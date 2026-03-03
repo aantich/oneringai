@@ -54,6 +54,13 @@ export interface ExecutionCancelledEvent {
   timestamp: Date;
 }
 
+export interface ExecutionEmptyOutputEvent {
+  executionId: string;
+  timestamp: Date;
+  duration: number;
+  usage?: import('../../../domain/entities/Response.js').TokenUsage;
+}
+
 export interface ExecutionMaxIterationsEvent {
   executionId: string;
   iteration: number;
@@ -190,6 +197,8 @@ export interface AgenticLoopEvents {
   'tool:timeout': ToolTimeoutEvent;
 
   'hook:error': HookErrorEvent;
+
+  'execution:empty_output': ExecutionEmptyOutputEvent;
 
   'circuit:opened': CircuitOpenedEvent;
   'circuit:half-open': CircuitHalfOpenEvent;

@@ -24644,6 +24644,20 @@ var Agent = class _Agent extends BaseAgent {
       timestamp: /* @__PURE__ */ new Date(),
       duration: totalDuration
     });
+    const hasTextOutput = response.output_text?.trim() || response.output?.some(
+      (item) => "content" in item && Array.isArray(item.content) && item.content.some((c) => c.type === "output_text" /* OUTPUT_TEXT */ && c.text?.trim())
+    );
+    if (!hasTextOutput) {
+      console.warn(
+        `[Agent] WARNING: ${methodName} completed with zero text output (executionId=${executionId}, iterations=${this.executionContext?.metrics.iterationCount ?? "?"}, tokens=${response.usage?.total_tokens ?? 0})`
+      );
+      this.emit("execution:empty_output", {
+        executionId,
+        timestamp: /* @__PURE__ */ new Date(),
+        duration: totalDuration,
+        usage: response.usage
+      });
+    }
     const duration = Date.now() - startTime;
     this._logger.info({ duration }, `Agent ${methodName} completed`);
     exports.metrics.timing(`agent.${methodName}.duration`, duration, { model: this.model, connector: this.connector.name });
@@ -24698,6 +24712,17 @@ var Agent = class _Agent extends BaseAgent {
         }
         const iterationStartTime = Date.now();
         const prepared = await this._agentContext.prepare();
+        const b1 = prepared.budget;
+        const bd1 = b1.breakdown;
+        const bp1 = [
+          `sysPrompt=${bd1.systemPrompt}`,
+          `PI=${bd1.persistentInstructions}`,
+          bd1.pluginInstructions ? `pluginInstr=${bd1.pluginInstructions}` : "",
+          ...Object.entries(bd1.pluginContents || {}).map(([k, v]) => `plugin:${k}=${v}`)
+        ].filter(Boolean).join(" ");
+        console.log(
+          `[Agent] [Context] iteration=${iteration} tokens: ${b1.totalUsed}/${b1.maxTokens} (${b1.utilizationPercent.toFixed(1)}%) tools=${b1.toolsTokens} conversation=${b1.conversationTokens} system=${b1.systemMessageTokens} input=${b1.currentInputTokens}` + (bp1 ? ` | ${bp1}` : "") + (prepared.compacted ? ` COMPACTED: ${prepared.compactionLog.join("; ")}` : "")
+        );
         const response = await this.generateWithHooks(prepared.input, iteration, executionId);
         const toolCalls = this.extractToolCalls(response.output);
         this._agentContext.addAssistantResponse(response.output);
@@ -24812,13 +24837,23 @@ var Agent = class _Agent extends BaseAgent {
    * Build placeholder response for streaming finalization
    */
   _buildPlaceholderResponse(executionId, startTime, streamState) {
+    const outputText = streamState.getAllText();
+    const output = [];
+    if (outputText && outputText.trim()) {
+      output.push({
+        type: "message",
+        role: "assistant" /* ASSISTANT */,
+        content: [{ type: "output_text" /* OUTPUT_TEXT */, text: outputText }]
+      });
+    }
     return {
       id: executionId,
       object: "response",
       created_at: Math.floor(startTime / 1e3),
       status: "completed",
       model: this.model,
-      output: [],
+      output,
+      output_text: outputText || void 0,
       usage: streamState.usage
     };
   }
@@ -24838,6 +24873,17 @@ var Agent = class _Agent extends BaseAgent {
           break;
         }
         const prepared = await this._agentContext.prepare();
+        const b2 = prepared.budget;
+        const bd2 = b2.breakdown;
+        const bp2 = [
+          `sysPrompt=${bd2.systemPrompt}`,
+          `PI=${bd2.persistentInstructions}`,
+          bd2.pluginInstructions ? `pluginInstr=${bd2.pluginInstructions}` : "",
+          ...Object.entries(bd2.pluginContents || {}).map(([k, v]) => `plugin:${k}=${v}`)
+        ].filter(Boolean).join(" ");
+        console.log(
+          `[Agent] [Context] iteration=${iteration} tokens: ${b2.totalUsed}/${b2.maxTokens} (${b2.utilizationPercent.toFixed(1)}%) tools=${b2.toolsTokens} conversation=${b2.conversationTokens} system=${b2.systemMessageTokens} input=${b2.currentInputTokens}` + (bp2 ? ` | ${bp2}` : "") + (prepared.compacted ? ` COMPACTED: ${prepared.compactionLog.join("; ")}` : "")
+        );
         const iterationStreamState = new StreamState(executionId, this.model);
         const toolCallsMap = /* @__PURE__ */ new Map();
         yield* this.streamGenerateWithHooks(

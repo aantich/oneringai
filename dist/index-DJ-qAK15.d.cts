@@ -2183,11 +2183,6 @@ declare class ExecutionContext {
 }
 
 /**
- * Event types for agent execution
- * These events are emitted asynchronously for notifications (UI updates, logging, etc.)
- */
-
-/**
  * Minimal config type for execution start events.
  * This captures the essential info without importing full AgentConfig.
  */
@@ -2226,6 +2221,12 @@ interface ExecutionCancelledEvent {
     executionId: string;
     reason?: string;
     timestamp: Date;
+}
+interface ExecutionEmptyOutputEvent {
+    executionId: string;
+    timestamp: Date;
+    duration: number;
+    usage?: TokenUsage;
 }
 interface ExecutionMaxIterationsEvent {
     executionId: string;
@@ -2344,6 +2345,7 @@ interface AgenticLoopEvents {
     'tool:error': ToolErrorEvent;
     'tool:timeout': ToolTimeoutEvent;
     'hook:error': HookErrorEvent;
+    'execution:empty_output': ExecutionEmptyOutputEvent;
     'circuit:opened': CircuitOpenedEvent;
     'circuit:half-open': CircuitHalfOpenEvent;
     'circuit:closed': CircuitClosedEvent;

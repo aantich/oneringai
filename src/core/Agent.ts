@@ -531,6 +531,26 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       duration: totalDuration,
     });
 
+    // Detect zero text output (model completed but produced no user-facing text)
+    const hasTextOutput = response.output_text?.trim() ||
+      response.output?.some((item: OutputItem) =>
+        'content' in item && Array.isArray((item as any).content) &&
+        (item as any).content.some((c: Content) => c.type === ContentType.OUTPUT_TEXT && (c as any).text?.trim())
+      );
+    if (!hasTextOutput) {
+      console.warn(
+        `[Agent] WARNING: ${methodName} completed with zero text output ` +
+        `(executionId=${executionId}, iterations=${this.executionContext?.metrics.iterationCount ?? '?'}, ` +
+        `tokens=${response.usage?.total_tokens ?? 0})`,
+      );
+      this.emit('execution:empty_output', {
+        executionId,
+        timestamp: new Date(),
+        duration: totalDuration,
+        usage: response.usage,
+      });
+    }
+
     const duration = Date.now() - startTime;
     this._logger.info({ duration }, `Agent ${methodName} completed`);
     metrics.timing(`agent.${methodName}.duration`, duration, { model: this.model, connector: this.connector.name });
@@ -610,6 +630,20 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         // Prepare context (handles compaction)
         // Note: instructions are set in systemPrompt during context creation
         const prepared = await this._agentContext.prepare();
+        const b1 = prepared.budget;
+        const bd1 = b1.breakdown;
+        const bp1 = [
+          `sysPrompt=${bd1.systemPrompt}`,
+          `PI=${bd1.persistentInstructions}`,
+          bd1.pluginInstructions ? `pluginInstr=${bd1.pluginInstructions}` : '',
+          ...Object.entries(bd1.pluginContents || {}).map(([k, v]) => `plugin:${k}=${v}`),
+        ].filter(Boolean).join(' ');
+        console.log(
+          `[Agent] [Context] iteration=${iteration} tokens: ${b1.totalUsed}/${b1.maxTokens} (${b1.utilizationPercent.toFixed(1)}%) ` +
+          `tools=${b1.toolsTokens} conversation=${b1.conversationTokens} system=${b1.systemMessageTokens} input=${b1.currentInputTokens}` +
+          (bp1 ? ` | ${bp1}` : '') +
+          (prepared.compacted ? ` COMPACTED: ${prepared.compactionLog.join('; ')}` : ''),
+        );
 
         // Generate LLM response
         const response = await this.generateWithHooks(prepared.input, iteration, executionId);
@@ -781,13 +815,24 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     startTime: number,
     streamState: StreamState
   ): AgentResponse {
+    // Include actual text output from stream (previously discarded as empty [])
+    const outputText = streamState.getAllText();
+    const output: OutputItem[] = [];
+    if (outputText && outputText.trim()) {
+      output.push({
+        type: 'message',
+        role: MessageRole.ASSISTANT,
+        content: [{ type: ContentType.OUTPUT_TEXT, text: outputText }],
+      });
+    }
     return {
       id: executionId,
       object: 'response',
       created_at: Math.floor(startTime / 1000),
       status: 'completed',
       model: this.model,
-      output: [],
+      output,
+      output_text: outputText || undefined,
       usage: streamState.usage,
     };
   }
@@ -817,6 +862,20 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         // Prepare context (handles compaction)
         // Note: instructions are set in systemPrompt during context creation
         const prepared = await this._agentContext.prepare();
+        const b2 = prepared.budget;
+        const bd2 = b2.breakdown;
+        const bp2 = [
+          `sysPrompt=${bd2.systemPrompt}`,
+          `PI=${bd2.persistentInstructions}`,
+          bd2.pluginInstructions ? `pluginInstr=${bd2.pluginInstructions}` : '',
+          ...Object.entries(bd2.pluginContents || {}).map(([k, v]) => `plugin:${k}=${v}`),
+        ].filter(Boolean).join(' ');
+        console.log(
+          `[Agent] [Context] iteration=${iteration} tokens: ${b2.totalUsed}/${b2.maxTokens} (${b2.utilizationPercent.toFixed(1)}%) ` +
+          `tools=${b2.toolsTokens} conversation=${b2.conversationTokens} system=${b2.systemMessageTokens} input=${b2.currentInputTokens}` +
+          (bp2 ? ` | ${bp2}` : '') +
+          (prepared.compacted ? ` COMPACTED: ${prepared.compactionLog.join('; ')}` : ''),
+        );
 
         // Stream LLM response and accumulate state (per-iteration state)
         const iterationStreamState = new StreamState(executionId, this.model);
