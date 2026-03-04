@@ -53,8 +53,15 @@ const CATEGORY_LABELS: Record<string, string> = {
   code: 'Code Execution',
   json: 'JSON',
   connector: 'API Connectors',
+  desktop: 'Desktop Automation',
+  'custom-tools': 'Custom Tools',
+  routines: 'Routines',
   other: 'Other',
 };
+
+const ALL_TOOL_CATEGORIES = [
+  'filesystem', 'shell', 'web', 'code', 'json', 'desktop', 'custom-tools', 'routines', 'other',
+];
 
 interface UniversalConnector {
   name: string;
@@ -1462,6 +1469,24 @@ export function AgentEditorPage(): React.ReactElement {
                     </Form.Text>
                   </Col>
 
+                  <Col md={4} lg={2}>
+                    <Form.Check
+                      type="switch"
+                      id="tool-catalog-enabled"
+                      label="Tool Catalog"
+                      checked={formData.toolCatalogEnabled}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          toolCatalogEnabled: e.target.checked,
+                        })
+                      }
+                    />
+                    <Form.Text className="text-muted d-block">
+                      Dynamic tool loading by category
+                    </Form.Text>
+                  </Col>
+
                   {/* History Management and Tool Permissions removed - not in NextGen */}
                 </Row>
               </Card.Body>
@@ -1638,6 +1663,91 @@ export function AgentEditorPage(): React.ReactElement {
                             })
                           }
                         />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                </Card.Body>
+              </Card>
+            )}
+
+            {/* Tool Catalog Settings */}
+            {formData.toolCatalogEnabled && (
+              <Card className="mb-4">
+                <Card.Header>
+                  <strong>Tool Catalog Settings</strong>
+                  <InfoTooltip
+                    id="tool-catalog-info"
+                    content="Configure which tool categories are always available (pinned) and which are visible to the agent"
+                  />
+                </Card.Header>
+                <Card.Body>
+                  <Row className="g-3">
+                    <Col md={6}>
+                      <Form.Group>
+                        <Form.Label>
+                          Pinned Categories
+                          <InfoTooltip
+                            id="pinned-info"
+                            content="Always loaded — the LLM cannot unload these"
+                          />
+                        </Form.Label>
+                        <div className="border rounded p-2" style={{ maxHeight: 200, overflowY: 'auto' }}>
+                          {ALL_TOOL_CATEGORIES.map((cat) => (
+                            <Form.Check
+                              key={cat}
+                              type="checkbox"
+                              id={`pinned-${cat}`}
+                              label={CATEGORY_LABELS[cat] || cat}
+                              checked={formData.pinnedCategories.includes(cat)}
+                              onChange={(e) => {
+                                const next = e.target.checked
+                                  ? [...formData.pinnedCategories, cat]
+                                  : formData.pinnedCategories.filter((c) => c !== cat);
+                                setFormData({ ...formData, pinnedCategories: next });
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <Form.Text className="text-muted">
+                          Categories the agent always has access to
+                        </Form.Text>
+                      </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                      <Form.Group>
+                        <Form.Label>
+                          Category Scope
+                          <InfoTooltip
+                            id="scope-info"
+                            content="Restrict which categories the agent can discover. Empty = all categories visible."
+                          />
+                        </Form.Label>
+                        <div className="border rounded p-2" style={{ maxHeight: 200, overflowY: 'auto' }}>
+                          {ALL_TOOL_CATEGORIES.map((cat) => (
+                            <Form.Check
+                              key={cat}
+                              type="checkbox"
+                              id={`scope-${cat}`}
+                              label={CATEGORY_LABELS[cat] || cat}
+                              checked={formData.toolCategoryScope.length === 0 || formData.toolCategoryScope.includes(cat)}
+                              onChange={(e) => {
+                                let next: string[];
+                                if (formData.toolCategoryScope.length === 0) {
+                                  next = ALL_TOOL_CATEGORIES.filter((c) => c !== cat);
+                                } else {
+                                  next = e.target.checked
+                                    ? [...formData.toolCategoryScope, cat]
+                                    : formData.toolCategoryScope.filter((c) => c !== cat);
+                                  if (next.length === ALL_TOOL_CATEGORIES.length) next = [];
+                                }
+                                setFormData({ ...formData, toolCategoryScope: next });
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <Form.Text className="text-muted">
+                          Empty = all categories visible
+                        </Form.Text>
                       </Form.Group>
                     </Col>
                   </Row>
