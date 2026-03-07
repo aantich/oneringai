@@ -12774,6 +12774,9 @@ var MODEL_REGISTRY = {
       video: false,
       batchAPI: true,
       promptCaching: true,
+      parameters: {
+        temperature: false
+      },
       input: {
         tokens: 128e3,
         text: true,
@@ -32219,22 +32222,45 @@ async function auth(provider, options) {
   }
 }
 async function authInternal(provider, { serverUrl, authorizationCode, scope, resourceMetadataUrl, fetchFn }) {
+  const cachedState = await provider.discoveryState?.();
   let resourceMetadata;
   let authorizationServerUrl;
-  try {
-    resourceMetadata = await discoverOAuthProtectedResourceMetadata(serverUrl, { resourceMetadataUrl }, fetchFn);
-    if (resourceMetadata.authorization_servers && resourceMetadata.authorization_servers.length > 0) {
-      authorizationServerUrl = resourceMetadata.authorization_servers[0];
-    }
-  } catch {
+  let metadata;
+  let effectiveResourceMetadataUrl = resourceMetadataUrl;
+  if (!effectiveResourceMetadataUrl && cachedState?.resourceMetadataUrl) {
+    effectiveResourceMetadataUrl = new URL(cachedState.resourceMetadataUrl);
   }
-  if (!authorizationServerUrl) {
-    authorizationServerUrl = new URL("/", serverUrl);
+  if (cachedState?.authorizationServerUrl) {
+    authorizationServerUrl = cachedState.authorizationServerUrl;
+    resourceMetadata = cachedState.resourceMetadata;
+    metadata = cachedState.authorizationServerMetadata ?? await discoverAuthorizationServerMetadata(authorizationServerUrl, { fetchFn });
+    if (!resourceMetadata) {
+      try {
+        resourceMetadata = await discoverOAuthProtectedResourceMetadata(serverUrl, { resourceMetadataUrl: effectiveResourceMetadataUrl }, fetchFn);
+      } catch {
+      }
+    }
+    if (metadata !== cachedState.authorizationServerMetadata || resourceMetadata !== cachedState.resourceMetadata) {
+      await provider.saveDiscoveryState?.({
+        authorizationServerUrl: String(authorizationServerUrl),
+        resourceMetadataUrl: effectiveResourceMetadataUrl?.toString(),
+        resourceMetadata,
+        authorizationServerMetadata: metadata
+      });
+    }
+  } else {
+    const serverInfo = await discoverOAuthServerInfo(serverUrl, { resourceMetadataUrl: effectiveResourceMetadataUrl, fetchFn });
+    authorizationServerUrl = serverInfo.authorizationServerUrl;
+    metadata = serverInfo.authorizationServerMetadata;
+    resourceMetadata = serverInfo.resourceMetadata;
+    await provider.saveDiscoveryState?.({
+      authorizationServerUrl: String(authorizationServerUrl),
+      resourceMetadataUrl: effectiveResourceMetadataUrl?.toString(),
+      resourceMetadata,
+      authorizationServerMetadata: metadata
+    });
   }
   const resource = await selectResourceURL(serverUrl, provider, resourceMetadata);
-  const metadata = await discoverAuthorizationServerMetadata(authorizationServerUrl, {
-    fetchFn
-  });
   let clientInformation = await Promise.resolve(provider.clientInformation());
   if (!clientInformation) {
     if (authorizationCode !== void 0) {
@@ -32487,6 +32513,26 @@ async function discoverAuthorizationServerMetadata(authorizationServerUrl, { fet
     }
   }
   return void 0;
+}
+async function discoverOAuthServerInfo(serverUrl, opts) {
+  let resourceMetadata;
+  let authorizationServerUrl;
+  try {
+    resourceMetadata = await discoverOAuthProtectedResourceMetadata(serverUrl, { resourceMetadataUrl: opts?.resourceMetadataUrl }, opts?.fetchFn);
+    if (resourceMetadata.authorization_servers && resourceMetadata.authorization_servers.length > 0) {
+      authorizationServerUrl = resourceMetadata.authorization_servers[0];
+    }
+  } catch {
+  }
+  if (!authorizationServerUrl) {
+    authorizationServerUrl = String(new URL("/", serverUrl));
+  }
+  const authorizationServerMetadata = await discoverAuthorizationServerMetadata(authorizationServerUrl, { fetchFn: opts?.fetchFn });
+  return {
+    authorizationServerUrl,
+    authorizationServerMetadata,
+    resourceMetadata
+  };
 }
 async function startAuthorization(authorizationServerUrl, { metadata, clientInformation, redirectUrl, scope, state, resource }) {
   let authorizationUrl;

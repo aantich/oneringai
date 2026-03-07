@@ -279,6 +279,9 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
       video: false,
       batchAPI: true,
       promptCaching: true,
+      parameters: {
+        temperature: false,
+      },
       input: {
         tokens: 128000,
         text: true,

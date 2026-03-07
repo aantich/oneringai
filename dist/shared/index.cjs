@@ -167,6 +167,9 @@ var MODEL_REGISTRY = {
       video: false,
       batchAPI: true,
       promptCaching: true,
+      parameters: {
+        temperature: false
+      },
       input: {
         tokens: 128e3,
         text: true,
