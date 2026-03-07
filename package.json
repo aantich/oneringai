@@ -50,7 +50,7 @@
     "test:oauth": "vitest run tests/unit/oauth",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "prepare": "",
+    "prepare": "npm run build",
     "prepublishOnly": "npm run build && npm run typecheck && npm run test:unit && npm run docs",
     "preversion": "npm run build && npm run typecheck",
     "version": "npm run build && git add -A",

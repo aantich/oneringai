@@ -5,6 +5,7 @@ yarn.lock
 pnpm-lock.yaml
 
 # Build output
+dist/
 *.tsbuildinfo
 
 # Environment variables
