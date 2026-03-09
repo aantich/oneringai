@@ -38,7 +38,7 @@
     "generate:vendors": "tsx scripts/generate-vendor-registry.ts",
     "generate": "npm run generate:tools && npm run generate:vendors",
     "build": "npm run generate && tsup",
-    "build:all": "npm run build && npm run --prefix packages/react-ui build && npm run --prefix apps/amos build && npm run --prefix apps/hosea build && npm run --prefix apps/convert build",
+    "build:all": "npm run build && npm run --prefix apps/amos build && npm run --prefix apps/hosea build && npm run --prefix apps/convert build",
     "dev": "npm run generate && tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
