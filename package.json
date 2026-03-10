@@ -1,6 +1,6 @@
 {
   "name": "@everworker/oneringai",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "description": "Unified AI agent library with multi-vendor support for text generation, image generation, and agentic workflows",
   "type": "module",
   "main": "./dist/index.js",
