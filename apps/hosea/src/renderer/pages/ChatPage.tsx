@@ -18,6 +18,7 @@ import { SidebarPanel, SIDEBAR_PANEL_DEFAULT_WIDTH } from '../components/Sidebar
 import { PlanDisplay } from '../components/plan';
 import { TabBar, NewTabModal } from '../components/tabs';
 import { useTabContext, type Message, type TabState, type SidebarTab } from '../hooks/useTabContext';
+import { useVoiceoverPlayback } from '../hooks/useVoiceoverPlayback';
 import type { Plan } from '../../preload/index';
 import { useNavigation } from '../hooks/useNavigation';
 
@@ -402,6 +403,12 @@ function ChatPageContent(): React.ReactElement {
   const [showNewTabModal, setShowNewTabModal] = useState(false);
 
   const activeTab = getActiveTab();
+
+  // Voice playback - runs in background, plays audio chunks as they arrive
+  useVoiceoverPlayback(
+    activeTab?.instanceId ?? null,
+    activeTab?.voiceoverEnabled ?? false,
+  );
 
   const handleNewTabClick = () => {
     setShowNewTabModal(true);

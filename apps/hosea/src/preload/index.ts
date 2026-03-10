@@ -232,7 +232,11 @@ export type StreamChunk =
   | { type: 'routine:failed'; executionId: string; error: string }
   // Browser user control handoff events
   | { type: 'browser:user_has_control'; reason?: string }
-  | { type: 'browser:agent_has_control' };
+  | { type: 'browser:agent_has_control' }
+  // Voice pseudo-streaming events
+  | { type: 'voice:chunk'; chunkIndex: number; audioBase64: string; format: string; durationSeconds?: number; text: string }
+  | { type: 'voice:error'; chunkIndex: number; error: string; text: string }
+  | { type: 'voice:complete'; totalChunks: number; totalDurationSeconds?: number };
 
 /**
  * Browser state info for IPC
@@ -327,6 +331,16 @@ export interface HoseaAPI {
       agentConfigId: string | null;
     }>;
     listInstances: () => Promise<Array<{ instanceId: string; agentConfigId: string; createdAt: number }>>;
+    // Voice pseudo-streaming
+    setVoiceover: (instanceId: string, enabled: boolean) => Promise<{ success: boolean; error?: string }>;
+    getVoiceConfig: (agentConfigId: string) => Promise<{
+      voiceEnabled: boolean;
+      voiceConnector?: string;
+      voiceModel?: string;
+      voiceVoice?: string;
+      voiceFormat?: string;
+      voiceSpeed?: number;
+    } | null>;
     // Instance-aware streaming listeners
     onStreamChunkInstance: (callback: (instanceId: string, chunk: StreamChunk) => void) => void;
     onStreamEndInstance: (callback: (instanceId: string) => void) => void;
@@ -575,6 +589,13 @@ export interface HoseaAPI {
       pinnedCategories: string[];
       toolCategoryScope: string[];
       mcpServers?: Array<{ serverName: string; selectedTools?: string[] }>;
+      // Voice/TTS settings
+      voiceEnabled?: boolean;
+      voiceConnector?: string;
+      voiceModel?: string;
+      voiceVoice?: string;
+      voiceFormat?: string;
+      voiceSpeed?: number;
       createdAt: number;
       updatedAt: number;
       lastUsedAt?: number;
@@ -615,6 +636,13 @@ export interface HoseaAPI {
       pinnedCategories: string[];
       toolCategoryScope: string[];
       mcpServers?: Array<{ serverName: string; selectedTools?: string[] }>;
+      // Voice/TTS settings
+      voiceEnabled?: boolean;
+      voiceConnector?: string;
+      voiceModel?: string;
+      voiceVoice?: string;
+      voiceFormat?: string;
+      voiceSpeed?: number;
       createdAt: number;
       updatedAt: number;
       lastUsedAt?: number;
@@ -1054,6 +1082,7 @@ export interface HoseaAPI {
       name: string;
       displayName: string;
       vendor: string;
+      connector: string;
       description?: string;
       maxInputLength: number;
       voiceCount: number;
@@ -1277,6 +1306,9 @@ const api: HoseaAPI = {
     handBackToAgent: (instanceId) => ipcRenderer.invoke('agent:hand-back-to-agent', instanceId),
     statusInstance: (instanceId) => ipcRenderer.invoke('agent:status-instance', instanceId),
     listInstances: () => ipcRenderer.invoke('agent:list-instances'),
+    // Voice pseudo-streaming
+    setVoiceover: (instanceId, enabled) => ipcRenderer.invoke('agent:set-voiceover', instanceId, enabled),
+    getVoiceConfig: (agentConfigId) => ipcRenderer.invoke('agent:get-voice-config', agentConfigId),
     // Instance-aware streaming listeners (include instanceId in callback)
     onStreamChunkInstance: (callback) => {
       ipcRenderer.removeAllListeners('agent:stream-chunk');

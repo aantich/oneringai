@@ -153,11 +153,13 @@ export class VoiceStream extends EventEmitter implements IDisposable {
         yield* this.drainAudioBuffer();
       }
 
-      // Wait for all pending TTS jobs to complete
-      await this.waitForAllJobs();
-
-      // Yield remaining audio events
-      yield* this.drainAudioBuffer();
+      // Drain audio events as each pending TTS job completes (low latency)
+      while (this.activeJobs.size > 0) {
+        // Wait for the next job to finish
+        await Promise.race(Array.from(this.activeJobs.values()).map((j) => j.promise));
+        // Immediately yield any audio events that became ready
+        yield* this.drainAudioBuffer();
+      }
 
       // Yield audio stream complete
       if (this.chunkIndex > 0) {

@@ -336,6 +336,32 @@
   background-color: #dc2626;
 }
 
+/* Voiceover toggle button */
+.chat__voice-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--color-gray-500);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.chat__voice-btn:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.chat__voice-btn--active {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-bg, rgba(239, 68, 68, 0.08));
+}
+
 /* Typing Indicator */
 .typing-indicator {
   display: flex;

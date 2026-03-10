@@ -256,6 +256,24 @@ async function setupIPC(): Promise<void> {
     return agentService!.cancelInstance(instanceId);
   }));
 
+  // Voice pseudo-streaming
+  ipcMain.handle('agent:set-voiceover', readyHandler(async (_event, instanceId: string, enabled: boolean) => {
+    return agentService!.setVoiceover(instanceId, enabled);
+  }));
+
+  ipcMain.handle('agent:get-voice-config', readyHandler(async (_event, agentConfigId: string) => {
+    const agent = agentService!.getAgent(agentConfigId);
+    if (!agent) return null;
+    return {
+      voiceEnabled: agent.voiceEnabled,
+      voiceConnector: agent.voiceConnector,
+      voiceModel: agent.voiceModel,
+      voiceVoice: agent.voiceVoice,
+      voiceFormat: agent.voiceFormat,
+      voiceSpeed: agent.voiceSpeed,
+    };
+  }));
+
   // Browser user control handoff (Trigger 1: user clicks "Take Control")
   ipcMain.handle('agent:take-user-control', readyHandler(async (_event, instanceId: string) => {
     return agentService!.takeUserControl(instanceId);

@@ -138,6 +138,13 @@ interface AgentFormData {
   toolCategoryScope: string[];
   // MCP servers
   mcpServers: AgentMCPServerRef[];
+  // Voice/TTS settings
+  voiceEnabled: boolean;
+  voiceConnector: string;
+  voiceModel: string;
+  voiceVoice: string;
+  voiceFormat: string;
+  voiceSpeed: number;
 }
 
 const defaultFormData: AgentFormData = {
@@ -175,6 +182,13 @@ const defaultFormData: AgentFormData = {
   toolCategoryScope: [],
   // MCP servers
   mcpServers: [],
+  // Voice/TTS settings
+  voiceEnabled: false,
+  voiceConnector: '',
+  voiceModel: '',
+  voiceVoice: '',
+  voiceFormat: 'mp3',
+  voiceSpeed: 1.0,
 };
 
 export function AgentEditorPage(): React.ReactElement {
@@ -198,6 +212,14 @@ export function AgentEditorPage(): React.ReactElement {
   const [strategies, setStrategies] = useState<StrategyInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const connectorVersion = useConnectorVersion();
+
+  // Voice/TTS state
+  const [ttsModels, setTTSModels] = useState<Array<{ name: string; displayName: string; vendor: string; connector: string; maxInputLength: number; voiceCount: number }>>([]);
+  const [ttsCapabilities, setTTSCapabilities] = useState<{
+    voices: Array<{ id: string; name: string; language: string; gender: 'male' | 'female' | 'neutral'; style?: string; isDefault?: boolean; accent?: string }>;
+    formats: string[];
+    speed: { supported: boolean; min?: number; max?: number; default?: number };
+  } | null>(null);
 
   // Live models fetched from the connector's API (e.g. Ollama)
   const [liveModels, setLiveModels] = useState<string[]>([]);
@@ -257,6 +279,13 @@ export function AgentEditorPage(): React.ReactElement {
               pinnedCategories: existingAgent.pinnedCategories ?? [],
               toolCategoryScope: existingAgent.toolCategoryScope ?? [],
               mcpServers: existingAgent.mcpServers || [],
+              // Voice/TTS settings
+              voiceEnabled: existingAgent.voiceEnabled ?? false,
+              voiceConnector: existingAgent.voiceConnector ?? '',
+              voiceModel: existingAgent.voiceModel ?? '',
+              voiceVoice: existingAgent.voiceVoice ?? '',
+              voiceFormat: existingAgent.voiceFormat ?? 'mp3',
+              voiceSpeed: existingAgent.voiceSpeed ?? 1.0,
             });
           }
         }
@@ -297,6 +326,53 @@ export function AgentEditorPage(): React.ReactElement {
       });
     return () => { cancelled = true; };
   }, [formData.connector, connectors]);
+
+  // Load TTS models when voice is enabled
+  useEffect(() => {
+    if (!formData.voiceEnabled) {
+      setTTSModels([]);
+      setTTSCapabilities(null);
+      return;
+    }
+    let cancelled = false;
+    window.hosea.multimedia.getAvailableTTSModels()
+      .then((models) => {
+        if (!cancelled) setTTSModels(models);
+      })
+      .catch((err) => {
+        console.error('Failed to load TTS models:', err);
+        if (!cancelled) setTTSModels([]);
+      });
+    return () => { cancelled = true; };
+  }, [formData.voiceEnabled]);
+
+  // Load TTS capabilities when voice model changes
+  useEffect(() => {
+    if (!formData.voiceModel) {
+      setTTSCapabilities(null);
+      return;
+    }
+    let cancelled = false;
+    window.hosea.multimedia.getTTSModelCapabilities(formData.voiceModel)
+      .then((caps) => {
+        if (!cancelled) {
+          setTTSCapabilities(caps as typeof ttsCapabilities);
+          // Auto-select default voice if none selected
+          if (!formData.voiceVoice && caps?.voices?.length) {
+            const defaultVoice = caps.voices.find((v: { isDefault?: boolean }) => v.isDefault);
+            setFormData((prev) => ({
+              ...prev,
+              voiceVoice: defaultVoice?.id ?? caps.voices[0]?.id ?? '',
+            }));
+          }
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load TTS capabilities:', err);
+        if (!cancelled) setTTSCapabilities(null);
+      });
+    return () => { cancelled = true; };
+  }, [formData.voiceModel]);
 
   // Get models for selected connector's vendor (from static registry)
   const getModelsForConnector = useCallback((): ModelInfo[] => {
@@ -699,6 +775,9 @@ export function AgentEditorPage(): React.ReactElement {
           </Nav.Item>
           <Nav.Item>
             <Nav.Link eventKey="context">Context</Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link eventKey="voice">Voice</Nav.Link>
           </Nav.Item>
         </Nav>
 
@@ -1755,6 +1834,145 @@ export function AgentEditorPage(): React.ReactElement {
               </Card>
             )}
 
+          </>
+        )}
+
+        {/* Voice Tab */}
+        {activeTab === 'voice' && (
+          <>
+            <Card className="mb-4">
+              <Card.Header>
+                <strong>Voice / Text-to-Speech</strong>
+                <InfoTooltip
+                  id="voice-info"
+                  content="Enable voice pseudo-streaming: agent responses will be spoken aloud sentence by sentence using TTS"
+                />
+              </Card.Header>
+              <Card.Body>
+                <Form.Check
+                  type="switch"
+                  id="voice-enabled"
+                  label="Enable Voice"
+                  checked={formData.voiceEnabled}
+                  onChange={(e) =>
+                    setFormData({ ...formData, voiceEnabled: e.target.checked })
+                  }
+                  className="mb-3"
+                />
+                <Form.Text className="text-muted d-block mb-3">
+                  When enabled, you can toggle voiceover on the chat page to hear agent responses spoken aloud.
+                </Form.Text>
+
+                {formData.voiceEnabled && (
+                  <>
+                    {/* TTS Model */}
+                    <Row className="g-3 mb-3">
+                      <Col md={6}>
+                        <Form.Group>
+                          <Form.Label>TTS Model</Form.Label>
+                          <Form.Select
+                            value={formData.voiceModel && formData.voiceConnector ? `${formData.voiceModel}::${formData.voiceConnector}` : formData.voiceModel}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const sepIdx = val.indexOf('::');
+                              const model = sepIdx >= 0 ? val.slice(0, sepIdx) : val;
+                              const connector = sepIdx >= 0 ? val.slice(sepIdx + 2) : '';
+                              setFormData({
+                                ...formData,
+                                voiceModel: model,
+                                voiceConnector: connector || formData.voiceConnector,
+                                voiceVoice: '', // Reset voice when model changes
+                              });
+                            }}
+                          >
+                            <option value="">Select a TTS model...</option>
+                            {ttsModels.map((m) => (
+                              <option key={`${m.name}::${m.connector}`} value={`${m.name}::${m.connector}`}>
+                                {m.displayName} ({m.connector})
+                              </option>
+                            ))}
+                          </Form.Select>
+                          {ttsModels.length === 0 && (
+                            <Form.Text className="text-warning">
+                              No TTS models available. Configure a connector that supports TTS (e.g. OpenAI, Google).
+                            </Form.Text>
+                          )}
+                        </Form.Group>
+                      </Col>
+                    </Row>
+
+                    {/* Voice selector */}
+                    {formData.voiceModel && ttsCapabilities?.voices && (
+                      <Row className="g-3 mb-3">
+                        <Col>
+                          <Form.Label>Voice</Form.Label>
+                          <div className="border rounded p-2" style={{ maxHeight: 240, overflowY: 'auto' }}>
+                            <div className="d-flex flex-wrap gap-2">
+                              {ttsCapabilities.voices.map((voice) => (
+                                <Button
+                                  key={voice.id}
+                                  size="sm"
+                                  variant={formData.voiceVoice === voice.id ? 'primary' : 'outline-secondary'}
+                                  onClick={() => setFormData({ ...formData, voiceVoice: voice.id })}
+                                >
+                                  {voice.name}
+                                  {voice.isDefault && ' *'}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                          {ttsCapabilities.voices.length === 0 && (
+                            <Form.Text className="text-muted">No voices available for this model</Form.Text>
+                          )}
+                        </Col>
+                      </Row>
+                    )}
+
+                    {/* Format and Speed */}
+                    <Row className="g-3">
+                      <Col md={3}>
+                        <Form.Group>
+                          <Form.Label>Audio Format</Form.Label>
+                          <Form.Select
+                            value={formData.voiceFormat}
+                            onChange={(e) =>
+                              setFormData({ ...formData, voiceFormat: e.target.value })
+                            }
+                          >
+                            {(ttsCapabilities?.formats || ['mp3', 'opus', 'aac', 'flac', 'wav']).map((fmt) => (
+                              <option key={fmt} value={fmt}>{fmt.toUpperCase()}</option>
+                            ))}
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+
+                      <Col md={3}>
+                        <Form.Group>
+                          <Form.Label>
+                            Speed: {formData.voiceSpeed.toFixed(2)}x
+                          </Form.Label>
+                          <Form.Range
+                            min={ttsCapabilities?.speed?.min ?? 0.25}
+                            max={ttsCapabilities?.speed?.max ?? 4.0}
+                            step={0.25}
+                            value={formData.voiceSpeed}
+                            onChange={(e) =>
+                              setFormData({ ...formData, voiceSpeed: parseFloat(e.target.value) })
+                            }
+                            disabled={ttsCapabilities?.speed?.supported === false}
+                          />
+                          <Form.Text className="text-muted">
+                            {ttsCapabilities?.speed?.supported === false
+                              ? 'Speed control not supported for this model'
+                              : `${ttsCapabilities?.speed?.min ?? 0.25}x - ${ttsCapabilities?.speed?.max ?? 4.0}x`}
+                          </Form.Text>
+                        </Form.Group>
+                      </Col>
+                    </Row>
+                  </>
+                )}
+              </Card.Body>
+            </Card>
           </>
         )}
       </div>

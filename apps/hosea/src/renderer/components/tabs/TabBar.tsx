@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Plus, PanelRightOpen, PanelRightClose } from 'lucide-react';
+import { Plus, PanelRightOpen, PanelRightClose, Volume2, VolumeX } from 'lucide-react';
 import { Tab } from './Tab';
 import { useTabContext } from '../../hooks/useTabContext';
 
@@ -15,7 +15,8 @@ interface TabBarProps {
 }
 
 export function TabBar({ onNewTabClick, showInternals, onToggleInternals }: TabBarProps): React.ReactElement {
-  const { tabs, activeTabId, tabOrder, switchTab, closeTab, isMaxTabsReached } = useTabContext();
+  const { tabs, activeTabId, tabOrder, switchTab, closeTab, isMaxTabsReached, toggleVoiceover } = useTabContext();
+  const activeTab = activeTabId ? tabs.get(activeTabId) : null;
 
   return (
     <div className="chat-tabs">
@@ -51,6 +52,17 @@ export function TabBar({ onNewTabClick, showInternals, onToggleInternals }: TabB
         >
           <Plus size={16} />
         </button>
+
+        {activeTab?.voiceConfigured && (
+          <button
+            type="button"
+            className={`chat-tabs__action ${activeTab.voiceoverEnabled ? 'chat-tabs__action--active' : ''}`}
+            onClick={toggleVoiceover}
+            title={activeTab.voiceoverEnabled ? 'Turn off voiceover' : 'Turn on voiceover'}
+          >
+            {activeTab.voiceoverEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          </button>
+        )}
 
         <button
           type="button"

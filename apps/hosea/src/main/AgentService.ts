@@ -33,6 +33,7 @@ import {
   getActiveVideoModels,
   calculateVideoCost,
   TextToSpeech,
+  VoiceStream,
   getTTSModelInfo,
   getActiveTTSModels,
   calculateTTSCost,
@@ -220,6 +221,13 @@ export interface StoredAgentConfig {
   toolCategoryScope: string[];   // empty = all built-in categories
   // MCP servers (optional)
   mcpServers?: AgentMCPServerRef[];
+  // Voice/TTS settings
+  voiceEnabled: boolean;
+  voiceConnector?: string;    // TTS connector name (may differ from LLM connector)
+  voiceModel?: string;        // e.g. 'tts-1-hd'
+  voiceVoice?: string;        // e.g. 'nova'
+  voiceFormat?: string;       // audio format, default 'mp3'
+  voiceSpeed?: number;        // speech speed, default 1.0
   // Metadata
   createdAt: number;
   updatedAt: number;
@@ -446,7 +454,11 @@ export type StreamChunk =
   | { type: 'routine:failed'; executionId: string; error: string }
   // Browser user control handoff events
   | { type: 'browser:user_has_control'; reason?: string }
-  | { type: 'browser:agent_has_control' };
+  | { type: 'browser:agent_has_control' }
+  // Voice pseudo-streaming events
+  | { type: 'voice:chunk'; chunkIndex: number; audioBase64: string; format: string; durationSeconds?: number; text: string }
+  | { type: 'voice:error'; chunkIndex: number; error: string; text: string }
+  | { type: 'voice:complete'; totalChunks: number; totalDurationSeconds?: number };
 
 /**
  * HOSEA UI Capabilities System Prompt
@@ -574,6 +586,9 @@ export interface AgentInstance {
   agent: Agent; // Only Agent type in NextGen
   sessionStorage: IContextStorage;
   createdAt: number;
+  // Voice pseudo-streaming
+  voiceStream?: VoiceStream;
+  voiceoverEnabled: boolean;
 }
 
 /** Maximum concurrent agent instances (memory limit) */
@@ -669,6 +684,13 @@ export class AgentService {
         toolCategoryScope: config.toolCategoryScope,
         lastUsedAt: config.lastUsedAt,
         isActive: config.isActive,
+        // Voice/TTS
+        voiceEnabled: config.voiceEnabled,
+        voiceConnector: config.voiceConnector,
+        voiceModel: config.voiceModel,
+        voiceVoice: config.voiceVoice,
+        voiceFormat: config.voiceFormat,
+        voiceSpeed: config.voiceSpeed,
       },
     };
   }
@@ -720,6 +742,13 @@ export class AgentService {
       updatedAt: new Date(definition.updatedAt).getTime(),
       lastUsedAt: typeConfig.lastUsedAt as number | undefined,
       isActive: (typeConfig.isActive as boolean) ?? false,
+      // Voice/TTS
+      voiceEnabled: Boolean(typeConfig.voiceEnabled ?? false),
+      voiceConnector: typeConfig.voiceConnector as string | undefined,
+      voiceModel: typeConfig.voiceModel as string | undefined,
+      voiceVoice: typeConfig.voiceVoice as string | undefined,
+      voiceFormat: (typeConfig.voiceFormat as string | undefined) ?? 'mp3',
+      voiceSpeed: (typeConfig.voiceSpeed as number | undefined) ?? 1.0,
     };
   }
 
@@ -3496,6 +3525,7 @@ export class AgentService {
       toolCategoryScope: [],
       permissionsEnabled: true,
       tools: [],
+      voiceEnabled: false,
     };
 
     const result = await this.createAgent(defaultConfig);
@@ -4084,6 +4114,7 @@ export class AgentService {
         agent,
         sessionStorage,
         createdAt: Date.now(),
+        voiceoverEnabled: false,
       };
       this.instances.set(instanceId, agentInstance);
 
@@ -4119,6 +4150,13 @@ export class AgentService {
         instance.agent.cancel();
       }
 
+      // Destroy voice stream if exists
+      if (instance.voiceStream) {
+        instance.voiceStream.interrupt();
+        instance.voiceStream.destroy();
+        instance.voiceStream = undefined;
+      }
+
       // Destroy associated browser instance if exists
       if (this.browserService && this.browserService.hasBrowser(instanceId)) {
         await this.browserService.destroyBrowser(instanceId);
@@ -4137,6 +4175,62 @@ export class AgentService {
       console.error(`Error destroying instance ${instanceId}:`, error);
       return { success: false, error: String(error) };
     }
+  }
+
+  /**
+   * Enable or disable voiceover for an agent instance.
+   * Creates/destroys VoiceStream based on the agent's voice config.
+   */
+  setVoiceover(instanceId: string, enabled: boolean): { success: boolean; error?: string } {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return { success: false, error: 'Instance not found' };
+
+    const agentConfig = this.agents.get(instance.agentConfigId);
+    if (!agentConfig?.voiceEnabled) {
+      return { success: false, error: 'Voice not configured for this agent' };
+    }
+
+    if (enabled && !instance.voiceStream) {
+      try {
+        // Determine TTS connector (may differ from LLM connector)
+        const ttsConnectorName = agentConfig.voiceConnector || agentConfig.connector;
+
+        // Ensure the connector is registered in the Connector registry
+        if (!Connector.has(ttsConnectorName)) {
+          const connectorConfig = this.connectors.get(ttsConnectorName);
+          if (!connectorConfig) {
+            return { success: false, error: `Connector "${ttsConnectorName}" not found` };
+          }
+          Connector.create({
+            name: ttsConnectorName,
+            vendor: connectorConfig.vendor as typeof Vendor[keyof typeof Vendor],
+            auth: connectorConfig.auth as any,
+            baseURL: connectorConfig.baseURL,
+          });
+        }
+
+        instance.voiceStream = VoiceStream.create({
+          ttsConnector: ttsConnectorName,
+          ttsModel: agentConfig.voiceModel,
+          voice: agentConfig.voiceVoice,
+          format: (agentConfig.voiceFormat ?? 'mp3') as any,
+          speed: agentConfig.voiceSpeed ?? 1.0,
+        });
+
+        logger.info(`[setVoiceover] Enabled voiceover for instance ${instanceId} (model: ${agentConfig.voiceModel}, voice: ${agentConfig.voiceVoice})`);
+      } catch (error) {
+        logger.error(`[setVoiceover] Failed to create VoiceStream: ${error}`);
+        return { success: false, error: String(error) };
+      }
+    } else if (!enabled && instance.voiceStream) {
+      instance.voiceStream.interrupt();
+      instance.voiceStream.destroy();
+      instance.voiceStream = undefined;
+      logger.info(`[setVoiceover] Disabled voiceover for instance ${instanceId}`);
+    }
+
+    instance.voiceoverEnabled = enabled;
+    return { success: true };
   }
 
   /**
@@ -4173,7 +4267,13 @@ export class AgentService {
     try {
       // Check if the agent has a stream method
       if ('stream' in instance.agent && typeof instance.agent.stream === 'function') {
-        for await (const event of instance.agent.stream(message)) {
+        // Wrap with VoiceStream when voiceover is enabled
+        const rawStream = instance.agent.stream(message);
+        const eventStream = (instance.voiceoverEnabled && instance.voiceStream)
+          ? instance.voiceStream.wrap(rawStream)
+          : rawStream;
+
+        for await (const event of eventStream) {
           // Cast through unknown to support various event type formats
           const e = event as unknown as { type: string; [key: string]: unknown };
 
@@ -4279,6 +4379,30 @@ export class AgentService {
             yield { type: 'execution:done', result: (e as any).result };
           } else if (e.type === 'execution:paused') {
             yield { type: 'execution:paused', reason: (e as any).reason };
+          }
+          // Voice pseudo-streaming events (from VoiceStream.wrap)
+          else if (e.type === 'response.audio_chunk.ready') {
+            yield {
+              type: 'voice:chunk',
+              chunkIndex: (e as any).chunk_index,
+              audioBase64: (e as any).audio_base64,
+              format: (e as any).format,
+              durationSeconds: (e as any).duration_seconds,
+              text: (e as any).text,
+            };
+          } else if (e.type === 'response.audio_chunk.error') {
+            yield {
+              type: 'voice:error',
+              chunkIndex: (e as any).chunk_index,
+              error: (e as any).error,
+              text: (e as any).text,
+            };
+          } else if (e.type === 'response.audio_stream.complete') {
+            yield {
+              type: 'voice:complete',
+              totalChunks: (e as any).total_chunks,
+              totalDurationSeconds: (e as any).total_duration_seconds,
+            };
           }
         }
       } else if ('run' in instance.agent && typeof instance.agent.run === 'function') {
@@ -5162,6 +5286,7 @@ export class AgentService {
     name: string;
     displayName: string;
     vendor: string;
+    connector: string;
     description?: string;
     maxInputLength: number;
     voiceCount: number;
@@ -5170,38 +5295,58 @@ export class AgentService {
       currency: string;
     };
   }> {
-    // Get vendors from configured connectors
-    const configuredVendors = new Set(
-      Array.from(this.connectors.values()).map((c) => c.vendor)
-    );
+    // Build a map of vendor → connector names (a vendor may have multiple connectors)
+    const vendorToConnectors = new Map<string, string[]>();
+    for (const [, c] of this.connectors) {
+      const list = vendorToConnectors.get(c.vendor) || [];
+      list.push(c.name);
+      vendorToConnectors.set(c.vendor, list);
+    }
 
-    // Get all active TTS models
-    const allModels = getActiveTTSModels();
-
-    // Map vendor names to match what's stored in connectors
+    // Map TTS model vendor names to connector vendor names
     const vendorMapping: Record<string, string[]> = {
       openai: ['openai'],
       google: ['google', 'google-vertex'],
     };
 
-    return allModels
-      .filter((model) => {
-        const modelVendor = model.provider.toLowerCase();
-        // Check if any configured vendor matches this model's vendor
-        return Array.from(configuredVendors).some((configuredVendor) => {
-          const mapped = vendorMapping[configuredVendor] || [configuredVendor];
-          return mapped.includes(modelVendor);
-        });
-      })
-      .map((model) => ({
-        name: model.name,
-        displayName: model.displayName,
-        vendor: model.provider.toLowerCase(),
-        description: model.description,
-        maxInputLength: model.capabilities.limits.maxInputLength,
-        voiceCount: model.capabilities.voices.length,
-        pricing: model.pricing,
-      }));
+    // Get all active TTS models
+    const allModels = getActiveTTSModels();
+
+    const results: Array<{
+      name: string;
+      displayName: string;
+      vendor: string;
+      connector: string;
+      description?: string;
+      maxInputLength: number;
+      voiceCount: number;
+      pricing?: { per1kCharacters: number; currency: string };
+    }> = [];
+
+    for (const model of allModels) {
+      const modelVendor = model.provider.toLowerCase();
+      // Find all connector vendors that can serve this model
+      for (const [connectorVendor, connectorNames] of vendorToConnectors) {
+        const mapped = vendorMapping[connectorVendor] || [connectorVendor];
+        if (mapped.includes(modelVendor)) {
+          // Emit one entry per connector that can serve this model
+          for (const connectorName of connectorNames) {
+            results.push({
+              name: model.name,
+              displayName: model.displayName,
+              vendor: model.provider.toLowerCase(),
+              connector: connectorName,
+              description: model.description,
+              maxInputLength: model.capabilities.limits.maxInputLength,
+              voiceCount: model.capabilities.voices.length,
+              pricing: model.pricing as { per1kCharacters: number; currency: string } | undefined,
+            });
+          }
+        }
+      }
+    }
+
+    return results;
   }
 
   /**

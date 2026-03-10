@@ -44,6 +44,9 @@ export interface TabState {
   pinnedContextKeys: string[];
   // Browser user control handoff state
   userHasControl: { active: boolean; reason?: string } | null;
+  // Voice/voiceover state
+  voiceConfigured: boolean;
+  voiceoverEnabled: boolean;
   // Routine execution state (in-memory only, derived from StreamChunk events)
   routineExecution: {
     executionId: string;
@@ -88,6 +91,9 @@ export interface TabContextValue {
   clearDynamicUIUpdate: () => void;
   sendDynamicUIAction: (action: string, elementId?: string, value?: unknown) => void;
   pinContextKey: (key: string, pinned: boolean) => Promise<void>;
+
+  // Voice
+  toggleVoiceover: () => Promise<void>;
 
   // State helpers
   isMaxTabsReached: boolean;
@@ -375,6 +381,20 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
         else if (chunk.type === 'browser:agent_has_control') {
           updatedTab.userHasControl = null;
         }
+        // Voice events - forward to playback hook via CustomEvent
+        else if (chunk.type === 'voice:chunk') {
+          window.dispatchEvent(new CustomEvent('hosea:voice-chunk', {
+            detail: { instanceId, chunkIndex: chunk.chunkIndex, audioBase64: chunk.audioBase64, format: chunk.format, durationSeconds: chunk.durationSeconds, text: chunk.text },
+          }));
+        } else if (chunk.type === 'voice:error') {
+          window.dispatchEvent(new CustomEvent('hosea:voice-error', {
+            detail: { instanceId, chunkIndex: chunk.chunkIndex, error: chunk.error, text: chunk.text },
+          }));
+        } else if (chunk.type === 'voice:complete') {
+          window.dispatchEvent(new CustomEvent('hosea:voice-complete', {
+            detail: { instanceId, totalChunks: chunk.totalChunks, totalDurationSeconds: chunk.totalDurationSeconds },
+          }));
+        }
 
         newTabs.set(tab.instanceId, updatedTab);
         return newTabs;
@@ -463,19 +483,10 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
         contextEntries: [],
         pinnedContextKeys: [],
         userHasControl: null,
+        voiceConfigured: false,
+        voiceoverEnabled: false,
         routineExecution: null,
       };
-
-      // Load pinned context keys for this agent
-      window.hosea.agent.getPinnedContextKeys(agentConfigId).then(pinnedKeys => {
-        setTabs(prev => {
-          const tab = prev.get(instanceId);
-          if (!tab) return prev;
-          const newTabs = new Map(prev);
-          newTabs.set(instanceId, { ...tab, pinnedContextKeys: pinnedKeys });
-          return newTabs;
-        });
-      }).catch(() => { /* ignore errors loading pinned keys */ });
 
       // Update status from instance
       const statusResult = await window.hosea.agent.statusInstance(instanceId);
@@ -488,11 +499,36 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
         };
       }
 
+      // Add tab to state FIRST, then load async data that updates it
       setTabs(prev => {
         const newTabs = new Map(prev);
         newTabs.set(instanceId, newTab);
         return newTabs;
       });
+
+      // Load voice config for this agent (tab must be in map before these run)
+      window.hosea.agent.getVoiceConfig(agentConfigId).then(voiceConfig => {
+        if (voiceConfig?.voiceEnabled) {
+          setTabs(prev => {
+            const tab = prev.get(instanceId);
+            if (!tab) return prev;
+            const newTabs = new Map(prev);
+            newTabs.set(instanceId, { ...tab, voiceConfigured: true });
+            return newTabs;
+          });
+        }
+      }).catch(() => { /* ignore errors loading voice config */ });
+
+      // Load pinned context keys for this agent
+      window.hosea.agent.getPinnedContextKeys(agentConfigId).then(pinnedKeys => {
+        setTabs(prev => {
+          const tab = prev.get(instanceId);
+          if (!tab) return prev;
+          const newTabs = new Map(prev);
+          newTabs.set(instanceId, { ...tab, pinnedContextKeys: pinnedKeys });
+          return newTabs;
+        });
+      }).catch(() => { /* ignore errors loading pinned keys */ });
 
       setTabOrder(prev => [...prev, instanceId]);
       setActiveTabId(instanceId);
@@ -696,6 +732,26 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
     await window.hosea.agent.pinContextKey(tab.agentConfigId, key, pinned);
   }, [activeTabId, tabs]);
 
+  // Toggle voiceover for the active tab
+  const toggleVoiceover = useCallback(async (): Promise<void> => {
+    const tab = activeTabId ? tabs.get(activeTabId) : null;
+    if (!tab || !tab.voiceConfigured) return;
+
+    const newEnabled = !tab.voiceoverEnabled;
+    const result = await window.hosea.agent.setVoiceover(tab.instanceId, newEnabled);
+    if (result.success) {
+      setTabs(prev => {
+        const currentTab = prev.get(tab.instanceId);
+        if (!currentTab) return prev;
+        const newTabs = new Map(prev);
+        newTabs.set(tab.instanceId, { ...currentTab, voiceoverEnabled: newEnabled });
+        return newTabs;
+      });
+    } else {
+      console.error('Failed to toggle voiceover:', result.error);
+    }
+  }, [activeTabId, tabs]);
+
   const value: TabContextValue = {
     tabs,
     activeTabId,
@@ -716,6 +772,8 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
     clearDynamicUIUpdate,
     sendDynamicUIAction,
     pinContextKey,
+    // Voice
+    toggleVoiceover,
     isMaxTabsReached: tabs.size >= MAX_TABS,
     tabCount: tabs.size,
   };
