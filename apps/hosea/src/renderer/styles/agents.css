@@ -1,0 +1,650 @@
+/**
+ * agents.css
+ * Styles specific to the Agents page (redesign v2).
+ * Imports no external files; relies on variables.css being loaded globally.
+ */
+
+/* ============================================================
+   1. Agent page local color tokens (scoped to .agents-page)
+   ============================================================ */
+
+.agents-page {
+  --agent-primary: #b91030;
+  --agent-primary-hover: #9f0d29;
+  --agent-primary-light: #fdf2f4;
+  --agent-chat-border: #f0a0b0;
+  --agent-chat-hover-bg: #fce8ec;
+  --agent-chat-hover-border: #e88898;
+}
+
+/* ============================================================
+   2. Stats bar
+   ============================================================ */
+
+.agents-stats-bar {
+  display: flex;
+  align-items: stretch;
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.agents-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  padding: 12px 16px;
+  border-right: 1px solid var(--color-gray-200);
+}
+
+.agents-stat-item:last-child {
+  border-right: none;
+}
+
+.agents-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: var(--color-gray-100);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  color: var(--color-gray-500);
+  font-size: 15px;
+}
+
+.agents-stat-value {
+  font-size: 17px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-800);
+  line-height: var(--line-height-tight);
+}
+
+.agents-stat-label {
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-gray-400);
+  line-height: var(--line-height-tight);
+}
+
+/* ============================================================
+   3. Toolbar
+   ============================================================ */
+
+.agents-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.agents-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.agents-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-gray-400);
+  font-size: 14px;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.agents-search-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px 0 34px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-gray-800);
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.agents-search-input::placeholder {
+  color: var(--color-gray-400);
+}
+
+.agents-search-input:focus {
+  border-color: var(--agent-primary);
+  box-shadow: 0 0 0 3px rgba(185, 16, 48, 0.12);
+}
+
+.agents-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-600);
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.agents-filter-btn:hover {
+  background: var(--color-gray-50);
+  border-color: var(--color-gray-300);
+  color: var(--color-gray-800);
+}
+
+.agents-filter-btn--active {
+  color: var(--agent-primary);
+  border-color: var(--agent-primary);
+  background: var(--agent-primary-light);
+}
+
+.agents-filter-btn--active:hover {
+  background: #f9e0e6;
+  border-color: var(--agent-primary-hover);
+}
+
+.agents-filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  color: var(--color-white);
+  background: var(--agent-primary);
+  border-radius: var(--radius-full);
+}
+
+.agents-toolbar-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-400);
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-left: 4px;
+}
+
+/* ============================================================
+   4. Grid
+   ============================================================ */
+
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+/* ============================================================
+   5. Agent card
+   ============================================================ */
+
+.agent-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  animation: cardEnter 0.2s ease forwards;
+}
+
+.agent-card:hover {
+  border-color: var(--color-gray-300);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.agent-card--active {
+  border-color: var(--color-gray-300);
+}
+
+.agent-card--broken {
+  opacity: 0.55;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Body */
+
+.agent-card__body {
+  padding: 14px 14px 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top row: avatar + info + menu */
+
+.agent-card__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-bottom: 10px;
+}
+
+/* Avatar */
+
+.agent-card__avatar {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: hsl(var(--avatar-hue, 210) 20% 93%);
+  border: 1px solid hsl(var(--avatar-hue, 210) 15% 84%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  color: hsl(var(--avatar-hue, 210) 40% 45%);
+  flex-shrink: 0;
+  user-select: none;
+  letter-spacing: 0.02em;
+}
+
+/* Active status dot on avatar */
+
+.agent-card--active .agent-card__avatar::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 9px;
+  height: 9px;
+  background: var(--color-success);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-white);
+}
+
+/* Info column */
+
+.agent-card__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.agent-card__name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: var(--line-height-tight);
+}
+
+.agent-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.agent-card__meta-dot {
+  color: var(--color-gray-300);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.agent-card__model-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-500);
+  background: var(--color-gray-100);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-full);
+  padding: 1px 7px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* EW badge (Everworker built-in indicator) */
+
+.agent-card__ew-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-400);
+  background: var(--color-gray-100);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-sm);
+  padding: 1px 4px;
+  line-height: 1.4;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* Warning icon */
+
+.agent-card__warn {
+  color: var(--color-warning);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+/* Menu button (shown on card hover) */
+
+.agent-card__menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--color-gray-400);
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+  padding: 0;
+}
+
+.agent-card:hover .agent-card__menu-btn {
+  opacity: 1;
+}
+
+.agent-card__menu-btn:hover {
+  background: var(--color-gray-100);
+  color: var(--color-gray-700);
+}
+
+/* Description */
+
+.agent-card__desc {
+  font-size: 12px;
+  color: var(--color-gray-500);
+  line-height: var(--line-height-normal);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 10px;
+  flex: 1;
+}
+
+/* Chips */
+
+.agent-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.agent-card__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-600);
+  background: var(--color-gray-100);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-full);
+  padding: 2px 8px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.agent-card__chip--error {
+  color: var(--color-danger);
+  background: var(--color-danger-light);
+  border-color: #fca5a5;
+}
+
+/* Footer */
+
+.agent-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-top: 1px solid var(--color-gray-100);
+  background: var(--color-gray-50);
+  min-height: 44px;
+}
+
+.agent-card__last-used {
+  font-size: 11px;
+  color: var(--color-gray-400);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Online status dot in footer */
+
+.agent-card__status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-gray-300);
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.agent-card__status-dot--online {
+  background: var(--color-success);
+  animation: pulse 2s ease infinite;
+}
+
+/* Action buttons */
+
+.agent-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+/* Base shared style for card action buttons */
+.btn-card-edit,
+.btn-card-chat,
+.btn-card-fix,
+.btn-card-disabled {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+/* Edit button — neutral ghost */
+.btn-card-edit {
+  color: var(--color-gray-600);
+  background: var(--color-white);
+  border-color: var(--color-gray-200);
+}
+
+.btn-card-edit:hover {
+  background: var(--color-gray-100);
+  border-color: var(--color-gray-300);
+  color: var(--color-gray-800);
+}
+
+/* Chat button — light pink style (NOT solid red) */
+.btn-card-chat {
+  color: var(--agent-primary);
+  background: var(--agent-primary-light);
+  border-color: var(--agent-chat-border);
+}
+
+.btn-card-chat:hover {
+  background: var(--agent-chat-hover-bg);
+  border-color: var(--agent-chat-hover-border);
+  color: var(--agent-primary-hover);
+}
+
+/* Fix button — warning style */
+.btn-card-fix {
+  color: #92400e;
+  background: var(--color-warning-light);
+  border-color: #fcd34d;
+}
+
+.btn-card-fix:hover {
+  background: #fde68a;
+  border-color: #f59e0b;
+  color: #78350f;
+}
+
+/* Disabled button */
+.btn-card-disabled {
+  color: var(--color-gray-400);
+  background: var(--color-gray-100);
+  border-color: var(--color-gray-200);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* ============================================================
+   6. New agent card
+   ============================================================ */
+
+.agent-card--new {
+  border: 2px dashed var(--color-gray-200);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+  animation: cardEnter 0.2s ease forwards;
+}
+
+.agent-card--new:hover {
+  border-color: var(--agent-primary);
+  background: var(--agent-primary-light);
+  box-shadow: none;
+  transform: none;
+}
+
+.agent-card__new-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  gap: 10px;
+  min-height: 160px;
+}
+
+.agent-card__new-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  background: var(--color-gray-100);
+  color: var(--color-gray-400);
+  font-size: 20px;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.agent-card--new:hover .agent-card__new-icon {
+  background: #f5cdd5;
+  color: var(--agent-primary);
+}
+
+.agent-card__new-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-600);
+  transition: color var(--transition-fast);
+}
+
+.agent-card--new:hover .agent-card__new-label {
+  color: var(--agent-primary);
+}
+
+.agent-card__new-sub {
+  font-size: 12px;
+  color: var(--color-gray-400);
+  text-align: center;
+  line-height: var(--line-height-normal);
+  transition: color var(--transition-fast);
+}
+
+.agent-card--new:hover .agent-card__new-sub {
+  color: var(--color-gray-500);
+}
+
+/* ============================================================
+   7. Entrance animation
+   ============================================================ */
+
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger first 6 cards */
+.agents-grid > :nth-child(1) { animation-delay: 0ms; }
+.agents-grid > :nth-child(2) { animation-delay: 30ms; }
+.agents-grid > :nth-child(3) { animation-delay: 60ms; }
+.agents-grid > :nth-child(4) { animation-delay: 90ms; }
+.agents-grid > :nth-child(5) { animation-delay: 120ms; }
+.agents-grid > :nth-child(6) { animation-delay: 150ms; }
+
+/* ============================================================
+   8. Active dot pulse animation
+   ============================================================ */
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+  }
+}
+
+.agent-card__status-dot--online {
+  animation: pulse 2s ease infinite;
+}
