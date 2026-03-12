@@ -1,3 +1,8 @@
+/**
+ * AgentCard — presentational card for a single AI agent.
+ * Renders avatar (initials + deterministic color), metadata, capability chips,
+ * and action buttons. All interaction is handled via callbacks.
+ */
 import React from 'react';
 import { AlertTriangle, MoreVertical, MessageSquare, Pencil, Wrench } from 'lucide-react';
 import type { AgentListItem } from './agentTypes.js';
@@ -16,7 +21,7 @@ interface AgentCardProps {
   isEwConnector: boolean;
   onChat: (id: string) => void;
   onEdit: (id: string) => void;
-  onFixConnector: () => void;
+  onFixConnector: (id: string) => void;
 }
 
 export function AgentCard({
@@ -43,8 +48,15 @@ export function AgentCard({
     if (isConnectorAvailable) onChat(agent.id);
   }
 
+  function handleCardKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (isConnectorAvailable) onChat(agent.id);
+    }
+  }
+
   return (
-    <div className={cardClass} onClick={handleCardClick} role="button" tabIndex={0}>
+    <div className={cardClass} onClick={handleCardClick} onKeyDown={handleCardKeyDown} role="button" tabIndex={0}>
       {/* Body */}
       <div className="agent-card__body">
         {/* Top row */}
@@ -109,7 +121,7 @@ export function AgentCard({
               {formatTimeAgo(agent.lastUsedAt)}
             </>
           ) : (
-            <span style={{ color: 'var(--color-warning, #f59e0b)' }}>
+            <span className="agent-card__last-used--warning">
               <AlertTriangle size={13} />
               No connector
             </span>
@@ -120,7 +132,7 @@ export function AgentCard({
           {isConnectorAvailable ? (
             <>
               <button
-                className="btn-card btn-card--secondary"
+                className="btn-card btn-card-edit"
                 onClick={(e) => { e.stopPropagation(); onEdit(agent.id); }}
                 aria-label="Edit agent"
               >
@@ -128,7 +140,7 @@ export function AgentCard({
                 Edit
               </button>
               <button
-                className="btn-card btn-card--primary"
+                className="btn-card btn-card-chat"
                 onClick={(e) => { e.stopPropagation(); onChat(agent.id); }}
                 aria-label="Chat with agent"
               >
@@ -139,15 +151,15 @@ export function AgentCard({
           ) : (
             <>
               <button
-                className="btn-card btn-card--warning"
-                onClick={(e) => { e.stopPropagation(); onFixConnector(); }}
+                className="btn-card btn-card-fix"
+                onClick={(e) => { e.stopPropagation(); onFixConnector(agent.id); }}
                 aria-label="Fix connector"
               >
                 <Wrench size={14} />
                 Fix connector
               </button>
               <button
-                className="btn-card btn-card--primary"
+                className="btn-card btn-card-disabled"
                 disabled
                 aria-label="Chat with agent"
               >

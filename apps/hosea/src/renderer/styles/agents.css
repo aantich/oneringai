@@ -229,6 +229,10 @@
   pointer-events: none;
 }
 
+.agent-card--broken .agent-card__footer {
+  pointer-events: auto;
+}
+
 /* Body */
 
 .agent-card__body {
@@ -446,6 +450,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.agent-card__last-used--warning {
+  color: var(--color-warning);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
 }
 
 /* Online status dot in footer */
