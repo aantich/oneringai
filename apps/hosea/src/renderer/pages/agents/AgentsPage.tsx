@@ -101,21 +101,21 @@ export function AgentsPage(): React.ReactElement {
         </div>
       </div>
 
-      {/* Stats bar */}
-      <AgentStatsBar stats={stats} />
-
-      {/* Toolbar — only when there are agents */}
-      {agents.length > 0 && (
-        <AgentToolbar
-          filters={filters}
-          activeCount={activeCount}
-          totalVisible={visibleAgents.length}
-          onFiltersChange={setFilters}
-        />
-      )}
-
       {/* Content */}
       <div className="page__content">
+        {/* Stats bar */}
+        <AgentStatsBar stats={stats} />
+
+        {/* Toolbar — only when there are agents */}
+        {agents.length > 0 && (
+          <AgentToolbar
+            filters={filters}
+            activeCount={activeCount}
+            totalVisible={visibleAgents.length}
+            onFiltersChange={setFilters}
+          />
+        )}
+
         {agents.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state__icon">
