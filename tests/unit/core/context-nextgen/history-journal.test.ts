@@ -157,8 +157,8 @@ describe('AgentContextNextGen - History Journal Integration', () => {
     const entries = await ctx.journal!.read('test-session-3');
     expect(entries).toHaveLength(3);
     expect(entries[0]!.type).toBe('user');
-    expect(entries[1]!.type).toBe('assistant');
-    expect(entries[2]!.type).toBe('tool_result');
+    expect(entries[1]!.type).toBe('tool_result');
+    expect(entries[2]!.type).toBe('assistant');
 
     ctx.destroy();
   });
