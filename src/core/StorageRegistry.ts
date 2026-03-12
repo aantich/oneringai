@@ -183,6 +183,13 @@ export class StorageRegistry {
   }
 
   /**
+   * Remove a single storage backend.
+   */
+  static remove(key: keyof StorageConfig): boolean {
+    return StorageRegistry.entries.delete(key);
+  }
+
+  /**
    * Check if a storage backend has been configured.
    */
   static has(key: keyof StorageConfig): boolean {

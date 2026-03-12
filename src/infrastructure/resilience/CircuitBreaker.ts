@@ -289,12 +289,18 @@ export class CircuitBreaker<T = any> extends EventEmitter<CircuitBreakerEvents> 
   }
 
   /**
-   * Remove failures outside the time window
+   * Remove failures outside the time window and cap array size
    */
   private pruneOldFailures(): void {
     const now = Date.now();
     const cutoff = now - this.config.windowMs;
     this.failures = this.failures.filter((f) => f.timestamp > cutoff);
+
+    // Cap failures array to prevent unbounded growth
+    const maxFailures = Math.max(this.config.failureThreshold * 2, 20);
+    if (this.failures.length > maxFailures) {
+      this.failures = this.failures.slice(-maxFailures);
+    }
   }
 
   /**

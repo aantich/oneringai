@@ -36,6 +36,9 @@ export interface RateLimiterConfig {
 
   /** Max wait time in ms (for 'wait' mode, default: 60000) */
   maxWaitMs?: number;
+
+  /** Max queued waiters (default: 500). Rejects new requests when exceeded. */
+  maxQueueSize?: number;
 }
 
 /**
@@ -46,6 +49,7 @@ export const DEFAULT_RATE_LIMITER_CONFIG: Required<RateLimiterConfig> = {
   windowMs: 60000,
   onLimit: 'wait',
   maxWaitMs: 60000,
+  maxQueueSize: 500,
 };
 
 /**
@@ -89,6 +93,7 @@ export class TokenBucketRateLimiter {
       windowMs: config.windowMs ?? DEFAULT_RATE_LIMITER_CONFIG.windowMs,
       onLimit: config.onLimit ?? DEFAULT_RATE_LIMITER_CONFIG.onLimit,
       maxWaitMs: config.maxWaitMs ?? DEFAULT_RATE_LIMITER_CONFIG.maxWaitMs,
+      maxQueueSize: config.maxQueueSize ?? DEFAULT_RATE_LIMITER_CONFIG.maxQueueSize,
     };
     this.tokens = this.config.maxRequests;
     this.lastRefill = Date.now();
@@ -116,7 +121,14 @@ export class TokenBucketRateLimiter {
       throw new RateLimitError(waitTime);
     }
 
-    // Wait mode
+    // Wait mode — check queue capacity
+    if (this.waitQueue.length >= this.config.maxQueueSize) {
+      throw new RateLimitError(
+        waitTime,
+        `Rate limiter queue full (${this.config.maxQueueSize} waiters). Try again later.`
+      );
+    }
+
     if (waitTime > this.config.maxWaitMs) {
       throw new RateLimitError(
         waitTime,

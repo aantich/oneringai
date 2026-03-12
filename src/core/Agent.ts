@@ -153,6 +153,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   // ===== Agent-specific State =====
   private hookManager: HookManager;
   private executionContext: ExecutionContext | null = null;
+  private _toolRegisteredListener: ((event: { name: string }) => void) | null = null;
 
   // Pause/resume/cancel state
   private _paused = false;
@@ -278,12 +279,13 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     }
 
     // Sync tool permission configs from ToolManager (via AgentContext) to PermissionManager
-    this._agentContext.tools.on('tool:registered', ({ name }) => {
+    this._toolRegisteredListener = ({ name }: { name: string }) => {
       const permission = this._agentContext.tools.getPermission(name);
       if (permission) {
         this._permissionManager.setToolConfig(name, permission);
       }
-    });
+    };
+    this._agentContext.tools.on('tool:registered', this._toolRegisteredListener);
 
     // Create hook manager
     this.hookManager = new HookManager(
@@ -2022,6 +2024,15 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     } catch {
       // Ignore errors during cancel
     }
+
+    // Remove ToolManager listener before context is destroyed
+    if (this._toolRegisteredListener) {
+      this._agentContext.tools.off('tool:registered', this._toolRegisteredListener);
+      this._toolRegisteredListener = null;
+    }
+
+    // Cleanup hook manager
+    this.hookManager.destroy();
 
     // Cleanup execution context
     this.executionContext?.cleanup();

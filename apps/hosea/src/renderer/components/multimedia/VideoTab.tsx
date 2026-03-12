@@ -8,6 +8,7 @@ import { Button } from 'react-bootstrap';
 import { useNavigation } from '../../hooks/useNavigation';
 import { VideoDisplay, type VideoStatus } from './VideoDisplay';
 import { ImageDropzone } from './ImageDropzone';
+import { ConnectorSelector } from './ConnectorSelector';
 
 // Video model info type
 interface VideoModelInfo {
@@ -59,6 +60,7 @@ export function VideoTab(): React.ReactElement {
   const { navigate } = useNavigation();
 
   // State
+  const [selectedConnector, setSelectedConnector] = useState<string | null>(null);
   const [availableModels, setAvailableModels] = useState<VideoModelInfo[]>([]);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [modelCapabilities, setModelCapabilities] = useState<VideoModelCapabilities | null>(null);
@@ -78,10 +80,10 @@ export function VideoTab(): React.ReactElement {
   // Polling ref
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Load available models on mount
+  // Load available models when connector changes
   useEffect(() => {
     loadAvailableModels();
-  }, []);
+  }, [selectedConnector]);
 
   // Load model capabilities when model changes
   useEffect(() => {
@@ -109,12 +111,16 @@ export function VideoTab(): React.ReactElement {
 
   const loadAvailableModels = async () => {
     try {
-      const models = await window.hosea.multimedia.getAvailableVideoModels();
+      const models = await window.hosea.multimedia.getAvailableVideoModels(selectedConnector || undefined);
       setAvailableModels(models);
 
-      // Auto-select first model if available
-      if (models.length > 0 && !selectedModel) {
-        setSelectedModel(models[0].name);
+      // Auto-select first model if available, or reset if current model not in list
+      if (models.length > 0) {
+        if (!selectedModel || !models.find((m) => m.name === selectedModel)) {
+          setSelectedModel(models[0].name);
+        }
+      } else {
+        setSelectedModel(null);
       }
     } catch (err) {
       console.error('Failed to load video models:', err);
@@ -241,6 +247,7 @@ export function VideoTab(): React.ReactElement {
       const result = await window.hosea.multimedia.generateVideo({
         model: selectedModel,
         prompt: prompt.trim(),
+        connector: selectedConnector || undefined,
         duration: Number(options.duration),
         resolution: options.resolution ? String(options.resolution) : undefined,
         aspectRatio: options.aspectRatio as '16:9' | '9:16' | '1:1' | '4:3' | '3:4' | undefined,
@@ -345,6 +352,14 @@ export function VideoTab(): React.ReactElement {
   return (
     <div className="video-tab">
       <div className="video-tab__controls">
+        {/* Connector Selection */}
+        <ConnectorSelector
+          selectedConnector={selectedConnector}
+          onSelectConnector={setSelectedConnector}
+          disabled={isGenerating}
+          mediaType="video"
+        />
+
         {/* Model Selection */}
         <div className="model-selector">
           <label className="model-selector__label" htmlFor="video-model-select">

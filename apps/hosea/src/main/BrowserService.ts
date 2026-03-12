@@ -651,6 +651,13 @@ export class BrowserService extends EventEmitter {
         }
       }
 
+      // Remove all event listeners before closing to prevent leaks
+      try {
+        view.webContents.removeAllListeners();
+      } catch {
+        // Ignore errors during listener cleanup
+      }
+
       // Destroy the web contents
       try {
         view.webContents.close();

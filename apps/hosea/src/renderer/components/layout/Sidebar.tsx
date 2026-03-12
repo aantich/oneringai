@@ -18,6 +18,7 @@ import {
   Plug,
   ChevronDown,
   ChevronRight,
+  History,
 } from 'lucide-react';
 import { useNavigation, type PageId } from '../../hooks/useNavigation';
 import logoFull from '../../assets/logo-full.svg';
@@ -42,6 +43,7 @@ const mainSections: NavSection[] = [
     label: 'Main',
     items: [
       { id: 'chat', label: 'Chat', icon: <MessageSquare size={20} /> },
+      { id: 'history', label: 'History', icon: <History size={20} /> },
       { id: 'agents', label: 'Agents', icon: <Bot size={20} /> },
       { id: 'routines', label: 'Routines', icon: <ListChecks size={20} /> },
     ],

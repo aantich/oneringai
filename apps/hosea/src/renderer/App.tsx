@@ -7,6 +7,7 @@ import { Spinner, Alert, Button } from 'react-bootstrap';
 import { Sidebar } from './components/layout';
 import {
   ChatPage,
+  HistoryPage,
   AgentsPage,
   AgentEditorPage,
   ConnectionsPage,
@@ -306,6 +307,8 @@ function AppContent(): React.ReactElement {
     switch (navigation.state.currentPage) {
       case 'chat':
         return <ChatPage />;
+      case 'history':
+        return <HistoryPage />;
       case 'agents':
         return <AgentsPage />;
       case 'agent-editor':

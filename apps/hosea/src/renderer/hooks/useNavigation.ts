@@ -6,6 +6,7 @@ import { useState, useCallback, createContext, useContext } from 'react';
 
 export type PageId =
   | 'chat'
+  | 'history'
   | 'agents'
   | 'agent-editor'
   | 'connections'

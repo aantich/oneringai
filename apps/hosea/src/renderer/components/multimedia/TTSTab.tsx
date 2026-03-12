@@ -7,6 +7,7 @@ import { Sparkles, AlertTriangle } from 'lucide-react';
 import { Button } from 'react-bootstrap';
 import { useNavigation } from '../../hooks/useNavigation';
 import { ModelSelector, type ImageModelInfo } from './ModelSelector';
+import { ConnectorSelector } from './ConnectorSelector';
 import { VoiceSelector, type VoiceInfo } from './VoiceSelector';
 import { AudioPlayer } from './AudioPlayer';
 
@@ -42,6 +43,7 @@ export function TTSTab(): React.ReactElement {
   const { navigate } = useNavigation();
 
   // State
+  const [selectedConnector, setSelectedConnector] = useState<string | null>(null);
   const [availableModels, setAvailableModels] = useState<TTSModelInfo[]>([]);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [modelCapabilities, setModelCapabilities] = useState<TTSCapabilities | null>(null);
@@ -54,10 +56,10 @@ export function TTSTab(): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
 
-  // Load available models on mount
+  // Load available models when connector changes
   useEffect(() => {
     loadAvailableModels();
-  }, []);
+  }, [selectedConnector]);
 
   // Load model capabilities when model changes
   useEffect(() => {
@@ -90,7 +92,7 @@ export function TTSTab(): React.ReactElement {
 
   const loadAvailableModels = async () => {
     try {
-      const models = await window.hosea.multimedia.getAvailableTTSModels();
+      const models = await window.hosea.multimedia.getAvailableTTSModels(selectedConnector || undefined);
       // Map to ImageModelInfo format for ModelSelector
       const mappedModels: TTSModelInfo[] = models.map((m) => ({
         name: m.name,
@@ -102,9 +104,13 @@ export function TTSTab(): React.ReactElement {
       }));
       setAvailableModels(mappedModels);
 
-      // Auto-select first model if available
-      if (models.length > 0 && !selectedModel) {
-        setSelectedModel(models[0].name);
+      // Auto-select first model if available, or reset if current model not in list
+      if (models.length > 0) {
+        if (!selectedModel || !mappedModels.find((m) => m.name === selectedModel)) {
+          setSelectedModel(models[0].name);
+        }
+      } else {
+        setSelectedModel(null);
       }
     } catch (err) {
       console.error('Failed to load TTS models:', err);
@@ -171,6 +177,7 @@ export function TTSTab(): React.ReactElement {
         model: selectedModel,
         text: text.trim(),
         voice: selectedVoice,
+        connector: selectedConnector || undefined,
         format: options.format as string,
         speed: options.speed as number | undefined,
         vendorOptions: options.instructions
@@ -215,6 +222,14 @@ export function TTSTab(): React.ReactElement {
   return (
     <div className="tts-tab">
       <div className="tts-tab__controls">
+        {/* Connector Selection */}
+        <ConnectorSelector
+          selectedConnector={selectedConnector}
+          onSelectConnector={setSelectedConnector}
+          disabled={isGenerating}
+          mediaType="tts"
+        />
+
         {/* Model Selection */}
         <ModelSelector
           models={availableModels}

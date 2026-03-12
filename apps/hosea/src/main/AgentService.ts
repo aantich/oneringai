@@ -4301,8 +4301,32 @@ export class AgentService {
 
     try {
       const ctx = instance.agent.context as AgentContextNextGen;
-      await ctx.save(instanceId);
-      logger.debug(`[saveInstanceSession] Saved session for instance ${instanceId}`);
+      const agentConfig = this.agents.get(instance.agentConfigId);
+
+      // Auto-generate title from first user message
+      let title = 'Untitled session';
+      const conversation = ctx.getConversation();
+      for (const item of conversation) {
+        if ('role' in item && item.role === 'user' && Array.isArray(item.content)) {
+          for (const c of item.content) {
+            if ('text' in c && c.text) {
+              title = c.text.slice(0, 80);
+              break;
+            }
+          }
+          if (title !== 'Untitled session') break;
+        }
+      }
+
+      const metadata = {
+        title,
+        agentName: agentConfig?.name || 'Unknown',
+        agentConfigId: instance.agentConfigId,
+        model: agentConfig?.model || 'unknown',
+      };
+
+      await ctx.save(instanceId, metadata);
+      logger.debug(`[saveInstanceSession] Saved session for instance ${instanceId} (title: "${title}")`);
     } catch (err) {
       logger.warn(`[saveInstanceSession] Failed for ${instanceId}: ${err}`);
     }
@@ -4324,6 +4348,206 @@ export class AgentService {
       agentConfigId: inst.agentConfigId,
       createdAt: inst.createdAt,
     }));
+  }
+
+  // ============ Session History Methods ============
+
+  /**
+   * List all saved sessions across all instance directories, grouped by agent.
+   * Scans ~/.everworker/inst_* dirs for session data and groups by agentConfigId from metadata.
+   */
+  async listAllSessions(): Promise<Array<{
+    agentConfigId: string;
+    agentName: string;
+    sessions: Array<{
+      sessionId: string;
+      instanceId: string;
+      title: string;
+      createdAt: number;
+      lastSavedAt: number;
+      messageCount: number;
+      model?: string;
+    }>;
+  }>> {
+    const baseDir = join(this.dataDir, '..');
+    const groupMap = new Map<string, {
+      agentConfigId: string;
+      agentName: string;
+      sessions: Array<{
+        sessionId: string;
+        instanceId: string;
+        title: string;
+        createdAt: number;
+        lastSavedAt: number;
+        messageCount: number;
+        model?: string;
+      }>;
+    }>();
+
+    try {
+      const entries = await readdir(baseDir, { withFileTypes: true });
+      const instDirs = entries.filter(e => e.isDirectory() && e.name.startsWith('inst_'));
+
+      for (const dir of instDirs) {
+        const instanceId = dir.name;
+        const storage = this.createSessionStorage(instanceId);
+        try {
+          const sessions = await storage.list();
+          if (sessions.length === 0) continue;
+
+          for (const s of sessions) {
+            let agentConfigId = (s.metadata?.agentConfigId as string) || '';
+            let agentName = (s.metadata?.agentName as string) || '';
+            let model = (s.metadata?.model as string) || '';
+
+            // For old sessions without metadata, load the full session to get state.metadata.agentId
+            if (!agentConfigId) {
+              try {
+                const fullSession = await storage.load(s.sessionId);
+                if (fullSession?.state?.metadata) {
+                  agentConfigId = (fullSession.state.metadata as Record<string, unknown>).agentId as string || '';
+                  model = model || (fullSession.state.metadata as Record<string, unknown>).model as string || '';
+                }
+              } catch { /* ignore */ }
+            }
+
+            if (!agentConfigId) agentConfigId = 'unknown';
+            if (!agentName) agentName = this.agents.get(agentConfigId)?.name || 'Unknown Agent';
+            if (!model) model = this.agents.get(agentConfigId)?.model || '';
+
+            if (!groupMap.has(agentConfigId)) {
+              groupMap.set(agentConfigId, { agentConfigId, agentName, sessions: [] });
+            }
+            groupMap.get(agentConfigId)!.sessions.push({
+              sessionId: s.sessionId,
+              instanceId,
+              title: (s.metadata?.title as string) || 'Untitled',
+              createdAt: new Date(s.createdAt).getTime(),
+              lastSavedAt: new Date(s.lastSavedAt).getTime(),
+              messageCount: s.messageCount,
+              model: model || undefined,
+            });
+          }
+        } catch {
+          // Skip dirs that fail to load
+        }
+      }
+    } catch (err) {
+      logger.warn(`[listAllSessions] Failed to scan base directory: ${err}`);
+    }
+
+    return Array.from(groupMap.values());
+  }
+
+  /**
+   * Resume a saved session: creates a new instance, loads the session from the
+   * original instance's storage, and returns the instanceId + UI messages.
+   *
+   * @param agentConfigId - The agent config to create the new instance from
+   * @param sessionId - The sessionId within the storage (usually same as old instanceId)
+   * @param oldInstanceId - The original instance directory where the session is stored
+   */
+  async resumeSession(agentConfigId: string, sessionId: string, oldInstanceId: string): Promise<{
+    success: boolean;
+    instanceId?: string;
+    messages?: Array<{ id: string; role: string; content: string; timestamp: number }>;
+    error?: string;
+  }> {
+    // Create a fresh instance for this agent config
+    const createResult = await this.createInstance(agentConfigId);
+    if (!createResult.success || !createResult.instanceId) {
+      return { success: false, error: createResult.error || 'Failed to create instance' };
+    }
+
+    const instance = this.instances.get(createResult.instanceId);
+    if (!instance) return { success: false, error: 'Instance not found after creation' };
+
+    try {
+      // Load the session from the OLD instance's storage into the NEW instance's context
+      const oldStorage = this.createSessionStorage(oldInstanceId);
+      const sessionData = await oldStorage.load(sessionId);
+      if (!sessionData) {
+        await this.destroyInstance(createResult.instanceId);
+        return { success: false, error: 'Session not found' };
+      }
+
+      // Save into new instance's storage, then load into context
+      const ctx = instance.agent.context as AgentContextNextGen;
+      await instance.sessionStorage.save(sessionId, sessionData.state, sessionData.metadata);
+      const loaded = await ctx.load(sessionId);
+      if (!loaded) {
+        await this.destroyInstance(createResult.instanceId);
+        return { success: false, error: 'Failed to load session into context' };
+      }
+
+      // Enable session saving (continuing the session)
+      instance.sessionSaveEnabled = true;
+
+      // Convert conversation to UI messages
+      const conversation = ctx.getConversation();
+      const messages = this.convertConversationToUIMessages(conversation);
+
+      logger.debug(`[resumeSession] Loaded session ${sessionId} from ${oldInstanceId} into instance ${createResult.instanceId} with ${messages.length} messages`);
+      return { success: true, instanceId: createResult.instanceId, messages };
+    } catch (err) {
+      await this.destroyInstance(createResult.instanceId);
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  }
+
+  /**
+   * Delete a saved session from the instance's storage directory.
+   */
+  async deleteSession(instanceId: string, sessionId: string): Promise<{ success: boolean; error?: string }> {
+    const storage = this.createSessionStorage(instanceId);
+    try {
+      await storage.delete(sessionId);
+      logger.debug(`[deleteSession] Deleted session ${sessionId} from ${instanceId}`);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  }
+
+  /**
+   * Convert context InputItem[] to UI-friendly message array.
+   */
+  private convertConversationToUIMessages(
+    conversation: readonly unknown[],
+  ): Array<{ id: string; role: string; content: string; timestamp: number }> {
+    const messages: Array<{ id: string; role: string; content: string; timestamp: number }> = [];
+
+    for (const item of conversation) {
+      if (!item || typeof item !== 'object' || !('role' in item)) continue;
+      const role = (item as { role: string }).role;
+      if (role === 'developer' || role === 'system') continue;
+
+      // Extract text content
+      let text = '';
+      const content = (item as { content?: unknown }).content;
+      if (typeof content === 'string') {
+        text = content;
+      } else if (Array.isArray(content)) {
+        for (const c of content) {
+          if (c && typeof c === 'object' && 'text' in c) {
+            text += (c as { text: string }).text;
+          }
+        }
+      }
+
+      if (!text && role === 'user') continue; // skip empty user messages
+
+      messages.push({
+        id: ('id' in item && typeof (item as { id: unknown }).id === 'string')
+          ? (item as { id: string }).id
+          : `restored-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        role,
+        content: text,
+        timestamp: Date.now(),
+      });
+    }
+
+    return messages;
   }
 
   /**
@@ -4896,7 +5120,7 @@ export class AgentService {
   /**
    * Get available image models based on configured connectors
    */
-  getAvailableImageModels(): Array<{
+  getAvailableImageModels(connectorName?: string): Array<{
     name: string;
     displayName: string;
     vendor: string;
@@ -4910,10 +5134,18 @@ export class AgentService {
       perImageHD?: number;
     };
   }> {
-    // Get vendors from configured connectors
-    const configuredVendors = new Set(
-      Array.from(this.connectors.values()).map((c) => c.vendor)
-    );
+    // If a specific connector is requested, only show models for that connector's vendor
+    const configuredVendors = new Set<string>();
+    if (connectorName) {
+      const connector = this.connectors.get(connectorName);
+      if (connector) {
+        configuredVendors.add(connector.vendor);
+      }
+    } else {
+      for (const c of this.connectors.values()) {
+        configuredVendors.add(c.vendor);
+      }
+    }
 
     // Get all active image models
     const allModels = getActiveImageModels();
@@ -4993,6 +5225,7 @@ export class AgentService {
   async generateImage(options: {
     model: string;
     prompt: string;
+    connector?: string;
     size?: string;
     quality?: string;
     style?: string;
@@ -5018,15 +5251,19 @@ export class AgentService {
 
       const vendor = modelInfo.provider.toLowerCase();
 
-      // Find a connector for this vendor
-      const connector = Array.from(this.connectors.values()).find(
-        (c) => c.vendor.toLowerCase() === vendor
-      );
+      // Find a connector — use explicit connector if provided, otherwise find by vendor
+      const connector = options.connector
+        ? this.connectors.get(options.connector)
+        : Array.from(this.connectors.values()).find(
+            (c) => c.vendor.toLowerCase() === vendor
+          );
 
       if (!connector) {
         return {
           success: false,
-          error: `No connector configured for vendor: ${vendor}`,
+          error: options.connector
+            ? `Connector not found: ${options.connector}`
+            : `No connector configured for vendor: ${vendor}`,
         };
       }
 
@@ -5084,7 +5321,7 @@ export class AgentService {
   /**
    * Get available video models based on configured connectors
    */
-  getAvailableVideoModels(): Array<{
+  getAvailableVideoModels(connectorName?: string): Array<{
     name: string;
     displayName: string;
     vendor: string;
@@ -5099,10 +5336,18 @@ export class AgentService {
       currency: string;
     };
   }> {
-    // Get vendors from configured connectors
-    const configuredVendors = new Set(
-      Array.from(this.connectors.values()).map((c) => c.vendor)
-    );
+    // If a specific connector is requested, only show models for that connector's vendor
+    const configuredVendors = new Set<string>();
+    if (connectorName) {
+      const connector = this.connectors.get(connectorName);
+      if (connector) {
+        configuredVendors.add(connector.vendor);
+      }
+    } else {
+      for (const c of this.connectors.values()) {
+        configuredVendors.add(c.vendor);
+      }
+    }
 
     // Get all active video models
     const allModels = getActiveVideoModels();
@@ -5190,6 +5435,7 @@ export class AgentService {
   async generateVideo(options: {
     model: string;
     prompt: string;
+    connector?: string;
     duration?: number;
     resolution?: string;
     aspectRatio?: '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
@@ -5210,15 +5456,19 @@ export class AgentService {
 
       const vendor = modelInfo.provider.toLowerCase();
 
-      // Find a connector for this vendor
-      const connector = Array.from(this.connectors.values()).find(
-        (c) => c.vendor.toLowerCase() === vendor
-      );
+      // Find a connector — use explicit connector if provided, otherwise find by vendor
+      const connector = options.connector
+        ? this.connectors.get(options.connector)
+        : Array.from(this.connectors.values()).find(
+            (c) => c.vendor.toLowerCase() === vendor
+          );
 
       if (!connector) {
         return {
           success: false,
-          error: `No connector configured for vendor: ${vendor}`,
+          error: options.connector
+            ? `Connector not found: ${options.connector}`
+            : `No connector configured for vendor: ${vendor}`,
         };
       }
 
@@ -5378,7 +5628,7 @@ export class AgentService {
   /**
    * Get available TTS models based on configured connectors
    */
-  getAvailableTTSModels(): Array<{
+  getAvailableTTSModels(connectorName?: string): Array<{
     name: string;
     displayName: string;
     vendor: string;
@@ -5393,10 +5643,18 @@ export class AgentService {
   }> {
     // Build a map of vendor → connector names (a vendor may have multiple connectors)
     const vendorToConnectors = new Map<string, string[]>();
-    for (const [, c] of this.connectors) {
-      const list = vendorToConnectors.get(c.vendor) || [];
-      list.push(c.name);
-      vendorToConnectors.set(c.vendor, list);
+    if (connectorName) {
+      // Only include the specified connector
+      const connector = this.connectors.get(connectorName);
+      if (connector) {
+        vendorToConnectors.set(connector.vendor, [connector.name]);
+      }
+    } else {
+      for (const [, c] of this.connectors) {
+        const list = vendorToConnectors.get(c.vendor) || [];
+        list.push(c.name);
+        vendorToConnectors.set(c.vendor, list);
+      }
     }
 
     // Map TTS model vendor names to connector vendor names
@@ -5492,6 +5750,7 @@ export class AgentService {
     model: string;
     text: string;
     voice: string;
+    connector?: string;
     format?: string;
     speed?: number;
     vendorOptions?: Record<string, unknown>;
@@ -5512,15 +5771,19 @@ export class AgentService {
 
       const vendor = modelInfo.provider.toLowerCase();
 
-      // Find a connector for this vendor
-      const connector = Array.from(this.connectors.values()).find(
-        (c) => c.vendor.toLowerCase() === vendor
-      );
+      // Find a connector — use explicit connector if provided, otherwise find by vendor
+      const connector = options.connector
+        ? this.connectors.get(options.connector)
+        : Array.from(this.connectors.values()).find(
+            (c) => c.vendor.toLowerCase() === vendor
+          );
 
       if (!connector) {
         return {
           success: false,
-          error: `No connector configured for vendor: ${vendor}`,
+          error: options.connector
+            ? `Connector not found: ${options.connector}`
+            : `No connector configured for vendor: ${vendor}`,
         };
       }
 

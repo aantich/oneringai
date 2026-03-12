@@ -284,6 +284,15 @@ export class HookManager {
   }
 
   /**
+   * Destroy the hook manager and release all references
+   */
+  destroy(): void {
+    this.hooks.clear();
+    this.hookErrorCounts.clear();
+    this.disabledHooks.clear();
+  }
+
+  /**
    * Re-enable a disabled hook
    */
   enableHook(hookKey: string): void {

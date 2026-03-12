@@ -510,12 +510,36 @@ export interface HoseaAPI {
     }>>;
   };
 
-  // Sessions
+  // Sessions (legacy single-agent)
   session: {
     save: () => Promise<{ success: boolean; sessionId?: string; error?: string }>;
     load: (sessionId: string) => Promise<{ success: boolean; error?: string }>;
     list: () => Promise<Array<{ id: string; createdAt: number }>>;
     new: () => Promise<{ success: boolean }>;
+  };
+
+  // Session History (multi-agent, scans inst_* dirs)
+  history: {
+    listAll: () => Promise<Array<{
+      agentConfigId: string;
+      agentName: string;
+      sessions: Array<{
+        sessionId: string;
+        instanceId: string;
+        title: string;
+        createdAt: number;
+        lastSavedAt: number;
+        messageCount: number;
+        model?: string;
+      }>;
+    }>>;
+    resume: (agentConfigId: string, sessionId: string, oldInstanceId: string) => Promise<{
+      success: boolean;
+      instanceId?: string;
+      messages?: Array<{ id: string; role: string; content: string; timestamp: number }>;
+      error?: string;
+    }>;
+    delete: (instanceId: string, sessionId: string) => Promise<{ success: boolean; error?: string }>;
   };
 
   // Tools
@@ -960,7 +984,7 @@ export interface HoseaAPI {
   // Multimedia - Image, Video, Audio generation
   multimedia: {
     // Image generation
-    getAvailableImageModels: () => Promise<Array<{
+    getAvailableImageModels: (connectorName?: string) => Promise<Array<{
       name: string;
       displayName: string;
       vendor: string;
@@ -998,6 +1022,7 @@ export interface HoseaAPI {
     generateImage: (options: {
       model: string;
       prompt: string;
+      connector?: string;
       size?: string;
       quality?: string;
       style?: string;
@@ -1015,7 +1040,7 @@ export interface HoseaAPI {
       error?: string;
     }>;
     // Video generation
-    getAvailableVideoModels: () => Promise<Array<{
+    getAvailableVideoModels: (connectorName?: string) => Promise<Array<{
       name: string;
       displayName: string;
       vendor: string;
@@ -1054,6 +1079,7 @@ export interface HoseaAPI {
     generateVideo: (options: {
       model: string;
       prompt: string;
+      connector?: string;
       duration?: number;
       resolution?: string;
       aspectRatio?: '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
@@ -1086,7 +1112,7 @@ export interface HoseaAPI {
       error?: string;
     }>;
     // TTS
-    getAvailableTTSModels: () => Promise<Array<{
+    getAvailableTTSModels: (connectorName?: string) => Promise<Array<{
       name: string;
       displayName: string;
       vendor: string;
@@ -1138,6 +1164,7 @@ export interface HoseaAPI {
       model: string;
       text: string;
       voice: string;
+      connector?: string;
       format?: string;
       speed?: number;
       vendorOptions?: Record<string, unknown>;
@@ -1432,6 +1459,12 @@ const api: HoseaAPI = {
     new: () => ipcRenderer.invoke('session:new'),
   },
 
+  history: {
+    listAll: () => ipcRenderer.invoke('history:list-all'),
+    resume: (agentConfigId: string, sessionId: string, oldInstanceId: string) => ipcRenderer.invoke('history:resume', agentConfigId, sessionId, oldInstanceId),
+    delete: (instanceId: string, sessionId: string) => ipcRenderer.invoke('history:delete', instanceId, sessionId),
+  },
+
   tool: {
     list: () => ipcRenderer.invoke('tool:list'),
     toggle: (toolName, enabled) => ipcRenderer.invoke('tool:toggle', toolName, enabled),
@@ -1493,12 +1526,12 @@ const api: HoseaAPI = {
 
   multimedia: {
     // Image generation
-    getAvailableImageModels: () => ipcRenderer.invoke('multimedia:get-available-image-models'),
+    getAvailableImageModels: (connectorName?) => ipcRenderer.invoke('multimedia:get-available-image-models', connectorName),
     getImageModelCapabilities: (modelName) => ipcRenderer.invoke('multimedia:get-image-model-capabilities', modelName),
     calculateImageCost: (modelName, imageCount, quality) => ipcRenderer.invoke('multimedia:calculate-image-cost', modelName, imageCount, quality),
     generateImage: (options) => ipcRenderer.invoke('multimedia:generate-image', options),
     // Video generation
-    getAvailableVideoModels: () => ipcRenderer.invoke('multimedia:get-available-video-models'),
+    getAvailableVideoModels: (connectorName?) => ipcRenderer.invoke('multimedia:get-available-video-models', connectorName),
     getVideoModelCapabilities: (modelName) => ipcRenderer.invoke('multimedia:get-video-model-capabilities', modelName),
     calculateVideoCost: (modelName, durationSeconds) => ipcRenderer.invoke('multimedia:calculate-video-cost', modelName, durationSeconds),
     generateVideo: (options) => ipcRenderer.invoke('multimedia:generate-video', options),
@@ -1506,7 +1539,7 @@ const api: HoseaAPI = {
     downloadVideo: (jobId) => ipcRenderer.invoke('multimedia:download-video', jobId),
     cancelVideoJob: (jobId) => ipcRenderer.invoke('multimedia:cancel-video-job', jobId),
     // TTS
-    getAvailableTTSModels: () => ipcRenderer.invoke('multimedia:get-available-tts-models'),
+    getAvailableTTSModels: (connectorName?) => ipcRenderer.invoke('multimedia:get-available-tts-models', connectorName),
     getTTSModelCapabilities: (modelName) => ipcRenderer.invoke('multimedia:get-tts-model-capabilities', modelName),
     calculateTTSCost: (modelName, charCount) => ipcRenderer.invoke('multimedia:calculate-tts-cost', modelName, charCount),
     synthesizeSpeech: (options) => ipcRenderer.invoke('multimedia:synthesize-speech', options),

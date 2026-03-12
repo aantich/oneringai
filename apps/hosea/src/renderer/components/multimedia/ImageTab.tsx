@@ -7,6 +7,7 @@ import { Sparkles, AlertTriangle } from 'lucide-react';
 import { Button } from 'react-bootstrap';
 import { useNavigation } from '../../hooks/useNavigation';
 import { ModelSelector, type ImageModelInfo } from './ModelSelector';
+import { ConnectorSelector } from './ConnectorSelector';
 import { DynamicOptionsForm, type ModelCapabilities, type VendorOptionSchema } from './DynamicOptionsForm';
 import { ImageDisplay } from './ImageDisplay';
 
@@ -48,6 +49,7 @@ export function ImageTab(): React.ReactElement {
   const { navigate } = useNavigation();
 
   // State
+  const [selectedConnector, setSelectedConnector] = useState<string | null>(null);
   const [availableModels, setAvailableModels] = useState<ImageModelInfo[]>([]);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [modelCapabilities, setModelCapabilities] = useState<ModelCapabilities | null>(null);
@@ -62,10 +64,10 @@ export function ImageTab(): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
 
-  // Load available models on mount
+  // Load available models when connector changes
   useEffect(() => {
     loadAvailableModels();
-  }, []);
+  }, [selectedConnector]);
 
   // Load model capabilities when model changes
   useEffect(() => {
@@ -86,12 +88,16 @@ export function ImageTab(): React.ReactElement {
 
   const loadAvailableModels = async () => {
     try {
-      const models = await window.hosea.multimedia.getAvailableImageModels();
+      const models = await window.hosea.multimedia.getAvailableImageModels(selectedConnector || undefined);
       setAvailableModels(models);
 
-      // Auto-select first model if available
-      if (models.length > 0 && !selectedModel) {
-        setSelectedModel(models[0].name);
+      // Auto-select first model if available, or reset if current model not in list
+      if (models.length > 0) {
+        if (!selectedModel || !models.find((m) => m.name === selectedModel)) {
+          setSelectedModel(models[0].name);
+        }
+      } else {
+        setSelectedModel(null);
       }
     } catch (err) {
       console.error('Failed to load image models:', err);
@@ -181,6 +187,7 @@ export function ImageTab(): React.ReactElement {
       const result: GenerationResult = await window.hosea.multimedia.generateImage({
         model: selectedModel,
         prompt: prompt.trim(),
+        connector: selectedConnector || undefined,
         ...options,
       });
 
@@ -231,6 +238,14 @@ export function ImageTab(): React.ReactElement {
   return (
     <div className="image-tab">
       <div className="image-tab__controls">
+        {/* Connector Selection */}
+        <ConnectorSelector
+          selectedConnector={selectedConnector}
+          onSelectConnector={setSelectedConnector}
+          disabled={isGenerating}
+          mediaType="image"
+        />
+
         {/* Model Selection */}
         <ModelSelector
           models={availableModels}

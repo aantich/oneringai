@@ -1,4 +1,5 @@
 export { ChatPage } from './ChatPage';
+export { HistoryPage } from './HistoryPage';
 export { AgentsPage } from './AgentsPage';
 export { AgentEditorPage } from './AgentEditorPage';
 export { ConnectionsPage } from './ConnectionsPage';

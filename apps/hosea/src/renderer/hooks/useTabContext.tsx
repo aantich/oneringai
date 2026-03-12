@@ -104,6 +104,9 @@ export interface TabContextValue {
   // Session saving
   toggleSessionSave: () => Promise<void>;
 
+  // Session history
+  createTabFromSession: (agentConfigId: string, sessionId: string, oldInstanceId: string, agentName: string, title: string) => Promise<string | null>;
+
   // State helpers
   isMaxTabsReached: boolean;
   tabCount: number;
@@ -587,6 +590,118 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
     }
   }, [tabs.size]);
 
+  // Create a tab from a saved session (resume)
+  const createTabFromSession = useCallback(async (
+    agentConfigId: string,
+    sessionId: string,
+    oldInstanceId: string,
+    agentName: string,
+    title: string,
+  ): Promise<string | null> => {
+    if (tabs.size >= MAX_TABS) {
+      console.warn(`Maximum number of tabs (${MAX_TABS}) reached`);
+      return null;
+    }
+
+    try {
+      const result = await window.hosea.history.resume(agentConfigId, sessionId, oldInstanceId);
+      if (!result.success || !result.instanceId) {
+        console.error('Failed to resume session:', result.error);
+        return null;
+      }
+
+      const instanceId = result.instanceId;
+
+      // Convert restored messages to UI format
+      const restoredMessages: Message[] = (result.messages || []).map(m => ({
+        id: m.id,
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+        timestamp: m.timestamp,
+      }));
+
+      const newTab: TabState = {
+        instanceId,
+        agentConfigId,
+        agentName,
+        title: title.slice(0, MAX_TITLE_LENGTH),
+        messages: restoredMessages,
+        streamingContent: '',
+        streamingThinking: '',
+        activeToolCalls: new Map(),
+        activePlan: null,
+        isLoading: false,
+        status: { initialized: true, connector: null, model: null, mode: null },
+        createdAt: Date.now(),
+        dynamicUIContent: null,
+        hasDynamicUIUpdate: false,
+        contextEntries: [],
+        pinnedContextKeys: [],
+        userHasControl: null,
+        voiceConfigured: false,
+        voiceoverEnabled: false,
+        sessionSaveEnabled: true,
+        routineExecution: null,
+      };
+
+      // Fetch actual status
+      window.hosea.agent.statusInstance(instanceId).then(statusResult => {
+        if (statusResult.found) {
+          setTabs(prev => {
+            const tab = prev.get(instanceId);
+            if (!tab) return prev;
+            const newTabs = new Map(prev);
+            newTabs.set(instanceId, {
+              ...tab,
+              status: {
+                initialized: statusResult.initialized,
+                connector: statusResult.connector,
+                model: statusResult.model,
+                mode: statusResult.mode,
+              },
+            });
+            return newTabs;
+          });
+        }
+      }).catch(() => { /* ignore */ });
+
+      // Load voice config
+      window.hosea.agent.getVoiceConfig(agentConfigId).then(voiceConfig => {
+        setTabs(prev => {
+          const tab = prev.get(instanceId);
+          if (!tab) return prev;
+          const newTabs = new Map(prev);
+          newTabs.set(instanceId, { ...tab, voiceConfigured: voiceConfig?.voiceEnabled ?? false });
+          return newTabs;
+        });
+      }).catch(() => { /* ignore */ });
+
+      // Load pinned context keys
+      window.hosea.agent.getPinnedContextKeys(agentConfigId).then(pinnedKeys => {
+        setTabs(prev => {
+          const tab = prev.get(instanceId);
+          if (!tab) return prev;
+          const newTabs = new Map(prev);
+          newTabs.set(instanceId, { ...tab, pinnedContextKeys: pinnedKeys });
+          return newTabs;
+        });
+      }).catch(() => { /* ignore */ });
+
+      setTabs(prev => {
+        const newTabs = new Map(prev);
+        newTabs.set(instanceId, newTab);
+        return newTabs;
+      });
+      setTabOrder(prev => [...prev, instanceId]);
+      setActiveTabId(instanceId);
+
+      return instanceId;
+    } catch (error) {
+      console.error('Error resuming session:', error);
+      return null;
+    }
+  }, [tabs.size]);
+
   // Close a tab
   const closeTab = useCallback(async (tabId: string): Promise<void> => {
     const tab = tabs.get(tabId);
@@ -842,6 +957,8 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
     toggleVoiceover,
     // Session saving
     toggleSessionSave,
+    // Session history
+    createTabFromSession,
     isMaxTabsReached: tabs.size >= MAX_TABS,
     tabCount: tabs.size,
   };

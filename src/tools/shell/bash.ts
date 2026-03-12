@@ -36,6 +36,8 @@ export interface BashArgs {
 }
 
 // Track background processes
+const MAX_BACKGROUND_PROCESSES = 20;
+const MAX_OUTPUT_LINES = 1000;
 const backgroundProcesses: Map<string, { process: ReturnType<typeof spawn>; output: string[] }> = new Map();
 
 /**
@@ -172,17 +174,33 @@ EXAMPLES:
 
         // Handle background execution
         if (run_in_background && mergedConfig.allowBackground) {
+          // Enforce max concurrent background processes
+          if (backgroundProcesses.size >= MAX_BACKGROUND_PROCESSES) {
+            try { process.kill(-childProcess.pid!, 'SIGTERM'); } catch { /* ignore */ }
+            resolve({
+              success: false,
+              stdout: '',
+              stderr: `Too many background processes (max: ${MAX_BACKGROUND_PROCESSES}). Kill some before starting new ones.`,
+              exitCode: 1,
+            });
+            return;
+          }
+
           const bgId = generateBackgroundId();
           const output: string[] = [];
 
           backgroundProcesses.set(bgId, { process: childProcess, output });
 
           childProcess.stdout.on('data', (data) => {
-            output.push(data.toString());
+            if (output.length < MAX_OUTPUT_LINES) {
+              output.push(data.toString());
+            }
           });
 
           childProcess.stderr.on('data', (data) => {
-            output.push(data.toString());
+            if (output.length < MAX_OUTPUT_LINES) {
+              output.push(data.toString());
+            }
           });
 
           childProcess.on('close', () => {

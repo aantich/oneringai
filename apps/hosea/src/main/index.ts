@@ -365,6 +365,19 @@ async function setupIPC(): Promise<void> {
     return agentService!.newSession();
   }));
 
+  // Session history operations
+  ipcMain.handle('history:list-all', readyHandler(async () => {
+    return agentService!.listAllSessions();
+  }));
+
+  ipcMain.handle('history:resume', readyHandler(async (_event, agentConfigId: string, sessionId: string, oldInstanceId: string) => {
+    return agentService!.resumeSession(agentConfigId, sessionId, oldInstanceId);
+  }));
+
+  ipcMain.handle('history:delete', readyHandler(async (_event, instanceId: string, sessionId: string) => {
+    return agentService!.deleteSession(instanceId, sessionId);
+  }));
+
   // Tool operations
   ipcMain.handle('tool:list', async () => {
     return agentService!.listTools();
@@ -709,8 +722,8 @@ async function setupIPC(): Promise<void> {
   }));
 
   // Multimedia - Image Generation (require heavy init for connector access)
-  ipcMain.handle('multimedia:get-available-image-models', readyHandler(async () => {
-    return agentService!.getAvailableImageModels();
+  ipcMain.handle('multimedia:get-available-image-models', readyHandler(async (_event, connectorName?: string) => {
+    return agentService!.getAvailableImageModels(connectorName);
   }));
 
   ipcMain.handle('multimedia:get-image-model-capabilities', readyHandler(async (_event, modelName: string) => {
@@ -734,8 +747,8 @@ async function setupIPC(): Promise<void> {
   }));
 
   // Multimedia - Video Generation (require heavy init)
-  ipcMain.handle('multimedia:get-available-video-models', readyHandler(async () => {
-    return agentService!.getAvailableVideoModels();
+  ipcMain.handle('multimedia:get-available-video-models', readyHandler(async (_event, connectorName?: string) => {
+    return agentService!.getAvailableVideoModels(connectorName);
   }));
 
   ipcMain.handle('multimedia:get-video-model-capabilities', readyHandler(async (_event, modelName: string) => {
@@ -750,6 +763,7 @@ async function setupIPC(): Promise<void> {
     return agentService!.generateVideo(options as {
       model: string;
       prompt: string;
+      connector?: string;
       duration?: number;
       resolution?: string;
       aspectRatio?: '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
@@ -772,8 +786,8 @@ async function setupIPC(): Promise<void> {
   }));
 
   // Multimedia - TTS (require heavy init)
-  ipcMain.handle('multimedia:get-available-tts-models', readyHandler(async () => {
-    return agentService!.getAvailableTTSModels();
+  ipcMain.handle('multimedia:get-available-tts-models', readyHandler(async (_event, connectorName?: string) => {
+    return agentService!.getAvailableTTSModels(connectorName);
   }));
 
   ipcMain.handle('multimedia:get-tts-model-capabilities', readyHandler(async (_event, modelName: string) => {
@@ -789,6 +803,7 @@ async function setupIPC(): Promise<void> {
       model: string;
       text: string;
       voice: string;
+      connector?: string;
       format?: string;
       speed?: number;
       vendorOptions?: Record<string, unknown>;

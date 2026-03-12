@@ -445,6 +445,7 @@ export abstract class BaseAgent<
     if (sessionConfig.autoSave) {
       const interval = sessionConfig.autoSaveIntervalMs ?? 30000;
       this._autoSaveInterval = setInterval(async () => {
+        if (this._isDestroyed) return;
         try {
           if (this._agentContext.sessionId) {
             await this._agentContext.save();
