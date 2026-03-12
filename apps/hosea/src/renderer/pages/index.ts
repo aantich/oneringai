@@ -1,6 +1,6 @@
 export { ChatPage } from './ChatPage';
 export { HistoryPage } from './HistoryPage';
-export { AgentsPage } from './AgentsPage';
+export { AgentsPage } from './agents/index.js';
 export { AgentEditorPage } from './AgentEditorPage';
 export { ConnectionsPage } from './ConnectionsPage';
 export { LLMConnectorsPage } from './LLMConnectorsPage';
