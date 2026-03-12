@@ -113,6 +113,7 @@
       "repo": "oneringai",
       "vPrefixedTagName": false
     },
+    "artifactName": "Everworker-Desktop-${version}-${arch}.${ext}",
     "mac": {
       "target": [
         "dmg",
@@ -144,7 +145,7 @@
       "installerIcon": "assets/icon.ico",
       "uninstallerIcon": "assets/icon.ico",
       "license": "LICENSE",
-      "artifactName": "${productName} Setup ${version} ${arch}.${ext}"
+      "artifactName": "Everworker-Desktop-Setup-${version}-${arch}.${ext}"
     },
     "dmg": {
       "contents": [
