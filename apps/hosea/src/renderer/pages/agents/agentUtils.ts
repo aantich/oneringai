@@ -1,4 +1,4 @@
-import type { AgentListItem, AgentStats, CapabilityChip } from './agentTypes.js';
+import type { AgentListItem, AgentStats, AgentFilters, CapabilityChip } from './agentTypes.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -46,7 +46,8 @@ export function getCapabilityChips(agent: Pick<AgentListItem,
   const t = agent.tools;
 
   if (t.length > 0) chips.push({ label: `${t.length} tools` });
-  if (t.includes('web_search') || t.includes('web_fetch')) chips.push({ label: 'Web search' });
+  if (t.includes('web_search')) chips.push({ label: 'Web search' });
+  if (t.includes('web_fetch') && !t.includes('web_search')) chips.push({ label: 'Web fetch' });
   if (t.includes('bash')) chips.push({ label: 'Bash' });
   if (t.includes('write_file') || t.includes('edit_file')) chips.push({ label: 'Filesystem' });
   if (t.includes('execute_javascript')) chips.push({ label: 'JS Executor' });
@@ -86,12 +87,16 @@ export function computeStats(agents: AgentListItem[]): AgentStats {
   };
 }
 
-/** Filter agents by query string (name, model, connector) and active-only flag */
-export function filterAgents(agents: AgentListItem[], query: string, activeOnly: boolean): AgentListItem[] {
+/**
+ * Filter agents by query string (name, model, connector) and active-only flag.
+ * Note: `activeOnly` filters on `agent.isActive` (user-set stored flag),
+ * NOT on `isActiveToday()` (recency from lastUsedAt).
+ */
+export function filterAgents(agents: AgentListItem[], filters: AgentFilters): AgentListItem[] {
   return agents.filter((a) => {
-    if (activeOnly && !a.isActive) return false;
-    if (!query) return true;
-    const q = query.toLowerCase();
+    if (filters.activeOnly && !a.isActive) return false;
+    if (!filters.query) return true;
+    const q = filters.query.toLowerCase();
     return (
       a.name.toLowerCase().includes(q) ||
       a.model.toLowerCase().includes(q) ||

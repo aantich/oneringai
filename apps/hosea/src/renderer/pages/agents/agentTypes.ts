@@ -1,6 +1,6 @@
 /**
  * Agent display types — shapes consumed by renderer components.
- * Mirrors the IPC contract from window.hosea.agentConfig.list()
+ * Display-subset of the IPC contract from window.hosea.agentConfig.list()
  */
 
 /** Full agent config as returned by the IPC layer */
@@ -24,6 +24,8 @@ export interface ConnectorListItem {
   name: string;
   vendor: string;
   source?: 'local' | 'everworker' | 'built-in';
+  models?: string[];
+  createdAt: number;
 }
 
 /** A capability chip label shown on an agent card */
