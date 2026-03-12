@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-03-10
+**Generated:** 2026-03-12
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -18,17 +18,17 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Video Generation](#video-generation) (18 items)
 - [Task Agents](#task-agents) (87 items)
 - [Context Management](#context-management) (14 items)
-- [Session Management](#session-management) (29 items)
-- [Tools & Function Calling](#tools-function-calling) (137 items)
+- [Session Management](#session-management) (33 items)
+- [Tools & Function Calling](#tools-function-calling) (138 items)
 - [Streaming](#streaming) (29 items)
 - [Model Registry](#model-registry) (10 items)
 - [OAuth & External APIs](#oauth-external-apis) (39 items)
 - [Resilience & Observability](#resilience-observability) (33 items)
 - [Errors](#errors) (20 items)
 - [Utilities](#utilities) (8 items)
-- [Interfaces](#interfaces) (49 items)
+- [Interfaces](#interfaces) (53 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (299 items)
+- [Other](#other) (301 items)
 
 ## Core
 
@@ -36,7 +36,7 @@ Core classes for authentication, agents, and providers
 
 ### Agent `class`
 
-📍 [`src/core/Agent.ts:140`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:152`](src/core/Agent.ts)
 
 Agent class - represents an AI assistant with tool calling capabilities
 
@@ -901,7 +901,7 @@ isDisposed(): boolean
 
 ### AgentConfig `interface`
 
-📍 [`src/core/Agent.ts:48`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:49`](src/core/Agent.ts)
 
 Agent configuration - extends BaseAgentConfig with Agent-specific options
 
@@ -948,6 +948,16 @@ Example: `toolExecutionTimeout: 300000` (5 minutes hard cap per tool call) |
     toolFailureMode?: 'fail' | 'continue';
     maxConsecutiveErrors?: number;
   };` | - |
+| `emptyResponseRetry?` | `emptyResponseRetry?: {
+    /** Enable retry for empty responses (default: true) */
+    enabled?: boolean;
+    /** Max retry attempts (default: 2) */
+    maxRetries?: number;
+    /** Initial backoff delay ms (default: 1000) */
+    initialDelayMs?: number;
+    /** Max backoff delay ms (default: 5000) */
+    maxDelayMs?: number;
+  };` | Configuration for retrying empty/incomplete LLM responses |
 
 </details>
 
@@ -974,7 +984,7 @@ Fetch options with additional connector-specific settings
 
 ### AgentSessionConfig `type`
 
-📍 [`src/core/Agent.ts:43`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:44`](src/core/Agent.ts)
 
 Session configuration for Agent (same as BaseSessionConfig)
 
@@ -9319,7 +9329,7 @@ async clear(): Promise&lt;void&gt;
 
 ### FileContextStorage `class`
 
-📍 [`src/infrastructure/storage/FileContextStorage.ts:104`](src/infrastructure/storage/FileContextStorage.ts)
+📍 [`src/infrastructure/storage/FileContextStorage.ts:106`](src/infrastructure/storage/FileContextStorage.ts)
 
 File-based storage for AgentContext session persistence
 
@@ -9481,6 +9491,7 @@ async rebuildIndex(): Promise&lt;void&gt;
 | `indexPath` | `indexPath: string` | - |
 | `prettyPrint` | `prettyPrint: boolean` | - |
 | `index` | `index: SessionIndex | null` | - |
+| `journal` | `journal: IHistoryJournal` | History journal companion — appends full conversation history as JSONL |
 
 </details>
 
@@ -9618,6 +9629,133 @@ getPath(userId: string | undefined): string
 |----------|------|-------------|
 | `baseDirectory` | `baseDirectory: string` | - |
 | `prettyPrint` | `prettyPrint: boolean` | - |
+
+</details>
+
+---
+
+### FileHistoryJournal `class`
+
+📍 [`src/infrastructure/storage/FileHistoryJournal.ts:55`](src/infrastructure/storage/FileHistoryJournal.ts)
+
+File-based history journal using JSONL format.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(sessionsDirectory: string)
+```
+
+**Parameters:**
+- `sessionsDirectory`: `string`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `append()`
+
+Append entries to the journal file.
+
+Uses fs.appendFile which is atomic for small writes on most filesystems.
+Each entry is serialized as a single JSON line.
+
+```typescript
+async append(sessionId: string, entries: HistoryEntry[]): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `sessionId`: `string`
+- `entries`: `HistoryEntry[]`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `read()`
+
+Read history entries with optional filtering and pagination.
+
+For large files, prefer stream() with pagination.
+
+```typescript
+async read(sessionId: string, options?: HistoryReadOptions): Promise&lt;HistoryEntry[]&gt;
+```
+
+**Parameters:**
+- `sessionId`: `string`
+- `options`: `HistoryReadOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;HistoryEntry[]&gt;`
+
+#### `count()`
+
+Count entries without fully parsing the file.
+
+Counts non-empty lines in the JSONL file.
+
+```typescript
+async count(sessionId: string): Promise&lt;number&gt;
+```
+
+**Parameters:**
+- `sessionId`: `string`
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `clear()`
+
+Delete the journal file for a session.
+
+```typescript
+async clear(sessionId: string): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `sessionId`: `string`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `stream()`
+
+Stream history entries line-by-line using readline.
+
+Memory-efficient for large histories — only one entry in memory at a time.
+
+```typescript
+async *stream(sessionId: string, options?: HistoryReadOptions): AsyncIterable&lt;HistoryEntry&gt;
+```
+
+**Parameters:**
+- `sessionId`: `string`
+- `options`: `HistoryReadOptions | undefined` *(optional)*
+
+**Returns:** `AsyncIterable&lt;HistoryEntry&gt;`
+
+#### `getLocation()`
+
+Get the file path for a session's journal (for debugging).
+
+```typescript
+getLocation(sessionId: string): string
+```
+
+**Parameters:**
+- `sessionId`: `string`
+
+**Returns:** `string`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `sessionsDirectory` | `sessionsDirectory: string` | - |
+| `directoryEnsured` | `directoryEnsured: boolean` | - |
 
 </details>
 
@@ -9937,6 +10075,149 @@ getPath(userId: string | undefined): string
 
 ---
 
+### FileRoutineExecutionStorage `class`
+
+📍 [`src/infrastructure/storage/FileRoutineExecutionStorage.ts:121`](src/infrastructure/storage/FileRoutineExecutionStorage.ts)
+
+File-based storage for routine execution records.
+
+Single instance handles all users. UserId is passed to each method.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: FileRoutineExecutionStorageConfig =
+```
+
+**Parameters:**
+- `config`: `FileRoutineExecutionStorageConfig` *(optional)* (default: `{}`)
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `insert()`
+
+```typescript
+async insert(userId: string | undefined, record: RoutineExecutionRecord): Promise&lt;string&gt;
+```
+
+**Parameters:**
+- `userId`: `string | undefined`
+- `record`: `RoutineExecutionRecord`
+
+**Returns:** `Promise&lt;string&gt;`
+
+#### `update()`
+
+```typescript
+async update(
+    id: string,
+    updates: Partial&lt;
+      Pick&lt;RoutineExecutionRecord, 'status' | 'progress' | 'error' | 'completedAt' | 'lastActivityAt'&gt;
+    &gt;,
+  ): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `updates`: `Partial&lt;Pick&lt;RoutineExecutionRecord, "status" | "progress" | "error" | "completedAt" | "lastActivityAt"&gt;&gt;`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `pushStep()`
+
+```typescript
+async pushStep(id: string, step: RoutineExecutionStep): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `step`: `RoutineExecutionStep`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `updateTask()`
+
+```typescript
+async updateTask(id: string, taskName: string, updates: Partial&lt;RoutineTaskSnapshot&gt;): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `taskName`: `string`
+- `updates`: `Partial&lt;RoutineTaskSnapshot&gt;`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `load()`
+
+```typescript
+async load(id: string): Promise&lt;RoutineExecutionRecord | null&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+
+**Returns:** `Promise&lt;RoutineExecutionRecord | null&gt;`
+
+#### `list()`
+
+```typescript
+async list(
+    userId: string | undefined,
+    options?:
+```
+
+**Parameters:**
+- `userId`: `string | undefined`
+- `options`: `{ routineId?: string | undefined; status?: RoutineExecutionStatus | undefined; limit?: number | undefined; offset?: number | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;RoutineExecutionRecord[]&gt;`
+
+#### `hasRunning()`
+
+```typescript
+async hasRunning(userId: string | undefined, routineId: string): Promise&lt;boolean&gt;
+```
+
+**Parameters:**
+- `userId`: `string | undefined`
+- `routineId`: `string`
+
+**Returns:** `Promise&lt;boolean&gt;`
+
+#### `getPath()`
+
+```typescript
+getPath(userId: string | undefined): string
+```
+
+**Parameters:**
+- `userId`: `string | undefined`
+
+**Returns:** `string`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `baseDirectory` | `baseDirectory: string` | - |
+| `prettyPrint` | `prettyPrint: boolean` | - |
+| `maxRecords` | `maxRecords: number` | - |
+| `executionUserMap` | `executionUserMap: Map&lt;string, string | undefined&gt;` | - |
+
+</details>
+
+---
+
 ### FileStorage `class`
 
 📍 [`src/connectors/oauth/infrastructure/storage/FileStorage.ts:22`](src/connectors/oauth/infrastructure/storage/FileStorage.ts)
@@ -10156,7 +10437,7 @@ getPath(userId: string | undefined): string
 
 ### ContextSessionMetadata `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:62`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:63`](src/domain/interfaces/IContextStorage.ts)
 
 Session metadata (stored with session)
 
@@ -10175,7 +10456,7 @@ Session metadata (stored with session)
 
 ### ContextSessionSummary `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:39`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:40`](src/domain/interfaces/IContextStorage.ts)
 
 Session summary for listing (lightweight, no full state)
 
@@ -10230,7 +10511,7 @@ Configuration for FileAgentDefinitionStorage
 
 ### FileContextStorageConfig `interface`
 
-📍 [`src/infrastructure/storage/FileContextStorage.ts:32`](src/infrastructure/storage/FileContextStorage.ts)
+📍 [`src/infrastructure/storage/FileContextStorage.ts:34`](src/infrastructure/storage/FileContextStorage.ts)
 
 Configuration for FileContextStorage
 
@@ -10317,6 +10598,25 @@ Configuration for FileRoutineDefinitionStorage
 
 ---
 
+### FileRoutineExecutionStorageConfig `interface`
+
+📍 [`src/infrastructure/storage/FileRoutineExecutionStorage.ts:31`](src/infrastructure/storage/FileRoutineExecutionStorage.ts)
+
+Configuration for FileRoutineExecutionStorage
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `baseDirectory?` | `baseDirectory?: string;` | Override the base directory (default: ~/.oneringai/users) |
+| `prettyPrint?` | `prettyPrint?: boolean;` | Pretty-print JSON (default: true) |
+| `maxRecords?` | `maxRecords?: number;` | Maximum number of execution records per user (default: 100). Oldest completed/failed are pruned on insert. |
+
+</details>
+
+---
+
 ### FileStorageConfig `interface`
 
 📍 [`src/connectors/oauth/infrastructure/storage/FileStorage.ts:17`](src/connectors/oauth/infrastructure/storage/FileStorage.ts)
@@ -10372,7 +10672,7 @@ Unified agent storage interface
 
 ### StoredContextSession `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:79`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:80`](src/domain/interfaces/IContextStorage.ts)
 
 Full session state wrapper (includes metadata)
 
@@ -10420,7 +10720,7 @@ export function createFileAgentDefinitionStorage(
 
 ### createFileContextStorage `function`
 
-📍 [`src/infrastructure/storage/FileContextStorage.ts:496`](src/infrastructure/storage/FileContextStorage.ts)
+📍 [`src/infrastructure/storage/FileContextStorage.ts:507`](src/infrastructure/storage/FileContextStorage.ts)
 
 Create a FileContextStorage for the given agent
 
@@ -10485,6 +10785,20 @@ Create a FileRoutineDefinitionStorage with default configuration
 export function createFileRoutineDefinitionStorage(
   config?: FileRoutineDefinitionStorageConfig
 ): FileRoutineDefinitionStorage
+```
+
+---
+
+### createFileRoutineExecutionStorage `function`
+
+📍 [`src/infrastructure/storage/FileRoutineExecutionStorage.ts:512`](src/infrastructure/storage/FileRoutineExecutionStorage.ts)
+
+Create a FileRoutineExecutionStorage with default configuration
+
+```typescript
+export function createFileRoutineExecutionStorage(
+  config?: FileRoutineExecutionStorageConfig
+): FileRoutineExecutionStorage
 ```
 
 ---
@@ -13707,7 +14021,7 @@ Default: true |
 
 ### ToolCallArgumentsDeltaEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:92`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:93`](src/domain/entities/StreamEvent.ts)
 
 Tool call arguments delta - incremental JSON
 
@@ -13729,7 +14043,7 @@ Tool call arguments delta - incremental JSON
 
 ### ToolCallArgumentsDoneEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:104`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:105`](src/domain/entities/StreamEvent.ts)
 
 Tool call arguments complete
 
@@ -13750,7 +14064,7 @@ Tool call arguments complete
 
 ### ToolCallStartEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:82`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:83`](src/domain/entities/StreamEvent.ts)
 
 Tool call detected and starting
 
@@ -13870,7 +14184,7 @@ Tool execution context - tracks all tool calls in a generation
 
 ### ToolExecutionDoneEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:125`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:126`](src/domain/entities/StreamEvent.ts)
 
 Tool execution complete
 
@@ -13911,7 +14225,7 @@ Default: true (if crypto.randomUUID is available) |
 
 ### ToolExecutionStartEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:115`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:116`](src/domain/entities/StreamEvent.ts)
 
 Tool execution starting
 
@@ -14165,7 +14479,7 @@ Used by initializeFromRegistry() and registerFromToolRegistry().
 
 ### ToolRegistryEntry `interface`
 
-📍 [`src/tools/registry.generated.ts:45`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:49`](src/tools/registry.generated.ts)
 
 Metadata for a tool in the registry
 
@@ -14338,7 +14652,7 @@ type Tool = FunctionToolDefinition | BuiltInTool
 
 ### ToolCategory `type`
 
-📍 [`src/tools/registry.generated.ts:42`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:46`](src/tools/registry.generated.ts)
 
 Tool category for grouping
 
@@ -14397,7 +14711,7 @@ type ToolSource = 'built-in' | 'connector' | 'custom' | 'mcp' | string
 
 ### createBashTool `function`
 
-📍 [`src/tools/shell/bash.ts:51`](src/tools/shell/bash.ts)
+📍 [`src/tools/shell/bash.ts:53`](src/tools/shell/bash.ts)
 
 Create a Bash tool with the given configuration
 
@@ -14762,6 +15076,21 @@ export function createGrepTool(config: FilesystemToolConfig =
 
 ---
 
+### createListBranchesTool `function`
+
+📍 [`src/tools/github/listBranches.ts:41`](src/tools/github/listBranches.ts)
+
+Create a GitHub list_branches tool
+
+```typescript
+export function createListBranchesTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;ListBranchesArgs, GitHubListBranchesResult&gt;
+```
+
+---
+
 ### createListDirectoryTool `function`
 
 📍 [`src/tools/filesystem/listDirectory.ts:139`](src/tools/filesystem/listDirectory.ts)
@@ -14873,7 +15202,7 @@ export function createReadFileTool(config: FilesystemToolConfig =
 
 ### createSearchCodeTool `function`
 
-📍 [`src/tools/github/searchCode.ts:42`](src/tools/github/searchCode.ts)
+📍 [`src/tools/github/searchCode.ts:102`](src/tools/github/searchCode.ts)
 
 Create a GitHub search_code tool
 
@@ -14999,7 +15328,7 @@ export function generateWebAPITool(): ToolFunction&lt;APIRequestArgs, APIRequest
 
 ### getAllBuiltInTools `function`
 
-📍 [`src/tools/registry.generated.ts:323`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:363`](src/tools/registry.generated.ts)
 
 Get all built-in tools as ToolFunction array
 
@@ -15023,7 +15352,7 @@ export function getConnectorTools(connectorName: string): ToolFunction[]
 
 ### getToolByName `function`
 
-📍 [`src/tools/registry.generated.ts:338`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:378`](src/tools/registry.generated.ts)
 
 Get tool by name
 
@@ -15051,7 +15380,7 @@ export function getToolCallDescription&lt;TArgs&gt;(
 
 ### getToolCategories `function`
 
-📍 [`src/tools/registry.generated.ts:348`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:388`](src/tools/registry.generated.ts)
 
 Get all unique category names
 
@@ -15063,7 +15392,7 @@ export function getToolCategories(): ToolCategory[]
 
 ### getToolRegistry `function`
 
-📍 [`src/tools/registry.generated.ts:328`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:368`](src/tools/registry.generated.ts)
 
 Get full tool registry with metadata
 
@@ -15075,7 +15404,7 @@ export function getToolRegistry(): ToolRegistryEntry[]
 
 ### getToolsByCategory `function`
 
-📍 [`src/tools/registry.generated.ts:333`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:373`](src/tools/registry.generated.ts)
 
 Get tools by category
 
@@ -15087,7 +15416,7 @@ export function getToolsByCategory(category: ToolCategory): ToolRegistryEntry[]
 
 ### getToolsRequiringConnector `function`
 
-📍 [`src/tools/registry.generated.ts:343`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:383`](src/tools/registry.generated.ts)
 
 Get tools that require connector configuration
 
@@ -15120,7 +15449,7 @@ export function hydrateCustomTool(
 
 ### isToolCallArgumentsDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:276`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:291`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallArgumentsDelta(
@@ -15132,7 +15461,7 @@ export function isToolCallArgumentsDelta(
 
 ### isToolCallArgumentsDone `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:282`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:297`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallArgumentsDone(
@@ -15144,7 +15473,7 @@ export function isToolCallArgumentsDone(
 
 ### isToolCallStart `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:272`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:287`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallStart(event: StreamEvent): event is ToolCallStartEvent
@@ -15674,7 +16003,7 @@ Get summary statistics
 getStatistics()
 ```
 
-**Returns:** `{ responseId: string; model: string; status: "in_progress" | "completed" | "failed" | "incomplete"; iterations: number; totalChunks: number; totalTextDeltas: number; totalToolCalls: number; textItemsCount: number; toolCallBuffersCount: number; completedToolCallsCount: number; durationMs: number; usage: { input_tokens: number; output_tokens: number; total_tokens: number; output_tokens_details?: { reasoning_tokens: number; } | undefined; }; }`
+**Returns:** `{ responseId: string; model: string; status: "in_progress" | "completed" | "failed" | "incomplete"; iterations: number; totalChunks: number; totalTextDeltas: number; totalToolCalls: number; textItemsCount: number; toolCallBuffersCount: number; completedToolCallsCount: number; durationMs: number; usage: { input_tokens: number; output_tokens: number; total_tokens: number; output_tokens_details?: { reasoning_tokens: number; } | undefined; }; providerStatus: "completed" | "failed" | "incomplete"; stopReason: string | undefined; }`
 
 #### `hasText()`
 
@@ -15714,7 +16043,7 @@ Create a snapshot for checkpointing (error recovery)
 createSnapshot()
 ```
 
-**Returns:** `{ responseId: string; model: string; createdAt: number; textBuffers: Map&lt;string, string[]&gt;; reasoningBuffers: Map&lt;string, string[]&gt;; toolCallBuffers: Map&lt;string, ToolCallBuffer&gt;; completedToolCalls: ToolCall[]; toolResults: Map&lt;string, any&gt;; currentIteration: number; usage: { input_tokens: number; output_tokens: number; total_tokens: number; output_tokens_details?: { reasoning_tokens: number; } | undefined; }; status: "in_progress" | "completed" | "failed" | "incomplete"; startTime: Date; endTime: Date | undefined; }`
+**Returns:** `{ responseId: string; model: string; createdAt: number; textBuffers: Map&lt;string, string[]&gt;; reasoningBuffers: Map&lt;string, string[]&gt;; toolCallBuffers: Map&lt;string, ToolCallBuffer&gt;; completedToolCalls: ToolCall[]; toolResults: Map&lt;string, any&gt;; currentIteration: number; usage: { input_tokens: number; output_tokens: number; total_tokens: number; output_tokens_details?: { reasoning_tokens: number; } | undefined; }; status: "in_progress" | "completed" | "failed" | "incomplete"; providerStatus: "completed" | "failed" | "incomplete"; stopReason: string | undefined; startTime: Date; endTime: Date | undefined; }`
 
 </details>
 
@@ -15734,6 +16063,8 @@ createSnapshot()
 | `currentIteration` | `currentIteration: number` | - |
 | `usage` | `usage: TokenUsage` | - |
 | `status` | `status: "in_progress" | "completed" | "failed" | "incomplete"` | - |
+| `providerStatus` | `providerStatus: "completed" | "failed" | "incomplete"` | Status reported by the provider's RESPONSE_COMPLETE event. Defaults to 'incomplete' (safe if never received). |
+| `stopReason?` | `stopReason: string | undefined` | Raw stop reason from provider (e.g., 'end_turn', 'max_tokens', 'SAFETY') |
 | `startTime` | `startTime: Date` | - |
 | `endTime?` | `endTime: Date | undefined` | - |
 | `totalChunks` | `totalChunks: number` | - |
@@ -15867,7 +16198,7 @@ destroy(): void
 
 ### AudioChunkErrorEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:215`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:229`](src/domain/entities/StreamEvent.ts)
 
 Audio chunk error - TTS synthesis failed for a text chunk
 
@@ -15887,7 +16218,7 @@ Audio chunk error - TTS synthesis failed for a text chunk
 
 ### AudioChunkReadyEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:194`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:208`](src/domain/entities/StreamEvent.ts)
 
 Audio chunk ready - TTS synthesis complete for a text chunk
 
@@ -15911,7 +16242,7 @@ Audio chunk ready - TTS synthesis complete for a text chunk
 
 ### AudioStreamCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:225`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:239`](src/domain/entities/StreamEvent.ts)
 
 Audio stream complete - all TTS chunks have been processed
 
@@ -15931,7 +16262,7 @@ Audio stream complete - all TTS chunks have been processed
 
 ### ErrorEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:177`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:191`](src/domain/entities/StreamEvent.ts)
 
 Error event
 
@@ -15994,7 +16325,7 @@ synthesizeStream(options: TTSOptions): AsyncIterableIterator&lt;TTSStreamChunk&g
 
 ### IterationCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:137`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:138`](src/domain/entities/StreamEvent.ts)
 
 Iteration complete - end of agentic loop iteration
 
@@ -16014,7 +16345,7 @@ Iteration complete - end of agentic loop iteration
 
 ### OutputTextDeltaEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:60`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:61`](src/domain/entities/StreamEvent.ts)
 
 Text delta - incremental text output
 
@@ -16036,7 +16367,7 @@ Text delta - incremental text output
 
 ### OutputTextDoneEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:72`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:73`](src/domain/entities/StreamEvent.ts)
 
 Text output complete for this item
 
@@ -16056,7 +16387,7 @@ Text output complete for this item
 
 ### ReasoningDeltaEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:158`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:172`](src/domain/entities/StreamEvent.ts)
 
 Reasoning/thinking delta - incremental reasoning output
 
@@ -16076,7 +16407,7 @@ Reasoning/thinking delta - incremental reasoning output
 
 ### ReasoningDoneEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:168`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:182`](src/domain/entities/StreamEvent.ts)
 
 Reasoning/thinking complete for this item
 
@@ -16095,7 +16426,7 @@ Reasoning/thinking complete for this item
 
 ### ResponseCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:147`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:148`](src/domain/entities/StreamEvent.ts)
 
 Response complete - final event
 
@@ -16109,6 +16440,7 @@ Response complete - final event
 | `usage` | `usage: TokenUsage;` | - |
 | `iterations` | `iterations: number;` | - |
 | `duration_ms?` | `duration_ms?: number;` | - |
+| `stop_reason?` | `stop_reason?: string;` | Raw provider stop reason for diagnostics (e.g., 'end_turn', 'max_tokens', 'SAFETY') |
 
 </details>
 
@@ -16116,7 +16448,7 @@ Response complete - final event
 
 ### ResponseCreatedEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:44`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:45`](src/domain/entities/StreamEvent.ts)
 
 Response created - first event in stream
 
@@ -16135,7 +16467,7 @@ Response created - first event in stream
 
 ### ResponseInProgressEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:53`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:54`](src/domain/entities/StreamEvent.ts)
 
 Response in progress
 
@@ -16225,6 +16557,7 @@ Stream event type enum
 | `REASONING_DELTA` | `response.reasoning.delta` | - |
 | `REASONING_DONE` | `response.reasoning.done` | - |
 | `RESPONSE_COMPLETE` | `response.complete` | - |
+| `RETRY` | `response.retry` | - |
 | `ERROR` | `response.error` | - |
 | `AUDIO_CHUNK_READY` | `response.audio_chunk.ready` | - |
 | `AUDIO_CHUNK_ERROR` | `response.audio_chunk.error` | - |
@@ -16236,7 +16569,7 @@ Stream event type enum
 
 ### StreamEvent `type`
 
-📍 [`src/domain/entities/StreamEvent.ts:236`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:250`](src/domain/entities/StreamEvent.ts)
 
 Union type of all stream events
 Discriminated by 'type' field for type narrowing
@@ -16255,6 +16588,7 @@ type StreamEvent = | ResponseCreatedEvent
   | ToolExecutionDoneEvent
   | IterationCompleteEvent
   | ResponseCompleteEvent
+  | RetryEvent
   | ErrorEvent
   | AudioChunkReadyEvent
   | AudioChunkErrorEvent
@@ -16265,7 +16599,7 @@ type StreamEvent = | ResponseCreatedEvent
 
 ### isAudioChunkError `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:308`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:323`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioChunkError(event: StreamEvent): event is AudioChunkErrorEvent
@@ -16275,7 +16609,7 @@ export function isAudioChunkError(event: StreamEvent): event is AudioChunkErrorE
 
 ### isAudioChunkReady `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:304`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:319`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioChunkReady(event: StreamEvent): event is AudioChunkReadyEvent
@@ -16285,7 +16619,7 @@ export function isAudioChunkReady(event: StreamEvent): event is AudioChunkReadyE
 
 ### isAudioStreamComplete `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:312`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:327`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioStreamComplete(event: StreamEvent): event is AudioStreamCompleteEvent
@@ -16295,7 +16629,7 @@ export function isAudioStreamComplete(event: StreamEvent): event is AudioStreamC
 
 ### isErrorEvent `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:300`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:315`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isErrorEvent(event: StreamEvent): event is ErrorEvent
@@ -16305,7 +16639,7 @@ export function isErrorEvent(event: StreamEvent): event is ErrorEvent
 
 ### isOutputTextDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:268`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:283`](src/domain/entities/StreamEvent.ts)
 
 Type guards for specific events
 
@@ -16317,7 +16651,7 @@ export function isOutputTextDelta(event: StreamEvent): event is OutputTextDeltaE
 
 ### isReasoningDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:288`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:303`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isReasoningDelta(event: StreamEvent): event is ReasoningDeltaEvent
@@ -16327,7 +16661,7 @@ export function isReasoningDelta(event: StreamEvent): event is ReasoningDeltaEve
 
 ### isReasoningDone `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:292`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:307`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isReasoningDone(event: StreamEvent): event is ReasoningDoneEvent
@@ -16337,7 +16671,7 @@ export function isReasoningDone(event: StreamEvent): event is ReasoningDoneEvent
 
 ### isResponseComplete `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:296`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:311`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isResponseComplete(event: StreamEvent): event is ResponseCompleteEvent
@@ -16347,7 +16681,7 @@ export function isResponseComplete(event: StreamEvent): event is ResponseComplet
 
 ### isStreamEvent `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:258`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:273`](src/domain/entities/StreamEvent.ts)
 
 Type guard to check if event is a specific type
 
@@ -19929,7 +20263,7 @@ constructor(
 
 ### TokenBucketRateLimiter `class`
 
-📍 [`src/infrastructure/resilience/RateLimiter.ts:71`](src/infrastructure/resilience/RateLimiter.ts)
+📍 [`src/infrastructure/resilience/RateLimiter.ts:75`](src/infrastructure/resilience/RateLimiter.ts)
 
 Token bucket rate limiter implementation
 
@@ -20321,6 +20655,7 @@ Configuration for the rate limiter
 | `windowMs?` | `windowMs?: number;` | Time window in ms (default: 60000 = 1 minute) |
 | `onLimit` | `onLimit: 'wait' | 'throw';` | What to do when rate limited |
 | `maxWaitMs?` | `maxWaitMs?: number;` | Max wait time in ms (for 'wait' mode, default: 60000) |
+| `maxQueueSize?` | `maxQueueSize?: number;` | Max queued waiters (default: 500). Rejects new requests when exceeded. |
 
 </details>
 
@@ -20328,7 +20663,7 @@ Configuration for the rate limiter
 
 ### RateLimiterMetrics `interface`
 
-📍 [`src/infrastructure/resilience/RateLimiter.ts:54`](src/infrastructure/resilience/RateLimiter.ts)
+📍 [`src/infrastructure/resilience/RateLimiter.ts:58`](src/infrastructure/resilience/RateLimiter.ts)
 
 Rate limiter metrics
 
@@ -20544,7 +20879,7 @@ Default configuration
 
 ### DEFAULT_RATE_LIMITER_CONFIG `const`
 
-📍 [`src/infrastructure/resilience/RateLimiter.ts:44`](src/infrastructure/resilience/RateLimiter.ts)
+📍 [`src/infrastructure/resilience/RateLimiter.ts:47`](src/infrastructure/resilience/RateLimiter.ts)
 
 Default rate limiter configuration
 
@@ -20557,6 +20892,7 @@ Default rate limiter configuration
 | `windowMs` | `60000` | - |
 | `onLimit` | `'wait'` | - |
 | `maxWaitMs` | `60000` | - |
+| `maxQueueSize` | `500` | - |
 
 </details>
 
@@ -21578,7 +21914,7 @@ Agent definition summary for listing
 
 ### ContextStorageListOptions `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:183`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:200`](src/domain/interfaces/IContextStorage.ts)
 
 Options for listing sessions
 
@@ -21594,6 +21930,32 @@ Options for listing sessions
 | `savedBefore?` | `savedBefore?: Date;` | - |
 | `limit?` | `limit?: number;` | Maximum number of results |
 | `offset?` | `offset?: number;` | Offset for pagination |
+
+</details>
+
+---
+
+### HistoryEntry `interface`
+
+📍 [`src/domain/interfaces/IHistoryJournal.ts:52`](src/domain/interfaces/IHistoryJournal.ts)
+
+A single entry in the history journal.
+
+Wraps an InputItem with metadata for ordering and filtering.
+The `item` field is the exact InputItem as it was added to the conversation,
+preserving full fidelity (including __images, tool_use_id, etc.).
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `timestamp` | `timestamp: number;` | When this entry was recorded (epoch ms) |
+| `type` | `type: HistoryEntryType;` | Entry type for filtering |
+| `item` | `item: InputItem;` | The actual conversation item (Message or CompactionItem) |
+| `turnIndex` | `turnIndex: number;` | Monotonically increasing turn counter.
+A "turn" is one user message + one assistant response (+ any tool calls in between).
+Useful for grouping related messages and pagination. |
 
 </details>
 
@@ -21636,6 +21998,29 @@ A single message in conversation history
 | `content` | `content: string;` | - |
 | `timestamp` | `timestamp: number;` | - |
 | `metadata?` | `metadata?: Record&lt;string, unknown&gt;;` | - |
+
+</details>
+
+---
+
+### HistoryReadOptions `interface`
+
+📍 [`src/domain/interfaces/IHistoryJournal.ts:77`](src/domain/interfaces/IHistoryJournal.ts)
+
+Options for reading history entries.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `offset?` | `offset?: number;` | Skip this many entries from the start |
+| `limit?` | `limit?: number;` | Maximum number of entries to return |
+| `types?` | `types?: HistoryEntryType[];` | Filter by entry type(s) |
+| `after?` | `after?: number;` | Only entries after this timestamp (epoch ms, inclusive) |
+| `before?` | `before?: number;` | Only entries before this timestamp (epoch ms, inclusive) |
+| `fromTurn?` | `fromTurn?: number;` | Only entries from this turn index onwards (inclusive) |
+| `toTurn?` | `toTurn?: number;` | Only entries up to this turn index (inclusive) |
 
 </details>
 
@@ -22066,7 +22451,7 @@ getInfo(): Record&lt;string, { displayName: string; description: string; baseURL
 
 ### IContextStorage `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:111`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:112`](src/domain/interfaces/IContextStorage.ts)
 
 Storage interface for AgentContext persistence
 
@@ -22189,6 +22574,26 @@ getLocation?(): string;
 
 </details>
 
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `journal?` | `readonly journal?: IHistoryJournal;` | History journal companion for full conversation logging.
+
+When present, AgentContextNextGen automatically appends every message
+to the journal (append-only, fire-and-forget). The journal is never
+affected by compaction, preserving full conversation history.
+
+Storage implementations create the appropriate journal for their backend:
+- FileContextStorage → FileHistoryJournal (JSONL files)
+- MongoContextStorage → MongoHistoryJournal (collection)
+
+Consumers never configure the journal separately — it comes for free
+with the storage backend. |
+
+</details>
+
 ---
 
 ### IDisposable `interface`
@@ -22231,6 +22636,116 @@ destroy(): void;
 |----------|------|-------------|
 | `isDestroyed` | `readonly isDestroyed: boolean;` | Returns true if destroy() has been called.
 Methods should check this before performing operations. |
+
+</details>
+
+---
+
+### IHistoryJournal `interface`
+
+📍 [`src/domain/interfaces/IHistoryJournal.ts:112`](src/domain/interfaces/IHistoryJournal.ts)
+
+Append-only history journal for conversation persistence.
+
+Implementations:
+- FileHistoryJournal: JSONL files at ~/.oneringai/agents/<agentId>/sessions/<sessionId>.history.jsonl
+- (Future) MongoHistoryJournal: MongoDB collection
+- (Future) RedisHistoryJournal: Redis Streams
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `append()`
+
+Append entries to the journal.
+
+This is the primary write operation, called on every addUserMessage(),
+addAssistantResponse(), and addToolResults(). Should be fast (append-only).
+
+```typescript
+append(sessionId: string, entries: HistoryEntry[]): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `sessionId`: `string`
+- `entries`: `HistoryEntry[]`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `read()`
+
+Read history entries with optional filtering and pagination.
+
+Entries are returned in chronological order (oldest first).
+
+```typescript
+read(sessionId: string, options?: HistoryReadOptions): Promise&lt;HistoryEntry[]&gt;;
+```
+
+**Parameters:**
+- `sessionId`: `string`
+- `options`: `HistoryReadOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;HistoryEntry[]&gt;`
+
+#### `count()`
+
+Get the total number of entries in the journal.
+
+```typescript
+count(sessionId: string): Promise&lt;number&gt;;
+```
+
+**Parameters:**
+- `sessionId`: `string`
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `clear()`
+
+Delete all history for a session.
+
+Called when a session is deleted via IContextStorage.delete().
+
+```typescript
+clear(sessionId: string): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `sessionId`: `string`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `stream()?`
+
+Stream history entries for large histories.
+
+Optional — implementations may omit this if streaming isn't practical
+(e.g., in-memory storage). Callers should fall back to read() with
+pagination if stream() is not available.
+
+```typescript
+stream?(sessionId: string, options?: HistoryReadOptions): AsyncIterable&lt;HistoryEntry&gt;;
+```
+
+**Parameters:**
+- `sessionId`: `string`
+- `options`: `HistoryReadOptions | undefined` *(optional)*
+
+**Returns:** `AsyncIterable&lt;HistoryEntry&gt;`
+
+#### `getLocation()?`
+
+Get a human-readable location string for debugging/display.
+
+```typescript
+getLocation?(sessionId: string): string;
+```
+
+**Parameters:**
+- `sessionId`: `string`
+
+**Returns:** `string`
 
 </details>
 
@@ -23636,7 +24151,7 @@ Segment-level timestamp
 
 ### SerializedContextState `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:17`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:18`](src/domain/interfaces/IContextStorage.ts)
 
 Serialized context state for persistence.
 This is the canonical definition - core layer re-exports this type.
@@ -23826,6 +24341,18 @@ Library imposes no structure — consumers define their own shape
 
 ```typescript
 type ConnectorAccessContext = Record&lt;string, unknown&gt;
+```
+
+---
+
+### HistoryEntryType `type`
+
+📍 [`src/domain/interfaces/IHistoryJournal.ts:43`](src/domain/interfaces/IHistoryJournal.ts)
+
+Type of history entry, derived from the message's role/purpose.
+
+```typescript
+type HistoryEntryType = 'user' | 'assistant' | 'tool_result' | 'system'
 ```
 
 ---
@@ -24249,7 +24776,7 @@ destroy(): void
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:122`](src/core/context-nextgen/AgentContextNextGen.ts)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:123`](src/core/context-nextgen/AgentContextNextGen.ts)
 
 Next-generation context manager for AI agents.
 
@@ -25757,6 +26284,16 @@ clear(): void
 
 **Returns:** `void`
 
+#### `destroy()`
+
+Destroy the hook manager and release all references
+
+```typescript
+destroy(): void
+```
+
+**Returns:** `void`
+
 #### `enableHook()`
 
 Re-enable a disabled hook
@@ -27230,6 +27767,19 @@ static resolve&lt;K extends keyof StorageConfig&gt;(key: K, defaultFactory: () =
 
 **Returns:** `StorageConfig[K]`
 
+#### `static remove()`
+
+Remove a single storage backend.
+
+```typescript
+static remove(key: keyof StorageConfig): boolean
+```
+
+**Parameters:**
+- `key`: `keyof StorageConfig`
+
+**Returns:** `boolean`
+
 #### `static has()`
 
 Check if a storage backend has been configured.
@@ -27638,6 +28188,10 @@ When not set, all connectors visible to the current userId are available. |
 Acts as a safety net: if a tool's own timeout mechanism fails
 (e.g. a child process doesn't exit), this will force-resolve with an error.
 Default: 0 (disabled - relies on each tool's own timeout) |
+| `journalFilter?` | `journalFilter?: import('../../domain/interfaces/IHistoryJournal.js').HistoryEntryType[];` | Filter which message types are written to the history journal.
+When set, only entries matching these types are appended.
+Default: undefined (all types journaled).
+Example: ['user', 'assistant'] to exclude tool_result entries. |
 
 </details>
 
@@ -27645,7 +28199,7 @@ Default: 0 (disabled - relies on each tool's own timeout) |
 
 ### AgenticLoopEvents `interface`
 
-📍 [`src/capabilities/agents/types/EventTypes.ts:177`](src/capabilities/agents/types/EventTypes.ts)
+📍 [`src/capabilities/agents/types/EventTypes.ts:186`](src/capabilities/agents/types/EventTypes.ts)
 
 Map of all event names to their payload types
 
@@ -27673,6 +28227,7 @@ Map of all event names to their payload types
 | `'tool:timeout'` | `'tool:timeout': ToolTimeoutEvent;` | - |
 | `'hook:error'` | `'hook:error': HookErrorEvent;` | - |
 | `'execution:empty_output'` | `'execution:empty_output': ExecutionEmptyOutputEvent;` | - |
+| `'execution:retry'` | `'execution:retry': ExecutionRetryEvent;` | - |
 | `'circuit:opened'` | `'circuit:opened': CircuitOpenedEvent;` | - |
 | `'circuit:half-open'` | `'circuit:half-open': CircuitHalfOpenEvent;` | - |
 | `'circuit:closed'` | `'circuit:closed': CircuitClosedEvent;` | - |
@@ -27981,7 +28536,7 @@ Options for the default SentenceChunkingStrategy
 
 ### CompactionContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:739`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:747`](src/core/context-nextgen/types.ts)
 
 Read-only context passed to compaction strategies.
 Provides access to data needed for compaction decisions and
@@ -28067,7 +28622,7 @@ estimateTokens(item: InputItem): number;
 
 ### CompactionResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:706`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:714`](src/core/context-nextgen/types.ts)
 
 Result of compact() operation.
 
@@ -28178,7 +28733,7 @@ Includes setup instructions and environment variables
 
 ### ConsolidationResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:723`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:731`](src/core/context-nextgen/types.ts)
 
 Result of consolidate() operation.
 
@@ -28231,7 +28786,7 @@ Token budget breakdown - clear and simple
 
 ### ContextEvents `interface`
 
-📍 [`src/core/context-nextgen/types.ts:656`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:664`](src/core/context-nextgen/types.ts)
 
 Events emitted by AgentContextNextGen
 
@@ -29082,9 +29637,28 @@ Options for fetch operations
 
 ---
 
-### GitHubCreatePRResult `interface`
+### GitHubBranchEntry `interface`
 
 📍 [`src/tools/github/types.ts:293`](src/tools/github/types.ts)
+
+A branch entry
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: string;` | - |
+| `sha` | `sha: string;` | - |
+| `protected` | `protected: boolean;` | - |
+
+</details>
+
+---
+
+### GitHubCreatePRResult `interface`
+
+📍 [`src/tools/github/types.ts:312`](src/tools/github/types.ts)
 
 Result from create_pr tool
 
@@ -29137,6 +29711,26 @@ Result from get_pr tool
     changed_files: number;
     draft: boolean;
   };` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### GitHubListBranchesResult `interface`
+
+📍 [`src/tools/github/types.ts:302`](src/tools/github/types.ts)
+
+Result from list_branches tool
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `branches?` | `branches?: GitHubBranchEntry[];` | - |
+| `count?` | `count?: number;` | - |
 | `error?` | `error?: string;` | - |
 
 </details>
@@ -29508,7 +30102,7 @@ reset(): void;
 
 ### ICompactionStrategy `interface`
 
-📍 [`src/core/context-nextgen/types.ts:794`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:802`](src/core/context-nextgen/types.ts)
 
 Compaction strategy interface.
 
@@ -30389,7 +30983,7 @@ Used to track where information came from and when it was last verified
 
 ### IterationCompleteEvent `interface`
 
-📍 [`src/capabilities/agents/types/EventTypes.ts:77`](src/capabilities/agents/types/EventTypes.ts)
+📍 [`src/capabilities/agents/types/EventTypes.ts:86`](src/capabilities/agents/types/EventTypes.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -32190,7 +32784,7 @@ Content types based on OpenAI Responses API format
 
 ### AgentEventName `type`
 
-📍 [`src/capabilities/agents/types/EventTypes.ts:215`](src/capabilities/agents/types/EventTypes.ts)
+📍 [`src/capabilities/agents/types/EventTypes.ts:225`](src/capabilities/agents/types/EventTypes.ts)
 
 ```typescript
 type AgentEventName = AgenticLoopEventName
@@ -32200,7 +32794,7 @@ type AgentEventName = AgenticLoopEventName
 
 ### AgentEvents `type`
 
-📍 [`src/capabilities/agents/types/EventTypes.ts:214`](src/capabilities/agents/types/EventTypes.ts)
+📍 [`src/capabilities/agents/types/EventTypes.ts:224`](src/capabilities/agents/types/EventTypes.ts)
 
 Agent events - alias for AgenticLoopEvents for cleaner API
 This is the preferred export name going forward.
@@ -32213,7 +32807,7 @@ type AgentEvents = AgenticLoopEvents
 
 ### AgenticLoopEventName `type`
 
-📍 [`src/capabilities/agents/types/EventTypes.ts:208`](src/capabilities/agents/types/EventTypes.ts)
+📍 [`src/capabilities/agents/types/EventTypes.ts:218`](src/capabilities/agents/types/EventTypes.ts)
 
 ```typescript
 type AgenticLoopEventName = keyof AgenticLoopEvents
@@ -32956,7 +33550,7 @@ export function getAllServiceIds(): string[]
 
 ### getBackgroundOutput `function`
 
-📍 [`src/tools/shell/bash.ts:331`](src/tools/shell/bash.ts)
+📍 [`src/tools/shell/bash.ts:349`](src/tools/shell/bash.ts)
 
 Get output from a background process
 
@@ -33179,7 +33773,7 @@ export function isWebUrl(source: string): boolean
 
 ### killBackgroundProcess `function`
 
-📍 [`src/tools/shell/bash.ts:347`](src/tools/shell/bash.ts)
+📍 [`src/tools/shell/bash.ts:365`](src/tools/shell/bash.ts)
 
 Kill a background process
 
@@ -33496,7 +34090,7 @@ export function validatePath(path: string): boolean
 
 ### DEFAULT_CONFIG `const`
 
-📍 [`src/core/context-nextgen/types.ts:629`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:637`](src/core/context-nextgen/types.ts)
 
 Default configuration values
 
