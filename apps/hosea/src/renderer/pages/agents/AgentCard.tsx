@@ -4,6 +4,7 @@
  * and action buttons. All interaction is handled via callbacks.
  */
 import React, { useRef, useState } from 'react';
+import clsx from 'clsx';
 import { AlertTriangle, MoreVertical, MessageSquare, Pencil, Wrench, Pin as PinIcon, Star } from 'lucide-react';
 import type { AgentListItem } from './agentTypes.js';
 import {
@@ -60,15 +61,13 @@ export function AgentCard({
   const [renameValue, setRenameValue] = useState(agent.name);
   const renameInputRef = useRef<HTMLInputElement>(null);
 
-  const cardClass = [
+  const cardClass = clsx(
     'agent-card',
-    agent.isActive ? 'agent-card--active' : '',
-    !isConnectorAvailable ? 'agent-card--broken' : '',
-    agent.isArchived ? 'agent-card--archived' : '',
-    agent.isPinned ? 'agent-card--pinned' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+    agent.isActive && 'agent-card--active',
+    !isConnectorAvailable && 'agent-card--broken',
+    agent.isArchived && 'agent-card--archived',
+    agent.isPinned && 'agent-card--pinned',
+  );
 
   function handleCardClick() {
     if (isConnectorAvailable && !renaming && !menuAnchor) onChat(agent.id);
