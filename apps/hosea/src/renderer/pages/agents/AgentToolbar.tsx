@@ -3,6 +3,7 @@
  * Includes search box, active filter button, and visible count label.
  */
 import React from 'react';
+import clsx from 'clsx';
 import { Search, CheckCircle, Archive } from 'lucide-react';
 import type { AgentFilters } from './agentTypes.js';
 
@@ -34,19 +35,8 @@ export function AgentToolbar({
     onFiltersChange({ ...filters, showArchived: !filters.showArchived, activeOnly: false });
   };
 
-  const filterBtnClass = [
-    'agents-filter-btn',
-    filters.activeOnly ? 'agents-filter-btn--active' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-
-  const archivedBtnClass = [
-    'agents-filter-btn',
-    filters.showArchived ? 'agents-filter-btn--active' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const filterBtnClass = clsx('agents-filter-btn', filters.activeOnly && 'agents-filter-btn--active');
+  const archivedBtnClass = clsx('agents-filter-btn', filters.showArchived && 'agents-filter-btn--active');
 
   return (
     <div className="agents-toolbar">

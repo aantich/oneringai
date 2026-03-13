@@ -189,7 +189,7 @@ export function AgentCard({
           {isConnectorAvailable ? (
             <>
               <span
-                className={`agent-card__status-dot${activeToday ? ' agent-card__status-dot--online' : ''}`}
+                className={clsx('agent-card__status-dot', activeToday && 'agent-card__status-dot--online')}
               />
               {formatTimeAgo(agent.lastUsedAt)}
             </>
