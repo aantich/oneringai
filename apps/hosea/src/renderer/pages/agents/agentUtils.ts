@@ -87,6 +87,15 @@ export function computeStats(agents: AgentListItem[]): AgentStats {
   };
 }
 
+/** Sort agents: pinned first, then by lastUsedAt descending */
+export function sortAgents(agents: AgentListItem[]): AgentListItem[] {
+  return [...agents].sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    return (b.lastUsedAt ?? 0) - (a.lastUsedAt ?? 0);
+  });
+}
+
 /**
  * Filter agents by query string (name, model, connector), active-only flag,
  * and archived visibility.

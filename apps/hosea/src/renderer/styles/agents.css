@@ -665,7 +665,42 @@
 }
 
 /* ============================================================
-   9. Archived card state
+   9. Pin badge + Default badge + Archived state
+   ============================================================ */
+
+.agent-card--pinned {
+  border-color: var(--color-primary-light);
+}
+
+.agent-card__pin-badge {
+  position: absolute;
+  top: 8px;
+  right: 36px;
+  display: flex;
+  align-items: center;
+  color: var(--color-primary);
+  opacity: 0.6;
+}
+
+.agent-card {
+  position: relative;
+}
+
+.agent-card__default-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-warning);
+  background: var(--color-warning-light);
+  border-radius: var(--radius-full);
+  padding: 1px 5px;
+  line-height: 1.4;
+}
+
+/* ============================================================
+   (archived state moved here, was 9)
    ============================================================ */
 
 .agent-card--archived {
@@ -749,4 +784,15 @@
   height: 1px;
   background: var(--color-gray-100);
   margin: var(--spacing-1) 0;
+}
+
+.agent-menu__item--confirm-delete {
+  color: var(--color-white);
+  background: var(--color-danger);
+  font-weight: var(--font-weight-medium);
+}
+
+.agent-menu__item--confirm-delete:hover {
+  background: #dc2626;
+  color: var(--color-white);
 }

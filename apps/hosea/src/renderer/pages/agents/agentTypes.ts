@@ -18,6 +18,7 @@ export interface AgentListItem {
   lastUsedAt?: number;
   isActive: boolean;
   isArchived?: boolean;
+  isPinned?: boolean;
 }
 
 /** Connector as returned by window.hosea.connector.list() */

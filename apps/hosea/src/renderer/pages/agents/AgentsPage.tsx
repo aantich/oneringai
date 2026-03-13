@@ -11,7 +11,7 @@ import { AgentStatsBar } from './AgentStatsBar.js';
 import { AgentToolbar } from './AgentToolbar.js';
 import { AgentCard } from './AgentCard.js';
 import type { AgentListItem, ConnectorListItem, AgentFilters } from './agentTypes.js';
-import { computeStats, filterAgents } from './agentUtils.js';
+import { computeStats, filterAgents, sortAgents } from './agentUtils.js';
 import '../../styles/agents.css';
 
 export function AgentsPage(): React.ReactElement {
@@ -52,7 +52,8 @@ export function AgentsPage(): React.ReactElement {
   );
 
   const stats = React.useMemo(() => computeStats(agents), [agents]);
-  const visibleAgents = React.useMemo(() => filterAgents(agents, filters), [agents, filters]);
+  const filteredAgents = React.useMemo(() => filterAgents(agents, filters), [agents, filters]);
+  const visibleAgents = React.useMemo(() => sortAgents(filteredAgents), [filteredAgents]);
   const activeCount = React.useMemo(() => agents.filter((a) => a.isActive && !a.isArchived).length, [agents]);
   const archivedCount = React.useMemo(() => agents.filter((a) => a.isArchived).length, [agents]);
 
@@ -104,6 +105,59 @@ export function AgentsPage(): React.ReactElement {
       setAgents((prev) => prev.map((a) => a.id === agentId ? { ...a, isArchived: false } : a));
     } catch (err) {
       console.error('[AgentsPage] handleUnarchive error:', err);
+    }
+  }, []);
+
+  const handlePin = useCallback(async (agentId: string) => {
+    try {
+      await window.hosea.agentConfig.update(agentId, { isPinned: true });
+      setAgents((prev) => prev.map((a) => a.id === agentId ? { ...a, isPinned: true } : a));
+    } catch (err) {
+      console.error('[AgentsPage] handlePin error:', err);
+    }
+  }, []);
+
+  const handleUnpin = useCallback(async (agentId: string) => {
+    try {
+      await window.hosea.agentConfig.update(agentId, { isPinned: false });
+      setAgents((prev) => prev.map((a) => a.id === agentId ? { ...a, isPinned: false } : a));
+    } catch (err) {
+      console.error('[AgentsPage] handleUnpin error:', err);
+    }
+  }, []);
+
+  const handleDuplicate = useCallback(async (agentId: string) => {
+    try {
+      const source = await window.hosea.agentConfig.get(agentId) as AgentListItem & Record<string, unknown>;
+      if (!source) return;
+      const { id: _id, createdAt: _c, updatedAt: _u, isActive: _a, ...rest } = source as any;
+      const result = await window.hosea.agentConfig.create({
+        ...rest,
+        name: `${source.name} (copy)`,
+        isPinned: false,
+        isArchived: false,
+      });
+      if (result?.success) await loadData();
+    } catch (err) {
+      console.error('[AgentsPage] handleDuplicate error:', err);
+    }
+  }, [loadData]);
+
+  const handleDelete = useCallback(async (agentId: string) => {
+    try {
+      await window.hosea.agentConfig.delete(agentId);
+      setAgents((prev) => prev.filter((a) => a.id !== agentId));
+    } catch (err) {
+      console.error('[AgentsPage] handleDelete error:', err);
+    }
+  }, []);
+
+  const handleSetDefault = useCallback(async (agentId: string) => {
+    try {
+      await window.hosea.agentConfig.setActive(agentId);
+      setAgents((prev) => prev.map((a) => ({ ...a, isActive: a.id === agentId })));
+    } catch (err) {
+      console.error('[AgentsPage] handleSetDefault error:', err);
     }
   }, []);
 
@@ -186,6 +240,11 @@ export function AgentsPage(): React.ReactElement {
                 onCopyId={handleCopyId}
                 onArchive={handleArchive}
                 onUnarchive={handleUnarchive}
+                onPin={handlePin}
+                onUnpin={handleUnpin}
+                onDuplicate={handleDuplicate}
+                onDelete={handleDelete}
+                onSetDefault={handleSetDefault}
               />
             ))}
 

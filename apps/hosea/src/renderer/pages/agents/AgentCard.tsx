@@ -4,7 +4,7 @@
  * and action buttons. All interaction is handled via callbacks.
  */
 import React, { useRef, useState } from 'react';
-import { AlertTriangle, MoreVertical, MessageSquare, Pencil, Wrench } from 'lucide-react';
+import { AlertTriangle, MoreVertical, MessageSquare, Pencil, Wrench, Pin, Star } from 'lucide-react';
 import type { AgentListItem } from './agentTypes.js';
 import {
   getInitials,
@@ -27,6 +27,11 @@ interface AgentCardProps {
   onCopyId: (id: string) => void;
   onArchive: (id: string) => void;
   onUnarchive: (id: string) => void;
+  onPin: (id: string) => void;
+  onUnpin: (id: string) => void;
+  onDuplicate: (id: string) => void;
+  onDelete: (id: string) => void;
+  onSetDefault: (id: string) => void;
 }
 
 export function AgentCard({
@@ -40,6 +45,11 @@ export function AgentCard({
   onCopyId,
   onArchive,
   onUnarchive,
+  onPin,
+  onUnpin,
+  onDuplicate,
+  onDelete,
+  onSetDefault,
 }: AgentCardProps): React.ReactElement {
   const desc = getDescription(agent.instructions);
   const chips = getCapabilityChips(agent);
@@ -55,18 +65,19 @@ export function AgentCard({
     agent.isActive ? 'agent-card--active' : '',
     !isConnectorAvailable ? 'agent-card--broken' : '',
     agent.isArchived ? 'agent-card--archived' : '',
+    agent.isPinned ? 'agent-card--pinned' : '',
   ]
     .filter(Boolean)
     .join(' ');
 
   function handleCardClick() {
-    if (isConnectorAvailable && !renaming) onChat(agent.id);
+    if (isConnectorAvailable && !renaming && !menuAnchor) onChat(agent.id);
   }
 
   function handleCardKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      if (isConnectorAvailable && !renaming) onChat(agent.id);
+      if (isConnectorAvailable && !renaming && !menuAnchor) onChat(agent.id);
     }
   }
 
@@ -78,7 +89,6 @@ export function AgentCard({
   function handleRenameStart(id: string) {
     setRenameValue(agent.name);
     setRenaming(true);
-    // Focus input after render
     setTimeout(() => renameInputRef.current?.select(), 0);
   }
 
@@ -97,6 +107,13 @@ export function AgentCard({
 
   return (
     <div className={cardClass} onClick={handleCardClick} onKeyDown={handleCardKeyDown} tabIndex={0}>
+      {/* Pin indicator */}
+      {agent.isPinned && (
+        <div className="agent-card__pin-badge" title="Pinned">
+          <Pin size={11} />
+        </div>
+      )}
+
       {/* Body */}
       <div className="agent-card__body">
         {/* Top row */}
@@ -126,6 +143,7 @@ export function AgentCard({
                 <>
                   {agent.name}
                   {isEwConnector && <span className="agent-card__ew-badge">EW</span>}
+                  {agent.isActive && <span className="agent-card__default-badge"><Star size={9} />Default</span>}
                   {!isConnectorAvailable && <AlertTriangle size={13} className="agent-card__warn" />}
                 </>
               )}
@@ -237,12 +255,19 @@ export function AgentCard({
         <AgentContextMenu
           agentId={agent.id}
           isArchived={agent.isArchived ?? false}
+          isPinned={agent.isPinned ?? false}
+          isDefault={agent.isActive}
           anchorEl={menuAnchor}
           onClose={() => setMenuAnchor(null)}
           onCopyId={onCopyId}
           onRename={handleRenameStart}
           onArchive={onArchive}
           onUnarchive={onUnarchive}
+          onPin={onPin}
+          onUnpin={onUnpin}
+          onDuplicate={onDuplicate}
+          onDelete={onDelete}
+          onSetDefault={onSetDefault}
         />
       )}
     </div>
