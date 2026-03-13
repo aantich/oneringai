@@ -57,13 +57,6 @@ export function AgentsPage(): React.ReactElement {
   const activeCount = React.useMemo(() => agents.filter((a) => a.isActive && !a.isArchived).length, [agents]);
   const archivedCount = React.useMemo(() => agents.filter((a) => a.isArchived).length, [agents]);
 
-  // Auto-exit archived view when no archived agents remain
-  useEffect(() => {
-    if (filters.showArchived && archivedCount === 0) {
-      setFilters((f) => ({ ...f, showArchived: false }));
-    }
-  }, [archivedCount, filters.showArchived]);
-
   // Handlers
   const handleCreateAgent = () => navigate('agent-editor', { mode: 'create' });
 
@@ -110,6 +103,8 @@ export function AgentsPage(): React.ReactElement {
     try {
       await window.hosea.agentConfig.update(agentId, { isArchived: false });
       setAgents((prev) => prev.map((a) => a.id === agentId ? { ...a, isArchived: false } : a));
+      // Exit archived view immediately — agent is back in main list
+      setFilters((f) => f.showArchived ? { ...f, showArchived: false } : f);
     } catch (err) {
       console.error('[AgentsPage] handleUnarchive error:', err);
     }
