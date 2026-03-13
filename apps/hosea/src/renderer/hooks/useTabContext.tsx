@@ -488,6 +488,25 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
     };
   }, []);
 
+  /**
+   * Purges backend agent instances that have no corresponding React tab.
+   *
+   * Why this exists: the backend keeps instances alive across renderer reloads
+   * (hot-reload, app restart without full quit). Each reload resets React state,
+   * so the tab map forgets about previously created instances — but the backend
+   * still counts them toward its limit of 10. Without this cleanup, users hit
+   * "Maximum number of instances reached" after a few reloads and Chat stops
+   * working entirely until the app is fully restarted.
+   */
+  const purgeOrphanInstances = useCallback(async (): Promise<void> => {
+    const backendInstances = await window.hosea.agent.listInstances();
+    const trackedIds = new Set(Array.from(tabs.values()).map((t) => t.instanceId));
+    const orphans = backendInstances.filter((i: { instanceId: string }) => !trackedIds.has(i.instanceId));
+    if (orphans.length === 0) return;
+    console.warn(`[useTabContext] Purging ${orphans.length} orphaned instance(s) not tracked by any tab`);
+    await Promise.all(orphans.map((i: { instanceId: string }) => window.hosea.agent.destroyInstance(i.instanceId)));
+  }, [tabs]);
+
   // Create a new tab
   const createTab = useCallback(async (agentConfigId: string, agentName?: string, title?: string): Promise<string | null> => {
     if (tabs.size >= MAX_TABS) {
@@ -496,14 +515,10 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
     }
 
     try {
-      // Create the agent instance
+      // Create the agent instance; on limit error clean up orphans and retry once
       let result = await window.hosea.agent.createInstance(agentConfigId);
       if (!result.success && result.error?.includes('Maximum number of instances')) {
-        // Destroy backend instances that have no corresponding React tab (orphans from previous sessions)
-        const backendInstances = await window.hosea.agent.listInstances();
-        const trackedIds = new Set(Array.from(tabs.values()).map((t) => t.instanceId));
-        const orphans = backendInstances.filter((i: { instanceId: string }) => !trackedIds.has(i.instanceId));
-        await Promise.all(orphans.map((i: { instanceId: string }) => window.hosea.agent.destroyInstance(i.instanceId)));
+        await purgeOrphanInstances();
         result = await window.hosea.agent.createInstance(agentConfigId);
       }
       if (!result.success || !result.instanceId) {
