@@ -12,10 +12,9 @@
  * - Case-insensitive search option
  */
 
-import { readFile } from 'node:fs/promises';
-import { readdir, stat } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { join, relative, extname } from 'node:path';
+import { relative, extname } from 'node:path';
 import type { ToolFunction } from '../../domain/entities/Tool.js';
 import {
   type FilesystemToolConfig,
@@ -26,6 +25,7 @@ import {
   validatePath,
   isExcludedExtension,
   toForwardSlash,
+  walkDirectory,
 } from './types.js';
 
 /**
@@ -81,63 +81,47 @@ const FILE_TYPE_MAP: Record<string, string[]> = {
 };
 
 /**
- * Recursively find files to search
+ * Find files to search using shared walkDirectory
  */
 async function findFilesToSearch(
   dir: string,
-  baseDir: string,
   config: FilesystemToolConfigDefaults,
   globPattern?: string,
   fileType?: string,
-  files: string[] = [],
-  depth: number = 0
 ): Promise<string[]> {
-  if (depth > 50 || files.length >= config.maxResults * 10) {
-    return files;
+  const files: string[] = [];
+  const maxFiles = config.maxResults * 10;
+
+  // Pre-compile glob regex if provided
+  let globRegex: RegExp | undefined;
+  if (globPattern) {
+    const pattern = globPattern
+      .replace(/\./g, '\\.')
+      .replace(/\*/g, '.*')
+      .replace(/\{([^}]+)\}/g, (_, p: string) => `(${p.split(',').join('|')})`);
+    globRegex = new RegExp(pattern + '$');
   }
 
-  try {
-    const entries = await readdir(dir, { withFileTypes: true });
+  for await (const entry of walkDirectory(dir, config)) {
+    if (files.length >= maxFiles) break;
+    if (!entry.isFile) continue;
 
-    for (const entry of entries) {
-      const fullPath = join(dir, entry.name);
+    // Skip binary/excluded files
+    if (isExcludedExtension(entry.name, config.excludeExtensions)) continue;
 
-      if (entry.isDirectory()) {
-        // Check if directory is blocked
-        const isBlocked = config.blockedDirectories.some(
-          blocked => entry.name === blocked
-        );
-        if (isBlocked) continue;
-
-        await findFilesToSearch(fullPath, baseDir, config, globPattern, fileType, files, depth + 1);
-      } else if (entry.isFile()) {
-        // Skip binary/excluded files
-        if (isExcludedExtension(entry.name, config.excludeExtensions)) continue;
-
-        // Check file type filter
-        if (fileType) {
-          const extensions = FILE_TYPE_MAP[fileType.toLowerCase()];
-          if (extensions) {
-            const ext = extname(entry.name).toLowerCase();
-            if (!extensions.includes(ext)) continue;
-          }
-        }
-
-        // Check glob pattern (simple matching)
-        if (globPattern) {
-          const pattern = globPattern
-            .replace(/\./g, '\\.')
-            .replace(/\*/g, '.*')
-            .replace(/\{([^}]+)\}/g, (_, p) => `(${p.split(',').join('|')})`);
-          const regex = new RegExp(pattern + '$');
-          if (!regex.test(entry.name)) continue;
-        }
-
-        files.push(fullPath);
+    // Check file type filter
+    if (fileType) {
+      const extensions = FILE_TYPE_MAP[fileType.toLowerCase()];
+      if (extensions) {
+        const ext = extname(entry.name).toLowerCase();
+        if (!extensions.includes(ext)) continue;
       }
     }
-  } catch {
-    // Skip directories we can't read
+
+    // Check glob pattern
+    if (globRegex && !globRegex.test(entry.name)) continue;
+
+    files.push(entry.fullPath);
   }
 
   return files;
@@ -343,7 +327,6 @@ WHEN TO USE:
           filesToSearch = [resolvedPath];
         } else {
           filesToSearch = await findFilesToSearch(
-            resolvedPath,
             resolvedPath,
             mergedConfig,
             globPattern,

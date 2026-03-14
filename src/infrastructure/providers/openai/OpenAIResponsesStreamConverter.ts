@@ -20,6 +20,36 @@ import { StreamEvent, StreamEventType, ReasoningDeltaEvent, ReasoningDoneEvent }
 type ResponseStreamEvent = ResponsesAPI.ResponseStreamEvent;
 
 export class OpenAIResponsesStreamConverter {
+  // Internal state for the current stream conversion
+  private activeItems = new Map<string, { type: string; toolCallId?: string; toolName?: string }>();
+  private toolCallBuffers = new Map<string, { id: string; name: string; args: string }>();
+  private reasoningBuffers = new Map<string, string[]>();
+  private reasoningDoneEmitted = new Set<string>();
+
+  /**
+   * Check if there are any pending tool calls in the current stream
+   */
+  hasToolCalls(): boolean {
+    return this.toolCallBuffers.size > 0;
+  }
+
+  /**
+   * Reset internal state (call between stream conversions)
+   */
+  reset(): void {
+    this.activeItems.clear();
+    this.toolCallBuffers.clear();
+    this.reasoningBuffers.clear();
+    this.reasoningDoneEmitted.clear();
+  }
+
+  /**
+   * Clear all internal buffers and release references
+   */
+  clear(): void {
+    this.reset();
+  }
+
   /**
    * Convert Responses API stream to our StreamEvent format
    */
@@ -29,14 +59,10 @@ export class OpenAIResponsesStreamConverter {
     let responseId = '';
     let sequenceNumber = 0;
 
-    // Track active items and tool calls
-    const activeItems = new Map<string, { type: string; toolCallId?: string; toolName?: string }>();
-    const toolCallBuffers = new Map<string, { id: string; name: string; args: string }>();
-    // Track reasoning content
-    const reasoningBuffers = new Map<string, string[]>();
-    // Track items that already emitted REASONING_DONE (avoid duplicates)
-    const reasoningDoneEmitted = new Set<string>();
+    // Reset state for new stream
+    this.reset();
 
+    try {
     for await (const event of stream) {
       // Debug logging
       if (process.env.DEBUG_OPENAI) {
@@ -58,16 +84,16 @@ export class OpenAIResponsesStreamConverter {
         case 'response.output_item.added': {
           const addedEvent = event as ResponsesAPI.ResponseOutputItemAddedEvent;
           const item = addedEvent.item;
-          activeItems.set(addedEvent.output_index.toString(), {
+          this.activeItems.set(addedEvent.output_index.toString(), {
             type: item.type,
           });
 
           // If it's a reasoning item, track it
           if (item.type === 'reasoning') {
-            activeItems.set(addedEvent.output_index.toString(), {
+            this.activeItems.set(addedEvent.output_index.toString(), {
               type: 'reasoning',
             });
-            reasoningBuffers.set(addedEvent.output_index.toString(), []);
+            this.reasoningBuffers.set(addedEvent.output_index.toString(), []);
           }
 
           // If it's a function call, track it
@@ -76,13 +102,13 @@ export class OpenAIResponsesStreamConverter {
             const toolCallId = functionCall.call_id;
             const toolName = functionCall.name;
 
-            activeItems.set(addedEvent.output_index.toString(), {
+            this.activeItems.set(addedEvent.output_index.toString(), {
               type: 'function_call',
               toolCallId,
               toolName,
             });
 
-            toolCallBuffers.set(toolCallId, {
+            this.toolCallBuffers.set(toolCallId, {
               id: toolCallId,
               name: toolName,
               args: '',
@@ -115,10 +141,10 @@ export class OpenAIResponsesStreamConverter {
 
         case 'response.function_call_arguments.delta': {
           const argsEvent = event as ResponsesAPI.ResponseFunctionCallArgumentsDeltaEvent;
-          const itemInfo = activeItems.get(argsEvent.output_index.toString());
+          const itemInfo = this.activeItems.get(argsEvent.output_index.toString());
 
           if (itemInfo?.toolCallId) {
-            const buffer = toolCallBuffers.get(itemInfo.toolCallId);
+            const buffer = this.toolCallBuffers.get(itemInfo.toolCallId);
             if (buffer) {
               buffer.args += argsEvent.delta || '';
 
@@ -146,7 +172,7 @@ export class OpenAIResponsesStreamConverter {
             delta?: string;
           };
           const outputIdx = reasoningEvent.output_index?.toString();
-          const buffer = outputIdx ? reasoningBuffers.get(outputIdx) : undefined;
+          const buffer = outputIdx ? this.reasoningBuffers.get(outputIdx) : undefined;
           if (buffer) {
             buffer.push(reasoningEvent.delta || '');
           }
@@ -165,9 +191,9 @@ export class OpenAIResponsesStreamConverter {
           // Full reasoning text completed — emit reasoning done
           const doneEvent = event as ResponsesAPI.ResponseReasoningTextDoneEvent;
           const outputIdx = doneEvent.output_index.toString();
-          const rBuf = reasoningBuffers.get(outputIdx);
+          const rBuf = this.reasoningBuffers.get(outputIdx);
           const thinkingText = rBuf ? rBuf.join('') : doneEvent.text || '';
-          reasoningDoneEmitted.add(outputIdx);
+          this.reasoningDoneEmitted.add(outputIdx);
 
           yield {
             type: StreamEventType.REASONING_DONE,
@@ -185,8 +211,8 @@ export class OpenAIResponsesStreamConverter {
           // If reasoning item is done, emit reasoning done (only if not already emitted by reasoning_text.done)
           if (item.type === 'reasoning') {
             const outputIdx = doneEvent.output_index.toString();
-            if (!reasoningDoneEmitted.has(outputIdx)) {
-              const rBuf = reasoningBuffers.get(outputIdx);
+            if (!this.reasoningDoneEmitted.has(outputIdx)) {
+              const rBuf = this.reasoningBuffers.get(outputIdx);
               const thinkingText = rBuf ? rBuf.join('') : '';
 
               yield {
@@ -201,7 +227,7 @@ export class OpenAIResponsesStreamConverter {
           // If function call is done, emit arguments complete
           if (item.type === 'function_call') {
             const functionCall = item as ResponsesAPI.ResponseFunctionToolCall;
-            const buffer = toolCallBuffers.get(functionCall.call_id);
+            const buffer = this.toolCallBuffers.get(functionCall.call_id);
 
             if (buffer) {
               yield {
@@ -253,6 +279,10 @@ export class OpenAIResponsesStreamConverter {
             console.error('[DEBUG] Unhandled Responses API event type:', (event as any).type);
           }
       }
+    }
+    } finally {
+      // Always clean up internal buffers when stream ends (normal or error)
+      this.clear();
     }
   }
 }

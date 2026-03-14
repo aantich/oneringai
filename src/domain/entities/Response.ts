@@ -23,6 +23,15 @@ export interface LLMResponse {
   id: string;
   object: 'response';
   created_at: number;
+  /**
+   * Response status:
+   * - `completed` — Generation finished successfully
+   * - `failed` — Generation failed with an error
+   * - `incomplete` — Generation stopped early (e.g. max tokens reached)
+   * - `cancelled` — Generation was cancelled by the caller
+   * - `in_progress` — Async/streaming generation still running (used by StreamState, video generation)
+   * - `queued` — Queued for processing (used by async video generation via Sora)
+   */
   status: 'completed' | 'failed' | 'in_progress' | 'cancelled' | 'queued' | 'incomplete';
   model: string;
   output: OutputItem[];
@@ -34,6 +43,8 @@ export interface LLMResponse {
     message: string;
   };
   metadata?: Record<string, string>;
+  /** Non-empty when async tools are still executing in the background */
+  pendingAsyncTools?: Array<{ toolCallId: string; toolName: string; startTime: number; status: import('./Tool.js').PendingAsyncToolStatus }>;
 }
 
 export type AgentResponse = LLMResponse;

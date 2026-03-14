@@ -65,7 +65,8 @@ export class GenericOpenAIProvider extends OpenAITextProvider {
   async listModels(): Promise<string[]> {
     try {
       return await super.listModels();
-    } catch {
+    } catch (error) {
+      this.logger.debug({ error: (error as Error).message }, 'listModels not supported by this endpoint');
       return [];
     }
   }

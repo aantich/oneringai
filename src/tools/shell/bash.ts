@@ -37,8 +37,31 @@ export interface BashArgs {
 
 // Track background processes
 const MAX_BACKGROUND_PROCESSES = 20;
+const MAX_COMPLETED_PROCESSES = 50;
 const MAX_OUTPUT_LINES = 1000;
 const backgroundProcesses: Map<string, { process: ReturnType<typeof spawn>; output: string[] }> = new Map();
+
+/**
+ * Evict oldest completed background processes when over capacity
+ */
+function evictCompletedProcesses(): void {
+  if (backgroundProcesses.size <= MAX_COMPLETED_PROCESSES) return;
+
+  const completed: string[] = [];
+  for (const [id, bg] of backgroundProcesses) {
+    if (bg.process.killed || bg.process.exitCode !== null) {
+      completed.push(id);
+    }
+  }
+
+  // Delete oldest completed entries (Map preserves insertion order)
+  const toRemove = completed.length - MAX_COMPLETED_PROCESSES;
+  if (toRemove > 0) {
+    for (let i = 0; i < toRemove && i < completed.length; i++) {
+      backgroundProcesses.delete(completed[i]!);
+    }
+  }
+}
 
 /**
  * Generate a unique ID for background processes
@@ -204,10 +227,13 @@ EXAMPLES:
           });
 
           childProcess.on('close', () => {
-            // Keep output for a while after completion
+            // Keep output for a short time after completion, then evict
             setTimeout(() => {
               backgroundProcesses.delete(bgId);
-            }, 300000); // 5 minutes
+            }, 60000); // 60 seconds
+
+            // Evict oldest completed entries if over capacity
+            evictCompletedProcesses();
           });
 
           resolve({

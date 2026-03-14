@@ -10,8 +10,10 @@ import {
   HookName,
   HookSignatures,
 } from './types/HookTypes.js';
+import type { IDisposable } from '../../domain/interfaces/IDisposable.js';
 
-export class HookManager {
+export class HookManager implements IDisposable {
+  private _isDestroyed = false;
   private hooks: Map<HookName, Hook<any, any>[]> = new Map();
   private timeout: number;
   private parallel: boolean;
@@ -284,9 +286,18 @@ export class HookManager {
   }
 
   /**
+   * Check if the hook manager has been destroyed
+   */
+  get isDestroyed(): boolean {
+    return this._isDestroyed;
+  }
+
+  /**
    * Destroy the hook manager and release all references
    */
   destroy(): void {
+    if (this._isDestroyed) return;
+    this._isDestroyed = true;
     this.hooks.clear();
     this.hookErrorCounts.clear();
     this.disabledHooks.clear();

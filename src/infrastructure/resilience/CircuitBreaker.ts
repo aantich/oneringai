@@ -273,7 +273,10 @@ export class CircuitBreaker<T = any> extends EventEmitter<CircuitBreakerEvents> 
         });
         break;
 
-      case 'closed':
+      case 'closed': {
+        // Capture before reset so event carries the actual success count
+        const capturedSuccesses = this.consecutiveSuccesses;
+
         // Reset state
         this.failures = [];
         this.consecutiveSuccesses = 0;
@@ -281,10 +284,11 @@ export class CircuitBreaker<T = any> extends EventEmitter<CircuitBreakerEvents> 
 
         this.emit('closed', {
           name: this.name,
-          successCount: this.consecutiveSuccesses,
+          successCount: capturedSuccesses,
           timestamp: Date.now(),
         });
         break;
+      }
     }
   }
 

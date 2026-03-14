@@ -4,7 +4,8 @@
  * Common types and configuration for filesystem operations.
  */
 
-import { resolve, normalize, isAbsolute, sep } from 'node:path';
+import { readdir } from 'node:fs/promises';
+import { resolve, normalize, isAbsolute, join, sep } from 'node:path';
 import { homedir } from 'node:os';
 import type { DocumentReaderConfig } from '../../capabilities/documents/types.js';
 
@@ -267,4 +268,56 @@ export function isExcludedExtension(
 ): boolean {
   const ext = filePath.toLowerCase().substring(filePath.lastIndexOf('.'));
   return excludeExtensions.includes(ext);
+}
+
+/**
+ * Yielded entry from walkDirectory
+ */
+export interface WalkEntry {
+  /** Full absolute path */
+  fullPath: string;
+  /** Filename / directory name */
+  name: string;
+  /** True when the entry is a regular file */
+  isFile: boolean;
+  /** True when the entry is a directory */
+  isDirectory: boolean;
+}
+
+/**
+ * Shared async generator for recursive directory traversal.
+ * Handles blocked directories and depth limits.
+ * Both glob.ts and grep.ts use this instead of duplicating traversal logic.
+ */
+export async function* walkDirectory(
+  dir: string,
+  config: FilesystemToolConfigDefaults,
+  maxDepth: number = 50,
+  _depth: number = 0,
+): AsyncGenerator<WalkEntry> {
+  if (_depth > maxDepth) return;
+
+  let entries;
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    // Skip directories we can't read
+    return;
+  }
+
+  for (const entry of entries) {
+    const fullPath = join(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      const isBlocked = config.blockedDirectories.some(
+        blocked => entry.name === blocked,
+      );
+      if (isBlocked) continue;
+
+      yield { fullPath, name: entry.name, isFile: false, isDirectory: true };
+      yield* walkDirectory(fullPath, config, maxDepth, _depth + 1);
+    } else if (entry.isFile()) {
+      yield { fullPath, name: entry.name, isFile: true, isDirectory: false };
+    }
+  }
 }

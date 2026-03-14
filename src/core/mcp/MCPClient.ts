@@ -16,6 +16,7 @@ import {
   ReadResourceResultSchema,
   ListPromptsResultSchema,
   GetPromptResultSchema,
+  EmptyResultSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { IMCPClient, MCPClientConnectionState } from '../../domain/interfaces/IMCPClient.js';
@@ -131,6 +132,7 @@ export class MCPClient extends EventEmitter implements IMCPClient, IDisposable {
     } catch (error) {
       // Clean up partially created resources
       this.stopHealthCheck(); // In case error occurred after startHealthCheck()
+      this.stopReconnect();   // Prevent stale reconnect timers from previous attempts
 
       if (this.client) {
         try {
@@ -219,7 +221,7 @@ export class MCPClient extends EventEmitter implements IMCPClient, IDisposable {
 
       return this._tools;
     } catch (error) {
-      throw new MCPError(`Failed to list tools from server '${this.name}'`, this.name, error as Error);
+      throw this.createMCPError('list tools', error as Error);
     }
   }
 
@@ -340,11 +342,7 @@ export class MCPClient extends EventEmitter implements IMCPClient, IDisposable {
         mimeType: resource.mimeType,
       }));
     } catch (error) {
-      throw new MCPError(
-        `Failed to list resources from server '${this.name}'`,
-        this.name,
-        error as Error
-      );
+      throw this.createMCPError('list resources', error as Error);
     }
   }
 
@@ -372,11 +370,7 @@ export class MCPClient extends EventEmitter implements IMCPClient, IDisposable {
         blob: 'blob' in content ? content.blob : undefined,
       };
     } catch (error) {
-      throw new MCPError(
-        `Failed to read resource '${uri}' from server '${this.name}'`,
-        this.name,
-        error as Error
-      );
+      throw this.createMCPError(`read resource '${uri}'`, error as Error);
     }
   }
 
@@ -394,16 +388,12 @@ export class MCPClient extends EventEmitter implements IMCPClient, IDisposable {
           method: 'resources/subscribe',
           params: { uri },
         },
-        {} as any // No specific schema for subscription acknowledgment
+        EmptyResultSchema
       );
 
       this.subscribedResources.add(uri);
     } catch (error) {
-      throw new MCPError(
-        `Failed to subscribe to resource '${uri}' on server '${this.name}'`,
-        this.name,
-        error as Error
-      );
+      throw this.createMCPError(`subscribe to resource '${uri}'`, error as Error);
     }
   }
 
@@ -411,22 +401,17 @@ export class MCPClient extends EventEmitter implements IMCPClient, IDisposable {
     this.ensureConnected();
 
     try {
-      // Unsubscribe method typically doesn't return structured data
       await this.client!.request(
         {
           method: 'resources/unsubscribe',
           params: { uri },
         },
-        {} as any // No specific schema for unsubscribe acknowledgment
+        EmptyResultSchema
       );
 
       this.subscribedResources.delete(uri);
     } catch (error) {
-      throw new MCPError(
-        `Failed to unsubscribe from resource '${uri}' on server '${this.name}'`,
-        this.name,
-        error as Error
-      );
+      throw this.createMCPError(`unsubscribe from resource '${uri}'`, error as Error);
     }
   }
 
@@ -444,7 +429,7 @@ export class MCPClient extends EventEmitter implements IMCPClient, IDisposable {
         arguments: prompt.arguments,
       }));
     } catch (error) {
-      throw new MCPError(`Failed to list prompts from server '${this.name}'`, this.name, error as Error);
+      throw this.createMCPError('list prompts', error as Error);
     }
   }
 
@@ -477,11 +462,7 @@ export class MCPClient extends EventEmitter implements IMCPClient, IDisposable {
         })),
       };
     } catch (error) {
-      throw new MCPError(
-        `Failed to get prompt '${name}' from server '${this.name}'`,
-        this.name,
-        error as Error
-      );
+      throw this.createMCPError(`get prompt '${name}'`, error as Error);
     }
   }
 
@@ -523,9 +504,21 @@ export class MCPClient extends EventEmitter implements IMCPClient, IDisposable {
     this._tools = [];
     this._capabilities = undefined;
     this._state = 'disconnected';
+    this.reconnectAttempts = 0;
     this.subscribedResources.clear();
     this.registeredToolNames.clear();
     this.removeAllListeners();
+  }
+
+  /**
+   * Create a standardized MCPError for this server
+   */
+  private createMCPError(operation: string, cause?: Error): MCPError {
+    return new MCPError(
+      `Failed to ${operation} from server '${this.name}'`,
+      this.name,
+      cause,
+    );
   }
 
   // Private helper methods
@@ -611,6 +604,7 @@ export class MCPClient extends EventEmitter implements IMCPClient, IDisposable {
 
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.config.maxReconnectAttempts) {
+      this._state = 'disconnected';
       this.emit('error', new MCPConnectionError(`Max reconnect attempts reached for server '${this.name}'`, this.name));
       return;
     }
@@ -619,8 +613,8 @@ export class MCPClient extends EventEmitter implements IMCPClient, IDisposable {
     this._state = 'reconnecting';
     this.emit('reconnecting', this.reconnectAttempts);
 
-    // Exponential backoff: 5s, 10s, 20s, 40s, ...
-    const delay = this.config.reconnectIntervalMs * Math.pow(2, this.reconnectAttempts - 1);
+    // Exponential backoff: 5s, 10s, 20s, 40s, ... capped at 5 minutes
+    const delay = Math.min(this.config.reconnectIntervalMs * Math.pow(2, this.reconnectAttempts - 1), 300_000);
 
     this.reconnectTimer = setTimeout(async () => {
       try {

@@ -16,7 +16,7 @@ import { InputItem, MessageRole, OutputItem } from '../domain/entities/Message.j
 import { AgentResponse } from '../domain/entities/Response.js';
 import { StreamEvent, StreamEventType, ResponseCompleteEvent, isToolCallArgumentsDone, isReasoningDelta } from '../domain/entities/StreamEvent.js';
 import { StreamState } from '../domain/entities/StreamState.js';
-import { Tool, ToolCall, ToolCallState, ToolResult } from '../domain/entities/Tool.js';
+import { Tool, ToolCall, ToolCallState, ToolResult, AsyncToolConfig, PendingAsyncTool } from '../domain/entities/Tool.js';
 import { Content, ContentType } from '../domain/entities/Content.js';
 import { ToolTimeoutError } from '../domain/errors/AIErrors.js';
 import type { HookConfig, HookName } from '../capabilities/agents/types/HookTypes.js';
@@ -108,6 +108,9 @@ export interface AgentConfig extends BaseAgentConfig {
     toolFailureMode?: 'fail' | 'continue';
     maxConsecutiveErrors?: number;
   };
+  /** Configuration for async (non-blocking) tool execution */
+  asyncTools?: AsyncToolConfig;
+
   /** Configuration for retrying empty/incomplete LLM responses */
   emptyResponseRetry?: {
     /** Enable retry for empty responses (default: true) */
@@ -161,6 +164,13 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   private _pausePromise: Promise<void> | null = null;
   private _resumeCallback: (() => void) | null = null;
   private _pauseResumeMutex: Promise<void> = Promise.resolve();
+
+  // Async tool state
+  private _asyncToolTracker: Map<string, PendingAsyncTool> = new Map();
+  private _asyncBatchTimer: ReturnType<typeof setTimeout> | null = null;
+  private _asyncResultQueue: ToolResult[] = [];
+  private _continuationInProgress = false;
+  private _executionActive = false;
 
   // ===== Static Factory =====
 
@@ -420,6 +430,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       timestamp: new Date(),
     }, undefined);
 
+    this._executionActive = true;
+
     return {
       executionId,
       startTime,
@@ -637,160 +649,190 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   async run(input: string | InputItem[]): Promise<AgentResponse> {
     const { executionId, startTime, maxIterations } = await this._prepareExecution(input, 'run');
 
+    try {
+      const finalResponse = await this._runAgenticLoop(executionId, startTime, maxIterations);
+
+      await this._finalizeExecution(executionId, startTime, finalResponse, 'run');
+      return finalResponse;
+    } catch (error) {
+      this._handleExecutionError(executionId, error as Error, startTime, 'run');
+      throw error;
+    } finally {
+      this._executionActive = false;
+      this._cleanupExecution();
+
+      // If async results arrived while we were running, schedule a flush
+      if (this._asyncResultQueue.length > 0 && (this._config.asyncTools?.autoContinue !== false)) {
+        setTimeout(() => this._flushAsyncResults(), 0);
+      }
+    }
+  }
+
+  /**
+   * Shared agentic loop used by both run() and continueWithAsyncResults().
+   * Includes: iteration loop, empty response retry, context budget logging,
+   * tool execution, max-iterations wrap-up, consolidation, pendingAsyncTools attachment.
+   */
+  private async _runAgenticLoop(
+    executionId: string,
+    _startTime: number,
+    maxIterations: number
+  ): Promise<AgentResponse> {
     let iteration = 0;
     let finalResponse: AgentResponse | null = null;
 
     // Empty response retry config
-    const runRetryConfig = {
+    const retryConfig = {
       enabled: this._config.emptyResponseRetry?.enabled ?? EMPTY_RESPONSE_RETRY.ENABLED,
       maxRetries: this._config.emptyResponseRetry?.maxRetries ?? EMPTY_RESPONSE_RETRY.MAX_RETRIES,
       initialDelayMs: this._config.emptyResponseRetry?.initialDelayMs ?? EMPTY_RESPONSE_RETRY.INITIAL_DELAY_MS,
       maxDelayMs: this._config.emptyResponseRetry?.maxDelayMs ?? EMPTY_RESPONSE_RETRY.MAX_DELAY_MS,
     };
-    const runRetryBackoffConfig: BackoffConfig = {
+    const retryBackoffConfig: BackoffConfig = {
       strategy: 'exponential',
-      initialDelayMs: runRetryConfig.initialDelayMs,
-      maxDelayMs: runRetryConfig.maxDelayMs,
+      initialDelayMs: retryConfig.initialDelayMs,
+      maxDelayMs: retryConfig.maxDelayMs,
       jitter: true,
     };
-    let runEmptyRetryCount = 0;
+    let emptyRetryCount = 0;
 
-    try {
-      while (iteration < maxIterations) {
-        const { shouldExit } = await this._checkIterationPreconditions(executionId, iteration);
-        if (shouldExit) {
-          throw new Error('Execution cancelled');
+    while (iteration < maxIterations) {
+      const { shouldExit } = await this._checkIterationPreconditions(executionId, iteration);
+      if (shouldExit) {
+        throw new Error('Execution cancelled');
+      }
+
+      const iterationStartTime = Date.now();
+
+      // Prepare context (handles compaction)
+      const prepared = await this._agentContext.prepare();
+      const b1 = prepared.budget;
+      const bd1 = b1.breakdown;
+      const bp1 = [
+        `sysPrompt=${bd1.systemPrompt}`,
+        `PI=${bd1.persistentInstructions}`,
+        bd1.pluginInstructions ? `pluginInstr=${bd1.pluginInstructions}` : '',
+        ...Object.entries(bd1.pluginContents || {}).map(([k, v]) => `plugin:${k}=${v}`),
+      ].filter(Boolean).join(' ');
+      console.log(
+        `[Agent] [Context] iteration=${iteration} tokens: ${b1.totalUsed}/${b1.maxTokens} (${b1.utilizationPercent.toFixed(1)}%) ` +
+        `tools=${b1.toolsTokens} conversation=${b1.conversationTokens} system=${b1.systemMessageTokens} input=${b1.currentInputTokens}` +
+        (bp1 ? ` | ${bp1}` : '') +
+        (prepared.compacted ? ` COMPACTED: ${prepared.compactionLog.join('; ')}` : ''),
+      );
+
+      // Generate LLM response
+      const response = await this.generateWithHooks(prepared.input, iteration, executionId);
+
+      // Extract tool calls
+      const toolCalls = this.extractToolCalls(response.output);
+
+      // If no tool calls, check for empty response retry before committing to context
+      if (toolCalls.length === 0) {
+        const hasText = !!(response.output_text?.trim());
+        const shouldRetry = !hasText &&
+          response.status !== 'failed' &&
+          retryConfig.enabled &&
+          emptyRetryCount < retryConfig.maxRetries;
+
+        if (shouldRetry) {
+          emptyRetryCount++;
+          const delay = calculateBackoff(emptyRetryCount, retryBackoffConfig);
+          this._logger.warn(
+            { attempt: emptyRetryCount, maxAttempts: retryConfig.maxRetries, status: response.status },
+            'Empty LLM response in run(), retrying...',
+          );
+          this.emit('execution:retry', {
+            executionId,
+            attempt: emptyRetryCount,
+            maxAttempts: retryConfig.maxRetries,
+            reason: `Empty response (status: ${response.status})`,
+            delayMs: delay,
+            timestamp: new Date(),
+          });
+          await new Promise(resolve => setTimeout(resolve, delay));
+          // Don't add empty response to context, don't increment iteration — just retry
+          continue;
         }
 
-        const iterationStartTime = Date.now();
-
-        // Prepare context (handles compaction)
-        // Note: instructions are set in systemPrompt during context creation
-        const prepared = await this._agentContext.prepare();
-        const b1 = prepared.budget;
-        const bd1 = b1.breakdown;
-        const bp1 = [
-          `sysPrompt=${bd1.systemPrompt}`,
-          `PI=${bd1.persistentInstructions}`,
-          bd1.pluginInstructions ? `pluginInstr=${bd1.pluginInstructions}` : '',
-          ...Object.entries(bd1.pluginContents || {}).map(([k, v]) => `plugin:${k}=${v}`),
-        ].filter(Boolean).join(' ');
-        console.log(
-          `[Agent] [Context] iteration=${iteration} tokens: ${b1.totalUsed}/${b1.maxTokens} (${b1.utilizationPercent.toFixed(1)}%) ` +
-          `tools=${b1.toolsTokens} conversation=${b1.conversationTokens} system=${b1.systemMessageTokens} input=${b1.currentInputTokens}` +
-          (bp1 ? ` | ${bp1}` : '') +
-          (prepared.compacted ? ` COMPACTED: ${prepared.compactionLog.join('; ')}` : ''),
-        );
-
-        // Generate LLM response
-        const response = await this.generateWithHooks(prepared.input, iteration, executionId);
-
-        // Extract tool calls
-        const toolCalls = this.extractToolCalls(response.output);
-
-        // If no tool calls, check for empty response retry before committing to context
-        if (toolCalls.length === 0) {
-          const hasText = !!(response.output_text?.trim());
-          const shouldRetry = !hasText &&
-            response.status !== 'failed' &&
-            runRetryConfig.enabled &&
-            runEmptyRetryCount < runRetryConfig.maxRetries;
-
-          if (shouldRetry) {
-            runEmptyRetryCount++;
-            const delay = calculateBackoff(runEmptyRetryCount, runRetryBackoffConfig);
-            this._logger.warn(
-              { attempt: runEmptyRetryCount, maxAttempts: runRetryConfig.maxRetries, status: response.status },
-              'Empty LLM response in run(), retrying...',
-            );
-            this.emit('execution:retry', {
-              executionId,
-              attempt: runEmptyRetryCount,
-              maxAttempts: runRetryConfig.maxRetries,
-              reason: `Empty response (status: ${response.status})`,
-              delayMs: delay,
-              timestamp: new Date(),
-            });
-            await new Promise(resolve => setTimeout(resolve, delay));
-            // Don't add empty response to context, don't increment iteration — just retry
-            continue;
-          }
-
-          // Accept the response
-          runEmptyRetryCount = 0;
-          this._agentContext.addAssistantResponse(response.output);
-          this._emitIterationComplete(executionId, iteration, response, iterationStartTime);
-          finalResponse = response;
-          break;
-        }
-
-        // Add assistant response to AgentContext (has tool calls, always accept)
+        // Accept the response
+        emptyRetryCount = 0;
         this._agentContext.addAssistantResponse(response.output);
-
-        // Emit tool detection
-        if (toolCalls.length > 0) {
-          this.emit('tool:detected', { executionId, iteration, toolCalls, timestamp: new Date() });
-        }
-
-        // Execute tools with hooks
-        const toolResults = await this.executeToolsWithHooks(toolCalls, iteration, executionId);
-
-        // Add tool results to AgentContext
-        this._agentContext.addToolResults(toolResults);
-
-        // Record iteration metrics
-        this._recordIterationMetrics(iteration, iterationStartTime, response, toolCalls, toolResults, prepared);
-
-        // Emit iteration complete
         this._emitIterationComplete(executionId, iteration, response, iterationStartTime);
-
-        iteration++;
+        finalResponse = response;
+        break;
       }
 
-      // Check if we exited normally or hit max iterations
-      if (iteration >= maxIterations && !finalResponse) {
-        // Do a final LLM call WITHOUT tools to let the agent wrap up gracefully
-        this._logger.info({ maxIterations }, 'Max iterations reached, generating wrap-up response');
+      // Add assistant response to AgentContext (has tool calls, always accept)
+      this._agentContext.addAssistantResponse(response.output);
 
-        // Add a user message prompting the wrap-up
-        this._agentContext.addUserMessage(AGENT_DEFAULTS.MAX_ITERATIONS_MESSAGE);
-
-        // Prepare context and generate final response WITHOUT tools
-        const prepared = await this._agentContext.prepare();
-        const wrapUpResponse = await this._provider.generate({
-          model: this.model,
-          input: prepared.input,
-          instructions: this._config.instructions,
-          tools: [], // No tools - force text-only response
-          temperature: this._config.temperature,
-          vendorOptions: this._config.vendorOptions,
-        });
-
-        // Add the wrap-up response to context
-        this._agentContext.addAssistantResponse(wrapUpResponse.output);
-
-        // Emit event for max iterations reached
-        this.emit('execution:maxIterations', {
-          executionId,
-          iteration,
-          maxIterations,
-          timestamp: new Date(),
-        });
-
-        finalResponse = wrapUpResponse;
+      // Emit tool detection
+      if (toolCalls.length > 0) {
+        this.emit('tool:detected', { executionId, iteration, toolCalls, timestamp: new Date() });
       }
 
-      // Run post-cycle consolidation (summarization, memory optimization, etc.)
-      await this._agentContext.consolidate();
+      // Execute tools with hooks
+      const toolResults = await this.executeToolsWithHooks(toolCalls, iteration, executionId);
 
-      await this._finalizeExecution(executionId, startTime, finalResponse!, 'run');
-      return finalResponse!;
-    } catch (error) {
-      this._handleExecutionError(executionId, error as Error, startTime, 'run');
-      throw error;
-    } finally {
-      this._cleanupExecution();
+      // Add tool results to AgentContext
+      this._agentContext.addToolResults(toolResults);
+
+      // Record iteration metrics
+      this._recordIterationMetrics(iteration, iterationStartTime, response, toolCalls, toolResults, prepared);
+
+      // Emit iteration complete
+      this._emitIterationComplete(executionId, iteration, response, iterationStartTime);
+
+      iteration++;
     }
+
+    // Check if we exited normally or hit max iterations
+    if (iteration >= maxIterations && !finalResponse) {
+      // Do a final LLM call WITHOUT tools to let the agent wrap up gracefully
+      this._logger.info({ maxIterations }, 'Max iterations reached, generating wrap-up response');
+
+      // Add a user message prompting the wrap-up
+      this._agentContext.addUserMessage(AGENT_DEFAULTS.MAX_ITERATIONS_MESSAGE);
+
+      // Prepare context and generate final response WITHOUT tools
+      const prepared = await this._agentContext.prepare();
+      const wrapUpResponse = await this._provider.generate({
+        model: this.model,
+        input: prepared.input,
+        instructions: this._config.instructions,
+        tools: [], // No tools - force text-only response
+        temperature: this._config.temperature,
+        vendorOptions: this._config.vendorOptions,
+      });
+
+      // Add the wrap-up response to context
+      this._agentContext.addAssistantResponse(wrapUpResponse.output);
+
+      // Emit event for max iterations reached
+      this.emit('execution:maxIterations', {
+        executionId,
+        iteration,
+        maxIterations,
+        timestamp: new Date(),
+      });
+
+      finalResponse = wrapUpResponse;
+    }
+
+    // Run post-cycle consolidation (summarization, memory optimization, etc.)
+    await this._agentContext.consolidate();
+
+    // Attach pending async tools info to response
+    if (this._asyncToolTracker.size > 0) {
+      finalResponse!.pendingAsyncTools = Array.from(this._asyncToolTracker.values()).map(p => ({
+        toolCallId: p.toolCallId,
+        toolName: p.toolName,
+        startTime: p.startTime,
+        status: p.status,
+      }));
+    }
+
+    return finalResponse!;
   }
 
   // ===== Stream-Specific Helpers =====
@@ -802,7 +844,16 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     toolCallsMap: Map<string, { name: string; args: string }>
   ): ToolCall[] {
     const toolCalls: ToolCall[] = [];
+    const toolDefinitions = this.getEnabledToolDefinitions();
+    const toolDefMap = new Map<string, Tool>();
+    for (const tool of toolDefinitions) {
+      if (tool.type === 'function') {
+        toolDefMap.set(tool.function.name, tool);
+      }
+    }
     for (const [toolCallId, buffer] of toolCallsMap) {
+      const toolDef = toolDefMap.get(buffer.name);
+      const isBlocking = toolDef?.blocking !== false;
       toolCalls.push({
         id: toolCallId,
         type: 'function',
@@ -810,7 +861,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           name: buffer.name,
           arguments: buffer.args,
         },
-        blocking: true,
+        blocking: isBlocking,
         state: ToolCallState.PENDING,
       });
     }
@@ -1231,7 +1282,13 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
       throw error;
     } finally {
+      this._executionActive = false;
       this._cleanupExecution(globalStreamState);
+
+      // If async results arrived while we were streaming, schedule a flush
+      if (this._asyncResultQueue.length > 0 && (this._config.asyncTools?.autoContinue !== false)) {
+        setTimeout(() => this._flushAsyncResults(), 0);
+      }
     }
   }
 
@@ -1497,7 +1554,10 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   }
 
   /**
-   * Execute tools with hooks
+   * Execute tools with hooks.
+   * Blocking tools (blocking !== false) are executed sequentially as before.
+   * Async tools (blocking === false) return a placeholder result immediately
+   * and execute in the background.
    */
   private async executeToolsWithHooks(
     toolCalls: ToolCall[],
@@ -1552,7 +1612,15 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         this.executionContext?.audit('tool_modified', { modifications: beforeTool.modified }, undefined, toolCall.function.name);
       }
 
-      // Execute tool
+      // Async tool: return placeholder, execute in background
+      if (!toolCall.blocking) {
+        const placeholderResult = this._startAsyncExecution(toolCall, executionId);
+        results.push(placeholderResult);
+        this.executionContext?.addToolResult(placeholderResult);
+        continue;
+      }
+
+      // Blocking tool: execute synchronously as before
       try {
         const result = await this.executeToolWithHooks(toolCall, iteration, executionId);
         results.push(result);
@@ -1746,6 +1814,308 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     }
 
     return false;
+  }
+
+  // ===== Async Tool Execution =====
+
+  /**
+   * Start async (non-blocking) tool execution.
+   * Returns a placeholder ToolResult immediately.
+   * The tool executes in the background and results are delivered
+   * as a new user message when complete.
+   */
+  private _startAsyncExecution(toolCall: ToolCall, executionId: string): ToolResult {
+    let parsedArgs: Record<string, unknown> = {};
+    try {
+      parsedArgs = JSON.parse(toolCall.function.arguments);
+    } catch { /* ignore parse errors */ }
+
+    const asyncConfig = this._config.asyncTools ?? {};
+    const timeout = asyncConfig.asyncTimeout ?? 300000; // 5 min default
+
+    // Track the pending async tool
+    const pending: PendingAsyncTool = {
+      toolCallId: toolCall.id,
+      toolName: toolCall.function.name,
+      args: parsedArgs,
+      startTime: Date.now(),
+      status: 'running',
+    };
+    this._asyncToolTracker.set(toolCall.id, pending);
+
+    // Emit async:tool:started
+    this.emit('async:tool:started', {
+      executionId,
+      toolCallId: toolCall.id,
+      toolName: toolCall.function.name,
+      args: parsedArgs,
+      timestamp: new Date(),
+    });
+
+    // Fire-and-forget execution with timeout
+    const executionPromise = this._agentContext.tools.execute(toolCall.function.name, parsedArgs);
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new ToolTimeoutError(toolCall.function.name, timeout)), timeout);
+    });
+
+    Promise.race([executionPromise, timeoutPromise])
+      .then((result) => {
+        clearTimeout(timeoutId);
+        if (this._isDestroyed) return; // agent destroyed
+        if (!this._asyncToolTracker.has(toolCall.id)) return; // cancelled
+        pending.status = 'completed';
+        const toolResult: ToolResult = {
+          tool_use_id: toolCall.id,
+          tool_name: toolCall.function.name,
+          tool_args: parsedArgs,
+          content: result,
+          state: ToolCallState.COMPLETED,
+          executionTime: Date.now() - pending.startTime,
+        };
+        pending.result = toolResult;
+        this.emit('async:tool:complete', {
+          executionId,
+          toolCallId: toolCall.id,
+          toolName: toolCall.function.name,
+          result: toolResult,
+          duration: toolResult.executionTime!,
+          timestamp: new Date(),
+        });
+        this._onAsyncComplete(toolCall.id, toolResult);
+      })
+      .catch((error: Error) => {
+        clearTimeout(timeoutId);
+        if (this._isDestroyed) return; // agent destroyed
+        if (!this._asyncToolTracker.has(toolCall.id)) return; // cancelled
+        const isTimeout = error instanceof ToolTimeoutError;
+        pending.status = isTimeout ? 'timeout' : 'failed';
+        pending.error = error;
+        const toolResult: ToolResult = {
+          tool_use_id: toolCall.id,
+          tool_name: toolCall.function.name,
+          tool_args: parsedArgs,
+          content: '',
+          error: error.message,
+          state: isTimeout ? ToolCallState.TIMEOUT : ToolCallState.FAILED,
+          executionTime: Date.now() - pending.startTime,
+        };
+        pending.result = toolResult;
+        if (isTimeout) {
+          this.emit('async:tool:timeout', {
+            executionId,
+            toolCallId: toolCall.id,
+            toolName: toolCall.function.name,
+            timeout,
+            timestamp: new Date(),
+          });
+        } else {
+          this.emit('async:tool:error', {
+            executionId,
+            toolCallId: toolCall.id,
+            toolName: toolCall.function.name,
+            error,
+            duration: Date.now() - pending.startTime,
+            timestamp: new Date(),
+          });
+        }
+        this._onAsyncComplete(toolCall.id, toolResult);
+      });
+
+    // Return placeholder result immediately
+    return {
+      tool_use_id: toolCall.id,
+      tool_name: toolCall.function.name,
+      tool_args: parsedArgs,
+      content: `Tool "${toolCall.function.name}" is executing asynchronously. The result will be delivered in a follow-up message. Continue with other work in the meantime.`,
+      state: ToolCallState.COMPLETED,
+      executionTime: 0,
+    };
+  }
+
+  /**
+   * Called when an async tool completes (success or failure).
+   * Queues the result and schedules batch delivery.
+   */
+  private _onAsyncComplete(toolCallId: string, result: ToolResult): void {
+    if (!this._asyncToolTracker.has(toolCallId)) return; // already cancelled/removed
+
+    this._asyncResultQueue.push(result);
+    this._asyncToolTracker.delete(toolCallId);
+
+    const asyncConfig = this._config.asyncTools ?? {};
+    const batchWindowMs = asyncConfig.batchWindowMs ?? 500;
+    const autoContinue = asyncConfig.autoContinue !== false; // default true
+
+    // If all pending are done, flush immediately
+    if (this._asyncToolTracker.size === 0) {
+      if (this._asyncBatchTimer) {
+        clearTimeout(this._asyncBatchTimer);
+        this._asyncBatchTimer = null;
+      }
+      if (autoContinue) {
+        this._flushAsyncResults();
+      }
+      return;
+    }
+
+    // Otherwise batch: start/reset timer
+    if (this._asyncBatchTimer) {
+      clearTimeout(this._asyncBatchTimer);
+    }
+    if (autoContinue) {
+      this._asyncBatchTimer = setTimeout(() => {
+        this._asyncBatchTimer = null;
+        this._flushAsyncResults();
+      }, batchWindowMs);
+    }
+  }
+
+  /**
+   * Flush queued async results by triggering a continuation.
+   */
+  private _flushAsyncResults(): void {
+    if (this._isDestroyed) return;
+    if (this._asyncResultQueue.length === 0) return;
+    if (this._continuationInProgress) return; // wait for current continuation to finish
+    if (this._executionActive) return; // results stay queued, flushed after run/stream ends
+
+    // Fire and forget — errors logged internally
+    this.continueWithAsyncResults().catch((err) => {
+      this._logger.error({ error: (err as Error).message }, 'Auto-continuation failed');
+    });
+  }
+
+  /**
+   * Continue the agentic loop with async tool results.
+   * Can be called automatically (autoContinue) or manually by the caller.
+   *
+   * Injects results as a user message and re-enters the agentic loop.
+   */
+  async continueWithAsyncResults(results?: ToolResult[]): Promise<AgentResponse> {
+    assertNotDestroyed(this, 'continue with async results');
+
+    if (this._continuationInProgress) {
+      throw new Error('A continuation is already in progress');
+    }
+
+    this._continuationInProgress = true;
+    this._executionActive = true;
+
+    try {
+      // Drain queue if no explicit results provided
+      const toDeliver = results ?? this._asyncResultQueue.splice(0, this._asyncResultQueue.length);
+      if (toDeliver.length === 0) {
+        throw new Error('No async results to deliver');
+      }
+
+      // Build user message with results
+      const parts: string[] = ['[Async Tool Results]'];
+      for (const result of toDeliver) {
+        const toolName = result.tool_name || 'unknown';
+        const toolCallId = result.tool_use_id;
+        if (result.error) {
+          parts.push(`\nTool "${toolName}" (${toolCallId}) failed:\nError: ${result.error}`);
+        } else {
+          const content = typeof result.content === 'string'
+            ? result.content
+            : JSON.stringify(result.content, null, 2);
+          parts.push(`\nTool "${toolName}" (${toolCallId}) completed:\n${content}`);
+        }
+      }
+      parts.push('\nProcess these results and continue.');
+
+      const executionId = `exec_async_${randomUUID()}`;
+      const startTime = Date.now();
+      const maxIterations = this._config.maxIterations || AGENT_DEFAULTS.MAX_ITERATIONS;
+
+      // Emit continuation start
+      this.emit('async:continuation:start', {
+        executionId,
+        results: toDeliver.map(r => ({ toolCallId: r.tool_use_id, toolName: r.tool_name || 'unknown' })),
+        timestamp: new Date(),
+      });
+
+      // Set current input for task type detection
+      this._agentContext.setCurrentInput(parts.join('\n'));
+
+      // Inject as user message
+      this._agentContext.addUserMessage(parts.join('\n'));
+
+      // Create execution context for this continuation
+      this.executionContext = new ExecutionContext(executionId, {
+        maxHistorySize: 10,
+        historyMode: this._config.historyMode || 'summary',
+        maxAuditTrailSize: 1000,
+      });
+
+      // Reset control state
+      this._paused = false;
+      this._cancelled = false;
+
+      this.emit('execution:start', {
+        executionId,
+        config: { model: this.model, maxIterations },
+        timestamp: new Date(),
+      });
+
+      // Use shared agentic loop
+      const finalResponse = await this._runAgenticLoop(executionId, startTime, maxIterations);
+
+      await this._finalizeExecution(executionId, startTime, finalResponse, 'run');
+      return finalResponse;
+    } finally {
+      this._continuationInProgress = false;
+      this._executionActive = false;
+      this._cleanupExecution();
+
+      // If async results arrived during continuation, schedule a flush
+      if (this._asyncResultQueue.length > 0 && (this._config.asyncTools?.autoContinue !== false)) {
+        setTimeout(() => this._flushAsyncResults(), 0);
+      }
+    }
+  }
+
+  // ===== Async Tool Public Accessors =====
+
+  /**
+   * Check if there are any pending async tools
+   */
+  hasPendingAsyncTools(): boolean {
+    return this._asyncToolTracker.size > 0;
+  }
+
+  /**
+   * Get info about pending async tools
+   */
+  getPendingAsyncTools(): PendingAsyncTool[] {
+    return Array.from(this._asyncToolTracker.values());
+  }
+
+  /**
+   * Cancel a specific async tool by toolCallId
+   */
+  cancelAsyncTool(toolCallId: string): void {
+    const pending = this._asyncToolTracker.get(toolCallId);
+    if (pending) {
+      pending.status = 'cancelled';
+      this._asyncToolTracker.delete(toolCallId);
+    }
+  }
+
+  /**
+   * Cancel all pending async tools
+   */
+  cancelAllAsyncTools(): void {
+    for (const pending of this._asyncToolTracker.values()) {
+      pending.status = 'cancelled';
+    }
+    this._asyncToolTracker.clear();
+    this._asyncResultQueue = [];
+    if (this._asyncBatchTimer) {
+      clearTimeout(this._asyncBatchTimer);
+      this._asyncBatchTimer = null;
+    }
   }
 
   // ===== Pause/Resume/Cancel =====
@@ -2024,6 +2394,11 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     } catch {
       // Ignore errors during cancel
     }
+
+    // Cancel all pending async tools
+    this.cancelAllAsyncTools();
+    this._continuationInProgress = false;
+    this._executionActive = false;
 
     // Remove ToolManager listener before context is destroyed
     if (this._toolRegisteredListener) {

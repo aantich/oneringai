@@ -180,6 +180,48 @@ export interface CircuitClosedEvent {
   timestamp: Date;
 }
 
+// ===== Async Tool Events =====
+
+export interface AsyncToolStartedEvent {
+  executionId: string;
+  toolCallId: string;
+  toolName: string;
+  args: Record<string, unknown>;
+  timestamp: Date;
+}
+
+export interface AsyncToolCompleteEvent {
+  executionId: string;
+  toolCallId: string;
+  toolName: string;
+  result: ToolResult;
+  duration: number;
+  timestamp: Date;
+}
+
+export interface AsyncToolErrorEvent {
+  executionId: string;
+  toolCallId: string;
+  toolName: string;
+  error: Error;
+  duration: number;
+  timestamp: Date;
+}
+
+export interface AsyncToolTimeoutEvent {
+  executionId: string;
+  toolCallId: string;
+  toolName: string;
+  timeout: number;
+  timestamp: Date;
+}
+
+export interface AsyncContinuationStartEvent {
+  executionId: string;
+  results: Array<{ toolCallId: string; toolName: string }>;
+  timestamp: Date;
+}
+
 /**
  * Map of all event names to their payload types
  */
@@ -213,6 +255,12 @@ export interface AgenticLoopEvents {
   'circuit:opened': CircuitOpenedEvent;
   'circuit:half-open': CircuitHalfOpenEvent;
   'circuit:closed': CircuitClosedEvent;
+
+  'async:tool:started': AsyncToolStartedEvent;
+  'async:tool:complete': AsyncToolCompleteEvent;
+  'async:tool:error': AsyncToolErrorEvent;
+  'async:tool:timeout': AsyncToolTimeoutEvent;
+  'async:continuation:start': AsyncContinuationStartEvent;
 }
 
 export type AgenticLoopEventName = keyof AgenticLoopEvents;

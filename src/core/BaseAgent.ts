@@ -445,7 +445,7 @@ export abstract class BaseAgent<
     if (sessionConfig.autoSave) {
       const interval = sessionConfig.autoSaveIntervalMs ?? 30000;
       this._autoSaveInterval = setInterval(async () => {
-        if (this._isDestroyed) return;
+        if (this._isDestroyed || this._agentContext.isDestroyed) return;
         try {
           if (this._agentContext.sessionId) {
             await this._agentContext.save();
@@ -1062,6 +1062,12 @@ export abstract class BaseAgent<
     if (this._autoSaveInterval) {
       clearInterval(this._autoSaveInterval);
       this._autoSaveInterval = null;
+    }
+
+    // Await any pending session load to prevent abandoned promises
+    if (this._pendingSessionLoad) {
+      this._pendingSessionLoad.catch(() => {});
+      this._pendingSessionLoad = null;
     }
 
     // Cleanup AgentContext only if we own it (not shared with other agents)

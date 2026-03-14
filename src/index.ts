@@ -531,6 +531,9 @@ export type {
   ToolResult,
   ToolExecutionContext,
   JSONSchema,
+  AsyncToolConfig,
+  PendingAsyncTool,
+  PendingAsyncToolStatus,
 } from './domain/entities/Tool.js';
 
 // Response

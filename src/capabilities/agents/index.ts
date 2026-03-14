@@ -27,6 +27,12 @@ export type {
   ToolCompleteEvent,
   LLMRequestEvent,
   LLMResponseEvent,
+  // Async tool events
+  AsyncToolStartedEvent,
+  AsyncToolCompleteEvent,
+  AsyncToolErrorEvent,
+  AsyncToolTimeoutEvent,
+  AsyncContinuationStartEvent,
 } from './types/EventTypes.js';
 
 // Hook types

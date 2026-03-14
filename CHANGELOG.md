@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Async (Non-Blocking) Tool Execution** — Tools with `blocking: false` now execute in the background while the agentic loop continues. The LLM receives an immediate placeholder result, and when the real result arrives, it is delivered as a new user message. Supports auto-continuation (re-enters the agentic loop automatically) or manual continuation via `agent.continueWithAsyncResults()`. Configurable via `asyncTools: { autoContinue, batchWindowMs, asyncTimeout }` on `AgentConfig`. Includes 5 new events (`async:tool:started`, `async:tool:complete`, `async:tool:error`, `async:tool:timeout`, `async:continuation:start`), public accessors (`hasPendingAsyncTools()`, `getPendingAsyncTools()`, `cancelAsyncTool()`, `cancelAllAsyncTools()`), and `pendingAsyncTools` on `AgentResponse`. New exported types: `AsyncToolConfig`, `PendingAsyncTool`, `PendingAsyncToolStatus`.
+
+### Fixed
+
+- **Stream: `_buildToolCallsFromMap()` hardcoded `blocking: true`** — Tool calls built from streaming responses now correctly read the `blocking` field from tool definitions instead of always setting `blocking: true`.
+
+- **OpenAI stream converter memory leak** — `OpenAIResponsesStreamConverter` stored all tracking state (activeItems, toolCallBuffers, reasoningBuffers) as local variables inside `convertStream()`, never cleaned up on error. Moved to instance properties with `clear()`/`reset()`/`hasToolCalls()` methods and try/finally cleanup. `OpenAITextProvider.streamGenerate()` now calls `streamConverter.clear()` in finally block.
+
+- **MCPClient reconnect timer leak** — `connect()` catch block called `stopHealthCheck()` but not `stopReconnect()`, leaving stale reconnect timers from previous attempts.
+
+- **BaseTextProvider: no IDisposable, no destroyed guard** — Now formally implements `IDisposable` with `isDestroyed` flag. `ensureObservabilityInitialized()` short-circuits if destroyed. Added base `mapError()` method for common HTTP error classification (401->auth, 429->rate limit, 500+->provider).
+
+- **Bash tool: excessive background process retention** — Completed background processes were retained for 5 minutes. Reduced TTL to 60 seconds and added `MAX_COMPLETED_PROCESSES` cap (50) with oldest-first eviction.
+
+- **HookManager: missing IDisposable interface** — Now implements `IDisposable` with proper `isDestroyed` flag and idempotent `destroy()`.
+
+- **FileContextStorage: index corruption on concurrent writes** — `updateIndex()` and `removeFromIndex()` had no serialization, allowing concurrent read-modify-write corruption. Added async mutex (`withIndexLock()`) wrapping all index mutations.
+
+- **CircuitBreaker: `closed` event emitted `successCount: 0`** — `transitionTo('closed')` reset `consecutiveSuccesses` to 0 before emitting the event. Now captures the value before reset.
+
+- **GenericOpenAIProvider: silent error swallow in `listModels()`** — Now logs caught errors at debug level instead of silently discarding.
+
+- **ToolPermissionManager: no destroy method** — Added `destroy()` that clears all internal state and calls `removeAllListeners()`.
+
+- **MCP subscribe/unsubscribe: `{} as any` type casts** — Replaced with proper `EmptyResultSchema` from MCP SDK.
+
+### Changed
+
+- **All providers: `console.log` replaced with `this.logger`** — OpenAI, Anthropic, and Google text providers now use the structured logger from `BaseTextProvider` instead of `console.log`/`console.error` for API call logging.
+
+- **OpenAITextProvider: typed params** — Request `params` changed from `any` to `Record<string, unknown>` in both `generate()` and `streamGenerate()`.
+
+- **webFetch.ts: proper error typing** — Outer catch changed from `catch (error: any)` to `catch (error: unknown)` with proper narrowing.
+
+- **Response.ts: documented status union** — Added JSDoc documenting all 6 status values and their use cases (`queued` for async video, `in_progress` for streaming).
+
+### Refactored
+
+- **Filesystem tools: shared `walkDirectory()` async generator** — Extracted common recursive directory traversal from `glob.ts` and `grep.ts` into `walkDirectory()` in `types.ts`. Both tools now use the shared generator, eliminating ~60 lines of duplicated traversal logic.
+
+- **MCPClient: `createMCPError()` helper** — Extracted repeated `new MCPError('Failed to X from server Y', name, cause)` pattern into a private helper, reducing boilerplate across 8 call sites.
+
 ## [0.4.8] - 2026-03-12
 
 ### Fixed

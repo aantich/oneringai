@@ -35,6 +35,7 @@
   - [21. External API Integration](#21-external-api-integration) — Scoped Registry, Vendor Templates, Tool Discovery
   - [22. Microsoft Graph Connector Tools](#22-microsoft-graph-connector-tools-new) — Email, calendar, meetings, and Teams transcripts
   - [23. Tool Catalog](#23-tool-catalog-new) — Dynamic tool loading/unloading for agents with 100+ tools
+  - [24. Async (Non-Blocking) Tools](#24-async-non-blocking-tools-new) — Background tool execution with auto-continuation
 - [MCP Integration](#mcp-model-context-protocol-integration)
 - [Documentation](#documentation)
 - [Examples](#examples)
@@ -117,6 +118,7 @@ Showcasing another amazing "built with oneringai": ["no saas" agentic business t
 - 📊 **Execution Recording** - NEW: Persist full routine execution history with `createExecutionRecorder()` — replaces manual hook wiring
 - ⏰ **Scheduling & Triggers** - NEW: `SimpleScheduler` for interval/one-time schedules, `EventEmitterTrigger` for webhook/queue-driven execution
 - 📦 **Tool Catalog** - NEW: Dynamic tool loading/unloading — agents discover and load only the categories they need at runtime
+- **Async Tools** - NEW: Non-blocking tool execution — long-running tools run in background while the agent continues reasoning, with auto-continuation when results arrive
 - 🔄 **Streaming** - Real-time responses with event streams
 - 📝 **TypeScript** - Full type safety and IntelliSense support
 
@@ -1707,6 +1709,88 @@ await agent.run('Search for information about quantum computing');
 - **Registry API** — `ToolCatalogRegistry.resolveTools()` for app-level tool resolution
 
 See the [User Guide](./USER_GUIDE.md#tool-catalog) for full documentation.
+
+### 24. Async (Non-Blocking) Tools
+
+Some tools take seconds or minutes to complete (web scraping, data analysis, API calls). With async tools, the agent doesn't wait — it continues reasoning and receives results later:
+
+```typescript
+import { Agent, ToolFunction } from '@everworker/oneringai';
+
+// Define a long-running tool as non-blocking
+const analyzeData: ToolFunction = {
+  definition: {
+    type: 'function',
+    function: {
+      name: 'analyze_dataset',
+      description: 'Run statistical analysis on a dataset (takes ~30s)',
+      parameters: {
+        type: 'object',
+        properties: { dataset: { type: 'string' } },
+        required: ['dataset'],
+      },
+    },
+    blocking: false, // <-- This makes it async
+  },
+  execute: async (args) => {
+    // Long-running work happens here
+    const result = await runAnalysis(args.dataset);
+    return { summary: result.summary, score: result.score };
+  },
+};
+
+// Auto-continue mode (default): agent handles everything
+const agent = Agent.create({
+  connector: 'anthropic',
+  model: 'claude-sonnet-4-6',
+  asyncTools: {
+    autoContinue: true,     // Re-enter agentic loop when results arrive (default)
+    batchWindowMs: 1000,    // Batch results arriving within 1s (default: 500ms)
+    asyncTimeout: 300000,   // 5 min timeout per async tool (default)
+  },
+  tools: [analyzeData, readFile], // Mix async and blocking tools
+});
+
+const response = await agent.run('Analyze the sales dataset and summarize');
+// response.pendingAsyncTools lists any still-running async tools
+// When results arrive, agent auto-continues and processes them
+
+// Manual mode: caller controls when to continue
+const agent2 = Agent.create({
+  connector: 'anthropic',
+  model: 'claude-sonnet-4-6',
+  asyncTools: { autoContinue: false },
+  tools: [analyzeData],
+});
+
+agent2.on('async:tool:complete', (event) => {
+  console.log(`${event.toolName} finished in ${event.duration}ms`);
+});
+
+const response2 = await agent2.run('Analyze the dataset');
+if (agent2.hasPendingAsyncTools()) {
+  // Do other work while waiting, then:
+  const continuation = await agent2.continueWithAsyncResults();
+  console.log(continuation.output_text);
+}
+```
+
+**How It Works:**
+1. LLM calls a `blocking: false` tool
+2. Tool starts executing in background; LLM gets placeholder: *"Tool is executing asynchronously..."*
+3. Agentic loop continues — LLM can call other tools, reason, or produce text
+4. When the real result arrives, it's injected as a user message with the full result
+5. If `autoContinue: true`, the agent re-enters the agentic loop to process the result
+
+**Key Features:**
+- **Mixed execution** — Blocking and async tools work together in the same iteration
+- **Result batching** — Multiple async results arriving close together are delivered in one message
+- **Timeout protection** — Configurable per-tool timeout (default 5 min)
+- **5 events** — `async:tool:started`, `async:tool:complete`, `async:tool:error`, `async:tool:timeout`, `async:continuation:start`
+- **Public API** — `hasPendingAsyncTools()`, `getPendingAsyncTools()`, `cancelAsyncTool(id)`, `cancelAllAsyncTools()`
+- **Clean cleanup** — `agent.destroy()` cancels all pending async tools
+
+See the [User Guide](./USER_GUIDE.md#async-non-blocking-tools) for the full guide.
 
 ---
 

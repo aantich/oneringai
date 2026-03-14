@@ -60,29 +60,36 @@ A comprehensive guide to using all features of the @everworker/oneringai library
     - GitHub Connector Tools (search_files, search_code, read_file, get_pr, pr_files, pr_comments, create_pr)
     - Microsoft Graph Connector Tools (create_draft_email, send_email, create_meeting, edit_meeting, find_meeting_slots, get_meeting_transcript)
 13. [Dynamic Tool Management](#dynamic-tool-management)
-14. [MCP (Model Context Protocol)](#mcp-model-context-protocol)
-15. [Multimodal (Vision)](#multimodal-vision)
-16. [Audio (TTS/STT)](#audio-ttsstt)
-17. [Image Generation](#image-generation)
-18. [Video Generation](#video-generation)
-19. [Custom Media Storage](#custom-media-storage)
+14. [Async (Non-Blocking) Tools](#async-non-blocking-tools)
+    - How It Works (Lifecycle)
+    - Auto-Continue vs Manual Mode
+    - Configuration (AsyncToolConfig)
+    - Events
+    - Public API
+    - Edge Cases
+15. [MCP (Model Context Protocol)](#mcp-model-context-protocol)
+16. [Multimodal (Vision)](#multimodal-vision)
+17. [Audio (TTS/STT)](#audio-ttsstt)
+18. [Image Generation](#image-generation)
+19. [Video Generation](#video-generation)
+20. [Custom Media Storage](#custom-media-storage)
     - IMediaStorage Interface
     - Custom S3 Backend Example
     - FileMediaStorage Default
-20. [Web Search](#web-search)
-21. [Streaming](#streaming)
-22. [External API Integration](#external-api-integration)
-23. [Vendor Templates](#vendor-templates)
+21. [Web Search](#web-search)
+22. [Streaming](#streaming)
+23. [External API Integration](#external-api-integration)
+24. [Vendor Templates](#vendor-templates)
     - Quick Setup for 43+ Services
     - Authentication Methods
     - Complete Vendor Reference
-24. [OAuth for External APIs](#oauth-for-external-apis)
-25. [Model Registry](#model-registry)
-26. [Scoped Connector Registry](#scoped-connector-registry)
+25. [OAuth for External APIs](#oauth-for-external-apis)
+26. [Model Registry](#model-registry)
+27. [Scoped Connector Registry](#scoped-connector-registry)
     - Access Control Policies
     - Multi-Tenant Isolation
     - Using with Agent and ConnectorTools
-27. [Advanced Features](#advanced-features)
+28. [Advanced Features](#advanced-features)
 28. [Production Deployment](#production-deployment)
 
 ---
@@ -6246,6 +6253,278 @@ const result = await agent.tools.execute('get_weather', { location: 'Paris' });
 
 // Execute returns the tool's result or throws on error
 ```
+
+---
+
+## Async (Non-Blocking) Tools
+
+Some tools take seconds or minutes to complete — web scraping, data analysis, external API calls, sub-agent orchestration. Normally, the agentic loop blocks on every tool call. With async tools (`blocking: false`), the tool executes in the background while the agent continues reasoning.
+
+### How It Works
+
+The lifecycle of an async tool call:
+
+1. **LLM requests tool call** — The agent's agentic loop extracts tool calls from the LLM response as usual
+2. **Placeholder returned** — For `blocking: false` tools, a placeholder `tool_result` is returned immediately: *"Tool X is executing asynchronously. The result will be delivered in a follow-up message."*
+3. **Background execution** — The tool runs in the background (fire-and-forget promise with timeout)
+4. **Loop continues** — The LLM sees the placeholder, can call other (blocking) tools, reason about the situation, or produce text output
+5. **Result arrives** — When the async tool completes (or fails/times out), the result is queued
+6. **Delivery as user message** — Queued results are batched and injected as a structured user message:
+   ```
+   [Async Tool Results]
+   Tool "analyze_dataset" (call_abc123) completed:
+   { "summary": "...", "score": 42 }
+
+   Process these results and continue.
+   ```
+7. **Continuation** — If `autoContinue: true` (default), the agent re-enters the agentic loop to process the results. If `false`, the caller must invoke `agent.continueWithAsyncResults()`.
+
+### Quick Start
+
+```typescript
+import { Agent, ToolFunction } from '@everworker/oneringai';
+
+// 1. Define a tool with blocking: false
+const analyzeData: ToolFunction = {
+  definition: {
+    type: 'function',
+    function: {
+      name: 'analyze_dataset',
+      description: 'Run statistical analysis on a large dataset (may take 30+ seconds)',
+      parameters: {
+        type: 'object',
+        properties: {
+          dataset: { type: 'string', description: 'Dataset name or path' },
+          metrics: { type: 'array', items: { type: 'string' }, description: 'Metrics to compute' },
+        },
+        required: ['dataset'],
+      },
+    },
+    blocking: false, // <-- Makes this tool async
+  },
+  execute: async (args) => {
+    const data = await loadDataset(args.dataset);
+    const results = await computeMetrics(data, args.metrics);
+    return { summary: results.summary, rowCount: data.length, metrics: results.values };
+  },
+};
+
+// 2. Create agent with async config
+const agent = Agent.create({
+  connector: 'anthropic',
+  model: 'claude-sonnet-4-6',
+  asyncTools: {
+    autoContinue: true,      // Default: auto re-enter loop on result
+    batchWindowMs: 1000,     // Batch results within 1s window
+    asyncTimeout: 300000,    // 5 min timeout per async tool
+  },
+  tools: [analyzeData, readFile, writeFile],  // Mix blocking and async tools
+});
+
+// 3. Run — async tools are handled automatically
+const response = await agent.run('Analyze the Q4 sales dataset and write a summary report');
+// The agent will:
+// - Call analyze_dataset (async) → gets placeholder
+// - Maybe call read_file (blocking) → gets real result
+// - Produce intermediate text while waiting
+// - When analyze_dataset completes → auto-continue, process results
+// - Write the report with writeFile
+```
+
+### Auto-Continue vs Manual Mode
+
+#### Auto-Continue (Default)
+
+With `autoContinue: true` (default), the agent re-enters the agentic loop automatically when results arrive:
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  asyncTools: { autoContinue: true }, // default
+  tools: [asyncTool],
+});
+
+// Just run — everything is handled
+const response = await agent.run('Do the analysis');
+// response.pendingAsyncTools may be non-empty if tools are still running
+// when the initial loop ends (no more blocking work to do)
+```
+
+The initial `run()` returns when the agentic loop has no more blocking work. If async tools are still pending, `response.pendingAsyncTools` lists them. When they complete, the agent auto-continues in the background.
+
+#### Manual Mode
+
+With `autoContinue: false`, results are queued but the agent doesn't auto-continue. The caller decides when:
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  asyncTools: { autoContinue: false },
+  tools: [asyncTool],
+});
+
+// Listen for completions
+agent.on('async:tool:complete', (event) => {
+  console.log(`${event.toolName} finished in ${event.duration}ms`);
+});
+
+const response = await agent.run('Start the analysis');
+
+// Check what's pending
+if (agent.hasPendingAsyncTools()) {
+  console.log('Pending:', agent.getPendingAsyncTools().map(p => p.toolName));
+
+  // Wait for results to arrive (via events, polling, or your own logic)
+  // Then trigger continuation:
+  const continuation = await agent.continueWithAsyncResults();
+  console.log(continuation.output_text); // Agent processed the async results
+}
+```
+
+### Configuration
+
+```typescript
+interface AsyncToolConfig {
+  /**
+   * Auto re-enter agentic loop when async results arrive.
+   * @default true
+   */
+  autoContinue?: boolean;
+
+  /**
+   * Batch window in ms. If multiple async tools complete within this window,
+   * their results are delivered together in a single user message.
+   * @default 500
+   */
+  batchWindowMs?: number;
+
+  /**
+   * Timeout per async tool execution in ms.
+   * @default 300000 (5 minutes)
+   */
+  asyncTimeout?: number;
+}
+```
+
+Set `blocking: false` on individual tool definitions:
+
+```typescript
+const tool: ToolFunction = {
+  definition: {
+    type: 'function',
+    function: { name: 'slow_tool', description: '...', parameters: {...} },
+    blocking: false, // <-- async
+  },
+  execute: async (args) => { /* ... */ },
+};
+```
+
+Tools default to `blocking: true` if not specified.
+
+### Events
+
+Five new events for monitoring async tool lifecycle:
+
+| Event | Payload | When |
+|-------|---------|------|
+| `async:tool:started` | `{ executionId, toolCallId, toolName, args, timestamp }` | Async tool execution begins |
+| `async:tool:complete` | `{ executionId, toolCallId, toolName, result, duration, timestamp }` | Tool completed successfully |
+| `async:tool:error` | `{ executionId, toolCallId, toolName, error, duration, timestamp }` | Tool threw an error |
+| `async:tool:timeout` | `{ executionId, toolCallId, toolName, timeout, timestamp }` | Tool exceeded `asyncTimeout` |
+| `async:continuation:start` | `{ executionId, results: [{toolCallId, toolName}], timestamp }` | Agent re-entering loop with results |
+
+```typescript
+agent.on('async:tool:started', (e) => {
+  console.log(`[ASYNC] ${e.toolName} started (${e.toolCallId})`);
+});
+
+agent.on('async:tool:complete', (e) => {
+  console.log(`[ASYNC] ${e.toolName} completed in ${e.duration}ms`);
+});
+
+agent.on('async:tool:error', (e) => {
+  console.error(`[ASYNC] ${e.toolName} failed: ${e.error.message}`);
+});
+
+agent.on('async:tool:timeout', (e) => {
+  console.warn(`[ASYNC] ${e.toolName} timed out after ${e.timeout}ms`);
+});
+
+agent.on('async:continuation:start', (e) => {
+  console.log(`[ASYNC] Continuing with ${e.results.length} result(s)`);
+});
+```
+
+### Public API
+
+```typescript
+// Check if any async tools are still running
+agent.hasPendingAsyncTools(): boolean;
+
+// Get details about pending async tools
+agent.getPendingAsyncTools(): PendingAsyncTool[];
+// PendingAsyncTool: { toolCallId, toolName, args, startTime, status, result?, error? }
+
+// Cancel a specific async tool
+agent.cancelAsyncTool(toolCallId: string): void;
+
+// Cancel all pending async tools and clear the result queue
+agent.cancelAllAsyncTools(): void;
+
+// Manually trigger continuation with queued results
+// (only needed when autoContinue: false)
+agent.continueWithAsyncResults(results?: ToolResult[]): Promise<AgentResponse>;
+
+// Response includes pending info
+const response = await agent.run('...');
+response.pendingAsyncTools; // Array<{ toolCallId, toolName, startTime }> | undefined
+```
+
+### Mixed Blocking and Async Tools
+
+Blocking and async tools work together naturally in the same iteration:
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  tools: [
+    readFile,           // blocking (default)
+    writeFile,          // blocking
+    webFetch,           // blocking
+    analyzeDataset,     // blocking: false
+    generateReport,     // blocking: false
+  ],
+});
+
+// If the LLM calls both readFile and analyzeDataset in the same turn:
+// - readFile executes synchronously, result returned immediately
+// - analyzeDataset starts in background, placeholder returned
+// - Both results go to context, loop continues
+```
+
+### Edge Cases
+
+| Scenario | Behavior |
+|----------|----------|
+| **Result arrives during active loop** | Queued, not injected mid-iteration. Delivered after current loop ends or in next continuation. |
+| **All called tools are async** | LLM sees only placeholders → likely produces text → loop ends → results trickle in → auto-continue |
+| **Async tool fails** | Error result delivered same as success — LLM sees the error and can react |
+| **Async tool times out** | Treated as error with timeout message. Configurable via `asyncTimeout`. |
+| **Agent destroyed with pending tools** | `destroy()` cancels all pending async tools and clears timers |
+| **Multiple results arrive close together** | Batched within `batchWindowMs` window, delivered as single message |
+| **`continueWithAsyncResults()` called with no results** | Throws `"No async results to deliver"` |
+| **Concurrent continuations** | Second call throws `"A continuation is already in progress"` |
+
+### Use Cases
+
+- **Long-running analysis** — Data processing, ML inference, report generation
+- **Parallel API calls** — Fetch from multiple external services simultaneously
+- **Sub-agent orchestration** — Dispatch work to sub-agents without blocking the orchestrator
+- **Web scraping** — Scrape multiple pages in parallel while the agent reasons about strategy
+- **File processing** — Process large files while the agent works on other tasks
 
 ---
 
