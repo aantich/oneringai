@@ -4046,7 +4046,7 @@ const execution = await executeRoutine({
     task: (task) => `
       ## ${task.name}
       ${task.description}
-      Remember to store results using context_set.
+      Remember to store results using store_set("context", key, { description, value }).
     `,
 
     // Custom validation prompt
@@ -4194,7 +4194,7 @@ const routine = createRoutineDefinition({
       validation: {
         completionCriteria: [
           'At least 5 competitors were identified',
-          'Competitor names were stored using context_set',
+          'Competitor names were stored using store_set("context", ...)',
         ],
       },
     },
@@ -4257,8 +4257,8 @@ if (execution.status === 'completed') {
 
 ### Best Practices
 
-1. **Use `context_set` for small shared state** — task names, IDs, short summaries. These are always visible.
-2. **Use `memory_store` for large data** — full API responses, documents, raw data. Retrieved on demand.
+1. **Use `store_set("context", ...)` for small shared state** — task names, IDs, short summaries. These are always visible.
+2. **Use `store_set("memory", ...)` for large data** — full API responses, documents, raw data. Retrieved on demand via `store_get("memory", key)`.
 3. **Define clear completion criteria** — specific, verifiable conditions the LLM can evaluate.
 4. **Set appropriate `minCompletionScore`** — use 80+ for strict validation, 60-70 for lenient.
 5. **Use `skipReflection: true`** for simple tasks that don't need validation.
@@ -4651,9 +4651,7 @@ The library ships with 38+ built-in tools across 8 categories:
 
 | Category | Tools | Description |
 |----------|-------|-------------|
-| **Memory** | `memory_store`, `memory_retrieve`, `memory_delete`, `memory_query`, `memory_cleanup_raw` | Working memory for agents (auto-registered when feature enabled) |
-| **In-Context Memory** | `context_set`, `context_delete`, `context_list` | Key-value store visible directly in context (auto-registered) |
-| **Persistent Instructions** | `instructions_set`, `instructions_remove`, `instructions_list`, `instructions_clear` | Cross-session agent instructions (auto-registered) |
+| **Unified Store** | `store_get`, `store_set`, `store_delete`, `store_list`, `store_action` | Generic CRUD for all plugin stores: memory, context, instructions, user_info, workspace (auto-registered) |
 | **Filesystem** | `read_file`, `write_file`, `edit_file`, `glob`, `grep`, `list_directory` | Local file operations |
 | **Shell** | `bash` | Shell command execution with safety guards |
 | **Web** | `webFetch` (built-in), `web_search` / `web_scrape` (ConnectorTools) | Web content retrieval, search, and scraping |
@@ -4665,45 +4663,43 @@ The library ships with 38+ built-in tools across 8 categories:
 
 Memory, In-Context Memory, and Persistent Instructions tools are documented in their respective sections above. Multimedia tools are documented in the Audio, Image, and Video sections. Desktop tools are documented in the Desktop Automation Tools section below. The rest are documented below.
 
-#### Memory Tools
+#### Store Tools (Memory, Context, Instructions, User Info, Workspace)
 
-Available when `workingMemory` feature is enabled:
+All plugin stores are accessed through the 5 unified `store_*` tools. Each store becomes available when its corresponding feature flag is enabled:
 
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
   model: 'gpt-4',
-  context: { features: { workingMemory: true } },
+  context: {
+    features: {
+      workingMemory: true,       // enables store="memory"
+      inContextMemory: true,     // enables store="context"
+      persistentInstructions: true, // enables store="instructions"
+      userInfo: true,            // enables store="user_info"
+      sharedWorkspace: true,     // enables store="workspace"
+    },
+  },
 });
 
-// The LLM can use these tools automatically:
-// - memory_store: Store key-value pair
-// - memory_retrieve: Retrieve value by key
-// - memory_delete: Delete entry
-// - memory_query: Query/list entries (by tier, pattern, etc.)
-// - memory_cleanup_raw: Clean up raw tier entries
+// The LLM uses these 5 tools to interact with all stores:
+// - store_get(store, key?)       — get one entry or all
+// - store_set(store, key, data)  — create/update entry
+// - store_delete(store, key)     — remove entry
+// - store_list(store, filter?)   — list entries
+// - store_action(store, action, params?) — store-specific operations (query, clear, etc.)
 
-// Programmatic access:
+// Examples:
+// store_set("memory", "user.profile", { description: "User profile", value: { name: "Alice" }, priority: "high" })
+// store_get("memory", "user.profile")
+// store_set("context", "state", { description: "Current state", value: { step: 1 }, showInUI: true })
+// store_set("instructions", "tone", { content: "Be concise" })
+// store_action("memory", "query", { tier: "findings" })
+
+// Programmatic access (unchanged):
 const memory = agent.context.memory;
 await memory.store('user.profile', 'User profile', { name: 'Alice' }, 'high');
 const profile = await memory.retrieve('user.profile');
-```
-
-#### In-Context Memory Tools
-
-Available when `inContextMemory` feature is enabled:
-
-```typescript
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4',
-  context: { features: { inContextMemory: true } },
-});
-
-// The LLM can use these tools automatically:
-// - context_set: Store/update entry (appears directly in context; set showInUI: true to display in sidebar)
-// - context_delete: Remove entry
-// - context_list: List all entries (includes showInUI status)
 ```
 
 #### Context Budget
