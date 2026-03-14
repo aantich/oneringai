@@ -97,7 +97,7 @@ export class StoreToolsManager {
       lines.push(`  ${schema.usageHint}`);
 
       if (mode === 'set') {
-        lines.push(`  Data: { ${schema.setDataFields.replace(/\n/g, ', ')} }`);
+        lines.push(`  Fields (pass as top-level params): ${schema.setDataFields.replace(/\n/g, ', ')}`);
       }
 
       if (mode === 'action' && schema.actions) {
@@ -159,21 +159,27 @@ export class StoreToolsManager {
             properties: {
               store: { type: 'string', description: 'Target store name' },
               key: { type: 'string', description: 'Unique key for the entry' },
-              data: {
-                type: 'object',
-                description: 'Entry data (fields depend on store — see store descriptions)',
-              },
             },
-            required: ['store', 'key', 'data'],
+            required: ['store', 'key'],
+            additionalProperties: true,
           },
         },
       },
       descriptionFactory: () => {
-        return `Create or update an entry in a data store.\n\n${this.buildStoreDescriptions('set')}`;
+        return `Create or update an entry in a data store. Pass store-specific fields as top-level parameters alongside store and key.\n\n${this.buildStoreDescriptions('set')}`;
       },
       execute: async (args: Record<string, unknown>, context?: ToolContext) => {
         const handler = this.resolveHandler(args.store as string);
-        return handler.storeSet(args.key as string, args.data as Record<string, unknown>, context);
+        // Extract data fields: everything except store/key routing params.
+        // Supports both flat args { store, key, value, description } and legacy { store, key, data: {...} }
+        let data: Record<string, unknown>;
+        if (args.data && typeof args.data === 'object' && !Array.isArray(args.data)) {
+          data = args.data as Record<string, unknown>;
+        } else {
+          const { store: _s, key: _k, ...rest } = args;
+          data = rest;
+        }
+        return handler.storeSet(args.key as string, data, context);
       },
       permission: { scope: 'always', riskLevel: 'low' },
       describeCall: (args) => `set ${args.key} in ${args.store}`,
@@ -220,24 +226,33 @@ export class StoreToolsManager {
             type: 'object',
             properties: {
               store: { type: 'string', description: 'Target store name' },
-              filter: {
-                type: 'object',
-                description: 'Optional filter criteria (store-specific — see store descriptions)',
-              },
             },
             required: ['store'],
+            additionalProperties: true,
           },
         },
       },
       descriptionFactory: () => {
-        return `List entries in a data store. Returns summaries, not full values.\n\n${this.buildStoreDescriptions('list')}`;
+        return `List entries in a data store. Returns summaries, not full values. Pass filter fields as top-level parameters alongside store.\n\n${this.buildStoreDescriptions('list')}`;
       },
       execute: async (args: Record<string, unknown>, context?: ToolContext) => {
         const handler = this.resolveHandler(args.store as string);
-        return handler.storeList(args.filter as Record<string, unknown> | undefined, context);
+        // Support both { filter: {...} } and flat filter args { store, status, tags }
+        let filter: Record<string, unknown> | undefined;
+        if (args.filter && typeof args.filter === 'object' && !Array.isArray(args.filter)) {
+          filter = args.filter as Record<string, unknown>;
+        } else {
+          const { store: _s, ...rest } = args;
+          filter = Object.keys(rest).length > 0 ? rest : undefined;
+        }
+        return handler.storeList(filter, context);
       },
       permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: (args) => `list ${args.store}${args.filter ? ' (filtered)' : ''}`,
+      describeCall: (args) => {
+        const { store, filter, ...rest } = args;
+        const hasFilter = filter || Object.keys(rest).length > 0;
+        return `list ${store}${hasFilter ? ' (filtered)' : ''}`;
+      },
     };
   }
 
@@ -253,22 +268,27 @@ export class StoreToolsManager {
             properties: {
               store: { type: 'string', description: 'Target store name' },
               action: { type: 'string', description: 'Action name' },
-              params: {
-                type: 'object',
-                description: 'Action parameters (action-specific)',
-              },
             },
             required: ['store', 'action'],
+            additionalProperties: true,
           },
         },
       },
       descriptionFactory: () => {
-        return `Execute a store-specific action (e.g., clear, cleanup, query).\nDestructive actions require { confirm: true } in params.\n\n${this.buildStoreDescriptions('action')}`;
+        return `Execute a store-specific action (e.g., clear, cleanup, query).\nDestructive actions require { confirm: true } as a parameter.\n\n${this.buildStoreDescriptions('action')}`;
       },
       execute: async (args: Record<string, unknown>, context?: ToolContext) => {
         const handler = this.resolveHandler(args.store as string);
         const action = args.action as string;
-        const params = args.params as Record<string, unknown> | undefined;
+
+        // Support both { params: {...} } and flat params { store, action, message, confirm }
+        let params: Record<string, unknown> | undefined;
+        if (args.params && typeof args.params === 'object' && !Array.isArray(args.params)) {
+          params = args.params as Record<string, unknown>;
+        } else {
+          const { store: _s, action: _a, ...rest } = args;
+          params = Object.keys(rest).length > 0 ? rest : undefined;
+        }
 
         // Check if handler supports actions
         if (!handler.storeAction) {
@@ -286,7 +306,7 @@ export class StoreToolsManager {
           return {
             success: false,
             action,
-            error: `Action "${action}" is destructive and requires { confirm: true } in params`,
+            error: `Action "${action}" is destructive and requires { confirm: true }`,
           };
         }
 

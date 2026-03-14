@@ -248,6 +248,17 @@ describe('StoreToolsManager', () => {
       expect(result.key).toBe('k1');
     });
 
+    it('store_set supports flat args (without data wrapper)', async () => {
+      const tool = findTool('store_set');
+      // LLMs often pass value/description/priority as top-level args instead of nesting in data
+      const result = await tool.execute({
+        store: 'notes', key: 'k2', value: { foo: 1 }, description: 'Test', priority: 'high',
+      }) as StoreSetResult & { data: Record<string, unknown> };
+      expect(result.success).toBe(true);
+      expect(result.key).toBe('k2');
+      expect(result.data).toEqual({ value: { foo: 1 }, description: 'Test', priority: 'high' });
+    });
+
     it('store_delete routes to correct handler', async () => {
       const tool = findTool('store_delete');
       const result = await tool.execute({ store: 'notes', key: 'k1' }) as StoreDeleteResult;
@@ -404,7 +415,7 @@ describe('StoreToolsManager', () => {
       const tools = manager.getTools();
       const setTool = tools.find(t => t.definition.function.name === 'store_set')!;
       const desc = setTool.descriptionFactory!();
-      expect(desc).toContain('Data:');
+      expect(desc).toContain('Fields (pass as top-level params):');
       expect(desc).toContain('value (required)');
     });
 

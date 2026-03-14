@@ -83,7 +83,7 @@ const DEFAULT_CONFIG: Required<Omit<SharedWorkspaceConfig, 'onEntriesChanged'>> 
 // Instructions
 // ============================================================================
 
-const SHARED_WORKSPACE_INSTRUCTIONS = `Store name: "workspace". Use store_set("workspace", key, { summary, content?, references?, status?, tags? }).
+const SHARED_WORKSPACE_INSTRUCTIONS = `Store name: "workspace". Use store_set({ store: "workspace", key: "...", summary: "...", content?: "...", references?: [...], status?: "...", tags?: [...] }).
 Shared Workspace is a team bulletin board — visible to ALL agents in the team.
 Entries track shared artifacts, plans, reviews, and task status.
 
@@ -99,12 +99,12 @@ Entries track shared artifacts, plans, reviews, and task status.
 **NOT for:** Persistent rules (use "instructions").
 
 **Tools:**
-- store_set("workspace", key, { summary, content?, references?, status?, tags? })
-- store_get("workspace", key?) — get one entry or all
-- store_delete("workspace", key)
-- store_list("workspace", { status?, tags?, author? })
-- store_action("workspace", "log", { message }) — append to shared conversation log
-- store_action("workspace", "history", { limit? }) — see recent log entries`;
+- store_set({ store: "workspace", key, summary, content?, references?, status?, tags?, author? })
+- store_get({ store: "workspace", key? }) \u2014 get one entry or all
+- store_delete({ store: "workspace", key })
+- store_list({ store: "workspace", status?, tags?, author? })
+- store_action({ store: "workspace", action: "log", params: { message, author? } }) \u2014 append to shared log
+- store_action({ store: "workspace", action: "history", params: { limit? } }) \u2014 see recent log entries`;
 
 // ============================================================================
 // Plugin Implementation
@@ -248,7 +248,7 @@ export class SharedWorkspacePluginNextGen implements IContextPluginNextGen, ISto
       displayName: 'Shared Workspace',
       description: 'Team bulletin board — visible to ALL agents. Tracks shared artifacts, plans, and status.',
       usageHint: 'Use for: shared plans, reviews, task status, collaborative documents. Private notes? Use "context". Persistent rules? Use "instructions".',
-      setDataFields: 'summary (required): Brief description of the artifact\ncontent?: Inline text content (for collaborative documents)\nreferences?: string[] — external pointers (file paths, DB IDs, URLs)\nstatus?: Free-form status (e.g., "draft", "in_review", "approved")\ntags?: string[] — for filtering',
+      setDataFields: 'summary (required): Brief description of the artifact\ncontent?: Inline text content (for collaborative documents)\nreferences?: string[] — external pointers (file paths, DB IDs, URLs)\nstatus?: Free-form status (e.g., "draft", "in_review", "approved")\nauthor?: Who created/updated this entry (defaults to "unknown")\ntags?: string[] — for filtering',
       actions: {
         log: {
           description: 'Append a message to the shared conversation log',

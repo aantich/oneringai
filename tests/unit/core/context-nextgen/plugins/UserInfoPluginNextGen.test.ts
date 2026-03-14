@@ -71,10 +71,10 @@ describe('UserInfoPluginNextGen', () => {
     it('should provide instructions', () => {
       const instructions = plugin.getInstructions();
       expect(instructions).toContain('User Info');
-      expect(instructions).toContain('store_set("user_info"');
-      expect(instructions).toContain('store_get("user_info"');
-      expect(instructions).toContain('store_delete("user_info"');
-      expect(instructions).toContain('store_action("user_info"');
+      expect(instructions).toContain('store_set');
+      expect(instructions).toContain('store_get');
+      expect(instructions).toContain('store_delete');
+      expect(instructions).toContain('store: "user_info"');
       expect(instructions).toContain('automatically shown in context');
     });
 

@@ -75,9 +75,8 @@ export interface WorkingMemoryPluginConfig {
 // Instructions
 // ============================================================================
 
-const WORKING_MEMORY_INSTRUCTIONS = `Store name: "memory". Use store_set("memory", key, { description, value, ... }).
-This is your EXTERNAL notepad \u2014 data is stored outside your context window.
-You see entry descriptions in context but must call store_get("memory", key) to read full values.
+const WORKING_MEMORY_INSTRUCTIONS = `Store name: "memory". Your EXTERNAL notepad \u2014 data stored outside context window.
+You see entry descriptions in context but must call store_get to read full values.
 Use for: large data, research findings, intermediate results, analysis.
 NOT for: small state you check every turn (use "context" \u2014 values appear directly in context).
 
@@ -87,12 +86,12 @@ NOT for: small state you check every turn (use "context" \u2014 values appear di
 - \`findings\`: High priority, kept longest. Final conclusions and insights.
 
 **Workflow:**
-1. Store raw data: \`store_set("memory", "topic", { description: "...", value: ..., tier: "raw" })\`
-2. Process and summarize: \`store_set("memory", "topic", { description: "...", value: ..., tier: "summary" })\`
-3. Extract findings: \`store_set("memory", "topic", { description: "...", value: ..., tier: "findings" })\`
-4. Clean up raw: \`store_action("memory", "cleanup_raw")\` or \`store_delete("memory", key)\`
+1. Store raw data: \`store_set({ store: "memory", key: "topic", description: "...", value: ..., tier: "raw" })\`
+2. Process and summarize: \`store_set({ store: "memory", key: "topic", description: "...", value: ..., tier: "summary" })\`
+3. Extract findings: \`store_set({ store: "memory", key: "topic", description: "...", value: ..., tier: "findings" })\`
+4. Clean up raw: \`store_action({ store: "memory", action: "cleanup_raw" })\` or \`store_delete({ store: "memory", key: "..." })\`
 
-**Tools:** store_set("memory", ...), store_get("memory", ...), store_delete("memory", ...), store_list("memory", ...), store_action("memory", "query"|"cleanup_raw")`;
+**Tools:** store_set, store_get, store_delete, store_list, store_action \u2014 all with store: "memory".`;
 
 // ============================================================================
 // Plugin Implementation

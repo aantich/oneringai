@@ -61,10 +61,10 @@ Each instruction is a keyed entry that can be independently managed.
 Store name: "instructions". NOT for temporary state (use "context") or user info (use "user_info").
 
 **To modify:**
-- \`store_set("instructions", key, { content })\`: Add or update a single instruction by key
-- \`store_delete("instructions", key)\`: Remove a single instruction by key
-- \`store_list("instructions")\`: List all instructions with keys and content
-- \`store_action("instructions", "clear", { confirm: true })\`: Remove all instructions (destructive!)
+- \`store_set({ store: "instructions", key: "...", content: "..." })\`: Add or update a single instruction by key
+- \`store_delete({ store: "instructions", key: "..." })\`: Remove a single instruction by key
+- \`store_list({ store: "instructions" })\`: List all instructions with keys and content
+- \`store_action({ store: "instructions", action: "clear", params: { confirm: true } })\`: Remove all instructions (destructive!)
 
 **Use for:** Agent personality, user preferences, learned rules, guidelines.`;
 

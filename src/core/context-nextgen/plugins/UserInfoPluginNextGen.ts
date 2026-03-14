@@ -71,10 +71,10 @@ Data is user-specific and persists across sessions and agents.
 User info is automatically shown in context — no need to retrieve every turn.
 
 **To manage:**
-- \`store_set("user_info", key, { value, description? })\`: Store/update user information
-- \`store_get("user_info", key?)\`: Retrieve one entry by key, or all entries if no key
-- \`store_delete("user_info", key)\`: Remove a specific entry
-- \`store_action("user_info", "clear", { confirm: true })\`: Remove all entries (destructive!)
+- \`store_set({ store: "user_info", key: "...", value: ..., description?: "..." })\`: Store/update user information
+- \`store_get({ store: "user_info", key?: "..." })\`: Retrieve one entry by key, or all entries if no key
+- \`store_delete({ store: "user_info", key: "..." })\`: Remove a specific entry
+- \`store_action({ store: "user_info", action: "clear", params: { confirm: true } })\`: Remove all entries (destructive!)
 
 **Use for:** User preferences, context, metadata (theme, language, timezone, role, etc.) It is also perfectly fine to search the web and other external sources for information about the user and then store it in user info for future use.
 
@@ -99,7 +99,7 @@ TODOs are stored alongside user info and shown in a separate "Current TODOs" sec
 - Suggest appropriate tags based on context (e.g. "work", "personal", "urgent").
 
 **Reminder rules:**
-- Check the \`_todo_last_reminded\` entry in user info. If its value is NOT today's date (YYYY-MM-DD) AND there are overdue or soon-due items (within 2 days), proactively remind the user ONCE at the start of the conversation, then set \`_todo_last_reminded\` to today's date via \`store_set("user_info", "_todo_last_reminded", { value: "YYYY-MM-DD" })\`.
+- Check the \`_todo_last_reminded\` entry in user info. If its value is NOT today's date (YYYY-MM-DD) AND there are overdue or soon-due items (within 2 days), proactively remind the user ONCE at the start of the conversation, then set \`_todo_last_reminded\` to today's date via \`store_set({ store: "user_info", key: "_todo_last_reminded", value: "YYYY-MM-DD" })\`.
 - Do NOT remind again in the same day unless the user explicitly asks about their TODOs.
 - When reminding, prioritize: overdue items first, then items due today, then items due tomorrow.
 - If the user asks about their TODOs or schedule, always answer regardless of reminder status.

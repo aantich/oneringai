@@ -74,7 +74,7 @@ const DEFAULT_CONFIG = {
 // Instructions
 // ============================================================================
 
-const IN_CONTEXT_MEMORY_INSTRUCTIONS = `Store name: "context". Use store_set("context", key, { description, value, priority?, showInUI? }).
+const IN_CONTEXT_MEMORY_INSTRUCTIONS = `Store name: "context". Use store_set({ store: "context", key: "...", description: "...", value: ..., priority?: "...", showInUI?: true/false }).
 Live Context stores key-value pairs DIRECTLY in your context window.
 Values are immediately visible every turn — no retrieval needed.
 
@@ -93,7 +93,7 @@ Values are immediately visible every turn — no retrieval needed.
 Values shown in the UI support the same rich markdown formatting as the chat window
 (see formatting instructions above). Use this for dashboards, progress displays, and results the user should see.
 
-**Tools:** store_set("context", key, { description, value, priority?, showInUI? }), store_get("context", key?), store_delete("context", key), store_list("context")`;
+**Tools:** store_set, store_get, store_delete, store_list \u2014 all with store: "context".`;
 
 // ============================================================================
 // Plugin Implementation
