@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import type { ToolCategoryMeta } from './toolTypes.js';
 
 interface Props {
@@ -13,7 +14,7 @@ export function ToolCategoryNav({ categories, selected, onSelect }: Props) {
       {categories.map((cat) => (
         <button
           key={cat.id}
-          className={`cat-nav__item${selected === cat.id ? ' cat-nav__item--active' : ''}`}
+          className={clsx('cat-nav__item', { 'cat-nav__item--active': selected === cat.id })}
           onClick={() => onSelect(cat.id)}
         >
           <span className="cat-nav__icon">{cat.icon}</span>

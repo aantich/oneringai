@@ -63,7 +63,7 @@ function ToolRow({ tool, selected, onSelect, onToggle }: ToolRowProps) {
 
   return (
     <div
-      className={clsx('tool-row', selected && 'tool-row--selected', !tool.enabled && 'tool-row--disabled')}
+      className={clsx('tool-row', { 'tool-row--selected': selected, 'tool-row--disabled': !tool.enabled })}
       onClick={() => onSelect(tool.name)}
     >
       <div className={clsx('tool-row__icon', `tool-icon--${tool.category}`)}>
@@ -79,7 +79,7 @@ function ToolRow({ tool, selected, onSelect, onToggle }: ToolRowProps) {
           {tool.safeByDefault ? 'Safe' : 'Approval'}
         </span>
         <button
-          className={clsx('tool-toggle', tool.enabled && 'tool-toggle--on')}
+          className={clsx('tool-toggle', { 'tool-toggle--on': tool.enabled })}
           onClick={handleToggle}
           title={tool.enabled ? 'Disable tool' : 'Enable tool'}
         >
