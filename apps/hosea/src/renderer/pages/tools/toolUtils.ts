@@ -1,3 +1,5 @@
+import React from 'react';
+import { Braces, Code2, FolderOpen, Globe, HelpCircle, LayoutGrid, Monitor, RefreshCw, Star, Terminal } from 'lucide-react';
 import type { ToolCategoryId, ToolCategoryMeta, ToolListItem, ToolSchemaParam } from './toolTypes.js';
 
 /** Human-readable label for each category */
@@ -17,21 +19,22 @@ export function getCatLabel(category: ToolCategoryId | 'all'): string {
   return labels[category] ?? category;
 }
 
-/** Emoji icon for each category */
-export function getCatIcon(category: ToolCategoryId | 'all'): string {
-  const icons: Record<string, string> = {
-    all: '⊞',
-    filesystem: '📁',
-    shell: '💻',
-    web: '🌐',
-    code: '⚙️',
-    json: '{ }',
-    routines: '🔄',
-    desktop: '🖥',
-    'custom-tools': '⭐',
-    other: '•',
-  };
-  return icons[category] ?? '•';
+const CAT_ICONS: Record<string, React.ReactElement> = {
+  all:           React.createElement(LayoutGrid, { size: 14 }),
+  filesystem:    React.createElement(FolderOpen,  { size: 14 }),
+  shell:         React.createElement(Terminal,    { size: 14 }),
+  web:           React.createElement(Globe,       { size: 14 }),
+  code:          React.createElement(Code2,       { size: 14 }),
+  json:          React.createElement(Braces,      { size: 14 }),
+  routines:      React.createElement(RefreshCw,   { size: 14 }),
+  desktop:       React.createElement(Monitor,     { size: 14 }),
+  'custom-tools': React.createElement(Star,       { size: 14 }),
+  other:         React.createElement(HelpCircle,  { size: 14 }),
+};
+
+/** Lucide icon element for each category */
+export function getCatIcon(category: ToolCategoryId | 'all'): React.ReactElement {
+  return CAT_ICONS[category] ?? CAT_ICONS['other']!;
 }
 
 /** CSS color token suffix for each category (used as data-cat attribute) */

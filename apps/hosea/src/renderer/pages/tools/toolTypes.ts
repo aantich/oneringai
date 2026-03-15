@@ -2,6 +2,7 @@
  * Tool display types — shapes consumed by renderer components.
  * Display-subset of the IPC contract from window.hosea.tool.registry()
  */
+import type React from 'react';
 
 /** Tool category identifiers matching ToolCategory in registry.generated.ts */
 export type ToolCategoryId =
@@ -31,7 +32,7 @@ export interface ToolListItem {
 export interface ToolCategoryMeta {
   id: ToolCategoryId | 'all';
   label: string;
-  icon: string;
+  icon: React.ReactElement;
   count: number;
 }
 
