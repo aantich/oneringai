@@ -238,12 +238,14 @@ export type {
   SerializedApprovalEntry,
   PermissionCheckResult,
   ApprovalDecision,
+  ApprovalRequestContext,
   AgentPermissionsConfig,
   PermissionCheckContext,
   PermissionManagerEvent,
 } from './core/permissions/index.js';
 export { APPROVAL_STATE_VERSION, DEFAULT_PERMISSION_CONFIG, DEFAULT_ALLOWLIST } from './core/permissions/index.js';
 export type { DefaultAllowlistedTool } from './core/permissions/index.js';
+export { FileUserPermissionRulesStorage } from './infrastructure/storage/FileUserPermissionRulesStorage.js';
 
 // Context Storage (Session Persistence via AgentContext)
 export type {

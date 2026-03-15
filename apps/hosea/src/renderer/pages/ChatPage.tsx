@@ -12,7 +12,9 @@ import {
   MarkdownRenderer,
   ThinkingBlock,
   ToolCallCard,
+  ToolApprovalBanner,
   type IChatMessage,
+  type IToolApprovalDecision,
 } from '@everworker/react-ui';
 import { SidebarPanel, SIDEBAR_PANEL_DEFAULT_WIDTH } from '../components/SidebarPanel';
 import { PlanDisplay } from '../components/plan';
@@ -279,6 +281,25 @@ function ChatContent({ tab, onSend, onCancel }: ChatContentProps): React.ReactEl
     onSend(`Feedback on the plan: ${feedback}`);
   }, [tab.activePlan, onSend]);
 
+  // Tool permission approval handlers
+  const [approvalLoading, setApprovalLoading] = useState(false);
+
+  const handleToolApproval = useCallback(async (decision: IToolApprovalDecision) => {
+    setApprovalLoading(true);
+    try {
+      await window.hosea.agent.respondToolApproval(tab.instanceId, {
+        requestId: decision.requestId,
+        approved: decision.approved,
+        scope: decision.scope,
+        remember: decision.remember,
+      });
+    } catch (error) {
+      console.error('Error responding to tool approval:', error);
+    } finally {
+      setApprovalLoading(false);
+    }
+  }, [tab.instanceId]);
+
   // Compute active tool calls for ExecutionProgress
   const activeToolCallsArray = Array.from(tab.activeToolCalls.values());
 
@@ -294,6 +315,18 @@ function ChatContent({ tab, onSend, onCancel }: ChatContentProps): React.ReactEl
             onFeedback={tab.activePlan.status === 'pending' ? handlePlanFeedback : undefined}
             isApproving={planLoading === 'approving'}
             isRejecting={planLoading === 'rejecting'}
+          />
+        </div>
+      )}
+
+      {/* Tool Permission Approval Banner */}
+      {tab.pendingApproval && (
+        <div className="chat__approval-fixed" style={{ padding: '0 1rem' }}>
+          <ToolApprovalBanner
+            request={tab.pendingApproval}
+            onApprove={handleToolApproval}
+            onDeny={handleToolApproval}
+            isResponding={approvalLoading}
           />
         </div>
       )}

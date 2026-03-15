@@ -62,6 +62,8 @@ export interface TabState {
     tasks: Map<string, { name: string; status: string; output?: string; error?: string }>;
     steps: Array<{ timestamp: number; taskName: string; type: string; data?: Record<string, unknown> }>;
   } | null;
+  // Tool permission approval
+  pendingApproval: import('../../preload/index').ToolApprovalRequest | null;
   // Orchestrator state
   isOrchestrator: boolean;
   workers: Map<string, WorkerState>;
@@ -278,6 +280,16 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
               ...updatedTab.messages.slice(0, -1),
               { ...lastMsg, toolCalls: updatedToolCalls },
             ];
+          }
+        }
+        // Tool permission approval events
+        else if (chunk.type === 'tool:approval_required') {
+          const c = chunk as { request: import('../../preload/index').ToolApprovalRequest };
+          updatedTab.pendingApproval = c.request;
+        } else if (chunk.type === 'tool:approval_resolved') {
+          const c = chunk as { requestId: string; approved: boolean };
+          if (updatedTab.pendingApproval?.requestId === c.requestId) {
+            updatedTab.pendingApproval = null;
           }
         }
         // Plan events
@@ -627,6 +639,7 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
         streamingThinking: '',
         activeToolCalls: new Map(),
         activePlan: null,
+        pendingApproval: null,
         isLoading: false,
         status: {
           initialized: true,
@@ -750,6 +763,7 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
         streamingThinking: '',
         activeToolCalls: new Map(),
         activePlan: null,
+        pendingApproval: null,
         isLoading: false,
         status: { initialized: true, connector: null, model: null, mode: null },
         createdAt: Date.now(),

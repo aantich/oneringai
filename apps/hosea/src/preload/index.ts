@@ -247,6 +247,9 @@ export type StreamChunk =
   | { type: 'orchestrator:worker_turn_start'; workerName: string }
   | { type: 'orchestrator:worker_turn_end'; workerName: string; success: boolean }
   | { type: 'orchestrator:workspace_update'; entries: WorkspaceEntryForUI[] }
+  // Tool permission approval events
+  | { type: 'tool:approval_required'; request: ToolApprovalRequest }
+  | { type: 'tool:approval_resolved'; requestId: string; approved: boolean }
   // Stream status events (retry, incomplete, failed)
   | { type: 'retry'; attempt: number; maxAttempts: number; reason: string; delayMs: number }
   | { type: 'status'; status: 'completed' | 'incomplete' | 'failed'; stopReason?: string };
@@ -278,6 +281,49 @@ export interface WorkspaceEntryForUI {
   author: string;
   version: number;
   updatedAt: number;
+}
+
+/**
+ * Tool approval request sent to renderer
+ */
+export interface ToolApprovalRequest {
+  requestId: string;
+  toolName: string;
+  args: Record<string, unknown>;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  approvalMessage?: string;
+  sensitiveArgs?: string[];
+  suggestedScope: 'once' | 'session' | 'persistent';
+  toolCategory?: string;
+  toolSource?: string;
+  description?: string;
+}
+
+/**
+ * Tool approval response from renderer
+ */
+export interface ToolApprovalResponse {
+  requestId: string;
+  approved: boolean;
+  scope: 'once' | 'session' | 'always' | 'never';
+  remember: boolean;
+}
+
+/**
+ * Permission rule for UI display
+ */
+export interface UserPermissionRuleForUI {
+  id: string;
+  toolName: string;
+  action: 'allow' | 'deny' | 'ask';
+  conditions?: Array<{ argName: string; operator: string; value: string }>;
+  unconditional: boolean;
+  enabled: boolean;
+  description?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  expiresAt?: string | null;
 }
 
 /**
@@ -395,6 +441,13 @@ export interface HoseaAPI {
     // Orchestrator worker inspection
     inspectWorker: (instanceId: string, workerRegistryId: string) => Promise<unknown>;
     listWorkers: (instanceId: string) => Promise<{ workers: unknown[] }>;
+    // Tool permission approval
+    respondToolApproval: (instanceId: string, response: ToolApprovalResponse) => Promise<{ success: boolean; error?: string }>;
+    // Permission rules management
+    getPermissionRules: (instanceId: string) => Promise<{ success: boolean; rules?: UserPermissionRuleForUI[]; error?: string }>;
+    deletePermissionRule: (instanceId: string, ruleId: string) => Promise<{ success: boolean; error?: string }>;
+    togglePermissionRule: (instanceId: string, ruleId: string, enabled: boolean) => Promise<{ success: boolean; error?: string }>;
+    clearSessionApprovals: (instanceId: string) => Promise<{ success: boolean; error?: string }>;
   };
 
   // Connectors
@@ -1406,6 +1459,13 @@ const api: HoseaAPI = {
     // Orchestrator worker inspection
     inspectWorker: (instanceId, workerRegistryId) => ipcRenderer.invoke('agent:inspect-worker', instanceId, workerRegistryId),
     listWorkers: (instanceId) => ipcRenderer.invoke('agent:list-workers', instanceId),
+    // Tool permission approval
+    respondToolApproval: (instanceId, response) => ipcRenderer.invoke('agent:respond-tool-approval', instanceId, response),
+    // Permission rules management
+    getPermissionRules: (instanceId) => ipcRenderer.invoke('agent:get-permission-rules', instanceId),
+    deletePermissionRule: (instanceId, ruleId) => ipcRenderer.invoke('agent:delete-permission-rule', instanceId, ruleId),
+    togglePermissionRule: (instanceId, ruleId, enabled) => ipcRenderer.invoke('agent:toggle-permission-rule', instanceId, ruleId, enabled),
+    clearSessionApprovals: (instanceId) => ipcRenderer.invoke('agent:clear-session-approvals', instanceId),
   },
 
   connector: {

@@ -272,6 +272,27 @@ async function setupIPC(): Promise<void> {
     return { workers: AgentRegistry.filterInfo({ parentAgentId: instance.agent.registryId }) };
   }));
 
+  // Tool permission approval
+  ipcMain.handle('agent:respond-tool-approval', readyHandler(async (_event, instanceId: string, response: unknown) => {
+    return agentService!.respondToolApproval(instanceId, response as any);
+  }));
+
+  ipcMain.handle('agent:get-permission-rules', readyHandler(async (_event, instanceId: string) => {
+    return agentService!.getPermissionRules(instanceId);
+  }));
+
+  ipcMain.handle('agent:delete-permission-rule', readyHandler(async (_event, instanceId: string, ruleId: string) => {
+    return agentService!.deletePermissionRule(instanceId, ruleId);
+  }));
+
+  ipcMain.handle('agent:toggle-permission-rule', readyHandler(async (_event, instanceId: string, ruleId: string, enabled: boolean) => {
+    return agentService!.togglePermissionRule(instanceId, ruleId, enabled);
+  }));
+
+  ipcMain.handle('agent:clear-session-approvals', readyHandler(async (_event, instanceId: string) => {
+    return agentService!.clearSessionApprovals(instanceId);
+  }));
+
   // Voice pseudo-streaming
   ipcMain.handle('agent:set-voiceover', readyHandler(async (_event, instanceId: string, enabled: boolean) => {
     return agentService!.setVoiceover(instanceId, enabled);
