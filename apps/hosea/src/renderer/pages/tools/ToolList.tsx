@@ -75,7 +75,7 @@ function ToolRow({ tool, selected, onSelect, onToggle }: ToolRowProps) {
         <div className="tool-row__desc">{tool.description}</div>
       </div>
       <div className="tool-row__meta">
-        <span className={clsx('perm-badge', tool.safeByDefault ? 'perm-badge--safe' : 'perm-badge--approval')}>
+        <span className={clsx('perm-badge', { 'perm-badge--safe': tool.safeByDefault, 'perm-badge--approval': !tool.safeByDefault })}>
           {tool.safeByDefault ? 'Safe' : 'Approval'}
         </span>
         <button

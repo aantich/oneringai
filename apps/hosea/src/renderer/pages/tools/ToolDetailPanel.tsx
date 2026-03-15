@@ -20,14 +20,13 @@ export function ToolDetailPanel({ tool, schema, panelWidth, onClose }: Props) {
     <div className="detail-panel" style={{ width: panelWidth }}>
       <div className="pn-header">
         <div className={clsx('pn-header__icon', `tool-icon--${tool.category}`)}>
-
           {getCatIcon(tool.category)}
         </div>
         <div className="pn-header__info">
           <div className="pn-header__name">{tool.name}</div>
           <div className="pn-header__badges">
             <span className="pn-header__cat-badge">{getCatLabel(tool.category)}</span>
-            <span className={clsx('perm-badge', safe ? 'perm-badge--safe' : 'perm-badge--approval')}>
+            <span className={clsx('perm-badge', { 'perm-badge--safe': safe, 'perm-badge--approval': !safe })}>
               {safe ? '✓ Auto-allowed' : '⚠ Approval'}
             </span>
           </div>
@@ -57,7 +56,7 @@ export function ToolDetailPanel({ tool, schema, panelWidth, onClose }: Props) {
                     <div className="param-row__head">
                       <span className="param-row__name">{param.name}</span>
                       <span className="param-row__type">{param.type}</span>
-                      <span className={clsx('param-row__required', param.required ? 'param-row__required--yes' : 'param-row__required--no')}>
+                      <span className={clsx('param-row__required', { 'param-row__required--yes': param.required, 'param-row__required--no': !param.required })}>
                         {param.required ? 'required' : 'optional'}
                       </span>
                     </div>
@@ -73,7 +72,7 @@ export function ToolDetailPanel({ tool, schema, panelWidth, onClose }: Props) {
 
         <div>
           <div className="pn-section__label">Permission</div>
-          <div className={clsx('pn-perm-box', safe ? 'pn-perm-box--safe' : 'pn-perm-box--approval')}>
+          <div className={clsx('pn-perm-box', { 'pn-perm-box--safe': safe, 'pn-perm-box--approval': !safe })}>
             <div className="pn-perm-box__icon">{safe ? '✓' : '⚠'}</div>
             <div>
               <div className="pn-perm-box__title">
