@@ -352,7 +352,7 @@ export class OpenAISoraProvider extends BaseMediaProvider implements IVideoProvi
     // If it's a file path, read it
     if (!image.startsWith('http')) {
       const fs = await import('fs');
-      const data = fs.readFileSync(image);
+      const data = await fs.promises.readFile(image);
       return new File([new Uint8Array(data)], 'input.png', { type: 'image/png' });
     }
 

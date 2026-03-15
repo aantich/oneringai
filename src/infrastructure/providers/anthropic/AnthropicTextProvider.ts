@@ -52,9 +52,9 @@ export class AnthropicTextProvider extends BaseTextProvider {
         // Convert our format → Anthropic Messages API format
         const anthropicRequest = this.converter.convertRequest(options);
 
-        console.log(
-          `[AnthropicTextProvider] generate: calling Anthropic API (model=${options.model}, ` +
-          `messages=${anthropicRequest.messages?.length ?? 0}, tools=${anthropicRequest.tools?.length ?? 0})`,
+        this.logger.debug(
+          { model: options.model, messageCount: anthropicRequest.messages?.length ?? 0, toolCount: anthropicRequest.tools?.length ?? 0 },
+          'generate: calling Anthropic API',
         );
         const genStartTime = Date.now();
 
@@ -63,14 +63,15 @@ export class AnthropicTextProvider extends BaseTextProvider {
           ...anthropicRequest,
           stream: false,
         });
-        console.log(
-          `[AnthropicTextProvider] generate: response received (${Date.now() - genStartTime}ms)`,
+        this.logger.debug(
+          { model: options.model, duration: Date.now() - genStartTime },
+          'generate: response received',
         );
 
         // Convert Anthropic response → our format
         return this.converter.convertResponse(anthropicResponse);
       } catch (error: any) {
-        console.error(`[AnthropicTextProvider] generate error (model=${options.model}):`, error.message || error);
+        this.logger.error({ model: options.model, error: error.message || error }, 'generate error');
         this.handleError(error, options.model);
         throw error; // TypeScript needs this
       }
@@ -81,14 +82,14 @@ export class AnthropicTextProvider extends BaseTextProvider {
    * Stream response using Anthropic Messages API
    */
   async *streamGenerate(options: TextGenerateOptions): AsyncIterableIterator<StreamEvent> {
+    let streamRef: any;
     try {
       // Convert our format → Anthropic Messages API format
       const anthropicRequest = this.converter.convertRequest(options);
 
-      console.log(
-        `[AnthropicTextProvider] streamGenerate: calling Anthropic API (model=${options.model}, ` +
-        `messages=${anthropicRequest.messages?.length ?? 0}, ` +
-        `tools=${anthropicRequest.tools?.length ?? 0})`,
+      this.logger.debug(
+        { model: options.model, messageCount: anthropicRequest.messages?.length ?? 0, toolCount: anthropicRequest.tools?.length ?? 0 },
+        'streamGenerate: calling Anthropic API',
       );
       const streamStartTime = Date.now();
 
@@ -97,8 +98,10 @@ export class AnthropicTextProvider extends BaseTextProvider {
         ...anthropicRequest,
         stream: true,
       });
-      console.log(
-        `[AnthropicTextProvider] streamGenerate: Anthropic stream opened (${Date.now() - streamStartTime}ms)`,
+      streamRef = stream;
+      this.logger.debug(
+        { model: options.model, duration: Date.now() - streamStartTime },
+        'streamGenerate: Anthropic stream opened',
       );
 
       // Reset stream converter for reuse
@@ -110,20 +113,28 @@ export class AnthropicTextProvider extends BaseTextProvider {
         chunkCount++;
         yield event;
       }
-      console.log(
-        `[AnthropicTextProvider] streamGenerate: stream complete (${chunkCount} events, ${Date.now() - streamStartTime}ms total)`,
+      this.logger.debug(
+        { events: chunkCount, duration: Date.now() - streamStartTime },
+        'streamGenerate: stream complete',
       );
     } catch (error: any) {
-      console.error(
-        `[AnthropicTextProvider] streamGenerate error (model=${options.model}):`,
-        error.message || error,
+      this.logger.error(
+        { model: options.model, error: error.message || error },
+        'streamGenerate error',
       );
       this.handleError(error, options.model);
       throw error;
     } finally {
       // ALWAYS clear stream converter to prevent memory leaks
-      // Use finally block to ensure cleanup even on exception
       this.streamConverter.clear();
+      // Abort underlying stream if consumer broke iteration early
+      if (streamRef) {
+        if (typeof streamRef.controller?.abort === 'function') {
+          try { streamRef.controller.abort(); } catch { /* ignore */ }
+        } else if (typeof streamRef.abort === 'function') {
+          try { streamRef.abort(); } catch { /* ignore */ }
+        }
+      }
     }
   }
 

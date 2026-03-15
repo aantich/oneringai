@@ -44,6 +44,8 @@ export function createDesktopMouseClickTool(config?: DesktopToolConfig): ToolFun
       return `${pos}${btn}${count}`;
     },
 
+    permission: { scope: 'session' as const, riskLevel: 'medium' as const },
+
     execute: async (args: DesktopMouseClickArgs): Promise<DesktopMouseClickResult> => {
       try {
         const driver = await getDesktopDriver(config);

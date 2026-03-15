@@ -87,6 +87,7 @@ interface ContextFeatures {
   persistentInstructions?: boolean; // PersistentInstructionsPluginNextGen (default: false)
   userInfo?: boolean;             // UserInfoPluginNextGen (default: false)
   toolCatalog?: boolean;          // ToolCatalogPluginNextGen (default: false)
+  sharedWorkspace?: boolean;      // SharedWorkspacePluginNextGen (default: false)
 }
 
 export const DEFAULT_FEATURES: Required<ContextFeatures> = {
@@ -95,6 +96,7 @@ export const DEFAULT_FEATURES: Required<ContextFeatures> = {
   persistentInstructions: false,
   userInfo: false,
   toolCatalog: false,
+  sharedWorkspace: false,
 };
 ```
 
@@ -220,6 +222,7 @@ src/
 │   ├── constants.ts            # All default values
 │   ├── TextToSpeech.ts, SpeechToText.ts
 │   ├── createProvider.ts, createAudioProvider.ts, createImageProvider.ts, createVideoProvider.ts
+│   ├── orchestrator/           # createOrchestrator, orchestration tools
 │   ├── permissions/            # ToolPermissionManager
 │   └── mcp/                    # MCPClient, MCPRegistry
 ├── domain/
@@ -341,11 +344,31 @@ AgentContextNextGen uses `ICompactionStrategy` implementations registered via `S
 
 Custom strategies can be registered via `StrategyRegistry.register(MyStrategy)`.
 
-## Tool Permissions
+## Tool Permissions (Policy-Based System)
 
-Default allowlist (no approval needed): `read_file`, `glob`, `grep`, `list_directory`, `memory_*`, `context_set`, `context_delete`, `context_list`, `context_stats`, `instructions_*`, `_start_planning`, `_modify_plan`, `_report_progress`, `_request_approval`
+**Architecture**: 3-tier evaluation in `PermissionPolicyManager.check()`:
+1. **User rules pre-check** (highest priority, FINAL) — per-user persistent rules with argument conditions
+2. **Parent delegation** (orchestrator workers) — parent deny is final
+3. **Policy chain** (built-in policies) — deny short-circuits, allow continues
 
-Require approval: `write_file`, `edit_file`, `bash`, `web_*`, `desktop_*`, `execute_javascript`, custom tools
+**Tool self-declaration**: All built-in tools declare `ToolPermissionConfig`:
+- `scope: 'always'` (auto-allow): read_file, glob, grep, list_directory, json_manipulate, store_*, todo_*, tool_catalog_*, desktop_get_*, desktop_window_list, orchestrator tools, meta-tools
+- `scope: 'session'` (ask once): write_file, edit_file, web_fetch, desktop_mouse_*, desktop_screenshot, desktop_keyboard_key, desktop_window_focus, custom_tool_save/delete, routine tools
+- `scope: 'once'` (ask every time): bash, execute_javascript, custom_tool_test, desktop_keyboard_type
+
+**User rules override everything**: `agent.policyManager.userRules` — CRUD API for persistent rules with argument conditions.
+
+**Built-in policies**: AllowlistPolicy, BlocklistPolicy, SessionApprovalPolicy, PathRestrictionPolicy, BashFilterPolicy, UrlAllowlistPolicy, RolePolicy, RateLimitPolicy
+
+**Key files**:
+- `src/core/permissions/PermissionPolicyManager.ts` — top-level manager
+- `src/core/permissions/UserPermissionRulesEngine.ts` — per-user rules with specificity matching
+- `src/core/permissions/PermissionEnforcementPlugin.ts` — ToolManager pipeline plugin
+- `src/core/permissions/PolicyChain.ts` — policy evaluation engine
+- `src/core/permissions/policies/` — 8 built-in policies
+- `src/domain/interfaces/IUserPermissionRulesStorage.ts` — Clean Architecture storage
+
+**Permission allowlist** (backward compat, in DEFAULT_ALLOWLIST): `read_file`, `glob`, `grep`, `list_directory`, `store_get`, `store_set`, `store_delete`, `store_list`, `store_action`, `_start_planning`, `_modify_plan`, `_report_progress`, `_request_approval`, `tool_catalog_search`, `tool_catalog_load`, `tool_catalog_unload`, `todo_add`, `todo_update`, `todo_remove`, `context_stats`
 
 ## Working Memory Scopes
 
@@ -368,9 +391,47 @@ const cost = calculateCost('gpt-5.2-thinking', inputTokens, outputTokens);
 
 ## NextGen Plugins
 
+### Unified Store Tools
+
+All CRUD plugins now share 5 generic `store_*` tools instead of having plugin-specific tool names. The `StoreToolsManager` routes calls to the correct `IStoreHandler` plugin based on the `store` argument.
+
+**The 5 tools:**
+
+| Tool | Purpose |
+|------|---------|
+| `store_get(store, key?)` | Get entry by key, or all entries if key omitted |
+| `store_set(store, key, value, ...)` | Create or update an entry |
+| `store_delete(store, key)` | Delete an entry by key |
+| `store_list(store, options?)` | List entries with optional filtering |
+| `store_action(store, action, params?)` | Store-specific operations (e.g., `cleanup_raw`, `clear`, `query`) |
+
+**Available store IDs:** `"memory"`, `"context"`, `"instructions"`, `"user_info"`, `"workspace"` (plus any custom `IStoreHandler` plugins you register).
+
+Each tool's description dynamically lists all registered stores with "use for / NOT for" guidance, so the LLM knows which store to target.
+
+**Creating a custom CRUD plugin:**
+
+Implement both `IContextPluginNextGen` and `IStoreHandler`, then register with the context. The `StoreToolsManager` auto-detects `IStoreHandler` plugins and routes `store_*` calls to them:
+
+```typescript
+class MyPlugin extends BasePluginNextGen implements IStoreHandler {
+  readonly storeId = 'my_store';
+  readonly storeDescription = 'Custom data store for ...';
+
+  async handleGet(key?: string) { /* ... */ }
+  async handleSet(key: string, value: unknown, meta?: Record<string, unknown>) { /* ... */ }
+  async handleDelete(key: string) { /* ... */ }
+  async handleList(options?: Record<string, unknown>) { /* ... */ }
+  async handleAction?(action: string, params?: Record<string, unknown>) { /* ... */ }
+}
+
+// Register — store tools are available automatically
+ctx.registerPlugin(new MyPlugin());
+```
+
 ### WorkingMemoryPluginNextGen
 
-Tiered memory storage (raw/summary/findings) with automatic eviction:
+Tiered memory storage (raw/summary/findings) with automatic eviction. Implements `IStoreHandler` (storeId: `"memory"`).
 
 ```typescript
 // Access via context
@@ -386,16 +447,17 @@ const value = await memory.retrieve('key');
 const entries = await memory.list({ tier: 'findings' });
 ```
 
-**Tools provided:**
-- `memory_store` - Store data in working memory
-- `memory_retrieve` - Retrieve data by key
-- `memory_delete` - Delete entry
-- `memory_query` - Query memory (by tier, pattern, etc.)
-- `memory_cleanup_raw` - Cleanup raw tier
+**Store tools (via `store_*`):**
+- `store_set("memory", key, value, { description, priority })` - Store data in working memory
+- `store_get("memory", key)` - Retrieve data by key
+- `store_delete("memory", key)` - Delete entry
+- `store_list("memory", { tier, pattern })` - List/query memory entries
+- `store_action("memory", "cleanup_raw")` - Cleanup raw tier
+- `store_action("memory", "query", { tier, pattern, ... })` - Advanced query
 
 ### InContextMemoryPluginNextGen
 
-Key-value storage that appears **directly in context** (no retrieval needed):
+Key-value storage that appears **directly in context** (no retrieval needed). Implements `IStoreHandler` (storeId: `"context"`).
 
 ```typescript
 const ctx = AgentContextNextGen.create({
@@ -407,14 +469,15 @@ const plugin = ctx.getPlugin<InContextMemoryPluginNextGen>('in_context_memory');
 plugin.set('state', 'Current state', { step: 1 }, 'high');
 ```
 
-**Tools provided:**
-- `context_set` - Store/update entry
-- `context_delete` - Remove entry
-- `context_list` - List all entries
+**Store tools (via `store_*`):**
+- `store_set("context", key, value, { description, priority })` - Store/update entry
+- `store_get("context", key)` - Retrieve entry
+- `store_delete("context", key)` - Remove entry
+- `store_list("context")` - List all entries with metadata
 
 ### PersistentInstructionsPluginNextGen
 
-Agent instructions that persist to disk as individually **keyed entries** across sessions:
+Agent instructions that persist to disk as individually **keyed entries** across sessions. Implements `IStoreHandler` (storeId: `"instructions"`).
 
 ```typescript
 const ctx = AgentContextNextGen.create({
@@ -440,18 +503,19 @@ await plugin.remove('code_rules');
 const list = await plugin.list();  // { key, contentLength, createdAt, updatedAt }[]
 ```
 
-**Tools provided:**
-- `instructions_set` - Add/update instruction by key (`key`, `content`)
-- `instructions_remove` - Remove instruction by key
-- `instructions_list` - List all instructions
-- `instructions_clear` - Clear all instructions
+**Store tools (via `store_*`):**
+- `store_set("instructions", key, content)` - Add/update instruction by key
+- `store_get("instructions", key?)` - Get one or all instructions
+- `store_delete("instructions", key)` - Remove instruction by key
+- `store_list("instructions")` - List all instructions with metadata
+- `store_action("instructions", "clear", { confirm: true })` - Clear all instructions
 
 **Config:** `maxTotalLength` (default: 50000), `maxEntries` (default: 50)
 **Storage:** `~/.oneringai/agents/<agentId>/custom_instructions.json`
 
 ### UserInfoPluginNextGen
 
-User-specific information storage that persists across sessions and agents. Data is **user-scoped**, not agent-scoped - different agents share the same user data.
+User-specific information storage that persists across sessions and agents. Implements `IStoreHandler` (storeId: `"user_info"`). Data is **user-scoped**, not agent-scoped - different agents share the same user data.
 
 ```typescript
 // Single-user app — no userId needed
@@ -467,20 +531,16 @@ const ctx = AgentContextNextGen.create({
   features: { userInfo: true },
   userId: 'alice',  // Optional, for multi-user isolation
 });
-
-// Access via tools (userId resolved from context automatically)
-// user_info_set('theme', 'dark', 'User preferred theme')
-// user_info_get('theme')  // Returns: { key, value, valueType, description, ... }
-// user_info_get()         // Returns all entries
-// user_info_remove('theme')
-// user_info_clear(confirm: true)
 ```
 
-**Tools provided:**
-- `user_info_set` - Store/update user information (`key`, `value`, `description?`)
-- `user_info_get` - Retrieve entry by key or all entries (key optional)
-- `user_info_remove` - Remove entry by key
-- `user_info_clear` - Clear all entries (requires `confirm: true`)
+**Store tools (via `store_*`):**
+- `store_set("user_info", key, value, { description })` - Store/update user information
+- `store_get("user_info", key?)` - Retrieve entry by key or all entries
+- `store_delete("user_info", key)` - Remove entry by key
+- `store_list("user_info")` - List all entries
+- `store_action("user_info", "clear", { confirm: true })` - Clear all entries
+
+**Independent tools (NOT via store_*):** `todo_add`, `todo_update`, `todo_remove` remain as standalone tools.
 
 **Config:** `maxTotalSize` (default: 100000 bytes / ~100KB), `maxEntries` (default: 100)
 **Storage:** `~/.oneringai/users/<userId>/user_info.json` (defaults to `~/.oneringai/users/default/user_info.json`)
@@ -492,6 +552,55 @@ const ctx = AgentContextNextGen.create({
 - Tools access current user's data only (no cross-user access)
 - User data NOT injected into context (`getContent()` returns null)
 - Multi-user apps set userId via `Agent.create({ userId })` or `StorageRegistry.setContext({ userId })`
+
+### SharedWorkspacePluginNextGen
+
+Multi-agent coordination bulletin board. Implements `IStoreHandler` (storeId: `"workspace"`). Storage-agnostic with inline content, external references, versioning, author tracking, and append-only conversation log.
+
+```typescript
+const ctx = AgentContextNextGen.create({
+  model: 'gpt-4',
+  features: { sharedWorkspace: true },
+});
+
+const plugin = ctx.getPlugin<SharedWorkspacePluginNextGen>('shared_workspace');
+```
+
+**Feature flag:** `features.sharedWorkspace: true`
+
+**Entry model:**
+```typescript
+interface WorkspaceEntry {
+  key: string;
+  content?: string;           // Inline content
+  references?: string[];      // External references (URLs, file paths, etc.)
+  summary: string;            // Short description
+  status: string;             // e.g., 'draft', 'ready', 'done'
+  author: string;             // Agent or user who created/updated
+  version: number;            // Auto-incremented on update
+  tags?: string[];            // Optional tags for filtering
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+**Store tools (via `store_*`):**
+- `store_set("workspace", key, value, { summary, status, author, tags, references })` - Create/update entry
+- `store_get("workspace", key?)` - Get entry or all entries
+- `store_delete("workspace", key)` - Remove entry
+- `store_list("workspace", { status, tags, author })` - List/filter entries
+- `store_action("workspace", "log", { message, author })` - Append to conversation log
+- `store_action("workspace", "history", { key })` - Get version history for an entry
+- `store_action("workspace", "archive", { key })` - Archive an entry
+- `store_action("workspace", "clear", { confirm: true })` - Clear all entries
+
+**Direct API:**
+```typescript
+plugin.getEntry(key);          // WorkspaceEntry | null
+plugin.getAllEntries();         // WorkspaceEntry[]
+plugin.getLog();               // LogEntry[] (append-only conversation log)
+plugin.appendLog(message, author);  // Append to log
+```
 
 ## Custom Tools Storage (Optional Per-User Isolation)
 
@@ -594,9 +703,10 @@ interface InContextMemoryConfig {
 
 | Tool | Purpose |
 |------|---------|
-| `context_set` | Store/update key-value pair |
-| `context_delete` | Remove entry to free space |
-| `context_list` | List all entries with metadata |
+| `store_set("context", ...)` | Store/update key-value pair |
+| `store_get("context", ...)` | Retrieve entry |
+| `store_delete("context", ...)` | Remove entry to free space |
+| `store_list("context")` | List all entries with metadata |
 
 ### Priority-Based Eviction
 
@@ -842,6 +952,87 @@ const myTool: ToolFunction = {
 };
 ```
 
+## Agent Orchestrator (`src/core/orchestrator/`)
+
+Multi-agent coordination via `createOrchestrator()`. The orchestrator is a regular Agent with orchestration tools — no subclass.
+
+### Usage
+
+```typescript
+import { createOrchestrator } from '@everworker/oneringai';
+
+const orchestrator = createOrchestrator({
+  connector: 'openai',
+  model: 'gpt-4',
+  agentTypes: {
+    architect: { systemPrompt: '...', tools: [readFile, writeFile] },
+    critic: { systemPrompt: '...', tools: [readFile] },
+    developer: { systemPrompt: '...', tools: [readFile, writeFile, editFile, bash] },
+  },
+});
+
+const result = await orchestrator.run('Build an auth module');
+```
+
+### Architecture
+
+- **Orchestrator** = Agent with 7 orchestration tools + shared workspace
+- **Workers** = persistent Agent instances created via `create_agent` tool
+- **SharedWorkspacePlugin** = shared bulletin board (same instance on all agents)
+- **Workspace Delta** = workers auto-receive "what changed since your last turn"
+- **Async turns** = `assign_turn_async` uses `blocking: false` (async tools infrastructure)
+
+### Orchestration Tools (7)
+
+| Tool | Blocking | Purpose |
+|------|----------|---------|
+| `create_agent(name, type)` | yes | Spawn worker from `agentTypes` |
+| `list_agents()` | yes | Show team status |
+| `destroy_agent(name)` | yes | Remove worker |
+| `assign_turn(agent, instruction, timeout?)` | **yes** | Sequential — wait for result |
+| `assign_turn_async(agent, instruction, timeout?)` | **no** | Async — result via continuation |
+| `assign_parallel(assignments[], timeout?)` | yes | Fan-out, wait for all |
+| `send_message(agent, message)` | yes | Inject into running/idle agent |
+
+### Agent.inject()
+
+```typescript
+agent.inject('Please also consider rate limiting', 'user');
+```
+
+Queues a message into a running agent's context. Processed on next agentic loop iteration. Used by `send_message` tool internally.
+
+### OrchestratorConfig
+
+```typescript
+interface OrchestratorConfig {
+  connector: string;
+  model: string;
+  systemPrompt?: string;            // Override auto-generated prompt
+  agentTypes: Record<string, AgentTypeConfig>;
+  workspace?: Partial<SharedWorkspaceConfig>;
+  name?: string;                    // Default: 'orchestrator'
+  agentId?: string;                 // For session persistence
+  maxIterations?: number;           // Default: 100
+}
+
+interface AgentTypeConfig {
+  systemPrompt: string;
+  tools?: ToolFunction[];
+  model?: string;                   // Override per-type
+  connector?: string;               // Override per-type
+}
+```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/core/orchestrator/createOrchestrator.ts` | Factory + system prompt + worker factory |
+| `src/core/orchestrator/tools.ts` | 7 tool definitions + workspace delta builder |
+| `src/core/orchestrator/index.ts` | Exports |
+| `src/core/Agent.ts` | `inject()` method |
+
 ---
 
-**Version**: 0.4.8 | **Last Updated**: 2026-03-12 | **Architecture**: Connector-First + NextGen Context
+**Version**: 0.5.0 | **Last Updated**: 2026-03-14 | **Architecture**: Connector-First + NextGen Context

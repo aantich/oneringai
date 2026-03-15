@@ -10,6 +10,7 @@ import { dirname, join } from 'node:path';
 import { homedir, tmpdir } from 'node:os';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { AgentService } from './AgentService.js';
+import { AgentRegistry } from '@everworker/oneringai';
 import { BrowserService } from './BrowserService.js';
 import { AutoUpdaterService } from './AutoUpdaterService.js';
 import { EWAuthService } from './EWAuthService.js';
@@ -258,6 +259,38 @@ async function setupIPC(): Promise<void> {
 
   ipcMain.handle('agent:cancel-instance', readyHandler(async (_event, instanceId: string) => {
     return agentService!.cancelInstance(instanceId);
+  }));
+
+  // Orchestrator worker inspection
+  ipcMain.handle('agent:inspect-worker', readyHandler(async (_event, _instanceId: string, workerRegistryId: string) => {
+    return AgentRegistry.inspect(workerRegistryId);
+  }));
+
+  ipcMain.handle('agent:list-workers', readyHandler(async (_event, instanceId: string) => {
+    const instance = agentService!.getInstance(instanceId);
+    if (!instance?.agent) return { workers: [] };
+    return { workers: AgentRegistry.filterInfo({ parentAgentId: instance.agent.registryId }) };
+  }));
+
+  // Tool permission approval
+  ipcMain.handle('agent:respond-tool-approval', readyHandler(async (_event, instanceId: string, response: unknown) => {
+    return agentService!.respondToolApproval(instanceId, response as any);
+  }));
+
+  ipcMain.handle('agent:get-permission-rules', readyHandler(async (_event, instanceId: string) => {
+    return agentService!.getPermissionRules(instanceId);
+  }));
+
+  ipcMain.handle('agent:delete-permission-rule', readyHandler(async (_event, instanceId: string, ruleId: string) => {
+    return agentService!.deletePermissionRule(instanceId, ruleId);
+  }));
+
+  ipcMain.handle('agent:toggle-permission-rule', readyHandler(async (_event, instanceId: string, ruleId: string, enabled: boolean) => {
+    return agentService!.togglePermissionRule(instanceId, ruleId, enabled);
+  }));
+
+  ipcMain.handle('agent:clear-session-approvals', readyHandler(async (_event, instanceId: string) => {
+    return agentService!.clearSessionApprovals(instanceId);
   }));
 
   // Voice pseudo-streaming

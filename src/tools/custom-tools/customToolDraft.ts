@@ -89,7 +89,7 @@ export function createCustomToolDraft(): ToolFunction<DraftArgs, DraftResult> {
 
     descriptionFactory: (context?: ToolContext) => buildDraftDescription(context),
 
-    permission: { scope: 'always', riskLevel: 'low' },
+    permission: { scope: 'always' as const, riskLevel: 'low' as const },
 
     execute: async (args: DraftArgs): Promise<DraftResult> => {
       const errors: string[] = [];

@@ -35,3 +35,11 @@ export { ToolCatalogPluginNextGen } from './ToolCatalogPluginNextGen.js';
 export type {
   ToolCatalogPluginConfig,
 } from './ToolCatalogPluginNextGen.js';
+
+export { SharedWorkspacePluginNextGen } from './SharedWorkspacePluginNextGen.js';
+export type {
+  SharedWorkspaceConfig,
+  SharedWorkspaceEntry,
+  WorkspaceLogEntry,
+  SerializedSharedWorkspaceState,
+} from './SharedWorkspacePluginNextGen.js';

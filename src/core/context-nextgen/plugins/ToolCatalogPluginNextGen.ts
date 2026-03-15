@@ -222,6 +222,7 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
 
     const searchTool: ToolFunction = {
       definition: catalogSearchDefinition,
+      permission: { scope: 'always' as const, riskLevel: 'low' as const },
       execute: async (args: Record<string, unknown>) => {
         return plugin.executeSearch(args.query as string | undefined, args.category as string | undefined);
       },
@@ -229,6 +230,7 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
 
     const loadTool: ToolFunction = {
       definition: catalogLoadDefinition,
+      permission: { scope: 'always' as const, riskLevel: 'low' as const },
       execute: async (args: Record<string, unknown>) => {
         return plugin.executeLoad(args.category as string);
       },
@@ -236,6 +238,7 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
 
     const unloadTool: ToolFunction = {
       definition: catalogUnloadDefinition,
+      permission: { scope: 'always' as const, riskLevel: 'low' as const },
       execute: async (args: Record<string, unknown>) => {
         return plugin.executeUnload(args.category as string);
       },

@@ -338,10 +338,12 @@ export class OpenAIResponsesConverter {
       return undefined;
     }
 
+    // ResponseTextConfig = { format?: ResponseFormatTextConfig }
+    // ResponseFormatTextConfig = { type: 'text' } | { type: 'json_object' } | { type: 'json_schema', ... }
+
     if (responseFormat.type === 'json_schema' && responseFormat.json_schema) {
       return {
-        type: 'text',
-        text: {
+        format: {
           type: 'json_schema',
           name: responseFormat.json_schema.name || 'response',
           schema: responseFormat.json_schema.schema || responseFormat.json_schema,
@@ -353,19 +355,14 @@ export class OpenAIResponsesConverter {
 
     if (responseFormat.type === 'json_object') {
       return {
-        type: 'text',
-        text: {
+        format: {
           type: 'json_object',
         },
       } as ResponsesAPI.ResponseTextConfig;
     }
 
-    return {
-      type: 'text',
-      text: {
-        type: 'text',
-      },
-    } as ResponsesAPI.ResponseTextConfig;
+    // Default: plain text — no format needed (it's the default)
+    return undefined;
   }
 
   /**

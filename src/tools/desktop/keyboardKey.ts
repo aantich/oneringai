@@ -31,6 +31,8 @@ export function createDesktopKeyboardKeyTool(config?: DesktopToolConfig): ToolFu
 
     describeCall: (args: DesktopKeyboardKeyArgs): string => args.keys,
 
+    permission: { scope: 'session' as const, riskLevel: 'medium' as const, sensitiveArgs: ['key'] },
+
     execute: async (args: DesktopKeyboardKeyArgs): Promise<DesktopKeyboardKeyResult> => {
       try {
         const driver = await getDesktopDriver(config);

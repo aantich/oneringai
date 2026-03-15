@@ -103,14 +103,14 @@ describe('AgentContextNextGen.getSnapshot()', () => {
     });
 
     const snapshot = await ctx.getSnapshot();
-    // Working memory plugin registers tools (memory_store, memory_retrieve, etc.)
+    // IStoreHandler plugins get 5 generic store_* tools registered
     expect(snapshot.tools.length).toBeGreaterThan(0);
 
-    const memoryTool = snapshot.tools.find((t) => t.name === 'memory_store');
-    expect(memoryTool).toBeDefined();
-    expect(memoryTool!.enabled).toBe(true);
-    expect(typeof memoryTool!.description).toBe('string');
-    expect(typeof memoryTool!.callCount).toBe('number');
+    const storeTool = snapshot.tools.find((t) => t.name === 'store_set');
+    expect(storeTool).toBeDefined();
+    expect(storeTool!.enabled).toBe(true);
+    expect(typeof storeTool!.description).toBe('string');
+    expect(typeof storeTool!.callCount).toBe('number');
   });
 
   it('should be fully serializable (JSON round-trip)', async () => {

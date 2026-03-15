@@ -25,6 +25,8 @@ export function createDesktopWindowListTool(config?: DesktopToolConfig): ToolFun
 
     describeCall: (): string => 'list windows',
 
+    permission: { scope: 'always' as const, riskLevel: 'low' as const },
+
     execute: async (): Promise<DesktopWindowListResult> => {
       try {
         const driver = await getDesktopDriver(config);

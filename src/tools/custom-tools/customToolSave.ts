@@ -89,7 +89,7 @@ export function createCustomToolSave(storage?: ICustomToolStorage): ToolFunction
       },
     },
 
-    permission: { scope: 'session', riskLevel: 'medium' },
+    permission: { scope: 'session' as const, riskLevel: 'medium' as const },
 
     execute: async (args: SaveArgs, context?: ToolContext): Promise<SaveResult> => {
       try {

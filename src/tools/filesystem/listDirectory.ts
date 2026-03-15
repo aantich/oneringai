@@ -190,6 +190,8 @@ EXAMPLES:
       },
     },
 
+    permission: { scope: 'always' as const, riskLevel: 'low' as const },
+
     describeCall: (args: ListDirectoryArgs): string => {
       const flags: string[] = [];
       if (args.recursive) flags.push('recursive');

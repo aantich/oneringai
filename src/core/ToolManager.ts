@@ -31,6 +31,8 @@ import { metrics } from '../infrastructure/observability/Metrics.js';
 import { ToolExecutionPipeline } from './tool-execution/ToolExecutionPipeline.js';
 import { ResultNormalizerPlugin } from './tool-execution/plugins/ResultNormalizerPlugin.js';
 import type { IToolExecutionPipeline } from './tool-execution/types.js';
+import type { PermissionPolicyManager } from './permissions/PermissionPolicyManager.js';
+import { PermissionEnforcementPlugin } from './permissions/PermissionEnforcementPlugin.js';
 
 // Re-export CircuitState for convenience
 export type { CircuitState, CircuitBreakerConfig } from '../infrastructure/resilience/CircuitBreaker.js';
@@ -312,6 +314,49 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
    */
   getToolContext(): ToolContext | undefined {
     return this._toolContext;
+  }
+
+  /**
+   * Set permission policy manager for tool execution enforcement.
+   *
+   * Registers a PermissionEnforcementPlugin on the execution pipeline at priority 1.
+   * This gates ALL tool execution through the policy chain — no bypasses.
+   */
+  setPermissionManager(manager: PermissionPolicyManager): void {
+    // Remove existing enforcement plugin if present
+    this.pipeline.remove('permission-enforcement');
+
+    // Register enforcement plugin with closures over ToolManager internals
+    this.pipeline.use(new PermissionEnforcementPlugin(
+      manager,
+      () => this._toolContext,
+      (name: string) => {
+        const reg = this.registry.get(name);
+        if (!reg) return undefined;
+        return {
+          source: reg.source,
+          category: reg.category,
+          namespace: reg.namespace,
+          tags: reg.tags,
+          permission: reg.permission,
+        };
+      },
+    ));
+  }
+
+  /**
+   * Get the permission policy manager (if enforcement is active).
+   */
+  getPermissionManager(): PermissionPolicyManager | undefined {
+    const plugin = this.pipeline.get('permission-enforcement') as PermissionEnforcementPlugin | undefined;
+    return plugin?.policyManager;
+  }
+
+  /**
+   * Check if permission enforcement is active on the execution pipeline.
+   */
+  hasPermissionEnforcement(): boolean {
+    return this.pipeline.has('permission-enforcement');
   }
 
   // ==========================================================================

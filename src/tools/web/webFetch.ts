@@ -127,6 +127,8 @@ Fetch an Excel spreadsheet:
     timeout: 15000,
   },
 
+  permission: { scope: 'session' as const, riskLevel: 'low' as const, sensitiveArgs: ['url'] },
+
   execute: async (args: WebFetchArgs): Promise<WebFetchResult> => {
     try {
       // Validate URL
@@ -290,9 +292,9 @@ Fetch an Excel spreadsheet:
         wasReadabilityUsed: mdResult.wasReadabilityUsed,
         wasTruncated: mdResult.wasTruncated,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle abort errors specially
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         return {
           success: false,
           url: args.url,
@@ -313,7 +315,7 @@ Fetch an Excel spreadsheet:
         contentType: 'error',
         qualityScore: 0,
         requiresJS: false,
-        error: (error as Error).message,
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   },

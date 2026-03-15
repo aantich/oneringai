@@ -16,6 +16,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { sanitizeUserId, sanitizeId } from './utils.js';
 import type { ICustomToolStorage, CustomToolListOptions } from '../../domain/interfaces/ICustomToolStorage.js';
 import type { CustomToolDefinition, CustomToolSummary } from '../../domain/entities/CustomToolDefinition.js';
 
@@ -67,38 +68,9 @@ function getDefaultBaseDirectory(): string {
   return join(homedir(), '.oneringai', 'users');
 }
 
-/**
- * Default user ID when none is provided
- */
-const DEFAULT_USER_ID = 'default';
-
-/**
- * Sanitize user ID for use as a directory name
- * Removes or replaces characters that are not safe for filenames
- */
-function sanitizeUserId(userId: string | undefined): string {
-  if (!userId) {
-    return DEFAULT_USER_ID;
-  }
-  return userId
-    .replace(/[^a-zA-Z0-9_-]/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '')
-    .toLowerCase()
-    || DEFAULT_USER_ID;
-}
-
-/**
- * Sanitize tool name for use as a filename
- */
-function sanitizeName(name: string): string {
-  return name
-    .replace(/[^a-zA-Z0-9_-]/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '')
-    .toLowerCase()
-    || 'default';
-}
+// sanitizeUserId and sanitizeId imported from ./utils.js
+// sanitizeName is an alias for sanitizeId
+const sanitizeName = sanitizeId;
 
 /**
  * File-based storage for custom tool definitions

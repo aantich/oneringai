@@ -25,6 +25,8 @@ export function createDesktopGetScreenSizeTool(config?: DesktopToolConfig): Tool
 
     describeCall: (): string => 'get screen size',
 
+    permission: { scope: 'always' as const, riskLevel: 'low' as const },
+
     execute: async (): Promise<DesktopGetScreenSizeResult> => {
       try {
         const driver = await getDesktopDriver(config);

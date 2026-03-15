@@ -2,7 +2,7 @@
  * UserInfoPluginNextGen Unit Tests
  *
  * Tests for the NextGen user info plugin covering:
- * - Core KVP operations via tools (set, get, remove, clear)
+ * - Core KVP operations via IStoreHandler (storeSet, storeGet, storeDelete, storeAction)
  * - Key validation
  * - Maximum entries/size enforcement
  * - Lazy initialization from storage
@@ -48,11 +48,6 @@ function createMockStorage(): IUserInfoStorage & { _data: Map<string, UserInfoEn
   };
 }
 
-function getTool(plugin: UserInfoPluginNextGen, name: string) {
-  const tools = plugin.getTools();
-  return tools.find(t => t.definition.function.name === name)!;
-}
-
 describe('UserInfoPluginNextGen', () => {
   let plugin: UserInfoPluginNextGen;
   let mockStorage: ReturnType<typeof createMockStorage>;
@@ -75,12 +70,9 @@ describe('UserInfoPluginNextGen', () => {
 
     it('should provide instructions', () => {
       const instructions = plugin.getInstructions();
-      expect(instructions).toContain('User Info');
-      expect(instructions).toContain('user_info_set');
-      expect(instructions).toContain('user_info_get');
-      expect(instructions).toContain('user_info_remove');
-      expect(instructions).toContain('user_info_clear');
-      expect(instructions).toContain('automatically shown in context');
+      expect(instructions).toContain('Store: "user_info"');
+      expect(instructions).toContain('Learn about the user proactively');
+      expect(instructions).toContain('Automatically shown in context');
     });
 
     it('should NOT be compactable', () => {
@@ -92,15 +84,11 @@ describe('UserInfoPluginNextGen', () => {
       expect(freed).toBe(0);
     });
 
-    it('should provide 7 tools (4 user_info + 3 todo)', () => {
+    it('should provide 3 TODO tools (store_* tools are registered separately)', () => {
       const tools = plugin.getTools();
-      expect(tools).toHaveLength(7);
+      expect(tools).toHaveLength(3);
 
       const toolNames = tools.map(t => t.definition.function.name);
-      expect(toolNames).toContain('user_info_set');
-      expect(toolNames).toContain('user_info_get');
-      expect(toolNames).toContain('user_info_remove');
-      expect(toolNames).toContain('user_info_clear');
       expect(toolNames).toContain('todo_add');
       expect(toolNames).toContain('todo_update');
       expect(toolNames).toContain('todo_remove');
@@ -117,10 +105,9 @@ describe('UserInfoPluginNextGen', () => {
       expect(content).toBeNull();
     });
 
-    it('should render entries as markdown after tool set', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
-      await setTool.execute({ key: 'language', value: 'en' });
+    it('should render entries as markdown after storeSet', async () => {
+      await plugin.storeSet('theme', { value: 'dark' });
+      await plugin.storeSet('language', { value: 'en' });
 
       const content = await plugin.getContent();
       expect(content).not.toBeNull();
@@ -131,8 +118,7 @@ describe('UserInfoPluginNextGen', () => {
     });
 
     it('should render complex values as JSON', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'prefs', value: { notifications: true, compact: false } });
+      await plugin.storeSet('prefs', { value: { notifications: true, compact: false } });
 
       const content = await plugin.getContent();
       expect(content).toContain('### prefs');
@@ -140,8 +126,7 @@ describe('UserInfoPluginNextGen', () => {
     });
 
     it('should render null value correctly', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'empty', value: null });
+      await plugin.storeSet('empty', { value: null });
 
       const content = await plugin.getContent();
       expect(content).toContain('### empty');
@@ -149,9 +134,8 @@ describe('UserInfoPluginNextGen', () => {
     });
 
     it('should render number and boolean values correctly', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'age', value: 30 });
-      await setTool.execute({ key: 'active', value: true });
+      await plugin.storeSet('age', { value: 30 });
+      await plugin.storeSet('active', { value: true });
 
       const content = await plugin.getContent();
       expect(content).toContain('30');
@@ -159,10 +143,8 @@ describe('UserInfoPluginNextGen', () => {
     });
 
     it('should return null after all entries removed', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      const removeTool = getTool(plugin, 'user_info_remove');
-      await setTool.execute({ key: 'theme', value: 'dark' });
-      await removeTool.execute({ key: 'theme' });
+      await plugin.storeSet('theme', { value: 'dark' });
+      await plugin.storeDelete('theme');
 
       const content = await plugin.getContent();
       expect(content).toBeNull();
@@ -176,20 +158,18 @@ describe('UserInfoPluginNextGen', () => {
     });
 
     it('should return non-zero after entries set', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
+      await plugin.storeSet('theme', { value: 'dark' });
 
       await plugin.getContent(); // triggers token calculation
       expect(plugin.getTokenSize()).toBeGreaterThan(0);
     });
 
     it('should invalidate token cache after set', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
+      await plugin.storeSet('theme', { value: 'dark' });
       await plugin.getContent();
       const sizeAfterOne = plugin.getTokenSize();
 
-      await setTool.execute({ key: 'language', value: 'en' });
+      await plugin.storeSet('language', { value: 'en' });
       // token cache should be invalidated
       // After next getContent, size should be larger
       await plugin.getContent();
@@ -197,14 +177,12 @@ describe('UserInfoPluginNextGen', () => {
     });
 
     it('should invalidate token cache after remove', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
-      await setTool.execute({ key: 'language', value: 'en' });
+      await plugin.storeSet('theme', { value: 'dark' });
+      await plugin.storeSet('language', { value: 'en' });
       await plugin.getContent();
       const sizeBefore = plugin.getTokenSize();
 
-      const removeTool = getTool(plugin, 'user_info_remove');
-      await removeTool.execute({ key: 'theme' });
+      await plugin.storeDelete('theme');
       await plugin.getContent();
       expect(plugin.getTokenSize()).toBeLessThan(sizeBefore);
     });
@@ -218,9 +196,8 @@ describe('UserInfoPluginNextGen', () => {
     });
 
     it('should return map of entries after set', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
-      await setTool.execute({ key: 'lang', value: 'en' });
+      await plugin.storeSet('theme', { value: 'dark' });
+      await plugin.storeSet('lang', { value: 'en' });
 
       const contents = plugin.getContents();
       expect(contents.size).toBe(2);
@@ -229,8 +206,7 @@ describe('UserInfoPluginNextGen', () => {
     });
 
     it('should return a copy (not reference)', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
+      await plugin.storeSet('theme', { value: 'dark' });
 
       const contents = plugin.getContents();
       contents.delete('theme');
@@ -241,8 +217,7 @@ describe('UserInfoPluginNextGen', () => {
 
   describe('Serialization (getState/restoreState)', () => {
     it('should serialize state with version 1', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
+      await plugin.storeSet('theme', { value: 'dark' });
 
       const state = plugin.getState();
       expect(state.version).toBe(1);
@@ -305,9 +280,8 @@ describe('UserInfoPluginNextGen', () => {
     });
 
     it('should round-trip correctly via getState/restoreState', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
-      await setTool.execute({ key: 'prefs', value: { a: 1 } });
+      await plugin.storeSet('theme', { value: 'dark' });
+      await plugin.storeSet('prefs', { value: { a: 1 } });
 
       const state = plugin.getState();
 
@@ -349,16 +323,15 @@ describe('UserInfoPluginNextGen', () => {
       expect(content).toContain('dark');
     });
 
-    it('should initialize from storage on first tool call', async () => {
+    it('should initialize from storage on first storeGet call', async () => {
       const now = Date.now();
       mockStorage._data.set('default', [
         { id: 'theme', value: 'dark', valueType: 'string', createdAt: now, updatedAt: now },
       ]);
 
-      const getTool2 = getTool(plugin, 'user_info_get');
-      const result = await getTool2.execute({});
+      const result = await plugin.storeGet();
       expect(plugin.isInitialized).toBe(true);
-      expect(result.count).toBe(1);
+      expect((result as any).entries).toHaveLength(1);
     });
 
     it('should initialize with userId', async () => {
@@ -409,10 +382,9 @@ describe('UserInfoPluginNextGen', () => {
     });
   });
 
-  describe('Tool: user_info_set', () => {
+  describe('storeSet', () => {
     it('should add a new entry', async () => {
-      const tool = getTool(plugin, 'user_info_set');
-      const result = await tool.execute({ key: 'theme', value: 'dark' });
+      const result = await plugin.storeSet('theme', { value: 'dark' });
 
       expect(result.success).toBe(true);
       expect(result.message).toContain('added');
@@ -421,22 +393,20 @@ describe('UserInfoPluginNextGen', () => {
     });
 
     it('should update an existing entry', async () => {
-      const tool = getTool(plugin, 'user_info_set');
-      await tool.execute({ key: 'theme', value: 'dark' });
-      const result = await tool.execute({ key: 'theme', value: 'light' });
+      await plugin.storeSet('theme', { value: 'dark' });
+      const result = await plugin.storeSet('theme', { value: 'light' });
 
       expect(result.success).toBe(true);
       expect(result.message).toContain('updated');
     });
 
     it('should preserve createdAt on update', async () => {
-      const tool = getTool(plugin, 'user_info_set');
-      await tool.execute({ key: 'theme', value: 'dark' });
+      await plugin.storeSet('theme', { value: 'dark' });
 
       const before = plugin.getContents().get('theme')!;
       await new Promise(r => setTimeout(r, 10));
 
-      await tool.execute({ key: 'theme', value: 'light' });
+      await plugin.storeSet('theme', { value: 'light' });
       const after = plugin.getContents().get('theme')!;
 
       expect(after.createdAt).toBe(before.createdAt);
@@ -444,22 +414,19 @@ describe('UserInfoPluginNextGen', () => {
     });
 
     it('should store with description', async () => {
-      const tool = getTool(plugin, 'user_info_set');
-      await tool.execute({ key: 'theme', value: 'dark', description: 'UI theme' });
+      await plugin.storeSet('theme', { value: 'dark', description: 'UI theme' });
 
       const contents = plugin.getContents();
       expect(contents.get('theme')!.description).toBe('UI theme');
     });
 
     it('should reject undefined value', async () => {
-      const tool = getTool(plugin, 'user_info_set');
-      const result = await tool.execute({ key: 'theme', value: undefined });
-      expect(result.error).toContain('undefined');
+      const result = await plugin.storeSet('theme', { value: undefined });
+      expect(result.message).toContain('undefined');
     });
 
     it('should write through to storage', async () => {
-      const tool = getTool(plugin, 'user_info_set');
-      await tool.execute({ key: 'theme', value: 'dark' });
+      await plugin.storeSet('theme', { value: 'dark' });
 
       const stored = mockStorage._data.get('default');
       expect(stored).not.toBeNull();
@@ -468,107 +435,91 @@ describe('UserInfoPluginNextGen', () => {
     });
   });
 
-  describe('Key Validation (via tools)', () => {
+  describe('Key Validation (via storeSet)', () => {
     it('should accept valid keys', async () => {
-      const tool = getTool(plugin, 'user_info_set');
-      expect((await tool.execute({ key: 'theme', value: 'v' })).success).toBe(true);
-      expect((await tool.execute({ key: 'code_rules', value: 'v' })).success).toBe(true);
-      expect((await tool.execute({ key: 'my-key', value: 'v' })).success).toBe(true);
-      expect((await tool.execute({ key: 'KEY123', value: 'v' })).success).toBe(true);
+      expect((await plugin.storeSet('theme', { value: 'v' })).success).toBe(true);
+      expect((await plugin.storeSet('code_rules', { value: 'v' })).success).toBe(true);
+      expect((await plugin.storeSet('my-key', { value: 'v' })).success).toBe(true);
+      expect((await plugin.storeSet('KEY123', { value: 'v' })).success).toBe(true);
     });
 
     it('should reject invalid keys', async () => {
-      const tool = getTool(plugin, 'user_info_set');
-      expect((await tool.execute({ key: '', value: 'v' })).error).toBeDefined();
-      expect((await tool.execute({ key: '   ', value: 'v' })).error).toBeDefined();
-      expect((await tool.execute({ key: 'key with spaces', value: 'v' })).error).toBeDefined();
-      expect((await tool.execute({ key: 'key.dot', value: 'v' })).error).toBeDefined();
+      expect((await plugin.storeSet('', { value: 'v' })).success).toBe(false);
+      expect((await plugin.storeSet('   ', { value: 'v' })).success).toBe(false);
+      expect((await plugin.storeSet('key with spaces', { value: 'v' })).success).toBe(false);
+      expect((await plugin.storeSet('key.dot', { value: 'v' })).success).toBe(false);
     });
 
     it('should reject keys exceeding max length', async () => {
-      const tool = getTool(plugin, 'user_info_set');
       const longKey = 'a'.repeat(101);
-      const result = await tool.execute({ key: longKey, value: 'v' });
-      expect(result.error).toBeDefined();
+      const result = await plugin.storeSet(longKey, { value: 'v' });
+      expect(result.success).toBe(false);
     });
   });
 
-  describe('Tool: user_info_get', () => {
-    it('should return error when no entries', async () => {
-      const tool = getTool(plugin, 'user_info_get');
-      const result = await tool.execute({});
-      expect(result.error).toContain('not found');
+  describe('storeGet', () => {
+    it('should return not found when no entries and key specified', async () => {
+      const result = await plugin.storeGet('nonexistent');
+      expect(result.found).toBe(false);
     });
 
     it('should return specific entry by key', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
+      await plugin.storeSet('theme', { value: 'dark' });
 
-      const tool = getTool(plugin, 'user_info_get');
-      const result = await tool.execute({ key: 'theme' });
-      expect(result.key).toBe('theme');
-      expect(result.value).toBe('dark');
-      expect(result.valueType).toBe('string');
+      const result = await plugin.storeGet('theme');
+      expect(result.found).toBe(true);
+      expect((result as any).entry.key).toBe('theme');
+      expect((result as any).entry.value).toBe('dark');
+      expect((result as any).entry.valueType).toBe('string');
     });
 
     it('should return all entries when no key', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
-      await setTool.execute({ key: 'lang', value: 'en' });
+      await plugin.storeSet('theme', { value: 'dark' });
+      await plugin.storeSet('lang', { value: 'en' });
 
-      const tool = getTool(plugin, 'user_info_get');
-      const result = await tool.execute({});
-      expect(result.count).toBe(2);
-      expect(result.entries).toHaveLength(2);
+      const result = await plugin.storeGet();
+      expect(result.found).toBe(true);
+      expect((result as any).entries).toHaveLength(2);
     });
 
-    it('should return error for non-existent key', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
+    it('should return not found for non-existent key', async () => {
+      await plugin.storeSet('theme', { value: 'dark' });
 
-      const tool = getTool(plugin, 'user_info_get');
-      const result = await tool.execute({ key: 'nonexistent' });
-      expect(result.error).toContain('not found');
+      const result = await plugin.storeGet('nonexistent');
+      expect(result.found).toBe(false);
     });
   });
 
-  describe('Tool: user_info_remove', () => {
+  describe('storeDelete', () => {
     it('should remove an existing entry', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
+      await plugin.storeSet('theme', { value: 'dark' });
 
-      const tool = getTool(plugin, 'user_info_remove');
-      const result = await tool.execute({ key: 'theme' });
-      expect(result.success).toBe(true);
+      const result = await plugin.storeDelete('theme');
+      expect(result.deleted).toBe(true);
 
       expect(plugin.getContents().size).toBe(0);
     });
 
-    it('should return error for non-existent key', async () => {
-      const tool = getTool(plugin, 'user_info_remove');
+    it('should return not deleted for non-existent key', async () => {
       // Need to trigger initialization first
       await plugin.getContent();
-      const result = await tool.execute({ key: 'nonexistent' });
-      expect(result.error).toContain('not found');
+      const result = await plugin.storeDelete('nonexistent');
+      expect(result.deleted).toBe(false);
     });
 
     it('should delete storage when last entry removed', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
+      await plugin.storeSet('theme', { value: 'dark' });
 
-      const tool = getTool(plugin, 'user_info_remove');
-      await tool.execute({ key: 'theme' });
+      await plugin.storeDelete('theme');
 
       expect(mockStorage._data.has('default')).toBe(false);
     });
 
     it('should persist remaining entries when not last', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
-      await setTool.execute({ key: 'lang', value: 'en' });
+      await plugin.storeSet('theme', { value: 'dark' });
+      await plugin.storeSet('lang', { value: 'en' });
 
-      const tool = getTool(plugin, 'user_info_remove');
-      await tool.execute({ key: 'theme' });
+      await plugin.storeDelete('theme');
 
       const stored = mockStorage._data.get('default');
       expect(stored).not.toBeNull();
@@ -577,20 +528,18 @@ describe('UserInfoPluginNextGen', () => {
     });
   });
 
-  describe('Tool: user_info_clear', () => {
+  describe('storeAction: clear', () => {
     it('should require confirmation', async () => {
-      const tool = getTool(plugin, 'user_info_clear');
-      const result = await tool.execute({ confirm: false });
-      expect(result.error).toContain('confirm');
+      const result = await plugin.storeAction('clear', { confirm: false });
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('confirm');
     });
 
     it('should clear all entries with confirmation', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
-      await setTool.execute({ key: 'lang', value: 'en' });
+      await plugin.storeSet('theme', { value: 'dark' });
+      await plugin.storeSet('lang', { value: 'en' });
 
-      const tool = getTool(plugin, 'user_info_clear');
-      const result = await tool.execute({ confirm: true });
+      const result = await plugin.storeAction('clear', { confirm: true });
       expect(result.success).toBe(true);
 
       expect(plugin.getContents().size).toBe(0);
@@ -598,13 +547,11 @@ describe('UserInfoPluginNextGen', () => {
     });
 
     it('should clear token cache', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
+      await plugin.storeSet('theme', { value: 'dark' });
       await plugin.getContent();
       expect(plugin.getTokenSize()).toBeGreaterThan(0);
 
-      const clearTool = getTool(plugin, 'user_info_clear');
-      await clearTool.execute({ confirm: true });
+      await plugin.storeAction('clear', { confirm: true });
       await plugin.getContent();
       expect(plugin.getTokenSize()).toBe(0);
     });
@@ -617,14 +564,14 @@ describe('UserInfoPluginNextGen', () => {
         maxEntries: 3,
       });
 
-      const tool = getTool(limitedPlugin, 'user_info_set');
-      expect((await tool.execute({ key: 'a', value: '1' })).success).toBe(true);
-      expect((await tool.execute({ key: 'b', value: '2' })).success).toBe(true);
-      expect((await tool.execute({ key: 'c', value: '3' })).success).toBe(true);
-      expect((await tool.execute({ key: 'd', value: '4' })).error).toContain('Maximum');
+      expect((await limitedPlugin.storeSet('a', { value: '1' })).success).toBe(true);
+      expect((await limitedPlugin.storeSet('b', { value: '2' })).success).toBe(true);
+      expect((await limitedPlugin.storeSet('c', { value: '3' })).success).toBe(true);
+      expect((await limitedPlugin.storeSet('d', { value: '4' })).success).toBe(false);
+      expect((await limitedPlugin.storeSet('d', { value: '4' })).message).toContain('Maximum');
 
       // Update existing should still work
-      expect((await tool.execute({ key: 'a', value: 'updated' })).success).toBe(true);
+      expect((await limitedPlugin.storeSet('a', { value: 'updated' })).success).toBe(true);
 
       limitedPlugin.destroy();
     });
@@ -635,9 +582,10 @@ describe('UserInfoPluginNextGen', () => {
         maxTotalSize: 100,
       });
 
-      const tool = getTool(limitedPlugin, 'user_info_set');
-      expect((await tool.execute({ key: 'a', value: 'x'.repeat(50) })).success).toBe(true);
-      expect((await tool.execute({ key: 'b', value: 'x'.repeat(60) })).error).toContain('exceed');
+      expect((await limitedPlugin.storeSet('a', { value: 'x'.repeat(50) })).success).toBe(true);
+      const result = await limitedPlugin.storeSet('b', { value: 'x'.repeat(60) });
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('exceed');
 
       limitedPlugin.destroy();
     });
@@ -648,10 +596,9 @@ describe('UserInfoPluginNextGen', () => {
         maxTotalSize: 200,
       });
 
-      const tool = getTool(limitedPlugin, 'user_info_set');
-      expect((await tool.execute({ key: 'a', value: 'x'.repeat(80) })).success).toBe(true);
+      expect((await limitedPlugin.storeSet('a', { value: 'x'.repeat(80) })).success).toBe(true);
       // Replacing 80 chars with 90 chars should work (still under 200 bytes)
-      expect((await tool.execute({ key: 'a', value: 'x'.repeat(90) })).success).toBe(true);
+      expect((await limitedPlugin.storeSet('a', { value: 'x'.repeat(90) })).success).toBe(true);
 
       limitedPlugin.destroy();
     });
@@ -661,13 +608,11 @@ describe('UserInfoPluginNextGen', () => {
     it('should throw when destroyed', async () => {
       plugin.destroy();
 
-      const setTool = getTool(plugin, 'user_info_set');
-      await expect(setTool.execute({ key: 'k', value: 'v' })).rejects.toThrow('destroyed');
+      await expect(plugin.storeSet('k', { value: 'v' })).rejects.toThrow('destroyed');
     });
 
     it('should clear entries on destroy', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
+      await plugin.storeSet('theme', { value: 'dark' });
 
       plugin.destroy();
       // getContents returns empty after destroy since _entries was cleared
@@ -675,8 +620,7 @@ describe('UserInfoPluginNextGen', () => {
     });
 
     it('should clear token cache on destroy', async () => {
-      const setTool = getTool(plugin, 'user_info_set');
-      await setTool.execute({ key: 'theme', value: 'dark' });
+      await plugin.storeSet('theme', { value: 'dark' });
       await plugin.getContent();
 
       plugin.destroy();
@@ -712,8 +656,7 @@ describe('UserInfoPluginNextGen', () => {
         userId: 'alice',
       });
 
-      const tool = getTool(alicePlugin, 'user_info_set');
-      await tool.execute({ key: 'theme', value: 'dark' });
+      await alicePlugin.storeSet('theme', { value: 'dark' });
 
       expect(mockStorage._data.has('alice')).toBe(true);
       expect(mockStorage._data.has('default')).toBe(false);

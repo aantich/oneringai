@@ -33,6 +33,21 @@ export { ToolCatalogRegistry } from './ToolCatalogRegistry.js';
 export type { ToolCategoryDefinition, CatalogToolEntry, ToolCategoryScope, ConnectorCategoryInfo, ToolRegistryEntry as CatalogRegistryEntry } from './ToolCatalogRegistry.js';
 export { Agent } from './Agent.js';
 export type { AgentConfig, AgentSessionConfig } from './Agent.js';
+export { AgentRegistry } from './AgentRegistry.js';
+export type {
+  AgentStatus,
+  AgentInfo,
+  AgentFilter,
+  AgentRegistryStats,
+  AggregateMetrics,
+  AgentTreeNode,
+  AgentInspection,
+  AgentRegistryEvents,
+  AgentEventListener,
+  IRegistrableAgent,
+} from './AgentRegistry.js';
+export { SuspendSignal } from './SuspendSignal.js';
+export type { SuspendSignalOptions } from './SuspendSignal.js';
 
 // Routine Runner
 export { executeRoutine } from './routineRunner.js';
@@ -60,6 +75,10 @@ export {
   DefaultCompactionStrategy,
   // Strategy Registry
   StrategyRegistry,
+  // Unified store tools
+  StoreToolsManager,
+  isStoreHandler,
+  SharedWorkspacePluginNextGen,
 } from './context-nextgen/index.js';
 export type {
   IContextPluginNextGen,
@@ -87,6 +106,18 @@ export type {
   UserInfoPluginConfig,
   SerializedUserInfoState,
   ToolCatalogPluginConfig,
+  SharedWorkspaceConfig,
+  SharedWorkspaceEntry,
+  WorkspaceLogEntry,
+  SerializedSharedWorkspaceState,
+  // Store handler types
+  IStoreHandler,
+  StoreEntrySchema,
+  StoreGetResult,
+  StoreSetResult,
+  StoreDeleteResult,
+  StoreListResult,
+  StoreActionResult,
   // Compaction strategy types
   ICompactionStrategy,
   CompactionContext,
@@ -114,6 +145,12 @@ export type {
 } from './BaseAgent.js';
 export { Vendor, VENDORS, isVendor } from './Vendor.js';
 export { createProvider, createProviderAsync, getVendorDefaultBaseURL } from './createProvider.js';
+
+// Orchestrator
+export { createOrchestrator } from './orchestrator/index.js';
+export type { OrchestratorConfig, AgentTypeConfig } from './orchestrator/index.js';
+export { buildOrchestrationTools, buildWorkspaceDelta } from './orchestrator/index.js';
+export type { OrchestrationToolsContext } from './orchestrator/index.js';
 
 // Centralized constants
 export {

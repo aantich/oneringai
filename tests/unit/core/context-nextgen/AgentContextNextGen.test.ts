@@ -264,7 +264,7 @@ describe('AgentContextNextGen', () => {
       testCtx.destroy();
     });
 
-    it('should register plugin tools', () => {
+    it('should register store tools when IStoreHandler plugin is added', () => {
       // Create context with auto-plugins disabled
       const testCtx = AgentContextNextGen.create({
         model: 'gpt-4',
@@ -276,8 +276,12 @@ describe('AgentContextNextGen', () => {
       testCtx.registerPlugin(memoryPlugin);
 
       const tools = testCtx.tools.list();
-      expect(tools).toContain('memory_store');
-      expect(tools).toContain('memory_retrieve');
+      // WorkingMemoryPluginNextGen implements IStoreHandler, so 5 store_* tools are registered
+      expect(tools).toContain('store_get');
+      expect(tools).toContain('store_set');
+      expect(tools).toContain('store_delete');
+      expect(tools).toContain('store_list');
+      expect(tools).toContain('store_action');
 
       testCtx.destroy();
     });

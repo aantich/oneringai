@@ -78,7 +78,7 @@ export function createRoutineGetTaskSteps(
       },
     },
 
-    permission: { scope: 'session', riskLevel: 'low' },
+    permission: { scope: 'always' as const, riskLevel: 'low' as const },
 
     execute: async (args: RoutineGetTaskStepsArgs, context?: ToolContext) => {
       try {

@@ -180,7 +180,7 @@ export class GoogleImageProvider extends BaseMediaProvider implements IImageProv
     } else {
       // It's a file path - read and convert
       const fs = await import('fs');
-      const buffer = fs.readFileSync(image);
+      const buffer = await fs.promises.readFile(image);
       imageBytes = buffer.toString('base64');
     }
 

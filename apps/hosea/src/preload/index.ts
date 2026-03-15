@@ -238,9 +238,93 @@ export type StreamChunk =
   | { type: 'voice:chunk'; chunkIndex: number; subIndex?: number; audioBase64: string; format: string; durationSeconds?: number; text: string }
   | { type: 'voice:error'; chunkIndex: number; error: string; text: string }
   | { type: 'voice:complete'; totalChunks: number; totalDurationSeconds?: number }
+  // Orchestrator worker events
+  | { type: 'orchestrator:worker_created'; worker: WorkerInfoForUI }
+  | { type: 'orchestrator:worker_destroyed'; workerName: string }
+  | { type: 'orchestrator:worker_status'; workerName: string; status: WorkerStatus }
+  | { type: 'orchestrator:worker_tool_start'; workerName: string; tool: string; description: string }
+  | { type: 'orchestrator:worker_tool_end'; workerName: string; tool: string; durationMs?: number }
+  | { type: 'orchestrator:worker_turn_start'; workerName: string }
+  | { type: 'orchestrator:worker_turn_end'; workerName: string; success: boolean }
+  | { type: 'orchestrator:workspace_update'; entries: WorkspaceEntryForUI[] }
+  // Tool permission approval events
+  | { type: 'tool:approval_required'; request: ToolApprovalRequest }
+  | { type: 'tool:approval_resolved'; requestId: string; approved: boolean }
   // Stream status events (retry, incomplete, failed)
   | { type: 'retry'; attempt: number; maxAttempts: number; reason: string; delayMs: number }
   | { type: 'status'; status: 'completed' | 'incomplete' | 'failed'; stopReason?: string };
+
+/**
+ * Worker status for orchestrator UI
+ */
+export type WorkerStatus = 'idle' | 'running' | 'paused' | 'destroyed';
+
+/**
+ * Worker info for orchestrator UI
+ */
+export interface WorkerInfoForUI {
+  name: string;
+  type: string;
+  model: string;
+  status: WorkerStatus;
+  registryId: string;
+  createdAt: number;
+}
+
+/**
+ * Workspace entry for orchestrator UI
+ */
+export interface WorkspaceEntryForUI {
+  key: string;
+  summary: string;
+  status: string;
+  author: string;
+  version: number;
+  updatedAt: number;
+}
+
+/**
+ * Tool approval request sent to renderer
+ */
+export interface ToolApprovalRequest {
+  requestId: string;
+  toolName: string;
+  args: Record<string, unknown>;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  approvalMessage?: string;
+  sensitiveArgs?: string[];
+  suggestedScope: 'once' | 'session' | 'persistent';
+  toolCategory?: string;
+  toolSource?: string;
+  description?: string;
+}
+
+/**
+ * Tool approval response from renderer
+ */
+export interface ToolApprovalResponse {
+  requestId: string;
+  approved: boolean;
+  scope: 'once' | 'session' | 'always' | 'never';
+  remember: boolean;
+}
+
+/**
+ * Permission rule for UI display
+ */
+export interface UserPermissionRuleForUI {
+  id: string;
+  toolName: string;
+  action: 'allow' | 'deny' | 'ask';
+  conditions?: Array<{ argName: string; operator: string; value: string }>;
+  unconditional: boolean;
+  enabled: boolean;
+  description?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  expiresAt?: string | null;
+}
 
 /**
  * Browser state info for IPC
@@ -354,6 +438,16 @@ export interface HoseaAPI {
     // Context entry pinning (for "Current Context" UI display)
     pinContextKey: (agentConfigId: string, key: string, pinned: boolean) => Promise<{ success: boolean; error?: string }>;
     getPinnedContextKeys: (agentConfigId: string) => Promise<string[]>;
+    // Orchestrator worker inspection
+    inspectWorker: (instanceId: string, workerRegistryId: string) => Promise<unknown>;
+    listWorkers: (instanceId: string) => Promise<{ workers: unknown[] }>;
+    // Tool permission approval
+    respondToolApproval: (instanceId: string, response: ToolApprovalResponse) => Promise<{ success: boolean; error?: string }>;
+    // Permission rules management
+    getPermissionRules: (instanceId: string) => Promise<{ success: boolean; rules?: UserPermissionRuleForUI[]; error?: string }>;
+    deletePermissionRule: (instanceId: string, ruleId: string) => Promise<{ success: boolean; error?: string }>;
+    togglePermissionRule: (instanceId: string, ruleId: string, enabled: boolean) => Promise<{ success: boolean; error?: string }>;
+    clearSessionApprovals: (instanceId: string) => Promise<{ success: boolean; error?: string }>;
   };
 
   // Connectors
@@ -1363,6 +1457,16 @@ const api: HoseaAPI = {
     // Context entry pinning
     pinContextKey: (agentConfigId, key, pinned) => ipcRenderer.invoke('agent:pin-context-key', agentConfigId, key, pinned),
     getPinnedContextKeys: (agentConfigId) => ipcRenderer.invoke('agent:get-pinned-context-keys', agentConfigId),
+    // Orchestrator worker inspection
+    inspectWorker: (instanceId, workerRegistryId) => ipcRenderer.invoke('agent:inspect-worker', instanceId, workerRegistryId),
+    listWorkers: (instanceId) => ipcRenderer.invoke('agent:list-workers', instanceId),
+    // Tool permission approval
+    respondToolApproval: (instanceId, response) => ipcRenderer.invoke('agent:respond-tool-approval', instanceId, response),
+    // Permission rules management
+    getPermissionRules: (instanceId) => ipcRenderer.invoke('agent:get-permission-rules', instanceId),
+    deletePermissionRule: (instanceId, ruleId) => ipcRenderer.invoke('agent:delete-permission-rule', instanceId, ruleId),
+    togglePermissionRule: (instanceId, ruleId, enabled) => ipcRenderer.invoke('agent:toggle-permission-rule', instanceId, ruleId, enabled),
+    clearSessionApprovals: (instanceId) => ipcRenderer.invoke('agent:clear-session-approvals', instanceId),
   },
 
   connector: {

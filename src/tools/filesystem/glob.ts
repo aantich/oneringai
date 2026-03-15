@@ -12,9 +12,9 @@
  * - Excludes common non-code directories by default
  */
 
-import { readdir, stat } from 'node:fs/promises';
+import { stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { relative } from 'node:path';
 import type { ToolFunction } from '../../domain/entities/Tool.js';
 import {
   type FilesystemToolConfig,
@@ -23,6 +23,7 @@ import {
   DEFAULT_FILESYSTEM_CONFIG,
   validatePath,
   toForwardSlash,
+  walkDirectory,
 } from './types.js';
 
 /**
@@ -64,57 +65,30 @@ function matchGlobPattern(pattern: string, filePath: string): boolean {
 }
 
 /**
- * Recursively find files matching a pattern
+ * Find files matching a pattern using shared walkDirectory
  */
 async function findFiles(
   dir: string,
   pattern: string,
   baseDir: string,
   config: FilesystemToolConfigDefaults,
-  results: { path: string; mtime: number }[] = [],
-  depth: number = 0
 ): Promise<{ path: string; mtime: number }[]> {
-  // Prevent infinite recursion
-  if (depth > 50 || results.length >= config.maxResults) {
-    return results;
-  }
+  const results: { path: string; mtime: number }[] = [];
 
-  try {
-    const entries = await readdir(dir, { withFileTypes: true });
+  for await (const entry of walkDirectory(dir, config)) {
+    if (results.length >= config.maxResults) break;
 
-    for (const entry of entries) {
-      if (results.length >= config.maxResults) break;
+    if (!entry.isFile) continue;
 
-      const fullPath = join(dir, entry.name);
-      // Normalize to forward slashes for consistent cross-platform pattern matching
-      const relativePath = toForwardSlash(relative(baseDir, fullPath));
-
-      // Check if directory is blocked
-      if (entry.isDirectory()) {
-        const isBlocked = config.blockedDirectories.some(
-          blocked => entry.name === blocked || relativePath.includes(`/${blocked}/`) || relativePath.startsWith(`${blocked}/`)
-        );
-        if (isBlocked) continue;
-
-        // Recurse into subdirectories
-        await findFiles(fullPath, pattern, baseDir, config, results, depth + 1);
-      } else if (entry.isFile()) {
-        // Check if file matches pattern
-        if (matchGlobPattern(pattern, relativePath)) {
-          try {
-            const stats = await stat(fullPath);
-            results.push({
-              path: relativePath,
-              mtime: stats.mtimeMs,
-            });
-          } catch {
-            // Skip files we can't stat
-          }
-        }
+    const relativePath = toForwardSlash(relative(baseDir, entry.fullPath));
+    if (matchGlobPattern(pattern, relativePath)) {
+      try {
+        const stats = await stat(entry.fullPath);
+        results.push({ path: relativePath, mtime: stats.mtimeMs });
+      } catch {
+        // Skip files we can't stat
       }
     }
-  } catch {
-    // Skip directories we can't read
   }
 
   return results;
@@ -171,6 +145,8 @@ WHEN TO USE:
         },
       },
     },
+
+    permission: { scope: 'always' as const, riskLevel: 'low' as const },
 
     describeCall: (args: GlobArgs): string => {
       if (args.path) {

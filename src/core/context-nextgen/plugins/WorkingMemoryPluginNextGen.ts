@@ -2,17 +2,18 @@
  * WorkingMemoryPluginNextGen - Working memory plugin for NextGen context
  *
  * Provides external storage with an INDEX shown in context.
- * LLM sees descriptions but must use memory_retrieve() to get full values.
+ * LLM sees descriptions but must use store_get("memory", key) to get full values.
  *
  * Features:
- * - Hierarchical tiers: raw → summary → findings
+ * - Hierarchical tiers: raw -> summary -> findings
  * - Priority-based eviction
  * - Task-aware scoping (optional)
  * - Automatic tier-based priorities
+ * - Implements IStoreHandler for unified store_* tools
  */
 
-import type { IContextPluginNextGen, ITokenEstimator } from '../types.js';
-import type { ToolFunction } from '../../../domain/entities/Tool.js';
+import type { IContextPluginNextGen, ITokenEstimator, IStoreHandler, StoreEntrySchema, StoreGetResult, StoreSetResult, StoreDeleteResult, StoreListResult, StoreActionResult } from '../types.js';
+import type { ToolFunction, ToolContext } from '../../../domain/entities/Tool.js';
 import type { IMemoryStorage } from '../../../domain/interfaces/IMemoryStorage.js';
 import { InMemoryStorage } from '../../../infrastructure/storage/InMemoryStorage.js';
 import { simpleTokenEstimator } from '../BasePluginNextGen.js';
@@ -41,111 +42,6 @@ import {
 } from '../../../domain/entities/Memory.js';
 
 import type { MemoryIndex, MemoryIndexEntry } from '../../../domain/entities/Memory.js';
-
-// Tool definitions (inline for full control)
-const memoryStoreDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'memory_store',
-    description: `Store data in working memory. Use this to save important information.
-
-TIER SYSTEM (for research/analysis):
-- "raw": Low priority, evicted first. Unprocessed data.
-- "summary": Normal priority. Processed summaries.
-- "findings": High priority, kept longest. Final conclusions.`,
-    parameters: {
-      type: 'object',
-      properties: {
-        key: { type: 'string', description: 'Namespaced key (e.g., "user.profile")' },
-        description: { type: 'string', description: 'Brief description (max 150 chars)' },
-        value: { description: 'Data to store (any JSON value)' },
-        tier: {
-          type: 'string',
-          enum: ['raw', 'summary', 'findings'],
-          description: 'Memory tier (sets priority automatically)',
-        },
-        scope: {
-          type: 'string',
-          enum: ['session', 'plan', 'persistent'],
-          description: 'Lifecycle scope (default: session)',
-        },
-        priority: {
-          type: 'string',
-          enum: ['low', 'normal', 'high', 'critical'],
-          description: 'Override priority (ignored if tier is set)',
-        },
-        pinned: { type: 'boolean', description: 'Never evict this entry' },
-      },
-      required: ['key', 'description', 'value'],
-    },
-  },
-};
-
-const memoryRetrieveDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'memory_retrieve',
-    description: 'Retrieve full data from working memory by key.',
-    parameters: {
-      type: 'object',
-      properties: {
-        key: { type: 'string', description: 'Key to retrieve' },
-      },
-      required: ['key'],
-    },
-  },
-};
-
-const memoryDeleteDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'memory_delete',
-    description: 'Delete data from working memory.',
-    parameters: {
-      type: 'object',
-      properties: {
-        key: { type: 'string', description: 'Key to delete' },
-      },
-      required: ['key'],
-    },
-  },
-};
-
-const memoryQueryDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'memory_query',
-    description: `Query working memory. List, search, or retrieve values.
-
-Examples:
-- memory_query() → list all keys
-- memory_query({ pattern: "findings.*" }) → match pattern
-- memory_query({ tier: "raw", includeValues: true }) → get raw tier values`,
-    parameters: {
-      type: 'object',
-      properties: {
-        pattern: { type: 'string', description: 'Glob pattern (e.g., "raw.*")' },
-        tier: { type: 'string', enum: ['raw', 'summary', 'findings'], description: 'Filter by tier' },
-        includeValues: { type: 'boolean', description: 'Include values (default: false)' },
-        includeStats: { type: 'boolean', description: 'Include memory stats' },
-      },
-      required: [],
-    },
-  },
-};
-
-const memoryCleanupRawDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'memory_cleanup_raw',
-    description: 'Delete ALL entries in the raw tier. Use after creating summaries.',
-    parameters: {
-      type: 'object',
-      properties: {},
-      required: [],
-    },
-  },
-};
 
 // ============================================================================
 // Types
@@ -179,8 +75,7 @@ export interface WorkingMemoryPluginConfig {
 // Instructions
 // ============================================================================
 
-const WORKING_MEMORY_INSTRUCTIONS = `Working Memory stores data EXTERNALLY with an index shown below.
-You see descriptions but must use memory_retrieve(key) to get full values.
+const WORKING_MEMORY_INSTRUCTIONS = `Store: "memory". You see entry descriptions in context but must call store_get to read full values.
 
 **Tier System** (for research/analysis):
 - \`raw\`: Low priority, evicted first. Unprocessed data to summarize later.
@@ -188,18 +83,16 @@ You see descriptions but must use memory_retrieve(key) to get full values.
 - \`findings\`: High priority, kept longest. Final conclusions and insights.
 
 **Workflow:**
-1. Store raw data: \`memory_store({ key: "topic", tier: "raw", ... })\`
-2. Process and summarize: \`memory_store({ key: "topic", tier: "summary", ... })\`
-3. Extract findings: \`memory_store({ key: "topic", tier: "findings", ... })\`
-4. Clean up raw: \`memory_cleanup_raw()\` or \`memory_delete(key)\`
-
-**Tools:** memory_store, memory_retrieve, memory_delete, memory_query, memory_cleanup_raw`;
+1. Store raw data: \`store_set({ store: "memory", key: "topic", description: "...", value: ..., tier: "raw" })\`
+2. Process and summarize: \`store_set({ store: "memory", key: "topic", description: "...", value: ..., tier: "summary" })\`
+3. Extract findings: \`store_set({ store: "memory", key: "topic", description: "...", value: ..., tier: "findings" })\`
+4. Clean up raw: \`store_action({ store: "memory", action: "cleanup_raw" })\` or \`store_delete({ store: "memory", key: "..." })\``;
 
 // ============================================================================
 // Plugin Implementation
 // ============================================================================
 
-export class WorkingMemoryPluginNextGen implements IContextPluginNextGen {
+export class WorkingMemoryPluginNextGen implements IContextPluginNextGen, IStoreHandler {
   readonly name = 'working_memory';
 
   private storage: IMemoryStorage;
@@ -281,13 +174,7 @@ export class WorkingMemoryPluginNextGen implements IContextPluginNextGen {
   }
 
   getTools(): ToolFunction[] {
-    return [
-      this.createMemoryStoreTool(),
-      this.createMemoryRetrieveTool(),
-      this.createMemoryDeleteTool(),
-      this.createMemoryQueryTool(),
-      this.createMemoryCleanupRawTool(),
-    ];
+    return [];
   }
 
   destroy(): void {
@@ -332,6 +219,106 @@ export class WorkingMemoryPluginNextGen implements IContextPluginNextGen {
       });
     }
     this._tokenCache = null;
+  }
+
+  // ============================================================================
+  // IStoreHandler Implementation
+  // ============================================================================
+
+  getStoreSchema(): StoreEntrySchema {
+    return {
+      storeId: 'memory',
+      displayName: 'Working Memory',
+      description: 'EXTERNAL storage with index in context. You see descriptions only; use store_get to retrieve full values.',
+      usageHint: 'Use for: large data, research findings, intermediate results. NOT for small state you check every turn (use "context" for that).',
+      setDataFields: 'description (required): Brief description shown in context index\nvalue (required): Data to store (any JSON value)\ntier?: "raw" | "summary" | "findings" (default: "raw")\nscope?: "session" | "plan" | "persistent" (default: "session")\npriority?: "low" | "normal" | "high" | "critical"\npinned?: boolean (never evicted if true)',
+      actions: {
+        cleanup_raw: {
+          description: 'Delete all raw-tier entries to free space',
+        },
+        query: {
+          description: 'Search entries by pattern and/or tier',
+          paramsDescription: 'pattern?: glob pattern, tier?: "raw"|"summary"|"findings", includeValues?: boolean, includeStats?: boolean',
+        },
+      },
+    };
+  }
+
+  async storeGet(key?: string, _context?: ToolContext): Promise<StoreGetResult> {
+    if (key) {
+      const result = await this.retrieve(key);
+      if (result === undefined) return { found: false, key };
+      return {
+        found: true,
+        key,
+        entry: { value: result } as Record<string, unknown>,
+      };
+    }
+    // Return all entries (descriptions only, like memory_query with no filter)
+    const allEntries = await this.query({});
+    return {
+      found: true,
+      entries: allEntries.entries.map(e => ({
+        key: e.key,
+        description: e.description,
+        tier: e.tier,
+      })),
+    };
+  }
+
+  async storeSet(key: string, data: Record<string, unknown>, _context?: ToolContext): Promise<StoreSetResult> {
+    const description = data.description as string;
+    const value = data.value;
+    if (!description || value === undefined) {
+      return { success: false, key, message: 'Both "description" and "value" are required in data' };
+    }
+    const result = await this.store(key, description, value, {
+      tier: data.tier as MemoryTier | undefined,
+      scope: data.scope as MemoryScope | undefined,
+      priority: data.priority as MemoryPriority | undefined,
+      pinned: data.pinned as boolean | undefined,
+    });
+    return { success: true, key: result.key, message: `Stored "${key}" in working memory`, sizeBytes: result.sizeBytes };
+  }
+
+  async storeDelete(key: string, _context?: ToolContext): Promise<StoreDeleteResult> {
+    const deleted = await this.delete(key);
+    return { deleted, key };
+  }
+
+  async storeList(filter?: Record<string, unknown>, _context?: ToolContext): Promise<StoreListResult> {
+    const results = await this.query({
+      pattern: filter?.pattern as string | undefined,
+      tier: filter?.tier as MemoryTier | undefined,
+    });
+    return {
+      entries: results.entries.map(e => ({
+        key: e.key,
+        description: e.description,
+        tier: e.tier,
+      })),
+      total: results.entries.length,
+    };
+  }
+
+  async storeAction(action: string, params?: Record<string, unknown>, _context?: ToolContext): Promise<StoreActionResult> {
+    switch (action) {
+      case 'cleanup_raw': {
+        const result = await this.cleanupRaw();
+        return { success: true, action, deleted: result.deleted, keys: result.keys };
+      }
+      case 'query': {
+        const results = await this.query({
+          pattern: params?.pattern as string | undefined,
+          tier: params?.tier as MemoryTier | undefined,
+          includeValues: params?.includeValues as boolean | undefined,
+          includeStats: params?.includeStats as boolean | undefined,
+        });
+        return { success: true, action, entries: results.entries, total: results.entries.length, stats: results.stats };
+      }
+      default:
+        return { success: false, action, error: `Unknown action "${action}". Available: cleanup_raw, query` };
+    }
   }
 
   // ============================================================================
@@ -642,85 +629,5 @@ export class WorkingMemoryPluginNextGen implements IContextPluginNextGen {
     if (this._destroyed) {
       throw new Error('WorkingMemoryPluginNextGen is destroyed');
     }
-  }
-
-  // ============================================================================
-  // Tool Factories
-  // ============================================================================
-
-  private createMemoryStoreTool(): ToolFunction {
-    return {
-      definition: memoryStoreDefinition,
-      execute: async (args: Record<string, unknown>) => {
-        const result = await this.store(
-          args.key as string,
-          args.description as string,
-          args.value,
-          {
-            tier: args.tier as MemoryTier | undefined,
-            scope: args.scope as MemoryScope | undefined,
-            priority: args.priority as MemoryPriority | undefined,
-            pinned: args.pinned as boolean | undefined,
-          }
-        );
-        return { success: true, ...result };
-      },
-      permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: (args) => `store ${args.key}`,
-    };
-  }
-
-  private createMemoryRetrieveTool(): ToolFunction {
-    return {
-      definition: memoryRetrieveDefinition,
-      execute: async (args: Record<string, unknown>) => {
-        const value = await this.retrieve(args.key as string);
-        if (value === undefined) {
-          return { found: false, key: args.key };
-        }
-        return { found: true, key: args.key, value };
-      },
-      permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: (args) => `retrieve ${args.key}`,
-    };
-  }
-
-  private createMemoryDeleteTool(): ToolFunction {
-    return {
-      definition: memoryDeleteDefinition,
-      execute: async (args: Record<string, unknown>) => {
-        const deleted = await this.delete(args.key as string);
-        return { deleted, key: args.key };
-      },
-      permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: (args) => `delete ${args.key}`,
-    };
-  }
-
-  private createMemoryQueryTool(): ToolFunction {
-    return {
-      definition: memoryQueryDefinition,
-      execute: async (args: Record<string, unknown>) => {
-        return await this.query({
-          pattern: args.pattern as string | undefined,
-          tier: args.tier as MemoryTier | undefined,
-          includeValues: args.includeValues as boolean | undefined,
-          includeStats: args.includeStats as boolean | undefined,
-        });
-      },
-      permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: (args) => args.pattern ? `query ${args.pattern}` : 'query all',
-    };
-  }
-
-  private createMemoryCleanupRawTool(): ToolFunction {
-    return {
-      definition: memoryCleanupRawDefinition,
-      execute: async () => {
-        return await this.cleanupRaw();
-      },
-      permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: () => 'cleanup raw tier',
-    };
   }
 }

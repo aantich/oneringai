@@ -82,7 +82,7 @@ export function createRoutineUpdateTask(
       },
     },
 
-    permission: { scope: 'session', riskLevel: 'medium' },
+    permission: { scope: 'session' as const, riskLevel: 'medium' as const },
 
     execute: async (args: RoutineUpdateTaskArgs, context?: ToolContext) => {
       try {

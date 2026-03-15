@@ -15,8 +15,8 @@
  * - Rarely accessed reference data
  */
 
-import type { IContextPluginNextGen, ITokenEstimator } from '../types.js';
-import type { ToolFunction } from '../../../domain/entities/Tool.js';
+import type { IContextPluginNextGen, ITokenEstimator, IStoreHandler, StoreEntrySchema, StoreGetResult, StoreSetResult, StoreDeleteResult, StoreListResult } from '../types.js';
+import type { ToolFunction, ToolContext } from '../../../domain/entities/Tool.js';
 import { simpleTokenEstimator } from '../BasePluginNextGen.js';
 
 // ============================================================================
@@ -74,11 +74,7 @@ const DEFAULT_CONFIG = {
 // Instructions
 // ============================================================================
 
-const IN_CONTEXT_MEMORY_INSTRUCTIONS = `In-Context Memory stores key-value pairs DIRECTLY in context.
-Values are immediately visible - no retrieval needed.
-
-**Use for:** Current state, preferences, counters, small results.
-**Do NOT use for:** Large data (use Working Memory instead).
+const IN_CONTEXT_MEMORY_INSTRUCTIONS = `Store: "context". Values are DIRECTLY visible in your context window every turn \u2014 no retrieval needed.
 
 **Priority levels** (for eviction when space is tight):
 - \`low\`: Evicted first. Temporary data.
@@ -86,77 +82,15 @@ Values are immediately visible - no retrieval needed.
 - \`high\`: Keep longer. Important state.
 - \`critical\`: Never auto-evicted.
 
-**UI Display:** Set \`showInUI: true\` in context_set to display the entry in the user's side panel.
+**UI Display:** Set \`showInUI: true\` to display the entry in the user's side panel.
 Values shown in the UI support the same rich markdown formatting as the chat window
-(see formatting instructions above). Use this for dashboards, progress displays, and results the user should see.
-
-**Tools:** context_set, context_delete, context_list`;
-
-// ============================================================================
-// Tool Definitions
-// ============================================================================
-
-const contextSetDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'context_set',
-    description: `Store or update a key-value pair in live context.
-Value appears directly in context - no retrieval needed.
-Set showInUI to true to also display the entry in the user's side panel.`,
-    parameters: {
-      type: 'object',
-      properties: {
-        key: { type: 'string', description: 'Unique key (e.g., "current_state")' },
-        description: { type: 'string', description: 'Brief description (shown in context)' },
-        value: { description: 'Value to store (any JSON-serializable data)' },
-        priority: {
-          type: 'string',
-          enum: ['low', 'normal', 'high', 'critical'],
-          description: 'Eviction priority. Default: "normal"',
-        },
-        showInUI: {
-          type: 'boolean',
-          description: 'If true, display this entry in the user\'s side panel with full rich markdown rendering — same capabilities as the chat window (code blocks, tables, LaTeX, Mermaid diagrams, Vega-Lite charts, mindmaps, etc. — see formatting instructions in system prompt). Use this for dashboards, status displays, and structured results the user should see. Default: false',
-        },
-      },
-      required: ['key', 'description', 'value'],
-    },
-  },
-};
-
-const contextDeleteDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'context_delete',
-    description: 'Delete an entry from live context to free space.',
-    parameters: {
-      type: 'object',
-      properties: {
-        key: { type: 'string', description: 'Key to delete' },
-      },
-      required: ['key'],
-    },
-  },
-};
-
-const contextListDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'context_list',
-    description: 'List all keys in live context with metadata.',
-    parameters: {
-      type: 'object',
-      properties: {},
-      required: [],
-    },
-  },
-};
+(see formatting instructions above). Use this for dashboards, progress displays, and results the user should see.`;
 
 // ============================================================================
 // Plugin Implementation
 // ============================================================================
 
-export class InContextMemoryPluginNextGen implements IContextPluginNextGen {
+export class InContextMemoryPluginNextGen implements IContextPluginNextGen, IStoreHandler {
   readonly name = 'in_context_memory';
 
   private entries: Map<string, InContextEntry> = new Map();
@@ -248,11 +182,7 @@ export class InContextMemoryPluginNextGen implements IContextPluginNextGen {
   }
 
   getTools(): ToolFunction[] {
-    return [
-      this.createContextSetTool(),
-      this.createContextDeleteTool(),
-      this.createContextListTool(),
-    ];
+    return [];
   }
 
   destroy(): void {
@@ -466,52 +396,82 @@ export class InContextMemoryPluginNextGen implements IContextPluginNextGen {
   }
 
   // ============================================================================
-  // Tool Factories
+  // IStoreHandler Implementation
   // ============================================================================
 
-  private createContextSetTool(): ToolFunction {
+  getStoreSchema(): StoreEntrySchema {
     return {
-      definition: contextSetDefinition,
-      execute: async (args: Record<string, unknown>) => {
-        this.set(
-          args.key as string,
-          args.description as string,
-          args.value,
-          args.priority as InContextPriority | undefined,
-          args.showInUI as boolean | undefined
-        );
-        return {
-          success: true,
-          key: args.key,
-          showInUI: args.showInUI ?? false,
-          message: `Stored "${args.key}" in live context${args.showInUI ? ' (visible in UI)' : ''}`,
-        };
-      },
-      permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: (args) => `set ${args.key}${args.showInUI ? ' [UI]' : ''}`,
+      storeId: 'context',
+      displayName: 'Live Context',
+      description: 'Values shown DIRECTLY in your context window — no retrieval needed.',
+      usageHint: 'Use for: small state, counters, flags, preferences you need to see every turn. Do NOT use for large data (use "memory" — it won\'t waste context tokens).',
+      setDataFields: 'description (required): Brief description shown in context\nvalue (required): Data to store (any JSON value)\npriority?: "low" | "normal" | "high" | "critical" (default: "normal")\nshowInUI?: boolean — display in user\'s side panel (default: false)',
     };
   }
 
-  private createContextDeleteTool(): ToolFunction {
+  async storeGet(key?: string, _context?: ToolContext): Promise<StoreGetResult> {
+    this.assertNotDestroyed();
+    if (key) {
+      const entry = this.entries.get(key);
+      if (!entry) return { found: false, key };
+      return {
+        found: true,
+        key,
+        entry: {
+          key: entry.key,
+          description: entry.description,
+          value: entry.value,
+          priority: entry.priority,
+          showInUI: entry.showInUI ?? false,
+          updatedAt: entry.updatedAt,
+        },
+      };
+    }
+    // Return all entries
     return {
-      definition: contextDeleteDefinition,
-      execute: async (args: Record<string, unknown>) => {
-        const deleted = this.delete(args.key as string);
-        return { deleted, key: args.key };
-      },
-      permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: (args) => `delete ${args.key}`,
+      found: true,
+      entries: Array.from(this.entries.values()).map(e => ({
+        key: e.key,
+        description: e.description,
+        value: e.value,
+        priority: e.priority,
+        showInUI: e.showInUI ?? false,
+        updatedAt: e.updatedAt,
+      })),
     };
   }
 
-  private createContextListTool(): ToolFunction {
+  async storeSet(key: string, data: Record<string, unknown>, _context?: ToolContext): Promise<StoreSetResult> {
+    const description = data.description as string;
+    const value = data.value;
+    if (!description || value === undefined) {
+      return { success: false, key, message: 'Both "description" and "value" are required in data' };
+    }
+    this.set(
+      key,
+      description,
+      value,
+      data.priority as InContextPriority | undefined,
+      data.showInUI as boolean | undefined,
+    );
     return {
-      definition: contextListDefinition,
-      execute: async () => {
-        return { entries: this.list() };
-      },
-      permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: () => 'list entries',
+      success: true,
+      key,
+      showInUI: (data.showInUI as boolean) ?? false,
+      message: `Stored "${key}" in live context${data.showInUI ? ' (visible in UI)' : ''}`,
+    };
+  }
+
+  async storeDelete(key: string, _context?: ToolContext): Promise<StoreDeleteResult> {
+    const deleted = this.delete(key);
+    return { deleted, key };
+  }
+
+  async storeList(_filter?: Record<string, unknown>, _context?: ToolContext): Promise<StoreListResult> {
+    const entries = this.list();
+    return {
+      entries: entries.map(e => ({ ...e })),
+      total: entries.length,
     };
   }
 }

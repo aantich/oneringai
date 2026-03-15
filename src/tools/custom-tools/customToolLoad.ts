@@ -40,7 +40,7 @@ export function createCustomToolLoad(storage?: ICustomToolStorage): ToolFunction
       },
     },
 
-    permission: { scope: 'always', riskLevel: 'low' },
+    permission: { scope: 'always' as const, riskLevel: 'low' as const },
 
     execute: async (args: LoadArgs, context?: ToolContext): Promise<LoadResult> => {
       const userId = context?.userId;

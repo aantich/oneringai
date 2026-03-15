@@ -16,6 +16,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { sanitizeUserId, DEFAULT_USER_ID } from './utils.js';
 import type { IUserInfoStorage, UserInfoEntry } from '../../domain/interfaces/IUserInfoStorage.js';
 
 /**
@@ -57,26 +58,13 @@ function getDefaultBaseDirectory(): string {
   return join(homedir(), '.oneringai', 'users');
 }
 
-/**
- * Default user ID when none is provided
- */
-const DEFAULT_USER_ID = 'default';
+// DEFAULT_USER_ID imported from ./utils.js
 
 /**
  * Sanitize user ID for use as a directory name
  * Removes or replaces characters that are not safe for filenames
  */
-function sanitizeUserId(userId: string | undefined): string {
-  if (!userId) return DEFAULT_USER_ID;
-  // Replace any character that isn't alphanumeric, dash, or underscore
-  // Also collapse multiple consecutive safe characters into one
-  return userId
-    .replace(/[^a-zA-Z0-9_-]/g, '_')  // Replace unsafe chars with underscore
-    .replace(/_+/g, '_')               // Collapse multiple underscores
-    .replace(/^_|_$/g, '')             // Remove leading/trailing underscores
-    .toLowerCase()                      // Normalize to lowercase
-    || DEFAULT_USER_ID;                 // Fallback if empty
-}
+// sanitizeUserId imported from ./utils.js
 
 /**
  * File-based storage for user information

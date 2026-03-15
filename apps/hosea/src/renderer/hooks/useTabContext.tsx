@@ -10,7 +10,7 @@ import type { IChatMessage, IToolCallInfo } from '@everworker/react-ui';
 import type { Plan, StreamChunk, DynamicUIContent, ContextEntryForUI } from '../../preload/index';
 
 // Sidebar tab type
-export type SidebarTab = 'look_inside' | 'dynamic_ui' | 'routines';
+export type SidebarTab = 'look_inside' | 'dynamic_ui' | 'routines' | 'workers';
 
 // ============ Types ============
 
@@ -62,6 +62,25 @@ export interface TabState {
     tasks: Map<string, { name: string; status: string; output?: string; error?: string }>;
     steps: Array<{ timestamp: number; taskName: string; type: string; data?: Record<string, unknown> }>;
   } | null;
+  // Tool permission approval
+  pendingApproval: import('../../preload/index').ToolApprovalRequest | null;
+  // Orchestrator state
+  isOrchestrator: boolean;
+  workers: Map<string, WorkerState>;
+  selectedWorkerName: string | null;
+  workspaceEntries: Array<{ key: string; summary: string; status: string; author: string; version: number; updatedAt: number }>;
+}
+
+export interface WorkerState {
+  name: string;
+  type: string;
+  model: string;
+  status: 'idle' | 'running' | 'paused' | 'destroyed';
+  registryId: string;
+  createdAt: number;
+  currentTool: string | null;
+  currentToolDescription: string | null;
+  turnCount: number;
 }
 
 // Sidebar state interface
@@ -106,6 +125,9 @@ export interface TabContextValue {
 
   // Session history
   createTabFromSession: (agentConfigId: string, sessionId: string, oldInstanceId: string, agentName: string, title: string) => Promise<string | null>;
+
+  // Orchestrator
+  selectWorker: (workerName: string | null) => void;
 
   // State helpers
   isMaxTabsReached: boolean;
@@ -258,6 +280,16 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
               ...updatedTab.messages.slice(0, -1),
               { ...lastMsg, toolCalls: updatedToolCalls },
             ];
+          }
+        }
+        // Tool permission approval events
+        else if (chunk.type === 'tool:approval_required') {
+          const c = chunk as { request: import('../../preload/index').ToolApprovalRequest };
+          updatedTab.pendingApproval = c.request;
+        } else if (chunk.type === 'tool:approval_resolved') {
+          const c = chunk as { requestId: string; approved: boolean };
+          if (updatedTab.pendingApproval?.requestId === c.requestId) {
+            updatedTab.pendingApproval = null;
           }
         }
         // Plan events
@@ -444,6 +476,71 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
         else if (chunk.type === 'browser:agent_has_control') {
           updatedTab.userHasControl = null;
         }
+        // Orchestrator worker events
+        else if (chunk.type === 'orchestrator:worker_created') {
+          const w = chunk.worker as { name: string; type: string; model: string; status: string; registryId: string; createdAt: number };
+          const workers = new Map(updatedTab.workers);
+          workers.set(w.name, {
+            name: w.name,
+            type: w.type,
+            model: w.model,
+            status: w.status as 'idle' | 'running' | 'paused' | 'destroyed',
+            registryId: w.registryId,
+            createdAt: w.createdAt,
+            currentTool: null,
+            currentToolDescription: null,
+            turnCount: 0,
+          });
+          updatedTab.workers = workers;
+        }
+        else if (chunk.type === 'orchestrator:worker_destroyed') {
+          const workers = new Map(updatedTab.workers);
+          workers.delete((chunk as { workerName: string }).workerName);
+          updatedTab.workers = workers;
+          // Clear selection if the destroyed worker was selected
+          if (updatedTab.selectedWorkerName === (chunk as { workerName: string }).workerName) {
+            updatedTab.selectedWorkerName = null;
+          }
+        }
+        else if (chunk.type === 'orchestrator:worker_status') {
+          const c = chunk as { workerName: string; status: string };
+          const existing = updatedTab.workers.get(c.workerName);
+          if (existing) {
+            const workers = new Map(updatedTab.workers);
+            workers.set(c.workerName, { ...existing, status: c.status as 'idle' | 'running' | 'paused' | 'destroyed' });
+            updatedTab.workers = workers;
+          }
+        }
+        else if (chunk.type === 'orchestrator:worker_tool_start') {
+          const c = chunk as { workerName: string; tool: string; description: string };
+          const existing = updatedTab.workers.get(c.workerName);
+          if (existing) {
+            const workers = new Map(updatedTab.workers);
+            workers.set(c.workerName, { ...existing, currentTool: c.tool, currentToolDescription: c.description });
+            updatedTab.workers = workers;
+          }
+        }
+        else if (chunk.type === 'orchestrator:worker_tool_end') {
+          const c = chunk as { workerName: string };
+          const existing = updatedTab.workers.get(c.workerName);
+          if (existing) {
+            const workers = new Map(updatedTab.workers);
+            workers.set(c.workerName, { ...existing, currentTool: null, currentToolDescription: null });
+            updatedTab.workers = workers;
+          }
+        }
+        else if (chunk.type === 'orchestrator:worker_turn_start') {
+          const c = chunk as { workerName: string };
+          const existing = updatedTab.workers.get(c.workerName);
+          if (existing) {
+            const workers = new Map(updatedTab.workers);
+            workers.set(c.workerName, { ...existing, turnCount: existing.turnCount + 1 });
+            updatedTab.workers = workers;
+          }
+        }
+        else if (chunk.type === 'orchestrator:workspace_update') {
+          updatedTab.workspaceEntries = (chunk as { entries: typeof updatedTab.workspaceEntries }).entries;
+        }
 
         newTabs.set(tab.instanceId, updatedTab);
         return newTabs;
@@ -542,6 +639,7 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
         streamingThinking: '',
         activeToolCalls: new Map(),
         activePlan: null,
+        pendingApproval: null,
         isLoading: false,
         status: {
           initialized: true,
@@ -559,7 +657,19 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
         voiceoverEnabled: false,
         sessionSaveEnabled: false,
         routineExecution: null,
+        isOrchestrator: false,
+        workers: new Map(),
+        selectedWorkerName: null,
+        workspaceEntries: [],
       };
+
+      // Check if this agent is an orchestrator
+      try {
+        const agentConfigResult = await window.hosea.agentConfig.get(agentConfigId);
+        if (agentConfigResult && (agentConfigResult as Record<string, unknown>).isOrchestrator) {
+          newTab.isOrchestrator = true;
+        }
+      } catch { /* ignore — non-critical */ }
 
       // Update status from instance
       const statusResult = await window.hosea.agent.statusInstance(instanceId);
@@ -653,6 +763,7 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
         streamingThinking: '',
         activeToolCalls: new Map(),
         activePlan: null,
+        pendingApproval: null,
         isLoading: false,
         status: { initialized: true, connector: null, model: null, mode: null },
         createdAt: Date.now(),
@@ -665,7 +776,19 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
         voiceoverEnabled: false,
         sessionSaveEnabled: true,
         routineExecution: null,
+        isOrchestrator: false,
+        workers: new Map(),
+        selectedWorkerName: null,
+        workspaceEntries: [],
       };
+
+      // Check if this agent is an orchestrator
+      try {
+        const agentConfigResult = await window.hosea.agentConfig.get(agentConfigId);
+        if (agentConfigResult && (agentConfigResult as Record<string, unknown>).isOrchestrator) {
+          newTab.isOrchestrator = true;
+        }
+      } catch { /* ignore */ }
 
       // Fetch actual status
       window.hosea.agent.statusInstance(instanceId).then(statusResult => {
@@ -875,6 +998,21 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
     setSidebar(prev => ({ ...prev, width }));
   }, []);
 
+  // Select a worker in the orchestrator dashboard (opens sidebar Workers tab)
+  const selectWorker = useCallback((workerName: string | null) => {
+    if (!activeTabId) return;
+    setTabs(prevTabs => {
+      const tab = prevTabs.get(activeTabId);
+      if (!tab) return prevTabs;
+      const newTabs = new Map(prevTabs);
+      newTabs.set(activeTabId, { ...tab, selectedWorkerName: workerName });
+      return newTabs;
+    });
+    if (workerName) {
+      setSidebar(prev => ({ ...prev, isOpen: true, activeTab: 'workers' }));
+    }
+  }, [activeTabId]);
+
   // Clear dynamic UI update indicator
   const clearDynamicUIUpdate = useCallback(() => {
     if (!activeTabId) return;
@@ -982,6 +1120,8 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
     toggleSessionSave,
     // Session history
     createTabFromSession,
+    // Orchestrator
+    selectWorker,
     isMaxTabsReached: tabs.size >= MAX_TABS,
     tabCount: tabs.size,
   };

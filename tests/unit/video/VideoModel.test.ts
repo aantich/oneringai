@@ -144,12 +144,12 @@ describe('VideoModel Registry', () => {
   describe('calculateVideoCost', () => {
     it('should calculate cost for sora-2', () => {
       const cost = calculateVideoCost('sora-2', 8);
-      expect(cost).toBe(1.20); // 8 * 0.15
+      expect(cost).toBe(0.80); // 8 * 0.10
     });
 
     it('should calculate cost for sora-2-pro', () => {
       const cost = calculateVideoCost('sora-2-pro', 12);
-      expect(cost).toBeCloseTo(4.80, 2); // 12 * 0.40
+      expect(cost).toBeCloseTo(3.60, 2); // 12 * 0.30
     });
 
     it('should calculate cost for Google Veo', () => {

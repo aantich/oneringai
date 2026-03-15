@@ -43,7 +43,7 @@ export function createRoutineGet(storage?: IRoutineDefinitionStorage): ToolFunct
       },
     },
 
-    permission: { scope: 'session', riskLevel: 'low' },
+    permission: { scope: 'always' as const, riskLevel: 'low' as const },
 
     execute: async (args: RoutineGetArgs, context?: ToolContext) => {
       try {

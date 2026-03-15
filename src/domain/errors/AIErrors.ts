@@ -114,6 +114,26 @@ export class ToolNotFoundError extends AIError {
   }
 }
 
+export class ToolPermissionDeniedError extends AIError {
+  constructor(
+    public readonly toolName: string,
+    public readonly reason: string,
+    public readonly details?: {
+      policyName?: string;
+      approvalRequired?: boolean;
+      approvalKey?: string;
+    }
+  ) {
+    super(
+      `Tool '${toolName}' permission denied: ${reason}`,
+      'TOOL_PERMISSION_DENIED',
+      403
+    );
+    this.name = 'ToolPermissionDeniedError';
+    Object.setPrototypeOf(this, ToolPermissionDeniedError.prototype);
+  }
+}
+
 export class ModelNotSupportedError extends AIError {
   constructor(providerName: string, model: string, capability: string) {
     super(

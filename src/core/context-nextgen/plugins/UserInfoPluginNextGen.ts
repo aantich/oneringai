@@ -21,7 +21,7 @@
  * - Tools access current user's data only (no cross-user access)
  */
 
-import type { IContextPluginNextGen, ITokenEstimator } from '../types.js';
+import type { IContextPluginNextGen, ITokenEstimator, IStoreHandler, StoreEntrySchema, StoreGetResult, StoreSetResult, StoreDeleteResult, StoreListResult, StoreActionResult } from '../types.js';
 import type { ToolFunction, ToolContext } from '../../../domain/entities/Tool.js';
 import type { IUserInfoStorage, UserInfoEntry } from '../../../domain/interfaces/IUserInfoStorage.js';
 import { FileUserInfoStorage } from '../../../infrastructure/storage/FileUserInfoStorage.js';
@@ -65,19 +65,10 @@ const KEY_PATTERN = /^[a-zA-Z0-9_-]+$/;
 // Instructions
 // ============================================================================
 
-const USER_INFO_INSTRUCTIONS = `User Info stores key-value information about the current user.
-Data is user-specific and persists across sessions and agents.
-User info is automatically shown in context — no need to call user_info_get every turn.
+const USER_INFO_INSTRUCTIONS = `Store: "user_info". Automatically shown in context \u2014 no need to retrieve every turn.
+It is also perfectly fine to search the web and other external sources for information about the user and then store it in user info for future use.
 
-**To manage:**
-- \`user_info_set(key, value, description?)\`: Store/update user information
-- \`user_info_get(key?)\`: Retrieve one entry by key, or all entries if no key
-- \`user_info_remove(key)\`: Remove a specific entry
-- \`user_info_clear(confirm: true)\`: Remove all entries (destructive!)
-
-**Use for:** User preferences, context, metadata (theme, language, timezone, role, etc.) It is also perfectly fine to search the web and other external sources for information about the user and then store it in user info for future use.
-
-**Important:** Do not store sensitive information (passwords, tokens, PII) in user info. It is not encrypted and may be accessible to other parts of the system. Always follow best practices for security.
+**Important:** Do not store sensitive information (passwords, tokens, PII) in user info.
 
 **Rules after each user message:** If the user provides new information about themselves, update user info accordingly. If they ask to change or remove existing information, do that as well. Always keep user info up to date with the latest information provided by the user. Learn about the user proactively!
 
@@ -98,7 +89,7 @@ TODOs are stored alongside user info and shown in a separate "Current TODOs" sec
 - Suggest appropriate tags based on context (e.g. "work", "personal", "urgent").
 
 **Reminder rules:**
-- Check the \`_todo_last_reminded\` entry in user info. If its value is NOT today's date (YYYY-MM-DD) AND there are overdue or soon-due items (within 2 days), proactively remind the user ONCE at the start of the conversation, then set \`_todo_last_reminded\` to today's date via \`user_info_set\`.
+- Check the \`_todo_last_reminded\` entry in user info. If its value is NOT today's date (YYYY-MM-DD) AND there are overdue or soon-due items (within 2 days), proactively remind the user ONCE at the start of the conversation, then set \`_todo_last_reminded\` to today's date via \`store_set({ store: "user_info", key: "_todo_last_reminded", value: "YYYY-MM-DD" })\`.
 - Do NOT remind again in the same day unless the user explicitly asks about their TODOs.
 - When reminding, prioritize: overdue items first, then items due today, then items due tomorrow.
 - If the user asks about their TODOs or schedule, always answer regardless of reminder status.
@@ -108,90 +99,6 @@ TODOs are stored alongside user info and shown in a separate "Current TODOs" sec
 - Completed TODOs older than 48 hours (check updatedAt of done items) → auto-delete via \`todo_remove\` without asking.
 - Overdue pending TODOs (past due > 7 days) → ask the user: "This TODO is overdue by X days — still relevant or should I remove it?"
 - Run cleanup checks at the same time as reminders (once per day, using \`_todo_last_reminded\` marker).`;
-
-// ============================================================================
-// Tool Definitions
-// ============================================================================
-
-const userInfoSetDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'user_info_set',
-    description: `Store or update user information by key. Data persists across sessions.
-If the key exists, it will be updated. If not, a new entry is created.`,
-    parameters: {
-      type: 'object',
-      properties: {
-        key: {
-          type: 'string',
-          description: 'Unique key for the information (alphanumeric, dash, underscore; max 100 chars)',
-        },
-        value: {
-          description: 'Value to store (any JSON-serializable data: string, number, boolean, object, array)',
-        },
-        description: {
-          type: 'string',
-          description: 'Optional description for self-documentation',
-        },
-      },
-      required: ['key', 'value'],
-    },
-  },
-};
-
-const userInfoGetDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'user_info_get',
-    description: 'Retrieve user information. If key is provided, returns that entry. Otherwise returns all entries.',
-    parameters: {
-      type: 'object',
-      properties: {
-        key: {
-          type: 'string',
-          description: 'Key of the entry to retrieve (optional - omit to get all entries)',
-        },
-      },
-      required: [],
-    },
-  },
-};
-
-const userInfoRemoveDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'user_info_remove',
-    description: 'Remove a specific user information entry by key.',
-    parameters: {
-      type: 'object',
-      properties: {
-        key: {
-          type: 'string',
-          description: 'Key of the entry to remove',
-        },
-      },
-      required: ['key'],
-    },
-  },
-};
-
-const userInfoClearDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'user_info_clear',
-    description: 'Clear all user information entries (DESTRUCTIVE). Requires confirmation.',
-    parameters: {
-      type: 'object',
-      properties: {
-        confirm: {
-          type: 'boolean',
-          description: 'Must be true to confirm deletion',
-        },
-      },
-      required: ['confirm'],
-    },
-  },
-};
 
 // ============================================================================
 // TODO Tool Definitions
@@ -404,7 +311,7 @@ function formatValue(value: unknown): string {
 // Plugin Implementation
 // ============================================================================
 
-export class UserInfoPluginNextGen implements IContextPluginNextGen {
+export class UserInfoPluginNextGen implements IContextPluginNextGen, IStoreHandler {
   readonly name = 'user_info';
 
   private _destroyed = false;
@@ -481,10 +388,6 @@ export class UserInfoPluginNextGen implements IContextPluginNextGen {
 
   getTools(): ToolFunction[] {
     return [
-      this.createUserInfoSetTool(),
-      this.createUserInfoGetTool(),
-      this.createUserInfoRemoveTool(),
-      this.createUserInfoClearTool(),
       this.createTodoAddTool(),
       this.createTodoUpdateTool(),
       this.createTodoRemoveTool(),
@@ -651,198 +554,199 @@ export class UserInfoPluginNextGen implements IContextPluginNextGen {
   }
 
   // ============================================================================
-  // Tool Factories
+  // IStoreHandler Implementation
   // ============================================================================
 
-  private createUserInfoSetTool(): ToolFunction {
+  getStoreSchema(): StoreEntrySchema {
     return {
-      definition: userInfoSetDefinition,
-      execute: async (args: Record<string, unknown>, context?: ToolContext) => {
-        this.assertNotDestroyed();
-        await this.ensureInitialized();
+      storeId: 'user_info',
+      displayName: 'User Information',
+      description: 'User-scoped data shared across all agents for this user. Persists across sessions.',
+      usageHint: 'Use for: facts about the user, their preferences, profile data. NOT for agent-specific state (use "context" or "memory").',
+      setDataFields: 'value (required): Data to store (any JSON value)\ndescription?: Brief description of what this entry is',
+      actions: {
+        clear: {
+          description: 'Delete ALL user info entries (irreversible)',
+          destructive: true,
+        },
+      },
+    };
+  }
 
-        const userId = context?.userId ?? this.userId;
+  async storeGet(key?: string, _context?: ToolContext): Promise<StoreGetResult> {
+    this.assertNotDestroyed();
+    await this.ensureInitialized();
 
-        const key = args.key as string;
-        const value = args.value;
-        const description = args.description as string | undefined;
+    if (this._entries.size === 0 && key !== undefined) {
+      return { found: false, key };
+    }
 
-        // Validate key
-        const keyError = validateKey(key);
-        if (keyError) {
-          return { error: keyError };
-        }
+    // Get specific entry
+    if (key !== undefined) {
+      const trimmedKey = key.trim();
+      const entry = this._entries.get(trimmedKey);
 
-        const trimmedKey = key.trim();
+      if (!entry) {
+        return { found: false, key: trimmedKey };
+      }
 
-        // Validate value
-        if (value === undefined) {
-          return { error: 'Value cannot be undefined. Use null for explicit null value.' };
-        }
-
-        // Check maxEntries (new entry only)
-        if (!this._entries.has(trimmedKey) && this._entries.size >= this.maxEntries) {
-          return { error: `Maximum number of entries reached (${this.maxEntries})` };
-        }
-
-        // Calculate sizes
-        const valueSize = calculateValueSize(value);
-        let currentTotal = 0;
-        for (const e of this._entries.values()) {
-          currentTotal += calculateValueSize(e.value);
-        }
-        const existingSize = this._entries.has(trimmedKey) ? calculateValueSize(this._entries.get(trimmedKey)!.value) : 0;
-        const newTotal = currentTotal - existingSize + valueSize;
-
-        if (newTotal > this.maxTotalSize) {
-          return { error: `Total size would exceed maximum (${this.maxTotalSize} bytes)` };
-        }
-
-        // Create or update entry
-        const now = Date.now();
-        const existing = this._entries.get(trimmedKey);
-        const entry: UserInfoEntry = {
-          id: trimmedKey,
-          value,
-          valueType: getValueType(value),
-          description,
-          createdAt: existing?.createdAt ?? now,
-          updatedAt: now,
-        };
-
-        this._entries.set(trimmedKey, entry);
-        this._tokenCache = null;
-
-        // Write-through to storage
-        await this.persistToStorage(userId);
-
-        return {
-          success: true,
-          message: existing ? `User info '${trimmedKey}' updated` : `User info '${trimmedKey}' added`,
-          key: trimmedKey,
+      return {
+        found: true,
+        key: entry.id,
+        entry: {
+          key: entry.id,
+          value: entry.value,
           valueType: entry.valueType,
-          valueSize,
-        };
-      },
-      permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: (args) => `set user info '${args.key}'`,
+          description: entry.description,
+          createdAt: entry.createdAt,
+          updatedAt: entry.updatedAt,
+        },
+      };
+    }
+
+    // Get all entries
+    const entries = Array.from(this._entries.values());
+    return {
+      found: entries.length > 0,
+      entries: entries.map(e => ({
+        key: e.id,
+        value: e.value,
+        valueType: e.valueType,
+        description: e.description,
+        createdAt: e.createdAt,
+        updatedAt: e.updatedAt,
+      })),
     };
   }
 
-  private createUserInfoGetTool(): ToolFunction {
+  async storeSet(key: string, data: Record<string, unknown>, context?: ToolContext): Promise<StoreSetResult> {
+    this.assertNotDestroyed();
+    await this.ensureInitialized();
+
+    const userId = context?.userId ?? this.userId;
+
+    const value = data.value;
+    const description = data.description as string | undefined;
+
+    // Validate key
+    const keyError = validateKey(key);
+    if (keyError) {
+      return { success: false, key, message: keyError };
+    }
+
+    const trimmedKey = key.trim();
+
+    // Validate value
+    if (value === undefined) {
+      return { success: false, key: trimmedKey, message: 'Value cannot be undefined. Use null for explicit null value.' };
+    }
+
+    // Check maxEntries (new entry only)
+    if (!this._entries.has(trimmedKey) && this._entries.size >= this.maxEntries) {
+      return { success: false, key: trimmedKey, message: `Maximum number of entries reached (${this.maxEntries})` };
+    }
+
+    // Calculate sizes
+    const valueSize = calculateValueSize(value);
+    let currentTotal = 0;
+    for (const e of this._entries.values()) {
+      currentTotal += calculateValueSize(e.value);
+    }
+    const existingSize = this._entries.has(trimmedKey) ? calculateValueSize(this._entries.get(trimmedKey)!.value) : 0;
+    const newTotal = currentTotal - existingSize + valueSize;
+
+    if (newTotal > this.maxTotalSize) {
+      return { success: false, key: trimmedKey, message: `Total size would exceed maximum (${this.maxTotalSize} bytes)` };
+    }
+
+    // Create or update entry
+    const now = Date.now();
+    const existing = this._entries.get(trimmedKey);
+    const entry: UserInfoEntry = {
+      id: trimmedKey,
+      value,
+      valueType: getValueType(value),
+      description,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+    };
+
+    this._entries.set(trimmedKey, entry);
+    this._tokenCache = null;
+
+    // Write-through to storage
+    await this.persistToStorage(userId);
+
     return {
-      definition: userInfoGetDefinition,
-      execute: async (args: Record<string, unknown>, _context?: ToolContext) => {
-        this.assertNotDestroyed();
-        await this.ensureInitialized();
-
-        const key = args.key as string | undefined;
-
-        if (this._entries.size === 0) {
-          return { error: 'User info not found' };
-        }
-
-        // Get specific entry
-        if (key !== undefined) {
-          const trimmedKey = key.trim();
-          const entry = this._entries.get(trimmedKey);
-
-          if (!entry) {
-            return { error: `User info '${trimmedKey}' not found` };
-          }
-
-          return {
-            key: entry.id,
-            value: entry.value,
-            valueType: entry.valueType,
-            description: entry.description,
-            createdAt: entry.createdAt,
-            updatedAt: entry.updatedAt,
-          };
-        }
-
-        // Get all entries
-        const entries = Array.from(this._entries.values());
-        return {
-          count: entries.length,
-          entries: entries.map(e => ({
-            key: e.id,
-            value: e.value,
-            valueType: e.valueType,
-            description: e.description,
-            createdAt: e.createdAt,
-            updatedAt: e.updatedAt,
-          })),
-        };
-      },
-      permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: (args) => args.key ? `get user info '${args.key}'` : 'get all user info',
+      success: true,
+      key: trimmedKey,
+      message: existing ? `User info '${trimmedKey}' updated` : `User info '${trimmedKey}' added`,
+      valueType: entry.valueType,
+      valueSize,
     };
   }
 
-  private createUserInfoRemoveTool(): ToolFunction {
+  async storeDelete(key: string, context?: ToolContext): Promise<StoreDeleteResult> {
+    this.assertNotDestroyed();
+    await this.ensureInitialized();
+
+    const userId = context?.userId ?? this.userId;
+    const trimmedKey = key.trim();
+
+    if (!this._entries.has(trimmedKey)) {
+      return { deleted: false, key: trimmedKey };
+    }
+
+    this._entries.delete(trimmedKey);
+    this._tokenCache = null;
+
+    // Write-through to storage
+    await this.persistToStorage(userId);
+
+    return { deleted: true, key: trimmedKey };
+  }
+
+  async storeList(_filter?: Record<string, unknown>, _context?: ToolContext): Promise<StoreListResult> {
+    this.assertNotDestroyed();
+    await this.ensureInitialized();
+
+    const entries = Array.from(this._entries.values());
     return {
-      definition: userInfoRemoveDefinition,
-      execute: async (args: Record<string, unknown>, context?: ToolContext) => {
-        this.assertNotDestroyed();
-        await this.ensureInitialized();
-
-        const userId = context?.userId ?? this.userId;
-
-        const key = args.key as string;
-
-        if (!key || typeof key !== 'string' || key.trim().length === 0) {
-          return { error: 'Key is required' };
-        }
-
-        const trimmedKey = key.trim();
-
-        if (!this._entries.has(trimmedKey)) {
-          return { error: `User info '${trimmedKey}' not found` };
-        }
-
-        this._entries.delete(trimmedKey);
-        this._tokenCache = null;
-
-        // Write-through to storage
-        await this.persistToStorage(userId);
-
-        return {
-          success: true,
-          message: `User info '${trimmedKey}' removed`,
-          key: trimmedKey,
-        };
-      },
-      permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: (args) => `remove user info '${args.key}'`,
+      entries: entries.map(e => ({
+        key: e.id,
+        value: e.value,
+        valueType: e.valueType,
+        description: e.description,
+        createdAt: e.createdAt,
+        updatedAt: e.updatedAt,
+      })),
+      total: entries.length,
     };
   }
 
-  private createUserInfoClearTool(): ToolFunction {
+  async storeAction(action: string, params?: Record<string, unknown>, context?: ToolContext): Promise<StoreActionResult> {
+    this.assertNotDestroyed();
+
+    if (action !== 'clear') {
+      return { success: false, action, message: `Unknown action: ${action}` };
+    }
+
+    const userId = context?.userId ?? this.userId;
+
+    if (params?.confirm !== true) {
+      return { success: false, action, message: 'Must pass confirm: true to clear user info' };
+    }
+
+    this._entries.clear();
+    this._tokenCache = null;
+
+    const storage = this.resolveStorage(context);
+    await storage.delete(userId);
+
     return {
-      definition: userInfoClearDefinition,
-      execute: async (args: Record<string, unknown>, context?: ToolContext) => {
-        this.assertNotDestroyed();
-
-        const userId = context?.userId ?? this.userId;
-
-        if (args.confirm !== true) {
-          return { error: 'Must pass confirm: true to clear user info' };
-        }
-
-        this._entries.clear();
-        this._tokenCache = null;
-
-        const storage = this.resolveStorage(context);
-        await storage.delete(userId);
-
-        return {
-          success: true,
-          message: 'All user information cleared',
-        };
-      },
-      permission: { scope: 'once', riskLevel: 'medium' },
-      describeCall: () => 'clear user info',
+      success: true,
+      action: 'clear',
+      message: 'All user information cleared',
     };
   }
 
@@ -853,6 +757,7 @@ export class UserInfoPluginNextGen implements IContextPluginNextGen {
   private createTodoAddTool(): ToolFunction {
     return {
       definition: todoAddDefinition,
+      permission: { scope: 'always' as const, riskLevel: 'low' as const },
       execute: async (args: Record<string, unknown>, context?: ToolContext) => {
         this.assertNotDestroyed();
         await this.ensureInitialized();
@@ -917,7 +822,6 @@ export class UserInfoPluginNextGen implements IContextPluginNextGen {
           todo: todoValue,
         };
       },
-      permission: { scope: 'always', riskLevel: 'low' },
       describeCall: (args) => `add todo '${args.title}'`,
     };
   }
@@ -925,6 +829,7 @@ export class UserInfoPluginNextGen implements IContextPluginNextGen {
   private createTodoUpdateTool(): ToolFunction {
     return {
       definition: todoUpdateDefinition,
+      permission: { scope: 'always' as const, riskLevel: 'low' as const },
       execute: async (args: Record<string, unknown>, context?: ToolContext) => {
         this.assertNotDestroyed();
         await this.ensureInitialized();
@@ -1003,7 +908,6 @@ export class UserInfoPluginNextGen implements IContextPluginNextGen {
           todo: updatedValue,
         };
       },
-      permission: { scope: 'always', riskLevel: 'low' },
       describeCall: (args) => `update todo '${args.id}'`,
     };
   }
@@ -1011,6 +915,7 @@ export class UserInfoPluginNextGen implements IContextPluginNextGen {
   private createTodoRemoveTool(): ToolFunction {
     return {
       definition: todoRemoveDefinition,
+      permission: { scope: 'always' as const, riskLevel: 'low' as const },
       execute: async (args: Record<string, unknown>, context?: ToolContext) => {
         this.assertNotDestroyed();
         await this.ensureInitialized();
@@ -1038,7 +943,6 @@ export class UserInfoPluginNextGen implements IContextPluginNextGen {
           id,
         };
       },
-      permission: { scope: 'always', riskLevel: 'low' },
       describeCall: (args) => `remove todo '${args.id}'`,
     };
   }

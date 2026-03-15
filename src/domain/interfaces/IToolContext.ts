@@ -89,6 +89,12 @@ export interface ToolContext {
   /** Connector registry scoped to this agent's allowed connectors and userId */
   connectorRegistry?: IConnectorRegistry;
 
+  /** User roles for permission policy evaluation */
+  roles?: string[];
+
+  /** Session ID for approval cache scoping */
+  sessionId?: string;
+
   /** Working memory access (if agent has memory feature enabled) */
   memory?: WorkingMemoryAccess;
 

@@ -13,8 +13,8 @@
  * Storage: ~/.oneringai/agents/<agentId>/custom_instructions.json
  */
 
-import type { IContextPluginNextGen, ITokenEstimator } from '../types.js';
-import type { ToolFunction } from '../../../domain/entities/Tool.js';
+import type { IContextPluginNextGen, IStoreHandler, StoreEntrySchema, StoreGetResult, StoreSetResult, StoreDeleteResult, StoreListResult, StoreActionResult, ITokenEstimator } from '../types.js';
+import type { ToolFunction, ToolContext } from '../../../domain/entities/Tool.js';
 import type { IPersistentInstructionsStorage, InstructionEntry } from '../../../domain/interfaces/IPersistentInstructionsStorage.js';
 import { FilePersistentInstructionsStorage } from '../../../infrastructure/storage/FilePersistentInstructionsStorage.js';
 import { simpleTokenEstimator } from '../BasePluginNextGen.js';
@@ -56,92 +56,8 @@ const KEY_PATTERN = /^[a-zA-Z0-9_-]+$/;
 // Instructions
 // ============================================================================
 
-const PERSISTENT_INSTRUCTIONS_INSTRUCTIONS = `Persistent Instructions are stored on disk and survive across sessions.
-Each instruction is a keyed entry that can be independently managed.
-
-**To modify:**
-- \`instructions_set(key, content)\`: Add or update a single instruction by key
-- \`instructions_remove(key)\`: Remove a single instruction by key
-- \`instructions_list()\`: List all instructions with keys and content
-- \`instructions_clear(confirm: true)\`: Remove all instructions (destructive!)
-
-**Use for:** Agent personality, user preferences, learned rules, guidelines.`;
-
-// ============================================================================
-// Tool Definitions
-// ============================================================================
-
-const instructionsSetDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'instructions_set',
-    description: `Add or update a single persistent instruction by key. Persists across sessions.
-If the key exists, it will be updated. If not, a new entry is created.`,
-    parameters: {
-      type: 'object',
-      properties: {
-        key: {
-          type: 'string',
-          description: 'Unique key for the instruction (alphanumeric, dash, underscore; max 100 chars)',
-        },
-        content: {
-          type: 'string',
-          description: 'Instruction content (markdown supported)',
-        },
-      },
-      required: ['key', 'content'],
-    },
-  },
-};
-
-const instructionsRemoveDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'instructions_remove',
-    description: 'Remove a single persistent instruction by key.',
-    parameters: {
-      type: 'object',
-      properties: {
-        key: {
-          type: 'string',
-          description: 'Key of the instruction to remove',
-        },
-      },
-      required: ['key'],
-    },
-  },
-};
-
-const instructionsListDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'instructions_list',
-    description: 'List all persistent instructions with their keys and content.',
-    parameters: {
-      type: 'object',
-      properties: {},
-      required: [],
-    },
-  },
-};
-
-const instructionsClearDefinition = {
-  type: 'function' as const,
-  function: {
-    name: 'instructions_clear',
-    description: 'Clear all persistent instructions (DESTRUCTIVE). Requires confirmation.',
-    parameters: {
-      type: 'object',
-      properties: {
-        confirm: {
-          type: 'boolean',
-          description: 'Must be true to confirm deletion',
-        },
-      },
-      required: ['confirm'],
-    },
-  },
-};
+const PERSISTENT_INSTRUCTIONS_INSTRUCTIONS = `Store: "instructions". Stored on disk, survives across sessions. Each instruction is a keyed entry.
+The \`content\` field must be a string. Use \`store_action({ store: "instructions", action: "clear", confirm: true })\` to remove all (destructive).`;
 
 // ============================================================================
 // Key Validation
@@ -160,7 +76,7 @@ function validateKey(key: unknown): string | null {
 // Plugin Implementation
 // ============================================================================
 
-export class PersistentInstructionsPluginNextGen implements IContextPluginNextGen {
+export class PersistentInstructionsPluginNextGen implements IContextPluginNextGen, IStoreHandler {
   readonly name = 'persistent_instructions';
 
   private _entries: Map<string, InstructionEntry> = new Map();
@@ -237,12 +153,7 @@ export class PersistentInstructionsPluginNextGen implements IContextPluginNextGe
   }
 
   getTools(): ToolFunction[] {
-    return [
-      this.createInstructionsSetTool(),
-      this.createInstructionsRemoveTool(),
-      this.createInstructionsListTool(),
-      this.createInstructionsClearTool(),
-    ];
+    return [];
   }
 
   destroy(): void {
@@ -430,6 +341,125 @@ export class PersistentInstructionsPluginNextGen implements IContextPluginNextGe
   }
 
   // ============================================================================
+  // IStoreHandler Implementation
+  // ============================================================================
+
+  getStoreSchema(): StoreEntrySchema {
+    return {
+      storeId: 'instructions',
+      displayName: 'Persistent Instructions',
+      description: 'Instructions that persist to disk across sessions. Stored per-agent.',
+      usageHint: 'Use for: learned rules, guidelines, personality traits, user preferences for this agent. NOT for temporary state (use "context") or user profile data (use "user_info").',
+      setDataFields: 'content (required, string only): The instruction text',
+      actions: {
+        clear: {
+          description: 'Delete ALL instructions (irreversible)',
+          destructive: true,
+        },
+      },
+    };
+  }
+
+  async storeGet(key?: string, _context?: ToolContext): Promise<StoreGetResult> {
+    if (key !== undefined) {
+      const entry = await this.get(key) as InstructionEntry | null;
+      if (!entry) {
+        return { found: false, key };
+      }
+      return {
+        found: true,
+        key,
+        entry: {
+          key: entry.id,
+          content: entry.content,
+          contentLength: entry.content.length,
+          createdAt: entry.createdAt,
+          updatedAt: entry.updatedAt,
+        },
+      };
+    }
+
+    // No key — return all entries
+    const all = await this.get();
+    if (!all) {
+      return { found: false, entries: [] };
+    }
+    const allEntries = all as InstructionEntry[];
+    return {
+      found: true,
+      entries: allEntries.map(e => ({
+        key: e.id,
+        content: e.content,
+        contentLength: e.content.length,
+        createdAt: e.createdAt,
+        updatedAt: e.updatedAt,
+      })),
+    };
+  }
+
+  async storeSet(key: string, data: Record<string, unknown>, _context?: ToolContext): Promise<StoreSetResult> {
+    const content = data.content;
+    if (typeof content !== 'string') {
+      return { success: false, key, message: 'content must be a string' };
+    }
+
+    if (content.trim().length === 0) {
+      return { success: false, key, message: 'Content cannot be empty. Use store_delete to remove an entry.' };
+    }
+
+    const keyError = validateKey(key);
+    if (keyError) {
+      return { success: false, key, message: keyError };
+    }
+
+    const isUpdate = this._entries.has(key.trim());
+    const success = await this.set(key.trim(), content);
+    if (!success) {
+      if (!isUpdate && this._entries.size >= this.maxEntries) {
+        return { success: false, key, message: `Maximum number of entries reached (${this.maxEntries})` };
+      }
+      return { success: false, key, message: `Content would exceed maximum total length (${this.maxTotalLength} chars)` };
+    }
+
+    return {
+      success: true,
+      key: key.trim(),
+      message: isUpdate ? `Instruction '${key.trim()}' updated` : `Instruction '${key.trim()}' added`,
+      contentLength: content.trim().length,
+    };
+  }
+
+  async storeDelete(key: string, _context?: ToolContext): Promise<StoreDeleteResult> {
+    const success = await this.remove(key.trim());
+    return { deleted: success, key: key.trim() };
+  }
+
+  async storeList(_filter?: Record<string, unknown>, _context?: ToolContext): Promise<StoreListResult> {
+    const entries = await this.list();
+    return {
+      entries: entries.map(e => ({
+        key: e.key,
+        contentLength: e.contentLength,
+        createdAt: e.createdAt,
+        updatedAt: e.updatedAt,
+      })),
+      total: entries.length,
+    };
+  }
+
+  async storeAction(action: string, params?: Record<string, unknown>, _context?: ToolContext): Promise<StoreActionResult> {
+    if (action === 'clear') {
+      if (params?.confirm !== true) {
+        return { success: false, action, message: 'Must pass confirm: true to clear instructions' };
+      }
+      await this.clear();
+      return { success: true, action, message: 'All custom instructions cleared' };
+    }
+
+    return { success: false, action, message: `Unknown action: ${action}` };
+  }
+
+  // ============================================================================
   // Private Helpers
   // ============================================================================
 
@@ -477,125 +507,5 @@ export class PersistentInstructionsPluginNextGen implements IContextPluginNextGe
     return this.getSortedEntries()
       .map(entry => `### ${entry.id}\n${entry.content}`)
       .join('\n\n');
-  }
-
-  // ============================================================================
-  // Tool Factories
-  // ============================================================================
-
-  private createInstructionsSetTool(): ToolFunction {
-    return {
-      definition: instructionsSetDefinition,
-      execute: async (args: Record<string, unknown>) => {
-        const key = args.key as string;
-        const content = args.content as string;
-
-        const keyError = validateKey(key);
-        if (keyError) {
-          return { error: keyError };
-        }
-
-        if (!content || content.trim().length === 0) {
-          return { error: 'Content cannot be empty. Use instructions_remove to delete an entry.' };
-        }
-
-        const isUpdate = this._entries.has(key.trim());
-        const success = await this.set(key.trim(), content);
-        if (!success) {
-          if (!isUpdate && this._entries.size >= this.maxEntries) {
-            return { error: `Maximum number of entries reached (${this.maxEntries})` };
-          }
-          return { error: `Content would exceed maximum total length (${this.maxTotalLength} chars)` };
-        }
-
-        return {
-          success: true,
-          message: isUpdate ? `Instruction '${key.trim()}' updated` : `Instruction '${key.trim()}' added`,
-          key: key.trim(),
-          contentLength: content.trim().length,
-        };
-      },
-      permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: (args) => `set instruction '${args.key}'`,
-    };
-  }
-
-  private createInstructionsRemoveTool(): ToolFunction {
-    return {
-      definition: instructionsRemoveDefinition,
-      execute: async (args: Record<string, unknown>) => {
-        const key = args.key as string;
-
-        if (!key || typeof key !== 'string' || key.trim().length === 0) {
-          return { error: 'Key is required' };
-        }
-
-        const success = await this.remove(key.trim());
-        if (!success) {
-          return { error: `Instruction '${key.trim()}' not found` };
-        }
-
-        return {
-          success: true,
-          message: `Instruction '${key.trim()}' removed`,
-          key: key.trim(),
-        };
-      },
-      permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: (args) => `remove instruction '${args.key}'`,
-    };
-  }
-
-  private createInstructionsListTool(): ToolFunction {
-    return {
-      definition: instructionsListDefinition,
-      execute: async () => {
-        const entries = await this.list();
-        const all = await this.get();
-
-        if (entries.length === 0) {
-          return {
-            count: 0,
-            entries: [],
-            message: '(no custom instructions set)',
-          };
-        }
-
-        // Include full content in the listing for transparency
-        const allEntries = all as InstructionEntry[];
-        return {
-          count: entries.length,
-          entries: allEntries.map(e => ({
-            key: e.id,
-            content: e.content,
-            contentLength: e.content.length,
-            createdAt: e.createdAt,
-            updatedAt: e.updatedAt,
-          })),
-          agentId: this.agentId,
-        };
-      },
-      permission: { scope: 'always', riskLevel: 'low' },
-      describeCall: () => 'list instructions',
-    };
-  }
-
-  private createInstructionsClearTool(): ToolFunction {
-    return {
-      definition: instructionsClearDefinition,
-      execute: async (args: Record<string, unknown>) => {
-        if (args.confirm !== true) {
-          return { error: 'Must pass confirm: true to clear instructions' };
-        }
-
-        await this.clear();
-        return {
-          success: true,
-          message: 'All custom instructions cleared',
-        };
-      },
-      permission: { scope: 'once', riskLevel: 'medium' },
-      describeCall: () => 'clear instructions',
-    };
   }
 }

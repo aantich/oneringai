@@ -548,7 +548,7 @@ pre.memory-entry__value {
    Everworker Desktop overrides for shared @everworker/react-ui Look Inside panel
    ============================================================================ */
 
-.hosea-look-inside .look-inside-panel {
+.look-inside-panel.hosea-look-inside {
   --li-bg: var(--color-white);
   --li-bg-secondary: var(--color-gray-50);
   --li-bg-tertiary: var(--color-gray-200);
@@ -562,6 +562,5 @@ pre.memory-entry__value {
   --li-code-bg: var(--color-gray-50);
   border: none;
   border-radius: 0;
-  height: 100%;
-  overflow-y: auto;
+  overflow: visible;
 }

@@ -102,11 +102,17 @@ export interface IImageModelDescription extends IBaseModelDescription {
 
 export const IMAGE_MODELS = {
   [Vendor.OpenAI]: {
-    /** GPT-Image-1: Latest OpenAI image model with best quality */
+    /** GPT-Image-1.5: State-of-the-art image generation */
+    GPT_IMAGE_1_5: 'gpt-image-1.5',
+    /** ChatGPT-Image-Latest: Image model used in ChatGPT (floating alias) */
+    CHATGPT_IMAGE_LATEST: 'chatgpt-image-latest',
+    /** GPT-Image-1: Previous generation image model */
     GPT_IMAGE_1: 'gpt-image-1',
-    /** DALL-E 3: High quality image generation */
+    /** GPT-Image-1-Mini: Cost-efficient version of GPT Image 1 */
+    GPT_IMAGE_1_MINI: 'gpt-image-1-mini',
+    /** DALL-E 3: Deprecated. High quality image generation */
     DALL_E_3: 'dall-e-3',
-    /** DALL-E 2: Fast, supports editing and variations */
+    /** DALL-E 2: Deprecated. Supports editing and variations */
     DALL_E_2: 'dall-e-2',
   },
   [Vendor.Google]: {
@@ -137,22 +143,176 @@ export const IMAGE_MODELS = {
 
 /**
  * Complete image model registry
- * Last full audit: January 2026
+ * Last full audit: March 2026
  */
 export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
   // ======================== OpenAI ========================
 
+  'gpt-image-1.5': {
+    name: 'gpt-image-1.5',
+    displayName: 'GPT Image 1.5',
+    provider: Vendor.OpenAI,
+    description: 'State-of-the-art image generation with better instruction following and prompt adherence',
+    isActive: true,
+    releaseDate: '2025-12-16',
+    sources: {
+      documentation: 'https://developers.openai.com/api/docs/models/gpt-image-1.5',
+      pricing: 'https://openai.com/pricing',
+      lastVerified: '2026-03-14',
+    },
+    capabilities: {
+      sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
+      maxImagesPerRequest: 10,
+      outputFormats: ['png', 'webp', 'jpeg'],
+      features: {
+        generation: true,
+        editing: true,
+        variations: false,
+        styleControl: false,
+        qualityControl: true,
+        transparency: true,
+        promptRevision: false,
+      },
+      limits: { maxPromptLength: 32000 },
+      vendorOptions: {
+        quality: {
+          type: 'enum',
+          label: 'Quality',
+          description: 'Image quality level',
+          enum: ['auto', 'low', 'medium', 'high'],
+          default: 'auto',
+          controlType: 'select',
+        },
+        background: {
+          type: 'enum',
+          label: 'Background',
+          description: 'Background transparency (requires png or webp)',
+          enum: ['auto', 'transparent', 'opaque'],
+          default: 'auto',
+          controlType: 'select',
+        },
+        output_format: {
+          type: 'enum',
+          label: 'Output Format',
+          description: 'Image file format',
+          enum: ['png', 'jpeg', 'webp'],
+          default: 'png',
+          controlType: 'select',
+        },
+        output_compression: {
+          type: 'number',
+          label: 'Compression',
+          description: 'Compression level for JPEG/WebP (0-100)',
+          min: 0,
+          max: 100,
+          default: 100,
+          controlType: 'slider',
+        },
+        moderation: {
+          type: 'enum',
+          label: 'Moderation',
+          description: 'Content moderation strictness',
+          enum: ['auto', 'low'],
+          default: 'auto',
+          controlType: 'radio',
+        },
+      },
+    },
+    pricing: {
+      perImageStandard: 0.034, // medium quality 1024x1024
+      perImageHD: 0.133, // high quality 1024x1024
+      currency: 'USD',
+    },
+  },
+
+  'chatgpt-image-latest': {
+    name: 'chatgpt-image-latest',
+    displayName: 'ChatGPT Image Latest',
+    provider: Vendor.OpenAI,
+    description: 'Image model used in ChatGPT. Floating alias pointing to current ChatGPT image snapshot',
+    isActive: true,
+    releaseDate: '2025-12-01',
+    sources: {
+      documentation: 'https://developers.openai.com/api/docs/models/chatgpt-image-latest',
+      pricing: 'https://openai.com/pricing',
+      lastVerified: '2026-03-14',
+    },
+    capabilities: {
+      sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
+      maxImagesPerRequest: 10,
+      outputFormats: ['png', 'webp', 'jpeg'],
+      features: {
+        generation: true,
+        editing: true,
+        variations: false,
+        styleControl: false,
+        qualityControl: true,
+        transparency: true,
+        promptRevision: false,
+      },
+      limits: { maxPromptLength: 32000 },
+      vendorOptions: {
+        quality: {
+          type: 'enum',
+          label: 'Quality',
+          description: 'Image quality level',
+          enum: ['auto', 'low', 'medium', 'high'],
+          default: 'auto',
+          controlType: 'select',
+        },
+        background: {
+          type: 'enum',
+          label: 'Background',
+          description: 'Background transparency (requires png or webp)',
+          enum: ['auto', 'transparent', 'opaque'],
+          default: 'auto',
+          controlType: 'select',
+        },
+        output_format: {
+          type: 'enum',
+          label: 'Output Format',
+          description: 'Image file format',
+          enum: ['png', 'jpeg', 'webp'],
+          default: 'png',
+          controlType: 'select',
+        },
+        output_compression: {
+          type: 'number',
+          label: 'Compression',
+          description: 'Compression level for JPEG/WebP (0-100)',
+          min: 0,
+          max: 100,
+          default: 100,
+          controlType: 'slider',
+        },
+        moderation: {
+          type: 'enum',
+          label: 'Moderation',
+          description: 'Content moderation strictness',
+          enum: ['auto', 'low'],
+          default: 'auto',
+          controlType: 'radio',
+        },
+      },
+    },
+    pricing: {
+      perImageStandard: 0.034, // medium quality 1024x1024
+      perImageHD: 0.133, // high quality 1024x1024
+      currency: 'USD',
+    },
+  },
+
   'gpt-image-1': {
     name: 'gpt-image-1',
-    displayName: 'GPT-Image-1',
+    displayName: 'GPT Image 1',
     provider: Vendor.OpenAI,
-    description: 'OpenAI latest image generation model with best quality and features',
+    description: 'Previous generation OpenAI image model. More expensive than GPT Image 1.5',
     isActive: true,
     releaseDate: '2025-04-01',
     sources: {
-      documentation: 'https://platform.openai.com/docs/guides/images',
+      documentation: 'https://developers.openai.com/api/docs/models/gpt-image-1',
       pricing: 'https://openai.com/pricing',
-      lastVerified: '2026-01-25',
+      lastVerified: '2026-03-14',
     },
     capabilities: {
       sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
@@ -213,8 +373,85 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
       },
     },
     pricing: {
-      perImageStandard: 0.011,
-      perImageHD: 0.042,
+      perImageStandard: 0.042, // medium quality 1024x1024
+      perImageHD: 0.167, // high quality 1024x1024
+      currency: 'USD',
+    },
+  },
+
+  'gpt-image-1-mini': {
+    name: 'gpt-image-1-mini',
+    displayName: 'GPT Image 1 Mini',
+    provider: Vendor.OpenAI,
+    description: 'Cost-efficient version of GPT Image 1. Cheapest OpenAI image model',
+    isActive: true,
+    releaseDate: '2025-06-01',
+    sources: {
+      documentation: 'https://developers.openai.com/api/docs/models/gpt-image-1-mini',
+      pricing: 'https://openai.com/pricing',
+      lastVerified: '2026-03-14',
+    },
+    capabilities: {
+      sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
+      maxImagesPerRequest: 10,
+      outputFormats: ['png', 'webp', 'jpeg'],
+      features: {
+        generation: true,
+        editing: true,
+        variations: false,
+        styleControl: false,
+        qualityControl: true,
+        transparency: true,
+        promptRevision: false,
+      },
+      limits: { maxPromptLength: 32000 },
+      vendorOptions: {
+        quality: {
+          type: 'enum',
+          label: 'Quality',
+          description: 'Image quality level',
+          enum: ['auto', 'low', 'medium', 'high'],
+          default: 'auto',
+          controlType: 'select',
+        },
+        background: {
+          type: 'enum',
+          label: 'Background',
+          description: 'Background transparency (requires png or webp)',
+          enum: ['auto', 'transparent', 'opaque'],
+          default: 'auto',
+          controlType: 'select',
+        },
+        output_format: {
+          type: 'enum',
+          label: 'Output Format',
+          description: 'Image file format',
+          enum: ['png', 'jpeg', 'webp'],
+          default: 'png',
+          controlType: 'select',
+        },
+        output_compression: {
+          type: 'number',
+          label: 'Compression',
+          description: 'Compression level for JPEG/WebP (0-100)',
+          min: 0,
+          max: 100,
+          default: 100,
+          controlType: 'slider',
+        },
+        moderation: {
+          type: 'enum',
+          label: 'Moderation',
+          description: 'Content moderation strictness',
+          enum: ['auto', 'low'],
+          default: 'auto',
+          controlType: 'radio',
+        },
+      },
+    },
+    pricing: {
+      perImageStandard: 0.011, // medium quality 1024x1024
+      perImageHD: 0.036, // high quality 1024x1024
       currency: 'USD',
     },
   },
@@ -223,8 +460,8 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     name: 'dall-e-3',
     displayName: 'DALL-E 3',
     provider: Vendor.OpenAI,
-    description: 'High quality image generation with prompt revision',
-    isActive: true,
+    description: 'Deprecated. High quality image generation with prompt revision. Migrate to gpt-image-1.5',
+    isActive: false,
     releaseDate: '2023-11-06',
     deprecationDate: '2026-05-12',
     sources: {
@@ -276,8 +513,8 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     name: 'dall-e-2',
     displayName: 'DALL-E 2',
     provider: Vendor.OpenAI,
-    description: 'Fast image generation with editing and variation support',
-    isActive: true,
+    description: 'Deprecated. Fast image generation with editing and variation support. Migrate to gpt-image-1-mini',
+    isActive: false,
     releaseDate: '2022-11-03',
     deprecationDate: '2026-05-12',
     sources: {

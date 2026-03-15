@@ -82,6 +82,8 @@ EXAMPLES:
       },
     },
 
+    permission: { scope: 'session' as const, riskLevel: 'medium' as const, sensitiveArgs: ['path', 'content'] },
+
     describeCall: (args: WriteFileArgs): string => {
       const size = args.content?.length || 0;
       if (size > 1000) {

@@ -671,26 +671,15 @@ describe('ToolPermissionManager', () => {
       expect(allowlist).toContain('grep');
       expect(allowlist).toContain('list_directory');
 
-      // Check memory tools
-      expect(allowlist).toContain('memory_store');
-      expect(allowlist).toContain('memory_retrieve');
-      expect(allowlist).toContain('memory_delete');
-      expect(allowlist).toContain('memory_query');
-      expect(allowlist).toContain('memory_cleanup_raw');
+      // Check unified store tools
+      expect(allowlist).toContain('store_get');
+      expect(allowlist).toContain('store_set');
+      expect(allowlist).toContain('store_delete');
+      expect(allowlist).toContain('store_list');
+      expect(allowlist).toContain('store_action');
 
       // Check context introspection tool (unified)
       expect(allowlist).toContain('context_stats');
-
-      // Check in-context memory tools
-      expect(allowlist).toContain('context_set');
-      expect(allowlist).toContain('context_delete');
-      expect(allowlist).toContain('context_list');
-
-      // Check persistent instructions tools
-      expect(allowlist).toContain('instructions_set');
-      expect(allowlist).toContain('instructions_remove');
-      expect(allowlist).toContain('instructions_list');
-      expect(allowlist).toContain('instructions_clear');
 
       // Check meta-tools
       expect(allowlist).toContain('_start_planning');
@@ -705,8 +694,8 @@ describe('ToolPermissionManager', () => {
       expect(readResult.allowed).toBe(true);
       expect(readResult.needsApproval).toBe(false);
 
-      // Test a memory tool
-      const memoryResult = permissionManager.checkPermission('memory_store');
+      // Test a store tool
+      const memoryResult = permissionManager.checkPermission('store_set');
       expect(memoryResult.allowed).toBe(true);
       expect(memoryResult.needsApproval).toBe(false);
 

@@ -63,10 +63,8 @@ describe('PersistentInstructionsPluginNextGen', () => {
 
     it('should provide instructions', () => {
       const instructions = plugin.getInstructions();
-      expect(instructions).toContain('Persistent Instructions');
-      expect(instructions).toContain('instructions_set');
-      expect(instructions).toContain('instructions_remove');
-      expect(instructions).toContain('instructions_list');
+      expect(instructions).toContain('Store: "instructions"');
+      expect(instructions).toContain('content');
     });
 
     it('should NOT be compactable', () => {
@@ -79,15 +77,9 @@ describe('PersistentInstructionsPluginNextGen', () => {
       expect(freed).toBe(0);
     });
 
-    it('should provide 4 tools', () => {
+    it('should return no tools (store handler provides operations instead)', () => {
       const tools = plugin.getTools();
-      expect(tools).toHaveLength(4);
-
-      const toolNames = tools.map(t => t.definition.function.name);
-      expect(toolNames).toContain('instructions_set');
-      expect(toolNames).toContain('instructions_remove');
-      expect(toolNames).toContain('instructions_list');
-      expect(toolNames).toContain('instructions_clear');
+      expect(tools).toHaveLength(0);
     });
 
     it('should require agentId', () => {
@@ -516,15 +508,9 @@ describe('PersistentInstructionsPluginNextGen', () => {
     });
   });
 
-  describe('Tool Execution', () => {
-    it('should execute instructions_set tool', async () => {
-      const tools = plugin.getTools();
-      const setTool = tools.find(t => t.definition.function.name === 'instructions_set')!;
-
-      const result = await setTool.execute({
-        key: 'style',
-        content: 'Be formal',
-      });
+  describe('IStoreHandler Execution', () => {
+    it('should execute storeSet', async () => {
+      const result = await plugin.storeSet('style', { content: 'Be formal' });
 
       expect(result.success).toBe(true);
       expect(result.key).toBe('style');
@@ -533,94 +519,114 @@ describe('PersistentInstructionsPluginNextGen', () => {
       expect(entry.content).toBe('Be formal');
     });
 
-    it('should reject empty content in instructions_set', async () => {
-      const tools = plugin.getTools();
-      const setTool = tools.find(t => t.definition.function.name === 'instructions_set')!;
-
-      const result = await setTool.execute({ key: 'style', content: '' });
-      expect(result.error).toContain('empty');
+    it('should reject empty content in storeSet', async () => {
+      const result = await plugin.storeSet('style', { content: '' });
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('empty');
     });
 
-    it('should reject invalid key in instructions_set', async () => {
-      const tools = plugin.getTools();
-      const setTool = tools.find(t => t.definition.function.name === 'instructions_set')!;
-
-      const result = await setTool.execute({ key: 'key with spaces', content: 'value' });
-      expect(result.error).toBeDefined();
+    it('should reject non-string content in storeSet', async () => {
+      const result = await plugin.storeSet('style', { content: 123 as unknown });
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('string');
     });
 
-    it('should report update vs add in instructions_set', async () => {
-      const tools = plugin.getTools();
-      const setTool = tools.find(t => t.definition.function.name === 'instructions_set')!;
+    it('should reject invalid key in storeSet', async () => {
+      const result = await plugin.storeSet('key with spaces', { content: 'value' });
+      expect(result.success).toBe(false);
+      expect(result.message).toBeDefined();
+    });
 
-      const addResult = await setTool.execute({ key: 'style', content: 'Be formal' });
+    it('should report update vs add in storeSet', async () => {
+      const addResult = await plugin.storeSet('style', { content: 'Be formal' });
       expect(addResult.message).toContain('added');
 
-      const updateResult = await setTool.execute({ key: 'style', content: 'Be casual' });
+      const updateResult = await plugin.storeSet('style', { content: 'Be casual' });
       expect(updateResult.message).toContain('updated');
     });
 
-    it('should execute instructions_remove tool', async () => {
+    it('should execute storeDelete', async () => {
       await plugin.set('style', 'Be formal');
 
-      const tools = plugin.getTools();
-      const removeTool = tools.find(t => t.definition.function.name === 'instructions_remove')!;
-
-      const result = await removeTool.execute({ key: 'style' });
-      expect(result.success).toBe(true);
+      const result = await plugin.storeDelete('style');
+      expect(result.deleted).toBe(true);
+      expect(result.key).toBe('style');
 
       const entry = await plugin.get('style');
       expect(entry).toBeNull();
     });
 
-    it('should return error for non-existent key in instructions_remove', async () => {
-      const tools = plugin.getTools();
-      const removeTool = tools.find(t => t.definition.function.name === 'instructions_remove')!;
-
-      const result = await removeTool.execute({ key: 'nonexistent' });
-      expect(result.error).toContain('not found');
+    it('should return deleted=false for non-existent key in storeDelete', async () => {
+      const result = await plugin.storeDelete('nonexistent');
+      expect(result.deleted).toBe(false);
+      expect(result.key).toBe('nonexistent');
     });
 
-    it('should execute instructions_list tool', async () => {
+    it('should execute storeList', async () => {
       await plugin.set('style', 'Be formal');
       await plugin.set('code', 'Use TypeScript');
 
-      const tools = plugin.getTools();
-      const listTool = tools.find(t => t.definition.function.name === 'instructions_list')!;
+      const result = await plugin.storeList();
 
-      const result = await listTool.execute({});
-
-      expect(result.count).toBe(2);
+      expect(result.total).toBe(2);
       expect(result.entries).toHaveLength(2);
       expect(result.entries[0].key).toBeDefined();
-      expect(result.entries[0].content).toBeDefined();
+      expect(result.entries[0].contentLength).toBeDefined();
     });
 
-    it('should handle empty list in instructions_list', async () => {
-      const tools = plugin.getTools();
-      const listTool = tools.find(t => t.definition.function.name === 'instructions_list')!;
-
-      const result = await listTool.execute({});
-      expect(result.count).toBe(0);
+    it('should handle empty storeList', async () => {
+      const result = await plugin.storeList();
+      expect(result.total).toBe(0);
       expect(result.entries).toEqual([]);
     });
 
-    it('should execute instructions_clear tool with confirmation', async () => {
+    it('should execute storeGet by key', async () => {
       await plugin.set('style', 'Be formal');
 
-      const tools = plugin.getTools();
-      const clearTool = tools.find(t => t.definition.function.name === 'instructions_clear')!;
+      const result = await plugin.storeGet('style');
+      expect(result.found).toBe(true);
+      expect(result.key).toBe('style');
+      expect(result.entry).toBeDefined();
+      expect(result.entry!.content).toBe('Be formal');
+    });
+
+    it('should return found=false for non-existent key in storeGet', async () => {
+      const result = await plugin.storeGet('nonexistent');
+      expect(result.found).toBe(false);
+      expect(result.key).toBe('nonexistent');
+    });
+
+    it('should execute storeGet without key (all entries)', async () => {
+      await plugin.set('style', 'Be formal');
+      await plugin.set('code', 'Use TypeScript');
+
+      const result = await plugin.storeGet();
+      expect(result.found).toBe(true);
+      expect(result.entries).toHaveLength(2);
+    });
+
+    it('should execute storeAction clear with confirmation', async () => {
+      await plugin.set('style', 'Be formal');
 
       // Without confirmation
-      const failResult = await clearTool.execute({ confirm: false });
-      expect(failResult.error).toContain('confirm');
+      const failResult = await plugin.storeAction('clear', { confirm: false });
+      expect(failResult.success).toBe(false);
+      expect(failResult.action).toBe('clear');
+      expect(failResult.message).toContain('confirm');
 
       // With confirmation
-      const successResult = await clearTool.execute({ confirm: true });
+      const successResult = await plugin.storeAction('clear', { confirm: true });
       expect(successResult.success).toBe(true);
+      expect(successResult.action).toBe('clear');
 
       const entries = await plugin.get();
       expect(entries).toBeNull();
+    });
+
+    it('should reject unknown storeAction', async () => {
+      const result = await plugin.storeAction('unknown_action');
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Unknown action');
     });
   });
 

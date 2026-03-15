@@ -43,6 +43,8 @@ export function createDesktopScreenshotTool(config?: DesktopToolConfig): ToolFun
       return 'full screen';
     },
 
+    permission: { scope: 'session' as const, riskLevel: 'medium' as const },
+
     execute: async (args: DesktopScreenshotArgs): Promise<DesktopScreenshotResult> => {
       try {
         const driver = await getDesktopDriver(config);

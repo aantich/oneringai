@@ -30,6 +30,8 @@ export function createDesktopMouseMoveTool(config?: DesktopToolConfig): ToolFunc
 
     describeCall: (args: DesktopMouseMoveArgs): string => `(${args.x}, ${args.y})`,
 
+    permission: { scope: 'session' as const, riskLevel: 'medium' as const },
+
     execute: async (args: DesktopMouseMoveArgs): Promise<DesktopMouseMoveResult> => {
       try {
         const driver = await getDesktopDriver(config);

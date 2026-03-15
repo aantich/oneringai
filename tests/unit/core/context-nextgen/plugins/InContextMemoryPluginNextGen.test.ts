@@ -31,22 +31,27 @@ describe('InContextMemoryPluginNextGen', () => {
 
     it('should provide instructions', () => {
       const instructions = plugin.getInstructions();
-      expect(instructions).toContain('In-Context Memory');
-      expect(instructions).toContain('context_set');
+      expect(instructions).toContain('Store: "context"');
+      expect(instructions).toContain('Priority levels');
     });
 
     it('should be compactable', () => {
       expect(plugin.isCompactable()).toBe(true);
     });
 
-    it('should provide 3 tools', () => {
+    it('should return no tools (uses IStoreHandler instead)', () => {
       const tools = plugin.getTools();
-      expect(tools).toHaveLength(3);
+      expect(tools).toHaveLength(0);
+    });
 
-      const toolNames = tools.map(t => t.definition.function.name);
-      expect(toolNames).toContain('context_set');
-      expect(toolNames).toContain('context_delete');
-      expect(toolNames).toContain('context_list');
+    it('should implement IStoreHandler with getStoreSchema', () => {
+      const schema = plugin.getStoreSchema();
+      expect(schema.storeId).toBe('context');
+      expect(schema.displayName).toBe('Live Context');
+      expect(schema.description).toBeDefined();
+      expect(schema.setDataFields).toContain('description');
+      expect(schema.setDataFields).toContain('value');
+      expect(schema.setDataFields).toContain('showInUI');
     });
   });
 
@@ -399,14 +404,10 @@ describe('InContextMemoryPluginNextGen', () => {
     });
   });
 
-  describe('Tool Execution', () => {
-    it('should execute context_set tool', async () => {
-      const tools = plugin.getTools();
-      const setTool = tools.find(t => t.definition.function.name === 'context_set')!;
-
-      const result = await setTool.execute({
-        key: 'tool_test',
-        description: 'Test from tool',
+  describe('IStoreHandler Execution', () => {
+    it('should execute storeSet', async () => {
+      const result = await plugin.storeSet('tool_test', {
+        description: 'Test from store',
         value: { fromTool: true },
         priority: 'high',
       });
@@ -417,12 +418,8 @@ describe('InContextMemoryPluginNextGen', () => {
       expect(plugin.get('tool_test')).toEqual({ fromTool: true });
     });
 
-    it('should execute context_set tool with showInUI', async () => {
-      const tools = plugin.getTools();
-      const setTool = tools.find(t => t.definition.function.name === 'context_set')!;
-
-      const result = await setTool.execute({
-        key: 'ui_entry',
+    it('should execute storeSet with showInUI', async () => {
+      const result = await plugin.storeSet('ui_entry', {
         description: 'Visible in UI',
         value: '## Dashboard\n- Task 1 done',
         showInUI: true,
@@ -436,25 +433,59 @@ describe('InContextMemoryPluginNextGen', () => {
       expect(entry?.showInUI).toBe(true);
     });
 
-    it('should execute context_delete tool', async () => {
-      plugin.set('to_delete', 'Will be deleted', {});
-
-      const tools = plugin.getTools();
-      const deleteTool = tools.find(t => t.definition.function.name === 'context_delete')!;
-
-      const result = await deleteTool.execute({ key: 'to_delete' });
-      expect(result.deleted).toBe(true);
+    it('should fail storeSet when description or value missing', async () => {
+      const result = await plugin.storeSet('bad', { description: 'no value' });
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('required');
     });
 
-    it('should execute context_list tool', async () => {
+    it('should execute storeDelete', async () => {
+      plugin.set('to_delete', 'Will be deleted', {});
+
+      const result = await plugin.storeDelete('to_delete');
+      expect(result.deleted).toBe(true);
+      expect(result.key).toBe('to_delete');
+    });
+
+    it('should return deleted=false for non-existent key', async () => {
+      const result = await plugin.storeDelete('no_such_key');
+      expect(result.deleted).toBe(false);
+      expect(result.key).toBe('no_such_key');
+    });
+
+    it('should execute storeList', async () => {
       plugin.set('key1', 'Entry 1', {});
       plugin.set('key2', 'Entry 2', {});
 
-      const tools = plugin.getTools();
-      const listTool = tools.find(t => t.definition.function.name === 'context_list')!;
-
-      const result = await listTool.execute({});
+      const result = await plugin.storeList();
       expect(result.entries).toHaveLength(2);
+      expect(result.total).toBe(2);
+    });
+
+    it('should execute storeGet with key', async () => {
+      plugin.set('mykey', 'My description', { val: 42 }, 'high');
+
+      const result = await plugin.storeGet('mykey');
+      expect(result.found).toBe(true);
+      expect(result.key).toBe('mykey');
+      expect(result.entry).toBeDefined();
+      expect(result.entry?.value).toEqual({ val: 42 });
+      expect(result.entry?.priority).toBe('high');
+    });
+
+    it('should execute storeGet without key (all entries)', async () => {
+      plugin.set('a', 'A', 1);
+      plugin.set('b', 'B', 2);
+
+      const result = await plugin.storeGet();
+      expect(result.found).toBe(true);
+      expect(result.entries).toHaveLength(2);
+    });
+
+    it('should return found=false for non-existent key', async () => {
+      const result = await plugin.storeGet('missing');
+      expect(result.found).toBe(false);
+      expect(result.key).toBe('missing');
     });
   });
 
@@ -497,11 +528,9 @@ describe('InContextMemoryPluginNextGen', () => {
       newPlugin.destroy();
     });
 
-    it('should include showInUI in context_set tool definition', () => {
-      const tools = plugin.getTools();
-      const setTool = tools.find(t => t.definition.function.name === 'context_set')!;
-      const params = setTool.definition.function.parameters as { properties: Record<string, unknown> };
-      expect(params.properties).toHaveProperty('showInUI');
+    it('should include showInUI in store schema setDataFields', () => {
+      const schema = plugin.getStoreSchema();
+      expect(schema.setDataFields).toContain('showInUI');
     });
 
     it('should mention showInUI in instructions', () => {

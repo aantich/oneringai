@@ -622,4 +622,16 @@ export class ToolPermissionManager extends EventEmitter {
     this.defaultScope = DEFAULT_PERMISSION_CONFIG.scope;
     this.defaultRiskLevel = DEFAULT_PERMISSION_CONFIG.riskLevel;
   }
+
+  /**
+   * Destroy the permission manager and release all resources
+   */
+  destroy(): void {
+    this.approvalCache.clear();
+    this.allowlist.clear();
+    this.blocklist.clear();
+    this.toolConfigs.clear();
+    this.onApprovalRequired = undefined;
+    this.removeAllListeners();
+  }
 }

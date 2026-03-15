@@ -16,6 +16,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { sanitizeId } from './utils.js';
 import type {
   IContextStorage,
   StoredContextSession,
@@ -86,14 +87,7 @@ function getDefaultBaseDirectory(): string {
  * Sanitize ID for use as a directory/file name
  * Removes or replaces characters that are not safe for filenames
  */
-function sanitizeId(id: string): string {
-  return id
-    .replace(/[^a-zA-Z0-9_-]/g, '_')  // Replace unsafe chars with underscore
-    .replace(/_+/g, '_')               // Collapse multiple underscores
-    .replace(/^_|_$/g, '')             // Remove leading/trailing underscores
-    .toLowerCase()                      // Normalize to lowercase
-    || 'default';                       // Fallback if empty
-}
+// sanitizeId imported from ./utils.js
 
 /**
  * Current format version (imported from interface)
@@ -109,6 +103,8 @@ export class FileContextStorage implements IContextStorage {
   private readonly indexPath: string;
   private readonly prettyPrint: boolean;
   private index: SessionIndex | null = null;
+  /** Async mutex to prevent concurrent read-modify-write corruption of the index */
+  private _indexLock: Promise<void> = Promise.resolve();
 
   /** History journal companion — appends full conversation history as JSONL */
   readonly journal: IHistoryJournal;
@@ -302,14 +298,25 @@ export class FileContextStorage implements IContextStorage {
     stored.metadata = { ...stored.metadata, ...metadata };
     stored.lastSavedAt = new Date().toISOString();
 
-    // Save back
+    // Save back atomically: write to temp file, then rename
     const sanitizedSessionId = sanitizeId(sessionId);
     const filePath = this.getFilePath(sanitizedSessionId);
     const data = this.prettyPrint
       ? JSON.stringify(stored, null, 2)
       : JSON.stringify(stored);
 
-    await fs.writeFile(filePath, data, 'utf-8');
+    const tempPath = `${filePath}.tmp`;
+    try {
+      await fs.writeFile(tempPath, data, 'utf-8');
+      await fs.rename(tempPath, filePath);
+    } catch (error) {
+      try {
+        await fs.unlink(tempPath);
+      } catch {
+        // Ignore cleanup errors
+      }
+      throw error;
+    }
 
     // Update index
     await this.updateIndex(stored);
@@ -443,24 +450,46 @@ export class FileContextStorage implements IContextStorage {
     await fs.writeFile(this.indexPath, data, 'utf-8');
   }
 
-  private async updateIndex(stored: StoredContextSession): Promise<void> {
-    const index = await this.loadIndex();
-    const entry = this.storedToIndexEntry(stored);
+  /**
+   * Acquire the index lock, run fn, then release.
+   * Serializes all index mutations to prevent concurrent read-modify-write corruption.
+   */
+  private async withIndexLock<T>(fn: () => Promise<T>): Promise<T> {
+    // Chain onto the existing lock so callers serialize
+    const prev = this._indexLock;
+    let release!: () => void;
+    this._indexLock = new Promise<void>(resolve => { release = resolve; });
 
-    const existingIdx = index.sessions.findIndex(e => e.sessionId === stored.sessionId);
-    if (existingIdx >= 0) {
-      index.sessions[existingIdx] = entry;
-    } else {
-      index.sessions.push(entry);
+    await prev; // wait for prior operation
+    try {
+      return await fn();
+    } finally {
+      release();
     }
+  }
 
-    await this.saveIndex();
+  private async updateIndex(stored: StoredContextSession): Promise<void> {
+    await this.withIndexLock(async () => {
+      const index = await this.loadIndex();
+      const entry = this.storedToIndexEntry(stored);
+
+      const existingIdx = index.sessions.findIndex(e => e.sessionId === stored.sessionId);
+      if (existingIdx >= 0) {
+        index.sessions[existingIdx] = entry;
+      } else {
+        index.sessions.push(entry);
+      }
+
+      await this.saveIndex();
+    });
   }
 
   private async removeFromIndex(sessionId: string): Promise<void> {
-    const index = await this.loadIndex();
-    index.sessions = index.sessions.filter(e => e.sessionId !== sessionId);
-    await this.saveIndex();
+    await this.withIndexLock(async () => {
+      const index = await this.loadIndex();
+      index.sessions = index.sessions.filter(e => e.sessionId !== sessionId);
+      await this.saveIndex();
+    });
   }
 
   private storedToIndexEntry(stored: StoredContextSession): SessionIndexEntry {

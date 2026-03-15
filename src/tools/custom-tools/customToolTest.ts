@@ -67,7 +67,7 @@ export function createCustomToolTest(): ToolFunction<TestArgs, TestResult> {
 
     descriptionFactory: (context?: ToolContext) => buildTestDescription(context),
 
-    permission: { scope: 'session', riskLevel: 'medium' },
+    permission: { scope: 'once' as const, riskLevel: 'high' as const, sensitiveArgs: ['code'] },
 
     execute: async (args: TestArgs, context?: ToolContext): Promise<TestResult> => {
       const logs: string[] = [];

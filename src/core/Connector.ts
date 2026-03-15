@@ -728,6 +728,9 @@ export class Connector {
     if (this.disposed) return;
     this.disposed = true;
     // Clean up resources
+    if (this.circuitBreaker) {
+      this.circuitBreaker.removeAllListeners();
+    }
     this.oauthManager = undefined;
     this.circuitBreaker = undefined;
   }

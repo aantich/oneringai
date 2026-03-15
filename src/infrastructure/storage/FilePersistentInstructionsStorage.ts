@@ -16,6 +16,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { sanitizeId } from './utils.js';
 import type { IPersistentInstructionsStorage, InstructionEntry } from '../../domain/interfaces/IPersistentInstructionsStorage.js';
 
 /**
@@ -58,20 +59,8 @@ function getDefaultBaseDirectory(): string {
   return join(homedir(), '.oneringai', 'agents');
 }
 
-/**
- * Sanitize agent ID for use as a directory name
- * Removes or replaces characters that are not safe for filenames
- */
-function sanitizeAgentId(agentId: string): string {
-  // Replace any character that isn't alphanumeric, dash, or underscore
-  // Also collapse multiple consecutive safe characters into one
-  return agentId
-    .replace(/[^a-zA-Z0-9_-]/g, '_')  // Replace unsafe chars with underscore
-    .replace(/_+/g, '_')               // Collapse multiple underscores
-    .replace(/^_|_$/g, '')             // Remove leading/trailing underscores
-    .toLowerCase()                      // Normalize to lowercase
-    || 'default';                       // Fallback if empty
-}
+// sanitizeAgentId is an alias for sanitizeId from ./utils.js
+const sanitizeAgentId = sanitizeId;
 
 /**
  * File-based storage for persistent agent instructions

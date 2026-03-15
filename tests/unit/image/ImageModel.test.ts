@@ -109,7 +109,7 @@ describe('ImageModel Registry', () => {
     it('should find models with generation support', () => {
       const models = getImageModelsWithFeature('generation');
       expect(models.length).toBeGreaterThan(0);
-      expect(models.some((m) => m.name === 'dall-e-3')).toBe(true);
+      expect(models.some((m) => m.name === 'gpt-image-1.5')).toBe(true);
       expect(models.some((m) => m.name === 'imagen-4.0-generate-001')).toBe(true);
     });
 
@@ -117,26 +117,24 @@ describe('ImageModel Registry', () => {
       const models = getImageModelsWithFeature('editing');
       expect(models.length).toBeGreaterThan(0);
       expect(models.some((m) => m.name === 'gpt-image-1')).toBe(true);
-      expect(models.some((m) => m.name === 'dall-e-2')).toBe(true);
       expect(models.some((m) => m.name === 'grok-imagine-image')).toBe(true);
     });
 
-    it('should find models with variation support', () => {
+    it('should find no active models with variation support', () => {
+      // dall-e-2 was the only model with variations but is now deprecated
       const models = getImageModelsWithFeature('variations');
-      expect(models.length).toBeGreaterThan(0);
-      expect(models.some((m) => m.name === 'dall-e-2')).toBe(true);
+      expect(models.length).toBe(0);
     });
 
     it('should find models with style control', () => {
       const models = getImageModelsWithFeature('styleControl');
       expect(models.length).toBeGreaterThan(0);
-      expect(models.some((m) => m.name === 'dall-e-3')).toBe(true);
+      expect(models.some((m) => m.name === 'gemini-3-pro-image-preview')).toBe(true);
     });
 
     it('should find models with prompt revision', () => {
       const models = getImageModelsWithFeature('promptRevision');
       expect(models.length).toBeGreaterThan(0);
-      expect(models.some((m) => m.name === 'dall-e-3')).toBe(true);
       expect(models.some((m) => m.name === 'grok-imagine-image')).toBe(true);
     });
   });

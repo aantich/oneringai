@@ -4,15 +4,16 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { X, Zap, Layout, ListChecks } from 'lucide-react';
+import { X, Zap, Layout, ListChecks, Users } from 'lucide-react';
 import { useDynamicUIChangeDetection } from '@everworker/react-ui';
 import type { InContextEntry } from '@everworker/oneringai';
 import { InternalsContent } from './InternalsContent';
 import { DynamicUIPanel } from './DynamicUIPanel';
 import { ContextDisplayPanel } from './ContextDisplayPanel';
 import { RoutinesPanel } from './RoutinesPanel';
+import { WorkerInspectorPanel, WorkspaceView } from './orchestrator';
 import type { DynamicUIContent, ContextEntryForUI } from '../../preload/index';
-import type { SidebarTab, TabState } from '../hooks/useTabContext';
+import type { SidebarTab, TabState, WorkerState } from '../hooks/useTabContext';
 
 interface SidebarPanelProps {
   isOpen: boolean;
@@ -39,6 +40,16 @@ interface SidebarPanelProps {
   routineExecution?: TabState['routineExecution'];
   /** Browser user control handoff state */
   userHasControl?: TabState['userHasControl'];
+  /** Whether this tab is an orchestrator */
+  isOrchestrator?: boolean;
+  /** Orchestrator worker states */
+  workers?: Map<string, WorkerState>;
+  /** Currently selected worker for inspection */
+  selectedWorkerName?: string | null;
+  /** Callback to select/deselect a worker */
+  onSelectWorker?: (name: string | null) => void;
+  /** Shared workspace entries */
+  workspaceEntries?: TabState['workspaceEntries'];
 }
 
 const MIN_WIDTH = 280;
@@ -63,6 +74,11 @@ export function SidebarPanel({
   onPinContextKey,
   routineExecution,
   userHasControl,
+  isOrchestrator,
+  workers,
+  selectedWorkerName,
+  onSelectWorker,
+  workspaceEntries,
 }: SidebarPanelProps): React.ReactElement | null {
   const panelRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -169,6 +185,18 @@ export function SidebarPanel({
               <span className="sidebar-panel__notification-dot" />
             )}
           </button>
+          {isOrchestrator && (
+            <button
+              className={`sidebar-panel__tab ${activeTab === 'workers' ? 'sidebar-panel__tab--active' : ''}`}
+              onClick={() => onTabChange('workers')}
+            >
+              <Users size={14} />
+              <span>Workers</span>
+              {workers && workers.size > 0 && activeTab !== 'workers' && (
+                <span className="sidebar-panel__notification-dot" />
+              )}
+            </button>
+          )}
         </div>
         <button
           className="sidebar-panel__close-btn"
@@ -181,7 +209,17 @@ export function SidebarPanel({
 
       {/* Tab content */}
       <div className="sidebar-panel__content">
-        {activeTab === 'look_inside' ? (
+        {activeTab === 'workers' && isOrchestrator ? (
+          selectedWorkerName && workers?.get(selectedWorkerName) ? (
+            <WorkerInspectorPanel
+              instanceId={instanceId ?? ''}
+              worker={workers.get(selectedWorkerName)!}
+              onBack={() => onSelectWorker?.(null)}
+            />
+          ) : (
+            <WorkspaceView entries={workspaceEntries ?? []} />
+          )
+        ) : activeTab === 'look_inside' ? (
           <InternalsContent instanceId={instanceId} />
         ) : activeTab === 'routines' ? (
           <RoutinesPanel

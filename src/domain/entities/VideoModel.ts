@@ -118,15 +118,18 @@ export const VIDEO_MODEL_REGISTRY: VideoModelRegistry = {
     name: 'sora-2',
     displayName: 'Sora 2',
     provider: Vendor.OpenAI,
+    description: 'Flagship video generation with synced audio. Extensions up to 120s total',
     isActive: true,
+    releaseDate: '2025-10-06',
     sources: OPENAI_SOURCES,
     capabilities: {
-      durations: [4, 8, 12],
-      resolutions: ['720x1280', '1280x720', '1024x1792', '1792x1024'],
+      durations: [4, 8, 12, 16, 20],
+      resolutions: ['720x1280', '1280x720'],
+      aspectRatios: ['9:16', '16:9'],
       maxFps: 30,
       audio: true,
       imageToVideo: true,
-      videoExtension: true,
+      videoExtension: true, // Up to 6 extensions, max 120s total
       frameControl: false,
       features: {
         upscaling: false,
@@ -136,7 +139,7 @@ export const VIDEO_MODEL_REGISTRY: VideoModelRegistry = {
       },
     },
     pricing: {
-      perSecond: 0.15,
+      perSecond: 0.10, // $0.05/sec batch API
       currency: 'USD',
     },
   },
@@ -145,15 +148,18 @@ export const VIDEO_MODEL_REGISTRY: VideoModelRegistry = {
     name: 'sora-2-pro',
     displayName: 'Sora 2 Pro',
     provider: Vendor.OpenAI,
+    description: 'Most advanced synced-audio video generation. Up to 1080p, extensions up to 120s',
     isActive: true,
+    releaseDate: '2025-10-06',
     sources: OPENAI_SOURCES,
     capabilities: {
-      durations: [4, 8, 12],
-      resolutions: ['720x1280', '1280x720', '1024x1792', '1792x1024', '1920x1080', '1080x1920'],
+      durations: [4, 8, 12, 16, 20],
+      resolutions: ['720x1280', '1280x720', '1024x1792', '1792x1024', '1080x1920', '1920x1080'],
+      aspectRatios: ['9:16', '16:9'],
       maxFps: 30,
       audio: true,
       imageToVideo: true,
-      videoExtension: true,
+      videoExtension: true, // Up to 6 extensions, max 120s total
       frameControl: true,
       features: {
         upscaling: true,
@@ -163,7 +169,7 @@ export const VIDEO_MODEL_REGISTRY: VideoModelRegistry = {
       },
     },
     pricing: {
-      perSecond: 0.40,
+      perSecond: 0.30, // 720p base; $0.50/sec at 1024x, $0.70/sec at 1080p
       currency: 'USD',
     },
   },

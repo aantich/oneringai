@@ -31,24 +31,30 @@ describe('WorkingMemoryPluginNextGen', () => {
 
     it('should provide instructions', () => {
       const instructions = plugin.getInstructions();
-      expect(instructions).toContain('Working Memory');
-      expect(instructions).toContain('memory_retrieve');
+      expect(instructions).toContain('Store: "memory"');
+      expect(instructions).toContain('Tier System');
+      expect(instructions).toContain('store_set');
     });
 
     it('should be compactable', () => {
       expect(plugin.isCompactable()).toBe(true);
     });
 
-    it('should provide 5 tools', () => {
+    it('should return no tools (uses IStoreHandler instead)', () => {
       const tools = plugin.getTools();
-      expect(tools).toHaveLength(5);
+      expect(tools).toHaveLength(0);
+    });
 
-      const toolNames = tools.map(t => t.definition.function.name);
-      expect(toolNames).toContain('memory_store');
-      expect(toolNames).toContain('memory_retrieve');
-      expect(toolNames).toContain('memory_delete');
-      expect(toolNames).toContain('memory_query');
-      expect(toolNames).toContain('memory_cleanup_raw');
+    it('should provide store schema', () => {
+      const schema = plugin.getStoreSchema();
+      expect(schema.storeId).toBe('memory');
+      expect(schema.displayName).toBe('Working Memory');
+      expect(schema.description).toBeDefined();
+      expect(schema.setDataFields).toContain('description');
+      expect(schema.setDataFields).toContain('value');
+      expect(schema.actions).toBeDefined();
+      expect(schema.actions!.cleanup_raw).toBeDefined();
+      expect(schema.actions!.query).toBeDefined();
     });
   });
 
@@ -402,14 +408,10 @@ describe('WorkingMemoryPluginNextGen', () => {
     });
   });
 
-  describe('Tool Execution', () => {
-    it('should execute memory_store tool', async () => {
-      const tools = plugin.getTools();
-      const storeTool = tools.find(t => t.definition.function.name === 'memory_store')!;
-
-      const result = await storeTool.execute({
-        key: 'tool_test',
-        description: 'Test from tool',
+  describe('IStoreHandler Execution', () => {
+    it('should execute storeSet', async () => {
+      const result = await plugin.storeSet('tool_test', {
+        description: 'Test from store handler',
         value: { fromTool: true },
       });
 
@@ -420,51 +422,105 @@ describe('WorkingMemoryPluginNextGen', () => {
       expect(value).toEqual({ fromTool: true });
     });
 
-    it('should execute memory_retrieve tool', async () => {
+    it('should reject storeSet without required fields', async () => {
+      const result = await plugin.storeSet('bad', { description: 'no value' });
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('required');
+    });
+
+    it('should execute storeGet for existing key', async () => {
       await plugin.store('existing', 'Exists', { data: 123 });
 
-      const tools = plugin.getTools();
-      const retrieveTool = tools.find(t => t.definition.function.name === 'memory_retrieve')!;
-
-      const result = await retrieveTool.execute({ key: 'existing' });
+      const result = await plugin.storeGet('existing');
       expect(result.found).toBe(true);
-      expect(result.value).toEqual({ data: 123 });
-
-      const notFound = await retrieveTool.execute({ key: 'non_existent' });
-      expect(notFound.found).toBe(false);
+      expect(result.key).toBe('existing');
+      expect(result.entry).toBeDefined();
+      expect(result.entry!.value).toEqual({ data: 123 });
     });
 
-    it('should execute memory_delete tool', async () => {
-      await plugin.store('to_delete', 'Will be deleted', {});
-
-      const tools = plugin.getTools();
-      const deleteTool = tools.find(t => t.definition.function.name === 'memory_delete')!;
-
-      const result = await deleteTool.execute({ key: 'to_delete' });
-      expect(result.deleted).toBe(true);
+    it('should execute storeGet for non-existent key', async () => {
+      const result = await plugin.storeGet('non_existent');
+      expect(result.found).toBe(false);
+      expect(result.key).toBe('non_existent');
     });
 
-    it('should execute memory_query tool', async () => {
+    it('should execute storeGet without key (list all)', async () => {
       await plugin.store('key1', 'Entry 1', {});
       await plugin.store('key2', 'Entry 2', {});
 
-      const tools = plugin.getTools();
-      const queryTool = tools.find(t => t.definition.function.name === 'memory_query')!;
-
-      const result = await queryTool.execute({});
+      const result = await plugin.storeGet();
+      expect(result.found).toBe(true);
       expect(result.entries).toHaveLength(2);
     });
 
-    it('should execute memory_cleanup_raw tool', async () => {
+    it('should execute storeDelete', async () => {
+      await plugin.store('to_delete', 'Will be deleted', {});
+
+      const result = await plugin.storeDelete('to_delete');
+      expect(result.deleted).toBe(true);
+      expect(result.key).toBe('to_delete');
+    });
+
+    it('should execute storeDelete for non-existent key', async () => {
+      const result = await plugin.storeDelete('non_existent');
+      expect(result.deleted).toBe(false);
+      expect(result.key).toBe('non_existent');
+    });
+
+    it('should execute storeList', async () => {
+      await plugin.store('key1', 'Entry 1', {});
+      await plugin.store('key2', 'Entry 2', {});
+
+      const result = await plugin.storeList();
+      expect(result.entries).toHaveLength(2);
+      expect(result.total).toBe(2);
+    });
+
+    it('should execute storeList with filter', async () => {
+      await plugin.store('user.profile', 'Profile', {});
+      await plugin.store('cache.data', 'Cache', {});
+
+      const result = await plugin.storeList({ pattern: 'user.*' });
+      expect(result.entries).toHaveLength(1);
+      expect(result.entries[0].key).toBe('user.profile');
+    });
+
+    it('should execute storeAction cleanup_raw', async () => {
       await plugin.store('item1', 'Raw', {}, { tier: 'raw' });
       await plugin.store('item2', 'Summary', {}, { tier: 'summary' });
 
-      const tools = plugin.getTools();
-      const cleanupTool = tools.find(t => t.definition.function.name === 'memory_cleanup_raw')!;
-
-      const result = await cleanupTool.execute({});
+      const result = await plugin.storeAction('cleanup_raw');
+      expect(result.success).toBe(true);
+      expect(result.action).toBe('cleanup_raw');
       expect(result.deleted).toBe(1);
       expect(result.keys).toContain('raw.item1');
+    });
+
+    it('should execute storeAction query', async () => {
+      await plugin.store('key1', 'Entry 1', {});
+      await plugin.store('key2', 'Entry 2', {});
+
+      const result = await plugin.storeAction('query', {});
+      expect(result.success).toBe(true);
+      expect(result.action).toBe('query');
+      expect(result.entries).toHaveLength(2);
+    });
+
+    it('should reject unknown storeAction', async () => {
+      const result = await plugin.storeAction('unknown_action');
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Unknown action');
+    });
+
+    it('should execute storeSet with tier option', async () => {
+      const result = await plugin.storeSet('data', {
+        description: 'Raw data',
+        value: { raw: true },
+        tier: 'raw',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.key).toBe('raw.data');
     });
   });
 });

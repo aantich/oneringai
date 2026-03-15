@@ -27,8 +27,9 @@
  */
 
 // ============ Core API (Primary) ============
-export { Connector, ScopedConnectorRegistry, StorageRegistry, ToolCatalogRegistry, Agent, Vendor, VENDORS, isVendor, createProvider, getVendorDefaultBaseURL } from './core/index.js';
-export type { StorageConfig, StorageContext, ToolCategoryDefinition, CatalogToolEntry, ToolCategoryScope, ConnectorCategoryInfo, CatalogRegistryEntry } from './core/index.js';
+export { Connector, ScopedConnectorRegistry, StorageRegistry, ToolCatalogRegistry, Agent, AgentRegistry, Vendor, VENDORS, isVendor, createProvider, getVendorDefaultBaseURL, SuspendSignal, createOrchestrator, buildOrchestrationTools, buildWorkspaceDelta } from './core/index.js';
+export type { StorageConfig, StorageContext, ToolCategoryDefinition, CatalogToolEntry, ToolCategoryScope, ConnectorCategoryInfo, CatalogRegistryEntry, SuspendSignalOptions, OrchestratorConfig, AgentTypeConfig, OrchestrationToolsContext, AgentInfo, AgentInspection, AgentFilter, AgentRegistryStats, AgentRegistryEvents, AgentEventListener } from './core/index.js';
+export type { AgentStatus as RegistryAgentStatus } from './core/index.js';
 export type { AgentConfig, AgentSessionConfig } from './core/index.js';
 
 // AgentContextNextGen - Clean, Simple Context Management
@@ -43,10 +44,14 @@ export {
   PersistentInstructionsPluginNextGen,
   UserInfoPluginNextGen,
   ToolCatalogPluginNextGen,
+  SharedWorkspacePluginNextGen,
   // Compaction strategies
   DefaultCompactionStrategy,
   // Strategy Registry
   StrategyRegistry,
+  // Unified store tools
+  StoreToolsManager,
+  isStoreHandler,
 } from './core/index.js';
 export type {
   AuthIdentity,
@@ -75,6 +80,18 @@ export type {
   UserInfoPluginConfig,
   SerializedUserInfoState,
   ToolCatalogPluginConfig,
+  SharedWorkspaceConfig,
+  SharedWorkspaceEntry,
+  WorkspaceLogEntry,
+  SerializedSharedWorkspaceState,
+  // Store handler types
+  IStoreHandler,
+  StoreEntrySchema,
+  StoreGetResult,
+  StoreSetResult,
+  StoreDeleteResult,
+  StoreListResult,
+  StoreActionResult,
   // Compaction strategy types
   ICompactionStrategy,
   CompactionContext,
@@ -221,12 +238,14 @@ export type {
   SerializedApprovalEntry,
   PermissionCheckResult,
   ApprovalDecision,
+  ApprovalRequestContext,
   AgentPermissionsConfig,
   PermissionCheckContext,
   PermissionManagerEvent,
 } from './core/permissions/index.js';
 export { APPROVAL_STATE_VERSION, DEFAULT_PERMISSION_CONFIG, DEFAULT_ALLOWLIST } from './core/permissions/index.js';
 export type { DefaultAllowlistedTool } from './core/permissions/index.js';
+export { FileUserPermissionRulesStorage } from './infrastructure/storage/FileUserPermissionRulesStorage.js';
 
 // Context Storage (Session Persistence via AgentContext)
 export type {
@@ -266,6 +285,14 @@ export type {
   MediaStorageEntry,
   MediaStorageListOptions,
 } from './domain/interfaces/IMediaStorage.js';
+
+// Correlation Storage (Suspend/Resume Session Mapping)
+export type {
+  ICorrelationStorage,
+  SessionRef,
+  CorrelationSummary,
+  CorrelationListOptions,
+} from './domain/interfaces/ICorrelationStorage.js';
 
 // ============ Error Handling ============
 export { ErrorHandler, globalErrorHandler } from './core/index.js';
@@ -489,6 +516,10 @@ export type {
 export { FileCustomToolStorage, createFileCustomToolStorage } from './infrastructure/storage/index.js';
 export type { FileCustomToolStorageConfig } from './infrastructure/storage/index.js';
 
+// Correlation Storage Implementations (for suspend/resume session mapping)
+export { FileCorrelationStorage, createFileCorrelationStorage } from './infrastructure/storage/index.js';
+export type { FileCorrelationStorageConfig } from './infrastructure/storage/index.js';
+
 // Tool Context (ToolContext is the canonical interface for tool execution context)
 export type { ToolContext, ToolContext as TaskToolContext, WorkingMemoryAccess } from './domain/interfaces/IToolContext.js';
 
@@ -531,6 +562,9 @@ export type {
   ToolResult,
   ToolExecutionContext,
   JSONSchema,
+  AsyncToolConfig,
+  PendingAsyncTool,
+  PendingAsyncToolStatus,
 } from './domain/entities/Tool.js';
 
 // Response

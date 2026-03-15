@@ -5,7 +5,173 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-03-15
+
+### Added
+- **Policy-Based Tool Permission System**: Complete replacement for the legacy `ToolPermissionManager`. Composable policies with deny-short-circuit / allow-continue semantics. Enforced at `ToolManager` pipeline level — ALL tool execution paths are gated (agent loop, direct API, orchestrator workers).
+- **Per-User Permission Rules** (`UserPermissionRulesEngine`): Persistent, per-user rules with argument-level conditions. User rules have the HIGHEST priority — they override ALL built-in policies. Specificity-based matching (not numeric priorities). Unconditional flag for absolute overrides.
+- **8 Built-in Policies**: `AllowlistPolicy`, `BlocklistPolicy`, `SessionApprovalPolicy`, `PathRestrictionPolicy` (canonicalized paths), `BashFilterPolicy` (best-effort guardrail), `UrlAllowlistPolicy` (parsed URL checking), `RolePolicy` (multi-role, deny beats allow), `RateLimitPolicy` (in-memory).
+- **Approval → Rule Creation**: Approval dialog responses can create persistent user rules via `ApprovalDecision.createRule`. "Always allow" decisions automatically persist as user rules for future sessions.
+- **Argument Conditions**: 8 operators (`starts_with`, `contains`, `equals`, `matches` + negations) with case-insensitive default. Meta-args (`__toolCategory`, `__toolSource`) for matching tool metadata.
+- **Tool Self-Declaration**: All 50+ built-in tools now declare default `ToolPermissionConfig` (scope, riskLevel, sensitiveArgs). App developers can override at registration time.
+- **Clean Architecture Storage**: `IUserPermissionRulesStorage` interface + `FileUserPermissionRulesStorage` reference implementation. Also `IPermissionAuditStorage`, `IPermissionPolicyStorage`, `IPermissionApprovalStorage`.
+- **PermissionEnforcementPlugin**: `IToolExecutionPlugin` at priority 1 on ToolManager pipeline. Throws `ToolPermissionDeniedError` (new typed error).
+- **Centralized Audit Redaction**: Sensitive args auto-redacted (built-in keys + tool-declared sensitiveArgs + truncation for large values).
+- **Orchestrator Delegation**: `setParentEvaluator()` — parent deny is final, parent allow doesn't skip worker restrictions.
+- **`agent.policyManager`**: New public getter for the `PermissionPolicyManager`. `agent.permissions` deprecated.
+- **`agent.policyManager.userRules`**: CRUD API for per-user permission rules (for UI integration).
+
+### Changed
+- **`ToolContext`**: Added `roles?: string[]` and `sessionId?: string` fields.
+- **`BaseAgentConfig`**: Added `userRoles?: string[]` field for role-based access control.
+
+### Deprecated
+- **`ToolPermissionManager`**: Replaced by `PermissionPolicyManager`. Legacy adapter preserved for backward compatibility.
+- **`agent.permissions`**: Use `agent.policyManager` instead.
+
+## [0.5.0] - 2026-03-15
+
+### Added
+- **`AgentRegistry` exported from main index**: `AgentRegistry` class and all its types (`AgentInfo`, `AgentInspection`, `AgentFilter`, `AgentRegistryStats`, `AgentRegistryEvents`, `AgentEventListener`) now exported from `@everworker/oneringai` for external use.
+- **`AgentContextNextGen.registerPlugin()` options**: New `{ skipDestroyOnContextDestroy: true }` option for shared plugins (e.g., SharedWorkspacePlugin in orchestrator).
+- **`StoreToolsManager.unregisterHandler()`**: New method to remove store handlers by storeId.
+- **Everworker Desktop: Orchestrator mode**: Any agent can be designated as an orchestrator via `isOrchestrator` config flag. Orchestrator instances use `createOrchestrator()` with child agent templates built from existing agent configs.
+- **Everworker Desktop: Worker event streaming**: Orchestrator instances subscribe to `AgentRegistry` events and forward worker lifecycle (created/destroyed/status), tool activity (start/end), and turn events as `orchestrator:*` StreamChunk types to the renderer.
+- **Everworker Desktop: Worker inspection IPC**: New `agent:inspect-worker` and `agent:list-workers` IPC handlers for deep worker inspection via `AgentRegistry.inspect()`.
+- **Everworker Desktop: Agent Editor — Orchestrator tab**: New "Orchestrator" tab in agent editor with toggle switch, child agent type picker (from existing agents), editable aliases, and max workers slider.
+- **Everworker Desktop: OrchestratorDashboard**: Horizontal strip above chat messages showing worker pills with live status (idle/running/paused), current tool activity, and workspace entry count. Only visible for orchestrator tabs.
+- **Everworker Desktop: Workers sidebar tab**: 4th sidebar tab (conditional on orchestrator mode) with WorkspaceView (shared workspace entries) and WorkerInspectorPanel (deep inspection via AgentRegistry with 2s polling for conversation, context budget, tool stats).
+
+- **Unified Store Tools**: 5 generic `store_*` tools (`store_get`, `store_set`, `store_delete`, `store_list`, `store_action`) replace 19 plugin-specific CRUD tools. All IStoreHandler plugins automatically get these tools — zero boilerplate.
+- **`IStoreHandler` Interface**: New interface for building custom CRUD plugins. Implement it alongside `IContextPluginNextGen` and your plugin automatically gets store tools when registered.
+- **`SharedWorkspacePluginNextGen`**: New plugin for multi-agent coordination. Storage-agnostic bulletin board with inline content, external references, versioning, author tracking, and append-only conversation log. Enable via `features.sharedWorkspace: true`.
+- **`StoreToolsManager`**: Central manager that routes `store_*` tool calls to the correct IStoreHandler plugin. Uses `descriptionFactory` to dynamically list available stores and their schemas.
+- **Store Comparison in Tool Descriptions**: Each `store_*` tool dynamically describes all available stores with "use for / NOT for" guidance, preventing LLM confusion about which store to use.
+- **Agent Orchestrator** (`createOrchestrator()`): Factory for creating an orchestrator Agent that coordinates a team of worker agents. The orchestrator is a regular Agent with orchestration tools — no subclass needed.
+- **7 Orchestration Tools**: `create_agent`, `list_agents`, `destroy_agent`, `assign_turn` (blocking), `assign_turn_async` (non-blocking, leverages async tools infrastructure), `assign_parallel` (fan-out), `send_message` (inject into running/idle agents).
+- **`Agent.inject()`**: New method to queue messages into a running agent's context, processed on the next agentic loop iteration. Enables orchestrator-to-worker communication during turns.
+- **Async Turn Assignment**: `assign_turn_async` uses the existing async tools infrastructure (`blocking: false`) — the orchestrator continues its loop while workers execute in the background. Results are delivered via auto-continuation.
+- **Workspace Delta**: Workers automatically receive a "what changed since your last turn" summary at the start of each turn, built from workspace entry timestamps.
+- **Default Orchestrator System Prompt**: Auto-generated from `agentTypes` config, describes available agent types, coordination tools, and workflow patterns.
+- **`src/core/orchestrator/`**: New module with `createOrchestrator.ts` (factory + system prompt), `tools.ts` (7 orchestration tool definitions), and `index.ts` (exports).
+
+### Added
+- **Orchestrator unit tests**: 68 tests covering `buildOrchestrationTools` (all 7 tools, workspace delta builder, validation, timeouts, partial failures), `createOrchestrator` (factory, system prompt, worker creation, destroy lifecycle, config options).
+
+### Fixed
+- **Dead `timers` array in `assign_parallel`**: Removed unused `timers` array and `timers.push(timer)` — individual timer cleanup already happens in per-promise `finally` blocks.
+- **Everworker Desktop: React anti-pattern in child agent selector**: Replaced `document.getElementById` DOM manipulation with controlled React state (`selectedChildAgentId`).
+- **Everworker Desktop: Array index as key for child agent list**: Changed `key={idx}` to stable `key={agentConfigId-alias}` to prevent wrong re-renders on deletion.
+- **Everworker Desktop: Silent polling errors in WorkerInspectorPanel**: Added error state — shows "Unable to inspect worker" message instead of being stuck on "Loading..." forever.
+- **Everworker Desktop: Poll interval magic number in WorkerInspectorPanel**: Extracted to `const POLL_INTERVAL_MS = 2000`.
+- **[CRITICAL] Timer leaks in orchestration tools**: `assign_turn`, `assign_turn_async`, and `assign_parallel` now properly clear timeout timers in `finally` blocks when `agent.run()` resolves before the timeout. Previously leaked 1+ timers per tool call.
+- **[CRITICAL] Shared workspace double-destroy**: When orchestrator is destroyed, the shared workspace plugin is no longer destroyed from worker contexts (only from the orchestrator). Added `registerPlugin(plugin, { skipDestroyOnContextDestroy: true })` option.
+- **[CRITICAL] Worker agents not cleaned up on orchestrator destroy**: `orchestrator.destroy()` now destroys all worker agents and clears the shared workspace.
+- **SharedWorkspacePlugin `compact()` callback**: `compact()` now triggers `onEntriesChanged` callback when entries are removed, matching `storeSet`/`storeDelete`/`storeAction('clear')` behavior.
+- **SharedWorkspacePlugin token cache in `enforceMaxEntries()`**: Token cache is now properly invalidated after entries are evicted by the max-entries limit.
+- **SharedWorkspacePlugin callback leak on destroy**: `onEntriesChanged` callback is cleared on `destroy()` to prevent keeping external objects alive.
+- **Injection queue type safety**: `_pendingInjections` is now typed as `Message[]` instead of `InputItem[]`, eliminating unsafe casts when draining injections.
+- **Injection queue unbounded growth**: `inject()` now drops oldest messages when queue exceeds 100 entries.
+- **`destroy_agent` on running agent**: Now returns an error if the agent is currently running instead of destroying mid-execution.
+- **Duplicate agents in `assign_parallel`**: Validates that each agent name appears only once in assignments to prevent concurrent runs on the same context.
+- **Max agents limit**: `create_agent` enforces a configurable `maxAgents` limit (default: 20) to prevent unbounded agent creation.
+- **Workspace delta cap**: Delta builder now caps entries (20) and log lines (10) to prevent very large deltas for agents that haven't run in a while.
+- **`orchestratorAgent` used before assignment**: `parentAgentId` now uses a deferred variable set after orchestrator creation.
+- **`StoreToolsManager.unregisterHandler()`**: Added missing method to remove store handlers.
+
+### Changed
+- **InContextMemoryPluginNextGen**: Now implements `IStoreHandler` (storeId: `"context"`). Old tools `context_set`, `context_delete`, `context_list` removed.
+- **WorkingMemoryPluginNextGen**: Now implements `IStoreHandler` (storeId: `"memory"`). Old tools `memory_store`, `memory_retrieve`, `memory_delete`, `memory_query`, `memory_cleanup_raw` removed. Tier-specific operations available via `store_action("memory", "cleanup_raw")` and `store_action("memory", "query", {...})`.
+- **PersistentInstructionsPluginNextGen**: Now implements `IStoreHandler` (storeId: `"instructions"`). Old tools `instructions_set`, `instructions_remove`, `instructions_list`, `instructions_clear` removed. Clear available via `store_action("instructions", "clear", { confirm: true })`.
+- **UserInfoPluginNextGen**: Now implements `IStoreHandler` (storeId: `"user_info"`). Old tools `user_info_set`, `user_info_get`, `user_info_remove`, `user_info_clear` removed. TODO tools (`todo_add`, `todo_update`, `todo_remove`) remain independent.
+- **Permission Allowlist**: Updated to include `store_get`, `store_set`, `store_delete`, `store_list`, `store_action`. Old 18 CRUD tool names removed.
+
+### Breaking Changes
+- Old CRUD tool names removed entirely (not deprecated). Client apps that enable features via `features.workingMemory: true` etc. are unaffected — tools change automatically under the hood.
+- Plugin names, feature flags, programmatic APIs, and session persistence formats are all unchanged.
+
 ## [Unreleased]
+
+### Added
+
+- **AgentRegistry — Global Agent Tracking, Observability & Control** — New static registry (`AgentRegistry`) that automatically tracks all active `Agent` instances. Agents auto-register on creation and auto-unregister on destroy — zero user effort. Provides:
+  - **Query**: `get(id)`, `getByName(name)`, `filter({ name, model, connector, status, parentAgentId })`, `list()`, `count`
+  - **Lightweight snapshots**: `listInfo()`, `filterInfo()` returning `AgentInfo` objects
+  - **Deep async inspection**: `inspect(id)`, `inspectAll()`, `inspectMatching()` — returns full `IContextSnapshot` (plugins, tools, budget, systemPrompt), complete `InputItem[]` conversation, execution metrics, audit trail, circuit breaker states, tool stats, and child agent info
+  - **Aggregate metrics**: `getStats()` (counts by status/model/connector), `getAggregateMetrics()` (total tokens, tool calls, errors across fleet)
+  - **Parent/child hierarchy**: `getChildren(parentId)`, `getParent(childId)`, `getTree(rootId)` (recursive `AgentTreeNode` for visualization)
+  - **Events**: `on/off/once` for `agent:registered`, `agent:unregistered`, `agent:statusChanged`, `registry:empty`
+  - **Event fan-in**: `onAgentEvent(listener)` — receive ALL events from ALL agents through one callback (ideal for dashboards/logging)
+  - **External control**: `pauseAgent(id)`, `resumeAgent(id)`, `cancelAgent(id)`, `destroyAgent(id)`, plus `*Matching(filter)` and `*All()` bulk variants
+  - New properties on `BaseAgent`: `registryId` (UUID, unique per instance), `parentAgentId` (links to parent for agent hierarchies)
+  - New config: `parentAgentId?: string` on `BaseAgentConfig` / `AgentConfig`
+  - New exported types: `AgentStatus`, `AgentInfo`, `AgentFilter`, `AgentRegistryStats`, `AggregateMetrics`, `AgentTreeNode`, `AgentInspection`, `AgentRegistryEvents`, `AgentEventListener`, `IRegistrableAgent`
+
+- **Long-Running Sessions (Suspend/Resume)** — Tools can now signal the agent loop to suspend via `SuspendSignal.create({ result, correlationId, metadata })`. When detected, the loop does a final wrap-up LLM call, saves the session and correlation mapping, and returns an `AgentResponse` with `status: 'suspended'` and a `suspension` field containing `correlationId`, `sessionId`, `agentId`, `resumeAs`, `expiresAt`, and `metadata`. Later, `Agent.hydrate(sessionId, { agentId })` reconstructs the agent from stored definition + session state, allowing the caller to add hooks/tools before calling `agent.run(userReply)` to continue. New types: `SuspendSignal`, `SuspendSignalOptions`, `ICorrelationStorage`, `SessionRef`, `CorrelationSummary`. New storage: `FileCorrelationStorage` (default, file-based at `~/.oneringai/correlations/`). New `StorageRegistry` key: `correlations`. New event: `execution:suspended`.
+
+- **Async (Non-Blocking) Tool Execution** — Tools with `blocking: false` now execute in the background while the agentic loop continues. The LLM receives an immediate placeholder result, and when the real result arrives, it is delivered as a new user message. Supports auto-continuation (re-enters the agentic loop automatically) or manual continuation via `agent.continueWithAsyncResults()`. Configurable via `asyncTools: { autoContinue, batchWindowMs, asyncTimeout }` on `AgentConfig`. Includes 5 new events (`async:tool:started`, `async:tool:complete`, `async:tool:error`, `async:tool:timeout`, `async:continuation:start`), public accessors (`hasPendingAsyncTools()`, `getPendingAsyncTools()`, `cancelAsyncTool()`, `cancelAllAsyncTools()`), and `pendingAsyncTools` on `AgentResponse`. New exported types: `AsyncToolConfig`, `PendingAsyncTool`, `PendingAsyncToolStatus`.
+
+### Fixed
+
+- **Memory leak: async batch timer not cleared on destroy** — `Agent.destroy()` now clears `_asyncBatchTimer`, preventing post-destroy callbacks and GC retention of destroyed agent instances.
+
+- **Memory leak: beforeCompactionCallback not cleared on context destroy** — `AgentContextNextGen.destroy()` now nulls out the `_beforeCompactionCallback`, breaking the Agent→Context→callback→Agent reference cycle that could prevent garbage collection.
+
+- **Memory leak: Connector circuit breaker listeners not removed** — `Connector.dispose()` now calls `removeAllListeners()` on the circuit breaker before dropping the reference.
+
+- **Unhandled async error in `_flushAsyncResults`** — The `setTimeout` callback that schedules async result flushing now checks `_isDestroyed` and wraps the call in try/catch with error logging.
+
+- **Race condition: auto-save log noise during destroy** — Auto-save interval now suppresses log output if the agent was destroyed between the `_isDestroyed` check and the async `save()` completion.
+
+- **Improved tool argument parse error messages** — `executeToolWithHooks` now provides descriptive errors when tool arguments are invalid JSON. Tracking-only parse failures now log at debug level instead of being silently swallowed.
+
+- **Null guard on LLM response** — Agent loop now guards against null/undefined responses from `generateWithHooks` before accessing `response.output`.
+
+### Changed
+
+- **DRY: Shared storage utilities** — Extracted duplicated `sanitizeId`, `sanitizeUserId`, `DEFAULT_USER_ID`, `ensureDirectory`, and `getErrorMessage` into `src/infrastructure/storage/utils.ts`. Updated 8 storage files to import from shared utilities instead of maintaining local copies.
+
+- **`InMemoryStorage`: `structuredClone()` replaces `JSON.parse(JSON.stringify())`** — Faster deep cloning with better type support (handles Date, Map, Set, etc.).
+
+- **Async file reads in providers** — Replaced `readFileSync` with `await fs.promises.readFile` in `clipboardImage.ts`, `OpenAISoraProvider.ts`, `GrokImagineProvider.ts`, and `GoogleImageProvider.ts` to avoid blocking the event loop.
+
+- **Stream: `_buildToolCallsFromMap()` hardcoded `blocking: true`** — Tool calls built from streaming responses now correctly read the `blocking` field from tool definitions instead of always setting `blocking: true`.
+
+- **OpenAI stream converter memory leak** — `OpenAIResponsesStreamConverter` stored all tracking state (activeItems, toolCallBuffers, reasoningBuffers) as local variables inside `convertStream()`, never cleaned up on error. Moved to instance properties with `clear()`/`reset()`/`hasToolCalls()` methods and try/finally cleanup. `OpenAITextProvider.streamGenerate()` now calls `streamConverter.clear()` in finally block.
+
+- **MCPClient reconnect timer leak** — `connect()` catch block called `stopHealthCheck()` but not `stopReconnect()`, leaving stale reconnect timers from previous attempts.
+
+- **BaseTextProvider: no IDisposable, no destroyed guard** — Now formally implements `IDisposable` with `isDestroyed` flag. `ensureObservabilityInitialized()` short-circuits if destroyed. Added base `mapError()` method for common HTTP error classification (401->auth, 429->rate limit, 500+->provider).
+
+- **Bash tool: excessive background process retention** — Completed background processes were retained for 5 minutes. Reduced TTL to 60 seconds and added `MAX_COMPLETED_PROCESSES` cap (50) with oldest-first eviction.
+
+- **HookManager: missing IDisposable interface** — Now implements `IDisposable` with proper `isDestroyed` flag and idempotent `destroy()`.
+
+- **FileContextStorage: index corruption on concurrent writes** — `updateIndex()` and `removeFromIndex()` had no serialization, allowing concurrent read-modify-write corruption. Added async mutex (`withIndexLock()`) wrapping all index mutations.
+
+- **CircuitBreaker: `closed` event emitted `successCount: 0`** — `transitionTo('closed')` reset `consecutiveSuccesses` to 0 before emitting the event. Now captures the value before reset.
+
+- **GenericOpenAIProvider: silent error swallow in `listModels()`** — Now logs caught errors at debug level instead of silently discarding.
+
+- **ToolPermissionManager: no destroy method** — Added `destroy()` that clears all internal state and calls `removeAllListeners()`.
+
+- **MCP subscribe/unsubscribe: `{} as any` type casts** — Replaced with proper `EmptyResultSchema` from MCP SDK.
+
+### Changed
+
+- **All providers: `console.log` replaced with `this.logger`** — OpenAI, Anthropic, and Google text providers now use the structured logger from `BaseTextProvider` instead of `console.log`/`console.error` for API call logging.
+
+- **OpenAITextProvider: typed params** — Request `params` changed from `any` to `Record<string, unknown>` in both `generate()` and `streamGenerate()`.
+
+- **webFetch.ts: proper error typing** — Outer catch changed from `catch (error: any)` to `catch (error: unknown)` with proper narrowing.
+
+- **Response.ts: documented status union** — Added JSDoc documenting all 6 status values and their use cases (`queued` for async video, `in_progress` for streaming).
+
+### Refactored
+
+- **Filesystem tools: shared `walkDirectory()` async generator** — Extracted common recursive directory traversal from `glob.ts` and `grep.ts` into `walkDirectory()` in `types.ts`. Both tools now use the shared generator, eliminating ~60 lines of duplicated traversal logic.
+
+- **MCPClient: `createMCPError()` helper** — Extracted repeated `new MCPError('Failed to X from server Y', name, cause)` pattern into a private helper, reducing boilerplate across 8 call sites.
 
 ## [0.4.8] - 2026-03-12
 

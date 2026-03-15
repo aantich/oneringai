@@ -30,6 +30,8 @@ export function createDesktopWindowFocusTool(config?: DesktopToolConfig): ToolFu
 
     describeCall: (args: DesktopWindowFocusArgs): string => `window ${args.windowId}`,
 
+    permission: { scope: 'session' as const, riskLevel: 'medium' as const },
+
     execute: async (args: DesktopWindowFocusArgs): Promise<DesktopWindowFocusResult> => {
       try {
         const driver = await getDesktopDriver(config);

@@ -76,6 +76,52 @@ export interface ToolExecutionContext {
   completedResults: Map<string, ToolResult>; // tool_use_id → ToolResult
 }
 
+/**
+ * Configuration for async (non-blocking) tool behavior
+ */
+export interface AsyncToolConfig {
+  /**
+   * If true, the agent automatically re-enters the agentic loop
+   * when async tool results arrive. If false, results are queued
+   * and the caller must call `continueWithAsyncResults()` manually.
+   * @default true
+   */
+  autoContinue?: boolean;
+
+  /**
+   * Window in ms to batch multiple async results before triggering
+   * a continuation. If multiple async tools complete within this window,
+   * their results are delivered together in a single user message.
+   * @default 500
+   */
+  batchWindowMs?: number;
+
+  /**
+   * Timeout in ms for async tool execution. If a tool doesn't complete
+   * within this window, it's treated as a timeout error.
+   * @default 300000 (5 minutes)
+   */
+  asyncTimeout?: number;
+}
+
+/**
+ * Status of a pending async tool execution
+ */
+export type PendingAsyncToolStatus = 'running' | 'completed' | 'failed' | 'timeout' | 'cancelled';
+
+/**
+ * Tracks a single async tool execution in flight
+ */
+export interface PendingAsyncTool {
+  toolCallId: string;
+  toolName: string;
+  args: Record<string, unknown>;
+  startTime: number;
+  status: PendingAsyncToolStatus;
+  result?: ToolResult;
+  error?: Error;
+}
+
 // ToolContext is imported from IToolContext.ts and re-exported above
 // This eliminates the duplicate definition and ensures type consistency
 

@@ -77,7 +77,7 @@ export function createRoutineListExecutions(
       },
     },
 
-    permission: { scope: 'session', riskLevel: 'low' },
+    permission: { scope: 'always' as const, riskLevel: 'low' as const },
 
     execute: async (args: RoutineListExecutionsArgs, context?: ToolContext) => {
       try {

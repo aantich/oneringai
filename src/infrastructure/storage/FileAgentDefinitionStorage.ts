@@ -16,6 +16,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { sanitizeId } from './utils.js';
 import type {
   IAgentDefinitionStorage,
   StoredAgentDefinition,
@@ -76,14 +77,8 @@ function getDefaultBaseDirectory(): string {
 /**
  * Sanitize agent ID for use as a directory name
  */
-function sanitizeAgentId(agentId: string): string {
-  return agentId
-    .replace(/[^a-zA-Z0-9_-]/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '')
-    .toLowerCase()
-    || 'default';
-}
+// sanitizeAgentId is an alias for sanitizeId from ./utils.js
+const sanitizeAgentId = sanitizeId;
 
 /**
  * File-based storage for agent definitions

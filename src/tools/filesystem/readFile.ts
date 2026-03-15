@@ -106,6 +106,8 @@ EXAMPLES:
       },
     },
 
+    permission: { scope: 'always' as const, riskLevel: 'low' as const },
+
     describeCall: (args: ReadFileArgs): string => {
       if (args.offset && args.limit) {
         return `${args.file_path} [lines ${args.offset}-${args.offset + args.limit}]`;

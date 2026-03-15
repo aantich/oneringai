@@ -75,7 +75,7 @@ export class OpenAITextProvider extends BaseTextProvider {
         );
 
         // Build request parameters
-        const params: any = {
+        const params: Record<string, unknown> = {
           model: options.model,
           input,
           ...(instructions && { instructions }),
@@ -104,21 +104,23 @@ export class OpenAITextProvider extends BaseTextProvider {
         // Add reasoning config from unified thinking option
         this.applyReasoningConfig(params, options);
 
-        console.log(
-          `[OpenAITextProvider] generate: calling OpenAI API (model=${options.model}, tools=${params.tools?.length ?? 0})`,
+        this.logger.debug(
+          { model: options.model, toolCount: (params.tools as unknown[])?.length ?? 0 },
+          'generate: calling OpenAI API',
         );
         const genStartTime = Date.now();
 
         // Call Responses API
-        const response = await this.client.responses.create(params);
-        console.log(
-          `[OpenAITextProvider] generate: response received (${Date.now() - genStartTime}ms)`,
+        const response = await this.client.responses.create(params as any);
+        this.logger.debug(
+          { model: options.model, duration: Date.now() - genStartTime },
+          'generate: response received',
         );
 
         // Convert response to our format
         return this.converter.convertResponse(response);
       } catch (error: any) {
-        console.error(`[OpenAITextProvider] generate error (model=${options.model}):`, error.message || error);
+        this.logger.error({ model: options.model, error: error.message || error }, 'generate error');
         this.handleError(error, options.model);
         throw error; // TypeScript needs this
       }
@@ -137,7 +139,7 @@ export class OpenAITextProvider extends BaseTextProvider {
       );
 
       // Build request parameters
-      const params: any = {
+      const params: Record<string, unknown> = {
         model: options.model,
         input,
         ...(instructions && { instructions }),
@@ -167,31 +169,43 @@ export class OpenAITextProvider extends BaseTextProvider {
       // Add reasoning config from unified thinking option
       this.applyReasoningConfig(params, options);
 
-      console.log(
-        `[OpenAITextProvider] streamGenerate: calling OpenAI API (model=${options.model}, ` +
-        `tools=${params.tools?.length ?? 0})`,
+      this.logger.debug(
+        { model: options.model, toolCount: (params.tools as unknown[])?.length ?? 0 },
+        'streamGenerate: calling OpenAI API',
       );
       const streamStartTime = Date.now();
 
       // Call Responses API with streaming
-      const stream = await this.client.responses.create(params) as any;
-      console.log(
-        `[OpenAITextProvider] streamGenerate: OpenAI stream opened (${Date.now() - streamStartTime}ms)`,
+      let streamRef: any;
+      const stream = await this.client.responses.create(params as any) as any;
+      streamRef = stream;
+      this.logger.debug(
+        { model: options.model, duration: Date.now() - streamStartTime },
+        'streamGenerate: OpenAI stream opened',
       );
 
       // Convert stream events using the stream converter
       let chunkCount = 0;
-      for await (const event of this.streamConverter.convertStream(stream as AsyncIterable<ResponsesAPI.ResponseStreamEvent>)) {
-        chunkCount++;
-        yield event;
+      try {
+        for await (const event of this.streamConverter.convertStream(stream as AsyncIterable<ResponsesAPI.ResponseStreamEvent>)) {
+          chunkCount++;
+          yield event;
+        }
+      } finally {
+        this.streamConverter.clear();
+        // Abort underlying stream if consumer broke iteration early
+        if (streamRef && typeof streamRef.abort === 'function') {
+          try { streamRef.abort(); } catch { /* ignore */ }
+        }
       }
-      console.log(
-        `[OpenAITextProvider] streamGenerate: stream complete (${chunkCount} events, ${Date.now() - streamStartTime}ms total)`,
+      this.logger.debug(
+        { events: chunkCount, duration: Date.now() - streamStartTime },
+        'streamGenerate: stream complete',
       );
     } catch (error: any) {
-      console.error(
-        `[OpenAITextProvider] streamGenerate error (model=${options.model}):`,
-        error.message || error,
+      this.logger.error(
+        { model: options.model, error: error.message || error },
+        'streamGenerate error',
       );
       this.handleError(error, options.model);
       throw error;
@@ -228,7 +242,7 @@ export class OpenAITextProvider extends BaseTextProvider {
   /**
    * Apply reasoning config from unified thinking option to request params
    */
-  private applyReasoningConfig(params: any, options: TextGenerateOptions): void {
+  private applyReasoningConfig(params: Record<string, unknown>, options: TextGenerateOptions): void {
     if (options.thinking?.enabled) {
       validateThinkingConfig(options.thinking);
       params.reasoning = {

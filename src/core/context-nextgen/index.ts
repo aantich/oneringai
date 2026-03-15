@@ -26,6 +26,14 @@ export type {
   SerializedContextState,
   ContextEvents,
   PluginConfigs,
+  // Store handler types (unified CRUD for plugins)
+  IStoreHandler,
+  StoreEntrySchema,
+  StoreGetResult,
+  StoreSetResult,
+  StoreDeleteResult,
+  StoreListResult,
+  StoreActionResult,
   // Compaction strategy types
   ICompactionStrategy,
   CompactionContext,
@@ -36,7 +44,11 @@ export type {
 export {
   DEFAULT_FEATURES,
   DEFAULT_CONFIG,
+  isStoreHandler,
 } from './types.js';
+
+// Store tools manager
+export { StoreToolsManager } from './store-tools.js';
 
 // Snapshot types (for "Look Inside" UIs)
 export { formatPluginDisplayName } from './snapshot.js';
@@ -58,6 +70,7 @@ export {
   PersistentInstructionsPluginNextGen,
   UserInfoPluginNextGen,
   ToolCatalogPluginNextGen,
+  SharedWorkspacePluginNextGen,
 } from './plugins/index.js';
 
 export type {
@@ -74,6 +87,10 @@ export type {
   UserInfoPluginConfig,
   SerializedUserInfoState,
   ToolCatalogPluginConfig,
+  SharedWorkspaceConfig,
+  SharedWorkspaceEntry,
+  WorkspaceLogEntry,
+  SerializedSharedWorkspaceState,
 } from './plugins/index.js';
 
 // Compaction strategies

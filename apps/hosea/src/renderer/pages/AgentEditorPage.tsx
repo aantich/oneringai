@@ -147,6 +147,10 @@ interface AgentFormData {
   voiceVoice: string;
   voiceFormat: string;
   voiceSpeed: number;
+  // Orchestrator mode
+  isOrchestrator: boolean;
+  orchestratorChildAgents: Array<{ agentConfigId: string; alias: string }>;
+  orchestratorMaxAgents: number;
 }
 
 const defaultFormData: AgentFormData = {
@@ -193,6 +197,10 @@ const defaultFormData: AgentFormData = {
   voiceVoice: '',
   voiceFormat: 'mp3',
   voiceSpeed: 1.0,
+  // Orchestrator mode
+  isOrchestrator: false,
+  orchestratorChildAgents: [],
+  orchestratorMaxAgents: 20,
 };
 
 export function AgentEditorPage(): React.ReactElement {
@@ -200,6 +208,7 @@ export function AgentEditorPage(): React.ReactElement {
   const isEditMode = state.params.mode === 'edit';
   const agentId = state.params.id as string | undefined;
   const [formData, setFormData] = useState<AgentFormData>(defaultFormData);
+  const [selectedChildAgentId, setSelectedChildAgentId] = useState('');
   const [activeTab, setActiveTab] = useState<string>('general');
   const [saving, setSaving] = useState(false);
 
@@ -214,6 +223,7 @@ export function AgentEditorPage(): React.ReactElement {
   const [mcpServerTools, setMCPServerTools] = useState<Record<string, MCPTool[]>>({});
   const [loadingMCPTools, setLoadingMCPTools] = useState<string | null>(null);
   const [strategies, setStrategies] = useState<StrategyInfo[]>([]);
+  const [availableAgents, setAvailableAgents] = useState<Array<{ id: string; name: string; model: string; tools: string[] }>>([]);
   const [loading, setLoading] = useState(true);
   const connectorVersion = useConnectorVersion();
 
@@ -233,13 +243,14 @@ export function AgentEditorPage(): React.ReactElement {
   useEffect(() => {
     async function loadData() {
       try {
-        const [connectorsList, models, tools, uniConns, mcpServersList, strategyList] = await Promise.all([
+        const [connectorsList, models, tools, uniConns, mcpServersList, strategyList, agentsList] = await Promise.all([
           window.hosea.connector.list(),
           window.hosea.model.list(),
           window.hosea.tool.registry(),
           window.hosea.universalConnector.list(),
           window.hosea.mcpServer.list(),
           window.hosea.strategy.list(),
+          window.hosea.agentConfig.list(),
         ]);
         setConnectors(connectorsList);
         setModelsByVendor(models);
@@ -247,6 +258,7 @@ export function AgentEditorPage(): React.ReactElement {
         setUniversalConnectors(uniConns);
         setMCPServers(mcpServersList);
         setStrategies(strategyList);
+        setAvailableAgents(agentsList.map(a => ({ id: a.id, name: a.name, model: a.model, tools: a.tools })));
 
         // Load existing agent data if in edit mode
         if (isEditMode && agentId) {
@@ -291,6 +303,10 @@ export function AgentEditorPage(): React.ReactElement {
               voiceVoice: existingAgent.voiceVoice ?? '',
               voiceFormat: existingAgent.voiceFormat ?? 'mp3',
               voiceSpeed: existingAgent.voiceSpeed ?? 1.0,
+              // Orchestrator
+              isOrchestrator: (existingAgent as Record<string, unknown>).isOrchestrator as boolean ?? false,
+              orchestratorChildAgents: ((existingAgent as Record<string, unknown>).orchestratorChildAgents as AgentFormData['orchestratorChildAgents']) ?? [],
+              orchestratorMaxAgents: ((existingAgent as Record<string, unknown>).orchestratorMaxAgents as number) ?? 20,
             });
           }
         }
@@ -783,6 +799,14 @@ export function AgentEditorPage(): React.ReactElement {
           </Nav.Item>
           <Nav.Item>
             <Nav.Link eventKey="voice">Voice</Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link eventKey="orchestrator">
+              Orchestrator
+              {formData.isOrchestrator && (
+                <Badge bg="success" className="ms-2">ON</Badge>
+              )}
+            </Nav.Link>
           </Nav.Item>
         </Nav>
 
@@ -2001,6 +2025,132 @@ export function AgentEditorPage(): React.ReactElement {
                 )}
               </Card.Body>
             </Card>
+          </>
+        )}
+        {/* Orchestrator Tab */}
+        {activeTab === 'orchestrator' && (
+          <>
+            <Card className="mb-3">
+              <Card.Body>
+                <Form.Check
+                  type="switch"
+                  id="orchestrator-mode"
+                  label={<><strong>Orchestrator Mode</strong> — This agent will coordinate a team of child agents</>}
+                  checked={formData.isOrchestrator}
+                  onChange={(e) => setFormData({ ...formData, isOrchestrator: e.target.checked })}
+                />
+              </Card.Body>
+            </Card>
+
+            {formData.isOrchestrator && (
+              <>
+                {/* Child Agent Types */}
+                <Card className="mb-3">
+                  <Card.Body>
+                    <h6 className="mb-3">Child Agent Types</h6>
+                    <p className="text-muted small mb-3">
+                      Add existing agents as templates. The orchestrator will be able to spawn workers from these types.
+                    </p>
+
+                    {/* Current child agents */}
+                    {formData.orchestratorChildAgents.map((child, idx) => {
+                      const agentInfo = availableAgents.find(a => a.id === child.agentConfigId);
+                      return (
+                        <div key={`${child.agentConfigId}-${child.alias}`} className="d-flex align-items-center gap-2 mb-2 p-2 border rounded">
+                          <Form.Control
+                            size="sm"
+                            style={{ width: '150px' }}
+                            value={child.alias}
+                            onChange={(e) => {
+                              const updated = [...formData.orchestratorChildAgents];
+                              updated[idx] = { ...updated[idx], alias: e.target.value };
+                              setFormData({ ...formData, orchestratorChildAgents: updated });
+                            }}
+                            placeholder="Alias"
+                          />
+                          <span className="text-muted small flex-grow-1">
+                            {agentInfo ? `${agentInfo.name} (${agentInfo.model}, ${agentInfo.tools.length} tools)` : child.agentConfigId}
+                          </span>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => {
+                              const updated = formData.orchestratorChildAgents.filter((_, i) => i !== idx);
+                              setFormData({ ...formData, orchestratorChildAgents: updated });
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      );
+                    })}
+
+                    {/* Add child agent selector */}
+                    <div className="d-flex gap-2 mt-2">
+                      <Form.Select
+                        size="sm"
+                        value={selectedChildAgentId}
+                        onChange={(e) => setSelectedChildAgentId(e.target.value)}
+                        className="flex-grow-1"
+                      >
+                        <option value="" disabled>Select an agent to add...</option>
+                        {availableAgents
+                          .filter(a => !isEditMode || a.id !== agentId)  // Don't allow adding self
+                          .map(a => (
+                            <option key={a.id} value={a.id}>{a.name} ({a.model})</option>
+                          ))
+                        }
+                      </Form.Select>
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        onClick={() => {
+                          if (!selectedChildAgentId) return;
+                          const agentInfo = availableAgents.find(a => a.id === selectedChildAgentId);
+                          if (!agentInfo) return;
+                          // Generate a unique alias
+                          const baseAlias = agentInfo.name.toLowerCase().replace(/\s+/g, '_');
+                          let alias = baseAlias;
+                          let counter = 1;
+                          while (formData.orchestratorChildAgents.some(c => c.alias === alias)) {
+                            alias = `${baseAlias}_${counter++}`;
+                          }
+                          setFormData({
+                            ...formData,
+                            orchestratorChildAgents: [
+                              ...formData.orchestratorChildAgents,
+                              { agentConfigId: selectedChildAgentId, alias },
+                            ],
+                          });
+                          setSelectedChildAgentId('');
+                        }}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  </Card.Body>
+                </Card>
+
+                {/* Max Workers */}
+                <Card>
+                  <Card.Body>
+                    <Form.Group>
+                      <Form.Label>Max Workers: {formData.orchestratorMaxAgents}</Form.Label>
+                      <Form.Range
+                        min={1}
+                        max={50}
+                        step={1}
+                        value={formData.orchestratorMaxAgents}
+                        onChange={(e) => setFormData({ ...formData, orchestratorMaxAgents: parseInt(e.target.value) })}
+                      />
+                      <Form.Text className="text-muted">
+                        Maximum number of worker agents the orchestrator can create simultaneously.
+                      </Form.Text>
+                    </Form.Group>
+                  </Card.Body>
+                </Card>
+              </>
+            )}
           </>
         )}
       </div>

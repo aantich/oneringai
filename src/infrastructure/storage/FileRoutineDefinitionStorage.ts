@@ -16,6 +16,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { sanitizeUserId, sanitizeId } from './utils.js';
 import type { IRoutineDefinitionStorage } from '../../domain/interfaces/IRoutineDefinitionStorage.js';
 import type { RoutineDefinition } from '../../domain/entities/Routine.js';
 
@@ -59,7 +60,7 @@ interface StoredRoutine {
 }
 
 const STORAGE_VERSION = 1;
-const DEFAULT_USER_ID = 'default';
+// sanitizeUserId, sanitizeId, DEFAULT_USER_ID imported from ./utils.js
 
 /**
  * Get the default base directory
@@ -75,33 +76,6 @@ function getDefaultBaseDirectory(): string {
   }
 
   return join(homedir(), '.oneringai', 'users');
-}
-
-/**
- * Sanitize user ID for use as a directory name
- */
-function sanitizeUserId(userId: string | undefined): string {
-  if (!userId) {
-    return DEFAULT_USER_ID;
-  }
-  return userId
-    .replace(/[^a-zA-Z0-9_-]/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '')
-    .toLowerCase()
-    || DEFAULT_USER_ID;
-}
-
-/**
- * Sanitize routine ID for use as a filename
- */
-function sanitizeId(id: string): string {
-  return id
-    .replace(/[^a-zA-Z0-9_-]/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '')
-    .toLowerCase()
-    || 'default';
 }
 
 /**

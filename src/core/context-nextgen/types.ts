@@ -6,6 +6,7 @@
 
 import type { InputItem } from '../../domain/entities/Message.js';
 import type { ToolFunction } from '../../domain/entities/Tool.js';
+import type { ToolContext } from '../../domain/entities/Tool.js';
 import type { IContextStorage as IContextStorageFromDomain } from '../../domain/interfaces/IContextStorage.js';
 import type { ToolCategoryScope } from '../ToolCatalogRegistry.js';
 
@@ -382,6 +383,171 @@ export interface IContextPluginNextGen {
 }
 
 // ============================================================================
+// Store Handler Interface (Unified CRUD for Plugins)
+// ============================================================================
+
+/**
+ * Describes a store's schema for dynamic tool description generation.
+ * The `descriptionFactory` on each store tool uses this to build
+ * a comparison table so the LLM knows which store to use.
+ */
+export interface StoreEntrySchema {
+  /** Short identifier used as the `store` parameter value (e.g., "memory", "context") */
+  storeId: string;
+
+  /** Human-readable store name (e.g., "Working Memory", "Live Context") */
+  displayName: string;
+
+  /** One-line description of what this store holds */
+  description: string;
+
+  /**
+   * "Use for:" guidance — tells the LLM when to pick this store.
+   * Should include explicit "NOT for:" guidance referencing other stores.
+   */
+  usageHint: string;
+
+  /**
+   * Human-readable description of the data fields accepted by storeSet.
+   * Shown in the store_set tool description. One line per field.
+   * Example: "description (required): Brief description of the data"
+   */
+  setDataFields: string;
+
+  /**
+   * Available actions for store_action, keyed by action name.
+   * If undefined or empty, this store has no actions.
+   */
+  actions?: Record<string, {
+    /** What this action does */
+    description: string;
+    /** Human-readable params description */
+    paramsDescription?: string;
+    /** If true, requires confirm: true parameter */
+    destructive?: boolean;
+  }>;
+}
+
+/**
+ * Result types for store operations.
+ * These are intentionally loose (Record-based) to accommodate
+ * store-specific fields in responses.
+ */
+export interface StoreGetResult {
+  found: boolean;
+  key?: string;
+  /** Single entry data (when key provided) */
+  entry?: Record<string, unknown>;
+  /** All entries (when no key provided) */
+  entries?: Array<Record<string, unknown>>;
+}
+
+export interface StoreSetResult {
+  success: boolean;
+  key: string;
+  message?: string;
+  [k: string]: unknown;
+}
+
+export interface StoreDeleteResult {
+  deleted: boolean;
+  key: string;
+}
+
+export interface StoreListResult {
+  entries: Array<Record<string, unknown>>;
+  total?: number;
+}
+
+export interface StoreActionResult {
+  success: boolean;
+  action: string;
+  [k: string]: unknown;
+}
+
+/**
+ * Interface for plugins that provide CRUD storage.
+ *
+ * When a plugin implements both `IContextPluginNextGen` and `IStoreHandler`,
+ * it automatically gets the 5 generic `store_*` tools — no tool creation needed.
+ *
+ * ## How to implement a custom CRUD plugin
+ *
+ * 1. Create a class that extends `BasePluginNextGen` and implements `IStoreHandler`
+ * 2. Implement `getStoreSchema()` — describes your store for tool descriptions
+ * 3. Implement the 5 handler methods (storeGet, storeSet, storeDelete, storeList)
+ * 4. Optionally implement `storeAction()` for non-CRUD operations
+ * 5. Write `getInstructions()` — explains when to use YOUR store vs others
+ * 6. Register with `ctx.registerPlugin(yourPlugin)` — store tools auto-include it
+ *
+ * Your plugin does NOT need to define any tools via `getTools()`.
+ * The `StoreToolsManager` creates the 5 `store_*` tools once and routes
+ * calls to the correct handler based on the `store` parameter.
+ *
+ * @example
+ * ```typescript
+ * class NotesPlugin extends BasePluginNextGen implements IStoreHandler {
+ *   readonly name = 'notes';
+ *   private notes = new Map<string, { text: string; tag?: string }>();
+ *
+ *   getStoreSchema(): StoreEntrySchema {
+ *     return {
+ *       storeId: 'notes',
+ *       displayName: 'Notes',
+ *       description: 'Simple text notes with optional tags',
+ *       usageHint: 'Use for: quick notes. NOT for structured data (use "memory").',
+ *       setDataFields: 'text (required): Note content\ntag?: Optional category tag',
+ *     };
+ *   }
+ *
+ *   async storeGet(key?: string) { ... }
+ *   async storeSet(key: string, data: Record<string, unknown>) { ... }
+ *   async storeDelete(key: string) { ... }
+ *   async storeList(filter?: Record<string, unknown>) { ... }
+ *
+ *   getInstructions() {
+ *     return 'Store name: "notes". Use store_set("notes", key, { text, tag? }).';
+ *   }
+ *   async getContent() { ... }
+ *   getContents() { return Object.fromEntries(this.notes); }
+ * }
+ * ```
+ */
+export interface IStoreHandler {
+  /** Return the store's schema for dynamic tool descriptions */
+  getStoreSchema(): StoreEntrySchema;
+
+  /** Get one entry by key, or all entries if key is undefined */
+  storeGet(key?: string, context?: ToolContext): Promise<StoreGetResult>;
+
+  /** Create or update an entry */
+  storeSet(key: string, data: Record<string, unknown>, context?: ToolContext): Promise<StoreSetResult>;
+
+  /** Delete an entry by key */
+  storeDelete(key: string, context?: ToolContext): Promise<StoreDeleteResult>;
+
+  /** List entries with optional filter */
+  storeList(filter?: Record<string, unknown>, context?: ToolContext): Promise<StoreListResult>;
+
+  /** Execute a store-specific action (optional — only needed if store has actions) */
+  storeAction?(action: string, params?: Record<string, unknown>, context?: ToolContext): Promise<StoreActionResult>;
+}
+
+/**
+ * Type guard to check if a plugin implements IStoreHandler.
+ */
+export function isStoreHandler(plugin: IContextPluginNextGen): plugin is IContextPluginNextGen & IStoreHandler {
+  return (
+    'getStoreSchema' in plugin &&
+    'storeGet' in plugin &&
+    'storeSet' in plugin &&
+    'storeDelete' in plugin &&
+    'storeList' in plugin &&
+    typeof (plugin as IStoreHandler).getStoreSchema === 'function'
+  );
+}
+
+// ============================================================================
 // Compaction Strategy
 // ============================================================================
 
@@ -502,6 +668,9 @@ export interface ContextFeatures {
 
   /** Enable ToolCatalog plugin for dynamic tool loading/unloading (default: false) */
   toolCatalog?: boolean;
+
+  /** Enable SharedWorkspace plugin for multi-agent coordination (default: false) */
+  sharedWorkspace?: boolean;
 }
 
 /**
@@ -513,6 +682,7 @@ export const DEFAULT_FEATURES: Required<ContextFeatures> = {
   persistentInstructions: false,
   userInfo: false,
   toolCatalog: false,
+  sharedWorkspace: false,
 };
 
 // ============================================================================
@@ -555,6 +725,12 @@ export interface PluginConfigs {
    * See ToolCatalogPluginConfig for full options.
    */
   toolCatalog?: Record<string, unknown>;
+
+  /**
+   * Shared workspace plugin config (used when features.sharedWorkspace=true).
+   * See SharedWorkspaceConfig for full options.
+   */
+  sharedWorkspace?: Record<string, unknown>;
 }
 
 /**

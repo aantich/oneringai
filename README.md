@@ -35,6 +35,10 @@
   - [21. External API Integration](#21-external-api-integration) — Scoped Registry, Vendor Templates, Tool Discovery
   - [22. Microsoft Graph Connector Tools](#22-microsoft-graph-connector-tools-new) — Email, calendar, meetings, and Teams transcripts
   - [23. Tool Catalog](#23-tool-catalog-new) — Dynamic tool loading/unloading for agents with 100+ tools
+  - [24. Async (Non-Blocking) Tools](#24-async-non-blocking-tools-new) — Background tool execution with auto-continuation
+  - [25. Long-Running Sessions (Suspend/Resume)](#25-long-running-sessions-suspendresume-new) — Suspend agent loops waiting for external input, resume days later
+  - [26. Agent Registry](#26-agent-registry-new) — Global tracking, deep inspection, parent/child hierarchy, event fan-in, external control
+  - [27. Agent Orchestrator](#27-agent-orchestrator-new) — Multi-agent teams with shared workspace, async turns, and parallel execution
 - [MCP Integration](#mcp-model-context-protocol-integration)
 - [Documentation](#documentation)
 - [Examples](#examples)
@@ -91,6 +95,7 @@ Showcasing another amazing "built with oneringai": ["no saas" agentic business t
 - 🎛️ **Dynamic Tool Management** - Enable/disable tools at runtime, namespaces, priority-based selection
 - 🔌 **Tool Execution Plugins** - NEW: Pluggable pipeline for logging, analytics, UI updates, custom behavior
 - 💾 **Session Persistence** - Save and resume conversations with full state restoration
+- ⏸️ **Long-Running Sessions** - NEW: Suspend agent loops via `SuspendSignal`, resume hours/days later with `Agent.hydrate()`
 - 👤 **Multi-User Support** - Set `userId` once, flows automatically to all tool executions and session metadata
 - 🔒 **Auth Identities** - Restrict agents to specific connectors (and accounts), composable with access policies
 - 🤖 **Universal Agent** - ⚠️ *Deprecated* - Use `Agent` with plugins instead
@@ -117,6 +122,8 @@ Showcasing another amazing "built with oneringai": ["no saas" agentic business t
 - 📊 **Execution Recording** - NEW: Persist full routine execution history with `createExecutionRecorder()` — replaces manual hook wiring
 - ⏰ **Scheduling & Triggers** - NEW: `SimpleScheduler` for interval/one-time schedules, `EventEmitterTrigger` for webhook/queue-driven execution
 - 📦 **Tool Catalog** - NEW: Dynamic tool loading/unloading — agents discover and load only the categories they need at runtime
+- **Async Tools** - NEW: Non-blocking tool execution — long-running tools run in background while the agent continues reasoning, with auto-continuation when results arrive
+- 📡 **Agent Registry** - NEW: Global tracking of all active agents — deep inspection, parent/child hierarchy, event fan-in, external control
 - 🔄 **Streaming** - Real-time responses with event streams
 - 📝 **TypeScript** - Full type safety and IntelliSense support
 
@@ -602,7 +609,126 @@ const plugin = agent.tools.executionPipeline.get('plugin-name');
 const plugins = agent.tools.executionPipeline.list();
 ```
 
-### 4. Session Persistence
+### 4. Tool Permissions (NEW)
+
+Policy-based permission system with per-user rules, argument inspection, and pluggable storage. Permissions are enforced at the ToolManager pipeline level -- **all tool execution paths are gated**.
+
+#### Zero-Config (Backward Compatible)
+
+Existing code works unchanged. Safe tools (read-only, memory, catalog) are auto-allowed; all others default to prompting:
+
+```typescript
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4', tools: [readFile, bash] });
+
+// read_file executes immediately (in DEFAULT_ALLOWLIST)
+// bash triggers approval flow (write/shell tools require approval by default)
+```
+
+#### Per-User Permission Rules
+
+User rules have the **highest priority** -- they override all built-in policies. Rules support argument inspection with conditions:
+
+```typescript
+import { PermissionPolicyManager } from '@everworker/oneringai';
+
+const manager = new PermissionPolicyManager({
+  userRules: [
+    // Allow bash, but only in the project directory
+    {
+      id: '1', toolName: 'bash', action: 'allow', enabled: true,
+      createdBy: 'user', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      conditions: [{ argName: 'command', operator: 'not_contains', value: 'rm -rf' }],
+    },
+    // Block all web tools unconditionally
+    {
+      id: '2', toolName: 'web_fetch', action: 'deny', enabled: true, unconditional: true,
+      createdBy: 'admin', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+    },
+  ],
+});
+```
+
+Condition operators: `starts_with`, `not_starts_with`, `contains`, `not_contains`, `equals`, `not_equals`, `matches` (regex), `not_matches`.
+
+#### Built-in Policies
+
+Eight composable policies evaluated in priority order (`deny` short-circuits):
+
+| Policy | Description |
+|--------|-------------|
+| **AllowlistPolicy** | Auto-allow tools in the allowlist (read-only, memory, catalog) |
+| **BlocklistPolicy** | Hard-block tools in the blocklist (no approval possible) |
+| **SessionApprovalPolicy** | Cache approvals per-session with optional argument-scoped keys |
+| **PathRestrictionPolicy** | Restrict file tools to allowed directory roots |
+| **BashFilterPolicy** | Block/flag dangerous shell commands by pattern |
+| **UrlAllowlistPolicy** | Restrict web tools to allowed URL domains |
+| **RolePolicy** | Role-based access control (map user roles to tool permissions) |
+| **RateLimitPolicy** | Limit tool invocations per time window |
+
+```typescript
+import { PathRestrictionPolicy, BashFilterPolicy } from '@everworker/oneringai';
+
+const agent = Agent.create({
+  connector: 'openai', model: 'gpt-4',
+  permissions: {
+    policies: [
+      new PathRestrictionPolicy({ allowedPaths: ['/workspace'] }),
+      new BashFilterPolicy({ blockedPatterns: ['rm -rf', 'sudo'] }),
+    ],
+  },
+});
+```
+
+#### Approval Dialog Integration
+
+When a tool needs approval, the `onApprovalRequired` callback fires. Return a `createRule` to persist the decision:
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai', model: 'gpt-4',
+  permissions: {
+    onApprovalRequired: async (ctx) => {
+      const userChoice = await showApprovalDialog(ctx.toolName, ctx.args);
+
+      return {
+        approved: userChoice.allow,
+        // Persist as a user rule so it won't ask again
+        createRule: userChoice.remember ? {
+          description: `Auto-allow ${ctx.toolName}`,
+          conditions: [{ argName: 'path', operator: 'starts_with', value: '/workspace' }],
+        } : undefined,
+      };
+    },
+  },
+});
+```
+
+#### Tool Self-Declaration
+
+Tool authors declare permission defaults on the tool definition. App developers can override at registration:
+
+```typescript
+const myTool: ToolFunction = {
+  definition: { type: 'function', function: { name: 'deploy', description: '...', parameters: {...} } },
+  execute: async (args) => { /* ... */ },
+  // Author-declared defaults
+  permission: {
+    scope: 'once',
+    riskLevel: 'high',
+    approvalMessage: 'This will deploy to production',
+    sensitiveArgs: ['environment', 'version'],
+  },
+};
+
+// App developer can override at registration
+agent.tools.register(myTool, {
+  permission: { scope: 'session' },  // Relax to session-level approval
+});
+```
+
+For complete documentation, see the [User Guide](./USER_GUIDE.md#tool-permissions).
+
+### 5. Session Persistence
 
 Save and resume full context state including conversation history and plugin states:
 
@@ -672,7 +798,7 @@ const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });
 
 See the [User Guide](./USER_GUIDE.md#centralized-storage-registry) for full documentation.
 
-### 5. Working Memory
+### 6. Working Memory
 
 Use the `WorkingMemoryPluginNextGen` for agents that need to store and retrieve data:
 
@@ -688,7 +814,7 @@ const agent = Agent.create({
   },
 });
 
-// Agent now has memory_store, memory_retrieve, memory_delete, memory_query tools
+// Agent now has unified store_get, store_set, store_delete, store_list, store_action tools
 await agent.run('Check weather for SF and remember the result');
 ```
 
@@ -698,7 +824,7 @@ await agent.run('Check weather for SF and remember the result');
 - 🧠 **Context Management** - Automatic handling of context limits
 - 💾 **Session Persistence** - Save/load via `ctx.save()` and `ctx.load()`
 
-### 6. Research with Search Tools
+### 7. Research with Search Tools
 
 Use `Agent` with search tools and `WorkingMemoryPluginNextGen` for research workflows:
 
@@ -734,7 +860,7 @@ await agent.run('Research AI developments in 2026 and store key findings');
 - 📝 **Working Memory** - Store findings with priority-based eviction
 - 🏗️ **Tiered Memory** - Raw → Summary → Findings pattern
 
-### 7. Context Management
+### 8. Context Management
 
 **AgentContextNextGen** is the modern, plugin-based context manager. It provides clean separation of concerns with composable plugins:
 
@@ -796,11 +922,12 @@ const agent = Agent.create({
 **Available Features:**
 | Feature | Default | Plugin | Associated Tools |
 |---------|---------|--------|------------------|
-| `workingMemory` | `true` | WorkingMemoryPluginNextGen | `memory_store/retrieve/delete/query/cleanup_raw` |
-| `inContextMemory` | `false` | InContextMemoryPluginNextGen | `context_set/delete/list` |
-| `persistentInstructions` | `false` | PersistentInstructionsPluginNextGen | `instructions_set/remove/list/clear` |
-| `userInfo` | `false` | UserInfoPluginNextGen | `user_info_set/get/remove/clear`, `todo_add/update/remove` |
+| `workingMemory` | `true` | WorkingMemoryPluginNextGen | Unified `store_*` tools (store="memory"). Actions: cleanup_raw, query |
+| `inContextMemory` | `false` | InContextMemoryPluginNextGen | Unified `store_*` tools (store="context") |
+| `persistentInstructions` | `false` | PersistentInstructionsPluginNextGen | Unified `store_*` tools (store="instructions"). Actions: clear |
+| `userInfo` | `false` | UserInfoPluginNextGen | Unified `store_*` tools (store="user_info") + `todo_add/update/remove` |
 | `toolCatalog` | `false` | ToolCatalogPluginNextGen | `tool_catalog_search/load/unload` |
+| `sharedWorkspace` | `false` | SharedWorkspacePluginNextGen | Unified `store_*` tools (store="workspace"). Actions: log, history, archive, clear |
 
 **AgentContextNextGen architecture:**
 - **Plugin-first design** - All features are composable plugins
@@ -820,7 +947,7 @@ console.log(budget.available);           // Remaining tokens
 console.log(budget.utilizationPercent);  // Usage percentage
 ```
 
-### 8. InContextMemory
+### 9. InContextMemory
 
 Store key-value pairs **directly in context** for instant LLM access without retrieval calls:
 
@@ -845,20 +972,20 @@ plugin.set('user_prefs', 'User preferences', { verbose: true }, 'high');
 // Store data with UI display - shown in the host app's sidebar panel
 plugin.set('dashboard', 'Progress dashboard', '## Progress\n- [x] Step 1\n- [ ] Step 2', 'normal', true);
 
-// LLM can use context_set/context_delete/context_list tools
+// LLM uses unified store tools: store_set("context", ...), store_get("context", ...), etc.
 // Or access directly via plugin API
 const state = plugin.get('current_state');  // { step: 2, status: 'active' }
 ```
 
 **Key Difference from WorkingMemory:**
-- **WorkingMemory**: External storage + index → requires `memory_retrieve()` for values
+- **WorkingMemory**: External storage + index → requires `store_get("memory", key)` for values
 - **InContextMemory**: Full values in context → instant access, no retrieval needed
 
-**UI Display (`showInUI`):** Entries with `showInUI: true` are displayed in the host application's sidebar panel with full markdown rendering (code blocks, tables, charts, diagrams, etc.). The LLM sets this via the `context_set` tool. Users can also pin specific entries to always display them regardless of the agent's setting. See the [User Guide](./USER_GUIDE.md#ui-display-showInUI) for details.
+**UI Display (`showInUI`):** Entries with `showInUI: true` are displayed in the host application's sidebar panel with full markdown rendering (code blocks, tables, charts, diagrams, etc.). The LLM sets this via `store_set("context", key, { ..., showInUI: true })`. Users can also pin specific entries to always display them regardless of the agent's setting. See the [User Guide](./USER_GUIDE.md#ui-display-showInUI) for details.
 
 **Use cases:** Session state, user preferences, counters, flags, small accumulated results, live dashboards.
 
-### 9. Persistent Instructions
+### 10. Persistent Instructions
 
 Store agent-level custom instructions that persist across sessions on disk:
 
@@ -876,7 +1003,7 @@ const agent = Agent.create({
   },
 });
 
-// LLM can now use instructions_set/remove/list/clear tools
+// LLM uses unified store tools: store_set("instructions", ...), store_delete("instructions", ...), etc.
 // Instructions persist to ~/.oneringai/agents/my-assistant/custom_instructions.json
 ```
 
@@ -886,15 +1013,15 @@ const agent = Agent.create({
 - 🔄 **Auto-Load** - Instructions loaded automatically on agent start
 - 🛡️ **Never Compacted** - Critical instructions always preserved in context
 
-**Available Tools:**
-- `instructions_set` - Add or update a single instruction by key
-- `instructions_remove` - Remove a single instruction by key
-- `instructions_list` - List all instructions with keys and content
-- `instructions_clear` - Remove all instructions (requires confirmation)
+**Store Tools (via unified `store_*` interface):**
+- `store_set("instructions", key, { content })` - Add or update a single instruction by key
+- `store_delete("instructions", key)` - Remove a single instruction by key
+- `store_list("instructions")` - List all instructions with keys and content
+- `store_action("instructions", "clear", { confirm: true })` - Remove all instructions
 
 **Use cases:** Agent personality/behavior, user preferences, learned rules, tool usage patterns.
 
-### 10. User Info
+### 11. User Info
 
 Store user-specific preferences and context that are automatically injected into the LLM system message:
 
@@ -912,9 +1039,9 @@ const agent = Agent.create({
   },
 });
 
-// LLM can now use user_info_set/get/remove/clear tools
+// LLM uses unified store tools: store_set("user_info", ...), store_get("user_info", ...), etc.
 // Data persists to ~/.oneringai/users/alice/user_info.json
-// All entries are automatically shown in context — no need to call user_info_get each turn
+// All entries are automatically shown in context — no need to call store_get each turn
 ```
 
 **Key Features:**
@@ -923,11 +1050,11 @@ const agent = Agent.create({
 - 👥 **User-Scoped** - Data is per-user, not per-agent — different agents share the same user data
 - 🔧 **LLM-Modifiable** - Agent can update user info during execution
 
-**User Info Tools:**
-- `user_info_set` - Store/update user information by key (`key`, `value`, `description?`)
-- `user_info_get` - Retrieve one entry by key, or all entries if no key
-- `user_info_remove` - Remove a specific entry
-- `user_info_clear` - Clear all entries (requires confirmation)
+**Store Tools (via unified `store_*` interface):**
+- `store_set("user_info", key, { value, description? })` - Store/update user information
+- `store_get("user_info", key?)` - Retrieve one entry or all entries
+- `store_delete("user_info", key)` - Remove a specific entry
+- `store_action("user_info", "clear", { confirm: true })` - Clear all entries
 
 **TODO Tools** (built into the same plugin):
 - `todo_add` - Create a TODO (`title`, `description?`, `people?`, `dueDate?`, `tags?`)
@@ -938,7 +1065,7 @@ TODOs are stored alongside user info and rendered in a separate **"Current TODOs
 
 **Use cases:** User preferences (theme, language, timezone), user context (role, location), accumulated knowledge about the user, task/TODO tracking with deadlines and people.
 
-### 11. Direct LLM Access
+### 12. Direct LLM Access
 
 Bypass all context management for simple, stateless LLM calls:
 
@@ -984,7 +1111,7 @@ for await (const event of agent.streamDirect('Tell me a story')) {
 
 **Use cases:** Quick one-off queries, embeddings-like simplicity, testing, hybrid workflows.
 
-### 12. Audio Capabilities
+### 13. Audio Capabilities
 
 Text-to-Speech and Speech-to-Text with multiple providers:
 
@@ -1049,7 +1176,7 @@ for await (const event of voice.wrap(agent.stream('Tell me a story'))) { ... }
 - **TTS**: OpenAI (`tts-1`, `tts-1-hd`, `gpt-4o-mini-tts`), Google (`gemini-tts`)
 - **STT**: OpenAI (`whisper-1`, `gpt-4o-transcribe`), Groq (`whisper-large-v3` - 12x cheaper!)
 
-### 13. Model Registry
+### 14. Model Registry
 
 Complete metadata for 23+ models:
 
@@ -1078,7 +1205,7 @@ console.log(`Cached: $${cachedCost}`);  // $0.0293 (90% discount)
 - **Google (7)**: Gemini 3, Gemini 2.5
 - **Grok (9)**: Grok 4.1, Grok 4, Grok Code, Grok 3, Grok 2 Vision
 
-### 14. Streaming
+### 15. Streaming
 
 Real-time responses:
 
@@ -1090,7 +1217,7 @@ for await (const text of StreamHelpers.textOnly(agent.stream('Hello'))) {
 }
 ```
 
-### 15. OAuth for External APIs
+### 16. OAuth for External APIs
 
 ```typescript
 import { OAuthManager, FileStorage } from '@everworker/oneringai';
@@ -1107,7 +1234,7 @@ const oauth = new OAuthManager({
 const authUrl = await oauth.startAuthFlow('user123');
 ```
 
-### 16. Developer Tools
+### 17. Developer Tools
 
 File system and shell tools for building coding assistants:
 
@@ -1149,7 +1276,7 @@ await agent.run('Run npm test and report any failures');
 - Timeout protection (default 2 min)
 - Output truncation for large outputs
 
-### 17. Custom Tool Generation (NEW)
+### 18. Custom Tool Generation (NEW)
 
 Let agents **create their own tools** at runtime — draft, test, iterate, save, and reuse. The agent writes JavaScript code, validates it, tests it in the VM sandbox, and persists it for future use. All 6 meta-tools are auto-registered and visible in Everworker Desktop.
 
@@ -1184,7 +1311,7 @@ agent.tools.register(weatherTool, { source: 'custom', tags: ['weather', 'api'] }
 
 > See the [User Guide](./USER_GUIDE.md#custom-tool-generation) for the complete workflow, sandbox API reference, and examples.
 
-### 18. Desktop Automation Tools (NEW)
+### 19. Desktop Automation Tools (NEW)
 
 OS-level desktop automation for building "computer use" agents — screenshot the screen, send to a vision model, receive tool calls (click, type, etc.), execute them, repeat:
 
@@ -1220,7 +1347,7 @@ await agent.run('Open Safari and search for "weather forecast"');
 - Screenshots use the `__images` convention for automatic multimodal handling across all providers (Anthropic, OpenAI, Google)
 - Requires `@nut-tree-fork/nut-js` as an optional peer dependency: `npm install @nut-tree-fork/nut-js`
 
-### 19. Document Reader
+### 20. Document Reader
 
 Universal file-to-LLM-content converter. Reads arbitrary document formats and produces clean markdown text with optional image extraction:
 
@@ -1285,7 +1412,7 @@ await agent.run([
 
 See the [User Guide](./USER_GUIDE.md#document-reader) for complete API reference and configuration options.
 
-### 20. Routine Execution (NEW)
+### 21. Routine Execution (NEW)
 
 Execute multi-step AI workflows where tasks run in dependency order with automatic validation:
 
@@ -1327,7 +1454,7 @@ console.log(execution.status); // 'completed' | 'failed'
 
 **Key Features:**
 - **Task Dependencies** - DAG-based ordering via `dependsOn`
-- **Memory Bridging** - In-context memory (`context_set`) + working memory (`memory_store`) persist across tasks while conversation is cleared
+- **Memory Bridging** - In-context memory (`store_set("context", ...)`) + working memory (`store_set("memory", ...)`) persist across tasks while conversation is cleared
 - **LLM Validation** - Self-reflection against completion criteria with configurable score thresholds
 - **Retry Logic** - Configurable `maxAttempts` per task with automatic retry on validation failure
 - **Smart Error Classification** - Permanent errors (auth, config, model-not-found) skip retry; transient errors retry normally
@@ -1410,7 +1537,7 @@ const all = await storage.list(undefined, { tags: ['daily'] });
 
 > See the [User Guide](./USER_GUIDE.md#routine-execution) for the complete API reference, architecture details, and examples.
 
-### 21. External API Integration
+### 22. External API Integration
 
 Connect your AI agents to 35+ external services with enterprise-grade resilience:
 
@@ -1617,7 +1744,7 @@ for (const tool of allTools) {
 }
 ```
 
-### 22. Microsoft Graph Connector Tools (NEW)
+### 23. Microsoft Graph Connector Tools (NEW)
 
 6 dedicated tools for Microsoft Graph API — email, calendar, meetings, and Teams transcripts. Auto-registered for connectors with `serviceType: 'microsoft'` or `baseURL` matching `graph.microsoft.com`.
 
@@ -1658,7 +1785,7 @@ await agent.run('Find available meeting slots for alice and bob this week');
 
 Supports both **delegated** (`/me` — user signs in) and **application** (`/users/{id}` — app-only) permission modes. See the [User Guide](./USER_GUIDE.md#microsoft-graph-connector-tools) for full parameter reference.
 
-### 23. Tool Catalog
+### 24. Tool Catalog
 
 When agents have 100+ available tools, sending all definitions to the LLM wastes tokens and degrades performance. The Tool Catalog lets agents discover and load only the categories they need:
 
@@ -1707,6 +1834,259 @@ await agent.run('Search for information about quantum computing');
 - **Registry API** — `ToolCatalogRegistry.resolveTools()` for app-level tool resolution
 
 See the [User Guide](./USER_GUIDE.md#tool-catalog) for full documentation.
+
+### 25. Async (Non-Blocking) Tools
+
+Some tools take seconds or minutes to complete (web scraping, data analysis, API calls). With async tools, the agent doesn't wait — it continues reasoning and receives results later:
+
+```typescript
+import { Agent, ToolFunction } from '@everworker/oneringai';
+
+// Define a long-running tool as non-blocking
+const analyzeData: ToolFunction = {
+  definition: {
+    type: 'function',
+    function: {
+      name: 'analyze_dataset',
+      description: 'Run statistical analysis on a dataset (takes ~30s)',
+      parameters: {
+        type: 'object',
+        properties: { dataset: { type: 'string' } },
+        required: ['dataset'],
+      },
+    },
+    blocking: false, // <-- This makes it async
+  },
+  execute: async (args) => {
+    // Long-running work happens here
+    const result = await runAnalysis(args.dataset);
+    return { summary: result.summary, score: result.score };
+  },
+};
+
+// Auto-continue mode (default): agent handles everything
+const agent = Agent.create({
+  connector: 'anthropic',
+  model: 'claude-sonnet-4-6',
+  asyncTools: {
+    autoContinue: true,     // Re-enter agentic loop when results arrive (default)
+    batchWindowMs: 1000,    // Batch results arriving within 1s (default: 500ms)
+    asyncTimeout: 300000,   // 5 min timeout per async tool (default)
+  },
+  tools: [analyzeData, readFile], // Mix async and blocking tools
+});
+
+const response = await agent.run('Analyze the sales dataset and summarize');
+// response.pendingAsyncTools lists any still-running async tools
+// When results arrive, agent auto-continues and processes them
+
+// Manual mode: caller controls when to continue
+const agent2 = Agent.create({
+  connector: 'anthropic',
+  model: 'claude-sonnet-4-6',
+  asyncTools: { autoContinue: false },
+  tools: [analyzeData],
+});
+
+agent2.on('async:tool:complete', (event) => {
+  console.log(`${event.toolName} finished in ${event.duration}ms`);
+});
+
+const response2 = await agent2.run('Analyze the dataset');
+if (agent2.hasPendingAsyncTools()) {
+  // Do other work while waiting, then:
+  const continuation = await agent2.continueWithAsyncResults();
+  console.log(continuation.output_text);
+}
+```
+
+**How It Works:**
+1. LLM calls a `blocking: false` tool
+2. Tool starts executing in background; LLM gets placeholder: *"Tool is executing asynchronously..."*
+3. Agentic loop continues — LLM can call other tools, reason, or produce text
+4. When the real result arrives, it's injected as a user message with the full result
+5. If `autoContinue: true`, the agent re-enters the agentic loop to process the result
+
+**Key Features:**
+- **Mixed execution** — Blocking and async tools work together in the same iteration
+- **Result batching** — Multiple async results arriving close together are delivered in one message
+- **Timeout protection** — Configurable per-tool timeout (default 5 min)
+- **5 events** — `async:tool:started`, `async:tool:complete`, `async:tool:error`, `async:tool:timeout`, `async:continuation:start`
+- **Public API** — `hasPendingAsyncTools()`, `getPendingAsyncTools()`, `cancelAsyncTool(id)`, `cancelAllAsyncTools()`
+- **Clean cleanup** — `agent.destroy()` cancels all pending async tools
+
+See the [User Guide](./USER_GUIDE.md#async-non-blocking-tools) for the full guide.
+
+### 26. Long-Running Sessions (Suspend/Resume)
+
+Some workflows span hours or days — an agent sends an email, then waits for a reply. With `SuspendSignal`, tools can pause the agent loop, and external events resume it later:
+
+```typescript
+import { Agent, SuspendSignal, ToolFunction } from '@everworker/oneringai';
+
+// Tool that suspends the agent loop
+const presentToUser: ToolFunction = {
+  definition: {
+    type: 'function',
+    function: {
+      name: 'send_results_email',
+      description: 'Email analysis results to the user and wait for their reply',
+      parameters: {
+        type: 'object',
+        properties: { to: { type: 'string' }, body: { type: 'string' } },
+        required: ['to', 'body'],
+      },
+    },
+  },
+  execute: async (args) => {
+    const { messageId } = await emailService.send(args.to, args.body);
+    return SuspendSignal.create({
+      result: `Email sent to ${args.to}. Waiting for reply.`,
+      correlationId: `email:${messageId}`,
+      metadata: { messageId },
+    });
+  },
+};
+
+// Run agent — it suspends when the tool returns SuspendSignal
+const response = await agent.run('Analyze data and email results to user@example.com');
+// response.status === 'suspended'
+// response.suspension.correlationId === 'email:msg_123'
+// response.suspension.sessionId — saved automatically
+
+// --- Days later: email reply arrives via webhook ---
+
+// Resolve which session to resume
+const ref = await correlationStorage.resolve('email:msg_123');
+
+// Reconstruct agent from stored definition + session
+const resumedAgent = await Agent.hydrate(ref.sessionId, { agentId: ref.agentId });
+
+// Customize before running (add hooks, tools, etc.)
+resumedAgent.tools.register(presentToUser);
+
+// Continue with user's reply — may complete or suspend again!
+const result = await resumedAgent.run('Thanks, but also look at Q2 data');
+```
+
+**How It Works:**
+1. Tool returns `SuspendSignal.create({ result, correlationId })` instead of a normal result
+2. Agent loop adds the `result` as normal tool output, does a final wrap-up LLM call (no tools)
+3. Session is saved automatically; correlation mapping stored for routing
+4. `AgentResponse` has `status: 'suspended'` with full `suspension` metadata
+5. Later, `Agent.hydrate()` reconstructs from stored definition + session
+6. Caller customizes (hooks, tools), then `run(input)` continues the loop
+
+**Key Features:**
+- **Zero LLM awareness** — The LLM just calls tools; suspension is handled by the loop
+- **Multi-step workflows** — Resume can lead to another suspension (natural chains)
+- **Configurable TTL** — Default 7 days, per-signal via `ttl` option
+- **Correlation storage** — Pluggable via `StorageRegistry.set('correlations', myStorage)`
+- **Full state restoration** — Conversation history + all plugin states (memory, instructions, etc.)
+
+See the [User Guide](./USER_GUIDE.md#long-running-sessions-suspendresume) for the full guide.
+
+### 27. Agent Registry
+
+Every `Agent` automatically registers with `AgentRegistry` on creation and unregisters on destroy. Query, inspect, and control all agents from one place:
+
+```typescript
+import { Agent, AgentRegistry } from '@everworker/oneringai';
+
+// Agents auto-register — no setup needed
+const researcher = Agent.create({ connector: 'openai', model: 'gpt-4', name: 'researcher' });
+const coder = Agent.create({ connector: 'anthropic', model: 'claude-sonnet-4-6', name: 'coder' });
+
+// Query
+AgentRegistry.count;                          // 2
+AgentRegistry.getByName('researcher');         // [researcher]
+AgentRegistry.filter({ status: 'idle' });     // [researcher, coder]
+
+// Aggregate stats
+AgentRegistry.getStats();
+// { total: 2, byStatus: { idle: 2, ... }, byModel: { 'gpt-4': 1, ... }, ... }
+
+// Deep inspection — full context, conversation, plugins, tools, metrics
+const inspection = await AgentRegistry.inspect(researcher.registryId);
+// inspection.context.plugins     — all plugin states (working memory, etc.)
+// inspection.context.tools       — all registered tools with call counts
+// inspection.conversation        — full InputItem[] array
+// inspection.execution.metrics   — tokens, tool calls, errors, durations
+
+// Parent/child hierarchy (for agent-spawns-agent patterns)
+const child = Agent.create({
+  connector: 'openai', model: 'gpt-4',
+  parentAgentId: researcher.registryId,   // link to parent
+});
+AgentRegistry.getChildren(researcher.registryId);  // [child]
+AgentRegistry.getTree(researcher.registryId);      // recursive tree
+
+// Event fan-in — all events from all agents through one listener
+AgentRegistry.onAgentEvent((agentId, name, event, data) => {
+  console.log(`[${name}] ${event}`);  // "[researcher] execution:start"
+});
+
+// External control
+AgentRegistry.pauseAgent(researcher.registryId);
+AgentRegistry.cancelAll('shutting down');
+AgentRegistry.destroyMatching({ model: 'gpt-4' });
+```
+
+See the [User Guide](./USER_GUIDE.md#agent-registry) for the full API reference.
+
+### 28. Agent Orchestrator (NEW)
+
+Create autonomous agent teams that coordinate through a shared workspace:
+
+```typescript
+import { createOrchestrator, Connector, Vendor } from '@everworker/oneringai';
+
+Connector.create({ name: 'openai', vendor: Vendor.OpenAI, auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! } });
+
+const orchestrator = createOrchestrator({
+  connector: 'openai',
+  model: 'gpt-4',
+  agentTypes: {
+    architect: {
+      systemPrompt: 'You are a senior software architect. Design clean, scalable systems.',
+      tools: [readFile, writeFile],
+    },
+    critic: {
+      systemPrompt: 'You are a thorough code reviewer. Find issues and suggest improvements.',
+      tools: [readFile, grep],
+    },
+    developer: {
+      systemPrompt: 'You are a senior developer. Write clean, tested code.',
+      tools: [readFile, writeFile, editFile, bash],
+    },
+  },
+});
+
+// The orchestrator LLM decides the workflow
+const result = await orchestrator.run('Build an auth module with JWT support');
+```
+
+**How it works:**
+- The orchestrator is a regular Agent with 7 coordination tools
+- Workers are persistent Agent instances that remember reasoning across turns
+- All agents share a workspace (bulletin board) for artifacts and status
+- Workers receive "what changed since your last turn" at each turn start
+
+**Orchestration tools:**
+
+| Tool | Type | Purpose |
+|------|------|---------|
+| `create_agent(name, type)` | blocking | Spawn a worker from predefined types |
+| `assign_turn(agent, instruction)` | blocking | Give agent a task, wait for result |
+| `assign_turn_async(agent, instruction)` | **non-blocking** | Start agent in background, result delivered later |
+| `assign_parallel([{agent, instruction}...])` | blocking | Fan-out to multiple agents, wait for all |
+| `send_message(agent, message)` | blocking | Inject message into running/idle agent |
+| `list_agents()` | blocking | See team status |
+| `destroy_agent(name)` | blocking | Remove a worker |
+
+**Async turns** leverage the existing async tools infrastructure — the orchestrator continues planning while workers execute in the background.
+
+See the [User Guide](./USER_GUIDE.md#agent-orchestrator) for detailed examples including iterative review cycles, parallel research, and custom workflows.
 
 ---
 

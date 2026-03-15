@@ -12,11 +12,14 @@ import {
   MarkdownRenderer,
   ThinkingBlock,
   ToolCallCard,
+  ToolApprovalBanner,
   type IChatMessage,
+  type IToolApprovalDecision,
 } from '@everworker/react-ui';
 import { SidebarPanel, SIDEBAR_PANEL_DEFAULT_WIDTH } from '../components/SidebarPanel';
 import { PlanDisplay } from '../components/plan';
 import { TabBar, NewTabModal } from '../components/tabs';
+import { OrchestratorDashboard } from '../components/orchestrator';
 import { useTabContext, type Message, type TabState, type SidebarTab } from '../hooks/useTabContext';
 import { useVoiceoverPlayback } from '../hooks/useVoiceoverPlayback';
 import type { Plan } from '../../preload/index';
@@ -32,6 +35,7 @@ interface ChatContentProps {
 
 function ChatContent({ tab, onSend, onCancel }: ChatContentProps): React.ReactElement {
   const { navigate } = useNavigation();
+  const { selectWorker, setSidebarOpen, setSidebarTab } = useTabContext();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -119,6 +123,17 @@ function ChatContent({ tab, onSend, onCancel }: ChatContentProps): React.ReactEl
       handleSend();
     }
   };
+
+  // Orchestrator handlers
+  const handleSelectWorker = useCallback((name: string) => {
+    selectWorker(name);
+  }, [selectWorker]);
+
+  const handleShowWorkspace = useCallback(() => {
+    selectWorker(null); // Deselect worker → workspace view
+    setSidebarOpen(true);
+    setSidebarTab('workers');
+  }, [selectWorker, setSidebarOpen, setSidebarTab]);
 
   const handleCopyMessage = useCallback(async (content: string) => {
     try {
@@ -266,6 +281,25 @@ function ChatContent({ tab, onSend, onCancel }: ChatContentProps): React.ReactEl
     onSend(`Feedback on the plan: ${feedback}`);
   }, [tab.activePlan, onSend]);
 
+  // Tool permission approval handlers
+  const [approvalLoading, setApprovalLoading] = useState(false);
+
+  const handleToolApproval = useCallback(async (decision: IToolApprovalDecision) => {
+    setApprovalLoading(true);
+    try {
+      await window.hosea.agent.respondToolApproval(tab.instanceId, {
+        requestId: decision.requestId,
+        approved: decision.approved,
+        scope: decision.scope,
+        remember: decision.remember,
+      });
+    } catch (error) {
+      console.error('Error responding to tool approval:', error);
+    } finally {
+      setApprovalLoading(false);
+    }
+  }, [tab.instanceId]);
+
   // Compute active tool calls for ExecutionProgress
   const activeToolCallsArray = Array.from(tab.activeToolCalls.values());
 
@@ -283,6 +317,29 @@ function ChatContent({ tab, onSend, onCancel }: ChatContentProps): React.ReactEl
             isRejecting={planLoading === 'rejecting'}
           />
         </div>
+      )}
+
+      {/* Tool Permission Approval Banner */}
+      {tab.pendingApproval && (
+        <div className="chat__approval-fixed" style={{ padding: '0 1rem' }}>
+          <ToolApprovalBanner
+            request={tab.pendingApproval}
+            onApprove={handleToolApproval}
+            onDeny={handleToolApproval}
+            isResponding={approvalLoading}
+          />
+        </div>
+      )}
+
+      {/* Orchestrator Worker Dashboard */}
+      {tab.isOrchestrator && tab.workers.size > 0 && (
+        <OrchestratorDashboard
+          workers={tab.workers}
+          selectedWorkerName={tab.selectedWorkerName}
+          onSelectWorker={handleSelectWorker}
+          workspaceEntryCount={tab.workspaceEntries.length}
+          onShowWorkspace={handleShowWorkspace}
+        />
       )}
 
       {/* Execution Progress */}
@@ -415,6 +472,7 @@ function ChatPageContent(): React.ReactElement {
     setSidebarWidth,
     sendDynamicUIAction,
     pinContextKey,
+    selectWorker,
   } = useTabContext();
 
   // New tab modal
@@ -502,6 +560,11 @@ function ChatPageContent(): React.ReactElement {
         onPinContextKey={(key, pinned) => pinContextKey(key, pinned)}
         routineExecution={activeTab?.routineExecution}
         userHasControl={activeTab?.userHasControl}
+        isOrchestrator={activeTab?.isOrchestrator}
+        workers={activeTab?.workers}
+        selectedWorkerName={activeTab?.selectedWorkerName}
+        onSelectWorker={selectWorker}
+        workspaceEntries={activeTab?.workspaceEntries}
       />
 
       {/* New Tab Modal */}

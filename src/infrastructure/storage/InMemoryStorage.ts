@@ -72,12 +72,12 @@ export class InMemoryPlanStorage implements IPlanStorage {
 
   async savePlan(plan: Plan): Promise<void> {
     // Deep clone to avoid mutations
-    this.plans.set(plan.id, JSON.parse(JSON.stringify(plan)));
+    this.plans.set(plan.id, structuredClone(plan));
   }
 
   async getPlan(planId: string): Promise<Plan | undefined> {
     const plan = this.plans.get(planId);
-    return plan ? JSON.parse(JSON.stringify(plan)) : undefined;
+    return plan ? structuredClone(plan) : undefined;
   }
 
   async updateTask(planId: string, task: Task): Promise<void> {
@@ -91,7 +91,7 @@ export class InMemoryPlanStorage implements IPlanStorage {
       throw new Error(`Task ${task.id} not found in plan ${planId}`);
     }
 
-    plan.tasks[taskIndex] = JSON.parse(JSON.stringify(task));
+    plan.tasks[taskIndex] = structuredClone(task);
   }
 
   async addTask(planId: string, task: Task): Promise<void> {
@@ -100,7 +100,7 @@ export class InMemoryPlanStorage implements IPlanStorage {
       throw new Error(`Plan ${planId} not found`);
     }
 
-    plan.tasks.push(JSON.parse(JSON.stringify(task)));
+    plan.tasks.push(structuredClone(task));
   }
 
   async deletePlan(planId: string): Promise<void> {
@@ -111,12 +111,12 @@ export class InMemoryPlanStorage implements IPlanStorage {
     const allPlans = Array.from(this.plans.values());
 
     if (!filter || !filter.status) {
-      return allPlans.map((p) => JSON.parse(JSON.stringify(p)));
+      return allPlans.map((p) => structuredClone(p));
     }
 
     return allPlans
       .filter((plan) => filter.status!.includes(plan.status))
-      .map((p) => JSON.parse(JSON.stringify(p)));
+      .map((p) => structuredClone(p));
   }
 
   async findByWebhookId(webhookId: string): Promise<{ plan: Plan; task: Task } | undefined> {
@@ -124,8 +124,8 @@ export class InMemoryPlanStorage implements IPlanStorage {
       for (const task of plan.tasks) {
         if (task.externalDependency?.webhookId === webhookId) {
           return {
-            plan: JSON.parse(JSON.stringify(plan)),
-            task: JSON.parse(JSON.stringify(task)),
+            plan: structuredClone(plan),
+            task: structuredClone(task),
           };
         }
       }
@@ -142,12 +142,12 @@ export class InMemoryAgentStateStorage implements IAgentStateStorage {
 
   async save(state: AgentState): Promise<void> {
     // Deep clone to avoid mutations
-    this.agents.set(state.id, JSON.parse(JSON.stringify(state)));
+    this.agents.set(state.id, structuredClone(state));
   }
 
   async load(agentId: string): Promise<AgentState | undefined> {
     const state = this.agents.get(agentId);
-    return state ? JSON.parse(JSON.stringify(state)) : undefined;
+    return state ? structuredClone(state) : undefined;
   }
 
   async delete(agentId: string): Promise<void> {
@@ -158,12 +158,12 @@ export class InMemoryAgentStateStorage implements IAgentStateStorage {
     const allStates = Array.from(this.agents.values());
 
     if (!filter || !filter.status) {
-      return allStates.map((s) => JSON.parse(JSON.stringify(s)));
+      return allStates.map((s) => structuredClone(s));
     }
 
     return allStates
       .filter((state) => filter.status!.includes(state.status))
-      .map((s) => JSON.parse(JSON.stringify(s)));
+      .map((s) => structuredClone(s));
   }
 
   async patch(agentId: string, updates: Partial<AgentState>): Promise<void> {

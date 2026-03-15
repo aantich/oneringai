@@ -1,7 +1,7 @@
 # @everworker/oneringai - Complete User Guide
 
-**Version:** 0.4.8
-**Last Updated:** 2026-03-12
+**Version:** 0.5.0
+**Last Updated:** 2026-03-14
 
 A comprehensive guide to using all features of the @everworker/oneringai library.
 
@@ -22,24 +22,31 @@ A comprehensive guide to using all features of the @everworker/oneringai library
    - Strategy Deep Dive (Algorithmic, Custom)
    - Token Estimation
    - Lifecycle Hooks
-8. [InContextMemory](#in-context-memory)
-   - Setup and Configuration
-   - Priority-Based Eviction
-   - Tools (context_set, context_delete, context_list)
-   - UI Display (`showInUI`) and User Pinning
-   - Use Cases and Best Practices
-9. [Persistent Instructions](#persistent-instructions)
-   - Setup and Configuration
-   - Tools (instructions_set, instructions_remove, instructions_list, instructions_clear)
-   - Storage and Persistence
-   - Use Cases and Best Practices
-10. [User Info](#user-info-nextgen-plugin)
+8. [Unified Store Tools](#unified-store-tools)
+   - Generic CRUD Interface (store_get, store_set, store_delete, store_list, store_action)
+   - Available Stores (memory, context, instructions, user_info, workspace)
+   - Custom Store Plugins
+9. [Shared Workspace](#shared-workspace)
+   - Multi-Agent Coordination
+   - Entry Model and Actions
+10. [InContextMemory](#in-context-memory)
+    - Setup and Configuration
+    - Priority-Based Eviction
+    - Tools (store_set/store_delete/store_list with store="context")
+    - UI Display (`showInUI`) and User Pinning
+    - Use Cases and Best Practices
+11. [Persistent Instructions](#persistent-instructions)
+    - Setup and Configuration
+    - Tools (store_set/store_delete/store_list/store_action with store="instructions")
+    - Storage and Persistence
+    - Use Cases and Best Practices
+12. [User Info](#user-info-nextgen-plugin)
     - Setup and Configuration
     - Context Injection (auto-rendered in system message)
-    - Tools (user_info_set, user_info_get, user_info_remove, user_info_clear, todo_add, todo_update, todo_remove)
+    - Tools (store_set/store_get/store_delete/store_action with store="user_info", plus todo_add, todo_update, todo_remove)
     - Storage and Multi-User Isolation
     - Use Cases and Best Practices
-11. [Routine Execution](#routine-execution)
+13. [Routine Execution](#routine-execution)
     - Overview and Architecture
     - Quick Start
     - RoutineDefinition and Tasks
@@ -50,7 +57,7 @@ A comprehensive guide to using all features of the @everworker/oneringai library
     - Custom Prompts
     - Callbacks and Progress Tracking
     - Complete Example
-12. [Tools & Function Calling](#tools--function-calling)
+14. [Tools & Function Calling](#tools--function-calling)
     - Built-in Tools Overview (33+ tools across 8 categories)
     - Developer Tools (Filesystem & Shell)
     - [Custom Tool Generation](#custom-tool-generation) — Agents create, test, and persist their own tools
@@ -59,31 +66,56 @@ A comprehensive guide to using all features of the @everworker/oneringai library
     - JSON Tool
     - GitHub Connector Tools (search_files, search_code, read_file, get_pr, pr_files, pr_comments, create_pr)
     - Microsoft Graph Connector Tools (create_draft_email, send_email, create_meeting, edit_meeting, find_meeting_slots, get_meeting_transcript)
-13. [Dynamic Tool Management](#dynamic-tool-management)
-14. [MCP (Model Context Protocol)](#mcp-model-context-protocol)
-15. [Multimodal (Vision)](#multimodal-vision)
-16. [Audio (TTS/STT)](#audio-ttsstt)
-17. [Image Generation](#image-generation)
-18. [Video Generation](#video-generation)
-19. [Custom Media Storage](#custom-media-storage)
+15. [Dynamic Tool Management](#dynamic-tool-management)
+16. [Async (Non-Blocking) Tools](#async-non-blocking-tools)
+    - How It Works (Lifecycle)
+    - Auto-Continue vs Manual Mode
+    - Configuration (AsyncToolConfig)
+    - Events
+    - Public API
+    - Edge Cases
+17. [Long-Running Sessions (Suspend/Resume)](#long-running-sessions-suspendresume)
+    - Creating Suspend Tools (SuspendSignal)
+    - Running and Detecting Suspension
+    - Resuming with Agent.hydrate()
+    - Correlation Storage
+    - Multi-Step Workflows
+18. [MCP (Model Context Protocol)](#mcp-model-context-protocol)
+19. [Multimodal (Vision)](#multimodal-vision)
+20. [Audio (TTS/STT)](#audio-ttsstt)
+21. [Image Generation](#image-generation)
+22. [Video Generation](#video-generation)
+23. [Custom Media Storage](#custom-media-storage)
     - IMediaStorage Interface
     - Custom S3 Backend Example
     - FileMediaStorage Default
-20. [Web Search](#web-search)
-21. [Streaming](#streaming)
-22. [External API Integration](#external-api-integration)
-23. [Vendor Templates](#vendor-templates)
+24. [Web Search](#web-search)
+25. [Streaming](#streaming)
+26. [External API Integration](#external-api-integration)
+27. [Vendor Templates](#vendor-templates)
     - Quick Setup for 43+ Services
     - Authentication Methods
     - Complete Vendor Reference
-24. [OAuth for External APIs](#oauth-for-external-apis)
-25. [Model Registry](#model-registry)
-26. [Scoped Connector Registry](#scoped-connector-registry)
+28. [OAuth for External APIs](#oauth-for-external-apis)
+29. [Model Registry](#model-registry)
+30. [Scoped Connector Registry](#scoped-connector-registry)
     - Access Control Policies
     - Multi-Tenant Isolation
     - Using with Agent and ConnectorTools
-27. [Advanced Features](#advanced-features)
-28. [Production Deployment](#production-deployment)
+31. [Agent Registry](#agent-registry) — Global tracking, deep inspection, parent/child hierarchy, event fan-in, external control
+32. [Agent Orchestrator](#agent-orchestrator) — Autonomous agent teams, shared workspace, parallel/sequential workflows
+    - Quick Start
+    - Architecture
+    - OrchestratorConfig
+    - Orchestration Tools (create_agent, assign_turn, assign_parallel, assign_turn_async, send_message)
+    - Workspace Delta
+    - Workflow Examples (Sequential Review, Parallel Research, Async Turns)
+    - Agent.inject()
+    - Worker Agent Lifecycle
+    - Custom System Prompt
+    - Per-Type Configuration
+33. [Advanced Features](#advanced-features)
+34. [Production Deployment](#production-deployment)
 
 ---
 
@@ -1143,10 +1175,10 @@ console.log(DEFAULT_FEATURES);
 
 | Feature | Default | Plugin | When Disabled |
 |---------|---------|--------|---------------|
-| `workingMemory` | `true` | WorkingMemoryPluginNextGen - tiered memory (raw/summary/findings) | `memory_*` tools not registered; `ctx.memory` returns `null` |
-| `inContextMemory` | `false` | InContextMemoryPluginNextGen - live key-value storage directly in context | `context_set/delete/list` tools not registered |
-| `persistentInstructions` | `false` | PersistentInstructionsPluginNextGen - agent instructions persisted to disk (KVP entries) | `instructions_*` tools not registered |
-| `userInfo` | `false` | UserInfoPluginNextGen - user-scoped preferences + TODO tracking auto-injected into context | `user_info_*` and `todo_*` tools not registered |
+| `workingMemory` | `true` | WorkingMemoryPluginNextGen - tiered memory (raw/summary/findings) | `store_*` tools cannot target `"memory"` store; `ctx.memory` returns `null` |
+| `inContextMemory` | `false` | InContextMemoryPluginNextGen - live key-value storage directly in context | `store_*` tools cannot target `"context"` store |
+| `persistentInstructions` | `false` | PersistentInstructionsPluginNextGen - agent instructions persisted to disk (KVP entries) | `store_*` tools cannot target `"instructions"` store |
+| `userInfo` | `false` | UserInfoPluginNextGen - user-scoped preferences + TODO tracking auto-injected into context | `store_*` tools cannot target `"user_info"` store; `todo_*` tools not registered |
 | `toolCatalog` | `false` | ToolCatalogPluginNextGen - dynamic tool loading/unloading by category | `tool_catalog_*` tools not registered; all tools must be pre-loaded |
 
 **Usage Examples:**
@@ -1231,20 +1263,27 @@ import { AgentContextNextGen } from '@everworker/oneringai';
 
 // With workingMemory enabled (default)
 const ctx = AgentContextNextGen.create({ model: 'gpt-4' });
-console.log(ctx.tools.has('memory_store'));     // true
+console.log(ctx.tools.has('store_set'));     // true (store_* tools registered)
 
-// With workingMemory disabled - no memory tools registered
+// With workingMemory disabled - memory store not available
 const ctx2 = AgentContextNextGen.create({
   model: 'gpt-4',
   features: { workingMemory: false },
 });
-console.log(ctx2.tools.has('memory_store'));    // false
+// store_* tools are still registered, but store_set("memory", ...) will fail
 ```
 
 **Tools registered by feature:**
-- **workingMemory=true** (default): `memory_store`, `memory_retrieve`, `memory_delete`, `memory_query`, `memory_cleanup_raw`
-- **inContextMemory=true**: `context_set`, `context_delete`, `context_list`
-- **persistentInstructions=true**: `instructions_set`, `instructions_remove`, `instructions_list`, `instructions_clear`
+
+All plugin stores are accessed through 5 unified `store_*` tools: `store_get`, `store_set`, `store_delete`, `store_list`, `store_action`. Each feature flag enables its corresponding store:
+
+- **workingMemory=true** (default): enables `"memory"` store (e.g., `store_set("memory", key, { description, value })`)
+- **inContextMemory=true**: enables `"context"` store (e.g., `store_set("context", key, { description, value })`)
+- **persistentInstructions=true**: enables `"instructions"` store (e.g., `store_set("instructions", key, { content })`)
+- **userInfo=true**: enables `"user_info"` store (e.g., `store_set("user_info", key, { value })`)
+- **sharedWorkspace=true**: enables `"workspace"` store (e.g., `store_set("workspace", key, { summary, content })`)
+
+TODO tools (`todo_add`, `todo_update`, `todo_remove`) remain separate and are registered when `userInfo=true`.
 
 **Backward Compatibility:**
 
@@ -2073,6 +2112,448 @@ await memoryPlugin.storeFindings('data.findings', 'Key findings', findings);
 
 ---
 
+## Unified Store Tools
+
+In v0.5.0, the 19 plugin-specific CRUD tools (`memory_store`, `context_set`, `instructions_set`, `user_info_set`, etc.) were replaced with **5 generic `store_*` tools** that work across all stores. This reduces tool clutter, simplifies the LLM's decision-making, and makes it trivial to add new stores.
+
+### The 5 Generic Tools
+
+| Tool | Signature | Description |
+|------|-----------|-------------|
+| `store_get` | `store_get(store, key?)` | Get one entry by key, or all entries when key is omitted |
+| `store_set` | `store_set(store, key, data)` | Create or update an entry |
+| `store_delete` | `store_delete(store, key)` | Remove an entry by key |
+| `store_list` | `store_list(store, filter?)` | List entries with optional filters |
+| `store_action` | `store_action(store, action, params?)` | Store-specific operations (query, clear, etc.) |
+
+The `store` parameter is a string identifying which store to target. The `data` parameter is an object whose shape depends on the store.
+
+### Available Stores
+
+| Store | Feature Flag | Description | Data Shape for `store_set` |
+|-------|-------------|-------------|---------------------------|
+| `"memory"` | `workingMemory: true` | Tiered working memory (raw/summary/findings) | `{ description, value, tier?, priority? }` |
+| `"context"` | `inContextMemory: true` | Key-value pairs visible directly in LLM context | `{ description, value, priority?, showInUI? }` |
+| `"instructions"` | `persistentInstructions: true` | Agent instructions persisted to disk | `{ content }` |
+| `"user_info"` | `userInfo: true` | User-scoped preferences across agents | `{ value, description? }` |
+| `"workspace"` | `sharedWorkspace: true` | Multi-agent coordination workspace | `{ summary, content?, references?, status?, tags? }` |
+
+### When to Use Each Store
+
+| Need | Store | Why |
+|------|-------|-----|
+| Large data, external retrieval | `"memory"` | Index in context, full data via `store_get` |
+| Small live state, instant access | `"context"` | Full values rendered directly in context |
+| Cross-session agent rules | `"instructions"` | Persists to disk, auto-loaded on start |
+| User preferences shared across agents | `"user_info"` | User-scoped, not agent-scoped |
+| Multi-agent data sharing | `"workspace"` | Versioned entries with author tracking |
+
+### Migration from Old Tool Names
+
+| Old Tool | New Equivalent |
+|----------|---------------|
+| `memory_store(key, desc, value, ...)` | `store_set("memory", key, { description, value, tier?, ... })` |
+| `memory_retrieve(key)` | `store_get("memory", key)` |
+| `memory_delete(key)` | `store_delete("memory", key)` |
+| `memory_query(...)` | `store_action("memory", "query", { pattern?, tier?, ... })` |
+| `memory_cleanup_raw()` | `store_action("memory", "cleanup_raw")` |
+| `context_set(key, desc, value, ...)` | `store_set("context", key, { description, value, priority?, showInUI? })` |
+| `context_delete(key)` | `store_delete("context", key)` |
+| `context_list()` | `store_list("context")` |
+| `instructions_set(key, content)` | `store_set("instructions", key, { content })` |
+| `instructions_remove(key)` | `store_delete("instructions", key)` |
+| `instructions_list()` | `store_list("instructions")` |
+| `instructions_clear(confirm)` | `store_action("instructions", "clear", { confirm: true })` |
+| `user_info_set(key, value, desc?)` | `store_set("user_info", key, { value, description? })` |
+| `user_info_get(key?)` | `store_get("user_info", key?)` |
+| `user_info_remove(key)` | `store_delete("user_info", key)` |
+| `user_info_clear(confirm)` | `store_action("user_info", "clear", { confirm: true })` |
+
+> **Note:** TODO tools (`todo_add`, `todo_update`, `todo_remove`) are unchanged.
+
+### Example Usage by Store
+
+#### Memory Store
+
+```typescript
+// Store data in working memory
+// Tool call from LLM:
+{
+  "name": "store_set",
+  "arguments": {
+    "store": "memory",
+    "key": "api_response",
+    "data": {
+      "description": "Full API response from /users endpoint",
+      "value": { "users": ["Alice", "Bob", "Charlie"] },
+      "tier": "findings",
+      "priority": "high"
+    }
+  }
+}
+
+// Retrieve data
+{
+  "name": "store_get",
+  "arguments": {
+    "store": "memory",
+    "key": "api_response"
+  }
+}
+
+// Query memory entries
+{
+  "name": "store_action",
+  "arguments": {
+    "store": "memory",
+    "action": "query",
+    "params": { "tier": "findings", "pattern": "api_*" }
+  }
+}
+
+// Clean up raw tier
+{
+  "name": "store_action",
+  "arguments": {
+    "store": "memory",
+    "action": "cleanup_raw"
+  }
+}
+```
+
+#### Context Store
+
+```typescript
+// Store live state visible directly in context
+{
+  "name": "store_set",
+  "arguments": {
+    "store": "context",
+    "key": "current_state",
+    "data": {
+      "description": "Processing state for current task",
+      "value": { "step": 3, "status": "active" },
+      "priority": "high",
+      "showInUI": true
+    }
+  }
+}
+
+// Delete an entry
+{
+  "name": "store_delete",
+  "arguments": {
+    "store": "context",
+    "key": "temp_data"
+  }
+}
+
+// List all entries
+{
+  "name": "store_list",
+  "arguments": {
+    "store": "context"
+  }
+}
+```
+
+#### Instructions Store
+
+```typescript
+// Set a persistent instruction
+{
+  "name": "store_set",
+  "arguments": {
+    "store": "instructions",
+    "key": "personality",
+    "data": {
+      "content": "Always be friendly and helpful. Use clear, simple language."
+    }
+  }
+}
+
+// Remove an instruction
+{
+  "name": "store_delete",
+  "arguments": {
+    "store": "instructions",
+    "key": "personality"
+  }
+}
+
+// Clear all instructions
+{
+  "name": "store_action",
+  "arguments": {
+    "store": "instructions",
+    "action": "clear",
+    "params": { "confirm": true }
+  }
+}
+```
+
+#### User Info Store
+
+```typescript
+// Store user preference
+{
+  "name": "store_set",
+  "arguments": {
+    "store": "user_info",
+    "key": "theme",
+    "data": {
+      "value": "dark",
+      "description": "User preferred theme"
+    }
+  }
+}
+
+// Get all user info
+{
+  "name": "store_get",
+  "arguments": {
+    "store": "user_info"
+  }
+}
+
+// Clear all user info
+{
+  "name": "store_action",
+  "arguments": {
+    "store": "user_info",
+    "action": "clear",
+    "params": { "confirm": true }
+  }
+}
+```
+
+### Creating a Custom Store Plugin
+
+Any plugin that implements `IContextPluginNextGen` and `IStoreHandler` automatically becomes available as a store target. The `IStoreHandler` interface defines the CRUD operations:
+
+```typescript
+import {
+  BasePluginNextGen,
+  IStoreHandler,
+  StoreGetResult,
+  StoreSetResult,
+  StoreDeleteResult,
+  StoreListResult,
+  StoreActionResult,
+} from '@everworker/oneringai';
+
+class NotesPlugin extends BasePluginNextGen implements IStoreHandler {
+  readonly name = 'notes';
+  readonly storeName = 'notes';  // The string used in store_*(store, ...)
+
+  private notes = new Map<string, { text: string; createdAt: number }>();
+
+  // IStoreHandler implementation
+  async storeGet(key?: string): Promise<StoreGetResult> {
+    if (key) {
+      const note = this.notes.get(key);
+      return note ? { found: true, key, data: note } : { found: false, key };
+    }
+    // Return all entries when key is omitted
+    const entries = Array.from(this.notes.entries()).map(([k, v]) => ({ key: k, ...v }));
+    return { found: true, data: entries };
+  }
+
+  async storeSet(key: string, data: Record<string, unknown>): Promise<StoreSetResult> {
+    const text = data.text as string;
+    if (!text) return { success: false, error: 'Missing "text" field' };
+    this.notes.set(key, { text, createdAt: Date.now() });
+    return { success: true, key, message: `Note "${key}" saved` };
+  }
+
+  async storeDelete(key: string): Promise<StoreDeleteResult> {
+    const existed = this.notes.delete(key);
+    return { success: true, existed };
+  }
+
+  async storeList(filter?: Record<string, unknown>): Promise<StoreListResult> {
+    const entries = Array.from(this.notes.entries()).map(([k, v]) => ({
+      key: k,
+      text: v.text,
+      createdAt: v.createdAt,
+    }));
+    return { entries, count: entries.length };
+  }
+
+  async storeAction(action: string, params?: Record<string, unknown>): Promise<StoreActionResult> {
+    if (action === 'clear') {
+      if (!params?.confirm) return { success: false, error: 'Requires confirm: true' };
+      this.notes.clear();
+      return { success: true, message: 'All notes cleared' };
+    }
+    return { success: false, error: `Unknown action: ${action}` };
+  }
+
+  // Standard plugin methods
+  getInstructions(): string | null { return 'Use store_set("notes", key, { text }) to save notes.'; }
+  getContent(): string | null { return null; }
+  getTools() { return []; }  // No plugin-specific tools needed; store_* tools handle everything
+}
+```
+
+Register and use:
+
+```typescript
+const ctx = AgentContextNextGen.create({ model: 'gpt-4' });
+ctx.registerPlugin(new NotesPlugin());
+
+// Now the LLM can use:
+// store_set("notes", "meeting", { text: "Discussed Q3 roadmap" })
+// store_get("notes", "meeting")
+// store_list("notes")
+// store_action("notes", "clear", { confirm: true })
+```
+
+---
+
+## Shared Workspace
+
+The **Shared Workspace** store enables multi-agent coordination by providing a shared, versioned key-value space that multiple agents can read from and write to.
+
+### Setup
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  context: {
+    features: { sharedWorkspace: true },
+  },
+});
+```
+
+### Entry Model
+
+Each workspace entry has richer metadata than other stores:
+
+```typescript
+interface WorkspaceEntry {
+  key: string;
+  content?: unknown;          // Full content (any JSON-serializable value)
+  references?: string[];      // Keys of related entries
+  summary: string;            // Human-readable summary (always required)
+  status?: string;            // e.g., "draft", "final", "in-review"
+  author?: string;            // Agent or user who wrote it
+  version: number;            // Auto-incremented on each update
+  tags?: string[];            // Categorization tags
+  createdAt: number;
+  updatedAt: number;
+}
+```
+
+### Usage
+
+```typescript
+// Store a workspace entry
+{
+  "name": "store_set",
+  "arguments": {
+    "store": "workspace",
+    "key": "research_findings",
+    "data": {
+      "summary": "Analysis of competitor pricing models",
+      "content": { "competitors": [...], "insights": [...] },
+      "status": "draft",
+      "tags": ["research", "pricing"],
+      "references": ["market_data"]
+    }
+  }
+}
+
+// Get a specific entry
+{
+  "name": "store_get",
+  "arguments": {
+    "store": "workspace",
+    "key": "research_findings"
+  }
+}
+
+// List entries (with optional filter)
+{
+  "name": "store_list",
+  "arguments": {
+    "store": "workspace",
+    "filter": { "tags": ["research"], "status": "draft" }
+  }
+}
+```
+
+### Workspace-Specific Actions
+
+The workspace store supports additional actions via `store_action`:
+
+| Action | Params | Description |
+|--------|--------|-------------|
+| `log` | `{ message, level? }` | Append a log entry (for coordination/debugging) |
+| `history` | `{ key }` | Get version history for an entry |
+| `archive` | `{ key }` | Archive an entry (soft-delete) |
+| `clear` | `{ confirm: true }` | Clear all entries |
+
+```typescript
+// Log a coordination message
+{
+  "name": "store_action",
+  "arguments": {
+    "store": "workspace",
+    "action": "log",
+    "params": { "message": "Starting phase 2 of analysis", "level": "info" }
+  }
+}
+
+// Get version history
+{
+  "name": "store_action",
+  "arguments": {
+    "store": "workspace",
+    "action": "history",
+    "params": { "key": "research_findings" }
+  }
+}
+```
+
+### Multi-Agent Example
+
+```typescript
+import { Agent, Connector, Vendor } from '@everworker/oneringai';
+
+Connector.create({
+  name: 'openai',
+  vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
+});
+
+// Two agents share the same workspace via shared storage
+const researcher = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  systemPrompt: 'You are a research agent. Store findings in the workspace.',
+  context: { features: { sharedWorkspace: true } },
+});
+
+const writer = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  systemPrompt: 'You are a writing agent. Read findings from workspace and write reports.',
+  context: { features: { sharedWorkspace: true } },
+});
+
+// Researcher stores findings
+await researcher.run('Research AI trends for 2026');
+// Agent calls: store_set("workspace", "ai_trends", { summary: "Key AI trends...", content: {...} })
+
+// Writer reads findings and writes report
+await writer.run('Write a report based on the workspace findings');
+// Agent calls: store_get("workspace", "ai_trends"), then produces a report
+```
+
+---
+
 ## InContextMemory (NextGen Plugin)
 
 **InContextMemoryPluginNextGen** is a context plugin that stores key-value pairs **directly in the LLM context** (not just an index like WorkingMemory). This is ideal for small, frequently-updated state that the LLM needs instant access to without retrieval calls.
@@ -2083,7 +2564,7 @@ await memoryPlugin.storeFindings('data.findings', 'Key findings', findings);
 |---------|---------------|-----------------|
 | **Storage** | External (in-memory or file) | Directly in LLM context |
 | **Context visibility** | Index only (keys + descriptions) | Full values visible |
-| **Access pattern** | Requires `memory_retrieve()` call | Immediate - no retrieval needed |
+| **Access pattern** | Requires `store_get("memory", key)` call | Immediate - no retrieval needed |
 | **UI display** | No | Yes — `showInUI` flag renders entries in host app sidebar |
 | **Best for** | Large data, rarely accessed info | Small state, frequently updated, live dashboards |
 | **Default capacity** | 25MB | 20 entries, 4000 tokens |
@@ -2152,50 +2633,56 @@ interface InContextMemoryConfig {
 
 ### Available Tools
 
-The LLM has access to three tools for managing in-context memory (values are always visible directly in context, so no `get` tool is needed):
+The LLM manages in-context memory through the unified `store_*` tools with `store="context"` (values are always visible directly in context, so no `store_get` is needed):
 
-#### context_set
+#### store_set("context", ...)
 
 Store or update a key-value pair in the live context:
 
 ```typescript
 // Tool call from LLM
 {
-  "name": "context_set",
+  "name": "store_set",
   "arguments": {
+    "store": "context",
     "key": "current_state",
-    "description": "Processing state for current task",
-    "value": { "step": 3, "status": "active", "errors": [] },
-    "priority": "high",    // optional: low, normal, high, critical
-    "showInUI": true        // optional: display in host app sidebar (default: false)
+    "data": {
+      "description": "Processing state for current task",
+      "value": { "step": 3, "status": "active", "errors": [] },
+      "priority": "high",    // optional: low, normal, high, critical
+      "showInUI": true        // optional: display in host app sidebar (default: false)
+    }
   }
 }
 ```
 
-#### context_delete
+#### store_delete("context", ...)
 
 Remove an entry to free space:
 
 ```typescript
 // Tool call from LLM
 {
-  "name": "context_delete",
+  "name": "store_delete",
   "arguments": {
+    "store": "context",
     "key": "temp_data"
   }
 }
 // Returns: { "success": true, "existed": true }
 ```
 
-#### context_list
+#### store_list("context")
 
 List all entries with metadata:
 
 ```typescript
 // Tool call from LLM
 {
-  "name": "context_list",
-  "arguments": {}
+  "name": "store_list",
+  "arguments": {
+    "store": "context"
+  }
 }
 // Returns: {
 //   "entries": [
@@ -2300,7 +2787,7 @@ This enables agents to create **live dashboards**, **progress displays**, and **
 
 #### How It Works
 
-1. **Agent sets `showInUI: true`** via the `context_set` tool (or the direct `set()` API)
+1. **Agent sets `showInUI: true`** via `store_set("context", key, { ..., showInUI: true })` (or the direct `set()` API)
 2. **Host app receives updates** via the `onEntriesChanged` callback (debounced at 100ms)
 3. **Entries render as cards** in the sidebar with markdown-rendered values
 4. **Users can pin entries** to always show them, overriding the agent's `showInUI` setting
@@ -2310,13 +2797,16 @@ This enables agents to create **live dashboards**, **progress displays**, and **
 ```typescript
 // Agent creates a visible dashboard entry
 {
-  "name": "context_set",
+  "name": "store_set",
   "arguments": {
+    "store": "context",
     "key": "progress",
-    "description": "Task progress dashboard",
-    "value": "## Research Progress\n\n| Topic | Status |\n|-------|--------|\n| API Design | Done |\n| Implementation | In Progress |\n\n**Next:** Write tests",
-    "priority": "high",
-    "showInUI": true
+    "data": {
+      "description": "Task progress dashboard",
+      "value": "## Research Progress\n\n| Topic | Status |\n|-------|--------|\n| API Design | Done |\n| Implementation | In Progress |\n\n**Next:** Write tests",
+      "priority": "high",
+      "showInUI": true
+    }
   }
 }
 ```
@@ -2483,7 +2973,7 @@ const inContextPlugin = ctx.getPlugin('in-context-memory') as InContextMemoryPlu
 inContextPlugin.set('search_status', 'Search status', { completed: 3, pending: 2 });
 
 // LLM sees:
-// - Memory Index: "search_results: Web search results" (needs memory_retrieve)
+// - Memory Index: "search_results: Web search results" (needs store_get("memory", "search_results"))
 // - Live Context: Full search_status value (instant access)
 ```
 
@@ -2500,7 +2990,7 @@ inContextPlugin.set('search_status', 'Search status', { completed: 3, pending: 2
 | **Storage** | In-memory (volatile) | Disk (persistent JSON) |
 | **Survives restarts** | No | Yes |
 | **Best for** | Session state, counters, flags | Agent personality, learned rules |
-| **LLM can modify** | Yes (context_set) | Yes (instructions_set/remove) |
+| **LLM can modify** | Yes (store_set("context", ...)) | Yes (store_set/store_delete("instructions", ...)) |
 | **Auto-loaded** | Via session restore | Always on agent start |
 | **Default capacity** | 20 entries, 4000 tokens | 50 entries, 50,000 chars total |
 
@@ -2576,48 +3066,54 @@ The agent ID is sanitized to be filesystem-safe (lowercase, special chars replac
 
 ### Available Tools
 
-The LLM has access to four tools for managing persistent instructions:
+The LLM manages persistent instructions through the unified `store_*` tools with `store="instructions"`:
 
-#### instructions_set
+#### store_set("instructions", ...)
 
 Add or update a single instruction by key:
 
 ```typescript
 // Tool call from LLM
 {
-  "name": "instructions_set",
+  "name": "store_set",
   "arguments": {
+    "store": "instructions",
     "key": "personality",
-    "content": "Always be friendly and helpful. Use clear, simple language."
+    "data": {
+      "content": "Always be friendly and helpful. Use clear, simple language."
+    }
   }
 }
 // Returns: { "success": true, "message": "Instruction 'personality' added", "key": "personality", "contentLength": 57 }
 ```
 
-#### instructions_remove
+#### store_delete("instructions", ...)
 
 Remove a single instruction by key:
 
 ```typescript
 // Tool call from LLM
 {
-  "name": "instructions_remove",
+  "name": "store_delete",
   "arguments": {
+    "store": "instructions",
     "key": "personality"
   }
 }
 // Returns: { "success": true, "message": "Instruction 'personality' removed", "key": "personality" }
 ```
 
-#### instructions_list
+#### store_list("instructions")
 
 List all instructions with their keys and content:
 
 ```typescript
 // Tool call from LLM
 {
-  "name": "instructions_list",
-  "arguments": {}
+  "name": "store_list",
+  "arguments": {
+    "store": "instructions"
+  }
 }
 // Returns: {
 //   "count": 2,
@@ -2629,16 +3125,18 @@ List all instructions with their keys and content:
 // }
 ```
 
-#### instructions_clear
+#### store_action("instructions", "clear", ...)
 
 Remove all instructions (requires confirmation):
 
 ```typescript
 // Tool call from LLM
 {
-  "name": "instructions_clear",
+  "name": "store_action",
   "arguments": {
-    "confirm": true  // Must be true, otherwise rejected
+    "store": "instructions",
+    "action": "clear",
+    "params": { "confirm": true }
   }
 }
 // Returns: { "success": true, "message": "All custom instructions cleared" }
@@ -2719,9 +3217,9 @@ const agent = Agent.create({
   connector: 'openai',
   model: 'gpt-4',
   systemPrompt: `You are a learning assistant. When the user expresses preferences or
-gives feedback about your responses, use instructions_set to remember them for
+gives feedback about your responses, use store_set("instructions", key, { content }) to remember them for
 future sessions. Use descriptive keys like "user_preferences", "response_style", etc.
-Review your instructions with instructions_list at the start of each conversation.`,
+Review your instructions with store_list("instructions") at the start of each conversation.`,
   context: {
     agentId: 'learning-assistant',
     features: { persistentInstructions: true },
@@ -2729,7 +3227,7 @@ Review your instructions with instructions_list at the start of each conversatio
 });
 
 // User: "I prefer when you explain things with analogies"
-// Agent calls: instructions_set({ key: "response_style", content: "Explain concepts using analogies when possible" })
+// Agent calls: store_set("instructions", "response_style", { content: "Explain concepts using analogies when possible" })
 // Next session, agent sees this in context automatically
 ```
 
@@ -2802,7 +3300,7 @@ If upgrading from the previous single-string persistent instructions:
 
 1. **File storage**: Auto-migrated. Legacy `custom_instructions.md` files are read as a single `legacy_instructions` entry and converted to `custom_instructions.json` on next save. No action needed.
 2. **Custom storage backends**: Update `load()` to return `InstructionEntry[] | null` and `save()` to accept `InstructionEntry[]` instead of `string`.
-3. **Tool API**: `instructions_append` is removed — use `instructions_set(key, content)` to add new entries. `instructions_get` is removed — use `instructions_list()` to see all entries.
+3. **Tool API**: `instructions_append` is removed — use `store_set("instructions", key, { content })` to add new entries. `instructions_get` is removed — use `store_list("instructions")` to see all entries.
 4. **Programmatic API**: `plugin.set(content)` → `plugin.set(key, content)`. `plugin.append(section)` → `plugin.set(newKey, section)`. `plugin.get()` now returns `InstructionEntry[] | null` (or a single `InstructionEntry` when called with a key).
 5. **Session state**: Existing saved sessions with old format (`{ content: string | null }`) are auto-migrated on `restoreState()`.
 
@@ -2961,7 +3459,7 @@ await agent.run('Now tell me more about the first item');
 
 Store user-specific preferences and context that persist across sessions and agents. Unlike other plugins, user info is **user-scoped** (not agent-scoped) — different agents share the same user's data.
 
-User info entries are **automatically injected into the LLM system message** as markdown, so the LLM always knows the user's preferences without needing to call `user_info_get` each turn.
+User info entries are **automatically injected into the LLM system message** as markdown, so the LLM always knows the user's preferences without needing to call `store_get("user_info")` each turn.
 
 ### Setup
 
@@ -3009,12 +3507,12 @@ const agent = Agent.create({
 
 ### User Info Tools
 
-| Tool | Description | Permission |
-|------|-------------|------------|
-| `user_info_set` | Store/update entry by key (`key`, `value`, `description?`) | Always allowed |
-| `user_info_get` | Retrieve one entry by key, or all entries (key optional) | Always allowed |
-| `user_info_remove` | Remove a specific entry by key | Always allowed |
-| `user_info_clear` | Clear all entries (requires `confirm: true`) | Requires approval |
+| Tool Call | Description | Permission |
+|-----------|-------------|------------|
+| `store_set("user_info", key, { value, description? })` | Store/update entry by key | Always allowed |
+| `store_get("user_info", key?)` | Retrieve one entry by key, or all entries (key optional) | Always allowed |
+| `store_delete("user_info", key)` | Remove a specific entry by key | Always allowed |
+| `store_action("user_info", "clear", { confirm: true })` | Clear all entries | Requires approval |
 
 ### TODO Tools
 
@@ -3477,16 +3975,16 @@ Tasks with no dependencies run first. A task only becomes eligible when all its 
 
 Between tasks, conversation history is cleared but **memory plugins persist**. This is how tasks share information:
 
-- **In-Context Memory** (`context_set`): Small key results that subsequent tasks see immediately in context. No retrieval call needed.
+- **In-Context Memory** (`store_set("context", ...)`): Small key results that subsequent tasks see immediately in context. No retrieval call needed.
   ```
-  Task 1 calls: context_set("api_endpoints", "Found 3 endpoints: /users, /orders, /products")
+  Task 1 calls: store_set("context", "api_endpoints", { description: "...", value: "Found 3 endpoints: /users, /orders, /products" })
   Task 2 sees this automatically in its context window
   ```
 
-- **Working Memory** (`memory_store` / `memory_retrieve`): Larger data stored externally, retrieved on demand.
+- **Working Memory** (`store_set("memory", ...)` / `store_get("memory", ...)`): Larger data stored externally, retrieved on demand.
   ```
-  Task 1 calls: memory_store("raw_data", "Full API response...", "findings")
-  Task 2 calls: memory_retrieve("raw_data") → gets the full response
+  Task 1 calls: store_set("memory", "raw_data", { description: "Full API response", value: "...", tier: "findings" })
+  Task 2 calls: store_get("memory", "raw_data") → gets the full response
   ```
 
 The default system prompt instructs the agent on this pattern. You can override it via `prompts.system`.
@@ -3559,7 +4057,7 @@ const execution = await executeRoutine({
     task: (task) => `
       ## ${task.name}
       ${task.description}
-      Remember to store results using context_set.
+      Remember to store results using store_set("context", key, { description, value }).
     `,
 
     // Custom validation prompt
@@ -3707,7 +4205,7 @@ const routine = createRoutineDefinition({
       validation: {
         completionCriteria: [
           'At least 5 competitors were identified',
-          'Competitor names were stored using context_set',
+          'Competitor names were stored using store_set("context", ...)',
         ],
       },
     },
@@ -3770,8 +4268,8 @@ if (execution.status === 'completed') {
 
 ### Best Practices
 
-1. **Use `context_set` for small shared state** — task names, IDs, short summaries. These are always visible.
-2. **Use `memory_store` for large data** — full API responses, documents, raw data. Retrieved on demand.
+1. **Use `store_set("context", ...)` for small shared state** — task names, IDs, short summaries. These are always visible.
+2. **Use `store_set("memory", ...)` for large data** — full API responses, documents, raw data. Retrieved on demand via `store_get("memory", key)`.
 3. **Define clear completion criteria** — specific, verifiable conditions the LLM can evaluate.
 4. **Set appropriate `minCompletionScore`** — use 80+ for strict validation, 60-70 for lenient.
 5. **Use `skipReflection: true`** for simple tasks that don't need validation.
@@ -4164,9 +4662,7 @@ The library ships with 38+ built-in tools across 8 categories:
 
 | Category | Tools | Description |
 |----------|-------|-------------|
-| **Memory** | `memory_store`, `memory_retrieve`, `memory_delete`, `memory_query`, `memory_cleanup_raw` | Working memory for agents (auto-registered when feature enabled) |
-| **In-Context Memory** | `context_set`, `context_delete`, `context_list` | Key-value store visible directly in context (auto-registered) |
-| **Persistent Instructions** | `instructions_set`, `instructions_remove`, `instructions_list`, `instructions_clear` | Cross-session agent instructions (auto-registered) |
+| **Unified Store** | `store_get`, `store_set`, `store_delete`, `store_list`, `store_action` | Generic CRUD for all plugin stores: memory, context, instructions, user_info, workspace (auto-registered) |
 | **Filesystem** | `read_file`, `write_file`, `edit_file`, `glob`, `grep`, `list_directory` | Local file operations |
 | **Shell** | `bash` | Shell command execution with safety guards |
 | **Web** | `webFetch` (built-in), `web_search` / `web_scrape` (ConnectorTools) | Web content retrieval, search, and scraping |
@@ -4178,45 +4674,43 @@ The library ships with 38+ built-in tools across 8 categories:
 
 Memory, In-Context Memory, and Persistent Instructions tools are documented in their respective sections above. Multimedia tools are documented in the Audio, Image, and Video sections. Desktop tools are documented in the Desktop Automation Tools section below. The rest are documented below.
 
-#### Memory Tools
+#### Store Tools (Memory, Context, Instructions, User Info, Workspace)
 
-Available when `workingMemory` feature is enabled:
+All plugin stores are accessed through the 5 unified `store_*` tools. Each store becomes available when its corresponding feature flag is enabled:
 
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
   model: 'gpt-4',
-  context: { features: { workingMemory: true } },
+  context: {
+    features: {
+      workingMemory: true,       // enables store="memory"
+      inContextMemory: true,     // enables store="context"
+      persistentInstructions: true, // enables store="instructions"
+      userInfo: true,            // enables store="user_info"
+      sharedWorkspace: true,     // enables store="workspace"
+    },
+  },
 });
 
-// The LLM can use these tools automatically:
-// - memory_store: Store key-value pair
-// - memory_retrieve: Retrieve value by key
-// - memory_delete: Delete entry
-// - memory_query: Query/list entries (by tier, pattern, etc.)
-// - memory_cleanup_raw: Clean up raw tier entries
+// The LLM uses these 5 tools to interact with all stores:
+// - store_get(store, key?)       — get one entry or all
+// - store_set(store, key, data)  — create/update entry
+// - store_delete(store, key)     — remove entry
+// - store_list(store, filter?)   — list entries
+// - store_action(store, action, params?) — store-specific operations (query, clear, etc.)
 
-// Programmatic access:
+// Examples:
+// store_set("memory", "user.profile", { description: "User profile", value: { name: "Alice" }, priority: "high" })
+// store_get("memory", "user.profile")
+// store_set("context", "state", { description: "Current state", value: { step: 1 }, showInUI: true })
+// store_set("instructions", "tone", { content: "Be concise" })
+// store_action("memory", "query", { tier: "findings" })
+
+// Programmatic access (unchanged):
 const memory = agent.context.memory;
 await memory.store('user.profile', 'User profile', { name: 'Alice' }, 'high');
 const profile = await memory.retrieve('user.profile');
-```
-
-#### In-Context Memory Tools
-
-Available when `inContextMemory` feature is enabled:
-
-```typescript
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4',
-  context: { features: { inContextMemory: true } },
-});
-
-// The LLM can use these tools automatically:
-// - context_set: Store/update entry (appears directly in context; set showInUI: true to display in sidebar)
-// - context_delete: Remove entry
-// - context_list: List all entries (includes showInUI status)
 ```
 
 #### Context Budget
@@ -6249,6 +6743,511 @@ const result = await agent.tools.execute('get_weather', { location: 'Paris' });
 
 ---
 
+## Async (Non-Blocking) Tools
+
+Some tools take seconds or minutes to complete — web scraping, data analysis, external API calls, sub-agent orchestration. Normally, the agentic loop blocks on every tool call. With async tools (`blocking: false`), the tool executes in the background while the agent continues reasoning.
+
+### How It Works
+
+The lifecycle of an async tool call:
+
+1. **LLM requests tool call** — The agent's agentic loop extracts tool calls from the LLM response as usual
+2. **Placeholder returned** — For `blocking: false` tools, a placeholder `tool_result` is returned immediately: *"Tool X is executing asynchronously. The result will be delivered in a follow-up message."*
+3. **Background execution** — The tool runs in the background (fire-and-forget promise with timeout)
+4. **Loop continues** — The LLM sees the placeholder, can call other (blocking) tools, reason about the situation, or produce text output
+5. **Result arrives** — When the async tool completes (or fails/times out), the result is queued
+6. **Delivery as user message** — Queued results are batched and injected as a structured user message:
+   ```
+   [Async Tool Results]
+   Tool "analyze_dataset" (call_abc123) completed:
+   { "summary": "...", "score": 42 }
+
+   Process these results and continue.
+   ```
+7. **Continuation** — If `autoContinue: true` (default), the agent re-enters the agentic loop to process the results. If `false`, the caller must invoke `agent.continueWithAsyncResults()`.
+
+### Quick Start
+
+```typescript
+import { Agent, ToolFunction } from '@everworker/oneringai';
+
+// 1. Define a tool with blocking: false
+const analyzeData: ToolFunction = {
+  definition: {
+    type: 'function',
+    function: {
+      name: 'analyze_dataset',
+      description: 'Run statistical analysis on a large dataset (may take 30+ seconds)',
+      parameters: {
+        type: 'object',
+        properties: {
+          dataset: { type: 'string', description: 'Dataset name or path' },
+          metrics: { type: 'array', items: { type: 'string' }, description: 'Metrics to compute' },
+        },
+        required: ['dataset'],
+      },
+    },
+    blocking: false, // <-- Makes this tool async
+  },
+  execute: async (args) => {
+    const data = await loadDataset(args.dataset);
+    const results = await computeMetrics(data, args.metrics);
+    return { summary: results.summary, rowCount: data.length, metrics: results.values };
+  },
+};
+
+// 2. Create agent with async config
+const agent = Agent.create({
+  connector: 'anthropic',
+  model: 'claude-sonnet-4-6',
+  asyncTools: {
+    autoContinue: true,      // Default: auto re-enter loop on result
+    batchWindowMs: 1000,     // Batch results within 1s window
+    asyncTimeout: 300000,    // 5 min timeout per async tool
+  },
+  tools: [analyzeData, readFile, writeFile],  // Mix blocking and async tools
+});
+
+// 3. Run — async tools are handled automatically
+const response = await agent.run('Analyze the Q4 sales dataset and write a summary report');
+// The agent will:
+// - Call analyze_dataset (async) → gets placeholder
+// - Maybe call read_file (blocking) → gets real result
+// - Produce intermediate text while waiting
+// - When analyze_dataset completes → auto-continue, process results
+// - Write the report with writeFile
+```
+
+### Auto-Continue vs Manual Mode
+
+#### Auto-Continue (Default)
+
+With `autoContinue: true` (default), the agent re-enters the agentic loop automatically when results arrive:
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  asyncTools: { autoContinue: true }, // default
+  tools: [asyncTool],
+});
+
+// Just run — everything is handled
+const response = await agent.run('Do the analysis');
+// response.pendingAsyncTools may be non-empty if tools are still running
+// when the initial loop ends (no more blocking work to do)
+```
+
+The initial `run()` returns when the agentic loop has no more blocking work. If async tools are still pending, `response.pendingAsyncTools` lists them. When they complete, the agent auto-continues in the background.
+
+#### Manual Mode
+
+With `autoContinue: false`, results are queued but the agent doesn't auto-continue. The caller decides when:
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  asyncTools: { autoContinue: false },
+  tools: [asyncTool],
+});
+
+// Listen for completions
+agent.on('async:tool:complete', (event) => {
+  console.log(`${event.toolName} finished in ${event.duration}ms`);
+});
+
+const response = await agent.run('Start the analysis');
+
+// Check what's pending
+if (agent.hasPendingAsyncTools()) {
+  console.log('Pending:', agent.getPendingAsyncTools().map(p => p.toolName));
+
+  // Wait for results to arrive (via events, polling, or your own logic)
+  // Then trigger continuation:
+  const continuation = await agent.continueWithAsyncResults();
+  console.log(continuation.output_text); // Agent processed the async results
+}
+```
+
+### Configuration
+
+```typescript
+interface AsyncToolConfig {
+  /**
+   * Auto re-enter agentic loop when async results arrive.
+   * @default true
+   */
+  autoContinue?: boolean;
+
+  /**
+   * Batch window in ms. If multiple async tools complete within this window,
+   * their results are delivered together in a single user message.
+   * @default 500
+   */
+  batchWindowMs?: number;
+
+  /**
+   * Timeout per async tool execution in ms.
+   * @default 300000 (5 minutes)
+   */
+  asyncTimeout?: number;
+}
+```
+
+Set `blocking: false` on individual tool definitions:
+
+```typescript
+const tool: ToolFunction = {
+  definition: {
+    type: 'function',
+    function: { name: 'slow_tool', description: '...', parameters: {...} },
+    blocking: false, // <-- async
+  },
+  execute: async (args) => { /* ... */ },
+};
+```
+
+Tools default to `blocking: true` if not specified.
+
+### Events
+
+Five new events for monitoring async tool lifecycle:
+
+| Event | Payload | When |
+|-------|---------|------|
+| `async:tool:started` | `{ executionId, toolCallId, toolName, args, timestamp }` | Async tool execution begins |
+| `async:tool:complete` | `{ executionId, toolCallId, toolName, result, duration, timestamp }` | Tool completed successfully |
+| `async:tool:error` | `{ executionId, toolCallId, toolName, error, duration, timestamp }` | Tool threw an error |
+| `async:tool:timeout` | `{ executionId, toolCallId, toolName, timeout, timestamp }` | Tool exceeded `asyncTimeout` |
+| `async:continuation:start` | `{ executionId, results: [{toolCallId, toolName}], timestamp }` | Agent re-entering loop with results |
+
+```typescript
+agent.on('async:tool:started', (e) => {
+  console.log(`[ASYNC] ${e.toolName} started (${e.toolCallId})`);
+});
+
+agent.on('async:tool:complete', (e) => {
+  console.log(`[ASYNC] ${e.toolName} completed in ${e.duration}ms`);
+});
+
+agent.on('async:tool:error', (e) => {
+  console.error(`[ASYNC] ${e.toolName} failed: ${e.error.message}`);
+});
+
+agent.on('async:tool:timeout', (e) => {
+  console.warn(`[ASYNC] ${e.toolName} timed out after ${e.timeout}ms`);
+});
+
+agent.on('async:continuation:start', (e) => {
+  console.log(`[ASYNC] Continuing with ${e.results.length} result(s)`);
+});
+```
+
+### Public API
+
+```typescript
+// Check if any async tools are still running
+agent.hasPendingAsyncTools(): boolean;
+
+// Get details about pending async tools
+agent.getPendingAsyncTools(): PendingAsyncTool[];
+// PendingAsyncTool: { toolCallId, toolName, args, startTime, status, result?, error? }
+
+// Cancel a specific async tool
+agent.cancelAsyncTool(toolCallId: string): void;
+
+// Cancel all pending async tools and clear the result queue
+agent.cancelAllAsyncTools(): void;
+
+// Manually trigger continuation with queued results
+// (only needed when autoContinue: false)
+agent.continueWithAsyncResults(results?: ToolResult[]): Promise<AgentResponse>;
+
+// Response includes pending info
+const response = await agent.run('...');
+response.pendingAsyncTools; // Array<{ toolCallId, toolName, startTime }> | undefined
+```
+
+### Mixed Blocking and Async Tools
+
+Blocking and async tools work together naturally in the same iteration:
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  tools: [
+    readFile,           // blocking (default)
+    writeFile,          // blocking
+    webFetch,           // blocking
+    analyzeDataset,     // blocking: false
+    generateReport,     // blocking: false
+  ],
+});
+
+// If the LLM calls both readFile and analyzeDataset in the same turn:
+// - readFile executes synchronously, result returned immediately
+// - analyzeDataset starts in background, placeholder returned
+// - Both results go to context, loop continues
+```
+
+### Edge Cases
+
+| Scenario | Behavior |
+|----------|----------|
+| **Result arrives during active loop** | Queued, not injected mid-iteration. Delivered after current loop ends or in next continuation. |
+| **All called tools are async** | LLM sees only placeholders → likely produces text → loop ends → results trickle in → auto-continue |
+| **Async tool fails** | Error result delivered same as success — LLM sees the error and can react |
+| **Async tool times out** | Treated as error with timeout message. Configurable via `asyncTimeout`. |
+| **Agent destroyed with pending tools** | `destroy()` cancels all pending async tools and clears timers |
+| **Multiple results arrive close together** | Batched within `batchWindowMs` window, delivered as single message |
+| **`continueWithAsyncResults()` called with no results** | Throws `"No async results to deliver"` |
+| **Concurrent continuations** | Second call throws `"A continuation is already in progress"` |
+
+### Use Cases
+
+- **Long-running analysis** — Data processing, ML inference, report generation
+- **Parallel API calls** — Fetch from multiple external services simultaneously
+- **Sub-agent orchestration** — Dispatch work to sub-agents without blocking the orchestrator
+- **Web scraping** — Scrape multiple pages in parallel while the agent reasons about strategy
+- **File processing** — Process large files while the agent works on other tasks
+
+---
+
+## Long-Running Sessions (Suspend/Resume)
+
+Some agentic workflows span hours or days. For example, an agent analyzes data, emails the results to a user, and waits for their reply before continuing. The **Suspend/Resume** feature enables this by letting tools pause the agent loop and external events resume it later.
+
+### How It Works
+
+1. A tool returns a `SuspendSignal` instead of a normal result
+2. The agent loop adds the display result to context, does a final wrap-up LLM call
+3. Session state (conversation + plugins) is saved automatically
+4. A correlation mapping links the external event ID to the session
+5. `AgentResponse` returns with `status: 'suspended'` and full metadata
+6. Later, `Agent.hydrate()` reconstructs the agent; `run(input)` continues
+
+### Creating a Suspend Tool
+
+```typescript
+import { SuspendSignal, ToolFunction } from '@everworker/oneringai';
+
+const sendResultsEmail: ToolFunction = {
+  definition: {
+    type: 'function',
+    function: {
+      name: 'send_results_email',
+      description: 'Email analysis results and wait for user reply',
+      parameters: {
+        type: 'object',
+        properties: {
+          to: { type: 'string', description: 'Recipient email' },
+          subject: { type: 'string' },
+          body: { type: 'string', description: 'Email body with results' },
+        },
+        required: ['to', 'subject', 'body'],
+      },
+    },
+  },
+  execute: async (args) => {
+    // Perform the side effect
+    const { messageId } = await emailService.send(args.to, args.subject, args.body);
+
+    // Return SuspendSignal — agent loop will pause
+    return SuspendSignal.create({
+      result: `Email sent to ${args.to} (subject: "${args.subject}"). Waiting for reply.`,
+      correlationId: `email:${messageId}`,
+      metadata: { messageId, sentTo: args.to },
+    });
+  },
+};
+```
+
+**SuspendSignal Options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `result` | `unknown` | (required) | Tool result visible to the LLM |
+| `correlationId` | `string` | (required) | ID for routing external events back (e.g., `email:msg_123`) |
+| `resumeAs` | `'user_message' \| 'tool_result'` | `'user_message'` | How external input is injected on resume |
+| `ttl` | `number` | 7 days (ms) | Time-to-live before the suspended session expires |
+| `metadata` | `Record<string, unknown>` | — | App-specific data (email ID, ticket ID, etc.) |
+
+### Running the Agent
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  tools: [sendResultsEmail, analyzeData],
+});
+
+const response = await agent.run('Analyze the Q1 sales data and email results to alice@example.com');
+
+if (response.status === 'suspended') {
+  console.log('Agent suspended!');
+  console.log('Correlation:', response.suspension.correlationId);
+  console.log('Session:', response.suspension.sessionId);
+  console.log('Expires:', response.suspension.expiresAt);
+  // Store the correlation for your webhook handler
+}
+```
+
+The `AgentResponse.suspension` field contains:
+
+```typescript
+{
+  correlationId: string;    // 'email:msg_123'
+  sessionId: string;        // Auto-generated or existing session ID
+  agentId: string;          // Agent ID for reconstruction
+  resumeAs: 'user_message' | 'tool_result';
+  expiresAt: string;        // ISO timestamp
+  metadata?: Record<string, unknown>;
+}
+```
+
+### Resuming a Suspended Session
+
+When the external event arrives (e.g., email reply webhook), reconstruct and resume:
+
+```typescript
+import { Agent, StorageRegistry } from '@everworker/oneringai';
+import type { ICorrelationStorage } from '@everworker/oneringai';
+
+// In your webhook handler
+app.post('/webhooks/email-reply', async (req, res) => {
+  const { inReplyTo, body } = req.body;
+
+  // 1. Resolve which session this reply belongs to
+  const correlationStorage = StorageRegistry.get('correlations') as ICorrelationStorage;
+  const ref = await correlationStorage.resolve(`email:${inReplyTo}`);
+  if (!ref) {
+    return res.status(404).send('Unknown or expired session');
+  }
+
+  // 2. Reconstruct agent from stored definition + session
+  const agent = await Agent.hydrate(ref.sessionId, {
+    agentId: ref.agentId,
+  });
+
+  // 3. Customize — add tools, hooks, etc.
+  agent.tools.register(sendResultsEmail);
+  agent.lifecycleHooks = { onError: myErrorHandler };
+
+  // 4. Continue with the user's reply
+  const result = await agent.run(body);
+
+  if (result.status === 'suspended') {
+    // Agent suspended again — another email sent, cycle continues
+    console.log('Re-suspended:', result.suspension.correlationId);
+  } else {
+    console.log('Agent completed:', result.output_text);
+  }
+
+  res.status(200).send('OK');
+});
+```
+
+### `Agent.hydrate()` API
+
+```typescript
+static async hydrate(
+  sessionId: string,
+  options: {
+    agentId: string;
+    definitionStorage?: IAgentDefinitionStorage;
+    overrides?: Partial<AgentConfig>;
+  }
+): Promise<Agent>
+```
+
+`hydrate()` is a static method that:
+1. Loads the agent definition via `Agent.fromStorage(agentId)`
+2. Loads the session state (conversation + plugin states) via `loadSession(sessionId)`
+3. Cleans up correlation mappings for the session
+4. Returns a fully reconstructed `Agent` ready for customization and `run()`
+
+**Prerequisites:** The agent definition must have been saved via `agent.saveDefinition()`, and `StorageRegistry` must have `sessions` configured (or the agent was created with explicit session storage).
+
+### Correlation Storage
+
+By default, correlations are stored as files in `~/.oneringai/correlations/`. Configure a custom backend:
+
+```typescript
+import { StorageRegistry, FileCorrelationStorage } from '@everworker/oneringai';
+
+// Use default file-based storage (auto-configured)
+// OR configure explicitly:
+StorageRegistry.set('correlations', new FileCorrelationStorage({
+  baseDirectory: '/custom/path/correlations',
+}));
+
+// Or implement ICorrelationStorage for Redis, database, etc.
+StorageRegistry.set('correlations', new RedisCorrelationStorage());
+```
+
+**ICorrelationStorage interface:**
+
+```typescript
+interface ICorrelationStorage {
+  save(correlationId: string, ref: SessionRef): Promise<void>;
+  resolve(correlationId: string): Promise<SessionRef | null>;
+  delete(correlationId: string): Promise<void>;
+  exists(correlationId: string): Promise<boolean>;
+  listBySession(sessionId: string): Promise<string[]>;
+  listByAgent(agentId: string): Promise<CorrelationSummary[]>;
+  pruneExpired(): Promise<number>;
+  getPath(): string;
+}
+```
+
+### Multi-Step Workflows
+
+Suspend/resume naturally supports multi-step workflows. Each `run()` can either complete or suspend again:
+
+```typescript
+// Step 1: Agent analyzes data, emails results, suspends
+const r1 = await agent.run('Analyze Q1 data and email results');
+// r1.status === 'suspended' (email sent, waiting for reply)
+
+// Step 2: User replies, agent processes feedback, sends follow-up, suspends
+const agent2 = await Agent.hydrate(r1.suspension.sessionId, { agentId });
+agent2.tools.register(sendResultsEmail);
+const r2 = await agent2.run('Looks good, but also analyze Q2');
+// r2.status === 'suspended' (another email sent)
+
+// Step 3: User replies, agent completes
+const agent3 = await Agent.hydrate(r2.suspension.sessionId, { agentId });
+agent3.tools.register(sendResultsEmail);
+const r3 = await agent3.run('Perfect, thanks!');
+// r3.status === 'completed'
+```
+
+### Events
+
+The agent emits an `execution:suspended` event when suspension occurs:
+
+```typescript
+agent.on('execution:suspended', (event) => {
+  console.log('Session suspended:', event.sessionId);
+  console.log('Correlation:', event.correlationId);
+  console.log('Expires:', event.expiresAt);
+});
+```
+
+### Housekeeping
+
+Expired correlations can be pruned:
+
+```typescript
+const correlationStorage = StorageRegistry.get('correlations') as ICorrelationStorage;
+const pruned = await correlationStorage.pruneExpired();
+console.log(`Pruned ${pruned} expired correlations`);
+```
+
+---
+
 ## Tool Execution Plugins
 
 The Tool Execution Plugin System provides a pluggable architecture for extending tool execution with custom behavior. This enables applications to add logging, analytics, UI updates, permission prompts, caching, or any custom logic to the tool execution lifecycle.
@@ -6613,6 +7612,1402 @@ agent.tools.executionPipeline.use(new HoseaUIPlugin({
   emitDynamicUI: (id, content) => mainWindow?.send('dynamic-ui', id, content),
   getInstanceId: () => currentInstanceId,
 }));
+```
+
+---
+
+## Tool Permissions
+
+The policy-based permission system provides composable policies, per-user rules with argument inspection, and pluggable storage. Permissions are enforced at the ToolManager pipeline level — all tool execution is gated, whether from Agent's agentic loop, direct API calls, or orchestrator workers.
+
+### Architecture Overview
+
+Permission evaluation follows a 3-tier model, checked in this order:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  1. USER RULES PRE-CHECK (highest priority, FINAL)           │
+│     Per-user persistent rules with argument conditions.       │
+│     When matched: result is FINAL, no further evaluation.     │
+│     Specificity-based: more conditions > fewer conditions.    │
+├──────────────────────────────────────────────────────────────┤
+│  2. PARENT DELEGATION PRE-CHECK (orchestrator workers)       │
+│     Parent deny is FINAL — worker cannot override.            │
+│     Parent allow does NOT skip worker restrictions.           │
+├──────────────────────────────────────────────────────────────┤
+│  3. POLICY CHAIN (composable policies)                       │
+│     Deny short-circuits immediately.                          │
+│     Allow is remembered but does NOT short-circuit.           │
+│     All abstain → defaultVerdict (default: 'deny').           │
+│                                                              │
+│     If deny + needsApproval → APPROVAL FLOW                 │
+│     → onApprovalRequired callback                            │
+│     → optional persistent rule creation                      │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Detailed evaluation flow in `PermissionPolicyManager.check()`:
+
+```
+PermissionPolicyManager.check(context):
+  1. UserPermissionRulesEngine.evaluate()
+     → allow? → DONE (skip chain entirely)
+     → deny?  → DONE (skip chain entirely)
+     → ask?   → approval dialog
+     → no match → fall through
+
+  2. Parent delegation (if orchestrator worker)
+     → parent deny → DONE
+     → parent allow → continue
+
+  3. PolicyChain.evaluate()
+     → BlocklistPolicy (pri 5) → AllowlistPolicy (pri 10) → RateLimitPolicy (pri 20)
+     → RolePolicy (pri 30) → PathRestrictionPolicy (pri 50) → BashFilterPolicy (pri 50)
+     → UrlAllowlistPolicy (pri 50) → SessionApprovalPolicy (pri 90)
+
+  4. If deny + needsApproval → onApprovalRequired callback
+     → approved? → cache approval, optionally create persistent rule
+     → denied? → optionally create persistent deny rule
+```
+
+Key design principles:
+
+- **User rules are supreme** — when a user rule matches, no policy can override it. This guarantees users always have final say.
+- **Deny short-circuits** — in the policy chain, a deny verdict stops evaluation immediately. No later policy can override a deny.
+- **Allow does NOT short-circuit** — an allow verdict is remembered, but evaluation continues. This ensures argument-level restrictions (e.g., BashFilterPolicy blocking `rm -rf /`) always run even if AllowlistPolicy already allowed `bash`.
+- **All abstain = deny** — if no policy has an opinion, the default is to deny (configurable to `'allow'` for backward compatibility).
+
+### Quick Start
+
+#### Zero-Config (Backward Compatible)
+
+The permission system is always active but backward compatible. Without any configuration, tools auto-execute using the default allowlist:
+
+```typescript
+import { Agent, Connector, Vendor } from '@everworker/oneringai';
+
+Connector.create({
+  name: 'openai',
+  vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
+});
+
+// No permissions config — uses default allowlist, all other tools auto-execute
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  tools: [readFile, writeFile, bash],
+});
+// read_file: auto-allowed (in DEFAULT_ALLOWLIST)
+// write_file: follows tool self-declaration (scope: 'session')
+// bash: follows tool self-declaration (scope: 'once')
+```
+
+#### Simple Policy Configuration
+
+Add path restrictions and bash command filtering:
+
+```typescript
+import {
+  Agent,
+  PathRestrictionPolicy,
+  BashFilterPolicy,
+} from '@everworker/oneringai';
+
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  permissions: {
+    // Allowlist is auto-merged with DEFAULT_ALLOWLIST
+    allowlist: ['my_safe_tool'],
+    blocklist: ['dangerous_tool'],
+
+    // Approval callback — invoked when a tool needs user approval
+    onApprovalRequired: async (ctx) => {
+      console.log(`Tool '${ctx.toolName}' needs approval. Args:`, ctx.args);
+      // In a real app, show a UI dialog
+      return { approved: true, scope: 'session' };
+    },
+
+    // Custom policies
+    policies: [
+      new PathRestrictionPolicy({
+        allowedPaths: ['/workspace', '/tmp'],
+      }),
+      new BashFilterPolicy({
+        denyPatterns: [/rm\s+-rf/, /sudo/],
+        allowCommands: ['ls', 'cat', 'echo', 'npm'],
+      }),
+    ],
+  },
+});
+```
+
+### Per-User Permission Rules
+
+User permission rules are persistent, per-user, and have the highest evaluation priority. When a user rule matches, its result is final — no policy can override it.
+
+#### UserPermissionRule Model
+
+```typescript
+interface UserPermissionRule {
+  /** Unique rule ID (UUID) */
+  id: string;
+
+  /** Tool name this rule applies to. Use '*' for all tools. */
+  toolName: string;
+
+  /** What to do when this rule matches */
+  action: 'allow' | 'deny' | 'ask';
+
+  /**
+   * Argument conditions (optional). ALL conditions must match (AND logic).
+   * If empty/omitted, rule applies to ALL calls of this tool (blanket rule).
+   */
+  conditions?: ArgumentCondition[];
+
+  /**
+   * If true, this rule is absolute — more specific rules CANNOT override it.
+   * "Allow bash unconditionally" means even a "bash + rm -rf → ask" rule is ignored.
+   * @default false
+   */
+  unconditional?: boolean;
+
+  /** Whether this rule is active */
+  enabled: boolean;
+
+  /** Human-readable description (shown in settings UI) */
+  description?: string;
+
+  /** How this rule was created */
+  createdBy: 'user' | 'approval_dialog' | 'admin' | 'system';
+
+  /** ISO timestamp of creation */
+  createdAt: string;
+
+  /** ISO timestamp of last update */
+  updatedAt: string;
+
+  /** Optional expiry (ISO timestamp). Null/undefined = never expires. */
+  expiresAt?: string | null;
+}
+```
+
+#### ArgumentCondition Operators
+
+All 8 operators for inspecting argument values:
+
+```typescript
+interface ArgumentCondition {
+  /** Argument name to inspect (e.g., 'command', 'path', 'url') */
+  argName: string;
+
+  /** Comparison operator */
+  operator: ConditionOperator;
+
+  /** Value to compare against. For 'matches'/'not_matches', a regex string. */
+  value: string;
+
+  /** Case-insensitive comparison. @default true */
+  ignoreCase?: boolean;
+}
+
+type ConditionOperator =
+  | 'starts_with'    // value starts with the given string
+  | 'not_starts_with'
+  | 'contains'       // value contains the given string
+  | 'not_contains'
+  | 'equals'         // exact equality
+  | 'not_equals'
+  | 'matches'        // regex match
+  | 'not_matches';   // regex negation
+```
+
+Examples of each operator:
+
+```typescript
+// Allow bash only for npm commands
+{ argName: 'command', operator: 'starts_with', value: 'npm' }
+
+// Deny commands containing 'sudo'
+{ argName: 'command', operator: 'contains', value: 'sudo' }
+
+// Allow write_file only for .ts files
+{ argName: 'path', operator: 'matches', value: '\\.ts$' }
+
+// Deny web_fetch for non-HTTPS URLs
+{ argName: 'url', operator: 'not_starts_with', value: 'https://' }
+
+// Allow edit_file only for a specific file
+{ argName: 'file_path', operator: 'equals', value: '/workspace/config.json' }
+
+// Deny bash commands matching dangerous patterns
+{ argName: 'command', operator: 'not_matches', value: 'rm\\s+-rf|dd\\s+if=|mkfs' }
+```
+
+#### Specificity Resolution
+
+When multiple rules match a tool call, specificity determines the winner:
+
+1. **Unconditional rules** are checked first. If matched, they are FINAL — no other rule can override them.
+2. **Conditional rules** are ranked by number of matching conditions. More conditions = more specific = higher priority.
+3. **Blanket rules** (no conditions) are the fallback with specificity 0.
+4. **Ties** are broken by `updatedAt` — most recently updated rule wins.
+
+```typescript
+// Example: these rules coexist without conflict
+const rules: UserPermissionRule[] = [
+  // Blanket: allow bash by default (specificity: 0)
+  { id: '1', toolName: 'bash', action: 'allow', enabled: true,
+    createdBy: 'user', createdAt: '...', updatedAt: '...' },
+
+  // Conditional: ask before rm commands (specificity: 1, overrides blanket)
+  { id: '2', toolName: 'bash', action: 'ask',
+    conditions: [{ argName: 'command', operator: 'contains', value: 'rm' }],
+    enabled: true, createdBy: 'user', createdAt: '...', updatedAt: '...' },
+
+  // More specific: deny rm -rf (specificity: 2, overrides the 'ask' above)
+  { id: '3', toolName: 'bash', action: 'deny',
+    conditions: [
+      { argName: 'command', operator: 'contains', value: 'rm' },
+      { argName: 'command', operator: 'contains', value: '-rf' },
+    ],
+    enabled: true, createdBy: 'user', createdAt: '...', updatedAt: '...' },
+];
+```
+
+#### Meta-Arguments
+
+Use special `__` prefixed argument names to match against tool registration metadata instead of call arguments:
+
+| Meta-Arg | Matches Against |
+|----------|----------------|
+| `__toolCategory` | Tool's registered category (e.g., `filesystem`, `web`, `shell`) |
+| `__toolSource` | Tool's source (e.g., `built-in`, `connector:github`, `mcp`, `custom`) |
+| `__toolNamespace` | Tool's registered namespace |
+
+```typescript
+// Deny all MCP tools
+{
+  id: '1', toolName: '*', action: 'deny',
+  conditions: [{ argName: '__toolSource', operator: 'starts_with', value: 'mcp' }],
+  enabled: true, createdBy: 'admin', createdAt: '...', updatedAt: '...',
+}
+
+// Allow only filesystem category tools
+{
+  id: '2', toolName: '*', action: 'allow',
+  conditions: [{ argName: '__toolCategory', operator: 'equals', value: 'filesystem' }],
+  enabled: true, createdBy: 'admin', createdAt: '...', updatedAt: '...',
+}
+
+// Block all desktop tools
+{
+  id: '3', toolName: '*', action: 'deny',
+  conditions: [{ argName: '__toolCategory', operator: 'equals', value: 'desktop' }],
+  enabled: true, createdBy: 'user', createdAt: '...', updatedAt: '...',
+}
+```
+
+#### CRUD API
+
+Manage rules programmatically via the `UserPermissionRulesEngine`:
+
+```typescript
+const engine = agent.policyManager.userRules;
+
+// Add a rule
+await engine.addRule({
+  id: crypto.randomUUID(),
+  toolName: 'bash',
+  action: 'ask',
+  conditions: [{ argName: 'command', operator: 'contains', value: 'rm' }],
+  enabled: true,
+  description: 'Ask before any rm commands',
+  createdBy: 'user',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+}, userId);
+
+// Update a rule
+await engine.updateRule(ruleId, { action: 'deny' }, userId);
+
+// Remove a rule
+await engine.removeRule(ruleId, userId);
+
+// Get all rules
+const allRules = engine.getRules();
+
+// Get rules for a specific tool
+const bashRules = engine.getRulesForTool('bash');
+
+// Get a single rule by ID
+const rule = engine.getRule(ruleId);
+
+// Enable/disable a rule
+await engine.enableRule(ruleId, userId);
+await engine.disableRule(ruleId, userId);
+```
+
+Rules auto-save to storage (if configured) after every mutation. Expired rules (past `expiresAt`) are automatically cleaned on evaluation.
+
+### Approval Dialog Integration
+
+When a policy denies a tool call with `needsApproval: true`, the `onApprovalRequired` callback is invoked. This is where your application shows an approval UI.
+
+#### Full Approval Callback Example
+
+```typescript
+import type { ApprovalRequestContext, ApprovalDecision } from '@everworker/oneringai';
+
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  permissions: {
+    onApprovalRequired: async (ctx: ApprovalRequestContext): Promise<ApprovalDecision> => {
+      // ctx contains rich context for the approval dialog
+      console.log(`Tool: ${ctx.toolName}`);
+      console.log(`Risk level: ${ctx.riskLevel}`);
+      console.log(`Arguments:`, ctx.args);
+      console.log(`Reason: ${ctx.decision.reason}`);
+      console.log(`Policy: ${ctx.decision.policyName}`);
+
+      if (ctx.approvalMessage) {
+        console.log(`Message: ${ctx.approvalMessage}`);
+      }
+      if (ctx.sensitiveArgs) {
+        console.log(`Sensitive args: ${ctx.sensitiveArgs.join(', ')}`);
+      }
+
+      // Show your UI dialog here...
+      const userChoice = await showApprovalDialog(ctx);
+
+      if (userChoice === 'allow_once') {
+        return { approved: true, scope: 'once' };
+      }
+
+      if (userChoice === 'allow_session') {
+        return { approved: true, scope: 'session' };
+      }
+
+      if (userChoice === 'always_allow') {
+        return {
+          approved: true,
+          scope: 'always',
+          remember: true,  // creates a persistent user rule
+        };
+      }
+
+      if (userChoice === 'always_allow_with_conditions') {
+        return {
+          approved: true,
+          createRule: {
+            description: 'Allow write_file in /workspace',
+            conditions: [
+              { argName: 'path', operator: 'starts_with', value: '/workspace/' },
+            ],
+          },
+        };
+      }
+
+      if (userChoice === 'deny_forever') {
+        return {
+          approved: false,
+          scope: 'never',
+          remember: true,  // creates a persistent deny rule
+        };
+      }
+
+      return { approved: false, reason: 'User denied' };
+    },
+  },
+});
+```
+
+#### ApprovalRequestContext Fields
+
+The callback receives a rich context extending `PolicyContext`:
+
+```typescript
+interface ApprovalRequestContext extends PolicyContext {
+  /** The deny decision that triggered this approval request */
+  decision: PolicyDecision;
+
+  /** Tool's risk level (from tool permission config or default) */
+  riskLevel: RiskLevel;  // 'low' | 'medium' | 'high' | 'critical'
+
+  /** Custom approval message (from tool permission config) */
+  approvalMessage?: string;
+
+  /** Argument names to highlight as sensitive in approval UI */
+  sensitiveArgs?: string[];
+
+  /** Policy-provided approval scope key */
+  approvalKey?: string;
+
+  /** Suggested approval scope */
+  approvalScope?: 'once' | 'session' | 'persistent';
+}
+```
+
+The base `PolicyContext` provides:
+
+```typescript
+interface PolicyContext {
+  toolName: string;                      // Tool being invoked
+  args: Record<string, unknown>;         // Parsed arguments
+  userId?: string;                       // From ToolContext.userId
+  roles?: string[];                      // From agent config userRoles
+  agentId?: string;
+  parentAgentId?: string;                // For orchestrator workers
+  sessionId?: string;
+  iteration?: number;                    // Agentic loop iteration
+  executionId?: string;                  // For tracing
+  toolSource?: string;                   // built-in, connector:xxx, mcp, custom
+  toolCategory?: string;                 // filesystem, web, shell, etc.
+  toolNamespace?: string;
+  toolTags?: string[];
+  toolPermissionConfig?: ToolPermissionConfig;  // Merged tool + registration config
+}
+```
+
+#### ApprovalDecision with createRule
+
+When the user wants to remember their decision, include `createRule` in the response:
+
+```typescript
+interface ApprovalDecision {
+  approved: boolean;
+  scope?: PermissionScope;   // 'once' | 'session' | 'always' | 'never'
+  reason?: string;           // Reason for denial
+  approvedBy?: string;       // Identifier of approver
+  remember?: boolean;        // Create persistent rule (shorthand)
+
+  /** Explicit rule creation with argument conditions */
+  createRule?: {
+    description?: string;
+    conditions?: ArgumentCondition[];
+    expiresAt?: string | null;   // ISO timestamp, null = never
+    unconditional?: boolean;
+  };
+}
+```
+
+#### Approval-to-Rule Creation Flow
+
+When the user approves with `createRule` or `remember: true`, the system automatically creates a persistent `UserPermissionRule`:
+
+```
+User clicks "Always Allow" in dialog
+    ↓
+ApprovalDecision { approved: true, remember: true, scope: 'always' }
+    ↓
+PermissionPolicyManager.createRuleFromApproval()
+    ↓
+UserPermissionRulesEngine.addRule({
+  toolName, action: 'allow', createdBy: 'approval_dialog'
+})
+    ↓
+Rule persisted to IUserPermissionRulesStorage
+    ↓
+Next call: user rule matches → immediate allow (no policy chain, no dialog)
+```
+
+### Built-in Policies
+
+The library ships 8 composable policies. Each can be used independently or combined in a chain. Policies are sorted by priority (lower number = runs first).
+
+#### AllowlistPolicy
+
+Auto-allows tools by name. Returns `allow` for listed tools, `abstain` for others. Note: allow does NOT short-circuit, so later policies (e.g., BashFilterPolicy) can still deny based on arguments.
+
+```typescript
+import { AllowlistPolicy, DEFAULT_ALLOWLIST } from '@everworker/oneringai';
+
+// Merge custom tools with defaults
+const policy = new AllowlistPolicy([
+  ...DEFAULT_ALLOWLIST,    // read_file, glob, grep, store_*, etc.
+  'my_safe_tool',
+  'another_safe_tool',
+]);
+```
+
+| Property | Value |
+|----------|-------|
+| Name | `builtin:allowlist` |
+| Priority | 10 |
+| Verdict | `allow` or `abstain` |
+
+Default allowlisted tools: `read_file`, `glob`, `grep`, `list_directory`, `store_get`, `store_set`, `store_delete`, `store_list`, `store_action`, `context_stats`, `todo_add`, `todo_update`, `todo_remove`, `tool_catalog_search`, `tool_catalog_load`, `tool_catalog_unload`, `_start_planning`, `_modify_plan`, `_report_progress`, `_request_approval`.
+
+Runtime modification:
+
+```typescript
+policy.add('new_safe_tool');
+policy.remove('store_delete');
+policy.has('read_file');     // true
+policy.getAll();             // string[]
+
+// Via PermissionPolicyManager shortcuts
+agent.policyManager.allowlistAdd('my_tool');
+agent.policyManager.allowlistRemove('my_tool');
+```
+
+#### BlocklistPolicy
+
+Permanently blocks tools by name. Returns `deny` without `needsApproval` — no user approval can override a blocklisted tool. Runs at the highest policy priority to block before any other policy can allow.
+
+```typescript
+import { BlocklistPolicy } from '@everworker/oneringai';
+
+const policy = new BlocklistPolicy([
+  'dangerous_tool',
+  'deprecated_tool',
+]);
+```
+
+| Property | Value |
+|----------|-------|
+| Name | `builtin:blocklist` |
+| Priority | 5 (runs before allowlist) |
+| Verdict | `deny` (hard block) or `abstain` |
+
+Runtime modification:
+
+```typescript
+policy.add('newly_dangerous_tool');
+policy.remove('dangerous_tool');
+
+// Via PermissionPolicyManager shortcuts (auto-removes from opposite list)
+agent.policyManager.blocklistAdd('bad_tool');   // also removes from allowlist
+agent.policyManager.blocklistRemove('bad_tool');
+```
+
+#### SessionApprovalPolicy
+
+Manages session-level approval caching based on tool self-declarations. Reads `PolicyContext.toolPermissionConfig` to determine behavior:
+
+- `scope: 'always'` — auto-allow (tool declares itself safe)
+- `scope: 'never'` — hard deny (tool is disabled)
+- `scope: 'session'` — check approval cache, deny with `needsApproval` if not cached
+- `scope: 'once'` — always deny with `needsApproval` for every call
+- No config — `abstain` (tool has no permission declaration)
+
+```typescript
+import { SessionApprovalPolicy } from '@everworker/oneringai';
+
+const policy = new SessionApprovalPolicy('once'); // default scope for undeclared tools
+```
+
+| Property | Value |
+|----------|-------|
+| Name | `builtin:session-approval` |
+| Priority | 90 (runs late, after argument-inspecting policies) |
+| Verdict | `allow`, `deny` (with or without `needsApproval`), or `abstain` |
+
+Approval cache management:
+
+```typescript
+// Programmatically approve a tool for the session
+agent.policyManager.approve('write_file', {
+  scope: 'session',
+  approvedBy: 'admin',
+});
+
+// With TTL expiration
+agent.policyManager.approve('bash', {
+  scope: 'session',
+  ttlMs: 300000, // 5 minutes
+});
+
+// Revoke an approval
+agent.policyManager.revoke('write_file');
+
+// Check cache
+agent.policyManager.isApproved('write_file'); // true/false
+
+// Clear all session approvals
+agent.policyManager.clearSession();
+```
+
+#### PathRestrictionPolicy
+
+Restricts file operations to allowed directory roots. Canonicalizes paths (resolves `..`, normalizes separators, best-effort symlink resolution for existing files).
+
+```typescript
+import { PathRestrictionPolicy } from '@everworker/oneringai';
+
+const policy = new PathRestrictionPolicy({
+  // Required: allowed path prefixes (canonicalized at construction)
+  allowedPaths: ['/workspace', '/tmp', process.cwd()],
+
+  // Optional: customize which tools are checked
+  // Default: write_file, edit_file, read_file, list_directory, glob, grep
+  tools: ['write_file', 'edit_file', 'read_file', 'list_directory', 'glob', 'grep'],
+
+  // Optional: which argument names contain file paths
+  // Default: path, file_path, target_path, directory, pattern
+  pathArgs: ['path', 'file_path', 'target_path', 'directory', 'pattern'],
+
+  // Optional: resolve symlinks for existing files
+  resolveSymlinks: true,  // default: true
+
+  // Optional: base path for resolving relative paths
+  basePath: process.cwd(),  // default: process.cwd()
+});
+```
+
+| Property | Value |
+|----------|-------|
+| Name | `builtin:path-restriction` |
+| Priority | 50 |
+| Verdict | `deny` (with `needsApproval`, argument-scoped key) or `abstain` |
+
+The policy returns `abstain` for tools not in its list, so non-filesystem tools are unaffected. When denying, it provides an argument-scoped approval key (e.g., `write_file:/workspace/foo.txt`) so users can approve access to specific paths for the session.
+
+#### BashFilterPolicy
+
+Best-effort command filtering for the `bash` tool. Checks deny patterns first (any match = deny), then allow patterns (any match = abstain).
+
+**Important**: This is a guardrail, NOT a sandbox. Shell command obfuscation can bypass string-based filtering. For strong isolation, combine with blocklisting bash by default, path restrictions, or container/sandbox execution.
+
+```typescript
+import { BashFilterPolicy } from '@everworker/oneringai';
+
+const policy = new BashFilterPolicy({
+  // Deny patterns (checked first, any match → deny with needsApproval)
+  denyPatterns: [
+    /rm\s+-rf/,
+    /sudo\s+/,
+    /chmod\s+777/,
+    /curl.*\|.*sh/,     // pipe curl to shell
+  ],
+  denyCommands: ['shutdown', 'reboot', 'mkfs'],
+
+  // Allow patterns (if matched after deny check, abstain → other policies decide)
+  allowPatterns: [/^(ls|cat|echo|pwd|whoami)/],
+  allowCommands: ['npm', 'node', 'git', 'tsc', 'npx'],
+
+  // Argument containing the command (default: 'command')
+  commandArg: 'command',
+});
+```
+
+| Property | Value |
+|----------|-------|
+| Name | `builtin:bash-filter` |
+| Priority | 50 |
+| Verdict | `deny` (with `needsApproval`, command-scoped key) or `abstain` |
+
+Only applies to the `bash` tool — all other tools get `abstain`. If neither deny nor allow patterns match, the policy abstains and lets other policies decide.
+
+#### UrlAllowlistPolicy
+
+Restricts URL-based tools to allowed domains. Uses proper `URL` parsing (not regex over raw strings). Validates both protocol and hostname.
+
+```typescript
+import { UrlAllowlistPolicy } from '@everworker/oneringai';
+
+const policy = new UrlAllowlistPolicy({
+  allowedDomains: [
+    'api.github.com',       // exact match (also matches www.api.github.com)
+    '.example.com',         // suffix: matches sub.example.com, NOT example.com
+    'internal.corp.net',    // exact + subdomains
+  ],
+
+  // Optional configuration
+  allowedProtocols: ['http:', 'https:'],  // default
+  tools: ['web_fetch', 'web_search', 'web_scrape'],  // default
+  urlArgs: ['url', 'query', 'target_url'],  // default
+});
+```
+
+| Property | Value |
+|----------|-------|
+| Name | `builtin:url-allowlist` |
+| Priority | 50 |
+| Verdict | `deny` (with `needsApproval`, domain-scoped key) or `abstain` |
+
+Domain matching rules:
+- `"example.com"` matches exactly `example.com` and subdomains like `www.example.com`
+- `".example.com"` (leading dot) matches `sub.example.com` but NOT `example.com` itself
+- `"evil-example.com"` does NOT match `example.com`
+- Non-URL arguments (e.g., plain search queries) are silently skipped
+
+#### RolePolicy
+
+Role-based access control. Users can have multiple roles. Deny beats allow across all matched rules.
+
+```typescript
+import { RolePolicy } from '@everworker/oneringai';
+
+const policy = new RolePolicy([
+  {
+    role: 'admin',
+    allowTools: ['*'],  // admins can use everything
+  },
+  {
+    role: 'developer',
+    allowTools: ['read_file', 'write_file', 'edit_file', 'bash', 'glob', 'grep'],
+    denyTools: ['desktop_mouse_click'],  // no desktop automation
+  },
+  {
+    role: 'viewer',
+    allowTools: ['read_file', 'glob', 'grep', 'list_directory'],
+    denyTools: ['write_file', 'edit_file', 'bash'],
+  },
+  {
+    role: 'restricted',
+    denyTools: ['*'],  // deny everything (overrides any allow from other roles)
+  },
+]);
+
+// Set user roles on the agent
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  userRoles: ['developer'],  // passed to PolicyContext.roles
+  permissions: {
+    policies: [policy],
+  },
+});
+```
+
+| Property | Value |
+|----------|-------|
+| Name | `builtin:role` |
+| Priority | 30 |
+| Verdict | `allow`, `deny` (hard block, no approval), or `abstain` |
+
+If a user has roles `['developer', 'restricted']`, deny from `restricted` beats allow from `developer`. If no user roles are set, the policy abstains.
+
+#### RateLimitPolicy
+
+Per-tool rate limiting with a sliding window. In-memory only — counters reset on process restart.
+
+```typescript
+import { RateLimitPolicy } from '@everworker/oneringai';
+
+const policy = new RateLimitPolicy({
+  limits: {
+    'web_fetch': { maxCalls: 10, windowMs: 60_000 },   // 10 per minute
+    'bash': { maxCalls: 5, windowMs: 30_000 },          // 5 per 30 seconds
+    'web_search': { maxCalls: 20, windowMs: 60_000 },   // 20 per minute
+  },
+
+  // Optional: default limit for tools not explicitly configured
+  defaultLimit: { maxCalls: 100, windowMs: 60_000 },
+});
+```
+
+| Property | Value |
+|----------|-------|
+| Name | `builtin:rate-limit` |
+| Priority | 20 |
+| Verdict | `deny` (hard block, no approval) or `abstain` |
+
+Rate limit denials are hard blocks — no approval override. The deny reason includes retry timing (e.g., "retry after 12345ms").
+
+```typescript
+// Reset counters
+policy.reset('web_fetch');  // reset one tool
+policy.reset();             // reset all tools
+```
+
+For distributed rate limiting across processes, implement a custom `IPermissionPolicy` with external state (e.g., Redis).
+
+### Tool Self-Declaration
+
+Tool authors can declare permission defaults directly on the tool definition. These are read by `SessionApprovalPolicy` via `PolicyContext.toolPermissionConfig`.
+
+#### ToolPermissionConfig Fields
+
+```typescript
+interface ToolPermissionConfig {
+  /** When approval is required: 'once' | 'session' | 'always' | 'never' */
+  scope?: PermissionScope;
+
+  /** Risk classification: 'low' | 'medium' | 'high' | 'critical' */
+  riskLevel?: RiskLevel;
+
+  /** Custom message shown in approval UI */
+  approvalMessage?: string;
+
+  /** Argument names to highlight as sensitive (also used for audit redaction) */
+  sensitiveArgs?: string[];
+
+  /** Expiration time for session approvals (ms) */
+  sessionTTLMs?: number;
+}
+```
+
+#### Declaring on a Tool
+
+```typescript
+const myTool: ToolFunction = {
+  definition: {
+    type: 'function',
+    function: {
+      name: 'deploy_service',
+      description: 'Deploy a service to production',
+      parameters: {
+        type: 'object',
+        properties: {
+          service: { type: 'string' },
+          environment: { type: 'string' },
+        },
+        required: ['service', 'environment'],
+      },
+    },
+  },
+  execute: async (args) => { /* ... */ },
+  permission: {
+    scope: 'once',          // require approval every time
+    riskLevel: 'critical',
+    approvalMessage: 'This will deploy to production. Are you sure?',
+    sensitiveArgs: ['environment'],
+    sessionTTLMs: 300_000,  // session approvals expire after 5 minutes
+  },
+};
+```
+
+#### Registration-Time Override
+
+Application developers can override tool declarations at registration time:
+
+```typescript
+agent.tools.register(myTool, {
+  permission: {
+    scope: 'session',      // override: approve once per session instead of every call
+    riskLevel: 'medium',   // downgrade risk from critical
+  },
+});
+```
+
+The merged config (registration override > tool declaration) is passed to policies as `PolicyContext.toolPermissionConfig`.
+
+#### Default Permissions for Built-in Tool Categories
+
+| Category | Tools | Default Scope | Risk Level |
+|----------|-------|--------------|------------|
+| Filesystem (read) | read_file, glob, grep, list_directory | `always` | `low` |
+| Filesystem (write) | write_file, edit_file | `session` | `medium` |
+| Shell | bash | `once` | `high` |
+| Web | web_fetch, web_search, web_scrape | `session` | `medium` |
+| Desktop (read) | desktop_get_*, desktop_window_list | `always` | `low` |
+| Desktop (action) | desktop_mouse_*, desktop_screenshot, desktop_keyboard_key, desktop_window_focus | `session` | `medium` |
+| Desktop (input) | desktop_keyboard_type | `once` | `high` |
+| Store tools | store_*, context_stats | `always` | `low` |
+| Code execution | execute_javascript | `once` | `high` |
+| Custom tools meta | custom_tool_save, custom_tool_delete | `session` | `medium` |
+| Custom tools meta | custom_tool_test | `once` | `high` |
+| Orchestrator | create_agent, list_agents, assign_turn, etc. | `always` | `low` |
+| Meta-tools | _start_planning, _modify_plan, _report_progress, _request_approval | `always` | `low` |
+
+### Storage (Clean Architecture)
+
+The permission system uses Clean Architecture storage interfaces. All storage is optional — the system works entirely in-memory without persistence.
+
+#### IUserPermissionRulesStorage
+
+Stores per-user permission rules:
+
+```typescript
+interface IUserPermissionRulesStorage {
+  /** Load all rules for a user. Returns null if no rules exist. */
+  load(userId: string | undefined): Promise<UserPermissionRule[] | null>;
+
+  /** Save all rules for a user (full replacement). */
+  save(userId: string | undefined, rules: UserPermissionRule[]): Promise<void>;
+
+  /** Delete all rules for a user. */
+  delete(userId: string | undefined): Promise<void>;
+
+  /** Check if rules exist for a user. */
+  exists(userId: string | undefined): Promise<boolean>;
+
+  /** Get storage path (for debugging/display). */
+  getPath(userId: string | undefined): string;
+}
+```
+
+The `userId` parameter is always optional — when `undefined`, implementations default to `'default'` user. Reference storage path: `~/.oneringai/users/<userId>/permission_rules.json`.
+
+```typescript
+// Reference implementation — file-based
+import { FileUserPermissionRulesStorage } from '@everworker/oneringai';
+
+const storage = new FileUserPermissionRulesStorage();
+
+// Custom implementation
+class MongoPermissionRulesStorage implements IUserPermissionRulesStorage {
+  async load(userId) { /* query MongoDB */ }
+  async save(userId, rules) { /* upsert to MongoDB */ }
+  async delete(userId) { /* delete from MongoDB */ }
+  async exists(userId) { /* check existence */ }
+  getPath(userId) { return `mongodb://permissions/${userId ?? 'default'}`; }
+}
+```
+
+#### IPermissionAuditStorage
+
+Append-only storage for permission audit trail:
+
+```typescript
+interface IPermissionAuditStorage {
+  /** Append an audit entry. */
+  append(entry: PermissionAuditEntry): Promise<void>;
+
+  /** Query audit entries with optional filtering. */
+  query(options?: AuditQueryOptions): Promise<PermissionAuditEntry[]>;
+
+  /** Clear entries older than the given date. */
+  clear(before?: string): Promise<void>;
+
+  /** Count entries matching the given criteria. */
+  count(options?: AuditQueryOptions): Promise<number>;
+}
+
+interface AuditQueryOptions {
+  toolName?: string;
+  userId?: string;
+  agentId?: string;
+  decision?: 'allow' | 'deny';
+  finalOutcome?: string;
+  since?: string;  // ISO date
+  limit?: number;
+  offset?: number;
+}
+```
+
+#### IPermissionPolicyStorage
+
+Stores serialized policy definitions for persistence. Policies can be loaded from storage and instantiated via the `PolicyFactoryRegistry`:
+
+```typescript
+interface IPermissionPolicyStorage {
+  /** Save policy definitions for a user. */
+  save(userId: string | undefined, policies: StoredPolicyDefinition[]): Promise<void>;
+
+  /** Load policy definitions for a user. Returns null if none exist. */
+  load(userId: string | undefined): Promise<StoredPolicyDefinition[] | null>;
+
+  /** Delete policy definitions for a user. */
+  delete(userId: string | undefined): Promise<void>;
+
+  /** Check if policy definitions exist for a user. */
+  exists(userId: string | undefined): Promise<boolean>;
+}
+
+interface StoredPolicyDefinition {
+  name: string;                          // Policy name
+  type: string;                          // Maps to IPermissionPolicyFactory
+  config: Record<string, unknown>;       // Policy-specific configuration
+  enabled: boolean;                      // Whether policy is active
+  priority?: number;                     // Evaluation priority
+  createdAt: string;                     // ISO timestamp
+  updatedAt: string;                     // ISO timestamp
+}
+```
+
+#### StorageRegistry Integration
+
+Configure permission storage globally via `StorageRegistry`, or pass directly in the agent config:
+
+```typescript
+import { StorageRegistry, FileUserPermissionRulesStorage } from '@everworker/oneringai';
+
+// Global configuration
+StorageRegistry.configure({
+  permissionRules: (ctx) => new MongoPermissionRulesStorage(ctx?.tenantId),
+});
+
+// Or per-agent
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  permissions: {
+    userRulesStorage: new FileUserPermissionRulesStorage(),
+    auditStorage: new MyAuditStorage(),
+    policyStorage: new MyPolicyStorage(),
+  },
+});
+```
+
+### Orchestrator Delegation
+
+When using the orchestrator pattern, worker agents cannot exceed the permissions of their parent (orchestrator).
+
+#### setParentEvaluator
+
+```typescript
+import { createOrchestrator, PathRestrictionPolicy, BashFilterPolicy } from '@everworker/oneringai';
+
+// Orchestrator with strict permissions
+const orchestrator = createOrchestrator({
+  connector: 'openai',
+  model: 'gpt-4',
+  agentTypes: {
+    developer: {
+      systemPrompt: 'Write code',
+      tools: [readFile, writeFile, bash],
+    },
+  },
+});
+
+// Add policies to orchestrator — workers inherit these restrictions
+orchestrator.policyManager.addPolicy(
+  new PathRestrictionPolicy({ allowedPaths: ['/workspace'] })
+);
+orchestrator.policyManager.addPolicy(
+  new BashFilterPolicy({ denyPatterns: [/rm\s+-rf/, /sudo/] })
+);
+// All workers are now restricted to /workspace and cannot run rm -rf or sudo
+```
+
+Delegation rules:
+- **Parent deny is FINAL** — worker cannot override a parent deny, even with its own user rules.
+- **Parent allow does NOT skip worker restrictions** — if the parent allows `bash`, the worker's BashFilterPolicy still runs.
+- **Parent approval callback is NOT invoked** during delegation check — only the worker's approval callback triggers.
+
+Programmatic delegation for custom agent hierarchies:
+
+```typescript
+import { PermissionPolicyManager } from '@everworker/oneringai';
+
+const parentManager = PermissionPolicyManager.fromConfig({ /* parent policies */ });
+const workerManager = PermissionPolicyManager.fromConfig({ /* worker policies */ });
+
+// Worker cannot exceed parent permissions
+workerManager.setParentEvaluator(parentManager);
+
+// Check parent
+const parent = workerManager.getParentEvaluator(); // PermissionPolicyManager | undefined
+```
+
+### Audit Trail
+
+Every permission check is recorded as a `PermissionAuditEntry` with centralized argument redaction.
+
+#### PermissionAuditEntry Format
+
+```typescript
+interface PermissionAuditEntry {
+  id: string;                    // Unique entry ID (UUID)
+  timestamp: string;             // ISO timestamp
+  toolName: string;              // Tool that was checked
+  decision: 'allow' | 'deny';   // Policy evaluation result
+  finalOutcome:                  // Final execution outcome
+    | 'executed'                 // Tool was allowed and executed
+    | 'blocked'                  // Tool was hard-blocked
+    | 'approval_granted'         // User approved via dialog
+    | 'approval_denied';         // User denied via dialog
+  reason: string;                // Human-readable reason
+  policyName?: string;           // Policy that made the deciding verdict
+  userId?: string;               // User who triggered the check
+  agentId?: string;              // Agent that triggered the check
+  args?: Record<string, unknown>; // Redacted arguments
+  executionId?: string;          // Execution ID for correlation
+  approvalRequired?: boolean;    // Whether approval was requested
+  approvalKey?: string;          // Approval cache key
+  metadata?: Record<string, unknown>;
+}
+```
+
+#### Centralized Redaction
+
+Arguments are automatically redacted before inclusion in audit entries. Three layers of protection:
+
+1. **Tool-declared `sensitiveArgs`** — argument names listed in `ToolPermissionConfig.sensitiveArgs` are replaced with `[REDACTED]`.
+2. **Built-in sensitive keys** — arguments with names matching common secret patterns are replaced with `[REDACTED]`: `token`, `password`, `secret`, `authorization`, `apikey`, `api_key`, `credential`, `private_key`, `access_token`, `refresh_token`, `client_secret`, `passphrase`, `key`.
+3. **Truncation** — string values longer than 500 characters are truncated with `...[truncated]`.
+
+#### Event Emission
+
+The `PermissionPolicyManager` emits events for every decision:
+
+```typescript
+const manager = agent.policyManager;
+
+manager.on('permission:allow', (entry: PermissionAuditEntry) => {
+  console.log(`Allowed: ${entry.toolName} by ${entry.policyName}`);
+});
+
+manager.on('permission:deny', (entry: PermissionAuditEntry) => {
+  console.log(`Denied: ${entry.toolName} — ${entry.reason}`);
+});
+
+manager.on('permission:approval_granted', (entry: PermissionAuditEntry) => {
+  console.log(`Approved by user: ${entry.toolName}`);
+});
+
+manager.on('permission:approval_denied', (entry: PermissionAuditEntry) => {
+  console.log(`User denied: ${entry.toolName}`);
+});
+
+// Catch-all audit event (fires for EVERY decision, in addition to specific events)
+manager.on('permission:audit', (entry: PermissionAuditEntry) => {
+  myAuditLog.record(entry);
+});
+
+// Policy lifecycle events
+manager.on('policy:added', ({ name }) => console.log(`Policy added: ${name}`));
+manager.on('policy:removed', ({ name }) => console.log(`Policy removed: ${name}`));
+manager.on('session:cleared', () => console.log('Session approvals cleared'));
+```
+
+If audit storage is configured, entries are automatically persisted (fire-and-forget — audit storage failures are non-fatal and do not affect tool execution).
+
+### Migration from Legacy System
+
+The original `ToolPermissionManager` is deprecated. The new `PermissionPolicyManager` is fully backward compatible.
+
+#### ToolPermissionManager to PermissionPolicyManager
+
+The legacy config is automatically translated when passed to `Agent.create()`:
+
+| Legacy Config | Policy Translation |
+|--------------|-------------------|
+| `blocklist: [...]` | `BlocklistPolicy` |
+| `allowlist: [...]` | `AllowlistPolicy` (merged with `DEFAULT_ALLOWLIST`) |
+| `defaultScope: 'once'` | `SessionApprovalPolicy('once')` |
+| `onApprovalRequired: fn` | Passed through with adapter wrapping |
+
+Detection: if the config object contains `policies` or `policyChain`, it uses the new `AgentPolicyConfig` path. Otherwise, it uses the legacy `AgentPermissionsConfig` path.
+
+```typescript
+// Legacy config — still works, auto-translated to policies
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  permissions: {
+    defaultScope: 'session',
+    allowlist: ['my_tool'],
+    blocklist: ['bad_tool'],
+    onApprovalRequired: async (ctx) => ({ approved: true }),
+  },
+});
+agent.permissions.approve('tool');  // ToolPermissionManager (deprecated)
+
+// New policy config — explicitly uses policies
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  permissions: {
+    allowlist: ['my_tool'],
+    blocklist: ['bad_tool'],
+    policies: [
+      new PathRestrictionPolicy({ allowedPaths: ['/workspace'] }),
+      new BashFilterPolicy({ denyPatterns: [/rm\s+-rf/] }),
+    ],
+    policyChain: { defaultVerdict: 'deny' },
+    onApprovalRequired: async (ctx) => ({ approved: true }),
+    userRulesStorage: new FileUserPermissionRulesStorage(),
+  },
+});
+agent.policyManager.userRules.addRule(rule);  // PermissionPolicyManager
+```
+
+#### Programmatic Translation
+
+```typescript
+import { PermissionPolicyManager } from '@everworker/oneringai';
+
+// From legacy config
+const manager = PermissionPolicyManager.fromLegacyConfig({
+  allowlist: ['my_tool'],
+  blocklist: ['bad_tool'],
+  defaultScope: 'session',
+});
+
+// From new config with policies
+const manager = PermissionPolicyManager.fromConfig({
+  allowlist: ['my_tool'],
+  policies: [new PathRestrictionPolicy({ allowedPaths: ['/workspace'] })],
+  policyChain: { defaultVerdict: 'deny' },
+  userRulesStorage: new FileUserPermissionRulesStorage(),
+  auditStorage: new MyAuditStorage(),
+});
+```
+
+Note: when using `fromLegacyConfig` without an `onApprovalRequired` callback, the chain default verdict is automatically set to `'allow'` to preserve backward compatibility (pre-policy-system behavior where all tools auto-execute). The strict `'deny'` default applies only when policies are explicitly configured via `AgentPolicyConfig`.
+
+#### Accessing the Manager
+
+```typescript
+// New API (preferred)
+const policyManager = agent.policyManager;
+
+// Deprecated (still works for backward compatibility)
+const legacyManager = agent.permissions;
+```
+
+### Pipeline Enforcement
+
+The permission system is enforced via `PermissionEnforcementPlugin`, registered at priority 1 on the ToolManager's execution pipeline. This guarantees all tool calls are checked regardless of entry point:
+
+```
+ToolManager.execute()
+    ↓
+ToolExecutionPipeline.beforeExecute()
+    ↓
+PermissionEnforcementPlugin (priority: 1, runs FIRST)
+    ↓
+PolicyContext built from: tool args + ToolContext + registration metadata
+    ↓
+PermissionPolicyManager.check()
+    ↓
+If denied → throws ToolPermissionDeniedError
+If allowed → execution continues to next plugin / tool handler
+```
+
+The `PermissionEnforcementPlugin` is automatically wired by `BaseAgent` during construction:
+
+```typescript
+// This happens automatically in BaseAgent constructor:
+this._agentContext.tools.setPermissionManager(this._policyManager);
+```
+
+The plugin builds `PolicyContext` automatically from:
+- Tool call arguments (from the execution pipeline context)
+- `ToolContext` (userId, agentId, sessionId, roles)
+- Tool registration metadata (source, category, namespace, tags, permission config)
+
+### Complete Example
+
+A full example combining user rules, multiple policies, approval dialog, storage, and audit logging:
+
+```typescript
+import {
+  Agent, Connector, Vendor,
+  PathRestrictionPolicy,
+  BashFilterPolicy,
+  UrlAllowlistPolicy,
+  RateLimitPolicy,
+  RolePolicy,
+  FileUserPermissionRulesStorage,
+} from '@everworker/oneringai';
+import type {
+  ApprovalRequestContext,
+  ApprovalDecision,
+  PermissionAuditEntry,
+} from '@everworker/oneringai';
+
+// Setup connector
+Connector.create({
+  name: 'openai',
+  vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
+});
+
+// Create agent with full permission configuration
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  userId: 'alice',
+  userRoles: ['developer'],
+
+  permissions: {
+    // Lists
+    allowlist: ['my_custom_tool'],
+    blocklist: ['legacy_dangerous_tool'],
+
+    // Composable policies
+    policies: [
+      // Restrict file access to project directory
+      new PathRestrictionPolicy({
+        allowedPaths: ['/workspace', '/tmp'],
+      }),
+
+      // Filter bash commands
+      new BashFilterPolicy({
+        denyPatterns: [/rm\s+-rf/, /sudo/, /curl.*\|.*sh/],
+        allowCommands: ['npm', 'node', 'git', 'tsc', 'ls', 'cat'],
+      }),
+
+      // Restrict web access to known APIs
+      new UrlAllowlistPolicy({
+        allowedDomains: ['api.github.com', '.npmjs.org', '.googleapis.com'],
+      }),
+
+      // Rate limiting
+      new RateLimitPolicy({
+        limits: {
+          'web_fetch': { maxCalls: 30, windowMs: 60_000 },
+          'bash': { maxCalls: 10, windowMs: 60_000 },
+        },
+      }),
+
+      // Role-based access
+      new RolePolicy([
+        { role: 'developer', allowTools: ['*'], denyTools: ['desktop_mouse_click'] },
+        { role: 'viewer', allowTools: ['read_file', 'glob', 'grep'] },
+      ]),
+    ],
+
+    // Policy chain config — strict deny by default
+    policyChain: { defaultVerdict: 'deny' },
+
+    // Per-user rules storage (persistent)
+    userRulesStorage: new FileUserPermissionRulesStorage(),
+
+    // Approval dialog
+    onApprovalRequired: async (ctx: ApprovalRequestContext): Promise<ApprovalDecision> => {
+      console.log(`[APPROVAL NEEDED] ${ctx.toolName}`);
+      console.log(`  Risk: ${ctx.riskLevel}`);
+      console.log(`  Reason: ${ctx.decision.reason}`);
+      console.log(`  Args: ${JSON.stringify(ctx.args)}`);
+
+      // Auto-approve low-risk tools for the session
+      if (ctx.riskLevel === 'low') {
+        return { approved: true, scope: 'session' };
+      }
+
+      // Always deny critical tools without asking
+      if (ctx.riskLevel === 'critical') {
+        return { approved: false, reason: 'Critical tools require admin approval' };
+      }
+
+      // Prompt the user for medium/high risk tools
+      const answer = await promptUser(`Allow ${ctx.toolName}? (y/n/always)`);
+      if (answer === 'always') {
+        return {
+          approved: true,
+          createRule: {
+            description: `User approved ${ctx.toolName}`,
+            conditions: ctx.approvalKey !== ctx.toolName
+              ? [{ argName: 'path', operator: 'starts_with', value: ctx.args.path as string }]
+              : undefined,
+          },
+        };
+      }
+      return { approved: answer === 'y' };
+    },
+  },
+});
+
+// Listen to audit events
+agent.policyManager.on('permission:audit', (entry: PermissionAuditEntry) => {
+  console.log(`[AUDIT] ${entry.decision} ${entry.toolName}: ${entry.reason}`);
+});
+
+// Add a user rule programmatically
+await agent.policyManager.userRules.addRule({
+  id: crypto.randomUUID(),
+  toolName: 'write_file',
+  action: 'allow',
+  conditions: [
+    { argName: 'path', operator: 'starts_with', value: '/workspace/src/' },
+  ],
+  enabled: true,
+  description: 'Allow writing to src directory',
+  createdBy: 'admin',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+}, 'alice');
+
+// Run the agent — all tool calls are permission-checked automatically
+const result = await agent.run('Read the README and refactor the auth module');
 ```
 
 ---
@@ -10111,6 +12506,511 @@ The `IConnectorRegistry` interface covers the read-only subset of Connector stat
 | `size()` | Count of accessible connectors |
 | `getDescriptionsForTools()` | Formatted descriptions for LLM tool parameters |
 | `getInfo()` | Connector info map for UI/documentation |
+
+---
+
+## Agent Registry
+
+The `AgentRegistry` is a global static registry that automatically tracks all active `Agent` instances. It provides observability, deep inspection, parent/child relationship tracking, event fan-in, and external control — all from one central place.
+
+### Automatic Tracking
+
+Every agent auto-registers on creation and auto-unregisters on destroy. No setup required:
+
+```typescript
+import { Agent, AgentRegistry } from '@everworker/oneringai';
+
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4', name: 'assistant' });
+AgentRegistry.count;  // 1
+AgentRegistry.has(agent.registryId);  // true
+
+agent.destroy();
+AgentRegistry.count;  // 0
+```
+
+Each agent gets a unique `registryId` (UUID) on creation. Agent names are NOT unique — multiple agents can share a name.
+
+### Query
+
+```typescript
+// By unique ID
+AgentRegistry.get(agent.registryId);
+
+// By name (returns array — names aren't unique)
+AgentRegistry.getByName('assistant');
+
+// Filter with AND logic
+AgentRegistry.filter({ model: 'gpt-4', status: 'running' });
+AgentRegistry.filter({ status: ['idle', 'running'] });  // match any of these statuses
+AgentRegistry.filter({ connector: 'openai', parentAgentId: parent.registryId });
+
+// Lightweight info snapshots
+const infos = AgentRegistry.listInfo();  // AgentInfo[]
+// Each: { id, name, model, connector, status, createdAt, parentAgentId, childAgentIds }
+
+// Aggregate stats
+const stats = AgentRegistry.getStats();
+// { total, byStatus: { idle, running, paused, cancelled, destroyed }, byModel, byConnector }
+
+// Aggregate metrics across all agents
+const metrics = AgentRegistry.getAggregateMetrics();
+// { totalAgents, activeExecutions, totalTokens, totalToolCalls, totalErrors, byModel, byConnector }
+```
+
+### Deep Inspection
+
+The `inspect()` method returns everything about an agent — full context snapshot, conversation history, plugin states, tools, execution metrics, audit trail, and circuit breaker states:
+
+```typescript
+const inspection = await AgentRegistry.inspect(agent.registryId);
+
+// Context snapshot (from agent.getSnapshot())
+inspection.context.plugins;       // IPluginSnapshot[] — all plugin states
+inspection.context.tools;         // IToolSnapshot[] — all tools with call counts
+inspection.context.budget;        // ContextBudget — token usage breakdown
+inspection.context.systemPrompt;  // string | null
+inspection.context.features;      // { workingMemory, inContextMemory, ... }
+
+// Full conversation
+inspection.conversation;          // ReadonlyArray<InputItem>
+inspection.currentInput;          // ReadonlyArray<InputItem> — pending input
+
+// Execution state
+inspection.execution.id;          // current executionId or null
+inspection.execution.iteration;   // current iteration
+inspection.execution.metrics;     // ExecutionMetrics (tokens, tool calls, durations, errors)
+inspection.execution.auditTrail;  // AuditEntry[] (hook executions, tool skips, permissions)
+
+// Tool manager
+inspection.toolStats;             // ToolManagerStats
+inspection.circuitBreakers;       // Map<string, CircuitState>
+
+// Children
+inspection.children;              // AgentInfo[] — child agent snapshots
+
+// Bulk inspection
+const all = await AgentRegistry.inspectAll();
+const filtered = await AgentRegistry.inspectMatching({ model: 'gpt-4' });
+```
+
+### Parent/Child Hierarchy
+
+Agents can track parent/child relationships for hierarchical agent architectures:
+
+```typescript
+// Create parent
+const orchestrator = Agent.create({ connector: 'openai', model: 'gpt-4', name: 'orchestrator' });
+
+// Create children linked to parent
+const researcher = Agent.create({
+  connector: 'openai', model: 'gpt-4', name: 'researcher',
+  parentAgentId: orchestrator.registryId,
+});
+const writer = Agent.create({
+  connector: 'anthropic', model: 'claude-sonnet-4-6', name: 'writer',
+  parentAgentId: orchestrator.registryId,
+});
+
+// Query relationships
+AgentRegistry.getChildren(orchestrator.registryId);  // [researcher, writer]
+AgentRegistry.getParent(researcher.registryId);      // orchestrator
+
+// Recursive tree (for visualization/dashboards)
+const tree = AgentRegistry.getTree(orchestrator.registryId);
+// { info: orchestratorInfo, children: [
+//   { info: researcherInfo, children: [] },
+//   { info: writerInfo, children: [] },
+// ]}
+
+// Filter by parent
+AgentRegistry.filter({ parentAgentId: orchestrator.registryId });
+```
+
+### Events
+
+Registry lifecycle events:
+
+```typescript
+// Agent registered/unregistered
+AgentRegistry.on('agent:registered', ({ agent, info }) => {
+  console.log(`New agent: ${info.name} (${info.id})`);
+});
+
+AgentRegistry.on('agent:unregistered', ({ id, name, reason }) => {
+  console.log(`Agent removed: ${name} (${reason})`);
+});
+
+// Status changes (tracked via agent's own EventEmitter)
+AgentRegistry.on('agent:statusChanged', ({ id, name, previous, current }) => {
+  console.log(`${name}: ${previous} -> ${current}`);
+});
+
+// Registry empty
+AgentRegistry.on('registry:empty', () => {
+  console.log('All agents destroyed');
+});
+```
+
+#### Event Fan-In
+
+Receive ALL events from ALL agents through a single callback — ideal for dashboards, logging pipelines, and monitoring:
+
+```typescript
+AgentRegistry.onAgentEvent((agentId, agentName, event, data) => {
+  console.log(`[${agentName}] ${event}`, data);
+  // "[researcher] execution:start" { executionId, config, timestamp }
+  // "[researcher] tool:complete" { executionId, iteration, toolCall, result, timestamp }
+  // "[writer] llm:response" { executionId, iteration, response, timestamp, duration }
+});
+
+// Stop listening
+AgentRegistry.offAgentEvent(myListener);
+```
+
+Forwarded events include all agent events: `execution:*`, `iteration:*`, `llm:*`, `tool:*`, `hook:error`, `circuit:*`, `async:*`.
+
+### External Control
+
+Control agents without holding a direct reference:
+
+```typescript
+// Individual control
+AgentRegistry.pauseAgent(id);
+AgentRegistry.resumeAgent(id);
+AgentRegistry.cancelAgent(id, 'timeout');
+AgentRegistry.destroyAgent(id);
+
+// Bulk control with filters
+AgentRegistry.pauseMatching({ model: 'gpt-4' });
+AgentRegistry.cancelMatching({ status: 'running' }, 'shutting down');
+AgentRegistry.destroyMatching({ connector: 'openai' });
+
+// Nuclear
+AgentRegistry.pauseAll();
+AgentRegistry.cancelAll('emergency shutdown');
+AgentRegistry.destroyAll();
+```
+
+### Full API Reference
+
+| Category | Method | Returns | Description |
+|----------|--------|---------|-------------|
+| **Query** | `get(id)` | `IRegistrableAgent?` | Get agent by unique ID |
+| | `getByName(name)` | `IRegistrableAgent[]` | Get all agents with name |
+| | `has(id)` | `boolean` | Check if agent exists |
+| | `list()` | `string[]` | All registry IDs |
+| | `filter(filter)` | `IRegistrableAgent[]` | Agents matching filter |
+| | `count` | `number` | Total tracked agents |
+| **Info** | `listInfo()` | `AgentInfo[]` | Lightweight snapshots |
+| | `filterInfo(filter)` | `AgentInfo[]` | Filtered snapshots |
+| **Inspection** | `inspect(id)` | `Promise<AgentInspection?>` | Deep inspection |
+| | `inspectAll()` | `Promise<AgentInspection[]>` | Inspect all agents |
+| | `inspectMatching(filter)` | `Promise<AgentInspection[]>` | Filtered inspection |
+| **Aggregates** | `getStats()` | `AgentRegistryStats` | Counts by status/model/connector |
+| | `getAggregateMetrics()` | `AggregateMetrics` | Tokens, tool calls, errors |
+| **Hierarchy** | `getChildren(parentId)` | `IRegistrableAgent[]` | Child agents |
+| | `getParent(childId)` | `IRegistrableAgent?` | Parent agent |
+| | `getTree(rootId)` | `AgentTreeNode?` | Recursive tree |
+| **Events** | `on(event, listener)` | `void` | Subscribe to lifecycle events |
+| | `off(event, listener)` | `void` | Unsubscribe |
+| | `once(event, listener)` | `void` | Subscribe once |
+| | `onAgentEvent(listener)` | `void` | Fan-in: all agent events |
+| | `offAgentEvent(listener)` | `void` | Remove fan-in listener |
+| **Control** | `pauseAgent(id)` | `boolean` | Pause agent |
+| | `resumeAgent(id)` | `boolean` | Resume agent |
+| | `cancelAgent(id, reason?)` | `boolean` | Cancel agent |
+| | `destroyAgent(id)` | `boolean` | Destroy agent |
+| | `pauseMatching(filter)` | `number` | Bulk pause |
+| | `cancelMatching(filter, reason?)` | `number` | Bulk cancel |
+| | `destroyMatching(filter)` | `number` | Bulk destroy |
+| | `pauseAll()` | `number` | Pause all |
+| | `cancelAll(reason?)` | `number` | Cancel all |
+| | `destroyAll()` | `number` | Destroy all |
+| **Housekeeping** | `clear()` | `void` | Clear registry (testing) |
+
+---
+
+## Agent Orchestrator
+
+Create autonomous agent teams that coordinate through a shared workspace. The orchestrator is a regular Agent with special tools — no subclass needed.
+
+### Quick Start
+
+```typescript
+import { createOrchestrator, Connector, Vendor } from '@everworker/oneringai';
+
+Connector.create({
+  name: 'openai',
+  vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
+});
+
+const orchestrator = createOrchestrator({
+  connector: 'openai',
+  model: 'gpt-4',
+  agentTypes: {
+    architect: {
+      systemPrompt: 'You are a senior software architect. Design clean, scalable systems. Use the shared workspace to publish your designs.',
+      tools: [readFile, writeFile],
+    },
+    critic: {
+      systemPrompt: 'You are a thorough code reviewer. Read artifacts from the workspace, find issues, and post your review back to the workspace.',
+      tools: [readFile, grep],
+    },
+    developer: {
+      systemPrompt: 'You are a senior developer. Read the plan from the workspace, implement it, and update the workspace with your progress.',
+      tools: [readFile, writeFile, editFile, bash],
+    },
+  },
+});
+
+const result = await orchestrator.run('Build an auth module with JWT support');
+console.log(result.output_text);
+```
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Orchestrator (Agent)                    │
+│                                                           │
+│  System prompt: auto-generated from agentTypes            │
+│  Tools: 7 orchestration tools + workspace store tools     │
+│                                                           │
+├─────────────────────────────────────────────────────────┤
+│           SharedWorkspace (shared instance)               │
+│  - entries: plans, code, reviews, status                  │
+│  - log: team conversation                                 │
+│  - All agents read/write via store_*("workspace", ...)    │
+├─────────────────────────────────────────────────────────┤
+│                    Worker Agents                          │
+│  - Persistent (remember reasoning across turns)           │
+│  - Own context + shared workspace                         │
+│  - Receive workspace delta at turn start                  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐               │
+│  │Architect │  │  Critic  │  │Developer │               │
+│  └──────────┘  └──────────┘  └──────────┘               │
+└─────────────────────────────────────────────────────────┘
+```
+
+### OrchestratorConfig
+
+```typescript
+interface OrchestratorConfig {
+  connector: string;           // Connector for LLM access
+  model: string;               // Model for orchestrator (default for workers too)
+  systemPrompt?: string;       // Custom prompt (overrides auto-generated)
+  agentTypes: Record<string, AgentTypeConfig>;  // Available worker types
+  workspace?: Partial<SharedWorkspaceConfig>;    // Workspace settings
+  features?: Partial<ContextFeatures>;           // Orchestrator context features
+  name?: string;               // Orchestrator name (default: 'orchestrator')
+  agentId?: string;            // For session persistence
+  maxIterations?: number;      // Max loop iterations (default: 100)
+}
+
+interface AgentTypeConfig {
+  systemPrompt: string;        // Role-defining prompt
+  tools?: ToolFunction[];      // Role-specific tools
+  model?: string;              // Override model per type
+  connector?: string;          // Override connector per type
+  features?: Partial<ContextFeatures>;  // Worker context features
+}
+```
+
+### Orchestration Tools
+
+The orchestrator gets 7 tools automatically:
+
+#### Team Management
+
+| Tool | Description |
+|------|-------------|
+| `create_agent(name, type)` | Spawn a worker from `agentTypes`. The agent is persistent — it remembers reasoning across turns. |
+| `list_agents()` | Returns all workers with name, model, status (idle/running/paused). |
+| `destroy_agent(name)` | Destroy a worker and free its resources. |
+
+#### Turn Assignment
+
+| Tool | Blocking | Description |
+|------|----------|-------------|
+| `assign_turn(agent, instruction, timeout?)` | Yes | Assign work and **wait** for result. Use for sequential workflows. Default timeout: 300s. |
+| `assign_turn_async(agent, instruction, timeout?)` | **No** | Assign work **without waiting**. Result delivered later via async continuation. Use to run agents in parallel or continue planning while a worker executes. |
+| `assign_parallel(assignments[], timeout?)` | Yes | Start multiple agents simultaneously, wait for **all** results. Convenience for fan-out patterns. |
+
+#### Communication
+
+| Tool | Description |
+|------|-------------|
+| `send_message(agent, message)` | Inject a message into an agent's context. If the agent is running, the message appears on its next iteration. If idle, it's seen on the next turn. Uses `Agent.inject()`. |
+
+### Workspace Delta
+
+When a worker starts a turn, its instruction is automatically prepended with a workspace delta showing what changed since that worker's last turn:
+
+```
+[Workspace changes since your last turn]
+- NEW: "auth_plan" (v1, by architect) — JWT auth design with refresh tokens
+- UPDATED: "requirements" (v1→v2, by orchestrator) — Added rate limiting requirement
+Recent log:
+  [architect] Designed API following RESTful patterns
+  [orchestrator] Added rate limiting to requirements
+
+Design the authentication module based on the approved plan.
+```
+
+### Workflow Examples
+
+#### Sequential Review Cycle
+
+```typescript
+const orchestrator = createOrchestrator({
+  connector: 'openai',
+  model: 'gpt-4',
+  agentTypes: {
+    architect: { systemPrompt: 'You are a software architect...', tools: [readFile, writeFile] },
+    critic: { systemPrompt: 'You are a code reviewer...', tools: [readFile] },
+    developer: { systemPrompt: 'You are a developer...', tools: [readFile, writeFile, editFile, bash] },
+  },
+});
+
+// The orchestrator LLM naturally follows this pattern:
+// 1. create_agent("arch", "architect")
+// 2. create_agent("rev", "critic")
+// 3. create_agent("dev", "developer")
+// 4. assign_turn("arch", "Design the auth module")
+// 5. assign_turn("rev", "Review the architecture plan")
+// 6. If issues: assign_turn("arch", "Address reviewer feedback")
+// 7. assign_turn("dev", "Implement the approved plan")
+// 8. assign_turn("rev", "Review the implementation")
+// 9. If issues: assign_turn("dev", "Fix review comments")
+// 10. Final acceptance
+
+const result = await orchestrator.run('Build a JWT auth module with refresh tokens');
+```
+
+#### Parallel Research
+
+```typescript
+const orchestrator = createOrchestrator({
+  connector: 'openai',
+  model: 'gpt-4',
+  agentTypes: {
+    researcher: {
+      systemPrompt: 'You are a research analyst. Search the web, analyze findings, and post results to the workspace.',
+      tools: [webSearchTool, webFetchTool],
+    },
+    synthesizer: {
+      systemPrompt: 'You are an analyst. Read research findings from the workspace and produce a comprehensive summary.',
+    },
+  },
+});
+
+// The orchestrator will:
+// 1. Create 3 researchers
+// 2. assign_parallel to all 3 with different research angles
+// 3. Create synthesizer
+// 4. assign_turn("synthesizer", "Combine all research findings")
+
+const result = await orchestrator.run('Research the top 3 competitors in the AI agent space');
+```
+
+#### Async Turns (Non-Blocking)
+
+```typescript
+// The orchestrator can use assign_turn_async to start work without waiting:
+//
+// 1. assign_turn_async("researcher-1", "Research competitor A")
+//    → Returns immediately: "researcher-1 is working..."
+//
+// 2. assign_turn_async("researcher-2", "Research competitor B")
+//    → Returns immediately: "researcher-2 is working..."
+//
+// 3. Orchestrator continues: updates workspace, plans next steps
+//
+// 4. [Async Tool Results] researcher-1 completed: "Found 5 key insights..."
+//    → Orchestrator processes result
+//
+// 5. [Async Tool Results] researcher-2 completed: "Analysis complete..."
+//    → Orchestrator processes result
+//
+// This leverages the existing async tools infrastructure (blocking: false).
+// Results are delivered via auto-continuation when workers finish.
+```
+
+### Agent.inject()
+
+The `inject()` method enables orchestrator-to-worker communication:
+
+```typescript
+// Inject a message into a running or idle agent
+agent.inject('Please also consider rate limiting in your design');
+agent.inject('Switch to OAuth2 instead of JWT', 'developer');  // 'developer' role
+
+// The message is queued and delivered on the agent's next agentic loop iteration.
+// Safe to call while the agent is running.
+```
+
+This is used internally by the `send_message` orchestration tool, but can also be called directly on any Agent instance.
+
+### Worker Agent Lifecycle
+
+Workers are **persistent** — they remember their reasoning across turns:
+
+1. **Created** via `create_agent(name, type)` — gets system prompt, tools, shared workspace
+2. **Assigned turns** — each `assign_turn` calls `agent.run(instruction)` on the same instance
+3. **Context accumulates** — the worker's context grows with each turn (compaction handles limits)
+4. **Destroyed** via `destroy_agent(name)` or when the orchestrator is destroyed
+
+### Custom System Prompt
+
+Override the auto-generated prompt for specialized workflows:
+
+```typescript
+const orchestrator = createOrchestrator({
+  connector: 'openai',
+  model: 'gpt-4',
+  systemPrompt: `You are a QA team lead. For every task:
+1. Create a "developer" agent to write code
+2. Create a "tester" agent to write tests
+3. Run them in parallel with assign_parallel
+4. If tests fail, send the failure details back to the developer
+5. Repeat until all tests pass`,
+  agentTypes: {
+    developer: { systemPrompt: '...', tools: [writeFile, editFile] },
+    tester: { systemPrompt: '...', tools: [readFile, bash] },
+  },
+});
+```
+
+### Per-Type Configuration
+
+Each agent type can have its own model, connector, and features:
+
+```typescript
+const orchestrator = createOrchestrator({
+  connector: 'openai',
+  model: 'gpt-4',  // Default
+  agentTypes: {
+    planner: {
+      systemPrompt: 'You are a strategic planner...',
+      model: 'gpt-4',      // Use the best model for planning
+      connector: 'openai',
+    },
+    coder: {
+      systemPrompt: 'You are a fast coder...',
+      model: 'gpt-4o-mini',  // Use a faster/cheaper model for coding
+      connector: 'openai',
+      tools: [readFile, writeFile, editFile, bash],
+    },
+    reviewer: {
+      systemPrompt: 'You are a code reviewer...',
+      model: 'claude-sonnet-4-20250514',  // Different provider entirely
+      connector: 'anthropic',
+      tools: [readFile, grep],
+    },
+  },
+});
+```
 
 ---
 

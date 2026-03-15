@@ -364,7 +364,7 @@ export class GrokImagineProvider extends BaseMediaProvider implements IVideoProv
 
     // If it's a file path, read and convert to data URL
     const fs = await import('fs');
-    const data = fs.readFileSync(image);
+    const data = await fs.promises.readFile(image);
     const base64 = data.toString('base64');
     // Try to detect image type from extension
     const ext = image.split('.').pop()?.toLowerCase() || 'png';

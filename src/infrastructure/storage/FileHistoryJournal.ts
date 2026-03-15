@@ -32,6 +32,7 @@
 
 import { promises as fs } from 'fs';
 import { createReadStream } from 'fs';
+import { sanitizeId } from './utils.js';
 import { join } from 'path';
 import { createInterface } from 'readline';
 import type { IHistoryJournal, HistoryEntry, HistoryReadOptions } from '../../domain/interfaces/IHistoryJournal.js';
@@ -40,14 +41,7 @@ import type { IHistoryJournal, HistoryEntry, HistoryReadOptions } from '../../do
  * Sanitize ID for use as a filename.
  * Same logic as FileContextStorage to ensure matching paths.
  */
-function sanitizeId(id: string): string {
-  return id
-    .replace(/[^a-zA-Z0-9_-]/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '')
-    .toLowerCase()
-    || 'default';
-}
+// sanitizeId imported from ./utils.js
 
 /**
  * File-based history journal using JSONL format.

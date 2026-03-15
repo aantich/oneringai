@@ -2,6 +2,9 @@
  * Storage infrastructure exports
  */
 
+// Shared storage utilities
+export { sanitizeId, sanitizeUserId, ensureDirectory, getErrorMessage, DEFAULT_USER_ID } from './utils.js';
+
 export {
   InMemoryStorage,
   InMemoryPlanStorage,
@@ -45,3 +48,7 @@ export type { FileRoutineDefinitionStorageConfig } from './FileRoutineDefinition
 // Routine execution storage (for execution history and tracking)
 export { FileRoutineExecutionStorage, createFileRoutineExecutionStorage } from './FileRoutineExecutionStorage.js';
 export type { FileRoutineExecutionStorageConfig } from './FileRoutineExecutionStorage.js';
+
+// Correlation storage (for mapping external events to suspended sessions)
+export { FileCorrelationStorage, createFileCorrelationStorage } from './FileCorrelationStorage.js';
+export type { FileCorrelationStorageConfig } from './FileCorrelationStorage.js';

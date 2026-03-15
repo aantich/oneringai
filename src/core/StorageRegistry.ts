@@ -44,6 +44,7 @@ import type { IMemoryStorage } from '../domain/interfaces/IMemoryStorage.js';
 import type { IUserInfoStorage } from '../domain/interfaces/IUserInfoStorage.js';
 import type { IRoutineDefinitionStorage } from '../domain/interfaces/IRoutineDefinitionStorage.js';
 import type { IRoutineExecutionStorage } from '../domain/interfaces/IRoutineExecutionStorage.js';
+import type { ICorrelationStorage } from '../domain/interfaces/ICorrelationStorage.js';
 
 // ============================================================================
 // Types
@@ -81,6 +82,9 @@ export interface StorageConfig {
   userInfo: (context?: StorageContext) => IUserInfoStorage;
   routineDefinitions: (context?: StorageContext) => IRoutineDefinitionStorage;
   routineExecutions: (context?: StorageContext) => IRoutineExecutionStorage;
+
+  // Global singleton
+  correlations: ICorrelationStorage;
 }
 
 // ============================================================================

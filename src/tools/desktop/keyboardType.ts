@@ -32,6 +32,8 @@ export function createDesktopKeyboardTypeTool(config?: DesktopToolConfig): ToolF
       return `"${preview}"`;
     },
 
+    permission: { scope: 'session' as const, riskLevel: 'high' as const, sensitiveArgs: ['text'] },
+
     execute: async (args: DesktopKeyboardTypeArgs): Promise<DesktopKeyboardTypeResult> => {
       try {
         const driver = await getDesktopDriver(config);

@@ -266,6 +266,8 @@ export function createExecuteJavaScriptTool(
     // Receives ToolContext so connector list is scoped to current userId.
     descriptionFactory: (context?: ToolContext) => generateDescription(context, maxTimeout),
 
+    permission: { scope: 'once' as const, riskLevel: 'high' as const, sensitiveArgs: ['code'] },
+
     execute: async (args: ExecuteJSArgs, context?: ToolContext): Promise<ExecuteJSResult> => {
       const logs: string[] = [];
       const startTime = Date.now();

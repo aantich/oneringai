@@ -104,6 +104,8 @@ EXAMPLES:
       },
     },
 
+    permission: { scope: 'session' as const, riskLevel: 'medium' as const, sensitiveArgs: ['path'] },
+
     describeCall: (args: EditFileArgs): string => {
       const mode = args.replace_all ? ' (replace all)' : '';
       return `${args.file_path}${mode}`;

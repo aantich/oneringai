@@ -25,6 +25,8 @@ export function createDesktopGetCursorTool(config?: DesktopToolConfig): ToolFunc
 
     describeCall: (): string => 'get cursor position',
 
+    permission: { scope: 'always' as const, riskLevel: 'low' as const },
+
     execute: async (): Promise<DesktopGetCursorResult> => {
       try {
         const driver = await getDesktopDriver(config);

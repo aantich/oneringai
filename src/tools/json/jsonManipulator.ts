@@ -117,6 +117,8 @@ The tool returns a result object with:
     timeout: 10000, // 10 seconds should be plenty for JSON operations
   },
 
+  permission: { scope: 'always' as const, riskLevel: 'low' as const },
+
   execute: async (args: JsonManipulateArgs): Promise<JsonManipulateResult> => {
     try {
       // Validate operation

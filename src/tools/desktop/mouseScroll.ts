@@ -37,6 +37,8 @@ export function createDesktopMouseScrollTool(config?: DesktopToolConfig): ToolFu
       return parts.join(', ') || 'no-op';
     },
 
+    permission: { scope: 'session' as const, riskLevel: 'medium' as const },
+
     execute: async (args: DesktopMouseScrollArgs): Promise<DesktopMouseScrollResult> => {
       try {
         const driver = await getDesktopDriver(config);

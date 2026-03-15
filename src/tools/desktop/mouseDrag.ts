@@ -37,6 +37,8 @@ export function createDesktopMouseDragTool(config?: DesktopToolConfig): ToolFunc
     describeCall: (args: DesktopMouseDragArgs): string =>
       `(${args.startX},${args.startY}) → (${args.endX},${args.endY})`,
 
+    permission: { scope: 'session' as const, riskLevel: 'medium' as const },
+
     execute: async (args: DesktopMouseDragArgs): Promise<DesktopMouseDragResult> => {
       try {
         const driver = await getDesktopDriver(config);

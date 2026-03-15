@@ -75,6 +75,7 @@ import {
   PersistentInstructionsPluginNextGen,
   UserInfoPluginNextGen,
   ToolCatalogPluginNextGen,
+  SharedWorkspacePluginNextGen,
 } from './plugins/index.js';
 import { StorageRegistry } from '../StorageRegistry.js';
 import type {
@@ -83,6 +84,7 @@ import type {
   PersistentInstructionsConfig,
   UserInfoPluginConfig,
   ToolCatalogPluginConfig,
+  SharedWorkspaceConfig,
 } from './plugins/index.js';
 
 // Strategy imports
@@ -91,7 +93,9 @@ import { StrategyRegistry } from './strategies/index.js';
 import {
   DEFAULT_FEATURES,
   DEFAULT_CONFIG,
+  isStoreHandler,
 } from './types.js';
+import { StoreToolsManager } from './store-tools.js';
 
 // ============================================================================
 // AgentContextNextGen
@@ -200,6 +204,14 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
   /** Filter for journal entry types. When set, only matching types are journaled. */
   private readonly _journalFilter: HistoryEntryType[] | undefined;
+
+  /** Unified store tools manager — routes store_* tools to IStoreHandler plugins */
+  private readonly _storeToolsManager = new StoreToolsManager();
+
+  /** Whether the 5 generic store_* tools have been registered with ToolManager */
+  private _storeToolsRegistered = false;
+  /** Plugins that should NOT be destroyed when this context is destroyed (shared across agents) */
+  private _skipDestroyPlugins = new Set<string>();
 
   // ============================================================================
   // Static Factory
@@ -323,6 +335,12 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       });
       this.registerPlugin(plugin);
       plugin.setToolManager(this._tools);
+    }
+
+    // 6. Shared Workspace (default: disabled)
+    if (features.sharedWorkspace) {
+      const swConfig = configs.sharedWorkspace as Partial<SharedWorkspaceConfig> | undefined;
+      this.registerPlugin(new SharedWorkspacePluginNextGen(swConfig));
     }
 
     // Validate strategy dependencies now that plugins are initialized
@@ -632,7 +650,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    * Register a plugin.
    * Plugin's tools are automatically registered with ToolManager.
    */
-  registerPlugin(plugin: IContextPluginNextGen): void {
+  registerPlugin(plugin: IContextPluginNextGen, options?: { skipDestroyOnContextDestroy?: boolean }): void {
     this.assertNotDestroyed();
 
     if (this._plugins.has(plugin.name)) {
@@ -641,10 +659,28 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
     this._plugins.set(plugin.name, plugin);
 
-    // Register plugin's tools
+    if (options?.skipDestroyOnContextDestroy) {
+      this._skipDestroyPlugins.add(plugin.name);
+    }
+
+    // Register plugin's own tools (non-store tools like todo_*)
     const tools = plugin.getTools();
     for (const tool of tools) {
       this._tools.register(tool);
+    }
+
+    // If plugin implements IStoreHandler, register with unified store tools
+    if (isStoreHandler(plugin)) {
+      this._storeToolsManager.registerHandler(plugin);
+
+      // Register the 5 generic store_* tools on first IStoreHandler
+      if (!this._storeToolsRegistered) {
+        const storeTools = this._storeToolsManager.getTools();
+        for (const tool of storeTools) {
+          this._tools.register(tool);
+        }
+        this._storeToolsRegistered = true;
+      }
     }
   }
 
@@ -1047,10 +1083,19 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       }
     }
 
-    // 3. Plugin Instructions (how to use each plugin)
+    // 3. Store System Overview + Plugin Instructions
     const instructionParts: string[] = [];
     let totalInstructionTokens = 0;
 
+    // If any CRUD stores are registered, add a unified overview block first
+    const storeSchemas = this._storeToolsManager.getSchemas();
+    if (storeSchemas.length > 0) {
+      const overview = this._storeToolsManager.buildOverview();
+      instructionParts.push(overview);
+      totalInstructionTokens += this._estimator.estimateTokens(overview);
+    }
+
+    // Per-plugin instructions (behavior, rules, workflows — NOT tool listing)
     for (const plugin of this._plugins.values()) {
       const instructions = plugin.getInstructions();
       if (instructions) {
@@ -2137,11 +2182,17 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   destroy(): void {
     if (this._destroyed) return;
 
-    // Destroy plugins
-    for (const plugin of this._plugins.values()) {
-      plugin.destroy();
+    // Destroy plugins (skip shared ones that are owned by another context)
+    for (const [name, plugin] of this._plugins) {
+      if (!this._skipDestroyPlugins.has(name)) {
+        plugin.destroy();
+      }
     }
     this._plugins.clear();
+    this._skipDestroyPlugins.clear();
+
+    // Destroy store tools manager
+    this._storeToolsManager.destroy();
 
     // Destroy tool manager
     this._tools.destroy();
@@ -2149,6 +2200,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     // Clear state
     this._conversation = [];
     this._currentInput = [];
+    this._beforeCompactionCallback = null;
 
     this.removeAllListeners();
     this._destroyed = true;

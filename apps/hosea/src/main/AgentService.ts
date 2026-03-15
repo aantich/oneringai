@@ -85,6 +85,17 @@ import {
   executeRoutine,
   type RoutineDefinition,
   type RoutineDefinitionInput,
+  // Orchestrator
+  createOrchestrator,
+  AgentRegistry,
+  // Permissions
+  FileUserPermissionRulesStorage,
+  type ApprovalDecision,
+  type ApprovalRequestContext,
+  type AgentTypeConfig,
+  type AgentInfo,
+  type RegistryAgentStatus,
+  type AgentEventListener,
 } from '@everworker/oneringai';
 import type { BrowserService } from './BrowserService.js';
 import { ToolCatalogRegistry } from '@everworker/oneringai';
@@ -240,6 +251,13 @@ export interface StoredAgentConfig {
   isActive: boolean;
   isArchived?: boolean;
   isPinned?: boolean;
+
+  // Orchestrator mode
+  isOrchestrator?: boolean;
+  /** References to existing agent configs used as child agent types */
+  orchestratorChildAgents?: Array<{ agentConfigId: string; alias: string }>;
+  /** Max worker agents (default: 20) */
+  orchestratorMaxAgents?: number;
 
   // DEPRECATED - kept for backward compatibility with old stored configs
   /** @deprecated Not used in NextGen */
@@ -469,6 +487,15 @@ export type StreamChunk =
   | { type: 'voice:chunk'; chunkIndex: number; subIndex?: number; audioBase64: string; format: string; durationSeconds?: number; text: string }
   | { type: 'voice:error'; chunkIndex: number; error: string; text: string }
   | { type: 'voice:complete'; totalChunks: number; totalDurationSeconds?: number }
+  // Orchestrator worker events
+  | { type: 'orchestrator:worker_created'; worker: { name: string; type: string; model: string; status: string; registryId: string; createdAt: number } }
+  | { type: 'orchestrator:worker_destroyed'; workerName: string }
+  | { type: 'orchestrator:worker_status'; workerName: string; status: string }
+  | { type: 'orchestrator:worker_tool_start'; workerName: string; tool: string; description: string }
+  | { type: 'orchestrator:worker_tool_end'; workerName: string; tool: string; durationMs?: number }
+  | { type: 'orchestrator:worker_turn_start'; workerName: string }
+  | { type: 'orchestrator:worker_turn_end'; workerName: string; success: boolean }
+  | { type: 'orchestrator:workspace_update'; entries: Array<{ key: string; summary: string; status: string; author: string; version: number; updatedAt: number }> }
   // Stream status events (retry, incomplete, failed)
   | { type: 'retry'; attempt: number; maxAttempts: number; reason: string; delayMs: number }
   | { type: 'status'; status: 'completed' | 'incomplete' | 'failed'; stopReason?: string };
@@ -606,6 +633,8 @@ export interface AgentInstance {
   voiceStream?: VoiceStream;
   voiceoverEnabled: boolean;
   sessionSaveEnabled: boolean;
+  // Orchestrator cleanup (AgentRegistry event listeners)
+  orchestratorCleanup?: () => void;
 }
 
 /** Maximum concurrent agent instances (memory limit) */
@@ -638,6 +667,14 @@ export class AgentService {
   // Tool catalog uses ToolCatalogRegistry (static global)
   // Stream emitter for sending chunks to renderer (set by main process)
   private streamEmitter: ((instanceId: string, chunk: StreamChunk) => void) | null = null;
+  // Pending tool permission approvals: requestId → { resolve, instanceId, createdAt }
+  private pendingApprovals = new Map<string, {
+    resolve: (decision: import('@everworker/oneringai').ApprovalDecision) => void;
+    instanceId: string;
+    toolName: string;
+    createdAt: number;
+    timer: ReturnType<typeof setTimeout>;
+  }>();
   // Compaction event log (last N events for each instance/agent)
   private compactionLogs: Map<string, Array<{ timestamp: number; tokensToFree: number; message: string }>> = new Map();
   private readonly MAX_COMPACTION_LOG_ENTRIES = 20;
@@ -3485,6 +3522,13 @@ export class AgentService {
               : undefined,
           },
         },
+        // Wire permission approval callback when permissions enabled
+        ...(agentConfig.permissionsEnabled ? {
+          permissions: {
+            onApprovalRequired: this.createApprovalCallback('default'),
+            userRulesStorage: new FileUserPermissionRulesStorage(),
+          },
+        } : {}),
       };
 
       this.agent = Agent.create(config);
@@ -3864,6 +3908,179 @@ export class AgentService {
     console.log('[AgentService] StreamEmitter connected - HoseaUIPlugin enabled for new instances');
   }
 
+  // ============ Tool Permission Approval ============
+
+  /**
+   * Create the onApprovalRequired callback for a specific agent instance.
+   * When called by the policy manager, it emits a StreamChunk to the renderer
+   * and waits for the user's decision via IPC.
+   */
+  private createApprovalCallback(instanceId: string): (context: ApprovalRequestContext) => Promise<ApprovalDecision> {
+    return (context: ApprovalRequestContext): Promise<ApprovalDecision> => {
+      return new Promise<ApprovalDecision>((resolve) => {
+        const requestId = crypto.randomUUID();
+
+        // 5-minute timeout — auto-deny if no response
+        const timer = setTimeout(() => {
+          if (this.pendingApprovals.has(requestId)) {
+            this.pendingApprovals.delete(requestId);
+            resolve({ approved: false, reason: 'Approval timeout (5 minutes)' });
+          }
+        }, 5 * 60 * 1000);
+
+        this.pendingApprovals.set(requestId, {
+          resolve,
+          instanceId,
+          toolName: context.toolName,
+          createdAt: Date.now(),
+          timer,
+        });
+
+        // Redact sensitive arg values before sending to renderer
+        const sensitiveSet = new Set(context.sensitiveArgs ?? []);
+        const redactedArgs: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(context.args)) {
+          redactedArgs[key] = sensitiveSet.has(key) ? '****' : value;
+        }
+
+        // Get tool description
+        const instance = this.instances.get(instanceId);
+        const tool = instance?.agent?.tools?.get(context.toolName);
+        let description = '';
+        if (tool?.describeCall) {
+          try { description = tool.describeCall(context.args); } catch { /* ignore */ }
+        }
+
+        // Emit to renderer
+        if (this.streamEmitter) {
+          this.streamEmitter(instanceId, {
+            type: 'tool:approval_required',
+            request: {
+              requestId,
+              toolName: context.toolName,
+              args: redactedArgs,
+              riskLevel: context.riskLevel,
+              approvalMessage: context.approvalMessage,
+              sensitiveArgs: context.sensitiveArgs,
+              suggestedScope: context.approvalScope ?? 'once',
+              toolCategory: context.toolCategory,
+              toolSource: context.toolSource,
+              description,
+            },
+          });
+        } else {
+          // No UI connected — deny immediately
+          clearTimeout(timer);
+          this.pendingApprovals.delete(requestId);
+          resolve({ approved: false, reason: 'No approval UI available' });
+        }
+      });
+    };
+  }
+
+  /**
+   * Handle approval response from renderer (called via IPC).
+   */
+  async respondToolApproval(instanceId: string, response: { requestId: string; approved: boolean; scope: string; remember: boolean }): Promise<{ success: boolean; error?: string }> {
+    const pending = this.pendingApprovals.get(response.requestId);
+    if (!pending) {
+      return { success: false, error: `No pending approval for requestId ${response.requestId}` };
+    }
+    if (pending.instanceId !== instanceId) {
+      return { success: false, error: 'Instance ID mismatch' };
+    }
+
+    clearTimeout(pending.timer);
+    this.pendingApprovals.delete(response.requestId);
+
+    // Map UI response to core ApprovalDecision
+    const decision: ApprovalDecision = {
+      approved: response.approved,
+      scope: response.scope as ApprovalDecision['scope'],
+      remember: response.remember,
+      createRule: response.remember ? {
+        description: `${response.approved ? 'Allowed' : 'Denied'} ${pending.toolName} via approval dialog`,
+        unconditional: response.scope === 'always' || response.scope === 'never',
+      } : undefined,
+    };
+
+    pending.resolve(decision);
+
+    // Notify renderer to clear the banner
+    if (this.streamEmitter) {
+      this.streamEmitter(instanceId, {
+        type: 'tool:approval_resolved',
+        requestId: response.requestId,
+        approved: response.approved,
+      });
+    }
+
+    return { success: true };
+  }
+
+  /**
+   * Get permission rules for an agent instance.
+   */
+  async getPermissionRules(instanceId: string): Promise<{ success: boolean; rules?: unknown[]; error?: string }> {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return { success: false, error: 'Instance not found' };
+
+    try {
+      const rules = instance.agent.policyManager.userRules.getRules();
+      return { success: true, rules: rules.map(r => ({ ...r })) };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  }
+
+  /**
+   * Delete a permission rule.
+   */
+  async deletePermissionRule(instanceId: string, ruleId: string): Promise<{ success: boolean; error?: string }> {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return { success: false, error: 'Instance not found' };
+
+    const removed = await instance.agent.policyManager.userRules.removeRule(ruleId);
+    return { success: removed, error: removed ? undefined : 'Rule not found' };
+  }
+
+  /**
+   * Toggle a permission rule enabled/disabled.
+   */
+  async togglePermissionRule(instanceId: string, ruleId: string, enabled: boolean): Promise<{ success: boolean; error?: string }> {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return { success: false, error: 'Instance not found' };
+
+    const updated = enabled
+      ? await instance.agent.policyManager.userRules.enableRule(ruleId)
+      : await instance.agent.policyManager.userRules.disableRule(ruleId);
+    return { success: updated, error: updated ? undefined : 'Rule not found' };
+  }
+
+  /**
+   * Clear session approval cache for an instance.
+   */
+  async clearSessionApprovals(instanceId: string): Promise<{ success: boolean; error?: string }> {
+    const instance = this.instances.get(instanceId);
+    if (!instance) return { success: false, error: 'Instance not found' };
+
+    instance.agent.policyManager.clearSession();
+    return { success: true };
+  }
+
+  /**
+   * Reject all pending approvals for a destroyed instance.
+   */
+  private rejectPendingApprovals(instanceId: string): void {
+    for (const [requestId, pending] of this.pendingApprovals) {
+      if (pending.instanceId === instanceId) {
+        clearTimeout(pending.timer);
+        pending.resolve({ approved: false, reason: 'Agent instance destroyed' });
+        this.pendingApprovals.delete(requestId);
+      }
+    }
+  }
+
   // ============ Context Entry Pinning ============
 
   /**
@@ -4091,21 +4308,177 @@ export class AgentService {
         },
       };
 
-      // Create agent (only basic Agent type in NextGen - other types deprecated)
-      // Pass only plain (non-connector) tools; connector tools registered separately below.
-      const agent = Agent.create({
-        connector: agentConfig.connector,
-        model: agentConfig.model,
-        name: agentConfig.name,
-        tools: plainTools,
-        instructions: fullInstructions,
-        temperature: agentConfig.temperature,
-        context: contextConfig,
-      });
+      // Create agent — branch for orchestrator mode vs regular agent
+      let agent: Agent;
+      let orchestratorCleanup: (() => void) | undefined;
 
-      // Register connector-produced tools with source tracking
-      for (const [connName, connTools] of connectorToolGroups) {
-        agent.tools.registerConnectorTools(connName, connTools);
+      if (agentConfig.isOrchestrator) {
+        // ---- ORCHESTRATOR MODE ----
+        // Build agentTypes from child agent references
+        const agentTypes: Record<string, AgentTypeConfig> = {};
+        for (const child of agentConfig.orchestratorChildAgents ?? []) {
+          const childConfig = this.agents.get(child.agentConfigId);
+          if (!childConfig) {
+            logger.warn(`[createInstance] Child agent config "${child.agentConfigId}" not found for alias "${child.alias}", skipping`);
+            continue;
+          }
+          // Resolve the child's tools
+          const childTools = ToolCatalogRegistry.resolveTools(
+            childConfig.tools,
+            { includeConnectors: true, context: toolCreationContext },
+          );
+          agentTypes[child.alias] = {
+            systemPrompt: childConfig.instructions || '',
+            tools: childTools,
+            model: childConfig.model,
+            connector: childConfig.connector,
+          };
+        }
+
+        logger.info(`[createInstance] Creating orchestrator with ${Object.keys(agentTypes).length} agent types: ${Object.keys(agentTypes).join(', ')}`);
+
+        // Create orchestrator agent (gets 7 orchestration tools + shared workspace automatically)
+        agent = createOrchestrator({
+          connector: agentConfig.connector,
+          model: agentConfig.model,
+          name: agentConfig.name,
+          systemPrompt: fullInstructions,
+          agentTypes,
+          maxAgents: agentConfig.orchestratorMaxAgents ?? 20,
+          maxIterations: agentConfig.maxIterations,
+          agentId: agentConfigId,
+        });
+
+        // Register the orchestrator's own tools from config (separate from orchestration tools)
+        for (const tool of plainTools) {
+          if (!agent.tools.has(tool.definition.function.name)) {
+            agent.tools.register(tool);
+          }
+        }
+        for (const [connName, connTools] of connectorToolGroups) {
+          agent.tools.registerConnectorTools(connName, connTools);
+        }
+
+        // Subscribe to AgentRegistry events for worker visibility in UI
+        if (this.streamEmitter) {
+          const streamEmitter = this.streamEmitter;
+          const orchestratorRegistryId = agent.registryId;
+          // Track known child agent IDs for O(1) lookup in high-frequency event handlers
+          const childAgentIds = new Set<string>();
+
+          // Worker created
+          const onRegistered = ({ info }: { agent: unknown; info: AgentInfo }) => {
+            if (info.parentAgentId !== orchestratorRegistryId) return;
+            childAgentIds.add(info.id);
+            streamEmitter(instanceId, {
+              type: 'orchestrator:worker_created',
+              worker: {
+                name: info.name,
+                // The worker name IS the type alias used in create_agent(name, type)
+                // We can't recover the type here, so we use the name
+                type: info.name,
+                model: info.model,
+                status: info.status as 'idle' | 'running' | 'paused' | 'destroyed',
+                registryId: info.id,
+                createdAt: info.createdAt.getTime(),
+              },
+            });
+          };
+          AgentRegistry.on('agent:registered', onRegistered);
+
+          // Worker destroyed — only emit for known children
+          const onUnregistered = ({ id, name }: { id: string; name: string; reason: string }) => {
+            if (!childAgentIds.has(id)) return;
+            childAgentIds.delete(id);
+            streamEmitter(instanceId, {
+              type: 'orchestrator:worker_destroyed',
+              workerName: name,
+            });
+          };
+          AgentRegistry.on('agent:unregistered', onUnregistered);
+
+          // Worker status changes — use cached Set for O(1) check
+          const onStatusChanged = ({ id, name, current }: { id: string; name: string; previous: RegistryAgentStatus; current: RegistryAgentStatus }) => {
+            if (!childAgentIds.has(id)) return;
+            streamEmitter(instanceId, {
+              type: 'orchestrator:worker_status',
+              workerName: name,
+              status: current as 'idle' | 'running' | 'paused' | 'destroyed',
+            });
+          };
+          AgentRegistry.on('agent:statusChanged', onStatusChanged);
+
+          // Fan-in for tool events from workers — use cached Set for O(1) check
+          const fanInListener: AgentEventListener = (agentId: string, agentName: string, event: string, data: unknown) => {
+            if (!childAgentIds.has(agentId)) return;
+
+            const d = data as Record<string, unknown>;
+            if (event === 'tool:start') {
+              streamEmitter(instanceId, {
+                type: 'orchestrator:worker_tool_start',
+                workerName: agentName,
+                tool: (d.name as string) ?? '',
+                description: (d.description as string) ?? '',
+              });
+            } else if (event === 'tool:complete') {
+              streamEmitter(instanceId, {
+                type: 'orchestrator:worker_tool_end',
+                workerName: agentName,
+                tool: (d.name as string) ?? '',
+                durationMs: d.durationMs as number | undefined,
+              });
+            } else if (event === 'execution:start') {
+              streamEmitter(instanceId, {
+                type: 'orchestrator:worker_turn_start',
+                workerName: agentName,
+              });
+            } else if (event === 'execution:complete') {
+              streamEmitter(instanceId, {
+                type: 'orchestrator:worker_turn_end',
+                workerName: agentName,
+                success: true,
+              });
+            } else if (event === 'execution:error') {
+              streamEmitter(instanceId, {
+                type: 'orchestrator:worker_turn_end',
+                workerName: agentName,
+                success: false,
+              });
+            }
+          };
+          AgentRegistry.onAgentEvent(fanInListener);
+
+          orchestratorCleanup = () => {
+            AgentRegistry.off('agent:registered', onRegistered);
+            AgentRegistry.off('agent:unregistered', onUnregistered);
+            AgentRegistry.off('agent:statusChanged', onStatusChanged);
+            AgentRegistry.offAgentEvent(fanInListener);
+            childAgentIds.clear();
+          };
+        }
+      } else {
+        // ---- REGULAR AGENT ----
+        agent = Agent.create({
+          connector: agentConfig.connector,
+          model: agentConfig.model,
+          name: agentConfig.name,
+          tools: plainTools,
+          instructions: fullInstructions,
+          temperature: agentConfig.temperature,
+          context: contextConfig,
+          // Wire permission approval when enabled
+          ...(agentConfig.permissionsEnabled ? {
+            permissions: {
+              onApprovalRequired: this.createApprovalCallback(instanceId),
+              userRulesStorage: new FileUserPermissionRulesStorage(),
+            },
+          } : {}),
+        });
+
+        // Register connector-produced tools with source tracking
+        for (const [connName, connTools] of connectorToolGroups) {
+          agent.tools.registerConnectorTools(connName, connTools);
+        }
       }
 
       // Register MCP tools with the agent if configured
@@ -4120,9 +4493,6 @@ export class AgentService {
         }
       }
 
-      // NOTE: Browser tools are now resolved through ToolCatalogRegistry when selected
-      // No need for separate registration - they're part of agentConfig.tools
-
       // Register HoseaUIPlugin for browser tool UI integration
       // This plugin emits Dynamic UI content when browser tools execute
       if (this.streamEmitter) {
@@ -4130,7 +4500,6 @@ export class AgentService {
         agent.tools.executionPipeline.use(
           new HoseaUIPlugin({
             emitDynamicUI: (instId: string, content: DynamicUIContent) => {
-              // Send Dynamic UI content to renderer via the stream emitter
               console.log(`[HoseaUIPlugin.emitDynamicUI] Sending to renderer for ${instId}`);
               streamEmitter(instId, {
                 type: 'ui:set_dynamic_content',
@@ -4139,7 +4508,6 @@ export class AgentService {
             },
             getInstanceId: () => instanceId,
             onAgentStuck: (instId: string) => {
-              // Trigger auto-pause via BrowserService event (Trigger 2)
               this.browserService?.emit('browser:agent-stuck', instId);
             },
           })
@@ -4158,6 +4526,7 @@ export class AgentService {
         createdAt: Date.now(),
         voiceoverEnabled: false,
         sessionSaveEnabled: false,
+        orchestratorCleanup,
       };
       this.instances.set(instanceId, agentInstance);
 
@@ -4186,6 +4555,15 @@ export class AgentService {
       const instance = this.instances.get(instanceId);
       if (!instance) {
         return { success: false, error: `Instance "${instanceId}" not found` };
+      }
+
+      // Reject pending approval requests for this instance
+      this.rejectPendingApprovals(instanceId);
+
+      // Clean up orchestrator event listeners before destroying
+      if (instance.orchestratorCleanup) {
+        instance.orchestratorCleanup();
+        instance.orchestratorCleanup = undefined;
       }
 
       // Cancel any ongoing operations

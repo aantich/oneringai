@@ -183,7 +183,7 @@ async function readClipboardImageWindows(): Promise<ClipboardImageResult> {
  */
 async function convertFileToDataUri(filePath: string): Promise<ClipboardImageResult> {
   try {
-    const imageBuffer = fs.readFileSync(filePath);
+    const imageBuffer = await fs.promises.readFile(filePath);
     const base64Image = imageBuffer.toString('base64');
 
     // Detect format from file

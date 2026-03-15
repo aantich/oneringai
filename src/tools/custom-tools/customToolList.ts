@@ -58,7 +58,7 @@ export function createCustomToolList(storage?: ICustomToolStorage): ToolFunction
       },
     },
 
-    permission: { scope: 'always', riskLevel: 'low' },
+    permission: { scope: 'always' as const, riskLevel: 'low' as const },
 
     execute: async (args: ListArgs, context?: ToolContext): Promise<ListResult> => {
       const userId = context?.userId;

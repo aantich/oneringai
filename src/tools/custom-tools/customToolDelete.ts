@@ -37,7 +37,7 @@ export function createCustomToolDelete(storage?: ICustomToolStorage): ToolFuncti
       },
     },
 
-    permission: { scope: 'session', riskLevel: 'medium' },
+    permission: { scope: 'session' as const, riskLevel: 'medium' as const, sensitiveArgs: ['name'] },
 
     execute: async (args: DeleteArgs, context?: ToolContext): Promise<DeleteResult> => {
       try {
