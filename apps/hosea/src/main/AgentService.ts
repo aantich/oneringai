@@ -3788,6 +3788,19 @@ export class AgentService {
     }));
   }
 
+  /**
+   * Get the JSON Schema parameters definition for a specific tool.
+   * Returns the `parameters` object from tool.definition.function, or null if not found.
+   */
+  getToolSchema(toolName: string): Record<string, unknown> | null {
+    const found = ToolCatalogRegistry.findTool(toolName);
+    if (!found) return null;
+    const tool = found.entry?.tool;
+    if (!tool) return null;
+    const params = tool.definition?.function?.parameters;
+    return (params as Record<string, unknown>) ?? null;
+  }
+
   toggleTool(toolName: string, enabled: boolean): { success: boolean } {
     if (!this.agent) {
       return { success: false };

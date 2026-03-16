@@ -87,11 +87,11 @@ export function computeStats(agents: AgentListItem[]): AgentStats {
   };
 }
 
-/** Sort agents: pinned first, then by lastUsedAt descending */
+/** Sort agents: pinned → default (isActive) → lastUsedAt descending */
 export function sortAgents(agents: AgentListItem[]): AgentListItem[] {
   return [...agents].sort((a, b) => {
-    if (a.isPinned && !b.isPinned) return -1;
-    if (!a.isPinned && b.isPinned) return 1;
+    if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+    if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
     return (b.lastUsedAt ?? 0) - (a.lastUsedAt ?? 0);
   });
 }

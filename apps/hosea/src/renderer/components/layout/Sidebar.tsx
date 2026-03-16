@@ -65,7 +65,7 @@ const mainSections: NavSection[] = [
 const advancedItems: NavItem[] = [
   { id: 'llm-connectors', label: 'LLM Providers', icon: <Brain size={20} /> },
   { id: 'universal-connectors', label: 'Universal Connectors', icon: <Key size={20} /> },
-  { id: 'tool-connectors', label: 'Tool Catalog', icon: <Wrench size={20} /> },
+  { id: 'tool-catalog', label: 'Tool Catalog', icon: <Wrench size={20} /> },
   { id: 'mcp-servers', label: 'MCP Servers', icon: <Server size={20} /> },
 ];
 

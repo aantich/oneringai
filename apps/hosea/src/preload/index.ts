@@ -652,6 +652,7 @@ export interface HoseaAPI {
       source: 'oneringai' | 'hosea' | 'custom';
     }>>;
     categories: () => Promise<Array<{ id: string; displayName: string; count: number }>>;
+    getSchema: (toolName: string) => Promise<Record<string, unknown> | null>;
   };
 
   // Config
@@ -1574,6 +1575,7 @@ const api: HoseaAPI = {
     toggle: (toolName, enabled) => ipcRenderer.invoke('tool:toggle', toolName, enabled),
     registry: () => ipcRenderer.invoke('tool:registry'),
     categories: () => ipcRenderer.invoke('tool:categories'),
+    getSchema: (toolName) => ipcRenderer.invoke('tool:getSchema', toolName),
   },
 
   config: {

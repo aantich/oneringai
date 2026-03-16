@@ -157,7 +157,12 @@ export function AgentsPage(): React.ReactElement {
   const handleSetDefault = useCallback(async (agentId: string) => {
     try {
       await window.hosea.agentConfig.setActive(agentId);
-      setAgents((prev) => prev.map((a) => ({ ...a, isActive: a.id === agentId })));
+      const now = Date.now();
+      setAgents((prev) => prev.map((a) => ({
+        ...a,
+        isActive: a.id === agentId,
+        lastUsedAt: a.id === agentId ? now : a.lastUsedAt,
+      })));
     } catch (err) {
       console.error('[AgentsPage] handleSetDefault error:', err);
     }

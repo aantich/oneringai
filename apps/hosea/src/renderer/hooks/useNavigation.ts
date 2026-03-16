@@ -14,6 +14,7 @@ export type PageId =
   | 'universal-connectors'
   | 'connector-catalog'
   | 'connector-create'
+  | 'tool-catalog'
   | 'tool-connectors'
   | 'mcp-servers'
   | 'multimedia-studio'

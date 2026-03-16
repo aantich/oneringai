@@ -8,6 +8,7 @@ export { UniversalConnectorsPage } from './UniversalConnectorsPage';
 export { ConnectorCatalogPage } from './ConnectorCatalogPage';
 export { ConnectorCreatePage } from './ConnectorCreatePage';
 export { ToolConnectorsPage } from './ToolConnectorsPage';
+export { ToolsPage } from './tools/index.js';
 export { MCPServersPage } from './MCPServersPage';
 export { MultimediaStudioPage } from './MultimediaStudioPage';
 export { RoutinesPage } from './RoutinesPage';

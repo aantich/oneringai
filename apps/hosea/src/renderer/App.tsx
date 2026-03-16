@@ -16,6 +16,7 @@ import {
   ConnectorCatalogPage,
   ConnectorCreatePage,
   ToolConnectorsPage,
+  ToolsPage,
   MCPServersPage,
   MultimediaStudioPage,
   RoutinesPage,
@@ -323,6 +324,8 @@ function AppContent(): React.ReactElement {
         return <ConnectorCatalogPage />;
       case 'connector-create':
         return <ConnectorCreatePage />;
+      case 'tool-catalog':
+        return <ToolsPage />;
       case 'tool-connectors':
         return <ToolConnectorsPage />;
       case 'mcp-servers':

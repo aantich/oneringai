@@ -428,6 +428,10 @@ async function setupIPC(): Promise<void> {
     return agentService!.getToolCategories();
   });
 
+  ipcMain.handle('tool:getSchema', async (_event, toolName: string) => {
+    return agentService!.getToolSchema(toolName);
+  });
+
   // Agent configuration operations
   ipcMain.handle('agent-config:list', async () => {
     return agentService!.listAgents();
