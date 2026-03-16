@@ -31,6 +31,7 @@ import type { InputItem } from '../domain/entities/Message.js';
 import type { StreamEvent } from '../domain/entities/StreamEvent.js';
 import type { IContextStorage, ContextSessionMetadata } from '../domain/interfaces/IContextStorage.js';
 import type { IConnectorRegistry } from '../domain/interfaces/IConnectorRegistry.js';
+import { StorageRegistry } from './StorageRegistry.js';
 
 /**
  * Options for tool registration
@@ -461,15 +462,18 @@ export abstract class BaseAgent<
    * Otherwise, translates legacy AgentPermissionsConfig to policies.
    */
   protected initializePolicyManager(config: TConfig): PermissionPolicyManager {
-    const permsConfig = config.permissions;
+    const permsConfig = config.permissions ?? {};
 
-    // Check if using new policy config (has `policies` or `policyChain` field)
-    if (permsConfig && ('policies' in permsConfig || 'policyChain' in permsConfig)) {
-      return PermissionPolicyManager.fromConfig(permsConfig as AgentPolicyConfig);
-    }
+    // Resolve user rules storage: explicit config > StorageRegistry > undefined
+    const registryRulesStorage = StorageRegistry.get('permissionRules');
 
-    // Legacy config — translate to policies
-    return PermissionPolicyManager.fromLegacyConfig(permsConfig ?? {});
+    // Always route through fromConfig (handles both legacy and policy-based paths)
+    const policyConfig: AgentPolicyConfig = {
+      ...permsConfig,
+      userRulesStorage: (permsConfig as AgentPolicyConfig).userRulesStorage ?? registryRulesStorage,
+    };
+
+    return PermissionPolicyManager.fromConfig(policyConfig);
   }
 
   /**

@@ -837,7 +837,7 @@ export class AgentService {
       maxInContextTokens: (typeConfig.maxInContextTokens as number) ?? 4000,
       persistentInstructionsEnabled: features.persistentInstructions ?? false,
       userInfoEnabled: features.userInfo ?? false,
-      dynamicUIEnabled: features.dynamicUI ?? false,
+      dynamicUIEnabled: features.dynamicUI ?? true,
       toolCatalogEnabled: features.toolCatalog ?? false,
       pinnedCategories: (typeConfig.pinnedCategories as string[]) ?? [],
       toolCategoryScope: (typeConfig.toolCategoryScope as string[]) ?? [],

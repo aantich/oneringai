@@ -45,6 +45,7 @@ import type { IUserInfoStorage } from '../domain/interfaces/IUserInfoStorage.js'
 import type { IRoutineDefinitionStorage } from '../domain/interfaces/IRoutineDefinitionStorage.js';
 import type { IRoutineExecutionStorage } from '../domain/interfaces/IRoutineExecutionStorage.js';
 import type { ICorrelationStorage } from '../domain/interfaces/ICorrelationStorage.js';
+import type { IUserPermissionRulesStorage } from '../domain/interfaces/IUserPermissionRulesStorage.js';
 
 // ============================================================================
 // Types
@@ -83,8 +84,9 @@ export interface StorageConfig {
   routineDefinitions: (context?: StorageContext) => IRoutineDefinitionStorage;
   routineExecutions: (context?: StorageContext) => IRoutineExecutionStorage;
 
-  // Global singleton
+  // Global singletons (partitioned by userId internally)
   correlations: ICorrelationStorage;
+  permissionRules: IUserPermissionRulesStorage;
 }
 
 // ============================================================================

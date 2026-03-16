@@ -8,22 +8,19 @@
  *
  * Also provides:
  * - Approval flow (onApprovalRequired callback, can create persistent user rules)
- * - Argument-scoped approval cache (via SessionApprovalPolicy)
- * - Centralized audit (with redaction)
+ * - Argument-scoped approval cache (via SessionApprovalPolicy, in-memory only)
+ * - Centralized audit via events (subscribe to 'permission:audit')
  * - Backward compatibility with legacy ToolPermissionManager
- * - Policy factory registry for stored policy deserialization
  */
 
 import { EventEmitter } from 'eventemitter3';
 import { PolicyChain } from './PolicyChain.js';
-import { PolicyFactoryRegistry } from './PolicyFactoryRegistry.js';
 import { UserPermissionRulesEngine } from './UserPermissionRulesEngine.js';
 import { AllowlistPolicy } from './policies/AllowlistPolicy.js';
 import { BlocklistPolicy } from './policies/BlocklistPolicy.js';
 import { SessionApprovalPolicy } from './policies/SessionApprovalPolicy.js';
 import type {
   IPermissionPolicy,
-  IPermissionPolicyFactory,
   PolicyContext,
   PolicyDecision,
   PolicyCheckResult,
@@ -39,9 +36,6 @@ import type {
 } from './types.js';
 import { DEFAULT_ALLOWLIST, DEFAULT_PERMISSION_CONFIG, POLICY_STATE_VERSION } from './types.js';
 import type { UserPermissionRule } from './types.js';
-import type { IPermissionAuditStorage } from '../../domain/interfaces/IPermissionAuditStorage.js';
-import type { IPermissionApprovalStorage } from '../../domain/interfaces/IPermissionApprovalStorage.js';
-import type { IPermissionPolicyStorage } from '../../domain/interfaces/IPermissionPolicyStorage.js';
 import type { IUserPermissionRulesStorage } from '../../domain/interfaces/IUserPermissionRulesStorage.js';
 
 // ============================================================================
@@ -54,7 +48,6 @@ export interface PolicyManagerEvents {
   'permission:approval_granted': PermissionAuditEntry;
   'permission:approval_denied': PermissionAuditEntry;
   'permission:audit': PermissionAuditEntry;
-  'permission:audit_error': { error: Error; entry: PermissionAuditEntry };
   'policy:added': { name: string };
   'policy:removed': { name: string };
   'session:cleared': {};
@@ -73,15 +66,6 @@ export interface PermissionPolicyManagerConfig {
 
   /** Callback invoked when a tool needs user approval */
   onApprovalRequired?: (context: ApprovalRequestContext) => Promise<ApprovalDecision>;
-
-  /** Audit storage (optional) */
-  auditStorage?: IPermissionAuditStorage;
-
-  /** Approval state storage (optional) */
-  approvalStorage?: IPermissionApprovalStorage;
-
-  /** Policy definitions storage (optional) */
-  policyStorage?: IPermissionPolicyStorage;
 
   /** Per-user permission rules storage (optional) */
   userRulesStorage?: IUserPermissionRulesStorage;
@@ -105,7 +89,6 @@ const MAX_ARG_VALUE_LENGTH = 500;
 
 export class PermissionPolicyManager extends EventEmitter {
   private chain: PolicyChain;
-  private factoryRegistry: PolicyFactoryRegistry;
   private _isDestroyed = false;
 
   // Delegation
@@ -113,11 +96,6 @@ export class PermissionPolicyManager extends EventEmitter {
 
   // Approval callback
   private onApprovalRequired?: (context: ApprovalRequestContext) => Promise<ApprovalDecision>;
-
-  // Storage backends
-  private auditStorage?: IPermissionAuditStorage;
-  private approvalStorage?: IPermissionApprovalStorage;
-  private policyStorage?: IPermissionPolicyStorage;
 
   // User permission rules engine (highest priority, pre-check)
   private _userRulesEngine: UserPermissionRulesEngine;
@@ -131,12 +109,8 @@ export class PermissionPolicyManager extends EventEmitter {
     super();
 
     this.chain = new PolicyChain(config.chain);
-    this.factoryRegistry = new PolicyFactoryRegistry();
     this._userRulesEngine = new UserPermissionRulesEngine(config.userRulesStorage);
     this.onApprovalRequired = config.onApprovalRequired;
-    this.auditStorage = config.auditStorage;
-    this.approvalStorage = config.approvalStorage;
-    this.policyStorage = config.policyStorage;
 
     // Register provided policies
     if (config.policies) {
@@ -171,14 +145,6 @@ export class PermissionPolicyManager extends EventEmitter {
 
   listPolicies(): IPermissionPolicy[] {
     return this.chain.list();
-  }
-
-  // ==========================================================================
-  // Policy Factory Registry
-  // ==========================================================================
-
-  registerPolicyFactory(factory: IPermissionPolicyFactory): void {
-    this.factoryRegistry.register(factory);
   }
 
   // ==========================================================================
@@ -549,14 +515,6 @@ export class PermissionPolicyManager extends EventEmitter {
 
     this.emit(eventName, entry);
     this.emit('permission:audit', entry);
-
-    // Persist if storage configured (fire-and-forget)
-    if (this.auditStorage) {
-      this.auditStorage.append(entry).catch((error) => {
-        // Audit persistence failure is non-fatal but surfaced via event
-        this.emit('permission:audit_error', { error: error as Error, entry });
-      });
-    }
   }
 
   /**
@@ -589,14 +547,6 @@ export class PermissionPolicyManager extends EventEmitter {
   // ==========================================================================
   // Persistence
   // ==========================================================================
-
-  /**
-   * Get the approval storage backend (if configured).
-   * Used by Phase 2 persistence features.
-   */
-  getApprovalStorage(): IPermissionApprovalStorage | undefined {
-    return this.approvalStorage;
-  }
 
   /**
    * Serialize approval state for session persistence.
@@ -657,33 +607,6 @@ export class PermissionPolicyManager extends EventEmitter {
         this._allowlistPolicy.add(name);
       }
     }
-  }
-
-  /**
-   * Load policy definitions from storage and instantiate them.
-   */
-  async loadPolicies(userId?: string): Promise<void> {
-    if (!this.policyStorage) return;
-
-    const definitions = await this.policyStorage.load(userId);
-    if (!definitions) return;
-
-    for (const def of definitions) {
-      if (!def.enabled) continue;
-      const policy = this.factoryRegistry.create(def);
-      if (policy) {
-        this.addPolicy(policy);
-      }
-    }
-  }
-
-  /**
-   * Save current policy definitions to storage.
-   * Note: only saves policies that were loaded from storage (stored definitions),
-   * not programmatically added policies.
-   */
-  async savePolicies(_userId?: string): Promise<void> {
-    throw new Error('Not implemented — use PolicyFactoryRegistry for stored policies');
   }
 
   // ==========================================================================
@@ -749,16 +672,7 @@ export class PermissionPolicyManager extends EventEmitter {
     // Apply per-tool configs (override tool self-declarations at check time)
     // These are applied via the SessionApprovalPolicy reading toolPermissionConfig
 
-    // Set storage backends
-    if (config.auditStorage) {
-      manager.auditStorage = config.auditStorage;
-    }
-    if (config.approvalStorage) {
-      manager.approvalStorage = config.approvalStorage;
-    }
-    if (config.policyStorage) {
-      manager.policyStorage = config.policyStorage;
-    }
+    // Set user rules storage
     if (config.userRulesStorage) {
       manager._userRulesEngine.setStorage(config.userRulesStorage);
     }

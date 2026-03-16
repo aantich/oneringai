@@ -268,8 +268,11 @@ export type {
   LoggingPluginOptions,
 } from './core/index.js';
 
-// Tool Permissions (NEW)
+// Tool Permissions
 export { ToolPermissionManager } from './core/permissions/index.js';
+export { PermissionPolicyManager } from './core/permissions/index.js';
+export type { PermissionPolicyManagerConfig, PolicyManagerEvents } from './core/permissions/index.js';
+export { UserPermissionRulesEngine } from './core/permissions/index.js';
 export type {
   PermissionScope,
   RiskLevel,
@@ -281,12 +284,21 @@ export type {
   ApprovalDecision,
   ApprovalRequestContext,
   AgentPermissionsConfig,
+  AgentPolicyConfig,
   PermissionCheckContext,
   PermissionManagerEvent,
+  IPermissionPolicy,
+  PolicyContext,
+  PolicyDecision,
+  PolicyCheckResult,
+  PolicyChainConfig,
+  PermissionAuditEntry,
+  UserPermissionRule,
 } from './core/permissions/index.js';
 export { APPROVAL_STATE_VERSION, DEFAULT_PERMISSION_CONFIG, DEFAULT_ALLOWLIST } from './core/permissions/index.js';
 export type { DefaultAllowlistedTool } from './core/permissions/index.js';
 export { FileUserPermissionRulesStorage } from './infrastructure/storage/FileUserPermissionRulesStorage.js';
+export type { IUserPermissionRulesStorage } from './domain/interfaces/IUserPermissionRulesStorage.js';
 
 // Context Storage (Session Persistence via AgentContext)
 export type {

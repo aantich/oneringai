@@ -570,15 +570,6 @@ export interface AgentPolicyConfig extends AgentPermissionsConfig {
   /** Policy chain configuration */
   policyChain?: PolicyChainConfig;
 
-  /** Audit storage for persisting permission decisions */
-  auditStorage?: import('../../domain/interfaces/IPermissionAuditStorage.js').IPermissionAuditStorage;
-
-  /** Approval state storage */
-  approvalStorage?: import('../../domain/interfaces/IPermissionApprovalStorage.js').IPermissionApprovalStorage;
-
-  /** Policy definitions storage */
-  policyStorage?: import('../../domain/interfaces/IPermissionPolicyStorage.js').IPermissionPolicyStorage;
-
   /** Per-user permission rules storage */
   userRulesStorage?: import('../../domain/interfaces/IUserPermissionRulesStorage.js').IUserPermissionRulesStorage;
 }

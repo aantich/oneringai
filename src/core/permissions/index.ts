@@ -14,7 +14,6 @@ export { PermissionPolicyManager } from './PermissionPolicyManager.js';
 export type { PermissionPolicyManagerConfig, PolicyManagerEvents } from './PermissionPolicyManager.js';
 export { PermissionEnforcementPlugin } from './PermissionEnforcementPlugin.js';
 export type { ToolRegistrationInfo } from './PermissionEnforcementPlugin.js';
-export { PolicyFactoryRegistry } from './PolicyFactoryRegistry.js';
 export { UserPermissionRulesEngine } from './UserPermissionRulesEngine.js';
 
 // Built-in policies
