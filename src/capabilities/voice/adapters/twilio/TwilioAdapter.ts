@@ -237,7 +237,12 @@ export class TwilioAdapter extends EventEmitter implements ITelephonyAdapter {
       this.handleMediaSocket(ws);
     });
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+      this.server.on('error', (err: Error) => {
+        logger.error({ err, port }, '[TwilioAdapter] Server error');
+        this.server = null;
+        reject(err);
+      });
       this.server.listen(port, () => {
         logger.info({ port, webhookPath: this.config.webhookPath }, '[TwilioAdapter] Standalone server started');
         resolve();
