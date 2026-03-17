@@ -9,7 +9,7 @@ import { Vendor } from './Vendor.js';
 import { OpenAITTSProvider } from '../infrastructure/providers/openai/OpenAITTSProvider.js';
 import { OpenAISTTProvider } from '../infrastructure/providers/openai/OpenAISTTProvider.js';
 import { GoogleTTSProvider } from '../infrastructure/providers/google/GoogleTTSProvider.js';
-import type { OpenAIMediaConfig, GoogleConfig } from '../domain/types/ProviderConfig.js';
+import { extractOpenAICompatConfig, extractGoogleConfig } from './extractProviderConfig.js';
 
 /**
  * Create a Text-to-Speech provider from a connector
@@ -19,7 +19,7 @@ export function createTTSProvider(connector: Connector): ITextToSpeechProvider {
 
   switch (vendor) {
     case Vendor.OpenAI:
-      return new OpenAITTSProvider(extractOpenAIConfig(connector));
+      return new OpenAITTSProvider(extractOpenAICompatConfig(connector, 'OpenAI'));
 
     case Vendor.Google:
       return new GoogleTTSProvider(extractGoogleConfig(connector));
@@ -40,7 +40,7 @@ export function createSTTProvider(connector: Connector): ISpeechToTextProvider {
 
   switch (vendor) {
     case Vendor.OpenAI:
-      return new OpenAISTTProvider(extractOpenAIConfig(connector));
+      return new OpenAISTTProvider(extractOpenAICompatConfig(connector, 'OpenAI'));
 
     case Vendor.Groq:
       // TODO: Implement GroqSTTProvider (Whisper on Groq)
@@ -56,43 +56,4 @@ export function createSTTProvider(connector: Connector): ISpeechToTextProvider {
         `Supported vendors: ${Vendor.OpenAI}, ${Vendor.Groq}`
       );
   }
-}
-
-/**
- * Extract OpenAI configuration from connector
- */
-function extractOpenAIConfig(connector: Connector): OpenAIMediaConfig {
-  const auth = connector.config.auth;
-
-  if (auth.type !== 'api_key') {
-    throw new Error('OpenAI requires API key authentication');
-  }
-
-  const options = connector.getOptions();
-
-  return {
-    auth: {
-      type: 'api_key',
-      apiKey: auth.apiKey,
-    },
-    baseURL: connector.baseURL,
-    organization: options.organization as string | undefined,
-    timeout: options.timeout as number | undefined,
-    maxRetries: options.maxRetries as number | undefined,
-  };
-}
-
-/**
- * Extract Google configuration from connector
- */
-function extractGoogleConfig(connector: Connector): GoogleConfig {
-  const auth = connector.config.auth;
-
-  if (auth.type !== 'api_key') {
-    throw new Error('Google requires API key authentication');
-  }
-
-  return {
-    apiKey: auth.apiKey,
-  };
 }

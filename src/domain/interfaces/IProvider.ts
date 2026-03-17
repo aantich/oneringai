@@ -7,6 +7,7 @@ export interface ProviderCapabilities {
   images: boolean;
   videos: boolean;
   audio: boolean;
+  embeddings?: boolean;
   /** Optional feature flags for specific capabilities */
   features?: Record<string, boolean>;
 }

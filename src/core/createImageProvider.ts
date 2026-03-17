@@ -8,7 +8,7 @@ import { Vendor } from './Vendor.js';
 import { OpenAIImageProvider } from '../infrastructure/providers/openai/OpenAIImageProvider.js';
 import { GoogleImageProvider } from '../infrastructure/providers/google/GoogleImageProvider.js';
 import { GrokImageProvider } from '../infrastructure/providers/grok/GrokImageProvider.js';
-import type { OpenAIMediaConfig, GoogleConfig, GrokMediaConfig } from '../domain/types/ProviderConfig.js';
+import { extractOpenAICompatConfig, extractGoogleConfig, extractGrokMediaConfig } from './extractProviderConfig.js';
 
 /**
  * Create an Image Generation provider from a connector
@@ -18,13 +18,13 @@ export function createImageProvider(connector: Connector): IImageProvider {
 
   switch (vendor) {
     case Vendor.OpenAI:
-      return new OpenAIImageProvider(extractOpenAIConfig(connector));
+      return new OpenAIImageProvider(extractOpenAICompatConfig(connector, 'OpenAI'));
 
     case Vendor.Google:
       return new GoogleImageProvider(extractGoogleConfig(connector));
 
     case Vendor.Grok:
-      return new GrokImageProvider(extractGrokConfig(connector));
+      return new GrokImageProvider(extractGrokMediaConfig(connector));
 
     default:
       throw new Error(
@@ -32,66 +32,4 @@ export function createImageProvider(connector: Connector): IImageProvider {
         `Supported vendors: ${Vendor.OpenAI}, ${Vendor.Google}, ${Vendor.Grok}`
       );
   }
-}
-
-/**
- * Extract OpenAI configuration from connector
- */
-function extractOpenAIConfig(connector: Connector): OpenAIMediaConfig {
-  const auth = connector.config.auth;
-
-  if (auth.type !== 'api_key') {
-    throw new Error('OpenAI requires API key authentication');
-  }
-
-  const options = connector.getOptions();
-
-  return {
-    auth: {
-      type: 'api_key',
-      apiKey: auth.apiKey,
-    },
-    baseURL: connector.baseURL,
-    organization: options.organization as string | undefined,
-    timeout: options.timeout as number | undefined,
-    maxRetries: options.maxRetries as number | undefined,
-  };
-}
-
-/**
- * Extract Google configuration from connector
- */
-function extractGoogleConfig(connector: Connector): GoogleConfig {
-  const auth = connector.config.auth;
-
-  if (auth.type !== 'api_key') {
-    throw new Error('Google requires API key authentication');
-  }
-
-  return {
-    apiKey: auth.apiKey,
-  };
-}
-
-/**
- * Extract Grok configuration from connector
- */
-function extractGrokConfig(connector: Connector): GrokMediaConfig {
-  const auth = connector.config.auth;
-
-  if (auth.type !== 'api_key') {
-    throw new Error('Grok requires API key authentication');
-  }
-
-  const options = connector.getOptions();
-
-  return {
-    auth: {
-      type: 'api_key',
-      apiKey: auth.apiKey,
-    },
-    baseURL: connector.baseURL,
-    timeout: options.timeout as number | undefined,
-    maxRetries: options.maxRetries as number | undefined,
-  };
 }

@@ -137,6 +137,12 @@ export type {
 } from './capabilities/video/index.js';
 export { createVideoProvider } from './core/createVideoProvider.js';
 
+// Embedding Capabilities
+export { Embeddings } from './capabilities/embeddings/index.js';
+export type { EmbeddingsCreateOptions } from './capabilities/embeddings/index.js';
+export { createEmbeddingProvider } from './core/createEmbeddingProvider.js';
+export type { IEmbeddingProvider, EmbeddingOptions, EmbeddingResponse } from './domain/interfaces/IEmbeddingProvider.js';
+
 // Speech Capabilities (Voice pseudo-streaming)
 export { VoiceStream, SentenceChunkingStrategy, AudioPlaybackQueue } from './capabilities/speech/index.js';
 export type {
@@ -690,6 +696,18 @@ export {
   getVideoModelsWithAudio,
   calculateVideoCost,
 } from './domain/entities/VideoModel.js';
+
+// Embedding Model Registry
+export type { IEmbeddingModelDescription, EmbeddingModelCapabilities, EmbeddingModelPricing } from './domain/entities/EmbeddingModel.js';
+export {
+  EMBEDDING_MODELS,
+  EMBEDDING_MODEL_REGISTRY,
+  getEmbeddingModelInfo,
+  getEmbeddingModelsByVendor,
+  getActiveEmbeddingModels,
+  getEmbeddingModelsWithFeature,
+  calculateEmbeddingCost,
+} from './domain/entities/EmbeddingModel.js';
 
 // ============ Streaming ============
 export { StreamEventType } from './domain/entities/StreamEvent.js';

@@ -5,10 +5,11 @@
 import { Connector } from './Connector.js';
 import { Vendor } from './Vendor.js';
 import type { IVideoProvider } from '../domain/interfaces/IVideoProvider.js';
-import type { OpenAIMediaConfig, GoogleMediaConfig, GrokMediaConfig } from '../domain/types/ProviderConfig.js';
 import { OpenAISoraProvider } from '../infrastructure/providers/openai/OpenAISoraProvider.js';
 import { GoogleVeoProvider } from '../infrastructure/providers/google/GoogleVeoProvider.js';
 import { GrokImagineProvider } from '../infrastructure/providers/grok/GrokImagineProvider.js';
+import { extractOpenAICompatConfig, extractGoogleMediaConfig, extractGrokMediaConfig } from './extractProviderConfig.js';
+
 /**
  * Create a video provider from a connector
  */
@@ -17,13 +18,13 @@ export function createVideoProvider(connector: Connector): IVideoProvider {
 
   switch (vendor) {
     case Vendor.OpenAI:
-      return new OpenAISoraProvider(extractOpenAIConfig(connector));
+      return new OpenAISoraProvider(extractOpenAICompatConfig(connector, 'OpenAI'));
 
     case Vendor.Google:
-      return new GoogleVeoProvider(extractGoogleConfig(connector));
+      return new GoogleVeoProvider(extractGoogleMediaConfig(connector));
 
     case Vendor.Grok:
-      return new GrokImagineProvider(extractGrokConfig(connector));
+      return new GrokImagineProvider(extractGrokMediaConfig(connector));
 
     default:
       throw new Error(
@@ -31,73 +32,4 @@ export function createVideoProvider(connector: Connector): IVideoProvider {
           `Supported vendors: ${Vendor.OpenAI}, ${Vendor.Google}, ${Vendor.Grok}`
       );
   }
-}
-
-/**
- * Extract OpenAI configuration from connector
- */
-function extractOpenAIConfig(connector: Connector): OpenAIMediaConfig {
-  const auth = connector.config.auth;
-
-  if (auth.type !== 'api_key') {
-    throw new Error('OpenAI requires API key authentication');
-  }
-
-  const options = connector.getOptions();
-
-  return {
-    auth: {
-      type: 'api_key',
-      apiKey: auth.apiKey,
-    },
-    baseURL: connector.baseURL,
-    organization: options.organization as string | undefined,
-    timeout: options.timeout as number | undefined,
-    maxRetries: options.maxRetries as number | undefined,
-  };
-}
-
-/**
- * Extract Google configuration from connector
- */
-function extractGoogleConfig(connector: Connector): GoogleMediaConfig {
-  const auth = connector.config.auth;
-
-  if (auth.type !== 'api_key') {
-    throw new Error('Google requires API key authentication');
-  }
-
-  const options = connector.getOptions();
-
-  return {
-    auth: {
-      type: 'api_key',
-      apiKey: auth.apiKey,
-    },
-    timeout: options.timeout as number | undefined,
-    maxRetries: options.maxRetries as number | undefined,
-  };
-}
-
-/**
- * Extract Grok configuration from connector
- */
-function extractGrokConfig(connector: Connector): GrokMediaConfig {
-  const auth = connector.config.auth;
-
-  if (auth.type !== 'api_key') {
-    throw new Error('Grok requires API key authentication');
-  }
-
-  const options = connector.getOptions();
-
-  return {
-    auth: {
-      type: 'api_key',
-      apiKey: auth.apiKey,
-    },
-    baseURL: connector.baseURL,
-    timeout: options.timeout as number | undefined,
-    maxRetries: options.maxRetries as number | undefined,
-  };
 }
