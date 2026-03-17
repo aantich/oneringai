@@ -631,7 +631,7 @@ export class TwilioAdapter extends EventEmitter implements ITelephonyAdapter {
       logger.info({ callSid, from, to }, '[TwilioAdapter] Incoming call');
 
       const wsUrl = this.config.publicUrl
-        ? `${this.config.publicUrl.replace(/^http/, 'ws')}${this.config.mediaStreamPath}`
+        ? `${this.config.publicUrl.replace(/^http/, 'ws').replace(/\/+$/, '')}${this.config.mediaStreamPath}`
         : `wss://localhost:${this.config.port}${this.config.mediaStreamPath}`;
 
       const twiml = [
