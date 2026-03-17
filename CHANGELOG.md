@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-03-17
+
+### Added
+- **Embedding Capability**: First-class embedding support following the same capability-based pattern as Image, Video, TTS, and STT. Multi-vendor embedding generation with a unified API.
+- **`Embeddings` Class**: High-level capability class with `Embeddings.create({ connector, model?, dimensions? })` factory. Supports single and batch embedding with per-call model/dimension overrides.
+- **`IEmbeddingProvider` Interface**: Provider interface with `embed(options)` method returning typed `EmbeddingResponse` (embeddings, model, usage). Extends `IProvider`.
+- **`createEmbeddingProvider(connector)` Factory**: Routes to the correct vendor-specific provider. Supports OpenAI, Google, Ollama, Groq, Together, Mistral, DeepSeek, Grok, and Custom vendors.
+- **`OpenAIEmbeddingProvider`**: Uses the OpenAI SDK for embedding generation. Also serves as the provider for all OpenAI-compatible vendors (Ollama, Mistral, Together, etc.) via baseURL and name overrides. Supports `dimensions` parameter for MRL-capable models.
+- **`GoogleEmbeddingProvider`**: Uses Google's `embedContent` and `batchEmbedContents` REST API with `outputDimensionality` support.
+- **Embedding Model Registry**: Comprehensive metadata for 10 embedding models across 4 vendors:
+  - **OpenAI (3)**: `text-embedding-3-small` (1536d, MRL), `text-embedding-3-large` (3072d, MRL), `text-embedding-ada-002` (legacy, inactive)
+  - **Google (1)**: `text-embedding-004` (768d, MRL, free tier)
+  - **Mistral (1)**: `mistral-embed` (1024d)
+  - **Ollama (5)**: `qwen3-embedding` (4096d, 8B, #1 MTEB multilingual), `qwen3-embedding:4b`, `qwen3-embedding:0.6b` (1024d, ~400MB), `nomic-embed-text` (768d), `mxbai-embed-large` (1024d)
+- **Registry Helpers**: `getEmbeddingModelInfo()`, `getEmbeddingModelsByVendor()`, `getActiveEmbeddingModels()`, `getEmbeddingModelsWithFeature()`, `calculateEmbeddingCost()`.
+- **`EMBEDDING_MODELS` Constants**: Typed constants organized by vendor (e.g., `EMBEDDING_MODELS[Vendor.OpenAI].TEXT_EMBEDDING_3_SMALL`).
+- **Matryoshka Representation Learning (MRL)**: Models with MRL support allow flexible output dimensions — request fewer dimensions for faster similarity search with minimal quality loss. Tracked via `capabilities.features.matryoshka` in the registry.
+- **Ollama `auth: none` Support**: Embedding factory correctly handles Ollama's `none` authentication type, matching the existing `createProvider` (text) behavior.
+- **`ProviderCapabilities.embeddings`**: Optional `embeddings?: boolean` field added to `ProviderCapabilities` interface. Embedding providers set this to `true`.
+
+### Changed
+- **DRY: Shared Config Extractors**: Extracted `extractOpenAICompatConfig()`, `extractGoogleConfig()`, `extractGoogleMediaConfig()`, and `extractGrokMediaConfig()` into `src/core/extractProviderConfig.ts`. Updated `createImageProvider`, `createAudioProvider`, and `createVideoProvider` to use shared helpers instead of local copies. Eliminates 4x code duplication across factory files.
+
 ## [0.5.1] - 2026-03-15
 
 ### Added

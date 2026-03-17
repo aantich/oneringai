@@ -1,6 +1,6 @@
 # @everworker/oneringai - Complete User Guide
 
-**Version:** 0.5.0
+**Version:** 0.5.2
 **Last Updated:** 2026-03-17
 
 A comprehensive guide to using all features of the @everworker/oneringai library.
@@ -84,7 +84,8 @@ A comprehensive guide to using all features of the @everworker/oneringai library
 19. [Multimodal (Vision)](#multimodal-vision)
 20. [Audio (TTS/STT)](#audio-ttsstt)
 21. [Image Generation](#image-generation)
-22. [Video Generation](#video-generation)
+22. [Embeddings](#embeddings)
+23. [Video Generation](#video-generation)
 23. [Custom Media Storage](#custom-media-storage)
     - IMediaStorage Interface
     - Custom S3 Backend Example
@@ -10219,6 +10220,254 @@ console.log(`5 HD images: $${hdCost}`);  // $0.40
 // Google Imagen
 const imagenCost = calculateImageCost('imagen-4.0-generate-001', 4);
 console.log(`4 Imagen images: $${imagenCost}`);  // $0.16
+```
+
+---
+
+## Embeddings
+
+The library provides multi-vendor text embedding generation with a unified API. Embeddings convert text into dense vector representations for semantic search, RAG, clustering, classification, and similarity matching.
+
+### Basic Usage
+
+```typescript
+import { Connector, Embeddings, Vendor } from '@everworker/oneringai';
+
+// Setup connector
+Connector.create({
+  name: 'openai',
+  vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
+});
+
+// Create embeddings instance
+const embeddings = Embeddings.create({ connector: 'openai' });
+
+// Embed a single text
+const result = await embeddings.embed('Hello world');
+console.log(result.embeddings[0].length);  // 1536
+console.log(result.usage.promptTokens);    // 2
+
+// Embed multiple texts (batch)
+const batch = await embeddings.embed([
+  'The quick brown fox',
+  'A lazy dog sleeps',
+  'Machine learning is powerful',
+]);
+console.log(batch.embeddings.length);  // 3
+```
+
+### Matryoshka Representation Learning (MRL)
+
+Models that support MRL (marked with `matryoshka: true` in the registry) allow you to request fewer output dimensions. This produces smaller vectors for faster similarity search with minimal quality loss.
+
+```typescript
+// Full dimensions (default)
+const full = await embeddings.embed('Hello world');
+console.log(full.embeddings[0].length);  // 1536
+
+// Reduced dimensions — 3x smaller vectors, ~1% quality loss
+const compact = await embeddings.embed('Hello world', { dimensions: 512 });
+console.log(compact.embeddings[0].length);  // 512
+
+// Even smaller — great for large-scale approximate search
+const tiny = await embeddings.embed('Hello world', { dimensions: 128 });
+console.log(tiny.embeddings[0].length);  // 128
+```
+
+Models with MRL support: `text-embedding-3-small`, `text-embedding-3-large`, `text-embedding-004` (Google), all `qwen3-embedding` variants, `nomic-embed-text`.
+
+### Default Dimensions
+
+You can set default dimensions at creation time:
+
+```typescript
+// All embeddings from this instance use 512 dimensions
+const embeddings = Embeddings.create({
+  connector: 'openai',
+  model: 'text-embedding-3-small',
+  dimensions: 512,
+});
+
+const result = await embeddings.embed('Hello');
+console.log(result.embeddings[0].length);  // 512
+
+// Override per-call
+const full = await embeddings.embed('Hello', { dimensions: 1536 });
+console.log(full.embeddings[0].length);  // 1536
+```
+
+### OpenAI Embeddings
+
+```typescript
+// text-embedding-3-small (recommended — cost-efficient, MRL)
+const result = await embeddings.embed('search query', {
+  model: 'text-embedding-3-small',
+  dimensions: 1536,  // default, can reduce to 512 or 256
+});
+
+// text-embedding-3-large (higher quality, more dimensions)
+const large = await embeddings.embed('search query', {
+  model: 'text-embedding-3-large',
+  dimensions: 3072,  // default, can reduce
+});
+```
+
+### Google Embeddings
+
+```typescript
+Connector.create({
+  name: 'google',
+  vendor: Vendor.Google,
+  auth: { type: 'api_key', apiKey: process.env.GOOGLE_API_KEY! },
+});
+
+const googleEmb = Embeddings.create({ connector: 'google' });
+
+// text-embedding-004 (768 dims, free tier)
+const result = await googleEmb.embed('search query');
+console.log(result.embeddings[0].length);  // 768
+
+// Reduce dimensions
+const compact = await googleEmb.embed('search query', { dimensions: 256 });
+```
+
+### Ollama Embeddings (Local)
+
+Run embedding models locally with Ollama — free, private, no API key required.
+
+```typescript
+Connector.create({
+  name: 'ollama-local',
+  vendor: Vendor.Ollama,
+  auth: { type: 'none' },
+  baseURL: 'http://localhost:11434/v1',
+});
+
+const local = Embeddings.create({ connector: 'ollama-local' });
+
+// qwen3-embedding (default) — 8B params, #1 on MTEB multilingual, 4096 dims
+const result = await local.embed('semantic search query');
+console.log(result.embeddings[0].length);  // 4096
+
+// Use smaller model for constrained environments
+const light = await local.embed('query', {
+  model: 'qwen3-embedding:0.6b',  // ~400MB, 1024 dims
+});
+
+// Use nomic-embed-text for 768-dim vectors
+const nomic = await local.embed('query', {
+  model: 'nomic-embed-text',
+});
+```
+
+**Recommended Ollama embedding models by system RAM:**
+
+| RAM | Model | Size | Dimensions | Quality |
+|-----|-------|------|------------|---------|
+| < 12 GB | `qwen3-embedding:0.6b` | ~400 MB | 1024 | Good |
+| 12-24 GB | `qwen3-embedding:4b` | ~2.5 GB | 4096 | Very good |
+| 24+ GB | `qwen3-embedding` | ~5 GB | 4096 | Best (MTEB #1) |
+
+### Available Models
+
+| Vendor | Model | Default Dims | Max Dims | MRL | Max Tokens | Price/1M Tokens |
+|--------|-------|-------------|----------|-----|------------|-----------------|
+| OpenAI | `text-embedding-3-small` | 1536 | 1536 | Yes | 8,191 | $0.02 |
+| OpenAI | `text-embedding-3-large` | 3072 | 3072 | Yes | 8,191 | $0.13 |
+| Google | `text-embedding-004` | 768 | 768 | Yes | 2,048 | Free |
+| Mistral | `mistral-embed` | 1024 | 1024 | No | 8,192 | $0.10 |
+| Ollama | `qwen3-embedding` | 4096 | 4096 | Yes | 8,192 | Free (local) |
+| Ollama | `qwen3-embedding:4b` | 4096 | 4096 | Yes | 8,192 | Free (local) |
+| Ollama | `qwen3-embedding:0.6b` | 1024 | 1024 | Yes | 8,192 | Free (local) |
+| Ollama | `nomic-embed-text` | 768 | 768 | Yes | 8,192 | Free (local) |
+| Ollama | `mxbai-embed-large` | 1024 | 1024 | No | 512 | Free (local) |
+
+### Model Introspection
+
+```typescript
+import {
+  getEmbeddingModelInfo,
+  getEmbeddingModelsByVendor,
+  getActiveEmbeddingModels,
+  getEmbeddingModelsWithFeature,
+  EMBEDDING_MODELS,
+  Vendor,
+} from '@everworker/oneringai';
+
+// Get model information
+const info = getEmbeddingModelInfo('text-embedding-3-small');
+console.log(info.capabilities.maxDimensions);        // 1536
+console.log(info.capabilities.maxTokens);            // 8191
+console.log(info.capabilities.features.matryoshka);   // true
+console.log(info.capabilities.features.multilingual);  // true
+console.log(info.capabilities.limits.maxBatchSize);    // 2048
+
+// List models by vendor
+const ollamaModels = getEmbeddingModelsByVendor(Vendor.Ollama);
+console.log(ollamaModels.map(m => m.name));
+// ['qwen3-embedding', 'qwen3-embedding:4b', 'qwen3-embedding:0.6b', 'nomic-embed-text', 'mxbai-embed-large']
+
+// Find MRL-capable models
+const mrlModels = getEmbeddingModelsWithFeature('matryoshka');
+console.log(mrlModels.map(m => `${m.name} (${m.capabilities.maxDimensions}d)`));
+
+// Find multilingual models
+const multilingualModels = getEmbeddingModelsWithFeature('multilingual');
+
+// Use model constants for type safety
+const modelName = EMBEDDING_MODELS[Vendor.OpenAI].TEXT_EMBEDDING_3_SMALL;
+// 'text-embedding-3-small'
+```
+
+### Cost Estimation
+
+```typescript
+import { calculateEmbeddingCost } from '@everworker/oneringai';
+
+// OpenAI text-embedding-3-small
+const cost = calculateEmbeddingCost('text-embedding-3-small', 1_000_000);
+console.log(`$${cost} per 1M tokens`);  // $0.02
+
+// OpenAI text-embedding-3-large
+const largeCost = calculateEmbeddingCost('text-embedding-3-large', 1_000_000);
+console.log(`$${largeCost} per 1M tokens`);  // $0.13
+
+// Ollama (free, returns null for no pricing)
+const localCost = calculateEmbeddingCost('qwen3-embedding', 1_000_000);
+console.log(localCost);  // null (free, local)
+
+// Google (free tier)
+const googleCost = calculateEmbeddingCost('text-embedding-004', 1_000_000);
+console.log(`$${googleCost}`);  // $0
+```
+
+### Common Use Cases
+
+**Semantic Search (RAG):**
+```typescript
+// Embed documents at ingestion time
+const docs = ['Document 1 text...', 'Document 2 text...', 'Document 3 text...'];
+const docEmbeddings = await embeddings.embed(docs, { dimensions: 512 });
+// Store docEmbeddings.embeddings in your vector database
+
+// At query time, embed the query with the same model and dimensions
+const queryResult = await embeddings.embed('user search query', { dimensions: 512 });
+const queryVector = queryResult.embeddings[0];
+// Use queryVector for vector similarity search
+```
+
+**Text Classification:**
+```typescript
+// Embed labeled examples and new text
+const categories = await embeddings.embed([
+  'sports news about football',
+  'financial market analysis',
+  'cooking recipe instructions',
+]);
+
+const newText = await embeddings.embed('The team scored in the final minute');
+// Compare newText vector to category vectors using cosine similarity
 ```
 
 ---

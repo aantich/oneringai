@@ -25,6 +25,7 @@
   - [10. User Info](#10-user-info)
   - [11. Direct LLM Access](#11-direct-llm-access)
   - [12. Audio Capabilities](#12-audio-capabilities)
+  - [Embeddings](#embeddings-new) — Multi-vendor text embeddings with MRL dimension control
   - [13. Model Registry](#13-model-registry)
   - [14. Streaming](#14-streaming)
   - [15. OAuth for External APIs](#15-oauth-for-external-apis)
@@ -90,6 +91,7 @@ Showcasing another amazing "built with oneringai": ["no saas" agentic business t
 - 🎤 **Audio Capabilities** - Text-to-Speech (TTS) and Speech-to-Text (STT) with OpenAI and Groq
 - 🖼️ **Image Generation** - DALL-E 3, gpt-image-1, Google Imagen 4 with editing and variations
 - 🎬 **Video Generation** - NEW: OpenAI Sora 2 and Google Veo 3 for AI video creation
+- 🔢 **Embeddings** - NEW: Multi-vendor embedding generation with MRL dimension control (OpenAI, Google, Ollama, Mistral)
 - 🔍 **Web Search** - Connector-based search with Serper, Brave, Tavily, and RapidAPI providers
 - 🔌 **NextGen Context** - Clean, plugin-based context management with `AgentContextNextGen`
 - 🎛️ **Dynamic Tool Management** - Enable/disable tools at runtime, namespaces, priority-based selection
@@ -293,6 +295,28 @@ const veoJob = await googleVideo.generate({
   model: 'veo-3.0-generate-001',
   duration: 8,
 });
+```
+
+### Embeddings (NEW)
+
+```typescript
+import { Embeddings } from '@everworker/oneringai';
+
+// OpenAI embeddings
+const embeddings = Embeddings.create({ connector: 'openai' });
+
+const result = await embeddings.embed(['Hello world', 'How are you?'], {
+  model: 'text-embedding-3-small',
+  dimensions: 512,  // MRL: reduce dimensions for faster search
+});
+
+console.log(result.embeddings.length);     // 2
+console.log(result.embeddings[0].length);  // 512
+
+// Ollama (local, free)
+const local = Embeddings.create({ connector: 'ollama-local' });
+const localResult = await local.embed('search query');
+// Uses qwen3-embedding (4096 dims, #1 on MTEB multilingual)
 ```
 
 ### Document Reader (NEW)
@@ -1175,6 +1199,86 @@ for await (const event of voice.wrap(agent.stream('Tell me a story'))) { ... }
 **Available Models:**
 - **TTS**: OpenAI (`tts-1`, `tts-1-hd`, `gpt-4o-mini-tts`), Google (`gemini-tts`)
 - **STT**: OpenAI (`whisper-1`, `gpt-4o-transcribe`), Groq (`whisper-large-v3` - 12x cheaper!)
+
+### Embeddings (NEW)
+
+Generate text embeddings across multiple vendors with a unified API. Supports Matryoshka Representation Learning (MRL) for flexible output dimensions.
+
+```typescript
+import { Embeddings, Connector, Vendor } from '@everworker/oneringai';
+
+// Setup
+Connector.create({
+  name: 'openai',
+  vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
+});
+
+const embeddings = Embeddings.create({ connector: 'openai' });
+
+// Single text
+const result = await embeddings.embed('Hello world');
+console.log(result.embeddings[0].length);  // 1536 (default for text-embedding-3-small)
+
+// Batch with custom dimensions (MRL)
+const batch = await embeddings.embed(
+  ['search query', 'document chunk 1', 'document chunk 2'],
+  { dimensions: 512 }
+);
+console.log(batch.embeddings.length);     // 3
+console.log(batch.embeddings[0].length);  // 512
+
+// Local with Ollama (free, no API key)
+Connector.create({
+  name: 'ollama-local',
+  vendor: Vendor.Ollama,
+  auth: { type: 'none' },
+  baseURL: 'http://localhost:11434/v1',
+});
+
+const local = Embeddings.create({ connector: 'ollama-local' });
+const localResult = await local.embed('semantic search query');
+// Uses qwen3-embedding by default (4096 dims, #1 on MTEB multilingual)
+```
+
+**Model introspection and cost estimation:**
+
+```typescript
+import {
+  getEmbeddingModelInfo,
+  getEmbeddingModelsByVendor,
+  calculateEmbeddingCost,
+  EMBEDDING_MODELS,
+  Vendor,
+} from '@everworker/oneringai';
+
+// Model details
+const info = getEmbeddingModelInfo('text-embedding-3-small');
+console.log(info.capabilities.maxDimensions);       // 1536
+console.log(info.capabilities.features.matryoshka);  // true (supports MRL)
+console.log(info.capabilities.maxTokens);            // 8191
+
+// Cost estimation
+const cost = calculateEmbeddingCost('text-embedding-3-small', 1_000_000);
+console.log(`$${cost} per 1M tokens`);  // $0.02
+
+// Browse models by vendor
+const ollamaModels = getEmbeddingModelsByVendor(Vendor.Ollama);
+console.log(ollamaModels.map(m => `${m.name} (${m.capabilities.defaultDimensions}d)`));
+// ['qwen3-embedding (4096d)', 'qwen3-embedding:4b (4096d)', 'qwen3-embedding:0.6b (1024d)', ...]
+```
+
+**Available Embedding Models:**
+
+| Vendor | Model | Dims | MRL | Tokens | Price/1M |
+|--------|-------|------|-----|--------|----------|
+| OpenAI | `text-embedding-3-small` | 1536 | yes | 8191 | $0.02 |
+| OpenAI | `text-embedding-3-large` | 3072 | yes | 8191 | $0.13 |
+| Google | `text-embedding-004` | 768 | yes | 2048 | Free |
+| Mistral | `mistral-embed` | 1024 | no | 8192 | $0.10 |
+| Ollama | `qwen3-embedding` (8B) | 4096 | yes | 8192 | Free (local) |
+| Ollama | `qwen3-embedding:0.6b` | 1024 | yes | 8192 | Free (local) |
+| Ollama | `nomic-embed-text` | 768 | yes | 8192 | Free (local) |
 
 ### 14. Model Registry
 

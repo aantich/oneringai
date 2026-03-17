@@ -224,6 +224,48 @@ export type {
 } from './microsoft/index.js';
 
 // ============================================================================
+// Slack Tools (Auto-registered with ConnectorTools for Slack service)
+// ============================================================================
+
+export {
+  // Tool factories
+  createListChannelsTool,
+  createGetMessagesTool,
+  createPostMessageTool,
+  createGetThreadTool,
+  createGetMentionsTool,
+  createSearchMessagesTool,
+  createAddReactionTool,
+  createGetUsersTool,
+  createGetChannelInfoTool,
+  createSetChannelTopicTool,
+  // Utilities
+  slackFetch,
+  toSlackTimestamp,
+  fromSlackTimestamp,
+  getAuthenticatedUserId,
+  formatMessage as formatSlackMessage,
+  slackPaginate,
+} from './slack/index.js';
+
+export type {
+  SlackChannel,
+  SlackMessage,
+  SlackMentionMessage,
+  SlackUser,
+  SlackListChannelsResult,
+  SlackGetMessagesResult,
+  SlackPostMessageResult,
+  SlackGetThreadResult,
+  SlackGetMentionsResult,
+  SlackSearchMessagesResult,
+  SlackAddReactionResult,
+  SlackGetUsersResult,
+  SlackGetChannelInfoResult,
+  SlackSetChannelTopicResult,
+} from './slack/index.js';
+
+// ============================================================================
 // Desktop Automation Tools
 // ============================================================================
 

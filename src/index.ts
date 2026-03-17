@@ -1192,6 +1192,43 @@ export type {
   GraphDriveItem,
 } from './tools/index.js';
 
+// Slack connector tools (auto-registered with ConnectorTools for Slack service)
+export {
+  createListChannelsTool,
+  createGetMessagesTool,
+  createPostMessageTool,
+  createGetThreadTool,
+  createGetMentionsTool,
+  createSearchMessagesTool,
+  createAddReactionTool,
+  createGetUsersTool,
+  createGetChannelInfoTool,
+  createSetChannelTopicTool,
+  slackFetch,
+  toSlackTimestamp,
+  fromSlackTimestamp,
+  getAuthenticatedUserId,
+  formatSlackMessage,
+  slackPaginate,
+} from './tools/index.js';
+
+export type {
+  SlackChannel,
+  SlackMessage,
+  SlackMentionMessage,
+  SlackUser,
+  SlackListChannelsResult,
+  SlackGetMessagesResult,
+  SlackPostMessageResult,
+  SlackGetThreadResult,
+  SlackGetMentionsResult,
+  SlackSearchMessagesResult,
+  SlackAddReactionResult,
+  SlackGetUsersResult,
+  SlackGetChannelInfoResult,
+  SlackSetChannelTopicResult,
+} from './tools/index.js';
+
 // Desktop automation tools (requires @nut-tree-fork/nut-js peer dependency)
 export {
   desktopScreenshot,
