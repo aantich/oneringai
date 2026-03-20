@@ -13,6 +13,13 @@ import type {
 import { CONNECTOR_CONFIG_VERSION } from '../../domain/interfaces/IConnectorConfigStorage.js';
 import { encrypt, decrypt } from '../oauth/utils/encryption.js';
 import { StorageRegistry } from '../../core/StorageRegistry.js';
+import {
+  buildAuthConfig,
+  extractNonSecretCredentials,
+  getVendorTemplate,
+  getVendorAuthTemplate,
+} from '../vendors/helpers.js';
+import type { TemplateCredentials } from '../vendors/types.js';
 
 /** Prefix for encrypted values */
 const ENCRYPTED_PREFIX = '$ENC$:';
@@ -162,6 +169,189 @@ export class ConnectorConfigStore {
       updatedAt: stored.updatedAt,
       version: stored.version,
     };
+  }
+
+  // ============ Template Lifecycle ============
+
+  /**
+   * Options for saveFromTemplate / updateFromTemplate
+   */
+  static TemplateOptions: undefined; // type anchor only
+
+  /**
+   * Save a connector created from a vendor template.
+   * Handles the full lifecycle: validates, builds auth, encrypts secrets,
+   * stores config AND preserves non-secret credentials for round-trip editing.
+   *
+   * @param name - Unique connector name
+   * @param vendorId - Vendor template ID (e.g., 'microsoft', 'slack')
+   * @param authTemplateId - Auth method ID (e.g., 'oauth-user', 'pat')
+   * @param credentials - Raw credentials from the user form
+   * @param options - Optional overrides (baseURL, displayName, etc.)
+   * @returns The built ConnectorConfig (decrypted, for runtime registration)
+   */
+  async saveFromTemplate(
+    name: string,
+    vendorId: string,
+    authTemplateId: string,
+    credentials: TemplateCredentials,
+    options?: {
+      baseURL?: string;
+      displayName?: string;
+      description?: string;
+      defaultModel?: string;
+      vendor?: string;
+      serviceType?: string;
+    },
+  ): Promise<ConnectorConfig> {
+    if (!name || name.trim().length === 0) {
+      throw new Error('Connector name is required');
+    }
+
+    const template = getVendorTemplate(vendorId);
+    if (!template) {
+      throw new Error(`Unknown vendor: ${vendorId}`);
+    }
+    const authTemplate = getVendorAuthTemplate(vendorId, authTemplateId);
+    if (!authTemplate) {
+      throw new Error(`Unknown auth method '${authTemplateId}' for vendor '${vendorId}'`);
+    }
+
+    // Build auth config from template + credentials
+    const auth = buildAuthConfig(authTemplate, credentials);
+
+    // Build full connector config
+    const config: ConnectorConfig = {
+      name,
+      vendor: (options?.vendor ?? vendorId) as any,
+      serviceType: options?.serviceType ?? template.serviceType,
+      auth,
+      baseURL: options?.baseURL ?? template.baseURL,
+      displayName: options?.displayName ?? template.name,
+      description: options?.description,
+      defaultModel: options?.defaultModel,
+    };
+
+    // Extract non-secret credentials for round-trip editing
+    const templateCredentials = extractNonSecretCredentials(authTemplate, credentials);
+
+    // Encrypt and save
+    const existing = await this.storage.get(name);
+    const now = Date.now();
+    const encryptedConfig = this.encryptSecrets(config);
+
+    const stored: StoredConnectorConfig = {
+      config: { ...encryptedConfig, name },
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+      version: CONNECTOR_CONFIG_VERSION,
+      templateCredentials,
+      vendorId,
+      authTemplateId,
+    };
+
+    await this.storage.save(name, stored);
+
+    return config;
+  }
+
+  /**
+   * Update a connector that was created from a vendor template.
+   * Merges new credentials with existing: non-empty values override,
+   * empty values preserve the existing decrypted value ("leave empty to keep").
+   *
+   * @param name - Existing connector name
+   * @param vendorId - Vendor template ID
+   * @param authTemplateId - Auth method ID
+   * @param credentials - New credentials (empty strings = keep existing)
+   * @param options - Optional overrides
+   * @returns The updated ConnectorConfig (decrypted, for runtime re-registration)
+   */
+  async updateFromTemplate(
+    name: string,
+    vendorId: string,
+    authTemplateId: string,
+    credentials: TemplateCredentials,
+    options?: {
+      baseURL?: string;
+      displayName?: string;
+      description?: string;
+      defaultModel?: string;
+      vendor?: string;
+      serviceType?: string;
+    },
+  ): Promise<ConnectorConfig> {
+    const template = getVendorTemplate(vendorId);
+    if (!template) {
+      throw new Error(`Unknown vendor: ${vendorId}`);
+    }
+    const authTemplate = getVendorAuthTemplate(vendorId, authTemplateId);
+    if (!authTemplate) {
+      throw new Error(`Unknown auth method '${authTemplateId}' for vendor '${vendorId}'`);
+    }
+
+    // Load existing decrypted config for merging
+    const existingConfig = await this.get(name);
+
+    // Merge credentials: new non-empty values override, empty = keep existing
+    const merged: Record<string, string> = {};
+    const allFields = [
+      ...authTemplate.requiredFields,
+      ...(authTemplate.optionalFields ?? []),
+    ];
+
+    for (const field of allFields) {
+      if (credentials[field]) {
+        // User provided a new value
+        merged[field] = credentials[field]!;
+      } else if (existingConfig) {
+        // Try to get existing value from decrypted auth
+        const authAny = existingConfig.auth as Record<string, any>;
+        if (typeof authAny[field] === 'string' && authAny[field]) {
+          merged[field] = authAny[field];
+        } else if (authAny.extra && typeof authAny.extra[field] === 'string' && authAny.extra[field]) {
+          merged[field] = authAny.extra[field];
+        }
+      }
+    }
+
+    // Build new auth from merged credentials
+    const auth = buildAuthConfig(authTemplate, merged);
+
+    // Build updated config
+    const config: ConnectorConfig = {
+      ...(existingConfig || {}),
+      name,
+      vendor: (options?.vendor ?? vendorId) as any,
+      serviceType: options?.serviceType ?? template.serviceType,
+      auth,
+      baseURL: options?.baseURL ?? existingConfig?.baseURL ?? template.baseURL,
+      displayName: options?.displayName ?? existingConfig?.displayName ?? template.name,
+      description: options?.description ?? existingConfig?.description,
+      defaultModel: options?.defaultModel ?? existingConfig?.defaultModel,
+    };
+
+    // Extract non-secret credentials for round-trip editing
+    const templateCredentials = extractNonSecretCredentials(authTemplate, merged);
+
+    // Encrypt and save
+    const existing = await this.storage.get(name);
+    const now = Date.now();
+    const encryptedConfig = this.encryptSecrets(config);
+
+    const stored: StoredConnectorConfig = {
+      config: { ...encryptedConfig, name },
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+      version: CONNECTOR_CONFIG_VERSION,
+      templateCredentials,
+      vendorId,
+      authTemplateId,
+    };
+
+    await this.storage.save(name, stored);
+
+    return config;
   }
 
   // ============ Encryption Helpers ============

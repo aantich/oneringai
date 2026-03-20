@@ -22,6 +22,21 @@ export interface StoredConnectorConfig {
 
   /** Schema version for future migrations */
   version: number;
+
+  /**
+   * Raw non-secret template credentials for round-trip editing.
+   * Populated by saveFromTemplate() / updateFromTemplate().
+   * Contains only non-secret fields (clientId, tenantId, scope, redirectUri, etc.).
+   * Secret fields (apiKey, clientSecret, privateKey, etc.) are NEVER stored here.
+   * Used by edit UIs to re-populate form fields without needing to decrypt config.auth.
+   */
+  templateCredentials?: Record<string, string>;
+
+  /** Vendor ID used to create this connector (e.g., 'microsoft', 'slack') */
+  vendorId?: string;
+
+  /** Auth template ID used (e.g., 'oauth-user', 'pat', 'bot-token') */
+  authTemplateId?: string;
 }
 
 /**

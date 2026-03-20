@@ -184,6 +184,35 @@ export function buildAuthConfig(
   return oauthConfig;
 }
 
+/** Known secret field names that must NEVER be stored in plaintext */
+const SECRET_CREDENTIAL_FIELDS = new Set([
+  'apiKey', 'clientSecret', 'privateKey', 'privateKeyPath',
+  'secretAccessKey', 'applicationKey', 'appToken', 'signingSecret',
+  'accessKeyId',
+]);
+
+/**
+ * Extract non-secret credentials from a raw credentials dict.
+ * Used by ConnectorConfigStore.saveFromTemplate() to preserve
+ * template field values for round-trip editing without storing secrets.
+ */
+export function extractNonSecretCredentials(
+  authTemplate: AuthTemplate,
+  credentials: TemplateCredentials,
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  const allFields = [
+    ...authTemplate.requiredFields,
+    ...(authTemplate.optionalFields ?? []),
+  ];
+  for (const field of allFields) {
+    if (!SECRET_CREDENTIAL_FIELDS.has(field) && credentials[field]) {
+      result[field] = credentials[field]!;
+    }
+  }
+  return result;
+}
+
 /**
  * Validate that all required fields are provided
  */

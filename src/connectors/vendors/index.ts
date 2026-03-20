@@ -53,6 +53,7 @@ export {
   getCredentialsSetupURL,
   getDocsURL,
   buildAuthConfig,
+  extractNonSecretCredentials,
   initVendorRegistry,
 } from './helpers.js';
 export type { VendorInfo } from './helpers.js';

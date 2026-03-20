@@ -932,6 +932,7 @@ export {
   getCredentialsSetupURL,
   getDocsURL,
   buildAuthConfig,
+  extractNonSecretCredentials,
   // All templates array
   allVendorTemplates,
   // Logo utilities
