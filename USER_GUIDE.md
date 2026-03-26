@@ -3317,6 +3317,7 @@ Agent inherits `runDirect()` and `streamDirect()` methods from BaseAgent. These 
 |----------|-------------------|
 | Conversational agent with history | `run()` |
 | Task with memory and tools | `run()` with context features |
+| Per-call reasoning control | `run(input, { thinking })` |
 | Quick one-off query | `runDirect()` |
 | Embedding-like simplicity | `runDirect()` |
 | Testing/debugging | `runDirect()` |
@@ -3355,6 +3356,13 @@ interface DirectCallOptions {
   responseFormat?: {
     type: 'text' | 'json_object' | 'json_schema';
     json_schema?: unknown;
+  };
+
+  /** Vendor-agnostic thinking/reasoning configuration */
+  thinking?: {
+    enabled: boolean;
+    budgetTokens?: number;   // Anthropic & Google
+    effort?: 'low' | 'medium' | 'high';  // OpenAI
   };
 
   /** Vendor-specific options */
@@ -3417,6 +3425,79 @@ for await (const event of agent.streamDirect('Explain quantum computing', {
 })) {
   // Handle events...
 }
+```
+
+### Per-Call RunOptions
+
+`run()` and `stream()` accept an optional second argument to override agent-level config for a single invocation:
+
+```typescript
+interface RunOptions {
+  /** Vendor-agnostic thinking/reasoning configuration */
+  thinking?: {
+    enabled: boolean;
+    budgetTokens?: number;         // Anthropic & Google
+    effort?: 'low' | 'medium' | 'high';  // OpenAI
+  };
+
+  /** Temperature override */
+  temperature?: number;
+
+  /** Vendor-specific options (shallow-merged with agent-level vendorOptions) */
+  vendorOptions?: Record<string, unknown>;
+}
+```
+
+```typescript
+// Override reasoning effort per call
+const deep = await agent.run('Prove this theorem', {
+  thinking: { enabled: true, effort: 'high' },
+});
+
+const quick = await agent.run('What is 2+2?', {
+  thinking: { enabled: true, effort: 'low' },
+});
+
+// Override temperature per call
+const creative = await agent.run('Write a poem', { temperature: 0.9 });
+
+// Streaming with per-call options
+for await (const event of agent.stream('Analyze this', {
+  thinking: { enabled: true, budgetTokens: 16384 },
+})) {
+  // ...
+}
+```
+
+RunOptions take precedence over agent-level config. `vendorOptions` are shallow-merged (per-call keys override agent-level keys).
+
+### Thinking / Reasoning
+
+Vendor-agnostic reasoning configuration that maps to each provider's native API:
+
+| Provider | `effort` maps to | `budgetTokens` maps to |
+|----------|-----------------|----------------------|
+| OpenAI | `reasoning.effort` | N/A |
+| Anthropic | N/A | `thinking.budget_tokens` |
+| Google | N/A | `thinkingConfig.thinkingBudget` |
+
+```typescript
+// Agent-level (applies to all calls)
+const agent = Agent.create({
+  connector: 'openai', model: 'o3-mini',
+  thinking: { enabled: true, effort: 'medium' },
+});
+
+// Per-call override
+await agent.run('Complex analysis', { thinking: { enabled: true, effort: 'high' } });
+await agent.run('Simple lookup', { thinking: { enabled: true, effort: 'low' } });
+
+// Anthropic with budget tokens
+const agent2 = Agent.create({ connector: 'anthropic', model: 'claude-sonnet-4-6' });
+await agent2.run('Deep reasoning task', { thinking: { enabled: true, budgetTokens: 16384 } });
+
+// runDirect() also supports thinking
+await agent.runDirect('Quick Q', { thinking: { enabled: true, effort: 'low' } });
 ```
 
 ### Comparison: run() vs runDirect()

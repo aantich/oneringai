@@ -5,6 +5,7 @@
  *
  * Available tools:
  * - bash: Execute shell commands (foreground or background)
+ * - dev_server: Start dev servers/watchers with log files and ready-wait
  * - bg_process_output: Read output from background processes
  * - bg_process_list: List all background processes
  * - bg_process_kill: Stop a background process
@@ -38,6 +39,7 @@ export {
   OutputRingBuffer,
   type BackgroundProcessInfo,
   type BackgroundProcessStatus,
+  type RegisterOptions,
 } from './BackgroundProcessManager.js';
 
 // Bash Tool
@@ -63,3 +65,9 @@ export {
   bgProcessKill,
   createBgProcessKillTool,
 } from './bgProcessKill.js';
+
+// Dev Server Tool
+export {
+  devServer,
+  createDevServerTool,
+} from './devServer.js';

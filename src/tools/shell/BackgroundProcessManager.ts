@@ -9,6 +9,8 @@
  */
 
 import type { ChildProcess } from 'node:child_process';
+import { createWriteStream, mkdirSync, type WriteStream } from 'node:fs';
+import { dirname } from 'node:path';
 
 // ============ Output Ring Buffer ============
 
@@ -134,6 +136,14 @@ export interface BackgroundProcessInfo {
   exitedAt: string | null;
   /** Total output lines ever produced */
   totalOutputLines: number;
+  /** Path to persistent log file (if logging to file) */
+  logFile: string | null;
+}
+
+/** Options for registering a background process */
+export interface RegisterOptions {
+  /** Path to write a persistent log file. Directory is created if needed. */
+  logFile?: string;
 }
 
 // ============ Manager ============
@@ -153,6 +163,10 @@ interface ManagedProcess {
   exitedAt: string | null;
   /** Pending SIGKILL timeout (from kill()). Cleared on process exit. */
   killTimeoutId: ReturnType<typeof setTimeout> | null;
+  /** Persistent log file write stream (if logging to file) */
+  logStream: WriteStream | null;
+  /** Path to the log file (if logging to file) */
+  logFile: string | null;
 }
 
 /** Max concurrent running processes */
@@ -171,7 +185,7 @@ class BackgroundProcessManagerImpl {
    * Register a spawned process for tracking.
    * Called by the bash tool after spawning with run_in_background.
    */
-  register(command: string, childProcess: ChildProcess): { id: string } | { error: string } {
+  register(command: string, childProcess: ChildProcess, options: RegisterOptions = {}): { id: string } | { error: string } {
     // Check running count
     let running = 0;
     for (const p of this.processes.values()) {
@@ -187,6 +201,20 @@ class BackgroundProcessManagerImpl {
     const id = `bg_${++this.idCounter}`;
     const output = new OutputRingBuffer(2000);
 
+    // Set up optional log file
+    let logStream: WriteStream | null = null;
+    const logFile = options.logFile ?? null;
+    if (logFile) {
+      try {
+        mkdirSync(dirname(logFile), { recursive: true });
+        logStream = createWriteStream(logFile, { flags: 'a' });
+        logStream.write(`[${new Date().toISOString()}] Starting: ${command}\n`);
+      } catch (err) {
+        // Non-fatal: log file failure shouldn't prevent process from running
+        logStream = null;
+      }
+    }
+
     const managed: ManagedProcess = {
       id,
       command,
@@ -199,14 +227,24 @@ class BackgroundProcessManagerImpl {
       startedAt: new Date().toISOString(),
       exitedAt: null,
       killTimeoutId: null,
+      logStream,
+      logFile,
     };
 
-    // Wire up output collection
+    // Wire up output collection (tee to ring buffer + optional log file)
     childProcess.stdout?.on('data', (data: Buffer) => {
-      output.append(data.toString());
+      const text = data.toString();
+      output.append(text);
+      if (managed.logStream) {
+        managed.logStream.write(text);
+      }
     });
     childProcess.stderr?.on('data', (data: Buffer) => {
-      output.append(data.toString());
+      const text = data.toString();
+      output.append(text);
+      if (managed.logStream) {
+        managed.logStream.write(text);
+      }
     });
 
     // Wire up exit tracking
@@ -216,6 +254,12 @@ class BackgroundProcessManagerImpl {
       managed.signal = sig;
       managed.status = sig ? 'killed' : 'exited';
       managed.exitedAt = new Date().toISOString();
+      // Close log stream
+      if (managed.logStream) {
+        managed.logStream.write(`\n[${managed.exitedAt}] Process exited (code=${code}, signal=${sig})\n`);
+        managed.logStream.end();
+        managed.logStream = null;
+      }
       // Release ChildProcess reference to prevent memory leak
       managed.process = null;
       // Clear any pending SIGKILL timeout
@@ -230,6 +274,12 @@ class BackgroundProcessManagerImpl {
       output.flush();
       managed.status = 'errored';
       managed.exitedAt = new Date().toISOString();
+      // Close log stream
+      if (managed.logStream) {
+        managed.logStream.write(`\n[${managed.exitedAt}] Process errored: ${err.message}\n`);
+        managed.logStream.end();
+        managed.logStream = null;
+      }
       // Release ChildProcess reference to prevent memory leak
       managed.process = null;
       if (managed.killTimeoutId !== null) {
@@ -258,6 +308,7 @@ class BackgroundProcessManagerImpl {
       startedAt: p.startedAt,
       exitedAt: p.exitedAt,
       totalOutputLines: p.output.totalWritten,
+      logFile: p.logFile,
     };
   }
 
@@ -341,6 +392,7 @@ class BackgroundProcessManagerImpl {
         startedAt: p.startedAt,
         exitedAt: p.exitedAt,
         totalOutputLines: p.output.totalWritten,
+        logFile: p.logFile,
       });
     }
 
@@ -367,6 +419,11 @@ class BackgroundProcessManagerImpl {
             p.process.kill('SIGTERM');
           }
         } catch { /* ignore */ }
+      }
+      // Close any open log streams
+      if (p.logStream) {
+        try { p.logStream.end(); } catch { /* ignore */ }
+        p.logStream = null;
       }
     }
   }

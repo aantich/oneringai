@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Per-Call `RunOptions`**: `agent.run(input, options?)` and `agent.stream(input, options?)` now accept an optional `RunOptions` parameter to override `thinking`, `temperature`, and `vendorOptions` per invocation. Enables controlling reasoning effort at each agentic step without changing agent-level config.
+- **`thinking` in `DirectCallOptions`**: `runDirect()` and `streamDirect()` now also support the vendor-agnostic `thinking` config (`enabled`, `budgetTokens`, `effort`).
+
+### Fixed
+- **Multi-turn Anthropic "must end with user message" error**: Fixed a bug in `AgentContextNextGen.setCurrentInput()` that appended the previous assistant message to `_currentInput`, causing the conversation sent to the API to end with an assistant message on the second+ `run()` call. This triggered Anthropic's "This model does not support assistant message prefill" error.
+- **Anthropic converter safety net**: Added trailing assistant message trimming in `AnthropicConverter.convertMessages()` as a defensive measure against any future context-layer bugs that could produce conversations ending with an assistant message.
+
 ## [0.5.2] - 2026-03-17
 
 ### Added

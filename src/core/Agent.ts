@@ -129,6 +129,27 @@ export interface AgentConfig extends BaseAgentConfig {
 }
 
 /**
+ * Per-call options for run() and stream().
+ * These override the agent-level config for this single invocation.
+ */
+export interface RunOptions {
+  /** Vendor-agnostic thinking/reasoning configuration */
+  thinking?: {
+    enabled: boolean;
+    /** Budget in tokens for thinking (Anthropic & Google) */
+    budgetTokens?: number;
+    /** Reasoning effort level (OpenAI) */
+    effort?: 'low' | 'medium' | 'high';
+  };
+
+  /** Temperature for generation */
+  temperature?: number;
+
+  /** Vendor-specific options */
+  vendorOptions?: Record<string, unknown>;
+}
+
+/**
  * Execution setup information returned by _prepareExecution()
  */
 interface ExecutionSetup {
@@ -175,6 +196,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   private _asyncResultQueue: ToolResult[] = [];
   private _continuationInProgress = false;
   private _executionActive = false;
+
+  // Per-call run options (set in run/stream, cleared in finally)
+  private _runOptions: RunOptions | undefined;
 
   // Message injection queue (for orchestrator send_message)
   // M4: Use Message[] instead of InputItem[] for type safety (inject() only creates Messages)
@@ -720,7 +744,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   /**
    * Run the agent with input
    */
-  async run(input: string | InputItem[]): Promise<AgentResponse> {
+  async run(input: string | InputItem[], options?: RunOptions): Promise<AgentResponse> {
+    this._runOptions = options;
     const { executionId, startTime, maxIterations } = await this._prepareExecution(input, 'run');
 
     try {
@@ -732,6 +757,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       this._handleExecutionError(executionId, error as Error, startTime, 'run');
       throw error;
     } finally {
+      this._runOptions = undefined;
       this._executionActive = false;
       this._cleanupExecution();
 
@@ -1121,7 +1147,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   /**
    * Stream response from the agent
    */
-  async *stream(input: string | InputItem[]): AsyncIterableIterator<StreamEvent> {
+  async *stream(input: string | InputItem[], options?: RunOptions): AsyncIterableIterator<StreamEvent> {
+    this._runOptions = options;
     const { executionId, startTime, maxIterations } = await this._prepareExecution(input, 'stream');
 
     // Create a single StreamState for the entire execution (tracks usage across iterations)
@@ -1460,6 +1487,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
       throw error;
     } finally {
+      this._runOptions = undefined;
       this._executionActive = false;
       this._cleanupExecution(globalStreamState);
 
@@ -1482,16 +1510,19 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   ): Promise<AgentResponse> {
     const llmStartTime = Date.now();
 
-    // Prepare options
+    // Prepare options (per-call RunOptions override agent-level config)
+    const ro = this._runOptions;
     let generateOptions: TextGenerateOptions = {
       model: this.model,
       input,
       instructions: this._config.instructions,
       tools: this.getEnabledToolDefinitions(),
       tool_choice: 'auto',
-      temperature: this._config.temperature,
-      thinking: this._config.thinking,
-      vendorOptions: this._config.vendorOptions,
+      temperature: ro?.temperature ?? this._config.temperature,
+      thinking: ro?.thinking ?? this._config.thinking,
+      vendorOptions: ro?.vendorOptions
+        ? { ...this._config.vendorOptions, ...ro.vendorOptions }
+        : this._config.vendorOptions,
     };
 
     // Execute before:llm hook
@@ -1577,16 +1608,19 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   ): AsyncIterableIterator<StreamEvent> {
     const llmStartTime = Date.now();
 
-    // Prepare options
+    // Prepare options (per-call RunOptions override agent-level config)
+    const sro = this._runOptions;
     const generateOptions: TextGenerateOptions = {
       model: this.model,
       input,
       instructions: this._config.instructions,
       tools: this.getEnabledToolDefinitions(),
       tool_choice: 'auto',
-      temperature: this._config.temperature,
-      thinking: this._config.thinking,
-      vendorOptions: this._config.vendorOptions,
+      temperature: sro?.temperature ?? this._config.temperature,
+      thinking: sro?.thinking ?? this._config.thinking,
+      vendorOptions: sro?.vendorOptions
+        ? { ...this._config.vendorOptions, ...sro.vendorOptions }
+        : this._config.vendorOptions,
     };
 
     // Execute before:llm hook

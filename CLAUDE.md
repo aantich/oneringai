@@ -181,7 +181,25 @@ const Vendor = { OpenAI, Anthropic, Google, GoogleVertex, Groq, Together, Grok, 
 
 **Agent** (`src/core/Agent.ts`) is the main agent type. It extends **BaseAgent** and uses `AgentContextNextGen` for context management.
 
-### Direct LLM Access (NEW)
+### Per-Call RunOptions
+
+`run()` and `stream()` accept optional `RunOptions` to override agent-level config per invocation:
+
+```typescript
+// Per-call reasoning effort (vendor-agnostic)
+const response = await agent.run('Complex task', { thinking: { enabled: true, effort: 'high' } });
+const response = await agent.run('Simple task', { thinking: { enabled: true, effort: 'low' } });
+
+// Override temperature per call
+const response = await agent.run('Creative task', { temperature: 0.9 });
+
+// Streaming with reasoning
+for await (const event of agent.stream('Analyze', { thinking: { enabled: true, budgetTokens: 16384 } })) { ... }
+```
+
+**RunOptions:** `thinking` (vendor-agnostic), `temperature`, `vendorOptions` — all override agent-level config for the duration of the call. `vendorOptions` are shallow-merged with agent-level vendorOptions.
+
+### Direct LLM Access
 
 All agents inherit `runDirect()` and `streamDirect()` from BaseAgent - bypasses all context management:
 
@@ -197,7 +215,7 @@ for await (const event of agent.streamDirect('Tell me a story')) { ... }
 await agent.runDirect([{ type: 'message', role: 'user', content: [...] }]);
 ```
 
-**DirectCallOptions:** `instructions`, `includeTools`, `temperature`, `maxOutputTokens`, `responseFormat`, `vendorOptions`
+**DirectCallOptions:** `instructions`, `includeTools`, `temperature`, `maxOutputTokens`, `responseFormat`, `thinking`, `vendorOptions`
 
 **Use cases:** Quick one-off queries, testing, hybrid workflows (mix `run()` and `runDirect()`).
 

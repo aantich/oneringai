@@ -69,8 +69,10 @@ export type {
 export {
   // Tools
   bash,
+  devServer,
   // Factory functions
   createBashTool,
+  createDevServerTool,
   // Utilities
   getBackgroundOutput,
   killBackgroundProcess,
@@ -375,10 +377,15 @@ import { glob } from './filesystem/index.js';
 import { grep } from './filesystem/index.js';
 import { listDirectory } from './filesystem/index.js';
 import { bash } from './shell/index.js';
+import { devServer } from './shell/index.js';
+import { bgProcessOutput } from './shell/index.js';
+import { bgProcessList } from './shell/index.js';
+import { bgProcessKill } from './shell/index.js';
 
 /**
  * A bundle of all developer tools commonly used for coding tasks.
- * Includes: readFile, writeFile, editFile, glob, grep, listDirectory, bash
+ * Includes: readFile, writeFile, editFile, glob, grep, listDirectory,
+ * bash, devServer, bgProcessOutput, bgProcessList, bgProcessKill
  *
  * @example
  * ```typescript
@@ -399,6 +406,10 @@ export const developerTools = [
   grep,
   listDirectory,
   bash,
+  devServer,
+  bgProcessOutput,
+  bgProcessList,
+  bgProcessKill,
 ];
 
 // ============================================================================

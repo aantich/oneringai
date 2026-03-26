@@ -164,6 +164,19 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
       }
     }
 
+    // Safety net: Anthropic requires the conversation to end with a user message.
+    // Some models (e.g., claude-opus-4-6) reject assistant prefill entirely.
+    // If the last message is assistant (can happen after compaction or context bugs),
+    // trim trailing assistant messages to prevent API errors.
+    while (messages.length > 0 && messages[messages.length - 1]!.role === 'assistant') {
+      messages.pop();
+    }
+
+    // If all messages were trimmed (shouldn't happen), add a minimal user message
+    if (messages.length === 0) {
+      messages.push({ role: 'user', content: 'Continue.' });
+    }
+
     return messages;
   }
 

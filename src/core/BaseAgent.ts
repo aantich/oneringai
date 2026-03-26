@@ -275,6 +275,15 @@ export interface DirectCallOptions {
     json_schema?: unknown;
   };
 
+  /** Vendor-agnostic thinking/reasoning configuration */
+  thinking?: {
+    enabled: boolean;
+    /** Budget in tokens for thinking (Anthropic & Google) */
+    budgetTokens?: number;
+    /** Reasoning effort level (OpenAI) */
+    effort?: 'low' | 'medium' | 'high';
+  };
+
   /** Vendor-specific options */
   vendorOptions?: Record<string, unknown>;
 }
@@ -901,6 +910,7 @@ export abstract class BaseAgent<
       temperature: options.temperature,
       max_output_tokens: options.maxOutputTokens,
       response_format: options.responseFormat,
+      thinking: options.thinking,
       vendorOptions: options.vendorOptions,
     };
 
@@ -953,6 +963,7 @@ export abstract class BaseAgent<
       temperature: options.temperature,
       max_output_tokens: options.maxOutputTokens,
       response_format: options.responseFormat,
+      thinking: options.thinking,
       vendorOptions: options.vendorOptions,
     };
 

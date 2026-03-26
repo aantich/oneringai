@@ -30,7 +30,7 @@ export function createBgProcessKillTool(): ToolFunction<BgProcessKillArgs, BgPro
         description:
           `Stop a running background process. Sends SIGTERM for graceful shutdown (allows the process to clean up), then SIGKILL after 3 seconds if it hasn't exited. Kills the entire process tree — so "npm run dev" will also stop the child node server, not just the npm wrapper.
 
-Use this to: stop a dev server before restarting it, kill a runaway build, clean up processes you no longer need. Use bg_process_list first to find the process ID if you've lost it. After killing, the process output is still available via bg_process_output for debugging.`,
+Use this to: stop a dev server before restarting it, kill a runaway build, clean up processes you no longer need. Works with processes started by dev_server or bash run_in_background. Use bg_process_list first to find the process ID if you've lost it. After killing, the process output is still available via bg_process_output (and the log file, if started via dev_server) for debugging.`,
         parameters: {
           type: 'object',
           properties: {

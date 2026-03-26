@@ -637,15 +637,11 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    */
   setCurrentInput(content: string | Content[]): void {
     this.assertNotDestroyed();
-    // Clear existing current input array
+    // Clear existing current input array and set new user message as current input.
+    // addUserMessage() sets _currentInput = [message] without pushing to _conversation.
+    // The user message moves to _conversation later when addAssistantResponse() is called.
     this._currentInput = [];
-    // Add user message to both conversation and current input
     this.addUserMessage(content);
-    // The last message added is the current input
-    const lastMsg = this._conversation[this._conversation.length - 1];
-    if (lastMsg) {
-      this._currentInput.push(lastMsg);
-    }
   }
 
   /**
