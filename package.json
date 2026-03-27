@@ -17,6 +17,11 @@
       "import": "./dist/capabilities/agents/index.js",
       "require": "./dist/capabilities/agents/index.cjs"
     },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js",
+      "require": "./dist/types/index.cjs"
+    },
     "./shared": {
       "types": "./dist/shared/index.d.ts",
       "import": "./dist/shared/index.js",
@@ -26,6 +31,14 @@
       "types": "./dist/capabilities/images/index.d.ts",
       "import": "./dist/capabilities/images/index.js",
       "require": "./dist/capabilities/images/index.cjs"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "types": ["./dist/types/index.d.ts"],
+      "shared": ["./dist/shared/index.d.ts"],
+      "agents": ["./dist/capabilities/agents/index.d.ts"],
+      "images": ["./dist/capabilities/images/index.d.ts"]
     }
   },
   "files": [

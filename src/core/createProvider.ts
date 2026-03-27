@@ -5,8 +5,6 @@
  * It extracts credentials from the connector and instantiates the appropriate SDK.
  */
 
-import OpenAI from 'openai';
-import Anthropic from '@anthropic-ai/sdk';
 import { Connector } from './Connector.js';
 import { Vendor } from './Vendor.js';
 import { ITextProvider } from '../domain/interfaces/ITextProvider.js';
@@ -20,37 +18,28 @@ import { VertexAITextProvider } from '../infrastructure/providers/vertex/VertexA
 import { GenericOpenAIProvider } from '../infrastructure/providers/generic/GenericOpenAIProvider.js';
 
 // ---------------------------------------------------------------------------
-// Vendor default base URLs — built once at module load from SDKs
+// Vendor default base URLs — hardcoded stable endpoints
 // ---------------------------------------------------------------------------
 
 /**
- * Immutable map of vendor → default API base URL, built at startup.
- * For OpenAI/Anthropic: reads from the installed SDK so we auto-track URL changes.
- * For OpenAI-compatible vendors: same URLs already in createProvider().
- * For Google/Vertex: stable API gateway endpoints.
+ * Immutable map of vendor → default API base URL.
+ * These are stable, well-known endpoints. Hardcoding avoids importing
+ * OpenAI/Anthropic SDKs at module load time (which cascades heavy deps
+ * into any module that touches this file).
  */
-const VENDOR_DEFAULT_URLS: ReadonlyMap<string, string> = (() => {
-  const map = new Map<string, string>();
-
-  // Read from actual SDKs at startup
-  try { map.set(Vendor.OpenAI, new OpenAI({ apiKey: '_' }).baseURL); } catch { /* SDK not installed */ }
-  try { map.set(Vendor.Anthropic, new Anthropic({ apiKey: '_' }).baseURL); } catch { /* SDK not installed */ }
-
-  // Google — SDKs don't expose a simple baseURL property
-  map.set(Vendor.Google, 'https://generativelanguage.googleapis.com');
-  map.set(Vendor.GoogleVertex, 'https://us-central1-aiplatform.googleapis.com');
-
-  // OpenAI-compatible vendors — no dedicated SDKs
-  map.set(Vendor.Groq, 'https://api.groq.com/openai/v1');
-  map.set(Vendor.Together, 'https://api.together.xyz/v1');
-  map.set(Vendor.Perplexity, 'https://api.perplexity.ai');
-  map.set(Vendor.Grok, 'https://api.x.ai/v1');
-  map.set(Vendor.DeepSeek, 'https://api.deepseek.com/v1');
-  map.set(Vendor.Mistral, 'https://api.mistral.ai/v1');
-  map.set(Vendor.Ollama, 'http://localhost:11434/v1');
-
-  return map;
-})();
+const VENDOR_DEFAULT_URLS: ReadonlyMap<string, string> = new Map([
+  [Vendor.OpenAI, 'https://api.openai.com/v1'],
+  [Vendor.Anthropic, 'https://api.anthropic.com'],
+  [Vendor.Google, 'https://generativelanguage.googleapis.com'],
+  [Vendor.GoogleVertex, 'https://us-central1-aiplatform.googleapis.com'],
+  [Vendor.Groq, 'https://api.groq.com/openai/v1'],
+  [Vendor.Together, 'https://api.together.xyz/v1'],
+  [Vendor.Perplexity, 'https://api.perplexity.ai'],
+  [Vendor.Grok, 'https://api.x.ai/v1'],
+  [Vendor.DeepSeek, 'https://api.deepseek.com/v1'],
+  [Vendor.Mistral, 'https://api.mistral.ai/v1'],
+  [Vendor.Ollama, 'http://localhost:11434/v1'],
+]);
 
 /**
  * Get the default API base URL for a vendor.
