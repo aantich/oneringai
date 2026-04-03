@@ -43,3 +43,10 @@ export type {
   WorkspaceLogEntry,
   SerializedSharedWorkspaceState,
 } from './SharedWorkspacePluginNextGen.js';
+
+export { DelegationPluginNextGen } from './DelegationPluginNextGen.js';
+export type {
+  DelegationPluginConfig,
+  DelegationTarget,
+  DelegationTargetResolver,
+} from './DelegationPluginNextGen.js';

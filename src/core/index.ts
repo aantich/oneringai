@@ -81,6 +81,7 @@ export {
   StoreToolsManager,
   isStoreHandler,
   SharedWorkspacePluginNextGen,
+  DelegationPluginNextGen,
 } from './context-nextgen/index.js';
 export type {
   IContextPluginNextGen,
@@ -115,6 +116,9 @@ export type {
   SharedWorkspaceEntry,
   WorkspaceLogEntry,
   SerializedSharedWorkspaceState,
+  DelegationPluginConfig,
+  DelegationTarget,
+  DelegationTargetResolver,
   // Store handler types
   IStoreHandler,
   StoreEntrySchema,

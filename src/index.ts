@@ -45,6 +45,7 @@ export {
   UserInfoPluginNextGen,
   ToolCatalogPluginNextGen,
   SharedWorkspacePluginNextGen,
+  DelegationPluginNextGen,
   // Compaction strategies
   DefaultCompactionStrategy,
   // Strategy Registry
@@ -92,6 +93,9 @@ export type {
   ToolCatalogPluginConfig,
   SharedWorkspaceConfig,
   SharedWorkspaceEntry,
+  DelegationPluginConfig,
+  DelegationTarget,
+  DelegationTargetResolver,
   WorkspaceLogEntry,
   SerializedSharedWorkspaceState,
   // Store handler types

@@ -74,6 +74,7 @@ export {
   UserInfoPluginNextGen,
   ToolCatalogPluginNextGen,
   SharedWorkspacePluginNextGen,
+  DelegationPluginNextGen,
 } from './plugins/index.js';
 
 export type {
@@ -94,6 +95,9 @@ export type {
   SharedWorkspaceEntry,
   WorkspaceLogEntry,
   SerializedSharedWorkspaceState,
+  DelegationPluginConfig,
+  DelegationTarget,
+  DelegationTargetResolver,
 } from './plugins/index.js';
 
 // Compaction strategies
