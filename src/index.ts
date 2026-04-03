@@ -1230,6 +1230,28 @@ export type {
   SlackSetChannelTopicResult,
 } from './tools/index.js';
 
+// Twilio connector tools (auto-registered with ConnectorTools for Twilio service)
+export {
+  createSendSMSTool,
+  createSendWhatsAppTool,
+  createListMessagesTool,
+  createGetMessageTool,
+  twilioFetch,
+  normalizePhoneNumber,
+  toWhatsAppNumber,
+  getAccountSid,
+  formatTwilioMessage,
+} from './tools/index.js';
+
+export type {
+  TwilioMessage,
+  TwilioSendResult,
+  TwilioListMessagesResult,
+  TwilioGetMessageResult,
+} from './tools/index.js';
+
+export { TwilioAPIError, TwilioConfigError } from './tools/index.js';
+
 // Desktop automation tools (requires @nut-tree-fork/nut-js peer dependency)
 export {
   desktopScreenshot,

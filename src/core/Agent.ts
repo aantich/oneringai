@@ -643,6 +643,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       executionId,
       response,
       context: this.executionContext!,
+      input: this._agentContext.getOriginalUserInput(),
       timestamp: new Date(),
       duration: totalDuration,
     }, undefined);
@@ -1227,7 +1228,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           toolCallsMap
         );
 
-        // Accumulate usage from this iteration into global state
+        // Accumulate text, reasoning, usage from this iteration into global state
+        globalStreamState.accumulateFrom(iterationStreamState);
         globalStreamState.accumulateUsage(iterationStreamState.usage);
 
         // Build tool calls from accumulated map

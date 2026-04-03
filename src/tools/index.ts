@@ -268,6 +268,31 @@ export type {
 } from './slack/index.js';
 
 // ============================================================================
+// Twilio Connector Tools (auto-registered with ConnectorTools for Twilio service)
+// ============================================================================
+
+export {
+  createSendSMSTool,
+  createSendWhatsAppTool,
+  createListMessagesTool,
+  createGetMessageTool,
+  twilioFetch,
+  normalizePhoneNumber,
+  toWhatsAppNumber,
+  getAccountSid,
+  formatMessage as formatTwilioMessage,
+} from './twilio/index.js';
+
+export type {
+  TwilioMessage,
+  TwilioSendResult,
+  TwilioListMessagesResult,
+  TwilioGetMessageResult,
+} from './twilio/index.js';
+
+export { TwilioAPIError, TwilioConfigError } from './twilio/index.js';
+
+// ============================================================================
 // Desktop Automation Tools
 // ============================================================================
 

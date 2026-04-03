@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Twilio Connector Tools**: 4 new tools for SMS and WhatsApp messaging via Twilio, auto-registered with ConnectorTools for the `twilio` service type:
+  - `send_sms` — Send SMS text messages to any phone number
+  - `send_whatsapp` — Send WhatsApp messages (freeform text or pre-approved templates via ContentSid)
+  - `list_messages` — List/filter messages by phone number, date range, and channel (SMS/WhatsApp/all)
+  - `get_message` — Get full details of a single message by SID (status, price, errors)
+  - Shared `twilioFetch()` helper with Account SID resolution, form-encoded POST, and Twilio error handling
+  - Phone number helpers: `normalizePhoneNumber()`, `toWhatsAppNumber()`, `getAccountSid()`
+
 ## [0.5.1] - 2026-04-01
 
 ### Added

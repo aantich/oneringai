@@ -33,6 +33,10 @@ export interface AfterExecutionContext {
   executionId: string;
   response: AgentResponse;
   context: ExecutionContext;
+  /** Original user input that started this execution.
+   *  Use this instead of context.getCurrentInput() which may have been
+   *  overwritten with tool results during multi-iteration execution. */
+  input: ReadonlyArray<import('../../../domain/entities/Message.js').InputItem>;
   timestamp: Date;
   duration: number;
 }
