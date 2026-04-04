@@ -268,6 +268,7 @@ function buildAssignTurnTool(ctx: OrchestrationToolsContext): ToolFunction {
         return {
           success: true,
           agent: name,
+          status: response.status,
           result: response.output_text,
           totalTokens: response.usage?.total_tokens,
         };
@@ -342,6 +343,7 @@ function buildAssignTurnAsyncTool(ctx: OrchestrationToolsContext): ToolFunction 
         return {
           success: true,
           agent: name,
+          status: response.status,
           result: response.output_text,
           totalTokens: response.usage?.total_tokens,
         };
@@ -431,6 +433,7 @@ function buildAssignParallelTool(ctx: OrchestrationToolsContext): ToolFunction {
           return {
             agent: a.agent,
             success: true,
+            status: response.status,
             result: response.output_text,
             totalTokens: response.usage?.total_tokens,
           };
