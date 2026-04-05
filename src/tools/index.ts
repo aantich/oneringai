@@ -293,6 +293,36 @@ export type {
 export { TwilioAPIError, TwilioConfigError } from './twilio/index.js';
 
 // ============================================================================
+// Telegram Connector Tools (auto-registered with ConnectorTools for Telegram service)
+// ============================================================================
+
+export {
+  createSendMessageTool as createTelegramSendMessageTool,
+  createSendPhotoTool as createTelegramSendPhotoTool,
+  createGetUpdatesTool as createTelegramGetUpdatesTool,
+  createGetMeTool as createTelegramGetMeTool,
+  createGetChatTool as createTelegramGetChatTool,
+  createSetWebhookTool as createTelegramSetWebhookTool,
+  telegramFetch,
+  getBotToken,
+} from './telegram/index.js';
+
+export type {
+  TelegramUser,
+  TelegramChat,
+  TelegramMessage,
+  TelegramPhotoSize,
+  TelegramUpdate,
+  TelegramSendResult,
+  TelegramGetMeResult,
+  TelegramGetChatResult,
+  TelegramGetUpdatesResult,
+  TelegramSetWebhookResult,
+} from './telegram/index.js';
+
+export { TelegramAPIError, TelegramConfigError } from './telegram/index.js';
+
+// ============================================================================
 // Desktop Automation Tools
 // ============================================================================
 

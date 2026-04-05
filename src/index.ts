@@ -1253,6 +1253,33 @@ export type {
 
 export { TwilioAPIError, TwilioConfigError } from './tools/index.js';
 
+// Telegram connector tools
+export {
+  createTelegramSendMessageTool,
+  createTelegramSendPhotoTool,
+  createTelegramGetUpdatesTool,
+  createTelegramGetMeTool,
+  createTelegramGetChatTool,
+  createTelegramSetWebhookTool,
+  telegramFetch,
+  getBotToken,
+} from './tools/index.js';
+
+export type {
+  TelegramUser,
+  TelegramChat,
+  TelegramMessage,
+  TelegramPhotoSize,
+  TelegramUpdate,
+  TelegramSendResult,
+  TelegramGetMeResult,
+  TelegramGetChatResult,
+  TelegramGetUpdatesResult,
+  TelegramSetWebhookResult,
+} from './tools/index.js';
+
+export { TelegramAPIError, TelegramConfigError } from './tools/index.js';
+
 // Desktop automation tools (requires @nut-tree-fork/nut-js peer dependency)
 export {
   desktopScreenshot,
