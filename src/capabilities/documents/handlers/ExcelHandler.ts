@@ -108,6 +108,8 @@ export class ExcelHandler implements IFormatHandler {
         return this.sheetToCSV(worksheet, opts);
       case 'json':
         return this.sheetToJSON(worksheet, opts);
+      case 'markdown-kv':
+        return this.sheetToMarkdownKV(worksheet, opts);
       default:
         return this.sheetToMarkdownTable(worksheet, opts);
     }
@@ -194,6 +196,44 @@ export class ExcelHandler implements IFormatHandler {
   }
 
   /**
+   * Convert worksheet to Markdown-KV format.
+   * Each row becomes a record block with `- **Header**: value` entries.
+   */
+  private sheetToMarkdownKV(worksheet: any, opts: { maxRows: number; maxColumns: number; tableFormat: string; includeFormulas: boolean }): string {
+    const rows = this.extractRows(worksheet, opts);
+    if (rows.length === 0) return '';
+
+    const headers = (rows[0] ?? []).slice(0, opts.maxColumns);
+    if (rows.length < 2) {
+      // Headers only, no data rows
+      return headers.map((h) => `- **${h}**`).join('\n');
+    }
+
+    const blocks: string[] = [];
+    const dataRows = rows.slice(1);
+
+    for (let i = 0; i < dataRows.length; i++) {
+      const row = dataRows[i]!;
+      const lines: string[] = [`### Record ${i + 1}`];
+      for (let j = 0; j < headers.length; j++) {
+        const value = j < row.length ? row[j] ?? '' : '';
+        if (value) {
+          lines.push(`- **${headers[j]}**: ${value}`);
+        }
+      }
+      blocks.push(lines.join('\n'));
+    }
+
+    let result = blocks.join('\n\n');
+
+    if (worksheet.rowCount > opts.maxRows) {
+      result += `\n\n_...truncated (${worksheet.rowCount - opts.maxRows} more rows)_`;
+    }
+
+    return result;
+  }
+
+  /**
    * Extract rows from worksheet as string arrays
    */
   private extractRows(worksheet: any, opts: { maxRows: number; maxColumns: number; tableFormat: string; includeFormulas: boolean }): string[][] {
@@ -255,4 +295,59 @@ export class ExcelHandler implements IFormatHandler {
 
     return String(cell.value).replace(/\|/g, '\\|'); // Escape pipes for markdown
   }
+}
+
+// ── Standalone Utility ─────────────────────────────────────────────
+
+export interface MarkdownKVSheet {
+  name: string;
+  content: string;
+}
+
+export interface ExcelToMarkdownKVOptions {
+  maxRows?: number;
+  maxColumns?: number;
+  includeFormulas?: boolean;
+}
+
+/**
+ * Convert an Excel (.xlsx) or CSV file buffer to Markdown-KV format.
+ *
+ * Each row becomes a record block:
+ * ```
+ * ### Record 1
+ * - **Name**: Alice
+ * - **Age**: 30
+ * ```
+ *
+ * @returns For CSV: a single string. For Excel: an array of `{ name, content }` per sheet.
+ */
+export async function excelToMarkdownKV(
+  buffer: Buffer,
+  format: 'xlsx' | 'csv',
+  options?: ExcelToMarkdownKVOptions,
+): Promise<string | MarkdownKVSheet[]> {
+  const handler = new ExcelHandler();
+  const pieces = await handler.handle(buffer, 'input.' + format, format, {
+    formatOptions: {
+      excel: {
+        tableFormat: 'markdown-kv',
+        maxRows: options?.maxRows,
+        maxColumns: options?.maxColumns,
+        includeFormulas: options?.includeFormulas,
+      },
+    },
+  });
+
+  const textPieces = pieces.filter((p): p is import('../types.js').DocumentTextPiece => p.type === 'text');
+
+  if (format === 'csv') {
+    return textPieces.map((p) => p.content).join('\n\n');
+  }
+
+  // Excel: return array of sheets with names
+  return textPieces.map((p) => ({
+    name: p.metadata.section ?? `Sheet ${p.metadata.index + 1}`,
+    content: p.content.replace(/^## Sheet: .+\n\n/, ''), // strip the sheet header added by handler
+  }));
 }

@@ -208,7 +208,7 @@ export type {
 } from './capabilities/scrape/index.js';
 
 // Document Reader Capability
-export { DocumentReader, FormatDetector, mergeTextPieces } from './capabilities/documents/index.js';
+export { DocumentReader, FormatDetector, mergeTextPieces, excelToMarkdownKV } from './capabilities/documents/index.js';
 export type {
   DocumentFormat,
   DocumentFamily,
@@ -226,6 +226,8 @@ export type {
   IFormatHandler,
   FormatDetectionResult,
   DocumentToContentOptions,
+  MarkdownKVSheet,
+  ExcelToMarkdownKVOptions,
 } from './capabilities/documents/index.js';
 export { documentToContent, readDocumentAsContent } from './utils/documentContentBridge.js';
 

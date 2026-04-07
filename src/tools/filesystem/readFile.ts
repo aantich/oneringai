@@ -61,7 +61,7 @@ DOCUMENT SUPPORT:
 - PDF files: extracted as markdown text with per-page sections
 - Word documents (.docx): converted to markdown preserving headings, lists, tables
 - PowerPoint (.pptx): extracted slide-by-slide as markdown
-- Excel (.xlsx) / CSV / ODS: tables converted to markdown tables
+- Excel (.xlsx) / CSV / ODS: converted to markdown key-value records (each row becomes a list of "**Header**: value" pairs). To get a markdown table instead, configure documentReaderConfig with tableFormat: 'markdown'. Other formats: 'csv', 'json'.
 - OpenDocument (.odt, .odp, .ods): converted like their MS Office equivalents
 - Images (.png, .jpg, .gif, .webp): described as image metadata
 - Binary documents are auto-detected by extension — just pass the file path
@@ -169,6 +169,13 @@ EXAMPLES:
               {
                 extractImages: false,
                 ...mergedConfig.documentReaderConfig?.defaults,
+                formatOptions: {
+                  ...mergedConfig.documentReaderConfig?.defaults?.formatOptions,
+                  excel: {
+                    tableFormat: 'markdown-kv',
+                    ...mergedConfig.documentReaderConfig?.defaults?.formatOptions?.excel,
+                  },
+                },
               }
             );
 

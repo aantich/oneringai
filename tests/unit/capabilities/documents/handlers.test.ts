@@ -6,6 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { TextHandler } from '../../../../src/capabilities/documents/handlers/TextHandler.js';
 import { ImageHandler } from '../../../../src/capabilities/documents/handlers/ImageHandler.js';
 import { HTMLHandler } from '../../../../src/capabilities/documents/handlers/HTMLHandler.js';
+import { ExcelHandler, excelToMarkdownKV } from '../../../../src/capabilities/documents/handlers/ExcelHandler.js';
 import type { DocumentReadOptions } from '../../../../src/capabilities/documents/types.js';
 
 const defaultOptions: DocumentReadOptions = {};
@@ -155,5 +156,204 @@ describe('HTMLHandler', () => {
     if (pieces[0]!.type === 'text') {
       expect(pieces[0]!.content.length).toBeLessThanOrEqual(150); // some overhead from truncation marker
     }
+  });
+});
+
+// ── Helper: build CSV buffer ──────────────────────────────────────
+function csvBuffer(text: string): Buffer {
+  return Buffer.from(text, 'utf-8');
+}
+
+// ── Helper: build XLSX buffer via exceljs ─────────────────────────
+async function xlsxBuffer(
+  sheets: { name: string; rows: (string | number)[][] }[],
+): Promise<Buffer> {
+  const exceljs = await import('exceljs');
+  const Workbook = exceljs.Workbook || (exceljs as any).default?.Workbook;
+  const wb = new Workbook();
+  for (const sheet of sheets) {
+    const ws = wb.addWorksheet(sheet.name);
+    for (const row of sheet.rows) {
+      ws.addRow(row);
+    }
+  }
+  const arrayBuf = await wb.xlsx.writeBuffer();
+  return Buffer.from(arrayBuf);
+}
+
+describe('ExcelHandler – markdown-kv format', () => {
+  const handler = new ExcelHandler();
+  const kvOptions: DocumentReadOptions = {
+    formatOptions: { excel: { tableFormat: 'markdown-kv' } },
+  };
+
+  // ── CSV tests ───────────────────────────────────────────────────
+
+  it('should convert CSV to markdown-kv records', async () => {
+    const buf = csvBuffer('Name,Age,City\nAlice,30,NYC\nBob,25,LA');
+    const pieces = await handler.handle(buf, 'data.csv', 'csv', kvOptions);
+
+    expect(pieces).toHaveLength(1);
+    const content = pieces[0]!.type === 'text' ? pieces[0]!.content : '';
+
+    expect(content).toContain('### Record 1');
+    expect(content).toContain('- **Name**: Alice');
+    expect(content).toContain('- **Age**: 30');
+    expect(content).toContain('- **City**: NYC');
+    expect(content).toContain('### Record 2');
+    expect(content).toContain('- **Name**: Bob');
+    expect(content).toContain('- **Age**: 25');
+    expect(content).toContain('- **City**: LA');
+  });
+
+  it('should skip empty values in markdown-kv', async () => {
+    const buf = csvBuffer('Name,Age,City\nAlice,,NYC');
+    const pieces = await handler.handle(buf, 'data.csv', 'csv', kvOptions);
+
+    const content = pieces[0]!.type === 'text' ? pieces[0]!.content : '';
+
+    expect(content).toContain('- **Name**: Alice');
+    expect(content).not.toContain('- **Age**:');
+    expect(content).toContain('- **City**: NYC');
+  });
+
+  it('should handle headers-only CSV (no data rows)', async () => {
+    const buf = csvBuffer('Name,Age,City');
+    const pieces = await handler.handle(buf, 'data.csv', 'csv', kvOptions);
+
+    const content = pieces[0]!.type === 'text' ? pieces[0]!.content : '';
+
+    expect(content).toContain('- **Name**');
+    expect(content).toContain('- **Age**');
+    expect(content).toContain('- **City**');
+    expect(content).not.toContain('### Record');
+  });
+
+  it('should handle single data row CSV', async () => {
+    const buf = csvBuffer('X,Y\n1,2');
+    const pieces = await handler.handle(buf, 'data.csv', 'csv', kvOptions);
+
+    const content = pieces[0]!.type === 'text' ? pieces[0]!.content : '';
+
+    expect(content).toContain('### Record 1');
+    expect(content).toContain('- **X**: 1');
+    expect(content).toContain('- **Y**: 2');
+    expect(content).not.toContain('### Record 2');
+  });
+
+  // ── XLSX tests ──────────────────────────────────────────────────
+
+  it('should convert XLSX to markdown-kv with sheet headers', async () => {
+    const buf = await xlsxBuffer([
+      { name: 'People', rows: [['Name', 'Age'], ['Alice', 30], ['Bob', 25]] },
+    ]);
+    const pieces = await handler.handle(buf, 'data.xlsx', 'xlsx', kvOptions);
+
+    expect(pieces).toHaveLength(1);
+    const content = pieces[0]!.type === 'text' ? pieces[0]!.content : '';
+
+    expect(content).toContain('## Sheet: People');
+    expect(content).toContain('### Record 1');
+    expect(content).toContain('- **Name**: Alice');
+    expect(content).toContain('- **Age**: 30');
+    expect(content).toContain('### Record 2');
+    expect(content).toContain('- **Name**: Bob');
+  });
+
+  it('should produce one piece per XLSX sheet', async () => {
+    const buf = await xlsxBuffer([
+      { name: 'Sheet1', rows: [['A', 'B'], ['1', '2']] },
+      { name: 'Sheet2', rows: [['X', 'Y'], ['3', '4']] },
+    ]);
+    const pieces = await handler.handle(buf, 'data.xlsx', 'xlsx', kvOptions);
+
+    expect(pieces).toHaveLength(2);
+
+    const c1 = pieces[0]!.type === 'text' ? pieces[0]!.content : '';
+    const c2 = pieces[1]!.type === 'text' ? pieces[1]!.content : '';
+
+    expect(c1).toContain('## Sheet: Sheet1');
+    expect(c1).toContain('- **A**: 1');
+    expect(c2).toContain('## Sheet: Sheet2');
+    expect(c2).toContain('- **X**: 3');
+  });
+
+  it('should respect maxRows option', async () => {
+    const buf = csvBuffer('H\nA\nB\nC\nD\nE');
+    const pieces = await handler.handle(buf, 'data.csv', 'csv', {
+      formatOptions: { excel: { tableFormat: 'markdown-kv', maxRows: 3 } },
+    });
+
+    const content = pieces[0]!.type === 'text' ? pieces[0]!.content : '';
+
+    // maxRows=3 → 1 header + 2 data rows
+    expect(content).toContain('### Record 1');
+    expect(content).toContain('### Record 2');
+    expect(content).not.toContain('### Record 3');
+  });
+
+  it('should respect maxColumns option', async () => {
+    const buf = csvBuffer('A,B,C,D\n1,2,3,4');
+    const pieces = await handler.handle(buf, 'data.csv', 'csv', {
+      formatOptions: { excel: { tableFormat: 'markdown-kv', maxColumns: 2 } },
+    });
+
+    const content = pieces[0]!.type === 'text' ? pieces[0]!.content : '';
+
+    expect(content).toContain('- **A**: 1');
+    expect(content).toContain('- **B**: 2');
+    expect(content).not.toContain('- **C**');
+    expect(content).not.toContain('- **D**');
+  });
+});
+
+describe('excelToMarkdownKV utility', () => {
+  it('should return a string for CSV input', async () => {
+    const buf = csvBuffer('Name,Score\nAlice,95\nBob,87');
+    const result = await excelToMarkdownKV(buf, 'csv');
+
+    expect(typeof result).toBe('string');
+    const text = result as string;
+    expect(text).toContain('### Record 1');
+    expect(text).toContain('- **Name**: Alice');
+    expect(text).toContain('- **Score**: 95');
+    expect(text).toContain('### Record 2');
+    expect(text).toContain('- **Name**: Bob');
+  });
+
+  it('should return sheet array for XLSX input', async () => {
+    const buf = await xlsxBuffer([
+      { name: 'Sales', rows: [['Product', 'Revenue'], ['Widget', 100]] },
+      { name: 'Costs', rows: [['Item', 'Amount'], ['Rent', 500]] },
+    ]);
+    const result = await excelToMarkdownKV(buf, 'xlsx');
+
+    expect(Array.isArray(result)).toBe(true);
+    const sheets = result as { name: string; content: string }[];
+    expect(sheets).toHaveLength(2);
+
+    expect(sheets[0]!.name).toBe('Sales');
+    expect(sheets[0]!.content).toContain('- **Product**: Widget');
+    expect(sheets[0]!.content).toContain('- **Revenue**: 100');
+    // Sheet header should be stripped by the utility
+    expect(sheets[0]!.content).not.toContain('## Sheet:');
+
+    expect(sheets[1]!.name).toBe('Costs');
+    expect(sheets[1]!.content).toContain('- **Item**: Rent');
+    expect(sheets[1]!.content).toContain('- **Amount**: 500');
+  });
+
+  it('should forward options (maxRows, maxColumns)', async () => {
+    const buf = csvBuffer('A,B,C\n1,2,3\n4,5,6\n7,8,9');
+    const result = await excelToMarkdownKV(buf, 'csv', { maxRows: 2, maxColumns: 2 });
+
+    const text = result as string;
+    // maxRows=2 → 1 header + 1 data row
+    expect(text).toContain('### Record 1');
+    expect(text).not.toContain('### Record 2');
+    // maxColumns=2 → only A, B
+    expect(text).toContain('- **A**: 1');
+    expect(text).toContain('- **B**: 2');
+    expect(text).not.toContain('- **C**');
   });
 });

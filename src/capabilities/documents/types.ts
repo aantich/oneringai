@@ -126,7 +126,7 @@ export interface ExcelFormatOptions {
   /** Maximum columns per sheet (default: 50) */
   maxColumns?: number;
   /** Table output format (default: 'markdown') */
-  tableFormat?: 'markdown' | 'csv' | 'json';
+  tableFormat?: 'markdown' | 'csv' | 'json' | 'markdown-kv';
   /** Include formulas as comments (default: false) */
   includeFormulas?: boolean;
 }

@@ -14,7 +14,7 @@ import path from 'node:path';
 interface CLIOptions {
   source: string;
   images: boolean;
-  format?: 'csv' | 'json' | 'markdown';
+  format?: 'csv' | 'json' | 'markdown' | 'markdown-kv';
   noHeader: boolean;
   maxTokens?: number;
 }
@@ -41,11 +41,11 @@ function parseArgs(argv: string[]): CLIOptions | null {
       opts.noHeader = true;
     } else if (arg === '--format') {
       const val = args[++i];
-      if (!val || !['csv', 'json', 'markdown'].includes(val)) {
-        console.error('Error: --format must be one of: csv, json, markdown');
+      if (!val || !['csv', 'json', 'markdown', 'markdown-kv'].includes(val)) {
+        console.error('Error: --format must be one of: csv, json, markdown, markdown-kv');
         process.exit(1);
       }
-      opts.format = val as 'csv' | 'json' | 'markdown';
+      opts.format = val as 'csv' | 'json' | 'markdown' | 'markdown-kv';
     } else if (arg === '--max-tokens') {
       const val = args[++i];
       const n = Number(val);
@@ -83,7 +83,7 @@ Arguments:
 
 Options:
   --images             Include image pieces (metadata only, no base64)
-  --format <fmt>       Excel table format: csv, json, markdown (default: markdown)
+  --format <fmt>       Excel table format: csv, json, markdown, markdown-kv (default: markdown)
   --no-header          Skip document header transformer
   --max-tokens <n>     Maximum estimated tokens in output
   -h, --help           Show this help message
