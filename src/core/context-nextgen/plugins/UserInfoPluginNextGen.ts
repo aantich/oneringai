@@ -321,6 +321,8 @@ export class UserInfoPluginNextGen implements IContextPluginNextGen, IStoreHandl
   private _entries: Map<string, UserInfoEntry> = new Map();
   /** Whether entries have been loaded from storage */
   private _initialized = false;
+  /** Whether state was restored from a session snapshot (needs storage merge) */
+  private _needsStorageMerge = false;
 
   private readonly maxTotalSize: number;
   private readonly maxEntries: number;
@@ -420,6 +422,10 @@ export class UserInfoPluginNextGen implements IContextPluginNextGen, IStoreHandl
         this._entries.set(entry.id, entry);
       }
       this._initialized = true;
+      // Schedule a storage merge on next getContent() — external writers
+      // (onboarding seed, dreaming service) may have updated MongoDB since
+      // this session state was saved.
+      this._needsStorageMerge = true;
       this._tokenCache = null;
     }
   }
@@ -446,27 +452,61 @@ export class UserInfoPluginNextGen implements IContextPluginNextGen, IStoreHandl
   }
 
   /**
-   * Lazy load entries from storage
+   * Lazy load entries from storage.
+   *
+   * When state was restored from a session snapshot (_needsStorageMerge),
+   * we merge storage entries that are newer or absent in the snapshot.
+   * This ensures external writes (onboarding seed, dreaming service)
+   * are visible even when a saved session exists.
    */
   private async ensureInitialized(): Promise<void> {
-    if (this._initialized || this._destroyed) return;
+    if (this._destroyed) return;
 
-    try {
-      const storage = this.resolveStorage();
-      const entries = await storage.load(this.userId);
-      this._entries.clear();
-      if (entries) {
-        for (const entry of entries) {
-          this._entries.set(entry.id, entry);
+    // Normal first-time load (no session restore)
+    if (!this._initialized) {
+      try {
+        const storage = this.resolveStorage();
+        const entries = await storage.load(this.userId);
+        this._entries.clear();
+        if (entries) {
+          for (const entry of entries) {
+            this._entries.set(entry.id, entry);
+          }
         }
+        this._initialized = true;
+      } catch (error) {
+        console.warn(`Failed to load user info for userId '${this.userId ?? 'default'}':`, error);
+        this._entries.clear();
+        this._initialized = true;
       }
-      this._initialized = true;
-    } catch (error) {
-      console.warn(`Failed to load user info for userId '${this.userId ?? 'default'}':`, error);
-      this._entries.clear();
-      this._initialized = true;
+      this._tokenCache = null;
+      return;
     }
-    this._tokenCache = null;
+
+    // Merge after session restore — pick up external writes from storage
+    if (this._needsStorageMerge) {
+      this._needsStorageMerge = false;
+      try {
+        const storage = this.resolveStorage();
+        const storageEntries = await storage.load(this.userId);
+        if (storageEntries) {
+          let merged = false;
+          for (const storageEntry of storageEntries) {
+            const cached = this._entries.get(storageEntry.id);
+            if (!cached || storageEntry.updatedAt > cached.updatedAt) {
+              this._entries.set(storageEntry.id, storageEntry);
+              merged = true;
+            }
+          }
+          if (merged) {
+            this._tokenCache = null;
+          }
+        }
+      } catch (error) {
+        // Non-fatal — session state is still usable
+        console.warn(`Failed to merge user info from storage for userId '${this.userId ?? 'default'}':`, error);
+      }
+    }
   }
 
   /**
