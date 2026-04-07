@@ -73,6 +73,34 @@ export type AuthTemplateField =
   | 'signingSecret';
 
 /**
+ * Vendor-specific option field definition.
+ * Declares a configurable option that UI apps render as form fields.
+ * Values are stored in `connector.config.options` and accessed via `connector.getOptions()`.
+ */
+export interface OptionField {
+  /** Option key stored in connector.config.options (e.g., 'defaultFromNumber') */
+  key: string;
+
+  /** Human-readable label for UI display (e.g., 'Default From Number') */
+  label: string;
+
+  /** Help text / placeholder shown in the UI */
+  description: string;
+
+  /** Whether the option must be provided (default: false) */
+  required?: boolean;
+
+  /** Field type hint for UI rendering (default: 'string') */
+  type?: 'string' | 'number' | 'boolean';
+
+  /** Default value if not provided */
+  defaultValue?: string | number | boolean;
+
+  /** Placeholder text for the input field */
+  placeholder?: string;
+}
+
+/**
  * Vendor template definition
  * Complete configuration for a vendor's supported authentication methods
  */
@@ -103,6 +131,9 @@ export interface VendorTemplate {
 
   /** Additional notes about the vendor's authentication */
   notes?: string;
+
+  /** Vendor-specific option fields (stored in connector.config.options). UI apps render these as form fields. */
+  optionFields?: OptionField[];
 }
 
 /**
@@ -156,4 +187,7 @@ export interface CreateConnectorOptions {
 
   /** Enable request/response logging */
   logging?: boolean;
+
+  /** Vendor-specific options (e.g., defaultFromNumber for Twilio). Stored in connector.config.options. */
+  vendorOptions?: Record<string, unknown>;
 }

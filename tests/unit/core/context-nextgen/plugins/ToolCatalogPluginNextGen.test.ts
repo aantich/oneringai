@@ -139,6 +139,71 @@ describe('ToolCatalogPluginNextGen', () => {
       expect(results.some(r => r.category === 'other_cat')).toBe(true);
     });
 
+    it('should list all tools across all categories with listAll', async () => {
+      const tools = plugin.getTools();
+      const searchTool = tools.find(t => t.definition.function.name === 'tool_catalog_search')!;
+
+      const result = await searchTool.execute({ listAll: true }) as Record<string, unknown>;
+      expect(result.totalCategories).toBe(2);
+      expect(result.totalTools).toBe(3);
+
+      const cats = result.categories as Array<{ category: string; tools: Array<{ name: string }> }>;
+      expect(cats).toHaveLength(2);
+
+      const testCat = cats.find(c => c.category === 'test_cat')!;
+      expect(testCat.tools).toHaveLength(2);
+      expect(testCat.tools.some(t => t.name === 'test_tool_a')).toBe(true);
+      expect(testCat.tools.some(t => t.name === 'test_tool_b')).toBe(true);
+
+      const otherCat = cats.find(c => c.category === 'other_cat')!;
+      expect(otherCat.tools).toHaveLength(1);
+      expect(otherCat.tools[0].name).toBe('other_tool_x');
+    });
+
+    it('should respect categoryScope with listAll', async () => {
+      const scopedPlugin = new ToolCatalogPluginNextGen({
+        categoryScope: ['test_cat'],
+      });
+      scopedPlugin.setToolManager(toolManager);
+
+      const tools = scopedPlugin.getTools();
+      const searchTool = tools.find(t => t.definition.function.name === 'tool_catalog_search')!;
+
+      const result = await searchTool.execute({ listAll: true }) as Record<string, unknown>;
+      expect(result.totalCategories).toBe(1);
+      expect(result.totalTools).toBe(2);
+
+      const cats = result.categories as Array<{ category: string }>;
+      expect(cats[0].category).toBe('test_cat');
+
+      scopedPlugin.destroy();
+    });
+
+    it('should show loaded/pinned status in listAll results', async () => {
+      const pinnedPlugin = new ToolCatalogPluginNextGen({
+        pinned: ['test_cat'],
+      });
+      const tm = new ToolManager();
+      pinnedPlugin.setToolManager(tm);
+
+      const tools = pinnedPlugin.getTools();
+      const searchTool = tools.find(t => t.definition.function.name === 'tool_catalog_search')!;
+
+      const result = await searchTool.execute({ listAll: true }) as Record<string, unknown>;
+      const cats = result.categories as Array<{ category: string; loaded: boolean; pinned: boolean }>;
+
+      const testCat = cats.find(c => c.category === 'test_cat')!;
+      expect(testCat.loaded).toBe(true);
+      expect(testCat.pinned).toBe(true);
+
+      const otherCat = cats.find(c => c.category === 'other_cat')!;
+      expect(otherCat.loaded).toBe(false);
+      expect(otherCat.pinned).toBe(false);
+
+      pinnedPlugin.destroy();
+      tm.destroy();
+    });
+
     it('should respect categoryScope filter', async () => {
       const scopedPlugin = new ToolCatalogPluginNextGen({
         categoryScope: ['test_cat'],

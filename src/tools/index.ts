@@ -69,8 +69,10 @@ export type {
 export {
   // Tools
   bash,
+  devServer,
   // Factory functions
   createBashTool,
+  createDevServerTool,
   // Utilities
   getBackgroundOutput,
   killBackgroundProcess,
@@ -266,6 +268,61 @@ export type {
 } from './slack/index.js';
 
 // ============================================================================
+// Twilio Connector Tools (auto-registered with ConnectorTools for Twilio service)
+// ============================================================================
+
+export {
+  createSendSMSTool,
+  createSendWhatsAppTool,
+  createListMessagesTool,
+  createGetMessageTool,
+  twilioFetch,
+  normalizePhoneNumber,
+  toWhatsAppNumber,
+  getAccountSid,
+  formatMessage as formatTwilioMessage,
+} from './twilio/index.js';
+
+export type {
+  TwilioMessage,
+  TwilioSendResult,
+  TwilioListMessagesResult,
+  TwilioGetMessageResult,
+} from './twilio/index.js';
+
+export { TwilioAPIError, TwilioConfigError } from './twilio/index.js';
+
+// ============================================================================
+// Telegram Connector Tools (auto-registered with ConnectorTools for Telegram service)
+// ============================================================================
+
+export {
+  createSendMessageTool as createTelegramSendMessageTool,
+  createSendPhotoTool as createTelegramSendPhotoTool,
+  createGetUpdatesTool as createTelegramGetUpdatesTool,
+  createGetMeTool as createTelegramGetMeTool,
+  createGetChatTool as createTelegramGetChatTool,
+  createSetWebhookTool as createTelegramSetWebhookTool,
+  telegramFetch,
+  getBotToken,
+} from './telegram/index.js';
+
+export type {
+  TelegramUser,
+  TelegramChat,
+  TelegramMessage,
+  TelegramPhotoSize,
+  TelegramUpdate,
+  TelegramSendResult,
+  TelegramGetMeResult,
+  TelegramGetChatResult,
+  TelegramGetUpdatesResult,
+  TelegramSetWebhookResult,
+} from './telegram/index.js';
+
+export { TelegramAPIError, TelegramConfigError } from './telegram/index.js';
+
+// ============================================================================
 // Desktop Automation Tools
 // ============================================================================
 
@@ -375,10 +432,15 @@ import { glob } from './filesystem/index.js';
 import { grep } from './filesystem/index.js';
 import { listDirectory } from './filesystem/index.js';
 import { bash } from './shell/index.js';
+import { devServer } from './shell/index.js';
+import { bgProcessOutput } from './shell/index.js';
+import { bgProcessList } from './shell/index.js';
+import { bgProcessKill } from './shell/index.js';
 
 /**
  * A bundle of all developer tools commonly used for coding tasks.
- * Includes: readFile, writeFile, editFile, glob, grep, listDirectory, bash
+ * Includes: readFile, writeFile, editFile, glob, grep, listDirectory,
+ * bash, devServer, bgProcessOutput, bgProcessList, bgProcessKill
  *
  * @example
  * ```typescript
@@ -399,6 +461,10 @@ export const developerTools = [
   grep,
   listDirectory,
   bash,
+  devServer,
+  bgProcessOutput,
+  bgProcessList,
+  bgProcessKill,
 ];
 
 // ============================================================================

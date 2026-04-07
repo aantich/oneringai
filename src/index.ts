@@ -27,10 +27,10 @@
  */
 
 // ============ Core API (Primary) ============
-export { Connector, ScopedConnectorRegistry, StorageRegistry, ToolCatalogRegistry, Agent, AgentRegistry, Vendor, VENDORS, isVendor, createProvider, getVendorDefaultBaseURL, SuspendSignal, createOrchestrator, buildOrchestrationTools, buildWorkspaceDelta } from './core/index.js';
-export type { StorageConfig, StorageContext, ToolCategoryDefinition, CatalogToolEntry, ToolCategoryScope, ConnectorCategoryInfo, CatalogRegistryEntry, SuspendSignalOptions, OrchestratorConfig, AgentTypeConfig, OrchestrationToolsContext, AgentInfo, AgentInspection, AgentFilter, AgentRegistryStats, AgentRegistryEvents, AgentEventListener } from './core/index.js';
+export { Connector, ScopedConnectorRegistry, StorageRegistry, ToolCatalogRegistry, Agent, AgentRegistry, Vendor, VENDORS, isVendor, createProvider, getVendorDefaultBaseURL, SuspendSignal, createOrchestrator, buildOrchestrationTools, buildWorkspaceDelta, createDelegationState } from './core/index.js';
+export type { StorageConfig, StorageContext, ToolCategoryDefinition, CatalogToolEntry, ToolCategoryScope, ConnectorCategoryInfo, CatalogRegistryEntry, SuspendSignalOptions, OrchestratorConfig, AgentTypeConfig, DelegationDefaults, OrchestrationToolsContext, DelegationState, DelegationReclaimConfig, AgentInfo, AgentInspection, AgentFilter, AgentRegistryStats, AgentRegistryEvents, AgentEventListener } from './core/index.js';
 export type { AgentStatus as RegistryAgentStatus } from './core/index.js';
-export type { AgentConfig, AgentSessionConfig } from './core/index.js';
+export type { AgentConfig, AgentSessionConfig, RunOptions } from './core/index.js';
 
 // AgentContextNextGen - Clean, Simple Context Management
 export {
@@ -212,7 +212,7 @@ export type {
 } from './capabilities/scrape/index.js';
 
 // Document Reader Capability
-export { DocumentReader, FormatDetector, mergeTextPieces } from './capabilities/documents/index.js';
+export { DocumentReader, FormatDetector, mergeTextPieces, excelToMarkdownKV } from './capabilities/documents/index.js';
 export type {
   DocumentFormat,
   DocumentFamily,
@@ -230,6 +230,8 @@ export type {
   IFormatHandler,
   FormatDetectionResult,
   DocumentToContentOptions,
+  MarkdownKVSheet,
+  ExcelToMarkdownKVOptions,
 } from './capabilities/documents/index.js';
 export { documentToContent, readDocumentAsContent } from './utils/documentContentBridge.js';
 
@@ -955,6 +957,7 @@ export type {
   VendorTemplate,
   AuthTemplate,
   AuthTemplateField,
+  OptionField,
   VendorRegistryEntry,
   TemplateCredentials,
   CreateConnectorOptions,
@@ -1233,6 +1236,55 @@ export type {
   SlackGetChannelInfoResult,
   SlackSetChannelTopicResult,
 } from './tools/index.js';
+
+// Twilio connector tools (auto-registered with ConnectorTools for Twilio service)
+export {
+  createSendSMSTool,
+  createSendWhatsAppTool,
+  createListMessagesTool,
+  createGetMessageTool,
+  twilioFetch,
+  normalizePhoneNumber,
+  toWhatsAppNumber,
+  getAccountSid,
+  formatTwilioMessage,
+} from './tools/index.js';
+
+export type {
+  TwilioMessage,
+  TwilioSendResult,
+  TwilioListMessagesResult,
+  TwilioGetMessageResult,
+} from './tools/index.js';
+
+export { TwilioAPIError, TwilioConfigError } from './tools/index.js';
+
+// Telegram connector tools
+export {
+  createTelegramSendMessageTool,
+  createTelegramSendPhotoTool,
+  createTelegramGetUpdatesTool,
+  createTelegramGetMeTool,
+  createTelegramGetChatTool,
+  createTelegramSetWebhookTool,
+  telegramFetch,
+  getBotToken,
+} from './tools/index.js';
+
+export type {
+  TelegramUser,
+  TelegramChat,
+  TelegramMessage,
+  TelegramPhotoSize,
+  TelegramUpdate,
+  TelegramSendResult,
+  TelegramGetMeResult,
+  TelegramGetChatResult,
+  TelegramGetUpdatesResult,
+  TelegramSetWebhookResult,
+} from './tools/index.js';
+
+export { TelegramAPIError, TelegramConfigError } from './tools/index.js';
 
 // Desktop automation tools (requires @nut-tree-fork/nut-js peer dependency)
 export {

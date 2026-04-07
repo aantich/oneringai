@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Twilio Connector Tools**: 4 new tools for SMS and WhatsApp messaging via Twilio, auto-registered with ConnectorTools for the `twilio` service type:
+  - `send_sms` — Send SMS text messages to any phone number
+  - `send_whatsapp` — Send WhatsApp messages (freeform text or pre-approved templates via ContentSid)
+  - `list_messages` — List/filter messages by phone number, date range, and channel (SMS/WhatsApp/all)
+  - `get_message` — Get full details of a single message by SID (status, price, errors)
+  - Shared `twilioFetch()` helper with Account SID resolution, form-encoded POST, and Twilio error handling
+  - Phone number helpers: `normalizePhoneNumber()`, `toWhatsAppNumber()`, `getAccountSid()`
+
+## [0.5.1] - 2026-04-01
+
+### Added
+- **Per-Call `RunOptions`**: `agent.run(input, options?)` and `agent.stream(input, options?)` now accept an optional `RunOptions` parameter to override `thinking`, `temperature`, and `vendorOptions` per invocation. Enables controlling reasoning effort at each agentic step without changing agent-level config.
+- **`thinking` in `DirectCallOptions`**: `runDirect()` and `streamDirect()` now also support the vendor-agnostic `thinking` config (`enabled`, `budgetTokens`, `effort`).
+- **Tool Catalog: `listAll` parameter** — `tool_catalog_search({ listAll: true })` returns every tool across all available categories and connectors, grouped by category. Includes tool metadata (name, displayName, description, safeByDefault) plus loaded/pinned status per category, and `totalCategories`/`totalTools` counts. Respects `categoryScope` and `identities` scoping.
+
+### Fixed
+- **Multi-turn Anthropic "must end with user message" error**: Fixed a bug in `AgentContextNextGen.setCurrentInput()` that appended the previous assistant message to `_currentInput`, causing the conversation sent to the API to end with an assistant message on the second+ `run()` call. This triggered Anthropic's "This model does not support assistant message prefill" error.
+- **Anthropic converter safety net**: Added trailing assistant message trimming in `AnthropicConverter.convertMessages()` as a defensive measure against any future context-layer bugs that could produce conversations ending with an assistant message.
+
 ## [0.5.2] - 2026-03-17
 
 ### Added

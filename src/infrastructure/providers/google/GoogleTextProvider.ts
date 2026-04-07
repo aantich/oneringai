@@ -17,6 +17,7 @@ import { GoogleConverter } from './GoogleConverter.js';
 import { GoogleStreamConverter } from './GoogleStreamConverter.js';
 import { StreamEvent } from '../../../domain/entities/StreamEvent.js';
 import { resolveModelCapabilities, resolveMaxContextTokens } from '../base/ModelCapabilityResolver.js';
+import { ProviderErrorMapper } from '../base/ProviderErrorMapper.js';
 
 export class GoogleTextProvider extends BaseTextProvider {
   readonly name = 'google';
@@ -118,7 +119,7 @@ export class GoogleTextProvider extends BaseTextProvider {
 
         return response;
       } catch (error: any) {
-        this.logger.error({ model: options.model, error: error.message || error }, 'generate error');
+        this.logger.error({ model: options.model, ...ProviderErrorMapper.extractErrorDetails(error) }, 'generate error');
         // Clear mappings on error to prevent stale state
         this.converter.clearMappings();
         this.handleError(error, options.model);
@@ -180,7 +181,7 @@ export class GoogleTextProvider extends BaseTextProvider {
     } catch (error: any) {
       // Clear converters on error to prevent stale state
       this.logger.error(
-        { model: options.model, error: error.message || error },
+        { model: options.model, ...ProviderErrorMapper.extractErrorDetails(error) },
         'streamGenerate error',
       );
       this.converter.clearMappings();

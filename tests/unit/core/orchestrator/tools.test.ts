@@ -1,20 +1,18 @@
 /**
- * Orchestration Tools Unit Tests
+ * Orchestration Tools v2 Unit Tests
  *
  * Tests for:
  * - buildWorkspaceDelta: workspace change formatting
- * - buildOrchestrationTools: all 7 orchestration tools
- *   - create_agent: validation, max agents, creation
- *   - list_agents: status reporting
- *   - destroy_agent: validation, running guard, cleanup
- *   - assign_turn: blocking execution, timeout, error handling
- *   - assign_turn_async: non-blocking flag
- *   - assign_parallel: fan-out, duplicate detection, partial failures
+ * - buildOrchestrationTools: all 5 orchestration tools
+ *   - assign_turn: auto-create, async (blocking: false), autoDestroy, timeout
+ *   - delegate_interactive: delegation state, double-delegation prevention, isRunning guard
  *   - send_message: injection, validation
+ *   - list_agents: status reporting + delegation info
+ *   - destroy_agent: validation, running guard, cleanup, delegation reclaim
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { buildOrchestrationTools, buildWorkspaceDelta } from '@/core/orchestrator/tools.js';
+import { buildOrchestrationTools, buildWorkspaceDelta, createDelegationState } from '@/core/orchestrator/tools.js';
 import type { OrchestrationToolsContext } from '@/core/orchestrator/tools.js';
 import { SharedWorkspacePluginNextGen } from '@/core/context-nextgen/plugins/SharedWorkspacePluginNextGen.js';
 import type { ToolFunction } from '@/domain/entities/Tool.js';
@@ -29,7 +27,7 @@ function createMockAgent(overrides: Partial<{
   isRunning: boolean;
   isPaused: boolean;
   isDestroyed: boolean;
-  runResult: { output_text: string; usage?: { total_tokens: number } };
+  runResult: { status?: string; output_text: string; usage?: { total_tokens: number } };
   runError: Error;
   runDelay: number;
 }> = {}) {
@@ -38,7 +36,7 @@ function createMockAgent(overrides: Partial<{
     isRunning = false,
     isPaused = false,
     isDestroyed = false,
-    runResult = { output_text: 'done', usage: { total_tokens: 100 } },
+    runResult = { status: 'completed', output_text: 'done', usage: { total_tokens: 100 } },
     runError,
     runDelay = 0,
   } = overrides;
@@ -71,6 +69,7 @@ function createToolsContext(overrides: Partial<OrchestrationToolsContext> = {}):
     ]),
     lastTurnTimestamps: new Map(),
     createWorkerAgent: vi.fn((name: string) => createMockAgent()),
+    delegationState: createDelegationState(),
     ...overrides,
   };
 }
@@ -134,7 +133,6 @@ describe('buildWorkspaceDelta', () => {
     const delta = buildWorkspaceDelta('agent-1', workspace, lastSeen);
     expect(delta).toContain('UPDATED');
     expect(delta).toContain('v2');
-    expect(delta).toContain('v2'); // version 2
   });
 
   it('should include recent log entries', async () => {
@@ -176,10 +174,10 @@ describe('buildWorkspaceDelta', () => {
 // ============================================================================
 
 describe('buildOrchestrationTools', () => {
-  it('should return exactly 7 tools', () => {
+  it('should return exactly 5 tools', () => {
     const ctx = createToolsContext();
     const tools = buildOrchestrationTools(ctx);
-    expect(tools).toHaveLength(7);
+    expect(tools).toHaveLength(5);
   });
 
   it('should return tools with correct names', () => {
@@ -187,21 +185,19 @@ describe('buildOrchestrationTools', () => {
     const tools = buildOrchestrationTools(ctx);
     const names = tools.map(t => t.definition.function.name);
     expect(names).toEqual([
-      'create_agent',
+      'assign_turn',
+      'delegate_interactive',
+      'send_message',
       'list_agents',
       'destroy_agent',
-      'assign_turn',
-      'assign_turn_async',
-      'assign_parallel',
-      'send_message',
     ]);
   });
 
-  it('should mark assign_turn_async as non-blocking', () => {
+  it('should mark assign_turn as non-blocking', () => {
     const ctx = createToolsContext();
     const tools = buildOrchestrationTools(ctx);
-    const asyncTool = findTool(tools, 'assign_turn_async');
-    expect(asyncTool.definition.blocking).toBe(false);
+    const tool = findTool(tools, 'assign_turn');
+    expect(tool.definition.blocking).toBe(false);
   });
 
   it('should set all tools to low risk', () => {
@@ -210,160 +206,6 @@ describe('buildOrchestrationTools', () => {
     for (const tool of tools) {
       expect(tool.permission?.riskLevel).toBe('low');
     }
-  });
-});
-
-// ============================================================================
-// create_agent tool
-// ============================================================================
-
-describe('create_agent', () => {
-  let ctx: OrchestrationToolsContext;
-  let tool: ToolFunction;
-
-  beforeEach(() => {
-    ctx = createToolsContext();
-    tool = findTool(buildOrchestrationTools(ctx), 'create_agent');
-  });
-
-  it('should create an agent with valid name and type', async () => {
-    const result = await tool.execute!({ name: 'dev-1', type: 'developer' }) as any;
-    expect(result.success).toBe(true);
-    expect(result.name).toBe('dev-1');
-    expect(result.type).toBe('developer');
-    expect(ctx.agents.has('dev-1')).toBe(true);
-    expect(ctx.createWorkerAgent).toHaveBeenCalledWith('dev-1', 'developer');
-  });
-
-  it('should reject duplicate agent name', async () => {
-    ctx.agents.set('dev-1', createMockAgent());
-
-    const result = await tool.execute!({ name: 'dev-1', type: 'developer' }) as any;
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('already exists');
-  });
-
-  it('should reject unknown agent type', async () => {
-    const result = await tool.execute!({ name: 'dev-1', type: 'unknown' }) as any;
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('Unknown agent type');
-    expect(result.error).toContain('developer');
-    expect(result.error).toContain('reviewer');
-  });
-
-  it('should enforce max agents limit (default 20)', async () => {
-    for (let i = 0; i < 20; i++) {
-      ctx.agents.set(`agent-${i}`, createMockAgent());
-    }
-
-    const result = await tool.execute!({ name: 'agent-21', type: 'developer' }) as any;
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('Maximum agent limit');
-  });
-
-  it('should enforce custom max agents limit', async () => {
-    ctx = createToolsContext({ maxAgents: 2 });
-    tool = findTool(buildOrchestrationTools(ctx), 'create_agent');
-
-    ctx.agents.set('a', createMockAgent());
-    ctx.agents.set('b', createMockAgent());
-
-    const result = await tool.execute!({ name: 'c', type: 'developer' }) as any;
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('2');
-  });
-
-  it('should have descriptionFactory listing available types', () => {
-    expect(tool.descriptionFactory).toBeDefined();
-    const desc = tool.descriptionFactory!({});
-    expect(desc).toContain('developer');
-    expect(desc).toContain('reviewer');
-  });
-});
-
-// ============================================================================
-// list_agents tool
-// ============================================================================
-
-describe('list_agents', () => {
-  let ctx: OrchestrationToolsContext;
-  let tool: ToolFunction;
-
-  beforeEach(() => {
-    ctx = createToolsContext();
-    tool = findTool(buildOrchestrationTools(ctx), 'list_agents');
-  });
-
-  it('should return empty list when no agents', async () => {
-    const result = await tool.execute!({}) as any;
-    expect(result.agents).toEqual([]);
-    expect(result.total).toBe(0);
-  });
-
-  it('should list agents with status', async () => {
-    ctx.agents.set('idle-agent', createMockAgent({ isRunning: false, isPaused: false }));
-    ctx.agents.set('running-agent', createMockAgent({ isRunning: true }));
-    ctx.agents.set('paused-agent', createMockAgent({ isPaused: true }));
-
-    const result = await tool.execute!({}) as any;
-    expect(result.total).toBe(3);
-
-    const idle = result.agents.find((a: any) => a.name === 'idle-agent');
-    expect(idle.status).toBe('idle');
-
-    const running = result.agents.find((a: any) => a.name === 'running-agent');
-    expect(running.status).toBe('running');
-
-    const paused = result.agents.find((a: any) => a.name === 'paused-agent');
-    expect(paused.status).toBe('paused');
-  });
-
-  it('should include model and isDestroyed', async () => {
-    ctx.agents.set('dev', createMockAgent({ model: 'gpt-4o', isDestroyed: true }));
-
-    const result = await tool.execute!({}) as any;
-    expect(result.agents[0].model).toBe('gpt-4o');
-    expect(result.agents[0].isDestroyed).toBe(true);
-  });
-});
-
-// ============================================================================
-// destroy_agent tool
-// ============================================================================
-
-describe('destroy_agent', () => {
-  let ctx: OrchestrationToolsContext;
-  let tool: ToolFunction;
-
-  beforeEach(() => {
-    ctx = createToolsContext();
-    tool = findTool(buildOrchestrationTools(ctx), 'destroy_agent');
-  });
-
-  it('should destroy an idle agent', async () => {
-    const mockAgent = createMockAgent();
-    ctx.agents.set('dev', mockAgent);
-    ctx.lastTurnTimestamps.set('dev', Date.now());
-
-    const result = await tool.execute!({ name: 'dev' }) as any;
-    expect(result.success).toBe(true);
-    expect(mockAgent.destroy).toHaveBeenCalled();
-    expect(ctx.agents.has('dev')).toBe(false);
-    expect(ctx.lastTurnTimestamps.has('dev')).toBe(false);
-  });
-
-  it('should reject destroying a non-existent agent', async () => {
-    const result = await tool.execute!({ name: 'ghost' }) as any;
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('not found');
-  });
-
-  it('should reject destroying a running agent (M1)', async () => {
-    ctx.agents.set('busy', createMockAgent({ isRunning: true }));
-
-    const result = await tool.execute!({ name: 'busy' }) as any;
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('currently running');
   });
 });
 
@@ -380,9 +222,9 @@ describe('assign_turn', () => {
     tool = findTool(buildOrchestrationTools(ctx), 'assign_turn');
   });
 
-  it('should run agent and return result', async () => {
+  it('should run existing agent and return result', async () => {
     const mockAgent = createMockAgent({
-      runResult: { output_text: 'Auth module complete', usage: { total_tokens: 500 } },
+      runResult: { status: 'completed', output_text: 'Auth module complete', usage: { total_tokens: 500 } },
     });
     ctx.agents.set('dev', mockAgent);
 
@@ -393,11 +235,55 @@ describe('assign_turn', () => {
     expect(result.totalTokens).toBe(500);
   });
 
+  it('should auto-create agent when type is provided', async () => {
+    const result = await tool.execute!({
+      agent: 'new-dev',
+      type: 'developer',
+      instruction: 'Build something',
+    }) as any;
+
+    expect(result.success).toBe(true);
+    expect(ctx.agents.has('new-dev')).toBe(true);
+    expect(ctx.createWorkerAgent).toHaveBeenCalledWith('new-dev', 'developer');
+  });
+
+  it('should error when agent not found and no type provided', async () => {
+    const result = await tool.execute!({ agent: 'ghost', instruction: 'hello' }) as any;
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('not found');
+    expect(result.error).toContain('type');
+  });
+
+  it('should error for unknown agent type', async () => {
+    const result = await tool.execute!({ agent: 'x', type: 'unknown', instruction: 'hello' }) as any;
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Unknown agent type');
+    expect(result.error).toContain('developer');
+    expect(result.error).toContain('reviewer');
+  });
+
+  it('should error for destroyed agent', async () => {
+    ctx.agents.set('dead', createMockAgent({ isDestroyed: true }));
+
+    const result = await tool.execute!({ agent: 'dead', instruction: 'hello' }) as any;
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('destroyed');
+  });
+
+  it('should enforce max agents limit', async () => {
+    for (let i = 0; i < 20; i++) {
+      ctx.agents.set(`agent-${i}`, createMockAgent());
+    }
+
+    const result = await tool.execute!({ agent: 'overflow', type: 'developer', instruction: 'hello' }) as any;
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Maximum agent limit');
+  });
+
   it('should prepend workspace delta to instruction', async () => {
     const mockAgent = createMockAgent();
     ctx.agents.set('dev', mockAgent);
 
-    // Add something to workspace so delta is non-empty
     await ctx.workspace.storeSet('plan', { summary: 'Build plan', author: 'orchestrator' });
 
     await tool.execute!({ agent: 'dev', instruction: 'Continue work' });
@@ -417,18 +303,21 @@ describe('assign_turn', () => {
     expect(ctx.lastTurnTimestamps.get('dev')!).toBeGreaterThanOrEqual(before);
   });
 
-  it('should return error for non-existent agent', async () => {
-    const result = await tool.execute!({ agent: 'ghost', instruction: 'hello' }) as any;
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('not found');
-  });
+  it('should auto-destroy agent when autoDestroy is true', async () => {
+    const mockAgent = createMockAgent();
+    (ctx.createWorkerAgent as any).mockReturnValue(mockAgent);
 
-  it('should return error for destroyed agent', async () => {
-    ctx.agents.set('dead', createMockAgent({ isDestroyed: true }));
+    const result = await tool.execute!({
+      agent: 'temp',
+      type: 'developer',
+      instruction: 'One-shot task',
+      autoDestroy: true,
+    }) as any;
 
-    const result = await tool.execute!({ agent: 'dead', instruction: 'hello' }) as any;
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('destroyed');
+    expect(result.success).toBe(true);
+    expect(result.destroyed).toBe(true);
+    expect(mockAgent.destroy).toHaveBeenCalled();
+    expect(ctx.agents.has('temp')).toBe(false);
   });
 
   it('should handle agent.run() errors gracefully', async () => {
@@ -451,20 +340,6 @@ describe('assign_turn', () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain('timed out');
   }, 10000);
-});
-
-// ============================================================================
-// assign_turn_async tool
-// ============================================================================
-
-describe('assign_turn_async', () => {
-  let ctx: OrchestrationToolsContext;
-  let tool: ToolFunction;
-
-  beforeEach(() => {
-    ctx = createToolsContext();
-    tool = findTool(buildOrchestrationTools(ctx), 'assign_turn_async');
-  });
 
   it('should have blocking: false on definition', () => {
     expect(tool.definition.blocking).toBe(false);
@@ -474,166 +349,86 @@ describe('assign_turn_async', () => {
     expect(tool.definition.timeout).toBe(300000);
   });
 
-  it('should execute the same as assign_turn', async () => {
-    const mockAgent = createMockAgent({
-      runResult: { output_text: 'async result', usage: { total_tokens: 200 } },
-    });
-    ctx.agents.set('dev', mockAgent);
-
-    const result = await tool.execute!({ agent: 'dev', instruction: 'Do async work' }) as any;
-    expect(result.success).toBe(true);
-    expect(result.result).toBe('async result');
-  });
-
-  it('should return error for non-existent agent', async () => {
-    const result = await tool.execute!({ agent: 'ghost', instruction: 'hello' }) as any;
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('not found');
-  });
-
-  it('should return error for destroyed agent', async () => {
-    ctx.agents.set('dead', createMockAgent({ isDestroyed: true }));
-    const result = await tool.execute!({ agent: 'dead', instruction: 'hello' }) as any;
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('destroyed');
+  it('should have descriptionFactory listing available types', () => {
+    expect(tool.descriptionFactory).toBeDefined();
+    const desc = tool.descriptionFactory!({});
+    expect(desc).toContain('developer');
+    expect(desc).toContain('reviewer');
   });
 });
 
+
 // ============================================================================
-// assign_parallel tool
+// delegate_interactive tool
 // ============================================================================
 
-describe('assign_parallel', () => {
+describe('delegate_interactive', () => {
   let ctx: OrchestrationToolsContext;
   let tool: ToolFunction;
 
   beforeEach(() => {
     ctx = createToolsContext();
-    tool = findTool(buildOrchestrationTools(ctx), 'assign_parallel');
+    tool = findTool(buildOrchestrationTools(ctx), 'delegate_interactive');
   });
 
-  it('should run multiple agents in parallel', async () => {
-    ctx.agents.set('dev-1', createMockAgent({
-      runResult: { output_text: 'result-1', usage: { total_tokens: 100 } },
-    }));
-    ctx.agents.set('dev-2', createMockAgent({
-      runResult: { output_text: 'result-2', usage: { total_tokens: 200 } },
-    }));
-
+  it('should set delegation state', async () => {
     const result = await tool.execute!({
-      assignments: [
-        { agent: 'dev-1', instruction: 'Task A' },
-        { agent: 'dev-2', instruction: 'Task B' },
-      ],
+      agent: 'coder',
+      type: 'developer',
+      monitoring: 'active',
+      reclaimOn: { keyword: 'done', maxTurns: 5 },
     }) as any;
 
     expect(result.success).toBe(true);
-    expect(result.total).toBe(2);
-    expect(result.succeeded).toBe(2);
-    expect(result.failed).toBe(0);
-    expect(result.results[0].result).toBe('result-1');
-    expect(result.results[1].result).toBe('result-2');
+    expect(result.agent).toBe('coder');
+    expect(result.monitoring).toBe('active');
+    expect(ctx.delegationState.active).toBe(true);
+    expect(ctx.delegationState.agentName).toBe('coder');
+    expect(ctx.delegationState.monitoring).toBe('active');
+    expect(ctx.delegationState.reclaimOn.keyword).toBe('done');
+    expect(ctx.delegationState.reclaimOn.maxTurns).toBe(5);
+    expect(ctx.delegationState.turnCount).toBe(0);
   });
 
-  it('should reject empty assignments', async () => {
-    const result = await tool.execute!({ assignments: [] }) as any;
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('No assignments');
+  it('should auto-create agent when type is provided', async () => {
+    const result = await tool.execute!({ agent: 'new-coder', type: 'developer' }) as any;
+
+    expect(result.success).toBe(true);
+    expect(ctx.agents.has('new-coder')).toBe(true);
+    expect(ctx.createWorkerAgent).toHaveBeenCalledWith('new-coder', 'developer');
   });
 
-  it('should reject null/undefined assignments', async () => {
-    const result = await tool.execute!({}) as any;
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('No assignments');
+  it('should default to passive monitoring', async () => {
+    await tool.execute!({ agent: 'coder', type: 'developer' });
+    expect(ctx.delegationState.monitoring).toBe('passive');
   });
 
-  it('should reject duplicate agents (L2)', async () => {
-    ctx.agents.set('dev', createMockAgent());
-
-    const result = await tool.execute!({
-      assignments: [
-        { agent: 'dev', instruction: 'Task A' },
-        { agent: 'dev', instruction: 'Task B' },
-      ],
-    }) as any;
+  it('should prevent double delegation', async () => {
+    await tool.execute!({ agent: 'coder', type: 'developer' });
+    const result = await tool.execute!({ agent: 'reviewer', type: 'reviewer' }) as any;
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain('Duplicate');
-    expect(result.error).toContain('dev');
+    expect(result.error).toContain('Already delegated');
   });
 
-  it('should reject if any agent does not exist', async () => {
-    ctx.agents.set('dev-1', createMockAgent());
-
-    const result = await tool.execute!({
-      assignments: [
-        { agent: 'dev-1', instruction: 'Task A' },
-        { agent: 'ghost', instruction: 'Task B' },
-      ],
-    }) as any;
-
+  it('should error for unknown type without existing agent', async () => {
+    const result = await tool.execute!({ agent: 'coder', type: 'unknown' }) as any;
     expect(result.success).toBe(false);
-    expect(result.error).toContain('ghost');
-    expect(result.error).toContain('not found');
+    expect(result.error).toContain('Unknown agent type');
   });
 
-  it('should handle partial failures', async () => {
-    ctx.agents.set('ok', createMockAgent({
-      runResult: { output_text: 'fine' },
-    }));
-    ctx.agents.set('fail', createMockAgent({
-      runError: new Error('Boom'),
-    }));
-
-    const result = await tool.execute!({
-      assignments: [
-        { agent: 'ok', instruction: 'Task A' },
-        { agent: 'fail', instruction: 'Task B' },
-      ],
-    }) as any;
-
-    expect(result.success).toBe(false); // not all succeeded
-    expect(result.succeeded).toBe(1);
-    expect(result.failed).toBe(1);
-
-    const okResult = result.results.find((r: any) => r.agent === 'ok');
-    expect(okResult.success).toBe(true);
-    expect(okResult.result).toBe('fine');
-
-    const failResult = result.results.find((r: any) => r.agent === 'fail');
-    expect(failResult.success).toBe(false);
-    expect(failResult.error).toContain('Boom');
-  });
-
-  it('should update lastTurnTimestamps for successful agents', async () => {
-    ctx.agents.set('dev', createMockAgent());
-    const before = Date.now();
+  it('should send briefing to agent if provided', async () => {
+    const mockAgent = createMockAgent();
+    (ctx.createWorkerAgent as any).mockReturnValue(mockAgent);
 
     await tool.execute!({
-      assignments: [{ agent: 'dev', instruction: 'Work' }],
+      agent: 'coder',
+      type: 'developer',
+      briefing: 'The user wants to debug an auth issue',
     });
 
-    expect(ctx.lastTurnTimestamps.get('dev')!).toBeGreaterThanOrEqual(before);
+    expect(mockAgent.inject).toHaveBeenCalledWith('The user wants to debug an auth issue', 'developer');
   });
-
-  it('should timeout individual agents', async () => {
-    ctx.agents.set('fast', createMockAgent({ runResult: { output_text: 'done' } }));
-    ctx.agents.set('slow', createMockAgent({ runDelay: 2000 }));
-
-    const result = await tool.execute!({
-      assignments: [
-        { agent: 'fast', instruction: 'Quick' },
-        { agent: 'slow', instruction: 'Slow' },
-      ],
-      timeout: 0.05, // 50ms
-    }) as any;
-
-    expect(result.succeeded).toBe(1);
-    expect(result.failed).toBe(1);
-
-    const slowResult = result.results.find((r: any) => r.agent === 'slow');
-    expect(slowResult.error).toContain('Timed out');
-  }, 10000);
 });
 
 // ============================================================================
@@ -674,14 +469,150 @@ describe('send_message', () => {
 });
 
 // ============================================================================
+// list_agents tool
+// ============================================================================
+
+describe('list_agents', () => {
+  let ctx: OrchestrationToolsContext;
+  let tool: ToolFunction;
+
+  beforeEach(() => {
+    ctx = createToolsContext();
+    tool = findTool(buildOrchestrationTools(ctx), 'list_agents');
+  });
+
+  it('should return empty list when no agents', async () => {
+    const result = await tool.execute!({}) as any;
+    expect(result.agents).toEqual([]);
+    expect(result.total).toBe(0);
+    expect(result.delegation).toBeNull();
+  });
+
+  it('should list agents with status', async () => {
+    ctx.agents.set('idle-agent', createMockAgent({ isRunning: false, isPaused: false }));
+    ctx.agents.set('running-agent', createMockAgent({ isRunning: true }));
+    ctx.agents.set('paused-agent', createMockAgent({ isPaused: true }));
+
+    const result = await tool.execute!({}) as any;
+    expect(result.total).toBe(3);
+
+    const idle = result.agents.find((a: any) => a.name === 'idle-agent');
+    expect(idle.status).toBe('idle');
+
+    const running = result.agents.find((a: any) => a.name === 'running-agent');
+    expect(running.status).toBe('running');
+
+    const paused = result.agents.find((a: any) => a.name === 'paused-agent');
+    expect(paused.status).toBe('paused');
+  });
+
+  it('should include model and isDestroyed', async () => {
+    ctx.agents.set('dev', createMockAgent({ model: 'gpt-4o', isDestroyed: true }));
+
+    const result = await tool.execute!({}) as any;
+    expect(result.agents[0].model).toBe('gpt-4o');
+    expect(result.agents[0].isDestroyed).toBe(true);
+  });
+
+  it('should show delegation info when active', async () => {
+    ctx.agents.set('coder', createMockAgent());
+    ctx.delegationState.active = true;
+    ctx.delegationState.agentName = 'coder';
+    ctx.delegationState.monitoring = 'active';
+    ctx.delegationState.turnCount = 3;
+    ctx.delegationState.reclaimOn = { keyword: 'done' };
+
+    const result = await tool.execute!({}) as any;
+    expect(result.delegation).not.toBeNull();
+    expect(result.delegation.agent).toBe('coder');
+    expect(result.delegation.monitoring).toBe('active');
+    expect(result.delegation.turnCount).toBe(3);
+    expect(result.agents[0].isDelegated).toBe(true);
+  });
+});
+
+// ============================================================================
+// destroy_agent tool
+// ============================================================================
+
+describe('destroy_agent', () => {
+  let ctx: OrchestrationToolsContext;
+  let tool: ToolFunction;
+
+  beforeEach(() => {
+    ctx = createToolsContext();
+    tool = findTool(buildOrchestrationTools(ctx), 'destroy_agent');
+  });
+
+  it('should destroy an idle agent', async () => {
+    const mockAgent = createMockAgent();
+    ctx.agents.set('dev', mockAgent);
+    ctx.lastTurnTimestamps.set('dev', Date.now());
+
+    const result = await tool.execute!({ name: 'dev' }) as any;
+    expect(result.success).toBe(true);
+    expect(mockAgent.destroy).toHaveBeenCalled();
+    expect(ctx.agents.has('dev')).toBe(false);
+    expect(ctx.lastTurnTimestamps.has('dev')).toBe(false);
+  });
+
+  it('should reject destroying a non-existent agent', async () => {
+    const result = await tool.execute!({ name: 'ghost' }) as any;
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('not found');
+  });
+
+  it('should reject destroying a running agent', async () => {
+    ctx.agents.set('busy', createMockAgent({ isRunning: true }));
+
+    const result = await tool.execute!({ name: 'busy' }) as any;
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('currently running');
+  });
+
+  it('should auto-reclaim delegation when destroying delegated agent', async () => {
+    const mockAgent = createMockAgent();
+    ctx.agents.set('coder', mockAgent);
+    ctx.delegationState.active = true;
+    ctx.delegationState.agentName = 'coder';
+    ctx.delegationState.turnCount = 5;
+
+    const result = await tool.execute!({ name: 'coder' }) as any;
+    expect(result.success).toBe(true);
+    expect(result.delegationReclaimed).toBe(true);
+    expect(ctx.delegationState.active).toBe(false);
+  });
+
+  it('should not set delegationReclaimed for non-delegated agent', async () => {
+    ctx.agents.set('dev', createMockAgent());
+
+    const result = await tool.execute!({ name: 'dev' }) as any;
+    expect(result.success).toBe(true);
+    expect(result.delegationReclaimed).toBe(false);
+  });
+});
+
+// ============================================================================
 // describeCall
 // ============================================================================
 
 describe('describeCall', () => {
-  it('create_agent should describe creation', () => {
+  it('assign_turn should describe assignment', () => {
     const ctx = createToolsContext();
-    const tool = findTool(buildOrchestrationTools(ctx), 'create_agent');
-    expect(tool.describeCall!({ name: 'dev', type: 'developer' })).toBe('create dev (developer)');
+    const tool = findTool(buildOrchestrationTools(ctx), 'assign_turn');
+    expect(tool.describeCall!({ agent: 'dev' })).toBe('assign dev');
+  });
+
+  it('delegate_interactive should describe delegation', () => {
+    const ctx = createToolsContext();
+    const tool = findTool(buildOrchestrationTools(ctx), 'delegate_interactive');
+    expect(tool.describeCall!({ agent: 'coder' })).toBe('delegate → coder');
+  });
+
+  it('send_message should describe target', () => {
+    const ctx = createToolsContext();
+    const tool = findTool(buildOrchestrationTools(ctx), 'send_message');
+    expect(tool.describeCall!({ agent: 'dev' })).toBe('message → dev');
   });
 
   it('list_agents should describe listing', () => {
@@ -694,29 +625,5 @@ describe('describeCall', () => {
     const ctx = createToolsContext();
     const tool = findTool(buildOrchestrationTools(ctx), 'destroy_agent');
     expect(tool.describeCall!({ name: 'dev' })).toBe('destroy dev');
-  });
-
-  it('assign_turn should describe blocking assignment', () => {
-    const ctx = createToolsContext();
-    const tool = findTool(buildOrchestrationTools(ctx), 'assign_turn');
-    expect(tool.describeCall!({ agent: 'dev' })).toBe('assign dev (blocking)');
-  });
-
-  it('assign_turn_async should describe async assignment', () => {
-    const ctx = createToolsContext();
-    const tool = findTool(buildOrchestrationTools(ctx), 'assign_turn_async');
-    expect(tool.describeCall!({ agent: 'dev' })).toBe('assign dev (async)');
-  });
-
-  it('assign_parallel should describe parallel agents', () => {
-    const ctx = createToolsContext();
-    const tool = findTool(buildOrchestrationTools(ctx), 'assign_parallel');
-    expect(tool.describeCall!({ assignments: [{ agent: 'a' }, { agent: 'b' }] })).toBe('parallel: a, b');
-  });
-
-  it('send_message should describe target', () => {
-    const ctx = createToolsContext();
-    const tool = findTool(buildOrchestrationTools(ctx), 'send_message');
-    expect(tool.describeCall!({ agent: 'dev' })).toBe('message → dev');
   });
 });

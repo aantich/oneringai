@@ -86,6 +86,7 @@ export type {
   VendorTemplate,
   AuthTemplate,
   AuthTemplateField,
+  OptionField,
   VendorRegistryEntry,
   TemplateCredentials,
   CreateConnectorOptions,

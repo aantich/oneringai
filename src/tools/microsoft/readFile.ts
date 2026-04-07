@@ -77,7 +77,7 @@ When given a web URL, the tool automatically resolves it to the correct Graph AP
 
 **Maximum file size:** 50 MB (100 MB for presentations). For larger files, use the search or list tools to find smaller alternatives.
 
-**Returns:** The file content as markdown text, along with metadata (filename, size, MIME type, webUrl). For spreadsheets, each sheet becomes a markdown table. For presentations, each slide becomes a section.`,
+**Returns:** The file content as markdown text, along with metadata (filename, size, MIME type, webUrl). For spreadsheets, each sheet is converted to markdown key-value records — every row becomes a block of "**Header**: value" pairs, which is easier for LLMs to parse than wide tables. For presentations, each slide becomes a section.`,
         parameters: {
           type: 'object',
           properties: {
@@ -226,7 +226,12 @@ When given a web URL, the tool automatically resolves it to the correct Graph AP
         // 4. Convert to markdown via DocumentReader
         const result = await reader.read(
           { type: 'buffer', buffer, filename: metadata.name },
-          { extractImages: false },
+          {
+            extractImages: false,
+            formatOptions: {
+              excel: { tableFormat: 'markdown-kv' },
+            },
+          },
         );
 
         if (!result.success) {

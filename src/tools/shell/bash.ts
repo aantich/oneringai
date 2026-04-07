@@ -49,48 +49,32 @@ export function createBashTool(config: ShellToolConfig = {}): ToolFunction<BashA
         name: 'bash',
         description: `Execute shell commands with optional timeout.
 
-SHELL: This tool uses ${mergedConfig.shell}${process.platform === 'win32' ? ' (Windows). Use Windows command syntax (dir, type, del, etc.), NOT Unix commands (ls, cat, rm, etc.). Use \\ as path separator or quote paths with forward slashes.' : ' (Unix). Use standard Unix command syntax.'}
+SHELL: ${mergedConfig.shell}${process.platform === 'win32' ? ' (Windows). Use Windows command syntax.' : ' (Unix).'}
 
 USAGE:
-- Execute any shell command
+- Execute any shell command (git, npm, docker, build scripts, etc.)
 - Working directory persists between commands
 - Commands timeout after 2 minutes by default (configurable up to 10 minutes)
 - Large outputs (>100KB) will be truncated
 
-BACKGROUND EXECUTION:
-- Set run_in_background=true for long-running commands (dev servers, watchers, builds)
-- Returns a background ID immediately
-- Use bg_process_output to check output, bg_process_list to see all processes, bg_process_kill to stop
+DEV SERVERS / LONG-RUNNING PROCESSES:
+- For dev servers, watchers, or any long-running process: use the dev_server tool instead
+- dev_server provides persistent log files, ready-wait, and better lifecycle management
+- The run_in_background option here is for one-off background commands that don't need log files
 
-IMPORTANT: This tool is for terminal operations like git, npm, docker, etc.
-For file operations, prefer dedicated tools:
-- Use read_file instead of cat/head/tail
-- Use edit_file instead of sed/awk
-- Use write_file instead of echo with redirection
-- Use glob instead of find
-- Use grep tool instead of grep command
+FILE OPERATIONS: Prefer dedicated tools (read_file, edit_file, write_file, glob, grep) over shell equivalents.
 
 BEST PRACTICES:
-- Always quote file paths with spaces: cd "/path with spaces"
-- Use absolute paths when possible${process.platform === 'win32' ? `
-- Chain dependent commands with &&: git add . && git commit -m "msg"
-- Use PowerShell syntax if cmd.exe is insufficient` : `
-- Chain dependent commands with &&: git add . && git commit -m "msg"
-- Use ; only when you don't care if earlier commands fail`}
+- Quote file paths with spaces: cd "/path with spaces"
+- Use absolute paths when possible
+- Chain with &&, use ; only when failures are acceptable
 - Avoid interactive commands (no -i flags)
 
 GIT SAFETY:
 - NEVER run destructive commands (push --force, reset --hard, clean -f) without explicit permission
-- NEVER update git config
-- NEVER skip hooks (--no-verify) without permission
+- NEVER update git config or skip hooks without permission
 - Always create NEW commits rather than amending
-- Stage specific files rather than using "git add -A"
-
-EXAMPLES:
-- Run npm install: { "command": "npm install", "description": "Install dependencies" }
-- Check git status: { "command": "git status", "description": "Show working tree status" }
-- Run tests: { "command": "npm test", "timeout": 300000, "description": "Run test suite" }
-- Start dev server: { "command": "npm run dev", "run_in_background": true, "description": "Start dev server" }`,
+- Stage specific files rather than using "git add -A"`,
         parameters: {
           type: 'object',
           properties: {

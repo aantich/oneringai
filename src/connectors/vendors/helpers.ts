@@ -101,11 +101,22 @@ export function buildAuthConfig(
       }
     }
 
+    let apiKey = credentials.apiKey;
+    const headerPrefix = (defaults as { headerPrefix?: string }).headerPrefix ?? 'Bearer';
+
+    // Basic Auth: base64-encode "user:password" per RFC 7617.
+    // The user part is resolved from extra fields with priority:
+    //   applicationKey (Twilio API Key SID) > username (Jira/Zendesk/Bitbucket) > accountId (Twilio) > 'api' (Mailgun)
+    if (headerPrefix === 'Basic') {
+      const basicUser = extra.applicationKey ?? extra.username ?? extra.accountId ?? 'api';
+      apiKey = Buffer.from(`${basicUser}:${apiKey}`).toString('base64');
+    }
+
     return {
       type: 'api_key',
-      apiKey: credentials.apiKey,
+      apiKey,
       headerName: (defaults as { headerName?: string }).headerName ?? 'Authorization',
-      headerPrefix: (defaults as { headerPrefix?: string }).headerPrefix ?? 'Bearer',
+      headerPrefix,
       ...(Object.keys(extra).length > 0 ? { extra } : {}),
     };
   }
@@ -301,6 +312,10 @@ export function createConnectorFromTemplate(
 
   if (options?.logging) {
     config.logging = { enabled: true };
+  }
+
+  if (options?.vendorOptions && Object.keys(options.vendorOptions).length > 0) {
+    config.options = options.vendorOptions;
   }
 
   return Connector.create(config);

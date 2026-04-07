@@ -72,7 +72,7 @@ const catalogSearchDefinition = {
   type: 'function' as const,
   function: {
     name: 'tool_catalog_search',
-    description: 'Search the tool catalog. No params lists categories. Use category to list tools in it, or query to keyword-search.',
+    description: 'Search the tool catalog. No params lists categories. Use category to list tools in it, query to keyword-search, or listAll to list every tool across all categories.',
     parameters: {
       type: 'object' as const,
       properties: {
@@ -83,6 +83,10 @@ const catalogSearchDefinition = {
         category: {
           type: 'string',
           description: 'Category name to list its tools',
+        },
+        listAll: {
+          type: 'boolean',
+          description: 'List all tools across all available categories and connectors, grouped by category',
         },
       },
     },
@@ -224,7 +228,7 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
       definition: catalogSearchDefinition,
       permission: { scope: 'always' as const, riskLevel: 'low' as const },
       execute: async (args: Record<string, unknown>) => {
-        return plugin.executeSearch(args.query as string | undefined, args.category as string | undefined);
+        return plugin.executeSearch(args.query as string | undefined, args.category as string | undefined, args.listAll as boolean | undefined);
       },
     };
 
@@ -367,8 +371,13 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
   // Metatool Implementations
   // ========================================================================
 
-  private executeSearch(query?: string, category?: string): Record<string, unknown> {
+  private executeSearch(query?: string, category?: string, listAll?: boolean): Record<string, unknown> {
     if (this._destroyed) return { error: 'Plugin destroyed' };
+
+    // List all tools across all categories
+    if (listAll) {
+      return this.listAllTools();
+    }
 
     // List tools in a specific category
     if (category) {
@@ -626,6 +635,57 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
     lines.push('- Categories marked [PINNED] are always available and cannot be unloaded.');
 
     return lines.join('\n');
+  }
+
+  private listAllTools(): Record<string, unknown> {
+    const categories: Array<{
+      category: string;
+      displayName: string;
+      description: string;
+      loaded: boolean;
+      pinned: boolean;
+      tools: Array<{ name: string; displayName: string; description: string; safeByDefault?: boolean }>;
+    }> = [];
+
+    let totalTools = 0;
+
+    // Built-in categories
+    for (const cat of this.getAllowedCategories()) {
+      const tools = ToolCatalogRegistry.getToolsInCategory(cat.name);
+      totalTools += tools.length;
+      categories.push({
+        category: cat.name,
+        displayName: cat.displayName,
+        description: cat.description,
+        loaded: this._loadedCategories.has(cat.name),
+        pinned: this._pinnedCategories.has(cat.name),
+        tools: tools.map(t => ({
+          name: t.name,
+          displayName: t.displayName,
+          description: t.description,
+          safeByDefault: t.safeByDefault,
+        })),
+      });
+    }
+
+    // Connector categories
+    for (const cc of this.getConnectorCategories()) {
+      totalTools += cc.toolCount;
+      categories.push({
+        category: cc.name,
+        displayName: cc.displayName,
+        description: cc.description,
+        loaded: this._loadedCategories.has(cc.name),
+        pinned: this._pinnedCategories.has(cc.name),
+        tools: cc.tools.map(t => ({
+          name: t.definition.function.name,
+          displayName: t.definition.function.name.replace(/_/g, ' '),
+          description: t.definition.function.description || '',
+        })),
+      });
+    }
+
+    return { categories, totalCategories: categories.length, totalTools };
   }
 
   private keywordSearch(query: string): Record<string, unknown> {

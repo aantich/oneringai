@@ -38,6 +38,25 @@ export const twilioTemplate: VendorTemplate = {
       },
     },
   ],
+
+  optionFields: [
+    {
+      key: 'defaultFromNumber',
+      label: 'Default SMS Phone Number',
+      description: 'Your Twilio phone number for sending SMS (E.164 format). Used when no "from" is specified in send_sms.',
+      required: false,
+      type: 'string',
+      placeholder: '+15551234567',
+    },
+    {
+      key: 'defaultWhatsAppNumber',
+      label: 'Default WhatsApp Phone Number',
+      description: 'Your Twilio WhatsApp-enabled number (E.164 format). Used when no "from" is specified in send_whatsapp.',
+      required: false,
+      type: 'string',
+      placeholder: '+15551234567',
+    },
+  ],
 };
 
 export const zendeskTemplate: VendorTemplate = {

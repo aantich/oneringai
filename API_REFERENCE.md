@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-03-17
+**Generated:** 2026-04-01
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -11,7 +11,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 
 ## Table of Contents
 
-- [Core](#core) (17 items)
+- [Core](#core) (18 items)
 - [Text-to-Speech (TTS)](#text-to-speech-tts-) (10 items)
 - [Speech-to-Text (STT)](#speech-to-text-stt-) (11 items)
 - [Image Generation](#image-generation) (24 items)
@@ -19,16 +19,16 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Task Agents](#task-agents) (87 items)
 - [Context Management](#context-management) (14 items)
 - [Session Management](#session-management) (42 items)
-- [Tools & Function Calling](#tools-function-calling) (144 items)
+- [Tools & Function Calling](#tools-function-calling) (154 items)
 - [Streaming](#streaming) (29 items)
-- [Model Registry](#model-registry) (10 items)
-- [OAuth & External APIs](#oauth-external-apis) (39 items)
+- [Model Registry](#model-registry) (16 items)
+- [OAuth & External APIs](#oauth-external-apis) (40 items)
 - [Resilience & Observability](#resilience-observability) (33 items)
 - [Errors](#errors) (20 items)
 - [Utilities](#utilities) (8 items)
-- [Interfaces](#interfaces) (57 items)
+- [Interfaces](#interfaces) (60 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (375 items)
+- [Other](#other) (397 items)
 
 ## Core
 
@@ -36,7 +36,7 @@ Core classes for authentication, agents, and providers
 
 ### Agent `class`
 
-📍 [`src/core/Agent.ts:159`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:180`](src/core/Agent.ts)
 
 Agent class - represents an AI assistant with tool calling capabilities
 
@@ -167,11 +167,12 @@ hasContext(): boolean
 Run the agent with input
 
 ```typescript
-async run(input: string | InputItem[]): Promise&lt;AgentResponse&gt;
+async run(input: string | InputItem[], options?: RunOptions): Promise&lt;AgentResponse&gt;
 ```
 
 **Parameters:**
 - `input`: `string | InputItem[]`
+- `options`: `RunOptions | undefined` *(optional)*
 
 **Returns:** `Promise&lt;LLMResponse&gt;`
 
@@ -180,11 +181,12 @@ async run(input: string | InputItem[]): Promise&lt;AgentResponse&gt;
 Stream response from the agent
 
 ```typescript
-async *stream(input: string | InputItem[]): AsyncIterableIterator&lt;StreamEvent&gt;
+async *stream(input: string | InputItem[], options?: RunOptions): AsyncIterableIterator&lt;StreamEvent&gt;
 ```
 
 **Parameters:**
 - `input`: `string | InputItem[]`
+- `options`: `RunOptions | undefined` *(optional)*
 
 **Returns:** `AsyncIterableIterator&lt;StreamEvent&gt;`
 
@@ -1641,6 +1643,32 @@ Fetch options with additional connector-specific settings
 
 ---
 
+### RunOptions `interface`
+
+📍 [`src/core/Agent.ts:135`](src/core/Agent.ts)
+
+Per-call options for run() and stream().
+These override the agent-level config for this single invocation.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `thinking?` | `thinking?: {
+    enabled: boolean;
+    /** Budget in tokens for thinking (Anthropic & Google) */
+    budgetTokens?: number;
+    /** Reasoning effort level (OpenAI) */
+    effort?: 'low' | 'medium' | 'high';
+  };` | Vendor-agnostic thinking/reasoning configuration |
+| `temperature?` | `temperature?: number;` | Temperature for generation |
+| `vendorOptions?` | `vendorOptions?: Record&lt;string, unknown&gt;;` | Vendor-specific options |
+
+</details>
+
+---
+
 ### AgentEventListener `type`
 
 📍 [`src/core/AgentRegistry.ts:126`](src/core/AgentRegistry.ts)
@@ -1689,7 +1717,7 @@ type Vendor = (typeof Vendor)[keyof typeof Vendor]
 
 ### createProvider `function`
 
-📍 [`src/core/createProvider.ts:67`](src/core/createProvider.ts)
+📍 [`src/core/createProvider.ts:56`](src/core/createProvider.ts)
 
 Create a text provider from a connector
 
@@ -1701,7 +1729,7 @@ export function createProvider(connector: Connector): ITextProvider
 
 ### getVendorDefaultBaseURL `function`
 
-📍 [`src/core/createProvider.ts:60`](src/core/createProvider.ts)
+📍 [`src/core/createProvider.ts:49`](src/core/createProvider.ts)
 
 Get the default API base URL for a vendor.
 For OpenAI/Anthropic reads from the installed SDK at runtime.
@@ -5115,7 +5143,7 @@ export function calculateVideoCost(modelName: string, durationSeconds: number): 
 
 ### createVideoProvider `function`
 
-📍 [`src/core/createVideoProvider.ts:15`](src/core/createVideoProvider.ts)
+📍 [`src/core/createVideoProvider.ts:16`](src/core/createVideoProvider.ts)
 
 Create a video provider from a connector
 
@@ -9978,7 +10006,7 @@ Persist and resume agent conversations
 
 ### ConnectorConfigStore `class`
 
-📍 [`src/connectors/storage/ConnectorConfigStore.ts:32`](src/connectors/storage/ConnectorConfigStore.ts)
+📍 [`src/connectors/storage/ConnectorConfigStore.ts:39`](src/connectors/storage/ConnectorConfigStore.ts)
 
 ConnectorConfigStore - manages connector configs with automatic encryption
 
@@ -10118,6 +10146,63 @@ async getMetadata(
 - `name`: `string`
 
 **Returns:** `Promise&lt;{ createdAt: number; updatedAt: number; version: number; } | null&gt;`
+
+#### `saveFromTemplate()`
+
+Save a connector created from a vendor template.
+Handles the full lifecycle: validates, builds auth, encrypts secrets,
+stores config AND preserves non-secret credentials for round-trip editing.
+
+```typescript
+async saveFromTemplate(
+    name: string,
+    vendorId: string,
+    authTemplateId: string,
+    credentials: TemplateCredentials,
+    options?:
+```
+
+**Parameters:**
+- `name`: `string`
+- `vendorId`: `string`
+- `authTemplateId`: `string`
+- `credentials`: `TemplateCredentials`
+- `options`: `{ baseURL?: string | undefined; displayName?: string | undefined; description?: string | undefined; defaultModel?: string | undefined; vendor?: string | undefined; serviceType?: string | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;ConnectorConfig&gt;`
+
+#### `updateFromTemplate()`
+
+Update a connector that was created from a vendor template.
+Merges new credentials with existing: non-empty values override,
+empty values preserve the existing decrypted value ("leave empty to keep").
+
+```typescript
+async updateFromTemplate(
+    name: string,
+    vendorId: string,
+    authTemplateId: string,
+    credentials: TemplateCredentials,
+    options?:
+```
+
+**Parameters:**
+- `name`: `string`
+- `vendorId`: `string`
+- `authTemplateId`: `string`
+- `credentials`: `TemplateCredentials`
+- `options`: `{ baseURL?: string | undefined; displayName?: string | undefined; description?: string | undefined; defaultModel?: string | undefined; vendor?: string | undefined; serviceType?: string | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;ConnectorConfig&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `TemplateOptions` | `TemplateOptions: undefined` | Options for saveFromTemplate / updateFromTemplate |
 
 </details>
 
@@ -12798,7 +12883,7 @@ buildOverview(): string
 
 ### ToolCatalogPluginNextGen `class`
 
-📍 [`src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts:132`](src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts)
+📍 [`src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts:136`](src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -16287,7 +16372,7 @@ Used by initializeFromRegistry() and registerFromToolRegistry().
 
 ### ToolRegistryEntry `interface`
 
-📍 [`src/tools/registry.generated.ts:52`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:53`](src/tools/registry.generated.ts)
 
 Metadata for a tool in the registry
 
@@ -16472,7 +16557,7 @@ type Tool = FunctionToolDefinition | BuiltInTool
 
 ### ToolCategory `type`
 
-📍 [`src/tools/registry.generated.ts:49`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:50`](src/tools/registry.generated.ts)
 
 Tool category for grouping
 
@@ -16535,6 +16620,19 @@ type ToolSource = 'built-in' | 'connector' | 'custom' | 'mcp' | string
 
 ```typescript
 export function buildOrchestrationTools(ctx: OrchestrationToolsContext): ToolFunction[]
+```
+
+---
+
+### createAddReactionTool `function`
+
+📍 [`src/tools/slack/addReaction.ts:25`](src/tools/slack/addReaction.ts)
+
+```typescript
+export function createAddReactionTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;AddReactionArgs, SlackAddReactionResult&gt;
 ```
 
 ---
@@ -16837,6 +16935,19 @@ export function createFindMeetingSlotsTool(
 
 ---
 
+### createGetChannelInfoTool `function`
+
+📍 [`src/tools/slack/getChannelInfo.ts:22`](src/tools/slack/getChannelInfo.ts)
+
+```typescript
+export function createGetChannelInfoTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;GetChannelInfoArgs, SlackGetChannelInfoResult&gt;
+```
+
+---
+
 ### createGetMeetingTranscriptTool `function`
 
 📍 [`src/tools/microsoft/getMeetingTranscript.ts:51`](src/tools/microsoft/getMeetingTranscript.ts)
@@ -16852,6 +16963,32 @@ export function createGetMeetingTranscriptTool(
 
 ---
 
+### createGetMentionsTool `function`
+
+📍 [`src/tools/slack/getMentions.ts:28`](src/tools/slack/getMentions.ts)
+
+```typescript
+export function createGetMentionsTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;GetMentionsArgs, SlackGetMentionsResult&gt;
+```
+
+---
+
+### createGetMessagesTool `function`
+
+📍 [`src/tools/slack/getMessages.ts:29`](src/tools/slack/getMessages.ts)
+
+```typescript
+export function createGetMessagesTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;GetMessagesArgs, SlackGetMessagesResult&gt;
+```
+
+---
+
 ### createGetPRTool `function`
 
 📍 [`src/tools/github/getPR.ts:29`](src/tools/github/getPR.ts)
@@ -16863,6 +17000,32 @@ export function createGetPRTool(
   connector: Connector,
   userId?: string
 ): ToolFunction&lt;GetPRArgs, GitHubGetPRResult&gt;
+```
+
+---
+
+### createGetThreadTool `function`
+
+📍 [`src/tools/slack/getThread.ts:26`](src/tools/slack/getThread.ts)
+
+```typescript
+export function createGetThreadTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;GetThreadArgs, SlackGetThreadResult&gt;
+```
+
+---
+
+### createGetUsersTool `function`
+
+📍 [`src/tools/slack/getUsers.ts:41`](src/tools/slack/getUsers.ts)
+
+```typescript
+export function createGetUsersTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;GetUsersArgs, SlackGetUsersResult&gt;
 ```
 
 ---
@@ -16917,6 +17080,19 @@ export function createListBranchesTool(
   connector: Connector,
   userId?: string
 ): ToolFunction&lt;ListBranchesArgs, GitHubListBranchesResult&gt;
+```
+
+---
+
+### createListChannelsTool `function`
+
+📍 [`src/tools/slack/listChannels.ts:25`](src/tools/slack/listChannels.ts)
+
+```typescript
+export function createListChannelsTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;ListChannelsArgs, SlackListChannelsResult&gt;
 ```
 
 ---
@@ -16984,6 +17160,19 @@ export function createMicrosoftSearchFilesTool(
   connector: Connector,
   userId?: string,
 ): ToolFunction&lt;SearchFilesArgs, MicrosoftSearchFilesResult&gt;
+```
+
+---
+
+### createPostMessageTool `function`
+
+📍 [`src/tools/slack/postMessage.ts:29`](src/tools/slack/postMessage.ts)
+
+```typescript
+export function createPostMessageTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;PostMessageArgs, SlackPostMessageResult&gt;
 ```
 
 ---
@@ -17060,6 +17249,19 @@ export function createSearchFilesTool(
 
 ---
 
+### createSearchMessagesTool `function`
+
+📍 [`src/tools/slack/searchMessages.ts:27`](src/tools/slack/searchMessages.ts)
+
+```typescript
+export function createSearchMessagesTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;SearchMessagesArgs, SlackSearchMessagesResult&gt;
+```
+
+---
+
 ### createSendEmailTool `function`
 
 📍 [`src/tools/microsoft/sendEmail.ts:28`](src/tools/microsoft/sendEmail.ts)
@@ -17071,6 +17273,19 @@ export function createSendEmailTool(
   connector: Connector,
   userId?: string
 ): ToolFunction&lt;SendEmailArgs, MicrosoftSendEmailResult&gt;
+```
+
+---
+
+### createSetChannelTopicTool `function`
+
+📍 [`src/tools/slack/setChannelTopic.ts:23`](src/tools/slack/setChannelTopic.ts)
+
+```typescript
+export function createSetChannelTopicTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;SetChannelTopicArgs, SlackSetChannelTopicResult&gt;
 ```
 
 ---
@@ -17158,7 +17373,7 @@ export function generateWebAPITool(): ToolFunction&lt;APIRequestArgs, APIRequest
 
 ### getAllBuiltInTools `function`
 
-📍 [`src/tools/registry.generated.ts:393`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:403`](src/tools/registry.generated.ts)
 
 Get all built-in tools as ToolFunction array
 
@@ -17170,7 +17385,7 @@ export function getAllBuiltInTools(): ToolFunction[]
 
 ### getConnectorTools `function`
 
-📍 [`src/connectors/vendors/helpers.ts:259`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:315`](src/connectors/vendors/helpers.ts)
 
 Get all tools for a connector (delegates to ConnectorTools)
 
@@ -17182,7 +17397,7 @@ export function getConnectorTools(connectorName: string): ToolFunction[]
 
 ### getToolByName `function`
 
-📍 [`src/tools/registry.generated.ts:408`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:418`](src/tools/registry.generated.ts)
 
 Get tool by name
 
@@ -17210,7 +17425,7 @@ export function getToolCallDescription&lt;TArgs&gt;(
 
 ### getToolCategories `function`
 
-📍 [`src/tools/registry.generated.ts:418`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:428`](src/tools/registry.generated.ts)
 
 Get all unique category names
 
@@ -17222,7 +17437,7 @@ export function getToolCategories(): ToolCategory[]
 
 ### getToolRegistry `function`
 
-📍 [`src/tools/registry.generated.ts:398`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:408`](src/tools/registry.generated.ts)
 
 Get full tool registry with metadata
 
@@ -17234,7 +17449,7 @@ export function getToolRegistry(): ToolRegistryEntry[]
 
 ### getToolsByCategory `function`
 
-📍 [`src/tools/registry.generated.ts:403`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:413`](src/tools/registry.generated.ts)
 
 Get tools by category
 
@@ -17246,7 +17461,7 @@ export function getToolsByCategory(category: ToolCategory): ToolRegistryEntry[]
 
 ### getToolsRequiringConnector `function`
 
-📍 [`src/tools/registry.generated.ts:413`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:423`](src/tools/registry.generated.ts)
 
 Get tools that require connector configuration
 
@@ -18552,6 +18767,60 @@ constructor(providerName: string, model: string, capability: string)
 
 ---
 
+### EmbeddingModelCapabilities `interface`
+
+📍 [`src/domain/entities/EmbeddingModel.ts:16`](src/domain/entities/EmbeddingModel.ts)
+
+Embedding model capabilities
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `maxTokens` | `maxTokens: number;` | Maximum input tokens |
+| `defaultDimensions` | `defaultDimensions: number;` | Default output dimensions |
+| `maxDimensions` | `maxDimensions: number;` | Maximum output dimensions |
+| `features` | `features: {
+    /** Matryoshka Representation Learning — flexible output dimensions */
+    matryoshka: boolean;
+    /** Supports task-specific instruction prefixes */
+    instructionAware: boolean;
+    /** Supports batched input (array of strings) in one call */
+    batchInput: boolean;
+    /** Supports 100+ languages */
+    multilingual: boolean;
+  };` | Feature support flags |
+| `limits` | `limits: {
+    /** Maximum inputs per batch request */
+    maxBatchSize: number;
+    /** Rate limit (requests per minute) */
+    maxRequestsPerMinute?: number;
+  };` | Model limits |
+| `vendorOptions?` | `vendorOptions?: Record&lt;string, VendorOptionSchema&gt;;` | Vendor-specific options schema |
+
+</details>
+
+---
+
+### EmbeddingModelPricing `interface`
+
+📍 [`src/domain/entities/EmbeddingModel.ts:53`](src/domain/entities/EmbeddingModel.ts)
+
+Embedding model pricing
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `perMTokens` | `perMTokens: number;` | Cost per million tokens |
+| `currency` | `currency: 'USD';` | - |
+
+</details>
+
+---
+
 ### IBaseModelDescription `interface`
 
 📍 [`src/domain/types/SharedTypes.ts:85`](src/domain/types/SharedTypes.ts)
@@ -18572,6 +18841,24 @@ Every model registry (Image, TTS, STT, Video) extends this
 | `releaseDate?` | `releaseDate?: string;` | Release date (YYYY-MM-DD) |
 | `deprecationDate?` | `deprecationDate?: string;` | Deprecation date if scheduled (YYYY-MM-DD) |
 | `sources` | `sources: ISourceLinks;` | Documentation/pricing links for maintenance |
+
+</details>
+
+---
+
+### IEmbeddingModelDescription `interface`
+
+📍 [`src/domain/entities/EmbeddingModel.ts:62`](src/domain/entities/EmbeddingModel.ts)
+
+Complete embedding model description
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `capabilities` | `capabilities: EmbeddingModelCapabilities;` | - |
+| `pricing?` | `pricing?: EmbeddingModelPricing;` | - |
 
 </details>
 
@@ -18732,6 +19019,18 @@ export function calculateCost(
 
 ---
 
+### calculateEmbeddingCost `function`
+
+📍 [`src/domain/entities/EmbeddingModel.ts:477`](src/domain/entities/EmbeddingModel.ts)
+
+Calculate embedding cost for a given model and token count
+
+```typescript
+export function calculateEmbeddingCost(modelName: string, tokens: number): number | null
+```
+
+---
+
 ### getActiveModels `function`
 
 📍 [`src/domain/entities/Model.ts:2756`](src/domain/entities/Model.ts)
@@ -18740,6 +19039,20 @@ Get all currently active models
 
 ```typescript
 export function getActiveModels(): ILLMDescription[]
+```
+
+---
+
+### getEmbeddingModelsWithFeature `function`
+
+📍 [`src/domain/entities/EmbeddingModel.ts:459`](src/domain/entities/EmbeddingModel.ts)
+
+Get embedding models that support a specific feature
+
+```typescript
+export function getEmbeddingModelsWithFeature(
+  feature: keyof IEmbeddingModelDescription['capabilities']['features']
+): IEmbeddingModelDescription[]
 ```
 
 ---
@@ -18780,6 +19093,334 @@ export function resolveModelCapabilities(
   vendorDefaults: ModelCapabilities
 ): ModelCapabilities
 ```
+
+---
+
+### EMBEDDING_MODEL_REGISTRY `const`
+
+📍 [`src/domain/entities/EmbeddingModel.ts:110`](src/domain/entities/EmbeddingModel.ts)
+
+Complete embedding model registry
+Last full audit: March 2026
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `'text-embedding-3-small'` | `{
+    name: 'text-embedding-3-small',
+    displayName: 'Text Embedding 3 Small',
+    provider: Vendor.OpenAI,
+    description: 'Cost-efficient embedding model with MRL support for flexible dimensions',
+    isActive: true,
+    releaseDate: '2024-01-25',
+    sources: {
+      documentation: 'https://platform.openai.com/docs/guides/embeddings',
+      pricing: 'https://openai.com/pricing',
+      lastVerified: '2026-03-17',
+    },
+    capabilities: {
+      maxTokens: 8191,
+      defaultDimensions: 1536,
+      maxDimensions: 1536,
+      features: {
+        matryoshka: true,
+        instructionAware: false,
+        batchInput: true,
+        multilingual: true,
+      },
+      limits: {
+        maxBatchSize: 2048,
+        maxRequestsPerMinute: 3000,
+      },
+    },
+    pricing: {
+      perMTokens: 0.02,
+      currency: 'USD',
+    },
+  }` | - |
+| `'text-embedding-3-large'` | `{
+    name: 'text-embedding-3-large',
+    displayName: 'Text Embedding 3 Large',
+    provider: Vendor.OpenAI,
+    description: 'High-quality embedding model with MRL support, up to 3072 dimensions',
+    isActive: true,
+    releaseDate: '2024-01-25',
+    sources: {
+      documentation: 'https://platform.openai.com/docs/guides/embeddings',
+      pricing: 'https://openai.com/pricing',
+      lastVerified: '2026-03-17',
+    },
+    capabilities: {
+      maxTokens: 8191,
+      defaultDimensions: 3072,
+      maxDimensions: 3072,
+      features: {
+        matryoshka: true,
+        instructionAware: false,
+        batchInput: true,
+        multilingual: true,
+      },
+      limits: {
+        maxBatchSize: 2048,
+        maxRequestsPerMinute: 3000,
+      },
+    },
+    pricing: {
+      perMTokens: 0.13,
+      currency: 'USD',
+    },
+  }` | - |
+| `'text-embedding-ada-002'` | `{
+    name: 'text-embedding-ada-002',
+    displayName: 'Text Embedding Ada 002',
+    provider: Vendor.OpenAI,
+    description: 'Legacy embedding model, replaced by text-embedding-3 series',
+    isActive: false,
+    releaseDate: '2022-12-15',
+    deprecationDate: '2025-01-04',
+    sources: {
+      documentation: 'https://platform.openai.com/docs/guides/embeddings',
+      pricing: 'https://openai.com/pricing',
+      lastVerified: '2026-03-17',
+    },
+    capabilities: {
+      maxTokens: 8191,
+      defaultDimensions: 1536,
+      maxDimensions: 1536,
+      features: {
+        matryoshka: false,
+        instructionAware: false,
+        batchInput: true,
+        multilingual: false,
+      },
+      limits: {
+        maxBatchSize: 2048,
+      },
+    },
+    pricing: {
+      perMTokens: 0.10,
+      currency: 'USD',
+    },
+  }` | - |
+| `'text-embedding-004'` | `{
+    name: 'text-embedding-004',
+    displayName: 'Text Embedding 004',
+    provider: Vendor.Google,
+    description: 'Gemini embedding model with dimension reduction support',
+    isActive: true,
+    releaseDate: '2024-05-14',
+    sources: {
+      documentation: 'https://ai.google.dev/gemini-api/docs/embeddings',
+      pricing: 'https://ai.google.dev/pricing',
+      lastVerified: '2026-03-17',
+    },
+    capabilities: {
+      maxTokens: 2048,
+      defaultDimensions: 768,
+      maxDimensions: 768,
+      features: {
+        matryoshka: true,
+        instructionAware: true,
+        batchInput: true,
+        multilingual: true,
+      },
+      limits: {
+        maxBatchSize: 100,
+        maxRequestsPerMinute: 1500,
+      },
+      vendorOptions: {
+        taskType: {
+          type: 'enum',
+          description: 'Task type for optimized embeddings',
+          enum: [
+            'RETRIEVAL_QUERY',
+            'RETRIEVAL_DOCUMENT',
+            'SEMANTIC_SIMILARITY',
+            'CLASSIFICATION',
+            'CLUSTERING',
+            'QUESTION_ANSWERING',
+            'FACT_VERIFICATION',
+          ],
+          label: 'Task Type',
+          controlType: 'select',
+        },
+      },
+    },
+    pricing: {
+      perMTokens: 0.00,
+      currency: 'USD',
+    },
+  }` | - |
+| `'mistral-embed'` | `{
+    name: 'mistral-embed',
+    displayName: 'Mistral Embed',
+    provider: Vendor.Mistral,
+    description: 'Mistral embedding model optimized for retrieval',
+    isActive: true,
+    releaseDate: '2024-02-26',
+    sources: {
+      documentation: 'https://docs.mistral.ai/capabilities/embeddings/',
+      pricing: 'https://mistral.ai/products/la-plateforme#pricing',
+      lastVerified: '2026-03-17',
+    },
+    capabilities: {
+      maxTokens: 8192,
+      defaultDimensions: 1024,
+      maxDimensions: 1024,
+      features: {
+        matryoshka: false,
+        instructionAware: false,
+        batchInput: true,
+        multilingual: true,
+      },
+      limits: {
+        maxBatchSize: 512,
+      },
+    },
+    pricing: {
+      perMTokens: 0.10,
+      currency: 'USD',
+    },
+  }` | - |
+| `'qwen3-embedding'` | `{
+    name: 'qwen3-embedding',
+    displayName: 'Qwen3 Embedding 8B',
+    provider: Vendor.Ollama,
+    description: 'Top-tier local embedding model (8B params). #1 on MTEB multilingual. ~5GB Q4.',
+    isActive: true,
+    releaseDate: '2025-06-09',
+    sources: {
+      documentation: 'https://huggingface.co/Qwen/Qwen3-Embedding-8B',
+      pricing: 'https://ollama.com/library/qwen3-embedding',
+      lastVerified: '2026-03-17',
+    },
+    capabilities: {
+      maxTokens: 8192,
+      defaultDimensions: 4096,
+      maxDimensions: 4096,
+      features: {
+        matryoshka: true,
+        instructionAware: true,
+        batchInput: true,
+        multilingual: true,
+      },
+      limits: {
+        maxBatchSize: 512,
+      },
+    },
+  }` | - |
+| `'qwen3-embedding:4b'` | `{
+    name: 'qwen3-embedding:4b',
+    displayName: 'Qwen3 Embedding 4B',
+    provider: Vendor.Ollama,
+    description: 'Mid-range local embedding model (4B params). ~2.5GB Q4.',
+    isActive: true,
+    releaseDate: '2025-06-09',
+    sources: {
+      documentation: 'https://huggingface.co/Qwen/Qwen3-Embedding-4B',
+      pricing: 'https://ollama.com/library/qwen3-embedding',
+      lastVerified: '2026-03-17',
+    },
+    capabilities: {
+      maxTokens: 8192,
+      defaultDimensions: 4096,
+      maxDimensions: 4096,
+      features: {
+        matryoshka: true,
+        instructionAware: true,
+        batchInput: true,
+        multilingual: true,
+      },
+      limits: {
+        maxBatchSize: 512,
+      },
+    },
+  }` | - |
+| `'qwen3-embedding:0.6b'` | `{
+    name: 'qwen3-embedding:0.6b',
+    displayName: 'Qwen3 Embedding 0.6B',
+    provider: Vendor.Ollama,
+    description: 'Lightweight local embedding model (0.6B params). ~400MB Q4. Runs on any laptop.',
+    isActive: true,
+    releaseDate: '2025-06-09',
+    sources: {
+      documentation: 'https://huggingface.co/Qwen/Qwen3-Embedding-0.6B',
+      pricing: 'https://ollama.com/library/qwen3-embedding',
+      lastVerified: '2026-03-17',
+    },
+    capabilities: {
+      maxTokens: 8192,
+      defaultDimensions: 1024,
+      maxDimensions: 1024,
+      features: {
+        matryoshka: true,
+        instructionAware: true,
+        batchInput: true,
+        multilingual: true,
+      },
+      limits: {
+        maxBatchSize: 512,
+      },
+    },
+  }` | - |
+| `'nomic-embed-text'` | `{
+    name: 'nomic-embed-text',
+    displayName: 'Nomic Embed Text',
+    provider: Vendor.Ollama,
+    description: 'Compact 768-dim embedding model with MRL support. ~275MB.',
+    isActive: true,
+    releaseDate: '2024-02-02',
+    sources: {
+      documentation: 'https://huggingface.co/nomic-ai/nomic-embed-text-v1.5',
+      pricing: 'https://ollama.com/library/nomic-embed-text',
+      lastVerified: '2026-03-17',
+    },
+    capabilities: {
+      maxTokens: 8192,
+      defaultDimensions: 768,
+      maxDimensions: 768,
+      features: {
+        matryoshka: true,
+        instructionAware: true,
+        batchInput: true,
+        multilingual: false,
+      },
+      limits: {
+        maxBatchSize: 512,
+      },
+    },
+  }` | - |
+| `'mxbai-embed-large'` | `{
+    name: 'mxbai-embed-large',
+    displayName: 'MixedBread Embed Large',
+    provider: Vendor.Ollama,
+    description: 'Mixed Bread AI large embedding model. ~670MB.',
+    isActive: true,
+    releaseDate: '2024-03-07',
+    sources: {
+      documentation: 'https://huggingface.co/mixedbread-ai/mxbai-embed-large-v1',
+      pricing: 'https://ollama.com/library/mxbai-embed-large',
+      lastVerified: '2026-03-17',
+    },
+    capabilities: {
+      maxTokens: 512,
+      defaultDimensions: 1024,
+      maxDimensions: 1024,
+      features: {
+        matryoshka: false,
+        instructionAware: true,
+        batchInput: true,
+        multilingual: false,
+      },
+      limits: {
+        maxBatchSize: 512,
+      },
+    },
+  }` | - |
+
+</details>
 
 ---
 
@@ -21590,7 +22231,7 @@ All implementations must encrypt tokens at rest
 
 ### VendorInfo `interface`
 
-📍 [`src/connectors/vendors/helpers.ts:266`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:322`](src/connectors/vendors/helpers.ts)
 
 Get vendor template information for display
 
@@ -21849,7 +22490,7 @@ const personalEmails = await personalFetch('/me/messages');
 
 ### createConnectorFromTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:202`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:258`](src/connectors/vendors/helpers.ts)
 
 Create a Connector from a vendor template
 
@@ -21872,6 +22513,23 @@ const connector = createConnectorFromTemplate(
   'pat',
   { apiKey: process.env.GITHUB_TOKEN }
 );
+```
+
+---
+
+### extractNonSecretCredentials `function`
+
+📍 [`src/connectors/vendors/helpers.ts:199`](src/connectors/vendors/helpers.ts)
+
+Extract non-secret credentials from a raw credentials dict.
+Used by ConnectorConfigStore.saveFromTemplate() to preserve
+template field values for round-trip editing without storing secrets.
+
+```typescript
+export function extractNonSecretCredentials(
+  authTemplate: AuthTemplate,
+  credentials: TemplateCredentials,
+): Record&lt;string, string&gt;
 ```
 
 ---
@@ -21915,7 +22573,7 @@ export function getAllVendorTemplates(): VendorTemplate[]
 
 ### getCredentialsSetupURL `function`
 
-📍 [`src/connectors/vendors/helpers.ts:349`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:405`](src/connectors/vendors/helpers.ts)
 
 Get credentials setup URL for a vendor
 
@@ -21927,7 +22585,7 @@ export function getCredentialsSetupURL(vendorId: string): string | undefined
 
 ### getDocsURL `function`
 
-📍 [`src/connectors/vendors/helpers.ts:357`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:413`](src/connectors/vendors/helpers.ts)
 
 Get docs URL for a vendor
 
@@ -21966,7 +22624,7 @@ export function getVendorColor(vendorId: string): string | undefined
 
 ### getVendorInfo `function`
 
-📍 [`src/connectors/vendors/helpers.ts:286`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:342`](src/connectors/vendors/helpers.ts)
 
 Get vendor information suitable for display
 
@@ -22060,7 +22718,7 @@ export function listVendorIds(): string[]
 
 ### listVendors `function`
 
-📍 [`src/connectors/vendors/helpers.ts:311`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:367`](src/connectors/vendors/helpers.ts)
 
 List all vendors with basic info
 
@@ -22072,7 +22730,7 @@ export function listVendors(): VendorInfo[]
 
 ### listVendorsByAuthType `function`
 
-📍 [`src/connectors/vendors/helpers.ts:340`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:396`](src/connectors/vendors/helpers.ts)
 
 List vendors that support a specific auth type
 
@@ -22084,7 +22742,7 @@ export function listVendorsByAuthType(authType: 'api_key' | 'oauth'): VendorInfo
 
 ### listVendorsByCategory `function`
 
-📍 [`src/connectors/vendors/helpers.ts:333`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:389`](src/connectors/vendors/helpers.ts)
 
 List vendors by category
 
@@ -24359,6 +25017,48 @@ Summary of a stored correlation
 
 ---
 
+### EmbeddingOptions `interface`
+
+📍 [`src/domain/interfaces/IEmbeddingProvider.ts:10`](src/domain/interfaces/IEmbeddingProvider.ts)
+
+Options for generating embeddings
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `model` | `model: string;` | Model to use for embedding |
+| `input` | `input: string | string[];` | Text(s) to embed — single string or array |
+| `dimensions?` | `dimensions?: number;` | Output dimensions (for models that support MRL / dimension reduction) |
+| `encodingFormat?` | `encodingFormat?: 'float' | 'base64';` | Encoding format for the embedding values |
+
+</details>
+
+---
+
+### EmbeddingResponse `interface`
+
+📍 [`src/domain/interfaces/IEmbeddingProvider.ts:24`](src/domain/interfaces/IEmbeddingProvider.ts)
+
+Response from an embedding request
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `embeddings` | `embeddings: number[][];` | Embedding vectors — always array of arrays, even for single input |
+| `model` | `model: string;` | Model used |
+| `usage` | `usage: {
+    promptTokens: number;
+    totalTokens: number;
+  };` | Token usage |
+
+</details>
+
+---
+
 ### HistoryEntry `interface`
 
 📍 [`src/domain/interfaces/IHistoryJournal.ts:52`](src/domain/interfaces/IHistoryJournal.ts)
@@ -24697,7 +25397,7 @@ canAccess(connector: Connector, context: ConnectorAccessContext): boolean;
 
 ### IConnectorConfigStorage `interface`
 
-📍 [`src/domain/interfaces/IConnectorConfigStorage.ts:35`](src/domain/interfaces/IConnectorConfigStorage.ts)
+📍 [`src/domain/interfaces/IConnectorConfigStorage.ts:50`](src/domain/interfaces/IConnectorConfigStorage.ts)
 
 Storage interface for ConnectorConfig persistence
 
@@ -25175,6 +25875,42 @@ destroy(): void;
 |----------|------|-------------|
 | `isDestroyed` | `readonly isDestroyed: boolean;` | Returns true if destroy() has been called.
 Methods should check this before performing operations. |
+
+</details>
+
+---
+
+### IEmbeddingProvider `interface`
+
+📍 [`src/domain/interfaces/IEmbeddingProvider.ts:39`](src/domain/interfaces/IEmbeddingProvider.ts)
+
+Embedding provider interface
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `embed()`
+
+Generate embeddings for one or more inputs
+
+```typescript
+embed(options: EmbeddingOptions): Promise&lt;EmbeddingResponse&gt;;
+```
+
+**Parameters:**
+- `options`: `EmbeddingOptions`
+
+**Returns:** `Promise&lt;EmbeddingResponse&gt;`
+
+#### `listModels()?`
+
+List available embedding models (optional)
+
+```typescript
+listModels?(): Promise&lt;string[]&gt;;
+```
+
+**Returns:** `Promise&lt;string[]&gt;`
 
 </details>
 
@@ -25989,7 +26725,7 @@ getPath(): string;
 
 ### IProvider `interface`
 
-📍 [`src/domain/interfaces/IProvider.ts:14`](src/domain/interfaces/IProvider.ts)
+📍 [`src/domain/interfaces/IProvider.ts:15`](src/domain/interfaces/IProvider.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -26692,6 +27428,7 @@ Base provider interface
 | `images` | `images: boolean;` | - |
 | `videos` | `videos: boolean;` | - |
 | `audio` | `audio: boolean;` | - |
+| `embeddings?` | `embeddings?: boolean;` | - |
 | `features?` | `features?: Record&lt;string, boolean&gt;;` | Optional feature flags for specific capabilities |
 
 </details>
@@ -26860,6 +27597,13 @@ Wrapper for stored connector configuration with metadata
 | `createdAt` | `createdAt: number;` | Timestamp when the config was first stored |
 | `updatedAt` | `updatedAt: number;` | Timestamp when the config was last updated |
 | `version` | `version: number;` | Schema version for future migrations |
+| `templateCredentials?` | `templateCredentials?: Record&lt;string, string&gt;;` | Raw non-secret template credentials for round-trip editing.
+Populated by saveFromTemplate() / updateFromTemplate().
+Contains only non-secret fields (clientId, tenantId, scope, redirectUri, etc.).
+Secret fields (apiKey, clientSecret, privateKey, etc.) are NEVER stored here.
+Used by edit UIs to re-populate form fields without needing to decrypt config.auth. |
+| `vendorId?` | `vendorId?: string;` | Vendor ID used to create this connector (e.g., 'microsoft', 'slack') |
+| `authTemplateId?` | `authTemplateId?: string;` | Auth template ID used (e.g., 'oauth-user', 'pat', 'bot-token') |
 
 </details>
 
@@ -28469,6 +29213,124 @@ async read(
 |----------|------|-------------|
 | `handlers` | `handlers: Map&lt;DocumentFamily, IFormatHandler&gt;` | - |
 | `config` | `config: DocumentReaderConfig` | - |
+
+</details>
+
+---
+
+### Embeddings `class`
+
+📍 [`src/capabilities/embeddings/Embeddings.ts:56`](src/capabilities/embeddings/Embeddings.ts)
+
+Embeddings capability class
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+private constructor(connector: Connector, model?: string, dimensions?: number)
+```
+
+**Parameters:**
+- `connector`: `Connector`
+- `model`: `string | undefined` *(optional)*
+- `dimensions`: `number | undefined` *(optional)*
+
+</details>
+
+<details>
+<summary><strong>Static Methods</strong></summary>
+
+#### `static create()`
+
+Create an Embeddings instance
+
+```typescript
+static create(options: EmbeddingsCreateOptions): Embeddings
+```
+
+**Parameters:**
+- `options`: `EmbeddingsCreateOptions`
+
+**Returns:** `Embeddings`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `embed()`
+
+Generate embeddings for one or more inputs
+
+```typescript
+async embed(
+    input: string | string[],
+    options?:
+```
+
+**Parameters:**
+- `input`: `string | string[]`
+- `options`: `{ model?: string | undefined; dimensions?: number | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;EmbeddingResponse&gt;`
+
+#### `listModels()`
+
+List available embedding models for this provider
+
+```typescript
+async listModels(): Promise&lt;string[]&gt;
+```
+
+**Returns:** `Promise&lt;string[]&gt;`
+
+#### `getModelInfo()`
+
+Get information about a specific embedding model
+
+```typescript
+getModelInfo(modelName: string): IEmbeddingModelDescription | undefined
+```
+
+**Parameters:**
+- `modelName`: `string`
+
+**Returns:** `IEmbeddingModelDescription | undefined`
+
+#### `getProvider()`
+
+Get the underlying provider
+
+```typescript
+getProvider(): IEmbeddingProvider
+```
+
+**Returns:** `IEmbeddingProvider`
+
+#### `getConnector()`
+
+Get the current connector
+
+```typescript
+getConnector(): Connector
+```
+
+**Returns:** `Connector`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `provider` | `provider: IEmbeddingProvider` | - |
+| `connector` | `connector: Connector` | - |
+| `defaultModel` | `defaultModel: string` | - |
+| `defaultDimensions?` | `defaultDimensions: number | undefined` | - |
 
 </details>
 
@@ -33821,6 +34683,13 @@ Options for direct LLM calls (bypassing AgentContext).
     type: 'text' | 'json_object' | 'json_schema';
     json_schema?: unknown;
   };` | Response format (text, json_object, json_schema) |
+| `thinking?` | `thinking?: {
+    enabled: boolean;
+    /** Budget in tokens for thinking (Anthropic & Google) */
+    budgetTokens?: number;
+    /** Reasoning effort level (OpenAI) */
+    effort?: 'low' | 'medium' | 'high';
+  };` | Vendor-agnostic thinking/reasoning configuration |
 | `vendorOptions?` | `vendorOptions?: Record&lt;string, unknown&gt;;` | Vendor-specific options |
 
 </details>
@@ -33968,6 +34837,25 @@ Result of a file edit operation
 | `replacements?` | `replacements?: number;` | - |
 | `error?` | `error?: string;` | - |
 | `diff?` | `diff?: string;` | - |
+
+</details>
+
+---
+
+### EmbeddingsCreateOptions `interface`
+
+📍 [`src/capabilities/embeddings/Embeddings.ts:44`](src/capabilities/embeddings/Embeddings.ts)
+
+Options for creating an Embeddings instance
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: string | Connector;` | Connector name or instance |
+| `model?` | `model?: string;` | Default model to use (if not specified, uses vendor's default) |
+| `dimensions?` | `dimensions?: number;` | Default dimensions (for MRL models) |
 
 </details>
 
@@ -37949,6 +38837,280 @@ Service info lookup (derived from SERVICE_DEFINITIONS)
 
 ---
 
+### SlackAddReactionResult `interface`
+
+📍 [`src/tools/slack/types.ts:295`](src/tools/slack/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### SlackChannel `interface`
+
+📍 [`src/tools/slack/types.ts:215`](src/tools/slack/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | - |
+| `name` | `name: string;` | - |
+| `topic?` | `topic?: string;` | - |
+| `purpose?` | `purpose?: string;` | - |
+| `memberCount?` | `memberCount?: number;` | - |
+| `isArchived` | `isArchived: boolean;` | - |
+| `isPrivate` | `isPrivate: boolean;` | - |
+| `isIM` | `isIM: boolean;` | - |
+
+</details>
+
+---
+
+### SlackGetChannelInfoResult `interface`
+
+📍 [`src/tools/slack/types.ts:319`](src/tools/slack/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `channel?` | `channel?: SlackChannel & {
+    created?: string;
+    creator?: string;
+    memberCount?: number;
+  };` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### SlackGetMentionsResult `interface`
+
+📍 [`src/tools/slack/types.ts:268`](src/tools/slack/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `messages?` | `messages?: SlackMentionMessage[];` | - |
+| `count?` | `count?: number;` | - |
+| `hasMore?` | `hasMore?: boolean;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### SlackGetMessagesResult `interface`
+
+📍 [`src/tools/slack/types.ts:244`](src/tools/slack/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `messages?` | `messages?: SlackMessage[];` | - |
+| `count?` | `count?: number;` | - |
+| `hasMore?` | `hasMore?: boolean;` | - |
+| `channel?` | `channel?: string;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### SlackGetThreadResult `interface`
+
+📍 [`src/tools/slack/types.ts:260`](src/tools/slack/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `messages?` | `messages?: SlackMessage[];` | - |
+| `count?` | `count?: number;` | - |
+| `parentMessage?` | `parentMessage?: SlackMessage;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### SlackGetUsersResult `interface`
+
+📍 [`src/tools/slack/types.ts:311`](src/tools/slack/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `users?` | `users?: SlackUser[];` | - |
+| `count?` | `count?: number;` | - |
+| `hasMore?` | `hasMore?: boolean;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### SlackListChannelsResult `interface`
+
+📍 [`src/tools/slack/types.ts:226`](src/tools/slack/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `channels?` | `channels?: SlackChannel[];` | - |
+| `count?` | `count?: number;` | - |
+| `hasMore?` | `hasMore?: boolean;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### SlackMentionMessage `interface`
+
+📍 [`src/tools/slack/types.ts:276`](src/tools/slack/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `ts` | `ts: string;` | - |
+| `date` | `date: string;` | - |
+| `text` | `text: string;` | - |
+| `user?` | `user?: string;` | - |
+| `channel?` | `channel?: { id: string; name?: string };` | - |
+| `threadTs?` | `threadTs?: string;` | - |
+| `permalink?` | `permalink?: string;` | - |
+
+</details>
+
+---
+
+### SlackMessage `interface`
+
+📍 [`src/tools/slack/types.ts:234`](src/tools/slack/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `ts` | `ts: string;` | - |
+| `date` | `date: string;` | - |
+| `user?` | `user?: string;` | - |
+| `text` | `text: string;` | - |
+| `threadTs?` | `threadTs?: string;` | - |
+| `replyCount?` | `replyCount?: number;` | - |
+| `reactions?` | `reactions?: { name: string; count: number }[];` | - |
+
+</details>
+
+---
+
+### SlackPostMessageResult `interface`
+
+📍 [`src/tools/slack/types.ts:253`](src/tools/slack/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `ts?` | `ts?: string;` | - |
+| `channel?` | `channel?: string;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### SlackSearchMessagesResult `interface`
+
+📍 [`src/tools/slack/types.ts:286`](src/tools/slack/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `messages?` | `messages?: SlackMentionMessage[];` | - |
+| `count?` | `count?: number;` | - |
+| `total?` | `total?: number;` | - |
+| `hasMore?` | `hasMore?: boolean;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### SlackSetChannelTopicResult `interface`
+
+📍 [`src/tools/slack/types.ts:329`](src/tools/slack/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `topic?` | `topic?: string;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### SlackUser `interface`
+
+📍 [`src/tools/slack/types.ts:300`](src/tools/slack/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | - |
+| `name` | `name: string;` | - |
+| `realName?` | `realName?: string;` | - |
+| `displayName?` | `displayName?: string;` | - |
+| `email?` | `email?: string;` | - |
+| `isBot` | `isBot: boolean;` | - |
+| `isAdmin?` | `isAdmin?: boolean;` | - |
+| `timezone?` | `timezone?: string;` | - |
+
+</details>
+
+---
+
 ### SourceCapabilities `interface`
 
 📍 [`src/capabilities/researchAgent/types.ts:143`](src/capabilities/researchAgent/types.ts)
@@ -39299,6 +40461,18 @@ export function buildWorkspaceDelta(
 
 ---
 
+### createEmbeddingProvider `function`
+
+📍 [`src/core/createEmbeddingProvider.ts:16`](src/core/createEmbeddingProvider.ts)
+
+Create an Embedding provider from a connector
+
+```typescript
+export function createEmbeddingProvider(connector: Connector): IEmbeddingProvider
+```
+
+---
+
 ### createExecutionRecorder `function`
 
 📍 [`src/core/createExecutionRecorder.ts:97`](src/core/createExecutionRecorder.ts)
@@ -39531,6 +40705,18 @@ export function formatRecipients(emails: unknown[]):
 
 ---
 
+### fromSlackTimestamp `function`
+
+📍 [`src/tools/slack/types.ts:147`](src/tools/slack/types.ts)
+
+Convert a Slack timestamp to an ISO 8601 string.
+
+```typescript
+export function fromSlackTimestamp(ts: string): string
+```
+
+---
+
 ### getAllServiceIds `function`
 
 📍 [`src/domain/entities/Services.ts:564`](src/domain/entities/Services.ts)
@@ -39543,9 +40729,26 @@ export function getAllServiceIds(): string[]
 
 ---
 
+### getAuthenticatedUserId `function`
+
+📍 [`src/tools/slack/types.ts:527`](src/tools/slack/types.ts)
+
+Get the authenticated bot/user's Slack user ID.
+Uses `auth.test` — works for both bot and user tokens.
+
+```typescript
+export async function getAuthenticatedUserId(
+  connector: Connector,
+  userId?: string,
+  accountId?: string
+): Promise&lt;string&gt;
+```
+
+---
+
 ### getBackgroundOutput `function`
 
-📍 [`src/tools/shell/bash.ts:322`](src/tools/shell/bash.ts)
+📍 [`src/tools/shell/bash.ts:306`](src/tools/shell/bash.ts)
 
 Get output from a background process
 
@@ -39780,7 +40983,7 @@ export function isWebUrl(source: string): boolean
 
 ### killBackgroundProcess `function`
 
-📍 [`src/tools/shell/bash.ts:338`](src/tools/shell/bash.ts)
+📍 [`src/tools/shell/bash.ts:322`](src/tools/shell/bash.ts)
 
 Kill a background process
 
@@ -40094,6 +41297,45 @@ export function setMediaStorage(storage: IMediaStorage): void
 
 ---
 
+### slackFetch `function`
+
+📍 [`src/tools/slack/types.ts:65`](src/tools/slack/types.ts)
+
+Make an authenticated Slack Web API request through the connector.
+
+Handles Slack's unique response format where HTTP 200 can still indicate failure
+via the `ok` field. Throws SlackAPIError on `ok: false`.
+
+```typescript
+export async function slackFetch&lt;T extends SlackBaseResponse = SlackBaseResponse&gt;(
+  connector: Connector,
+  method: string,
+  options?: SlackFetchOptions
+): Promise&lt;T&gt;
+```
+
+---
+
+### slackPaginate `function`
+
+📍 [`src/tools/slack/types.ts:162`](src/tools/slack/types.ts)
+
+Collect paginated results from a Slack API method.
+
+Slack uses cursor-based pagination. This helper calls the method repeatedly
+until there are no more pages or maxPages is reached.
+
+```typescript
+export async function slackPaginate&lt;TResponse extends SlackBaseResponse, TItem&gt;(
+  connector: Connector,
+  method: string,
+  params: Record&lt;string, unknown&gt;,
+  extractItems: (response: TResponse) =&gt; TItem[],
+  options?:
+```
+
+---
+
 ### sttToTwilio `function`
 
 📍 [`src/capabilities/voice/adapters/twilio/codecs.ts:188`](src/capabilities/voice/adapters/twilio/codecs.ts)
@@ -40115,6 +41357,21 @@ Handles body stringification and query param building
 
 ```typescript
 export function toConnectorOptions(options: ExtendedFetchOptions): ConnectorFetchOptions
+```
+
+---
+
+### toSlackTimestamp `function`
+
+📍 [`src/tools/slack/types.ts:130`](src/tools/slack/types.ts)
+
+Convert an ISO 8601 date string to a Slack timestamp (Unix epoch string).
+
+Slack uses Unix epoch seconds as strings (e.g., "1234567890.000000").
+Accepts ISO 8601 strings or Unix epoch numbers/strings.
+
+```typescript
+export function toSlackTimestamp(input: string): string
 ```
 
 ---

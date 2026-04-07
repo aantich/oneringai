@@ -257,6 +257,41 @@ export class StreamState {
   }
 
   /**
+   * Accumulate text, reasoning, and statistics from another StreamState.
+   * Used to merge per-iteration state into the global execution state,
+   * so that the final response built from the global state has full text.
+   */
+  accumulateFrom(other: StreamState): void {
+    // Merge text buffers
+    for (const [itemId, chunks] of other.textBuffers) {
+      if (!this.textBuffers.has(itemId)) {
+        this.textBuffers.set(itemId, []);
+      }
+      this.textBuffers.get(itemId)!.push(...chunks);
+    }
+    this.totalTextDeltas += other.totalTextDeltas;
+
+    // Merge reasoning buffers
+    for (const [itemId, chunks] of other.reasoningBuffers) {
+      if (!this.reasoningBuffers.has(itemId)) {
+        this.reasoningBuffers.set(itemId, []);
+      }
+      this.reasoningBuffers.get(itemId)!.push(...chunks);
+    }
+
+    // Merge statistics
+    this.totalChunks += other.totalChunks;
+
+    // Propagate provider status from the last iteration that reported one
+    if (other.providerStatus !== 'incomplete') {
+      this.providerStatus = other.providerStatus;
+    }
+    if (other.stopReason) {
+      this.stopReason = other.stopReason;
+    }
+  }
+
+  /**
    * Accumulate token usage (adds to existing values)
    */
   accumulateUsage(usage: Partial<TokenUsage>): void {

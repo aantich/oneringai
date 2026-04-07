@@ -44,7 +44,7 @@ export function createBgProcessOutputTool(): ToolFunction<BgProcessOutputArgs, B
       function: {
         name: 'bg_process_output',
         description:
-          `Read output from a background process started with the bash tool using run_in_background=true. Use this to monitor long-running commands like dev servers, file watchers, build processes, or any command you started in the background.
+          `Read output from a background process started with dev_server or bash run_in_background=true. Use this to monitor dev servers, file watchers, build processes, or any background command. For processes started with dev_server, you can also read the full log file directly via read_file.
 
 READING MODES:
 - Default: returns the last 50 lines of output (like "tail -50")

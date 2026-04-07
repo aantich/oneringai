@@ -46,8 +46,14 @@ export {
   HTMLHandler,
   OfficeHandler,
   ExcelHandler,
+  excelToMarkdownKV,
   PDFHandler,
   getDefaultHandlers,
+} from './handlers/index.js';
+
+export type {
+  MarkdownKVSheet,
+  ExcelToMarkdownKVOptions,
 } from './handlers/index.js';
 
 // Transformers

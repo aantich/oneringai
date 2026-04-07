@@ -1135,6 +1135,41 @@ for await (const event of agent.streamDirect('Tell me a story')) {
 
 **Use cases:** Quick one-off queries, embeddings-like simplicity, testing, hybrid workflows.
 
+### Thinking / Reasoning (Per-Call)
+
+Control reasoning effort per call — vendor-agnostic API that maps to OpenAI's `reasoning_effort`, Anthropic's `budget_tokens`, and Google's `thinkingBudget`:
+
+```typescript
+const agent = Agent.create({ connector: 'anthropic', model: 'claude-sonnet-4-6' });
+
+// Set reasoning at agent level (applies to all calls)
+const agent2 = Agent.create({
+  connector: 'openai', model: 'o3-mini',
+  thinking: { enabled: true, effort: 'medium' },
+});
+
+// Override per call via RunOptions
+const deep = await agent.run('Prove this theorem', {
+  thinking: { enabled: true, budgetTokens: 16384 },
+});
+
+const quick = await agent.run('What is 2+2?', {
+  thinking: { enabled: true, effort: 'low' },
+});
+
+// Streaming with reasoning
+for await (const event of agent.stream('Analyze this code', {
+  thinking: { enabled: true, effort: 'high' },
+})) { /* ... */ }
+
+// Also works with runDirect()
+const resp = await agent.runDirect('Quick question', {
+  thinking: { enabled: true, effort: 'medium' },
+});
+```
+
+**RunOptions** (for `run()` / `stream()`): `thinking`, `temperature`, `vendorOptions` — override agent-level config for a single call.
+
 ### 13. Audio Capabilities
 
 Text-to-Speech and Speech-to-Text with multiple providers:

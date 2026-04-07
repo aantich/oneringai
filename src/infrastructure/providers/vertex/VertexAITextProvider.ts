@@ -19,6 +19,7 @@ import { GoogleConverter } from '../google/GoogleConverter.js';
 import { GoogleStreamConverter } from '../google/GoogleStreamConverter.js';
 import { StreamEvent } from '../../../domain/entities/StreamEvent.js';
 import { resolveModelCapabilities, resolveMaxContextTokens } from '../base/ModelCapabilityResolver.js';
+import { ProviderErrorMapper } from '../base/ProviderErrorMapper.js';
 
 export class VertexAITextProvider extends BaseTextProvider {
   readonly name = 'vertex-ai';
@@ -99,7 +100,7 @@ export class VertexAITextProvider extends BaseTextProvider {
       // Convert response → our format (same as regular Gemini API)
       return this.converter.convertResponse(result);
     } catch (error: any) {
-      console.error(`[VertexAITextProvider] generate error (model=${options.model}):`, error.message || error);
+      this.logger.error({ model: options.model, ...ProviderErrorMapper.extractErrorDetails(error) }, 'generate error');
       this.handleError(error, options.model);
       throw error; // TypeScript needs this
     }
@@ -147,9 +148,9 @@ export class VertexAITextProvider extends BaseTextProvider {
         `[VertexAITextProvider] streamGenerate: stream complete (${chunkCount} events, ${Date.now() - streamStartTime}ms total)`,
       );
     } catch (error: any) {
-      console.error(
-        `[VertexAITextProvider] streamGenerate error (model=${options.model}):`,
-        error.message || error,
+      this.logger.error(
+        { model: options.model, ...ProviderErrorMapper.extractErrorDetails(error) },
+        'streamGenerate error',
       );
       this.handleError(error, options.model);
       throw error;

@@ -20,6 +20,7 @@ import * as ResponsesAPI from 'openai/resources/responses/responses.js';
 import { getModelInfo } from '../../../domain/entities/Model.js';
 import { resolveModelCapabilities, resolveMaxContextTokens } from '../base/ModelCapabilityResolver.js';
 import { validateThinkingConfig } from '../shared/validateThinkingConfig.js';
+import { ProviderErrorMapper } from '../base/ProviderErrorMapper.js';
 
 export class OpenAITextProvider extends BaseTextProvider {
   readonly name: string = 'openai';
@@ -120,7 +121,7 @@ export class OpenAITextProvider extends BaseTextProvider {
         // Convert response to our format
         return this.converter.convertResponse(response);
       } catch (error: any) {
-        this.logger.error({ model: options.model, error: error.message || error }, 'generate error');
+        this.logger.error({ model: options.model, ...ProviderErrorMapper.extractErrorDetails(error) }, 'generate error');
         this.handleError(error, options.model);
         throw error; // TypeScript needs this
       }
@@ -204,7 +205,7 @@ export class OpenAITextProvider extends BaseTextProvider {
       );
     } catch (error: any) {
       this.logger.error(
-        { model: options.model, error: error.message || error },
+        { model: options.model, ...ProviderErrorMapper.extractErrorDetails(error) },
         'streamGenerate error',
       );
       this.handleError(error, options.model);

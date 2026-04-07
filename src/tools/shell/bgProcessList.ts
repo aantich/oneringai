@@ -23,6 +23,7 @@ export interface BgProcessListResult {
     startedAt: string;
     exitedAt: string | null;
     totalOutputLines: number;
+    logFile: string | null;
   }>;
   count: number;
   runningCount: number;
@@ -38,7 +39,7 @@ export function createBgProcessListTool(): ToolFunction<BgProcessListArgs, BgPro
         description:
           `List all background processes and their current status. Use this to: see what background processes are running (dev servers, watchers, builds), find a process ID you forgot, check if a background command has finished or crashed, get an overview before deciding what to kill or restart.
 
-Returns each process with: ID (for use with bg_process_output/bg_process_kill), the original command, status (running/exited/killed/errored), PID, exit code, start time, and total output lines. Running processes are listed first.`,
+Processes are started via dev_server (preferred for servers/watchers) or bash with run_in_background=true. Returns each process with: ID (for use with bg_process_output/bg_process_kill), the original command, status (running/exited/killed/errored), PID, exit code, start time, total output lines, and log file path (if started via dev_server). Running processes are listed first.`,
         parameters: {
           type: 'object',
           properties: {
@@ -83,13 +84,14 @@ Returns each process with: ID (for use with bg_process_output/bg_process_kill), 
           startedAt: p.startedAt,
           exitedAt: p.exitedAt,
           totalOutputLines: p.totalOutputLines,
+          logFile: p.logFile,
         })),
         count: processes.length,
         runningCount,
       };
 
       if (processes.length === 0) {
-        result.message = 'No background processes. Use the bash tool with run_in_background=true to start one.';
+        result.message = 'No background processes. Use dev_server to start a server, or bash with run_in_background=true for other background commands.';
       }
 
       return result;

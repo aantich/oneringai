@@ -154,6 +154,11 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   /** Current input (pending, will be added to conversation after LLM response) */
   private _currentInput: InputItem[] = [];
 
+  /** Original user input captured at the start of each execution.
+   *  Unlike _currentInput which changes during the agentic loop (tool results
+   *  replace user message), this preserves the input that started the execution. */
+  private _originalUserInput: ReadonlyArray<InputItem> = [];
+
   /** Registered plugins */
   private readonly _plugins: Map<string, IContextPluginNextGen> = new Map();
 
@@ -637,15 +642,15 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    */
   setCurrentInput(content: string | Content[]): void {
     this.assertNotDestroyed();
-    // Clear existing current input array
+    // Clear existing current input array and set new user message as current input.
+    // addUserMessage() sets _currentInput = [message] without pushing to _conversation.
+    // The user message moves to _conversation later when addAssistantResponse() is called.
     this._currentInput = [];
-    // Add user message to both conversation and current input
     this.addUserMessage(content);
-    // The last message added is the current input
-    const lastMsg = this._conversation[this._conversation.length - 1];
-    if (lastMsg) {
-      this._currentInput.push(lastMsg);
-    }
+    // Capture original user input — setCurrentInput is called once per execution
+    // via _prepareExecution(). This snapshot survives the agentic loop where
+    // _currentInput gets overwritten with tool results.
+    this._originalUserInput = [...this._currentInput];
   }
 
   /**
@@ -656,6 +661,10 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     for (const item of items) {
       this._conversation.push(item);
     }
+    // Capture original user input from the seeded items
+    this._originalUserInput = items.filter(
+      item => item.type === 'message' && (item as any).role === MessageRole.USER
+    );
   }
 
   /**
@@ -920,9 +929,21 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
   /**
    * Get current input (read-only).
+   * NOTE: This changes during the agentic loop — after tool execution it
+   * contains tool results, not the original user message.
    */
   getCurrentInput(): ReadonlyArray<InputItem> {
     return this._currentInput;
+  }
+
+  /**
+   * Get the original user input from the start of execution.
+   * Unlike getCurrentInput() which changes during the agentic loop
+   * (tool results replace user message), this always returns the
+   * input that started the current execution.
+   */
+  getOriginalUserInput(): ReadonlyArray<InputItem> {
+    return this._originalUserInput;
   }
 
   /**

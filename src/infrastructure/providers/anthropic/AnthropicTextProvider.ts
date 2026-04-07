@@ -17,6 +17,7 @@ import { AnthropicConverter } from './AnthropicConverter.js';
 import { AnthropicStreamConverter } from './AnthropicStreamConverter.js';
 import { StreamEvent } from '../../../domain/entities/StreamEvent.js';
 import { resolveModelCapabilities, resolveMaxContextTokens } from '../base/ModelCapabilityResolver.js';
+import { ProviderErrorMapper } from '../base/ProviderErrorMapper.js';
 
 export class AnthropicTextProvider extends BaseTextProvider {
   readonly name = 'anthropic';
@@ -71,7 +72,7 @@ export class AnthropicTextProvider extends BaseTextProvider {
         // Convert Anthropic response → our format
         return this.converter.convertResponse(anthropicResponse);
       } catch (error: any) {
-        this.logger.error({ model: options.model, error: error.message || error }, 'generate error');
+        this.logger.error({ model: options.model, ...ProviderErrorMapper.extractErrorDetails(error) }, 'generate error');
         this.handleError(error, options.model);
         throw error; // TypeScript needs this
       }
@@ -119,7 +120,7 @@ export class AnthropicTextProvider extends BaseTextProvider {
       );
     } catch (error: any) {
       this.logger.error(
-        { model: options.model, error: error.message || error },
+        { model: options.model, ...ProviderErrorMapper.extractErrorDetails(error) },
         'streamGenerate error',
       );
       this.handleError(error, options.model);

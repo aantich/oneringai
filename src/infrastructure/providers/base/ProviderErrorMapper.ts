@@ -126,4 +126,53 @@ export class ProviderErrorMapper {
 
     return undefined;
   }
+
+  /**
+   * Extract rich error details for logging.
+   * Captures status, code, type, cause, headers, and stack from SDK errors.
+   */
+  static extractErrorDetails(error: any): Record<string, unknown> {
+    const details: Record<string, unknown> = {
+      error: error.message || String(error),
+    };
+
+    if (error.status != null) details.status = error.status;
+    if (error.statusCode != null) details.statusCode = error.statusCode;
+    if (error.code != null) details.code = error.code;
+    if (error.type != null) details.type = error.type;
+    if (error.param != null) details.param = error.param;
+
+    // SDK-specific error body (OpenAI, Anthropic often put structured info here)
+    if (error.error != null && typeof error.error === 'object') {
+      details.errorBody = error.error;
+    }
+
+    // Google-style error details
+    if (error.errorDetails != null) {
+      details.errorDetails = error.errorDetails;
+    }
+
+    // Cause chain (Node.js Error.cause)
+    if (error.cause != null) {
+      const cause = error.cause;
+      details.cause = cause.message || String(cause);
+      if (cause.code != null) details.causeCode = cause.code;
+      // Nested cause (e.g. ECONNREFUSED wrapped in fetch error)
+      if (cause.cause != null) {
+        const inner = cause.cause;
+        details.innerCause = inner.message || String(inner);
+        if (inner.code != null) details.innerCauseCode = inner.code;
+      }
+    }
+
+    // Request URL if available (some SDKs attach it)
+    if (error.url != null) details.url = error.url;
+
+    // Stack trace (first 5 lines to keep logs readable)
+    if (error.stack) {
+      details.stack = error.stack.split('\n').slice(0, 5).join('\n');
+    }
+
+    return details;
+  }
 }

@@ -32,7 +32,7 @@ export type { StorageConfig, StorageContext } from './StorageRegistry.js';
 export { ToolCatalogRegistry } from './ToolCatalogRegistry.js';
 export type { ToolCategoryDefinition, CatalogToolEntry, ToolCategoryScope, ConnectorCategoryInfo, ToolRegistryEntry as CatalogRegistryEntry } from './ToolCatalogRegistry.js';
 export { Agent } from './Agent.js';
-export type { AgentConfig, AgentSessionConfig } from './Agent.js';
+export type { AgentConfig, AgentSessionConfig, RunOptions } from './Agent.js';
 export { AgentRegistry } from './AgentRegistry.js';
 export type {
   AgentStatus,
@@ -163,9 +163,9 @@ export { createProvider, createProviderAsync, getVendorDefaultBaseURL } from './
 
 // Orchestrator
 export { createOrchestrator } from './orchestrator/index.js';
-export type { OrchestratorConfig, AgentTypeConfig } from './orchestrator/index.js';
-export { buildOrchestrationTools, buildWorkspaceDelta } from './orchestrator/index.js';
-export type { OrchestrationToolsContext } from './orchestrator/index.js';
+export type { OrchestratorConfig, AgentTypeConfig, DelegationDefaults } from './orchestrator/index.js';
+export { buildOrchestrationTools, buildWorkspaceDelta, createDelegationState } from './orchestrator/index.js';
+export type { OrchestrationToolsContext, DelegationState, DelegationReclaimConfig } from './orchestrator/index.js';
 
 // Centralized constants
 export {
