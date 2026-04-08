@@ -196,17 +196,15 @@ export const LLM_MODELS = {
     CLAUDE_OPUS_4: 'claude-opus-4-20250514',
     CLAUDE_SONNET_4: 'claude-sonnet-4-20250514',
     CLAUDE_SONNET_3_7: 'claude-3-7-sonnet-20250219',
-    // Claude 3.x Legacy (Deprecated)
-    CLAUDE_HAIKU_3: 'claude-3-haiku-20240307',
   },
   [Vendor.Google]: {
     // Gemini 3.1 Series (Preview)
     GEMINI_3_1_PRO_PREVIEW: 'gemini-3.1-pro-preview',
     GEMINI_3_1_FLASH_LITE_PREVIEW: 'gemini-3.1-flash-lite-preview',
     GEMINI_3_1_FLASH_IMAGE_PREVIEW: 'gemini-3.1-flash-image-preview',
+    GEMINI_3_1_FLASH_LIVE_PREVIEW: 'gemini-3.1-flash-live-preview',
     // Gemini 3 Series (Preview)
     GEMINI_3_FLASH_PREVIEW: 'gemini-3-flash-preview',
-    GEMINI_3_PRO_PREVIEW: 'gemini-3-pro-preview',
     GEMINI_3_PRO_IMAGE_PREVIEW: 'gemini-3-pro-image-preview',
     // Gemini 2.5 Series (Production)
     GEMINI_2_5_PRO: 'gemini-2.5-pro',
@@ -215,20 +213,13 @@ export const LLM_MODELS = {
     GEMINI_2_5_FLASH_IMAGE: 'gemini-2.5-flash-image',
   },
   [Vendor.Grok]: {
+    // Grok 4.20 Series (Flagship, 2M context)
+    GROK_4_20_0309_REASONING: 'grok-4.20-0309-reasoning',
+    GROK_4_20_0309_NON_REASONING: 'grok-4.20-0309-non-reasoning',
+    GROK_4_20_MULTI_AGENT_0309: 'grok-4.20-multi-agent-0309',
     // Grok 4.1 Series (2M context, fast)
     GROK_4_1_FAST_REASONING: 'grok-4-1-fast-reasoning',
     GROK_4_1_FAST_NON_REASONING: 'grok-4-1-fast-non-reasoning',
-    // Grok 4 Series
-    GROK_4_FAST_REASONING: 'grok-4-fast-reasoning',
-    GROK_4_FAST_NON_REASONING: 'grok-4-fast-non-reasoning',
-    GROK_4_0709: 'grok-4-0709',
-    // Grok Code
-    GROK_CODE_FAST_1: 'grok-code-fast-1',
-    // Grok 3 Series
-    GROK_3: 'grok-3',
-    GROK_3_MINI: 'grok-3-mini',
-    // Grok 2 Series (Vision)
-    GROK_2_VISION_1212: 'grok-2-vision-1212',
   },
 } as const;
 
@@ -1698,7 +1689,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
       batchAPI: true,
       promptCaching: true,
       input: {
-        tokens: 200000, // 1M with beta header
+        tokens: 1000000,
         text: true,
         image: true,
         cpm: 5,
@@ -1715,7 +1706,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   'claude-sonnet-4-6': {
     name: 'claude-sonnet-4-6',
     provider: Vendor.Anthropic,
-    description: 'Best combination of speed and intelligence. Adaptive thinking, 1M context beta',
+    description: 'Best combination of speed and intelligence. Adaptive thinking, 1M context',
     isActive: true,
     preferred: true,
     releaseDate: '2026-02-01',
@@ -1735,7 +1726,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
       batchAPI: true,
       promptCaching: true,
       input: {
-        tokens: 200000, // 1M with beta header
+        tokens: 1000000,
         text: true,
         image: true,
         cpm: 3,
@@ -2003,42 +1994,6 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     },
   },
 
-  // Claude 3.x Legacy (Deprecated - retiring April 19, 2026)
-  'claude-3-haiku-20240307': {
-    name: 'claude-3-haiku-20240307',
-    provider: Vendor.Anthropic,
-    description: 'Deprecated. Retiring April 19, 2026. Migrate to Haiku 4.5',
-    isActive: true,
-    releaseDate: '2024-03-07',
-    knowledgeCutoff: '2023-08-01',
-    features: {
-      reasoning: false,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: true,
-      audio: false,
-      video: false,
-      extendedThinking: false,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 200000,
-        text: true,
-        image: true,
-        cpm: 0.25,
-        cpmCached: 0.03,
-      },
-      output: {
-        tokens: 4096,
-        text: true,
-        cpm: 1.25,
-      },
-    },
-  },
 
   // ============================================================================
   // Google Models (Verified from ai.google.dev - March 2026)
@@ -2154,6 +2109,43 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     },
   },
 
+  'gemini-3.1-flash-live-preview': {
+    name: 'gemini-3.1-flash-live-preview',
+    provider: Vendor.Google,
+    description: 'Low-latency Live API model for real-time audio dialogue with multimodal awareness',
+    isActive: true,
+    releaseDate: '2026-03-01',
+    knowledgeCutoff: '2025-01-01',
+    features: {
+      reasoning: true,
+      streaming: true,
+      structuredOutput: false,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: true,
+      vision: true,
+      audio: true,
+      video: true,
+      batchAPI: false,
+      promptCaching: false,
+      input: {
+        tokens: 131072,
+        text: true,
+        image: true,
+        audio: true,
+        video: true,
+        cpm: 0.75,
+      },
+      output: {
+        tokens: 65536,
+        text: true,
+        audio: true,
+        cpm: 4.50,
+      },
+    },
+  },
+
   // Gemini 3 Series (Preview)
   'gemini-3-flash-preview': {
     name: 'gemini-3-flash-preview',
@@ -2193,46 +2185,10 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     },
   },
 
-  'gemini-3-pro-preview': {
-    name: 'gemini-3-pro-preview',
-    provider: Vendor.Google,
-    description: 'Deprecated. Shutting down March 9, 2026. Migrate to gemini-3.1-pro-preview',
-    isActive: true,
-    releaseDate: '2025-11-18',
-    knowledgeCutoff: '2025-01-01',
-    features: {
-      reasoning: true,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: true,
-      audio: true,
-      video: true,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 1048576,
-        text: true,
-        image: true,
-        audio: true,
-        video: true,
-        cpm: 1.25,
-      },
-      output: {
-        tokens: 65536,
-        text: true,
-        cpm: 10,
-      },
-    },
-  },
-
   'gemini-3-pro-image-preview': {
     name: 'gemini-3-pro-image-preview',
     provider: Vendor.Google,
-    description: 'Professional-grade image generation and editing with reasoning',
+    description: 'Nano Banana Pro — state-of-the-art native image generation and editing with reasoning',
     isActive: true,
     releaseDate: '2025-11-18',
     knowledgeCutoff: '2025-01-01',
@@ -2411,14 +2367,118 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   },
 
   // ============================================================================
-  // xAI Grok Models (Verified from docs.x.ai - March 2026)
+  // xAI Grok Models (Verified from docs.x.ai - April 2026)
   // ============================================================================
 
-  // Grok 4.1 Series (2M context, fast)
+  // Grok 4.20 Series (Flagship, 2M context)
+  'grok-4.20-0309-reasoning': {
+    name: 'grok-4.20-0309-reasoning',
+    provider: Vendor.Grok,
+    description: 'Flagship Grok 4.20 with reasoning, 2M context, vision support',
+    isActive: true,
+    preferred: true,
+    releaseDate: '2026-03-09',
+    knowledgeCutoff: '2024-11-01',
+    features: {
+      reasoning: true,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      batchAPI: true,
+      promptCaching: true,
+      input: {
+        tokens: 2000000,
+        text: true,
+        image: true,
+        cpm: 2.00,
+      },
+      output: {
+        tokens: 65536,
+        text: true,
+        cpm: 6.00,
+      },
+    },
+  },
+
+  'grok-4.20-0309-non-reasoning': {
+    name: 'grok-4.20-0309-non-reasoning',
+    provider: Vendor.Grok,
+    description: 'Flagship Grok 4.20 without reasoning, 2M context, vision support',
+    isActive: true,
+    releaseDate: '2026-03-09',
+    knowledgeCutoff: '2024-11-01',
+    features: {
+      reasoning: false,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      batchAPI: true,
+      promptCaching: true,
+      input: {
+        tokens: 2000000,
+        text: true,
+        image: true,
+        cpm: 2.00,
+      },
+      output: {
+        tokens: 65536,
+        text: true,
+        cpm: 6.00,
+      },
+    },
+  },
+
+  'grok-4.20-multi-agent-0309': {
+    name: 'grok-4.20-multi-agent-0309',
+    provider: Vendor.Grok,
+    description: 'Grok 4.20 optimized for multi-agent workflows, 2M context, vision + reasoning',
+    isActive: true,
+    releaseDate: '2026-03-09',
+    knowledgeCutoff: '2024-11-01',
+    features: {
+      reasoning: true,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      batchAPI: true,
+      promptCaching: true,
+      input: {
+        tokens: 2000000,
+        text: true,
+        image: true,
+        cpm: 2.00,
+      },
+      output: {
+        tokens: 65536,
+        text: true,
+        cpm: 6.00,
+      },
+    },
+  },
+
+  // Grok 4.1 Series (2M context, fast, cost-efficient)
   'grok-4-1-fast-reasoning': {
     name: 'grok-4-1-fast-reasoning',
     provider: Vendor.Grok,
-    description: 'Fast Grok 4.1 with reasoning capabilities, 2M context window, vision support',
+    description: 'Fast Grok 4.1 with reasoning, 2M context, vision support',
     isActive: true,
     releaseDate: '2025-11-01',
     knowledgeCutoff: '2024-11-01',
@@ -2440,7 +2500,6 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
         text: true,
         image: true,
         cpm: 0.20,
-        cpmCached: 0.05,
       },
       output: {
         tokens: 65536,
@@ -2453,7 +2512,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   'grok-4-1-fast-non-reasoning': {
     name: 'grok-4-1-fast-non-reasoning',
     provider: Vendor.Grok,
-    description: 'Fast Grok 4.1 without reasoning, 2M context window, vision support',
+    description: 'Fast Grok 4.1 without reasoning, 2M context, vision support',
     isActive: true,
     releaseDate: '2025-11-01',
     knowledgeCutoff: '2024-11-01',
@@ -2475,257 +2534,11 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
         text: true,
         image: true,
         cpm: 0.20,
-        cpmCached: 0.05,
       },
       output: {
         tokens: 65536,
         text: true,
         cpm: 0.50,
-      },
-    },
-  },
-
-  // Grok Code Series
-  'grok-code-fast-1': {
-    name: 'grok-code-fast-1',
-    provider: Vendor.Grok,
-    description: 'Specialized coding model with reasoning capabilities, 256K context',
-    isActive: true,
-    releaseDate: '2025-10-01',
-    knowledgeCutoff: '2024-11-01',
-    features: {
-      reasoning: true,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: false,
-      audio: false,
-      video: false,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 256000,
-        text: true,
-        cpm: 0.20,
-        cpmCached: 0.02,
-      },
-      output: {
-        tokens: 32768,
-        text: true,
-        cpm: 1.50,
-      },
-    },
-  },
-
-  // Grok 4 Series
-  'grok-4-fast-reasoning': {
-    name: 'grok-4-fast-reasoning',
-    provider: Vendor.Grok,
-    description: 'Fast Grok 4 with reasoning capabilities, 2M context window, vision support',
-    isActive: true,
-    releaseDate: '2025-09-01',
-    knowledgeCutoff: '2024-11-01',
-    features: {
-      reasoning: true,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: true,
-      audio: false,
-      video: false,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 2000000,
-        text: true,
-        image: true,
-        cpm: 0.20,
-        cpmCached: 0.05,
-      },
-      output: {
-        tokens: 65536,
-        text: true,
-        cpm: 0.50,
-      },
-    },
-  },
-
-  'grok-4-fast-non-reasoning': {
-    name: 'grok-4-fast-non-reasoning',
-    provider: Vendor.Grok,
-    description: 'Fast Grok 4 without reasoning, 2M context window, vision support',
-    isActive: true,
-    releaseDate: '2025-09-01',
-    knowledgeCutoff: '2024-11-01',
-    features: {
-      reasoning: false,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: true,
-      audio: false,
-      video: false,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 2000000,
-        text: true,
-        image: true,
-        cpm: 0.20,
-        cpmCached: 0.05,
-      },
-      output: {
-        tokens: 65536,
-        text: true,
-        cpm: 0.50,
-      },
-    },
-  },
-
-  'grok-4-0709': {
-    name: 'grok-4-0709',
-    provider: Vendor.Grok,
-    description: 'Grok 4 flagship model (July 2025 release), 256K context, vision support, reasoning',
-    isActive: true,
-    releaseDate: '2025-07-09',
-    knowledgeCutoff: '2024-11-01',
-    features: {
-      reasoning: true,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: true,
-      audio: false,
-      video: false,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 256000,
-        text: true,
-        image: true,
-        cpm: 3.00,
-        cpmCached: 0.75,
-      },
-      output: {
-        tokens: 32768,
-        text: true,
-        cpm: 15.00,
-      },
-    },
-  },
-
-  // Grok 3 Series
-  'grok-3-mini': {
-    name: 'grok-3-mini',
-    provider: Vendor.Grok,
-    description: 'Lightweight, cost-efficient model with reasoning, 131K context',
-    isActive: true,
-    releaseDate: '2025-06-01',
-    knowledgeCutoff: '2024-11-01',
-    features: {
-      reasoning: true,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: false,
-      audio: false,
-      video: false,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 131072,
-        text: true,
-        cpm: 0.30,
-        cpmCached: 0.07,
-      },
-      output: {
-        tokens: 32768,
-        text: true,
-        cpm: 0.50,
-      },
-    },
-  },
-
-  'grok-3': {
-    name: 'grok-3',
-    provider: Vendor.Grok,
-    description: 'Production model for general-purpose tasks, 131K context',
-    isActive: true,
-    releaseDate: '2025-06-01',
-    knowledgeCutoff: '2024-11-01',
-    features: {
-      reasoning: false,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: false,
-      audio: false,
-      video: false,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 131072,
-        text: true,
-        cpm: 3.00,
-        cpmCached: 0.75,
-      },
-      output: {
-        tokens: 32768,
-        text: true,
-        cpm: 15.00,
-      },
-    },
-  },
-
-  // Grok 2 Series (Legacy - not in current docs)
-  'grok-2-vision-1212': {
-    name: 'grok-2-vision-1212',
-    provider: Vendor.Grok,
-    description: 'Legacy vision model for image understanding, 32K context. Not in current xAI docs',
-    isActive: true,
-    releaseDate: '2024-12-12',
-    knowledgeCutoff: '2024-11-01',
-    features: {
-      reasoning: false,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: true,
-      audio: false,
-      video: false,
-      batchAPI: false,
-      promptCaching: false,
-      input: {
-        tokens: 32768,
-        text: true,
-        image: true,
-        cpm: 2.00,
-      },
-      output: {
-        tokens: 8192,
-        text: true,
-        cpm: 10.00,
       },
     },
   },

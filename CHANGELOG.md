@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-04-08
+
 ### Added
+- **Telegram Connector Tools**: 6 new tools for Telegram Bot API, auto-registered with ConnectorTools for the `telegram` service type:
+  - `telegram_send_message` — Send text messages with optional formatting (HTML/Markdown)
+  - `telegram_send_photo` — Send photos by URL or file_id
+  - `telegram_get_updates` — Poll for incoming messages/events (long-polling support)
+  - `telegram_set_webhook` — Set or remove webhook for push updates
+  - `telegram_get_me` — Get bot info (connection test)
+  - `telegram_get_chat` — Get chat/group/channel info
+  - Shared `telegramFetch()` helper with Bot API token-in-URL pattern, error handling, and timeout management
 - **Twilio Connector Tools**: 4 new tools for SMS and WhatsApp messaging via Twilio, auto-registered with ConnectorTools for the `twilio` service type:
   - `send_sms` — Send SMS text messages to any phone number
   - `send_whatsapp` — Send WhatsApp messages (freeform text or pre-approved templates via ContentSid)
@@ -15,6 +25,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `get_message` — Get full details of a single message by SID (status, price, errors)
   - Shared `twilioFetch()` helper with Account SID resolution, form-encoded POST, and Twilio error handling
   - Phone number helpers: `normalizePhoneNumber()`, `toWhatsAppNumber()`, `getAccountSid()`
+  - Twilio template now supports `optionFields` for default SMS/WhatsApp phone numbers
+- **Context Size Guardrail**: Pre-flight context limit enforcement across all LLM providers (OpenAI, Anthropic, Google, Vertex). Estimates input token count before each LLM call and auto-trims messages if they exceed the model's context window, leaving space for the response. Safety net for `runDirect()`/`streamDirect()` paths that bypass `AgentContextNextGen.prepare()`.
+- **Orchestrator v2**: Major upgrade to the agent orchestrator with conversational delegation model:
+  - 3-tier routing: DIRECT (orchestrator handles) / DELEGATE (hand session to sub-agent) / ORCHESTRATE (multi-agent coordination)
+  - `delegate_interactive` tool — hand the user-facing session to a sub-agent with monitoring and auto-reclaim
+  - All-async execution model (orchestrator never blocks on sub-agents)
+  - Rich agent type descriptions (`description`, `scenarios`, `capabilities`) for intelligent routing
+  - Optional `autoDescribe` — LLM-generated descriptions for agent types at creation time
+  - `skipPlanning` option to bypass UNDERSTAND/PLAN/APPROVE phases
+  - `DelegationDefaults` for configurable monitoring mode and reclaim conditions
+  - Orchestrator can now have its own `tools` for DIRECT-route tasks
+- **Excel Markdown-KV Format**: New `markdown-kv` table format for ExcelHandler — converts each row to a record block with `- **Header**: value` entries, useful for LLM consumption of spreadsheet data
+- **Vendor Template `optionFields`**: New `OptionField` type for declaring vendor-specific configurable options in templates. UI apps render these as form fields; values stored in `connector.config.options`
+- **`AfterExecutionContext.input`**: Hook context now includes the original user input, preserved across multi-iteration executions where `getCurrentInput()` may be overwritten by tool results
+- **Model Registry Updates**: Added Grok 4.20 series (reasoning, non-reasoning, multi-agent with 2M context), Gemini 3.1 Flash Live preview
+
+### Fixed
+- **Google Gemini 3+ thought signatures**: Fixed tool call round-tripping where thought signatures were lost after session save/restore. Signatures now persist on `ToolUseContent.thoughtSignature` (survives serialization) with 3-tier resolution: Content object → in-memory Map → bypass fallback
+- **Google streaming duplicate tool call IDs**: Tool call IDs in `GoogleStreamConverter` now include a counter to prevent collisions when multiple tool calls occur in a single response
+- **Streaming `thoughtSignature` propagation**: `TOOL_CALL_START` stream events now carry `thought_signature` field; `StreamState` and `Agent._addStreamingAssistantMessage()` propagate signatures through the streaming pipeline
+- **Multi-iteration streaming text accumulation**: `StreamState.accumulateFrom()` merges text, reasoning, and statistics from per-iteration state into global state, fixing missing text in final response for multi-turn agentic streams
+- **UserInfo plugin session restore merge**: After restoring from a session snapshot, the plugin now merges newer entries from storage (e.g., from onboarding seed or dreaming service) instead of using stale snapshot data only
+- **Basic Auth connector encoding**: `buildAuthConfig()` now correctly base64-encodes `user:password` per RFC 7617 for Basic Auth connectors (Twilio, Jira, Zendesk, Bitbucket, Mailgun)
+- **Agent error logging**: Agent failure logs now include rich error details (status, code, type, cause chain, error body) via `ProviderErrorMapper.extractErrorDetails()` instead of just `error.message`
+- **`createConnectorFromTemplate` vendorOptions**: Template-created connectors now support passing `vendorOptions` which are stored in `connector.config.options`
+
+### Changed
+- **Orchestration tools reduced from 7 to 5**: `assign_turn` now auto-creates agents and is always async with optional `autoDestroy`. `assign_parallel` removed (use multiple `assign_turn` calls). New `delegate_interactive` replaces direct `create_agent` + `assign_turn` for user-facing delegation.
+- **Model Registry Cleanup**: Removed deprecated models — Claude 3 Haiku, Grok 4/3/2 legacy series, Gemini 3 Pro preview
+
+### Removed
+- Deprecated Grok models: `grok-4-fast-reasoning`, `grok-4-fast-non-reasoning`, `grok-4-0709`, `grok-code-fast-1`, `grok-3`, `grok-3-mini`, `grok-2-vision-1212`
+- Deprecated Anthropic model: `claude-3-haiku-20240307`
+- Deprecated Google model: `gemini-3-pro-preview`
 
 ## [0.5.1] - 2026-04-01
 

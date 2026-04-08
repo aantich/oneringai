@@ -1,7 +1,7 @@
 # @everworker/oneringai - Complete User Guide
 
-**Version:** 0.5.1
-**Last Updated:** 2026-04-01
+**Version:** 0.5.2
+**Last Updated:** 2026-04-08
 
 A comprehensive guide to using all features of the @everworker/oneringai library.
 
@@ -66,6 +66,8 @@ A comprehensive guide to using all features of the @everworker/oneringai library
     - JSON Tool
     - GitHub Connector Tools (search_files, search_code, read_file, get_pr, pr_files, pr_comments, create_pr)
     - Microsoft Graph Connector Tools (create_draft_email, send_email, create_meeting, edit_meeting, find_meeting_slots, get_meeting_transcript)
+    - [Telegram Connector Tools](#telegram-connector-tools) — Bot API tools (send_message, send_photo, get_updates, set_webhook, get_me, get_chat)
+    - [Twilio Connector Tools](#twilio-connector-tools) — SMS and WhatsApp (send_sms, send_whatsapp, list_messages, get_message)
 15. [Dynamic Tool Management](#dynamic-tool-management)
 16. [Async (Non-Blocking) Tools](#async-non-blocking-tools)
     - How It Works (Lifecycle)
@@ -6340,6 +6342,71 @@ Retrieve the transcript from a Teams online meeting as plain text with speaker l
 | `edit_meeting` | `Calendars.ReadWrite` | `Calendars.ReadWrite` |
 | `find_meeting_slots` | `Calendars.Read` | `Calendars.Read` |
 | `get_meeting_transcript` | `OnlineMeetingTranscript.Read.All` | `OnlineMeetingTranscript.Read.All` |
+
+### Telegram Connector Tools
+
+6 tools for Telegram Bot API, auto-registered via `ConnectorTools.for('telegram')` when you create a Telegram connector:
+
+```typescript
+import { createConnectorFromTemplate, Agent, Vendor, Connector } from '@everworker/oneringai';
+
+// Create Telegram connector
+createConnectorFromTemplate('my-bot', 'telegram', 'bot-token', {
+  apiKey: process.env.TELEGRAM_BOT_TOKEN!,
+});
+
+// Agent with Telegram tools
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4',
+  identities: ['my-bot'],  // Enables Telegram tools
+});
+```
+
+| Tool | Description |
+|------|-------------|
+| `telegram_send_message(chat_id, text, parse_mode?)` | Send a text message with optional HTML/Markdown formatting |
+| `telegram_send_photo(chat_id, photo, caption?)` | Send a photo by URL or file_id with optional caption |
+| `telegram_get_updates(offset?, limit?, timeout?)` | Poll for incoming messages/events (supports long-polling) |
+| `telegram_set_webhook(url?, drop_pending?)` | Set or remove webhook for push-based updates |
+| `telegram_get_me()` | Get bot info — useful as a connection test |
+| `telegram_get_chat(chat_id)` | Get chat/group/channel details |
+
+**Key patterns:**
+- Token-in-URL: Telegram puts the bot token in the URL path (`/bot<TOKEN>/<method>`)
+- All responses wrapped in `{ ok: boolean, result: T }`
+- `telegramFetch()` helper handles auth, JSON encoding, timeout (including long-poll hold time), and error parsing
+
+### Twilio Connector Tools
+
+4 tools for SMS and WhatsApp messaging via Twilio, auto-registered via `ConnectorTools.for('twilio')`:
+
+```typescript
+import { createConnectorFromTemplate } from '@everworker/oneringai';
+
+createConnectorFromTemplate('my-twilio', 'twilio', 'api-key', {
+  apiKey: process.env.TWILIO_AUTH_TOKEN!,
+  extra: { accountId: process.env.TWILIO_ACCOUNT_SID! },
+}, {
+  vendorOptions: {
+    defaultFromNumber: '+15551234567',
+    defaultWhatsAppNumber: '+15551234567',
+  },
+});
+```
+
+| Tool | Description |
+|------|-------------|
+| `send_sms(to, body, from?)` | Send an SMS. Uses `defaultFromNumber` from vendor options if `from` is omitted. |
+| `send_whatsapp(to, body, from?, contentSid?)` | Send a WhatsApp message (freeform or pre-approved template via ContentSid). Uses `defaultWhatsAppNumber` if `from` is omitted. |
+| `list_messages(to?, from?, dateSent?, pageSize?)` | List/filter messages by phone number, date range, and channel (SMS/WhatsApp/all) |
+| `get_message(messageSid)` | Get full details of a single message by SID (status, price, errors) |
+
+**Key patterns:**
+- Basic Auth: Twilio uses HTTP Basic Auth (`accountSid:authToken` base64-encoded) — handled automatically by `buildAuthConfig()`
+- Form-encoded POST: Twilio API uses `application/x-www-form-urlencoded` for mutations
+- Phone helpers: `normalizePhoneNumber()` ensures E.164 format, `toWhatsAppNumber()` adds `whatsapp:` prefix
+- Account SID resolution: `getAccountSid()` resolves from `extra.accountId` on the connector
 
 ---
 
@@ -13136,6 +13203,11 @@ interface OrchestratorConfig {
   name?: string;               // Orchestrator name (default: 'orchestrator')
   agentId?: string;            // For session persistence
   maxIterations?: number;      // Max loop iterations (default: 100)
+  maxAgents?: number;          // Max worker agents (default: 20)
+  skipPlanning?: boolean;      // Skip UNDERSTAND/PLAN/APPROVE phases (default: false)
+  tools?: ToolFunction[];      // Tools available to the orchestrator for DIRECT-route tasks
+  delegationDefaults?: DelegationDefaults; // Default delegation settings
+  autoDescribe?: boolean;      // LLM-generated descriptions for agent types (default: false)
 }
 
 interface AgentTypeConfig {
@@ -13144,28 +13216,40 @@ interface AgentTypeConfig {
   model?: string;              // Override model per type
   connector?: string;          // Override connector per type
   features?: Partial<ContextFeatures>;  // Worker context features
+  plugins?: PluginConfigs;     // Worker plugin configurations
+  description?: string;        // One-liner for routing (e.g., "Senior dev who writes and tests code")
+  scenarios?: string[];        // When to use (e.g., ["implementing features", "fixing bugs"])
+  capabilities?: string[];     // What it can do (e.g., ["read/write files", "run shell commands"])
 }
 ```
 
+### 3-Tier Routing
+
+The orchestrator v2 uses a 3-tier routing model:
+
+| Route | When | Behavior |
+|-------|------|----------|
+| **DIRECT** | Simple queries, quick lookups | Orchestrator handles directly using its own `tools` |
+| **DELEGATE** | User needs extended interaction with a specialist | Hands user-facing session to a sub-agent via `delegate_interactive` |
+| **ORCHESTRATE** | Complex multi-step tasks | Coordinates multiple workers via `assign_turn` + workspace |
+
 ### Orchestration Tools
 
-The orchestrator gets 7 tools automatically:
+The orchestrator gets 5 tools automatically:
+
+#### Task Assignment
+
+| Tool | Description |
+|------|-------------|
+| `assign_turn(agent, type, instruction)` | Assign work to an agent. Auto-creates the agent if it doesn't exist. Always async. Optional `autoDestroy` to clean up after completion. |
+| `delegate_interactive(type, instruction)` | Hand the user-facing session to a sub-agent. Supports `monitoring` (passive/active/event) and `reclaimOn` conditions (keyword, maxTurns, workspaceKey). |
 
 #### Team Management
 
 | Tool | Description |
 |------|-------------|
-| `create_agent(name, type)` | Spawn a worker from `agentTypes`. The agent is persistent — it remembers reasoning across turns. |
-| `list_agents()` | Returns all workers with name, model, status (idle/running/paused). |
-| `destroy_agent(name)` | Destroy a worker and free its resources. |
-
-#### Turn Assignment
-
-| Tool | Blocking | Description |
-|------|----------|-------------|
-| `assign_turn(agent, instruction, timeout?)` | Yes | Assign work and **wait** for result. Use for sequential workflows. Default timeout: 300s. |
-| `assign_turn_async(agent, instruction, timeout?)` | **No** | Assign work **without waiting**. Result delivered later via async continuation. Use to run agents in parallel or continue planning while a worker executes. |
-| `assign_parallel(assignments[], timeout?)` | Yes | Start multiple agents simultaneously, wait for **all** results. Convenience for fan-out patterns. |
+| `list_agents()` | Returns all workers with name, model, status, plus current delegation state. |
+| `destroy_agent(name)` | Destroy a worker. Auto-reclaims delegation if the destroyed agent was the delegatee. |
 
 #### Communication
 

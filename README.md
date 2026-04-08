@@ -39,7 +39,9 @@
   - [24. Async (Non-Blocking) Tools](#24-async-non-blocking-tools-new) — Background tool execution with auto-continuation
   - [25. Long-Running Sessions (Suspend/Resume)](#25-long-running-sessions-suspendresume-new) — Suspend agent loops waiting for external input, resume days later
   - [26. Agent Registry](#26-agent-registry-new) — Global tracking, deep inspection, parent/child hierarchy, event fan-in, external control
-  - [27. Agent Orchestrator](#27-agent-orchestrator-new) — Multi-agent teams with shared workspace, async turns, and parallel execution
+  - [27. Agent Orchestrator](#27-agent-orchestrator-new) — Multi-agent teams with shared workspace, delegation, and async execution
+  - [28. Telegram Connector Tools](#28-telegram-connector-tools-new) — Bot API tools for messaging, updates, and webhooks
+  - [29. Twilio Connector Tools](#29-twilio-connector-tools-new) — SMS and WhatsApp messaging tools
 - [MCP Integration](#mcp-model-context-protocol-integration)
 - [Documentation](#documentation)
 - [Examples](#examples)
@@ -126,6 +128,8 @@ Showcasing another amazing "built with oneringai": ["no saas" agentic business t
 - 📦 **Tool Catalog** - NEW: Dynamic tool loading/unloading — agents discover and load only the categories they need at runtime
 - **Async Tools** - NEW: Non-blocking tool execution — long-running tools run in background while the agent continues reasoning, with auto-continuation when results arrive
 - 📡 **Agent Registry** - NEW: Global tracking of all active agents — deep inspection, parent/child hierarchy, event fan-in, external control
+- 📱 **Telegram Tools** - NEW: 6 Telegram Bot API tools — send messages/photos, get updates, webhooks, chat info
+- 📞 **Twilio Tools** - NEW: 4 Twilio tools — SMS, WhatsApp messaging, message listing and details
 - 🔄 **Streaming** - Real-time responses with event streams
 - 📝 **TypeScript** - Full type safety and IntelliSense support
 
@@ -2175,57 +2179,84 @@ See the [User Guide](./USER_GUIDE.md#agent-registry) for the full API reference.
 
 ### 28. Agent Orchestrator (NEW)
 
-Create autonomous agent teams that coordinate through a shared workspace:
+Create autonomous agent teams with conversational delegation and shared workspace:
 
 ```typescript
 import { createOrchestrator, Connector, Vendor } from '@everworker/oneringai';
 
 Connector.create({ name: 'openai', vendor: Vendor.OpenAI, auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! } });
 
-const orchestrator = createOrchestrator({
+const orchestrator = await createOrchestrator({
   connector: 'openai',
   model: 'gpt-4',
   agentTypes: {
     architect: {
-      systemPrompt: 'You are a senior software architect. Design clean, scalable systems.',
+      systemPrompt: 'You are a senior software architect.',
+      description: 'Senior architect who designs clean, scalable systems',
+      scenarios: ['designing new modules', 'reviewing architecture'],
+      capabilities: ['read/write files', 'system design'],
       tools: [readFile, writeFile],
     },
-    critic: {
-      systemPrompt: 'You are a thorough code reviewer. Find issues and suggest improvements.',
-      tools: [readFile, grep],
-    },
     developer: {
-      systemPrompt: 'You are a senior developer. Write clean, tested code.',
+      systemPrompt: 'You are a senior developer.',
+      description: 'Developer who writes clean, tested code',
       tools: [readFile, writeFile, editFile, bash],
     },
   },
+  tools: [readFile],  // Direct tools for the orchestrator itself
 });
 
-// The orchestrator LLM decides the workflow
 const result = await orchestrator.run('Build an auth module with JWT support');
 ```
 
 **How it works:**
-- The orchestrator is a regular Agent with 7 coordination tools
+- 3-tier routing: DIRECT (orchestrator handles), DELEGATE (hand session to sub-agent), ORCHESTRATE (multi-agent)
 - Workers are persistent Agent instances that remember reasoning across turns
 - All agents share a workspace (bulletin board) for artifacts and status
-- Workers receive "what changed since your last turn" at each turn start
+- `delegate_interactive` hands the user-facing session to a sub-agent with monitoring and auto-reclaim
 
 **Orchestration tools:**
 
-| Tool | Type | Purpose |
-|------|------|---------|
-| `create_agent(name, type)` | blocking | Spawn a worker from predefined types |
-| `assign_turn(agent, instruction)` | blocking | Give agent a task, wait for result |
-| `assign_turn_async(agent, instruction)` | **non-blocking** | Start agent in background, result delivered later |
-| `assign_parallel([{agent, instruction}...])` | blocking | Fan-out to multiple agents, wait for all |
-| `send_message(agent, message)` | blocking | Inject message into running/idle agent |
-| `list_agents()` | blocking | See team status |
-| `destroy_agent(name)` | blocking | Remove a worker |
+| Tool | Purpose |
+|------|---------|
+| `assign_turn(agent, type, instruction)` | Assign work (auto-creates agent if needed, always async, optional autoDestroy) |
+| `delegate_interactive(type, instruction)` | Hand user session to a sub-agent with monitoring/reclaim |
+| `send_message(agent, message)` | Inject message into running/idle agent |
+| `list_agents()` | See team status + delegation state |
+| `destroy_agent(name)` | Remove a worker (auto-reclaims if delegated) |
 
-**Async turns** leverage the existing async tools infrastructure — the orchestrator continues planning while workers execute in the background.
+See the [User Guide](./USER_GUIDE.md#agent-orchestrator) for detailed examples including delegation, parallel research, and custom workflows.
 
-See the [User Guide](./USER_GUIDE.md#agent-orchestrator) for detailed examples including iterative review cycles, parallel research, and custom workflows.
+### 29. Telegram Connector Tools (NEW)
+
+6 tools for Telegram Bot API, auto-registered via `ConnectorTools.for('telegram')`:
+
+```typescript
+import { createConnectorFromTemplate } from '@everworker/oneringai';
+
+createConnectorFromTemplate('my-bot', 'telegram', 'bot-token', {
+  apiKey: process.env.TELEGRAM_BOT_TOKEN!,
+});
+
+// Tools auto-available when agent has a telegram connector identity:
+// telegram_send_message, telegram_send_photo, telegram_get_updates,
+// telegram_set_webhook, telegram_get_me, telegram_get_chat
+```
+
+### 30. Twilio Connector Tools (NEW)
+
+4 tools for SMS and WhatsApp via Twilio, auto-registered via `ConnectorTools.for('twilio')`:
+
+```typescript
+import { createConnectorFromTemplate } from '@everworker/oneringai';
+
+createConnectorFromTemplate('my-twilio', 'twilio', 'api-key', {
+  apiKey: process.env.TWILIO_AUTH_TOKEN!,
+  extra: { accountId: process.env.TWILIO_ACCOUNT_SID! },
+}, { vendorOptions: { defaultFromNumber: '+15551234567' } });
+
+// Tools: send_sms, send_whatsapp, list_messages, get_message
+```
 
 ---
 
