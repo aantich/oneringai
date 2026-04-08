@@ -45,6 +45,8 @@ export interface ToolUseContent extends BaseContent {
   id: string;
   name: string;
   arguments: string; // JSON string
+  /** Google Gemini 3+ opaque thought signature for round-tripping function calls */
+  thoughtSignature?: string;
 }
 
 export interface ToolResultContent extends BaseContent {

@@ -17,6 +17,7 @@ export class GoogleStreamConverter {
   private isFirst: boolean = true;
   private toolCallBuffers: Map<string, { name: string; args: string; signature?: string }> = new Map();
   private hadToolCalls: boolean = false;
+  private toolCallCounter: number = 0;
   private reasoningBuffer: string = '';
   private wasThinking: boolean = false;
   private lastFinishReason: string | undefined = undefined;
@@ -196,7 +197,7 @@ export class GoogleStreamConverter {
         // Function call (tool use)
         const functionCall = part.functionCall;
         const toolName = functionCall.name || 'unknown';
-        const toolCallId = `call_${this.responseId}_${toolName}`;
+        const toolCallId = `call_${this.responseId}_${this.toolCallCounter++}_${toolName}`;
 
         // Extract thought signature if present (required for Gemini 3+)
         const thoughtSignature = 'thoughtSignature' in part ? (part.thoughtSignature as string) : undefined;
@@ -231,6 +232,7 @@ export class GoogleStreamConverter {
             item_id: `msg_${this.responseId}`,
             tool_call_id: toolCallId,
             tool_name: toolName,
+            thought_signature: thoughtSignature,
           });
         } else if (thoughtSignature) {
           // Update signature if we get it in a later chunk
@@ -301,6 +303,7 @@ export class GoogleStreamConverter {
     this.isFirst = true;
     this.toolCallBuffers.clear();
     this.hadToolCalls = false;
+    this.toolCallCounter = 0;
     this.reasoningBuffer = '';
     this.wasThinking = false;
     this.lastFinishReason = undefined;

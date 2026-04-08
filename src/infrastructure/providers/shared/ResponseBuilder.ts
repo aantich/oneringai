@@ -156,13 +156,15 @@ export function createTextContent(text: string): Content {
 export function createToolUseContent(
   id: string,
   name: string,
-  args: string | Record<string, unknown>
+  args: string | Record<string, unknown>,
+  thoughtSignature?: string,
 ): Content {
   return {
     type: ContentType.TOOL_USE,
     id,
     name,
     arguments: typeof args === 'string' ? args : JSON.stringify(args),
+    ...(thoughtSignature && { thoughtSignature }),
   };
 }
 

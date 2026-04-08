@@ -1033,7 +1033,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    * Build tool calls array from accumulated map
    */
   private _buildToolCallsFromMap(
-    toolCallsMap: Map<string, { name: string; args: string }>
+    toolCallsMap: Map<string, { name: string; args: string; thoughtSignature?: string }>
   ): ToolCall[] {
     const toolCalls: ToolCall[] = [];
     const toolDefinitions = this.getEnabledToolDefinitions();
@@ -1065,7 +1065,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    */
   private _addStreamingAssistantMessage(
     streamState: StreamState,
-    toolCalls: ToolCall[]
+    toolCalls: ToolCall[],
+    toolCallsMap?: Map<string, { name: string; args: string; thoughtSignature?: string }>,
   ): void {
     const assistantText = streamState.getAllText();
     const assistantContent: Content[] = [];
@@ -1096,11 +1097,13 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
     // Add tool use blocks
     for (const tc of toolCalls) {
+      const thoughtSig = toolCallsMap?.get(tc.id)?.thoughtSignature;
       assistantContent.push({
         type: ContentType.TOOL_USE,
         id: tc.id,
         name: tc.function.name,
         arguments: tc.function.arguments,
+        ...(thoughtSig && { thoughtSignature: thoughtSig }),
       });
     }
 
@@ -1218,7 +1221,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
         // Stream LLM response and accumulate state (per-iteration state)
         const iterationStreamState = new StreamState(executionId, this.model);
-        const toolCallsMap = new Map<string, { name: string; args: string }>();
+        const toolCallsMap = new Map<string, { name: string; args: string; thoughtSignature?: string }>();
 
         // Stream from provider with hooks
         yield* this.streamGenerateWithHooks(
@@ -1399,7 +1402,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         }
 
         // Build and add assistant message to context
-        this._addStreamingAssistantMessage(iterationStreamState, toolCalls);
+        this._addStreamingAssistantMessage(iterationStreamState, toolCalls, toolCallsMap);
         this._agentContext.addToolResults(toolResults);
 
         yield {
@@ -1609,7 +1612,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     iteration: number,
     executionId: string,
     streamState: StreamState,
-    toolCallsMap: Map<string, { name: string; args: string }>
+    toolCallsMap: Map<string, { name: string; args: string; thoughtSignature?: string }>
   ): AsyncIterableIterator<StreamEvent> {
     const llmStartTime = Date.now();
 
@@ -1657,7 +1660,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           streamState.accumulateTextDelta(event.item_id, event.delta);
         } else if (event.type === StreamEventType.TOOL_CALL_START) {
           streamState.startToolCall(event.tool_call_id, event.tool_name);
-          toolCallsMap.set(event.tool_call_id, { name: event.tool_name, args: '' });
+          toolCallsMap.set(event.tool_call_id, { name: event.tool_name, args: '', thoughtSignature: event.thought_signature });
         } else if (event.type === StreamEventType.TOOL_CALL_ARGUMENTS_DELTA) {
           streamState.accumulateToolArguments(event.tool_call_id, event.delta);
           const buffer = toolCallsMap.get(event.tool_call_id);

@@ -85,6 +85,8 @@ export interface ToolCallStartEvent extends BaseStreamEvent {
   item_id: string;
   tool_call_id: string;
   tool_name: string;
+  /** Google Gemini 3+ thought signature for round-tripping function calls */
+  thought_signature?: string;
 }
 
 /**

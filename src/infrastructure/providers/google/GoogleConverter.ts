@@ -14,7 +14,7 @@ import { LLMResponse } from '../../../domain/entities/Response.js';
 import { InputItem, MessageRole } from '../../../domain/entities/Message.js';
 import { convertToolsToStandardFormat } from '../shared/ToolConversionUtils.js';
 import { validateThinkingConfig } from '../shared/validateThinkingConfig.js';
-import { Content, ContentType } from '../../../domain/entities/Content.js';
+import { Content, ContentType, ToolUseContent } from '../../../domain/entities/Content.js';
 import { Tool } from '../../../domain/entities/Tool.js';
 import { fetchImageAsBase64 } from '../../../utils/imageUtils.js';
 import { InvalidToolArgumentsError } from '../../../domain/errors/AIErrors.js';
@@ -226,18 +226,18 @@ export class GoogleConverter {
             },
           };
 
-          // Add thought signature if we have one (required for Gemini 3+)
-          const signature = this.thoughtSignatures.get(c.id);
+          // Add thought signature (required for Gemini 3+)
+          // Priority: Content object (survives serialization) > in-memory Map > bypass fallback
+          const signature = (c as ToolUseContent).thoughtSignature
+            || this.thoughtSignatures.get(c.id)
+            || 'context_engineering_is_the_way_to_go';
 
           if (process.env.DEBUG_GOOGLE) {
             console.error(`[DEBUG] Looking up signature for tool ID: ${c.id}`);
-            console.error(`[DEBUG] Found signature:`, signature ? 'YES' : 'NO');
-            console.error(`[DEBUG] Available signatures:`, Array.from(this.thoughtSignatures.keys()));
+            console.error(`[DEBUG] Source:`, (c as ToolUseContent).thoughtSignature ? 'Content' : this.thoughtSignatures.has(c.id) ? 'Map' : 'bypass');
           }
 
-          if (signature) {
-            functionCallPart.thoughtSignature = signature;
-          }
+          functionCallPart.thoughtSignature = signature;
 
           parts.push(functionCallPart);
           break;
@@ -400,9 +400,10 @@ export class GoogleConverter {
         const toolId = generateToolCallId('google');
         const functionName = part.functionCall.name || '';
 
-        // Store thought signature if present (required for Gemini 3+)
+        // Capture thought signature (required for Gemini 3+)
+        let sig: string | undefined;
         if ('thoughtSignature' in part && part.thoughtSignature) {
-          const sig = part.thoughtSignature as string;
+          sig = part.thoughtSignature as string;
           this.thoughtSignatures.set(toolId, sig);
 
           if (process.env.DEBUG_GOOGLE) {
@@ -414,7 +415,8 @@ export class GoogleConverter {
           console.error(`[DEBUG] Part keys:`, Object.keys(part));
         }
 
-        content.push(createToolUseContent(toolId, functionName, part.functionCall.args || {}));
+        // Persist signature on Content object so it survives serialization
+        content.push(createToolUseContent(toolId, functionName, part.functionCall.args || {}, sig));
       }
     }
 
