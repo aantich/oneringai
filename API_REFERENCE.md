@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-04-01
+**Generated:** 2026-04-08
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -19,16 +19,16 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Task Agents](#task-agents) (87 items)
 - [Context Management](#context-management) (14 items)
 - [Session Management](#session-management) (42 items)
-- [Tools & Function Calling](#tools-function-calling) (154 items)
+- [Tools & Function Calling](#tools-function-calling) (158 items)
 - [Streaming](#streaming) (29 items)
 - [Model Registry](#model-registry) (16 items)
-- [OAuth & External APIs](#oauth-external-apis) (40 items)
+- [OAuth & External APIs](#oauth-external-apis) (41 items)
 - [Resilience & Observability](#resilience-observability) (33 items)
-- [Errors](#errors) (20 items)
+- [Errors](#errors) (24 items)
 - [Utilities](#utilities) (8 items)
 - [Interfaces](#interfaces) (60 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (397 items)
+- [Other](#other) (424 items)
 
 ## Core
 
@@ -36,7 +36,7 @@ Core classes for authentication, agents, and providers
 
 ### Agent `class`
 
-📍 [`src/core/Agent.ts:180`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:181`](src/core/Agent.ts)
 
 Agent class - represents an AI assistant with tool calling capabilities
 
@@ -1448,7 +1448,7 @@ isDisposed(): boolean
 
 ### AgentConfig `interface`
 
-📍 [`src/core/Agent.ts:53`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:54`](src/core/Agent.ts)
 
 Agent configuration - extends BaseAgentConfig with Agent-specific options
 
@@ -1645,7 +1645,7 @@ Fetch options with additional connector-specific settings
 
 ### RunOptions `interface`
 
-📍 [`src/core/Agent.ts:135`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:136`](src/core/Agent.ts)
 
 Per-call options for run() and stream().
 These override the agent-level config for this single invocation.
@@ -1683,7 +1683,7 @@ type AgentEventListener = (agentId: string, agentName: string, event: string, da
 
 ### AgentSessionConfig `type`
 
-📍 [`src/core/Agent.ts:48`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:49`](src/core/Agent.ts)
 
 Session configuration for Agent (same as BaseSessionConfig)
 
@@ -14828,7 +14828,7 @@ constructor(
 
 ### AfterToolContext `interface`
 
-📍 [`src/capabilities/agents/types/HookTypes.ts:65`](src/capabilities/agents/types/HookTypes.ts)
+📍 [`src/capabilities/agents/types/HookTypes.ts:69`](src/capabilities/agents/types/HookTypes.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -14848,7 +14848,7 @@ constructor(
 
 ### ApproveToolContext `interface`
 
-📍 [`src/capabilities/agents/types/HookTypes.ts:74`](src/capabilities/agents/types/HookTypes.ts)
+📍 [`src/capabilities/agents/types/HookTypes.ts:78`](src/capabilities/agents/types/HookTypes.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -14891,7 +14891,7 @@ within this window, it's treated as a timeout error. |
 
 ### BeforeToolContext `interface`
 
-📍 [`src/capabilities/agents/types/HookTypes.ts:57`](src/capabilities/agents/types/HookTypes.ts)
+📍 [`src/capabilities/agents/types/HookTypes.ts:61`](src/capabilities/agents/types/HookTypes.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -15788,7 +15788,7 @@ MCP Tool call result
 
 ### OrchestrationToolsContext `interface`
 
-📍 [`src/core/orchestrator/tools.ts:23`](src/core/orchestrator/tools.ts)
+📍 [`src/core/orchestrator/tools.ts:21`](src/core/orchestrator/tools.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -15800,7 +15800,9 @@ MCP Tool call result
 | `agentTypes` | `agentTypes: Map&lt;string, AgentTypeConfig&gt;;` | Registered agent type configurations |
 | `lastTurnTimestamps` | `lastTurnTimestamps: Map&lt;string, number&gt;;` | Timestamp of each agent's last completed turn (for workspace deltas) |
 | `createWorkerAgent` | `createWorkerAgent: (name: string, type: string) =&gt; Agent;` | Factory function to create a worker agent |
-| `maxAgents?` | `maxAgents?: number;` | Maximum number of worker agents (M2, default: 20) |
+| `maxAgents?` | `maxAgents?: number;` | Maximum number of worker agents (default: 20) |
+| `delegationState` | `delegationState: DelegationState;` | Delegation state — shared with createOrchestrator for run()/stream() wrapping |
+| `delegationDefaults?` | `delegationDefaults?: DelegationDefaults;` | Default delegation settings from OrchestratorConfig |
 
 </details>
 
@@ -15912,7 +15914,7 @@ Default: true |
 
 ### ToolCallArgumentsDeltaEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:93`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:95`](src/domain/entities/StreamEvent.ts)
 
 Tool call arguments delta - incremental JSON
 
@@ -15934,7 +15936,7 @@ Tool call arguments delta - incremental JSON
 
 ### ToolCallArgumentsDoneEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:105`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:107`](src/domain/entities/StreamEvent.ts)
 
 Tool call arguments complete
 
@@ -15968,6 +15970,7 @@ Tool call detected and starting
 | `item_id` | `item_id: string;` | - |
 | `tool_call_id` | `tool_call_id: string;` | - |
 | `tool_name` | `tool_name: string;` | - |
+| `thought_signature?` | `thought_signature?: string;` | Google Gemini 3+ thought signature for round-tripping function calls |
 
 </details>
 
@@ -16077,7 +16080,7 @@ Tool execution context - tracks all tool calls in a generation
 
 ### ToolExecutionDoneEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:126`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:128`](src/domain/entities/StreamEvent.ts)
 
 Tool execution complete
 
@@ -16118,7 +16121,7 @@ Default: true (if crypto.randomUUID is available) |
 
 ### ToolExecutionStartEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:116`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:118`](src/domain/entities/StreamEvent.ts)
 
 Tool execution starting
 
@@ -16229,7 +16232,7 @@ Default: 0 (disabled - relies on tool's own timeout) |
 
 ### ToolModification `interface`
 
-📍 [`src/capabilities/agents/types/HookTypes.ts:97`](src/capabilities/agents/types/HookTypes.ts)
+📍 [`src/capabilities/agents/types/HookTypes.ts:101`](src/capabilities/agents/types/HookTypes.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -16418,7 +16421,7 @@ Metadata for a tool in the registry
 
 ### ToolResultContent `interface`
 
-📍 [`src/domain/entities/Content.ts:50`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:52`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -16470,6 +16473,7 @@ Provider converters read this field to inject native multimodal image blocks. |
 | `id` | `id: string;` | - |
 | `name` | `name: string;` | - |
 | `arguments` | `arguments: string;` | - |
+| `thoughtSignature?` | `thoughtSignature?: string;` | Google Gemini 3+ opaque thought signature for round-tripping function calls |
 
 </details>
 
@@ -16616,7 +16620,7 @@ type ToolSource = 'built-in' | 'connector' | 'custom' | 'mcp' | string
 
 ### buildOrchestrationTools `function`
 
-📍 [`src/core/orchestrator/tools.ts:91`](src/core/orchestrator/tools.ts)
+📍 [`src/core/orchestrator/tools.ts:168`](src/core/orchestrator/tools.ts)
 
 ```typescript
 export function buildOrchestrationTools(ctx: OrchestrationToolsContext): ToolFunction[]
@@ -16989,6 +16993,19 @@ export function createGetMessagesTool(
 
 ---
 
+### createGetMessageTool `function`
+
+📍 [`src/tools/twilio/getMessage.ts:22`](src/tools/twilio/getMessage.ts)
+
+```typescript
+export function createGetMessageTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;GetMessageArgs, TwilioGetMessageResult&gt;
+```
+
+---
+
 ### createGetPRTool `function`
 
 📍 [`src/tools/github/getPR.ts:29`](src/tools/github/getPR.ts)
@@ -17105,6 +17122,19 @@ Create a List Directory tool with the given configuration
 
 ```typescript
 export function createListDirectoryTool(config: FilesystemToolConfig =
+```
+
+---
+
+### createListMessagesTool `function`
+
+📍 [`src/tools/twilio/listMessages.ts:34`](src/tools/twilio/listMessages.ts)
+
+```typescript
+export function createListMessagesTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;ListMessagesArgs, TwilioListMessagesResult&gt;
 ```
 
 ---
@@ -17277,6 +17307,32 @@ export function createSendEmailTool(
 
 ---
 
+### createSendSMSTool `function`
+
+📍 [`src/tools/twilio/sendSMS.ts:29`](src/tools/twilio/sendSMS.ts)
+
+```typescript
+export function createSendSMSTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;SendSMSArgs, TwilioSendResult&gt;
+```
+
+---
+
+### createSendWhatsAppTool `function`
+
+📍 [`src/tools/twilio/sendWhatsApp.ts:36`](src/tools/twilio/sendWhatsApp.ts)
+
+```typescript
+export function createSendWhatsAppTool(
+  connector: Connector,
+  userId?: string
+): ToolFunction&lt;SendWhatsAppArgs, TwilioSendResult&gt;
+```
+
+---
+
 ### createSetChannelTopicTool `function`
 
 📍 [`src/tools/slack/setChannelTopic.ts:23`](src/tools/slack/setChannelTopic.ts)
@@ -17385,7 +17441,7 @@ export function getAllBuiltInTools(): ToolFunction[]
 
 ### getConnectorTools `function`
 
-📍 [`src/connectors/vendors/helpers.ts:315`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:330`](src/connectors/vendors/helpers.ts)
 
 Get all tools for a connector (delegates to ConnectorTools)
 
@@ -17494,7 +17550,7 @@ export function hydrateCustomTool(
 
 ### isToolCallArgumentsDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:291`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:293`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallArgumentsDelta(
@@ -17506,7 +17562,7 @@ export function isToolCallArgumentsDelta(
 
 ### isToolCallArgumentsDone `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:297`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:299`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallArgumentsDone(
@@ -17518,7 +17574,7 @@ export function isToolCallArgumentsDone(
 
 ### isToolCallStart `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:287`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:289`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallStart(event: StreamEvent): event is ToolCallStartEvent
@@ -17994,6 +18050,21 @@ updateUsage(usage: Partial&lt;TokenUsage&gt;): void
 
 **Returns:** `void`
 
+#### `accumulateFrom()`
+
+Accumulate text, reasoning, and statistics from another StreamState.
+Used to merge per-iteration state into the global execution state,
+so that the final response built from the global state has full text.
+
+```typescript
+accumulateFrom(other: StreamState): void
+```
+
+**Parameters:**
+- `other`: `StreamState`
+
+**Returns:** `void`
+
 #### `accumulateUsage()`
 
 Accumulate token usage (adds to existing values)
@@ -18245,7 +18316,7 @@ destroy(): void
 
 ### AudioChunkErrorEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:229`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:231`](src/domain/entities/StreamEvent.ts)
 
 Audio chunk error - TTS synthesis failed for a text chunk
 
@@ -18265,7 +18336,7 @@ Audio chunk error - TTS synthesis failed for a text chunk
 
 ### AudioChunkReadyEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:208`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:210`](src/domain/entities/StreamEvent.ts)
 
 Audio chunk ready - TTS synthesis complete for a text chunk
 
@@ -18289,7 +18360,7 @@ Audio chunk ready - TTS synthesis complete for a text chunk
 
 ### AudioStreamCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:239`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:241`](src/domain/entities/StreamEvent.ts)
 
 Audio stream complete - all TTS chunks have been processed
 
@@ -18309,7 +18380,7 @@ Audio stream complete - all TTS chunks have been processed
 
 ### ErrorEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:191`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:193`](src/domain/entities/StreamEvent.ts)
 
 Error event
 
@@ -18372,7 +18443,7 @@ synthesizeStream(options: TTSOptions): AsyncIterableIterator&lt;TTSStreamChunk&g
 
 ### IterationCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:138`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:140`](src/domain/entities/StreamEvent.ts)
 
 Iteration complete - end of agentic loop iteration
 
@@ -18434,7 +18505,7 @@ Text output complete for this item
 
 ### ReasoningDeltaEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:172`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:174`](src/domain/entities/StreamEvent.ts)
 
 Reasoning/thinking delta - incremental reasoning output
 
@@ -18454,7 +18525,7 @@ Reasoning/thinking delta - incremental reasoning output
 
 ### ReasoningDoneEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:182`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:184`](src/domain/entities/StreamEvent.ts)
 
 Reasoning/thinking complete for this item
 
@@ -18473,7 +18544,7 @@ Reasoning/thinking complete for this item
 
 ### ResponseCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:148`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:150`](src/domain/entities/StreamEvent.ts)
 
 Response complete - final event
 
@@ -18616,7 +18687,7 @@ Stream event type enum
 
 ### StreamEvent `type`
 
-📍 [`src/domain/entities/StreamEvent.ts:250`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:252`](src/domain/entities/StreamEvent.ts)
 
 Union type of all stream events
 Discriminated by 'type' field for type narrowing
@@ -18646,7 +18717,7 @@ type StreamEvent = | ResponseCreatedEvent
 
 ### isAudioChunkError `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:323`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:325`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioChunkError(event: StreamEvent): event is AudioChunkErrorEvent
@@ -18656,7 +18727,7 @@ export function isAudioChunkError(event: StreamEvent): event is AudioChunkErrorE
 
 ### isAudioChunkReady `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:319`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:321`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioChunkReady(event: StreamEvent): event is AudioChunkReadyEvent
@@ -18666,7 +18737,7 @@ export function isAudioChunkReady(event: StreamEvent): event is AudioChunkReadyE
 
 ### isAudioStreamComplete `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:327`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:329`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioStreamComplete(event: StreamEvent): event is AudioStreamCompleteEvent
@@ -18676,7 +18747,7 @@ export function isAudioStreamComplete(event: StreamEvent): event is AudioStreamC
 
 ### isErrorEvent `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:315`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:317`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isErrorEvent(event: StreamEvent): event is ErrorEvent
@@ -18686,7 +18757,7 @@ export function isErrorEvent(event: StreamEvent): event is ErrorEvent
 
 ### isOutputTextDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:283`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:285`](src/domain/entities/StreamEvent.ts)
 
 Type guards for specific events
 
@@ -18698,7 +18769,7 @@ export function isOutputTextDelta(event: StreamEvent): event is OutputTextDeltaE
 
 ### isReasoningDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:303`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:305`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isReasoningDelta(event: StreamEvent): event is ReasoningDeltaEvent
@@ -18708,7 +18779,7 @@ export function isReasoningDelta(event: StreamEvent): event is ReasoningDeltaEve
 
 ### isReasoningDone `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:307`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:309`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isReasoningDone(event: StreamEvent): event is ReasoningDoneEvent
@@ -18718,7 +18789,7 @@ export function isReasoningDone(event: StreamEvent): event is ReasoningDoneEvent
 
 ### isResponseComplete `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:311`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:313`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isResponseComplete(event: StreamEvent): event is ResponseCompleteEvent
@@ -18728,7 +18799,7 @@ export function isResponseComplete(event: StreamEvent): event is ResponseComplet
 
 ### isStreamEvent `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:273`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:275`](src/domain/entities/StreamEvent.ts)
 
 Type guard to check if event is a specific type
 
@@ -18984,7 +19055,7 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ### ModelCapabilities `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:38`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:41`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -19005,7 +19076,7 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ### calculateCost `function`
 
-📍 [`src/domain/entities/Model.ts:2768`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:2581`](src/domain/entities/Model.ts)
 
 Calculate the cost for a given model and token usage
 
@@ -19033,7 +19104,7 @@ export function calculateEmbeddingCost(modelName: string, tokens: number): numbe
 
 ### getActiveModels `function`
 
-📍 [`src/domain/entities/Model.ts:2756`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:2569`](src/domain/entities/Model.ts)
 
 Get all currently active models
 
@@ -19059,7 +19130,7 @@ export function getEmbeddingModelsWithFeature(
 
 ### getModelInfo `function`
 
-📍 [`src/domain/entities/Model.ts:2739`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:2552`](src/domain/entities/Model.ts)
 
 Get model information by name
 
@@ -19071,7 +19142,7 @@ export function getModelInfo(modelName: string): ILLMDescription | undefined
 
 ### getModelsByVendor `function`
 
-📍 [`src/domain/entities/Model.ts:2748`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:2561`](src/domain/entities/Model.ts)
 
 Get all models for a specific vendor
 
@@ -19426,7 +19497,7 @@ Last full audit: March 2026
 
 ### MODEL_REGISTRY `const`
 
-📍 [`src/domain/entities/Model.ts:239`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:230`](src/domain/entities/Model.ts)
 
 Complete model registry with all model metadata
 Updated: March 2026 - Verified from official vendor documentation
@@ -20839,7 +20910,7 @@ Updated: March 2026 - Verified from official vendor documentation
       batchAPI: true,
       promptCaching: true,
       input: {
-        tokens: 200000, // 1M with beta header
+        tokens: 1000000,
         text: true,
         image: true,
         cpm: 5,
@@ -20855,7 +20926,7 @@ Updated: March 2026 - Verified from official vendor documentation
 | `'claude-sonnet-4-6'` | `{
     name: 'claude-sonnet-4-6',
     provider: Vendor.Anthropic,
-    description: 'Best combination of speed and intelligence. Adaptive thinking, 1M context beta',
+    description: 'Best combination of speed and intelligence. Adaptive thinking, 1M context',
     isActive: true,
     preferred: true,
     releaseDate: '2026-02-01',
@@ -20875,7 +20946,7 @@ Updated: March 2026 - Verified from official vendor documentation
       batchAPI: true,
       promptCaching: true,
       input: {
-        tokens: 200000, // 1M with beta header
+        tokens: 1000000,
         text: true,
         image: true,
         cpm: 3,
@@ -21133,41 +21204,6 @@ Updated: March 2026 - Verified from official vendor documentation
       },
     },
   }` | - |
-| `'claude-3-haiku-20240307'` | `{
-    name: 'claude-3-haiku-20240307',
-    provider: Vendor.Anthropic,
-    description: 'Deprecated. Retiring April 19, 2026. Migrate to Haiku 4.5',
-    isActive: true,
-    releaseDate: '2024-03-07',
-    knowledgeCutoff: '2023-08-01',
-    features: {
-      reasoning: false,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: true,
-      audio: false,
-      video: false,
-      extendedThinking: false,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 200000,
-        text: true,
-        image: true,
-        cpm: 0.25,
-        cpmCached: 0.03,
-      },
-      output: {
-        tokens: 4096,
-        text: true,
-        cpm: 1.25,
-      },
-    },
-  }` | - |
 | `'gemini-3.1-pro-preview'` | `{
     name: 'gemini-3.1-pro-preview',
     provider: Vendor.Google,
@@ -21274,6 +21310,42 @@ Updated: March 2026 - Verified from official vendor documentation
       },
     },
   }` | - |
+| `'gemini-3.1-flash-live-preview'` | `{
+    name: 'gemini-3.1-flash-live-preview',
+    provider: Vendor.Google,
+    description: 'Low-latency Live API model for real-time audio dialogue with multimodal awareness',
+    isActive: true,
+    releaseDate: '2026-03-01',
+    knowledgeCutoff: '2025-01-01',
+    features: {
+      reasoning: true,
+      streaming: true,
+      structuredOutput: false,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: true,
+      vision: true,
+      audio: true,
+      video: true,
+      batchAPI: false,
+      promptCaching: false,
+      input: {
+        tokens: 131072,
+        text: true,
+        image: true,
+        audio: true,
+        video: true,
+        cpm: 0.75,
+      },
+      output: {
+        tokens: 65536,
+        text: true,
+        audio: true,
+        cpm: 4.50,
+      },
+    },
+  }` | - |
 | `'gemini-3-flash-preview'` | `{
     name: 'gemini-3-flash-preview',
     provider: Vendor.Google,
@@ -21311,45 +21383,10 @@ Updated: March 2026 - Verified from official vendor documentation
       },
     },
   }` | - |
-| `'gemini-3-pro-preview'` | `{
-    name: 'gemini-3-pro-preview',
-    provider: Vendor.Google,
-    description: 'Deprecated. Shutting down March 9, 2026. Migrate to gemini-3.1-pro-preview',
-    isActive: true,
-    releaseDate: '2025-11-18',
-    knowledgeCutoff: '2025-01-01',
-    features: {
-      reasoning: true,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: true,
-      audio: true,
-      video: true,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 1048576,
-        text: true,
-        image: true,
-        audio: true,
-        video: true,
-        cpm: 1.25,
-      },
-      output: {
-        tokens: 65536,
-        text: true,
-        cpm: 10,
-      },
-    },
-  }` | - |
 | `'gemini-3-pro-image-preview'` | `{
     name: 'gemini-3-pro-image-preview',
     provider: Vendor.Google,
-    description: 'Professional-grade image generation and editing with reasoning',
+    description: 'Nano Banana Pro — state-of-the-art native image generation and editing with reasoning',
     isActive: true,
     releaseDate: '2025-11-18',
     knowledgeCutoff: '2025-01-01',
@@ -21521,10 +21558,110 @@ Updated: March 2026 - Verified from official vendor documentation
       },
     },
   }` | - |
+| `'grok-4.20-0309-reasoning'` | `{
+    name: 'grok-4.20-0309-reasoning',
+    provider: Vendor.Grok,
+    description: 'Flagship Grok 4.20 with reasoning, 2M context, vision support',
+    isActive: true,
+    preferred: true,
+    releaseDate: '2026-03-09',
+    knowledgeCutoff: '2024-11-01',
+    features: {
+      reasoning: true,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      batchAPI: true,
+      promptCaching: true,
+      input: {
+        tokens: 2000000,
+        text: true,
+        image: true,
+        cpm: 2.00,
+      },
+      output: {
+        tokens: 65536,
+        text: true,
+        cpm: 6.00,
+      },
+    },
+  }` | - |
+| `'grok-4.20-0309-non-reasoning'` | `{
+    name: 'grok-4.20-0309-non-reasoning',
+    provider: Vendor.Grok,
+    description: 'Flagship Grok 4.20 without reasoning, 2M context, vision support',
+    isActive: true,
+    releaseDate: '2026-03-09',
+    knowledgeCutoff: '2024-11-01',
+    features: {
+      reasoning: false,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      batchAPI: true,
+      promptCaching: true,
+      input: {
+        tokens: 2000000,
+        text: true,
+        image: true,
+        cpm: 2.00,
+      },
+      output: {
+        tokens: 65536,
+        text: true,
+        cpm: 6.00,
+      },
+    },
+  }` | - |
+| `'grok-4.20-multi-agent-0309'` | `{
+    name: 'grok-4.20-multi-agent-0309',
+    provider: Vendor.Grok,
+    description: 'Grok 4.20 optimized for multi-agent workflows, 2M context, vision + reasoning',
+    isActive: true,
+    releaseDate: '2026-03-09',
+    knowledgeCutoff: '2024-11-01',
+    features: {
+      reasoning: true,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      batchAPI: true,
+      promptCaching: true,
+      input: {
+        tokens: 2000000,
+        text: true,
+        image: true,
+        cpm: 2.00,
+      },
+      output: {
+        tokens: 65536,
+        text: true,
+        cpm: 6.00,
+      },
+    },
+  }` | - |
 | `'grok-4-1-fast-reasoning'` | `{
     name: 'grok-4-1-fast-reasoning',
     provider: Vendor.Grok,
-    description: 'Fast Grok 4.1 with reasoning capabilities, 2M context window, vision support',
+    description: 'Fast Grok 4.1 with reasoning, 2M context, vision support',
     isActive: true,
     releaseDate: '2025-11-01',
     knowledgeCutoff: '2024-11-01',
@@ -21546,7 +21683,6 @@ Updated: March 2026 - Verified from official vendor documentation
         text: true,
         image: true,
         cpm: 0.20,
-        cpmCached: 0.05,
       },
       output: {
         tokens: 65536,
@@ -21558,7 +21694,7 @@ Updated: March 2026 - Verified from official vendor documentation
 | `'grok-4-1-fast-non-reasoning'` | `{
     name: 'grok-4-1-fast-non-reasoning',
     provider: Vendor.Grok,
-    description: 'Fast Grok 4.1 without reasoning, 2M context window, vision support',
+    description: 'Fast Grok 4.1 without reasoning, 2M context, vision support',
     isActive: true,
     releaseDate: '2025-11-01',
     knowledgeCutoff: '2024-11-01',
@@ -21580,246 +21716,11 @@ Updated: March 2026 - Verified from official vendor documentation
         text: true,
         image: true,
         cpm: 0.20,
-        cpmCached: 0.05,
       },
       output: {
         tokens: 65536,
         text: true,
         cpm: 0.50,
-      },
-    },
-  }` | - |
-| `'grok-code-fast-1'` | `{
-    name: 'grok-code-fast-1',
-    provider: Vendor.Grok,
-    description: 'Specialized coding model with reasoning capabilities, 256K context',
-    isActive: true,
-    releaseDate: '2025-10-01',
-    knowledgeCutoff: '2024-11-01',
-    features: {
-      reasoning: true,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: false,
-      audio: false,
-      video: false,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 256000,
-        text: true,
-        cpm: 0.20,
-        cpmCached: 0.02,
-      },
-      output: {
-        tokens: 32768,
-        text: true,
-        cpm: 1.50,
-      },
-    },
-  }` | - |
-| `'grok-4-fast-reasoning'` | `{
-    name: 'grok-4-fast-reasoning',
-    provider: Vendor.Grok,
-    description: 'Fast Grok 4 with reasoning capabilities, 2M context window, vision support',
-    isActive: true,
-    releaseDate: '2025-09-01',
-    knowledgeCutoff: '2024-11-01',
-    features: {
-      reasoning: true,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: true,
-      audio: false,
-      video: false,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 2000000,
-        text: true,
-        image: true,
-        cpm: 0.20,
-        cpmCached: 0.05,
-      },
-      output: {
-        tokens: 65536,
-        text: true,
-        cpm: 0.50,
-      },
-    },
-  }` | - |
-| `'grok-4-fast-non-reasoning'` | `{
-    name: 'grok-4-fast-non-reasoning',
-    provider: Vendor.Grok,
-    description: 'Fast Grok 4 without reasoning, 2M context window, vision support',
-    isActive: true,
-    releaseDate: '2025-09-01',
-    knowledgeCutoff: '2024-11-01',
-    features: {
-      reasoning: false,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: true,
-      audio: false,
-      video: false,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 2000000,
-        text: true,
-        image: true,
-        cpm: 0.20,
-        cpmCached: 0.05,
-      },
-      output: {
-        tokens: 65536,
-        text: true,
-        cpm: 0.50,
-      },
-    },
-  }` | - |
-| `'grok-4-0709'` | `{
-    name: 'grok-4-0709',
-    provider: Vendor.Grok,
-    description: 'Grok 4 flagship model (July 2025 release), 256K context, vision support, reasoning',
-    isActive: true,
-    releaseDate: '2025-07-09',
-    knowledgeCutoff: '2024-11-01',
-    features: {
-      reasoning: true,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: true,
-      audio: false,
-      video: false,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 256000,
-        text: true,
-        image: true,
-        cpm: 3.00,
-        cpmCached: 0.75,
-      },
-      output: {
-        tokens: 32768,
-        text: true,
-        cpm: 15.00,
-      },
-    },
-  }` | - |
-| `'grok-3-mini'` | `{
-    name: 'grok-3-mini',
-    provider: Vendor.Grok,
-    description: 'Lightweight, cost-efficient model with reasoning, 131K context',
-    isActive: true,
-    releaseDate: '2025-06-01',
-    knowledgeCutoff: '2024-11-01',
-    features: {
-      reasoning: true,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: false,
-      audio: false,
-      video: false,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 131072,
-        text: true,
-        cpm: 0.30,
-        cpmCached: 0.07,
-      },
-      output: {
-        tokens: 32768,
-        text: true,
-        cpm: 0.50,
-      },
-    },
-  }` | - |
-| `'grok-3'` | `{
-    name: 'grok-3',
-    provider: Vendor.Grok,
-    description: 'Production model for general-purpose tasks, 131K context',
-    isActive: true,
-    releaseDate: '2025-06-01',
-    knowledgeCutoff: '2024-11-01',
-    features: {
-      reasoning: false,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: false,
-      audio: false,
-      video: false,
-      batchAPI: true,
-      promptCaching: true,
-      input: {
-        tokens: 131072,
-        text: true,
-        cpm: 3.00,
-        cpmCached: 0.75,
-      },
-      output: {
-        tokens: 32768,
-        text: true,
-        cpm: 15.00,
-      },
-    },
-  }` | - |
-| `'grok-2-vision-1212'` | `{
-    name: 'grok-2-vision-1212',
-    provider: Vendor.Grok,
-    description: 'Legacy vision model for image understanding, 32K context. Not in current xAI docs',
-    isActive: true,
-    releaseDate: '2024-12-12',
-    knowledgeCutoff: '2024-11-01',
-    features: {
-      reasoning: false,
-      streaming: true,
-      structuredOutput: true,
-      functionCalling: true,
-      fineTuning: false,
-      predictedOutputs: false,
-      realtime: false,
-      vision: true,
-      audio: false,
-      video: false,
-      batchAPI: false,
-      promptCaching: false,
-      input: {
-        tokens: 32768,
-        text: true,
-        image: true,
-        cpm: 2.00,
-      },
-      output: {
-        tokens: 8192,
-        text: true,
-        cpm: 10.00,
       },
     },
   }` | - |
@@ -21997,7 +21898,7 @@ Defines a single authentication method (e.g., API key, OAuth user flow)
 
 ### CreateConnectorOptions `interface`
 
-📍 [`src/connectors/vendors/types.ts:144`](src/connectors/vendors/types.ts)
+📍 [`src/connectors/vendors/types.ts:175`](src/connectors/vendors/types.ts)
 
 Options for creating a connector from a template
 
@@ -22011,6 +21912,7 @@ Options for creating a connector from a template
 | `displayName?` | `displayName?: string;` | Human-readable display name |
 | `timeout?` | `timeout?: number;` | Request timeout in ms |
 | `logging?` | `logging?: boolean;` | Enable request/response logging |
+| `vendorOptions?` | `vendorOptions?: Record&lt;string, unknown&gt;;` | Vendor-specific options (e.g., defaultFromNumber for Twilio). Stored in connector.config.options. |
 
 </details>
 
@@ -22159,6 +22061,31 @@ Supports multiple OAuth flows
 
 ---
 
+### OptionField `interface`
+
+📍 [`src/connectors/vendors/types.ts:80`](src/connectors/vendors/types.ts)
+
+Vendor-specific option field definition.
+Declares a configurable option that UI apps render as form fields.
+Values are stored in `connector.config.options` and accessed via `connector.getOptions()`.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `key` | `key: string;` | Option key stored in connector.config.options (e.g., 'defaultFromNumber') |
+| `label` | `label: string;` | Human-readable label for UI display (e.g., 'Default From Number') |
+| `description` | `description: string;` | Help text / placeholder shown in the UI |
+| `required?` | `required?: boolean;` | Whether the option must be provided (default: false) |
+| `type?` | `type?: 'string' | 'number' | 'boolean';` | Field type hint for UI rendering (default: 'string') |
+| `defaultValue?` | `defaultValue?: string | number | boolean;` | Default value if not provided |
+| `placeholder?` | `placeholder?: string;` | Placeholder text for the input field |
+
+</details>
+
+---
+
 ### SimpleIcon `interface`
 
 📍 [`src/connectors/vendors/logos.ts:11`](src/connectors/vendors/logos.ts)
@@ -22231,7 +22158,7 @@ All implementations must encrypt tokens at rest
 
 ### VendorInfo `interface`
 
-📍 [`src/connectors/vendors/helpers.ts:322`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:337`](src/connectors/vendors/helpers.ts)
 
 Get vendor template information for display
 
@@ -22282,7 +22209,7 @@ Vendor logo information
 
 ### VendorRegistryEntry `interface`
 
-📍 [`src/connectors/vendors/types.ts:111`](src/connectors/vendors/types.ts)
+📍 [`src/connectors/vendors/types.ts:142`](src/connectors/vendors/types.ts)
 
 Registry entry for a vendor (generated at build time)
 
@@ -22305,7 +22232,7 @@ Registry entry for a vendor (generated at build time)
 
 ### VendorTemplate `interface`
 
-📍 [`src/connectors/vendors/types.ts:79`](src/connectors/vendors/types.ts)
+📍 [`src/connectors/vendors/types.ts:107`](src/connectors/vendors/types.ts)
 
 Vendor template definition
 Complete configuration for a vendor's supported authentication methods
@@ -22324,6 +22251,7 @@ Complete configuration for a vendor's supported authentication methods
 | `authTemplates` | `authTemplates: AuthTemplate[];` | All supported authentication methods |
 | `category` | `category: ServiceCategory;` | Category from Services.ts |
 | `notes?` | `notes?: string;` | Additional notes about the vendor's authentication |
+| `optionFields?` | `optionFields?: OptionField[];` | Vendor-specific option fields (stored in connector.config.options). UI apps render these as form fields. |
 
 </details>
 
@@ -22375,7 +22303,7 @@ type OAuthFlow = 'authorization_code' | 'client_credentials' | 'jwt_bearer' | 's
 
 ### TemplateCredentials `type`
 
-📍 [`src/connectors/vendors/types.ts:137`](src/connectors/vendors/types.ts)
+📍 [`src/connectors/vendors/types.ts:168`](src/connectors/vendors/types.ts)
 
 Credentials provided by user when creating connector from template
 
@@ -22490,7 +22418,7 @@ const personalEmails = await personalFetch('/me/messages');
 
 ### createConnectorFromTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:258`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:269`](src/connectors/vendors/helpers.ts)
 
 Create a Connector from a vendor template
 
@@ -22519,7 +22447,7 @@ const connector = createConnectorFromTemplate(
 
 ### extractNonSecretCredentials `function`
 
-📍 [`src/connectors/vendors/helpers.ts:199`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:210`](src/connectors/vendors/helpers.ts)
 
 Extract non-secret credentials from a raw credentials dict.
 Used by ConnectorConfigStore.saveFromTemplate() to preserve
@@ -22573,7 +22501,7 @@ export function getAllVendorTemplates(): VendorTemplate[]
 
 ### getCredentialsSetupURL `function`
 
-📍 [`src/connectors/vendors/helpers.ts:405`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:420`](src/connectors/vendors/helpers.ts)
 
 Get credentials setup URL for a vendor
 
@@ -22585,7 +22513,7 @@ export function getCredentialsSetupURL(vendorId: string): string | undefined
 
 ### getDocsURL `function`
 
-📍 [`src/connectors/vendors/helpers.ts:413`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:428`](src/connectors/vendors/helpers.ts)
 
 Get docs URL for a vendor
 
@@ -22624,7 +22552,7 @@ export function getVendorColor(vendorId: string): string | undefined
 
 ### getVendorInfo `function`
 
-📍 [`src/connectors/vendors/helpers.ts:342`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:357`](src/connectors/vendors/helpers.ts)
 
 Get vendor information suitable for display
 
@@ -22718,7 +22646,7 @@ export function listVendorIds(): string[]
 
 ### listVendors `function`
 
-📍 [`src/connectors/vendors/helpers.ts:367`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:382`](src/connectors/vendors/helpers.ts)
 
 List all vendors with basic info
 
@@ -22730,7 +22658,7 @@ export function listVendors(): VendorInfo[]
 
 ### listVendorsByAuthType `function`
 
-📍 [`src/connectors/vendors/helpers.ts:396`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:411`](src/connectors/vendors/helpers.ts)
 
 List vendors that support a specific auth type
 
@@ -22742,7 +22670,7 @@ export function listVendorsByAuthType(authType: 'api_key' | 'oauth'): VendorInfo
 
 ### listVendorsByCategory `function`
 
-📍 [`src/connectors/vendors/helpers.ts:389`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:404`](src/connectors/vendors/helpers.ts)
 
 List vendors by category
 
@@ -24491,6 +24419,20 @@ static mapError(error: any, context: ProviderErrorContext): AIError
 
 **Returns:** `AIError`
 
+#### `static extractErrorDetails()`
+
+Extract rich error details for logging.
+Captures status, code, type, cause, headers, and stack from SDK errors.
+
+```typescript
+static extractErrorDetails(error: any): Record&lt;string, unknown&gt;
+```
+
+**Parameters:**
+- `error`: `any`
+
+**Returns:** `Record&lt;string, unknown&gt;`
+
 </details>
 
 ---
@@ -24534,6 +24476,106 @@ constructor(
 **Parameters:**
 - `providerName`: `string`
 - `retryAfter`: `number | undefined` *(optional)*
+
+</details>
+
+---
+
+### TelegramAPIError `class`
+
+📍 [`src/tools/telegram/types.ts:51`](src/tools/telegram/types.ts)
+
+Error from Telegram Bot API
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(
+    public readonly statusCode: number,
+    public readonly errorCode: number | undefined,
+    public readonly telegramDescription: string
+  )
+```
+
+**Parameters:**
+- `statusCode`: `number`
+- `errorCode`: `number | undefined`
+- `telegramDescription`: `string`
+
+</details>
+
+---
+
+### TelegramConfigError `class`
+
+📍 [`src/tools/telegram/types.ts:65`](src/tools/telegram/types.ts)
+
+Error for missing Telegram configuration
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(message: string)
+```
+
+**Parameters:**
+- `message`: `string`
+
+</details>
+
+---
+
+### TwilioAPIError `class`
+
+📍 [`src/tools/twilio/types.ts:64`](src/tools/twilio/types.ts)
+
+Error from Twilio API
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(
+    public readonly statusCode: number,
+    public readonly twilioCode: number | undefined,
+    public readonly twilioMessage: string
+  )
+```
+
+**Parameters:**
+- `statusCode`: `number`
+- `twilioCode`: `number | undefined`
+- `twilioMessage`: `string`
+
+</details>
+
+---
+
+### TwilioConfigError `class`
+
+📍 [`src/tools/twilio/types.ts:78`](src/tools/twilio/types.ts)
+
+Error for missing Twilio configuration
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(message: string)
+```
+
+**Parameters:**
+- `message`: `string`
 
 </details>
 
@@ -27067,7 +27109,7 @@ translate?(options: STTOptions): Promise&lt;STTResponse&gt;;
 
 ### ITextProvider `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:48`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:51`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -27640,6 +27682,7 @@ Used by edit UIs to re-populate form fields without needing to decrypt config.au
     effort?: 'low' | 'medium' | 'high';
   };` | Vendor-agnostic thinking/reasoning configuration |
 | `vendorOptions?` | `vendorOptions?: Record&lt;string, any&gt;;` | Vendor-specific options (e.g., Google's thinkingLevel, OpenAI's reasoning_effort) |
+| `skipContextLimitCheck?` | `skipContextLimitCheck?: boolean;` | Skip pre-flight context limit check. Default: false (check is ON) |
 
 </details>
 
@@ -27990,7 +28033,7 @@ protected getMaxRetries(): number
 
 ### BaseTextProvider `class`
 
-📍 [`src/infrastructure/providers/base/BaseTextProvider.ts:19`](src/infrastructure/providers/base/BaseTextProvider.ts)
+📍 [`src/infrastructure/providers/base/BaseTextProvider.ts:15`](src/infrastructure/providers/base/BaseTextProvider.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -28096,20 +28139,20 @@ protected normalizeInputToString(input: string | any[]): string
 
 **Returns:** `string`
 
-#### `mapError()`
+#### `applyContextLimitGuardrail()`
 
-Map common HTTP error codes to typed provider errors.
-Subclasses can override for vendor-specific error mapping and call super.mapError() as fallback.
+Apply context limit guardrail to generation options.
+Returns the same options if within budget, or trimmed options if over.
+This is a safety net — primary context management is in AgentContextNextGen.
 
 ```typescript
-protected mapError(error: unknown, providerName?: string): Error
+protected applyContextLimitGuardrail(options: TextGenerateOptions): TextGenerateOptions
 ```
 
 **Parameters:**
-- `error`: `unknown`
-- `providerName`: `string | undefined` *(optional)*
+- `options`: `TextGenerateOptions`
 
-**Returns:** `Error`
+**Returns:** `TextGenerateOptions`
 
 #### `listModels()`
 
@@ -28409,9 +28452,24 @@ getConversation(): ReadonlyArray&lt;InputItem&gt;
 #### `getCurrentInput()`
 
 Get current input (read-only).
+NOTE: This changes during the agentic loop — after tool execution it
+contains tool results, not the original user message.
 
 ```typescript
 getCurrentInput(): ReadonlyArray&lt;InputItem&gt;
+```
+
+**Returns:** `readonly InputItem[]`
+
+#### `getOriginalUserInput()`
+
+Get the original user input from the start of execution.
+Unlike getCurrentInput() which changes during the agentic loop
+(tool results replace user message), this always returns the
+input that started the current execution.
+
+```typescript
+getOriginalUserInput(): ReadonlyArray&lt;InputItem&gt;
 ```
 
 **Returns:** `readonly InputItem[]`
@@ -33590,7 +33648,7 @@ Full agent state - everything needed to resume
 
 ### AgentTypeConfig `interface`
 
-📍 [`src/core/orchestrator/createOrchestrator.ts:30`](src/core/orchestrator/createOrchestrator.ts)
+📍 [`src/core/orchestrator/createOrchestrator.ts:38`](src/core/orchestrator/createOrchestrator.ts)
 
 Configuration for an agent type that the orchestrator can spawn.
 
@@ -33605,6 +33663,9 @@ Configuration for an agent type that the orchestrator can spawn.
 | `connector?` | `connector?: string;` | Connector override (defaults to orchestrator's connector) |
 | `features?` | `features?: Partial&lt;ContextFeatures&gt;;` | Context features for this agent type |
 | `plugins?` | `plugins?: PluginConfigs;` | Plugin configurations for this agent type |
+| `description?` | `description?: string;` | One-liner describing the agent's role (e.g., "Senior developer who writes and tests code") |
+| `scenarios?` | `scenarios?: string[];` | Typical scenarios when this agent should be used (e.g., ["implementing features", "fixing bugs"]) |
+| `capabilities?` | `capabilities?: string[];` | What this agent can do / what tools it has (e.g., ["read/write files", "run shell commands"]) |
 
 </details>
 
@@ -33712,7 +33773,7 @@ Extends PolicyContext with the deny decision and UI-relevant info.
 
 ### ApprovalResult `interface`
 
-📍 [`src/capabilities/agents/types/HookTypes.ts:110`](src/capabilities/agents/types/HookTypes.ts)
+📍 [`src/capabilities/agents/types/HookTypes.ts:114`](src/capabilities/agents/types/HookTypes.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -34268,6 +34329,68 @@ Configuration for DefaultCompactionStrategy
 
 ---
 
+### DelegationDefaults `interface`
+
+📍 [`src/core/orchestrator/createOrchestrator.ts:66`](src/core/orchestrator/createOrchestrator.ts)
+
+Delegation defaults that apply when delegate_interactive is called
+without explicit monitoring/reclaimOn parameters.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `monitoring?` | `monitoring?: 'passive' | 'active' | 'event';` | Default monitoring mode (default: 'passive') |
+| `reclaimOn?` | `reclaimOn?: {
+    keyword?: string;
+    maxTurns?: number;
+    workspaceKey?: string;
+  };` | Default reclaim conditions |
+
+</details>
+
+---
+
+### DelegationReclaimConfig `interface`
+
+📍 [`src/core/orchestrator/tools.ts:52`](src/core/orchestrator/tools.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `keyword?` | `keyword?: string;` | User keyword that triggers reclaim (e.g., "done", "back") |
+| `maxTurns?` | `maxTurns?: number;` | Auto-reclaim after N delegation turns |
+| `workspaceKey?` | `workspaceKey?: string;` | Reclaim when this workspace key appears |
+
+</details>
+
+---
+
+### DelegationState `interface`
+
+📍 [`src/core/orchestrator/tools.ts:44`](src/core/orchestrator/tools.ts)
+
+Delegation state — tracks whether the orchestrator has handed
+the user-facing session to a sub-agent.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `active` | `active: boolean;` | - |
+| `agentName` | `agentName: string;` | - |
+| `monitoring` | `monitoring: 'passive' | 'active' | 'event';` | - |
+| `reclaimOn` | `reclaimOn: DelegationReclaimConfig;` | - |
+| `turnCount` | `turnCount: number;` | - |
+
+</details>
+
+---
+
 ### DesktopGetCursorResult `interface`
 
 📍 [`src/tools/desktop/types.ts:203`](src/tools/desktop/types.ts)
@@ -34691,6 +34814,7 @@ Options for direct LLM calls (bypassing AgentContext).
     effort?: 'low' | 'medium' | 'high';
   };` | Vendor-agnostic thinking/reasoning configuration |
 | `vendorOptions?` | `vendorOptions?: Record&lt;string, unknown&gt;;` | Vendor-specific options |
+| `skipContextLimitCheck?` | `skipContextLimitCheck?: boolean;` | Skip pre-flight context limit check. Default: false (check is ON) |
 
 </details>
 
@@ -34876,6 +35000,23 @@ Configuration for the default energy-based VAD
 | `speechFramesThreshold?` | `speechFramesThreshold?: number;` | Consecutive speech frames needed to trigger speech_start. Default: 3 |
 | `silenceTimeout?` | `silenceTimeout?: number;` | Silence duration in ms to trigger speech_end. Default: 1500 |
 | `minSpeechDuration?` | `minSpeechDuration?: number;` | Minimum speech duration in ms to be considered valid. Default: 250 |
+
+</details>
+
+---
+
+### ExcelToMarkdownKVOptions `interface`
+
+📍 [`src/capabilities/documents/handlers/ExcelHandler.ts:307`](src/capabilities/documents/handlers/ExcelHandler.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `maxRows?` | `maxRows?: number;` | - |
+| `maxColumns?` | `maxColumns?: number;` | - |
+| `includeFormulas?` | `includeFormulas?: boolean;` | - |
 
 </details>
 
@@ -35389,7 +35530,7 @@ Result of a grep operation
 
 ### HookConfig `interface`
 
-📍 [`src/capabilities/agents/types/HookTypes.ts:123`](src/capabilities/agents/types/HookTypes.ts)
+📍 [`src/capabilities/agents/types/HookTypes.ts:127`](src/capabilities/agents/types/HookTypes.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -37195,6 +37336,22 @@ Default: 'ToolExecution' |
 
 ---
 
+### MarkdownKVSheet `interface`
+
+📍 [`src/capabilities/documents/handlers/ExcelHandler.ts:302`](src/capabilities/documents/handlers/ExcelHandler.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: string;` | - |
+| `content` | `content: string;` | - |
+
+</details>
+
+---
+
 ### MCPClientState `interface`
 
 📍 [`src/domain/entities/MCPTypes.ts:126`](src/domain/entities/MCPTypes.ts)
@@ -37624,7 +37781,7 @@ Example: { 'GITHUB_PERSONAL_ACCESS_TOKEN': 'my-github-connector' } |
 
 ### OrchestratorConfig `interface`
 
-📍 [`src/core/orchestrator/createOrchestrator.ts:48`](src/core/orchestrator/createOrchestrator.ts)
+📍 [`src/core/orchestrator/createOrchestrator.ts:80`](src/core/orchestrator/createOrchestrator.ts)
 
 Configuration for the orchestrator.
 
@@ -37644,6 +37801,12 @@ Configuration for the orchestrator.
 | `agentId?` | `agentId?: string;` | Agent ID for session persistence |
 | `maxIterations?` | `maxIterations?: number;` | Max iterations for the orchestrator's agentic loop (default: 100) |
 | `maxAgents?` | `maxAgents?: number;` | Maximum number of worker agents (default: 20) |
+| `skipPlanning?` | `skipPlanning?: boolean;` | Skip the planning workflow (UNDERSTAND/PLAN/APPROVE phases) and execute directly (default: false) |
+| `tools?` | `tools?: ToolFunction[];` | Additional tools available to the orchestrator itself (for DIRECT route tasks) |
+| `delegationDefaults?` | `delegationDefaults?: DelegationDefaults;` | Default delegation settings |
+| `autoDescribe?` | `autoDescribe?: boolean;` | Auto-generate rich descriptions for agent types that lack explicit description/scenarios/capabilities.
+Runs a single LLM call at creation time. Makes createOrchestrator return a Promise.
+Default: false |
 
 </details>
 
@@ -39398,6 +39561,203 @@ Typically prefixed by channel (e.g., "email:msg_123", "ticket:T-456") |
 
 ---
 
+### TelegramChat `interface`
+
+📍 [`src/tools/telegram/types.ts:161`](src/tools/telegram/types.ts)
+
+Telegram Chat object
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: number;` | - |
+| `type` | `type: 'private' | 'group' | 'supergroup' | 'channel';` | - |
+| `title?` | `title?: string;` | - |
+| `username?` | `username?: string;` | - |
+| `first_name?` | `first_name?: string;` | - |
+| `last_name?` | `last_name?: string;` | - |
+| `description?` | `description?: string;` | - |
+| `invite_link?` | `invite_link?: string;` | - |
+
+</details>
+
+---
+
+### TelegramGetChatResult `interface`
+
+📍 [`src/tools/telegram/types.ts:218`](src/tools/telegram/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `chat?` | `chat?: TelegramChat;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### TelegramGetMeResult `interface`
+
+📍 [`src/tools/telegram/types.ts:212`](src/tools/telegram/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `bot?` | `bot?: TelegramUser;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### TelegramGetUpdatesResult `interface`
+
+📍 [`src/tools/telegram/types.ts:224`](src/tools/telegram/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `updates?` | `updates?: TelegramUpdate[];` | - |
+| `count?` | `count?: number;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### TelegramMessage `interface`
+
+📍 [`src/tools/telegram/types.ts:173`](src/tools/telegram/types.ts)
+
+Telegram Message object
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `message_id` | `message_id: number;` | - |
+| `from?` | `from?: TelegramUser;` | - |
+| `chat` | `chat: TelegramChat;` | - |
+| `date` | `date: number;` | - |
+| `text?` | `text?: string;` | - |
+| `caption?` | `caption?: string;` | - |
+| `photo?` | `photo?: TelegramPhotoSize[];` | - |
+| `reply_to_message?` | `reply_to_message?: TelegramMessage;` | - |
+
+</details>
+
+---
+
+### TelegramPhotoSize `interface`
+
+📍 [`src/tools/telegram/types.ts:185`](src/tools/telegram/types.ts)
+
+Telegram PhotoSize object
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `file_id` | `file_id: string;` | - |
+| `file_unique_id` | `file_unique_id: string;` | - |
+| `width` | `width: number;` | - |
+| `height` | `height: number;` | - |
+| `file_size?` | `file_size?: number;` | - |
+
+</details>
+
+---
+
+### TelegramSendResult `interface`
+
+📍 [`src/tools/telegram/types.ts:206`](src/tools/telegram/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `message?` | `message?: TelegramMessage;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### TelegramSetWebhookResult `interface`
+
+📍 [`src/tools/telegram/types.ts:231`](src/tools/telegram/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### TelegramUpdate `interface`
+
+📍 [`src/tools/telegram/types.ts:194`](src/tools/telegram/types.ts)
+
+Telegram Update object (from getUpdates)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `update_id` | `update_id: number;` | - |
+| `message?` | `message?: TelegramMessage;` | - |
+| `edited_message?` | `edited_message?: TelegramMessage;` | - |
+| `channel_post?` | `channel_post?: TelegramMessage;` | - |
+| `edited_channel_post?` | `edited_channel_post?: TelegramMessage;` | - |
+
+</details>
+
+---
+
+### TelegramUser `interface`
+
+📍 [`src/tools/telegram/types.ts:151`](src/tools/telegram/types.ts)
+
+Telegram User object
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: number;` | - |
+| `is_bot` | `is_bot: boolean;` | - |
+| `first_name` | `first_name: string;` | - |
+| `last_name?` | `last_name?: string;` | - |
+| `username?` | `username?: string;` | - |
+| `language_code?` | `language_code?: string;` | - |
+
+</details>
+
+---
+
 ### TelephonyAdapterEvents `interface`
 
 📍 [`src/capabilities/voice/types.ts:403`](src/capabilities/voice/types.ts)
@@ -39454,7 +39814,7 @@ Text pipeline configuration — STT → Agent → TTS
 
 ### ThinkingContent `interface`
 
-📍 [`src/domain/entities/Content.ts:63`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:65`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -39514,6 +39874,87 @@ For inbound-only, this is extracted from the media stream event. |
 | `publicUrl?` | `publicUrl?: string;` | Public URL where Twilio can reach this server.
 Required for standalone mode and outbound calls.
 Example: 'https://myserver.com' or 'https://abc123.ngrok.io' |
+
+</details>
+
+---
+
+### TwilioGetMessageResult `interface`
+
+📍 [`src/tools/twilio/types.ts:215`](src/tools/twilio/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `message?` | `message?: TwilioMessage;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### TwilioListMessagesResult `interface`
+
+📍 [`src/tools/twilio/types.ts:207`](src/tools/twilio/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `messages?` | `messages?: TwilioMessage[];` | - |
+| `count?` | `count?: number;` | - |
+| `hasMore?` | `hasMore?: boolean;` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### TwilioMessage `interface`
+
+📍 [`src/tools/twilio/types.ts:184`](src/tools/twilio/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `sid` | `sid: string;` | - |
+| `from` | `from: string;` | - |
+| `to` | `to: string;` | - |
+| `body` | `body: string;` | - |
+| `status` | `status: string;` | - |
+| `direction` | `direction: string;` | - |
+| `dateSent` | `dateSent: string | null;` | - |
+| `dateCreated` | `dateCreated: string;` | - |
+| `price` | `price: string | null;` | - |
+| `priceUnit` | `priceUnit: string | null;` | - |
+| `numSegments` | `numSegments: string | null;` | - |
+| `errorCode` | `errorCode: number | null;` | - |
+| `errorMessage` | `errorMessage: string | null;` | - |
+| `channel` | `channel: 'sms' | 'whatsapp';` | - |
+
+</details>
+
+---
+
+### TwilioSendResult `interface`
+
+📍 [`src/tools/twilio/types.ts:201`](src/tools/twilio/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `success` | `success: boolean;` | - |
+| `message?` | `message?: TwilioMessage;` | - |
+| `error?` | `error?: string;` | - |
 
 </details>
 
@@ -39930,7 +40371,7 @@ type ConnectorAuth = | OAuthConnectorAuth
 
 ### Content `type`
 
-📍 [`src/domain/entities/Content.ts:73`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:75`](src/domain/entities/Content.ts)
 
 ```typescript
 type Content = | InputTextContent
@@ -40048,7 +40489,7 @@ type Hook = (
 
 ### HookName `type`
 
-📍 [`src/capabilities/agents/types/HookTypes.ts:145`](src/capabilities/agents/types/HookTypes.ts)
+📍 [`src/capabilities/agents/types/HookTypes.ts:149`](src/capabilities/agents/types/HookTypes.ts)
 
 ```typescript
 type HookName = keyof Omit&lt;HookConfig, 'hookTimeout' | 'parallelHooks'&gt;
@@ -40449,7 +40890,7 @@ export function buildQueryString(params: Record&lt;string, string | number | boo
 
 ### buildWorkspaceDelta `function`
 
-📍 [`src/core/orchestrator/tools.ts:46`](src/core/orchestrator/tools.ts)
+📍 [`src/core/orchestrator/tools.ts:79`](src/core/orchestrator/tools.ts)
 
 ```typescript
 export function buildWorkspaceDelta(
@@ -40457,6 +40898,16 @@ export function buildWorkspaceDelta(
   workspace: SharedWorkspacePluginNextGen,
   lastSeen: Map&lt;string, number&gt;,
 ): string
+```
+
+---
+
+### createDelegationState `function`
+
+📍 [`src/core/orchestrator/tools.ts:61`](src/core/orchestrator/tools.ts)
+
+```typescript
+export function createDelegationState(): DelegationState
 ```
 
 ---
@@ -40488,37 +40939,55 @@ export function createExecutionRecorder(options: ExecutionRecorderOptions): Exec
 
 ### createOrchestrator `function`
 
-📍 [`src/core/orchestrator/createOrchestrator.ts:150`](src/core/orchestrator/createOrchestrator.ts)
+📍 [`src/core/orchestrator/createOrchestrator.ts:540`](src/core/orchestrator/createOrchestrator.ts)
 
 Create an orchestrator Agent that can coordinate a team of worker agents.
 
+The orchestrator serves as the single point of contact for the user and supports
+3 routing modes: DIRECT (answer or silently delegate), DELEGATE (interactive session
+with a specialist), and ORCHESTRATE (complex multi-agent plans).
+
+All agent execution is async — the orchestrator never blocks waiting for sub-agents.
+
 ```typescript
-export function createOrchestrator(config: OrchestratorConfig): Agent
+export async function createOrchestrator(config: OrchestratorConfig): Promise&lt;Agent&gt;
 ```
 
 **Example:**
 
 ```typescript
-const orchestrator = createOrchestrator({
+const orchestrator = await createOrchestrator({
   connector: 'openai',
   model: 'gpt-4',
   agentTypes: {
-    architect: {
-      systemPrompt: 'You are a senior software architect...',
-      tools: [readFile, writeFile],
-    },
-    critic: {
-      systemPrompt: 'You are a thorough code reviewer...',
-      tools: [readFile, grep],
-    },
     developer: {
       systemPrompt: 'You are a senior developer...',
-      tools: [readFile, writeFile, editFile, bash],
+      description: 'Senior developer who writes clean, tested code.',
+      scenarios: ['implementing features', 'fixing bugs', 'writing tests'],
+      capabilities: ['read/write files', 'run shell commands', 'search code'],
+      tools: [readFile, writeFile, bash],
+    },
+    researcher: {
+      systemPrompt: 'You are a research specialist...',
+      description: 'Research specialist with web access.',
+      scenarios: ['finding documentation', 'comparing libraries'],
+      capabilities: ['web search', 'web scrape', 'summarize findings'],
+      tools: [webSearch, webScrape],
     },
   },
 });
 
-const result = await orchestrator.run('Build an auth module with JWT support');
+// Simple question → DIRECT
+const result = await orchestrator.run('What is JWT?');
+
+// Tool-heavy task → DIRECT (silently delegates)
+const result = await orchestrator.run('Research the top 3 auth libraries for Node.js');
+
+// Interactive session → DELEGATE
+const result = await orchestrator.run('Help me debug this auth flow step by step');
+
+// Complex task → ORCHESTRATE
+const result = await orchestrator.run('Build an auth module with JWT, tests, and docs');
 ```
 
 ---
@@ -40591,6 +41060,29 @@ or direct web URLs without knowing the driveId/itemId.
 
 ```typescript
 export function encodeSharingUrl(webUrl: string): string
+```
+
+---
+
+### excelToMarkdownKV `function`
+
+📍 [`src/capabilities/documents/handlers/ExcelHandler.ts:325`](src/capabilities/documents/handlers/ExcelHandler.ts)
+
+Convert an Excel (.xlsx) or CSV file buffer to Markdown-KV format.
+
+Each row becomes a record block:
+```
+### Record 1
+- **Name**: Alice
+- **Age**: 30
+```
+
+```typescript
+export async function excelToMarkdownKV(
+  buffer: Buffer,
+  format: 'xlsx' | 'csv',
+  options?: ExcelToMarkdownKVOptions,
+): Promise&lt;string | MarkdownKVSheet[]&gt;
 ```
 
 ---
@@ -40717,6 +41209,21 @@ export function fromSlackTimestamp(ts: string): string
 
 ---
 
+### getAccountSid `function`
+
+📍 [`src/tools/twilio/types.ts:31`](src/tools/twilio/types.ts)
+
+Get the Twilio Account SID from the connector's auth extra fields.
+
+The Account SID is stored in `auth.extra.accountId` when the connector
+is created via the Twilio vendor template.
+
+```typescript
+export function getAccountSid(connector: Connector): string
+```
+
+---
+
 ### getAllServiceIds `function`
 
 📍 [`src/domain/entities/Services.ts:564`](src/domain/entities/Services.ts)
@@ -40754,6 +41261,18 @@ Get output from a background process
 
 ```typescript
 export function getBackgroundOutput(bgId: string):
+```
+
+---
+
+### getBotToken `function`
+
+📍 [`src/tools/telegram/types.ts:24`](src/tools/telegram/types.ts)
+
+Get the Bot API token from the connector's auth config.
+
+```typescript
+export function getBotToken(connector: Connector): string
 ```
 
 ---
@@ -41070,6 +41589,19 @@ export function normalizeEmails(input: unknown[]): string[]
 
 ---
 
+### normalizePhoneNumber `function`
+
+📍 [`src/tools/twilio/types.ts:163`](src/tools/twilio/types.ts)
+
+Normalize a phone number to E.164 format.
+Ensures the number starts with '+'.
+
+```typescript
+export function normalizePhoneNumber(phone: string): string
+```
+
+---
+
 ### parseKeyCombo `function`
 
 📍 [`src/tools/desktop/driver/NutTreeDriver.ts:70`](src/tools/desktop/driver/NutTreeDriver.ts)
@@ -41348,6 +41880,26 @@ export function sttToTwilio(pcm: Buffer, sourceRate: number = 24000): Buffer
 
 ---
 
+### telegramFetch `function`
+
+📍 [`src/tools/telegram/types.ts:91`](src/tools/telegram/types.ts)
+
+Make an authenticated Telegram Bot API request.
+
+Builds the URL as: /bot<TOKEN>/<method>
+All calls are POST with JSON body (Telegram supports both GET and POST,
+but POST with JSON is the most flexible and consistent).
+
+```typescript
+export async function telegramFetch&lt;T = unknown&gt;(
+  connector: Connector,
+  method: string,
+  options?: TelegramFetchOptions
+): Promise&lt;T&gt;
+```
+
+---
+
 ### toConnectorOptions `function`
 
 📍 [`src/capabilities/shared/types.ts:80`](src/capabilities/shared/types.ts)
@@ -41372,6 +41924,38 @@ Accepts ISO 8601 strings or Unix epoch numbers/strings.
 
 ```typescript
 export function toSlackTimestamp(input: string): string
+```
+
+---
+
+### toWhatsAppNumber `function`
+
+📍 [`src/tools/twilio/types.ts:174`](src/tools/twilio/types.ts)
+
+Add the WhatsApp prefix to a phone number.
+If already prefixed, returns as-is.
+
+```typescript
+export function toWhatsAppNumber(phone: string): string
+```
+
+---
+
+### twilioFetch `function`
+
+📍 [`src/tools/twilio/types.ts:95`](src/tools/twilio/types.ts)
+
+Make an authenticated Twilio API request through the connector.
+
+Automatically resolves the Account SID and builds the correct URL path.
+Twilio endpoints follow: /Accounts/{AccountSid}/{resource}.json
+
+```typescript
+export async function twilioFetch&lt;T = unknown&gt;(
+  connector: Connector,
+  resource: string,
+  options?: TwilioFetchOptions
+): Promise&lt;T&gt;
 ```
 
 ---
