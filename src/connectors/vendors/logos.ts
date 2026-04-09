@@ -27,6 +27,7 @@ export const VENDOR_ICON_MAP: Record<string, string | null> = {
   // Major Vendors (unified)
   microsoft: 'microsoft',
   google: 'google',
+  'google-api': 'google',
 
   // Cloud
   aws: 'amazonwebservices',

@@ -7,9 +7,9 @@
 import type { VendorTemplate } from '../types.js';
 
 export const googleTemplate: VendorTemplate = {
-  id: 'google',
+  id: 'google-api',
   name: 'Google',
-  serviceType: 'google',
+  serviceType: 'google-api',
   baseURL: 'https://www.googleapis.com',
   docsURL: 'https://developers.google.com/',
   credentialsSetupURL: 'https://console.cloud.google.com/apis/credentials',

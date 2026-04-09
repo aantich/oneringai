@@ -59,7 +59,7 @@ export const SERVICE_DEFINITIONS: readonly ServiceDefinition[] = [
     commonScopes: ['User.Read', 'Files.ReadWrite', 'Mail.Read', 'Calendars.ReadWrite'],
   },
   {
-    id: 'google',
+    id: 'google-api',
     name: 'Google',
     category: 'major-vendors',
     urlPattern: /googleapis\.com|accounts\.google\.com/i,

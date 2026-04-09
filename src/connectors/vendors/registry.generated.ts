@@ -233,9 +233,9 @@ export const vendorRegistry: VendorRegistryEntry[] = [
     template: sendgridTemplate,
   },
   {
-    id: 'google',
+    id: 'google-api',
     name: 'Google',
-    serviceType: 'google',
+    serviceType: 'google-api',
     category: 'major-vendors' as ServiceCategory,
     authMethods: ["oauth-user","service-account"],
     credentialsSetupURL: 'https://console.cloud.google.com/apis/credentials',
