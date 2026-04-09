@@ -30,6 +30,12 @@ export interface OAuthConfig {
   // Static Token specific (NEW)
   staticToken?: string; // Static API key/token (for OpenAI, Anthropic, etc.)
 
+  // Vendor-specific authorization parameters
+  /** Extra query parameters appended to the authorization URL.
+   *  Used for vendor-specific requirements, e.g. Google's `access_type: 'offline'`
+   *  to obtain a refresh token. */
+  authorizationParams?: Record<string, string>;
+
   // Token management
   autoRefresh?: boolean; // Default: true
   refreshBeforeExpiry?: number; // Seconds before expiry to refresh (default: 300)

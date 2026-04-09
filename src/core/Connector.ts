@@ -759,6 +759,7 @@ export class Connector {
       privateKeyPath: auth.privateKeyPath,
       audience: auth.audience,
       refreshBeforeExpiry: auth.refreshBeforeExpiry,
+      authorizationParams: auth.authorizationParams,
       storage: Connector.defaultStorage,
       storageKey: auth.storageKey ?? this.name,
     };

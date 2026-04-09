@@ -603,7 +603,12 @@ describe('Microsoft Graph Tools', () => {
       });
 
       it('should send a reply', async () => {
-        fetchSpy.mockResolvedValueOnce(mockEmptyResponse());
+        // 3-step reply flow: createReply → PATCH → send
+        fetchSpy.mockResolvedValueOnce(
+          mockResponse({ id: 'draft-001', body: { content: '<p>Quoted original</p>' } })
+        );
+        fetchSpy.mockResolvedValueOnce(mockEmptyResponse(200)); // PATCH
+        fetchSpy.mockResolvedValueOnce(mockEmptyResponse());    // send
 
         const tool = createSendEmailTool(connector);
         const result = await tool.execute({
@@ -615,12 +620,20 @@ describe('Microsoft Graph Tools', () => {
 
         expect(result.success).toBe(true);
 
-        const calledUrl = fetchSpy.mock.calls[0]![0] as string;
-        expect(calledUrl).toBe('/me/messages/msg-001/reply');
+        // Step 1: createReply
+        const createUrl = fetchSpy.mock.calls[0]![0] as string;
+        expect(createUrl).toBe('/me/messages/msg-001/createReply');
 
-        const callBody = JSON.parse(fetchSpy.mock.calls[0]![1]?.body as string);
-        expect(callBody.comment).toBe('<p>Thanks!</p>');
-        expect(callBody.message.toRecipients).toEqual([{ emailAddress: { address: 'alice@example.com' } }]);
+        // Step 2: PATCH with combined body and recipients
+        const patchUrl = fetchSpy.mock.calls[1]![0] as string;
+        expect(patchUrl).toBe('/me/messages/draft-001');
+        const patchBody = JSON.parse(fetchSpy.mock.calls[1]![1]?.body as string);
+        expect(patchBody.body.content).toBe('<p>Thanks!</p><br/><p>Quoted original</p>');
+        expect(patchBody.toRecipients).toEqual([{ emailAddress: { address: 'alice@example.com' } }]);
+
+        // Step 3: send
+        const sendUrl = fetchSpy.mock.calls[2]![0] as string;
+        expect(sendUrl).toBe('/me/messages/draft-001/send');
       });
 
       it('should handle API errors gracefully', async () => {

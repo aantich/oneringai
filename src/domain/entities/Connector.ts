@@ -58,6 +58,10 @@ export interface OAuthConnectorAuth {
   refreshBeforeExpiry?: number; // Seconds before expiry to refresh (default: 300)
   storageKey?: string; // Custom storage key
 
+  /** Extra query parameters appended to the authorization URL.
+   *  Used for vendor-specific requirements, e.g. Google's `access_type: 'offline'`. */
+  authorizationParams?: Record<string, string>;
+
   /** Vendor-specific extra credentials */
   extra?: Record<string, string>;
 }

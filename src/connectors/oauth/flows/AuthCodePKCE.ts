@@ -78,6 +78,13 @@ export class AuthCodePKCEFlow {
       params.append('code_challenge_method', 'S256');
     }
 
+    // Add vendor-specific authorization parameters (e.g. Google's access_type=offline)
+    if (this.config.authorizationParams) {
+      for (const [key, value] of Object.entries(this.config.authorizationParams)) {
+        params.set(key, value);
+      }
+    }
+
     // Encode userId and accountId in state for retrieval in callback
     // Format: `{random_state}[::userId[::accountId]]`
     let stateWithMetadata = state;

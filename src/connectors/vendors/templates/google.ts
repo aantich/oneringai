@@ -31,6 +31,14 @@ export const googleTemplate: VendorTemplate = {
         authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
         tokenUrl: 'https://oauth2.googleapis.com/token',
         usePKCE: true,
+        // Google requires access_type=offline to return a refresh_token.
+        // prompt=consent forces the consent screen on re-authorization,
+        // which is the only way Google re-issues a refresh_token for
+        // an app the user has already authorized.
+        authorizationParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
       },
       scopes: [
         'https://www.googleapis.com/auth/drive',

@@ -143,6 +143,7 @@ export function buildAuthConfig(
     privateKeyPath: credentials.privateKeyPath,
     audience: credentials.audience ?? oauthDefaults.audience,
     subject: credentials.subject ?? oauthDefaults.subject,
+    authorizationParams: oauthDefaults.authorizationParams,
   };
 
   // Handle URL templates (e.g., {tenantId}, {installationId})
