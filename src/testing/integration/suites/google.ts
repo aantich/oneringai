@@ -2,10 +2,21 @@
  * Google Workspace Integration Test Suite
  *
  * Tests: Gmail (draft, send), Calendar (create, list, get, edit, find slots, transcript), Drive (list, search, read)
+ *
+ * NOTE: When using service-account auth, most Google tools require `targetUser`
+ * to specify which user's mailbox/calendar/drive to act on.
  */
 
-import type { IntegrationTestSuite } from '../types.js';
+import type { IntegrationTestSuite, TestContext } from '../types.js';
 import { registerSuite } from '../runner.js';
+
+/** If targetUser param is set, include it in tool args for service-account auth. */
+function withTargetUser(ctx: TestContext, args: Record<string, unknown>): Record<string, unknown> {
+  if (ctx.params.targetUser) {
+    return { ...args, targetUser: ctx.params.targetUser };
+  }
+  return args;
+}
 
 const googleWorkspaceSuite: IntegrationTestSuite = {
   id: 'google-workspace',
@@ -23,6 +34,13 @@ const googleWorkspaceSuite: IntegrationTestSuite = {
     },
   ],
   optionalParams: [
+    {
+      key: 'targetUser',
+      label: 'Target User (Service Account Auth)',
+      description: 'User email for service-account/domain-wide delegation auth, e.g. "alice@company.com". Required for service-account connectors, leave empty for OAuth.',
+      type: 'email',
+      required: false,
+    },
     {
       key: 'testDriveQuery',
       label: 'Drive Search Query',
@@ -56,11 +74,11 @@ const googleWorkspaceSuite: IntegrationTestSuite = {
       critical: false,
       execute: async (tools, ctx) => {
         const tool = tools.get('create_draft_email')!;
-        const result = await tool.execute({
+        const result = await tool.execute(withTargetUser(ctx, {
           to: [ctx.params.testRecipientEmail],
           subject: `[Integration Test] Draft - ${new Date().toISOString()}`,
           body: 'This is an automated integration test draft. Safe to delete.',
-        });
+        }));
         if (!result.success) {
           return { success: false, message: result.error || 'Draft creation failed', data: result };
         }
@@ -76,11 +94,11 @@ const googleWorkspaceSuite: IntegrationTestSuite = {
       critical: false,
       execute: async (tools, ctx) => {
         const tool = tools.get('send_email')!;
-        const result = await tool.execute({
+        const result = await tool.execute(withTargetUser(ctx, {
           to: [ctx.params.testRecipientEmail],
           subject: `[Integration Test] Send - ${new Date().toISOString()}`,
           body: 'This is an automated integration test email. Safe to delete.',
-        });
+        }));
         if (!result.success) {
           return { success: false, message: result.error || 'Send failed', data: result };
         }
@@ -99,7 +117,7 @@ const googleWorkspaceSuite: IntegrationTestSuite = {
         const tool = tools.get('create_meeting')!;
         const start = new Date(Date.now() + 24 * 60 * 60 * 1000); // tomorrow
         const end = new Date(start.getTime() + 60 * 60 * 1000); // +1h
-        const result = await tool.execute({
+        const result = await tool.execute(withTargetUser(ctx, {
           summary: `[Integration Test] Meeting - ${new Date().toISOString()}`,
           startDateTime: start.toISOString(),
           endDateTime: end.toISOString(),
@@ -107,7 +125,7 @@ const googleWorkspaceSuite: IntegrationTestSuite = {
           description: 'Automated integration test meeting. Safe to delete.',
           isOnlineMeeting: true,
           timeZone: 'UTC',
-        });
+        }));
         if (!result.success) {
           return { success: false, message: result.error || 'Create meeting failed', data: result };
         }
@@ -134,16 +152,16 @@ const googleWorkspaceSuite: IntegrationTestSuite = {
       toolName: 'list_meetings',
       description: 'Lists upcoming Google Calendar events',
       critical: false,
-      execute: async (tools, _ctx) => {
+      execute: async (tools, ctx) => {
         const tool = tools.get('list_meetings')!;
         const now = new Date();
         const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-        const result = await tool.execute({
+        const result = await tool.execute(withTargetUser(ctx, {
           startDateTime: now.toISOString(),
           endDateTime: weekLater.toISOString(),
           maxResults: 10,
           timeZone: 'UTC',
-        });
+        }));
         if (!result.success) {
           return { success: false, message: result.error || 'List meetings failed', data: result };
         }
@@ -165,7 +183,7 @@ const googleWorkspaceSuite: IntegrationTestSuite = {
           return { success: false, message: 'No meeting ID from create test' };
         }
         const tool = tools.get('get_meeting')!;
-        const result = await tool.execute({ eventId: meetingId });
+        const result = await tool.execute(withTargetUser(ctx, { eventId: meetingId }));
         if (!result.success) {
           return { success: false, message: result.error || 'Get meeting failed', data: result };
         }
@@ -183,10 +201,10 @@ const googleWorkspaceSuite: IntegrationTestSuite = {
           return { success: false, message: 'No meeting ID from create test' };
         }
         const tool = tools.get('edit_meeting')!;
-        const result = await tool.execute({
+        const result = await tool.execute(withTargetUser(ctx, {
           eventId: meetingId,
           summary: `[Integration Test] Updated - ${new Date().toISOString()}`,
-        });
+        }));
         if (!result.success) {
           return { success: false, message: result.error || 'Edit meeting failed', data: result };
         }
@@ -204,13 +222,13 @@ const googleWorkspaceSuite: IntegrationTestSuite = {
         const attendees = ctx.params.testSlotAttendees!.split(',').map((e) => e.trim());
         const now = new Date();
         const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-        const result = await tool.execute({
+        const result = await tool.execute(withTargetUser(ctx, {
           attendees,
           startDateTime: now.toISOString(),
           endDateTime: tomorrow.toISOString(),
           durationMinutes: 30,
           timeZone: 'UTC',
-        });
+        }));
         if (!result.success) {
           return { success: false, message: result.error || 'Find slots failed', data: result };
         }
@@ -229,9 +247,9 @@ const googleWorkspaceSuite: IntegrationTestSuite = {
       critical: false,
       execute: async (tools, ctx) => {
         const tool = tools.get('get_meeting_transcript')!;
-        const result = await tool.execute({
+        const result = await tool.execute(withTargetUser(ctx, {
           meetingId: ctx.params.testMeetingId,
-        });
+        }));
         // Transcript may not exist — that's OK, we just verify the API call works
         if (!result.success && result.error?.includes('not found')) {
           return { success: true, message: 'API call succeeded (no transcript found)', data: result };
@@ -249,9 +267,9 @@ const googleWorkspaceSuite: IntegrationTestSuite = {
       toolName: 'list_files',
       description: 'Lists files in Google Drive',
       critical: false,
-      execute: async (tools, _ctx) => {
+      execute: async (tools, ctx) => {
         const tool = tools.get('list_files')!;
-        const result = await tool.execute({ maxResults: 5 });
+        const result = await tool.execute(withTargetUser(ctx, { maxResults: 5 }));
         if (!result.success) {
           return { success: false, message: result.error || 'List files failed', data: result };
         }
@@ -270,7 +288,7 @@ const googleWorkspaceSuite: IntegrationTestSuite = {
       execute: async (tools, ctx) => {
         const tool = tools.get('search_files')!;
         const query = ctx.params.testDriveQuery || 'test';
-        const result = await tool.execute({ query, maxResults: 5 });
+        const result = await tool.execute(withTargetUser(ctx, { query, maxResults: 5 }));
         if (!result.success) {
           return { success: false, message: result.error || 'Search files failed', data: result };
         }
@@ -288,13 +306,11 @@ const googleWorkspaceSuite: IntegrationTestSuite = {
       critical: false,
       execute: async (tools, ctx) => {
         const tool = tools.get('read_file')!;
-        // Try to use a file from previous search, or just test with a known file
         const searchResult = ctx.state.searchFileId as string | undefined;
         if (!searchResult) {
-          // Try listing first to get a file ID
           const listTool = tools.get('list_files');
           if (listTool) {
-            const listResult = await listTool.execute({ maxResults: 1 });
+            const listResult = await listTool.execute(withTargetUser(ctx, { maxResults: 1 }));
             if (listResult.success && listResult.files?.length > 0) {
               ctx.state.searchFileId = listResult.files[0].id;
             }
@@ -304,7 +320,7 @@ const googleWorkspaceSuite: IntegrationTestSuite = {
         if (!fileId) {
           return { success: true, message: 'No files available to read (empty Drive)', data: {} };
         }
-        const result = await tool.execute({ fileId });
+        const result = await tool.execute(withTargetUser(ctx, { fileId }));
         if (!result.success) {
           return { success: false, message: result.error || 'Read file failed', data: result };
         }

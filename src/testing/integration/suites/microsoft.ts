@@ -3,10 +3,22 @@
  *
  * Tests: Outlook (draft, send), Calendar (create, list, get, edit, find slots, transcript),
  *        OneDrive/SharePoint (list, search, read)
+ *
+ * NOTE: When using app-only (client_credentials) auth, most Microsoft Graph tools
+ * require `targetUser` to specify which mailbox/calendar to act on.
+ * Provide it in the optional params.
  */
 
-import type { IntegrationTestSuite } from '../types.js';
+import type { IntegrationTestSuite, TestContext } from '../types.js';
 import { registerSuite } from '../runner.js';
+
+/** If targetUser param is set, include it in tool args for app-only auth. */
+function withTargetUser(ctx: TestContext, args: Record<string, unknown>): Record<string, unknown> {
+  if (ctx.params.targetUser) {
+    return { ...args, targetUser: ctx.params.targetUser };
+  }
+  return args;
+}
 
 const microsoftSuite: IntegrationTestSuite = {
   id: 'microsoft-365',
@@ -24,6 +36,13 @@ const microsoftSuite: IntegrationTestSuite = {
     },
   ],
   optionalParams: [
+    {
+      key: 'targetUser',
+      label: 'Target User (App-Only Auth)',
+      description: 'User email/ID for app-only (client_credentials) auth, e.g. "alice@contoso.com". Required for app-permission connectors, leave empty for delegated auth.',
+      type: 'email',
+      required: false,
+    },
     {
       key: 'testDriveQuery',
       label: 'OneDrive Search Query',
@@ -50,11 +69,11 @@ const microsoftSuite: IntegrationTestSuite = {
       critical: false,
       execute: async (tools, ctx) => {
         const tool = tools.get('create_draft_email')!;
-        const result = await tool.execute({
+        const result = await tool.execute(withTargetUser(ctx, {
           to: [ctx.params.testRecipientEmail],
           subject: `[Integration Test] Draft - ${new Date().toISOString()}`,
           body: 'This is an automated integration test draft. Safe to delete.',
-        });
+        }));
         if (!result.success) {
           return { success: false, message: result.error || 'Draft creation failed', data: result };
         }
@@ -70,11 +89,11 @@ const microsoftSuite: IntegrationTestSuite = {
       critical: false,
       execute: async (tools, ctx) => {
         const tool = tools.get('send_email')!;
-        const result = await tool.execute({
+        const result = await tool.execute(withTargetUser(ctx, {
           to: [ctx.params.testRecipientEmail],
           subject: `[Integration Test] Send - ${new Date().toISOString()}`,
           body: 'This is an automated integration test email. Safe to delete.',
-        });
+        }));
         if (!result.success) {
           return { success: false, message: result.error || 'Send failed', data: result };
         }
@@ -93,7 +112,7 @@ const microsoftSuite: IntegrationTestSuite = {
         const tool = tools.get('create_meeting')!;
         const start = new Date(Date.now() + 24 * 60 * 60 * 1000);
         const end = new Date(start.getTime() + 60 * 60 * 1000);
-        const result = await tool.execute({
+        const result = await tool.execute(withTargetUser(ctx, {
           subject: `[Integration Test] Meeting - ${new Date().toISOString()}`,
           startDateTime: start.toISOString().replace('Z', ''),
           endDateTime: end.toISOString().replace('Z', ''),
@@ -101,7 +120,7 @@ const microsoftSuite: IntegrationTestSuite = {
           body: '<p>Automated integration test meeting. Safe to delete.</p>',
           isOnlineMeeting: true,
           timeZone: 'UTC',
-        });
+        }));
         if (!result.success) {
           return { success: false, message: result.error || 'Create meeting failed', data: result };
         }
@@ -112,9 +131,12 @@ const microsoftSuite: IntegrationTestSuite = {
         if (ctx.state.meetingId && tools.has('api')) {
           try {
             const apiTool = tools.get('api')!;
+            const userPath = ctx.params.targetUser
+              ? `/users/${ctx.params.targetUser}`
+              : '/me';
             await apiTool.execute({
               method: 'DELETE',
-              endpoint: `/me/events/${ctx.state.meetingId}`,
+              endpoint: `${userPath}/events/${ctx.state.meetingId}`,
             });
           } catch {
             // Best effort
@@ -127,16 +149,16 @@ const microsoftSuite: IntegrationTestSuite = {
       toolName: 'list_meetings',
       description: 'Lists upcoming Microsoft Calendar events',
       critical: false,
-      execute: async (tools, _ctx) => {
+      execute: async (tools, ctx) => {
         const tool = tools.get('list_meetings')!;
         const now = new Date();
         const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-        const result = await tool.execute({
+        const result = await tool.execute(withTargetUser(ctx, {
           startDateTime: now.toISOString(),
           endDateTime: weekLater.toISOString(),
           maxResults: 10,
           timeZone: 'UTC',
-        });
+        }));
         if (!result.success) {
           return { success: false, message: result.error || 'List meetings failed', data: result };
         }
@@ -158,7 +180,7 @@ const microsoftSuite: IntegrationTestSuite = {
           return { success: false, message: 'No meeting ID from create test' };
         }
         const tool = tools.get('get_meeting')!;
-        const result = await tool.execute({ eventId: meetingId });
+        const result = await tool.execute(withTargetUser(ctx, { eventId: meetingId }));
         if (!result.success) {
           return { success: false, message: result.error || 'Get meeting failed', data: result };
         }
@@ -176,10 +198,10 @@ const microsoftSuite: IntegrationTestSuite = {
           return { success: false, message: 'No meeting ID from create test' };
         }
         const tool = tools.get('edit_meeting')!;
-        const result = await tool.execute({
+        const result = await tool.execute(withTargetUser(ctx, {
           eventId: meetingId,
           subject: `[Integration Test] Updated - ${new Date().toISOString()}`,
-        });
+        }));
         if (!result.success) {
           return { success: false, message: result.error || 'Edit meeting failed', data: result };
         }
@@ -197,13 +219,13 @@ const microsoftSuite: IntegrationTestSuite = {
         const attendees = ctx.params.testSlotAttendees!.split(',').map((e) => e.trim());
         const now = new Date();
         const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-        const result = await tool.execute({
+        const result = await tool.execute(withTargetUser(ctx, {
           attendees,
           startDateTime: now.toISOString(),
           endDateTime: tomorrow.toISOString(),
           durationMinutes: 30,
           timeZone: 'UTC',
-        });
+        }));
         if (!result.success) {
           return { success: false, message: result.error || 'Find slots failed', data: result };
         }
@@ -221,12 +243,11 @@ const microsoftSuite: IntegrationTestSuite = {
       critical: false,
       execute: async (tools, ctx) => {
         const tool = tools.get('get_meeting_transcript')!;
-        // Use the meeting ID from creation or just test with a recent one
         const meetingId = ctx.state.meetingId as string | undefined;
         if (!meetingId) {
           return { success: true, message: 'No meeting ID to check transcript for' };
         }
-        const result = await tool.execute({ meetingId });
+        const result = await tool.execute(withTargetUser(ctx, { meetingId }));
         if (!result.success && (result.error?.includes('not found') || result.error?.includes('No transcript'))) {
           return { success: true, message: 'API call succeeded (no transcript available)', data: result };
         }
@@ -245,7 +266,7 @@ const microsoftSuite: IntegrationTestSuite = {
       critical: false,
       execute: async (tools, ctx) => {
         const tool = tools.get('list_files')!;
-        const result = await tool.execute({ maxResults: 5 });
+        const result = await tool.execute(withTargetUser(ctx, { maxResults: 5 }));
         if (!result.success) {
           return { success: false, message: result.error || 'List files failed', data: result };
         }
@@ -264,7 +285,7 @@ const microsoftSuite: IntegrationTestSuite = {
       execute: async (tools, ctx) => {
         const tool = tools.get('search_files')!;
         const query = ctx.params.testDriveQuery || 'test';
-        const result = await tool.execute({ query, maxResults: 5 });
+        const result = await tool.execute(withTargetUser(ctx, { query, maxResults: 5 }));
         if (!result.success) {
           return { success: false, message: result.error || 'Search files failed', data: result };
         }
@@ -286,7 +307,7 @@ const microsoftSuite: IntegrationTestSuite = {
           return { success: true, message: 'No files available to read (empty OneDrive)' };
         }
         const tool = tools.get('read_file')!;
-        const result = await tool.execute({ fileId });
+        const result = await tool.execute(withTargetUser(ctx, { fileId }));
         if (!result.success) {
           return { success: false, message: result.error || 'Read file failed', data: result };
         }
