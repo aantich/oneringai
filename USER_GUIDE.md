@@ -65,9 +65,13 @@ A comprehensive guide to using all features of the @everworker/oneringai library
     - Web Tools (webFetch, web_search via ConnectorTools, web_scrape via ConnectorTools)
     - JSON Tool
     - GitHub Connector Tools (search_files, search_code, read_file, get_pr, pr_files, pr_comments, create_pr)
-    - Microsoft Graph Connector Tools (create_draft_email, send_email, create_meeting, edit_meeting, find_meeting_slots, get_meeting_transcript)
+    - Microsoft Graph Connector Tools (11 tools: email, calendar, meetings, Teams transcripts, OneDrive/SharePoint files)
+    - [Google Workspace Connector Tools](#google-workspace-connector-tools) — Gmail, Calendar, Meet, Drive (11 tools)
+    - [Zoom Connector Tools](#zoom-connector-tools) — Meeting management and transcripts (3 tools)
     - [Telegram Connector Tools](#telegram-connector-tools) — Bot API tools (send_message, send_photo, get_updates, set_webhook, get_me, get_chat)
     - [Twilio Connector Tools](#twilio-connector-tools) — SMS and WhatsApp (send_sms, send_whatsapp, list_messages, get_message)
+    - [Unified Calendar Tool](#unified-calendar-tool) — Cross-provider meeting slot finder (Google + Microsoft)
+    - [Multi-Account Connectors](#multi-account-connectors) — Multiple accounts per vendor with automatic routing
 15. [Dynamic Tool Management](#dynamic-tool-management)
 16. [Async (Non-Blocking) Tools](#async-non-blocking-tools)
     - How It Works (Lifecycle)
@@ -4742,7 +4746,7 @@ const myTool: ToolFunction = {
 
 ### Built-in Tools Overview
 
-The library ships with 38+ built-in tools across 8 categories:
+The library ships with 70+ built-in tools across 14 categories:
 
 | Category | Tools | Description |
 |----------|-------|-------------|
@@ -4753,7 +4757,12 @@ The library ships with 38+ built-in tools across 8 categories:
 | **Desktop** | `desktop_screenshot`, `desktop_mouse_*`, `desktop_keyboard_*`, `desktop_window_*`, `desktop_get_*` | OS-level desktop automation (11 tools, requires `@nut-tree-fork/nut-js`) |
 | **Code** | `executeJavaScript` | Sandboxed JavaScript execution |
 | **JSON** | `jsonManipulator` | JSON object manipulation (add, delete, replace fields) |
-| **GitHub** | `search_files`, `search_code`, `read_file`, `get_pr`, `pr_files`, `pr_comments`, `create_pr` | GitHub API operations (auto-registered for GitHub connectors) |
+| **GitHub** | `search_files`, `search_code`, `read_file`, `get_pr`, `pr_files`, `pr_comments`, `create_pr` | GitHub API operations (7 tools, auto-registered for GitHub connectors) |
+| **Microsoft** | `create_draft_email`, `send_email`, `create_meeting`, `edit_meeting`, `get_meeting`, `list_meetings`, `find_meeting_slots`, `get_meeting_transcript`, `read_file`, `list_files`, `search_files` | Microsoft Graph tools (11 tools, auto-registered) |
+| **Google** | `create_draft_email`, `send_email`, `create_meeting`, `edit_meeting`, `get_meeting`, `list_meetings`, `find_meeting_slots`, `get_meeting_transcript`, `read_file`, `list_files`, `search_files` | Google Workspace tools (11 tools, auto-registered) |
+| **Zoom** | `zoom_create_meeting`, `zoom_update_meeting`, `zoom_get_transcript` | Zoom meeting tools (3 tools, auto-registered) |
+| **Telegram** | `telegram_send_message`, `telegram_send_photo`, `telegram_get_updates`, `telegram_set_webhook`, `telegram_get_me`, `telegram_get_chat` | Telegram Bot API tools (6 tools, auto-registered) |
+| **Twilio** | `send_sms`, `send_whatsapp`, `list_messages`, `get_message` | SMS and WhatsApp tools (4 tools, auto-registered) |
 | **Multimedia** | `generate_image`, `generate_video`, `text_to_speech`, `speech_to_text` | Media generation (auto-registered for AI vendor connectors) |
 
 Memory, In-Context Memory, and Persistent Instructions tools are documented in their respective sections above. Multimedia tools are documented in the Audio, Image, and Video sections. Desktop tools are documented in the Desktop Automation Tools section below. The rest are documented below.
@@ -6149,7 +6158,7 @@ const { owner, repo } = parseRepository('https://github.com/facebook/react');
 
 ### Microsoft Graph Connector Tools
 
-When a Microsoft connector is configured, `ConnectorTools.for('microsoft')` automatically includes 6 dedicated tools alongside the generic API tool. These enable email, calendar, meetings, and Teams transcript workflows.
+When a Microsoft connector is configured, `ConnectorTools.for('microsoft')` automatically includes 11 dedicated tools alongside the generic API tool. These enable email, calendar, meetings, Teams transcript, and OneDrive/SharePoint file workflows.
 
 #### Quick Start
 
@@ -6164,7 +6173,7 @@ Connector.create({
   baseURL: 'https://graph.microsoft.com/v1.0',
 });
 
-// Get all Microsoft tools (generic API + 6 dedicated tools)
+// Get all Microsoft tools (generic API + 11 dedicated tools)
 const tools = ConnectorTools.for('microsoft');
 
 // Use with an agent
@@ -6176,6 +6185,7 @@ const agent = Agent.create({
 
 await agent.run('Draft an email to alice@example.com about the project update');
 await agent.run('Schedule a 30-minute Teams meeting with bob@example.com next Tuesday at 2pm');
+await agent.run('Find my recent files in OneDrive about the project plan');
 ```
 
 #### Delegated vs Application Mode
@@ -6187,7 +6197,7 @@ Microsoft Graph supports two permission modes:
 | **Delegated** | `/me` | User signs in via OAuth. Tools access the signed-in user's mailbox/calendar. |
 | **Application** | `/users/{targetUser}` | App authenticates as itself (client_credentials). Requires `targetUser` parameter in each tool call. |
 
-All 6 tools accept an optional `targetUser` parameter (email or user ID). When using delegated auth, this is ignored and `/me` is used automatically.
+All 11 tools accept an optional `targetUser` parameter (email or user ID). When using delegated auth, this is ignored and `/me` is used automatically.
 
 #### create_draft_email
 
@@ -6407,6 +6417,186 @@ createConnectorFromTemplate('my-twilio', 'twilio', 'api-key', {
 - Form-encoded POST: Twilio API uses `application/x-www-form-urlencoded` for mutations
 - Phone helpers: `normalizePhoneNumber()` ensures E.164 format, `toWhatsAppNumber()` adds `whatsapp:` prefix
 - Account SID resolution: `getAccountSid()` resolves from `extra.accountId` on the connector
+
+### Google Workspace Connector Tools
+
+11 tools for Google APIs (Gmail, Calendar, Meet, Drive), auto-registered via `ConnectorTools.for('google-api')` when a connector with `serviceType: 'google-api'` exists:
+
+```typescript
+import { Connector, ConnectorTools, Agent, Vendor } from '@everworker/oneringai';
+
+// Create Google OAuth connector
+Connector.create({
+  name: 'google',
+  vendor: Vendor.Google,
+  baseURL: 'https://www.googleapis.com',
+  auth: {
+    type: 'oauth', flow: 'authorization_code',
+    clientId: process.env.GOOGLE_CLIENT_ID!,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    redirectUri: 'http://localhost:3000/callback',
+    scope: 'https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly',
+  },
+  config: { serviceType: 'google-api' },
+});
+
+// Get all Google tools (generic API + 11 dedicated tools)
+const tools = ConnectorTools.for('google');
+
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools,
+});
+
+await agent.run('Draft an email to alice@example.com about the project update');
+await agent.run('Create a calendar event for next Tuesday at 2pm with Google Meet');
+await agent.run('Search my Drive for the Q4 report');
+```
+
+| Tool | Description | Risk |
+|------|-------------|------|
+| `create_draft_email` | Create a draft email in Gmail, optionally as a reply | medium |
+| `send_email` | Send an email or reply via Gmail with HTML body support | once |
+| `create_meeting` | Create Google Calendar event with optional Google Meet link | medium |
+| `edit_meeting` | Update an existing Google Calendar event | medium |
+| `get_meeting` | Get full details of a single calendar event | low |
+| `list_meetings` | List calendar events in a time window | low |
+| `find_meeting_slots` | Find available time slots via Google freeBusy API | low |
+| `get_meeting_transcript` | Retrieve Google Meet transcript from Drive | low |
+| `read_file` | Read a file from Google Drive as markdown (Docs, Sheets, Slides, PDF, images) | low |
+| `list_files` | List files/folders in Google Drive | low |
+| `search_files` | Full-text search across Google Drive | low |
+
+**Authentication modes:**
+
+| Mode | `userId` param | When to use |
+|------|---------------|-------------|
+| **OAuth (delegated)** | User's identity | User signs in via Google OAuth. Tools access the signed-in user's Gmail/Calendar/Drive. |
+| **Service Account** | Service account email | Server-to-server access. `targetUser` parameter in tools for domain-wide delegation. |
+
+**Key patterns:**
+- `googleFetch()` helper handles OAuth and service account auth, JSON encoding, error parsing, and multi-account awareness
+- Google-native file formats (Docs, Sheets, Slides) are exported to markdown/CSV automatically in `read_file`
+- `isServiceAccountAuth()` checks connector auth type to determine path prefix behavior
+- All tools accept optional `targetUser` parameter for service account impersonation
+
+### Zoom Connector Tools
+
+3 tools for Zoom meeting management, auto-registered via `ConnectorTools.for('zoom')`:
+
+```typescript
+import { createConnectorFromTemplate, ConnectorTools } from '@everworker/oneringai';
+
+// OAuth User Token
+createConnectorFromTemplate('my-zoom', 'zoom', 'oauth-user', {
+  clientId: process.env.ZOOM_CLIENT_ID!,
+  redirectUri: 'http://localhost:3000/callback',
+});
+
+// Or Server-to-Server OAuth
+createConnectorFromTemplate('zoom-s2s', 'zoom', 'oauth-s2s', {
+  clientId: process.env.ZOOM_S2S_CLIENT_ID!,
+  clientSecret: process.env.ZOOM_S2S_CLIENT_SECRET!,
+  extra: { accountId: process.env.ZOOM_ACCOUNT_ID! },
+});
+```
+
+| Tool | Description | Risk |
+|------|-------------|------|
+| `zoom_create_meeting` | Create instant or scheduled Zoom meeting. Returns join URL, start URL, password. | once |
+| `zoom_update_meeting` | Update meeting settings (topic, time, duration, waiting room, join-before-host) | once |
+| `zoom_get_transcript` | Download and parse cloud recording transcript (VTT → structured speaker-attributed text) | session |
+
+**Key patterns:**
+- `zoomFetch()` helper with query param support, error handling, and 204 No Content handling
+- `parseMeetingId()` extracts meeting ID from URL (`https://zoom.us/j/123...`) or raw numeric ID
+- `parseVTT()` parses WebVTT transcript into structured `TranscriptEntry[]` with speaker, timestamps, and text
+
+### Unified Calendar Tool
+
+Cross-provider meeting slot finder that aggregates busy intervals from multiple calendar backends (Google, Microsoft):
+
+```typescript
+import {
+  createUnifiedFindMeetingSlotsTool,
+  createGoogleCalendarSlotsProvider,
+  createMicrosoftCalendarSlotsProvider,
+} from '@everworker/oneringai';
+
+// Create providers from existing connectors
+const googleProvider = createGoogleCalendarSlotsProvider(googleConnector);
+const msftProvider = createMicrosoftCalendarSlotsProvider(msftConnector);
+
+// Unified tool checks all providers in parallel
+const tool = createUnifiedFindMeetingSlotsTool([googleProvider, msftProvider]);
+
+const result = await tool.execute({
+  attendees: ['alice@gmail.com', 'bob@outlook.com'],
+  startDateTime: '2026-04-15T08:00:00',
+  endDateTime: '2026-04-15T18:00:00',
+  duration: 30,
+  timeZone: 'America/New_York',
+  maxResults: 5,
+  // Optional: route attendees to specific providers
+  attendeeMapping: {
+    'alice@gmail.com': 'Google',
+    'bob@outlook.com': 'Microsoft',
+  },
+});
+// result.slots: MeetingSlotSuggestion[] — times when ALL attendees are free
+```
+
+The `ICalendarSlotsProvider` interface is extensible — implement it for any calendar backend:
+
+```typescript
+interface ICalendarSlotsProvider {
+  readonly name: string;
+  execute(args: GetBusyIntervalsArgs): Promise<GetBusyIntervalsResult>;
+}
+```
+
+### Multi-Account Connectors
+
+Use multiple accounts per connector (e.g., work + personal Microsoft accounts) with automatic account resolution:
+
+```typescript
+import { Agent, Connector, Vendor } from '@everworker/oneringai';
+
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  identities: [
+    { connector: 'microsoft', accountId: 'work' },
+    { connector: 'microsoft', accountId: 'personal' },
+    { connector: 'google', accountId: 'main', toolFilter: ['send_email', 'read_file'] },
+  ],
+});
+```
+
+**How it works:**
+
+1. Each identity generates its own set of tools via `ConnectorTools.for(connector, { accountId })`
+2. Tools are registered with source metadata (e.g., `connector:microsoft:work`) for identity filtering
+3. `toolFilter` (optional) restricts which tools are generated per identity
+4. Account resolution follows a 4-tier priority:
+   - Explicit `accountId` from `ConnectorTools.for({ accountId })` (highest)
+   - `context.accountId` already set on `ToolContext`
+   - `context.connectorAccounts[connectorName]` per-connector binding map
+   - `undefined` — legacy path, no binding
+
+**OAuth account management:**
+
+```typescript
+// Re-key a temporary account ID to a stable one (e.g., after discovering email)
+await connector.rekeyAccount('user-123', 'temp-abc', 'alice@work.com');
+
+// Remove an account
+await connector.removeAccount('user-123', 'personal');
+
+// List all accounts for a user
+const accounts = await connector.listAccounts('user-123');
+```
 
 ---
 
@@ -11767,7 +11957,11 @@ All tools generated by `ConnectorTools.for()` are prefixed with the connector na
 
 **Services with built-in tools:**
 - **GitHub** — 7 tools: `search_files`, `search_code`, `read_file`, `get_pr`, `pr_files`, `pr_comments`, `create_pr` (see [GitHub Connector Tools](#github-connector-tools))
-- **Microsoft** — 6 tools: `create_draft_email`, `send_email`, `create_meeting`, `edit_meeting`, `find_meeting_slots`, `get_meeting_transcript` (see [Microsoft Graph Connector Tools](#microsoft-graph-connector-tools))
+- **Microsoft** — 11 tools: email, calendar, meetings, Teams transcripts, OneDrive/SharePoint files (see [Microsoft Graph Connector Tools](#microsoft-graph-connector-tools))
+- **Google Workspace** — 11 tools: Gmail, Calendar, Meet transcripts, Drive files (see [Google Workspace Connector Tools](#google-workspace-connector-tools))
+- **Zoom** — 3 tools: `zoom_create_meeting`, `zoom_update_meeting`, `zoom_get_transcript` (see [Zoom Connector Tools](#zoom-connector-tools))
+- **Telegram** — 6 tools: `telegram_send_message`, `telegram_send_photo`, `telegram_get_updates`, `telegram_set_webhook`, `telegram_get_me`, `telegram_get_chat` (see [Telegram Connector Tools](#telegram-connector-tools))
+- **Twilio** — 4 tools: `send_sms`, `send_whatsapp`, `list_messages`, `get_message` (see [Twilio Connector Tools](#twilio-connector-tools))
 - **AI Vendors** (OpenAI, Google, Grok) — Multimedia tools: `generate_image`, `generate_video`, `text_to_speech`, `speech_to_text`
 
 This ensures that tools from different vendors (e.g., `google_generate_image` vs `main-openai_generate_image`) never collide, and are clearly identified by connector in UIs and agent configs.

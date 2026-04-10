@@ -42,6 +42,11 @@
   - [27. Agent Orchestrator](#27-agent-orchestrator-new) — Multi-agent teams with shared workspace, delegation, and async execution
   - [28. Telegram Connector Tools](#28-telegram-connector-tools-new) — Bot API tools for messaging, updates, and webhooks
   - [29. Twilio Connector Tools](#29-twilio-connector-tools-new) — SMS and WhatsApp messaging tools
+  - [30. Google Workspace Connector Tools](#30-google-workspace-connector-tools-new) — Gmail, Calendar, Meet, and Drive tools
+  - [31. Zoom Connector Tools](#31-zoom-connector-tools-new) — Meeting management and transcripts
+  - [32. Unified Calendar](#32-unified-calendar-new) — Cross-provider meeting slot finder (Google + Microsoft)
+  - [33. Multi-Account Connectors](#33-multi-account-connectors-new) — Multiple accounts per vendor with automatic routing
+  - [34. Integration Testing](#34-integration-testing-new) — Reusable test suites for connector tools
 - [MCP Integration](#mcp-model-context-protocol-integration)
 - [Documentation](#documentation)
 - [Examples](#examples)
@@ -130,6 +135,11 @@ Showcasing another amazing "built with oneringai": ["no saas" agentic business t
 - 📡 **Agent Registry** - NEW: Global tracking of all active agents — deep inspection, parent/child hierarchy, event fan-in, external control
 - 📱 **Telegram Tools** - NEW: 6 Telegram Bot API tools — send messages/photos, get updates, webhooks, chat info
 - 📞 **Twilio Tools** - NEW: 4 Twilio tools — SMS, WhatsApp messaging, message listing and details
+- 📧 **Google Workspace Tools** - NEW: 11 tools for Gmail, Calendar, Meet transcripts, and Drive (read, search, list files)
+- 🎥 **Zoom Tools** - NEW: 3 Zoom tools — create/update meetings, get cloud recording transcripts
+- 📅 **Unified Calendar** - NEW: Cross-provider meeting slot finder aggregating Google + Microsoft calendars
+- 👥 **Multi-Account Connectors** - NEW: Multiple accounts per vendor (e.g., work + personal) with automatic routing
+- 🧪 **Integration Testing** - NEW: Reusable test suite framework for connector tools with 10 built-in suites
 - 🔄 **Streaming** - Real-time responses with event streams
 - 📝 **TypeScript** - Full type safety and IntelliSense support
 
@@ -1718,9 +1728,10 @@ await agent.run('Show me PR #42 and summarize the review comments');
 ```
 
 **Supported Services (35+):**
-- **Communication**: Slack, Discord, Microsoft Teams, Twilio
+- **Communication**: Slack, Discord, Microsoft Teams, Twilio, Telegram *(6 built-in tools)*, Zoom *(3 built-in tools)*
 - **Development**: GitHub *(7 built-in tools)*, GitLab, Jira, Linear, Bitbucket
-- **Microsoft**: Microsoft Graph *(6 built-in tools)* — email, calendar, meetings, Teams transcripts
+- **Google Workspace**: Google APIs *(11 built-in tools)* — Gmail, Calendar, Meet transcripts, Drive
+- **Microsoft**: Microsoft Graph *(11 built-in tools)* — email, calendar, meetings, Teams transcripts, OneDrive
 - **Productivity**: Notion, Asana, Monday, Airtable, Trello
 - **CRM**: Salesforce, HubSpot, Zendesk, Intercom
 - **Payments**: Stripe, PayPal, Square
@@ -1829,7 +1840,7 @@ await agent.run('List my GitHub repositories');
 **Supported Categories (43 vendors):**
 | Category | Vendors |
 |----------|---------|
-| Communication | Slack, Discord, Telegram, Microsoft Teams |
+| Communication | Slack, Discord, Telegram, Microsoft Teams, Zoom, Twilio |
 | Development | GitHub, GitLab, Bitbucket, Jira, Linear, Asana, Trello |
 | Productivity | Notion, Airtable, Google Workspace, Microsoft 365, Confluence |
 | CRM | Salesforce, HubSpot, Pipedrive |
@@ -1840,7 +1851,7 @@ await agent.run('List my GitHub repositories');
 | Monitoring | Datadog, PagerDuty, Sentry |
 | Search | Serper, Brave, Tavily, RapidAPI |
 | Scrape | ZenRows |
-| Other | Twilio, Zendesk, Intercom, Shopify |
+| Other | Zendesk, Intercom, Shopify |
 
 Each vendor includes:
 - **Credentials setup URL** - Direct link to where you create API keys
@@ -1889,7 +1900,7 @@ for (const tool of allTools) {
 
 ### 23. Microsoft Graph Connector Tools (NEW)
 
-6 dedicated tools for Microsoft Graph API — email, calendar, meetings, and Teams transcripts. Auto-registered for connectors with `serviceType: 'microsoft'` or `baseURL` matching `graph.microsoft.com`.
+11 dedicated tools for Microsoft Graph API — email, calendar, meetings, Teams transcripts, and OneDrive/SharePoint files. Auto-registered for connectors with `serviceType: 'microsoft'` or `baseURL` matching `graph.microsoft.com`.
 
 ```typescript
 import { Connector, ConnectorTools, Services, Agent } from '@everworker/oneringai';
@@ -1902,7 +1913,7 @@ Connector.create({
   baseURL: 'https://graph.microsoft.com/v1.0',
 });
 
-// Get all Microsoft tools (generic API + 6 dedicated tools)
+// Get all Microsoft tools (generic API + 11 dedicated tools)
 const tools = ConnectorTools.for('microsoft');
 
 const agent = Agent.create({
@@ -1923,8 +1934,13 @@ await agent.run('Find available meeting slots for alice and bob this week');
 | `send_email` | Send an email or reply immediately | medium |
 | `create_meeting` | Create calendar event with optional Teams link | medium |
 | `edit_meeting` | Update an existing calendar event | medium |
+| `get_meeting` | Get full details of a single calendar event | low |
+| `list_meetings` | List calendar events in a time window | low |
 | `find_meeting_slots` | Find available slots when all attendees are free | low |
 | `get_meeting_transcript` | Retrieve Teams meeting transcript as text | low |
+| `read_file` | Read a OneDrive/SharePoint file as markdown | low |
+| `list_files` | List files/folders in OneDrive/SharePoint | low |
+| `search_files` | Search across OneDrive/SharePoint | low |
 
 Supports both **delegated** (`/me` — user signs in) and **application** (`/users/{id}` — app-only) permission modes. See the [User Guide](./USER_GUIDE.md#microsoft-graph-connector-tools) for full parameter reference.
 
@@ -2256,6 +2272,127 @@ createConnectorFromTemplate('my-twilio', 'twilio', 'api-key', {
 }, { vendorOptions: { defaultFromNumber: '+15551234567' } });
 
 // Tools: send_sms, send_whatsapp, list_messages, get_message
+```
+
+### 31. Google Workspace Connector Tools (NEW)
+
+11 tools for Google APIs (Gmail, Calendar, Meet, Drive), auto-registered via `ConnectorTools.for('google-api')`:
+
+```typescript
+import { Connector, Agent, Vendor, ConnectorTools } from '@everworker/oneringai';
+
+// OAuth connector for Google
+Connector.create({
+  name: 'google',
+  vendor: Vendor.Google,
+  baseURL: 'https://www.googleapis.com',
+  auth: {
+    type: 'oauth', flow: 'authorization_code',
+    clientId: process.env.GOOGLE_CLIENT_ID!,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    redirectUri: 'http://localhost:3000/callback',
+    scope: 'https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly',
+  },
+  config: { serviceType: 'google-api' },
+});
+
+// All 11 tools auto-available:
+// create_draft_email, send_email, create_meeting, edit_meeting,
+// get_meeting, list_meetings, find_meeting_slots, get_meeting_transcript,
+// read_file, list_files, search_files
+const tools = ConnectorTools.for('google');
+```
+
+| Tool | Purpose | Risk |
+|------|---------|------|
+| `create_draft_email` | Create Gmail draft (or reply draft) | medium |
+| `send_email` | Send email or reply via Gmail | once |
+| `create_meeting` | Create Calendar event with optional Meet link | medium |
+| `edit_meeting` | Update existing Calendar event | medium |
+| `get_meeting` | Get full details of a calendar event | low |
+| `list_meetings` | List calendar events in time window | low |
+| `find_meeting_slots` | Find free slots via freeBusy API | low |
+| `get_meeting_transcript` | Get Meet transcript from Drive | low |
+| `read_file` | Read Drive file as markdown | low |
+| `list_files` | List Drive files/folders | low |
+| `search_files` | Full-text search across Drive | low |
+
+### 32. Zoom Connector Tools (NEW)
+
+3 tools for Zoom meeting management, auto-registered via `ConnectorTools.for('zoom')`:
+
+```typescript
+import { createConnectorFromTemplate, ConnectorTools } from '@everworker/oneringai';
+
+createConnectorFromTemplate('my-zoom', 'zoom', 'oauth-user', {
+  clientId: process.env.ZOOM_CLIENT_ID!,
+  redirectUri: 'http://localhost:3000/callback',
+});
+
+// Tools: zoom_create_meeting, zoom_update_meeting, zoom_get_transcript
+const tools = ConnectorTools.for('my-zoom');
+```
+
+### 33. Unified Calendar (NEW)
+
+Cross-provider meeting slot finder — aggregates busy intervals from Google + Microsoft calendars:
+
+```typescript
+import {
+  createUnifiedFindMeetingSlotsTool,
+  createGoogleCalendarSlotsProvider,
+  createMicrosoftCalendarSlotsProvider,
+} from '@everworker/oneringai';
+
+const tool = createUnifiedFindMeetingSlotsTool([
+  createGoogleCalendarSlotsProvider(googleConnector),
+  createMicrosoftCalendarSlotsProvider(msftConnector),
+]);
+
+const result = await tool.execute({
+  attendees: ['alice@gmail.com', 'bob@outlook.com'],
+  startDateTime: '2026-04-15T08:00:00',
+  endDateTime: '2026-04-15T18:00:00',
+  duration: 30,
+});
+// Returns: slots where ALL attendees across ALL providers are free
+```
+
+### 34. Multi-Account Connectors (NEW)
+
+Use multiple accounts per connector (e.g., work + personal Microsoft accounts):
+
+```typescript
+import { Agent, Connector, Vendor } from '@everworker/oneringai';
+
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  identities: [
+    { connector: 'microsoft', accountId: 'work' },
+    { connector: 'microsoft', accountId: 'personal' },
+    { connector: 'google', accountId: 'main', toolFilter: ['send_email', 'read_file'] },
+  ],
+});
+// Each identity generates its own set of account-prefixed tools.
+// toolFilter restricts which tools are created per identity.
+```
+
+### 35. Integration Testing (NEW)
+
+Reusable test suite framework for validating connector tools against live APIs:
+
+```typescript
+import { IntegrationTestRunner } from '@everworker/oneringai';
+
+// List all available suites
+const suites = IntegrationTestRunner.getAllSuites();
+// → google, microsoft, slack, github, telegram, twilio, zoom, web-search, web-scrape, generic-api
+
+// Run a suite
+const result = await IntegrationTestRunner.runSuite('google', tools, {
+  params: { testEmail: 'test@example.com' },
+});
 ```
 
 ---

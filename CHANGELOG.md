@@ -7,6 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-04-10
+
+### Added
+- **Google Workspace Connector Tools**: 11 new tools for Google APIs, auto-registered with ConnectorTools for the `google-api` service type:
+  - `create_draft_email` — Create a draft email in Gmail, optionally as a reply
+  - `send_email` — Send an email or reply via Gmail with HTML body support
+  - `create_meeting` — Create a Google Calendar event with optional Google Meet link
+  - `edit_meeting` — Update an existing Google Calendar event
+  - `get_meeting` — Get full details of a single calendar event
+  - `list_meetings` — List calendar events in a time window
+  - `find_meeting_slots` — Find available meeting time slots via Google freeBusy API
+  - `get_meeting_transcript` — Retrieve Google Meet transcript from Google Drive
+  - `read_file` — Read a file from Google Drive as markdown (Docs, Sheets, Slides, PDF, images, etc.)
+  - `list_files` — List files/folders in Google Drive
+  - `search_files` — Full-text search across Google Drive
+  - Shared `googleFetch()` helper with service-account and OAuth support, error handling, and multi-account awareness
+- **Zoom Connector Tools**: 3 new tools for Zoom API, auto-registered with ConnectorTools for the `zoom` service type:
+  - `zoom_create_meeting` — Create instant or scheduled Zoom meetings
+  - `zoom_update_meeting` — Update existing meeting settings (topic, time, duration, waiting room, etc.)
+  - `zoom_get_transcript` — Download and parse cloud recording transcripts (VTT → structured speaker-attributed text)
+  - Shared `zoomFetch()` helper, `parseMeetingId()` (URL or numeric), `parseVTT()` transcript parser
+  - Zoom vendor template with OAuth (user token) and Server-to-Server OAuth auth templates
+- **Unified Calendar Tool** (`find_meeting_slots`): Cross-provider meeting slot finder that aggregates busy intervals from multiple calendar systems (Google, Microsoft, etc.) and computes unified free slots where all attendees are available. Supports attendee-to-provider mapping for routing attendees to correct calendar backends.
+  - `ICalendarSlotsProvider` interface for pluggable calendar backends
+  - `createGoogleCalendarSlotsProvider()` and `createMicrosoftCalendarSlotsProvider()` adapters
+  - 15-minute granularity slot scanning with configurable duration and time window
+- **Multi-Account Connector Support**: Agents can now use multiple accounts per connector (e.g., `microsoft:work` + `microsoft:personal`) with automatic account resolution:
+  - `connectorAccounts` field on `ToolContext` — per-connector account binding map
+  - `ConnectorTools.withAccountBinding()` — unified 4-tier account resolution (explicit → context.accountId → connectorAccounts map → legacy)
+  - `resolveConnectorContext()` helper for consistent userId/accountId extraction in tool factories
+  - `AuthIdentity.toolFilter` — restrict which tools are generated per identity
+  - `ToolManager.mergeToolContext()` — partial context updates without wiping existing fields
+  - `AgentContextNextGen.syncToolContext()` auto-builds `connectorAccounts` from single-account identities
+  - `BaseAgent.registerIdentityTools()` — auto-generates and registers connector tools from agent identities
+  - `ToolCatalogRegistry` multi-account support: `connector:name:accountId` category format, per-account tool discovery via `forIdentities()`
+- **Microsoft Tools Enhancements**:
+  - `get_meeting` — Get full details of a single calendar event (new tool)
+  - `list_meetings` — List calendar events in a time window with join URLs (new tool)
+  - Rich reply support — `send_email` and `create_draft_email` now prepend HTML body above quoted original for threaded replies
+- **Tool Permissions Bypass** (`autoApproveAll`): New `PermissionPolicyManager` option that auto-approves all tools without interactive checks. Blocklist still respected for safety. Use for autonomous/scheduled execution where no approval UI exists.
+- **Integration Testing Framework**: Reusable test suite system for connector tools, exported as public API:
+  - `IntegrationTestRunner` — run suites against live connectors with parameterized test cases
+  - 10 built-in suites: Google, Microsoft, Slack, GitHub, Telegram, Twilio, Zoom, web-search, web-scrape, generic-api
+  - `registerSuite()` for custom suite registration
+- **Storage Admin Bypass** (`StorageUserContext`): New `bypassOwnerScope` flag for admin operations on documents owned by other users. `resolveStorageUserContext()` normalizer for backward-compatible `string | undefined | StorageUserContext` inputs. Applied to `IRoutineDefinitionStorage` and `IRoutineExecutionStorage`.
+- **OAuth Account Management**: `Connector.rekeyAccount()` to re-alias tokens (e.g., temporary ID → discovered email), `Connector.removeAccount()` to unlink accounts. `TokenStore.rekeyAccount()` and `removeAccount()` with in-memory + persistent cleanup. `authorizationParams` passthrough for custom OAuth flows.
+
+### Fixed
+- **Google OAuth refresh tokens**: Fixed refresh token handling in Google connector templates
+- **Connector ID resolution**: Fixed connector ID propagation in multi-account scenarios
+- **Microsoft reply-all**: Fixed `send_email` reply threading to correctly prepend new content above quoted original
+- **Microsoft tool error formatting**: Consistent `formatMicrosoftToolError()` across all Microsoft tools
+- **Tool adapter context propagation**: Fixed accountId/userId propagation through tool adapters
+- **OAuth token storage**: Multiple OAuth flow fixes for multi-account token management
+
+### Changed
+- **ConnectorTools API simplified**: Removed `ConnectorTools.genericAPI()` and `ConnectorTools.serviceTools()` — use `ConnectorTools.for()` for everything. All tools now get unified account binding wrapper.
+- **`ToolCatalogRegistry.parseConnectorCategory()`** now returns `ParsedConnectorCategory` object (with `connectorName` + `accountId`) instead of plain string
+- **ToolCatalog source tags**: Connector categories use category name directly as source (e.g., `connector:microsoft:work`) instead of `catalog:connector:...` prefix
+
 ## [0.5.2] - 2026-04-08
 
 ### Added
