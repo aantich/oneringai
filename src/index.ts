@@ -1409,3 +1409,15 @@ export type { IScheduler, ScheduleHandle, ScheduleSpec } from './domain/interfac
 export { SimpleScheduler } from './infrastructure/scheduling/SimpleScheduler.js';
 export { EventEmitterTrigger } from './infrastructure/triggers/EventEmitterTrigger.js';
 
+// ============ Integration Testing ============
+export { IntegrationTestRunner, registerSuite } from './testing/integration/index.js';
+export type {
+  IntegrationTestSuite,
+  IntegrationTestCase,
+  TestCaseResult,
+  TestSuiteResult,
+  TestContext,
+  TestParam,
+  RunSuiteOptions,
+} from './testing/integration/types.js';
+

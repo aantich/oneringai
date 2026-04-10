@@ -232,6 +232,72 @@ export type {
 } from './microsoft/index.js';
 
 // ============================================================================
+// Multi-Connector Calendar Tools
+// ============================================================================
+
+export {
+  createUnifiedFindMeetingSlotsTool,
+  createGoogleCalendarSlotsProvider,
+  createMicrosoftCalendarSlotsProvider,
+} from './calendar/index.js';
+
+export type {
+  IMultiConnectorProvider,
+  ICalendarSlotsProvider,
+  BusyInterval,
+  GetBusyIntervalsArgs,
+  GetBusyIntervalsResult,
+  FindSlotsResult,
+  UnifiedFindSlotsResult,
+  UnifiedFindMeetingSlotsOptions,
+} from './calendar/index.js';
+
+// ============================================================================
+// Google API Tools (Auto-registered with ConnectorTools for Google service)
+// ============================================================================
+
+export {
+  // Tool factories
+  createGoogleDraftEmailTool,
+  createGoogleSendEmailTool,
+  createGoogleMeetingTool,
+  createGoogleEditMeetingTool,
+  createGoogleGetMeetingTranscriptTool,
+  createGoogleFindMeetingSlotsTool,
+  createGoogleListMeetingsTool,
+  createGoogleGetMeetingTool,
+  // Files (Google Drive)
+  createGoogleReadFileTool,
+  createGoogleListFilesTool,
+  createGoogleSearchFilesTool,
+  // Utilities
+  isServiceAccountAuth,
+  getGoogleUserId,
+  googleFetch,
+  buildMimeMessage,
+  encodeBase64Url,
+  isGoogleNativeFormat,
+  GOOGLE_NATIVE_MIME_TYPES,
+} from './google/index.js';
+
+export type {
+  GoogleDraftEmailResult,
+  GoogleSendEmailResult,
+  GoogleCreateMeetingResult,
+  GoogleEditMeetingResult,
+  GoogleGetTranscriptResult,
+  GoogleListMeetingsResult,
+  GoogleGetMeetingResult,
+  GoogleMeetingListEntry,
+  GoogleFindSlotsResult,
+  GoogleReadFileResult,
+  GoogleListFilesResult,
+  GoogleSearchFilesResult,
+  GoogleReadFileConfig,
+  GoogleDriveFile,
+} from './google/index.js';
+
+// ============================================================================
 // Slack Tools (Auto-registered with ConnectorTools for Slack service)
 // ============================================================================
 
