@@ -77,7 +77,7 @@ const microsoftSuite: IntegrationTestSuite = {
         if (!result.success) {
           return { success: false, message: result.error || 'Draft creation failed', data: result };
         }
-        ctx.state.draftId = result.messageId || result.id;
+        ctx.state.draftId = result.draftId;
         return { success: true, message: `Draft created: ${ctx.state.draftId}`, data: result };
       },
     },
@@ -127,22 +127,8 @@ const microsoftSuite: IntegrationTestSuite = {
         ctx.state.meetingId = result.eventId;
         return { success: true, message: `Meeting created: ${result.eventId}`, data: result };
       },
-      cleanup: async (tools, ctx) => {
-        if (ctx.state.meetingId && tools.has('api')) {
-          try {
-            const apiTool = tools.get('api')!;
-            const userPath = ctx.params.targetUser
-              ? `/users/${ctx.params.targetUser}`
-              : '/me';
-            await apiTool.execute({
-              method: 'DELETE',
-              endpoint: `${userPath}/events/${ctx.state.meetingId}`,
-            });
-          } catch {
-            // Best effort
-          }
-        }
-      },
+      // NOTE: cleanup is on edit_meeting (last test that uses the meetingId),
+      // not here — the runner runs cleanup immediately after each test case.
     },
     {
       name: 'List calendar meetings',
@@ -207,6 +193,22 @@ const microsoftSuite: IntegrationTestSuite = {
         }
         return { success: true, message: 'Meeting updated successfully', data: result };
       },
+      cleanup: async (tools, ctx) => {
+        if (ctx.state.meetingId && tools.has('api')) {
+          try {
+            const apiTool = tools.get('api')!;
+            const userPath = ctx.params.targetUser
+              ? `/users/${ctx.params.targetUser}`
+              : '/me';
+            await apiTool.execute({
+              method: 'DELETE',
+              endpoint: `${userPath}/events/${ctx.state.meetingId}`,
+            });
+          } catch {
+            // Best effort
+          }
+        }
+      },
     },
     {
       name: 'Find available meeting slots',
@@ -223,7 +225,7 @@ const microsoftSuite: IntegrationTestSuite = {
           attendees,
           startDateTime: now.toISOString(),
           endDateTime: tomorrow.toISOString(),
-          durationMinutes: 30,
+          duration: 30,
           timeZone: 'UTC',
         }));
         if (!result.success) {
@@ -270,9 +272,9 @@ const microsoftSuite: IntegrationTestSuite = {
         if (!result.success) {
           return { success: false, message: result.error || 'List files failed', data: result };
         }
-        const count = result.files?.length ?? 0;
+        const count = result.items?.length ?? 0;
         if (count > 0) {
-          ctx.state.searchFileId = result.files[0].id;
+          ctx.state.searchFileId = result.items[0].id;
         }
         return { success: true, message: `Found ${count} files`, data: result };
       },
@@ -291,7 +293,7 @@ const microsoftSuite: IntegrationTestSuite = {
         }
         return {
           success: true,
-          message: `Search returned ${result.files?.length ?? 0} results`,
+          message: `Search returned ${result.results?.length ?? 0} results`,
           data: result,
         };
       },
