@@ -6,10 +6,7 @@
  *
  * Usage:
  * ```typescript
- * import { ConnectorTools, Services } from '@everworker/oneringai';
- *
- * // Get generic API tool for any connector
- * const apiTool = ConnectorTools.genericAPI('my-connector');
+ * import { ConnectorTools } from '@everworker/oneringai';
  *
  * // Get all tools (generic + service-specific if registered)
  * const tools = ConnectorTools.for('slack');
@@ -25,7 +22,6 @@ export {
   ConnectorTools,
   resolveConnectorContext,
   type ServiceToolFactory,
-  type GenericAPIToolOptions,
   type GenericAPICallArgs,
   type GenericAPICallResult,
   type ConnectorToolsOptions,

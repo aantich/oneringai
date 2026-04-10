@@ -246,11 +246,6 @@ describe('Twilio Tools', () => {
       expect(names).toContain('my-twilio_get_message');
     });
 
-    it('should return 4 tools via serviceTools()', () => {
-      const connector = createMockConnector('twilio-svc');
-      const tools = ConnectorTools.serviceTools(connector);
-      expect(tools).toHaveLength(4);
-    });
   });
 
   // ========================================================================

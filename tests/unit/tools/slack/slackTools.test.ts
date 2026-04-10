@@ -167,11 +167,6 @@ describe('Slack Tools', () => {
       expect(names).toContain('my-slack_get_users');
     });
 
-    it('should return 10 tools via serviceTools()', () => {
-      const connector = createMockConnector('slack-svc');
-      const tools = ConnectorTools.serviceTools(connector);
-      expect(tools).toHaveLength(10);
-    });
   });
 
   // ========================================================================

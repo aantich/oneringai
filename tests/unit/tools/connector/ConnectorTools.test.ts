@@ -7,6 +7,14 @@ import { Connector } from '../../../../src/core/Connector.js';
 import { ConnectorTools } from '../../../../src/tools/connector/ConnectorTools.js';
 import { Services } from '../../../../src/domain/entities/Services.js';
 
+/** Get the generic API tool from ConnectorTools.for() */
+function getApiTool(connectorName: string) {
+  const tools = ConnectorTools.for(connectorName);
+  const api = tools.find(t => t.definition.function.name.endsWith('_api'));
+  if (!api) throw new Error(`No API tool found for ${connectorName}`);
+  return api;
+}
+
 describe('ConnectorTools', () => {
   beforeEach(() => {
     Connector.clear();
@@ -100,23 +108,11 @@ describe('ConnectorTools', () => {
         baseURL: 'https://api.example.com',
       });
 
-      const tool = ConnectorTools.genericAPI('test-api');
+      const tool = getApiTool('test-api');
 
       expect(tool.definition.function.name).toBe('test-api_api');
       expect(tool.definition.function.description).toContain('api.example.com');
       expect(tool.execute).toBeDefined();
-    });
-
-    it('should allow custom tool name', () => {
-      Connector.create({
-        name: 'test',
-        auth: { type: 'api_key', apiKey: 'test-key' },
-        baseURL: 'https://api.example.com',
-      });
-
-      const tool = ConnectorTools.genericAPI('test', { toolName: 'custom_api_tool' });
-
-      expect(tool.definition.function.name).toBe('custom_api_tool');
     });
 
     it('should include required parameters in schema', () => {
@@ -126,7 +122,7 @@ describe('ConnectorTools', () => {
         baseURL: 'https://api.example.com',
       });
 
-      const tool = ConnectorTools.genericAPI('test');
+      const tool = getApiTool('test');
       const params = tool.definition.function.parameters;
 
       expect(params?.required).toContain('method');
@@ -145,7 +141,7 @@ describe('ConnectorTools', () => {
         baseURL: 'https://api.example.com',
       });
 
-      const tool = ConnectorTools.genericAPI('test');
+      const tool = getApiTool('test');
 
       expect(tool.permission?.riskLevel).toBe('medium');
       expect(tool.permission?.scope).toBe('session');
@@ -374,7 +370,7 @@ describe('ConnectorTools', () => {
         baseURL: 'https://api.example.com',
       });
 
-      const tool = ConnectorTools.genericAPI('test');
+      const tool = getApiTool('test');
 
       expect(tool.describeCall).toBeDefined();
       expect(tool.describeCall?.({ method: 'GET', endpoint: '/users' })).toBe('GET /users');
@@ -410,7 +406,7 @@ describe('ConnectorTools', () => {
           new Response(JSON.stringify({ ok: true }), { status: 200 })
         );
 
-        const tool = ConnectorTools.genericAPI('slack-test');
+        const tool = getApiTool('slack-test');
         const result = await tool.execute({
           method: 'POST',
           endpoint: '/chat.postMessage',
@@ -430,7 +426,7 @@ describe('ConnectorTools', () => {
           new Response(JSON.stringify({ ok: true }), { status: 200 })
         );
 
-        const tool = ConnectorTools.genericAPI('slack-test');
+        const tool = getApiTool('slack-test');
         // LLM sends body as a string instead of an object
         const result = await tool.execute({
           method: 'POST',
@@ -452,7 +448,7 @@ describe('ConnectorTools', () => {
           new Response(JSON.stringify({ ok: true }), { status: 200 })
         );
 
-        const tool = ConnectorTools.genericAPI('slack-test');
+        const tool = getApiTool('slack-test');
         const result = await tool.execute({
           method: 'POST',
           endpoint: '/some-endpoint',
@@ -471,7 +467,7 @@ describe('ConnectorTools', () => {
           new Response(JSON.stringify({ data: [] }), { status: 200 })
         );
 
-        const tool = ConnectorTools.genericAPI('slack-test');
+        const tool = getApiTool('slack-test');
         const result = await tool.execute({
           method: 'GET',
           endpoint: '/channels.list',
@@ -493,7 +489,7 @@ describe('ConnectorTools', () => {
           )
         );
 
-        const tool = ConnectorTools.genericAPI('slack-test');
+        const tool = getApiTool('slack-test');
         const result = await tool.execute({
           method: 'POST',
           endpoint: '/chat.postMessage',
@@ -515,7 +511,7 @@ describe('ConnectorTools', () => {
           )
         );
 
-        const tool = ConnectorTools.genericAPI('slack-test');
+        const tool = getApiTool('slack-test');
         const result = await tool.execute({
           method: 'POST',
           endpoint: '/api/endpoint',
@@ -535,7 +531,7 @@ describe('ConnectorTools', () => {
           )
         );
 
-        const tool = ConnectorTools.genericAPI('slack-test');
+        const tool = getApiTool('slack-test');
         const result = await tool.execute({
           method: 'GET',
           endpoint: '/api/data',
@@ -554,7 +550,7 @@ describe('ConnectorTools', () => {
           )
         );
 
-        const tool = ConnectorTools.genericAPI('slack-test');
+        const tool = getApiTool('slack-test');
         const result = await tool.execute({
           method: 'POST',
           endpoint: '/chat.postMessage',
@@ -571,7 +567,7 @@ describe('ConnectorTools', () => {
           new Response('Unauthorized', { status: 401 })
         );
 
-        const tool = ConnectorTools.genericAPI('slack-test');
+        const tool = getApiTool('slack-test');
         const result = await tool.execute({
           method: 'GET',
           endpoint: '/users.list',
@@ -588,7 +584,7 @@ describe('ConnectorTools', () => {
           new Response('OK', { status: 200 })
         );
 
-        const tool = ConnectorTools.genericAPI('slack-test');
+        const tool = getApiTool('slack-test');
         const result = await tool.execute({
           method: 'GET',
           endpoint: '/health',

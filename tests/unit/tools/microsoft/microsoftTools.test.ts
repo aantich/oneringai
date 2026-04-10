@@ -382,11 +382,6 @@ describe('Microsoft Graph Tools', () => {
       expect(names).toContain('ms-outlook_find_meeting_slots');
     });
 
-    it('should return 11 tools via serviceTools()', () => {
-      const connector = createMockConnector('ms-svc');
-      const tools = ConnectorTools.serviceTools(connector);
-      expect(tools).toHaveLength(11);
-    });
   });
 
   // ========================================================================

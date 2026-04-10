@@ -316,44 +316,6 @@ export class ConnectorTools {
   }
 
   /**
-   * Get just the generic API tool for a connector
-   *
-   * @param connectorOrName - Connector instance or name
-   * @param options - Optional configuration
-   * @returns Generic API tool
-   *
-   * @example
-   * ```typescript
-   * const apiTool = ConnectorTools.genericAPI('github');
-   * ```
-   */
-  static genericAPI(
-    connectorOrName: Connector | string,
-    options?: GenericAPIToolOptions
-  ): ToolFunction<GenericAPICallArgs, GenericAPICallResult> {
-    const connector = this.resolveConnector(connectorOrName);
-    return this.createGenericAPITool(connector, options);
-  }
-
-  /**
-   * Get only service-specific tools (no generic API tool)
-   *
-   * @param connectorOrName - Connector instance or name
-   * @param userId - Optional user ID for multi-user OAuth
-   * @returns Service-specific tools only
-   */
-  static serviceTools(connectorOrName: Connector | string, userId?: string): ToolFunction[] {
-    const connector = this.resolveConnector(connectorOrName);
-    const serviceType = this.detectService(connector);
-
-    if (!serviceType || !this.factories.has(serviceType)) {
-      return [];
-    }
-
-    return this.factories.get(serviceType)!(connector, userId);
-  }
-
-  /**
    * Discover tools for ALL registered connectors with external services
    * Skips AI provider connectors (those with vendor but no serviceType)
    *

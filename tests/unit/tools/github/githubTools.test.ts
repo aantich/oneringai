@@ -180,11 +180,6 @@ describe('GitHub Tools', () => {
       expect(names).toContain('my-github_create_pr');
     });
 
-    it('should return 8 tools via serviceTools()', () => {
-      const connector = createMockConnector('gh-svc');
-      const tools = ConnectorTools.serviceTools(connector);
-      expect(tools).toHaveLength(8);
-    });
   });
 
   // ========================================================================

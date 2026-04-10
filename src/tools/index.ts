@@ -114,7 +114,6 @@ export { executeJavaScript, createExecuteJavaScriptTool, executeInVM } from './c
 export {
   ConnectorTools,
   type ServiceToolFactory,
-  type GenericAPIToolOptions,
   type GenericAPICallArgs,
   type GenericAPICallResult,
 } from './connector/index.js';

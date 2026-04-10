@@ -895,7 +895,6 @@ export {
 } from './tools/connector/index.js';
 export type {
   ServiceToolFactory,
-  GenericAPIToolOptions,
   GenericAPICallArgs,
   GenericAPICallResult,
   ConnectorToolsOptions,

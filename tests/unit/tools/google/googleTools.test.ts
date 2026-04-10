@@ -382,24 +382,6 @@ describe('Google API Tools', () => {
       expect(ConnectorTools.hasServiceTools('google-api')).toBe(true);
     });
 
-    it('should return all 11 tools from serviceTools', () => {
-      const connector = createMockConnector('google-reg');
-      const tools = ConnectorTools.serviceTools(connector);
-      expect(tools.length).toBe(11);
-
-      const names = tools.map(t => t.definition.function.name);
-      expect(names).toContain('create_draft_email');
-      expect(names).toContain('send_email');
-      expect(names).toContain('create_meeting');
-      expect(names).toContain('edit_meeting');
-      expect(names).toContain('get_meeting_transcript');
-      expect(names).toContain('list_meetings');
-      expect(names).toContain('get_meeting');
-      expect(names).toContain('find_meeting_slots');
-      expect(names).toContain('read_file');
-      expect(names).toContain('list_files');
-      expect(names).toContain('search_files');
-    });
   });
 
   // ========================================================================
