@@ -21,6 +21,7 @@ import {
   DEFAULT_MAX_FILE_SIZE_BYTES,
   SUPPORTED_EXTENSIONS,
   MicrosoftAPIError,
+  formatMicrosoftToolError,
   type GraphDriveItem,
   type MicrosoftReadFileResult,
 } from './types.js';
@@ -268,19 +269,19 @@ When given a web URL, the tool automatically resolves it to the correct Graph AP
           if (error.status === 404) {
             return {
               success: false,
-              error: `File not found. Check that the source "${args.source}" is correct and you have access.`,
+              error: `File not found. Check that the source "${args.source}" is correct and you have access.${error.requestId ? ` [request-id: ${error.requestId}]` : ''}`,
             };
           }
           if (error.status === 403 || error.status === 401) {
             return {
               success: false,
-              error: `Access denied. The connector may not have sufficient permissions (Files.Read or Sites.Read.All required).`,
+              error: `Access denied${error.code ? ` (${error.code})` : ''}. The connector may not have sufficient permissions (Files.Read or Sites.Read.All required).${error.requestId ? ` [request-id: ${error.requestId}]` : ''}`,
             };
           }
         }
         return {
           success: false,
-          error: `Failed to read file: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatMicrosoftToolError('Failed to read file', error),
         };
       }
     },

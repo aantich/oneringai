@@ -20,6 +20,7 @@ import {
   type GitHubRepoResponse,
   resolveRepository,
   githubFetch,
+  formatGitHubToolError,
 } from './types.js';
 
 /**
@@ -229,7 +230,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to search code: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGitHubToolError('Failed to search code', error),
         };
       }
     },

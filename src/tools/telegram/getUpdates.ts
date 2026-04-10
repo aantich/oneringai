@@ -9,7 +9,7 @@
 
 import type { Connector } from '../../core/Connector.js';
 import type { ToolFunction, ToolContext } from '../../domain/entities/Tool.js';
-import { type TelegramGetUpdatesResult, type TelegramUpdate, telegramFetch } from './types.js';
+import { type TelegramGetUpdatesResult, type TelegramUpdate, telegramFetch, formatTelegramToolError } from './types.js';
 
 export interface GetUpdatesArgs {
   /** Offset: ID of the first update to return. Use last update_id + 1 to acknowledge previous updates. */
@@ -101,7 +101,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to get updates: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatTelegramToolError('Failed to get updates', error),
         };
       }
     },

@@ -14,6 +14,7 @@ import {
   encodeSharingUrl,
   isWebUrl,
   formatFileSize,
+  formatMicrosoftToolError,
   type GraphDriveItem,
   type GraphDriveItemListResponse,
   type MicrosoftListFilesResult,
@@ -173,7 +174,7 @@ Use this tool to browse the contents of a folder, discover available files befor
       } catch (error) {
         return {
           success: false,
-          error: `Failed to list files: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatMicrosoftToolError('Failed to list files', error),
         };
       }
     },

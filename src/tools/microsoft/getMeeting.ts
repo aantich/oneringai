@@ -15,6 +15,7 @@ import {
   type GraphCalendarViewEvent,
   getUserPathPrefix,
   microsoftFetch,
+  formatMicrosoftToolError,
 } from './types.js';
 
 export interface GetMeetingArgs {
@@ -177,7 +178,7 @@ EXAMPLES:
         return {
           success: false,
           isOnlineMeeting: false,
-          error: `Failed to get meeting: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatMicrosoftToolError('Failed to get meeting', error),
         };
       }
     },

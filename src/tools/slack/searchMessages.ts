@@ -13,6 +13,7 @@ import {
   type SlackMentionMessage,
   slackFetch,
   fromSlackTimestamp,
+  formatSlackToolError,
 } from './types.js';
 
 export interface SearchMessagesArgs {
@@ -130,7 +131,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to search messages: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatSlackToolError('Failed to search messages', error),
         };
       }
     },

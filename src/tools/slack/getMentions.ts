@@ -14,6 +14,7 @@ import {
   slackFetch,
   fromSlackTimestamp,
   getAuthenticatedUserId,
+  formatSlackToolError,
 } from './types.js';
 
 export interface GetMentionsArgs {
@@ -131,7 +132,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to get mentions: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatSlackToolError('Failed to get mentions', error),
         };
       }
     },

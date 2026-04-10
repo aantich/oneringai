@@ -7,7 +7,7 @@
 
 import type { Connector } from '../../core/Connector.js';
 import type { ToolFunction, ToolContext } from '../../domain/entities/Tool.js';
-import { type ZoomCreateMeetingResult, type ZoomMeetingResponse, zoomFetch } from './types.js';
+import { type ZoomCreateMeetingResult, type ZoomMeetingResponse, zoomFetch, formatZoomToolError } from './types.js';
 
 export interface CreateMeetingArgs {
   /** Meeting topic/title */
@@ -165,7 +165,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to create meeting: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatZoomToolError('Failed to create meeting', error),
         };
       }
     },

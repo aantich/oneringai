@@ -7,7 +7,7 @@
 
 import type { Connector } from '../../core/Connector.js';
 import type { ToolFunction, ToolContext } from '../../domain/entities/Tool.js';
-import { type TelegramSendResult, type TelegramMessage, telegramFetch } from './types.js';
+import { type TelegramSendResult, type TelegramMessage, telegramFetch, formatTelegramToolError } from './types.js';
 
 export interface SendPhotoArgs {
   /** Target chat ID (number) or @username (string) */
@@ -107,7 +107,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to send photo: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatTelegramToolError('Failed to send photo', error),
         };
       }
     },

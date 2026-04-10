@@ -12,6 +12,7 @@ import {
   getUserPathPrefix,
   microsoftFetch,
   formatAttendees,
+  formatMicrosoftToolError,
 } from './types.js';
 
 export interface EditMeetingArgs {
@@ -163,7 +164,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to edit meeting: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatMicrosoftToolError('Failed to edit meeting', error),
         };
       }
     },

@@ -6,7 +6,7 @@
 
 import type { Connector } from '../../core/Connector.js';
 import type { ToolFunction } from '../../domain/entities/Tool.js';
-import { type TelegramGetMeResult, type TelegramUser, telegramFetch } from './types.js';
+import { type TelegramGetMeResult, type TelegramUser, telegramFetch, formatTelegramToolError } from './types.js';
 
 export function createGetMeTool(
   connector: Connector
@@ -40,7 +40,7 @@ export function createGetMeTool(
       } catch (error) {
         return {
           success: false,
-          error: `Failed to get bot info: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatTelegramToolError('Failed to get bot info', error),
         };
       }
     },

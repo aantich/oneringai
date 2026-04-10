@@ -54,9 +54,22 @@ export class TelegramAPIError extends Error {
     public readonly errorCode: number | undefined,
     public readonly telegramDescription: string
   ) {
-    super(`Telegram API error (${statusCode}): ${telegramDescription}`);
+    const parts = [`Telegram API error ${statusCode}`];
+    if (errorCode !== undefined) parts.push(`(code ${errorCode})`);
+    parts.push(`: ${telegramDescription}`);
+    super(parts.join(''));
     this.name = 'TelegramAPIError';
   }
+}
+
+/**
+ * Format any error caught in a Telegram tool's catch block into a detailed string.
+ */
+export function formatTelegramToolError(prefix: string, error: unknown): string {
+  if (error instanceof Error) {
+    return `${prefix}: ${error.message}`;
+  }
+  return `${prefix}: ${String(error)}`;
 }
 
 /**

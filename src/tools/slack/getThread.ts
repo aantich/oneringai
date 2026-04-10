@@ -12,6 +12,7 @@ import {
   type SlackConversationsRepliesResponse,
   slackFetch,
   formatMessage,
+  formatSlackToolError,
 } from './types.js';
 
 export interface GetThreadArgs {
@@ -108,7 +109,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to get thread: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatSlackToolError('Failed to get thread', error),
         };
       }
     },

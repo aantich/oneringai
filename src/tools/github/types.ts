@@ -109,17 +109,40 @@ export interface GitHubFetchOptions {
  * Error from GitHub API
  */
 export class GitHubAPIError extends Error {
+  /** Documentation URL from GitHub error response */
+  public readonly documentationUrl: string | undefined;
+
   constructor(
     public readonly status: number,
     public readonly statusText: string,
     public readonly body: unknown
   ) {
-    const msg = typeof body === 'object' && body !== null && 'message' in body
-      ? (body as { message: string }).message
-      : statusText;
-    super(`GitHub API error ${status}: ${msg}`);
+    let msg = statusText;
+    let docUrl: string | undefined;
+
+    if (typeof body === 'object' && body !== null) {
+      const b = body as Record<string, unknown>;
+      if (typeof b.message === 'string') msg = b.message;
+      if (typeof b.documentation_url === 'string') docUrl = b.documentation_url;
+    }
+
+    const parts = [`GitHub API error ${status}: ${msg}`];
+    if (docUrl) parts.push(` — see ${docUrl}`);
+
+    super(parts.join(''));
     this.name = 'GitHubAPIError';
+    this.documentationUrl = docUrl;
   }
+}
+
+/**
+ * Format any error caught in a GitHub tool's catch block into a detailed string.
+ */
+export function formatGitHubToolError(prefix: string, error: unknown): string {
+  if (error instanceof Error) {
+    return `${prefix}: ${error.message}`;
+  }
+  return `${prefix}: ${String(error)}`;
 }
 
 /**

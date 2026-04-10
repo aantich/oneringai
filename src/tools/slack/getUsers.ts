@@ -14,6 +14,7 @@ import {
   type SlackUsersInfoResponse,
   slackFetch,
   slackPaginate,
+  formatSlackToolError,
 } from './types.js';
 
 export interface GetUsersArgs {
@@ -154,7 +155,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to get users: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatSlackToolError('Failed to get users', error),
         };
       }
     },

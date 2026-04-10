@@ -13,6 +13,7 @@ import {
   getGoogleUserId,
   googleFetch,
   formatFileSize,
+  formatGoogleToolError,
 } from './types.js';
 
 interface SearchFilesArgs {
@@ -198,7 +199,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to search files: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGoogleToolError('Failed to search files', error),
         };
       }
     },

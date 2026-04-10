@@ -12,6 +12,7 @@ import {
   getGoogleUserId,
   googleFetch,
   normalizeEmails,
+  formatGoogleToolError,
 } from './types.js';
 
 interface CreateMeetingArgs {
@@ -179,7 +180,7 @@ EXAMPLE:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to create meeting: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGoogleToolError('Failed to create meeting', error),
         };
       }
     },

@@ -11,6 +11,7 @@ import {
   type GitHubPRFileEntry,
   resolveRepository,
   githubFetch,
+  formatGitHubToolError,
 } from './types.js';
 
 /**
@@ -109,7 +110,7 @@ NOTE: Very large diffs may be truncated by GitHub. Patch content may be absent f
       } catch (error) {
         return {
           success: false,
-          error: `Failed to get PR files: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGitHubToolError('Failed to get PR files', error),
         };
       }
     },

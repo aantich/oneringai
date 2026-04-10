@@ -12,6 +12,7 @@ import {
   getUserPathPrefix,
   microsoftFetch,
   formatRecipients,
+  formatMicrosoftToolError,
 } from './types.js';
 
 export interface CreateDraftEmailArgs {
@@ -163,7 +164,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to create draft email: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatMicrosoftToolError('Failed to create draft email', error),
         };
       }
     },

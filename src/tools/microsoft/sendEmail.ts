@@ -11,6 +11,7 @@ import {
   getUserPathPrefix,
   microsoftFetch,
   formatRecipients,
+  formatMicrosoftToolError,
 } from './types.js';
 
 export interface SendEmailArgs {
@@ -178,7 +179,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to send email: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatMicrosoftToolError('Failed to send email', error),
         };
       }
     },

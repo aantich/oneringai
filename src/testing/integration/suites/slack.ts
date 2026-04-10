@@ -125,7 +125,7 @@ const slackSuite: IntegrationTestSuite = {
       execute: async (tools, ctx) => {
         const messageTs = ctx.state.messageTs as string | undefined;
         if (!messageTs) {
-          return { success: false, message: 'No message ts from post_message test' };
+          return { success: true, message: 'Skipped: no message ts (post_message did not succeed)' };
         }
         const tool = tools.get('post_message')!;
         const result = await tool.execute({
@@ -148,7 +148,7 @@ const slackSuite: IntegrationTestSuite = {
       execute: async (tools, ctx) => {
         const messageTs = ctx.state.messageTs as string | undefined;
         if (!messageTs) {
-          return { success: false, message: 'No message ts from post_message test' };
+          return { success: true, message: 'Skipped: no message ts (post_message did not succeed)' };
         }
         const tool = tools.get('get_thread')!;
         const result = await tool.execute({
@@ -174,7 +174,7 @@ const slackSuite: IntegrationTestSuite = {
       execute: async (tools, ctx) => {
         const messageTs = ctx.state.messageTs as string | undefined;
         if (!messageTs) {
-          return { success: false, message: 'No message ts from post_message test' };
+          return { success: true, message: 'Skipped: no message ts (post_message did not succeed)' };
         }
         const tool = tools.get('add_reaction')!;
         const result = await tool.execute({

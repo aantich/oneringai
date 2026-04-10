@@ -12,6 +12,7 @@ import {
   type GitHubBranchEntry,
   resolveRepository,
   githubFetch,
+  formatGitHubToolError,
 } from './types.js';
 
 /**
@@ -146,7 +147,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to list branches: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGitHubToolError('Failed to list branches', error),
         };
       }
     },

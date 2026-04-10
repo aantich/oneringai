@@ -13,6 +13,7 @@ import {
   getUserPathPrefix,
   microsoftFetch,
   resolveMeetingId,
+  formatMicrosoftToolError,
 } from './types.js';
 
 export interface GetMeetingTranscriptArgs {
@@ -153,7 +154,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to get meeting transcript: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatMicrosoftToolError('Failed to get meeting transcript', error),
         };
       }
     },

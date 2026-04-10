@@ -14,6 +14,7 @@ import {
   normalizePhoneNumber,
   toWhatsAppNumber,
   formatMessage,
+  formatTwilioToolError,
 } from './types.js';
 
 export interface ListMessagesArgs {
@@ -165,7 +166,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to list messages: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatTwilioToolError('Failed to list messages', error),
         };
       }
     },

@@ -17,6 +17,7 @@ import {
   type GraphCalendarViewEvent,
   getUserPathPrefix,
   microsoftFetch,
+  formatMicrosoftToolError,
 } from './types.js';
 
 export interface ListMeetingsArgs {
@@ -193,7 +194,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to list meetings: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatMicrosoftToolError('Failed to list meetings', error),
         };
       }
     },

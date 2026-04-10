@@ -13,6 +13,7 @@ import {
   slackFetch,
   toSlackTimestamp,
   formatMessage,
+  formatSlackToolError,
 } from './types.js';
 
 export interface GetMessagesArgs {
@@ -123,7 +124,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to get messages: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatSlackToolError('Failed to get messages', error),
         };
       }
     },

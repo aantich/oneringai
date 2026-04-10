@@ -11,6 +11,7 @@ import {
   type GitHubPRResponse,
   resolveRepository,
   githubFetch,
+  formatGitHubToolError,
 } from './types.js';
 
 /**
@@ -113,7 +114,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to get PR: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGitHubToolError('Failed to get PR', error),
         };
       }
     },

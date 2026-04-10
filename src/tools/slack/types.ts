@@ -39,9 +39,26 @@ export class SlackAPIError extends Error {
     public readonly errorCode: string,
     public readonly responseMetadata?: unknown
   ) {
-    super(`Slack API error: ${errorCode}`);
+    // Include scope info from metadata when available (e.g. missing_scope errors)
+    let detail = `Slack API error: ${errorCode}`;
+    if (typeof responseMetadata === 'object' && responseMetadata !== null) {
+      const meta = responseMetadata as Record<string, unknown>;
+      if (meta.needed) detail += ` (needed: ${meta.needed})`;
+      if (meta.provided) detail += ` (provided: ${meta.provided})`;
+    }
+    super(detail);
     this.name = 'SlackAPIError';
   }
+}
+
+/**
+ * Format any error caught in a Slack tool's catch block into a detailed string.
+ */
+export function formatSlackToolError(prefix: string, error: unknown): string {
+  if (error instanceof Error) {
+    return `${prefix}: ${error.message}`;
+  }
+  return `${prefix}: ${String(error)}`;
 }
 
 /**

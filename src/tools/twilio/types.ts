@@ -67,9 +67,22 @@ export class TwilioAPIError extends Error {
     public readonly twilioCode: number | undefined,
     public readonly twilioMessage: string
   ) {
-    super(`Twilio API error (${statusCode}): ${twilioMessage}`);
+    const parts = [`Twilio API error ${statusCode}`];
+    if (twilioCode !== undefined) parts.push(`(code ${twilioCode})`);
+    parts.push(`: ${twilioMessage}`);
+    super(parts.join(''));
     this.name = 'TwilioAPIError';
   }
+}
+
+/**
+ * Format any error caught in a Twilio tool's catch block into a detailed string.
+ */
+export function formatTwilioToolError(prefix: string, error: unknown): string {
+  if (error instanceof Error) {
+    return `${prefix}: ${error.message}`;
+  }
+  return `${prefix}: ${String(error)}`;
 }
 
 /**

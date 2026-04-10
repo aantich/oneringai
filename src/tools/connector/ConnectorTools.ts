@@ -285,12 +285,18 @@ export class ConnectorTools {
       tools.push(...serviceTools);
     }
 
-    // 3. If accountId is set, wrap all tools to inject accountId into ToolContext at execute time
+    // 3. All connector tools get account resolution from ToolContext.connectorAccounts.
+    //    This allows single-account connectors to work without per-tool wrapping —
+    //    the host app sets connectorAccounts on ToolContext and tools resolve it here.
+    const resolved = tools.map(tool => this.withAccountResolution(tool, connector.name));
+
+    // 4. If accountId is explicitly set (multi-account expansion), also bind it per-tool.
+    //    bindAccountId sets context.accountId which takes precedence over connectorAccounts.
     if (accountId) {
-      return tools.map(tool => this.bindAccountId(tool, accountId));
+      return resolved.map(tool => this.bindAccountId(tool, accountId));
     }
 
-    return tools;
+    return resolved;
   }
 
   /**
@@ -521,6 +527,36 @@ export class ConnectorTools {
     }
 
     return result;
+  }
+
+  /**
+   * Wrap a tool to resolve accountId from ToolContext.connectorAccounts at execute time.
+   *
+   * Resolution order:
+   * 1. context.accountId — explicit per-tool binding (set by bindAccountId for multi-account)
+   * 2. context.connectorAccounts[connectorName] — per-connector binding (single-account)
+   * 3. undefined — no binding (legacy tokens without accountId)
+   *
+   * This wrapper is applied to ALL connector tools in for(), so individual
+   * service tool factories don't need to know about connectorAccounts.
+   */
+  private static withAccountResolution(tool: ToolFunction, connectorName: string): ToolFunction {
+    return {
+      ...tool,
+      execute: async (args: any, context?: ToolContext) => {
+        // If accountId is already set (by bindAccountId wrapper), pass through
+        if (context?.accountId) {
+          return tool.execute(args, context);
+        }
+        // Resolve from connectorAccounts map
+        const resolved = context?.connectorAccounts?.[connectorName];
+        if (resolved) {
+          return tool.execute(args, { ...context, accountId: resolved });
+        }
+        // No binding — legacy path
+        return tool.execute(args, context);
+      },
+    };
   }
 
   /**

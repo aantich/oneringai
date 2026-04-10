@@ -11,6 +11,7 @@ import {
   type SlackAddReactionResult,
   type SlackReactionsAddResponse,
   slackFetch,
+  formatSlackToolError,
 } from './types.js';
 
 export interface AddReactionArgs {
@@ -102,7 +103,7 @@ EXAMPLES:
         }
         return {
           success: false,
-          error: `Failed to add reaction: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatSlackToolError('Failed to add reaction', error),
         };
       }
     },

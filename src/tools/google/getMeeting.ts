@@ -12,6 +12,7 @@ import {
   getGoogleUserId,
   googleFetch,
   stripHtml,
+  formatGoogleToolError,
 } from './types.js';
 
 interface GetMeetingArgs {
@@ -129,7 +130,7 @@ EXAMPLE:
         return {
           success: false,
           isOnlineMeeting: false,
-          error: `Failed to get meeting: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGoogleToolError('Failed to get meeting', error),
         };
       }
     },

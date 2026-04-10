@@ -11,6 +11,7 @@ import {
   type SlackListChannelsResult,
   type SlackConversationsListResponse,
   slackPaginate,
+  formatSlackToolError,
 } from './types.js';
 
 export interface ListChannelsArgs {
@@ -127,7 +128,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to list channels: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatSlackToolError('Failed to list channels', error),
         };
       }
     },

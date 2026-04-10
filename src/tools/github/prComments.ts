@@ -15,6 +15,7 @@ import {
   type GitHubIssueCommentResponse,
   resolveRepository,
   githubFetch,
+  formatGitHubToolError,
 } from './types.js';
 
 /**
@@ -164,7 +165,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to get PR comments: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGitHubToolError('Failed to get PR comments', error),
         };
       }
     },

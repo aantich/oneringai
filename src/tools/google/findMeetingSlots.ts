@@ -14,6 +14,7 @@ import {
   getGoogleUserId,
   googleFetch,
   normalizeEmails,
+  formatGoogleToolError,
 } from './types.js';
 
 export interface FindMeetingSlotsArgs {
@@ -264,7 +265,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to find meeting slots: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGoogleToolError('Failed to find meeting slots', error),
         };
       }
     },

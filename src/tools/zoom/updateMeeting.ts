@@ -8,7 +8,7 @@
 
 import type { Connector } from '../../core/Connector.js';
 import type { ToolFunction, ToolContext } from '../../domain/entities/Tool.js';
-import { type ZoomUpdateMeetingResult, zoomFetch, parseMeetingId } from './types.js';
+import { type ZoomUpdateMeetingResult, zoomFetch, parseMeetingId, formatZoomToolError } from './types.js';
 
 export interface UpdateMeetingArgs {
   /** Meeting URL (e.g., https://zoom.us/j/123...) or numeric meeting ID */
@@ -142,7 +142,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to update meeting: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatZoomToolError('Failed to update meeting', error),
         };
       }
     },

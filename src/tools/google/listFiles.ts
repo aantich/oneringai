@@ -13,6 +13,7 @@ import {
   getGoogleUserId,
   googleFetch,
   formatFileSize,
+  formatGoogleToolError,
 } from './types.js';
 
 interface ListFilesArgs {
@@ -164,7 +165,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to list files: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGoogleToolError('Failed to list files', error),
         };
       }
     },

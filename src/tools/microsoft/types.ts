@@ -89,17 +89,54 @@ export interface MicrosoftFetchOptions {
  * Error from Microsoft Graph API
  */
 export class MicrosoftAPIError extends Error {
+  /** Graph error code (e.g. "ErrorAccessDenied", "Authorization_RequestDenied") */
+  public readonly code: string | undefined;
+  /** Request ID from Graph API for support / debugging */
+  public readonly requestId: string | undefined;
+
   constructor(
     public readonly status: number,
     public readonly statusText: string,
     public readonly body: unknown
   ) {
-    const msg = typeof body === 'object' && body !== null && 'error' in body
-      ? ((body as { error: { message: string } }).error?.message ?? statusText)
-      : statusText;
-    super(`Microsoft Graph API error ${status}: ${msg}`);
+    let msg = statusText;
+    let code: string | undefined;
+    let requestId: string | undefined;
+
+    if (typeof body === 'object' && body !== null && 'error' in body) {
+      const err = (body as { error: { code?: string; message?: string; innerError?: { 'request-id'?: string; date?: string } } }).error;
+      msg = err?.message ?? statusText;
+      code = err?.code;
+      requestId = err?.innerError?.['request-id'];
+    }
+
+    // Build a detailed message: status + code + message + request-id
+    const parts = [`Microsoft Graph API error ${status}`];
+    if (code) parts.push(`(${code})`);
+    parts.push(`: ${msg}`);
+    if (requestId) parts.push(` [request-id: ${requestId}]`);
+
+    super(parts.join(''));
     this.name = 'MicrosoftAPIError';
+    this.code = code;
+    this.requestId = requestId;
   }
+}
+
+/**
+ * Format any error caught in a Microsoft tool's catch block into a detailed string.
+ *
+ * For MicrosoftAPIError: includes status, code, message, and request-id.
+ * For other errors: includes message + stringified body if available.
+ */
+export function formatMicrosoftToolError(prefix: string, error: unknown): string {
+  if (error instanceof MicrosoftAPIError) {
+    return `${prefix}: ${error.message}`;
+  }
+  if (error instanceof Error) {
+    return `${prefix}: ${error.message}`;
+  }
+  return `${prefix}: ${String(error)}`;
 }
 
 /**

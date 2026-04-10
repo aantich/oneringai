@@ -12,6 +12,7 @@ import {
   type SlackConversationsInfoResponse,
   slackFetch,
   fromSlackTimestamp,
+  formatSlackToolError,
 } from './types.js';
 
 export interface GetChannelInfoArgs {
@@ -94,7 +95,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to get channel info: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatSlackToolError('Failed to get channel info', error),
         };
       }
     },

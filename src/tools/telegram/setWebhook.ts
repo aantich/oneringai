@@ -7,7 +7,7 @@
 
 import type { Connector } from '../../core/Connector.js';
 import type { ToolFunction, ToolContext } from '../../domain/entities/Tool.js';
-import { type TelegramSetWebhookResult, telegramFetch } from './types.js';
+import { type TelegramSetWebhookResult, telegramFetch, formatTelegramToolError } from './types.js';
 
 export interface SetWebhookArgs {
   /** HTTPS URL for receiving updates. Empty string removes the webhook. */
@@ -96,7 +96,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to set webhook: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatTelegramToolError('Failed to set webhook', error),
         };
       }
     },

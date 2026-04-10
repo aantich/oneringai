@@ -11,6 +11,7 @@ import {
   type SlackSetChannelTopicResult,
   type SlackConversationsSetTopicResponse,
   slackFetch,
+  formatSlackToolError,
 } from './types.js';
 
 export interface SetChannelTopicArgs {
@@ -92,7 +93,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to set topic: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatSlackToolError('Failed to set topic', error),
         };
       }
     },

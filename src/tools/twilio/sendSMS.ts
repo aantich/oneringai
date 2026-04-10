@@ -13,6 +13,7 @@ import {
   twilioFetch,
   normalizePhoneNumber,
   formatMessage,
+  formatTwilioToolError,
 } from './types.js';
 
 export interface SendSMSArgs {
@@ -122,7 +123,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to send SMS: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatTwilioToolError('Failed to send SMS', error),
         };
       }
     },

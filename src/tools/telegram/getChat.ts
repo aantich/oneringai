@@ -6,7 +6,7 @@
 
 import type { Connector } from '../../core/Connector.js';
 import type { ToolFunction, ToolContext } from '../../domain/entities/Tool.js';
-import { type TelegramGetChatResult, type TelegramChat, telegramFetch } from './types.js';
+import { type TelegramGetChatResult, type TelegramChat, telegramFetch, formatTelegramToolError } from './types.js';
 
 export interface GetChatArgs {
   /** Chat ID (number) or @username (string) */
@@ -61,7 +61,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to get chat: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatTelegramToolError('Failed to get chat', error),
         };
       }
     },

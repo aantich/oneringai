@@ -14,6 +14,7 @@ import {
   normalizeEmails,
   buildMimeMessage,
   encodeBase64Url,
+  formatGoogleToolError,
 } from './types.js';
 
 interface SendEmailArgs {
@@ -203,7 +204,7 @@ export function createGoogleSendEmailTool(
       } catch (error) {
         return {
           success: false,
-          error: `Failed to send email: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGoogleToolError('Failed to send email', error),
         };
       }
     },

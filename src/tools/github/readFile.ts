@@ -16,6 +16,7 @@ import {
   type GitHubBlobResponse,
   resolveRepository,
   githubFetch,
+  formatGitHubToolError,
 } from './types.js';
 
 /**
@@ -192,7 +193,7 @@ NOTE: Files larger than 1MB are fetched via the Git Blob API. Very large files (
       } catch (error) {
         return {
           success: false,
-          error: `Failed to read file: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGitHubToolError('Failed to read file', error),
           path: args.path,
         };
       }

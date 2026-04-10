@@ -14,6 +14,7 @@ import {
   getGoogleUserId,
   googleFetch,
   GoogleAPIError,
+  formatGoogleToolError,
 } from './types.js';
 
 interface GetMeetingTranscriptArgs {
@@ -192,7 +193,7 @@ The transcript document is typically named like "Meeting transcript - <meeting t
         }
         return {
           success: false,
-          error: `Failed to get transcript: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGoogleToolError('Failed to get transcript', error),
         };
       }
     },

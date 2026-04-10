@@ -58,6 +58,7 @@ export {
   getDrivePrefix,
   resolveFileEndpoints,
   formatFileSize,
+  formatMicrosoftToolError,
 } from './types.js';
 
 // Tool factories (for direct use with custom options)

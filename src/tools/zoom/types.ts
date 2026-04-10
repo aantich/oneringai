@@ -37,9 +37,22 @@ export class ZoomAPIError extends Error {
     public readonly errorCode?: string,
     public readonly errorMessage?: string
   ) {
-    super(`Zoom API error (${statusCode}): ${errorMessage ?? errorCode ?? 'Unknown error'}`);
+    const parts = [`Zoom API error ${statusCode}`];
+    if (errorCode) parts.push(`(${errorCode})`);
+    parts.push(`: ${errorMessage ?? 'Unknown error'}`);
+    super(parts.join(''));
     this.name = 'ZoomAPIError';
   }
+}
+
+/**
+ * Format any error caught in a Zoom tool's catch block into a detailed string.
+ */
+export function formatZoomToolError(prefix: string, error: unknown): string {
+  if (error instanceof Error) {
+    return `${prefix}: ${error.message}`;
+  }
+  return `${prefix}: ${String(error)}`;
 }
 
 /**

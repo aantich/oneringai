@@ -11,6 +11,7 @@ import type { ToolFunction, ToolContext } from '../../domain/entities/Tool.js';
 import {
   microsoftFetch,
   formatFileSize,
+  formatMicrosoftToolError,
   type GraphDriveItemListResponse,
   type GraphSearchResponse,
   type MicrosoftSearchFilesResult,
@@ -186,7 +187,7 @@ Use this tool when you need to **find** files by name, content, or metadata acro
       } catch (error) {
         return {
           success: false,
-          error: `Search failed: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatMicrosoftToolError('Search failed', error),
         };
       }
     },

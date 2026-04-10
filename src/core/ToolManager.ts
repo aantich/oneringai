@@ -303,10 +303,20 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
   }
 
   /**
-   * Set tool context for execution (called by agent before runs)
+   * Set tool context for execution (called by agent before runs).
+   * WARNING: This REPLACES the entire context. Prefer mergeToolContext() for partial updates.
    */
   setToolContext(context: ToolContext | undefined): void {
     this._toolContext = context;
+  }
+
+  /**
+   * Merge partial updates into the existing tool context.
+   * Unlike setToolContext(), this preserves fields not present in the partial update.
+   * Use this when updating userId or connectorAccounts without wiping agentId, identities, etc.
+   */
+  mergeToolContext(partial: Partial<ToolContext>): void {
+    this._toolContext = { ...this._toolContext, ...partial };
   }
 
   /**

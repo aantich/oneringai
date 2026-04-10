@@ -12,6 +12,7 @@ import {
   type TwilioRawMessage,
   twilioFetch,
   formatMessage,
+  formatTwilioToolError,
 } from './types.js';
 
 export interface GetMessageArgs {
@@ -78,7 +79,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to get message: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatTwilioToolError('Failed to get message', error),
         };
       }
     },

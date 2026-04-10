@@ -16,6 +16,7 @@ import {
   twilioFetch,
   toWhatsAppNumber,
   formatMessage,
+  formatTwilioToolError,
 } from './types.js';
 
 export interface SendWhatsAppArgs {
@@ -157,7 +158,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to send WhatsApp message: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatTwilioToolError('Failed to send WhatsApp message', error),
         };
       }
     },

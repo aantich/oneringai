@@ -22,6 +22,7 @@ import {
   SUPPORTED_EXTENSIONS,
   DEFAULT_MAX_FILE_SIZE_BYTES,
   GoogleAPIError,
+  formatGoogleToolError,
 } from './types.js';
 
 // ---- Args ----
@@ -340,7 +341,7 @@ Use this tool when you need to read the contents of a document stored in Google 
         }
         return {
           success: false,
-          error: `Failed to read file: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGoogleToolError('Failed to read file', error),
         };
       }
     },

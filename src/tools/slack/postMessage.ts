@@ -11,6 +11,7 @@ import {
   type SlackPostMessageResult,
   type SlackPostMessageResponse,
   slackFetch,
+  formatSlackToolError,
 } from './types.js';
 
 export interface PostMessageArgs {
@@ -123,7 +124,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to post message: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatSlackToolError('Failed to post message', error),
         };
       }
     },

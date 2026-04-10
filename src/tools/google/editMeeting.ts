@@ -12,6 +12,7 @@ import {
   getGoogleUserId,
   googleFetch,
   normalizeEmails,
+  formatGoogleToolError,
 } from './types.js';
 
 interface EditMeetingArgs {
@@ -177,7 +178,7 @@ EXAMPLE:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to edit meeting: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGoogleToolError('Failed to edit meeting', error),
         };
       }
     },

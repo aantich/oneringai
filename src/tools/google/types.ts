@@ -67,24 +67,46 @@ export interface GoogleFetchOptions {
  * Error from Google API
  */
 export class GoogleAPIError extends Error {
+  /** Google error status string (e.g. "PERMISSION_DENIED", "NOT_FOUND") */
+  public readonly errorStatus: string | undefined;
+
   constructor(
     public readonly status: number,
     public readonly statusText: string,
     public readonly body: unknown
   ) {
-    const msg = typeof body === 'object' && body !== null && 'error' in body
-      ? (() => {
-          const err = (body as { error: unknown }).error;
-          if (typeof err === 'object' && err !== null && 'message' in err) {
-            return (err as { message: string }).message;
-          }
-          if (typeof err === 'string') return err;
-          return statusText;
-        })()
-      : statusText;
-    super(`Google API error ${status}: ${msg}`);
+    let msg = statusText;
+    let errorStatus: string | undefined;
+
+    if (typeof body === 'object' && body !== null && 'error' in body) {
+      const err = (body as { error: unknown }).error;
+      if (typeof err === 'object' && err !== null) {
+        const errObj = err as { message?: string; status?: string; code?: number };
+        msg = errObj.message ?? statusText;
+        errorStatus = errObj.status;
+      } else if (typeof err === 'string') {
+        msg = err;
+      }
+    }
+
+    const parts = [`Google API error ${status}`];
+    if (errorStatus) parts.push(`(${errorStatus})`);
+    parts.push(`: ${msg}`);
+
+    super(parts.join(''));
     this.name = 'GoogleAPIError';
+    this.errorStatus = errorStatus;
   }
+}
+
+/**
+ * Format any error caught in a Google tool's catch block into a detailed string.
+ */
+export function formatGoogleToolError(prefix: string, error: unknown): string {
+  if (error instanceof Error) {
+    return `${prefix}: ${error.message}`;
+  }
+  return `${prefix}: ${String(error)}`;
 }
 
 /**

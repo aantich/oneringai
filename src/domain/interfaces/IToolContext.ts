@@ -83,6 +83,20 @@ export interface ToolContext {
   /** Account alias for multi-account OAuth — auto-populated from Agent config (accountId). Allows one user to auth multiple external accounts on the same connector (e.g., 'work', 'personal'). */
   accountId?: string;
 
+  /**
+   * Per-connector account bindings (connector name → accountId).
+   *
+   * Set by the host app during tool resolution for single-account connectors.
+   * Connector tools resolve their accountId from this map when `accountId` is not
+   * explicitly set (i.e., the tool is not wrapped with `bindAccountId`).
+   *
+   * Resolution order in connector tools:
+   * 1. `context.accountId` — explicit per-tool binding (multi-account wrapper)
+   * 2. `context.connectorAccounts[connectorName]` — per-connector binding (this field)
+   * 3. `undefined` — no binding (legacy tokens without accountId)
+   */
+  connectorAccounts?: Record<string, string>;
+
   /** Auth identities this agent is scoped to (for identity-aware tool descriptions) */
   identities?: AuthIdentity[];
 

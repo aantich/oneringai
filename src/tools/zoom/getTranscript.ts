@@ -20,6 +20,7 @@ import {
   zoomFetch,
   parseMeetingId,
   parseVTT,
+  formatZoomToolError,
 } from './types.js';
 
 export interface GetTranscriptArgs {
@@ -133,7 +134,7 @@ EXAMPLES:
       } catch (error) {
         return {
           success: false,
-          error: `Failed to get transcript: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatZoomToolError('Failed to get transcript', error),
         };
       }
     },

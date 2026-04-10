@@ -15,6 +15,7 @@ import {
   normalizeEmails,
   buildMimeMessage,
   encodeBase64Url,
+  formatGoogleToolError,
 } from './types.js';
 
 interface CreateDraftEmailArgs {
@@ -177,7 +178,7 @@ The draft will be saved to the user's Drafts folder and can be reviewed and sent
       } catch (error) {
         return {
           success: false,
-          error: `Failed to create draft email: ${error instanceof Error ? error.message : String(error)}`,
+          error: formatGoogleToolError('Failed to create draft email', error),
         };
       }
     },
