@@ -477,6 +477,8 @@ export type {
   RoutineExecutionStatus,
   RoutineExecution,
   RoutineParameter,
+  DeterministicStep,
+  StepErrorStrategy,
 } from './domain/entities/Routine.js';
 
 export {
@@ -508,8 +510,8 @@ export { createExecutionRecorder } from './core/createExecutionRecorder.js';
 export type { ExecutionRecorderOptions, ExecutionRecorder } from './core/createExecutionRecorder.js';
 
 // Routine Control Flow
-export { resolveTemplates, ROUTINE_KEYS, resolveFlowSource } from './core/routineControlFlow.js';
-export type { ControlFlowResult } from './core/routineControlFlow.js';
+export { resolveTemplates, resolveStepArgs, ROUTINE_KEYS, resolveFlowSource } from './core/routineControlFlow.js';
+export type { ControlFlowResult, StepResolveContext } from './core/routineControlFlow.js';
 
 // Memory Entities
 export type {

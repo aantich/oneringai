@@ -22,6 +22,7 @@ import {
 import type {
   RoutineDefinition,
   RoutineExecution,
+  DeterministicStep,
 } from '../domain/entities/Routine.js';
 import {
   createRoutineExecution,
@@ -38,9 +39,13 @@ import {
   validateAndResolveInputs,
   resolveTaskTemplates,
   executeControlFlow,
+  resolveStepArgs,
+  storeResult,
+  withTimeout,
   ROUTINE_KEYS,
   getPlugins,
 } from './routineControlFlow.js';
+import type { StepResolveContext } from './routineControlFlow.js';
 
 // ============================================================================
 // Types
@@ -94,6 +99,15 @@ export interface ExecuteRoutineOptions {
 
   /** Called after each validation attempt (whether pass or fail) */
   onTaskValidation?: (task: Task, result: TaskValidationResult, execution: RoutineExecution) => void;
+
+  /** Called when a deterministic step starts executing */
+  onStepStarted?: (step: DeterministicStep, phase: 'pre' | 'post', index: number, execution: RoutineExecution) => void;
+
+  /** Called when a deterministic step completes successfully */
+  onStepComplete?: (step: DeterministicStep, phase: 'pre' | 'post', index: number, result: unknown, execution: RoutineExecution) => void;
+
+  /** Called when a deterministic step fails */
+  onStepFailed?: (step: DeterministicStep, phase: 'pre' | 'post', index: number, error: Error, execution: RoutineExecution) => void;
 
   /** Configurable prompts (all have sensible defaults) */
   prompts?: {
@@ -483,8 +497,14 @@ const DEP_CLEANUP_CONFIG = {
 
 /** Prefixes for full routine cleanup (after execution). */
 const FULL_CLEANUP_CONFIG = {
-  icmPrefixes: ['__routine_', ROUTINE_KEYS.DEP_RESULT_PREFIX, '__map_', '__fold_', ROUTINE_KEYS.TASK_OUTPUT_PREFIX],
-  wmPrefixes: [ROUTINE_KEYS.DEP_RESULT_PREFIX, ROUTINE_KEYS.WM_DEP_FINDINGS_PREFIX, ROUTINE_KEYS.TASK_OUTPUT_PREFIX],
+  icmPrefixes: [
+    '__routine_', ROUTINE_KEYS.DEP_RESULT_PREFIX, '__map_', '__fold_',
+    ROUTINE_KEYS.TASK_OUTPUT_PREFIX, ROUTINE_KEYS.PRE_STEP_PREFIX, ROUTINE_KEYS.POST_STEP_PREFIX,
+  ],
+  wmPrefixes: [
+    ROUTINE_KEYS.DEP_RESULT_PREFIX, ROUTINE_KEYS.WM_DEP_FINDINGS_PREFIX,
+    ROUTINE_KEYS.TASK_OUTPUT_PREFIX, ROUTINE_KEYS.PRE_STEP_PREFIX, ROUTINE_KEYS.POST_STEP_PREFIX,
+  ],
 };
 
 /**
@@ -568,10 +588,21 @@ async function injectRoutineContext(
 
 /**
  * Clean up all routine-managed keys from ICM and WM.
+ * @param extraKeys — additional exact keys to clean up (e.g., custom resultKeys from deterministic steps)
  */
-async function cleanupRoutineContext(agent: Agent): Promise<void> {
+async function cleanupRoutineContext(agent: Agent, extraKeys?: string[]): Promise<void> {
   const { icmPlugin, wmPlugin } = getPlugins(agent);
   await cleanupMemoryKeys(icmPlugin, wmPlugin, FULL_CLEANUP_CONFIG);
+
+  // Clean up custom resultKeys that don't match standard prefixes
+  if (extraKeys && extraKeys.length > 0) {
+    for (const key of extraKeys) {
+      if (icmPlugin) icmPlugin.delete(key);
+      if (wmPlugin) {
+        try { await wmPlugin.delete(key); } catch { /* may not exist in WM */ }
+      }
+    }
+  }
 }
 
 // ============================================================================
@@ -647,6 +678,104 @@ async function validateTaskCompletion(
 }
 
 // ============================================================================
+// Deterministic Step Execution
+// ============================================================================
+
+const DEFAULT_STEP_TIMEOUT = 30_000;
+
+interface StepExecutionContext {
+  agent: Agent;
+  steps: DeterministicStep[];
+  phase: 'pre' | 'post';
+  inputs: Record<string, unknown>;
+  execution: RoutineExecution;
+  taskResults?: Map<string, unknown>;
+  onStepStarted?: (step: DeterministicStep, phase: 'pre' | 'post', index: number, execution: RoutineExecution) => void;
+  onStepComplete?: (step: DeterministicStep, phase: 'pre' | 'post', index: number, result: unknown, execution: RoutineExecution) => void;
+  onStepFailed?: (step: DeterministicStep, phase: 'pre' | 'post', index: number, error: Error, execution: RoutineExecution) => void;
+}
+
+interface StepExecutionResult {
+  success: boolean;
+  results: Map<string, unknown>;
+  errors: Array<{ stepName: string; error: string }>;
+  /** All ICM/WM keys written by these steps (for cleanup). */
+  usedResultKeys: string[];
+}
+
+/**
+ * Execute an array of deterministic steps (no LLM).
+ *
+ * Each step calls a registered tool directly via agent.tools.execute(),
+ * stores the result in ICM/WM, and respects per-step error handling.
+ */
+async function executeDeterministicSteps(ctx: StepExecutionContext): Promise<StepExecutionResult> {
+  const { agent, steps, phase, inputs, execution, taskResults } = ctx;
+  const { icmPlugin, wmPlugin } = getPlugins(agent);
+  const log = logger.child({ phase, routine: 'deterministic-steps' });
+  const stepResults = new Map<string, unknown>();
+  const errors: Array<{ stepName: string; error: string }> = [];
+  const usedResultKeys: string[] = [];
+
+  const defaultOnError = phase === 'pre' ? 'fail' : 'continue';
+
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i]!;
+    const onError = step.onError ?? defaultOnError;
+    const resultKey = step.resultKey ??
+      `${phase === 'pre' ? ROUTINE_KEYS.PRE_STEP_PREFIX : ROUTINE_KEYS.POST_STEP_PREFIX}${step.name}`;
+
+    log.info({ stepName: step.name, toolName: step.toolName, index: i }, `Executing ${phase}-step`);
+    ctx.onStepStarted?.(step, phase, i, execution);
+
+    try {
+      // Resolve template placeholders in args
+      const resolveCtx: StepResolveContext = { inputs, taskResults, stepResults };
+      const resolvedArgs = resolveStepArgs(step.args, resolveCtx);
+
+      // Execute tool directly via the agent's ToolManager
+      // Note: ToolManager's ResultNormalizerPlugin converts exceptions to
+      // { success: false, error: '...' } objects instead of throwing.
+      const timeoutMs = step.timeoutMs ?? DEFAULT_STEP_TIMEOUT;
+      const result = await withTimeout(
+        agent.tools.execute(step.toolName, resolvedArgs),
+        timeoutMs,
+        `${phase}-step "${step.name}"`
+      );
+
+      // Check for normalized error results (tool threw but pipeline recovered)
+      if (result && typeof result === 'object' && 'success' in result && result.success === false && 'error' in result) {
+        throw new Error((result as { error: string }).error);
+      }
+
+      // Store result
+      stepResults.set(step.name, result);
+
+      // Inject into ICM/WM for task access (preSteps) or downstream steps (postSteps)
+      await storeResult(resultKey, `${phase}-step result: ${step.name}`, result, icmPlugin, wmPlugin);
+      usedResultKeys.push(resultKey);
+
+      log.info({ stepName: step.name }, `${phase}-step completed`);
+      ctx.onStepComplete?.(step, phase, i, result, execution);
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+      log.error({ stepName: step.name, error: errorMessage }, `${phase}-step failed`);
+      errors.push({ stepName: step.name, error: errorMessage });
+      ctx.onStepFailed?.(step, phase, i, error as Error, execution);
+
+      if (onError === 'fail') {
+        return { success: false, results: stepResults, errors, usedResultKeys };
+      } else if (onError === 'skip-remaining') {
+        break;
+      }
+      // 'continue' → proceed to next step
+    }
+  }
+
+  return { success: true, results: stepResults, errors, usedResultKeys };
+}
+
+// ============================================================================
 // Main Runner
 // ============================================================================
 
@@ -681,6 +810,9 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
     onTaskComplete,
     onTaskFailed,
     onTaskValidation,
+    onStepStarted,
+    onStepComplete,
+    onStepFailed,
     hooks,
     prompts,
     inputs: rawInputs,
@@ -785,7 +917,53 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
 
   const failureMode = definition.concurrency?.failureMode ?? 'fail-fast';
 
+  // Track custom resultKeys from deterministic steps for cleanup (reused agents)
+  const stepResultKeys: string[] = [];
+
   try {
+    // 5. Validate pre/post step tool names
+    const stepToolNames = [
+      ...(definition.preSteps ?? []).map(s => s.toolName),
+      ...(definition.postSteps ?? []).map(s => s.toolName),
+    ];
+    if (stepToolNames.length > 0) {
+      const missingStepTools = [...new Set(
+        stepToolNames.filter(name => !agent.tools.hasToolFunction(name))
+      )];
+      if (missingStepTools.length > 0) {
+        execution.status = 'failed';
+        execution.error = `Missing tools required by pre/post steps: ${missingStepTools.join(', ')}`;
+        execution.completedAt = Date.now();
+        execution.lastUpdatedAt = Date.now();
+        return execution;
+      }
+    }
+
+    // 6. Execute preSteps (deterministic, no LLM)
+    if (definition.preSteps && definition.preSteps.length > 0) {
+      log.info({ count: definition.preSteps.length }, 'Executing pre-steps');
+      const preResult = await executeDeterministicSteps({
+        agent,
+        steps: definition.preSteps,
+        phase: 'pre',
+        inputs: resolvedInputs,
+        execution,
+        onStepStarted: onStepStarted,
+        onStepComplete: onStepComplete,
+        onStepFailed: onStepFailed,
+      });
+
+      stepResultKeys.push(...preResult.usedResultKeys);
+
+      if (!preResult.success) {
+        execution.status = 'failed';
+        execution.error = `Pre-step failed: ${preResult.errors.map(e => e.stepName).join(', ')}`;
+        execution.completedAt = Date.now();
+        execution.lastUpdatedAt = Date.now();
+        return execution;
+      }
+    }
+
     // 7. Main execution loop
     let nextTasks = getNextExecutableTasks(execution.plan);
 
@@ -991,6 +1169,50 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
       execution.progress = getRoutineProgress(execution);
     }
 
+    // 8. Execute postSteps (deterministic, no LLM)
+    const shouldRunPostSteps =
+      definition.postSteps &&
+      definition.postSteps.length > 0 &&
+      (definition.postStepsTrigger === 'always' || execution.status === 'completed');
+
+    if (shouldRunPostSteps) {
+      // Build task results map for {{result.TASK_NAME}} resolution
+      const taskResults = new Map<string, unknown>();
+      for (const task of execution.plan.tasks) {
+        if (task.status === 'completed' && task.result?.output) {
+          taskResults.set(task.name, task.result.output);
+        }
+      }
+
+      log.info({ count: definition.postSteps!.length }, 'Executing post-steps');
+      const postResult = await executeDeterministicSteps({
+        agent,
+        steps: definition.postSteps!,
+        phase: 'post',
+        inputs: resolvedInputs,
+        execution,
+        taskResults,
+        onStepStarted: onStepStarted,
+        onStepComplete: onStepComplete,
+        onStepFailed: onStepFailed,
+      });
+
+      stepResultKeys.push(...postResult.usedResultKeys);
+
+      if (!postResult.success) {
+        const postStepError = `Post-step failed: ${postResult.errors.map(e => e.stepName).join(', ')}`;
+        if (execution.status === 'completed') {
+          // Routine succeeded but post-step failed — downgrade to failed
+          execution.status = 'failed';
+          execution.error = postStepError;
+        } else {
+          // Routine already failed — append post-step error to preserve both
+          execution.error = `${execution.error}; ${postStepError}`;
+        }
+        execution.lastUpdatedAt = Date.now();
+      }
+    }
+
     log.info(
       { status: execution.status, progress: execution.progress },
       'Routine execution finished'
@@ -1000,7 +1222,7 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
   } finally {
     // Clean up routine-managed keys from ICM/WM (important for reused agents)
     try {
-      await cleanupRoutineContext(agent);
+      await cleanupRoutineContext(agent, stepResultKeys);
     } catch (e) {
       log.debug({ error: (e as Error).message }, 'Failed to clean up routine context');
     }

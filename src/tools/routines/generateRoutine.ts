@@ -38,6 +38,65 @@ A routine definition has these fields:
 - **concurrency**: { maxParallelTasks: number, strategy: "fifo"|"priority"|"shortest-first", failureMode?: "fail-fast"|"continue"|"fail-all" }
 - **allowDynamicTasks**: If true, the LLM can add/modify tasks during execution (default: false)
 - **tasks** (required): Array of TaskInput objects defining the workflow steps
+- **preSteps**: Deterministic tool calls to run BEFORE the task loop (no LLM). Results are injected into agent context.
+- **postSteps**: Deterministic tool calls to run AFTER the task loop (no LLM). Can reference task results.
+- **postStepsTrigger**: When to run postSteps: "on-success" (default) or "always"
+
+## Deterministic Steps (Pre/Post)
+
+Optional arrays of tool calls that run WITHOUT LLM involvement:
+
+### preSteps — Run before the task loop
+Execute tools to fetch data, load configs, set up state. Results are injected into agent context for use by tasks.
+\`\`\`json
+{
+  "preSteps": [
+    {
+      "name": "Load Config",
+      "toolName": "store_get",
+      "args": { "key": "{{param.configKey}}" },
+      "resultKey": "config_data"
+    },
+    {
+      "name": "Fetch External Data",
+      "toolName": "web_fetch",
+      "args": { "url": "{{param.apiUrl}}", "method": "GET" },
+      "resultKey": "api_data",
+      "timeoutMs": 10000
+    }
+  ]
+}
+\`\`\`
+
+### postSteps — Run after the task loop completes
+Execute tools to send results, save outputs, trigger notifications.
+\`\`\`json
+{
+  "postSteps": [
+    {
+      "name": "Save Results",
+      "toolName": "store_set",
+      "args": { "key": "final_report", "value": "{{result.Generate Report}}" },
+      "onError": "continue"
+    },
+    {
+      "name": "Notify",
+      "toolName": "send_email",
+      "args": { "to": "{{param.email}}", "body": "{{result.Summarize}}" },
+      "onError": "continue"
+    }
+  ],
+  "postStepsTrigger": "on-success"
+}
+\`\`\`
+
+### Step fields
+- **name** (required): Human-readable step name (used in logs and recording)
+- **toolName** (required): Registered tool to call
+- **args** (required): Arguments object. Supports templates: {{param.NAME}} (inputs), {{result.TASK_NAME}} (task outputs, postSteps only), {{step.STEP_NAME}} (prior step results)
+- **resultKey**: ICM key where result is stored (auto-generated if omitted)
+- **onError**: "fail" (default for preSteps), "continue" (default for postSteps), or "skip-remaining"
+- **timeoutMs**: Step timeout in ms (default: 30000)
 
 ## Task Structure
 
@@ -275,6 +334,39 @@ export function createGenerateRoutine(storage?: IRoutineDefinitionStorage): Tool
                     required: ['name', 'description'],
                   },
                 },
+                preSteps: {
+                  type: 'array',
+                  description: 'Deterministic tool calls to run before the task loop (no LLM). Results injected into agent context.',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string', description: 'Human-readable step name' },
+                      toolName: { type: 'string', description: 'Tool name to invoke' },
+                      args: { type: 'object', description: 'Arguments (supports {{param.NAME}} templates)' },
+                      resultKey: { type: 'string', description: 'ICM key for result storage' },
+                      onError: { type: 'string', enum: ['fail', 'continue', 'skip-remaining'], description: 'Error handling (default: fail)' },
+                      timeoutMs: { type: 'number', description: 'Step timeout in ms (default: 30000)' },
+                    },
+                    required: ['name', 'toolName', 'args'],
+                  },
+                },
+                postSteps: {
+                  type: 'array',
+                  description: 'Deterministic tool calls to run after the task loop (no LLM). Can use {{result.TASK_NAME}} templates.',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string', description: 'Human-readable step name' },
+                      toolName: { type: 'string', description: 'Tool name to invoke' },
+                      args: { type: 'object', description: 'Arguments (supports {{param.NAME}}, {{result.TASK_NAME}}, {{step.STEP_NAME}} templates)' },
+                      resultKey: { type: 'string', description: 'ICM key for result storage' },
+                      onError: { type: 'string', enum: ['fail', 'continue', 'skip-remaining'], description: 'Error handling (default: continue)' },
+                      timeoutMs: { type: 'number', description: 'Step timeout in ms (default: 30000)' },
+                    },
+                    required: ['name', 'toolName', 'args'],
+                  },
+                },
+                postStepsTrigger: { type: 'string', enum: ['on-success', 'always'], description: 'When to run postSteps (default: on-success)' },
                 metadata: { type: 'object', description: 'Arbitrary routine-level metadata' },
               },
               required: ['name', 'description', 'tasks'],

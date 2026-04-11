@@ -24,7 +24,13 @@ export type RoutineStepType =
   | 'iteration.complete'
   | 'execution.error'
   | 'control_flow.started'
-  | 'control_flow.completed';
+  | 'control_flow.completed'
+  | 'prestep.started'
+  | 'prestep.completed'
+  | 'prestep.failed'
+  | 'poststep.started'
+  | 'poststep.completed'
+  | 'poststep.failed';
 
 export interface RoutineExecutionStep {
   timestamp: number;

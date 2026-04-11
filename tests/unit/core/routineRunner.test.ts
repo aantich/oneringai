@@ -1318,4 +1318,405 @@ describe('executeRoutine', () => {
       expect(taskAInput).not.toContain('### Output Storage');
     });
   });
+
+  // ==========================================================================
+  // Deterministic Pre-Steps and Post-Steps
+  // ==========================================================================
+
+  describe('deterministic pre-steps', () => {
+    function makeTool(name: string, result: unknown): ToolFunction {
+      return {
+        definition: {
+          type: 'function',
+          function: { name, description: `Test tool ${name}`, parameters: { type: 'object', properties: {} } },
+        },
+        execute: vi.fn(async () => result),
+      };
+    }
+
+    it('should execute preSteps before the task loop', async () => {
+      const executionOrder: string[] = [];
+      const fetchTool = makeTool('fetch_data', { data: [1, 2, 3] });
+      (fetchTool.execute as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+        executionOrder.push('prestep:fetch_data');
+        return { data: [1, 2, 3] };
+      });
+
+      mockGenerate.mockImplementation(async () => {
+        executionOrder.push('task');
+        return makeTextResponse('Done');
+      });
+
+      const routine = createRoutineDefinition({
+        name: 'With PreSteps',
+        description: 'Test',
+        tasks: [{ name: 'Process', description: 'Process data' }],
+        preSteps: [
+          { name: 'Fetch Data', toolName: 'fetch_data', args: {} },
+        ],
+      });
+
+      const execution = await executeRoutine({
+        ...defaultOptions(routine),
+        tools: [fetchTool],
+      });
+
+      expect(execution.status).toBe('completed');
+      expect(executionOrder).toEqual(['prestep:fetch_data', 'task']);
+      expect(fetchTool.execute).toHaveBeenCalledTimes(1);
+    });
+
+    it('should resolve {{param.X}} templates in preStep args', async () => {
+      const fetchTool = makeTool('fetch_data', { ok: true });
+
+      const routine = createRoutineDefinition({
+        name: 'Parameterized PreStep',
+        description: 'Test',
+        tasks: [{ name: 'Task', description: 'Do work' }],
+        parameters: [{ name: 'url', description: 'API URL', required: true }],
+        preSteps: [
+          { name: 'Fetch', toolName: 'fetch_data', args: { url: '{{param.url}}', method: 'GET' } },
+        ],
+      });
+
+      mockGenerate.mockResolvedValue(makeTextResponse('Done'));
+
+      await executeRoutine({
+        ...defaultOptions(routine),
+        tools: [fetchTool],
+        inputs: { url: 'https://api.example.com/data' },
+      });
+
+      expect(fetchTool.execute).toHaveBeenCalledWith(
+        expect.objectContaining({ url: 'https://api.example.com/data', method: 'GET' }),
+        expect.anything()
+      );
+    });
+
+    it('should fail routine when preStep fails with default onError (fail)', async () => {
+      const failingTool = makeTool('fail_tool', null);
+      (failingTool.execute as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+        throw new Error('Connection refused');
+      });
+
+      const routine = createRoutineDefinition({
+        name: 'Failing PreStep',
+        description: 'Test',
+        tasks: [{ name: 'Task', description: 'Should not run' }],
+        preSteps: [
+          { name: 'Bad Step', toolName: 'fail_tool', args: {} },
+        ],
+      });
+
+      const execution = await executeRoutine({
+        ...defaultOptions(routine),
+        tools: [failingTool],
+      });
+
+      expect(execution.status).toBe('failed');
+      expect(execution.error).toContain('Pre-step failed');
+      expect(execution.error).toContain('Bad Step');
+      // Task should never have run
+      expect(mockGenerate).not.toHaveBeenCalled();
+    });
+
+    it('should continue when preStep fails with onError=continue', async () => {
+      const failingTool = makeTool('fail_tool', null);
+      (failingTool.execute as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+        throw new Error('Oops');
+      });
+
+      const routine = createRoutineDefinition({
+        name: 'Continuing PreStep',
+        description: 'Test',
+        tasks: [{ name: 'Task', description: 'Should still run' }],
+        preSteps: [
+          { name: 'Optional Step', toolName: 'fail_tool', args: {}, onError: 'continue' },
+        ],
+      });
+
+      mockGenerate.mockResolvedValue(makeTextResponse('Done'));
+
+      const execution = await executeRoutine({
+        ...defaultOptions(routine),
+        tools: [failingTool],
+      });
+
+      expect(execution.status).toBe('completed');
+      expect(mockGenerate).toHaveBeenCalled();
+    });
+
+    it('should fail when preStep tool is not registered', async () => {
+      const routine = createRoutineDefinition({
+        name: 'Missing Tool',
+        description: 'Test',
+        tasks: [{ name: 'Task', description: 'Work' }],
+        preSteps: [
+          { name: 'Ghost', toolName: 'nonexistent_tool', args: {} },
+        ],
+      });
+
+      const execution = await executeRoutine(defaultOptions(routine));
+
+      expect(execution.status).toBe('failed');
+      expect(execution.error).toContain('Missing tools required by pre/post steps');
+      expect(execution.error).toContain('nonexistent_tool');
+    });
+
+    it('should call onStepStarted and onStepComplete callbacks', async () => {
+      const fetchTool = makeTool('fetch_data', { ok: true });
+      const onStepStarted = vi.fn();
+      const onStepComplete = vi.fn();
+
+      const routine = createRoutineDefinition({
+        name: 'Callbacks',
+        description: 'Test',
+        tasks: [{ name: 'Task', description: 'Work' }],
+        preSteps: [
+          { name: 'Fetch', toolName: 'fetch_data', args: {} },
+        ],
+      });
+
+      mockGenerate.mockResolvedValue(makeTextResponse('Done'));
+
+      await executeRoutine({
+        ...defaultOptions(routine),
+        tools: [fetchTool],
+        onStepStarted,
+        onStepComplete,
+      });
+
+      expect(onStepStarted).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Fetch', toolName: 'fetch_data' }),
+        'pre', 0, expect.anything()
+      );
+      expect(onStepComplete).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Fetch' }),
+        'pre', 0, expect.objectContaining({ ok: true }), expect.anything()
+      );
+    });
+
+    it('should execute multiple preSteps in order with {{step.X}} chaining', async () => {
+      const stepATool = makeTool('step_a', { token: 'abc123' });
+      const stepBTool = makeTool('step_b', { ready: true });
+
+      const routine = createRoutineDefinition({
+        name: 'Chained PreSteps',
+        description: 'Test',
+        tasks: [{ name: 'Task', description: 'Work' }],
+        preSteps: [
+          { name: 'Auth', toolName: 'step_a', args: {} },
+          { name: 'Init', toolName: 'step_b', args: { token: '{{step.Auth}}' } },
+        ],
+      });
+
+      mockGenerate.mockResolvedValue(makeTextResponse('Done'));
+
+      await executeRoutine({
+        ...defaultOptions(routine),
+        tools: [stepATool, stepBTool],
+      });
+
+      expect(stepBTool.execute).toHaveBeenCalledWith(
+        expect.objectContaining({ token: '{"token":"abc123"}' }),
+        expect.anything()
+      );
+    });
+  });
+
+  describe('deterministic post-steps', () => {
+    function makeTool(name: string, result: unknown): ToolFunction {
+      return {
+        definition: {
+          type: 'function',
+          function: { name, description: `Test tool ${name}`, parameters: { type: 'object', properties: {} } },
+        },
+        execute: vi.fn(async () => result),
+      };
+    }
+
+    it('should execute postSteps after successful completion', async () => {
+      const executionOrder: string[] = [];
+      const notifyTool = makeTool('notify', { sent: true });
+      (notifyTool.execute as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+        executionOrder.push('poststep:notify');
+        return { sent: true };
+      });
+
+      mockGenerate.mockImplementation(async () => {
+        executionOrder.push('task');
+        return makeTextResponse('Task result here');
+      });
+
+      const routine = createRoutineDefinition({
+        name: 'With PostSteps',
+        description: 'Test',
+        tasks: [{ name: 'Analyze', description: 'Do analysis' }],
+        postSteps: [
+          { name: 'Notify', toolName: 'notify', args: { body: '{{result.Analyze}}' } },
+        ],
+      });
+
+      const execution = await executeRoutine({
+        ...defaultOptions(routine),
+        tools: [notifyTool],
+      });
+
+      expect(execution.status).toBe('completed');
+      expect(executionOrder).toEqual(['task', 'poststep:notify']);
+      expect(notifyTool.execute).toHaveBeenCalledWith(
+        expect.objectContaining({ body: 'Task result here' }),
+        expect.anything()
+      );
+    });
+
+    it('should skip postSteps when routine fails (default on-success trigger)', async () => {
+      const notifyTool = makeTool('notify', { sent: true });
+
+      // Make the task fail by exhausting attempts with a permanent error
+      mockGenerate.mockRejectedValue(
+        new (await import('@/domain/errors/AIErrors.js')).ProviderAuthError('Bad key')
+      );
+
+      const routine = createRoutineDefinition({
+        name: 'Failing Routine',
+        description: 'Test',
+        tasks: [{ name: 'Task', description: 'Will fail' }],
+        postSteps: [
+          { name: 'Notify', toolName: 'notify', args: {} },
+        ],
+      });
+
+      const execution = await executeRoutine({
+        ...defaultOptions(routine),
+        tools: [notifyTool],
+      });
+
+      expect(execution.status).toBe('failed');
+      expect(notifyTool.execute).not.toHaveBeenCalled();
+    });
+
+    it('should run postSteps on failure when postStepsTrigger=always', async () => {
+      const cleanupTool = makeTool('cleanup', { cleaned: true });
+
+      mockGenerate.mockRejectedValue(
+        new (await import('@/domain/errors/AIErrors.js')).ProviderAuthError('Bad key')
+      );
+
+      const routine = createRoutineDefinition({
+        name: 'Always PostSteps',
+        description: 'Test',
+        tasks: [{ name: 'Task', description: 'Will fail' }],
+        postSteps: [
+          { name: 'Cleanup', toolName: 'cleanup', args: {} },
+        ],
+        postStepsTrigger: 'always',
+      });
+
+      const execution = await executeRoutine({
+        ...defaultOptions(routine),
+        tools: [cleanupTool],
+      });
+
+      expect(execution.status).toBe('failed');
+      expect(cleanupTool.execute).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not downgrade status when postStep fails with default onError (continue)', async () => {
+      const failingTool = makeTool('bad_notify', null);
+      (failingTool.execute as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+        throw new Error('SMTP down');
+      });
+
+      mockGenerate.mockResolvedValue(makeTextResponse('Done'));
+
+      const routine = createRoutineDefinition({
+        name: 'PostStep Fail Continue',
+        description: 'Test',
+        tasks: [{ name: 'Task', description: 'Work' }],
+        postSteps: [
+          { name: 'Bad Notify', toolName: 'bad_notify', args: {} },
+        ],
+      });
+
+      const execution = await executeRoutine({
+        ...defaultOptions(routine),
+        tools: [failingTool],
+      });
+
+      // Status should remain completed because onError defaults to 'continue' for postSteps
+      expect(execution.status).toBe('completed');
+    });
+
+    it('should downgrade status when postStep fails with onError=fail', async () => {
+      const failingTool = makeTool('critical_save', null);
+      (failingTool.execute as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+        throw new Error('DB down');
+      });
+
+      mockGenerate.mockResolvedValue(makeTextResponse('Done'));
+
+      const routine = createRoutineDefinition({
+        name: 'PostStep Fail Hard',
+        description: 'Test',
+        tasks: [{ name: 'Task', description: 'Work' }],
+        postSteps: [
+          { name: 'Critical Save', toolName: 'critical_save', args: {}, onError: 'fail' },
+        ],
+      });
+
+      const execution = await executeRoutine({
+        ...defaultOptions(routine),
+        tools: [failingTool],
+      });
+
+      expect(execution.status).toBe('failed');
+      expect(execution.error).toContain('Post-step failed');
+    });
+
+    it('should append post-step error to existing error when routine already failed and postStepsTrigger=always', async () => {
+      const failingPostTool = makeTool('fail_save', null);
+      (failingPostTool.execute as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+        throw new Error('DB down');
+      });
+
+      mockGenerate.mockRejectedValue(
+        new (await import('@/domain/errors/AIErrors.js')).ProviderAuthError('Bad key')
+      );
+
+      const routine = createRoutineDefinition({
+        name: 'Both Fail',
+        description: 'Test',
+        tasks: [{ name: 'Task', description: 'Will fail' }],
+        postSteps: [
+          { name: 'Save', toolName: 'fail_save', args: {}, onError: 'fail' },
+        ],
+        postStepsTrigger: 'always',
+      });
+
+      const execution = await executeRoutine({
+        ...defaultOptions(routine),
+        tools: [failingPostTool],
+      });
+
+      expect(execution.status).toBe('failed');
+      // Original task error should be preserved
+      expect(execution.error).toContain('Task "Task" failed');
+      // Post-step error should be appended
+      expect(execution.error).toContain('Post-step failed');
+      expect(execution.error).toContain('Save');
+    });
+  });
+
+  describe('backward compatibility', () => {
+    it('should work identically without preSteps or postSteps', async () => {
+      const routine = createSimpleRoutine();
+      mockGenerate.mockResolvedValue(makeTextResponse('Done'));
+
+      const execution = await executeRoutine(defaultOptions(routine));
+
+      expect(execution.status).toBe('completed');
+      expect(execution.plan.tasks[0]!.status).toBe('completed');
+    });
+  });
 });

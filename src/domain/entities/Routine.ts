@@ -28,6 +28,51 @@ export interface RoutineParameter {
 }
 
 // ============================================================================
+// Deterministic Steps
+// ============================================================================
+
+/**
+ * Error handling strategy for deterministic steps.
+ * - 'fail': Abort the routine on step failure (default for preSteps)
+ * - 'continue': Log the error and continue to next step (default for postSteps)
+ * - 'skip-remaining': Stop executing remaining steps but don't fail the routine
+ */
+export type StepErrorStrategy = 'fail' | 'continue' | 'skip-remaining';
+
+/**
+ * A deterministic tool call that runs without LLM involvement.
+ *
+ * Arguments support template placeholders:
+ * - {{param.NAME}} — resolved from routine input parameters
+ * - {{result.TASK_NAME}} — resolved from task output (postSteps only)
+ * - {{step.STEP_NAME}} — resolved from a previous step's result
+ */
+export interface DeterministicStep {
+  /** Human-readable name for this step (used in recording and logging) */
+  name: string;
+
+  /** Tool name to invoke (must be registered on the agent) */
+  toolName: string;
+
+  /** Arguments to pass to the tool. Values can contain {{...}} templates. */
+  args: Record<string, unknown>;
+
+  /**
+   * ICM/WM key where the step result is stored.
+   * For preSteps: makes result available to tasks via this key.
+   * For postSteps: makes result available to subsequent postSteps.
+   * If omitted, result is stored as `__prestep_{name}` or `__poststep_{name}`.
+   */
+  resultKey?: string;
+
+  /** Error handling strategy. Default: 'fail' for preSteps, 'continue' for postSteps. */
+  onError?: StepErrorStrategy;
+
+  /** Timeout in ms for this step. Default: 30000 (30s). */
+  timeoutMs?: number;
+}
+
+// ============================================================================
 // Routine Definition (Template)
 // ============================================================================
 
@@ -71,6 +116,17 @@ export interface RoutineDefinition {
   /** Input parameters this routine accepts (templates use {{param.name}}) */
   parameters?: RoutineParameter[];
 
+  /** Deterministic steps to execute BEFORE the agent-based task loop.
+   *  Results are injected into agent context for use by tasks. */
+  preSteps?: DeterministicStep[];
+
+  /** Deterministic steps to execute AFTER the agent-based task loop completes.
+   *  Can reference task results via {{result.TASK_NAME}} templates. */
+  postSteps?: DeterministicStep[];
+
+  /** When to run postSteps. Default: 'on-success' */
+  postStepsTrigger?: 'on-success' | 'always';
+
   /** Tags for categorization and filtering */
   tags?: string[];
 
@@ -103,6 +159,9 @@ export interface RoutineDefinitionInput {
   concurrency?: PlanConcurrency;
   allowDynamicTasks?: boolean;
   parameters?: RoutineParameter[];
+  preSteps?: DeterministicStep[];
+  postSteps?: DeterministicStep[];
+  postStepsTrigger?: 'on-success' | 'always';
   tags?: string[];
   author?: string;
   metadata?: Record<string, unknown>;
@@ -202,6 +261,9 @@ export function createRoutineDefinition(input: RoutineDefinitionInput): RoutineD
     concurrency: input.concurrency,
     allowDynamicTasks: input.allowDynamicTasks ?? false,
     parameters: input.parameters,
+    preSteps: input.preSteps,
+    postSteps: input.postSteps,
+    postStepsTrigger: input.postStepsTrigger,
     tags: input.tags,
     author: input.author,
     createdAt: now,

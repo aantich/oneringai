@@ -42,6 +42,10 @@ export const ROUTINE_KEYS = {
   WM_DEP_FINDINGS_PREFIX: 'findings/__dep_result_',
   /** Prefix for auto-stored task outputs (set by output contracts) */
   TASK_OUTPUT_PREFIX: '__task_output_',
+  /** Prefix for pre-step results stored in ICM/WM */
+  PRE_STEP_PREFIX: '__prestep_',
+  /** Prefix for post-step results stored in ICM/WM */
+  POST_STEP_PREFIX: '__poststep_',
 } as const;
 
 // ============================================================================
@@ -158,6 +162,75 @@ export function resolveTaskTemplates(
 }
 
 // ============================================================================
+// Deterministic Step Argument Resolution
+// ============================================================================
+
+/**
+ * Context for resolving templates in deterministic step arguments.
+ */
+export interface StepResolveContext {
+  /** Routine input parameters ({{param.NAME}}) */
+  inputs: Record<string, unknown>;
+  /** Task results map: task name → output ({{result.TASK_NAME}}, post-steps only) */
+  taskResults?: Map<string, unknown>;
+  /** Prior step results map: step name → output ({{step.STEP_NAME}}) */
+  stepResults?: Map<string, unknown>;
+}
+
+/**
+ * Resolve template placeholders in deterministic step arguments (deep).
+ *
+ * Walks the argument object recursively. For string values, resolves:
+ * - {{param.NAME}} — from inputs
+ * - {{result.TASK_NAME}} — from task outputs (post-steps)
+ * - {{step.STEP_NAME}} — from prior step results
+ *
+ * Non-string values pass through unchanged. Unresolved templates are left as-is.
+ */
+export function resolveStepArgs(
+  args: Record<string, unknown>,
+  context: StepResolveContext
+): Record<string, unknown> {
+  function resolveValue(value: unknown): unknown {
+    if (typeof value === 'string') {
+      return value.replace(
+        /\{\{(\w+)\.([^}]+)\}\}/g,
+        (_match, namespace: string, key: string) => {
+          let resolved: unknown;
+          if (namespace === 'param') {
+            resolved = context.inputs[key];
+          } else if (namespace === 'result') {
+            resolved = context.taskResults?.get(key);
+          } else if (namespace === 'step') {
+            resolved = context.stepResults?.get(key);
+          } else {
+            return _match;
+          }
+          if (resolved === undefined) return _match;
+          return typeof resolved === 'string' ? resolved : JSON.stringify(resolved);
+        }
+      );
+    }
+    if (Array.isArray(value)) return value.map(resolveValue);
+    if (value !== null && typeof value === 'object') {
+      const obj = value as Record<string, unknown>;
+      const resolved: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(obj)) {
+        resolved[k] = resolveValue(v);
+      }
+      return resolved;
+    }
+    return value;
+  }
+
+  const resolved: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(args)) {
+    resolved[k] = resolveValue(v);
+  }
+  return resolved;
+}
+
+// ============================================================================
 // Parameter Validation
 // ============================================================================
 
@@ -219,7 +292,7 @@ export async function readMemoryValue(
 /**
  * Store a value in ICM (if small enough) or WM (if large).
  */
-async function storeResult(
+export async function storeResult(
   key: string,
   description: string,
   value: unknown,
@@ -333,7 +406,7 @@ function setIterationKeys(
  * Wrap a promise with an optional timeout. Returns the promise result if it resolves
  * before the timeout, otherwise rejects with a descriptive error.
  */
-async function withTimeout<T>(
+export async function withTimeout<T>(
   promise: Promise<T>,
   timeoutMs: number | undefined,
   label: string

@@ -13,6 +13,7 @@ import {
   readMemoryValue,
   resolveSubRoutine,
   resolveFlowSource,
+  resolveStepArgs,
   executeControlFlow,
   ROUTINE_KEYS,
 } from '@/core/routineControlFlow.js';
@@ -982,5 +983,86 @@ describe('executeControlFlow', () => {
     const result = await executeControlFlow(agent, task, {});
     expect(result.completed).toBe(false);
     expect(result.error).toContain('Unknown control flow type');
+  });
+});
+
+// ============================================================================
+// resolveStepArgs
+// ============================================================================
+
+describe('resolveStepArgs', () => {
+  it('should resolve {{param.X}} templates from inputs', () => {
+    const result = resolveStepArgs(
+      { url: '{{param.apiUrl}}', method: 'GET' },
+      { inputs: { apiUrl: 'https://example.com' } }
+    );
+    expect(result).toEqual({ url: 'https://example.com', method: 'GET' });
+  });
+
+  it('should resolve {{result.TASK}} templates from task results', () => {
+    const taskResults = new Map<string, unknown>([['Summarize', 'A brief summary']]);
+    const result = resolveStepArgs(
+      { body: '{{result.Summarize}}' },
+      { inputs: {}, taskResults }
+    );
+    expect(result).toEqual({ body: 'A brief summary' });
+  });
+
+  it('should resolve {{step.STEP}} templates from prior step results', () => {
+    const stepResults = new Map<string, unknown>([['Auth', { token: 'abc123' }]]);
+    const result = resolveStepArgs(
+      { header: '{{step.Auth}}' },
+      { inputs: {}, stepResults }
+    );
+    expect(result).toEqual({ header: '{"token":"abc123"}' });
+  });
+
+  it('should leave unresolved templates as-is', () => {
+    const result = resolveStepArgs(
+      { url: '{{param.missing}}', unknown: '{{foo.bar}}' },
+      { inputs: {} }
+    );
+    expect(result).toEqual({ url: '{{param.missing}}', unknown: '{{foo.bar}}' });
+  });
+
+  it('should handle nested objects recursively', () => {
+    const result = resolveStepArgs(
+      { config: { nested: { url: '{{param.host}}/api' } } },
+      { inputs: { host: 'https://api.test' } }
+    );
+    expect(result).toEqual({ config: { nested: { url: 'https://api.test/api' } } });
+  });
+
+  it('should handle arrays recursively', () => {
+    const result = resolveStepArgs(
+      { items: ['{{param.a}}', '{{param.b}}', 'literal'] },
+      { inputs: { a: 'first', b: 'second' } }
+    );
+    expect(result).toEqual({ items: ['first', 'second', 'literal'] });
+  });
+
+  it('should pass non-string values through unchanged', () => {
+    const result = resolveStepArgs(
+      { count: 42, enabled: true, empty: null },
+      { inputs: {} }
+    );
+    expect(result).toEqual({ count: 42, enabled: true, empty: null });
+  });
+
+  it('should JSON.stringify non-string resolved values', () => {
+    const result = resolveStepArgs(
+      { data: '{{param.obj}}' },
+      { inputs: { obj: { key: 'value' } } }
+    );
+    expect(result).toEqual({ data: '{"key":"value"}' });
+  });
+
+  it('should handle mixed namespaces in one string', () => {
+    const taskResults = new Map([['Report', 'the report']]);
+    const result = resolveStepArgs(
+      { msg: 'Results for {{param.user}}: {{result.Report}}' },
+      { inputs: { user: 'Alice' }, taskResults }
+    );
+    expect(result).toEqual({ msg: 'Results for Alice: the report' });
   });
 });

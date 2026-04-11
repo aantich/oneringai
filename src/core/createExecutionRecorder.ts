@@ -28,7 +28,7 @@
 
 import type { HookConfig } from '../capabilities/agents/types/HookTypes.js';
 import type { Task, TaskValidationResult } from '../domain/entities/Task.js';
-import type { RoutineExecution } from '../domain/entities/Routine.js';
+import type { RoutineExecution, DeterministicStep } from '../domain/entities/Routine.js';
 import type { RoutineExecutionStep } from '../domain/entities/RoutineExecutionRecord.js';
 import type { IRoutineExecutionStorage } from '../domain/interfaces/IRoutineExecutionStorage.js';
 import { logger } from '../infrastructure/observability/Logger.js';
@@ -59,6 +59,12 @@ export interface ExecutionRecorder {
   onTaskFailed: (task: Task, execution: RoutineExecution) => void;
   /** Callback for onTaskValidation. */
   onTaskValidation: (task: Task, result: TaskValidationResult, execution: RoutineExecution) => void;
+  /** Callback for deterministic step start. */
+  onStepStarted: (step: DeterministicStep, phase: 'pre' | 'post', index: number, execution: RoutineExecution) => void;
+  /** Callback for deterministic step completion. */
+  onStepComplete: (step: DeterministicStep, phase: 'pre' | 'post', index: number, result: unknown, execution: RoutineExecution) => void;
+  /** Callback for deterministic step failure. */
+  onStepFailed: (step: DeterministicStep, phase: 'pre' | 'post', index: number, error: Error, execution: RoutineExecution) => void;
   /** Call after executeRoutine() resolves/rejects to write final status. */
   finalize: (execution: RoutineExecution | null, error?: Error) => Promise<void>;
 }
@@ -325,6 +331,57 @@ export function createExecutionRecorder(options: ExecutionRecorderOptions): Exec
     });
   };
 
+  // ---- Deterministic Step Callbacks ----
+
+  const onStepStarted = (
+    step: DeterministicStep,
+    phase: 'pre' | 'post',
+    index: number,
+    _execution: RoutineExecution,
+  ): void => {
+    pushStep({
+      timestamp: Date.now(),
+      taskName: `${phase}step:${step.name}`,
+      type: `${phase}step.started`,
+      data: { toolName: step.toolName, index },
+    });
+    heartbeat();
+  };
+
+  const onStepComplete = (
+    step: DeterministicStep,
+    phase: 'pre' | 'post',
+    index: number,
+    result: unknown,
+    _execution: RoutineExecution,
+  ): void => {
+    pushStep({
+      timestamp: Date.now(),
+      taskName: `${phase}step:${step.name}`,
+      type: `${phase}step.completed`,
+      data: {
+        toolName: step.toolName,
+        index,
+        result: truncate(result, maxTruncateLength),
+      },
+    });
+  };
+
+  const onStepFailed = (
+    step: DeterministicStep,
+    phase: 'pre' | 'post',
+    index: number,
+    error: Error,
+    _execution: RoutineExecution,
+  ): void => {
+    pushStep({
+      timestamp: Date.now(),
+      taskName: `${phase}step:${step.name}`,
+      type: `${phase}step.failed`,
+      data: { toolName: step.toolName, index, error: error.message },
+    });
+  };
+
   // ---- Finalize ----
 
   const finalize = async (
@@ -370,6 +427,9 @@ export function createExecutionRecorder(options: ExecutionRecorderOptions): Exec
     onTaskComplete,
     onTaskFailed,
     onTaskValidation,
+    onStepStarted,
+    onStepComplete,
+    onStepFailed,
     finalize,
   };
 }
