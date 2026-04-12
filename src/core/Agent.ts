@@ -37,6 +37,8 @@ import type {
   AgentDefinitionMetadata,
 } from '../domain/interfaces/IAgentDefinitionStorage.js';
 import { StorageRegistry } from './StorageRegistry.js';
+import { TemplateEngine } from './TemplateEngine.js';
+import type { TemplateContext } from './TemplateEngine.js';
 import { AgentRegistry } from './AgentRegistry.js';
 import { SuspendSignal } from './SuspendSignal.js';
 import type { ICorrelationStorage, SessionRef } from '../domain/interfaces/ICorrelationStorage.js';
@@ -383,7 +385,17 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
     // Set system prompt on inherited AgentContext if instructions provided
     if (config.instructions) {
-      this._agentContext.systemPrompt = config.instructions;
+      // Run static template pass (resolves AGENT_ID, MODEL, VENDOR, etc.)
+      const templateCtx: TemplateContext = {
+        agentId: this.name,
+        agentName: this.name,
+        model: this.model,
+        vendor: this.connector.vendor,
+        userId: config.userId,
+      };
+      this._agentContext.systemPrompt = TemplateEngine.processSync(
+        config.instructions, templateCtx, { phase: 'static' }
+      );
       this._hasExplicitInstructions = true;
     }
 

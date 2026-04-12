@@ -98,6 +98,7 @@ import {
   isStoreHandler,
 } from './types.js';
 import { StoreToolsManager } from './store-tools.js';
+import { TemplateEngine } from '../TemplateEngine.js';
 
 // ============================================================================
 // AgentContextNextGen
@@ -1160,10 +1161,15 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       pluginContents: {} as Record<string, number>,
     };
 
-    // 1. System Prompt (user-provided)
+    // 1. System Prompt (user-provided) — run dynamic template pass
     if (this._systemPrompt) {
-      parts.push(`# System Prompt\n\n${this._systemPrompt}`);
-      breakdown.systemPrompt = this._estimator.estimateTokens(this._systemPrompt);
+      const resolvedPrompt = await TemplateEngine.process(this._systemPrompt, {
+        agentId: this._agentId,
+        model: this._config.model,
+        userId: this._userId,
+      }, { phase: 'dynamic' });
+      parts.push(`# System Prompt\n\n${resolvedPrompt}`);
+      breakdown.systemPrompt = this._estimator.estimateTokens(resolvedPrompt);
     }
 
     // 2. Persistent Instructions (from plugin, if enabled)

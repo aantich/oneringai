@@ -14,6 +14,7 @@ A comprehensive guide to using all features of the @everworker/oneringai library
 3. [Basic Text Generation](#basic-text-generation)
 4. [Connectors & Authentication](#connectors--authentication)
 5. [Agent Features](#agent-features)
+   - [Instruction Templates](#instruction-templates) — `{{DATE}}`, `{{AGENT_ID}}`, custom `{{COMMAND:arg}}` with extensible registry
    - Multi-User Support (`userId`)
    - Auth Identities (`identities`)
 6. [Tools & Function Calling](#tools--function-calling)
@@ -410,6 +411,187 @@ const agent = Agent.create({
 
 const response = await agent.run('How do I read a CSV file?');
 // Agent will provide Python code with all the rules applied
+```
+
+### Instruction Templates
+
+Agent instructions support `{{COMMAND}}` and `{{COMMAND:arg}}` template placeholders that resolve automatically. Templates are processed in two phases:
+
+- **Static** — resolved once when the agent is created (e.g., `AGENT_ID`, `MODEL`)
+- **Dynamic** — resolved fresh before every LLM call (e.g., `DATE`, `TIME`, `RANDOM`)
+
+#### Built-in Templates
+
+| Template | Phase | Description |
+|----------|-------|-------------|
+| `{{AGENT_ID}}` | static | Agent's ID/name |
+| `{{AGENT_NAME}}` | static | Agent's display name |
+| `{{MODEL}}` | static | Current model (e.g., `gpt-4.1`) |
+| `{{VENDOR}}` | static | Current vendor (e.g., `openai`) |
+| `{{USER_ID}}` | static | Current user ID |
+| `{{DATE}}` | dynamic | Current date — default `YYYY-MM-DD` |
+| `{{DATE:format}}` | dynamic | Formatted date (e.g., `{{DATE:MM/DD/YYYY}}`, `{{DATE:DD.MM.YY}}`) |
+| `{{TIME}}` | dynamic | Current time — default `HH:mm:ss` |
+| `{{TIME:format}}` | dynamic | Formatted time (e.g., `{{TIME:hh:mm A}}` → `02:30 PM`) |
+| `{{DATETIME}}` | dynamic | Combined — default `YYYY-MM-DD HH:mm:ss` |
+| `{{DATETIME:format}}` | dynamic | Formatted (e.g., `{{DATETIME:YYYY/MM/DD HH:mm}}`) |
+| `{{RANDOM}}` | dynamic | Random integer 1–100 |
+| `{{RANDOM:min:max}}` | dynamic | Random integer in range (e.g., `{{RANDOM:1:10}}`) |
+
+**Format tokens:** `YYYY`, `YY`, `MM`, `DD`, `HH` (24h), `hh` (12h), `mm`, `ss`, `A` (AM/PM), `a` (am/pm)
+
+#### Basic Usage
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  name: 'research-assistant',
+  userId: 'user-42',
+  instructions: `You are {{AGENT_NAME}}, running on {{VENDOR}}/{{MODEL}}.
+Today is {{DATE:MM/DD/YYYY}}. Current time: {{TIME:hh:mm A}}.
+Assigned to user {{USER_ID}}.
+Your session token is {{RANDOM:1000:9999}}.`,
+});
+
+// After creation, static templates are already resolved:
+// "You are research-assistant, running on openai/gpt-4.1."
+// Dynamic templates resolve on each LLM call:
+// "Today is 04/12/2026. Current time: 02:30 PM."
+```
+
+#### Custom Handlers
+
+Register your own template commands with `TemplateEngine.register()`. Handlers receive the arg string (after the colon) and a context object:
+
+```typescript
+import { TemplateEngine } from '@everworker/oneringai';
+
+// Simple static handler (resolved once at agent creation)
+TemplateEngine.register('COMPANY', () => 'Acme Corp');
+
+// Handler with argument
+TemplateEngine.register('GREET', (style, ctx) => {
+  const name = (ctx.userName as string) ?? 'there';
+  return style === 'casual' ? `Hey ${name}!` : `Good day, ${name}.`;
+});
+// Usage: {{GREET:casual}} → "Hey Alice!"
+
+// Async dynamic handler (resolved every LLM call)
+TemplateEngine.register('DB_COUNT', async (collection) => {
+  const count = await db.collection(collection!).countDocuments();
+  return String(count);
+}, { dynamic: true });
+// Usage: {{DB_COUNT:users}} → "4210"
+
+// i18n translation handler
+const translations = { en: { hello: 'Hello' }, es: { hello: 'Hola' } };
+TemplateEngine.register('T', (key, ctx) => {
+  const lang = (ctx.lang as string) ?? 'en';
+  return translations[lang]?.[key ?? ''] ?? `[missing: ${key}]`;
+});
+// Usage: {{T:hello}} → "Hola" (when ctx.lang = 'es')
+```
+
+#### Overriding Built-in Handlers
+
+Client apps can override any built-in handler. For example, to make `{{DATE}}` respect the user's timezone:
+
+```typescript
+import { TemplateEngine } from '@everworker/oneringai';
+
+TemplateEngine.register('DATE', (fmt, ctx) => {
+  const tz = (ctx.timezone as string) ?? 'UTC';
+  const now = new Date();
+  if (!fmt) {
+    return now.toLocaleDateString('en-CA', { timeZone: tz });
+  }
+  // Custom format logic with timezone...
+  return now.toLocaleDateString('en-US', { timeZone: tz });
+}, { dynamic: true });
+```
+
+Overrides work regardless of registration order — user registrations always win over built-ins.
+
+#### Escaping Templates
+
+When you need to pass `{{...}}` literally to the LLM (e.g., to explain the template syntax itself), use one of two escape mechanisms:
+
+**Triple braces** — for inline escaping:
+
+```typescript
+const instructions = `You are {{AGENT_ID}}.
+
+When users ask about templates, tell them:
+- {{{DATE}}} inserts the current date
+- {{{RANDOM:min:max}}} generates a random number`;
+
+// Resolves to:
+// "You are my-agent."
+// "- {{DATE}} inserts the current date"
+// "- {{RANDOM:min:max}} generates a random number"
+```
+
+**Raw blocks** — for longer passages:
+
+```typescript
+const instructions = `Today is {{DATE}}.
+
+{{raw}}
+## Template Reference
+{{DATE}} - Current date
+{{TIME}} - Current time
+{{AGENT_ID}} - Agent identifier
+{{RANDOM:min:max}} - Random number
+{{/raw}}`;
+
+// {{DATE}} outside the raw block resolves normally.
+// Everything inside {{raw}}...{{/raw}} is preserved verbatim.
+```
+
+#### How It Works
+
+Templates are processed in two phases integrated into the agent lifecycle:
+
+1. **Agent creation** (`Agent.create()`) — `TemplateEngine.processSync()` runs the **static** pass on `config.instructions`, resolving `AGENT_ID`, `MODEL`, `VENDOR`, `USER_ID`, and any custom static handlers.
+
+2. **Before each LLM call** (`AgentContextNextGen.buildSystemMessage()`) — `TemplateEngine.process()` runs the **dynamic** pass, resolving `DATE`, `TIME`, `DATETIME`, `RANDOM`, and any custom dynamic handlers.
+
+Unknown `{{COMMANDS}}` are left as-is — they won't cause errors and can coexist with other templating systems.
+
+#### API Reference
+
+```typescript
+// Register a handler (overrides existing, including built-ins)
+TemplateEngine.register(name: string, handler: TemplateHandler, options?: { dynamic?: boolean }): void;
+
+// Unregister a handler
+TemplateEngine.unregister(name: string): void;
+
+// Check if a handler exists
+TemplateEngine.has(name: string): boolean;
+
+// List all registered handler names
+TemplateEngine.getRegisteredHandlers(): string[];
+
+// Process templates (async — supports async handlers)
+await TemplateEngine.process(text, context?, { phase?: 'static' | 'dynamic' | 'all' }): Promise<string>;
+
+// Process templates (sync — throws if a matched handler returns a Promise)
+TemplateEngine.processSync(text, context?, { phase?: 'static' | 'dynamic' | 'all' }): string;
+
+// Handler signature
+type TemplateHandler = (arg: string | undefined, context: TemplateContext) => string | Promise<string>;
+
+// Context passed to handlers
+interface TemplateContext {
+  agentId?: string;
+  agentName?: string;
+  model?: string;
+  vendor?: string;
+  userId?: string;
+  [key: string]: unknown;  // custom fields
+}
 ```
 
 ### Control Methods

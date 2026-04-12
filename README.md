@@ -48,6 +48,7 @@
   - [32. Unified Calendar](#32-unified-calendar-new) — Cross-provider meeting slot finder (Google + Microsoft)
   - [33. Multi-Account Connectors](#33-multi-account-connectors-new) — Multiple accounts per vendor with automatic routing
   - [34. Integration Testing](#34-integration-testing-new) — Reusable test suites for connector tools
+  - [36. Instruction Templates](#36-instruction-templates-new) — `{{DATE}}`, `{{AGENT_ID}}`, custom `{{COMMAND:arg}}` with extensible registry
 - [MCP Integration](#mcp-model-context-protocol-integration)
 - [Documentation](#documentation)
 - [Examples](#examples)
@@ -139,6 +140,7 @@ Showcasing another amazing "built with oneringai": ["no saas" agentic business t
 - 📅 **Unified Calendar** - NEW: Cross-provider meeting slot finder aggregating Google + Microsoft calendars
 - 👥 **Multi-Account Connectors** - NEW: Multiple accounts per vendor (e.g., work + personal) with automatic routing
 - 🧪 **Integration Testing** - NEW: Reusable test suite framework for connector tools with 10 built-in suites
+- 📝 **Instruction Templates** - NEW: `{{DATE}}`, `{{AGENT_ID}}`, `{{RANDOM:1:10}}` and custom `{{COMMAND:arg}}` in agent instructions — extensible registry with async support
 - 🔄 **Streaming** - Real-time responses with event streams
 - 📝 **TypeScript** - Full type safety and IntelliSense support
 
@@ -2400,6 +2402,44 @@ const result = await IntegrationTestRunner.runSuite('google', tools, {
   params: { testEmail: 'test@example.com' },
 });
 ```
+
+### 36. Instruction Templates (NEW)
+
+Use `{{COMMAND}}` placeholders in agent instructions that resolve automatically — static values at creation, dynamic values every LLM call. Fully extensible with custom handlers:
+
+```typescript
+import { Agent, TemplateEngine } from '@everworker/oneringai';
+
+// Built-in templates resolve automatically
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  instructions: `You are {{AGENT_NAME}}, running on {{VENDOR}}/{{MODEL}}.
+Today is {{DATE}}. Current time: {{TIME:HH:mm}}.
+Your session ID is {{RANDOM:1000:9999}}.`,
+});
+
+// Register custom handlers — override built-ins or add your own
+TemplateEngine.register('COMPANY', () => 'Acme Corp');
+TemplateEngine.register('DATE', (fmt, ctx) => {
+  // Override built-in DATE with user-timezone support
+  const tz = (ctx.timezone as string) ?? 'UTC';
+  return new Date().toLocaleDateString('en-CA', { timeZone: tz });
+}, { dynamic: true });
+
+// Async handlers for dynamic data
+TemplateEngine.register('USER_COUNT', async () => {
+  return String(await db.users.countDocuments());
+}, { dynamic: true });
+
+// Escape templates to pass them literally to the LLM:
+// Triple braces: {{{DATE}}} → {{DATE}}
+// Raw blocks:    {{raw}}...{{/raw}} → content verbatim
+```
+
+**Built-in handlers:** `DATE`, `TIME`, `DATETIME` (with format args like `MM/DD/YYYY`), `RANDOM:min:max`, `AGENT_ID`, `AGENT_NAME`, `MODEL`, `VENDOR`, `USER_ID`
+
+See the [User Guide](./USER_GUIDE.md#instruction-templates) for the full reference.
 
 ---
 

@@ -183,6 +183,20 @@ npm run test:integration  # Integration tests (requires API keys)
 
 CONTEXT_DEFAULTS.MAX_TOKENS=128000, COMPACTION_THRESHOLD=0.75 | AGENT_DEFAULTS.MAX_ITERATIONS=50, TEMPERATURE=0.7 | CIRCUIT_BREAKER.FAILURE_THRESHOLD=5 | MEMORY.MAX_SIZE=25MB
 
+## TemplateEngine (`src/core/TemplateEngine.ts`)
+
+Extensible `{{COMMAND}}` / `{{COMMAND:arg}}` substitution for agent instructions. Static registry pattern.
+
+**Two-phase processing:**
+- **Static** (Agent constructor, `processSync`): AGENT_ID, AGENT_NAME, MODEL, VENDOR, USER_ID
+- **Dynamic** (buildSystemMessage, `process`): DATE, TIME, DATETIME, RANDOM
+
+**Escaping:** `{{{X}}}` → literal `{{X}}`. `{{raw}}...{{/raw}}` → verbatim block.
+
+**Extensibility:** `TemplateEngine.register('NAME', handler, { dynamic?: boolean })`. Handlers: `(arg: string | undefined, ctx: TemplateContext) => string | Promise<string>`.
+
+**Date format tokens:** YYYY, YY, MM, DD, HH, hh, mm, ss, A, a
+
 ## MCP Integration
 
 `MCPRegistry.create({ name, transport, transportConfig })` → `client.connect()` → `client.registerTools(agent.tools)`. Supports stdio + HTTP/HTTPS.

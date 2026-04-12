@@ -26,6 +26,8 @@
  */
 
 export { Connector } from './Connector.js';
+export { TemplateEngine } from './TemplateEngine.js';
+export type { TemplateHandler, TemplateContext, TemplateHandlerOptions, ProcessOptions } from './TemplateEngine.js';
 export { ScopedConnectorRegistry } from './ScopedConnectorRegistry.js';
 export { StorageRegistry } from './StorageRegistry.js';
 export type { StorageConfig, StorageContext } from './StorageRegistry.js';

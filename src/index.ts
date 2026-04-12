@@ -27,7 +27,8 @@
  */
 
 // ============ Core API (Primary) ============
-export { Connector, ScopedConnectorRegistry, StorageRegistry, ToolCatalogRegistry, Agent, AgentRegistry, Vendor, VENDORS, isVendor, createProvider, getVendorDefaultBaseURL, SuspendSignal, createOrchestrator, buildOrchestrationTools, buildWorkspaceDelta, createDelegationState } from './core/index.js';
+export { Connector, ScopedConnectorRegistry, StorageRegistry, ToolCatalogRegistry, Agent, AgentRegistry, Vendor, VENDORS, isVendor, createProvider, getVendorDefaultBaseURL, SuspendSignal, createOrchestrator, buildOrchestrationTools, buildWorkspaceDelta, createDelegationState, TemplateEngine } from './core/index.js';
+export type { TemplateHandler, TemplateContext, TemplateHandlerOptions, ProcessOptions } from './core/index.js';
 export type { StorageConfig, StorageContext, ToolCategoryDefinition, CatalogToolEntry, ToolCategoryScope, ConnectorCategoryInfo, ParsedConnectorCategory, CatalogRegistryEntry, SuspendSignalOptions, OrchestratorConfig, AgentTypeConfig, DelegationDefaults, OrchestrationToolsContext, DelegationState, DelegationReclaimConfig, AgentInfo, AgentInspection, AgentFilter, AgentRegistryStats, AgentRegistryEvents, AgentEventListener } from './core/index.js';
 export type { AgentStatus as RegistryAgentStatus } from './core/index.js';
 export type { AgentConfig, AgentSessionConfig, RunOptions } from './core/index.js';

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **TemplateEngine** — Extensible template substitution for agent instructions (`src/core/TemplateEngine.ts`)
+  - `{{COMMAND}}` and `{{COMMAND:arg}}` syntax with colon-separated arguments
+  - Two-phase processing: **static** handlers resolve once at agent creation (AGENT_ID, AGENT_NAME, MODEL, VENDOR, USER_ID), **dynamic** handlers resolve every LLM call (DATE, TIME, DATETIME, RANDOM)
+  - Custom date formatting: `{{DATE:MM/DD/YYYY}}`, `{{TIME:hh:mm A}}`, `{{DATETIME:YYYY/MM/DD HH:mm}}`
+  - Random number generation: `{{RANDOM:min:max}}`
+  - Triple-brace escaping: `{{{DATE}}}` → literal `{{DATE}}`
+  - Raw block escaping: `{{raw}}...{{/raw}}` → content preserved verbatim
+  - Fully extensible: `TemplateEngine.register('COMPANY', () => 'Acme Corp')` with async handler support
+  - Phase-aware: handlers declare `{ dynamic: true }` for per-call resolution, static by default
+  - `process()` (async) and `processSync()` APIs with phase filtering
+  - Built-in handlers can be overridden by client apps (e.g., replace `DATE` with timezone-aware version)
+  - Integrated into Agent constructor (static pass) and AgentContextNextGen.buildSystemMessage (dynamic pass)
+
 ## [0.5.3] - 2026-04-10
 
 ### Added
