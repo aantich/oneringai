@@ -326,7 +326,7 @@ export function createExecutionRecorder(options: ExecutionRecorderOptions): Exec
         taskId: task.id,
         isComplete: result.isComplete,
         completionScore: result.completionScore,
-        explanation: truncate(result.explanation, maxTruncateLength),
+        explanation: result.explanation,
       },
     });
   };

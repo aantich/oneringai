@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-04-10
+**Generated:** 2026-04-12
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -19,16 +19,16 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Task Agents](#task-agents) (87 items)
 - [Context Management](#context-management) (14 items)
 - [Session Management](#session-management) (42 items)
-- [Tools & Function Calling](#tools-function-calling) (159 items)
+- [Tools & Function Calling](#tools-function-calling) (164 items)
 - [Streaming](#streaming) (29 items)
 - [Model Registry](#model-registry) (16 items)
 - [OAuth & External APIs](#oauth-external-apis) (41 items)
 - [Resilience & Observability](#resilience-observability) (33 items)
-- [Errors](#errors) (24 items)
+- [Errors](#errors) (25 items)
 - [Utilities](#utilities) (8 items)
 - [Interfaces](#interfaces) (63 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (438 items)
+- [Other](#other) (441 items)
 
 ## Core
 
@@ -8414,7 +8414,7 @@ Research plan for systematic research
 
 ### RoutineTaskResult `interface`
 
-📍 [`src/domain/entities/RoutineExecutionRecord.ts:40`](src/domain/entities/RoutineExecutionRecord.ts)
+📍 [`src/domain/entities/RoutineExecutionRecord.ts:46`](src/domain/entities/RoutineExecutionRecord.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8433,7 +8433,7 @@ Research plan for systematic research
 
 ### RoutineTaskSnapshot `interface`
 
-📍 [`src/domain/entities/RoutineExecutionRecord.ts:48`](src/domain/entities/RoutineExecutionRecord.ts)
+📍 [`src/domain/entities/RoutineExecutionRecord.ts:54`](src/domain/entities/RoutineExecutionRecord.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -9158,7 +9158,7 @@ export function createTask(input: TaskInput): Task
 
 ### createTaskSnapshots `function`
 
-📍 [`src/domain/entities/RoutineExecutionRecord.ts:96`](src/domain/entities/RoutineExecutionRecord.ts)
+📍 [`src/domain/entities/RoutineExecutionRecord.ts:102`](src/domain/entities/RoutineExecutionRecord.ts)
 
 Create initial task snapshots from a routine definition.
 
@@ -15038,6 +15038,25 @@ Options for ConnectorTools methods that accept a scoped registry
 
 ---
 
+### CreateRoutineToolOptions `interface`
+
+📍 [`src/core/createRoutineTool.ts:38`](src/core/createRoutineTool.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `definition` | `definition: RoutineDefinition;` | The routine definition to wrap as a tool. |
+| `createAgent` | `createAgent: () =&gt; Agent | Promise&lt;Agent&gt;;` | Factory that creates a fresh Agent for each routine invocation.
+Called every time the tool is executed — the agent is destroyed after the routine completes. |
+| `toolName?` | `toolName?: string;` | Override tool name. Default: 'routine_{sanitized_definition_name}'.
+Must be unique among all registered tools. |
+
+</details>
+
+---
+
 ### CustomToolDefinition `interface`
 
 📍 [`src/domain/entities/CustomToolDefinition.ts:54`](src/domain/entities/CustomToolDefinition.ts)
@@ -15858,6 +15877,25 @@ Tracks a single async tool execution in flight
 
 ---
 
+### RoutineToolCatalogOptions `interface`
+
+📍 [`src/core/createRoutineTool.ts:55`](src/core/createRoutineTool.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `definitions` | `definitions: RoutineDefinition[];` | Routine definitions to register as a tool catalog category. |
+| `createAgent` | `createAgent: (definition: RoutineDefinition) =&gt; Agent | Promise&lt;Agent&gt;;` | Shared agent factory — receives the specific definition being executed.
+Called per-invocation; the agent is destroyed after the routine completes. |
+| `categoryName?` | `categoryName?: string;` | Category name for ToolCatalogRegistry. Default: 'routines:executable' |
+| `categoryDisplayName?` | `categoryDisplayName?: string;` | Category display name. Default: 'Executable Routines' |
+
+</details>
+
+---
+
 ### SerializedToolState `interface`
 
 📍 [`src/core/ToolManager.ts:169`](src/core/ToolManager.ts)
@@ -16414,7 +16452,7 @@ Used by initializeFromRegistry() and registerFromToolRegistry().
 
 ### ToolRegistryEntry `interface`
 
-📍 [`src/tools/registry.generated.ts:53`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:54`](src/tools/registry.generated.ts)
 
 Metadata for a tool in the registry
 
@@ -16600,7 +16638,7 @@ type Tool = FunctionToolDefinition | BuiltInTool
 
 ### ToolCategory `type`
 
-📍 [`src/tools/registry.generated.ts:50`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:51`](src/tools/registry.generated.ts)
 
 Tool category for grouping
 
@@ -17288,6 +17326,25 @@ export function createReadFileTool(config: FilesystemToolConfig =
 
 ---
 
+### createRoutineTool `function`
+
+📍 [`src/core/createRoutineTool.ts:122`](src/core/createRoutineTool.ts)
+
+Create a non-blocking ToolFunction from a RoutineDefinition.
+
+The tool:
+- Has `blocking: false` — executes asynchronously
+- Spawns a fresh agent via `createAgent()` per invocation
+- Runs `executeRoutine()` with the definition and input args
+- Destroys the agent after completion (success or failure)
+- Returns task results as the tool output
+
+```typescript
+export function createRoutineTool(options: CreateRoutineToolOptions): ToolFunction
+```
+
+---
+
 ### createSearchCodeTool `function`
 
 📍 [`src/tools/github/searchCode.ts:103`](src/tools/github/searchCode.ts)
@@ -17468,7 +17525,7 @@ export function generateWebAPITool(): ToolFunction&lt;APIRequestArgs, APIRequest
 
 ### getAllBuiltInTools `function`
 
-📍 [`src/tools/registry.generated.ts:403`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:413`](src/tools/registry.generated.ts)
 
 Get all built-in tools as ToolFunction array
 
@@ -17492,7 +17549,7 @@ export function getConnectorTools(connectorName: string): ToolFunction[]
 
 ### getToolByName `function`
 
-📍 [`src/tools/registry.generated.ts:418`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:428`](src/tools/registry.generated.ts)
 
 Get tool by name
 
@@ -17520,7 +17577,7 @@ export function getToolCallDescription&lt;TArgs&gt;(
 
 ### getToolCategories `function`
 
-📍 [`src/tools/registry.generated.ts:428`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:438`](src/tools/registry.generated.ts)
 
 Get all unique category names
 
@@ -17532,7 +17589,7 @@ export function getToolCategories(): ToolCategory[]
 
 ### getToolRegistry `function`
 
-📍 [`src/tools/registry.generated.ts:408`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:418`](src/tools/registry.generated.ts)
 
 Get full tool registry with metadata
 
@@ -17544,7 +17601,7 @@ export function getToolRegistry(): ToolRegistryEntry[]
 
 ### getToolsByCategory `function`
 
-📍 [`src/tools/registry.generated.ts:413`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:423`](src/tools/registry.generated.ts)
 
 Get tools by category
 
@@ -17556,7 +17613,7 @@ export function getToolsByCategory(category: ToolCategory): ToolRegistryEntry[]
 
 ### getToolsRequiringConnector `function`
 
-📍 [`src/tools/registry.generated.ts:423`](src/tools/registry.generated.ts)
+📍 [`src/tools/registry.generated.ts:433`](src/tools/registry.generated.ts)
 
 Get tools that require connector configuration
 
@@ -17621,6 +17678,34 @@ export function isToolCallStart(event: StreamEvent): event is ToolCallStartEvent
 
 ---
 
+### registerRoutineToolCategory `function`
+
+📍 [`src/core/createRoutineTool.ts:198`](src/core/createRoutineTool.ts)
+
+Register routine definitions as a ToolCatalog category.
+
+Each routine becomes a CatalogToolEntry with a `createTool` factory
+for lazy instantiation when loaded via `tool_catalog_load`.
+
+```typescript
+export function registerRoutineToolCategory(options: RoutineToolCatalogOptions): void
+```
+
+**Example:**
+
+```typescript
+registerRoutineToolCategory({
+  definitions: [routineA, routineB],
+  createAgent: (def) => Agent.create({
+    connector: def.metadata?.connector as string ?? 'openai',
+    model: def.metadata?.model as string ?? 'gpt-4',
+  }),
+});
+// Agents can now: tool_catalog_search → tool_catalog_load('routines:executable')
+```
+
+---
+
 ### resolveConnectorContext `function`
 
 📍 [`src/tools/connector/ConnectorTools.ts:171`](src/tools/connector/ConnectorTools.ts)
@@ -17636,6 +17721,19 @@ export function resolveConnectorContext(
   context: ToolContext | undefined,
   fallbackUserId?: string,
 ):
+```
+
+---
+
+### sanitizeToolName `function`
+
+📍 [`src/core/createRoutineTool.ts:80`](src/core/createRoutineTool.ts)
+
+Sanitize a routine name into a valid tool name.
+Converts to lowercase, replaces non-alphanumeric runs with underscores, trims trailing underscores.
+
+```typescript
+function sanitizeToolName(name: string): string
 ```
 
 ---
@@ -24756,6 +24854,21 @@ Events emitted by ErrorHandler
 | `'error:fatal'` | `'error:fatal': { error: Error; context: ErrorContext };` | Emitted when an error is fatal (no recovery possible) |
 
 </details>
+
+---
+
+### StepErrorStrategy `type`
+
+📍 [`src/domain/entities/Routine.ts:40`](src/domain/entities/Routine.ts)
+
+Error handling strategy for deterministic steps.
+- 'fail': Abort the routine on step failure (default for preSteps)
+- 'continue': Log the error and continue to next step (default for postSteps)
+- 'skip-remaining': Stop executing remaining steps but don't fail the routine
+
+```typescript
+type StepErrorStrategy = 'fail' | 'continue' | 'skip-remaining'
+```
 
 ---
 
@@ -33747,7 +33860,7 @@ Example: ['user', 'assistant'] to exclude tool_result entries. |
 
 ### AgenticLoopEvents `interface`
 
-📍 [`src/capabilities/agents/types/EventTypes.ts:228`](src/capabilities/agents/types/EventTypes.ts)
+📍 [`src/capabilities/agents/types/EventTypes.ts:235`](src/capabilities/agents/types/EventTypes.ts)
 
 Map of all event names to their payload types
 
@@ -33783,6 +33896,7 @@ Map of all event names to their payload types
 | `'async:tool:complete'` | `'async:tool:complete': AsyncToolCompleteEvent;` | - |
 | `'async:tool:error'` | `'async:tool:error': AsyncToolErrorEvent;` | - |
 | `'async:tool:timeout'` | `'async:tool:timeout': AsyncToolTimeoutEvent;` | - |
+| `'async:results:injected'` | `'async:results:injected': AsyncResultsInjectedEvent;` | - |
 | `'async:continuation:start'` | `'async:continuation:start': AsyncContinuationStartEvent;` | - |
 
 </details>
@@ -34514,7 +34628,7 @@ Events emitted by AgentContextNextGen
 
 ### ControlFlowResult `interface`
 
-📍 [`src/core/routineControlFlow.ts:51`](src/core/routineControlFlow.ts)
+📍 [`src/core/routineControlFlow.ts:55`](src/core/routineControlFlow.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -35023,6 +35137,36 @@ the user-facing session to a sub-agent.
 
 ---
 
+### DeterministicStep `interface`
+
+📍 [`src/domain/entities/Routine.ts:50`](src/domain/entities/Routine.ts)
+
+A deterministic tool call that runs without LLM involvement.
+
+Arguments support template placeholders:
+- {{param.NAME}} — resolved from routine input parameters
+- {{result.TASK_NAME}} — resolved from task output (postSteps only)
+- {{step.STEP_NAME}} — resolved from a previous step's result
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: string;` | Human-readable name for this step (used in recording and logging) |
+| `toolName` | `toolName: string;` | Tool name to invoke (must be registered on the agent) |
+| `args` | `args: Record&lt;string, unknown&gt;;` | Arguments to pass to the tool. Values can contain {{...}} templates. |
+| `resultKey?` | `resultKey?: string;` | ICM/WM key where the step result is stored.
+For preSteps: makes result available to tasks via this key.
+For postSteps: makes result available to subsequent postSteps.
+If omitted, result is stored as `__prestep_{name}` or `__poststep_{name}`. |
+| `onError?` | `onError?: StepErrorStrategy;` | Error handling strategy. Default: 'fail' for preSteps, 'continue' for postSteps. |
+| `timeoutMs?` | `timeoutMs?: number;` | Timeout in ms for this step. Default: 30000 (30s). |
+
+</details>
+
+---
+
 ### DirectCallOptions `interface`
 
 📍 [`src/core/BaseAgent.ts:260`](src/core/BaseAgent.ts)
@@ -35260,7 +35404,7 @@ Configuration for the default energy-based VAD
 
 ### ExecuteRoutineOptions `interface`
 
-📍 [`src/core/routineRunner.ts:59`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:64`](src/core/routineRunner.ts)
 
 Options for executing a routine.
 
@@ -35290,6 +35434,9 @@ The agent is NOT destroyed after execution — caller manages its lifecycle. |
 | `onTaskComplete?` | `onTaskComplete?: (task: Task, execution: RoutineExecution) =&gt; void;` | Called when a task completes successfully |
 | `onTaskFailed?` | `onTaskFailed?: (task: Task, execution: RoutineExecution) =&gt; void;` | Called when a task fails |
 | `onTaskValidation?` | `onTaskValidation?: (task: Task, result: TaskValidationResult, execution: RoutineExecution) =&gt; void;` | Called after each validation attempt (whether pass or fail) |
+| `onStepStarted?` | `onStepStarted?: (step: DeterministicStep, phase: 'pre' | 'post', index: number, execution: RoutineExecution) =&gt; void;` | Called when a deterministic step starts executing |
+| `onStepComplete?` | `onStepComplete?: (step: DeterministicStep, phase: 'pre' | 'post', index: number, result: unknown, execution: RoutineExecution) =&gt; void;` | Called when a deterministic step completes successfully |
+| `onStepFailed?` | `onStepFailed?: (step: DeterministicStep, phase: 'pre' | 'post', index: number, error: Error, execution: RoutineExecution) =&gt; void;` | Called when a deterministic step fails |
 | `prompts?` | `prompts?: {
     /** Override system prompt builder. Receives definition, should return full system prompt. */
     system?: (definition: RoutineDefinition) =&gt; string;
@@ -35338,6 +35485,9 @@ This captures the essential info without importing full AgentConfig.
 | `onTaskComplete` | `onTaskComplete: (task: Task, execution: RoutineExecution) =&gt; void;` | Callback for onTaskComplete. |
 | `onTaskFailed` | `onTaskFailed: (task: Task, execution: RoutineExecution) =&gt; void;` | Callback for onTaskFailed. |
 | `onTaskValidation` | `onTaskValidation: (task: Task, result: TaskValidationResult, execution: RoutineExecution) =&gt; void;` | Callback for onTaskValidation. |
+| `onStepStarted` | `onStepStarted: (step: DeterministicStep, phase: 'pre' | 'post', index: number, execution: RoutineExecution) =&gt; void;` | Callback for deterministic step start. |
+| `onStepComplete` | `onStepComplete: (step: DeterministicStep, phase: 'pre' | 'post', index: number, result: unknown, execution: RoutineExecution) =&gt; void;` | Callback for deterministic step completion. |
+| `onStepFailed` | `onStepFailed: (step: DeterministicStep, phase: 'pre' | 'post', index: number, error: Error, execution: RoutineExecution) =&gt; void;` | Callback for deterministic step failure. |
 | `finalize` | `finalize: (execution: RoutineExecution | null, error?: Error) =&gt; Promise&lt;void&gt;;` | Call after executeRoutine() resolves/rejects to write final status. |
 
 </details>
@@ -38753,7 +38903,7 @@ Research execution result
 
 ### RoutineDefinition `interface`
 
-📍 [`src/domain/entities/Routine.ts:40`](src/domain/entities/Routine.ts)
+📍 [`src/domain/entities/Routine.ts:85`](src/domain/entities/Routine.ts)
 
 A reusable routine definition (template).
 
@@ -38776,6 +38926,13 @@ Multiple RoutineExecutions can be created from one RoutineDefinition.
 | `concurrency?` | `concurrency?: PlanConcurrency;` | Concurrency settings for task execution |
 | `allowDynamicTasks?` | `allowDynamicTasks?: boolean;` | Whether the LLM can dynamically add/modify tasks during execution. Default: false |
 | `parameters?` | `parameters?: RoutineParameter[];` | Input parameters this routine accepts (templates use {{param.name}}) |
+| `preSteps?` | `preSteps?: DeterministicStep[];` | Deterministic steps to execute BEFORE the agent-based task loop.
+ Results are injected into agent context for use by tasks. |
+| `postSteps?` | `postSteps?: DeterministicStep[];` | Deterministic steps to execute AFTER the agent-based task loop completes.
+ Can reference task results via {{result.TASK_NAME}} templates. |
+| `postStepsTrigger?` | `postStepsTrigger?: 'on-success' | 'always';` | When to run postSteps. Default: 'on-success' |
+| `timeoutMs?` | `timeoutMs?: number;` | Max wall-clock time for entire execution (preSteps + tasks + postSteps) in ms.
+ Default: 3600000 (1 hour). Set to 0 to disable. |
 | `tags?` | `tags?: string[];` | Tags for categorization and filtering |
 | `author?` | `author?: string;` | Author/creator |
 | `createdAt` | `createdAt: string;` | When the definition was created (ISO string) |
@@ -38788,7 +38945,7 @@ Multiple RoutineExecutions can be created from one RoutineDefinition.
 
 ### RoutineDefinitionInput `interface`
 
-📍 [`src/domain/entities/Routine.ts:94`](src/domain/entities/Routine.ts)
+📍 [`src/domain/entities/Routine.ts:154`](src/domain/entities/Routine.ts)
 
 Input for creating a RoutineDefinition.
 id, createdAt, updatedAt are auto-generated if not provided.
@@ -38809,8 +38966,13 @@ id, createdAt, updatedAt are auto-generated if not provided.
 | `concurrency?` | `concurrency?: PlanConcurrency;` | - |
 | `allowDynamicTasks?` | `allowDynamicTasks?: boolean;` | - |
 | `parameters?` | `parameters?: RoutineParameter[];` | - |
+| `preSteps?` | `preSteps?: DeterministicStep[];` | - |
+| `postSteps?` | `postSteps?: DeterministicStep[];` | - |
+| `postStepsTrigger?` | `postStepsTrigger?: 'on-success' | 'always';` | - |
+| `timeoutMs?` | `timeoutMs?: number;` | - |
 | `tags?` | `tags?: string[];` | - |
 | `author?` | `author?: string;` | - |
+| `createdAt?` | `createdAt?: string;` | Preserve original creation timestamp on updates. Defaults to now if omitted. |
 | `metadata?` | `metadata?: Record&lt;string, unknown&gt;;` | - |
 
 </details>
@@ -38819,7 +38981,7 @@ id, createdAt, updatedAt are auto-generated if not provided.
 
 ### RoutineExecution `interface`
 
-📍 [`src/domain/entities/Routine.ts:130`](src/domain/entities/Routine.ts)
+📍 [`src/domain/entities/Routine.ts:196`](src/domain/entities/Routine.ts)
 
 Runtime state when executing a routine.
 Created from a RoutineDefinition, delegates task management to Plan.
@@ -38846,7 +39008,7 @@ Created from a RoutineDefinition, delegates task management to Plan.
 
 ### RoutineExecutionRecord `interface`
 
-📍 [`src/domain/entities/RoutineExecutionRecord.ts:65`](src/domain/entities/RoutineExecutionRecord.ts)
+📍 [`src/domain/entities/RoutineExecutionRecord.ts:71`](src/domain/entities/RoutineExecutionRecord.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -38881,7 +39043,7 @@ Created from a RoutineDefinition, delegates task management to Plan.
 
 ### RoutineExecutionStep `interface`
 
-📍 [`src/domain/entities/RoutineExecutionRecord.ts:29`](src/domain/entities/RoutineExecutionRecord.ts)
+📍 [`src/domain/entities/RoutineExecutionRecord.ts:35`](src/domain/entities/RoutineExecutionRecord.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -39697,6 +39859,25 @@ Stdio transport configuration
 
 ---
 
+### StepResolveContext `interface`
+
+📍 [`src/core/routineControlFlow.ts:171`](src/core/routineControlFlow.ts)
+
+Context for resolving templates in deterministic step arguments.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `inputs` | `inputs: Record&lt;string, unknown&gt;;` | Routine input parameters ({{param.NAME}}) |
+| `taskResults?` | `taskResults?: Map&lt;string, unknown&gt;;` | Task results map: task name → output ({{result.TASK_NAME}}, post-steps only) |
+| `stepResults?` | `stepResults?: Map&lt;string, unknown&gt;;` | Prior step results map: step name → output ({{step.STEP_NAME}}) |
+
+</details>
+
+---
+
 ### StorageConfig `interface`
 
 📍 [`src/core/StorageRegistry.ts:71`](src/core/StorageRegistry.ts)
@@ -40463,7 +40644,7 @@ If empty/omitted, rule applies to ALL calls of this tool (blanket rule). |
 
 ### ValidationContext `interface`
 
-📍 [`src/core/routineRunner.ts:114`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:128`](src/core/routineRunner.ts)
 
 Context snapshot passed to the validation prompt builder.
 Contains everything the validator needs to evaluate task completion
@@ -40655,7 +40836,7 @@ Content types based on OpenAI Responses API format
 
 ### AgentEventName `type`
 
-📍 [`src/capabilities/agents/types/EventTypes.ts:273`](src/capabilities/agents/types/EventTypes.ts)
+📍 [`src/capabilities/agents/types/EventTypes.ts:281`](src/capabilities/agents/types/EventTypes.ts)
 
 ```typescript
 type AgentEventName = AgenticLoopEventName
@@ -40665,7 +40846,7 @@ type AgentEventName = AgenticLoopEventName
 
 ### AgentEvents `type`
 
-📍 [`src/capabilities/agents/types/EventTypes.ts:272`](src/capabilities/agents/types/EventTypes.ts)
+📍 [`src/capabilities/agents/types/EventTypes.ts:280`](src/capabilities/agents/types/EventTypes.ts)
 
 Agent events - alias for AgenticLoopEvents for cleaner API
 This is the preferred export name going forward.
@@ -40678,7 +40859,7 @@ type AgentEvents = AgenticLoopEvents
 
 ### AgenticLoopEventName `type`
 
-📍 [`src/capabilities/agents/types/EventTypes.ts:266`](src/capabilities/agents/types/EventTypes.ts)
+📍 [`src/capabilities/agents/types/EventTypes.ts:274`](src/capabilities/agents/types/EventTypes.ts)
 
 ```typescript
 type AgenticLoopEventName = keyof AgenticLoopEvents
@@ -41162,7 +41343,7 @@ type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
 
 ### RoutineExecutionStatus `type`
 
-📍 [`src/domain/entities/Routine.ts:118`](src/domain/entities/Routine.ts)
+📍 [`src/domain/entities/Routine.ts:184`](src/domain/entities/Routine.ts)
 
 Execution status for a routine run
 
@@ -41194,6 +41375,12 @@ type RoutineStepType = | 'task.started'
   | 'execution.error'
   | 'control_flow.started'
   | 'control_flow.completed'
+  | 'prestep.started'
+  | 'prestep.completed'
+  | 'prestep.failed'
+  | 'poststep.started'
+  | 'poststep.completed'
+  | 'poststep.failed'
 ```
 
 ---
@@ -41376,7 +41563,7 @@ export function createEmbeddingProvider(connector: Connector): IEmbeddingProvide
 
 ### createExecutionRecorder `function`
 
-📍 [`src/core/createExecutionRecorder.ts:97`](src/core/createExecutionRecorder.ts)
+📍 [`src/core/createExecutionRecorder.ts:103`](src/core/createExecutionRecorder.ts)
 
 Create an ExecutionRecorder that wires hooks + callbacks to persist
 execution state via the provided storage backend.
@@ -41444,7 +41631,7 @@ const result = await orchestrator.run('Build an auth module with JWT, tests, and
 
 ### createRoutineDefinition `function`
 
-📍 [`src/domain/entities/Routine.ts:166`](src/domain/entities/Routine.ts)
+📍 [`src/domain/entities/Routine.ts:232`](src/domain/entities/Routine.ts)
 
 Create a RoutineDefinition with defaults.
 Validates task dependency references and detects cycles.
@@ -41457,7 +41644,7 @@ export function createRoutineDefinition(input: RoutineDefinitionInput): RoutineD
 
 ### createRoutineExecution `function`
 
-📍 [`src/domain/entities/Routine.ts:217`](src/domain/entities/Routine.ts)
+📍 [`src/domain/entities/Routine.ts:287`](src/domain/entities/Routine.ts)
 
 Create a RoutineExecution from a RoutineDefinition.
 Instantiates all tasks into a Plan via createPlan().
@@ -41470,7 +41657,7 @@ export function createRoutineExecution(definition: RoutineDefinition): RoutineEx
 
 ### createRoutineExecutionRecord `function`
 
-📍 [`src/domain/entities/RoutineExecutionRecord.ts:112`](src/domain/entities/RoutineExecutionRecord.ts)
+📍 [`src/domain/entities/RoutineExecutionRecord.ts:118`](src/domain/entities/RoutineExecutionRecord.ts)
 
 Create an initial RoutineExecutionRecord from a definition.
 Status is set to 'running' with empty steps.
@@ -41539,7 +41726,7 @@ export async function excelToMarkdownKV(
 
 ### executeRoutine `function`
 
-📍 [`src/core/routineRunner.ts:673`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:803`](src/core/routineRunner.ts)
 
 Execute a routine definition.
 
@@ -41797,7 +41984,7 @@ export function getRegisteredScrapeProviders(): string[]
 
 ### getRoutineProgress `function`
 
-📍 [`src/domain/entities/Routine.ts:246`](src/domain/entities/Routine.ts)
+📍 [`src/domain/entities/Routine.ts:316`](src/domain/entities/Routine.ts)
 
 Compute routine progress (0-100) from plan task statuses.
 
@@ -42228,7 +42415,7 @@ export function resolveFileEndpoints(
 
 ### resolveFlowSource `function`
 
-📍 [`src/core/routineControlFlow.ts:472`](src/core/routineControlFlow.ts)
+📍 [`src/core/routineControlFlow.ts:545`](src/core/routineControlFlow.ts)
 
 Resolve the source array for a map/fold control flow using layered resolution:
 1. Determine lookup key(s) from source config
@@ -42300,9 +42487,31 @@ export function resolveRepository(
 
 ---
 
+### resolveStepArgs `function`
+
+📍 [`src/core/routineControlFlow.ts:190`](src/core/routineControlFlow.ts)
+
+Resolve template placeholders in deterministic step arguments (deep).
+
+Walks the argument object recursively. For string values, resolves:
+- {{param.NAME}} — from inputs
+- {{result.TASK_NAME}} — from task outputs (post-steps)
+- {{step.STEP_NAME}} — from prior step results
+
+Non-string values pass through unchanged. Unresolved templates are left as-is.
+
+```typescript
+export function resolveStepArgs(
+  args: Record&lt;string, unknown&gt;,
+  context: StepResolveContext
+): Record&lt;string, unknown&gt;
+```
+
+---
+
 ### resolveTemplates `function`
 
-📍 [`src/core/routineControlFlow.ts:71`](src/core/routineControlFlow.ts)
+📍 [`src/core/routineControlFlow.ts:75`](src/core/routineControlFlow.ts)
 
 Resolve template placeholders in text.
 

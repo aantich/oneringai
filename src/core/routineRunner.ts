@@ -335,17 +335,14 @@ function formatToolCallLog(conversation: ReadonlyArray<OutputItem>): string {
       if (c.type === ContentType.TOOL_USE) {
         let argsStr: string;
         try {
-          // Pretty-print but truncate large args
           const parsed = JSON.parse(c.arguments);
           argsStr = JSON.stringify(parsed, null, 2);
-          if (argsStr.length > 500) argsStr = argsStr.slice(0, 500) + '... (truncated)';
         } catch {
           argsStr = c.arguments;
         }
         calls.push(`CALL: ${c.name}(${argsStr})`);
       } else if (c.type === ContentType.TOOL_RESULT) {
-        let resultStr = typeof c.content === 'string' ? c.content : JSON.stringify(c.content);
-        if (resultStr.length > 500) resultStr = resultStr.slice(0, 500) + '... (truncated)';
+        const resultStr = typeof c.content === 'string' ? c.content : JSON.stringify(c.content);
         const prefix = c.error ? 'ERROR' : 'RESULT';
         calls.push(`  ${prefix}: ${resultStr}`);
       }
