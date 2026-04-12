@@ -427,6 +427,7 @@ export interface MicrosoftFindSlotsResult {
 export interface MeetingSlotSuggestion {
   start: string;
   end: string;
+  timeZone?: string;
   confidence: string;
   attendeeAvailability: { attendee: string; availability: string }[];
 }

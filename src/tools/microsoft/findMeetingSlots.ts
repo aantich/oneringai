@@ -114,6 +114,7 @@ EXAMPLES:
             method: 'POST',
             userId: effectiveUserId,
             accountId: effectiveAccountId,
+            headers: { 'Prefer': `outlook.timezone="${tz}"` },
             body: {
               attendees: formatAttendees(args.attendees),
               timeConstraint: {
@@ -133,6 +134,7 @@ EXAMPLES:
         const slots = (result.meetingTimeSuggestions ?? []).map((s) => ({
           start: s.meetingTimeSlot.start.dateTime,
           end: s.meetingTimeSlot.end.dateTime,
+          timeZone: s.meetingTimeSlot.start.timeZone,
           confidence: String(s.confidence),
           attendeeAvailability: (s.attendeeAvailability ?? []).map((a) => ({
             attendee: a.attendee.emailAddress.address,
