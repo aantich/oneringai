@@ -216,6 +216,13 @@ export interface AsyncToolTimeoutEvent {
   timestamp: Date;
 }
 
+export interface AsyncResultsInjectedEvent {
+  executionId: string;
+  iteration: number;
+  results: Array<{ toolCallId: string; toolName: string }>;
+  timestamp: Date;
+}
+
 export interface AsyncContinuationStartEvent {
   executionId: string;
   results: Array<{ toolCallId: string; toolName: string }>;
@@ -260,6 +267,7 @@ export interface AgenticLoopEvents {
   'async:tool:complete': AsyncToolCompleteEvent;
   'async:tool:error': AsyncToolErrorEvent;
   'async:tool:timeout': AsyncToolTimeoutEvent;
+  'async:results:injected': AsyncResultsInjectedEvent;
   'async:continuation:start': AsyncContinuationStartEvent;
 }
 

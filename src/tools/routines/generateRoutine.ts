@@ -41,6 +41,7 @@ A routine definition has these fields:
 - **preSteps**: Deterministic tool calls to run BEFORE the task loop (no LLM). Results are injected into agent context.
 - **postSteps**: Deterministic tool calls to run AFTER the task loop (no LLM). Can reference task results.
 - **postStepsTrigger**: When to run postSteps: "on-success" (default) or "always"
+- **timeoutMs**: Max wall-clock time for entire execution in ms. Default: 3600000 (1 hour). Set to 0 to disable.
 
 ## Deterministic Steps (Pre/Post)
 
@@ -367,6 +368,7 @@ export function createGenerateRoutine(storage?: IRoutineDefinitionStorage): Tool
                   },
                 },
                 postStepsTrigger: { type: 'string', enum: ['on-success', 'always'], description: 'When to run postSteps (default: on-success)' },
+                timeoutMs: { type: 'number', description: 'Max wall-clock time for entire execution in ms (default: 3600000 = 1 hour, 0 = disabled)' },
                 metadata: { type: 'object', description: 'Arbitrary routine-level metadata' },
               },
               required: ['name', 'description', 'tasks'],

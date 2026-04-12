@@ -7,3 +7,4 @@ export { routineGet, createRoutineGet } from './routineGet.js';
 export { routineListExecutions, createRoutineListExecutions } from './routineListExecutions.js';
 export { routineGetTaskSteps, createRoutineGetTaskSteps } from './routineGetTaskSteps.js';
 export { routineUpdateTask, createRoutineUpdateTask } from './routineUpdateTask.js';
+export { routineUpdate, createRoutineUpdate } from './routineUpdate.js';

@@ -127,6 +127,10 @@ export interface RoutineDefinition {
   /** When to run postSteps. Default: 'on-success' */
   postStepsTrigger?: 'on-success' | 'always';
 
+  /** Max wall-clock time for entire execution (preSteps + tasks + postSteps) in ms.
+   *  Default: 3600000 (1 hour). Set to 0 to disable. */
+  timeoutMs?: number;
+
   /** Tags for categorization and filtering */
   tags?: string[];
 
@@ -162,8 +166,11 @@ export interface RoutineDefinitionInput {
   preSteps?: DeterministicStep[];
   postSteps?: DeterministicStep[];
   postStepsTrigger?: 'on-success' | 'always';
+  timeoutMs?: number;
   tags?: string[];
   author?: string;
+  /** Preserve original creation timestamp on updates. Defaults to now if omitted. */
+  createdAt?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -264,9 +271,10 @@ export function createRoutineDefinition(input: RoutineDefinitionInput): RoutineD
     preSteps: input.preSteps,
     postSteps: input.postSteps,
     postStepsTrigger: input.postStepsTrigger,
+    timeoutMs: input.timeoutMs,
     tags: input.tags,
     author: input.author,
-    createdAt: now,
+    createdAt: input.createdAt ?? now,
     updatedAt: now,
     metadata: input.metadata,
   };

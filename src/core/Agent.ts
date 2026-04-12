@@ -811,6 +811,39 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         throw new Error('Execution cancelled');
       }
 
+      // Inject any completed async tool results into context before the next LLM call.
+      // This allows the LLM to see async results mid-loop rather than waiting until run() ends.
+      // Formatted as a user message (not tool_result) to avoid orphaned tool_use_id references
+      // that would cause API errors with providers expecting tool_result to follow tool_use.
+      if (this._asyncResultQueue.length > 0) {
+        const asyncResults = this._asyncResultQueue.splice(0, this._asyncResultQueue.length);
+
+        const parts: string[] = ['[Async Tool Results]'];
+        for (const result of asyncResults) {
+          const toolName = result.tool_name || 'unknown';
+          if (result.error) {
+            parts.push(`\nTool "${toolName}" failed:\nError: ${result.error}`);
+          } else {
+            const content = typeof result.content === 'string'
+              ? result.content
+              : JSON.stringify(result.content, null, 2);
+            parts.push(`\nTool "${toolName}" completed:\n${content}`);
+          }
+        }
+        this._agentContext.addUserMessage(parts.join('\n'));
+
+        this._logger.info(
+          { count: asyncResults.length, tools: asyncResults.map(r => r.tool_name) },
+          'Injected async tool results into agentic loop',
+        );
+        this.emit('async:results:injected', {
+          executionId,
+          iteration,
+          results: asyncResults.map(r => ({ toolCallId: r.tool_use_id, toolName: r.tool_name || 'unknown' })),
+          timestamp: new Date(),
+        });
+      }
+
       const iterationStartTime = Date.now();
 
       // Prepare context (handles compaction)
@@ -2097,7 +2130,12 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     } catch { /* ignore parse errors */ }
 
     const asyncConfig = this._config.asyncTools ?? {};
-    const timeout = asyncConfig.asyncTimeout ?? 300000; // 5 min default
+
+    // Resolve timeout: per-tool definition > agent async config > 5 min default.
+    // timeout=0 disables the dead-man's switch (e.g., for routine tools with their own timeout).
+    const toolDef = this._agentContext.tools.getToolDefinition(toolCall.function.name);
+    const perToolTimeout = toolDef && 'timeout' in toolDef ? toolDef.timeout : undefined;
+    const timeout = perToolTimeout !== undefined ? perToolTimeout : (asyncConfig.asyncTimeout ?? 300000);
 
     // Track the pending async tool
     const pending: PendingAsyncTool = {
@@ -2118,16 +2156,21 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       timestamp: new Date(),
     });
 
-    // Fire-and-forget execution with timeout
+    // Fire-and-forget execution, optionally with timeout
     const executionPromise = this._agentContext.tools.execute(toolCall.function.name, parsedArgs);
-    let timeoutId: ReturnType<typeof setTimeout>;
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(() => reject(new ToolTimeoutError(toolCall.function.name, timeout)), timeout);
-    });
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const racedPromise = timeout > 0
+      ? (() => {
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            timeoutId = setTimeout(() => reject(new ToolTimeoutError(toolCall.function.name, timeout)), timeout);
+          });
+          return Promise.race([executionPromise, timeoutPromise]);
+        })()
+      : executionPromise; // timeout=0: no dead-man's switch
 
-    Promise.race([executionPromise, timeoutPromise])
+    racedPromise
       .then((result) => {
-        clearTimeout(timeoutId);
+        if (timeoutId) clearTimeout(timeoutId);
         if (this._isDestroyed) return; // agent destroyed
         if (!this._asyncToolTracker.has(toolCall.id)) return; // cancelled
         pending.status = 'completed';
@@ -2151,7 +2194,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         this._onAsyncComplete(toolCall.id, toolResult);
       })
       .catch((error: Error) => {
-        clearTimeout(timeoutId);
+        if (timeoutId) clearTimeout(timeoutId);
         if (this._isDestroyed) return; // agent destroyed
         if (!this._asyncToolTracker.has(toolCall.id)) return; // cancelled
         const isTimeout = error instanceof ToolTimeoutError;

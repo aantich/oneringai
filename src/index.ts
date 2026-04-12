@@ -513,6 +513,10 @@ export type { ExecutionRecorderOptions, ExecutionRecorder } from './core/createE
 export { resolveTemplates, resolveStepArgs, ROUTINE_KEYS, resolveFlowSource } from './core/routineControlFlow.js';
 export type { ControlFlowResult, StepResolveContext } from './core/routineControlFlow.js';
 
+// Routine-as-Tool
+export { createRoutineTool, registerRoutineToolCategory } from './core/createRoutineTool.js';
+export type { CreateRoutineToolOptions, RoutineToolCatalogOptions } from './core/createRoutineTool.js';
+
 // Memory Entities
 export type {
   MemoryEntry,

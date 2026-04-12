@@ -1708,8 +1708,94 @@ describe('executeRoutine', () => {
     });
   });
 
+  // ==========================================================================
+  // Routine Timeout
+  // ==========================================================================
+
+  describe('routine timeout', () => {
+    it('should fail execution when routine timeout fires between tasks', async () => {
+      // Multiple tasks — timeout fires during the middle of execution
+      const routine = createRoutineDefinition({
+        name: 'Slow Routine',
+        description: 'Test',
+        tasks: [
+          { name: 'Task A', description: 'First' },
+          { name: 'Task B', description: 'Second', dependsOn: ['Task A'] },
+          { name: 'Task C', description: 'Third', dependsOn: ['Task B'] },
+          { name: 'Task D', description: 'Fourth', dependsOn: ['Task C'] },
+        ],
+        timeoutMs: 150, // fires after 150ms
+      });
+
+      // Each LLM call takes 80ms — 4 tasks × 80ms = 320ms total, timeout fires mid-execution
+      mockGenerate.mockImplementation(async () => {
+        await new Promise(resolve => setTimeout(resolve, 80));
+        return makeTextResponse('Done');
+      });
+
+      const execution = await executeRoutine(defaultOptions(routine));
+
+      expect(execution.status).toBe('failed');
+      expect(execution.error).toContain('timed out after 150ms');
+    });
+
+    it('should not timeout when timeoutMs=0 (disabled)', async () => {
+      const routine = createRoutineDefinition({
+        name: 'No Timeout',
+        description: 'Test',
+        tasks: [{ name: 'Task', description: 'Work' }],
+        timeoutMs: 0,
+      });
+
+      mockGenerate.mockResolvedValue(makeTextResponse('Done'));
+
+      const execution = await executeRoutine(defaultOptions(routine));
+
+      expect(execution.status).toBe('completed');
+    });
+
+    it('should still run postSteps with trigger=always after timeout', async () => {
+      const notifyTool: ToolFunction = {
+        definition: {
+          type: 'function',
+          function: { name: 'notify', description: 'Notify', parameters: { type: 'object', properties: {} } },
+        },
+        execute: vi.fn(async () => ({ sent: true })),
+      };
+
+      const routine = createRoutineDefinition({
+        name: 'Timeout + PostSteps',
+        description: 'Test',
+        tasks: [
+          { name: 'Task A', description: 'First' },
+          { name: 'Task B', description: 'Second', dependsOn: ['Task A'] },
+          { name: 'Task C', description: 'Third', dependsOn: ['Task B'] },
+          { name: 'Task D', description: 'Fourth', dependsOn: ['Task C'] },
+        ],
+        timeoutMs: 150,
+        postSteps: [{ name: 'Notify', toolName: 'notify', args: {} }],
+        postStepsTrigger: 'always',
+      });
+
+      mockGenerate.mockImplementation(async () => {
+        await new Promise(resolve => setTimeout(resolve, 80));
+        return makeTextResponse('Done');
+      });
+
+      const execution = await executeRoutine({
+        ...defaultOptions(routine),
+        tools: [notifyTool],
+      });
+
+      expect(execution.status).toBe('failed');
+      expect(execution.error).toContain('timed out');
+      // PostSteps should still have run
+      expect(notifyTool.execute).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('backward compatibility', () => {
-    it('should work identically without preSteps or postSteps', async () => {
+    it('should work identically without preSteps, postSteps, or timeoutMs', async () => {
       const routine = createSimpleRoutine();
       mockGenerate.mockResolvedValue(makeTextResponse('Done'));
 

@@ -15,11 +15,34 @@ interface RoutineListExecutionsArgs {
   status?: string;
 }
 
-function truncate(val: unknown, limit: number): string | undefined {
-  if (val === null || val === undefined) return undefined;
-  const str = typeof val === 'string' ? val : JSON.stringify(val);
-  if (str.length <= limit) return str;
-  return `${str.substring(0, limit)}...[truncated]`;
+interface StepPhaseSummary {
+  total: number;
+  completed: number;
+  failed: number;
+  errors?: string[];
+}
+
+function buildStepSummary(
+  steps: Array<{ type: string; data?: Record<string, unknown> }>,
+  completedType: string,
+  failedType: string,
+  startedType: string,
+): StepPhaseSummary | undefined {
+  const started = steps.filter(s => s.type === startedType).length;
+  if (started === 0) return undefined;
+
+  const completed = steps.filter(s => s.type === completedType).length;
+  const failedSteps = steps.filter(s => s.type === failedType);
+  const errors = failedSteps
+    .map(s => s.data?.error as string | undefined)
+    .filter((e): e is string => !!e);
+
+  return {
+    total: started,
+    completed,
+    failed: failedSteps.length,
+    ...(errors.length > 0 ? { errors } : {}),
+  };
 }
 
 function buildStorageContext(toolContext?: ToolContext): StorageContext | undefined {
@@ -93,21 +116,32 @@ export function createRoutineListExecutions(
           limit,
         });
 
-        const executions = records.map((rec) => ({
-          executionId: rec.executionId,
-          status: rec.status,
-          startedAt: rec.startedAt ? new Date(rec.startedAt).toISOString() : undefined,
-          completedAt: rec.completedAt ? new Date(rec.completedAt).toISOString() : undefined,
-          error: truncate(rec.error, 500),
-          connectorName: rec.connectorName,
-          model: rec.model,
-          tasks: rec.tasks.map((t) => ({
-            name: t.name,
-            status: t.status,
-            attempts: t.attempts,
-            result: t.result ? truncate(t.result.output ?? t.result.error, 500) : undefined,
-          })),
-        }));
+        const executions = records.map((rec) => {
+          const preStepsSummary = buildStepSummary(
+            rec.steps, 'prestep.completed', 'prestep.failed', 'prestep.started',
+          );
+          const postStepsSummary = buildStepSummary(
+            rec.steps, 'poststep.completed', 'poststep.failed', 'poststep.started',
+          );
+
+          return {
+            executionId: rec.executionId,
+            status: rec.status,
+            startedAt: rec.startedAt ? new Date(rec.startedAt).toISOString() : undefined,
+            completedAt: rec.completedAt ? new Date(rec.completedAt).toISOString() : undefined,
+            error: rec.error,
+            connectorName: rec.connectorName,
+            model: rec.model,
+            ...(preStepsSummary ? { preStepsSummary } : {}),
+            tasks: rec.tasks.map((t) => ({
+              name: t.name,
+              status: t.status,
+              attempts: t.attempts,
+              result: t.result,
+            })),
+            ...(postStepsSummary ? { postStepsSummary } : {}),
+          };
+        });
 
         return {
           success: true,

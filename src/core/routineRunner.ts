@@ -682,6 +682,7 @@ async function validateTaskCompletion(
 // ============================================================================
 
 const DEFAULT_STEP_TIMEOUT = 30_000;
+const DEFAULT_ROUTINE_TIMEOUT = 3_600_000; // 1 hour
 
 interface StepExecutionContext {
   agent: Agent;
@@ -920,6 +921,18 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
   // Track custom resultKeys from deterministic steps for cleanup (reused agents)
   const stepResultKeys: string[] = [];
 
+  // Global routine timeout — cancels the agent if wall-clock time is exceeded
+  const routineTimeoutMs = definition.timeoutMs !== undefined ? definition.timeoutMs : DEFAULT_ROUTINE_TIMEOUT;
+  let routineTimedOut = false;
+  let routineTimer: ReturnType<typeof setTimeout> | undefined;
+
+  if (routineTimeoutMs > 0) {
+    routineTimer = setTimeout(() => {
+      routineTimedOut = true;
+      agent.cancel(`Routine timed out after ${routineTimeoutMs}ms`);
+    }, routineTimeoutMs);
+  }
+
   try {
     // 5. Validate pre/post step tool names
     const stepToolNames = [
@@ -968,6 +981,12 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
     let nextTasks = getNextExecutableTasks(execution.plan);
 
     while (nextTasks.length > 0) {
+      // Check routine timeout before starting next task
+      if (routineTimedOut) {
+        log.warn('Routine timeout detected between tasks, aborting');
+        break;
+      }
+
       // Pick first task (sequential for now; parallel support can be added later)
       const task = nextTasks[0]!;
       const taskIndex = execution.plan.tasks.findIndex((t) => t.id === task.id);
@@ -1169,6 +1188,18 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
       execution.progress = getRoutineProgress(execution);
     }
 
+    // Enrich error message if the failure was caused by the routine timeout
+    if (routineTimedOut && execution.status === 'failed') {
+      execution.error = `Routine timed out after ${routineTimeoutMs}ms` +
+        (execution.error ? `; ${execution.error}` : '');
+    }
+
+    // Clear routine timer before postSteps so cleanup steps aren't killed
+    if (routineTimer) {
+      clearTimeout(routineTimer);
+      routineTimer = undefined;
+    }
+
     // 8. Execute postSteps (deterministic, no LLM)
     const shouldRunPostSteps =
       definition.postSteps &&
@@ -1220,6 +1251,9 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
 
     return execution;
   } finally {
+    // Clear routine timeout timer (may already be cleared before postSteps)
+    if (routineTimer) clearTimeout(routineTimer);
+
     // Clean up routine-managed keys from ICM/WM (important for reused agents)
     try {
       await cleanupRoutineContext(agent, stepResultKeys);

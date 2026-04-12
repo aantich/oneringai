@@ -11,15 +11,9 @@ import type { StorageContext } from '../../core/StorageRegistry.js';
 
 interface RoutineGetTaskStepsArgs {
   executionId: string;
-  taskName: string;
+  taskName?: string;
+  phase?: 'task' | 'pre' | 'post' | 'all';
   stepTypes?: string[];
-}
-
-function truncate(val: unknown, limit: number): string | undefined {
-  if (val === null || val === undefined) return undefined;
-  const str = typeof val === 'string' ? val : JSON.stringify(val);
-  if (str.length <= limit) return str;
-  return `${str.substring(0, limit)}...[truncated]`;
 }
 
 function buildStorageContext(toolContext?: ToolContext): StorageContext | undefined {
@@ -54,7 +48,15 @@ export function createRoutineGetTaskSteps(
       function: {
         name: 'routine_get_task_steps',
         description:
-          'Get step-level execution detail for a specific task within a routine execution. Returns timestamped steps filtered by task name and optional step types.',
+          'Get step-level execution detail for a routine execution. Filter by task name, execution phase (pre/post steps vs tasks), or step types.\n\n' +
+          'Phase values:\n' +
+          '- "task" (default): filter by taskName within the main task loop\n' +
+          '- "pre": show prestep.started/completed/failed steps (deterministic pre-steps)\n' +
+          '- "post": show poststep.started/completed/failed steps (deterministic post-steps)\n' +
+          '- "all": show all steps (taskName is optional filter)\n\n' +
+          'Step types: task.started, task.completed, task.failed, task.validation, tool.call, tool.start, ' +
+          'llm.start, llm.complete, iteration.complete, prestep.started, prestep.completed, prestep.failed, ' +
+          'poststep.started, poststep.completed, poststep.failed',
         parameters: {
           type: 'object',
           properties: {
@@ -64,16 +66,21 @@ export function createRoutineGetTaskSteps(
             },
             taskName: {
               type: 'string',
-              description: 'Name of the task to get steps for',
+              description: 'Name of the task or step to filter by. Required when phase is "task", optional otherwise.',
+            },
+            phase: {
+              type: 'string',
+              enum: ['task', 'pre', 'post', 'all'],
+              description: 'Execution phase to query: "task" (default), "pre" (preSteps), "post" (postSteps), "all"',
             },
             stepTypes: {
               type: 'array',
               items: { type: 'string' },
               description:
-                'Optional filter for step types (e.g., ["task.started", "task.completed", "tool.call", "llm.complete"])',
+                'Optional filter for step types (e.g., ["task.started", "task.completed", "prestep.failed"])',
             },
           },
-          required: ['executionId', 'taskName'],
+          required: ['executionId'],
         },
       },
     },
@@ -82,6 +89,13 @@ export function createRoutineGetTaskSteps(
 
     execute: async (args: RoutineGetTaskStepsArgs, context?: ToolContext) => {
       try {
+        const phase = args.phase ?? 'task';
+
+        // Require taskName when phase is "task"
+        if (phase === 'task' && !args.taskName) {
+          return { success: false, error: 'taskName is required when phase is "task"' };
+        }
+
         const s = resolveRoutineExecutionStorage(storage, context);
 
         const record = await s.load(args.executionId);
@@ -89,8 +103,32 @@ export function createRoutineGetTaskSteps(
           return { success: false, error: `Execution not found: ${args.executionId}` };
         }
 
-        // Filter steps by taskName
-        let filtered = record.steps.filter((step) => step.taskName === args.taskName);
+        // Phase-based filtering
+        const preTypes = new Set<string>(['prestep.started', 'prestep.completed', 'prestep.failed']);
+        const postTypes = new Set<string>(['poststep.started', 'poststep.completed', 'poststep.failed']);
+
+        let filtered = record.steps;
+
+        if (phase === 'pre') {
+          filtered = filtered.filter(s => preTypes.has(s.type));
+          if (args.taskName) {
+            filtered = filtered.filter(s => s.taskName === args.taskName);
+          }
+        } else if (phase === 'post') {
+          filtered = filtered.filter(s => postTypes.has(s.type));
+          if (args.taskName) {
+            filtered = filtered.filter(s => s.taskName === args.taskName);
+          }
+        } else if (phase === 'all') {
+          if (args.taskName) {
+            filtered = filtered.filter(s => s.taskName === args.taskName);
+          }
+        } else {
+          // phase === 'task' — exclude pre/post step types, filter by taskName
+          filtered = filtered.filter(
+            s => !preTypes.has(s.type) && !postTypes.has(s.type) && s.taskName === args.taskName,
+          );
+        }
 
         // Optionally filter by step types
         if (args.stepTypes && args.stepTypes.length > 0) {
@@ -98,24 +136,17 @@ export function createRoutineGetTaskSteps(
           filtered = filtered.filter((step) => typeSet.has(step.type));
         }
 
-        // Truncate step data values
-        const steps = filtered.map((step) => {
-          const truncatedData: Record<string, unknown> | undefined = step.data
-            ? Object.fromEntries(
-                Object.entries(step.data).map(([k, v]) => [k, truncate(v, 1000)]),
-              )
-            : undefined;
-
-          return {
-            timestamp: new Date(step.timestamp).toISOString(),
-            type: step.type,
-            data: truncatedData,
-          };
-        });
+        const steps = filtered.map((step) => ({
+          timestamp: new Date(step.timestamp).toISOString(),
+          taskName: step.taskName,
+          type: step.type,
+          data: step.data,
+        }));
 
         return {
           success: true,
-          taskName: args.taskName,
+          phase,
+          ...(args.taskName ? { taskName: args.taskName } : {}),
           totalStepsInExecution: record.steps.length,
           filteredStepCount: steps.length,
           steps,
@@ -125,7 +156,8 @@ export function createRoutineGetTaskSteps(
       }
     },
 
-    describeCall: (args: RoutineGetTaskStepsArgs) => `steps for ${args.taskName}`,
+    describeCall: (args: RoutineGetTaskStepsArgs) =>
+      `steps ${args.phase ?? 'task'}${args.taskName ? ` for ${args.taskName}` : ''}`,
   };
 }
 

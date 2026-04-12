@@ -12,13 +12,6 @@ interface RoutineGetArgs {
   routineName?: string;
 }
 
-function truncate(val: unknown, limit: number): string | undefined {
-  if (val === null || val === undefined) return undefined;
-  const str = typeof val === 'string' ? val : JSON.stringify(val);
-  if (str.length <= limit) return str;
-  return `${str.substring(0, limit)}...[truncated]`;
-}
-
 export function createRoutineGet(storage?: IRoutineDefinitionStorage): ToolFunction<RoutineGetArgs> {
   return {
     definition: {
@@ -74,32 +67,7 @@ export function createRoutineGet(storage?: IRoutineDefinitionStorage): ToolFunct
 
         return {
           success: true,
-          routine: {
-            id: routine.id,
-            name: routine.name,
-            description: routine.description,
-            version: routine.version,
-            author: routine.author,
-            tags: routine.tags,
-            instructions: truncate(routine.instructions, 500),
-            parameters: routine.parameters,
-            requiredTools: routine.requiredTools,
-            requiredPlugins: routine.requiredPlugins,
-            concurrency: routine.concurrency,
-            allowDynamicTasks: routine.allowDynamicTasks,
-            createdAt: routine.createdAt,
-            updatedAt: routine.updatedAt,
-            tasks: routine.tasks.map((t) => ({
-              name: t.name,
-              description: truncate(t.description, 500),
-              dependsOn: t.dependsOn,
-              suggestedTools: t.suggestedTools,
-              expectedOutput: truncate(t.expectedOutput, 500),
-              maxAttempts: t.maxAttempts,
-              controlFlow: t.controlFlow ? { type: t.controlFlow.type } : undefined,
-              validation: t.validation,
-            })),
-          },
+          routine,
         };
       } catch (error) {
         return { success: false, error: (error as Error).message };
