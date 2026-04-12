@@ -32,6 +32,7 @@
   - [16. Developer Tools](#16-developer-tools)
   - [17. Custom Tool Generation](#17-custom-tool-generation-new) — Agents create, test, and persist their own tools
   - [18. Document Reader](#18-document-reader) — PDF, DOCX, XLSX, PPTX, CSV, HTML, images
+  - [19. Desktop Automation Tools](#19-desktop-automation-tools-new) — Screenshot, mouse, keyboard, window control for computer use agents
   - [20. Routine Execution](#20-routine-execution) — Multi-step workflows with task dependencies, validation, and memory bridging
   - [21. External API Integration](#21-external-api-integration) — Scoped Registry, Vendor Templates, Tool Discovery
   - [22. Microsoft Graph Connector Tools](#22-microsoft-graph-connector-tools-new) — Email, calendar, meetings, and Teams transcripts
@@ -65,7 +66,7 @@
 | Document | Description |
 |----------|-------------|
 | **[User Guide](./USER_GUIDE.md)** | Comprehensive guide covering every feature with examples — connectors, agents, context, plugins, audio, video, search, MCP, OAuth, and more |
-| **[API Reference](./API_REFERENCE.md)** | Auto-generated reference for all 600+ public exports — classes, interfaces, types, and functions with signatures |
+| **[API Reference](./API_REFERENCE.md)** | Auto-generated reference for all public exports — classes, interfaces, types, and functions with signatures |
 | [CHANGELOG](./CHANGELOG.md) | Version history and migration notes |
 
 ---
@@ -78,11 +79,9 @@
 
 
 ## EVERWORKER DESKTOP APP
-We realize that library alone in these times is not enough to get you excited, so we built a FREE FOREVER desktop app on top of this library to showcase its power! It's as easy to start using as cloning this library's repo, and then `cd apps/hosea` and then `npm install` and then `npm run dev`. Or watch the video first:
+We realize that library alone in these times is not enough to get you excited, so we built a FREE FOREVER desktop app on top of this library to showcase its power! Check the [Everworker Desktop repository](https://github.com/AntonioCiolworker/hosea) for installation instructions. Or watch the video first:
 
 [![Watch the demo](https://img.youtube.com/vi/_LzDiuOQD8Y/maxresdefault.jpg)](https://www.youtube.com/watch?v=_LzDiuOQD8Y)
-
-Or read the more detailed installation / setup instructions [here](https://github.com/Integrail/oneringai/blob/main/apps/hosea/README.md)
 
 Better to see once and then dig in the code! :)
 
@@ -92,9 +91,9 @@ Showcasing another amazing "built with oneringai": ["no saas" agentic business t
 
 ## Features
 
-- ✨ **Unified API** - One interface for 10+ AI providers (OpenAI, Anthropic, Google, Groq, DeepSeek, and more)
+- ✨ **Unified API** - One interface for 12 AI providers (OpenAI, Anthropic, Google, Vertex, Groq, Together, Perplexity, Grok, DeepSeek, Mistral, Ollama, Custom)
 - 🔑 **Connector-First Architecture** - Single auth system with support for multiple keys per vendor
-- 📊 **Model Registry** - Complete metadata for 35+ latest (2026) models with pricing and features
+- 📊 **Model Registry** - Complete metadata for 60+ latest (2026) models with pricing and features
 - 🎤 **Audio Capabilities** - Text-to-Speech (TTS) and Speech-to-Text (STT) with OpenAI and Groq
 - 🖼️ **Image Generation** - DALL-E 3, gpt-image-1, Google Imagen 4 with editing and variations
 - 🎬 **Video Generation** - NEW: OpenAI Sora 2 and Google Veo 3 for AI video creation
@@ -168,7 +167,7 @@ Connector.create({
 // 2. Create an agent
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
 });
 
 // 3. Run
@@ -204,7 +203,7 @@ const weatherTool: ToolFunction = {
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [weatherTool],
 });
 
@@ -342,7 +341,7 @@ import { Agent, developerTools } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: developerTools,
 });
 
@@ -410,7 +409,7 @@ const searchTools = ConnectorTools.for('serper-main');
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [...searchTools, tools.webFetch],
 });
 
@@ -453,7 +452,7 @@ const scrapeTools = ConnectorTools.for('zenrows');
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [...scrapeTools, tools.webFetch],
 });
 
@@ -472,7 +471,7 @@ await agent.run('Scrape https://example.com and summarize');
 | Provider | Text | Vision | TTS | STT | Image | Video | Tools | Context |
 |----------|------|--------|-----|-----|-------|-------|-------|---------|
 | **OpenAI** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 128K |
-| **Anthropic (Claude)** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | 200K |
+| **Anthropic (Claude)** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | 1M |
 | **Google (Gemini)** | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | 1M |
 | **Google Vertex AI** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | 1M |
 | **Grok (xAI)** | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | 128K |
@@ -480,6 +479,7 @@ await agent.run('Scrape https://example.com and summarize');
 | **Together AI** | ✅ | Some | ❌ | ❌ | ❌ | ❌ | ✅ | 128K |
 | **DeepSeek** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 64K |
 | **Mistral** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 32K |
+| **Perplexity** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 128K |
 | **Ollama** | ✅ | Varies | ❌ | ❌ | ❌ | ❌ | ✅ | Varies |
 | **Custom** | ✅ | Varies | ❌ | ❌ | ❌ | ❌ | ✅ | Varies |
 
@@ -497,7 +497,7 @@ const storage = createFileContextStorage('my-assistant');
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   userId: 'user-123',            // Flows to all tool executions automatically
   identities: [                   // Only these connectors visible to tools
     { connector: 'github' },
@@ -539,7 +539,7 @@ import { Agent } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [weatherTool, emailTool, databaseTool],
 });
 
@@ -576,7 +576,7 @@ import { Agent, LoggingPlugin, type IToolExecutionPlugin } from '@everworker/one
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [weatherTool],
 });
 
@@ -656,7 +656,7 @@ Policy-based permission system with per-user rules, argument inspection, and plu
 Existing code works unchanged. Safe tools (read-only, memory, catalog) are auto-allowed; all others default to prompting:
 
 ```typescript
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4', tools: [readFile, bash] });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1', tools: [readFile, bash] });
 
 // read_file executes immediately (in DEFAULT_ALLOWLIST)
 // bash triggers approval flow (write/shell tools require approval by default)
@@ -707,7 +707,7 @@ Eight composable policies evaluated in priority order (`deny` short-circuits):
 import { PathRestrictionPolicy, BashFilterPolicy } from '@everworker/oneringai';
 
 const agent = Agent.create({
-  connector: 'openai', model: 'gpt-4',
+  connector: 'openai', model: 'gpt-4.1',
   permissions: {
     policies: [
       new PathRestrictionPolicy({ allowedPaths: ['/workspace'] }),
@@ -723,7 +723,7 @@ When a tool needs approval, the `onApprovalRequired` callback fires. Return a `c
 
 ```typescript
 const agent = Agent.create({
-  connector: 'openai', model: 'gpt-4',
+  connector: 'openai', model: 'gpt-4.1',
   permissions: {
     onApprovalRequired: async (ctx) => {
       const userChoice = await showApprovalDialog(ctx.toolName, ctx.args);
@@ -778,7 +778,7 @@ const storage = createFileContextStorage('my-assistant');
 
 // Create context with storage
 const ctx = AgentContextNextGen.create({
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   features: { workingMemory: true },
   storage,
 });
@@ -791,7 +791,7 @@ await ctx.memory?.store('user_color', 'User favorite color', 'blue');
 await ctx.save('session-001', { title: 'User Preferences' });
 
 // Later... load session
-const ctx2 = AgentContextNextGen.create({ model: 'gpt-4', storage });
+const ctx2 = AgentContextNextGen.create({ model: 'gpt-4.1', storage });
 const loaded = await ctx2.load('session-001');
 
 if (loaded) {
@@ -827,7 +827,7 @@ StorageRegistry.configure({
 });
 
 // All agents and tools automatically use these backends
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
 ```
 
 **Resolution order:** explicit constructor param > `StorageRegistry` > file-based default.
@@ -845,7 +845,7 @@ import { Agent } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [weatherTool, emailTool],
   context: {
     features: { workingMemory: true },
@@ -882,7 +882,7 @@ const searchTools = ConnectorTools.for('serper-main');
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [...searchTools, tools.webFetch],
   context: {
     features: { workingMemory: true },
@@ -907,7 +907,7 @@ import { Agent, AgentContextNextGen } from '@everworker/oneringai';
 
 // Option 1: Use AgentContextNextGen directly (standalone)
 const ctx = AgentContextNextGen.create({
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   systemPrompt: 'You are a helpful assistant.',
   features: { workingMemory: true, inContextMemory: true },
 });
@@ -918,7 +918,7 @@ const { input, budget } = await ctx.prepare(); // Ready for LLM call
 // Option 2: Via Agent.create
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: {
     features: { workingMemory: true },
   },
@@ -936,7 +936,7 @@ Enable/disable features independently. Disabled features = no associated tools r
 // Minimal stateless agent (no memory)
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: {
     features: { workingMemory: false }
   }
@@ -945,7 +945,7 @@ const agent = Agent.create({
 // Full-featured agent with all plugins
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: {
     features: {
       workingMemory: true,
@@ -961,7 +961,7 @@ const agent = Agent.create({
 | Feature | Default | Plugin | Associated Tools |
 |---------|---------|--------|------------------|
 | `workingMemory` | `true` | WorkingMemoryPluginNextGen | Unified `store_*` tools (store="memory"). Actions: cleanup_raw, query |
-| `inContextMemory` | `false` | InContextMemoryPluginNextGen | Unified `store_*` tools (store="context") |
+| `inContextMemory` | `true` | InContextMemoryPluginNextGen | Unified `store_*` tools (store="context") |
 | `persistentInstructions` | `false` | PersistentInstructionsPluginNextGen | Unified `store_*` tools (store="instructions"). Actions: clear |
 | `userInfo` | `false` | UserInfoPluginNextGen | Unified `store_*` tools (store="user_info") + `todo_add/update/remove` |
 | `toolCatalog` | `false` | ToolCatalogPluginNextGen | `tool_catalog_search/load/unload` |
@@ -993,7 +993,7 @@ Store key-value pairs **directly in context** for instant LLM access without ret
 import { AgentContextNextGen } from '@everworker/oneringai';
 
 const ctx = AgentContextNextGen.create({
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   features: { inContextMemory: true },
   plugins: {
     inContextMemory: { maxEntries: 20 },
@@ -1032,7 +1032,7 @@ import { Agent } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: {
     agentId: 'my-assistant',  // Required for storage path
     features: {
@@ -1068,7 +1068,7 @@ import { Agent } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   userId: 'alice',  // Optional — defaults to 'default' user
   context: {
     features: {
@@ -1108,7 +1108,7 @@ TODOs are stored alongside user info and rendered in a separate **"Current TODOs
 Bypass all context management for simple, stateless LLM calls:
 
 ```typescript
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
 
 // Direct call - no history tracking, no memory, no context preparation
 const response = await agent.runDirect('What is 2 + 2?');
@@ -1331,7 +1331,7 @@ console.log(ollamaModels.map(m => `${m.name} (${m.capabilities.defaultDimensions
 
 ### 14. Model Registry
 
-Complete metadata for 23+ models:
+Complete metadata for 60+ models with pricing, context windows, and feature flags:
 
 ```typescript
 import { getModelInfo, calculateCost, LLM_MODELS, Vendor } from '@everworker/oneringai';
@@ -1353,10 +1353,10 @@ console.log(`Cached: $${cachedCost}`);  // $0.0293 (90% discount)
 ```
 
 **Available Models:**
-- **OpenAI (12)**: GPT-5.2 series, GPT-5 family, GPT-4.1, GPT-4o, o3-mini, o1
-- **Anthropic (7)**: Claude 4.5 series, Claude 4.x, Claude 3.7 Sonnet, Claude 3 Haiku
-- **Google (7)**: Gemini 3, Gemini 2.5
-- **Grok (9)**: Grok 4.1, Grok 4, Grok Code, Grok 3, Grok 2 Vision
+- **OpenAI (27+)**: GPT-5.4, GPT-5.3, GPT-5.2, GPT-5.1, GPT-5, GPT-4.1, GPT-4o, o3, o4-mini, o1, Deep Research, Audio, Realtime, Open-Source
+- **Anthropic (9)**: Claude 4.6 (Opus, Sonnet), Claude 4.5, Claude 4.1, Claude 4, Claude 3.7 Sonnet, Haiku 4.5
+- **Google (10)**: Gemini 3.1, Gemini 3, Gemini 2.5
+- **Grok (5)**: Grok 4.20 (reasoning, non-reasoning, multi-agent), Grok 4.1 Fast
 
 ### 15. Streaming
 
@@ -1396,8 +1396,8 @@ import { developerTools } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
-  tools: developerTools, // Includes all 7 tools
+  model: 'gpt-4.1',
+  tools: developerTools, // Includes all 11 tools
 });
 
 // Agent can now:
@@ -1408,6 +1408,8 @@ const agent = Agent.create({
 // - Search content with regex (grep)
 // - List directories (list_directory)
 // - Execute shell commands (bash)
+// - Start dev servers (dev_server)
+// - Manage background processes (bg_process_output, bg_process_list, bg_process_kill)
 
 await agent.run('Read package.json and tell me the dependencies');
 await agent.run('Find all TODO comments in the src directory');
@@ -1422,6 +1424,10 @@ await agent.run('Run npm test and report any failures');
 - **grep** - Search content with regex
 - **list_directory** - List directory contents
 - **bash** - Execute shell commands with safety guards
+- **dev_server** - Start a development server in the background
+- **bg_process_output** - Read output from a background process
+- **bg_process_list** - List running background processes
+- **bg_process_kill** - Stop a background process
 
 **Safety Features:**
 - Blocked dangerous commands (`rm -rf /`, fork bombs)
@@ -1439,7 +1445,7 @@ import { createCustomToolMetaTools, hydrateCustomTool } from '@everworker/onerin
 // Give an agent the ability to create tools
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [...createCustomToolMetaTools()],
 });
 
@@ -1473,7 +1479,7 @@ import { desktopTools } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: desktopTools, // All 11 desktop tools
 });
 
@@ -1597,7 +1603,7 @@ const routine = createRoutineDefinition({
 const execution = await executeRoutine({
   definition: routine,
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [...searchTools],
   onTaskComplete: (task, exec) => console.log(`[${exec.progress}%] ${task.name} done`),
 });
@@ -1644,7 +1650,7 @@ import {
   type IRoutineExecutionStorage,
 } from '@everworker/oneringai';
 
-const record = createRoutineExecutionRecord(definition, 'openai', 'gpt-4');
+const record = createRoutineExecutionRecord(definition, 'openai', 'gpt-4.1');
 const execId = await storage.insert(userId, record);
 const recorder = createExecutionRecorder({ storage, executionId: execId });
 
@@ -1692,7 +1698,7 @@ const all = await storage.list(undefined, { tags: ['daily'] });
 
 ### 22. External API Integration
 
-Connect your AI agents to 35+ external services with enterprise-grade resilience:
+Connect your AI agents to 45+ external services with enterprise-grade resilience:
 
 ```typescript
 import { Connector, ConnectorTools, Services, Agent } from '@everworker/oneringai';
@@ -1718,7 +1724,7 @@ const tools = ConnectorTools.for('github');
 // Use with an agent — userId flows to all tools automatically
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   userId: 'user-123',  // All tool API calls use this user's OAuth tokens
   tools: tools,
 });
@@ -1727,7 +1733,7 @@ await agent.run('Find all TypeScript files in src/ and show me the entry point')
 await agent.run('Show me PR #42 and summarize the review comments');
 ```
 
-**Supported Services (35+):**
+**Supported Services (45+):**
 - **Communication**: Slack, Discord, Microsoft Teams, Twilio, Telegram *(6 built-in tools)*, Zoom *(3 built-in tools)*
 - **Development**: GitHub *(7 built-in tools)*, GitLab, Jira, Linear, Bitbucket
 - **Google Workspace**: Google APIs *(11 built-in tools)* — Gmail, Calendar, Meet transcripts, Drive
@@ -1784,7 +1790,7 @@ registry.get('other-co');  // throws "not found" (no info leakage)
 // Use with Agent
 const agent = Agent.create({
   connector: 'acme-openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   registry,  // Agent resolves connectors through the scoped view
 });
 
@@ -1830,7 +1836,7 @@ const tools = ConnectorTools.for('my-github');
 // Use with agent
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools,
 });
 
@@ -1918,7 +1924,7 @@ const tools = ConnectorTools.for('microsoft');
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools,
 });
 
@@ -1964,7 +1970,7 @@ ToolCatalogRegistry.registerTools('knowledge', [
 // Enable tool catalog with scoping
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   // Identities control which connector categories are visible
   identities: [{ connector: 'github' }, { connector: 'slack' }],
   context: {
@@ -2153,7 +2159,7 @@ Every `Agent` automatically registers with `AgentRegistry` on creation and unreg
 import { Agent, AgentRegistry } from '@everworker/oneringai';
 
 // Agents auto-register — no setup needed
-const researcher = Agent.create({ connector: 'openai', model: 'gpt-4', name: 'researcher' });
+const researcher = Agent.create({ connector: 'openai', model: 'gpt-4.1', name: 'researcher' });
 const coder = Agent.create({ connector: 'anthropic', model: 'claude-sonnet-4-6', name: 'coder' });
 
 // Query
@@ -2163,7 +2169,7 @@ AgentRegistry.filter({ status: 'idle' });     // [researcher, coder]
 
 // Aggregate stats
 AgentRegistry.getStats();
-// { total: 2, byStatus: { idle: 2, ... }, byModel: { 'gpt-4': 1, ... }, ... }
+// { total: 2, byStatus: { idle: 2, ... }, byModel: { 'gpt-4.1': 1, ... }, ... }
 
 // Deep inspection — full context, conversation, plugins, tools, metrics
 const inspection = await AgentRegistry.inspect(researcher.registryId);
@@ -2174,7 +2180,7 @@ const inspection = await AgentRegistry.inspect(researcher.registryId);
 
 // Parent/child hierarchy (for agent-spawns-agent patterns)
 const child = Agent.create({
-  connector: 'openai', model: 'gpt-4',
+  connector: 'openai', model: 'gpt-4.1',
   parentAgentId: researcher.registryId,   // link to parent
 });
 AgentRegistry.getChildren(researcher.registryId);  // [child]
@@ -2188,7 +2194,7 @@ AgentRegistry.onAgentEvent((agentId, name, event, data) => {
 // External control
 AgentRegistry.pauseAgent(researcher.registryId);
 AgentRegistry.cancelAll('shutting down');
-AgentRegistry.destroyMatching({ model: 'gpt-4' });
+AgentRegistry.destroyMatching({ model: 'gpt-4.1' });
 ```
 
 See the [User Guide](./USER_GUIDE.md#agent-registry) for the full API reference.
@@ -2204,7 +2210,7 @@ Connector.create({ name: 'openai', vendor: Vendor.OpenAI, auth: { type: 'api_key
 
 const orchestrator = await createOrchestrator({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   agentTypes: {
     architect: {
       systemPrompt: 'You are a senior software architect.',
@@ -2436,7 +2442,7 @@ await fsClient.connect();
 await remoteClient.connect();
 
 // Create agent and register MCP tools
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
 fsClient.registerTools(agent.tools);
 remoteClient.registerTools(agent.tools);
 
@@ -2531,7 +2537,7 @@ Check your `.env` file and ensure the key is correct for that vendor.
 Each vendor has different model names. Check the [User Guide](./USER_GUIDE.md) for supported models.
 
 ### Vision not working
-Use a vision-capable model: `gpt-4o`, `claude-opus-4-5-20251101`, `gemini-3-flash-preview`.
+Use a vision-capable model: `gpt-4.1`, `claude-sonnet-4-6`, `gemini-2.5-flash`.
 
 ## Contributing
 
@@ -2543,4 +2549,4 @@ MIT License - See [LICENSE](./LICENSE) file.
 
 ---
 
-**Version:** 0.5.0 | **Last Updated:** 2026-03-17 | **[User Guide](./USER_GUIDE.md)** | **[API Reference](./API_REFERENCE.md)** | **[Changelog](./CHANGELOG.md)**
+**Version:** 0.5.3 | **Last Updated:** 2026-04-12 | **[User Guide](./USER_GUIDE.md)** | **[API Reference](./API_REFERENCE.md)** | **[Changelog](./CHANGELOG.md)**

@@ -1,7 +1,7 @@
 # @everworker/oneringai - Complete User Guide
 
-**Version:** 0.5.2
-**Last Updated:** 2026-04-08
+**Version:** 0.5.3
+**Last Updated:** 2026-04-12
 
 A comprehensive guide to using all features of the @everworker/oneringai library.
 
@@ -16,50 +16,9 @@ A comprehensive guide to using all features of the @everworker/oneringai library
 5. [Agent Features](#agent-features)
    - Multi-User Support (`userId`)
    - Auth Identities (`identities`)
-6. [Session Persistence](#session-persistence)
-   - [Centralized Storage Registry](#centralized-storage-registry) — One `configure()` for all backends, multi-tenant `StorageContext`
-7. [Context Management](#context-management)
-   - Strategy Deep Dive (Algorithmic, Custom)
-   - Token Estimation
-   - Lifecycle Hooks
-8. [Unified Store Tools](#unified-store-tools)
-   - Generic CRUD Interface (store_get, store_set, store_delete, store_list, store_action)
-   - Available Stores (memory, context, instructions, user_info, workspace)
-   - Custom Store Plugins
-9. [Shared Workspace](#shared-workspace)
-   - Multi-Agent Coordination
-   - Entry Model and Actions
-10. [InContextMemory](#in-context-memory)
-    - Setup and Configuration
-    - Priority-Based Eviction
-    - Tools (store_set/store_delete/store_list with store="context")
-    - UI Display (`showInUI`) and User Pinning
-    - Use Cases and Best Practices
-11. [Persistent Instructions](#persistent-instructions)
-    - Setup and Configuration
-    - Tools (store_set/store_delete/store_list/store_action with store="instructions")
-    - Storage and Persistence
-    - Use Cases and Best Practices
-12. [User Info](#user-info-nextgen-plugin)
-    - Setup and Configuration
-    - Context Injection (auto-rendered in system message)
-    - Tools (store_set/store_get/store_delete/store_action with store="user_info", plus todo_add, todo_update, todo_remove)
-    - Storage and Multi-User Isolation
-    - Use Cases and Best Practices
-13. [Routine Execution](#routine-execution)
-    - Overview and Architecture
-    - Quick Start
-    - RoutineDefinition and Tasks
-    - Task Dependencies and Ordering
-    - Memory as Inter-Task Bridge
-    - Validation and Self-Reflection
-    - Retry Logic and Failure Modes
-    - Custom Prompts
-    - Callbacks and Progress Tracking
-    - Complete Example
-14. [Tools & Function Calling](#tools--function-calling)
-    - Built-in Tools Overview (33+ tools across 8 categories)
-    - Developer Tools (Filesystem & Shell)
+6. [Tools & Function Calling](#tools--function-calling)
+    - Built-in Tools Overview (160+ tools across 18 categories)
+    - Developer Tools (Filesystem & Shell — 11 tools)
     - [Custom Tool Generation](#custom-tool-generation) — Agents create, test, and persist their own tools
     - [Document Reader](#document-reader) — PDF, DOCX, XLSX, PPTX, CSV, HTML, images
     - Web Tools (webFetch, web_search via ConnectorTools, web_scrape via ConnectorTools)
@@ -72,7 +31,48 @@ A comprehensive guide to using all features of the @everworker/oneringai library
     - [Twilio Connector Tools](#twilio-connector-tools) — SMS and WhatsApp (send_sms, send_whatsapp, list_messages, get_message)
     - [Unified Calendar Tool](#unified-calendar-tool) — Cross-provider meeting slot finder (Google + Microsoft)
     - [Multi-Account Connectors](#multi-account-connectors) — Multiple accounts per vendor with automatic routing
-15. [Dynamic Tool Management](#dynamic-tool-management)
+7. [Dynamic Tool Management](#dynamic-tool-management)
+8. [Session Persistence](#session-persistence)
+   - [Centralized Storage Registry](#centralized-storage-registry) — One `configure()` for all backends, multi-tenant `StorageContext`
+9. [Context Management](#context-management)
+   - Strategy Deep Dive (Algorithmic, Custom)
+   - Token Estimation
+   - Lifecycle Hooks
+10. [Unified Store Tools](#unified-store-tools)
+    - Generic CRUD Interface (store_get, store_set, store_delete, store_list, store_action)
+    - Available Stores (memory, context, instructions, user_info, workspace)
+    - Custom Store Plugins
+11. [Shared Workspace](#shared-workspace)
+    - Multi-Agent Coordination
+    - Entry Model and Actions
+12. [InContextMemory](#in-context-memory)
+    - Setup and Configuration
+    - Priority-Based Eviction
+    - Tools (store_set/store_delete/store_list with store="context")
+    - UI Display (`showInUI`) and User Pinning
+    - Use Cases and Best Practices
+13. [Persistent Instructions](#persistent-instructions)
+    - Setup and Configuration
+    - Tools (store_set/store_delete/store_list/store_action with store="instructions")
+    - Storage and Persistence
+    - Use Cases and Best Practices
+14. [User Info](#user-info-nextgen-plugin)
+    - Setup and Configuration
+    - Context Injection (auto-rendered in system message)
+    - Tools (store_set/store_get/store_delete/store_action with store="user_info", plus todo_add, todo_update, todo_remove)
+    - Storage and Multi-User Isolation
+    - Use Cases and Best Practices
+15. [Routine Execution](#routine-execution)
+    - Overview and Architecture
+    - Quick Start
+    - RoutineDefinition and Tasks
+    - Task Dependencies and Ordering
+    - Memory as Inter-Task Bridge
+    - Validation and Self-Reflection
+    - Retry Logic and Failure Modes
+    - Custom Prompts
+    - Callbacks and Progress Tracking
+    - Complete Example
 16. [Async (Non-Blocking) Tools](#async-non-blocking-tools)
     - How It Works (Lifecycle)
     - Auto-Continue vs Manual Mode
@@ -92,37 +92,39 @@ A comprehensive guide to using all features of the @everworker/oneringai library
 21. [Image Generation](#image-generation)
 22. [Embeddings](#embeddings)
 23. [Video Generation](#video-generation)
-23. [Custom Media Storage](#custom-media-storage)
+24. [Custom Media Storage](#custom-media-storage)
     - IMediaStorage Interface
     - Custom S3 Backend Example
     - FileMediaStorage Default
-24. [Web Search](#web-search)
-25. [Streaming](#streaming)
-26. [External API Integration](#external-api-integration)
-27. [Vendor Templates](#vendor-templates)
+25. [Web Search](#web-search)
+26. [Streaming](#streaming)
+27. [External API Integration](#external-api-integration)
+28. [Vendor Templates](#vendor-templates)
     - Quick Setup for 43+ Services
     - Authentication Methods
     - Complete Vendor Reference
-28. [OAuth for External APIs](#oauth-for-external-apis)
-29. [Model Registry](#model-registry)
-30. [Scoped Connector Registry](#scoped-connector-registry)
+29. [OAuth for External APIs](#oauth-for-external-apis)
+30. [Model Registry](#model-registry)
+31. [Scoped Connector Registry](#scoped-connector-registry)
     - Access Control Policies
     - Multi-Tenant Isolation
     - Using with Agent and ConnectorTools
-31. [Agent Registry](#agent-registry) — Global tracking, deep inspection, parent/child hierarchy, event fan-in, external control
-32. [Agent Orchestrator](#agent-orchestrator) — Autonomous agent teams, shared workspace, parallel/sequential workflows
+32. [Agent Registry](#agent-registry) — Global tracking, deep inspection, parent/child hierarchy, event fan-in, external control
+33. [Agent Orchestrator](#agent-orchestrator) — Multi-agent teams with shared workspace, delegation, and async execution
     - Quick Start
     - Architecture
     - OrchestratorConfig
-    - Orchestration Tools (create_agent, assign_turn, assign_parallel, assign_turn_async, send_message)
+    - Orchestration Tools (assign_turn, delegate_interactive, send_message, list_agents, destroy_agent)
+    - 3-Tier Routing (DIRECT, DELEGATE, ORCHESTRATE)
+    - Interactive Delegation (monitoring modes, reclaim conditions)
+    - 5-Phase Planning (UNDERSTAND, PLAN, APPROVE, EXECUTE, REPORT)
     - Workspace Delta
-    - Workflow Examples (Sequential Review, Parallel Research, Async Turns)
     - Agent.inject()
     - Worker Agent Lifecycle
     - Custom System Prompt
     - Per-Type Configuration
-33. [Advanced Features](#advanced-features)
-34. [Production Deployment](#production-deployment)
+34. [Advanced Features](#advanced-features)
+35. [Production Deployment](#production-deployment)
 
 ---
 
@@ -164,7 +166,7 @@ Connector.create({
 // 2. Create an agent
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
 });
 
 // 3. Run the agent
@@ -195,7 +197,7 @@ User Code → Connector Registry → Agent → Provider → LLM
 
 1. **Connector** - Manages authentication
 2. **Agent** - Orchestrates LLM interactions
-3. **Vendor** - Enum of supported AI providers
+3. **Vendor** - Const object of supported AI providers (e.g., `Vendor.OpenAI`, `Vendor.Anthropic`)
 
 ---
 
@@ -230,7 +232,7 @@ Agents maintain conversation history automatically:
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
 });
 
 // First turn
@@ -247,7 +249,7 @@ console.log(response.output_text);
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
 
   // Optional settings
   temperature: 0.7,          // Randomness (0.0 - 1.0)
@@ -265,7 +267,7 @@ Change settings during execution:
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
 });
 
 // Change model
@@ -335,10 +337,10 @@ Connector.create({
 });
 
 // Use main key
-const agent1 = Agent.create({ connector: 'openai-main', model: 'gpt-4' });
+const agent1 = Agent.create({ connector: 'openai-main', model: 'gpt-4.1' });
 
 // Use backup key
-const agent2 = Agent.create({ connector: 'openai-backup', model: 'gpt-4' });
+const agent2 = Agent.create({ connector: 'openai-backup', model: 'gpt-4.1' });
 ```
 
 ### Managing Connectors
@@ -396,7 +398,7 @@ Vendor.Custom        // Custom OpenAI-compatible endpoints
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   instructions: `You are a Python programming expert.
 
                  Rules:
@@ -413,7 +415,7 @@ const response = await agent.run('How do I read a CSV file?');
 ### Control Methods
 
 ```typescript
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
 
 // Pause execution
 agent.pause();
@@ -437,7 +439,7 @@ if (agent.isPaused()) {
 ### Metrics & Audit Trail
 
 ```typescript
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
 
 await agent.run('Hello!');
 
@@ -457,7 +459,7 @@ audit.forEach(entry => {
 ### Cleanup
 
 ```typescript
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
 
 // Register cleanup callback
 agent.onCleanup(() => {
@@ -476,7 +478,7 @@ For multi-user systems, set `userId` once at agent creation and it automatically
 // Set userId at creation
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   userId: 'user-123',
   tools: [myTool],
 });
@@ -507,12 +509,12 @@ console.log(agent.context.userId);  // 'user-456'
 **Setting userId at different levels:**
 ```typescript
 // Option 1: At agent level (recommended)
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4', userId: 'user-123' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1', userId: 'user-123' });
 
 // Option 2: At context level
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: { userId: 'user-123' },
 });
 
@@ -529,7 +531,7 @@ import type { AuthIdentity } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   userId: 'user-123',
   identities: [                       // Only these connectors available to tools
     { connector: 'github' },
@@ -577,7 +579,7 @@ const storage = createFileContextStorage('my-assistant');
 
 // Create context with storage
 const ctx = AgentContextNextGen.create({
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   features: { workingMemory: true },
   storage,
 });
@@ -590,7 +592,7 @@ await ctx.memory?.store('user_name', 'User name', 'Alice');
 await ctx.save('session-001', { title: 'User Session' });
 
 // Later... load session
-const ctx2 = AgentContextNextGen.create({ model: 'gpt-4', storage });
+const ctx2 = AgentContextNextGen.create({ model: 'gpt-4.1', storage });
 const loaded = await ctx2.load('session-001');
 
 if (loaded) {
@@ -656,7 +658,7 @@ StorageRegistry.configure({
 });
 
 // That's it! All agents, tools, and plugins will use these backends automatically.
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
 ```
 
 **Resolution order** (every subsystem follows this):
@@ -714,7 +716,7 @@ StorageRegistry.configure({
 StorageRegistry.setContext({ userId: 'alice', tenantId: 'acme-corp' });
 
 // All agents now get tenant-scoped storage automatically
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4', userId: 'alice' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1', userId: 'alice' });
 ```
 
 If no global context is set, `AgentContextNextGen` auto-derives one from its `userId` config (i.e., `{ userId }`) and passes it to the factories. This means `Agent.create({ userId: 'alice' })` automatically partitions storage by user — no `setContext()` needed for simple single-user cases.
@@ -747,7 +749,7 @@ const storage = createFileContextStorage('my-agent');
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: {
     agentId: 'my-agent',
     features: { workingMemory: true },
@@ -791,7 +793,7 @@ const storage = createFileContextStorage('my-assistant');
 
 // Create context with storage
 const ctx = AgentContextNextGen.create({
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   features: { workingMemory: true, inContextMemory: true },
   storage,
 });
@@ -816,7 +818,7 @@ console.log(ctx.sessionId);  // 'session-001'
 ```typescript
 // Create new context and load
 const ctx2 = AgentContextNextGen.create({
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   features: { workingMemory: true, inContextMemory: true },
   storage,
 });
@@ -918,7 +920,7 @@ const defStorage = createFileAgentDefinitionStorage();
 // Create and configure agent
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   instructions: 'You are a helpful support assistant.',
   context: {
     agentId: 'support-bot',
@@ -998,7 +1000,7 @@ import { AgentContextNextGen } from '@everworker/oneringai';
 
 // Create a context instance
 const ctx = AgentContextNextGen.create({
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   systemPrompt: 'You are a helpful assistant.',
   features: {
     workingMemory: true,      // WorkingMemoryPluginNextGen
@@ -1075,7 +1077,7 @@ import { Agent, AgentContextNextGen } from '@everworker/oneringai';
 // AgentContextNextGen is auto-created with default config
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [weatherTool],
   context: {
     strategy: 'algorithmic',    // Default strategy: algorithmic compaction at 75% threshold
@@ -1104,8 +1106,8 @@ const { budget } = await ctx.prepare();
 console.log(`Used: ${budget.used}/${budget.total} tokens`);
 
 // Option 2: Pass existing AgentContextNextGen instance
-const sharedContext = AgentContextNextGen.create({ model: 'gpt-4' });
-const agent1 = Agent.create({ connector: 'openai', model: 'gpt-4', context: sharedContext });
+const sharedContext = AgentContextNextGen.create({ model: 'gpt-4.1' });
+const agent1 = Agent.create({ connector: 'openai', model: 'gpt-4.1', context: sharedContext });
 const agent2 = Agent.create({ connector: 'anthropic', model: 'claude', context: sharedContext });
 // Both agents share the same context state and ToolManager!
 ```
@@ -1175,7 +1177,7 @@ import { AgentContextNextGen, DEFAULT_FEATURES } from '@everworker/oneringai';
 
 // View default feature settings
 console.log(DEFAULT_FEATURES);
-// { workingMemory: true, inContextMemory: false, persistentInstructions: false, userInfo: false, toolCatalog: false }
+// { workingMemory: true, inContextMemory: true, persistentInstructions: false, userInfo: false, toolCatalog: false, sharedWorkspace: false }
 ```
 
 **Available Features:**
@@ -1183,7 +1185,7 @@ console.log(DEFAULT_FEATURES);
 | Feature | Default | Plugin | When Disabled |
 |---------|---------|--------|---------------|
 | `workingMemory` | `true` | WorkingMemoryPluginNextGen - tiered memory (raw/summary/findings) | `store_*` tools cannot target `"memory"` store; `ctx.memory` returns `null` |
-| `inContextMemory` | `false` | InContextMemoryPluginNextGen - live key-value storage directly in context | `store_*` tools cannot target `"context"` store |
+| `inContextMemory` | `true` | InContextMemoryPluginNextGen - live key-value storage directly in context | `store_*` tools cannot target `"context"` store |
 | `persistentInstructions` | `false` | PersistentInstructionsPluginNextGen - agent instructions persisted to disk (KVP entries) | `store_*` tools cannot target `"instructions"` store |
 | `userInfo` | `false` | UserInfoPluginNextGen - user-scoped preferences + TODO tracking auto-injected into context | `store_*` tools cannot target `"user_info"` store; `todo_*` tools not registered |
 | `toolCatalog` | `false` | ToolCatalogPluginNextGen - dynamic tool loading/unloading by category | `tool_catalog_*` tools not registered; all tools must be pre-loaded |
@@ -1193,7 +1195,7 @@ console.log(DEFAULT_FEATURES);
 ```typescript
 // 1. Minimal stateless agent (no working memory)
 const ctx = AgentContextNextGen.create({
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   features: { workingMemory: false },  // Disable working memory
 });
 
@@ -1201,10 +1203,10 @@ console.log(ctx.memory);  // null
 
 // 2. Full-featured agent with all capabilities
 const ctx = AgentContextNextGen.create({
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   features: {
     workingMemory: true,          // default: true
-    inContextMemory: true,        // default: false
+    inContextMemory: true,        // default: true
     persistentInstructions: true, // default: false
     userInfo: true,               // default: false
   },
@@ -1213,7 +1215,7 @@ const ctx = AgentContextNextGen.create({
 // 3. Via Agent.create() - inline config
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: {
     features: { workingMemory: false },  // Disable working memory
   },
@@ -1222,7 +1224,7 @@ const agent = Agent.create({
 // 4. Agent with all features
 const fullAgent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   userId: 'alice',  // Optional for userInfo isolation
   context: {
     agentId: 'my-agent',
@@ -1269,12 +1271,12 @@ AgentContextNextGen automatically registers feature-aware tools based on enabled
 import { AgentContextNextGen } from '@everworker/oneringai';
 
 // With workingMemory enabled (default)
-const ctx = AgentContextNextGen.create({ model: 'gpt-4' });
+const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
 console.log(ctx.tools.has('store_set'));     // true (store_* tools registered)
 
 // With workingMemory disabled - memory store not available
 const ctx2 = AgentContextNextGen.create({
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   features: { workingMemory: false },
 });
 // store_* tools are still registered, but store_set("memory", ...) will fail
@@ -1294,7 +1296,7 @@ TODO tools (`todo_add`, `todo_update`, `todo_remove`) remain separate and are re
 
 **Backward Compatibility:**
 
-- Default features: `workingMemory: true`, `inContextMemory: false`, `persistentInstructions: false`
+- Default features: `workingMemory: true`, `inContextMemory: true`, `persistentInstructions: false`, `sharedWorkspace: false`
 - Code not using `features` config works unchanged
 
 #### Conversation Management
@@ -1304,7 +1306,7 @@ AgentContextNextGen provides a simple API for managing conversation history:
 ```typescript
 import { AgentContextNextGen } from '@everworker/oneringai';
 
-const ctx = AgentContextNextGen.create({ model: 'gpt-4' });
+const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
 
 // Add user message
 ctx.addUserMessage('Hello!');
@@ -1361,7 +1363,7 @@ const storage = createFileContextStorage('my-agent');
 
 // Create context with storage
 const ctx = AgentContextNextGen.create({
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   features: { workingMemory: true },
   storage,
 });
@@ -1373,7 +1375,7 @@ ctx.addUserMessage('Hello');
 await ctx.save('session-001', { title: 'My Session' });
 
 // Later: Load session
-const ctx2 = AgentContextNextGen.create({ model: 'gpt-4', storage });
+const ctx2 = AgentContextNextGen.create({ model: 'gpt-4.1', storage });
 await ctx2.load('session-001');
 // ctx2 now has full conversation and plugin states restored
 ```
@@ -1428,7 +1430,7 @@ class MyPlugin extends BasePluginNextGen {
 }
 
 // Use the plugin
-const ctx = AgentContextNextGen.create({ model: 'gpt-4' });
+const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
 const plugin = new MyPlugin();
 ctx.registerPlugin(plugin);
 plugin.addData('Custom data');
@@ -1439,7 +1441,7 @@ plugin.addData('Custom data');
 Monitor AgentContextNextGen activity:
 
 ```typescript
-const ctx = AgentContextNextGen.create({ model: 'gpt-4' });
+const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
 
 // Message events
 ctx.on('message:added', ({ message }) => {
@@ -1472,7 +1474,7 @@ import { Agent, AgentContextNextGen, WorkingMemoryPluginNextGen } from '@everwor
 // Create Agent with NextGen context
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [myTool],
   context: {
     features: { workingMemory: true, inContextMemory: true },
@@ -1561,7 +1563,7 @@ import { Agent } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [myTool],
   context: {
     strategy: 'algorithmic',  // Default: compact at 75% utilization
@@ -1616,7 +1618,7 @@ import {
 
 // Create AgentContextNextGen with configuration
 const ctx = AgentContextNextGen.create({
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   systemPrompt: 'Your system instructions',
   maxContextTokens: 128000,    // Model's context window
   responseReserve: 4096,       // Reserve tokens for response
@@ -1708,7 +1710,7 @@ For **tool outputs** (search/scrape results):
 // AgentContextNextGen is the unified context manager - configure via Agent.create()
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: {
     features: { workingMemory: true },
   },
@@ -1752,7 +1754,7 @@ import { Agent, BeforeCompactionContext } from '@everworker/oneringai';
 // Define lifecycle hooks when creating the agent
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   lifecycleHooks: {
     beforeCompaction: async (context: BeforeCompactionContext) => {
       console.log(`Agent ${context.agentId}: Compaction starting`);
@@ -1830,14 +1832,14 @@ The `algorithmic` strategy is the recommended default. It requires the `working_
 // Default - uses algorithmic strategy automatically
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: { features: { workingMemory: true } },
 });
 
 // Explicit strategy selection
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: { strategy: 'algorithmic' },
 });
 ```
@@ -1902,7 +1904,7 @@ StrategyRegistry.register(TimeBasedStrategy);
 // Use your custom strategy via Agent.create()
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: {
     strategy: 'time-based',  // Uses your registered strategy
   },
@@ -1911,7 +1913,7 @@ const agent = Agent.create({
 // Or provide a strategy instance directly
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: {
     compactionStrategy: new TimeBasedStrategy(),
   },
@@ -1924,14 +1926,14 @@ const agent = Agent.create({
 // Default - algorithmic strategy (recommended for most use cases)
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   // strategy defaults to 'algorithmic' (75% threshold)
 });
 
 // Custom registered strategy
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: { strategy: 'time-based' },  // Your registered strategy
 });
 ```
@@ -2053,7 +2055,7 @@ import { Agent } from '@everworker/oneringai';
 // Default algorithmic strategy - recommended for most use cases
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: { features: { workingMemory: true } },
 });
 
@@ -2406,7 +2408,7 @@ class NotesPlugin extends BasePluginNextGen implements IStoreHandler {
 Register and use:
 
 ```typescript
-const ctx = AgentContextNextGen.create({ model: 'gpt-4' });
+const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
 ctx.registerPlugin(new NotesPlugin());
 
 // Now the LLM can use:
@@ -2427,7 +2429,7 @@ The **Shared Workspace** store enables multi-agent coordination by providing a s
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: {
     features: { sharedWorkspace: true },
   },
@@ -2538,14 +2540,14 @@ Connector.create({
 // Two agents share the same workspace via shared storage
 const researcher = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   systemPrompt: 'You are a research agent. Store findings in the workspace.',
   context: { features: { sharedWorkspace: true } },
 });
 
 const writer = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   systemPrompt: 'You are a writing agent. Read findings from workspace and write reports.',
   context: { features: { sharedWorkspace: true } },
 });
@@ -2582,7 +2584,7 @@ await writer.run('Write a report based on the workspace findings');
 import { AgentContextNextGen, InContextMemoryPluginNextGen } from '@everworker/oneringai';
 
 const ctx = AgentContextNextGen.create({
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   features: { inContextMemory: true },  // Enables InContextMemoryPluginNextGen
 });
 
@@ -2599,7 +2601,7 @@ For more control, you can set up the plugin manually:
 ```typescript
 import { AgentContextNextGen, InContextMemoryPluginNextGen } from '@everworker/oneringai';
 
-const ctx = AgentContextNextGen.create({ model: 'gpt-4' });
+const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
 
 // Create and configure plugin
 const plugin = new InContextMemoryPluginNextGen({
@@ -2905,7 +2907,7 @@ const ctxState = await ctx.serialize();
 
 // Restore entire context (including InContextMemory)
 const newCtx = AgentContextNextGen.create({
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   features: { inContextMemory: true },
 });
 await newCtx.deserialize(ctxState);  // Plugins are restored automatically
@@ -3008,7 +3010,7 @@ import { Agent } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: {
     agentId: 'my-assistant',  // Used for storage path
     features: {
@@ -3028,7 +3030,7 @@ For more control, you can set up the plugin manually:
 ```typescript
 import { AgentContextNextGen, PersistentInstructionsPluginNextGen } from '@everworker/oneringai';
 
-const ctx = AgentContextNextGen.create({ model: 'gpt-4' });
+const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
 
 // Create and configure plugin
 const plugin = new PersistentInstructionsPluginNextGen({
@@ -3222,7 +3224,7 @@ plugin.restoreState(state);
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   systemPrompt: `You are a learning assistant. When the user expresses preferences or
 gives feedback about your responses, use store_set("instructions", key, { content }) to remember them for
 future sessions. Use descriptive keys like "user_preferences", "response_style", etc.
@@ -3332,7 +3334,7 @@ Agent inherits `runDirect()` and `streamDirect()` methods from BaseAgent. These 
 ### Basic Usage
 
 ```typescript
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
 
 // Direct call - bypasses all context management
 const response = await agent.runDirect('What is 2 + 2?');
@@ -3524,7 +3526,7 @@ You can mix both approaches in the same agent:
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [weatherTool, searchTool],
 });
 
@@ -3557,7 +3559,7 @@ import { Agent } from '@everworker/oneringai';
 // Single-user app — no userId needed
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: {
     features: { userInfo: true },
   },
@@ -3566,7 +3568,7 @@ const agent = Agent.create({
 // Multi-user app — opt-in per-user isolation
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   userId: 'alice',
   context: {
     features: { userInfo: true },
@@ -3677,7 +3679,7 @@ When agents need 100+ tools, sending all tool definitions to the LLM wastes toke
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [readFile, writeFile],  // always-on tools (outside catalog)
   identities: [{ connector: 'github' }],  // connector scope
   context: {
@@ -3708,7 +3710,7 @@ The Tool Catalog has two independent scoping mechanisms:
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
 
   // Controls which connector categories appear in catalog
   identities: [
@@ -3936,7 +3938,7 @@ const routine = createRoutineDefinition({
 const execution = await executeRoutine({
   definition: routine,
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   onTaskComplete: (task) => console.log(`Done: ${task.name}`),
   onTaskFailed: (task) => console.error(`Failed: ${task.name}`),
 });
@@ -4136,7 +4138,7 @@ Override any prompt builder to customize agent behavior:
 const execution = await executeRoutine({
   definition: routine,
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   prompts: {
     // Custom system prompt
     system: (definition) => `You are ${definition.name}. Follow these rules...`,
@@ -4165,7 +4167,7 @@ const execution = await executeRoutine({
 const execution = await executeRoutine({
   definition: routine,
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
 
   onTaskComplete: (task, execution) => {
     console.log(`Task "${task.name}" completed`);
@@ -4335,7 +4337,7 @@ const searchTools = ConnectorTools.for('serper');
 const execution = await executeRoutine({
   definition: routine,
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [...searchTools, tools.webFetch],
   onTaskComplete: (task, exec) => {
     console.log(`[${exec.progress}%] ${task.name} completed (score: ${task.result?.validationScore})`);
@@ -4438,7 +4440,7 @@ import {
 } from '@everworker/oneringai';
 
 // 1. Create the initial record from a definition
-const record = createRoutineExecutionRecord(definition, 'openai', 'gpt-4', {
+const record = createRoutineExecutionRecord(definition, 'openai', 'gpt-4.1', {
   type: 'schedule',
   source: 'daily-cron',
 });
@@ -4659,7 +4661,7 @@ const weatherTool: ToolFunction = {
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [weatherTool, calculatorTool, searchTool],
 });
 
@@ -4680,7 +4682,7 @@ console.log(response.output_text);
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [tool1, tool2],
 });
 
@@ -4774,7 +4776,7 @@ All plugin stores are accessed through the 5 unified `store_*` tools. Each store
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   context: {
     features: {
       workingMemory: true,       // enables store="memory"
@@ -4837,7 +4839,7 @@ const jsTool = createExecuteJavaScriptTool();
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [jsTool],
 });
 
@@ -4882,7 +4884,7 @@ Connector.create({
 // Give the agent the ability to create tools
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [...createCustomToolMetaTools()],
 });
 
@@ -5008,7 +5010,7 @@ if (definition) {
   const tool = hydrateCustomTool(definition);
 
   // Register on any agent
-  const agent = Agent.create({ connector: 'openai', model: 'gpt-4', tools: [tool] });
+  const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1', tools: [tool] });
 
   // The agent can now use celsius_to_fahrenheit like any built-in tool
   const response = await agent.run('Convert 37°C to Fahrenheit');
@@ -5188,7 +5190,7 @@ import { developerTools } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: developerTools, // All 7 tools included
 });
 
@@ -5397,7 +5399,7 @@ Connector.create({
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: desktopTools,
 });
 
@@ -5517,7 +5519,7 @@ import { Agent, developerTools } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: developerTools,
 });
 
@@ -5539,7 +5541,7 @@ import { Agent, webFetch } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [webFetch],
 });
 
@@ -5834,7 +5836,7 @@ import { webFetch } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [webFetch],
 });
 
@@ -5868,7 +5870,7 @@ const searchTools = ConnectorTools.for('serper');
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [tools.webFetch, ...searchTools],
 });
 
@@ -5919,7 +5921,7 @@ import { jsonManipulator } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [jsonManipulator],
 });
 
@@ -5958,7 +5960,7 @@ const tools = ConnectorTools.for('github');
 // Use with an agent
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: tools,
 });
 
@@ -6179,7 +6181,7 @@ const tools = ConnectorTools.for('microsoft');
 // Use with an agent
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: tools,
 });
 
@@ -6368,7 +6370,7 @@ createConnectorFromTemplate('my-bot', 'telegram', 'bot-token', {
 // Agent with Telegram tools
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   identities: ['my-bot'],  // Enables Telegram tools
 });
 ```
@@ -6619,7 +6621,7 @@ import { Agent } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [weatherTool, emailTool, databaseTool],
 });
 
@@ -6648,7 +6650,7 @@ Every agent has a `tools` property that returns the ToolManager owned by the con
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [tool1, tool2],
 });
 
@@ -6852,7 +6854,7 @@ agent.tools.register(productionTool, {
 function createAgentWithPermissions(userRole: string) {
   const agent = Agent.create({
     connector: 'openai',
-    model: 'gpt-4',
+    model: 'gpt-4.1',
   });
 
   // Register all tools
@@ -6945,7 +6947,7 @@ The old API still works:
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [tool1, tool2],  // Still works!
 });
 
@@ -7166,7 +7168,7 @@ With `autoContinue: true` (default), the agent re-enters the agentic loop automa
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   asyncTools: { autoContinue: true }, // default
   tools: [asyncTool],
 });
@@ -7186,7 +7188,7 @@ With `autoContinue: false`, results are queued but the agent doesn't auto-contin
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   asyncTools: { autoContinue: false },
   tools: [asyncTool],
 });
@@ -7315,7 +7317,7 @@ Blocking and async tools work together naturally in the same iteration:
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [
     readFile,           // blocking (default)
     writeFile,          // blocking
@@ -7418,7 +7420,7 @@ const sendResultsEmail: ToolFunction = {
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [sendResultsEmail, analyzeData],
 });
 
@@ -7626,7 +7628,7 @@ import { Agent, LoggingPlugin, type IToolExecutionPlugin } from '@everworker/one
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [weatherTool],
 });
 
@@ -8034,7 +8036,7 @@ Connector.create({
 // No permissions config — uses default allowlist, all other tools auto-execute
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [readFile, writeFile, bash],
 });
 // read_file: auto-allowed (in DEFAULT_ALLOWLIST)
@@ -8055,7 +8057,7 @@ import {
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   permissions: {
     // Allowlist is auto-merged with DEFAULT_ALLOWLIST
     allowlist: ['my_safe_tool'],
@@ -8301,7 +8303,7 @@ import type { ApprovalRequestContext, ApprovalDecision } from '@everworker/oneri
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   permissions: {
     onApprovalRequired: async (ctx: ApprovalRequestContext): Promise<ApprovalDecision> => {
       // ctx contains rich context for the approval dialog
@@ -8704,7 +8706,7 @@ const policy = new RolePolicy([
 // Set user roles on the agent
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   userRoles: ['developer'],  // passed to PolicyContext.roles
   permissions: {
     policies: [policy],
@@ -8964,7 +8966,7 @@ StorageRegistry.configure({
 // Or per-agent
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   permissions: {
     userRulesStorage: new FileUserPermissionRulesStorage(),
     auditStorage: new MyAuditStorage(),
@@ -8983,9 +8985,9 @@ When using the orchestrator pattern, worker agents cannot exceed the permissions
 import { createOrchestrator, PathRestrictionPolicy, BashFilterPolicy } from '@everworker/oneringai';
 
 // Orchestrator with strict permissions
-const orchestrator = createOrchestrator({
+const orchestrator = await createOrchestrator({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   agentTypes: {
     developer: {
       systemPrompt: 'Write code',
@@ -9118,7 +9120,7 @@ Detection: if the config object contains `policies` or `policyChain`, it uses th
 // Legacy config — still works, auto-translated to policies
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   permissions: {
     defaultScope: 'session',
     allowlist: ['my_tool'],
@@ -9131,7 +9133,7 @@ agent.permissions.approve('tool');  // ToolPermissionManager (deprecated)
 // New policy config — explicitly uses policies
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   permissions: {
     allowlist: ['my_tool'],
     blocklist: ['bad_tool'],
@@ -9242,7 +9244,7 @@ Connector.create({
 // Create agent with full permission configuration
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   userId: 'alice',
   userRoles: ['developer'],
 
@@ -9401,7 +9403,7 @@ await client.connect();
 console.log(`Connected! Available tools: ${client.tools.length}`);
 
 // Create agent and register MCP tools
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
 client.registerTools(agent.tools);
 
 // Agent can now use MCP tools
@@ -9489,7 +9491,7 @@ const clients = MCPRegistry.createFromConfig(Config.getSection('mcp')!);
 await MCPRegistry.connectAll();
 
 // Create agent and register tools
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
 for (const client of clients) {
   if (client.isConnected()) {
     client.registerTools(agent.tools);
@@ -9792,7 +9794,7 @@ await Promise.all([
 ]);
 
 // Create agent and register all tools
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
 fsClient.registerTools(agent.tools);
 githubClient.registerTools(agent.tools);
 dbClient.registerTools(agent.tools);
@@ -10376,7 +10378,7 @@ Connector.create({
 });
 
 const stt = SpeechToText.create({ connector: 'openai', model: 'whisper-1' });
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
 const tts = TextToSpeech.create({ connector: 'openai', model: 'tts-1-hd', voice: 'nova' });
 
 // Voice assistant pipeline
@@ -11430,7 +11432,7 @@ const searchTools = ConnectorTools.for('serper');
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [tools.webFetch, ...searchTools],
 });
 
@@ -11640,7 +11642,7 @@ const scrapeTools = ConnectorTools.for('zenrows');
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [tools.webFetch, ...scrapeTools],
 });
 
@@ -11679,7 +11681,7 @@ import { Agent, isOutputTextDelta } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
 });
 
 // Stream response
@@ -11735,7 +11737,7 @@ for await (const event of agent.stream('Hello')) {
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [weatherTool, calculatorTool],
 });
 
@@ -11786,7 +11788,7 @@ const tools = ConnectorTools.for('github');
 // 3. Use with an agent
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: tools,
 });
 
@@ -12248,7 +12250,7 @@ Connector.create({
 // Create agent with external API tools
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [
     ...ConnectorTools.for('github'),
     ...ConnectorTools.for('slack'),
@@ -12292,7 +12294,7 @@ const tools = ConnectorTools.for('my-github');
 // Use with agent
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools,
 });
 
@@ -12751,7 +12753,7 @@ const listEmailsTool: ToolFunction = {
 // Use with agent
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [listEmailsTool],
 });
 
@@ -12996,7 +12998,7 @@ const registry = Connector.scoped({ tenantId: 'acme' });
 
 const agent = Agent.create({
   connector: 'acme-openai',  // Resolved via scoped registry
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   registry,
 });
 
@@ -13067,7 +13069,7 @@ function handleRequest(tenantId: string) {
   // This tenant can only see their own connectors
   const agent = Agent.create({
     connector: `${tenantId}-openai`,
-    model: 'gpt-4',
+    model: 'gpt-4.1',
     registry,
   });
 
@@ -13111,7 +13113,7 @@ Every agent auto-registers on creation and auto-unregisters on destroy. No setup
 ```typescript
 import { Agent, AgentRegistry } from '@everworker/oneringai';
 
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4', name: 'assistant' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1', name: 'assistant' });
 AgentRegistry.count;  // 1
 AgentRegistry.has(agent.registryId);  // true
 
@@ -13131,7 +13133,7 @@ AgentRegistry.get(agent.registryId);
 AgentRegistry.getByName('assistant');
 
 // Filter with AND logic
-AgentRegistry.filter({ model: 'gpt-4', status: 'running' });
+AgentRegistry.filter({ model: 'gpt-4.1', status: 'running' });
 AgentRegistry.filter({ status: ['idle', 'running'] });  // match any of these statuses
 AgentRegistry.filter({ connector: 'openai', parentAgentId: parent.registryId });
 
@@ -13181,7 +13183,7 @@ inspection.children;              // AgentInfo[] — child agent snapshots
 
 // Bulk inspection
 const all = await AgentRegistry.inspectAll();
-const filtered = await AgentRegistry.inspectMatching({ model: 'gpt-4' });
+const filtered = await AgentRegistry.inspectMatching({ model: 'gpt-4.1' });
 ```
 
 ### Parent/Child Hierarchy
@@ -13190,11 +13192,11 @@ Agents can track parent/child relationships for hierarchical agent architectures
 
 ```typescript
 // Create parent
-const orchestrator = Agent.create({ connector: 'openai', model: 'gpt-4', name: 'orchestrator' });
+const orchestrator = Agent.create({ connector: 'openai', model: 'gpt-4.1', name: 'orchestrator' });
 
 // Create children linked to parent
 const researcher = Agent.create({
-  connector: 'openai', model: 'gpt-4', name: 'researcher',
+  connector: 'openai', model: 'gpt-4.1', name: 'researcher',
   parentAgentId: orchestrator.registryId,
 });
 const writer = Agent.create({
@@ -13272,7 +13274,7 @@ AgentRegistry.cancelAgent(id, 'timeout');
 AgentRegistry.destroyAgent(id);
 
 // Bulk control with filters
-AgentRegistry.pauseMatching({ model: 'gpt-4' });
+AgentRegistry.pauseMatching({ model: 'gpt-4.1' });
 AgentRegistry.cancelMatching({ status: 'running' }, 'shutting down');
 AgentRegistry.destroyMatching({ connector: 'openai' });
 
@@ -13336,9 +13338,9 @@ Connector.create({
   auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
 });
 
-const orchestrator = createOrchestrator({
+const orchestrator = await createOrchestrator({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   agentTypes: {
     architect: {
       systemPrompt: 'You are a senior software architect. Design clean, scalable systems. Use the shared workspace to publish your designs.',
@@ -13366,7 +13368,7 @@ console.log(result.output_text);
 │                   Orchestrator (Agent)                    │
 │                                                           │
 │  System prompt: auto-generated from agentTypes            │
-│  Tools: 7 orchestration tools + workspace store tools     │
+│  Tools: 5 orchestration tools + workspace store tools     │
 │                                                           │
 ├─────────────────────────────────────────────────────────┤
 │           SharedWorkspace (shared instance)               │
@@ -13471,9 +13473,9 @@ Design the authentication module based on the approved plan.
 #### Sequential Review Cycle
 
 ```typescript
-const orchestrator = createOrchestrator({
+const orchestrator = await createOrchestrator({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   agentTypes: {
     architect: { systemPrompt: 'You are a software architect...', tools: [readFile, writeFile] },
     critic: { systemPrompt: 'You are a code reviewer...', tools: [readFile] },
@@ -13482,16 +13484,15 @@ const orchestrator = createOrchestrator({
 });
 
 // The orchestrator LLM naturally follows this pattern:
-// 1. create_agent("arch", "architect")
-// 2. create_agent("rev", "critic")
-// 3. create_agent("dev", "developer")
-// 4. assign_turn("arch", "Design the auth module")
-// 5. assign_turn("rev", "Review the architecture plan")
-// 6. If issues: assign_turn("arch", "Address reviewer feedback")
-// 7. assign_turn("dev", "Implement the approved plan")
-// 8. assign_turn("rev", "Review the implementation")
-// 9. If issues: assign_turn("dev", "Fix review comments")
-// 10. Final acceptance
+// 1. assign_turn(agent="arch", type="architect", instruction="Design the auth module")
+//    → auto-creates "arch" as an architect worker
+// 2. assign_turn(agent="rev", type="critic", instruction="Review the architecture plan")
+//    → auto-creates "rev" as a critic worker
+// 3. If issues: assign_turn(agent="arch", instruction="Address reviewer feedback")
+// 4. assign_turn(agent="dev", type="developer", instruction="Implement the approved plan")
+// 5. assign_turn(agent="rev", instruction="Review the implementation")
+// 6. If issues: assign_turn(agent="dev", instruction="Fix review comments")
+// 7. Final acceptance → destroy_agent for each worker
 
 const result = await orchestrator.run('Build a JWT auth module with refresh tokens');
 ```
@@ -13499,9 +13500,9 @@ const result = await orchestrator.run('Build a JWT auth module with refresh toke
 #### Parallel Research
 
 ```typescript
-const orchestrator = createOrchestrator({
+const orchestrator = await createOrchestrator({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   agentTypes: {
     researcher: {
       systemPrompt: 'You are a research analyst. Search the web, analyze findings, and post results to the workspace.',
@@ -13513,36 +13514,61 @@ const orchestrator = createOrchestrator({
   },
 });
 
-// The orchestrator will:
-// 1. Create 3 researchers
-// 2. assign_parallel to all 3 with different research angles
-// 3. Create synthesizer
-// 4. assign_turn("synthesizer", "Combine all research findings")
+// The orchestrator will (all assign_turn calls are async/non-blocking):
+// 1. assign_turn(agent="r1", type="researcher", instruction="Research competitor A")
+// 2. assign_turn(agent="r2", type="researcher", instruction="Research competitor B")
+// 3. assign_turn(agent="r3", type="researcher", instruction="Research competitor C")
+//    → All 3 run concurrently (assign_turn is always non-blocking)
+// 4. When results arrive, assign_turn(agent="synth", type="synthesizer", instruction="Combine all research")
 
 const result = await orchestrator.run('Research the top 3 competitors in the AI agent space');
 ```
 
-#### Async Turns (Non-Blocking)
+#### Async Execution (All assign_turn Calls Are Non-Blocking)
 
 ```typescript
-// The orchestrator can use assign_turn_async to start work without waiting:
+// assign_turn is always async (blocking: false). The orchestrator naturally
+// launches multiple agents concurrently:
 //
-// 1. assign_turn_async("researcher-1", "Research competitor A")
-//    → Returns immediately: "researcher-1 is working..."
+// 1. assign_turn(agent="r1", type="researcher", instruction="Research competitor A")
+//    → Returns immediately, r1 starts working in background
 //
-// 2. assign_turn_async("researcher-2", "Research competitor B")
-//    → Returns immediately: "researcher-2 is working..."
+// 2. assign_turn(agent="r2", type="researcher", instruction="Research competitor B")
+//    → Returns immediately, r2 starts working in background
 //
-// 3. Orchestrator continues: updates workspace, plans next steps
+// 3. Orchestrator continues: updates workspace, plans next steps, talks to user
 //
-// 4. [Async Tool Results] researcher-1 completed: "Found 5 key insights..."
-//    → Orchestrator processes result
+// 4. Results arrive via autoContinue (500ms batching window):
+//    → "r1 completed: Found 5 key insights..."
+//    → "r2 completed: Analysis complete..."
 //
-// 5. [Async Tool Results] researcher-2 completed: "Analysis complete..."
-//    → Orchestrator processes result
+// The orchestrator classifies each result: complete, question, stuck, or partial.
+// 3-strike rule: after 3 failed re-assignments, try different agent type or escalate.
+```
+
+#### Interactive Delegation
+
+```typescript
+// For extended interactive sessions (pair-programming, tutoring, debugging):
 //
-// This leverages the existing async tools infrastructure (blocking: false).
-// Results are delivered via auto-continuation when workers finish.
+// delegate_interactive(agent="dev", type="developer",
+//   monitoring="active",     // LLM reviews each turn, can intervene
+//   reclaimOn={ keyword: "done", maxTurns: 20 },
+//   briefing="User wants help implementing auth")
+//
+// User now talks directly to the "dev" agent.
+// Orchestrator monitors and can inject guidance via send_message.
+// Control returns when user says "done" or after 20 turns.
+//
+// Monitoring modes:
+//   passive  — exchanges logged to workspace, reviewed when control returns
+//   active   — LLM reviews each turn, can inject intervention messages
+//   event    — notified when a specific workspace key appears
+//
+// Reclaim conditions:
+//   keyword     — user says a word (regex match, e.g., "done", "back")
+//   maxTurns    — auto-reclaim after N delegation turns
+//   workspaceKey — reclaim when a specific workspace entry appears
 ```
 
 ### Agent.inject()
@@ -13564,8 +13590,8 @@ This is used internally by the `send_message` orchestration tool, but can also b
 
 Workers are **persistent** — they remember their reasoning across turns:
 
-1. **Created** via `create_agent(name, type)` — gets system prompt, tools, shared workspace
-2. **Assigned turns** — each `assign_turn` calls `agent.run(instruction)` on the same instance
+1. **Created** via `assign_turn(agent=name, type=type, instruction=...)` — auto-creates with system prompt, tools, shared workspace
+2. **Assigned turns** — each subsequent `assign_turn` calls `agent.run(instruction)` on the same instance
 3. **Context accumulates** — the worker's context grows with each turn (compaction handles limits)
 4. **Destroyed** via `destroy_agent(name)` or when the orchestrator is destroyed
 
@@ -13574,15 +13600,15 @@ Workers are **persistent** — they remember their reasoning across turns:
 Override the auto-generated prompt for specialized workflows:
 
 ```typescript
-const orchestrator = createOrchestrator({
+const orchestrator = await createOrchestrator({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   systemPrompt: `You are a QA team lead. For every task:
-1. Create a "developer" agent to write code
-2. Create a "tester" agent to write tests
-3. Run them in parallel with assign_parallel
-4. If tests fail, send the failure details back to the developer
-5. Repeat until all tests pass`,
+1. assign_turn a "developer" to write code
+2. assign_turn a "tester" to write tests
+3. Both run concurrently (assign_turn is always async)
+4. If tests fail, send_message the failure details to the developer
+5. assign_turn the developer again to fix, repeat until all tests pass`,
   agentTypes: {
     developer: { systemPrompt: '...', tools: [writeFile, editFile] },
     tester: { systemPrompt: '...', tools: [readFile, bash] },
@@ -13595,13 +13621,13 @@ const orchestrator = createOrchestrator({
 Each agent type can have its own model, connector, and features:
 
 ```typescript
-const orchestrator = createOrchestrator({
+const orchestrator = await createOrchestrator({
   connector: 'openai',
-  model: 'gpt-4',  // Default
+  model: 'gpt-4.1',  // Default
   agentTypes: {
     planner: {
       systemPrompt: 'You are a strategic planner...',
-      model: 'gpt-4',      // Use the best model for planning
+      model: 'gpt-4.1',      // Use the best model for planning
       connector: 'openai',
     },
     coder: {
@@ -13635,7 +13661,7 @@ import { Agent } from '@everworker/oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [myTool],
 
   // Lifecycle hooks
@@ -13667,7 +13693,7 @@ For finer control over the agentic loop, use the `hooks` config with named hook 
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   hooks: {
     'before:tool': async (context) => {
       console.log(`Calling ${context.tool.name}`);
@@ -13840,7 +13866,7 @@ import {
   ToolExecutionError,
 } from '@everworker/oneringai';
 
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
 
 try {
   const response = await agent.run('Hello');
@@ -13872,12 +13898,12 @@ try {
 Connector.create({ name: 'openai-main', vendor: Vendor.OpenAI, auth: { ... } });
 Connector.create({ name: 'openai-backup', vendor: Vendor.OpenAI, auth: { ... } });
 
-const agent = Agent.create({ connector: 'openai-main', model: 'gpt-4' });
+const agent = Agent.create({ connector: 'openai-main', model: 'gpt-4.1' });
 
 // Bad: Passing keys directly
 const agent = Agent.create({
   connector: { vendor: Vendor.OpenAI, auth: { apiKey: '...' } },
-  model: 'gpt-4'
+  model: 'gpt-4.1'
 });
 ```
 
@@ -14027,7 +14053,7 @@ Connector.create({ name: 'anthropic', vendor: Vendor.Anthropic, auth: { ... } })
 Connector.create({ name: 'google', vendor: Vendor.Google, auth: { ... } });
 
 // Create agents for each
-const openaiAgent = Agent.create({ connector: 'openai', model: 'gpt-4' });
+const openaiAgent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
 const claudeAgent = Agent.create({ connector: 'anthropic', model: 'claude-opus-4-5-20251101' });
 const geminiAgent = Agent.create({ connector: 'google', model: 'gemini-3-flash-preview' });
 
@@ -14066,7 +14092,7 @@ const searchTool: ToolFunction = {
 
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [searchTool],
   instructions: `You are a helpful assistant with access to a knowledge base.
                  Always search the knowledge base before answering questions.`,
@@ -14080,7 +14106,7 @@ const response = await agent.run('What is our return policy?');
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
-  model: 'gpt-4',
+  model: 'gpt-4.1',
   tools: [searchTool, scrapeWebTool],
   context: {
     features: { workingMemory: true },
