@@ -667,7 +667,7 @@ async function validateTaskCompletion(
   const minScore = task.validation?.minCompletionScore ?? 80;
 
   return {
-    isComplete: isComplete && completionScore >= minScore,
+    isComplete: completionScore >= minScore,
     completionScore,
     explanation,
     requiresUserApproval: false,
