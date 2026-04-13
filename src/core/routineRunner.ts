@@ -663,7 +663,7 @@ async function validateTaskCompletion(
     };
   }
 
-  const { isComplete, completionScore, explanation } = extracted.data;
+  const { completionScore, explanation } = extracted.data;
   const minScore = task.validation?.minCompletionScore ?? 80;
 
   return {
