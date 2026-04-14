@@ -14310,8 +14310,8 @@ const response = await agent.run(`
 
 ## Support & Resources
 
-- **GitHub:** https://github.com/Integrail/oneringai
-- **Issues:** https://github.com/Integrail/oneringai/issues
+- **GitHub:** https://github.com/aantich/oneringai
+- **Issues:** https://github.com/aantich/oneringai/issues
 - **Examples:** `/examples` directory in repo
 - **TypeScript Docs:** Full IntelliSense support
 

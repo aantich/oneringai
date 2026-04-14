@@ -79,7 +79,7 @@ Licensee agrees to indemnify and hold harmless Everworker AI from claims arising
 
 
 This is a summary of the key terms. The full license is available at:
-https://github.com/Integrail/oneringai/blob/main/apps/LICENSE
+https://github.com/aantich/oneringai/blob/main/apps/LICENSE
 
 For licensing inquiries: anton@everworker.ai`;
 

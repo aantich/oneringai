@@ -1259,13 +1259,13 @@ function createAppMenu(): void {
         {
           label: 'Learn More',
           click: async () => {
-            await shell.openExternal('https://github.com/Integrail/oneringai');
+            await shell.openExternal('https://github.com/aantich/oneringai');
           },
         },
         {
           label: 'Report Issue',
           click: async () => {
-            await shell.openExternal('https://github.com/Integrail/oneringai/issues');
+            await shell.openExternal('https://github.com/aantich/oneringai/issues');
           },
         },
         // Check for Updates on non-Mac platforms

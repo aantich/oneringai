@@ -30,7 +30,7 @@ npm run dev
 
 that's it, you are set!
 
-For non-developers, [go to releases](https://github.com/Integrail/oneringai/releases/), find your platform's installer and follow the usual steps.
+For non-developers, [go to releases](https://github.com/aantich/oneringai/releases/), find your platform's installer and follow the usual steps.
 
 ### Note for Mac users
 If you are using an installer, you may get "an untrusted developer" notice or something. This is Apple's fault as they are extremely slow in processing the so-called "notarization requests", but usually you just need to right click on the app once you installed it and then "open", and then allow it to run. In some cases it may forbid running it altogether, then you have to go to "System Settings", "Privacy and Security", and change the corresponding setting. Once you go through it once, the updates are automatic!

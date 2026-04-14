@@ -94,7 +94,7 @@ This will:
 
 After electron-builder uploads the files:
 
-1. Go to https://github.com/Integrail/oneringai/releases
+1. Go to https://github.com/aantich/oneringai/releases
 2. Find the draft release (will be named by version number)
 3. Edit the release:
    - **Tag**: Change to `hosea-vX.Y.Z`
@@ -107,13 +107,13 @@ After electron-builder uploads the files:
 ```bash
 # Get release ID and publish
 RELEASE_ID=$(curl -s -H "Authorization: token $GH_TOKEN" \
-  "https://api.github.com/repos/Integrail/oneringai/releases" | \
+  "https://api.github.com/repos/aantich/oneringai/releases" | \
   python3 -c "import sys,json; print(json.load(sys.stdin)[0]['id'])")
 
 curl -X PATCH \
   -H "Authorization: token $GH_TOKEN" \
   -H "Content-Type: application/json" \
-  "https://api.github.com/repos/Integrail/oneringai/releases/$RELEASE_ID" \
+  "https://api.github.com/repos/aantich/oneringai/releases/$RELEASE_ID" \
   -d '{"tag_name": "hosea-vX.Y.Z", "name": "Everworker Desktop vX.Y.Z", "draft": false}'
 ```
 
@@ -137,13 +137,13 @@ npx electron-builder --mac --win --linux --publish always
 ## GitHub Token Setup
 
 You need a **fine-grained personal access token** with:
-- **Repository access**: `Integrail/oneringai`
+- **Repository access**: `aantich/oneringai`
 - **Permissions**: Contents (Read and write)
 
 To create one:
 1. Go to https://github.com/settings/tokens?type=beta
 2. Click "Generate new token"
-3. Select repository: `Integrail/oneringai`
+3. Select repository: `aantich/oneringai`
 4. Under "Permissions" → "Repository permissions" → "Contents": Read and write
 5. Generate and save the token securely
 
@@ -164,7 +164,7 @@ To create one:
 | **Package** | `@everworker/hosea` |
 | **App ID** | `ai.everworker.hosea` |
 | **Product Name** | Everworker Desktop |
-| **GitHub** | https://github.com/Integrail/oneringai/tree/main/apps/hosea |
+| **GitHub** | https://github.com/aantich/oneringai/tree/main/apps/hosea |
 
 ## Build Configuration
 

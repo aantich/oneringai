@@ -107,7 +107,7 @@ npm view @everworker/oneringai version
 |-------|-------|
 | **Package** | `@everworker/oneringai` |
 | **npm** | https://www.npmjs.com/package/@everworker/oneringai |
-| **GitHub** | https://github.com/Integrail/oneringai |
+| **GitHub** | https://github.com/aantich/oneringai |
 | **Registry** | https://registry.npmjs.org/ |
 
 ## Troubleshooting

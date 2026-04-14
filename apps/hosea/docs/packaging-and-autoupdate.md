@@ -5,7 +5,7 @@
 This document describes the packaging and auto-update architecture for Everworker Desktop. All components described here have been **fully implemented**.
 
 **Current Release:** v0.1.0 (February 2025)
-**GitHub Releases:** https://github.com/Integrail/oneringai/releases
+**GitHub Releases:** https://github.com/aantich/oneringai/releases
 
 ---
 

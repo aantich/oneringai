@@ -164,5 +164,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bootstrap 5 + React Bootstrap for UI components
 - Integrates with `@everworker/oneringai` core library
 
-[Unreleased]: https://github.com/Integrail/oneringai/compare/hosea-v0.1.0...HEAD
-[0.1.0]: https://github.com/Integrail/oneringai/releases/tag/hosea-v0.1.0
+[Unreleased]: https://github.com/aantich/oneringai/compare/hosea-v0.1.0...HEAD
+[0.1.0]: https://github.com/aantich/oneringai/releases/tag/hosea-v0.1.0

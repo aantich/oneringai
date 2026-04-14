@@ -13,7 +13,7 @@ Welcome, and thank you for considering a contribution to OneRingAI! Whether you'
 ### Setup
 
 ```bash
-git clone git@github.com:Integrail/oneringai.git
+git clone git@github.com:aantich/oneringai.git
 cd oneringai
 npm install
 npm run build
@@ -35,7 +35,7 @@ npm run test:unit
 
 ### Reporting Issues
 
-Open an issue on [GitHub](https://github.com/Integrail/oneringai/issues) with:
+Open an issue on [GitHub](https://github.com/aantich/oneringai/issues) with:
 
 - A clear title and description
 - Steps to reproduce (if applicable)
@@ -190,7 +190,7 @@ Here are some areas where contributions are especially welcome:
 | **MCP transports** | New transport types for `MCPClient` |
 | **OAuth templates** | Pre-configured templates for popular APIs |
 | **Documentation** | Improve README, add examples, fix typos |
-| **Bug fixes** | Check the [issues](https://github.com/Integrail/oneringai/issues) |
+| **Bug fixes** | Check the [issues](https://github.com/aantich/oneringai/issues) |
 | **Tests** | Improve coverage, especially for edge cases |
 
 ## Adding a New Vendor Provider

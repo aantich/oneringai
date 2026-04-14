@@ -148,7 +148,7 @@ export function UpdateNotification(): React.ReactElement | null {
               size="sm"
               variant="primary"
               className="mt-2 w-100"
-              onClick={() => window.hosea.shell.openExternal('https://github.com/Integrail/oneringai/releases/latest')}
+              onClick={() => window.hosea.shell.openExternal('https://github.com/aantich/oneringai/releases/latest')}
             >
               <ExternalLink size={14} className="me-1" />
               Download Latest Version

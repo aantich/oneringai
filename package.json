@@ -139,11 +139,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Integrail/oneringai.git"
+    "url": "git+https://github.com/aantich/oneringai.git"
   },
   "homepage": "https://oneringai.io",
   "bugs": {
-    "url": "https://github.com/Integrail/oneringai/issues"
+    "url": "https://github.com/aantich/oneringai/issues"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.76.0",

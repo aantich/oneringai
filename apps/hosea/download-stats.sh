@@ -5,7 +5,7 @@
 #   ./download-stats.sh          # All releases
 #   ./download-stats.sh 0.1.7    # Specific version
 
-REPO="Integrail/oneringai"
+REPO="aantich/oneringai"
 
 # Colors
 BOLD="\033[1m"
