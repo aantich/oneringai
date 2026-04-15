@@ -71,4 +71,13 @@ export class ScopedConnectorRegistry implements IConnectorRegistry {
     }
     return info;
   }
+
+  getById(id: string): Connector {
+    const connector = Connector.getById(id);
+    if (!this.policy.canAccess(connector, this.context)) {
+      const available = this.list().join(', ') || 'none';
+      throw new Error(`Connector with id '${id}' not found. Available: ${available}`);
+    }
+    return connector;
+  }
 }

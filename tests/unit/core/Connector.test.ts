@@ -4,13 +4,19 @@
  * Tests for the static Connector registry: CRUD, auth types, resilience config.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Connector } from '../../../src/core/Connector.js';
 import { Vendor } from '../../../src/core/Vendor.js';
+import type { IConnectorRegistry } from '../../../src/domain/interfaces/IConnectorRegistry.js';
 
 describe('Connector', () => {
   beforeEach(() => {
     Connector.clear();
+    Connector.setRegistry(null);
+  });
+
+  afterEach(() => {
+    Connector.setRegistry(null);
   });
 
   describe('create() and get()', () => {
@@ -304,6 +310,199 @@ describe('Connector', () => {
       expect(desc).toContain('github');
       expect(desc).toContain('GitHub API');
       expect(desc).toContain('Access GitHub repos');
+    });
+  });
+
+  describe('id', () => {
+    it('should auto-generate a UUID id when not provided', () => {
+      const connector = Connector.create({
+        name: 'auto-id',
+        auth: { type: 'api_key', apiKey: 'k' },
+      });
+
+      expect(connector.id).toBeDefined();
+      expect(typeof connector.id).toBe('string');
+      expect(connector.id.length).toBeGreaterThan(0);
+    });
+
+    it('should use provided id from config', () => {
+      const connector = Connector.create({
+        name: 'explicit-id',
+        id: 'my-custom-id-123',
+        auth: { type: 'api_key', apiKey: 'k' },
+      });
+
+      expect(connector.id).toBe('my-custom-id-123');
+    });
+
+    it('should store id back into config', () => {
+      const connector = Connector.create({
+        name: 'id-in-config',
+        auth: { type: 'api_key', apiKey: 'k' },
+      });
+
+      expect(connector.config.id).toBe(connector.id);
+    });
+
+    it('should generate unique ids for different connectors', () => {
+      const c1 = Connector.create({ name: 'a', auth: { type: 'api_key', apiKey: '1' } });
+      const c2 = Connector.create({ name: 'b', auth: { type: 'api_key', apiKey: '2' } });
+
+      expect(c1.id).not.toBe(c2.id);
+    });
+  });
+
+  describe('getById()', () => {
+    it('should find a connector by id', () => {
+      const connector = Connector.create({
+        name: 'findable',
+        id: 'known-id',
+        auth: { type: 'api_key', apiKey: 'k' },
+      });
+
+      const found = Connector.getById('known-id');
+      expect(found).toBe(connector);
+    });
+
+    it('should throw when id is not found', () => {
+      Connector.create({ name: 'other', auth: { type: 'api_key', apiKey: 'k' } });
+
+      expect(() => Connector.getById('nonexistent-id')).toThrow(/not found/);
+    });
+
+    it('should find auto-generated id', () => {
+      const connector = Connector.create({
+        name: 'auto',
+        auth: { type: 'api_key', apiKey: 'k' },
+      });
+
+      const found = Connector.getById(connector.id);
+      expect(found).toBe(connector);
+    });
+
+    it('should be available via asRegistry()', () => {
+      const connector = Connector.create({
+        name: 'via-registry',
+        id: 'reg-id',
+        auth: { type: 'api_key', apiKey: 'k' },
+      });
+
+      const registry = Connector.asRegistry();
+      expect(registry.getById).toBeDefined();
+      const found = registry.getById!('reg-id');
+      expect(found).toBe(connector);
+    });
+  });
+
+  describe('setRegistry() — custom registry delegation', () => {
+    function createMockRegistry(connectors: Connector[]): IConnectorRegistry {
+      const map = new Map(connectors.map(c => [c.name, c]));
+      return {
+        get: (name: string) => {
+          const c = map.get(name);
+          if (!c) throw new Error(`Connector '${name}' not found`);
+          return c;
+        },
+        has: (name: string) => map.has(name),
+        list: () => Array.from(map.keys()),
+        listAll: () => Array.from(map.values()),
+        size: () => map.size,
+        getDescriptionsForTools: () => 'custom descriptions',
+        getInfo: () => {
+          const info: Record<string, { displayName: string; description: string; baseURL: string }> = {};
+          for (const c of map.values()) {
+            info[c.name] = { displayName: c.displayName, description: '', baseURL: c.baseURL };
+          }
+          return info;
+        },
+        getById: (id: string) => {
+          for (const c of map.values()) {
+            if (c.id === id) return c;
+          }
+          throw new Error(`Connector with id '${id}' not found`);
+        },
+      };
+    }
+
+    it('should delegate get() to custom registry', () => {
+      // Create a connector in the internal map
+      const internal = Connector.create({ name: 'internal', auth: { type: 'api_key', apiKey: 'int' } });
+
+      // Create a connector outside the internal map (via a previously created one for the mock)
+      Connector.clear();
+      const external = Connector.create({ name: 'external', auth: { type: 'api_key', apiKey: 'ext' } });
+      Connector.clear(); // remove from internal map
+
+      // Set custom registry that only has 'external'
+      Connector.setRegistry(createMockRegistry([external]));
+
+      expect(Connector.get('external')).toBe(external);
+      expect(() => Connector.get('internal')).toThrow(/not found/);
+    });
+
+    it('should delegate has() to custom registry', () => {
+      const c = Connector.create({ name: 'test', auth: { type: 'api_key', apiKey: 'k' } });
+      Connector.clear();
+
+      Connector.setRegistry(createMockRegistry([c]));
+      expect(Connector.has('test')).toBe(true);
+      expect(Connector.has('missing')).toBe(false);
+    });
+
+    it('should delegate list() and listAll() to custom registry', () => {
+      const c1 = Connector.create({ name: 'a', auth: { type: 'api_key', apiKey: '1' } });
+      const c2 = Connector.create({ name: 'b', auth: { type: 'api_key', apiKey: '2' } });
+      Connector.clear();
+
+      Connector.setRegistry(createMockRegistry([c1, c2]));
+      expect(Connector.list()).toEqual(['a', 'b']);
+      expect(Connector.listAll()).toEqual([c1, c2]);
+      expect(Connector.size()).toBe(2);
+    });
+
+    it('should delegate getDescriptionsForTools() to custom registry', () => {
+      Connector.setRegistry(createMockRegistry([]));
+      expect(Connector.getDescriptionsForTools()).toBe('custom descriptions');
+    });
+
+    it('should delegate getInfo() to custom registry', () => {
+      const c = Connector.create({ name: 'info-test', auth: { type: 'api_key', apiKey: 'k' }, displayName: 'Info Test' });
+      Connector.clear();
+
+      Connector.setRegistry(createMockRegistry([c]));
+      const info = Connector.getInfo();
+      expect(info['info-test']).toBeDefined();
+      expect(info['info-test'].displayName).toBe('Info Test');
+    });
+
+    it('should delegate getById() to custom registry', () => {
+      const c = Connector.create({ name: 'by-id', id: 'custom-id', auth: { type: 'api_key', apiKey: 'k' } });
+      Connector.clear();
+
+      Connector.setRegistry(createMockRegistry([c]));
+      expect(Connector.getById('custom-id')).toBe(c);
+    });
+
+    it('should revert to internal map when registry is cleared', () => {
+      const internal = Connector.create({ name: 'stays', auth: { type: 'api_key', apiKey: 'k' } });
+
+      Connector.setRegistry(createMockRegistry([]));
+      expect(Connector.has('stays')).toBe(false); // custom registry has nothing
+
+      Connector.setRegistry(null);
+      expect(Connector.has('stays')).toBe(true); // back to internal map
+      expect(Connector.get('stays')).toBe(internal);
+    });
+
+    it('should return custom registry via getRegistry()', () => {
+      expect(Connector.getRegistry()).toBeNull();
+
+      const mockRegistry = createMockRegistry([]);
+      Connector.setRegistry(mockRegistry);
+      expect(Connector.getRegistry()).toBe(mockRegistry);
+
+      Connector.setRegistry(null);
+      expect(Connector.getRegistry()).toBeNull();
     });
   });
 });

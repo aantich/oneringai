@@ -12,6 +12,7 @@
  * - Request/response logging
  */
 
+import { randomUUID } from 'crypto';
 import { ConnectorConfig, ConnectorAuth } from '../domain/entities/Connector.js';
 import { Vendor } from './Vendor.js';
 import { OAuthManager } from '../connectors/oauth/OAuthManager.js';
@@ -51,6 +52,37 @@ export interface ConnectorFetchOptions extends RequestInit {
  * Connector class - represents a single authenticated connection
  */
 export class Connector {
+  // ============ Custom Registry ============
+
+  private static _customRegistry: IConnectorRegistry | null = null;
+
+  /**
+   * Set a custom connector registry implementation.
+   * When set, all static read methods (get, has, list, listAll, size, etc.)
+   * delegate to this registry instead of the internal Map.
+   *
+   * Use this to plug in multi-tenant, lazy-loading, or any custom connector
+   * resolution strategy. Pass null to revert to the built-in Map-based registry.
+   *
+   * @example
+   * ```typescript
+   * // Multi-tenant app — set per-request in middleware
+   * Connector.setRegistry(new TenantConnectorRegistry(tenantId));
+   *
+   * // Now Connector.get('microsoft') resolves via TenantConnectorRegistry
+   * ```
+   */
+  static setRegistry(registry: IConnectorRegistry | null): void {
+    Connector._customRegistry = registry;
+  }
+
+  /**
+   * Get the current custom registry (or null if using the built-in registry).
+   */
+  static getRegistry(): IConnectorRegistry | null {
+    return Connector._customRegistry;
+  }
+
   // ============ Static Registry ============
 
   private static registry: Map<string, Connector> = new Map();
@@ -75,6 +107,7 @@ export class Connector {
    * Get a connector by name
    */
   static get(name: string): Connector {
+    if (Connector._customRegistry) return Connector._customRegistry.get(name);
     const connector = Connector.registry.get(name);
     if (!connector) {
       const available = Connector.list().join(', ') || 'none';
@@ -87,6 +120,7 @@ export class Connector {
    * Check if a connector exists
    */
   static has(name: string): boolean {
+    if (Connector._customRegistry) return Connector._customRegistry.has(name);
     return Connector.registry.has(name);
   }
 
@@ -94,6 +128,7 @@ export class Connector {
    * List all registered connector names
    */
   static list(): string[] {
+    if (Connector._customRegistry) return Connector._customRegistry.list();
     return Array.from(Connector.registry.keys());
   }
 
@@ -137,6 +172,7 @@ export class Connector {
    * Get all registered connectors
    */
   static listAll(): Connector[] {
+    if (Connector._customRegistry) return Connector._customRegistry.listAll();
     return Array.from(Connector.registry.values());
   }
 
@@ -144,7 +180,19 @@ export class Connector {
    * Get number of registered connectors
    */
   static size(): number {
+    if (Connector._customRegistry) return Connector._customRegistry.size();
     return Connector.registry.size;
+  }
+
+  /**
+   * Get a connector by ID
+   */
+  static getById(id: string): Connector {
+    if (Connector._customRegistry?.getById) return Connector._customRegistry.getById(id);
+    for (const connector of Connector.registry.values()) {
+      if (connector.id === id) return connector;
+    }
+    throw new Error(`Connector with id '${id}' not found`);
   }
 
   // ============ Access Control ============
@@ -194,6 +242,7 @@ export class Connector {
       size: () => Connector.size(),
       getDescriptionsForTools: () => Connector.getDescriptionsForTools(),
       getInfo: () => Connector.getInfo(),
+      getById: (id: string) => Connector.getById(id),
     };
   }
 
@@ -202,6 +251,8 @@ export class Connector {
    * Useful for generating dynamic tool descriptions
    */
   static getDescriptionsForTools(): string {
+    if (Connector._customRegistry) return Connector._customRegistry.getDescriptionsForTools();
+
     const connectors = Connector.listAll();
 
     if (connectors.length === 0) {
@@ -217,6 +268,8 @@ export class Connector {
    * Get connector info (for tools and documentation)
    */
   static getInfo(): Record<string, { displayName: string; description: string; baseURL: string }> {
+    if (Connector._customRegistry) return Connector._customRegistry.getInfo();
+
     const info: Record<string, { displayName: string; description: string; baseURL: string }> = {};
 
     for (const connector of Connector.registry.values()) {
@@ -232,6 +285,7 @@ export class Connector {
 
   // ============ Instance ============
 
+  readonly id: string;
   readonly name: string;
   readonly vendor?: Vendor;
   readonly config: ConnectorConfig;
@@ -247,9 +301,10 @@ export class Connector {
   private totalLatencyMs = 0;
 
   private constructor(config: ConnectorConfig & { name: string }) {
+    this.id = config.id ?? randomUUID();
     this.name = config.name;
     this.vendor = config.vendor;
-    this.config = config;
+    this.config = { ...config, id: this.id };
 
     // Initialize OAuth manager for OAuth and JWT auth types
     if (config.auth.type === 'oauth') {

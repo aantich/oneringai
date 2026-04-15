@@ -29,4 +29,7 @@ export interface IConnectorRegistry {
 
   /** Get connector info map */
   getInfo(): Record<string, { displayName: string; description: string; baseURL: string }>;
+
+  /** Get a connector by ID. Optional — not all registries support ID-based lookup. */
+  getById?(id: string): Connector;
 }

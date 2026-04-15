@@ -107,6 +107,9 @@ export interface JWTConnectorAuth {
  * Used for BOTH AI providers AND external APIs
  */
 export interface ConnectorConfig {
+  // Stable identifier — auto-generated UUID if not provided
+  id?: string;
+
   // Unique identifier (required for Connector.create())
   name?: string; // e.g., 'openai-main', 'openai-backup', 'github-user'
 
