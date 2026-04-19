@@ -1037,6 +1037,8 @@ const projects = await store.listEntities(
 
 Facts have predicates — strings like `works_at`, `assigned_task`, `has_status`. Left unconstrained, an LLM will drift: `worksAt`, `works-at`, `employed_by`, `works_for` all describe the same relationship but won't aggregate, rank, or query as one. The **predicate registry** is the fix.
 
+> For a dedicated walkthrough with copy-paste recipes, see [MEMORY_PREDICATES.md](./MEMORY_PREDICATES.md).
+
 ### Three use patterns
 
 ```ts

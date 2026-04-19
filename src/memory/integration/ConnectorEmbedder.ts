@@ -72,6 +72,7 @@ export class ConnectorEmbedder implements IEmbedder {
     if (!vec) {
       throw new Error('ConnectorEmbedder: provider returned no embedding');
     }
+    this.assertVectorShape(vec);
     return vec;
   }
 
@@ -87,6 +88,29 @@ export class ConnectorEmbedder implements IEmbedder {
         `ConnectorEmbedder: provider returned ${res.embeddings.length} embeddings for ${texts.length} inputs`,
       );
     }
+    for (const vec of res.embeddings) this.assertVectorShape(vec);
     return res.embeddings;
+  }
+
+  /**
+   * Reject vectors whose length mismatches the declared dimensions, or contain
+   * NaN/Infinity. Storing a wrong-sized vector silently poisons cosine-distance
+   * retrieval downstream (NaN scores, wrong ranking).
+   */
+  private assertVectorShape(vec: number[]): void {
+    if (vec.length !== this.dimensions) {
+      throw new Error(
+        `ConnectorEmbedder: dimension mismatch — provider returned ${vec.length}, ` +
+          `expected ${this.dimensions} (model '${this.model}' may have changed or requestedDimensions ignored)`,
+      );
+    }
+    for (let i = 0; i < vec.length; i++) {
+      const v = vec[i]!;
+      if (!Number.isFinite(v)) {
+        throw new Error(
+          `ConnectorEmbedder: non-finite value at index ${i} (got ${v})`,
+        );
+      }
+    }
   }
 }

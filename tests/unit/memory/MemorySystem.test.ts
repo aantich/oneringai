@@ -624,8 +624,24 @@ describe('MemorySystem', () => {
       await expect(mem.mergeEntities('x', 'x', {})).rejects.toThrow(/must differ/);
     });
 
-    it('throws when entities not found', async () => {
-      await expect(mem.mergeEntities('missing1', 'missing2', {})).rejects.toThrow();
+    it('throws when entities not found or not visible', async () => {
+      await expect(mem.mergeEntities('missing1', 'missing2', {})).rejects.toThrow(
+        /winner .* not found or not visible/,
+      );
+    });
+
+    it("loser error message clearly indicates not-found-or-not-visible", async () => {
+      const winner = await mem.upsertEntity(
+        {
+          type: 'person',
+          displayName: 'W',
+          identifiers: [{ kind: 'email', value: 'w@a.com' }],
+        },
+        {},
+      );
+      await expect(
+        mem.mergeEntities(winner.entity.id, 'invisible-loser', {}),
+      ).rejects.toThrow(/loser .* not found or not visible/);
     });
   });
 
@@ -1258,6 +1274,8 @@ describe('MemorySystem', () => {
         onChange: () => {
           throw new Error('listener broke');
         },
+        // Silence the console.warn fallback in the default code path.
+        onError: () => undefined,
       });
       await expect(
         m.upsertEntity(

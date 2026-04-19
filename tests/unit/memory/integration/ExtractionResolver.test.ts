@@ -192,22 +192,24 @@ describe('ExtractionResolver', () => {
     expect(result.unresolved[0]!.reason).toMatch(/context label/);
   });
 
-  it('surfaces mergeCandidates when a mention fuzzily matches an existing entity', async () => {
-    // Pre-seed Microsoft.
+  it('surfaces mergeCandidates when alias-tier match is below autoResolveThreshold', async () => {
+    // Pre-seed Microsoft with an alias "MSFT".
     await mem.upsertEntityBySurface(
       {
         surface: 'Microsoft',
         type: 'organization',
         identifiers: [{ kind: 'domain', value: 'microsoft.com' }],
+        aliases: ['MSFT'],
       },
       scope,
     );
 
-    // Now extract something that fuzzily resembles it but with no identifier —
-    // under conservative threshold 0.9, it creates new but reports merge candidate.
+    // Extract "MSFT" — alias tier returns confidence 0.85, which is below
+    // the default 0.9 autoResolveThreshold → new entity created, but the
+    // existing Microsoft surfaces as a merge candidate for human review.
     const output: ExtractionOutput = {
       mentions: {
-        m1: { surface: 'Microsft Inc', type: 'organization' }, // typo + suffix
+        m1: { surface: 'MSFT', type: 'organization' },
       },
       facts: [],
     };

@@ -1013,6 +1013,8 @@ Where:
 
 ## Predicate Registry
 
+See [MEMORY_PREDICATES.md](./MEMORY_PREDICATES.md) for usage recipes and walkthroughs. This section is the API reference.
+
 Pluggable vocabulary for fact predicates. Optional — when no registry is configured, predicates remain free-form strings (canonicalization is a no-op). When a registry is attached, `addFact` gains:
 
 - **Canonicalization.** `worksAt`, `works-at`, `employed_by` all collapse to `works_at` before storage.

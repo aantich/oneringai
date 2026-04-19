@@ -75,7 +75,7 @@ describe('ConnectorEmbedder', () => {
     });
 
     it('forwards requestedDimensions to provider', async () => {
-      const provider = makeMockProvider();
+      const provider = makeMockProvider({ dimensions: 512 });
       const emb = ConnectorEmbedder.withProvider({
         provider,
         model: 'm1',
@@ -124,6 +124,51 @@ describe('ConnectorEmbedder', () => {
       const provider = makeMockProvider({ failOn: () => true });
       const emb = ConnectorEmbedder.withProvider({ provider, model: 'm1', dimensions: 3 });
       await expect(emb.embed('x')).rejects.toThrow(/mock provider failure/);
+    });
+
+    it('rejects vectors whose length mismatches declared dimensions', async () => {
+      const wrong: IEmbeddingProvider = {
+        name: 'wrong',
+        capabilities: { embeddings: true } as never,
+        embed: async (opts: EmbeddingOptions) => ({
+          embeddings: [[0.1, 0.2]], // 2-dim, caller declared 3
+          model: opts.model,
+          usage: { promptTokens: 0, totalTokens: 0 },
+        }),
+      };
+      const emb = ConnectorEmbedder.withProvider({ provider: wrong, model: 'm1', dimensions: 3 });
+      await expect(emb.embed('x')).rejects.toThrow(/dimension mismatch/);
+    });
+
+    it('rejects vectors containing NaN / Infinity', async () => {
+      const bad: IEmbeddingProvider = {
+        name: 'bad',
+        capabilities: { embeddings: true } as never,
+        embed: async (opts: EmbeddingOptions) => ({
+          embeddings: [[0.1, Number.NaN, 0.3]],
+          model: opts.model,
+          usage: { promptTokens: 0, totalTokens: 0 },
+        }),
+      };
+      const emb = ConnectorEmbedder.withProvider({ provider: bad, model: 'm1', dimensions: 3 });
+      await expect(emb.embed('x')).rejects.toThrow(/non-finite/);
+    });
+
+    it('embedBatch also validates each vector shape', async () => {
+      const mixed: IEmbeddingProvider = {
+        name: 'mixed',
+        capabilities: { embeddings: true } as never,
+        embed: async (opts: EmbeddingOptions) => ({
+          embeddings: [
+            [0.1, 0.2, 0.3],
+            [0.1, 0.2], // bad — wrong length
+          ],
+          model: opts.model,
+          usage: { promptTokens: 0, totalTokens: 0 },
+        }),
+      };
+      const emb = ConnectorEmbedder.withProvider({ provider: mixed, model: 'm1', dimensions: 3 });
+      await expect(emb.embedBatch!(['a', 'b'])).rejects.toThrow(/dimension mismatch/);
     });
   });
 

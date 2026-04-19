@@ -259,6 +259,38 @@ describe('InMemoryAdapter', () => {
       const result = await store.searchEntities('', {}, {});
       expect(result.items.map((e) => e.id).sort()).toEqual([aliceId, bobId, acmeId].sort());
     });
+
+    it('ranks exact match > alias exact > displayName substring > identifier substring', async () => {
+      // Start from a fresh store so we control exactly what's in the search set.
+      const s = new InMemoryAdapter();
+      const exactDn = await s.createEntity(
+        entityInput({ displayName: 'Acme', type: 'organization' }),
+      );
+      const exactAlias = await s.createEntity(
+        entityInput({
+          displayName: 'ACM Holdings',
+          aliases: ['acme'],
+          type: 'organization',
+        }),
+      );
+      const dnSubstring = await s.createEntity(
+        entityInput({ displayName: 'Acme International', type: 'organization' }),
+      );
+      const identifierSubstring = await s.createEntity(
+        entityInput({
+          displayName: 'Alice',
+          identifiers: [{ kind: 'email', value: 'a@acme.com' }],
+        }),
+      );
+      const result = await s.searchEntities('acme', {}, {});
+      expect(result.items.map((e) => e.id)).toEqual([
+        exactDn.id,
+        exactAlias.id,
+        dnSubstring.id,
+        identifierSubstring.id,
+      ]);
+      s.destroy();
+    });
   });
 
   describe('entities — listEntities pagination', () => {

@@ -19,7 +19,6 @@ export {
   EntityResolver,
   buildIdentityString,
   RESOLUTION_DEFAULTS,
-  normalizedLevenshteinRatio,
   normalizeSurface,
 } from './resolution/index.js';
 export type { ResolverMemoryHooks } from './resolution/index.js';
@@ -83,7 +82,7 @@ export type {
 export { genericTraverse } from './GenericTraversal.js';
 export { scoreFact, rankFacts } from './Ranking.js';
 
-// Predicate library — pluggable vocabulary with ~50-predicate standard set.
+// Predicate library — pluggable vocabulary with a 51-predicate standard set.
 export { PredicateRegistry, STANDARD_PREDICATES } from './predicates/index.js';
 export type { PredicateDefinition } from './predicates/index.js';
 

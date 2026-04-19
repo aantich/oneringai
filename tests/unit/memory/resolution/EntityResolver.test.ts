@@ -67,20 +67,21 @@ describe('EntityResolver.resolve — via MemorySystem.resolveEntity', () => {
     expect(candidates[0]!.matchedOn).toBe('alias');
   });
 
-  it('tier 4: fuzzy match on typo', async () => {
+  it('typos do NOT fuzzy-resolve in v1 (typo-tolerant resolution is future work)', async () => {
     await seedOrg('Microsoft', [], [{ kind: 'domain', value: 'microsoft.com' }]);
 
     const candidates = await mem.resolveEntity(
       { surface: 'Microsft', type: 'organization' }, // typo
       scope,
     );
-    expect(candidates).toHaveLength(1);
-    expect(candidates[0]!.matchedOn).toBe('fuzzy');
-    expect(candidates[0]!.confidence).toBeGreaterThan(0.5);
-    expect(candidates[0]!.confidence).toBeLessThan(0.9);
+    // Intentionally no match — see EntityResolver header. The caller will
+    // either see an empty array or nothing that clears autoResolveThreshold,
+    // and `upsertEntityBySurface` will create a duplicate. Document this
+    // behavior so future semantic-tier wiring is obvious.
+    expect(candidates).toEqual([]);
   });
 
-  it('fuzzy: Microsoft vs Microsoft Inc. normalization → exact match', async () => {
+  it('normalized exact match still works (Microsoft vs Microsoft Inc.)', async () => {
     await seedOrg('Microsoft', [], [{ kind: 'domain', value: 'microsoft.com' }]);
 
     const candidates = await mem.resolveEntity(
@@ -252,8 +253,7 @@ describe('EntityResolver.upsertBySurface — via MemorySystem.upsertEntityBySurf
     expect(ent.aliases).toContain('MSFT');
   });
 
-  it('below conservative default threshold (0.9) creates new entity', async () => {
-    // Seed "Microsoft", then a fuzzy variant (below 0.9)
+  it('typo creates a new entity (typo-tolerant resolution is future work)', async () => {
     await mem.upsertEntityBySurface(
       {
         surface: 'Microsoft',
@@ -263,33 +263,31 @@ describe('EntityResolver.upsertBySurface — via MemorySystem.upsertEntityBySurf
       {},
     );
     const result = await mem.upsertEntityBySurface(
-      {
-        surface: 'Microsft', // typo - fuzzy match ~0.88
-        type: 'organization',
-      },
+      { surface: 'Microsft', type: 'organization' }, // typo
       {},
     );
-    // Fuzzy confidence should be below 0.9 → creates new entity.
+    // v1: no fuzzy tier → no candidates → new entity created.
     expect(result.resolved).toBe(false);
-    // The existing Microsoft should appear in mergeCandidates.
-    expect(result.mergeCandidates.length).toBeGreaterThanOrEqual(1);
+    expect(result.mergeCandidates).toEqual([]);
   });
 
-  it('configurable threshold allows more aggressive auto-resolve', async () => {
-    await mem.upsertEntityBySurface(
+  it('alias tier (0.85) auto-resolves when threshold is lowered to 0.8', async () => {
+    const first = await mem.upsertEntityBySurface(
       {
         surface: 'Microsoft',
         type: 'organization',
         identifiers: [{ kind: 'domain', value: 'microsoft.com' }],
+        aliases: ['MSFT'],
       },
       {},
     );
     const result = await mem.upsertEntityBySurface(
-      { surface: 'Microsft', type: 'organization' },
+      { surface: 'MSFT', type: 'organization' },
       {},
-      { autoResolveThreshold: 0.5 },
+      { autoResolveThreshold: 0.8 },
     );
     expect(result.resolved).toBe(true);
+    expect(result.entity.id).toBe(first.entity.id);
   });
 
   it('exact displayName (conf 0.9) auto-resolves at default threshold 0.9', async () => {
@@ -315,23 +313,25 @@ describe('Configurable entity resolution thresholds', () => {
     const store = new InMemoryAdapter();
     const mem = new MemorySystem({
       store,
-      entityResolution: { autoResolveThreshold: 0.6 },
+      entityResolution: { autoResolveThreshold: 0.8 }, // alias tier 0.85 now passes
     });
 
-    await mem.upsertEntityBySurface(
+    const first = await mem.upsertEntityBySurface(
       {
         surface: 'Microsoft',
         type: 'organization',
         identifiers: [{ kind: 'domain', value: 'microsoft.com' }],
+        aliases: ['MSFT'],
       },
       {},
     );
-    // Now a fuzzy-ish variant should auto-resolve at the lower threshold.
+    // Alias match (0.85 confidence) now auto-resolves under the lower threshold.
     const result = await mem.upsertEntityBySurface(
-      { surface: 'Microsft', type: 'organization' },
+      { surface: 'MSFT', type: 'organization' },
       {},
     );
     expect(result.resolved).toBe(true);
+    expect(result.entity.id).toBe(first.entity.id);
     await mem.shutdown();
   });
 

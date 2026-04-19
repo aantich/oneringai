@@ -134,16 +134,24 @@ export class InMemoryAdapter implements IMemoryStore {
     this.assertLive();
     const q = query.toLowerCase().trim();
     const types = opts.types && opts.types.length > 0 ? new Set(opts.types) : null;
-    const matches: IEntity[] = [];
+    const scored: Array<{ entity: IEntity; score: number }> = [];
     for (const e of this.entitiesById.values()) {
       if (e.archived) continue;
       if (!isVisible(e, scope)) continue;
       if (types && !types.has(e.type)) continue;
-      if (q.length === 0 || matchesEntityText(e, q)) {
-        matches.push(e);
+      if (q.length === 0) {
+        scored.push({ entity: e, score: 0 });
+        continue;
       }
+      const score = entityRelevance(e, q);
+      if (score > 0) scored.push({ entity: e, score });
     }
-    return paginate(matches.map(clone), opts.limit, opts.cursor);
+    // Stable rank by score desc; tiebreak by displayName alphabetical for determinism.
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.entity.displayName.localeCompare(b.entity.displayName);
+    });
+    return paginate(scored.map((s) => clone(s.entity)), opts.limit, opts.cursor);
   }
 
   async listEntities(
@@ -438,15 +446,30 @@ function isVisible(record: { groupId?: string; ownerId?: string }, scope: ScopeF
   return true;
 }
 
-function matchesEntityText(entity: IEntity, q: string): boolean {
-  if (entity.displayName.toLowerCase().includes(q)) return true;
+/**
+ * Relevance score for searchEntities ranking. Higher = better match.
+ *   4 — displayName equals query (case-insensitive)
+ *   3 — alias equals query
+ *   2 — displayName contains query
+ *   1 — alias contains query
+ *   1 — identifier value contains query
+ *   0 — no match
+ */
+function entityRelevance(entity: IEntity, q: string): number {
+  if (!q) return 0;
+  const dn = entity.displayName.toLowerCase();
+  if (dn === q) return 4;
   if (entity.aliases) {
-    for (const a of entity.aliases) if (a.toLowerCase().includes(q)) return true;
+    for (const a of entity.aliases) if (a.toLowerCase() === q) return 3;
+  }
+  if (dn.includes(q)) return 2;
+  if (entity.aliases) {
+    for (const a of entity.aliases) if (a.toLowerCase().includes(q)) return 1;
   }
   for (const ident of entity.identifiers) {
-    if (ident.value.toLowerCase().includes(q)) return true;
+    if (ident.value.toLowerCase().includes(q)) return 1;
   }
-  return false;
+  return 0;
 }
 
 function factMatches(fact: IFact, filter: FactFilter, scope: ScopeFilter): boolean {

@@ -1,9 +1,10 @@
 /**
- * Tests for normalized Levenshtein fuzzy matching.
+ * Tests for surface-form normalization used by EntityResolver's exact-match tiers.
+ * (Levenshtein-based fuzzy matching was removed in v1 — see EntityResolver header.)
  */
 
 import { describe, it, expect } from 'vitest';
-import { normalizedLevenshteinRatio, normalizeSurface } from '@/memory/resolution/fuzzy.js';
+import { normalizeSurface } from '@/memory/resolution/fuzzy.js';
 
 describe('normalizeSurface', () => {
   it('lowercases + trims', () => {
@@ -28,43 +29,5 @@ describe('normalizeSurface', () => {
 
   it('empty → empty', () => {
     expect(normalizeSurface('')).toBe('');
-  });
-});
-
-describe('normalizedLevenshteinRatio', () => {
-  it('identical strings → 1.0', () => {
-    expect(normalizedLevenshteinRatio('Microsoft', 'Microsoft')).toBe(1);
-  });
-
-  it('case + punctuation differences → 1.0 after normalization', () => {
-    expect(normalizedLevenshteinRatio('Microsoft Inc.', 'MICROSOFT')).toBe(1);
-  });
-
-  it('totally different → low', () => {
-    expect(normalizedLevenshteinRatio('Microsoft', 'Acme')).toBeLessThan(0.3);
-  });
-
-  it('one character off → high', () => {
-    expect(normalizedLevenshteinRatio('Microsoft', 'Microsft')).toBeGreaterThan(0.85);
-  });
-
-  it('Q3 Planning vs Q3 Planning Review', () => {
-    const r = normalizedLevenshteinRatio('Q3 Planning', 'Q3 Planning Review');
-    expect(r).toBeGreaterThan(0.5);
-    expect(r).toBeLessThan(1);
-  });
-
-  it('empty vs empty → 1.0', () => {
-    expect(normalizedLevenshteinRatio('', '')).toBe(1);
-  });
-
-  it('empty vs non-empty → 0', () => {
-    expect(normalizedLevenshteinRatio('', 'x')).toBe(0);
-    expect(normalizedLevenshteinRatio('x', '')).toBe(0);
-  });
-
-  it('MSFT vs Microsoft — low match without expansion', () => {
-    // These would only match via aliases, not pure fuzzy.
-    expect(normalizedLevenshteinRatio('MSFT', 'Microsoft')).toBeLessThan(0.85);
   });
 });

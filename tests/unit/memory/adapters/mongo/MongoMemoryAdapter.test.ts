@@ -207,6 +207,45 @@ describe('MongoMemoryAdapter', () => {
         // suppress unused warnings
         expect(bobId).toBeTruthy();
       });
+
+      it('ranks exact > alias-exact > displayName-substring > identifier-substring', async () => {
+        // Clear the beforeEach setup: fresh collections for a deterministic check.
+        const entColl = new FakeMongoCollection<IEntity>();
+        const factColl = new FakeMongoCollection<IFact>();
+        const local = new MongoMemoryAdapter({
+          entities: entColl,
+          facts: factColl,
+          factsCollectionName: 'test_facts',
+          useNativeGraphLookup: false,
+        });
+        const exactDn = await local.createEntity(
+          entityInput({ displayName: 'Acme', type: 'organization' }),
+        );
+        const exactAlias = await local.createEntity(
+          entityInput({
+            displayName: 'ACM Holdings',
+            aliases: ['acme'],
+            type: 'organization',
+          }),
+        );
+        const dnSub = await local.createEntity(
+          entityInput({ displayName: 'Acme International', type: 'organization' }),
+        );
+        const identSub = await local.createEntity(
+          entityInput({
+            displayName: 'Alice',
+            identifiers: [{ kind: 'email', value: 'a@acme.com' }],
+          }),
+        );
+        const res = await local.searchEntities('acme', {}, {});
+        expect(res.items.map((e) => e.id)).toEqual([
+          exactDn.id,
+          exactAlias.id,
+          dnSub.id,
+          identSub.id,
+        ]);
+        local.destroy();
+      });
     });
 
     describe('listEntities', () => {
@@ -236,6 +275,76 @@ describe('MongoMemoryAdapter', () => {
         await adapter.archiveEntity(ids[0]!, {});
         const res = await adapter.listEntities({ archived: true }, {}, {});
         expect(res.items.map((e) => e.id)).toEqual([ids[0]!]);
+      });
+
+      describe('metadataFilter validation', () => {
+        it('accepts literal values', async () => {
+          await expect(
+            adapter.listEntities({ metadataFilter: { state: 'active' } }, {}, {}),
+          ).resolves.toBeTruthy();
+        });
+
+        it('accepts $in arrays', async () => {
+          await expect(
+            adapter.listEntities(
+              { metadataFilter: { state: { $in: ['active', 'pending'] } } },
+              {},
+              {},
+            ),
+          ).resolves.toBeTruthy();
+        });
+
+        it('rejects keys starting with $', async () => {
+          await expect(
+            adapter.listEntities({ metadataFilter: { $where: 'x' } }, {}, {}),
+          ).rejects.toThrow(/must not start with/);
+        });
+
+        it('rejects keys containing a dot', async () => {
+          await expect(
+            adapter.listEntities({ metadataFilter: { 'nested.field': 'x' } }, {}, {}),
+          ).rejects.toThrow(/must not start with .* or contain/);
+        });
+
+        it('rejects unknown operator shapes', async () => {
+          await expect(
+            adapter.listEntities(
+              { metadataFilter: { state: { $regex: '.*' } } },
+              {},
+              {},
+            ),
+          ).rejects.toThrow(/only literal values or \{\$in/);
+        });
+
+        it('rejects multi-key operator objects', async () => {
+          await expect(
+            adapter.listEntities(
+              { metadataFilter: { state: { $in: ['x'], $regex: '.*' } } },
+              {},
+              {},
+            ),
+          ).rejects.toThrow(/only literal values or \{\$in/);
+        });
+
+        it('rejects $in with non-array values', async () => {
+          await expect(
+            adapter.listEntities(
+              { metadataFilter: { state: { $in: 'not-an-array' as never } } },
+              {},
+              {},
+            ),
+          ).rejects.toThrow(/\$in must be an array/);
+        });
+
+        it('rejects $in arrays containing objects', async () => {
+          await expect(
+            adapter.listEntities(
+              { metadataFilter: { state: { $in: [{ bad: 'value' }] } } },
+              {},
+              {},
+            ),
+          ).rejects.toThrow(/array must contain only primitives/);
+        });
       });
     });
   });

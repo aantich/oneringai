@@ -2,12 +2,22 @@
  * EntityResolver — translate surface forms ("Microsoft", "Q3 Planning", "John")
  * to existing entity IDs, creating new entities when nothing matches confidently.
  *
- * Matching hierarchy (first pass that produces a candidate wins the tier):
- *   1. Strong identifier match        → confidence 1.0
- *   2. Exact displayName (case-insensitive) → confidence 0.90
- *   3. Exact alias match              → confidence 0.85
- *   4. Fuzzy displayName/alias        → confidence 0.5–0.8 (via normalized Levenshtein)
- *   5. Semantic match via identityEmbedding → confidence 0.4–0.8 (via cosine)
+ * Matching hierarchy (v1 — typo-tolerant resolution is future work):
+ *   1. Strong identifier match (email, domain, …) → confidence 1.0
+ *   2. Exact displayName, normalized (case, "Inc.", punctuation) → confidence 0.90
+ *   3. Exact alias, normalized → confidence 0.85
+ *
+ * Typos and fuzzy matches do NOT currently resolve. A misspelled "Microsft"
+ * will create a duplicate entity rather than merging with "Microsoft". This
+ * is intentional for v1: the only deterministic fuzzy approach is an O(n)
+ * scan of entities-of-type, which silently produces wrong answers at scale.
+ *
+ * The proper solution is an entity-level semantic search (cosine over
+ * `identityEmbedding` via Atlas Vector Search / ANN index). That requires a
+ * new `IMemoryStore.semanticSearchEntities` capability on adapters and is
+ * planned for a later release. Identity embeddings ARE populated today
+ * (`enableIdentityEmbedding` default true) so switching on semantic tier
+ * later is a drop-in change.
  *
  * Context-aware disambiguation: when multiple candidates pass threshold,
  * prefer the one that shares the most `contextEntityIds` with already-
@@ -32,13 +42,11 @@ import type {
   UpsertBySurfaceOptions,
   UpsertBySurfaceResult,
 } from '../types.js';
-import { normalizedLevenshteinRatio, normalizeSurface } from './fuzzy.js';
+import { normalizeSurface } from './fuzzy.js';
 
 const DEFAULT_AUTO_RESOLVE_THRESHOLD = 0.9;
-const DEFAULT_MIN_FUZZY_RATIO = 0.85;
 const DEFAULT_THRESHOLD = 0.5;
 const DEFAULT_LIMIT = 5;
-const DEFAULT_SEMANTIC_TOP_K = 5;
 
 /**
  * Narrow hook used by EntityResolver — lets it query + upsert without pulling
@@ -66,16 +74,12 @@ export interface ResolverMemoryHooks {
 
 export class EntityResolver {
   private readonly autoResolveThreshold: number;
-  private readonly minFuzzyRatio: number;
-  private readonly identityEmbeddingEnabled: boolean;
 
   constructor(
     private readonly hooks: ResolverMemoryHooks,
     config?: EntityResolutionConfig,
   ) {
     this.autoResolveThreshold = config?.autoResolveThreshold ?? DEFAULT_AUTO_RESOLVE_THRESHOLD;
-    this.minFuzzyRatio = config?.minFuzzyRatio ?? DEFAULT_MIN_FUZZY_RATIO;
-    this.identityEmbeddingEnabled = config?.enableIdentityEmbedding ?? true;
   }
 
   /**
@@ -114,103 +118,49 @@ export class EntityResolver {
       }
     }
 
-    // ---- Tier 2 + 3: exact displayName + alias match via searchEntities ----
-    // searchEntities does substring matching — exact matches hit here.
+    // ---- Tier 2 + 3: exact displayName + alias match ----
+    // searchEntities substring-matches; we then re-check with normalized
+    // equality to distinguish exact matches from mere substring hits.
+    //
+    // We search both the raw surface AND the normalized surface so that
+    // forms like "Microsoft Inc." (which substring-misses "Microsoft") still
+    // find the entity — normalizeSurface strips corporate suffixes, so the
+    // normalized query becomes "microsoft" and the underlying case-insensitive
+    // substring index hits.
     const surface = query.surface.trim();
     if (surface.length > 0) {
-      const page = await this.hooks.store.searchEntities(
-        surface,
-        { types: query.type ? [query.type] : undefined, limit: 20 },
-        scope,
-      );
-      for (const entity of page.items) {
-        const tier = exactMatchTier(entity, surface);
-        if (tier === null) continue;
-        const candidate: EntityCandidate = {
-          entity,
-          confidence: tier.confidence,
-          matchedOn: tier.matchedOn,
-        };
-        const existing = seen.get(entity.id);
-        if (!existing || existing.confidence < candidate.confidence) {
-          seen.set(entity.id, candidate);
-        }
-      }
+      const normalized = normalizeSurface(surface);
+      const seenPages = new Set<string>();
+      const queries = normalized && normalized !== surface.toLowerCase()
+        ? [surface, normalized]
+        : [surface];
 
-      // ---- Tiers 2/3/4 over a broader candidate pool ----
-      // searchEntities is substring-based — it misses cases like
-      // "Microsoft Inc." (not a substring of "Microsoft") and typos like
-      // "Microsft" vs "Microsoft". Pull a broader pool via listEntities,
-      // bounded by type, and run both exact-after-normalization and fuzzy
-      // matching over it.
-      const fuzzyCandidatePool = await this.hooks.store.listEntities(
-        { type: query.type },
-        { limit: 500 },
-        scope,
-      );
-      for (const entity of fuzzyCandidatePool.items) {
-        if (seen.has(entity.id)) continue; // already resolved via tier 1 or substring hit
-        // First try tier 2/3 — exact after normalization (handles "Inc.", case, punctuation).
-        const tier = exactMatchTier(entity, surface);
-        if (tier !== null) {
-          seen.set(entity.id, {
+      for (const q of queries) {
+        const page = await this.hooks.store.searchEntities(
+          q,
+          { types: query.type ? [query.type] : undefined, limit: 50 },
+          scope,
+        );
+        for (const entity of page.items) {
+          if (seenPages.has(entity.id)) continue;
+          seenPages.add(entity.id);
+          const tier = exactMatchTier(entity, surface);
+          if (tier === null) continue;
+          const candidate: EntityCandidate = {
             entity,
             confidence: tier.confidence,
             matchedOn: tier.matchedOn,
-          });
-          continue;
-        }
-        // Then tier 4 — fuzzy ratio.
-        const fuzzyScore = bestFuzzyScore(entity, surface);
-        if (fuzzyScore >= this.minFuzzyRatio) {
-          // Map fuzzy ratio [minFuzzyRatio, 1.0] → [0.6, 0.84].
-          // 0.6 lower bound so the "aggressive auto-resolve" threshold that
-          // users choose (0.6) fires for near-matches; 0.84 upper avoids
-          // collision with exact-alias tier (0.85).
-          const confidence =
-            0.6 + ((fuzzyScore - this.minFuzzyRatio) / (1 - this.minFuzzyRatio)) * 0.24;
-          seen.set(entity.id, { entity, confidence, matchedOn: 'fuzzy' });
+          };
+          const existing = seen.get(entity.id);
+          if (!existing || existing.confidence < candidate.confidence) {
+            seen.set(entity.id, candidate);
+          }
         }
       }
     }
 
-    // ---- Tier 5: semantic embedding fallback ----
-    if (this.identityEmbeddingEnabled && this.hooks.embedQuery && this.hooks.store.semanticSearch) {
-      try {
-        const queryVec = await this.hooks.embedQuery(
-          buildIdentityString({
-            type: query.type ?? 'entity',
-            displayName: query.surface,
-            aliases: [],
-            identifiers: query.identifiers ?? [],
-          }),
-        );
-        // We deliberately use semanticSearch on facts to find entities via their profile embedding.
-        // But for identity embedding matching, callers can also provide a custom path — here we fall
-        // back to a best-effort cosine over entities we've already seen's embeddings.
-        // Proper vector search on entities would require a store-level API; v1 uses just the
-        // fuzzy/string path as the main fallback.
-        // So this tier only contributes when an entity's identityEmbedding is already loaded
-        // among the `seen` set candidates (or we extend the store to support entity vector
-        // search). For now: compute cosine against already-seen entities' identityEmbeddings.
-        for (const candidate of seen.values()) {
-          const ie = candidate.entity.identityEmbedding;
-          if (!ie || ie.length !== queryVec.length) continue;
-          const score = cosine(queryVec, ie);
-          // Reweight: entities with strong semantic match but no string match get a lift.
-          const semConfidence = 0.4 + score * 0.4; // 0 → 0.4, 1 → 0.8
-          if (candidate.matchedOn === 'fuzzy' && semConfidence > candidate.confidence) {
-            seen.set(candidate.entity.id, {
-              entity: candidate.entity,
-              confidence: semConfidence,
-              matchedOn: 'embedding',
-            });
-          }
-        }
-      } catch {
-        // Embedding failures never break resolution — we just fall back.
-      }
-    }
+    // Typo-tolerant (fuzzy / semantic) resolution intentionally omitted in v1.
+    // See file header comment.
 
     // ---- Context-aware disambiguation ----
     if (query.contextEntityIds && query.contextEntityIds.length > 0 && seen.size > 1) {
@@ -321,35 +271,11 @@ function exactMatchTier(
   return null;
 }
 
-function bestFuzzyScore(entity: IEntity, surface: string): number {
-  let best = normalizedLevenshteinRatio(entity.displayName, surface);
-  if (entity.aliases) {
-    for (const a of entity.aliases) {
-      const r = normalizedLevenshteinRatio(a, surface);
-      if (r > best) best = r;
-    }
-  }
-  return best;
-}
-
-function cosine(a: number[], b: number[]): number {
-  let dot = 0;
-  let na = 0;
-  let nb = 0;
-  for (let i = 0; i < a.length; i++) {
-    const ai = a[i]!;
-    const bi = b[i]!;
-    dot += ai * bi;
-    na += ai * ai;
-    nb += bi * bi;
-  }
-  const denom = Math.sqrt(na) * Math.sqrt(nb);
-  return denom === 0 ? 0 : dot / denom;
-}
-
 /**
  * Short string embedded for identity matching. Composed of displayName,
- * top aliases, and primary identifier values. See MemorySystem.ensureIdentityEmbedding.
+ * top aliases, and primary identifier values. Populated on every entity
+ * write when an embedder is configured; consumed by the future entity-level
+ * semantic search tier (not yet wired — see file header).
  */
 export function buildIdentityString(args: {
   type: string;
@@ -375,8 +301,6 @@ export function buildIdentityString(args: {
 // Re-export defaults so MemorySystem can keep consistent thresholds.
 export const RESOLUTION_DEFAULTS = {
   autoResolveThreshold: DEFAULT_AUTO_RESOLVE_THRESHOLD,
-  minFuzzyRatio: DEFAULT_MIN_FUZZY_RATIO,
   threshold: DEFAULT_THRESHOLD,
   limit: DEFAULT_LIMIT,
-  semanticTopK: DEFAULT_SEMANTIC_TOP_K,
 } as const;

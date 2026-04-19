@@ -110,6 +110,7 @@ export class MemorySystem implements IDisposable {
   private readonly profileThreshold: number;
   private readonly ranking: RankingConfig;
   private readonly onChange?: (event: ChangeEvent) => void;
+  private readonly onError?: (error: unknown, event: ChangeEvent) => void;
   private readonly queue: EmbeddingQueue;
   private readonly resolver: EntityResolver;
   private readonly resolutionConfig: EntityResolutionConfig;
@@ -147,7 +148,22 @@ export class MemorySystem implements IDisposable {
       predicateWeights: mergedWeights,
     };
     this.onChange = config.onChange;
-    this.queue = new EmbeddingQueue(this.store, this.embedder, config.embeddingQueue);
+    this.onError = config.onError;
+    this.queue = new EmbeddingQueue(
+      this.store,
+      this.embedder,
+      config.embeddingQueue,
+      (item, error) => {
+        const reason = error instanceof Error ? error.message : String(error);
+        this.emit({
+          type: 'fact.embedding.failed',
+          factId: item.factId,
+          entityId: item.entityId,
+          attempts: item.attempts,
+          reason,
+        });
+      },
+    );
     this.resolutionConfig = config.entityResolution ?? {};
     this.resolver = new EntityResolver(
       {
@@ -220,7 +236,7 @@ export class MemorySystem implements IDisposable {
         updatedAt: new Date(),
       };
       await this.store.updateEntity(next);
-      this.queueIdentityEmbedding(next, scope);
+      this.queueIdentityEmbedding(next, scope, best);
       this.emit({ type: 'entity.upsert', entity: next, created: false });
       return {
         entity: next,
@@ -317,13 +333,24 @@ export class MemorySystem implements IDisposable {
       updatedAt: new Date(),
     };
     await this.store.updateEntity(next);
-    this.queueIdentityEmbedding(next, scope);
+    this.queueIdentityEmbedding(next, scope, current);
     this.emit({ type: 'entity.upsert', entity: next, created: false });
     return next;
   }
 
-  /** Queue an identity-embedding refresh if the feature is enabled + embedder present. */
-  private queueIdentityEmbedding(entity: IEntity, scope: ScopeFilter): void {
+  /**
+   * Queue an identity-embedding refresh if the feature is enabled + embedder
+   * present. Skips the enqueue (saving an embedder round-trip) when the new
+   * identity string is identical to the previously-embedded one.
+   *
+   * `prior` — the entity as it existed before this write. Omit for brand-new
+   * entities (no prior state to compare to).
+   */
+  private queueIdentityEmbedding(
+    entity: IEntity,
+    scope: ScopeFilter,
+    prior?: IEntity,
+  ): void {
     if (!this.embedder) return;
     if (this.resolutionConfig.enableIdentityEmbedding === false) return;
     const text = buildIdentityString({
@@ -332,6 +359,15 @@ export class MemorySystem implements IDisposable {
       aliases: entity.aliases ?? [],
       identifiers: entity.identifiers,
     });
+    if (prior) {
+      const priorText = buildIdentityString({
+        type: prior.type,
+        displayName: prior.displayName,
+        aliases: prior.aliases ?? [],
+        identifiers: prior.identifiers,
+      });
+      if (priorText === text) return; // no identity change → no need to re-embed
+    }
     this.queue.enqueueIdentity(entity.id, text, scope);
   }
 
@@ -402,8 +438,16 @@ export class MemorySystem implements IDisposable {
 
     const winner = await this.store.getEntity(winnerId, scope);
     const loser = await this.store.getEntity(loserId, scope);
-    if (!winner) throw new Error(`mergeEntities: winner ${winnerId} not found`);
-    if (!loser) throw new Error(`mergeEntities: loser ${loserId} not found`);
+    if (!winner) {
+      throw new Error(
+        `mergeEntities: winner ${winnerId} not found or not visible in caller scope`,
+      );
+    }
+    if (!loser) {
+      throw new Error(
+        `mergeEntities: loser ${loserId} not found or not visible in caller scope`,
+      );
+    }
 
     // Merge identifiers + aliases into winner
     const merged = mergeIdentifiersAndAliases(winner, {
@@ -550,6 +594,21 @@ export class MemorySystem implements IDisposable {
   ): Promise<IFact> {
     assertNotDestroyed(this, 'addFact');
 
+    // Reject empty/whitespace predicates regardless of mode — these are almost
+    // always a caller bug and corrupt ranking/retrieval if they land in storage.
+    if (typeof input.predicate !== 'string' || input.predicate.trim().length === 0) {
+      throw new Error('addFact: predicate must be a non-empty string');
+    }
+
+    // Reject self-referential facts. A fact (A, p, A) is almost always a
+    // caller bug — if a legitimate self-loop is ever needed for a specific
+    // predicate we can opt that predicate in explicitly.
+    if (input.objectId !== undefined && input.objectId === input.subjectId) {
+      throw new Error(
+        `addFact: subjectId and objectId must differ (self-referential facts not allowed)`,
+      );
+    }
+
     // Predicate canonicalization + registry-driven defaults.
     // When no registry is configured, `predicate` is left as-is and `def` is
     // undefined — addFact behaves exactly as before.
@@ -632,7 +691,7 @@ export class MemorySystem implements IDisposable {
       sourceSignalId: input.sourceSignalId,
       derivedBy: input.derivedBy,
       importance: input.importance ?? def?.defaultImportance,
-      contextIds: input.contextIds,
+      contextIds: input.contextIds && input.contextIds.length > 0 ? input.contextIds : undefined,
       supersedes,
       archived: input.archived,
       isAggregate: input.isAggregate ?? def?.isAggregate,
@@ -1169,8 +1228,23 @@ export class MemorySystem implements IDisposable {
     if (!this.onChange) return;
     try {
       this.onChange(event);
-    } catch {
-      // Listener failures must not impact the data path.
+    } catch (err) {
+      // Listener failures must not impact the data path. Route to onError if
+      // provided; otherwise warn on console so the failure is never completely
+      // invisible.
+      if (this.onError) {
+        try {
+          this.onError(err, event);
+        } catch {
+          // An onError that throws is a bug we cannot fix here — swallow.
+        }
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `MemorySystem.onChange listener threw during '${event.type}':`,
+          err,
+        );
+      }
     }
   }
 }
@@ -1311,6 +1385,9 @@ interface QueueItem {
   text: string;
   scope: ScopeFilter;
   attempts: number;
+  /** Identifying metadata for observability on final failure. */
+  factId: FactId | null;
+  entityId: EntityId | null;
   /** Called with the computed embedding vector; queue retries if this or embed() throws. */
   onComplete: (embedding: number[]) => Promise<void>;
 }
@@ -1324,12 +1401,23 @@ class EmbeddingQueue {
   private activeWorkers = 0;
   private stopped = false;
   private readonly idleWaiters: Array<() => void> = [];
+  /** Hook fired when an item exhausts all retries. */
+  private readonly onFinalFailure?: (
+    item: QueueItem,
+    error: unknown,
+  ) => void;
 
-  constructor(store: IMemoryStore, embedder: IEmbedder | undefined, config?: EmbeddingQueueConfig) {
+  constructor(
+    store: IMemoryStore,
+    embedder: IEmbedder | undefined,
+    config?: EmbeddingQueueConfig,
+    onFinalFailure?: (item: QueueItem, error: unknown) => void,
+  ) {
     this.store = store;
     this.embedder = embedder;
     this.concurrency = config?.concurrency ?? DEFAULT_EMBED_CONCURRENCY;
     this.maxRetries = config?.retries ?? DEFAULT_EMBED_RETRIES;
+    this.onFinalFailure = onFinalFailure;
   }
 
   /** Enqueue a fact's embedding — writes to IFact.embedding via updateFact. */
@@ -1339,6 +1427,8 @@ class EmbeddingQueue {
       text,
       scope,
       attempts: 0,
+      factId,
+      entityId: null,
       onComplete: async (embedding) => {
         await this.store.updateFact(factId, { embedding }, scope);
       },
@@ -1353,6 +1443,8 @@ class EmbeddingQueue {
       text,
       scope,
       attempts: 0,
+      factId: null,
+      entityId,
       onComplete: async (embedding) => {
         const cur = await this.store.getEntity(entityId, scope);
         if (!cur) return;
@@ -1407,12 +1499,19 @@ class EmbeddingQueue {
       if (!this.embedder) return;
       const vector = await this.embedder.embed(item.text);
       await item.onComplete(vector);
-    } catch {
+    } catch (err) {
       if (item.attempts < this.maxRetries) {
         item.attempts++;
         this.queue.push(item);
+      } else if (this.onFinalFailure) {
+        // Final failure — notify the observer hook. Callers can map this to a
+        // dead-letter queue / metric / alert rather than silently drop.
+        try {
+          this.onFinalFailure(item, err);
+        } catch {
+          // Never let a failing observer break the queue.
+        }
       }
-      // Final failure: drop silently. Callers can re-trigger embedding by writing a new fact.
     } finally {
       this.activeWorkers--;
       if (this.queue.length > 0) {

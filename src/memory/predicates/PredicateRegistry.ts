@@ -6,7 +6,7 @@
  * ranking-weight derivation.
  *
  * Usage patterns:
- *   - `PredicateRegistry.standard()` — ship-with-the-library 50-predicate set.
+ *   - `PredicateRegistry.standard()` — ship-with-the-library 51-predicate set.
  *   - `PredicateRegistry.empty().registerAll([...])` — build your own vocab.
  *   - `PredicateRegistry.standard().register(...).register(...)` — extend.
  *
@@ -22,7 +22,7 @@ export class PredicateRegistry {
   private byAlias = new Map<string, string>();
 
   /**
-   * Returns a fresh registry seeded with the standard 50-predicate set.
+   * Returns a fresh registry seeded with the standard 51-predicate set.
    * Called as a factory — each invocation produces an independent instance,
    * so mutations never leak between MemorySystems or tests.
    */

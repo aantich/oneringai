@@ -204,6 +204,7 @@ export class MongoMemoryAdapter implements IMemoryStore {
   ): Promise<Page<IEntity>> {
     this.assertLive();
     const q = query.trim();
+    const qLower = q.toLowerCase();
     const clauses: MongoFilter[] = [scopeToFilter(scope), ARCHIVED_HIDDEN];
 
     if (opts.types && opts.types.length > 0) {
@@ -224,10 +225,34 @@ export class MongoMemoryAdapter implements IMemoryStore {
 
     const skip = parseCursor(opts.cursor);
     const limit = opts.limit ?? this.defaultPageSize;
-    const docs = await this.entities.find(filter, { limit, skip });
+
+    // Oversample so we can rank client-side, then paginate by skip/limit over
+    // the ranked list. Cap at a reasonable total pool to bound work.
+    const oversamplePool = Math.max(500, skip + limit * 5);
+    const docs = await this.entities.find(filter, { limit: oversamplePool });
+    const revived = docs.map(reviveEntity);
+
+    // Rank by relevance when q is non-empty; otherwise preserve fetch order.
+    if (qLower.length > 0) {
+      const scored = revived.map((entity) => ({
+        entity,
+        score: entityRelevance(entity, qLower),
+      }));
+      scored.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return a.entity.displayName.localeCompare(b.entity.displayName);
+      });
+      const items = scored.slice(skip, skip + limit).map((s) => s.entity);
+      return {
+        items,
+        nextCursor: formatCursor(skip, limit, items.length),
+      };
+    }
+
+    const items = revived.slice(skip, skip + limit);
     return {
-      items: docs.map(reviveEntity),
-      nextCursor: formatCursor(skip, limit, docs.length),
+      items,
+      nextCursor: formatCursor(skip, limit, items.length),
     };
   }
 
@@ -649,6 +674,27 @@ function cosine(a: number[], b: number[]): number {
   return denom === 0 ? 0 : dot / denom;
 }
 
+/**
+ * Relevance score for searchEntities ranking. Higher = better match.
+ * Mirrored from InMemoryAdapter so behavior is consistent across adapters.
+ */
+function entityRelevance(entity: IEntity, q: string): number {
+  if (!q) return 0;
+  const dn = entity.displayName.toLowerCase();
+  if (dn === q) return 4;
+  if (entity.aliases) {
+    for (const a of entity.aliases) if (a.toLowerCase() === q) return 3;
+  }
+  if (dn.includes(q)) return 2;
+  if (entity.aliases) {
+    for (const a of entity.aliases) if (a.toLowerCase().includes(q)) return 1;
+  }
+  for (const ident of entity.identifiers) {
+    if (ident.value.toLowerCase().includes(q)) return 1;
+  }
+  return 0;
+}
+
 function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -656,18 +702,68 @@ function escapeRegex(s: string): string {
 /**
  * Translate { state: 'pending', priority: { $in: ['high','urgent'] } } into
  * { 'metadata.state': 'pending', 'metadata.priority': { $in: [...] } }.
- * Supports literal values and { $in: [...] }; caller is expected to use
- * only those two shapes (see EntityListFilter.metadataFilter docstring).
+ *
+ * Hardened against operator injection: only literal scalars/arrays and a
+ * single `{ $in: [...] }` shape are accepted. Keys starting with `$` or
+ * containing `.` are rejected. Any other object shape (multiple keys, other
+ * Mongo operators like `$where`, `$regex`, `$function`) throws.
+ *
+ * Callers who forward untrusted input into `metadataFilter` get defense in
+ * depth: a user can't smuggle `{$where: "..."}` through even by accident.
  */
 function metadataFilterToMongo(filter: Record<string, unknown>): MongoFilter {
   const out: MongoFilter = {};
   for (const [key, expected] of Object.entries(filter)) {
-    const path = `metadata.${key}`;
-    if (expected && typeof expected === 'object' && !Array.isArray(expected) && '$in' in expected) {
-      out[path] = expected;
-    } else {
-      out[path] = expected;
+    if (key.startsWith('$') || key.includes('.')) {
+      throw new Error(
+        `metadataFilter: invalid key '${key}' — keys must not start with '$' or contain '.'`,
+      );
     }
+    const path = `metadata.${key}`;
+    assertAllowedMetadataValue(key, expected);
+    out[path] = expected;
   }
   return out;
+}
+
+function assertAllowedMetadataValue(key: string, value: unknown): void {
+  if (value === null || value === undefined) return;
+  const t = typeof value;
+  if (t === 'string' || t === 'number' || t === 'boolean') return;
+  if (value instanceof Date) return;
+  if (Array.isArray(value)) {
+    // Only arrays of primitives / Dates are allowed.
+    for (const v of value) {
+      const tv = typeof v;
+      if (
+        v !== null &&
+        v !== undefined &&
+        tv !== 'string' &&
+        tv !== 'number' &&
+        tv !== 'boolean' &&
+        !(v instanceof Date)
+      ) {
+        throw new Error(
+          `metadataFilter['${key}']: array must contain only primitives or Dates`,
+        );
+      }
+    }
+    return;
+  }
+  if (t === 'object') {
+    const keys = Object.keys(value as Record<string, unknown>);
+    if (keys.length === 1 && keys[0] === '$in') {
+      const inArr = (value as { $in: unknown }).$in;
+      if (!Array.isArray(inArr)) {
+        throw new Error(`metadataFilter['${key}']: $in must be an array`);
+      }
+      assertAllowedMetadataValue(key, inArr);
+      return;
+    }
+    throw new Error(
+      `metadataFilter['${key}']: only literal values or {$in: [...]} are allowed ` +
+        `(got keys: ${keys.join(', ')})`,
+    );
+  }
+  throw new Error(`metadataFilter['${key}']: unsupported value type '${t}'`);
 }

@@ -7,8 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- **Predicate Registry** — pluggable fact-predicate vocabulary for the memory layer (`src/memory/predicates/`)
+### Memory layer — hardening + predicate library
+
+**Predicate registry docs**
+- New `docs/MEMORY_PREDICATES.md` — dedicated usage guide with recipes (setup patterns, extending the standard library, custom vocabularies, auto-supersession, LLM prompt integration, drift monitoring, strict mode, ranking weights).
+- Cross-linked from `MEMORY_API.md` and `MEMORY_GUIDE.md`.
+
+**Safety / correctness fixes (memory layer)**
+- `ConnectorEmbedder` now validates returned vectors: wrong dimensions or non-finite values throw immediately instead of silently poisoning cosine-distance retrieval.
+- `MemorySystem.addFact` rejects empty/whitespace predicates and self-referential facts (`subjectId === objectId`) at entry regardless of predicate mode.
+- `MongoMemoryAdapter.metadataFilter` hardened: keys starting with `$` or containing `.` are rejected; values whitelisted to literal scalars/arrays/Dates or `{$in: [...]}`. Protects callers forwarding user input against `$where` / `$function` / `$regex` injection.
+- Identity-embedding dedup: `upsertEntity` / `appendAliasesAndIdentifiers` skip re-embedding when the composed identity string is unchanged, avoiding wasted embedder calls.
+- `mergeEntities` error messages distinguish "not found" from "not visible in caller scope".
+- `searchEntities` (InMemoryAdapter + MongoMemoryAdapter) now ranks results by relevance: exact displayName > exact alias > displayName substring > alias substring > identifier substring.
+- `MemorySystem.addFact` normalizes empty `contextIds: []` to `undefined` on write.
+
+**Observability**
+- New `ChangeEvent` variant `fact.embedding.failed` — emitted once per embedding job that exhausts all retries (carries `factId`, `entityId`, `attempts`, `reason`). Lets operators surface dead-letter signals rather than silently dropping embeddings.
+- New `MemorySystemConfig.onError(error, event)` hook — routes `onChange` listener exceptions to a dedicated handler. Falls back to `console.warn` when unset (previously swallowed silently).
+
+**Entity resolution**
+- Fuzzy/typo-tolerant resolution (old tier 4 + tier 5) removed. Rationale: scanning an arbitrary N-entity pool silently degrades with dataset size. The proper replacement is entity-level semantic search over `identityEmbedding` (requires a new `IMemoryStore.semanticSearchEntities` capability on adapters) and is planned for a future release. Identity embeddings continue to be populated today so the future wiring is a drop-in.
+- `EntityResolutionConfig.minFuzzyRatio` and `.fuzzyCandidatePoolSize` removed.
+- `normalizedLevenshteinRatio` utility removed; `normalizeSurface` retained (still used by exact-match tiers to handle "Inc.", case, punctuation).
+- Exact-match search now also tries the normalized surface, so `"Microsoft Inc."` finds `"Microsoft"` via corporate-suffix stripping.
+
+**Predicate Registry** — pluggable fact-predicate vocabulary for the memory layer (`src/memory/predicates/`)
   - `PredicateRegistry` class + `PredicateDefinition` type with canonical name, category, aliases, default importance, ranking weight, `singleValued`/`isAggregate` semantics, and LLM-prompt metadata
   - `PredicateRegistry.standard()` — 51-predicate starter library across 9 categories (identity, organizational, task, state, communication, observation, temporal, document, social)
   - `PredicateRegistry.empty()` — for fully custom vocabularies

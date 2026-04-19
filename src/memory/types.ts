@@ -464,7 +464,21 @@ export type ChangeEvent =
   | { type: 'fact.add'; fact: IFact }
   | { type: 'fact.archive'; factId: FactId }
   | { type: 'fact.supersede'; oldId: FactId; newId: FactId }
-  | { type: 'profile.regenerate'; entityId: EntityId; scope: ScopeFields; factId: FactId };
+  | { type: 'profile.regenerate'; entityId: EntityId; scope: ScopeFields; factId: FactId }
+  /**
+   * Emitted once per embedding job that exhausted all retries. Lets operators
+   * surface a dead-letter signal (metrics, alerts) rather than silently
+   * dropping the embedding. Applies to both fact and entity-identity jobs.
+   */
+  | {
+      type: 'fact.embedding.failed';
+      /** Populated for fact-level embeddings; null for entity-identity jobs. */
+      factId: FactId | null;
+      /** Populated for entity-identity embeddings; null for fact jobs. */
+      entityId: EntityId | null;
+      attempts: number;
+      reason: string;
+    };
 
 // ---------------------------------------------------------------------------
 // Ranking config
@@ -545,12 +559,17 @@ export interface UpsertBySurfaceResult {
 export interface EntityResolutionConfig {
   /** Default threshold for auto-resolve in upsertEntityBySurface. Default 0.90 (conservative). */
   autoResolveThreshold?: number;
-  /** Minimum normalized Levenshtein ratio for fuzzy match. Default 0.85. */
-  minFuzzyRatio?: number;
   /**
    * When true AND an embedder is configured, entities get an identity
-   * embedding (over displayName + aliases + primary identifier values) used
-   * as a fallback when string matching fails. Default true.
+   * embedding (over displayName + aliases + primary identifier values).
+   * Default true.
+   *
+   * The embedding is stored on the entity for forward compatibility; v1 of
+   * the resolver does not yet read it. Typo-tolerant resolution (consuming
+   * these embeddings via an entity-level semantic search) is planned for a
+   * future release and will require a new `IMemoryStore.semanticSearchEntities`
+   * capability on adapters. Set to `false` to skip the embedder cost until
+   * that ships.
    */
   enableIdentityEmbedding?: boolean;
 }
@@ -591,6 +610,12 @@ export interface MemorySystemConfig {
    */
   predicateAutoSupersede?: boolean;
   onChange?: (event: ChangeEvent) => void;
+  /**
+   * Invoked when `onChange` throws. Lets operators surface listener failures
+   * to their logging / telemetry pipeline rather than losing them silently.
+   * Falls back to `console.warn` when unset.
+   */
+  onError?: (error: unknown, event: ChangeEvent) => void;
 }
 
 // Re-export IDisposable so consumers can use the same symbol.
