@@ -404,6 +404,43 @@ export class MemorySystem implements IDisposable {
   }
 
   /**
+   * List entities by type + optional metadata equality filter. Thin pass-through
+   * to the store's `listEntities` — exposed on MemorySystem so tool layers
+   * don't need to reach into the store directly.
+   */
+  listEntities(
+    filter: import('./types.js').EntityListFilter,
+    opts: import('./types.js').ListOptions,
+    scope: ScopeFilter,
+  ) {
+    assertNotDestroyed(this, 'listEntities');
+    return this.store.listEntities(filter, opts, scope);
+  }
+
+  /**
+   * Enumerate facts directly. Pass-through to the store's `findFacts` so tool
+   * layers can list raw facts without reaching into the store. For ranked/
+   * retrieval-oriented queries prefer `getContext` or `semanticSearch`.
+   */
+  findFacts(
+    filter: FactFilter,
+    opts: import('./types.js').FactQueryOptions,
+    scope: ScopeFilter,
+  ) {
+    assertNotDestroyed(this, 'findFacts');
+    return this.store.findFacts(filter, opts, scope);
+  }
+
+  /**
+   * Fetch a single fact by id. Returns null when the fact does not exist or
+   * is not visible to the caller's scope.
+   */
+  getFact(id: FactId, scope: ScopeFilter) {
+    assertNotDestroyed(this, 'getFact');
+    return this.store.getFact(id, scope);
+  }
+
+  /**
    * Resolve a surface form ("Microsoft", "Q3 Planning", "John") to ranked
    * candidate entities. Matching tiers: strong identifier → exact displayName →
    * exact alias → fuzzy → semantic (identityEmbedding). Returns candidates

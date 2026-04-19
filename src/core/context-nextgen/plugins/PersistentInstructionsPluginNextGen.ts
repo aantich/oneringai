@@ -11,6 +11,12 @@
  * - Custom tool usage guidelines
  *
  * Storage: ~/.oneringai/agents/<agentId>/custom_instructions.json
+ *
+ * @deprecated Prefer `MemoryPluginNextGen` (feature flag `memory`). The memory
+ * plugin auto-synthesizes an agent profile from observed facts via incremental
+ * profile regeneration — it does what this plugin does, plus self-learning,
+ * supersession-based history, permissions, and semantic recall. This plugin
+ * keeps working unchanged for existing integrations.
  */
 
 import type { IContextPluginNextGen, IStoreHandler, StoreEntrySchema, StoreGetResult, StoreSetResult, StoreDeleteResult, StoreListResult, StoreActionResult, ITokenEstimator } from '../types.js';
@@ -76,6 +82,9 @@ function validateKey(key: unknown): string | null {
 // Plugin Implementation
 // ============================================================================
 
+/**
+ * @deprecated See file header — prefer `MemoryPluginNextGen`.
+ */
 export class PersistentInstructionsPluginNextGen implements IContextPluginNextGen, IStoreHandler {
   readonly name = 'persistent_instructions';
 

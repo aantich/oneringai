@@ -83,6 +83,7 @@ export {
   StoreToolsManager,
   isStoreHandler,
   SharedWorkspacePluginNextGen,
+  MemoryPluginNextGen,
 } from './context-nextgen/index.js';
 export type {
   IContextPluginNextGen,

@@ -46,6 +46,7 @@ export {
   UserInfoPluginNextGen,
   ToolCatalogPluginNextGen,
   SharedWorkspacePluginNextGen,
+  MemoryPluginNextGen,
   // Compaction strategies
   DefaultCompactionStrategy,
   // Strategy Registry

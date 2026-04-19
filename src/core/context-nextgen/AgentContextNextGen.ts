@@ -78,6 +78,7 @@ import {
   UserInfoPluginNextGen,
   ToolCatalogPluginNextGen,
   SharedWorkspacePluginNextGen,
+  MemoryPluginNextGen,
 } from './plugins/index.js';
 import { StorageRegistry } from '../StorageRegistry.js';
 import type {
@@ -87,6 +88,7 @@ import type {
   UserInfoPluginConfig,
   ToolCatalogPluginConfig,
   SharedWorkspaceConfig,
+  MemoryPluginConfig,
 } from './plugins/index.js';
 
 // Strategy imports
@@ -349,6 +351,35 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     if (features.sharedWorkspace) {
       const swConfig = configs.sharedWorkspace as Partial<SharedWorkspaceConfig> | undefined;
       this.registerPlugin(new SharedWorkspacePluginNextGen(swConfig));
+    }
+
+    // 7. Memory plugin — self-learning knowledge store. Requires a MemorySystem
+    // in config because the library cannot auto-construct one (it needs an
+    // adapter + optionally embedder + profile generator).
+    if (features.memory) {
+      if (!this._agentId) {
+        throw new Error('memory feature requires agentId to be set');
+      }
+      const memConfig = configs.memory as Partial<MemoryPluginConfig> | undefined;
+      if (!memConfig?.memory) {
+        throw new Error(
+          "memory feature is enabled but plugins.memory.memory (MemorySystem instance) is missing — " +
+          "construct a MemorySystem with your chosen adapter and pass it in plugins config",
+        );
+      }
+      const resolvedUserId = memConfig.userId ?? this._userId;
+      if (!resolvedUserId) {
+        throw new Error(
+          'memory feature requires userId — set it on AgentContextNextGen config ' +
+          'or pass plugins.memory.userId explicitly',
+        );
+      }
+      this.registerPlugin(new MemoryPluginNextGen({
+        ...memConfig,
+        agentId: this._agentId,
+        userId: resolvedUserId,
+        memory: memConfig.memory,
+      } as MemoryPluginConfig));
     }
 
     // 7. External plugins from PluginRegistry

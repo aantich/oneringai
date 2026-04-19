@@ -43,3 +43,9 @@ export type {
   WorkspaceLogEntry,
   SerializedSharedWorkspaceState,
 } from './SharedWorkspacePluginNextGen.js';
+
+export { MemoryPluginNextGen } from './MemoryPluginNextGen.js';
+export type {
+  MemoryPluginConfig,
+  MemoryPluginInjectionConfig,
+} from './MemoryPluginNextGen.js';

@@ -1,6 +1,12 @@
 /**
  * UserInfoPluginNextGen - User information storage plugin for NextGen context
  *
+ * @deprecated Prefer `MemoryPluginNextGen` (feature flag `memory`). The memory
+ * plugin stores user information as *facts* (not overwritable KV), which means
+ * history is preserved via supersession, values have confidence/importance,
+ * and the user profile is LLM-synthesized from facts automatically. This
+ * plugin keeps working unchanged for existing integrations.
+ *
  * Stores key-value information about the current user (preferences, context, metadata).
  * Data is user-scoped, not agent-scoped - different agents share the same user data.
  *
@@ -311,6 +317,9 @@ function formatValue(value: unknown): string {
 // Plugin Implementation
 // ============================================================================
 
+/**
+ * @deprecated See file header — prefer `MemoryPluginNextGen`.
+ */
 export class UserInfoPluginNextGen implements IContextPluginNextGen, IStoreHandler {
   readonly name = 'user_info';
 

@@ -63,6 +63,35 @@ export type {
 } from './filesystem/index.js';
 
 // ============================================================================
+// Memory Tools (require a live MemorySystem — created via factory)
+// ============================================================================
+
+export {
+  createMemoryTools,
+  createRecallTool,
+  createGraphTool,
+  createSearchTool,
+  createFindEntityTool,
+  createListFactsTool,
+  createRememberTool,
+  createLinkTool,
+  createForgetTool,
+  createSubjectResolver,
+  SUBJECT_TOKEN_ME,
+  SUBJECT_TOKEN_THIS_AGENT,
+  visibilityToPermissions,
+  resolveScope,
+} from './memory/index.js';
+export type {
+  CreateMemoryToolsArgs,
+  MemoryToolDeps,
+  SubjectRef,
+  Visibility,
+  ResolveResult,
+  MemoryToolError,
+} from './memory/index.js';
+
+// ============================================================================
 // Shell Tools
 // ============================================================================
 

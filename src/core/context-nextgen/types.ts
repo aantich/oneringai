@@ -674,10 +674,10 @@ export interface KnownContextFeatures {
   /** Enable InContextMemory plugin (default: false) */
   inContextMemory?: boolean;
 
-  /** Enable PersistentInstructions plugin (default: false) */
+  /** Enable PersistentInstructions plugin (default: false). @deprecated prefer the `memory` feature. */
   persistentInstructions?: boolean;
 
-  /** Enable UserInfo plugin (default: false) */
+  /** Enable UserInfo plugin (default: false). @deprecated prefer the `memory` feature. */
   userInfo?: boolean;
 
   /** Enable ToolCatalog plugin for dynamic tool loading/unloading (default: false) */
@@ -685,6 +685,9 @@ export interface KnownContextFeatures {
 
   /** Enable SharedWorkspace plugin for multi-agent coordination (default: false) */
   sharedWorkspace?: boolean;
+
+  /** Enable Memory plugin for self-learning knowledge store (default: false). Requires `plugins.memory.memory: MemorySystem` in config. */
+  memory?: boolean;
 }
 
 /**
@@ -710,6 +713,7 @@ export const DEFAULT_FEATURES: Required<KnownContextFeatures> = {
   userInfo: false,
   toolCatalog: false,
   sharedWorkspace: false,
+  memory: false,
 };
 
 // ============================================================================
@@ -737,6 +741,8 @@ export interface KnownPluginConfigs {
   toolCatalog?: Record<string, unknown>;
   /** Shared workspace plugin config. See SharedWorkspaceConfig. */
   sharedWorkspace?: Record<string, unknown>;
+  /** Memory plugin config. See MemoryPluginConfig. `agentId` auto-filled from context. `userId` auto-filled from context if unset. Requires `memory: MemorySystem`. */
+  memory?: Record<string, unknown>;
 }
 
 /**
