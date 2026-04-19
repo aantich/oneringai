@@ -6,7 +6,7 @@
 import type { ToolFunction } from '../../domain/entities/Tool.js';
 import type { ContextOptions } from '../../memory/index.js';
 import type { MemoryToolDeps, SubjectRef } from './types.js';
-import { resolveScope } from './types.js';
+import { clamp, resolveScope } from './types.js';
 
 export interface RecallArgs {
   /** SubjectRef — "me", "this_agent", an entity id, {id}, {identifier}, or {surface}. */
@@ -17,16 +17,14 @@ export interface RecallArgs {
    * 'tasks' and 'events' are on by default — pass minimal=true to suppress.
    */
   include?: Array<'documents' | 'semantic' | 'neighbors' | 'tasks' | 'events'>;
-  /** Cap on top-ranked facts. Default 15. */
+  /** Cap on top-ranked facts. Default 15, max 100. */
   topFactsLimit?: number;
   /** When true, skip the default related-tasks + related-events tiers (faster). */
   minimal?: boolean;
   /** For the 'semantic' tier: the search query used within the entity's facts. */
   semanticQuery?: string;
-  /** For the 'neighbors' tier: how many hops to include. Default 1. */
+  /** For the 'neighbors' tier: how many hops to include. Default 1, max 5. */
   neighborDepth?: number;
-  /** Group scope for the lookup — optional; defaults to the caller's scope. */
-  groupId?: string;
 }
 
 const DESCRIPTION = `Retrieve what memory knows about an entity — LLM-synthesized profile, top-ranked facts, and optionally related tasks, events, semantic matches, or graph neighbors. Your primary way to pull context about any entity.
@@ -64,7 +62,6 @@ export function createRecallTool(deps: MemoryToolDeps): ToolFunction<RecallArgs>
             minimal: { type: 'boolean' },
             semanticQuery: { type: 'string' },
             neighborDepth: { type: 'number' },
-            groupId: { type: 'string' },
           },
           required: ['subject'],
         },
@@ -84,14 +81,14 @@ export function createRecallTool(deps: MemoryToolDeps): ToolFunction<RecallArgs>
       if (args.subject === undefined || args.subject === null) {
         return { error: 'subject is required' };
       }
-      const scope = resolveScope(context?.userId, deps.defaultUserId, args.groupId);
+      const scope = resolveScope(context?.userId, deps.defaultUserId, deps.defaultGroupId);
       const resolved = await deps.resolve(args.subject, scope);
       if (!resolved.ok) {
         return { error: resolved.message, candidates: resolved.candidates };
       }
 
       const opts: ContextOptions = {
-        topFactsLimit: args.topFactsLimit ?? 15,
+        topFactsLimit: clamp(args.topFactsLimit, 15, 100),
         tiers: args.minimal ? 'minimal' : 'full',
       };
       // Filter caller-provided includes to the subset ContextOptions accepts.
@@ -106,7 +103,7 @@ export function createRecallTool(deps: MemoryToolDeps): ToolFunction<RecallArgs>
       }
       if (allowedIncludes.length > 0) opts.include = allowedIncludes;
       if (args.semanticQuery) opts.semanticQuery = args.semanticQuery;
-      if (args.neighborDepth !== undefined) opts.neighborDepth = args.neighborDepth;
+      if (args.neighborDepth !== undefined) opts.neighborDepth = clamp(args.neighborDepth, 1, 5);
 
       try {
         const view = await deps.memory.getContext(resolved.entity.id, opts, scope);

@@ -11,7 +11,7 @@
 import type { ToolFunction } from '../../domain/entities/Tool.js';
 import type { Identifier, MemorySystem, ScopeFilter } from '../../memory/index.js';
 import type { MemoryToolDeps, Visibility } from './types.js';
-import { resolveScope, visibilityToPermissions } from './types.js';
+import { clamp, resolveScope, visibilityToPermissions } from './types.js';
 
 export interface FindEntityArgs {
   /**
@@ -39,10 +39,8 @@ export interface FindEntityArgs {
   metadata?: Record<string, unknown>;
   /** For upsert: visibility. See Visibility docstring. Default 'private'. */
   visibility?: Visibility;
-  /** For list: page size. Default 20. */
+  /** For list: page size. Default 20, max 200. */
   limit?: number;
-  /** Group scope. Optional. */
-  groupId?: string;
 }
 
 const DESCRIPTION = `Look up, list, or create an entity. An entity can have many different identifiers (email, slack_id, github_login, internal_id…); this tool is how you find the right one.
@@ -83,7 +81,6 @@ export function createFindEntityTool(
             metadata: { type: 'object' },
             visibility: { type: 'string', enum: ['private', 'group', 'public'] },
             limit: { type: 'number' },
-            groupId: { type: 'string' },
           },
         },
       },
@@ -93,7 +90,7 @@ export function createFindEntityTool(
 
     execute: async (args, context) => {
       const action = args.action ?? 'find';
-      const scope = resolveScope(context?.userId, deps.defaultUserId, args.groupId);
+      const scope = resolveScope(context?.userId, deps.defaultUserId, deps.defaultGroupId);
 
       try {
         if (action === 'find') {
@@ -146,7 +143,7 @@ async function doList(
   scope: ScopeFilter,
 ): Promise<unknown> {
   const by = args.by ?? {};
-  const limit = args.limit ?? 20;
+  const limit = clamp(args.limit, 20, 200);
   const page = await memory.listEntities(
     {
       type: by.type,

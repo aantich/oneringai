@@ -78,6 +78,13 @@ export interface MemoryPluginConfig {
    * feature flag).
    */
   userId: string;
+  /**
+   * **Trusted** group id for the caller (authenticated by the host app).
+   * Closed into tool deps so every memory call uses this groupId. Tools do
+   * NOT accept a groupId arg from the LLM — see the security review. Leave
+   * undefined for non-grouped deployments.
+   */
+  groupId?: string;
   /** Permissions stamped on the bootstrapped user entity. */
   userEntityPermissions?: Permissions;
   /** Permissions stamped on the bootstrapped agent entity. */
@@ -146,6 +153,7 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
   private readonly memory: MemorySystem;
   private readonly agentId: string;
   private readonly userId: string;
+  private readonly groupId: string | undefined;
   private readonly userPerms: Permissions | undefined;
   private readonly agentPerms: Permissions | undefined;
   private readonly userInj: ResolvedInjection;
@@ -192,6 +200,7 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
     this.memory = config.memory;
     this.agentId = config.agentId;
     this.userId = config.userId;
+    this.groupId = config.groupId;
     this.userPerms = config.userEntityPermissions;
     this.agentPerms = config.agentEntityPermissions;
     this.userInj = resolveInjection(config.userProfileInjection);
@@ -317,6 +326,7 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
         memory: this.memory,
         agentId: this.agentId,
         defaultUserId: this.userId,
+        defaultGroupId: this.groupId,
         defaultVisibility: this.defaultVisibility,
         autoResolveThreshold: this.autoResolveThreshold,
         getOwnSubjectIds: () => ({
@@ -396,7 +406,12 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
   private async doBootstrap(): Promise<void> {
     const scope = this.scope();
 
-    // Agent entity — always bootstrap.
+    // Agent entity — always bootstrap. The identifier kind+value pair is a
+    // stable strong key; `upsertEntity` dedupes via `findEntitiesByIdentifier`,
+    // and `bootstrapInFlight` serialises concurrent calls within this process.
+    // Cross-process uniqueness is the adapter's responsibility (Mongo needs
+    // a unique index on {identifiers.kind, identifiers.value}; the in-memory
+    // adapter is single-process so not relevant).
     if (!this.agentEntityId) {
       const result = await this.memory.upsertEntity(
         {
@@ -430,7 +445,7 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
   }
 
   private scope(): ScopeFilter {
-    return { userId: this.userId };
+    return { userId: this.userId, groupId: this.groupId };
   }
 
   private buildPlaceholder(): string {

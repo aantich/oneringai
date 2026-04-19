@@ -16,7 +16,6 @@ export interface LinkArgs {
   observedAt?: string;
   contextIds?: string[];
   visibility?: Visibility;
-  groupId?: string;
 }
 
 const DESCRIPTION = `Link two entities with a predicate. Both sides are entities (not scalar values). Use for "X attended Y", "A works at B", "C references D", etc. If you want to record a value (number, string) instead, use memory_remember.
@@ -49,7 +48,6 @@ export function createLinkTool(deps: MemoryToolDeps): ToolFunction<LinkArgs> {
             observedAt: { type: 'string' },
             contextIds: { type: 'array', items: { type: 'string' } },
             visibility: { type: 'string', enum: ['private', 'group', 'public'] },
-            groupId: { type: 'string' },
           },
           required: ['from', 'predicate', 'to'],
         },
@@ -65,7 +63,7 @@ export function createLinkTool(deps: MemoryToolDeps): ToolFunction<LinkArgs> {
         return { error: 'predicate is required (non-empty string)' };
       }
 
-      const scope = resolveScope(context?.userId, deps.defaultUserId, args.groupId);
+      const scope = resolveScope(context?.userId, deps.defaultUserId, deps.defaultGroupId);
 
       const fromRes = await deps.resolve(args.from, scope);
       if (!fromRes.ok) {

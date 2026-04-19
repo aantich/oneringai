@@ -32,8 +32,6 @@ export interface RememberArgs {
   contextIds?: string[];
   /** Visibility. Default: 'private' for user/other subjects, 'group' for this_agent. */
   visibility?: Visibility;
-  /** Group scope. Optional. */
-  groupId?: string;
 }
 
 const DESCRIPTION = `Record a new atomic fact (subject, predicate, value-or-object). Be proactive — whenever the user reveals something you should remember, store it. Facts accumulate and feed into profile regeneration automatically.
@@ -77,7 +75,6 @@ export function createRememberTool(deps: MemoryToolDeps): ToolFunction<RememberA
             observedAt: { type: 'string' },
             contextIds: { type: 'array', items: { type: 'string' } },
             visibility: { type: 'string', enum: ['private', 'group', 'public'] },
-            groupId: { type: 'string' },
           },
           required: ['subject', 'predicate'],
         },
@@ -95,7 +92,7 @@ export function createRememberTool(deps: MemoryToolDeps): ToolFunction<RememberA
         return { error: 'provide at least one of value, objectId, or details' };
       }
 
-      const scope = resolveScope(context?.userId, deps.defaultUserId, args.groupId);
+      const scope = resolveScope(context?.userId, deps.defaultUserId, deps.defaultGroupId);
       const resolved = await deps.resolve(args.subject, scope);
       if (!resolved.ok) {
         return { error: resolved.message, candidates: resolved.candidates };

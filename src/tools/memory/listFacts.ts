@@ -7,7 +7,7 @@
 import type { ToolFunction } from '../../domain/entities/Tool.js';
 import type { FactFilter } from '../../memory/index.js';
 import type { MemoryToolDeps, SubjectRef } from './types.js';
-import { resolveScope } from './types.js';
+import { clamp, resolveScope } from './types.js';
 
 export interface ListFactsArgs {
   /** Subject. See SubjectRef forms. */
@@ -16,25 +16,27 @@ export interface ListFactsArgs {
   predicate?: string;
   /** Or multiple predicates (OR). */
   predicates?: string[];
-  /** Include archived facts too (default false). */
-  includeArchived?: boolean;
+  /**
+   * When true, returns ONLY archived facts (history / audit view). Default
+   * false returns only non-archived facts. For "both" you'd call twice and
+   * merge — not supported in v1.
+   */
+  archivedOnly?: boolean;
   /** Atomic only, document only, or both. Default: 'atomic'. */
   kind?: 'atomic' | 'document' | 'any';
-  /** Page size. Default 20. */
+  /** Page size. Default 20, max 200. */
   limit?: number;
   /** Pagination cursor from a previous call. */
   cursor?: string;
-  /** Group scope. Optional. */
-  groupId?: string;
 }
 
-const DESCRIPTION = `List atomic facts about a subject. Use for enumeration when you want structured raw facts rather than the LLM-synthesized profile (e.g., to count, tabulate, export, or inspect individual entries).
+const DESCRIPTION = `List facts about a subject. Use for enumeration when you want structured raw facts rather than the LLM-synthesized profile (e.g., to count, tabulate, export, or inspect individual entries).
 
 Examples:
-- {"subject":"me","predicate":"prefers"} — all recorded user preferences
+- {"subject":"me","predicate":"prefers"} — all recorded user preferences (live, non-archived)
 - {"subject":{"surface":"Acme deal"},"limit":50} — everything about the deal
 - {"subject":"ent_xyz","predicates":["attended","missed"]} — attendance-only
-- {"subject":"me","includeArchived":true} — history including archived
+- {"subject":"me","archivedOnly":true} — audit view: only archived (historical) facts
 
 Paginated: reuse "cursor" from the response to fetch the next page.`;
 
@@ -51,11 +53,10 @@ export function createListFactsTool(deps: MemoryToolDeps): ToolFunction<ListFact
             subject: { description: 'Subject entity — see SubjectRef forms.' },
             predicate: { type: 'string' },
             predicates: { type: 'array', items: { type: 'string' } },
-            includeArchived: { type: 'boolean' },
+            archivedOnly: { type: 'boolean' },
             kind: { type: 'string', enum: ['atomic', 'document', 'any'] },
             limit: { type: 'number' },
             cursor: { type: 'string' },
-            groupId: { type: 'string' },
           },
           required: ['subject'],
         },
@@ -67,7 +68,7 @@ export function createListFactsTool(deps: MemoryToolDeps): ToolFunction<ListFact
 
     execute: async (args, context) => {
       if (!args.subject) return { error: 'subject is required' };
-      const scope = resolveScope(context?.userId, deps.defaultUserId, args.groupId);
+      const scope = resolveScope(context?.userId, deps.defaultUserId, deps.defaultGroupId);
       const resolved = await deps.resolve(args.subject, scope);
       if (!resolved.ok) {
         return { error: resolved.message, candidates: resolved.candidates };
@@ -78,9 +79,9 @@ export function createListFactsTool(deps: MemoryToolDeps): ToolFunction<ListFact
       };
       if (args.predicate) filter.predicate = args.predicate;
       if (args.predicates?.length) filter.predicates = args.predicates;
-      if (args.includeArchived === true) {
-        // Passing undefined shows non-archived; `true` shows only archived.
-        // For "both", we'd need two queries; pick archived=true when asked.
+      if (args.archivedOnly === true) {
+        // FactFilter.archived === true returns archived-only (audit view).
+        // Default (archived undefined) returns only non-archived.
         filter.archived = true;
       }
       if (args.kind === 'atomic' || args.kind === 'document') {
@@ -90,15 +91,13 @@ export function createListFactsTool(deps: MemoryToolDeps): ToolFunction<ListFact
       }
 
       try {
-        // Use the store via the memory system — we need `findFacts` exposure.
-        // MemorySystem doesn't expose findFacts directly, so we route through
-        // getContext for now if subject matches; else use semanticSearch as
-        // fallback? No — simpler: expose listFacts via the store accessor.
-        // Memory system provides `getContext`, but for raw enumeration we
-        // need a direct findFacts pass-through. Add it on MemorySystem side.
         const page = await deps.memory.findFacts(
           filter,
-          { limit: args.limit ?? 20, cursor: args.cursor, orderBy: { field: 'observedAt', direction: 'desc' } },
+          {
+            limit: clamp(args.limit, 20, 200),
+            cursor: args.cursor,
+            orderBy: { field: 'observedAt', direction: 'desc' },
+          },
           scope,
         );
         return {

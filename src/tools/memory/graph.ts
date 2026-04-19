@@ -8,23 +8,21 @@
 import type { ToolFunction } from '../../domain/entities/Tool.js';
 import type { TraversalOptions } from '../../memory/index.js';
 import type { MemoryToolDeps, SubjectRef } from './types.js';
-import { resolveScope } from './types.js';
+import { clamp, resolveScope } from './types.js';
 
 export interface GraphArgs {
   /** Starting entity. See SubjectRef forms. */
   start: SubjectRef;
   /** 'out' = outgoing edges (subject→object), 'in' = incoming, 'both' = bidirectional. Default 'both'. */
   direction?: 'out' | 'in' | 'both';
-  /** Hard hop limit (required). Keep small (1–3) to stay responsive. Default 2. */
+  /** Hard hop limit. Keep small (1–3) to stay responsive. Default 2, max 5. */
   maxDepth?: number;
   /** Filter edges to these predicate names. Omit to include all. */
   predicates?: string[];
-  /** Max total edges returned. Default 100. */
+  /** Max total edges returned. Default 100, max 500. */
   limit?: number;
   /** Point-in-time traversal — only facts valid at this timestamp. */
   asOf?: string;
-  /** Group scope. Optional. */
-  groupId?: string;
 }
 
 const DESCRIPTION = `Walk the knowledge graph from a starting entity. Returns nodes + edges showing what it's connected to, via which predicates, up to maxDepth hops. Use when recall isn't enough — when you need the web of relationships between entities.
@@ -55,7 +53,6 @@ export function createGraphTool(deps: MemoryToolDeps): ToolFunction<GraphArgs> {
             predicates: { type: 'array', items: { type: 'string' } },
             limit: { type: 'number' },
             asOf: { type: 'string' },
-            groupId: { type: 'string' },
           },
           required: ['start'],
         },
@@ -67,7 +64,7 @@ export function createGraphTool(deps: MemoryToolDeps): ToolFunction<GraphArgs> {
 
     execute: async (args, context) => {
       if (!args.start) return { error: 'start is required' };
-      const scope = resolveScope(context?.userId, deps.defaultUserId, args.groupId);
+      const scope = resolveScope(context?.userId, deps.defaultUserId, deps.defaultGroupId);
       const resolved = await deps.resolve(args.start, scope);
       if (!resolved.ok) {
         return { error: resolved.message, candidates: resolved.candidates };
@@ -75,11 +72,10 @@ export function createGraphTool(deps: MemoryToolDeps): ToolFunction<GraphArgs> {
 
       const opts: TraversalOptions = {
         direction: args.direction ?? 'both',
-        maxDepth: args.maxDepth ?? 2,
+        maxDepth: clamp(args.maxDepth, 2, 5),
+        limit: clamp(args.limit, 100, 500),
       };
       if (args.predicates?.length) opts.predicates = args.predicates;
-      if (args.limit !== undefined) opts.limit = args.limit ?? 100;
-      else opts.limit = 100;
       if (args.asOf) {
         const d = new Date(args.asOf);
         if (!isNaN(d.valueOf())) opts.asOf = d;

@@ -26,7 +26,6 @@ export interface ForgetArgs {
     contextIds?: string[];
     visibility?: Visibility;
   };
-  groupId?: string;
 }
 
 const DESCRIPTION = `Archive a fact, optionally replacing it with a corrected/updated one. Supersession (replaceWith) preserves history — you can always audit what changed. Plain archive just hides the fact.
@@ -50,7 +49,6 @@ export function createForgetTool(deps: MemoryToolDeps): ToolFunction<ForgetArgs>
           properties: {
             factId: { type: 'string' },
             replaceWith: { type: 'object' },
-            groupId: { type: 'string' },
           },
           required: ['factId'],
         },
@@ -63,23 +61,20 @@ export function createForgetTool(deps: MemoryToolDeps): ToolFunction<ForgetArgs>
       if (!args.factId || typeof args.factId !== 'string') {
         return { error: 'factId is required (non-empty string)' };
       }
-      const scope = resolveScope(context?.userId, deps.defaultUserId, args.groupId);
+      const scope = resolveScope(context?.userId, deps.defaultUserId, deps.defaultGroupId);
 
       try {
         if (!args.replaceWith) {
           await deps.memory.archiveFact(args.factId, scope);
-          // Invalidate cache if the archived fact's subject is user/agent.
-          // Since we don't have the fact object here, invalidate unconditionally
-          // on any forget — cheap.
+          // Cache invalidation is conservative: we don't know the archived fact's
+          // subject here, so always flip dirty — cheap vs. another round-trip.
           deps.onWriteToOwnSubjects?.();
           return { archived: true, factId: args.factId };
         }
 
-        // Supersede path — use MemorySystem.addFact with supersedes. We need the
-        // predecessor's subjectId; fetch the fact first via the store accessor
-        // on memory. MemorySystem doesn't expose a public getFact; findFacts +
-        // id filter isn't ideal. Fall back to archiveFact if lookup fails.
-        const predecessor = await findFactById(deps, args.factId, scope);
+        // Load predecessor to capture subjectId + default permissions before
+        // writing the successor.
+        const predecessor = await deps.memory.getFact(args.factId, scope);
         if (!predecessor) {
           return { error: `fact '${args.factId}' not found or not visible` };
         }
@@ -136,17 +131,4 @@ export function createForgetTool(deps: MemoryToolDeps): ToolFunction<ForgetArgs>
       }
     },
   };
-}
-
-async function findFactById(
-  deps: MemoryToolDeps,
-  factId: string,
-  scope: import('../../memory/index.js').ScopeFilter,
-) {
-  // No direct getFact on MemorySystem — scan via findFacts with no filter and
-  // match by id. Small (limit=1) but broad — acceptable for the rare supersede
-  // path; library consumers doing high-rate superseding should use
-  // memory.addFact({...supersedes}) directly.
-  // Better: expose getFact. Let's do that — simpler and faster.
-  return deps.memory.getFact(factId, scope);
 }

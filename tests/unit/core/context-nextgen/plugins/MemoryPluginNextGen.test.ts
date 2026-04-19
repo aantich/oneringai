@@ -334,3 +334,45 @@ describe('MemoryPluginNextGen — state serialization', () => {
     expect(plugin.getBootstrappedIds()).toEqual({});
   });
 });
+
+describe('MemoryPluginNextGen — trusted groupId flows into scope', () => {
+  it('plugin-configured groupId is applied to every memory read', async () => {
+    const mem = makeMem();
+    const spy = vi.spyOn(mem, 'getContext');
+    const plugin = new MemoryPluginNextGen({
+      memory: mem,
+      agentId: AGENT_ID,
+      userId: USER_ID,
+      groupId: 'team-A',
+    });
+    await plugin.getContent();
+    // Every getContext call should carry scope.groupId === 'team-A'.
+    for (const call of spy.mock.calls) {
+      expect(call[2].groupId).toBe('team-A');
+      expect(call[2].userId).toBe(USER_ID);
+    }
+  });
+
+  it('tools created by the plugin carry the trusted groupId and ignore LLM-provided groupId', async () => {
+    const mem = makeMem();
+    const plugin = new MemoryPluginNextGen({
+      memory: mem,
+      agentId: AGENT_ID,
+      userId: USER_ID,
+      groupId: 'team-A',
+    });
+    await plugin.getContent();
+    const getContextSpy = vi.spyOn(mem, 'getContext');
+    const recall = plugin
+      .getTools()
+      .find((t) => t.definition.function.name === 'memory_recall')!;
+    await recall.execute(
+      // @ts-expect-error — groupId no longer valid
+      { subject: 'me', groupId: 'attacker-group' },
+      { userId: USER_ID },
+    );
+    const scopeArg = getContextSpy.mock.calls[0]![2];
+    expect(scopeArg.groupId).toBe('team-A');
+    expect(scopeArg.groupId).not.toBe('attacker-group');
+  });
+});

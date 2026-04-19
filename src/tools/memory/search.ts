@@ -7,12 +7,12 @@
 import type { ToolFunction } from '../../domain/entities/Tool.js';
 import type { FactFilter } from '../../memory/index.js';
 import type { MemoryToolDeps } from './types.js';
-import { resolveScope } from './types.js';
+import { clamp, resolveScope } from './types.js';
 
 export interface SearchArgs {
   /** Natural-language query. Embedded and matched against fact embeddings. */
   query: string;
-  /** Number of results. Default 10. */
+  /** Number of results. Default 10, max 100. */
   topK?: number;
   /** Optional fact filter — predicate, subjectId, observedAfter, etc. */
   filter?: {
@@ -21,10 +21,10 @@ export interface SearchArgs {
     predicate?: string;
     predicates?: string[];
     minConfidence?: number;
+    /** ISO-8601 string. Invalid values return a structured error. */
     observedAfter?: string;
     observedBefore?: string;
   };
-  groupId?: string;
 }
 
 const DESCRIPTION = `Semantic text search across facts visible to you. Best when the user asks "find anything about X" and you don't know the entity or predicate upfront. Requires an embedder; will report "not available" otherwise.
@@ -49,7 +49,6 @@ export function createSearchTool(deps: MemoryToolDeps): ToolFunction<SearchArgs>
             query: { type: 'string' },
             topK: { type: 'number' },
             filter: { type: 'object' },
-            groupId: { type: 'string' },
           },
           required: ['query'],
         },
@@ -62,7 +61,7 @@ export function createSearchTool(deps: MemoryToolDeps): ToolFunction<SearchArgs>
       if (!args.query || typeof args.query !== 'string' || args.query.trim().length === 0) {
         return { error: 'query is required and must be a non-empty string' };
       }
-      const scope = resolveScope(context?.userId, deps.defaultUserId, args.groupId);
+      const scope = resolveScope(context?.userId, deps.defaultUserId, deps.defaultGroupId);
 
       const filter: FactFilter = {};
       if (args.filter) {
@@ -73,13 +72,19 @@ export function createSearchTool(deps: MemoryToolDeps): ToolFunction<SearchArgs>
         if (typeof args.filter.minConfidence === 'number') {
           filter.minConfidence = args.filter.minConfidence;
         }
-        if (args.filter.observedAfter) {
+        if (args.filter.observedAfter !== undefined) {
           const d = new Date(args.filter.observedAfter);
-          if (!isNaN(d.valueOf())) filter.observedAfter = d;
+          if (isNaN(d.valueOf())) {
+            return { error: 'invalid observedAfter — expected ISO-8601 string' };
+          }
+          filter.observedAfter = d;
         }
-        if (args.filter.observedBefore) {
+        if (args.filter.observedBefore !== undefined) {
           const d = new Date(args.filter.observedBefore);
-          if (!isNaN(d.valueOf())) filter.observedBefore = d;
+          if (isNaN(d.valueOf())) {
+            return { error: 'invalid observedBefore — expected ISO-8601 string' };
+          }
+          filter.observedBefore = d;
         }
       }
 
@@ -88,7 +93,7 @@ export function createSearchTool(deps: MemoryToolDeps): ToolFunction<SearchArgs>
           args.query,
           filter,
           scope,
-          args.topK ?? 10,
+          clamp(args.topK, 10, 100),
         );
         return {
           query: args.query,

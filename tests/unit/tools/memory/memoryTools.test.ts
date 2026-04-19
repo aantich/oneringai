@@ -10,7 +10,7 @@
  *   - structured errors on bad input
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { MemorySystem, IEntity } from '@/memory/index.js';
 import { MemorySystem as MemorySystemClass } from '@/memory/MemorySystem.js';
 import { InMemoryAdapter } from '@/memory/adapters/inmemory/InMemoryAdapter.js';
@@ -615,5 +615,220 @@ describe('visibilityToPermissions', () => {
     expect(visibilityToPermissions('group')).toEqual({ group: 'read', world: 'none' });
     expect(visibilityToPermissions('public')).toBeUndefined();
     expect(visibilityToPermissions(undefined)).toBeUndefined();
+  });
+});
+
+// ===========================================================================
+// Security regressions
+// ===========================================================================
+
+describe('security: LLM cannot override group scope via tool args', () => {
+  it('memory_recall ignores any `groupId` the LLM supplies — uses deps.defaultGroupId instead', async () => {
+    const mem = makeMem();
+    const ids = await bootstrap(mem);
+    const spy = vi.spyOn(mem, 'getContext');
+
+    // Build tools with NO defaultGroupId. If the tool honoured args.groupId
+    // we'd see "team-secret" reach memory.
+    const t = createMemoryTools({
+      memory: mem,
+      agentId: AGENT_ID,
+      defaultUserId: USER_ID,
+      getOwnSubjectIds: () => ({
+        userEntityId: ids.userEntityId,
+        agentEntityId: ids.agentEntityId,
+      }),
+    });
+    const recall = toolByName(t, 'memory_recall');
+    await recall.execute(
+      // @ts-expect-error — groupId is no longer a valid arg, but the LLM may
+      // still try; assert it's silently ignored.
+      { subject: 'me', groupId: 'team-secret' },
+      { userId: USER_ID },
+    );
+    expect(spy).toHaveBeenCalled();
+    const scopeArg = spy.mock.calls[0]![2];
+    expect(scopeArg.groupId).toBeUndefined();
+  });
+
+  it('memory_remember ignores `groupId` arg, uses deps.defaultGroupId for scope', async () => {
+    const mem = makeMem();
+    const ids = await bootstrap(mem);
+    const addFactSpy = vi.spyOn(mem, 'addFact');
+
+    const t = createMemoryTools({
+      memory: mem,
+      agentId: AGENT_ID,
+      defaultUserId: USER_ID,
+      defaultGroupId: 'trusted-group',
+      getOwnSubjectIds: () => ({
+        userEntityId: ids.userEntityId,
+        agentEntityId: ids.agentEntityId,
+      }),
+    });
+    const remember = toolByName(t, 'memory_remember');
+    await remember.execute(
+      // @ts-expect-error — groupId not part of args
+      { subject: 'me', predicate: 'p', value: 'v', groupId: 'attacker-group' },
+      { userId: USER_ID },
+    );
+    const scopeArg = addFactSpy.mock.calls[0]![1];
+    expect(scopeArg.groupId).toBe('trusted-group');
+    expect(scopeArg.groupId).not.toBe('attacker-group');
+  });
+});
+
+// ===========================================================================
+// DoS: numeric limits are clamped to safe ranges
+// ===========================================================================
+
+describe('DoS caps: numeric limits are clamped', () => {
+  it('memory_graph clamps maxDepth to 5 and limit to 500', async () => {
+    const mem = makeMem();
+    const ids = await bootstrap(mem);
+    const spy = vi.spyOn(mem, 'traverse');
+    const graph = toolByName(tools(mem, ids), 'memory_graph');
+    await graph.execute(
+      { start: 'me', maxDepth: 1_000, limit: 1_000_000 },
+      { userId: USER_ID },
+    );
+    const opts = spy.mock.calls[0]![1];
+    expect(opts.maxDepth).toBe(5);
+    expect(opts.limit).toBe(500);
+  });
+
+  it('memory_search clamps topK to 100', async () => {
+    const mem = makeMem();
+    const ids = await bootstrap(mem);
+    const spy = vi.spyOn(mem, 'semanticSearch');
+    // Make it not throw the "no embedder" error — return empty.
+    spy.mockResolvedValue([]);
+    const search = toolByName(tools(mem, ids), 'memory_search');
+    await search.execute({ query: 'x', topK: 10_000 }, { userId: USER_ID });
+    const topK = spy.mock.calls[0]![3];
+    expect(topK).toBe(100);
+  });
+
+  it('memory_list_facts clamps limit to 200', async () => {
+    const mem = makeMem();
+    const ids = await bootstrap(mem);
+    const spy = vi.spyOn(mem, 'findFacts');
+    const listFacts = toolByName(tools(mem, ids), 'memory_list_facts');
+    await listFacts.execute(
+      { subject: 'me', limit: 1_000_000 },
+      { userId: USER_ID },
+    );
+    const opts = spy.mock.calls[0]![1];
+    expect(opts.limit).toBe(200);
+  });
+
+  it('memory_recall clamps topFactsLimit to 100 and neighborDepth to 5', async () => {
+    const mem = makeMem();
+    const ids = await bootstrap(mem);
+    const spy = vi.spyOn(mem, 'getContext');
+    const recall = toolByName(tools(mem, ids), 'memory_recall');
+    await recall.execute(
+      {
+        subject: 'me',
+        topFactsLimit: 5_000,
+        neighborDepth: 99,
+        include: ['neighbors'],
+      },
+      { userId: USER_ID },
+    );
+    const opts = spy.mock.calls[0]![1];
+    expect(opts.topFactsLimit).toBe(100);
+    expect(opts.neighborDepth).toBe(5);
+  });
+
+  it('memory_find_entity (list) clamps limit to 200', async () => {
+    const mem = makeMem();
+    const ids = await bootstrap(mem);
+    const spy = vi.spyOn(mem, 'listEntities');
+    const find = toolByName(tools(mem, ids), 'memory_find_entity');
+    await find.execute(
+      { action: 'list', by: { type: 'person' }, limit: 1_000_000 },
+      { userId: USER_ID },
+    );
+    const opts = spy.mock.calls[0]![1];
+    expect(opts.limit).toBe(200);
+  });
+});
+
+// ===========================================================================
+// memory_list_facts archivedOnly rename semantics
+// ===========================================================================
+
+describe('memory_list_facts — archivedOnly semantics', () => {
+  it('default returns only non-archived facts', async () => {
+    const mem = makeMem();
+    const ids = await bootstrap(mem);
+    const live = await mem.addFact(
+      { subjectId: ids.userEntityId, predicate: 'note', kind: 'atomic', value: 'live' },
+      { userId: USER_ID },
+    );
+    const stale = await mem.addFact(
+      { subjectId: ids.userEntityId, predicate: 'note', kind: 'atomic', value: 'stale' },
+      { userId: USER_ID },
+    );
+    await mem.archiveFact(stale.id, { userId: USER_ID });
+    const listFacts = toolByName(tools(mem, ids), 'memory_list_facts');
+    const r: any = await listFacts.execute(
+      { subject: 'me', predicate: 'note' },
+      { userId: USER_ID },
+    );
+    const ids2 = r.facts.map((f: any) => f.id);
+    expect(ids2).toContain(live.id);
+    expect(ids2).not.toContain(stale.id);
+  });
+
+  it('archivedOnly:true returns only archived facts', async () => {
+    const mem = makeMem();
+    const ids = await bootstrap(mem);
+    const live = await mem.addFact(
+      { subjectId: ids.userEntityId, predicate: 'note', kind: 'atomic', value: 'live' },
+      { userId: USER_ID },
+    );
+    const stale = await mem.addFact(
+      { subjectId: ids.userEntityId, predicate: 'note', kind: 'atomic', value: 'stale' },
+      { userId: USER_ID },
+    );
+    await mem.archiveFact(stale.id, { userId: USER_ID });
+    const listFacts = toolByName(tools(mem, ids), 'memory_list_facts');
+    const r: any = await listFacts.execute(
+      { subject: 'me', predicate: 'note', archivedOnly: true },
+      { userId: USER_ID },
+    );
+    const factIds = r.facts.map((f: any) => f.id);
+    expect(factIds).toContain(stale.id);
+    expect(factIds).not.toContain(live.id);
+  });
+});
+
+// ===========================================================================
+// memory_search — strict ISO date validation
+// ===========================================================================
+
+describe('memory_search — strict date validation', () => {
+  it('returns structured error for invalid observedAfter', async () => {
+    const mem = makeMem();
+    const ids = await bootstrap(mem);
+    const search = toolByName(tools(mem, ids), 'memory_search');
+    const r: any = await search.execute(
+      { query: 'anything', filter: { observedAfter: 'not-a-date' } },
+      { userId: USER_ID },
+    );
+    expect(r.error).toMatch(/invalid observedAfter/);
+  });
+
+  it('returns structured error for invalid observedBefore', async () => {
+    const mem = makeMem();
+    const ids = await bootstrap(mem);
+    const search = toolByName(tools(mem, ids), 'memory_search');
+    const r: any = await search.execute(
+      { query: 'anything', filter: { observedBefore: 'garbage' } },
+      { userId: USER_ID },
+    );
+    expect(r.error).toMatch(/invalid observedBefore/);
   });
 });

@@ -98,6 +98,13 @@ export interface MemoryToolDeps {
    */
   defaultUserId?: string;
   /**
+   * **Trusted** group id, set by the host app via plugin config. Tools
+   * stamp this onto every `ScopeFilter` and NEVER accept a groupId from LLM
+   * tool arguments — that would let a user claim arbitrary group membership
+   * and read/write other groups' records. See the security review.
+   */
+  defaultGroupId?: string;
+  /**
    * Called after any write-through tool that targets the user or agent
    * subject. The plugin listens to this to invalidate its rendered-content
    * cache so the next `getContent()` call re-fetches.
@@ -141,19 +148,40 @@ export interface MemoryToolError {
 
 /**
  * Helper to build a scope from the tool context + plugin defaults.
- * `userId` falls back to `defaultUserId`; `groupId` is not yet plumbed
- * through `ToolContext` — callers that need group-scoped access should
- * pass `groupId` as a tool argument explicitly.
+ *
+ * `userId` falls back to `defaultUserId` (plugin config), which in turn falls
+ * back to undefined. `groupId` comes EXCLUSIVELY from `defaultGroupId` (plugin
+ * config, trusted) — tools do NOT accept a groupId argument from the LLM. See
+ * the security review for why: LLM-provided scope would let a user escalate
+ * into arbitrary groups.
  */
 export function resolveScope(
   contextUserId: string | undefined,
   defaultUserId: string | undefined,
-  groupId?: string,
+  defaultGroupId?: string,
 ): ScopeFilter {
   return {
     userId: contextUserId ?? defaultUserId,
-    groupId,
+    groupId: defaultGroupId,
   };
+}
+
+/**
+ * Clamp a caller-supplied numeric limit to a safe range. Tool args are
+ * LLM-controllable; unbounded values can DoS the adapter (native $graphLookup
+ * with `maxDepth: 1000`, semanticSearch with `topK: 100_000`, etc.).
+ *
+ * - Negative or `NaN` values fall back to `defaultVal`.
+ * - Values above `max` are clamped to `max`.
+ */
+export function clamp(
+  value: number | undefined,
+  defaultVal: number,
+  max: number,
+): number {
+  const v = typeof value === 'number' && !Number.isNaN(value) ? value : defaultVal;
+  if (v < 0) return defaultVal;
+  return Math.min(v, max);
 }
 
 // Re-export for convenience at the tool layer.

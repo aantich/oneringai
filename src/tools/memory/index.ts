@@ -41,6 +41,7 @@ export {
   SUBJECT_TOKEN_THIS_AGENT,
   visibilityToPermissions,
   resolveScope,
+  clamp,
 } from './types.js';
 export { createSubjectResolver } from './resolveSubject.js';
 export { createRecallTool } from './recall.js';
@@ -56,6 +57,12 @@ export interface CreateMemoryToolsArgs {
   memory: MemorySystem;
   agentId: string;
   defaultUserId?: string;
+  /**
+   * **Trusted** group id from the host app. Closed into tool deps so every
+   * memory call uses this groupId. Tools do NOT accept a groupId arg from the
+   * LLM — see the security review. Leave undefined for non-grouped deployments.
+   */
+  defaultGroupId?: string;
   defaultVisibility?: {
     forUser?: Visibility;
     forAgent?: Visibility;
@@ -87,6 +94,7 @@ export function createMemoryTools(args: CreateMemoryToolsArgs): ToolFunction[] {
     resolve,
     agentId: args.agentId,
     defaultUserId: args.defaultUserId,
+    defaultGroupId: args.defaultGroupId,
     onWriteToOwnSubjects: args.onWriteToOwnSubjects,
     getOwnSubjectIds,
     defaultVisibility: {
