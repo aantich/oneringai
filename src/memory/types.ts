@@ -565,6 +565,31 @@ export interface MemorySystemConfig {
   topFactsRanking?: RankingConfig;
   embeddingQueue?: EmbeddingQueueConfig;
   entityResolution?: EntityResolutionConfig;
+  /**
+   * Pluggable predicate vocabulary. When present, `addFact` canonicalizes the
+   * predicate (camelCase/dash/alias → snake_case), applies `defaultImportance`
+   * / `isAggregate` defaults, auto-supersedes prior facts for `singleValued`
+   * predicates, and folds registry weights into ranking. Absent = free-form
+   * predicate strings (pre-registry behavior).
+   *
+   * Pass `PredicateRegistry.standard()` for the built-in 51-predicate starter
+   * set, `PredicateRegistry.empty()` plus `.registerAll(...)` for a fully
+   * custom vocabulary.
+   */
+  predicates?: import('./predicates/PredicateRegistry.js').PredicateRegistry;
+  /**
+   * 'strict' rejects any `addFact` whose (canonicalized) predicate is not in
+   * the registry. 'permissive' (default) writes unknowns verbatim — they show
+   * up in `IngestionResult.newPredicates` for drift monitoring.
+   * Throws at construction if set to 'strict' without a registry.
+   */
+  predicateMode?: 'permissive' | 'strict';
+  /**
+   * When true (default), `addFact` auto-supersedes the prior visible fact for
+   * a `(subject, predicate)` pair when the predicate is marked `singleValued`.
+   * Set to false to opt out while still getting canonicalization + defaults.
+   */
+  predicateAutoSupersede?: boolean;
   onChange?: (event: ChangeEvent) => void;
 }
 

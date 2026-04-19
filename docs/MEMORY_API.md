@@ -15,9 +15,10 @@ All public symbols are exported from `@everworker/oneringai/src/memory/index.js`
 5. [Integration Layer](#integration-layer)
 6. [Extraction Helpers](#extraction-helpers)
 7. [Ranking](#ranking)
-8. [Events](#events)
-9. [Errors](#errors)
-10. [Type Reference](#type-reference)
+8. [Predicate Registry](#predicate-registry)
+9. [Events](#events)
+10. [Errors](#errors)
+11. [Type Reference](#type-reference)
 
 ---
 
@@ -185,6 +186,9 @@ interface MemorySystemConfig {
   topFactsRanking?: RankingConfig;              // default half-life 90d, min confidence 0.2
   embeddingQueue?: EmbeddingQueueConfig;        // default concurrency 4, retries 3
   entityResolution?: EntityResolutionConfig;    // default threshold 0.90, minFuzzy 0.85, identityEmbedding enabled
+  predicates?: PredicateRegistry;               // optional; canonicalization + defaults + auto-supersede (see below)
+  predicateMode?: 'permissive' | 'strict';      // default 'permissive'; strict rejects unknowns
+  predicateAutoSupersede?: boolean;             // default true; controls singleValued auto-supersede
   onChange?: (event: ChangeEvent) => void;      // fire-and-forget event hook
 }
 ```
@@ -1004,6 +1008,137 @@ Where:
 - If `confidence < minConfidence`, score is 0.
 
 `rankFacts` returns the sorted list descending, with zero-scored facts filtered out.
+
+---
+
+## Predicate Registry
+
+Pluggable vocabulary for fact predicates. Optional — when no registry is configured, predicates remain free-form strings (canonicalization is a no-op). When a registry is attached, `addFact` gains:
+
+- **Canonicalization.** `worksAt`, `works-at`, `employed_by` all collapse to `works_at` before storage.
+- **Default importance.** When the caller omits `importance`, the registry's `defaultImportance` is applied (falls back to ranking default 0.5 otherwise).
+- **Default `isAggregate`.** For aggregate predicates like `interaction_count`.
+- **Auto-supersede for `singleValued` predicates.** Writing `current_title` twice for the same subject auto-archives the first. Disable globally via `predicateAutoSupersede: false`.
+- **Ranking weights.** Registry `rankingWeight` values fold into `RankingConfig.predicateWeights`. User-supplied weights win on collision.
+- **LLM prompt rendering.** `registry.renderForPrompt()` produces a markdown vocabulary block for injection into extraction prompts.
+
+### Shape
+
+```ts
+interface PredicateDefinition {
+  name: string;                         // canonical snake_case — the id
+  description: string;
+  category: string;                     // 'identity' | 'task' | 'communication' | …
+  payloadKind?: 'relational' | 'attribute' | 'narrative';
+  subjectTypes?: string[];
+  objectTypes?: string[];
+  inverse?: string;                     // e.g. reports_to ↔ manages
+  aliases?: string[];                   // alternate surface forms → this
+  defaultImportance?: number;           // 0..1
+  rankingWeight?: number;               // default 1.0 in RankingConfig
+  isAggregate?: boolean;                // updates in place; mutually exclusive with singleValued
+  singleValued?: boolean;               // auto-supersede prior on new write
+  examples?: string[];
+}
+
+class PredicateRegistry {
+  static standard(): PredicateRegistry;                // 51-predicate starter set
+  static empty(): PredicateRegistry;
+
+  register(def: PredicateDefinition): this;
+  registerAll(defs: PredicateDefinition[]): this;
+  unregister(name: string): this;
+
+  get(nameOrAlias: string): PredicateDefinition | null;
+  has(nameOrAlias: string): boolean;
+
+  canonicalize(input: string): string;
+
+  list(filter?: { categories?: string[]; subjectType?: string }): PredicateDefinition[];
+  categories(): string[];
+
+  renderForPrompt(opts?: {
+    categories?: string[];
+    subjectType?: string;
+    maxPerCategory?: number;                            // default 5
+  }): string;
+
+  toRankingWeights(base?: Record<string, number>): Record<string, number>;
+}
+```
+
+### Standard library
+
+`PredicateRegistry.standard()` returns a fresh registry with 51 predicates across 9 categories:
+
+| Category | Predicates |
+|---|---|
+| identity | works_at, reports_to, current_title, current_role, located_in, is_member_of, founded |
+| organizational | part_of, subsidiary_of, manages, owns, acquired, merged_with |
+| task | assigned_task, committed_to, completed, created, reviewed, approved, blocked_by, depends_on, has_due_date, has_priority |
+| state | state_changed, has_status, current_status |
+| communication | emailed, called, messaged, met_with, mentioned, cc_ed, responded_to, interaction_count *(aggregate)* |
+| observation | observed_topic, expressed_concern, expressed_interest, acknowledged, noted |
+| temporal | occurred_on, scheduled_for, started_on, ended_on |
+| document | profile, biography, memo, meeting_notes, research_note |
+| social | knows, works_with, colleague_of |
+
+`singleValued`: `current_title`, `current_role`, `has_due_date`, `has_priority`, `has_status`, `current_status`, `started_on`, `ended_on`. `isAggregate`: `interaction_count`.
+
+**Note:** `profile` is consumed by `MemorySystem.getContext` (document fact with predicate=`profile` is the canonical per-entity profile). Do not rename.
+
+### Usage
+
+```ts
+import { MemorySystem, PredicateRegistry } from '@everworker/oneringai';
+
+// Use the standard library as-is.
+const memory = new MemorySystem({
+  store,
+  predicates: PredicateRegistry.standard(),
+});
+
+// Extend the standard library with your own predicates.
+const custom = PredicateRegistry.standard();
+custom.register({
+  name: 'invested_in',
+  description: 'Investor relationship.',
+  category: 'task',
+  rankingWeight: 1.3,
+  defaultImportance: 0.9,
+});
+const memory2 = new MemorySystem({ store, predicates: custom });
+
+// Build your own vocabulary from scratch.
+const domain = PredicateRegistry.empty().registerAll([
+  { name: 'patient_of', description: 'Patient-doctor relation.', category: 'clinical' },
+  // ...
+]);
+const memory3 = new MemorySystem({ store, predicates: domain, predicateMode: 'strict' });
+```
+
+### Strict vs. permissive mode
+
+- **permissive** (default): unknown predicates are accepted and canonicalized; they show up in `IngestionResult.newPredicates` for vocabulary-drift review.
+- **strict**: `addFact` throws when the predicate is not in the registry. Strict rejections through `ExtractionResolver` land in `IngestionResult.unresolved` AND `newPredicates`.
+
+Setting `predicateMode: 'strict'` without a `predicates` registry throws at `MemorySystem` construction.
+
+### Auto-supersession scope isolation
+
+Auto-supersession for `singleValued` predicates is scope-bounded: it only archives prior facts visible to the caller. A user-scoped write cannot implicitly archive a group-scoped prior (and vice-versa). This means a `singleValued` predicate can have multiple per-scope "current" values — intentional for isolation, surprising if unexpected.
+
+### Prompt rendering
+
+```ts
+const prompt = defaultExtractionPrompt({
+  signalText,
+  predicateRegistry: PredicateRegistry.standard(),
+  maxPredicatesPerCategory: 5,         // default
+});
+```
+
+The rendered block is appended to the default extraction prompt. LLM output predicates canonicalize + dedupe at ingest time; unknowns surface in `IngestionResult.newPredicates`.
 
 ---
 

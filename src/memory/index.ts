@@ -83,6 +83,10 @@ export type {
 export { genericTraverse } from './GenericTraversal.js';
 export { scoreFact, rankFacts } from './Ranking.js';
 
+// Predicate library — pluggable vocabulary with ~50-predicate standard set.
+export { PredicateRegistry, STANDARD_PREDICATES } from './predicates/index.js';
+export type { PredicateDefinition } from './predicates/index.js';
+
 // ---- Types ----
 export type {
   // Ids + primitives

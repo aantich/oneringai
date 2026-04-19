@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Predicate Registry** — pluggable fact-predicate vocabulary for the memory layer (`src/memory/predicates/`)
+  - `PredicateRegistry` class + `PredicateDefinition` type with canonical name, category, aliases, default importance, ranking weight, `singleValued`/`isAggregate` semantics, and LLM-prompt metadata
+  - `PredicateRegistry.standard()` — 51-predicate starter library across 9 categories (identity, organizational, task, state, communication, observation, temporal, document, social)
+  - `PredicateRegistry.empty()` — for fully custom vocabularies
+  - Canonicalization: camelCase/dash/whitespace → snake_case, alias resolution (case-insensitive)
+  - `renderForPrompt()` — markdown vocabulary block for injection into LLM extraction prompts; configurable `maxPerCategory` cap
+  - `toRankingWeights()` — merges registry weights into `RankingConfig.predicateWeights` (user weights win on collision)
+  - `MemorySystemConfig.predicates` (optional registry), `predicateMode: 'permissive'|'strict'` (default permissive), `predicateAutoSupersede: boolean` (default true)
+  - `MemorySystem.addFact`: canonicalizes predicates; applies `defaultImportance`/`isAggregate`; auto-supersedes `singleValued` predecessors (scope-bounded); rejects unknowns in strict mode
+  - `MemorySystem.canonicalizePredicate`, `hasPredicateRegistry`, `getPredicateDefinition` public methods
+  - `defaultExtractionPrompt` accepts `predicateRegistry` + `maxPredicatesPerCategory`; renders vocabulary block when present
+  - `ExtractionResolver.IngestionResult.newPredicates` — deduped list of canonicalized unknowns seen in LLM output (vocabulary-drift signal)
+  - 76 new unit tests; full memory suite (19 files, 401 tests) + full project suite (4509 tests) green
 - **TemplateEngine** — Extensible template substitution for agent instructions (`src/core/TemplateEngine.ts`)
   - `{{COMMAND}}` and `{{COMMAND:arg}}` syntax with colon-separated arguments
   - Two-phase processing: **static** handlers resolve once at agent creation (AGENT_ID, AGENT_NAME, MODEL, VENDOR, USER_ID), **dynamic** handlers resolve every LLM call (DATE, TIME, DATETIME, RANDOM)

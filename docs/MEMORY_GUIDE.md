@@ -16,13 +16,14 @@ This guide is task-oriented and assumes you've at least skimmed the API referenc
 6. [Modeling your domain](#modeling-your-domain)
 7. [Writing knowledge](#writing-knowledge)
 8. [Reading knowledge](#reading-knowledge)
-9. [The LLM extraction pipeline](#the-llm-extraction-pipeline)
-10. [Entity resolution in practice](#entity-resolution-in-practice)
-11. [Profile generation](#profile-generation)
-12. [Scope and multi-tenancy](#scope-and-multi-tenancy)
-13. [Common patterns](#common-patterns)
-14. [Scaling](#scaling)
-15. [Troubleshooting](#troubleshooting)
+9. [Controlling the predicate vocabulary](#controlling-the-predicate-vocabulary)
+10. [The LLM extraction pipeline](#the-llm-extraction-pipeline)
+11. [Entity resolution in practice](#entity-resolution-in-practice)
+12. [Profile generation](#profile-generation)
+13. [Scope and multi-tenancy](#scope-and-multi-tenancy)
+14. [Common patterns](#common-patterns)
+15. [Scaling](#scaling)
+16. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -1029,6 +1030,89 @@ const projects = await store.listEntities(
   scope,
 );
 ```
+
+---
+
+## Controlling the predicate vocabulary
+
+Facts have predicates — strings like `works_at`, `assigned_task`, `has_status`. Left unconstrained, an LLM will drift: `worksAt`, `works-at`, `employed_by`, `works_for` all describe the same relationship but won't aggregate, rank, or query as one. The **predicate registry** is the fix.
+
+### Three use patterns
+
+```ts
+import { PredicateRegistry, MemorySystem } from '@everworker/oneringai';
+
+// Pattern 1: ship with the 51-predicate starter set.
+const memory = new MemorySystem({
+  store,
+  predicates: PredicateRegistry.standard(),
+});
+
+// Pattern 2: extend the starter set with your domain.
+const registry = PredicateRegistry.standard();
+registry.register({
+  name: 'invested_in',
+  description: 'Investor relationship.',
+  category: 'task',
+  rankingWeight: 1.3,
+  defaultImportance: 0.9,
+});
+
+// Pattern 3: build a fully custom vocabulary and run in strict mode.
+const clinical = PredicateRegistry.empty().registerAll([
+  { name: 'patient_of', description: '...', category: 'clinical' },
+  { name: 'prescribed', description: '...', category: 'clinical' },
+]);
+const memory2 = new MemorySystem({
+  store,
+  predicates: clinical,
+  predicateMode: 'strict',  // reject anything outside the vocabulary
+});
+```
+
+### What the registry does
+
+When attached to `MemorySystem`, every `addFact` call:
+
+1. **Canonicalizes.** `worksAt` → `works_at`. `employed_by` → `works_at` (alias). `works-at` → `works_at`.
+2. **Applies defaults.** Registry `defaultImportance` fills in for callers that omit importance. Registry `isAggregate` applies to predicates like `interaction_count`.
+3. **Auto-supersedes `singleValued`.** Writing `current_title` twice for the same subject auto-archives the first — only the latest is the "current" value. Disable globally with `predicateAutoSupersede: false` if you want append-only semantics.
+4. **Feeds ranking.** Registry `rankingWeight` values merge into `RankingConfig.predicateWeights`. User-supplied weights always win on collision.
+
+### Feeding the vocabulary to the LLM
+
+Pass the registry into the extraction prompt so the model learns the house style:
+
+```ts
+import { defaultExtractionPrompt } from '@everworker/oneringai';
+
+const prompt = defaultExtractionPrompt({
+  signalText: emailBody,
+  predicateRegistry: registry,
+  maxPredicatesPerCategory: 5,  // cap by category for prompt token budget
+});
+// Send to LLM …
+```
+
+The LLM sees a "Predicate vocabulary" block and will prefer the canonical names. It can still invent new ones — those come out as `IngestionResult.newPredicates` for drift review.
+
+### Drift monitoring
+
+```ts
+const result = await resolver.resolveAndIngest(llmOutput, signalId, scope);
+if (result.newPredicates.length > 0) {
+  // LLM invented these. Periodically review:
+  //   - Promote frequent newcomers into the registry.
+  //   - Tighten the prompt if they're duplicates of canonical names.
+  console.log('Unknown predicates seen:', result.newPredicates);
+}
+```
+
+In `strict` mode, unknown predicates are rejected at `addFact`; they surface in both `IngestionResult.unresolved` and `IngestionResult.newPredicates`.
+
+### Scope caveat for auto-supersede
+
+Auto-supersede only archives facts visible to the caller. A group-scoped `current_title` fact won't be touched by a user-scoped write (and vice versa). This is intentional — scope isolation is never broken — but it means the same `singleValued` predicate can have multiple "current" values across scopes. Usually fine; just know it's happening.
 
 ---
 

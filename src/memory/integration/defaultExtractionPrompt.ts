@@ -12,6 +12,7 @@
  * (domain-specific predicate vocabularies, extra metadata, etc.).
  */
 
+import type { PredicateRegistry } from '../predicates/PredicateRegistry.js';
 import type { IEntity, ScopeFields } from '../types.js';
 
 export interface ExtractionPromptContext {
@@ -25,6 +26,15 @@ export interface ExtractionPromptContext {
   knownEntities?: IEntity[];
   /** Reference date for interpreting relative dates ("next Friday"). Defaults to today. */
   referenceDate?: Date;
+  /**
+   * When present, the registry's vocabulary is rendered into the prompt so the
+   * LLM learns the canonical predicate names + aliases + examples. The LLM may
+   * still invent new predicates; unknowns canonicalize at write time and land
+   * in `IngestionResult.newPredicates` for review.
+   */
+  predicateRegistry?: PredicateRegistry;
+  /** Cap on predicates shown per category (keeps prompt token budget bounded). Default 5. */
+  maxPredicatesPerCategory?: number;
 }
 
 export function defaultExtractionPrompt(ctx: ExtractionPromptContext): string {
@@ -34,11 +44,16 @@ export function defaultExtractionPrompt(ctx: ExtractionPromptContext): string {
     targetScope,
     knownEntities,
     referenceDate = new Date(),
+    predicateRegistry,
+    maxPredicatesPerCategory = 5,
   } = ctx;
 
   const source = signalSourceDescription ? `Source: ${signalSourceDescription}\n` : '';
   const scopeDescription = describeScope(targetScope ?? {});
   const knownSection = renderKnownEntities(knownEntities);
+  const predicateSection = predicateRegistry
+    ? '\n\n' + predicateRegistry.renderForPrompt({ maxPerCategory: maxPredicatesPerCategory })
+    : '';
 
   return `You are extracting structured memory from a signal (email, message, document excerpt, etc.).
 Your output populates a knowledge graph of entities (people, organizations, tasks, events, projects, topics) and facts (triples) about them.
@@ -97,7 +112,7 @@ Return JSON with exactly two top-level keys:
 7. **Confidence** reflects how sure you are the fact is TRUE, not how important it is.
 8. **One observation = one fact.** If the same fact is stated multiple times, emit it once.
 9. **Skip pleasantries, greetings, boilerplate.** Extract only what carries knowledge.
-10. **Output ONLY the JSON.** No surrounding prose, no code fences.`;
+10. **Output ONLY the JSON.** No surrounding prose, no code fences.${predicateSection}`;
 }
 
 // -------------------------------------------------------------------------

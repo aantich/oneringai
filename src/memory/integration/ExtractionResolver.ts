@@ -76,6 +76,14 @@ export interface IngestionResult {
   mergeCandidates: Array<{ label: string; surface: string; candidates: EntityCandidate[] }>;
   /** Mention labels or facts that couldn't be resolved/written. */
   unresolved: IngestionError[];
+  /**
+   * Canonicalized predicates in the LLM output that are NOT in the memory
+   * system's predicate registry. Useful for detecting vocabulary drift —
+   * periodically review and either promote to the registry or refine the
+   * prompt. Empty when no registry is configured.
+   * Deduped.
+   */
+  newPredicates: string[];
 }
 
 export interface ExtractionResolverOptions {
@@ -150,6 +158,8 @@ export class ExtractionResolver {
     // ----- Pass 2: facts → written facts -----
     const writtenFacts: IFact[] = [];
     const factSpecs = output.facts ?? [];
+    const hasRegistry = this.memory.hasPredicateRegistry();
+    const newPredicatesSet = new Set<string>();
 
     for (let i = 0; i < factSpecs.length; i++) {
       const spec = factSpecs[i]!;
@@ -193,10 +203,18 @@ export class ExtractionResolver {
           if (skip) continue;
         }
 
+        // Canonicalize the predicate and track unknowns for vocabulary-drift
+        // monitoring. Strict-mode rejection happens inside addFact and lands
+        // in `unresolved` via the surrounding try/catch.
+        const predicate = this.memory.canonicalizePredicate(spec.predicate);
+        if (hasRegistry && !this.memory.getPredicateDefinition(predicate)) {
+          newPredicatesSet.add(predicate);
+        }
+
         const fact = await this.memory.addFact(
           {
             subjectId,
-            predicate: spec.predicate,
+            predicate,
             kind: spec.kind ?? 'atomic',
             objectId,
             value: spec.value,
@@ -226,6 +244,7 @@ export class ExtractionResolver {
       facts: writtenFacts,
       mergeCandidates,
       unresolved,
+      newPredicates: Array.from(newPredicatesSet).sort(),
     };
   }
 }

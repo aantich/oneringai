@@ -14,6 +14,8 @@ import { assertNotDestroyed } from '../domain/interfaces/IDisposable.js';
 import type { IDisposable } from '../domain/interfaces/IDisposable.js';
 import { genericTraverse } from './GenericTraversal.js';
 import { rankFacts } from './Ranking.js';
+import type { PredicateRegistry } from './predicates/PredicateRegistry.js';
+import type { PredicateDefinition } from './predicates/types.js';
 import { EntityResolver, buildIdentityString } from './resolution/EntityResolver.js';
 import type {
   ChangeEvent,
@@ -111,6 +113,9 @@ export class MemorySystem implements IDisposable {
   private readonly queue: EmbeddingQueue;
   private readonly resolver: EntityResolver;
   private readonly resolutionConfig: EntityResolutionConfig;
+  private readonly predicates?: PredicateRegistry;
+  private readonly predicateMode: 'permissive' | 'strict';
+  private readonly predicateAutoSupersede: boolean;
 
   /** Tracks pending profile regenerations per (entityId + scopeKey) to prevent overlap. */
   private readonly regenInFlight = new Set<string>();
@@ -123,7 +128,24 @@ export class MemorySystem implements IDisposable {
     this.profileGenerator = config.profileGenerator;
     this.ruleEngine = config.ruleEngine;
     this.profileThreshold = config.profileRegenerationThreshold ?? DEFAULT_PROFILE_THRESHOLD;
-    this.ranking = config.topFactsRanking ?? {};
+    this.predicates = config.predicates;
+    this.predicateMode = config.predicateMode ?? 'permissive';
+    this.predicateAutoSupersede = config.predicateAutoSupersede ?? true;
+    if (this.predicateMode === 'strict' && !this.predicates) {
+      throw new Error(
+        "MemorySystem: predicateMode='strict' requires a `predicates` registry",
+      );
+    }
+    // Fold registry ranking weights into the base ranking config. Caller-supplied
+    // weights win on collision — user config always trumps registry defaults.
+    const userWeights = config.topFactsRanking?.predicateWeights ?? {};
+    const mergedWeights = this.predicates
+      ? this.predicates.toRankingWeights(userWeights)
+      : userWeights;
+    this.ranking = {
+      ...(config.topFactsRanking ?? {}),
+      predicateWeights: mergedWeights,
+    };
     this.onChange = config.onChange;
     this.queue = new EmbeddingQueue(this.store, this.embedder, config.embeddingQueue);
     this.resolutionConfig = config.entityResolution ?? {};
@@ -497,6 +519,27 @@ export class MemorySystem implements IDisposable {
   // Facts
   // ==========================================================================
 
+  /**
+   * Normalize a predicate string to its canonical form. When no registry is
+   * configured, returns the input unchanged.
+   *
+   * Used by ExtractionResolver and available to external callers that want to
+   * pre-normalize predicates before querying.
+   */
+  canonicalizePredicate(input: string): string {
+    return this.predicates ? this.predicates.canonicalize(input) : input;
+  }
+
+  /** True when a predicate registry is configured on this MemorySystem. */
+  hasPredicateRegistry(): boolean {
+    return !!this.predicates;
+  }
+
+  /** Lookup a predicate definition (by canonical name or alias). Null when no registry or unknown. */
+  getPredicateDefinition(nameOrAlias: string): PredicateDefinition | null {
+    return this.predicates?.get(nameOrAlias) ?? null;
+  }
+
   async addFact(
     input: Partial<IFact> & {
       subjectId: EntityId;
@@ -506,6 +549,24 @@ export class MemorySystem implements IDisposable {
     scope: ScopeFilter,
   ): Promise<IFact> {
     assertNotDestroyed(this, 'addFact');
+
+    // Predicate canonicalization + registry-driven defaults.
+    // When no registry is configured, `predicate` is left as-is and `def` is
+    // undefined — addFact behaves exactly as before.
+    const predicate = this.predicates
+      ? this.predicates.canonicalize(input.predicate)
+      : input.predicate;
+    if (
+      this.predicateMode === 'strict' &&
+      this.predicates &&
+      !this.predicates.has(predicate)
+    ) {
+      throw new Error(
+        `addFact: predicate '${input.predicate}' (canonical: '${predicate}') ` +
+          `not in registry. Use predicateMode='permissive' or register the predicate.`,
+      );
+    }
+    const def = this.predicates?.get(predicate);
 
     const subject = await this.store.getEntity(input.subjectId, scope);
     if (!subject) throw new Error(`addFact: subject entity ${input.subjectId} not found`);
@@ -539,10 +600,27 @@ export class MemorySystem implements IDisposable {
     const factScope = deriveFactScope(input, subject, scope);
     assertScopeInvariant(subject, factScope);
 
+    // Auto-supersede for singleValued predicates (e.g. current_title, has_due_date).
+    // Only fires when: registry knows the predicate, it's marked singleValued,
+    // auto-supersede is enabled, and the caller did not set `supersedes` already.
+    //
+    // Scope caveat: findFacts is scope-bounded. A prior fact in an outer scope
+    // invisible to the caller will not be superseded — this is intentional for
+    // isolation, but can produce multiple per-scope 'current' values.
+    let supersedes = input.supersedes;
+    if (!supersedes && this.predicateAutoSupersede && def?.singleValued) {
+      const prior = await this.store.findFacts(
+        { subjectId: input.subjectId, predicate, archived: false },
+        { limit: 1, orderBy: { field: 'createdAt', direction: 'desc' } },
+        scope,
+      );
+      if (prior.items.length > 0) supersedes = prior.items[0]!.id;
+    }
+
     const now = new Date();
     const newFact: NewFact = {
       subjectId: input.subjectId,
-      predicate: input.predicate,
+      predicate,
       kind: input.kind,
       objectId: input.objectId,
       value: input.value,
@@ -553,11 +631,11 @@ export class MemorySystem implements IDisposable {
       confidence: input.confidence,
       sourceSignalId: input.sourceSignalId,
       derivedBy: input.derivedBy,
-      importance: input.importance,
+      importance: input.importance ?? def?.defaultImportance,
       contextIds: input.contextIds,
-      supersedes: input.supersedes,
+      supersedes,
       archived: input.archived,
-      isAggregate: input.isAggregate,
+      isAggregate: input.isAggregate ?? def?.isAggregate,
       observedAt: input.observedAt ?? now,
       validFrom: input.validFrom,
       validUntil: input.validUntil,
