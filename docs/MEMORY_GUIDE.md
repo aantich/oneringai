@@ -1728,8 +1728,6 @@ interface MemoryPluginConfig {
     forOther?: 'private' | 'group' | 'public';
   };
 
-  // Rendered-content cache TTL (ms). 30_000 default; 0 disables.
-  contentCacheMs?: number;
   // Fuzzy-match threshold for {surface} lookups. Default 0.9 (conservative).
   autoResolveThreshold?: number;
 }

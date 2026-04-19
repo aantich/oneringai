@@ -105,14 +105,9 @@ export interface MemoryToolDeps {
    */
   defaultGroupId?: string;
   /**
-   * Called after any write-through tool that targets the user or agent
-   * subject. The plugin listens to this to invalidate its rendered-content
-   * cache so the next `getContent()` call re-fetches.
-   */
-  onWriteToOwnSubjects?: () => void;
-  /**
-   * Entity ids bootstrapped by the plugin. Used to detect when a write
-   * touches the user or agent subject, to fire `onWriteToOwnSubjects`.
+   * Entity ids bootstrapped by the plugin. Used by the resolver to look up
+   * the `"me"` / `"this_agent"` tokens and by `memory_remember` to pick the
+   * default visibility class.
    */
   getOwnSubjectIds: () => { userEntityId?: string; agentEntityId?: string };
   /**

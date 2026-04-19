@@ -39,7 +39,6 @@ Self-learning knowledge store for agents, end-to-end. The plugin bootstraps a `p
 - Feature flag `memory: true` + `plugins.memory.memory: MemorySystem` opts in. Requires `userId` per the memory layer's owner invariant.
 - Injects ONLY two blocks: `## Agent Profile (...)` and `## Your User Profile (...)`. Each block configurable via `agentProfileInjection` / `userProfileInjection` (`topFacts` default 20, optional `factPredicates` whitelist, `relatedTasks`, `relatedEvents`, `identifiers`).
 - Entity bootstrap is idempotent via identifier-keyed upsert + an in-flight promise lock.
-- Rendered-content cache with TTL (default 30s) + write-invalidation when tools touch user/agent subjects.
 - Graceful degradation — memory-layer errors log via `logger.warn` and return a placeholder, never fail context prep.
 
 **New tools** (`src/tools/memory/`):
@@ -64,7 +63,7 @@ Self-learning knowledge store for agents, end-to-end. The plugin bootstraps a `p
 - `UserInfoPluginNextGen` and `PersistentInstructionsPluginNextGen` are marked `@deprecated`. They keep working unchanged; new code should prefer `MemoryPluginNextGen`. The memory plugin supersedes both with facts-over-KV, supersession-preserved history, LLM-synthesised profiles, three-principal permissions, and semantic recall.
 
 **Tests (+66):**
-- `tests/unit/core/context-nextgen/plugins/MemoryPluginNextGen.test.ts` — bootstrap, injection config, cache + invalidation, graceful degradation, tool wiring, state round-trip, trusted-groupId flow.
+- `tests/unit/core/context-nextgen/plugins/MemoryPluginNextGen.test.ts` — bootstrap, injection config, fresh-render behavior, graceful degradation, tool wiring, state round-trip, trusted-groupId flow.
 - `tests/unit/tools/memory/memoryTools.test.ts` — one describe per tool covering SubjectRef variants, visibility → permissions, `archivedOnly` semantics, DoS clamping, security regression (groupId arg ignored), strict date validation.
 
 **Docs:**

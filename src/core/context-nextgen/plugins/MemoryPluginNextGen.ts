@@ -23,9 +23,6 @@
  *   - `getContent()` catches all memory errors, logs them, and falls back to
  *     a placeholder — context preparation must never fail because the store
  *     blipped.
- *   - Rendered content is cached with a TTL; writes through the plugin's
- *     tools that touch the user or agent subject flip a dirty flag so the
- *     next render fetches fresh.
  */
 
 import type { IContextPluginNextGen, ITokenEstimator } from '../types.js';
@@ -99,8 +96,6 @@ export interface MemoryPluginConfig {
     forAgent?: Visibility;
     forOther?: Visibility;
   };
-  /** Rendered content cache TTL in ms. 0 disables caching. Default: 30_000. */
-  contentCacheMs?: number;
   /** Fuzzy-match threshold for `{surface}` lookups. Default: 0.9. */
   autoResolveThreshold?: number;
   /**
@@ -165,7 +160,6 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
     forAgent: Visibility;
     forOther: Visibility;
   };
-  private readonly contentCacheMs: number;
   private readonly autoResolveThreshold: number;
 
   private readonly estimator: ITokenEstimator = simpleTokenEstimator;
@@ -173,11 +167,6 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
   private userEntityId: EntityId | undefined;
   private agentEntityId: EntityId | undefined;
   private bootstrapInFlight: Promise<void> | null = null;
-
-  // Cache
-  private cachedContent: string | null = null;
-  private cachedAt = 0;
-  private dirty = true;
 
   private tokenCache = 0;
   private instructionsTokenCache: number | null = null;
@@ -212,7 +201,6 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
       forAgent: config.defaultVisibility?.forAgent ?? 'group',
       forOther: config.defaultVisibility?.forOther ?? 'private',
     };
-    this.contentCacheMs = config.contentCacheMs ?? 30_000;
     this.autoResolveThreshold = config.autoResolveThreshold ?? 0.9;
   }
 
@@ -226,16 +214,6 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
 
   async getContent(): Promise<string | null> {
     if (this.destroyed) return null;
-
-    // Cache: fresh AND not dirty → return cached directly.
-    if (
-      this.contentCacheMs > 0 &&
-      !this.dirty &&
-      this.cachedContent !== null &&
-      Date.now() - this.cachedAt < this.contentCacheMs
-    ) {
-      return this.cachedContent;
-    }
 
     try {
       await this.ensureBootstrapped();
@@ -268,9 +246,6 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
       }
 
       const rendered = blocks.length > 0 ? blocks.join('\n\n') : null;
-      this.cachedContent = rendered;
-      this.cachedAt = Date.now();
-      this.dirty = false;
       this.tokenCache = rendered ? this.estimator.estimateTokens(rendered) : 0;
       return rendered;
     } catch (err) {
@@ -287,7 +262,6 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
       );
       const placeholder = this.buildPlaceholder();
       this.tokenCache = this.estimator.estimateTokens(placeholder);
-      // Don't cache placeholders — retry on the next prepare().
       return placeholder;
     }
   }
@@ -333,9 +307,6 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
           userEntityId: this.userEntityId,
           agentEntityId: this.agentEntityId,
         }),
-        onWriteToOwnSubjects: () => {
-          this.dirty = true;
-        },
       });
     }
     return this.cachedTools;
@@ -343,7 +314,6 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
 
   destroy(): void {
     this.destroyed = true;
-    this.cachedContent = null;
     this.cachedTools = null;
   }
 
@@ -367,25 +337,15 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
     if (typeof s.userId === 'string' && s.userId !== this.userId) {
       this.userEntityId = undefined;
       this.agentEntityId = undefined;
-      this.dirty = true;
-      this.cachedContent = null;
       return;
     }
     if (typeof s.userEntityId === 'string') this.userEntityId = s.userEntityId;
     if (typeof s.agentEntityId === 'string') this.agentEntityId = s.agentEntityId;
-    // Force a fresh render to verify the entities still exist at this scope.
-    this.dirty = true;
-    this.cachedContent = null;
   }
 
   // ---------------------------------------------------------------------------
   // Public accessors — mainly for tests / advanced callers
   // ---------------------------------------------------------------------------
-
-  /** Force the next getContent() to re-fetch from memory. */
-  invalidate(): void {
-    this.dirty = true;
-  }
 
   /** Entity IDs created (or resolved) during bootstrap. Undefined before bootstrap. */
   getBootstrappedIds(): { userEntityId?: string; agentEntityId?: string } {

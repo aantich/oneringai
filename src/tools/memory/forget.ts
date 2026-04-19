@@ -72,9 +72,6 @@ export function createForgetTool(deps: MemoryToolDeps): ToolFunction<ForgetArgs>
       try {
         if (!args.replaceWith) {
           await deps.memory.archiveFact(args.factId, scope);
-          // Cache invalidation is conservative: we don't know the archived fact's
-          // subject here, so always flip dirty — cheap vs. another round-trip.
-          deps.onWriteToOwnSubjects?.();
           return { archived: true, factId: args.factId };
         }
 
@@ -140,8 +137,6 @@ export function createForgetTool(deps: MemoryToolDeps): ToolFunction<ForgetArgs>
           },
           scope,
         );
-
-        deps.onWriteToOwnSubjects?.();
 
         const payload: Record<string, unknown> = {
           superseded: true,

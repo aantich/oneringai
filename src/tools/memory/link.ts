@@ -140,17 +140,6 @@ export function createLinkTool(deps: MemoryToolDeps): ToolFunction<LinkArgs> {
           scope,
         );
 
-        // Touch cache on either side being user/agent.
-        const own = deps.getOwnSubjectIds();
-        if (
-          fromRes.entity.id === own.userEntityId ||
-          fromRes.entity.id === own.agentEntityId ||
-          toRes.entity.id === own.userEntityId ||
-          toRes.entity.id === own.agentEntityId
-        ) {
-          deps.onWriteToOwnSubjects?.();
-        }
-
         const payload: Record<string, unknown> = {
           fact: {
             id: fact.id,

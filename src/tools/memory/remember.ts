@@ -166,9 +166,6 @@ export function createRememberTool(deps: MemoryToolDeps): ToolFunction<RememberA
           scope,
         );
 
-        // Invalidate plugin cache if this touches user or agent subject.
-        maybeInvalidate(deps, resolved.entity.id);
-
         const payload: Record<string, unknown> = {
           fact: {
             id: fact.id,
@@ -207,13 +204,6 @@ function pickDefaultVisibility(
     return deps.defaultVisibility.forAgent;
   }
   return deps.defaultVisibility.forOther;
-}
-
-function maybeInvalidate(deps: MemoryToolDeps, entityId: string): void {
-  const { userEntityId, agentEntityId } = deps.getOwnSubjectIds();
-  if (entityId === userEntityId || entityId === agentEntityId) {
-    deps.onWriteToOwnSubjects?.();
-  }
 }
 
 /**

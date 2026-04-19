@@ -121,7 +121,6 @@ describe('MemoryPluginNextGen — injection shape', () => {
     const { userEntityId } = plugin.getBootstrappedIds();
     await seedUserProfile(mem, userEntityId!, 'Alice is a power user who prefers concise replies.');
 
-    plugin.invalidate();
     const out = await plugin.getContent();
     expect(out).toMatch(/Alice is a power user/);
     // Agent profile still placeholder.
@@ -149,7 +148,6 @@ describe('MemoryPluginNextGen — injection shape', () => {
         { userId: USER_ID },
       );
     }
-    plugin.invalidate();
     const out = await plugin.getContent();
     expect(out).toMatch(/Recent top facts/);
     expect(out).toMatch(/preference_/);
@@ -173,7 +171,6 @@ describe('MemoryPluginNextGen — injection shape', () => {
       },
       { userId: USER_ID },
     );
-    plugin.invalidate();
     const out = await plugin.getContent();
     expect(out).not.toMatch(/Recent top facts/);
   });
@@ -195,7 +192,6 @@ describe('MemoryPluginNextGen — injection shape', () => {
       { subjectId: userEntityId!, predicate: 'dislikes', kind: 'atomic', value: 'verbose' },
       { userId: USER_ID },
     );
-    plugin.invalidate();
     const out = await plugin.getContent();
     expect(out).toMatch(/prefers: "concise"/);
     expect(out).not.toMatch(/dislikes/);
@@ -214,69 +210,19 @@ describe('MemoryPluginNextGen — injection shape', () => {
   });
 });
 
-describe('MemoryPluginNextGen — cache + invalidation', () => {
-  let mem: MemorySystem;
-  beforeEach(() => {
-    mem = makeMem();
-  });
-
-  it('cached getContent avoids re-fetching until TTL expires or dirty is set', async () => {
+describe('MemoryPluginNextGen — fresh render every call', () => {
+  it('each getContent call re-fetches from the memory layer', async () => {
+    const mem = makeMem();
     const plugin = new MemoryPluginNextGen({
       memory: mem,
       agentId: AGENT_ID,
       userId: USER_ID,
-      contentCacheMs: 10_000,
-    });
-    const getContextSpy = vi.spyOn(mem, 'getContext');
-    const first = await plugin.getContent();
-    const callsAfterFirst = getContextSpy.mock.calls.length;
-    expect(callsAfterFirst).toBeGreaterThan(0);
-
-    // Second call within TTL — no new getContext calls.
-    const second = await plugin.getContent();
-    expect(second).toBe(first);
-    expect(getContextSpy.mock.calls.length).toBe(callsAfterFirst);
-
-    // Invalidate explicitly — third call re-fetches.
-    plugin.invalidate();
-    await plugin.getContent();
-    expect(getContextSpy.mock.calls.length).toBeGreaterThan(callsAfterFirst);
-  });
-
-  it('contentCacheMs=0 disables caching (always re-renders)', async () => {
-    const plugin = new MemoryPluginNextGen({
-      memory: mem,
-      agentId: AGENT_ID,
-      userId: USER_ID,
-      contentCacheMs: 0,
     });
     const spy = vi.spyOn(mem, 'getContext');
     await plugin.getContent();
     const afterFirst = spy.mock.calls.length;
     await plugin.getContent();
     expect(spy.mock.calls.length).toBeGreaterThan(afterFirst);
-  });
-
-  it('tool-driven writes through onWriteToOwnSubjects flip the dirty flag', async () => {
-    const plugin = new MemoryPluginNextGen({
-      memory: mem,
-      agentId: AGENT_ID,
-      userId: USER_ID,
-    });
-    await plugin.getContent();
-    const spy = vi.spyOn(mem, 'getContext');
-    const before = spy.mock.calls.length;
-
-    // Simulate the remember tool invoking onWriteToOwnSubjects via getTools.
-    const tools = plugin.getTools();
-    const remember = tools.find((t) => t.definition.function.name === 'memory_remember')!;
-    await remember.execute(
-      { subject: 'me', predicate: 'prefers', value: 'tests' },
-      { userId: USER_ID },
-    );
-    // Next render should re-fetch because dirty flipped.
-    await plugin.getContent();
-    expect(spy.mock.calls.length).toBeGreaterThan(before);
   });
 });
 
@@ -287,7 +233,6 @@ describe('MemoryPluginNextGen — graceful degradation', () => {
     // Make getContext throw — bootstrap still runs OK, but content render fails.
     await plugin.getContent();
     vi.spyOn(mem, 'getContext').mockRejectedValue(new Error('DB down'));
-    plugin.invalidate();
     const out = await plugin.getContent();
     expect(out).toMatch(/memory unavailable/);
     // No throw — placeholder returned.

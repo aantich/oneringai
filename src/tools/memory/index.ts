@@ -71,17 +71,15 @@ export interface CreateMemoryToolsArgs {
     forOther?: Visibility;
   };
   getOwnSubjectIds?: () => { userEntityId?: string; agentEntityId?: string };
-  onWriteToOwnSubjects?: () => void;
   autoResolveThreshold?: number;
 }
 
 /**
  * Factory: build all 8 memory tools wired to a shared resolver + deps.
  *
- * When called by `MemoryPluginNextGen` the `getOwnSubjectIds` +
- * `onWriteToOwnSubjects` callbacks hook the plugin's cache. Standalone
- * callers can leave them unset — `"me"` / `"this_agent"` tokens will then
- * report "not available" until overridden.
+ * When called by `MemoryPluginNextGen` the `getOwnSubjectIds` callback hooks
+ * the plugin's bootstrapped entity ids. Standalone callers can leave it
+ * unset — `"me"` / `"this_agent"` tokens will then report "not available".
  */
 export function createMemoryTools(args: CreateMemoryToolsArgs): ToolFunction[] {
   const getOwnSubjectIds = args.getOwnSubjectIds ?? (() => ({}));
@@ -97,7 +95,6 @@ export function createMemoryTools(args: CreateMemoryToolsArgs): ToolFunction[] {
     agentId: args.agentId,
     defaultUserId: args.defaultUserId,
     defaultGroupId: args.defaultGroupId,
-    onWriteToOwnSubjects: args.onWriteToOwnSubjects,
     getOwnSubjectIds,
     defaultVisibility: {
       forUser: args.defaultVisibility?.forUser ?? 'private',
