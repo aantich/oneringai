@@ -592,6 +592,97 @@ describe('SessionIngestorPluginNextGen — H-3 truncation-aware watermark', () =
   });
 });
 
+describe('SessionIngestorPluginNextGen — C2 silent-drop logging + C4 clamping', () => {
+  let restore: (() => void) | null = null;
+  beforeEach(() => { restore?.(); restore = null; });
+
+  it('logs a warn when a fact references an unknown subject label (C2)', async () => {
+    // Extraction references a mention label that isn't in the mentions map.
+    const extraction = JSON.stringify({
+      mentions: {}, // no mentions!
+      facts: [{ subject: 'm_ghost', predicate: 'likes', value: 'x' }],
+    });
+    const stub = stubAgent([extraction]);
+    restore = stub.restore;
+    const mem = makeMem();
+    const plugin = new SessionIngestorPluginNextGen({
+      memory: mem,
+      agentId: AGENT,
+      userId: USER,
+      connectorName: 'c',
+      model: 'm',
+    });
+
+    // Spy on warn logs to confirm the drop is observable.
+    const warnings: Array<{ obj: Record<string, unknown>; msg: string }> = [];
+    const loggerModule = await import('@/infrastructure/observability/Logger.js');
+    const warnSpy = vi
+      .spyOn(loggerModule.logger, 'warn')
+      .mockImplementation((obj: unknown, msg?: string) => {
+        warnings.push({ obj: obj as Record<string, unknown>, msg: msg ?? '' });
+      });
+
+    plugin.onBeforePrepare({
+      messages: [{ id: 'p1', role: 'user', content: 'something' }],
+      currentInput: [],
+    });
+    await plugin.waitForIngest();
+
+    const drop = warnings.find((w) => w.msg.includes('subject label'));
+    expect(drop).toBeTruthy();
+    expect((drop!.obj as { missingLabel: string }).missingLabel).toBe('m_ghost');
+    expect((drop!.obj as { role: string }).role).toBe('subject');
+    expect(Array.isArray((drop!.obj as { knownLabels: string[] }).knownLabels)).toBe(true);
+    warnSpy.mockRestore();
+  });
+
+  it('clamps LLM-supplied out-of-range confidence / importance at ingest (C4)', async () => {
+    const extraction = JSON.stringify({
+      mentions: {
+        m1: { surface: 'Alice', type: 'person', identifiers: [{ kind: 'email', value: 'a@x.com' }] },
+      },
+      facts: [
+        {
+          subject: 'm_user',
+          predicate: 'likes',
+          value: 'coffee',
+          confidence: 5, // out of range
+          importance: -0.5, // out of range
+        },
+      ],
+    });
+    const stub = stubAgent([extraction]);
+    restore = stub.restore;
+    const mem = makeMem();
+    const plugin = new SessionIngestorPluginNextGen({
+      memory: mem,
+      agentId: AGENT,
+      userId: USER,
+      connectorName: 'c',
+      model: 'm',
+    });
+
+    // Spy on memory.addFact to observe the exact values going through.
+    const addFactSpy = vi.spyOn(mem, 'addFact');
+
+    plugin.onBeforePrepare({
+      messages: [{ id: 'p1', role: 'user', content: 'I like coffee' }],
+      currentInput: [],
+    });
+    await plugin.waitForIngest();
+
+    // Find the call that wrote the `likes` fact (not the user/agent bootstraps).
+    const likesCall = addFactSpy.mock.calls.find((c) => {
+      const input = c[0] as { predicate?: string };
+      return input.predicate === 'likes';
+    });
+    expect(likesCall).toBeDefined();
+    const input = likesCall![0] as { confidence?: number; importance?: number };
+    expect(input.confidence).toBe(1);
+    expect(input.importance).toBe(0);
+  });
+});
+
 describe('buildSessionExtractionPrompt', () => {
   it('includes pre-resolved m_user / m_agent labels', () => {
     const out = buildSessionExtractionPrompt({

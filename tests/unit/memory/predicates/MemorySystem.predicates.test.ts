@@ -91,6 +91,38 @@ describe('MemorySystem — constructor validation', () => {
     const store = new InMemoryAdapter();
     expect(() => new MemorySystem({ store })).not.toThrow();
   });
+
+  it("F2: throws when unknownPredicatePolicy is explicitly set without a registry", () => {
+    const store = new InMemoryAdapter();
+    expect(
+      () => new MemorySystem({ store, unknownPredicatePolicy: 'drop' }),
+    ).toThrow(/has no effect without a .predicates. registry/);
+    expect(
+      () => new MemorySystem({ store, unknownPredicatePolicy: 'fuzzy_map' }),
+    ).toThrow(/has no effect without a .predicates. registry/);
+    expect(
+      () => new MemorySystem({ store, unknownPredicatePolicy: 'keep' }),
+    ).toThrow(/has no effect without a .predicates. registry/);
+  });
+
+  it('F2: accepts unknownPredicatePolicy when a registry is provided', () => {
+    const store = new InMemoryAdapter();
+    expect(
+      () =>
+        new MemorySystem({
+          store,
+          predicates: minimalRegistry(),
+          unknownPredicatePolicy: 'drop',
+        }),
+    ).not.toThrow();
+  });
+
+  it('F2: default (no policy set) does not throw even without a registry (back-compat)', () => {
+    const store = new InMemoryAdapter();
+    // No `unknownPredicatePolicy` in config → OK. Internal default is 'fuzzy_map'
+    // but it's inert without a registry.
+    expect(() => new MemorySystem({ store })).not.toThrow();
+  });
 });
 
 describe('MemorySystem — canonicalizePredicate / registry introspection', () => {

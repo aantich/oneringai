@@ -4,7 +4,6 @@
  */
 
 import type { ToolFunction } from '../../domain/entities/Tool.js';
-import type { MemorySystem, ScopeFilter } from '../../memory/index.js';
 import type { MemoryToolDeps, SubjectRef, Visibility } from './types.js';
 import {
   SUBJECT_TOKEN_ME,
@@ -14,6 +13,7 @@ import {
   toErrorMessage,
   visibilityToPermissions,
 } from './types.js';
+import { findForeignContextIds, ownerlessSubjectWarning } from './ownership.js';
 
 export interface LinkArgs {
   from: SubjectRef;
@@ -108,18 +108,25 @@ export function createLinkTool(deps: MemoryToolDeps): ToolFunction<LinkArgs> {
       // config like `defaultVisibility.forAgent='group'`.
       let vis = args.visibility ?? pickDefaultVisibility(deps, args.from, fromRes.entity.id);
 
-      // H-2: downgrade on foreign contextIds.
       const warnings: string[] = [];
+
+      // H1: surface ownerless-from audit note. fromRes is the fact's subject.
+      const ownerlessWarn = ownerlessSubjectWarning(fromRes.entity.ownerId, scope.userId);
+      if (ownerlessWarn) warnings.push(ownerlessWarn);
+
+      // H-2: downgrade on foreign contextIds. Adapter errors → fail-safe to
+      // "foreign" (downgrade to private).
       if (args.contextIds?.length && (vis === 'group' || vis === 'public')) {
         const foreign = await findForeignContextIds(
           deps.memory,
           args.contextIds,
           scope,
+          { tool: 'memory_link', fromId: fromRes.entity.id },
         );
         if (foreign.length > 0) {
           vis = 'private';
           warnings.push(
-            `visibility downgraded to "private": contextIds include entities you don't own (${foreign.join(', ')}).`,
+            `visibility downgraded to "private": contextIds include entities you don't own or couldn't verify (${foreign.join(', ')}).`,
           );
         }
       }
@@ -182,19 +189,3 @@ function pickDefaultVisibility(
   return deps.defaultVisibility.forOther;
 }
 
-async function findForeignContextIds(
-  memory: MemorySystem,
-  contextIds: string[],
-  scope: ScopeFilter,
-): Promise<string[]> {
-  const foreign: string[] = [];
-  await Promise.all(
-    contextIds.map(async (id) => {
-      const ent = await memory.getEntity(id, scope);
-      if (ent && ent.ownerId !== undefined && ent.ownerId !== scope.userId) {
-        foreign.push(id);
-      }
-    }),
-  );
-  return foreign;
-}

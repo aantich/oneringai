@@ -10,7 +10,11 @@
 
 import { Agent } from '../../../core/Agent.js';
 import type { ExtractionOutput } from '../ExtractionResolver.js';
-import { parseExtractionResponse as parseExtractionResponseInternal } from '../parseExtraction.js';
+import {
+  parseExtractionResponse as parseExtractionResponseInternal,
+  parseExtractionWithStatus,
+} from '../parseExtraction.js';
+import { logger } from '../../../infrastructure/observability/Logger.js';
 import type { IExtractor } from './types.js';
 
 export interface ConnectorExtractorConfig {
@@ -67,7 +71,23 @@ export class ConnectorExtractor implements IExtractor {
       responseFormat: { type: 'json_object' },
     });
     const raw = response.output_text ?? '';
-    return parseExtractionResponse(raw);
+    const parsed = parseExtractionWithStatus(raw);
+    if (parsed.status !== 'ok') {
+      // No silent errors (CLAUDE.md). Parser failed — surface with enough
+      // context to debug. The ingest pipeline continues with the partial
+      // result (`parsed.mentions`/`parsed.facts` may still contain the
+      // fields that did parse), matching pre-existing tolerant behaviour.
+      logger.warn(
+        {
+          component: 'ConnectorExtractor',
+          status: parsed.status,
+          reason: parsed.reason,
+          rawExcerpt: parsed.rawExcerpt,
+        },
+        'LLM extraction parse failed',
+      );
+    }
+    return { mentions: parsed.mentions, facts: parsed.facts };
   }
 
   destroy(): void {

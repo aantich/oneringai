@@ -13,7 +13,8 @@
  *   memory_list_facts   — paginated raw fact enumeration
  *   memory_remember     — write an atomic fact
  *   memory_link         — write a relational fact (entity ↔ entity)
- *   memory_forget       — archive a fact (optionally supersede with replacement)
+ *   memory_forget       — archive a fact (optionally supersede with replacement); rate-limited
+ *   memory_restore      — un-archive a fact (undo for memory_forget mistakes)
  */
 
 import type { ToolFunction } from '../../domain/entities/Tool.js';
@@ -28,6 +29,7 @@ import { createListFactsTool } from './listFacts.js';
 import { createRememberTool } from './remember.js';
 import { createLinkTool } from './link.js';
 import { createForgetTool } from './forget.js';
+import { createRestoreTool } from './restore.js';
 
 export type {
   MemoryToolDeps,
@@ -54,6 +56,7 @@ export { createListFactsTool } from './listFacts.js';
 export { createRememberTool } from './remember.js';
 export { createLinkTool } from './link.js';
 export { createForgetTool } from './forget.js';
+export { createRestoreTool } from './restore.js';
 
 export interface CreateMemoryToolsArgs {
   memory: MemorySystem;
@@ -72,6 +75,11 @@ export interface CreateMemoryToolsArgs {
   };
   getOwnSubjectIds?: () => { userEntityId?: string; agentEntityId?: string };
   autoResolveThreshold?: number;
+  /**
+   * Override the `memory_forget` rate limit. Default: 10 calls / 60s per user.
+   * Use `{ maxCallsPerWindow: 0 }` to disable (not recommended for production).
+   */
+  forgetRateLimit?: { maxCallsPerWindow?: number; windowMs?: number };
 }
 
 /**
@@ -101,6 +109,7 @@ export function createMemoryTools(args: CreateMemoryToolsArgs): ToolFunction[] {
       forAgent: args.defaultVisibility?.forAgent ?? 'group',
       forOther: args.defaultVisibility?.forOther ?? 'private',
     },
+    forgetRateLimit: args.forgetRateLimit,
   };
 
   return [
@@ -112,5 +121,6 @@ export function createMemoryTools(args: CreateMemoryToolsArgs): ToolFunction[] {
     createRememberTool(deps),
     createLinkTool(deps),
     createForgetTool(deps),
+    createRestoreTool(deps),
   ];
 }

@@ -36,6 +36,7 @@ import type {
 import { genericTraverse } from '../../GenericTraversal.js';
 import type { IMongoCollectionLike, MongoFilter, MongoSort } from './IMongoCollectionLike.js';
 import { mergeFilters, scopeToFilter } from './scopeFilter.js';
+import { ensureIndexes } from './indexes.js';
 import {
   factFilterToMongo,
   formatCursor,
@@ -121,6 +122,21 @@ export class MongoMemoryAdapter implements IMemoryStore {
     this.vectorCandidateMultiplier = opts.vectorCandidateMultiplier ?? 10;
     this.factsCollectionName = opts.factsCollectionName;
     this.defaultPageSize = opts.defaultPageSize ?? DEFAULT_PAGE_SIZE;
+  }
+
+  /**
+   * H7: ensure the recommended indexes exist. Idempotent — Mongo's
+   * `createIndex` is a no-op when the index is already present with matching
+   * specification. Callers integrate this into their migration system; the
+   * adapter does NOT call it automatically (indexes are the client app's
+   * responsibility, not a library concern).
+   *
+   * Invokes the shared `ensureIndexes(...)` function against this adapter's
+   * collections. See `indexes.ts` for the index list and why each exists.
+   */
+  async ensureIndexes(): Promise<void> {
+    this.assertLive();
+    await ensureIndexes({ entities: this.entities, facts: this.facts });
   }
 
   // ==========================================================================

@@ -263,6 +263,11 @@ Brain-like knowledge store: **entities** (pure identity + metadata) + **facts** 
 - Scope visibility: `(groupId, ownerId)` absent = global; both match for user-within-group. Layered under permissions — scope defines the principal; permissions define the level.
 - Tests: 303 unit tests, 14 files. Mongo real-DB integration gated on `mongodb` + `mongodb-memory-server` optional peer deps.
 
+**Mongo deployment checklist (client app responsibility, not library):**
+- Call `memorySystem.ensureAdapterIndexes()` from your migration — creates the performance + correctness indexes documented in `src/memory/adapters/mongo/indexes.ts`. Idempotent. No-op for `InMemoryAdapter`.
+- **Additionally** create a unique index on `{identifiers.kind: 1, identifiers.value: 1}` for the entities collection (partial, filtered on documents that actually have that identifier). Required to prevent cross-process bootstrap races in `MemoryPluginNextGen` — two containers upserting the same user/agent entity simultaneously produce duplicates otherwise. Not created automatically: adding a unique index to a collection with existing duplicates fails; build + verify it explicitly in a migration.
+- Atlas Vector Search indexes (for `semanticSearch`) live outside `ensureIndexes()` — create them via the Atlas UI or admin API.
+
 ---
 
 **Version**: 0.5.1 | **Last Updated**: 2026-04-04 | **Architecture**: Connector-First + NextGen Context

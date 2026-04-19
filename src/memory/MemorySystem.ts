@@ -128,6 +128,28 @@ export class InvalidTaskTransitionError extends Error {
 }
 
 /**
+ * F1 — thrown by `restoreFact` when the target fact was superseded by a later
+ * non-archived fact. Un-archiving the predecessor without first handling the
+ * successor would leave two "current" values for the same predicate, breaking
+ * ranking and the singleValued invariant. Callers handle this by (a) archiving
+ * the successor first, or (b) using `memory_forget` on the successor.
+ */
+export class FactSupersededError extends Error {
+  readonly factId: FactId;
+  readonly supersededBy: FactId;
+  constructor(factId: FactId, supersededBy: FactId) {
+    super(
+      `Cannot restore fact ${factId}: it was superseded by fact ${supersededBy} ` +
+        `which is still active. Archive ${supersededBy} first (or use ` +
+        `memory_forget on it) before restoring ${factId}.`,
+    );
+    this.name = 'FactSupersededError';
+    this.factId = factId;
+    this.supersededBy = supersededBy;
+  }
+}
+
+/**
  * Single entry appended to `task.metadata.stateHistory` on every transition.
  * No cap — retention is the caller's problem (audit systems, GDPR, archival).
  */
@@ -206,6 +228,8 @@ export class MemorySystem implements IDisposable {
   private readonly predicates?: PredicateRegistry;
   private readonly predicateMode: 'permissive' | 'strict';
   private readonly predicateAutoSupersede: boolean;
+  private readonly unknownPredicatePolicy: 'fuzzy_map' | 'keep' | 'drop';
+  private readonly unknownPredicateFuzzyMaxDistance: number | undefined;
   private readonly _taskStates: TaskStatesConfig;
   private readonly _autoApplyTaskTransitions: boolean;
 
@@ -223,9 +247,24 @@ export class MemorySystem implements IDisposable {
     this.predicates = config.predicates;
     this.predicateMode = config.predicateMode ?? 'permissive';
     this.predicateAutoSupersede = config.predicateAutoSupersede ?? true;
+    this.unknownPredicatePolicy = config.unknownPredicatePolicy ?? 'fuzzy_map';
+    this.unknownPredicateFuzzyMaxDistance = config.unknownPredicateFuzzyMaxDistance;
     if (this.predicateMode === 'strict' && !this.predicates) {
       throw new Error(
         "MemorySystem: predicateMode='strict' requires a `predicates` registry",
+      );
+    }
+    // F2: caller explicitly set the policy but didn't configure a registry —
+    // `resolveUnknownPredicate` would silently return {policy:'keep'} for
+    // every unknown, quietly ignoring the caller's intent. Fail loudly so
+    // misconfiguration surfaces at startup rather than in production drift.
+    // The default value alone doesn't trigger — absent a registry, the
+    // default 'fuzzy_map' is inert (findClosest needs a registry to run).
+    if (config.unknownPredicatePolicy !== undefined && !this.predicates) {
+      throw new Error(
+        `MemorySystem: unknownPredicatePolicy='${config.unknownPredicatePolicy}' ` +
+          'has no effect without a `predicates` registry. Configure a registry ' +
+          'or omit the policy from config.',
       );
     }
     this._taskStates = validateTaskStates(config.taskStates);
@@ -785,9 +824,63 @@ export class MemorySystem implements IDisposable {
     return !!this.predicates;
   }
 
+  /**
+   * H7: ensure the configured adapter has all recommended indexes. No-op for
+   * adapters that don't expose `ensureIndexes` (InMemoryAdapter has nothing
+   * to index). Delegates to the adapter's own method — typically
+   * `MongoMemoryAdapter.ensureIndexes()`. Idempotent.
+   *
+   * **Call from your migration system, not from application hot paths.**
+   * Index creation on production collections can be expensive; the library
+   * intentionally does not call this automatically at construction time.
+   *
+   * See `docs/MEMORY_PERMISSIONS.md` (or the memory README) for the full
+   * list of recommended indexes and why each matters. Cross-process
+   * deployments with MemoryPluginNextGen additionally need a unique index on
+   * `{identifiers.kind: 1, identifiers.value: 1}` (partial, filtered on
+   * `identifiers.$.value: {$exists: true}`) — this one is not created by
+   * `ensureIndexes()` because adding a unique index to a collection with
+   * existing duplicates fails hard; callers should build + verify it
+   * explicitly in a migration.
+   */
+  async ensureAdapterIndexes(): Promise<void> {
+    const withIndexes = this.store as unknown as {
+      ensureIndexes?: () => Promise<void>;
+    };
+    if (typeof withIndexes.ensureIndexes === 'function') {
+      await withIndexes.ensureIndexes();
+    }
+  }
+
   /** Lookup a predicate definition (by canonical name or alias). Null when no registry or unknown. */
   getPredicateDefinition(nameOrAlias: string): PredicateDefinition | null {
     return this.predicates?.get(nameOrAlias) ?? null;
+  }
+
+  /**
+   * H5: the configured drift policy + closest known predicate for an unknown.
+   * Returns `{ policy: 'fuzzy_map', mappedTo? }` / `{ policy: 'keep' }` /
+   * `{ policy: 'drop' }`. `mappedTo` is only present when the policy is
+   * `'fuzzy_map'` AND a close registry match exists. Intended for callers
+   * (`ExtractionResolver`) that want to apply the policy themselves and record
+   * the decision in their result payload.
+   */
+  resolveUnknownPredicate(canonical: string): {
+    policy: 'fuzzy_map' | 'keep' | 'drop';
+    mappedTo?: string;
+    distance?: number;
+  } {
+    if (!this.predicates) return { policy: 'keep' };
+    if (this.unknownPredicatePolicy !== 'fuzzy_map') {
+      return { policy: this.unknownPredicatePolicy };
+    }
+    // F3: let caller-configured absolute cap tighten the default budget.
+    const opts = this.unknownPredicateFuzzyMaxDistance !== undefined
+      ? { maxDistance: this.unknownPredicateFuzzyMaxDistance }
+      : undefined;
+    const hit = this.predicates.findClosest(canonical, opts);
+    if (hit) return { policy: 'fuzzy_map', mappedTo: hit.name, distance: hit.distance };
+    return { policy: 'fuzzy_map' }; // no mapping — caller falls back to keep
   }
 
   async addFact(
@@ -924,9 +1017,14 @@ export class MemorySystem implements IDisposable {
     // Only fires when: registry knows the predicate, it's marked singleValued,
     // auto-supersede is enabled, and the caller did not set `supersedes` already.
     //
-    // Scope caveat: findFacts is scope-bounded. A prior fact in an outer scope
-    // invisible to the caller will not be superseded — this is intentional for
-    // isolation, but can produce multiple per-scope 'current' values.
+    // Scope caveat (H3): findFacts is scope-bounded. A prior fact in an outer
+    // scope (group-shared / global) invisible to the caller will NOT be
+    // superseded here — isolation is deliberate, but callers should know. We
+    // emit a `fact.supersede_skipped_outer_scope` ChangeEvent below when this
+    // happens so observers (logs, metrics) can flag the drift. Detection uses
+    // an admin-widened scope read — the event fires only for singleValued
+    // predicates, so the extra lookup is scoped to the narrow auto-supersede
+    // hot path.
     let supersedes = input.supersedes;
     if (!supersedes && this.predicateAutoSupersede && def?.singleValued) {
       const prior = await this.store.findFacts(
@@ -934,7 +1032,30 @@ export class MemorySystem implements IDisposable {
         { limit: 1, orderBy: { field: 'createdAt', direction: 'desc' } },
         scope,
       );
-      if (prior.items.length > 0) supersedes = prior.items[0]!.id;
+      if (prior.items.length > 0) {
+        supersedes = prior.items[0]!.id;
+      } else {
+        // Caller couldn't see any prior in their scope. Check whether an outer
+        // scope holds one — if yes, we're about to create a per-scope "current"
+        // that coexists with an outer one. Emit a signal.
+        const outer = await this.findOuterScopePrior(
+          input.subjectId,
+          predicate,
+          scope,
+        );
+        if (outer) {
+          this.emit({
+            type: 'fact.supersede_skipped_outer_scope',
+            subjectId: input.subjectId,
+            predicate,
+            outerFactId: outer.id,
+            callerScope: {
+              ownerId: scope.userId,
+              groupId: scope.groupId,
+            },
+          });
+        }
+      }
     }
 
     const now = new Date();
@@ -951,7 +1072,13 @@ export class MemorySystem implements IDisposable {
       // Clamp to [0,1] at the boundary — LLM callers may emit out-of-range
       // values that would corrupt ranking. Applies to caller-supplied
       // values only; registry defaults (def?.defaultImportance) are trusted.
-      confidence: clampUnit01(input.confidence),
+      //
+      // H6: default unset confidence to 1.0 (matches Ranking.ts interpretation
+      // of missing confidence). Storing an explicit value means the Mongo
+      // minConfidence filter can drop the `$exists:false` branch — callers
+      // asking "give me facts with confidence ≥ X" no longer get un-scored
+      // legacy facts mixed into high-quality results.
+      confidence: clampUnit01(input.confidence) ?? 1.0,
       sourceSignalId: input.sourceSignalId,
       derivedBy: input.derivedBy,
       importance: clampUnit01(input.importance) ?? def?.defaultImportance,
@@ -1056,6 +1183,43 @@ export class MemorySystem implements IDisposable {
   }
 
   /**
+   * Reverse of `archiveFact` — restore a previously-archived fact so it
+   * participates in queries again. Used by the `memory_restore` tool to give
+   * agents an undo path for mistaken archives.
+   *
+   * F1 guard: if the target fact was archived as part of a supersession
+   * (i.e. another non-archived fact has `supersedes: targetId`), restoring it
+   * would create two "current" facts for the same (subject, predicate) pair.
+   * Throws `FactSupersededError` with the successor's id so callers can
+   * handle the successor first. The tool layer surfaces this as a structured
+   * error to the LLM.
+   */
+  async restoreFact(id: FactId, scope: ScopeFilter): Promise<void> {
+    assertNotDestroyed(this, 'restoreFact');
+    // `getFact` returns archived facts too — no archived filter applied.
+    const fact = await this.store.getFact(id, scope);
+    if (!fact) {
+      throw new Error(`restoreFact: fact ${id} not found or not visible in caller scope`);
+    }
+    assertCanAccess(fact, scope, 'write', 'fact');
+    if (!fact.archived) return; // idempotent — nothing to do.
+
+    // F1: detect an existing non-archived successor. `findFacts` defaults to
+    // hiding archived, so a hit here means "live successor".
+    const successors = await this.store.findFacts(
+      { supersedes: id },
+      { limit: 1 },
+      scope,
+    );
+    if (successors.items.length > 0) {
+      throw new FactSupersededError(id, successors.items[0]!.id);
+    }
+
+    await this.store.updateFact(id, { archived: false }, scope);
+    this.emit({ type: 'fact.restore', factId: id });
+  }
+
+  /**
    * Update an existing fact's `details` field in place. Intended for merging
    * narrative context when the session ingestor finds a duplicate fact and
    * produces an LLM-merged details string. Recomputes `isSemantic` (the merged
@@ -1127,9 +1291,48 @@ export class MemorySystem implements IDisposable {
       scope,
     );
     for (const f of page.items) {
-      const sameValue = stableEqual(f.value, input.value);
+      // H4: dedup is case/whitespace-insensitive on string values. LLM
+      // extraction is non-deterministic in capitalisation/whitespace; without
+      // normalisation, `"Alice"` / `"alice"` / `"Alice "` produce three facts
+      // for the same knowledge. Object values fall back to stableEqual
+      // (key-sorted deep equality).
+      const sameValue = dedupValueEqual(f.value, input.value);
       const sameObject = (f.objectId ?? null) === (input.objectId ?? null);
       if (sameValue && sameObject) return f;
+    }
+    return null;
+  }
+
+  /**
+   * H3: look for a same-subject same-predicate non-archived fact that lives
+   * OUTSIDE the caller's scope (group-shared or global) — used by addFact's
+   * auto-supersede path to detect when a caller-scope write will coexist with
+   * an invisible outer "current" value.
+   *
+   * Only invoked on the narrow singleValued-predicate auto-supersede branch
+   * when the caller's own scope has no prior; the widened admin scope adds
+   * one extra read per such write, not a general overhead.
+   */
+  private async findOuterScopePrior(
+    subjectId: EntityId,
+    predicate: string,
+    callerScope: ScopeFilter,
+  ): Promise<IFact | null> {
+    // Admin scope: no userId, no groupId → sees everything.
+    const all = await this.store.findFacts(
+      { subjectId, predicate, archived: false },
+      { limit: 10, orderBy: { field: 'createdAt', direction: 'desc' } },
+      {},
+    );
+    for (const f of all.items) {
+      // Skip anything that WOULD be visible to the caller — those cases
+      // already use supersedes. We're looking for the outer-scope "current".
+      if (callerScope.userId && f.ownerId === callerScope.userId) continue;
+      // A group-scoped fact (no ownerId, specific groupId) may still be
+      // visible to the caller if they're in that group — that's already
+      // handled by the caller-scope query. Anything remaining is genuinely
+      // outside the caller's view.
+      return f;
     }
     return null;
   }
@@ -1985,6 +2188,29 @@ function clampUnit01(v: number | undefined): number | undefined {
  * plain objects (key-sorted). Does NOT attempt Map/Set/Date — LLM output is
  * JSON, so these won't appear.
  */
+/**
+ * Dedup-boundary comparison for fact `value`. Mirrors `stableEqual` except
+ * string values are compared case-insensitively and whitespace-normalised
+ * (trim + collapse internal runs to a single space). Intended ONLY for the
+ * `findDedupMatch` hot path — not a general-purpose equality.
+ *
+ * Rationale (H4): the extraction LLM is non-deterministic in casing and
+ * whitespace (`"Alice"` vs `"ALICE"` vs `"Alice "`). Without normalisation
+ * every ingest turn could produce a new "duplicate" fact for the same
+ * knowledge, bloating the store and defeating the "one fact per knowledge"
+ * contract of prompt v2.
+ */
+export function dedupValueEqual(a: unknown, b: unknown): boolean {
+  if (typeof a === 'string' && typeof b === 'string') {
+    return normalizeStringForDedup(a) === normalizeStringForDedup(b);
+  }
+  return stableEqual(a, b);
+}
+
+function normalizeStringForDedup(s: string): string {
+  return s.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
 function stableEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (typeof a === 'number' && typeof b === 'number') {

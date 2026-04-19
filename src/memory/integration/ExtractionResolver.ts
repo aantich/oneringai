@@ -219,31 +219,53 @@ export class ExtractionResolver {
           }
         }
 
+        // Partial context is still useful: drop only the missing labels,
+        // keep the fact with whatever resolved. Previously an entire fact was
+        // discarded on one missing context label — that silently lost every
+        // multi-context fact where the LLM referenced one hallucinated label.
+        // Missing labels are still surfaced via `unresolved[]` so the caller
+        // can log/tighten the prompt.
         let contextIds: EntityId[] | undefined;
         if (spec.contextIds && spec.contextIds.length > 0) {
-          contextIds = [];
-          let skip = false;
+          const resolvedIds: EntityId[] = [];
           for (const cid of spec.contextIds) {
             const resolved = labelToEntityId.get(cid);
             if (!resolved) {
               unresolved.push({
                 where: `fact:${i}`,
-                reason: `context label "${cid}" not found in mentions`,
+                reason: `context label "${cid}" not found in mentions (dropped from contextIds; fact still written)`,
               });
-              skip = true;
-              break;
+              continue;
             }
-            contextIds.push(resolved);
+            resolvedIds.push(resolved);
           }
-          if (skip) continue;
+          contextIds = resolvedIds.length > 0 ? resolvedIds : undefined;
         }
 
-        // Canonicalize the predicate and track unknowns for vocabulary-drift
-        // monitoring. Strict-mode rejection happens inside addFact and lands
-        // in `unresolved` via the surrounding try/catch.
-        const predicate = this.memory.canonicalizePredicate(spec.predicate);
+        // Canonicalize the predicate and apply the configured H5 drift policy
+        // when the result isn't in the registry. Strict-mode rejection happens
+        // inside addFact and lands in `unresolved` via the surrounding
+        // try/catch.
+        let predicate = this.memory.canonicalizePredicate(spec.predicate);
         if (hasRegistry && !this.memory.getPredicateDefinition(predicate)) {
-          newPredicatesSet.add(predicate);
+          const decision = this.memory.resolveUnknownPredicate(predicate);
+          if (decision.policy === 'drop') {
+            unresolved.push({
+              where: `fact:${i}`,
+              reason: `unknown predicate "${predicate}" — fact dropped (unknownPredicatePolicy='drop')`,
+            });
+            newPredicatesSet.add(predicate);
+            continue;
+          }
+          if (decision.policy === 'fuzzy_map' && decision.mappedTo) {
+            // Record the mapping so operators see "predicate X was snapped
+            // onto Y" rather than just "X showed up".
+            newPredicatesSet.add(`${predicate}→${decision.mappedTo}`);
+            predicate = decision.mappedTo;
+          } else {
+            // 'keep' or 'fuzzy_map' with no close match — write verbatim.
+            newPredicatesSet.add(predicate);
+          }
         }
 
         // Kind validation — the prompt restricts to 'atomic' | 'document',

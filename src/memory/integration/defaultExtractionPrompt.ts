@@ -20,7 +20,7 @@
  * (domain-specific predicate vocabularies, extra metadata, etc.).
  */
 
-export const DEFAULT_EXTRACTION_PROMPT_VERSION = 2;
+export const DEFAULT_EXTRACTION_PROMPT_VERSION = 3;
 
 import type { PredicateRegistry } from '../predicates/PredicateRegistry.js';
 import type { IEntity, ScopeFields } from '../types.js';
@@ -85,8 +85,17 @@ export function defaultExtractionPrompt(ctx: ExtractionPromptContext): string {
   const scopeDescription = describeScope(targetScope ?? {});
   const preResolvedSection = renderPreResolvedBindings(preResolvedBindings);
   const knownSection = renderKnownEntities(knownEntities);
+  // v3 (H5): when a registry is present, explicitly tell the LLM the
+  // vocabulary is closed. The server still applies a fuzzy-mapping fallback
+  // for near-misses, but the instruction here prevents most drift from ever
+  // reaching the resolver.
   const predicateSection = predicateRegistry
-    ? '\n\n' + predicateRegistry.renderForPrompt({ maxPerCategory: maxPredicatesPerCategory })
+    ? '\n\n' +
+      predicateRegistry.renderForPrompt({ maxPerCategory: maxPredicatesPerCategory }) +
+      '\n\n**Use ONLY the predicates listed above. Do NOT invent new ones.** ' +
+      'If no listed predicate is a perfect fit, pick the closest match and put ' +
+      'the nuance in `details`. Unknown predicates are either auto-mapped to the ' +
+      'nearest known name (possibly incorrectly) or dropped.'
     : '';
 
   return `You are extracting structured memory from a signal (email, message, document excerpt, etc.).

@@ -119,6 +119,54 @@ export interface MemoryToolDeps {
     forAgent: Visibility;
     forOther: Visibility;
   };
+  /**
+   * Per-user cooldown for destructive tools (`memory_forget`). Prevents a
+   * jailbroken agent from wiping memory in a loop (e.g. after a prompt
+   * injection via ingested content). When the caller's userId is unset, the
+   * cooldown is keyed on `'anonymous'` so tests / single-user setups still
+   * get protection.
+   *
+   * Defaults: 10 calls per 60_000 ms window. Set `maxCallsPerWindow: 0` to
+   * disable (not recommended for production).
+   */
+  forgetRateLimit?: {
+    maxCallsPerWindow?: number;
+    windowMs?: number;
+  };
+}
+
+/**
+ * Sliding-window rate limiter keyed on userId. Returns `ok: true` when the
+ * call is admitted (and records it); `ok: false` with `retryAfterMs` when
+ * the caller is over quota. Pure in-memory — intentionally; the forget tool
+ * is LLM-facing, and cross-process jailbreak spam is mitigated by the host
+ * app's LLM provider rate limits, not ours.
+ */
+export type RateLimiterCheck =
+  | { ok: true }
+  | { ok: false; retryAfterMs: number; quota: number; windowMs: number };
+
+export function createSlidingWindowLimiter(
+  maxCallsPerWindow: number,
+  windowMs: number,
+): (userId: string) => RateLimiterCheck {
+  const calls = new Map<string, number[]>();
+  return (userId: string) => {
+    if (maxCallsPerWindow <= 0 || windowMs <= 0) return { ok: true };
+    const now = Date.now();
+    const key = userId || 'anonymous';
+    const bucket = calls.get(key) ?? [];
+    // Drop timestamps that have aged out of the window.
+    const fresh = bucket.filter((t) => now - t < windowMs);
+    if (fresh.length >= maxCallsPerWindow) {
+      const oldest = fresh[0]!;
+      const retryAfterMs = windowMs - (now - oldest);
+      return { ok: false, retryAfterMs, quota: maxCallsPerWindow, windowMs };
+    }
+    fresh.push(now);
+    calls.set(key, fresh);
+    return { ok: true };
+  };
 }
 
 /** Result of resolving a `SubjectRef` to zero, one, or many candidates. */

@@ -445,10 +445,12 @@ describe('InMemoryAdapter', () => {
       expect(page.items.map((f) => f.id)).toEqual([f4.id]);
     });
 
-    it('by minConfidence (facts without confidence default to 1.0)', async () => {
+    it('by minConfidence (H6: facts without explicit confidence are excluded)', async () => {
+      // H6: strict minConfidence. MemorySystem.addFact defaults unset
+      // confidence to 1.0 at write, so this only excludes legacy un-scored
+      // facts (f4 here). Callers needing legacy inclusion can backfill.
       const page = await store.findFacts({ minConfidence: 0.5 }, {}, {});
-      // f4 has no confidence set → treated as 1.0 → passes min 0.5.
-      expect(page.items.map((f) => f.id).sort()).toEqual([f1.id, f3.id, f4.id].sort());
+      expect(page.items.map((f) => f.id).sort()).toEqual([f1.id, f3.id].sort());
     });
 
     it('combined filters (AND semantics)', async () => {

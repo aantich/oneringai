@@ -169,7 +169,7 @@ describe('ExtractionResolver', () => {
     expect(result.unresolved[0]!.reason).toMatch(/subject label/);
   });
 
-  it('records fact with bad contextId label as unresolved', async () => {
+  it('records bad contextId label as unresolved but still writes the fact (C2)', async () => {
     const bad: ExtractionOutput = {
       mentions: {
         m1: {
@@ -188,8 +188,40 @@ describe('ExtractionResolver', () => {
       ],
     };
     const result = await resolver.resolveAndIngest(bad, 'signal', scope);
-    expect(result.facts).toHaveLength(0);
+    // Prior behaviour dropped the entire fact on one missing contextId. New
+    // behaviour: surface the drop in `unresolved`, keep the fact with the
+    // labels that did resolve (here: none, so contextIds is undefined).
+    expect(result.facts).toHaveLength(1);
+    expect(result.facts[0]!.contextIds).toBeUndefined();
     expect(result.unresolved[0]!.reason).toMatch(/context label/);
+  });
+
+  it('preserves resolved contextIds when one label is missing', async () => {
+    const mixed: ExtractionOutput = {
+      mentions: {
+        m1: {
+          surface: 'John',
+          type: 'person',
+          identifiers: [{ kind: 'email', value: 'j@x.com' }],
+        },
+        m2: {
+          surface: 'Q3 Planning',
+          type: 'topic',
+        },
+      },
+      facts: [
+        {
+          subject: 'm1',
+          predicate: 'note',
+          value: 'x',
+          contextIds: ['m2', 'hallucinated_label'],
+        },
+      ],
+    };
+    const result = await resolver.resolveAndIngest(mixed, 'signal', scope);
+    expect(result.facts).toHaveLength(1);
+    expect(result.facts[0]!.contextIds).toHaveLength(1);
+    expect(result.unresolved[0]!.reason).toMatch(/hallucinated_label/);
   });
 
   it('surfaces mergeCandidates when alias-tier match is below autoResolveThreshold', async () => {
@@ -387,6 +419,88 @@ describe('ExtractionResolver', () => {
 
       expect(result.unresolved).toEqual([]);
       expect(result.facts[0]!.contextIds).toEqual([dealSeed.entity.id]);
+    });
+  });
+
+  describe('unknownPredicatePolicy (H5)', () => {
+    it('fuzzy-maps a near-miss to the closest registered predicate', async () => {
+      const { PredicateRegistry } = await import('@/memory/predicates/PredicateRegistry.js');
+      const mem2 = new MemorySystem({
+        store: new InMemoryAdapter(),
+        predicates: PredicateRegistry.standard(),
+        // default policy is 'fuzzy_map'
+      });
+      const resolver2 = new ExtractionResolver(mem2);
+      const out: ExtractionOutput = {
+        mentions: {
+          m1: {
+            surface: 'John',
+            type: 'person',
+            identifiers: [{ kind: 'email', value: 'j@x.com' }],
+          },
+          m2: {
+            surface: 'Acme',
+            type: 'organization',
+            identifiers: [{ kind: 'domain', value: 'acme.com' }],
+          },
+        },
+        facts: [
+          // `work_at` is a 1-char typo of the registered `works_at`.
+          { subject: 'm1', predicate: 'work_at', object: 'm2' },
+        ],
+      };
+      const result = await resolver2.resolveAndIngest(out, 'sig', scope);
+      expect(result.facts).toHaveLength(1);
+      expect(result.facts[0]!.predicate).toBe('works_at');
+      // Mapping surfaces in newPredicates for audit.
+      expect(result.newPredicates).toContain('work_at→works_at');
+      await mem2.shutdown();
+    });
+
+    it('drop policy skips the fact entirely', async () => {
+      const { PredicateRegistry } = await import('@/memory/predicates/PredicateRegistry.js');
+      const mem2 = new MemorySystem({
+        store: new InMemoryAdapter(),
+        predicates: PredicateRegistry.standard(),
+        unknownPredicatePolicy: 'drop',
+      });
+      const resolver2 = new ExtractionResolver(mem2);
+      const out: ExtractionOutput = {
+        mentions: {
+          m1: { surface: 'X', type: 'topic' },
+        },
+        facts: [
+          { subject: 'm1', predicate: 'wildly_invented_predicate', value: 'v' },
+        ],
+      };
+      const result = await resolver2.resolveAndIngest(out, 'sig', scope);
+      expect(result.facts).toHaveLength(0);
+      expect(result.unresolved[0]!.reason).toMatch(/unknownPredicatePolicy='drop'/);
+      expect(result.newPredicates).toContain('wildly_invented_predicate');
+      await mem2.shutdown();
+    });
+
+    it('keep policy writes the unknown predicate verbatim', async () => {
+      const { PredicateRegistry } = await import('@/memory/predicates/PredicateRegistry.js');
+      const mem2 = new MemorySystem({
+        store: new InMemoryAdapter(),
+        predicates: PredicateRegistry.standard(),
+        unknownPredicatePolicy: 'keep',
+      });
+      const resolver2 = new ExtractionResolver(mem2);
+      const out: ExtractionOutput = {
+        mentions: {
+          m1: { surface: 'X', type: 'topic' },
+        },
+        facts: [
+          { subject: 'm1', predicate: 'something_brand_new', value: 'v' },
+        ],
+      };
+      const result = await resolver2.resolveAndIngest(out, 'sig', scope);
+      expect(result.facts).toHaveLength(1);
+      expect(result.facts[0]!.predicate).toBe('something_brand_new');
+      expect(result.newPredicates).toContain('something_brand_new');
+      await mem2.shutdown();
     });
   });
 });

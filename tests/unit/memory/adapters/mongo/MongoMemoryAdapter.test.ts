@@ -429,12 +429,13 @@ describe('MongoMemoryAdapter', () => {
       expect(res.items.map((f) => f.id)).toEqual([archived.id]);
     });
 
-    it('findFacts minConfidence — missing confidence treated as 1.0', async () => {
+    it('findFacts minConfidence (H6: strict — legacy un-scored facts excluded)', async () => {
       await adapter.createFact(factInput(a.id, { confidence: 0.3 }));
       const highConf = await adapter.createFact(factInput(a.id, { confidence: 0.9 }));
-      const noConf = await adapter.createFact(factInput(a.id));
+      // Legacy un-scored fact — H6: excluded from confidence-filtered queries.
+      await adapter.createFact(factInput(a.id));
       const res = await adapter.findFacts({ minConfidence: 0.5 }, {}, {});
-      expect(res.items.map((f) => f.id).sort()).toEqual([highConf.id, noConf.id].sort());
+      expect(res.items.map((f) => f.id)).toEqual([highConf.id]);
     });
 
     it('findFacts asOf filters by validity window', async () => {
@@ -843,6 +844,37 @@ describe('MongoMemoryAdapter', () => {
       await expect(
         ensureIndexes({ entities: minimal, facts: minimalF }),
       ).resolves.toBeUndefined();
+    });
+
+    it('MongoMemoryAdapter.ensureIndexes() delegates to the shared helper (H7)', async () => {
+      const ents = new FakeMongoCollection<IEntity>();
+      const facts2 = new FakeMongoCollection<IFact>();
+      const a = new MongoMemoryAdapter({ entities: ents, facts: facts2 });
+      await a.ensureIndexes();
+      // At least the identifier + subject indexes must be present.
+      expect(ents.createdIndexes.length).toBeGreaterThan(0);
+      expect(facts2.createdIndexes.length).toBeGreaterThan(0);
+      // Idempotent — safe to call twice.
+      await a.ensureIndexes();
+    });
+
+    it('MemorySystem.ensureAdapterIndexes() routes through the adapter (H7)', async () => {
+      const { MemorySystem } = await import('@/memory/MemorySystem.js');
+      const ents = new FakeMongoCollection<IEntity>();
+      const facts2 = new FakeMongoCollection<IFact>();
+      const adapter2 = new MongoMemoryAdapter({ entities: ents, facts: facts2 });
+      const mem = new MemorySystem({ store: adapter2 });
+      await mem.ensureAdapterIndexes();
+      expect(ents.createdIndexes.length).toBeGreaterThan(0);
+      await mem.shutdown();
+    });
+
+    it('MemorySystem.ensureAdapterIndexes() is a no-op on InMemoryAdapter (H7)', async () => {
+      const { MemorySystem } = await import('@/memory/MemorySystem.js');
+      const { InMemoryAdapter } = await import('@/memory/adapters/inmemory/InMemoryAdapter.js');
+      const mem = new MemorySystem({ store: new InMemoryAdapter() });
+      await expect(mem.ensureAdapterIndexes()).resolves.toBeUndefined();
+      await mem.shutdown();
     });
   });
 

@@ -16,6 +16,7 @@
 
 import type { PredicateDefinition } from './types.js';
 import { STANDARD_PREDICATES } from './standard.js';
+import { editDistance } from '../resolution/fuzzy.js';
 
 export class PredicateRegistry {
   private byName = new Map<string, PredicateDefinition>();
@@ -113,6 +114,49 @@ export class PredicateRegistry {
     const viaAlias = this.byAlias.get(normalized);
     if (viaAlias) return viaAlias;
     return normalized;
+  }
+
+  /**
+   * Best-effort near-match for an unknown predicate. Returns the canonical
+   * name of the closest known predicate within a length-aware edit-distance
+   * budget, or `null` if nothing is close enough.
+   *
+   * Used by `ExtractionResolver`'s H5 drift policy to snap LLM typos like
+   * `"work_at"` onto the registered `"works_at"`. Does NOT help with pure
+   * semantic mismatches (`"discussed_topic"` ↛ `"mentioned"`) — those need
+   * human-in-the-loop review of the `newPredicates` report.
+   *
+   * **F3 — length-aware distance budget.** A flat distance-2 threshold is too
+   * loose for long predicates where 2-char swaps flip meaning
+   * (`talks_at` ↔ `works_at`). The effective budget is:
+   *
+   *   effectiveMax = min(maxDistance, max(1, floor(min(lenA, lenB) / 4)))
+   *
+   * So short predicates allow distance 1, 8-char predicates allow 2, 12+ char
+   * predicates allow 3 — matching how typos scale with word length. Callers
+   * can tighten with `opts.maxDistance` (absolute cap) or override entirely
+   * by passing a very low value.
+   */
+  findClosest(
+    input: string,
+    opts?: { maxDistance?: number },
+  ): { name: string; distance: number } | null {
+    const maxDistance = opts?.maxDistance ?? 2;
+    const normalized = normalize(input);
+    let best: { name: string; distance: number } | null = null;
+    const consider = (candidate: string, canonical: string): void => {
+      // F3: length-aware clamp. Use the shorter length so padding a short
+      // unknown onto a long registered name doesn't get an inflated budget.
+      const minLen = Math.min(normalized.length, candidate.length);
+      const lengthBudget = Math.max(1, Math.floor(minLen / 4));
+      const effectiveMax = Math.min(maxDistance, lengthBudget);
+      const d = editDistance(normalized, candidate);
+      if (d > effectiveMax) return;
+      if (best === null || d < best.distance) best = { name: canonical, distance: d };
+    };
+    for (const name of this.byName.keys()) consider(name, name);
+    for (const [alias, canonical] of this.byAlias.entries()) consider(alias, canonical);
+    return best;
   }
 
   /** List definitions, optionally filtered by category or subject-type hint. */

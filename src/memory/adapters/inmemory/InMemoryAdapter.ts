@@ -500,7 +500,14 @@ function factMatches(fact: IFact, filter: FactFilter, scope: ScopeFilter): boole
     return false;
   }
   if (filter.kind && fact.kind !== filter.kind) return false;
-  if (filter.minConfidence !== undefined && (fact.confidence ?? 1) < filter.minConfidence) return false;
+  // F1: match facts whose supersedes field targets a given predecessor.
+  if (filter.supersedes !== undefined && fact.supersedes !== filter.supersedes) return false;
+  // H6: strict — require explicit confidence above the threshold. MemorySystem
+  // defaults to 1.0 at write when unset, so this only excludes legacy un-scored
+  // facts (which we don't want silently mixed into quality-filtered queries).
+  if (filter.minConfidence !== undefined) {
+    if (fact.confidence === undefined || fact.confidence < filter.minConfidence) return false;
+  }
 
   const observedAt = fact.observedAt ?? fact.createdAt;
   if (filter.observedAfter && observedAt < filter.observedAfter) return false;

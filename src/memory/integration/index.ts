@@ -34,6 +34,10 @@ export type {
   ExtractionResolverOptions,
 } from './ExtractionResolver.js';
 
+// Extraction-output parser (rich + back-compat forms).
+export { parseExtractionWithStatus } from './parseExtraction.js';
+export type { ParseExtractionResult, ParseStatus } from './parseExtraction.js';
+
 // Signal ingestion — raw source (email, plain text, custom) → facts.
 export {
   SignalIngestor,

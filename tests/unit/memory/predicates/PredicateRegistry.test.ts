@@ -375,3 +375,106 @@ describe('PredicateRegistry — standard() factory', () => {
     }
   });
 });
+
+describe('PredicateRegistry — findClosest (F3 length-aware)', () => {
+  it('snaps a 1-char typo on a long predicate (works_at / work_at)', () => {
+    const r = PredicateRegistry.empty().register({
+      name: 'works_at',
+      category: 'organizational',
+      description: '',
+    });
+    const hit = r.findClosest('work_at');
+    expect(hit).not.toBeNull();
+    expect(hit!.name).toBe('works_at');
+    expect(hit!.distance).toBe(1);
+  });
+
+  it('does NOT snap semantically-distinct predicates when caller tightens maxDistance=1', () => {
+    // `talks_at` vs `works_at` is distance 2. Default length-aware budget
+    // admits it on 8-char predicates; callers worried about semantic
+    // corruption should set unknownPredicateFuzzyMaxDistance=1.
+    const r = PredicateRegistry.empty().register({
+      name: 'works_at',
+      category: 'organizational',
+      description: '',
+    });
+    const strict = r.findClosest('talks_at', { maxDistance: 1 });
+    expect(strict).toBeNull();
+  });
+
+  it('length-aware budget allows distance 3 on 12+ char predicates', () => {
+    const r = PredicateRegistry.empty().register({
+      name: 'participated_in',
+      category: 'event',
+      description: '',
+    });
+    // 15 chars → budget floor(15/4) = 3. `particpated_in` is missing one
+    // letter, distance 1 — should match easily.
+    const easy = r.findClosest('particpated_in');
+    expect(easy?.name).toBe('participated_in');
+  });
+
+  it('short predicate (<4 chars) still allows distance 1 (minor typo)', () => {
+    const r = PredicateRegistry.empty().register({
+      name: 'likes',
+      category: 'attribute',
+      description: '',
+    });
+    const hit = r.findClosest('liks'); // 1-char drop
+    expect(hit?.name).toBe('likes');
+    expect(hit?.distance).toBe(1);
+  });
+
+  it('returns null for predicates far beyond the budget', () => {
+    const r = PredicateRegistry.empty().register({
+      name: 'works_at',
+      category: 'organizational',
+      description: '',
+    });
+    expect(r.findClosest('completely_unrelated_predicate_xyz')).toBeNull();
+  });
+
+  it('honors explicit maxDistance override (tighten to 1)', () => {
+    const r = PredicateRegistry.empty().register({
+      name: 'works_at',
+      category: 'organizational',
+      description: '',
+    });
+    // 2-distance candidate no longer matches under tighter cap.
+    expect(r.findClosest('work_atz', { maxDistance: 1 })).toBeNull();
+  });
+});
+
+describe('MemorySystem — unknownPredicateFuzzyMaxDistance config (F3)', () => {
+  it('passes the configured cap through resolveUnknownPredicate', async () => {
+    const { MemorySystem } = await import('@/memory/MemorySystem.js');
+    const { InMemoryAdapter } = await import('@/memory/adapters/inmemory/InMemoryAdapter.js');
+    const registry = PredicateRegistry.empty().register({
+      name: 'works_at',
+      category: 'organizational',
+      description: '',
+    });
+    // `work_atz` vs `works_at`: substitute s→nothing + insert z at end
+    // → distance 2. Default length-aware budget admits it (min(2, 2) = 2).
+    const loose = new MemorySystem({
+      store: new InMemoryAdapter(),
+      predicates: registry,
+      unknownPredicatePolicy: 'fuzzy_map',
+    });
+    const loose_hit = loose.resolveUnknownPredicate('work_atz');
+    expect(loose_hit.mappedTo).toBe('works_at');
+    expect(loose_hit.distance).toBe(2);
+    await loose.shutdown();
+
+    // Same input with caller-tightened cap of 1 → no match.
+    const strict = new MemorySystem({
+      store: new InMemoryAdapter(),
+      predicates: registry,
+      unknownPredicatePolicy: 'fuzzy_map',
+      unknownPredicateFuzzyMaxDistance: 1,
+    });
+    const strict_hit = strict.resolveUnknownPredicate('work_atz');
+    expect(strict_hit.mappedTo).toBeUndefined();
+    await strict.shutdown();
+  });
+});

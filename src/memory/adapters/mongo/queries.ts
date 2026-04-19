@@ -38,14 +38,15 @@ export function factFilterToMongo(filter: FactFilter, scope: ScopeFilter): Mongo
     clauses.push({ predicate: { $in: filter.predicates } });
   }
   if (filter.kind !== undefined) clauses.push({ kind: filter.kind });
+  // F1: supersession-chain lookup — find the successor of a specific fact.
+  if (filter.supersedes !== undefined) clauses.push({ supersedes: filter.supersedes });
   if (filter.minConfidence !== undefined) {
-    // Treat missing confidence as 1.0 (consistent with InMemoryAdapter).
-    clauses.push({
-      $or: [
-        { confidence: { $gte: filter.minConfidence } },
-        { confidence: { $exists: false } },
-      ],
-    });
+    // H6: require explicit confidence at/above threshold. MemorySystem.addFact
+    // defaults missing confidence to 1.0 at write, so legacy un-scored facts
+    // are the only reason `$exists:false` would matter — and including them
+    // pollutes high-quality queries with unknown-quality data. Callers who
+    // need to include legacy facts can use a dedicated backfill + re-query.
+    clauses.push({ confidence: { $gte: filter.minConfidence } });
   }
 
   // Temporal filters

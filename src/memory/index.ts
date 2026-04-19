@@ -16,6 +16,7 @@ export {
   ProfileGeneratorMissingError,
   SemanticSearchUnavailableError,
   InvalidTaskTransitionError,
+  FactSupersededError,
 } from './MemorySystem.js';
 export type {
   TaskStateHistoryEntry,
@@ -48,6 +49,7 @@ export {
   SignalIngestor,
   ConnectorExtractor,
   parseExtractionResponse,
+  parseExtractionWithStatus,
   PlainTextAdapter,
   EmailSignalAdapter,
   CalendarSignalAdapter,
@@ -85,6 +87,8 @@ export type {
   CalendarAttendee,
   CalendarSignal,
   CalendarSignalAdapterOptions,
+  ParseExtractionResult,
+  ParseStatus,
 } from './integration/index.js';
 
 // Mongo adapter — optional peer dep on `mongodb`; import path is always safe

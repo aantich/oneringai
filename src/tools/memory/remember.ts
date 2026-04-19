@@ -4,7 +4,6 @@
  */
 
 import type { ToolFunction } from '../../domain/entities/Tool.js';
-import type { MemorySystem, ScopeFilter } from '../../memory/index.js';
 import type { MemoryToolDeps, SubjectRef, Visibility } from './types.js';
 import {
   SUBJECT_TOKEN_ME,
@@ -14,6 +13,7 @@ import {
   toErrorMessage,
   visibilityToPermissions,
 } from './types.js';
+import { findForeignContextIds, ownerlessSubjectWarning } from './ownership.js';
 
 export interface RememberArgs {
   subject: SubjectRef;
@@ -143,21 +143,30 @@ export function createRememberTool(deps: MemoryToolDeps): ToolFunction<RememberA
       // Pick visibility: explicit arg > per-subject default.
       let vis = args.visibility ?? pickDefaultVisibility(deps, args.subject, resolved.entity.id);
 
+      const warnings: string[] = [];
+
+      // H1: surface ownerless-subject writes in the audit trail. The memory
+      // layer will still attach fact.ownerId = scope.userId, but the subject
+      // entity itself stays ownerless. LLM + logs see the divergence.
+      const ownerlessWarn = ownerlessSubjectWarning(resolved.entity.ownerId, scope.userId);
+      if (ownerlessWarn) warnings.push(ownerlessWarn);
+
       // H-2: if any contextId points to a foreign-owned (but visible) entity
       // and the chosen visibility would leak it via graph-touchesEntity
       // queries, downgrade to 'private'. Invisible contextIds are left for
-      // the memory layer to reject.
-      const warnings: string[] = [];
+      // the memory layer to reject. Adapter errors during the check are
+      // treated as "foreign" (fail-safe) rather than crashing the tool.
       if (args.contextIds?.length && (vis === 'group' || vis === 'public')) {
         const foreign = await findForeignContextIds(
           deps.memory,
           args.contextIds,
           scope,
+          { tool: 'memory_remember', subjectId: resolved.entity.id },
         );
         if (foreign.length > 0) {
           vis = 'private';
           warnings.push(
-            `visibility downgraded to "private": contextIds include entities you don't own (${foreign.join(', ')}). ` +
+            `visibility downgraded to "private": contextIds include entities you don't own or couldn't verify (${foreign.join(', ')}). ` +
             `Non-private writes on foreign context would leak into their owners' graph queries.`,
           );
         }
@@ -224,24 +233,3 @@ function pickDefaultVisibility(
   return deps.defaultVisibility.forOther;
 }
 
-/**
- * Filter contextIds to those pointing to entities visible but NOT owned by the
- * caller. Invisible entities are skipped (the memory layer will reject them
- * at addFact time).
- */
-async function findForeignContextIds(
-  memory: MemorySystem,
-  contextIds: string[],
-  scope: ScopeFilter,
-): Promise<string[]> {
-  const foreign: string[] = [];
-  await Promise.all(
-    contextIds.map(async (id) => {
-      const ent = await memory.getEntity(id, scope);
-      if (ent && ent.ownerId !== undefined && ent.ownerId !== scope.userId) {
-        foreign.push(id);
-      }
-    }),
-  );
-  return foreign;
-}

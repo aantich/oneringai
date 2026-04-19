@@ -5,14 +5,21 @@
  */
 
 import type { ToolFunction } from '../../domain/entities/Tool.js';
-import type { MemorySystem, ScopeFilter } from '../../memory/index.js';
 import type { MemoryToolDeps, Visibility } from './types.js';
 import {
   clampUnit,
+  createSlidingWindowLimiter,
   resolveScope,
   toErrorMessage,
   visibilityToPermissions,
 } from './types.js';
+import { findForeignContextIds } from './ownership.js';
+
+// H9: destructive-op rate limit. Jailbroken prompt + unbounded forget loop =
+// silent memory wipe. Default: 10 calls per 60s per user. Caller can disable
+// by passing { maxCallsPerWindow: 0 } in plugin config (not recommended).
+const FORGET_DEFAULT_MAX = 10;
+const FORGET_DEFAULT_WINDOW_MS = 60_000;
 
 export interface ForgetArgs {
   factId: string;
@@ -44,6 +51,9 @@ Examples:
   {"factId":"fact_note","replaceWith":{"predicate":"learned_pattern","details":"New version of the pattern...","importance":0.8}}`;
 
 export function createForgetTool(deps: MemoryToolDeps): ToolFunction<ForgetArgs> {
+  const maxCalls = deps.forgetRateLimit?.maxCallsPerWindow ?? FORGET_DEFAULT_MAX;
+  const windowMs = deps.forgetRateLimit?.windowMs ?? FORGET_DEFAULT_WINDOW_MS;
+  const checkRate = createSlidingWindowLimiter(maxCalls, windowMs);
   return {
     definition: {
       type: 'function',
@@ -69,6 +79,21 @@ export function createForgetTool(deps: MemoryToolDeps): ToolFunction<ForgetArgs>
       }
       const scope = resolveScope(context?.userId, deps.defaultUserId, deps.defaultGroupId);
 
+      // H9: rate-limit destructive operations per user. Jailbroken agents can
+      // loop tool calls; this caps the blast radius before the host app's
+      // circuit breaker / tool-manager safeguards kick in.
+      const rate = checkRate(scope.userId ?? '');
+      if (!rate.ok) {
+        return {
+          error:
+            `memory_forget rate limit exceeded — at most ${rate.quota} archives ` +
+            `per ${Math.round(rate.windowMs / 1000)}s. Retry in ~${Math.ceil(rate.retryAfterMs / 1000)}s. ` +
+            `If you need to archive many facts at once, ask the user to confirm first.`,
+          rateLimited: true,
+          retryAfterMs: rate.retryAfterMs,
+        };
+      }
+
       try {
         if (!args.replaceWith) {
           await deps.memory.archiveFact(args.factId, scope);
@@ -93,6 +118,7 @@ export function createForgetTool(deps: MemoryToolDeps): ToolFunction<ForgetArgs>
         }
 
         // H-2: downgrade on foreign contextIds when visibility is non-private.
+        // Adapter errors on the check are fail-safe to "foreign".
         const warnings: string[] = [];
         let vis = rw.visibility;
         const effectiveVisBeforeCheck = vis; // may be undefined → inherit predecessor
@@ -104,11 +130,12 @@ export function createForgetTool(deps: MemoryToolDeps): ToolFunction<ForgetArgs>
             deps.memory,
             rw.contextIds,
             scope,
+            { tool: 'memory_forget', predecessorFactId: args.factId },
           );
           if (foreign.length > 0) {
             vis = 'private';
             warnings.push(
-              `visibility downgraded to "private": contextIds include entities you don't own (${foreign.join(', ')}).`,
+              `visibility downgraded to "private": contextIds include entities you don't own or couldn't verify (${foreign.join(', ')}).`,
             );
           }
         }
@@ -160,19 +187,3 @@ export function createForgetTool(deps: MemoryToolDeps): ToolFunction<ForgetArgs>
   };
 }
 
-async function findForeignContextIds(
-  memory: MemorySystem,
-  contextIds: string[],
-  scope: ScopeFilter,
-): Promise<string[]> {
-  const foreign: string[] = [];
-  await Promise.all(
-    contextIds.map(async (id) => {
-      const ent = await memory.getEntity(id, scope);
-      if (ent && ent.ownerId !== undefined && ent.ownerId !== scope.userId) {
-        foreign.push(id);
-      }
-    }),
-  );
-  return foreign;
-}

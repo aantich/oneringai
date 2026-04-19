@@ -321,6 +321,14 @@ export interface FactFilter {
   observedBefore?: Date;
   /** Temporal filter: validFrom ≤ asOf ≤ (validUntil ?? ∞) AND createdAt ≤ asOf. */
   asOf?: Date;
+  /**
+   * Match facts whose `supersedes` field equals this fact id. Used by
+   * `restoreFact` to detect an existing non-archived successor before
+   * un-archiving a previously superseded predecessor. Pass `null` to match
+   * facts with no `supersedes` (not currently supported — implement only if
+   * needed).
+   */
+  supersedes?: FactId;
 }
 
 export interface FactOrderBy {
@@ -530,7 +538,22 @@ export type ChangeEvent =
   | { type: 'entity.merge'; winnerId: EntityId; loserId: EntityId }
   | { type: 'fact.add'; fact: IFact }
   | { type: 'fact.archive'; factId: FactId }
+  | { type: 'fact.restore'; factId: FactId }
   | { type: 'fact.supersede'; oldId: FactId; newId: FactId }
+  /**
+   * H3: emitted when a singleValued predicate's auto-supersede couldn't see a
+   * prior fact in the caller's scope, but a prior DOES exist in an outer scope
+   * (group-shared or global). The new fact lands in the caller's scope as a
+   * new "current" coexisting with the invisible outer one. Intentional — the
+   * event lets operators observe the drift without changing isolation.
+   */
+  | {
+      type: 'fact.supersede_skipped_outer_scope';
+      subjectId: EntityId;
+      predicate: string;
+      outerFactId: FactId;
+      callerScope: ScopeFields;
+    }
   | { type: 'profile.regenerate'; entityId: EntityId; scope: ScopeFields; factId: FactId }
   /**
    * Emitted once per embedding job that exhausted all retries. Lets operators
@@ -729,6 +752,36 @@ export interface MemorySystemConfig {
    * Throws at construction if set to 'strict' without a registry.
    */
   predicateMode?: 'permissive' | 'strict';
+  /**
+   * H5 — how the LLM extraction pipeline handles a predicate that isn't in the
+   * registry (after canonicalisation). Only used when a registry is configured.
+   *
+   * - `'fuzzy_map'` (default): try to snap onto the closest registered
+   *   predicate via edit distance (length-aware — see
+   *   `unknownPredicateFuzzyMaxDistance`). Typical wins: `work_at`→`works_at`,
+   *   `mention`→`mentioned`. No match → fall through to `'keep'`.
+   * - `'keep'`: write the unknown predicate verbatim (pre-H5 behaviour).
+   *   Surfaces in `IngestionResult.newPredicates` for human review.
+   * - `'drop'`: skip the fact entirely, record the reason in `unresolved`.
+   *
+   * Regardless of policy, the unknown predicate is always added to
+   * `newPredicates` (with the mapping target if one was chosen) so operators
+   * can still audit drift.
+   */
+  unknownPredicatePolicy?: 'fuzzy_map' | 'keep' | 'drop';
+  /**
+   * F3 — absolute cap on the Levenshtein distance used by `findClosest` when
+   * `unknownPredicatePolicy='fuzzy_map'`. The effective budget is also
+   * clamped by predicate length (`floor(min(lenA,lenB)/4)`, min 1), so
+   * lowering this only tightens further. Default: 2 (registry's built-in
+   * budget).
+   *
+   * Tune down (e.g. 1) if your vocabulary has semantically-distinct
+   * predicates within edit distance 2 of each other (`talks_at` vs
+   * `works_at`). Tune up only with confidence your predicates are
+   * well-separated in edit-distance space.
+   */
+  unknownPredicateFuzzyMaxDistance?: number;
   /**
    * When true (default), `addFact` auto-supersedes the prior visible fact for
    * a `(subject, predicate)` pair when the predicate is marked `singleValued`.

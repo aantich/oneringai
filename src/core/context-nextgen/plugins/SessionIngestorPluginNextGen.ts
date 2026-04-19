@@ -38,7 +38,8 @@ import type {
   ExtractionFactSpec,
   ExtractionOutput,
 } from '../../../memory/integration/ExtractionResolver.js';
-import { parseExtractionResponse } from '../../../memory/integration/parseExtraction.js';
+import { parseExtractionWithStatus } from '../../../memory/integration/parseExtraction.js';
+import { clampUnit } from '../../../tools/memory/types.js';
 import { logger } from '../../../infrastructure/observability/Logger.js';
 
 // ===========================================================================
@@ -484,20 +485,74 @@ export class SessionIngestorPluginNextGen implements IContextPluginNextGen {
     scope: ScopeFilter,
     dupPairs: Array<{ existing: IFact; newDetails: string }>,
   ): Promise<void> {
+    // C2: no silent drops. If the extractor references a label the resolver
+    // couldn't map (typo, hallucination, foreign-owned mention dropped
+    // upstream), emit a structured warn so the gap is observable. Each drop
+    // is one fact of potential knowledge lost per turn — silence makes
+    // regressions invisible.
     const subjectId = labelToId.get(spec.subject);
-    if (!subjectId) return;
+    if (!subjectId) {
+      logger.warn(
+        {
+          component: 'SessionIngestorPluginNextGen',
+          agentId: this.agentId,
+          userId: this.userId,
+          sourceSignalId,
+          missingLabel: spec.subject,
+          role: 'subject',
+          predicate: spec.predicate,
+          knownLabels: Array.from(labelToId.keys()),
+        },
+        'fact dropped — subject label not in resolved mentions',
+      );
+      return;
+    }
     let objectId: EntityId | undefined;
     if (spec.object) {
       const oid = labelToId.get(spec.object);
-      if (!oid) return;
+      if (!oid) {
+        logger.warn(
+          {
+            component: 'SessionIngestorPluginNextGen',
+            agentId: this.agentId,
+            userId: this.userId,
+            sourceSignalId,
+            missingLabel: spec.object,
+            role: 'object',
+            predicate: spec.predicate,
+            knownLabels: Array.from(labelToId.keys()),
+          },
+          'fact dropped — object label not in resolved mentions',
+        );
+        return;
+      }
       objectId = oid;
     }
     const contextIds: EntityId[] = [];
+    const droppedContext: string[] = [];
     if (spec.contextIds) {
       for (const cid of spec.contextIds) {
         const resolved = labelToId.get(cid);
         if (resolved) contextIds.push(resolved);
+        else droppedContext.push(cid);
       }
+    }
+    if (droppedContext.length > 0) {
+      // Partial context is still useful — fact is written with the labels that
+      // did resolve, but we log the dropped ones so they're recoverable.
+      logger.warn(
+        {
+          component: 'SessionIngestorPluginNextGen',
+          agentId: this.agentId,
+          userId: this.userId,
+          sourceSignalId,
+          missingLabels: droppedContext,
+          role: 'contextIds',
+          predicate: spec.predicate,
+          knownLabels: Array.from(labelToId.keys()),
+        },
+        'contextIds partially dropped — some labels not in resolved mentions',
+      );
     }
 
     const kind =
@@ -538,8 +593,12 @@ export class SessionIngestorPluginNextGen implements IContextPluginNextGen {
         objectId,
         details: spec.details,
         summaryForEmbedding: spec.summaryForEmbedding,
-        confidence: spec.confidence,
-        importance: spec.importance,
+        // C4: defence-in-depth — clamp at every external write boundary.
+        // MemorySystem.addFact clamps internally too, but relying on a single
+        // chokepoint is fragile (a new write path that bypasses core would
+        // break ranking silently).
+        confidence: clampUnit(spec.confidence),
+        importance: clampUnit(spec.importance),
         contextIds: contextIds.length > 0 ? contextIds : undefined,
         observedAt: toDate(spec.observedAt),
         validFrom: toDate(spec.validFrom),
@@ -564,7 +623,23 @@ export class SessionIngestorPluginNextGen implements IContextPluginNextGen {
       maxOutputTokens: this.maxOutputTokens,
       responseFormat: { type: 'json_object' },
     });
-    return parseExtractionResponse(response.output_text ?? '');
+    const parsed = parseExtractionWithStatus(response.output_text ?? '');
+    if (parsed.status !== 'ok') {
+      // No silent errors. A transient LLM hiccup mustn't drop a whole turn
+      // of knowledge without a trace — log enough to retry/diagnose.
+      logger.warn(
+        {
+          component: 'SessionIngestorPluginNextGen',
+          agentId: this.agentId,
+          userId: this.userId,
+          status: parsed.status,
+          reason: parsed.reason,
+          rawExcerpt: parsed.rawExcerpt,
+        },
+        'session extraction parse failed',
+      );
+    }
+    return { mentions: parsed.mentions, facts: parsed.facts };
   }
 
   private async mergeDetails(oldDetails: string, newDetails: string): Promise<string> {

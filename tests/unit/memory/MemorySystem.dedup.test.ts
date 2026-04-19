@@ -238,6 +238,61 @@ describe('dedup — structural value equality (M-2)', () => {
   });
 });
 
+describe('dedup — case-insensitive + whitespace-normalised string values (H4)', () => {
+  it('treats "Alice", "alice", "Alice " as the same fact', async () => {
+    const mem = makeMem();
+    const subjectId = await bootstrap(mem);
+    const first = await mem.addFact(
+      { subjectId, predicate: 'nickname', kind: 'atomic', value: 'Alice' },
+      { userId: USER },
+    );
+    const lower = await mem.addFact(
+      { subjectId, predicate: 'nickname', kind: 'atomic', value: 'alice', dedup: true },
+      { userId: USER },
+    );
+    expect(lower.id).toBe(first.id);
+    const trailing = await mem.addFact(
+      { subjectId, predicate: 'nickname', kind: 'atomic', value: 'Alice ', dedup: true },
+      { userId: USER },
+    );
+    expect(trailing.id).toBe(first.id);
+    const doubleSpace = await mem.addFact(
+      { subjectId, predicate: 'nickname', kind: 'atomic', value: '  Alice  ', dedup: true },
+      { userId: USER },
+    );
+    expect(doubleSpace.id).toBe(first.id);
+  });
+
+  it('still distinguishes semantically different strings', async () => {
+    const mem = makeMem();
+    const subjectId = await bootstrap(mem);
+    const first = await mem.addFact(
+      { subjectId, predicate: 'nickname', kind: 'atomic', value: 'Alice' },
+      { userId: USER },
+    );
+    const second = await mem.addFact(
+      { subjectId, predicate: 'nickname', kind: 'atomic', value: 'Bob', dedup: true },
+      { userId: USER },
+    );
+    expect(second.id).not.toBe(first.id);
+  });
+
+  it('does not apply case-insensitivity to object/number values', async () => {
+    const mem = makeMem();
+    const subjectId = await bootstrap(mem);
+    // Number values — exact equality.
+    const n1 = await mem.addFact(
+      { subjectId, predicate: 'score', kind: 'atomic', value: 42 },
+      { userId: USER },
+    );
+    const n2 = await mem.addFact(
+      { subjectId, predicate: 'score', kind: 'atomic', value: 42, dedup: true },
+      { userId: USER },
+    );
+    expect(n2.id).toBe(n1.id);
+  });
+});
+
 describe('updateFactDetails', () => {
   it('updates details in place and recomputes isSemantic', async () => {
     const mem = makeMem();
