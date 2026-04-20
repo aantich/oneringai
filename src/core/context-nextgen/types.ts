@@ -717,8 +717,11 @@ export interface KnownContextFeatures {
   /** Enable SharedWorkspace plugin for multi-agent coordination (default: false) */
   sharedWorkspace?: boolean;
 
-  /** Enable Memory plugin for self-learning knowledge store (default: false). Requires `plugins.memory.memory: MemorySystem` in config. */
+  /** Enable Memory plugin for self-learning knowledge store (default: false, READ-ONLY tools). Requires `plugins.memory.memory: MemorySystem` in config. */
   memory?: boolean;
+
+  /** Enable Memory-write sidecar (default: false). Adds the 5 write tools (remember/link/forget/restore/upsert_entity). Requires `memory: true`. */
+  memoryWrite?: boolean;
 }
 
 /**
@@ -745,6 +748,7 @@ export const DEFAULT_FEATURES: Required<KnownContextFeatures> = {
   toolCatalog: false,
   sharedWorkspace: false,
   memory: false,
+  memoryWrite: false,
 };
 
 // ============================================================================
@@ -774,6 +778,8 @@ export interface KnownPluginConfigs {
   sharedWorkspace?: Record<string, unknown>;
   /** Memory plugin config. See MemoryPluginConfig. `agentId` auto-filled from context. `userId` auto-filled from context if unset. Requires `memory: MemorySystem`. */
   memory?: Record<string, unknown>;
+  /** Memory-write plugin config. See MemoryWritePluginConfig. Shares `memory` / `agentId` / `userId` with the memory plugin when unset. */
+  memoryWrite?: Record<string, unknown>;
 }
 
 /**

@@ -49,7 +49,7 @@ const DESCRIPTION = `Record a new fact (subject, predicate, value-or-object). Be
 
 Subject can be: "me", "this_agent", entity id, {id}, {identifier:{kind,value}}, or {surface:"..."}.
 
-You can ONLY write facts on entities you own (the tool rejects writes to entities owned by other users — upsert your own entity first via memory_find_entity).
+You can ONLY write facts on entities you own (the tool rejects writes to entities owned by other users — upsert your own entity first via memory_upsert_entity).
 
 kind (default "atomic"):
 - "atomic": short/structured — attributes (employee_count=500), relations (attended → meeting), brief observations. Use this for data.
@@ -135,7 +135,7 @@ export function createRememberTool(deps: MemoryToolDeps): ToolFunction<RememberA
           error:
             `memory_remember: cannot write facts on entities you don't own ` +
             `(subject.ownerId=${resolved.entity.ownerId}, caller=${scope.userId ?? 'none'}). ` +
-            `Upsert your own entity via memory_find_entity or ask the owner to write this fact.`,
+            `Upsert your own entity via memory_upsert_entity or ask the owner to write this fact.`,
           subjectOwnerId: resolved.entity.ownerId,
         };
       }

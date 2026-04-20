@@ -82,6 +82,6 @@ export function ownerlessSubjectWarning(
   return (
     'subject entity has no ownerId — fact will be written with your userId as ' +
     'ownerId, which diverges from the subject. Consider claiming the entity ' +
-    `by re-upserting with memory_find_entity(action="upsert").`
+    `by re-upserting with memory_upsert_entity.`
   );
 }

@@ -2,19 +2,23 @@
  * Memory tools — high-signal LLM tools for the self-learning memory layer.
  *
  * These tools need a live `MemorySystem` instance, so unlike most built-in
- * tools they're not singletons. Create them via `createMemoryTools({...})`
- * — typically the `MemoryPluginNextGen` does this for you.
+ * tools they're not singletons. The read/write split lets a host app give
+ * an agent retrieval-only access while a separate pipeline (e.g.
+ * `SessionIngestorPluginNextGen`) handles writes.
  *
- * Tools:
+ * Read tools (5):
  *   memory_recall       — profile + top-ranked facts for a subject
  *   memory_graph        — N-hop traversal (native $graphLookup on Mongo)
  *   memory_search       — semantic text search
- *   memory_find_entity  — lookup/list/upsert by id, identifier, surface, or type
+ *   memory_find_entity  — lookup/list by id, identifier, surface, or type
  *   memory_list_facts   — paginated raw fact enumeration
- *   memory_remember     — write an atomic fact
- *   memory_link         — write a relational fact (entity ↔ entity)
- *   memory_forget       — archive a fact (optionally supersede with replacement); rate-limited
- *   memory_restore      — un-archive a fact (undo for memory_forget mistakes)
+ *
+ * Write tools (5):
+ *   memory_remember       — write an atomic fact
+ *   memory_link           — write a relational fact (entity ↔ entity)
+ *   memory_forget         — archive a fact (rate-limited)
+ *   memory_restore        — un-archive a fact (undo for memory_forget)
+ *   memory_upsert_entity  — create or merge an entity by identifiers
  */
 
 import type { ToolFunction } from '../../domain/entities/Tool.js';
@@ -30,6 +34,7 @@ import { createRememberTool } from './remember.js';
 import { createLinkTool } from './link.js';
 import { createForgetTool } from './forget.js';
 import { createRestoreTool } from './restore.js';
+import { createUpsertEntityTool } from './upsertEntity.js';
 
 export type {
   MemoryToolDeps,
@@ -57,6 +62,7 @@ export { createRememberTool } from './remember.js';
 export { createLinkTool } from './link.js';
 export { createForgetTool } from './forget.js';
 export { createRestoreTool } from './restore.js';
+export { createUpsertEntityTool } from './upsertEntity.js';
 
 export interface CreateMemoryToolsArgs {
   memory: MemorySystem;
@@ -82,22 +88,14 @@ export interface CreateMemoryToolsArgs {
   forgetRateLimit?: { maxCallsPerWindow?: number; windowMs?: number };
 }
 
-/**
- * Factory: build all 8 memory tools wired to a shared resolver + deps.
- *
- * When called by `MemoryPluginNextGen` the `getOwnSubjectIds` callback hooks
- * the plugin's bootstrapped entity ids. Standalone callers can leave it
- * unset — `"me"` / `"this_agent"` tokens will then report "not available".
- */
-export function createMemoryTools(args: CreateMemoryToolsArgs): ToolFunction[] {
+function buildDeps(args: CreateMemoryToolsArgs): MemoryToolDeps {
   const getOwnSubjectIds = args.getOwnSubjectIds ?? (() => ({}));
   const resolve = createSubjectResolver({
     memory: args.memory,
     getOwnSubjectIds,
     autoResolveThreshold: args.autoResolveThreshold,
   });
-
-  const deps: MemoryToolDeps = {
+  return {
     memory: args.memory,
     resolve,
     agentId: args.agentId,
@@ -111,16 +109,37 @@ export function createMemoryTools(args: CreateMemoryToolsArgs): ToolFunction[] {
     },
     forgetRateLimit: args.forgetRateLimit,
   };
+}
 
+/** Read-only retrieval tools — no memory writes performed. */
+export function createMemoryReadTools(args: CreateMemoryToolsArgs): ToolFunction[] {
+  const deps = buildDeps(args);
   return [
     createRecallTool(deps),
     createGraphTool(deps),
     createSearchTool(deps),
     createFindEntityTool(deps),
     createListFactsTool(deps),
+  ];
+}
+
+/** Write-side memory tools — mutate entities and facts. */
+export function createMemoryWriteTools(args: CreateMemoryToolsArgs): ToolFunction[] {
+  const deps = buildDeps(args);
+  return [
     createRememberTool(deps),
     createLinkTool(deps),
     createForgetTool(deps),
     createRestoreTool(deps),
+    createUpsertEntityTool(deps),
   ];
+}
+
+/**
+ * All 10 memory tools (5 read + 5 write). Convenience factory — most callers
+ * should prefer `createMemoryReadTools` / `createMemoryWriteTools` separately
+ * so read agents don't carry the write-tool schema overhead.
+ */
+export function createMemoryTools(args: CreateMemoryToolsArgs): ToolFunction[] {
+  return [...createMemoryReadTools(args), ...createMemoryWriteTools(args)];
 }

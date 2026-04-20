@@ -50,6 +50,9 @@ export type {
   MemoryPluginInjectionConfig,
 } from './MemoryPluginNextGen.js';
 
+export { MemoryWritePluginNextGen } from './MemoryWritePluginNextGen.js';
+export type { MemoryWritePluginConfig } from './MemoryWritePluginNextGen.js';
+
 export {
   SessionIngestorPluginNextGen,
   buildSessionExtractionPrompt,

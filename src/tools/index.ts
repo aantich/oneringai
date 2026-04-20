@@ -68,6 +68,8 @@ export type {
 
 export {
   createMemoryTools,
+  createMemoryReadTools,
+  createMemoryWriteTools,
   createRecallTool,
   createGraphTool,
   createSearchTool,
@@ -76,6 +78,8 @@ export {
   createRememberTool,
   createLinkTool,
   createForgetTool,
+  createRestoreTool,
+  createUpsertEntityTool,
   createSubjectResolver,
   SUBJECT_TOKEN_ME,
   SUBJECT_TOKEN_THIS_AGENT,

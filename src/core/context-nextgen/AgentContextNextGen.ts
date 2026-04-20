@@ -79,6 +79,7 @@ import {
   ToolCatalogPluginNextGen,
   SharedWorkspacePluginNextGen,
   MemoryPluginNextGen,
+  MemoryWritePluginNextGen,
 } from './plugins/index.js';
 import { StorageRegistry } from '../StorageRegistry.js';
 import type {
@@ -89,6 +90,7 @@ import type {
   ToolCatalogPluginConfig,
   SharedWorkspaceConfig,
   MemoryPluginConfig,
+  MemoryWritePluginConfig,
 } from './plugins/index.js';
 
 // Strategy imports
@@ -382,7 +384,49 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       } as MemoryPluginConfig));
     }
 
-    // 7. External plugins from PluginRegistry
+    // 8. Memory-write sidecar — opt-in via `memoryWrite: true`. Ships write
+    // tools only (memory_remember / _link / _forget / _restore / _upsert_entity)
+    // with no system-message content. Requires `memory` feature to be enabled
+    // so the user/agent entities are bootstrapped by MemoryPluginNextGen.
+    if (features.memoryWrite) {
+      if (!features.memory) {
+        throw new Error(
+          "memoryWrite feature requires the 'memory' feature to be enabled — " +
+          "MemoryPluginNextGen owns entity bootstrap + profile injection; " +
+          "MemoryWritePluginNextGen only adds write tools on top of it",
+        );
+      }
+      if (!this._agentId) {
+        throw new Error('memoryWrite feature requires agentId to be set');
+      }
+      const writeConfig = configs.memoryWrite as Partial<MemoryWritePluginConfig> | undefined;
+      const readMemConfig = configs.memory as Partial<MemoryPluginConfig> | undefined;
+      const sharedMemory = writeConfig?.memory ?? readMemConfig?.memory;
+      if (!sharedMemory) {
+        throw new Error(
+          "memoryWrite feature is enabled but no MemorySystem instance is available — " +
+          "set plugins.memory.memory or plugins.memoryWrite.memory",
+        );
+      }
+      const resolvedUserIdWrite = writeConfig?.userId ?? readMemConfig?.userId ?? this._userId;
+      if (!resolvedUserIdWrite) {
+        throw new Error('memoryWrite feature requires userId');
+      }
+      const readPluginRaw = this._plugins.get('memory');
+      const readPlugin =
+        readPluginRaw instanceof MemoryPluginNextGen ? readPluginRaw : undefined;
+      this.registerPlugin(new MemoryWritePluginNextGen({
+        ...writeConfig,
+        agentId: this._agentId,
+        userId: resolvedUserIdWrite,
+        memory: sharedMemory,
+        getOwnSubjectIds:
+          writeConfig?.getOwnSubjectIds ??
+          (readPlugin ? () => readPlugin.getBootstrappedIds() : undefined),
+      } as MemoryWritePluginConfig));
+    }
+
+    // 9. External plugins from PluginRegistry
     const registeredPlugins = PluginRegistry.getAll();
     if (registeredPlugins.size > 0) {
       const factoryContext: PluginFactoryContext = {

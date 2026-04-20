@@ -75,6 +75,9 @@ export {
   ToolCatalogPluginNextGen,
   SharedWorkspacePluginNextGen,
   MemoryPluginNextGen,
+  MemoryWritePluginNextGen,
+  SessionIngestorPluginNextGen,
+  buildSessionExtractionPrompt,
 } from './plugins/index.js';
 
 export type {
@@ -97,6 +100,9 @@ export type {
   SerializedSharedWorkspaceState,
   MemoryPluginConfig,
   MemoryPluginInjectionConfig,
+  MemoryWritePluginConfig,
+  SessionIngestorPluginConfig,
+  SessionIngestorDiligence,
 } from './plugins/index.js';
 
 // Compaction strategies

@@ -1,24 +1,18 @@
 /**
- * memory_find_entity — look up, list, or upsert an entity by any of its
- * IDs, by surface name, or by type + metadata filter. An entity can have
- * MANY different identifiers (email, slack_id, github_login, internal_id…);
- * this is how you find the right one.
- *
- * Upsert auto-merges identifiers when you provide a new one on an existing
- * entity matched by another identifier.
+ * memory_find_entity — read-only lookup / listing of entities by id,
+ * identifier, surface name, or type + metadata filter. Split from the
+ * historical mixed-read/write tool; upsert now lives in `upsertEntity.ts`
+ * so read and write plugins can own non-overlapping tool sets.
  */
 
 import type { ToolFunction } from '../../domain/entities/Tool.js';
-import type { Identifier, MemorySystem, ScopeFilter } from '../../memory/index.js';
-import type { MemoryToolDeps, Visibility } from './types.js';
-import { clamp, resolveScope, toErrorMessage, visibilityToPermissions } from './types.js';
+import type { MemorySystem, ScopeFilter } from '../../memory/index.js';
+import type { MemoryToolDeps } from './types.js';
+import { clamp, resolveScope, toErrorMessage } from './types.js';
 
 export interface FindEntityArgs {
-  /**
-   * Action: 'find' (default) returns one entity or candidates, 'list' returns
-   * a paginated list for {type, metadataFilter}, 'upsert' creates-or-merges.
-   */
-  action?: 'find' | 'list' | 'upsert';
+  /** 'find' returns one entity or candidates; 'list' returns a paginated list. */
+  action?: 'find' | 'list';
   /** How to look up — one of id | identifier | surface | type+metadataFilter. */
   by?: {
     id?: string;
@@ -27,38 +21,22 @@ export interface FindEntityArgs {
     type?: string;
     metadataFilter?: Record<string, unknown>;
   };
-  /** For upsert: entity type (required for new entities). */
-  type?: string;
-  /** For upsert: display name (required for new entities). */
-  displayName?: string;
-  /** For upsert: identifiers to attach. Existing entities merge extras. */
-  identifiers?: Identifier[];
-  /** For upsert: alias names (display hints, not identifiers). */
-  aliases?: string[];
-  /** For upsert: free-form metadata. */
-  metadata?: Record<string, unknown>;
-  /** For upsert: visibility. See Visibility docstring. Default 'private'. */
-  visibility?: Visibility;
   /** For list: page size. Default 20, max 200. */
   limit?: number;
 }
 
-const DESCRIPTION = `Look up, list, or create an entity. An entity can have many different identifiers (email, slack_id, github_login, internal_id…); this tool is how you find the right one.
+const DESCRIPTION = `Look up or list entities. An entity can have many identifiers (email, slack_id, github_login, internal_id…); this tool finds the right one.
 
 Actions:
-- "find" (default): look up ONE entity. Use by.id OR by.identifier OR by.surface. (by.type / by.metadataFilter are list-only and ignored here.)
+- "find" (default): look up ONE entity. Use by.id OR by.identifier OR by.surface.
 - "list": enumerate entities by by.type + optional by.metadataFilter.
-- "upsert": find-or-create. If any supplied identifier matches an existing entity, the remaining identifiers are merged onto it (multi-ID enrichment). Set {kind, value, exclusive:true} on canonical identifiers (email, phone) to mark them as one-to-one — prevents the same identifier being attached to two entities.
+
+Read-only — to create or merge entities use memory_upsert_entity (available only when the write plugin is enabled).
 
 Examples:
 - find by email: {"by":{"identifier":{"kind":"email","value":"alice@a.com"}}}
-- find same Alice by Slack: {"by":{"identifier":{"kind":"slack_user_id","value":"U07ABC"}}}
 - find by surface: {"by":{"surface":"Alice from accounting"}}
-- list active projects: {"action":"list","by":{"type":"project","metadataFilter":{"state":"active"}},"limit":20}
-- upsert a person with multiple IDs (merges if any identifier already exists; email flagged exclusive):
-  {"action":"upsert","type":"person","displayName":"Alice Smith","identifiers":[{"kind":"email","value":"alice@a.com","exclusive":true},{"kind":"slack_user_id","value":"U07ABC"}]}
-
-Visibility for upsert: "private" (default, owner-only), "group" (group can read), "public".`;
+- list active projects: {"action":"list","by":{"type":"project","metadataFilter":{"state":"active"}},"limit":20}`;
 
 export function createFindEntityTool(
   deps: MemoryToolDeps,
@@ -72,14 +50,8 @@ export function createFindEntityTool(
         parameters: {
           type: 'object',
           properties: {
-            action: { type: 'string', enum: ['find', 'list', 'upsert'] },
+            action: { type: 'string', enum: ['find', 'list'] },
             by: { type: 'object' },
-            type: { type: 'string' },
-            displayName: { type: 'string' },
-            identifiers: { type: 'array' },
-            aliases: { type: 'array', items: { type: 'string' } },
-            metadata: { type: 'object' },
-            visibility: { type: 'string', enum: ['private', 'group', 'public'] },
             limit: { type: 'number' },
           },
         },
@@ -99,10 +71,7 @@ export function createFindEntityTool(
         if (action === 'list') {
           return await doList(deps.memory, args, scope);
         }
-        if (action === 'upsert') {
-          return await doUpsert(deps.memory, args, scope);
-        }
-        return { error: `unknown action '${action}'` };
+        return { error: `unknown action '${action}' (read-only tool supports 'find' and 'list')` };
       } catch (err) {
         return { error: `memory_find_entity failed: ${toErrorMessage(err)}` };
       }
@@ -158,46 +127,7 @@ async function doList(
   };
 }
 
-async function doUpsert(
-  memory: MemorySystem,
-  args: FindEntityArgs,
-  scope: ScopeFilter,
-): Promise<unknown> {
-  if (!args.type) return { error: 'upsert: type is required' };
-  if (!args.displayName) return { error: 'upsert: displayName is required' };
-  if (!args.identifiers?.length && !args.by?.identifier) {
-    return {
-      error: 'upsert: provide at least one identifier (in "identifiers" or "by.identifier")',
-    };
-  }
-
-  const identifiers: Identifier[] = args.identifiers?.length
-    ? args.identifiers
-    : [{ kind: args.by!.identifier!.kind, value: args.by!.identifier!.value }];
-
-  const permissions = visibilityToPermissions(args.visibility ?? 'private');
-
-  const result = await memory.upsertEntity(
-    {
-      type: args.type,
-      displayName: args.displayName,
-      identifiers,
-      aliases: args.aliases,
-      metadata: args.metadata,
-      permissions,
-    },
-    scope,
-  );
-
-  return {
-    entity: shapeEntity(result.entity),
-    created: result.created,
-    mergedIdentifiers: result.mergedIdentifiers,
-    mergeCandidates: result.mergeCandidates,
-  };
-}
-
-function shapeEntity(e: import('../../memory/index.js').IEntity): Record<string, unknown> {
+export function shapeEntity(e: import('../../memory/index.js').IEntity): Record<string, unknown> {
   return {
     id: e.id,
     type: e.type,

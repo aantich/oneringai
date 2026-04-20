@@ -1154,15 +1154,23 @@ await agent.run("Remember I prefer concise answers");
 - 📜 **Supersession history** — corrections archive predecessors; audit chain preserved via `archivedOnly: true`
 - 🛡️ **LLM-safe** — `groupId` fixed by host app (never from tool args); numeric limits clamped
 
-**8 LLM tools** (`memory_*`):
+**10 LLM tools** (`memory_*`) split into two opt-in bundles:
+
+*Read (via `MemoryPluginNextGen`, feature flag `memory`):*
 - `memory_recall(subject, include?)` — profile + top facts + optional tiers
 - `memory_graph(start, direction, maxDepth, predicates?)` — N-hop traversal
 - `memory_search(query, topK?, filter?)` — semantic text search
-- `memory_find_entity(by | action:"upsert", ...)` — lookup / list / create-or-merge
+- `memory_find_entity(by, action? ∈ {find, list})` — lookup or list (read-only)
 - `memory_list_facts(subject, predicate?, archivedOnly?)` — structured enumeration
+
+*Write (via `MemoryWritePluginNextGen`, feature flag `memoryWrite`):*
 - `memory_remember(subject, predicate, value?/objectId?/details?, visibility?)` — write a fact
 - `memory_link(from, predicate, to)` — write a relational fact
+- `memory_upsert_entity(type, displayName, identifiers, ...)` — create or merge an entity by identifier
 - `memory_forget(factId, replaceWith?)` — archive or supersede
+- `memory_restore(factId)` — un-archive
+
+Enable `memory: true` alone for retrieval-only agents (pair with `SessionIngestorPluginNextGen` for background learning), or enable both flags for agents that write memory deliberately.
 
 **Flexible SubjectRef** — every tool accepts any of: entity id, `"me"`, `"this_agent"`, `{id}`, `{identifier: {kind, value}}`, `{surface: "..."}`.
 

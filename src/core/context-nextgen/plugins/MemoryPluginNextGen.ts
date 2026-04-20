@@ -38,7 +38,7 @@ import type {
 } from '../../../memory/index.js';
 import { simpleTokenEstimator } from '../BasePluginNextGen.js';
 import {
-  createMemoryTools,
+  createMemoryReadTools,
   type Visibility,
 } from '../../../tools/memory/index.js';
 import { logger } from '../../../infrastructure/observability/Logger.js';
@@ -128,17 +128,17 @@ const MEMORY_INSTRUCTIONS = `## Memory (self-learning knowledge store)
 
 Your agent profile and the user's profile are ALREADY shown above — do not call memory_recall on "me" or "this_agent" just to re-read them.
 
-For anything else — other people, organisations, projects, topics, events, tasks — use the memory_* tools. Be proactive:
-- When the user mentions an entity you don't yet know, call memory_find_entity (or memory_recall with {surface:"..."}).
-- When you learn a fact worth remembering, call memory_remember.
-- When the user corrects something, use memory_forget with a \`replaceWith\` to supersede cleanly.
-- If you archived something by mistake, use memory_restore to un-archive it.
+For anything else — other people, organisations, projects, topics, events, tasks — use the memory_* retrieval tools:
+- When the user mentions an entity you don't yet know, call memory_find_entity or memory_recall with {surface:"..."}.
 - For "who/what is connected to X?" questions, use memory_graph — it walks the knowledge graph and returns nodes + edges.
 - For "find anything about X" questions where you don't know the entity, use memory_search (semantic).
+- memory_list_facts gives raw paginated fact enumeration.
 
-Privacy default: memory_remember with no visibility falls back to "private" for user-subject facts (owner-only). Pass visibility:"group" or "public" only when the user signals the fact should be shared.
+Entities may have many identifiers (email, slack_id, github_login, internal_id…). memory_find_entity accepts any of them via \`{by:{identifier:{kind,value}}}\`. This tool is read-only (actions: find | list).
 
-Entities may have many identifiers (email, slack_id, github_login, internal_id…). memory_find_entity accepts any of them via \`{by:{identifier:{kind,value}}}\`. memory_find_entity with action="upsert" will merge new identifiers onto an existing entity automatically.`;
+If you're missing information, answer from what you can retrieve rather than apologising for "not remembering". Write-side capabilities, if any, are described separately below (and may be absent — some deployments update memory through a background pipeline instead).`;
+
+// Write-side instructions live in MemoryWritePluginNextGen.
 
 // ===========================================================================
 // Plugin
@@ -298,7 +298,7 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
 
   getTools(): ToolFunction[] {
     if (!this.cachedTools) {
-      this.cachedTools = createMemoryTools({
+      this.cachedTools = createMemoryReadTools({
         memory: this.memory,
         agentId: this.agentId,
         defaultUserId: this.userId,

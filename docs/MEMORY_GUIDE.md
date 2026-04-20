@@ -1844,16 +1844,22 @@ This lets you have layered profiles: everyone sees the global "John is CEO of Ac
 
 ---
 
-## Giving agents memory — the `MemoryPluginNextGen` plugin and `memory_*` tools
+## Giving agents memory — the `MemoryPluginNextGen` / `MemoryWritePluginNextGen` plugins and `memory_*` tools
 
-Up to this point the guide has been about the memory *library* — you call `memory.addFact`, `memory.getContext`, etc. from your application. But the whole point of memory is to make agents smarter, so we ship a **context plugin** and a set of **LLM-callable tools** that let the agent read and write memory during its own thinking loop.
+Up to this point the guide has been about the memory *library* — you call `memory.addFact`, `memory.getContext`, etc. from your application. But the whole point of memory is to make agents smarter, so we ship **two complementary context plugins** and a set of **LLM-callable tools** that let the agent read and (optionally) write memory during its own thinking loop.
 
-There are two moving parts:
+There are three moving parts:
 
-1. **`MemoryPluginNextGen`** — a [NextGen context plugin](./MEMORY_API.md) that bootstraps a user + agent entity in memory and injects their profiles into the system message. The agent sees its own evolving profile and the user's profile on every turn, without having to ask.
-2. **The `memory_*` tools** (8 of them) — high-signal LLM tools for everything the plugin *doesn't* inject: looking up other entities, walking the graph, semantic search, writing new facts, linking entities, forgetting/superseding facts.
+1. **`MemoryPluginNextGen`** — a [NextGen context plugin](./MEMORY_API.md) that bootstraps a user + agent entity in memory and injects their profiles into the system message. The agent sees its own evolving profile and the user's profile on every turn, without having to ask. Ships the **5 read** `memory_*` tools. Enabled via `features.memory: true`.
+2. **`MemoryWritePluginNextGen`** — a lightweight sidecar plugin that adds the **5 write** `memory_*` tools (`memory_remember`, `memory_link`, `memory_upsert_entity`, `memory_forget`, `memory_restore`). No system-message content of its own. Enabled via `features.memoryWrite: true` — requires `features.memory: true` (the read plugin owns entity bootstrap + profile injection).
+3. **The `memory_*` tools** (10 total, split 5/5) — high-signal LLM tools for everything the plugin doesn't inject: looking up entities, walking the graph, semantic search (reads); writing facts, linking entities, upserting entities, forgetting/superseding facts (writes).
 
-The plugin is how **self-learning** works end-to-end: observations flow in through `memory_remember` (or your own ingestion code), profiles regenerate incrementally as enough new facts accumulate, and the regenerated profiles appear in context on the next turn. No manual prompt engineering, no static "rules for the agent" file.
+**Two common wiring choices:**
+
+- **Read + write (traditional):** enable both flags. The agent reads memory via retrieval tools and also decides when to write new facts itself. Good for explicit "remember this" conversations. Higher per-turn token cost (~5k tokens of tool schemas).
+- **Read-only + background ingestion:** enable only `memory: true`, and manually register a `SessionIngestorPluginNextGen` that extracts facts from the conversation on a (usually cheaper) separate model. Agent cannot write directly — memory updates itself behind the scenes. Cheaper per turn; write latency lags one turn.
+
+The plugin pair is how **self-learning** works end-to-end: observations flow in through `memory_remember` (or your own ingestion code like `SessionIngestorPluginNextGen`), profiles regenerate incrementally as enough new facts accumulate, and the regenerated profiles appear in context on the next turn. No manual prompt engineering, no static "rules for the agent" file.
 
 ### Quick start
 
@@ -1870,20 +1876,24 @@ const memory = createMemorySystemWithConnectors({
   },
 });
 
-// 2. Create an agent with the memory feature enabled.
+// 2. Create an agent with both memory features enabled (read + write).
 const agent = Agent.create({
   connector: 'anthropic',
   model: 'claude-sonnet-4-6',
   agentId: 'my-assistant',
   userId: 'alice',             // REQUIRED — memory enforces owner on every record
-  contextFeatures: { memory: true },
+  contextFeatures: {
+    memory: true,               // reads: profile injection + 5 retrieval tools
+    memoryWrite: true,          // writes: 5 mutation tools (omit for retrieval-only)
+  },
   pluginConfigs: {
     memory: {
-      memory,                  // the MemorySystem instance
+      memory,                  // the MemorySystem instance (shared by both plugins)
       // groupId: 'team-A',    // optional: trusted group from your auth layer
       // userProfileInjection: { topFacts: 20, relatedTasks: true },
       // agentProfileInjection: { topFacts: 10 },
     },
+    // memoryWrite inherits `memory` from plugins.memory.memory unless overridden.
   },
 });
 
@@ -2091,7 +2101,7 @@ The library's permission system trusts scope (`{userId, groupId}`) because the h
 - Consequently, tools do **not** accept a `groupId` arg. It's silently ignored if the model tries to pass one.
 - The host app is responsible for setting `plugins.memory.groupId` from its authenticated session, not from user input.
 
-**No ghost-writes.** `memory_remember` and `memory_link` reject writes whose subject (`subject` for remember, `from` for link) is owned by another user. Because the memory layer enforces `fact.ownerId == subject.ownerId`, a write against someone else's entity would silently attribute the fact to *them*. Tools return a structured error in that case. Use `memory_find_entity` with `action: "upsert"` to create your own entity for the fact you want to record.
+**No ghost-writes.** `memory_remember` and `memory_link` reject writes whose subject (`subject` for remember, `from` for link) is owned by another user. Because the memory layer enforces `fact.ownerId == subject.ownerId`, a write against someone else's entity would silently attribute the fact to *them*. Tools return a structured error in that case. Use `memory_upsert_entity` to create your own entity for the fact you want to record.
 
 **`contextIds` auto-downgrade.** If a write specifies `contextIds` that include entities you don't own, and the chosen visibility is `"group"` or `"public"`, the tool silently downgrades visibility to `"private"` and includes a `warnings` entry in the response. This prevents a compromised agent from planting cross-owner facts that would then surface in a victim's graph-walk results.
 
@@ -2103,12 +2113,16 @@ The library's permission system trusts scope (`{userId, groupId}`) because the h
 
 ### Using the tools outside the plugin
 
-If you're building a custom agent and don't want the full `MemoryPluginNextGen`, you can still use the `memory_*` tools directly:
+If you're building a custom agent and don't want the full plugin setup, you can still use the `memory_*` tools directly. Three factories are exported, all sharing the same `CreateMemoryToolsArgs`:
+
+- `createMemoryReadTools(...)` — the 5 retrieval tools (`memory_recall`, `memory_graph`, `memory_search`, `memory_find_entity`, `memory_list_facts`).
+- `createMemoryWriteTools(...)` — the 5 mutation tools (`memory_remember`, `memory_link`, `memory_upsert_entity`, `memory_forget`, `memory_restore`).
+- `createMemoryTools(...)` — convenience returning all 10.
 
 ```ts
-import { createMemoryTools } from '@everworker/oneringai';
+import { createMemoryReadTools, createMemoryWriteTools } from '@everworker/oneringai';
 
-const tools = createMemoryTools({
+const readTools = createMemoryReadTools({
   memory,                              // MemorySystem instance
   agentId: 'my-agent',
   defaultUserId: 'alice',              // fallback when ToolContext.userId is unset
@@ -2119,8 +2133,12 @@ const tools = createMemoryTools({
   autoResolveThreshold: 0.9,
 });
 
-// Register on any Agent.
-agent.registerTools(tools);
+// Register on any Agent. For a read-only agent skip the write bundle entirely.
+agent.registerTools(readTools);
+
+// Or, for full read+write:
+const writeTools = createMemoryWriteTools({ memory, agentId: 'my-agent', defaultUserId: 'alice' });
+agent.registerTools([...readTools, ...writeTools]);
 ```
 
 Without `getOwnSubjectIds`, the `"me"` / `"this_agent"` tokens return a structured error; callers must reference entities by id, identifier, or surface.
@@ -2190,10 +2208,11 @@ ctx.registerPlugin(new SessionIngestorPluginNextGen({
 
 **Graceful degradation.** Extractor errors log via `logger.warn` and never propagate. A misbehaving plugin cannot break `prepare()`.
 
-**Relationship to `MemoryPluginNextGen`.** The two plugins compose:
-- `MemoryPluginNextGen` — injects profiles into the system message + exposes 8 LLM-callable `memory_*` tools for deliberate writes.
-- `SessionIngestorPluginNextGen` — passively captures observations from the conversation itself, fire-and-forget.
-- Both bootstrap `person:<userId>` + `agent:<agentId>` entities via identifier-keyed upsert — the operation is idempotent, so running both is safe.
+**Relationship to `MemoryPluginNextGen` / `MemoryWritePluginNextGen`.** The plugins compose:
+- `MemoryPluginNextGen` — injects profiles into the system message + exposes the **5 read** `memory_*` tools.
+- `MemoryWritePluginNextGen` — optional sidecar exposing the **5 write** `memory_*` tools for deliberate writes by the LLM. Omit when you want the agent to be retrieval-only.
+- `SessionIngestorPluginNextGen` — passively captures observations from the conversation itself, fire-and-forget. Good replacement for `MemoryWritePluginNextGen` when you don't want the main agent to pay the write-tool schema cost or be trusted with direct memory mutations.
+- All three bootstrap `person:<userId>` + `agent:<agentId>` entities via identifier-keyed upsert — the operation is idempotent, so running any combination is safe.
 
 ### Time-boxed facts
 

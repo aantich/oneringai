@@ -3860,7 +3860,7 @@ interface UserInfoPluginConfig {
 
 ## Self-Learning Memory (NextGen Plugin)
 
-**`MemoryPluginNextGen`** is the modern replacement for both `PersistentInstructionsPluginNextGen` and `UserInfoPluginNextGen`. It sits on top of the [memory layer](./docs/MEMORY_GUIDE.md) and turns it into a first-class agent capability: the agent sees its own evolving profile and the user's profile on every turn, and it has 8 LLM-callable tools to read/write memory while it thinks.
+**`MemoryPluginNextGen`** is the modern replacement for both `PersistentInstructionsPluginNextGen` and `UserInfoPluginNextGen`. It sits on top of the [memory layer](./docs/MEMORY_GUIDE.md) and turns it into a first-class agent capability: the agent sees its own evolving profile and the user's profile on every turn, and it has **5 read** `memory_*` tools to query memory while it thinks. Mutation tools (`memory_remember`, `memory_link`, `memory_upsert_entity`, `memory_forget`, `memory_restore`) ship in a separate opt-in **`MemoryWritePluginNextGen`** (feature flag `memoryWrite`) so retrieval-only agents don't pay the write-tool schema cost.
 
 End-to-end, self-learning works like this:
 1. The user tells the agent something ("I prefer concise answers").
@@ -3886,20 +3886,24 @@ const memory = createMemorySystemWithConnectors({
   },
 });
 
-// 2. Agent with feature flag + plugin config.
+// 2. Agent with feature flags + plugin config.
 const agent = Agent.create({
   connector: 'anthropic',
   model: 'claude-sonnet-4-6',
   agentId: 'my-assistant',
   userId: 'alice',                                 // REQUIRED — memory's owner invariant
-  contextFeatures: { memory: true },
+  contextFeatures: {
+    memory: true,                                   // reads: profile injection + 5 retrieval tools
+    memoryWrite: true,                              // writes: 5 mutation tools (omit for retrieval-only)
+  },
   pluginConfigs: {
     memory: {
-      memory,                                      // the MemorySystem instance
+      memory,                                      // the MemorySystem instance (shared by both plugins)
       // groupId: 'team-A',                        // optional, trusted — from your auth layer
       // userProfileInjection: { topFacts: 20, relatedTasks: true },
       // agentProfileInjection: { topFacts: 10 },
     },
+    // memoryWrite inherits memory/userId from plugins.memory unless overridden.
   },
 });
 
@@ -3983,26 +3987,35 @@ type SubjectRef =
   | { surface: string };                               // fuzzy resolution by name/alias
 ```
 
+**Read tools** — always available whenever `features.memory: true`:
+
 | Tool | What it does | Example |
 |------|--------------|---------|
 | `memory_recall` | Profile + top facts + optional tiers | `{"subject":"me"}` or `{"subject":{"surface":"Acme deal"},"include":["neighbors"]}` |
 | `memory_graph` | N-hop graph traversal (Mongo `$graphLookup` when available) | `{"start":"me","direction":"out","maxDepth":2}` |
 | `memory_search` | Semantic text search across facts | `{"query":"deployment incidents last quarter","topK":10}` |
-| `memory_find_entity` | Look up / list / upsert by any identifier, surface, or type | `{"by":{"identifier":{"kind":"email","value":"alice@a.com"}}}` |
+| `memory_find_entity` | Look up / list by identifier, surface, or type (**read-only** — actions: `find`, `list`) | `{"by":{"identifier":{"kind":"email","value":"alice@a.com"}}}` |
 | `memory_list_facts` | Paginated raw fact enumeration | `{"subject":"me","predicate":"prefers"}` |
+
+**Write tools** — only available when `features.memoryWrite: true` (requires `memory: true`):
+
+| Tool | What it does | Example |
+|------|--------------|---------|
 | `memory_remember` | Write an atomic fact | `{"subject":"me","predicate":"prefers","value":"concise"}` |
 | `memory_link` | Write a relational fact | `{"from":{"surface":"Alice"},"predicate":"attended","to":{"surface":"Q3 planning"}}` |
+| `memory_upsert_entity` | Create or merge an entity by identifier | `{"type":"person","displayName":"Alice","identifiers":[{"kind":"email","value":"alice@a.com"}]}` |
 | `memory_forget` | Archive a fact (optionally supersede) | `{"factId":"fact_xyz","replaceWith":{"predicate":"role","value":"senior engineer"}}` |
+| `memory_restore` | Un-archive a previously forgotten fact | `{"factId":"fact_xyz"}` |
 
-**Visibility mapping** on `memory_remember` / `memory_link`:
+**Visibility mapping** on `memory_remember` / `memory_link` / `memory_upsert_entity`:
 - `"private"` → `{group: 'none', world: 'none'}` — owner-only
 - `"group"` → `{group: 'read', world: 'none'}` — group-readable
 - `"public"` → undefined — library defaults (group:read, world:read)
 
-**Multi-ID enrichment** — `memory_find_entity` with `action: "upsert"` auto-merges identifiers when any one matches an existing entity:
+**Multi-ID enrichment** — `memory_upsert_entity` auto-merges identifiers when any one matches an existing entity:
 
 ```json
-{"action": "upsert", "type": "person", "displayName": "Alice Smith",
+{"type": "person", "displayName": "Alice Smith",
  "identifiers": [{"kind": "email", "value": "alice@a.com"},
                  {"kind": "slack_user_id", "value": "U07ABC"}]}
 ```

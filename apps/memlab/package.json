@@ -1,0 +1,31 @@
+{
+  "name": "@everworker/memlab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Interactive lab for exercising the oneringai memory subsystem (chat / extract / browse).",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "memlab": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@everworker/oneringai": "file:../..",
+    "chalk": "^5.3.0",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsup": "^8.0.1",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

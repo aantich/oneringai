@@ -47,6 +47,8 @@ export {
   ToolCatalogPluginNextGen,
   SharedWorkspacePluginNextGen,
   MemoryPluginNextGen,
+  MemoryWritePluginNextGen,
+  SessionIngestorPluginNextGen,
   // Compaction strategies
   DefaultCompactionStrategy,
   // Strategy Registry
@@ -96,6 +98,11 @@ export type {
   SharedWorkspaceEntry,
   WorkspaceLogEntry,
   SerializedSharedWorkspaceState,
+  MemoryPluginConfig,
+  MemoryPluginInjectionConfig,
+  MemoryWritePluginConfig,
+  SessionIngestorPluginConfig,
+  SessionIngestorDiligence,
   // Store handler types
   IStoreHandler,
   StoreEntrySchema,
@@ -1019,6 +1026,23 @@ export { sanitizeToolName } from './utils/sanitize.js';
 export * as tools from './tools/index.js';
 export { createExecuteJavaScriptTool } from './tools/code/executeJavaScript.js';
 
+// Memory tool factories (for hosts that want to assemble tool sets without plugins)
+export {
+  createMemoryTools,
+  createMemoryReadTools,
+  createMemoryWriteTools,
+  createRecallTool,
+  createGraphTool,
+  createSearchTool,
+  createFindEntityTool,
+  createListFactsTool,
+  createRememberTool,
+  createLinkTool,
+  createForgetTool,
+  createRestoreTool,
+  createUpsertEntityTool,
+} from './tools/memory/index.js';
+
 // Custom tool generation system (meta-tools + hydration)
 export {
   // Default instances (auto-registered via tool registry)
@@ -1416,6 +1440,158 @@ export type { FileRoutineExecutionStorageConfig } from './infrastructure/storage
 export type { IScheduler, ScheduleHandle, ScheduleSpec } from './domain/interfaces/IScheduler.js';
 export { SimpleScheduler } from './infrastructure/scheduling/SimpleScheduler.js';
 export { EventEmitterTrigger } from './infrastructure/triggers/EventEmitterTrigger.js';
+
+// ============ Memory Layer (Knowledge Graph) ============
+// Brain-like entity + fact store. Self-contained under src/memory/; re-exported
+// here so host apps can build MemorySystem instances, wire Connector-backed
+// embedder/profile generator, and run the signal → facts pipeline.
+export {
+  MemorySystem,
+  InMemoryAdapter,
+  ScopeInvariantError,
+  ProfileGeneratorMissingError,
+  SemanticSearchUnavailableError,
+  InvalidTaskTransitionError,
+  FactSupersededError,
+  OptimisticConcurrencyError,
+  ScopeViolationError,
+  EntityResolver,
+  buildIdentityString,
+  RESOLUTION_DEFAULTS,
+  normalizeSurface,
+  // Integration — Connector-backed providers + signal pipeline
+  ConnectorEmbedder,
+  ConnectorProfileGenerator,
+  parseProfileResponse,
+  defaultProfilePrompt,
+  createMemorySystemWithConnectors,
+  defaultExtractionPrompt,
+  DEFAULT_EXTRACTION_PROMPT_VERSION,
+  ExtractionResolver,
+  SignalIngestor,
+  ConnectorExtractor,
+  parseExtractionResponse,
+  parseExtractionWithStatus,
+  PlainTextAdapter,
+  EmailSignalAdapter,
+  CalendarSignalAdapter,
+  // Traversal + ranking
+  genericTraverse,
+  scoreFact,
+  rankFacts,
+  // Identifiers + predicates
+  canonicalIdentifier,
+  slugify,
+  PredicateRegistry,
+  STANDARD_PREDICATES,
+  // Access control
+  PermissionDeniedError,
+  OwnerRequiredError,
+  canAccess,
+  effectivePermissions,
+  assertCanAccess,
+  levelGrants,
+  DEFAULT_GROUP_LEVEL,
+  DEFAULT_WORLD_LEVEL,
+} from './memory/index.js';
+export type {
+  // Adapter options
+  InMemoryAdapterOptions,
+  // Integration config
+  ConnectorEmbedderConfig,
+  ConnectorProfileGeneratorConfig,
+  PromptContext as MemoryPromptContext,
+  MemoryConnectorsConfig,
+  MemorySystemWithConnectorsConfig,
+  ExtractionPromptContext,
+  PreResolvedBinding,
+  ExtractionMention,
+  ExtractionFactSpec,
+  ExtractionOutput,
+  IngestionResolvedEntity,
+  IngestionError,
+  IngestionResult,
+  ExtractionResolverOptions,
+  SignalIngestorConfig,
+  ContextHintsConfig,
+  IngestSignalInput,
+  IngestTextInput,
+  IngestExtractedInput,
+  ConnectorExtractorConfig,
+  ParticipantSeed,
+  SeedFact,
+  ExtractedSignal,
+  SignalSourceAdapter,
+  IExtractor,
+  PlainTextRaw,
+  EmailAddress,
+  EmailSignal,
+  EmailSignalAdapterOptions,
+  CalendarAttendee,
+  CalendarSignal,
+  CalendarSignalAdapterOptions,
+  ParseExtractionResult,
+  ParseStatus,
+  ResolverMemoryHooks,
+  // Identifier config
+  CanonicalIdentifierOptions,
+  SlugifyOptions,
+  // Predicate types
+  PredicateDefinition,
+  // Access control types
+  AccessLevel,
+  Permission,
+  Permissions,
+  AccessControlled,
+  // Core memory types
+  EntityId,
+  FactId,
+  FactKind,
+  Identifier as MemoryIdentifier,
+  ScopeFields,
+  ScopeFilter,
+  IEntity,
+  IFact,
+  NewEntity,
+  NewFact,
+  IMemoryStore,
+  EntityView,
+  ContextOptions,
+  ContextTier,
+  RelatedTask,
+  RelatedEvent,
+  Neighborhood,
+  TraversalOptions,
+  FactFilter,
+  FactOrderBy,
+  FactQueryOptions,
+  Page,
+  UpsertEntityResult,
+  EntityListFilter,
+  EntitySearchOptions,
+  ListOptions,
+  SemanticSearchOptions,
+  EntityCandidate,
+  ResolveEntityQuery,
+  ResolveEntityOptions,
+  UpsertBySurfaceInput,
+  UpsertBySurfaceOptions,
+  UpsertBySurfaceResult,
+  EntityResolutionConfig,
+  IEmbedder,
+  IProfileGenerator,
+  ProfileGeneratorInput,
+  IRuleEngine,
+  IScopedMemoryView,
+  ChangeEvent,
+  MemorySystemConfig,
+  EmbeddingQueueConfig,
+  RankingConfig,
+  TaskStatesConfig,
+  TaskStateHistoryEntry,
+  TransitionTaskStateOptions,
+  TransitionTaskStateResult,
+} from './memory/index.js';
 
 // ============ Integration Testing ============
 export { IntegrationTestRunner, registerSuite } from './testing/integration/index.js';

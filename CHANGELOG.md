@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Memory refactor — self-review pass
+
+Follow-up fixes on top of the read/write split landed in the same release:
+
+- **Stale doc strings referencing `memory_find_entity(action:"upsert")`.** `src/tools/memory/remember.ts` (ghost-write error message) and `src/tools/memory/ownership.ts` (`ownerlessSubjectWarning`) still told the LLM to call the deprecated form. Both now point at `memory_upsert_entity`.
+- **`MemoryWritePluginNextGen.writePermissions` dead field removed.** Declared but never used; violates the repo rule against designing for hypothetical future requirements. Removed along with its unused `Permissions` import.
+- **`MemoryPluginNextGen` instructions contradicted the write plugin.** The read-plugin instructions used to assert "these tools are READ ONLY — you cannot write memory directly", which was false when the write plugin was also registered. Rewrote to describe retrieval only and defer write-side language to whatever the write plugin (or an external ingester) provides — avoids a self-contradicting system message when both plugins are active.
+- **Unchecked type cast on sibling plugin lookup.** `AgentContextNextGen.initializePlugins` used `this._plugins.get('memory') as MemoryPluginNextGen | undefined` to find the read plugin before wiring `getOwnSubjectIds` on the write plugin. Replaced with an `instanceof` check so a pathological scenario (someone manually registering a different plugin under the name `memory`) falls back to the default no-op callback instead of misusing a foreign plugin's missing `getBootstrappedIds` method.
+- **Test coverage for the new split.** New files:
+  - `tests/unit/core/context-nextgen/plugins/MemoryWritePluginNextGen.test.ts` (13 tests) — constructor guards, exact-5-tool contract, no-overlap with read plugin, instructions present, `getContent` null, token accounting, `getOwnSubjectIds` threading (with and without callback), destroy lifecycle, state round-trip, and a shared-store co-op test showing write→read visibility on a single `MemorySystem`.
+  - `tests/unit/core/context-nextgen/AgentContextNextGen.memoryFeatureFlag.test.ts` (6 tests) — auto-wiring behavior: `memory: true` alone registers only the read plugin (5 tools); `memoryWrite: true` without `memory: true` throws with a helpful message; both flags register both plugins and the write plugin's `getOwnSubjectIds` routes `"me"` to the read plugin's bootstrapped user entity; write plugin inherits the `MemorySystem` from `plugins.memory.memory` when `plugins.memoryWrite.memory` is unset; combined flag set yields exactly 10 unique tool names.
+  - `tests/unit/tools/memory/factorySplit.test.ts` (4 tests) — `createMemoryReadTools` / `createMemoryWriteTools` return non-overlapping 5-tool bundles; `createMemoryTools` returns the 10-tool union without duplicates; every tool's JSON-schema is walked to assert no `{type: "array"}` node is missing `items` (regression guard for the OpenAI strict-validator bug that blocked chat earlier).
+- **Documentation updates.** `CLAUDE.md` plugin table + "Agent integration" paragraph, `README.md` memory-tools section, `USER_GUIDE.md` quick-start + tool tables, `docs/MEMORY_GUIDE.md` chapter intro + quick-start + "Using the tools outside the plugin" + "Relationship to MemoryPluginNextGen" — all now describe the read/write split, the renamed `memory_upsert_entity` tool, and the two wiring patterns (full read+write vs read-only + background ingestor).
+
+### Memory plugin split: reads vs writes (BREAKING)
+
+`MemoryPluginNextGen` used to ship all 9 memory tools (reads + writes) by default. Two problems: every agent paid ~5k tokens of tool schemas per turn even when all it needed was retrieval, and there was no clean way to build "retrieval-only agent + separate ingestion pipeline" architectures without hand-filtering tools.
+
+**Breaking changes:**
+- `MemoryPluginNextGen.getTools()` now returns only the 5 read tools: `memory_recall`, `memory_graph`, `memory_search`, `memory_find_entity`, `memory_list_facts`. The `memory: true` feature flag no longer enables write capability.
+- `memory_find_entity` is now read-only (actions: `find` | `list`). The `upsert` action has moved to a new tool, **`memory_upsert_entity`**, exposed by the write plugin. LLM prompts that previously sent `{action:"upsert", ...}` to `memory_find_entity` will get an "unknown action" error — migrate to the new tool name.
+- Its system instructions now describe retrieval only; the "be proactive, call `memory_remember`" paragraph has moved to the write plugin's instructions.
+
+**Additive:**
+- New **`MemoryWritePluginNextGen`** — lightweight sidecar plugin that ships the 5 write tools (`memory_remember`, `memory_link`, `memory_forget`, `memory_restore`, `memory_upsert_entity`) and a write-specific instruction block. No system-message content of its own. Shares the read plugin's bootstrapped `me` / `this_agent` entity ids via a `getOwnSubjectIds` callback.
+- New feature flag **`memoryWrite: true`**. Requires `memory: true` — the read plugin still owns user/agent entity bootstrap + profile injection.
+- New tool factories `createMemoryReadTools()` and `createMemoryWriteTools()` exported from `@everworker/oneringai`. `createMemoryTools()` still exists as a convenience that returns all 10 (read + write) tools.
+- New tool `createUpsertEntityTool()` exported for hosts that want to hand-pick tools.
+- `MemoryWritePluginNextGen`, `SessionIngestorPluginNextGen`, and all their types now re-exported from the main package barrel for host-app consumption.
+
+**To restore the old behavior**: enable both flags — `features: { memory: true, memoryWrite: true }`. Config shape is unchanged; the shared `MemorySystem` instance from `plugins.memory.memory` is used by both plugins automatically.
+
+### New memlab mode: `/chat-auto`
+
+Exercises the retrieval-only agent + background ingestor architecture end-to-end. Main agent uses only `memoryPluginNextGen` (read tools); a manually-registered `SessionIngestorPluginNextGen` runs after each turn using `MEMLAB_EXTRACT_MODEL` (defaults to the primary connector's `extractModel`, typically a cheaper/faster model than the chat model). After each user→agent turn, memlab forces a synchronous ingest pass and prints the new facts (predicate + subject + object) and elapsed time so the operator can watch what the plugin learned. `/chat` (full read+write) kept as-is for side-by-side comparison.
+
+### `memory_find_entity` tool schema rejected by OpenAI strict validator
+
+`memory_find_entity`'s `identifiers` parameter was declared as `{ type: 'array' }` with no `items` subschema. OpenAI's function-parameter validator rejects this with `400 Invalid schema for function 'memory_find_entity': In context=('properties', 'identifiers'), array schema missing items.` — making any OpenAI agent with `features.memory` unable to start a chat turn. Fixed by declaring `items` as an object schema with `kind` + `value` required (plus optional `isPrimary` / `verified`), matching the `Identifier` type. No behavior change for LLMs already supplying well-formed identifiers; only the schema declaration was wrong.
+
+### Memory layer now re-exported from main package surface
+
+`src/memory/*` was a first-class subsystem in the codebase (documented in CLAUDE.md, required by `MemoryPluginNextGen`) but its runtime values and types were not accessible from `import ... from '@everworker/oneringai'` — callers had to reach into internal paths that the `exports` field gated off. `src/index.ts` now re-exports the public memory surface: `MemorySystem`, `InMemoryAdapter`, `createMemorySystemWithConnectors`, `ConnectorEmbedder`, `ConnectorProfileGenerator`, `SignalIngestor`, `ConnectorExtractor`, `PlainTextAdapter`, `EmailSignalAdapter`, `CalendarSignalAdapter`, `ExtractionResolver`, `EntityResolver`, `PredicateRegistry`, `canonicalIdentifier`, plus every public type (`IEntity`, `IFact`, `ScopeFilter`, `FactFilter`, `IngestionResult`, etc.). No behavior changes; purely additive surface.
+
+### New app: `apps/memlab`
+
+Interactive lab for exercising the memory subsystem end-to-end. Single terminal REPL with three modes:
+- `/chat` — memory-enabled `Agent` with streamed output; logs every `memory_*` tool call and its arguments/result so an operator can watch what the agent reads/writes.
+- `/extract` — pastes arbitrary text (auto-detects email-shaped input and routes through `EmailSignalAdapter`, else `PlainTextAdapter`). Runs `SignalIngestor.ingest`, then prints resolved entities (new vs matched), written facts, merge candidates, and ingestion errors.
+- `/browse` — direct read-only `MemorySystem` queries. Filters facts by subject/object/predicate/kind/confidence/importance/text substring; inspects entity detail + profile + fact neighborhood; lists open tasks (`listOpenTasks`) and recent topics (`listRecentTopics`); runs `semanticSearch` when an embedder is available.
+
+Auto-registers a Connector per populated vendor API key (OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, …). Primary connector chosen by discovery order; overrideable via `MEMLAB_PRIMARY`. In-memory adapter only; `/dump` and `/load` export/import JSON for persistence across restarts. No external deps beyond `chalk` + `dotenv`.
+
 ### Entity-type ergonomics — post-PR-4 bug fixes
 
 Self-review of the four PRs above turned up four real bugs + one crash-safety doc gap. All fixes are additive / bug-fix; no API breakage.

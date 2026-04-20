@@ -84,6 +84,8 @@ export {
   isStoreHandler,
   SharedWorkspacePluginNextGen,
   MemoryPluginNextGen,
+  MemoryWritePluginNextGen,
+  SessionIngestorPluginNextGen,
 } from './context-nextgen/index.js';
 export type {
   IContextPluginNextGen,
@@ -118,6 +120,11 @@ export type {
   SharedWorkspaceEntry,
   WorkspaceLogEntry,
   SerializedSharedWorkspaceState,
+  MemoryPluginConfig,
+  MemoryPluginInjectionConfig,
+  MemoryWritePluginConfig,
+  SessionIngestorPluginConfig,
+  SessionIngestorDiligence,
   // Store handler types
   IStoreHandler,
   StoreEntrySchema,

@@ -304,15 +304,16 @@ describe('memory_graph', () => {
 // memory_find_entity
 // ===========================================================================
 
-describe('memory_find_entity', () => {
+describe('memory_find_entity / memory_upsert_entity', () => {
   it('finds by identifier across different IDs on the same entity', async () => {
     const mem = makeMem();
     const ids = await bootstrap(mem);
     // Enrich Bob with a second identifier via upsert.
-    const find = toolByName(tools(mem, ids), 'memory_find_entity');
-    await find.execute(
+    const all = tools(mem, ids);
+    const find = toolByName(all, 'memory_find_entity');
+    const upsert = toolByName(all, 'memory_upsert_entity');
+    await upsert.execute(
       {
-        action: 'upsert',
         type: 'person',
         displayName: 'Bob Smith',
         identifiers: [
@@ -341,29 +342,33 @@ describe('memory_find_entity', () => {
     expect(r.entities.length).toBeGreaterThanOrEqual(2); // Alice + Bob
   });
 
-  it('upsert requires type + displayName', async () => {
+  it('upsert requires type + displayName + identifiers', async () => {
     const mem = makeMem();
     const ids = await bootstrap(mem);
-    const find = toolByName(tools(mem, ids), 'memory_find_entity');
-    const r1: any = await find.execute(
-      { action: 'upsert', displayName: 'X' },
+    const upsert = toolByName(tools(mem, ids), 'memory_upsert_entity');
+    const r1: any = await upsert.execute(
+      { displayName: 'X', identifiers: [{ kind: 'internal_id', value: 'x' }] } as any,
       { userId: USER_ID },
     );
     expect(r1.error).toMatch(/type/);
-    const r2: any = await find.execute(
-      { action: 'upsert', type: 'topic' },
+    const r2: any = await upsert.execute(
+      { type: 'topic', identifiers: [{ kind: 'internal_id', value: 'x' }] } as any,
       { userId: USER_ID },
     );
     expect(r2.error).toMatch(/displayName/);
+    const r3: any = await upsert.execute(
+      { type: 'topic', displayName: 'X', identifiers: [] } as any,
+      { userId: USER_ID },
+    );
+    expect(r3.error).toMatch(/identifiers/);
   });
 
   it('upsert with visibility "group" stamps group:read,world:none', async () => {
     const mem = makeMem();
     const ids = await bootstrap(mem);
-    const find = toolByName(tools(mem, ids), 'memory_find_entity');
-    const r: any = await find.execute(
+    const upsert = toolByName(tools(mem, ids), 'memory_upsert_entity');
+    const r: any = await upsert.execute(
       {
-        action: 'upsert',
         type: 'topic',
         displayName: 'Internal Topic',
         identifiers: [{ kind: 'internal_id', value: 'topic-42' }],

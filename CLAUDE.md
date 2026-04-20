@@ -103,11 +103,19 @@ All CRUD plugins share 5 generic tools routed by `StoreToolsManager`:
 | **PersistentInstructionsPluginNextGen** ⚠️ *deprecated* | `"instructions"` | Keyed instructions persisting to disk. Requires `agentId`. Storage: `~/.oneringai/agents/<agentId>/custom_instructions.json`. **Prefer `MemoryPluginNextGen`.** |
 | **UserInfoPluginNextGen** ⚠️ *deprecated* | `"user_info"` | User-scoped data (not agent-scoped). Stateless — userId from `ToolContext.userId`. Also provides standalone `todo_add/update/remove` tools. **Prefer `MemoryPluginNextGen`.** |
 | **SharedWorkspacePluginNextGen** | `"workspace"` | Multi-agent bulletin board. Versioning, author tracking, append-only log. Extra actions: `log`, `history`, `archive` |
-| **MemoryPluginNextGen** (feature flag `memory`) | — (no KV) | Self-learning knowledge store. Bootstraps `person:<userId>` + `agent:<agentId>` entities; injects their profiles into system message; ships 8 LLM-callable `memory_*` tools for facts, graph, search, linking, forget/supersede. Requires `plugins.memory.memory: MemorySystem` + `userId`. |
+| **MemoryPluginNextGen** (feature flag `memory`) | — (no KV) | Self-learning knowledge store (read-side). Bootstraps `person:<userId>` + `agent:<agentId>` entities; injects their profiles into system message; ships **5 read-only** `memory_*` tools. Requires `plugins.memory.memory: MemorySystem` + `userId`. |
+| **MemoryWritePluginNextGen** (feature flag `memoryWrite`) | — (no KV) | Lightweight sidecar — adds the **5 write** `memory_*` tools. No system-message content of its own. Requires `memory: true` (piggy-backs on its bootstrap via a `getOwnSubjectIds` callback). Enable when the agent should mutate memory directly; otherwise use a background extractor like `SessionIngestorPluginNextGen`. |
 
 **WorkingMemory vs InContextMemory:** WorkingMemory stores externally with index in context (needs retrieval). InContextMemory stores values directly in context.
 
-**MemoryPluginNextGen tools:** `memory_recall`, `memory_graph`, `memory_search`, `memory_find_entity`, `memory_list_facts`, `memory_remember`, `memory_link`, `memory_forget`. `SubjectRef` accepts id | `"me"` | `"this_agent"` | `{id}` | `{identifier:{kind,value}}` | `{surface}`. All caller-supplied limits are clamped (maxDepth≤5, topK≤100, limit≤200, etc.). `groupId` flows from plugin config (trusted), never from LLM tool args.
+**Memory tools (10 total — split by plugin):**
+- **Read (always via MemoryPluginNextGen):** `memory_recall`, `memory_graph`, `memory_search`, `memory_find_entity` (actions: `find` | `list`), `memory_list_facts`.
+- **Write (via MemoryWritePluginNextGen):** `memory_remember`, `memory_link`, `memory_upsert_entity`, `memory_forget`, `memory_restore`.
+- **Tool-name migration:** `memory_find_entity` with `action: 'upsert'` was split into a standalone **`memory_upsert_entity`** tool (v0.5.6+). `memory_find_entity` is now read-only.
+
+`SubjectRef` accepts id | `"me"` | `"this_agent"` | `{id}` | `{identifier:{kind,value}}` | `{surface}`. All caller-supplied limits are clamped (maxDepth≤5, topK≤100, limit≤200, etc.). `groupId` flows from plugin config (trusted), never from LLM tool args.
+
+**Assembling tools without plugins:** `createMemoryReadTools(...)` and `createMemoryWriteTools(...)` export the bundles directly; `createMemoryTools(...)` is a convenience wrapper returning all 10. All three factories share the same `CreateMemoryToolsArgs`.
 
 ## StorageRegistry (`src/core/StorageRegistry.ts`)
 
@@ -228,9 +236,11 @@ Brain-like knowledge store: **entities** (pure identity + metadata) + **facts** 
 - `ExtractionResolver` + `defaultExtractionPrompt` — raw LLM output (`{mentions, facts}`) → resolved entities + facts with `sourceSignalId` attached. Supports `preResolved: {label → entityId}` to bypass upsert for labels bound upstream.
 - `signals/` — high-level facts-producing API: `SignalIngestor` orchestrates adapter → deterministic seed phase → prompt (with locked labels) → `IExtractor` LLM call → `ExtractionResolver`. Ships `PlainTextAdapter`, `EmailSignalAdapter` (seeds from/to/cc + non-free domains, drops BCC), `ConnectorExtractor` (default LLM via Connector). Custom `SignalSourceAdapter` + `IExtractor` are the extension points.
 
-**Agent integration** (`src/core/context-nextgen/plugins/MemoryPluginNextGen.ts` + `src/tools/memory/`):
-- `MemoryPluginNextGen` — NextGen context plugin, injects user + agent profiles + top facts into system message; ships 8 `memory_*` LLM tools; self-learning via incremental profile regen. Feature flag: `memory` (default off). Requires `plugins.memory.memory: MemorySystem` + `userId`.
-- `createMemoryTools({ memory, agentId, defaultUserId, defaultGroupId, ... })` — factory for the 8 tools without the full plugin. `defaultGroupId` is trusted (from host auth layer); tools never accept a `groupId` arg from the LLM. All numeric limits are clamped (maxDepth≤5, topK≤100, limit≤200, etc.).
+**Agent integration** (`src/core/context-nextgen/plugins/Memory{,Write}PluginNextGen.ts` + `src/tools/memory/`):
+- `MemoryPluginNextGen` — read-side context plugin. Injects user + agent profiles + top facts into system message; ships the **5 read** `memory_*` LLM tools; drives self-learning via incremental profile regen. Feature flag: `memory` (default off). Requires `plugins.memory.memory: MemorySystem` + `userId`.
+- `MemoryWritePluginNextGen` — write-side sidecar. Ships the **5 write** `memory_*` LLM tools (`memory_remember`, `memory_link`, `memory_upsert_entity`, `memory_forget`, `memory_restore`) and its own instruction block; no system-message content. Feature flag: `memoryWrite` (requires `memory: true`). Shares the read plugin's bootstrapped user/agent entity ids via a `getOwnSubjectIds` callback (wired automatically when both are feature-flagged).
+- `createMemoryReadTools(...)` / `createMemoryWriteTools(...)` / `createMemoryTools(...)` — assemble tools without the plugins. All three share the same `CreateMemoryToolsArgs`. `defaultGroupId` is trusted (from host auth layer); tools never accept a `groupId` arg from the LLM. All numeric limits are clamped (maxDepth≤5, topK≤100, limit≤200, etc.).
+- **Background ingestion alternative:** `SessionIngestorPluginNextGen` (also exported) fires `onBeforePrepare`, extracts facts from the accumulated conversation via a (usually cheaper) dedicated connector+model, and writes them directly to the `MemorySystem`. Pair it with `memory: true` only (no `memoryWrite`) to get a retrieval-only agent whose memory updates happen behind the scenes.
 - **Incremental profile regen:** `IProfileGenerator.generate` takes a single `ProfileGeneratorInput` with `newFacts` (observed since prior), `priorProfile`, `invalidatedFactIds` (supersession + archivals). Generator evolves the prior profile from deltas rather than rewriting from all facts.
 
 **Resolution** (`src/memory/resolution/`):

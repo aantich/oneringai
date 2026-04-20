@@ -240,20 +240,16 @@ describe('MemoryPluginNextGen — graceful degradation', () => {
 });
 
 describe('MemoryPluginNextGen — getTools', () => {
-  it('returns exactly the 9 memory tools, cached across calls', () => {
+  it('returns exactly the 5 read-only memory tools, cached across calls', () => {
     const mem = makeMem();
     const plugin = new MemoryPluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
     const tools = plugin.getTools();
     const names = tools.map((t) => t.definition.function.name).sort();
     expect(names).toEqual([
       'memory_find_entity',
-      'memory_forget',
       'memory_graph',
-      'memory_link',
       'memory_list_facts',
       'memory_recall',
-      'memory_remember',
-      'memory_restore',
       'memory_search',
     ]);
     // Same array on second call (cached).
