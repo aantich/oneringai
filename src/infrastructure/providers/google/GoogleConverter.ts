@@ -12,6 +12,7 @@ import type {
 import { TextGenerateOptions } from '../../../domain/interfaces/ITextProvider.js';
 import { LLMResponse } from '../../../domain/entities/Response.js';
 import { InputItem, MessageRole } from '../../../domain/entities/Message.js';
+import { getModelInfo } from '../../../domain/entities/Model.js';
 import { convertToolsToStandardFormat } from '../shared/ToolConversionUtils.js';
 import { validateThinkingConfig } from '../shared/validateThinkingConfig.js';
 import { Content, ContentType, ToolUseContent } from '../../../domain/entities/Content.js';
@@ -91,9 +92,13 @@ export class GoogleConverter {
       };
     }
 
-    // Add generation config
+    // Add generation config — drop temperature for models that don't accept it
+    const supportsTemperature =
+      getModelInfo(options.model)?.features.parameters?.temperature !== false;
     request.generationConfig = {
-      temperature: options.temperature,
+      ...(options.temperature !== undefined && supportsTemperature && {
+        temperature: options.temperature,
+      }),
       maxOutputTokens: options.max_output_tokens,
     };
 

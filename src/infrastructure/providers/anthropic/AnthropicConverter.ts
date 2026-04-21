@@ -15,6 +15,7 @@ import { LLMResponse } from '../../../domain/entities/Response.js';
 import { InputItem } from '../../../domain/entities/Message.js';
 import { Content, ContentType } from '../../../domain/entities/Content.js';
 import { Tool } from '../../../domain/entities/Tool.js';
+import { getModelInfo } from '../../../domain/entities/Model.js';
 import { convertToolsToStandardFormat, transformForAnthropic, ProviderToolFormat } from '../shared/ToolConversionUtils.js';
 import { mapAnthropicStatus, ResponseStatus } from '../shared/ResponseBuilder.js';
 import { validateThinkingConfig } from '../shared/validateThinkingConfig.js';
@@ -45,6 +46,12 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
       params.tools = tools;
     }
 
+    // Some models (e.g. claude-opus-4-7) deprecate the `temperature` parameter entirely.
+    // Registry opt-out: features.parameters.temperature === false.
+    // Default is supported — unknown / missing registry entries pass temperature through.
+    const supportsTemperature =
+      getModelInfo(options.model)?.features.parameters?.temperature !== false;
+
     // Add thinking/reasoning support
     if (options.thinking?.enabled) {
       validateThinkingConfig(options.thinking);
@@ -53,10 +60,12 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
         type: 'enabled',
         budget_tokens: budgetTokens,
       };
-      // Anthropic requires temperature=1 when thinking is enabled
-      params.temperature = 1;
-    } else if (options.temperature !== undefined) {
-      // Only set temperature if thinking is not enabled
+      // Anthropic requires temperature=1 when thinking is enabled — but only on models that accept it
+      if (supportsTemperature) {
+        params.temperature = 1;
+      }
+    } else if (options.temperature !== undefined && supportsTemperature) {
+      // Only set temperature if thinking is not enabled and the model accepts it
       params.temperature = options.temperature;
     }
 

@@ -1672,7 +1672,7 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   'claude-opus-4-7': {
     name: 'claude-opus-4-7',
     provider: Vendor.Anthropic,
-    description: 'Most capable model for complex reasoning and agentic coding. 1M context, 128K output, adaptive thinking with new xhigh effort level, high-resolution vision (2576px). New tokenizer.',
+    description: 'Most capable model for complex reasoning and agentic coding. 1M context, 128K output, adaptive thinking with new xhigh effort level, high-resolution vision (2576px). New tokenizer. Does not accept `temperature`.',
     isActive: true,
     preferred: true,
     releaseDate: '2026-04-16',
@@ -1691,6 +1691,9 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
       extendedThinking: false,
       batchAPI: true,
       promptCaching: true,
+      parameters: {
+        temperature: false,
+      },
       input: {
         tokens: 1000000,
         text: true,

@@ -198,6 +198,36 @@ describe('AnthropicConverter', () => {
       expect(request.temperature).toBe(0.7);
     });
 
+    it('should drop temperature for models that do not support it (Opus 4.7)', () => {
+      const request = converter.convertRequest({
+        model: 'claude-opus-4-7',
+        input: [{
+          type: 'message',
+          role: MessageRole.USER,
+          content: [{ type: ContentType.INPUT_TEXT, text: 'test' }]
+        }],
+        temperature: 0.7,
+        tools: []
+      });
+
+      expect(request.temperature).toBeUndefined();
+    });
+
+    it('should not force temperature=1 on thinking-enabled if model does not support temperature', () => {
+      const request = converter.convertRequest({
+        model: 'claude-opus-4-7',
+        input: [{
+          type: 'message',
+          role: MessageRole.USER,
+          content: [{ type: ContentType.INPUT_TEXT, text: 'test' }]
+        }],
+        thinking: { enabled: true, budgetTokens: 5000 },
+        tools: []
+      });
+
+      expect(request.temperature).toBeUndefined();
+    });
+
     it('should set max_tokens if provided', () => {
       const request = converter.convertRequest({
         model: 'claude-3-5-sonnet-20241022',
