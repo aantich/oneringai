@@ -13,12 +13,13 @@
  *   memory_find_entity  — lookup/list by id, identifier, surface, or type
  *   memory_list_facts   — paginated raw fact enumeration
  *
- * Write tools (5):
- *   memory_remember       — write an atomic fact
- *   memory_link           — write a relational fact (entity ↔ entity)
- *   memory_forget         — archive a fact (rate-limited)
- *   memory_restore        — un-archive a fact (undo for memory_forget)
- *   memory_upsert_entity  — create or merge an entity by identifiers
+ * Write tools (6):
+ *   memory_remember         — write an atomic fact
+ *   memory_link             — write a relational fact (entity ↔ entity)
+ *   memory_forget           — archive a fact (rate-limited)
+ *   memory_restore          — un-archive a fact (undo for memory_forget)
+ *   memory_upsert_entity    — create or merge an entity by identifiers
+ *   memory_set_agent_rule   — record a user-specific behavior rule for this agent
  */
 
 import type { ToolFunction } from '../../domain/entities/Tool.js';
@@ -35,6 +36,7 @@ import { createLinkTool } from './link.js';
 import { createForgetTool } from './forget.js';
 import { createRestoreTool } from './restore.js';
 import { createUpsertEntityTool } from './upsertEntity.js';
+import { createSetAgentRuleTool } from './setAgentRule.js';
 
 export type {
   MemoryToolDeps,
@@ -63,6 +65,7 @@ export { createLinkTool } from './link.js';
 export { createForgetTool } from './forget.js';
 export { createRestoreTool } from './restore.js';
 export { createUpsertEntityTool } from './upsertEntity.js';
+export { createSetAgentRuleTool, AGENT_BEHAVIOR_RULE_PREDICATE } from './setAgentRule.js';
 
 export interface CreateMemoryToolsArgs {
   memory: MemorySystem;
@@ -132,11 +135,12 @@ export function createMemoryWriteTools(args: CreateMemoryToolsArgs): ToolFunctio
     createForgetTool(deps),
     createRestoreTool(deps),
     createUpsertEntityTool(deps),
+    createSetAgentRuleTool(deps),
   ];
 }
 
 /**
- * All 10 memory tools (5 read + 5 write). Convenience factory — most callers
+ * All 11 memory tools (5 read + 6 write). Convenience factory — most callers
  * should prefer `createMemoryReadTools` / `createMemoryWriteTools` separately
  * so read agents don't carry the write-tool schema overhead.
  */

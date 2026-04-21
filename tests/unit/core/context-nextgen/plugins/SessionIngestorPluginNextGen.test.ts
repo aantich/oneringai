@@ -12,6 +12,7 @@ import { Agent } from '@/core/Agent.js';
 import {
   SessionIngestorPluginNextGen,
   buildSessionExtractionPrompt,
+  renderMessage,
 } from '@/core/context-nextgen/plugins/SessionIngestorPluginNextGen.js';
 import { MemorySystem } from '@/memory/MemorySystem.js';
 import { InMemoryAdapter } from '@/memory/adapters/inmemory/InMemoryAdapter.js';
@@ -63,7 +64,7 @@ describe('SessionIngestorPluginNextGen — constructor guards', () => {
         agentId: AGENT,
         userId: USER,
         connectorName: '',
-        model: 'm',
+        model: 'm', minBatchMessages: 1,
       }),
     ).toThrow(/connectorName/);
     expect(
@@ -84,7 +85,7 @@ describe('SessionIngestorPluginNextGen — constructor guards', () => {
       agentId: AGENT,
       userId: USER,
       connectorName: 'cx',
-      model: 'mx',
+      model: 'mx', minBatchMessages: 1,
     });
     expect(plugin.getInstructions()).toBeNull();
     expect(await plugin.getContent()).toBeNull();
@@ -101,7 +102,7 @@ describe('SessionIngestorPluginNextGen — watermark state', () => {
       agentId: AGENT,
       userId: USER,
       connectorName: 'cx',
-      model: 'mx',
+      model: 'mx', minBatchMessages: 1,
     });
     // @ts-expect-error private write for test
     plugin.lastIngestedMessageId = 'msg-42';
@@ -112,7 +113,7 @@ describe('SessionIngestorPluginNextGen — watermark state', () => {
       agentId: AGENT,
       userId: USER,
       connectorName: 'cx',
-      model: 'mx',
+      model: 'mx', minBatchMessages: 1,
     });
     fresh.restoreState(state);
     expect(fresh.getLastIngestedMessageId()).toBe('msg-42');
@@ -125,7 +126,7 @@ describe('SessionIngestorPluginNextGen — watermark state', () => {
       agentId: AGENT,
       userId: 'bob',
       connectorName: 'cx',
-      model: 'mx',
+      model: 'mx', minBatchMessages: 1,
     });
     plugin.restoreState({ version: 2, agentId: AGENT, userId: 'alice', lastIngestedMessageId: 'msg-9' });
     expect(plugin.getLastIngestedMessageId()).toBeNull();
@@ -138,7 +139,7 @@ describe('SessionIngestorPluginNextGen — watermark state', () => {
       agentId: AGENT,
       userId: USER,
       connectorName: 'cx',
-      model: 'mx',
+      model: 'mx', minBatchMessages: 1,
     });
     plugin.restoreState({ version: 1, agentId: AGENT, userId: USER, watermark: 99 });
     expect(plugin.getLastIngestedMessageId()).toBeNull();
@@ -161,7 +162,7 @@ describe('SessionIngestorPluginNextGen — onBeforePrepare', () => {
       agentId: AGENT,
       userId: USER,
       connectorName: 'cx',
-      model: 'mx',
+      model: 'mx', minBatchMessages: 1,
     });
     plugin.onBeforePrepare({ messages: [], currentInput: [] });
     await plugin.waitForIngest();
@@ -191,7 +192,7 @@ describe('SessionIngestorPluginNextGen — onBeforePrepare', () => {
       agentId: AGENT,
       userId: USER,
       connectorName: 'cx',
-      model: 'mx',
+      model: 'mx', minBatchMessages: 1,
     });
 
     plugin.onBeforePrepare({
@@ -253,7 +254,7 @@ describe('SessionIngestorPluginNextGen — onBeforePrepare', () => {
       agentId: AGENT,
       userId: USER,
       connectorName: 'cx',
-      model: 'mx',
+      model: 'mx', minBatchMessages: 1,
     });
 
     // Turn 1 — writes the fact
@@ -338,7 +339,7 @@ describe('SessionIngestorPluginNextGen — onBeforePrepare', () => {
       agentId: AGENT,
       userId: USER,
       connectorName: 'cx',
-      model: 'mx',
+      model: 'mx', minBatchMessages: 1,
     });
 
     plugin.onBeforePrepare({
@@ -388,7 +389,7 @@ describe('SessionIngestorPluginNextGen — onBeforePrepare', () => {
       agentId: AGENT,
       userId: USER,
       connectorName: 'cx',
-      model: 'mx',
+      model: 'mx', minBatchMessages: 1,
     });
 
     plugin.onBeforePrepare({
@@ -424,7 +425,7 @@ describe('SessionIngestorPluginNextGen — id-based watermark (H-1)', () => {
     restore = stub.restore;
     const mem = makeMem();
     const plugin = new SessionIngestorPluginNextGen({
-      memory: mem, agentId: AGENT, userId: USER, connectorName: 'c', model: 'm',
+      memory: mem, agentId: AGENT, userId: USER, connectorName: 'c', model: 'm', minBatchMessages: 1,
     });
 
     // Turn 1: 5 messages.
@@ -488,7 +489,7 @@ describe('SessionIngestorPluginNextGen — H-2 ownership guards', () => {
       { userId: 'other_user' },
     );
     const plugin = new SessionIngestorPluginNextGen({
-      memory: mem, agentId: AGENT, userId: USER, connectorName: 'c', model: 'm',
+      memory: mem, agentId: AGENT, userId: USER, connectorName: 'c', model: 'm', minBatchMessages: 1,
     });
     plugin.onBeforePrepare({
       messages: [{ id: 'z1', role: 'user', content: 'hello' }],
@@ -542,7 +543,7 @@ describe('SessionIngestorPluginNextGen — H-2 ownership guards', () => {
     restore = stub.restore;
 
     const plugin = new SessionIngestorPluginNextGen({
-      memory: mem, agentId: AGENT, userId: USER, connectorName: 'c', model: 'm',
+      memory: mem, agentId: AGENT, userId: USER, connectorName: 'c', model: 'm', minBatchMessages: 1,
     });
     plugin.onBeforePrepare({
       messages: [{ id: 'y1', role: 'user', content: 'My friend Bob (bob@foreign.com) loves jazz.' }],
@@ -570,7 +571,7 @@ describe('SessionIngestorPluginNextGen — H-3 truncation-aware watermark', () =
     restore = stub.restore;
     const mem = makeMem();
     const plugin = new SessionIngestorPluginNextGen({
-      memory: mem, agentId: AGENT, userId: USER, connectorName: 'c', model: 'm',
+      memory: mem, agentId: AGENT, userId: USER, connectorName: 'c', model: 'm', minBatchMessages: 1,
       maxTranscriptChars: 120, // tiny budget
     });
     // 4 messages, each ~50 chars after role prefix → only first 2 fit.
@@ -610,7 +611,7 @@ describe('SessionIngestorPluginNextGen — C2 silent-drop logging + C4 clamping'
       agentId: AGENT,
       userId: USER,
       connectorName: 'c',
-      model: 'm',
+      model: 'm', minBatchMessages: 1,
     });
 
     // Spy on warn logs to confirm the drop is observable.
@@ -659,7 +660,7 @@ describe('SessionIngestorPluginNextGen — C2 silent-drop logging + C4 clamping'
       agentId: AGENT,
       userId: USER,
       connectorName: 'c',
-      model: 'm',
+      model: 'm', minBatchMessages: 1,
     });
 
     // Spy on memory.addFact to observe the exact values going through.
@@ -732,7 +733,7 @@ describe('buildSessionExtractionPrompt', () => {
     expect(out).toMatch(/validUntil/);
   });
 
-  it('includes the three-bucket partition', () => {
+  it('documents the primary extraction targets (user facts + other entities)', () => {
     const out = buildSessionExtractionPrompt({
       transcript: 'x',
       agentId: 'a',
@@ -740,8 +741,405 @@ describe('buildSessionExtractionPrompt', () => {
       diligence: 'normal',
       referenceDate: new Date(),
     });
-    expect(out).toMatch(/Bucket 1 — USER facts/);
-    expect(out).toMatch(/Bucket 2 — AGENT learnings/);
-    expect(out).toMatch(/Bucket 3 — OTHER entities/);
+    expect(out).toMatch(/USER facts \(subject: `m_user`\)/);
+    expect(out).toMatch(/OTHER entities/);
+  });
+
+  it('includes the anti-pattern shape rule (suppresses utterance-event predicates)', () => {
+    const out = buildSessionExtractionPrompt({
+      transcript: 'x',
+      agentId: 'a',
+      userId: 'u',
+      diligence: 'normal',
+      referenceDate: new Date(),
+    });
+    // Shape rule must be present, not just a blocklist.
+    expect(out).toMatch(/Shape rule/);
+    expect(out).toMatch(/utterance event/);
+    // A few concrete illustrations that the LLM has seen in earlier runs.
+    for (const p of [
+      'mentioned_by',
+      'was_mentioned_in_conversation',
+      'asked_about',
+      'discussed_in',
+      'talked_about',
+      'entity_type',
+    ]) {
+      expect(out).toContain(p);
+    }
+  });
+
+  it('instructs the extractor not to re-extract agent tool-writes, with tool_call/tool_result shape', () => {
+    const out = buildSessionExtractionPrompt({
+      transcript: 'x',
+      agentId: 'a',
+      userId: 'u',
+      diligence: 'normal',
+      referenceDate: new Date(),
+    });
+    expect(out).toMatch(/DO NOT re-extract|do NOT re-extract/);
+    expect(out).toMatch(/AMBIENT/);
+    // Strengthened rule now references the actual transcript markers the
+    // renderer emits, so the LLM can see and apply the rule.
+    expect(out).toMatch(/\[tool_call memory_\*/);
+    expect(out).toMatch(/tool_result ok/);
+    expect(out).toMatch(/tool_result error/);
+    // Concrete duplicate-prevention examples for memory_upsert_entity.
+    expect(out).toMatch(/has_task/);
+    expect(out).toMatch(/due_date|deadline/);
+    // Error case: failed writes are extraction-eligible (ambient is the safety net).
+    expect(out).toMatch(/error.*write FAILED|failed.*extraction-eligible|safety net/i);
+  });
+
+  it('explicitly forbids agent-subject facts under every diligence level', () => {
+    // Agent-subject writes are owned by `memory_set_agent_rule` (user-driven,
+    // narrow trigger). The ambient ingestor must never emit them — no matter
+    // how thorough the pass. Prompt must state this unambiguously.
+    for (const diligence of ['minimal', 'normal', 'thorough'] as const) {
+      const out = buildSessionExtractionPrompt({
+        transcript: 'x',
+        agentId: 'a',
+        userId: 'u',
+        diligence,
+        referenceDate: new Date(),
+      });
+      expect(out).toMatch(/DO NOT extract facts with subject `m_agent`/);
+      // The prompt must NOT reintroduce the old "agent learnings" section.
+      expect(out).not.toMatch(/AGENT learnings \(subject: `m_agent`\)/);
+    }
+  });
+});
+
+describe('renderMessage (transcript builder)', () => {
+  it('renders plain string content verbatim', () => {
+    expect(renderMessage({ role: 'user', content: 'hi there' })).toBe('user: hi there');
+  });
+
+  it('renders array-content text parts concatenated', () => {
+    const m = {
+      role: 'assistant',
+      content: [{ text: 'Hello,' }, { text: 'world.' }],
+    };
+    expect(renderMessage(m)).toBe('assistant: Hello, world.');
+  });
+
+  it('renders tool_call with serialized args so the extractor can see captured facts', () => {
+    const m = {
+      role: 'assistant',
+      content: [
+        {
+          type: 'tool_call',
+          name: 'memory_upsert_entity',
+          arguments: {
+            type: 'task',
+            displayName: 'Call the doctor',
+            metadata: { state: 'pending', dueAt: '2026-04-30T09:00:00Z' },
+          },
+        },
+      ],
+    };
+    const out = renderMessage(m);
+    expect(out).toMatch(/\[tool_call memory_upsert_entity/);
+    expect(out).toContain('"type":"task"');
+    expect(out).toContain('"displayName":"Call the doctor"');
+    expect(out).toContain('"dueAt":"2026-04-30T09:00:00Z"');
+  });
+
+  it('truncates oversized tool_call args to cap transcript cost', () => {
+    const m = {
+      role: 'assistant',
+      content: [
+        {
+          type: 'tool_call',
+          name: 'memory_remember',
+          arguments: { subject: 'me', predicate: 'big', value: 'x'.repeat(2000) },
+        },
+      ],
+    };
+    const out = renderMessage(m);
+    // Cap is 500; with room for closing quote + structure, payload must be trimmed.
+    expect(out.length).toBeLessThan(650);
+    expect(out).toMatch(/…/); // truncation ellipsis
+  });
+
+  it('renders tool_result with ok tag when call succeeded', () => {
+    const m = {
+      role: 'assistant',
+      content: [
+        {
+          type: 'tool_result',
+          tool_use_id: 't1',
+          result: { fact: { id: 'abc', predicate: 'full_name' } },
+        },
+      ],
+    };
+    const out = renderMessage(m);
+    expect(out).toMatch(/\[tool_result ok/);
+    expect(out).toContain('full_name');
+  });
+
+  it('renders tool_result with error tag when the tool returned an error', () => {
+    const m = {
+      role: 'assistant',
+      content: [
+        {
+          type: 'tool_result',
+          tool_use_id: 't2',
+          result: { error: 'No entity matching surface=Everworker.ai' },
+        },
+      ],
+    };
+    const out = renderMessage(m);
+    expect(out).toMatch(/\[tool_result error/);
+    expect(out).toContain('Everworker');
+  });
+
+  it('honors is_error / isError flags at the content level', () => {
+    const m = {
+      role: 'assistant',
+      content: [
+        {
+          type: 'tool_result',
+          tool_use_id: 't3',
+          is_error: true,
+          content: 'boom',
+        },
+      ],
+    };
+    expect(renderMessage(m)).toMatch(/\[tool_result error/);
+  });
+
+  it('tolerates a tool_call with no args', () => {
+    const m = {
+      role: 'assistant',
+      content: [{ type: 'tool_call', name: 'memory_recall' }],
+    };
+    expect(renderMessage(m)).toBe('assistant: [tool_call memory_recall]');
+  });
+});
+
+// ===========================================================================
+// Batching + flush() — graceful-shutdown contract
+// ===========================================================================
+
+describe('SessionIngestorPluginNextGen — batching + flush', () => {
+  let restore: (() => void) | null = null;
+  beforeEach(() => {
+    restore?.();
+    restore = null;
+  });
+
+  it('onBeforePrepare skips ingest when accumulated messages are below minBatchMessages', async () => {
+    const stub = stubAgent([JSON.stringify({ mentions: {}, facts: [] })]);
+    restore = stub.restore;
+    const mem = makeMem();
+    const plugin = new SessionIngestorPluginNextGen({
+      memory: mem,
+      agentId: AGENT,
+      userId: USER,
+      connectorName: 'c',
+      model: 'm',
+      minBatchMessages: 4, // require 4; we'll feed 2
+    });
+
+    plugin.onBeforePrepare({
+      messages: [
+        { id: 'm1', role: 'user', content: 'hi' },
+        { id: 'm2', role: 'assistant', content: 'hello' },
+      ],
+      currentInput: [],
+    });
+    await plugin.waitForIngest();
+    expect(stub.calls.length).toBe(0); // no LLM call because below threshold
+  });
+
+  it('onBeforePrepare fires once the batch reaches minBatchMessages', async () => {
+    const stub = stubAgent([JSON.stringify({ mentions: {}, facts: [] })]);
+    restore = stub.restore;
+    const mem = makeMem();
+    const plugin = new SessionIngestorPluginNextGen({
+      memory: mem,
+      agentId: AGENT,
+      userId: USER,
+      connectorName: 'c',
+      model: 'm',
+      minBatchMessages: 2,
+    });
+
+    plugin.onBeforePrepare({
+      messages: [
+        { id: 'm1', role: 'user', content: 'hi' },
+        { id: 'm2', role: 'assistant', content: 'hello' },
+      ],
+      currentInput: [],
+    });
+    await plugin.waitForIngest();
+    expect(stub.calls.length).toBe(1);
+  });
+
+  it('flush() forces an ingest regardless of threshold, on the last-seen snapshot', async () => {
+    const stub = stubAgent([JSON.stringify({ mentions: {}, facts: [] })]);
+    restore = stub.restore;
+    const mem = makeMem();
+    const plugin = new SessionIngestorPluginNextGen({
+      memory: mem,
+      agentId: AGENT,
+      userId: USER,
+      connectorName: 'c',
+      model: 'm',
+      minBatchMessages: 100, // effectively unreachable
+    });
+
+    // onBeforePrepare stores snapshot but skips ingest (below threshold).
+    plugin.onBeforePrepare({
+      messages: [
+        { id: 'm1', role: 'user', content: 'hi' },
+        { id: 'm2', role: 'assistant', content: 'hello' },
+      ],
+      currentInput: [],
+    });
+    await plugin.waitForIngest();
+    expect(stub.calls.length).toBe(0);
+
+    // flush() bypasses the threshold and runs on the stored snapshot.
+    await plugin.flush();
+    expect(stub.calls.length).toBe(1);
+    expect(plugin.getLastIngestedMessageId()).toBe('m2');
+  });
+
+  it('flush() is a no-op before any prepare has fired (no stored snapshot)', async () => {
+    const stub = stubAgent([]);
+    restore = stub.restore;
+    const mem = makeMem();
+    const plugin = new SessionIngestorPluginNextGen({
+      memory: mem,
+      agentId: AGENT,
+      userId: USER,
+      connectorName: 'c',
+      model: 'm',
+    });
+    await plugin.flush();
+    expect(stub.calls.length).toBe(0);
+  });
+
+  it('flush() accepts an explicit snapshot override', async () => {
+    const stub = stubAgent([JSON.stringify({ mentions: {}, facts: [] })]);
+    restore = stub.restore;
+    const mem = makeMem();
+    const plugin = new SessionIngestorPluginNextGen({
+      memory: mem,
+      agentId: AGENT,
+      userId: USER,
+      connectorName: 'c',
+      model: 'm',
+      minBatchMessages: 100,
+    });
+    await plugin.flush({
+      messages: [
+        { id: 'x1', role: 'user', content: 'explicit' },
+        { id: 'x2', role: 'assistant', content: 'ack' },
+      ],
+      currentInput: [],
+    });
+    expect(stub.calls.length).toBe(1);
+    expect(plugin.getLastIngestedMessageId()).toBe('x2');
+  });
+
+  it('flush() is idempotent — a second call after the watermark advanced is a no-op', async () => {
+    const stub = stubAgent([JSON.stringify({ mentions: {}, facts: [] })]);
+    restore = stub.restore;
+    const mem = makeMem();
+    const plugin = new SessionIngestorPluginNextGen({
+      memory: mem,
+      agentId: AGENT,
+      userId: USER,
+      connectorName: 'c',
+      model: 'm',
+      minBatchMessages: 1,
+    });
+    const snapshot = {
+      messages: [
+        { id: 'm1', role: 'user', content: 'hi' },
+        { id: 'm2', role: 'assistant', content: 'hello' },
+      ],
+      currentInput: [],
+    };
+    await plugin.flush(snapshot);
+    expect(stub.calls.length).toBe(1);
+    await plugin.flush(snapshot);
+    expect(stub.calls.length).toBe(1); // watermark is at m2, nothing new to ingest
+  });
+
+  it('flush() on destroyed plugin does not run a new ingest', async () => {
+    const stub = stubAgent([]);
+    restore = stub.restore;
+    const mem = makeMem();
+    const plugin = new SessionIngestorPluginNextGen({
+      memory: mem,
+      agentId: AGENT,
+      userId: USER,
+      connectorName: 'c',
+      model: 'm',
+      minBatchMessages: 1,
+    });
+    plugin.destroy();
+    await plugin.flush({
+      messages: [
+        { id: 'm1', role: 'user', content: 'hi' },
+        { id: 'm2', role: 'assistant', content: 'hello' },
+      ],
+      currentInput: [],
+    });
+    expect(stub.calls.length).toBe(0);
+  });
+
+  it('exposes minBatchMessages via config; default is 6 when unset', async () => {
+    // Confirm the library default by building a plugin with no minBatchMessages
+    // and feeding 5 messages — the hook must skip.
+    const stub = stubAgent([]);
+    restore = stub.restore;
+    const mem = makeMem();
+    const plugin = new SessionIngestorPluginNextGen({
+      memory: mem,
+      agentId: AGENT,
+      userId: USER,
+      connectorName: 'c',
+      model: 'm',
+      // no minBatchMessages — take the default
+    });
+    plugin.onBeforePrepare({
+      messages: [
+        { id: 'a', role: 'user', content: '1' },
+        { id: 'b', role: 'assistant', content: '2' },
+        { id: 'c', role: 'user', content: '3' },
+        { id: 'd', role: 'assistant', content: '4' },
+        { id: 'e', role: 'user', content: '5' },
+      ],
+      currentInput: [],
+    });
+    await plugin.waitForIngest();
+    expect(stub.calls.length).toBe(0); // 5 < default 6
+  });
+});
+
+// ===========================================================================
+// Prompt rule: don't extract task/event from imperative user requests
+// ===========================================================================
+
+describe('buildSessionExtractionPrompt — imperative-request rule', () => {
+  it('instructs the extractor NOT to synthesize task/event entities from action requests', () => {
+    const out = buildSessionExtractionPrompt({
+      transcript: 'x',
+      agentId: 'a',
+      userId: 'u',
+      diligence: 'normal',
+      referenceDate: new Date(),
+    });
+    // New rule present and concrete.
+    expect(out).toMatch(/imperative user requests|agent-action requests/i);
+    expect(out).toMatch(/remind me to|schedule Y|track Z|add to my to-do/);
+    expect(out).toMatch(/has_task|assigned_to|due_date|has_reminder|needs_to/);
+    // Exception for fact-form statements is still allowed.
+    expect(out).toMatch(/Exception.*fact.*extractable|calendar fact.*not asking the agent/i);
   });
 });

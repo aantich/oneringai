@@ -85,6 +85,19 @@ export interface SessionIngestorPluginConfig {
    * messages are truncated from the head when over budget. Default 20_000.
    */
   maxTranscriptChars?: number;
+
+  /**
+   * Minimum number of conversation messages (flat count, not user/assistant
+   * pairs) that must have accumulated since the last successful ingest for a
+   * natural \`onBeforePrepare\` trigger to fire. Below this threshold the hook
+   * short-circuits and defers to the next turn.
+   *
+   * Default: 6 (≈ 3 user/assistant pairs). Set to 1 for per-turn ingest.
+   *
+   * For guaranteed final ingest at session end, call \`await plugin.flush()\`
+   * before \`plugin.destroy()\` — \`flush\` ignores this threshold.
+   */
+  minBatchMessages?: number;
 }
 
 // ===========================================================================
@@ -111,6 +124,7 @@ export class SessionIngestorPluginNextGen implements IContextPluginNextGen {
   private readonly temperature: number;
   private readonly maxOutputTokens: number;
   private readonly maxTranscriptChars: number;
+  private readonly minBatchMessages: number;
 
   private userEntityId: EntityId | undefined;
   private agentEntityId: EntityId | undefined;
@@ -126,6 +140,12 @@ export class SessionIngestorPluginNextGen implements IContextPluginNextGen {
   private lastIngestedMessageId: string | null = null;
   private ingestInFlight: Promise<void> | null = null;
   private destroyed = false;
+  /**
+   * Most recent `onBeforePrepare` snapshot, kept so `flush()` can run ingest
+   * on the current conversation without the caller supplying one. Updated on
+   * every hook invocation (including the "below threshold, skip" path).
+   */
+  private lastSnapshot: PluginPrepareSnapshot | null = null;
 
   // Lazy-init LLM agent (built once on first use, disposed on destroy).
   private llmAgent: Agent | null = null;
@@ -147,6 +167,8 @@ export class SessionIngestorPluginNextGen implements IContextPluginNextGen {
     this.temperature = config.temperature ?? 0.2;
     this.maxOutputTokens = config.maxOutputTokens ?? 2000;
     this.maxTranscriptChars = config.maxTranscriptChars ?? 20_000;
+    // Clamp to at least 1 — below 1 makes no sense and breaks threshold checks.
+    this.minBatchMessages = Math.max(1, config.minBatchMessages ?? 6);
   }
 
   // ---------------------------------------------------------------------------
@@ -234,6 +256,10 @@ export class SessionIngestorPluginNextGen implements IContextPluginNextGen {
     if (this.destroyed) return;
     if (this.bootstrapFailed) return; // Plugin disabled — can't write safely.
 
+    // Remember the snapshot even if we skip firing — `flush()` uses this as
+    // the source for a forced ingest on graceful shutdown.
+    this.lastSnapshot = snapshot;
+
     // If a previous ingest is still in flight, don't pile up — skip this turn.
     // The next turn will include whatever hasn't been ingested yet (id-based
     // watermark means we won't lose messages even when we skip).
@@ -244,6 +270,10 @@ export class SessionIngestorPluginNextGen implements IContextPluginNextGen {
     // (dedup protects us from re-inserting duplicates).
     const messagesSlice = sliceAfterId(snapshot.messages, this.lastIngestedMessageId);
     if (messagesSlice.length === 0) return;
+
+    // Batching gate — skip unless we've accumulated enough messages to amortize
+    // the LLM call. `flush()` bypasses this gate for guaranteed final ingest.
+    if (messagesSlice.length < this.minBatchMessages) return;
 
     this.ingestInFlight = this.ingest(messagesSlice)
       .catch((err) => {
@@ -269,6 +299,67 @@ export class SessionIngestorPluginNextGen implements IContextPluginNextGen {
   /** Await the current in-flight ingestion, if any. Used by tests to deterministically wait. */
   async waitForIngest(): Promise<void> {
     if (this.ingestInFlight) await this.ingestInFlight;
+  }
+
+  /**
+   * Force-ingest any pending messages and await completion — the graceful-
+   * shutdown escape hatch. Bypasses `minBatchMessages`; uses the most recent
+   * `onBeforePrepare` snapshot as the source (so callers should ensure
+   * `AgentContextNextGen.prepare()` has fired at least once after the last
+   * message was added — typically that happens naturally during the last
+   * agent turn).
+   *
+   * Contract: hosts should call `await plugin.flush()` before disposing of
+   * the plugin (on DDP disconnect, `/back`, SIGINT, etc.) to guarantee the
+   * final batch is persisted. `destroy()` does NOT await — it only flips the
+   * destroyed flag and releases the LLM agent.
+   *
+   * Safe to call multiple times; on a destroyed plugin, this awaits any
+   * in-flight ingest but does not start a new one.
+   *
+   * Optional `snapshot` override: callers that have already built a fresh
+   * `PluginPrepareSnapshot` (e.g. via another plugin's hook) can pass it in
+   * directly and skip the stored-snapshot path.
+   */
+  async flush(snapshot?: PluginPrepareSnapshot): Promise<void> {
+    // Always await any existing in-flight ingest first — both for correctness
+    // (don't overlap) and so a caller that just kicked an ingest via a prior
+    // `prepare()` call gets its results before we add more.
+    if (this.ingestInFlight) {
+      try {
+        await this.ingestInFlight;
+      } catch {
+        // Swallow — errors are already logged in the promise chain. We still
+        // attempt the forced flush on top of a prior failure.
+      }
+    }
+
+    if (this.destroyed) return;
+    if (this.bootstrapFailed) return;
+
+    const source = snapshot ?? this.lastSnapshot;
+    if (!source) return; // No prepare has fired yet; nothing to flush.
+
+    const messagesSlice = sliceAfterId(source.messages, this.lastIngestedMessageId);
+    if (messagesSlice.length === 0) return;
+
+    // Unlike `onBeforePrepare`, we run even below `minBatchMessages` — that's
+    // the whole point of `flush()`.
+    const promise = this.ingest(messagesSlice).catch((err) => {
+      logger.warn(
+        {
+          component: 'SessionIngestorPluginNextGen',
+          agentId: this.agentId,
+          userId: this.userId,
+          error: err instanceof Error ? err.message : String(err),
+        },
+        'flush() ingest failed',
+      );
+    });
+    this.ingestInFlight = promise.finally(() => {
+      this.ingestInFlight = null;
+    });
+    await this.ingestInFlight;
   }
 
   /** Id of the last message we've ingested. `null` before any ingest. */
@@ -743,8 +834,18 @@ function findLastMessageIdWithId(messages: ReadonlyArray<unknown>): string | nul
   return null;
 }
 
-/** Best-effort render of a conversation message to plain text. */
-function renderMessage(m: unknown): string {
+/** Max chars of serialized tool-call args rendered into the transcript. */
+const TOOL_CALL_ARGS_MAX_CHARS = 500;
+/** Max chars of serialized tool-result payload rendered into the transcript. */
+const TOOL_RESULT_MAX_CHARS = 240;
+
+/**
+ * Best-effort render of a conversation message to plain text. Exported for
+ * unit tests — the transcript-rendering shape directly affects extraction
+ * quality (the extractor must be able to see tool-call arguments and results
+ * to avoid re-extracting facts the agent already wrote).
+ */
+export function renderMessage(m: unknown): string {
   if (!m || typeof m !== 'object') return '';
   const msg = m as Record<string, unknown>;
   const role = typeof msg.role === 'string' ? msg.role : 'unknown';
@@ -755,17 +856,76 @@ function renderMessage(m: unknown): string {
     for (const c of content) {
       if (!c || typeof c !== 'object') continue;
       const cc = c as Record<string, unknown>;
-      if (typeof cc.text === 'string') parts.push(cc.text);
-      else if (typeof cc.content === 'string') parts.push(cc.content);
-      else if (cc.type === 'tool_call' && typeof cc.name === 'string') {
-        parts.push(`[tool:${cc.name}]`);
+      // Type-tagged parts win over the generic text/content fallback so a
+      // tool_result with `content: 'boom'` renders as `[tool_result error ...]`,
+      // not as plain text "boom".
+      if (cc.type === 'tool_call' && typeof cc.name === 'string') {
+        parts.push(renderToolCall(cc));
       } else if (cc.type === 'tool_result' && typeof cc.tool_use_id === 'string') {
-        parts.push(`[tool_result:${cc.tool_use_id}]`);
+        parts.push(renderToolResult(cc));
+      } else if (typeof cc.text === 'string') {
+        parts.push(cc.text);
+      } else if (typeof cc.content === 'string') {
+        parts.push(cc.content);
       }
     }
     return parts.length > 0 ? `${role}: ${parts.join(' ')}` : '';
   }
   return '';
+}
+
+/**
+ * Render a tool call with truncated JSON args so the extractor can see what
+ * has already been captured — critical for dedup against the background
+ * extraction pipeline. Args are truncated at `TOOL_CALL_ARGS_MAX_CHARS` to
+ * cap the token footprint; the extraction prompt instructs the LLM to treat
+ * facts inside the arg block as already-written and NOT to re-extract them.
+ */
+function renderToolCall(cc: Record<string, unknown>): string {
+  const name = String(cc.name ?? 'unknown');
+  const args = cc.arguments ?? cc.input ?? cc.args;
+  const serialized = serializeForTranscript(args, TOOL_CALL_ARGS_MAX_CHARS);
+  if (!serialized) return `[tool_call ${name}]`;
+  return `[tool_call ${name} ${serialized}]`;
+}
+
+/**
+ * Render a tool result so the extractor can spot failures (and know the fact
+ * was NOT captured, so the extractor should still consider it). Success
+ * payloads are truncated; errors are surfaced explicitly.
+ */
+function renderToolResult(cc: Record<string, unknown>): string {
+  // Heuristic: look for `is_error`/`error`/`isError` to distinguish failures.
+  const isError =
+    cc.is_error === true ||
+    cc.isError === true ||
+    (typeof cc.error === 'string' && cc.error.length > 0) ||
+    (cc.result &&
+      typeof cc.result === 'object' &&
+      (cc.result as Record<string, unknown>).error !== undefined);
+
+  const payload = cc.result ?? cc.content ?? cc.output;
+  const serialized = serializeForTranscript(payload, TOOL_RESULT_MAX_CHARS);
+  const tag = isError ? 'error' : 'ok';
+  if (!serialized) return `[tool_result ${tag}]`;
+  return `[tool_result ${tag} ${serialized}]`;
+}
+
+/**
+ * JSON-serialize a value with length cap. Returns empty string if the value
+ * is absent or unserializable. Truncation appends a single-character ellipsis
+ * so the LLM can see the boundary.
+ */
+function serializeForTranscript(value: unknown, maxChars: number): string {
+  if (value === undefined || value === null) return '';
+  let s: string;
+  try {
+    s = typeof value === 'string' ? value : JSON.stringify(value);
+  } catch {
+    s = String(value);
+  }
+  if (s.length <= maxChars) return s;
+  return s.slice(0, maxChars - 1) + '…';
 }
 
 // ===========================================================================
@@ -789,7 +949,7 @@ export function buildSessionExtractionPrompt(ctx: SessionExtractionPromptContext
   const openTag = `conversation_${nonce}`;
   const closeTag = `/conversation_${nonce}`;
 
-  return `You are analyzing a recent agent-user conversation turn and extracting memory updates. Your output populates a knowledge graph partitioned across THREE buckets.
+  return `You are analyzing a recent agent-user conversation turn and extracting memory updates. Your output populates a knowledge graph.
 
 Reference date: ${refDate}
 
@@ -831,15 +991,14 @@ Return JSON with exactly two top-level keys:
   ]
 }
 
-## Three buckets — ORGANIZE your output around these
+## What to extract
 
-**Bucket 1 — USER facts (subject: \`m_user\`).** Preferences, identity claims, personal circumstances the user stated or revealed.
-- Examples: \`{subject:"m_user", predicate:"prefers", value:"concise responses"}\`, \`{subject:"m_user", predicate:"works_at", object:"m1"}\`.
+**USER facts (subject: \`m_user\`).** Preferences, identity claims, roles, relationships, commitments the user stated or revealed.
+- Good examples: \`{subject:"m_user", predicate:"prefers", value:"concise responses"}\`, \`{subject:"m_user", predicate:"works_at", object:"m1"}\`, \`{subject:"m_user", predicate:"full_name", value:"Anton Antich"}\`.
 
-**Bucket 2 — AGENT learnings (subject: \`m_agent\`).** Procedures / patterns / rules the agent DISCOVERED during this turn that would help on future turns. Use \`kind:"document"\` for multi-sentence procedures.
-- Examples: \`{subject:"m_agent", predicate:"learned_pattern", details:"When calculating tax, ALWAYS confirm jurisdiction first because rates differ materially by state", kind:"document"}\`, \`{subject:"m_agent", predicate:"avoided_pitfall", details:"Don't suggest Meteor 2.x async patterns — this project is on 3.x"}\`.
+**OTHER entities.** People, organizations, projects, events, tasks mentioned in the conversation that aren't the user or agent. Declare them as new mentions and write facts about THEIR attributes / relationships. Use \`contextIds\` to bind observations to parent entities (a concern raised during a project discussion should have the project in \`contextIds\`).
 
-**Bucket 3 — OTHER entities.** People, organizations, projects, events, tasks mentioned in the conversation that aren't the user or agent. Declare them as new mentions and write facts about them. Use \`contextIds\` to bind observations to parent entities (e.g. a concern raised during a project discussion should have the project in \`contextIds\`).
+**DO NOT extract facts with subject \`m_agent\`.** Agent behavior and personality are NOT a concern of this ambient extractor. User-owned behavior rules are captured exclusively when the user explicitly instructs the agent ("be terse", "reply in Russian") — the agent itself writes those via its own \`memory_set_agent_rule\` tool. Global agent instructions are admin-controlled. Any fact you would have put on \`m_agent\` is noise here — skip it.
 
 ## Fact kinds
 Every fact sets \`kind\` to exactly ONE of:
@@ -855,10 +1014,69 @@ When in doubt, OMIT \`validUntil\` — too-early expiry silently hides facts fro
 
 ${diligenceSection}
 
+## Anti-patterns — DO NOT emit these
+
+A fact is noise (and MUST be skipped) if it describes the conversation itself, restates mention metadata, or is too generic to distinguish anyone. The rules below matter more than any example list — apply the SHAPE rule first.
+
+**Shape rule (most important):** if a predicate describes the *utterance event* itself — the fact that something was said, asked, mentioned, brought up, acknowledged, or discussed — it is transcript, not knowledge. Drop it. You are extracting what the user REVEALED about the world, not what they said in this turn.
+
+Concrete illustrations of the shape rule (non-exhaustive — do not treat as a blocklist, apply the principle to ANY similar predicate):
+- \`mentioned_by\`, \`mentioned_in\`, \`was_mentioned_in_conversation\`, \`referenced_in\`, \`appeared_in\`, \`discussed_in\`, \`talked_about\`, \`brought_up\`, \`raised_in\`, \`came_up_in\`, \`observed_in\`.
+- \`asked_about\`, \`asked_for\`, \`inquired_about\`, \`questioned\`, \`wondered_about\`.
+- \`said\`, \`told\`, \`stated\`, \`expressed\`, \`communicated\`, \`informed\`.
+- \`acknowledged\`, \`greeted\`, \`thanked\`, \`confirmed\`, \`responded\`.
+
+**Other noise categories:**
+
+- **No tautologies with mention metadata.** The mention's \`type\` IS the entity's type — DO NOT write \`entity_type\`, \`is_a\`, \`category\`, \`kind\`, \`classification\` facts that repeat it. If Everworker is declared as \`type:"organization"\`, writing \`{subject:"m1", predicate:"entity_type", value:"organization"}\` is forbidden.
+- **No generic attributes that hold for anyone.** \`is_person\`, \`has_name\`, \`has_identifier\`, \`exists\`, \`is_real\` — too universal to matter. If the same fact would hold for every user and every entity, skip it.
+- **No boolean provenance facts.** \`was_discussed: true\`, \`is_mentioned: true\`, \`is_known: true\` — drop. Provenance is \`sourceSignalId\`, not a predicate.
+
+**Self-check before emitting ANY fact** — answer both:
+1. "Would a stranger reading only this fact, with no access to the transcript, learn something specific about this subject (the user, an entity in the world) that's not already in the mention?" If no, drop.
+2. "Is this predicate describing what happened in the conversation, or what's true in the world?" If it's about the conversation, drop.
+
+## Agent-written writes — do NOT re-extract them
+
+The agent has write tools available for explicit user requests. When the user explicitly asks the agent to create a task, event, entity, or fact ("remind me to X", "create a task", "remember that X"), the agent writes it directly through its tools. These writes appear in the transcript as:
+
+\`[tool_call memory_* <json-args>]\` — the JSON args have ALREADY been persisted.
+\`[tool_result ok <json>]\` — the write succeeded.
+\`[tool_result error <message>]\` — the write FAILED (in that case, the fact is NOT in memory).
+
+**Rule:** when the transcript contains a \`[tool_call memory_*]\` block paired with a \`[tool_result ok ...]\`, the facts encoded inside the args are already captured. DO NOT re-extract ANY fact that restates, paraphrases, or decomposes what's in those arguments — even if the user's message in the same turn also stated it verbatim.
+
+Concretely, a \`memory_upsert_entity\` with \`type:'task'\`, \`displayName:'Call the doctor'\`, \`metadata.dueAt:'2026-04-30'\` ALREADY captures:
+- the task's existence (do not write \`has_task\`, \`assigned_to\`)
+- the due date (do not write \`due_date\`, \`deadline\`, \`dueOn\`)
+- the assignee-by-owner (do not write \`assigned_to\`)
+- the task name (do not write \`task_name\`, \`title\`)
+All of those would be duplicate facts.
+
+If a tool_result says \`error\`, the write FAILED — in that case the fact is still extraction-eligible (the ambient layer becomes the safety net).
+
+For \`memory_remember\` / \`memory_link\` calls: any fact with the same subject + predicate (or a near-synonym predicate) as the call's args is already captured — skip it.
+
+Your job is the AMBIENT layer: facts the user revealed that the agent did NOT capture via its write tools in this turn.
+
+## Do NOT synthesize action requests into facts
+
+Imperative user requests like "remind me to X", "schedule Y", "track Z", "add to my to-do", "create a task for A" are agent-action requests, NOT ambient facts. They are the user telling the agent to DO something.
+
+- If the agent handled the request via a \`memory_*\` tool call in the transcript, the existing re-extract rule already covers it (skip — already persisted).
+- If the agent did NOT handle it (asked a clarifying question, forgot, refused, or the request is still mid-multi-turn clarification like "9am" answering "what time?"), you still MUST skip these. Do not synthesize \`has_task\`, \`has_reminder\`, \`assigned_to\`, \`due_date\`, \`needs_to\`, or task/event entities on the user's behalf. The agent's job is to fulfill action requests; yours is to capture world-facts the user revealed.
+
+A user saying "remind me to call the doctor on April 30" reveals nothing about the user except that they want a reminder — which is an action request, not a persistent fact about them. Skip it entirely.
+
+Exception: the user stating a future commitment as a fact (not a request) IS extractable — e.g. "I have a doctor appointment on April 30" CAN become an event entity, because the user is asserting a calendar fact, not asking the agent to act.
+
 ## General rules
+
 - Skip greetings, acknowledgments, tool-call mechanics, transient task state.
 - One observation = one fact. Don't duplicate facts within this extraction.
 - Dedup against existing memory is automatic — you don't need to avoid re-extracting known facts. The system merges details when a duplicate is found.
+- Prefer \`predicate: full_name\` / \`preferred_name\` / \`display_name\` for names; prefer \`works_at\` / \`works_on\` / \`member_of\` for affiliations; prefer \`prefers\` / \`dislikes\` / \`believes\` for opinions.
+- When uncertain, SKIP. A noisy memory is worse than a sparse one — missing facts are re-extracted on the next mention; wrong facts pollute retrieval forever.
 - Output ONLY the JSON. No surrounding prose, no code fences.`;
 }
 
@@ -871,7 +1089,7 @@ Skip: preferences you inferred from tone, patterns you "noticed", implicit concl
 Keep: direct statements ("I work at X", "I prefer Y"), explicit corrections, explicit commitments.`;
     case 'thorough':
       return `## Diligence: THOROUGH
-Extract both explicit statements AND tentative inferences. Mark inferences with \`confidence: 0.3-0.7\` and explain the basis in \`details\`.
+Extract explicit statements AND tentative inferences. Mark inferences with \`confidence: 0.3-0.7\` and explain the basis in \`details\`.
 Capture: small preferences, repeated phrasings, inferred constraints, patterns that emerged across the turn.
 Still skip: greetings, pleasantries, transient task state.`;
     case 'normal':

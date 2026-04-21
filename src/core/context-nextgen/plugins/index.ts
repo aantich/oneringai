@@ -56,6 +56,7 @@ export type { MemoryWritePluginConfig } from './MemoryWritePluginNextGen.js';
 export {
   SessionIngestorPluginNextGen,
   buildSessionExtractionPrompt,
+  renderMessage as renderSessionMessage,
 } from './SessionIngestorPluginNextGen.js';
 export type {
   SessionIngestorPluginConfig,

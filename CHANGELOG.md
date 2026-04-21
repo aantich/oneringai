@@ -7,6 +7,125 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### User-specific agent behavior rules — `memory_set_agent_rule` + rules block
+
+New narrow-trigger channel for **per-user, per-agent behavior directives**. Addresses the long-running tension between "agent self-learns from ambient observation" (which produced noise and meta-procedures) and "agent never modifies its own behavior" (which stranded user corrections like "stop apologizing" with nowhere to go).
+
+**Shape of the change:**
+- Different users may give DIFFERENT instructions to the same agent — user A says "be terse", user B says "be verbose". Rules are therefore scoped per-user, not global. Global agent personality / base instructions are admin-controlled via `Agent.create({ instructions })` — never synthesized.
+- Distinction is a **data-model shape**, not a predicate whitelist: rules are facts with `subjectId = agentEntityId`, `ownerId = userId`. A future rule-inference engine can add facts with any predicate under the same shape and they surface automatically.
+
+**New tool: `memory_set_agent_rule`.** Added as the 6th tool in the write bundle (`createMemoryWriteTools` / `MemoryWritePluginNextGen`). Signature: `{ rule: string, replaces?: string }`. Auto-fills subject = agent entity, predicate = `agent_behavior_rule`, visibility = `private`, importance = 0.95. Narrow trigger: the WRITE_INSTRUCTIONS spell out YES/NO cases — YES for tone / style / format / language / meta-interaction rules; NO for task requests, calendar actions, factual corrections, or user statements (those have their own paths). Supersession via `replaces = <ruleId>`; deletion via `memory_forget`.
+
+**New system-message block: `## User-specific instructions for this agent`.** Rendered by `MemoryPluginNextGen.getContent()` above the user profile block. Queries `findFacts({ subjectId: agentEntityId, archived: false }, ..., { userId })` — ownerId match via scope filter. Each rule shows as `- [<shortId>] <rule text>  \`ruleId=<fullId>\`` so the agent can reference it when superseding. Long rules truncated at 300 chars with ellipsis; archived rules excluded. Block is omitted entirely when the user has no rules.
+
+**Removed: `## Agent Profile` auto-render.** Global agent profile was synthesized from ambient facts and injected into every turn, but in practice the "thorough-diligence agent learnings" path produced more noise than signal. Admin instructions are the right tool for agent personality. The agent entity itself still exists — it's the subject of user directives, used as `"this_agent"` in tool arguments, and available for graph queries — just not auto-summarized into the system message.
+
+**Other changes:**
+- `SessionIngestorPluginNextGen` extraction prompt: **dropped agent-learnings section entirely**. All three diligence levels (minimal / normal / thorough) now explicitly forbid `subject: m_agent` writes. Agent behavior is owned exclusively by `memory_set_agent_rule` (user-driven) and admin instructions (global). Removes the `renderAgentLearningsSection` helper.
+- `MemorySystem.maybeRegenerateProfile`: **guard added** — skips regen when the subject entity's `type === 'agent'`. Cheap `getEntity` lookup; avoids wasted LLM calls for profiles nobody reads. User-subject regen is unchanged.
+- `MemoryPluginNextGen.MemoryPluginConfig.agentProfileInjection` is **kept in the type for backward-compat but is no longer read**. Passing it is a no-op; callers can remove it safely.
+
+**Tests added (12 new):**
+- `tests/unit/tools/memory/setAgentRule.test.ts` (5) — happy path, missing bootstrap → structured error, empty-rule rejection, supersession via `replaces` (predecessor archived + new `supersedes` set), schema validity.
+- `tests/unit/core/context-nextgen/plugins/MemoryPluginNextGen.rulesBlock.test.ts` (7) — no block when no rules, renders each rule with short+full id, no old `## Agent Profile` block, archived rules excluded, truncation of long rules, rules render BEFORE the user profile (directive priority), profile regen guard for agent-type entities.
+
+**Updated existing tests:**
+- `factorySplit.test.ts` — write bundle is now 6 tools, combined is 11.
+- `AgentContextNextGen.memoryFeatureFlag.test.ts` — write-plugin length is 6; total across plugins is 11.
+- `MemoryWritePluginNextGen.test.ts` — tool bundle length + destroy lifecycle assertions updated.
+- `MemoryPluginNextGen.test.ts` — bootstrap + injection tests no longer assert `## Agent Profile`; now explicitly assert its absence.
+- `SessionIngestorPluginNextGen.test.ts` — old "agent-learnings section" tests replaced with a single parametric test asserting `DO NOT extract facts with subject m_agent` appears at every diligence level and the legacy section never reappears.
+
+All 4951 tests pass.
+
+### Review-pass follow-ups (same unreleased set)
+
+Tightening after a thorough review of the rules-block + `memory_set_agent_rule` change.
+
+**Security — ghost-write guard on `memory_set_agent_rule`.** Uncovered during review: `MemorySystem.addFact` derives `fact.ownerId` from the *subject entity's* owner (via `deriveFactScope`), not the caller's scope. For the agent entity that means a cross-owner write silently lands with the agent-owner's id attached — effectively injecting a rule into *their* system-message rules block. The tool now pre-checks `agent.ownerId === scope.userId` and returns a structured error with a multi-user hint when they diverge (matches the pattern `memory_remember` already uses). No change to the memory-layer invariant itself; the check is at the tool boundary where the caller's intent is trusted.
+
+**Rate limit on `memory_set_agent_rule`.** Defaults to 10 writes per 60 s per user (same policy as `memory_forget`, shared `deps.forgetRateLimit` override). Rules are rendered into every subsequent system message until superseded, so the cost of a jailbreak-spam is asymmetric; cheap insurance to cap it.
+
+**Render filter hardening.** The rules-block filter in `MemoryPluginNextGen.renderRulesBlock` now rejects facts with `ownerId !== scope.userId` strictly (previously let `ownerId === undefined` through as a defensive no-op — in theory fine because the library enforces `OwnerRequiredError`, but tighter is better against legacy data migrations).
+
+**Render shape simplified.** Dropped the redundant `[shortId] … \`ruleId=<fullId>\`` double-render. Now just `[<fullId>] <rule>` — the full id is what the agent passes to `replaces`, the short form saved nothing useful. ~30 tokens per rule.
+
+**Dead-code cleanup.** Removed the `void AGENT_BEHAVIOR_RULE_PREDICATE;` expression + the constant's import from `MemoryPluginNextGen.ts` (it had no runtime effect; the comment overstated what `void` does for tree-shaking).
+
+**Main-package exports.** Added `createSetAgentRuleTool` and `AGENT_BEHAVIOR_RULE_PREDICATE` to `src/index.ts` (next to the other memory tool creators) for consistency with the existing `createRememberTool` / `createForgetTool` / … surface.
+
+**Docs synced.** Fixed stale tool counts across `CLAUDE.md` (5→6 write, 10→11 total), `docs/MEMORY_GUIDE.md` (same counts + replaced the `## Agent Profile` example output with the new rules block + user profile), and `src/core/context-nextgen/types.ts` JSDoc on the `memoryWrite` feature flag. Added a dedicated `#### memory_set_agent_rule` subsection to `MEMORY_GUIDE.md` covering narrow-trigger rules, supersession, render shape, and rule-engine compatibility.
+
+**Test coverage additions (3 new):**
+- Ownership mismatch → structured error (caller ≠ agent-entity owner).
+- Rate limit honors `deps.forgetRateLimit` — 3rd call after limit-of-2 returns `rateLimited: true` + `retryAfterMs`.
+- Render filter excludes cross-ownerId facts (defence-in-depth — covers both the ScopeInvariantError path at write time and the filter path for legacy data).
+
+**Test coverage updates:** `MemoryWritePluginNextGen.test.ts` "mentions every tool" now asserts `memory_set_agent_rule` appears in the instructions block (guards against adding the tool to the bundle but forgetting to instruct the agent on it). Stale header JSDocs in 4 test files synced.
+
+**Typo fix.** "from a ambient inference" → "from an ambient inference" in `MemoryWritePluginNextGen.WRITE_INSTRUCTIONS`.
+
+All 4954 tests pass. Library rebuilt, memlab typecheck clean.
+
+### Ingestor batching + graceful-shutdown contract + imperative-request guard
+
+Four correlated fixes around `SessionIngestorPluginNextGen`.
+
+- **Batching.** New `SessionIngestorPluginConfig.minBatchMessages` (default **6**). Natural `onBeforePrepare` triggers now short-circuit below the threshold. Previously the hook fired every turn, which on reasoning models (gpt-5-mini at default medium effort) cost ~20s per turn for trivial exchanges. Default 6 means ~3 user/assistant pairs per batch; set to `1` for per-turn ingest. The plugin stores the most recent snapshot even when it skips, so a later `flush()` can use it.
+- **Graceful-shutdown API.** New public `async flush(snapshot?: PluginPrepareSnapshot): Promise<void>`. Bypasses the batching threshold, awaits the LLM call, advances the watermark. Safe to call from destroy paths. Takes an optional snapshot override for hosts that build their own. `destroy()` is unchanged — still sync, still just flips the destroyed flag — so the documented contract is: `await plugin.flush(); plugin.destroy();`. We do NOT attempt to hook into JavaScript garbage collection — `FinalizationRegistry` can't safely perform async I/O at GC time, and pretending otherwise would look robust while dropping data. Hosts ARE responsible for calling `flush()` on browser-close / DDP-disconnect / idle-timeout / SIGINT / SIGTERM. If that matters for your deployment, keep `minBatchMessages` small or layer a write-ahead transcript journal on top.
+- **Imperative-request guard in the extractor prompt.** When the user says "remind me to X", "schedule Y", "track Z", those are agent-action requests, not ambient facts. The extractor used to synthesize `has_task`, `due_date`, `assigned_to` facts for them — even across multi-turn clarifications where the agent asked "what time?" and the user replied "9am" without any tool call. New rule: skip entirely. If the agent handled it via a `memory_*` tool call, the re-extract rule covers it; if the agent didn't, the extractor must NOT fabricate the action on the agent's behalf. Exception: fact-form statements ("I have a doctor appointment on April 30") remain extractable as events.
+- **Agent "no lying" + "act decisively" rules** in `MemoryWritePluginNextGen.WRITE_INSTRUCTIONS`. New "Never lie about memory writes" section: the agent MUST NOT claim to have saved / scheduled / reminded anything unless it actually called a write tool this turn with an `ok` result. Phrases like "I'll remind you" with no preceding tool call are now explicitly named as lies. New "Act decisively" section: for imperative task requests the agent fills defaults (9 AM local time, medium priority, private visibility) rather than asking; clarifying questions are restricted to genuine DATE ambiguity.
+
+**Tests added (11 new):** batching threshold behavior (below-threshold skip, exactly-at-threshold fires, default 6), `flush()` forces ingest below threshold, flush no-op before any prepare, explicit snapshot override, idempotency after watermark advance, no-op on destroyed plugin, imperative-request extractor prompt rule, agent "no lying" rule + forbidden phrases, agent "act decisively" rule with concrete defaults. Existing 18 plugin instantiations updated to set `minBatchMessages: 1` for per-turn test semantics.
+
+**memlab `/chat-auto`:** removed the force-trigger-after-each-turn hack. Now relies on natural batching. On `/back`, `/exit`, SIGINT, or SIGTERM, calls `await sessionIngestor.flush()` first. Shows `[final flush — extracting deferred batch]` when the trailing batch produces facts.
+
+**Docs (`docs/MEMORY_GUIDE.md`):** updated the SessionIngestor section to reflect the new batching + tool-call visibility + imperative-request guard. New "Host integration" subsection with Meteor, signal-handler, one-shot, and idle-timeout patterns, plus explicit "no GC safety net" caveat.
+
+**memlab models:** extraction + profile generator moved to `gpt-4.1` (non-reasoning, fast). Chat stays on `gpt-5.4`. gpt-5-mini's medium reasoning overhead on structured JSON extraction was the root cause of the 20-second latency.
+
+### Ingestor dedup fix — transcript now carries tool-call args + results
+
+Ambient ingestion was re-extracting facts the agent had already written via its own `memory_*` tool calls. Root cause: `renderMessage` in `SessionIngestorPluginNextGen` collapsed tool calls to `[tool:memory_upsert_entity]` — the args were dropped, so the extractor LLM couldn't see what had been captured. Paired with "ignore tool-call blocks" guidance in the prompt, this was nominally correct but unusable in practice (the LLM still saw the user's "remind me to call the doctor" message and dutifully extracted `due_date`, `assigned_to`, `has_task` — all already encoded in the agent's `memory_upsert_entity({type:'task', metadata:{dueAt:...}})` call).
+
+- **`renderMessage` now renders tool calls with serialized, truncated JSON args.** Format: `[tool_call <name> <json>]` with args capped at 500 chars (per-call). Tool results render as `[tool_result ok <json>]` or `[tool_result error <message>]` with payload capped at 240 chars, so the extractor can also tell successful writes apart from failed ones (failed writes remain extraction-eligible — ambient is the safety net). Exported from the context-nextgen plugin barrel as `renderSessionMessage` for host apps that want a consistent transcript shape.
+- **Extraction prompt strengthened** with a concrete rule keyed off the new markers: when `[tool_call memory_*]` is paired with `[tool_result ok]`, the JSON args are already persisted — do NOT re-extract *any* fact that restates, paraphrases, or decomposes what's inside, even if the user's message verbatim repeated it. A worked example inline shows which predicates to avoid when a `memory_upsert_entity({type:'task', ...})` is present (`has_task`, `assigned_to`, `due_date`, `deadline`, `task_name`, `title` — all duplicates).
+- **Ordering fix in `renderMessage`:** type-tagged parts (`tool_call`, `tool_result`) now take precedence over the generic `text` / `content` string fallback. Previously, a tool_result with `content: 'error message'` rendered as plain text instead of `[tool_result error …]`, leaking error strings into the transcript as if they were assistant speech.
+- **Tests added (8 new):** prompt assertions for the new tool_call / tool_result shape + duplicate-prevention examples + failed-write-remains-extractable rule; `renderMessage` direct behavioral tests for plain content, array text, tool_call with args, truncation cap, tool_result ok/error tagging, `is_error` flag handling, and tool_call with no args.
+
+### Memory is subconscious — agent must never discuss it with the user
+
+Follow-up fix on the memory-write prompts. Agents were narrating memory operations to the user ("I tried to link X but couldn't find…", "Should I remember this?", "Preferred display name? Visibility: private or group?"). Memory is supposed to be like a private notebook — the user should never know it exists.
+
+- **`MemoryWritePluginNextGen.WRITE_INSTRUCTIONS`** gets a new top-of-block section: **"Memory is SUBCONSCIOUS — never discuss it with the user"**. Explicit forbidden patterns (with paraphrase prohibition): "I'll remember that.", "I saved that.", "Should I remember this?", any question about display name / visibility / entity type / domain / identifier / confidence. The user doesn't know these concepts exist. Counter-example given: "Nice to meet you, Anton." — NOT "I've saved that your name is Anton."
+- **New "Recover from memory failures silently" section.** When `memory_link` fails with "no entity", the agent must `memory_upsert_entity` it silently and retry — not ask the user for a display name / visibility. Any persistent failure → drop the memory task and continue answering the user's original question without mentioning the failure. Memory is best-effort infrastructure.
+- **Clarifying questions rule updated.** The existing "ask at most one" rule now explicitly says that question must be about the real-world tool choice (e.g. "Calendar or Todoist?"), never about memory internals.
+- **Standard-predicate vocabulary section added** to WRITE_INSTRUCTIONS so agent writes match the ingestor's predicate choice (dedup works). Names should be `full_name` / `preferred_name` (NOT `name`); affiliations `works_at` / `member_of` (NOT `employer`); etc. Explicit `DO NOT use` entries for `name`, `employer`, `job`, `mentioned_by`.
+- **`memory_link` example** now includes the auto-upsert-then-retry guidance inline, so the LLM sees the correct sequence for the failure case.
+- **Privacy-default sentence** rewrites to say "Use `visibility:"group"` or `"public"` only when the user explicitly signals the fact should be shared — do NOT ask about visibility." Previously it just described the mapping; now it forbids asking.
+- **7 new prose assertions** in `MemoryWritePluginNextGen.test.ts` covering: subconscious rule + forbidden phrases + "Nice to meet you" counter-example, silent-recovery rule + upsert-on-link-fail, best-effort failure posture, one-non-memory-question rule with real-world-tool example, standard predicate list + explicit anti-list, no-asking-about-visibility rule. 20 tests total pass on this file now.
+
+### Memory prompts — tool-selection principle + entity-type docs + noise cleanup
+
+User testing of the read/write split surfaced two prompt-level gaps. Fixes:
+
+- **`MemoryWritePluginNextGen.WRITE_INSTRUCTIONS` rewritten** to teach the LLM *when memory is the right tool* rather than *when to call each tool*. The earlier version invited the agent to write memory aggressively. The rewrite:
+  - Frames memory as "knowledge YOU (the agent) need to remember across conversations" and says explicitly it is NOT a substitute for real-world integrations.
+  - Adds a "check for a dedicated connector tool FIRST" block naming the usual suspects (calendar, task tracker, notes, email) so the LLM knows to defer.
+  - Adds WHEN-RIGHT / WHEN-WRONG rules with the background-extractor aware: "user conversing about themselves → do nothing, the background pipeline captures it."
+  - Replaces the phrase-list of triggers with a conservation rule: "If unsure, ask ONE targeted clarifying question, then act on reasonable defaults. Do not ask five questions."
+  - Adds an **Entity types section with worked examples** for `task`, `event`, `person`, `organization`, plus the subject-fact / document-fact / correction patterns — so the LLM has a concrete template rather than inventing shapes. State vocabulary for tasks exposed (`pending | in_progress | blocked | deferred | done | cancelled`).
+- **`MemoryPluginNextGen.MEMORY_INSTRUCTIONS` now documents entity types for retrieval.** Lists conventional types with their metadata fields (`task.{state, dueAt, priority, assigneeId, projectId}`, `event.{startTime, endTime, location, attendeeIds}`) and a concrete `memory_find_entity` example for listing open tasks. Previously the agent had no way to know tasks were a first-class type worth querying.
+- **`SessionIngestorPluginNextGen` extraction prompt tightened:**
+  - Replaced the three-bucket partition with two primary targets (USER facts + OTHER entities). Agent learnings (`m_agent`) moved into a separately-rendered subsection that is *omitted entirely under `minimal` and `normal` diligence* and only appears under `thorough` with a strict evidence gate (explicit correction, failed attempt, or domain-specific constraint).
+  - Elevated the anti-pattern rule from a blocklist to a **shape rule**: "if a predicate describes the utterance event itself — that something was said, asked, mentioned, discussed — it's transcript, not knowledge." Concrete illustrations (`was_mentioned_in_conversation`, `asked_about`, `talked_about`, `discussed_in`, `brought_up`, `came_up_in`, `said`, `told`, `acknowledged`…) are given as examples of the principle, not an exhaustive blocklist — the LLM is instructed to apply the rule to *any* similar predicate.
+  - Added explicit "do NOT re-extract agent tool-writes" instruction. When the agent uses its own memory write tools for explicit user requests (create task, schedule event, remember X), those writes are in the transcript; the extractor should skip them. The extractor's job is the AMBIENT layer — facts the user revealed without explicitly asking the agent to record.
+  - Two-question self-check added before any fact is emitted: (1) does this fact teach a stranger something specific about the subject that isn't already in the mention? (2) is this predicate about the world, or about what happened in the conversation?
+- **memlab `/chat-auto` flipped to `memoryWrite: true`.** With the new decision principle in the write plugin's instructions, the agent now has all 10 tools but only writes on explicit request. Background ingestion handles the rest. `/chat` keeps the same configuration but without the background ingestor — useful as an A/B baseline.
+- **Design doc for deferred follow-up** at `docs/designs/FUTURE_TOOL_PRIORITY_HINTS.md` captures the "schema-level `priorityHint` on `ToolFunction`" idea that came up during design. Not implemented — prose-only is enough for now. Doc explains conditions under which to revisit.
+- **Tests added (8 new, all in plugin-test files):** (a) `MemoryWritePluginNextGen` prose now asserts the connector-first principle, wrong-tool rule, entity-type examples, state vocabulary, and one-clarifying-question guidance; (b) `MemoryPluginNextGen` prose asserts entity-type retrieval guidance with a metadataFilter example; (c) `SessionIngestorPluginNextGen` prose asserts the shape rule appears, concrete forbidden predicates are listed, agent-learnings section is absent under `minimal`/`normal` and present with evidence gates under `thorough`, and the no-re-extract-agent-writes instruction is in place.
+
 ### Memory refactor — self-review pass
 
 Follow-up fixes on top of the read/write split landed in the same release:

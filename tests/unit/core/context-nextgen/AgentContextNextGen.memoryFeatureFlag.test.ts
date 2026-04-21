@@ -117,11 +117,11 @@ describe('AgentContextNextGen feature-flag auto-init — memory / memoryWrite', 
     const writePlugin = ctx.getPlugin<MemoryWritePluginNextGen>('memory_write');
     expect(writePlugin).toBeInstanceOf(MemoryWritePluginNextGen);
     // The write plugin's tools should be usable.
-    expect(writePlugin!.getTools().length).toBe(5);
+    expect(writePlugin!.getTools().length).toBe(6);
     ctx.destroy();
   });
 
-  it('total tools across plugins equals 10 when both features enabled', () => {
+  it('total tools across plugins equals 11 when both features enabled', () => {
     const mem = makeMem();
     const ctx = AgentContextNextGen.create({
       model: MODEL,
@@ -133,7 +133,7 @@ describe('AgentContextNextGen feature-flag auto-init — memory / memoryWrite', 
     const read = ctx.getPlugin<MemoryPluginNextGen>('memory')!.getTools();
     const write = ctx.getPlugin<MemoryWritePluginNextGen>('memory_write')!.getTools();
     const names = new Set([...read, ...write].map((t) => t.definition.function.name));
-    expect(names.size).toBe(10);
+    expect(names.size).toBe(11);
     ctx.destroy();
   });
 });

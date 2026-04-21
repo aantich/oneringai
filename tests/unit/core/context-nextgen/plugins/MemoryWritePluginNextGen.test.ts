@@ -3,7 +3,7 @@
  *
  * Coverage:
  *   - Constructor guards (memory / agentId / userId required)
- *   - getTools() returns exactly the 5 write tools, cached across calls
+ *   - getTools() returns exactly the 6 write tools, cached across calls
  *   - getInstructions() returns the write block (not null, mentions each tool)
  *   - getContent() returns null (side-effect plugin, no system-message body)
  *   - Token accounting: getTokenSize=0, getInstructionsTokenSize>0
@@ -64,7 +64,7 @@ describe('MemoryWritePluginNextGen — constructor guards', () => {
 });
 
 describe('MemoryWritePluginNextGen — tools', () => {
-  it('returns exactly the 5 write tools, cached across calls', () => {
+  it('returns exactly the 6 write tools, cached across calls', () => {
     const mem = makeMem();
     const plugin = new MemoryWritePluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
     const tools = plugin.getTools();
@@ -74,6 +74,7 @@ describe('MemoryWritePluginNextGen — tools', () => {
       'memory_link',
       'memory_remember',
       'memory_restore',
+      'memory_set_agent_rule',
       'memory_upsert_entity',
     ]);
     expect(plugin.getTools()).toBe(tools); // cached
@@ -99,6 +100,130 @@ describe('MemoryWritePluginNextGen — instructions + content', () => {
     expect(text).toMatch(/memory_forget/);
     expect(text).toMatch(/memory_restore/);
     expect(text).toMatch(/memory_upsert_entity/);
+    expect(text).toMatch(/memory_set_agent_rule/);
+  });
+
+  it('teaches the "prefer dedicated connector tool" principle (memory is fallback, not first choice)', () => {
+    const mem = makeMem();
+    const plugin = new MemoryWritePluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
+    const text = plugin.getInstructions() ?? '';
+    // Principle must be stated, not buried.
+    expect(text).toMatch(/NOT a substitute for real-world integrations/i);
+    expect(text).toMatch(/dedicated connector tool/i);
+    // Concrete connector categories are named so the LLM recognises a match.
+    expect(text).toMatch(/Calendar request/i);
+    expect(text).toMatch(/google_calendar|microsoft_graph/);
+    expect(text).toMatch(/Task tracking/i);
+    // Explicit when-WRONG rule so the LLM doesn't reach for memory by default.
+    expect(text).toMatch(/Memory is the WRONG tool/);
+    // Background-extractor awareness: agent should not duplicate ambient writes.
+    expect(text).toMatch(/background pipeline|background extractor|ambient facts/i);
+  });
+
+  it('includes entity-type guidance with worked examples for task + event', () => {
+    const mem = makeMem();
+    const plugin = new MemoryWritePluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
+    const text = plugin.getInstructions() ?? '';
+    // Task and event entity examples with their conventional metadata fields.
+    expect(text).toMatch(/type:'task'/);
+    expect(text).toMatch(/dueAt/);
+    expect(text).toMatch(/state:'pending'/);
+    expect(text).toMatch(/type:'event'/);
+    expect(text).toMatch(/startTime/);
+    // State vocabulary exposed so the LLM doesn't invent values.
+    expect(text).toMatch(/pending.*in_progress.*blocked/);
+    // Correction pattern points at memory_forget+replaceWith (audit chain).
+    expect(text).toMatch(/memory_forget/);
+    expect(text).toMatch(/replaceWith/);
+  });
+
+  it('instructs the agent to ask at most one non-memory question when ambiguous', () => {
+    const mem = makeMem();
+    const plugin = new MemoryWritePluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
+    const text = plugin.getInstructions() ?? '';
+    // One-question rule, phrased around the real-world tool choice (not memory).
+    expect(text).toMatch(/ONE[^.]*(?:clarifying|non-memory|short)/i);
+    expect(text).toMatch(/Never ask five|not ask five/i);
+    // The example disambiguation question is about a real-world tool, not memory.
+    expect(text).toMatch(/Google Calendar|Todoist|real-world tool/i);
+  });
+
+  it('instructs the agent to treat memory as SUBCONSCIOUS (never mention it to the user)', () => {
+    const mem = makeMem();
+    const plugin = new MemoryWritePluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
+    const text = plugin.getInstructions() ?? '';
+    // Core principle stated explicitly.
+    expect(text).toMatch(/SUBCONSCIOUS/);
+    expect(text).toMatch(/private notebook/i);
+    // Explicit forbidden phrase patterns so the LLM knows what NOT to say.
+    expect(text).toMatch(/I'll remember that/i);
+    expect(text).toMatch(/Should I remember this|Want me to save/i);
+    // Forbids asking about memory internals in conversation.
+    expect(text).toMatch(/display name|visibility.*entity type|memory-internal/i);
+    // Explicit counterexample: correct reply should not mention memory.
+    expect(text).toMatch(/Nice to meet you/);
+    // Principle reinforced near the bottom.
+    expect(text).toMatch(/infrastructure, not a feature/);
+  });
+
+  it('instructs the agent to recover from memory failures silently', () => {
+    const mem = makeMem();
+    const plugin = new MemoryWritePluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
+    const text = plugin.getInstructions() ?? '';
+    expect(text).toMatch(/Recover.*silently|recover silently/i);
+    // Specific recovery pattern: upsert missing entity on link failure.
+    expect(text).toMatch(/memory_link.*fails/i);
+    expect(text).toMatch(/memory_upsert_entity/);
+    expect(text).toMatch(/retry the link/);
+    // Best-effort posture when recovery fails too.
+    expect(text).toMatch(/best-effort|continue answering/i);
+  });
+
+  it('documents the standard predicate vocabulary (aligned with the ingestor)', () => {
+    const mem = makeMem();
+    const plugin = new MemoryWritePluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
+    const text = plugin.getInstructions() ?? '';
+    // Key preferred predicates.
+    expect(text).toMatch(/full_name/);
+    expect(text).toMatch(/preferred_name/);
+    expect(text).toMatch(/works_at/);
+    expect(text).toMatch(/prefers/);
+    // Explicit anti-patterns — the failures we saw in the wild.
+    expect(text).toMatch(/Do NOT use `name`/);
+    expect(text).toMatch(/mentioned_by/);
+  });
+
+  it('instructs the agent to never ask about visibility (memory-internal concept)', () => {
+    const mem = makeMem();
+    const plugin = new MemoryWritePluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
+    const text = plugin.getInstructions() ?? '';
+    // The "do not ask" rule around visibility must be explicit.
+    expect(text).toMatch(/do NOT ask about visibility|do not ask about visibility/i);
+  });
+
+  it('forbids the agent from claiming a save without an actual tool call', () => {
+    const mem = makeMem();
+    const plugin = new MemoryWritePluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
+    const text = plugin.getInstructions() ?? '';
+    // The rule must be stated as a hard "never lie" and name the telltale phrases.
+    expect(text).toMatch(/Never lie about memory writes/);
+    expect(text).toMatch(/lies?\*{0,2}\s+if no preceding tool call/);
+    expect(text).toMatch(/I'll remind you/);
+    // Concretely lists the words that are forbidden without a tool call.
+    expect(text).toMatch(/saved|scheduled|reminded|recorded/);
+  });
+
+  it('tells the agent to act decisively on imperative task requests (fill defaults, do not ask)', () => {
+    const mem = makeMem();
+    const plugin = new MemoryWritePluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
+    const text = plugin.getInstructions() ?? '';
+    // Explicit "create in this turn" rule.
+    expect(text).toMatch(/CREATE the entity in this turn|Act decisively/i);
+    // Named defaults for each optional field.
+    expect(text).toMatch(/default.*dueAt.*09:00|default.*9 AM/i);
+    expect(text).toMatch(/priority:\s*'medium'/);
+    // Clarifying-question rule constrained to date ambiguity only.
+    expect(text).toMatch(/DATE itself is genuinely ambiguous/i);
   });
 
   it('getContent returns null (side-effect plugin)', async () => {
@@ -175,13 +300,13 @@ describe('MemoryWritePluginNextGen — lifecycle', () => {
     const mem = makeMem();
     const plugin = new MemoryWritePluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
     const before = plugin.getTools();
-    expect(before.length).toBe(5);
+    expect(before.length).toBe(6);
     plugin.destroy();
     expect(plugin.isDestroyed).toBe(true);
     // Re-calling getTools after destroy currently re-creates (consistent with
     // MemoryPluginNextGen's behavior). If that ever changes, update this test.
     const after = plugin.getTools();
-    expect(after.length).toBe(5);
+    expect(after.length).toBe(6);
   });
 
   it('getState / restoreState round-trips identity shape', () => {

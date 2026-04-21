@@ -21,9 +21,13 @@ const TABLE: Array<Omit<VendorEntry, 'connectorName'>> = [
   {
     vendor: Vendor.OpenAI,
     envVar: 'OPENAI_API_KEY',
-    chatModel: 'gpt-5-mini',
-    extractModel: 'gpt-5-mini',
-    profileModel: 'gpt-5-mini',
+    // Main chat uses the strongest reasoning model. Extraction + profile
+    // generation run on a non-reasoning model (gpt-4.1) so they're fast and
+    // predictable — reasoning-model latency on a structured JSON call is pure
+    // overhead (medium-effort reasoning on gpt-5-mini was ~20s for 2 facts).
+    chatModel: 'gpt-5.4',
+    extractModel: 'gpt-4.1',
+    profileModel: 'gpt-4.1',
     embeddingModel: 'text-embedding-3-small',
     embeddingDims: 1536,
   },

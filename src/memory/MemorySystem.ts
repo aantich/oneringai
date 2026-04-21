@@ -2023,6 +2023,15 @@ export class MemorySystem implements IDisposable {
 
     const readScope: ScopeFilter = { groupId: scope.groupId, userId: scope.ownerId };
     try {
+      // Skip regen for agent-type entities. Agent profiles are not rendered
+      // into the system message any more (admin-controlled instructions live
+      // on `Agent.create({instructions})` instead). Spending an LLM call to
+      // synthesize a profile nobody reads is pure waste — the only writes
+      // that land on an agent entity today are user-specific behavior rules
+      // from `memory_set_agent_rule`, which have their own render path.
+      const subject = await this.store.getEntity(entityId, readScope);
+      if (subject?.type === 'agent') return;
+
       const priorPage = await this.store.findFacts(
         { subjectId: entityId, predicate: 'profile', kind: 'document' },
         { limit: 10, orderBy: { field: 'createdAt', direction: 'desc' } },

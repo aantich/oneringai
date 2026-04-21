@@ -24,8 +24,8 @@ import { runExtract } from './extract.js';
 import { runBrowse } from './browse.js';
 
 const HELP = `Commands:
-  /chat                  Chat with agent — full read+write memory tools
-  /chat-auto             Chat with read-only agent + background SessionIngestor
+  /chat                  Chat with agent — full read+write memory tools, no background ingestion
+  /chat-auto             Chat with agent (explicit-writes only) + background SessionIngestor
   /extract               Paste text/email → run extractor → show extracted facts
   /browse                Query the memory store directly (entities, facts, search)
   /who [<userId>]        Show or set current userId

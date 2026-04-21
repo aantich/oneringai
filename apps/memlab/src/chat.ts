@@ -7,10 +7,12 @@ import {
   Agent,
   StreamEventType,
   type MemorySystem,
+  type ScopeFilter,
 } from '@everworker/oneringai';
 import chalk from 'chalk';
 import type { UI } from './ui.js';
 import type { VendorEntry } from './env.js';
+import { listActiveRules, renderRules } from './rules.js';
 
 export interface ChatConfig {
   ui: UI;
@@ -47,13 +49,37 @@ export async function runChat(cfg: ChatConfig): Promise<void> {
   });
 
   ui.heading(`chat — ${primary.connectorName} / ${chatModel}`);
-  ui.dim(`userId=${userId} agentId=${agentId} — type /back to return to main REPL`);
+  ui.dim(`userId=${userId} agentId=${agentId} — /back to return · /rules to list active behavior rules`);
+
+  const scope: ScopeFilter = { userId };
+
+  // Session-start banner: if any rules carried over from a prior session
+  // (persistent store, or simply same process kept alive), show them once
+  // so the operator knows what the agent will honor this turn.
+  try {
+    const existing = await listActiveRules(memory, scope);
+    if (existing.length > 0) {
+      renderRules(ui, existing, { title: 'Existing rules at session start' });
+    }
+  } catch (err) {
+    ui.dim(`  (could not list existing rules: ${err instanceof Error ? err.message : String(err)})`);
+  }
 
   try {
     for (;;) {
       const input = (await ui.prompt(chalk.bold.blue('you> '))).trim();
       if (!input) continue;
       if (BACK_COMMANDS.has(input.toLowerCase())) return;
+
+      if (input.toLowerCase() === '/rules') {
+        try {
+          const rules = await listActiveRules(memory, scope);
+          renderRules(ui, rules, { title: 'Active rules' });
+        } catch (err) {
+          ui.error(`/rules failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
+        continue;
+      }
 
       try {
         await streamOnce(agent, input, ui);

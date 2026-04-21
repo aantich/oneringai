@@ -1850,9 +1850,9 @@ Up to this point the guide has been about the memory *library* — you call `mem
 
 There are three moving parts:
 
-1. **`MemoryPluginNextGen`** — a [NextGen context plugin](./MEMORY_API.md) that bootstraps a user + agent entity in memory and injects their profiles into the system message. The agent sees its own evolving profile and the user's profile on every turn, without having to ask. Ships the **5 read** `memory_*` tools. Enabled via `features.memory: true`.
-2. **`MemoryWritePluginNextGen`** — a lightweight sidecar plugin that adds the **5 write** `memory_*` tools (`memory_remember`, `memory_link`, `memory_upsert_entity`, `memory_forget`, `memory_restore`). No system-message content of its own. Enabled via `features.memoryWrite: true` — requires `features.memory: true` (the read plugin owns entity bootstrap + profile injection).
-3. **The `memory_*` tools** (10 total, split 5/5) — high-signal LLM tools for everything the plugin doesn't inject: looking up entities, walking the graph, semantic search (reads); writing facts, linking entities, upserting entities, forgetting/superseding facts (writes).
+1. **`MemoryPluginNextGen`** — a [NextGen context plugin](./MEMORY_API.md) that bootstraps a user + agent entity in memory and injects two blocks into the system message: **`## User-specific instructions for this agent`** (directives the current user has given, rendered verbatim from facts on the agent entity scoped to this user) and **`## Your User Profile`** (synthesized from user-entity facts). Ships the **5 read** `memory_*` tools. Enabled via `features.memory: true`. Note: global agent personality / base instructions are admin-controlled via `Agent.create({ instructions })` — **no auto-synthesized agent profile** is injected any more. The `agentProfileInjection` config is kept for backward-compat but is a no-op.
+2. **`MemoryWritePluginNextGen`** — a lightweight sidecar plugin that adds the **6 write** `memory_*` tools (`memory_remember`, `memory_link`, `memory_upsert_entity`, `memory_forget`, `memory_restore`, `memory_set_agent_rule`). No system-message content of its own. Enabled via `features.memoryWrite: true` — requires `features.memory: true` (the read plugin owns entity bootstrap + the rules-block render).
+3. **The `memory_*` tools** (11 total, split 5/6) — high-signal LLM tools for everything the plugin doesn't inject: looking up entities, walking the graph, semantic search (reads); writing facts, linking entities, upserting entities, forgetting/superseding facts, setting user-specific behavior rules (writes).
 
 **Two common wiring choices:**
 
@@ -1883,28 +1883,31 @@ const agent = Agent.create({
   agentId: 'my-assistant',
   userId: 'alice',             // REQUIRED — memory enforces owner on every record
   contextFeatures: {
-    memory: true,               // reads: profile injection + 5 retrieval tools
-    memoryWrite: true,          // writes: 5 mutation tools (omit for retrieval-only)
+    memory: true,               // reads: user profile + rules block + 5 retrieval tools
+    memoryWrite: true,          // writes: 6 mutation tools (omit for retrieval-only)
   },
   pluginConfigs: {
     memory: {
       memory,                  // the MemorySystem instance (shared by both plugins)
       // groupId: 'team-A',    // optional: trusted group from your auth layer
       // userProfileInjection: { topFacts: 20, relatedTasks: true },
-      // agentProfileInjection: { topFacts: 10 },
     },
     // memoryWrite inherits `memory` from plugins.memory.memory unless overridden.
   },
 });
 
 // On every agent turn the system message now includes:
-//   ## Agent Profile (agent:my-assistant)
-//   ...profile.details (regenerates automatically)...
-//   ### Recent top facts (up to 20)
+//   ## User-specific instructions for this agent
+//   _The current user has given you these directives. Honor them over default behavior..._
+//   - Be terse in replies.  `ruleId=fact_abc123_...`
+//   - Reply in Russian.     `ruleId=fact_def456_...`
 //
 //   ## Your User Profile (user:alice)
-//   ...profile.details...
+//   ...profile.details (regenerates automatically from new user-subject facts)...
 //   ### Recent top facts (up to 20)
+//
+// The rules block is omitted entirely when the user hasn't set any rules.
+// Global agent personality / base instructions flow through `Agent.create({ instructions })`.
 
 await agent.run("Remember that I prefer concise responses");
 // Agent calls memory_remember({subject:"me", predicate:"prefers", value:"concise responses"})
@@ -1930,8 +1933,11 @@ interface MemoryPluginConfig {
   userEntityPermissions?:  { group?: 'none'|'read'|'write'; world?: 'none'|'read'|'write' };
   agentEntityPermissions?: { group?: 'none'|'read'|'write'; world?: 'none'|'read'|'write' };
 
-  // What to inject into the system message for each profile.
+  // What to inject into the system message for the user profile.
   userProfileInjection?:  ProfileInjection;
+  // DEPRECATED — no longer read. Agent profile auto-render was removed; global
+  // agent personality lives on `Agent.create({ instructions })`. Kept in the
+  // type for backward-compat so existing callers don't need a breaking change.
   agentProfileInjection?: ProfileInjection;
 
   // Per-subject default visibility for `memory_remember` / `memory_link`.
@@ -1968,7 +1974,7 @@ On first `getContent()` the plugin calls `memory.upsertEntity` to ensure:
 
 **Note:** cross-process uniqueness is the storage adapter's responsibility. For Mongo you want a unique compound index on `{identifiers.kind, identifiers.value}`.
 
-### The 8 tools
+### The 11 tools
 
 All tools accept a **`SubjectRef`** where an entity is needed — a flexible type that reflects the fact that an entity can have many identifiers (email, slack_id, github_login, internal_id…). Valid forms:
 
@@ -2093,6 +2099,35 @@ Archive a fact (optionally superseding it with a correction). Supersession prese
 {"factId": "fact_xyz", "replaceWith": {"predicate": "role", "value": "senior engineer"}}
 ```
 
+#### `memory_set_agent_rule`
+
+Record a user-specific behavior rule for this agent. Writes a fact with `subjectId = agentEntityId`, `predicate = 'agent_behavior_rule'`, `ownerId = userId`, private visibility, importance 0.95. Rate-limited per user (same cap as `memory_forget`).
+
+**Narrow trigger** — the agent is instructed to call this, and only this, when the user gives a directive about HOW the agent itself should write, speak, format, or behave in future turns.
+
+- YES: tone / style / format / language / meta-interaction rules. "Be terse", "stop using emojis", "reply in Russian", "always cite sources".
+- NO: task requests ("remind me to X"), calendar actions ("schedule Y"), factual corrections ("actually it's Tuesday"), user statements ("I live in Tokyo"). Those flow through their own tools or the ambient ingestor.
+
+**Supersession** — when the user contradicts a previous rule ("actually be normal again"), pass the prior rule's fact id as `replaces`. The rules block in the system message renders each rule's id specifically so the agent can point `replaces` at it. Plain `memory_forget` on the rule id drops it with no replacement.
+
+```json
+{"rule": "Be terse in replies."}
+{"rule": "Reply in English again.", "replaces": "fact_abc123_def"}
+```
+
+**Render shape.** On the next turn the system message carries:
+
+```
+## User-specific instructions for this agent
+_The current user has given you these directives. Honor them over default behavior..._
+- Be terse in replies.  `ruleId=fact_abc123_...`
+- Reply in English again.  `ruleId=fact_def456_...`
+```
+
+The block is omitted entirely when the user hasn't set any rules. Rules are scoped per-user-per-agent via `ownerId` (another user of the same agent gets a different set).
+
+**Future rule-inference engine** — the renderer queries `findFacts({subjectId: agentEntityId, archived: false})` and post-filters by `ownerId === scope.userId`. Any future component that writes facts with the same shape (agent subject + user ownership) surfaces in the block automatically, regardless of predicate — the distinction is the data-model shape, not a predicate whitelist.
+
 ### Security model
 
 The library's permission system trusts scope (`{userId, groupId}`) because the host application is responsible for authenticating who the caller is. The memory plugin + tools keep that trust boundary intact:
@@ -2116,8 +2151,8 @@ The library's permission system trusts scope (`{userId, groupId}`) because the h
 If you're building a custom agent and don't want the full plugin setup, you can still use the `memory_*` tools directly. Three factories are exported, all sharing the same `CreateMemoryToolsArgs`:
 
 - `createMemoryReadTools(...)` — the 5 retrieval tools (`memory_recall`, `memory_graph`, `memory_search`, `memory_find_entity`, `memory_list_facts`).
-- `createMemoryWriteTools(...)` — the 5 mutation tools (`memory_remember`, `memory_link`, `memory_upsert_entity`, `memory_forget`, `memory_restore`).
-- `createMemoryTools(...)` — convenience returning all 10.
+- `createMemoryWriteTools(...)` — the 6 mutation tools (`memory_remember`, `memory_link`, `memory_upsert_entity`, `memory_forget`, `memory_restore`, `memory_set_agent_rule`).
+- `createMemoryTools(...)` — convenience returning all 11.
 
 ```ts
 import { createMemoryReadTools, createMemoryWriteTools } from '@everworker/oneringai';
@@ -2162,33 +2197,44 @@ The `memory_*` tools let the LLM write deliberately. But you shouldn't rely on i
 ```ts
 import { SessionIngestorPluginNextGen } from '@everworker/oneringai';
 
-ctx.registerPlugin(new SessionIngestorPluginNextGen({
+const sessionIngestor = new SessionIngestorPluginNextGen({
   memory,
   agentId: 'sales-assistant',
   userId: currentUserId,
   groupId: currentGroupId,           // optional, trusted from host auth
-  connectorName: 'haiku-extractor',  // REQUIRED — no default
-  model: 'claude-haiku-4-5-20251001',
+  connectorName: 'fast-extractor',   // REQUIRED — no default
+  model: 'gpt-4.1',                  // prefer non-reasoning models for speed
   diligence: 'normal',               // 'minimal' | 'normal' | 'thorough'
-}));
+  minBatchMessages: 6,               // optional (default 6) — batching threshold
+});
+ctx.registerPlugin(sessionIngestor);
 ```
 
-**Required config:** `memory`, `agentId`, `userId`, `connectorName`, `model`. There are **no defaults** on the connector — the host explicitly wires its own extraction backend (usually cheaper than the main agent's model).
+**Required config:** `memory`, `agentId`, `userId`, `connectorName`, `model`. There are **no defaults** on the connector — the host explicitly wires its own extraction backend (usually cheaper and NON-reasoning; reasoning models like gpt-5-mini add 15-20s latency per extraction for zero quality gain on structured JSON). There are **no defaults for speed either** — plan for the extractor model, not the chat model.
 
-**Where it fires.** At the top of `AgentContextNextGen.prepare()`, before system-message assembly and before compaction. Plugin synchronously snapshots the conversation slice since its watermark, kicks off async extraction, returns immediately. `prepare()` is NEVER awaited on this — if the ingestor is slow, the turn proceeds. The next turn sees whatever was persisted by then.
+**Where it fires.** At the top of `AgentContextNextGen.prepare()`, before system-message assembly and before compaction. The hook snapshots the conversation slice since its watermark and, **if the slice is at least `minBatchMessages` long**, kicks off async extraction. Below threshold the hook short-circuits — no LLM call. `prepare()` is NEVER awaited on this; if the ingestor is slow, the turn proceeds. The next turn sees whatever was persisted by then.
 
-**What it extracts.** The prompt partitions output into three buckets, with pre-bound labels so the LLM never re-resolves the user or agent identity:
+**Batching + graceful shutdown.** Default `minBatchMessages: 6` (≈ 3 user/assistant pairs). Below the threshold, messages accumulate and nothing runs. On graceful shutdown the host MUST call `await plugin.flush()` to ingest the trailing batch — `flush()` bypasses the threshold and awaits completion. `destroy()` does NOT await; it just flips the destroyed flag and releases the LLM agent. See the "Host integration" section below for wiring examples (Meteor, Express, CLI, signal handlers).
 
-| Bucket | Subject | Use for |
+**What it extracts.** Two primary targets, with pre-bound labels so the LLM never re-resolves the user or agent identity:
+
+| Target | Subject | Use for |
 |---|---|---|
-| **USER facts** | `m_user` (pre-bound) | Preferences, identity claims, personal circumstances |
-| **AGENT learnings** | `m_agent` (pre-bound) | Procedures / patterns / rules the agent discovered — `learned_pattern`, `refined_procedure`, `avoided_pitfall`. Use `kind:"document"` for multi-sentence prose |
-| **OTHER entities** | new `m1..mN` mentions | People / orgs / projects / events / tasks mentioned in the turn |
+| **USER facts** | `m_user` (pre-bound) | Preferences, identity claims, affiliations, roles, commitments |
+| **OTHER entities** | new `m1..mN` mentions | People / orgs / projects / events / topics mentioned by the user |
+
+**No agent-subject writes.** The extractor is FORBIDDEN from emitting facts with subject `m_agent` — at every diligence level. Agent behavior and personality are captured through a different channel: `memory_set_agent_rule` (user-driven, narrow trigger — "be terse", "reply in Russian") for per-user behavior rules, and `Agent.create({ instructions })` for global admin-controlled agent personality. The ambient ingestor is strictly about facts the USER reveals about the world.
+
+**Imperative-request guard.** The prompt explicitly forbids synthesizing task/event/reminder entities from action requests ("remind me to X", "schedule Y", "track Z"). Those are the agent's job — if it captured them via a `memory_*` tool call, the re-extract rule skips them; if it didn't, the ingestor must NOT synthesize them on the agent's behalf. Fact-form statements ("I have a doctor appointment on April 30") are still extractable as events.
+
+**Agent tool-call visibility.** Transcript lines now render tool calls and results in-line: `[tool_call memory_upsert_entity {...args...}]` / `[tool_result ok <payload>]` / `[tool_result error <msg>]`. The args are truncated at 500 chars (results at 240). The extraction prompt keys off these markers to avoid re-extracting anything the agent already wrote, while still extracting around failed writes (the error result tells the LLM the fact is NOT in memory).
 
 **Diligence knob** (default `normal`):
 - `minimal` — only facts stated EXPLICITLY. No inference.
 - `normal` — explicit + confident inferences. Skip greetings / tool plumbing.
 - `thorough` — tentative inferences included, flagged with `confidence < 0.7`.
+
+Agent-subject writes are forbidden at every diligence level (see "No agent-subject writes" above).
 
 **Dedup + detail merging.** Every write uses the dedup path:
 1. The plugin calls `memory.findDuplicateFact({subjectId, predicate, kind, value, objectId})` before inserting.
@@ -2209,9 +2255,73 @@ ctx.registerPlugin(new SessionIngestorPluginNextGen({
 **Graceful degradation.** Extractor errors log via `logger.warn` and never propagate. A misbehaving plugin cannot break `prepare()`.
 
 **Relationship to `MemoryPluginNextGen` / `MemoryWritePluginNextGen`.** The plugins compose:
-- `MemoryPluginNextGen` — injects profiles into the system message + exposes the **5 read** `memory_*` tools.
-- `MemoryWritePluginNextGen` — optional sidecar exposing the **5 write** `memory_*` tools for deliberate writes by the LLM. Omit when you want the agent to be retrieval-only.
-- `SessionIngestorPluginNextGen` — passively captures observations from the conversation itself, fire-and-forget. Good replacement for `MemoryWritePluginNextGen` when you don't want the main agent to pay the write-tool schema cost or be trusted with direct memory mutations.
+- `MemoryPluginNextGen` — injects the user profile + user-specific behavior rules into the system message + exposes the **5 read** `memory_*` tools.
+- `MemoryWritePluginNextGen` — optional sidecar exposing the **6 write** `memory_*` tools (including `memory_set_agent_rule`) for deliberate writes by the LLM. Omit when you want the agent to be retrieval-only.
+- `SessionIngestorPluginNextGen` — passively captures observations from the conversation itself, fire-and-forget. Never writes agent-subject facts (that's `memory_set_agent_rule`'s job). Good replacement for `MemoryWritePluginNextGen` when you don't want the main agent to pay the write-tool schema cost or be trusted with direct memory mutations (note: without `memory_set_agent_rule`, user-driven behavior rules are not captured at all — pair the ingestor with at least the write plugin if rules matter).
+
+### Host integration — guaranteeing final flush on session end
+
+The ingestor batches by default (`minBatchMessages: 6`). On any graceful shutdown, the host MUST call `await plugin.flush()` before the plugin becomes unreachable — otherwise the trailing batch is lost. `flush()` ignores the threshold and awaits the LLM call.
+
+**We cannot hook into JavaScript garbage collection.** `FinalizationRegistry` exists but can't safely perform async I/O at GC time. There is no safety net for hard crashes / SIGKILL / sudden power loss either. If those cases matter, keep `minBatchMessages` small to bound the loss window, or layer a write-ahead transcript journal on top of the ingestor.
+
+Common integration patterns:
+
+**Meteor / DDP session per connection** — flush when the client tab closes:
+```ts
+Meteor.publish('agent-session', function () {
+  const ingestor = new SessionIngestorPluginNextGen({ ... });
+  const agent = Agent.create({ ... });
+  agent.context.registerPlugin(ingestor);
+
+  this.onStop(async () => {
+    try { await ingestor.flush(); } finally { ingestor.destroy(); agent.destroy(); }
+  });
+});
+```
+
+**Long-running server + signal handlers** — intercept SIGINT/SIGTERM:
+```ts
+async function shutdown(sig: string) {
+  try { await ingestor.flush(); } finally { ingestor.destroy(); process.exit(0); }
+}
+process.once('SIGINT',  () => void shutdown('SIGINT'));
+process.once('SIGTERM', () => void shutdown('SIGTERM'));
+```
+
+**One-shot agent run (CLI, email handler, webhook)** — flush before returning:
+```ts
+const result = await agent.run(input);
+await ingestor.flush();
+ingestor.destroy();
+agent.destroy();
+return result;
+```
+
+**Per-session cleanup with idle timeout** — if you expire agents after N minutes of inactivity, flush in your timeout callback:
+```ts
+const timer = setTimeout(async () => {
+  await ingestor.flush();
+  ingestor.destroy();
+  agent.destroy();
+  sessionMap.delete(sessionId);
+}, IDLE_MS);
+```
+
+**Non-agent "process this input now" path.** When you have raw text or an email and just want to extract facts without running an agent, use `SignalIngestor` directly — it's the right primitive:
+```ts
+const ingestor = new SignalIngestor({ memory, extractor });
+await ingestor.ingest({ kind: 'email', raw: emailObj, sourceSignalId, scope });
+// or for plain text:
+await ingestor.ingestText({ text, sourceSignalId, scope });
+```
+No session lifecycle, no flush needed — `ingest*` is synchronous-end-to-end.
+
+**Choosing `minBatchMessages`:**
+- `1` — per-turn ingest. Most expensive; visible per-turn. Useful for dev / debug.
+- `6` (default) — ~3 user/assistant pairs per batch. Good production balance.
+- `12+` — longer sessions, fewer LLM calls. Raise loss window on crash.
+- For one-shot / email flows: irrelevant — use `SignalIngestor` instead.
 - All three bootstrap `person:<userId>` + `agent:<agentId>` entities via identifier-keyed upsert — the operation is idempotent, so running any combination is safe.
 
 ### Time-boxed facts

@@ -1041,6 +1041,8 @@ export {
   createForgetTool,
   createRestoreTool,
   createUpsertEntityTool,
+  createSetAgentRuleTool,
+  AGENT_BEHAVIOR_RULE_PREDICATE,
 } from './tools/memory/index.js';
 
 // Custom tool generation system (meta-tools + hydration)

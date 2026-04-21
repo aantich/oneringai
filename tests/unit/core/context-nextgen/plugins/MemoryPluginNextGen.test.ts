@@ -4,12 +4,13 @@
  * Coverage:
  *   - Constructor guards
  *   - Entity bootstrap (idempotent, identifier-keyed, uses configured perms)
- *   - getContent rendering: user + agent profile blocks, topFacts, empty-profile placeholder
+ *   - getContent rendering: user profile block, topFacts, empty-profile placeholder
+ *     (agent profile auto-render is dropped — see the rulesBlock sibling test)
  *   - Injection config variants: topFacts=0, factPredicates whitelist, identifiers on/off
  *   - Cache + write-invalidation
  *   - Graceful degradation when memory throws
  *   - userId-unset degraded mode (agent-only)
- *   - getTools() returns 8 tools
+ *   - getTools() returns the 5 read tools
  *   - serialize / restoreState round trip
  */
 
@@ -79,7 +80,10 @@ describe('MemoryPluginNextGen — entity bootstrap', () => {
     const ids1 = plugin.getBootstrappedIds();
     expect(ids1.userEntityId).toBeDefined();
     expect(ids1.agentEntityId).toBeDefined();
-    expect(out1).toMatch(/## Agent Profile/);
+    // Agent profile block was removed — admin instructions are handled by
+    // `Agent.create({instructions})`. Only the user profile block + any
+    // user-specific rules block are rendered now.
+    expect(out1).not.toMatch(/## Agent Profile/);
     expect(out1).toMatch(/## Your User Profile/);
 
     // Second call returns same entity ids (identifier-keyed upsert is idempotent).
@@ -114,7 +118,7 @@ describe('MemoryPluginNextGen — injection shape', () => {
     mem = makeMem();
   });
 
-  it('renders profile details when present, placeholder otherwise', async () => {
+  it('renders profile details when present', async () => {
     const plugin = new MemoryPluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
     // Bootstrap first so we can target the user entity with a profile fact.
     await plugin.getContent();
@@ -123,8 +127,8 @@ describe('MemoryPluginNextGen — injection shape', () => {
 
     const out = await plugin.getContent();
     expect(out).toMatch(/Alice is a power user/);
-    // Agent profile still placeholder.
-    expect(out).toMatch(/No profile yet/);
+    // Agent profile block is no longer rendered.
+    expect(out).not.toMatch(/## Agent Profile/);
   });
 
   it('renders top-ranked facts under "Recent top facts"', async () => {
@@ -254,6 +258,22 @@ describe('MemoryPluginNextGen — getTools', () => {
     ]);
     // Same array on second call (cached).
     expect(plugin.getTools()).toBe(tools);
+  });
+});
+
+describe('MemoryPluginNextGen — instructions', () => {
+  it('documents entity types (task, event, …) with retrieval example', () => {
+    const mem = makeMem();
+    const plugin = new MemoryPluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
+    const text = plugin.getInstructions() ?? '';
+    expect(text).toMatch(/Entity types you can retrieve/);
+    // Conventional types with their metadata fields named.
+    expect(text).toMatch(/task/);
+    expect(text).toMatch(/state, dueAt/);
+    expect(text).toMatch(/event/);
+    expect(text).toMatch(/startTime/);
+    // Concrete retrieval example for open tasks.
+    expect(text).toMatch(/metadataFilter.*state.*\$in/);
   });
 });
 

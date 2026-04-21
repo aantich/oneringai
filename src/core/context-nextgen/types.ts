@@ -720,7 +720,7 @@ export interface KnownContextFeatures {
   /** Enable Memory plugin for self-learning knowledge store (default: false, READ-ONLY tools). Requires `plugins.memory.memory: MemorySystem` in config. */
   memory?: boolean;
 
-  /** Enable Memory-write sidecar (default: false). Adds the 5 write tools (remember/link/forget/restore/upsert_entity). Requires `memory: true`. */
+  /** Enable Memory-write sidecar (default: false). Adds the 6 write tools (remember/link/forget/restore/upsert_entity/set_agent_rule). Requires `memory: true`. */
   memoryWrite?: boolean;
 }
 

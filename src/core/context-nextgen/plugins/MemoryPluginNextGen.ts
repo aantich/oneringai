@@ -3,9 +3,9 @@
  * agent's context.
  *
  * What it injects into the system message:
- *   ## Agent Profile (<displayName>)
- *   <profile.details>
- *   ### Recent top facts (up to N)
+ *   ## User-specific instructions for this agent
+ *   _Directives the current user has given. Follow them over default behavior._
+ *   - [<ruleId>] <rule text>
  *   - ...
  *
  *   ## Your User Profile (<displayName>)
@@ -13,8 +13,18 @@
  *   ### Recent top facts (up to N)
  *   - ...
  *
+ * Note: global agent personality / base instructions are NOT rendered here
+ * any more — they're admin-controlled via `Agent.create({ instructions })`.
+ * The agent entity still exists (used as `this_agent` subject, as ruleSubject
+ * for the rules block, and for graph queries) but its `profile.details` is
+ * not auto-synthesized or injected.
+ *
+ * Rules block is populated exclusively by `memory_set_agent_rule` (write bundle).
+ * A future rule-inference engine can add facts with the same subject and any
+ * predicate — renderer surfaces them automatically without code changes.
+ *
  * Everything else — other people, organisations, projects, graph queries,
- * semantic search — happens through the 8 memory_* tools. That keeps the
+ * semantic search — happens through the memory_* tools. That keeps the
  * system message cheap while still giving the LLM full read/write access
  * to memory.
  *
@@ -124,9 +134,19 @@ interface ResolvedInjection {
 const USER_IDENTIFIER_KIND = 'system_user_id';
 const AGENT_IDENTIFIER_KIND = 'system_agent_id';
 
+/** Truncate each rule's rendered body at this length (chars). Individual rules
+ *  that exceed this are clipped with an ellipsis; the full text stays in the
+ *  underlying fact (`details`) and is available via `memory_list_facts`. */
+const MAX_RULE_CHARS = 300;
+
+function truncate(s: string, maxChars: number): string {
+  if (s.length <= maxChars) return s;
+  return s.slice(0, maxChars - 1) + '…';
+}
+
 const MEMORY_INSTRUCTIONS = `## Memory (self-learning knowledge store)
 
-Your agent profile and the user's profile are ALREADY shown above — do not call memory_recall on "me" or "this_agent" just to re-read them.
+The user's profile and any user-specific instructions for you are ALREADY shown above — do not call memory_recall on "me" just to re-read them. User-specific instructions override default behavior; honor them literally.
 
 For anything else — other people, organisations, projects, topics, events, tasks — use the memory_* retrieval tools:
 - When the user mentions an entity you don't yet know, call memory_find_entity or memory_recall with {surface:"..."}.
@@ -135,6 +155,16 @@ For anything else — other people, organisations, projects, topics, events, tas
 - memory_list_facts gives raw paginated fact enumeration.
 
 Entities may have many identifiers (email, slack_id, github_login, internal_id…). memory_find_entity accepts any of them via \`{by:{identifier:{kind,value}}}\`. This tool is read-only (actions: find | list).
+
+### Entity types you can retrieve
+
+Entities have conventional types — use them in \`memory_find_entity\` filters:
+- \`person\`, \`organization\`, \`project\`, \`topic\` — minimal metadata.
+- \`task\` — \`metadata: {state, dueAt, priority?, assigneeId?, projectId?}\`. State vocabulary: \`pending\` | \`in_progress\` | \`blocked\` | \`deferred\` | \`done\` | \`cancelled\`.
+- \`event\` — \`metadata: {startTime, endTime?, location?, attendeeIds?}\`.
+
+Example — list the user's open tasks:
+\`memory_find_entity({action:'list', by:{type:'task', metadataFilter:{state:{$in:['pending','in_progress']}}}})\`
 
 If you're missing information, answer from what you can retrieve rather than apologising for "not remembering". Write-side capabilities, if any, are described separately below (and may be absent — some deployments update memory through a background pipeline instead).`;
 
@@ -154,7 +184,6 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
   private readonly userPerms: Permissions | undefined;
   private readonly agentPerms: Permissions | undefined;
   private readonly userInj: ResolvedInjection;
-  private readonly agentInj: ResolvedInjection;
   private readonly userDisplayName: string;
   private readonly agentDisplayName: string;
   private readonly defaultVisibility: {
@@ -195,7 +224,10 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
     this.userPerms = config.userEntityPermissions;
     this.agentPerms = config.agentEntityPermissions;
     this.userInj = resolveInjection(config.userProfileInjection);
-    this.agentInj = resolveInjection(config.agentProfileInjection);
+    // `config.agentProfileInjection` is accepted but no longer used — the agent
+    // profile block has been removed. Left in the type for backward-compat so
+    // existing callers don't need a breaking change.
+    void config.agentProfileInjection;
     this.userDisplayName = config.userDisplayName ?? `user:${this.userId}`;
     this.agentDisplayName = config.agentDisplayName ?? `agent:${this.agentId}`;
     this.defaultVisibility = {
@@ -220,23 +252,18 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
     try {
       await this.ensureBootstrapped();
       const blocks: string[] = [];
+      const scope = this.scope();
 
-      // Agent profile first — stable across users of the same agent.
+      // Rules block first — directives override defaults, so the LLM should
+      // see them before the user profile. Rendered from facts on the agent
+      // entity scoped to the current user (ownerId match via scope filter).
       if (this.agentEntityId) {
-        const scope = this.scope();
-        const agentBlock = await this.renderProfileBlock(
-          this.agentEntityId,
-          this.agentDisplayName,
-          this.agentInj,
-          'Agent Profile',
-          scope,
-        );
-        if (agentBlock) blocks.push(agentBlock);
+        const rulesBlock = await this.renderRulesBlock(this.agentEntityId, scope);
+        if (rulesBlock) blocks.push(rulesBlock);
       }
 
       // User profile — addressed to the LLM as "Your User Profile".
       if (this.userEntityId) {
-        const scope = this.scope();
         const userBlock = await this.renderProfileBlock(
           this.userEntityId,
           this.userDisplayName,
@@ -430,12 +457,69 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
 
   private buildPlaceholder(): string {
     return [
-      '## Agent Profile',
-      '(memory unavailable — retrying next turn)',
-      '',
       '## Your User Profile',
       '(memory unavailable — retrying next turn)',
     ].join('\n');
+  }
+
+  /**
+   * Render the "User-specific instructions for this agent" block. One fact per
+   * rule; each prefixed with its short factId so the agent can reference it in
+   * `memory_set_agent_rule.replaces` when the user supersedes the rule.
+   *
+   * Query: facts on the agent entity owned by the current user (ownerId match
+   * enforced by the post-filter below; scope only controls read visibility),
+   * non-archived. No predicate filter — a future rule-inference engine can
+   * add facts with any predicate and they surface automatically. Today
+   * `memory_set_agent_rule` writes the `agent_behavior_rule` predicate.
+   */
+  private async renderRulesBlock(
+    agentEntityId: EntityId,
+    scope: ScopeFilter,
+  ): Promise<string | null> {
+    const page = await this.memory.findFacts(
+      { subjectId: agentEntityId, archived: false },
+      { limit: 50, orderBy: { field: 'createdAt', direction: 'desc' } },
+      scope,
+    );
+    // Filter to rule-shaped facts. We check:
+    //   (a) ownerId matches the current user (scope already filters for read
+    //       visibility; this extra check guards against public rules from
+    //       other principals leaking in once group/world rule writes exist).
+    //   (b) There's a renderable body (details).
+    // Predicate used by today's `memory_set_agent_rule` is retained as the
+    // primary shape — referenced for clarity but we don't hard-exclude other
+    // predicates (future rule-engine facts are surfaced automatically).
+    const rules = page.items.filter((f) => {
+      // Strict ownerId check — scope controls read *visibility* (permissions),
+      // but the rules block is per-user-per-agent by definition, so we reject
+      // any fact whose ownerId doesn't match the caller. Undefined ownerId
+      // is rejected too: the memory layer enforces `ownerId` on every record
+      // (`OwnerRequiredError`), so undefined only happens for pre-invariant
+      // legacy data — treat as not-mine and drop rather than risk leakage.
+      if (scope.userId && f.ownerId !== scope.userId) return false;
+      if (typeof f.details !== 'string' || f.details.trim().length === 0) return false;
+      // Exclude `profile` documents (shouldn't exist on agent entities any more
+      // thanks to `maybeRegenerateProfile`'s type guard, but defensive).
+      if (f.predicate === 'profile') return false;
+      return true;
+    });
+    if (rules.length === 0) return null;
+
+    const lines: string[] = [
+      '## User-specific instructions for this agent',
+      '_The current user has given you these directives. Honor them over default behavior. Supersede via `memory_set_agent_rule` with `replaces: <ruleId>`; drop via `memory_forget`._',
+      '',
+    ];
+    for (const f of rules) {
+      // Full factId only — agent passes it verbatim to `replaces`. Tried a
+      // short-id bracket + `ruleId=<full>` tag side-by-side; that wastes ~30
+      // tokens per rule with no benefit since the agent doesn't need the short
+      // form for anything.
+      const body = escapeInline(truncate(f.details!, MAX_RULE_CHARS));
+      lines.push(`- [${f.id}] ${body}`);
+    }
+    return lines.join('\n');
   }
 
   private async renderProfileBlock(
