@@ -146,7 +146,7 @@
     "url": "https://github.com/aantich/oneringai/issues"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.88.0",
+    "@anthropic-ai/sdk": "^0.90.0",
     "@google/genai": "^1.41.0",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@mozilla/readability": "^0.6.0",

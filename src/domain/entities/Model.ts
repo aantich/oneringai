@@ -184,7 +184,9 @@ export const LLM_MODELS = {
     GPT_OSS_20B: 'gpt-oss-20b',
   },
   [Vendor.Anthropic]: {
-    // Claude 4.6 Series (Current)
+    // Claude 4.7 Series (Current flagship Opus — April 2026)
+    CLAUDE_OPUS_4_7: 'claude-opus-4-7',
+    // Claude 4.6 Series (Current Sonnet, legacy Opus)
     CLAUDE_OPUS_4_6: 'claude-opus-4-6',
     CLAUDE_SONNET_4_6: 'claude-sonnet-4-6',
     // Claude 4.5 Series
@@ -1662,16 +1664,54 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   },
 
   // ============================================================================
-  // Anthropic Models (Verified from platform.claude.com - March 2026)
+  // Anthropic Models (Verified from platform.claude.com - April 2026)
+  // Source: https://platform.claude.com/docs/en/about-claude/models/overview
   // ============================================================================
 
-  // Claude 4.6 Series (Current)
+  // Claude 4.7 Series (Current flagship — released 2026-04-16)
+  'claude-opus-4-7': {
+    name: 'claude-opus-4-7',
+    provider: Vendor.Anthropic,
+    description: 'Most capable model for complex reasoning and agentic coding. 1M context, 128K output, adaptive thinking with new xhigh effort level, high-resolution vision (2576px). New tokenizer.',
+    isActive: true,
+    preferred: true,
+    releaseDate: '2026-04-16',
+    knowledgeCutoff: '2026-01-01',
+    features: {
+      reasoning: false,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      extendedThinking: false,
+      batchAPI: true,
+      promptCaching: true,
+      input: {
+        tokens: 1000000,
+        text: true,
+        image: true,
+        cpm: 5,
+        cpmCached: 0.5,
+      },
+      output: {
+        tokens: 128000,
+        text: true,
+        cpm: 25,
+      },
+    },
+  },
+
+  // Claude 4.6 Series (Sonnet current, Opus legacy)
   'claude-opus-4-6': {
     name: 'claude-opus-4-6',
     provider: Vendor.Anthropic,
-    description: 'The most intelligent model for building agents and coding. 128K output, adaptive thinking',
+    description: 'Legacy Opus 4.6. Superseded by Opus 4.7. 128K output, adaptive thinking',
     isActive: true,
-    preferred: true,
     releaseDate: '2026-02-01',
     knowledgeCutoff: '2025-05-01',
     features: {

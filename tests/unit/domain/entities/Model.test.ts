@@ -13,7 +13,7 @@ describe('Model Registry', () => {
   describe('MODEL_REGISTRY', () => {
     it('should have all models', () => {
       const modelCount = Object.keys(MODEL_REGISTRY).length;
-      expect(modelCount).toBe(61);
+      expect(modelCount).toBe(62);
     });
 
     it('should have 37 OpenAI models', () => {
@@ -23,11 +23,11 @@ describe('Model Registry', () => {
       expect(openAIModels).toHaveLength(37);
     });
 
-    it('should have 9 Anthropic models', () => {
+    it('should have 10 Anthropic models', () => {
       const anthropicModels = Object.values(MODEL_REGISTRY).filter(
         (model) => model.provider === Vendor.Anthropic
       );
-      expect(anthropicModels).toHaveLength(9);
+      expect(anthropicModels).toHaveLength(10);
     });
 
     it('should have 10 Google models', () => {
@@ -48,7 +48,7 @@ describe('Model Registry', () => {
       const activeCount = Object.values(MODEL_REGISTRY).filter(
         (model) => model.isActive
       ).length;
-      expect(activeCount).toBe(61);
+      expect(activeCount).toBe(62);
     });
 
     it('should have valid pricing for all models', () => {
@@ -86,6 +86,7 @@ describe('Model Registry', () => {
     });
 
     it('should have Anthropic model constants', () => {
+      expect(LLM_MODELS[Vendor.Anthropic].CLAUDE_OPUS_4_7).toBe('claude-opus-4-7');
       expect(LLM_MODELS[Vendor.Anthropic].CLAUDE_OPUS_4_6).toBe('claude-opus-4-6');
       expect(LLM_MODELS[Vendor.Anthropic].CLAUDE_SONNET_4_6).toBe('claude-sonnet-4-6');
       expect(LLM_MODELS[Vendor.Anthropic].CLAUDE_OPUS_4_5).toBe(
@@ -184,7 +185,7 @@ describe('Model Registry', () => {
 
     it('should filter models by Anthropic vendor', () => {
       const models = getModelsByVendor(Vendor.Anthropic);
-      expect(models).toHaveLength(9);
+      expect(models).toHaveLength(10);
       expect(models.every((m) => m.provider === Vendor.Anthropic)).toBe(true);
     });
 
@@ -237,7 +238,7 @@ describe('Model Registry', () => {
   describe('getActiveModels()', () => {
     it('should return all active models', () => {
       const models = getActiveModels();
-      expect(models).toHaveLength(61);
+      expect(models).toHaveLength(62);
       expect(models.every((m) => m.isActive)).toBe(true);
     });
 
@@ -408,13 +409,15 @@ describe('Model Registry', () => {
       const gpt54 = getModelInfo('gpt-5.4');
       const gpt52 = getModelInfo('gpt-5.2');
       const gpt5 = getModelInfo('gpt-5');
+      const opus47 = getModelInfo('claude-opus-4-7');
       const opus46 = getModelInfo('claude-opus-4-6');
       const sonnet46 = getModelInfo('claude-sonnet-4-6');
 
       expect(gpt54?.preferred).toBe(true);
       expect(gpt52?.preferred).toBeUndefined();
       expect(gpt5?.preferred).toBeUndefined();
-      expect(opus46?.preferred).toBe(true);
+      expect(opus47?.preferred).toBe(true);
+      expect(opus46?.preferred).toBeUndefined();
       expect(sonnet46?.preferred).toBe(true);
     });
 
