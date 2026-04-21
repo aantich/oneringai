@@ -150,14 +150,16 @@ Do NOT use \`name\` (use \`full_name\` or \`preferred_name\`), \`employer\` (use
 
 \`memory_remember\` / \`memory_link\` / \`memory_upsert_entity\` with no visibility fall back to "private" for user-subject facts (owner-only). Use \`visibility:"group"\` or \`"public"\` only when the user explicitly signals the fact should be shared — do NOT ask about visibility.
 
-### User-specific behavior rules — \`memory_set_agent_rule\`
+### User-specific directives about YOU — \`memory_set_agent_rule\`
 
-Call this — and ONLY this — when the user gives a directive about HOW YOU SHOULD WRITE, SPEAK, FORMAT, or BEHAVE in future turns. These rules are rendered back to you at the top of the system message ("User-specific instructions for this agent") and override default behavior.
+Call this — and ONLY this — whenever the user gives you a directive about **YOU**: how you should behave, identify, or present yourself going forward. The test is "does this change something about ME that should persist across turns?". These rules are rendered back to you at the top of the system message ("User-specific instructions for this agent") and override default behavior.
 
 **YES — call \`memory_set_agent_rule\` when the user says any of these:**
+- Identity / name / persona: "your name is Jason", "you are a pirate", "act as my therapist", "call yourself Sparky"
+- Role assignment: "be my coding copilot", "treat me as a beginner", "you're my sales coach now"
 - Tone / style: "be terse", "stop being formal", "stop apologizing"
 - Format rules: "no bullet points", "always cite sources", "reply in JSON"
-- Language: "answer in Russian"
+- Language: "answer in Russian", "always respond in English"
 - Meta-interaction: "when you don't know, just say so", "ask before destructive commands"
 - Pattern corrections: "you keep suggesting X when I want Y — stop"
 
@@ -165,11 +167,24 @@ Call this — and ONLY this — when the user gives a directive about HOW YOU SH
 - "remind me to X" / "track Y" / "add to my to-do" → task creation via \`memory_upsert_entity\` (type:'task') or a task-tracker connector.
 - "schedule Y" / "add to my calendar" → calendar connector.
 - "actually it's Tuesday, not Monday" → factual correction via \`memory_forget\` with \`replaceWith\` on the incorrect fact.
-- "I live in Tokyo" / "I work at Acme" / "I like Python" → user statement; the background ingestor captures these — don't write yourself.
+- User statements about themselves: "I live in Tokyo" / "I work at Acme" / "my name is Anton" → these are facts about the USER, captured by the background ingestor — do not write yourself. (The asymmetry matters: "your name is Jason" is a rule about YOU; "my name is Anton" is a fact about the USER.)
+- General preferences about the world: "I like Python" → ambient ingestor.
 
-**Supersession.** When the user contradicts an existing rule ("actually be normal again", "drop the Russian thing"), pass the prior rule's \`ruleId\` as \`replaces\`. The rule list in your system message shows each rule's id — use it directly. This preserves the audit chain. If the user wants the rule gone entirely with no replacement, use \`memory_forget\` on that ruleId.
+**Phrasing — record in FIRST PERSON.** When you call this tool, the \`rule\` text you pass is what you'll read back in your own system message every turn. Rephrase the user's directive as *self-description* — not verbatim second-person. Examples:
 
-Do NOT call \`memory_set_agent_rule\` from an ambient inference (the user didn't explicitly tell you to change behavior). Under-calling is fine — the user will repeat. Over-calling pollutes the rule list.`;
+| User said | Record as (first-person) |
+|---|---|
+| "your name is Jason" | "My name is Jason." |
+| "you are a pirate" | "I am a pirate." |
+| "act as my therapist" | "I act as the user's therapist." |
+| "be terse" | "I reply tersely." |
+| "stop apologizing" | "I do not apologize." |
+| "no bullet points" | "I do not use bullet points." |
+| "reply in Russian" | "I reply in Russian." |
+
+**Supersession.** When the user contradicts an existing rule ("actually be normal again", "drop the Russian thing", "go back to your default name"), pass the prior rule's \`ruleId\` as \`replaces\`. The rule list in your system message shows each rule's id — use it directly. This preserves the audit chain. If the user wants the rule gone entirely with no replacement, use \`memory_forget\` on that ruleId.
+
+Do NOT call \`memory_set_agent_rule\` from an ambient inference (the user didn't explicitly tell you something about yourself). Under-calling is fine — the user will repeat. Over-calling pollutes the rule list.`;
 
 export class MemoryWritePluginNextGen implements IContextPluginNextGen {
   readonly name = 'memory_write';

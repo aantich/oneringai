@@ -139,9 +139,20 @@ const AGENT_IDENTIFIER_KIND = 'system_agent_id';
  *  underlying fact (`details`) and is available via `memory_list_facts`. */
 const MAX_RULE_CHARS = 300;
 
+/** How many most-recent facts (visible to the current user's scope) to ship
+ *  in the UI snapshot via `getContents()`. Not seen by the LLM. */
+const SNAPSHOT_RECENT_FACTS_LIMIT = 30;
+
 function truncate(s: string, maxChars: number): string {
   if (s.length <= maxChars) return s;
   return s.slice(0, maxChars - 1) + '…';
+}
+
+/** Drop retrieval-internal fields (embeddings are huge float arrays) so the
+ *  snapshot stays small over the wire. The UI doesn't need them to render. */
+function stripHeavyFactFields(f: IFact): IFact {
+  const { embedding: _embedding, summaryForEmbedding: _sfe, ...rest } = f;
+  return rest as IFact;
 }
 
 const MEMORY_INSTRUCTIONS = `## Memory (self-learning knowledge store)
@@ -296,12 +307,53 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
   }
 
   getContents(): unknown {
-    return {
+    return this.snapshotContents();
+  }
+
+  /**
+   * Snapshot payload for UI inspectors (e.g. react-ui LookInsidePanel). Not
+   * seen by the LLM. Ships the bootstrapped IDs plus the most-recent N facts
+   * that are VISIBLE to the current user's scope — enforced by
+   * `MemorySystem.findFacts`, which delegates to the storage adapter's
+   * `canAccess(..., 'read')` filter. Nothing here bypasses the permissions
+   * layer: the UI can only show what the user could already fetch via
+   * `memory_list_facts` / `memory_recall`.
+   */
+  private async snapshotContents(): Promise<{
+    agentId: string;
+    userId: string;
+    userEntityId: string | undefined;
+    agentEntityId: string | undefined;
+    recentFacts: IFact[];
+  }> {
+    const base = {
       agentId: this.agentId,
       userId: this.userId,
       userEntityId: this.userEntityId,
       agentEntityId: this.agentEntityId,
     };
+
+    if (this.destroyed) return { ...base, recentFacts: [] };
+
+    try {
+      const page = await this.memory.findFacts(
+        {},
+        { orderBy: { field: 'createdAt', direction: 'desc' }, limit: SNAPSHOT_RECENT_FACTS_LIMIT },
+        this.scope(),
+      );
+      return { ...base, recentFacts: page.items.map(stripHeavyFactFields) };
+    } catch (err) {
+      logger.warn(
+        {
+          component: 'MemoryPluginNextGen',
+          agentId: this.agentId,
+          userId: this.userId,
+          error: err instanceof Error ? err.message : String(err),
+        },
+        'memory plugin getContents failed to fetch recent facts — snapshot will be IDs-only',
+      );
+      return { ...base, recentFacts: [] };
+    }
   }
 
   getTokenSize(): number {
@@ -508,7 +560,7 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
 
     const lines: string[] = [
       '## User-specific instructions for this agent',
-      '_The current user has given you these directives. Honor them over default behavior. Supersede via `memory_set_agent_rule` with `replaces: <ruleId>`; drop via `memory_forget`._',
+      '_The items below describe YOU — your identity, persona, tone, and behavior — as the current user wants them. Read each as self-description (first-person) and honor it over your default behavior. Supersede via `memory_set_agent_rule` with `replaces: <ruleId>`; drop via `memory_forget`._',
       '',
     ];
     for (const f of rules) {

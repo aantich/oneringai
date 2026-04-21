@@ -53,29 +53,46 @@ export interface SetAgentRuleArgs {
   replaces?: string;
 }
 
-const DESCRIPTION = `Record a user-specific behavior rule for yourself (this agent). Call this tool — and ONLY this tool — when the user gives an instruction about HOW YOU SHOULD WRITE, SPEAK, FORMAT, or BEHAVE in future turns.
+const DESCRIPTION = `Record a user-specific directive that shapes YOU (this agent) going forward. Call this tool — and ONLY this tool — whenever the user tells you something about HOW YOU SHOULD BEHAVE, IDENTIFY, OR PRESENT YOURSELF in future turns. The test is: does this change something about ME that should persist across turns (tone, format, language, name, persona, role, interaction rules)? If yes, call it. If it's about the user or the world, do not.
 
 **YES — call this:**
+- Identity / name / persona: "your name is Jason", "you are a pirate", "act as my therapist", "call yourself Sparky"
+- Role assignment: "be my coding copilot", "treat me as a beginner", "you're my sales coach now"
 - Tone / style: "be terse", "stop being so formal", "stop apologizing"
 - Format rules: "no bullet points", "always cite sources", "reply in JSON"
-- Language: "answer in Russian"
-- Meta-interaction: "when you don't know, say so clearly", "ask before destructive commands"
-- Pattern corrections: "you keep suggesting X when I clearly want Y — stop"
+- Language: "answer in Russian", "always respond in English"
+- Meta-interaction: "when you don't know, say so clearly", "ask before running destructive commands"
+- Pattern corrections: "you keep suggesting X when I want Y — stop"
 
 **NO — do NOT call this (use a different path):**
 - Task requests ("remind me to X") → a task-tracker connector if available, else memory_upsert_entity with type:'task'
 - Calendar actions ("schedule Y", "add to my calendar") → a calendar connector
-- Factual corrections ("actually it's Tuesday not Monday") → memory_forget with replaceWith on the wrong fact
-- User statements ("I live in Tokyo", "I work at Acme") → the background ingestor captures these; do not write yourself
+- Factual corrections about the world ("actually it's Tuesday not Monday") → memory_forget with replaceWith on the wrong fact
+- User statements about themselves ("I live in Tokyo", "I work at Acme", "my name is Anton") → the background ingestor captures these; do not write yourself
 - General preferences about the world ("I like Python") → ambient ingestor
 
-**Supersession.** When the user contradicts a previous rule ("actually be normal again", "drop the Russian thing"), pass the prior rule's \`ruleId\` as \`replaces\`. The rule list in your system message shows each rule's \`ruleId\` — use it to point to the right predecessor. This preserves the audit chain. If the user asks to drop a rule entirely with no replacement, use \`memory_forget\` on the ruleId instead.
+Note the asymmetry: "your name is Jason" is a rule about YOU (call this tool); "my name is Anton" is a fact about the USER (ambient ingestor).
+
+**Supersession.** When the user contradicts a previous rule ("actually be normal again", "drop the Russian thing", "go back to your default name"), pass the prior rule's \`ruleId\` as \`replaces\`. The rule list in your system message shows each rule's \`ruleId\` — use it to point to the right predecessor. This preserves the audit chain. If the user asks to drop a rule entirely with no replacement, use \`memory_forget\` on the ruleId instead.
 
 Params:
-- rule: the directive, verbatim or lightly cleaned ("Be terse in replies.", "Reply in Russian.").
+- rule: the directive, rephrased in **FIRST PERSON from YOUR perspective**. Do NOT copy the user's second-person phrasing verbatim. The rule will be rendered back into your system message every turn and should read naturally as *self-description*, not as an imperative aimed at someone else.
+
+  | User said | Record as |
+  |---|---|
+  | "your name is Jason" | "My name is Jason." |
+  | "you are a pirate" | "I am a pirate." |
+  | "act as my therapist" | "I act as the user's therapist." |
+  | "be my coding copilot" | "I am the user's coding copilot." |
+  | "be terse" | "I reply tersely." |
+  | "stop apologizing" | "I do not apologize." |
+  | "no bullet points" | "I do not use bullet points." |
+  | "reply in Russian" | "I reply in Russian." |
+  | "always cite sources" | "I always cite sources." |
+
 - replaces: optional ruleId (a fact id) of a prior rule the new one overrides.
 
-The rule appears in your system message's "User-specific instructions for this agent" block from the next turn onward.`;
+The rule appears in your system message's "User-specific instructions for this agent" block from the next turn onward, where you will read it as your own persistent context.`;
 
 const BEHAVIOR_RULE_PREDICATE = 'agent_behavior_rule';
 
