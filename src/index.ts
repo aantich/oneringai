@@ -1572,6 +1572,8 @@ export type {
   Permission,
   Permissions,
   AccessControlled,
+  VisibilityContext,
+  VisibilityPolicy,
   // Core memory types
   EntityId,
   FactId,

@@ -148,6 +148,8 @@ export type {
   Permission,
   Permissions,
   AccessControlled,
+  VisibilityContext,
+  VisibilityPolicy,
 } from './AccessControl.js';
 
 // ---- Types ----

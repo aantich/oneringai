@@ -34,11 +34,18 @@
  */
 
 import type { IDisposable } from '../domain/interfaces/IDisposable.js';
-import type { Permissions } from './AccessControl.js';
+import type { Permissions, VisibilityPolicy } from './AccessControl.js';
 
 // Re-export access-control surface so callers only need to import from
 // `@everworker/oneringai` (or the memory barrel) to get the full type set.
-export type { AccessLevel, Permission, Permissions, AccessControlled } from './AccessControl.js';
+export type {
+  AccessLevel,
+  Permission,
+  Permissions,
+  AccessControlled,
+  VisibilityContext,
+  VisibilityPolicy,
+} from './AccessControl.js';
 export {
   PermissionDeniedError,
   OwnerRequiredError,
@@ -804,6 +811,23 @@ export interface MemorySystemConfig {
    * Falls back to `console.warn` when unset.
    */
   onError?: (error: unknown, event: ChangeEvent) => void;
+  /**
+   * Host-supplied default `permissions` for every entity / fact write where
+   * the caller didn't specify `permissions` explicitly. Lets hosts express
+   * policies like "entities are group-readable, facts are owner-private by
+   * default" in one place instead of at every call site — and, critically,
+   * applies to writes emitted from inside the library (e.g., by
+   * `ExtractionResolver` or `ProfileGenerator` paths) that the host can't
+   * intercept directly.
+   *
+   * Callers that pass `permissions` on the write input always win — the
+   * policy only fills the blanks. Return `undefined` from the policy to
+   * fall through to the library defaults (`DEFAULT_GROUP_LEVEL` /
+   * `DEFAULT_WORLD_LEVEL`, both `'read'`).
+   *
+   * Keep the function cheap — it runs on every entity / fact create.
+   */
+  visibilityPolicy?: VisibilityPolicy;
 }
 
 // Re-export IDisposable so consumers can use the same symbol.

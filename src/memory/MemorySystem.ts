@@ -16,6 +16,9 @@ import {
   assertCanAccess,
   canAccess,
   OwnerRequiredError,
+  type Permissions,
+  type VisibilityContext,
+  type VisibilityPolicy,
 } from './AccessControl.js';
 import { genericTraverse } from './GenericTraversal.js';
 import { rankFacts } from './Ranking.js';
@@ -232,6 +235,7 @@ export class MemorySystem implements IDisposable {
   private readonly unknownPredicateFuzzyMaxDistance: number | undefined;
   private readonly _taskStates: TaskStatesConfig;
   private readonly _autoApplyTaskTransitions: boolean;
+  private readonly visibilityPolicy?: VisibilityPolicy;
 
   /** Tracks pending profile regenerations per (entityId + scopeKey) to prevent overlap. */
   private readonly regenInFlight = new Set<string>();
@@ -269,6 +273,7 @@ export class MemorySystem implements IDisposable {
     }
     this._taskStates = validateTaskStates(config.taskStates);
     this._autoApplyTaskTransitions = config.autoApplyTaskTransitions ?? true;
+    this.visibilityPolicy = config.visibilityPolicy;
     // Fold registry ranking weights into the base ranking config. Caller-supplied
     // weights win on collision — user config always trumps registry defaults.
     const userWeights = config.topFactsRanking?.predicateWeights ?? {};
@@ -388,6 +393,21 @@ export class MemorySystem implements IDisposable {
     };
   }
 
+  /**
+   * Resolve `permissions` for a write. Caller-supplied permissions always
+   * win; when absent, consult the `visibilityPolicy` (if any). When the
+   * policy returns `undefined` — or no policy is configured — leave
+   * permissions undefined so the library defaults (`DEFAULT_GROUP_LEVEL` /
+   * `DEFAULT_WORLD_LEVEL`) apply.
+   */
+  private resolvePermissions(
+    explicit: Permissions | undefined,
+    ctx: VisibilityContext,
+  ): Permissions | undefined {
+    if (explicit !== undefined) return explicit;
+    return this.visibilityPolicy?.(ctx);
+  }
+
   private async createEntity(
     input: Partial<IEntity> & {
       identifiers: Identifier[];
@@ -415,7 +435,10 @@ export class MemorySystem implements IDisposable {
       groupId: input.groupId ?? scope.groupId,
       ownerId,
       metadata: input.metadata,
-      permissions: input.permissions,
+      permissions: this.resolvePermissions(input.permissions, {
+        kind: 'entity',
+        entityType: input.type,
+      }),
     };
     const entity = await this.store.createEntity(newEntity);
     this.queueIdentityEmbedding(entity, scope);
@@ -1102,7 +1125,11 @@ export class MemorySystem implements IDisposable {
       validFrom: input.validFrom,
       validUntil: input.validUntil,
       metadata: input.metadata,
-      permissions: input.permissions,
+      permissions: this.resolvePermissions(input.permissions, {
+        kind: 'fact',
+        predicate,
+        factKind: input.kind,
+      }),
       groupId: factScope.groupId,
       ownerId: factScope.ownerId,
     };

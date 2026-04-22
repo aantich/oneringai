@@ -80,6 +80,40 @@ export interface AccessControlled {
 }
 
 // ---------------------------------------------------------------------------
+// VisibilityPolicy — host-supplied default permissions per write
+// ---------------------------------------------------------------------------
+
+/**
+ * Context the policy sees when asked for defaults on a write. Fields are set
+ * according to `kind`:
+ *   - kind === 'entity' ⇒ `entityType` set, `predicate` / `factKind` absent.
+ *   - kind === 'fact'   ⇒ `predicate` set (post-canonicalization), `factKind`
+ *                          set, `entityType` absent.
+ */
+export interface VisibilityContext {
+  kind: 'entity' | 'fact';
+  entityType?: string;
+  predicate?: string;
+  factKind?: 'atomic' | 'document';
+}
+
+/**
+ * Host-supplied function that returns default `Permissions` for a write when
+ * the caller didn't specify `permissions` explicitly. Lets hosts encode
+ * policies like "entities are group-readable, facts are owner-private by
+ * default" without touching every call site.
+ *
+ * Rules:
+ *   - Caller-supplied `permissions` on the write input always wins — this
+ *     policy only fills the blanks.
+ *   - Return `undefined` to fall through to the library defaults
+ *     (`DEFAULT_GROUP_LEVEL` / `DEFAULT_WORLD_LEVEL` — both `'read'`).
+ *   - The policy is invoked synchronously on every entity/fact create path
+ *     inside `MemorySystem`; keep it cheap (pure lookup, no I/O).
+ */
+export type VisibilityPolicy = (ctx: VisibilityContext) => Permissions | undefined;
+
+// ---------------------------------------------------------------------------
 // Errors
 // ---------------------------------------------------------------------------
 
