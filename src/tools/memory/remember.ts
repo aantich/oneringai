@@ -57,14 +57,9 @@ kind (default "atomic"):
 
 value vs objectId: set EITHER value OR objectId, never both. (Mixing the two makes the fact ambiguous in later queries.)
 
-visibility (default varies by subject):
-- "private": only the owner (current user) can see — good for personal notes.
-- "group": the user's group can read — for team-shared knowledge.
-- "public": library defaults (group+world read) — for broadly useful facts.
+Visibility (who can read the fact) is decided by the host — do not try to set it.
 
-Defaults: user subject → "private"; this_agent → "group" (shared agents); other → "private".
-
-If contextIds contains any entity you don't own, visibility is automatically downgraded to "private" to prevent leaking fabricated facts into another user's context graph — the response will include a "warnings" field in that case.
+If contextIds contains any entity you don't own, the host may restrict the write to prevent leaking fabricated facts into another user's context graph — the response will include a "warnings" field in that case.
 
 Examples:
 - User preference (atomic, scalar):
@@ -72,7 +67,7 @@ Examples:
 - Company attribute (atomic, your own company entity):
   {"subject":{"surface":"Acme"},"predicate":"employee_count","value":500,"confidence":0.8,"importance":0.3}
 - Learned procedure (document — indexed for semantic recall):
-  {"subject":"this_agent","predicate":"learned_pattern","kind":"document","details":"When users ask for tax calculations, always clarify the jurisdiction before quoting rates because …","visibility":"group"}
+  {"subject":"this_agent","predicate":"learned_pattern","kind":"document","details":"When users ask for tax calculations, always clarify the jurisdiction before quoting rates because …"}
 - Observation tied to a context entity (atomic with narrative details):
   {"subject":{"surface":"Alice"},"predicate":"raised_concern","details":"Timeline risk","contextIds":["<dealId>"]}`;
 
@@ -96,7 +91,6 @@ export function createRememberTool(deps: MemoryToolDeps): ToolFunction<RememberA
             importance: { type: 'number' },
             observedAt: { type: 'string' },
             contextIds: { type: 'array', items: { type: 'string' } },
-            visibility: { type: 'string', enum: ['private', 'group', 'public'] },
           },
           required: ['subject', 'predicate'],
         },

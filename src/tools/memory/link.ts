@@ -32,7 +32,9 @@ const DESCRIPTION = `Link two entities with a predicate. Both sides are entities
 
 Both 'from' and 'to' accept any SubjectRef form: entity id, "me", "this_agent", {id}, {identifier}, or {surface}.
 
-You can ONLY link FROM an entity you own. (The 'to' side can be any visible entity.) If foreign contextIds are supplied with non-private visibility, visibility is downgraded to "private" and a warning is included in the response.
+You can ONLY link FROM an entity you own. (The 'to' side can be any visible entity.)
+
+Visibility (who can read the link) is decided by the host — do not try to set it. If contextIds reference entities you don't own, the host may restrict the write; a "warnings" field is included in that case.
 
 Examples:
 - Alice attended a meeting (only valid if your entity is the 'from' side):
@@ -60,7 +62,6 @@ export function createLinkTool(deps: MemoryToolDeps): ToolFunction<LinkArgs> {
             confidence: { type: 'number' },
             observedAt: { type: 'string' },
             contextIds: { type: 'array', items: { type: 'string' } },
-            visibility: { type: 'string', enum: ['private', 'group', 'public'] },
           },
           required: ['from', 'predicate', 'to'],
         },

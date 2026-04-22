@@ -33,7 +33,7 @@ Set {kind, value, exclusive:true} on canonical identifiers (email, phone) to mar
 Example — upsert a person with multiple IDs (email flagged exclusive):
 {"type":"person","displayName":"Alice Smith","identifiers":[{"kind":"email","value":"alice@a.com","exclusive":true},{"kind":"slack_user_id","value":"U07ABC"}]}
 
-Visibility: "private" (default, owner-only), "group" (group can read), "public".`;
+Visibility (who can read the record) is decided by the host — do not try to set it.`;
 
 export function createUpsertEntityTool(
   deps: MemoryToolDeps,
@@ -64,7 +64,6 @@ export function createUpsertEntityTool(
             },
             aliases: { type: 'array', items: { type: 'string' } },
             metadata: { type: 'object' },
-            visibility: { type: 'string', enum: ['private', 'group', 'public'] },
           },
           required: ['type', 'displayName', 'identifiers'],
         },
