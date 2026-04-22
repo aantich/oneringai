@@ -25,6 +25,8 @@ import type {
   MongoUpdate,
   MongoUpdateOptions,
   MongoUpdateResult,
+  SearchIndexDefinition,
+  SearchIndexInfo,
 } from './IMongoCollectionLike.js';
 
 /**
@@ -47,6 +49,13 @@ export interface MeteorCollectionLike<T> {
   rawCollection(): {
     aggregate(pipeline: unknown[]): { toArray(): Promise<unknown[]> };
     createIndex(spec: Record<string, 1 | -1>, opts?: unknown): Promise<string>;
+    /** Atlas Search / Vector Search hooks — present on node driver v6.6+. */
+    createSearchIndex?(definition: {
+      name: string;
+      type?: 'search' | 'vectorSearch';
+      definition: Record<string, unknown>;
+    }): Promise<string>;
+    listSearchIndexes?(name?: string): { toArray(): Promise<Array<Record<string, unknown>>> };
   };
 }
 
@@ -115,6 +124,33 @@ export class MeteorMongoCollection<T extends { id: string }> implements IMongoCo
     await this.col.rawCollection().createIndex(spec, opts);
   }
 
+  async createSearchIndex(definition: SearchIndexDefinition): Promise<string> {
+    const raw = this.col.rawCollection();
+    if (!raw.createSearchIndex) {
+      throw new Error(
+        'MeteorMongoCollection.createSearchIndex: Meteor raw collection does not expose createSearchIndex. ' +
+          'Atlas Vector Search requires the underlying mongodb node driver v6.6+ and Atlas Server v6.0.11+.',
+      );
+    }
+    return raw.createSearchIndex({
+      name: definition.name,
+      type: definition.type,
+      definition: definition.definition as Record<string, unknown>,
+    });
+  }
+
+  async listSearchIndexes(name?: string): Promise<SearchIndexInfo[]> {
+    const raw = this.col.rawCollection();
+    if (!raw.listSearchIndexes) {
+      throw new Error(
+        'MeteorMongoCollection.listSearchIndexes: Meteor raw collection does not expose listSearchIndexes. ' +
+          'Requires mongodb node driver v6.6+.',
+      );
+    }
+    const rows = await raw.listSearchIndexes(name).toArray();
+    return rows.map(reviveSearchIndexInfo);
+  }
+
   // No withTransaction — Meteor + transactions is fragile; callers that need
   // it can use RawMongoCollection against the same collection alongside.
 }
@@ -161,6 +197,17 @@ function reviveRawRow(row: unknown): unknown {
 
 function translateIdField(filter: MongoFilter): MongoFilter {
   return walkFilter(filter, (key, value) => (key === 'id' ? ['_id', value] : null));
+}
+
+function reviveSearchIndexInfo(row: Record<string, unknown>): SearchIndexInfo {
+  const name = typeof row.name === 'string' ? row.name : '';
+  const status = typeof row.status === 'string' ? row.status : 'UNKNOWN';
+  const queryable = row.queryable === true;
+  const latestDefinition =
+    row.latestDefinition && typeof row.latestDefinition === 'object'
+      ? (row.latestDefinition as Record<string, unknown>)
+      : undefined;
+  return { name, status, queryable, latestDefinition };
 }
 
 function walkFilter(

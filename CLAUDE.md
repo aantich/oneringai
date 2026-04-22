@@ -229,7 +229,7 @@ Brain-like knowledge store: **entities** (pure identity + metadata) + **facts** 
 
 **Adapters** (pluggable):
 - `adapters/inmemory/InMemoryAdapter.ts` — zero-dep default.
-- `adapters/mongo/` — `MongoMemoryAdapter` + `RawMongoCollection` (mongodb driver) + `MeteorMongoCollection` (Meteor-reactive writes). Configurable collection names, optional `$graphLookup` + Atlas Vector Search fast paths.
+- `adapters/mongo/` — `MongoMemoryAdapter` + `RawMongoCollection` (mongodb driver) + `MeteorMongoCollection` (Meteor-reactive writes). Configurable collection names, optional `$graphLookup` + Atlas Vector Search fast paths for both facts and entities. Vector indexes created programmatically via `ensureVectorSearchIndexes()` (opt-in) or manually via Atlas UI.
 
 **Integration** (`src/memory/integration/`):
 - `ConnectorEmbedder` + `ConnectorProfileGenerator` — wire oneringai Connectors into memory's `IEmbedder`/`IProfileGenerator`.
@@ -245,7 +245,7 @@ Brain-like knowledge store: **entities** (pure identity + metadata) + **facts** 
 - **Incremental profile regen:** `IProfileGenerator.generate` takes a single `ProfileGeneratorInput` with `newFacts` (observed since prior), `priorProfile`, `invalidatedFactIds` (supersession + archivals). Generator evolves the prior profile from deltas rather than rewriting from all facts.
 
 **Resolution** (`src/memory/resolution/`):
-- `EntityResolver` translates surface forms ("Microsoft", "Q3 Planning") to entity IDs. Tiers: identifier (1.0) → exact displayName (0.9) → exact alias (0.85) → fuzzy (0.6–0.84) → semantic (identityEmbedding). Conservative default auto-resolve threshold 0.9; configurable via `entityResolution.autoResolveThreshold`.
+- `EntityResolver` translates surface forms ("Microsoft", "Q3 Planning") to entity IDs. Tiers: identifier (1.0) → exact displayName (0.9) → exact alias (0.85) → **semantic** via `identityEmbedding` (capped at 0.89, **opt-in** via `entityResolution.enableSemanticResolution`). Conservative default auto-resolve threshold 0.9; configurable via `entityResolution.autoResolveThreshold`. Semantic tier calls `IMemoryStore.semanticSearchEntities` (implemented by `InMemoryAdapter` + `MongoMemoryAdapter`); cap ensures enabling the flag alone never auto-merges — caller must also lower `autoResolveThreshold` (e.g. to 0.75) to trust semantic matches.
 - `fuzzy.ts` — normalized Levenshtein (strips Inc/Corp/LLC, case-insensitive, punctuation-tolerant).
 
 **Entity type conventions** (see `types.ts` header):
@@ -272,13 +272,15 @@ Brain-like knowledge store: **entities** (pure identity + metadata) + **facts** 
 - **Permissions (three-principal):** every record carries optional `permissions: { group?, world? }` with `AccessLevel = 'none'|'read'|'write'`. Owner always has full access. Defaults: `group='read'`, `world='read'` (public-read, owner-write). See `src/memory/AccessControl.ts` + `docs/MEMORY_PERMISSIONS.md`.
 - **Read vs write enforcement:** reads are filtered at storage (adapter translates `canAccess(..., 'read')` into native query). Writes are checked at MemorySystem (`assertCanAccess(..., 'write')` throws `PermissionDeniedError`).
 - Scope visibility: `(groupId, ownerId)` absent = global; both match for user-within-group. Layered under permissions — scope defines the principal; permissions define the level.
-- Tests: 303 unit tests, 14 files. Mongo real-DB integration gated on `mongodb` + `mongodb-memory-server` optional peer deps.
+- Tests: 728 memory unit tests (40 files). Mongo real-DB integration gated on `mongodb` + `mongodb-memory-server` optional peer deps.
 
 **Mongo deployment checklist (client app responsibility, not library):**
 - Call `memorySystem.ensureAdapterIndexes()` from your migration — creates the performance + correctness indexes documented in `src/memory/adapters/mongo/indexes.ts`. Idempotent. No-op for `InMemoryAdapter`.
 - **Additionally** create a unique index on `{identifiers.kind: 1, identifiers.value: 1}` for the entities collection (partial, filtered on documents that actually have that identifier). Required to prevent cross-process bootstrap races in `MemoryPluginNextGen` — two containers upserting the same user/agent entity simultaneously produce duplicates otherwise. Not created automatically: adding a unique index to a collection with existing duplicates fails; build + verify it explicitly in a migration.
-- Atlas Vector Search indexes (for `semanticSearch`) live outside `ensureIndexes()` — create them via the Atlas UI or admin API.
+- Atlas Vector Search indexes live outside `ensureAdapterIndexes()` because they need runtime parameters (`dimensions`, `similarity`) and build asynchronously. Two options:
+  - **Programmatic (recommended):** `await (adapter as MongoMemoryAdapter).ensureVectorSearchIndexes({ dimensions: embedder.dimensions })`. Idempotent; polls until `queryable: true`. Creates both the facts-level (`embedding`) and entities-level (`identityEmbedding`, used by `EntityResolver` semantic tier) indexes. Requires mongodb node driver v6.6+ and Atlas Server v6.0.11+.
+  - **Manual:** create via Atlas UI / admin API. The adapter's `vectorIndexName` (facts) / `entityVectorIndexName` (entities) options must match the index names you chose, otherwise runtime queries won't hit the index.
 
 ---
 
-**Version**: 0.5.1 | **Last Updated**: 2026-04-04 | **Architecture**: Connector-First + NextGen Context
+**Version**: 0.5.1 | **Last Updated**: 2026-04-23 | **Architecture**: Connector-First + NextGen Context

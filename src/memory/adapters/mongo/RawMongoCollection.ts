@@ -20,6 +20,8 @@ import type {
   MongoUpdate,
   MongoUpdateOptions,
   MongoUpdateResult,
+  SearchIndexDefinition,
+  SearchIndexInfo,
 } from './IMongoCollectionLike.js';
 
 /**
@@ -53,6 +55,14 @@ export interface RawMongoDriverCollection<T> {
   countDocuments(filter: MongoFilter): Promise<number>;
   aggregate(pipeline: unknown[]): { toArray(): Promise<unknown[]> };
   createIndex(spec: Record<string, 1 | -1>, opts?: unknown): Promise<string>;
+  /** Atlas Search / Vector Search creation (node driver v6+). Optional on the
+   *  underlying driver so structural typing stays permissive. */
+  createSearchIndex?(definition: {
+    name: string;
+    type?: 'search' | 'vectorSearch';
+    definition: Record<string, unknown>;
+  }): Promise<string>;
+  listSearchIndexes?(name?: string): { toArray(): Promise<Array<Record<string, unknown>>> };
 }
 
 /** Optional client surface for sessions/transactions. */
@@ -142,6 +152,31 @@ export class RawMongoCollection<T extends { id: string }> implements IMongoColle
     opts?: { unique?: boolean; name?: string },
   ): Promise<void> {
     await this.col.createIndex(spec, opts);
+  }
+
+  async createSearchIndex(definition: SearchIndexDefinition): Promise<string> {
+    if (!this.col.createSearchIndex) {
+      throw new Error(
+        'RawMongoCollection.createSearchIndex: underlying driver does not expose createSearchIndex. ' +
+          'Atlas Vector Search requires mongodb-node-driver v6.6+ and Atlas Server v6.0.11+.',
+      );
+    }
+    return this.col.createSearchIndex({
+      name: definition.name,
+      type: definition.type,
+      definition: definition.definition as Record<string, unknown>,
+    });
+  }
+
+  async listSearchIndexes(name?: string): Promise<SearchIndexInfo[]> {
+    if (!this.col.listSearchIndexes) {
+      throw new Error(
+        'RawMongoCollection.listSearchIndexes: underlying driver does not expose listSearchIndexes. ' +
+          'Atlas Search index management requires mongodb-node-driver v6.6+.',
+      );
+    }
+    const rows = await this.col.listSearchIndexes(name).toArray();
+    return rows.map(reviveSearchIndexInfo);
   }
 
   async withTransaction<R>(fn: () => Promise<R>): Promise<R> {
@@ -235,6 +270,23 @@ function isInFilter(v: unknown): v is { $in: unknown[] } {
  * `rewrite` returns `[newKey, newValue]` to replace the entry, or `null` to
  * keep it as-is.
  */
+/**
+ * Map Atlas's `listSearchIndexes` row shape onto our normalized `SearchIndexInfo`.
+ * Atlas returns a `queryable: boolean` plus `status: string` — we pass both
+ * through verbatim and surface the echoed definition for callers that want to
+ * diff existing vs desired specs.
+ */
+function reviveSearchIndexInfo(row: Record<string, unknown>): SearchIndexInfo {
+  const name = typeof row.name === 'string' ? row.name : '';
+  const status = typeof row.status === 'string' ? row.status : 'UNKNOWN';
+  const queryable = row.queryable === true;
+  const latestDefinition =
+    row.latestDefinition && typeof row.latestDefinition === 'object'
+      ? (row.latestDefinition as Record<string, unknown>)
+      : undefined;
+  return { name, status, queryable, latestDefinition };
+}
+
 function walkFilter(
   filter: MongoFilter,
   rewrite: (key: string, value: unknown) => [string, unknown] | null,

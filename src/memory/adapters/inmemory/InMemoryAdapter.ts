@@ -13,6 +13,7 @@ import type {
   EntityId,
   EntityListFilter,
   EntitySearchOptions,
+  EntitySemanticSearchFilter,
   FactFilter,
   FactId,
   FactQueryOptions,
@@ -312,6 +313,35 @@ export class InMemoryAdapter implements IMemoryStore {
       if (!factMatches(f, filter, scope)) continue;
       const score = cosine(queryVector, f.embedding);
       scored.push({ fact: clone(f), score });
+    }
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, opts.topK);
+  }
+
+  async semanticSearchEntities(
+    queryVector: number[],
+    filter: EntitySemanticSearchFilter,
+    opts: SemanticSearchOptions & { minScore?: number },
+    scope: ScopeFilter,
+  ): Promise<Array<{ entity: IEntity; score: number }>> {
+    this.assertLive();
+    // Type filter: `type` (single) takes precedence; `types` (union) is fallback.
+    const typeSet =
+      filter.type !== undefined
+        ? new Set([filter.type])
+        : filter.types && filter.types.length > 0
+          ? new Set(filter.types)
+          : null;
+    const minScore = opts.minScore;
+    const scored: Array<{ entity: IEntity; score: number }> = [];
+    for (const e of this.entitiesById.values()) {
+      if (e.archived) continue;
+      if (!isVisible(e, scope)) continue;
+      if (typeSet && !typeSet.has(e.type)) continue;
+      if (!e.identityEmbedding || e.identityEmbedding.length !== queryVector.length) continue;
+      const score = cosine(queryVector, e.identityEmbedding);
+      if (minScore !== undefined && score < minScore) continue;
+      scored.push({ entity: clone(e), score });
     }
     scored.sort((a, b) => b.score - a.score);
     return scored.slice(0, opts.topK);

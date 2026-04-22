@@ -158,6 +158,80 @@ describeIfAvailable('MongoMemoryAdapter (real Mongo)', () => {
     expect(results[0]?.score).toBeCloseTo(1, 5);
   });
 
+  it('semanticSearchEntities cursor-scan ranks by cosine over identityEmbedding', async () => {
+    // Seed three entities; write identityEmbedding via updateEntity so we
+    // don't depend on MemorySystem's async embedder queue.
+    const alpha = await adapter.createEntity({
+      type: 'organization',
+      displayName: 'Alpha',
+      identifiers: [],
+    });
+    await adapter.updateEntity({ ...alpha, identityEmbedding: [1, 0, 0], version: 2 });
+
+    const beta = await adapter.createEntity({
+      type: 'organization',
+      displayName: 'Beta',
+      identifiers: [],
+    });
+    await adapter.updateEntity({ ...beta, identityEmbedding: [0.8, 0.2, 0], version: 2 });
+
+    const gamma = await adapter.createEntity({
+      type: 'organization',
+      displayName: 'Gamma',
+      identifiers: [],
+    });
+    await adapter.updateEntity({ ...gamma, identityEmbedding: [0, 0, 1], version: 2 });
+
+    const results = await adapter.semanticSearchEntities(
+      [1, 0, 0],
+      { type: 'organization' },
+      { topK: 3 },
+      {},
+    );
+    expect(results.map((r) => r.entity.displayName)).toEqual(['Alpha', 'Beta', 'Gamma']);
+    expect(results[0]!.score).toBeCloseTo(1, 5);
+  });
+
+  it('semanticSearchEntities excludes archived + applies type filter + minScore', async () => {
+    const live = await adapter.createEntity({
+      type: 'organization',
+      displayName: 'Live',
+      identifiers: [],
+    });
+    await adapter.updateEntity({ ...live, identityEmbedding: [1, 0, 0], version: 2 });
+
+    const gone = await adapter.createEntity({
+      type: 'organization',
+      displayName: 'Gone',
+      identifiers: [],
+    });
+    await adapter.updateEntity({ ...gone, identityEmbedding: [1, 0, 0], version: 2 });
+    await adapter.archiveEntity(gone.id, {});
+
+    const offType = await adapter.createEntity({
+      type: 'person',
+      displayName: 'Person',
+      identifiers: [],
+    });
+    await adapter.updateEntity({ ...offType, identityEmbedding: [1, 0, 0], version: 2 });
+
+    const orthogonal = await adapter.createEntity({
+      type: 'organization',
+      displayName: 'Far',
+      identifiers: [],
+    });
+    await adapter.updateEntity({ ...orthogonal, identityEmbedding: [0, 1, 0], version: 2 });
+
+    const results = await adapter.semanticSearchEntities(
+      [1, 0, 0],
+      { type: 'organization' },
+      { topK: 10, minScore: 0.5 },
+      {},
+    );
+    // Archived excluded, type filtered to organization, Far dropped by minScore.
+    expect(results.map((r) => r.entity.displayName)).toEqual(['Live']);
+  });
+
   it('updateEntity enforces optimistic concurrency', async () => {
     const ent = await adapter.createEntity({
       type: 'person',

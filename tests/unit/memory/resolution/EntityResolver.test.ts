@@ -68,17 +68,16 @@ describe('EntityResolver.resolve — via MemorySystem.resolveEntity', () => {
     expect(candidates[0]!.matchedOn).toBe('alias');
   });
 
-  it('typos do NOT fuzzy-resolve in v1 (typo-tolerant resolution is future work)', async () => {
+  it('typos do NOT fuzzy-resolve by default (semantic tier is opt-in)', async () => {
     await seedOrg('Microsoft', [], [{ kind: 'domain', value: 'microsoft.com' }]);
 
     const candidates = await mem.resolveEntity(
       { surface: 'Microsft', type: 'organization' }, // typo
       scope,
     );
-    // Intentionally no match — see EntityResolver header. The caller will
-    // either see an empty array or nothing that clears autoResolveThreshold,
-    // and `upsertEntityBySurface` will create a duplicate. Document this
-    // behavior so future semantic-tier wiring is obvious.
+    // Semantic tier is behind `enableSemanticResolution: true` — without it,
+    // tiers 1-3 are exact-only so a typo returns nothing. Behavior is identical
+    // to the pre-semantic implementation; opt-in preserves backward compat.
     expect(candidates).toEqual([]);
   });
 
@@ -391,6 +390,362 @@ describe('Configurable entity resolution thresholds', () => {
     );
     await mem.flushEmbeddings();
     expect(embedCalls).toBeGreaterThan(0);
+    await mem.shutdown();
+  });
+});
+
+// =============================================================================
+// Tier 4 — semantic match over identityEmbedding (opt-in)
+// =============================================================================
+
+describe('EntityResolver — tier 4: semantic match', () => {
+  /**
+   * Deterministic keyed embedder for the tests. Each surface the test seeds or
+   * queries is assigned a hand-picked vector so cosine similarity is easy to
+   * reason about. Anything we haven't mapped falls back to an orthogonal
+   * vector (no false semantic hits).
+   *
+   * We drive seeds through MemorySystem.upsertEntity, which re-embeds on the
+   * queue — so we have to provide the SAME vector for the seed's identity
+   * string as for the matching query. `normalizeSurface` strips "Inc"/etc.
+   * on both sides so that part lines up naturally; for displayName-only
+   * seeds we key the map by the lowercased displayName.
+   */
+  function buildKeyedEmbedder(map: Record<string, number[]>, dims = 4) {
+    const zero = Array.from({ length: dims }, () => 0);
+    let calls = 0;
+    return {
+      dimensions: dims,
+      embed: async (text: string): Promise<number[]> => {
+        calls++;
+        const key = text.toLowerCase();
+        // Try exact key; else try first-word prefix (identity strings look
+        // like "microsoft | alias: msft | domain=microsoft.com"). That lets
+        // one-off surfaces match a canonical vector if they share a stem.
+        if (map[key]) return [...map[key]];
+        for (const k of Object.keys(map)) {
+          if (key.includes(k)) return [...map[k]];
+        }
+        return [...zero];
+      },
+      get calls() {
+        return calls;
+      },
+    };
+  }
+
+  it('opt-out by default — typos still miss even with an embedder configured', async () => {
+    const embedder = buildKeyedEmbedder({
+      microsoft: [1, 0, 0, 0],
+      microsft: [0.98, 0.05, 0.05, 0], // very close cosine
+    });
+    const store = new InMemoryAdapter();
+    const mem = new MemorySystem({ store, embedder });
+
+    await mem.upsertEntity(
+      { type: 'organization', displayName: 'Microsoft', identifiers: [] },
+      scope,
+    );
+    await mem.flushEmbeddings();
+
+    const candidates = await mem.resolveEntity(
+      { surface: 'Microsft', type: 'organization' },
+      scope,
+    );
+    expect(candidates).toEqual([]);
+    await mem.shutdown();
+  });
+
+  it('opt-in resolves typos via semantic match (matchedOn: embedding)', async () => {
+    const embedder = buildKeyedEmbedder({
+      microsoft: [1, 0, 0, 0],
+      microsft: [0.98, 0.05, 0.05, 0],
+    });
+    const store = new InMemoryAdapter();
+    const mem = new MemorySystem({
+      store,
+      embedder,
+      entityResolution: { enableSemanticResolution: true },
+    });
+
+    await mem.upsertEntity(
+      { type: 'organization', displayName: 'Microsoft', identifiers: [] },
+      scope,
+    );
+    await mem.flushEmbeddings();
+
+    const candidates = await mem.resolveEntity(
+      { surface: 'Microsft', type: 'organization' },
+      scope,
+    );
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]!.matchedOn).toBe('embedding');
+    expect(candidates[0]!.entity.displayName).toBe('Microsoft');
+    // Confidence capped at 0.89 — strictly below default auto-resolve (0.9).
+    expect(candidates[0]!.confidence).toBeLessThanOrEqual(0.89);
+    expect(candidates[0]!.confidence).toBeGreaterThanOrEqual(0.75);
+    await mem.shutdown();
+  });
+
+  it('confidence cap (0.89) prevents semantic tier alone from auto-merging', async () => {
+    // Near-perfect cosine (0.99) — but we still cap at 0.89, so
+    // upsertEntityBySurface (default threshold 0.9) won't merge.
+    const embedder = buildKeyedEmbedder({
+      acme: [1, 0, 0, 0],
+      akme: [0.995, 0.01, 0, 0],
+    });
+    const store = new InMemoryAdapter();
+    const mem = new MemorySystem({
+      store,
+      embedder,
+      entityResolution: { enableSemanticResolution: true },
+    });
+
+    const seeded = await mem.upsertEntity(
+      { type: 'organization', displayName: 'Acme', identifiers: [] },
+      scope,
+    );
+    await mem.flushEmbeddings();
+
+    const result = await mem.upsertEntityBySurface(
+      { surface: 'Akme', type: 'organization' },
+      scope,
+    );
+    // Created new entity instead of merging — semantic cap kept confidence below 0.9.
+    expect(result.resolved).toBe(false);
+    expect(result.entity.id).not.toBe(seeded.entity.id);
+    // But the semantic match WAS surfaced as a merge candidate.
+    expect(result.mergeCandidates.some((c) => c.matchedOn === 'embedding')).toBe(true);
+    await mem.shutdown();
+  });
+
+  it('lowering autoResolveThreshold to 0.75 allows semantic merges', async () => {
+    const embedder = buildKeyedEmbedder({
+      acme: [1, 0, 0, 0],
+      akme: [0.995, 0.01, 0, 0],
+    });
+    const store = new InMemoryAdapter();
+    const mem = new MemorySystem({
+      store,
+      embedder,
+      entityResolution: {
+        enableSemanticResolution: true,
+        autoResolveThreshold: 0.75,
+      },
+    });
+
+    const seeded = await mem.upsertEntity(
+      { type: 'organization', displayName: 'Acme', identifiers: [] },
+      scope,
+    );
+    await mem.flushEmbeddings();
+
+    const result = await mem.upsertEntityBySurface(
+      { surface: 'Akme', type: 'organization' },
+      scope,
+    );
+    expect(result.resolved).toBe(true);
+    expect(result.entity.id).toBe(seeded.entity.id);
+    await mem.shutdown();
+  });
+
+  it('tier-1 identifier match wins — semantic tier skipped to avoid embed cost', async () => {
+    let embedCalls = 0;
+    const embedder = {
+      dimensions: 4,
+      embed: async (_text: string): Promise<number[]> => {
+        embedCalls++;
+        return [1, 0, 0, 0];
+      },
+    };
+    const store = new InMemoryAdapter();
+    const mem = new MemorySystem({
+      store,
+      embedder,
+      entityResolution: { enableSemanticResolution: true },
+    });
+
+    await mem.upsertEntity(
+      {
+        type: 'organization',
+        displayName: 'Microsoft',
+        identifiers: [{ kind: 'domain', value: 'microsoft.com' }],
+      },
+      scope,
+    );
+    await mem.flushEmbeddings();
+    const before = embedCalls;
+
+    const candidates = await mem.resolveEntity(
+      {
+        surface: 'whatever',
+        type: 'organization',
+        identifiers: [{ kind: 'domain', value: 'microsoft.com' }],
+      },
+      scope,
+    );
+    expect(candidates[0]!.confidence).toBe(1.0);
+    expect(candidates[0]!.matchedOn).toBe('identifier');
+    // Embedder NOT called for the resolution — tier 1 short-circuits.
+    expect(embedCalls).toBe(before);
+    await mem.shutdown();
+  });
+
+  it('never downgrades an existing higher-tier match (tier 2 beats tier 4 on same entity)', async () => {
+    const embedder = buildKeyedEmbedder({ microsoft: [1, 0, 0, 0] });
+    const store = new InMemoryAdapter();
+    const mem = new MemorySystem({
+      store,
+      embedder,
+      entityResolution: { enableSemanticResolution: true },
+    });
+
+    await mem.upsertEntity(
+      { type: 'organization', displayName: 'Microsoft', identifiers: [] },
+      scope,
+    );
+    await mem.flushEmbeddings();
+
+    // Exact displayName match → tier 2 (0.9). Semantic would also produce
+    // a candidate for the same entity; the higher-tier confidence must win.
+    const candidates = await mem.resolveEntity(
+      { surface: 'Microsoft', type: 'organization' },
+      scope,
+    );
+    expect(candidates[0]!.matchedOn).toBe('displayName');
+    expect(candidates[0]!.confidence).toBe(0.9);
+    await mem.shutdown();
+  });
+
+  it('type filter is honored by the semantic tier', async () => {
+    const embedder = buildKeyedEmbedder({ alpha: [1, 0, 0, 0] });
+    const store = new InMemoryAdapter();
+    const mem = new MemorySystem({
+      store,
+      embedder,
+      entityResolution: { enableSemanticResolution: true },
+    });
+
+    // Two entities with near-identical identity embeddings but different types.
+    await mem.upsertEntity(
+      { type: 'person', displayName: 'Alpha', identifiers: [] },
+      scope,
+    );
+    await mem.upsertEntity(
+      { type: 'organization', displayName: 'Alpha', identifiers: [] },
+      scope,
+    );
+    await mem.flushEmbeddings();
+
+    const candidates = await mem.resolveEntity(
+      { surface: 'Alpha', type: 'organization' },
+      scope,
+    );
+    expect(candidates.every((c) => c.entity.type === 'organization')).toBe(true);
+  });
+
+  it('below minScore cosine floor (0.75) → no semantic candidate', async () => {
+    // Cosine ≈ 0 for orthogonal vectors — well under the 0.75 floor.
+    const embedder = buildKeyedEmbedder({
+      alpha: [1, 0, 0, 0],
+      beta: [0, 1, 0, 0],
+    });
+    const store = new InMemoryAdapter();
+    const mem = new MemorySystem({
+      store,
+      embedder,
+      entityResolution: { enableSemanticResolution: true },
+    });
+
+    await mem.upsertEntity(
+      { type: 'organization', displayName: 'Alpha', identifiers: [] },
+      scope,
+    );
+    await mem.flushEmbeddings();
+
+    const candidates = await mem.resolveEntity(
+      { surface: 'Beta', type: 'organization' },
+      scope,
+    );
+    expect(candidates).toEqual([]);
+    await mem.shutdown();
+  });
+
+  it('embedder failure logs + falls through to tier 1-3 (no crash)', async () => {
+    const embedder = {
+      dimensions: 4,
+      embed: async (_text: string): Promise<number[]> => {
+        throw new Error('boom');
+      },
+    };
+    const store = new InMemoryAdapter();
+    const mem = new MemorySystem({
+      store,
+      embedder,
+      entityResolution: { enableSemanticResolution: true },
+    });
+
+    // Seed via direct adapter write so we don't go through the embed queue.
+    await store.createEntity({
+      type: 'organization',
+      displayName: 'Microsoft',
+      identifiers: [],
+    });
+
+    // Tier 2 still works even though tier 4's embedder throws.
+    const candidates = await mem.resolveEntity(
+      { surface: 'Microsoft', type: 'organization' },
+      scope,
+    );
+    expect(candidates[0]!.matchedOn).toBe('displayName');
+    await mem.shutdown();
+  });
+
+  it('context-aware disambiguation still boosts semantic candidates', async () => {
+    // Two "John"s; John1 is linked to Acme via a fact. Resolve with Acme in
+    // context — both Johns have nearly-identical identity embeddings, so
+    // semantic surfaces both at near-equal confidence. Context overlap with
+    // Acme should boost John1 to the top.
+    const embedder = buildKeyedEmbedder({
+      john: [1, 0, 0, 0],
+      jon: [0.99, 0.1, 0, 0], // typo'd query vector — near-parallel to john
+      acme: [0, 1, 0, 0],
+    });
+    const store = new InMemoryAdapter();
+    const mem = new MemorySystem({
+      store,
+      embedder,
+      entityResolution: { enableSemanticResolution: true },
+    });
+
+    const acme = await mem.upsertEntity(
+      { type: 'organization', displayName: 'Acme', identifiers: [] },
+      scope,
+    );
+    const john1 = await mem.upsertEntity(
+      { type: 'person', displayName: 'John', identifiers: [] },
+      scope,
+    );
+    const john2 = await mem.upsertEntity(
+      { type: 'person', displayName: 'John', identifiers: [] },
+      scope,
+    );
+    await mem.flushEmbeddings();
+
+    await mem.addFact(
+      { subjectId: john1.entity.id, predicate: 'works_at', kind: 'atomic', objectId: acme.entity.id },
+      scope,
+    );
+
+    // Query with a typo so tiers 1-3 don't match — only semantic + context.
+    const candidates = await mem.resolveEntity(
+      { surface: 'Jon', type: 'person', contextEntityIds: [acme.entity.id] },
+      scope,
+    );
+    // Both Johns surface via semantic; disambiguation puts john1 first.
+    expect(candidates.length).toBeGreaterThanOrEqual(1);
+    expect(candidates[0]!.entity.id).toBe(john1.entity.id);
+    expect(john2.entity.id).toBeDefined();
     await mem.shutdown();
   });
 });

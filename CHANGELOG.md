@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Entity-level semantic resolution (opt-in) + `ensureVectorSearchIndexes` helper
+
+The memory layer has been writing an `identityEmbedding` on every entity since v0.4 but no code read it — `EntityResolver` was exact-only, so typos like "Microsft" → "Microsoft" created duplicates. This change adds the semantic tier that consumes those embeddings and ships the Mongo plumbing to make it production-ready.
+
+**Shape of the change:**
+- **New capability on `IMemoryStore`:** `semanticSearchEntities(queryVector, {type?, types?}, {topK, minScore?}, scope)` — cosine over `identityEmbedding`, archived excluded, scope enforced. Optional (duck-typed) — stores without it skip the semantic tier gracefully. Both in-tree adapters implement it.
+- **New config flag:** `EntityResolutionConfig.enableSemanticResolution` (default `false`). Opt-in because any confidence-calibration miss could silently merge different entities; existing deployments keep exact-only behavior until they flip the flag.
+- **EntityResolver Tier 4 — semantic match:** runs after tiers 1-3 when the flag is on, an embedder is wired, and the store implements `semanticSearchEntities`. Skipped when tier 1 produced a 1.0 identifier match (saves an embed). Cosine floor 0.75; confidence capped at 0.89 — strictly below the default auto-resolve threshold (0.90) so enabling the flag alone NEVER auto-merges. The LLM sees semantic candidates as merge candidates; callers who trust the scoring lower `autoResolveThreshold` (e.g. to 0.75) to opt into auto-merge.
+- **No new LLM tool.** Retrieval tools (`memory_recall`, `memory_graph`, `memory_find_entity`, `memory_search`) already delegate entity resolution to `EntityResolver.resolve()`, so typo-tolerant lookup comes for free without expanding the tool surface or changing tool descriptions.
+- **Both Mongo wrappers supported:** new `createSearchIndex` / `listSearchIndexes` hooks on `IMongoCollectionLike`. `RawMongoCollection` calls the driver directly; `MeteorMongoCollection` routes through `rawCollection()` (same pattern as existing `aggregate`). Neither wrapper is a runtime dependency of the adapter — the methods are structurally optional.
+- **`MongoMemoryAdapter.ensureVectorSearchIndexes({dimensions, similarity?, factsIndexName?, entitiesIndexName?, waitUntilReady?})`:** opt-in, programmatic creation of Atlas `$vectorSearch` indexes for both the facts collection (`embedding`) and the entities collection (`identityEmbedding`). Idempotent — existing indexes by name are detected via `listSearchIndexes` and skipped. When `waitUntilReady:true` (default) polls until `queryable: true` or timeout. Requires mongodb node driver v6.6+ and Atlas Server v6.0.11+. Clients can also create indexes manually via Atlas UI; the adapter's `vectorIndexName` / `entityVectorIndexName` options must match the chosen names.
+- **New adapter option:** `MongoMemoryAdapterOptions.entityVectorIndexName` — when set + `entities.aggregate` present, `semanticSearchEntities` dispatches through `$vectorSearch` instead of cursor-scan cosine.
+
+**What's preserved:**
+- **Zero behavior change by default.** `enableSemanticResolution` defaults false; exact-only resolution is identical to prior versions.
+- **Tier ordering preserved.** Semantic tier never downgrades a higher-tier match on the same entity (tier 1-3 confidence always wins on ties).
+- **Scope + archived invariants preserved.** Both adapter implementations apply `ScopeFilter` and hide archived entities. Tested end-to-end.
+
+**Tests added (23 new):**
+- `tests/unit/memory/InMemoryAdapter.test.ts` (9) — cosine ranking, topK truncation, dimension-mismatch skip, missing-embedding skip, single + union type filters, archived exclusion, scope visibility (cross-group private hidden), `minScore` floor.
+- `tests/unit/memory/resolution/EntityResolver.test.ts` (10) — opt-out default (typos still miss even with embedder), opt-in resolves typos, confidence cap prevents auto-merge, lowered `autoResolveThreshold` allows semantic merge, tier-1 identifier short-circuit (no embed call), no downgrade of higher-tier match, type filter honored, below-cosine-floor → no candidate, embedder-failure log + graceful tier-1-3 fallthrough, context-aware disambiguation boost on semantic candidates.
+- `tests/unit/memory/adapters/mongo/MongoMemoryAdapter.test.ts` (14) — cursor-scan ranking, skip unembedded + mismatched dim, archived excluded, type filter (single + union), scope visibility, `minScore` floor, `find()` dispatch when no vector index, `aggregate()` dispatch with `entityVectorIndexName`, `ensureVectorSearchIndexes` creates correct definition for both collections, idempotent on re-run, custom index names, `factsIndexName: null` skip, non-default similarity, polling until READY, error on FAILED status, actionable timeout error.
+- `tests/integration/memory/MongoMemoryAdapter.integration.test.ts` (2) — end-to-end cosine ranking + archived/type/minScore on real Mongo (gated on `mongodb-memory-server`).
+- Existing "typos do NOT fuzzy-resolve in v1" assertion updated to reflect current state ("semantic is opt-in; default still exact-only") without weakening the guarantee.
+
+**Migration guidance for client apps:**
+```ts
+// 1. Turn on the feature flag:
+new MemorySystem({
+  store,
+  embedder,
+  entityResolution: { enableSemanticResolution: true },
+});
+
+// 2. On Mongo deployments, create the Atlas Vector Search index(es) from your migration:
+await (adapter as MongoMemoryAdapter).ensureVectorSearchIndexes({
+  dimensions: embedder.dimensions,   // MUST match embedder
+  similarity: 'cosine',              // default
+});
+// Adapter options must name the same indexes:
+new MongoMemoryAdapter({
+  entities, facts,
+  vectorIndexName: 'facts_vector',
+  entityVectorIndexName: 'entities_vector',  // enables $vectorSearch fast path
+});
+```
+
 ### User-specific agent behavior rules — `memory_set_agent_rule` + rules block
 
 New narrow-trigger channel for **per-user, per-agent behavior directives**. Addresses the long-running tension between "agent self-learns from ambient observation" (which produced noise and meta-procedures) and "agent never modifies its own behavior" (which stranded user corrections like "stop apologizing" with nowhere to go).

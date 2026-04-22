@@ -386,6 +386,18 @@ export interface SemanticSearchOptions {
 }
 
 /**
+ * Narrow filter for `IMemoryStore.semanticSearchEntities`. Type narrowing is
+ * the only supported pre-filter — resolver tier-4 always knows (or guesses)
+ * the type. Scope still flows through `scope: ScopeFilter` separately.
+ */
+export interface EntitySemanticSearchFilter {
+  /** Single-type narrow — preferred when known. */
+  type?: string;
+  /** Multi-type narrow — union. Ignored when `type` is set. */
+  types?: string[];
+}
+
+/**
  * Input type for creating a new entity. `id`, `version`, `createdAt`, and
  * `updatedAt` are assigned by the storage layer (adapter) — callers never
  * set them.
@@ -468,6 +480,29 @@ export interface IMemoryStore {
     opts: SemanticSearchOptions,
     scope: ScopeFilter,
   ): Promise<Array<{ fact: IFact; score: number }>>;
+
+  /**
+   * Entity-level semantic search over `identityEmbedding`. Consumed by
+   * `EntityResolver`'s semantic tier (Tier 4) when
+   * `EntityResolutionConfig.enableSemanticResolution` is on. Adapters that
+   * don't implement this are skipped — the resolver falls back to Tiers 1-3.
+   *
+   * Contract:
+   *  - `filter.type` / `filter.types` narrow by `IEntity.type`. At least one
+   *    should be used in practice — otherwise every entity type is a candidate.
+   *  - `opts.topK` clamped by the caller (resolver passes small values, ~10).
+   *  - `opts.minScore` optional noise floor (adapter MAY pre-filter; resolver
+   *    post-filters regardless, so implementations can ignore it).
+   *  - Results ordered by descending `score` (cosine similarity, 0..1).
+   *  - Archived entities MUST be excluded.
+   *  - `scope` enforcement identical to every other read.
+   */
+  semanticSearchEntities?(
+    queryVector: number[],
+    filter: EntitySemanticSearchFilter,
+    opts: SemanticSearchOptions & { minScore?: number },
+    scope: ScopeFilter,
+  ): Promise<Array<{ entity: IEntity; score: number }>>;
 
   // ----- Lifecycle -----
   destroy(): void;
@@ -697,14 +732,28 @@ export interface EntityResolutionConfig {
    * embedding (over displayName + aliases + primary identifier values).
    * Default true.
    *
-   * The embedding is stored on the entity for forward compatibility; v1 of
-   * the resolver does not yet read it. Typo-tolerant resolution (consuming
-   * these embeddings via an entity-level semantic search) is planned for a
-   * future release and will require a new `IMemoryStore.semanticSearchEntities`
-   * capability on adapters. Set to `false` to skip the embedder cost until
-   * that ships.
+   * Consumed by Tier 4 of `EntityResolver` when `enableSemanticResolution`
+   * is on. Set to `false` to skip the embedder cost if you neither use
+   * semantic resolution nor plan to enable it later.
    */
   enableIdentityEmbedding?: boolean;
+  /**
+   * Enable the semantic tier in `EntityResolver` — matches surface forms
+   * against `identityEmbedding` via `IMemoryStore.semanticSearchEntities`.
+   * Requires an embedder AND an adapter that implements
+   * `semanticSearchEntities` (currently `InMemoryAdapter` and
+   * `MongoMemoryAdapter`).
+   *
+   * Default: false. Opt-in because any confidence calibration mistake could
+   * silently merge different entities; existing deployments keep Tier 1-3
+   * exact-only behavior until they flip this on.
+   *
+   * Semantic candidates are capped at confidence 0.89 — strictly below the
+   * default `autoResolveThreshold` (0.90) — so enabling this flag alone will
+   * NOT auto-merge. The LLM sees semantic candidates as "merge candidates"
+   * and decides. Lower `autoResolveThreshold` only if you trust the mapping.
+   */
+  enableSemanticResolution?: boolean;
 }
 
 /**

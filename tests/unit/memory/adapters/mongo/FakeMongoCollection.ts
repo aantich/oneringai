@@ -21,16 +21,24 @@ import type {
   MongoUpdate,
   MongoUpdateOptions,
   MongoUpdateResult,
+  SearchIndexDefinition,
+  SearchIndexInfo,
 } from '@/memory/adapters/mongo/IMongoCollectionLike.js';
 
 export class FakeMongoCollection<T extends { id: string }> implements IMongoCollectionLike<T> {
   private docs: T[] = [];
   private indexes: Array<{ spec: Record<string, 1 | -1>; unique: boolean; name?: string }> = [];
+  private searchIndexes: SearchIndexInfo[] = [];
   private txActive = false;
   private seq = 0;
 
   /** For verifying aggregate path. */
   public aggregateCalls = 0;
+  /** For verifying search-index calls. */
+  public createSearchIndexCalls: SearchIndexDefinition[] = [];
+  public listSearchIndexCalls = 0;
+  /** When set, successive listSearchIndexes calls yield from this queue (oldest first). */
+  public searchIndexSequence?: SearchIndexInfo[][];
 
   constructor(private readonly name: string = 'fake') {}
 
@@ -141,6 +149,39 @@ export class FakeMongoCollection<T extends { id: string }> implements IMongoColl
     opts?: { unique?: boolean; name?: string },
   ): Promise<void> {
     this.indexes.push({ spec, unique: !!opts?.unique, name: opts?.name });
+  }
+
+  async createSearchIndex(definition: SearchIndexDefinition): Promise<string> {
+    this.createSearchIndexCalls.push(definition);
+    this.searchIndexes.push({
+      name: definition.name,
+      status: 'PENDING',
+      queryable: false,
+      latestDefinition: definition.definition as Record<string, unknown>,
+    });
+    return definition.name;
+  }
+
+  async listSearchIndexes(name?: string): Promise<SearchIndexInfo[]> {
+    this.listSearchIndexCalls++;
+    // Optional scripted sequence — each call pops the next snapshot. Useful
+    // for simulating the PENDING → BUILDING → READY lifecycle under polling.
+    if (this.searchIndexSequence && this.searchIndexSequence.length > 0) {
+      const snapshot = this.searchIndexSequence.shift()!;
+      const filtered = name ? snapshot.filter((i) => i.name === name) : snapshot;
+      return filtered;
+    }
+    const all = this.searchIndexes;
+    return name ? all.filter((i) => i.name === name) : [...all];
+  }
+
+  /** Test helper: mark a scripted index as READY without using the sequence. */
+  markSearchIndexReady(name: string): void {
+    const i = this.searchIndexes.find((x) => x.name === name);
+    if (i) {
+      i.status = 'READY';
+      i.queryable = true;
+    }
   }
 
   get createdIndexes(): Array<{ spec: Record<string, 1 | -1>; name?: string }> {
@@ -394,10 +435,47 @@ function evaluatePipeline(docs: unknown[], pipeline: unknown[]): unknown[] {
       const params = stage.$graphLookup as { as: string };
       current = current.map((d) => ({ ...(d as Record<string, unknown>), [params.as]: [] }));
     } else if ('$vectorSearch' in stage) {
-      current = [];
+      // Minimal functional stand-in for Atlas $vectorSearch: apply the filter,
+      // extract the embedding at `path`, score cosine vs `queryVector`, top K.
+      // `vectorSearchScore` is stashed under the same field name `$addFields`
+      // will look for via `$meta`.
+      const params = stage.$vectorSearch as {
+        path: string;
+        queryVector: number[];
+        filter?: MongoFilter;
+        limit?: number;
+      };
+      let filtered = current;
+      if (params.filter) {
+        filtered = filtered.filter((d) => matches(d, params.filter!));
+      }
+      const scored: Array<{ doc: Record<string, unknown>; score: number }> = [];
+      for (const d of filtered) {
+        const vec = getField(d, params.path);
+        if (!Array.isArray(vec)) continue;
+        if (vec.length !== params.queryVector.length) continue;
+        const score = cosineVec(vec as number[], params.queryVector);
+        scored.push({ doc: d as Record<string, unknown>, score });
+      }
+      scored.sort((a, b) => b.score - a.score);
+      const limit = params.limit ?? scored.length;
+      current = scored.slice(0, limit).map((s) => ({ ...s.doc, score: s.score }));
     }
   }
   return current;
+}
+
+function cosineVec(a: number[], b: number[]): number {
+  let dot = 0;
+  let na = 0;
+  let nb = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i]! * b[i]!;
+    na += a[i]! * a[i]!;
+    nb += b[i]! * b[i]!;
+  }
+  const denom = Math.sqrt(na) * Math.sqrt(nb);
+  return denom === 0 ? 0 : dot / denom;
 }
 
 function clone<T>(x: T): T {

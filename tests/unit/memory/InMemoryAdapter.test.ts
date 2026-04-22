@@ -774,6 +774,147 @@ describe('InMemoryAdapter', () => {
   });
 
   // ==========================================================================
+  // Semantic entity search (identityEmbedding)
+  // ==========================================================================
+
+  describe('semanticSearchEntities', () => {
+    async function createEntityWithEmbedding(
+      overrides: Partial<NewEntity>,
+      embedding: number[] | undefined,
+    ): Promise<IEntity> {
+      const e = await store.createEntity(entityInput(overrides));
+      if (embedding !== undefined) {
+        const updated: IEntity = { ...e, identityEmbedding: embedding, version: e.version + 1 };
+        await store.updateEntity(updated);
+        return (await store.getEntity(e.id, {}))!;
+      }
+      return e;
+    }
+
+    it('ranks entities by cosine similarity over identityEmbedding', async () => {
+      const alpha = await createEntityWithEmbedding(
+        { displayName: 'Alpha', type: 'organization' },
+        [1, 0, 0],
+      );
+      const beta = await createEntityWithEmbedding(
+        { displayName: 'Beta', type: 'organization' },
+        [0.9, 0.1, 0],
+      );
+      const gamma = await createEntityWithEmbedding(
+        { displayName: 'Gamma', type: 'organization' },
+        [0, 0, 1],
+      );
+
+      const results = await store.semanticSearchEntities(
+        [1, 0, 0],
+        { type: 'organization' },
+        { topK: 3 },
+        {},
+      );
+      expect(results[0]!.entity.id).toBe(alpha.id);
+      expect(results[0]!.score).toBeCloseTo(1, 5);
+      expect(results[1]!.entity.id).toBe(beta.id);
+      expect(results[2]!.entity.id).toBe(gamma.id);
+    });
+
+    it('honors topK by truncating after sort', async () => {
+      await createEntityWithEmbedding({ displayName: 'A' }, [1, 0, 0]);
+      await createEntityWithEmbedding({ displayName: 'B' }, [0.8, 0.2, 0]);
+      await createEntityWithEmbedding({ displayName: 'C' }, [0.5, 0.5, 0]);
+      const results = await store.semanticSearchEntities([1, 0, 0], {}, { topK: 2 }, {});
+      expect(results).toHaveLength(2);
+      expect(results[0]!.score).toBeGreaterThan(results[1]!.score);
+    });
+
+    it('skips entities without identityEmbedding', async () => {
+      await createEntityWithEmbedding({ displayName: 'Bare' }, undefined);
+      const embedded = await createEntityWithEmbedding({ displayName: 'Embedded' }, [1, 0, 0]);
+      const results = await store.semanticSearchEntities([1, 0, 0], {}, { topK: 10 }, {});
+      expect(results.map((r) => r.entity.id)).toEqual([embedded.id]);
+    });
+
+    it('skips entities whose identityEmbedding has a mismatched dimension', async () => {
+      await createEntityWithEmbedding({ displayName: 'ShortVec' }, [1, 0]); // wrong dim
+      const ok = await createEntityWithEmbedding({ displayName: 'GoodVec' }, [1, 0, 0]);
+      const results = await store.semanticSearchEntities([1, 0, 0], {}, { topK: 10 }, {});
+      expect(results.map((r) => r.entity.id)).toEqual([ok.id]);
+    });
+
+    it('filters by type (single)', async () => {
+      const org = await createEntityWithEmbedding(
+        { displayName: 'MSFT', type: 'organization' },
+        [1, 0, 0],
+      );
+      await createEntityWithEmbedding({ displayName: 'Alice', type: 'person' }, [1, 0, 0]);
+      const results = await store.semanticSearchEntities(
+        [1, 0, 0],
+        { type: 'organization' },
+        { topK: 10 },
+        {},
+      );
+      expect(results.map((r) => r.entity.id)).toEqual([org.id]);
+    });
+
+    it('filters by types (union)', async () => {
+      const org = await createEntityWithEmbedding(
+        { displayName: 'MSFT', type: 'organization' },
+        [1, 0, 0],
+      );
+      const topic = await createEntityWithEmbedding(
+        { displayName: 'AI', type: 'topic' },
+        [0.9, 0, 0.1],
+      );
+      await createEntityWithEmbedding({ displayName: 'Alice', type: 'person' }, [1, 0, 0]);
+      const results = await store.semanticSearchEntities(
+        [1, 0, 0],
+        { types: ['organization', 'topic'] },
+        { topK: 10 },
+        {},
+      );
+      const ids = results.map((r) => r.entity.id).sort();
+      expect(ids).toEqual([org.id, topic.id].sort());
+    });
+
+    it('excludes archived entities', async () => {
+      const live = await createEntityWithEmbedding({ displayName: 'Live' }, [1, 0, 0]);
+      const gone = await createEntityWithEmbedding({ displayName: 'Gone' }, [1, 0, 0]);
+      await store.archiveEntity(gone.id, {});
+      const results = await store.semanticSearchEntities([1, 0, 0], {}, { topK: 10 }, {});
+      expect(results.map((r) => r.entity.id)).toEqual([live.id]);
+    });
+
+    it('honors scope visibility — cross-group private entities hidden', async () => {
+      await createEntityWithEmbedding(
+        { displayName: 'SecretOrg', groupId: 'g2', permissions: PRIVATE_PERMS },
+        [1, 0, 0],
+      );
+      const mine = await createEntityWithEmbedding(
+        { displayName: 'MyOrg', groupId: 'g1' },
+        [1, 0, 0],
+      );
+      const results = await store.semanticSearchEntities(
+        [1, 0, 0],
+        {},
+        { topK: 10 },
+        { groupId: 'g1' },
+      );
+      expect(results.map((r) => r.entity.id)).toEqual([mine.id]);
+    });
+
+    it('applies minScore floor when provided', async () => {
+      const closeA = await createEntityWithEmbedding({ displayName: 'Close' }, [1, 0, 0]);
+      await createEntityWithEmbedding({ displayName: 'Far' }, [0, 1, 0]); // cosine 0 → below
+      const results = await store.semanticSearchEntities(
+        [1, 0, 0],
+        {},
+        { topK: 10, minScore: 0.5 },
+        {},
+      );
+      expect(results.map((r) => r.entity.id)).toEqual([closeA.id]);
+    });
+  });
+
+  // ==========================================================================
   // Lifecycle
   // ==========================================================================
 

@@ -603,6 +603,298 @@ describe('MongoMemoryAdapter', () => {
   });
 
   // ==========================================================================
+  // Semantic entity search — cursor-scan fallback
+  // ==========================================================================
+
+  describe('semanticSearchEntities cursor-scan fallback', () => {
+    /** Seed an entity and write identityEmbedding via updateEntity (version bump). */
+    async function seedWithEmbedding(
+      overrides: Partial<NewEntity>,
+      embedding: number[] | undefined,
+    ): Promise<IEntity> {
+      const e = await adapter.createEntity(entityInput(overrides));
+      if (embedding !== undefined) {
+        await adapter.updateEntity({ ...e, identityEmbedding: embedding, version: 2 });
+        return (await adapter.getEntity(e.id, {}))!;
+      }
+      return e;
+    }
+
+    it('ranks entities by cosine similarity over identityEmbedding', async () => {
+      const alpha = await seedWithEmbedding(
+        { displayName: 'Alpha', type: 'organization' },
+        [1, 0, 0],
+      );
+      const beta = await seedWithEmbedding(
+        { displayName: 'Beta', type: 'organization' },
+        [0.8, 0.2, 0],
+      );
+      await seedWithEmbedding({ displayName: 'Gamma', type: 'organization' }, [0, 0, 1]);
+
+      const res = await adapter.semanticSearchEntities(
+        [1, 0, 0],
+        { type: 'organization' },
+        { topK: 2 },
+        {},
+      );
+      expect(res).toHaveLength(2);
+      expect(res[0]!.entity.id).toBe(alpha.id);
+      expect(res[0]!.score).toBeCloseTo(1, 5);
+      expect(res[1]!.entity.id).toBe(beta.id);
+    });
+
+    it('skips entities without identityEmbedding and mismatched dimensions', async () => {
+      await seedWithEmbedding({ displayName: 'Bare' }, undefined);
+      await seedWithEmbedding({ displayName: 'Short' }, [1, 0]); // wrong dim
+      const ok = await seedWithEmbedding({ displayName: 'Good' }, [1, 0, 0]);
+      const res = await adapter.semanticSearchEntities([1, 0, 0], {}, { topK: 10 }, {});
+      expect(res.map((r) => r.entity.id)).toEqual([ok.id]);
+    });
+
+    it('excludes archived entities', async () => {
+      const live = await seedWithEmbedding({ displayName: 'Live' }, [1, 0, 0]);
+      const gone = await seedWithEmbedding({ displayName: 'Gone' }, [1, 0, 0]);
+      await adapter.archiveEntity(gone.id, {});
+      const res = await adapter.semanticSearchEntities([1, 0, 0], {}, { topK: 10 }, {});
+      expect(res.map((r) => r.entity.id)).toEqual([live.id]);
+    });
+
+    it('applies type filter (single + union)', async () => {
+      const org = await seedWithEmbedding(
+        { displayName: 'Alpha', type: 'organization' },
+        [1, 0, 0],
+      );
+      const topic = await seedWithEmbedding({ displayName: 'Alpha', type: 'topic' }, [1, 0, 0]);
+      await seedWithEmbedding({ displayName: 'Alpha', type: 'person' }, [1, 0, 0]);
+
+      const single = await adapter.semanticSearchEntities(
+        [1, 0, 0],
+        { type: 'organization' },
+        { topK: 10 },
+        {},
+      );
+      expect(single.map((r) => r.entity.id)).toEqual([org.id]);
+
+      const union = await adapter.semanticSearchEntities(
+        [1, 0, 0],
+        { types: ['organization', 'topic'] },
+        { topK: 10 },
+        {},
+      );
+      expect(new Set(union.map((r) => r.entity.id))).toEqual(new Set([org.id, topic.id]));
+    });
+
+    it('applies scope filter — cross-group private entities hidden', async () => {
+      await seedWithEmbedding(
+        { displayName: 'Secret', groupId: 'g2', permissions: PRIVATE_PERMS },
+        [1, 0, 0],
+      );
+      const mine = await seedWithEmbedding(
+        { displayName: 'Mine', groupId: 'g1' },
+        [1, 0, 0],
+      );
+      const res = await adapter.semanticSearchEntities(
+        [1, 0, 0],
+        {},
+        { topK: 10 },
+        { groupId: 'g1' },
+      );
+      expect(res.map((r) => r.entity.id)).toEqual([mine.id]);
+    });
+
+    it('applies minScore floor', async () => {
+      const close = await seedWithEmbedding({ displayName: 'Close' }, [1, 0, 0]);
+      await seedWithEmbedding({ displayName: 'Far' }, [0, 1, 0]); // cosine 0
+      const res = await adapter.semanticSearchEntities(
+        [1, 0, 0],
+        {},
+        { topK: 10, minScore: 0.5 },
+        {},
+      );
+      expect(res.map((r) => r.entity.id)).toEqual([close.id]);
+    });
+
+    it('uses find() not aggregate() when entityVectorIndexName is unset', async () => {
+      await seedWithEmbedding({ displayName: 'Any' }, [1, 0, 0]);
+      const before = entColl.aggregateCalls;
+      await adapter.semanticSearchEntities([1, 0, 0], {}, { topK: 1 }, {});
+      expect(entColl.aggregateCalls).toBe(before);
+    });
+  });
+
+  // ==========================================================================
+  // Semantic entity search — Atlas $vectorSearch path
+  // ==========================================================================
+
+  describe('semanticSearchEntities Atlas $vectorSearch path', () => {
+    let atlasEnts: FakeMongoCollection<IEntity>;
+    let atlasFacts: FakeMongoCollection<IFact>;
+    let atlasAdapter: MongoMemoryAdapter;
+
+    beforeEach(() => {
+      atlasEnts = new FakeMongoCollection<IEntity>('entities');
+      atlasFacts = new FakeMongoCollection<IFact>('facts');
+      atlasAdapter = new MongoMemoryAdapter({
+        entities: atlasEnts,
+        facts: atlasFacts,
+        factsCollectionName: 'facts',
+        entityVectorIndexName: 'entities_vector',
+      });
+    });
+
+    afterEach(() => {
+      if (!atlasAdapter.isDestroyed) atlasAdapter.destroy();
+    });
+
+    it('dispatches to aggregate() when entityVectorIndexName is set', async () => {
+      const e = await atlasAdapter.createEntity(entityInput({ type: 'organization' }));
+      await atlasAdapter.updateEntity({ ...e, identityEmbedding: [1, 0, 0], version: 2 });
+
+      const before = atlasEnts.aggregateCalls;
+      const res = await atlasAdapter.semanticSearchEntities(
+        [1, 0, 0],
+        { type: 'organization' },
+        { topK: 5 },
+        {},
+      );
+      expect(atlasEnts.aggregateCalls).toBe(before + 1);
+      expect(res).toHaveLength(1);
+      expect(res[0]!.entity.id).toBe(e.id);
+      expect(res[0]!.score).toBeCloseTo(1, 5);
+    });
+  });
+
+  // ==========================================================================
+  // ensureVectorSearchIndexes — index management helper
+  // ==========================================================================
+
+  describe('ensureVectorSearchIndexes', () => {
+    it('creates facts + entities vector search indexes with expected definition', async () => {
+      // waitUntilReady=false to avoid polling the fake's PENDING default forever.
+      await adapter.ensureVectorSearchIndexes({
+        dimensions: 1536,
+        waitUntilReady: false,
+      });
+      const factDefs = factColl.createSearchIndexCalls.filter((d) => d.name === 'facts_vector');
+      const entDefs = entColl.createSearchIndexCalls.filter((d) => d.name === 'entities_vector');
+      expect(factDefs).toHaveLength(1);
+      expect(entDefs).toHaveLength(1);
+      expect(factDefs[0]!.type).toBe('vectorSearch');
+      expect(factDefs[0]!.definition.fields![0]).toEqual({
+        type: 'vector',
+        path: 'embedding',
+        numDimensions: 1536,
+        similarity: 'cosine',
+      });
+      expect(entDefs[0]!.definition.fields![0]).toEqual({
+        type: 'vector',
+        path: 'identityEmbedding',
+        numDimensions: 1536,
+        similarity: 'cosine',
+      });
+    });
+
+    it('skips creation when index already present (idempotent)', async () => {
+      // First run seeds both indexes.
+      await adapter.ensureVectorSearchIndexes({ dimensions: 8, waitUntilReady: false });
+      expect(factColl.createSearchIndexCalls).toHaveLength(1);
+      expect(entColl.createSearchIndexCalls).toHaveLength(1);
+
+      // Second run must be a no-op for creation.
+      await adapter.ensureVectorSearchIndexes({ dimensions: 8, waitUntilReady: false });
+      expect(factColl.createSearchIndexCalls).toHaveLength(1);
+      expect(entColl.createSearchIndexCalls).toHaveLength(1);
+    });
+
+    it('honors custom index names (factsIndexName / entitiesIndexName)', async () => {
+      await adapter.ensureVectorSearchIndexes({
+        dimensions: 4,
+        factsIndexName: 'custom_facts_idx',
+        entitiesIndexName: 'custom_ents_idx',
+        waitUntilReady: false,
+      });
+      expect(factColl.createSearchIndexCalls[0]!.name).toBe('custom_facts_idx');
+      expect(entColl.createSearchIndexCalls[0]!.name).toBe('custom_ents_idx');
+    });
+
+    it('skips facts when factsIndexName is null', async () => {
+      await adapter.ensureVectorSearchIndexes({
+        dimensions: 4,
+        factsIndexName: null,
+        waitUntilReady: false,
+      });
+      expect(factColl.createSearchIndexCalls).toHaveLength(0);
+      expect(entColl.createSearchIndexCalls).toHaveLength(1);
+    });
+
+    it('accepts non-default similarity', async () => {
+      await adapter.ensureVectorSearchIndexes({
+        dimensions: 4,
+        similarity: 'dotProduct',
+        waitUntilReady: false,
+      });
+      expect(
+        (factColl.createSearchIndexCalls[0]!.definition.fields![0] as { similarity: string })
+          .similarity,
+      ).toBe('dotProduct');
+    });
+
+    it('waits for queryable=true when waitUntilReady=true', async () => {
+      // Script lifecycle: first list = empty (triggers create), then PENDING,
+      // then READY. Each call consumes one snapshot.
+      factColl.searchIndexSequence = [
+        [], // list before create
+        [{ name: 'facts_vector', status: 'PENDING', queryable: false }],
+        [{ name: 'facts_vector', status: 'READY', queryable: true }],
+      ];
+      entColl.searchIndexSequence = [
+        [],
+        [{ name: 'entities_vector', status: 'PENDING', queryable: false }],
+        [{ name: 'entities_vector', status: 'READY', queryable: true }],
+      ];
+      await adapter.ensureVectorSearchIndexes({
+        dimensions: 4,
+        waitUntilReady: true,
+        readyPollMs: 1,
+        readyTimeoutMs: 5_000,
+      });
+      // Reached READY for both.
+      expect(factColl.listSearchIndexCalls).toBeGreaterThanOrEqual(3);
+      expect(entColl.listSearchIndexCalls).toBeGreaterThanOrEqual(3);
+    });
+
+    it('throws when Atlas reports FAILED status', async () => {
+      factColl.searchIndexSequence = [
+        [], // before create
+        [{ name: 'facts_vector', status: 'FAILED', queryable: false }],
+      ];
+      await expect(
+        adapter.ensureVectorSearchIndexes({
+          dimensions: 4,
+          waitUntilReady: true,
+          readyPollMs: 1,
+          readyTimeoutMs: 2_000,
+          entitiesIndexName: null, // isolate to facts
+        }),
+      ).rejects.toThrow(/FAILED/);
+    });
+
+    it('times out with an actionable error', async () => {
+      // Never becomes queryable within the deadline.
+      factColl.searchIndexSequence = [[]]; // triggers create, then polls real state
+      await expect(
+        adapter.ensureVectorSearchIndexes({
+          dimensions: 4,
+          waitUntilReady: true,
+          readyPollMs: 1,
+          readyTimeoutMs: 10,
+          entitiesIndexName: null,
+        }),
+      ).rejects.toThrow(/timed out/);
+    });
+  });
+
+  // ==========================================================================
   // Graph traverse — iterative fallback
   // ==========================================================================
 

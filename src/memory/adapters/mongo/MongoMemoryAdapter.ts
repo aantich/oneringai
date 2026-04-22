@@ -18,6 +18,7 @@ import type {
   EntityId,
   EntityListFilter,
   EntitySearchOptions,
+  EntitySemanticSearchFilter,
   FactFilter,
   FactId,
   FactQueryOptions,
@@ -34,7 +35,13 @@ import type {
   TraversalOptions,
 } from '../../types.js';
 import { genericTraverse } from '../../GenericTraversal.js';
-import type { IMongoCollectionLike, MongoFilter, MongoSort } from './IMongoCollectionLike.js';
+import type {
+  IMongoCollectionLike,
+  MongoFilter,
+  MongoSort,
+  SearchIndexDefinition,
+  SearchIndexInfo,
+} from './IMongoCollectionLike.js';
 import { mergeFilters, scopeToFilter } from './scopeFilter.js';
 import { ensureIndexes } from './indexes.js';
 import {
@@ -78,8 +85,22 @@ export interface MongoMemoryAdapterOptions {
   vectorIndexName?: string;
 
   /**
+   * When set AND `entities.aggregate` is present, `semanticSearchEntities()`
+   * uses Atlas Vector Search via `$vectorSearch` against this index name.
+   * Otherwise falls back to cursor-scan cosine over `entity.identityEmbedding`.
+   *
+   * Index is NOT auto-created by `ensureIndexes()` (which only handles regular
+   * b-tree indexes). Create it via `ensureVectorSearchIndexes()` (programmatic,
+   * requires mongodb node driver v6.6+ + Atlas Server v6.0.11+) or via the
+   * Atlas UI / admin API. See `ensureVectorSearchIndexes` JSDoc for details.
+   */
+  entityVectorIndexName?: string;
+
+  /**
    * Number of vector candidates to ask Atlas Vector Search to consider before
-   * returning topK. Only used when `vectorIndexName` is set. Default: topK * 10.
+   * returning topK. Used by both `semanticSearch` (facts) and
+   * `semanticSearchEntities` when the corresponding index name is set.
+   * Default: topK * 10.
    */
   vectorCandidateMultiplier?: number;
 
@@ -108,6 +129,7 @@ export class MongoMemoryAdapter implements IMemoryStore {
   private readonly facts: IMongoCollectionLike<IFact>;
   private readonly useNativeGraphLookup: boolean;
   private readonly vectorIndexName?: string;
+  private readonly entityVectorIndexName?: string;
   private readonly vectorCandidateMultiplier: number;
   private readonly factsCollectionName?: string;
   private readonly defaultPageSize: number;
@@ -119,6 +141,7 @@ export class MongoMemoryAdapter implements IMemoryStore {
     this.useNativeGraphLookup =
       !!opts.useNativeGraphLookup && !!opts.facts.aggregate && !!opts.factsCollectionName;
     this.vectorIndexName = opts.vectorIndexName;
+    this.entityVectorIndexName = opts.entityVectorIndexName;
     this.vectorCandidateMultiplier = opts.vectorCandidateMultiplier ?? 10;
     this.factsCollectionName = opts.factsCollectionName;
     this.defaultPageSize = opts.defaultPageSize ?? DEFAULT_PAGE_SIZE;
@@ -635,6 +658,166 @@ export class MongoMemoryAdapter implements IMemoryStore {
   }
 
   // ==========================================================================
+  // Semantic entity search (identityEmbedding)
+  // ==========================================================================
+
+  async semanticSearchEntities(
+    queryVector: number[],
+    filter: EntitySemanticSearchFilter,
+    opts: SemanticSearchOptions & { minScore?: number },
+    scope: ScopeFilter,
+  ): Promise<Array<{ entity: IEntity; score: number }>> {
+    this.assertLive();
+    if (this.entityVectorIndexName && this.entities.aggregate) {
+      return this.atlasVectorSearchEntities(queryVector, filter, opts, scope);
+    }
+    return this.cursorCosineEntities(queryVector, filter, opts, scope);
+  }
+
+  private async atlasVectorSearchEntities(
+    queryVector: number[],
+    filter: EntitySemanticSearchFilter,
+    opts: SemanticSearchOptions & { minScore?: number },
+    scope: ScopeFilter,
+  ): Promise<Array<{ entity: IEntity; score: number }>> {
+    const vectorFilter = mergeFilters(
+      scopeToFilter(scope),
+      ARCHIVED_HIDDEN,
+      entitySemanticFilterToMongo(filter),
+    );
+    const pipeline = [
+      {
+        $vectorSearch: {
+          index: this.entityVectorIndexName!,
+          path: 'identityEmbedding',
+          queryVector,
+          numCandidates: opts.topK * this.vectorCandidateMultiplier,
+          limit: opts.topK,
+          filter: vectorFilter,
+        },
+      },
+      { $addFields: { score: { $meta: 'vectorSearchScore' } } },
+    ];
+    const rows = (await this.entities.aggregate!(pipeline)) as Array<IEntity & { score?: number }>;
+    const minScore = opts.minScore;
+    const scored = rows
+      .map((r) => ({ entity: reviveEntity(r), score: r.score ?? 0 }))
+      .filter((r) => (minScore === undefined ? true : r.score >= minScore));
+    return scored;
+  }
+
+  private async cursorCosineEntities(
+    queryVector: number[],
+    filter: EntitySemanticSearchFilter,
+    opts: SemanticSearchOptions & { minScore?: number },
+    scope: ScopeFilter,
+  ): Promise<Array<{ entity: IEntity; score: number }>> {
+    const mongoFilter = mergeFilters(
+      scopeToFilter(scope),
+      ARCHIVED_HIDDEN,
+      entitySemanticFilterToMongo(filter),
+      { identityEmbedding: { $exists: true } },
+    );
+    // Cap at 5000 to match fact-level cursor scan — scope + type narrows early.
+    const docs = await this.entities.find(mongoFilter, { limit: 5000 });
+    const minScore = opts.minScore;
+    const scored: Array<{ entity: IEntity; score: number }> = [];
+    for (const doc of docs) {
+      if (!doc.identityEmbedding || doc.identityEmbedding.length !== queryVector.length) continue;
+      const score = cosine(queryVector, doc.identityEmbedding);
+      if (minScore !== undefined && score < minScore) continue;
+      scored.push({ entity: reviveEntity(doc), score });
+    }
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, opts.topK);
+  }
+
+  // ==========================================================================
+  // Atlas Search / Vector Search index management
+  // ==========================================================================
+
+  /**
+   * Create the Atlas Vector Search indexes for facts and/or entities if they
+   * aren't already present. Separate from `ensureIndexes()` because vector
+   * indexes need runtime parameters (`dimensions`, `similarity`) and take
+   * longer to build — callers shouldn't pay that cost unless they use
+   * semantic search.
+   *
+   * Requires:
+   *   - Atlas Server v6.0.11+ and mongodb node driver v6.6+ (the driver
+   *     exposes `createSearchIndex` / `listSearchIndexes`).
+   *   - The `IMongoCollectionLike` wrapper must implement `createSearchIndex`
+   *     (both bundled wrappers do; custom wrappers may need updating).
+   *
+   * Idempotent — re-running is safe: existing indexes with the configured
+   * name are detected via `listSearchIndexes` and skipped. If
+   * `waitUntilReady` is true, polls each created index until `queryable: true`
+   * or timeout.
+   *
+   * The adapter's `vectorIndexName` / `entityVectorIndexName` options must
+   * match the `factsIndexName` / `entitiesIndexName` used here, otherwise
+   * runtime queries won't hit the index.
+   */
+  async ensureVectorSearchIndexes(opts: {
+    /** Embedding dimensionality — MUST match your embedder. Fixed per-index. */
+    dimensions: number;
+    /** Default: 'cosine'. Match the similarity your embedder was trained for. */
+    similarity?: 'cosine' | 'dotProduct' | 'euclidean';
+    /**
+     * Atlas index name for facts. Default: 'facts_vector'. Must match
+     * `vectorIndexName` on this adapter for runtime queries to use it.
+     * Pass `null` to skip the facts index entirely.
+     */
+    factsIndexName?: string | null;
+    /**
+     * Atlas index name for entities. Default: 'entities_vector'. Must match
+     * `entityVectorIndexName` on this adapter. Pass `null` to skip.
+     */
+    entitiesIndexName?: string | null;
+    /** Poll until queryable=true. Default: true. */
+    waitUntilReady?: boolean;
+    /** Poll timeout when `waitUntilReady`. Default: 120000 (2 min). */
+    readyTimeoutMs?: number;
+    /** Poll interval when `waitUntilReady`. Default: 2000 (2s). */
+    readyPollMs?: number;
+  }): Promise<void> {
+    this.assertLive();
+    const similarity = opts.similarity ?? 'cosine';
+    const waitUntilReady = opts.waitUntilReady ?? true;
+    const readyTimeoutMs = opts.readyTimeoutMs ?? 120_000;
+    const readyPollMs = opts.readyPollMs ?? 2_000;
+
+    const factsName = opts.factsIndexName === undefined ? 'facts_vector' : opts.factsIndexName;
+    const entitiesName =
+      opts.entitiesIndexName === undefined ? 'entities_vector' : opts.entitiesIndexName;
+
+    if (factsName !== null) {
+      await ensureOneVectorSearchIndex({
+        collection: this.facts as unknown as IMongoCollectionLike<{ id: string }>,
+        name: factsName,
+        path: 'embedding',
+        dimensions: opts.dimensions,
+        similarity,
+        waitUntilReady,
+        readyTimeoutMs,
+        readyPollMs,
+      });
+    }
+    if (entitiesName !== null) {
+      await ensureOneVectorSearchIndex({
+        collection: this.entities as unknown as IMongoCollectionLike<{ id: string }>,
+        name: entitiesName,
+        path: 'identityEmbedding',
+        dimensions: opts.dimensions,
+        similarity,
+        waitUntilReady,
+        readyTimeoutMs,
+        readyPollMs,
+      });
+    }
+  }
+
+  // ==========================================================================
   // Lifecycle
   // ==========================================================================
 
@@ -865,4 +1048,98 @@ function assertAllowedMetadataValue(key: string, value: unknown): void {
     );
   }
   throw new Error(`metadataFilter['${key}']: unsupported value type '${t}'`);
+}
+
+// =============================================================================
+// Entity semantic search helpers
+// =============================================================================
+
+/** Translate the narrow `EntitySemanticSearchFilter` into a Mongo filter clause. */
+function entitySemanticFilterToMongo(filter: EntitySemanticSearchFilter): MongoFilter {
+  if (filter.type !== undefined) return { type: filter.type };
+  if (filter.types && filter.types.length > 0) return { type: { $in: filter.types } };
+  return {};
+}
+
+// =============================================================================
+// Atlas Vector Search index management
+// =============================================================================
+
+interface EnsureVectorIndexArgs {
+  collection: IMongoCollectionLike<{ id: string }>;
+  name: string;
+  path: string;
+  dimensions: number;
+  similarity: 'cosine' | 'dotProduct' | 'euclidean';
+  waitUntilReady: boolean;
+  readyTimeoutMs: number;
+  readyPollMs: number;
+}
+
+/**
+ * Ensure a single Atlas Vector Search index exists on a collection.
+ * - List existing indexes; if our name is present, skip creation.
+ * - Otherwise create with the given path/dimensions/similarity.
+ * - If `waitUntilReady`, poll until the index reports `queryable: true` or
+ *   the timeout elapses.
+ *
+ * Throws if the wrapper does not implement `createSearchIndex` /
+ * `listSearchIndexes` (non-Atlas Mongo, older driver, custom wrapper).
+ */
+async function ensureOneVectorSearchIndex(args: EnsureVectorIndexArgs): Promise<void> {
+  const { collection, name } = args;
+  if (!collection.createSearchIndex || !collection.listSearchIndexes) {
+    throw new Error(
+      `ensureVectorSearchIndexes: collection wrapper does not implement createSearchIndex / listSearchIndexes. ` +
+        `Atlas Vector Search requires mongodb node driver v6.6+ and Atlas Server v6.0.11+.`,
+    );
+  }
+  const definition: SearchIndexDefinition = {
+    name,
+    type: 'vectorSearch',
+    definition: {
+      fields: [
+        {
+          type: 'vector',
+          path: args.path,
+          numDimensions: args.dimensions,
+          similarity: args.similarity,
+        },
+      ],
+    },
+  };
+
+  const existing = await collection.listSearchIndexes(name);
+  const present = existing.find((i) => i.name === name);
+  if (!present) {
+    await collection.createSearchIndex(definition);
+  }
+  if (!args.waitUntilReady) return;
+  await waitForSearchIndexReady(collection, name, args.readyTimeoutMs, args.readyPollMs);
+}
+
+async function waitForSearchIndexReady(
+  collection: IMongoCollectionLike<{ id: string }>,
+  name: string,
+  timeoutMs: number,
+  pollMs: number,
+): Promise<void> {
+  if (!collection.listSearchIndexes) return;
+  const deadline = Date.now() + timeoutMs;
+  let last: SearchIndexInfo | undefined;
+  while (Date.now() < deadline) {
+    const rows = await collection.listSearchIndexes(name);
+    last = rows.find((i) => i.name === name);
+    if (last && last.queryable) return;
+    if (last && last.status === 'FAILED') {
+      throw new Error(
+        `ensureVectorSearchIndexes: Atlas reported index '${name}' as FAILED. Inspect the latest definition and recreate.`,
+      );
+    }
+    await new Promise((r) => setTimeout(r, pollMs));
+  }
+  throw new Error(
+    `ensureVectorSearchIndexes: timed out after ${timeoutMs}ms waiting for index '${name}' to become queryable ` +
+      `(last status: ${last?.status ?? 'UNKNOWN'}). Index build is async on Atlas; try increasing readyTimeoutMs.`,
+  );
 }
