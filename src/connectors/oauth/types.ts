@@ -22,10 +22,25 @@ export interface OAuthConfig {
   clientSecret?: string;
 
   // JWT Bearer specific
-  privateKey?: string; // PEM format
+  privateKey?: string; // PEM format (PKCS#1, PKCS#8, or EC — auto-normalized)
   privateKeyPath?: string; // Or path to file
   tokenSigningAlg?: string; // Default: RS256
   audience?: string;
+  /**
+   * How the JWT assertion is delivered to the token endpoint.
+   * - `'form'` (default, RFC 7523): POST application/x-www-form-urlencoded with
+   *   `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=<JWT>`.
+   * - `'bearer'` (GitHub App installation tokens and similar): POST with an
+   *   `Authorization: Bearer <JWT>` header and no body. Response field for the
+   *   token is `token` (not `access_token`) and expiry is `expires_at` ISO
+   *   string (not `expires_in` seconds).
+   */
+  tokenRequestStyle?: 'form' | 'bearer';
+  /**
+   * JWT `exp` lifetime, in seconds. Default 3600. GitHub rejects JWTs with
+   * `exp` more than 10 minutes in the future; set to 540 for GitHub Apps.
+   */
+  tokenLifetimeSeconds?: number;
 
   // Static Token specific (NEW)
   staticToken?: string; // Static API key/token (for OpenAI, Anthropic, etc.)

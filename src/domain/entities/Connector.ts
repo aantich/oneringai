@@ -53,6 +53,15 @@ export interface OAuthConnectorAuth {
   issuer?: string;
   subject?: string;
   audience?: string;
+  /**
+   * How the JWT assertion is delivered to the token endpoint.
+   * - `'form'` (default, RFC 7523): POST with grant_type + assertion body.
+   * - `'bearer'` (GitHub App installation tokens): POST with
+   *   `Authorization: Bearer <JWT>` header and no body.
+   */
+  tokenRequestStyle?: 'form' | 'bearer';
+  /** JWT `exp` lifetime in seconds (default 3600; GitHub caps at 600). */
+  tokenLifetimeSeconds?: number;
 
   // Advanced options
   refreshBeforeExpiry?: number; // Seconds before expiry to refresh (default: 300)

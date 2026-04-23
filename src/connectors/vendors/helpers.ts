@@ -144,6 +144,8 @@ export function buildAuthConfig(
     audience: credentials.audience ?? oauthDefaults.audience,
     subject: credentials.subject ?? oauthDefaults.subject,
     authorizationParams: oauthDefaults.authorizationParams,
+    tokenRequestStyle: (oauthDefaults as { tokenRequestStyle?: 'form' | 'bearer' }).tokenRequestStyle,
+    tokenLifetimeSeconds: (oauthDefaults as { tokenLifetimeSeconds?: number }).tokenLifetimeSeconds,
   };
 
   // Handle URL templates (e.g., {tenantId}, {installationId})

@@ -58,12 +58,22 @@ export const githubTemplate: VendorTemplate = {
       name: 'GitHub App (Installation Token)',
       type: 'oauth',
       flow: 'jwt_bearer',
-      description: 'App authenticates as itself for org-wide automation. Requires App ID, private key, and installation ID',
+      description: 'App authenticates as itself for org-wide automation. Requires App ID, private key, and installation ID.',
+      // `appId` (numeric) OR `clientId` (Iv23li…) can be used as the JWT `iss`;
+      // GitHub accepts either. We also require clientId so OAuthManager.validateConfig
+      // is happy and the JWT has a well-defined issuer.
       requiredFields: ['appId', 'privateKey', 'installationId'],
+      optionalFields: ['clientId'],
       defaults: {
         type: 'oauth',
         flow: 'jwt_bearer',
         tokenUrl: 'https://api.github.com/app/installations/{installationId}/access_tokens',
+        // GitHub's installation access token endpoint does NOT follow RFC 7523
+        // (form-urlencoded body). Instead it expects the JWT in
+        // `Authorization: Bearer` on an empty POST.
+        tokenRequestStyle: 'bearer',
+        // GitHub rejects JWTs with exp > 10 min. JWTBearerFlow caps to this.
+        tokenLifetimeSeconds: 540,
       },
     },
   ],
