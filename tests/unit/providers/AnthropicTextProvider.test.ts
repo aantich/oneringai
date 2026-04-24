@@ -13,15 +13,25 @@ import {
 } from '@/domain/errors/AIErrors.js';
 import { StreamEventType } from '@/domain/entities/StreamEvent.js';
 
-// Create mock functions with vi.hoisted for proper hoisting
-const { mockCreate, mockAnthropic } = vi.hoisted(() => {
+// Create mock functions with vi.hoisted for proper hoisting.
+// `generate()` uses messages.stream(...).finalMessage(); streamGenerate() uses
+// messages.create({ stream: true }). Both are mocked here so each code path
+// can set its own behavior.
+const { mockCreate, mockStream, mockFinalMessage, mockAnthropic } = vi.hoisted(() => {
   const mockCreate = vi.fn();
+  const mockFinalMessage = vi.fn();
+  const mockStream = vi.fn(() => ({
+    finalMessage: mockFinalMessage,
+    controller: { abort: vi.fn() },
+    abort: vi.fn(),
+  }));
   const mockAnthropic = vi.fn(() => ({
     messages: {
       create: mockCreate,
+      stream: mockStream,
     },
   }));
-  return { mockCreate, mockAnthropic };
+  return { mockCreate, mockStream, mockFinalMessage, mockAnthropic };
 });
 
 // Mock Anthropic SDK
@@ -109,16 +119,17 @@ describe('AnthropicTextProvider', () => {
     };
 
     beforeEach(() => {
-      mockCreate.mockResolvedValue(mockResponse);
+      // generate() routes through messages.stream(...).finalMessage()
+      mockFinalMessage.mockResolvedValue(mockResponse);
     });
 
-    it('should call messages.create with converted request', async () => {
+    it('should call messages.stream with converted request', async () => {
       await provider.generate({
         model: 'claude-3-5-sonnet-20241022',
         input: 'Hello',
       });
 
-      expect(mockCreate).toHaveBeenCalledWith(
+      expect(mockStream).toHaveBeenCalledWith(
         expect.objectContaining({
           model: 'claude-3-5-sonnet-20241022',
           messages: expect.any(Array),
@@ -133,7 +144,7 @@ describe('AnthropicTextProvider', () => {
         input: 'Hello world',
       });
 
-      expect(mockCreate).toHaveBeenCalledWith(
+      expect(mockStream).toHaveBeenCalledWith(
         expect.objectContaining({
           messages: [{ role: 'user', content: 'Hello world' }],
         })
@@ -147,7 +158,7 @@ describe('AnthropicTextProvider', () => {
         instructions: 'You are a helpful assistant',
       });
 
-      expect(mockCreate).toHaveBeenCalledWith(
+      expect(mockStream).toHaveBeenCalledWith(
         expect.objectContaining({
           system: 'You are a helpful assistant',
         })
@@ -161,7 +172,7 @@ describe('AnthropicTextProvider', () => {
         temperature: 0.7,
       });
 
-      expect(mockCreate).toHaveBeenCalledWith(
+      expect(mockStream).toHaveBeenCalledWith(
         expect.objectContaining({
           temperature: 0.7,
         })
@@ -175,7 +186,7 @@ describe('AnthropicTextProvider', () => {
         max_output_tokens: 2000,
       });
 
-      expect(mockCreate).toHaveBeenCalledWith(
+      expect(mockStream).toHaveBeenCalledWith(
         expect.objectContaining({
           max_tokens: 2000,
         })
@@ -219,7 +230,7 @@ describe('AnthropicTextProvider', () => {
     });
 
     it('should handle tool use in response', async () => {
-      mockCreate.mockResolvedValue({
+      mockFinalMessage.mockResolvedValue({
         ...mockResponse,
         content: [
           {
@@ -266,7 +277,7 @@ describe('AnthropicTextProvider', () => {
         ],
       });
 
-      expect(mockCreate).toHaveBeenCalledWith(
+      expect(mockStream).toHaveBeenCalledWith(
         expect.objectContaining({
           tools: expect.arrayContaining([
             expect.objectContaining({
@@ -400,7 +411,7 @@ describe('AnthropicTextProvider', () => {
 
   describe('error handling', () => {
     it('should throw ProviderAuthError on 401', async () => {
-      mockCreate.mockRejectedValue({ status: 401 });
+      mockFinalMessage.mockRejectedValue({ status: 401 });
 
       await expect(
         provider.generate({ model: 'claude-3-5-sonnet-20241022', input: 'Hello' })
@@ -408,7 +419,7 @@ describe('AnthropicTextProvider', () => {
     });
 
     it('should throw ProviderRateLimitError on 429', async () => {
-      mockCreate.mockRejectedValue({ status: 429 });
+      mockFinalMessage.mockRejectedValue({ status: 429 });
 
       await expect(
         provider.generate({ model: 'claude-3-5-sonnet-20241022', input: 'Hello' })
@@ -417,7 +428,7 @@ describe('AnthropicTextProvider', () => {
 
     it('should throw ProviderContextLengthError on overloaded error', async () => {
       // The implementation checks for type === 'invalid_request_error' AND message contains 'prompt is too long'
-      mockCreate.mockRejectedValue({
+      mockFinalMessage.mockRejectedValue({
         status: 400,
         type: 'invalid_request_error',
         message: 'prompt is too long',
@@ -430,7 +441,7 @@ describe('AnthropicTextProvider', () => {
 
     it('should re-throw unknown errors', async () => {
       const customError = new Error('Custom error');
-      mockCreate.mockRejectedValue(customError);
+      mockFinalMessage.mockRejectedValue(customError);
 
       await expect(
         provider.generate({ model: 'claude-3-5-sonnet-20241022', input: 'Hello' })
@@ -464,7 +475,7 @@ describe('AnthropicTextProvider', () => {
 
   describe('converter cleanup', () => {
     it('should clean up converter after request', async () => {
-      mockCreate.mockResolvedValue({
+      mockFinalMessage.mockResolvedValue({
         id: 'msg_1',
         type: 'message',
         role: 'assistant',
@@ -480,7 +491,7 @@ describe('AnthropicTextProvider', () => {
       await provider.generate({ model: 'claude-3-5-sonnet-20241022', input: 'Hello 2' });
       await provider.generate({ model: 'claude-3-5-sonnet-20241022', input: 'Hello 3' });
 
-      expect(mockCreate).toHaveBeenCalledTimes(3);
+      expect(mockStream).toHaveBeenCalledTimes(3);
     });
   });
 });

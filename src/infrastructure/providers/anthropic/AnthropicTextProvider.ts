@@ -40,26 +40,39 @@ export class AnthropicTextProvider extends BaseTextProvider {
   }
 
   /**
-   * Generate response using Anthropic Messages API
+   * Generate response using Anthropic Messages API.
+   *
+   * Transport is always streaming (via `client.messages.stream(...)` +
+   * `.finalMessage()`), even though the public signature is non-streaming.
+   * The SDK aggregates server-sent events into the same `Message` object the
+   * non-streaming endpoint returns, and our converter treats it identically.
+   *
+   * Why streaming transport: the Anthropic SDK refuses non-streaming requests
+   * whose estimated duration exceeds 10 minutes with
+   * "Streaming is required for operations that may take longer than 10 minutes".
+   * Long profile regenerations and large-context single-shot calls hit that
+   * guardrail. Streaming transport avoids it without changing any caller.
    */
   async generate(options: TextGenerateOptions): Promise<LLMResponse> {
     options = this.applyContextLimitGuardrail(options);
     return this.executeWithCircuitBreaker(async () => {
+      let streamRef: any;
       try {
         // Convert our format → Anthropic Messages API format
         const anthropicRequest = this.converter.convertRequest(options);
 
         this.logger.debug(
           { model: options.model, messageCount: anthropicRequest.messages?.length ?? 0, toolCount: anthropicRequest.tools?.length ?? 0 },
-          'generate: calling Anthropic API',
+          'generate: calling Anthropic API (streaming transport)',
         );
         const genStartTime = Date.now();
 
-        // Call Anthropic API (not stream)
-        const anthropicResponse = await this.client.messages.create({
-          ...anthropicRequest,
-          stream: false,
-        });
+        // Use SDK's streaming helper — identical final shape to non-streaming
+        // create(), but bypasses the 10-minute non-streaming guardrail.
+        const stream = this.client.messages.stream(anthropicRequest);
+        streamRef = stream;
+        const anthropicResponse = await stream.finalMessage();
+
         this.logger.debug(
           { model: options.model, duration: Date.now() - genStartTime },
           'generate: response received',
@@ -71,6 +84,16 @@ export class AnthropicTextProvider extends BaseTextProvider {
         this.logger.error({ model: options.model, ...ProviderErrorMapper.extractErrorDetails(error) }, 'generate error');
         this.handleError(error, options.model);
         throw error; // TypeScript needs this
+      } finally {
+        // Abort the underlying SSE connection if we exited via throw before
+        // finalMessage() settled (circuit-breaker cancel, upstream abort, etc.).
+        if (streamRef) {
+          if (typeof streamRef.controller?.abort === 'function') {
+            try { streamRef.controller.abort(); } catch { /* ignore */ }
+          } else if (typeof streamRef.abort === 'function') {
+            try { streamRef.abort(); } catch { /* ignore */ }
+          }
+        }
       }
     }, options.model);
   }
