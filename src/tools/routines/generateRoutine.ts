@@ -133,6 +133,7 @@ Tasks can have a controlFlow field for iteration patterns:
 \`\`\`
 
 ### fold — Accumulate a result across array elements
+**REQUIRED fields:** \`type\`, \`source\`, \`tasks\`, \`initialValue\`, \`resultKey\`. \`initialValue\` is the starting accumulator (must be provided, use \`""\`, \`0\`, \`[]\`, \`{}\` as appropriate for the accumulation shape). \`resultKey\` is the memory key where the final accumulated value is stored after the fold completes.
 \`\`\`json
 {
   "type": "fold",
@@ -147,6 +148,7 @@ Tasks can have a controlFlow field for iteration patterns:
 \`\`\`
 
 ### until — Loop until a condition is met
+\`maxIterations\` is optional and defaults to 1 (i.e. the sub-routine runs once and the condition is checked). Set a higher value only when you genuinely need retries; the hard cap is 1000.
 \`\`\`json
 {
   "type": "until",
@@ -293,17 +295,21 @@ export function createGenerateRoutine(storage?: IRoutineDefinitionStorage): Tool
                       },
                       controlFlow: {
                         type: 'object',
-                        description: 'Control flow for iteration (map, fold, or until)',
+                        description:
+                          'Control flow for iteration. Per-type required fields:\n' +
+                          '- map: type, source, tasks\n' +
+                          '- fold: type, source, tasks, initialValue, resultKey (BOTH required — no defaults)\n' +
+                          '- until: type, tasks, condition (maxIterations optional, defaults to 1)',
                         properties: {
                           type: { type: 'string', enum: ['map', 'fold', 'until'], description: 'Control flow type' },
-                          source: { description: 'Source data: string key, { task: "name" }, { key: "key" }, or { key: "key", path: "json.path" }' },
+                          source: { description: 'Source data (map/fold only): string key, { task: "name" }, { key: "key" }, or { key: "key", path: "json.path" }' },
                           tasks: { type: 'array', description: 'Sub-routine tasks to execute per iteration', items: { type: 'object' } },
-                          resultKey: { type: 'string', description: 'Memory key for collected results' },
-                          initialValue: { description: 'Starting accumulator value (fold only)' },
-                          condition: { type: 'object', description: 'Exit condition (until only)' },
-                          maxIterations: { type: 'number', description: 'Cap on iterations' },
-                          iterationKey: { type: 'string', description: 'Memory key for iteration index (until only)' },
-                          iterationTimeoutMs: { type: 'number', description: 'Timeout per iteration in ms' },
+                          resultKey: { type: 'string', description: 'map: memory key for collected results array (optional). fold: memory key for final accumulated value (REQUIRED).' },
+                          initialValue: { description: 'fold: starting accumulator value (REQUIRED — use "", 0, [], or {} as appropriate). Not used by map/until.' },
+                          condition: { type: 'object', description: 'Exit condition, checked after each iteration (until only — REQUIRED for until)' },
+                          maxIterations: { type: 'number', description: 'Cap on iterations. map/fold default to array length. until defaults to 1. Hard cap: 1000.' },
+                          iterationKey: { type: 'string', description: 'Memory key for iteration index (until only, optional)' },
+                          iterationTimeoutMs: { type: 'number', description: 'Timeout per iteration in ms (optional)' },
                         },
                         required: ['type', 'tasks'],
                       },

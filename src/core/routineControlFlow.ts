@@ -801,7 +801,8 @@ async function handleUntil(
   // Resolve sub-routine
   const { augmented, baseInstructions } = prepareSubRoutine(flow.tasks, task.name);
 
-  log.info({ maxIterations: flow.maxIterations }, 'Starting until loop');
+  const maxIter = Math.min(flow.maxIterations ?? 1, HARD_MAX_ITERATIONS);
+  log.info({ maxIterations: maxIter }, 'Starting until loop');
 
   // Build ConditionMemoryAccess adapter from readMemoryValue
   const memoryAccess: ConditionMemoryAccess = {
@@ -809,7 +810,7 @@ async function handleUntil(
   };
 
   try {
-    for (let i = 0; i < flow.maxIterations; i++) {
+    for (let i = 0; i < maxIter; i++) {
       // Set iteration key if configured
       if (flow.iterationKey && icmPlugin) {
         icmPlugin.set(flow.iterationKey, 'Current iteration index', i, 'high');
@@ -817,7 +818,7 @@ async function handleUntil(
 
       // Inject iteration-specific instructions
       augmented.instructions = [
-        `You are in iteration ${i + 1} of a repeating operation (max ${flow.maxIterations}).`,
+        `You are in iteration ${i + 1} of a repeating operation (max ${maxIter}).`,
         'Complete the task. The loop will continue until its exit condition is met.',
         '',
         baseInstructions,
@@ -851,7 +852,7 @@ async function handleUntil(
     }
   }
 
-  return { completed: false, error: `Until loop: maxIterations (${flow.maxIterations}) exceeded` };
+  return { completed: false, error: `Until loop: maxIterations (${maxIter}) exceeded` };
 }
 
 // ============================================================================
