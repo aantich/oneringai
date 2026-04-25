@@ -9,6 +9,10 @@ import type {
   IVideoProvider,
   VideoGenerateOptions,
   VideoExtendOptions,
+  VideoRemixOptions,
+  VideoEditOptions,
+  CreateCharacterOptions,
+  CharacterRef,
   VideoResponse,
 } from '../../../domain/interfaces/IVideoProvider.js';
 import type { ProviderCapabilities } from '../../../domain/interfaces/IProvider.js';
@@ -184,8 +188,13 @@ export class OpenAISoraProvider extends BaseMediaProvider implements IVideoProvi
   }
 
   /**
-   * Extend/remix an existing video
-   * Note: OpenAI SDK uses 'remix' instead of 'extend'
+   * Extend a completed video by generating an additional segment.
+   * Calls SDK `videos.extend()` (added in openai 6.28). The `seconds`
+   * parameter controls the *new* segment length, not total duration.
+   *
+   * `direction` is currently unused — the OpenAI Videos API extends from
+   * the end of the source clip. The field is kept on `VideoExtendOptions`
+   * for future provider parity.
    */
   async extendVideo(options: VideoExtendOptions): Promise<VideoResponse> {
     return this.executeWithCircuitBreaker(
@@ -197,21 +206,15 @@ export class OpenAISoraProvider extends BaseMediaProvider implements IVideoProvi
             direction: options.direction,
           });
 
-          // Get the video ID - for remix, we need a video ID not buffer
-          let videoId: string;
-          if (typeof options.video === 'string' && !options.video.startsWith('http')) {
-            // Assume it's a video ID
-            videoId = options.video;
-          } else {
-            throw new ProviderError(
-              'openai',
-              'Video extension requires a video ID. Upload the video first or provide the job ID.'
-            );
-          }
-
-          // Use the remix endpoint with a prompt
+          const videoId = this.requireVideoId(options.video, 'video extension');
+          const seconds = this.durationToSeconds(options.extendDuration);
           const prompt = options.prompt || 'Extend this video seamlessly';
-          const response = await this.client.videos.remix(videoId, { prompt });
+
+          const response = await this.client.videos.extend({
+            video: { id: videoId },
+            prompt,
+            seconds,
+          });
 
           this.logOperationComplete('video.extend', {
             jobId: response.id,
@@ -227,6 +230,136 @@ export class OpenAISoraProvider extends BaseMediaProvider implements IVideoProvi
       },
       'video.extend',
       { model: options.model }
+    );
+  }
+
+  /**
+   * Remix a completed video — same length, prompt-steered re-generation.
+   */
+  async remixVideo(options: VideoRemixOptions): Promise<VideoResponse> {
+    return this.executeWithCircuitBreaker(
+      async () => {
+        try {
+          this.logOperationStart('video.remix', { videoId: options.videoId });
+
+          const response = await this.client.videos.remix(options.videoId, {
+            prompt: options.prompt,
+          });
+
+          this.logOperationComplete('video.remix', {
+            jobId: response.id,
+            status: response.status,
+          });
+
+          return this.mapResponse(response);
+        } catch (error: any) {
+          this.handleError(error);
+          throw error;
+        }
+      },
+      'video.remix',
+      { videoId: options.videoId }
+    );
+  }
+
+  /**
+   * Edit a completed video — apply a prompt-described change.
+   */
+  async editVideo(options: VideoEditOptions): Promise<VideoResponse> {
+    return this.executeWithCircuitBreaker(
+      async () => {
+        try {
+          this.logOperationStart('video.edit', { videoId: options.videoId });
+
+          const response = await this.client.videos.edit({
+            video: { id: options.videoId },
+            prompt: options.prompt,
+          });
+
+          this.logOperationComplete('video.edit', {
+            jobId: response.id,
+            status: response.status,
+          });
+
+          return this.mapResponse(response);
+        } catch (error: any) {
+          this.handleError(error);
+          throw error;
+        }
+      },
+      'video.edit',
+      { videoId: options.videoId }
+    );
+  }
+
+  /**
+   * Create a reusable character from a reference video (Sora character API).
+   * Returns the character id, which can later be passed back to
+   * `generateVideo` via `vendorOptions.characterId` (raw API plumbing —
+   * the unified `VideoGenerateOptions` does not yet model character refs).
+   */
+  async createCharacter(options: CreateCharacterOptions): Promise<CharacterRef> {
+    return this.executeWithCircuitBreaker(
+      async () => {
+        try {
+          this.logOperationStart('video.createCharacter', { name: options.name });
+
+          const video = await this.prepareVideoInput(options.video);
+          const response = await this.client.videos.createCharacter({
+            name: options.name,
+            video,
+          });
+
+          this.logOperationComplete('video.createCharacter', {
+            characterId: response.id,
+          });
+
+          if (!response.id) {
+            throw new ProviderError(
+              'openai',
+              'Sora createCharacter returned no character id'
+            );
+          }
+          return { id: response.id, name: response.name ?? options.name };
+        } catch (error: any) {
+          if (error instanceof ProviderError) throw error;
+          this.handleError(error);
+          throw error;
+        }
+      },
+      'video.createCharacter',
+      { name: options.name }
+    );
+  }
+
+  /**
+   * Look up an existing character by id.
+   */
+  async getCharacter(characterId: string): Promise<CharacterRef> {
+    return this.executeWithCircuitBreaker(
+      async () => {
+        try {
+          this.logOperationStart('video.getCharacter', { characterId });
+
+          const response = await this.client.videos.getCharacter(characterId);
+
+          this.logOperationComplete('video.getCharacter', { characterId });
+
+          if (!response.id) {
+            throw new ProviderError(
+              'openai',
+              `Sora getCharacter(${characterId}) returned no character id`
+            );
+          }
+          return { id: response.id, name: response.name ?? '' };
+        } catch (error: any) {
+          if (error instanceof ProviderError) throw error;
+          this.handleError(error);
+          throw error;
+        }
+      },
+      'video.getCharacter',
+      { characterId }
     );
   }
 
@@ -300,9 +433,17 @@ export class OpenAISoraProvider extends BaseMediaProvider implements IVideoProvi
   }
 
   /**
-   * Convert duration number to SDK's seconds string format
+   * Convert duration number to SDK's seconds string format.
+   * Rejects non-finite, non-positive, or NaN inputs — silently mapping
+   * those to a default would waste a paid Sora job.
    */
   private durationToSeconds(duration: number): '4' | '8' | '12' {
+    if (!Number.isFinite(duration) || duration <= 0) {
+      throw new ProviderError(
+        'openai',
+        `Invalid Sora duration: ${duration}. Must be a finite positive number (snapped to 4 / 8 / 12 seconds).`
+      );
+    }
     if (duration <= 4) return '4';
     if (duration <= 8) return '8';
     return '12';
@@ -358,8 +499,59 @@ export class OpenAISoraProvider extends BaseMediaProvider implements IVideoProvi
 
     // For URLs, fetch and convert to File
     const response = await fetch(image);
+    if (!response.ok) {
+      throw new ProviderError(
+        'openai',
+        `Failed to fetch image reference (${image}): ${response.status} ${response.statusText}`
+      );
+    }
     const arrayBuffer = await response.arrayBuffer();
     return new File([new Uint8Array(arrayBuffer)], 'input.png', { type: 'image/png' });
+  }
+
+  /**
+   * Prepare video input for API (character creation, etc).
+   * Accepts Buffer, local file path, or HTTP URL.
+   */
+  private async prepareVideoInput(video: Buffer | string): Promise<any> {
+    if (Buffer.isBuffer(video)) {
+      return new File([new Uint8Array(video)], 'input.mp4', { type: 'video/mp4' });
+    }
+
+    if (!video.startsWith('http')) {
+      const fs = await import('fs');
+      const path = await import('path');
+      const data = await fs.promises.readFile(video);
+      const filename = path.basename(video) || 'input.mp4';
+      const ext = path.extname(filename).toLowerCase();
+      const mime = ext === '.mov' ? 'video/quicktime' : ext === '.webm' ? 'video/webm' : 'video/mp4';
+      return new File([new Uint8Array(data)], filename, { type: mime });
+    }
+
+    const response = await fetch(video);
+    if (!response.ok) {
+      throw new ProviderError(
+        'openai',
+        `Failed to fetch video reference (${video}): ${response.status} ${response.statusText}`
+      );
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    return new File([new Uint8Array(arrayBuffer)], 'input.mp4', { type: 'video/mp4' });
+  }
+
+  /**
+   * Resolve a `Buffer | string` reference to a video id.
+   * The Videos API references completed clips by id, not by upload — buffers
+   * and URLs are rejected so the caller knows to upload first.
+   */
+  private requireVideoId(video: Buffer | string, op: string): string {
+    if (typeof video === 'string' && !video.startsWith('http')) {
+      return video;
+    }
+    throw new ProviderError(
+      'openai',
+      `Sora ${op} requires a video id (returned by generateVideo). Buffers and URLs are not supported here.`
+    );
   }
 
   /**

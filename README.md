@@ -23,7 +23,7 @@
   - [8. InContextMemory](#8-incontextmemory)
   - [9. Persistent Instructions](#9-persistent-instructions)
   - [10. User Info](#10-user-info)
-  - [10b. Self-Learning Memory — plugin + tools](#10b-self-learning-memory--plugin--tools) — `MemoryPluginNextGen` with 8 `memory_*` LLM tools (supersedes 9 & 10)
+  - [10b. Self-Learning Memory — plugin + tools](#10b-self-learning-memory--plugin--tools) — `MemoryPluginNextGen` + `MemoryWritePluginNextGen` with **11 `memory_*` LLM tools** (5 read + 6 write incl. `memory_set_agent_rule`); supersedes 9 & 10
   - [11. Direct LLM Access](#11-direct-llm-access)
   - [12. Audio Capabilities](#12-audio-capabilities)
   - [Embeddings](#embeddings-new) — Multi-vendor text embeddings with MRL dimension control
@@ -115,7 +115,7 @@ Showcasing another amazing "built with oneringai": ["no saas" agentic business t
 - 📌 **InContextMemory** - Live key-value storage directly in LLM context with optional UI display (`showInUI`)
 - 📝 **Persistent Instructions** - ⚠️ *Deprecated* in favour of `MemoryPluginNextGen` (self-learning memory). Still works unchanged.
 - 👤 **User Info Plugin** - ⚠️ *Deprecated* in favour of `MemoryPluginNextGen`. Still works unchanged.
-- 🧠 **Self-Learning Memory** - NEW: `MemoryPluginNextGen` + 8 `memory_*` tools — brain-like entity/fact store with permissions, semantic search, graph queries, LLM-synthesised profiles that evolve from observations
+- 🧠 **Self-Learning Memory** - NEW: `MemoryPluginNextGen` + `MemoryWritePluginNextGen` + 11 `memory_*` tools — brain-like entity/fact store with three-principal permissions, semantic search, graph queries, LLM-synthesised profiles that evolve from observations, user-driven behavior rules, optional background ingestion via `SessionIngestorPluginNextGen`
 - 🛠️ **Agentic Workflows** - Built-in tool calling and multi-turn conversations
 - 🔧 **Developer Tools** - NEW: Filesystem and shell tools for coding assistants (read, write, edit, grep, glob, bash)
 - 🧰 **Custom Tool Generation** - NEW: Let agents create, test, and persist their own reusable tools at runtime — complete meta-tool system with VM sandbox
@@ -234,14 +234,24 @@ const response = await agent.run(
 ```typescript
 import { TextToSpeech, SpeechToText } from '@everworker/oneringai';
 
-// Text-to-Speech
+// Text-to-Speech — built-in voice
 const tts = TextToSpeech.create({
   connector: 'openai',
   model: 'tts-1-hd',
-  voice: 'nova',
+  voice: 'nova', // alloy | ash | ballad | coral | echo | fable | onyx | nova | sage | shimmer | verse | marin | cedar
 });
 
 await tts.toFile('Hello, world!', './output.mp3');
+
+// Text-to-Speech — custom voice (OpenAI). Pass the `voice_…` id you got
+// when registering the voice in the OpenAI dashboard; the SDK call is
+// handled automatically.
+const customTts = TextToSpeech.create({
+  connector: 'openai',
+  model: 'gpt-4o-mini-tts',
+  voice: 'voice_1234abcd',
+});
+await customTts.toFile('Spoken in your bespoke voice.', './brand.mp3');
 
 // Speech-to-Text
 const stt = SpeechToText.create({
@@ -294,7 +304,7 @@ const job = await videoGen.generate({
   prompt: 'A cinematic shot of a sunrise over mountains',
   model: 'sora-2',
   duration: 8,
-  resolution: '1280x720',
+  resolution: '1280x720',           // 720x1280 / 1280x720 / 1024x1792 / 1792x1024 (1.4× HD)
 });
 
 // Wait for completion
@@ -312,6 +322,54 @@ const veoJob = await googleVideo.generate({
   model: 'veo-3.0-generate-001',
   duration: 8,
 });
+```
+
+#### Sora: extend, remix, edit (OpenAI only)
+
+The Videos API references completed clips by **id** — pass the `jobId` returned
+by `generate()`, not a buffer or URL.
+
+```typescript
+// Extend — generate an additional segment after the source clip.
+const extension = await videoGen.extend({
+  model: 'sora-2',
+  video: job.jobId,           // id of a completed video
+  prompt: 'The camera pulls back to reveal a snow-covered valley',
+  extendDuration: 8,          // length of the *new* segment, snapped to 4/8/12
+});
+
+// Remix — same length, prompt-steered re-generation.
+const remix = await videoGen.remix({
+  videoId: job.jobId,
+  prompt: 'Same composition, but at golden hour',
+});
+
+// Edit — apply a prompt-described change to a completed clip.
+const edited = await videoGen.edit({
+  videoId: job.jobId,
+  prompt: 'Add light snowfall throughout',
+});
+```
+
+#### Sora: reusable characters (OpenAI only)
+
+Upload a reference video to register a character; thread the returned id
+back through `vendorOptions` on a later `generate()`.
+
+```typescript
+const character = await videoGen.createCharacter({
+  name: 'Hero',
+  video: './reference-shot.mp4', // Buffer | local path | URL
+});
+// → { id: 'char_…', name: 'Hero' }
+
+const scene = await videoGen.generate({
+  prompt: 'Hero walks across a windswept beach at dusk',
+  vendorOptions: { characterId: character.id },
+});
+
+// Look up later
+const same = await videoGen.getCharacter(character.id);
 ```
 
 ### Embeddings (NEW)
@@ -970,6 +1028,8 @@ const agent = Agent.create({
 | `userInfo` | `false` | UserInfoPluginNextGen | Unified `store_*` tools (store="user_info") + `todo_add/update/remove` |
 | `toolCatalog` | `false` | ToolCatalogPluginNextGen | `tool_catalog_search/load/unload` |
 | `sharedWorkspace` | `false` | SharedWorkspacePluginNextGen | Unified `store_*` tools (store="workspace"). Actions: log, history, archive, clear |
+| `memory` | `false` | MemoryPluginNextGen | 5 read tools: `memory_recall`, `memory_graph`, `memory_search`, `memory_find_entity`, `memory_list_facts`. Requires `plugins.memory.memory: MemorySystem`. |
+| `memoryWrite` | `false` | MemoryWritePluginNextGen | 6 write tools: `memory_remember`, `memory_link`, `memory_upsert_entity`, `memory_forget`, `memory_restore`, `memory_set_agent_rule`. Requires `memory: true`. |
 
 **AgentContextNextGen architecture:**
 - **Plugin-first design** - All features are composable plugins
@@ -1111,13 +1171,13 @@ TODOs are stored alongside user info and rendered in a separate **"Current TODOs
 
 ### 10b. Self-Learning Memory — plugin + tools
 
-A context plugin + 8 LLM-callable tools built on the [memory layer](./docs/MEMORY_GUIDE.md). Bootstraps a `person` entity for the user and an `agent` entity for the agent; injects both evolving profiles into the system message; lets the agent read and write memory mid-conversation. Observations flow in through `memory_remember`; profile regeneration synthesises them incrementally; the next turn sees the updated profile. No manual prompt engineering needed for user/agent preferences.
+A brain-like, queryable knowledge store built on the [memory layer](./docs/MEMORY_GUIDE.md). Two cooperating context plugins + **11 LLM-callable tools** turn the agent into a learning system: it bootstraps a `person` entity for the user (and optionally an `organization` entity for their group), injects the evolving user profile + any user-given behavior rules into the system message every turn, and exposes `memory_*` tools so the LLM can read or write the knowledge graph mid-conversation. Observations flow in via `memory_remember` (LLM-driven) or `SessionIngestorPluginNextGen` (passive); incremental profile regeneration synthesises them; the next turn sees the updated profile. No manual prompt engineering for user/agent preferences.
 
 ```typescript
 import { Agent, createMemorySystemWithConnectors, InMemoryAdapter } from '@everworker/oneringai';
 
 const memory = createMemorySystemWithConnectors({
-  store: new InMemoryAdapter(),
+  store: new InMemoryAdapter(),                 // or MongoMemoryAdapter for production
   connectors: {
     embedding: { connector: 'openai', model: 'text-embedding-3-small', dimensions: 1536 },
     profile:   { connector: 'anthropic', model: 'claude-sonnet-4-6' },
@@ -1127,19 +1187,25 @@ const memory = createMemorySystemWithConnectors({
 const agent = Agent.create({
   connector: 'anthropic',
   model: 'claude-sonnet-4-6',
-  agentId: 'my-assistant',
   userId: 'alice',                              // REQUIRED — memory's owner invariant
-  contextFeatures: { memory: true },
-  pluginConfigs: {
-    memory: {
-      memory,
-      // groupId: 'team-A',                     // trusted, from your auth layer
-      // userProfileInjection: { topFacts: 20 },
+  context: {
+    agentId: 'my-assistant',
+    features: {
+      memory: true,                             // reads: profile injection + 5 retrieval tools
+      memoryWrite: true,                        // writes: 6 mutation tools (omit for retrieval-only)
+    },
+    plugins: {
+      memory: {
+        memory,
+        // groupId: 'team-A',                   // trusted, from your auth layer
+        // userProfileInjection: { topFacts: 20, relatedTasks: true },
+        // groupBootstrap: { displayName: 'Acme', identifiers: [{ kind: 'domain', value: 'acme.com' }] },
+      },
     },
   },
 });
 
-await agent.run("Remember I prefer concise answers");
+await agent.run('Remember I prefer concise answers');
 // Agent calls memory_remember({subject:"me", predicate:"prefers", value:"concise answers"})
 // Fact stored → profile regen fires in background → next turn sees it in the user profile
 ```
@@ -1149,32 +1215,37 @@ await agent.run("Remember I prefer concise answers");
 - 🔐 **Three-principal permissions** — owner / group / world, enforced at the adapter
 - 📊 **Ranked recall** — profile + top facts by `confidence × recency × predicateWeight × importance`
 - 🕸️ **Graph queries** — Mongo native `$graphLookup` when available, iterative BFS fallback
-- 🔍 **Semantic search** — over embedded facts
-- 🧬 **Multi-ID entities** — lookup by email / slack_id / github_login / any identifier; upsert auto-merges
+- 🔍 **Semantic search** — over embedded facts (with Atlas Vector Search at scale)
+- 🧬 **Multi-ID entities** — lookup by email / slack_id / github_login / domain / any identifier; upsert auto-merges
 - 📜 **Supersession history** — corrections archive predecessors; audit chain preserved via `archivedOnly: true`
-- 🛡️ **LLM-safe** — `groupId` fixed by host app (never from tool args); numeric limits clamped
+- 🪧 **User-driven behavior rules** — `memory_set_agent_rule` records "be terse" / "reply in Russian" / "your name is Jason" directives, rendered back into the system message every turn (per-user-per-agent scoped)
+- 🏢 **Optional org bootstrap** — when `groupBootstrap` is set, an `organization` entity is upserted and rendered as a separate "Your Organization Profile" block alongside the user profile
+- 🛡️ **LLM-safe** — `groupId` fixed by host app (never from tool args); ghost-write protection; `contextIds` auto-downgrade; numeric limits clamped
 
-**10 LLM tools** (`memory_*`) split into two opt-in bundles:
+**11 LLM tools** (`memory_*`), split into two opt-in bundles:
 
 *Read (via `MemoryPluginNextGen`, feature flag `memory`):*
-- `memory_recall(subject, include?)` — profile + top facts + optional tiers
+- `memory_recall(subject, include?)` — profile + top facts + optional tiers (`documents` / `semantic` / `neighbors`)
 - `memory_graph(start, direction, maxDepth, predicates?)` — N-hop traversal
 - `memory_search(query, topK?, filter?)` — semantic text search
 - `memory_find_entity(by, action? ∈ {find, list})` — lookup or list (read-only)
 - `memory_list_facts(subject, predicate?, archivedOnly?)` — structured enumeration
 
-*Write (via `MemoryWritePluginNextGen`, feature flag `memoryWrite`):*
-- `memory_remember(subject, predicate, value?/objectId?/details?, visibility?)` — write a fact
+*Write (via `MemoryWritePluginNextGen`, feature flag `memoryWrite`, requires `memory: true`):*
+- `memory_remember(subject, predicate, value?/objectId?/details?, visibility?)` — write a fact (atomic or document)
 - `memory_link(from, predicate, to)` — write a relational fact
 - `memory_upsert_entity(type, displayName, identifiers, ...)` — create or merge an entity by identifier
-- `memory_forget(factId, replaceWith?)` — archive or supersede
-- `memory_restore(factId)` — un-archive
+- `memory_forget(factId, replaceWith?)` — archive or supersede (rate-limited 10/60s/user)
+- `memory_restore(factId)` — un-archive (undo for `memory_forget`)
+- `memory_set_agent_rule(rule, replaces?)` — record a user-specific behavior rule for THIS agent
 
-Enable `memory: true` alone for retrieval-only agents (pair with `SessionIngestorPluginNextGen` for background learning), or enable both flags for agents that write memory deliberately.
+Enable `memory: true` alone for retrieval-only agents (and pair with `SessionIngestorPluginNextGen` for passive background learning); enable both flags for agents that write memory deliberately.
 
-**Flexible SubjectRef** — every tool accepts any of: entity id, `"me"`, `"this_agent"`, `{id}`, `{identifier: {kind, value}}`, `{surface: "..."}`.
+**Flexible `SubjectRef`** — every tool accepts any of: entity id, `"me"`, `"this_agent"`, `{id}`, `{identifier: {kind, value}}`, `{surface: "..."}`.
 
-See [docs/MEMORY_GUIDE.md § 14](./docs/MEMORY_GUIDE.md#giving-agents-memory--the-memorypluginnextgen-plugin-and-memory_-tools) for full reference.
+**Storage backends:** `InMemoryAdapter` (zero deps, dev/tests), `MongoMemoryAdapter` + `RawMongoCollection` (production servers — supports native `$graphLookup` + Atlas Vector Search via `ensureVectorSearchIndexes()`), `MongoMemoryAdapter` + `MeteorMongoCollection` (Meteor apps — reactive publications). Custom adapters implement `IMemoryStore`.
+
+See the [USER_GUIDE Self-Learning Memory section](./USER_GUIDE.md#self-learning-memory-nextgen-plugin) for the user-guide-level walkthrough, [docs/MEMORY_GUIDE.md](./docs/MEMORY_GUIDE.md) for the full conceptual model + adapter setup + signal ingestion, [docs/MEMORY_API.md](./docs/MEMORY_API.md) for the `MemorySystem` API reference, and [docs/MEMORY_PERMISSIONS.md](./docs/MEMORY_PERMISSIONS.md) for the permission model.
 
 ### 12. Direct LLM Access
 
@@ -1426,7 +1497,7 @@ console.log(`Cached: $${cachedCost}`);  // $0.0293 (90% discount)
 ```
 
 **Available Models:**
-- **OpenAI (27+)**: GPT-5.4, GPT-5.3, GPT-5.2, GPT-5.1, GPT-5, GPT-4.1, GPT-4o, o3, o4-mini, o1, Deep Research, Audio, Realtime, Open-Source
+- **OpenAI (40+)**: GPT-5.5 (flagship), GPT-5.4 (+ pro / mini / nano), GPT-5.3, GPT-5.2, GPT-5.1, GPT-5, GPT-4.1, GPT-4o, o3, o4-mini, o1, Deep Research, Audio, Realtime, Open-Source
 - **Anthropic (9)**: Claude 4.6 (Opus, Sonnet), Claude 4.5, Claude 4.1, Claude 4, Claude 3.7 Sonnet, Haiku 4.5
 - **Google (10)**: Gemini 3.1, Gemini 3, Gemini 2.5
 - **Grok (5)**: Grok 4.20 (reasoning, non-reasoning, multi-agent), Grok 4.1 Fast

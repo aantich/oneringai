@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Self-Learning Memory documentation overhaul
+
+Rewrote the Self-Learning Memory section in `USER_GUIDE.md` (now a dedicated, comprehensive walkthrough at TOC #15) and updated the matching section in `README.md` (10b). Brings the user-facing docs in sync with the current code surface:
+
+- Tool count corrected to **11** (5 read + 6 write) — both docs previously claimed 8/10. `memory_set_agent_rule` is now listed in the write-tool table.
+- Wiring example updated to the actual API: `context: { features, plugins }` (the prior `contextFeatures` / `pluginConfigs` field names did not exist).
+- Injected-context block updated to reflect the current renderer: rules block (`## User-specific instructions for this agent`) → user profile → optional organization profile when `groupBootstrap` is set. Removed the stale "Agent Profile" section that no longer auto-renders.
+- Added coverage for `groupBootstrap`, `recentActivity` profile-injection field, `defaultVisibility` semantics, `MemoryWritePluginNextGen` config, and the `forgetRateLimit` knob.
+- New subsections for storage backends (`InMemoryAdapter`, `MongoMemoryAdapter` raw + Meteor), permissions and scope (three-principal model), security invariants (no ghost-writes, `contextIds` auto-downgrade, numeric clamping), behavior rules via `memory_set_agent_rule`, background ingestion via `SessionIngestorPluginNextGen`, and direct `MemorySystem` access for server-side code.
+- Cross-links to `docs/MEMORY_GUIDE.md`, `docs/MEMORY_API.md`, `docs/MEMORY_PERMISSIONS.md`, `docs/MEMORY_SIGNALS.md`, `docs/MEMORY_PREDICATES.md`.
+- README "Available Features" table now includes rows for `memory` and `memoryWrite` flags.
+
+No source changes — documentation only.
+
+### Added GPT-5.5 (new OpenAI flagship)
+
+Registered `gpt-5.5` as the new OpenAI flagship and moved the `preferred` flag from `gpt-5.4` to `gpt-5.5`. 1,050,000-token context, 128,000-token max output, knowledge cutoff 2025-12-01. Reasoning.effort: none / low / medium (default) / high / xhigh. Pricing $5 input · $0.50 cached · $30 output per 1M tokens; prompts >272K input tokens are billed at 2× input / 1.5× output for the full session. Vision in, text out, prompt caching + batch + Responses API supported.
+
+### Added GPT-5.4 mini and GPT-5.4 nano
+
+Registered `gpt-5.4-mini` and `gpt-5.4-nano` (release 2026-03-17, knowledge cutoff 2025-08-31). 400K context / 128K max output. Vision-in, text-out. Reasoning.effort: none / low / medium / high / xhigh. Per 1M tokens: mini $0.75 input · $0.075 cached · $4.50 output; nano $0.20 · $0.02 · $1.25.
+
+### Sora: dedicated extend / remix / edit + Character API
+
+Aligned the OpenAI Sora provider with the SDK's split between three transforms on completed videos:
+
+- **`videoGen.extend({ video: jobId, prompt, extendDuration })`** now calls the real `videos.extend()` endpoint (added in openai-node 6.28). Previously this method aliased onto `videos.remix()`, which kept the clip the same length — the new behaviour generates an actual additional segment whose length is controlled by `extendDuration` (snapped to the SDK-allowed `4 / 8 / 12` seconds). **Behaviour change for existing callers**: if you relied on the old alias, switch to `videoGen.remix(...)` (below).
+- **`videoGen.remix({ videoId, prompt })`** — same length, prompt-steered re-generation.
+- **`videoGen.edit({ videoId, prompt })`** — apply a prompt-described change to a completed clip.
+- **`videoGen.createCharacter({ name, video })` / `videoGen.getCharacter(id)`** — register a reusable character from a reference video and thread its id back into a future `generate()` via `vendorOptions.characterId` for cross-shot continuity. Accepts `Buffer`, local path, or HTTP URL.
+
+All four are optional methods on `IVideoProvider` — non-OpenAI providers throw a clear "not supported" error rather than silently no-op. New types exported: `VideoRemixOptions`, `VideoEditOptions`, `CreateCharacterOptions`, `CharacterRef`.
+
+Higher-resolution Sora exports (`1024x1792`, `1792x1024` — 1.4× the standard 720p) were already wired through the `resolution` / `aspectRatio` mappers; the supported set is now documented in the Video Generation section of the user guide.
+
+### TTS: custom voices (OpenAI)
+
+`TextToSpeech` now accepts custom-voice ids alongside built-in voice names. Any string starting with `voice_` (the prefix OpenAI returns when a custom voice is created in the dashboard) is forwarded to the SDK as `{ id }`; built-in names (`alloy`, `nova`, `cedar`, etc.) pass through unchanged. No interface changes — `TTSOptions.voice` stays `string`.
+
+```typescript
+const tts = TextToSpeech.create({
+  connector: 'openai',
+  model: 'gpt-4o-mini-tts',
+  voice: 'voice_1234abcd',
+});
+```
+
 ### No silent truncation of LLM content (output + input)
 
 Library-wide policy change: we no longer silently clip content that flows to an LLM, is generated by an LLM, or is persisted from an LLM response. Old defaults quietly dropped content that modern model context windows could easily handle; hosts lost information they didn't know they'd lost. The new stance:
