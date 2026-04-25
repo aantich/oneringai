@@ -297,7 +297,9 @@ describeIfOpenAI('ImageGeneration Integration (OpenAI)', () => {
     }, 120000);
   });
 
-  describe('Image variations (DALL-E 2)', () => {
+  // DALL-E 2 is a legacy model and the variations endpoint is no longer reliably
+  // available (returns 404). Skipped — we don't ship DALL-E 2 as a current option.
+  describe.skip('Image variations (DALL-E 2)', () => {
     it('should create a variation of an image', async () => {
       const imageGen = ImageGeneration.create({
         connector: 'openai-image-test',

@@ -5,6 +5,9 @@
  * - WorkingMemoryPluginNextGen
  * - InContextMemoryPluginNextGen
  * - PersistentInstructionsPluginNextGen
+ *
+ * After v0.5.0, plugin-specific tools (memory_*, context_*, instructions_*)
+ * are replaced by 5 unified store_* tools routed by the `store` parameter.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -21,26 +24,37 @@ import {
   FEATURE_PRESETS,
 } from '../../helpers/contextTestHelpers.js';
 
+const PERSIST_AGENT_ID = 'test-agent-instructions';
+
+async function clearPersistentInstructionsForAgent(agentId: string): Promise<void> {
+  const dir = path.join(os.homedir(), '.oneringai', 'agents', agentId);
+  await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+}
+
 describe('AgentContextNextGen Plugins Integration (Mock)', () => {
   let ctx: AgentContextNextGen | null = null;
   let tempDir: string | null = null;
 
   beforeEach(async () => {
-    // Create temp directory for persistent instructions tests
+    // Create temp directory for tests that need it
     tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'context-test-'));
     process.env.ONERINGAI_DATA_DIR = tempDir;
+
+    // PersistentInstructions storage uses ~/.oneringai/agents/<agentId>/ — purge between tests
+    await clearPersistentInstructionsForAgent(PERSIST_AGENT_ID);
   });
 
   afterEach(async () => {
     safeDestroy(ctx);
     ctx = null;
 
-    // Clean up temp directory
     if (tempDir) {
       await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
       tempDir = null;
     }
     delete process.env.ONERINGAI_DATA_DIR;
+
+    await clearPersistentInstructionsForAgent(PERSIST_AGENT_ID);
   });
 
   // ============================================================================
@@ -112,18 +126,20 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       expect(content).toContain('Description 2');
     });
 
-    it('should provide memory tools', async () => {
+    it('should expose unified store tools for working memory', async () => {
       const toolNames = ctx!.tools.getEnabled().map(t => t.definition.function.name);
 
-      expect(toolNames).toContain('memory_store');
-      expect(toolNames).toContain('memory_retrieve');
-      expect(toolNames).toContain('memory_delete');
-      expect(toolNames).toContain('memory_query');
-      expect(toolNames).toContain('memory_cleanup_raw');
+      expect(toolNames).toContain('store_set');
+      expect(toolNames).toContain('store_get');
+      expect(toolNames).toContain('store_delete');
+      expect(toolNames).toContain('store_list');
+      expect(toolNames).toContain('store_action');
     });
 
-    it('should execute memory_store tool', async () => {
-      const result = await ctx!.tools.execute('memory_store', {
+    it('should execute store_set tool against the memory store', async () => {
+      const setTool = ctx!.tools.get('store_set')!;
+      const result = await setTool.execute({
+        store: 'memory',
         key: 'test_key',
         description: 'Test description',
         value: { data: 'test' },
@@ -137,13 +153,14 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       expect(retrieved).toEqual({ data: 'test' });
     });
 
-    it('should execute memory_retrieve tool', async () => {
+    it('should execute store_get tool against the memory store', async () => {
       await ctx!.memory!.store('my_key', 'My data', { foo: 'bar' });
 
-      const result = await ctx!.tools.execute('memory_retrieve', { key: 'my_key' });
+      const getTool = ctx!.tools.get('store_get')!;
+      const result = await getTool.execute({ store: 'memory', key: 'my_key' });
 
       expect(result).toHaveProperty('found', true);
-      expect(result).toHaveProperty('value', { foo: 'bar' });
+      expect((result as any).value ?? (result as any).entry?.value).toEqual({ foo: 'bar' });
     });
 
     it('should cleanup raw tier entries', async () => {
@@ -166,17 +183,17 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       expect(summaryQuery.entries.length).toBe(1);
     });
 
-    it('should include instructions in system message', async () => {
+    it('should include working-memory instructions in system message', async () => {
       ctx!.addUserMessage('test');
       const { input } = await ctx!.prepare();
 
-      // Get system message content
       const systemMsg = input[0] as any;
       const text = systemMsg.content[0].text;
 
       expect(text).toContain('Working Memory');
-      expect(text).toContain('memory_store');
-      expect(text).toContain('memory_retrieve');
+      // Unified store tools are referenced in the overview
+      expect(text).toContain('store_set');
+      expect(text).toContain('store_get');
     });
   });
 
@@ -205,7 +222,6 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       expect(content).not.toBeNull();
       expect(content).toContain('state');
       expect(content).toContain('Current state');
-      // Value should be visible directly (unlike WorkingMemory which shows only index)
       expect(content).toContain('step');
       expect(content).toContain('running');
     });
@@ -227,7 +243,7 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       plugin.set('key1', 'Test', 'value1');
       expect(plugin.delete('key1')).toBe(true);
       expect(plugin.has('key1')).toBe(false);
-      expect(plugin.delete('key1')).toBe(false); // Already deleted
+      expect(plugin.delete('key1')).toBe(false);
     });
 
     it('should list entries', () => {
@@ -254,16 +270,18 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       expect(plugin.list().length).toBe(0);
     });
 
-    it('should provide context tools', () => {
+    it('should expose unified store tools for context store', () => {
       const toolNames = ctx!.tools.getEnabled().map(t => t.definition.function.name);
 
-      expect(toolNames).toContain('context_set');
-      expect(toolNames).toContain('context_delete');
-      expect(toolNames).toContain('context_list');
+      expect(toolNames).toContain('store_set');
+      expect(toolNames).toContain('store_delete');
+      expect(toolNames).toContain('store_list');
     });
 
-    it('should execute context_set tool', async () => {
-      const result = await ctx!.tools.execute('context_set', {
+    it('should execute store_set tool against the context store', async () => {
+      const setTool = ctx!.tools.get('store_set')!;
+      const result = await setTool.execute({
+        store: 'context',
         key: 'my_state',
         description: 'Application state',
         value: { mode: 'active' },
@@ -276,25 +294,27 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       expect(plugin.get('my_state')).toEqual({ mode: 'active' });
     });
 
-    it('should execute context_delete tool', async () => {
+    it('should execute store_delete tool against the context store', async () => {
       const plugin = ctx!.getPlugin<InContextMemoryPluginNextGen>('in_context_memory')!;
       plugin.set('to_delete', 'Will be deleted', 'value');
 
-      const result = await ctx!.tools.execute('context_delete', { key: 'to_delete' });
+      const deleteTool = ctx!.tools.get('store_delete')!;
+      const result = await deleteTool.execute({ store: 'context', key: 'to_delete' });
 
       expect(result).toHaveProperty('deleted', true);
       expect(plugin.has('to_delete')).toBe(false);
     });
 
-    it('should execute context_list tool', async () => {
+    it('should execute store_list tool against the context store', async () => {
       const plugin = ctx!.getPlugin<InContextMemoryPluginNextGen>('in_context_memory')!;
       plugin.set('key1', 'Desc 1', 'value1');
       plugin.set('key2', 'Desc 2', 'value2');
 
-      const result = await ctx!.tools.execute('context_list', {});
+      const listTool = ctx!.tools.get('store_list')!;
+      const result = await listTool.execute({ store: 'context' });
 
       expect(result).toHaveProperty('entries');
-      expect(result.entries.length).toBe(2);
+      expect((result as any).entries.length).toBe(2);
     });
 
     it('should include values in prepared context', async () => {
@@ -320,20 +340,16 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
     beforeEach(() => {
       ctx = createContextWithFeatures(
         { workingMemory: false, inContextMemory: false, persistentInstructions: true },
-        { agentId: 'test-agent-instructions' }
+        { agentId: PERSIST_AGENT_ID }
       );
     });
 
     it('should auto-generate agentId if not provided for persistent instructions', () => {
-      // AgentContextNextGen auto-generates an agentId if not provided
-      // So creating context with persistentInstructions=true without agentId should work
       const testCtx = AgentContextNextGen.create({
         model: 'gpt-4',
         features: { workingMemory: false, inContextMemory: false, persistentInstructions: true },
-        // No agentId provided - should auto-generate
       });
 
-      // Should have generated an agentId
       expect(testCtx.agentId).toBeTruthy();
       expect(testCtx.hasPlugin('persistent_instructions')).toBe(true);
 
@@ -379,17 +395,19 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       expect(instructions).toBeNull();
     });
 
-    it('should provide instructions tools', () => {
+    it('should expose unified store tools for the instructions store', () => {
       const toolNames = ctx!.tools.getEnabled().map(t => t.definition.function.name);
 
-      expect(toolNames).toContain('instructions_set');
-      expect(toolNames).toContain('instructions_remove');
-      expect(toolNames).toContain('instructions_list');
-      expect(toolNames).toContain('instructions_clear');
+      expect(toolNames).toContain('store_set');
+      expect(toolNames).toContain('store_delete');
+      expect(toolNames).toContain('store_list');
+      expect(toolNames).toContain('store_action');
     });
 
-    it('should execute instructions_set tool', async () => {
-      await ctx!.tools.execute('instructions_set', {
+    it('should execute store_set tool against the instructions store', async () => {
+      const setTool = ctx!.tools.get('store_set')!;
+      await setTool.execute({
+        store: 'instructions',
         key: 'style',
         content: 'New instructions from tool',
       });
@@ -400,27 +418,28 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       expect((entry as any).content).toBe('New instructions from tool');
     });
 
-    it('should execute instructions_remove tool', async () => {
+    it('should execute store_delete tool against the instructions store', async () => {
       const plugin = ctx!.getPlugin<PersistentInstructionsPluginNextGen>('persistent_instructions')!;
       await plugin.set('style', 'Initial instructions.');
 
-      await ctx!.tools.execute('instructions_remove', {
-        key: 'style',
-      });
+      const deleteTool = ctx!.tools.get('store_delete')!;
+      await deleteTool.execute({ store: 'instructions', key: 'style' });
 
       const entry = await plugin.get('style');
       expect(entry).toBeNull();
     });
 
-    it('should execute instructions_list tool', async () => {
+    it('should execute store_list tool against the instructions store', async () => {
       const plugin = ctx!.getPlugin<PersistentInstructionsPluginNextGen>('persistent_instructions')!;
       await plugin.set('style', 'Test instructions');
 
-      const result = await ctx!.tools.execute('instructions_list', {});
+      const listTool = ctx!.tools.get('store_list')!;
+      const result = await listTool.execute({ store: 'instructions' });
 
-      expect(result).toHaveProperty('count', 1);
       expect(result).toHaveProperty('entries');
-      expect((result as any).entries[0].key).toBe('style');
+      const entries = (result as any).entries;
+      expect(entries.length).toBe(1);
+      expect(entries[0].key).toBe('style');
     });
 
     it('should include instructions in prepared context', async () => {
@@ -460,15 +479,13 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       ctx.addUserMessage('test');
       const { input, budget } = await ctx.prepare();
 
-      // All should be in system message
       const systemMsg = input[0] as any;
       const text = systemMsg.content[0].text;
 
-      expect(text).toContain('Be creative'); // Persistent instructions
-      expect(text).toContain('state'); // In-context memory
-      expect(text).toContain('key'); // Working memory index
+      expect(text).toContain('Be creative');
+      expect(text).toContain('state');
+      expect(text).toContain('key');
 
-      // Budget should track plugin contributions
       expect(budget.breakdown.persistentInstructions).toBeGreaterThan(0);
       expect(budget.breakdown.pluginContents['in_context_memory']).toBeGreaterThan(0);
       expect(budget.breakdown.pluginContents['working_memory']).toBeGreaterThan(0);
@@ -483,11 +500,10 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       const systemMsg = input[0] as any;
       const text = systemMsg.content[0].text;
 
-      // Each plugin should have its instructions included
+      // Section headers come from formatPluginName('working_memory') etc.
       expect(text).toContain('Working Memory');
-      expect(text).toContain('In-Context Memory');
+      expect(text).toContain('In Context Memory');
 
-      // Plugin instructions tokens should be tracked
       expect(budget.breakdown.pluginInstructions).toBeGreaterThan(0);
     });
   });
@@ -500,18 +516,14 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
     it('should serialize and restore working memory state', async () => {
       ctx = createContextWithFeatures(FEATURE_PRESETS.memoryOnly);
 
-      // Store some data
       await ctx.memory!.store('key1', 'Desc 1', 'value1');
       await ctx.memory!.store('key2', 'Desc 2', { nested: 'data' });
 
-      // Get state
       const state = ctx.memory!.getState();
 
-      // Create new context and restore
       const ctx2 = createContextWithFeatures(FEATURE_PRESETS.memoryOnly);
       ctx2.memory!.restoreState(state);
 
-      // Verify restored
       const value1 = await ctx2.memory!.retrieve('key1');
       const value2 = await ctx2.memory!.retrieve('key2');
 

@@ -132,8 +132,10 @@ describe('MCP Stdio Integration', () => {
     const newToolCount = agent.listTools().length;
     expect(newToolCount).toBeGreaterThan(initialToolCount);
 
-    // Check that tools are namespaced
-    const mcpTools = agent.listTools().filter((name) => name.startsWith('mcp:filesystem:'));
+    // Check that tools are namespaced. sanitizeToolName replaces colons with
+    // underscores (provider compatibility), so the on-the-wire prefix is
+    // "mcp_filesystem_" not "mcp:filesystem:".
+    const mcpTools = agent.listTools().filter((name) => name.startsWith('mcp_filesystem_'));
     expect(mcpTools.length).toBeGreaterThan(0);
   }, 30000);
 

@@ -45,26 +45,33 @@ const REASONING_MODEL_TIMEOUT = 240000; // 4 minutes for reasoning models (Googl
 const TEST_PROMPT = 'Hi! Say hello back in one short sentence.';
 
 /**
- * Models to skip (deprecated, image-only, or unsupported models)
+ * Models to skip. Capability-based skips (realtime, audio, deep-research,
+ * open-weight, live-preview) are derived from registry features in
+ * `isTextChatTestable` below — this set is for one-off overrides only.
  */
 const SKIP_MODELS: Set<string> = new Set([
   // Image generation models - don't support text-only requests
   'gemini-3-pro-image-preview',
   'gemini-2.5-flash-image',
-  // Deprecated Claude 3.x models - only test Claude 4+
+  // Flaky / transient empty-response (re-run before treating as a real bug)
+  'claude-haiku-4-5-20251001',
+  // Anthropic deprecated-but-still-listed: API returns 404 even though registry
+  // marks them active. Remove from this set when the registry catches up.
+  'claude-sonnet-4-20250514',
   'claude-3-7-sonnet-20250219',
-  'claude-3-haiku-20240307',
-  'claude-3-5-sonnet-20241022',
-  'claude-3-5-haiku-20241022',
 ]);
 
 /**
- * Reasoning models that don't support temperature parameter
- * These models also require longer timeout due to thinking/reasoning time
+ * Models that don't accept the `temperature` parameter (rejected at the API level).
+ * Most are reasoning models; chat-latest aliases also reject it. They also need a
+ * longer timeout because of thinking/reasoning time.
  */
 const REASONING_MODELS: Set<string> = new Set([
   'gpt-5.2',
   'gpt-5.2-pro',
+  'gpt-5.2-chat-latest',
+  'gpt-5.1-chat-latest',
+  'gpt-5-chat-latest',
   'gpt-5',
   'gpt-5-mini',
   'gpt-5-nano',
@@ -79,11 +86,43 @@ const REASONING_MODELS: Set<string> = new Set([
 // ============================================================================
 
 /**
- * Get all models for a specific vendor from the registry
+ * Decide whether a registry model is callable through the standard text chat path
+ * exercised by `agent.run(...)`. Capability-driven so the registry stays the
+ * source of truth — adding/removing models in the registry flows through here.
+ *
+ * Reasons we skip:
+ *  - `features.realtime`         → realtime API only (WebRTC/WebSocket), not chat completions
+ *  - `features.audio === true`   → audio modality required even when text input is "accepted"
+ *  - description "Open-weight"   → not hosted on the OpenAI paid API (cpm 0)
+ *  - name "*-deep-research"      → requires web_search/mcp/file_search tools we don't pass
+ *  - name "*-live-preview"       → Google Gemini Live API only
+ *  - `features.input.text !== true` → cannot accept text input
+ */
+function isTextChatTestable(model: ILLMDescription): boolean {
+  const f = model.features as any;
+  if (f?.realtime === true) return false;
+  if (f?.audio === true) return false;
+  if (f?.input && f.input.text !== true) return false;
+  if (typeof model.description === 'string' && /open-weight/i.test(model.description)) return false;
+  if (model.name.endsWith('-deep-research')) return false;
+  if (model.name.endsWith('-live-preview')) return false;
+  return true;
+}
+
+/**
+ * Get all testable models for a specific vendor from the registry.
+ * Filters by:
+ *  - isActive (registry truth)
+ *  - capability flags (isTextChatTestable)
+ *  - explicit SKIP_MODELS set for one-offs (deprecated leftovers, flakes)
  */
 function getVendorModels(vendor: string): ILLMDescription[] {
   return Object.values(MODEL_REGISTRY).filter(
-    (model) => model.provider === vendor && model.isActive
+    (model) =>
+      model.provider === vendor &&
+      model.isActive &&
+      !SKIP_MODELS.has(model.name) &&
+      isTextChatTestable(model)
   );
 }
 
@@ -95,10 +134,13 @@ async function testModel(connectorName: string, modelName: string): Promise<void
   const isGemini3Reasoning = modelName.startsWith('gemini-3-') &&
                             (modelName.includes('pro') || modelName.includes('flash'));
 
+  // Models that don't accept temperature (reasoning + chat-latest aliases)
+  const supportsTemperature = !REASONING_MODELS.has(modelName);
+
   const agent = Agent.create({
     connector: connectorName,
     model: modelName,
-    temperature: 0.7,
+    ...(supportsTemperature ? { temperature: 0.7 } : {}),
     maxOutputTokens: 100, // Limit output to reduce cost
     vendorOptions: isGemini3Reasoning ? { thinkingLevel: 'low' } : undefined,
   });

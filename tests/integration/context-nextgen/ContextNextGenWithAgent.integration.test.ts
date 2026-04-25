@@ -71,10 +71,10 @@ describeIfOpenAI('AgentContextNextGen with OpenAI (Integration)', () => {
       expect(agent.context.features.workingMemory).toBe(true);
       expect(agent.context.memory).not.toBeNull();
 
-      // Verify memory tools are available
+      // Verify unified store tools are available
       const toolNames = agent.context.tools.getEnabled().map(t => t.definition.function.name);
-      expect(toolNames).toContain('memory_store');
-      expect(toolNames).toContain('memory_retrieve');
+      expect(toolNames).toContain('store_set');
+      expect(toolNames).toContain('store_get');
     });
 
     it('should create agent with in-context memory enabled', async () => {
@@ -87,10 +87,10 @@ describeIfOpenAI('AgentContextNextGen with OpenAI (Integration)', () => {
       expect(agent.context.features.inContextMemory).toBe(true);
       expect(agent.context.hasPlugin('in_context_memory')).toBe(true);
 
-      // Verify context tools are available
+      // Verify unified store tools are available
       const toolNames = agent.context.tools.getEnabled().map(t => t.definition.function.name);
-      expect(toolNames).toContain('context_set');
-      expect(toolNames).toContain('context_delete');
+      expect(toolNames).toContain('store_set');
+      expect(toolNames).toContain('store_delete');
     });
 
     it('should create agent with all features disabled', async () => {
@@ -104,10 +104,10 @@ describeIfOpenAI('AgentContextNextGen with OpenAI (Integration)', () => {
       expect(agent.context.memory).toBeFalsy();
       expect(agent.context.hasPlugin('in_context_memory')).toBe(false);
 
-      // No memory tools
+      // No store tools (no IStoreHandler plugins enabled)
       const toolNames = agent.context.tools.getEnabled().map(t => t.definition.function.name);
-      expect(toolNames).not.toContain('memory_store');
-      expect(toolNames).not.toContain('context_set');
+      expect(toolNames).not.toContain('store_set');
+      expect(toolNames).not.toContain('store_get');
     });
   });
 
@@ -146,7 +146,7 @@ describeIfOpenAI('AgentContextNextGen with OpenAI (Integration)', () => {
 
       // Ask about it
       const response = await agent.run(
-        'Use memory_retrieve to get the key "fact" and tell me what the secret code is.'
+        'Use store_get with store: "memory" and key: "fact" to retrieve it, then tell me what the secret code is.'
       );
 
       expect(response.status).toBe('completed');
@@ -251,8 +251,8 @@ describeIfOpenAI('AgentContextNextGen with OpenAI (Integration)', () => {
       });
 
       expect(response.status).toBe('completed');
-      // Should not mention memory tools
-      expect(response.output_text!.toLowerCase()).not.toContain('memory_store');
+      // Should not mention store tools
+      expect(response.output_text!.toLowerCase()).not.toContain('store_set');
     }, 30000);
   });
 
@@ -307,7 +307,7 @@ describeIfAnthropic('AgentContextNextGen with Anthropic (Integration)', () => {
     it('should create agent with context features', async () => {
       const agent = Agent.create({
         connector: 'anthropic-context-test',
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5-20251001',
         context: { features: { workingMemory: true } },
       });
 
@@ -318,7 +318,7 @@ describeIfAnthropic('AgentContextNextGen with Anthropic (Integration)', () => {
     it('should use memory tools in conversation', async () => {
       const agent = Agent.create({
         connector: 'anthropic-context-test',
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5-20251001',
         context: { features: { workingMemory: true } },
       });
 
@@ -327,7 +327,7 @@ describeIfAnthropic('AgentContextNextGen with Anthropic (Integration)', () => {
 
       // Ask about it
       const response = await agent.run(
-        'Use memory_retrieve to get "animal" and tell me what my favorite animal is.'
+        'Use store_get with store: "memory" and key: "animal" to retrieve it, then tell me what my favorite animal is.'
       );
 
       expect(response.status).toBe('completed');
@@ -339,7 +339,7 @@ describeIfAnthropic('AgentContextNextGen with Anthropic (Integration)', () => {
     it('should maintain context across turns', async () => {
       const agent = Agent.create({
         connector: 'anthropic-context-test',
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5-20251001',
         context: { features: { workingMemory: false } },
       });
 
