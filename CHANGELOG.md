@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-04-25
+
+> **Headline: the Memory System.** This release lands a brain-like, self-learning knowledge layer for agents — entity + fact graph, signal ingestion, semantic entity resolution, per-user/per-agent behavior rules, restraint-posture extraction, and a write/read-split plugin pair that turns ambient conversation into durable, scoped memory. Most of the entries below are pieces of that single arc; the rest is plumbing (model-registry refresh, no-silent-truncation policy, Sora extend/remix/edit) and a sweep of test fixes that brought the integration suite back to green.
+>
+> **Memory at a glance:**
+> - **Two-plugin split:** `MemoryPluginNextGen` (read-only, 5 `memory_*` tools, injects user profile + per-agent rules into the system message) + `MemoryWritePluginNextGen` (6 `memory_*` write tools, optional sidecar). Either can run alone.
+> - **Self-learning via background extraction:** `SessionIngestorPluginNextGen` watches the conversation, batches turns, dedups against in-flight `memory_*` tool calls, and writes facts in the background — no inline prompt overhead.
+> - **Per-user-per-agent behavior rules:** `memory_set_agent_rule` lets the agent capture user-specific style/tone/format directives and re-renders them at the top of the system message every turn. Owned by the user, scoped to the agent, supersedeable.
+> - **Restraint posture (v5 prompt):** eagerness profiles, anchor registry, anchor-bound priorities, optional skeptic pass — plus prompt-injection hardening on every attacker-controllable surface.
+> - **Semantic entity resolution (opt-in):** `enableSemanticResolution` plus `ensureVectorSearchIndexes()` for Atlas Vector Search; cap-protected so flipping the flag alone never auto-merges.
+> - **Three-principal permissions:** owner / group / world with read/write levels, enforced at storage for reads and at the system facade for writes.
+> - **First-class storage:** in-memory adapter ships, `MongoMemoryAdapter` (raw + Meteor-reactive) for production with `$graphLookup` and `$vectorSearch` fast paths.
+> - **Subconscious by default:** the agent never narrates memory operations to the user — memory is private notebook, not chat.
+>
+> See the new `docs/MEMORY_*.md` set and `USER_GUIDE.md` §15 for the full guide.
+
+### Test-suite fix-up — store_* unification, registry-driven model selection
+
+Brought the integration suite back to green after the v0.5.x tool-name unification and a wave of model-registry churn. Source code untouched — tests only.
+
+- **Unified `store_*` tools** — rewrote ~50 tests across `userInfo.test.ts`, `ContextNextGenPlugins.mock.test.ts`, `ContextNextGenIntegration.mock.test.ts`, `ContextNextGenWithAgent.integration.test.ts`, `ProviderConverters.integration.test.ts`, and `routineControlFlowExecution.test.ts` to use the v0.5.0 unified `store_set` / `store_get` / `store_delete` / `store_list` / `store_action` API in place of the old plugin-specific tool names (`memory_store`, `context_set`, `instructions_set`, `user_info_set`, …). Includes the 24 mocked LLM tool calls in the routine control-flow tests.
+- **Capability-aware AllModels test** — `tests/integration/text/AllModels.integration.test.ts` now derives skip/parameter decisions from registry features rather than hardcoded names. Realtime, audio, deep-research, open-weight, and live-preview models are filtered out automatically; `gpt-5.x-chat-latest` aliases are treated like reasoning models (no `temperature`).
+- **Anthropic deprecated-model swap** — replaced hardcoded `claude-3-5-haiku-20241022` references with `claude-haiku-4-5-20251001` in 4 test files.
+- **Strategy registry rename** — `'proactive'` / `'lazy'` strategy names → `'algorithmic'` in `ContextNextGenIntegration.mock.test.ts` (the proactive/lazy strategies were retired earlier).
+- **Removed dead test** — `tests/integration/search/WebSearch.integration.test.ts` imported a removed module (`webSearch.js` was replaced by the `createWebSearchTool` factory pattern).
+- **MCP namespace assertion fix** — `MCPStdio.integration.test.ts` was checking for `mcp:filesystem:` prefix on namespaced tool names, but `sanitizeToolName` collapses colons to underscores; fixed to `mcp_filesystem_`.
+- **Multi-turn alice prompt + DALL-E 2 variations skip** — strengthened the gpt-4o-mini multi-turn prompt to be deterministic; `describe.skip` on DALL-E 2 image variations (legacy endpoint, OpenAI returns 404).
+
 ### Memory v5: restraint posture review fixes
 
 Follow-up audit of the restraint-posture work surfaced seven issues; all fixed in this batch.

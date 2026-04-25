@@ -130,13 +130,15 @@ export class JWTBearerFlow {
     // iss / iat / exp mismatches at a glance.
     try {
       const [headerB64, payloadB64] = assertion.split('.');
-      const dec = (s: string) =>
-        JSON.parse(Buffer.from(s.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
-      console.log(
-        `[JWTBearer] POST ${this.config.tokenUrl} style=${style} header=${JSON.stringify(
-          dec(headerB64)
-        )} payload=${JSON.stringify(dec(payloadB64))}`
-      );
+      if (headerB64 && payloadB64) {
+        const dec = (s: string) =>
+          JSON.parse(Buffer.from(s.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
+        console.log(
+          `[JWTBearer] POST ${this.config.tokenUrl} style=${style} header=${JSON.stringify(
+            dec(headerB64)
+          )} payload=${JSON.stringify(dec(payloadB64))}`
+        );
+      }
     } catch {
       /* ignore diagnostic decode failure */
     }
