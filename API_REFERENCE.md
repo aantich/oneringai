@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-04-14
+**Generated:** 2026-04-25
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -15,20 +15,20 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Text-to-Speech (TTS)](#text-to-speech-tts-) (10 items)
 - [Speech-to-Text (STT)](#speech-to-text-stt-) (11 items)
 - [Image Generation](#image-generation) (24 items)
-- [Video Generation](#video-generation) (18 items)
-- [Task Agents](#task-agents) (87 items)
+- [Video Generation](#video-generation) (22 items)
+- [Task Agents](#task-agents) (113 items)
 - [Context Management](#context-management) (14 items)
-- [Session Management](#session-management) (42 items)
-- [Tools & Function Calling](#tools-function-calling) (164 items)
+- [Session Management](#session-management) (45 items)
+- [Tools & Function Calling](#tools-function-calling) (175 items)
 - [Streaming](#streaming) (29 items)
-- [Model Registry](#model-registry) (16 items)
+- [Model Registry](#model-registry) (17 items)
 - [OAuth & External APIs](#oauth-external-apis) (41 items)
 - [Resilience & Observability](#resilience-observability) (33 items)
-- [Errors](#errors) (25 items)
-- [Utilities](#utilities) (8 items)
+- [Errors](#errors) (36 items)
+- [Utilities](#utilities) (10 items)
 - [Interfaces](#interfaces) (63 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (446 items)
+- [Other](#other) (600 items)
 
 ## Core
 
@@ -1038,7 +1038,7 @@ static clear(): void
 
 ### Connector `class`
 
-📍 [`src/core/Connector.ts:53`](src/core/Connector.ts)
+📍 [`src/core/Connector.ts:54`](src/core/Connector.ts)
 
 Connector class - represents a single authenticated connection
 
@@ -1058,6 +1058,34 @@ private constructor(config: ConnectorConfig &
 
 <details>
 <summary><strong>Static Methods</strong></summary>
+
+#### `static setRegistry()`
+
+Set a custom connector registry implementation.
+When set, all static read methods (get, has, list, listAll, size, etc.)
+delegate to this registry instead of the internal Map.
+
+Use this to plug in multi-tenant, lazy-loading, or any custom connector
+resolution strategy. Pass null to revert to the built-in Map-based registry.
+
+```typescript
+static setRegistry(registry: IConnectorRegistry | null): void
+```
+
+**Parameters:**
+- `registry`: `IConnectorRegistry | null`
+
+**Returns:** `void`
+
+#### `static getRegistry()`
+
+Get the current custom registry (or null if using the built-in registry).
+
+```typescript
+static getRegistry(): IConnectorRegistry | null
+```
+
+**Returns:** `IConnectorRegistry | null`
 
 #### `static create()`
 
@@ -1131,6 +1159,58 @@ static clear(): void
 
 **Returns:** `void`
 
+#### `static getFromMap()`
+
+Get a connector from the internal Map, bypassing the custom registry.
+Returns undefined if not found (does not throw).
+
+```typescript
+static getFromMap(name: string): Connector | undefined
+```
+
+**Parameters:**
+- `name`: `string`
+
+**Returns:** `Connector | undefined`
+
+#### `static hasInMap()`
+
+Check if a connector exists in the internal Map, bypassing the custom registry.
+
+```typescript
+static hasInMap(name: string): boolean
+```
+
+**Parameters:**
+- `name`: `string`
+
+**Returns:** `boolean`
+
+#### `static listAllFromMap()`
+
+List all connector instances from the internal Map, bypassing the custom registry.
+
+```typescript
+static listAllFromMap(): Connector[]
+```
+
+**Returns:** `Connector[]`
+
+#### `static warmup()`
+
+Call the custom registry's warmup() if available.
+Entry points (middleware, request handlers) should call this before
+using sync read methods to ensure connectors are loaded for the
+current context (e.g., tenant/group).
+
+No-op if no custom registry or no warmup method.
+
+```typescript
+static async warmup(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
 #### `static setDefaultStorage()`
 
 Set default token storage for OAuth connectors
@@ -1163,6 +1243,19 @@ static size(): number
 ```
 
 **Returns:** `number`
+
+#### `static getById()`
+
+Get a connector by ID
+
+```typescript
+static getById(id: string): Connector
+```
+
+**Parameters:**
+- `id`: `string`
+
+**Returns:** `Connector`
 
 #### `static setAccessPolicy()`
 
@@ -1464,6 +1557,7 @@ isDisposed(): boolean
 | Property | Type | Description |
 |----------|------|-------------|
 | `registry` | `registry: Map&lt;string, Connector&gt;` | - |
+| `id` | `id: string` | - |
 | `name` | `name: string` | - |
 | `vendor?` | `vendor: Vendor | undefined` | - |
 | `config` | `config: ConnectorConfig` | - |
@@ -1659,7 +1753,7 @@ Aggregate statistics across all tracked agents
 
 ### ConnectorFetchOptions `interface`
 
-📍 [`src/core/Connector.ts:41`](src/core/Connector.ts)
+📍 [`src/core/Connector.ts:42`](src/core/Connector.ts)
 
 Fetch options with additional connector-specific settings
 
@@ -2183,7 +2277,11 @@ Options for text-to-speech synthesis
 |----------|------|-------------|
 | `model` | `model: string;` | Model to use (e.g., 'tts-1', 'gpt-4o-mini-tts') |
 | `input` | `input: string;` | Text to synthesize |
-| `voice` | `voice: string;` | Voice ID to use |
+| `voice` | `voice: string;` | Voice ID to use.
+For OpenAI: a built-in name (`alloy`, `ash`, `ballad`, `coral`, `echo`,
+`fable`, `onyx`, `nova`, `sage`, `shimmer`, `verse`, `marin`, `cedar`) or
+a custom-voice ID with the `voice_` prefix (e.g. `voice_1234`). Custom IDs
+are forwarded to the SDK as `{ id }` automatically. |
 | `format?` | `format?: AudioFormat;` | Audio output format |
 | `speed?` | `speed?: number;` | Speech speed (0.25 to 4.0, vendor-dependent) |
 | `vendorOptions?` | `vendorOptions?: Record&lt;string, unknown&gt;;` | Vendor-specific options passthrough |
@@ -2194,7 +2292,7 @@ Options for text-to-speech synthesis
 
 ### TTSResponse `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:39`](src/domain/interfaces/IAudioProvider.ts)
+📍 [`src/domain/interfaces/IAudioProvider.ts:45`](src/domain/interfaces/IAudioProvider.ts)
 
 Response from text-to-speech synthesis
 
@@ -2214,7 +2312,7 @@ Response from text-to-speech synthesis
 
 ### TTSStreamChunk `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:71`](src/domain/interfaces/IAudioProvider.ts)
+📍 [`src/domain/interfaces/IAudioProvider.ts:77`](src/domain/interfaces/IAudioProvider.ts)
 
 A single chunk of streamed TTS audio
 
@@ -2835,7 +2933,7 @@ STT model capabilities
 
 ### STTOptions `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:106`](src/domain/interfaces/IAudioProvider.ts)
+📍 [`src/domain/interfaces/IAudioProvider.ts:112`](src/domain/interfaces/IAudioProvider.ts)
 
 Options for speech-to-text transcription
 
@@ -2860,7 +2958,7 @@ Options for speech-to-text transcription
 
 ### STTResponse `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:158`](src/domain/interfaces/IAudioProvider.ts)
+📍 [`src/domain/interfaces/IAudioProvider.ts:164`](src/domain/interfaces/IAudioProvider.ts)
 
 Response from speech-to-text transcription
 
@@ -2893,7 +2991,7 @@ type STTOutputFormat = 'json' | 'text' | 'srt' | 'vtt' | 'verbose_json'
 
 ### STTOutputFormat `type`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:101`](src/domain/interfaces/IAudioProvider.ts)
+📍 [`src/domain/interfaces/IAudioProvider.ts:107`](src/domain/interfaces/IAudioProvider.ts)
 
 STT output format types
 
@@ -4651,7 +4749,7 @@ Generate videos from text prompts
 
 ### VideoGeneration `class`
 
-📍 [`src/capabilities/video/VideoGeneration.ts:79`](src/capabilities/video/VideoGeneration.ts)
+📍 [`src/capabilities/video/VideoGeneration.ts:83`](src/capabilities/video/VideoGeneration.ts)
 
 VideoGeneration capability class
 
@@ -4775,6 +4873,63 @@ async extend(options: VideoExtendOptions): Promise&lt;VideoResponse&gt;
 
 **Returns:** `Promise&lt;VideoResponse&gt;`
 
+#### `remix()`
+
+Remix a completed video with a new prompt — same length,
+prompt-steered re-generation. Provider-dependent (OpenAI Sora today).
+
+```typescript
+async remix(options: VideoRemixOptions): Promise&lt;VideoResponse&gt;
+```
+
+**Parameters:**
+- `options`: `VideoRemixOptions`
+
+**Returns:** `Promise&lt;VideoResponse&gt;`
+
+#### `edit()`
+
+Edit a completed video using a prompt-described change.
+Provider-dependent (OpenAI Sora today).
+
+```typescript
+async edit(options: VideoEditOptions): Promise&lt;VideoResponse&gt;
+```
+
+**Parameters:**
+- `options`: `VideoEditOptions`
+
+**Returns:** `Promise&lt;VideoResponse&gt;`
+
+#### `createCharacter()`
+
+Create a reusable character from a reference video.
+Provider-dependent (OpenAI Sora today). Returns a `CharacterRef` whose
+`id` can be passed back via `vendorOptions.characterId` on a later
+`generate` call.
+
+```typescript
+async createCharacter(options: CreateCharacterOptions): Promise&lt;CharacterRef&gt;
+```
+
+**Parameters:**
+- `options`: `CreateCharacterOptions`
+
+**Returns:** `Promise&lt;CharacterRef&gt;`
+
+#### `getCharacter()`
+
+Look up an existing character by id. Provider-dependent.
+
+```typescript
+async getCharacter(characterId: string): Promise&lt;CharacterRef&gt;
+```
+
+**Parameters:**
+- `characterId`: `string`
+
+**Returns:** `Promise&lt;CharacterRef&gt;`
+
 #### `cancel()`
 
 Cancel a pending video generation job
@@ -4846,6 +5001,43 @@ getConnector(): Connector
 
 ---
 
+### CharacterRef `interface`
+
+📍 [`src/domain/interfaces/IVideoProvider.ts:82`](src/domain/interfaces/IVideoProvider.ts)
+
+A reusable character reference (Sora character API).
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | Character identifier returned by the provider |
+| `name` | `name: string;` | Display name |
+
+</details>
+
+---
+
+### CreateCharacterOptions `interface`
+
+📍 [`src/domain/interfaces/IVideoProvider.ts:72`](src/domain/interfaces/IVideoProvider.ts)
+
+Options for creating a reusable character from a reference video
+(Sora character API).
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: string;` | Display name for the character |
+| `video` | `video: Buffer | string;` | Reference video — Buffer, file path, or URL |
+
+</details>
+
+---
+
 ### IVideoModelDescription `interface`
 
 📍 [`src/domain/entities/VideoModel.ts:58`](src/domain/entities/VideoModel.ts)
@@ -4866,7 +5058,7 @@ Video model description
 
 ### IVideoProvider `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:105`](src/domain/interfaces/IVideoProvider.ts)
+📍 [`src/domain/interfaces/IVideoProvider.ts:149`](src/domain/interfaces/IVideoProvider.ts)
 
 Video provider interface
 
@@ -4926,6 +5118,61 @@ extendVideo?(options: VideoExtendOptions): Promise&lt;VideoResponse&gt;;
 
 **Returns:** `Promise&lt;VideoResponse&gt;`
 
+#### `remixVideo()?`
+
+Remix a completed video with a new prompt (optional).
+Distinct from extend: same length, prompt-steered re-generation.
+
+```typescript
+remixVideo?(options: VideoRemixOptions): Promise&lt;VideoResponse&gt;;
+```
+
+**Parameters:**
+- `options`: `VideoRemixOptions`
+
+**Returns:** `Promise&lt;VideoResponse&gt;`
+
+#### `editVideo()?`
+
+Edit a completed video using a prompt (optional).
+
+```typescript
+editVideo?(options: VideoEditOptions): Promise&lt;VideoResponse&gt;;
+```
+
+**Parameters:**
+- `options`: `VideoEditOptions`
+
+**Returns:** `Promise&lt;VideoResponse&gt;`
+
+#### `createCharacter()?`
+
+Create a reusable character from a reference video (optional).
+Returns a `CharacterRef` whose `id` can be threaded into future
+`generateVideo` calls via `vendorOptions`.
+
+```typescript
+createCharacter?(options: CreateCharacterOptions): Promise&lt;CharacterRef&gt;;
+```
+
+**Parameters:**
+- `options`: `CreateCharacterOptions`
+
+**Returns:** `Promise&lt;CharacterRef&gt;`
+
+#### `getCharacter()?`
+
+Look up an existing character by id (optional).
+
+```typescript
+getCharacter?(characterId: string): Promise&lt;CharacterRef&gt;;
+```
+
+**Parameters:**
+- `characterId`: `string`
+
+**Returns:** `Promise&lt;CharacterRef&gt;`
+
 #### `listModels()?`
 
 List available video models
@@ -4955,7 +5202,7 @@ cancelJob?(jobId: string): Promise&lt;boolean&gt;;
 
 ### SimpleVideoGenerateOptions `interface`
 
-📍 [`src/capabilities/video/VideoGeneration.ts:57`](src/capabilities/video/VideoGeneration.ts)
+📍 [`src/capabilities/video/VideoGeneration.ts:61`](src/capabilities/video/VideoGeneration.ts)
 
 Simplified options for quick generation
 
@@ -4972,6 +5219,25 @@ Simplified options for quick generation
 | `image?` | `image?: Buffer | string;` | Reference image for image-to-video |
 | `seed?` | `seed?: number;` | Seed for reproducibility |
 | `vendorOptions?` | `vendorOptions?: Record&lt;string, unknown&gt;;` | Vendor-specific options |
+
+</details>
+
+---
+
+### VideoEditOptions `interface`
+
+📍 [`src/domain/interfaces/IVideoProvider.ts:61`](src/domain/interfaces/IVideoProvider.ts)
+
+Options for editing an existing video.
+Edit = apply a prompt-described change to a completed video.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `videoId` | `videoId: string;` | Identifier of the completed video to edit |
+| `prompt` | `prompt: string;` | Prompt describing the edit |
 
 </details>
 
@@ -5024,7 +5290,7 @@ Options for generating a video
 
 ### VideoGenerationCreateOptions `interface`
 
-📍 [`src/capabilities/video/VideoGeneration.ts:49`](src/capabilities/video/VideoGeneration.ts)
+📍 [`src/capabilities/video/VideoGeneration.ts:53`](src/capabilities/video/VideoGeneration.ts)
 
 Options for creating a VideoGeneration instance
 
@@ -5041,7 +5307,7 @@ Options for creating a VideoGeneration instance
 
 ### VideoJob `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:53`](src/domain/interfaces/IVideoProvider.ts)
+📍 [`src/domain/interfaces/IVideoProvider.ts:97`](src/domain/interfaces/IVideoProvider.ts)
 
 Video generation job
 
@@ -5113,9 +5379,29 @@ Video model pricing
 
 ---
 
+### VideoRemixOptions `interface`
+
+📍 [`src/domain/interfaces/IVideoProvider.ts:50`](src/domain/interfaces/IVideoProvider.ts)
+
+Options for remixing an existing video.
+Remix = re-generate the same clip with a new prompt steering the result.
+The video reference is the completed-video ID returned by `generateVideo`.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `videoId` | `videoId: string;` | Identifier of the completed video to remix |
+| `prompt` | `prompt: string;` | Prompt steering the remix |
+
+</details>
+
+---
+
 ### VideoResponse `interface`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:71`](src/domain/interfaces/IVideoProvider.ts)
+📍 [`src/domain/interfaces/IVideoProvider.ts:115`](src/domain/interfaces/IVideoProvider.ts)
 
 Video generation response
 
@@ -5152,7 +5438,7 @@ Video generation response
 
 ### VideoStatus `type`
 
-📍 [`src/domain/interfaces/IVideoProvider.ts:48`](src/domain/interfaces/IVideoProvider.ts)
+📍 [`src/domain/interfaces/IVideoProvider.ts:92`](src/domain/interfaces/IVideoProvider.ts)
 
 Video generation status (for async operations)
 
@@ -5906,6 +6192,315 @@ async storeList(_filter?: Record&lt;string, unknown&gt;, _context?: ToolContext)
 
 ---
 
+### InMemoryAdapter `class`
+
+📍 [`src/memory/adapters/inmemory/InMemoryAdapter.ts:44`](src/memory/adapters/inmemory/InMemoryAdapter.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(opts: InMemoryAdapterOptions =
+```
+
+**Parameters:**
+- `opts`: `InMemoryAdapterOptions` *(optional)* (default: `{}`)
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `createEntity()`
+
+```typescript
+async createEntity(input: NewEntity): Promise&lt;IEntity&gt;
+```
+
+**Parameters:**
+- `input`: `NewEntity`
+
+**Returns:** `Promise&lt;IEntity&gt;`
+
+#### `createEntities()`
+
+```typescript
+async createEntities(inputs: NewEntity[]): Promise&lt;IEntity[]&gt;
+```
+
+**Parameters:**
+- `inputs`: `NewEntity[]`
+
+**Returns:** `Promise&lt;IEntity[]&gt;`
+
+#### `updateEntity()`
+
+```typescript
+async updateEntity(entity: IEntity): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `entity`: `IEntity`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `getEntity()`
+
+```typescript
+async getEntity(id: EntityId, scope: ScopeFilter): Promise&lt;IEntity | null&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IEntity | null&gt;`
+
+#### `getEntities()`
+
+```typescript
+async getEntities(ids: EntityId[], scope: ScopeFilter): Promise&lt;Array&lt;IEntity | null&gt;&gt;
+```
+
+**Parameters:**
+- `ids`: `string[]`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;(IEntity | null)[]&gt;`
+
+#### `findEntitiesByIdentifier()`
+
+```typescript
+async findEntitiesByIdentifier(
+    kind: string,
+    value: string,
+    scope: ScopeFilter,
+  ): Promise&lt;IEntity[]&gt;
+```
+
+**Parameters:**
+- `kind`: `string`
+- `value`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IEntity[]&gt;`
+
+#### `searchEntities()`
+
+```typescript
+async searchEntities(
+    query: string,
+    opts: EntitySearchOptions,
+    scope: ScopeFilter,
+  ): Promise&lt;Page&lt;IEntity&gt;&gt;
+```
+
+**Parameters:**
+- `query`: `string`
+- `opts`: `EntitySearchOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Page&lt;IEntity&gt;&gt;`
+
+#### `listEntities()`
+
+```typescript
+async listEntities(
+    filter: EntityListFilter,
+    opts: ListOptions,
+    scope: ScopeFilter,
+  ): Promise&lt;Page&lt;IEntity&gt;&gt;
+```
+
+**Parameters:**
+- `filter`: `EntityListFilter`
+- `opts`: `ListOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Page&lt;IEntity&gt;&gt;`
+
+#### `archiveEntity()`
+
+```typescript
+async archiveEntity(id: EntityId, scope: ScopeFilter): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `deleteEntity()`
+
+```typescript
+async deleteEntity(id: EntityId, scope: ScopeFilter): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `createFact()`
+
+```typescript
+async createFact(input: NewFact): Promise&lt;IFact&gt;
+```
+
+**Parameters:**
+- `input`: `NewFact`
+
+**Returns:** `Promise&lt;IFact&gt;`
+
+#### `createFacts()`
+
+```typescript
+async createFacts(inputs: NewFact[]): Promise&lt;IFact[]&gt;
+```
+
+**Parameters:**
+- `inputs`: `NewFact[]`
+
+**Returns:** `Promise&lt;IFact[]&gt;`
+
+#### `getFact()`
+
+```typescript
+async getFact(id: FactId, scope: ScopeFilter): Promise&lt;IFact | null&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IFact | null&gt;`
+
+#### `findFacts()`
+
+```typescript
+async findFacts(
+    filter: FactFilter,
+    opts: FactQueryOptions,
+    scope: ScopeFilter,
+  ): Promise&lt;Page&lt;IFact&gt;&gt;
+```
+
+**Parameters:**
+- `filter`: `FactFilter`
+- `opts`: `FactQueryOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Page&lt;IFact&gt;&gt;`
+
+#### `updateFact()`
+
+```typescript
+async updateFact(id: FactId, patch: Partial&lt;IFact&gt;, scope: ScopeFilter): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `patch`: `Partial&lt;IFact&gt;`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `countFacts()`
+
+```typescript
+async countFacts(filter: FactFilter, scope: ScopeFilter): Promise&lt;number&gt;
+```
+
+**Parameters:**
+- `filter`: `FactFilter`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `traverse()`
+
+```typescript
+async traverse(
+    startId: EntityId,
+    opts: TraversalOptions,
+    scope: ScopeFilter,
+  ): Promise&lt;Neighborhood&gt;
+```
+
+**Parameters:**
+- `startId`: `string`
+- `opts`: `TraversalOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Neighborhood&gt;`
+
+#### `semanticSearch()`
+
+```typescript
+async semanticSearch(
+    queryVector: number[],
+    filter: FactFilter,
+    opts: SemanticSearchOptions,
+    scope: ScopeFilter,
+  ): Promise&lt;Array&lt;
+```
+
+**Parameters:**
+- `queryVector`: `number[]`
+- `filter`: `FactFilter`
+- `opts`: `SemanticSearchOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;{ fact: IFact; score: number; }[]&gt;`
+
+#### `semanticSearchEntities()`
+
+```typescript
+async semanticSearchEntities(
+    queryVector: number[],
+    filter: EntitySemanticSearchFilter,
+    opts: SemanticSearchOptions &
+```
+
+**Parameters:**
+- `queryVector`: `number[]`
+- `filter`: `EntitySemanticSearchFilter`
+- `opts`: `SemanticSearchOptions & { minScore?: number | undefined; }`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;{ entity: IEntity; score: number; }[]&gt;`
+
+#### `destroy()`
+
+```typescript
+destroy(): void
+```
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `entitiesById` | `entitiesById: Map&lt;string, IEntity&gt;` | - |
+| `entitiesByIdent` | `entitiesByIdent: Map&lt;string, Set&lt;string&gt;&gt;` | - |
+| `factsById` | `factsById: Map&lt;string, IFact&gt;` | - |
+| `factsBySubject` | `factsBySubject: Map&lt;string, Set&lt;string&gt;&gt;` | - |
+| `factsByObject` | `factsByObject: Map&lt;string, Set&lt;string&gt;&gt;` | - |
+| `factsByContext` | `factsByContext: Map&lt;string, Set&lt;string&gt;&gt;` | - |
+| `destroyed` | `destroyed: boolean` | - |
+
+</details>
+
+---
+
 ### InMemoryAgentStateStorage `class`
 
 📍 [`src/infrastructure/storage/InMemoryStorage.ts:140`](src/infrastructure/storage/InMemoryStorage.ts)
@@ -6419,6 +7014,42 @@ async getTotalSize(): Promise&lt;number&gt;
 
 ---
 
+### InvalidTaskTransitionError `class`
+
+📍 [`src/memory/MemorySystem.ts:123`](src/memory/MemorySystem.ts)
+
+Thrown when `transitionTaskState` is called with `validate: 'strict'` and
+the (from, to) pair is not allowed by the caller-supplied transition matrix.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(taskId: EntityId, from: string | undefined, to: string)
+```
+
+**Parameters:**
+- `taskId`: `string`
+- `from`: `string | undefined`
+- `to`: `string`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `from` | `from: string | undefined` | - |
+| `to` | `to: string` | - |
+| `taskId` | `taskId: string` | - |
+
+</details>
+
+---
+
 ### MemoryConnectorStorage `class`
 
 📍 [`src/connectors/storage/MemoryConnectorStorage.ts:20`](src/connectors/storage/MemoryConnectorStorage.ts)
@@ -6589,6 +7220,169 @@ estimateSavings(component: IContextComponent): number
 
 ---
 
+### MemoryPluginNextGen `class`
+
+📍 [`src/core/context-nextgen/plugins/MemoryPluginNextGen.ts:264`](src/core/context-nextgen/plugins/MemoryPluginNextGen.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: MemoryPluginConfig)
+```
+
+**Parameters:**
+- `config`: `MemoryPluginConfig`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `getInstructions()`
+
+```typescript
+getInstructions(): string
+```
+
+**Returns:** `string`
+
+#### `getContent()`
+
+```typescript
+async getContent(): Promise&lt;string | null&gt;
+```
+
+**Returns:** `Promise&lt;string | null&gt;`
+
+#### `getContents()`
+
+```typescript
+getContents(): unknown
+```
+
+**Returns:** `unknown`
+
+#### `getTokenSize()`
+
+```typescript
+getTokenSize(): number
+```
+
+**Returns:** `number`
+
+#### `getInstructionsTokenSize()`
+
+```typescript
+getInstructionsTokenSize(): number
+```
+
+**Returns:** `number`
+
+#### `isCompactable()`
+
+```typescript
+isCompactable(): boolean
+```
+
+**Returns:** `boolean`
+
+#### `compact()`
+
+```typescript
+async compact(_targetTokensToFree: number): Promise&lt;number&gt;
+```
+
+**Parameters:**
+- `_targetTokensToFree`: `number`
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `getTools()`
+
+```typescript
+getTools(): ToolFunction[]
+```
+
+**Returns:** `ToolFunction&lt;any, any&gt;[]`
+
+#### `destroy()`
+
+```typescript
+destroy(): void
+```
+
+**Returns:** `void`
+
+#### `getState()`
+
+```typescript
+getState(): unknown
+```
+
+**Returns:** `unknown`
+
+#### `restoreState()`
+
+```typescript
+restoreState(state: unknown): void
+```
+
+**Parameters:**
+- `state`: `unknown`
+
+**Returns:** `void`
+
+#### `getBootstrappedIds()`
+
+Entity IDs created (or resolved) during bootstrap. Undefined before bootstrap.
+
+```typescript
+getBootstrappedIds():
+```
+
+**Returns:** `{ userEntityId?: string | undefined; agentEntityId?: string | undefined; groupEntityId?: string | undefined; }`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: "memory"` | - |
+| `memory` | `memory: MemorySystem` | - |
+| `agentId` | `agentId: string` | - |
+| `userId` | `userId: string` | - |
+| `groupId` | `groupId: string | undefined` | - |
+| `userPerms` | `userPerms: Permissions | undefined` | - |
+| `agentPerms` | `agentPerms: Permissions | undefined` | - |
+| `groupPerms` | `groupPerms: Permissions | undefined` | - |
+| `userInj` | `userInj: ResolvedInjection` | - |
+| `groupInj` | `groupInj: ResolvedInjection` | - |
+| `userDisplayName` | `userDisplayName: string` | - |
+| `agentDisplayName` | `agentDisplayName: string` | - |
+| `groupDisplayName` | `groupDisplayName: string | undefined` | - |
+| `groupExtraIdentifiers` | `groupExtraIdentifiers: readonly Identifier[]` | - |
+| `groupBootstrapEnabled` | `groupBootstrapEnabled: boolean` | - |
+| `defaultVisibility` | `defaultVisibility: { forUser: Visibility; forAgent: Visibility; forOther: Visibility; }` | - |
+| `autoResolveThreshold` | `autoResolveThreshold: number` | - |
+| `estimator` | `estimator: ITokenEstimator` | - |
+| `userEntityId` | `userEntityId: string | undefined` | - |
+| `agentEntityId` | `agentEntityId: string | undefined` | - |
+| `groupEntityId` | `groupEntityId: string | undefined` | - |
+| `bootstrapInFlight` | `bootstrapInFlight: Promise&lt;void&gt; | null` | - |
+| `tokenCache` | `tokenCache: number` | - |
+| `instructionsTokenCache` | `instructionsTokenCache: number | null` | - |
+| `destroyed` | `destroyed: boolean` | - |
+| `cachedTools` | `cachedTools: ToolFunction&lt;any, any&gt;[] | null` | - |
+
+</details>
+
+---
+
 ### MemoryStorage `class`
 
 📍 [`src/connectors/oauth/infrastructure/storage/MemoryStorage.ts:9`](src/connectors/oauth/infrastructure/storage/MemoryStorage.ts)
@@ -6679,6 +7473,1283 @@ async listKeys(): Promise&lt;string[]&gt;
 | Property | Type | Description |
 |----------|------|-------------|
 | `tokens` | `tokens: Map&lt;string, string&gt;` | - |
+
+</details>
+
+---
+
+### MemorySystem `class`
+
+📍 [`src/memory/MemorySystem.ts:226`](src/memory/MemorySystem.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: MemorySystemConfig)
+```
+
+**Parameters:**
+- `config`: `MemorySystemConfig`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `upsertEntity()`
+
+```typescript
+async upsertEntity(
+    input: Partial&lt;IEntity&gt; &
+```
+
+**Parameters:**
+- `input`: `Partial&lt;IEntity&gt; & { identifiers: Identifier[]; displayName: string; type: string; }`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;UpsertEntityResult&gt;`
+
+#### `getEntity()`
+
+```typescript
+getEntity(id: EntityId, scope: ScopeFilter): Promise&lt;IEntity | null&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IEntity | null&gt;`
+
+#### `getEntities()`
+
+Batch fetch. Returned array aligns with `ids` positionally; missing ids /
+scope-filtered-out entries become `null`. Intended for call sites that
+need to resolve many EntityId references cheaply (e.g. rendering
+`fact.objectId` as a displayName in the system message).
+
+```typescript
+getEntities(ids: EntityId[], scope: ScopeFilter): Promise&lt;Array&lt;IEntity | null&gt;&gt;
+```
+
+**Parameters:**
+- `ids`: `string[]`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;(IEntity | null)[]&gt;`
+
+#### `findEntitiesByIdentifier()`
+
+Return every entity visible at `scope` whose identifier list contains
+`(kind, value)`. Thin pass-through to the store — exposed so callers that
+need to detect bootstrap duplicates (e.g. `MemoryPluginNextGen`) don't
+have to reach into `store` directly.
+
+```typescript
+findEntitiesByIdentifier(
+    kind: string,
+    value: string,
+    scope: ScopeFilter,
+  ): Promise&lt;IEntity[]&gt;
+```
+
+**Parameters:**
+- `kind`: `string`
+- `value`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IEntity[]&gt;`
+
+#### `searchEntities()`
+
+```typescript
+searchEntities(
+    query: string,
+    opts:
+```
+
+**Parameters:**
+- `query`: `string`
+- `opts`: `{ types?: string[] | undefined; limit?: number | undefined; cursor?: string | undefined; }`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Page&lt;IEntity&gt;&gt;`
+
+#### `listEntities()`
+
+List entities by type + optional metadata equality filter. Thin pass-through
+to the store's `listEntities` — exposed on MemorySystem so tool layers
+don't need to reach into the store directly.
+
+```typescript
+listEntities(
+    filter: import('./types.js').EntityListFilter,
+    opts: import('./types.js').ListOptions,
+    scope: ScopeFilter,
+  )
+```
+
+**Parameters:**
+- `filter`: `EntityListFilter`
+- `opts`: `ListOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Page&lt;IEntity&gt;&gt;`
+
+#### `findFacts()`
+
+Enumerate facts directly. Pass-through to the store's `findFacts` so tool
+layers can list raw facts without reaching into the store. For ranked/
+retrieval-oriented queries prefer `getContext` or `semanticSearch`.
+
+```typescript
+findFacts(
+    filter: FactFilter,
+    opts: import('./types.js').FactQueryOptions,
+    scope: ScopeFilter,
+  )
+```
+
+**Parameters:**
+- `filter`: `FactFilter`
+- `opts`: `FactQueryOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Page&lt;IFact&gt;&gt;`
+
+#### `getFact()`
+
+Fetch a single fact by id. Returns null when the fact does not exist or
+is not visible to the caller's scope.
+
+```typescript
+getFact(id: FactId, scope: ScopeFilter)
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IFact | null&gt;`
+
+#### `resolveEntity()`
+
+Resolve a surface form ("Microsoft", "Q3 Planning", "John") to ranked
+candidate entities. Matching tiers: strong identifier → exact displayName →
+exact alias → fuzzy → semantic (identityEmbedding). Returns candidates
+sorted by confidence; empty if nothing meets `opts.threshold` (default 0.5).
+
+```typescript
+resolveEntity(
+    query: ResolveEntityQuery,
+    scope: ScopeFilter,
+    opts?: ResolveEntityOptions,
+  ): Promise&lt;EntityCandidate[]&gt;
+```
+
+**Parameters:**
+- `query`: `ResolveEntityQuery`
+- `scope`: `ScopeFilter`
+- `opts`: `ResolveEntityOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;EntityCandidate[]&gt;`
+
+#### `upsertEntityBySurface()`
+
+Upsert-or-resolve by surface form. If the top candidate clears
+`autoResolveThreshold` (default conservative 0.90), returns that entity
+with the new surface + identifiers merged in (alias accumulation).
+Otherwise creates a new entity and reports near-matches as
+`mergeCandidates` for deferred human review.
+
+```typescript
+upsertEntityBySurface(
+    input: UpsertBySurfaceInput,
+    scope: ScopeFilter,
+    opts?: UpsertBySurfaceOptions,
+  ): Promise&lt;UpsertBySurfaceResult&gt;
+```
+
+**Parameters:**
+- `input`: `UpsertBySurfaceInput`
+- `scope`: `ScopeFilter`
+- `opts`: `UpsertBySurfaceOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;UpsertBySurfaceResult&gt;`
+
+#### `mergeEntities()`
+
+Merge two entities — copy loser's identifiers + aliases onto winner, rewrite
+every fact whose subject or object is the loser to point at the winner, and
+archive the loser.
+
+**Scope-window limitation (defence-in-depth, by design):** the rewrite step
+only touches facts visible to the caller's scope. Facts scoped more narrowly
+than the caller (e.g. other users' private facts on either entity) are left
+untouched and will continue to reference the archived loser. This prevents a
+user from rewriting data they cannot see, but means a "complete" merge
+requires a caller with broad-enough scope to see every referencing fact.
+
+```typescript
+async mergeEntities(
+    winnerId: EntityId,
+    loserId: EntityId,
+    scope: ScopeFilter,
+  ): Promise&lt;IEntity&gt;
+```
+
+**Parameters:**
+- `winnerId`: `string`
+- `loserId`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IEntity&gt;`
+
+#### `archiveEntity()`
+
+```typescript
+async archiveEntity(id: EntityId, scope: ScopeFilter): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `deleteEntity()`
+
+```typescript
+async deleteEntity(
+    id: EntityId,
+    scope: ScopeFilter,
+    opts:
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+- `opts`: `{ hard?: boolean | undefined; }` *(optional)* (default: `{}`)
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `canonicalizePredicate()`
+
+Normalize a predicate string to its canonical form. When no registry is
+configured, returns the input unchanged.
+
+Used by ExtractionResolver and available to external callers that want to
+pre-normalize predicates before querying.
+
+```typescript
+canonicalizePredicate(input: string): string
+```
+
+**Parameters:**
+- `input`: `string`
+
+**Returns:** `string`
+
+#### `hasPredicateRegistry()`
+
+True when a predicate registry is configured on this MemorySystem.
+
+```typescript
+hasPredicateRegistry(): boolean
+```
+
+**Returns:** `boolean`
+
+#### `ensureAdapterIndexes()`
+
+H7: ensure the configured adapter has all recommended indexes. No-op for
+adapters that don't expose `ensureIndexes` (InMemoryAdapter has nothing
+to index). Delegates to the adapter's own method — typically
+`MongoMemoryAdapter.ensureIndexes()`. Idempotent.
+
+**Call from your migration system, not from application hot paths.**
+Index creation on production collections can be expensive; the library
+intentionally does not call this automatically at construction time.
+
+See `docs/MEMORY_PERMISSIONS.md` (or the memory README) for the full
+list of recommended indexes and why each matters. Cross-process
+deployments with MemoryPluginNextGen additionally need a unique index on
+`{identifiers.kind: 1, identifiers.value: 1}` (partial, filtered on
+`identifiers.$.value: {$exists: true}`) — this one is not created by
+`ensureIndexes()` because adding a unique index to a collection with
+existing duplicates fails hard; callers should build + verify it
+explicitly in a migration.
+
+```typescript
+async ensureAdapterIndexes(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `getPredicateDefinition()`
+
+Lookup a predicate definition (by canonical name or alias). Null when no registry or unknown.
+
+```typescript
+getPredicateDefinition(nameOrAlias: string): PredicateDefinition | null
+```
+
+**Parameters:**
+- `nameOrAlias`: `string`
+
+**Returns:** `PredicateDefinition | null`
+
+#### `resolveUnknownPredicate()`
+
+H5: the configured drift policy + closest known predicate for an unknown.
+Returns `{ policy: 'fuzzy_map', mappedTo? }` / `{ policy: 'keep' }` /
+`{ policy: 'drop' }`. `mappedTo` is only present when the policy is
+`'fuzzy_map'` AND a close registry match exists. Intended for callers
+(`ExtractionResolver`) that want to apply the policy themselves and record
+the decision in their result payload.
+
+```typescript
+resolveUnknownPredicate(canonical: string):
+```
+
+**Parameters:**
+- `canonical`: `string`
+
+**Returns:** `{ policy: "fuzzy_map" | "keep" | "drop"; mappedTo?: string | undefined; distance?: number | undefined; }`
+
+#### `addFact()`
+
+```typescript
+async addFact(
+    input: Partial&lt;IFact&gt; &
+```
+
+**Parameters:**
+- `input`: `Partial&lt;IFact&gt; & { subjectId: string; predicate: string; kind: FactKind; dedup?: boolean | undefined; }`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IFact&gt;`
+
+#### `addFacts()`
+
+```typescript
+async addFacts(
+    inputs: Array&lt;
+      Partial&lt;IFact&gt; &
+```
+
+**Parameters:**
+- `inputs`: `(Partial&lt;IFact&gt; & { subjectId: string; predicate: string; kind: FactKind; })[]`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IFact[]&gt;`
+
+#### `supersedeFact()`
+
+```typescript
+supersedeFact(
+    oldId: FactId,
+    newInput: Partial&lt;IFact&gt; &
+```
+
+**Parameters:**
+- `oldId`: `string`
+- `newInput`: `Partial&lt;IFact&gt; & { predicate: string; kind: FactKind; subjectId: string; }`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IFact&gt;`
+
+#### `archiveFact()`
+
+```typescript
+async archiveFact(id: FactId, scope: ScopeFilter): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `restoreFact()`
+
+Reverse of `archiveFact` — restore a previously-archived fact so it
+participates in queries again. Used by the `memory_restore` tool to give
+agents an undo path for mistaken archives.
+
+F1 guard: if the target fact was archived as part of a supersession
+(i.e. another non-archived fact has `supersedes: targetId`), restoring it
+would create two "current" facts for the same (subject, predicate) pair.
+Throws `FactSupersededError` with the successor's id so callers can
+handle the successor first. The tool layer surfaces this as a structured
+error to the LLM.
+
+```typescript
+async restoreFact(id: FactId, scope: ScopeFilter): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `updateFactDetails()`
+
+Update an existing fact's `details` field in place. Intended for merging
+narrative context when the session ingestor finds a duplicate fact and
+produces an LLM-merged details string. Recomputes `isSemantic` (the merged
+text may cross the length threshold), clears the stale embedding, and
+re-embeds if an embedder is configured.
+
+This mutates the fact — the prior `details` is lost. Use supersession if
+you need the full audit chain.
+
+```typescript
+async updateFactDetails(
+    id: FactId,
+    details: string,
+    scope: ScopeFilter,
+  ): Promise&lt;IFact&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `details`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IFact&gt;`
+
+#### `findDuplicateFact()`
+
+Find an existing non-archived fact matching the `(subjectId, predicate,
+kind, value, objectId)` signature of `input`. Returns null on no match.
+
+Exposed for callers (the session ingestor) that need to split insert vs
+merge paths themselves — e.g. to batch LLM-based details merging across
+several duplicates rather than merging one at a time.
+
+Predicate is canonicalized via the registry (if one is configured) so
+aliases match the same way `addFact` would treat them.
+
+```typescript
+async findDuplicateFact(
+    input: Partial&lt;IFact&gt; &
+```
+
+**Parameters:**
+- `input`: `Partial&lt;IFact&gt; & { subjectId: string; predicate: string; kind: FactKind; }`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IFact | null&gt;`
+
+#### `getContext()`
+
+```typescript
+async getContext(
+    entityId: EntityId,
+    opts: ContextOptions,
+    scope: ScopeFilter,
+  ): Promise&lt;EntityView&gt;
+```
+
+**Parameters:**
+- `entityId`: `string`
+- `opts`: `ContextOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;EntityView&gt;`
+
+#### `updateEntityMetadata()`
+
+Shallow-merge a patch into entity.metadata. Version-bumping, scope-checked,
+emits entity.upsert event. Caller does NOT read-modify-write — this helper
+handles all of that atomically (from the caller's perspective).
+
+```typescript
+async updateEntityMetadata(
+    id: EntityId,
+    patch: Record&lt;string, unknown&gt;,
+    scope: ScopeFilter,
+  ): Promise&lt;IEntity&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `patch`: `Record&lt;string, unknown&gt;`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IEntity&gt;`
+
+#### `transitionTaskState()`
+
+Transition a task entity to a new state — the canonical way to mutate
+`task.metadata.state` after creation.
+
+Side effects (atomic from the caller's perspective, but read-modify-write
+at the MemorySystem layer — adapters with native transactions may promote):
+  - Sets `metadata.state = newState`.
+  - Appends `metadata.stateHistory: TaskStateHistoryEntry[]`, keeping only
+    the most-recent `stateHistoryCap` entries (default 200). Older entries
+    drop in FIFO order — full audit history is still recoverable from the
+    `state_changed` facts themselves.
+  - When `newState` is in `taskStates.terminal` AND `metadata.completedAt`
+    is unset, sets `metadata.completedAt = at`.
+  - Writes a `state_changed` fact with `value: { from, to }`, the provided
+    `signalId` as `sourceSignalId`, and `importance: 0.7` (override via
+    `opts.factOverrides`).
+
+**Validate modes:**
+ - `'warn'` (default): any transition allowed; out-of-matrix transitions
+   log to `console.warn` and still proceed.
+ - `'strict'`: out-of-matrix transitions throw `InvalidTaskTransitionError`
+   and NO writes happen.
+ - `'none'`: silent.
+
+**Crash-safety:** the metadata update and the audit fact write are NOT
+atomic — this method commits the metadata mutation first, then calls
+`addFact`. If the process dies between the two writes (or `addFact`
+throws after validation), the task's `state` + `stateHistory` are
+persisted but the audit fact is missing. The metadata is authoritative
+and `stateHistory` preserves the transition record, so queries keep
+working; only the fact-level provenance (ranking, retrieval via
+`state_changed` predicate) is lost for that specific transition.
+Callers that need transactional audit should wrap the call at their
+adapter layer.
+
+Subject must be a `type: 'task'` entity. For non-task subjects, call
+`addFact` + `updateEntityMetadata` directly.
+
+```typescript
+async transitionTaskState(
+    taskId: EntityId,
+    newState: string,
+    opts: TransitionTaskStateOptions,
+    scope: ScopeFilter,
+  ): Promise&lt;TransitionTaskStateResult&gt;
+```
+
+**Parameters:**
+- `taskId`: `string`
+- `newState`: `string`
+- `opts`: `TransitionTaskStateOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;TransitionTaskStateResult&gt;`
+
+#### `listOpenTasks()`
+
+List open (non-terminal) tasks for a scope, optionally filtered by
+assignee or project. Thin wrapper around `listEntities` — uses the
+configured `taskStates.active` as the `$in` filter on `metadata.state`.
+
+Client-side sort: `metadata.dueAt` ascending (undefined last), then
+`updatedAt` descending. TODO: push down once `EntityListFilter.orderBy`
+lands on adapters.
+
+Hard cap 200; default limit 50. Pass a smaller limit explicitly to
+constrain prompt-token budget when injecting into an extraction prompt.
+
+```typescript
+async listOpenTasks(
+    scope: ScopeFilter,
+    opts:
+```
+
+**Parameters:**
+- `scope`: `ScopeFilter`
+- `opts`: `{ assigneeId?: string | undefined; projectId?: string | undefined; limit?: number | undefined; }` *(optional)* (default: `{}`)
+
+**Returns:** `Promise&lt;IEntity[]&gt;`
+
+#### `listRecentTopics()`
+
+List recent topic entities for a scope. Fetches up to `limit * 4` (capped
+at 200) topics and filters client-side by `updatedAt >= cutoff` where
+cutoff defaults to now - `days` days. Sorted by `updatedAt` descending.
+
+TODO: push down once `EntityListFilter.updatedAfter` + `orderBy` land on
+adapters.
+
+```typescript
+async listRecentTopics(
+    scope: ScopeFilter,
+    opts:
+```
+
+**Parameters:**
+- `scope`: `ScopeFilter`
+- `opts`: `{ days?: number | undefined; limit?: number | undefined; }` *(optional)* (default: `{}`)
+
+**Returns:** `Promise&lt;IEntity[]&gt;`
+
+#### `getProfile()`
+
+Resolve the most-specific profile visible to the caller.
+Precedence: ownerId match > groupId match > global. First hit wins.
+
+```typescript
+async getProfile(entityId: EntityId, scope: ScopeFilter): Promise&lt;IFact | null&gt;
+```
+
+**Parameters:**
+- `entityId`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IFact | null&gt;`
+
+#### `traverse()`
+
+```typescript
+async traverse(
+    entityId: EntityId,
+    opts: TraversalOptions,
+    scope: ScopeFilter,
+  ): Promise&lt;Neighborhood&gt;
+```
+
+**Parameters:**
+- `entityId`: `string`
+- `opts`: `TraversalOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Neighborhood&gt;`
+
+#### `semanticSearch()`
+
+```typescript
+async semanticSearch(
+    query: string,
+    filter: FactFilter,
+    scope: ScopeFilter,
+    topK: number = DEFAULT_SEMANTIC_TOP_K,
+  ): Promise&lt;Array&lt;
+```
+
+**Parameters:**
+- `query`: `string`
+- `filter`: `FactFilter`
+- `scope`: `ScopeFilter`
+- `topK`: `number` *(optional)* (default: `DEFAULT_SEMANTIC_TOP_K`)
+
+**Returns:** `Promise&lt;{ fact: IFact; score: number; }[]&gt;`
+
+#### `regenerateProfile()`
+
+```typescript
+async regenerateProfile(
+    entityId: EntityId,
+    targetScope: ScopeFields,
+    _trigger: 'threshold' | 'manual' = 'manual',
+  ): Promise&lt;IFact&gt;
+```
+
+**Parameters:**
+- `entityId`: `string`
+- `targetScope`: `ScopeFields`
+- `_trigger`: `"manual" | "threshold"` *(optional)* (default: `'manual'`)
+
+**Returns:** `Promise&lt;IFact&gt;`
+
+#### `deriveFactsFor()`
+
+```typescript
+async deriveFactsFor(entityId: EntityId, scope: ScopeFilter): Promise&lt;IFact[]&gt;
+```
+
+**Parameters:**
+- `entityId`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IFact[]&gt;`
+
+#### `flushEmbeddings()`
+
+```typescript
+flushEmbeddings(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `pendingEmbeddings()`
+
+```typescript
+pendingEmbeddings(): number
+```
+
+**Returns:** `number`
+
+#### `destroy()`
+
+```typescript
+destroy(): void
+```
+
+**Returns:** `void`
+
+#### `shutdown()`
+
+```typescript
+async shutdown(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `store` | `store: IMemoryStore` | - |
+| `embedder?` | `embedder: IEmbedder | undefined` | - |
+| `profileGenerator?` | `profileGenerator: IProfileGenerator | undefined` | - |
+| `ruleEngine?` | `ruleEngine: IRuleEngine | undefined` | - |
+| `profileThreshold` | `profileThreshold: number` | - |
+| `ranking` | `ranking: RankingConfig` | - |
+| `onChange?` | `onChange: ((event: ChangeEvent) =&gt; void) | undefined` | - |
+| `onError?` | `onError: ((error: unknown, event: ChangeEvent) =&gt; void) | undefined` | - |
+| `queue` | `queue: EmbeddingQueue` | - |
+| `resolver` | `resolver: EntityResolver` | - |
+| `resolutionConfig` | `resolutionConfig: EntityResolutionConfig` | - |
+| `predicates?` | `predicates: PredicateRegistry | undefined` | - |
+| `predicateMode` | `predicateMode: "permissive" | "strict"` | - |
+| `predicateAutoSupersede` | `predicateAutoSupersede: boolean` | - |
+| `unknownPredicatePolicy` | `unknownPredicatePolicy: "fuzzy_map" | "keep" | "drop"` | - |
+| `unknownPredicateFuzzyMaxDistance` | `unknownPredicateFuzzyMaxDistance: number | undefined` | - |
+| `visibilityPolicy?` | `visibilityPolicy: VisibilityPolicy | undefined` | - |
+| `regenInFlight` | `regenInFlight: Set&lt;string&gt;` | Tracks pending profile regenerations per (entityId + scopeKey) to prevent overlap. |
+| `destroyed` | `destroyed: boolean` | - |
+
+</details>
+
+---
+
+### MemoryWritePluginNextGen `class`
+
+📍 [`src/core/context-nextgen/plugins/MemoryWritePluginNextGen.ts:189`](src/core/context-nextgen/plugins/MemoryWritePluginNextGen.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: MemoryWritePluginConfig)
+```
+
+**Parameters:**
+- `config`: `MemoryWritePluginConfig`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `getInstructions()`
+
+```typescript
+getInstructions(): string | null
+```
+
+**Returns:** `string | null`
+
+#### `getContent()`
+
+```typescript
+async getContent(): Promise&lt;string | null&gt;
+```
+
+**Returns:** `Promise&lt;string | null&gt;`
+
+#### `getContents()`
+
+```typescript
+getContents(): unknown
+```
+
+**Returns:** `unknown`
+
+#### `getTokenSize()`
+
+```typescript
+getTokenSize(): number
+```
+
+**Returns:** `number`
+
+#### `getInstructionsTokenSize()`
+
+```typescript
+getInstructionsTokenSize(): number
+```
+
+**Returns:** `number`
+
+#### `isCompactable()`
+
+```typescript
+isCompactable(): boolean
+```
+
+**Returns:** `boolean`
+
+#### `compact()`
+
+```typescript
+async compact(_targetTokensToFree: number): Promise&lt;number&gt;
+```
+
+**Parameters:**
+- `_targetTokensToFree`: `number`
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `getTools()`
+
+```typescript
+getTools(): ToolFunction[]
+```
+
+**Returns:** `ToolFunction&lt;any, any&gt;[]`
+
+#### `destroy()`
+
+```typescript
+destroy(): void
+```
+
+**Returns:** `void`
+
+#### `getState()`
+
+```typescript
+getState(): unknown
+```
+
+**Returns:** `unknown`
+
+#### `restoreState()`
+
+```typescript
+restoreState(_state: unknown): void
+```
+
+**Parameters:**
+- `_state`: `unknown`
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: "memory_write"` | - |
+| `memory` | `memory: MemorySystem` | - |
+| `agentId` | `agentId: string` | - |
+| `userId` | `userId: string` | - |
+| `groupId` | `groupId: string | undefined` | - |
+| `defaultVisibility` | `defaultVisibility: { forUser: Visibility; forAgent: Visibility; forOther: Visibility; }` | - |
+| `autoResolveThreshold` | `autoResolveThreshold: number` | - |
+| `getOwnSubjectIds` | `getOwnSubjectIds: () =&gt; { userEntityId?: string | undefined; agentEntityId?: string | undefined; }` | - |
+| `forgetRateLimit` | `forgetRateLimit: { maxCallsPerWindow?: number | undefined; windowMs?: number | undefined; } | undefined` | - |
+| `estimator` | `estimator: ITokenEstimator` | - |
+| `instructionsTokenCache` | `instructionsTokenCache: number | null` | - |
+| `cachedTools` | `cachedTools: ToolFunction&lt;any, any&gt;[] | null` | - |
+| `destroyed` | `destroyed: boolean` | - |
+
+</details>
+
+---
+
+### MongoMemoryAdapter `class`
+
+📍 [`src/memory/adapters/mongo/MongoMemoryAdapter.ts:126`](src/memory/adapters/mongo/MongoMemoryAdapter.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(opts: MongoMemoryAdapterOptions)
+```
+
+**Parameters:**
+- `opts`: `MongoMemoryAdapterOptions`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `ensureIndexes()`
+
+H7: ensure the recommended indexes exist. Idempotent — Mongo's
+`createIndex` is a no-op when the index is already present with matching
+specification. Callers integrate this into their migration system; the
+adapter does NOT call it automatically (indexes are the client app's
+responsibility, not a library concern).
+
+Invokes the shared `ensureIndexes(...)` function against this adapter's
+collections. See `indexes.ts` for the index list and why each exists.
+
+```typescript
+async ensureIndexes(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `createEntity()`
+
+```typescript
+async createEntity(input: NewEntity): Promise&lt;IEntity&gt;
+```
+
+**Parameters:**
+- `input`: `NewEntity`
+
+**Returns:** `Promise&lt;IEntity&gt;`
+
+#### `createEntities()`
+
+```typescript
+async createEntities(inputs: NewEntity[]): Promise&lt;IEntity[]&gt;
+```
+
+**Parameters:**
+- `inputs`: `NewEntity[]`
+
+**Returns:** `Promise&lt;IEntity[]&gt;`
+
+#### `updateEntity()`
+
+```typescript
+async updateEntity(entity: IEntity): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `entity`: `IEntity`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `getEntity()`
+
+```typescript
+async getEntity(id: EntityId, scope: ScopeFilter): Promise&lt;IEntity | null&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IEntity | null&gt;`
+
+#### `getEntities()`
+
+```typescript
+async getEntities(ids: EntityId[], scope: ScopeFilter): Promise&lt;Array&lt;IEntity | null&gt;&gt;
+```
+
+**Parameters:**
+- `ids`: `string[]`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;(IEntity | null)[]&gt;`
+
+#### `findEntitiesByIdentifier()`
+
+```typescript
+async findEntitiesByIdentifier(
+    kind: string,
+    value: string,
+    scope: ScopeFilter,
+  ): Promise&lt;IEntity[]&gt;
+```
+
+**Parameters:**
+- `kind`: `string`
+- `value`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IEntity[]&gt;`
+
+#### `searchEntities()`
+
+```typescript
+async searchEntities(
+    query: string,
+    opts: EntitySearchOptions,
+    scope: ScopeFilter,
+  ): Promise&lt;Page&lt;IEntity&gt;&gt;
+```
+
+**Parameters:**
+- `query`: `string`
+- `opts`: `EntitySearchOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Page&lt;IEntity&gt;&gt;`
+
+#### `listEntities()`
+
+```typescript
+async listEntities(
+    filter: EntityListFilter,
+    opts: ListOptions,
+    scope: ScopeFilter,
+  ): Promise&lt;Page&lt;IEntity&gt;&gt;
+```
+
+**Parameters:**
+- `filter`: `EntityListFilter`
+- `opts`: `ListOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Page&lt;IEntity&gt;&gt;`
+
+#### `archiveEntity()`
+
+```typescript
+async archiveEntity(id: EntityId, scope: ScopeFilter): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `deleteEntity()`
+
+```typescript
+async deleteEntity(id: EntityId, scope: ScopeFilter): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `createFact()`
+
+```typescript
+async createFact(input: NewFact): Promise&lt;IFact&gt;
+```
+
+**Parameters:**
+- `input`: `NewFact`
+
+**Returns:** `Promise&lt;IFact&gt;`
+
+#### `createFacts()`
+
+```typescript
+async createFacts(inputs: NewFact[]): Promise&lt;IFact[]&gt;
+```
+
+**Parameters:**
+- `inputs`: `NewFact[]`
+
+**Returns:** `Promise&lt;IFact[]&gt;`
+
+#### `getFact()`
+
+```typescript
+async getFact(id: FactId, scope: ScopeFilter): Promise&lt;IFact | null&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IFact | null&gt;`
+
+#### `findFacts()`
+
+```typescript
+async findFacts(
+    filter: FactFilter,
+    opts: FactQueryOptions,
+    scope: ScopeFilter,
+  ): Promise&lt;Page&lt;IFact&gt;&gt;
+```
+
+**Parameters:**
+- `filter`: `FactFilter`
+- `opts`: `FactQueryOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Page&lt;IFact&gt;&gt;`
+
+#### `updateFact()`
+
+```typescript
+async updateFact(id: FactId, patch: Partial&lt;IFact&gt;, scope: ScopeFilter): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `patch`: `Partial&lt;IFact&gt;`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `countFacts()`
+
+```typescript
+async countFacts(filter: FactFilter, scope: ScopeFilter): Promise&lt;number&gt;
+```
+
+**Parameters:**
+- `filter`: `FactFilter`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `traverse()`
+
+```typescript
+async traverse(
+    startId: EntityId,
+    opts: TraversalOptions,
+    scope: ScopeFilter,
+  ): Promise&lt;Neighborhood&gt;
+```
+
+**Parameters:**
+- `startId`: `string`
+- `opts`: `TraversalOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Neighborhood&gt;`
+
+#### `semanticSearch()`
+
+```typescript
+async semanticSearch(
+    queryVector: number[],
+    filter: FactFilter,
+    opts: SemanticSearchOptions,
+    scope: ScopeFilter,
+  ): Promise&lt;Array&lt;
+```
+
+**Parameters:**
+- `queryVector`: `number[]`
+- `filter`: `FactFilter`
+- `opts`: `SemanticSearchOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;{ fact: IFact; score: number; }[]&gt;`
+
+#### `semanticSearchEntities()`
+
+```typescript
+async semanticSearchEntities(
+    queryVector: number[],
+    filter: EntitySemanticSearchFilter,
+    opts: SemanticSearchOptions &
+```
+
+**Parameters:**
+- `queryVector`: `number[]`
+- `filter`: `EntitySemanticSearchFilter`
+- `opts`: `SemanticSearchOptions & { minScore?: number | undefined; }`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;{ entity: IEntity; score: number; }[]&gt;`
+
+#### `ensureVectorSearchIndexes()`
+
+Create the Atlas Vector Search indexes for facts and/or entities if they
+aren't already present. Separate from `ensureIndexes()` because vector
+indexes need runtime parameters (`dimensions`, `similarity`) and take
+longer to build — callers shouldn't pay that cost unless they use
+semantic search.
+
+Requires:
+  - Atlas Server v6.0.11+ and mongodb node driver v6.6+ (the driver
+    exposes `createSearchIndex` / `listSearchIndexes`).
+  - The `IMongoCollectionLike` wrapper must implement `createSearchIndex`
+    (both bundled wrappers do; custom wrappers may need updating).
+
+Idempotent — re-running is safe: existing indexes with the configured
+name are detected via `listSearchIndexes` and skipped. Concurrent-create
+races (two migrations running at once) are absorbed: if
+`createSearchIndex` fails but the index is present on re-check, we
+treat it as "another process won" and continue.
+
+Fire-and-forget: returns as soon as Atlas accepts the create request.
+The index builds asynchronously on Atlas (30–60s typical). Runs during
+startup migrations, so the index is ready well before real traffic.
+The typical first query lands minutes after the migration, not seconds —
+no readiness wait needed.
+
+**Index names come from the adapter's config by default.** If the adapter
+was constructed with `vectorIndexName: 'custom_facts'` (or
+`entityVectorIndexName: 'custom_entities'`), this helper creates indexes
+under those names automatically. Callers can still override via
+`factsIndexName` / `entitiesIndexName`, but the default is the safe
+choice — runtime queries and helper output always agree.
+
+**Filter fields are auto-declared in the index definition.** Atlas
+`$vectorSearch` silently ignores `filter` clauses whose paths aren't
+declared as `type: 'filter'` in the index. We declare scope + archived
++ discriminator paths for both collections so scope enforcement works
+on the `$vectorSearch` fast path. See the field lists in
+`FACTS_FILTER_PATHS` / `ENTITIES_FILTER_PATHS` below — manual Atlas-UI
+creators must match or the filter is silently ignored (scope bypass).
+
+```typescript
+async ensureVectorSearchIndexes(opts:
+```
+
+**Parameters:**
+- `opts`: `{ dimensions: number; similarity?: "cosine" | "dotProduct" | "euclidean" | undefined; factsIndexName?: string | null | undefined; entitiesIndexName?: string | null | undefined; }`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `destroy()`
+
+```typescript
+destroy(): void
+```
+
+**Returns:** `void`
+
+#### `shutdown()`
+
+```typescript
+async shutdown(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `entities` | `entities: IMongoCollectionLike&lt;IEntity&gt;` | - |
+| `facts` | `facts: IMongoCollectionLike&lt;IFact&gt;` | - |
+| `useNativeGraphLookup` | `useNativeGraphLookup: boolean` | - |
+| `vectorIndexName?` | `vectorIndexName: string | undefined` | - |
+| `entityVectorIndexName?` | `entityVectorIndexName: string | undefined` | - |
+| `vectorCandidateMultiplier` | `vectorCandidateMultiplier: number` | - |
+| `factsCollectionName?` | `factsCollectionName: string | undefined` | - |
+| `defaultPageSize` | `defaultPageSize: number` | - |
+| `destroyed` | `destroyed: boolean` | - |
 
 </details>
 
@@ -8074,6 +10145,335 @@ getTotalSize(): Promise&lt;number&gt;;
 
 ---
 
+### IMemoryStore `interface`
+
+📍 [`src/memory/types.ts:489`](src/memory/types.ts)
+
+Storage contract. Required methods are the minimum capability; optional
+methods (`traverse`, `semanticSearch`) are discovered by duck-typing.
+
+**Id generation:** adapters own id assignment. `createEntity` / `createFact`
+return a fully-formed record with its id populated. Callers never pass ids
+for new records.
+
+**Adapter responsibilities:**
+ - Apply `ScopeFilter` to every read — MemorySystem also filters, but the
+   adapter must provide defence-in-depth.
+ - Assign primary ids on create. Native mechanisms preferred (Mongo ObjectId,
+   Meteor Random.id(), UUID for in-memory).
+ - Enforce optimistic concurrency on `updateEntity`: reject if incoming
+   `version !== stored.version + 1`.
+ - Hide archived records by default; return them only when an explicit
+   `archived: true` filter is passed.
+ - Support `asOf` on fact queries (`validFrom ≤ asOf ≤ validUntil ?? ∞`
+   AND `createdAt ≤ asOf`).
+ - When possible, expose a transactional primitive for supersession —
+   MemorySystem currently writes the new fact before archiving the
+   predecessor (crash-safe ordering) but adapters with native transactions
+   may promote this to a single atomic operation.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `createEntity()`
+
+Insert a new entity. Adapter assigns id + version (1) + timestamps. Returns the created record.
+
+```typescript
+createEntity(input: NewEntity): Promise&lt;IEntity&gt;;
+```
+
+**Parameters:**
+- `input`: `NewEntity`
+
+**Returns:** `Promise&lt;IEntity&gt;`
+
+#### `createEntities()`
+
+Batch insert. Returned array is in the same order as input.
+
+```typescript
+createEntities(inputs: NewEntity[]): Promise&lt;IEntity[]&gt;;
+```
+
+**Parameters:**
+- `inputs`: `NewEntity[]`
+
+**Returns:** `Promise&lt;IEntity[]&gt;`
+
+#### `updateEntity()`
+
+Update an existing entity. Incoming version must equal stored.version + 1.
+
+```typescript
+updateEntity(entity: IEntity): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `entity`: `IEntity`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `getEntity()`
+
+```typescript
+getEntity(id: EntityId, scope: ScopeFilter): Promise&lt;IEntity | null&gt;;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IEntity | null&gt;`
+
+#### `getEntities()`
+
+Batch fetch entities by id. Returned array is in the same order as input;
+ids not found or filtered out by scope resolve to `null` in-place. Lets
+callers render references (e.g. `fact.objectId` → entity displayName)
+without firing N round-trips. Adapters SHOULD implement this as a single
+native batch query (e.g. Mongo `{_id:{$in:[…]}}`); the default InMemory
+impl maps over `getEntity`.
+
+```typescript
+getEntities(ids: EntityId[], scope: ScopeFilter): Promise&lt;Array&lt;IEntity | null&gt;&gt;;
+```
+
+**Parameters:**
+- `ids`: `string[]`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;(IEntity | null)[]&gt;`
+
+#### `findEntitiesByIdentifier()`
+
+```typescript
+findEntitiesByIdentifier(kind: string, value: string, scope: ScopeFilter): Promise&lt;IEntity[]&gt;;
+```
+
+**Parameters:**
+- `kind`: `string`
+- `value`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IEntity[]&gt;`
+
+#### `searchEntities()`
+
+```typescript
+searchEntities(query: string, opts: EntitySearchOptions, scope: ScopeFilter): Promise&lt;Page&lt;IEntity&gt;&gt;;
+```
+
+**Parameters:**
+- `query`: `string`
+- `opts`: `EntitySearchOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Page&lt;IEntity&gt;&gt;`
+
+#### `listEntities()`
+
+```typescript
+listEntities(filter: EntityListFilter, opts: ListOptions, scope: ScopeFilter): Promise&lt;Page&lt;IEntity&gt;&gt;;
+```
+
+**Parameters:**
+- `filter`: `EntityListFilter`
+- `opts`: `ListOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Page&lt;IEntity&gt;&gt;`
+
+#### `archiveEntity()`
+
+```typescript
+archiveEntity(id: EntityId, scope: ScopeFilter): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `deleteEntity()`
+
+Hard delete — MemorySystem gates this with an explicit flag.
+
+```typescript
+deleteEntity(id: EntityId, scope: ScopeFilter): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `createFact()`
+
+Insert a new fact. Adapter assigns id + createdAt. Returns the created record.
+
+```typescript
+createFact(input: NewFact): Promise&lt;IFact&gt;;
+```
+
+**Parameters:**
+- `input`: `NewFact`
+
+**Returns:** `Promise&lt;IFact&gt;`
+
+#### `createFacts()`
+
+Batch insert. Returned array is in the same order as input.
+
+```typescript
+createFacts(inputs: NewFact[]): Promise&lt;IFact[]&gt;;
+```
+
+**Parameters:**
+- `inputs`: `NewFact[]`
+
+**Returns:** `Promise&lt;IFact[]&gt;`
+
+#### `getFact()`
+
+```typescript
+getFact(id: FactId, scope: ScopeFilter): Promise&lt;IFact | null&gt;;
+```
+
+**Parameters:**
+- `id`: `string`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;IFact | null&gt;`
+
+#### `findFacts()`
+
+```typescript
+findFacts(filter: FactFilter, opts: FactQueryOptions, scope: ScopeFilter): Promise&lt;Page&lt;IFact&gt;&gt;;
+```
+
+**Parameters:**
+- `filter`: `FactFilter`
+- `opts`: `FactQueryOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Page&lt;IFact&gt;&gt;`
+
+#### `updateFact()`
+
+Patch fields on an existing fact. Used for archiving + embedding writes.
+
+```typescript
+updateFact(id: FactId, patch: Partial&lt;IFact&gt;, scope: ScopeFilter): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `id`: `string`
+- `patch`: `Partial&lt;IFact&gt;`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `countFacts()`
+
+```typescript
+countFacts(filter: FactFilter, scope: ScopeFilter): Promise&lt;number&gt;;
+```
+
+**Parameters:**
+- `filter`: `FactFilter`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `traverse()?`
+
+```typescript
+traverse?(startId: EntityId, opts: TraversalOptions, scope: ScopeFilter): Promise&lt;Neighborhood&gt;;
+```
+
+**Parameters:**
+- `startId`: `string`
+- `opts`: `TraversalOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Neighborhood&gt;`
+
+#### `semanticSearch()?`
+
+```typescript
+semanticSearch?(
+    queryVector: number[],
+    filter: FactFilter,
+    opts: SemanticSearchOptions,
+    scope: ScopeFilter,
+  ): Promise&lt;Array&lt;{ fact: IFact; score: number }&gt;&gt;;
+```
+
+**Parameters:**
+- `queryVector`: `number[]`
+- `filter`: `FactFilter`
+- `opts`: `SemanticSearchOptions`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;{ fact: IFact; score: number; }[]&gt;`
+
+#### `semanticSearchEntities()?`
+
+Entity-level semantic search over `identityEmbedding`. Consumed by
+`EntityResolver`'s semantic tier (Tier 4) when
+`EntityResolutionConfig.enableSemanticResolution` is on. Adapters that
+don't implement this are skipped — the resolver falls back to Tiers 1-3.
+
+Contract:
+ - `filter.type` / `filter.types` narrow by `IEntity.type`. At least one
+   should be used in practice — otherwise every entity type is a candidate.
+ - `opts.topK` clamped by the caller (resolver passes small values, ~10).
+ - `opts.minScore` optional noise floor (adapter MAY pre-filter; resolver
+   post-filters regardless, so implementations can ignore it).
+ - Results ordered by descending `score` (cosine similarity, 0..1).
+ - Archived entities MUST be excluded.
+ - `scope` enforcement identical to every other read.
+
+```typescript
+semanticSearchEntities?(
+    queryVector: number[],
+    filter: EntitySemanticSearchFilter,
+    opts: SemanticSearchOptions & { minScore?: number },
+    scope: ScopeFilter,
+  ): Promise&lt;Array&lt;{ entity: IEntity; score: number }&gt;&gt;;
+```
+
+**Parameters:**
+- `queryVector`: `number[]`
+- `filter`: `EntitySemanticSearchFilter`
+- `opts`: `SemanticSearchOptions & { minScore?: number | undefined; }`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;{ entity: IEntity; score: number; }[]&gt;`
+
+#### `destroy()`
+
+```typescript
+destroy(): void;
+```
+
+**Returns:** `void`
+
+#### `shutdown()?`
+
+```typescript
+shutdown?(): Promise&lt;void&gt;;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+</details>
+
+---
+
 ### InContextMemoryConfig `interface`
 
 📍 [`src/core/context-nextgen/plugins/InContextMemoryPluginNextGen.ts:38`](src/core/context-nextgen/plugins/InContextMemoryPluginNextGen.ts)
@@ -8088,6 +10488,22 @@ getTotalSize(): Promise&lt;number&gt;;
 | `defaultPriority?` | `defaultPriority?: InContextPriority;` | Default priority for new entries (default: 'normal') |
 | `showTimestamps?` | `showTimestamps?: boolean;` | Whether to show timestamps in output (default: false) |
 | `onEntriesChanged?` | `onEntriesChanged?: (entries: InContextEntry[]) =&gt; void;` | Callback fired when entries change. Receives all current entries. |
+
+</details>
+
+---
+
+### InMemoryAdapterOptions `interface`
+
+📍 [`src/memory/adapters/inmemory/InMemoryAdapter.ts:38`](src/memory/adapters/inmemory/InMemoryAdapter.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `entities?` | `entities?: IEntity[];` | Seed data for tests. |
+| `facts?` | `facts?: IFact[];` | - |
 
 </details>
 
@@ -8197,6 +10613,60 @@ findByWebhookId(webhookId: string): Promise&lt;{ plan: Plan; task: Task } | unde
 
 ---
 
+### IScopedMemoryView `interface`
+
+📍 [`src/memory/types.ts:621`](src/memory/types.ts)
+
+Read-only view scoped to a specific caller, passed to the rule engine.
+Rules CANNOT write through this view — they return partial IFact specs
+that MemorySystem validates and persists.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `getEntity()`
+
+```typescript
+getEntity(id: EntityId): Promise&lt;IEntity | null&gt;;
+```
+
+**Parameters:**
+- `id`: `string`
+
+**Returns:** `Promise&lt;IEntity | null&gt;`
+
+#### `findFacts()`
+
+```typescript
+findFacts(filter: FactFilter, opts?: { limit?: number }): Promise&lt;IFact[]&gt;;
+```
+
+**Parameters:**
+- `filter`: `FactFilter`
+- `opts`: `{ limit?: number | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;IFact[]&gt;`
+
+</details>
+
+---
+
+### MemoryConnectorsConfig `interface`
+
+📍 [`src/memory/integration/createMemorySystemWithConnectors.ts:19`](src/memory/integration/createMemorySystemWithConnectors.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `embedding?` | `embedding?: ConnectorEmbedderConfig;` | - |
+| `profile?` | `profile?: ConnectorProfileGeneratorConfig;` | - |
+
+</details>
+
+---
+
 ### MemoryEntry `interface`
 
 📍 [`src/domain/entities/Memory.ts:380`](src/domain/entities/Memory.ts)
@@ -8286,6 +10756,280 @@ Index entry (lightweight, always in context)
 | `scope` | `scope: MemoryScope;` | - |
 | `effectivePriority` | `effectivePriority: MemoryPriority;` | - |
 | `pinned` | `pinned: boolean;` | - |
+
+</details>
+
+---
+
+### MemoryPluginConfig `interface`
+
+📍 [`src/core/context-nextgen/plugins/MemoryPluginNextGen.ts:114`](src/core/context-nextgen/plugins/MemoryPluginNextGen.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `memory` | `memory: MemorySystem;` | Live memory system. REQUIRED. |
+| `agentId` | `agentId: string;` | Agent id — unique per agent definition. |
+| `userId` | `userId: string;` | Current user id. REQUIRED — the memory layer's owner invariant means every
+bootstrapped entity needs an owner. Host app should pass the logged-in
+user's id (auto-filled from `AgentContextNextGen.userId` when wired via
+feature flag). |
+| `groupId?` | `groupId?: string;` | **Trusted** group id for the caller (authenticated by the host app).
+Closed into tool deps so every memory call uses this groupId. Tools do
+NOT accept a groupId arg from the LLM — see the security review. Leave
+undefined for non-grouped deployments. |
+| `userEntityPermissions?` | `userEntityPermissions?: Permissions;` | Permissions stamped on the bootstrapped user entity. |
+| `agentEntityPermissions?` | `agentEntityPermissions?: Permissions;` | Permissions stamped on the bootstrapped agent entity. |
+| `groupBootstrap?` | `groupBootstrap?: {
+    /** Display name of the organization (e.g., the group's `name` field). */
+    displayName: string;
+    /**
+     * Additional identifiers beyond `system_group_id`. For example:
+     * `[{ kind: 'domain', value: 'acme.com' }]` lets signal extraction
+     * converge with this same entity — the library's `EmailSignalAdapter`
+     * seeds organizations with `kind: 'domain'` when resolving participant
+     * email addresses. Match that convention so bootstrap doesn't create a
+     * parallel entity.
+     */
+    identifiers?: Identifier[];
+    /** Permissions stamped on the bootstrapped organization entity. */
+    permissions?: Permissions;
+  };` | Optional group ("current organization") bootstrap. When present AND
+`groupId` is set, a third `organization` entity is upserted carrying the
+identifier `{kind: 'system_group_id', value: groupId}` (plus any extras).
+Rendered as a "Your Organization Profile" block alongside the user profile.
+
+Visibility of facts on this entity is controlled by the host's
+`MemorySystem.visibilityPolicy` and per-write `permissions` overrides —
+the library's built-in defaults are group-read + world-read. A host
+that needs per-user privacy on a shared org entity MUST install a
+visibility policy that produces user-private permissions on those facts.
+
+Skip this field (or leave `groupId` undefined) in non-grouped deployments
+or when the caller has no current organization (e.g., platform superadmin). |
+| `userProfileInjection?` | `userProfileInjection?: MemoryPluginInjectionConfig;` | Per-profile injection config. Defaults to `{profile:true, topFacts:20}`. |
+| `agentProfileInjection?` | `agentProfileInjection?: MemoryPluginInjectionConfig;` | - |
+| `groupProfileInjection?` | `groupProfileInjection?: MemoryPluginInjectionConfig;` | Injection config for the group ("organization") profile block. Same
+ defaults as `userProfileInjection`. Ignored when `groupBootstrap` is
+ not provided. |
+| `defaultVisibility?` | `defaultVisibility?: {
+    forUser?: Visibility;
+    forAgent?: Visibility;
+    forOther?: Visibility;
+  };` | Default visibility for memory_remember / memory_link. Defaults:
+ forUser='private', forAgent='group', forOther='private'. |
+| `autoResolveThreshold?` | `autoResolveThreshold?: number;` | Fuzzy-match threshold for `{surface}` lookups. Default: 0.9. |
+| `userDisplayName?` | `userDisplayName?: string;` | Entity display names used when bootstrapping. If the user/agent entity
+already exists (identifier-keyed), these are ignored. The group entity's
+displayName is taken from `groupBootstrap.displayName`. |
+| `agentDisplayName?` | `agentDisplayName?: string;` | - |
+
+</details>
+
+---
+
+### MemoryPluginInjectionConfig `interface`
+
+📍 [`src/core/context-nextgen/plugins/MemoryPluginNextGen.ts:75`](src/core/context-nextgen/plugins/MemoryPluginNextGen.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `profile?` | `profile?: boolean;` | Include profile.details text. Default: true. |
+| `topFacts?` | `topFacts?: number;` | Top N recent ranked facts to include. 0 disables. Default: 20. |
+| `factPredicates?` | `factPredicates?: string[];` | Restrict topFacts to these predicates. Default: all. |
+| `relatedTasks?` | `relatedTasks?: boolean;` | Include active related tasks. Default: false. |
+| `relatedEvents?` | `relatedEvents?: boolean;` | Include recent related events. Default: false. |
+| `identifiers?` | `identifiers?: boolean;` | Include the entity's identifiers (kind=value). Default: false. |
+| `maxFactLineChars?` | `maxFactLineChars?: number;` | Optional cap on each rendered fact line. Default: undefined (no cap).
+Previously defaulted to 200 chars, which clipped fact details mid-sentence
+in the system message. Hosts who want to keep the system message small
+can set this explicitly. See feedback_no_truncation.md. |
+| `recentActivity?` | `recentActivity?: {
+    /** How many rows to render. 0 disables. Default 20. */
+    limit?: number;
+    /** Lookback window in days. Default 7. */
+    windowDays?: number;
+    /** Optional predicate allowlist — e.g. `['completed','attended','responded_to']`. */
+    predicates?: string[];
+  };` | Time-ordered recent activity about this entity. Renders a
+`### Recent activity` section after the top facts. Unlike `topFacts`
+(ranked), this is strict newest-first — the agent sees a rolling window
+of what the subject has actually been doing.
+
+Defaults: ON with `{ limit: 20, windowDays: 7 }`. Pass `{ limit: 0 }`
+to disable. |
+
+</details>
+
+---
+
+### MemorySystemConfig `interface`
+
+📍 [`src/memory/types.ts:827`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `store` | `store: IMemoryStore;` | - |
+| `embedder?` | `embedder?: IEmbedder;` | - |
+| `profileGenerator?` | `profileGenerator?: IProfileGenerator;` | - |
+| `ruleEngine?` | `ruleEngine?: IRuleEngine;` | - |
+| `taskStates?` | `taskStates?: TaskStatesConfig;` | Task-state vocabulary. Defaults to:
+  { active: ['pending','in_progress','blocked','deferred'],
+    terminal: ['done','cancelled'] }
+The two arrays must be disjoint and non-empty. |
+| `autoApplyTaskTransitions?` | `autoApplyTaskTransitions?: boolean;` | When true (default), the LLM extraction pipeline auto-routes `state_changed`
+facts on task-type subjects through `MemorySystem.transitionTaskState` so
+the side effects (metadata update, history append, `completedAt` for
+terminal states) happen as part of ingestion. Set false to skip the
+routing — facts still land but `transitionTaskState` must be called
+explicitly by the host. |
+| `stateHistoryCap?` | `stateHistoryCap?: number;` | Maximum number of entries retained in `task.metadata.stateHistory`.
+`transitionTaskState` keeps the most-recent N entries (older entries are
+dropped in FIFO order). Guards against unbounded metadata growth on chatty
+tasks — a task that cycles through states thousands of times could
+otherwise push the entity document past Mongo's 16 MB cap. Full audit
+history is still recoverable via the `state_changed` facts themselves,
+which carry `sourceSignalId` + `observedAt`.
+
+Default: 200. Must be >= 1. Set to a larger value only if full in-document
+history matters for your queries and you've sized the document budget
+accordingly. |
+| `profileRegenerationThreshold?` | `profileRegenerationThreshold?: number;` | Number of new atomic facts since last profile regen that triggers auto-regeneration. |
+| `topFactsRanking?` | `topFactsRanking?: RankingConfig;` | - |
+| `embeddingQueue?` | `embeddingQueue?: EmbeddingQueueConfig;` | - |
+| `entityResolution?` | `entityResolution?: EntityResolutionConfig;` | - |
+| `predicates?` | `predicates?: import('./predicates/PredicateRegistry.js').PredicateRegistry;` | Pluggable predicate vocabulary. When present, `addFact` canonicalizes the
+predicate (camelCase/dash/alias → snake_case), applies `defaultImportance`
+/ `isAggregate` defaults, auto-supersedes prior facts for `singleValued`
+predicates, and folds registry weights into ranking. Absent = free-form
+predicate strings (pre-registry behavior).
+
+Pass `PredicateRegistry.standard()` for the built-in 51-predicate starter
+set, `PredicateRegistry.empty()` plus `.registerAll(...)` for a fully
+custom vocabulary. |
+| `predicateMode?` | `predicateMode?: 'permissive' | 'strict';` | 'strict' rejects any `addFact` whose (canonicalized) predicate is not in
+the registry. 'permissive' (default) writes unknowns verbatim — they show
+up in `IngestionResult.newPredicates` for drift monitoring.
+Throws at construction if set to 'strict' without a registry. |
+| `unknownPredicatePolicy?` | `unknownPredicatePolicy?: 'fuzzy_map' | 'keep' | 'drop';` | H5 — how the LLM extraction pipeline handles a predicate that isn't in the
+registry (after canonicalisation). Only used when a registry is configured.
+
+- `'fuzzy_map'` (default): try to snap onto the closest registered
+  predicate via edit distance (length-aware — see
+  `unknownPredicateFuzzyMaxDistance`). Typical wins: `work_at`→`works_at`,
+  `mention`→`mentioned`. No match → fall through to `'keep'`.
+- `'keep'`: write the unknown predicate verbatim (pre-H5 behaviour).
+  Surfaces in `IngestionResult.newPredicates` for human review.
+- `'drop'`: skip the fact entirely, record the reason in `unresolved`.
+
+Regardless of policy, the unknown predicate is always added to
+`newPredicates` (with the mapping target if one was chosen) so operators
+can still audit drift. |
+| `unknownPredicateFuzzyMaxDistance?` | `unknownPredicateFuzzyMaxDistance?: number;` | F3 — absolute cap on the Levenshtein distance used by `findClosest` when
+`unknownPredicatePolicy='fuzzy_map'`. The effective budget is also
+clamped by predicate length (`floor(min(lenA,lenB)/4)`, min 1), so
+lowering this only tightens further. Default: 2 (registry's built-in
+budget).
+
+Tune down (e.g. 1) if your vocabulary has semantically-distinct
+predicates within edit distance 2 of each other (`talks_at` vs
+`works_at`). Tune up only with confidence your predicates are
+well-separated in edit-distance space. |
+| `predicateAutoSupersede?` | `predicateAutoSupersede?: boolean;` | When true (default), `addFact` auto-supersedes the prior visible fact for
+a `(subject, predicate)` pair when the predicate is marked `singleValued`.
+Set to false to opt out while still getting canonicalization + defaults. |
+| `onChange?` | `onChange?: (event: ChangeEvent) =&gt; void;` | - |
+| `onError?` | `onError?: (error: unknown, event: ChangeEvent) =&gt; void;` | Invoked when `onChange` throws. Lets operators surface listener failures
+to their logging / telemetry pipeline rather than losing them silently.
+Falls back to `console.warn` when unset. |
+| `visibilityPolicy?` | `visibilityPolicy?: VisibilityPolicy;` | Host-supplied default `permissions` for every entity / fact write where
+the caller didn't specify `permissions` explicitly. Lets hosts express
+policies like "entities are group-readable, facts are owner-private by
+default" in one place instead of at every call site — and, critically,
+applies to writes emitted from inside the library (e.g., by
+`ExtractionResolver` or `ProfileGenerator` paths) that the host can't
+intercept directly.
+
+Callers that pass `permissions` on the write input always win — the
+policy only fills the blanks. Return `undefined` from the policy to
+fall through to the library defaults (`DEFAULT_GROUP_LEVEL` /
+`DEFAULT_WORLD_LEVEL`, both `'read'`).
+
+Keep the function cheap — it runs on every entity / fact create. |
+
+</details>
+
+---
+
+### MemoryWritePluginConfig `interface`
+
+📍 [`src/core/context-nextgen/plugins/MemoryWritePluginNextGen.ts:27`](src/core/context-nextgen/plugins/MemoryWritePluginNextGen.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `memory` | `memory: MemorySystem;` | Live memory system. REQUIRED. |
+| `agentId` | `agentId: string;` | Agent id. REQUIRED — matches `MemoryPluginNextGen.agentId`. |
+| `userId` | `userId: string;` | Current user id. REQUIRED — matches `MemoryPluginNextGen.userId`. |
+| `groupId?` | `groupId?: string;` | Trusted group id from host auth. Matches `MemoryPluginNextGen.groupId`. |
+| `defaultVisibility?` | `defaultVisibility?: {
+    forUser?: Visibility;
+    forAgent?: Visibility;
+    forOther?: Visibility;
+  };` | Default visibility for remember/link. Matches MemoryPlugin defaults. |
+| `autoResolveThreshold?` | `autoResolveThreshold?: number;` | Fuzzy-match threshold for `{surface}` subject lookups. Default 0.9. |
+| `getOwnSubjectIds?` | `getOwnSubjectIds?: () =&gt; { userEntityId?: string; agentEntityId?: string };` | Callback supplied by the sibling `MemoryPluginNextGen` so `"me"` /
+`"this_agent"` tokens resolve to its bootstrapped entities. When absent,
+those tokens return "not available". |
+| `forgetRateLimit?` | `forgetRateLimit?: { maxCallsPerWindow?: number; windowMs?: number };` | Rate-limit override for memory_forget. |
+
+</details>
+
+---
+
+### MongoMemoryAdapterOptions `interface`
+
+📍 [`src/memory/adapters/mongo/MongoMemoryAdapter.ts:68`](src/memory/adapters/mongo/MongoMemoryAdapter.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `entities` | `entities: IMongoCollectionLike&lt;IEntity&gt;;` | - |
+| `facts` | `facts: IMongoCollectionLike&lt;IFact&gt;;` | - |
+| `useNativeGraphLookup?` | `useNativeGraphLookup?: boolean;` | When true AND `facts.aggregate` is present, `traverse()` uses a single
+native `$graphLookup` pipeline per direction instead of iterative BFS.
+Default: false. |
+| `vectorIndexName?` | `vectorIndexName?: string;` | When set AND `facts.aggregate` is present, `semanticSearch()` uses Atlas
+Vector Search via `$vectorSearch` against this index name. Otherwise
+falls back to cursor-scan cosine. |
+| `entityVectorIndexName?` | `entityVectorIndexName?: string;` | When set AND `entities.aggregate` is present, `semanticSearchEntities()`
+uses Atlas Vector Search via `$vectorSearch` against this index name.
+Otherwise falls back to cursor-scan cosine over `entity.identityEmbedding`.
+
+Index is NOT auto-created by `ensureIndexes()` (which only handles regular
+b-tree indexes). Create it via `ensureVectorSearchIndexes()` (programmatic,
+requires mongodb node driver v6.6+ + Atlas Server v6.0.11+) or via the
+Atlas UI / admin API. See `ensureVectorSearchIndexes` JSDoc for details. |
+| `vectorCandidateMultiplier?` | `vectorCandidateMultiplier?: number;` | Number of vector candidates to ask Atlas Vector Search to consider before
+returning topK. Used by both `semanticSearch` (facts) and
+`semanticSearchEntities` when the corresponding index name is set.
+Default: topK * 10. |
+| `factsCollectionName?` | `factsCollectionName?: string;` | Name of the facts collection — required by `$graphLookup` (it needs the
+collection name to recurse over). If omitted, `useNativeGraphLookup` is
+disabled and iterative BFS is used instead. |
+| `defaultPageSize?` | `defaultPageSize?: number;` | Default page size when a caller doesn't specify `limit`. |
 
 </details>
 
@@ -8391,6 +11135,23 @@ PlanningAgent configuration
 
 ---
 
+### RelatedTask `interface`
+
+📍 [`src/memory/types.ts:240`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `task` | `task: IEntity;` | - |
+| `role` | `role: string;` | Relationship that links this task to the subject entity
+ (e.g. 'assigned_to', 'reporter_of', 'project_of', 'context_of'). |
+
+</details>
+
+---
+
 ### ResearchPlan `interface`
 
 📍 [`src/capabilities/researchAgent/types.ts:179`](src/capabilities/researchAgent/types.ts)
@@ -8407,6 +11168,46 @@ Research plan for systematic research
 | `sources?` | `sources?: string[];` | Sources to use (empty = all available) |
 | `maxResultsPerQuery?` | `maxResultsPerQuery?: number;` | Maximum results per query |
 | `maxTotalFindings?` | `maxTotalFindings?: number;` | Maximum total findings |
+
+</details>
+
+---
+
+### ResolverMemoryHooks `interface`
+
+📍 [`src/memory/resolution/EntityResolver.ts:72`](src/memory/resolution/EntityResolver.ts)
+
+Narrow hook used by EntityResolver — lets it query + upsert without pulling
+in the full MemorySystem surface (keeps the resolver easy to test).
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `store` | `store: IMemoryStore;` | - |
+| `embedQuery?` | `embedQuery?: (text: string) =&gt; Promise&lt;number[]&gt;;` | - |
+| `upsertEntity` | `upsertEntity: (
+    input: Partial&lt;IEntity&gt; & {
+      identifiers: Identifier[];
+      displayName: string;
+      type: string;
+    },
+    scope: ScopeFilter,
+  ) =&gt; Promise&lt;{ entity: IEntity; created: boolean }&gt;;` | - |
+| `appendAliasesAndIdentifiers` | `appendAliasesAndIdentifiers: (
+    id: EntityId,
+    aliases: string[],
+    identifiers: Identifier[],
+    scope: ScopeFilter,
+    opts?: {
+      metadata?: Record&lt;string, unknown&gt;;
+      metadataMerge?: 'fillMissing' | 'overwrite';
+    },
+  ) =&gt; Promise&lt;IEntity&gt;;` | Patches an existing entity with additional aliases/identifiers (no-op if already present).
+When `opts.metadata` is supplied, merges per `opts.metadataMerge`:
+ - `'fillMissing'` (default): only keys absent from stored metadata are set.
+ - `'overwrite'`: shallow-merge (incoming keys win). |
 
 </details>
 
@@ -8694,6 +11495,52 @@ Reference to a source value for control flow operations.
 
 ---
 
+### TaskStateHistoryEntry `interface`
+
+📍 [`src/memory/MemorySystem.ts:165`](src/memory/MemorySystem.ts)
+
+Single entry appended to `task.metadata.stateHistory` on every transition.
+No cap — retention is the caller's problem (audit systems, GDPR, archival).
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `from` | `from: string | undefined;` | - |
+| `to` | `to: string;` | - |
+| `at` | `at: Date;` | - |
+| `signalId?` | `signalId?: string;` | - |
+| `reason?` | `reason?: string;` | - |
+
+</details>
+
+---
+
+### TaskStatesConfig `interface`
+
+📍 [`src/memory/types.ts:820`](src/memory/types.ts)
+
+Task-state vocabulary configuration. Drives which states `getContext`
+surfaces as "open" in `relatedTasks`, and which are treated as "terminal"
+(done/cancelled) for side effects like auto-setting `completedAt`.
+
+Library default preserves the legacy vocabulary. Apps using different
+lifecycles (e.g. `'proposed' | 'scheduled' | 'in_progress' | 'done'`)
+override here rather than hardcoding state strings in metadata queries.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `active` | `active: string[];` | States treated as "still open" — surfaced in getContext.relatedTasks. |
+| `terminal` | `terminal: string[];` | States treated as "finished" — transitions into these auto-set completedAt. |
+
+</details>
+
+---
+
 ### TaskUntilFlow `interface`
 
 📍 [`src/domain/entities/Task.ts:155`](src/domain/entities/Task.ts)
@@ -8708,7 +11555,7 @@ Until: repeat a sub-routine until a condition is met
 | `type` | `type: 'until';` | - |
 | `tasks` | `tasks: SubRoutineSpec;` | Sub-routine to run each iteration |
 | `condition` | `condition: TaskCondition;` | Checked AFTER each iteration (reuses existing TaskCondition type) |
-| `maxIterations` | `maxIterations: number;` | Maximum iterations (required — no default) |
+| `maxIterations?` | `maxIterations?: number;` | Maximum iterations. Default: 1. Hard cap: 1000. |
 | `iterationKey?` | `iterationKey?: string;` | Optional ICM key for current iteration index |
 | `iterationTimeoutMs?` | `iterationTimeoutMs?: number;` | Timeout per sub-execution iteration in ms (default: no timeout) |
 
@@ -8788,6 +11635,64 @@ Result of task validation (returned by LLM reflection)
   }&gt;;` | Per-criterion evaluation results |
 | `requiresUserApproval` | `requiresUserApproval: boolean;` | Whether user approval is needed |
 | `approvalReason?` | `approvalReason?: string;` | Reason for requiring user approval |
+
+</details>
+
+---
+
+### TransitionTaskStateOptions `interface`
+
+📍 [`src/memory/MemorySystem.ts:173`](src/memory/MemorySystem.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `signalId?` | `signalId?: string;` | Stable audit pointer — typically the ingest signal id. Flows into the history entry AND the written fact. |
+| `at?` | `at?: Date;` | When the transition happened. Defaults to now. |
+| `reason?` | `reason?: string;` | Free-form audit note. Stored in the history entry. |
+| `validate?` | `validate?: 'strict' | 'warn' | 'none';` | Validation mode.
+- `'warn'` (default): any transition allowed; out-of-matrix transitions route through `onError` and proceed.
+- `'strict'`: out-of-matrix transitions throw `InvalidTaskTransitionError` — metadata + fact writes are skipped.
+- `'none'`: no validation, no warnings. |
+| `transitions?` | `transitions?: Record&lt;string, string[]&gt;;` | Explicit allowed transitions: `{ from: [allowed, to, states] }`. When omitted,
+every transition is allowed (with a warning for duplicates in `'warn'`).
+Keys include `'__initial'` for transitions into a first-time state. |
+| `factOverrides?` | `factOverrides?: {
+    importance?: number;
+    confidence?: number;
+    contextIds?: EntityId[];
+    validFrom?: Date;
+    validUntil?: Date;
+    summaryForEmbedding?: string;
+    evidenceQuote?: string;
+  };` | Optional overrides applied to the written `state_changed` audit fact.
+Unset fields fall back to the method's defaults (`importance: 0.7`,
+`confidence: undefined`, no `contextIds`, etc.).
+
+The LLM extraction pipeline populates this when it routes a
+`state_changed` fact through `transitionTaskState` — without it, the
+caller's `importance` / `confidence` / `contextIds` would be silently
+dropped and the audit fact would not surface on retrieval queries that
+pivot on `contextIds` (e.g. "everything about the Acme deal"). |
+
+</details>
+
+---
+
+### TransitionTaskStateResult `interface`
+
+📍 [`src/memory/MemorySystem.ts:215`](src/memory/MemorySystem.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `task` | `task: IEntity;` | - |
+| `fact` | `fact: IFact | null;` | - |
+| `rejected?` | `rejected?: string;` | Set when `validate='strict'` rejected the transition. |
 
 </details>
 
@@ -9001,6 +11906,21 @@ type MemoryScope = SimpleScope | TaskAwareScope
 
 ---
 
+### MemorySystemWithConnectorsConfig `type`
+
+📍 [`src/memory/integration/createMemorySystemWithConnectors.ts:24`](src/memory/integration/createMemorySystemWithConnectors.ts)
+
+```typescript
+type MemorySystemWithConnectorsConfig = Omit&lt;
+  MemorySystemConfig,
+  'embedder' | 'profileGenerator'
+&gt; & {
+  connectors?: MemoryConnectorsConfig;
+}
+```
+
+---
+
 ### PlanStatus `type`
 
 📍 [`src/domain/entities/Task.ts:38`](src/domain/entities/Task.ts)
@@ -9128,6 +12048,56 @@ Check if a task can be executed (dependencies met, status is pending)
 
 ```typescript
 export function canTaskExecute(task: Task, allTasks: Task[]): boolean
+```
+
+---
+
+### createMemoryReadTools `function`
+
+📍 [`src/tools/memory/index.ts:118`](src/tools/memory/index.ts)
+
+Read-only retrieval tools — no memory writes performed.
+
+```typescript
+export function createMemoryReadTools(args: CreateMemoryToolsArgs): ToolFunction[]
+```
+
+---
+
+### createMemorySystemWithConnectors `function`
+
+📍 [`src/memory/integration/createMemorySystemWithConnectors.ts:31`](src/memory/integration/createMemorySystemWithConnectors.ts)
+
+```typescript
+export function createMemorySystemWithConnectors(
+  config: MemorySystemWithConnectorsConfig,
+): MemorySystem
+```
+
+---
+
+### createMemoryTools `function`
+
+📍 [`src/tools/memory/index.ts:147`](src/tools/memory/index.ts)
+
+All 11 memory tools (5 read + 6 write). Convenience factory — most callers
+should prefer `createMemoryReadTools` / `createMemoryWriteTools` separately
+so read agents don't carry the write-tool schema overhead.
+
+```typescript
+export function createMemoryTools(args: CreateMemoryToolsArgs): ToolFunction[]
+```
+
+---
+
+### createMemoryWriteTools `function`
+
+📍 [`src/tools/memory/index.ts:130`](src/tools/memory/index.ts)
+
+Write-side memory tools — mutate entities and facts.
+
+```typescript
+export function createMemoryWriteTools(args: CreateMemoryToolsArgs): ToolFunction[]
 ```
 
 ---
@@ -11807,6 +14777,231 @@ getPath(userId: string | undefined): string
 
 ---
 
+### SessionIngestorPluginNextGen `class`
+
+📍 [`src/core/context-nextgen/plugins/SessionIngestorPluginNextGen.ts:124`](src/core/context-nextgen/plugins/SessionIngestorPluginNextGen.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: SessionIngestorPluginConfig)
+```
+
+**Parameters:**
+- `config`: `SessionIngestorPluginConfig`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `getInstructions()`
+
+```typescript
+getInstructions(): string | null
+```
+
+**Returns:** `string | null`
+
+#### `getContent()`
+
+```typescript
+async getContent(): Promise&lt;string | null&gt;
+```
+
+**Returns:** `Promise&lt;string | null&gt;`
+
+#### `getContents()`
+
+```typescript
+getContents(): unknown
+```
+
+**Returns:** `unknown`
+
+#### `getTokenSize()`
+
+```typescript
+getTokenSize(): number
+```
+
+**Returns:** `number`
+
+#### `getInstructionsTokenSize()`
+
+```typescript
+getInstructionsTokenSize(): number
+```
+
+**Returns:** `number`
+
+#### `isCompactable()`
+
+```typescript
+isCompactable(): boolean
+```
+
+**Returns:** `boolean`
+
+#### `compact()`
+
+```typescript
+async compact(_targetTokensToFree: number): Promise&lt;number&gt;
+```
+
+**Parameters:**
+- `_targetTokensToFree`: `number`
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `getTools()`
+
+```typescript
+getTools(): ToolFunction[]
+```
+
+**Returns:** `ToolFunction&lt;any, any&gt;[]`
+
+#### `destroy()`
+
+```typescript
+destroy(): void
+```
+
+**Returns:** `void`
+
+#### `getState()`
+
+```typescript
+getState(): unknown
+```
+
+**Returns:** `unknown`
+
+#### `restoreState()`
+
+```typescript
+restoreState(state: unknown): void
+```
+
+**Parameters:**
+- `state`: `unknown`
+
+**Returns:** `void`
+
+#### `onBeforePrepare()`
+
+```typescript
+onBeforePrepare(snapshot: PluginPrepareSnapshot): void
+```
+
+**Parameters:**
+- `snapshot`: `PluginPrepareSnapshot`
+
+**Returns:** `void`
+
+#### `waitForIngest()`
+
+Await the current in-flight ingestion, if any. Used by tests to deterministically wait.
+
+```typescript
+async waitForIngest(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `flush()`
+
+Force-ingest any pending messages and await completion — the graceful-
+shutdown escape hatch. Bypasses `minBatchMessages`; uses the most recent
+`onBeforePrepare` snapshot as the source (so callers should ensure
+`AgentContextNextGen.prepare()` has fired at least once after the last
+message was added — typically that happens naturally during the last
+agent turn).
+
+Contract: hosts should call `await plugin.flush()` before disposing of
+the plugin (on DDP disconnect, `/back`, SIGINT, etc.) to guarantee the
+final batch is persisted. `destroy()` does NOT await — it only flips the
+destroyed flag and releases the LLM agent.
+
+Safe to call multiple times; on a destroyed plugin, this awaits any
+in-flight ingest but does not start a new one.
+
+Optional `snapshot` override: callers that have already built a fresh
+`PluginPrepareSnapshot` (e.g. via another plugin's hook) can pass it in
+directly and skip the stored-snapshot path.
+
+```typescript
+async flush(snapshot?: PluginPrepareSnapshot): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `snapshot`: `PluginPrepareSnapshot | undefined` *(optional)*
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `getLastIngestedMessageId()`
+
+Id of the last message we've ingested. `null` before any ingest.
+
+```typescript
+getLastIngestedMessageId(): string | null
+```
+
+**Returns:** `string | null`
+
+#### `isDisabled()`
+
+Whether bootstrap encountered a foreign-owned entity and disabled the plugin.
+
+```typescript
+isDisabled(): boolean
+```
+
+**Returns:** `boolean`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: "session_ingestor"` | - |
+| `memory` | `memory: MemorySystem` | - |
+| `agentId` | `agentId: string` | - |
+| `userId` | `userId: string` | - |
+| `groupId` | `groupId: string | undefined` | - |
+| `connectorName` | `connectorName: string` | - |
+| `model` | `model: string` | - |
+| `diligence` | `diligence: SessionIngestorDiligence` | - |
+| `temperature` | `temperature: number` | - |
+| `maxOutputTokens` | `maxOutputTokens: number | undefined` | - |
+| `maxTranscriptChars` | `maxTranscriptChars: number` | - |
+| `minBatchMessages` | `minBatchMessages: number` | - |
+| `userEntityId` | `userEntityId: string | undefined` | - |
+| `agentEntityId` | `agentEntityId: string | undefined` | - |
+| `bootstrapInFlight` | `bootstrapInFlight: Promise&lt;void&gt; | null` | - |
+| `bootstrapFailed` | `bootstrapFailed: boolean` | Set to true if bootstrap returned a foreign-owned entity — we disable
+ the plugin for the rest of the session to prevent ghost-writes. |
+| `lastIngestedMessageId` | `lastIngestedMessageId: string | null` | Stable watermark — id of the last message we've successfully ingested.
+ Index-based watermarks break on compaction (AgentContextNextGen mutates
+ _conversation via filter → indices shift), so we track a message id
+ instead and scan forward for it on each turn. |
+| `ingestInFlight` | `ingestInFlight: Promise&lt;void&gt; | null` | - |
+| `destroyed` | `destroyed: boolean` | - |
+| `lastSnapshot` | `lastSnapshot: PluginPrepareSnapshot | null` | Most recent `onBeforePrepare` snapshot, kept so `flush()` can run ingest
+on the current conversation without the caller supplying one. Updated on
+every hook invocation (including the "below threshold, skip" path). |
+| `llmAgent` | `llmAgent: Agent | null` | - |
+
+</details>
+
+---
+
 ### VoiceSession `class`
 
 📍 [`src/capabilities/voice/VoiceSession.ts:55`](src/capabilities/voice/VoiceSession.ts)
@@ -12245,6 +15440,53 @@ Unified agent storage interface
 
 ---
 
+### SessionIngestorPluginConfig `interface`
+
+📍 [`src/core/context-nextgen/plugins/SessionIngestorPluginNextGen.ts:51`](src/core/context-nextgen/plugins/SessionIngestorPluginNextGen.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `memory` | `memory: MemorySystem;` | Live memory system. REQUIRED. |
+| `agentId` | `agentId: string;` | Agent id. REQUIRED. |
+| `userId` | `userId: string;` | Current user id. REQUIRED (owner invariant). |
+| `groupId?` | `groupId?: string;` | Optional trusted group id from host auth. Stamped on written facts. |
+| `connectorName` | `connectorName: string;` | Connector name used for BOTH the extraction call and the details-merge
+call. REQUIRED — no default. The host typically wires a cheaper model
+(Haiku / gpt-5-mini) here rather than reusing the main agent's connector. |
+| `model` | `model: string;` | Model id on the connector. REQUIRED — no default. |
+| `diligence?` | `diligence?: SessionIngestorDiligence;` | Extraction thoroughness. Default 'normal'.
+  - 'minimal'  — only facts the user stated EXPLICITLY. No inference.
+  - 'normal'   — standard guidelines (skip greetings, tool plumbing).
+  - 'thorough' — capture tentative inferences too (with confidence < 0.7). |
+| `temperature?` | `temperature?: number;` | Sampling temp for the extractor/merger agent. Default 0.2. |
+| `maxOutputTokens?` | `maxOutputTokens?: number;` | Max output tokens per LLM call. Default: undefined — the provider uses the
+model's own ceiling, which is always the maximum the model can emit.
+Set explicitly only when cost control on ambient extraction matters more
+than extraction completeness. See feedback_no_output_limits.md. |
+| `maxTranscriptChars?` | `maxTranscriptChars?: number;` | Maximum characters of transcript sent to the extractor per run. When the
+backlog exceeds this, older messages are deferred to subsequent hook
+invocations (not lost — the watermark stays at the last message that fit).
+Default 1_000_000 (≈ 250 K tokens at 4 chars/token) — fits every current
+cheap-tier extractor model (Haiku 4.5 / gpt-5-mini / Gemini 2.5 Flash)
+with substantial headroom. The default is deliberately high so the
+"defer to next turn" path is a safety net, not a daily occurrence. |
+| `minBatchMessages?` | `minBatchMessages?: number;` | Minimum number of conversation messages (flat count, not user/assistant
+pairs) that must have accumulated since the last successful ingest for a
+natural \`onBeforePrepare\` trigger to fire. Below this threshold the hook
+short-circuits and defers to the next turn.
+
+Default: 6 (≈ 3 user/assistant pairs). Set to 1 for per-turn ingest.
+
+For guaranteed final ingest at session end, call \`await plugin.flush()\`
+before \`plugin.destroy()\` — \`flush\` ignores this threshold. |
+
+</details>
+
+---
+
 ### SessionRef `interface`
 
 📍 [`src/domain/interfaces/ICorrelationStorage.ts:34`](src/domain/interfaces/ICorrelationStorage.ts)
@@ -12359,6 +15601,16 @@ Exposed to lifecycle hooks and event handlers.
 | `metadata` | `metadata: Record&lt;string, unknown&gt;;` | Adapter-specific metadata (e.g., Twilio AccountSid, geographic info) |
 
 </details>
+
+---
+
+### SessionIngestorDiligence `type`
+
+📍 [`src/core/context-nextgen/plugins/SessionIngestorPluginNextGen.ts:49`](src/core/context-nextgen/plugins/SessionIngestorPluginNextGen.ts)
+
+```typescript
+type SessionIngestorDiligence = 'minimal' | 'normal' | 'thorough'
+```
 
 ---
 
@@ -15943,8 +19195,13 @@ Default: '/bin/bash' on Unix, 'cmd.exe' on Windows |
 Default: dangerous commands like rm -rf / |
 | `blockedPatterns?` | `blockedPatterns?: RegExp[];` | Patterns that if matched will block the command.
 Default: patterns that could cause data loss |
-| `maxOutputSize?` | `maxOutputSize?: number;` | Maximum output size in characters before truncation.
-Default: 100000 (100KB) |
+| `maxOutputSize?` | `maxOutputSize?: number;` | Soft ceiling on in-memory output buffer per command, in characters.
+Purely a process-memory safeguard — the bash tool uses a rolling tail
+buffer so a runaway command that writes gigabytes cannot OOM the host.
+The FULL buffer up to this ceiling is returned to the caller verbatim
+(no head-clip). Default: 10_000_000 (10MB), which fits a typical LLM's
+context window many times over and only kicks in on genuinely runaway
+commands. Lower only if you have tight memory constraints. |
 | `allowBackground?` | `allowBackground?: boolean;` | Whether to allow running commands in background.
 Default: true |
 
@@ -16720,7 +19977,7 @@ export function createAddReactionTool(
 
 ### createBashTool `function`
 
-📍 [`src/tools/shell/bash.ts:42`](src/tools/shell/bash.ts)
+📍 [`src/tools/shell/bash.ts:46`](src/tools/shell/bash.ts)
 
 Create a Bash tool with the given configuration
 
@@ -17001,6 +20258,18 @@ export function createExecuteJavaScriptTool(
 
 ---
 
+### createFindEntityTool `function`
+
+📍 [`src/tools/memory/findEntity.ts:63`](src/tools/memory/findEntity.ts)
+
+```typescript
+export function createFindEntityTool(
+  deps: MemoryToolDeps,
+): ToolFunction&lt;FindEntityArgs&gt;
+```
+
+---
+
 ### createFindMeetingSlotsTool `function`
 
 📍 [`src/tools/microsoft/findMeetingSlots.ts:31`](src/tools/microsoft/findMeetingSlots.ts)
@@ -17012,6 +20281,16 @@ export function createFindMeetingSlotsTool(
   connector: Connector,
   userId?: string
 ): ToolFunction&lt;FindMeetingSlotsArgs, MicrosoftFindSlotsResult&gt;
+```
+
+---
+
+### createForgetTool `function`
+
+📍 [`src/tools/memory/forget.ts:53`](src/tools/memory/forget.ts)
+
+```typescript
+export function createForgetTool(deps: MemoryToolDeps): ToolFunction&lt;ForgetArgs&gt;
 ```
 
 ---
@@ -17126,7 +20405,7 @@ export function createGetUsersTool(
 
 ### createGitHubReadFileTool `function`
 
-📍 [`src/tools/github/readFile.ts:41`](src/tools/github/readFile.ts)
+📍 [`src/tools/github/readFile.ts:45`](src/tools/github/readFile.ts)
 
 Create a GitHub read_file tool
 
@@ -17151,14 +20430,34 @@ export function createGlobTool(config: FilesystemToolConfig =
 
 ---
 
+### createGraphTool `function`
+
+📍 [`src/tools/memory/graph.ts:123`](src/tools/memory/graph.ts)
+
+```typescript
+export function createGraphTool(deps: MemoryToolDeps): ToolFunction&lt;GraphArgs&gt;
+```
+
+---
+
 ### createGrepTool `function`
 
-📍 [`src/tools/filesystem/grep.ts:177`](src/tools/filesystem/grep.ts)
+📍 [`src/tools/filesystem/grep.ts:181`](src/tools/filesystem/grep.ts)
 
 Create a Grep tool with the given configuration
 
 ```typescript
 export function createGrepTool(config: FilesystemToolConfig =
+```
+
+---
+
+### createLinkTool `function`
+
+📍 [`src/tools/memory/link.ts:47`](src/tools/memory/link.ts)
+
+```typescript
+export function createLinkTool(deps: MemoryToolDeps): ToolFunction&lt;LinkArgs&gt;
 ```
 
 ---
@@ -17199,6 +20498,16 @@ Create a List Directory tool with the given configuration
 
 ```typescript
 export function createListDirectoryTool(config: FilesystemToolConfig =
+```
+
+---
+
+### createListFactsTool `function`
+
+📍 [`src/tools/memory/listFacts.ts:43`](src/tools/memory/listFacts.ts)
+
+```typescript
+export function createListFactsTool(deps: MemoryToolDeps): ToolFunction&lt;ListFactsArgs&gt;
 ```
 
 ---
@@ -17316,12 +20625,42 @@ export function createPRFilesTool(
 
 ### createReadFileTool `function`
 
-📍 [`src/tools/filesystem/readFile.ts:43`](src/tools/filesystem/readFile.ts)
+📍 [`src/tools/filesystem/readFile.ts:47`](src/tools/filesystem/readFile.ts)
 
 Create a Read File tool with the given configuration
 
 ```typescript
 export function createReadFileTool(config: FilesystemToolConfig =
+```
+
+---
+
+### createRecallTool `function`
+
+📍 [`src/tools/memory/recall.ts:43`](src/tools/memory/recall.ts)
+
+```typescript
+export function createRecallTool(deps: MemoryToolDeps): ToolFunction&lt;RecallArgs&gt;
+```
+
+---
+
+### createRememberTool `function`
+
+📍 [`src/tools/memory/remember.ts:74`](src/tools/memory/remember.ts)
+
+```typescript
+export function createRememberTool(deps: MemoryToolDeps): ToolFunction&lt;RememberArgs&gt;
+```
+
+---
+
+### createRestoreTool `function`
+
+📍 [`src/tools/memory/restore.ts:27`](src/tools/memory/restore.ts)
+
+```typescript
+export function createRestoreTool(deps: MemoryToolDeps): ToolFunction&lt;RestoreArgs&gt;
 ```
 
 ---
@@ -17388,6 +20727,16 @@ export function createSearchMessagesTool(
 
 ---
 
+### createSearchTool `function`
+
+📍 [`src/tools/memory/search.ts:48`](src/tools/memory/search.ts)
+
+```typescript
+export function createSearchTool(deps: MemoryToolDeps): ToolFunction&lt;SearchArgs&gt;
+```
+
+---
+
 ### createSendEmailTool `function`
 
 📍 [`src/tools/microsoft/sendEmail.ts:30`](src/tools/microsoft/sendEmail.ts)
@@ -17429,6 +20778,16 @@ export function createSendWhatsAppTool(
 
 ---
 
+### createSetAgentRuleTool `function`
+
+📍 [`src/tools/memory/setAgentRule.ts:99`](src/tools/memory/setAgentRule.ts)
+
+```typescript
+export function createSetAgentRuleTool(deps: MemoryToolDeps): ToolFunction&lt;SetAgentRuleArgs&gt;
+```
+
+---
+
 ### createSetChannelTopicTool `function`
 
 📍 [`src/tools/slack/setChannelTopic.ts:24`](src/tools/slack/setChannelTopic.ts)
@@ -17465,6 +20824,18 @@ export function createTextToSpeechTool(
   storage?: IMediaStorage,
   userId?: string
 ): ToolFunction&lt;TextToSpeechArgs, TextToSpeechResult&gt;
+```
+
+---
+
+### createUpsertEntityTool `function`
+
+📍 [`src/tools/memory/upsertEntity.ts:38`](src/tools/memory/upsertEntity.ts)
+
+```typescript
+export function createUpsertEntityTool(
+  deps: MemoryToolDeps,
+): ToolFunction&lt;UpsertEntityArgs&gt;
 ```
 
 ---
@@ -17537,7 +20908,7 @@ export function getAllBuiltInTools(): ToolFunction[]
 
 ### getConnectorTools `function`
 
-📍 [`src/connectors/vendors/helpers.ts:331`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:333`](src/connectors/vendors/helpers.ts)
 
 Get all tools for a connector (delegates to ConnectorTools)
 
@@ -18559,7 +21930,7 @@ Error event
 
 ### IStreamingTextToSpeechProvider `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:82`](src/domain/interfaces/IAudioProvider.ts)
+📍 [`src/domain/interfaces/IAudioProvider.ts:88`](src/domain/interfaces/IAudioProvider.ts)
 
 Streaming Text-to-Speech provider interface (opt-in extension)
 Providers that support chunked transfer implement this alongside ITextToSpeechProvider.
@@ -19230,9 +22601,29 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ---
 
+### RestraintModelInfo `interface`
+
+📍 [`src/memory/integration/RestraintEvent.ts:54`](src/memory/integration/RestraintEvent.ts)
+
+Telemetry about the model call that produced or vetoed the item. Optional —
+emitted only when the primitive actually called a connector.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: string;` | - |
+| `model` | `model: string;` | - |
+| `latencyMs?` | `latencyMs?: number;` | Wall-clock latency for the call in milliseconds. |
+
+</details>
+
+---
+
 ### calculateCost `function`
 
-📍 [`src/domain/entities/Model.ts:2581`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:2752`](src/domain/entities/Model.ts)
 
 Calculate the cost for a given model and token usage
 
@@ -19260,7 +22651,7 @@ export function calculateEmbeddingCost(modelName: string, tokens: number): numbe
 
 ### getActiveModels `function`
 
-📍 [`src/domain/entities/Model.ts:2569`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:2740`](src/domain/entities/Model.ts)
 
 Get all currently active models
 
@@ -19286,7 +22677,7 @@ export function getEmbeddingModelsWithFeature(
 
 ### getModelInfo `function`
 
-📍 [`src/domain/entities/Model.ts:2552`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:2723`](src/domain/entities/Model.ts)
 
 Get model information by name
 
@@ -19298,7 +22689,7 @@ export function getModelInfo(modelName: string): ILLMDescription | undefined
 
 ### getModelsByVendor `function`
 
-📍 [`src/domain/entities/Model.ts:2561`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:2732`](src/domain/entities/Model.ts)
 
 Get all models for a specific vendor
 
@@ -19653,7 +23044,7 @@ Last full audit: March 2026
 
 ### MODEL_REGISTRY `const`
 
-📍 [`src/domain/entities/Model.ts:230`](src/domain/entities/Model.ts)
+📍 [`src/domain/entities/Model.ts:236`](src/domain/entities/Model.ts)
 
 Complete model registry with all model metadata
 Updated: March 2026 - Verified from official vendor documentation
@@ -19663,12 +23054,52 @@ Updated: March 2026 - Verified from official vendor documentation
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `'gpt-5.5'` | `{
+    name: 'gpt-5.5',
+    provider: Vendor.OpenAI,
+    description: 'Newest frontier model for the most complex professional work and coding. 1M+ context. Reasoning.effort: none, low, medium (default), high, xhigh. &gt;272K input tokens priced at 2x input / 1.5x output for the full session',
+    isActive: true,
+    preferred: true,
+    releaseDate: '2026-04-25',
+    knowledgeCutoff: '2025-12-01',
+    features: {
+      reasoning: true,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      batchAPI: true,
+      promptCaching: true,
+      parameters: {
+        temperature: false,
+        topP: false,
+        frequencyPenalty: false,
+        presencePenalty: false,
+      },
+      input: {
+        tokens: 1050000,
+        text: true,
+        image: true,
+        cpm: 5,
+        cpmCached: 0.5,
+      },
+      output: {
+        tokens: 128000,
+        text: true,
+        cpm: 30,
+      },
+    },
+  }` | - |
 | `'gpt-5.4'` | `{
     name: 'gpt-5.4',
     provider: Vendor.OpenAI,
     description: 'Flagship model with 1M+ context. Reasoning.effort: none, low, medium, high, xhigh. Computer use, MCP, tool search',
     isActive: true,
-    preferred: true,
     releaseDate: '2026-03-05',
     knowledgeCutoff: '2025-08-31',
     features: {
@@ -19701,6 +23132,86 @@ Updated: March 2026 - Verified from official vendor documentation
         tokens: 128000,
         text: true,
         cpm: 15,
+      },
+    },
+  }` | - |
+| `'gpt-5.4-mini'` | `{
+    name: 'gpt-5.4-mini',
+    provider: Vendor.OpenAI,
+    description: 'Smaller, faster, cheaper sibling of gpt-5.4. 400K context. Text + vision in, text out. Reasoning.effort: none, low, medium, high, xhigh',
+    isActive: true,
+    releaseDate: '2026-03-17',
+    knowledgeCutoff: '2025-08-31',
+    features: {
+      reasoning: true,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      batchAPI: true,
+      promptCaching: true,
+      parameters: {
+        temperature: false,
+        topP: false,
+        frequencyPenalty: false,
+        presencePenalty: false,
+      },
+      input: {
+        tokens: 400000,
+        text: true,
+        image: true,
+        cpm: 0.75,
+        cpmCached: 0.075,
+      },
+      output: {
+        tokens: 128000,
+        text: true,
+        cpm: 4.5,
+      },
+    },
+  }` | - |
+| `'gpt-5.4-nano'` | `{
+    name: 'gpt-5.4-nano',
+    provider: Vendor.OpenAI,
+    description: 'Smallest gpt-5.4 variant for high-volume, low-latency tasks. 400K context. Text + vision in, text out. Reasoning.effort: none, low, medium, high, xhigh',
+    isActive: true,
+    releaseDate: '2026-03-17',
+    knowledgeCutoff: '2025-08-31',
+    features: {
+      reasoning: true,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      batchAPI: true,
+      promptCaching: true,
+      parameters: {
+        temperature: false,
+        topP: false,
+        frequencyPenalty: false,
+        presencePenalty: false,
+      },
+      input: {
+        tokens: 400000,
+        text: true,
+        image: true,
+        cpm: 0.2,
+        cpmCached: 0.02,
+      },
+      output: {
+        tokens: 128000,
+        text: true,
+        cpm: 1.25,
       },
     },
   }` | - |
@@ -21043,12 +24554,50 @@ Updated: March 2026 - Verified from official vendor documentation
       },
     },
   }` | - |
+| `'claude-opus-4-7'` | `{
+    name: 'claude-opus-4-7',
+    provider: Vendor.Anthropic,
+    description: 'Most capable model for complex reasoning and agentic coding. 1M context, 128K output, adaptive thinking with new xhigh effort level, high-resolution vision (2576px). New tokenizer. Does not accept `temperature`.',
+    isActive: true,
+    preferred: true,
+    releaseDate: '2026-04-16',
+    knowledgeCutoff: '2026-01-01',
+    features: {
+      reasoning: false,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      extendedThinking: false,
+      batchAPI: true,
+      promptCaching: true,
+      parameters: {
+        temperature: false,
+      },
+      input: {
+        tokens: 1000000,
+        text: true,
+        image: true,
+        cpm: 5,
+        cpmCached: 0.5,
+      },
+      output: {
+        tokens: 128000,
+        text: true,
+        cpm: 25,
+      },
+    },
+  }` | - |
 | `'claude-opus-4-6'` | `{
     name: 'claude-opus-4-6',
     provider: Vendor.Anthropic,
-    description: 'The most intelligent model for building agents and coding. 128K output, adaptive thinking',
+    description: 'Legacy Opus 4.6. Superseded by Opus 4.7. 128K output, adaptive thinking',
     isActive: true,
-    preferred: true,
     releaseDate: '2026-02-01',
     knowledgeCutoff: '2025-05-01',
     features: {
@@ -21891,7 +25440,7 @@ OAuth 2.0 authentication for external services
 
 ### OAuthManager `class`
 
-📍 [`src/connectors/oauth/OAuthManager.ts:12`](src/connectors/oauth/OAuthManager.ts)
+📍 [`src/connectors/oauth/OAuthManager.ts:13`](src/connectors/oauth/OAuthManager.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -22203,6 +25752,15 @@ listKeys?(): Promise&lt;string[]&gt;;
 | `privateKeyPath?` | `privateKeyPath?: string;` | - |
 | `tokenSigningAlg?` | `tokenSigningAlg?: string;` | - |
 | `audience?` | `audience?: string;` | - |
+| `tokenRequestStyle?` | `tokenRequestStyle?: 'form' | 'bearer';` | How the JWT assertion is delivered to the token endpoint.
+- `'form'` (default, RFC 7523): POST application/x-www-form-urlencoded with
+  `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=<JWT>`.
+- `'bearer'` (GitHub App installation tokens and similar): POST with an
+  `Authorization: Bearer <JWT>` header and no body. Response field for the
+  token is `token` (not `access_token`) and expiry is `expires_at` ISO
+  string (not `expires_in` seconds). |
+| `tokenLifetimeSeconds?` | `tokenLifetimeSeconds?: number;` | JWT `exp` lifetime, in seconds. Default 3600. GitHub rejects JWTs with
+`exp` more than 10 minutes in the future; set to 540 for GitHub Apps. |
 | `staticToken?` | `staticToken?: string;` | - |
 | `authorizationParams?` | `authorizationParams?: Record&lt;string, string&gt;;` | Extra query parameters appended to the authorization URL.
  Used for vendor-specific requirements, e.g. Google's `access_type: 'offline'`
@@ -22242,6 +25800,11 @@ Supports multiple OAuth flows
 | `issuer?` | `issuer?: string;` | - |
 | `subject?` | `subject?: string;` | - |
 | `audience?` | `audience?: string;` | - |
+| `tokenRequestStyle?` | `tokenRequestStyle?: 'form' | 'bearer';` | How the JWT assertion is delivered to the token endpoint.
+- `'form'` (default, RFC 7523): POST with grant_type + assertion body.
+- `'bearer'` (GitHub App installation tokens): POST with
+  `Authorization: Bearer <JWT>` header and no body. |
+| `tokenLifetimeSeconds?` | `tokenLifetimeSeconds?: number;` | JWT `exp` lifetime in seconds (default 3600; GitHub caps at 600). |
 | `refreshBeforeExpiry?` | `refreshBeforeExpiry?: number;` | - |
 | `storageKey?` | `storageKey?: string;` | - |
 | `authorizationParams?` | `authorizationParams?: Record&lt;string, string&gt;;` | Extra query parameters appended to the authorization URL.
@@ -22306,7 +25869,7 @@ Simple Icons icon data structure
 
 ### StoredToken `interface`
 
-📍 [`src/connectors/oauth/types.ts:56`](src/connectors/oauth/types.ts)
+📍 [`src/connectors/oauth/types.ts:71`](src/connectors/oauth/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -22349,7 +25912,7 @@ All implementations must encrypt tokens at rest
 
 ### VendorInfo `interface`
 
-📍 [`src/connectors/vendors/helpers.ts:338`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:340`](src/connectors/vendors/helpers.ts)
 
 Get vendor template information for display
 
@@ -22609,7 +26172,7 @@ const personalEmails = await personalFetch('/me/messages');
 
 ### createConnectorFromTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:270`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:272`](src/connectors/vendors/helpers.ts)
 
 Create a Connector from a vendor template
 
@@ -22638,7 +26201,7 @@ const connector = createConnectorFromTemplate(
 
 ### extractNonSecretCredentials `function`
 
-📍 [`src/connectors/vendors/helpers.ts:211`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:213`](src/connectors/vendors/helpers.ts)
 
 Extract non-secret credentials from a raw credentials dict.
 Used by ConnectorConfigStore.saveFromTemplate() to preserve
@@ -22692,7 +26255,7 @@ export function getAllVendorTemplates(): VendorTemplate[]
 
 ### getCredentialsSetupURL `function`
 
-📍 [`src/connectors/vendors/helpers.ts:421`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:423`](src/connectors/vendors/helpers.ts)
 
 Get credentials setup URL for a vendor
 
@@ -22704,7 +26267,7 @@ export function getCredentialsSetupURL(vendorId: string): string | undefined
 
 ### getDocsURL `function`
 
-📍 [`src/connectors/vendors/helpers.ts:429`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:431`](src/connectors/vendors/helpers.ts)
 
 Get docs URL for a vendor
 
@@ -22743,7 +26306,7 @@ export function getVendorColor(vendorId: string): string | undefined
 
 ### getVendorInfo `function`
 
-📍 [`src/connectors/vendors/helpers.ts:358`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:360`](src/connectors/vendors/helpers.ts)
 
 Get vendor information suitable for display
 
@@ -22837,7 +26400,7 @@ export function listVendorIds(): string[]
 
 ### listVendors `function`
 
-📍 [`src/connectors/vendors/helpers.ts:383`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:385`](src/connectors/vendors/helpers.ts)
 
 List all vendors with basic info
 
@@ -22849,7 +26412,7 @@ export function listVendors(): VendorInfo[]
 
 ### listVendorsByAuthType `function`
 
-📍 [`src/connectors/vendors/helpers.ts:412`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:414`](src/connectors/vendors/helpers.ts)
 
 List vendors that support a specific auth type
 
@@ -22861,7 +26424,7 @@ export function listVendorsByAuthType(authType: 'api_key' | 'oauth'): VendorInfo
 
 ### listVendorsByCategory `function`
 
-📍 [`src/connectors/vendors/helpers.ts:405`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:407`](src/connectors/vendors/helpers.ts)
 
 List vendors by category
 
@@ -24355,6 +27918,43 @@ getConfig(): Readonly&lt;Required&lt;ErrorHandlerConfig&gt;&gt;
 
 ---
 
+### FactSupersededError `class`
+
+📍 [`src/memory/MemorySystem.ts:146`](src/memory/MemorySystem.ts)
+
+F1 — thrown by `restoreFact` when the target fact was superseded by a later
+non-archived fact. Un-archiving the predecessor without first handling the
+successor would leave two "current" values for the same predicate, breaking
+ranking and the singleValued invariant. Callers handle this by (a) archiving
+the successor first, or (b) using `memory_forget` on the successor.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(factId: FactId, supersededBy: FactId)
+```
+
+**Parameters:**
+- `factId`: `string`
+- `supersededBy`: `string`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `factId` | `factId: string` | - |
+| `supersededBy` | `supersededBy: string` | - |
+
+</details>
+
+---
+
 ### InvalidConfigError `class`
 
 📍 [`src/domain/errors/AIErrors.ts:149`](src/domain/errors/AIErrors.ts)
@@ -24370,6 +27970,39 @@ constructor(message: string)
 
 **Parameters:**
 - `message`: `string`
+
+</details>
+
+---
+
+### JsonParseError `class`
+
+📍 [`src/utils/jsonRepair.ts:124`](src/utils/jsonRepair.ts)
+
+Error thrown by {@link parseJsonPermissive} when every strategy fails.
+Carries the first 500 chars of the raw input for debugging.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(message: string, rawText: string)
+```
+
+**Parameters:**
+- `message`: `string`
+- `rawText`: `string`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `rawSnippet` | `rawSnippet: string` | First 500 chars of the raw text that failed to parse. |
 
 </details>
 
@@ -24508,6 +28141,118 @@ constructor(
 - `timeoutMs`: `number`
 - `serverName`: `string | undefined` *(optional)*
 - `cause`: `Error | undefined` *(optional)*
+
+</details>
+
+---
+
+### MongoOptimisticConcurrencyError `class`
+
+📍 [`src/memory/adapters/mongo/MongoMemoryAdapter.ts:57`](src/memory/adapters/mongo/MongoMemoryAdapter.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(message: string)
+```
+
+**Parameters:**
+- `message`: `string`
+
+</details>
+
+---
+
+### OptimisticConcurrencyError `class`
+
+📍 [`src/memory/adapters/inmemory/InMemoryAdapter.ts:470`](src/memory/adapters/inmemory/InMemoryAdapter.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(message: string)
+```
+
+**Parameters:**
+- `message`: `string`
+
+</details>
+
+---
+
+### OwnerRequiredError `class`
+
+📍 [`src/memory/AccessControl.ts:144`](src/memory/AccessControl.ts)
+
+Thrown when a record would be created without an `ownerId` AND the calling
+scope carries no `userId` either. Every record must have an owner — either
+set explicitly by the caller (admin delegation) or inherited from
+`scope.userId`.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(public readonly recordKind: 'entity' | 'fact')
+```
+
+**Parameters:**
+- `recordKind`: `"entity" | "fact"`
+
+</details>
+
+---
+
+### PermissionDeniedError `class`
+
+📍 [`src/memory/AccessControl.ts:125`](src/memory/AccessControl.ts)
+
+Thrown by MemorySystem when a caller attempts a mutation against a record
+whose effective permissions deny write access. Reads that are denied return
+empty results rather than throwing (storage filters them out).
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(
+    public readonly recordId: string,
+    public readonly recordKind: 'entity' | 'fact',
+    public readonly operation: Permission,
+  )
+```
+
+**Parameters:**
+- `recordId`: `string`
+- `recordKind`: `"entity" | "fact"`
+- `operation`: `Permission`
+
+</details>
+
+---
+
+### ProfileGeneratorMissingError `class`
+
+📍 [`src/memory/MemorySystem.ts:105`](src/memory/MemorySystem.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor()
+```
 
 </details>
 
@@ -24668,6 +28413,66 @@ constructor(
 **Parameters:**
 - `providerName`: `string`
 - `retryAfter`: `number | undefined` *(optional)*
+
+</details>
+
+---
+
+### ScopeInvariantError `class`
+
+📍 [`src/memory/MemorySystem.ts:98`](src/memory/MemorySystem.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(message: string)
+```
+
+**Parameters:**
+- `message`: `string`
+
+</details>
+
+---
+
+### ScopeViolationError `class`
+
+📍 [`src/memory/adapters/inmemory/InMemoryAdapter.ts:477`](src/memory/adapters/inmemory/InMemoryAdapter.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(message: string)
+```
+
+**Parameters:**
+- `message`: `string`
+
+</details>
+
+---
+
+### SemanticSearchUnavailableError `class`
+
+📍 [`src/memory/MemorySystem.ts:112`](src/memory/MemorySystem.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(reason: string)
+```
+
+**Parameters:**
+- `reason`: `string`
 
 </details>
 
@@ -24857,6 +28662,22 @@ Events emitted by ErrorHandler
 
 ---
 
+### IngestionError `interface`
+
+📍 [`src/memory/integration/ExtractionResolver.ts:80`](src/memory/integration/ExtractionResolver.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `where` | `where: string;` | Which mention label / fact index failed. |
+| `reason` | `reason: string;` | - |
+
+</details>
+
+---
+
 ### StepErrorStrategy `type`
 
 📍 [`src/domain/entities/Routine.ts:40`](src/domain/entities/Routine.ts)
@@ -25003,6 +28824,28 @@ code blocks, or other text mixed with JSON data.
 
 ---
 
+### ParseJsonPermissiveOptions `interface`
+
+📍 [`src/utils/jsonRepair.ts:32`](src/utils/jsonRepair.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `stripFieldsAsLastResort?` | `stripFieldsAsLastResort?: string[];` | Field names that may contain verbatim text (quotes, newlines, unescaped
+chars) which breaks JSON parsing. If all repair strategies fail, the
+parser replaces each named field's value with `null` and retries.
+
+Defaults to `['details', 'body', 'quote', 'sourceQuote', 'excerpt',
+'narrative', 'rawText']` — the usual suspects across LLM schemas.
+
+Pass `[]` to disable the field-strip fallback entirely. |
+
+</details>
+
+---
+
 ### createTextMessage `function`
 
 📍 [`src/utils/messageBuilder.ts:124`](src/utils/messageBuilder.ts)
@@ -25105,6 +28948,21 @@ export function extractNumber(
 
 ```typescript
 const score = extractNumber(llmResponse, [/(\d{1,3})%?\s*complete/i], 50);
+```
+
+---
+
+### parseJsonPermissive `function`
+
+📍 [`src/utils/jsonRepair.ts:51`](src/utils/jsonRepair.ts)
+
+Parse JSON from an LLM response with multiple repair strategies.
+
+```typescript
+export function parseJsonPermissive(
+  text: string,
+  opts?: ParseJsonPermissiveOptions,
+): unknown
 ```
 
 ---
@@ -25817,6 +29675,34 @@ getInfo(): Record&lt;string, { displayName: string; description: string; baseURL
 ```
 
 **Returns:** `Record&lt;string, { displayName: string; description: string; baseURL: string; }&gt;`
+
+#### `getById()?`
+
+Get a connector by ID. Optional — not all registries support ID-based lookup.
+
+```typescript
+getById?(id: string): Connector;
+```
+
+**Parameters:**
+- `id`: `string`
+
+**Returns:** `Connector`
+
+#### `warmup()?`
+
+Optional async warmup — called before sync reads to ensure connectors are loaded.
+
+Multi-tenant registries can implement this to lazily load connectors for the
+current request context (e.g., tenant/group). Entry points call Connector.warmup()
+which delegates here. After warmup completes, all sync read methods (get, has,
+list, listAll) must return correct results without further async work.
+
+```typescript
+warmup?(): Promise&lt;void&gt;;
+```
+
+**Returns:** `Promise&lt;void&gt;`
 
 </details>
 
@@ -27277,7 +31163,7 @@ has(id: string): boolean;
 
 ### ISpeechToTextProvider `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:178`](src/domain/interfaces/IAudioProvider.ts)
+📍 [`src/domain/interfaces/IAudioProvider.ts:184`](src/domain/interfaces/IAudioProvider.ts)
 
 Speech-to-Text provider interface
 
@@ -27377,7 +31263,7 @@ listModels(): Promise&lt;string[]&gt;;
 
 ### ITextToSpeechProvider `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:56`](src/domain/interfaces/IAudioProvider.ts)
+📍 [`src/domain/interfaces/IAudioProvider.ts:62`](src/domain/interfaces/IAudioProvider.ts)
 
 Text-to-Speech provider interface
 
@@ -27732,7 +31618,7 @@ cancel(): void;
 
 ### SegmentTimestamp `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:147`](src/domain/interfaces/IAudioProvider.ts)
+📍 [`src/domain/interfaces/IAudioProvider.ts:153`](src/domain/interfaces/IAudioProvider.ts)
 
 Segment-level timestamp
 
@@ -27956,7 +31842,7 @@ User information is stored per userId - each user has their own isolated data.
 
 ### WordTimestamp `interface`
 
-📍 [`src/domain/interfaces/IAudioProvider.ts:138`](src/domain/interfaces/IAudioProvider.ts)
+📍 [`src/domain/interfaces/IAudioProvider.ts:144`](src/domain/interfaces/IAudioProvider.ts)
 
 Word-level timestamp
 
@@ -28462,7 +32348,7 @@ destroy(): void
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:130`](src/core/context-nextgen/AgentContextNextGen.ts)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:134`](src/core/context-nextgen/AgentContextNextGen.ts)
 
 Next-generation context manager for AI agents.
 
@@ -29368,6 +33254,285 @@ async search(query: string, options: SearchOptions =
 
 ---
 
+### CalendarSignalAdapter `class`
+
+📍 [`src/memory/integration/signals/adapters/CalendarSignalAdapter.ts:62`](src/memory/integration/signals/adapters/CalendarSignalAdapter.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(opts: CalendarSignalAdapterOptions =
+```
+
+**Parameters:**
+- `opts`: `CalendarSignalAdapterOptions` *(optional)* (default: `{}`)
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `extract()`
+
+```typescript
+extract(raw: CalendarSignal): ExtractedSignal
+```
+
+**Parameters:**
+- `raw`: `CalendarSignal`
+
+**Returns:** `ExtractedSignal`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `kind` | `kind: "calendar"` | - |
+| `skipDeclinedAttendance` | `skipDeclinedAttendance: boolean` | - |
+
+</details>
+
+---
+
+### ConnectorEmbedder `class`
+
+📍 [`src/memory/integration/ConnectorEmbedder.ts:26`](src/memory/integration/ConnectorEmbedder.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: ConnectorEmbedderConfig)
+```
+
+**Parameters:**
+- `config`: `ConnectorEmbedderConfig`
+
+</details>
+
+<details>
+<summary><strong>Static Methods</strong></summary>
+
+#### `static withProvider()`
+
+Construct a ConnectorEmbedder from a pre-built provider instead of
+resolving one from the Connector registry. Intended for callers that
+already have an IEmbeddingProvider (testing, unusual plumbing).
+
+```typescript
+static withProvider(args:
+```
+
+**Parameters:**
+- `args`: `{ provider: IEmbeddingProvider; model: string; dimensions: number; requestedDimensions?: number | undefined; }`
+
+**Returns:** `ConnectorEmbedder`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `embed()`
+
+```typescript
+async embed(text: string): Promise&lt;number[]&gt;
+```
+
+**Parameters:**
+- `text`: `string`
+
+**Returns:** `Promise&lt;number[]&gt;`
+
+#### `embedBatch()`
+
+```typescript
+async embedBatch(texts: string[]): Promise&lt;number[][]&gt;
+```
+
+**Parameters:**
+- `texts`: `string[]`
+
+**Returns:** `Promise&lt;number[][]&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `dimensions` | `dimensions: number` | - |
+| `provider` | `provider: IEmbeddingProvider` | - |
+| `model` | `model: string` | - |
+| `requestedDimensions?` | `requestedDimensions: number | undefined` | - |
+
+</details>
+
+---
+
+### ConnectorExtractor `class`
+
+📍 [`src/memory/integration/signals/ConnectorExtractor.ts:35`](src/memory/integration/signals/ConnectorExtractor.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: ConnectorExtractorConfig)
+```
+
+**Parameters:**
+- `config`: `ConnectorExtractorConfig`
+
+</details>
+
+<details>
+<summary><strong>Static Methods</strong></summary>
+
+#### `static withAgent()`
+
+Construct from a pre-built agent-like object. Intended for testing and
+callers with their own LLM plumbing. The object must expose `runDirect`
+(returning `{ output_text }`) and `destroy`.
+
+```typescript
+static withAgent(args:
+```
+
+**Parameters:**
+- `args`: `{ agent: { runDirect: (input: string | InputItem[], options?: DirectCallOptions) =&gt; Promise&lt;LLMResponse&gt;; destroy: () =&gt; void; }; temperature?: number | undefined; maxOutputTokens?: number | undefined; }`
+
+**Returns:** `ConnectorExtractor`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `extract()`
+
+```typescript
+async extract(prompt: string): Promise&lt;ExtractionOutput&gt;
+```
+
+**Parameters:**
+- `prompt`: `string`
+
+**Returns:** `Promise&lt;ExtractionOutput&gt;`
+
+#### `destroy()`
+
+```typescript
+destroy(): void
+```
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `agent` | `agent: Agent` | - |
+| `temperature` | `temperature: number` | - |
+| `maxOutputTokens` | `maxOutputTokens: number | undefined` | - |
+
+</details>
+
+---
+
+### ConnectorProfileGenerator `class`
+
+📍 [`src/memory/integration/ConnectorProfileGenerator.ts:34`](src/memory/integration/ConnectorProfileGenerator.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: ConnectorProfileGeneratorConfig)
+```
+
+**Parameters:**
+- `config`: `ConnectorProfileGeneratorConfig`
+
+</details>
+
+<details>
+<summary><strong>Static Methods</strong></summary>
+
+#### `static withAgent()`
+
+Construct from a pre-built agent-like object. Intended for testing and
+unusual callers that already have their own LLM plumbing.
+
+```typescript
+static withAgent(args:
+```
+
+**Parameters:**
+- `args`: `{ agent: { runDirect: (input: string | InputItem[], options?: DirectCallOptions) =&gt; Promise&lt;LLMResponse&gt;; destroy: () =&gt; void; }; promptTemplate?: ((ctx: ProfileGeneratorInput) =&gt; string) | undefined; temperature?: number | undefined; maxOutputTokens?: number | undefined; }`
+
+**Returns:** `ConnectorProfileGenerator`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `generate()`
+
+```typescript
+async generate(
+    input: ProfileGeneratorInput,
+  ): Promise&lt;
+```
+
+**Parameters:**
+- `input`: `ProfileGeneratorInput`
+
+**Returns:** `Promise&lt;{ details: string; summaryForEmbedding: string; }&gt;`
+
+#### `destroy()`
+
+Release the internal agent.
+
+```typescript
+destroy(): void
+```
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `agent` | `agent: Agent` | - |
+| `promptFn` | `promptFn: (ctx: ProfileGeneratorInput) =&gt; string` | - |
+| `temperature` | `temperature: number` | - |
+| `maxOutputTokens` | `maxOutputTokens: number | undefined` | - |
+
+</details>
+
+---
+
 ### DefaultCompactionStrategy `class`
 
 📍 [`src/core/context-nextgen/strategies/DefaultCompactionStrategy.ts:42`](src/core/context-nextgen/strategies/DefaultCompactionStrategy.ts)
@@ -29544,6 +33709,53 @@ async read(
 
 ---
 
+### EmailSignalAdapter `class`
+
+📍 [`src/memory/integration/signals/adapters/EmailSignalAdapter.ts:73`](src/memory/integration/signals/adapters/EmailSignalAdapter.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(opts: EmailSignalAdapterOptions =
+```
+
+**Parameters:**
+- `opts`: `EmailSignalAdapterOptions` *(optional)* (default: `{}`)
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `extract()`
+
+```typescript
+extract(raw: EmailSignal): ExtractedSignal
+```
+
+**Parameters:**
+- `raw`: `EmailSignal`
+
+**Returns:** `ExtractedSignal`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `kind` | `kind: "email"` | - |
+| `seedOrganizations` | `seedOrganizations: boolean` | - |
+| `freeProviders` | `freeProviders: Set&lt;string&gt;` | - |
+
+</details>
+
+---
+
 ### Embeddings `class`
 
 📍 [`src/capabilities/embeddings/Embeddings.ts:56`](src/capabilities/embeddings/Embeddings.ts)
@@ -29715,6 +33927,87 @@ reset(): void
 | `speechStartTime` | `speechStartTime: number` | - |
 | `lastSpeechTime` | `lastSpeechTime: number` | - |
 | `nonPcmWarned` | `nonPcmWarned: boolean` | - |
+
+</details>
+
+---
+
+### EntityResolver `class`
+
+📍 [`src/memory/resolution/EntityResolver.ts:101`](src/memory/resolution/EntityResolver.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(
+    private readonly hooks: ResolverMemoryHooks,
+    config?: EntityResolutionConfig,
+  )
+```
+
+**Parameters:**
+- `hooks`: `ResolverMemoryHooks`
+- `config`: `EntityResolutionConfig | undefined` *(optional)*
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `resolve()`
+
+Find candidate entities for a surface form. Returns ranked by confidence.
+Empty array if nothing clears `opts.threshold` (default 0.5).
+
+```typescript
+async resolve(
+    query: ResolveEntityQuery,
+    scope: ScopeFilter,
+    opts?: ResolveEntityOptions,
+  ): Promise&lt;EntityCandidate[]&gt;
+```
+
+**Parameters:**
+- `query`: `ResolveEntityQuery`
+- `scope`: `ScopeFilter`
+- `opts`: `ResolveEntityOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;EntityCandidate[]&gt;`
+
+#### `upsertBySurface()`
+
+Upsert-or-resolve: resolves the surface to an existing entity if top
+candidate clears autoResolveThreshold, else creates a new entity.
+Accumulates aliases + identifiers on matches — the system gets better
+at recognizing the same entity across variant surface forms over time.
+
+```typescript
+async upsertBySurface(
+    input: UpsertBySurfaceInput,
+    scope: ScopeFilter,
+    opts?: UpsertBySurfaceOptions,
+  ): Promise&lt;UpsertBySurfaceResult&gt;
+```
+
+**Parameters:**
+- `input`: `UpsertBySurfaceInput`
+- `scope`: `ScopeFilter`
+- `opts`: `UpsertBySurfaceOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;UpsertBySurfaceResult&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `autoResolveThreshold` | `autoResolveThreshold: number` | - |
+| `semanticEnabled` | `semanticEnabled: boolean` | - |
 
 </details>
 
@@ -29944,6 +34237,54 @@ getSummary()
 | `iterationSummaries` | `iterationSummaries: IterationSummary[]` | - |
 | `metrics` | `metrics: ExecutionMetrics` | - |
 | `auditTrail` | `auditTrail: AuditEntry[]` | - |
+
+</details>
+
+---
+
+### ExtractionResolver `class`
+
+📍 [`src/memory/integration/ExtractionResolver.ts:125`](src/memory/integration/ExtractionResolver.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(private readonly memory: MemorySystem)
+```
+
+**Parameters:**
+- `memory`: `MemorySystem`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `resolveAndIngest()`
+
+Ingest a raw LLM extraction output. Resolves mentions to entities (upsert
+if missing), translates facts from label-space to id-space, writes them.
+Attaches `sourceSignalId` to every written fact.
+
+```typescript
+async resolveAndIngest(
+    output: ExtractionOutput,
+    sourceSignalId: string,
+    scope: ScopeFilter,
+    opts?: ExtractionResolverOptions,
+  ): Promise&lt;IngestionResult&gt;
+```
+
+**Parameters:**
+- `output`: `ExtractionOutput`
+- `sourceSignalId`: `string`
+- `scope`: `ScopeFilter`
+- `opts`: `ExtractionResolverOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;IngestionResult&gt;`
 
 </details>
 
@@ -30779,6 +35120,174 @@ static clear(): void
 
 ---
 
+### MeteorMongoCollection `class`
+
+📍 [`src/memory/adapters/mongo/MeteorMongoCollection.ts:62`](src/memory/adapters/mongo/MeteorMongoCollection.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(private col: MeteorCollectionLike&lt;T&gt;)
+```
+
+**Parameters:**
+- `col`: `MeteorCollectionLike&lt;T&gt;`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `insertOne()`
+
+```typescript
+async insertOne(doc: T): Promise&lt;string&gt;
+```
+
+**Parameters:**
+- `doc`: `T`
+
+**Returns:** `Promise&lt;string&gt;`
+
+#### `insertMany()`
+
+```typescript
+async insertMany(docs: T[]): Promise&lt;string[]&gt;
+```
+
+**Parameters:**
+- `docs`: `T[]`
+
+**Returns:** `Promise&lt;string[]&gt;`
+
+#### `updateOne()`
+
+```typescript
+async updateOne(
+    filter: MongoFilter,
+    update: MongoUpdate,
+    opts?: MongoUpdateOptions,
+  ): Promise&lt;MongoUpdateResult&gt;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+- `update`: `MongoUpdate`
+- `opts`: `MongoUpdateOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;MongoUpdateResult&gt;`
+
+#### `deleteOne()`
+
+```typescript
+async deleteOne(filter: MongoFilter): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `deleteMany()`
+
+```typescript
+async deleteMany(filter: MongoFilter): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `findOne()`
+
+```typescript
+async findOne(filter: MongoFilter, opts?: MongoFindOptions): Promise&lt;T | null&gt;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+- `opts`: `MongoFindOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;T | null&gt;`
+
+#### `find()`
+
+```typescript
+async find(filter: MongoFilter, opts?: MongoFindOptions): Promise&lt;T[]&gt;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+- `opts`: `MongoFindOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;T[]&gt;`
+
+#### `countDocuments()`
+
+```typescript
+async countDocuments(filter: MongoFilter): Promise&lt;number&gt;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `aggregate()`
+
+```typescript
+async aggregate(pipeline: unknown[]): Promise&lt;unknown[]&gt;
+```
+
+**Parameters:**
+- `pipeline`: `unknown[]`
+
+**Returns:** `Promise&lt;unknown[]&gt;`
+
+#### `createIndex()`
+
+```typescript
+async createIndex(
+    spec: Record&lt;string, 1 | -1&gt;,
+    opts?:
+```
+
+**Parameters:**
+- `spec`: `Record&lt;string, 1 | -1&gt;`
+- `opts`: `{ unique?: boolean | undefined; name?: string | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `createSearchIndex()`
+
+```typescript
+async createSearchIndex(definition: SearchIndexDefinition): Promise&lt;string&gt;
+```
+
+**Parameters:**
+- `definition`: `SearchIndexDefinition`
+
+**Returns:** `Promise&lt;string&gt;`
+
+#### `listSearchIndexes()`
+
+```typescript
+async listSearchIndexes(name?: string): Promise&lt;SearchIndexInfo[]&gt;
+```
+
+**Parameters:**
+- `name`: `string | undefined` *(optional)*
+
+**Returns:** `Promise&lt;SearchIndexInfo[]&gt;`
+
+</details>
+
+---
+
 ### NutTreeDriver `class`
 
 📍 [`src/tools/desktop/driver/NutTreeDriver.ts:133`](src/tools/desktop/driver/NutTreeDriver.ts)
@@ -31210,7 +35719,7 @@ destroy(): void
 
 ### PersistentInstructionsPluginNextGen `class`
 
-📍 [`src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts:79`](src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts)
+📍 [`src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts:88`](src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -31481,6 +35990,37 @@ async storeAction(action: string, params?: Record&lt;string, unknown&gt;, _conte
 
 ---
 
+### PlainTextAdapter `class`
+
+📍 [`src/memory/integration/signals/adapters/PlainTextAdapter.ts:18`](src/memory/integration/signals/adapters/PlainTextAdapter.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `extract()`
+
+```typescript
+extract(raw: PlainTextRaw): ExtractedSignal
+```
+
+**Parameters:**
+- `raw`: `PlainTextRaw`
+
+**Returns:** `ExtractedSignal`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `kind` | `kind: "text"` | - |
+
+</details>
+
+---
+
 ### PluginRegistry `class`
 
 📍 [`src/core/context-nextgen/PluginRegistry.ts:115`](src/core/context-nextgen/PluginRegistry.ts)
@@ -31589,9 +36129,219 @@ static getAll(): ReadonlyMap&lt;string, PluginRegistryEntry&gt;
 
 ---
 
+### PredicateRegistry `class`
+
+📍 [`src/memory/predicates/PredicateRegistry.ts:21`](src/memory/predicates/PredicateRegistry.ts)
+
+<details>
+<summary><strong>Static Methods</strong></summary>
+
+#### `static standard()`
+
+Returns a fresh registry seeded with the standard 51-predicate set.
+Called as a factory — each invocation produces an independent instance,
+so mutations never leak between MemorySystems or tests.
+
+```typescript
+static standard(): PredicateRegistry
+```
+
+**Returns:** `PredicateRegistry`
+
+#### `static empty()`
+
+Returns an empty registry. Use for fully custom vocabularies.
+
+```typescript
+static empty(): PredicateRegistry
+```
+
+**Returns:** `PredicateRegistry`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `register()`
+
+```typescript
+register(def: PredicateDefinition): this
+```
+
+**Parameters:**
+- `def`: `PredicateDefinition`
+
+**Returns:** `this`
+
+#### `registerAll()`
+
+```typescript
+registerAll(defs: PredicateDefinition[]): this
+```
+
+**Parameters:**
+- `defs`: `PredicateDefinition[]`
+
+**Returns:** `this`
+
+#### `unregister()`
+
+```typescript
+unregister(name: string): this
+```
+
+**Parameters:**
+- `name`: `string`
+
+**Returns:** `this`
+
+#### `get()`
+
+Resolve an input name (already-canonical, alias, camelCase, or dashed
+form) to the canonical definition, or null.
+
+```typescript
+get(nameOrAlias: string): PredicateDefinition | null
+```
+
+**Parameters:**
+- `nameOrAlias`: `string`
+
+**Returns:** `PredicateDefinition | null`
+
+#### `has()`
+
+```typescript
+has(nameOrAlias: string): boolean
+```
+
+**Parameters:**
+- `nameOrAlias`: `string`
+
+**Returns:** `boolean`
+
+#### `canonicalize()`
+
+Normalize an input string to the canonical predicate name.
+  - 'worksAt' → 'works_at'        (camelCase → snake)
+  - 'works-at' → 'works_at'       (dash → snake)
+  - 'Works At' → 'works_at'       (whitespace → snake)
+  - 'employed_by' → 'works_at'    (alias lookup)
+  - 'unknown_thing' → 'unknown_thing'  (unchanged — registry is permissive)
+
+```typescript
+canonicalize(input: string): string
+```
+
+**Parameters:**
+- `input`: `string`
+
+**Returns:** `string`
+
+#### `findClosest()`
+
+Best-effort near-match for an unknown predicate. Returns the canonical
+name of the closest known predicate within a length-aware edit-distance
+budget, or `null` if nothing is close enough.
+
+Used by `ExtractionResolver`'s H5 drift policy to snap LLM typos like
+`"work_at"` onto the registered `"works_at"`. Does NOT help with pure
+semantic mismatches (`"discussed_topic"` ↛ `"mentioned"`) — those need
+human-in-the-loop review of the `newPredicates` report.
+
+**F3 — length-aware distance budget.** A flat distance-2 threshold is too
+loose for long predicates where 2-char swaps flip meaning
+(`talks_at` ↔ `works_at`). The effective budget is:
+
+  effectiveMax = min(maxDistance, max(1, floor(min(lenA, lenB) / 4)))
+
+So short predicates allow distance 1, 8-char predicates allow 2, 12+ char
+predicates allow 3 — matching how typos scale with word length. Callers
+can tighten with `opts.maxDistance` (absolute cap) or override entirely
+by passing a very low value.
+
+```typescript
+findClosest(
+    input: string,
+    opts?:
+```
+
+**Parameters:**
+- `input`: `string`
+- `opts`: `{ maxDistance?: number | undefined; } | undefined` *(optional)*
+
+**Returns:** `{ name: string; distance: number; } | null`
+
+#### `list()`
+
+List definitions, optionally filtered by category or subject-type hint.
+
+```typescript
+list(filter?:
+```
+
+**Parameters:**
+- `filter`: `{ categories?: string[] | undefined; subjectType?: string | undefined; } | undefined` *(optional)*
+
+**Returns:** `PredicateDefinition[]`
+
+#### `categories()`
+
+```typescript
+categories(): string[]
+```
+
+**Returns:** `string[]`
+
+#### `renderForPrompt()`
+
+Render the registry as a markdown block suitable for injection into an
+LLM extraction prompt. Chunked by category; capped by `maxPerCategory`
+to keep the prompt token budget bounded.
+
+```typescript
+renderForPrompt(opts?:
+```
+
+**Parameters:**
+- `opts`: `{ categories?: string[] | undefined; subjectType?: string | undefined; maxPerCategory?: number | undefined; } | undefined` *(optional)*
+
+**Returns:** `string`
+
+#### `toRankingWeights()`
+
+Produce a new RankingConfig.predicateWeights map merging the registry's
+weights with the caller-supplied `base`. **`base` wins on collision** so
+user configuration always trumps the registry default. Returns a NEW
+object; never mutates inputs.
+
+```typescript
+toRankingWeights(base?: Record&lt;string, number&gt;): Record&lt;string, number&gt;
+```
+
+**Parameters:**
+- `base`: `Record&lt;string, number&gt; | undefined` *(optional)*
+
+**Returns:** `Record&lt;string, number&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `byName` | `byName: Map&lt;string, PredicateDefinition&gt;` | - |
+| `byAlias` | `byAlias: Map&lt;string, string&gt;` | - |
+
+</details>
+
+---
+
 ### ProviderConfigAgent `class`
 
-📍 [`src/agents/ProviderConfigAgent.ts:16`](src/agents/ProviderConfigAgent.ts)
+📍 [`src/agents/ProviderConfigAgent.ts:17`](src/agents/ProviderConfigAgent.ts)
 
 Built-in agent for generating OAuth provider configurations
 
@@ -31707,6 +36457,192 @@ async search(query: string, options: SearchOptions =
 | Property | Type | Description |
 |----------|------|-------------|
 | `name` | `name: "rapidapi"` | - |
+
+</details>
+
+---
+
+### RawMongoCollection `class`
+
+📍 [`src/memory/adapters/mongo/RawMongoCollection.ts:76`](src/memory/adapters/mongo/RawMongoCollection.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(
+    private col: RawMongoDriverCollection&lt;T&gt;,
+    /** ObjectId constructor from the `mongodb` package (e.g. `ObjectId` imported from 'mongodb'). */
+    private ObjectId: ObjectIdCtor,
+    private client?: RawMongoClientLike,
+  )
+```
+
+**Parameters:**
+- `col`: `RawMongoDriverCollection&lt;T&gt;`
+- `ObjectId`: `ObjectIdCtor`
+- `client`: `RawMongoClientLike | undefined` *(optional)*
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `insertOne()`
+
+```typescript
+async insertOne(doc: T): Promise&lt;string&gt;
+```
+
+**Parameters:**
+- `doc`: `T`
+
+**Returns:** `Promise&lt;string&gt;`
+
+#### `insertMany()`
+
+```typescript
+async insertMany(docs: T[]): Promise&lt;string[]&gt;
+```
+
+**Parameters:**
+- `docs`: `T[]`
+
+**Returns:** `Promise&lt;string[]&gt;`
+
+#### `updateOne()`
+
+```typescript
+async updateOne(
+    filter: MongoFilter,
+    update: MongoUpdate,
+    opts?: MongoUpdateOptions,
+  ): Promise&lt;MongoUpdateResult&gt;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+- `update`: `MongoUpdate`
+- `opts`: `MongoUpdateOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;MongoUpdateResult&gt;`
+
+#### `deleteOne()`
+
+```typescript
+async deleteOne(filter: MongoFilter): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `deleteMany()`
+
+```typescript
+async deleteMany(filter: MongoFilter): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `findOne()`
+
+```typescript
+async findOne(filter: MongoFilter, opts?: MongoFindOptions): Promise&lt;T | null&gt;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+- `opts`: `MongoFindOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;T | null&gt;`
+
+#### `find()`
+
+```typescript
+async find(filter: MongoFilter, opts?: MongoFindOptions): Promise&lt;T[]&gt;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+- `opts`: `MongoFindOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;T[]&gt;`
+
+#### `countDocuments()`
+
+```typescript
+countDocuments(filter: MongoFilter): Promise&lt;number&gt;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `aggregate()`
+
+```typescript
+async aggregate(pipeline: unknown[]): Promise&lt;unknown[]&gt;
+```
+
+**Parameters:**
+- `pipeline`: `unknown[]`
+
+**Returns:** `Promise&lt;unknown[]&gt;`
+
+#### `createIndex()`
+
+```typescript
+async createIndex(
+    spec: Record&lt;string, 1 | -1&gt;,
+    opts?:
+```
+
+**Parameters:**
+- `spec`: `Record&lt;string, 1 | -1&gt;`
+- `opts`: `{ unique?: boolean | undefined; name?: string | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `createSearchIndex()`
+
+```typescript
+async createSearchIndex(definition: SearchIndexDefinition): Promise&lt;string&gt;
+```
+
+**Parameters:**
+- `definition`: `SearchIndexDefinition`
+
+**Returns:** `Promise&lt;string&gt;`
+
+#### `listSearchIndexes()`
+
+```typescript
+async listSearchIndexes(name?: string): Promise&lt;SearchIndexInfo[]&gt;
+```
+
+**Parameters:**
+- `name`: `string | undefined` *(optional)*
+
+**Returns:** `Promise&lt;SearchIndexInfo[]&gt;`
+
+#### `withTransaction()`
+
+```typescript
+async withTransaction&lt;R&gt;(fn: () =&gt; Promise&lt;R&gt;): Promise&lt;R&gt;
+```
+
+**Parameters:**
+- `fn`: `() =&gt; Promise&lt;R&gt;`
+
+**Returns:** `Promise&lt;R&gt;`
 
 </details>
 
@@ -31974,6 +36910,17 @@ getInfo(): Record&lt;string,
 ```
 
 **Returns:** `Record&lt;string, { displayName: string; description: string; baseURL: string; }&gt;`
+
+#### `getById()`
+
+```typescript
+getById(id: string): Connector
+```
+
+**Parameters:**
+- `id`: `string`
+
+**Returns:** `Connector`
 
 </details>
 
@@ -32443,6 +37390,109 @@ appendLog(author: string, message: string): void
 
 ---
 
+### SignalIngestor `class`
+
+📍 [`src/memory/integration/signals/SignalIngestor.ts:115`](src/memory/integration/signals/SignalIngestor.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: SignalIngestorConfig)
+```
+
+**Parameters:**
+- `config`: `SignalIngestorConfig`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `registerAdapter()`
+
+Register (or replace) an adapter for a given `kind`.
+
+```typescript
+registerAdapter(adapter: SignalSourceAdapter&lt;unknown&gt;): this
+```
+
+**Parameters:**
+- `adapter`: `SignalSourceAdapter&lt;unknown&gt;`
+
+**Returns:** `this`
+
+#### `hasAdapter()`
+
+```typescript
+hasAdapter(kind: string): boolean
+```
+
+**Parameters:**
+- `kind`: `string`
+
+**Returns:** `boolean`
+
+#### `ingest()`
+
+Typed ingest by adapter kind.
+
+```typescript
+async ingest&lt;TRaw&gt;(input: IngestSignalInput&lt;TRaw&gt;): Promise&lt;IngestionResult&gt;
+```
+
+**Parameters:**
+- `input`: `IngestSignalInput&lt;TRaw&gt;`
+
+**Returns:** `Promise&lt;IngestionResult&gt;`
+
+#### `ingestText()`
+
+Bypass adapters — caller provides raw text + optional participant seeds directly.
+
+```typescript
+async ingestText(input: IngestTextInput): Promise&lt;IngestionResult&gt;
+```
+
+**Parameters:**
+- `input`: `IngestTextInput`
+
+**Returns:** `Promise&lt;IngestionResult&gt;`
+
+#### `ingestExtracted()`
+
+Lowest-level entry point — for callers with their own adapter logic.
+
+```typescript
+async ingestExtracted(input: IngestExtractedInput): Promise&lt;IngestionResult&gt;
+```
+
+**Parameters:**
+- `input`: `IngestExtractedInput`
+
+**Returns:** `Promise&lt;IngestionResult&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `memory` | `memory: MemorySystem` | - |
+| `extractor` | `extractor: IExtractor` | - |
+| `adapters` | `adapters: Map&lt;string, SignalSourceAdapter&lt;unknown&gt;&gt;` | - |
+| `promptFn` | `promptFn: (ctx: ExtractionPromptContext) =&gt; string` | - |
+| `maxPredicatesPerCategory` | `maxPredicatesPerCategory: number` | - |
+| `predicateRegistry` | `predicateRegistry: PredicateRegistry | undefined` | - |
+| `contextHints` | `contextHints: ContextHintsConfig | undefined` | - |
+
+</details>
+
+---
+
 ### SimpleScheduler `class`
 
 📍 [`src/infrastructure/scheduling/SimpleScheduler.ts:10`](src/infrastructure/scheduling/SimpleScheduler.ts)
@@ -32509,6 +37559,148 @@ destroy(): void
 | Property | Type | Description |
 |----------|------|-------------|
 | `timers` | `timers: Map&lt;string, { timer: NodeJS.Timeout; type: "timeout" | "interval"; }&gt;` | - |
+
+</details>
+
+---
+
+### SkepticPass `class`
+
+📍 [`src/memory/integration/SkepticPass.ts:89`](src/memory/integration/SkepticPass.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: SkepticPassConfig)
+```
+
+**Parameters:**
+- `config`: `SkepticPassConfig`
+
+</details>
+
+<details>
+<summary><strong>Static Methods</strong></summary>
+
+#### `static withAgent()`
+
+Construct from a pre-built agent-like object. Intended for testing — same
+pattern as `ConnectorProfileGenerator.withAgent`.
+
+```typescript
+static withAgent(args:
+```
+
+**Parameters:**
+- `args`: `{ agent: AgentLike; connector?: string | undefined; model?: string | undefined; promptTemplate?: ((ctx: SkepticPromptContext) =&gt; string) | undefined; temperature?: number | undefined; onDecision?: RestraintEventListener | undefined; maxOutputTokens?: number | undefined; }`
+
+**Returns:** `SkepticPass`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `review()`
+
+Review a list of items and return the kept/dropped split. Always emits
+one event per item (and pass-level events on parse / model errors). On
+any failure the pass falls open (all items kept) and the failure is
+logged — never silently swallowed.
+
+```typescript
+async review(
+    items: SkepticReviewItem[],
+    ctx: SkepticReviewContext =
+```
+
+**Parameters:**
+- `items`: `SkepticReviewItem[]`
+- `ctx`: `SkepticReviewContext` *(optional)* (default: `{}`)
+
+**Returns:** `Promise&lt;SkepticReviewResult&gt;`
+
+#### `destroy()`
+
+Idempotent. Calling twice is a no-op rather than a double-destroy of
+ the underlying Agent.
+
+```typescript
+destroy(): void
+```
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `agent` | `agent: AgentLike` | - |
+| `promptFn` | `promptFn: (ctx: SkepticPromptContext) =&gt; string` | - |
+| `temperature` | `temperature: number` | - |
+| `defaultListener?` | `defaultListener: RestraintEventListener | undefined` | - |
+| `maxOutputTokens` | `maxOutputTokens: number | undefined` | - |
+| `modelInfo` | `modelInfo: { connector: string; model: string; }` | - |
+
+</details>
+
+---
+
+### StaticAnchorRegistry `class`
+
+📍 [`src/memory/integration/AnchorRegistry.ts:64`](src/memory/integration/AnchorRegistry.ts)
+
+Static-data convenience — wraps a fixed `Anchor[]` as an AnchorRegistry.
+Useful for tests, demos, and scripts where the active set is hand-rolled.
+
+`getAnchorsForUser` returns the same list regardless of `userId` — this is
+intentional for testing. Real impls should branch on `userId`.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(private readonly anchors: readonly Anchor[])
+```
+
+**Parameters:**
+- `anchors`: `readonly Anchor[]`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `getAnchorsForUser()`
+
+```typescript
+async getAnchorsForUser(_userId: string): Promise&lt;Anchor[]&gt;
+```
+
+**Parameters:**
+- `_userId`: `string`
+
+**Returns:** `Promise&lt;Anchor[]&gt;`
+
+#### `validateBinding()`
+
+```typescript
+async validateBinding(_userId: string, anchorId: string): Promise&lt;boolean&gt;
+```
+
+**Parameters:**
+- `_userId`: `string`
+- `anchorId`: `string`
+
+**Returns:** `Promise&lt;boolean&gt;`
 
 </details>
 
@@ -33360,7 +38552,7 @@ outboundWebhookHandler(): (req: any, res: any) =&gt; void
 
 ### UserInfoPluginNextGen `class`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:314`](src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:323`](src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -33904,6 +39096,27 @@ async destroy(): Promise&lt;void&gt;
 
 ---
 
+### AccessControlled `interface`
+
+📍 [`src/memory/AccessControl.ts:75`](src/memory/AccessControl.ts)
+
+Minimal record shape for access control. Any persisted entity or fact
+satisfies this (both extend ScopeFields and optionally carry permissions).
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id?` | `id?: string;` | - |
+| `ownerId?` | `ownerId?: string;` | - |
+| `groupId?` | `groupId?: string;` | - |
+| `permissions?` | `permissions?: Permissions;` | - |
+
+</details>
+
+---
+
 ### AgentConfig `interface`
 
 📍 [`src/domain/entities/AgentState.ts:23`](src/domain/entities/AgentState.ts)
@@ -33927,7 +39140,7 @@ Agent configuration (needed for resume)
 
 ### AgentContextNextGenConfig `interface`
 
-📍 [`src/core/context-nextgen/types.ts:752`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:795`](src/core/context-nextgen/types.ts)
 
 AgentContextNextGen configuration
 
@@ -34102,7 +39315,7 @@ Full agent state - everything needed to resume
 
 ### AgentTypeConfig `interface`
 
-📍 [`src/core/orchestrator/createOrchestrator.ts:38`](src/core/orchestrator/createOrchestrator.ts)
+📍 [`src/core/orchestrator/createOrchestrator.ts:39`](src/core/orchestrator/createOrchestrator.ts)
 
 Configuration for an agent type that the orchestrator can spawn.
 
@@ -34125,9 +39338,90 @@ Configuration for an agent type that the orchestrator can spawn.
 
 ---
 
+### Anchor `interface`
+
+📍 [`src/memory/integration/AnchorRegistry.ts:21`](src/memory/integration/AnchorRegistry.ts)
+
+AnchorRegistry — pluggable interface for binding extracted items to
+stated anchors (e.g. a user's priorities, a project's OKRs, a team's
+focus areas).
+
+The library ships the *interface only*. Hosts provide the implementation —
+for ICOS the impl walks the memory graph from the user entity outward via
+`tracks_priority` facts and returns the active priority entities.
+
+Used by `defaultExtractionPrompt` (when `EagernessProfile.requirePriorityBinding`
+is on, the prompt renders the active anchors and asks the LLM to bind each
+extracted task to one) and by `RestrainedExtractionContract` (for strict-mode
+binding validation).
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | Stable id the LLM echoes back as `servesAnchorId`. Opaque string. |
+| `label` | `label: string;` | Short human-readable label. Surfaces in the prompt. |
+| `kind?` | `kind?: string;` | Optional category — e.g. `priority`, `okr`, `focus_area`. |
+| `metadata?` | `metadata?: Record&lt;string, unknown&gt;;` | Optional details for prompt rendering — e.g. `{ horizon: 'quarter' }`. |
+
+</details>
+
+---
+
+### AnchorRegistry `interface`
+
+📍 [`src/memory/integration/AnchorRegistry.ts:41`](src/memory/integration/AnchorRegistry.ts)
+
+Pluggable lookup. Implementations decide where anchors come from
+(memory graph traversal, settings collection, external service) and
+how "active" is defined (current quarter, current week, etc.).
+
+`getAnchorsForUser` is invoked at most once per extraction call; small
+latencies are fine, but implementations should NOT hit a cold cache from
+inside a tight loop — cache at the application layer if needed.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `getAnchorsForUser()`
+
+Return active anchors for the user. Empty array means "no active
+anchors" — under `strict` priority binding, callers should treat this as
+a hard signal that nothing should be emitted.
+
+```typescript
+getAnchorsForUser(userId: string): Promise&lt;Anchor[]&gt;;
+```
+
+**Parameters:**
+- `userId`: `string`
+
+**Returns:** `Promise&lt;Anchor[]&gt;`
+
+#### `validateBinding()`
+
+Validate a host-emitted binding. Returns `true` if `anchorId` is one of
+this user's currently active anchors. Implementations may apply
+additional rules (recency, scope, etc.).
+
+```typescript
+validateBinding(userId: string, anchorId: string): Promise&lt;boolean&gt;;
+```
+
+**Parameters:**
+- `userId`: `string`
+- `anchorId`: `string`
+
+**Returns:** `Promise&lt;boolean&gt;`
+
+</details>
+
+---
+
 ### APIKeyConnectorAuth `interface`
 
-📍 [`src/domain/entities/Connector.ts:73`](src/domain/entities/Connector.ts)
+📍 [`src/domain/entities/Connector.ts:82`](src/domain/entities/Connector.ts)
 
 Static API key authentication
 For services like OpenAI, Anthropic, many SaaS APIs
@@ -34377,7 +39671,7 @@ Base response for all capability providers
 
 ### BashResult `interface`
 
-📍 [`src/tools/shell/types.ts:96`](src/tools/shell/types.ts)
+📍 [`src/tools/shell/types.ts:101`](src/tools/shell/types.ts)
 
 Result of a bash command execution
 
@@ -34400,6 +39694,69 @@ Result of a bash command execution
 
 ---
 
+### CalendarAttendee `interface`
+
+📍 [`src/memory/integration/signals/adapters/CalendarSignalAdapter.ts:25`](src/memory/integration/signals/adapters/CalendarSignalAdapter.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `email` | `email: string;` | - |
+| `name?` | `name?: string;` | - |
+| `rsvpStatus?` | `rsvpStatus?: 'accepted' | 'declined' | 'tentative' | 'needs_action';` | - |
+
+</details>
+
+---
+
+### CalendarSignal `interface`
+
+📍 [`src/memory/integration/signals/adapters/CalendarSignalAdapter.ts:31`](src/memory/integration/signals/adapters/CalendarSignalAdapter.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id?` | `id?: string;` | External calendar event id. Preferred source of canonical identifier stability. |
+| `source?` | `source?: string;` | Calendar source, e.g. `'gcal'`, `'outlook'`, `'ical'`. Default `'calendar'`. |
+| `title` | `title: string;` | - |
+| `description?` | `description?: string;` | - |
+| `location?` | `location?: string;` | - |
+| `startTime` | `startTime: Date;` | - |
+| `endTime?` | `endTime?: Date;` | - |
+| `organizer?` | `organizer?: CalendarAttendee;` | - |
+| `attendees?` | `attendees?: CalendarAttendee[];` | Attendee list. Organizer MAY also appear here — deduped by email. |
+| `kind?` | `kind?: 'meeting' | 'focus' | 'travel' | 'other';` | Free-form hint, e.g. `'meeting'`, `'focus'`, `'travel'`, `'other'`. |
+
+</details>
+
+---
+
+### CalendarSignalAdapterOptions `interface`
+
+📍 [`src/memory/integration/signals/adapters/CalendarSignalAdapter.ts:48`](src/memory/integration/signals/adapters/CalendarSignalAdapter.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `skipDeclinedAttendance?` | `skipDeclinedAttendance?: boolean;` | When true, attendees with `rsvpStatus: 'declined'` are omitted entirely —
+no person seed, no `attended` seed fact, and they are not listed in
+`signalText`. Default true: we don't want the declined attendee's name
+showing up in the prompt, because the LLM can (and does) infer
+attendance from the presence alone, defeating the skip intent.
+
+Set false to preserve prior behavior (declined attendees seeded + listed
+in signalText; only the deterministic `attended` seed fact is skipped). |
+
+</details>
+
+---
+
 ### CallSummary `interface`
 
 📍 [`src/capabilities/voice/types.ts:127`](src/capabilities/voice/types.ts)
@@ -34415,6 +39772,21 @@ Result of a bash command execution
 | `totalSttMs` | `totalSttMs: number;` | Total STT processing time in ms |
 | `totalTtsMs` | `totalTtsMs: number;` | Total TTS processing time in ms |
 | `totalAgentMs` | `totalAgentMs: number;` | Total agent processing time in ms |
+
+</details>
+
+---
+
+### CanonicalIdentifierOptions `interface`
+
+📍 [`src/memory/identifiers.ts:56`](src/memory/identifiers.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `slugMaxLength?` | `slugMaxLength?: number;` | Max length of the final slug portion (default 40). |
 
 </details>
 
@@ -34443,7 +39815,7 @@ Options for the default SentenceChunkingStrategy
 
 ### CompactionContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:936`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:979`](src/core/context-nextgen/types.ts)
 
 Read-only context passed to compaction strategies.
 Provides access to data needed for compaction decisions and
@@ -34545,7 +39917,7 @@ estimateTokens(item: InputItem): number;
 
 ### CompactionResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:903`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:946`](src/core/context-nextgen/types.ts)
 
 Result of compact() operation.
 
@@ -34565,7 +39937,7 @@ Result of compact() operation.
 
 ### ConnectorConfig `interface`
 
-📍 [`src/domain/entities/Connector.ts:109`](src/domain/entities/Connector.ts)
+📍 [`src/domain/entities/Connector.ts:118`](src/domain/entities/Connector.ts)
 
 Complete connector configuration
 Used for BOTH AI providers AND external APIs
@@ -34575,6 +39947,7 @@ Used for BOTH AI providers AND external APIs
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `id?` | `id?: string;` | - |
 | `name?` | `name?: string;` | - |
 | `vendor?` | `vendor?: Vendor;` | - |
 | `serviceType?` | `serviceType?: string;` | - |
@@ -34634,7 +40007,7 @@ Used for BOTH AI providers AND external APIs
 
 ### ConnectorConfigResult `interface`
 
-📍 [`src/domain/entities/Connector.ts:206`](src/domain/entities/Connector.ts)
+📍 [`src/domain/entities/Connector.ts:218`](src/domain/entities/Connector.ts)
 
 Result from ProviderConfigAgent
 Includes setup instructions and environment variables
@@ -34654,9 +40027,68 @@ Includes setup instructions and environment variables
 
 ---
 
+### ConnectorEmbedderConfig `interface`
+
+📍 [`src/memory/integration/ConnectorEmbedder.ts:15`](src/memory/integration/ConnectorEmbedder.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: string;` | Connector name — must already be registered via Connector.create(). |
+| `model` | `model: string;` | Embedding model id, e.g. 'text-embedding-3-small' or 'text-embedding-3-large'. |
+| `dimensions` | `dimensions: number;` | Output dimensions. Must match the model's output (or MRL-reduced target). |
+| `requestedDimensions?` | `requestedDimensions?: number;` | Optional dimension override passed to the provider (for MRL models). |
+
+</details>
+
+---
+
+### ConnectorExtractorConfig `interface`
+
+📍 [`src/memory/integration/signals/ConnectorExtractor.ts:20`](src/memory/integration/signals/ConnectorExtractor.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: string;` | Connector name — must already be registered with `Connector.create()`. |
+| `model` | `model: string;` | Chat/LLM model id, e.g. 'claude-sonnet-4-6' or 'gpt-5-mini'. |
+| `temperature?` | `temperature?: number;` | Default 0.2 — tighter sampling keeps JSON well-formed. |
+| `maxOutputTokens?` | `maxOutputTokens?: number;` | Max output tokens per LLM call. Default: undefined — use the model's own
+ceiling, which is always the maximum it can emit. Hardcoded defaults
+silently truncate long extractions. See feedback_no_output_limits.md. |
+
+</details>
+
+---
+
+### ConnectorProfileGeneratorConfig `interface`
+
+📍 [`src/memory/integration/ConnectorProfileGenerator.ts:17`](src/memory/integration/ConnectorProfileGenerator.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: string;` | Connector name — must already be registered. |
+| `model` | `model: string;` | Chat/LLM model id, e.g. 'claude-sonnet-4-6' or 'gpt-5-mini'. |
+| `promptTemplate?` | `promptTemplate?: (ctx: PromptContext) =&gt; string;` | Override the default prompt. Must still return {details, summaryForEmbedding}. |
+| `temperature?` | `temperature?: number;` | Temperature for generation. Default 0.3 (tighter, more factual). |
+| `maxOutputTokens?` | `maxOutputTokens?: number;` | Max output tokens. Default: undefined — use the model's own ceiling,
+which is always the maximum it can emit. Hardcoded defaults silently
+truncate profile generation. See feedback_no_output_limits.md. |
+
+</details>
+
+---
+
 ### ConsolidationResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:920`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:963`](src/core/context-nextgen/types.ts)
 
 Result of consolidate() operation.
 
@@ -34675,7 +40107,7 @@ Result of consolidate() operation.
 
 ### ContextBudget `interface`
 
-📍 [`src/core/context-nextgen/types.ts:571`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:602`](src/core/context-nextgen/types.ts)
 
 Token budget breakdown - clear and simple
 
@@ -34709,7 +40141,7 @@ Token budget breakdown - clear and simple
 
 ### ContextEvents `interface`
 
-📍 [`src/core/context-nextgen/types.ts:853`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:896`](src/core/context-nextgen/types.ts)
 
 Events emitted by AgentContextNextGen
 
@@ -34736,9 +40168,57 @@ Events emitted by AgentContextNextGen
 
 ---
 
+### ContextHintsConfig `interface`
+
+📍 [`src/memory/integration/signals/SignalIngestor.ts:37`](src/memory/integration/signals/SignalIngestor.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `openTasks?` | `openTasks?: boolean | { limit?: number };` | Prefix the "Known entities" block with open tasks for the ingest scope.
+Opt-in — costs a `listOpenTasks` call + prompt tokens per extraction.
+  `true`       → default limit 20
+  `{ limit }`  → caller-controlled limit (clamped by listOpenTasks to ≤ 200) |
+| `recentTopics?` | `recentTopics?: boolean | { days?: number; limit?: number };` | Prefix the "Known entities" block with recently-touched topics.
+Same opt-in semantics as `openTasks`. |
+
+</details>
+
+---
+
+### ContextOptions `interface`
+
+📍 [`src/memory/types.ts:277`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `topFactsLimit?` | `topFactsLimit?: number;` | - |
+| `include?` | `include?: ContextTier[];` | Opt-in tiers. Tasks + events are on by default; semantic/neighbors/documents
+are opt-in. Pass `tiers: 'minimal'` to suppress tasks + events for perf. |
+| `tiers?` | `tiers?: 'full' | 'minimal';` | 'full' (default): include relatedTasks + relatedEvents automatically.
+ 'minimal': skip those tiers. |
+| `documentPredicates?` | `documentPredicates?: string[];` | - |
+| `semanticQuery?` | `semanticQuery?: string;` | - |
+| `semanticTopK?` | `semanticTopK?: number;` | - |
+| `neighborPredicates?` | `neighborPredicates?: string[];` | - |
+| `neighborDepth?` | `neighborDepth?: number;` | - |
+| `asOf?` | `asOf?: Date;` | - |
+| `relatedTasksLimit?` | `relatedTasksLimit?: number;` | Limits on the task/event tiers. Defaults: 15 each. |
+| `relatedEventsLimit?` | `relatedEventsLimit?: number;` | - |
+| `recentEventsWindowDays?` | `recentEventsWindowDays?: number;` | How far back to look for "recent" events. Default 90 days. |
+
+</details>
+
+---
+
 ### ControlFlowResult `interface`
 
-📍 [`src/core/routineControlFlow.ts:55`](src/core/routineControlFlow.ts)
+📍 [`src/core/routineControlFlow.ts:56`](src/core/routineControlFlow.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -34791,7 +40271,7 @@ Configuration for DefaultCompactionStrategy
 
 ### DelegationDefaults `interface`
 
-📍 [`src/core/orchestrator/createOrchestrator.ts:66`](src/core/orchestrator/createOrchestrator.ts)
+📍 [`src/core/orchestrator/createOrchestrator.ts:67`](src/core/orchestrator/createOrchestrator.ts)
 
 Delegation defaults that apply when delegate_interactive is called
 without explicit monitoring/reclaimOn parameters.
@@ -35337,7 +40817,7 @@ Options for direct LLM calls (bypassing AgentContext).
 
 ### DocumentReaderConfig `interface`
 
-📍 [`src/capabilities/documents/types.ts:179`](src/capabilities/documents/types.ts)
+📍 [`src/capabilities/documents/types.ts:184`](src/capabilities/documents/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -35355,7 +40835,7 @@ Options for direct LLM calls (bypassing AgentContext).
 
 ### DocumentReadOptions `interface`
 
-📍 [`src/capabilities/documents/types.ts:151`](src/capabilities/documents/types.ts)
+📍 [`src/capabilities/documents/types.ts:156`](src/capabilities/documents/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -35419,7 +40899,7 @@ Options for direct LLM calls (bypassing AgentContext).
 
 ### DocumentToContentOptions `interface`
 
-📍 [`src/capabilities/documents/types.ts:228`](src/capabilities/documents/types.ts)
+📍 [`src/capabilities/documents/types.ts:233`](src/capabilities/documents/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -35430,6 +40910,34 @@ Options for direct LLM calls (bypassing AgentContext).
 | `imageFilter?` | `imageFilter?: ImageFilterOptions;` | Additional image filtering at content conversion time |
 | `maxImages?` | `maxImages?: number;` | Maximum images in content output (default: 20) |
 | `mergeAdjacentText?` | `mergeAdjacentText?: boolean;` | Merge adjacent text pieces into one (default: true) |
+
+</details>
+
+---
+
+### EagernessProfile `interface`
+
+📍 [`src/memory/integration/EagernessProfile.ts:34`](src/memory/integration/EagernessProfile.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `preset` | `preset: EagernessPreset;` | Preset name, recorded for telemetry. Resolved values may differ if the
+ host applied per-stage or per-knob overrides. |
+| `requireEvidenceQuote` | `requireEvidenceQuote: EagernessLevel;` | Force every emitted task / signal / fact to carry a verbatim quote from
+ source. `strict` rejects items missing the quote; `soft` keeps the field
+ optional but prompts the model to prefer it. |
+| `requireJustification` | `requireJustification: boolean;` | When non-empty output is produced, require a one-sentence justification
+ (`whyActionable`). `false` keeps the prompt and parser silent on this. |
+| `requirePriorityBinding` | `requirePriorityBinding: EagernessLevel;` | Bind each emitted Task to a stated user priority (an "anchor"). Strict
+ drops items whose binding doesn't match an active anchor; soft renders
+ anchors in the prompt but doesn't enforce. |
+| `skepticPass` | `skepticPass: SkepticPassMode;` | Run the skeptic pass after the primary call. Mode is a label; the host
+ resolves it to a concrete connector/model. |
+| `negativeExamplesCount` | `negativeExamplesCount: number;` | Number of recent dismissals to inject as negative examples. 0 disables. |
+| `perStage?` | `perStage?: Partial&lt;Record&lt;EagernessStage, Partial&lt;EagernessProfile&gt;&gt;&gt;;` | Per-stage overrides applied on top of the top-level fields. |
 
 </details>
 
@@ -35451,6 +40959,78 @@ Result of a file edit operation
 | `replacements?` | `replacements?: number;` | - |
 | `error?` | `error?: string;` | - |
 | `diff?` | `diff?: string;` | - |
+
+</details>
+
+---
+
+### EmailAddress `interface`
+
+📍 [`src/memory/integration/signals/adapters/EmailSignalAdapter.ts:18`](src/memory/integration/signals/adapters/EmailSignalAdapter.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `email` | `email: string;` | - |
+| `name?` | `name?: string;` | - |
+
+</details>
+
+---
+
+### EmailSignal `interface`
+
+📍 [`src/memory/integration/signals/adapters/EmailSignalAdapter.ts:23`](src/memory/integration/signals/adapters/EmailSignalAdapter.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `from` | `from: EmailAddress;` | - |
+| `to?` | `to?: EmailAddress[];` | - |
+| `cc?` | `cc?: EmailAddress[];` | - |
+| `bcc?` | `bcc?: EmailAddress[];` | BCC is NOT forwarded to the extractor for privacy reasons. |
+| `subject?` | `subject?: string;` | - |
+| `body` | `body: string;` | Plain-text body. Caller is responsible for stripping HTML / quoted replies as needed. |
+| `date?` | `date?: Date;` | - |
+| `messageId?` | `messageId?: string;` | - |
+| `threadId?` | `threadId?: string;` | - |
+
+</details>
+
+---
+
+### EmailSignalAdapterOptions `interface`
+
+📍 [`src/memory/integration/signals/adapters/EmailSignalAdapter.ts:37`](src/memory/integration/signals/adapters/EmailSignalAdapter.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `seedOrganizations?` | `seedOrganizations?: boolean;` | Seed sender/recipient email domains as `organization` entities. Default true. |
+| `freeEmailProviders?` | `freeEmailProviders?: string[];` | Domains skipped when seeding organizations. Defaults to a common-providers
+list; pass a custom list to override entirely (not extend). Case-insensitive. |
+
+</details>
+
+---
+
+### EmbeddingQueueConfig `interface`
+
+📍 [`src/memory/types.ts:690`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `concurrency?` | `concurrency?: number;` | - |
+| `retries?` | `retries?: number;` | - |
 
 </details>
 
@@ -35490,6 +41070,150 @@ Configuration for the default energy-based VAD
 | `speechFramesThreshold?` | `speechFramesThreshold?: number;` | Consecutive speech frames needed to trigger speech_start. Default: 3 |
 | `silenceTimeout?` | `silenceTimeout?: number;` | Silence duration in ms to trigger speech_end. Default: 1500 |
 | `minSpeechDuration?` | `minSpeechDuration?: number;` | Minimum speech duration in ms to be considered valid. Default: 250 |
+
+</details>
+
+---
+
+### EnsureIndexesArgs `interface`
+
+📍 [`src/memory/adapters/mongo/indexes.ts:41`](src/memory/adapters/mongo/indexes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `entities` | `entities: IMongoCollectionLike&lt;IEntity&gt;;` | - |
+| `facts` | `facts: IMongoCollectionLike&lt;IFact&gt;;` | - |
+
+</details>
+
+---
+
+### EntityCandidate `interface`
+
+📍 [`src/memory/types.ts:699`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `entity` | `entity: IEntity;` | - |
+| `confidence` | `confidence: number;` | 0..1 — 1.0 is an identifier-exact match; decreases through fuzzy/semantic. |
+| `matchedOn` | `matchedOn: 'identifier' | 'displayName' | 'alias' | 'fuzzy' | 'embedding';` | - |
+
+</details>
+
+---
+
+### EntityListFilter `interface`
+
+📍 [`src/memory/types.ts:368`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `type?` | `type?: string;` | - |
+| `ids?` | `ids?: EntityId[];` | - |
+| `archived?` | `archived?: boolean;` | - |
+| `metadataFilter?` | `metadataFilter?: Record&lt;string, unknown&gt;;` | Filter on entity.metadata fields. Keys may use dot-notation to reach
+nested paths (e.g. `'jarvis.importance'` → `metadata.jarvis.importance`).
+Keys whose path segments begin with `$` are rejected — no operator
+injection. Supported value shapes per key:
+  - literal scalar: `state: 'pending'`
+  - literal Date
+  - array of primitives/Dates (equality against array field)
+  - `{ $in: [...] }` — membership
+  - one or more range operators (may combine): `{ $gte: 10, $lt: 20 }` —
+    operators allowed: `$lt`, `$lte`, `$gt`, `$gte`. RHS must be scalar
+    or Date.
+Example:
+  {
+    'state': { $in: ['pending', 'in_progress'] },
+    'dueAt': { $lt: new Date('2026-05-01') },
+    'jarvis.importance': { $gte: 70 },
+  } |
+
+</details>
+
+---
+
+### EntityResolutionConfig `interface`
+
+📍 [`src/memory/types.ts:779`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `autoResolveThreshold?` | `autoResolveThreshold?: number;` | Default threshold for auto-resolve in upsertEntityBySurface. Default 0.90 (conservative). |
+| `enableIdentityEmbedding?` | `enableIdentityEmbedding?: boolean;` | When true AND an embedder is configured, entities get an identity
+embedding (over displayName + aliases + primary identifier values).
+Default true.
+
+Consumed by Tier 4 of `EntityResolver` when `enableSemanticResolution`
+is on. Set to `false` to skip the embedder cost if you neither use
+semantic resolution nor plan to enable it later. |
+| `enableSemanticResolution?` | `enableSemanticResolution?: boolean;` | Enable the semantic tier in `EntityResolver` — matches surface forms
+against `identityEmbedding` via `IMemoryStore.semanticSearchEntities`.
+Requires an embedder AND an adapter that implements
+`semanticSearchEntities` (currently `InMemoryAdapter` and
+`MongoMemoryAdapter`).
+
+Default: false. Opt-in because any confidence calibration mistake could
+silently merge different entities; existing deployments keep Tier 1-3
+exact-only behavior until they flip this on.
+
+Semantic candidates are capped at confidence 0.89 — strictly below the
+default `autoResolveThreshold` (0.90) — so enabling this flag alone will
+NOT auto-merge. The LLM sees semantic candidates as "merge candidates"
+and decides. Lower `autoResolveThreshold` only if you trust the mapping. |
+
+</details>
+
+---
+
+### EntitySearchOptions `interface`
+
+📍 [`src/memory/types.ts:404`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `types?` | `types?: string[];` | - |
+| `limit?` | `limit?: number;` | - |
+| `cursor?` | `cursor?: string;` | - |
+
+</details>
+
+---
+
+### EntityView `interface`
+
+📍 [`src/memory/types.ts:254`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `entity` | `entity: IEntity;` | - |
+| `profile` | `profile: IFact | null;` | Most-specific visible document fact with predicate='profile', or null if none. |
+| `topFacts` | `topFacts: IFact[];` | Atomic facts where the subject is the target entity OR the target appears
+as object OR in contextIds, ranked by confidence × recency × predicateWeight
+× importance. Duplicates dropped. |
+| `relatedTasks?` | `relatedTasks?: RelatedTask[];` | Tasks linked to this entity via metadata or fact relationships. Non-terminal state by default. |
+| `relatedEvents?` | `relatedEvents?: RelatedEvent[];` | Events linked to this entity (attendance, subject/object, context). Recent by default. |
+| `documents?` | `documents?: IFact[];` | - |
+| `semantic?` | `semantic?: Array&lt;{ fact: IFact; score: number }&gt;;` | - |
+| `neighbors?` | `neighbors?: Neighborhood;` | - |
 
 </details>
 
@@ -35641,6 +41365,235 @@ Usable by any capability that makes HTTP requests via Connector
 
 ---
 
+### ExtractedSignal `interface`
+
+📍 [`src/memory/integration/signals/types.ts:98`](src/memory/integration/signals/types.ts)
+
+Normalized signal shape — adapters reduce every source format to this.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `signalText` | `signalText: string;` | Body text handed to the LLM. Strip out headers / noise if they don't carry knowledge. |
+| `signalSourceDescription?` | `signalSourceDescription?: string;` | Short human description, e.g. "Email from anton@everworker.ai to sarah@everworker.ai". |
+| `participants` | `participants: ParticipantSeed[];` | Deterministic entity seeds derived from metadata. May be empty. |
+| `seedFacts?` | `seedFacts?: SeedFact[];` | Deterministic facts derived from signal metadata, written after seed
+entities are resolved. Useful when the relationship is guaranteed by the
+source (e.g. calendar organizer/attendee) and shouldn't depend on the
+LLM extracting it. Unresolved role references produce `IngestionError`
+entries; the rest still write. Optional. |
+
+</details>
+
+---
+
+### ExtractionFactSpec `interface`
+
+📍 [`src/memory/integration/ExtractionResolver.ts:45`](src/memory/integration/ExtractionResolver.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `subject` | `subject: string;` | - |
+| `predicate` | `predicate: string;` | - |
+| `object?` | `object?: string;` | - |
+| `value?` | `value?: unknown;` | - |
+| `details?` | `details?: string;` | - |
+| `summaryForEmbedding?` | `summaryForEmbedding?: string;` | - |
+| `confidence?` | `confidence?: number;` | - |
+| `importance?` | `importance?: number;` | - |
+| `contextIds?` | `contextIds?: string[];` | - |
+| `kind?` | `kind?: FactKind;` | - |
+| `validFrom?` | `validFrom?: string | Date;` | - |
+| `validUntil?` | `validUntil?: string | Date;` | - |
+| `observedAt?` | `observedAt?: string | Date;` | - |
+| `evidenceQuote?` | `evidenceQuote?: string;` | Verbatim quote from the source signal supporting this fact. Required
+under `EagernessProfile.requireEvidenceQuote = 'strict'` (filtered by
+`RestrainedExtractionContract`); pass-through otherwise. Stored on the
+written fact as `IFact.evidenceQuote`. |
+
+</details>
+
+---
+
+### ExtractionMention `interface`
+
+📍 [`src/memory/integration/ExtractionResolver.ts:31`](src/memory/integration/ExtractionResolver.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `surface` | `surface: string;` | - |
+| `type` | `type: string;` | - |
+| `identifiers?` | `identifiers?: Identifier[];` | - |
+| `aliases?` | `aliases?: string[];` | - |
+| `metadata?` | `metadata?: Record&lt;string, unknown&gt;;` | Type-specific fields the LLM extracted alongside the mention (e.g.
+`{ state: 'proposed', dueAt: '2026-04-30', assigneeId: 'm1' }` for a task).
+Flows through `upsertEntityBySurface.metadata` — on create, set verbatim;
+on resolve, conservative `fillMissing` merge (never overwrites existing). |
+
+</details>
+
+---
+
+### ExtractionOutput `interface`
+
+📍 [`src/memory/integration/ExtractionResolver.ts:68`](src/memory/integration/ExtractionResolver.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `mentions` | `mentions: Record&lt;string, ExtractionMention&gt;;` | - |
+| `facts` | `facts: ExtractionFactSpec[];` | - |
+
+</details>
+
+---
+
+### ExtractionPromptContext `interface`
+
+📍 [`src/memory/integration/defaultExtractionPrompt.ts:54`](src/memory/integration/defaultExtractionPrompt.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `signalText` | `signalText: string;` | Raw text of the signal (email body, transcript, doc content, …). |
+| `signalSourceDescription?` | `signalSourceDescription?: string;` | Optional hint describing where this came from, e.g. "email from john@acme.com". |
+| `targetScope?` | `targetScope?: ScopeFields;` | Scope the extractor should treat as target — guides the LLM's privacy judgment. |
+| `knownEntities?` | `knownEntities?: IEntity[];` | Optional pre-loaded entity candidates the extractor can reference by name. |
+| `referenceDate?` | `referenceDate?: Date;` | Reference date for interpreting relative dates ("next Friday"). Defaults to today. |
+| `predicateRegistry?` | `predicateRegistry?: PredicateRegistry;` | When present, the registry's vocabulary is rendered into the prompt so the
+LLM learns the canonical predicate names + aliases + examples. The LLM may
+still invent new predicates; unknowns canonicalize at write time and land
+in `IngestionResult.newPredicates` for review. |
+| `maxPredicatesPerCategory?` | `maxPredicatesPerCategory?: number;` | Cap on predicates shown per category (keeps prompt token budget bounded). Default 5. |
+| `preResolvedBindings?` | `preResolvedBindings?: PreResolvedBinding[];` | Labels already bound to entities upstream (typically by signal metadata
+extraction). The prompt renders them as a locked vocabulary and instructs
+the LLM to reference them directly in facts without redeclaring them. |
+| `eagerness?` | `eagerness?: EagernessProfile;` | Restraint posture. When present, the prompt renders the corresponding
+"Restraint" section that turns silence into the easy answer:
+  - `requireJustification` → adds a top-level `whyActionable` field that
+    is required *only* when output is non-empty.
+  - `requireEvidenceQuote` → adds `evidenceQuote` to each fact (soft:
+    advised; strict: required).
+  - `requirePriorityBinding` → renders the active anchors and asks for
+    `servesAnchorId` per task mention.
+  - `negativeExamplesCount` → controls how many entries from
+    `negativeExamples` are rendered as "do NOT do this" patterns.
+
+Omit `eagerness` to keep the v4 behavior (no Restraint section). |
+| `anchors?` | `anchors?: Anchor[];` | Active anchors (priorities, OKRs, focus areas) for the user. Surfaced in
+the prompt only when `eagerness.requirePriorityBinding !== 'off'`. Each
+anchor's `id` is what the LLM should echo back as `servesAnchorId`. |
+| `negativeExamples?` | `negativeExamples?: Array&lt;{ snippet: string; reason?: string }&gt;;` | Recent dismissals to inject as negative examples. Rendered up to
+`eagerness.negativeExamplesCount`. Each entry is a short snippet the user
+already chose to ignore — strong calibration signal. |
+
+</details>
+
+---
+
+### ExtractionResolverOptions `interface`
+
+📍 [`src/memory/integration/ExtractionResolver.ts:103`](src/memory/integration/ExtractionResolver.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `autoResolveThreshold?` | `autoResolveThreshold?: number;` | Override per-upsert threshold (default: memory system's config). |
+| `preResolved?` | `preResolved?: Record&lt;string, EntityId&gt;;` | Pre-bound `label → entityId` map. When the LLM output references any of
+these labels (as subject/object/contextId/mention), the resolver skips
+upsert and uses the provided entity id directly. Intended for signal-level
+metadata (email headers, calendar attendees) where identities are already
+resolved upstream via strong identifiers — no need to round-trip through
+the LLM.
+
+If the LLM output also contains a mention with the same label (e.g. it
+ignored the prompt instruction not to redeclare), the pre-resolved binding
+wins and the mention is skipped silently. |
+
+</details>
+
+---
+
+### FactFilter `interface`
+
+📍 [`src/memory/types.ts:323`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `subjectId?` | `subjectId?: EntityId;` | - |
+| `objectId?` | `objectId?: EntityId;` | - |
+| `contextId?` | `contextId?: EntityId;` | Matches facts where `contextIds` array includes this entity id. |
+| `touchesEntity?` | `touchesEntity?: EntityId;` | OR-wildcard entity match — returns facts where this id appears as
+subject, object, OR in contextIds. Used by `getContext` for the
+"everything about X" query. |
+| `predicate?` | `predicate?: string;` | - |
+| `predicates?` | `predicates?: string[];` | - |
+| `kind?` | `kind?: FactKind;` | - |
+| `archived?` | `archived?: boolean;` | Defaults to false (archived rows hidden). Pass true to include only archived, or undefined for default. |
+| `minConfidence?` | `minConfidence?: number;` | - |
+| `observedAfter?` | `observedAfter?: Date;` | - |
+| `observedBefore?` | `observedBefore?: Date;` | - |
+| `asOf?` | `asOf?: Date;` | Temporal filter: validFrom ≤ asOf ≤ (validUntil ?? ∞) AND createdAt ≤ asOf. |
+| `supersedes?` | `supersedes?: FactId;` | Match facts whose `supersedes` field equals this fact id. Used by
+`restoreFact` to detect an existing non-archived successor before
+un-archiving a previously superseded predecessor. Pass `null` to match
+facts with no `supersedes` (not currently supported — implement only if
+needed). |
+
+</details>
+
+---
+
+### FactOrderBy `interface`
+
+📍 [`src/memory/types.ts:354`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `field` | `field: 'observedAt' | 'createdAt' | 'confidence';` | - |
+| `direction` | `direction: 'asc' | 'desc';` | - |
+
+</details>
+
+---
+
+### FactQueryOptions `interface`
+
+📍 [`src/memory/types.ts:430`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `orderBy?` | `orderBy?: FactOrderBy;` | - |
+| `limit?` | `limit?: number;` | - |
+| `cursor?` | `cursor?: string;` | - |
+
+</details>
+
+---
+
 ### FetchedContent `interface`
 
 📍 [`src/capabilities/researchAgent/types.ts:51`](src/capabilities/researchAgent/types.ts)
@@ -35685,7 +41638,7 @@ Options for fetch operations
 
 ### FormatDetectionResult `interface`
 
-📍 [`src/capabilities/documents/types.ts:219`](src/capabilities/documents/types.ts)
+📍 [`src/capabilities/documents/types.ts:224`](src/capabilities/documents/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -36166,7 +42119,7 @@ reset(): void;
 
 ### ICompactionStrategy `interface`
 
-📍 [`src/core/context-nextgen/types.ts:998`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1041`](src/core/context-nextgen/types.ts)
 
 Compaction strategy interface.
 
@@ -36525,6 +42478,32 @@ restoreState(state: unknown): void;
 
 **Returns:** `void`
 
+#### `onBeforePrepare()?`
+
+Called at the top of `AgentContextNextGen.prepare()` — BEFORE system
+message assembly, token budgeting, and compaction. Purpose: give
+side-effect plugins (e.g. session-learning ingestors) a chance to
+observe the accumulated conversation before compaction potentially
+evicts messages.
+
+The plugin receives a SNAPSHOT of the conversation messages and current
+input at the time prepare() fires. Implementers should synchronously
+capture what they need from the snapshot and kick off any async work —
+this method is NOT awaited by `prepare()`, and the caller of `prepare()`
+will proceed regardless. Throwing from this method is swallowed (logged)
+so a failing side-effect plugin cannot break context preparation.
+
+Default: no-op (most plugins don't need this).
+
+```typescript
+onBeforePrepare?(snapshot: PluginPrepareSnapshot): void;
+```
+
+**Parameters:**
+- `snapshot`: `PluginPrepareSnapshot`
+
+**Returns:** `void`
+
 </details>
 
 <details>
@@ -36561,6 +42540,29 @@ Returned by `AgentContextNextGen.getSnapshot()` and `BaseAgent.getSnapshot()`.
 | `systemPrompt` | `systemPrompt: string | null;` | System prompt (null if not set) |
 | `plugins` | `plugins: IPluginSnapshot[];` | All registered plugins with their current state |
 | `tools` | `tools: IToolSnapshot[];` | All registered tools |
+
+</details>
+
+---
+
+### Identifier `interface`
+
+📍 [`src/memory/types.ts:98`](src/memory/types.ts)
+
+A strong, uniqueness-bearing identifier for an entity.
+Aliases (on IEntity) are display hints — NOT identifiers.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `kind` | `kind: string;` | e.g. 'email' | 'slack_id' | 'phone' | 'domain' | 'github' | 'legal_name' | 'ticker' | 'duns' |
+| `value` | `value: string;` | - |
+| `isPrimary?` | `isPrimary?: boolean;` | - |
+| `verified?` | `verified?: boolean;` | - |
+| `source?` | `source?: string;` | Which signal/source added this identifier. |
+| `addedAt?` | `addedAt?: Date;` | - |
 
 </details>
 
@@ -36723,7 +42725,7 @@ focusWindow(windowId: number): Promise&lt;void&gt;;
 
 ### IDocumentTransformer `interface`
 
-📍 [`src/capabilities/documents/types.ts:199`](src/capabilities/documents/types.ts)
+📍 [`src/capabilities/documents/types.ts:204`](src/capabilities/documents/types.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -36755,9 +42757,167 @@ transform(pieces: DocumentPiece[], context: TransformerContext): Promise&lt;Docu
 
 ---
 
+### IEmbedder `interface`
+
+📍 [`src/memory/types.ts:568`](src/memory/types.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `embed()`
+
+```typescript
+embed(text: string): Promise&lt;number[]&gt;;
+```
+
+**Parameters:**
+- `text`: `string`
+
+**Returns:** `Promise&lt;number[]&gt;`
+
+#### `embedBatch()?`
+
+```typescript
+embedBatch?(texts: string[]): Promise&lt;number[][]&gt;;
+```
+
+**Parameters:**
+- `texts`: `string[]`
+
+**Returns:** `Promise&lt;number[][]&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `dimensions` | `dimensions: number;` | - |
+
+</details>
+
+---
+
+### IEntity `interface`
+
+📍 [`src/memory/types.ts:109`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: EntityId;` | - |
+| `type` | `type: string;` | Open string. See well-known conventions in file header. |
+| `displayName` | `displayName: string;` | - |
+| `aliases?` | `aliases?: string[];` | - |
+| `identifiers` | `identifiers: Identifier[];` | - |
+| `metadata?` | `metadata?: Record&lt;string, unknown&gt;;` | Type-specific fields. See file header for conventional fields per type
+(tasks carry state/dueAt/assigneeId, events carry startTime/attendeeIds, etc.).
+Free-form — adapters support equality filtering via EntityListFilter.metadataFilter. |
+| `archived?` | `archived?: boolean;` | - |
+| `permissions?` | `permissions?: Permissions;` | Access-control block governing non-owner reads/writes. Undefined → library
+defaults (`group: 'read'` when `groupId` set, `world: 'read'` always).
+See `AccessControl.ts` for semantics. Owner always has full access. |
+| `identityEmbedding?` | `identityEmbedding?: number[];` | Lightweight embedding over `displayName + top aliases + primary identifier
+values`, used by EntityResolver for semantic fallback when string matching
+fails. Populated async by the embedding queue when enabled. |
+| `version` | `version: number;` | Optimistic concurrency token — incremented on every write. |
+| `createdAt` | `createdAt: Date;` | - |
+| `updatedAt` | `updatedAt: Date;` | - |
+
+</details>
+
+---
+
+### IExtractor `interface`
+
+📍 [`src/memory/integration/signals/types.ts:132`](src/memory/integration/signals/types.ts)
+
+LLM extractor contract. `prompt` is the fully-rendered extraction prompt;
+returns the parsed JSON output. Implementations are responsible for calling
+the LLM, requesting JSON response format, parsing, and fallback handling.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `extract()`
+
+```typescript
+extract(prompt: string): Promise&lt;ExtractionOutput&gt;;
+```
+
+**Parameters:**
+- `prompt`: `string`
+
+**Returns:** `Promise&lt;ExtractionOutput&gt;`
+
+</details>
+
+---
+
+### IFact `interface`
+
+📍 [`src/memory/types.ts:153`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: FactId;` | - |
+| `subjectId` | `subjectId: EntityId;` | - |
+| `predicate` | `predicate: string;` | - |
+| `kind` | `kind: FactKind;` | - |
+| `objectId?` | `objectId?: EntityId;` | - |
+| `value?` | `value?: unknown;` | - |
+| `details?` | `details?: string;` | - |
+| `summaryForEmbedding?` | `summaryForEmbedding?: string;` | Short gist used as the embedding input for document facts. |
+| `embedding?` | `embedding?: number[];` | - |
+| `isSemantic?` | `isSemantic?: boolean;` | Computed at write-time. Gates embedding eligibility. |
+| `confidence?` | `confidence?: number;` | - |
+| `evidenceQuote?` | `evidenceQuote?: string;` | Verbatim quote from the source signal that justifies this fact.
+
+When `EagernessProfile.requireEvidenceQuote` is `'strict'`, the extraction
+pipeline rejects facts missing this field — that single rule eliminates
+the "LLM invented a description" failure mode in restraint-first
+deployments (ICOS Chief of Staff and similar).
+
+Library-side: optional. Existing callers and chatty deployments can
+write facts without it; downstream consumers that care can read it
+to render "why this card is here" in UI. |
+| `sourceSignalId?` | `sourceSignalId?: string;` | Opaque identifier of the signal/source this fact was derived from.
+Memory layer makes no assumptions about the id's format — library users
+own the signal store. Each observation is one fact with one source;
+reinforcement creates a new (possibly superseding) fact. |
+| `derivedBy?` | `derivedBy?: string;` | Rule id if the fact was inferred by the rule engine. |
+| `importance?` | `importance?: number;` | 0..1 importance. Drives ranking (multiplies recency × confidence × predicateWeight)
+and controls effective decay (more-important facts decay slower).
+Default 0.5. Identity-level facts → 1.0. Trivial observations → 0.1. |
+| `contextIds?` | `contextIds?: EntityId[];` | Additional entities this fact is "about" beyond subject/object.
+Example: (John, assigned_task, PowerPoint) with contextIds=[AcmeDeal]
+lets the deal view surface this action without the deal being subject
+or object. `getContext` queries subject OR object OR contextIds. |
+| `supersedes?` | `supersedes?: FactId;` | - |
+| `archived?` | `archived?: boolean;` | - |
+| `isAggregate?` | `isAggregate?: boolean;` | Numeric aggregates update in place; never supersede. |
+| `observedAt?` | `observedAt?: Date;` | - |
+| `validFrom?` | `validFrom?: Date;` | - |
+| `validUntil?` | `validUntil?: Date;` | - |
+| `metadata?` | `metadata?: Record&lt;string, unknown&gt;;` | - |
+| `permissions?` | `permissions?: Permissions;` | Access-control block governing non-owner reads/writes. Undefined → library
+defaults (`group: 'read'` when `groupId` set, `world: 'read'` always).
+See `AccessControl.ts` for semantics. Owner always has full access. |
+| `createdAt` | `createdAt: Date;` | - |
+
+</details>
+
+---
+
 ### IFormatHandler `interface`
 
-📍 [`src/capabilities/documents/types.ts:206`](src/capabilities/documents/types.ts)
+📍 [`src/capabilities/documents/types.ts:211`](src/capabilities/documents/types.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -36790,6 +42950,206 @@ handle(
 |----------|------|-------------|
 | `name` | `readonly name: string;` | - |
 | `supportedFormats` | `readonly supportedFormats: DocumentFormat[];` | - |
+
+</details>
+
+---
+
+### IMongoCollectionLike `interface`
+
+📍 [`src/memory/adapters/mongo/IMongoCollectionLike.ts:39`](src/memory/adapters/mongo/IMongoCollectionLike.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `insertOne()`
+
+Insert a document. Any `id` field on the input is IGNORED — the collection
+assigns the primary key (Mongo: ObjectId → hex string; Meteor: Random.id()).
+Returns the assigned id as a string.
+
+```typescript
+insertOne(doc: T): Promise&lt;string&gt;;
+```
+
+**Parameters:**
+- `doc`: `T`
+
+**Returns:** `Promise&lt;string&gt;`
+
+#### `insertMany()`
+
+Batch insert. Returned ids are in the same order as input.
+
+```typescript
+insertMany(docs: T[]): Promise&lt;string[]&gt;;
+```
+
+**Parameters:**
+- `docs`: `T[]`
+
+**Returns:** `Promise&lt;string[]&gt;`
+
+#### `updateOne()`
+
+Update. `filter` may contain `id: <string>` — wrappers translate to the
+native primary-key form (Mongo: `_id: ObjectId(...)`; Meteor: `_id: <string>`).
+Any `id` field in the update payload is stripped (ids are immutable).
+
+```typescript
+updateOne(
+    filter: MongoFilter,
+    update: MongoUpdate,
+    opts?: MongoUpdateOptions,
+  ): Promise&lt;MongoUpdateResult&gt;;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+- `update`: `MongoUpdate`
+- `opts`: `MongoUpdateOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;MongoUpdateResult&gt;`
+
+#### `deleteOne()`
+
+```typescript
+deleteOne(filter: MongoFilter): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `deleteMany()`
+
+```typescript
+deleteMany(filter: MongoFilter): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `findOne()`
+
+Returned documents always have `id` populated (mapped from the native
+primary key — `_id.toHexString()` for Mongo ObjectId, or the string form
+for Meteor). `_id` is not present on returned documents.
+
+```typescript
+findOne(filter: MongoFilter, opts?: MongoFindOptions): Promise&lt;T | null&gt;;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+- `opts`: `MongoFindOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;T | null&gt;`
+
+#### `find()`
+
+```typescript
+find(filter: MongoFilter, opts?: MongoFindOptions): Promise&lt;T[]&gt;;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+- `opts`: `MongoFindOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;T[]&gt;`
+
+#### `countDocuments()`
+
+```typescript
+countDocuments(filter: MongoFilter): Promise&lt;number&gt;;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `aggregate()?`
+
+Aggregation pipeline. Optional — adapters gate `$graphLookup` and
+`$vectorSearch` fast paths on its presence.
+
+```typescript
+aggregate?(pipeline: unknown[]): Promise&lt;unknown[]&gt;;
+```
+
+**Parameters:**
+- `pipeline`: `unknown[]`
+
+**Returns:** `Promise&lt;unknown[]&gt;`
+
+#### `createIndex()?`
+
+Index management hook. Optional — the adapter's `ensureIndexes()` helper
+calls this when available; otherwise users must create indexes themselves.
+
+```typescript
+createIndex?(spec: Record&lt;string, 1 | -1&gt;, opts?: { unique?: boolean; name?: string }): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `spec`: `Record&lt;string, 1 | -1&gt;`
+- `opts`: `{ unique?: boolean | undefined; name?: string | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `createSearchIndex()?`
+
+Atlas Search / Vector Search index management. Optional — available on
+Atlas Server 6.0.11+ via the node driver's `createSearchIndex()` +
+`listSearchIndexes()`. Meteor wrappers delegate to `rawCollection()`.
+When absent, callers must create vector-search indexes via the Atlas UI
+or admin API out-of-band.
+
+`createSearchIndex` is idempotent only in the "already exists" sense —
+Atlas returns an error if the name clashes. Callers should `listSearchIndexes`
+first to skip creation when the index is present.
+
+```typescript
+createSearchIndex?(definition: SearchIndexDefinition): Promise&lt;string&gt;;
+```
+
+**Parameters:**
+- `definition`: `SearchIndexDefinition`
+
+**Returns:** `Promise&lt;string&gt;`
+
+#### `listSearchIndexes()?`
+
+Returns all search indexes (or one named index) with lifecycle status.
+
+```typescript
+listSearchIndexes?(name?: string): Promise&lt;SearchIndexInfo[]&gt;;
+```
+
+**Parameters:**
+- `name`: `string | undefined` *(optional)*
+
+**Returns:** `Promise&lt;SearchIndexInfo[]&gt;`
+
+#### `withTransaction()?`
+
+Transaction hook — present on raw-driver wrappers when a client is
+available, absent on Meteor wrappers. When present, MongoMemoryAdapter
+wraps supersession in a transaction; when absent, it relies on the
+crash-safe ordering that MemorySystem already enforces.
+
+```typescript
+withTransaction?&lt;R&gt;(fn: () =&gt; Promise&lt;R&gt;): Promise&lt;R&gt;;
+```
+
+**Parameters:**
+- `fn`: `() =&gt; Promise&lt;R&gt;`
+
+**Returns:** `Promise&lt;R&gt;`
 
 </details>
 
@@ -36831,6 +43191,109 @@ The adapter maps provider-specific data to this structure.
 | `updatedAt` | `updatedAt: number;` | - |
 | `priority` | `priority: InContextPriority;` | - |
 | `showInUI?` | `showInUI?: boolean;` | If true, this entry is displayed in the user's side panel UI |
+
+</details>
+
+---
+
+### IngestExtractedInput `interface`
+
+📍 [`src/memory/integration/signals/SignalIngestor.ts:107`](src/memory/integration/signals/SignalIngestor.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `extracted` | `extracted: ExtractedSignal;` | - |
+| `sourceSignalId` | `sourceSignalId: string;` | - |
+| `scope` | `scope: ScopeFilter;` | - |
+| `autoResolveThreshold?` | `autoResolveThreshold?: number;` | - |
+| `knownEntities?` | `knownEntities?: IEntity[];` | - |
+
+</details>
+
+---
+
+### IngestionResolvedEntity `interface`
+
+📍 [`src/memory/integration/ExtractionResolver.ts:73`](src/memory/integration/ExtractionResolver.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `label` | `label: string;` | - |
+| `entity` | `entity: IEntity;` | - |
+| `resolved` | `resolved: boolean;` | - |
+| `mergeCandidates` | `mergeCandidates: EntityCandidate[];` | - |
+
+</details>
+
+---
+
+### IngestionResult `interface`
+
+📍 [`src/memory/integration/ExtractionResolver.ts:86`](src/memory/integration/ExtractionResolver.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `entities` | `entities: IngestionResolvedEntity[];` | - |
+| `facts` | `facts: IFact[];` | - |
+| `mergeCandidates` | `mergeCandidates: Array&lt;{ label: string; surface: string; candidates: EntityCandidate[] }&gt;;` | Entities that matched existing records with mid-confidence candidates. |
+| `unresolved` | `unresolved: IngestionError[];` | Mention labels or facts that couldn't be resolved/written. |
+| `newPredicates` | `newPredicates: string[];` | Canonicalized predicates in the LLM output that are NOT in the memory
+system's predicate registry. Useful for detecting vocabulary drift —
+periodically review and either promote to the registry or refine the
+prompt. Empty when no registry is configured.
+Deduped. |
+
+</details>
+
+---
+
+### IngestSignalInput `interface`
+
+📍 [`src/memory/integration/signals/SignalIngestor.ts:79`](src/memory/integration/signals/SignalIngestor.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `kind` | `kind: string;` | Kind matching a registered adapter, e.g. `'email'`, `'text'`. |
+| `raw` | `raw: TRaw;` | Raw source-specific payload. |
+| `sourceSignalId` | `sourceSignalId: string;` | Opaque id for the originating signal — attached to every written fact. |
+| `scope` | `scope: ScopeFilter;` | - |
+| `autoResolveThreshold?` | `autoResolveThreshold?: number;` | Optional override of the auto-resolve threshold for this ingest only. |
+| `knownEntities?` | `knownEntities?: IEntity[];` | Known entities to hint to the LLM (appears as "Known entities" block).
+Useful when the caller has pre-fetched likely candidates (e.g. by thread
+participants) but doesn't want to seed them as hard bindings. |
+
+</details>
+
+---
+
+### IngestTextInput `interface`
+
+📍 [`src/memory/integration/signals/SignalIngestor.ts:97`](src/memory/integration/signals/SignalIngestor.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `text` | `text: string;` | - |
+| `signalSourceDescription?` | `signalSourceDescription?: string;` | - |
+| `participants?` | `participants?: ParticipantSeed[];` | - |
+| `sourceSignalId` | `sourceSignalId: string;` | - |
+| `scope` | `scope: ScopeFilter;` | - |
+| `autoResolveThreshold?` | `autoResolveThreshold?: number;` | - |
+| `knownEntities?` | `knownEntities?: IEntity[];` | - |
 
 </details>
 
@@ -36981,6 +43444,30 @@ Snapshot of a single plugin's state.
 
 ---
 
+### IProfileGenerator `interface`
+
+📍 [`src/memory/types.ts:610`](src/memory/types.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `generate()`
+
+```typescript
+generate(
+    input: ProfileGeneratorInput,
+  ): Promise&lt;{ details: string; summaryForEmbedding: string }&gt;;
+```
+
+**Parameters:**
+- `input`: `ProfileGeneratorInput`
+
+**Returns:** `Promise&lt;{ details: string; summaryForEmbedding: string; }&gt;`
+
+</details>
+
+---
+
 ### IResearchSource `interface`
 
 📍 [`src/capabilities/researchAgent/types.ts:101`](src/capabilities/researchAgent/types.ts)
@@ -37054,6 +43541,34 @@ getCapabilities?(): SourceCapabilities;
 | `name` | `readonly name: string;` | Unique name for this source |
 | `description` | `readonly description: string;` | Human-readable description |
 | `type` | `readonly type: 'web' | 'vector' | 'file' | 'api' | 'database' | 'custom';` | Type of source (for categorization) |
+
+</details>
+
+---
+
+### IRuleEngine `interface`
+
+📍 [`src/memory/types.ts:626`](src/memory/types.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `deriveFor()`
+
+```typescript
+deriveFor(
+    entityId: EntityId,
+    view: IScopedMemoryView,
+    scope: ScopeFilter,
+  ): Promise&lt;Array&lt;Partial&lt;IFact&gt;&gt;&gt;;
+```
+
+**Parameters:**
+- `entityId`: `string`
+- `view`: `IScopedMemoryView`
+- `scope`: `ScopeFilter`
+
+**Returns:** `Promise&lt;Partial&lt;IFact&gt;[]&gt;`
 
 </details>
 
@@ -37171,7 +43686,7 @@ Used to track where information came from and when it was last verified
 
 ### IStoreHandler `interface`
 
-📍 [`src/core/context-nextgen/types.ts:526`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:557`](src/core/context-nextgen/types.ts)
 
 Interface for plugins that provide CRUD storage.
 
@@ -37737,7 +44252,7 @@ destroy(): Promise&lt;void&gt;;
 
 ### JWTConnectorAuth `interface`
 
-📍 [`src/domain/entities/Connector.ts:90`](src/domain/entities/Connector.ts)
+📍 [`src/domain/entities/Connector.ts:99`](src/domain/entities/Connector.ts)
 
 JWT Bearer token authentication
 For service accounts (Google, Salesforce)
@@ -37764,7 +44279,7 @@ For service accounts (Google, Salesforce)
 
 ### KnownContextFeatures `interface`
 
-📍 [`src/core/context-nextgen/types.ts:670`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:701`](src/core/context-nextgen/types.ts)
 
 Feature flags for enabling/disabling plugins
 
@@ -37775,10 +44290,12 @@ Feature flags for enabling/disabling plugins
 |----------|------|-------------|
 | `workingMemory?` | `workingMemory?: boolean;` | Enable WorkingMemory plugin (default: true) |
 | `inContextMemory?` | `inContextMemory?: boolean;` | Enable InContextMemory plugin (default: false) |
-| `persistentInstructions?` | `persistentInstructions?: boolean;` | Enable PersistentInstructions plugin (default: false) |
-| `userInfo?` | `userInfo?: boolean;` | Enable UserInfo plugin (default: false) |
+| `persistentInstructions?` | `persistentInstructions?: boolean;` | Enable PersistentInstructions plugin (default: false). |
+| `userInfo?` | `userInfo?: boolean;` | Enable UserInfo plugin (default: false). |
 | `toolCatalog?` | `toolCatalog?: boolean;` | Enable ToolCatalog plugin for dynamic tool loading/unloading (default: false) |
 | `sharedWorkspace?` | `sharedWorkspace?: boolean;` | Enable SharedWorkspace plugin for multi-agent coordination (default: false) |
+| `memory?` | `memory?: boolean;` | Enable Memory plugin for self-learning knowledge store (default: false, READ-ONLY tools). Requires `plugins.memory.memory: MemorySystem` in config. |
+| `memoryWrite?` | `memoryWrite?: boolean;` | Enable Memory-write sidecar (default: false). Adds the 6 write tools (remember/link/forget/restore/upsert_entity/set_agent_rule). Requires `memory: true`. |
 
 </details>
 
@@ -37786,7 +44303,7 @@ Feature flags for enabling/disabling plugins
 
 ### KnownPluginConfigs `interface`
 
-📍 [`src/core/context-nextgen/types.ts:727`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:766`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 When features are enabled, plugins are created with these configs.
@@ -37803,6 +44320,33 @@ The config shapes match each plugin's constructor parameter.
 | `userInfo?` | `userInfo?: Record&lt;string, unknown&gt;;` | User info plugin config. See UserInfoPluginConfig. |
 | `toolCatalog?` | `toolCatalog?: Record&lt;string, unknown&gt;;` | Tool catalog plugin config. See ToolCatalogPluginConfig. |
 | `sharedWorkspace?` | `sharedWorkspace?: Record&lt;string, unknown&gt;;` | Shared workspace plugin config. See SharedWorkspaceConfig. |
+| `memory?` | `memory?: Record&lt;string, unknown&gt;;` | Memory plugin config. See MemoryPluginConfig. `agentId` auto-filled from context. `userId` auto-filled from context if unset. Requires `memory: MemorySystem`. |
+| `memoryWrite?` | `memoryWrite?: Record&lt;string, unknown&gt;;` | Memory-write plugin config. See MemoryWritePluginConfig. Shares `memory` / `agentId` / `userId` with the memory plugin when unset. |
+
+</details>
+
+---
+
+### ListOptions `interface`
+
+📍 [`src/memory/types.ts:410`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `limit?` | `limit?: number;` | - |
+| `cursor?` | `cursor?: string;` | - |
+| `orderBy?` | `orderBy?: EntityOrderBy | EntityOrderBy[];` | Stable multi-key sort. Single `EntityOrderBy` or array (earlier keys
+dominant). Nested metadata paths allowed. When omitted the adapter's
+natural order is used (Mongo: _id asc; InMemory: insertion order). |
+| `select?` | `select?: string[];` | Field projection (dot-paths allowed). When omitted, full entity is
+returned. When provided, the response always includes a required minimum
+(`id`, `type`, `displayName`, `version`, `createdAt`, `updatedAt`,
+`ownerId`, `groupId`, `archived`) plus the requested paths. Unrequested
+optional fields (`identifiers`, `aliases`, `metadata`, `permissions`,
+`identityEmbedding`) are absent from returned objects. |
 
 </details>
 
@@ -38186,6 +44730,104 @@ Identical to MeetingSlotSuggestion in both google and microsoft types.
 
 ---
 
+### MeteorCollectionLike `interface`
+
+📍 [`src/memory/adapters/mongo/MeteorMongoCollection.ts:36`](src/memory/adapters/mongo/MeteorMongoCollection.ts)
+
+Structural shape of a Meteor Mongo.Collection. The real Meteor class adds
+many more methods, but this is what the adapter uses.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `insertAsync()`
+
+```typescript
+insertAsync(doc: T): Promise&lt;string&gt;;
+```
+
+**Parameters:**
+- `doc`: `T`
+
+**Returns:** `Promise&lt;string&gt;`
+
+#### `updateAsync()`
+
+```typescript
+updateAsync(
+    selector: MongoFilter,
+    modifier: MongoUpdate,
+    opts?: { multi?: boolean; upsert?: boolean },
+  ): Promise&lt;number&gt;;
+```
+
+**Parameters:**
+- `selector`: `MongoFilter`
+- `modifier`: `MongoUpdate`
+- `opts`: `{ multi?: boolean | undefined; upsert?: boolean | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `removeAsync()`
+
+```typescript
+removeAsync(selector: MongoFilter): Promise&lt;number&gt;;
+```
+
+**Parameters:**
+- `selector`: `MongoFilter`
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `findOneAsync()`
+
+```typescript
+findOneAsync(selector: MongoFilter, opts?: MongoFindOptions): Promise&lt;T | null&gt;;
+```
+
+**Parameters:**
+- `selector`: `MongoFilter`
+- `opts`: `MongoFindOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;T | null&gt;`
+
+#### `find()`
+
+```typescript
+find(
+    selector: MongoFilter,
+    opts?: MongoFindOptions,
+  ): { fetchAsync(): Promise&lt;T[]&gt;; countAsync(): Promise&lt;number&gt; };
+```
+
+**Parameters:**
+- `selector`: `MongoFilter`
+- `opts`: `MongoFindOptions | undefined` *(optional)*
+
+**Returns:** `{ fetchAsync(): Promise&lt;T[]&gt;; countAsync(): Promise&lt;number&gt;; }`
+
+#### `rawCollection()`
+
+```typescript
+rawCollection(): {
+    aggregate(pipeline: unknown[]): { toArray(): Promise&lt;unknown[]&gt; };
+    createIndex(spec: Record&lt;string, 1 | -1&gt;, opts?: unknown): Promise&lt;string&gt;;
+    /** Atlas Search / Vector Search hooks — present on node driver v6.6+. */
+    createSearchIndex?(definition: {
+      name: string;
+      type?: 'search' | 'vectorSearch';
+      definition: Record&lt;string, unknown&gt;;
+    }): Promise&lt;string&gt;;
+    listSearchIndexes?(name?: string): { toArray(): Promise&lt;Array&lt;Record&lt;string, unknown&gt;&gt;&gt; };
+  };
+```
+
+**Returns:** `{ aggregate(pipeline: unknown[]): { toArray(): Promise&lt;unknown[]&gt;; }; createIndex(spec: Record&lt;string, 1 | -1&gt;, opts?: unknown): Promise&lt;string&gt;; createSearchIndex?(definition: { name: string; type?: "search" | "vectorSearch" | undefined; definition: Record&lt;string, unknown&gt;; }): Promise&lt;string&gt;; listSearchIndexes?(name?: string | undefined): { toArray(): Promise&lt;Record&lt;string, unknown&gt;[]&gt;; }; }`
+
+</details>
+
+---
+
 ### MicrosoftCreateMeetingResult `interface`
 
 📍 [`src/tools/microsoft/types.ts:357`](src/tools/microsoft/types.ts)
@@ -38372,9 +45014,98 @@ Identical to MeetingSlotSuggestion in both google and microsoft types.
 
 ---
 
+### MongoFindOptions `interface`
+
+📍 [`src/memory/adapters/mongo/IMongoCollectionLike.ts:22`](src/memory/adapters/mongo/IMongoCollectionLike.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `sort?` | `sort?: MongoSort;` | - |
+| `limit?` | `limit?: number;` | - |
+| `skip?` | `skip?: number;` | - |
+| `projection?` | `projection?: Record&lt;string, 0 | 1&gt;;` | - |
+
+</details>
+
+---
+
+### MongoUpdateOptions `interface`
+
+📍 [`src/memory/adapters/mongo/IMongoCollectionLike.ts:29`](src/memory/adapters/mongo/IMongoCollectionLike.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `upsert?` | `upsert?: boolean;` | - |
+
+</details>
+
+---
+
+### MongoUpdateResult `interface`
+
+📍 [`src/memory/adapters/mongo/IMongoCollectionLike.ts:33`](src/memory/adapters/mongo/IMongoCollectionLike.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `matchedCount` | `matchedCount: number;` | - |
+| `modifiedCount` | `modifiedCount: number;` | - |
+| `upsertedCount` | `upsertedCount: number;` | - |
+
+</details>
+
+---
+
+### Neighborhood `interface`
+
+📍 [`src/memory/types.ts:300`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `nodes` | `nodes: Array&lt;{ entity: IEntity; depth: number }&gt;;` | - |
+| `edges` | `edges: Array&lt;{ fact: IFact; from: EntityId; to: EntityId; depth: number }&gt;;` | - |
+
+</details>
+
+---
+
+### ObjectIdLike `interface`
+
+📍 [`src/memory/adapters/mongo/RawMongoCollection.ts:32`](src/memory/adapters/mongo/RawMongoCollection.ts)
+
+Minimal structural shape of a mongodb-driver ObjectId. Just enough to
+construct and read back. We never import from `mongodb` at runtime — callers
+pass their Collection object.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `toHexString()`
+
+```typescript
+toHexString(): string;
+```
+
+**Returns:** `string`
+
+</details>
+
+---
+
 ### OrchestratorConfig `interface`
 
-📍 [`src/core/orchestrator/createOrchestrator.ts:80`](src/core/orchestrator/createOrchestrator.ts)
+📍 [`src/core/orchestrator/createOrchestrator.ts:81`](src/core/orchestrator/createOrchestrator.ts)
 
 Configuration for the orchestrator.
 
@@ -38444,7 +45175,7 @@ Configuration for initiating an outbound call.
 
 ### OversizedInputResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:639`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:670`](src/core/context-nextgen/types.ts)
 
 Result of handling oversized current input
 
@@ -38459,6 +45190,93 @@ Result of handling oversized current input
 | `warning?` | `warning?: string;` | Warning message if truncated |
 | `originalSize` | `originalSize: number;` | Original size in bytes |
 | `finalSize` | `finalSize: number;` | Final size in bytes |
+
+</details>
+
+---
+
+### Page `interface`
+
+📍 [`src/memory/types.ts:359`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `items` | `items: T[];` | - |
+| `nextCursor?` | `nextCursor?: string;` | - |
+
+</details>
+
+---
+
+### ParseExtractionResult `interface`
+
+📍 [`src/memory/integration/parseExtraction.ts:32`](src/memory/integration/parseExtraction.ts)
+
+Rich parse result. `rawExcerpt` is the first ~500 chars of the raw input
+ — useful for logs without bloating them.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `status` | `status: ParseStatus;` | - |
+| `mentions` | `mentions: ExtractionOutput['mentions'];` | - |
+| `facts` | `facts: ExtractionOutput['facts'];` | - |
+| `whyActionable?` | `whyActionable?: string;` | One-sentence justification for emitting non-empty output, when the prompt
+required it (`EagernessProfile.requireJustification = true`). Always
+captured when present in the LLM output, even under chatty profiles —
+existence is harmless, absence is what restraint enforces upstream. |
+| `reason?` | `reason?: string;` | Short human-readable reason when status !== 'ok'. |
+| `rawExcerpt?` | `rawExcerpt?: string;` | Truncated sample of the raw input for logging. |
+
+</details>
+
+---
+
+### ParticipantSeed `interface`
+
+📍 [`src/memory/integration/signals/types.ts:40`](src/memory/integration/signals/types.ts)
+
+Metadata-derived entity seed. The adapter emits these from deterministic
+fields (email headers, calendar attendee lists, DB joins) — no LLM required.
+
+Seeds MUST carry at least one strong identifier. Seeding on weak names would
+bind ambiguously — `SignalIngestor` rejects seeds with empty `identifiers`
+rather than silently skip them. If you only have a display name, don't seed:
+let the LLM surface the mention and resolve via surface form.
+
+Despite the historical name "participant", seeds can be ANY entity type —
+events, tasks, projects. The role field is a free-form hint used by
+`seedFacts` (below) for deterministic relational-fact writes.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `role` | `role: string;` | Free-form role hint, e.g. `from`, `to`, `cc`, `author`, `attendee`, `organizer`, `event`. |
+| `identifiers` | `identifiers: Identifier[];` | Strong identifiers. MUST be non-empty. |
+| `displayName?` | `displayName?: string;` | Display name hint (falls back to the first identifier value). |
+| `aliases?` | `aliases?: string[];` | Additional surface forms spotted in the metadata. |
+| `type?` | `type?: string;` | Entity type. Default `'person'`. |
+| `metadata?` | `metadata?: Record&lt;string, unknown&gt;;` | Type-specific fields to set on the entity (e.g. event `startTime`/`endTime`,
+task `state`/`dueAt`). Merge semantics follow `upsertEntityBySurface.metadata`:
+verbatim on create, `fillMissing` on resolve (by default). |
+| `metadataMerge?` | `metadataMerge?: 'fillMissing' | 'overwrite';` | Merge policy for `metadata` when the seed resolves to an existing entity.
+Defaults to `'fillMissing'` — the conservative policy that never overwrites
+a value already on the entity. Set to `'overwrite'` ONLY when the signal
+is an authoritative refresh of structural state (e.g. a calendar pull
+rescheduling an event, a CRM sync updating a deal's stage). LLM-extracted
+mentions should leave this unset — re-extractions can be wrong and
+`fillMissing` protects against clobbering good data.
+
+Applies per-seed: a calendar adapter can set `'overwrite'` on the event
+seed while leaving person seeds at the default so a rogue signal can't
+rename a person. |
 
 </details>
 
@@ -38558,9 +45376,30 @@ Blocklist is still respected for safety. |
 
 ---
 
+### Permissions `interface`
+
+📍 [`src/memory/AccessControl.ts:58`](src/memory/AccessControl.ts)
+
+Permissions block attached to entities and facts. Both fields optional;
+unset fields fall back to library defaults.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `group?` | `group?: AccessLevel;` | What members of `record.groupId` (other than the owner) can do. Meaningful
+only when `record.groupId` is set. Default `'read'`. |
+| `world?` | `world?: AccessLevel;` | What everyone outside `record.groupId` can do — or everyone, when the
+record has no `groupId`. Default `'read'`. |
+
+</details>
+
+---
+
 ### PersistentInstructionsConfig `interface`
 
-📍 [`src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts:29`](src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts)
+📍 [`src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts:35`](src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -38592,6 +45431,22 @@ Blocklist is still respected for safety. |
 | `sizeBytes` | `sizeBytes: number;` | - |
 | `estimatedTokens` | `estimatedTokens: number;` | - |
 | `label?` | `label?: string;` | - |
+
+</details>
+
+---
+
+### PlainTextRaw `interface`
+
+📍 [`src/memory/integration/signals/adapters/PlainTextAdapter.ts:12`](src/memory/integration/signals/adapters/PlainTextAdapter.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `text` | `text: string;` | - |
+| `source?` | `source?: string;` | Optional short description, e.g. "note-attached-to-ticket-123". |
 
 </details>
 
@@ -38828,9 +45683,53 @@ Decision returned by a permission policy.
 
 ---
 
+### PredicateDefinition `interface`
+
+📍 [`src/memory/predicates/types.ts:13`](src/memory/predicates/types.ts)
+
+Predicate library — types.
+
+A `PredicateDefinition` describes one predicate in the vocabulary: its
+canonical name, description, category, and optional write-time behavior
+(defaultImportance, auto-supersession for single-valued predicates,
+aggregate semantics) plus ranking weight and LLM-prompt metadata.
+
+The registry is *optional*. When no registry is configured on MemorySystem,
+predicates remain free-form strings — nothing in the memory layer breaks.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: string;` | Canonical snake_case name — the id. |
+| `description` | `description: string;` | One-line description shown in the LLM prompt + docs. |
+| `category` | `category: string;` | Grouping used for prompt chunking (e.g. 'identity', 'task', 'communication'). |
+| `payloadKind?` | `payloadKind?: 'relational' | 'attribute' | 'narrative';` | What shape of payload this predicate expects. Informational — memory
+layer does not enforce it (permissive by design). |
+| `subjectTypes?` | `subjectTypes?: string[];` | Typing hint surfaced in the LLM prompt. Not enforced at write time. |
+| `objectTypes?` | `objectTypes?: string[];` | - |
+| `inverse?` | `inverse?: string;` | Reverse predicate (e.g. 'reports_to' ↔ 'manages'). Informational only. |
+| `aliases?` | `aliases?: string[];` | Other surface forms that canonicalize to this predicate. Lowercased at
+register time; lookup is case-insensitive. |
+| `defaultImportance?` | `defaultImportance?: number;` | 0..1. Applied to IFact.importance when the writer omits it. |
+| `rankingWeight?` | `rankingWeight?: number;` | Multiplier in Ranking.scoreFact. Folded into RankingConfig.predicateWeights
+by PredicateRegistry.toRankingWeights. User-supplied weights always win. |
+| `isAggregate?` | `isAggregate?: boolean;` | Aggregate predicates (counters, sums) — update in place, never supersede.
+Mutually exclusive with singleValued. |
+| `singleValued?` | `singleValued?: boolean;` | Single-valued predicates (e.g. current_title). Writing a new fact
+auto-supersedes the prior visible one for (subject, predicate). Can be
+disabled globally via MemorySystemConfig.predicateAutoSupersede:false.
+Mutually exclusive with isAggregate. |
+| `examples?` | `examples?: string[];` | Shown to the LLM in the prompt to disambiguate. Keep ≤ 2 per predicate. |
+
+</details>
+
+---
+
 ### PreparedContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:618`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:649`](src/core/context-nextgen/types.ts)
 
 Result of prepare() - ready for LLM call
 
@@ -38848,6 +45747,29 @@ Result of prepare() - ready for LLM call
 
 ---
 
+### PreResolvedBinding `interface`
+
+📍 [`src/memory/integration/defaultExtractionPrompt.ts:45`](src/memory/integration/defaultExtractionPrompt.ts)
+
+A label already bound to an entity before the LLM runs. Typically produced
+from signal metadata (email headers, calendar attendees, Slack user list) —
+strong identifiers let us resolve deterministically and hand the LLM a
+pre-bound vocabulary so it can reference `m1`, `m2` directly in its output
+without re-declaring them as mentions.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `label` | `label: string;` | Stable local label (e.g. `m1`). The LLM must use this verbatim in facts. |
+| `entity` | `entity: IEntity;` | Resolved entity — surfaced in the prompt as a human-readable hint. |
+| `role?` | `role?: string;` | Source role (e.g. `from`, `to`, `cc`, `author`, `attendee`). Free-form. |
+
+</details>
+
+---
+
 ### ProcessOptions `interface`
 
 📍 [`src/core/TemplateEngine.ts:57`](src/core/TemplateEngine.ts)
@@ -38860,6 +45782,250 @@ Options for process/processSync.
 | Property | Type | Description |
 |----------|------|-------------|
 | `phase?` | `phase?: 'static' | 'dynamic' | 'all';` | Which handlers to invoke. 'static' = creation-time only, 'dynamic' = prepare-time only, 'all' = both. Default: 'all' |
+
+</details>
+
+---
+
+### ProfileGeneratorInput `interface`
+
+📍 [`src/memory/types.ts:588`](src/memory/types.ts)
+
+Input passed to `IProfileGenerator.generate`. Regeneration is **incremental**:
+the generator receives the prior profile (if any) as its starting point and
+only the deltas since then — new facts plus IDs of facts whose claims should
+be dropped because they've been archived or superseded.
+
+**First regen (no prior):** `priorProfile` is undefined, `newFacts` is the
+full set of atomic facts visible to the target scope, and `invalidatedFactIds`
+is empty. Generator should synthesize from scratch.
+
+**Subsequent regens:** `priorProfile.details` is the authoritative starting
+text; the generator should *evolve* it by folding in `newFacts` and removing
+any claims backed only by facts whose IDs appear in `invalidatedFactIds`.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `entity` | `entity: IEntity;` | - |
+| `newFacts` | `newFacts: IFact[];` | Atomic facts added since the prior profile was generated (observedAt >
+prior.createdAt, archived=false). On first regen: all atomic facts.
+Capped at 500 by MemorySystem. |
+| `priorProfile` | `priorProfile: IFact | undefined;` | The prior profile document, if one exists at this scope. |
+| `invalidatedFactIds` | `invalidatedFactIds: FactId[];` | IDs of facts the generator should *drop* from the profile:
+  - Facts superseded by new ones (`supersedes` → predecessor id).
+  - Facts archived directly (via `archiveFact`) that were visible at prior
+    regen time.
+The generator never sees these facts' contents — only their IDs — so it
+cannot reference them in the updated profile, only remove existing mentions. |
+| `targetScope` | `targetScope: ScopeFields;` | - |
+
+</details>
+
+---
+
+### RankingConfig `interface`
+
+📍 [`src/memory/types.ts:680`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `predicateWeights?` | `predicateWeights?: Record&lt;string, number&gt;;` | - |
+| `recencyHalfLifeDays?` | `recencyHalfLifeDays?: number;` | - |
+| `minConfidence?` | `minConfidence?: number;` | - |
+
+</details>
+
+---
+
+### RawMongoClientLike `interface`
+
+📍 [`src/memory/adapters/mongo/RawMongoCollection.ts:69`](src/memory/adapters/mongo/RawMongoCollection.ts)
+
+Optional client surface for sessions/transactions.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `startSession()`
+
+```typescript
+startSession(): {
+    withTransaction&lt;R&gt;(fn: () =&gt; Promise&lt;R&gt;): Promise&lt;R&gt;;
+    endSession(): Promise&lt;void&gt; | void;
+  };
+```
+
+**Returns:** `{ withTransaction&lt;R&gt;(fn: () =&gt; Promise&lt;R&gt;): Promise&lt;R&gt;; endSession(): void | Promise&lt;void&gt;; }`
+
+</details>
+
+---
+
+### RawMongoDriverCollection `interface`
+
+📍 [`src/memory/adapters/mongo/RawMongoCollection.ts:41`](src/memory/adapters/mongo/RawMongoCollection.ts)
+
+Structural shape of the subset of mongodb-driver's Collection we use.
+Matches mongodb@5+ and mongodb@6+ Collection surface.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `insertOne()`
+
+```typescript
+insertOne(doc: T): Promise&lt;{ insertedId: ObjectIdLike | string }&gt;;
+```
+
+**Parameters:**
+- `doc`: `T`
+
+**Returns:** `Promise&lt;{ insertedId: string | ObjectIdLike; }&gt;`
+
+#### `insertMany()`
+
+```typescript
+insertMany(docs: T[]): Promise&lt;{ insertedIds: Record&lt;number, ObjectIdLike | string&gt; }&gt;;
+```
+
+**Parameters:**
+- `docs`: `T[]`
+
+**Returns:** `Promise&lt;{ insertedIds: Record&lt;number, string | ObjectIdLike&gt;; }&gt;`
+
+#### `updateOne()`
+
+```typescript
+updateOne(
+    filter: MongoFilter,
+    update: MongoUpdate,
+    opts?: { upsert?: boolean },
+  ): Promise&lt;MongoUpdateResult&gt;;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+- `update`: `MongoUpdate`
+- `opts`: `{ upsert?: boolean | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;MongoUpdateResult&gt;`
+
+#### `deleteOne()`
+
+```typescript
+deleteOne(filter: MongoFilter): Promise&lt;unknown&gt;;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+
+**Returns:** `Promise&lt;unknown&gt;`
+
+#### `deleteMany()`
+
+```typescript
+deleteMany(filter: MongoFilter): Promise&lt;unknown&gt;;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+
+**Returns:** `Promise&lt;unknown&gt;`
+
+#### `findOne()`
+
+```typescript
+findOne(filter: MongoFilter, opts?: MongoFindOptions): Promise&lt;T | null&gt;;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+- `opts`: `MongoFindOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;T | null&gt;`
+
+#### `find()`
+
+```typescript
+find(filter: MongoFilter, opts?: MongoFindOptions): {
+    toArray(): Promise&lt;T[]&gt;;
+  };
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+- `opts`: `MongoFindOptions | undefined` *(optional)*
+
+**Returns:** `{ toArray(): Promise&lt;T[]&gt;; }`
+
+#### `countDocuments()`
+
+```typescript
+countDocuments(filter: MongoFilter): Promise&lt;number&gt;;
+```
+
+**Parameters:**
+- `filter`: `MongoFilter`
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `aggregate()`
+
+```typescript
+aggregate(pipeline: unknown[]): { toArray(): Promise&lt;unknown[]&gt; };
+```
+
+**Parameters:**
+- `pipeline`: `unknown[]`
+
+**Returns:** `{ toArray(): Promise&lt;unknown[]&gt;; }`
+
+#### `createIndex()`
+
+```typescript
+createIndex(spec: Record&lt;string, 1 | -1&gt;, opts?: unknown): Promise&lt;string&gt;;
+```
+
+**Parameters:**
+- `spec`: `Record&lt;string, 1 | -1&gt;`
+- `opts`: `unknown` *(optional)*
+
+**Returns:** `Promise&lt;string&gt;`
+
+#### `createSearchIndex()?`
+
+Atlas Search / Vector Search creation (node driver v6+). Optional on the
+ underlying driver so structural typing stays permissive.
+
+```typescript
+createSearchIndex?(definition: {
+    name: string;
+    type?: 'search' | 'vectorSearch';
+    definition: Record&lt;string, unknown&gt;;
+  }): Promise&lt;string&gt;;
+```
+
+**Parameters:**
+- `definition`: `{ name: string; type?: "search" | "vectorSearch" | undefined; definition: Record&lt;string, unknown&gt;; }`
+
+**Returns:** `Promise&lt;string&gt;`
+
+#### `listSearchIndexes()?`
+
+```typescript
+listSearchIndexes?(name?: string): { toArray(): Promise&lt;Array&lt;Record&lt;string, unknown&gt;&gt;&gt; };
+```
+
+**Parameters:**
+- `name`: `string | undefined` *(optional)*
+
+**Returns:** `{ toArray(): Promise&lt;Record&lt;string, unknown&gt;[]&gt;; }`
 
 </details>
 
@@ -38929,6 +46095,23 @@ No separate STT/TTS needed — the model handles audio natively.
 | `effort?` | `effort?: 'low' | 'medium' | 'high';` | - |
 | `summary?` | `summary?: string;` | - |
 | `encrypted_content?` | `encrypted_content?: string;` | - |
+
+</details>
+
+---
+
+### RelatedEvent `interface`
+
+📍 [`src/memory/types.ts:247`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `event` | `event: IEntity;` | - |
+| `role` | `role: string;` | - |
+| `when?` | `when?: Date;` | Start time pulled from event.metadata, if present. |
 
 </details>
 
@@ -39025,6 +46208,123 @@ Research execution result
     processDurationMs: number;
     synthesizeDurationMs: number;
   };` | Execution metrics |
+
+</details>
+
+---
+
+### ResolveEntityOptions `interface`
+
+📍 [`src/memory/types.ts:720`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `limit?` | `limit?: number;` | - |
+| `threshold?` | `threshold?: number;` | Minimum confidence for a candidate to be returned. Default: 0.5. |
+
+</details>
+
+---
+
+### ResolveEntityQuery `interface`
+
+📍 [`src/memory/types.ts:706`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `surface` | `surface: string;` | The raw text the LLM extracted — e.g. "Microsoft", "Q3 Planning", "John". |
+| `type?` | `type?: string;` | Hint — 'person', 'organization', 'task', 'event', etc. |
+| `identifiers?` | `identifiers?: Identifier[];` | Strong identifiers parsed from the signal, if any. |
+| `contextEntityIds?` | `contextEntityIds?: EntityId[];` | Other entities already resolved in the same extraction — used to
+disambiguate among multiple fuzzy candidates by shared context. |
+
+</details>
+
+---
+
+### RestrainedExtractionInput `interface`
+
+📍 [`src/memory/integration/RestrainedExtractionContract.ts:39`](src/memory/integration/RestrainedExtractionContract.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `mentions` | `mentions: Record&lt;string, ExtractionMention&gt;;` | Mention map keyed by local label, as produced by the parser. |
+| `facts` | `facts: ExtractionFactSpec[];` | Fact spec list, as produced by the parser. |
+| `whyActionable?` | `whyActionable?: string;` | Top-level justification, as parsed (`undefined` if absent). |
+
+</details>
+
+---
+
+### RestrainedExtractionOptions `interface`
+
+📍 [`src/memory/integration/RestrainedExtractionContract.ts:48`](src/memory/integration/RestrainedExtractionContract.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `profile` | `profile: EagernessProfile;` | - |
+| `stage?` | `stage?: RestraintStage;` | Stage label for emitted events. Default `signalExtraction`. |
+| `anchors?` | `anchors?: Anchor[];` | Active anchors to validate `servesAnchorId` against. Empty / undefined ⇒
+ no active anchors (matters under strict priority binding). |
+| `onDecision?` | `onDecision?: RestraintEventListener;` | Live event listener — fires once per decision (kept and dropped). |
+
+</details>
+
+---
+
+### RestrainedExtractionResult `interface`
+
+📍 [`src/memory/integration/RestrainedExtractionContract.ts:59`](src/memory/integration/RestrainedExtractionContract.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `whyActionable?` | `whyActionable?: string;` | Justification preserved when present. |
+| `events` | `events: RestraintEvent[];` | The full decision log, including kept items. |
+| `summary` | `summary: {
+    factsKept: number;
+    factsDropped: number;
+    mentionsKept: number;
+    mentionsDropped: number;
+    /** Set when output was suppressed wholesale (e.g. `whyActionable` missing). */
+    suppressed: boolean;
+  };` | Counts derived from `events` for quick assertions. |
+
+</details>
+
+---
+
+### RestraintEvent `interface`
+
+📍 [`src/memory/integration/RestraintEvent.ts:61`](src/memory/integration/RestraintEvent.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `kind` | `kind: RestraintEventKind;` | - |
+| `stage` | `stage: RestraintStage;` | - |
+| `itemRef` | `itemRef: string;` | Reference to the item this event is about — fact index, mention label, task id, etc. |
+| `reasonCode` | `reasonCode: string;` | Stable code for filtering / dashboards (e.g. `evidence_missing`). |
+| `reasonText` | `reasonText: string;` | Human-readable reason. Suitable for surfacing to operators. |
+| `modelInfo?` | `modelInfo?: RestraintModelInfo;` | Set when the decision involved a model call. |
+| `meta?` | `meta?: Record&lt;string, unknown&gt;;` | Free-form additional context — e.g. anchor ids tried, snippet of the bad quote. |
+| `at?` | `at?: Date;` | Wall-clock at emission. Defaults to `new Date()` at construction time. |
 
 </details>
 
@@ -39224,6 +46524,50 @@ Options for running a test suite.
 | `connectorName?` | `connectorName?: string;` | Connector name (for result tracking) |
 | `onProgress?` | `onProgress?: (result: TestCaseResult) =&gt; void;` | Called after each test case completes (for real-time UI updates) |
 | `signal?` | `signal?: AbortSignal;` | Abort signal for cancellation |
+
+</details>
+
+---
+
+### ScopeFields `interface`
+
+📍 [`src/memory/types.ts:72`](src/memory/types.ts)
+
+Visibility scope on an entity or fact.
+
+- (none, none)       → global (visible to all)
+- (groupId, none)    → group-wide
+- (none, ownerId)    → user-private across all groups
+- (groupId, ownerId) → user-private within a specific group
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `groupId?` | `groupId?: string;` | - |
+| `ownerId?` | `ownerId?: string;` | - |
+
+</details>
+
+---
+
+### ScopeFilter `interface`
+
+📍 [`src/memory/types.ts:83`](src/memory/types.ts)
+
+Caller's scope context. A record is visible iff:
+  (!record.groupId || record.groupId === filter.groupId)
+  AND
+  (!record.ownerId || record.ownerId === filter.userId)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `groupId?` | `groupId?: string;` | - |
+| `userId?` | `userId?: string;` | - |
 
 </details>
 
@@ -39465,6 +46809,48 @@ Search result interface
 
 ---
 
+### SeedFact `interface`
+
+📍 [`src/memory/integration/signals/types.ts:82`](src/memory/integration/signals/types.ts)
+
+Deterministic relational fact the adapter wants written after seed entities
+are resolved. Roles refer to `ParticipantSeed.role` values; `SignalIngestor`
+resolves them to entity ids and calls `memory.addFact`.
+
+When the referenced role appears multiple times among seeds (e.g. many
+attendees), one fact is written per matching seed. Unresolved roles produce
+an `IngestionError` entry rather than silently failing.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `subjectRole` | `subjectRole: string;` | Role of the subject entity among `participants`. |
+| `predicate` | `predicate: string;` | Canonical predicate (snake_case). |
+| `objectRole` | `objectRole: string;` | Role of the object entity among `participants`. |
+| `importance?` | `importance?: number;` | Optional salience. Defaults to predicate registry / addFact defaults. |
+| `confidence?` | `confidence?: number;` | Optional per-fact confidence override. |
+
+</details>
+
+---
+
+### SemanticSearchOptions `interface`
+
+📍 [`src/memory/types.ts:436`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `topK` | `topK: number;` | - |
+
+</details>
+
+---
+
 ### SerializedApprovalEntry `interface`
 
 📍 [`src/core/permissions/types.ts:154`](src/core/permissions/types.ts)
@@ -39509,7 +46895,7 @@ Serialized approval state for session persistence
 
 ### SerializedPersistentInstructionsState `interface`
 
-📍 [`src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts:40`](src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts)
+📍 [`src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts:46`](src/core/context-nextgen/plugins/PersistentInstructionsPluginNextGen.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -39542,7 +46928,7 @@ Serialized approval state for session persistence
 
 ### SerializedUserInfoState `interface`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:49`](src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:55`](src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -39639,6 +47025,158 @@ Service info lookup (derived from SERVICE_DEFINITIONS)
 | `tags?` | `tags?: string[];` | Optional tags for filtering |
 | `createdAt` | `createdAt: number;` | - |
 | `updatedAt` | `updatedAt: number;` | - |
+
+</details>
+
+---
+
+### SignalIngestorConfig `interface`
+
+📍 [`src/memory/integration/signals/SignalIngestor.ts:52`](src/memory/integration/signals/SignalIngestor.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `memory` | `memory: MemorySystem;` | - |
+| `extractor` | `extractor: IExtractor;` | - |
+| `adapters?` | `adapters?: SignalSourceAdapter&lt;unknown&gt;[];` | Adapters registered at construction time. More can be added via `registerAdapter`. |
+| `promptTemplate?` | `promptTemplate?: (ctx: ExtractionPromptContext) =&gt; string;` | Optional override of the extraction prompt builder. When omitted the
+library's `defaultExtractionPrompt` is used. |
+| `maxPredicatesPerCategory?` | `maxPredicatesPerCategory?: number;` | Cap on predicates rendered per category in the prompt. Default 5. |
+| `predicateRegistry?` | `predicateRegistry?: PredicateRegistry;` | When present, the registry is handed to the prompt builder so the LLM
+sees canonical predicate names. Defaults to `memory`'s registry if one
+was configured, otherwise undefined. |
+| `contextHints?` | `contextHints?: ContextHintsConfig;` | Opt-in: inject prior context (open tasks, recent topics) into the
+extraction prompt so re-mentions of existing entities resolve to the
+same row instead of creating duplicates. Off by default — token-budget
+guardrail. Enable per-scope when ingesting a stream of related signals. |
+
+</details>
+
+---
+
+### SignalSourceAdapter `interface`
+
+📍 [`src/memory/integration/signals/types.ts:121`](src/memory/integration/signals/types.ts)
+
+Adapter contract. Implementations are pure: `raw → ExtractedSignal` with no
+I/O. Side effects (fetching attachments, querying a thread index) should be
+done by the caller and the results passed into `raw` so the adapter stays
+deterministic + testable.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `extract()`
+
+```typescript
+extract(raw: TRaw): ExtractedSignal;
+```
+
+**Parameters:**
+- `raw`: `TRaw`
+
+**Returns:** `ExtractedSignal`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `kind` | `readonly kind: string;` | Unique kind string, e.g. `'email'`, `'text'`, `'slack'`. |
+
+</details>
+
+---
+
+### SkepticPassConfig `interface`
+
+📍 [`src/memory/integration/SkepticPass.ts:33`](src/memory/integration/SkepticPass.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: string;` | Connector name — must already be registered. |
+| `model` | `model: string;` | Model identifier passed to the connector. |
+| `promptTemplate?` | `promptTemplate?: (ctx: SkepticPromptContext) =&gt; string;` | Optional override for the system prompt. Receives the rendered review
+ context and must instruct the LLM to return `{ keep: [...], drop: [{ index, reason }] }`. |
+| `temperature?` | `temperature?: number;` | Sampling temperature. Default 0.1 — low to keep veto deterministic. |
+| `onDecision?` | `onDecision?: RestraintEventListener;` | Default decision listener — fires for every event in every `review()` call. |
+| `maxOutputTokens?` | `maxOutputTokens?: number;` | Cap on output tokens. Default undefined (model's own ceiling). |
+
+</details>
+
+---
+
+### SkepticPromptContext `interface`
+
+📍 [`src/memory/integration/SkepticPass.ts:78`](src/memory/integration/SkepticPass.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `items` | `items: SkepticReviewItem[];` | - |
+| `contextHint?` | `contextHint?: string;` | - |
+
+</details>
+
+---
+
+### SkepticReviewContext `interface`
+
+📍 [`src/memory/integration/SkepticPass.ts:58`](src/memory/integration/SkepticPass.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `stage?` | `stage?: RestraintStage;` | Stage label for emitted events. Defaults to caller stage. |
+| `contextHint?` | `contextHint?: string;` | Optional preamble appended to the prompt — e.g. "review tasks against priorities X/Y/Z". |
+| `onDecision?` | `onDecision?: RestraintEventListener;` | Per-call decision listener (in addition to the constructor-level one). |
+
+</details>
+
+---
+
+### SkepticReviewItem `interface`
+
+📍 [`src/memory/integration/SkepticPass.ts:49`](src/memory/integration/SkepticPass.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | Stable id surfaced in the prompt and echoed back in events. |
+| `summary` | `summary: string;` | Compact summary the skeptic reasons over. Keep ≤ ~200 chars per item. |
+| `meta?` | `meta?: Record&lt;string, unknown&gt;;` | Optional per-item meta surfaced in events; not shown to the LLM. |
+
+</details>
+
+---
+
+### SkepticReviewResult `interface`
+
+📍 [`src/memory/integration/SkepticPass.ts:67`](src/memory/integration/SkepticPass.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `kept` | `kept: SkepticReviewItem[];` | Items the skeptic voted to keep. |
+| `dropped` | `dropped: Array&lt;{ item: SkepticReviewItem; reason: string }&gt;;` | Items the skeptic voted to drop, with reasons. |
+| `events` | `events: RestraintEvent[];` | Full decision log: one event per item plus pass-level events on errors. |
+| `failedOpen` | `failedOpen: boolean;` | Set when the LLM call itself failed and items were passed through. |
 
 </details>
 
@@ -39918,6 +47456,21 @@ Service info lookup (derived from SERVICE_DEFINITIONS)
 
 ---
 
+### SlugifyOptions `interface`
+
+📍 [`src/memory/identifiers.ts:24`](src/memory/identifiers.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `maxLength?` | `maxLength?: number;` | Max length of the slug (default 40). Truncation drops whole words where possible. |
+
+</details>
+
+---
+
 ### SourceCapabilities `interface`
 
 📍 [`src/capabilities/researchAgent/types.ts:143`](src/capabilities/researchAgent/types.ts)
@@ -39990,7 +47543,7 @@ Stdio transport configuration
 
 ### StepResolveContext `interface`
 
-📍 [`src/core/routineControlFlow.ts:171`](src/core/routineControlFlow.ts)
+📍 [`src/core/routineControlFlow.ts:172`](src/core/routineControlFlow.ts)
 
 Context for resolving templates in deterministic step arguments.
 
@@ -40042,7 +47595,7 @@ StorageContext for multi-tenant scenarios) and return a storage instance.
 
 ### StoreActionResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:472`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:503`](src/core/context-nextgen/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -40058,7 +47611,7 @@ StorageContext for multi-tenant scenarios) and return a storage instance.
 
 ### StoreDeleteResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:462`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:493`](src/core/context-nextgen/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -40074,7 +47627,7 @@ StorageContext for multi-tenant scenarios) and return a storage instance.
 
 ### StoreEntrySchema `interface`
 
-📍 [`src/core/context-nextgen/types.ts:404`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:435`](src/core/context-nextgen/types.ts)
 
 Describes a store's schema for dynamic tool description generation.
 The `descriptionFactory` on each store tool uses this to build
@@ -40109,7 +47662,7 @@ If undefined or empty, this store has no actions. |
 
 ### StoreGetResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:446`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:477`](src/core/context-nextgen/types.ts)
 
 Result types for store operations.
 These are intentionally loose (Record-based) to accommodate
@@ -40131,7 +47684,7 @@ store-specific fields in responses.
 
 ### StoreListResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:467`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:498`](src/core/context-nextgen/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -40147,7 +47700,7 @@ store-specific fields in responses.
 
 ### StoreSetResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:455`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:486`](src/core/context-nextgen/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -40652,6 +48205,25 @@ Emitted by pipelines for UI display and logging.
 
 ---
 
+### TraversalOptions `interface`
+
+📍 [`src/memory/types.ts:305`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `predicates?` | `predicates?: string[];` | - |
+| `direction` | `direction: 'out' | 'in' | 'both';` | - |
+| `maxDepth` | `maxDepth: number;` | Required hard bound — no unbounded traversals. |
+| `limit?` | `limit?: number;` | - |
+| `asOf?` | `asOf?: Date;` | - |
+
+</details>
+
+---
+
 ### TwilioAdapterConfig `interface`
 
 📍 [`src/capabilities/voice/types.ts:467`](src/capabilities/voice/types.ts)
@@ -40759,9 +48331,101 @@ Example: 'https://myserver.com' or 'https://abc123.ngrok.io' |
 
 ---
 
+### UpsertBySurfaceInput `interface`
+
+📍 [`src/memory/types.ts:726`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `surface` | `surface: string;` | - |
+| `type` | `type: string;` | - |
+| `identifiers?` | `identifiers?: Identifier[];` | - |
+| `aliases?` | `aliases?: string[];` | Alternate forms spotted alongside the primary surface (e.g. "MSFT" next to "Microsoft"). |
+| `contextEntityIds?` | `contextEntityIds?: EntityId[];` | - |
+| `metadata?` | `metadata?: Record&lt;string, unknown&gt;;` | Type-specific fields (task.state, event.startTime, etc.). See the file
+header for conventional fields per entity type.
+
+**Merge semantics on resolve (existing entity):** governed by
+`UpsertBySurfaceOptions.metadataMerge`. Default `'fillMissing'` — only
+keys absent from the stored entity's metadata are set; existing values
+are never overwritten. This is the guardrail for LLM-driven ingestion:
+re-extracting a task should never silently flip `state` or `dueAt`.
+
+To deliberately change existing metadata, use `updateEntityMetadata` (raw
+patch) or `transitionTaskState` (state machine + audit). The upsert path
+is for *first observation* of fields, not updates.
+
+On create (no match), all keys are set verbatim. |
+
+</details>
+
+---
+
+### UpsertBySurfaceOptions `interface`
+
+📍 [`src/memory/types.ts:752`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `autoResolveThreshold?` | `autoResolveThreshold?: number;` | Candidates must clear this confidence to auto-resolve to an existing
+entity. Conservative default (0.90) — favors fewer false merges at the
+cost of creating more duplicates that can be merged later. |
+| `metadataMerge?` | `metadataMerge?: 'fillMissing' | 'overwrite';` | How to merge `input.metadata` into an existing entity on resolve.
+- `'fillMissing'` (default): only set keys absent from stored metadata.
+  Never overwrites existing values. Safe default for LLM-driven ingestion.
+- `'overwrite'`: shallow-merge (incoming keys win). Use when the caller
+  is authoritative (e.g. sync job from a system of record).
+
+Irrelevant on create — all keys are set. |
+
+</details>
+
+---
+
+### UpsertBySurfaceResult `interface`
+
+📍 [`src/memory/types.ts:771`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `entity` | `entity: IEntity;` | - |
+| `resolved` | `resolved: boolean;` | True if we matched an existing entity; false if we created a new one. |
+| `mergeCandidates` | `mergeCandidates: EntityCandidate[];` | Other near-matches that didn't win — surfaced for human review / deferred merges. |
+
+</details>
+
+---
+
+### UpsertEntityResult `interface`
+
+📍 [`src/memory/types.ts:314`](src/memory/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `entity` | `entity: IEntity;` | - |
+| `created` | `created: boolean;` | - |
+| `mergedIdentifiers` | `mergedIdentifiers: number;` | How many new identifiers were added to an existing entity. |
+| `mergeCandidates` | `mergeCandidates: EntityId[];` | Other entities that matched by some identifiers but were not chosen. |
+
+</details>
+
+---
+
 ### UserInfoPluginConfig `interface`
 
-📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:38`](src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts)
+📍 [`src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts:44`](src/core/context-nextgen/plugins/UserInfoPluginNextGen.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -40854,6 +48518,30 @@ Used to describe vendor-specific options that fall outside semantic options
 | `max?` | `max?: number;` | Maximum value for numbers |
 | `step?` | `step?: number;` | Step value for number sliders |
 | `controlType?` | `controlType?: 'select' | 'radio' | 'slider' | 'checkbox' | 'text' | 'textarea';` | UI control type hint |
+
+</details>
+
+---
+
+### VisibilityContext `interface`
+
+📍 [`src/memory/AccessControl.ts:93`](src/memory/AccessControl.ts)
+
+Context the policy sees when asked for defaults on a write. Fields are set
+according to `kind`:
+  - kind === 'entity' ⇒ `entityType` set, `predicate` / `factKind` absent.
+  - kind === 'fact'   ⇒ `predicate` set (post-canonicalization), `factKind`
+                         set, `entityType` absent.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `kind` | `kind: 'entity' | 'fact';` | - |
+| `entityType?` | `entityType?: string;` | - |
+| `predicate?` | `predicate?: string;` | - |
+| `factKind?` | `factKind?: 'atomic' | 'document';` | - |
 
 </details>
 
@@ -40999,6 +48687,20 @@ Content types based on OpenAI Responses API format
 | `DEVELOPER` | `developer` | - |
 
 </details>
+
+---
+
+### AccessLevel `type`
+
+📍 [`src/memory/AccessControl.ts:46`](src/memory/AccessControl.ts)
+
+Access level granted to a non-owner principal. Hierarchy: `'write'` implies
+`'read'`. The owner (record.ownerId === caller.userId) always has full
+access regardless of these fields.
+
+```typescript
+type AccessLevel = 'none' | 'read' | 'write'
+```
 
 ---
 
@@ -41152,6 +48854,51 @@ type CallEndReason = 'caller_hangup' | 'agent_hangup' | 'timeout' | 'error' | 'r
 
 ---
 
+### ChangeEvent `type`
+
+📍 [`src/memory/types.ts:638`](src/memory/types.ts)
+
+```typescript
+type ChangeEvent = | { type: 'entity.upsert'; entity: IEntity; created: boolean }
+  | { type: 'entity.archive'; entityId: EntityId }
+  | { type: 'entity.merge'; winnerId: EntityId; loserId: EntityId }
+  | { type: 'fact.add'; fact: IFact }
+  | { type: 'fact.archive'; factId: FactId }
+  | { type: 'fact.restore'; factId: FactId }
+  | { type: 'fact.supersede'; oldId: FactId; newId: FactId }
+  /**
+   * H3: emitted when a singleValued predicate's auto-supersede couldn't see a
+   * prior fact in the caller's scope, but a prior DOES exist in an outer scope
+   * (group-shared or global). The new fact lands in the caller's scope as a
+   * new "current" coexisting with the invisible outer one. Intentional — the
+   * event lets operators observe the drift without changing isolation.
+   */
+  | {
+      type: 'fact.supersede_skipped_outer_scope';
+      subjectId: EntityId;
+      predicate: string;
+      outerFactId: FactId;
+      callerScope: ScopeFields;
+    }
+  | { type: 'profile.regenerate'; entityId: EntityId; scope: ScopeFields; factId: FactId }
+  /**
+   * Emitted once per embedding job that exhausted all retries. Lets operators
+   * surface a dead-letter signal (metrics, alerts) rather than silently
+   * dropping the embedding. Applies to both fact and entity-identity jobs.
+   */
+  | {
+      type: 'fact.embedding.failed';
+      /** Populated for fact-level embeddings; null for entity-identity jobs. */
+      factId: FactId | null;
+      /** Populated for entity-identity embeddings; null for fact jobs. */
+      entityId: EntityId | null;
+      attempts: number;
+      reason: string;
+    }
+```
+
+---
+
 ### ConnectorAuth `type`
 
 📍 [`src/domain/entities/Connector.ts:24`](src/domain/entities/Connector.ts)
@@ -41186,7 +48933,7 @@ type Content = | InputTextContent
 
 ### ContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:695`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:732`](src/core/context-nextgen/types.ts)
 
 Feature flags for enabling/disabling plugins.
 Known keys provide autocomplete; arbitrary string keys are also accepted
@@ -41194,6 +48941,19 @@ for externally registered plugins (via PluginRegistry).
 
 ```typescript
 type ContextFeatures = KnownContextFeatures & { [key: string]: boolean | undefined }
+```
+
+---
+
+### ContextTier `type`
+
+📍 [`src/memory/types.ts:275`](src/memory/types.ts)
+
+Tiers that callers can explicitly include; relatedTasks + relatedEvents are
+included BY DEFAULT unless the caller passes { tiers: 'minimal' }.
+
+```typescript
+type ContextTier = 'documents' | 'semantic' | 'neighbors'
 ```
 
 ---
@@ -41252,12 +49012,93 @@ type DocumentSource = FileSource | URLSource | BufferSource | BlobSource
 
 ---
 
+### EagernessLevel `type`
+
+📍 [`src/memory/integration/EagernessProfile.ts:21`](src/memory/integration/EagernessProfile.ts)
+
+Three-state knob: feature off, advisory in prompt, schema-enforced.
+
+```typescript
+type EagernessLevel = 'off' | 'soft' | 'strict'
+```
+
+---
+
+### EagernessPreset `type`
+
+📍 [`src/memory/integration/EagernessProfile.ts:18`](src/memory/integration/EagernessProfile.ts)
+
+EagernessProfile — tunable restraint posture for extraction / scoring stages.
+
+Host applications (e.g. an exec-facing Chief-of-Staff product) frequently
+need to *suppress* LLM eagerness: stop surfacing every issue, stop inventing
+detail when the source is thin, prefer silence over output. This profile
+makes that posture configurable per call (and per stage within a call) so
+the same library can serve both chatty and disciplined deployments.
+
+The profile is **descriptive, not executive** — it records preferences;
+downstream prompt builders, parsers, and the optional `SkepticPass` consult
+it. The library ships no opinionated defaults beyond `chatty` (the most
+permissive preset) so existing callers keep their current behavior unless
+they opt in.
+
+```typescript
+type EagernessPreset = 'chatty' | 'balanced' | 'strict' | 'minimal'
+```
+
+---
+
+### EagernessStage `type`
+
+📍 [`src/memory/integration/EagernessProfile.ts:32`](src/memory/integration/EagernessProfile.ts)
+
+Stage identifier for per-stage overrides.
+
+```typescript
+type EagernessStage = 'signalExtraction' | 'taskNarrative' | 'priorityScoring'
+```
+
+---
+
+### EntityId `type`
+
+📍 [`src/memory/types.ts:92`](src/memory/types.ts)
+
+```typescript
+type EntityId = string
+```
+
+---
+
 ### EvictionStrategy `type`
 
 📍 [`src/core/context-nextgen/plugins/WorkingMemoryPluginNextGen.ts:63`](src/core/context-nextgen/plugins/WorkingMemoryPluginNextGen.ts)
 
 ```typescript
 type EvictionStrategy = 'lru' | 'size'
+```
+
+---
+
+### FactId `type`
+
+📍 [`src/memory/types.ts:145`](src/memory/types.ts)
+
+```typescript
+type FactId = string
+```
+
+---
+
+### FactKind `type`
+
+📍 [`src/memory/types.ts:151`](src/memory/types.ts)
+
+- 'atomic'   → short triple: (subject, predicate, objectId | value), optional short `details`.
+- 'document' → long-form narrative in `details` (profiles, memos, notes, bios).
+
+```typescript
+type FactKind = 'atomic' | 'document'
 ```
 
 ---
@@ -41354,6 +49195,51 @@ type ModifyingHook = Hook&lt;TContext, TModification&gt;
 
 ---
 
+### MongoFilter `type`
+
+📍 [`src/memory/adapters/mongo/IMongoCollectionLike.ts:18`](src/memory/adapters/mongo/IMongoCollectionLike.ts)
+
+Narrow collection contract the MongoMemoryAdapter depends on.
+
+Two implementations ship in-tree: RawMongoCollection (wraps a mongodb-driver
+Collection) and MeteorMongoCollection (wraps a Meteor Mongo.Collection).
+Users with different plumbing can implement this interface themselves.
+
+Writes are expected to trigger whatever reactivity mechanism the underlying
+collection provides (Meteor publications, change streams) — the adapter
+deliberately routes material updates through these methods so memory writes
+propagate to subscribers.
+
+Reads are expected to run on the raw driver when complex pipelines are
+needed (`aggregate`), which is why `aggregate` is optional — implementations
+that can't support it gracefully disable the fast paths that depend on it.
+
+```typescript
+type MongoFilter = Record&lt;string, unknown&gt;
+```
+
+---
+
+### MongoSort `type`
+
+📍 [`src/memory/adapters/mongo/IMongoCollectionLike.ts:20`](src/memory/adapters/mongo/IMongoCollectionLike.ts)
+
+```typescript
+type MongoSort = Record&lt;string, 1 | -1&gt;
+```
+
+---
+
+### MongoUpdate `type`
+
+📍 [`src/memory/adapters/mongo/IMongoCollectionLike.ts:19`](src/memory/adapters/mongo/IMongoCollectionLike.ts)
+
+```typescript
+type MongoUpdate = Record&lt;string, unknown&gt;
+```
+
+---
+
 ### MouseButton `type`
 
 📍 [`src/tools/desktop/types.ts:13`](src/tools/desktop/types.ts)
@@ -41366,6 +49252,43 @@ The driver converts to logical OS coords internally using scaleFactor.
 
 ```typescript
 type MouseButton = 'left' | 'right' | 'middle'
+```
+
+---
+
+### NewEntity `type`
+
+📍 [`src/memory/types.ts:457`](src/memory/types.ts)
+
+Input type for creating a new entity. `id`, `version`, `createdAt`, and
+`updatedAt` are assigned by the storage layer (adapter) — callers never
+set them.
+
+```typescript
+type NewEntity = Omit&lt;IEntity, 'id' | 'version' | 'createdAt' | 'updatedAt'&gt;
+```
+
+---
+
+### NewFact `type`
+
+📍 [`src/memory/types.ts:463`](src/memory/types.ts)
+
+Input type for creating a new fact. `id` and `createdAt` are assigned by
+the storage layer.
+
+```typescript
+type NewFact = Omit&lt;IFact, 'id' | 'createdAt'&gt;
+```
+
+---
+
+### ObjectIdCtor `type`
+
+📍 [`src/memory/adapters/mongo/RawMongoCollection.ts:35`](src/memory/adapters/mongo/RawMongoCollection.ts)
+
+```typescript
+type ObjectIdCtor = (hex: string) =&gt; ObjectIdLike
 ```
 
 ---
@@ -41388,6 +49311,32 @@ type OutputFormat = 'url' | 'base64' | 'buffer'
 
 ```typescript
 type OutputItem = Message | CompactionItem | ReasoningItem
+```
+
+---
+
+### ParseStatus `type`
+
+📍 [`src/memory/integration/parseExtraction.ts:28`](src/memory/integration/parseExtraction.ts)
+
+Outcome of a parse attempt. `ok` is the only shape callers can trust the
+ mentions/facts fields on (though they may still be empty).
+
+```typescript
+type ParseStatus = 'ok' | 'parse_error' | 'shape_error'
+```
+
+---
+
+### Permission `type`
+
+📍 [`src/memory/AccessControl.ts:52`](src/memory/AccessControl.ts)
+
+A specific permission being requested. `'write'` subsumes `'read'` — a
+write-granted caller can always read too.
+
+```typescript
+type Permission = 'read' | 'write'
 ```
 
 ---
@@ -41441,7 +49390,7 @@ type PipelineConfig = TextPipelineConfig | RealtimePipelineConfig
 
 ### PluginConfigs `type`
 
-📍 [`src/core/context-nextgen/types.ts:747`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:790`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 Known keys provide autocomplete; arbitrary string keys accepted
@@ -41468,6 +49417,20 @@ type PluginFactory = (
 
 ---
 
+### PromptContext `type`
+
+📍 [`src/memory/integration/defaultPrompt.ts:22`](src/memory/integration/defaultPrompt.ts)
+
+Context passed to a prompt template function. This is the same shape as
+`ProfileGeneratorInput` — alias kept for backward compatibility of custom
+prompt authors.
+
+```typescript
+type PromptContext = ProfileGeneratorInput
+```
+
+---
+
 ### QualityLevel `type`
 
 📍 [`src/domain/types/SharedTypes.ts:21`](src/domain/types/SharedTypes.ts)
@@ -41483,13 +49446,81 @@ type QualityLevel = 'draft' | 'standard' | 'high' | 'ultra'
 
 ### ResolvedContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:701`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:738`](src/core/context-nextgen/types.ts)
 
 Resolved features — all known keys guaranteed present, plus any extras.
 Used internally after merging with DEFAULT_FEATURES.
 
 ```typescript
 type ResolvedContextFeatures = Required&lt;KnownContextFeatures&gt; & Record&lt;string, boolean&gt;
+```
+
+---
+
+### RestraintEventKind `type`
+
+📍 [`src/memory/integration/RestraintEvent.ts:22`](src/memory/integration/RestraintEvent.ts)
+
+RestraintEvent — one shared shape for every decision a restraint primitive
+makes (kept, dropped, vetoed, parse-failed). Used by `RestrainedExtractionContract`
+and `SkepticPass`.
+
+The library does NOT write logs anywhere — it emits events. Hosts wire the
+`onDecision` callback to their own log store (ICOS writes them to
+`jarvis_activity_log` so admin dashboards can render emitted-vs-vetoed
+counters and operators can tune presets against real data).
+
+Standing rule: **no silent disappearance**. Every drop, every veto, every
+parse failure on the restraint path produces a `RestraintEvent`. If you
+find yourself dropping an item without emitting one — stop and add the
+event.
+
+```typescript
+type RestraintEventKind = | 'skeptic_kept'
+  /** SkepticPass voted to drop this item. */
+  | 'skeptic_veto'
+  /** SkepticPass output couldn't be parsed — pass treated as no-op for safety. */
+  | 'skeptic_parse_failure'
+  /** SkepticPass connector/model errored. Items pass through. */
+  | 'skeptic_error'
+  /** Item dropped because evidenceQuote was missing under strict mode. */
+  | 'evidence_missing'
+  /** Item dropped because servesAnchorId didn't match an active anchor. */
+  | 'priority_unbound'
+  /** No active anchors available; under strict requirePriorityBinding everything was dropped. */
+  | 'no_anchors'
+  /** Output non-empty but `whyActionable` missing under requireJustification. */
+  | 'justification_missing'
+  /** Item kept by RestrainedExtractionContract (passed all refinements). */
+  | 'kept'
+  | (string & {})
+```
+
+---
+
+### RestraintEventListener `type`
+
+📍 [`src/memory/integration/RestraintEvent.ts:79`](src/memory/integration/RestraintEvent.ts)
+
+Convenience callback type used by every restraint primitive.
+
+```typescript
+type RestraintEventListener = (event: RestraintEvent) =&gt; void
+```
+
+---
+
+### RestraintStage `type`
+
+📍 [`src/memory/integration/RestraintEvent.ts:44`](src/memory/integration/RestraintEvent.ts)
+
+Stage label — extraction, narrative, scoring, etc. Open-string for host stages.
+
+```typescript
+type RestraintStage = | 'signalExtraction'
+  | 'taskNarrative'
+  | 'priorityScoring'
+  | (string & {})
 ```
 
 ---
@@ -41612,6 +49643,21 @@ type ServiceType = (typeof SERVICE_DEFINITIONS)[number]['id']
 
 ---
 
+### SkepticPassMode `type`
+
+📍 [`src/memory/integration/EagernessProfile.ts:29`](src/memory/integration/EagernessProfile.ts)
+
+Skeptic-pass mode label. The library does NOT define a connector/model for
+each mode — that's the host's choice (e.g. ICOS picks Haiku for `cheap`,
+Sonnet at low temp for `strong`). Code that runs the pass takes the mode
+label and looks up its concrete config out of band.
+
+```typescript
+type SkepticPassMode = 'off' | 'cheap' | 'strong'
+```
+
+---
+
 ### StorageContext `type`
 
 📍 [`src/core/StorageRegistry.ts:62`](src/core/StorageRegistry.ts)
@@ -41665,6 +49711,29 @@ type VADEvent = 'speech_start' | 'speech_end' | null
 
 ---
 
+### VisibilityPolicy `type`
+
+📍 [`src/memory/AccessControl.ts:114`](src/memory/AccessControl.ts)
+
+Host-supplied function that returns default `Permissions` for a write when
+the caller didn't specify `permissions` explicitly. Lets hosts encode
+policies like "entities are group-readable, facts are owner-private by
+default" without touching every call site.
+
+Rules:
+  - Caller-supplied `permissions` on the write input always wins — this
+    policy only fills the blanks.
+  - Return `undefined` to fall through to the library defaults
+    (`DEFAULT_GROUP_LEVEL` / `DEFAULT_WORLD_LEVEL` — both `'read'`).
+  - The policy is invoked synchronously on every entity/fact create path
+    inside `MemorySystem`; keep it cheap (pure lookup, no I/O).
+
+```typescript
+type VisibilityPolicy = (ctx: VisibilityContext) =&gt; Permissions | undefined
+```
+
+---
+
 ### VoiceBridgeConfig `type`
 
 📍 [`src/capabilities/voice/types.ts:309`](src/capabilities/voice/types.ts)
@@ -41674,6 +49743,61 @@ VoiceBridge configuration — discriminated union by pipeline type.
 ```typescript
 type VoiceBridgeConfig = | (VoiceBridgeBaseConfig & TextPipelineConfig)
   | (VoiceBridgeBaseConfig & RealtimePipelineConfig)
+```
+
+---
+
+### applyRestrainedExtractionContract `function`
+
+📍 [`src/memory/integration/RestrainedExtractionContract.ts:84`](src/memory/integration/RestrainedExtractionContract.ts)
+
+Apply restraint refinements to a parsed extraction output. Pure — no I/O.
+
+Returns a NEW `ExtractionOutput` plus the decision log. The input is not
+mutated. Mentions that were referenced only by dropped facts ARE retained —
+the LLM may have introduced them for entity resolution alone, and dropping
+them here would lose entity merge candidates. Tasks dropped for priority
+reasons ARE removed entirely (mention + any facts referencing them).
+
+```typescript
+export function applyRestrainedExtractionContract(
+  input: RestrainedExtractionInput,
+  opts: RestrainedExtractionOptions,
+): RestrainedExtractionResult
+```
+
+---
+
+### assertCanAccess `function`
+
+📍 [`src/memory/AccessControl.ts:207`](src/memory/AccessControl.ts)
+
+Throw `PermissionDeniedError` if `caller` lacks `need` on `record`.
+
+```typescript
+export function assertCanAccess(
+  record: AccessControlled,
+  caller: ScopeFilter,
+  need: Permission,
+  recordKind: 'entity' | 'fact',
+): void
+```
+
+---
+
+### buildEagernessProfile `function`
+
+📍 [`src/memory/integration/EagernessProfile.ts:159`](src/memory/integration/EagernessProfile.ts)
+
+Build a profile from a preset name with optional top-level overrides.
+Convenience for hosts that want "preset X but with `requireJustification`
+always on" without hand-rolling the merge.
+
+```typescript
+export function buildEagernessProfile(
+  preset: EagernessPreset,
+  overrides?: Partial&lt;Omit&lt;EagernessProfile, 'preset'&gt;&gt;,
+): EagernessProfile
 ```
 
 ---
@@ -41689,6 +49813,21 @@ export function buildEndpointWithQuery(
   endpoint: string,
   queryParams?: Record&lt;string, string | number | boolean&gt;
 ): string
+```
+
+---
+
+### buildIdentityString `function`
+
+📍 [`src/memory/resolution/EntityResolver.ts:377`](src/memory/resolution/EntityResolver.ts)
+
+Short string embedded for identity matching. Composed of displayName,
+top aliases, and primary identifier values. Populated on every entity
+write when an embedder is configured; consumed by the future entity-level
+semantic search tier (not yet wired — see file header).
+
+```typescript
+export function buildIdentityString(args:
 ```
 
 ---
@@ -41715,6 +49854,63 @@ export function buildWorkspaceDelta(
   workspace: SharedWorkspacePluginNextGen,
   lastSeen: Map&lt;string, number&gt;,
 ): string
+```
+
+---
+
+### canAccess `function`
+
+📍 [`src/memory/AccessControl.ts:190`](src/memory/AccessControl.ts)
+
+Returns true iff `caller` has the requested permission on `record`.
+
+Evaluation order:
+  1. Owner match   → true (full access, unconditionally).
+  2. Group match   → `levelGrants(permissions.group, need)`.
+  3. Otherwise     → `levelGrants(permissions.world, need)`.
+
+```typescript
+export function canAccess(
+  record: AccessControlled,
+  caller: ScopeFilter,
+  need: Permission,
+): boolean
+```
+
+---
+
+### canonicalIdentifier `function`
+
+📍 [`src/memory/identifiers.ts:81`](src/memory/identifiers.ts)
+
+Build a canonical identifier for an entity that lacks a natural external key.
+
+The resulting value is `<type>:<part>:<part>:...` where undefined/empty
+parts are dropped. The last part is slugified; earlier parts are used as-is
+(they're typically entity ids or identifier kinds, already safe). If you
+want all parts slugified, slugify them before calling.
+
+```typescript
+export function canonicalIdentifier(
+  type: string,
+  parts: Record&lt;string, string | undefined&gt;,
+  opts: CanonicalIdentifierOptions =
+```
+
+**Example:**
+
+```typescript
+canonicalIdentifier('task', {
+    assignee: 'user_123',
+    context: 'topic_erp_renewal',
+    title: 'Send budget by Friday',
+  })
+  // → { kind: 'canonical', value: 'task:user_123:topic_erp_renewal:send-budget-by-friday' }
+```
+```typescript
+Calendar event
+canonicalIdentifier('event', { source: 'gcal', id: '3k9f...abc' })
+// → { kind: 'canonical', value: 'event:gcal:3k9f-abc' }
 ```
 
 ---
@@ -41756,7 +49952,7 @@ export function createExecutionRecorder(options: ExecutionRecorderOptions): Exec
 
 ### createOrchestrator `function`
 
-📍 [`src/core/orchestrator/createOrchestrator.ts:540`](src/core/orchestrator/createOrchestrator.ts)
+📍 [`src/core/orchestrator/createOrchestrator.ts:575`](src/core/orchestrator/createOrchestrator.ts)
 
 Create an orchestrator Agent that can coordinate a team of worker agents.
 
@@ -41853,6 +50049,36 @@ export function createRoutineExecutionRecord(
 
 ---
 
+### defaultExtractionPrompt `function`
+
+📍 [`src/memory/integration/defaultExtractionPrompt.ts:112`](src/memory/integration/defaultExtractionPrompt.ts)
+
+```typescript
+export function defaultExtractionPrompt(ctx: ExtractionPromptContext): string
+```
+
+---
+
+### defaultProfilePrompt `function`
+
+📍 [`src/memory/integration/defaultPrompt.ts:24`](src/memory/integration/defaultPrompt.ts)
+
+```typescript
+export function defaultProfilePrompt(ctx: PromptContext): string
+```
+
+---
+
+### defaultSkepticPrompt `function`
+
+📍 [`src/memory/integration/SkepticPass.ts:291`](src/memory/integration/SkepticPass.ts)
+
+```typescript
+export function defaultSkepticPrompt(ctx: SkepticPromptContext): string
+```
+
+---
+
 ### detectServiceFromURL `function`
 
 📍 [`src/domain/entities/Services.ts:537`](src/domain/entities/Services.ts)
@@ -41861,6 +50087,46 @@ Detect service type from a URL
 
 ```typescript
 export function detectServiceFromURL(url: string): string | undefined
+```
+
+---
+
+### effectivePermissions `function`
+
+📍 [`src/memory/AccessControl.ts:172`](src/memory/AccessControl.ts)
+
+Resolve a record's effective group+world levels after applying library
+defaults. The `group` level is `'none'` when the record has no `groupId`
+(no group principal exists).
+
+```typescript
+export function effectivePermissions(
+  record: AccessControlled,
+):
+```
+
+---
+
+### emitRestraintEvent `function`
+
+📍 [`src/memory/integration/RestraintEvent.ts:92`](src/memory/integration/RestraintEvent.ts)
+
+Helper: emit one event to a listener while also pushing it onto an array
+(so the caller's result can include the full `events: RestraintEvent[]`).
+
+Listener errors do NOT propagate — a logging failure must not break the
+pipeline (otherwise we'd silently drop items because we couldn't log
+dropping them, defeating the rule). But the failure IS logged via
+`console.error` with the offending event attached, so a buggy listener
+doesn't blackhole every decision invisibly. The "no silent error" rule
+applies even to error-handling code.
+
+```typescript
+export function emitRestraintEvent(
+  collector: RestraintEvent[],
+  listener: RestraintEventListener | undefined,
+  event: RestraintEvent,
+): void
 ```
 
 ---
@@ -41877,6 +50143,16 @@ or direct web URLs without knowing the driveId/itemId.
 
 ```typescript
 export function encodeSharingUrl(webUrl: string): string
+```
+
+---
+
+### ensureIndexes `function`
+
+📍 [`src/memory/adapters/mongo/indexes.ts:46`](src/memory/adapters/mongo/indexes.ts)
+
+```typescript
+export async function ensureIndexes(args: EnsureIndexesArgs): Promise&lt;void&gt;
 ```
 
 ---
@@ -41906,7 +50182,7 @@ export async function excelToMarkdownKV(
 
 ### executeRoutine `function`
 
-📍 [`src/core/routineRunner.ts:800`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:803`](src/core/routineRunner.ts)
 
 Execute a routine definition.
 
@@ -41930,6 +50206,19 @@ const execution = await executeRoutine({
 });
 
 console.log(execution.status); // 'completed' | 'failed'
+```
+
+---
+
+### factFilterToMongo `function`
+
+📍 [`src/memory/adapters/mongo/queries.ts:14`](src/memory/adapters/mongo/queries.ts)
+
+Build a Mongo filter from a FactFilter + ScopeFilter.
+Pushes archived and asOf into the DB so the app never scans hidden docs.
+
+```typescript
+export function factFilterToMongo(filter: FactFilter, scope: ScopeFilter): MongoFilter
 ```
 
 ---
@@ -42038,6 +50327,21 @@ export function fromSlackTimestamp(ts: string): string
 
 ---
 
+### genericTraverse `function`
+
+📍 [`src/memory/GenericTraversal.ts:15`](src/memory/GenericTraversal.ts)
+
+```typescript
+export async function genericTraverse(
+  store: IMemoryStore,
+  startId: EntityId,
+  opts: TraversalOptions,
+  scope: ScopeFilter,
+): Promise&lt;Neighborhood&gt;
+```
+
+---
+
 ### getAccountSid `function`
 
 📍 [`src/tools/twilio/types.ts:31`](src/tools/twilio/types.ts)
@@ -42084,7 +50388,7 @@ export async function getAuthenticatedUserId(
 
 ### getBackgroundOutput `function`
 
-📍 [`src/tools/shell/bash.ts:306`](src/tools/shell/bash.ts)
+📍 [`src/tools/shell/bash.ts:342`](src/tools/shell/bash.ts)
 
 Get output from a background process
 
@@ -42134,6 +50438,19 @@ Priority:
 export function getDrivePrefix(
   userPrefix: string,
   options?:
+```
+
+---
+
+### getEagernessPreset `function`
+
+📍 [`src/memory/integration/EagernessProfile.ts:109`](src/memory/integration/EagernessProfile.ts)
+
+Look up a preset by name. Returns a fresh shallow copy so callers can mutate
+without poisoning the canonical table.
+
+```typescript
+export function getEagernessPreset(preset: EagernessPreset): EagernessProfile
 ```
 
 ---
@@ -42249,7 +50566,7 @@ export function isAppPermissionAuth(connector: Connector): boolean
 
 ### isBlockedCommand `function`
 
-📍 [`src/tools/shell/types.ts:111`](src/tools/shell/types.ts)
+📍 [`src/tools/shell/types.ts:116`](src/tools/shell/types.ts)
 
 Check if a command should be blocked
 
@@ -42308,7 +50625,7 @@ export function isMicrosoftFileUrl(source: string): boolean
 
 ### isStoreHandler `function`
 
-📍 [`src/core/context-nextgen/types.ts:549`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:580`](src/core/context-nextgen/types.ts)
 
 Type guard to check if a plugin implements IStoreHandler.
 
@@ -42352,12 +50669,25 @@ export function isWebUrl(source: string): boolean
 
 ### killBackgroundProcess `function`
 
-📍 [`src/tools/shell/bash.ts:322`](src/tools/shell/bash.ts)
+📍 [`src/tools/shell/bash.ts:358`](src/tools/shell/bash.ts)
 
 Kill a background process
 
 ```typescript
 export function killBackgroundProcess(bgId: string): boolean
+```
+
+---
+
+### levelGrants `function`
+
+📍 [`src/memory/AccessControl.ts:222`](src/memory/AccessControl.ts)
+
+Given an access level and a requested permission, does the level grant the
+permission? `'write'` implies `'read'`.
+
+```typescript
+export function levelGrants(level: AccessLevel, need: Permission): boolean
 ```
 
 ---
@@ -42371,6 +50701,16 @@ Useful for tools that want to show what's available or support fallback chains
 
 ```typescript
 export function listConnectorsByServiceTypes(serviceTypes: string[]): string[]
+```
+
+---
+
+### mergeFilters `function`
+
+📍 [`src/memory/adapters/mongo/scopeFilter.ts:62`](src/memory/adapters/mongo/scopeFilter.ts)
+
+```typescript
+export function mergeFilters(...filters: Array&lt;MongoFilter | null | undefined&gt;): MongoFilter
 ```
 
 ---
@@ -42465,6 +50805,70 @@ export function normalizePhoneNumber(phone: string): string
 
 ---
 
+### normalizeSurface `function`
+
+📍 [`src/memory/resolution/fuzzy.ts:22`](src/memory/resolution/fuzzy.ts)
+
+Normalize a surface form for comparison:
+  - lowercase
+  - strip non-alphanumeric except whitespace (apostrophes, commas, dashes, etc.)
+  - strip common corporate suffixes (Inc, Corp, LLC, etc.)
+  - collapse whitespace
+  - trim
+
+```typescript
+export function normalizeSurface(s: string): string
+```
+
+---
+
+### orderByToSort `function`
+
+📍 [`src/memory/adapters/mongo/queries.ts:92`](src/memory/adapters/mongo/queries.ts)
+
+```typescript
+export function orderByToSort(orderBy?: FactOrderBy): MongoSort | undefined
+```
+
+---
+
+### parseExtractionResponse `function`
+
+📍 [`src/memory/integration/parseExtraction.ts:143`](src/memory/integration/parseExtraction.ts)
+
+Resilient to code fences + leading/trailing prose. Returns an empty shape
+rather than throwing so ingest pipelines can continue.
+
+**Prefer `parseExtractionWithStatus` for new code** — this wrapper cannot
+distinguish "no extractable content" from "parse failure".
+
+```typescript
+export function parseExtractionResponse(raw: string): ExtractionOutput
+```
+
+---
+
+### parseExtractionWithStatus `function`
+
+📍 [`src/memory/integration/parseExtraction.ts:63`](src/memory/integration/parseExtraction.ts)
+
+Rich parser. Never throws — failures surface as non-ok status.
+
+- `status: 'parse_error'` — input didn't contain any valid JSON object.
+- `status: 'shape_error'` — JSON parsed, but `mentions` was not an object
+  (e.g. LLM emitted an array) or `facts` was not an array. Whichever
+  fields *did* match the expected shape are still returned; the other is
+  filled with the empty default so the caller can partial-commit if it
+  wants to.
+- `status: 'ok'` — parse succeeded; `mentions` + `facts` may still be
+  empty if the LLM genuinely had nothing to extract.
+
+```typescript
+export function parseExtractionWithStatus(raw: string): ParseExtractionResult
+```
+
+---
+
 ### parseKeyCombo `function`
 
 📍 [`src/tools/desktop/driver/NutTreeDriver.ts:70`](src/tools/desktop/driver/NutTreeDriver.ts)
@@ -42474,6 +50878,20 @@ Returns nut-tree Key enum values.
 
 ```typescript
 export function parseKeyCombo(keys: string, KeyEnum: Record&lt;string, any&gt;): any[]
+```
+
+---
+
+### parseProfileResponse `function`
+
+📍 [`src/memory/integration/ConnectorProfileGenerator.ts:102`](src/memory/integration/ConnectorProfileGenerator.ts)
+
+```typescript
+export function parseProfileResponse(
+  raw: string,
+  entity: IEntity,
+  priorProfile: IFact | undefined,
+):
 ```
 
 ---
@@ -42494,6 +50912,19 @@ export function parseRepository(input: string): GitHubRepository
 
 ---
 
+### parseSkepticOutput `function`
+
+📍 [`src/memory/integration/SkepticPass.ts:346`](src/memory/integration/SkepticPass.ts)
+
+```typescript
+export function parseSkepticOutput(
+  raw: string,
+  _itemCount: number,
+): SkepticParseOk | SkepticParseErr
+```
+
+---
+
 ### pcmToMulaw `function`
 
 📍 [`src/capabilities/voice/adapters/twilio/codecs.ts:106`](src/capabilities/voice/adapters/twilio/codecs.ts)
@@ -42502,6 +50933,16 @@ Encode PCM 16-bit signed little-endian to μ-law.
 
 ```typescript
 export function pcmToMulaw(pcm: Buffer): Buffer
+```
+
+---
+
+### rankFacts `function`
+
+📍 [`src/memory/Ranking.ts:40`](src/memory/Ranking.ts)
+
+```typescript
+export function rankFacts(facts: IFact[], config: RankingConfig, now: Date): IFact[]
 ```
 
 ---
@@ -42573,6 +51014,28 @@ export function resolveConnector(connectorOrName: string | Connector): Connector
 
 ---
 
+### resolveEagerness `function`
+
+📍 [`src/memory/integration/EagernessProfile.ts:124`](src/memory/integration/EagernessProfile.ts)
+
+Resolve the effective profile for a given stage.
+
+Resolution order: `profile.perStage[stage]` → `profile` (top-level) →
+`getEagernessPreset(profile.preset)` (canonical preset).
+
+Returns a NEW object — never aliases the inputs. The returned profile's
+`perStage` field is omitted (resolution is one-way; downstream code should
+not re-resolve).
+
+```typescript
+export function resolveEagerness(
+  profile: EagernessProfile,
+  stage: EagernessStage,
+): EagernessProfile
+```
+
+---
+
 ### resolveFileEndpoints `function`
 
 📍 [`src/tools/microsoft/types.ts:711`](src/tools/microsoft/types.ts)
@@ -42595,7 +51058,7 @@ export function resolveFileEndpoints(
 
 ### resolveFlowSource `function`
 
-📍 [`src/core/routineControlFlow.ts:545`](src/core/routineControlFlow.ts)
+📍 [`src/core/routineControlFlow.ts:547`](src/core/routineControlFlow.ts)
 
 Resolve the source array for a map/fold control flow using layered resolution:
 1. Determine lookup key(s) from source config
@@ -42669,7 +51132,7 @@ export function resolveRepository(
 
 ### resolveStepArgs `function`
 
-📍 [`src/core/routineControlFlow.ts:190`](src/core/routineControlFlow.ts)
+📍 [`src/core/routineControlFlow.ts:191`](src/core/routineControlFlow.ts)
 
 Resolve template placeholders in deterministic step arguments (deep).
 
@@ -42691,7 +51154,7 @@ export function resolveStepArgs(
 
 ### resolveTemplates `function`
 
-📍 [`src/core/routineControlFlow.ts:75`](src/core/routineControlFlow.ts)
+📍 [`src/core/routineControlFlow.ts:76`](src/core/routineControlFlow.ts)
 
 Resolve template placeholders in text.
 
@@ -42708,6 +51171,33 @@ export function resolveTemplates(
   inputs: Record&lt;string, unknown&gt;,
   icmPlugin: InContextMemoryPluginNextGen | null
 ): string
+```
+
+---
+
+### scopeToFilter `function`
+
+📍 [`src/memory/adapters/mongo/scopeFilter.ts:37`](src/memory/adapters/mongo/scopeFilter.ts)
+
+```typescript
+export function scopeToFilter(scope: ScopeFilter): MongoFilter
+```
+
+---
+
+### scoreFact `function`
+
+📍 [`src/memory/Ranking.ts:21`](src/memory/Ranking.ts)
+
+Score formula: confidence × recency × predicateWeight × importanceMultiplier
+
+importanceMultiplier = 0.3 + importance × 1.4
+  → importance 0.5 (default) → 1.0 (no-op, back-compat with v1 data)
+  → importance 1.0           → 1.7× (identity-level facts)
+  → importance 0.0           → 0.3× (trivial observations)
+
+```typescript
+export function scoreFact(fact: IFact, config: RankingConfig, now: Date): number
 ```
 
 ---
@@ -42761,6 +51251,20 @@ export async function slackPaginate&lt;TResponse extends SlackBaseResponse, TIte
   params: Record&lt;string, unknown&gt;,
   extractItems: (response: TResponse) =&gt; TItem[],
   options?:
+```
+
+---
+
+### slugify `function`
+
+📍 [`src/memory/identifiers.ts:34`](src/memory/identifiers.ts)
+
+Deterministic URL-safe slug. Lowercase, ASCII alphanumerics + dashes, no
+leading/trailing dashes, collapsed dash runs. Stable across calls for the
+same input — that's the whole point.
+
+```typescript
+export function slugify(text: string, opts: SlugifyOptions =
 ```
 
 ---
@@ -42902,7 +51406,7 @@ export function validatePath(path: string): boolean
 
 ### DEFAULT_CONFIG `const`
 
-📍 [`src/core/context-nextgen/types.ts:826`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:869`](src/core/context-nextgen/types.ts)
 
 Default configuration values
 
@@ -42972,7 +51476,7 @@ Default configuration values
 
 ### DEFAULT_FEATURES `const`
 
-📍 [`src/core/context-nextgen/types.ts:706`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:743`](src/core/context-nextgen/types.ts)
 
 Default feature configuration for built-in plugins.
 
@@ -42987,6 +51491,8 @@ Default feature configuration for built-in plugins.
 | `userInfo` | `false` | - |
 | `toolCatalog` | `false` | - |
 | `sharedWorkspace` | `false` | - |
+| `memory` | `false` | - |
+| `memoryWrite` | `false` | - |
 
 </details>
 
@@ -43041,7 +51547,7 @@ Default permission config applied when no config is specified
 
 ### DEFAULT_SHELL_CONFIG `const`
 
-📍 [`src/tools/shell/types.ts:68`](src/tools/shell/types.ts)
+📍 [`src/tools/shell/types.ts:73`](src/tools/shell/types.ts)
 
 Default configuration
 
@@ -43070,8 +51576,59 @@ Default configuration
     /mkfs/i,
     /dd\s+.*of=\/dev\//i, // dd to devices
   ]` | - |
-| `maxOutputSize` | `100000` | - |
+| `maxOutputSize` | `10_000_000` | - |
 | `allowBackground` | `true` | - |
+
+</details>
+
+---
+
+### EAGERNESS_PRESETS `const`
+
+📍 [`src/memory/integration/EagernessProfile.ts:70`](src/memory/integration/EagernessProfile.ts)
+
+Canonical preset table. `chatty` is the no-restraint baseline (matches the
+library's pre-EagernessProfile behavior). `strict` is the recommended ICOS
+default. `minimal` is the strongest discipline — for pre-launch tuning or
+very high-bar exec deployments.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `chatty` | `{
+    preset: 'chatty',
+    requireEvidenceQuote: 'off',
+    requireJustification: false,
+    requirePriorityBinding: 'off',
+    skepticPass: 'off',
+    negativeExamplesCount: 0,
+  }` | - |
+| `balanced` | `{
+    preset: 'balanced',
+    requireEvidenceQuote: 'soft',
+    requireJustification: true,
+    requirePriorityBinding: 'soft',
+    skepticPass: 'cheap',
+    negativeExamplesCount: 2,
+  }` | - |
+| `strict` | `{
+    preset: 'strict',
+    requireEvidenceQuote: 'strict',
+    requireJustification: true,
+    requirePriorityBinding: 'strict',
+    skepticPass: 'cheap',
+    negativeExamplesCount: 3,
+  }` | - |
+| `minimal` | `{
+    preset: 'minimal',
+    requireEvidenceQuote: 'strict',
+    requireJustification: true,
+    requirePriorityBinding: 'strict',
+    skepticPass: 'strong',
+    negativeExamplesCount: 5,
+  }` | - |
 
 </details>
 
