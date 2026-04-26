@@ -57,6 +57,33 @@ export function maybeCoerceToDate(value: unknown): unknown {
 }
 
 /**
+ * Strict variant of `maybeCoerceToDate` for callers that want a `Date | undefined`
+ * back. Returns:
+ *   - the same `Date` if input is a `Date`
+ *   - a parsed `Date` if input is an ISO-shaped string AND parses to a valid moment
+ *   - a parsed `Date` if input is a finite number (treated as epoch ms)
+ *   - `undefined` otherwise
+ *
+ * Use at write boundaries inside the library AND in app code that bridges signal
+ * payloads (where calendar/email adapters may legitimately ship Date OR ISO
+ * string) into typed domain fields.
+ */
+export function toDate(value: unknown): Date | undefined {
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? undefined : value;
+    }
+    if (looksLikeIsoDate(value)) {
+        const d = new Date(value);
+        return Number.isNaN(d.getTime()) ? undefined : d;
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        const d = new Date(value);
+        return Number.isNaN(d.getTime()) ? undefined : d;
+    }
+    return undefined;
+}
+
+/**
  * Walk a metadata object recursively, coercing every ISO-date-looking string
  * to a `Date`. Returns the same reference when nothing changes (lets callers'
  * deep-equality + dirty checks short-circuit).

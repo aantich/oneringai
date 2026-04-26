@@ -12,6 +12,7 @@ import {
     coerceMetadataDates,
     looksLikeIsoDate,
     maybeCoerceToDate,
+    toDate,
 } from '@/memory/dateCoercion.js';
 
 describe('looksLikeIsoDate', () => {
@@ -79,6 +80,44 @@ describe('maybeCoerceToDate', () => {
     it('leaves null / undefined alone', () => {
         expect(maybeCoerceToDate(null)).toBe(null);
         expect(maybeCoerceToDate(undefined)).toBe(undefined);
+    });
+});
+
+describe('toDate (strict)', () => {
+    it('returns the same Date instance when given a Date', () => {
+        const d = new Date('2026-04-30T13:00:00Z');
+        expect(toDate(d)).toBe(d);
+    });
+    it('parses ISO strings to Date', () => {
+        const out = toDate('2026-04-30T13:00:00Z');
+        expect(out).toBeInstanceOf(Date);
+        expect((out as Date).toISOString()).toBe('2026-04-30T13:00:00.000Z');
+    });
+    it('parses date-only strings to Date', () => {
+        const out = toDate('2026-04-30');
+        expect(out).toBeInstanceOf(Date);
+    });
+    it('parses finite numbers as epoch ms', () => {
+        const out = toDate(1700000000000);
+        expect(out).toBeInstanceOf(Date);
+        expect((out as Date).getTime()).toBe(1700000000000);
+    });
+    it('returns undefined for non-ISO strings', () => {
+        expect(toDate('never')).toBe(undefined);
+        expect(toDate('hello')).toBe(undefined);
+    });
+    it('returns undefined for invalid Date instances', () => {
+        expect(toDate(new Date('not-a-date'))).toBe(undefined);
+    });
+    it('returns undefined for null / undefined / objects', () => {
+        expect(toDate(null)).toBe(undefined);
+        expect(toDate(undefined)).toBe(undefined);
+        expect(toDate({})).toBe(undefined);
+        expect(toDate([])).toBe(undefined);
+    });
+    it('returns undefined for non-finite numbers', () => {
+        expect(toDate(Number.NaN)).toBe(undefined);
+        expect(toDate(Number.POSITIVE_INFINITY)).toBe(undefined);
     });
 });
 

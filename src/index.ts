@@ -1519,6 +1519,15 @@ export {
   // Metadata diff helper (used by callers detecting external entity changes —
   // e.g. v25 calendar pipeline detecting event reschedule via API re-fetch).
   diffEntityMetadata,
+  // Date coercion helpers — library write paths apply these automatically;
+  // re-exported so app-level signal adapters / REST handlers can DRY-coerce
+  // payload date values (Date | ISO string | epoch number) to `Date | undefined`
+  // before bridging into typed domain fields.
+  toDate,
+  looksLikeIsoDate,
+  maybeCoerceToDate,
+  coerceMetadataDates,
+  coerceFactTemporalFields,
   // Access control
   PermissionDeniedError,
   OwnerRequiredError,

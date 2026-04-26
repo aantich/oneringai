@@ -165,6 +165,19 @@ export type { CanonicalIdentifierOptions, SlugifyOptions } from './identifiers.j
 export { diffEntityMetadata } from './metadataDiff.js';
 export type { MetadataChange } from './metadataDiff.js';
 
+// Date coercion helpers — apply at write boundaries where date-shaped values
+// arrive as ISO strings (LLM extraction, REST sync) but must land in MongoDB
+// as `Date` for `$gte/$lt` range queries to work. Library write paths apply
+// these automatically; exported here for app code that bridges payloads
+// (signal adapters, REST handlers) into typed domain fields.
+export {
+  toDate,
+  looksLikeIsoDate,
+  maybeCoerceToDate,
+  coerceMetadataDates,
+  coerceFactTemporalFields,
+} from './dateCoercion.js';
+
 // Predicate library — pluggable vocabulary with a 51-predicate standard set.
 export { PredicateRegistry, STANDARD_PREDICATES } from './predicates/index.js';
 export type { PredicateDefinition } from './predicates/index.js';
