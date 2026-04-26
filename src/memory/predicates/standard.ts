@@ -548,6 +548,36 @@ export const STANDARD_PREDICATES: PredicateDefinition[] = [
   },
 
   // ---------------------------------------------------------------------------
+  // priority  (Chief-of-Staff goal tracking; surfaces "what is this user
+  // working toward?" via memory_graph walks)
+  // ---------------------------------------------------------------------------
+  {
+    name: 'tracks_priority',
+    description:
+      'Person tracks a long-term priority (quarterly/yearly goal). Multi-valued — a user typically tracks several priorities.',
+    category: 'priority',
+    payloadKind: 'relational',
+    subjectTypes: ['person'],
+    objectTypes: ['priority'],
+    inverse: 'tracked_by',
+    defaultImportance: 0.9,
+    rankingWeight: 1.4,
+    examples: ['(me, tracks_priority, "Ship NA launch Q2 2026")'],
+  },
+  {
+    name: 'priority_affects',
+    description:
+      'Priority bears on / governs another entity (project, deal, person, topic). Used to answer "is X relevant to a current priority?".',
+    category: 'priority',
+    payloadKind: 'relational',
+    subjectTypes: ['priority'],
+    inverse: 'affected_by_priority',
+    defaultImportance: 0.8,
+    rankingWeight: 1.2,
+    examples: ['("Ship NA launch", priority_affects, "NA Launch project")'],
+  },
+
+  // ---------------------------------------------------------------------------
   // document  (narrative facts; details is long-form)
   // ---------------------------------------------------------------------------
   {

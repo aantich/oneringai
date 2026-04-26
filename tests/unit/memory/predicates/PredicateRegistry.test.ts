@@ -333,9 +333,10 @@ describe('PredicateRegistry — standard() factory', () => {
     expect(cats).toContain('observation');
     expect(cats).toContain('temporal');
     expect(cats).toContain('event');
+    expect(cats).toContain('priority');
     expect(cats).toContain('document');
     expect(cats).toContain('social');
-    expect(cats).toHaveLength(10);
+    expect(cats).toHaveLength(11);
   });
 
   it('contains the canonical `profile` predicate (consumed by getContext)', () => {

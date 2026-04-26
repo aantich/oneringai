@@ -20,6 +20,7 @@ import {
   type VisibilityContext,
   type VisibilityPolicy,
 } from './AccessControl.js';
+import { coerceFactTemporalFields, coerceMetadataDates } from './dateCoercion.js';
 import { genericTraverse } from './GenericTraversal.js';
 import { metadataDeepEqual } from './metadataDiff.js';
 import { rankFacts } from './Ranking.js';
@@ -375,6 +376,13 @@ export class MemorySystem implements IDisposable {
     scope: ScopeFilter,
   ): Promise<UpsertEntityResult> {
     assertNotDestroyed(this, 'upsertEntity');
+    // Coerce ISO-string date values in metadata to `Date` instances. Callers
+    // (LLM extraction, REST sync) frequently emit ISO strings; storing those
+    // as strings silently breaks `$gte/$lt` Mongo range queries. See
+    // `dateCoercion.ts` for the contract.
+    if (input.metadata) {
+      input = { ...input, metadata: coerceMetadataDates(input.metadata) };
+    }
     // Empty identifiers is allowed — entities like projects, topics, clusters
     // may genuinely have no external strong key. They can still be found via
     // displayName/alias search + fuzzy + identity embedding.
@@ -550,15 +558,18 @@ export class MemorySystem implements IDisposable {
 
     // Metadata merge — fillMissing (default) never overwrites existing keys;
     // overwrite is a shallow merge where incoming wins. No-op if no incoming.
+    // Coerce incoming ISO-string dates to `Date` before merge so stored
+    // metadata is type-consistent and survives Mongo range queries.
     let nextMetadata: Record<string, unknown> | undefined = current.metadata;
-    if (opts?.metadata && Object.keys(opts.metadata).length > 0) {
+    const incomingMetadata = coerceMetadataDates(opts?.metadata);
+    if (incomingMetadata && Object.keys(incomingMetadata).length > 0) {
       const existing = (current.metadata ?? {}) as Record<string, unknown>;
-      const mode = opts.metadataMerge ?? 'fillMissing';
+      const mode = opts?.metadataMerge ?? 'fillMissing';
       const merged: Record<string, unknown> = { ...existing };
-      for (const [k, v] of Object.entries(opts.metadata)) {
+      for (const [k, v] of Object.entries(incomingMetadata)) {
         if (v === undefined) continue;
         if (mode === 'fillMissing' && k in existing) continue;
-        if (merged[k] !== v) {
+        if (!metadataDeepEqual(merged[k], v)) {
           merged[k] = v;
           dirty = true;
         }
@@ -1005,6 +1016,12 @@ export class MemorySystem implements IDisposable {
     scope: ScopeFilter,
   ): Promise<IFact> {
     assertNotDestroyed(this, 'addFact');
+
+    // Coerce ISO-string temporal fields (`observedAt`, `validFrom`, `validUntil`)
+    // and any ISO-date strings in `metadata` to `Date`. These fields are typed
+    // `Date | undefined` on `IFact`, so a string here is a contract violation
+    // we silently repair — a string in Mongo silently breaks `$gte/$lt` queries.
+    input = coerceFactTemporalFields(input);
 
     // Reject empty/whitespace predicates regardless of mode — these are almost
     // always a caller bug and corrupt ranking/retrieval if they land in storage.
@@ -1884,9 +1901,12 @@ export class MemorySystem implements IDisposable {
     assertNotDestroyed(this, 'updateEntityMetadata');
     const current = await this.store.getEntity(id, scope);
     if (!current) throw new Error(`updateEntityMetadata: entity ${id} not found`);
+    // Coerce ISO-string date values in the patch before merging so stored
+    // metadata stays Date-typed for Mongo range queries.
+    const coercedPatch = coerceMetadataDates(patch);
     const next: IEntity = {
       ...current,
-      metadata: { ...(current.metadata ?? {}), ...patch },
+      metadata: { ...(current.metadata ?? {}), ...coercedPatch },
       version: current.version + 1,
       updatedAt: new Date(),
     };

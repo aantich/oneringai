@@ -120,6 +120,7 @@ The background ingestor uses this vocabulary too; matching predicates lets the d
 - **Affiliation**: \`works_at\`, \`works_on\`, \`member_of\`, \`owns\`, \`manages\`, \`reports_to\`.
 - **Opinion / preference**: \`prefers\`, \`dislikes\`, \`avoids\`, \`believes\`, \`values\`.
 - **Activity / relation**: \`attended\`, \`hosted\`, \`assigned_to\`, \`blocked_by\`, \`depends_on\`, \`related_to\`.
+- **Goal / priority** (Chief-of-Staff deployments only): \`tracks_priority\` (Person → Priority entity — multi-valued, the user tracks many priorities), \`priority_affects\` (Priority → project / deal / person / topic / goal it governs).
 - **Narrative note** (when the user says "remember this": use \`note\` with \`kind:"document"\`).
 
 Do NOT use \`name\` (use \`full_name\` or \`preferred_name\`), \`employer\` (use \`works_at\` with an organization object), \`job\` (use \`role\` or \`title\`), \`mentioned_by\` (transcript artifact, not knowledge).
@@ -135,6 +136,18 @@ Do NOT use \`name\` (use \`full_name\` or \`preferred_name\`), \`employer\` (use
   \`memory_upsert_entity({type:'person', displayName:'Alice Smith', identifiers:[{kind:'email', value:'alice@acme.com'}]})\`
 - **organization** — with domain:
   \`memory_upsert_entity({type:'organization', displayName:'Acme', identifiers:[{kind:'domain', value:'acme.com'}]})\`
+- **priority** — long-term goal a user is tracking (Chief-of-Staff: "my Q2 priority is the NA launch", "my yearly goal is to ship X"). Two-step:
+  1. Upsert the priority entity:
+     \`memory_upsert_entity({type:'priority', displayName:'Ship NA launch', identifiers:[{kind:'canonical', value:'priority:<userId>:ship-na-launch-2026-q2'}], metadata:{jarvis:{priority:{horizon:'Q', weight:0.8, deadline:'2026-06-30T00:00:00Z', status:'active', scope:'personal'}}}})\`
+  2. Link the user to it so it surfaces in profile / ranking:
+     \`memory_link({from:'me', predicate:'tracks_priority', to:{id:'<priorityIdFromStep1>'}})\`
+  Fields: \`horizon\` 'Q' (quarterly) or 'Y' (yearly); \`weight\` 0..1 drives ordering (heavier = more central, default 0.5); \`scope\` 'personal'|'team'|'company' is a categorical label for ranking/filtering — it does NOT control privacy or sharing (the host platform manages visibility); \`status\` starts at 'active'.
+  Status transitions ('met' / 'dropped') — record the transition as an explicit \`state_changed\` fact on the priority entity. The system's task-state auto-router applies the change deterministically:
+  \`memory_remember({subject:{id:'<priorityId>'}, predicate:'state_changed', value:{from:'active', to:'met'}, observedAt:'<iso>'})\` (or \`to:'dropped'\`).
+  As an alternative when you want the change to land immediately on the entity itself, re-upsert with explicit overwrite: \`memory_upsert_entity({type:'priority', identifiers:[{kind:'canonical', value:'<sameCanonicalId>'}], metadata:{jarvis:{priority:{status:'met'}}}, metadataMerge:'overwrite'})\`. Default merge mode is \`fillMissing\` which would silently keep the old \`status\`.
+- **priority → affected entity** — when the user ties a priority to specific work ("this priority affects the NA Launch project", "that goal is about Acme"):
+  \`memory_link({from:{id:'<priorityId>'}, predicate:'priority_affects', to:{surface:'NA Launch project'}})\`
+  Future ranking uses these links to answer "is this signal/task relevant to a current priority?". Always link new priorities to the projects/people/topics they govern when the user mentions them.
 - **Fact on the user** — "remember that I prefer tea":
   \`memory_remember({subject:'me', predicate:'prefers', value:'tea'})\`
 - **Long-form note** — "remember this for future reference: <prose>":

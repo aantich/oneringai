@@ -243,6 +243,105 @@ describeIfAvailable('MongoMemoryAdapter (real Mongo)', () => {
     expect(got?.displayName).toBe('Updated');
     expect(got?.version).toBe(2);
   });
+
+  // --------------------------------------------------------------------------
+  // Date coercion at write boundary — protects against the BSON cross-type
+  // comparison bug where a string-typed value silently fails $gte/$lt range
+  // queries even when its content overlaps the requested range.
+  //
+  // The unit-level InMemoryAdapter test cannot prove this; JS comparison
+  // semantics are forgiving where BSON is not. Only a real-Mongo round-trip
+  // catches the regression.
+  // --------------------------------------------------------------------------
+
+  it('coerces ISO-string metadata dates so $gte/$lt queries match', async () => {
+    await adapter.createEntity({
+      type: 'event',
+      displayName: 'Date coercion target',
+      identifiers: [{ kind: 'cal_event', value: 'evt-coerce-1' }],
+      // Caller (LLM / REST sync) emits an ISO string. Without coercion at the
+      // write boundary, this lands in BSON as a string and the query below
+      // returns zero matches.
+      metadata: { startTime: '2026-05-01T10:00:00Z' },
+    });
+
+    const inRange = await adapter.listEntities(
+      {
+        type: 'event',
+        metadataFilter: {
+          startTime: {
+            $gte: new Date('2026-04-30T00:00:00Z'),
+            $lt: new Date('2026-05-02T00:00:00Z'),
+          },
+        },
+      },
+      {},
+      {},
+    );
+    expect(inRange.items.map((e) => e.displayName)).toContain('Date coercion target');
+
+    // Sanity check: a range that doesn't cover the value misses it.
+    const outOfRange = await adapter.listEntities(
+      {
+        type: 'event',
+        metadataFilter: {
+          startTime: { $gte: new Date('2026-06-01T00:00:00Z') },
+        },
+      },
+      {},
+      {},
+    );
+    expect(outOfRange.items.map((e) => e.displayName)).not.toContain('Date coercion target');
+  });
+
+  it('coerces ISO-string dates inside deeply-nested metadata (no depth cap)', async () => {
+    await adapter.createEntity({
+      type: 'priority',
+      displayName: 'Deep nested target',
+      identifiers: [{ kind: 'canonical', value: 'priority:user-1:deep' }],
+      metadata: {
+        // 3 levels deep — the depth-capped earlier impl missed this.
+        jarvis: { priority: { deadline: '2026-06-30T00:00:00Z', status: 'active' } },
+      },
+    });
+
+    const hits = await adapter.listEntities(
+      {
+        type: 'priority',
+        metadataFilter: {
+          'jarvis.priority.deadline': {
+            $gte: new Date('2026-06-29T00:00:00Z'),
+            $lt: new Date('2026-07-01T00:00:00Z'),
+          },
+        },
+      },
+      {},
+      {},
+    );
+    expect(hits.items.map((e) => e.displayName)).toContain('Deep nested target');
+  });
+
+  it('coerces ISO-string fact value fields ($ex: state_changed at:<iso>)', async () => {
+    const task = await adapter.createEntity({
+      type: 'task',
+      displayName: 'Range fact target',
+      identifiers: [{ kind: 'canonical', value: 'task:user-1:range' }],
+    });
+    // Common state_changed shape — the `at` ISO string must be coerced or
+    // a range query on `value.at` silently misses it.
+    await adapter.createFact({
+      subjectId: task.id,
+      predicate: 'state_changed',
+      kind: 'atomic',
+      value: { from: 'pending', to: 'in_progress', at: '2026-05-15T09:00:00Z' },
+    });
+
+    // Read back; verify the BSON type. Driver-level Date → JS Date round trip.
+    const facts = await adapter.findFacts({ subjectId: task.id }, {}, {});
+    const v = facts.items[0]?.value as Record<string, unknown> | undefined;
+    expect(v?.at).toBeInstanceOf(Date);
+    expect((v?.at as Date).toISOString()).toBe('2026-05-15T09:00:00.000Z');
+  });
 });
 
 if (!available) {

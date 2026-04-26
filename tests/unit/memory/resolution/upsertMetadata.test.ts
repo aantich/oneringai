@@ -40,11 +40,11 @@ describe('upsertEntityBySurface — metadata', () => {
       scope,
     );
     expect(res.resolved).toBe(false);
-    expect(res.entity.metadata).toEqual({
-      state: 'proposed',
-      dueAt: '2026-04-30',
-      assigneeId: 'alice',
-    });
+    const md = res.entity.metadata as Record<string, unknown>;
+    expect(md.state).toBe('proposed');
+    expect(md.dueAt).toBeInstanceOf(Date);
+    expect((md.dueAt as Date).toISOString()).toBe('2026-04-30T00:00:00.000Z');
+    expect(md.assigneeId).toBe('alice');
   });
 
   it('resolve + fillMissing (default): existing keys untouched, missing keys set', async () => {
@@ -73,11 +73,11 @@ describe('upsertEntityBySurface — metadata', () => {
     );
     expect(res.resolved).toBe(true);
     expect(res.entity.id).toBe(first.entity.id);
-    expect(res.entity.metadata).toEqual({
-      state: 'in_progress',
-      dueAt: '2026-04-30',
-      priority: 'high',
-    });
+    const md = res.entity.metadata as Record<string, unknown>;
+    expect(md.state).toBe('in_progress');
+    expect(md.dueAt).toBeInstanceOf(Date);
+    expect((md.dueAt as Date).toISOString()).toBe('2026-04-30T00:00:00.000Z');
+    expect(md.priority).toBe('high');
   });
 
   it('resolve + overwrite: shallow-merge with incoming winning', async () => {
@@ -102,11 +102,11 @@ describe('upsertEntityBySurface — metadata', () => {
       { metadataMerge: 'overwrite' },
     );
     expect(res.entity.id).toBe(first.entity.id);
-    expect(res.entity.metadata).toEqual({
-      state: 'done',
-      dueAt: '2026-04-30',
-      priority: 'high',
-    });
+    const md = res.entity.metadata as Record<string, unknown>;
+    expect(md.state).toBe('done');
+    expect(md.dueAt).toBeInstanceOf(Date);
+    expect((md.dueAt as Date).toISOString()).toBe('2026-04-30T00:00:00.000Z');
+    expect(md.priority).toBe('high');
   });
 
   it('resolve without metadata: existing metadata untouched, no version bump just for metadata', async () => {
@@ -151,10 +151,99 @@ describe('upsertEntityBySurface — metadata', () => {
       scope,
     );
     expect(out.entities).toHaveLength(1);
-    expect(out.entities[0]!.entity.metadata).toEqual({
-      state: 'proposed',
-      dueAt: '2026-05-01',
-    });
+    const md = out.entities[0]!.entity.metadata as Record<string, unknown>;
+    expect(md.state).toBe('proposed');
+    expect(md.dueAt).toBeInstanceOf(Date);
+    expect((md.dueAt as Date).toISOString()).toBe('2026-05-01T00:00:00.000Z');
+  });
+
+  it('overwrite mode: structurally-equal nested-object metadata does NOT bump version', async () => {
+    // Pre-coercion impl used `merged[k] !== v` (reference equality), which would
+    // falsely flag every nested object/array as dirty on resolve, bumping the
+    // version every call. The fix uses `metadataDeepEqual` — structurally equal
+    // values are a no-op.
+    const first = await mem.upsertEntityBySurface(
+      {
+        surface: 'Nested deep equal',
+        type: 'project',
+        identifiers: [{ kind: 'canonical', value: 'proj:nested-equal' }],
+        metadata: {
+          owners: ['alice', 'bob'],
+          jarvis: { importance: 0.8, tags: ['core', 'q3'] },
+        },
+      },
+      scope,
+    );
+    const vBefore = first.entity.version;
+    const res = await mem.upsertEntityBySurface(
+      {
+        surface: 'Nested deep equal',
+        type: 'project',
+        identifiers: [{ kind: 'canonical', value: 'proj:nested-equal' }],
+        // Same shape, fresh references — would have been dirty under `!==`.
+        metadata: {
+          owners: ['alice', 'bob'],
+          jarvis: { importance: 0.8, tags: ['core', 'q3'] },
+        },
+      },
+      scope,
+      { metadataMerge: 'overwrite' },
+    );
+    expect(res.entity.version).toBe(vBefore);
+  });
+
+  it('overwrite mode: structurally-equal Date metadata does NOT bump version', async () => {
+    const first = await mem.upsertEntityBySurface(
+      {
+        surface: 'Date equal',
+        type: 'event',
+        identifiers: [{ kind: 'canonical', value: 'evt:date-equal' }],
+        metadata: { startTime: new Date('2026-05-01T10:00:00Z') },
+      },
+      scope,
+    );
+    const vBefore = first.entity.version;
+    const res = await mem.upsertEntityBySurface(
+      {
+        surface: 'Date equal',
+        type: 'event',
+        identifiers: [{ kind: 'canonical', value: 'evt:date-equal' }],
+        // Different Date instance, same instant. Reference-equality would bump.
+        metadata: { startTime: new Date('2026-05-01T10:00:00Z') },
+      },
+      scope,
+      { metadataMerge: 'overwrite' },
+    );
+    expect(res.entity.version).toBe(vBefore);
+  });
+
+  it('overwrite mode: structurally-different nested metadata DOES bump version', async () => {
+    // Counterpoint to the deep-equal test: a real change must still flip dirty.
+    const first = await mem.upsertEntityBySurface(
+      {
+        surface: 'Nested changes',
+        type: 'project',
+        identifiers: [{ kind: 'canonical', value: 'proj:nested-changes' }],
+        metadata: { jarvis: { importance: 0.5 } },
+      },
+      scope,
+    );
+    const vBefore = first.entity.version;
+    const res = await mem.upsertEntityBySurface(
+      {
+        surface: 'Nested changes',
+        type: 'project',
+        identifiers: [{ kind: 'canonical', value: 'proj:nested-changes' }],
+        metadata: { jarvis: { importance: 0.9 } },
+      },
+      scope,
+      { metadataMerge: 'overwrite' },
+    );
+    expect(res.entity.version).toBe(vBefore + 1);
+    expect(
+      ((res.entity.metadata as Record<string, unknown>).jarvis as Record<string, unknown>)
+        .importance,
+    ).toBe(0.9);
   });
 
   it('fillMissing drops undefined values without flipping dirty', async () => {

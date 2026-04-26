@@ -36,7 +36,7 @@ describe('upsertEntity — metadata merge', () => {
     );
   }
 
-  it('create: metadata set verbatim regardless of merge option', async () => {
+  it('create: metadata set verbatim regardless of merge option (ISO date strings coerced to Date)', async () => {
     const res = await mem.upsertEntity(
       {
         type: 'event',
@@ -48,10 +48,10 @@ describe('upsertEntity — metadata merge', () => {
       scope,
     );
     expect(res.created).toBe(true);
-    expect(res.entity.metadata).toEqual({
-      startTime: '2026-05-01T10:00Z',
-      status: 'confirmed',
-    });
+    const md = res.entity.metadata as Record<string, unknown>;
+    expect(md.startTime).toBeInstanceOf(Date);
+    expect((md.startTime as Date).toISOString()).toBe('2026-05-01T10:00:00.000Z');
+    expect(md.status).toBe('confirmed');
   });
 
   it('default (no merge option) — metadata is ignored on resolve, version not bumped', async () => {
@@ -68,10 +68,10 @@ describe('upsertEntity — metadata merge', () => {
     );
     expect(second.entity.id).toBe(first.entity.id);
     expect(second.entity.version).toBe(1);
-    expect(second.entity.metadata).toEqual({
-      startTime: '2026-05-01T10:00Z',
-      status: 'confirmed',
-    });
+    const md = second.entity.metadata as Record<string, unknown>;
+    expect(md.startTime).toBeInstanceOf(Date);
+    expect((md.startTime as Date).toISOString()).toBe('2026-05-01T10:00:00.000Z');
+    expect(md.status).toBe('confirmed');
   });
 
   it('overwrite mode: incoming keys win, version bumps', async () => {
@@ -88,10 +88,10 @@ describe('upsertEntity — metadata merge', () => {
     );
     expect(second.entity.id).toBe(first.entity.id);
     expect(second.entity.version).toBe(2);
-    expect(second.entity.metadata).toEqual({
-      startTime: '2026-05-02T10:00Z',
-      status: 'cancelled',
-    });
+    const md = second.entity.metadata as Record<string, unknown>;
+    expect(md.startTime).toBeInstanceOf(Date);
+    expect((md.startTime as Date).toISOString()).toBe('2026-05-02T10:00:00.000Z');
+    expect(md.status).toBe('cancelled');
   });
 
   it('overwrite mode + metadataMergeKeys whitelist: only listed keys touched', async () => {
@@ -118,12 +118,12 @@ describe('upsertEntity — metadata merge', () => {
       },
       scope,
     );
-    expect(second.entity.metadata).toEqual({
-      startTime: '2026-05-02T10:00Z',
-      status: 'cancelled',
-      organizerId: 'p_alice',
-      attendeeIds: ['p_bob'],
-    });
+    const md = second.entity.metadata as Record<string, unknown>;
+    expect(md.startTime).toBeInstanceOf(Date);
+    expect((md.startTime as Date).toISOString()).toBe('2026-05-02T10:00:00.000Z');
+    expect(md.status).toBe('cancelled');
+    expect(md.organizerId).toBe('p_alice');
+    expect(md.attendeeIds).toEqual(['p_bob']);
     expect(second.entity.version).toBe(2);
   });
 
@@ -142,11 +142,11 @@ describe('upsertEntity — metadata merge', () => {
       },
       scope,
     );
-    expect(second.entity.metadata).toEqual({
-      startTime: '2026-05-01T10:00Z',
-      status: 'confirmed',
-      location: 'Boardroom A',
-    });
+    const md = second.entity.metadata as Record<string, unknown>;
+    expect(md.startTime).toBeInstanceOf(Date);
+    expect((md.startTime as Date).toISOString()).toBe('2026-05-01T10:00:00.000Z');
+    expect(md.status).toBe('confirmed');
+    expect(md.location).toBe('Boardroom A');
   });
 
   it('no-op when incoming values equal stored — version not bumped', async () => {
@@ -196,7 +196,9 @@ describe('upsertEntity — metadata merge', () => {
     );
     expect(second.entity.version).toBe(first.entity.version + 1);
     expect(second.entity.identifiers.map((i) => i.kind).sort()).toEqual(['cal_event', 'ical_uid']);
-    expect((second.entity.metadata as Record<string, unknown>).startTime).toBe('2026-05-03T10:00Z');
+    const startTime = (second.entity.metadata as Record<string, unknown>).startTime;
+    expect(startTime).toBeInstanceOf(Date);
+    expect((startTime as Date).toISOString()).toBe('2026-05-03T10:00:00.000Z');
   });
 
   it('undefined incoming values are skipped', async () => {
@@ -211,9 +213,37 @@ describe('upsertEntity — metadata merge', () => {
       },
       scope,
     );
-    expect(second.entity.metadata).toEqual({
-      startTime: '2026-05-01T10:00Z',
-      status: 'cancelled',
-    });
+    const md = second.entity.metadata as Record<string, unknown>;
+    expect(md.startTime).toBeInstanceOf(Date);
+    expect((md.startTime as Date).toISOString()).toBe('2026-05-01T10:00:00.000Z');
+    expect(md.status).toBe('cancelled');
+  });
+
+  it('coerces ISO date strings on first write so $gte/$lt range queries work', async () => {
+    await mem.upsertEntity(
+      {
+        type: 'event',
+        displayName: 'Range query target',
+        identifiers: [{ kind: 'cal_event', value: 'evt-range' }],
+        metadata: { startTime: '2026-05-01T10:00Z' },
+      },
+      scope,
+    );
+    // listEntities with a metadataFilter using Date should hit the entity —
+    // proves the stored value is Date-typed (string would fail the BSON range).
+    const page = await mem.listEntities(
+      {
+        type: 'event',
+        metadataFilter: {
+          startTime: {
+            $gte: new Date('2026-04-30T00:00:00Z'),
+            $lt: new Date('2026-05-02T00:00:00Z'),
+          },
+        },
+      },
+      {},
+      scope,
+    );
+    expect(page.items).toHaveLength(1);
   });
 });

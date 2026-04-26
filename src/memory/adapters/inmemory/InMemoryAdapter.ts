@@ -33,6 +33,7 @@ import type {
   TraversalOptions,
 } from '../../types.js';
 import { canAccess } from '../../AccessControl.js';
+import { coerceFactTemporalFields, coerceMetadataDates } from '../../dateCoercion.js';
 import { genericTraverse } from '../../GenericTraversal.js';
 
 export interface InMemoryAdapterOptions {
@@ -72,6 +73,9 @@ export class InMemoryAdapter implements IMemoryStore {
       version: 1,
       createdAt: now,
       updatedAt: now,
+      // Belt-and-suspenders: coerce ISO-string dates in metadata so direct
+      // adapter use (without MemorySystem) still yields Date-typed storage.
+      metadata: coerceMetadataDates(input.metadata),
     };
     this.indexEntity(entity);
     return clone(entity);
@@ -97,7 +101,8 @@ export class InMemoryAdapter implements IMemoryStore {
       );
     }
     this.unindexEntityIdentifiers(existing);
-    this.indexEntity(entity);
+    // Belt-and-suspenders: coerce metadata dates at the storage boundary.
+    this.indexEntity({ ...entity, metadata: coerceMetadataDates(entity.metadata) });
   }
 
   async getEntity(id: EntityId, scope: ScopeFilter): Promise<IEntity | null> {
@@ -229,8 +234,9 @@ export class InMemoryAdapter implements IMemoryStore {
 
   async createFact(input: NewFact): Promise<IFact> {
     this.assertLive();
+    const coerced = coerceFactTemporalFields(input);
     const fact: IFact = {
-      ...input,
+      ...coerced,
       id: newId(),
       createdAt: new Date(),
     };
@@ -275,7 +281,11 @@ export class InMemoryAdapter implements IMemoryStore {
     if (!isVisible(f, scope)) {
       throw new ScopeViolationError(`Fact ${id} not visible in scope`);
     }
-    const next: IFact = { ...f, ...patch, id: f.id };
+    // Belt-and-suspenders: coerce ISO-string temporal fields + nested
+    // metadata in the patch before applying. Mirrors MongoMemoryAdapter so
+    // the two stores stay observationally identical.
+    const coerced = coerceFactTemporalFields(patch);
+    const next: IFact = { ...f, ...coerced, id: f.id };
     this.unindexFact(f);
     this.indexFact(next);
   }

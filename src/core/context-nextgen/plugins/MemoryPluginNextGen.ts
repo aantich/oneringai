@@ -249,9 +249,14 @@ Entities have conventional types — use them in \`memory_find_entity\` filters:
 - \`person\`, \`organization\`, \`project\`, \`topic\` — minimal metadata.
 - \`task\` — \`metadata: {state, dueAt, priority?, assigneeId?, projectId?}\`. State vocabulary: \`pending\` | \`in_progress\` | \`blocked\` | \`deferred\` | \`done\` | \`cancelled\`.
 - \`event\` — \`metadata: {startTime, endTime?, location?, attendeeIds?}\`.
+- \`priority\` — long-term goal a user is tracking (Chief-of-Staff: quarterly/yearly objective). \`metadata.jarvis.priority: {horizon: 'Q'|'Y', weight: 0..1, deadline?, status: 'active'|'met'|'dropped', scope: 'personal'|'team'|'company'}\`. \`scope\` is a categorical label (NOT a privacy/permissions setting — those are managed by the host platform). The owning user's Person entity is linked to a priority via a \`tracks_priority\` fact; what the priority affects (project/deal/person/topic) is linked via \`priority_affects\` facts. Walk these in \`memory_graph\` to answer "what's this user working toward?" and "is X relevant to a current priority?".
 
 Example — list the user's open tasks:
 \`memory_find_entity({action:'list', by:{type:'task', metadataFilter:{state:{$in:['pending','in_progress']}}}})\`
+
+Example — list the user's active quarterly priorities, heaviest first
+(\`metadataFilter\` keys are short-form — relative to \`metadata\`. \`orderBy.field\` is a full dot-path on the entity document — include the \`metadata.\` prefix):
+\`memory_find_entity({action:'list', by:{type:'priority', metadataFilter:{'jarvis.priority.status':'active', 'jarvis.priority.horizon':'Q'}, orderBy:[{field:'metadata.jarvis.priority.weight', direction:'desc'}]}})\`
 
 If you're missing information, answer from what you can retrieve rather than apologising for "not remembering". Write-side capabilities, if any, are described separately below (and may be absent — some deployments update memory through a background pipeline instead).`;
 
