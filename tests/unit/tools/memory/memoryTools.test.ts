@@ -597,6 +597,36 @@ describe('memory_remember', () => {
     );
     expect(r.fact.subjectId).toBe(ids.otherUserId);
   });
+
+  it('rejects reserved predicate "agent_behavior_rule" — must use memory_set_agent_rule', async () => {
+    // Closes a back-door: without this guard, the rules-block renderer in
+    // MemoryPluginNextGen would surface a fact written here as if it were a
+    // proper agent rule, bypassing memory_set_agent_rule's rate limit and
+    // ownership stamp.
+    const mem = makeMem();
+    const ids = await bootstrap(mem);
+    const remember = toolByName(tools(mem, ids), 'memory_remember');
+    const r: any = await remember.execute(
+      {
+        subject: 'this_agent',
+        predicate: 'agent_behavior_rule',
+        details: 'be terse',
+      },
+      { userId: USER_ID },
+    );
+    expect(r.fact).toBeUndefined();
+    expect(typeof r.error).toBe('string');
+    expect(r.error).toMatch(/agent_behavior_rule/);
+    expect(r.error).toMatch(/memory_set_agent_rule/);
+
+    // Belt-and-suspenders — confirm nothing was written.
+    const page = await mem.findFacts(
+      { predicate: 'agent_behavior_rule' },
+      { limit: 10 },
+      { userId: USER_ID },
+    );
+    expect(page.items.length).toBe(0);
+  });
 });
 
 // ===========================================================================

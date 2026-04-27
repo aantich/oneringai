@@ -148,8 +148,23 @@ export interface MemoryToolDeps {
    *
    * Defaults: 10 calls per 60_000 ms window. Set `maxCallsPerWindow: 0` to
    * disable (not recommended for production).
+   *
+   * Also used as the fallback for `setAgentRuleRateLimit` for back-compat —
+   * see that field's docstring for why a separate budget is preferable.
    */
   forgetRateLimit?: {
+    maxCallsPerWindow?: number;
+    windowMs?: number;
+  };
+  /**
+   * Per-user cooldown for `memory_set_agent_rule`. Conceptually a separate
+   * budget from `memory_forget` (rule-writes vs destructive ops have
+   * different blast radii). When omitted, falls back to `forgetRateLimit`
+   * for back-compat with hosts that only configured the legacy field.
+   *
+   * Defaults: 10 calls per 60_000 ms window when both fields are omitted.
+   */
+  setAgentRuleRateLimit?: {
     maxCallsPerWindow?: number;
     windowMs?: number;
   };

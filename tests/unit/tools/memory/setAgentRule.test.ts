@@ -188,4 +188,27 @@ describe('memory_set_agent_rule — tool', () => {
     expect(r3.retryAfterMs).toBeGreaterThan(0);
     expect(r3.ruleId).toBeUndefined();
   });
+
+  it('rate limit: dedicated setAgentRuleRateLimit takes precedence over forgetRateLimit fallback', async () => {
+    const ids = await bootstrap(mem);
+    const base = await buildDeps(mem, ids);
+    // forgetRateLimit is loose (999/min); setAgentRuleRateLimit is tight (2/min).
+    // The tool must honor the dedicated knob, not the fallback.
+    const deps: MemoryToolDeps = {
+      ...base,
+      forgetRateLimit: { maxCallsPerWindow: 999, windowMs: 60_000 },
+      setAgentRuleRateLimit: { maxCallsPerWindow: 2, windowMs: 60_000 },
+    };
+    const tool = createSetAgentRuleTool(deps);
+
+    const r1: any = await tool.execute({ rule: 'rule a' }, { userId: USER_ID });
+    const r2: any = await tool.execute({ rule: 'rule b' }, { userId: USER_ID });
+    const r3: any = await tool.execute({ rule: 'rule c' }, { userId: USER_ID });
+
+    expect(r1.error).toBeUndefined();
+    expect(r2.error).toBeUndefined();
+    // If precedence were inverted, r3 would succeed (under the loose 999 budget).
+    expect(r3.rateLimited).toBe(true);
+    expect(r3.ruleId).toBeUndefined();
+  });
 });
