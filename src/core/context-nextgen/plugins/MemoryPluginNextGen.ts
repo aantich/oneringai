@@ -2,18 +2,30 @@
  * MemoryPluginNextGen — bridges the self-learning memory layer into the
  * agent's context.
  *
+ * Framing convention: the rules block is in 1st person (it describes the
+ * agent itself — "be terse"). Every other block is in **3rd person**, framed
+ * as "About the User" / "User's Priorities" / "About the User's Organization",
+ * because the agent is helping the user with the user's goals — not pursuing
+ * its own. Earlier wording ("Your User Profile") risked the agent treating
+ * the user's profile / priorities as its own.
+ *
  * What it injects into the system message:
  *   ## User-specific instructions for this agent
  *   _Directives the current user has given. Follow them over default behavior._
  *   - [<ruleId>] <rule text>
  *   - ...
  *
- *   ## Your User Profile (<displayName>)
+ *   ## About the User (<displayName>)
+ *   **Timezone:** <iana-tz>                       ← only when entity.metadata.jarvis.tz set
  *   <profile.details>
  *   ### Recent top facts (up to N)
  *   - ...
  *
- *   ## Your Organization Profile (<orgName>)      ← only when groupBootstrap set
+ *   ## User's Active Priorities                   ← only when tracks_priority facts exist
+ *   - **<priority displayName>** _(horizon=Q, weight=0.80, deadline=…, scope=personal)_
+ *   - ...
+ *
+ *   ## About the User's Organization (<orgName>)  ← only when groupBootstrap set
  *   <profile.details>
  *   ### Recent top facts (up to N)
  *   - ...
@@ -138,7 +150,8 @@ export interface MemoryPluginConfig {
    * Optional group ("current organization") bootstrap. When present AND
    * `groupId` is set, a third `organization` entity is upserted carrying the
    * identifier `{kind: 'system_group_id', value: groupId}` (plus any extras).
-   * Rendered as a "Your Organization Profile" block alongside the user profile.
+   * Rendered as an "About the User's Organization" block alongside the user
+   * profile.
    *
    * Visibility of facts on this entity is controlled by the host's
    * `MemorySystem.visibilityPolicy` and per-write `permissions` overrides —
@@ -233,7 +246,7 @@ function stripHeavyFactFields(f: IFact): IFact {
 
 const MEMORY_INSTRUCTIONS = `## Memory (self-learning knowledge store)
 
-The user's profile and any user-specific instructions for you are ALREADY shown above — do not call memory_recall on "me" just to re-read them. User-specific instructions override default behavior; honor them literally.
+The user's profile, the user's active priorities, and any user-specific instructions for you are ALREADY shown above — do not call memory_recall on "me" just to re-read them. The profile / priorities blocks describe the USER (3rd person); the user-specific instructions block describes YOU (1st person) and overrides default behavior. When planning or recommending action, prefer paths that advance an active user priority.
 
 For anything else — other people, organisations, projects, topics, events, tasks — use the memory_* retrieval tools:
 - When the user mentions an entity you don't yet know, call memory_find_entity or memory_recall with {surface:"..."}.
@@ -370,16 +383,24 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
         if (rulesBlock) blocks.push(rulesBlock);
       }
 
-      // User profile — addressed to the LLM as "Your User Profile".
+      // User profile — 3rd-person framing so the agent doesn't confuse the
+      // user's context with its own. Timezone surfaces here when set.
       if (this.userEntityId) {
         const userBlock = await this.renderProfileBlock(
           this.userEntityId,
           this.userDisplayName,
           this.userInj,
-          'Your User Profile',
+          'About the User',
           scope,
+          { kind: 'user' },
         );
         if (userBlock) blocks.push(userBlock);
+
+        // Priorities directly after the user profile — what the user is
+        // working toward. Walks `tracks_priority` facts on the user entity;
+        // returns null when no active priorities are tracked.
+        const prioritiesBlock = await this.renderPrioritiesBlock(this.userEntityId, scope);
+        if (prioritiesBlock) blocks.push(prioritiesBlock);
       }
 
       // Organization profile — rendered only when group bootstrap succeeded.
@@ -392,8 +413,9 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
           this.groupEntityId,
           this.groupDisplayName ?? `group:${this.groupId}`,
           this.groupInj,
-          'Your Organization Profile',
+          "About the User's Organization",
           scope,
+          { kind: 'organization' },
         );
         if (groupBlock) blocks.push(groupBlock);
       }
@@ -744,7 +766,7 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
 
   private buildPlaceholder(): string {
     return [
-      '## Your User Profile',
+      '## About the User',
       '(memory unavailable — retrying next turn)',
     ].join('\n');
   }
@@ -812,12 +834,166 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
     return lines.join('\n');
   }
 
+  /**
+   * Render the user's active priorities. Walks `tracks_priority` facts on
+   * the user entity (write side: `memory_link({from:'me', predicate:'tracks_priority',
+   * to:{id:<priorityId>}})` after `memory_upsert_entity({type:'priority', ...})`),
+   * fetches the linked priority entities, filters by
+   * `metadata.jarvis.priority.status === 'active'`, and orders by weight desc
+   * with deadline asc as a tiebreak.
+   *
+   * Returns null when:
+   *   - no `tracks_priority` facts exist on the user
+   *   - findFacts/getEntities throws (logged warn, graceful degrade)
+   *   - all referenced priorities are non-active or archived
+   *
+   * No render config: priorities are critical context and always surface when
+   * present. Hosts that need to suppress this section can set
+   * `userProfileInjection.recentActivity.limit = 0` for activity, but the
+   * priorities block intentionally has no off switch — if a user tracked
+   * priorities exist, the agent must see them.
+   */
+  private async renderPrioritiesBlock(
+    userEntityId: EntityId,
+    scope: ScopeFilter,
+  ): Promise<string | null> {
+    let factsPage: { items: IFact[] };
+    try {
+      factsPage = await this.memory.findFacts(
+        {
+          subjectId: userEntityId,
+          predicate: 'tracks_priority',
+          archived: false,
+        },
+        // 100 is well above any plausible per-user priority count; gives
+        // headroom for callers that haven't pruned old `met`/`dropped` links
+        // and still works with the hard ceiling enforced by adapters.
+        { limit: 100, orderBy: { field: 'observedAt', direction: 'desc' } },
+        scope,
+      );
+    } catch (err) {
+      logger.warn(
+        {
+          component: 'MemoryPluginNextGen',
+          agentId: this.agentId,
+          userId: this.userId,
+          error: err instanceof Error ? err.message : String(err),
+        },
+        'priorities fetch failed — section omitted for this turn',
+      );
+      return null;
+    }
+
+    const priorityIds = Array.from(
+      new Set(
+        factsPage.items
+          .map((f) => f.objectId)
+          .filter((id): id is EntityId => Boolean(id)),
+      ),
+    );
+    if (priorityIds.length === 0) return null;
+
+    let entities: Array<IEntity | null>;
+    try {
+      entities = await this.memory.getEntities(priorityIds, scope);
+    } catch (err) {
+      logger.warn(
+        {
+          component: 'MemoryPluginNextGen',
+          agentId: this.agentId,
+          userId: this.userId,
+          error: err instanceof Error ? err.message : String(err),
+        },
+        'priorities entity-fetch failed — section omitted for this turn',
+      );
+      return null;
+    }
+
+    interface ActivePriority {
+      entity: IEntity;
+      horizon: string | undefined;
+      weight: number;
+      deadline: string | undefined;
+      scopeLabel: string | undefined;
+      deadlineMs: number;
+    }
+    const active: ActivePriority[] = [];
+    for (const e of entities) {
+      if (!e) continue;
+      if (e.archived) continue;
+      const pri = readJarvisRecord(e.metadata, 'priority');
+      // status defaults to 'active' when omitted — early data may have been
+      // written before the field was conventional. Only filter when the field
+      // is explicitly set to a non-active value.
+      const status = typeof pri?.status === 'string' ? pri.status : 'active';
+      if (status !== 'active') continue;
+      const horizon = typeof pri?.horizon === 'string' ? pri.horizon : undefined;
+      const weight = typeof pri?.weight === 'number' ? pri.weight : 0;
+      // Deadline arrives either as an ISO string (caller-supplied) or a
+      // Date instance (after `coerceMetadataDates` runs in MemorySystem.upsertEntity).
+      // Normalize both to a stable ISO string for display + a numeric ms for sort.
+      const deadlineRaw = pri?.deadline;
+      let deadline: string | undefined;
+      let deadlineMs = Number.POSITIVE_INFINITY;
+      if (deadlineRaw instanceof Date) {
+        const t = deadlineRaw.getTime();
+        if (Number.isFinite(t)) {
+          deadline = deadlineRaw.toISOString();
+          deadlineMs = t;
+        }
+      } else if (typeof deadlineRaw === 'string' && deadlineRaw.length > 0) {
+        const t = Date.parse(deadlineRaw);
+        deadline = deadlineRaw;
+        if (Number.isFinite(t)) deadlineMs = t;
+      }
+      const scopeLabel = typeof pri?.scope === 'string' ? pri.scope : undefined;
+      active.push({
+        entity: e,
+        horizon,
+        weight,
+        deadline,
+        scopeLabel,
+        deadlineMs,
+      });
+    }
+    if (active.length === 0) return null;
+
+    // Sort: heaviest weight first; sooner deadline as tiebreak. Missing
+    // deadlines sort last via Number.POSITIVE_INFINITY above.
+    active.sort((a, b) => {
+      if (b.weight !== a.weight) return b.weight - a.weight;
+      return a.deadlineMs - b.deadlineMs;
+    });
+
+    const lines: string[] = [
+      "## User's Active Priorities",
+      "_Long-term goals the user is tracking (3rd-person — these are the USER's goals, not yours). " +
+      'When planning, recommending, or filtering signal, bias toward paths that advance an active priority. ' +
+      'Cite a priority by name when it bears on the request._',
+      '',
+    ];
+    for (const p of active) {
+      const tags: string[] = [];
+      if (p.horizon) tags.push(`horizon=${p.horizon}`);
+      if (p.weight > 0) tags.push(`weight=${p.weight.toFixed(2)}`);
+      if (p.deadline) tags.push(`deadline=${p.deadline}`);
+      if (p.scopeLabel) tags.push(`scope=${p.scopeLabel}`);
+      const tagStr =
+        tags.length > 0
+          ? ` _(${tags.map((t) => escapeInline(t)).join(', ')})_`
+          : '';
+      lines.push(`- **${escapeInline(p.entity.displayName)}**${tagStr}`);
+    }
+    return lines.join('\n');
+  }
+
   private async renderProfileBlock(
     entityId: EntityId,
     displayNameFallback: string,
     inj: ResolvedInjection,
     headerLabel: string,
     scope: ScopeFilter,
+    target: { kind: 'user' | 'organization' },
   ): Promise<string | null> {
     const view = await this.memory.getContext(
       entityId,
@@ -832,6 +1008,16 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
     const name = escapeInline(view.entity.displayName || displayNameFallback);
     // headerLabel is a trusted constant from this module; name is untrusted.
     lines.push(`## ${headerLabel} (${name})`);
+
+    // Timezone — host apps stamp this on the user entity via
+    // `metadata.jarvis.tz` (IANA string, e.g. 'Europe/Berlin'). Surfacing it
+    // here lets the agent reason about "today" / "this morning" / scheduling
+    // without guessing UTC or asking. User-only by default — orgs may have
+    // their own timezone but that's a separate convention the host can opt in.
+    if (target.kind === 'user') {
+      const tz = readJarvisString(view.entity.metadata, 'tz');
+      if (tz) lines.push(`**Timezone:** ${escapeInline(tz)}`);
+    }
 
     if (inj.identifiers) {
       const ids = view.entity.identifiers
@@ -1055,6 +1241,37 @@ function resolveRecentActivity(
     windowDays: cfg.windowDays ?? RECENT_ACTIVITY_DEFAULT.windowDays,
     predicates: cfg.predicates,
   };
+}
+
+/**
+ * Read a string field from `metadata.jarvis.<key>` defensively. The `jarvis`
+ * namespace inside `entity.metadata` is the host application's reserved area
+ * (e.g. `metadata.jarvis.priority.{...}` on `priority` entities, or
+ * `metadata.jarvis.tz` on the user). Returns undefined on any shape
+ * deviation — callers render nothing rather than surfacing junk.
+ */
+function readJarvisString(
+  metadata: Record<string, unknown> | undefined,
+  key: string,
+): string | undefined {
+  const jarvis = metadata?.jarvis;
+  if (!jarvis || typeof jarvis !== 'object') return undefined;
+  const v = (jarvis as Record<string, unknown>)[key];
+  return typeof v === 'string' && v.length > 0 ? v : undefined;
+}
+
+/**
+ * Read a record field from `metadata.jarvis.<key>` (e.g. the `priority`
+ * sub-object on a priority entity). See `readJarvisString` for namespace notes.
+ */
+function readJarvisRecord(
+  metadata: Record<string, unknown> | undefined,
+  key: string,
+): Record<string, unknown> | undefined {
+  const jarvis = metadata?.jarvis;
+  if (!jarvis || typeof jarvis !== 'object') return undefined;
+  const v = (jarvis as Record<string, unknown>)[key];
+  return v && typeof v === 'object' ? (v as Record<string, unknown>) : undefined;
 }
 
 function renderFactLine(

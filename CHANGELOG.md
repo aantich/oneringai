@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Memory plugin: 3rd-person framing, User's Active Priorities block, user timezone
+
+`MemoryPluginNextGen.getContent()` now distinguishes 1st-person (about the agent) from 3rd-person (about the user) blocks so the agent doesn't conflate the user's context with its own.
+
+- **3rd-person headers** — `## Your User Profile` → `## About the User (<displayName>)` and `## Your Organization Profile` → `## About the User's Organization (<orgName>)`. The "User-specific instructions for this agent" block stays in 1st person — it really does describe the agent. **Breaking** for callers asserting on the old strings; the public plugin API is unchanged.
+- **`## User's Active Priorities`** — new section rendered IMMEDIATELY after the user profile block (before the organization block) when the user has at least one active tracked priority. Walks `tracks_priority` facts on the user entity, fetches the linked `priority` entities, filters by `metadata.jarvis.priority.status === 'active'`, sorts by `weight` desc with `deadline` asc as tiebreak. Each bullet renders the priority's `displayName` plus tags `(horizon, weight, deadline, scope)` when set. Section is omitted entirely when no `tracks_priority` facts exist or all referenced priorities are non-active. Write path is unchanged: `memory_upsert_entity({type:'priority', metadata:{jarvis:{priority:{...}}}})` followed by `memory_link({from:'me', predicate:'tracks_priority', to:{id:<priorityId>}})`.
+- **`**Timezone:**` line** in the user profile block when `userEntity.metadata.jarvis.tz` is set (IANA string, e.g. `'Europe/Berlin'`). Lets the agent reason about "today" / scheduling without guessing UTC. User-only by convention — the renderer ignores `tz` on org/agent entities. Host apps populate it via `memory.upsertEntity({..., metadata:{jarvis:{tz:'...'}}, metadataMerge:'overwrite'})` or the LLM tool `memory_upsert_entity`.
+- **Plugin instructions updated** — `MEMORY_INSTRUCTIONS` now points at the priorities section explicitly and reminds the agent that profile/priorities describe the USER (3rd person), while the rules block describes the agent (1st person, overrides default behavior).
+
 ### Routines: `routine_list` + `routine_delete` tools, summary-only listing
 
 - **New tool `routine_list`** — slim, paginated listing of routine definitions. Filters by `tags` (ANY-of intersect), `search` (case-insensitive substring on name/description), `limit` (1–200, default 50), `offset`. Returns `{ count, hasMore, routines: RoutineSummary[] }`. The pagination probe fetches `limit + 1` to compute `hasMore` without a second round-trip.
