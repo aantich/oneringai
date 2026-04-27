@@ -4011,11 +4011,11 @@ Three blocks are rendered when `features.memory: true`:
 
 ```
 ## User-specific instructions for this agent
-_Directives the current user has given. Follow them over default behavior._
-- Be terse in replies. ` ruleId=fact_abc123_…`
-- Reply in English again. ` ruleId=fact_def456_…`
+_The items below describe YOU … each line begins with `[ruleId=<id>]` — pass that exact id to `memory_set_agent_rule.replaces` to supersede or to `memory_forget.factId` to drop._
+- [ruleId=fact_abc123_…] Be terse in replies.
+- [ruleId=fact_def456_…] Reply in English again.
 
-## Your User Profile (Alice Smith)
+## About the User (Alice Smith)
 Alice prefers concise replies, leads product strategy at Acme, …
 
 ### Recent top facts (up to 20)
@@ -4023,7 +4023,7 @@ Alice prefers concise replies, leads product strategy at Acme, …
 - works_at: Acme (conf=0.95)
 - role: "product lead" (conf=0.9)
 
-## Your Organization Profile (Acme)        ← only when groupBootstrap is set
+## About the User's Organization (Acme)        ← only when groupBootstrap is set
 Acme is a 500-person SaaS company in the logistics space …
 
 ### Recent top facts (up to 20)
@@ -4097,7 +4097,8 @@ interface MemoryWritePluginConfig {
   groupId?: string;
   defaultVisibility?: { /* same shape as above */ };
   autoResolveThreshold?: number;
-  forgetRateLimit?: { maxCallsPerWindow?: number; windowMs?: number };  // default 10/60s/user
+  forgetRateLimit?: { maxCallsPerWindow?: number; windowMs?: number };       // default 10/60s/user; also fallback for setAgentRuleRateLimit
+  setAgentRuleRateLimit?: { maxCallsPerWindow?: number; windowMs?: number }; // default: falls back to forgetRateLimit, then 10/60s/user
 }
 ```
 

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Memory: agent-rule write path tightened
+
+Tightening pass on `memory_set_agent_rule` and the rules-block round-trip. All public types are backwards-compatible; the system-message render format changed (callers asserting on the old `[<factId>] body` literal must update).
+
+- **Rules block render format** — `## User-specific instructions for this agent` lines now render as `- [ruleId=<id>] <body>` (was `- [<factId>] <body>`). Eliminates the LLM's mental hop between the bare bracketed id, `memory_forget.factId`, and `memory_set_agent_rule.replaces` — the bracket label now spells the field name. Preamble updated to spell out both supersede + drop paths in one sentence.
+- **`memory_remember` reserves `agent_behavior_rule`** — writes with `predicate: 'agent_behavior_rule'` are now rejected at the tool layer with a structured error pointing to `memory_set_agent_rule`. Closes a back-door where an LLM ignoring the prose advisory could bypass the rule-write rate limit + ownership stamp by writing the same predicate directly. Other predicates on the agent entity still flow through (forward-compat for a future rule-inference engine that may write different predicates).
+- **New `setAgentRuleRateLimit` config field** on `MemoryToolDeps`, `CreateMemoryToolsArgs`, `MemoryWritePluginConfig`. Same shape as `forgetRateLimit` (`{maxCallsPerWindow?, windowMs?}`); falls back to `forgetRateLimit`, then to the 10/60s default. Lets hosts give rule-writes a different budget than destructive `memory_forget` ops without sharing one knob.
+- **`memory_forget` description cross-links rule-drop** — passing a `ruleId` from the rules block as `factId` is now documented as the canonical way to drop a behavior rule with no replacement. Use `memory_set_agent_rule.replaces` instead when *swapping* one rule for another (preserves the audit chain on the rule list).
+- **Trimmed doubled prose in `WRITE_INSTRUCTIONS`** — the YES/NO trigger list and first-person rephrasing table for `memory_set_agent_rule` are now in the tool's own description only (single source of truth). Saves ~400 tokens per turn on agents carrying the write bundle. The plugin's instruction block keeps a short pointer + the "rule about YOU vs fact about the USER" asymmetry test.
+- **Multi-rule guidance** — tool description now tells the LLM to call once per atomic rule when the user states several at once ("be terse, no bullets, in Russian" → three calls), so each can supersede / be forgotten independently.
+
 ### Memory plugin: 3rd-person framing, User's Active Priorities block, user timezone
 
 `MemoryPluginNextGen.getContent()` now distinguishes 1st-person (about the agent) from 3rd-person (about the user) blocks so the agent doesn't conflate the user's context with its own.

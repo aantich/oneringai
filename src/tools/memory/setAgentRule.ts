@@ -43,8 +43,8 @@ import {
 // Mirror `memory_forget`'s default: 10 writes per 60s per user. A jailbroken
 // agent could otherwise spam rules that get rendered into every subsequent
 // turn's system message — asymmetric cost (cheap to write, expensive to read
-// every turn until superseded). Host can override via `forgetRateLimit` on
-// the deps (shared with `memory_forget` — same policy surface).
+// every turn until superseded). Host can override via `setAgentRuleRateLimit`
+// on the deps; if absent, falls back to `forgetRateLimit` for back-compat.
 const SET_RULE_DEFAULT_MAX = 10;
 const SET_RULE_DEFAULT_WINDOW_MS = 60_000;
 
@@ -92,13 +92,23 @@ Params:
 
 - replaces: optional ruleId (a fact id) of a prior rule the new one overrides.
 
-The rule appears in your system message's "User-specific instructions for this agent" block from the next turn onward, where you will read it as your own persistent context.`;
+**Multiple rules in one user turn.** If the user states several distinct directives at once ("be terse, no bullets, in Russian"), call this tool **once per atomic rule** — three calls, three lines. Each rule supersedes / is forgotten independently; concatenating them into one rule string defeats granular supersession ("never mind the bullets thing" → which part?). Splitting also makes the rule list easier to read back.
+
+The rule appears in your system message's "User-specific instructions for this agent" block from the next turn onward, rendered as \`- [ruleId=<id>] <rule>\`. The bracketed value is the same id you'd pass to \`memory_forget.factId\` to drop the rule, or to this tool's \`replaces\` to supersede it.`;
 
 const BEHAVIOR_RULE_PREDICATE = 'agent_behavior_rule';
 
 export function createSetAgentRuleTool(deps: MemoryToolDeps): ToolFunction<SetAgentRuleArgs> {
-  const maxCalls = deps.forgetRateLimit?.maxCallsPerWindow ?? SET_RULE_DEFAULT_MAX;
-  const windowMs = deps.forgetRateLimit?.windowMs ?? SET_RULE_DEFAULT_WINDOW_MS;
+  // Prefer the dedicated `setAgentRuleRateLimit`; fall back to `forgetRateLimit`
+  // so hosts that only configured the legacy field keep working unchanged.
+  const maxCalls =
+    deps.setAgentRuleRateLimit?.maxCallsPerWindow ??
+    deps.forgetRateLimit?.maxCallsPerWindow ??
+    SET_RULE_DEFAULT_MAX;
+  const windowMs =
+    deps.setAgentRuleRateLimit?.windowMs ??
+    deps.forgetRateLimit?.windowMs ??
+    SET_RULE_DEFAULT_WINDOW_MS;
   const checkRate = createSlidingWindowLimiter(maxCalls, windowMs);
   return {
     definition: {

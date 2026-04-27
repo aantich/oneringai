@@ -43,9 +43,12 @@ export interface ForgetArgs {
 
 const DESCRIPTION = `Archive a fact, optionally replacing it with a corrected/updated one. Supersession (replaceWith) preserves history — you can always audit what changed. Plain archive just hides the fact.
 
+Behavior rules from \`memory_set_agent_rule\` are facts too: when the user wants a rule **dropped entirely with no replacement** ("never mind the Russian thing", "stop being terse"), pass the \`ruleId\` shown in your system message's "User-specific instructions for this agent" block as \`factId\` here. Use \`memory_set_agent_rule\` with \`replaces\` instead when the user is *swapping* one rule for another (preserves the audit chain on the rule list).
+
 Examples:
 - Archive a wrong fact outright: {"factId":"fact_xyz"}
-- Supersede with a correction (subject inherited from predecessor):
+- Drop a behavior rule the user retracted: {"factId":"<ruleId from system message>"}
+- Supersede a fact with a correction (subject inherited from predecessor):
   {"factId":"fact_xyz","replaceWith":{"predicate":"role","value":"senior engineer"}}
 - Update free-form document:
   {"factId":"fact_note","replaceWith":{"predicate":"learned_pattern","details":"New version of the pattern...","importance":0.8}}`;

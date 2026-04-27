@@ -87,8 +87,17 @@ export interface CreateMemoryToolsArgs {
   /**
    * Override the `memory_forget` rate limit. Default: 10 calls / 60s per user.
    * Use `{ maxCallsPerWindow: 0 }` to disable (not recommended for production).
+   *
+   * Also used as the fallback for `setAgentRuleRateLimit`.
    */
   forgetRateLimit?: { maxCallsPerWindow?: number; windowMs?: number };
+  /**
+   * Override the `memory_set_agent_rule` rate limit. Same defaults as
+   * `forgetRateLimit` (10 calls / 60s per user) and falls back to it when
+   * omitted, but specifying it separately lets a host raise rule-write
+   * quota without also raising the destructive `memory_forget` quota.
+   */
+  setAgentRuleRateLimit?: { maxCallsPerWindow?: number; windowMs?: number };
 }
 
 function buildDeps(args: CreateMemoryToolsArgs): MemoryToolDeps {
@@ -111,6 +120,7 @@ function buildDeps(args: CreateMemoryToolsArgs): MemoryToolDeps {
       forOther: args.defaultVisibility?.forOther ?? 'private',
     },
     forgetRateLimit: args.forgetRateLimit,
+    setAgentRuleRateLimit: args.setAgentRuleRateLimit,
   };
 }
 

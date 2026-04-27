@@ -1898,11 +1898,11 @@ const agent = Agent.create({
 
 // On every agent turn the system message now includes:
 //   ## User-specific instructions for this agent
-//   _The current user has given you these directives. Honor them over default behavior..._
-//   - Be terse in replies.  `ruleId=fact_abc123_...`
-//   - Reply in Russian.     `ruleId=fact_def456_...`
+//   _Each line begins with `[ruleId=<id>]` — pass that to memory_set_agent_rule.replaces to supersede, or to memory_forget.factId to drop..._
+//   - [ruleId=fact_abc123_...] Be terse in replies.
+//   - [ruleId=fact_def456_...] Reply in Russian.
 //
-//   ## Your User Profile (user:alice)
+//   ## About the User (user:alice)
 //   ...profile.details (regenerates automatically from new user-subject facts)...
 //   ### Recent top facts (up to 20)
 //
@@ -2119,9 +2119,9 @@ Record a user-specific behavior rule for this agent. Writes a fact with `subject
 
 ```
 ## User-specific instructions for this agent
-_The current user has given you these directives. Honor them over default behavior..._
-- Be terse in replies.  `ruleId=fact_abc123_...`
-- Reply in English again.  `ruleId=fact_def456_...`
+_Each line begins with `[ruleId=<id>]` — pass that to memory_set_agent_rule.replaces to supersede, or to memory_forget.factId to drop..._
+- [ruleId=fact_abc123_...] Be terse in replies.
+- [ruleId=fact_def456_...] Reply in English again.
 ```
 
 The block is omitted entirely when the user hasn't set any rules. Rules are scoped per-user-per-agent via `ownerId` (another user of the same agent gets a different set).

@@ -66,10 +66,10 @@ describe('MemoryPluginNextGen — rules block', () => {
     expect(out).toMatch(/## User-specific instructions for this agent/);
     expect(out).toContain('Be terse in replies.');
     expect(out).toContain('Reply in Russian.');
-    // Full factId is rendered verbatim in square brackets — the agent passes
-    // this to memory_set_agent_rule.replaces without modification.
-    expect(out).toContain(`[${id1}]`);
-    expect(out).toContain(`[${id2}]`);
+    // Bracket renders as `[ruleId=<factId>]` — explicit field name spares
+    // the LLM from bridging memory_forget(factId) ↔ memory_set_agent_rule(ruleId).
+    expect(out).toContain(`[ruleId=${id1}]`);
+    expect(out).toContain(`[ruleId=${id2}]`);
   });
 
   it('does NOT render the old ## Agent Profile block', async () => {
@@ -89,8 +89,8 @@ describe('MemoryPluginNextGen — rules block', () => {
     const out = (await plugin.getContent())!;
     expect(out).toContain('Use metric units.');
     expect(out).not.toContain('Use imperial units.');
-    expect(out).toContain(`[${liveId}]`);
-    expect(out).not.toContain(`[${deadId}]`);
+    expect(out).toContain(`[ruleId=${liveId}]`);
+    expect(out).not.toContain(`[ruleId=${deadId}]`);
   });
 
   it('renders long rules in full (no char cap on rule bodies)', async () => {
@@ -162,7 +162,7 @@ describe('MemoryPluginNextGen — rules block', () => {
 
     const out = (await plugin.getContent())!;
     expect(out).toContain('Be terse.');
-    expect(out).toContain(`[${ownId}]`);
+    expect(out).toContain(`[ruleId=${ownId}]`);
     // Either the write was rejected (plantedForeignFact=false, ideal) OR the
     // render filter dropped it after storage. Both outcomes satisfy the
     // defence-in-depth property.

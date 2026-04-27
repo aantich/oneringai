@@ -14,6 +14,7 @@ import {
   visibilityToPermissions,
 } from './types.js';
 import { findForeignContextIds, ownerlessSubjectWarning } from './ownership.js';
+import { AGENT_BEHAVIOR_RULE_PREDICATE } from './setAgentRule.js';
 
 export interface RememberArgs {
   subject: SubjectRef;
@@ -58,6 +59,8 @@ kind (default "atomic"):
 value vs objectId: set EITHER value OR objectId, never both. (Mixing the two makes the fact ambiguous in later queries.)
 
 Visibility (who can read the fact) is decided by the host — do not try to set it.
+
+Do NOT use this tool to set rules about YOUR OWN behavior (tone, persona, name, format, language, role). Those go through \`memory_set_agent_rule\`, which writes the rule to the right subject + predicate + visibility so it surfaces in the "User-specific instructions for this agent" block on the next turn. Writing such a directive via \`memory_remember\` will not bind reliably to that block.
 
 If contextIds contains any entity you don't own, the host may restrict the write to prevent leaking fabricated facts into another user's context graph — the response will include a "warnings" field in that case.
 
@@ -109,6 +112,25 @@ export function createRememberTool(deps: MemoryToolDeps): ToolFunction<RememberA
       }
       if (args.value !== undefined && args.objectId !== undefined) {
         return { error: 'set either value or objectId, not both' };
+      }
+
+      // Reserved-predicate guard. `agent_behavior_rule` is the predicate
+      // `memory_set_agent_rule` writes to bind a rule into the
+      // "User-specific instructions for this agent" block. Letting
+      // `memory_remember` write the same predicate creates a back-door
+      // around set_agent_rule's rate limit, ownership check, and importance
+      // stamp — and the rules block renderer would happily surface it.
+      // Reject and route the LLM to the right tool. Other predicates on
+      // the agent entity still flow through (forward-compat for a future
+      // rule-inference engine writing different predicates).
+      if (args.predicate === AGENT_BEHAVIOR_RULE_PREDICATE) {
+        return {
+          error:
+            `memory_remember: predicate '${AGENT_BEHAVIOR_RULE_PREDICATE}' is reserved for ` +
+            `memory_set_agent_rule. Call memory_set_agent_rule({rule: ...}) instead — ` +
+            `it stamps the right importance, applies the rule-write rate limit, ` +
+            `and binds to the system-message rules block.`,
+        };
       }
 
       const scope = resolveScope(context?.userId, deps.defaultUserId, deps.defaultGroupId);

@@ -817,19 +817,19 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
 
     const lines: string[] = [
       '## User-specific instructions for this agent',
-      '_The items below describe YOU — your identity, persona, tone, and behavior — as the current user wants them. Read each as self-description (first-person) and honor it over your default behavior. Supersede via `memory_set_agent_rule` with `replaces: <ruleId>`; drop via `memory_forget`._',
+      '_The items below describe YOU — your identity, persona, tone, and behavior — as the current user wants them. Read each as self-description (first-person) and honor it over your default behavior. Each line begins with `[ruleId=<id>]` — pass that exact id to `memory_set_agent_rule.replaces` to supersede the rule, or to `memory_forget.factId` to drop it._',
       '',
     ];
     for (const f of rules) {
-      // Full factId only — agent passes it verbatim to `replaces`. Tried a
-      // short-id bracket + `ruleId=<full>` tag side-by-side; that wastes ~30
-      // tokens per rule with no benefit since the agent doesn't need the short
-      // form for anything.
+      // Bracket label is `ruleId=<id>` so the LLM doesn't have to bridge
+      // "factId" (memory_forget arg name) ↔ "ruleId" (memory_set_agent_rule
+      // response field) ↔ a bare bracketed string. They're the same value;
+      // the explicit field name eliminates the mental hop.
       // Full rule body — user-authored behavior rules are often nuanced and
       // clipping at a fixed char budget silently dropped the qualifying
       // clause the agent was supposed to respect.
       const body = escapeInline(f.details!);
-      lines.push(`- [${f.id}] ${body}`);
+      lines.push(`- [ruleId=${f.id}] ${body}`);
     }
     return lines.join('\n');
   }

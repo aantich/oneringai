@@ -47,8 +47,13 @@ export interface MemoryWritePluginConfig {
    * those tokens return "not available".
    */
   getOwnSubjectIds?: () => { userEntityId?: string; agentEntityId?: string };
-  /** Rate-limit override for memory_forget. */
+  /** Rate-limit override for memory_forget. Also used as the fallback for
+   *  `setAgentRuleRateLimit` when that field is omitted. */
   forgetRateLimit?: { maxCallsPerWindow?: number; windowMs?: number };
+  /** Rate-limit override for memory_set_agent_rule. Falls back to
+   *  `forgetRateLimit` when omitted; allows hosts to give rule-writes a
+   *  larger budget than destructive forgets without sharing one knob. */
+  setAgentRuleRateLimit?: { maxCallsPerWindow?: number; windowMs?: number };
 }
 
 const WRITE_INSTRUCTIONS = `## Memory writes
@@ -165,39 +170,13 @@ Who can read each record is decided by the host platform — not by you. Write t
 
 ### User-specific directives about YOU — \`memory_set_agent_rule\`
 
-Call this — and ONLY this — whenever the user gives you a directive about **YOU**: how you should behave, identify, or present yourself going forward. The test is "does this change something about ME that should persist across turns?". These rules are rendered back to you at the top of the system message ("User-specific instructions for this agent") and override default behavior.
+When the user tells you something about **YOU** that should persist across turns — your identity, persona, name, tone, format, language, or interaction rules — call \`memory_set_agent_rule\`. Asymmetry test: "your name is Jason" is a rule about YOU (call this tool); "my name is Anton" is a fact about the USER (do not write — the ambient ingestor handles it). The tool's own description has the full YES/NO trigger list and the first-person rephrasing table — follow it precisely; the prose you pass is read back to you each turn as self-description.
 
-**YES — call \`memory_set_agent_rule\` when the user says any of these:**
-- Identity / name / persona: "your name is Jason", "you are a pirate", "act as my therapist", "call yourself Sparky"
-- Role assignment: "be my coding copilot", "treat me as a beginner", "you're my sales coach now"
-- Tone / style: "be terse", "stop being formal", "stop apologizing"
-- Format rules: "no bullet points", "always cite sources", "reply in JSON"
-- Language: "answer in Russian", "always respond in English"
-- Meta-interaction: "when you don't know, just say so", "ask before destructive commands"
-- Pattern corrections: "you keep suggesting X when I want Y — stop"
+If the user states multiple distinct rules in one turn ("be terse, no bullets, in Russian"), call the tool **once per atomic rule** — each rule supersedes independently and renders as its own line.
 
-**NO — do NOT call this tool for any of these (use another path):**
-- "remind me to X" / "track Y" / "add to my to-do" → task creation via \`memory_upsert_entity\` (type:'task') or a task-tracker connector.
-- "schedule Y" / "add to my calendar" → calendar connector.
-- "actually it's Tuesday, not Monday" → factual correction via \`memory_forget\` with \`replaceWith\` on the incorrect fact.
-- User statements about themselves: "I live in Tokyo" / "I work at Acme" / "my name is Anton" → these are facts about the USER, captured by the background ingestor — do not write yourself. (The asymmetry matters: "your name is Jason" is a rule about YOU; "my name is Anton" is a fact about the USER.)
-- General preferences about the world: "I like Python" → ambient ingestor.
+Rules render back in the system message as \`- [ruleId=<id>] <rule>\`. To **supersede** a rule when the user contradicts it, pass that \`ruleId\` as \`replaces\`. To **drop** a rule entirely with no replacement, call \`memory_forget({factId: <ruleId>})\` — the bracketed value is the same id either way.
 
-**Phrasing — record in FIRST PERSON.** When you call this tool, the \`rule\` text you pass is what you'll read back in your own system message every turn. Rephrase the user's directive as *self-description* — not verbatim second-person. Examples:
-
-| User said | Record as (first-person) |
-|---|---|
-| "your name is Jason" | "My name is Jason." |
-| "you are a pirate" | "I am a pirate." |
-| "act as my therapist" | "I act as the user's therapist." |
-| "be terse" | "I reply tersely." |
-| "stop apologizing" | "I do not apologize." |
-| "no bullet points" | "I do not use bullet points." |
-| "reply in Russian" | "I reply in Russian." |
-
-**Supersession.** When the user contradicts an existing rule ("actually be normal again", "drop the Russian thing", "go back to your default name"), pass the prior rule's \`ruleId\` as \`replaces\`. The rule list in your system message shows each rule's id — use it directly. This preserves the audit chain. If the user wants the rule gone entirely with no replacement, use \`memory_forget\` on that ruleId.
-
-Do NOT call \`memory_set_agent_rule\` from an ambient inference (the user didn't explicitly tell you something about yourself). Under-calling is fine — the user will repeat. Over-calling pollutes the rule list.`;
+Do NOT use \`memory_remember\` to set behavior rules — that path won't bind to the rules block reliably. Do NOT call \`memory_set_agent_rule\` from ambient inference; under-calling is fine, over-calling pollutes the rule list.`;
 
 export class MemoryWritePluginNextGen implements IContextPluginNextGen {
   readonly name = 'memory_write';
@@ -217,6 +196,7 @@ export class MemoryWritePluginNextGen implements IContextPluginNextGen {
     agentEntityId?: string;
   };
   private readonly forgetRateLimit: MemoryWritePluginConfig['forgetRateLimit'];
+  private readonly setAgentRuleRateLimit: MemoryWritePluginConfig['setAgentRuleRateLimit'];
 
   private readonly estimator: ITokenEstimator = simpleTokenEstimator;
   private instructionsTokenCache: number | null = null;
@@ -248,6 +228,7 @@ export class MemoryWritePluginNextGen implements IContextPluginNextGen {
     this.autoResolveThreshold = config.autoResolveThreshold ?? 0.9;
     this.getOwnSubjectIds = config.getOwnSubjectIds ?? (() => ({}));
     this.forgetRateLimit = config.forgetRateLimit;
+    this.setAgentRuleRateLimit = config.setAgentRuleRateLimit;
   }
 
   getInstructions(): string | null {
@@ -297,6 +278,7 @@ export class MemoryWritePluginNextGen implements IContextPluginNextGen {
         autoResolveThreshold: this.autoResolveThreshold,
         getOwnSubjectIds: this.getOwnSubjectIds,
         forgetRateLimit: this.forgetRateLimit,
+        setAgentRuleRateLimit: this.setAgentRuleRateLimit,
       });
     }
     return this.cachedTools;
