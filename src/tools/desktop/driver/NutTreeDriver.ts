@@ -194,9 +194,21 @@ function downsampleRGBA(
 // ============================================================================
 
 // Default cap for screenshot dimensions (longest side, in UI-pixel units).
-// Chosen to fit comfortably within the preferred input sizes of all major
-// vision LLMs (OpenAI ~1024, Anthropic ~1568, Gemini ~3072). Larger images
-// consistently hurt AI coordinate-prediction accuracy.
+//
+// 1280 is a deliberate compromise across the three major vision providers:
+//   - Anthropic (long side ≤ 1568): receives the image without internal resize.
+//   - Gemini (long side ≤ 3072):    receives the image without internal resize.
+//   - OpenAI:                       its preprocessor scales the SHORT side to
+//                                   768 in high-detail mode, so a 1280×800
+//                                   screenshot is downsampled to 1228×768
+//                                   internally (6 tiles instead of 4 at 1024).
+//                                   We accept this overhead in exchange for
+//                                   keeping more detail on Anthropic/Gemini
+//                                   and on small UI elements (tray icons,
+//                                   compact buttons) that disappear under
+//                                   aggressive downsampling.
+// Larger caps (>1280) consistently hurt coordinate-prediction accuracy across
+// all three providers — bigger isn't better past this point.
 const DEFAULT_SCREENSHOT_MAX_DIM = 1280;
 
 export interface NutTreeDriverOptions {
