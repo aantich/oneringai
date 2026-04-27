@@ -21,8 +21,8 @@ export function createDesktopMouseScrollTool(config?: DesktopToolConfig): ToolFu
           properties: {
             deltaX: { type: 'number', description: 'Horizontal scroll amount. Positive=right, negative=left. Default: 0' },
             deltaY: { type: 'number', description: 'Vertical scroll amount. Positive=down, negative=up. Default: 0' },
-            x: { type: 'number', description: 'X coordinate to scroll at (in screenshot pixels). Omit to scroll at current position.' },
-            y: { type: 'number', description: 'Y coordinate to scroll at (in screenshot pixels). Omit to scroll at current position.' },
+            x: { type: 'number', description: 'X coordinate to scroll at (in screen pixels). Omit to scroll at current position.' },
+            y: { type: 'number', description: 'Y coordinate to scroll at (in screen pixels). Omit to scroll at current position.' },
           },
           required: [],
         },

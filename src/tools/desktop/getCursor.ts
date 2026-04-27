@@ -1,7 +1,8 @@
 /**
  * Desktop Get Cursor Tool
  *
- * Returns the current cursor position in physical pixel (screenshot) coordinates.
+ * Returns the current cursor position in screen pixel coordinates — same space as
+ * desktop_screenshot and the desktop_mouse_* APIs.
  */
 
 import type { ToolFunction } from '../../domain/entities/Tool.js';
@@ -14,7 +15,7 @@ export function createDesktopGetCursorTool(config?: DesktopToolConfig): ToolFunc
       type: 'function',
       function: {
         name: 'desktop_get_cursor',
-        description: `Get the current mouse cursor position in screenshot pixel coordinates.`,
+        description: `Get the current mouse cursor position in screen pixel coordinates (same space as the screenshot and mouseClick/mouseMove).`,
         parameters: {
           type: 'object',
           properties: {},

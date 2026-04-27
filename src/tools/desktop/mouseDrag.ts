@@ -19,10 +19,10 @@ export function createDesktopMouseDragTool(config?: DesktopToolConfig): ToolFunc
         parameters: {
           type: 'object',
           properties: {
-            startX: { type: 'number', description: 'Start X coordinate (in screenshot pixels)' },
-            startY: { type: 'number', description: 'Start Y coordinate (in screenshot pixels)' },
-            endX: { type: 'number', description: 'End X coordinate (in screenshot pixels)' },
-            endY: { type: 'number', description: 'End Y coordinate (in screenshot pixels)' },
+            startX: { type: 'number', description: 'Start X coordinate (in screen pixels)' },
+            startY: { type: 'number', description: 'Start Y coordinate (in screen pixels)' },
+            endX: { type: 'number', description: 'End X coordinate (in screen pixels)' },
+            endY: { type: 'number', description: 'End Y coordinate (in screen pixels)' },
             button: {
               type: 'string',
               enum: ['left', 'right', 'middle'],
