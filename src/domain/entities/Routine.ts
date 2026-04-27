@@ -148,6 +148,24 @@ export interface RoutineDefinition {
 }
 
 /**
+ * Slim projection of a RoutineDefinition for listing.
+ *
+ * Returned by IRoutineDefinitionStorage.list(). Use load() to fetch the
+ * full definition (tasks, pre/postSteps, instructions, etc.).
+ */
+export interface RoutineSummary {
+  id: string;
+  name: string;
+  description: string;
+  version?: string;
+  author?: string;
+  tags?: string[];
+  taskCount: number;
+  parameterNames?: string[];
+  updatedAt: string;
+}
+
+/**
  * Input for creating a RoutineDefinition.
  * id, createdAt, updatedAt are auto-generated if not provided.
  */

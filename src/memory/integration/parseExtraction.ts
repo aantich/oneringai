@@ -33,6 +33,13 @@ export interface ParseExtractionResult {
   status: ParseStatus;
   mentions: ExtractionOutput['mentions'];
   facts: ExtractionOutput['facts'];
+  /**
+   * One-sentence justification for emitting non-empty output, when the prompt
+   * required it (`EagernessProfile.requireJustification = true`). Always
+   * captured when present in the LLM output, even under chatty profiles —
+   * existence is harmless, absence is what restraint enforces upstream.
+   */
+  whyActionable?: string;
   /** Short human-readable reason when status !== 'ok'. */
   reason?: string;
   /** Truncated sample of the raw input for logging. */
@@ -99,6 +106,10 @@ export function parseExtractionWithStatus(raw: string): ParseExtractionResult {
 
   const mentions = mentionsOk ? (obj.mentions as ExtractionOutput['mentions']) : {};
   const facts = factsOk && Array.isArray(obj.facts) ? (obj.facts as ExtractionOutput['facts']) : [];
+  const whyActionable =
+    typeof obj.whyActionable === 'string' && obj.whyActionable.trim().length > 0
+      ? obj.whyActionable.trim()
+      : undefined;
 
   if (!mentionsOk || !factsOk) {
     const shapeIssues: string[] = [];
@@ -108,12 +119,18 @@ export function parseExtractionWithStatus(raw: string): ParseExtractionResult {
       status: 'shape_error',
       mentions,
       facts,
+      ...(whyActionable !== undefined ? { whyActionable } : {}),
       reason: shapeIssues.join('; '),
       rawExcerpt,
     };
   }
 
-  return { status: 'ok', mentions, facts };
+  return {
+    status: 'ok',
+    mentions,
+    facts,
+    ...(whyActionable !== undefined ? { whyActionable } : {}),
+  };
 }
 
 /**

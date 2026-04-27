@@ -37,6 +37,10 @@ import type {
   IVideoProvider,
   VideoGenerateOptions,
   VideoExtendOptions,
+  VideoRemixOptions,
+  VideoEditOptions,
+  CreateCharacterOptions,
+  CharacterRef,
   VideoResponse,
 } from '../../domain/interfaces/IVideoProvider.js';
 import { VIDEO_MODELS, getVideoModelInfo } from '../../domain/entities/VideoModel.js';
@@ -197,6 +201,51 @@ export class VideoGeneration {
     };
 
     return this.provider.extendVideo(fullOptions);
+  }
+
+  /**
+   * Remix a completed video with a new prompt — same length,
+   * prompt-steered re-generation. Provider-dependent (OpenAI Sora today).
+   */
+  async remix(options: VideoRemixOptions): Promise<VideoResponse> {
+    if (!this.provider.remixVideo) {
+      throw new Error(`Video remix not supported by ${this.provider.name}`);
+    }
+    return this.provider.remixVideo(options);
+  }
+
+  /**
+   * Edit a completed video using a prompt-described change.
+   * Provider-dependent (OpenAI Sora today).
+   */
+  async edit(options: VideoEditOptions): Promise<VideoResponse> {
+    if (!this.provider.editVideo) {
+      throw new Error(`Video edit not supported by ${this.provider.name}`);
+    }
+    return this.provider.editVideo(options);
+  }
+
+  /**
+   * Create a reusable character from a reference video.
+   * Provider-dependent (OpenAI Sora today). Returns a `CharacterRef` whose
+   * `id` can be passed back via `vendorOptions.characterId` on a later
+   * `generate` call.
+   */
+  async createCharacter(options: CreateCharacterOptions): Promise<CharacterRef> {
+    if (!this.provider.createCharacter) {
+      throw new Error(`Character API not supported by ${this.provider.name}`);
+    }
+    return this.provider.createCharacter(options);
+  }
+
+  /**
+   * Look up an existing character by id. Provider-dependent.
+   */
+  async getCharacter(characterId: string): Promise<CharacterRef> {
+    if (!this.provider.getCharacter) {
+      throw new Error(`Character API not supported by ${this.provider.name}`);
+    }
+    return this.provider.getCharacter(characterId);
   }
 
   /**

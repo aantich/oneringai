@@ -56,6 +56,13 @@ export interface ExtractionFactSpec {
   validFrom?: string | Date;
   validUntil?: string | Date;
   observedAt?: string | Date;
+  /**
+   * Verbatim quote from the source signal supporting this fact. Required
+   * under `EagernessProfile.requireEvidenceQuote = 'strict'` (filtered by
+   * `RestrainedExtractionContract`); pass-through otherwise. Stored on the
+   * written fact as `IFact.evidenceQuote`.
+   */
+  evidenceQuote?: string;
 }
 
 export interface ExtractionOutput {
@@ -316,6 +323,7 @@ export class ExtractionResolver {
                 validFrom: toDate(spec.validFrom),
                 validUntil: toDate(spec.validUntil),
                 summaryForEmbedding: spec.summaryForEmbedding,
+                evidenceQuote: spec.evidenceQuote,
               },
             },
             scope,
@@ -344,6 +352,7 @@ export class ExtractionResolver {
             validFrom: toDate(spec.validFrom),
             validUntil: toDate(spec.validUntil),
             sourceSignalId,
+            evidenceQuote: spec.evidenceQuote,
           },
           scope,
         );
@@ -388,6 +397,7 @@ export class ExtractionResolver {
         validFrom?: Date;
         validUntil?: Date;
         summaryForEmbedding?: string;
+        evidenceQuote?: string;
       };
     },
     scope: ScopeFilter,

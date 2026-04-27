@@ -20,7 +20,13 @@ export interface TTSOptions {
   /** Text to synthesize */
   input: string;
 
-  /** Voice ID to use */
+  /**
+   * Voice ID to use.
+   * For OpenAI: a built-in name (`alloy`, `ash`, `ballad`, `coral`, `echo`,
+   * `fable`, `onyx`, `nova`, `sage`, `shimmer`, `verse`, `marin`, `cedar`) or
+   * a custom-voice ID with the `voice_` prefix (e.g. `voice_1234`). Custom IDs
+   * are forwarded to the SDK as `{ id }` automatically.
+   */
   voice: string;
 
   /** Audio output format */

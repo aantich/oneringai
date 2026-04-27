@@ -285,6 +285,30 @@ describe('MemorySystem', () => {
       expect(fact.isSemantic).toBe(false);
     });
 
+    it('persists evidenceQuote end-to-end (addFact → getFact)', async () => {
+      const written = await mem.addFact(
+        {
+          subjectId,
+          predicate: 'note',
+          kind: 'atomic',
+          details: 'committed by EOQ',
+          evidenceQuote: '"we will ship by end of quarter"',
+        },
+        TEST_SCOPE,
+      );
+      expect(written.evidenceQuote).toBe('"we will ship by end of quarter"');
+      const reread = await mem.getFact(written.id, TEST_SCOPE);
+      expect(reread?.evidenceQuote).toBe('"we will ship by end of quarter"');
+    });
+
+    it('omits evidenceQuote on the stored fact when not supplied', async () => {
+      const written = await mem.addFact(
+        { subjectId, predicate: 'note', kind: 'atomic', details: 'no quote' },
+        TEST_SCOPE,
+      );
+      expect(written.evidenceQuote).toBeUndefined();
+    });
+
     it('enforces scope invariant — rejects widening groupId beyond subject', async () => {
       const scopedId = await seedEntity(mem, {
         scope: { groupId: 'g1' },

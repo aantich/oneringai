@@ -43,6 +43,50 @@ export interface VideoExtendOptions {
 }
 
 /**
+ * Options for remixing an existing video.
+ * Remix = re-generate the same clip with a new prompt steering the result.
+ * The video reference is the completed-video ID returned by `generateVideo`.
+ */
+export interface VideoRemixOptions {
+  /** Identifier of the completed video to remix */
+  videoId: string;
+  /** Prompt steering the remix */
+  prompt: string;
+}
+
+/**
+ * Options for editing an existing video.
+ * Edit = apply a prompt-described change to a completed video.
+ */
+export interface VideoEditOptions {
+  /** Identifier of the completed video to edit */
+  videoId: string;
+  /** Prompt describing the edit */
+  prompt: string;
+}
+
+/**
+ * Options for creating a reusable character from a reference video
+ * (Sora character API).
+ */
+export interface CreateCharacterOptions {
+  /** Display name for the character */
+  name: string;
+  /** Reference video — Buffer, file path, or URL */
+  video: Buffer | string;
+}
+
+/**
+ * A reusable character reference (Sora character API).
+ */
+export interface CharacterRef {
+  /** Character identifier returned by the provider */
+  id: string;
+  /** Display name */
+  name: string;
+}
+
+/**
  * Video generation status (for async operations)
  */
 export type VideoStatus = 'pending' | 'processing' | 'completed' | 'failed';
@@ -123,6 +167,29 @@ export interface IVideoProvider extends IProvider {
    * Extend an existing video (optional)
    */
   extendVideo?(options: VideoExtendOptions): Promise<VideoResponse>;
+
+  /**
+   * Remix a completed video with a new prompt (optional).
+   * Distinct from extend: same length, prompt-steered re-generation.
+   */
+  remixVideo?(options: VideoRemixOptions): Promise<VideoResponse>;
+
+  /**
+   * Edit a completed video using a prompt (optional).
+   */
+  editVideo?(options: VideoEditOptions): Promise<VideoResponse>;
+
+  /**
+   * Create a reusable character from a reference video (optional).
+   * Returns a `CharacterRef` whose `id` can be threaded into future
+   * `generateVideo` calls via `vendorOptions`.
+   */
+  createCharacter?(options: CreateCharacterOptions): Promise<CharacterRef>;
+
+  /**
+   * Look up an existing character by id (optional).
+   */
+  getCharacter?(characterId: string): Promise<CharacterRef>;
 
   /**
    * List available video models

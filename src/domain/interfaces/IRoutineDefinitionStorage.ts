@@ -9,7 +9,7 @@
  * by ownerId. This enables admin operations on system/shared routines.
  */
 
-import type { RoutineDefinition } from '../entities/Routine.js';
+import type { RoutineDefinition, RoutineSummary } from '../entities/Routine.js';
 import type { StorageUserContextInput } from './StorageContext.js';
 
 export interface IRoutineDefinitionStorage {
@@ -17,11 +17,15 @@ export interface IRoutineDefinitionStorage {
   load(context: StorageUserContextInput, id: string): Promise<RoutineDefinition | null>;
   delete(context: StorageUserContextInput, id: string): Promise<void>;
   exists(context: StorageUserContextInput, id: string): Promise<boolean>;
+  /**
+   * List routine summaries (slim projection). Use load(id) to fetch the full
+   * definition for any returned entry.
+   */
   list(context: StorageUserContextInput, options?: {
     tags?: string[];
     search?: string;
     limit?: number;
     offset?: number;
-  }): Promise<RoutineDefinition[]>;
+  }): Promise<RoutineSummary[]>;
   getPath(context: StorageUserContextInput): string;
 }

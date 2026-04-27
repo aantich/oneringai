@@ -20,7 +20,9 @@ import {
   type VisibilityContext,
   type VisibilityPolicy,
 } from './AccessControl.js';
+import { coerceFactTemporalFields, coerceMetadataDates } from './dateCoercion.js';
 import { genericTraverse } from './GenericTraversal.js';
+import { metadataDeepEqual } from './metadataDiff.js';
 import { rankFacts } from './Ranking.js';
 import type { PredicateRegistry } from './predicates/PredicateRegistry.js';
 import type { PredicateDefinition } from './predicates/types.js';
@@ -49,6 +51,8 @@ import type {
   NewFact,
   RankingConfig,
   RelatedEvent,
+  RelatedItemHit,
+  RelatedItemsResult,
   RelatedTask,
   ResolveEntityOptions,
   ResolveEntityQuery,
@@ -83,6 +87,14 @@ const DEFAULT_TASK_STATES = {
   active: ['pending', 'in_progress', 'blocked', 'deferred'],
   terminal: ['done', 'cancelled'],
 } as const;
+
+/**
+ * Minimum candidate pool fetched from the semantic store inside
+ * `findSimilarOpenTasks` before the post-state-filter runs. Picked so that
+ * even `topK=1` still surveys enough of the vector neighbourhood to find an
+ * active match if one exists slightly below the top hit.
+ */
+const FIND_SIMILAR_OVER_FETCH_FLOOR = 30;
 
 /** Conventional metadata fields on task entities that reference other entities. */
 const RELATIONAL_TASK_FIELDS = ['assigneeId', 'reporterId', 'projectId'] as const;
@@ -208,6 +220,7 @@ export interface TransitionTaskStateOptions {
     validFrom?: Date;
     validUntil?: Date;
     summaryForEmbedding?: string;
+    evidenceQuote?: string;
   };
 }
 
@@ -337,10 +350,39 @@ export class MemorySystem implements IDisposable {
       identifiers: Identifier[];
       displayName: string;
       type: string;
+      /**
+       * How `input.metadata` is folded into an existing entity on resolve.
+       * Default: undefined → metadata is ignored on resolve (current behavior,
+       * backward-compatible).
+       *  - `'fillMissing'`: only set keys absent from stored metadata; existing
+       *    values are never overwritten. Safe for LLM-driven re-extraction.
+       *  - `'overwrite'`: shallow-merge — incoming keys win. Use when the
+       *    caller is authoritative (calendar API for events, sync from system
+       *    of record).
+       *
+       * On create (no match) all keys are set verbatim regardless of this option.
+       */
+      metadataMerge?: 'fillMissing' | 'overwrite';
+      /**
+       * Optional whitelist applied when `metadataMerge` is set: only these
+       * top-level keys are touched. Other incoming keys are ignored. Lets the
+       * caller pin the merge to a known set (e.g. `['startTime','endTime',
+       * 'status']` for events) without leaking unrelated extracted fields.
+       *
+       * Has no effect when `metadataMerge` is unset.
+       */
+      metadataMergeKeys?: string[];
     },
     scope: ScopeFilter,
   ): Promise<UpsertEntityResult> {
     assertNotDestroyed(this, 'upsertEntity');
+    // Coerce ISO-string date values in metadata to `Date` instances. Callers
+    // (LLM extraction, REST sync) frequently emit ISO strings; storing those
+    // as strings silently breaks `$gte/$lt` Mongo range queries. See
+    // `dateCoercion.ts` for the contract.
+    if (input.metadata) {
+      input = { ...input, metadata: coerceMetadataDates(input.metadata) };
+    }
     // Empty identifiers is allowed — entities like projects, topics, clusters
     // may genuinely have no external strong key. They can still be found via
     // displayName/alias search + fuzzy + identity embedding.
@@ -374,11 +416,22 @@ export class MemorySystem implements IDisposable {
     const merged = mergeIdentifiersAndAliases(best, input);
     const changedCount = merged.entity.identifiers.length - best.identifiers.length;
 
-    if (merged.dirty) {
+    // Optional metadata merge. Mirrors the contract on appendAliasesAndIdentifiers
+    // and UpsertBySurfaceOptions; default is no-op so existing callers are
+    // unaffected.
+    const mergedWithMetadata = applyMetadataMerge(
+      merged.entity,
+      input.metadata,
+      input.metadataMerge,
+      input.metadataMergeKeys,
+    );
+    const dirty = merged.dirty || mergedWithMetadata.changed;
+
+    if (dirty) {
       // Dirty path mutates an existing entity — write access required.
       assertCanAccess(best, scope, 'write', 'entity');
       const next: IEntity = {
-        ...merged.entity,
+        ...mergedWithMetadata.entity,
         version: best.version + 1,
         updatedAt: new Date(),
       };
@@ -505,15 +558,18 @@ export class MemorySystem implements IDisposable {
 
     // Metadata merge — fillMissing (default) never overwrites existing keys;
     // overwrite is a shallow merge where incoming wins. No-op if no incoming.
+    // Coerce incoming ISO-string dates to `Date` before merge so stored
+    // metadata is type-consistent and survives Mongo range queries.
     let nextMetadata: Record<string, unknown> | undefined = current.metadata;
-    if (opts?.metadata && Object.keys(opts.metadata).length > 0) {
+    const incomingMetadata = coerceMetadataDates(opts?.metadata);
+    if (incomingMetadata && Object.keys(incomingMetadata).length > 0) {
       const existing = (current.metadata ?? {}) as Record<string, unknown>;
-      const mode = opts.metadataMerge ?? 'fillMissing';
+      const mode = opts?.metadataMerge ?? 'fillMissing';
       const merged: Record<string, unknown> = { ...existing };
-      for (const [k, v] of Object.entries(opts.metadata)) {
+      for (const [k, v] of Object.entries(incomingMetadata)) {
         if (v === undefined) continue;
         if (mode === 'fillMissing' && k in existing) continue;
-        if (merged[k] !== v) {
+        if (!metadataDeepEqual(merged[k], v)) {
           merged[k] = v;
           dirty = true;
         }
@@ -961,6 +1017,12 @@ export class MemorySystem implements IDisposable {
   ): Promise<IFact> {
     assertNotDestroyed(this, 'addFact');
 
+    // Coerce ISO-string temporal fields (`observedAt`, `validFrom`, `validUntil`)
+    // and any ISO-date strings in `metadata` to `Date`. These fields are typed
+    // `Date | undefined` on `IFact`, so a string here is a contract violation
+    // we silently repair — a string in Mongo silently breaks `$gte/$lt` queries.
+    input = coerceFactTemporalFields(input);
+
     // Reject empty/whitespace predicates regardless of mode — these are almost
     // always a caller bug and corrupt ranking/retrieval if they land in storage.
     if (typeof input.predicate !== 'string' || input.predicate.trim().length === 0) {
@@ -1137,6 +1199,7 @@ export class MemorySystem implements IDisposable {
       // asking "give me facts with confidence ≥ X" no longer get un-scored
       // legacy facts mixed into high-quality results.
       confidence: clampUnit01(input.confidence) ?? 1.0,
+      evidenceQuote: input.evidenceQuote,
       sourceSignalId: input.sourceSignalId,
       derivedBy: input.derivedBy,
       importance: clampUnit01(input.importance) ?? def?.defaultImportance,
@@ -1528,15 +1591,169 @@ export class MemorySystem implements IDisposable {
    * where a relational fact ties a task to the subject. Returns only non-
    * terminal states by default.
    */
+  /**
+   * Multi-entity public traversal used by external pipelines (e.g. v25
+   * reconciler relevance set). Resolves tasks + events that touch ANY of
+   * `entityIds` via metadata role fields or fact contextIds, dedupes by id,
+   * and tags each hit with the input entity that matched it (so callers can
+   * trace why an item is in the set).
+   *
+   * Cost: O(entityIds.length) underlying queries. Suitable for relevance-set
+   * construction over a handful (~5–20) of input entities.
+   *
+   * **Limit semantics**: `limit` is a *per-bucket* cap — the result holds at
+   * most `limit` tasks AND at most `limit` events (so up to `2 * limit` items
+   * total). Default 50, hard ceiling 200 per bucket.
+   *
+   * **Attribution**: when `limit` is reached, later `entityIds` do not
+   * contribute attribution — the first input entity to surface a given hit
+   * wins `matchedEntityId`. Pass entities ordered by relevance.
+   */
+  async resolveRelatedItems(
+    entityIds: EntityId[],
+    scope: ScopeFilter,
+    opts?: {
+      types?: ('task' | 'event')[];
+      /** Task state filter. Default: configured `taskStates.active`. Pass empty array to disable filtering. */
+      taskStates?: string[];
+      /** Per-bucket cap (tasks and events each capped at this value). Default 50, hard ceiling 200. */
+      limit?: number;
+      asOf?: Date;
+      recentEventsWindowDays?: number;
+    },
+  ): Promise<RelatedItemsResult> {
+    assertNotDestroyed(this, 'resolveRelatedItems');
+    const types = opts?.types ?? ['task', 'event'];
+    const wantTasks = types.includes('task');
+    const wantEvents = types.includes('event');
+    const limit = Math.min(Math.max(opts?.limit ?? 50, 1), 200);
+
+    // Re-use the per-entity resolvers and reshape into the multi-entity view.
+    const taskCtxOpts: ContextOptions & { activeStatesOverride?: readonly string[] } = {
+      relatedTasksLimit: limit,
+      relatedEventsLimit: limit,
+      asOf: opts?.asOf,
+      recentEventsWindowDays: opts?.recentEventsWindowDays,
+      activeStatesOverride: opts?.taskStates,
+    };
+    const eventCtxOpts: ContextOptions = {
+      relatedEventsLimit: limit,
+      asOf: opts?.asOf,
+      recentEventsWindowDays: opts?.recentEventsWindowDays,
+    };
+
+    const tasksById = new Map<EntityId, RelatedItemHit<RelatedTask>>();
+    const eventsById = new Map<EntityId, RelatedItemHit<RelatedEvent>>();
+
+    for (const eid of entityIds) {
+      if (tasksById.size >= limit && eventsById.size >= limit) break;
+      if (wantTasks) {
+        const hits = await this.resolveRelatedTasks(eid, taskCtxOpts, scope);
+        for (const h of hits) {
+          if (!tasksById.has(h.task.id) && tasksById.size < limit) {
+            tasksById.set(h.task.id, { ...h, matchedEntityId: eid });
+          }
+        }
+      }
+      if (wantEvents) {
+        const hits = await this.resolveRelatedEvents(eid, eventCtxOpts, scope);
+        for (const h of hits) {
+          if (!eventsById.has(h.event.id) && eventsById.size < limit) {
+            eventsById.set(h.event.id, { ...h, matchedEntityId: eid });
+          }
+        }
+      }
+    }
+
+    return {
+      tasks: [...tasksById.values()],
+      events: [...eventsById.values()],
+    };
+  }
+
+  /**
+   * Semantic kNN over open task summaries. Embeds `queryText` and ranks active
+   * tasks by similarity against their identityEmbedding (which covers
+   * displayName + aliases + primary identifier values — typically the task
+   * summary). Used by the v25 reconciler to catch cross-channel mentions
+   * ("the JPM thing") that don't share a contextId with the new signal.
+   *
+   * Returns empty array when no embedder/semantic adapter is configured —
+   * callers should treat semantic similarity as opportunistic, not load-bearing.
+   */
+  async findSimilarOpenTasks(
+    queryText: string,
+    scope: ScopeFilter,
+    opts?: {
+      topK?: number;
+      minScore?: number;
+      taskStates?: string[];
+    },
+  ): Promise<Array<{ task: IEntity; score: number }>> {
+    assertNotDestroyed(this, 'findSimilarOpenTasks');
+    // Clamp caller-supplied limits per project convention (topK ≤ 100). Guards
+    // against an LLM-driven caller asking for 100k results — the over-fetch
+    // multiplier below would otherwise issue a 300k-row vector search.
+    const requestedTopK = Number.isFinite(opts?.topK) ? (opts!.topK as number) : 10;
+    const topK = Math.min(Math.max(Math.trunc(requestedTopK), 1), 100);
+    const requestedMin = Number.isFinite(opts?.minScore) ? (opts!.minScore as number) : 0;
+    const minScore = Math.min(Math.max(requestedMin, 0), 1);
+    const activeStates =
+      opts?.taskStates && opts.taskStates.length > 0
+        ? opts.taskStates
+        : this._taskStates.active;
+
+    if (!this.embedder) return [];
+    if (typeof this.store.semanticSearchEntities !== 'function') return [];
+
+    let queryVector: number[];
+    try {
+      queryVector = await this.embedder.embed(queryText);
+    } catch (err) {
+      console.warn('[MemorySystem.findSimilarOpenTasks] embed failed:', err);
+      return [];
+    }
+
+    let candidates: Array<{ entity: IEntity; score: number }>;
+    try {
+      // Over-fetch with a real floor so small `topK` still survives the
+      // post-state-filter (e.g. topK=1 would otherwise pull only 3 rows; if all
+      // are terminal the result is empty when an active match existed at rank 4).
+      const overFetch = Math.min(Math.max(topK * 3, FIND_SIMILAR_OVER_FETCH_FLOOR), 300);
+      candidates = await this.store.semanticSearchEntities(
+        queryVector,
+        { type: 'task' },
+        { topK: overFetch, minScore },
+        scope,
+      );
+    } catch (err) {
+      console.warn('[MemorySystem.findSimilarOpenTasks] semanticSearchEntities failed:', err);
+      return [];
+    }
+
+    const out: Array<{ task: IEntity; score: number }> = [];
+    for (const c of candidates) {
+      if (c.score < minScore) continue;
+      const state = (c.entity.metadata as Record<string, unknown> | undefined)?.state;
+      if (typeof state !== 'string' || !activeStates.includes(state)) continue;
+      out.push({ task: c.entity, score: c.score });
+      if (out.length >= topK) break;
+    }
+    return out;
+  }
+
   private async resolveRelatedTasks(
     entityId: EntityId,
-    opts: ContextOptions,
+    opts: ContextOptions & { activeStatesOverride?: readonly string[] },
     scope: ScopeFilter,
   ): Promise<RelatedTask[]> {
     const limit = opts.relatedTasksLimit ?? 15;
     const acc = new Map<EntityId, RelatedTask>();
 
-    const activeStates = this._taskStates.active;
+    const activeStates =
+      opts.activeStatesOverride && opts.activeStatesOverride.length > 0
+        ? [...opts.activeStatesOverride]
+        : this._taskStates.active;
     for (const role of RELATIONAL_TASK_FIELDS) {
       if (acc.size >= limit) break;
       const page = await this.store.listEntities(
@@ -1684,9 +1901,12 @@ export class MemorySystem implements IDisposable {
     assertNotDestroyed(this, 'updateEntityMetadata');
     const current = await this.store.getEntity(id, scope);
     if (!current) throw new Error(`updateEntityMetadata: entity ${id} not found`);
+    // Coerce ISO-string date values in the patch before merging so stored
+    // metadata stays Date-typed for Mongo range queries.
+    const coercedPatch = coerceMetadataDates(patch);
     const next: IEntity = {
       ...current,
-      metadata: { ...(current.metadata ?? {}), ...patch },
+      metadata: { ...(current.metadata ?? {}), ...coercedPatch },
       version: current.version + 1,
       updatedAt: new Date(),
     };
@@ -1837,6 +2057,7 @@ export class MemorySystem implements IDisposable {
           validFrom: o.validFrom,
           validUntil: o.validUntil,
           summaryForEmbedding: o.summaryForEmbedding,
+          evidenceQuote: o.evidenceQuote,
         },
         scope,
       );
@@ -2452,6 +2673,45 @@ function mergeIdentifiersAndAliases(
     },
     dirty,
   };
+}
+
+/**
+ * Shallow-merge `incoming` into `existing.metadata` per the chosen mode,
+ * optionally restricted to `keys`. Returns the (possibly updated) entity and
+ * a `changed` flag. No-op when `incoming` is empty or `mode` is undefined.
+ *
+ * - `fillMissing`: only sets keys absent from the stored metadata.
+ * - `overwrite`: incoming keys win (shallow).
+ *
+ * Equality check uses deep-equal on the value to avoid spurious version bumps
+ * when callers re-pass identical data.
+ */
+function applyMetadataMerge(
+  existing: IEntity,
+  incoming: Record<string, unknown> | undefined,
+  mode: 'fillMissing' | 'overwrite' | undefined,
+  keys: string[] | undefined,
+): { entity: IEntity; changed: boolean } {
+  if (!mode || !incoming) return { entity: existing, changed: false };
+  const incomingEntries = Object.entries(incoming).filter(([, v]) => v !== undefined);
+  if (incomingEntries.length === 0) return { entity: existing, changed: false };
+
+  const allowedKeys = keys && keys.length > 0 ? new Set(keys) : null;
+  const current = (existing.metadata ?? {}) as Record<string, unknown>;
+  const next: Record<string, unknown> = { ...current };
+  let changed = false;
+
+  for (const [k, v] of incomingEntries) {
+    if (allowedKeys && !allowedKeys.has(k)) continue;
+    if (mode === 'fillMissing' && k in current) continue;
+    if (!metadataDeepEqual(current[k], v)) {
+      next[k] = v;
+      changed = true;
+    }
+  }
+
+  if (!changed) return { entity: existing, changed: false };
+  return { entity: { ...existing, metadata: next }, changed: true };
 }
 
 function embeddingsEqual(a: number[], b: number[]): boolean {

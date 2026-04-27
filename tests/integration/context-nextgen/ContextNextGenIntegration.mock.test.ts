@@ -287,7 +287,7 @@ describe('AgentContextNextGen Integration (Mock)', () => {
         model: 'gpt-4',
         maxContextTokens: 500,
         responseReserve: 100,
-        strategy: 'proactive', // 70% threshold
+        strategy: 'algorithmic', // 70% threshold
         features: FEATURE_PRESETS.minimal,
       });
 
@@ -310,7 +310,7 @@ describe('AgentContextNextGen Integration (Mock)', () => {
         model: 'gpt-4',
         maxContextTokens: 800,
         responseReserve: 100,
-        strategy: 'proactive',
+        strategy: 'algorithmic',
         features: FEATURE_PRESETS.minimal,
       });
 
@@ -407,7 +407,7 @@ describe('AgentContextNextGen Integration (Mock)', () => {
         model: 'gpt-4',
         maxContextTokens: 200,
         responseReserve: 20,
-        strategy: 'lazy', // 90% threshold, less aggressive compaction
+        strategy: 'algorithmic', // 90% threshold, less aggressive compaction
         features: FEATURE_PRESETS.minimal,
       });
 
@@ -432,7 +432,7 @@ describe('AgentContextNextGen Integration (Mock)', () => {
         model: 'gpt-4',
         maxContextTokens: 400,
         responseReserve: 50,
-        strategy: 'proactive',
+        strategy: 'algorithmic',
         features: FEATURE_PRESETS.minimal,
       });
 
@@ -537,34 +537,29 @@ describe('AgentContextNextGen Integration (Mock)', () => {
       expect(ctx.hasPlugin('persistent_instructions')).toBe(true);
     });
 
-    it('should register plugin tools based on features', async () => {
+    it('should register the unified store_* tools when any IStoreHandler plugin is enabled', async () => {
       ctx = createContextWithFeatures(FEATURE_PRESETS.full, { agentId: 'test-agent' });
 
       const tools = ctx.tools.getEnabled();
       const toolNames = tools.map(t => t.definition.function.name);
 
-      // WorkingMemory tools
-      expect(toolNames).toContain('memory_store');
-      expect(toolNames).toContain('memory_retrieve');
-
-      // InContextMemory tools
-      expect(toolNames).toContain('context_set');
-      expect(toolNames).toContain('context_delete');
-
-      // PersistentInstructions tools
-      expect(toolNames).toContain('instructions_set');
-      expect(toolNames).toContain('instructions_list');
+      // Unified store tools — registered once when any IStoreHandler plugin appears
+      expect(toolNames).toContain('store_set');
+      expect(toolNames).toContain('store_get');
+      expect(toolNames).toContain('store_delete');
+      expect(toolNames).toContain('store_list');
+      expect(toolNames).toContain('store_action');
     });
 
-    it('should not register tools for disabled features', () => {
+    it('should not register store_* tools when no IStoreHandler plugins are enabled', () => {
       ctx = createMinimalContext();
 
       const tools = ctx.tools.getEnabled();
       const toolNames = tools.map(t => t.definition.function.name);
 
-      expect(toolNames).not.toContain('memory_store');
-      expect(toolNames).not.toContain('context_set');
-      expect(toolNames).not.toContain('instructions_set');
+      expect(toolNames).not.toContain('store_set');
+      expect(toolNames).not.toContain('store_get');
+      expect(toolNames).not.toContain('store_delete');
     });
   });
 

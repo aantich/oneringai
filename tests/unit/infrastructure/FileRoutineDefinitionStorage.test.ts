@@ -158,12 +158,20 @@ describe('FileRoutineDefinitionStorage', () => {
       expect(routines).toHaveLength(0);
     });
 
-    it('should return full RoutineDefinition objects', async () => {
-      const routines = await storage.list('test-user');
-      for (const r of routines) {
-        expect(r.tasks).toBeDefined();
-        expect(r.tasks.length).toBeGreaterThan(0);
-        expect(r.createdAt).toBeDefined();
+    it('should return slim RoutineSummary entries', async () => {
+      const summaries = await storage.list('test-user');
+      for (const s of summaries) {
+        expect(s.id).toBeDefined();
+        expect(s.name).toBeDefined();
+        expect(s.description).toBeDefined();
+        expect(s.taskCount).toBeGreaterThan(0);
+        expect(s.updatedAt).toBeDefined();
+        // Summary must NOT carry full-definition fields.
+        expect((s as Record<string, unknown>).tasks).toBeUndefined();
+        expect((s as Record<string, unknown>).createdAt).toBeUndefined();
+        expect((s as Record<string, unknown>).preSteps).toBeUndefined();
+        expect((s as Record<string, unknown>).postSteps).toBeUndefined();
+        expect((s as Record<string, unknown>).instructions).toBeUndefined();
       }
     });
   });

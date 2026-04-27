@@ -6,6 +6,10 @@
  * - Multi-user isolation
  * - StorageRegistry integration
  * - Cross-agent data sharing
+ *
+ * After v0.5.0, user-info CRUD is exposed via the unified store_* tools
+ * (store: "user_info"). The plugin's own getTools() returns only the
+ * standalone todo_* tools.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -58,48 +62,55 @@ describe('UserInfo Plugin Integration', () => {
       const plugin = ctx.getPlugin<UserInfoPluginNextGen>('user_info');
       expect(plugin).toBeDefined();
 
-      // Get tools
-      const tools = plugin!.getTools();
-      expect(tools.length).toBe(4);
-      const toolNames = tools.map(t => t.definition.function.name);
-      expect(toolNames).toContain('user_info_set');
-      expect(toolNames).toContain('user_info_get');
-      expect(toolNames).toContain('user_info_remove');
-      expect(toolNames).toContain('user_info_clear');
+      // Plugin's own tools: todo_* only
+      const pluginTools = plugin!.getTools();
+      expect(pluginTools.length).toBe(3);
+      const pluginToolNames = pluginTools.map(t => t.definition.function.name);
+      expect(pluginToolNames).toContain('todo_add');
+      expect(pluginToolNames).toContain('todo_update');
+      expect(pluginToolNames).toContain('todo_remove');
+
+      // Unified store_* tools registered on the context
+      const setTool = ctx.tools.get('store_set')!;
+      const getTool = ctx.tools.get('store_get')!;
+      const deleteTool = ctx.tools.get('store_delete')!;
+      expect(setTool).toBeDefined();
+      expect(getTool).toBeDefined();
+      expect(deleteTool).toBeDefined();
 
       // Set user info
-      const setTool = tools.find(t => t.definition.function.name === 'user_info_set')!;
       const setResult = await setTool.execute(
-        { key: 'theme', value: 'dark', description: 'User preferred theme' },
+        { store: 'user_info', key: 'theme', value: 'dark', description: 'User preferred theme' },
         { userId: TEST_USER_ID_1 }
       );
       expect(setResult).toHaveProperty('success', true);
 
       // Get user info
-      const getTool = tools.find(t => t.definition.function.name === 'user_info_get')!;
       const getResult = await getTool.execute(
-        { key: 'theme' },
+        { store: 'user_info', key: 'theme' },
         { userId: TEST_USER_ID_1 }
       );
-      expect(getResult).toHaveProperty('key', 'theme');
-      expect(getResult).toHaveProperty('value', 'dark');
-      expect(getResult).toHaveProperty('valueType', 'string');
-      expect(getResult).toHaveProperty('description', 'User preferred theme');
+      expect(getResult).toHaveProperty('found', true);
+      expect((getResult as any).entry).toMatchObject({
+        key: 'theme',
+        value: 'dark',
+        valueType: 'string',
+        description: 'User preferred theme',
+      });
 
       // Remove user info
-      const removeTool = tools.find(t => t.definition.function.name === 'user_info_remove')!;
-      const removeResult = await removeTool.execute(
-        { key: 'theme' },
+      const removeResult = await deleteTool.execute(
+        { store: 'user_info', key: 'theme' },
         { userId: TEST_USER_ID_1 }
       );
-      expect(removeResult).toHaveProperty('success', true);
+      expect(removeResult).toHaveProperty('deleted', true);
 
       // Verify removed
       const getResult2 = await getTool.execute(
-        { key: 'theme' },
+        { store: 'user_info', key: 'theme' },
         { userId: TEST_USER_ID_1 }
       );
-      expect(getResult2).toHaveProperty('error');
+      expect(getResult2).toHaveProperty('found', false);
 
       ctx.destroy();
     });
@@ -111,20 +122,17 @@ describe('UserInfo Plugin Integration', () => {
         userId: TEST_USER_ID_1,
       });
 
-      const plugin = ctx.getPlugin<UserInfoPluginNextGen>('user_info')!;
-      const tools = plugin.getTools();
-      const setTool = tools.find(t => t.definition.function.name === 'user_info_set')!;
-      const getTool = tools.find(t => t.definition.function.name === 'user_info_get')!;
+      const setTool = ctx.tools.get('store_set')!;
+      const getTool = ctx.tools.get('store_get')!;
 
       // Set multiple entries
-      await setTool.execute({ key: 'theme', value: 'dark' }, { userId: TEST_USER_ID_1 });
-      await setTool.execute({ key: 'language', value: 'en' }, { userId: TEST_USER_ID_1 });
-      await setTool.execute({ key: 'timezone', value: 'UTC' }, { userId: TEST_USER_ID_1 });
+      await setTool.execute({ store: 'user_info', key: 'theme', value: 'dark' }, { userId: TEST_USER_ID_1 });
+      await setTool.execute({ store: 'user_info', key: 'language', value: 'en' }, { userId: TEST_USER_ID_1 });
+      await setTool.execute({ store: 'user_info', key: 'timezone', value: 'UTC' }, { userId: TEST_USER_ID_1 });
 
-      // Get all entries
-      const allResult = await getTool.execute({}, { userId: TEST_USER_ID_1 });
-      expect(allResult).toHaveProperty('count', 3);
-      expect(allResult).toHaveProperty('entries');
+      // Get all entries (no key)
+      const allResult = await getTool.execute({ store: 'user_info' }, { userId: TEST_USER_ID_1 });
+      expect(allResult).toHaveProperty('found', true);
       expect((allResult as any).entries).toHaveLength(3);
 
       ctx.destroy();
@@ -138,9 +146,11 @@ describe('UserInfo Plugin Integration', () => {
         userId: TEST_USER_ID_1,
       });
 
-      const plugin1 = ctx1.getPlugin<UserInfoPluginNextGen>('user_info')!;
-      const setTool = plugin1.getTools().find(t => t.definition.function.name === 'user_info_set')!;
-      await setTool.execute({ key: 'theme', value: 'dark' }, { userId: TEST_USER_ID_1 });
+      const setTool = ctx1.tools.get('store_set')!;
+      await setTool.execute(
+        { store: 'user_info', key: 'theme', value: 'dark' },
+        { userId: TEST_USER_ID_1 }
+      );
       ctx1.destroy();
 
       // Second context - read data
@@ -150,10 +160,12 @@ describe('UserInfo Plugin Integration', () => {
         userId: TEST_USER_ID_1,
       });
 
-      const plugin2 = ctx2.getPlugin<UserInfoPluginNextGen>('user_info')!;
-      const getTool = plugin2.getTools().find(t => t.definition.function.name === 'user_info_get')!;
-      const result = await getTool.execute({ key: 'theme' }, { userId: TEST_USER_ID_1 });
-      expect(result).toHaveProperty('value', 'dark');
+      const getTool = ctx2.tools.get('store_get')!;
+      const result = await getTool.execute(
+        { store: 'user_info', key: 'theme' },
+        { userId: TEST_USER_ID_1 }
+      );
+      expect((result as any).entry?.value).toBe('dark');
 
       ctx2.destroy();
     });
@@ -161,31 +173,56 @@ describe('UserInfo Plugin Integration', () => {
 
   describe('Multi-User Isolation', () => {
     it('should isolate data between users', async () => {
-      const ctx = AgentContextNextGen.create({
+      // Each user gets its own context — the plugin keeps a single in-memory
+      // entry map and isolates only at the storage layer (file per user).
+      // To verify per-user state, we read each user back through a fresh ctx.
+      const ctxWrite1 = AgentContextNextGen.create({
         model: 'gpt-4',
         features: { userInfo: true },
+        userId: TEST_USER_ID_1,
       });
+      await ctxWrite1.tools.get('store_set')!.execute(
+        { store: 'user_info', key: 'theme', value: 'dark' },
+        { userId: TEST_USER_ID_1 }
+      );
+      ctxWrite1.destroy();
 
-      const plugin = ctx.getPlugin<UserInfoPluginNextGen>('user_info')!;
-      const tools = plugin.getTools();
-      const setTool = tools.find(t => t.definition.function.name === 'user_info_set')!;
-      const getTool = tools.find(t => t.definition.function.name === 'user_info_get')!;
+      const ctxWrite2 = AgentContextNextGen.create({
+        model: 'gpt-4',
+        features: { userInfo: true },
+        userId: TEST_USER_ID_2,
+      });
+      await ctxWrite2.tools.get('store_set')!.execute(
+        { store: 'user_info', key: 'theme', value: 'light' },
+        { userId: TEST_USER_ID_2 }
+      );
+      ctxWrite2.destroy();
 
-      // User 1 sets theme to dark
-      await setTool.execute({ key: 'theme', value: 'dark' }, { userId: TEST_USER_ID_1 });
+      // Read user 1 back from a fresh ctx — should still be 'dark'
+      const ctxRead1 = AgentContextNextGen.create({
+        model: 'gpt-4',
+        features: { userInfo: true },
+        userId: TEST_USER_ID_1,
+      });
+      const result1 = await ctxRead1.tools.get('store_get')!.execute(
+        { store: 'user_info', key: 'theme' },
+        { userId: TEST_USER_ID_1 }
+      );
+      expect((result1 as any).entry?.value).toBe('dark');
+      ctxRead1.destroy();
 
-      // User 2 sets theme to light
-      await setTool.execute({ key: 'theme', value: 'light' }, { userId: TEST_USER_ID_2 });
-
-      // Verify User 1 still has dark
-      const result1 = await getTool.execute({ key: 'theme' }, { userId: TEST_USER_ID_1 });
-      expect(result1).toHaveProperty('value', 'dark');
-
-      // Verify User 2 has light
-      const result2 = await getTool.execute({ key: 'theme' }, { userId: TEST_USER_ID_2 });
-      expect(result2).toHaveProperty('value', 'light');
-
-      ctx.destroy();
+      // Read user 2 back from a fresh ctx — should be 'light'
+      const ctxRead2 = AgentContextNextGen.create({
+        model: 'gpt-4',
+        features: { userInfo: true },
+        userId: TEST_USER_ID_2,
+      });
+      const result2 = await ctxRead2.tools.get('store_get')!.execute(
+        { store: 'user_info', key: 'theme' },
+        { userId: TEST_USER_ID_2 }
+      );
+      expect((result2 as any).entry?.value).toBe('light');
+      ctxRead2.destroy();
     });
   });
 
@@ -216,10 +253,11 @@ describe('UserInfo Plugin Integration', () => {
         userId: TEST_USER_ID_1,
       });
 
-      const plugin = ctx.getPlugin<UserInfoPluginNextGen>('user_info')!;
-      const setTool = plugin.getTools().find(t => t.definition.function.name === 'user_info_set')!;
-
-      await setTool.execute({ key: 'test', value: 'value' }, { userId: TEST_USER_ID_1 });
+      const setTool = ctx.tools.get('store_set')!;
+      await setTool.execute(
+        { store: 'user_info', key: 'test', value: 'value' },
+        { userId: TEST_USER_ID_1 }
+      );
 
       expect(loadCalled).toBe(true);
       expect(saveCalled).toBe(true);
@@ -238,9 +276,11 @@ describe('UserInfo Plugin Integration', () => {
         userId: TEST_USER_ID_1,
       });
 
-      const plugin1 = ctx1.getPlugin<UserInfoPluginNextGen>('user_info')!;
-      const setTool = plugin1.getTools().find(t => t.definition.function.name === 'user_info_set')!;
-      await setTool.execute({ key: 'theme', value: 'dark' }, { userId: TEST_USER_ID_1 });
+      const setTool = ctx1.tools.get('store_set')!;
+      await setTool.execute(
+        { store: 'user_info', key: 'theme', value: 'dark' },
+        { userId: TEST_USER_ID_1 }
+      );
       ctx1.destroy();
 
       // Agent 2 reads data (different agentId, same userId)
@@ -251,10 +291,12 @@ describe('UserInfo Plugin Integration', () => {
         userId: TEST_USER_ID_1,
       });
 
-      const plugin2 = ctx2.getPlugin<UserInfoPluginNextGen>('user_info')!;
-      const getTool = plugin2.getTools().find(t => t.definition.function.name === 'user_info_get')!;
-      const result = await getTool.execute({ key: 'theme' }, { userId: TEST_USER_ID_1 });
-      expect(result).toHaveProperty('value', 'dark');
+      const getTool = ctx2.tools.get('store_get')!;
+      const result = await getTool.execute(
+        { store: 'user_info', key: 'theme' },
+        { userId: TEST_USER_ID_1 }
+      );
+      expect((result as any).entry?.value).toBe('dark');
 
       ctx2.destroy();
     });
@@ -267,22 +309,24 @@ describe('UserInfo Plugin Integration', () => {
         features: { userInfo: true },
       });
 
-      const plugin = ctx.getPlugin<UserInfoPluginNextGen>('user_info')!;
-      const tools = plugin.getTools();
-      const setTool = tools.find(t => t.definition.function.name === 'user_info_set')!;
-      const getTool = tools.find(t => t.definition.function.name === 'user_info_get')!;
+      const setTool = ctx.tools.get('store_set')!;
+      const getTool = ctx.tools.get('store_get')!;
+      const actionTool = ctx.tools.get('store_action')!;
 
       // Call without userId — should work, using 'default' user
-      const setResult = await setTool.execute({ key: 'test_default', value: 'value' });
+      const setResult = await setTool.execute({
+        store: 'user_info',
+        key: 'test_default',
+        value: 'value',
+      });
       expect(setResult).toHaveProperty('success', true);
 
       // Retrieve without userId — should find the entry
-      const getResult = await getTool.execute({ key: 'test_default' });
-      expect(getResult).toHaveProperty('value', 'value');
+      const getResult = await getTool.execute({ store: 'user_info', key: 'test_default' });
+      expect((getResult as any).entry?.value).toBe('value');
 
-      // Clean up
-      const clearTool = tools.find(t => t.definition.function.name === 'user_info_clear')!;
-      await clearTool.execute({ confirm: true });
+      // Clean up via store_action({ action: 'clear', confirm: true })
+      await actionTool.execute({ store: 'user_info', action: 'clear', confirm: true });
 
       ctx.destroy();
     });
@@ -294,15 +338,15 @@ describe('UserInfo Plugin Integration', () => {
         userId: TEST_USER_ID_1,
       });
 
-      const plugin = ctx.getPlugin<UserInfoPluginNextGen>('user_info')!;
-      const setTool = plugin.getTools().find(t => t.definition.function.name === 'user_info_set')!;
+      const setTool = ctx.tools.get('store_set')!;
 
       // Invalid key (has spaces)
       const result = await setTool.execute(
-        { key: 'invalid key', value: 'value' },
+        { store: 'user_info', key: 'invalid key', value: 'value' },
         { userId: TEST_USER_ID_1 }
       );
-      expect(result).toHaveProperty('error');
+      expect(result).toHaveProperty('success', false);
+      expect(result).toHaveProperty('message');
 
       ctx.destroy();
     });

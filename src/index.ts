@@ -483,6 +483,7 @@ export {
 export type {
   RoutineDefinition,
   RoutineDefinitionInput,
+  RoutineSummary,
   RoutineExecutionStatus,
   RoutineExecution,
   RoutineParameter,
@@ -854,6 +855,10 @@ export type {
   IVideoProvider,
   VideoGenerateOptions,
   VideoExtendOptions,
+  VideoRemixOptions,
+  VideoEditOptions,
+  CreateCharacterOptions,
+  CharacterRef,
   VideoResponse,
   VideoJob,
   VideoStatus,
@@ -1479,6 +1484,17 @@ export {
   PlainTextAdapter,
   EmailSignalAdapter,
   CalendarSignalAdapter,
+  // v5+ restraint posture
+  EAGERNESS_PRESETS,
+  buildEagernessProfile,
+  getEagernessPreset,
+  resolveEagerness,
+  StaticAnchorRegistry,
+  emitRestraintEvent,
+  applyRestrainedExtractionContract,
+  SkepticPass,
+  defaultSkepticPrompt,
+  parseSkepticOutput,
   // Mongo adapter — host apps (e.g. V25/Meteor) build MemorySystem on top
   // of this. Exposed here because package.json has no './memory' subpath
   // and the memory barrel is not otherwise reachable from consumers.
@@ -1500,6 +1516,18 @@ export {
   slugify,
   PredicateRegistry,
   STANDARD_PREDICATES,
+  // Metadata diff helper (used by callers detecting external entity changes —
+  // e.g. v25 calendar pipeline detecting event reschedule via API re-fetch).
+  diffEntityMetadata,
+  // Date coercion helpers — library write paths apply these automatically;
+  // re-exported so app-level signal adapters / REST handlers can DRY-coerce
+  // payload date values (Date | ISO string | epoch number) to `Date | undefined`
+  // before bridging into typed domain fields.
+  toDate,
+  looksLikeIsoDate,
+  maybeCoerceToDate,
+  coerceMetadataDates,
+  coerceFactTemporalFields,
   // Access control
   PermissionDeniedError,
   OwnerRequiredError,
@@ -1564,6 +1592,27 @@ export type {
   ParseExtractionResult,
   ParseStatus,
   ResolverMemoryHooks,
+  // v5+ restraint posture types
+  EagernessLevel,
+  EagernessPreset,
+  EagernessProfile,
+  EagernessStage,
+  SkepticPassMode,
+  Anchor,
+  AnchorRegistry,
+  RestraintEvent,
+  RestraintEventKind,
+  RestraintEventListener,
+  RestraintModelInfo,
+  RestraintStage,
+  RestrainedExtractionInput,
+  RestrainedExtractionOptions,
+  RestrainedExtractionResult,
+  SkepticPassConfig,
+  SkepticPromptContext,
+  SkepticReviewContext,
+  SkepticReviewItem,
+  SkepticReviewResult,
   // Identifier config
   CanonicalIdentifierOptions,
   SlugifyOptions,
@@ -1593,6 +1642,9 @@ export type {
   ContextTier,
   RelatedTask,
   RelatedEvent,
+  RelatedItemHit,
+  RelatedItemsResult,
+  MetadataChange,
   Neighborhood,
   TraversalOptions,
   FactFilter,

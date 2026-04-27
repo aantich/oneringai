@@ -254,6 +254,7 @@ export type {
 export type {
   RoutineDefinition,
   RoutineDefinitionInput,
+  RoutineSummary,
   RoutineExecutionStatus,
   RoutineExecution,
   RoutineParameter,
@@ -626,6 +627,10 @@ export type {
   IVideoProvider,
   VideoGenerateOptions,
   VideoExtendOptions,
+  VideoRemixOptions,
+  VideoEditOptions,
+  CreateCharacterOptions,
+  CharacterRef,
   VideoResponse,
   VideoJob,
   VideoStatus,

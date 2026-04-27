@@ -63,7 +63,7 @@ export class OpenAITTSProvider extends BaseMediaProvider implements IStreamingTe
           const requestParams: OpenAI.Audio.SpeechCreateParams = {
             model: options.model,
             input: options.input,
-            voice: options.voice as OpenAI.Audio.SpeechCreateParams['voice'],
+            voice: this.resolveVoice(options.voice),
             response_format: format,
             speed: options.speed,
           };
@@ -124,7 +124,7 @@ export class OpenAITTSProvider extends BaseMediaProvider implements IStreamingTe
     const requestParams: OpenAI.Audio.SpeechCreateParams = {
       model: options.model,
       input: options.input,
-      voice: options.voice as OpenAI.Audio.SpeechCreateParams['voice'],
+      voice: this.resolveVoice(options.voice),
       response_format: format,
       speed: options.speed,
     };
@@ -175,6 +175,19 @@ export class OpenAITTSProvider extends BaseMediaProvider implements IStreamingTe
    */
   async listVoices(): Promise<IVoiceInfo[]> {
     return OPENAI_VOICES;
+  }
+
+  /**
+   * Resolve a voice identifier to OpenAI's voice parameter shape.
+   * - Built-in voice names (e.g. 'alloy', 'nova') pass through as strings.
+   * - Custom voice IDs (prefix `voice_`, returned by OpenAI when a custom voice
+   *   is created in the dashboard) are wrapped as `{ id }` per the SDK contract.
+   */
+  private resolveVoice(voice: string): OpenAI.Audio.SpeechCreateParams['voice'] {
+    if (voice.startsWith('voice_')) {
+      return { id: voice };
+    }
+    return voice as OpenAI.Audio.SpeechCreateParams['voice'];
   }
 
   /**

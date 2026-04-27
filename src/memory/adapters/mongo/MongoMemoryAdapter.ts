@@ -34,6 +34,7 @@ import type {
   SemanticSearchOptions,
   TraversalOptions,
 } from '../../types.js';
+import { coerceFactTemporalFields, coerceMetadataDates } from '../../dateCoercion.js';
 import { genericTraverse } from '../../GenericTraversal.js';
 import type {
   IMongoCollectionLike,
@@ -877,6 +878,9 @@ function normalizeEntityForStorage(entity: IEntity): IEntity {
       ...i,
       value: i.value.toLowerCase(),
     })),
+    // Belt-and-suspenders: re-coerce metadata at the storage boundary so
+    // bypass paths (direct adapter use) can't smuggle ISO strings into BSON.
+    metadata: coerceMetadataDates(entity.metadata),
   };
 }
 
@@ -892,21 +896,28 @@ function normalizeNewEntityForStorage(
       ...i,
       value: i.value.toLowerCase(),
     })),
+    metadata: coerceMetadataDates(input.metadata),
   };
 }
 
 function normalizeNewFactForStorage(
   input: NewFact & { createdAt: Date },
 ): Omit<IFact, 'id'> {
+  // Belt-and-suspenders: enforce Date typing on temporal fields + nested
+  // metadata at the storage boundary.
+  const coerced = coerceFactTemporalFields(input);
   return {
-    ...input,
-    groupId: input.groupId ?? (null as unknown as undefined),
-    ownerId: input.ownerId ?? (null as unknown as undefined),
+    ...coerced,
+    groupId: coerced.groupId ?? (null as unknown as undefined),
+    ownerId: coerced.ownerId ?? (null as unknown as undefined),
   };
 }
 
 function normalizePartialFactForStorage(patch: Partial<IFact>): Partial<IFact> {
-  return patch;
+  // Coerce ISO-string temporal fields to `Date` so $set patches don't smuggle
+  // strings into BSON. `IFact` types these as `Date | undefined`; a string
+  // here means a caller violated the contract.
+  return coerceFactTemporalFields(patch);
 }
 
 function reviveEntity(doc: IEntity): IEntity {

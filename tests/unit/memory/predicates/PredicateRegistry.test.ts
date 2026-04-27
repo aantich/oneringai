@@ -201,7 +201,9 @@ describe('PredicateRegistry — list / categories', () => {
 
   it('list({categories}) filters by category', () => {
     const taskOnly = r.list({ categories: ['task'] });
-    expect(taskOnly.length).toBe(10);
+    // Floor — adding more task-category predicates is fine; this asserts the
+    // existing-at-test-time set still appears.
+    expect(taskOnly.length).toBeGreaterThanOrEqual(10);
     expect(taskOnly.every((d) => d.category === 'task')).toBe(true);
   });
 
@@ -331,9 +333,10 @@ describe('PredicateRegistry — standard() factory', () => {
     expect(cats).toContain('observation');
     expect(cats).toContain('temporal');
     expect(cats).toContain('event');
+    expect(cats).toContain('priority');
     expect(cats).toContain('document');
     expect(cats).toContain('social');
-    expect(cats).toHaveLength(10);
+    expect(cats).toHaveLength(11);
   });
 
   it('contains the canonical `profile` predicate (consumed by getContext)', () => {

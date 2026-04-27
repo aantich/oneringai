@@ -166,7 +166,10 @@ export class OpenAISTTProvider extends BaseMediaProvider implements ISpeechToTex
       // but default to 16000 Hz (safe for Whisper). Voice pipelines send 8000 Hz
       // which also works fine — WAV header tells the decoder.
       const wavBuffer = this.wrapPcmAsWav(audio, 1, 16000, 16);
-      return new File([new Uint8Array(wavBuffer)], 'audio.wav', { type: 'audio/wav' });
+      // Pass the Buffer directly to File — wrapping in `new Uint8Array(buf)`
+      // would force the typed-array overload and copy the WAV before File even
+      // snapshots it. Direct pass keeps a single Blob-internal copy.
+      return new File([wavBuffer as BlobPart], 'audio.wav', { type: 'audio/wav' });
     } else if (typeof audio === 'string') {
       // File path - create ReadStream
       return fs.createReadStream(audio);

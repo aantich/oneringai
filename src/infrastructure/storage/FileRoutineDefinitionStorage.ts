@@ -18,7 +18,7 @@ import { join } from 'path';
 import { homedir } from 'os';
 import { sanitizeUserId, sanitizeId } from './utils.js';
 import type { IRoutineDefinitionStorage } from '../../domain/interfaces/IRoutineDefinitionStorage.js';
-import type { RoutineDefinition } from '../../domain/entities/Routine.js';
+import type { RoutineDefinition, RoutineSummary } from '../../domain/entities/Routine.js';
 import { resolveStorageUserContext, type StorageUserContextInput } from '../../domain/interfaces/StorageContext.js';
 
 /**
@@ -32,15 +32,19 @@ export interface FileRoutineDefinitionStorageConfig {
 }
 
 /**
- * Index entry for fast listing without loading full files
+ * Index entry for fast listing without loading full files.
+ * Mirrors RoutineSummary so list() can return entries directly.
  */
 interface RoutineIndexEntry {
   id: string;
   name: string;
   description: string;
+  version?: string;
   tags?: string[];
   author?: string;
   updatedAt: string;
+  taskCount: number;
+  parameterNames?: string[];
 }
 
 /**
@@ -189,7 +193,7 @@ export class FileRoutineDefinitionStorage implements IRoutineDefinitionStorage {
     search?: string;
     limit?: number;
     offset?: number;
-  }): Promise<RoutineDefinition[]> {
+  }): Promise<RoutineSummary[]> {
     const { userId } = resolveStorageUserContext(context);
     const index = await this.loadIndex(userId);
     let entries = [...index.routines];
@@ -224,16 +228,17 @@ export class FileRoutineDefinitionStorage implements IRoutineDefinitionStorage {
       entries = entries.slice(0, options.limit);
     }
 
-    // Load full definitions for filtered entries
-    const results: RoutineDefinition[] = [];
-    for (const entry of entries) {
-      const def = await this.load(context, entry.id);
-      if (def) {
-        results.push(def);
-      }
-    }
-
-    return results;
+    return entries.map(e => ({
+      id: e.id,
+      name: e.name,
+      description: e.description,
+      version: e.version,
+      author: e.author,
+      tags: e.tags,
+      taskCount: e.taskCount ?? 0,
+      parameterNames: e.parameterNames,
+      updatedAt: e.updatedAt,
+    }));
   }
 
   getPath(context: StorageUserContextInput): string {
@@ -308,9 +313,12 @@ export class FileRoutineDefinitionStorage implements IRoutineDefinitionStorage {
       id: definition.id,
       name: definition.name,
       description: definition.description,
+      version: definition.version,
       tags: definition.tags,
       author: definition.author,
       updatedAt: definition.updatedAt,
+      taskCount: definition.tasks.length,
+      parameterNames: definition.parameters?.map(p => p.name),
     };
   }
 

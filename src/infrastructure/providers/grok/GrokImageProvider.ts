@@ -166,11 +166,14 @@ export class GrokImageProvider extends BaseMediaProvider implements IImageProvid
   }
 
   /**
-   * Prepare image input (Buffer or file path) for API
+   * Prepare image input (Buffer or file path) for API.
+   *
+   * Buffer is passed directly to File — wrapping in `new Uint8Array(buf)`
+   * would copy the payload before File snapshots it.
    */
   private prepareImageInput(image: Buffer | string): any {
     if (Buffer.isBuffer(image)) {
-      return new File([new Uint8Array(image)], 'image.png', { type: 'image/png' });
+      return new File([image as BlobPart], 'image.png', { type: 'image/png' });
     }
 
     // It's a file path - create a readable stream

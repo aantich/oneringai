@@ -52,8 +52,8 @@ export function createRoutineGet(storage?: IRoutineDefinitionStorage): ToolFunct
         if (args.routineId) {
           routine = await s.load(userId, args.routineId);
         } else if (args.routineName) {
-          const results = await s.list(userId, { search: args.routineName, limit: 1 });
-          routine = results.length > 0 ? results[0] : null;
+          const matches = await s.list(userId, { search: args.routineName, limit: 1 });
+          routine = matches.length > 0 ? await s.load(userId, matches[0]!.id) : null;
         }
 
         if (!routine) {

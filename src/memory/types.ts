@@ -171,6 +171,19 @@ export interface IFact extends ScopeFields {
   // Quality + provenance
   confidence?: number;
   /**
+   * Verbatim quote from the source signal that justifies this fact.
+   *
+   * When `EagernessProfile.requireEvidenceQuote` is `'strict'`, the extraction
+   * pipeline rejects facts missing this field — that single rule eliminates
+   * the "LLM invented a description" failure mode in restraint-first
+   * deployments (ICOS Chief of Staff and similar).
+   *
+   * Library-side: optional. Existing callers and chatty deployments can
+   * write facts without it; downstream consumers that care can read it
+   * to render "why this card is here" in UI.
+   */
+  evidenceQuote?: string;
+  /**
    * Opaque identifier of the signal/source this fact was derived from.
    * Memory layer makes no assumptions about the id's format — library users
    * own the signal store. Each observation is one fact with one source;
@@ -236,6 +249,14 @@ export interface RelatedEvent {
   role: string;
   /** Start time pulled from event.metadata, if present. */
   when?: Date;
+}
+
+/** A related-task / related-event hit augmented with the input entity that produced the match. */
+export type RelatedItemHit<T> = T & { matchedEntityId: EntityId };
+
+export interface RelatedItemsResult {
+  tasks: RelatedItemHit<RelatedTask>[];
+  events: RelatedItemHit<RelatedEvent>[];
 }
 
 export interface EntityView {
@@ -858,7 +879,7 @@ export interface MemorySystemConfig {
    * predicates, and folds registry weights into ranking. Absent = free-form
    * predicate strings (pre-registry behavior).
    *
-   * Pass `PredicateRegistry.standard()` for the built-in 51-predicate starter
+   * Pass `PredicateRegistry.standard()` for the built-in 54-predicate starter
    * set, `PredicateRegistry.empty()` plus `.registerAll(...)` for a fully
    * custom vocabulary.
    */

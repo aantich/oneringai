@@ -134,9 +134,13 @@ export interface ILLMDescription {
  */
 export const LLM_MODELS = {
   [Vendor.OpenAI]: {
-    // GPT-5.4 Series (Current Flagship)
+    // GPT-5.5 Series (Current Flagship)
+    GPT_5_5: 'gpt-5.5',
+    // GPT-5.4 Series
     GPT_5_4: 'gpt-5.4',
     GPT_5_4_PRO: 'gpt-5.4-pro',
+    GPT_5_4_MINI: 'gpt-5.4-mini',
+    GPT_5_4_NANO: 'gpt-5.4-nano',
     // GPT-5.3 Series
     GPT_5_3_CODEX: 'gpt-5.3-codex',
     GPT_5_3_CHAT: 'gpt-5.3-chat-latest',
@@ -234,13 +238,55 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   // OpenAI Models (Verified from developers.openai.com - March 2026)
   // ============================================================================
 
-  // GPT-5.4 Series (Current Flagship - March 2026)
+  // GPT-5.5 Series (Current Flagship - April 2026)
+  'gpt-5.5': {
+    name: 'gpt-5.5',
+    provider: Vendor.OpenAI,
+    description: 'Newest frontier model for the most complex professional work and coding. 1M+ context. Reasoning.effort: none, low, medium (default), high, xhigh. >272K input tokens priced at 2x input / 1.5x output for the full session',
+    isActive: true,
+    preferred: true,
+    releaseDate: '2026-04-25',
+    knowledgeCutoff: '2025-12-01',
+    features: {
+      reasoning: true,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      batchAPI: true,
+      promptCaching: true,
+      parameters: {
+        temperature: false,
+        topP: false,
+        frequencyPenalty: false,
+        presencePenalty: false,
+      },
+      input: {
+        tokens: 1050000,
+        text: true,
+        image: true,
+        cpm: 5,
+        cpmCached: 0.5,
+      },
+      output: {
+        tokens: 128000,
+        text: true,
+        cpm: 30,
+      },
+    },
+  },
+
+  // GPT-5.4 Series
   'gpt-5.4': {
     name: 'gpt-5.4',
     provider: Vendor.OpenAI,
     description: 'Flagship model with 1M+ context. Reasoning.effort: none, low, medium, high, xhigh. Computer use, MCP, tool search',
     isActive: true,
-    preferred: true,
     releaseDate: '2026-03-05',
     knowledgeCutoff: '2025-08-31',
     features: {
@@ -273,6 +319,88 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
         tokens: 128000,
         text: true,
         cpm: 15,
+      },
+    },
+  },
+
+  'gpt-5.4-mini': {
+    name: 'gpt-5.4-mini',
+    provider: Vendor.OpenAI,
+    description: 'Smaller, faster, cheaper sibling of gpt-5.4. 400K context. Text + vision in, text out. Reasoning.effort: none, low, medium, high, xhigh',
+    isActive: true,
+    releaseDate: '2026-03-17',
+    knowledgeCutoff: '2025-08-31',
+    features: {
+      reasoning: true,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      batchAPI: true,
+      promptCaching: true,
+      parameters: {
+        temperature: false,
+        topP: false,
+        frequencyPenalty: false,
+        presencePenalty: false,
+      },
+      input: {
+        tokens: 400000,
+        text: true,
+        image: true,
+        cpm: 0.75,
+        cpmCached: 0.075,
+      },
+      output: {
+        tokens: 128000,
+        text: true,
+        cpm: 4.5,
+      },
+    },
+  },
+
+  'gpt-5.4-nano': {
+    name: 'gpt-5.4-nano',
+    provider: Vendor.OpenAI,
+    description: 'Smallest gpt-5.4 variant for high-volume, low-latency tasks. 400K context. Text + vision in, text out. Reasoning.effort: none, low, medium, high, xhigh',
+    isActive: true,
+    releaseDate: '2026-03-17',
+    knowledgeCutoff: '2025-08-31',
+    features: {
+      reasoning: true,
+      streaming: true,
+      structuredOutput: true,
+      functionCalling: true,
+      fineTuning: false,
+      predictedOutputs: false,
+      realtime: false,
+      vision: true,
+      audio: false,
+      video: false,
+      batchAPI: true,
+      promptCaching: true,
+      parameters: {
+        temperature: false,
+        topP: false,
+        frequencyPenalty: false,
+        presencePenalty: false,
+      },
+      input: {
+        tokens: 400000,
+        text: true,
+        image: true,
+        cpm: 0.2,
+        cpmCached: 0.02,
+      },
+      output: {
+        tokens: 128000,
+        text: true,
+        cpm: 1.25,
       },
     },
   },

@@ -52,7 +52,7 @@ const memory = new MemorySystem({
 });
 ```
 
-51 predicates across 9 categories. Good starting point for general knowledge-graph use cases (people, orgs, tasks, communications).
+54 predicates across 9 categories. Good starting point for general knowledge-graph use cases (people, orgs, tasks, communications).
 
 ### Pattern 2 — extend the standard library with your domain
 
@@ -108,13 +108,13 @@ const memory = new MemorySystem({
 PredicateRegistry.standard()
 ```
 
-Returns a fresh instance (safe to mutate). 51 predicates in 9 categories:
+Returns a fresh instance (safe to mutate). 54 predicates in 9 categories:
 
 | Category | Predicates |
 |---|---|
 | **identity** | `works_at`, `reports_to`, `current_title`, `current_role`, `located_in`, `is_member_of`, `founded` |
 | **organizational** | `part_of`, `subsidiary_of`, `manages`, `owns`, `acquired`, `merged_with` |
-| **task** | `assigned_task`, `committed_to`, `completed`, `created`, `reviewed`, `approved`, `blocked_by`, `depends_on`, `has_due_date`, `has_priority` |
+| **task** | `assigned_task`, `committed_to`, `completed`, `created`, `reviewed`, `approved`, `blocked_by`, `depends_on`, `has_due_date`, `has_priority`, `prepares_for`, `delegated_to`, `cancelled_due_to` |
 | **state** | `state_changed`, `has_status`, `current_status` |
 | **communication** | `emailed`, `called`, `messaged`, `met_with`, `mentioned`, `cc_ed`, `responded_to`, `interaction_count` *(aggregate)* |
 | **observation** | `observed_topic`, `expressed_concern`, `expressed_interest`, `acknowledged`, `noted` |

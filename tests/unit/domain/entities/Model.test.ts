@@ -13,14 +13,14 @@ describe('Model Registry', () => {
   describe('MODEL_REGISTRY', () => {
     it('should have all models', () => {
       const modelCount = Object.keys(MODEL_REGISTRY).length;
-      expect(modelCount).toBe(62);
+      expect(modelCount).toBe(65);
     });
 
-    it('should have 37 OpenAI models', () => {
+    it('should have 40 OpenAI models', () => {
       const openAIModels = Object.values(MODEL_REGISTRY).filter(
         (model) => model.provider === Vendor.OpenAI
       );
-      expect(openAIModels).toHaveLength(37);
+      expect(openAIModels).toHaveLength(40);
     });
 
     it('should have 10 Anthropic models', () => {
@@ -48,7 +48,7 @@ describe('Model Registry', () => {
       const activeCount = Object.values(MODEL_REGISTRY).filter(
         (model) => model.isActive
       ).length;
-      expect(activeCount).toBe(62);
+      expect(activeCount).toBe(65);
     });
 
     it('should have valid pricing for all models', () => {
@@ -179,7 +179,7 @@ describe('Model Registry', () => {
   describe('getModelsByVendor()', () => {
     it('should filter models by OpenAI vendor', () => {
       const models = getModelsByVendor(Vendor.OpenAI);
-      expect(models).toHaveLength(37);
+      expect(models).toHaveLength(40);
       expect(models.every((m) => m.provider === Vendor.OpenAI)).toBe(true);
     });
 
@@ -238,7 +238,7 @@ describe('Model Registry', () => {
   describe('getActiveModels()', () => {
     it('should return all active models', () => {
       const models = getActiveModels();
-      expect(models).toHaveLength(62);
+      expect(models).toHaveLength(65);
       expect(models.every((m) => m.isActive)).toBe(true);
     });
 
@@ -406,6 +406,7 @@ describe('Model Registry', () => {
     });
 
     it('should have preferred flag on recommended models', () => {
+      const gpt55 = getModelInfo('gpt-5.5');
       const gpt54 = getModelInfo('gpt-5.4');
       const gpt52 = getModelInfo('gpt-5.2');
       const gpt5 = getModelInfo('gpt-5');
@@ -413,7 +414,8 @@ describe('Model Registry', () => {
       const opus46 = getModelInfo('claude-opus-4-6');
       const sonnet46 = getModelInfo('claude-sonnet-4-6');
 
-      expect(gpt54?.preferred).toBe(true);
+      expect(gpt55?.preferred).toBe(true);
+      expect(gpt54?.preferred).toBeUndefined();
       expect(gpt52?.preferred).toBeUndefined();
       expect(gpt5?.preferred).toBeUndefined();
       expect(opus47?.preferred).toBe(true);

@@ -70,6 +70,25 @@ describe('ExtractionResolver', () => {
     }
   });
 
+  it('forwards evidenceQuote from ExtractionFactSpec onto the stored fact', async () => {
+    const out: ExtractionOutput = {
+      mentions: {
+        m1: { surface: 'Alice', type: 'person' },
+      },
+      facts: [
+        {
+          subject: 'm1',
+          predicate: 'committed_to',
+          value: 'ship-by-eoq',
+          evidenceQuote: '"we will ship by end of quarter"',
+        },
+      ],
+    };
+    const result = await resolver.resolveAndIngest(out, 'sig_eq', scope);
+    expect(result.facts).toHaveLength(1);
+    expect(result.facts[0]!.evidenceQuote).toBe('"we will ship by end of quarter"');
+  });
+
   it('translates mention labels to real entity IDs in facts', async () => {
     const result = await resolver.resolveAndIngest(johnMicrosoftQ3, 'signal_1', scope);
     const john = result.entities.find((e) => e.label === 'm1')!;

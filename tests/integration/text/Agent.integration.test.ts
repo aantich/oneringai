@@ -181,6 +181,8 @@ describeIfOpenAI('Agent Integration - OpenAI', () => {
       const agent = Agent.create({
         connector: 'openai-test',
         model: 'gpt-4o-mini',
+        instructions:
+          'You answer questions using the prior turns of this conversation as your only source of truth. Never claim you do not know information that the user has already told you in this conversation.',
       });
 
       const response = await agent.run([
@@ -197,7 +199,12 @@ describeIfOpenAI('Agent Integration - OpenAI', () => {
         {
           type: 'message',
           role: 'user',
-          content: [{ type: 'input_text', text: 'What is my name?' }],
+          content: [
+            {
+              type: 'input_text',
+              text: 'Earlier in this same conversation I told you my name. Repeat it back to me exactly.',
+            },
+          ],
         },
       ]);
 
@@ -556,7 +563,7 @@ describeIfAnthropic('Agent Integration - Anthropic (Claude)', () => {
     it('should generate with claude-haiku for faster responses', async () => {
       const agent = Agent.create({
         connector: 'anthropic-test',
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5-20251001',
       });
 
       // Use runDirect to bypass context management and built-in tools
@@ -695,7 +702,7 @@ describeIfAllKeys('Cross-vendor consistency', () => {
     const configs = [
       { connector: 'openai-cross', model: 'gpt-4o-mini' },
       { connector: 'google-cross', model: 'gemini-2.0-flash' },
-      { connector: 'anthropic-cross', model: 'claude-3-5-haiku-20241022' },
+      { connector: 'anthropic-cross', model: 'claude-haiku-4-5-20251001' },
     ];
 
     for (const config of configs) {
@@ -718,7 +725,7 @@ describeIfAllKeys('Cross-vendor consistency', () => {
     const configs = [
       { connector: 'openai-cross', model: 'gpt-4o-mini' },
       { connector: 'google-cross', model: 'gemini-2.0-flash' },
-      { connector: 'anthropic-cross', model: 'claude-3-5-haiku-20241022' },
+      { connector: 'anthropic-cross', model: 'claude-haiku-4-5-20251001' },
     ];
 
     for (const config of configs) {

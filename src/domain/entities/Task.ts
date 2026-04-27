@@ -158,8 +158,8 @@ export interface TaskUntilFlow {
   tasks: SubRoutineSpec;
   /** Checked AFTER each iteration (reuses existing TaskCondition type) */
   condition: TaskCondition;
-  /** Maximum iterations (required — no default) */
-  maxIterations: number;
+  /** Maximum iterations. Default: 1. Hard cap: 1000. */
+  maxIterations?: number;
   /** Optional ICM key for current iteration index */
   iterationKey?: string;
   /** Timeout per sub-execution iteration in ms (default: no timeout) */

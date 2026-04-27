@@ -48,15 +48,20 @@ export function createRoutineGetTaskSteps(
       function: {
         name: 'routine_get_task_steps',
         description:
-          'Get step-level execution detail for a routine execution. Filter by task name, execution phase (pre/post steps vs tasks), or step types.\n\n' +
-          'Phase values:\n' +
-          '- "task" (default): filter by taskName within the main task loop\n' +
-          '- "pre": show prestep.started/completed/failed steps (deterministic pre-steps)\n' +
-          '- "post": show poststep.started/completed/failed steps (deterministic post-steps)\n' +
-          '- "all": show all steps (taskName is optional filter)\n\n' +
-          'Step types: task.started, task.completed, task.failed, task.validation, tool.call, tool.start, ' +
-          'llm.start, llm.complete, iteration.complete, prestep.started, prestep.completed, prestep.failed, ' +
-          'poststep.started, poststep.completed, poststep.failed',
+          'Get step-level execution detail for a routine execution. Filter by task name, phase, or step types.\n\n' +
+          'Phases:\n' +
+          '- "task" (default): steps within the main task loop (taskName required)\n' +
+          '- "pre": deterministic preSteps\n' +
+          '- "post": deterministic postSteps\n' +
+          '- "all": everything (taskName optional filter)\n\n' +
+          'Step type groups (use for stepTypes filter):\n' +
+          '- task.*           — task.started, task.completed, task.failed, task.validation\n' +
+          '- tool.*           — tool.start, tool.call\n' +
+          '- llm.*            — llm.start, llm.complete\n' +
+          '- control_flow.*   — control_flow.started, control_flow.completed (map/fold/until wrappers)\n' +
+          '- prestep.*        — prestep.started, prestep.completed, prestep.failed\n' +
+          '- poststep.*       — poststep.started, poststep.completed, poststep.failed\n' +
+          '- iteration.complete, execution.error',
         parameters: {
           type: 'object',
           properties: {

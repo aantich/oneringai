@@ -329,7 +329,7 @@ describeIfAnthropic('Anthropic Converter - multi-turn tool calls', () => {
   it('should handle sequential tool calls', async () => {
     const agent = Agent.create({
       connector: 'anthropic-converter-test',
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-haiku-4-5-20251001',
       tools: [sequentialTool],
       context: { features: { workingMemory: false } },
     });
@@ -348,7 +348,7 @@ describeIfAnthropic('Anthropic Converter - multi-turn tool calls', () => {
   it('should handle counter tool with multiple invocations', async () => {
     const agent = Agent.create({
       connector: 'anthropic-converter-test',
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-haiku-4-5-20251001',
       tools: [counterTool],
       context: { features: { workingMemory: false } },
     });
@@ -368,7 +368,7 @@ describeIfAnthropic('Anthropic Converter - multi-turn tool calls', () => {
   it('should handle chat without tools', async () => {
     const agent = Agent.create({
       connector: 'anthropic-converter-test',
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-haiku-4-5-20251001',
       context: { features: { workingMemory: false } },
     });
 
@@ -436,11 +436,11 @@ describeIfOllama('Ollama Converter - multi-turn tool calls', () => {
       model: ollamaModel!,
       tools: [sequentialTool],
     });
-    agent.context.tools.disable('context_stats');
-    agent.context.tools.disable('memory_store');
-    agent.context.tools.disable('memory_retrieve');
-    agent.context.tools.disable('memory_delete');
-    agent.context.tools.disable('memory_list');
+    agent.context.tools.disable('store_set');
+    agent.context.tools.disable('store_get');
+    agent.context.tools.disable('store_delete');
+    agent.context.tools.disable('store_list');
+    agent.context.tools.disable('store_action');
 
     const response = await agent.run(
       'Use the get_step_data tool to get all 3 steps in sequence. ' +
@@ -458,11 +458,11 @@ describeIfOllama('Ollama Converter - multi-turn tool calls', () => {
       model: ollamaModel!,
       tools: [counterTool],
     });
-    agent.context.tools.disable('context_stats');
-    agent.context.tools.disable('memory_store');
-    agent.context.tools.disable('memory_retrieve');
-    agent.context.tools.disable('memory_delete');
-    agent.context.tools.disable('memory_list');
+    agent.context.tools.disable('store_set');
+    agent.context.tools.disable('store_get');
+    agent.context.tools.disable('store_delete');
+    agent.context.tools.disable('store_list');
+    agent.context.tools.disable('store_action');
 
     const response = await agent.run(
       'Use the increment_counter tool three times. First with amount 5, then amount 3, then amount 2. ' +
@@ -529,7 +529,7 @@ describeIfAllKeys('Cross-Provider Converter Consistency', () => {
     const configs: Array<{ connector: string; model: string; name: string }> = [
       { connector: 'openai-cross-conv', model: 'gpt-4o-mini', name: 'OpenAI' },
       { connector: 'google-cross-conv', model: 'gemini-2.0-flash', name: 'Google' },
-      { connector: 'anthropic-cross-conv', model: 'claude-3-5-haiku-20241022', name: 'Anthropic' },
+      { connector: 'anthropic-cross-conv', model: 'claude-haiku-4-5-20251001', name: 'Anthropic' },
     ];
     if (OLLAMA_AVAILABLE) {
       configs.push({ connector: 'ollama-cross-conv', model: ollamaModel!, name: 'Ollama' });
@@ -561,7 +561,7 @@ describeIfAllKeys('Cross-Provider Converter Consistency', () => {
     const configs: Array<{ connector: string; model: string; name: string }> = [
       { connector: 'openai-cross-conv', model: 'gpt-4o-mini', name: 'OpenAI' },
       { connector: 'google-cross-conv', model: 'gemini-2.0-flash', name: 'Google' },
-      { connector: 'anthropic-cross-conv', model: 'claude-3-5-haiku-20241022', name: 'Anthropic' },
+      { connector: 'anthropic-cross-conv', model: 'claude-haiku-4-5-20251001', name: 'Anthropic' },
     ];
     if (OLLAMA_AVAILABLE) {
       configs.push({ connector: 'ollama-cross-conv', model: ollamaModel!, name: 'Ollama' });

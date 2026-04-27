@@ -12,13 +12,14 @@ import type {
   DeterministicStep,
 } from '../../domain/entities/Routine.js';
 import { createRoutineDefinition } from '../../domain/entities/Routine.js';
-import type { PlanConcurrency } from '../../domain/entities/Task.js';
+import type { PlanConcurrency, TaskInput } from '../../domain/entities/Task.js';
 import { resolveRoutineDefinitionStorage } from './resolveStorage.js';
 
 interface RoutineUpdates {
   description?: string;
   instructions?: string;
   parameters?: RoutineParameter[];
+  tasks?: TaskInput[];
   preSteps?: DeterministicStep[];
   postSteps?: DeterministicStep[];
   postStepsTrigger?: 'on-success' | 'always';
@@ -40,6 +41,7 @@ const UPDATABLE_FIELDS: (keyof RoutineUpdates)[] = [
   'description',
   'instructions',
   'parameters',
+  'tasks',
   'preSteps',
   'postSteps',
   'postStepsTrigger',
@@ -61,7 +63,11 @@ export function createRoutineUpdate(
       function: {
         name: 'routine_update',
         description:
-          'Update routine-level fields on an existing routine definition. For task-level updates use routine_update_task. Validates the updated routine before saving.',
+          'Update an existing routine definition. ' +
+          'Supports both routine-level fields (description, instructions, parameters, concurrency, etc.) ' +
+          'and full replacement of the tasks array (add/remove/reorder/rename tasks, change dependencies, control flow, conditions). ' +
+          'For surgical edits to a single existing task (description, expectedOutput, etc.) prefer routine_update_task. ' +
+          'Validates the merged routine via createRoutineDefinition (checks dependency graph + cycles) before saving.',
         parameters: {
           type: 'object',
           properties: {
@@ -85,6 +91,89 @@ export function createRoutineUpdate(
                       description: { type: 'string' },
                       required: { type: 'boolean' },
                       default: {},
+                    },
+                    required: ['name', 'description'],
+                  },
+                },
+                tasks: {
+                  type: 'array',
+                  description:
+                    'Replace the full tasks array. The merged routine is re-validated before saving — cycles, missing dependencies, or unreferenced task names will reject the update. ' +
+                    'Each task supports the same shape as in generate_routine: name, description, dependsOn, suggestedTools, expectedOutput, maxAttempts, condition, controlFlow, validation, execution, metadata. ' +
+                    'For changes to a single existing task by name, prefer routine_update_task.',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string', description: 'Unique task name (used in dependsOn references)' },
+                      description: { type: 'string', description: 'What this task should accomplish' },
+                      dependsOn: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        description: 'Task names that must complete first',
+                      },
+                      suggestedTools: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        description: 'Preferred tool names for this task',
+                      },
+                      expectedOutput: { type: 'string', description: 'Description of expected task output' },
+                      maxAttempts: { type: 'number', description: 'Max retries on failure (default: 3)' },
+                      condition: {
+                        type: 'object',
+                        description: 'Conditional execution based on memory state',
+                        properties: {
+                          memoryKey: { type: 'string' },
+                          operator: {
+                            type: 'string',
+                            enum: ['exists', 'not_exists', 'equals', 'contains', 'truthy', 'greater_than', 'less_than'],
+                          },
+                          value: {},
+                          onFalse: { type: 'string', enum: ['skip', 'fail', 'wait'] },
+                        },
+                        required: ['memoryKey', 'operator', 'onFalse'],
+                      },
+                      controlFlow: {
+                        type: 'object',
+                        description:
+                          'Control flow for iteration. Per-type required fields:\n' +
+                          '- map: type, source, tasks\n' +
+                          '- fold: type, source, tasks, initialValue, resultKey (BOTH required — no defaults)\n' +
+                          '- until: type, tasks, condition (maxIterations optional, defaults to 1)',
+                        properties: {
+                          type: { type: 'string', enum: ['map', 'fold', 'until'] },
+                          source: {},
+                          tasks: { type: 'array', items: { type: 'object' } },
+                          resultKey: { type: 'string' },
+                          initialValue: {},
+                          condition: { type: 'object' },
+                          maxIterations: { type: 'number' },
+                          iterationKey: { type: 'string' },
+                          iterationTimeoutMs: { type: 'number' },
+                        },
+                        required: ['type', 'tasks'],
+                      },
+                      validation: {
+                        type: 'object',
+                        properties: {
+                          skipReflection: { type: 'boolean' },
+                          completionCriteria: { type: 'array', items: { type: 'string' } },
+                          minCompletionScore: { type: 'number' },
+                          requiredMemoryKeys: { type: 'array', items: { type: 'string' } },
+                          mode: { type: 'string', enum: ['strict', 'warn'] },
+                          requireUserApproval: { type: 'string', enum: ['never', 'uncertain', 'always'] },
+                          customValidator: { type: 'string' },
+                        },
+                      },
+                      execution: {
+                        type: 'object',
+                        properties: {
+                          parallel: { type: 'boolean' },
+                          maxConcurrency: { type: 'number' },
+                          priority: { type: 'number' },
+                          maxIterations: { type: 'number' },
+                        },
+                      },
+                      metadata: { type: 'object' },
                     },
                     required: ['name', 'description'],
                   },

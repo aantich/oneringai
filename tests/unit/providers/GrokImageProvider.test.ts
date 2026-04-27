@@ -250,6 +250,23 @@ describe('GrokImageProvider', () => {
         data: [{ b64_json: 'editedimagedata' }],
       });
     });
+
+    it('byte-fidelity: File preserves length + bytes from a source Buffer', async () => {
+      // Regression guard for the zero-extra-copy upload path:
+      // `prepareImageInput` was changed from `new File([new Uint8Array(buf)], …)`
+      // to `new File([buf as BlobPart], …)`. We verify the resulting File has
+      // the right size and exact bytes — catches truncation if anyone reverts.
+      const payload = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46]); // JPEG-ish
+      await provider.editImage({
+        model: 'grok-imagine-image',
+        image: payload,
+        prompt: 'edit',
+      });
+      const file = mockEdit.mock.calls[0][0].image as File;
+      expect(file).toBeInstanceOf(File);
+      expect(file.size).toBe(payload.length);
+      expect(Buffer.compare(Buffer.from(await file.arrayBuffer()), payload)).toBe(0);
+    });
   });
 
   describe('listModels()', () => {

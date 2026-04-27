@@ -1098,7 +1098,7 @@ interface PredicateDefinition {
 }
 
 class PredicateRegistry {
-  static standard(): PredicateRegistry;                // 51-predicate starter set
+  static standard(): PredicateRegistry;                // 54-predicate starter set
   static empty(): PredicateRegistry;
 
   register(def: PredicateDefinition): this;
@@ -1125,13 +1125,13 @@ class PredicateRegistry {
 
 ### Standard library
 
-`PredicateRegistry.standard()` returns a fresh registry with 51 predicates across 9 categories:
+`PredicateRegistry.standard()` returns a fresh registry with 54 predicates across 9 categories:
 
 | Category | Predicates |
 |---|---|
 | identity | works_at, reports_to, current_title, current_role, located_in, is_member_of, founded |
 | organizational | part_of, subsidiary_of, manages, owns, acquired, merged_with |
-| task | assigned_task, committed_to, completed, created, reviewed, approved, blocked_by, depends_on, has_due_date, has_priority |
+| task | assigned_task, committed_to, completed, created, reviewed, approved, blocked_by, depends_on, has_due_date, has_priority, prepares_for, delegated_to, cancelled_due_to |
 | state | state_changed, has_status, current_status |
 | communication | emailed, called, messaged, met_with, mentioned, cc_ed, responded_to, interaction_count *(aggregate)* |
 | observation | observed_topic, expressed_concern, expressed_interest, acknowledged, noted |

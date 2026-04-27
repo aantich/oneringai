@@ -84,7 +84,7 @@ describe('MemoryPluginNextGen — entity bootstrap', () => {
     // `Agent.create({instructions})`. Only the user profile block + any
     // user-specific rules block are rendered now.
     expect(out1).not.toMatch(/## Agent Profile/);
-    expect(out1).toMatch(/## Your User Profile/);
+    expect(out1).toMatch(/## About the User/);
 
     // Second call returns same entity ids (identifier-keyed upsert is idempotent).
     const plugin2 = new MemoryPluginNextGen({ memory: mem, agentId: AGENT_ID, userId: USER_ID });
@@ -130,7 +130,7 @@ describe('MemoryPluginNextGen — group entity bootstrap', () => {
     const ids = plugin.getBootstrappedIds();
     expect(ids.groupEntityId).toBeUndefined();
     const out = await plugin.getContent();
-    expect(out).not.toMatch(/Your Organization Profile/);
+    expect(out).not.toMatch(/About the User's Organization/);
   });
 
   it('bootstrap: upserts an organization entity keyed by system_group_id', async () => {
@@ -254,7 +254,7 @@ describe('MemoryPluginNextGen — group entity bootstrap', () => {
     expect(plugin.getBootstrappedIds().groupEntityId).toBeUndefined();
   });
 
-  it('renders "Your Organization Profile" block when group entity exists', async () => {
+  it('renders "About the User\'s Organization" block when group entity exists', async () => {
     const plugin = new MemoryPluginNextGen({
       memory: mem,
       agentId: AGENT_ID,
@@ -276,7 +276,7 @@ describe('MemoryPluginNextGen — group entity bootstrap', () => {
       { userId: USER_ID, groupId: GROUP_ID },
     );
     const out = await plugin.getContent();
-    expect(out).toMatch(/## Your Organization Profile \(Acme Inc\.\)/);
+    expect(out).toMatch(/## About the User's Organization \(Acme Inc\.\)/);
     expect(out).toMatch(/acme\.com/);
   });
 

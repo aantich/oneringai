@@ -1,7 +1,7 @@
 # @everworker/oneringai - Complete User Guide
 
-**Version:** 0.5.3
-**Last Updated:** 2026-04-12
+**Version:** 0.6.0
+**Last Updated:** 2026-04-25
 
 A comprehensive guide to using all features of the @everworker/oneringai library.
 
@@ -57,13 +57,27 @@ A comprehensive guide to using all features of the @everworker/oneringai library
     - Tools (store_set/store_delete/store_list/store_action with store="instructions")
     - Storage and Persistence
     - Use Cases and Best Practices
-14. [User Info](#user-info-nextgen-plugin)
+14. [User Info](#user-info-nextgen-plugin) — ⚠️ deprecated, prefer Self-Learning Memory
     - Setup and Configuration
     - Context Injection (auto-rendered in system message)
     - Tools (store_set/store_get/store_delete/store_action with store="user_info", plus todo_add, todo_update, todo_remove)
     - Storage and Multi-User Isolation
     - Use Cases and Best Practices
-15. [Routine Execution](#routine-execution)
+15. [Self-Learning Memory](#self-learning-memory-nextgen-plugin) — `MemoryPluginNextGen` + `MemoryWritePluginNextGen` + 11 `memory_*` tools (entities, facts, graph, semantic search, profile auto-regen, three-principal permissions)
+    - What it is — entities + facts data model
+    - When to use which plugin (working / in-context / memory / memoryWrite / session ingestor)
+    - Quick Start (in-process, dev)
+    - Storage backends (InMemoryAdapter, MongoMemoryAdapter — raw + Meteor)
+    - What gets injected into the system message (rules, user profile, optional org profile)
+    - Plugin config (incl. `groupBootstrap`, `recentActivity`, `defaultVisibility`)
+    - The 11 `memory_*` tools (5 read + 6 write incl. `memory_set_agent_rule`)
+    - Behavior rules — `memory_set_agent_rule`
+    - Background ingestion via `SessionIngestorPluginNextGen`
+    - Permissions and scope (three-principal model)
+    - Security invariants (no ghost-writes, contextId downgrade, numeric clamping)
+    - Using the tools without the plugin
+    - Direct `MemorySystem` access
+16. [Routine Execution](#routine-execution)
     - Overview and Architecture
     - Quick Start
     - RoutineDefinition and Tasks
@@ -74,44 +88,44 @@ A comprehensive guide to using all features of the @everworker/oneringai library
     - Custom Prompts
     - Callbacks and Progress Tracking
     - Complete Example
-16. [Async (Non-Blocking) Tools](#async-non-blocking-tools)
+17. [Async (Non-Blocking) Tools](#async-non-blocking-tools)
     - How It Works (Lifecycle)
     - Auto-Continue vs Manual Mode
     - Configuration (AsyncToolConfig)
     - Events
     - Public API
     - Edge Cases
-17. [Long-Running Sessions (Suspend/Resume)](#long-running-sessions-suspendresume)
+18. [Long-Running Sessions (Suspend/Resume)](#long-running-sessions-suspendresume)
     - Creating Suspend Tools (SuspendSignal)
     - Running and Detecting Suspension
     - Resuming with Agent.hydrate()
     - Correlation Storage
     - Multi-Step Workflows
-18. [MCP (Model Context Protocol)](#mcp-model-context-protocol)
-19. [Multimodal (Vision)](#multimodal-vision)
-20. [Audio (TTS/STT)](#audio-ttsstt)
-21. [Image Generation](#image-generation)
-22. [Embeddings](#embeddings)
-23. [Video Generation](#video-generation)
-24. [Custom Media Storage](#custom-media-storage)
+19. [MCP (Model Context Protocol)](#mcp-model-context-protocol)
+20. [Multimodal (Vision)](#multimodal-vision)
+21. [Audio (TTS/STT)](#audio-ttsstt)
+22. [Image Generation](#image-generation)
+23. [Embeddings](#embeddings)
+24. [Video Generation](#video-generation)
+25. [Custom Media Storage](#custom-media-storage)
     - IMediaStorage Interface
     - Custom S3 Backend Example
     - FileMediaStorage Default
-25. [Web Search](#web-search)
-26. [Streaming](#streaming)
-27. [External API Integration](#external-api-integration)
-28. [Vendor Templates](#vendor-templates)
+26. [Web Search](#web-search)
+27. [Streaming](#streaming)
+28. [External API Integration](#external-api-integration)
+29. [Vendor Templates](#vendor-templates)
     - Quick Setup for 43+ Services
     - Authentication Methods
     - Complete Vendor Reference
-29. [OAuth for External APIs](#oauth-for-external-apis)
-30. [Model Registry](#model-registry)
-31. [Scoped Connector Registry](#scoped-connector-registry)
+30. [OAuth for External APIs](#oauth-for-external-apis)
+31. [Model Registry](#model-registry)
+32. [Scoped Connector Registry](#scoped-connector-registry)
     - Access Control Policies
     - Multi-Tenant Isolation
     - Using with Agent and ConnectorTools
-32. [Agent Registry](#agent-registry) — Global tracking, deep inspection, parent/child hierarchy, event fan-in, external control
-33. [Agent Orchestrator](#agent-orchestrator) — Multi-agent teams with shared workspace, delegation, and async execution
+33. [Agent Registry](#agent-registry) — Global tracking, deep inspection, parent/child hierarchy, event fan-in, external control
+34. [Agent Orchestrator](#agent-orchestrator) — Multi-agent teams with shared workspace, delegation, and async execution
     - Quick Start
     - Architecture
     - OrchestratorConfig
@@ -124,8 +138,8 @@ A comprehensive guide to using all features of the @everworker/oneringai library
     - Worker Agent Lifecycle
     - Custom System Prompt
     - Per-Type Configuration
-34. [Advanced Features](#advanced-features)
-35. [Production Deployment](#production-deployment)
+35. [Advanced Features](#advanced-features)
+36. [Production Deployment](#production-deployment)
 
 ---
 
@@ -3860,15 +3874,42 @@ interface UserInfoPluginConfig {
 
 ## Self-Learning Memory (NextGen Plugin)
 
-**`MemoryPluginNextGen`** is the modern replacement for both `PersistentInstructionsPluginNextGen` and `UserInfoPluginNextGen`. It sits on top of the [memory layer](./docs/MEMORY_GUIDE.md) and turns it into a first-class agent capability: the agent sees its own evolving profile and the user's profile on every turn, and it has **5 read** `memory_*` tools to query memory while it thinks. Mutation tools (`memory_remember`, `memory_link`, `memory_upsert_entity`, `memory_forget`, `memory_restore`) ship in a separate opt-in **`MemoryWritePluginNextGen`** (feature flag `memoryWrite`) so retrieval-only agents don't pay the write-tool schema cost.
+The Self-Learning Memory system is a brain-like, queryable knowledge store that lets agents *learn from observation* — the user's profile and any user-given behavior rules are injected into the system message on every turn, and the agent can read or mutate the knowledge graph mid-conversation through 11 dedicated tools. It supersedes both `PersistentInstructionsPluginNextGen` and `UserInfoPluginNextGen`.
 
-End-to-end, self-learning works like this:
-1. The user tells the agent something ("I prefer concise answers").
-2. The agent calls `memory_remember({subject: "me", predicate: "prefers", value: "concise answers"})`.
-3. The fact lands in the memory store. If enough new facts have accumulated (default threshold 10), **incremental profile regeneration** fires in the background — the configured LLM is handed the prior profile + only the new facts + a list of invalidated fact IDs, and returns an updated profile document.
-4. On the next turn, the user's profile in the system message reflects the preference — no manual prompt engineering required.
+This section is the user-guide-level walkthrough. For the full conceptual model, adapter setup, signal ingestion pipeline, predicate vocabulary, and resolution tiers, see:
+- [docs/MEMORY_GUIDE.md](./docs/MEMORY_GUIDE.md) — the canonical memory layer guide.
+- [docs/MEMORY_API.md](./docs/MEMORY_API.md) — full `MemorySystem` API reference.
+- [docs/MEMORY_PERMISSIONS.md](./docs/MEMORY_PERMISSIONS.md) — three-principal permission model.
+- [docs/MEMORY_SIGNALS.md](./docs/MEMORY_SIGNALS.md) — signal → fact extraction.
+- [docs/MEMORY_PREDICATES.md](./docs/MEMORY_PREDICATES.md) — predicate registry.
 
-### Quick Start
+### What it is
+
+Two first-class concepts:
+
+- **Entities** are pure identity. People, organizations, projects, tasks, events, topics — each carries a `displayName`, `aliases`, strong `identifiers` (email, domain, slack_id, github, custom canonical id), and type-specific `metadata` (e.g. task `state` / `dueAt`, event `startTime` / `attendeeIds`).
+- **Facts** are knowledge. Triples like `(John, works_at, Microsoft)` or document facts (long-form prose). Facts carry `confidence`, `importance`, `sourceSignalId`, temporal validity (`validFrom` / `validUntil`), supersession links, and can bind to additional entities via `contextIds` ("this fact is about John but also relates to the Acme deal").
+
+Everything is append-only with supersession (state changes archive predecessors), scope-aware (global / group / user-private), three-principal permissioned (owner / group / world), and retrievable as profile + ranked facts + related tasks + related events in one query.
+
+**Self-learning loop:**
+1. The user tells the agent something ("I prefer concise answers"), or a background ingestor extracts facts from the conversation.
+2. A fact lands in the store via `memory_remember` (LLM-driven) or `SessionIngestorPluginNextGen` (passive).
+3. When the new-facts threshold is crossed (default 3), **incremental profile regeneration** fires in the background — the configured LLM gets the prior profile + new facts + invalidated IDs and returns an evolved profile document.
+4. On the next turn, the system message reflects the change. No manual prompt engineering.
+
+### When to use which plugin
+
+| Plugin | Feature flag | Purpose |
+|---|---|---|
+| `WorkingMemoryPluginNextGen` | `workingMemory` (default true) | Ephemeral per-session scratchpad with tiered eviction (raw / summary / findings). NOT a knowledge store. |
+| `InContextMemoryPluginNextGen` | `inContextMemory` (default true) | Live KV values rendered directly in the system message. Use for small, high-signal state the LLM must always see. |
+| **`MemoryPluginNextGen`** | `memory` (default false) | **Recommended.** Self-learning knowledge store. Read-side: profile injection + 5 retrieval tools. |
+| **`MemoryWritePluginNextGen`** | `memoryWrite` (default false) | Optional sidecar — adds the 6 write `memory_*` tools. Requires `memory: true`. |
+| `SessionIngestorPluginNextGen` | n/a (registered manually) | Background pipeline — extracts facts from each batch of messages and writes them to the same `MemorySystem`. Pair with `memory: true` (no `memoryWrite`) for retrieval-only agents whose memory updates happen passively. |
+| `PersistentInstructionsPluginNextGen`, `UserInfoPluginNextGen` | `persistentInstructions`, `userInfo` | ⚠️ Deprecated — use `MemoryPluginNextGen` instead. |
+
+### Quick Start (in-process, dev)
 
 ```typescript
 import {
@@ -3877,7 +3918,8 @@ import {
   InMemoryAdapter,
 } from '@everworker/oneringai';
 
-// 1. Memory system (see docs/MEMORY_GUIDE.md for adapter choices).
+// 1. Build the MemorySystem. Embedder + profile-generator are optional but
+//    recommended (without them: no semantic search, no profile auto-regen).
 const memory = createMemorySystemWithConnectors({
   store: new InMemoryAdapter(),
   connectors: {
@@ -3886,98 +3928,182 @@ const memory = createMemorySystemWithConnectors({
   },
 });
 
-// 2. Agent with feature flags + plugin config.
+// 2. Agent with feature flags + plugin config (under `context.features` /
+//    `context.plugins`).
 const agent = Agent.create({
   connector: 'anthropic',
   model: 'claude-sonnet-4-6',
-  agentId: 'my-assistant',
-  userId: 'alice',                                 // REQUIRED — memory's owner invariant
-  contextFeatures: {
-    memory: true,                                   // reads: profile injection + 5 retrieval tools
-    memoryWrite: true,                              // writes: 5 mutation tools (omit for retrieval-only)
-  },
-  pluginConfigs: {
-    memory: {
-      memory,                                      // the MemorySystem instance (shared by both plugins)
-      // groupId: 'team-A',                        // optional, trusted — from your auth layer
-      // userProfileInjection: { topFacts: 20, relatedTasks: true },
-      // agentProfileInjection: { topFacts: 10 },
+  userId: 'alice',                              // REQUIRED — memory's owner invariant
+  context: {
+    agentId: 'my-assistant',                    // optional — auto-generated if omitted
+    features: {
+      memory: true,                             // reads: profile injection + 5 retrieval tools
+      memoryWrite: true,                        // writes: 6 mutation tools (omit for retrieval-only)
     },
-    // memoryWrite inherits memory/userId from plugins.memory unless overridden.
+    plugins: {
+      memory: {
+        memory,                                 // the MemorySystem instance — shared by both plugins
+        // groupId: 'team-A',                   // optional, trusted from your auth layer
+        // userDisplayName: 'Alice Smith',
+        // userProfileInjection: { topFacts: 20, relatedTasks: true },
+      },
+      // `memoryWrite` inherits memory / agentId / userId from plugins.memory.
+    },
   },
 });
 
 await agent.run('Remember that I prefer concise answers');
 await agent.run('What are my preferences?');
-// → The answer now references the stored preference because it's in the
-//   user profile that's injected into context on every turn.
+// → The reply references the stored preference because it's already in the
+//   user profile injected into context on every turn — no tool call needed.
 ```
 
-### What gets injected into context
+> The `context.features.memory` and `context.features.memoryWrite` flags are independent. `memoryWrite: true` requires `memory: true`. Enable just `memory` for a retrieval-only agent (and pair with `SessionIngestorPluginNextGen` to keep memory growing passively).
+
+### Storage backends
+
+`MemorySystem` is an `IMemoryStore` adapter away from any database. Three adapters ship out of the box; full setup details live in [docs/MEMORY_GUIDE.md § Choosing a storage backend](./docs/MEMORY_GUIDE.md#choosing-a-storage-backend).
+
+| Adapter | When to use |
+|---|---|
+| `InMemoryAdapter` | Tests, REPL, single-user desktop apps that snapshot externally. Zero deps. |
+| `MongoMemoryAdapter` + `RawMongoCollection` | Production servers using the `mongodb` driver. Supports native `$graphLookup` and Atlas Vector Search. |
+| `MongoMemoryAdapter` + `MeteorMongoCollection` | Meteor apps — writes flow through Meteor's async API and trigger reactive publications. |
+
+```typescript
+import { MongoClient } from 'mongodb';
+import {
+  MongoMemoryAdapter,
+  RawMongoCollection,
+} from '@everworker/oneringai';
+
+const client = await new MongoClient(url).connect();
+const db = client.db('myapp');
+const entitiesColl = new RawMongoCollection(db.collection('memory_entities'), client);
+const factsColl   = new RawMongoCollection(db.collection('memory_facts'), client);
+
+const memory = createMemorySystemWithConnectors({
+  store: new MongoMemoryAdapter({
+    entities: entitiesColl,
+    facts: factsColl,
+    factsCollectionName: 'memory_facts',     // required for native $graphLookup
+    useNativeGraphLookup: true,
+  }),
+  connectors: {
+    embedding: { connector: 'openai', model: 'text-embedding-3-small', dimensions: 1536 },
+    profile:   { connector: 'anthropic', model: 'claude-sonnet-4-6' },
+  },
+});
+
+// Run once on startup — creates all required performance + correctness indexes.
+await memory.ensureAdapterIndexes();
+
+// For semantic search at scale, also create Atlas Vector Search indexes
+// programmatically (UI creation is a security footgun — see MEMORY_GUIDE.md).
+await (memory['store'] as MongoMemoryAdapter).ensureVectorSearchIndexes({ dimensions: 1536 });
+```
+
+> Mongo deployments must additionally create a unique partial index on `{identifiers.kind: 1, identifiers.value: 1}` for the entities collection. This guards against cross-process bootstrap races where two containers upsert the same user/agent entity simultaneously. `ensureAdapterIndexes()` does NOT create it (adding a unique index over existing duplicates fails); add it explicitly in a migration.
+
+### What gets injected into the system message
+
+Three blocks are rendered when `features.memory: true`:
 
 ```
-## Agent Profile (agent:my-assistant)
-(LLM-synthesized agent profile — empty on first run, evolves as facts accumulate)
+## User-specific instructions for this agent
+_Directives the current user has given. Follow them over default behavior._
+- Be terse in replies. ` ruleId=fact_abc123_…`
+- Reply in English again. ` ruleId=fact_def456_…`
 
-### Recent top facts (up to 20)
-- learned_pattern: Always ask for dimensions before tax calcs (conf=1.00)
-
-## Your User Profile (user:alice)
-Alice prefers concise replies, is interested in product strategy...
+## Your User Profile (Alice Smith)
+Alice prefers concise replies, leads product strategy at Acme, …
 
 ### Recent top facts (up to 20)
 - prefers: "concise answers" (conf=1.00)
+- works_at: Acme (conf=0.95)
 - role: "product lead" (conf=0.9)
+
+## Your Organization Profile (Acme)        ← only when groupBootstrap is set
+Acme is a 500-person SaaS company in the logistics space …
+
+### Recent top facts (up to 20)
+- …
 ```
 
-Everything else — other people, organisations, projects, graph queries, semantic search — happens through the 8 `memory_*` tools. The system message stays small; the tools give the agent full read/write access to the knowledge graph when it needs it.
+The blocks are rendered **before** every LLM call, never trimmed by compaction (`isCompactable() === false`). Empty blocks are omitted — a brand-new user with no facts gets nothing rendered until something is learned.
 
-### Config
+> Global agent personality / base instructions are NOT auto-rendered any more — set them via `Agent.create({ instructions })`. The `agent` entity still exists for graph queries and as the `this_agent` subject for `memory_set_agent_rule`, but its profile is not synthesised or injected.
+
+### Plugin config
 
 ```typescript
 interface MemoryPluginConfig {
-  memory: MemorySystem;                            // REQUIRED
-  agentId: string;                                 // REQUIRED — unique per agent definition
-  userId: string;                                  // REQUIRED — memory's owner invariant
+  memory: MemorySystem;                  // REQUIRED
+  agentId: string;                       // auto-filled from context.agentId
+  userId: string;                        // auto-filled from agent.userId
+  groupId?: string;                      // TRUSTED — from your auth layer
 
-  // Trusted group id from your auth layer. Plumbed into every memory call
-  // the plugin + its tools make. LLM tool arguments CANNOT override this.
-  groupId?: string;
-
-  // Permissions stamped on the bootstrapped user/agent entities.
+  // Permissions stamped on the bootstrapped user / agent / group entities.
   userEntityPermissions?:  { group?: 'none'|'read'|'write'; world?: 'none'|'read'|'write' };
   agentEntityPermissions?: { group?: 'none'|'read'|'write'; world?: 'none'|'read'|'write' };
 
-  // What to inject for each profile. Both default to { profile: true, topFacts: 20 }.
+  // Optional org bootstrap — when set AND groupId is set, a third entity
+  // (`organization`, identifier `system_group_id`) is upserted and rendered
+  // as "Your Organization Profile". Visibility of facts on it is controlled
+  // by your MemorySystem.visibilityPolicy + per-write permissions.
+  groupBootstrap?: {
+    displayName: string;
+    identifiers?: { kind: string; value: string }[];   // e.g. [{kind:'domain', value:'acme.com'}]
+    permissions?: { group?: 'none'|'read'|'write'; world?: 'none'|'read'|'write' };
+  };
+
+  // What to inject for each profile block. Defaults to { profile:true, topFacts:20,
+  // recentActivity: { limit: 20, windowDays: 7 } }.
   userProfileInjection?:  ProfileInjection;
-  agentProfileInjection?: ProfileInjection;
+  groupProfileInjection?: ProfileInjection;
 
   // Default visibility for memory_remember / memory_link when the LLM omits it.
-  // Defaults: user → 'private', this_agent → 'group', other → 'private'.
+  // Defaults: forUser='private', forAgent='group', forOther='private'.
   defaultVisibility?: {
     forUser?:  'private' | 'group' | 'public';
     forAgent?: 'private' | 'group' | 'public';
     forOther?: 'private' | 'group' | 'public';
   };
 
-  contentCacheMs?: number;         // Rendered-content cache TTL (ms). Default 30_000.
-  autoResolveThreshold?: number;   // Fuzzy-match threshold for {surface}. Default 0.9.
+  autoResolveThreshold?: number;        // Fuzzy-match threshold for {surface}. Default 0.9.
+  userDisplayName?: string;             // Used on first bootstrap; ignored if entity exists.
+  agentDisplayName?: string;            // Same.
 }
 
 interface ProfileInjection {
-  profile?: boolean;          // Include profile.details text. Default true.
-  topFacts?: number;          // Recent ranked facts. 0 disables. Default 20 (max 100).
-  factPredicates?: string[];  // Whitelist for topFacts. Default all.
-  relatedTasks?: boolean;     // Include active tasks. Default false.
-  relatedEvents?: boolean;    // Include recent events. Default false.
-  identifiers?: boolean;      // Render identifier list. Default false.
-  maxFactLineChars?: number;  // Truncate each rendered fact line. Default 200.
+  profile?: boolean;          // Include profile.details. Default true.
+  topFacts?: number;          // Top N ranked facts. 0 disables. Default 20 (cap 100).
+  factPredicates?: string[];  // Restrict topFacts to these predicates.
+  relatedTasks?: boolean;     // Include active related tasks. Default false.
+  relatedEvents?: boolean;    // Include recent related events. Default false.
+  identifiers?: boolean;      // Render entity identifier list. Default false.
+  maxFactLineChars?: number;  // Cap each rendered fact line. Default undefined (no cap).
+  recentActivity?: {          // Time-ordered "Recent activity" tail. Default ON, limit 20, 7d.
+    limit?: number;           // 0 disables.
+    windowDays?: number;
+    predicates?: string[];    // Optional predicate allowlist.
+  };
+}
+
+interface MemoryWritePluginConfig {
+  memory: MemorySystem;                  // REQUIRED
+  agentId: string;                       // auto-filled
+  userId: string;                        // auto-filled
+  groupId?: string;
+  defaultVisibility?: { /* same shape as above */ };
+  autoResolveThreshold?: number;
+  forgetRateLimit?: { maxCallsPerWindow?: number; windowMs?: number };  // default 10/60s/user
 }
 ```
 
-### The 8 tools
+### The 11 `memory_*` tools
 
-All tools accept a flexible **`SubjectRef`** (entities can have many identifiers — email, slack_id, github_login, internal_id…):
+All tools accept a flexible **`SubjectRef`** so the LLM never has to know an entity id:
 
 ```typescript
 type SubjectRef =
@@ -3987,78 +4113,189 @@ type SubjectRef =
   | { surface: string };                               // fuzzy resolution by name/alias
 ```
 
-**Read tools** — always available whenever `features.memory: true`:
+**Read tools (5)** — registered when `features.memory: true`:
 
 | Tool | What it does | Example |
 |------|--------------|---------|
-| `memory_recall` | Profile + top facts + optional tiers | `{"subject":"me"}` or `{"subject":{"surface":"Acme deal"},"include":["neighbors"]}` |
-| `memory_graph` | N-hop graph traversal (Mongo `$graphLookup` when available) | `{"start":"me","direction":"out","maxDepth":2}` |
-| `memory_search` | Semantic text search across facts | `{"query":"deployment incidents last quarter","topK":10}` |
-| `memory_find_entity` | Look up / list by identifier, surface, or type (**read-only** — actions: `find`, `list`) | `{"by":{"identifier":{"kind":"email","value":"alice@a.com"}}}` |
-| `memory_list_facts` | Paginated raw fact enumeration | `{"subject":"me","predicate":"prefers"}` |
+| `memory_recall` | Profile + top facts + optional tiers (`documents` / `semantic` / `neighbors`) | `{"subject":"me"}` · `{"subject":{"surface":"Acme deal"},"include":["neighbors"]}` |
+| `memory_graph` | N-hop graph traversal (Mongo `$graphLookup` for `direction:'out'`/`'in'`; iterative BFS for `'both'`) | `{"start":"me","direction":"out","maxDepth":2}` |
+| `memory_search` | Semantic text search across embedded facts | `{"query":"deployment incidents last quarter","topK":10}` |
+| `memory_find_entity` | Lookup or list by id, identifier, surface, or type+metadata (read-only — actions: `find` / `list`) | `{"by":{"identifier":{"kind":"email","value":"alice@a.com"}}}` |
+| `memory_list_facts` | Paginated raw fact enumeration; `archivedOnly: true` returns audit view | `{"subject":"me","predicate":"prefers"}` |
 
-**Write tools** — only available when `features.memoryWrite: true` (requires `memory: true`):
+**Write tools (6)** — registered when `features.memoryWrite: true` (requires `memory: true`):
 
 | Tool | What it does | Example |
 |------|--------------|---------|
-| `memory_remember` | Write an atomic fact | `{"subject":"me","predicate":"prefers","value":"concise"}` |
-| `memory_link` | Write a relational fact | `{"from":{"surface":"Alice"},"predicate":"attended","to":{"surface":"Q3 planning"}}` |
-| `memory_upsert_entity` | Create or merge an entity by identifier | `{"type":"person","displayName":"Alice","identifiers":[{"kind":"email","value":"alice@a.com"}]}` |
-| `memory_forget` | Archive a fact (optionally supersede) | `{"factId":"fact_xyz","replaceWith":{"predicate":"role","value":"senior engineer"}}` |
-| `memory_restore` | Un-archive a previously forgotten fact | `{"factId":"fact_xyz"}` |
+| `memory_remember` | Write an atomic fact (or document fact via `kind: "document"` + `details`) | `{"subject":"me","predicate":"prefers","value":"concise"}` |
+| `memory_link` | Write a relational fact between two entities | `{"from":{"surface":"Alice"},"predicate":"attended","to":{"surface":"Q3 planning"}}` |
+| `memory_upsert_entity` | Create or merge an entity by identifiers (multi-ID auto-merge) | `{"type":"person","displayName":"Alice","identifiers":[{"kind":"email","value":"alice@a.com"}]}` |
+| `memory_forget` | Archive a fact (optionally supersede with a correction). Rate-limited 10/60s/user. | `{"factId":"fact_xyz","replaceWith":{"predicate":"role","value":"senior engineer"}}` |
+| `memory_restore` | Un-archive a previously forgotten fact (undo). Rejects when superseded by a live successor. | `{"factId":"fact_xyz"}` |
+| `memory_set_agent_rule` | Record a user-specific behavior rule for THIS agent. Rendered back into the system-message rules block. | `{"rule":"Be terse in replies."}` · `{"rule":"Reply in Russian.","replaces":"fact_abc123"}` |
 
-**Visibility mapping** on `memory_remember` / `memory_link` / `memory_upsert_entity`:
-- `"private"` → `{group: 'none', world: 'none'}` — owner-only
-- `"group"` → `{group: 'read', world: 'none'}` — group-readable
-- `"public"` → undefined — library defaults (group:read, world:read)
+**Visibility mapping** (on `memory_remember` / `memory_link` / `memory_upsert_entity`):
 
-**Multi-ID enrichment** — `memory_upsert_entity` auto-merges identifiers when any one matches an existing entity:
+| Tool arg | Permissions stamped | Effect |
+|---|---|---|
+| `"private"` | `{group:'none', world:'none'}` | Owner-only |
+| `"group"` | `{group:'read', world:'none'}` | Group-readable |
+| `"public"` | `undefined` (library defaults: `group:'read'`, `world:'read'`) | Visible to anyone with scope access |
+
+**Multi-ID enrichment** — `memory_upsert_entity` auto-merges identifiers when any one matches an existing entity. Useful when the LLM observes a person via Slack today and via email tomorrow:
 
 ```json
-{"type": "person", "displayName": "Alice Smith",
- "identifiers": [{"kind": "email", "value": "alice@a.com"},
-                 {"kind": "slack_user_id", "value": "U07ABC"}]}
+{"type":"person","displayName":"Alice Smith",
+ "identifiers":[{"kind":"email","value":"alice@a.com"},
+                {"kind":"slack_user_id","value":"U07ABC"}]}
 ```
 
-If any identifier already belongs to an entity, the other(s) get added to it — so `memory_find_entity({"by":{"identifier":{"kind":"slack_user_id","value":"U07ABC"}}})` later hits the same Alice.
+If any identifier already belongs to an entity, the others are added to it — so future `memory_find_entity` lookups by either identifier resolve to the same Alice.
 
-### Security model
+### Behavior rules — `memory_set_agent_rule`
 
-The library's permission system trusts scope (`{userId, groupId}`) because the host application is responsible for authenticating who the caller is. The memory plugin + tools preserve this trust boundary:
+When the user gives a directive about *the agent itself* ("be terse", "stop apologizing", "reply in Russian", "your name is Jason now"), the LLM calls `memory_set_agent_rule`. The rule is stored as a fact on the agent entity scoped to the calling user (`ownerId = userId`, `predicate = 'agent_behavior_rule'`, importance 0.95, private visibility) and rendered back into the **`## User-specific instructions for this agent`** block on every subsequent turn. Each rule shows its `ruleId` so the LLM can pass `replaces` to supersede it cleanly when the user contradicts a prior rule.
 
-- **`userId` and `groupId` come from plugin config, NEVER from tool arguments.** If a `groupId` tool argument were honoured, a user in group A could ask the agent to call `memory_remember({..., groupId: "B"})` and escalate into group B. Instead, `groupId` is fixed by the host app and silently ignored if the LLM tries to override it.
-- All LLM-controllable numeric limits are clamped to safe maxes (`maxDepth ≤ 5`, `topK ≤ 100`, `limit ≤ 200/500`, `topFactsLimit ≤ 100`, `neighborDepth ≤ 5`) to prevent DoS via absurd arguments.
-- `memory_search` date filters must be valid ISO-8601 — invalid strings return a structured error instead of silently dropping the filter.
+The plugin's instructions teach the LLM a narrow trigger:
 
-### Using the tools without the full plugin
+- ✅ Identity / name / persona, role assignment, tone, format, language, meta-interaction rules.
+- ❌ Task creation ("remind me to X" → `memory_upsert_entity` task or a tracker connector), calendar actions, factual corrections, user statements about themselves.
 
-If you want the LLM tools but not the plugin's profile injection:
+Rules are scoped per-user-per-agent — another user of the same agent gets a different set, all derived from the same single `agentEntityId` plus per-fact `ownerId` filtering.
+
+### Background ingestion via `SessionIngestorPluginNextGen`
+
+`memory_*` write tools depend on the agent remembering to call them. For deployments where the agent should be retrieval-only or where you want belt-and-suspenders capture, register `SessionIngestorPluginNextGen` alongside `MemoryPluginNextGen`. It hooks `onBeforePrepare`, snapshots the conversation slice since its watermark, and (when the slice meets `minBatchMessages`) kicks off an async LLM extraction that writes facts directly to the same `MemorySystem`.
 
 ```typescript
-import { createMemoryTools } from '@everworker/oneringai';
+import { SessionIngestorPluginNextGen } from '@everworker/oneringai';
 
-const tools = createMemoryTools({
-  memory,                                     // MemorySystem instance
-  agentId: 'my-agent',
-  defaultUserId: 'alice',                     // fallback when ToolContext.userId is unset
-  defaultGroupId: 'team-A',                   // TRUSTED — from your auth layer
-  getOwnSubjectIds: () => ({ userEntityId, agentEntityId }),
-  defaultVisibility: { forUser: 'private', forAgent: 'group', forOther: 'private' },
-});
-
-agent.registerTools(tools);
+// After Agent.create(...):
+agent.context.registerPlugin(new SessionIngestorPluginNextGen({
+  memory,
+  agentId: agent.context.agentId,
+  userId: 'alice',
+  groupId: 'team-A',                    // optional, trusted
+  connectorName: 'fast-extractor',      // REQUIRED — typically a cheap, NON-reasoning model
+  model: 'gpt-4.1',
+  diligence: 'normal',                  // 'minimal' | 'normal' | 'thorough'
+  minBatchMessages: 6,                  // default
+}));
 ```
 
-Without `getOwnSubjectIds`, the `"me"` / `"this_agent"` SubjectRef tokens return a structured error; callers must reference entities by id, identifier, or surface.
+Pair `memory: true` with the ingestor (and **without** `memoryWrite`) for an agent that reads memory but never mutates it directly — useful when the agent operator wants ambient learning without trusting the LLM to write. See [docs/MEMORY_GUIDE.md § Learning from agent runs](./docs/MEMORY_GUIDE.md#learning-from-agent-runs--sessioningestorpluginnextgen) for batching, watermark, dedup-merge, and graceful-shutdown details.
 
-### When to use which plugin
+> On graceful shutdown the host MUST `await ingestor.flush()` before destroying the agent — `flush()` ignores the batch threshold and awaits completion, so the trailing batch is captured.
 
-- **`WorkingMemoryPluginNextGen`** (`workingMemory` feature) — ephemeral agent scratchpad, per-session, tiered eviction. Not a knowledge store.
-- **`InContextMemoryPluginNextGen`** (`inContextMemory` feature) — live KV values right in the system message, priority-based eviction. Use for small, high-signal state the LLM must see.
-- **`MemoryPluginNextGen`** (`memory` feature, **recommended**) — the knowledge store. Use for anything you want to learn about the user, the agent, other entities, or their relationships — that should persist + evolve + survive across sessions.
-- `PersistentInstructionsPluginNextGen` and `UserInfoPluginNextGen` — deprecated; use `MemoryPluginNextGen` instead.
+For **non-agent flows** (process this email / text now, no conversation involved), use `SignalIngestor` directly — see [docs/MEMORY_SIGNALS.md](./docs/MEMORY_SIGNALS.md). Reference adapters: `EmailSignalAdapter`, `CalendarSignalAdapter`, `PlainTextAdapter`. Custom adapters implement `SignalSourceAdapter`.
 
-See [docs/MEMORY_GUIDE.md § 14](./docs/MEMORY_GUIDE.md#giving-agents-memory--the-memorypluginnextgen-plugin-and-memory_-tools) for deeper reference, and [docs/MEMORY_PERMISSIONS.md](./docs/MEMORY_PERMISSIONS.md) for the permission model.
+### Permissions and scope
+
+Every entity and fact carries:
+- **`ownerId`** (required) — the user who created the record. Owner always has full access.
+- **`groupId`** (optional) — the group the record belongs to.
+- **`permissions: { group?, world? }`** — `'none' | 'read' | 'write'`. Defaults: `group: 'read'`, `world: 'read'` (public-read, owner-write).
+
+Reads are filtered at the storage adapter (defence-in-depth); writes are checked at the `MemorySystem` layer (`assertCanAccess(..., 'write')` throws `PermissionDeniedError`). Scope visibility cuts orthogonal: a record with `groupId: 'A'` is invisible to callers in group `'B'` regardless of permissions.
+
+The plugin's `defaultVisibility` config decides what stamping happens when the LLM doesn't pass an explicit `visibility`:
+
+| Subject role | Default | Why |
+|---|---|---|
+| `forUser` (subject is the calling user) | `'private'` | Personal facts default to owner-only |
+| `forAgent` (subject is `this_agent`) | `'group'` | Agent-side learnings shared with the org |
+| `forOther` (any other entity) | `'private'` | Conservative — prevents accidental cross-user info leakage via shared entities |
+
+Override per-deployment via `defaultVisibility` config or per-call via the LLM's `visibility` arg. Full model: [docs/MEMORY_PERMISSIONS.md](./docs/MEMORY_PERMISSIONS.md).
+
+### Security invariants
+
+The library trusts scope (`{userId, groupId}`) because the host authenticates the caller. The plugin + tools preserve that trust boundary:
+
+- **`userId` and `groupId` come from plugin config, NEVER from tool arguments.** Tools silently ignore any `groupId` passed by the LLM. (Otherwise a user in group A could ask the agent to call `memory_remember({..., groupId: "B"})` and escalate.)
+- **No ghost-writes.** `memory_remember` and `memory_link` reject writes whose subject is owned by another user — the memory layer enforces `fact.ownerId == subject.ownerId`, so without this guard a write against someone else's entity would silently attribute the fact to *them*. The tools return a structured error; the LLM should `memory_upsert_entity` its own entity instead.
+- **`contextIds` auto-downgrade.** A write specifying `contextIds` that include foreign-owned entities AND a non-private visibility is silently downgraded to `private` (with a `warnings` entry on the response). Prevents planting cross-owner facts that surface in a victim's graph walks.
+- **Numeric clamping.** All LLM-controllable numeric limits are capped (`maxDepth ≤ 5`, `topK ≤ 100`, `limit ≤ 200/500`, `topFactsLimit ≤ 100`, `neighborDepth ≤ 5`, `confidence`/`importance` ∈ [0, 1]). DoS and ranking-pollution mitigated.
+- **`kind` is a strict enum.** Every fact is `'atomic'` or `'document'`. Anything else is rejected at both the tool and `MemorySystem.addFact` boundary.
+- **`value` and `objectId` are mutually exclusive.** Either relational or attribute, never both.
+
+### Using the tools without the plugin
+
+If you want the LLM tools but not the plugin's profile injection (e.g. you already have a custom system prompt strategy), call the factories directly. All three share the same `CreateMemoryToolsArgs`:
+
+```typescript
+import {
+  createMemoryReadTools,
+  createMemoryWriteTools,
+  createMemoryTools,            // convenience: all 11
+} from '@everworker/oneringai';
+
+const readTools = createMemoryReadTools({
+  memory,                                   // MemorySystem instance
+  agentId: 'my-agent',
+  defaultUserId: 'alice',                   // fallback when ToolContext.userId is unset
+  defaultGroupId: 'team-A',                 // TRUSTED — from your auth layer
+  // Optional: wire "me" / "this_agent" token resolution via your own bootstrap.
+  getOwnSubjectIds: () => ({ userEntityId, agentEntityId }),
+  defaultVisibility: { forUser: 'private', forAgent: 'group', forOther: 'private' },
+  autoResolveThreshold: 0.9,
+});
+
+agent.tools.register(readTools);
+
+// Or full read+write:
+const writeTools = createMemoryWriteTools({ memory, agentId: 'my-agent', defaultUserId: 'alice' });
+agent.tools.register([...readTools, ...writeTools]);
+```
+
+Without `getOwnSubjectIds`, the `"me"` / `"this_agent"` `SubjectRef` tokens return a structured error; callers must reference entities by id, identifier, or surface.
+
+### Direct `MemorySystem` access
+
+For server-side code (jobs, migrations, CLI tooling) you can bypass the agent layer entirely and use the `MemorySystem` API directly:
+
+```typescript
+const scope = { userId: 'alice', groupId: 'team-A' };
+
+// Upsert an entity
+const { entity: john } = await memory.upsertEntity({
+  type: 'person',
+  displayName: 'John Doe',
+  identifiers: [{ kind: 'email', value: 'john@acme.com' }],
+}, scope);
+
+// Add a fact
+await memory.addFact({
+  subjectId: john.id,
+  predicate: 'works_at',
+  kind: 'atomic',
+  objectId: acmeId,
+  importance: 0.8,
+}, scope);
+
+// Brain-like retrieval — profile + top facts + related tasks + related events
+const view = await memory.getContext(john.id, {}, scope);
+
+// Surface-form lookup (for callers that don't know the id yet)
+const candidates = await memory.resolveEntity(
+  { surface: 'John from Acme', type: 'person' },
+  scope,
+);
+
+// Graph traversal
+const neighborhood = await memory.traverse(john.id, {
+  direction: 'out',
+  maxDepth: 2,
+}, scope);
+
+// Semantic search (requires embedder)
+const hits = await memory.semanticSearch('budget concerns', {}, scope);
+
+// Bitemporal — what did we know about this entity on a specific date?
+const past = await memory.getContext(john.id, { asOf: new Date('2026-01-15') }, scope);
+```
+
+Full API reference: [docs/MEMORY_API.md](./docs/MEMORY_API.md).
 
 ---
 
@@ -10510,6 +10747,32 @@ const voices = await tts.listVoices();
 const audio = await tts.synthesize('Hello', { voice: 'echo' });
 ```
 
+#### Custom Voices (OpenAI)
+
+OpenAI lets you register a custom voice in the dashboard and reference it
+through the API. The library accepts the resulting `voice_…` id wherever a
+built-in voice name is expected — the SDK call shape (`voice: { id }`) is
+handled internally.
+
+```typescript
+const branded = TextToSpeech.create({
+  connector: 'openai',
+  model: 'gpt-4o-mini-tts',
+  voice: 'voice_1234abcd', // id returned by OpenAI when the custom voice was created
+});
+
+await branded.toFile('Spoken in your bespoke voice.', './brand.mp3');
+
+// Override per-call as well
+await branded.synthesize('Different copy.', { voice: 'voice_5678efgh' });
+```
+
+**How it's detected:** any string starting with `voice_` is forwarded as a
+custom-voice reference; everything else is treated as a built-in voice name
+(`alloy`, `ash`, `ballad`, `coral`, `echo`, `fable`, `onyx`, `nova`, `sage`,
+`shimmer`, `verse`, `marin`, `cedar`). `tts.listVoices()` returns only the
+built-ins — the dashboard is the source of truth for custom-voice ids.
+
 #### Audio Formats
 
 ```typescript
@@ -11404,7 +11667,9 @@ const fast = await googleVideo.generate({
 
 ### Video Extension
 
-Extend an existing video (not all models support this):
+Extend an existing video by generating an additional segment after it.
+For OpenAI Sora the API references completed clips by **id** (the `jobId`
+returned by `generate()` / `generateAndWait()`), not by buffer or URL.
 
 ```typescript
 const videoGen = VideoGeneration.create({ connector: 'openai' });
@@ -11415,18 +11680,96 @@ const original = await videoGen.generateAndWait({
   duration: 4,
 });
 
-// Download the original
-const originalBuffer = await videoGen.download(original.jobId);
-
-// Extend it
+// Extend it (Sora: pass the jobId; the new segment length is `extendDuration`)
 const extended = await videoGen.extend({
-  video: originalBuffer,
+  model: 'sora-2',
+  video: original.jobId,
   prompt: 'The rocket continues into space',
-  extendDuration: 4,        // Add 4 more seconds
-  direction: 'end',         // Extend from the end
+  extendDuration: 8,        // length of the *new* segment, snapped to 4/8/12
+  direction: 'end',         // currently advisory; OpenAI extends from the end
 });
 
 await videoGen.waitForCompletion(extended.jobId);
+```
+
+> **Note** — older versions of this library aliased `extend()` onto the
+> `videos.remix()` SDK call, which does not actually lengthen the clip.
+> As of the current release, `extend()` is wired to the real
+> `videos.extend()` endpoint; if you relied on the old aliasing behaviour,
+> use `videoGen.remix()` (below) instead.
+
+### Video Remix and Edit (Sora)
+
+OpenAI Sora exposes two more transforms on completed videos:
+
+```typescript
+// Remix — same length, prompt-steered re-generation.
+const remix = await videoGen.remix({
+  videoId: original.jobId,
+  prompt: 'Same composition, but at golden hour',
+});
+
+// Edit — apply a prompt-described change to the completed clip.
+const edited = await videoGen.edit({
+  videoId: original.jobId,
+  prompt: 'Add light snowfall throughout',
+});
+
+await Promise.all([
+  videoGen.waitForCompletion(remix.jobId),
+  videoGen.waitForCompletion(edited.jobId),
+]);
+```
+
+Both methods throw `Video remix not supported by …` / `Video edit not
+supported by …` when the underlying provider does not implement them.
+Today only the OpenAI Sora provider does.
+
+### Reusable Characters (Sora)
+
+The Sora character API lets you upload a reference video to register a
+named character, then thread the returned id back into a future
+`generate()` via `vendorOptions.characterId`.
+
+```typescript
+// Register the character from a reference clip.
+const hero = await videoGen.createCharacter({
+  name: 'Hero',
+  video: './reference-shot.mp4',  // Buffer | local path | URL
+});
+// → { id: 'char_…', name: 'Hero' }
+
+// Reuse on subsequent generations.
+const scene = await videoGen.generate({
+  prompt: 'Hero walks across a windswept beach at dusk',
+  vendorOptions: { characterId: hero.id },
+});
+
+// Look up later.
+const same = await videoGen.getCharacter(hero.id);
+```
+
+The character id is stable across generations, so you can keep a single
+character coherent across multiple shots.
+
+### Higher-Resolution Sora Output
+
+Sora supports four output sizes. Pass either a `resolution` string or an
+`aspectRatio` keyword:
+
+| Resolution | Orientation | Notes |
+|---|---|---|
+| `720x1280` | Portrait | Default |
+| `1280x720` | Landscape | Standard 720p |
+| `1024x1792` | Portrait, 1.4× | Higher-resolution export |
+| `1792x1024` | Landscape, 1.4× | Higher-resolution export |
+
+```typescript
+const hd = await videoGen.generate({
+  prompt: 'Aerial shot of a coastline at dawn',
+  model: 'sora-2-pro',
+  resolution: '1792x1024',
+});
 ```
 
 ### Available Models
@@ -13197,11 +13540,26 @@ console.log(openaiModels.map(m => m.name));
 
 // Get all active models
 const activeModels = getActiveModels();
-console.log(activeModels.length); // 35
+console.log(activeModels.length); // 65
 
 // Use model constants
-const model = LLM_MODELS[Vendor.OpenAI].GPT_5_2;
-console.log(model); // 'gpt-5.2'
+const flagship = LLM_MODELS[Vendor.OpenAI].GPT_5_5;   // 'gpt-5.5' (current OpenAI flagship)
+const mini     = LLM_MODELS[Vendor.OpenAI].GPT_5_4_MINI; // 'gpt-5.4-mini'
+const nano     = LLM_MODELS[Vendor.OpenAI].GPT_5_4_NANO; // 'gpt-5.4-nano'
+```
+
+**GPT-5.4 mini / nano (added 2026-03-17):** smaller, cheaper siblings of
+`gpt-5.4` for high-volume work. 400K context, 128K max output, vision-in,
+text-out, structured output + function calling + prompt caching + batch.
+Pricing per 1M tokens: mini $0.75 in / $0.075 cached / $4.50 out;
+nano $0.20 in / $0.02 cached / $1.25 out. Use them via the registry the
+same way as any other OpenAI model:
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-5.4-nano',          // or 'gpt-5.4-mini' / 'gpt-5.5'
+});
 ```
 
 ### Resolve Model Capabilities
@@ -14533,5 +14891,5 @@ MIT License - see LICENSE file for details.
 
 ---
 
-**Last Updated:** 2026-03-17
-**Version:** 0.5.0
+**Last Updated:** 2026-04-25
+**Version:** 0.6.0

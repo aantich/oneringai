@@ -7,6 +7,131 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Memory plugin: 3rd-person framing, User's Active Priorities block, user timezone
+
+`MemoryPluginNextGen.getContent()` now distinguishes 1st-person (about the agent) from 3rd-person (about the user) blocks so the agent doesn't conflate the user's context with its own.
+
+- **3rd-person headers** — `## Your User Profile` → `## About the User (<displayName>)` and `## Your Organization Profile` → `## About the User's Organization (<orgName>)`. The "User-specific instructions for this agent" block stays in 1st person — it really does describe the agent. **Breaking** for callers asserting on the old strings; the public plugin API is unchanged.
+- **`## User's Active Priorities`** — new section rendered IMMEDIATELY after the user profile block (before the organization block) when the user has at least one active tracked priority. Walks `tracks_priority` facts on the user entity, fetches the linked `priority` entities, filters by `metadata.jarvis.priority.status === 'active'`, sorts by `weight` desc with `deadline` asc as tiebreak. Each bullet renders the priority's `displayName` plus tags `(horizon, weight, deadline, scope)` when set. Section is omitted entirely when no `tracks_priority` facts exist or all referenced priorities are non-active. Write path is unchanged: `memory_upsert_entity({type:'priority', metadata:{jarvis:{priority:{...}}}})` followed by `memory_link({from:'me', predicate:'tracks_priority', to:{id:<priorityId>}})`.
+- **`**Timezone:**` line** in the user profile block when `userEntity.metadata.jarvis.tz` is set (IANA string, e.g. `'Europe/Berlin'`). Lets the agent reason about "today" / scheduling without guessing UTC. User-only by convention — the renderer ignores `tz` on org/agent entities. Host apps populate it via `memory.upsertEntity({..., metadata:{jarvis:{tz:'...'}}, metadataMerge:'overwrite'})` or the LLM tool `memory_upsert_entity`.
+- **Plugin instructions updated** — `MEMORY_INSTRUCTIONS` now points at the priorities section explicitly and reminds the agent that profile/priorities describe the USER (3rd person), while the rules block describes the agent (1st person, overrides default behavior).
+
+### Routines: `routine_list` + `routine_delete` tools, summary-only listing
+
+- **New tool `routine_list`** — slim, paginated listing of routine definitions. Filters by `tags` (ANY-of intersect), `search` (case-insensitive substring on name/description), `limit` (1–200, default 50), `offset`. Returns `{ count, hasMore, routines: RoutineSummary[] }`. The pagination probe fetches `limit + 1` to compute `hasMore` without a second round-trip.
+- **New tool `routine_delete`** — permanently removes a routine definition by ID. Past execution records are preserved; downstream schedules referencing the deleted ID will fail at runtime. Marked `session`/`high` risk.
+- **`routine_update` now supports `tasks` array replacement** — full add/remove/reorder/rename, dependency rewiring, control-flow changes. Re-validated via `createRoutineDefinition` (cycle + missing-dep checks) before saving. For surgical edits to a single existing task, `routine_update_task` is still preferred.
+- **BREAKING — `IRoutineDefinitionStorage.list()` now returns `RoutineSummary[]`** instead of `RoutineDefinition[]`. The summary carries `id`, `name`, `description`, `version`, `author`, `tags`, `taskCount`, `parameterNames`, `updatedAt`. Use `load(id)` for the full definition. This eliminates the per-entry full-document materialization that every backend was paying — Mongo/Postgres impls can now project to summary fields server-side, and the file impl returns its index entries directly without per-entry disk reads. Custom `IRoutineDefinitionStorage` implementers must update their `list()` signature; `routine_get`'s name-search path now does an extra `load()`.
+- **`RoutineSummary` exported** from `@everworker/oneringai` and `@everworker/oneringai/types`.
+
+### Memory: task/event lifecycle primitives
+
+Public surface for the v25 task/event reconciliation pipeline. All additions are backwards-compatible.
+
+- **`MemorySystem.upsertEntity` now accepts `metadataMerge` + `metadataMergeKeys`.** The identifier-resolved path can now fold incoming `metadata` into an existing entity. Modes: `'fillMissing'` (only set absent keys) and `'overwrite'` (shallow-merge, incoming wins). Optional `metadataMergeKeys` whitelist pins the merge to a known set so a calendar-style sync caller cannot accidentally leak unrelated extracted fields. Default behaviour is preserved — without the option, metadata is ignored on resolve. Triggers `assertCanAccess(..., 'write')` whenever a merge actually changes a key, so read-only callers cannot push metadata. Deep-equality on values prevents spurious version bumps.
+- **`MemorySystem.resolveRelatedItems(entityIds, scope, opts)`.** Multi-entity public traversal returning tasks + events that touch ANY of `entityIds` via metadata role fields or fact `contextIds`, deduped by id and tagged with `matchedEntityId`. Per-bucket `limit` (tasks and events each capped, default 50, ceiling 200). Bias note: the first input entity to surface a hit wins attribution — pass `entityIds` ordered by relevance.
+- **`MemorySystem.findSimilarOpenTasks(queryText, scope, opts)`.** Semantic kNN over open tasks via `IMemoryStore.semanticSearchEntities`, post-filtered by configured active task states. `topK` clamped to `[1, 100]`, `minScore` clamped to `[0, 1]` (NaN → 0). Over-fetch floor of 30 candidates ensures small `topK` still survives the post-state filter. Returns `[]` (with `console.warn`) when the embedder or semantic adapter is missing — callers should treat semantic similarity as opportunistic, not load-bearing.
+- **`diffEntityMetadata(prev, next, watchedKeys)` exported from `@everworker/oneringai`.** Pure helper for callers detecting external metadata changes (e.g. a calendar API event update) so they can emit predicate facts (`cancelled`, `rescheduled`) without re-implementing diff logic per call site. Reports `added` / `removed` / `changed`, deep-compares arrays/objects/Dates.
+- **Three new lifecycle predicates** (now 54 total in `STANDARD_PREDICATES`):
+  - `prepares_for` (task → event, inverse `prepared_by`) — completing the task readies the user for the event; lets cancellation propagate onto bound prep tasks.
+  - `delegated_to` (task → person, inverse `delegate_of`) — captures the act of handoff distinctly from the resulting `assigned_task`.
+  - `cancelled_due_to` (task | event → entity, inverse `cancellation_cause_for`) — cancellation provenance.
+
+## [0.6.0] - 2026-04-25
+
+> **Headline: the Memory System.** This release lands a brain-like, self-learning knowledge layer for agents — entity + fact graph, signal ingestion, semantic entity resolution, per-user/per-agent behavior rules, restraint-posture extraction, and a write/read-split plugin pair that turns ambient conversation into durable, scoped memory. Most of the entries below are pieces of that single arc; the rest is plumbing (model-registry refresh, no-silent-truncation policy, Sora extend/remix/edit) and a sweep of test fixes that brought the integration suite back to green.
+>
+> **Memory at a glance:**
+> - **Two-plugin split:** `MemoryPluginNextGen` (read-only, 5 `memory_*` tools, injects user profile + per-agent rules into the system message) + `MemoryWritePluginNextGen` (6 `memory_*` write tools, optional sidecar). Either can run alone.
+> - **Self-learning via background extraction:** `SessionIngestorPluginNextGen` watches the conversation, batches turns, dedups against in-flight `memory_*` tool calls, and writes facts in the background — no inline prompt overhead.
+> - **Per-user-per-agent behavior rules:** `memory_set_agent_rule` lets the agent capture user-specific style/tone/format directives and re-renders them at the top of the system message every turn. Owned by the user, scoped to the agent, supersedeable.
+> - **Restraint posture (v5 prompt):** eagerness profiles, anchor registry, anchor-bound priorities, optional skeptic pass — plus prompt-injection hardening on every attacker-controllable surface.
+> - **Semantic entity resolution (opt-in):** `enableSemanticResolution` plus `ensureVectorSearchIndexes()` for Atlas Vector Search; cap-protected so flipping the flag alone never auto-merges.
+> - **Three-principal permissions:** owner / group / world with read/write levels, enforced at storage for reads and at the system facade for writes.
+> - **First-class storage:** in-memory adapter ships, `MongoMemoryAdapter` (raw + Meteor-reactive) for production with `$graphLookup` and `$vectorSearch` fast paths.
+> - **Subconscious by default:** the agent never narrates memory operations to the user — memory is private notebook, not chat.
+>
+> See the new `docs/MEMORY_*.md` set and `USER_GUIDE.md` §15 for the full guide.
+
+### Test-suite fix-up — store_* unification, registry-driven model selection
+
+Brought the integration suite back to green after the v0.5.x tool-name unification and a wave of model-registry churn. Source code untouched — tests only.
+
+- **Unified `store_*` tools** — rewrote ~50 tests across `userInfo.test.ts`, `ContextNextGenPlugins.mock.test.ts`, `ContextNextGenIntegration.mock.test.ts`, `ContextNextGenWithAgent.integration.test.ts`, `ProviderConverters.integration.test.ts`, and `routineControlFlowExecution.test.ts` to use the v0.5.0 unified `store_set` / `store_get` / `store_delete` / `store_list` / `store_action` API in place of the old plugin-specific tool names (`memory_store`, `context_set`, `instructions_set`, `user_info_set`, …). Includes the 24 mocked LLM tool calls in the routine control-flow tests.
+- **Capability-aware AllModels test** — `tests/integration/text/AllModels.integration.test.ts` now derives skip/parameter decisions from registry features rather than hardcoded names. Realtime, audio, deep-research, open-weight, and live-preview models are filtered out automatically; `gpt-5.x-chat-latest` aliases are treated like reasoning models (no `temperature`).
+- **Anthropic deprecated-model swap** — replaced hardcoded `claude-3-5-haiku-20241022` references with `claude-haiku-4-5-20251001` in 4 test files.
+- **Strategy registry rename** — `'proactive'` / `'lazy'` strategy names → `'algorithmic'` in `ContextNextGenIntegration.mock.test.ts` (the proactive/lazy strategies were retired earlier).
+- **Removed dead test** — `tests/integration/search/WebSearch.integration.test.ts` imported a removed module (`webSearch.js` was replaced by the `createWebSearchTool` factory pattern).
+- **MCP namespace assertion fix** — `MCPStdio.integration.test.ts` was checking for `mcp:filesystem:` prefix on namespaced tool names, but `sanitizeToolName` collapses colons to underscores; fixed to `mcp_filesystem_`.
+- **Multi-turn alice prompt + DALL-E 2 variations skip** — strengthened the gpt-4o-mini multi-turn prompt to be deterministic; `describe.skip` on DALL-E 2 image variations (legacy endpoint, OpenAI returns 404).
+
+### Memory v5: restraint posture review fixes
+
+Follow-up audit of the restraint-posture work surfaced seven issues; all fixed in this batch.
+
+- **`evidenceQuote` now reaches storage.** The field was added to `IFact`, advertised by the v5 prompt, and accepted by `ExtractionResolver` — but `MemorySystem.addFact` constructed its `NewFact` literal without it, silently dropping the quote at the storage boundary. The same omission existed on the `state_changed` audit-fact path through `transitionTaskState`. Both now propagate. Added `MemorySystem.addFact` and `ExtractionResolver` round-trip tests pinning the behaviour.
+- **v5 primitives re-exported from the package root.** `EAGERNESS_PRESETS`, `buildEagernessProfile`, `getEagernessPreset`, `resolveEagerness`, `StaticAnchorRegistry`, `emitRestraintEvent`, `applyRestrainedExtractionContract`, `SkepticPass`, `defaultSkepticPrompt`, `parseSkepticOutput` (plus the matching types) are now available from `@everworker/oneringai`. Previously only reachable via the `./memory` subpath, which `package.json` does not export.
+- **`emitRestraintEvent` no longer silently swallows listener errors.** A throwing listener was caught and discarded, blackholing every decision invisibly — directly contradicting the project's "no silent error" rule. The catch now logs via `console.error` with the event attached; the throw still does not propagate (a logging failure must not break the data path). Test updated to assert both behaviours.
+- **Prompt-injection hardening on new v5 surfaces.** `defaultExtractionPrompt` now sanitises anchor labels and negative-example snippets (collapse newlines, strip backticks, drop leading `#`) before splicing into the system prompt — same posture as the v4 nonce-wrapped signal body. Same hardening applied to `SkepticPass.defaultSkepticPrompt` for `item.summary` and `contextHint`. Both attacker-controllable today via extracted email content / scraped pages.
+- **`SkepticPass` matches the `IDisposable` pattern.** Added `isDestroyed` getter and made `destroy()` idempotent. Calling `destroy()` twice no longer double-destroys the underlying agent.
+- **Chatty preset no longer renders the Restraint preamble for nothing.** When every flag in the profile is off (e.g. `EAGERNESS_PRESETS.chatty`), `defaultExtractionPrompt` now skips the entire `## Restraint posture` section — saves tokens on every chatty call.
+- **Soft-mode anchor binding distinguishes "stale" from "no binding".** `RestrainedExtractionContract` previously emitted `priority_unbound_soft` for both unbound tasks and tasks pointing at decommissioned anchors. The stale case now emits `priority_stale_soft` with `meta.servesAnchorIdProvided` set, so dashboards can tell "LLM didn't bind" from "LLM bound to inactive priority".
+
+### Self-Learning Memory documentation overhaul
+
+Rewrote the Self-Learning Memory section in `USER_GUIDE.md` (now a dedicated, comprehensive walkthrough at TOC #15) and updated the matching section in `README.md` (10b). Brings the user-facing docs in sync with the current code surface:
+
+- Tool count corrected to **11** (5 read + 6 write) — both docs previously claimed 8/10. `memory_set_agent_rule` is now listed in the write-tool table.
+- Wiring example updated to the actual API: `context: { features, plugins }` (the prior `contextFeatures` / `pluginConfigs` field names did not exist).
+- Injected-context block updated to reflect the current renderer: rules block (`## User-specific instructions for this agent`) → user profile → optional organization profile when `groupBootstrap` is set. Removed the stale "Agent Profile" section that no longer auto-renders.
+- Added coverage for `groupBootstrap`, `recentActivity` profile-injection field, `defaultVisibility` semantics, `MemoryWritePluginNextGen` config, and the `forgetRateLimit` knob.
+- New subsections for storage backends (`InMemoryAdapter`, `MongoMemoryAdapter` raw + Meteor), permissions and scope (three-principal model), security invariants (no ghost-writes, `contextIds` auto-downgrade, numeric clamping), behavior rules via `memory_set_agent_rule`, background ingestion via `SessionIngestorPluginNextGen`, and direct `MemorySystem` access for server-side code.
+- Cross-links to `docs/MEMORY_GUIDE.md`, `docs/MEMORY_API.md`, `docs/MEMORY_PERMISSIONS.md`, `docs/MEMORY_SIGNALS.md`, `docs/MEMORY_PREDICATES.md`.
+- README "Available Features" table now includes rows for `memory` and `memoryWrite` flags.
+
+No source changes — documentation only.
+
+### Added GPT-5.5 (new OpenAI flagship)
+
+Registered `gpt-5.5` as the new OpenAI flagship and moved the `preferred` flag from `gpt-5.4` to `gpt-5.5`. 1,050,000-token context, 128,000-token max output, knowledge cutoff 2025-12-01. Reasoning.effort: none / low / medium (default) / high / xhigh. Pricing $5 input · $0.50 cached · $30 output per 1M tokens; prompts >272K input tokens are billed at 2× input / 1.5× output for the full session. Vision in, text out, prompt caching + batch + Responses API supported.
+
+### Added GPT-5.4 mini and GPT-5.4 nano
+
+Registered `gpt-5.4-mini` and `gpt-5.4-nano` (release 2026-03-17, knowledge cutoff 2025-08-31). 400K context / 128K max output. Vision-in, text-out. Reasoning.effort: none / low / medium / high / xhigh. Per 1M tokens: mini $0.75 input · $0.075 cached · $4.50 output; nano $0.20 · $0.02 · $1.25.
+
+### Sora: dedicated extend / remix / edit + Character API
+
+Aligned the OpenAI Sora provider with the SDK's split between three transforms on completed videos:
+
+- **`videoGen.extend({ video: jobId, prompt, extendDuration })`** now calls the real `videos.extend()` endpoint (added in openai-node 6.28). Previously this method aliased onto `videos.remix()`, which kept the clip the same length — the new behaviour generates an actual additional segment whose length is controlled by `extendDuration` (snapped to the SDK-allowed `4 / 8 / 12` seconds). **Behaviour change for existing callers**: if you relied on the old alias, switch to `videoGen.remix(...)` (below).
+- **`videoGen.remix({ videoId, prompt })`** — same length, prompt-steered re-generation.
+- **`videoGen.edit({ videoId, prompt })`** — apply a prompt-described change to a completed clip.
+- **`videoGen.createCharacter({ name, video })` / `videoGen.getCharacter(id)`** — register a reusable character from a reference video and thread its id back into a future `generate()` via `vendorOptions.characterId` for cross-shot continuity. Accepts `Buffer`, local path, or HTTP URL.
+
+All four are optional methods on `IVideoProvider` — non-OpenAI providers throw a clear "not supported" error rather than silently no-op. New types exported: `VideoRemixOptions`, `VideoEditOptions`, `CreateCharacterOptions`, `CharacterRef`.
+
+Higher-resolution Sora exports (`1024x1792`, `1792x1024` — 1.4× the standard 720p) were already wired through the `resolution` / `aspectRatio` mappers; the supported set is now documented in the Video Generation section of the user guide.
+
+### Performance: skip redundant Buffer copy on media uploads
+
+Eliminated a double-allocation on the path that turns a `Buffer` (or `ArrayBuffer`) into a `File` for upload to OpenAI / Grok. The previous shape `new File([new Uint8Array(buffer)], …)` triggered the typed-array overload of `Uint8Array`, copying every byte into a fresh `ArrayBuffer` *before* the `File` snapshotted them — so each upload was double-allocating its payload before the bytes left the process. The fix is to pass the `Buffer` / `ArrayBuffer` directly to `new File([buffer], …)` (cast to `BlobPart` to satisfy the modern Node `Buffer<ArrayBufferLike>` typing). For a 500 MB Sora upload, this drops peak memory from ~1.5 GB to ~1 GB during the upload window.
+
+Touched (8 sites in 4 files): `OpenAISoraProvider.prepareImageInput` + `prepareVideoInput`, `OpenAISTTProvider.prepareAudioFile`, `OpenAIImageProvider.prepareImageInput`, `GrokImageProvider.prepareImageInput`. Added a byte-fidelity regression test (`OpenAISoraProvider.test.ts`) that round-trips a known Buffer through `createCharacter` and asserts the resulting `File.size` and bytes match the source.
+
+`PDFHandler.handle` deliberately keeps its `new Uint8Array(buffer)` calls — `unpdf` (pdf.js) detaches the underlying `ArrayBuffer` when posting to its worker, so each call genuinely needs a fresh copy. Added a live round-trip test (`tests/unit/capabilities/documents/PDFHandler.test.ts`) that builds a minimal valid PDF in memory, runs it through `PDFHandler` twice with the *same* source `Buffer`, and asserts text extraction succeeds both times — pinning the existing behaviour so any future "cleanup" PR that drops the explicit copy gets caught.
+
+### TTS: custom voices (OpenAI)
+
+`TextToSpeech` now accepts custom-voice ids alongside built-in voice names. Any string starting with `voice_` (the prefix OpenAI returns when a custom voice is created in the dashboard) is forwarded to the SDK as `{ id }`; built-in names (`alloy`, `nova`, `cedar`, etc.) pass through unchanged. No interface changes — `TTSOptions.voice` stays `string`.
+
+```typescript
+const tts = TextToSpeech.create({
+  connector: 'openai',
+  model: 'gpt-4o-mini-tts',
+  voice: 'voice_1234abcd',
+});
+```
+
 ### No silent truncation of LLM content (output + input)
 
 Library-wide policy change: we no longer silently clip content that flows to an LLM, is generated by an LLM, or is persisted from an LLM response. Old defaults quietly dropped content that modern model context windows could easily handle; hosts lost information they didn't know they'd lost. The new stance:

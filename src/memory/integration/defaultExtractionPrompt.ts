@@ -1,8 +1,12 @@
 /**
  * Default prompt template for signal → memory extraction.
  *
- * **Prompt version: 4** — bump this number whenever the prompt surface changes
+ * **Prompt version: 5** — bump this number whenever the prompt surface changes
  * materially so callers pinning snapshots notice.
+ *   - v5: restraint posture controls (`EagernessProfile`) — optional
+ *         `whyActionable`, optional per-fact `evidenceQuote`, optional
+ *         priority/anchor binding, configurable negative-example slot.
+ *         Backward-compatible: omit `eagerness` to keep v4 behavior.
  *   - v4: nonce-wrapped `<signal_content_*>` delimiters (prompt-injection defense).
  *   - v3: closed predicate vocabulary warning when a registry is present.
  *   - v2: "## Parsimony" section (zero-fact is valid, expected fact counts, neg/pos example);
@@ -12,6 +16,8 @@
  * The LLM is instructed to return JSON with:
  *   - `mentions`: map of local labels → entity surface forms (+ optional metadata)
  *   - `facts`: triples referencing mention labels (not entity IDs)
+ *   - `whyActionable` (optional, required by `requireJustification`): one-sentence
+ *     justification — only present when output is non-empty
  *
  * The memory layer's `ExtractionResolver` then translates mention labels into
  * entity IDs (via `upsertEntityBySurface`) and writes the facts. When an
@@ -22,10 +28,12 @@
  * (domain-specific predicate vocabularies, extra metadata, etc.).
  */
 
-export const DEFAULT_EXTRACTION_PROMPT_VERSION = 4;
+export const DEFAULT_EXTRACTION_PROMPT_VERSION = 5;
 
 import type { PredicateRegistry } from '../predicates/PredicateRegistry.js';
 import type { IEntity, ScopeFields } from '../types.js';
+import type { Anchor } from './AnchorRegistry.js';
+import type { EagernessProfile } from './EagernessProfile.js';
 
 /**
  * A label already bound to an entity before the LLM runs. Typically produced
@@ -69,6 +77,36 @@ export interface ExtractionPromptContext {
    * the LLM to reference them directly in facts without redeclaring them.
    */
   preResolvedBindings?: PreResolvedBinding[];
+
+  /**
+   * Restraint posture. When present, the prompt renders the corresponding
+   * "Restraint" section that turns silence into the easy answer:
+   *   - `requireJustification` → adds a top-level `whyActionable` field that
+   *     is required *only* when output is non-empty.
+   *   - `requireEvidenceQuote` → adds `evidenceQuote` to each fact (soft:
+   *     advised; strict: required).
+   *   - `requirePriorityBinding` → renders the active anchors and asks for
+   *     `servesAnchorId` per task mention.
+   *   - `negativeExamplesCount` → controls how many entries from
+   *     `negativeExamples` are rendered as "do NOT do this" patterns.
+   *
+   * Omit `eagerness` to keep the v4 behavior (no Restraint section).
+   */
+  eagerness?: EagernessProfile;
+
+  /**
+   * Active anchors (priorities, OKRs, focus areas) for the user. Surfaced in
+   * the prompt only when `eagerness.requirePriorityBinding !== 'off'`. Each
+   * anchor's `id` is what the LLM should echo back as `servesAnchorId`.
+   */
+  anchors?: Anchor[];
+
+  /**
+   * Recent dismissals to inject as negative examples. Rendered up to
+   * `eagerness.negativeExamplesCount`. Each entry is a short snippet the user
+   * already chose to ignore — strong calibration signal.
+   */
+  negativeExamples?: Array<{ snippet: string; reason?: string }>;
 }
 
 export function defaultExtractionPrompt(ctx: ExtractionPromptContext): string {
@@ -81,12 +119,20 @@ export function defaultExtractionPrompt(ctx: ExtractionPromptContext): string {
     predicateRegistry,
     maxPredicatesPerCategory = 5,
     preResolvedBindings,
+    eagerness,
+    anchors,
+    negativeExamples,
   } = ctx;
 
   const source = signalSourceDescription ? `Source: ${signalSourceDescription}\n` : '';
   const scopeDescription = describeScope(targetScope ?? {});
   const preResolvedSection = renderPreResolvedBindings(preResolvedBindings);
   const knownSection = renderKnownEntities(knownEntities);
+  const restraintSection = renderRestraintSection(eagerness, anchors, negativeExamples);
+  const factSchemaSuffix = eagerness ? renderFactSchemaSuffix(eagerness) : '';
+  const topLevelJustification = eagerness?.requireJustification
+    ? ',\n  "whyActionable": "<one sentence — REQUIRED only when mentions or facts are non-empty>"'
+    : '';
   // Nonce-wrapped delimiters prevent signal-body injection. A raw `</signal_content>`
   // inside an attacker-controlled email body would otherwise close the tag and let
   // the rest of the body read as prompt instructions.
@@ -116,10 +162,10 @@ Target scope: ${scopeDescription}
 <${openTag}>
 ${signalText}
 <${closeTag}>
-${preResolvedSection}${knownSection}
+${preResolvedSection}${knownSection}${restraintSection}
 
 ## Output format
-Return JSON with exactly two top-level keys:
+Return JSON with the following top-level keys:
 
 {
   "mentions": {
@@ -131,7 +177,7 @@ Return JSON with exactly two top-level keys:
       "metadata": {
         // Optional type-specific fields. ONLY set on first observation; the
         // resolver will NOT overwrite existing values on re-extraction.
-        // task:  { "state": "proposed", "dueAt": "2026-04-30", "assigneeId": "<label>", "priority": "high" }
+        // task:  { "state": "proposed", "dueAt": "2026-04-30", "assigneeId": "<label>", "priority": "high", "servesAnchorId": "<anchor_id>" }
         // event: { "startTime": "2026-05-01T10:00:00Z", "endTime": "...", "location": "...", "attendeeIds": ["<label>"] }
       }
     }
@@ -148,9 +194,9 @@ Return JSON with exactly two top-level keys:
       "contextIds": ["<local_label>"],      // other entities this fact is "about"
       "kind": "atomic",                     // MUST be exactly "atomic" OR "document" — see Fact kinds below
       "validFrom": "YYYY-MM-DDTHH:MM:SSZ",  // ISO-8601; optional — see Validity period below
-      "validUntil": "YYYY-MM-DDTHH:MM:SSZ"  // ISO-8601; optional
+      "validUntil": "YYYY-MM-DDTHH:MM:SSZ", // ISO-8601; optional${factSchemaSuffix}
     }
-  ]
+  ]${topLevelJustification}
 }
 
 ## Parsimony (most important)
@@ -348,4 +394,147 @@ function formatDateMaybe(v: unknown): string {
  *  prompt still leans on the model following instructions. */
 function makeNonce(): string {
   return Math.random().toString(36).slice(2, 10);
+}
+
+/**
+ * Render the v5 "Restraint" section. Only emits when an `EagernessProfile` is
+ * supplied — chatty/no-eagerness callers see the v4 prompt unchanged.
+ *
+ * The section reframes the LLM's job: silence is the easy answer; output
+ * requires explicit justification, evidence, and (when configured) a binding
+ * to a stated user priority.
+ */
+function renderRestraintSection(
+  eagerness: EagernessProfile | undefined,
+  anchors: Anchor[] | undefined,
+  negativeExamples: Array<{ snippet: string; reason?: string }> | undefined,
+): string {
+  if (!eagerness) return '';
+
+  // Skip the section entirely when no flag is gating anything — otherwise
+  // chatty callers that pass `EAGERNESS_PRESETS.chatty` get the preamble
+  // for no reason and burn tokens on every call. The "chatty" preset is
+  // semantically equivalent to "no eagerness profile".
+  const nCount = Math.max(0, Math.min(5, eagerness.negativeExamplesCount | 0));
+  const willRenderNegatives =
+    nCount > 0 && !!negativeExamples && negativeExamples.length > 0;
+  const hasAnyRestraint =
+    eagerness.requireJustification ||
+    eagerness.requireEvidenceQuote !== 'off' ||
+    eagerness.requirePriorityBinding !== 'off' ||
+    willRenderNegatives;
+  if (!hasAnyRestraint) return '';
+
+  const lines: string[] = [];
+  lines.push('');
+  lines.push('## Restraint posture');
+  lines.push(
+    'Silence is the **easy answer**. Output requires evidence and (where configured) a binding to one of the user\'s stated priorities. Acting needs justification; skipping does not. If the signal is thin or noisy, prefer empty arrays.',
+  );
+
+  if (eagerness.requireJustification) {
+    lines.push('');
+    lines.push(
+      '- `whyActionable` (top-level): when `mentions` or `facts` is non-empty, write ONE short sentence (≤ 25 words) saying why this is worth the user\'s attention. Omit when both are empty. Padding triggers rejection.',
+    );
+  }
+
+  if (eagerness.requireEvidenceQuote === 'soft') {
+    lines.push(
+      '- `evidenceQuote` (per fact, recommended): a verbatim phrase from the signal supporting the fact. Improves auditability; absence is allowed but discouraged.',
+    );
+  } else if (eagerness.requireEvidenceQuote === 'strict') {
+    lines.push(
+      '- `evidenceQuote` (per fact, REQUIRED): a verbatim phrase (≤ 200 chars) from the signal that directly supports the fact. Facts without an evidence quote will be DROPPED. Do not paraphrase. Do not synthesize. Quote the source.',
+    );
+  }
+
+  if (eagerness.requirePriorityBinding !== 'off' && anchors && anchors.length > 0) {
+    lines.push('');
+    lines.push(
+      eagerness.requirePriorityBinding === 'strict'
+        ? "### Priority binding (REQUIRED for task mentions)"
+        : '### Priority binding (preferred for task mentions)',
+    );
+    lines.push(
+      "The user's currently active priorities. For every `task` mention, include `metadata.servesAnchorId` set to one of these ids:",
+    );
+    for (const a of anchors) {
+      const kind = a.kind ? ` [${sanitizeInlineString(a.kind, 40)}]` : '';
+      // Anchor labels often originate from user-editable settings or free
+      // text. Sanitize to defang headings/code-fences that could prematurely
+      // close the prompt structure or inject pseudo-instructions.
+      lines.push(
+        `- \`${sanitizeInlineString(a.id, 80)}\`${kind} — ${sanitizeInlineString(a.label, 200)}`,
+      );
+    }
+    if (eagerness.requirePriorityBinding === 'strict') {
+      lines.push(
+        "If a candidate task does NOT serve any of these priorities, OMIT it. The Decision Queue is for priority-aligned work only — context-only items belong in facts (with `kind: \"document\"`) or are dropped.",
+      );
+    } else {
+      lines.push(
+        'When a task plausibly serves a priority, set `servesAnchorId`. When it does not, omit the field — do not invent a binding.',
+      );
+    }
+  } else if (eagerness.requirePriorityBinding === 'strict') {
+    // Strict binding requested but no anchors available — instruct LLM to emit nothing taskish.
+    lines.push('');
+    lines.push('### No active priorities');
+    lines.push(
+      "The user has no active priorities right now. Under strict priority binding, do NOT emit any `task` mentions. Facts about people/orgs/events are still useful as context.",
+    );
+  }
+
+  if (willRenderNegatives && negativeExamples) {
+    lines.push('');
+    lines.push('### Calibration — items the user has DISMISSED before');
+    lines.push(
+      'Patterns matching these recent dismissals are LOW value for this user. If a candidate task closely resembles them, drop it.',
+    );
+    // Negative examples come from prior LLM-extracted dismissals, which can
+    // ultimately trace back to attacker-controlled signal bodies (emails,
+    // scraped pages). Sanitize before splicing into the system prompt so a
+    // crafted snippet can't open a fake instruction block.
+    for (const ex of negativeExamples.slice(0, nCount)) {
+      const reasonStr = ex.reason
+        ? `  (reason: ${sanitizeInlineString(ex.reason, 200)})`
+        : '';
+      lines.push(`- "${sanitizeInlineString(ex.snippet, 200)}"${reasonStr}`);
+    }
+  }
+
+  lines.push('');
+  return lines.join('\n');
+}
+
+/**
+ * Schema-suffix appended inside each fact object. Adds an `evidenceQuote`
+ * field comment when the profile asks for it. Empty string under chatty mode.
+ */
+function renderFactSchemaSuffix(eagerness: EagernessProfile): string {
+  if (eagerness.requireEvidenceQuote === 'off') return '';
+  const requirement =
+    eagerness.requireEvidenceQuote === 'strict'
+      ? '<verbatim phrase from the signal — REQUIRED, ≤200 chars>'
+      : '<verbatim phrase from the signal — recommended>';
+  return `\n      "evidenceQuote": "${requirement}"`;
+}
+
+/**
+ * Defang a single-line string before splicing into the prompt. Caps length,
+ * collapses newlines (so a crafted multi-line snippet can't open a fake
+ * heading or code fence on a fresh line), strips backticks (which would
+ * close our inline `code` spans), and removes the markdown heading prefix
+ * `#` at line start. Not a security boundary — the LLM still has to follow
+ * instructions — but raises the bar for prompt-injection via
+ * attacker-derived strings (anchor labels, negative-example snippets).
+ */
+function sanitizeInlineString(s: string, maxLen: number): string {
+  const noBreaks = s.replace(/[\r\n]+/g, ' ');
+  const noFences = noBreaks.replace(/`/g, "'");
+  const noHeading = noFences.replace(/^[\s>#]+/, '').trimStart();
+  const trimmed = noHeading.trim();
+  if (trimmed.length <= maxLen) return trimmed;
+  return trimmed.slice(0, maxLen) + '…';
 }

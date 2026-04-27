@@ -52,7 +52,7 @@ describe('MemoryPluginNextGen — rules block', () => {
     const out = await plugin.getContent();
     expect(out).not.toMatch(/User-specific instructions for this agent/);
     // User profile still renders (even if just the placeholder).
-    expect(out).toMatch(/## Your User Profile/);
+    expect(out).toMatch(/## About the User/);
   });
 
   it('renders the block with each rule as its own line (full factId bracket)', async () => {
@@ -116,7 +116,7 @@ describe('MemoryPluginNextGen — rules block', () => {
 
     const out = (await plugin.getContent())!;
     const rulesIdx = out.indexOf('## User-specific instructions for this agent');
-    const profileIdx = out.indexOf('## Your User Profile');
+    const profileIdx = out.indexOf('## About the User');
     expect(rulesIdx).toBeGreaterThan(-1);
     expect(profileIdx).toBeGreaterThan(-1);
     expect(rulesIdx).toBeLessThan(profileIdx);

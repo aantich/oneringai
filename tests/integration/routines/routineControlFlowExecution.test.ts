@@ -140,7 +140,7 @@ describe('routineControlFlowExecution', () => {
 
   describe('map control flow', () => {
     it('should execute basic map over array', async () => {
-      // Task A: stores ['a','b','c'] via context_set, then text response
+      // Task A: stores ['a','b','c'] via store_set, then text response
       // Task B: map over the array with 1 sub-task per element → 3 iterations
       //   Each iteration: 1 agent.run() → 1 mockGenerate (text-only)
       const routine = createRoutineDefinition({
@@ -169,7 +169,8 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Task A: tool call to store array
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'items',
           value: ['a', 'b', 'c'],
           description: 'Items to process',
@@ -224,8 +225,9 @@ describe('routineControlFlowExecution', () => {
       const capturedInputs: string[] = [];
 
       mockGenerate
-        // Setup: store array via context_set
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        // Setup: store array via store_set
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'data',
           value: ['alpha', 'beta'],
           description: 'Data array',
@@ -282,7 +284,8 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Setup: store 5-element array
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'big_array',
           value: [1, 2, 3, 4, 5],
           description: 'Big array',
@@ -328,7 +331,8 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Setup
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'items',
           value: ['x', 'y', 'z'],
           description: 'Items',
@@ -371,7 +375,8 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Setup: store empty array
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'empty',
           value: [],
           description: 'Empty array',
@@ -421,7 +426,8 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Setup: store array
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'data',
           value: ['one', 'two'],
           description: 'Data',
@@ -479,7 +485,8 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Setup: store array
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'numbers',
           value: [10, 20, 30],
           description: 'Numbers',
@@ -511,7 +518,7 @@ describe('routineControlFlowExecution', () => {
           },
           {
             name: 'Fold ICM',
-            description: 'Fold using context_set for accumulator',
+            description: 'Fold using store_set for accumulator',
             dependsOn: ['Setup'],
             controlFlow: {
               type: 'fold',
@@ -519,7 +526,7 @@ describe('routineControlFlowExecution', () => {
               initialValue: 'start',
               resultKey: 'fold_result',
               tasks: [
-                { name: 'Accumulate', description: 'Update accumulator via context_set' },
+                { name: 'Accumulate', description: 'Update accumulator via store_set' },
               ],
             },
           },
@@ -528,21 +535,24 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Setup
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'vals',
           value: ['x', 'y'],
           description: 'Values',
         }))
         .mockResolvedValueOnce(makeTextResponse('Setup done'))
-        // Fold iteration 0: LLM updates accumulator via context_set, then text
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        // Fold iteration 0: LLM updates accumulator via store_set, then text
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: '__fold_accumulator',
           value: 'start+x',
           description: 'Updated accumulator',
         }))
         .mockResolvedValueOnce(makeTextResponse('Updated'))
-        // Fold iteration 1: LLM updates accumulator via context_set, then text
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        // Fold iteration 1: LLM updates accumulator via store_set, then text
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: '__fold_accumulator',
           value: 'start+x+y',
           description: 'Updated accumulator',
@@ -556,7 +566,7 @@ describe('routineControlFlowExecution', () => {
       // since getSubRoutineOutput returns "Updated" (not null).
       // To truly test ICM fallback, the task output would need to be null.
       // However the text response "Updated" is non-null so it takes precedence.
-      // The fold still completes — the key test is that context_set calls succeed.
+      // The fold still completes — the key test is that store_set calls succeed.
       expect(execution.plan.tasks[1]!.status).toBe('completed');
     });
 
@@ -590,7 +600,8 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Setup
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'items',
           value: ['a'],
           description: 'Items',
@@ -638,7 +649,8 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Setup
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'items',
           value: [1, 2, 3],
           description: 'Items',
@@ -689,8 +701,9 @@ describe('routineControlFlowExecution', () => {
         .mockResolvedValueOnce(makeTextResponse('Working...'))
         // Iteration 1: no done flag set
         .mockResolvedValueOnce(makeTextResponse('Still working...'))
-        // Iteration 2: set done=true via context_set, then text
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        // Iteration 2: set done=true via store_set, then text
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'done',
           value: true,
           description: 'Done flag',
@@ -764,14 +777,16 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Iteration 0: set status to 'pending'
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'status',
           value: 'pending',
           description: 'Status',
         }))
         .mockResolvedValueOnce(makeTextResponse('Not yet'))
         // Iteration 1: set status to 'complete'
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'status',
           value: 'complete',
           description: 'Status',
@@ -812,21 +827,24 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Iteration 0: set count=1
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'count',
           value: 1,
           description: 'Counter',
         }))
         .mockResolvedValueOnce(makeTextResponse('Count: 1'))
         // Iteration 1: set count=2
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'count',
           value: 2,
           description: 'Counter',
         }))
         .mockResolvedValueOnce(makeTextResponse('Count: 2'))
         // Iteration 2: set count=3 (> 2, condition met)
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'count',
           value: 3,
           description: 'Counter',
@@ -874,7 +892,8 @@ describe('routineControlFlowExecution', () => {
         // Iteration 1: set stop=true
         .mockImplementationOnce(async (opts: { input: unknown }) => {
           capturedInputs.push(JSON.stringify(opts.input));
-          return makeToolUseResponse('context_set', {
+          return makeToolUseResponse('store_set', {
+            store: 'context',
             key: 'stop',
             value: true,
             description: 'Stop flag',
@@ -929,7 +948,8 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Fetch Data: store array, then text
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'data',
           value: ['item1', 'item2'],
           description: 'Fetched data',
@@ -981,7 +1001,8 @@ describe('routineControlFlowExecution', () => {
         // Task A
         .mockImplementationOnce(async () => {
           executionOrder.push('A-tool');
-          return makeToolUseResponse('context_set', {
+          return makeToolUseResponse('store_set', {
+            store: 'context',
             key: 'prepared',
             value: ['p1', 'p2'],
             description: 'Prepared',
@@ -1040,7 +1061,8 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Setup
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'items',
           value: ['a'],
           description: 'Items',
@@ -1099,7 +1121,8 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Setup
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'items',
           value: ['a'],
           description: 'Items',
@@ -1139,7 +1162,8 @@ describe('routineControlFlowExecution', () => {
 
       mockGenerate
         // Setup
-        .mockResolvedValueOnce(makeToolUseResponse('context_set', {
+        .mockResolvedValueOnce(makeToolUseResponse('store_set', {
+          store: 'context',
           key: 'items',
           value: ['x'],
           description: 'Items',
