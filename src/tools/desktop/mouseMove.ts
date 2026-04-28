@@ -16,12 +16,12 @@ export function createDesktopMouseMoveTool(config?: DesktopToolConfig): ToolFunc
       type: 'function',
       function: {
         name: 'desktop_mouse_move',
-        description: `Move the mouse cursor to the specified (x, y) position. Coordinates are in screenshot pixel space (full screen). Returns the actual cursor position after the move for verification.`,
+        description: `Move the mouse cursor to the specified (x, y) position. Coordinates are in screen pixel space (full screen). Returns the actual cursor position after the move for verification.`,
         parameters: {
           type: 'object',
           properties: {
-            x: { type: 'number', description: 'X coordinate (in screenshot pixels)' },
-            y: { type: 'number', description: 'Y coordinate (in screenshot pixels)' },
+            x: { type: 'number', description: 'X coordinate (in screen pixels)' },
+            y: { type: 'number', description: 'Y coordinate (in screen pixels)' },
           },
           required: ['x', 'y'],
         },

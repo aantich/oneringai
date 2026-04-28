@@ -15,13 +15,13 @@ export function createDesktopScreenshotTool(config?: DesktopToolConfig): ToolFun
       type: 'function',
       function: {
         name: 'desktop_screenshot',
-        description: `Take a screenshot of the entire screen or a specific region. Returns the screenshot image for visual analysis. Use this to see what's on screen before performing actions. IMPORTANT: If you capture a region, element positions in the image are relative to the region's top-left corner. To click an element at image position (ix, iy), you must use screen coordinates (ix + region.x, iy + region.y). Prefer full-screen screenshots to avoid coordinate offset errors.`,
+        description: `Take a screenshot of the entire screen or a specific region. Returns the screenshot image for visual analysis. The image pixel coordinates match the coordinate space used by desktop_mouse_click / desktop_mouse_move — no scale conversion is needed. IMPORTANT: If you capture a region, element positions in the image are relative to the region's top-left corner. To click an element at image position (ix, iy), use screen coordinates (ix + region.x, iy + region.y). Prefer full-screen screenshots to avoid coordinate offset errors.`,
         parameters: {
           type: 'object',
           properties: {
             region: {
               type: 'object',
-              description: 'Optional region to capture (in physical pixel coordinates). Omit to capture full screen.',
+              description: 'Optional region to capture (in screen pixel coordinates, same space as mouse coordinates). Omit to capture full screen.',
               properties: {
                 x: { type: 'number', description: 'Left edge X coordinate' },
                 y: { type: 'number', description: 'Top edge Y coordinate' },

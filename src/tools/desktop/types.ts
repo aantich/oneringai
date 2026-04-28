@@ -2,8 +2,12 @@
  * Desktop Automation Tools - Types
  *
  * Interfaces and types for OS-level desktop automation (screenshot, mouse, keyboard, windows).
- * All coordinates are in PHYSICAL pixel space (screenshot space).
- * The driver converts to logical OS coords internally using scaleFactor.
+ *
+ * Coordinate system: LOGICAL pixels throughout. On HiDPI/Retina displays the
+ * screenshot PNG is downsampled to logical dimensions before being returned,
+ * so the pixel coordinates visible to a vision-LLM match the coordinate space
+ * used by mouseMove/mouseClick/etc. `scaleFactor` is exposed on
+ * DesktopScreenSize for diagnostics but is NOT applied to caller coordinates.
  */
 
 // ============================================================================
@@ -18,24 +22,24 @@ export interface DesktopPoint {
 }
 
 export interface DesktopScreenSize {
-  /** Physical pixel width (screenshot space) */
+  /** Raw physical pixel width. Diagnostic only — not the coordinate space used by the APIs. */
   physicalWidth: number;
-  /** Physical pixel height (screenshot space) */
+  /** Raw physical pixel height. Diagnostic only — not the coordinate space used by the APIs. */
   physicalHeight: number;
-  /** Logical OS width */
+  /** Logical OS width. This is the coordinate space for all mouse/screenshot APIs. */
   logicalWidth: number;
-  /** Logical OS height */
+  /** Logical OS height. This is the coordinate space for all mouse/screenshot APIs. */
   logicalHeight: number;
-  /** Scale factor (physical / logical), e.g. 2.0 on Retina */
+  /** Scale factor (physical / logical), e.g. 2.0 on Retina. For diagnostics only. */
   scaleFactor: number;
 }
 
 export interface DesktopScreenshot {
-  /** Base64-encoded PNG image data */
+  /** Base64-encoded PNG image data (dimensions in logical pixels) */
   base64: string;
-  /** Width in physical pixels */
+  /** Width in logical pixels — matches mouseClick/mouseMove coordinate space */
   width: number;
-  /** Height in physical pixels */
+  /** Height in logical pixels — matches mouseClick/mouseMove coordinate space */
   height: number;
 }
 
@@ -46,7 +50,7 @@ export interface DesktopWindow {
   title: string;
   /** Application name */
   appName?: string;
-  /** Window bounds in physical pixel coords */
+  /** Window bounds in logical pixel coords */
   bounds?: { x: number; y: number; width: number; height: number };
 }
 
@@ -68,7 +72,7 @@ export interface IDesktopDriver {
   screenshot(region?: { x: number; y: number; width: number; height: number }): Promise<DesktopScreenshot>;
   getScreenSize(): Promise<DesktopScreenSize>;
 
-  // Mouse (all coords in physical pixels)
+  // Mouse (all coords in logical pixels — same space as the PNG returned by screenshot())
   mouseMove(x: number, y: number): Promise<void>;
   mouseClick(x: number, y: number, button: MouseButton, clickCount: number): Promise<void>;
   mouseDrag(startX: number, startY: number, endX: number, endY: number, button: MouseButton): Promise<void>;
