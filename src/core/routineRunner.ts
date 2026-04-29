@@ -83,6 +83,22 @@ export interface ExecuteRoutineOptions {
   /** Input parameter values for parameterized routines */
   inputs?: Record<string, unknown>;
 
+  /**
+   * Optional verbatim user message used in place of the FIRST executable
+   * task's prompt. Subsequent tasks still go through the normal
+   * `prompts.task` (or default) builder.
+   *
+   * Use for caller-driven kickoff — e.g. "execute the selected action" — where
+   * the routine's first step shouldn't follow the routine's own templating.
+   * Retries of the first task re-use this message; only when the routine
+   * advances to the next task does the default builder kick in.
+   *
+   * For pre-loading context into the system prompt, callers should bake it
+   * into `agent.instructions` themselves at agent-creation time (Mode 2) or
+   * into `prompts.system` (Mode 1) — the library does not own that surface.
+   */
+  initialUserMessage?: string;
+
   /** Hooks — applied to agent for the duration of routine execution.
    *  For new agents: baked in at creation. For existing agents: registered before
    *  execution and unregistered after. */
@@ -799,6 +815,22 @@ async function executeDeterministicSteps(ctx: StepExecutionContext): Promise<Ste
  *
  * console.log(execution.status); // 'completed' | 'failed'
  * ```
+ *
+ * @example Caller-driven kickoff (caller bakes pre-loaded context into the
+ * agent's instructions, library injects the first user message):
+ * ```typescript
+ * const agent = Agent.create({
+ *   connector: 'openai',
+ *   model: 'gpt-4',
+ *   instructions: agentDef.instructions + '\n\n## Pre-loaded task\nFacts:\n- ...',
+ *   tools,
+ * });
+ * const execution = await executeRoutine({
+ *   definition: actionExecutorRoutine,
+ *   agent,
+ *   initialUserMessage: 'Execute the selected action: Send reply.',
+ * });
+ * ```
  */
 export async function executeRoutine(options: ExecuteRoutineOptions): Promise<RoutineExecution> {
   const {
@@ -980,6 +1012,12 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
     // 7. Main execution loop
     let nextTasks = getNextExecutableTasks(execution.plan);
 
+    // Tracks whether `initialUserMessage` has been consumed. Set to true after
+    // the first task starts iterating; subsequent tasks fall through to the
+    // standard prompt builder. Retries of the first task re-use the original
+    // initial message (we capture once per outer task iteration).
+    let initialMessageConsumed = false;
+
     while (nextTasks.length > 0) {
       // Check routine timeout before starting next task
       if (routineTimedOut) {
@@ -1011,6 +1049,14 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
         return { shouldPause: false };
       };
       agent.registerHook('pause:check', iterationLimiter);
+
+      // Capture once-per-task whether this iteration of the outer loop should
+      // use the caller-supplied `initialUserMessage` instead of the standard
+      // task prompt builder. Retries of THIS task share the same flag; the
+      // next outer task falls back to the default builder.
+      const useInitialMessageForThisTask =
+        !initialMessageConsumed && !!options.initialUserMessage;
+      initialMessageConsumed = true;
 
       try {
         // Helper to get the live task reference (updateTaskStatus returns new objects)
@@ -1053,8 +1099,12 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
               // Resolve templates in task description and expectedOutput
               const resolvedTask = resolveTaskTemplates(getTask(), resolvedInputs, icmPlugin);
 
-              // Build task prompt
-              const taskPrompt = buildTaskPrompt(resolvedTask);
+              // Build task prompt — caller may override the FIRST task's prompt
+              // entirely via options.initialUserMessage (e.g. for kickoff
+              // routines where the routine itself doesn't template per-task).
+              const taskPrompt = useInitialMessageForThisTask
+                ? options.initialUserMessage!
+                : buildTaskPrompt(resolvedTask);
 
               // Run agent
               const response = await agent.run(taskPrompt);
