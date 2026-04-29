@@ -147,6 +147,28 @@ export interface MemoryPluginConfig {
   /** Permissions stamped on the bootstrapped agent entity. */
   agentEntityPermissions?: Permissions;
   /**
+   * Optional **persona** entity id. When set, the agent's behavior rules are
+   * read from and written to this entity instead of the variant agent entity
+   * bootstrapped by `agentId`. Lets several agent variants share one identity:
+   * pass the same `personaEntityId` to each variant and any rule written via
+   * `memory_set_agent_rule` (and any 'me'/'this_agent' subject token in read
+   * tools) lands on the shared persona, so all variants render the same
+   * "User-specific instructions for this agent" block.
+   *
+   * The variant agent entity (keyed by `system_agent_id:<agentId>`) is still
+   * bootstrapped — host code that wants per-variant analytics or factContextIds
+   * can reach it via `getBootstrappedIds().agentEntityId`. Only the LLM-facing
+   * subject for rules + 'this_agent' is overridden.
+   *
+   * The host owns the persona entity's lifecycle (upsert with whatever
+   * type/identifier scheme fits — e.g. `type:'assistant_persona'` keyed by
+   * `{kind:'system_assistant_persona_id', value:userId}` for a per-user
+   * persona). The persona entity MUST be owned by the same `userId` passed
+   * here, or `memory_set_agent_rule` will reject writes with a cross-owner
+   * error (the same ownership invariant enforced for variant agents).
+   */
+  personaEntityId?: EntityId;
+  /**
    * Optional group ("current organization") bootstrap. When present AND
    * `groupId` is set, a third `organization` entity is upserted carrying the
    * identifier `{kind: 'system_group_id', value: groupId}` (plus any extras).
@@ -286,6 +308,7 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
   private readonly agentId: string;
   private readonly userId: string;
   private readonly groupId: string | undefined;
+  private readonly personaEntityId: EntityId | undefined;
   private readonly userPerms: Permissions | undefined;
   private readonly agentPerms: Permissions | undefined;
   private readonly groupPerms: Permissions | undefined;
@@ -332,6 +355,7 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
     this.agentId = config.agentId;
     this.userId = config.userId;
     this.groupId = config.groupId;
+    this.personaEntityId = config.personaEntityId;
     this.userPerms = config.userEntityPermissions;
     this.agentPerms = config.agentEntityPermissions;
     this.groupPerms = config.groupBootstrap?.permissions;
@@ -378,8 +402,12 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
       // Rules block first — directives override defaults, so the LLM should
       // see them before the user profile. Rendered from facts on the agent
       // entity scoped to the current user (ownerId match via scope filter).
-      if (this.agentEntityId) {
-        const rulesBlock = await this.renderRulesBlock(this.agentEntityId, scope);
+      // When a persona is configured, rules live on the persona entity so
+      // multiple variants sharing it see the same block — see
+      // `getOwnAgentSubjectId`.
+      const ruleSubjectId = this.getOwnAgentSubjectId();
+      if (ruleSubjectId) {
+        const rulesBlock = await this.renderRulesBlock(ruleSubjectId, scope);
         if (rulesBlock) blocks.push(rulesBlock);
       }
 
@@ -521,10 +549,7 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
         defaultGroupId: this.groupId,
         defaultVisibility: this.defaultVisibility,
         autoResolveThreshold: this.autoResolveThreshold,
-        getOwnSubjectIds: () => ({
-          userEntityId: this.userEntityId,
-          agentEntityId: this.agentEntityId,
-        }),
+        getOwnSubjectIds: () => this.getOwnSubjectIds(),
       });
     }
     return this.cachedTools;
@@ -576,7 +601,11 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
   // Public accessors — mainly for tests / advanced callers
   // ---------------------------------------------------------------------------
 
-  /** Entity IDs created (or resolved) during bootstrap. Undefined before bootstrap. */
+  /** Entity IDs created (or resolved) during bootstrap. Undefined before bootstrap.
+   *  Always returns the *variant* agent entity id (keyed by `system_agent_id`),
+   *  even when a persona is configured — for "what was actually bootstrapped"
+   *  use this; for "what `'me'` / `'this_agent'` resolve to in tools" use
+   *  `getOwnSubjectIds()`. */
   getBootstrappedIds(): {
     userEntityId?: string;
     agentEntityId?: string;
@@ -587,6 +616,31 @@ export class MemoryPluginNextGen implements IContextPluginNextGen {
       agentEntityId: this.agentEntityId,
       groupEntityId: this.groupEntityId,
     };
+  }
+
+  /**
+   * Subject ids for LLM-facing `'me'` / `'this_agent'` token resolution,
+   * used by both this plugin's read tools and (via `AgentContextNextGen`'s
+   * wiring) `MemoryWritePluginNextGen`'s write tools. `agentEntityId` here
+   * is **persona-aware**: if a `personaEntityId` was configured, this returns
+   * the persona, so `memory_set_agent_rule` writes and rule-block reads share
+   * one subject across every variant carrying the same persona.
+   *
+   * Use `getBootstrappedIds()` instead when you need the variant agent entity
+   * id (analytics, factContextIds, snapshots).
+   */
+  getOwnSubjectIds(): { userEntityId?: string; agentEntityId?: string } {
+    return {
+      userEntityId: this.userEntityId,
+      agentEntityId: this.getOwnAgentSubjectId(),
+    };
+  }
+
+  /** Persona id wins over the bootstrapped variant id. Persona is set in
+   *  the constructor and available immediately — variant only after bootstrap.
+   *  Either or both may be undefined; callers must handle that. */
+  private getOwnAgentSubjectId(): EntityId | undefined {
+    return this.personaEntityId ?? this.agentEntityId;
   }
 
   // ---------------------------------------------------------------------------

@@ -420,9 +420,15 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         agentId: this._agentId,
         userId: resolvedUserIdWrite,
         memory: sharedMemory,
+        // Persona-aware: when the read plugin has a `personaEntityId`,
+        // `getOwnSubjectIds()` reports the persona as the agent subject so
+        // `memory_set_agent_rule` (and any 'this_agent' token in writes) lands
+        // on the shared persona. Falls back to the bootstrapped variant id
+        // when no persona is configured. Use `getBootstrappedIds()` only for
+        // "what was actually bootstrapped" — not for tool subject resolution.
         getOwnSubjectIds:
           writeConfig?.getOwnSubjectIds ??
-          (readPlugin ? () => readPlugin.getBootstrappedIds() : undefined),
+          (readPlugin ? () => readPlugin.getOwnSubjectIds() : undefined),
       } as MemoryWritePluginConfig));
     }
 
