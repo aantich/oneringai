@@ -44,7 +44,12 @@ export type {
   SerializedSharedWorkspaceState,
 } from './SharedWorkspacePluginNextGen.js';
 
-export { MemoryPluginNextGen } from './MemoryPluginNextGen.js';
+export {
+  MemoryPluginNextGen,
+  USER_IDENTIFIER_KIND,
+  AGENT_IDENTIFIER_KIND,
+  GROUP_IDENTIFIER_KIND,
+} from './MemoryPluginNextGen.js';
 export type {
   MemoryPluginConfig,
   MemoryPluginInjectionConfig,

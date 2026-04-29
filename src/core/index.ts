@@ -84,6 +84,9 @@ export {
   isStoreHandler,
   SharedWorkspacePluginNextGen,
   MemoryPluginNextGen,
+  USER_IDENTIFIER_KIND,
+  AGENT_IDENTIFIER_KIND,
+  GROUP_IDENTIFIER_KIND,
   MemoryWritePluginNextGen,
   SessionIngestorPluginNextGen,
 } from './context-nextgen/index.js';

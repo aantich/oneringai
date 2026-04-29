@@ -251,9 +251,23 @@ const RECENT_ACTIVITY_DEFAULT: ResolvedRecentActivity = Object.freeze({
 // Constants
 // ===========================================================================
 
-const USER_IDENTIFIER_KIND = 'system_user_id';
-const AGENT_IDENTIFIER_KIND = 'system_agent_id';
-const GROUP_IDENTIFIER_KIND = 'system_group_id';
+/**
+ * Identifier kinds the plugin uses to bootstrap the user / agent / group
+ * entities in the memory graph. Exported so host applications that need to
+ * reach the same entities outside the plugin's own bootstrap path (e.g. an
+ * eager-upsert fallback in a host-side rule-tool wiring, or admin tooling
+ * that looks up the entity by identifier) reference the same source of
+ * truth — without these exports, hosts would either hardcode the literal
+ * strings (silent drift if the library renames them) or rely on private
+ * conventions.
+ *
+ * The values themselves are part of the on-the-wire identifier schema and
+ * MUST NOT change between minor versions — entities written under the old
+ * kind would become orphan rows after a rename.
+ */
+export const USER_IDENTIFIER_KIND = 'system_user_id';
+export const AGENT_IDENTIFIER_KIND = 'system_agent_id';
+export const GROUP_IDENTIFIER_KIND = 'system_group_id';
 
 /** How many most-recent facts (visible to the current user's scope) to ship
  *  in the UI snapshot via `getContents()`. Not seen by the LLM. */
