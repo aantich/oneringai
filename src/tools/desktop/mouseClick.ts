@@ -20,8 +20,8 @@ export function createDesktopMouseClickTool(config?: DesktopToolConfig): ToolFun
         parameters: {
           type: 'object',
           properties: {
-            x: { type: 'number', description: 'X coordinate to click (in screenshot pixels). Omit to click at current position.' },
-            y: { type: 'number', description: 'Y coordinate to click (in screenshot pixels). Omit to click at current position.' },
+            x: { type: 'number', description: 'X coordinate to click (in screen pixels). Omit to click at current position.' },
+            y: { type: 'number', description: 'Y coordinate to click (in screen pixels). Omit to click at current position.' },
             button: {
               type: 'string',
               enum: ['left', 'right', 'middle'],

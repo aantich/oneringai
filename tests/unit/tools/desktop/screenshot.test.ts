@@ -10,14 +10,18 @@ import { createDesktopScreenshotTool } from '../../../../src/tools/desktop/scree
  * Mock driver for testing
  */
 function createMockDriver(overrides?: Partial<IDesktopDriver>): IDesktopDriver {
+  // Mock scenario: 2560×1600 physical Retina display, logical 1280×800.
+  // Driver caps screenshots at the logical dims (≤ default screenshotMaxDim 1280),
+  // so the screenshot dimensions match the logical/UI coordinate space —
+  // the same space mouseClick/mouseMove arguments live in.
   return {
     isInitialized: true,
-    scaleFactor: 2,
+    scaleFactor: 2, // retina diagnostic only — not applied to caller coords
     initialize: vi.fn().mockResolvedValue(undefined),
     screenshot: vi.fn().mockResolvedValue({
       base64: 'dGVzdGltYWdl', // "testimage" in base64
-      width: 2560,
-      height: 1600,
+      width: 1280,
+      height: 800,
     } satisfies DesktopScreenshot),
     getScreenSize: vi.fn().mockResolvedValue({
       physicalWidth: 2560,
@@ -54,13 +58,13 @@ describe('desktopScreenshot tool', () => {
     });
   });
 
-  it('should include dimensions in result', async () => {
+  it('should include dimensions in result (in UI-pixel / mouse-coord space)', async () => {
     const mockDriver = createMockDriver();
     const tool = createDesktopScreenshotTool({ driver: mockDriver });
     const result = await tool.execute({});
 
-    expect(result.width).toBe(2560);
-    expect(result.height).toBe(1600);
+    expect(result.width).toBe(1280);
+    expect(result.height).toBe(800);
   });
 
   it('should include base64 in result for text summary', async () => {
