@@ -80,11 +80,7 @@ const IN_CONTEXT_MEMORY_INSTRUCTIONS = `Store: "whiteboard". Values are DIRECTLY
 - \`low\`: Evicted first. Temporary data.
 - \`normal\`: Default. Standard importance.
 - \`high\`: Keep longer. Important state.
-- \`critical\`: Never auto-evicted.
-
-**UI Display:** Set \`showInUI: true\` to display the entry in the user's side panel.
-Values shown in the UI support the same rich markdown formatting as the chat window
-(see formatting instructions above). Use this for dashboards, progress displays, and results the user should see.`;
+- \`critical\`: Never auto-evicted.`;
 
 // ============================================================================
 // Plugin Implementation
@@ -405,7 +401,7 @@ export class InContextMemoryPluginNextGen implements IContextPluginNextGen, ISto
       displayName: 'Whiteboard',
       description: 'Values shown DIRECTLY in your context window — no retrieval needed.',
       usageHint: 'Use for: small state, counters, flags, preferences you need to see every turn. Do NOT use for large data (use "notes" — it won\'t waste context tokens).',
-      setDataFields: 'description (required): Brief description shown in context\nvalue (required): Data to store (any JSON value)\npriority?: "low" | "normal" | "high" | "critical" (default: "normal")\nshowInUI?: boolean — display in user\'s side panel (default: false)',
+      setDataFields: 'description (required): Brief description shown in context\nvalue (required): Data to store (any JSON value)\npriority?: "low" | "normal" | "high" | "critical" (default: "normal")',
     };
   }
 
@@ -458,7 +454,7 @@ export class InContextMemoryPluginNextGen implements IContextPluginNextGen, ISto
       success: true,
       key,
       showInUI: (data.showInUI as boolean) ?? false,
-      message: `Stored "${key}" on whiteboard${data.showInUI ? ' (visible in UI)' : ''}`,
+      message: `Stored "${key}" on whiteboard`,
     };
   }
 

@@ -51,7 +51,7 @@ describe('InContextMemoryPluginNextGen', () => {
       expect(schema.description).toBeDefined();
       expect(schema.setDataFields).toContain('description');
       expect(schema.setDataFields).toContain('value');
-      expect(schema.setDataFields).toContain('showInUI');
+      // showInUI intentionally NOT in setDataFields — see DynamicUIPlugin (@everworker/react-ui)
     });
   });
 
@@ -528,16 +528,10 @@ describe('InContextMemoryPluginNextGen', () => {
       newPlugin.destroy();
     });
 
-    it('should include showInUI in store schema setDataFields', () => {
-      const schema = plugin.getStoreSchema();
-      expect(schema.setDataFields).toContain('showInUI');
-    });
-
-    it('should mention showInUI in instructions', () => {
-      const instructions = plugin.getInstructions();
-      expect(instructions).toContain('showInUI');
-      expect(instructions).toContain('side panel');
-    });
+    // Note: showInUI is intentionally NOT advertised in setDataFields or instructions.
+    // It is a host/DynamicUI-coupling field; LLM-facing docs for it live in
+    // @everworker/react-ui's DynamicUIPlugin, which teaches the rendering semantics.
+    // The field is still wired up on InContextEntry for hosts to read.
   });
 
   describe('onEntriesChanged callback', () => {
