@@ -333,6 +333,319 @@ describe('ExtractionResolver', () => {
     expect(fact.observedAt).toBeInstanceOf(Date);
   });
 
+  describe('label translation in mention.metadata', () => {
+    it('translates event.attendeeIds labels → entity ids', async () => {
+      const output: ExtractionOutput = {
+        mentions: {
+          m1: {
+            surface: 'Alice',
+            type: 'person',
+            identifiers: [{ kind: 'email', value: 'alice@acme.com' }],
+          },
+          m2: {
+            surface: 'Bob',
+            type: 'person',
+            identifiers: [{ kind: 'email', value: 'bob@acme.com' }],
+          },
+          evt: {
+            surface: 'Q3 sync',
+            type: 'event',
+            metadata: {
+              startTime: '2026-05-01T10:00:00Z',
+              attendeeIds: ['m1', 'm2'],
+            },
+          },
+        },
+        facts: [],
+      };
+      const result = await resolver.resolveAndIngest(output, 'signal_evt', scope);
+      const evt = result.entities.find((e) => e.label === 'evt');
+      expect(evt).toBeDefined();
+      const md = evt!.entity.metadata as Record<string, unknown>;
+      const aliceId = result.entities.find((e) => e.label === 'm1')!.entity.id;
+      const bobId = result.entities.find((e) => e.label === 'm2')!.entity.id;
+      expect(md.attendeeIds).toEqual([aliceId, bobId]);
+      expect(result.unresolved).toEqual([]);
+    });
+
+    it('translates task.assigneeId label → entity id', async () => {
+      const output: ExtractionOutput = {
+        mentions: {
+          john: {
+            surface: 'John',
+            type: 'person',
+            identifiers: [{ kind: 'email', value: 'j@acme.com' }],
+          },
+          t1: {
+            surface: 'Send budget',
+            type: 'task',
+            metadata: { state: 'proposed', assigneeId: 'john' },
+          },
+        },
+        facts: [],
+      };
+      const result = await resolver.resolveAndIngest(output, 'signal_task', scope);
+      const task = result.entities.find((e) => e.label === 't1')!;
+      const johnId = result.entities.find((e) => e.label === 'john')!.entity.id;
+      const md = task.entity.metadata as Record<string, unknown>;
+      expect(md.assigneeId).toBe(johnId);
+      expect(md.state).toBe('proposed'); // unchanged passthrough
+      expect(result.unresolved).toEqual([]);
+    });
+
+    it('drops unresolved labels in attendeeIds and surfaces them in unresolved[]', async () => {
+      const output: ExtractionOutput = {
+        mentions: {
+          m1: {
+            surface: 'Alice',
+            type: 'person',
+            identifiers: [{ kind: 'email', value: 'alice@acme.com' }],
+          },
+          evt: {
+            surface: 'Sync',
+            type: 'event',
+            metadata: { attendeeIds: ['m1', 'ghost', 'm1'] },
+          },
+        },
+        facts: [],
+      };
+      const result = await resolver.resolveAndIngest(output, 'signal', scope);
+      const evt = result.entities.find((e) => e.label === 'evt')!;
+      const aliceId = result.entities.find((e) => e.label === 'm1')!.entity.id;
+      const md = evt.entity.metadata as Record<string, unknown>;
+      expect(md.attendeeIds).toEqual([aliceId, aliceId]);
+      const drops = result.unresolved.filter((u) =>
+        u.where.includes('mention:evt.metadata.attendeeIds'),
+      );
+      expect(drops).toHaveLength(1);
+      expect(drops[0]!.reason).toContain('"ghost"');
+    });
+
+    it('drops unresolved single-value label and logs to unresolved[]', async () => {
+      const output: ExtractionOutput = {
+        mentions: {
+          t1: {
+            surface: 'Do thing',
+            type: 'task',
+            metadata: { assigneeId: 'ghost' },
+          },
+        },
+        facts: [],
+      };
+      const result = await resolver.resolveAndIngest(output, 'signal', scope);
+      const task = result.entities.find((e) => e.label === 't1')!;
+      const md = task.entity.metadata as Record<string, unknown>;
+      // Field is set to undefined (shallow merge), not a stale label.
+      expect(md.assigneeId).toBeUndefined();
+      const drops = result.unresolved.filter((u) =>
+        u.where.includes('mention:t1.metadata.assigneeId'),
+      );
+      expect(drops).toHaveLength(1);
+      expect(drops[0]!.reason).toContain('"ghost"');
+    });
+
+    it('translates pre-resolved labels (e.g. m_self) inside attendeeIds', async () => {
+      const selfSeed = await mem.upsertEntityBySurface(
+        {
+          surface: 'Anton',
+          type: 'person',
+          identifiers: [{ kind: 'email', value: 'anton@everworker.ai' }],
+        },
+        scope,
+      );
+      const output: ExtractionOutput = {
+        mentions: {
+          evt: {
+            surface: '1:1',
+            type: 'event',
+            metadata: { attendeeIds: ['m_self'] },
+          },
+        },
+        facts: [],
+      };
+      const result = await resolver.resolveAndIngest(output, 'signal', scope, {
+        preResolved: { m_self: selfSeed.entity.id },
+      });
+      const evt = result.entities.find((e) => e.label === 'evt')!;
+      const md = evt.entity.metadata as Record<string, unknown>;
+      expect(md.attendeeIds).toEqual([selfSeed.entity.id]);
+      expect(result.unresolved).toEqual([]);
+    });
+
+    it('leaves metadata untouched when no translatable fields are present', async () => {
+      const output: ExtractionOutput = {
+        mentions: {
+          evt: {
+            surface: 'Sync',
+            type: 'event',
+            metadata: { startTime: '2026-05-01T10:00:00Z', location: 'Zoom' },
+          },
+        },
+        facts: [],
+      };
+      const result = await resolver.resolveAndIngest(output, 'signal', scope);
+      const evt = result.entities.find((e) => e.label === 'evt')!;
+      const md = evt.entity.metadata as Record<string, unknown>;
+      expect(md.location).toBe('Zoom');
+      expect(md.attendeeIds).toBeUndefined();
+      expect(result.unresolved).toEqual([]);
+    });
+
+    it('preserves existing event.attendeeIds on re-extraction (fillMissing)', async () => {
+      // Seed three real entities + an event whose attendeeIds are real ids.
+      const alice = await mem.upsertEntityBySurface(
+        {
+          surface: 'Alice',
+          type: 'person',
+          identifiers: [{ kind: 'email', value: 'alice@acme.com' }],
+        },
+        scope,
+      );
+      const bob = await mem.upsertEntityBySurface(
+        {
+          surface: 'Bob',
+          type: 'person',
+          identifiers: [{ kind: 'email', value: 'bob@acme.com' }],
+        },
+        scope,
+      );
+      const evtSeed = await mem.upsertEntityBySurface(
+        {
+          surface: 'Q3 sync',
+          type: 'event',
+          identifiers: [{ kind: 'canonical', value: 'evt:q3-sync' }],
+          metadata: { attendeeIds: [alice.entity.id, bob.entity.id] },
+        },
+        scope,
+      );
+
+      // Re-extract with LLM labels — without the fillMissing guard this would
+      // clobber [aliceId, bobId] down to [aliceId].
+      const output: ExtractionOutput = {
+        mentions: {
+          m1: {
+            surface: 'Alice',
+            type: 'person',
+            identifiers: [{ kind: 'email', value: 'alice@acme.com' }],
+          },
+          evt: {
+            surface: 'Q3 sync',
+            type: 'event',
+            identifiers: [{ kind: 'canonical', value: 'evt:q3-sync' }],
+            metadata: { attendeeIds: ['m1'] },
+          },
+        },
+        facts: [],
+      };
+      const result = await resolver.resolveAndIngest(output, 'signal_re', scope);
+      const evt = result.entities.find((e) => e.label === 'evt')!;
+      expect(evt.entity.id).toBe(evtSeed.entity.id);
+      expect(evt.resolved).toBe(true);
+      const md = evt.entity.metadata as Record<string, unknown>;
+      expect(md.attendeeIds).toEqual([alice.entity.id, bob.entity.id]);
+      const skips = result.unresolved.filter((u) =>
+        u.where.includes('mention:evt.metadata.attendeeIds'),
+      );
+      expect(skips).toHaveLength(1);
+      expect(skips[0]!.reason).toContain('fillMissing');
+    });
+
+    it('preserves existing task.assigneeId on re-extraction (fillMissing)', async () => {
+      const john = await mem.upsertEntityBySurface(
+        {
+          surface: 'John',
+          type: 'person',
+          identifiers: [{ kind: 'email', value: 'john@acme.com' }],
+        },
+        scope,
+      );
+      const taskSeed = await mem.upsertEntityBySurface(
+        {
+          surface: 'Send budget',
+          type: 'task',
+          identifiers: [{ kind: 'canonical', value: 'task:send-budget' }],
+          metadata: { state: 'in_progress', assigneeId: john.entity.id },
+        },
+        scope,
+      );
+
+      const output: ExtractionOutput = {
+        mentions: {
+          m_other: {
+            surface: 'Mary',
+            type: 'person',
+            identifiers: [{ kind: 'email', value: 'mary@acme.com' }],
+          },
+          t1: {
+            surface: 'Send budget',
+            type: 'task',
+            identifiers: [{ kind: 'canonical', value: 'task:send-budget' }],
+            metadata: { assigneeId: 'm_other' },
+          },
+        },
+        facts: [],
+      };
+      const result = await resolver.resolveAndIngest(output, 'signal_task_re', scope);
+      const task = result.entities.find((e) => e.label === 't1')!;
+      expect(task.entity.id).toBe(taskSeed.entity.id);
+      expect(task.resolved).toBe(true);
+      const md = task.entity.metadata as Record<string, unknown>;
+      expect(md.assigneeId).toBe(john.entity.id);
+      const skips = result.unresolved.filter((u) =>
+        u.where.includes('mention:t1.metadata.assigneeId'),
+      );
+      expect(skips).toHaveLength(1);
+      expect(skips[0]!.reason).toContain('fillMissing');
+    });
+
+    it('translates labels on resolved entity when the field was unset', async () => {
+      // Seed an event WITHOUT attendeeIds. Re-extraction should fill the
+      // field with translated ids — fillMissing did write the LLM's labels
+      // because the existing field was missing, so translation is safe.
+      const alice = await mem.upsertEntityBySurface(
+        {
+          surface: 'Alice',
+          type: 'person',
+          identifiers: [{ kind: 'email', value: 'alice@acme.com' }],
+        },
+        scope,
+      );
+      const evtSeed = await mem.upsertEntityBySurface(
+        {
+          surface: 'Q3 sync',
+          type: 'event',
+          identifiers: [{ kind: 'canonical', value: 'evt:q3-sync' }],
+          metadata: { startTime: '2026-05-01T10:00:00Z' },
+        },
+        scope,
+      );
+
+      const output: ExtractionOutput = {
+        mentions: {
+          m1: {
+            surface: 'Alice',
+            type: 'person',
+            identifiers: [{ kind: 'email', value: 'alice@acme.com' }],
+          },
+          evt: {
+            surface: 'Q3 sync',
+            type: 'event',
+            identifiers: [{ kind: 'canonical', value: 'evt:q3-sync' }],
+            metadata: { attendeeIds: ['m1'] },
+          },
+        },
+        facts: [],
+      };
+      const result = await resolver.resolveAndIngest(output, 'signal_fill', scope);
+      const evt = result.entities.find((e) => e.label === 'evt')!;
+      expect(evt.entity.id).toBe(evtSeed.entity.id);
+      expect(evt.resolved).toBe(true);
+      const md = evt.entity.metadata as Record<string, unknown>;
+      expect(md.attendeeIds).toEqual([alice.entity.id]);
+      expect(result.unresolved).toEqual([]);
+    });
+  });
+
   describe('preResolved bindings', () => {
     it('uses pre-resolved entity id without calling upsertEntityBySurface', async () => {
       const antonSeed = await mem.upsertEntityBySurface(

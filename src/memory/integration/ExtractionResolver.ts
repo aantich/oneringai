@@ -2,11 +2,16 @@
  * ExtractionResolver — given a raw LLM extraction output {mentions, facts},
  * translates it into resolved entities + persisted facts.
  *
- * Three-pass flow:
+ * Four-pass flow:
  *   1. For each mention: call memory.upsertEntityBySurface → map local label → entity id.
- *   2. For each fact: translate subject/object/contextIds, attach sourceSignalId,
+ *   2. Translate label references inside mention.metadata (e.g.
+ *      `event.attendeeIds = ['m_self','m1']`, `task.assigneeId = 'm_john'`)
+ *      to real entity ids and patch the entity. Unresolved labels are dropped
+ *      and logged. Without this, downstream readers (resolveRelatedEvents,
+ *      task-by-assignee queries) see prompt placeholders instead of ids.
+ *   3. For each fact: translate subject/object/contextIds, attach sourceSignalId,
  *      call memory.addFact.
- *   3. Return result with resolved entities, written facts, merge candidates,
+ *   4. Return result with resolved entities, written facts, merge candidates,
  *      and unresolved references (e.g., facts pointing to undefined mention labels).
  *
  * One bad mention or fact doesn't abort the whole ingest — errors are collected
@@ -119,6 +124,36 @@ export interface ExtractionResolverOptions {
 }
 
 // =============================================================================
+// Metadata label translation
+// =============================================================================
+//
+// The default extraction prompt instructs the LLM to reference other mentions
+// by local label inside type-specific metadata fields (e.g. event.attendeeIds,
+// task.assigneeId, task.servesAnchorId — see `defaultExtractionPrompt.ts`).
+// `upsertEntityBySurface` writes those labels through verbatim, so without
+// post-translation entity metadata ends up containing prompt placeholders like
+// `'m_self'` / `'m1'` instead of real entity ids — and readers that query by
+// these fields (`MemorySystem.resolveRelatedEvents`, task-by-assignee paths)
+// silently miss every record.
+//
+// Translation is keyed by entity type. Adding a new label-bearing metadata
+// field → add it here. Values that aren't in `labelToEntityId` are treated as
+// unresolved labels and dropped (with an entry in `unresolved[]`) — there is
+// no LLM-emitted code path that would put a real entity id here.
+
+interface MetadataLabelFields {
+  /** Single-string label fields — translate value or drop if unresolved. */
+  readonly single: readonly string[];
+  /** Array-of-string label fields — translate each item, drop unresolved. */
+  readonly arrays: readonly string[];
+}
+
+const TRANSLATABLE_METADATA_FIELDS: Readonly<Record<string, MetadataLabelFields>> = {
+  task: { single: ['assigneeId', 'servesAnchorId'], arrays: [] },
+  event: { single: [], arrays: ['attendeeIds'] },
+};
+
+// =============================================================================
 // ExtractionResolver
 // =============================================================================
 
@@ -193,6 +228,108 @@ export class ExtractionResolver {
         unresolved.push({
           where: `mention:${label}`,
           reason: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    // ----- Pass 1.5: translate label references inside mention.metadata -----
+    // Pass 1 wrote `mention.metadata` verbatim, which means label-bearing
+    // fields (event.attendeeIds, task.assigneeId, …) still hold prompt
+    // placeholders like 'm_self'/'m1'. Resolve them now that the full
+    // labelToEntityId map exists, and patch the entity. Skipping this leaves
+    // resolveRelatedEvents and assignee queries blind to LLM-emitted entities.
+    //
+    // fillMissing semantics: `upsertEntityBySurface` preserves pre-existing
+    // metadata fields on resolve. If the entity's current value differs from
+    // the LLM's label spec, fillMissing kept a real value — translating would
+    // clobber it. Detection: the entity's current metadata field equals the
+    // LLM's spec exactly (post-Pass-1) iff Pass 1 wrote the label (new entity
+    // OR resolved-with-missing-field). Anything else means real data was
+    // preserved; skip translation and surface a note.
+    for (const resolved of entities) {
+      const meta = output.mentions[resolved.label]?.metadata;
+      if (!meta) continue;
+      const config = TRANSLATABLE_METADATA_FIELDS[resolved.entity.type];
+      if (!config) continue;
+
+      const currentMeta = (resolved.entity.metadata ?? {}) as Record<string, unknown>;
+      const patch: Record<string, unknown> = {};
+      let changed = false;
+
+      for (const key of config.single) {
+        const llmVal = meta[key];
+        if (typeof llmVal !== 'string' || llmVal.length === 0) continue;
+
+        if (currentMeta[key] !== llmVal) {
+          unresolved.push({
+            where: `mention:${resolved.label}.metadata.${key}`,
+            reason: `existing entity has different ${key}; LLM-emitted label "${llmVal}" ignored (fillMissing)`,
+          });
+          continue;
+        }
+
+        const id = labelToEntityId.get(llmVal);
+        if (id) {
+          patch[key] = id;
+          changed = true;
+        } else {
+          // LLM hallucinated a label that has no mention — drop the field.
+          // In-memory adapter keeps an `undefined` value here; Mongo strips at
+          // BSON serialization. So `'key' in metadata` is unreliable downstream
+          // — readers must check `metadata[key] != null`, not `in`.
+          patch[key] = undefined;
+          changed = true;
+          unresolved.push({
+            where: `mention:${resolved.label}.metadata.${key}`,
+            reason: `metadata label "${llmVal}" not found in mentions (field dropped)`,
+          });
+        }
+      }
+
+      for (const key of config.arrays) {
+        const llmArr = meta[key];
+        if (!Array.isArray(llmArr)) continue;
+
+        if (!isShallowArrayEqual(currentMeta[key], llmArr)) {
+          unresolved.push({
+            where: `mention:${resolved.label}.metadata.${key}`,
+            reason: `existing entity has different ${key}; LLM-emitted labels ignored (fillMissing)`,
+          });
+          continue;
+        }
+
+        const translated: EntityId[] = [];
+        for (const item of llmArr) {
+          if (typeof item !== 'string' || item.length === 0) continue;
+          const id = labelToEntityId.get(item);
+          if (id) {
+            translated.push(id);
+          } else {
+            unresolved.push({
+              where: `mention:${resolved.label}.metadata.${key}`,
+              reason: `metadata label "${item}" not found in mentions (item dropped)`,
+            });
+          }
+        }
+        patch[key] = translated;
+        changed = true;
+      }
+
+      if (!changed) continue;
+
+      try {
+        const updated = await this.memory.updateEntityMetadata(
+          resolved.entity.id,
+          patch,
+          scope,
+        );
+        // Reflect the patched metadata back into the result so callers don't
+        // see the pre-translation state.
+        resolved.entity = updated;
+      } catch (err) {
+        unresolved.push({
+          where: `mention:${resolved.label}.metadata`,
+          reason: `metadata-label patch failed: ${err instanceof Error ? err.message : String(err)}`,
         });
       }
     }
@@ -444,4 +581,19 @@ function extractTo(value: unknown): string | null {
     if (typeof to === 'string' && to.trim().length > 0) return to.trim();
   }
   return null;
+}
+
+/**
+ * Position-sensitive shallow equality for two arrays. Used in Pass 1.5 to
+ * detect whether the entity's current metadata array still matches the LLM's
+ * label spec — only then is it safe to translate (otherwise fillMissing has
+ * preserved real data and we'd clobber it).
+ */
+function isShallowArrayEqual(a: unknown, b: readonly unknown[]): boolean {
+  if (!Array.isArray(a)) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
 }
