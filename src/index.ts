@@ -1036,6 +1036,17 @@ export { sanitizeToolName } from './utils/sanitize.js';
 export * as tools from './tools/index.js';
 export { createExecuteJavaScriptTool } from './tools/code/executeJavaScript.js';
 
+// Interaction tools (human-in-the-loop, pause/resume via SuspendSignal)
+export { createRequestUserInputTool } from './tools/interaction/index.js';
+export type {
+  IUserInteractionDelivery,
+  UserInteractionRequest,
+  UserInteractionDeliveryContext,
+  UserInteractionDeliveryResult,
+  CreateRequestUserInputToolOptions,
+  RequestUserInputToolDisplayResult,
+} from './tools/interaction/index.js';
+
 // Memory tool factories (for hosts that want to assemble tool sets without plugins)
 export {
   createMemoryTools,

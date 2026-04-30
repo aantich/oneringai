@@ -618,6 +618,21 @@ export {
 export { generateRoutine, createGenerateRoutine } from './routines/index.js';
 
 // ============================================================================
+// Interaction Tools (human-in-the-loop, pause/resume via SuspendSignal)
+// ============================================================================
+
+export { createRequestUserInputTool } from './interaction/index.js';
+
+export type {
+  IUserInteractionDelivery,
+  UserInteractionRequest,
+  UserInteractionDeliveryContext,
+  UserInteractionDeliveryResult,
+  CreateRequestUserInputToolOptions,
+  RequestUserInputToolDisplayResult,
+} from './interaction/index.js';
+
+// ============================================================================
 // Custom Tool Generation System
 // ============================================================================
 
