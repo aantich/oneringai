@@ -1317,7 +1317,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     for (const plugin of this._plugins.values()) {
       const instructions = plugin.getInstructions();
       if (instructions) {
-        instructionParts.push(`## ${this.formatPluginName(plugin.name)}\n\n${instructions}`);
+        instructionParts.push(`## ${this.pluginSectionTitle(plugin)}\n\n${instructions}`);
         totalInstructionTokens += plugin.getInstructionsTokenSize();
       }
     }
@@ -1333,7 +1333,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
       const content = await plugin.getContent();
       if (content) {
-        const sectionTitle = this.formatPluginName(plugin.name);
+        const sectionTitle = this.pluginSectionTitle(plugin);
         parts.push(`# ${sectionTitle}\n\n${content}`);
         breakdown.pluginContents[plugin.name] = plugin.getTokenSize();
       }
@@ -1354,6 +1354,21 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     };
 
     return { systemMessage, systemTokens, breakdown };
+  }
+
+  /**
+   * Resolve the LLM-visible section title for a plugin.
+   * For IStoreHandler plugins, prefer the schema's `displayName` (the same
+   * label the LLM sees in the `## Data Stores` overview), so the per-plugin
+   * section header stays consistent with the storeId it documents. Falls back
+   * to `formatPluginName(plugin.name)` for plugins without a schema.
+   */
+  private pluginSectionTitle(plugin: IContextPluginNextGen): string {
+    if (isStoreHandler(plugin)) {
+      const displayName = plugin.getStoreSchema().displayName;
+      if (displayName) return displayName;
+    }
+    return this.formatPluginName(plugin.name);
   }
 
   /**

@@ -305,7 +305,7 @@ describe('AgentContextNextGen', () => {
       // System message should include memory index
       const systemMsg = input[0] as Message;
       const textContent = systemMsg.content[0] as any;
-      expect(textContent.text).toContain('Working Memory');
+      expect(textContent.text).toContain('Notes');
 
       testCtx.destroy();
     });

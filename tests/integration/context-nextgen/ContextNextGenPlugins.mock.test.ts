@@ -190,7 +190,7 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       const systemMsg = input[0] as any;
       const text = systemMsg.content[0].text;
 
-      expect(text).toContain('Working Memory');
+      expect(text).toContain('Notes');
       // Unified store tools are referenced in the overview
       expect(text).toContain('store_set');
       expect(text).toContain('store_get');
@@ -500,9 +500,9 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       const systemMsg = input[0] as any;
       const text = systemMsg.content[0].text;
 
-      // Section headers come from formatPluginName('working_memory') etc.
-      expect(text).toContain('Working Memory');
-      expect(text).toContain('In Context Memory');
+      // Section headers come from getStoreSchema().displayName for IStoreHandler plugins.
+      expect(text).toContain('Notes');
+      expect(text).toContain('Whiteboard');
 
       expect(budget.breakdown.pluginInstructions).toBeGreaterThan(0);
     });

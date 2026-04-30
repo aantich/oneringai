@@ -119,8 +119,8 @@ export interface ITokenEstimator {
  * ```
  *
  * Built-in plugins use these headers:
- * - WorkingMemory: `## Working Memory (N entries)`
- * - InContextMemory: `## In Context Memory (N entries)`
+ * - WorkingMemory: `## Notes (N entries)`
+ * - InContextMemory: `## Whiteboard (N entries)`
  * - PersistentInstructions: No header (user's raw instructions)
  *
  * ## Tool Naming Convention
