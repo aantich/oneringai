@@ -328,23 +328,40 @@ describe('MemorySystem', () => {
       ).rejects.toThrow(ScopeInvariantError);
     });
 
-    it('enforces scope invariant — rejects widening ownerId beyond subject', async () => {
+    it('fact ownerId defaults to caller scope.userId, not subject.ownerId', async () => {
+      // Seed a Person entity owned by u1 with group-shared visibility — the
+      // canonical setup for hosts that share Person/Org across users (v25, etc).
+      const sharedPersonId = await seedEntity(mem, {
+        scope: { groupId: 'g1', userId: 'u1' },
+        identifiers: [{ kind: 'email', value: 'shared@x.com' }],
+        groupId: 'g1',
+        ownerId: 'u1',
+        permissions: { group: 'read', world: 'none' },
+      });
+      // u2 (in same group) writes a fact about that shared subject. Fact must
+      // land under u2's ownership — facts are personal observations even when
+      // their subject is shared.
+      const fact = await mem.addFact(
+        { subjectId: sharedPersonId, predicate: 'note', kind: 'atomic', details: 'x' },
+        { groupId: 'g1', userId: 'u2' },
+      );
+      expect(fact.ownerId).toBe('u2');
+      expect(fact.groupId).toBe('g1');
+    });
+
+    it('explicit input.ownerId still wins over scope.userId (admin delegation)', async () => {
       const userEntId = await seedEntity(mem, {
         scope: { userId: 'u1' },
         identifiers: [{ kind: 'email', value: 'u@x.com' }],
         ownerId: 'u1',
       });
-      await expect(
-        mem.addFact(
-          {
-            subjectId: userEntId,
-            predicate: 'note',
-            kind: 'atomic',
-            ownerId: 'u2',
-          },
-          { userId: 'u1' },
-        ),
-      ).rejects.toThrow(ScopeInvariantError);
+      // Caller passes explicit ownerId — used for admin / system writes that
+      // attribute the fact to a different principal.
+      const fact = await mem.addFact(
+        { subjectId: userEntId, predicate: 'note', kind: 'atomic', ownerId: 'u2' },
+        { userId: 'u1' },
+      );
+      expect(fact.ownerId).toBe('u2');
     });
 
     it('FIX: rejects fact whose objectId entity is not visible to caller', async () => {

@@ -2593,12 +2593,27 @@ function deriveFactScope(
   subject: IEntity,
   scope: ScopeFilter,
 ): ScopeFields {
-  // Precedence: explicit input > subject entity's scope > caller scope.
-  // Subject fields are constraints — the fact can only narrow, never widen.
-  const groupId =
-    input.groupId ?? (subject.groupId ?? scope.groupId);
-  const ownerId =
-    input.ownerId ?? (subject.ownerId ?? undefined);
+  // groupId still narrows from subject — facts cannot escape their subject's
+  // tenant. Multi-tenant subjects are not supported; a fact straddling groups
+  // would break group-bound visibility.
+  const groupId = input.groupId ?? (subject.groupId ?? scope.groupId);
+
+  // ownerId tracks the WRITER, not the subject. Hosts may promote certain
+  // entity types (typically Person, Organization) to group-shared visibility
+  // via VisibilityPolicy so multiple users in a tenant converge on a single
+  // record for the same real-world referent. Facts written about that shared
+  // subject are each writer's own observations and must be owned by the
+  // writer, not by whoever happened to create the subject first. Defaulting
+  // to subject.ownerId silently re-attributed user A's signal extractions to
+  // user B (the subject's creator) and made A's facts invisible in A's own
+  // memory while polluting B's.
+  //
+  // Precedence: explicit input.ownerId (admin delegation) > caller's userId
+  // (the writer) > subject.ownerId (last-resort fallback for system writes
+  // that lack scope.userId — e.g. cross-user maintenance jobs running under
+  // withSystemContext). Real callers always have scope.userId.
+  const ownerId = input.ownerId ?? scope.userId ?? subject.ownerId ?? undefined;
+
   return { groupId, ownerId };
 }
 
@@ -2608,11 +2623,11 @@ function assertScopeInvariant(subject: IEntity, factScope: ScopeFields): void {
       `fact groupId=${factScope.groupId ?? 'none'} must equal subject groupId=${subject.groupId}`,
     );
   }
-  if (subject.ownerId && factScope.ownerId !== subject.ownerId) {
-    throw new ScopeInvariantError(
-      `fact ownerId=${factScope.ownerId ?? 'none'} must equal subject ownerId=${subject.ownerId}`,
-    );
-  }
+  // ownerId equality with subject is NOT enforced. Group-shared subjects
+  // (Person, Organization, …) admit facts owned by any member of the
+  // subject's group; the writer's read access to subject was already enforced
+  // by `store.getEntity(subjectId, scope)` upstream of this call. Cross-group
+  // writes are still blocked by the groupId check above.
 }
 
 function sameScope(a: ScopeFields, b: ScopeFields): boolean {
