@@ -139,7 +139,7 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
     it('should execute store_set tool against the memory store', async () => {
       const setTool = ctx!.tools.get('store_set')!;
       const result = await setTool.execute({
-        store: 'memory',
+        store: 'notes',
         key: 'test_key',
         description: 'Test description',
         value: { data: 'test' },
@@ -157,7 +157,7 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       await ctx!.memory!.store('my_key', 'My data', { foo: 'bar' });
 
       const getTool = ctx!.tools.get('store_get')!;
-      const result = await getTool.execute({ store: 'memory', key: 'my_key' });
+      const result = await getTool.execute({ store: 'notes', key: 'my_key' });
 
       expect(result).toHaveProperty('found', true);
       expect((result as any).value ?? (result as any).entry?.value).toEqual({ foo: 'bar' });
@@ -281,7 +281,7 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
     it('should execute store_set tool against the context store', async () => {
       const setTool = ctx!.tools.get('store_set')!;
       const result = await setTool.execute({
-        store: 'context',
+        store: 'whiteboard',
         key: 'my_state',
         description: 'Application state',
         value: { mode: 'active' },
@@ -299,7 +299,7 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       plugin.set('to_delete', 'Will be deleted', 'value');
 
       const deleteTool = ctx!.tools.get('store_delete')!;
-      const result = await deleteTool.execute({ store: 'context', key: 'to_delete' });
+      const result = await deleteTool.execute({ store: 'whiteboard', key: 'to_delete' });
 
       expect(result).toHaveProperty('deleted', true);
       expect(plugin.has('to_delete')).toBe(false);
@@ -311,7 +311,7 @@ describe('AgentContextNextGen Plugins Integration (Mock)', () => {
       plugin.set('key2', 'Desc 2', 'value2');
 
       const listTool = ctx!.tools.get('store_list')!;
-      const result = await listTool.execute({ store: 'context' });
+      const result = await listTool.execute({ store: 'whiteboard' });
 
       expect(result).toHaveProperty('entries');
       expect((result as any).entries.length).toBe(2);

@@ -120,7 +120,7 @@ export interface ITokenEstimator {
  *
  * Built-in plugins use these headers:
  * - WorkingMemory: `## Working Memory (N entries)`
- * - InContextMemory: `## Live Context (N entries)`
+ * - InContextMemory: `## In Context Memory (N entries)`
  * - PersistentInstructions: No header (user's raw instructions)
  *
  * ## Tool Naming Convention
@@ -433,10 +433,10 @@ export interface PluginPrepareSnapshot {
  * a comparison table so the LLM knows which store to use.
  */
 export interface StoreEntrySchema {
-  /** Short identifier used as the `store` parameter value (e.g., "memory", "context") */
+  /** Short identifier used as the `store` parameter value (e.g., "notes", "whiteboard") */
   storeId: string;
 
-  /** Human-readable store name (e.g., "Working Memory", "Live Context") */
+  /** Human-readable store name (e.g., "Notes", "Whiteboard") */
   displayName: string;
 
   /** One-line description of what this store holds */

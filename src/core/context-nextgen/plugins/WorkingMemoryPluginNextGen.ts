@@ -2,7 +2,7 @@
  * WorkingMemoryPluginNextGen - Working memory plugin for NextGen context
  *
  * Provides external storage with an INDEX shown in context.
- * LLM sees descriptions but must use store_get("memory", key) to get full values.
+ * LLM sees descriptions but must use store_get("notes", key) to get full values.
  *
  * Features:
  * - Hierarchical tiers: raw -> summary -> findings
@@ -75,7 +75,7 @@ export interface WorkingMemoryPluginConfig {
 // Instructions
 // ============================================================================
 
-const WORKING_MEMORY_INSTRUCTIONS = `Store: "memory". You see entry descriptions in context but must call store_get to read full values.
+const WORKING_MEMORY_INSTRUCTIONS = `Store: "notes". You see entry descriptions in context but must call store_get to read full values.
 
 **Tier System** (for research/analysis):
 - \`raw\`: Low priority, evicted first. Unprocessed data to summarize later.
@@ -83,10 +83,10 @@ const WORKING_MEMORY_INSTRUCTIONS = `Store: "memory". You see entry descriptions
 - \`findings\`: High priority, kept longest. Final conclusions and insights.
 
 **Workflow:**
-1. Store raw data: \`store_set({ store: "memory", key: "topic", description: "...", value: ..., tier: "raw" })\`
-2. Process and summarize: \`store_set({ store: "memory", key: "topic", description: "...", value: ..., tier: "summary" })\`
-3. Extract findings: \`store_set({ store: "memory", key: "topic", description: "...", value: ..., tier: "findings" })\`
-4. Clean up raw: \`store_action({ store: "memory", action: "cleanup_raw" })\` or \`store_delete({ store: "memory", key: "..." })\``;
+1. Store raw data: \`store_set({ store: "notes", key: "topic", description: "...", value: ..., tier: "raw" })\`
+2. Process and summarize: \`store_set({ store: "notes", key: "topic", description: "...", value: ..., tier: "summary" })\`
+3. Extract findings: \`store_set({ store: "notes", key: "topic", description: "...", value: ..., tier: "findings" })\`
+4. Clean up raw: \`store_action({ store: "notes", action: "cleanup_raw" })\` or \`store_delete({ store: "notes", key: "..." })\``;
 
 // ============================================================================
 // Plugin Implementation
@@ -227,10 +227,10 @@ export class WorkingMemoryPluginNextGen implements IContextPluginNextGen, IStore
 
   getStoreSchema(): StoreEntrySchema {
     return {
-      storeId: 'memory',
-      displayName: 'Working Memory',
-      description: 'EXTERNAL storage with index in context. You see descriptions only; use store_get to retrieve full values.',
-      usageHint: 'Use for: large data, research findings, intermediate results. NOT for small state you check every turn (use "context" for that).',
+      storeId: 'notes',
+      displayName: 'Notes',
+      description: 'EXTERNAL storage with an index visible in context. You see descriptions only; use store_get to retrieve full values.',
+      usageHint: 'Use for: large data, research findings, intermediate results. NOT for small state you check every turn (use "whiteboard" for that).',
       setDataFields: 'description (required): Brief description shown in context index\nvalue (required): Data to store (any JSON value)\ntier?: "raw" | "summary" | "findings" (default: "raw")\nscope?: "session" | "plan" | "persistent" (default: "session")\npriority?: "low" | "normal" | "high" | "critical"\npinned?: boolean (never evicted if true)',
       actions: {
         cleanup_raw: {
@@ -278,7 +278,7 @@ export class WorkingMemoryPluginNextGen implements IContextPluginNextGen, IStore
       priority: data.priority as MemoryPriority | undefined,
       pinned: data.pinned as boolean | undefined,
     });
-    return { success: true, key: result.key, message: `Stored "${key}" in working memory`, sizeBytes: result.sizeBytes };
+    return { success: true, key: result.key, message: `Stored "${key}" in notes`, sizeBytes: result.sizeBytes };
   }
 
   async storeDelete(key: string, _context?: ToolContext): Promise<StoreDeleteResult> {

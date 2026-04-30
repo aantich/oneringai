@@ -1074,16 +1074,16 @@ plugin.set('user_prefs', 'User preferences', { verbose: true }, 'high');
 // Store data with UI display - shown in the host app's sidebar panel
 plugin.set('dashboard', 'Progress dashboard', '## Progress\n- [x] Step 1\n- [ ] Step 2', 'normal', true);
 
-// LLM uses unified store tools: store_set("context", ...), store_get("context", ...), etc.
+// LLM uses unified store tools: store_set("whiteboard", ...), store_get("whiteboard", ...), etc.
 // Or access directly via plugin API
 const state = plugin.get('current_state');  // { step: 2, status: 'active' }
 ```
 
 **Key Difference from WorkingMemory:**
-- **WorkingMemory**: External storage + index → requires `store_get("memory", key)` for values
+- **WorkingMemory**: External storage + index → requires `store_get("notes", key)` for values
 - **InContextMemory**: Full values in context → instant access, no retrieval needed
 
-**UI Display (`showInUI`):** Entries with `showInUI: true` are displayed in the host application's sidebar panel with full markdown rendering (code blocks, tables, charts, diagrams, etc.). The LLM sets this via `store_set("context", key, { ..., showInUI: true })`. Users can also pin specific entries to always display them regardless of the agent's setting. See the [User Guide](./USER_GUIDE.md#ui-display-showInUI) for details.
+**UI Display (`showInUI`):** Entries with `showInUI: true` are displayed in the host application's sidebar panel with full markdown rendering (code blocks, tables, charts, diagrams, etc.). The LLM sets this via `store_set("whiteboard", key, { ..., showInUI: true })`. Users can also pin specific entries to always display them regardless of the agent's setting. See the [User Guide](./USER_GUIDE.md#ui-display-showInUI) for details.
 
 **Use cases:** Session state, user preferences, counters, flags, small accumulated results, live dashboards.
 
@@ -1757,7 +1757,7 @@ console.log(execution.status); // 'completed' | 'failed'
 
 **Key Features:**
 - **Task Dependencies** - DAG-based ordering via `dependsOn`
-- **Memory Bridging** - In-context memory (`store_set("context", ...)`) + working memory (`store_set("memory", ...)`) persist across tasks while conversation is cleared
+- **Memory Bridging** - Whiteboard (`store_set("whiteboard", ...)`) + notes (`store_set("notes", ...)`) persist across tasks while conversation is cleared
 - **LLM Validation** - Self-reflection against completion criteria with configurable score thresholds
 - **Retry Logic** - Configurable `maxAttempts` per task with automatic retry on validation failure
 - **Smart Error Classification** - Permanent errors (auth, config, model-not-found) skip retry; transient errors retry normally

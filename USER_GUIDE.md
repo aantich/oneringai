@@ -49,7 +49,7 @@ A comprehensive guide to using all features of the @everworker/oneringai library
 12. [InContextMemory](#in-context-memory)
     - Setup and Configuration
     - Priority-Based Eviction
-    - Tools (store_set/store_delete/store_list with store="context")
+    - Tools (store_set/store_delete/store_list with store="whiteboard")
     - UI Display (`showInUI`) and User Pinning
     - Use Cases and Best Practices
 13. [Persistent Instructions](#persistent-instructions)
@@ -1380,8 +1380,8 @@ console.log(DEFAULT_FEATURES);
 
 | Feature | Default | Plugin | When Disabled |
 |---------|---------|--------|---------------|
-| `workingMemory` | `true` | WorkingMemoryPluginNextGen - tiered memory (raw/summary/findings) | `store_*` tools cannot target `"memory"` store; `ctx.memory` returns `null` |
-| `inContextMemory` | `true` | InContextMemoryPluginNextGen - live key-value storage directly in context | `store_*` tools cannot target `"context"` store |
+| `workingMemory` | `true` | WorkingMemoryPluginNextGen - tiered memory (raw/summary/findings) | `store_*` tools cannot target `"notes"` store; `ctx.memory` returns `null` |
+| `inContextMemory` | `true` | InContextMemoryPluginNextGen - live key-value storage directly in context | `store_*` tools cannot target `"whiteboard"` store |
 | `persistentInstructions` | `false` | PersistentInstructionsPluginNextGen - agent instructions persisted to disk (KVP entries) | `store_*` tools cannot target `"instructions"` store |
 | `userInfo` | `false` | UserInfoPluginNextGen - user-scoped preferences + TODO tracking auto-injected into context | `store_*` tools cannot target `"user_info"` store; `todo_*` tools not registered |
 | `toolCatalog` | `false` | ToolCatalogPluginNextGen - dynamic tool loading/unloading by category | `tool_catalog_*` tools not registered; all tools must be pre-loaded |
@@ -1475,15 +1475,15 @@ const ctx2 = AgentContextNextGen.create({
   model: 'gpt-4.1',
   features: { workingMemory: false },
 });
-// store_* tools are still registered, but store_set("memory", ...) will fail
+// store_* tools are still registered, but store_set("notes", ...) will fail
 ```
 
 **Tools registered by feature:**
 
 All plugin stores are accessed through 5 unified `store_*` tools: `store_get`, `store_set`, `store_delete`, `store_list`, `store_action`. Each feature flag enables its corresponding store:
 
-- **workingMemory=true** (default): enables `"memory"` store (e.g., `store_set("memory", key, { description, value })`)
-- **inContextMemory=true**: enables `"context"` store (e.g., `store_set("context", key, { description, value })`)
+- **workingMemory=true** (default): enables `"notes"` store (e.g., `store_set("notes", key, { description, value })`)
+- **inContextMemory=true**: enables `"whiteboard"` store (e.g., `store_set("whiteboard", key, { description, value })`)
 - **persistentInstructions=true**: enables `"instructions"` store (e.g., `store_set("instructions", key, { content })`)
 - **userInfo=true**: enables `"user_info"` store (e.g., `store_set("user_info", key, { value })`)
 - **sharedWorkspace=true**: enables `"workspace"` store (e.g., `store_set("workspace", key, { summary, content })`)
@@ -2337,8 +2337,8 @@ The `store` parameter is a string identifying which store to target. The `data` 
 
 | Store | Feature Flag | Description | Data Shape for `store_set` |
 |-------|-------------|-------------|---------------------------|
-| `"memory"` | `workingMemory: true` | Tiered working memory (raw/summary/findings) | `{ description, value, tier?, priority? }` |
-| `"context"` | `inContextMemory: true` | Key-value pairs visible directly in LLM context | `{ description, value, priority?, showInUI? }` |
+| `"notes"` | `workingMemory: true` | Tiered working memory (raw/summary/findings) | `{ description, value, tier?, priority? }` |
+| `"whiteboard"` | `inContextMemory: true` | Key-value pairs visible directly in LLM context | `{ description, value, priority?, showInUI? }` |
 | `"instructions"` | `persistentInstructions: true` | Agent instructions persisted to disk | `{ content }` |
 | `"user_info"` | `userInfo: true` | User-scoped preferences across agents | `{ value, description? }` |
 | `"workspace"` | `sharedWorkspace: true` | Multi-agent coordination workspace | `{ summary, content?, references?, status?, tags? }` |
@@ -2347,8 +2347,8 @@ The `store` parameter is a string identifying which store to target. The `data` 
 
 | Need | Store | Why |
 |------|-------|-----|
-| Large data, external retrieval | `"memory"` | Index in context, full data via `store_get` |
-| Small live state, instant access | `"context"` | Full values rendered directly in context |
+| Large data, external retrieval | `"notes"` | Index in context, full data via `store_get` |
+| Small live state, instant access | `"whiteboard"` | Full values rendered directly in context |
 | Cross-session agent rules | `"instructions"` | Persists to disk, auto-loaded on start |
 | User preferences shared across agents | `"user_info"` | User-scoped, not agent-scoped |
 | Multi-agent data sharing | `"workspace"` | Versioned entries with author tracking |
@@ -2357,14 +2357,14 @@ The `store` parameter is a string identifying which store to target. The `data` 
 
 | Old Tool | New Equivalent |
 |----------|---------------|
-| `memory_store(key, desc, value, ...)` | `store_set("memory", key, { description, value, tier?, ... })` |
-| `memory_retrieve(key)` | `store_get("memory", key)` |
-| `memory_delete(key)` | `store_delete("memory", key)` |
-| `memory_query(...)` | `store_action("memory", "query", { pattern?, tier?, ... })` |
-| `memory_cleanup_raw()` | `store_action("memory", "cleanup_raw")` |
-| `context_set(key, desc, value, ...)` | `store_set("context", key, { description, value, priority?, showInUI? })` |
-| `context_delete(key)` | `store_delete("context", key)` |
-| `context_list()` | `store_list("context")` |
+| `memory_store(key, desc, value, ...)` | `store_set("notes", key, { description, value, tier?, ... })` |
+| `memory_retrieve(key)` | `store_get("notes", key)` |
+| `memory_delete(key)` | `store_delete("notes", key)` |
+| `memory_query(...)` | `store_action("notes", "query", { pattern?, tier?, ... })` |
+| `memory_cleanup_raw()` | `store_action("notes", "cleanup_raw")` |
+| `context_set(key, desc, value, ...)` | `store_set("whiteboard", key, { description, value, priority?, showInUI? })` |
+| `context_delete(key)` | `store_delete("whiteboard", key)` |
+| `context_list()` | `store_list("whiteboard")` |
 | `instructions_set(key, content)` | `store_set("instructions", key, { content })` |
 | `instructions_remove(key)` | `store_delete("instructions", key)` |
 | `instructions_list()` | `store_list("instructions")` |
@@ -2386,7 +2386,7 @@ The `store` parameter is a string identifying which store to target. The `data` 
 {
   "name": "store_set",
   "arguments": {
-    "store": "memory",
+    "store": "notes",
     "key": "api_response",
     "data": {
       "description": "Full API response from /users endpoint",
@@ -2401,7 +2401,7 @@ The `store` parameter is a string identifying which store to target. The `data` 
 {
   "name": "store_get",
   "arguments": {
-    "store": "memory",
+    "store": "notes",
     "key": "api_response"
   }
 }
@@ -2410,7 +2410,7 @@ The `store` parameter is a string identifying which store to target. The `data` 
 {
   "name": "store_action",
   "arguments": {
-    "store": "memory",
+    "store": "notes",
     "action": "query",
     "params": { "tier": "findings", "pattern": "api_*" }
   }
@@ -2420,7 +2420,7 @@ The `store` parameter is a string identifying which store to target. The `data` 
 {
   "name": "store_action",
   "arguments": {
-    "store": "memory",
+    "store": "notes",
     "action": "cleanup_raw"
   }
 }
@@ -2433,7 +2433,7 @@ The `store` parameter is a string identifying which store to target. The `data` 
 {
   "name": "store_set",
   "arguments": {
-    "store": "context",
+    "store": "whiteboard",
     "key": "current_state",
     "data": {
       "description": "Processing state for current task",
@@ -2448,7 +2448,7 @@ The `store` parameter is a string identifying which store to target. The `data` 
 {
   "name": "store_delete",
   "arguments": {
-    "store": "context",
+    "store": "whiteboard",
     "key": "temp_data"
   }
 }
@@ -2457,7 +2457,7 @@ The `store` parameter is a string identifying which store to target. The `data` 
 {
   "name": "store_list",
   "arguments": {
-    "store": "context"
+    "store": "whiteboard"
   }
 }
 ```
@@ -2547,37 +2547,37 @@ import {
   StoreActionResult,
 } from '@everworker/oneringai';
 
-class NotesPlugin extends BasePluginNextGen implements IStoreHandler {
-  readonly name = 'notes';
-  readonly storeName = 'notes';  // The string used in store_*(store, ...)
+class SnippetsPlugin extends BasePluginNextGen implements IStoreHandler {
+  readonly name = 'snippets';
+  readonly storeName = 'snippets';  // The string used in store_*(store, ...)
 
-  private notes = new Map<string, { text: string; createdAt: number }>();
+  private snippets = new Map<string, { text: string; createdAt: number }>();
 
   // IStoreHandler implementation
   async storeGet(key?: string): Promise<StoreGetResult> {
     if (key) {
-      const note = this.notes.get(key);
-      return note ? { found: true, key, data: note } : { found: false, key };
+      const snippet = this.snippets.get(key);
+      return snippet ? { found: true, key, data: snippet } : { found: false, key };
     }
     // Return all entries when key is omitted
-    const entries = Array.from(this.notes.entries()).map(([k, v]) => ({ key: k, ...v }));
+    const entries = Array.from(this.snippets.entries()).map(([k, v]) => ({ key: k, ...v }));
     return { found: true, data: entries };
   }
 
   async storeSet(key: string, data: Record<string, unknown>): Promise<StoreSetResult> {
     const text = data.text as string;
     if (!text) return { success: false, error: 'Missing "text" field' };
-    this.notes.set(key, { text, createdAt: Date.now() });
-    return { success: true, key, message: `Note "${key}" saved` };
+    this.snippets.set(key, { text, createdAt: Date.now() });
+    return { success: true, key, message: `Snippet "${key}" saved` };
   }
 
   async storeDelete(key: string): Promise<StoreDeleteResult> {
-    const existed = this.notes.delete(key);
+    const existed = this.snippets.delete(key);
     return { success: true, existed };
   }
 
   async storeList(filter?: Record<string, unknown>): Promise<StoreListResult> {
-    const entries = Array.from(this.notes.entries()).map(([k, v]) => ({
+    const entries = Array.from(this.snippets.entries()).map(([k, v]) => ({
       key: k,
       text: v.text,
       createdAt: v.createdAt,
@@ -2588,14 +2588,14 @@ class NotesPlugin extends BasePluginNextGen implements IStoreHandler {
   async storeAction(action: string, params?: Record<string, unknown>): Promise<StoreActionResult> {
     if (action === 'clear') {
       if (!params?.confirm) return { success: false, error: 'Requires confirm: true' };
-      this.notes.clear();
-      return { success: true, message: 'All notes cleared' };
+      this.snippets.clear();
+      return { success: true, message: 'All snippets cleared' };
     }
     return { success: false, error: `Unknown action: ${action}` };
   }
 
   // Standard plugin methods
-  getInstructions(): string | null { return 'Use store_set("notes", key, { text }) to save notes.'; }
+  getInstructions(): string | null { return 'Use store_set("snippets", key, { text }) to save text snippets.'; }
   getContent(): string | null { return null; }
   getTools() { return []; }  // No plugin-specific tools needed; store_* tools handle everything
 }
@@ -2605,13 +2605,13 @@ Register and use:
 
 ```typescript
 const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
-ctx.registerPlugin(new NotesPlugin());
+ctx.registerPlugin(new SnippetsPlugin());
 
 // Now the LLM can use:
-// store_set("notes", "meeting", { text: "Discussed Q3 roadmap" })
-// store_get("notes", "meeting")
-// store_list("notes")
-// store_action("notes", "clear", { confirm: true })
+// store_set("snippets", "meeting", { text: "Discussed Q3 roadmap" })
+// store_get("snippets", "meeting")
+// store_list("snippets")
+// store_action("snippets", "clear", { confirm: true })
 ```
 
 ---
@@ -2769,7 +2769,7 @@ await writer.run('Write a report based on the workspace findings');
 |---------|---------------|-----------------|
 | **Storage** | External (in-memory or file) | Directly in LLM context |
 | **Context visibility** | Index only (keys + descriptions) | Full values visible |
-| **Access pattern** | Requires `store_get("memory", key)` call | Immediate - no retrieval needed |
+| **Access pattern** | Requires `store_get("notes", key)` call | Immediate - no retrieval needed |
 | **UI display** | No | Yes — `showInUI` flag renders entries in host app sidebar |
 | **Best for** | Large data, rarely accessed info | Small state, frequently updated, live dashboards |
 | **Default capacity** | 25MB | 20 entries, 4000 tokens |
@@ -2838,9 +2838,9 @@ interface InContextMemoryConfig {
 
 ### Available Tools
 
-The LLM manages in-context memory through the unified `store_*` tools with `store="context"` (values are always visible directly in context, so no `store_get` is needed):
+The LLM manages in-context memory through the unified `store_*` tools with `store="whiteboard"` (values are always visible directly in context, so no `store_get` is needed):
 
-#### store_set("context", ...)
+#### store_set("whiteboard", ...)
 
 Store or update a key-value pair in the live context:
 
@@ -2849,7 +2849,7 @@ Store or update a key-value pair in the live context:
 {
   "name": "store_set",
   "arguments": {
-    "store": "context",
+    "store": "whiteboard",
     "key": "current_state",
     "data": {
       "description": "Processing state for current task",
@@ -2861,7 +2861,7 @@ Store or update a key-value pair in the live context:
 }
 ```
 
-#### store_delete("context", ...)
+#### store_delete("whiteboard", ...)
 
 Remove an entry to free space:
 
@@ -2870,14 +2870,14 @@ Remove an entry to free space:
 {
   "name": "store_delete",
   "arguments": {
-    "store": "context",
+    "store": "whiteboard",
     "key": "temp_data"
   }
 }
 // Returns: { "success": true, "existed": true }
 ```
 
-#### store_list("context")
+#### store_list("whiteboard")
 
 List all entries with metadata:
 
@@ -2886,7 +2886,7 @@ List all entries with metadata:
 {
   "name": "store_list",
   "arguments": {
-    "store": "context"
+    "store": "whiteboard"
   }
 }
 // Returns: {
@@ -2992,7 +2992,7 @@ This enables agents to create **live dashboards**, **progress displays**, and **
 
 #### How It Works
 
-1. **Agent sets `showInUI: true`** via `store_set("context", key, { ..., showInUI: true })` (or the direct `set()` API)
+1. **Agent sets `showInUI: true`** via `store_set("whiteboard", key, { ..., showInUI: true })` (or the direct `set()` API)
 2. **Host app receives updates** via the `onEntriesChanged` callback (debounced at 100ms)
 3. **Entries render as cards** in the sidebar with markdown-rendered values
 4. **Users can pin entries** to always show them, overriding the agent's `showInUI` setting
@@ -3004,7 +3004,7 @@ This enables agents to create **live dashboards**, **progress displays**, and **
 {
   "name": "store_set",
   "arguments": {
-    "store": "context",
+    "store": "whiteboard",
     "key": "progress",
     "data": {
       "description": "Task progress dashboard",
@@ -3178,7 +3178,7 @@ const inContextPlugin = ctx.getPlugin('in-context-memory') as InContextMemoryPlu
 inContextPlugin.set('search_status', 'Search status', { completed: 3, pending: 2 });
 
 // LLM sees:
-// - Memory Index: "search_results: Web search results" (needs store_get("memory", "search_results"))
+// - Memory Index: "search_results: Web search results" (needs store_get("notes", "search_results"))
 // - Live Context: Full search_status value (instant access)
 ```
 
@@ -3197,7 +3197,7 @@ inContextPlugin.set('search_status', 'Search status', { completed: 3, pending: 2
 | **Storage** | In-memory (volatile) | Disk (persistent JSON) |
 | **Survives restarts** | No | Yes |
 | **Best for** | Session state, counters, flags | Agent personality, learned rules |
-| **LLM can modify** | Yes (store_set("context", ...)) | Yes (store_set/store_delete("instructions", ...)) |
+| **LLM can modify** | Yes (store_set("whiteboard", ...)) | Yes (store_set/store_delete("instructions", ...)) |
 | **Auto-loaded** | Via session restore | Always on agent start |
 | **Default capacity** | 20 entries, 4000 tokens | 50 entries, 50,000 chars total |
 
@@ -4695,16 +4695,16 @@ Tasks with no dependencies run first. A task only becomes eligible when all its 
 
 Between tasks, conversation history is cleared but **memory plugins persist**. This is how tasks share information:
 
-- **In-Context Memory** (`store_set("context", ...)`): Small key results that subsequent tasks see immediately in context. No retrieval call needed.
+- **In-Context Memory** (`store_set("whiteboard", ...)`): Small key results that subsequent tasks see immediately in context. No retrieval call needed.
   ```
-  Task 1 calls: store_set("context", "api_endpoints", { description: "...", value: "Found 3 endpoints: /users, /orders, /products" })
+  Task 1 calls: store_set("whiteboard", "api_endpoints", { description: "...", value: "Found 3 endpoints: /users, /orders, /products" })
   Task 2 sees this automatically in its context window
   ```
 
-- **Working Memory** (`store_set("memory", ...)` / `store_get("memory", ...)`): Larger data stored externally, retrieved on demand.
+- **Working Memory** (`store_set("notes", ...)` / `store_get("notes", ...)`): Larger data stored externally, retrieved on demand.
   ```
-  Task 1 calls: store_set("memory", "raw_data", { description: "Full API response", value: "...", tier: "findings" })
-  Task 2 calls: store_get("memory", "raw_data") → gets the full response
+  Task 1 calls: store_set("notes", "raw_data", { description: "Full API response", value: "...", tier: "findings" })
+  Task 2 calls: store_get("notes", "raw_data") → gets the full response
   ```
 
 The default system prompt instructs the agent on this pattern. You can override it via `prompts.system`.
@@ -4777,7 +4777,7 @@ const execution = await executeRoutine({
     task: (task) => `
       ## ${task.name}
       ${task.description}
-      Remember to store results using store_set("context", key, { description, value }).
+      Remember to store results using store_set("whiteboard", key, { description, value }).
     `,
 
     // Custom validation prompt
@@ -4925,7 +4925,7 @@ const routine = createRoutineDefinition({
       validation: {
         completionCriteria: [
           'At least 5 competitors were identified',
-          'Competitor names were stored using store_set("context", ...)',
+          'Competitor names were stored using store_set("whiteboard", ...)',
         ],
       },
     },
@@ -4988,8 +4988,8 @@ if (execution.status === 'completed') {
 
 ### Best Practices
 
-1. **Use `store_set("context", ...)` for small shared state** — task names, IDs, short summaries. These are always visible.
-2. **Use `store_set("memory", ...)` for large data** — full API responses, documents, raw data. Retrieved on demand via `store_get("memory", key)`.
+1. **Use `store_set("whiteboard", ...)` for small shared state** — task names, IDs, short summaries. These are always visible.
+2. **Use `store_set("notes", ...)` for large data** — full API responses, documents, raw data. Retrieved on demand via `store_get("notes", key)`.
 3. **Define clear completion criteria** — specific, verifiable conditions the LLM can evaluate.
 4. **Set appropriate `minCompletionScore`** — use 80+ for strict validation, 60-70 for lenient.
 5. **Use `skipReflection: true`** for simple tasks that don't need validation.
@@ -5409,8 +5409,8 @@ const agent = Agent.create({
   model: 'gpt-4.1',
   context: {
     features: {
-      workingMemory: true,       // enables store="memory"
-      inContextMemory: true,     // enables store="context"
+      workingMemory: true,       // enables store="notes"
+      inContextMemory: true,     // enables store="whiteboard"
       persistentInstructions: true, // enables store="instructions"
       userInfo: true,            // enables store="user_info"
       sharedWorkspace: true,     // enables store="workspace"
@@ -5426,11 +5426,11 @@ const agent = Agent.create({
 // - store_action(store, action, params?) — store-specific operations (query, clear, etc.)
 
 // Examples:
-// store_set("memory", "user.profile", { description: "User profile", value: { name: "Alice" }, priority: "high" })
-// store_get("memory", "user.profile")
-// store_set("context", "state", { description: "Current state", value: { step: 1 }, showInUI: true })
+// store_set("notes", "user.profile", { description: "User profile", value: { name: "Alice" }, priority: "high" })
+// store_get("notes", "user.profile")
+// store_set("whiteboard", "state", { description: "Current state", value: { step: 1 }, showInUI: true })
 // store_set("instructions", "tone", { content: "Be concise" })
-// store_action("memory", "query", { tier: "findings" })
+// store_action("notes", "query", { tier: "findings" })
 
 // Programmatic access (unchanged):
 const memory = agent.context.memory;

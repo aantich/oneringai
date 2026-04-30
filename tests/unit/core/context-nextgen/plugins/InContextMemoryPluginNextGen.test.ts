@@ -31,7 +31,7 @@ describe('InContextMemoryPluginNextGen', () => {
 
     it('should provide instructions', () => {
       const instructions = plugin.getInstructions();
-      expect(instructions).toContain('Store: "context"');
+      expect(instructions).toContain('Store: "whiteboard"');
       expect(instructions).toContain('Priority levels');
     });
 
@@ -46,8 +46,8 @@ describe('InContextMemoryPluginNextGen', () => {
 
     it('should implement IStoreHandler with getStoreSchema', () => {
       const schema = plugin.getStoreSchema();
-      expect(schema.storeId).toBe('context');
-      expect(schema.displayName).toBe('Live Context');
+      expect(schema.storeId).toBe('whiteboard');
+      expect(schema.displayName).toBe('Whiteboard');
       expect(schema.description).toBeDefined();
       expect(schema.setDataFields).toContain('description');
       expect(schema.setDataFields).toContain('value');

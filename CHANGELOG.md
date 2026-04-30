@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Storage plugins renamed to "notes" / "whiteboard" (LLM-visible only)
+
+Disambiguates the two scratchpad stores from the graph **Memory** plugin (entities + facts). The agent now sees three distinct vocabularies instead of three things called "memory".
+
+- **`WorkingMemoryPluginNextGen.getStoreSchema().storeId`**: `'memory'` → `'notes'`. `displayName`: `'Working Memory'` → `'Notes'`. Inline examples in `WORKING_MEMORY_INSTRUCTIONS` updated. Internal `plugin.name` (`'working_memory'`), the `WorkingMemoryPluginNextGen` class name, the `workingMemory` feature flag, the `ctx.memory` accessor, and the `StorageRegistry.workingMemory` factory key are all UNCHANGED in this release (deferred to a later coordinated rename).
+- **`InContextMemoryPluginNextGen.getStoreSchema().storeId`**: `'context'` → `'whiteboard'`. `displayName`: `'Live Context'` → `'Whiteboard'`. `IN_CONTEXT_MEMORY_INSTRUCTIONS` updated. Same scope: `plugin.name`, class, feature flag, etc. UNCHANGED.
+- **Cross-references in each plugin's `usageHint`** flipped accordingly (`use "context" for that` → `use "whiteboard" for that`, etc.).
+- **Companion update in `@everworker/react-ui`**: `DynamicUIPlugin` instructions teach the LLM to use the new `"whiteboard"` storeId. Ship matching versions.
+- **Migration impact for callers**: any LLM prompt or tool result that hardcoded `store: "memory"` or `store: "context"` must flip to `store: "notes"` / `store: "whiteboard"`. Callers using the plugin API directly (`ctx.memory!.store(...)`, `getPlugin('in_context_memory')`) are unaffected. README + USER_GUIDE examples updated; the example custom store plugin in USER_GUIDE renamed from `NotesPlugin` (storeId `'notes'`) to `SnippetsPlugin` (storeId `'snippets'`) to avoid the new collision.
+
 ### Memory: agent-rule write path tightened
 
 Tightening pass on `memory_set_agent_rule` and the rules-block round-trip. All public types are backwards-compatible; the system-message render format changed (callers asserting on the old `[<factId>] body` literal must update).

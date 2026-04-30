@@ -116,13 +116,13 @@ describeIfOpenAI('AgentContextNextGen with OpenAI (Integration)', () => {
       const agent = Agent.create({
         connector: 'openai-context-test',
         model: 'gpt-4o-mini',
-        instructions: 'You are a helpful assistant. Store important information using memory tools.',
-        context: { features: { workingMemory: true } },
+        instructions: 'You are a helpful assistant. Store important information using the notes store.',
+        context: { features: { workingMemory: true, inContextMemory: false } },
       });
 
       // First turn: store information
       const response1 = await agent.run(
-        'Please store the following in your memory with key "user_name": My name is Bob.'
+        'Please store the following in the notes store with key "user_name": My name is Bob.'
       );
 
       expect(response1.status).toBe('completed');
@@ -146,7 +146,7 @@ describeIfOpenAI('AgentContextNextGen with OpenAI (Integration)', () => {
 
       // Ask about it
       const response = await agent.run(
-        'Use store_get with store: "memory" and key: "fact" to retrieve it, then tell me what the secret code is.'
+        'Use store_get with store: "notes" and key: "fact" to retrieve it, then tell me what the secret code is.'
       );
 
       expect(response.status).toBe('completed');
@@ -327,7 +327,7 @@ describeIfAnthropic('AgentContextNextGen with Anthropic (Integration)', () => {
 
       // Ask about it
       const response = await agent.run(
-        'Use store_get with store: "memory" and key: "animal" to retrieve it, then tell me what my favorite animal is.'
+        'Use store_get with store: "notes" and key: "animal" to retrieve it, then tell me what my favorite animal is.'
       );
 
       expect(response.status).toBe('completed');

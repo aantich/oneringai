@@ -31,7 +31,7 @@ describe('WorkingMemoryPluginNextGen', () => {
 
     it('should provide instructions', () => {
       const instructions = plugin.getInstructions();
-      expect(instructions).toContain('Store: "memory"');
+      expect(instructions).toContain('Store: "notes"');
       expect(instructions).toContain('Tier System');
       expect(instructions).toContain('store_set');
     });
@@ -47,8 +47,8 @@ describe('WorkingMemoryPluginNextGen', () => {
 
     it('should provide store schema', () => {
       const schema = plugin.getStoreSchema();
-      expect(schema.storeId).toBe('memory');
-      expect(schema.displayName).toBe('Working Memory');
+      expect(schema.storeId).toBe('notes');
+      expect(schema.displayName).toBe('Notes');
       expect(schema.description).toBeDefined();
       expect(schema.setDataFields).toContain('description');
       expect(schema.setDataFields).toContain('value');

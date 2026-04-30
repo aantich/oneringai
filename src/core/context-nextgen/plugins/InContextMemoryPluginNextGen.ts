@@ -74,7 +74,7 @@ const DEFAULT_CONFIG = {
 // Instructions
 // ============================================================================
 
-const IN_CONTEXT_MEMORY_INSTRUCTIONS = `Store: "context". Values are DIRECTLY visible in your context window every turn \u2014 no retrieval needed.
+const IN_CONTEXT_MEMORY_INSTRUCTIONS = `Store: "whiteboard". Values are DIRECTLY visible in your context window every turn \u2014 no retrieval needed.
 
 **Priority levels** (for eviction when space is tight):
 - \`low\`: Evicted first. Temporary data.
@@ -401,10 +401,10 @@ export class InContextMemoryPluginNextGen implements IContextPluginNextGen, ISto
 
   getStoreSchema(): StoreEntrySchema {
     return {
-      storeId: 'context',
-      displayName: 'Live Context',
+      storeId: 'whiteboard',
+      displayName: 'Whiteboard',
       description: 'Values shown DIRECTLY in your context window — no retrieval needed.',
-      usageHint: 'Use for: small state, counters, flags, preferences you need to see every turn. Do NOT use for large data (use "memory" — it won\'t waste context tokens).',
+      usageHint: 'Use for: small state, counters, flags, preferences you need to see every turn. Do NOT use for large data (use "notes" — it won\'t waste context tokens).',
       setDataFields: 'description (required): Brief description shown in context\nvalue (required): Data to store (any JSON value)\npriority?: "low" | "normal" | "high" | "critical" (default: "normal")\nshowInUI?: boolean — display in user\'s side panel (default: false)',
     };
   }
@@ -458,7 +458,7 @@ export class InContextMemoryPluginNextGen implements IContextPluginNextGen, ISto
       success: true,
       key,
       showInUI: (data.showInUI as boolean) ?? false,
-      message: `Stored "${key}" in live context${data.showInUI ? ' (visible in UI)' : ''}`,
+      message: `Stored "${key}" on whiteboard${data.showInUI ? ' (visible in UI)' : ''}`,
     };
   }
 
