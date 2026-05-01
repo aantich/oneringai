@@ -152,8 +152,12 @@ describe('AuthCodePKCEFlow', () => {
 
       await flow.exchangeCode('code', state);
 
-      // Token should be stored with userId
-      expect(mockStorage.has('auth_code:test-client-id:user123')).toBe(true);
+      // Token should be stored under the 4-part user key. accountId
+      // defaults to `'default'` when the caller passes only userId — the
+      // 3-part `flow:clientId:userId` shape is gone (strict host adapters
+      // like v25 MongoTokenStorage reject it because it's ambiguous between
+      // app-level and user-level token kinds).
+      expect(mockStorage.has('auth_code:test-client-id:user123:default')).toBe(true);
     });
 
     it('should clear PKCE data after successful exchange (one-time use)', async () => {

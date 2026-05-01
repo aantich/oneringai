@@ -86,21 +86,26 @@ describe('TokenStore', () => {
       expect(mockStorage.has('test_key')).toBe(true);
     });
 
-    it('should append userId for multi-user mode', async () => {
+    it('should produce 4-part key for userId without accountId (default-account fill)', async () => {
+      // Contract change: getScopedKey never produces 3-part keys.
+      // userId without accountId now lands at `baseKey:userId:default` so
+      // strict host adapters (v25 MongoTokenStorage) can parse the shape
+      // unambiguously as a user-scoped token.
       await store.storeToken({ access_token: 'token1' }, 'user123');
 
-      expect(mockStorage.has('test_key:user123')).toBe(true);
+      expect(mockStorage.has('test_key:user123:default')).toBe(true);
+      expect(mockStorage.has('test_key:user123')).toBe(false);
       expect(mockStorage.has('test_key')).toBe(false);
     });
 
-    it('should isolate tokens by userId', async () => {
+    it('should isolate tokens by userId under the 4-part contract', async () => {
       await store.storeToken({ access_token: 'token1' }, 'user1');
       await store.storeToken({ access_token: 'token2' }, 'user2');
-      await store.storeToken({ access_token: 'token3' }); // default
+      await store.storeToken({ access_token: 'token3' }); // default → base key (system)
 
       expect(mockStorage.size()).toBe(3);
-      expect(mockStorage.has('test_key:user1')).toBe(true);
-      expect(mockStorage.has('test_key:user2')).toBe(true);
+      expect(mockStorage.has('test_key:user1:default')).toBe(true);
+      expect(mockStorage.has('test_key:user2:default')).toBe(true);
       expect(mockStorage.has('test_key')).toBe(true);
     });
   });

@@ -17,30 +17,36 @@ export class TokenStore {
   }
 
   /**
-   * Get user-scoped (and optionally account-scoped) storage key
+   * Get user-scoped (and optionally account-scoped) storage key.
    *
-   * Key format (backward compatible):
-   * - No userId, no accountId  → baseKey
-   * - userId only              → baseKey:userId
-   * - userId + accountId       → baseKey:userId:accountId
-   * - accountId only           → baseKey:default:accountId
+   * Output is exactly two shapes:
+   * - **2-part** `baseKey` — system / app-level (no userId, no accountId).
+   * - **4-part** `baseKey:userId:accountId` — user-scoped, with `'default'`
+   *   substituted for whichever component the caller omitted.
+   *
+   * The previous 3-part `baseKey:userId` shape (userId without accountId) is
+   * deliberately gone. Strict host storage adapters (e.g. v25
+   * MongoTokenStorage) reject 3-part keys because the contract is "system
+   * tokens are 2-part, user tokens always carry an accountId" — a 3-part key
+   * is ambiguous between the two. Defaulting accountId to `'default'`
+   * collapses the bug class without losing any information: callers that
+   * pass only userId continue to see exactly one token per user, just under
+   * the explicit 4-part key now.
    *
    * @param userId - User identifier (optional, defaults to single-user mode)
    * @param accountId - Account alias for multi-account support (optional)
-   * @returns Storage key scoped to user and account
+   * @returns Storage key — always 2 parts (system) or 4 parts (user)
    */
   private getScopedKey(userId?: string, accountId?: string): string {
-    if (accountId) {
-      // Multi-account mode: always include userId dimension
-      const userPart = userId && userId !== 'default' ? userId : 'default';
-      return `${this.baseStorageKey}:${userPart}:${accountId}`;
-    }
-    if (!userId || userId === 'default') {
-      // Single-user mode (backward compatible)
+    const hasUser = !!(userId && userId !== 'default');
+    const hasAccount = !!accountId;
+    if (!hasUser && !hasAccount) {
+      // Single-user / system mode (backward compatible).
       return this.baseStorageKey;
     }
-    // Multi-user mode, no account (backward compatible)
-    return `${this.baseStorageKey}:${userId}`;
+    const userPart = hasUser ? userId! : 'default';
+    const accountPart = hasAccount ? accountId! : 'default';
+    return `${this.baseStorageKey}:${userPart}:${accountPart}`;
   }
 
   /**

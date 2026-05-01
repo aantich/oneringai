@@ -15,24 +15,31 @@ export class ClientCredentialsFlow {
   }
 
   /**
-   * Get token using client credentials
-   * @param userId - User identifier for multi-user support (optional, rarely used for client_credentials)
-   * @param accountId - Account alias for multi-account support (optional)
+   * Get token using client credentials.
+   *
+   * `userId` / `accountId` are accepted for API compatibility with the
+   * generic OAuthManager surface (callers like `Connector.fetch` route them
+   * through unconditionally), but they are deliberately ignored for token
+   * storage: client_credentials is application-level auth — there is exactly
+   * ONE token per app regardless of which user is calling. Partitioning the
+   * token cache per user wastes storage and produces invalid 3-part
+   * `flow:clientId:userId` storage keys that strict host token-storage
+   * implementations (e.g. v25 MongoTokenStorage) reject. The caller's
+   * `userId` is still meaningful at the API-URL level (e.g. `/users/{id}/...`
+   * Microsoft Graph routes) — that mapping happens at the tool layer, not
+   * here.
    */
-  async getToken(userId?: string, accountId?: string): Promise<string> {
-    // Return cached token if valid
-    if (await this.tokenStore.isValid(this.config.refreshBeforeExpiry, userId, accountId)) {
-      return this.tokenStore.getAccessToken(userId, accountId);
+  async getToken(_userId?: string, _accountId?: string): Promise<string> {
+    if (await this.tokenStore.isValid(this.config.refreshBeforeExpiry)) {
+      return this.tokenStore.getAccessToken();
     }
-
-    // Request new token
-    return this.requestToken(userId, accountId);
+    return this.requestToken();
   }
 
   /**
-   * Request a new token from the authorization server
+   * Request a new token from the authorization server.
    */
-  private async requestToken(userId?: string, accountId?: string): Promise<string> {
+  private async requestToken(): Promise<string> {
     // Create Basic Auth header
     const auth = Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString(
       'base64'
@@ -63,29 +70,26 @@ export class ClientCredentialsFlow {
 
     const data: any = await response.json();
 
-    // Store token (encrypted)
-    await this.tokenStore.storeToken(data, userId, accountId);
+    // Store token (encrypted) under the singleton app-level key. See getToken
+    // doc above for why userId/accountId are ignored.
+    await this.tokenStore.storeToken(data);
 
     return data.access_token;
   }
 
   /**
-   * Refresh token (client credentials don't use refresh tokens)
-   * Just requests a new token
-   * @param userId - User identifier for multi-user support (optional)
-   * @param accountId - Account alias for multi-account support (optional)
+   * Refresh token (client credentials don't use refresh tokens — just request
+   * a new one). userId/accountId ignored — see getToken.
    */
-  async refreshToken(userId?: string, accountId?: string): Promise<string> {
-    await this.tokenStore.clear(userId, accountId);
-    return this.requestToken(userId, accountId);
+  async refreshToken(_userId?: string, _accountId?: string): Promise<string> {
+    await this.tokenStore.clear();
+    return this.requestToken();
   }
 
   /**
-   * Check if token is valid
-   * @param userId - User identifier for multi-user support (optional)
-   * @param accountId - Account alias for multi-account support (optional)
+   * Check if token is valid. userId/accountId ignored — see getToken.
    */
-  async isTokenValid(userId?: string, accountId?: string): Promise<boolean> {
-    return this.tokenStore.isValid(this.config.refreshBeforeExpiry, userId, accountId);
+  async isTokenValid(_userId?: string, _accountId?: string): Promise<boolean> {
+    return this.tokenStore.isValid(this.config.refreshBeforeExpiry);
   }
 }

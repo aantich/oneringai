@@ -98,18 +98,24 @@ export class JWTBearerFlow {
   }
 
   /**
-   * Get token using JWT Bearer assertion
-   * @param userId - User identifier for multi-user support (optional)
-   * @param accountId - Account alias for multi-account support (optional)
+   * Get token using JWT Bearer assertion.
+   *
+   * `userId` / `accountId` are accepted for API compatibility with the
+   * generic OAuthManager surface but deliberately ignored for token storage:
+   * jwt_bearer is application-level auth (service account / GitHub App / RFC
+   * 7523 grant) — there is exactly ONE token per app regardless of which
+   * caller is requesting it. Partitioning the cache per user wastes storage
+   * and produces invalid 3-part `flow:clientId:userId` storage keys that
+   * strict host token-storage implementations (e.g. v25 MongoTokenStorage)
+   * reject. If the underlying API needs per-user impersonation, that
+   * happens at the API URL/header level (e.g. Microsoft Graph
+   * `/users/{id}/...` routes), not at token retrieval.
    */
-  async getToken(userId?: string, accountId?: string): Promise<string> {
-    // Return cached token if valid
-    if (await this.tokenStore.isValid(this.config.refreshBeforeExpiry, userId, accountId)) {
-      return this.tokenStore.getAccessToken(userId, accountId);
+  async getToken(_userId?: string, _accountId?: string): Promise<string> {
+    if (await this.tokenStore.isValid(this.config.refreshBeforeExpiry)) {
+      return this.tokenStore.getAccessToken();
     }
-
-    // Request new token
-    return this.requestToken(userId, accountId);
+    return this.requestToken();
   }
 
   /**
@@ -121,7 +127,7 @@ export class JWTBearerFlow {
    *   on an empty POST; response uses `token` + `expires_at` instead of
    *   `access_token` + `expires_in`.
    */
-  private async requestToken(userId?: string, accountId?: string): Promise<string> {
+  private async requestToken(): Promise<string> {
     const assertion = await this.generateJWT();
     const style = this.config.tokenRequestStyle ?? 'form';
 
@@ -189,30 +195,27 @@ export class JWTBearerFlow {
             )
           : 3600;
       const normalized = { ...data, access_token: token, expires_in: expiresIn };
-      await this.tokenStore.storeToken(normalized, userId, accountId);
+      await this.tokenStore.storeToken(normalized);
       return token;
     }
 
-    await this.tokenStore.storeToken(data, userId, accountId);
+    await this.tokenStore.storeToken(data);
     return data.access_token;
   }
 
   /**
-   * Refresh token (generate new JWT and request new token)
-   * @param userId - User identifier for multi-user support (optional)
-   * @param accountId - Account alias for multi-account support (optional)
+   * Refresh token (generate new JWT and request new token).
+   * userId/accountId ignored — see getToken.
    */
-  async refreshToken(userId?: string, accountId?: string): Promise<string> {
-    await this.tokenStore.clear(userId, accountId);
-    return this.requestToken(userId, accountId);
+  async refreshToken(_userId?: string, _accountId?: string): Promise<string> {
+    await this.tokenStore.clear();
+    return this.requestToken();
   }
 
   /**
-   * Check if token is valid
-   * @param userId - User identifier for multi-user support (optional)
-   * @param accountId - Account alias for multi-account support (optional)
+   * Check if token is valid. userId/accountId ignored — see getToken.
    */
-  async isTokenValid(userId?: string, accountId?: string): Promise<boolean> {
-    return this.tokenStore.isValid(this.config.refreshBeforeExpiry, userId, accountId);
+  async isTokenValid(_userId?: string, _accountId?: string): Promise<boolean> {
+    return this.tokenStore.isValid(this.config.refreshBeforeExpiry);
   }
 }
