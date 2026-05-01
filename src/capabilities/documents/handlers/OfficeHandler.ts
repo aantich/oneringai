@@ -5,9 +5,9 @@
  * Uses officeparser (lazy-loaded) for AST-based extraction.
  */
 
-import { createRequire } from 'node:module';
-import { dirname, join } from 'node:path';
-import { fileTypeFromBuffer } from 'file-type';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { DOCUMENT_DEFAULTS } from '../../../core/constants.js';
 import type {
   IFormatHandler,
@@ -17,80 +17,67 @@ import type {
 } from '../types.js';
 
 // =====================================================================
-// officeparser Meteor/webpack compatibility patch
+// officeparser Meteor/webpack compatibility — temp-file workaround
 // =====================================================================
 //
-// PROBLEM: When this code runs inside a Meteor server bundle (icos /
-// Everworker), parseOffice() throws:
+// PROBLEM: Inside a Meteor server bundle (icos / Everworker), passing a
+// Buffer to parseOffice() throws:
 //
 //   [OfficeParser]: A dynamic import callback was not specified.
 //
 // ROOT CAUSE: With Buffer input (no filename), parseOffice falls back
-// to magic-byte detection, which calls loadFileType() inside
+// to magic-byte format detection, which calls `loadFileType()` inside
 // officeparser's `dist/utils/moduleLoader.js`. That helper uses
 //
 //     new Function('s', 'return import(s)')(specifier)
 //
 // to bypass bundler static analysis. V8 parses the synthesized function
-// body in the global scope where Meteor has NOT registered a host
+// body in GLOBAL SCOPE, where Meteor has NOT registered a host
 // dynamic-import callback (it only registers one for code inside its
 // own module wrapper). V8 then refuses the import().
 //
-// FIX: We import `file-type` from oneringai's module scope (where the
-// callback IS registered), then overwrite officeparser's loadFileType
-// with a cached wrapper. parseOffice's full dispatch logic still runs;
-// the broken `new Function(...)` path is never reached.
+// WHY THIS FIX (temp file): we write the buffer to a temp file with the
+// known extension and pass the path. officeparser then sets `ext` from
+// `file.split('.').pop()` and dispatches by extension at OfficeParser.js:168
+// — `loadFileType()` is never called and the broken `new Function(...)`
+// path is never reached.
 //
-// WHY NOT extension hint: officeparser has no extensionHint / format
-// option in OfficeParserConfig (verified against types.d.ts and
-// OfficeParser.js). The only way it learns the format from a Buffer is
-// magic-byte detection.
+// WHY NOT a monkey-patch on `loadFileType`: tried first, doesn't work
+// in Meteor's bundled-server context. icos's rspack config bundles
+// officeparser INTO v25's server bundle (it isn't in the
+// `nativeExternals` list in icos/rspack.config.js). The bundled
+// officeparser has its own internal copy of `moduleLoader.js`, so a
+// monkey-patch via Node's CJS cache on `node_modules/officeparser/...`
+// mutates a different module instance than the running code.
 //
-// WHY NOT temp file: works, but adds disk dependency for environments
-// (k8s read-only root, restricted tmpfs) where /tmp may be unavailable.
+// WHY NOT extension hint: officeparser has no extensionHint / format /
+// mimeType option in `OfficeParserConfig` (verified against
+// `dist/types.d.ts`). The only ways it learns the format are
+// `file.split('.').pop()` for path strings or `loadFileType()` for
+// buffers.
 //
-// FRAGILITY — REVIEW ON EVERY officeparser BUMP:
-//   1. officeparser pins to `~6.1.0` so MINOR bumps are deliberate.
-//   2. The internal path is `dist/utils/moduleLoader.js`, exported name
-//      `loadFileType`. If either is renamed/removed, the patch throws
-//      loudly at first use (we want this — never silent).
-//   3. officeparser's package.json `exports` field restricts subpaths
-//      to "." only, so we resolve via require.resolve('officeparser')
-//      then walk the directory tree to bypass the restriction.
-//   4. There's a unit test at
-//      `src/capabilities/documents/__tests__/OfficeHandler.patch.test.ts`
-//      that exercises this path against a real .pptx — run it after
-//      every officeparser version bump.
+// FRAGILITY — REVIEW CHECKLIST:
+//   1. The path-string code path in officeparser (`OfficeParser.js:138`)
+//      uses `await import('fs')` to read the file. This is a literal
+//      module-level dynamic import that bundlers resolve at build time
+//      (not the broken `new Function` trick) — works in Meteor.
+//   2. If a future officeparser version drops path-string input, this
+//      stops working. Lock the major version in package.json and run
+//      `tests/unit/capabilities/documents/OfficeHandler.test.ts` on
+//      every bump.
+//   3. Disk dependency: requires `os.tmpdir()` to be writable. True on
+//      every realistic Meteor host (Galaxy, MUP/Docker, k8s with
+//      default tmpfs). If you ever run in `--read-only` containers
+//      without a tmpfs mount, you'll need a different approach (the
+//      monkey-patch was the candidate but is foiled by bundling).
 //
-// To verify in isolation, see scripts/verify-officeparser-patch.mjs.
+// To verify in isolation: scripts/verify-officeparser-patch.mjs
 // =====================================================================
 
-const requireCjs = createRequire(import.meta.url);
+let parseOffice: ((file: string, config?: any) => Promise<any>) | null = null;
 
-let parseOffice: ((file: Buffer, config?: any) => Promise<any>) | null = null;
-let patchApplied = false;
-
-function applyOfficeParserPatch(): void {
-  if (patchApplied) return;
-  const officeparserMain = requireCjs.resolve('officeparser');
-  const moduleLoaderPath = join(dirname(officeparserMain), 'utils', 'moduleLoader.js');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const moduleLoader = requireCjs(moduleLoaderPath) as { loadFileType?: unknown };
-  if (typeof moduleLoader.loadFileType !== 'function') {
-    throw new Error(
-      `[OfficeHandler] officeparser internal layout changed: ` +
-        `expected loadFileType function at ${moduleLoaderPath}. ` +
-        `Review the Meteor/webpack patch in OfficeHandler.ts after this version bump.`,
-    );
-  }
-  (moduleLoader as { loadFileType: () => Promise<{ fileTypeFromBuffer: typeof fileTypeFromBuffer }> }).loadFileType =
-    async () => ({ fileTypeFromBuffer });
-  patchApplied = true;
-}
-
-async function getParseOffice(): Promise<(file: Buffer, config?: any) => Promise<any>> {
+async function getParseOffice(): Promise<(file: string, config?: any) => Promise<any>> {
   if (!parseOffice) {
-    applyOfficeParserPatch();
     const mod = await import('officeparser');
     parseOffice = mod.parseOffice;
   }
@@ -112,10 +99,30 @@ export class OfficeHandler implements IFormatHandler {
     const extractImages = options.extractImages !== false;
     const includeSpeakerNotes = options.formatOptions?.office?.includeSpeakerNotes !== false;
 
-    const ast = await parse(buffer, {
-      extractAttachments: extractImages,
-      ignoreNotes: !includeSpeakerNotes,
-    });
+    // Write buffer to a temp file so officeparser dispatches by extension
+    // (avoids the magic-byte detection path that breaks under Meteor's
+    // server bundle — see comment block at top of this file).
+    const tmpDir = await mkdtemp(join(tmpdir(), 'oneringai-office-'));
+    const tmpPath = join(tmpDir, `doc.${format}`);
+    let ast: any;
+    try {
+      await writeFile(tmpPath, buffer);
+      ast = await parse(tmpPath, {
+        extractAttachments: extractImages,
+        ignoreNotes: !includeSpeakerNotes,
+      });
+    } finally {
+      await rm(tmpDir, { recursive: true, force: true }).catch((err) => {
+        // Cleanup failure must not mask a parse failure, but log the full
+        // context so we never silently lose disk space (per the project's
+        // no-silent-errors rule).
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[OfficeHandler] failed to clean up temp dir ${tmpDir} for ${filename}:`,
+          err,
+        );
+      });
+    }
 
     const pieces: DocumentPiece[] = [];
     let pieceIndex = 0;

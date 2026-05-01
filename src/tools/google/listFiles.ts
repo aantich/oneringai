@@ -11,6 +11,8 @@ import {
   type GoogleDriveFile,
   type GoogleDriveFileListResponse,
   getGoogleUserId,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   googleFetch,
   formatFileSize,
   formatGoogleToolError,
@@ -44,11 +46,33 @@ function mapDriveFile(file: GoogleDriveFile): GoogleListFilesResult['items'] ext
 
 /**
  * Create a Google Drive list_files tool
+ *
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
  */
 export function createGoogleListFilesTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<ListFilesArgs, GoogleListFilesResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    folderId: {
+      type: 'string',
+      description: 'Folder ID to list contents of. Omit for root ("My Drive").',
+    },
+    search: {
+      type: 'string',
+      description: 'Filter files by name (optional). Searches within the specified folder.',
+    },
+    limit: {
+      type: 'number',
+      description: 'Max results (1-200). Default: 100.',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -71,24 +95,7 @@ EXAMPLES:
 - Filter by name: { "search": "quarterly report" }`,
         parameters: {
           type: 'object',
-          properties: {
-            folderId: {
-              type: 'string',
-              description: 'Folder ID to list contents of. Omit for root ("My Drive").',
-            },
-            search: {
-              type: 'string',
-              description: 'Filter files by name (optional). Searches within the specified folder.',
-            },
-            limit: {
-              type: 'number',
-              description: 'Max results (1-200). Default: 100.',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User email for service-account auth. Ignored in delegated auth.',
-            },
-          },
+          properties,
         },
       },
       blocking: true,
@@ -115,8 +122,8 @@ EXAMPLES:
       const effectiveAccountId = context?.accountId;
 
       try {
-        // Validate service account auth
-        getGoogleUserId(connector, args.targetUser);
+        // Validate service account auth (Drive endpoint doesn't take user-prefix in URL)
+        getGoogleUserId(connector, args.targetUser, actAs);
 
         const pageSize = Math.min(args.limit ?? 100, 200);
 

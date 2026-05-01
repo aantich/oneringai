@@ -10,6 +10,8 @@ import {
   type GoogleSendEmailResult,
   type GmailMessageResponse,
   getGoogleUserId,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   googleFetch,
   normalizeEmails,
   buildMimeMessage,
@@ -29,11 +31,47 @@ interface SendEmailArgs {
 
 /**
  * Create a Google Gmail send_email tool
+ *
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
  */
 export function createGoogleSendEmailTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<SendEmailArgs, GoogleSendEmailResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    to: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'Recipient email addresses. Example: ["alice@example.com"]',
+    },
+    subject: {
+      type: 'string',
+      description: 'Email subject line. For replies, typically "Re: <original subject>".',
+    },
+    body: {
+      type: 'string',
+      description: 'Email body content. HTML is supported.',
+    },
+    cc: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'CC recipient email addresses (optional).',
+    },
+    replyToMessageId: {
+      type: 'string',
+      description: 'Gmail message ID to reply to (optional). Threads the reply with the original.',
+    },
+    replyAll: {
+      type: 'boolean',
+      description: 'If true and replyToMessageId is set, includes all original recipients in CC. Default: false.',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -48,38 +86,7 @@ export function createGoogleSendEmailTool(
 **Threading:** When replyToMessageId is set, the sent message is automatically threaded with the original conversation.`,
         parameters: {
           type: 'object',
-          properties: {
-            to: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Recipient email addresses. Example: ["alice@example.com"]',
-            },
-            subject: {
-              type: 'string',
-              description: 'Email subject line. For replies, typically "Re: <original subject>".',
-            },
-            body: {
-              type: 'string',
-              description: 'Email body content. HTML is supported.',
-            },
-            cc: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'CC recipient email addresses (optional).',
-            },
-            replyToMessageId: {
-              type: 'string',
-              description: 'Gmail message ID to reply to (optional). Threads the reply with the original.',
-            },
-            replyAll: {
-              type: 'boolean',
-              description: 'If true and replyToMessageId is set, includes all original recipients in CC. Default: false.',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User email for service-account auth. Ignored in delegated auth.',
-            },
-          },
+          properties,
           required: ['to', 'subject', 'body'],
         },
       },
@@ -106,7 +113,7 @@ export function createGoogleSendEmailTool(
       const effectiveAccountId = context?.accountId;
 
       try {
-        const googleUser = getGoogleUserId(connector, args.targetUser);
+        const googleUser = getGoogleUserId(connector, args.targetUser, actAs);
         const to = normalizeEmails(args.to);
         let cc = args.cc ? normalizeEmails(args.cc) : undefined;
         const baseUrl = 'https://gmail.googleapis.com';

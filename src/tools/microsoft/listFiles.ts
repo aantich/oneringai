@@ -9,6 +9,8 @@ import type { Connector } from '../../core/Connector.js';
 import type { ToolFunction, ToolContext } from '../../domain/entities/Tool.js';
 import {
   getUserPathPrefix,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   microsoftFetch,
   getDrivePrefix,
   encodeSharingUrl,
@@ -39,10 +41,43 @@ const SELECT_FIELDS = 'id,name,size,lastModifiedDateTime,file,folder,webUrl';
 
 // ---- Tool Factory ----
 
+/**
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
+ */
 export function createMicrosoftListFilesTool(
   connector: Connector,
   userId?: string,
+  actAs?: string,
 ): ToolFunction<ListFilesArgs, MicrosoftListFilesResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    path: {
+      type: 'string',
+      description:
+        'Folder path (e.g., "/Documents/Projects") or a web URL to a SharePoint/OneDrive folder. Omit to list root.',
+    },
+    driveId: {
+      type: 'string',
+      description: 'Optional drive ID for a specific non-default drive.',
+    },
+    siteId: {
+      type: 'string',
+      description: 'Optional SharePoint site ID to access that site\'s default document library.',
+    },
+    search: {
+      type: 'string',
+      description:
+        'Optional search query to filter results by filename or content. Searches within the specified folder and all subfolders.',
+    },
+    limit: {
+      type: 'number',
+      description: `Maximum number of items to return (default: ${DEFAULT_LIMIT}, max: ${MAX_LIMIT}).`,
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -62,34 +97,7 @@ Use this tool to browse the contents of a folder, discover available files befor
 **Tip:** To read a file's content after finding it, use the read_file tool with the file's webUrl or id from these results.`,
         parameters: {
           type: 'object',
-          properties: {
-            path: {
-              type: 'string',
-              description:
-                'Folder path (e.g., "/Documents/Projects") or a web URL to a SharePoint/OneDrive folder. Omit to list root.',
-            },
-            driveId: {
-              type: 'string',
-              description: 'Optional drive ID for a specific non-default drive.',
-            },
-            siteId: {
-              type: 'string',
-              description: 'Optional SharePoint site ID to access that site\'s default document library.',
-            },
-            search: {
-              type: 'string',
-              description:
-                'Optional search query to filter results by filename or content. Searches within the specified folder and all subfolders.',
-            },
-            limit: {
-              type: 'number',
-              description: `Maximum number of items to return (default: ${DEFAULT_LIMIT}, max: ${MAX_LIMIT}).`,
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User ID or email. Only needed with application-only (client_credentials) auth.',
-            },
-          },
+          properties,
         },
       },
       blocking: true,
@@ -117,7 +125,7 @@ Use this tool to browse the contents of a folder, discover available files befor
       const limit = Math.min(Math.max(1, args.limit ?? DEFAULT_LIMIT), MAX_LIMIT);
 
       try {
-        const userPrefix = getUserPathPrefix(connector, args.targetUser);
+        const userPrefix = getUserPathPrefix(connector, args.targetUser, actAs);
         const drivePrefix = getDrivePrefix(userPrefix, {
           siteId: args.siteId,
           driveId: args.driveId,

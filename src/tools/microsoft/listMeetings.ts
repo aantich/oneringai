@@ -16,6 +16,8 @@ import {
   type GraphCalendarViewResponse,
   type GraphCalendarViewEvent,
   getUserPathPrefix,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   microsoftFetch,
   formatMicrosoftToolError,
 } from './types.js';
@@ -75,11 +77,37 @@ function toMeetingEntry(event: GraphCalendarViewEvent): MeetingListEntry {
 
 /**
  * Create a Microsoft Graph list_meetings tool
+ *
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
  */
 export function createListMeetingsTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<ListMeetingsArgs, MicrosoftListMeetingsResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    startDateTime: {
+      type: 'string',
+      description: 'Start of time window as ISO 8601 string without timezone suffix. Example: "2025-01-13T00:00:00"',
+    },
+    endDateTime: {
+      type: 'string',
+      description: 'End of time window as ISO 8601 string without timezone suffix. Example: "2025-01-17T23:59:59"',
+    },
+    timeZone: {
+      type: 'string',
+      description: 'IANA timezone string for interpreting start/end times. Example: "America/New_York", "Europe/Zurich". Default: "UTC".',
+    },
+    maxResults: {
+      type: 'number',
+      description: 'Maximum number of events to return (1-100). Default: 25.',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -112,28 +140,7 @@ EXAMPLES:
 - Last 7 days: { "startDateTime": "2025-01-08T00:00:00", "endDateTime": "2025-01-15T23:59:59" }`,
         parameters: {
           type: 'object',
-          properties: {
-            startDateTime: {
-              type: 'string',
-              description: 'Start of time window as ISO 8601 string without timezone suffix. Example: "2025-01-13T00:00:00"',
-            },
-            endDateTime: {
-              type: 'string',
-              description: 'End of time window as ISO 8601 string without timezone suffix. Example: "2025-01-17T23:59:59"',
-            },
-            timeZone: {
-              type: 'string',
-              description: 'IANA timezone string for interpreting start/end times. Example: "America/New_York", "Europe/Zurich". Default: "UTC".',
-            },
-            maxResults: {
-              type: 'number',
-              description: 'Maximum number of events to return (1-100). Default: 25.',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User ID or email (UPN) for app-only auth. Example: "alice@contoso.com". Ignored in delegated auth.',
-            },
-          },
+          properties,
           required: ['startDateTime', 'endDateTime'],
         },
       },
@@ -156,7 +163,7 @@ EXAMPLES:
       const effectiveUserId = context?.userId ?? userId;
       const effectiveAccountId = context?.accountId;
       try {
-        const prefix = getUserPathPrefix(connector, args.targetUser);
+        const prefix = getUserPathPrefix(connector, args.targetUser, actAs);
         const top = Math.min(Math.max(args.maxResults ?? 25, 1), 100);
 
         const selectFields = [

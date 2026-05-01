@@ -6,7 +6,7 @@
  * is used, these tools become available automatically.
  */
 
-import { ConnectorTools } from '../connector/ConnectorTools.js';
+import { ConnectorTools, type ServiceToolFactoryOptions } from '../connector/ConnectorTools.js';
 import type { Connector } from '../../core/Connector.js';
 import { createDraftEmailTool } from './createDraftEmail.js';
 import { createSendEmailTool } from './sendEmail.js';
@@ -25,24 +25,33 @@ import { createMicrosoftSearchFilesTool } from './searchFiles.js';
  *
  * After calling this, `ConnectorTools.for('my-microsoft-connector')` will
  * return all 11 Microsoft tools plus the generic API tool.
+ *
+ * The factory forwards `options.actAs` (the on-behalf-of user lock set at the
+ * `ConnectorTools.for(..., { actAs })` call site) into each tool builder. The
+ * `readFile` tool has its own `config` slot, so `actAs` is its 4th parameter.
  */
 export function registerMicrosoftTools(): void {
-  ConnectorTools.registerService('microsoft', (connector: Connector, userId?: string) => {
-    return [
-      // Email
-      createDraftEmailTool(connector, userId),
-      createSendEmailTool(connector, userId),
-      // Meetings
-      createMeetingTool(connector, userId),
-      createEditMeetingTool(connector, userId),
-      createGetMeetingTranscriptTool(connector, userId),
-      createListMeetingsTool(connector, userId),
-      createGetMeetingTool(connector, userId),
-      createFindMeetingSlotsTool(connector, userId),
-      // Files (OneDrive / SharePoint)
-      createMicrosoftReadFileTool(connector, userId),
-      createMicrosoftListFilesTool(connector, userId),
-      createMicrosoftSearchFilesTool(connector, userId),
-    ];
-  });
+  ConnectorTools.registerService(
+    'microsoft',
+    (connector: Connector, userId?: string, options?: ServiceToolFactoryOptions) => {
+      const actAs = options?.actAs;
+      return [
+        // Email
+        createDraftEmailTool(connector, userId, actAs),
+        createSendEmailTool(connector, userId, actAs),
+        // Meetings
+        createMeetingTool(connector, userId, actAs),
+        createEditMeetingTool(connector, userId, actAs),
+        createGetMeetingTranscriptTool(connector, userId, actAs),
+        createListMeetingsTool(connector, userId, actAs),
+        createGetMeetingTool(connector, userId, actAs),
+        createFindMeetingSlotsTool(connector, userId, actAs),
+        // Files (OneDrive / SharePoint)
+        // readFile keeps `config` at slot 3 (legacy); actAs is slot 4.
+        createMicrosoftReadFileTool(connector, userId, undefined, actAs),
+        createMicrosoftListFilesTool(connector, userId, actAs),
+        createMicrosoftSearchFilesTool(connector, userId, actAs),
+      ];
+    },
+  );
 }

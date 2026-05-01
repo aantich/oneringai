@@ -46,6 +46,8 @@ export type {
 export {
   isServiceAccountAuth,
   getGoogleUserId,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   googleFetch,
   normalizeEmails,
   buildMimeMessage,

@@ -12,6 +12,8 @@ import {
   type GoogleGetTranscriptResult,
   type GoogleDriveFileListResponse,
   getGoogleUserId,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   googleFetch,
   GoogleAPIError,
   formatGoogleToolError,
@@ -26,11 +28,33 @@ interface GetMeetingTranscriptArgs {
 
 /**
  * Create a Google Meet get_meeting_transcript tool
+ *
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
  */
 export function createGoogleGetMeetingTranscriptTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<GetMeetingTranscriptArgs, GoogleGetTranscriptResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    meetingTitle: {
+      type: 'string',
+      description: 'Calendar event title to search for in transcript filenames.',
+    },
+    meetingCode: {
+      type: 'string',
+      description: 'Google Meet code (e.g., "abc-defg-hij"). Searches Drive for matching transcript.',
+    },
+    fileId: {
+      type: 'string',
+      description: 'Direct Google Drive file ID of the transcript document (most reliable).',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -50,24 +74,7 @@ The transcript document is typically named like "Meeting transcript - <meeting t
 **Note:** Transcripts must be enabled in Google Workspace admin settings. The transcript doc must be accessible to the authenticated user.`,
         parameters: {
           type: 'object',
-          properties: {
-            meetingTitle: {
-              type: 'string',
-              description: 'Calendar event title to search for in transcript filenames.',
-            },
-            meetingCode: {
-              type: 'string',
-              description: 'Google Meet code (e.g., "abc-defg-hij"). Searches Drive for matching transcript.',
-            },
-            fileId: {
-              type: 'string',
-              description: 'Direct Google Drive file ID of the transcript document (most reliable).',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User email for service-account auth. Ignored in delegated auth.',
-            },
-          },
+          properties,
         },
       },
     },
@@ -93,7 +100,7 @@ The transcript document is typically named like "Meeting transcript - <meeting t
 
       try {
         // Validate service-account auth if applicable
-        getGoogleUserId(connector, args.targetUser);
+        getGoogleUserId(connector, args.targetUser, actAs);
 
         if (!args.fileId && !args.meetingTitle && !args.meetingCode) {
           return {

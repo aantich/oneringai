@@ -12,6 +12,8 @@ import {
   type GoogleCalendarEvent,
   type GoogleCalendarEventListResponse,
   getGoogleUserId,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   googleFetch,
   formatGoogleToolError,
 } from './types.js';
@@ -66,11 +68,37 @@ function toMeetingEntry(event: GoogleCalendarEvent): GoogleMeetingListEntry {
 
 /**
  * Create a Google Calendar list_meetings tool
+ *
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
  */
 export function createGoogleListMeetingsTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<ListMeetingsArgs, GoogleListMeetingsResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    startDateTime: {
+      type: 'string',
+      description: 'Start of time window as ISO 8601 (RFC 3339). Example: "2025-01-15T00:00:00Z"',
+    },
+    endDateTime: {
+      type: 'string',
+      description: 'End of time window as ISO 8601 (RFC 3339). Example: "2025-01-16T00:00:00Z"',
+    },
+    timeZone: {
+      type: 'string',
+      description: 'IANA timezone. Default: "UTC".',
+    },
+    maxResults: {
+      type: 'number',
+      description: 'Max events to return (1-100). Default: 50.',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -89,28 +117,7 @@ EXAMPLE:
 { "startDateTime": "2025-01-15T00:00:00Z", "endDateTime": "2025-01-16T00:00:00Z", "timeZone": "America/New_York" }`,
         parameters: {
           type: 'object',
-          properties: {
-            startDateTime: {
-              type: 'string',
-              description: 'Start of time window as ISO 8601 (RFC 3339). Example: "2025-01-15T00:00:00Z"',
-            },
-            endDateTime: {
-              type: 'string',
-              description: 'End of time window as ISO 8601 (RFC 3339). Example: "2025-01-16T00:00:00Z"',
-            },
-            timeZone: {
-              type: 'string',
-              description: 'IANA timezone. Default: "UTC".',
-            },
-            maxResults: {
-              type: 'number',
-              description: 'Max events to return (1-100). Default: 50.',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User email for service-account auth. Ignored in delegated auth.',
-            },
-          },
+          properties,
           required: ['startDateTime', 'endDateTime'],
         },
       },
@@ -136,7 +143,7 @@ EXAMPLE:
       const effectiveAccountId = context?.accountId;
 
       try {
-        const calendarUser = getGoogleUserId(connector, args.targetUser);
+        const calendarUser = getGoogleUserId(connector, args.targetUser, actAs);
         const maxResults = Math.min(args.maxResults ?? 50, 100);
 
         const result = await googleFetch<GoogleCalendarEventListResponse>(

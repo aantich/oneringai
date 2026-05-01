@@ -32,10 +32,12 @@ export abstract class BaseTextProvider extends BaseProvider implements ITextProv
 
   /**
    * Auto-initialize observability on first use (lazy initialization)
-   * This is called automatically by executeWithCircuitBreaker()
+   * This is called automatically by executeWithCircuitBreaker(); subclasses
+   * whose stream paths bypass it (e.g. streamGenerate) should also call it
+   * at entry so error logs carry the real provider name instead of "unknown".
    * @internal
    */
-  private ensureObservabilityInitialized(): void {
+  protected ensureObservabilityInitialized(): void {
     if (this._isObservabilityInitialized || this._isDestroyed) {
       return;
     }

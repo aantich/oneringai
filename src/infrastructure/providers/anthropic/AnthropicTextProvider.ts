@@ -103,6 +103,9 @@ export class AnthropicTextProvider extends BaseTextProvider {
    */
   async *streamGenerate(options: TextGenerateOptions): AsyncIterableIterator<StreamEvent> {
     options = this.applyContextLimitGuardrail(options);
+    // streamGenerate doesn't go through executeWithCircuitBreaker, so logger
+    // would otherwise stay bound to provider="unknown" until first generate().
+    this.ensureObservabilityInitialized();
     let streamRef: any;
     try {
       // Convert our format → Anthropic Messages API format

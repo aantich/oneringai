@@ -47,25 +47,70 @@ export function isAppPermissionAuth(connector: Connector): boolean {
 /**
  * Get the user path prefix for Microsoft Graph API requests.
  *
- * - App-permission flows (client_credentials, jwt_bearer, jwt): returns `/users/${targetUser}`
- * - Delegated flow (authorization_code): returns `/me` (ignores targetUser)
+ * Resolution order for app-permission flows:
+ *   1. `actAs` (lock set at tool instantiation) — ALWAYS wins, LLM can't override
+ *   2. `targetUser` (LLM-supplied per-call argument)
+ *   3. throws if neither is provided
+ *
+ * - App-permission flows (client_credentials, jwt_bearer, jwt): returns `/users/${effective}`
+ * - Delegated flow (authorization_code): returns `/me` (ignores targetUser AND actAs —
+ *   the OAuth token already binds identity)
  * - API key / other: returns `/me`
+ *
+ * @param connector       The Microsoft Graph connector
+ * @param targetUser      The LLM-supplied per-call user (from tool args). May be undefined.
+ * @param actAs           Lock set at tool-instantiation time. When set, ALWAYS used and
+ *                        `targetUser` is ignored.
  */
-export function getUserPathPrefix(connector: Connector, targetUser?: string): string {
+export function getUserPathPrefix(
+  connector: Connector,
+  targetUser?: string,
+  actAs?: string,
+): string {
   if (isAppPermissionAuth(connector)) {
-    if (!targetUser) {
+    // actAs lock takes priority over LLM-supplied arg — that's the whole point of the lock
+    const effective = actAs ?? targetUser;
+    if (!effective) {
       const auth = connector.config.auth;
       const flowInfo = auth.type === 'oauth' ? ` (flow: ${auth.flow})` : ` (type: ${auth.type})`;
       throw new Error(
         `targetUser is required when using app-permission auth${flowInfo}. ` +
-        'Provide a user ID or UPN (e.g., "user@domain.com"). ' +
+        'Provide a user ID or UPN (e.g., "user@domain.com") via the `targetUser` ' +
+        'argument or set `actAs` at tool instantiation. ' +
         'If this connector uses delegated (user) auth, check that the auth config has flow: "authorization_code".'
       );
     }
-    return `/users/${targetUser}`;
+    return `/users/${effective}`;
   }
   return '/me';
 }
+
+/**
+ * Whether the per-tool `targetUser` JSON-schema parameter should be exposed to the LLM
+ * for a given (connector, actAs) combination.
+ *
+ * - app-only & no actAs lock → true (LLM must supply)
+ * - app-only & actAs lock → false (locked at instantiation)
+ * - delegated → false (auth token binds identity; arg would be silently ignored)
+ *
+ * Tools call this when building their JSON schema so the LLM never sees a
+ * `targetUser` arg it cannot meaningfully use.
+ */
+export function shouldExposeTargetUserParam(connector: Connector, actAs?: string): boolean {
+  return !actAs && isAppPermissionAuth(connector);
+}
+
+/**
+ * Standard JSON-schema fragment for the optional `targetUser` LLM parameter.
+ * Tools spread this into their `properties` block when `shouldExposeTargetUserParam`
+ * returns true.
+ */
+export const TARGET_USER_PARAM_SCHEMA: { type: 'string'; description: string } = {
+  type: 'string',
+  description:
+    'User ID or email (UPN) to act on behalf of. REQUIRED with app-only ' +
+    '(client_credentials / jwt) auth. Example: "alice@contoso.com".',
+};
 
 // ============================================================================
 // Microsoft Graph API Helpers

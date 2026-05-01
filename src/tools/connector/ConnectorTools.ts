@@ -101,14 +101,42 @@ function detectAPIError(data: unknown): string | null {
 }
 
 /**
+ * Options forwarded from `ConnectorTools.for()` to a `ServiceToolFactory`.
+ *
+ * Currently carries the optional `actAs` lock. Adding new fields here is a
+ * non-breaking change because the `options` parameter is itself optional and
+ * existing factories that ignore extra params continue to work.
+ */
+export interface ServiceToolFactoryOptions {
+  /**
+   * Lock the on-behalf-of user identity for tools that act as a specific user
+   * (Microsoft Graph `/users/{id}`, Google API `userId`). Set ONCE at tool
+   * instantiation; the LLM cannot override it at call time.
+   *
+   * - When set: the per-tool `targetUser` schema parameter is OMITTED and this
+   *   value is always used.
+   * - When unset: existing behavior (LLM supplies `targetUser` for app-only auth).
+   * - Silently ignored for delegated connectors (identity already bound by token).
+   */
+  actAs?: string;
+}
+
+/**
  * Factory function type for creating service-specific tools.
  * Takes a Connector and returns an array of tools that use it.
  *
  * The `userId` parameter is a legacy fallback — tools should prefer reading
  * userId from ToolContext at execution time (auto-populated by Agent).
  * Factory userId is used as fallback when ToolContext is not available.
+ *
+ * The optional `options` parameter carries forwarded settings such as `actAs`.
+ * Existing factories that ignore the third argument continue to work.
  */
-export type ServiceToolFactory = (connector: Connector, userId?: string) => ToolFunction[];
+export type ServiceToolFactory = (
+  connector: Connector,
+  userId?: string,
+  options?: ServiceToolFactoryOptions,
+) => ToolFunction[];
 
 /**
  * Options for generating the generic API tool
@@ -155,6 +183,22 @@ export interface ConnectorToolsOptions {
   registry?: IConnectorRegistry;
   /** Account alias for multi-account OAuth. When set, tools are prefixed with accountId and context is bound. */
   accountId?: string;
+  /**
+   * Lock the on-behalf-of user identity for tools that act as a specific user
+   * (Microsoft Graph `/users/{id}`, Google API `userId`). Set ONCE at tool
+   * instantiation; the LLM cannot override it at call time.
+   *
+   * - When set: the per-tool `targetUser` schema parameter is OMITTED and this
+   *   value is always used.
+   * - When unset: existing behavior (LLM supplies `targetUser` for app-only auth).
+   * - Silently ignored for delegated connectors (identity already bound by token).
+   *
+   * Use this when wiring a single shared app-token connector into a specific
+   * agent that should only ever operate on behalf of one user. The connector
+   * itself stays generic and can be reused with different `actAs` values
+   * across different agents.
+   */
+  actAs?: string;
 }
 
 /**
@@ -299,7 +343,9 @@ export class ConnectorTools {
     const serviceType = this.detectService(connector);
     if (serviceType && this.factories.has(serviceType)) {
       const factory = this.factories.get(serviceType)!;
-      const serviceTools = factory(connector, userId);
+      const factoryOptions: ServiceToolFactoryOptions = {};
+      if (options?.actAs !== undefined) factoryOptions.actAs = options.actAs;
+      const serviceTools = factory(connector, userId, factoryOptions);
       for (const tool of serviceTools) {
         tool.definition.function.name = `${namePrefix}_${tool.definition.function.name}`;
       }
@@ -492,10 +538,12 @@ export class ConnectorTools {
         : identity.connector;
 
       try {
-        const tools = this.for(identity.connector, userId, {
+        const forOptions: ConnectorToolsOptions = {
           registry: options?.registry,
-          accountId: identity.accountId,
-        });
+        };
+        if (identity.accountId !== undefined) forOptions.accountId = identity.accountId;
+        if (identity.actAs !== undefined) forOptions.actAs = identity.actAs;
+        const tools = this.for(identity.connector, userId, forOptions);
         if (tools.length > 0) {
           result.set(key, tools);
         }

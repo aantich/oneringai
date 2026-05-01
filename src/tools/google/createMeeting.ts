@@ -10,6 +10,8 @@ import {
   type GoogleCreateMeetingResult,
   type GoogleCalendarEvent,
   getGoogleUserId,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   googleFetch,
   normalizeEmails,
   formatGoogleToolError,
@@ -42,11 +44,54 @@ function extractMeetLink(event: GoogleCalendarEvent): string | undefined {
 
 /**
  * Create a Google Calendar create_meeting tool
+ *
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
  */
 export function createGoogleMeetingTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<CreateMeetingArgs, GoogleCreateMeetingResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    summary: {
+      type: 'string',
+      description: 'Event title/subject.',
+    },
+    startDateTime: {
+      type: 'string',
+      description: 'Event start as ISO 8601 string. Example: "2025-01-15T14:00:00"',
+    },
+    endDateTime: {
+      type: 'string',
+      description: 'Event end as ISO 8601 string. Example: "2025-01-15T15:00:00"',
+    },
+    attendees: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'Attendee email addresses as plain strings.',
+    },
+    description: {
+      type: 'string',
+      description: 'Event description/body (optional). HTML supported.',
+    },
+    isOnlineMeeting: {
+      type: 'boolean',
+      description: 'If true, creates a Google Meet link for the event. Default: false.',
+    },
+    location: {
+      type: 'string',
+      description: 'Physical location for the event (optional).',
+    },
+    timeZone: {
+      type: 'string',
+      description: 'IANA timezone. Example: "America/New_York". Default: "UTC".',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -65,45 +110,7 @@ EXAMPLE:
 { "summary": "Sprint Review", "startDateTime": "2025-01-15T14:00:00", "endDateTime": "2025-01-15T15:00:00", "attendees": ["alice@example.com"], "timeZone": "America/New_York", "isOnlineMeeting": true }`,
         parameters: {
           type: 'object',
-          properties: {
-            summary: {
-              type: 'string',
-              description: 'Event title/subject.',
-            },
-            startDateTime: {
-              type: 'string',
-              description: 'Event start as ISO 8601 string. Example: "2025-01-15T14:00:00"',
-            },
-            endDateTime: {
-              type: 'string',
-              description: 'Event end as ISO 8601 string. Example: "2025-01-15T15:00:00"',
-            },
-            attendees: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Attendee email addresses as plain strings.',
-            },
-            description: {
-              type: 'string',
-              description: 'Event description/body (optional). HTML supported.',
-            },
-            isOnlineMeeting: {
-              type: 'boolean',
-              description: 'If true, creates a Google Meet link for the event. Default: false.',
-            },
-            location: {
-              type: 'string',
-              description: 'Physical location for the event (optional).',
-            },
-            timeZone: {
-              type: 'string',
-              description: 'IANA timezone. Example: "America/New_York". Default: "UTC".',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User email for service-account auth. Ignored in delegated auth.',
-            },
-          },
+          properties,
           required: ['summary', 'startDateTime', 'endDateTime', 'attendees'],
         },
       },
@@ -158,7 +165,7 @@ EXAMPLE:
         }
 
         // Google Calendar API uses a different base URL
-        const calendarUser = getGoogleUserId(connector, args.targetUser);
+        const calendarUser = getGoogleUserId(connector, args.targetUser, actAs);
         const event = await googleFetch<GoogleCalendarEvent>(
           connector,
           `/calendar/v3/calendars/${calendarUser}/events`,

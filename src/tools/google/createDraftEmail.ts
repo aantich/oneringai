@@ -11,6 +11,8 @@ import {
   type GmailDraftResponse,
   type GmailMessageResponse,
   getGoogleUserId,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   googleFetch,
   normalizeEmails,
   buildMimeMessage,
@@ -29,11 +31,43 @@ interface CreateDraftEmailArgs {
 
 /**
  * Create a Google Gmail create_draft_email tool
+ *
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
  */
 export function createGoogleDraftEmailTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<CreateDraftEmailArgs, GoogleDraftEmailResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    to: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'Recipient email addresses. Example: ["alice@example.com"]',
+    },
+    subject: {
+      type: 'string',
+      description: 'Email subject line. For replies, this is typically "Re: <original subject>".',
+    },
+    body: {
+      type: 'string',
+      description: 'Email body content. HTML is supported.',
+    },
+    cc: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'CC recipient email addresses (optional).',
+    },
+    replyToMessageId: {
+      type: 'string',
+      description: 'Gmail message ID to reply to (optional). Creates a threaded reply draft.',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -48,34 +82,7 @@ The draft will be saved to the user's Drafts folder and can be reviewed and sent
 **Reply drafts:** Set replyToMessageId to the Gmail message ID to create a reply draft. The draft will be threaded with the original message.`,
         parameters: {
           type: 'object',
-          properties: {
-            to: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Recipient email addresses. Example: ["alice@example.com"]',
-            },
-            subject: {
-              type: 'string',
-              description: 'Email subject line. For replies, this is typically "Re: <original subject>".',
-            },
-            body: {
-              type: 'string',
-              description: 'Email body content. HTML is supported.',
-            },
-            cc: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'CC recipient email addresses (optional).',
-            },
-            replyToMessageId: {
-              type: 'string',
-              description: 'Gmail message ID to reply to (optional). Creates a threaded reply draft.',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User email for service-account auth. Ignored in delegated auth.',
-            },
-          },
+          properties,
           required: ['to', 'subject', 'body'],
         },
       },
@@ -102,7 +109,7 @@ The draft will be saved to the user's Drafts folder and can be reviewed and sent
       const effectiveAccountId = context?.accountId;
 
       try {
-        const googleUser = getGoogleUserId(connector, args.targetUser);
+        const googleUser = getGoogleUserId(connector, args.targetUser, actAs);
         const to = normalizeEmails(args.to);
         const cc = args.cc ? normalizeEmails(args.cc) : undefined;
         const baseUrl = 'https://gmail.googleapis.com';

@@ -10,6 +10,8 @@ import {
   type MicrosoftEditMeetingResult,
   type GraphEventResponse,
   getUserPathPrefix,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   microsoftFetch,
   formatAttendees,
   formatMicrosoftToolError,
@@ -30,11 +32,58 @@ export interface EditMeetingArgs {
 
 /**
  * Create a Microsoft Graph edit_meeting tool
+ *
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
  */
 export function createEditMeetingTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<EditMeetingArgs, MicrosoftEditMeetingResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    eventId: {
+      type: 'string',
+      description: 'Calendar event ID string from create_meeting result. Example: "AAMkADI1M2I3YzgtODg..."',
+    },
+    subject: {
+      type: 'string',
+      description: 'New meeting title as plain string. Example: "Updated: Sprint Review"',
+    },
+    startDateTime: {
+      type: 'string',
+      description: 'New start date/time as ISO 8601 string without timezone suffix. Example: "2025-01-15T10:00:00"',
+    },
+    endDateTime: {
+      type: 'string',
+      description: 'New end date/time as ISO 8601 string without timezone suffix. Example: "2025-01-15T10:30:00"',
+    },
+    attendees: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'FULL replacement attendee list as plain email strings. Example: ["alice@contoso.com", "charlie@contoso.com"]. Include ALL attendees.',
+    },
+    body: {
+      type: 'string',
+      description: 'New meeting description as HTML string. Example: "<p>Updated agenda</p>"',
+    },
+    isOnlineMeeting: {
+      type: 'boolean',
+      description: 'true to add Teams meeting link, false to remove it.',
+    },
+    location: {
+      type: 'string',
+      description: 'New location as plain string. Example: "Conference Room A"',
+    },
+    timeZone: {
+      type: 'string',
+      description: 'IANA timezone string for start/end times. Example: "Europe/Zurich". Default: "UTC".',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -60,49 +109,7 @@ EXAMPLES:
 - Add Teams link: { "eventId": "AAMkADI1...", "isOnlineMeeting": true }`,
         parameters: {
           type: 'object',
-          properties: {
-            eventId: {
-              type: 'string',
-              description: 'Calendar event ID string from create_meeting result. Example: "AAMkADI1M2I3YzgtODg..."',
-            },
-            subject: {
-              type: 'string',
-              description: 'New meeting title as plain string. Example: "Updated: Sprint Review"',
-            },
-            startDateTime: {
-              type: 'string',
-              description: 'New start date/time as ISO 8601 string without timezone suffix. Example: "2025-01-15T10:00:00"',
-            },
-            endDateTime: {
-              type: 'string',
-              description: 'New end date/time as ISO 8601 string without timezone suffix. Example: "2025-01-15T10:30:00"',
-            },
-            attendees: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'FULL replacement attendee list as plain email strings. Example: ["alice@contoso.com", "charlie@contoso.com"]. Include ALL attendees.',
-            },
-            body: {
-              type: 'string',
-              description: 'New meeting description as HTML string. Example: "<p>Updated agenda</p>"',
-            },
-            isOnlineMeeting: {
-              type: 'boolean',
-              description: 'true to add Teams meeting link, false to remove it.',
-            },
-            location: {
-              type: 'string',
-              description: 'New location as plain string. Example: "Conference Room A"',
-            },
-            timeZone: {
-              type: 'string',
-              description: 'IANA timezone string for start/end times. Example: "Europe/Zurich". Default: "UTC".',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User ID or email (UPN) for app-only auth. Example: "alice@contoso.com". Ignored in delegated auth.',
-            },
-          },
+          properties,
           required: ['eventId'],
         },
       },
@@ -127,7 +134,7 @@ EXAMPLES:
       const effectiveUserId = context?.userId ?? userId;
       const effectiveAccountId = context?.accountId;
       try {
-        const prefix = getUserPathPrefix(connector, args.targetUser);
+        const prefix = getUserPathPrefix(connector, args.targetUser, actAs);
         const tz = args.timeZone ?? 'UTC';
 
         // Build partial update body with only provided fields

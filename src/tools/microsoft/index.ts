@@ -46,6 +46,8 @@ export type {
 export {
   isAppPermissionAuth,
   getUserPathPrefix,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   microsoftFetch,
   formatRecipients,
   formatAttendees,

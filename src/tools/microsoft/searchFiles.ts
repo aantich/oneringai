@@ -12,6 +12,8 @@ import {
   microsoftFetch,
   formatFileSize,
   formatMicrosoftToolError,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   type GraphDriveItemListResponse,
   type GraphSearchResponse,
   type MicrosoftSearchFilesResult,
@@ -34,10 +36,44 @@ const MAX_LIMIT = 100;
 
 // ---- Tool Factory ----
 
+/**
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
+ *              NOTE: this tool currently uses Microsoft's tenant-global `/search/query`
+ *              endpoint, which doesn't take a user-prefix in the URL. The lock here is
+ *              for schema consistency — `targetUser` is hidden when `actAs` is set so
+ *              the LLM doesn't see an arg it can't use.
+ */
 export function createMicrosoftSearchFilesTool(
   connector: Connector,
   userId?: string,
+  actAs?: string,
 ): ToolFunction<SearchFilesArgs, MicrosoftSearchFilesResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    query: {
+      type: 'string',
+      description:
+        'Search query. Supports plain text and KQL syntax (e.g., "budget report", "filename:spec.docx", "author:john filetype:pptx").',
+    },
+    siteId: {
+      type: 'string',
+      description: 'Optional SharePoint site ID to limit search to a specific site.',
+    },
+    fileTypes: {
+      type: 'array',
+      items: { type: 'string' },
+      description:
+        'Optional file type filter. Array of extensions without dots (e.g., ["docx", "pdf", "xlsx"]).',
+    },
+    limit: {
+      type: 'number',
+      description: `Maximum number of results (default: ${DEFAULT_LIMIT}, max: ${MAX_LIMIT}).`,
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -63,31 +99,7 @@ Use this tool when you need to **find** files by name, content, or metadata acro
 **Tip:** Start with a broad search, then use read_file on the most relevant results.`,
         parameters: {
           type: 'object',
-          properties: {
-            query: {
-              type: 'string',
-              description:
-                'Search query. Supports plain text and KQL syntax (e.g., "budget report", "filename:spec.docx", "author:john filetype:pptx").',
-            },
-            siteId: {
-              type: 'string',
-              description: 'Optional SharePoint site ID to limit search to a specific site.',
-            },
-            fileTypes: {
-              type: 'array',
-              items: { type: 'string' },
-              description:
-                'Optional file type filter. Array of extensions without dots (e.g., ["docx", "pdf", "xlsx"]).',
-            },
-            limit: {
-              type: 'number',
-              description: `Maximum number of results (default: ${DEFAULT_LIMIT}, max: ${MAX_LIMIT}).`,
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User ID or email. Only needed with application-only (client_credentials) auth.',
-            },
-          },
+          properties,
           required: ['query'],
         },
       },

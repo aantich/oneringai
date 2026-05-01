@@ -9,6 +9,8 @@ import type { ToolFunction, ToolContext } from '../../domain/entities/Tool.js';
 import {
   type MicrosoftSendEmailResult,
   getUserPathPrefix,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   microsoftFetch,
   formatRecipients,
   formatMicrosoftToolError,
@@ -26,11 +28,50 @@ export interface SendEmailArgs {
 
 /**
  * Create a Microsoft Graph send_email tool
+ *
+ * @param connector  Microsoft Graph connector
+ * @param userId     Platform/EW userId for OAuth-token lookup (NOT the Graph mailbox owner)
+ * @param actAs      Lock the on-behalf-of user. When set, the tool's JSON schema OMITS the
+ *                   `targetUser` arg and always uses this value. The LLM cannot override.
  */
 export function createSendEmailTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<SendEmailArgs, MicrosoftSendEmailResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    to: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'Recipient email addresses as plain strings. Example: ["alice@contoso.com", "bob@contoso.com"]',
+    },
+    subject: {
+      type: 'string',
+      description: 'Email subject as plain string. Example: "Meeting tomorrow" or "Re: Original subject" for replies.',
+    },
+    body: {
+      type: 'string',
+      description: 'Email body as HTML string (e.g. "<p>Hi!</p>"). For replies, your HTML is prepended above the quoted original message.',
+    },
+    cc: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'CC email addresses as plain strings. Example: ["bob@contoso.com"]. Optional.',
+    },
+    replyToMessageId: {
+      type: 'string',
+      description: 'Graph message ID of the email to reply to. Example: "AAMkADI1M2I3YzgtODg...". When set, sends a threaded reply.',
+    },
+    replyAll: {
+      type: 'boolean',
+      description: 'When true AND replyToMessageId is set, replies to ALL original recipients (To + CC), not just the sender. Default: false. Ignored if replyToMessageId is not set.',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -57,38 +98,7 @@ EXAMPLES:
 - With CC: { "to": ["alice@contoso.com"], "subject": "Update", "body": "<p>FYI</p>", "cc": ["bob@contoso.com"] }`,
         parameters: {
           type: 'object',
-          properties: {
-            to: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Recipient email addresses as plain strings. Example: ["alice@contoso.com", "bob@contoso.com"]',
-            },
-            subject: {
-              type: 'string',
-              description: 'Email subject as plain string. Example: "Meeting tomorrow" or "Re: Original subject" for replies.',
-            },
-            body: {
-              type: 'string',
-              description: 'Email body as HTML string (e.g. "<p>Hi!</p>"). For replies, your HTML is prepended above the quoted original message.',
-            },
-            cc: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'CC email addresses as plain strings. Example: ["bob@contoso.com"]. Optional.',
-            },
-            replyToMessageId: {
-              type: 'string',
-              description: 'Graph message ID of the email to reply to. Example: "AAMkADI1M2I3YzgtODg...". When set, sends a threaded reply.',
-            },
-            replyAll: {
-              type: 'boolean',
-              description: 'When true AND replyToMessageId is set, replies to ALL original recipients (To + CC), not just the sender. Default: false. Ignored if replyToMessageId is not set.',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User ID or email (UPN) for app-only auth. Example: "alice@contoso.com". Ignored in delegated auth.',
-            },
-          },
+          properties,
           required: ['to', 'subject', 'body'],
         },
       },
@@ -112,7 +122,7 @@ EXAMPLES:
       const effectiveUserId = context?.userId ?? userId;
       const effectiveAccountId = context?.accountId;
       try {
-        const prefix = getUserPathPrefix(connector, args.targetUser);
+        const prefix = getUserPathPrefix(connector, args.targetUser, actAs);
 
         if (args.replyToMessageId) {
           // 3-step reply flow for rich HTML with quoted original:

@@ -4,7 +4,7 @@
  * Registers all Google API tool factories with ConnectorTools.
  */
 
-import { ConnectorTools } from '../connector/ConnectorTools.js';
+import { ConnectorTools, type ServiceToolFactoryOptions } from '../connector/ConnectorTools.js';
 import type { Connector } from '../../core/Connector.js';
 import { createGoogleDraftEmailTool } from './createDraftEmail.js';
 import { createGoogleSendEmailTool } from './sendEmail.js';
@@ -21,22 +21,32 @@ import { createGoogleSearchFilesTool } from './searchFiles.js';
 /**
  * Register all Google API tools with ConnectorTools.
  * Called as a side-effect when importing `./index.js`.
+ *
+ * The factory forwards `options.actAs` (the on-behalf-of user lock set at the
+ * `ConnectorTools.for(..., { actAs })` call site) into each tool builder. The
+ * `readFile` tool has its own `config` slot, so `actAs` is its 4th parameter.
  */
 export function registerGoogleTools(): void {
-  ConnectorTools.registerService('google-api', (connector: Connector, userId?: string) => [
-    // Email (Gmail)
-    createGoogleDraftEmailTool(connector, userId),
-    createGoogleSendEmailTool(connector, userId),
-    // Calendar
-    createGoogleMeetingTool(connector, userId),
-    createGoogleEditMeetingTool(connector, userId),
-    createGoogleGetMeetingTranscriptTool(connector, userId),
-    createGoogleListMeetingsTool(connector, userId),
-    createGoogleGetMeetingTool(connector, userId),
-    createGoogleFindMeetingSlotsTool(connector, userId),
-    // Drive
-    createGoogleReadFileTool(connector, userId),
-    createGoogleListFilesTool(connector, userId),
-    createGoogleSearchFilesTool(connector, userId),
-  ]);
+  ConnectorTools.registerService(
+    'google-api',
+    (connector: Connector, userId?: string, options?: ServiceToolFactoryOptions) => {
+      const actAs = options?.actAs;
+      return [
+        // Email (Gmail)
+        createGoogleDraftEmailTool(connector, userId, actAs),
+        createGoogleSendEmailTool(connector, userId, actAs),
+        // Calendar
+        createGoogleMeetingTool(connector, userId, actAs),
+        createGoogleEditMeetingTool(connector, userId, actAs),
+        createGoogleGetMeetingTranscriptTool(connector, userId, actAs),
+        createGoogleListMeetingsTool(connector, userId, actAs),
+        createGoogleGetMeetingTool(connector, userId, actAs),
+        createGoogleFindMeetingSlotsTool(connector, userId, actAs),
+        // Drive — readFile keeps `config` at slot 3 (legacy); actAs is slot 4.
+        createGoogleReadFileTool(connector, userId, undefined, actAs),
+        createGoogleListFilesTool(connector, userId, actAs),
+        createGoogleSearchFilesTool(connector, userId, actAs),
+      ];
+    },
+  );
 }

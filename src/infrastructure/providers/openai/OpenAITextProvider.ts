@@ -129,6 +129,7 @@ export class OpenAITextProvider extends BaseTextProvider {
    */
   async *streamGenerate(options: TextGenerateOptions): AsyncIterableIterator<StreamEvent> {
     options = this.applyContextLimitGuardrail(options);
+    this.ensureObservabilityInitialized();
     try {
       // Convert to Responses API format
       const { input, instructions } = this.converter.convertInput(

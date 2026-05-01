@@ -37,6 +37,18 @@ export interface AuthIdentity {
    * When absent, ALL tools for this connector are generated.
    */
   toolFilter?: string[];
+
+  /**
+   * Lock the on-behalf-of user identity for this identity's tool instances
+   * (Microsoft Graph `/users/{id}`, Google API `userId`). Set ONCE here and
+   * the LLM cannot override it at call time.
+   *
+   * - When set: the per-tool `targetUser` schema parameter is OMITTED and this
+   *   value is always used.
+   * - When unset: existing behavior (LLM supplies `targetUser` for app-only auth).
+   * - Silently ignored for delegated connectors (identity already bound by token).
+   */
+  actAs?: string;
 }
 
 // ============================================================================

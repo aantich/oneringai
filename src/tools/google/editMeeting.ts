@@ -10,6 +10,8 @@ import {
   type GoogleEditMeetingResult,
   type GoogleCalendarEvent,
   getGoogleUserId,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   googleFetch,
   normalizeEmails,
   formatGoogleToolError,
@@ -30,11 +32,58 @@ interface EditMeetingArgs {
 
 /**
  * Create a Google Calendar edit_meeting tool
+ *
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
  */
 export function createGoogleEditMeetingTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<EditMeetingArgs, GoogleEditMeetingResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    eventId: {
+      type: 'string',
+      description: 'The calendar event ID to update.',
+    },
+    summary: {
+      type: 'string',
+      description: 'New event title (optional).',
+    },
+    startDateTime: {
+      type: 'string',
+      description: 'New start time as ISO 8601 (optional).',
+    },
+    endDateTime: {
+      type: 'string',
+      description: 'New end time as ISO 8601 (optional).',
+    },
+    attendees: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'REPLACES all attendees. Include everyone you want on the invite.',
+    },
+    description: {
+      type: 'string',
+      description: 'New event description (optional). HTML supported.',
+    },
+    isOnlineMeeting: {
+      type: 'boolean',
+      description: 'If true, adds a Google Meet link (optional).',
+    },
+    location: {
+      type: 'string',
+      description: 'New physical location (optional).',
+    },
+    timeZone: {
+      type: 'string',
+      description: 'IANA timezone for start/end. Default: "UTC".',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -54,49 +103,7 @@ EXAMPLE:
 { "eventId": "abc123", "summary": "Updated Title", "attendees": ["alice@example.com", "bob@example.com"] }`,
         parameters: {
           type: 'object',
-          properties: {
-            eventId: {
-              type: 'string',
-              description: 'The calendar event ID to update.',
-            },
-            summary: {
-              type: 'string',
-              description: 'New event title (optional).',
-            },
-            startDateTime: {
-              type: 'string',
-              description: 'New start time as ISO 8601 (optional).',
-            },
-            endDateTime: {
-              type: 'string',
-              description: 'New end time as ISO 8601 (optional).',
-            },
-            attendees: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'REPLACES all attendees. Include everyone you want on the invite.',
-            },
-            description: {
-              type: 'string',
-              description: 'New event description (optional). HTML supported.',
-            },
-            isOnlineMeeting: {
-              type: 'boolean',
-              description: 'If true, adds a Google Meet link (optional).',
-            },
-            location: {
-              type: 'string',
-              description: 'New physical location (optional).',
-            },
-            timeZone: {
-              type: 'string',
-              description: 'IANA timezone for start/end. Default: "UTC".',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User email for service-account auth. Ignored in delegated auth.',
-            },
-          },
+          properties,
           required: ['eventId'],
         },
       },
@@ -121,7 +128,7 @@ EXAMPLE:
 
       try {
         const tz = args.timeZone ?? 'UTC';
-        const calendarUser = getGoogleUserId(connector, args.targetUser);
+        const calendarUser = getGoogleUserId(connector, args.targetUser, actAs);
 
         const patchBody: Record<string, unknown> = {};
 

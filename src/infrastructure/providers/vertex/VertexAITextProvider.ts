@@ -107,6 +107,7 @@ export class VertexAITextProvider extends BaseTextProvider {
    */
   async *streamGenerate(options: TextGenerateOptions): AsyncIterableIterator<StreamEvent> {
     options = this.applyContextLimitGuardrail(options);
+    this.ensureObservabilityInitialized();
     try {
       // Convert our format → Google format
       const googleRequest = await this.converter.convertRequest(options);

@@ -11,6 +11,8 @@ import {
   type MicrosoftGetTranscriptResult,
   type GraphTranscriptListResponse,
   getUserPathPrefix,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   microsoftFetch,
   resolveMeetingId,
   formatMicrosoftToolError,
@@ -48,11 +50,25 @@ function parseVttToText(vtt: string): string {
 
 /**
  * Create a Microsoft Graph get_meeting_transcript tool
+ *
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
  */
 export function createGetMeetingTranscriptTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<GetMeetingTranscriptArgs, MicrosoftGetTranscriptResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    meetingId: {
+      type: 'string',
+      description: 'Teams online meeting ID (e.g. "MSo1N2Y5...") or Teams meeting join URL. This is NOT the calendar event ID.',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -71,16 +87,7 @@ EXAMPLES:
 - By Teams join URL: { "meetingId": "https://teams.microsoft.com/l/meetup-join/19%3ameeting_MjA5YjFi..." }`,
         parameters: {
           type: 'object',
-          properties: {
-            meetingId: {
-              type: 'string',
-              description: 'Teams online meeting ID (e.g. "MSo1N2Y5...") or Teams meeting join URL. This is NOT the calendar event ID.',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User ID or email (UPN) to act on behalf of. Only needed for app-only (client_credentials) auth. Ignored in delegated auth.',
-            },
-          },
+          properties,
           required: ['meetingId'],
         },
       },
@@ -103,7 +110,7 @@ EXAMPLES:
       const effectiveUserId = context?.userId ?? userId;
       const effectiveAccountId = context?.accountId;
       try {
-        const prefix = getUserPathPrefix(connector, args.targetUser);
+        const prefix = getUserPathPrefix(connector, args.targetUser, actAs);
 
         // Resolve meeting ID — handles both raw IDs and Teams join URLs
         const resolved = await resolveMeetingId(connector, args.meetingId, prefix, effectiveUserId, effectiveAccountId);

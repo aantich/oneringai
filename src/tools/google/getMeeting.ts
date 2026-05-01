@@ -10,6 +10,8 @@ import {
   type GoogleGetMeetingResult,
   type GoogleCalendarEvent,
   getGoogleUserId,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   googleFetch,
   stripHtml,
   formatGoogleToolError,
@@ -33,11 +35,25 @@ function extractMeetLink(event: GoogleCalendarEvent): string | undefined {
 
 /**
  * Create a Google Calendar get_meeting tool
+ *
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
  */
 export function createGoogleGetMeetingTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<GetMeetingArgs, GoogleGetMeetingResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    eventId: {
+      type: 'string',
+      description: 'The calendar event ID.',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -51,16 +67,7 @@ EXAMPLE:
 { "eventId": "abc123def456" }`,
         parameters: {
           type: 'object',
-          properties: {
-            eventId: {
-              type: 'string',
-              description: 'The calendar event ID.',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User email for service-account auth. Ignored in delegated auth.',
-            },
-          },
+          properties,
           required: ['eventId'],
         },
       },
@@ -84,7 +91,7 @@ EXAMPLE:
       const effectiveAccountId = context?.accountId;
 
       try {
-        const calendarUser = getGoogleUserId(connector, args.targetUser);
+        const calendarUser = getGoogleUserId(connector, args.targetUser, actAs);
 
         const event = await googleFetch<GoogleCalendarEvent>(
           connector,

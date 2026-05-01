@@ -80,7 +80,12 @@ export class ProviderErrorMapper {
       messageLower.includes('max_tokens') ||
       messageLower.includes('prompt is too long')
     ) {
-      return new ProviderContextLengthError(providerName, effectiveMaxTokens);
+      const { requestedTokens, reportedMaxTokens } = this.extractContextLengthTokens(error, message);
+      return new ProviderContextLengthError(
+        providerName,
+        reportedMaxTokens ?? effectiveMaxTokens,
+        requestedTokens,
+      );
     }
 
     // Generic provider error for everything else
@@ -125,6 +130,60 @@ export class ProviderErrorMapper {
     }
 
     return undefined;
+  }
+
+  /**
+   * Pull the actual prompt-token count (and the model-reported max, when present)
+   * out of provider error messages. Returning these keeps `ProviderContextLengthError`
+   * from logging "undefined > N" downstream — Anthropic/OpenAI both quote real numbers.
+   */
+  private static extractContextLengthTokens(
+    error: any,
+    message: string,
+  ): { requestedTokens?: number; reportedMaxTokens?: number } {
+    let requestedTokens: number | undefined;
+    let reportedMaxTokens: number | undefined;
+
+    const errorBody = error?.error;
+    const bodyMessage =
+      typeof errorBody?.message === 'string'
+        ? errorBody.message
+        : typeof errorBody?.error?.message === 'string'
+          ? errorBody.error.message
+          : undefined;
+    const haystack = `${message} ${bodyMessage ?? ''}`;
+
+    // Anthropic: "prompt is too long: 1544107 tokens > 1000000 maximum"
+    const anthropic = /(\d[\d,]*)\s*tokens?\s*>\s*(\d[\d,]*)/i.exec(haystack);
+    if (anthropic) {
+      requestedTokens = this.toInt(anthropic[1]);
+      reportedMaxTokens = this.toInt(anthropic[2]);
+    }
+
+    // OpenAI: "maximum context length is 128000 tokens, however you requested 200000 tokens"
+    if (requestedTokens == null) {
+      const openai = /maximum context length is\s*(\d[\d,]*)\s*tokens.*?requested\s*(\d[\d,]*)\s*tokens/i.exec(
+        haystack,
+      );
+      if (openai) {
+        reportedMaxTokens = this.toInt(openai[1]);
+        requestedTokens = this.toInt(openai[2]);
+      }
+    }
+
+    // Generic fallback: any "<N> tokens" near "requested" / "input"
+    if (requestedTokens == null) {
+      const generic = /(?:requested|input|prompt)[^0-9]{0,40}(\d[\d,]*)\s*tokens?/i.exec(haystack);
+      if (generic) requestedTokens = this.toInt(generic[1]);
+    }
+
+    return { requestedTokens, reportedMaxTokens };
+  }
+
+  private static toInt(s: string | undefined): number | undefined {
+    if (!s) return undefined;
+    const n = parseInt(s.replace(/,/g, ''), 10);
+    return Number.isFinite(n) ? n : undefined;
   }
 
   /**

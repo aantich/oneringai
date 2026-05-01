@@ -14,6 +14,8 @@ import {
   type MicrosoftGetMeetingResult,
   type GraphCalendarViewEvent,
   getUserPathPrefix,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   microsoftFetch,
   formatMicrosoftToolError,
 } from './types.js';
@@ -67,11 +69,25 @@ function stripHtml(html: string): string {
 
 /**
  * Create a Microsoft Graph get_meeting tool
+ *
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
  */
 export function createGetMeetingTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<GetMeetingArgs, MicrosoftGetMeetingResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    eventId: {
+      type: 'string',
+      description: 'Calendar event ID from a list_meetings result or create_meeting result. Example: "AAMkADI1M2I3YzgtODg..."',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -99,16 +115,7 @@ EXAMPLES:
 - { "eventId": "AAMkADI1M2I3YzgtODg..." }`,
         parameters: {
           type: 'object',
-          properties: {
-            eventId: {
-              type: 'string',
-              description: 'Calendar event ID from a list_meetings result or create_meeting result. Example: "AAMkADI1M2I3YzgtODg..."',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User ID or email (UPN) for app-only auth. Example: "alice@contoso.com". Ignored in delegated auth.',
-            },
-          },
+          properties,
           required: ['eventId'],
         },
       },
@@ -131,7 +138,7 @@ EXAMPLES:
       const effectiveUserId = context?.userId ?? userId;
       const effectiveAccountId = context?.accountId;
       try {
-        const prefix = getUserPathPrefix(connector, args.targetUser);
+        const prefix = getUserPathPrefix(connector, args.targetUser, actAs);
 
         const selectFields = [
           'id', 'subject', 'body', 'bodyPreview', 'start', 'end',

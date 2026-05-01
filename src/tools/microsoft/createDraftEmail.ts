@@ -10,6 +10,8 @@ import {
   type MicrosoftDraftEmailResult,
   type GraphMessageResponse,
   getUserPathPrefix,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   microsoftFetch,
   formatRecipients,
   formatMicrosoftToolError,
@@ -26,11 +28,44 @@ export interface CreateDraftEmailArgs {
 
 /**
  * Create a Microsoft Graph create_draft_email tool
+ *
+ * @param actAs Lock the on-behalf-of user. When set, the tool's JSON schema OMITS
+ *              the `targetUser` arg and always uses this value.
  */
 export function createDraftEmailTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<CreateDraftEmailArgs, MicrosoftDraftEmailResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    to: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'Recipient email addresses as plain strings. Example: ["alice@contoso.com", "bob@contoso.com"]',
+    },
+    subject: {
+      type: 'string',
+      description: 'Email subject as plain string. Example: "Project update" or "Re: Original subject" for replies.',
+    },
+    body: {
+      type: 'string',
+      description: 'Email body as an HTML string. Example: "<p>Hello!</p><p>See you tomorrow.</p>"',
+    },
+    cc: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'CC email addresses as plain strings. Example: ["bob@contoso.com"]. Optional.',
+    },
+    replyToMessageId: {
+      type: 'string',
+      description: 'Graph message ID of the email to reply to. Example: "AAMkADI1M2I3YzgtODg...". When set, creates a threaded reply draft.',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -50,34 +85,7 @@ EXAMPLES:
 - With CC: { "to": ["alice@contoso.com"], "subject": "Notes", "body": "<p>See attached.</p>", "cc": ["bob@contoso.com"] }`,
         parameters: {
           type: 'object',
-          properties: {
-            to: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Recipient email addresses as plain strings. Example: ["alice@contoso.com", "bob@contoso.com"]',
-            },
-            subject: {
-              type: 'string',
-              description: 'Email subject as plain string. Example: "Project update" or "Re: Original subject" for replies.',
-            },
-            body: {
-              type: 'string',
-              description: 'Email body as an HTML string. Example: "<p>Hello!</p><p>See you tomorrow.</p>"',
-            },
-            cc: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'CC email addresses as plain strings. Example: ["bob@contoso.com"]. Optional.',
-            },
-            replyToMessageId: {
-              type: 'string',
-              description: 'Graph message ID of the email to reply to. Example: "AAMkADI1M2I3YzgtODg...". When set, creates a threaded reply draft.',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User ID or email (UPN) for app-only auth. Example: "alice@contoso.com". Ignored in delegated auth.',
-            },
-          },
+          properties,
           required: ['to', 'subject', 'body'],
         },
       },
@@ -101,7 +109,7 @@ EXAMPLES:
       const effectiveUserId = context?.userId ?? userId;
       const effectiveAccountId = context?.accountId;
       try {
-        const prefix = getUserPathPrefix(connector, args.targetUser);
+        const prefix = getUserPathPrefix(connector, args.targetUser, actAs);
 
         if (args.replyToMessageId) {
           // Reply draft: createReply → then PATCH to prepend our HTML above quoted original

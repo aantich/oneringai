@@ -27,21 +27,63 @@ export function isServiceAccountAuth(connector: Connector): boolean {
 /**
  * Get the user identifier for Google API requests.
  *
- * - Service-account flows (jwt_bearer, client_credentials, jwt): returns targetUser (required)
- * - Delegated flow (authorization_code) / API key: returns 'me'
+ * Resolution order for service-account flows:
+ *   1. `actAs` (lock set at tool instantiation) — ALWAYS wins, LLM can't override
+ *   2. `targetUser` (LLM-supplied per-call argument)
+ *   3. throws if neither is provided
+ *
+ * - Service-account flows (jwt_bearer, client_credentials, jwt): returns the resolved user
+ * - Delegated flow (authorization_code) / API key: returns 'me' (ignores both
+ *   targetUser AND actAs — the OAuth token already binds identity)
+ *
+ * @param connector       The Google API connector
+ * @param targetUser      LLM-supplied per-call user (from tool args). May be undefined.
+ * @param actAs           Lock set at tool-instantiation time. When set, ALWAYS used and
+ *                        `targetUser` is ignored.
  */
-export function getGoogleUserId(connector: Connector, targetUser?: string): string {
+export function getGoogleUserId(
+  connector: Connector,
+  targetUser?: string,
+  actAs?: string,
+): string {
   if (isServiceAccountAuth(connector)) {
-    if (!targetUser) {
+    // actAs lock takes priority over LLM-supplied arg — that's the whole point of the lock
+    const effective = actAs ?? targetUser;
+    if (!effective) {
       throw new Error(
         'targetUser is required when using service-account auth (jwt_bearer / client_credentials). ' +
-        'Provide a user email (e.g., "user@domain.com").'
+        'Provide a user email (e.g., "user@domain.com") via the `targetUser` argument or ' +
+        'set `actAs` at tool instantiation.'
       );
     }
-    return targetUser;
+    return effective;
   }
   return 'me';
 }
+
+/**
+ * Whether to expose the per-tool `targetUser` JSON-schema parameter to the LLM
+ * for a given (connector, actAs) combination.
+ *
+ * - service-account & no actAs lock → true (LLM must supply)
+ * - service-account & actAs lock → false (locked at instantiation)
+ * - delegated → false (auth token binds identity; arg would be silently ignored)
+ */
+export function shouldExposeTargetUserParam(connector: Connector, actAs?: string): boolean {
+  return !actAs && isServiceAccountAuth(connector);
+}
+
+/**
+ * Standard JSON-schema fragment for the optional `targetUser` LLM parameter.
+ * Tools spread this into their `properties` block when `shouldExposeTargetUserParam`
+ * returns true.
+ */
+export const TARGET_USER_PARAM_SCHEMA: { type: 'string'; description: string } = {
+  type: 'string',
+  description:
+    'User email to act on behalf of. REQUIRED with service-account ' +
+    '(client_credentials / jwt_bearer / jwt) auth. Example: "alice@example.com".',
+};
 
 // ============================================================================
 // Google API Helpers

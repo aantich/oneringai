@@ -12,6 +12,8 @@ import {
   type MeetingSlotSuggestion,
   type GoogleFreeBusyResponse,
   getGoogleUserId,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   googleFetch,
   normalizeEmails,
   formatGoogleToolError,
@@ -116,10 +118,46 @@ function findFreeSlots(
  *
  * The args and result format intentionally match the Microsoft find_meeting_slots tool.
  */
+/**
+ * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
+ */
 export function createGoogleFindMeetingSlotsTool(
   connector: Connector,
-  userId?: string
+  userId?: string,
+  actAs?: string,
 ): ToolFunction<FindMeetingSlotsArgs, GoogleFindSlotsResult> {
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    attendees: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'Attendee email addresses as plain strings. Example: ["alice@example.com", "bob@example.com"]. Do NOT pass objects.',
+    },
+    startDateTime: {
+      type: 'string',
+      description: 'Search window start as ISO 8601 string without timezone suffix. Example: "2025-01-15T08:00:00"',
+    },
+    endDateTime: {
+      type: 'string',
+      description: 'Search window end as ISO 8601 string without timezone suffix. Example: "2025-01-15T18:00:00". Can span multiple days.',
+    },
+    duration: {
+      type: 'number',
+      description: 'Meeting duration in minutes as integer. Example: 30 or 60.',
+    },
+    timeZone: {
+      type: 'string',
+      description: 'IANA timezone string for start/end times. Example: "America/New_York", "Europe/Zurich". Default: "UTC".',
+    },
+    maxResults: {
+      type: 'number',
+      description: 'Maximum number of time slot suggestions as integer. Default: 5.',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
+
   return {
     definition: {
       type: 'function',
@@ -139,37 +177,7 @@ EXAMPLES:
 - Find 1hr slot across days: { "attendees": ["alice@example.com"], "startDateTime": "2025-01-15T08:00:00", "endDateTime": "2025-01-17T18:00:00", "duration": 60, "maxResults": 10 }`,
         parameters: {
           type: 'object',
-          properties: {
-            attendees: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Attendee email addresses as plain strings. Example: ["alice@example.com", "bob@example.com"]. Do NOT pass objects.',
-            },
-            startDateTime: {
-              type: 'string',
-              description: 'Search window start as ISO 8601 string without timezone suffix. Example: "2025-01-15T08:00:00"',
-            },
-            endDateTime: {
-              type: 'string',
-              description: 'Search window end as ISO 8601 string without timezone suffix. Example: "2025-01-15T18:00:00". Can span multiple days.',
-            },
-            duration: {
-              type: 'number',
-              description: 'Meeting duration in minutes as integer. Example: 30 or 60.',
-            },
-            timeZone: {
-              type: 'string',
-              description: 'IANA timezone string for start/end times. Example: "America/New_York", "Europe/Zurich". Default: "UTC".',
-            },
-            maxResults: {
-              type: 'number',
-              description: 'Maximum number of time slot suggestions as integer. Default: 5.',
-            },
-            targetUser: {
-              type: 'string',
-              description: 'User ID or email for service-account auth. Ignored in delegated auth.',
-            },
-          },
+          properties,
           required: ['attendees', 'startDateTime', 'endDateTime', 'duration'],
         },
       },
@@ -193,8 +201,9 @@ EXAMPLES:
       const effectiveAccountId = context?.accountId;
 
       try {
-        // Ensure the connector resolves the user for service accounts
-        getGoogleUserId(connector, args.targetUser);
+        // Ensure the connector resolves the user for service accounts (validation only;
+        // freeBusy doesn't take a user-prefix in URL, so we just throw early if missing).
+        getGoogleUserId(connector, args.targetUser, actAs);
         const tz = args.timeZone ?? 'UTC';
         const attendees = normalizeEmails(args.attendees);
         const maxResults = args.maxResults ?? 5;

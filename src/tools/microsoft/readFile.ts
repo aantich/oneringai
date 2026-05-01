@@ -11,6 +11,8 @@ import { DocumentReader, mergeTextPieces } from '../../capabilities/documents/Do
 import { FormatDetector } from '../../capabilities/documents/FormatDetector.js';
 import {
   getUserPathPrefix,
+  shouldExposeTargetUserParam,
+  TARGET_USER_PARAM_SCHEMA,
   microsoftFetch,
   getDrivePrefix,
   resolveFileEndpoints,
@@ -46,15 +48,42 @@ export interface MicrosoftReadFileConfig {
 
 // ---- Tool Factory ----
 
+/**
+ * @param config Optional file size limits.
+ * @param actAs  Lock the on-behalf-of user; when set, the LLM cannot override.
+ */
 export function createMicrosoftReadFileTool(
   connector: Connector,
   userId?: string,
   config?: MicrosoftReadFileConfig,
+  actAs?: string,
 ): ToolFunction<ReadFileArgs, MicrosoftReadFileResult> {
   // Reuse a single DocumentReader instance across invocations (stateless, no resources to leak)
   const reader = DocumentReader.create();
   const defaultLimit = config?.maxFileSizeBytes ?? DEFAULT_MAX_FILE_SIZE_BYTES;
   const sizeOverrides = config?.fileSizeLimits;
+
+  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
+  const properties: Record<string, unknown> = {
+    source: {
+      type: 'string',
+      description:
+        'The file to read. Accepts a web URL (SharePoint/OneDrive link), a file path within the drive (e.g., "/Documents/report.docx"), or a Graph API item ID.',
+    },
+    driveId: {
+      type: 'string',
+      description:
+        'Optional drive ID. Omit to use the default drive. Only needed when accessing a specific non-default drive.',
+    },
+    siteId: {
+      type: 'string',
+      description:
+        'Optional SharePoint site ID. Use this instead of driveId to access files in a specific SharePoint site\'s default drive.',
+    },
+  };
+  if (exposeTargetUser) {
+    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
+  }
 
   return {
     definition: {
@@ -81,28 +110,7 @@ When given a web URL, the tool automatically resolves it to the correct Graph AP
 **Returns:** The file content as markdown text, along with metadata (filename, size, MIME type, webUrl). For spreadsheets, each sheet is converted to markdown key-value records — every row becomes a block of "**Header**: value" pairs, which is easier for LLMs to parse than wide tables. For presentations, each slide becomes a section.`,
         parameters: {
           type: 'object',
-          properties: {
-            source: {
-              type: 'string',
-              description:
-                'The file to read. Accepts a web URL (SharePoint/OneDrive link), a file path within the drive (e.g., "/Documents/report.docx"), or a Graph API item ID.',
-            },
-            driveId: {
-              type: 'string',
-              description:
-                'Optional drive ID. Omit to use the default drive. Only needed when accessing a specific non-default drive.',
-            },
-            siteId: {
-              type: 'string',
-              description:
-                'Optional SharePoint site ID. Use this instead of driveId to access files in a specific SharePoint site\'s default drive.',
-            },
-            targetUser: {
-              type: 'string',
-              description:
-                'User ID or email (e.g., "user@contoso.com"). Only needed with application-only (client_credentials) auth to specify which user\'s drive to access.',
-            },
-          },
+          properties,
           required: ['source'],
         },
       },
@@ -149,7 +157,7 @@ When given a web URL, the tool automatically resolves it to the correct Graph AP
 
       try {
         // 1. Resolve endpoints
-        const userPrefix = getUserPathPrefix(connector, args.targetUser);
+        const userPrefix = getUserPathPrefix(connector, args.targetUser, actAs);
         const drivePrefix = getDrivePrefix(userPrefix, {
           siteId: args.siteId,
           driveId: args.driveId,
