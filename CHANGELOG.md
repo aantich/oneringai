@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Office document parsing — Meteor/webpack compatibility fix
+
+Fixes `microsoft_read_file` / `google_read_file` / any flow that runs `OfficeHandler` from a Meteor server bundle. Symptom: every `.docx` / `.pptx` / `.xlsx` / `.odt` / `.odp` / `.ods` read failed with `[OfficeParser]: A dynamic import callback was not specified.`
+
+- **Root cause** — officeparser 6.x triggers magic-byte format detection when given a Buffer with no extension hint. Detection uses `loadFileType()` from `dist/utils/moduleLoader.js`, which calls `new Function('s', 'return import(s)')(specifier)` to dodge bundler static analysis. V8 parses that function body in global scope where Meteor has not registered a host dynamic-import callback, so the import throws.
+- **Fix** — `OfficeHandler` now imports `file-type` from oneringai's own module scope (where the host callback IS registered) and replaces officeparser's `loadFileType` export with a cached wrapper. `parseOffice`'s full dispatch logic still runs; the broken `new Function(...)` path is never reached.
+- **Why not extension-hint** — verified: `OfficeParserConfig` has no extension/format/mimeType field. The only ways officeparser learns the format are `file.split('.').pop()` (path string input) or `loadFileType()` (buffer input).
+- **`file-type` is now a direct dependency** (`^22.0.1`). It was already transitively present via officeparser; this just declares the relationship explicitly.
+- **`officeparser` pinned to `~6.1.0`** — the fix reaches into officeparser's internal `dist/utils/moduleLoader.js`, so minor bumps must be deliberate. Lock-step with the test at `tests/unit/capabilities/documents/OfficeHandler.test.ts` and the standalone `scripts/verify-officeparser-patch.mjs`.
+- **Review checklist on every officeparser bump** — see the comment block at the top of `src/capabilities/documents/handlers/OfficeHandler.ts`.
+
 ### Storage plugins renamed to "notes" / "whiteboard" (LLM-visible only)
 
 Disambiguates the two scratchpad stores from the graph **Memory** plugin (entities + facts). The agent now sees three distinct vocabularies instead of three things called "memory".

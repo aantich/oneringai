@@ -5,6 +5,9 @@
  * Uses officeparser (lazy-loaded) for AST-based extraction.
  */
 
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
+import { fileTypeFromBuffer } from 'file-type';
 import { DOCUMENT_DEFAULTS } from '../../../core/constants.js';
 import type {
   IFormatHandler,
@@ -13,11 +16,81 @@ import type {
   DocumentPiece,
 } from '../types.js';
 
-// Lazy-loaded officeparser
+// =====================================================================
+// officeparser Meteor/webpack compatibility patch
+// =====================================================================
+//
+// PROBLEM: When this code runs inside a Meteor server bundle (icos /
+// Everworker), parseOffice() throws:
+//
+//   [OfficeParser]: A dynamic import callback was not specified.
+//
+// ROOT CAUSE: With Buffer input (no filename), parseOffice falls back
+// to magic-byte detection, which calls loadFileType() inside
+// officeparser's `dist/utils/moduleLoader.js`. That helper uses
+//
+//     new Function('s', 'return import(s)')(specifier)
+//
+// to bypass bundler static analysis. V8 parses the synthesized function
+// body in the global scope where Meteor has NOT registered a host
+// dynamic-import callback (it only registers one for code inside its
+// own module wrapper). V8 then refuses the import().
+//
+// FIX: We import `file-type` from oneringai's module scope (where the
+// callback IS registered), then overwrite officeparser's loadFileType
+// with a cached wrapper. parseOffice's full dispatch logic still runs;
+// the broken `new Function(...)` path is never reached.
+//
+// WHY NOT extension hint: officeparser has no extensionHint / format
+// option in OfficeParserConfig (verified against types.d.ts and
+// OfficeParser.js). The only way it learns the format from a Buffer is
+// magic-byte detection.
+//
+// WHY NOT temp file: works, but adds disk dependency for environments
+// (k8s read-only root, restricted tmpfs) where /tmp may be unavailable.
+//
+// FRAGILITY — REVIEW ON EVERY officeparser BUMP:
+//   1. officeparser pins to `~6.1.0` so MINOR bumps are deliberate.
+//   2. The internal path is `dist/utils/moduleLoader.js`, exported name
+//      `loadFileType`. If either is renamed/removed, the patch throws
+//      loudly at first use (we want this — never silent).
+//   3. officeparser's package.json `exports` field restricts subpaths
+//      to "." only, so we resolve via require.resolve('officeparser')
+//      then walk the directory tree to bypass the restriction.
+//   4. There's a unit test at
+//      `src/capabilities/documents/__tests__/OfficeHandler.patch.test.ts`
+//      that exercises this path against a real .pptx — run it after
+//      every officeparser version bump.
+//
+// To verify in isolation, see scripts/verify-officeparser-patch.mjs.
+// =====================================================================
+
+const requireCjs = createRequire(import.meta.url);
+
 let parseOffice: ((file: Buffer, config?: any) => Promise<any>) | null = null;
+let patchApplied = false;
+
+function applyOfficeParserPatch(): void {
+  if (patchApplied) return;
+  const officeparserMain = requireCjs.resolve('officeparser');
+  const moduleLoaderPath = join(dirname(officeparserMain), 'utils', 'moduleLoader.js');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const moduleLoader = requireCjs(moduleLoaderPath) as { loadFileType?: unknown };
+  if (typeof moduleLoader.loadFileType !== 'function') {
+    throw new Error(
+      `[OfficeHandler] officeparser internal layout changed: ` +
+        `expected loadFileType function at ${moduleLoaderPath}. ` +
+        `Review the Meteor/webpack patch in OfficeHandler.ts after this version bump.`,
+    );
+  }
+  (moduleLoader as { loadFileType: () => Promise<{ fileTypeFromBuffer: typeof fileTypeFromBuffer }> }).loadFileType =
+    async () => ({ fileTypeFromBuffer });
+  patchApplied = true;
+}
 
 async function getParseOffice(): Promise<(file: Buffer, config?: any) => Promise<any>> {
   if (!parseOffice) {
+    applyOfficeParserPatch();
     const mod = await import('officeparser');
     parseOffice = mod.parseOffice;
   }
