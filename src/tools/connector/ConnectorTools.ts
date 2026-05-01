@@ -192,11 +192,21 @@ export interface ConnectorToolsOptions {
    *   value is always used.
    * - When unset: existing behavior (LLM supplies `targetUser` for app-only auth).
    * - Silently ignored for delegated connectors (identity already bound by token).
+   * - Empty / whitespace-only strings are treated as unset.
    *
    * Use this when wiring a single shared app-token connector into a specific
    * agent that should only ever operate on behalf of one user. The connector
    * itself stays generic and can be reused with different `actAs` values
    * across different agents.
+   *
+   * SCOPE — only tools whose request URL is user-scoped participate in the lock.
+   * Tools that hit endpoints which are not user-scoped at the URL level
+   * (Microsoft `/search/query`; Google `/drive/v3/files`, `/calendar/v3/freeBusy`)
+   * do NOT take `actAs` and are unaffected by it — they always work with whatever
+   * the underlying token can see. Each non-participating tool's factory carries
+   * a `NOTE on actAs lock` doc block explaining the data-scope guarantee for
+   * that specific tool. If you need true per-user isolation for those tools,
+   * use a delegated connector (where the OAuth token binds identity directly).
    */
   actAs?: string;
 }

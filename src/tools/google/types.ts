@@ -12,6 +12,21 @@ import type { Connector } from '../../core/Connector.js';
 // ============================================================================
 
 /**
+ * Coerce empty / whitespace-only strings to `undefined`.
+ *
+ * Why: a host app may pass `actAs: process.env.DEFAULT_USER` and expect it to
+ * behave like "unset" when the env var is unset (`''`). Without normalization
+ * the empty string flows through `??` (which only short-circuits on
+ * null/undefined) and produces broken state — schema exposes `targetUser` but
+ * runtime always errors. Also trims surrounding whitespace.
+ */
+function normalizeUser(s: string | undefined): string | undefined {
+  if (s === undefined) return undefined;
+  const t = s.trim();
+  return t.length > 0 ? t : undefined;
+}
+
+/**
  * Check whether a connector uses service-account (non-delegated) authentication.
  * Service-account connectors impersonate via the `sub` claim (domain-wide delegation),
  * so Google API calls may need `userId` param instead of implicit `me`.
@@ -47,8 +62,11 @@ export function getGoogleUserId(
   actAs?: string,
 ): string {
   if (isServiceAccountAuth(connector)) {
+    // Coerce empty/whitespace strings to undefined so they don't poison `??`.
+    const normalizedActAs = normalizeUser(actAs);
+    const normalizedTarget = normalizeUser(targetUser);
     // actAs lock takes priority over LLM-supplied arg — that's the whole point of the lock
-    const effective = actAs ?? targetUser;
+    const effective = normalizedActAs ?? normalizedTarget;
     if (!effective) {
       throw new Error(
         'targetUser is required when using service-account auth (jwt_bearer / client_credentials). ' +
@@ -70,7 +88,8 @@ export function getGoogleUserId(
  * - delegated → false (auth token binds identity; arg would be silently ignored)
  */
 export function shouldExposeTargetUserParam(connector: Connector, actAs?: string): boolean {
-  return !actAs && isServiceAccountAuth(connector);
+  // Treat empty/whitespace actAs as unset, matching getGoogleUserId.
+  return !normalizeUser(actAs) && isServiceAccountAuth(connector);
 }
 
 /**

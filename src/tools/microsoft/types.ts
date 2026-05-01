@@ -12,6 +12,24 @@ import type { Connector } from '../../core/Connector.js';
 // ============================================================================
 
 /**
+ * Coerce empty / whitespace-only strings to `undefined`.
+ *
+ * Why: a host app may pass `actAs: process.env.DEFAULT_USER` and expect it to
+ * behave like "unset" when the env var is unset (`''`). Without normalization
+ * the empty string flows through `??` (which only short-circuits on
+ * null/undefined) and produces broken state — schema exposes `targetUser` but
+ * runtime always errors.
+ *
+ * Also trims surrounding whitespace, since user-supplied UPNs / emails copied
+ * from UIs commonly carry stray spaces.
+ */
+function normalizeUser(s: string | undefined): string | undefined {
+  if (s === undefined) return undefined;
+  const t = s.trim();
+  return t.length > 0 ? t : undefined;
+}
+
+/**
  * Check whether a connector uses app-level (non-delegated) authentication.
  * App-level connectors access resources on behalf of the application, not a
  * specific signed-in user, so Microsoft Graph calls must use `/users/{id}`
@@ -68,8 +86,11 @@ export function getUserPathPrefix(
   actAs?: string,
 ): string {
   if (isAppPermissionAuth(connector)) {
+    // Coerce empty/whitespace strings to undefined so they don't poison `??`.
+    const normalizedActAs = normalizeUser(actAs);
+    const normalizedTarget = normalizeUser(targetUser);
     // actAs lock takes priority over LLM-supplied arg — that's the whole point of the lock
-    const effective = actAs ?? targetUser;
+    const effective = normalizedActAs ?? normalizedTarget;
     if (!effective) {
       const auth = connector.config.auth;
       const flowInfo = auth.type === 'oauth' ? ` (flow: ${auth.flow})` : ` (type: ${auth.type})`;
@@ -97,7 +118,8 @@ export function getUserPathPrefix(
  * `targetUser` arg it cannot meaningfully use.
  */
 export function shouldExposeTargetUserParam(connector: Connector, actAs?: string): boolean {
-  return !actAs && isAppPermissionAuth(connector);
+  // Treat empty/whitespace actAs as unset, matching getUserPathPrefix.
+  return !normalizeUser(actAs) && isAppPermissionAuth(connector);
 }
 
 /**

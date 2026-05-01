@@ -11,8 +11,6 @@ import {
   type GoogleDriveFile,
   type GoogleDriveFileListResponse,
   getGoogleUserId,
-  shouldExposeTargetUserParam,
-  TARGET_USER_PARAM_SCHEMA,
   googleFetch,
   formatFileSize,
   formatGoogleToolError,
@@ -47,32 +45,16 @@ function mapDriveFile(file: GoogleDriveFile): GoogleListFilesResult['items'] ext
 /**
  * Create a Google Drive list_files tool
  *
- * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
+ * NOTE on `actAs` lock — this tool does NOT participate. It hits
+ * `/drive/v3/files`, which is not user-scoped at the URL level (Drive scope
+ * is determined by the token's identity, set by `auth.subject` for service
+ * accounts). The agent-level `actAs` passed to `ConnectorTools.for(...)` has
+ * no effect here; data scope is whatever the underlying token can see.
  */
 export function createGoogleListFilesTool(
   connector: Connector,
-  userId?: string,
-  actAs?: string,
+  userId?: string
 ): ToolFunction<ListFilesArgs, GoogleListFilesResult> {
-  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
-  const properties: Record<string, unknown> = {
-    folderId: {
-      type: 'string',
-      description: 'Folder ID to list contents of. Omit for root ("My Drive").',
-    },
-    search: {
-      type: 'string',
-      description: 'Filter files by name (optional). Searches within the specified folder.',
-    },
-    limit: {
-      type: 'number',
-      description: 'Max results (1-200). Default: 100.',
-    },
-  };
-  if (exposeTargetUser) {
-    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
-  }
-
   return {
     definition: {
       type: 'function',
@@ -95,7 +77,24 @@ EXAMPLES:
 - Filter by name: { "search": "quarterly report" }`,
         parameters: {
           type: 'object',
-          properties,
+          properties: {
+            folderId: {
+              type: 'string',
+              description: 'Folder ID to list contents of. Omit for root ("My Drive").',
+            },
+            search: {
+              type: 'string',
+              description: 'Filter files by name (optional). Searches within the specified folder.',
+            },
+            limit: {
+              type: 'number',
+              description: 'Max results (1-200). Default: 100.',
+            },
+            targetUser: {
+              type: 'string',
+              description: 'User email for service-account auth. Ignored in delegated auth.',
+            },
+          },
         },
       },
       blocking: true,
@@ -123,7 +122,7 @@ EXAMPLES:
 
       try {
         // Validate service account auth (Drive endpoint doesn't take user-prefix in URL)
-        getGoogleUserId(connector, args.targetUser, actAs);
+        getGoogleUserId(connector, args.targetUser);
 
         const pageSize = Math.min(args.limit ?? 100, 200);
 

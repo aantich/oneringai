@@ -14,8 +14,6 @@ import {
   type GoogleReadFileResult,
   type GoogleDriveFile,
   getGoogleUserId,
-  shouldExposeTargetUserParam,
-  TARGET_USER_PARAM_SCHEMA,
   googleFetch,
   formatFileSize,
   getFileSizeLimit,
@@ -47,28 +45,19 @@ export interface GoogleReadFileConfig {
 
 /**
  * @param config Optional file size limits.
- * @param actAs  Lock the on-behalf-of user; when set, the LLM cannot override.
+ *
+ * NOTE on `actAs` lock — this tool does NOT participate. It hits
+ * `/drive/v3/files/{fileId}`, fetched by ID and not user-scoped at the URL
+ * level. Data scope is whatever the underlying token can see.
  */
 export function createGoogleReadFileTool(
   connector: Connector,
   userId?: string,
   config?: GoogleReadFileConfig,
-  actAs?: string,
 ): ToolFunction<ReadFileArgs, GoogleReadFileResult> {
   const reader = DocumentReader.create();
   const defaultLimit = config?.maxFileSizeBytes ?? DEFAULT_MAX_FILE_SIZE_BYTES;
   const sizeOverrides = config?.fileSizeLimits;
-
-  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
-  const properties: Record<string, unknown> = {
-    fileId: {
-      type: 'string',
-      description: 'The Google Drive file ID. Get this from list_files, search_files, or from a Drive URL.',
-    },
-  };
-  if (exposeTargetUser) {
-    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
-  }
 
   return {
     definition: {
@@ -94,7 +83,16 @@ Use this tool when you need to read the contents of a document stored in Google 
 **Returns:** The file content as markdown text, along with metadata (filename, size, MIME type, webUrl). For spreadsheets, each sheet is converted to markdown key-value records. For presentations, each slide becomes a section.`,
         parameters: {
           type: 'object',
-          properties,
+          properties: {
+            fileId: {
+              type: 'string',
+              description: 'The Google Drive file ID. Get this from list_files, search_files, or from a Drive URL.',
+            },
+            targetUser: {
+              type: 'string',
+              description: 'User email for service-account auth. Ignored in delegated auth.',
+            },
+          },
           required: ['fileId'],
         },
       },
@@ -129,7 +127,7 @@ Use this tool when you need to read the contents of a document stored in Google 
       try {
         // Ensure user auth is valid for service accounts (Drive endpoint doesn't
         // take user-prefix in URL; this is validation only)
-        getGoogleUserId(connector, args.targetUser, actAs);
+        getGoogleUserId(connector, args.targetUser);
 
         // 1. Get file metadata
         const metadata = await googleFetch<GoogleDriveFile>(

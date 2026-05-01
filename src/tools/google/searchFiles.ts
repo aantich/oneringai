@@ -11,8 +11,6 @@ import {
   type GoogleDriveFile,
   type GoogleDriveFileListResponse,
   getGoogleUserId,
-  shouldExposeTargetUserParam,
-  TARGET_USER_PARAM_SCHEMA,
   googleFetch,
   formatFileSize,
   formatGoogleToolError,
@@ -70,37 +68,14 @@ function buildFileTypeQuery(fileTypes: string[]): string {
 /**
  * Create a Google Drive search_files tool
  *
- * @param actAs Lock the on-behalf-of user; when set, the LLM cannot override.
+ * NOTE on `actAs` lock — this tool does NOT participate. It hits
+ * `/drive/v3/files` (full-text search), not user-scoped at the URL level.
+ * Data scope is whatever the underlying token can see.
  */
 export function createGoogleSearchFilesTool(
   connector: Connector,
-  userId?: string,
-  actAs?: string,
+  userId?: string
 ): ToolFunction<SearchFilesArgs, GoogleSearchFilesResult> {
-  const exposeTargetUser = shouldExposeTargetUserParam(connector, actAs);
-  const properties: Record<string, unknown> = {
-    query: {
-      type: 'string',
-      description: 'Search query. Searches file names and contents.',
-    },
-    fileTypes: {
-      type: 'array',
-      items: { type: 'string' },
-      description: 'Filter by file type. Examples: "doc", "sheet", "pdf", "image". Optional.',
-    },
-    folderId: {
-      type: 'string',
-      description: 'Restrict search to a specific folder (optional).',
-    },
-    limit: {
-      type: 'number',
-      description: 'Max results (1-100). Default: 20.',
-    },
-  };
-  if (exposeTargetUser) {
-    properties.targetUser = TARGET_USER_PARAM_SCHEMA;
-  }
-
   return {
     definition: {
       type: 'function',
@@ -118,7 +93,29 @@ EXAMPLES:
 - Search in folder: { "query": "notes", "folderId": "1ABC_def_GHI" }`,
         parameters: {
           type: 'object',
-          properties,
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Search query. Searches file names and contents.',
+            },
+            fileTypes: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Filter by file type. Examples: "doc", "sheet", "pdf", "image". Optional.',
+            },
+            folderId: {
+              type: 'string',
+              description: 'Restrict search to a specific folder (optional).',
+            },
+            limit: {
+              type: 'number',
+              description: 'Max results (1-100). Default: 20.',
+            },
+            targetUser: {
+              type: 'string',
+              description: 'User email for service-account auth. Ignored in delegated auth.',
+            },
+          },
           required: ['query'],
         },
       },
@@ -145,7 +142,7 @@ EXAMPLES:
 
       try {
         // Validate service account auth (Drive endpoint doesn't take user-prefix in URL)
-        getGoogleUserId(connector, args.targetUser, actAs);
+        getGoogleUserId(connector, args.targetUser);
 
         const pageSize = Math.min(args.limit ?? 20, 100);
 

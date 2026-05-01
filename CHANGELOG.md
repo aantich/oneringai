@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Connector tools — `actAs` lock for app-only / service-account flows
+
+Closes the impersonation gap on Microsoft Graph and Google API tools. A single shared app-token connector can now be wired into a specific agent that operates ONLY on behalf of a given user, with no way for the LLM to point at a different mailbox / drive.
+
+- **New `ConnectorToolsOptions.actAs?: string`** (and matching `AuthIdentity.actAs`) — set ONCE at tool instantiation. The connector itself stays generic; the lock lives on the tool instances handed to a specific agent.
+- **Schema-level enforcement** — when `actAs` is set, the `targetUser` JSON-schema property is OMITTED from every URL-scoped Microsoft + Google tool. The LLM literally cannot express the disallowed call. Defense-in-depth: `getUserPathPrefix` / `getGoogleUserId` always prefer `actAs` over any LLM-supplied `targetUser` arg if one slips through.
+- **Empty-string normalization** — `actAs: ''` and whitespace-only values are coerced to "unset". Lets host apps pass `actAs: process.env.DEFAULT_USER` without breaking when the env var is unset. Surrounding whitespace on `actAs` and `targetUser` is also trimmed.
+- **Delegated connectors** also drop `targetUser` from their schemas (the OAuth token already binds identity; the arg was previously decorative and silently ignored).
+- **Backward compatible**: existing `ConnectorTools.for(connector)` calls without `actAs` keep current behavior — app-only connectors still expose `targetUser` as a required-style arg.
+- New `shouldExposeTargetUserParam()` and `TARGET_USER_PARAM_SCHEMA` helpers exported from both `src/tools/microsoft/types.ts` and `src/tools/google/types.ts`.
+- New `ServiceToolFactoryOptions` interface exported from `src/tools/connector/ConnectorTools.ts` — third arg of `ServiceToolFactory` for forwarding `actAs` (and future settings). Existing factories that ignore the third arg continue to work.
+- New unit tests in `tests/unit/tools/microsoft/actAsLock.test.ts` and `tests/unit/tools/google/actAsLock.test.ts` covering: helper resolution order, per-tool schema shape across all states, runtime URL with locked / unlocked / delegated connectors, defense-in-depth (LLM `targetUser` ignored when locked), `ConnectorTools.for({ actAs })` propagation, empty/whitespace-`actAs` normalization, and documentation tests for non-participating tools (proves the gap exists).
+
+#### Scope — which tools participate
+
+**Participating (`actAs` enforced at URL level)** — 16 tools whose request URL is user-scoped, so the lock fully constrains data scope:
+- Microsoft: `send_email`, `create_draft_email`, `create_meeting`, `edit_meeting`, `get_meeting`, `get_meeting_transcript`, `list_meetings`, `find_meeting_slots`, `list_files`, `read_file` (URLs all built from `/me` or `/users/{id}`).
+- Google: `send_email`, `create_draft_email`, `create_meeting`, `edit_meeting`, `get_meeting`, `list_meetings` (URLs built from `/gmail/v1/users/{id}/...` or `/calendar/v3/calendars/{id}/...`).
+
+**Non-participating** — 6 tools whose endpoints are not user-scoped at the URL level. They do NOT take `actAs`, the lock has no effect on them, and they always work with whatever the underlying token can see (i.e. respect the token's normal permissions). Each carries a `NOTE on actAs lock` doc block:
+- Microsoft `search_files` — tenant-global `/search/query` (or site-scoped `/sites/{id}/...` when `siteId` is given).
+- Google `list_files`, `search_files`, `read_file` — `/drive/v3/files` and `/drive/v3/files/{id}`.
+- Google `get_meeting_transcript` — searches Drive for transcript docs.
+- Google `find_meeting_slots` — `/calendar/v3/freeBusy` (POST with attendees in body).
+
+For true per-user isolation on these, use a delegated connector (the OAuth token binds identity directly). For Google service accounts with domain-wide delegation, the connector's static `auth.subject` claim drives identity — the library does not change subjects per-call.
+
 ### Office document parsing — Meteor/webpack compatibility fix
 
 Fixes `microsoft_read_file` / `google_read_file` / any flow that runs `OfficeHandler` from a Meteor server bundle. Symptom: every `.docx` / `.pptx` / `.xlsx` / `.odt` / `.odp` / `.ods` read failed with `[OfficeParser]: A dynamic import callback was not specified.`
