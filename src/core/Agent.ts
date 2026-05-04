@@ -246,6 +246,13 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    * not propagated to avoid auto-regenerating a full connector tool surface
    * (which would defeat the scope).
    *
+   * **Plugins are NOT inherited.** The scoped agent runs with default context
+   * features only (working memory, in-context memory). Memory plugins,
+   * SharedWorkspace, custom plugins on the parent are not carried over.
+   * Routines that need them must declare `requiredPlugins` so the runner's
+   * missing-plugin check fails loudly. Matches Mode 1 (`connector` + `model`)
+   * behavior in the routine runner.
+   *
    * Throws if any name is not registered on this agent.
    */
   scopedTo(

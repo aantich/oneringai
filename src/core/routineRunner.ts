@@ -48,6 +48,20 @@ import {
 import type { StepResolveContext } from './routineControlFlow.js';
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+/**
+ * Lifecycle hook names the runner registers on the executor agent for the
+ * duration of a routine execution. Listed once here to keep the scoped and
+ * non-scoped Mode 2 branches in sync.
+ */
+const ROUTINE_HOOK_NAMES = [
+  'before:execution', 'after:execution', 'before:llm', 'after:llm',
+  'before:tool', 'after:tool', 'approve:tool', 'pause:check',
+] as const;
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -60,6 +74,15 @@ import type { StepResolveContext } from './routineControlFlow.js';
  * 2. **Existing agent**: Pass `agent` (a pre-created Agent instance).
  *    The agent is NOT destroyed after execution — caller owns its lifecycle.
  *    The agent's existing connector, model, tools, and hooks are used.
+ *
+ * **Tool scoping (Mode 2 + `definition.requiredTools`)**: when the caller
+ * passes an `agent` AND the routine declares `requiredTools`, the runner
+ * builds a scoped executor via `existingAgent.scopedTo(requiredTools)` and
+ * runs the routine on that. The caller's superagent stays untouched; the
+ * scoped executor is destroyed at end of run. The scoped executor uses
+ * default context features (working memory, in-context memory) and does NOT
+ * inherit the caller's plugins — routines that need plugins must declare
+ * them in `requiredPlugins`.
  */
 export interface ExecuteRoutineOptions {
   /** Routine definition to execute */
@@ -904,11 +927,7 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
       ownsAgent = true; // runner now owns the scoped executor
 
       if (hooks) {
-        const hookNames = [
-          'before:execution', 'after:execution', 'before:llm', 'after:llm',
-          'before:tool', 'after:tool', 'approve:tool', 'pause:check',
-        ] as const;
-        for (const name of hookNames) {
+        for (const name of ROUTINE_HOOK_NAMES) {
           const hook = hooks[name];
           if (hook) {
             agent.registerHook(name, hook as any);
@@ -921,11 +940,7 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
       agent = existingAgent;
 
       if (hooks) {
-        const hookNames = [
-          'before:execution', 'after:execution', 'before:llm', 'after:llm',
-          'before:tool', 'after:tool', 'approve:tool', 'pause:check',
-        ] as const;
-        for (const name of hookNames) {
+        for (const name of ROUTINE_HOOK_NAMES) {
           const hook = hooks[name];
           if (hook) {
             agent.registerHook(name, hook as any);
