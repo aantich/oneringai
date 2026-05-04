@@ -703,6 +703,19 @@ export abstract class BaseAgent<
   }
 
   /**
+   * Slim catalog of every enabled tool on this agent — name + description only,
+   * no parameter schemas. Passthrough to `tools.listCompact()`.
+   *
+   * Intended use: a "superagent" carrying every possible tool exposes this list
+   * to a routine builder, which picks names and commits them into
+   * `RoutineDefinition.requiredTools`. The routine executor then resolves those
+   * names back to the same tool instances via `agent.scopedTo(...)`.
+   */
+  listToolsCompact() {
+    return this.tools.listCompact();
+  }
+
+  /**
    * Get the AgentContextNextGen (unified context management).
    * This is the primary way to access tools, memory, and history.
    */

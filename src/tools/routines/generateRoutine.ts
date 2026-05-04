@@ -33,7 +33,7 @@ A routine definition has these fields:
 - **tags**: Array of strings for categorization and filtering (e.g., ["research", "analysis"])
 - **instructions**: Additional text injected into the agent's system prompt when executing this routine. Use for behavioral guidance, tone, constraints.
 - **parameters**: Array of input parameters that make the routine reusable. Each has: name, description, required (default false), default. Use {{param.NAME}} in task descriptions/expectedOutput to reference them.
-- **requiredTools**: Tool names that must be available before starting (e.g., ["web_fetch", "store_set"])
+- **requiredTools**: Fully-qualified tool names that the routine executor must have access to (e.g., ["web_fetch", "msft-personal_send_email"]). At execution time the runner restricts the executor agent to **exactly this set** — every tool any task or pre/postStep invokes MUST appear here, including connector-prefixed names. Names you have not been told about will not exist; consult the available-tools catalog you were given before generating.
 - **requiredPlugins**: Plugin names that must be enabled (e.g., ["working_memory"])
 - **concurrency**: { maxParallelTasks: number, strategy: "fifo"|"priority"|"shortest-first", failureMode?: "fail-fast"|"continue"|"fail-all" }
 - **allowDynamicTasks**: If true, the LLM can add/modify tasks during execution (default: false)

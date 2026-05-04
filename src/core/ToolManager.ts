@@ -194,6 +194,22 @@ export type ToolManagerEvent =
 // ============================================================================
 
 /**
+ * Compact descriptor for a registered tool — name + description (no schemas).
+ *
+ * Returned by ToolManager.listCompact(). Used by routine builders to discover
+ * which tools are available without paying the token cost of full parameter
+ * schemas. The LLM commits selected names into RoutineDefinition.requiredTools;
+ * the routine executor then resolves those names against the source agent.
+ */
+export interface CompactToolDescriptor {
+  name: string;
+  description: string;
+  category?: string;
+  /** Connector instance name when the tool is connector-bound (e.g. 'msft-personal'). */
+  connectorName?: string;
+}
+
+/**
  * Configuration for ToolManager
  */
 export interface ToolManagerConfig {
@@ -753,6 +769,45 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
   get size(): number {
     return this.registry.size;
   }
+
+  /**
+   * Slim catalog of currently enabled tools — name + description, no parameter schemas.
+   *
+   * Used by routine builders to discover what's available on a superagent without
+   * paying the token cost of full tool definitions. Each entry includes:
+   * - `name`: the LLM-facing tool name (already connector-prefixed for connector tools,
+   *   e.g. `msft-personal_send_email`)
+   * - `description`: the tool's `definition.function.description`
+   * - `category`: optional grouping
+   * - `connectorName`: present for connector-bound tools (read from
+   *   `tool.connectorName`, falling back to parsing the registration `source` like
+   *   `'connector:msft-personal'` or `'connector:msft-personal:account-id'`)
+   *
+   * Disabled tools are excluded — they're not actually callable by the LLM, so listing
+   * them would mislead a routine builder.
+   */
+  listCompact(): CompactToolDescriptor[] {
+    const result: CompactToolDescriptor[] = [];
+    for (const [name, reg] of this.registry) {
+      if (!reg.enabled) continue;
+      const def = reg.tool.definition.function;
+
+      let connectorName: string | undefined = reg.tool.connectorName;
+      if (!connectorName && reg.source?.startsWith('connector:')) {
+        const rest = reg.source.slice('connector:'.length);
+        connectorName = rest.split(':')[0] || undefined;
+      }
+
+      result.push({
+        name,
+        description: def.description ?? '',
+        ...(reg.category ? { category: reg.category } : {}),
+        ...(connectorName ? { connectorName } : {}),
+      });
+    }
+    return result;
+  }
+
 
   // ==========================================================================
   // Selection

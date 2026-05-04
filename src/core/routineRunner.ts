@@ -859,7 +859,9 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
   // Validate and resolve input parameters
   const resolvedInputs = validateAndResolveInputs(definition.parameters, rawInputs);
 
-  const ownsAgent = !existingAgent;
+  // ownsAgent flips to true when the runner constructs an agent (Mode 1) or a
+  // scoped executor off the caller's superagent (Mode 2 + requiredTools).
+  let ownsAgent = !existingAgent;
   const log = logger.child({ routine: definition.name });
 
   // 1. Create execution
@@ -881,20 +883,54 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
   const registeredHooks: Array<{ name: string; hook: Function }> = [];
 
   if (existingAgent) {
-    // Mode 2: Reuse pre-created agent — caller owns lifecycle
-    agent = existingAgent;
+    // Mode 2: caller passed a "superagent" carrying the full tool surface.
+    // If the routine declares requiredTools, build a scoped executor restricted
+    // to exactly those tools — caller's superagent stays untouched.
+    if (definition.requiredTools && definition.requiredTools.length > 0) {
+      const missing = definition.requiredTools.filter(
+        (name) => !existingAgent.tools.has(name),
+      );
+      if (missing.length > 0) {
+        execution.status = 'failed';
+        execution.error = `Missing required tools on agent: ${missing.join(', ')}`;
+        execution.completedAt = Date.now();
+        execution.lastUpdatedAt = Date.now();
+        return execution;
+      }
 
-    // Register routine-specific hooks on the existing agent (cleaned up in finally)
-    if (hooks) {
-      const hookNames = [
-        'before:execution', 'after:execution', 'before:llm', 'after:llm',
-        'before:tool', 'after:tool', 'approve:tool', 'pause:check',
-      ] as const;
-      for (const name of hookNames) {
-        const hook = hooks[name];
-        if (hook) {
-          agent.registerHook(name, hook as any);
-          registeredHooks.push({ name, hook });
+      agent = existingAgent.scopedTo(definition.requiredTools, {
+        instructions: buildSystemPrompt(definition),
+      });
+      ownsAgent = true; // runner now owns the scoped executor
+
+      if (hooks) {
+        const hookNames = [
+          'before:execution', 'after:execution', 'before:llm', 'after:llm',
+          'before:tool', 'after:tool', 'approve:tool', 'pause:check',
+        ] as const;
+        for (const name of hookNames) {
+          const hook = hooks[name];
+          if (hook) {
+            agent.registerHook(name, hook as any);
+          }
+        }
+      }
+    } else {
+      // No requiredTools declared — fall back to legacy behavior: reuse the
+      // caller's agent as-is, hooks register/unregister around the run.
+      agent = existingAgent;
+
+      if (hooks) {
+        const hookNames = [
+          'before:execution', 'after:execution', 'before:llm', 'after:llm',
+          'before:tool', 'after:tool', 'approve:tool', 'pause:check',
+        ] as const;
+        for (const name of hookNames) {
+          const hook = hooks[name];
+          if (hook) {
+            agent.registerHook(name, hook as any);
+            registeredHooks.push({ name, hook });
+          }
         }
       }
     }

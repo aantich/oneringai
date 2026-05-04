@@ -230,6 +230,47 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   }
 
   /**
+   * Build a fresh agent restricted to the named tools, reusing this agent's
+   * connector, model, and userId.
+   *
+   * This is the "filtered superagent" pattern: keep one agent carrying every
+   * possible tool, and at routine-execution time hand the runner an agent
+   * restricted to exactly the tools the routine declared in `requiredTools`.
+   *
+   * The returned agent is independent — its own AgentContextNextGen, own
+   * ToolManager (with fresh circuit breakers), own hooks. Caller owns its
+   * lifecycle and must `destroy()` it.
+   *
+   * Tool **functions** are shared by reference, so connector tools resolve the
+   * same way they would on the parent — no re-instantiation. `identities` is
+   * not propagated to avoid auto-regenerating a full connector tool surface
+   * (which would defeat the scope).
+   *
+   * Throws if any name is not registered on this agent.
+   */
+  scopedTo(
+    allowedToolNames: string[],
+    options?: { instructions?: string },
+  ): Agent {
+    const missing = allowedToolNames.filter((name) => !this.tools.has(name));
+    if (missing.length > 0) {
+      throw new Error(
+        `Agent.scopedTo: tool(s) not registered on agent: ${missing.join(', ')}`,
+      );
+    }
+
+    const scopedTools = allowedToolNames.map((name) => this.tools.get(name)!);
+
+    return Agent.create({
+      connector: this.connector,
+      model: this.model,
+      userId: this.userId,
+      tools: scopedTools,
+      ...(options?.instructions !== undefined ? { instructions: options.instructions } : {}),
+    });
+  }
+
+  /**
    * Resume an agent from a saved session
    *
    * @example
