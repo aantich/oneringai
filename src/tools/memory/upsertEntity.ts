@@ -22,6 +22,14 @@ export interface UpsertEntityArgs {
   aliases?: string[];
   /** Free-form metadata. */
   metadata?: Record<string, unknown>;
+  /**
+   * Metadata merge mode when re-upserting an existing entity. Default
+   * `'fillMissing'` only writes keys that are absent. Pass `'overwrite'` to
+   * force-replace existing keys (required for partial updates like status
+   * transitions that must land on the entity even when the field already
+   * has a value).
+   */
+  metadataMerge?: 'fillMissing' | 'overwrite';
   /** Visibility. Default 'private'. */
   visibility?: Visibility;
 }
@@ -30,8 +38,33 @@ const DESCRIPTION = `Create or merge an entity by identifier. If any supplied id
 
 Set {kind, value, exclusive:true} on canonical identifiers (email, phone) to mark them one-to-one — prevents the same identifier being attached to two entities.
 
-Example — upsert a person with multiple IDs (email flagged exclusive):
-{"type":"person","displayName":"Alice Smith","identifiers":[{"kind":"email","value":"alice@a.com","exclusive":true},{"kind":"slack_user_id","value":"U07ABC"}]}
+\`type\` is an open string, but these conventional types carry recognized metadata that retrieval, profile generation, and downstream prompts know about. Prefer them when applicable:
+
+  • person — strong identifiers: email / slack_user_id / phone / github.
+    {"type":"person","displayName":"Alice Smith","identifiers":[{"kind":"email","value":"alice@a.com","exclusive":true},{"kind":"slack_user_id","value":"U07ABC"}]}
+  • organization — domain / legal_name / ticker.
+    {"type":"organization","displayName":"Acme","identifiers":[{"kind":"domain","value":"acme.com","exclusive":true}]}
+  • task — actionable item. metadata: state ('pending'|'in_progress'|'blocked'|'deferred'|'done'|'cancelled'), dueAt, priority, assigneeId, projectId.
+    {"type":"task","displayName":"Send budget","identifiers":[{"kind":"canonical","value":"task:<userId>:send-budget-2026-04-30"}],"metadata":{"state":"pending","dueAt":"2026-04-30T09:00:00Z","priority":"high"}}
+  • event — time-bound occurrence. metadata: startTime, endTime, location, attendeeIds.
+    {"type":"event","displayName":"Meeting with Sarah","identifiers":[{"kind":"canonical","value":"event:<userId>:meeting-sarah-2026-04-21"}],"metadata":{"startTime":"2026-04-21T15:00:00+02:00","endTime":"2026-04-21T16:00:00+02:00"}}
+  • project — metadata: status, stakeholderIds.
+  • topic — free-form topical anchor (themes, recurring subjects).
+  • priority — see dedicated section below.
+
+Use the \`canonical\` identifier kind for entities that lack a natural external strong key (tasks, events, priorities). Format: \`<type>:<userId>:<slug>\`.
+
+PRIORITIES — long-term goals the user is tracking ("my Q2 priority is the NA launch", "my yearly goal is to ship X"). First-class entities; they bind tasks, signals, and ranking across the system. Two-step write — both steps are REQUIRED:
+
+  1. Upsert the priority entity:
+     {"type":"priority","displayName":"Ship NA launch","identifiers":[{"kind":"canonical","value":"priority:<userId>:ship-na-launch-2026-q2"}],"metadata":{"jarvis":{"priority":{"horizon":"Q","weight":0.8,"deadline":"2026-06-30T00:00:00Z","status":"active","scope":"personal"}}}}
+  2. Emit a \`tracks_priority\` fact (subject = the user's Person entity, object = the priority entity from step 1). Without this link the priority does not surface in the user's profile or in any ranking pass.
+
+Fields: \`horizon\` 'Q' (quarterly) or 'Y' (yearly); \`weight\` 0..1 drives ordering (heavier = more central, default 0.5); \`scope\` 'personal'|'team'|'company' is a categorical label the host platform may use to derive visibility — write what the user states, the host decides what it means; \`status\` starts 'active'.
+
+To transition status to 'met' or 'dropped', re-upsert the priority with the same canonical identifier, the new status under \`metadata.jarvis.priority.status\`, and \`metadataMerge:'overwrite'\` — the default \`'fillMissing'\` would silently keep the old status. Optionally also emit a \`state_changed\` fact (subject = priority entity, value = {from, to}) for an audit trail.
+
+When the user ties a priority to specific work ("this priority is about the NA Launch project"), also emit \`priority_affects\` (subject = priority entity, object = the affected project / person / topic) — future ranking uses these links to answer "is this signal/task relevant to a current priority?".
 
 Visibility (who can read the record) is decided by the host — do not try to set it.`;
 
@@ -64,6 +97,12 @@ export function createUpsertEntityTool(
             },
             aliases: { type: 'array', items: { type: 'string' } },
             metadata: { type: 'object' },
+            metadataMerge: {
+              type: 'string',
+              enum: ['fillMissing', 'overwrite'],
+              description:
+                "Merge mode for `metadata` when an existing entity is matched. Default 'fillMissing' (only writes absent keys). Pass 'overwrite' for partial updates that must replace existing values — e.g. status transitions on priority/task entities.",
+            },
           },
           required: ['type', 'displayName', 'identifiers'],
         },
@@ -98,6 +137,7 @@ export function createUpsertEntityTool(
             identifiers: args.identifiers,
             aliases: args.aliases,
             metadata: args.metadata,
+            metadataMerge: args.metadataMerge,
             permissions,
           },
           scope,
