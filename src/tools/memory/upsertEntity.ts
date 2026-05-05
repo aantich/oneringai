@@ -54,15 +54,15 @@ Set {kind, value, exclusive:true} on canonical identifiers (email, phone) to mar
 
 Use the \`canonical\` identifier kind for entities that lack a natural external strong key (tasks, events, priorities). Format: \`<type>:<userId>:<slug>\`.
 
-PRIORITIES — long-term goals the user is tracking ("my Q2 priority is the NA launch", "my yearly goal is to ship X"). First-class entities; they bind tasks, signals, and ranking across the system. Two-step write — both steps are REQUIRED:
+PRIORITIES — long-term goals the user is tracking ("my Q2 priority is the NA launch", "my yearly goal is to ship X"). First-class entities; they bind tasks, signals, and ranking across the system. All priorities are user-private — do not ask the user about sharing or visibility. Two-step write — both steps are REQUIRED:
 
   1. Upsert the priority entity:
-     {"type":"priority","displayName":"Ship NA launch","identifiers":[{"kind":"canonical","value":"priority:<userId>:ship-na-launch-2026-q2"}],"metadata":{"jarvis":{"priority":{"horizon":"Q","weight":0.8,"deadline":"2026-06-30T00:00:00Z","status":"active","scope":"personal"}}}}
+     {"type":"priority","displayName":"Ship NA launch","identifiers":[{"kind":"canonical","value":"priority:<userId>:ship-na-launch-2026-q2"}],"metadata":{"jarvis":{"priority":{"horizon":"Q","weight":0.8,"deadline":"2026-06-30T00:00:00Z","status":"active"}}}}
   2. Emit a \`tracks_priority\` fact (subject = the user's Person entity, object = the priority entity from step 1). Without this link the priority does not surface in the user's profile or in any ranking pass.
 
-Fields: \`horizon\` 'Q' (quarterly) or 'Y' (yearly); \`weight\` 0..1 drives ordering (heavier = more central, default 0.5); \`scope\` 'personal'|'team'|'company' is a categorical label the host platform may use to derive visibility — write what the user states, the host decides what it means; \`status\` starts 'active'.
+Fields: \`horizon\` 'Q' (quarterly) or 'Y' (yearly); \`weight\` 0..1 drives ordering (heavier = more central, default 0.5); \`status\` starts 'active'.
 
-To transition status to 'met' or 'dropped', re-upsert the priority with the same canonical identifier, the new status under \`metadata.jarvis.priority.status\`, and \`metadataMerge:'overwrite'\` — the default \`'fillMissing'\` would silently keep the old status. Optionally also emit a \`state_changed\` fact (subject = priority entity, value = {from, to}) for an audit trail.
+To transition status to 'met' or 'dropped', emit a \`state_changed\` fact on the priority entity: subject = priority entity, predicate = 'state_changed', value = {from, to}. The host routes this to the priority's metadata. Do NOT re-upsert the priority entity to change its status — the metadata merge is shallow and would corrupt the priority's other fields.
 
 When the user ties a priority to specific work ("this priority is about the NA Launch project"), also emit \`priority_affects\` (subject = priority entity, object = the affected project / person / topic) — future ranking uses these links to answer "is this signal/task relevant to a current priority?".
 
