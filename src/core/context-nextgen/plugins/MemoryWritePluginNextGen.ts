@@ -141,15 +141,15 @@ Do NOT use \`name\` (use \`full_name\` or \`preferred_name\`), \`employer\` (use
   \`memory_upsert_entity({type:'person', displayName:'Alice Smith', identifiers:[{kind:'email', value:'alice@acme.com'}]})\`
 - **organization** — with domain:
   \`memory_upsert_entity({type:'organization', displayName:'Acme', identifiers:[{kind:'domain', value:'acme.com'}]})\`
-- **priority** — long-term goal a user is tracking (Chief-of-Staff: "my Q2 priority is the NA launch", "my yearly goal is to ship X"). Two-step:
+- **priority** — long-term goal a user is tracking (Chief-of-Staff: "my Q2 priority is the NA launch", "my yearly goal is to ship X"). All priorities are user-private — do not ask the user about sharing or visibility. Two-step:
   1. Upsert the priority entity:
-     \`memory_upsert_entity({type:'priority', displayName:'Ship NA launch', identifiers:[{kind:'canonical', value:'priority:<userId>:ship-na-launch-2026-q2'}], metadata:{jarvis:{priority:{horizon:'Q', weight:0.8, deadline:'2026-06-30T00:00:00Z', status:'active', scope:'personal'}}}})\`
+     \`memory_upsert_entity({type:'priority', displayName:'Ship NA launch', identifiers:[{kind:'canonical', value:'priority:<userId>:ship-na-launch-2026-q2'}], metadata:{jarvis:{priority:{horizon:'Q', weight:0.8, deadline:'2026-06-30T00:00:00Z', status:'active'}}}})\`
   2. Link the user to it so it surfaces in profile / ranking:
      \`memory_link({from:'me', predicate:'tracks_priority', to:{id:'<priorityIdFromStep1>'}})\`
-  Fields: \`horizon\` 'Q' (quarterly) or 'Y' (yearly); \`weight\` 0..1 drives ordering (heavier = more central, default 0.5); \`scope\` 'personal'|'team'|'company' is a categorical label for ranking/filtering — it does NOT control privacy or sharing (the host platform manages visibility); \`status\` starts at 'active'.
-  Status transitions ('met' / 'dropped') — record the transition as an explicit \`state_changed\` fact on the priority entity. The system's task-state auto-router applies the change deterministically:
+  Fields: \`horizon\` 'Q' (quarterly) or 'Y' (yearly); \`weight\` 0..1 drives ordering (heavier = more central, default 0.5); \`status\` starts at 'active'.
+  Status transitions ('met' / 'dropped') — record the transition as an explicit \`state_changed\` fact on the priority entity. The host routes this to the priority's metadata:
   \`memory_remember({subject:{id:'<priorityId>'}, predicate:'state_changed', value:{from:'active', to:'met'}, observedAt:'<iso>'})\` (or \`to:'dropped'\`).
-  As an alternative when you want the change to land immediately on the entity itself, re-upsert with explicit overwrite: \`memory_upsert_entity({type:'priority', identifiers:[{kind:'canonical', value:'<sameCanonicalId>'}], metadata:{jarvis:{priority:{status:'met'}}}, metadataMerge:'overwrite'})\`. Default merge mode is \`fillMissing\` which would silently keep the old \`status\`.
+  Do NOT re-upsert the priority entity to change its status — the metadata merge is shallow and would corrupt the priority's other fields.
 - **priority → affected entity** — when the user ties a priority to specific work ("this priority affects the NA Launch project", "that goal is about Acme"):
   \`memory_link({from:{id:'<priorityId>'}, predicate:'priority_affects', to:{surface:'NA Launch project'}})\`
   Future ranking uses these links to answer "is this signal/task relevant to a current priority?". Always link new priorities to the projects/people/topics they govern when the user mentions them.

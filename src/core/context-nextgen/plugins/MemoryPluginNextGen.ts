@@ -22,7 +22,7 @@
  *   - ...
  *
  *   ## User's Active Priorities                   ← only when tracks_priority facts exist
- *   - **<priority displayName>** _(horizon=Q, weight=0.80, deadline=…, scope=personal)_
+ *   - **<priority displayName>** _(horizon=Q, weight=0.80, deadline=…)_
  *   - ...
  *
  *   ## About the User's Organization (<orgName>)  ← only when groupBootstrap set
@@ -298,7 +298,7 @@ Entities have conventional types — use them in \`memory_find_entity\` filters:
 - \`person\`, \`organization\`, \`project\`, \`topic\` — minimal metadata.
 - \`task\` — \`metadata: {state, dueAt, priority?, assigneeId?, projectId?}\`. State vocabulary: \`pending\` | \`in_progress\` | \`blocked\` | \`deferred\` | \`done\` | \`cancelled\`.
 - \`event\` — \`metadata: {startTime, endTime?, location?, attendeeIds?}\`.
-- \`priority\` — long-term goal a user is tracking (Chief-of-Staff: quarterly/yearly objective). \`metadata.jarvis.priority: {horizon: 'Q'|'Y', weight: 0..1, deadline?, status: 'active'|'met'|'dropped', scope: 'personal'|'team'|'company'}\`. \`scope\` is a categorical label (NOT a privacy/permissions setting — those are managed by the host platform). The owning user's Person entity is linked to a priority via a \`tracks_priority\` fact; what the priority affects (project/deal/person/topic) is linked via \`priority_affects\` facts. Walk these in \`memory_graph\` to answer "what's this user working toward?" and "is X relevant to a current priority?".
+- \`priority\` — long-term goal a user is tracking (Chief-of-Staff: quarterly/yearly objective). \`metadata.jarvis.priority: {horizon: 'Q'|'Y', weight: 0..1, deadline?, status: 'active'|'met'|'dropped'}\`. All priorities are user-private; the host platform manages visibility. The owning user's Person entity is linked to a priority via a \`tracks_priority\` fact; what the priority affects (project/deal/person/topic) is linked via \`priority_affects\` facts. Walk these in \`memory_graph\` to answer "what's this user working toward?" and "is X relevant to a current priority?".
 
 Example — list the user's open tasks:
 \`memory_find_entity({action:'list', by:{type:'task', metadataFilter:{state:{$in:['pending','in_progress']}}}})\`
