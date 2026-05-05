@@ -557,6 +557,9 @@ function factMatches(fact: IFact, filter: FactFilter, scope: ScopeFilter): boole
     return false;
   }
   if (filter.kind && fact.kind !== filter.kind) return false;
+  if (filter.sourceSignalId !== undefined && fact.sourceSignalId !== filter.sourceSignalId) {
+    return false;
+  }
   // F1: match facts whose supersedes field targets a given predecessor.
   if (filter.supersedes !== undefined && fact.supersedes !== filter.supersedes) return false;
   // H6: strict — require explicit confidence above the threshold. MemorySystem

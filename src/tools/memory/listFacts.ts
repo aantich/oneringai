@@ -1,7 +1,6 @@
 /**
- * memory_list_facts — enumerate atomic facts about a subject. Use when you
- * want structured raw facts rather than the LLM-synthesized profile (e.g.,
- * to count, tabulate, or export). Paginated.
+ * memory_list_facts — enumerate raw facts. Filters by subject entity, by
+ * source signal, or both. Paginated.
  */
 
 import type { ToolFunction } from '../../domain/entities/Tool.js';
@@ -10,8 +9,17 @@ import type { MemoryToolDeps, SubjectRef } from './types.js';
 import { clamp, resolveScope, toErrorMessage } from './types.js';
 
 export interface ListFactsArgs {
-  /** Subject. See SubjectRef forms. */
-  subject: SubjectRef;
+  /**
+   * Subject entity. Required UNLESS `sourceSignalId` is given. See SubjectRef
+   * forms.
+   */
+  subject?: SubjectRef;
+  /**
+   * Return only facts that were extracted from this source signal (the opaque
+   * id of an email / calendar event / transcript / etc. as known to the
+   * embedding application). May be combined with `subject` to AND the two.
+   */
+  sourceSignalId?: string;
   /** Filter to one predicate. */
   predicate?: string;
   /** Or multiple predicates (OR). */
@@ -30,13 +38,21 @@ export interface ListFactsArgs {
   cursor?: string;
 }
 
-const DESCRIPTION = `List facts about a subject. Use for enumeration when you want structured raw facts rather than the LLM-synthesized profile (e.g., to count, tabulate, export, or inspect individual entries).
+const DESCRIPTION = `List raw facts. Filters by subject entity, by source signal, or both. Use when you want structured raw rows rather than the LLM-synthesized profile (counting, tabulating, exporting, or pulling everything extracted from one specific source).
+
+REQUIRED: at least one of \`subject\` or \`sourceSignalId\`.
+
+Modes:
+- subject only — every fact about an entity (a person, deal, project, etc.)
+- sourceSignalId only — every fact extracted from one source (an email, a meeting, a transcript). The embedding application owns signal ids; resolve a meeting URL / message id to a signal id with the v25 \`signal_facts\` resolver, or pass the id directly if you already have it.
+- both — facts about that subject extracted from that one source (rare; useful for audit trails)
 
 Examples:
-- {"subject":"me","predicate":"prefers"} — all recorded user preferences (live, non-archived)
+- {"subject":"me","predicate":"prefers"} — all recorded user preferences
 - {"subject":{"surface":"Acme deal"},"limit":50} — everything about the deal
-- {"subject":"ent_xyz","predicates":["attended","missed"]} — attendance-only
-- {"subject":"me","archivedOnly":true} — audit view: only archived (historical) facts
+- {"sourceSignalId":"7eM3MWMZjmCxF3rbk"} — every fact extracted from one specific signal (atomic AND document; pass kind:"any" to include narrative-style memos/notes)
+- {"sourceSignalId":"7eM3MWMZjmCxF3rbk","kind":"any","predicates":["committed_to","decided","meeting_notes"]} — decisions and notes from one meeting
+- {"subject":"me","archivedOnly":true} — audit view of historical facts about user
 
 Paginated: reuse "cursor" from the response to fetch the next page.`;
 
@@ -50,7 +66,11 @@ export function createListFactsTool(deps: MemoryToolDeps): ToolFunction<ListFact
         parameters: {
           type: 'object',
           properties: {
-            subject: { description: 'Subject entity — see SubjectRef forms.' },
+            subject: { description: 'Subject entity — see SubjectRef forms. Optional if sourceSignalId is given.' },
+            sourceSignalId: {
+              type: 'string',
+              description: 'Opaque source signal id. Returns only facts extracted from this signal.',
+            },
             predicate: { type: 'string' },
             predicates: { type: 'array', items: { type: 'string' } },
             archivedOnly: { type: 'boolean' },
@@ -58,36 +78,56 @@ export function createListFactsTool(deps: MemoryToolDeps): ToolFunction<ListFact
             limit: { type: 'number' },
             cursor: { type: 'string' },
           },
-          required: ['subject'],
+          // No `required` — must validate one-of in execute().
         },
       },
     },
 
-    describeCall: (args) =>
-      `facts about ${typeof args.subject === 'string' ? args.subject : JSON.stringify(args.subject)}`,
+    describeCall: (args) => {
+      if (args.subject && args.sourceSignalId) {
+        const subj = typeof args.subject === 'string' ? args.subject : JSON.stringify(args.subject);
+        return `facts about ${subj} from signal ${args.sourceSignalId}`;
+      }
+      if (args.sourceSignalId) return `facts from signal ${args.sourceSignalId}`;
+      if (args.subject) {
+        return `facts about ${typeof args.subject === 'string' ? args.subject : JSON.stringify(args.subject)}`;
+      }
+      return 'facts (missing arguments)';
+    },
 
     execute: async (args, context) => {
-      if (!args.subject) return { error: 'subject is required' };
+      if (!args.subject && !args.sourceSignalId) {
+        return { error: 'must provide subject, sourceSignalId, or both' };
+      }
       const scope = resolveScope(context?.userId, deps.defaultUserId, deps.defaultGroupId);
-      const resolved = await deps.resolve(args.subject, scope);
-      if (!resolved.ok) {
-        return { error: resolved.message, candidates: resolved.candidates };
+
+      const filter: FactFilter = {};
+      let resolvedSubject: { id: string; displayName?: string } | undefined;
+
+      if (args.subject) {
+        const resolved = await deps.resolve(args.subject, scope);
+        if (!resolved.ok) {
+          return { error: resolved.message, candidates: resolved.candidates };
+        }
+        filter.subjectId = resolved.entity.id;
+        resolvedSubject = { id: resolved.entity.id, displayName: resolved.entity.displayName };
       }
 
-      const filter: FactFilter = {
-        subjectId: resolved.entity.id,
-      };
+      if (args.sourceSignalId) filter.sourceSignalId = args.sourceSignalId;
       if (args.predicate) filter.predicate = args.predicate;
       if (args.predicates?.length) filter.predicates = args.predicates;
       if (args.archivedOnly === true) {
-        // FactFilter.archived === true returns archived-only (audit view).
-        // Default (archived undefined) returns only non-archived.
         filter.archived = true;
       }
       if (args.kind === 'atomic' || args.kind === 'document') {
         filter.kind = args.kind;
+      } else if (args.kind === 'any') {
+        // leave undefined to match both
       } else if (!args.kind) {
-        filter.kind = 'atomic';
+        // Default depends on mode: subject-only stays atomic (existing behavior);
+        // source-only defaults to 'any' since transcripts/memos are document-kind
+        // and that's exactly the surprising omission we want to avoid.
+        filter.kind = args.sourceSignalId && !args.subject ? undefined : 'atomic';
       }
 
       try {
@@ -101,9 +141,11 @@ export function createListFactsTool(deps: MemoryToolDeps): ToolFunction<ListFact
           scope,
         );
         return {
-          subject: { id: resolved.entity.id, displayName: resolved.entity.displayName },
+          ...(resolvedSubject ? { subject: resolvedSubject } : {}),
+          ...(args.sourceSignalId ? { sourceSignalId: args.sourceSignalId } : {}),
           facts: page.items.map((f) => ({
             id: f.id,
+            subjectId: f.subjectId,
             predicate: f.predicate,
             kind: f.kind,
             objectId: f.objectId,
@@ -112,6 +154,7 @@ export function createListFactsTool(deps: MemoryToolDeps): ToolFunction<ListFact
             confidence: f.confidence,
             importance: f.importance,
             observedAt: f.observedAt,
+            sourceSignalId: f.sourceSignalId,
             archived: f.archived,
           })),
           nextCursor: page.nextCursor,

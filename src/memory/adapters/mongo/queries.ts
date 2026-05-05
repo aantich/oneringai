@@ -38,6 +38,9 @@ export function factFilterToMongo(filter: FactFilter, scope: ScopeFilter): Mongo
     clauses.push({ predicate: { $in: filter.predicates } });
   }
   if (filter.kind !== undefined) clauses.push({ kind: filter.kind });
+  if (filter.sourceSignalId !== undefined) {
+    clauses.push({ sourceSignalId: filter.sourceSignalId });
+  }
   // F1: supersession-chain lookup — find the successor of a specific fact.
   if (filter.supersedes !== undefined) clauses.push({ supersedes: filter.supersedes });
   if (filter.minConfidence !== undefined) {

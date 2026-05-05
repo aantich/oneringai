@@ -342,6 +342,14 @@ export interface FactFilter {
   predicate?: string;
   predicates?: string[];
   kind?: FactKind;
+  /**
+   * Match facts whose `sourceSignalId` equals this id — i.e. all facts that
+   * were extracted from one specific source signal (an email, a calendar
+   * event, a meeting transcript, etc.). The signal id is opaque from the
+   * library's point of view; the embedding application is responsible for
+   * resolving "this meeting" / "this email" → signal id.
+   */
+  sourceSignalId?: string;
   /** Defaults to false (archived rows hidden). Pass true to include only archived, or undefined for default. */
   archived?: boolean;
   minConfidence?: number;
