@@ -71,6 +71,8 @@ export const pagerdutyTemplate: VendorTemplate = {
         'read': 'Read incidents, services, and schedules',
         'write': 'Create and update incidents and services',
       },
+      // PagerDuty OAuth issues refresh_token automatically.
+      refreshStrategy: { kind: 'automatic' },
     },
   ],
 };
@@ -120,6 +122,8 @@ export const sentryTemplate: VendorTemplate = {
         'org:read': 'Read organization info',
         'member:read': 'Read org member info',
       },
+      // Sentry OAuth issues refresh_token automatically (access token ~8h).
+      refreshStrategy: { kind: 'automatic' },
     },
   ],
 };

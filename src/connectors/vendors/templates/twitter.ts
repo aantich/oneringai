@@ -73,6 +73,9 @@ export const twitterTemplate: VendorTemplate = {
         'dm.write': 'Send direct messages',
         'offline.access': 'Stay connected (refresh token)',
       },
+      // X/Twitter requires `offline.access` (with a DOT, not underscore — a
+      // common gotcha vs. OIDC `offline_access`) to issue a refresh_token.
+      refreshStrategy: { kind: 'scope', scope: 'offline.access' },
     },
     {
       id: 'bearer-token',

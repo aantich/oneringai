@@ -38,6 +38,10 @@ export const dropboxTemplate: VendorTemplate = {
         'sharing.write': 'Manage sharing settings',
         'account_info.read': 'Read account information',
       },
+      // Dropbox requires `token_access_type=offline` on the authorize URL to
+      // issue a refresh_token. Without it, access tokens are short-lived and
+      // unrefreshable.
+      refreshStrategy: { kind: 'auth_param', key: 'token_access_type', value: 'offline' },
     },
   ],
 };

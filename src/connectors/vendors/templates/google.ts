@@ -68,6 +68,11 @@ export const googleTemplate: VendorTemplate = {
         'https://www.googleapis.com/auth/tasks': 'Read and write Google Tasks',
         'https://www.googleapis.com/auth/admin.directory.user.readonly': 'Read user directory (Admin)',
       },
+      // Google requires `access_type=offline` query param to return a
+      // refresh_token. (The `defaults.authorizationParams` above sets it; the
+      // strategy declaration is the canonical source of truth and the
+      // defensive re-application path for hosts that bypass buildAuthConfig.)
+      refreshStrategy: { kind: 'auth_param', key: 'access_type', value: 'offline' },
     },
     {
       id: 'service-account',

@@ -47,6 +47,16 @@ export interface OAuthConnectorAuth {
   scope?: string;
   usePKCE?: boolean;
 
+  /**
+   * Vendor-mandated scope token that must appear in every authorize URL for
+   * refresh-token issuance (e.g. `offline_access` for Microsoft / Atlassian,
+   * `refresh_token` for Salesforce, `offline.access` for Twitter/X). Stamped
+   * by `buildAuthConfig` from the template's `RefreshStrategy`. Force-merged
+   * into `scope` at URL-build time so operator scope overrides
+   * (e.g. Microsoft `.default`) can't drop it. Idempotent.
+   */
+  requiredScope?: string;
+
   // JWT bearer flow specific
   privateKey?: string;
   privateKeyPath?: string;

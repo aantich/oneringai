@@ -211,3 +211,89 @@ describe('prompt v5 — negative-example calibration', () => {
     expect(p).not.toContain('Calibration — items the user has DISMISSED before');
   });
 });
+
+describe('prompt v5 — prior thread context (background-only block)', () => {
+  // The prior-thread block is the canonical chokepoint for thread-aware
+  // extraction: it tells the LLM "use these earlier messages as background,
+  // do NOT re-extract from them" and pairs with the canonical-id rule so
+  // follow-up commitments merge into existing tasks.
+
+  it('omits the block entirely when priorThreadContext is undefined', () => {
+    const p = defaultExtractionPrompt({ signalText: 'x' });
+    expect(p).not.toContain('Prior thread context');
+    expect(p).not.toContain('prior_thread_context_');
+  });
+
+  it('omits the block when priorThreadContext is an empty array', () => {
+    const p = defaultExtractionPrompt({ signalText: 'x', priorThreadContext: [] });
+    expect(p).not.toContain('Prior thread context');
+  });
+
+  it('renders the block with header + body when supplied', () => {
+    const p = defaultExtractionPrompt({
+      signalText: 'New reply content.',
+      priorThreadContext: [
+        {
+          header: 'From Anton at 2026-05-06T08:44Z',
+          body: 'Original message about the access setup.',
+        },
+      ],
+    });
+    expect(p).toContain('## Prior thread context (background only — DO NOT extract from this)');
+    expect(p).toContain('From Anton at 2026-05-06T08:44Z');
+    expect(p).toContain('Original message about the access setup.');
+  });
+
+  it('renders multiple prior messages separated by header markers', () => {
+    const p = defaultExtractionPrompt({
+      signalText: 'Latest message.',
+      priorThreadContext: [
+        { header: 'From Anton at T1', body: 'First message.' },
+        { header: 'From Pavel at T2', body: 'Second reply.' },
+      ],
+    });
+    expect(p).toContain('--- From Anton at T1 ---');
+    expect(p).toContain('First message.');
+    expect(p).toContain('--- From Pavel at T2 ---');
+    expect(p).toContain('Second reply.');
+  });
+
+  it('uses a nonce-tagged delimiter (defends against tag-injection in prior bodies)', () => {
+    const p = defaultExtractionPrompt({
+      signalText: 'x',
+      priorThreadContext: [{ header: 'h', body: 'b' }],
+    });
+    // Open and close tags must include a nonce suffix, not a bare label.
+    expect(p).toMatch(/<prior_thread_context_[A-Za-z0-9]+>/);
+    expect(p).toMatch(/<\/prior_thread_context_[A-Za-z0-9]+>/);
+  });
+
+  it('places the prior block BEFORE the signal_content block (extraction target is last)', () => {
+    const p = defaultExtractionPrompt({
+      signalText: 'TARGET_TEXT_TO_EXTRACT',
+      priorThreadContext: [{ header: 'PRIOR_HDR', body: 'PRIOR_BODY' }],
+    });
+    const priorIdx = p.indexOf('PRIOR_HDR');
+    const targetIdx = p.indexOf('TARGET_TEXT_TO_EXTRACT');
+    expect(priorIdx).toBeGreaterThan(0);
+    expect(targetIdx).toBeGreaterThan(priorIdx);
+  });
+
+  it('explicitly instructs the LLM to use prior context for canonical-id merging', () => {
+    const p = defaultExtractionPrompt({
+      signalText: 'x',
+      priorThreadContext: [{ header: 'h', body: 'b' }],
+    });
+    expect(p).toContain('SAME canonical id');
+    expect(p).toContain('rule 4');
+  });
+
+  it('explicitly forbids extracting from the prior block', () => {
+    const p = defaultExtractionPrompt({
+      signalText: 'x',
+      priorThreadContext: [{ header: 'h', body: 'b' }],
+    });
+    expect(p).toContain('DO NOT extract');
+    expect(p).toMatch(/Do NOT emit facts.*prior content/i);
+  });
+});

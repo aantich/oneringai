@@ -324,6 +324,39 @@ export class Connector {
     return info;
   }
 
+  /**
+   * Backfill resolver for OAuth `authorization_code` connectors loaded from
+   * persisted configs that pre-date the `RefreshStrategy` annotation. Given a
+   * `serviceType` (e.g. `'microsoft'`), returns a patch that re-applies the
+   * vendor template's strategy: stamps `requiredScope` and merges the
+   * scope/authorizationParams. Returns `undefined` if no template is found
+   * or the strategy is a no-op (`automatic`/`never_expires`/`manual_setup`).
+   *
+   * Registered by `vendors/index.ts` at module-load time, so the lookup
+   * works for any host that imports `@everworker/oneringai`. Hosts that
+   * bypass `buildAuthConfig` (e.g. v25's GroupScopedConnectorRegistry, which
+   * reconstructs Connectors from decrypted DB configs) still get the right
+   * refresh-grant tokens on every authorize URL — no migration required.
+   */
+  private static refreshStrategyBackfill?: (
+    serviceType: string | undefined,
+    auth: ConnectorAuth & { type: 'oauth' },
+  ) => {
+    requiredScope?: string;
+    scope?: string;
+    authorizationParams?: Record<string, string>;
+  } | undefined;
+
+  /**
+   * Register the refresh-strategy backfill resolver. Called by
+   * `vendors/index.ts` once at boot. Idempotent (a second call replaces).
+   */
+  static setRefreshStrategyBackfill(
+    fn: NonNullable<typeof Connector.refreshStrategyBackfill>,
+  ): void {
+    Connector.refreshStrategyBackfill = fn;
+  }
+
   // ============ Instance ============
 
   readonly id: string;
@@ -874,6 +907,34 @@ export class Connector {
   // ============ Private ============
 
   private initOAuthManager(auth: ConnectorAuth & { type: 'oauth' }): void {
+    // Backfill RefreshStrategy for legacy configs that were saved before the
+    // `requiredScope` field existed. Without this, a Microsoft connector
+    // saved with an operator-overridden scope (e.g. `.default`) would lose
+    // refresh-token issuance on every reconstruction-from-DB. Only kicks in
+    // for `authorization_code` flows where the field is absent — never
+    // overrides an explicitly-stamped value.
+    let scope = auth.scope;
+    let requiredScope = auth.requiredScope;
+    let authorizationParams = auth.authorizationParams;
+    if (
+      auth.flow === 'authorization_code' &&
+      // `== null` (intentional double-equals) catches both `undefined` AND
+      // `null`. Some storage layers (MongoDB, Postgres jsonb, Firestore)
+      // preserve `null` literally rather than dropping the field — without
+      // this, a host-persisted `requiredScope: null` would silently bypass
+      // the backfill and break refresh-token issuance for legacy Microsoft /
+      // Salesforce / Atlassian / Twitter configs.
+      auth.requiredScope == null &&
+      Connector.refreshStrategyBackfill
+    ) {
+      const patch = Connector.refreshStrategyBackfill(this.config.serviceType, auth);
+      if (patch) {
+        if (patch.scope !== undefined) scope = patch.scope;
+        if (patch.requiredScope !== undefined) requiredScope = patch.requiredScope;
+        if (patch.authorizationParams !== undefined) authorizationParams = patch.authorizationParams;
+      }
+    }
+
     // Convert ConnectorAuth to OAuthConfig
     const oauthConfig = {
       flow: auth.flow as 'authorization_code' | 'client_credentials' | 'jwt_bearer',
@@ -882,7 +943,8 @@ export class Connector {
       tokenUrl: auth.tokenUrl,
       authorizationUrl: auth.authorizationUrl,
       redirectUri: auth.redirectUri,
-      scope: auth.scope,
+      scope,
+      requiredScope,
       usePKCE: auth.usePKCE,
       privateKey: auth.privateKey,
       privateKeyPath: auth.privateKeyPath,
@@ -890,7 +952,7 @@ export class Connector {
       tokenRequestStyle: auth.tokenRequestStyle,
       tokenLifetimeSeconds: auth.tokenLifetimeSeconds,
       refreshBeforeExpiry: auth.refreshBeforeExpiry,
-      authorizationParams: auth.authorizationParams,
+      authorizationParams,
       storage: Connector.defaultStorage,
       storageKey: auth.storageKey ?? this.name,
     };

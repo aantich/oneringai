@@ -49,6 +49,9 @@ export const zoomTemplate: VendorTemplate = {
         'cloud_recording:read:list_recording_files': 'View cloud recordings',
         'cloud_recording:read:recording_transcript': 'Access meeting transcripts',
       },
+      // Zoom OAuth: access tokens expire in 1h, refresh_token issued
+      // automatically.
+      refreshStrategy: { kind: 'automatic' },
     },
     {
       id: 'server-to-server',

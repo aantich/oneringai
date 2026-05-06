@@ -66,6 +66,9 @@ export const mailchimpTemplate: VendorTemplate = {
         tokenUrl: 'https://login.mailchimp.com/oauth2/token',
         usePKCE: true,
       },
+      // Mailchimp OAuth tokens are long-lived and don't expire — no refresh
+      // mechanism. Re-auth only on revocation.
+      refreshStrategy: { kind: 'never_expires' },
     },
   ],
 };

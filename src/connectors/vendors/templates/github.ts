@@ -52,6 +52,12 @@ export const githubTemplate: VendorTemplate = {
         'delete_repo': 'Delete repositories',
         'admin:org': 'Full control of orgs and teams',
       },
+      // GitHub OAuth Apps issue non-expiring access tokens by default —
+      // refresh tokens are only used by GitHub Apps with user-token expiry
+      // explicitly enabled. The OAuth-App template here intentionally relies
+      // on the never-expiry behavior; switch to `github-app` (jwt_bearer) for
+      // org-wide automation if shorter-lived tokens are needed.
+      refreshStrategy: { kind: 'never_expires' },
     },
     {
       id: 'github-app',

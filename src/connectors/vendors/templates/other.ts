@@ -105,6 +105,9 @@ export const zendeskTemplate: VendorTemplate = {
         'tickets:read': 'Read support tickets',
         'tickets:write': 'Create and update tickets',
       },
+      // Zendesk OAuth tokens don't expire by default — long-lived. No
+      // refresh mechanism in the standard flow.
+      refreshStrategy: { kind: 'never_expires' },
     },
   ],
 };
@@ -146,6 +149,8 @@ export const intercomTemplate: VendorTemplate = {
         tokenUrl: 'https://api.intercom.io/auth/eagle/token',
         usePKCE: true,
       },
+      // Intercom OAuth tokens don't expire — no refresh mechanism.
+      refreshStrategy: { kind: 'never_expires' },
     },
   ],
 };
@@ -202,6 +207,9 @@ export const shopifyTemplate: VendorTemplate = {
         'read_fulfillments': 'Read fulfillment data',
         'write_fulfillments': 'Create and update fulfillments',
       },
+      // Shopify Admin API access tokens are long-lived (do not expire) for
+      // online & offline access modes. No refresh mechanism.
+      refreshStrategy: { kind: 'never_expires' },
     },
   ],
 };

@@ -61,6 +61,13 @@ export const slackTemplate: VendorTemplate = {
         'search:read': 'Search messages and files',
         'team:read': 'View workspace info',
       },
+      // Slack OAuth issues non-expiring `xoxb-` / `xoxp-` tokens by default.
+      // Refresh tokens (`xoxe-`) are only issued when token rotation is
+      // explicitly enabled per-app in the Slack app config — out of band of
+      // the OAuth flow itself. Default behavior here assumes non-rotating
+      // tokens that never expire; flip to a custom strategy if your app
+      // enables rotation.
+      refreshStrategy: { kind: 'never_expires' },
     },
   ],
 };

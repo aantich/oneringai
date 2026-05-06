@@ -18,6 +18,14 @@ export interface OAuthConfig {
   scope?: string;
   usePKCE?: boolean; // Default: true
 
+  /**
+   * Vendor-mandated scope token for refresh-token issuance (e.g. `offline_access`,
+   * `refresh_token`, `offline.access`). Sourced from the vendor template's
+   * `RefreshStrategy`; force-merged into the authorize URL `scope` parameter
+   * even when the operator overrides `scope` (e.g. Microsoft `.default`).
+   */
+  requiredScope?: string;
+
   // Client Credentials specific
   clientSecret?: string;
 

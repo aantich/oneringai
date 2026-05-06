@@ -26,6 +26,21 @@ User Code → Connector Registry → Agent → Provider Factory → ITextProvide
 - **ToolManager** (`src/core/ToolManager.ts`) — Unified tool management + execution. `IToolExecutor`, `IDisposable`. Per-tool circuit breakers
 - **Vendor** (`src/core/Vendor.ts`) — Const object: `{ OpenAI, Anthropic, Google, GoogleVertex, Groq, Together, Grok, DeepSeek, Mistral, Perplexity, Ollama, Custom }`
 
+## OAuth: Vendor Refresh Strategy
+
+Every authorization_code vendor template MUST declare a `refreshStrategy: RefreshStrategy` (validated at registry-init time — `initVendorRegistry` throws on missing). Drives whether the library force-merges anything into the authorize URL to guarantee refresh-capable tokens.
+
+**Variants** (`src/connectors/vendors/types.ts`):
+- `{ kind: 'scope', scope: '<token>' }` — vendor requires this scope for refresh-token issuance. Force-merged into `scope` AND stamped on `OAuthConnectorAuth.requiredScope` so reconstitution-from-DB paths re-apply it. Microsoft / Atlassian → `offline_access`, Salesforce → `refresh_token`, Twitter/X → `offline.access` (dot, not underscore!).
+- `{ kind: 'auth_param', key, value }` — vendor requires an authorize-URL query param. Merged into `authorizationParams` without clobbering operator-set keys. Google → `access_type=offline`, Dropbox → `token_access_type=offline`.
+- `{ kind: 'automatic' }` — vendor issues `refresh_token` unconditionally. No-op (Discord, Asana, HubSpot, Stripe, QuickBooks, Box, Zoom, Pipedrive, Ramp, Bitbucket, Airtable, GitLab, PagerDuty, Sentry).
+- `{ kind: 'never_expires' }` — vendor's tokens don't expire; refresh n/a (Notion, Linear, Slack default, Trello, Mailchimp, Zendesk, Intercom, Shopify, GitHub OAuth Apps).
+- `{ kind: 'manual_setup', description }` — refresh requires out-of-band IdP/app config the library can't enforce (e.g. GitHub App "expire user tokens" toggle, Slack token rotation enable). No-op on the wire; surface the description to operators.
+
+**Defensive backfill:** `Connector.setRefreshStrategyBackfill(...)` is registered by `vendors/index.ts` at boot. When a Connector is reconstructed from a persisted config that pre-dates the `requiredScope` annotation, `initOAuthManager` looks up the vendor template by `serviceType` and re-applies the strategy. **No migration required for existing saved connectors.**
+
+**Persistence:** `requiredScope` lives on `OAuthConnectorAuth` and survives encryption/decryption (spread-preserved by `ConnectorConfigStore`). Hosts that bypass `buildAuthConfig` (e.g. v25's `GroupScopedConnectorRegistry`) get the right behavior via the backfill.
+
 ## AgentContextNextGen
 
 Plugin-first context manager. Features enable/disable plugins:

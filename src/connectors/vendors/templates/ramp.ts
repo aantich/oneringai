@@ -52,6 +52,8 @@ export const rampTemplate: VendorTemplate = {
         'departments:read',
         'reimbursements:read',
       ],
+      // Ramp OAuth issues refresh_token automatically.
+      refreshStrategy: { kind: 'automatic' },
     },
   ],
 };

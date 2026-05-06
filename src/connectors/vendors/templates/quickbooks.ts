@@ -31,6 +31,9 @@ export const quickbooksTemplate: VendorTemplate = {
         usePKCE: true,
       },
       scopes: ['com.intuit.quickbooks.accounting', 'com.intuit.quickbooks.payment'],
+      // QuickBooks OAuth: access tokens expire in 1h, refresh_token issued
+      // automatically (refresh_token rotates on use; lifetime ~100d).
+      refreshStrategy: { kind: 'automatic' },
     },
   ],
 };

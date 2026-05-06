@@ -41,6 +41,12 @@ export const stripeTemplate: VendorTemplate = {
         usePKCE: true,
       },
       scopes: ['read_write'],
+      // Stripe Connect: connected-account access tokens are long-lived (do
+      // not expire) for Standard accounts. Refresh tokens are returned
+      // automatically on the initial exchange but are typically not needed
+      // for ongoing access — treat as automatic so the lib stores them if
+      // present.
+      refreshStrategy: { kind: 'automatic' },
     },
   ],
 };

@@ -38,6 +38,10 @@ export const salesforceTemplate: VendorTemplate = {
         'wave_api': 'Access Analytics (Wave) API',
         'full': 'Full access to all data',
       },
+      // Salesforce requires `refresh_token` scope for refresh-token issuance
+      // (also accepts `offline_access`). Without it, access tokens (~2h)
+      // become terminal.
+      refreshStrategy: { kind: 'scope', scope: 'refresh_token' },
     },
     {
       id: 'jwt-bearer',

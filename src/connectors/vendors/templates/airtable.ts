@@ -41,6 +41,9 @@ export const airtableTemplate: VendorTemplate = {
         usePKCE: true,
       },
       scopes: ['data.records:read', 'data.records:write', 'schema.bases:read'],
+      // Airtable OAuth: access tokens expire in ~1h, refresh_token issued
+      // automatically on every authorization_code exchange.
+      refreshStrategy: { kind: 'automatic' },
     },
   ],
 };

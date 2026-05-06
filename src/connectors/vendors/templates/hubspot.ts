@@ -60,6 +60,9 @@ export const hubspotTemplate: VendorTemplate = {
         'tickets': 'Read and write support tickets',
         'e-commerce': 'Access e-commerce data (products, line items)',
       },
+      // HubSpot OAuth: access tokens expire in ~30min, refresh_token issued
+      // automatically (refresh_token never expires).
+      refreshStrategy: { kind: 'automatic' },
     },
     {
       id: 'oauth-mcp',
@@ -76,6 +79,9 @@ export const hubspotTemplate: VendorTemplate = {
         tokenUrl: 'https://mcp.hubspot.com/oauth/v1/token',
         usePKCE: true,
       },
+      // HubSpot MCP Auth Apps issue refresh tokens automatically — same
+      // behavior as the public-app flow.
+      refreshStrategy: { kind: 'automatic' },
     },
   ],
 };

@@ -40,6 +40,9 @@ export const pipedriveTemplate: VendorTemplate = {
         tokenUrl: 'https://oauth.pipedrive.com/oauth/token',
         usePKCE: true,
       },
+      // Pipedrive OAuth: access tokens expire in ~1h, refresh_token issued
+      // automatically.
+      refreshStrategy: { kind: 'automatic' },
     },
   ],
 };

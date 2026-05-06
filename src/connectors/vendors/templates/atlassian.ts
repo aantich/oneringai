@@ -49,6 +49,7 @@ export const jiraTemplate: VendorTemplate = {
         'manage:jira-project': 'Manage projects and components',
         'manage:jira-configuration': 'Manage Jira settings',
       },
+      refreshStrategy: { kind: 'scope', scope: 'offline_access' },
     },
   ],
 };
@@ -99,6 +100,7 @@ export const confluenceTemplate: VendorTemplate = {
         'write:confluence-space': 'Create and manage spaces',
         'read:confluence-user': 'Read user information',
       },
+      refreshStrategy: { kind: 'scope', scope: 'offline_access' },
     },
   ],
 };
@@ -150,6 +152,9 @@ export const bitbucketTemplate: VendorTemplate = {
         'pipeline': 'Access Pipelines (CI/CD)',
         'wiki': 'Access repository wiki',
       },
+      // Bitbucket OAuth issues a refresh_token on every authorization_code
+      // exchange — no special scope or query param required.
+      refreshStrategy: { kind: 'automatic' },
     },
   ],
 };
@@ -198,6 +203,9 @@ export const trelloTemplate: VendorTemplate = {
         'write': 'Create and update boards, lists, and cards',
         'account': 'Read member information',
       },
+      // Trello tokens don't expire by default — the OAuth flow returns
+      // long-lived tokens, no refresh needed.
+      refreshStrategy: { kind: 'never_expires' },
     },
   ],
 };

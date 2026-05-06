@@ -50,6 +50,9 @@ export const discordTemplate: VendorTemplate = {
         'bot': 'Add a bot to your servers',
         'connections': 'View your connected accounts',
       },
+      // Discord OAuth2: access tokens expire in ~7d, refresh_token issued
+      // automatically with no special scope required.
+      refreshStrategy: { kind: 'automatic' },
     },
   ],
 };

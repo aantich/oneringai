@@ -41,6 +41,9 @@ export const asanaTemplate: VendorTemplate = {
         usePKCE: true,
       },
       scopes: ['default'],
+      // Asana OAuth: access tokens expire in 1h, refresh_token issued
+      // automatically (refresh_token never expires).
+      refreshStrategy: { kind: 'automatic' },
     },
   ],
 };

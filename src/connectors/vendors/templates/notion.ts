@@ -40,6 +40,8 @@ export const notionTemplate: VendorTemplate = {
         tokenUrl: 'https://api.notion.com/v1/oauth/token',
         usePKCE: true,
       },
+      // Notion access tokens don't expire — no refresh mechanism.
+      refreshStrategy: { kind: 'never_expires' },
     },
   ],
 };

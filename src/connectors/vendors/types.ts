@@ -9,6 +9,35 @@ import type { ServiceCategory } from '../../domain/entities/Services.js';
 import type { ConnectorAuth } from '../../domain/entities/Connector.js';
 
 /**
+ * How a vendor issues refresh tokens for `authorization_code` flows. Determines
+ * what (if anything) the library force-merges into authorize URLs to guarantee
+ * long-lived sessions without manual re-auth. **Required** for every
+ * `authorization_code` template — the registry initializer fails fast if absent.
+ *
+ * - `automatic`: vendor issues a refresh token unconditionally (Discord, Asana,
+ *   HubSpot, Stripe, QuickBooks, Box, Zoom, Pipedrive, Ramp, Atlassian-Bitbucket).
+ * - `never_expires`: tokens don't expire (or have multi-year lifetime), no
+ *   refresh ever needed (Notion, Linear, Airtable PAT, GitHub OAuth Apps,
+ *   Slack classic bot tokens).
+ * - `scope`: a specific scope token must be in the authorize request. Microsoft
+ *   / Atlassian / GitLab use `offline_access`; Salesforce uses `refresh_token`;
+ *   Twitter/X uses `offline.access` (note the dot). Force-merged on every
+ *   authorize URL to survive operator scope overrides.
+ * - `auth_param`: a query param must be on the authorize URL. Google uses
+ *   `access_type=offline`; Dropbox uses `token_access_type=offline`. Stamped
+ *   into the persisted `authorizationParams`.
+ * - `manual_setup`: refresh tokens require out-of-band IdP / app config the
+ *   library can't enforce (GitHub App "expire user tokens" toggle, Slack token
+ *   rotation enable). Surfaces a warning at template-import time.
+ */
+export type RefreshStrategy =
+  | { kind: 'automatic' }
+  | { kind: 'never_expires' }
+  | { kind: 'scope'; scope: string }
+  | { kind: 'auth_param'; key: string; value: string }
+  | { kind: 'manual_setup'; description: string };
+
+/**
  * Authentication template for a vendor
  * Defines a single authentication method (e.g., API key, OAuth user flow)
  */
@@ -42,6 +71,14 @@ export interface AuthTemplate {
 
   /** Human-readable descriptions for scopes (key = scope ID) */
   scopeDescriptions?: Record<string, string>;
+
+  /**
+   * How this vendor issues refresh tokens. **Required** when
+   * `flow === 'authorization_code'`; ignored otherwise. Drives the force-merge
+   * that guarantees refresh-capable tokens without operator intervention.
+   * Validated at registry-init time — missing on an auth-code template throws.
+   */
+  refreshStrategy?: RefreshStrategy;
 }
 
 /**

@@ -11,6 +11,7 @@ import { ConnectorTools } from '../../tools/connector/ConnectorTools.js';
 import type {
   VendorTemplate,
   AuthTemplate,
+  RefreshStrategy,
   TemplateCredentials,
   CreateConnectorOptions,
 } from './types.js';
@@ -19,9 +20,29 @@ import type {
 let vendorRegistry: Map<string, VendorTemplate> | null = null;
 
 /**
- * Initialize the vendor registry (called by generated registry file)
+ * Initialize the vendor registry (called by generated registry file).
+ *
+ * Validates that every `authorization_code` auth template declares a
+ * `refreshStrategy`. Refresh-token issuance is a contract — without an
+ * explicit strategy, a vendor's tokens silently expire after ~1h with no
+ * recovery. Failing fast here surfaces the missing annotation at boot
+ * instead of as a silent prod degradation hours later.
  */
 export function initVendorRegistry(templates: VendorTemplate[]): void {
+  const errors: string[] = [];
+  for (const template of templates) {
+    for (const auth of template.authTemplates) {
+      if (auth.type === 'oauth' && auth.flow === 'authorization_code' && !auth.refreshStrategy) {
+        errors.push(`${template.id}/${auth.id}`);
+      }
+    }
+  }
+  if (errors.length > 0) {
+    throw new Error(
+      `Vendor registry: missing refreshStrategy on authorization_code auth templates: ${errors.join(', ')}. ` +
+        `Every auth-code template MUST declare how its IdP issues refresh tokens (scope, auth_param, automatic, never_expires, or manual_setup).`
+    );
+  }
   vendorRegistry = new Map(templates.map((t) => [t.id, t]));
 }
 
@@ -74,54 +95,94 @@ export function listVendorIds(): string[] {
 }
 
 /**
- * OAuth scopes that grant refresh-token issuance. Providers only return a
- * `refresh_token` if one of these is in the authorization request — without
- * a refresh token, the access token's expiry becomes terminal (no recovery
- * short of forcing the user to re-authenticate).
- *
- * Manual scope overrides on the connector config (e.g. swapping the full
- * scope list for Microsoft's `.default`) silently dropped these — exactly
- * the silent-degradation class of bug we ban in this codebase. Force-merging
- * makes refresh capability a contract, not a polite request.
+ * Merge a single required scope token into a space-separated scope string.
+ * Idempotent: returns the input unchanged if the token is already present.
+ * Empty / undefined input yields the required token alone (so the IdP at
+ * least gets refresh-grant guidance). Preserves token order.
  */
-const REFRESH_GRANT_SCOPES = ['offline_access', 'refresh_token'];
+function mergeScope(scope: string | undefined, required: string): string {
+  const requiredTrimmed = required.trim();
+  const trimmed = scope?.trim() ?? '';
+  // Empty/whitespace `required` is a misconfiguration (TypeScript types
+  // require `string`, not non-empty), but we never want to inject empty
+  // tokens into the wire scope.
+  if (!requiredTrimmed) return trimmed;
+  if (!trimmed) return requiredTrimmed;
+  const tokens = trimmed.split(/\s+/).filter(Boolean);
+  if (tokens.includes(requiredTrimmed)) return trimmed;
+  tokens.push(requiredTrimmed);
+  return tokens.join(' ');
+}
 
 /**
  * Build the final OAuth scope sent to the provider.
  *
- * 1. **Connector-supplied scope wins as the base.** A site override (e.g.
- *    `https://graph.microsoft.com/.default`) is honored verbatim — operators
- *    keep control of which API permissions are requested.
- * 2. **Refresh-grant scopes from the auth template are force-merged.** Even
- *    if the override drops them, every refresh-grant scope the vendor
- *    template declares is appended back. Refresh capability is non-negotiable.
- * 3. **Empty-input fallback.** If neither the connector nor the template
- *    supplies any scope at all, fall back to `.default` plus refresh-grant
- *    scopes. `.default` is meaningful for Microsoft (uses pre-consented app
- *    permissions); other providers ignore unknown scope tokens, so this is
- *    a safe last resort rather than a no-scope request.
+ * Operator scope wins as the base — a site override (e.g. Microsoft
+ * `.default`) is honored verbatim. The strategy-driven required scope (if
+ * any) is force-merged downstream by the caller via `mergeScope` before the
+ * scope hits the wire. Empty-input fallback is `.default` (meaningful for
+ * Microsoft, ignored by other vendors).
  */
 function buildOAuthScope(
   connectorScope: string | undefined,
   authTemplate: AuthTemplate
 ): string {
-  const templateRefreshScopes = (authTemplate.scopes ?? []).filter((s) =>
-    REFRESH_GRANT_SCOPES.includes(s)
-  );
-
   const connectorTrimmed = connectorScope?.trim();
   const templateScopes = authTemplate.scopes?.join(' ').trim() ?? '';
   const base = connectorTrimmed || templateScopes;
+  return base || '.default';
+}
 
-  if (!base) {
-    return ['.default', ...templateRefreshScopes].join(' ');
+/**
+ * Apply a `RefreshStrategy` to an OAuth config under construction.
+ * - `scope`: stamps `requiredScope` and force-merges into `scope`.
+ * - `auth_param`: stamps the key/value into `authorizationParams` without
+ *   clobbering pre-existing operator-set keys.
+ * - `automatic` / `never_expires` / `manual_setup`: no-op on the wire.
+ *
+ * Returns a new partial config; caller merges into the OAuth config.
+ *
+ * Exported for the legacy-config backfill path in `Connector.initOAuthManager`
+ * — re-applies the strategy when reconstructing a Connector from a DB config
+ * that pre-dates the `requiredScope` annotation. Other call sites should not
+ * use this directly; they should go through `buildAuthConfig`.
+ */
+export function applyRefreshStrategy(
+  scope: string,
+  authorizationParams: Record<string, string> | undefined,
+  strategy: RefreshStrategy | undefined
+): {
+  scope: string;
+  requiredScope: string | undefined;
+  authorizationParams: Record<string, string> | undefined;
+} {
+  if (!strategy) {
+    return { scope, requiredScope: undefined, authorizationParams };
   }
-
-  const finalScopes = new Set(base.split(/\s+/).filter(Boolean));
-  for (const s of templateRefreshScopes) {
-    finalScopes.add(s);
+  switch (strategy.kind) {
+    case 'scope':
+      return {
+        scope: mergeScope(scope, strategy.scope),
+        requiredScope: strategy.scope,
+        authorizationParams,
+      };
+    case 'auth_param': {
+      const merged = { ...(authorizationParams ?? {}) };
+      // Operator-supplied param wins (don't clobber explicit overrides).
+      if (!(strategy.key in merged)) {
+        merged[strategy.key] = strategy.value;
+      }
+      return {
+        scope,
+        requiredScope: undefined,
+        authorizationParams: merged,
+      };
+    }
+    case 'automatic':
+    case 'never_expires':
+    case 'manual_setup':
+      return { scope, requiredScope: undefined, authorizationParams };
   }
-  return Array.from(finalScopes).join(' ');
 }
 
 /**
@@ -179,6 +240,18 @@ export function buildAuthConfig(
 
   const oauthDefaults = defaults as Partial<ConnectorAuth & { type: 'oauth' }>;
 
+  // Apply the vendor's RefreshStrategy. For `scope` strategies the required
+  // token is force-merged into `scope` AND stamped on `requiredScope` so it
+  // survives reconstitution-from-DB paths that bypass `buildAuthConfig`. For
+  // `auth_param` strategies the param is merged into `authorizationParams`
+  // (which is already protected by being persisted on the auth config).
+  const baseScope = buildOAuthScope(credentials.scope, authTemplate);
+  const strategyResult = applyRefreshStrategy(
+    baseScope,
+    oauthDefaults.authorizationParams,
+    authTemplate.flow === 'authorization_code' ? authTemplate.refreshStrategy : undefined,
+  );
+
   // Build OAuth config based on flow type
   const oauthConfig: ConnectorAuth & { type: 'oauth' } = {
     type: 'oauth',
@@ -188,13 +261,14 @@ export function buildAuthConfig(
     tokenUrl: oauthDefaults.tokenUrl ?? '',
     authorizationUrl: oauthDefaults.authorizationUrl,
     redirectUri: credentials.redirectUri,
-    scope: buildOAuthScope(credentials.scope, authTemplate),
+    scope: strategyResult.scope,
+    requiredScope: strategyResult.requiredScope,
     usePKCE: oauthDefaults.usePKCE,
     privateKey: credentials.privateKey,
     privateKeyPath: credentials.privateKeyPath,
     audience: credentials.audience ?? oauthDefaults.audience,
     subject: credentials.subject ?? oauthDefaults.subject,
-    authorizationParams: oauthDefaults.authorizationParams,
+    authorizationParams: strategyResult.authorizationParams,
     tokenRequestStyle: (oauthDefaults as { tokenRequestStyle?: 'form' | 'bearer' }).tokenRequestStyle,
     tokenLifetimeSeconds: (oauthDefaults as { tokenLifetimeSeconds?: number }).tokenLifetimeSeconds,
   };

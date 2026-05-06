@@ -48,6 +48,12 @@ export const gitlabTemplate: VendorTemplate = {
         'read_repository': 'Read repository contents',
         'write_repository': 'Write to repositories',
       },
+      // GitLab issues `refresh_token` automatically on every authorization_code
+      // exchange — no special scope required. (gitlab.com supports
+      // `offline_access` as a scope, but older self-hosted GitLab instances
+      // may reject unknown scope tokens with `invalid_scope`. Trusting the
+      // automatic-refresh default is the broadly-compatible choice.)
+      refreshStrategy: { kind: 'automatic' },
     },
   ],
 };

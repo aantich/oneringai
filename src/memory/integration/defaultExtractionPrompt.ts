@@ -107,6 +107,25 @@ export interface ExtractionPromptContext {
    * already chose to ignore — strong calibration signal.
    */
   negativeExamples?: Array<{ snippet: string; reason?: string }>;
+
+  /**
+   * Prior conversation context (e.g. earlier emails in the same thread,
+   * earlier turns in a transcript) that has ALREADY been extracted in
+   * previous pipeline runs. Rendered as a clearly-labeled "DO NOT extract"
+   * background block — the LLM must use it for grounding (resolving "she",
+   * binding follow-up commitments to the original task) but MUST NOT emit
+   * facts or mentions whose source is exclusively this prior content.
+   *
+   * Each entry is a short header (e.g. `From Anton at 2026-05-06T08:44Z`)
+   * plus the message body, ideally already de-quoted by the host so the
+   * same sentence doesn't appear repeatedly across nested replies.
+   *
+   * Pair with the existing canonical-id rule for tasks: a commitment seen
+   * in the delta that was already extracted from a prior message MUST yield
+   * the SAME canonical id, so the resolver merges into the existing entity
+   * instead of creating a duplicate.
+   */
+  priorThreadContext?: Array<{ header: string; body: string }>;
 }
 
 export function defaultExtractionPrompt(ctx: ExtractionPromptContext): string {
@@ -122,6 +141,7 @@ export function defaultExtractionPrompt(ctx: ExtractionPromptContext): string {
     eagerness,
     anchors,
     negativeExamples,
+    priorThreadContext,
   } = ctx;
 
   const source = signalSourceDescription ? `Source: ${signalSourceDescription}\n` : '';
@@ -139,6 +159,13 @@ export function defaultExtractionPrompt(ctx: ExtractionPromptContext): string {
   const nonce = makeNonce();
   const openTag = `signal_content_${nonce}`;
   const closeTag = `/signal_content_${nonce}`;
+  const priorOpenTag = `prior_thread_context_${nonce}`;
+  const priorCloseTag = `/prior_thread_context_${nonce}`;
+  const priorThreadSection = renderPriorThreadContext(
+    priorThreadContext,
+    priorOpenTag,
+    priorCloseTag,
+  );
   // v3 (H5): when a registry is present, explicitly tell the LLM the
   // vocabulary is closed. The server still applies a fuzzy-mapping fallback
   // for near-misses, but the instruction here prevents most drift from ever
@@ -158,7 +185,7 @@ Your output populates a knowledge graph of entities (people, organizations, task
 ## Signal
 ${source}Reference date: ${referenceDate.toISOString().slice(0, 10)}
 Target scope: ${scopeDescription}
-
+${priorThreadSection}
 <${openTag}>
 ${signalText}
 <${closeTag}>
@@ -210,6 +237,30 @@ Expected fact counts by signal type:
 - **Multi-topic** (two distinct commitments, a decision + a concern): **2 facts**
 - **Long transcript / meeting recap**: **3–6 facts** — the salient decisions and commitments, NOT every sentence
 
+## Tasks: ONE commitment = ONE task (do NOT decompose)
+A single commitment, decision, or unblock-request becomes a SINGLE task — even when it spans multiple sub-actions, integrations, or deliverables. The Decision Queue is a tool for the executive: 7 cards for one conversation is rejection territory.
+
+- "Set up Microsoft, Google, Slack, and Zoom integrations on test/staging" → ONE task, not four.
+- "Grant Ekaterina access so she can configure the integrations" → ONE task ("Grant Ekaterina access to test/staging"), not three (one per integration + one for access + one for verification).
+- "Merge Jovan's PRs and run the EKE demo" → if both fall under the same person/timeline, ONE task ("Prepare EKE demo: merge PRs and run"). Two genuinely independent commitments → two tasks.
+
+The narrative or evidence quote captures the sub-actions inside the task body; the task surface names the decision. Sub-action lists belong in the \`details\` field of the COMMITMENT FACT (e.g. the \`committed_to\` fact pointing at the task), NOT in additional task mentions.
+
+### Negative example — TASK OVER-DECOMPOSITION (frequent failure mode)
+Signal (single email): "Ekaterina will set up Microsoft, Google, Slack, and Zoom integrations on test and staging as soon as Vitaly grants her access."
+
+BAD output (5 tasks for one commitment):
+- \`task: Set up Microsoft integration on test/staging\`
+- \`task: Set up Google integration on test/staging\`
+- \`task: Set up Slack integration on test/staging\`
+- \`task: Set up Zoom integration on test/staging\`
+- \`task: Grant Ekaterina access\`
+
+CORRECT output (one actionable task — the unblock):
+- \`task: Grant Ekaterina test/staging access (so she can configure Microsoft/Google/Slack/Zoom integrations)\`
+
+The thing the EXEC can act on is granting access. The integrations are downstream of that and belong in the task narrative, not as separate cards.
+
 ### Negative example — DO NOT DO THIS
 Signal: "Hi Sarah, we need to discuss ERP renewal. Worried Oracle's pricing won't work. Can we meet Thursday? – John"
 
@@ -228,6 +279,7 @@ Same signal. CORRECT output:
     "t1": {
       "surface": "Meet Sarah about ERP renewal",
       "type": "task",
+      "identifiers": [{ "kind": "canonical", "value": "task:meet-sarah-erp-renewal-2026-THU" }],
       "metadata": { "state": "proposed", "assigneeId": "m_john", "dueAt": "2026-THU" }
     }
   },
@@ -280,11 +332,28 @@ When unsure, PREFER leaving \`validUntil\` undefined over guessing — a too-ear
 3. **Capture surface variants.** If the text uses "Microsoft" and "MSFT" for the same org, include both under the mention's \`aliases\`.
 4. **Tasks and events are entities with metadata — NOT a pile of facts.**
    Mention-level \`metadata\` carries the structural fields. Do NOT restate them as separate facts.
-   - **Task**: \`{ type: "task", surface: "Send budget", metadata: { "state": "proposed", "dueAt": "2026-04-30", "assigneeId": "<label>", "priority": "high" } }\`
+   - **Task**: \`{ type: "task", surface: "Send budget", identifiers: [{ "kind": "canonical", "value": "task:send-budget-2026-04-30" }], metadata: { "state": "proposed", "dueAt": "2026-04-30", "assigneeId": "<label>", "priority": "high" } }\`
    - **Event**: \`{ type: "event", surface: "Q3 Planning", metadata: { "startTime": "2026-05-01T10:00:00Z", "endTime": "...", "location": "...", "attendeeIds": ["<label>"] } }\`
    The commitment itself is still a fact: \`{ subject: "john_label", predicate: "committed_to", object: "task_label" }\`. But "this task is due 2026-04-30" is metadata, not a separate \`has_due_date\` fact.
 
    **State changes** use a single \`state_changed\` fact — the system routes it through the task-state machine automatically. Emit \`{ subject: "task_label", predicate: "state_changed", value: { "from": "in_progress", "to": "done" } }\` — the task's metadata, history, and completedAt all update as a side effect.
+
+   **REQUIRED canonical identifier on every task mention.** Tasks have no natural strong identifier (unlike a person's email or a domain). Without a canonical id, the same commitment seen across multiple signals (thread replies, transcripts, follow-ups) creates duplicate task entities — a known production bug pattern. So every \`type: "task"\` mention MUST include:
+
+   \`\`\`
+   "identifiers": [{ "kind": "canonical", "value": "task:<verb>-<key-noun>-<YYYY-MM-DD>" }]
+   \`\`\`
+
+   - \`<verb>\`: short imperative — \`grant\`, \`merge\`, \`send\`, \`review\`, \`schedule\`, \`unblock\`, \`prep\`.
+   - \`<key-noun>\`: the most identifying object phrase, lowercased and hyphen-separated, ≤ 4 words. The PERSON, ORG, or ARTIFACT that uniquely identifies the commitment — NOT every detail.
+   - \`<YYYY-MM-DD>\`: the task's due date if known; otherwise the date this commitment was first made (typically the signal's reference date).
+
+   Examples:
+   - "Grant Ekaterina access to test/staging" (made 2026-05-06) → \`task:grant-ekaterina-access-2026-05-06\`
+   - "Send Q3 budget to Sarah by Apr 30" → \`task:send-q3-budget-2026-04-30\`
+   - "Merge Jovan's PRs for EKE demo" (made 2026-05-06) → \`task:merge-jovan-prs-2026-05-06\`
+
+   Same commitment surfaced across multiple signals MUST yield the SAME canonical id — that's how the resolver dedupes. If the second signal merely re-references an existing commitment (a thread reply, a meeting follow-up), produce the SAME canonical id you'd produce from the original; the system will merge into the existing task entity.
 5. **Use contextIds for deal/project/meeting binding.** If John's commitment happens in the context of an Acme deal, add the deal's label to the fact's \`contextIds\`. The deal is not subject or object but the activity should be surfaced when querying the deal.
 6. **Importance calibration.**
    - 1.0: identity-level facts ("X is CEO", "X works at Y")
@@ -304,6 +373,36 @@ function describeScope(scope: ScopeFields): string {
   if (scope.ownerId && !scope.groupId) return `user-private (owner=${scope.ownerId})`;
   if (scope.groupId && !scope.ownerId) return `group-wide (group=${scope.groupId})`;
   return `user-private within group (group=${scope.groupId}, owner=${scope.ownerId})`;
+}
+
+/**
+ * Render the prior-thread context block — earlier messages in the same thread
+ * whose facts have already been extracted in prior pipeline runs. The LLM
+ * must use this as background ONLY (resolving "she", binding follow-ups to
+ * already-extracted commitments via canonical id) and MUST NOT extract from
+ * it. Wrapped in a nonce-tagged delimiter to defend against the same
+ * prompt-injection class as the main signal body.
+ */
+function renderPriorThreadContext(
+  context: Array<{ header: string; body: string }> | undefined,
+  openTag: string,
+  closeTag: string,
+): string {
+  if (!context || context.length === 0) return '';
+  const blocks = context
+    .map((c) => `--- ${c.header} ---\n${c.body.trim()}`)
+    .join('\n\n');
+  return `\n## Prior thread context (background only — DO NOT extract from this)
+The messages below are earlier turns in the SAME conversation. Their facts have ALREADY been extracted in prior pipeline runs. Treat them as background ONLY:
+
+- Use them to resolve pronouns ("she", "the deal", "that PR") in the new message.
+- Use them to recognise that a commitment in the new message is a follow-up to an existing task — emit the SAME canonical id you'd produce from the original (per rule 4), so the resolver merges into the existing entity instead of creating a duplicate.
+- Do NOT emit facts or task mentions whose source is exclusively this prior content. The signal_content block (further below) is the extraction target. The prior_thread_context block is reference material.
+
+<${openTag}>
+${blocks}
+<${closeTag}>
+`;
 }
 
 function renderPreResolvedBindings(bindings?: PreResolvedBinding[]): string {

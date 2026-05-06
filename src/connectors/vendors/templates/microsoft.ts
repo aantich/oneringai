@@ -82,6 +82,7 @@ export const microsoftTemplate: VendorTemplate = {
         'BookingsAppointment.ReadWrite.All': 'Manage Bookings appointments',
         'offline_access': 'Maintain access (refresh token)',
       },
+      refreshStrategy: { kind: 'scope', scope: 'offline_access' },
     },
     {
       id: 'client-credentials',

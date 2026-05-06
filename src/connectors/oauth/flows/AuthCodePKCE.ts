@@ -7,6 +7,29 @@ import { TokenStore } from '../domain/TokenStore.js';
 import { generatePKCE, generateState } from '../utils/pkce.js';
 import type { OAuthConfig } from '../types.js';
 
+/**
+ * Force-merge a vendor-required scope token into a space-separated scope
+ * string. Idempotent: returns the input unchanged if the token is already
+ * present. Empty / undefined scope yields the required token alone so the
+ * IdP at least gets refresh-grant guidance.
+ *
+ * The `requiredScope` is per-vendor — Microsoft / Atlassian / GitLab use
+ * `offline_access`, Salesforce uses `refresh_token`, Twitter/X uses
+ * `offline.access`. Sourced from `OAuthConfig.requiredScope`, which the
+ * vendor template's `RefreshStrategy` stamped at config-build time.
+ */
+function mergeRequiredScope(scope: string | undefined, required: string | undefined): string | undefined {
+  const requiredTrimmed = required?.trim();
+  // Empty / whitespace required is a misconfiguration — never emit empty tokens.
+  if (!requiredTrimmed) return scope;
+  const trimmed = scope?.trim() ?? '';
+  if (!trimmed) return requiredTrimmed;
+  const tokens = trimmed.split(/\s+/).filter(Boolean);
+  if (tokens.includes(requiredTrimmed)) return trimmed;
+  tokens.push(requiredTrimmed);
+  return tokens.join(' ');
+}
+
 export class AuthCodePKCEFlow {
   private tokenStore: TokenStore;
   // Store PKCE data per user+account with timestamps for cleanup
@@ -67,9 +90,25 @@ export class AuthCodePKCEFlow {
       state,
     });
 
-    // Add scope if provided
-    if (this.config.scope) {
-      params.append('scope', this.config.scope);
+    // Force-merge the vendor's `requiredScope` (e.g. `offline_access` for
+    // Microsoft, `refresh_token` for Salesforce, `offline.access` for
+    // Twitter/X) so refresh-token issuance survives operator scope overrides
+    // — e.g. someone setting Microsoft's `.default` to use pre-consented app
+    // permissions, which silently strips the vendor-template scope list.
+    // Without a refresh token, the access token's expiry is terminal: every
+    // background fetch silently fails forever after the first ~1h.
+    //
+    // The required token comes from the vendor template's `RefreshStrategy`
+    // and is persisted on the OAuth config (`config.requiredScope`), so even
+    // hosts that bypass `buildAuthConfig` (e.g. v25's
+    // `GroupScopedConnectorRegistry`, which instantiates Connector directly
+    // from decrypted DB configs) get the right merge as long as the saved
+    // config carries the field. Vendors with no required scope (Discord,
+    // Asana, GitHub, etc. — `automatic` / `never_expires` / `manual_setup`
+    // strategies) leave `requiredScope` undefined and this is a no-op.
+    const mergedScope = mergeRequiredScope(this.config.scope, this.config.requiredScope);
+    if (mergedScope) {
+      params.append('scope', mergedScope);
     }
 
     // Add PKCE parameters (if enabled, default true)
@@ -155,12 +194,13 @@ export class AuthCodePKCEFlow {
       client_id: this.config.clientId,
     });
 
-    // Add client secret if provided (confidential clients)
-    console.log(`[OAuth:exchangeCode] clientId=${this.config.clientId?.substring(0, 8)}... hasSecret=${!!this.config.clientSecret} secretLen=${this.config.clientSecret?.length ?? 0} tokenUrl=${this.config.tokenUrl} redirectUri=${this.config.redirectUri}`);
+    // Add client secret if provided (confidential clients).
+    // Note: we don't log clientId / secret length / URLs here — that's
+    // diagnostic noise on every code exchange and leaks key prefixes into
+    // logs. The downstream fetch failure path already produces a useful
+    // error with the IdP's response body.
     if (this.config.clientSecret) {
       params.append('client_secret', this.config.clientSecret);
-    } else {
-      console.warn('[OAuth:exchangeCode] WARNING: No client_secret available — token exchange may fail for confidential clients');
     }
 
     // Add code_verifier if PKCE was used

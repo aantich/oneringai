@@ -35,6 +35,9 @@ export const boxTemplate: VendorTemplate = {
         'manage_groups': 'Manage enterprise groups',
         'manage_enterprise': 'Manage enterprise settings',
       },
+      // Box OAuth: access tokens expire in 1h, refresh_token issued
+      // automatically (refresh_token expires in 60 days).
+      refreshStrategy: { kind: 'automatic' },
     },
     {
       id: 'client-credentials',

@@ -23,6 +23,11 @@ describe('AuthCodePKCEFlow', () => {
     tokenUrl: 'https://oauth.example.com/token',
     redirectUri: 'http://localhost:3000/callback',
     scope: 'read write',
+    // The vendor-mandated scope token. Sourced from the vendor template's
+    // `RefreshStrategy` — Microsoft / Atlassian use `offline_access`,
+    // Salesforce uses `refresh_token`, Twitter/X uses `offline.access`.
+    // Defaulting to `offline_access` here exercises the most common case.
+    requiredScope: 'offline_access',
     usePKCE: true,
   };
 
@@ -59,7 +64,91 @@ describe('AuthCodePKCEFlow', () => {
       expect(urlObj.searchParams.get('response_type')).toBe('code');
       expect(urlObj.searchParams.get('client_id')).toBe('test-client-id');
       expect(urlObj.searchParams.get('redirect_uri')).toBe('http://localhost:3000/callback');
-      expect(urlObj.searchParams.get('scope')).toBe('read write');
+      // `offline_access` is force-merged into every authorize URL so refresh-token
+      // issuance survives operator scope overrides. See `ensureOfflineAccess`.
+      const scope = urlObj.searchParams.get('scope');
+      expect(scope).toBe('read write offline_access');
+    });
+
+    describe('requiredScope force-merge', () => {
+      // Refresh-token issuance is non-negotiable: every authorize URL must
+      // carry the vendor-mandated `requiredScope` regardless of how the host
+      // configured `scope`. Operators routinely override scope (e.g.
+      // Microsoft's `.default`) and silently drop the vendor template's
+      // refresh-grant token; this is the canonical chokepoint that catches
+      // every code path. The required token comes from the vendor template's
+      // `RefreshStrategy` and is per-vendor — see parameterized cases below.
+
+      it('appends requiredScope when scope omits it', async () => {
+        const url = await flow.getAuthorizationUrl();
+        const urlObj = new URL(url);
+        expect(urlObj.searchParams.get('scope')).toBe('read write offline_access');
+      });
+
+      it('does NOT duplicate requiredScope when already present', async () => {
+        const flowWithOffline = new AuthCodePKCEFlow({
+          ...config,
+          scope: 'read write offline_access',
+          storage: mockStorage,
+        });
+        const url = await flowWithOffline.getAuthorizationUrl();
+        const scope = new URL(url).searchParams.get('scope') ?? '';
+        const occurrences = scope.split(/\s+/).filter((t) => t === 'offline_access').length;
+        expect(occurrences).toBe(1);
+      });
+
+      it('emits requiredScope as the lone scope when none was configured', async () => {
+        const flowNoScope = new AuthCodePKCEFlow({
+          ...config,
+          scope: undefined,
+          storage: mockStorage,
+        });
+        const url = await flowNoScope.getAuthorizationUrl();
+        expect(new URL(url).searchParams.get('scope')).toBe('offline_access');
+      });
+
+      it('preserves an operator override (e.g. Microsoft `.default`) verbatim and adds requiredScope', async () => {
+        const flowDefault = new AuthCodePKCEFlow({
+          ...config,
+          scope: 'https://graph.microsoft.com/.default',
+          storage: mockStorage,
+        });
+        const url = await flowDefault.getAuthorizationUrl();
+        const scope = new URL(url).searchParams.get('scope') ?? '';
+        expect(scope).toContain('https://graph.microsoft.com/.default');
+        expect(scope).toContain('offline_access');
+      });
+
+      it.each([
+        // Microsoft / Atlassian / GitLab
+        { vendor: 'Microsoft-style', requiredScope: 'offline_access' },
+        // Salesforce
+        { vendor: 'Salesforce', requiredScope: 'refresh_token' },
+        // Twitter/X — note the dot, not underscore
+        { vendor: 'Twitter/X', requiredScope: 'offline.access' },
+      ])('per-vendor: $vendor force-merges $requiredScope', async ({ requiredScope }) => {
+        const f = new AuthCodePKCEFlow({
+          ...config,
+          requiredScope,
+          storage: mockStorage,
+        });
+        const scope = new URL(await f.getAuthorizationUrl()).searchParams.get('scope') ?? '';
+        expect(scope).toContain(requiredScope);
+      });
+
+      it('does NOT add any requiredScope when the vendor declares none (automatic / never_expires / manual_setup)', async () => {
+        // Discord / Asana / GitHub OAuth / Notion etc. — vendors with
+        // `automatic`, `never_expires`, or `manual_setup` strategies leave
+        // `requiredScope` undefined, and the flow must not invent a token.
+        const f = new AuthCodePKCEFlow({
+          ...config,
+          requiredScope: undefined,
+          storage: mockStorage,
+        });
+        const scope = new URL(await f.getAuthorizationUrl()).searchParams.get('scope') ?? '';
+        expect(scope).toBe('read write');
+        expect(scope).not.toContain('offline_access');
+      });
     });
 
     it('should include PKCE parameters', async () => {

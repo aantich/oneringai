@@ -42,6 +42,9 @@ export const linearTemplate: VendorTemplate = {
         usePKCE: true,
       },
       scopes: ['read', 'write', 'issues:create', 'comments:create'],
+      // Linear access tokens have a 10-year lifetime — effectively never
+      // expire. No refresh mechanism.
+      refreshStrategy: { kind: 'never_expires' },
     },
   ],
 };
