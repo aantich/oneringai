@@ -74,6 +74,57 @@ export function listVendorIds(): string[] {
 }
 
 /**
+ * OAuth scopes that grant refresh-token issuance. Providers only return a
+ * `refresh_token` if one of these is in the authorization request — without
+ * a refresh token, the access token's expiry becomes terminal (no recovery
+ * short of forcing the user to re-authenticate).
+ *
+ * Manual scope overrides on the connector config (e.g. swapping the full
+ * scope list for Microsoft's `.default`) silently dropped these — exactly
+ * the silent-degradation class of bug we ban in this codebase. Force-merging
+ * makes refresh capability a contract, not a polite request.
+ */
+const REFRESH_GRANT_SCOPES = ['offline_access', 'refresh_token'];
+
+/**
+ * Build the final OAuth scope sent to the provider.
+ *
+ * 1. **Connector-supplied scope wins as the base.** A site override (e.g.
+ *    `https://graph.microsoft.com/.default`) is honored verbatim — operators
+ *    keep control of which API permissions are requested.
+ * 2. **Refresh-grant scopes from the auth template are force-merged.** Even
+ *    if the override drops them, every refresh-grant scope the vendor
+ *    template declares is appended back. Refresh capability is non-negotiable.
+ * 3. **Empty-input fallback.** If neither the connector nor the template
+ *    supplies any scope at all, fall back to `.default` plus refresh-grant
+ *    scopes. `.default` is meaningful for Microsoft (uses pre-consented app
+ *    permissions); other providers ignore unknown scope tokens, so this is
+ *    a safe last resort rather than a no-scope request.
+ */
+function buildOAuthScope(
+  connectorScope: string | undefined,
+  authTemplate: AuthTemplate
+): string {
+  const templateRefreshScopes = (authTemplate.scopes ?? []).filter((s) =>
+    REFRESH_GRANT_SCOPES.includes(s)
+  );
+
+  const connectorTrimmed = connectorScope?.trim();
+  const templateScopes = authTemplate.scopes?.join(' ').trim() ?? '';
+  const base = connectorTrimmed || templateScopes;
+
+  if (!base) {
+    return ['.default', ...templateRefreshScopes].join(' ');
+  }
+
+  const finalScopes = new Set(base.split(/\s+/).filter(Boolean));
+  for (const s of templateRefreshScopes) {
+    finalScopes.add(s);
+  }
+  return Array.from(finalScopes).join(' ');
+}
+
+/**
  * Build ConnectorAuth from auth template and credentials
  */
 export function buildAuthConfig(
@@ -137,7 +188,7 @@ export function buildAuthConfig(
     tokenUrl: oauthDefaults.tokenUrl ?? '',
     authorizationUrl: oauthDefaults.authorizationUrl,
     redirectUri: credentials.redirectUri,
-    scope: credentials.scope ?? authTemplate.scopes?.join(' '),
+    scope: buildOAuthScope(credentials.scope, authTemplate),
     usePKCE: oauthDefaults.usePKCE,
     privateKey: credentials.privateKey,
     privateKeyPath: credentials.privateKeyPath,
