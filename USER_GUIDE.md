@@ -16469,11 +16469,27 @@ const authUrl = await oauth.startAuthFlow('user-123');
 console.log('Visit:', authUrl);
 
 // After user authorizes and is redirected back with ?code=...&state=...
-await oauth.handleCallback(callbackUrl, 'user-123');  // callbackUrl is the full redirect URL; returns void
+await oauth.handleCallback(callbackUrl, 'user-123');  // Result can be ignored for ordinary OAuth API access
 
 // Use token
 const accessToken = await oauth.getToken('user-123');  // returns the access token string
 ```
+
+### OpenID Connect callback result
+
+`OAuthManager.handleCallback()` and `Connector.handleCallback()` return an
+`OAuthCallbackResult` (`{ idToken?: string }`), exported from
+`@everworker/oneringai`. For providers that return `id_token`, the result contains
+that raw token; otherwise it is `{}`. Existing callers can continue to ignore
+the result. Wrappers explicitly typed as `Promise<void>` must either await and
+discard the result or update their return type.
+
+An ID token is **not verified** by this API. Before using it to authenticate a
+user, the host must verify its signature, issuer, exact client audience, expiry
+and the attempt's nonce. The library does not persist it in `StoredToken`, make
+it available through `getToken()`, or return it again during access-token refresh.
+Do not log the ID token or expose it to an untrusted client. Access and refresh
+token storage and user/account scoping are unchanged.
 
 ### Authenticated Fetch
 

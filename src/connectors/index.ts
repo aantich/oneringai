@@ -17,6 +17,7 @@ export {
 
 export type {
   OAuthConfig,
+  OAuthCallbackResult,
   OAuthFlow,
   TokenResponse,
   StoredToken,

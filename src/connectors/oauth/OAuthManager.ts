@@ -8,7 +8,7 @@ import { ClientCredentialsFlow } from './flows/ClientCredentials.js';
 import { JWTBearerFlow } from './flows/JWTBearer.js';
 import { StaticTokenFlow } from './flows/StaticToken.js';
 import { FileStorage } from './infrastructure/storage/FileStorage.js';
-import type { OAuthConfig } from './types.js';
+import type { OAuthConfig, OAuthCallbackResult } from './types.js';
 
 export class OAuthManager {
   private flow: AuthCodePKCEFlow | ClientCredentialsFlow | JWTBearerFlow | StaticTokenFlow;
@@ -93,11 +93,14 @@ export class OAuthManager {
    * Handle OAuth callback (Authorization Code only)
    * Call this with the callback URL after user authorizes
    *
+   * Returns an optional raw ID token for caller-side OIDC verification. The ID
+   * token is not verified or persisted by the library; non-OIDC flows return {}.
+   *
    * @param callbackUrl - Full callback URL with code and state parameters
    * @param userId - Optional user identifier (can be extracted from state if embedded)
    * @param accountId - Optional account alias (can be extracted from state if embedded)
    */
-  async handleCallback(callbackUrl: string, userId?: string, accountId?: string): Promise<void> {
+  async handleCallback(callbackUrl: string, userId?: string, accountId?: string): Promise<OAuthCallbackResult> {
     if (!(this.flow instanceof AuthCodePKCEFlow)) {
       throw new Error('handleCallback() is only available for authorization_code flow');
     }
@@ -114,7 +117,7 @@ export class OAuthManager {
       throw new Error('Missing state parameter in callback URL');
     }
 
-    await this.flow.exchangeCode(code, state, userId, accountId);
+    return this.flow.exchangeCode(code, state, userId, accountId);
   }
 
   /**

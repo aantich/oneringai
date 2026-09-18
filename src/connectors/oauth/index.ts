@@ -6,6 +6,7 @@ export { OAuthManager } from './OAuthManager.js';
 
 export type {
   OAuthConfig,
+  OAuthCallbackResult,
   OAuthFlow,
   TokenResponse,
   StoredToken,

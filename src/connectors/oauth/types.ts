@@ -75,12 +75,20 @@ export interface OAuthConfig {
   storageKey?: string; // Key for storing this token (default: based on clientId)
 }
 
+/** Result of one authorization-code exchange; never persisted by token storage. */
+export interface OAuthCallbackResult {
+  /** Raw, unverified ID token. Verify signature, issuer, audience, expiry and nonce before using its claims; do not log or expose it to untrusted clients. */
+  idToken?: string;
+}
+
 export interface TokenResponse {
   access_token: string;
   token_type: string;
   expires_in: number;
   refresh_token?: string;
   scope?: string;
+  /** Returned only to the callback caller; not included in StoredToken. */
+  id_token?: string;
 }
 
 export interface StoredToken {

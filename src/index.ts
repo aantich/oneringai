@@ -1140,7 +1140,7 @@ export type {
 // ============ OAuth & Storage (for external APIs) ============
 export { OAuthManager, MemoryStorage, FileStorage } from './connectors/index.js';
 export { generateEncryptionKey, authenticatedFetch, createAuthenticatedFetch, generateWebAPITool } from './connectors/index.js';
-export type { OAuthConfig, OAuthFlow, ITokenStorage, FileStorageConfig, StoredToken } from './connectors/index.js';
+export type { OAuthConfig, OAuthCallbackResult, OAuthFlow, ITokenStorage, FileStorageConfig, StoredToken } from './connectors/index.js';
 
 // ConnectorConfig storage (persistent connector configs with encryption)
 export {

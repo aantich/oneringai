@@ -16,6 +16,7 @@ import { randomUUID } from 'crypto';
 import { ConnectorConfig, ConnectorAuth } from '../domain/entities/Connector.js';
 import { Vendor } from './Vendor.js';
 import { OAuthManager } from '../connectors/oauth/OAuthManager.js';
+import type { OAuthCallbackResult } from '../connectors/oauth/types.js';
 import { MemoryStorage } from '../connectors/oauth/infrastructure/storage/MemoryStorage.js';
 import type { ITokenStorage } from '../connectors/oauth/domain/ITokenStorage.js';
 import { StorageRegistry } from './StorageRegistry.js';
@@ -495,15 +496,18 @@ export class Connector {
    * Handle OAuth callback
    * Call this after user is redirected back from OAuth provider
    *
+   * Returns an optional raw ID token for caller-side OIDC verification. The ID
+   * token is not verified or persisted by the library; non-OIDC flows return {}.
+   *
    * @param callbackUrl - Full callback URL with code and state parameters
    * @param userId - Optional user identifier (can be extracted from state if embedded)
    * @param accountId - Optional account alias (can be extracted from state if embedded)
    */
-  async handleCallback(callbackUrl: string, userId?: string, accountId?: string): Promise<void> {
+  async handleCallback(callbackUrl: string, userId?: string, accountId?: string): Promise<OAuthCallbackResult> {
     if (!this.oauthManager) {
       throw new Error(`Connector '${this.name}' is not an OAuth connector`);
     }
-    await this.oauthManager.handleCallback(callbackUrl, userId, accountId);
+    return this.oauthManager.handleCallback(callbackUrl, userId, accountId);
   }
 
   /**

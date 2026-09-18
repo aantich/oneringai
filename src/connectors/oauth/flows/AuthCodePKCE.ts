@@ -5,7 +5,7 @@
 
 import { TokenStore } from '../domain/TokenStore.js';
 import { generatePKCE, generateState } from '../utils/pkce.js';
-import type { OAuthConfig } from '../types.js';
+import type { OAuthConfig, OAuthCallbackResult, TokenResponse } from '../types.js';
 
 /**
  * Force-merge a vendor-required scope token into a space-separated scope
@@ -146,7 +146,7 @@ export class AuthCodePKCEFlow {
    * @param userId - User identifier (optional, can be extracted from state)
    * @param accountId - Account alias (optional, can be extracted from state)
    */
-  async exchangeCode(code: string, state: string, userId?: string, accountId?: string): Promise<void> {
+  async exchangeCode(code: string, state: string, userId?: string, accountId?: string): Promise<OAuthCallbackResult> {
     // Extract userId and accountId from state if embedded
     let actualState = state;
     let actualUserId = userId;
@@ -241,7 +241,7 @@ export class AuthCodePKCEFlow {
       throw new Error(`Token exchange failed: ${response.status} ${response.statusText} - ${error}`);
     }
 
-    const data: any = await response.json();
+    const data: TokenResponse = await response.json();
 
     // Store token (encrypted) with user and account scoping
     await this.tokenStore.storeToken(data, actualUserId, actualAccountId);
@@ -249,6 +249,9 @@ export class AuthCodePKCEFlow {
     // Clear PKCE data (one-time use)
     this.codeVerifiers.delete(mapKey);
     this.states.delete(mapKey);
+
+    // ID tokens belong to this exchange, not the access/refresh-token lifecycle.
+    return typeof data.id_token === 'string' ? { idToken: data.id_token } : {};
   }
 
   /**

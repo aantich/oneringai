@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-09-04
+**Generated:** 2026-09-18
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -23,7 +23,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Tools & Function Calling](#tools-function-calling) (205 items)
 - [Streaming](#streaming) (32 items)
 - [Model Registry](#model-registry) (29 items)
-- [OAuth & External APIs](#oauth-external-apis) (41 items)
+- [OAuth & External APIs](#oauth-external-apis) (42 items)
 - [Resilience & Observability](#resilience-observability) (33 items)
 - [Errors](#errors) (41 items)
 - [Utilities](#utilities) (10 items)
@@ -1205,7 +1205,7 @@ static clear(): void
 
 ### Connector `class`
 
-📍 [`src/core/Connector.ts:54`](src/core/Connector.ts)
+📍 [`src/core/Connector.ts:55`](src/core/Connector.ts)
 
 Connector class - represents a single authenticated connection
 
@@ -1546,8 +1546,11 @@ async startAuth(userId?: string, accountId?: string): Promise&lt;string&gt;
 Handle OAuth callback
 Call this after user is redirected back from OAuth provider
 
+Returns an optional raw ID token for caller-side OIDC verification. The ID
+token is not verified or persisted by the library; non-OIDC flows return {}.
+
 ```typescript
-async handleCallback(callbackUrl: string, userId?: string, accountId?: string): Promise&lt;void&gt;
+async handleCallback(callbackUrl: string, userId?: string, accountId?: string): Promise&lt;OAuthCallbackResult&gt;
 ```
 
 **Parameters:**
@@ -1555,7 +1558,7 @@ async handleCallback(callbackUrl: string, userId?: string, accountId?: string): 
 - `userId`: `string | undefined` *(optional)*
 - `accountId`: `string | undefined` *(optional)*
 
-**Returns:** `Promise&lt;void&gt;`
+**Returns:** `Promise&lt;OAuthCallbackResult&gt;`
 
 #### `hasValidToken()`
 
@@ -1940,7 +1943,7 @@ Aggregate statistics across all tracked agents
 
 ### ConnectorFetchOptions `interface`
 
-📍 [`src/core/Connector.ts:42`](src/core/Connector.ts)
+📍 [`src/core/Connector.ts:43`](src/core/Connector.ts)
 
 Fetch options with additional connector-specific settings
 
@@ -33072,8 +33075,11 @@ async startAuthFlow(userId?: string, accountId?: string): Promise&lt;string&gt;
 Handle OAuth callback (Authorization Code only)
 Call this with the callback URL after user authorizes
 
+Returns an optional raw ID token for caller-side OIDC verification. The ID
+token is not verified or persisted by the library; non-OIDC flows return {}.
+
 ```typescript
-async handleCallback(callbackUrl: string, userId?: string, accountId?: string): Promise&lt;void&gt;
+async handleCallback(callbackUrl: string, userId?: string, accountId?: string): Promise&lt;OAuthCallbackResult&gt;
 ```
 
 **Parameters:**
@@ -33081,7 +33087,7 @@ async handleCallback(callbackUrl: string, userId?: string, accountId?: string): 
 - `userId`: `string | undefined` *(optional)*
 - `accountId`: `string | undefined` *(optional)*
 
-**Returns:** `Promise&lt;void&gt;`
+**Returns:** `Promise&lt;OAuthCallbackResult&gt;`
 
 #### `revokeToken()`
 
@@ -33276,6 +33282,23 @@ listKeys?(): Promise&lt;string[]&gt;;
 
 ---
 
+### OAuthCallbackResult `interface`
+
+📍 [`src/connectors/oauth/types.ts:79`](src/connectors/oauth/types.ts)
+
+Result of one authorization-code exchange; never persisted by token storage.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `idToken?` | `idToken?: string;` | Raw, unverified ID token. Verify signature, issuer, audience, expiry and nonce before using its claims; do not log or expose it to untrusted clients. |
+
+</details>
+
+---
+
 ### OAuthConfig `interface`
 
 📍 [`src/connectors/oauth/types.ts:9`](src/connectors/oauth/types.ts)
@@ -33428,7 +33451,7 @@ Simple Icons icon data structure
 
 ### StoredToken `interface`
 
-📍 [`src/connectors/oauth/types.ts:86`](src/connectors/oauth/types.ts)
+📍 [`src/connectors/oauth/types.ts:94`](src/connectors/oauth/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>

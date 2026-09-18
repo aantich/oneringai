@@ -1,0 +1,458 @@
+\documentclass[sigplan,10pt,anonymous,review]{acmart}
+
+\setcopyright{none}
+\settopmatter{printacmref=false, printccs=false, printfolios=true}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\pagestyle{plain}
+
+\acmConference[PAgE '27]{Principles of Agentic Engineering}{January 2027}{Mexico City, Mexico}
+\acmBooktitle{Principles of Agentic Engineering (PAgE '27), January 2027, Mexico City, Mexico}
+
+\begin{document}
+
+\title{From Prompt Assembly to Governed State: Explicit Memory Boundaries for Tool-Using Agents}
+\subtitle{Work in Progress}
+
+\author{Anonymous Author(s)}
+\affiliation{\institution{Anonymous Institution}}
+
+\begin{abstract}
+Tool-using language agents accumulate several kinds of state that are often
+collapsed into one prompt: dialogue, tool observations, scratch data,
+long-lived knowledge, authorization context, and the available action surface.
+This conflation makes failures difficult to localize.  Truncation can separate
+a tool invocation from its result; a retrieved fact can outlive its evidence;
+and a memory query can cross a tenant boundary before the model ever sees the
+data.  We present a work-in-progress architecture that treats agent context as
+a governed state-assembly problem.  The architecture separates immutable
+instructions, committed conversation, protected current input, spillable
+working memory, and a provenance-bearing entity--fact store.  Context
+capabilities are plugins sharing one tool manager, while compaction is a
+single, observable pre-call transition that preserves tool-call/result pairs.
+Persistent memory enforces ownership and principal-based visibility at the
+storage boundary and represents non-aggregate updates by supersession rather
+than destructive replacement.  We formulate seven runtime invariants covering
+budget accounting, transcript integrity, capability coherence, provenance,
+and authorization.  We then propose a fault-injection and long-horizon
+evaluation measuring task success, grounded recall, unauthorized disclosure,
+token cost, and latency against rolling-window, summarization, and retrieval
+baselines.  The implementation is an open-source, strict-TypeScript agent
+runtime; its identity and artifact URL are withheld during anonymous review.
+The goal is not to claim that memory makes an agent safe, but to show how
+explicit state boundaries turn important safety assumptions into interfaces,
+checks, and testable hypotheses.
+\end{abstract}
+
+\keywords{language agents, context management, memory, tool use, runtime
+invariants, access control}
+
+\maketitle
+
+\section{Introduction}
+
+Language agents interleave model inference with external actions.  Systems
+such as ReAct make the reasoning--action loop explicit~\cite{yao2023react},
+while Toolformer demonstrates that models can learn when and how to call
+APIs~\cite{schick2023toolformer}.  Once such agents operate for more than a
+few steps, however, their engineering problem is no longer only ``what should
+the model do next?''  It is also ``which state should be visible, mutable,
+retrievable, and authorized at this step?''
+
+Existing architectures have shown the value of modular memory
+components~\cite{sumers2023coala}, dynamic retrieval and
+reflection~\cite{park2023generative}, and operating-system-inspired movement
+between memory tiers~\cite{packer2023memgpt}.  We build on this direction but
+focus on a complementary question: which invariants should an agent runtime
+enforce even when model behavior is unreliable?  The distinction matters
+because many failures occur outside the model.  A context manager may orphan a
+tool result during truncation, retrieve a superseded fact, expose a record to
+the wrong principal, or maintain two divergent registries of executable tools.
+More capable reasoning does not repair these faults.
+
+This paper reports work in progress on a strict-TypeScript runtime for
+tool-using agents.  Its design separates five state classes and gives each a
+different lifetime and mutation policy.  A plugin protocol contributes prompt
+content and tools to a single assembly pipeline.  A context budget is computed
+before each model call, and compaction occurs once at that boundary.  Large or
+old tool results may move to working memory, but historical tool invocations
+and results are removed atomically.  Long-term memory is a typed entity--fact
+system with confidence, importance, evidence, provenance, temporal validity,
+and supersession.  Authorization is evaluated before retrieved records become
+model input.
+
+The contributions of this work-in-progress paper are:
+
+\begin{itemize}
+  \item a state taxonomy and preparation semantics for assembling bounded
+        model context from independently governed components;
+  \item seven executable invariants spanning context integrity, capability
+        coherence, persistent-memory provenance, and access control;
+  \item a reference implementation in a vendor-neutral agent runtime; and
+  \item an evaluation design combining property tests, fault injection, and
+        long-horizon agent tasks, including explicit safety and cost metrics.
+\end{itemize}
+
+We deliberately do not report end-task improvements yet.  The current evidence
+is architectural and test-based; the proposed controlled evaluation is the
+next stage.  This distinction is important for avoiding the common error of
+equating the existence of a memory subsystem with improved reliability.
+
+\section{Failure Model and Design Requirements}
+
+We assume a model that can produce incorrect text, malformed tool arguments,
+unwarranted memory writes, and inconsistent plans.  External tool results can
+be large, stale, adversarial, or partially trusted.  The host application,
+rather than the model, authenticates users and resolves organizational
+membership.  Storage and runtime code are inside the trusted computing base;
+model output and retrieved external content are not.
+
+This model exposes four recurring failure classes.
+
+\paragraph{Context-integrity failures.}
+A token-pressure policy removes a tool invocation but retains its result, or
+vice versa.  The next provider request is malformed or, worse, semantically
+ambiguous.  Repeated compaction at several layers can also summarize already
+summarized evidence and make loss difficult to audit.
+
+\paragraph{State-lifetime failures.}
+Ephemeral scratch data is promoted to durable user knowledge, or long-lived
+facts exist only in a rolling prompt.  A corrected fact destructively
+overwrites its predecessor, erasing provenance and making historical queries
+impossible.
+
+\paragraph{Capability-coherence failures.}
+The prompt describes one tool set while the executor uses another.  A context
+plugin maintains its own registry, so disabling a capability removes its
+instructions but leaves an executable function reachable.
+
+\paragraph{Authorization failures.}
+A model-generated identity or group is treated as authoritative.  Filtering
+occurs after retrieval, allowing unauthorized data into prompt construction,
+logs, caches, or ranking.  AgentDojo's results show why untrusted tool content
+must be treated as an active security input rather than inert
+text~\cite{debenedetti2024agentdojo}.
+
+From these failures we derive four requirements: state classes must have
+explicit lifetimes; every model request must be assembled at one observable
+boundary; tool capability must have a single source of truth; and memory
+authorization must occur before model visibility.
+
+\section{Architecture}
+
+\subsection{State classes}
+
+At turn $t$, the runtime state is
+
+\begin{equation}
+S_t = \langle P, H_t, U_t, W_t, K_t, M_t \rangle ,
+\end{equation}
+
+where $P$ contains the system contract and enabled-plugin instructions;
+$H_t$ is committed conversation history; $U_t$ is the current input; $W_t$
+is spillable working memory; $K_t$ is persistent entity--fact knowledge; and
+$M_t$ is the single tool manager.  Table~\ref{tab:state} summarizes their
+governance.
+
+\begin{table*}[t]
+\caption{State classes are separated by lifetime, authority, and loss policy.}
+\label{tab:state}
+\centering
+\small
+\begin{tabular}{lllll}
+\toprule
+State & Typical contents & Lifetime & Writer & Pressure behavior \\
+\midrule
+$P$: contract & system prompt, plugin rules & agent configuration & host/plugins & never compacted \\
+$H_t$: history & user/assistant messages, tool pairs & session & runtime & pair-aware eviction \\
+$U_t$: current input & new request or newest tool results & one model step & host/runtime & protected; reject or truncate explicitly \\
+$W_t$: working memory & large observations, scratch artifacts & session or task & agent/runtime & indexed spill and explicit retrieval \\
+$K_t$: knowledge & entities, facts, evidence, temporal state & cross-session & host/ingestor/agent policy & ranked, scoped retrieval \\
+$M_t$: capabilities & executable tool definitions and policy & agent lifetime & host/plugins & definitions budgeted, never silently dropped \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+This separation does not imply that every application should enable every
+class.  Features are plugins: a disabled feature contributes neither prompt
+content nor tools.  Retrieval-only deployments can enable $K_t$ reads while
+disallowing model-authored writes.  Session ingestors can observe a transcript
+before compaction and update memory asynchronously, without blocking the model
+call.
+
+\subsection{One preparation boundary}
+
+The preparation function computes
+
+\begin{equation}
+Q_t, B_t = \operatorname{prepare}(S_t, L, R),
+\end{equation}
+
+where $L$ is the model context limit, $R$ is the response reserve, $Q_t$ is the
+provider-ready sequence, and $B_t$ is an inspectable budget.  The budget
+contains separate terms for tool definitions, system and plugin content,
+conversation, and current input:
+
+\begin{equation}
+b_P + b_H + b_U + b_M \leq L - R.
+\end{equation}
+
+Tool schemas and protected current input are accounted for before historical
+conversation.  If the system contract plus current input cannot fit, the
+runtime follows an explicit oversized-input policy rather than silently
+evicting a different state class.  Compaction is triggered only at a configured
+critical utilization threshold and runs once immediately before the provider
+call.  Budget and compaction events are emitted for monitoring.
+
+The implemented algorithmic policy first identifies historical tool pairs by
+call identifier.  Large results are placed in $W_t$ with a descriptive key;
+old pairs beyond a configured cap can be spilled; and a rolling window removes
+remaining old messages.  Every removal operation treats a call and its result
+as one unit.  Immediately before dispatch, a sanitizer rejects or repairs
+unmatched historical pairs.  This is intentionally a runtime property rather
+than a prompting convention.
+
+\subsection{Plugin-scoped context, shared tools}
+
+Each context plugin exposes four conceptually distinct surfaces: static
+instructions, dynamic model-visible content, serializable state, and optional
+tools.  Plugins track the token size of their own dynamic content and declare
+whether it can be compacted.  The context manager assembles all enabled plugin
+instructions and content into one developer message.
+
+All tools, including plugin-provided and late-bound tools, are registered in
+the same manager $M_t$.  Consequently, tool visibility, enablement, permission
+checks, and execution observe the same state.  This removes a class of
+time-of-check/time-of-use mismatches between prompt assembly and execution.
+Dynamic tool catalogs can load a bounded subset of a large tool collection,
+but the loaded subset still enters $M_t$ and the token budget.
+
+\subsection{Persistent knowledge with provenance}
+
+The persistent store represents identity as entities and knowledge as facts.
+An atomic fact is approximately a tuple
+
+\begin{equation}
+f = \langle s,p,o,c,i,e,z,[v_0,v_1],\sigma \rangle,
+\end{equation}
+
+where $s,p,o$ are subject, predicate, and object/value; $c$ is confidence;
+$i$ is importance; $e$ is supporting evidence; $z$ identifies the source
+signal; $[v_0,v_1]$ is a validity interval; and $\sigma$ optionally identifies
+a superseded predecessor.  Facts can additionally bind to several contextual
+entities.  Document facts store longer narratives such as profiles.
+
+Non-aggregate corrections create a successor and archive the prior fact rather
+than mutating history in place.  Queries can therefore apply an ``as of'' time
+and exclude superseded knowledge.  Retrieval ranks visible candidates using
+confidence, recency, predicate weight, and importance; semantic retrieval and
+bounded graph traversal are optional tiers.  Entity resolution proceeds from
+strong identifiers through normalized names and aliases to a confidence-capped
+semantic fallback.  The model can emit surface forms, while trusted runtime
+code resolves stored identifiers.
+
+This model is intentionally more structured than storing transcript chunks in
+a vector index.  The vector representation is a retrieval aid; provenance,
+temporal state, ownership, and graph relationships remain first-class fields.
+
+\subsection{Authorization before model visibility}
+
+Every entity and fact has an owner.  The host supplies a trusted set of caller
+principals (for example user, group, entity, and service identities).  At the
+storage boundary, record permissions and explicit ACL grants are materialized
+as read and write principal sets.  A record $r$ is visible to caller $a$ only
+if
+
+\begin{equation}
+\operatorname{Read}(r) \cap \operatorname{Principals}(a) \neq \emptyset .
+\end{equation}
+
+The query performs this intersection; it is not a post-retrieval model filter.
+Write principals are constrained to be a subset of read principals.  An empty
+caller-principal set fails closed.  Because pre-migration records lack the
+materialized sets, principal mode has no legacy fallback: a backfill is an
+explicit deployment gate.  The host remains responsible for constructing the
+principal set from authenticated state.  Allowing model output to add a group
+principal would move the vulnerability outside the library rather than solve
+it.
+
+\section{Executable Invariants}
+
+We use invariants both as design documentation and as property-test targets.
+They do not prove end-to-end agent correctness; they narrow the set of failures
+that the stochastic component can induce.
+
+\begin{description}
+  \item[I1: Budget accountability.] Every provider request exposes a budget
+  decomposition, and fixed content plus response reserve must fit before
+  historical content is admitted.
+
+  \item[I2: Current-input preservation.] Accepted $U_t$ is present in $Q_t$;
+  ordinary history compaction cannot remove the newest request or newest tool
+  observation.
+
+  \item[I3: Historical pair closure.] For each historical call identifier in
+  $Q_t$, its tool invocation and result are either both present or both absent.
+
+  \item[I4: Single preparation transition.] Compaction occurs at most once per
+  provider call and is observable through a transition log and budget event.
+
+  \item[I5: Capability coherence.] The agent executor and context assembler
+  reference the same manager: $M_t^{agent} \equiv M_t^{context}$.  Disabling a
+  plugin removes its contributed content and tools.
+
+  \item[I6: Provenance-preserving correction.] A non-aggregate correction does
+  not destroy its predecessor; the successor links to it and temporal queries
+  select the appropriate visible version.
+
+  \item[I7: Authorized retrieval.] Every returned record is readable by at
+  least one trusted caller principal, and write principals are a subset of read
+  principals.
+\end{description}
+
+The current implementation has unit and integration tests for pair-preserving
+compaction, context snapshots and persistence, plugin feature flags, shared
+tool-manager identity, owner and ACL matrices, supersession, temporal queries,
+entity resolution, and fail-closed principal behavior.  These tests establish
+implementation conformance to local properties.  They do not yet establish
+whether agents complete more tasks or whether the ranking policy selects the
+best evidence under realistic load.
+
+\section{Evaluation Plan}
+
+Our evaluation separates deterministic runtime properties from stochastic
+agent outcomes.
+
+\subsection{Research questions}
+
+\textbf{RQ1: Integrity.} Under token pressure and malformed histories, does
+pair-aware preparation eliminate structurally invalid provider requests while
+preserving the current observation?
+
+\textbf{RQ2: Long-horizon reliability.} Do explicit working and persistent
+memory tiers improve task completion and evidence-grounded answers relative to
+rolling-window and summarization baselines at equal model context limits?
+
+\textbf{RQ3: Authorization.} Under cross-tenant queries, stale indexes, entity
+merges, and adversarial tool content, does storage-boundary filtering prevent
+unauthorized records from entering model-visible context?
+
+\textbf{RQ4: Tradeoffs.} What task-success gains, if any, justify additional
+tokens, retrieval operations, and p50/p95 latency?
+
+\subsection{Workloads and baselines}
+
+We plan three workload families.  First, repository-navigation tasks require
+an agent to inspect many files and retain tool observations across a long
+trajectory; a held-out subset of SWE-bench-style issues provides realistic
+software-engineering structure~\cite{jimenez2024swebench}.  Second, synthetic
+assistant tasks combine email, calendar, people, projects, corrections, and
+time-sensitive questions.  Their generated ground-truth graph makes
+provenance, staleness, and authorization directly measurable.  Third,
+tool-policy dialogues adapt the state-based evaluation style of
+$\tau$-bench~\cite{yao2024taubench}, including repeated trials to measure
+reliability rather than best-case success.
+
+We will compare: (B0) full history until rejection; (B1) oldest-first rolling
+window; (B2) rolling summaries; (B3) embedding retrieval over unstructured
+chunks; (B4) tiered context without persistent knowledge; and (B5) the full
+architecture.  All conditions use the same model, tools, response reserve,
+and nominal context limit.  Retrieval-only and model-write-enabled memory are
+reported separately because they have different safety envelopes.
+
+\subsection{Fault injection}
+
+Deterministic tests inject orphaned tool calls/results, oversized Unicode tool
+outputs, repeated compaction thresholds, plugin failures, serialization and
+restore cycles, conflicting facts, expired facts, low-confidence entity
+matches, revoked ACL entries, incomplete principal sets, pre-backfill records,
+and entity merges.  Security cases place prompt-injection strings inside tool
+results and memory evidence.  We do not expect state separation alone to stop
+all prompt injection; the question is whether authorization and transcript
+invariants remain intact while task-level defenses are evaluated independently.
+
+\subsection{Metrics and analysis}
+
+Primary safety metrics are malformed-request rate, current-input loss,
+unauthorized-record exposure (target: zero), and provenance coverage of facts
+used in final answers.  Reliability metrics are state-goal success,
+evidence-supported answer accuracy, stale-fact selection, and repeated-trial
+$\mathrm{pass}^k$.  Systems metrics are input/output tokens, peak prompt
+utilization, memory reads/writes, compaction count, and p50/p95 latency.
+
+Each stochastic condition will run paired task instances across multiple
+seeds.  We will report confidence intervals and per-task deltas, not only
+aggregate means.  Safety failures will be listed individually.  Model and
+runtime versions, prompts, synthetic data generators, and event traces will be
+pinned in the artifact.  The principal hypothesis is that explicit tiers and
+pair-aware compaction reduce structural failures and improve long-horizon
+success at a measurable latency cost.  A null or negative task-success result
+would remain useful if the invariant and cost results identify where the
+architecture does and does not help.
+
+\section{Discussion}
+
+\paragraph{Boundaries are not policies.}
+The architecture makes state classes and enforcement points explicit, but a
+host can still choose an unsafe visibility default, trust an incorrect
+principal set, or permit the model to write unsupported facts.  The system
+therefore exposes retrieval-only operation, configurable visibility policy,
+evidence requirements, and confidence thresholds.  Defaults and deployment
+guidance are part of the safety surface.
+
+\paragraph{Compaction is lossy computation.}
+Moving a tool result to working memory preserves bytes but changes immediate
+availability; summarizing it changes content.  Both operations should be
+treated as semantic transitions with logs, not invisible prompt optimization.
+Our evaluation will distinguish retained, retrievable, and irrecoverably
+dropped observations.
+
+\paragraph{Structured memory introduces its own errors.}
+Entity resolution can merge distinct people, extraction can invent a fact, and
+ranking can prefer salient but stale evidence.  Provenance and supersession
+make these errors inspectable but do not prevent them.  Restraint-oriented
+ingestion---requiring evidence quotes and using a skeptical second pass---is an
+available policy whose effect still requires measurement.
+
+\paragraph{Generality.}
+The concepts are provider-neutral, but the reference implementation and tests
+are TypeScript-specific.  Provider message schemas also differ.  Pair closure
+is expressed over a normalized internal representation, and adapters must
+preserve call identifiers correctly.
+
+\section{Agent-Assisted Research Workflow}
+
+The workshop explicitly invites descriptions of agent use in research.  An AI
+coding agent was used to inspect the implementation and documentation, locate
+relevant tests, search for primary literature, and produce the initial paper
+scaffold and prose.  Human authors selected the research claim, constrained
+the paper to work-in-progress status, and are responsible for validating every
+architectural statement, citation, experiment, and anonymization decision.
+No empirical result in this draft was generated or inferred by the agent.
+
+For reproducibility, the final artifact will record the agent instructions,
+the source revision inspected, generated diffs, and the commands used for
+tests and paper compilation.  Agent-written text is treated as an untrusted
+draft: claims must be matched to code or measured data, references must resolve
+to primary sources, and proposed experiments require human approval before
+execution.  The main lesson so far is that an agent can rapidly connect a broad
+implementation to a paper structure, but it tends to turn implemented
+mechanisms into implied benefits.  Explicitly separating ``implemented,''
+``tested invariant,'' and ``measured outcome'' is a useful oversight rule.
+
+\section{Conclusion}
+
+Safe agentic engineering requires more than improving the model's next-action
+prediction.  The surrounding runtime decides what the model can see, remember,
+forget, and execute.  We have presented a work-in-progress architecture that
+separates prompt contract, conversation, current input, working memory,
+persistent knowledge, and tool capability; assembles them at one budgeted
+boundary; and enforces integrity and authorization invariants outside the
+model.  The immediate next step is a controlled evaluation that tests whether
+these structural guarantees translate into grounded long-horizon behavior at
+an acceptable cost.  Regardless of outcome, stating the invariants makes the
+system's safety claims falsifiable.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}

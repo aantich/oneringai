@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- OAuth authorization-code callbacks now return an exported `OAuthCallbackResult`
+  with the provider's optional raw `idToken`. The result is forwarded through
+  `OAuthManager` and `Connector`; ID tokens are not verified or persisted in token
+  storage. Existing callers may ignore the result; explicit `Promise<void>`
+  wrappers should await/discard it or adopt the new return type.
+
 ## [1.1.7] — 2026-09-04
 
 ### Added
