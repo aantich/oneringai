@@ -1,6 +1,6 @@
 {
   "name": "@everworker/oneringai",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "Unified TypeScript AI agent library with multi-vendor models, tools, memory, media, and pluggable OneRingAI/Codex agent runtimes",
   "type": "module",
   "main": "./dist/index.js",
