@@ -1730,6 +1730,100 @@ Codex SDK runtime resolves it once when opening each Codex session. Empty or
 whitespace-only values fail before reaching the SDK. Other vendors must use
 their documented authentication forms.
 
+### Preserving OAuth configuration and requesting refresh access
+
+Use the provider template's `refreshStrategy` when a host requires reusable
+authorization-code grants. The public `applyRefreshStrategy()` helper applies
+only the provider's refresh requirements to the configuration you already have:
+
+```typescript
+import {
+  applyRefreshStrategy,
+  getVendorAuthTemplate,
+  type OAuthConnectorAuth,
+} from '@everworker/oneringai';
+
+function requireRefreshAccess(
+  auth: OAuthConnectorAuth,
+  vendorId: string,
+  authTemplateId: string,
+): OAuthConnectorAuth {
+  const template = getVendorAuthTemplate(vendorId, authTemplateId);
+  if (auth.flow !== 'authorization_code' || template?.flow !== auth.flow) {
+    throw new Error('Select the matching authorization-code template');
+  }
+  return {
+    ...auth,
+    ...applyRefreshStrategy(
+      auth.scope,
+      auth.authorizationParams,
+      template.refreshStrategy,
+      { enforce: true, requiredScope: auth.requiredScope },
+    ),
+  };
+}
+```
+
+The helper is pure and idempotent. It preserves your API scopes, existing
+required scope tokens and unrelated authorization parameters, including `prompt`.
+It never copies the template's general scope list or prompt defaults. Its return
+value is a config patch, not a token or a storage operation.
+
+`auth.scope` is the authoritative scope field, including an explicitly empty
+string. A legacy `authorizationParams.scope` is used only when `auth.scope` is
+absent. The helper promotes that fallback into the returned `scope` and removes
+the duplicate parameter. This prevents stale parameters from undoing scope edits
+or reintroducing removed permissions. Authorization URL construction follows the
+same precedence and always merges `requiredScope`, including for configurations
+that bypass the helper. Unrelated parameters such as `prompt` remain unchanged.
+
+| Template strategy | Effect |
+| --- | --- |
+| `scope` | Merge the provider-required scope tokens without duplicating them. |
+| `auth_param` | Add the provider's required parameter. With `enforce: true`, replace a conflicting value; otherwise retain the existing value. |
+| `automatic` / `never_expires` | No provider-specific request additions. |
+| `manual_setup` | No invented request additions; the host must handle the documented provider setup. |
+
+For example, the Google and Dropbox templates declare their respective offline
+parameters; Microsoft, Salesforce and Twitter declare their respective refresh
+scopes. Host code does not need a provider switch. Enforcement with no strategy
+throws a configuration error. Existing three-argument calls keep their current
+parameter precedence, including an explicitly configured online flow.
+
+Enforcement requests the provider's renewal behavior; it does not guarantee a
+refresh token on every callback. Providers can omit a replacement refresh token
+after a subsequent authorization. Hosts must retain an existing valid grant for
+the exact same account/client and must not confuse omission with disconnect.
+`automatic`/`never_expires` describe the template's renewal model, not a promise
+that consent or credentials cannot be revoked. `manual_setup` must be completed
+outside the helper. No refresh scopes are added to app-only client-credentials
+or JWT-bearer flows by this API integration.
+
+`buildAuthConfig(template, credentials)` retains normal creation defaults.
+For an existing same-method authorization-code connector, use
+`buildAuthConfig(template, credentialPatch, { existingAuth })` instead.
+Nonempty supplied template credentials replace their fields; empty values keep
+the existing values, including secrets. Existing scopes, prompts, PKCE, token
+storage namespace, refresh margin and custom endpoints survive the update.
+An absent/empty saved scope does not import the template's broad scope list.
+A changed parameter such as `tenantId` updates an endpoint only if that endpoint
+still matches its previous template-derived URL; custom endpoints are preserved.
+
+`ConnectorConfigStore.updateFromTemplate()` uses this preservation automatically.
+An explicit provider/authentication-method change requires that method's own
+required credentials and does not inherit the previous method's credentials.
+Legacy configurations with matching provider and unambiguous method information
+can be edited; ambiguous ones require an explicit `saveFromTemplate()` replacement.
+The full-config `save()` API remains a replacement operation. A changed OAuth
+client does not make the old client's user grants transferable.
+
+Reconstructed `Connector` instances apply the same refresh requirements using
+their canonical `serviceType`, even when `requiredScope` is already populated.
+If a service has conflicting authorization-code strategies, automatic backfill
+does not guess one: select the exact auth template and apply it explicitly as
+shown above. This backfill does not import prompt or general scope defaults and
+does not silently enable parameter enforcement for existing hosts.
+
 ### Multiple Keys Per Vendor
 
 Use different keys for different purposes:

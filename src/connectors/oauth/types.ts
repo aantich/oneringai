@@ -63,7 +63,8 @@ export interface OAuthConfig {
   // Vendor-specific authorization parameters
   /** Extra query parameters appended to the authorization URL.
    *  Used for vendor-specific requirements, e.g. Google's `access_type: 'offline'`
-   *  to obtain a refresh token. */
+   *  to obtain a refresh token. `scope` here is a legacy fallback only when the
+   *  dedicated `scope` field is absent; it cannot override `requiredScope`. */
   authorizationParams?: Record<string, string>;
 
   // Token management

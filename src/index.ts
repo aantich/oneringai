@@ -1171,6 +1171,7 @@ export {
   getCredentialsSetupURL,
   getDocsURL,
   buildAuthConfig,
+  applyRefreshStrategy,
   extractNonSecretCredentials,
   // All templates array
   allVendorTemplates,
@@ -1190,6 +1191,9 @@ export type {
   VendorTemplate,
   AuthTemplate,
   AuthTemplateField,
+  RefreshStrategy,
+  ApplyRefreshStrategyOptions,
+  BuildAuthConfigOptions,
   OptionField,
   VendorRegistryEntry,
   TemplateCredentials,

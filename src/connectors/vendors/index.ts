@@ -33,6 +33,7 @@ export type {
   VendorTemplate,
   AuthTemplate,
   AuthTemplateField,
+  RefreshStrategy,
   OptionField,
   VendorRegistryEntry,
   TemplateCredentials,
@@ -58,7 +59,7 @@ export {
   extractNonSecretCredentials,
   initVendorRegistry,
 } from './helpers.js';
-export type { VendorInfo } from './helpers.js';
+export type { VendorInfo, ApplyRefreshStrategyOptions, BuildAuthConfigOptions } from './helpers.js';
 
 // All templates
 export { allVendorTemplates } from './templates/index.js';
@@ -95,26 +96,39 @@ initVendorRegistry(allVendorTemplates);
 // refresh-token issuance silently — every saved config would need a manual
 // re-stamp migration. This makes the upgrade self-healing.
 //
-// Idempotent: the backfill only fires when `auth.requiredScope` is absent,
-// so freshly-stamped configs (post-upgrade) skip the lookup entirely.
+// Idempotent for both fresh and saved configs, including existing required scopes.
+// This applies refresh metadata only, never general scope or prompt defaults.
 Connector.setRefreshStrategyBackfill((serviceType, auth) => {
   if (!serviceType) return undefined;
   // Match by serviceType, not vendor id — both are typically equal but
   // serviceType is what's persisted on ConnectorConfig and is the API-facing
   // discriminator. Find the auth-code template for this service.
-  const template = getAllVendorTemplates().find((t) => t.serviceType === serviceType);
-  if (!template) return undefined;
-  const authTemplate = template.authTemplates.find(
-    (a) => a.type === 'oauth' && a.flow === 'authorization_code',
-  );
-  if (!authTemplate?.refreshStrategy) return undefined;
+  const candidates = getAllVendorTemplates()
+    .filter(t => t.serviceType === serviceType)
+    .flatMap(t => t.authTemplates)
+    .filter(a => a.type === 'oauth' && a.flow === 'authorization_code');
+  const strategyKey = (strategy: typeof candidates[number]['refreshStrategy']) => {
+    if (!strategy) return undefined;
+    switch (strategy.kind) {
+      case 'scope': return JSON.stringify([strategy.kind, strategy.scope]);
+      case 'auth_param': return JSON.stringify([strategy.kind, strategy.key, strategy.value]);
+      case 'manual_setup': return JSON.stringify([strategy.kind, strategy.description]);
+      default: return strategy.kind;
+    }
+  };
+  const authTemplate = candidates[0];
+  if (!authTemplate?.refreshStrategy || candidates.some(a =>
+    strategyKey(a.refreshStrategy) !== strategyKey(authTemplate.refreshStrategy),
+  )) return undefined; // Host must select the exact template; never guess the first.
+
   // Re-apply the strategy to the existing scope/authorizationParams. We pass
   // the persisted `auth.scope` as the base so operator overrides are
   // preserved verbatim — only the refresh-grant token is force-merged back.
   const result = applyRefreshStrategy(
-    auth.scope ?? '',
+    auth.scope,
     auth.authorizationParams,
     authTemplate.refreshStrategy,
+    { requiredScope: auth.requiredScope },
   );
   return {
     requiredScope: result.requiredScope,

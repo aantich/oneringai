@@ -259,6 +259,9 @@ export class ConnectorConfigStore {
    * Update a connector that was created from a vendor template.
    * Merges new credentials with existing: non-empty values override,
    * empty values preserve the existing decrypted value ("leave empty to keep").
+   * Same-method authorization-code updates also preserve saved scopes, prompts,
+   * token namespaces, PKCE, refresh settings and custom endpoints. Method changes
+   * require the new method's own credentials; legacy ambiguity requires replacement.
    *
    * @param name - Existing connector name
    * @param vendorId - Vendor template ID
@@ -290,8 +293,29 @@ export class ConnectorConfigStore {
       throw new Error(`Unknown auth method '${authTemplateId}' for vendor '${vendorId}'`);
     }
 
-    // Load existing decrypted config for merging
-    const existingConfig = await this.get(name);
+    // Read config and method provenance once. No extra metadata lookup on edits.
+    const existing = await this.storage.get(name);
+    const existingConfig = existing ? this.decryptSecrets(existing.config) : null;
+    const methodChanged = !!existing && (
+      (existing.vendorId !== undefined && existing.vendorId !== vendorId) ||
+      (existing.authTemplateId !== undefined && existing.authTemplateId !== authTemplateId) ||
+      existingConfig!.auth.type !== authTemplate.type ||
+      (existingConfig!.auth.type === 'oauth' && existingConfig!.auth.flow !== authTemplate.flow)
+    );
+    const preservingOAuth = !methodChanged && existingConfig?.auth.type === 'oauth' &&
+      existingConfig.auth.flow === 'authorization_code' && authTemplate.flow === 'authorization_code';
+    if (preservingOAuth && (!existing?.vendorId || !existing.authTemplateId)) {
+      const sameProvider = existing?.vendorId === vendorId ||
+        existingConfig.serviceType === template.serviceType || existingConfig.vendor === vendorId;
+      const candidates = template.authTemplates.filter(a => a.type === 'oauth' && a.flow === 'authorization_code');
+      if (!sameProvider || (!existing?.authTemplateId && candidates.length !== 1)) {
+        throw new Error('Cannot infer the saved OAuth template; use saveFromTemplate for an explicit replacement');
+      }
+    }
+    if (methodChanged) {
+      const missing = authTemplate.requiredFields.filter(field => !credentials[field]);
+      if (missing.length) throw new Error(`New authentication method requires credentials: ${missing.join(', ')}`);
+    }
 
     // Merge credentials: new non-empty values override, empty = keep existing
     const merged: Record<string, string> = {};
@@ -304,7 +328,7 @@ export class ConnectorConfigStore {
       if (credentials[field]) {
         // User provided a new value
         merged[field] = credentials[field]!;
-      } else if (existingConfig) {
+      } else if (existingConfig && !methodChanged) {
         // Try to get existing value from decrypted auth
         const authAny = existingConfig.auth as Record<string, any>;
         if (typeof authAny[field] === 'string' && authAny[field]) {
@@ -315,8 +339,9 @@ export class ConnectorConfigStore {
       }
     }
 
-    // Build new auth from merged credentials
-    const auth = buildAuthConfig(authTemplate, merged);
+    const auth = preservingOAuth
+      ? buildAuthConfig(authTemplate, credentials, { existingAuth: existingConfig.auth })
+      : buildAuthConfig(authTemplate, merged);
 
     // Build updated config
     const config: ConnectorConfig = {
@@ -335,7 +360,6 @@ export class ConnectorConfigStore {
     const templateCredentials = extractNonSecretCredentials(authTemplate, merged);
 
     // Encrypt and save
-    const existing = await this.storage.get(name);
     const now = Date.now();
     const encryptedConfig = this.encryptSecrets(config);
 

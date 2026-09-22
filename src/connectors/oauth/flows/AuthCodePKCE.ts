@@ -3,6 +3,7 @@
  * User authentication for web and mobile apps
  */
 
+import { mergeOAuthScopes } from '../utils/scopes.js';
 import { TokenStore } from '../domain/TokenStore.js';
 import { generatePKCE, generateState } from '../utils/pkce.js';
 import type { OAuthConfig, OAuthCallbackResult, TokenResponse } from '../types.js';
@@ -19,15 +20,7 @@ import type { OAuthConfig, OAuthCallbackResult, TokenResponse } from '../types.j
  * vendor template's `RefreshStrategy` stamped at config-build time.
  */
 function mergeRequiredScope(scope: string | undefined, required: string | undefined): string | undefined {
-  const requiredTrimmed = required?.trim();
-  // Empty / whitespace required is a misconfiguration — never emit empty tokens.
-  if (!requiredTrimmed) return scope;
-  const trimmed = scope?.trim() ?? '';
-  if (!trimmed) return requiredTrimmed;
-  const tokens = trimmed.split(/\s+/).filter(Boolean);
-  if (tokens.includes(requiredTrimmed)) return trimmed;
-  tokens.push(requiredTrimmed);
-  return tokens.join(' ');
+  return required?.trim() ? mergeOAuthScopes(scope, required) : scope;
 }
 
 export class AuthCodePKCEFlow {
@@ -106,7 +99,11 @@ export class AuthCodePKCEFlow {
     // config carries the field. Vendors with no required scope (Discord,
     // Asana, GitHub, etc. — `automatic` / `never_expires` / `manual_setup`
     // strategies) leave `requiredScope` undefined and this is a no-op.
-    const mergedScope = mergeRequiredScope(this.config.scope, this.config.requiredScope);
+    // The dedicated scope field wins; retain parameter-only legacy configs.
+    const mergedScope = mergeRequiredScope(
+      this.config.scope ?? this.config.authorizationParams?.scope,
+      this.config.requiredScope,
+    );
     if (mergedScope) {
       params.append('scope', mergedScope);
     }
@@ -120,6 +117,7 @@ export class AuthCodePKCEFlow {
     // Add vendor-specific authorization parameters (e.g. Google's access_type=offline)
     if (this.config.authorizationParams) {
       for (const [key, value] of Object.entries(this.config.authorizationParams)) {
+        if (key === 'scope') continue; // Already resolved with requiredScope above.
         params.set(key, value);
       }
     }

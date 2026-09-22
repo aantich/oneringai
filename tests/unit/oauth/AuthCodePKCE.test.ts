@@ -151,6 +151,27 @@ describe('AuthCodePKCEFlow', () => {
       });
     });
 
+    describe('overlapping scope fields', () => {
+      it.each([
+        { scope: 'openid email profile', requiredScope: undefined, expected: 'openid email profile' },
+        { scope: 'openid', requiredScope: 'offline_access', expected: 'openid offline_access' },
+        { scope: undefined, requiredScope: undefined, expected: 'legacy.read' },
+        { scope: undefined, requiredScope: 'offline_access', expected: 'legacy.read offline_access' },
+        { scope: '', requiredScope: undefined, expected: undefined },
+        { scope: '', requiredScope: 'offline_access', expected: 'offline_access' },
+      ])('resolves primary=$scope and required=$requiredScope before emitting scope', async ({ scope, requiredScope, expected }) => {
+        const authorizationParams = Object.freeze({ scope: 'legacy.read', prompt: 'select_account', custom: 'kept' });
+        const directFlow = new AuthCodePKCEFlow({
+          ...config, scope, requiredScope, authorizationParams, storage: mockStorage,
+        });
+        const params = new URL(await directFlow.getAuthorizationUrl()).searchParams;
+        expect(params.getAll('scope')).toEqual(expected ? [expected] : []);
+        expect(params.get('prompt')).toBe('select_account');
+        expect(params.get('custom')).toBe('kept');
+        expect(authorizationParams.scope).toBe('legacy.read');
+      });
+    });
+
     it('should include PKCE parameters', async () => {
       const url = await flow.getAuthorizationUrl();
       const urlObj = new URL(url);

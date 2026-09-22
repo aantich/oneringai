@@ -79,7 +79,9 @@ export interface OAuthConnectorAuth {
   storageKey?: string; // Custom storage key
 
   /** Extra query parameters appended to the authorization URL.
-   *  Used for vendor-specific requirements, e.g. Google's `access_type: 'offline'`. */
+   *  Used for vendor-specific requirements, e.g. Google's `access_type: 'offline'`.
+   *  `scope` here is a legacy fallback only when the dedicated `scope` field is
+   *  absent; it cannot override `requiredScope`. */
   authorizationParams?: Record<string, string>;
 
   /** Vendor-specific extra credentials */

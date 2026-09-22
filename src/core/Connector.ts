@@ -331,7 +331,7 @@ export class Connector {
    * `serviceType` (e.g. `'microsoft'`), returns a patch that re-applies the
    * vendor template's strategy: stamps `requiredScope` and merges the
    * scope/authorizationParams. Returns `undefined` if no template is found
-   * or the strategy is a no-op (`automatic`/`never_expires`/`manual_setup`).
+   * or the service has conflicting auth-code strategies.
    *
    * Registered by `vendors/index.ts` at module-load time, so the lookup
    * works for any host that imports `@everworker/oneringai`. Hosts that
@@ -956,24 +956,14 @@ export class Connector {
   // ============ Private ============
 
   private initOAuthManager(auth: ConnectorAuth & { type: 'oauth' }): void {
-    // Backfill RefreshStrategy for legacy configs that were saved before the
-    // `requiredScope` field existed. Without this, a Microsoft connector
-    // saved with an operator-overridden scope (e.g. `.default`) would lose
-    // refresh-token issuance on every reconstruction-from-DB. Only kicks in
-    // for `authorization_code` flows where the field is absent — never
-    // overrides an explicitly-stamped value.
+    // Reapply only refresh requirements on every auth-code reconstruction.
+    // Existing required scopes are preserved; their presence does not prove
+    // that every provider requirement has already been applied.
     let scope = auth.scope;
     let requiredScope = auth.requiredScope;
     let authorizationParams = auth.authorizationParams;
     if (
       auth.flow === 'authorization_code' &&
-      // `== null` (intentional double-equals) catches both `undefined` AND
-      // `null`. Some storage layers (MongoDB, Postgres jsonb, Firestore)
-      // preserve `null` literally rather than dropping the field — without
-      // this, a host-persisted `requiredScope: null` would silently bypass
-      // the backfill and break refresh-token issuance for legacy Microsoft /
-      // Salesforce / Atlassian / Twitter configs.
-      auth.requiredScope == null &&
       Connector.refreshStrategyBackfill
     ) {
       const patch = Connector.refreshStrategyBackfill(this.config.serviceType, auth);

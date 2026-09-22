@@ -4,6 +4,7 @@
  * Functions for creating connectors from vendor templates.
  */
 
+import { mergeOAuthScopes as mergeScope } from '../oauth/utils/scopes.js';
 import { Connector } from '../../core/Connector.js';
 import type { ConnectorAuth, ConnectorConfig } from '../../domain/entities/Connector.js';
 import type { ToolFunction } from '../../domain/entities/Tool.js';
@@ -95,26 +96,6 @@ export function listVendorIds(): string[] {
 }
 
 /**
- * Merge a single required scope token into a space-separated scope string.
- * Idempotent: returns the input unchanged if the token is already present.
- * Empty / undefined input yields the required token alone (so the IdP at
- * least gets refresh-grant guidance). Preserves token order.
- */
-function mergeScope(scope: string | undefined, required: string): string {
-  const requiredTrimmed = required.trim();
-  const trimmed = scope?.trim() ?? '';
-  // Empty/whitespace `required` is a misconfiguration (TypeScript types
-  // require `string`, not non-empty), but we never want to inject empty
-  // tokens into the wire scope.
-  if (!requiredTrimmed) return trimmed;
-  if (!trimmed) return requiredTrimmed;
-  const tokens = trimmed.split(/\s+/).filter(Boolean);
-  if (tokens.includes(requiredTrimmed)) return trimmed;
-  tokens.push(requiredTrimmed);
-  return tokens.join(' ');
-}
-
-/**
  * Build the final OAuth scope sent to the provider.
  *
  * Operator scope wins as the base — a site override (e.g. Microsoft
@@ -133,65 +114,156 @@ function buildOAuthScope(
   return base || '.default';
 }
 
+/** Options for applying provider refresh requirements to an existing configuration. */
+export interface ApplyRefreshStrategyOptions {
+  /** Enforce the strategy's authorization parameter over a conflicting value. Default: false. */
+  enforce?: boolean;
+  /** Other required scope tokens to preserve and merge, without importing template scopes. */
+  requiredScope?: string;
+}
+
 /**
- * Apply a `RefreshStrategy` to an OAuth config under construction.
- * - `scope`: stamps `requiredScope` and force-merges into `scope`.
- * - `auth_param`: stamps the key/value into `authorizationParams` without
- *   clobbering pre-existing operator-set keys.
- * - `automatic` / `never_expires` / `manual_setup`: no-op on the wire.
- *
- * Returns a new partial config; caller merges into the OAuth config.
- *
- * Exported for the legacy-config backfill path in `Connector.initOAuthManager`
- * — re-applies the strategy when reconstructing a Connector from a DB config
- * that pre-dates the `requiredScope` annotation. Other call sites should not
- * use this directly; they should go through `buildAuthConfig`.
+ * Apply only a provider's refresh requirements. Pure and idempotent: configured
+ * API scopes and unrelated parameters (including prompt) are preserved.
+ * `scope` is authoritative, including an explicit empty string. When absent,
+ * fall back to `authorizationParams.scope`; remove that duplicate parameter
+ * from the returned patch so it cannot override edits or required scopes.
+ * With enforce enabled, a missing strategy is an error and the strategy's
+ * authorization parameter wins. Existing three-argument calls keep their
+ * operator-value precedence. This requests renewal capability; it does not
+ * guarantee a refresh token in every response or perform manual provider setup.
  */
 export function applyRefreshStrategy(
-  scope: string,
+  scope: string | undefined,
   authorizationParams: Record<string, string> | undefined,
-  strategy: RefreshStrategy | undefined
+  strategy: RefreshStrategy | undefined,
+  options: ApplyRefreshStrategyOptions = {},
 ): {
   scope: string;
   requiredScope: string | undefined;
   authorizationParams: Record<string, string> | undefined;
 } {
+  const configuredScope = scope ?? authorizationParams?.scope ?? '';
+  if (authorizationParams && 'scope' in authorizationParams) {
+    authorizationParams = { ...authorizationParams };
+    delete authorizationParams.scope;
+  }
+  const requiredScope = mergeScope(undefined, options.requiredScope ?? '') || undefined;
+  const baseScope = requiredScope ? mergeScope(configuredScope, requiredScope) : configuredScope;
   if (!strategy) {
-    return { scope, requiredScope: undefined, authorizationParams };
+    if (options.enforce) throw new Error('Refresh strategy is required when enforcement is enabled');
+    return { scope: baseScope, requiredScope, authorizationParams };
   }
   switch (strategy.kind) {
-    case 'scope':
+    case 'scope': {
+      const combinedRequiredScope = mergeScope(requiredScope, strategy.scope);
       return {
-        scope: mergeScope(scope, strategy.scope),
-        requiredScope: strategy.scope,
+        scope: mergeScope(baseScope, combinedRequiredScope),
+        requiredScope: combinedRequiredScope,
         authorizationParams,
       };
+    }
     case 'auth_param': {
       const merged = { ...(authorizationParams ?? {}) };
-      // Operator-supplied param wins (don't clobber explicit overrides).
-      if (!(strategy.key in merged)) {
+      if (options.enforce || !(strategy.key in merged)) {
         merged[strategy.key] = strategy.value;
       }
-      return {
-        scope,
-        requiredScope: undefined,
-        authorizationParams: merged,
-      };
+      return { scope: baseScope, requiredScope, authorizationParams: merged };
     }
     case 'automatic':
     case 'never_expires':
     case 'manual_setup':
-      return { scope, requiredScope: undefined, authorizationParams };
+      return { scope: baseScope, requiredScope, authorizationParams };
   }
 }
 
+/** Options for editing a same-method authorization-code configuration. */
+export interface BuildAuthConfigOptions {
+  /** Preserve saved settings; nonempty supplied template credentials replace their fields. */
+  existingAuth?: ConnectorAuth;
+}
+
+const standardOAuthFields = new Set([
+  'clientId', 'clientSecret', 'tokenUrl', 'authorizationUrl',
+  'redirectUri', 'scope', 'usePKCE', 'privateKey', 'privateKeyPath',
+  'issuer', 'subject', 'audience',
+]);
+
+/** Resolve only placeholders declared in the template, using supplied credentials. */
+function resolveOAuthUrl(url: string | undefined, credentials: Record<string, string | undefined>): string | undefined {
+  return url?.replace(/\{([A-Za-z][A-Za-z0-9]*)\}/g, (placeholder, field: string) =>
+    credentials[field] || placeholder,
+  );
+}
+
+/** Update auth settings without re-importing creation defaults or losing token namespaces. */
+function updateAuthorizationCodeAuth(
+  authTemplate: AuthTemplate,
+  credentials: TemplateCredentials,
+  existingAuth: ConnectorAuth,
+): ConnectorAuth {
+  if (existingAuth.type !== 'oauth' || existingAuth.flow !== 'authorization_code' ||
+      authTemplate.type !== 'oauth' || authTemplate.flow !== 'authorization_code') {
+    throw new Error('existingAuth requires the same authorization-code authentication method');
+  }
+  const auth = {
+    ...existingAuth,
+    ...(existingAuth.authorizationParams && { authorizationParams: { ...existingAuth.authorizationParams } }),
+    ...(existingAuth.extra && { extra: { ...existingAuth.extra } }),
+  };
+  const fields = [...authTemplate.requiredFields, ...(authTemplate.optionalFields ?? [])];
+  const previous: Record<string, string | undefined> = { ...existingAuth.extra };
+  for (const field of fields) {
+    const value = (existingAuth as unknown as Record<string, unknown>)[field];
+    if (typeof value === 'string') previous[field] = value;
+  }
+  const next = { ...previous };
+  for (const field of fields) {
+    const value = credentials[field];
+    if (!value) continue; // Existing update contract: empty means keep, including secrets.
+    next[field] = value;
+    if (standardOAuthFields.has(field)) {
+      (auth as unknown as Record<string, unknown>)[field] = value;
+    } else {
+      auth.extra = { ...auth.extra, [field]: value };
+    }
+  }
+  const defaults = authTemplate.defaults as Partial<typeof existingAuth>;
+  for (const field of ['tokenUrl', 'authorizationUrl'] as const) {
+    const templateUrl = defaults[field];
+    if (!templateUrl) continue;
+    const previousUrl = resolveOAuthUrl(templateUrl, previous);
+    const nextUrl = resolveOAuthUrl(templateUrl, next);
+    // A changed tenant/installation only updates a template-derived endpoint.
+    // Explicit endpoint edits and custom saved endpoints remain authoritative.
+    if (nextUrl !== previousUrl && existingAuth[field] === previousUrl && auth[field] === existingAuth[field]) {
+      auth[field] = nextUrl!;
+    }
+  }
+  const refresh = applyRefreshStrategy(
+    auth.scope, auth.authorizationParams, authTemplate.refreshStrategy,
+    { requiredScope: auth.requiredScope },
+  );
+  return {
+    ...auth,
+    ...refresh,
+    scope: refresh.scope || auth.scope, // Missing saved scopes never import broad template scopes.
+  };
+}
+
 /**
- * Build ConnectorAuth from auth template and credentials
+ * Build ConnectorAuth from a template and credentials. Creation uses template
+ * defaults. With existingAuth, preserve saved authorization-code settings and
+ * apply only the nonempty credential patch plus provider refresh requirements.
  */
 export function buildAuthConfig(
   authTemplate: AuthTemplate,
-  credentials: TemplateCredentials
+  credentials: TemplateCredentials,
+  options: BuildAuthConfigOptions = {},
 ): ConnectorAuth {
+  if (options.existingAuth) {
+    return updateAuthorizationCodeAuth(authTemplate, credentials, options.existingAuth);
+  }
   const defaults = authTemplate.defaults;
 
   if (authTemplate.type === 'api_key') {
@@ -276,31 +348,11 @@ export function buildAuthConfig(
     tokenLifetimeSeconds: (oauthDefaults as { tokenLifetimeSeconds?: number }).tokenLifetimeSeconds,
   };
 
-  // Handle URL templates (e.g., {tenantId}, {installationId})
-  if (oauthConfig.tokenUrl && credentials.tenantId) {
-    oauthConfig.tokenUrl = oauthConfig.tokenUrl.replace('{tenantId}', credentials.tenantId);
-  }
-  if (oauthConfig.authorizationUrl && credentials.tenantId) {
-    oauthConfig.authorizationUrl = oauthConfig.authorizationUrl.replace(
-      '{tenantId}',
-      credentials.tenantId
-    );
-  }
-  if (oauthConfig.tokenUrl && credentials.installationId) {
-    oauthConfig.tokenUrl = oauthConfig.tokenUrl.replace(
-      '{installationId}',
-      credentials.installationId
-    );
-  }
+  // Keep creation and update endpoint interpolation identical.
+  oauthConfig.tokenUrl = resolveOAuthUrl(oauthConfig.tokenUrl, credentials) ?? '';
+  oauthConfig.authorizationUrl = resolveOAuthUrl(oauthConfig.authorizationUrl, credentials);
 
-  // Collect vendor-specific extra fields into auth.extra (same pattern as api_key).
-  // This preserves template fields like tenantId, installationId so they survive
-  // round-trips through save → load → edit → save.
-  const standardOAuthFields = new Set([
-    'clientId', 'clientSecret', 'tokenUrl', 'authorizationUrl',
-    'redirectUri', 'scope', 'usePKCE', 'privateKey', 'privateKeyPath',
-    'issuer', 'subject', 'audience',
-  ]);
+  // Preserve template-specific fields for later edits and URL reconstruction.
   const oauthExtra: Record<string, string> = {};
   const allOAuthFields = [
     ...authTemplate.requiredFields,

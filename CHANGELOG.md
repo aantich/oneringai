@@ -9,11 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Public `applyRefreshStrategy()` and `RefreshStrategy`/options types allow hosts
+  to enforce a provider's refresh request requirements while preserving configured
+  scopes and prompt parameters. Enforcement is opt-in; existing refresh-parameter
+  precedence and template creation defaults are unchanged.
+- `buildAuthConfig()` accepts `existingAuth` for preservation-aware edits of
+  same-method authorization-code configurations.
+
 - OAuth authorization-code callbacks now return an exported `OAuthCallbackResult`
   with the provider's optional raw `idToken`. The result is forwarded through
   `OAuthManager` and `Connector`; ID tokens are not verified or persisted in token
   storage. Existing callers may ignore the result; explicit `Promise<void>`
   wrappers should await/discard it or adopt the new return type.
+
+### Fixed
+
+- Reconcile overlapping OAuth scope fields: the dedicated `scope` wins, while
+  parameter-only legacy scopes remain supported. Refresh configuration removes
+  the duplicate `authorizationParams.scope`, and authorization URLs cannot use
+  it to override scope edits or suppress required refresh scopes.
+- Template edits retain saved OAuth prompts, custom parameters, token storage
+  keys, PKCE, refresh margins and endpoints. Editing a template parameter updates
+  only endpoints still derived from that template. Changing auth methods requires
+  the new method's credentials instead of inheriting incompatible secrets.
+- Saved-connector refresh backfill also runs when `requiredScope` is populated,
+  preserves other required scopes, and avoids guessing between conflicting
+  strategies. Shared scope merging prevents duplicates in authorization URLs.
+- Template updates reuse one loaded config/metadata record instead of reading
+  the same storage twice. OAuth token storage interfaces and refresh execution
+  remain unchanged; no database migration is required.
 
 ## [1.1.7] — 2026-09-04
 

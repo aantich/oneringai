@@ -10,8 +10,8 @@ import type { ConnectorAuth } from '../../domain/entities/Connector.js';
 
 /**
  * How a vendor issues refresh tokens for `authorization_code` flows. Determines
- * what (if anything) the library force-merges into authorize URLs to guarantee
- * long-lived sessions without manual re-auth. **Required** for every
+ * what (if anything) the library merges into authorize URLs to request renewal
+ * capability. Issuance still depends on provider policy and existing consent. **Required** for every
  * `authorization_code` template — the registry initializer fails fast if absent.
  *
  * - `automatic`: vendor issues a refresh token unconditionally (Discord, Asana,
@@ -75,7 +75,7 @@ export interface AuthTemplate {
   /**
    * How this vendor issues refresh tokens. **Required** when
    * `flow === 'authorization_code'`; ignored otherwise. Drives the force-merge
-   * that guarantees refresh-capable tokens without operator intervention.
+   * that requests refresh-capable access; provider consent/setup still applies.
    * Validated at registry-init time — missing on an auth-code template throws.
    */
   refreshStrategy?: RefreshStrategy;

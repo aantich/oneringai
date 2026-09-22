@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-09-18
+**Generated:** 2026-09-22
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -23,7 +23,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Tools & Function Calling](#tools-function-calling) (205 items)
 - [Streaming](#streaming) (32 items)
 - [Model Registry](#model-registry) (29 items)
-- [OAuth & External APIs](#oauth-external-apis) (42 items)
+- [OAuth & External APIs](#oauth-external-apis) (46 items)
 - [Resilience & Observability](#resilience-observability) (33 items)
 - [Errors](#errors) (41 items)
 - [Utilities](#utilities) (10 items)
@@ -17376,6 +17376,9 @@ async saveFromTemplate(
 Update a connector that was created from a vendor template.
 Merges new credentials with existing: non-empty values override,
 empty values preserve the existing decrypted value ("leave empty to keep").
+Same-method authorization-code updates also preserve saved scopes, prompts,
+token namespaces, PKCE, refresh settings and custom endpoints. Method changes
+require the new method's own credentials; legacy ambiguity requires replacement.
 
 ```typescript
 async updateFromTemplate(
@@ -26863,7 +26866,7 @@ export function getAllBuiltInTools(): ToolFunction[]
 
 ### getConnectorTools `function`
 
-📍 [`src/connectors/vendors/helpers.ts:461`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:513`](src/connectors/vendors/helpers.ts)
 
 Get all tools for a connector (delegates to ConnectorTools)
 
@@ -33151,6 +33154,24 @@ async removeAccount(userId: string, accountId: string): Promise&lt;boolean&gt;
 
 ---
 
+### ApplyRefreshStrategyOptions `interface`
+
+📍 [`src/connectors/vendors/helpers.ts:118`](src/connectors/vendors/helpers.ts)
+
+Options for applying provider refresh requirements to an existing configuration.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `enforce?` | `enforce?: boolean;` | Enforce the strategy's authorization parameter over a conflicting value. Default: false. |
+| `requiredScope?` | `requiredScope?: string;` | Other required scope tokens to preserve and merge, without importing template scopes. |
+
+</details>
+
+---
+
 ### AuthTemplate `interface`
 
 📍 [`src/connectors/vendors/types.ts:44`](src/connectors/vendors/types.ts)
@@ -33175,8 +33196,25 @@ Defines a single authentication method (e.g., API key, OAuth user flow)
 | `scopeDescriptions?` | `scopeDescriptions?: Record&lt;string, string&gt;;` | Human-readable descriptions for scopes (key = scope ID) |
 | `refreshStrategy?` | `refreshStrategy?: RefreshStrategy;` | How this vendor issues refresh tokens. **Required** when
 `flow === 'authorization_code'`; ignored otherwise. Drives the force-merge
-that guarantees refresh-capable tokens without operator intervention.
+that requests refresh-capable access; provider consent/setup still applies.
 Validated at registry-init time — missing on an auth-code template throws. |
+
+</details>
+
+---
+
+### BuildAuthConfigOptions `interface`
+
+📍 [`src/connectors/vendors/helpers.ts:181`](src/connectors/vendors/helpers.ts)
+
+Options for editing a same-method authorization-code configuration.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `existingAuth?` | `existingAuth?: ConnectorAuth;` | Preserve saved settings; nonempty supplied template credentials replace their fields. |
 
 </details>
 
@@ -33284,7 +33322,7 @@ listKeys?(): Promise&lt;string[]&gt;;
 
 ### OAuthCallbackResult `interface`
 
-📍 [`src/connectors/oauth/types.ts:79`](src/connectors/oauth/types.ts)
+📍 [`src/connectors/oauth/types.ts:80`](src/connectors/oauth/types.ts)
 
 Result of one authorization-code exchange; never persisted by token storage.
 
@@ -33340,7 +33378,8 @@ token acts as that user. When unset, `sub` defaults to `clientId`
 | `staticToken?` | `staticToken?: string;` | - |
 | `authorizationParams?` | `authorizationParams?: Record&lt;string, string&gt;;` | Extra query parameters appended to the authorization URL.
  Used for vendor-specific requirements, e.g. Google's `access_type: 'offline'`
- to obtain a refresh token. |
+ to obtain a refresh token. `scope` here is a legacy fallback only when the
+ dedicated `scope` field is absent; it cannot override `requiredScope`. |
 | `autoRefresh?` | `autoRefresh?: boolean;` | - |
 | `refreshBeforeExpiry?` | `refreshBeforeExpiry?: number;` | - |
 | `storage?` | `storage?: ITokenStorage;` | - |
@@ -33390,7 +33429,9 @@ into `scope` at URL-build time so operator scope overrides
 | `refreshBeforeExpiry?` | `refreshBeforeExpiry?: number;` | - |
 | `storageKey?` | `storageKey?: string;` | - |
 | `authorizationParams?` | `authorizationParams?: Record&lt;string, string&gt;;` | Extra query parameters appended to the authorization URL.
- Used for vendor-specific requirements, e.g. Google's `access_type: 'offline'`. |
+ Used for vendor-specific requirements, e.g. Google's `access_type: 'offline'`.
+ `scope` here is a legacy fallback only when the dedicated `scope` field is
+ absent; it cannot override `requiredScope`. |
 | `extra?` | `extra?: Record&lt;string, string&gt;;` | Vendor-specific extra credentials |
 
 </details>
@@ -33451,7 +33492,7 @@ Simple Icons icon data structure
 
 ### StoredToken `interface`
 
-📍 [`src/connectors/oauth/types.ts:94`](src/connectors/oauth/types.ts)
+📍 [`src/connectors/oauth/types.ts:95`](src/connectors/oauth/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -33494,7 +33535,7 @@ All implementations must encrypt tokens at rest
 
 ### VendorInfo `interface`
 
-📍 [`src/connectors/vendors/helpers.ts:468`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:520`](src/connectors/vendors/helpers.ts)
 
 Get vendor template information for display
 
@@ -33637,6 +33678,41 @@ type OAuthFlow = 'authorization_code' | 'client_credentials' | 'jwt_bearer' | 's
 
 ---
 
+### RefreshStrategy `type`
+
+📍 [`src/connectors/vendors/types.ts:33`](src/connectors/vendors/types.ts)
+
+How a vendor issues refresh tokens for `authorization_code` flows. Determines
+what (if anything) the library merges into authorize URLs to request renewal
+capability. Issuance still depends on provider policy and existing consent. **Required** for every
+`authorization_code` template — the registry initializer fails fast if absent.
+
+- `automatic`: vendor issues a refresh token unconditionally (Discord, Asana,
+  HubSpot, Stripe, QuickBooks, Box, Zoom, Pipedrive, Ramp, Atlassian-Bitbucket).
+- `never_expires`: tokens don't expire (or have multi-year lifetime), no
+  refresh ever needed (Notion, Linear, Airtable PAT, GitHub OAuth Apps,
+  Slack classic bot tokens).
+- `scope`: a specific scope token must be in the authorize request. Microsoft
+  / Atlassian / GitLab use `offline_access`; Salesforce uses `refresh_token`;
+  Twitter/X uses `offline.access` (note the dot). Force-merged on every
+  authorize URL to survive operator scope overrides.
+- `auth_param`: a query param must be on the authorize URL. Google uses
+  `access_type=offline`; Dropbox uses `token_access_type=offline`. Stamped
+  into the persisted `authorizationParams`.
+- `manual_setup`: refresh tokens require out-of-band IdP / app config the
+  library can't enforce (GitHub App "expire user tokens" toggle, Slack token
+  rotation enable). Surfaces a warning at template-import time.
+
+```typescript
+type RefreshStrategy = | { kind: 'automatic' }
+  | { kind: 'never_expires' }
+  | { kind: 'scope'; scope: string }
+  | { kind: 'auth_param'; key: string; value: string }
+  | { kind: 'manual_setup'; description: string }
+```
+
+---
+
 ### TemplateCredentials `type`
 
 📍 [`src/connectors/vendors/types.ts:205`](src/connectors/vendors/types.ts)
@@ -33646,6 +33722,35 @@ Credentials provided by user when creating connector from template
 ```typescript
 type TemplateCredentials = {
   [K in AuthTemplateField]?: string;
+}
+```
+
+---
+
+### applyRefreshStrategy `function`
+
+📍 [`src/connectors/vendors/helpers.ts:136`](src/connectors/vendors/helpers.ts)
+
+Apply only a provider's refresh requirements. Pure and idempotent: configured
+API scopes and unrelated parameters (including prompt) are preserved.
+`scope` is authoritative, including an explicit empty string. When absent,
+fall back to `authorizationParams.scope`; remove that duplicate parameter
+from the returned patch so it cannot override edits or required scopes.
+With enforce enabled, a missing strategy is an error and the strategy's
+authorization parameter wins. Existing three-argument calls keep their
+operator-value precedence. This requests renewal capability; it does not
+guarantee a refresh token in every response or perform manual provider setup.
+
+```typescript
+export function applyRefreshStrategy(
+  scope: string | undefined,
+  authorizationParams: Record&lt;string, string&gt; | undefined,
+  strategy: RefreshStrategy | undefined,
+  options: ApplyRefreshStrategyOptions = {},
+): {
+  scope: string;
+  requiredScope: string | undefined;
+  authorizationParams: Record&lt;string, string&gt; | undefined;
 }
 ```
 
@@ -33700,14 +33805,17 @@ const response = await authenticatedFetch(
 
 ### buildAuthConfig `function`
 
-📍 [`src/connectors/vendors/helpers.ts:191`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:259`](src/connectors/vendors/helpers.ts)
 
-Build ConnectorAuth from auth template and credentials
+Build ConnectorAuth from a template and credentials. Creation uses template
+defaults. With existingAuth, preserve saved authorization-code settings and
+apply only the nonempty credential patch plus provider refresh requirements.
 
 ```typescript
 export function buildAuthConfig(
   authTemplate: AuthTemplate,
-  credentials: TemplateCredentials
+  credentials: TemplateCredentials,
+  options: BuildAuthConfigOptions = {},
 ): ConnectorAuth
 ```
 
@@ -33754,7 +33862,7 @@ const personalEmails = await personalFetch('/me/messages');
 
 ### createConnectorFromTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:400`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:452`](src/connectors/vendors/helpers.ts)
 
 Create a Connector from a vendor template
 
@@ -33783,7 +33891,7 @@ const connector = createConnectorFromTemplate(
 
 ### extractNonSecretCredentials `function`
 
-📍 [`src/connectors/vendors/helpers.ts:341`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:393`](src/connectors/vendors/helpers.ts)
 
 Extract non-secret credentials from a raw credentials dict.
 Used by ConnectorConfigStore.saveFromTemplate() to preserve
@@ -33825,7 +33933,7 @@ export function getAllVendorLogos(): Map&lt;string, VendorLogo&gt;
 
 ### getAllVendorTemplates `function`
 
-📍 [`src/connectors/vendors/helpers.ts:64`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:65`](src/connectors/vendors/helpers.ts)
 
 Get all vendor templates
 
@@ -33837,7 +33945,7 @@ export function getAllVendorTemplates(): VendorTemplate[]
 
 ### getCredentialsSetupURL `function`
 
-📍 [`src/connectors/vendors/helpers.ts:551`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:603`](src/connectors/vendors/helpers.ts)
 
 Get credentials setup URL for a vendor
 
@@ -33849,7 +33957,7 @@ export function getCredentialsSetupURL(vendorId: string): string | undefined
 
 ### getDocsURL `function`
 
-📍 [`src/connectors/vendors/helpers.ts:559`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:611`](src/connectors/vendors/helpers.ts)
 
 Get docs URL for a vendor
 
@@ -33861,7 +33969,7 @@ export function getDocsURL(vendorId: string): string | undefined
 
 ### getVendorAuthTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:76`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:77`](src/connectors/vendors/helpers.ts)
 
 Get auth template for a vendor
 
@@ -33888,7 +33996,7 @@ export function getVendorColor(vendorId: string): string | undefined
 
 ### getVendorInfo `function`
 
-📍 [`src/connectors/vendors/helpers.ts:488`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:540`](src/connectors/vendors/helpers.ts)
 
 Get vendor information suitable for display
 
@@ -33946,7 +34054,7 @@ export function getVendorLogoSvg(vendorId: string, color?: string): string | und
 
 ### getVendorTemplate `function`
 
-📍 [`src/connectors/vendors/helpers.ts:52`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:53`](src/connectors/vendors/helpers.ts)
 
 Get vendor template by ID
 
@@ -33970,7 +34078,7 @@ export function hasVendorLogo(vendorId: string): boolean
 
 ### listVendorIds `function`
 
-📍 [`src/connectors/vendors/helpers.ts:88`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:89`](src/connectors/vendors/helpers.ts)
 
 List all vendor IDs
 
@@ -33982,7 +34090,7 @@ export function listVendorIds(): string[]
 
 ### listVendors `function`
 
-📍 [`src/connectors/vendors/helpers.ts:513`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:565`](src/connectors/vendors/helpers.ts)
 
 List all vendors with basic info
 
@@ -33994,7 +34102,7 @@ export function listVendors(): VendorInfo[]
 
 ### listVendorsByAuthType `function`
 
-📍 [`src/connectors/vendors/helpers.ts:542`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:594`](src/connectors/vendors/helpers.ts)
 
 List vendors that support a specific auth type
 
@@ -34006,7 +34114,7 @@ export function listVendorsByAuthType(authType: 'api_key' | 'oauth'): VendorInfo
 
 ### listVendorsByCategory `function`
 
-📍 [`src/connectors/vendors/helpers.ts:535`](src/connectors/vendors/helpers.ts)
+📍 [`src/connectors/vendors/helpers.ts:587`](src/connectors/vendors/helpers.ts)
 
 List vendors by category
 
@@ -47889,7 +47997,7 @@ validateBinding(userId: string, anchorId: string): Promise&lt;boolean&gt;;
 
 ### APIKeyConnectorAuth `interface`
 
-📍 [`src/domain/entities/Connector.ts:93`](src/domain/entities/Connector.ts)
+📍 [`src/domain/entities/Connector.ts:95`](src/domain/entities/Connector.ts)
 
 Static API key authentication
 For services like OpenAI, Anthropic, many SaaS APIs
@@ -47917,7 +48025,7 @@ E.g., Slack Socket Mode needs { appToken: 'xapp-...', signingSecret: '...' } |
 
 ### APIKeyProviderConnectorAuth `interface`
 
-📍 [`src/domain/entities/Connector.ts:119`](src/domain/entities/Connector.ts)
+📍 [`src/domain/entities/Connector.ts:121`](src/domain/entities/Connector.ts)
 
 Host-local rotating API key authentication. This runtime-only form is not
 serializable and ConnectorConfigStore deliberately refuses to persist it.
@@ -48548,7 +48656,7 @@ GPT-6 Astra conversation-scoped reasoning-effort update.
 
 ### ConnectorConfig `interface`
 
-📍 [`src/domain/entities/Connector.ts:147`](src/domain/entities/Connector.ts)
+📍 [`src/domain/entities/Connector.ts:149`](src/domain/entities/Connector.ts)
 
 Complete connector configuration
 Used for BOTH AI providers AND external APIs
@@ -48622,7 +48730,7 @@ Used for BOTH AI providers AND external APIs
 
 ### ConnectorConfigResult `interface`
 
-📍 [`src/domain/entities/Connector.ts:251`](src/domain/entities/Connector.ts)
+📍 [`src/domain/entities/Connector.ts:253`](src/domain/entities/Connector.ts)
 
 Result from ProviderConfigAgent
 Includes setup instructions and environment variables
@@ -53970,7 +54078,7 @@ destroy(): Promise&lt;void&gt;;
 
 ### JWTConnectorAuth `interface`
 
-📍 [`src/domain/entities/Connector.ts:128`](src/domain/entities/Connector.ts)
+📍 [`src/domain/entities/Connector.ts:130`](src/domain/entities/Connector.ts)
 
 JWT Bearer token authentication
 For service accounts (Google, Salesforce)
