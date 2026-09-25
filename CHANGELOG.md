@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Public `ConnectorNotFoundError` (`CONNECTOR_NOT_FOUND`) distinguishes missing
+  or scope-hidden connectors from authentication, configuration and storage
+  failures. Built-in name/ID lookup, scoped registries and agent identity views
+  use it while preserving diagnostic messages and visibility checks. Custom
+  registries should adopt this error; their thrown errors still pass through
+  unchanged. Hosts choose HTTP mapping and optional fallback behavior.
+
 ## [1.1.8] — 2026-09-22
 
 ### Added

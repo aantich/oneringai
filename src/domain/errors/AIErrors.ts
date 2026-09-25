@@ -15,6 +15,21 @@ export class AIError extends Error {
   }
 }
 
+/**
+ * A connector could not be resolved in the current registry scope.
+ * Scoped registries use the same error for missing and hidden connectors so
+ * callers cannot distinguish their existence. Other lookup failures must retain
+ * their original type. Hosts decide whether absence permits a fallback; no HTTP
+ * status is assigned. Diagnostic messages must only list visible connectors.
+ */
+export class ConnectorNotFoundError extends AIError {
+  constructor(message = 'Connector not found in current scope.', originalError?: Error) {
+    super(message, 'CONNECTOR_NOT_FOUND', undefined, originalError);
+    this.name = 'ConnectorNotFoundError';
+    Object.setPrototypeOf(this, ConnectorNotFoundError.prototype);
+  }
+}
+
 export class ProviderNotFoundError extends AIError {
   constructor(providerName: string) {
     super(

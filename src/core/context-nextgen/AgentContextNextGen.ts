@@ -71,6 +71,7 @@ import type { IContextStorage, StoredContextSession } from '../../domain/interfa
 import type { IHistoryJournal, HistoryEntry, HistoryEntryType } from '../../domain/interfaces/IHistoryJournal.js';
 import type { IConnectorRegistry } from '../../domain/interfaces/IConnectorRegistry.js';
 import { Connector } from '../Connector.js';
+import { ConnectorNotFoundError } from '../../domain/errors/AIErrors.js';
 
 // Plugin imports for auto-initialization
 import {
@@ -609,7 +610,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         if (!allowed) return base.get(name);
         if (!allowed.has(name)) {
           const available = [...allowed].filter(n => base.has(n)).join(', ') || 'none';
-          throw new Error(`Connector '${name}' not found. Available: ${available}`);
+          throw new ConnectorNotFoundError(`Connector '${name}' not found. Available: ${available}`);
         }
         return base.get(name);
       },

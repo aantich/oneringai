@@ -962,6 +962,7 @@ export type {
 // ============ Errors ============
 export {
   AIError,
+  ConnectorNotFoundError,
   ProviderNotFoundError,
   ProviderAuthError,
   ProviderMisalignmentError,

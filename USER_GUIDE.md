@@ -17094,6 +17094,31 @@ The `IConnectorRegistry` interface covers the read-only subset of Connector stat
 | `size()` | Count of accessible connectors |
 | `getDescriptionsForTools()` | Formatted descriptions for LLM tool parameters |
 | `getInfo()` | Connector info map for UI/documentation |
+| `getById(id)` | Optional ID lookup; same error contract as `get(name)` |
+
+Missing connectors throw the public `ConnectorNotFoundError`, which extends
+`AIError` and carries `code: 'CONNECTOR_NOT_FOUND'`. Scoped registries and agent
+identity views use the same error for hidden connectors; absence does not reveal
+whether a connector exists in another scope. The error has no HTTP status: the
+host decides how to report it and whether an optional read can use a separately
+authorized cache. It never grants access to a connector or cached data.
+
+Custom `IConnectorRegistry` implementations should throw this error for missing
+or scope-hidden connectors. `Connector.get()` and `Connector.getById()` delegate
+without wrapping errors: authentication, broken configuration and storage errors
+must propagate as their original failures, not be converted into absence.
+
+```typescript
+import { ConnectorNotFoundError } from '@everworker/oneringai';
+
+// Inside a custom registry, after applying its scope/visibility checks:
+throw new ConnectorNotFoundError();
+```
+
+The default message is safe and generic. A custom diagnostic message and optional
+original error may be supplied as `new ConnectorNotFoundError(message, cause)`.
+Built-in diagnostics retain the requested name/ID and visible connector names;
+HTTP adapters should avoid exposing these diagnostics to clients.
 
 ---
 

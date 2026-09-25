@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-09-22
+**Generated:** 2026-09-24
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -25,7 +25,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Model Registry](#model-registry) (29 items)
 - [OAuth & External APIs](#oauth-external-apis) (46 items)
 - [Resilience & Observability](#resilience-observability) (33 items)
-- [Errors](#errors) (41 items)
+- [Errors](#errors) (42 items)
 - [Utilities](#utilities) (10 items)
 - [Interfaces](#interfaces) (78 items)
 - [Base Classes](#base-classes) (3 items)
@@ -1205,7 +1205,7 @@ static clear(): void
 
 ### Connector `class`
 
-📍 [`src/core/Connector.ts:55`](src/core/Connector.ts)
+📍 [`src/core/Connector.ts:56`](src/core/Connector.ts)
 
 Connector class - represents a single authenticated connection
 
@@ -1943,7 +1943,7 @@ Aggregate statistics across all tracked agents
 
 ### ConnectorFetchOptions `interface`
 
-📍 [`src/core/Connector.ts:43`](src/core/Connector.ts)
+📍 [`src/core/Connector.ts:44`](src/core/Connector.ts)
 
 Fetch options with additional connector-specific settings
 
@@ -12658,7 +12658,7 @@ async shutdown(): Promise&lt;void&gt;
 
 ### ParallelTasksError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:322`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:337`](src/domain/errors/AIErrors.ts)
 
 Error thrown when multiple tasks fail in parallel execution (fail-all mode)
 
@@ -12830,7 +12830,7 @@ finalizePlanning(): void
 
 ### TaskTimeoutError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:275`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:290`](src/domain/errors/AIErrors.ts)
 
 Error thrown when a task execution times out
 
@@ -12858,7 +12858,7 @@ constructor(
 
 ### TaskValidationError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:294`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:309`](src/domain/errors/AIErrors.ts)
 
 Error thrown when task completion validation fails
 
@@ -15556,7 +15556,7 @@ Set to false to skip re-check for performance if you know condition won't change
 
 ### TaskFailure `interface`
 
-📍 [`src/domain/errors/AIErrors.ts:313`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:328`](src/domain/errors/AIErrors.ts)
 
 Task failure info for parallel execution
 
@@ -21344,7 +21344,7 @@ static forIdentities(
 
 ### InvalidToolArgumentsError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:215`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:230`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -22037,7 +22037,7 @@ static reset(): void
 
 ### ToolExecutionError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:96`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:111`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -22925,7 +22925,7 @@ loadState(state: SerializedToolState): void
 
 ### ToolNotFoundError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:128`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:143`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -23468,7 +23468,7 @@ static isConnectorTool(entry: ToolRegistryEntry | ConnectorToolEntry): entry is 
 
 ### ToolTimeoutError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:113`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:128`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -28337,7 +28337,7 @@ Model metadata, pricing, and capabilities
 
 ### ModelNotSupportedError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:160`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:175`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -35320,9 +35320,36 @@ constructor(
 
 ---
 
+### ConnectorNotFoundError `class`
+
+📍 [`src/domain/errors/AIErrors.ts:25`](src/domain/errors/AIErrors.ts)
+
+A connector could not be resolved in the current registry scope.
+Scoped registries use the same error for missing and hidden connectors so
+callers cannot distinguish their existence. Other lookup failures must retain
+their original type. Hosts decide whether absence permits a fallback; no HTTP
+status is assigned. Diagnostic messages must only list visible connectors.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(message = 'Connector not found in current scope.', originalError?: Error)
+```
+
+**Parameters:**
+- `message`: `string` *(optional)* (default: `'Connector not found in current scope.'`)
+- `originalError`: `Error | undefined` *(optional)*
+
+</details>
+
+---
+
 ### ContextOverflowError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:409`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:424`](src/domain/errors/AIErrors.ts)
 
 Error thrown when context cannot be reduced to fit within limits
 after all graceful degradation levels have been exhausted.
@@ -35378,7 +35405,7 @@ getTopConsumers(count = 5): Array&lt;{ component: string; tokens: number }&gt;
 
 ### DependencyCycleError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:255`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:270`](src/domain/errors/AIErrors.ts)
 
 Error thrown when a dependency cycle is detected in a plan
 
@@ -35610,7 +35637,7 @@ constructor(factId: FactId, supersededBy: FactId)
 
 ### InvalidConfigError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:207`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:222`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -35913,7 +35940,7 @@ constructor()
 
 ### ProviderAmbiguousOperationError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:189`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:204`](src/domain/errors/AIErrors.ts)
 
 A paid/external submission may have succeeded even though no handle was received.
 
@@ -35943,7 +35970,7 @@ constructor(
 
 ### ProviderAuthError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:30`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:45`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -35964,7 +35991,7 @@ constructor(providerName: string, message: string = 'Authentication failed')
 
 ### ProviderCapabilityNotSupportedError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:172`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:187`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -35990,7 +36017,7 @@ constructor(
 
 ### ProviderContextLengthError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:80`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:95`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -36016,7 +36043,7 @@ constructor(
 
 ### ProviderError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:232`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:247`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -36085,7 +36112,7 @@ static extractErrorDetails(error: any): Record&lt;string, unknown&gt;
 
 ### ProviderMisalignmentError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:43`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:58`](src/domain/errors/AIErrors.ts)
 
 OpenAI safety monitor stopped a request for a potential misalignment policy violation.
 
@@ -36128,7 +36155,7 @@ constructor(
 
 ### ProviderNotFoundError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:18`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:33`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -36148,7 +36175,7 @@ constructor(providerName: string)
 
 ### ProviderRateLimitError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:65`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:80`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -36364,7 +36391,7 @@ constructor(message: string)
 
 ### ContextOverflowBudget `interface`
 
-📍 [`src/domain/errors/AIErrors.ts:397`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:412`](src/domain/errors/AIErrors.ts)
 
 Detailed budget information for context overflow diagnosis
 
@@ -37616,7 +37643,10 @@ listAll(): Promise&lt;StoredConnectorConfig[]&gt;;
 
 #### `get()`
 
-Get a connector by name. Throws if not found (or not accessible).
+Get a connector by name. Throw ConnectorNotFoundError when missing or hidden
+in this scope, with no disclosure of inaccessible connectors. Propagate
+authentication, configuration and storage failures without reclassifying
+them as absence. Connector.get() preserves custom-registry errors unchanged.
 
 ```typescript
 get(name: string): Connector;
@@ -37693,6 +37723,7 @@ getInfo(): Record&lt;string, { displayName: string; description: string; baseURL
 #### `getById()?`
 
 Get a connector by ID. Optional — not all registries support ID-based lookup.
+Uses the same ConnectorNotFoundError contract as get().
 
 ```typescript
 getById?(id: string): Connector;
@@ -40590,7 +40621,7 @@ destroy(): void
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:136`](src/core/context-nextgen/AgentContextNextGen.ts)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:137`](src/core/context-nextgen/AgentContextNextGen.ts)
 
 Next-generation context manager for AI agents.
 
@@ -45459,7 +45490,7 @@ async destroy(): Promise&lt;void&gt;
 
 ### ScopedConnectorRegistry `class`
 
-📍 [`src/core/ScopedConnectorRegistry.ts:15`](src/core/ScopedConnectorRegistry.ts)
+📍 [`src/core/ScopedConnectorRegistry.ts:16`](src/core/ScopedConnectorRegistry.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>

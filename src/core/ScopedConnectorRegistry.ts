@@ -9,6 +9,7 @@
  */
 
 import { Connector } from './Connector.js';
+import { ConnectorNotFoundError } from '../domain/errors/AIErrors.js';
 import type { IConnectorRegistry } from '../domain/interfaces/IConnectorRegistry.js';
 import type { IConnectorAccessPolicy, ConnectorAccessContext } from '../domain/interfaces/IConnectorAccessPolicy.js';
 
@@ -21,13 +22,13 @@ export class ScopedConnectorRegistry implements IConnectorRegistry {
   get(name: string): Connector {
     if (!Connector.has(name)) {
       const available = this.list().join(', ') || 'none';
-      throw new Error(`Connector '${name}' not found. Available: ${available}`);
+      throw new ConnectorNotFoundError(`Connector '${name}' not found. Available: ${available}`);
     }
     const connector = Connector.get(name);
     if (!this.policy.canAccess(connector, this.context)) {
       // Same error message shape — no information leakage about existence
       const available = this.list().join(', ') || 'none';
-      throw new Error(`Connector '${name}' not found. Available: ${available}`);
+      throw new ConnectorNotFoundError(`Connector '${name}' not found. Available: ${available}`);
     }
     return connector;
   }
@@ -76,7 +77,7 @@ export class ScopedConnectorRegistry implements IConnectorRegistry {
     const connector = Connector.getById(id);
     if (!this.policy.canAccess(connector, this.context)) {
       const available = this.list().join(', ') || 'none';
-      throw new Error(`Connector with id '${id}' not found. Available: ${available}`);
+      throw new ConnectorNotFoundError(`Connector with id '${id}' not found. Available: ${available}`);
     }
     return connector;
   }

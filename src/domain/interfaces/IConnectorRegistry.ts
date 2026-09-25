@@ -9,7 +9,12 @@
 import type { Connector } from '../../core/Connector.js';
 
 export interface IConnectorRegistry {
-  /** Get a connector by name. Throws if not found (or not accessible). */
+  /**
+   * Get a connector by name. Throw ConnectorNotFoundError when missing or hidden
+   * in this scope, with no disclosure of inaccessible connectors. Propagate
+   * authentication, configuration and storage failures without reclassifying
+   * them as absence. Connector.get() preserves custom-registry errors unchanged.
+   */
   get(name: string): Connector;
 
   /** Check if a connector exists (and is accessible) */
@@ -30,7 +35,10 @@ export interface IConnectorRegistry {
   /** Get connector info map */
   getInfo(): Record<string, { displayName: string; description: string; baseURL: string }>;
 
-  /** Get a connector by ID. Optional — not all registries support ID-based lookup. */
+  /**
+   * Get a connector by ID. Optional — not all registries support ID-based lookup.
+   * Uses the same ConnectorNotFoundError contract as get().
+   */
   getById?(id: string): Connector;
 
   /**

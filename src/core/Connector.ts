@@ -27,6 +27,7 @@ import { metrics } from '../infrastructure/observability/Metrics.js';
 import type { IConnectorRegistry } from '../domain/interfaces/IConnectorRegistry.js';
 import type { IConnectorAccessPolicy, ConnectorAccessContext } from '../domain/interfaces/IConnectorAccessPolicy.js';
 import { ScopedConnectorRegistry } from './ScopedConnectorRegistry.js';
+import { ConnectorNotFoundError } from '../domain/errors/AIErrors.js';
 
 /**
  * Default configuration values for resilience features
@@ -112,7 +113,7 @@ export class Connector {
     const connector = Connector.registry.get(name);
     if (!connector) {
       const available = Connector.list().join(', ') || 'none';
-      throw new Error(`Connector '${name}' not found. Available: ${available}`);
+      throw new ConnectorNotFoundError(`Connector '${name}' not found. Available: ${available}`);
     }
     return connector;
   }
@@ -234,7 +235,7 @@ export class Connector {
     for (const connector of Connector.registry.values()) {
       if (connector.id === id) return connector;
     }
-    throw new Error(`Connector with id '${id}' not found`);
+    throw new ConnectorNotFoundError(`Connector with id '${id}' not found`);
   }
 
   // ============ Access Control ============
