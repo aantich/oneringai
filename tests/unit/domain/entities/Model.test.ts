@@ -23,7 +23,7 @@ describe('Model Registry', () => {
       expect(MODEL_REGISTRY['claude-mythos-5-1']).toBeDefined();
       expect(MODEL_REGISTRY['gemini-3.8-flash']).toBeDefined();
       expect(MODEL_REGISTRY['gemini-3.7-flash']).toBeDefined();
-      expect(MODEL_REGISTRY['grok-4.6']).toBeDefined();
+      expect(MODEL_REGISTRY['grok-4.7']).toBeDefined();
       expect(MODEL_REGISTRY['deepseek-v4-flash']).toBeDefined();
       expect(MODEL_REGISTRY['deepseek-v4-pro']).toBeDefined();
     });
@@ -110,6 +110,9 @@ describe('Model Registry', () => {
   describe('LLM_MODELS constants', () => {
     it('should have OpenAI model constants', () => {
       expect(LLM_MODELS[Vendor.OpenAI].GPT_6_ASTRA).toBe('gpt-6-astra');
+      expect(LLM_MODELS[Vendor.OpenAI].GPT_6_1_SOL).toBe('gpt-6.1-sol');
+      expect(LLM_MODELS[Vendor.OpenAI].GPT_5_6_CYBER).toBe('gpt-5.6-cyber');
+      expect(LLM_MODELS[Vendor.OpenAI].GPT_ROSALIND_RESEARCH).toBe('gpt-rosalind-research');
       expect(LLM_MODELS[Vendor.OpenAI].GPT_5_2).toBe('gpt-5.2');
       expect(LLM_MODELS[Vendor.OpenAI].GPT_5_2_PRO).toBe('gpt-5.2-pro');
       expect(LLM_MODELS[Vendor.OpenAI].GPT_5_2_CODEX).toBe('gpt-5.2-codex');
@@ -161,6 +164,7 @@ describe('Model Registry', () => {
     });
 
     it('should have Grok model constants', () => {
+      expect(LLM_MODELS[Vendor.Grok].GROK_4_7).toBe('grok-4.7');
       expect(LLM_MODELS[Vendor.Grok].GROK_4_6).toBe('grok-4.6');
       expect(LLM_MODELS[Vendor.Grok].GROK_4_20_0309_REASONING).toBe('grok-4.20-0309-reasoning');
       expect(LLM_MODELS[Vendor.Grok].GROK_4_20_0309_NON_REASONING).toBe('grok-4.20-0309-non-reasoning');
@@ -418,7 +422,7 @@ describe('Model Registry', () => {
       expect(astra).toMatchObject({
         provider: Vendor.OpenAI,
         lifecycle: 'active',
-        availability: 'limited',
+        availability: 'public',
         preferred: true,
         knowledgeCutoff: '2026-04-30',
         endpoints: ['responses', 'chat_completions', 'batch'],
@@ -434,7 +438,7 @@ describe('Model Registry', () => {
           midTurnSteering: true,
           configurationUpdates: true,
           misalignmentMonitoring: true,
-          input: { tokens: 922_000, cpm: 10, cpmCached: 1 },
+          input: { tokens: 1_050_000, cpm: 10, cpmCached: 1 },
           output: { tokens: 128_000, cpm: 50 },
         },
       });
@@ -538,6 +542,8 @@ describe('Model Registry', () => {
       const fable51 = getModelInfo('claude-fable-5-1');
       const opus48 = getModelInfo('claude-opus-4-8');
       const sonnet5 = getModelInfo('claude-sonnet-5');
+      const opus55 = getModelInfo('claude-opus-5-5');
+      const sonnet55 = getModelInfo('claude-sonnet-5-5');
       const opus47 = getModelInfo('claude-opus-4-7');
       const opus46 = getModelInfo('claude-opus-4-6');
       const sonnet46 = getModelInfo('claude-sonnet-4-6');
@@ -550,8 +556,10 @@ describe('Model Registry', () => {
       expect(gpt5?.preferred).toBeUndefined();
       // Current flagships are preferred; superseded models are demoted.
       expect(fable51?.preferred).toBe(true);
+      expect(opus55?.preferred).toBe(true);
+      expect(sonnet55?.preferred).toBe(true);
       expect(opus48?.preferred).toBeUndefined();
-      expect(sonnet5?.preferred).toBe(true);
+      expect(sonnet5?.preferred).toBeUndefined();
       expect(opus47?.preferred).toBeUndefined();
       expect(opus46?.preferred).toBeUndefined();
       expect(sonnet46?.preferred).toBeUndefined();
@@ -597,6 +605,19 @@ describe('Model Registry', () => {
       });
       expect(getModelInfo('gemini-3.5-flash')?.aliases).toEqual(['gemini-flash-latest']);
       expect(gemini38?.aliases).toBeUndefined();
+    });
+
+    it('describes Grok 4.7 hosted tools and corrected release metadata', () => {
+      expect(getModelInfo('grok-4.7')).toMatchObject({
+        provider: Vendor.Grok,
+        lifecycle: 'active',
+        preferred: true,
+        releaseDate: '2026-09-21',
+        endpoints: ['responses'],
+        features: {
+          nativeTools: ['web_search', 'x_search', 'code_execution'],
+        },
+      });
     });
 
     it('should have correct Claude 4.6 series data', () => {

@@ -1,200 +1,180 @@
-# Model Registry and Provider API Audit — 2026-09-04
+# Model Registry and Provider API Audit — 2026-10-07
 
-**Status:** current registry audit
+**Status:** implemented; authenticated vendor availability remains account-gated
 
-This audit covers every vendor represented in OneRingAI's model registries:
-OpenAI, Anthropic, Google, xAI, DeepSeek, Groq, Mistral, and Ollama. It includes
-text, realtime voice, TTS/STT, image, video, and embeddings. Official vendor
-documentation was treated as the source of truth; floating aliases and preview
-lifecycle notices were checked against release notes as well as model pages.
+This audit covers the current first-party model catalogs and materially new API
+surfaces for OpenAI, Anthropic, Google, and xAI. The wider registry still
+contains DeepSeek, Groq, Mistral, and Ollama records from the previous full
+catalog audit. Official model pages, API guides, pricing pages, release notes,
+and the installed first-party SDK types were treated as the sources of truth.
 
-## 2026-09-04 OpenAI update
+## Implemented registry changes
 
-- Added GPT-6 Astra as the current limited-rollout flagship with Responses,
-  Chat Completions, and Batch support; `low` through `max` reasoning; text and
-  image input; a 1,050,000-token total context window, 922,000 maximum input,
-  and 128,000 maximum output. The registry's `features.input.tokens` therefore
-  records 922,000.
-- Recorded standard, cached-input, cache-write, output, long-context, Batch,
-  Flex, and Fast pricing from the official model page.
-- Enabled Astra in OneRingAI runtime reasoning controls, OpenAI hosted-tool
-  discovery, and GPT-5.6-or-later explicit prompt-cache handling.
-- Added end-to-end Responses support for async function/custom tools,
-  `configuration_update`, explicit `compaction_trigger`, and WebSocket
-  `response.steer`, backed by OpenAI SDK 7.10 types.
-- Added dedicated misalignment-policy error mapping and connector-first safety
-  alert retrieval. Explicit Astra Fast/priority requests are rejected against
-  the EU data-residency endpoint.
+### OpenAI
 
-## 2026-08-30 refresh
+- Added GPT-6.1 Sol, GPT-6 Sol, and GPT-6 Luna alongside GPT-6 Astra, with
+  verified reasoning efforts, endpoints, context/output limits, cache-write and
+  long-context pricing, processing tiers, and Responses extension flags.
+- Added access-controlled GPT-5.6 Cyber (`gpt-daybreak-red-latest`) and
+  GPT-Rosalind Research. Unknown published limits remain `null`; the registry
+  does not invent them.
+- Added the `gpt-daybreak-blue-latest` alias for GPT-5.6 Sol.
+- Added GPT Image 2.5 Sunburst and Flare.
+- GPT-6 context guardrails record the documented 1,050,000-token total context
+  window. The 128,000-token output cap remains separate.
 
-The complete first-party pass found and corrected these changes since the
-previous audit:
+### Anthropic
 
-- OpenAI: current promotional GPT-5.6 Sol pricing; retired GPT-5/5.1/5.2/5.3
-  aliases; upcoming GPT-4.1 Nano, audio, realtime, and GPT Image shutdowns;
-  Sora 2 and Sora 2 Pro remain callable but are deprecated with the Videos API
-  until 2026-09-24.
-- Anthropic: Claude 5 remains the current documented family; no new registry
-  model was required, and the retired Opus 4.1 migration remains Opus 5.
-- Google: added Gemini 3.7 Flash, Gemini Omni 1.1 Flash, Gemini 3.5 Transcribe,
-  and Gemini 3.5 Transcribe Live; retired Imagen 4; marked Gemini Omni Preview,
-  Gemini 3.1 Flash-Lite, and Gemini 2.5 Flash Image with current lifecycle data.
-- xAI: added Grok 4.6 and Grok Imagine Image 2.0, and updated Grok Imagine
-  Video 1.5 for text-to-video support.
-- DeepSeek: added V4 Flash Vision Experimental, current peak/off-peak pricing,
-  and Responses routing for all current first-party V4 models.
-- Groq, Mistral, and Ollama: added Whisper Large v3 Turbo, Codestral Embed,
-  EmbeddingGemma, and All MiniLM; retired Distil Whisper and corrected current
-  Whisper pricing and file/timestamp limits.
+- Added Claude Opus 5.5 and Sonnet 5.5 as preferred public models with 1M input
+  context, 128K output, current pricing, and model-specific effort metadata.
+- Marked Opus 5 and Sonnet 5 as legacy with 5.5 replacements. They remain
+  callable; legacy is not treated as retired.
+- Retained Fable 5.1 and Mythos 5.1 lifecycle/access metadata from the September
+  refresh.
 
-## Gaps found before implementation
+### Google
 
-| Area | Previous state | Gap |
-|---|---|---|
-| Registry contract | `isActive` plus modality-specific ad hoc fields | Could not distinguish preview, callable deprecation, retirement, aliases, snapshots, access scope, endpoints, or replacement models |
-| Registry lookup | Canonical keys only | Floating API aliases such as `gpt-5.6` and `grok-voice-latest` failed lookup and constant-completeness checks |
-| Pricing | Mostly one input/output token rate or flat media price | No long-context tiers, processing modes, cached writes, per-message voice charges, streaming STT, resolution, duration, or multimodal embedding/image token accounting |
-| OpenAI | Older GPT/image/transcription/Sora entries and incomplete GA Realtime surface | Missing GPT-5.6 family, GPT-5.5 Pro, GPT Image 2, current transcription models, current Sora lifecycle/pricing, prompt-cache/service-tier options, and full Realtime client/API support |
-| Anthropic | Registry stopped before the current Claude 5 family | Missing Opus 5/Mythos 5/Fable 5 metadata, current 1M/128K limits, adaptive effort, and fast mode |
-| Google | `generateContent` only; older Gemini/media/embedding records | Missing Gemini 3.6/3.5 families, GA Interactions `steps` API, native 3.1 image models, current Veo/Omni/TTS, and multimodal Gemini Embedding 2 |
-| xAI | Text plus older Grok image/video adapters | Missing Grok 4.5/4.3/Build, current image/video pricing and request restrictions, dedicated TTS/STT, streaming audio, and Voice Agent Realtime/SIP credential helpers |
-| DeepSeek | Routed through the generic OpenAI Responses adapter with no registry entries | Chat-only models could be sent to an unsupported endpoint; full Responses reasoning was discarded; tool turns did not replay reasoning; current V4 models, hosted endpoints, FIM/balance, and real limits were absent |
-| Tests/docs | Exact counts and retired preview ids were embedded in tests and guides | Tests rewarded stale facts; README/User Guide described superseded model families and only OpenAI/Groq audio |
+- Added Gemini 3.8 Flash, Gemini 3.8 Live, and Gemini 3.8 Live Extended
+  Thinking, including Interactions/Live endpoints, multimodal capabilities,
+  processing tiers, and pricing.
+- Added Gemini Nano Banana 2.1 and Gemini 3.8 Flash/Flash-Lite TTS models.
+- Updated replaced Live entries to point to Gemini 3.8 Live.
 
-## Implemented status
+### xAI
 
-The public registry schema is now `MODEL_REGISTRY_SCHEMA_VERSION === 2`.
-The change is additive except that unknown token windows are represented as
-`null` instead of a synthetic zero. Existing canonical direct indexing still
-works. Alias resolution is intentionally available through `getModelInfo()` and
-the media equivalents rather than by duplicating records.
+- Added Grok 4.7 with its 500K context window, supported reasoning efforts,
+  Responses endpoint, cache and long-context pricing, and current hosted-tool
+  capabilities.
+- Added Grok Voice Transcribe 2.0 and retained current xAI image, video, TTS,
+  STT, and Voice Agent records.
 
-Schema v2 adds lifecycle, availability, aliases, snapshots, normalized
-endpoints, deprecation/retirement dates, replacements, preferred choices,
-official sources, vendor-option schemas, and expanded pricing. All modality
-helpers now expose `getDeprecated*Models()` for callable models with a migration
-notice.
+## Implemented provider/API changes
 
-Provider implementation now covers:
+### OpenAI
 
-- OpenAI Responses options for current reasoning, service tiers, cache options,
-  GPT-6 Astra and GPT-5.6 long-context accounting, GPT Image 2, current
-  transcription, Sora 2,
-  GA Realtime WebSocket/WebRTC credentials, transcription/translation, SIP
-  controls, tools, VAD, and telephony bridging.
-- Anthropic adaptive thinking and effort, current structured output, service
-  tier/fast mode, and current model capability limits.
-- Google Gemini 3.5+ through Interactions by default, including `steps`,
-  `step.delta`, terminal status/error normalization, reasoning, tools, structured responses, and a documented
-  `generateContent` opt-out; current image, video, TTS/STT, and multimodal
-  embedding providers are registered and wired. Named tools remain forced on
-  both Interactions and `generateContent`; external embedding media is
-  timeout- and size-bounded to Google's 100 MB inline/50 MB PDF limits with
-  content-based MIME inference.
-- xAI native image/video, REST and WebSocket TTS, REST and WebSocket STT, and
-  OpenAI-compatible realtime voice. Realtime supports ephemeral browser
-  credentials, SIP refer/hangup, resumption ids, reasoning selection, and JSON
-  or binary audio transport through `GrokRealtimeSession`, including every
-  documented 8–48 kHz PCM rate without weakening OpenAI's 24 kHz session type.
-  Buffered TTS format metadata follows xAI's response content type when a
-  provider-specific `output_format` overrides the normalized default.
-- DeepSeek now has a dedicated Chat Completions and Responses adapter. It
-  auto-routes first-party V4 Flash/Pro, preserves full reasoning through tool
-  loops, supports streaming, structured output, native web search, model
-  listing, FIM, balance, and strict beta tools, and reports cache/reasoning
-  usage. Host presets cover OpenRouter, Together, Fireworks, DeepInfra, NVIDIA
-  NIM, and Azure Foundry while keeping host limits separate from canonical
-  first-party metadata. The false first-party embeddings capability was removed.
+- Upgraded to `openai` 7.30.
+- Managed Agent execution now preserves Responses reasoning and encrypted
+  compaction items across tool turns. Direct and streaming continuations expose
+  provider state without flattening it into visible text, and streaming replay
+  retains the original cross-type output order.
+- Native tools cover web search, Code Interpreter, file search, remote MCP,
+  computer use, hosted shell, apply patch, tool search, and image generation on
+  capability-declared models. Direct responses retain native call payloads,
+  and typed computer/shell/patch/tool-search output items let trusted hosts
+  continue client-executed tool loops without raw SDK calls.
+- Added connector-first `OpenAIDecisions`, `OpenAILiveSession`, and
+  `OpenAIVoices` wrappers.
+- Existing Astra support remains: async function/custom tools, in-band
+  `configuration_update`, explicit compaction, Responses WebSocket steering,
+  and misalignment alert retrieval. EU Fast/priority validation covers all four
+  current GPT-6 models, and EU Ultrafast requests are rejected before inference.
+- Sampling validation follows the effective GPT-6 reasoning effort. Sol and
+  Luna permit sampling only with `none`; Astra and GPT-6.1 Sol reject `none`.
 
-The library now requires Node.js 22 or newer. This matches the upgraded current
-OpenAI, Anthropic, and Google SDK baseline and is a deliberate package-level API
-compatibility change.
+### Anthropic
 
-## Current registry snapshot
+- Upgraded to `@anthropic-ai/sdk` 0.131.
+- Added the current web search (`web_search_20260318`), web fetch
+  (`web_fetch_20260318`), and code execution (`code_execution_20260521`) wire
+  versions.
+- Added deferred tool definitions, programmatic code-execution callers,
+  regex/BM25 tool search, and server-side compaction request/response handling.
+- Added model-specific validation: Opus 5.5 is always adaptive; Sonnet 5.5 uses
+  adaptive or `between_tools`, with `between_tools` limited to `high` or lower.
+- Claude Opus 5 `disabled` mode is likewise limited to `high` or lower, and
+  contradictory provider-neutral thinking configurations fail locally.
+- Unknown Anthropic provider blocks are stored as opaque provider state and
+  replayed verbatim. This is required for correct tool-search and server-tool
+  continuation, including streams.
 
-The text/realtime registry contains 96 records: OpenAI 49, Anthropic 15,
-Google 15, xAI 12, and DeepSeek 5. Dedicated registries contain 20 image, 10
-video, 7 TTS, 14 STT, and 15 embedding records.
+### Google
 
-Notable preferred/current families are:
+- Upgraded to `@google/genai` 2.27.
+- Gemini 3.5+ continues to use Interactions by default. Interactions now map
+  continuation tokens, Gemini 3.8 file search, computer use, and file-search
+  usage telemetry.
+- Added connector-first `GoogleLiveSession`, including background interaction
+  status, and `GoogleVoices` lifecycle access.
+- Google TTS distinguishes built-in names from custom `voice_…`, `voicekey_…`,
+  and `voices/…` identifiers. Its local voice list remains deterministic while
+  `GoogleVoices` owns the remote custom catalog.
+- Computer use intentionally remains host-executed. OneRingAI returns normal
+  tool calls; the host owns confirmation, action execution, and screenshots.
 
-- OpenAI: GPT-6 Astra, GPT-5.6 Sol/Terra/Luna, GPT-5.5 Pro, GPT Image 2,
-  GPT Realtime 2.1, and GPT Transcribe/Live Transcribe. Sora 2/2 Pro remain
-  callable but have published deprecation and retirement metadata.
-- Anthropic: Claude Opus 5, Mythos 5, Fable 5, Opus 4.8, and Sonnet 5.
-- Google: Gemini 3.7 Flash, Gemini 3.5/3.6 families, Gemini 3.1 native
-  image/TTS, Gemini Omni 1.1, Veo, Gemini 3.5 Transcribe, and Gemini Embedding 2.
-- xAI: Grok 4.6, Grok 4.5/4.3, Grok Build 0.1, Grok Imagine Image 2.0,
-  Grok Imagine Video 1.5, xAI TTS/STT, and Grok Voice Think Fast 2.0.
-- DeepSeek: V4 Flash, V4 Pro, and V4 Flash Vision Experimental, plus retired records for
-  `deepseek-chat` and `deepseek-reasoner` with migration targets.
+### xAI
+
+- Added a dedicated `GrokTextProvider` while retaining xAI's
+  OpenAI-compatible Responses transport.
+- The adapter advertises and maps xAI web search, X search, and hosted code
+  execution only for registry-declared models; preserves reasoning state
+  through tool turns; and converts native
+  tool counts and provider-reported cost ticks.
+- xAI-specific capabilities are not inferred from OpenAI model names.
+
+## Compatibility and safety decisions
+
+1. `Connector` remains the only credential source. New high-level APIs accept a
+   connector name or instance and never accept raw keys in request options.
+2. Runtime native-tool validation is model- and adapter-gated. Unsupported
+   tools fail before a provider call rather than silently falling back.
+3. Provider-owned continuation blocks use `ContentType.PROVIDER_STATE`. They
+   are retained for replay but excluded from user-visible text and compaction
+   summaries.
+4. Access-controlled models are represented in the registry even when a caller
+   cannot invoke them. `availability` communicates that distinction.
+5. Unknown limits and prices are `null`/omitted. The registry does not turn
+   absent vendor data into synthetic zeroes or guessed values.
+6. Google computer use and all consequential local actions remain host-owned;
+   provider tool events are telemetry, not authorization.
 
 ## API migration notes
 
-1. Use lookup helpers for aliases. `MODEL_REGISTRY['gpt-5.6']` remains
-   undefined, while `getModelInfo('gpt-5.6')` resolves to `gpt-5.6-sol`.
-2. Treat `isActive` as callable availability and `lifecycle` as migration
-   state. A deprecated model can remain active until its retirement date.
-3. Handle `features.input.tokens` and `features.output.tokens` as
-   `number | null`; use `resolveMaxContextTokens()` when a numeric fallback is
-   required.
-4. Gemini 3.5+ automatically uses Interactions. Set
-   `vendorOptions.api = 'generateContent'` for temporary wire compatibility.
-5. Media cost helpers accept richer usage objects while retaining their old
-   positional calls.
-6. xAI streaming STT is exposed through
-   `SpeechToText.transcribeStream()`/`IStreamingSpeechToTextProvider`; realtime
-   speech-to-speech uses `OpenAIRealtimeSession` with a Grok connector.
+- Check `agent.getAdvancedCapabilities(model)` before exposing a native tool or
+  Responses extension in a product UI.
+- Use `response.continuation_token` and pass it back as `continuationToken` for
+  Gemini Interactions continuation.
+- Use `runDirect()`/`streamDirect()` when the host owns OpenAI async-tool or
+  Gemini computer-use continuations.
+- Claude 5.5 applications should set explicit `thinking.mode` only when they
+  need `between_tools`; ordinary adaptive mode is the safe default.
+- xAI callers can request `{ capability: 'x_search' }` only through a Grok
+  connector/model. The OpenAI adapter rejects it.
+- Registry aliases must be globally unambiguous within each registry; a
+  canonical model ID can no longer also be claimed as another model's alias.
+- Media callers should continue using `ImageGeneration`, `TextToSpeech`, and
+  `SpeechToText`; new media records are selected through their registries.
 
-## Supported boundaries
+## Validation
 
-The inference library does not capture microphones, play speakers, construct a
-browser `RTCPeerConnection`, provision carrier phone numbers, receive/verify
-telephony webhooks, or create vendor dashboard resources. It supplies the model
-wire protocols, credentials, media transforms, provider calls, and call-control
-operations needed by a host application. These are host integration boundaries,
-not missing model support.
-
-## Validation completed
-
-- 6,555 unit tests across 301 files, including registry contracts, provider
-  routing, media defaults, Agent Runtime model overrides, and generated tool
-  fingerprint verification.
-- Strict TypeScript, ESLint, example compilation, ESM/CJS/declaration build,
-  package-export verification, and public/internal API reference generation.
-- AMOS and Convert builds passed. Hosea's build could not start because its
-  standalone dependencies are not installed in this checkout
-  (`@vitejs/plugin-react` is declared but absent).
-- Authenticated vendor integration calls remain credential- and
-  network-gated and were not counted as completed by this refresh.
+The implementation is covered by registry completeness/capability tests,
+provider request/response and streaming tests, connector-first wrapper tests,
+runtime reasoning-map tests, TypeScript, ESLint, examples compilation, package
+build/export verification, and generated API documentation. Live API access is
+organization-, region-, and credential-dependent and is intentionally separate
+from deterministic unit validation.
 
 ## Official sources
 
-- OpenAI: [models](https://developers.openai.com/api/docs/models),
+- OpenAI: [latest model](https://developers.openai.com/api/docs/guides/latest-model),
+  [models](https://developers.openai.com/api/docs/models),
   [pricing](https://developers.openai.com/api/docs/pricing),
-  [Realtime](https://developers.openai.com/api/docs/guides/realtime),
-  [image generation](https://developers.openai.com/api/docs/guides/image-generation),
-  and [video generation](https://developers.openai.com/api/docs/guides/video-generation).
+  [changelog](https://developers.openai.com/api/docs/changelog),
+  [async tool calling](https://developers.openai.com/api/docs/guides/async-tool-calling),
+  [steering](https://developers.openai.com/api/docs/guides/steering), and
+  [reasoning](https://developers.openai.com/api/docs/guides/reasoning).
 - Anthropic: [model overview](https://platform.claude.com/docs/en/about-claude/models/overview),
-  [pricing](https://platform.claude.com/docs/en/about-claude/pricing),
-  [effort](https://platform.claude.com/docs/en/build-with-claude/effort), and
-  [fast mode](https://platform.claude.com/docs/en/build-with-claude/fast-mode).
+  [Opus 5.5](https://platform.claude.com/docs/en/models/opus-5-5/overview),
+  [Sonnet 5.5](https://platform.claude.com/docs/en/models/sonnet-5-5/overview),
+  [tool use](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview),
+  and [pricing](https://platform.claude.com/docs/en/about-claude/pricing).
 - Google: [models](https://ai.google.dev/gemini-api/docs/models),
-  [pricing](https://ai.google.dev/gemini-api/docs/pricing),
-  [release notes](https://ai.google.dev/gemini-api/docs/changelog),
   [Interactions](https://ai.google.dev/gemini-api/docs/interactions),
-  [image generation](https://ai.google.dev/gemini-api/docs/image-generation),
-  [video generation](https://ai.google.dev/gemini-api/docs/video), and
-  [embeddings](https://ai.google.dev/gemini-api/docs/embeddings).
+  [Live](https://ai.google.dev/gemini-api/docs/live),
+  [computer use](https://ai.google.dev/gemini-api/docs/computer-use),
+  [file search](https://ai.google.dev/gemini-api/docs/file-search), and
+  [pricing](https://ai.google.dev/gemini-api/docs/pricing).
 - xAI: [models](https://docs.x.ai/developers/models),
-  [pricing](https://docs.x.ai/developers/pricing),
-  [release notes](https://docs.x.ai/developers/release-notes),
-  [Voice Agent API](https://docs.x.ai/developers/model-capabilities/audio/voice-agent),
-  [TTS](https://docs.x.ai/developers/model-capabilities/audio/text-to-speech),
-  and [STT](https://docs.x.ai/developers/model-capabilities/audio/speech-to-text).
-- DeepSeek: [models and pricing](https://api-docs.deepseek.com/quick_start/pricing/),
-  [Responses API](https://api-docs.deepseek.com/guides/responses_api/),
-  [thinking mode](https://api-docs.deepseek.com/guides/thinking_mode/),
-  [context caching](https://api-docs.deepseek.com/guides/kv_cache/), and
-  [release updates](https://api-docs.deepseek.com/updates/).
+  [Grok 4.7](https://docs.x.ai/developers/grok-4-7),
+  [tools](https://docs.x.ai/developers/tools/overview),
+  [pricing](https://docs.x.ai/developers/pricing), and
+  [release notes](https://docs.x.ai/developers/release-notes).

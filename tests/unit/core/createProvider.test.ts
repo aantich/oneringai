@@ -12,6 +12,7 @@ const {
   MockGoogleTextProvider,
   MockVertexAITextProvider,
   MockDeepSeekTextProvider,
+  MockGrokTextProvider,
   MockGenericOpenAIProvider,
 } = vi.hoisted(() => {
   const MockOpenAITextProvider = vi.fn().mockImplementation((config) => ({
@@ -44,12 +45,18 @@ const {
     config,
   }));
 
+  const MockGrokTextProvider = vi.fn().mockImplementation((name, config) => ({
+    name,
+    config,
+  }));
+
   return {
     MockOpenAITextProvider,
     MockAnthropicTextProvider,
     MockGoogleTextProvider,
     MockVertexAITextProvider,
     MockDeepSeekTextProvider,
+    MockGrokTextProvider,
     MockGenericOpenAIProvider,
   };
 });
@@ -77,6 +84,10 @@ vi.mock('@/infrastructure/providers/deepseek/DeepSeekTextProvider.js', () => ({
 
 vi.mock('@/infrastructure/providers/generic/GenericOpenAIProvider.js', () => ({
   GenericOpenAIProvider: MockGenericOpenAIProvider,
+}));
+
+vi.mock('@/infrastructure/providers/grok/GrokTextProvider.js', () => ({
+  GrokTextProvider: MockGrokTextProvider,
 }));
 
 // Import after mocking
@@ -183,7 +194,7 @@ describe('createProvider', () => {
       expect(provider.name).toBe('perplexity-test');
     });
 
-    it('should create GenericOpenAIProvider for Grok vendor', () => {
+    it('should create the dedicated GrokTextProvider for Grok vendor', () => {
       Connector.create({
         name: 'grok-test',
         vendor: Vendor.Grok,
@@ -193,6 +204,10 @@ describe('createProvider', () => {
       const provider = createProvider(Connector.get('grok-test'));
 
       expect(provider.name).toBe('grok-test');
+      expect(MockGrokTextProvider).toHaveBeenCalledWith(
+        'grok-test',
+        expect.objectContaining({ baseURL: 'https://api.x.ai/v1' }),
+      );
     });
 
     it('should create the dedicated DeepSeekTextProvider for DeepSeek vendor', () => {

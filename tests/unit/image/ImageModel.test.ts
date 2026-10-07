@@ -173,7 +173,7 @@ describe('ImageModel Registry', () => {
         cachedImageInputTokens: 200_000,
         imageOutputTokens: 300_000,
       });
-      expect(cost).toBeCloseTo(0.5 + 0.4 + 9);
+      expect(cost).toBeCloseTo(0.25 + 0.2 + 4.5);
     });
 
     it('adds partial text-token usage without dropping per-image output cost', () => {

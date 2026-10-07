@@ -4,7 +4,7 @@
 
 import { Vendor } from '../../core/Vendor.js';
 import type { IBaseModelDescription, AudioFormat, VendorOptionSchema } from '../types/SharedTypes.js';
-import { createRegistryHelpers } from './RegistryUtils.js';
+import { assertNoRegistryAliasCollisions, createRegistryHelpers } from './RegistryUtils.js';
 import { OPENAI_VOICES, GEMINI_VOICES, XAI_VOICES, GEMINI_TTS_LANGUAGES, COMMON_LANGUAGES, AUDIO_FORMATS, type IVoiceInfo } from './SharedVoices.js';
 
 // Re-export IVoiceInfo for public API
@@ -98,6 +98,10 @@ export const TTS_MODELS = {
     TTS_1_HD: 'tts-1-hd',
   },
   [Vendor.Google]: {
+    /** Flagship creative TTS with voice design and replication. */
+    GEMINI_3_8_FLASH_TTS: 'gemini-3.8-flash-tts',
+    /** Cost-efficient, low-latency TTS with voice replication. */
+    GEMINI_3_8_FLASH_LITE_TTS: 'gemini-3.8-flash-lite-tts',
     /** Current controllable low-latency Gemini TTS preview. */
     GEMINI_3_1_FLASH_TTS: 'gemini-3.1-flash-tts-preview',
     /** Gemini 2.5 Flash TTS (optimized for low latency) */
@@ -131,7 +135,7 @@ const OPENAI_TTS_BASE: Omit<TTSModelCapabilities, 'features' | 'limits'> = {
 
 /**
  * Complete TTS model registry
- * Last full audit: August 2026
+ * Last full audit: October 2026
  */
 export const TTS_MODEL_REGISTRY: Record<string, ITTSModelDescription> = {
   // ======================== OpenAI ========================
@@ -223,15 +227,69 @@ export const TTS_MODEL_REGISTRY: Record<string, ITTSModelDescription> = {
 
   // ======================== Google ========================
 
+  'gemini-3.8-flash-tts': {
+    name: 'gemini-3.8-flash-tts',
+    displayName: 'Gemini 3.8 Flash TTS',
+    provider: Vendor.Google,
+    description: 'Flagship creative TTS for studio-grade fidelity, expressive acting, regional dialects, voice design, and replication',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['audio_speech', 'generate_content', 'batch'],
+    releaseDate: '2026-09-22',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash-tts', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-10-07' },
+    capabilities: {
+      voices: GEMINI_VOICES,
+      formats: ['wav'],
+      languages: [...GEMINI_TTS_LANGUAGES],
+      speed: { supported: false },
+      features: { streaming: false, ssml: false, emotions: true, voiceCloning: true, wordTimestamps: false, instructionSteering: true },
+      limits: { maxInputLength: 8192 },
+      vendorOptions: {
+        stylePrompt: { type: 'string', description: 'Natural-language narration and delivery instructions' },
+        voiceId: { type: 'string', description: 'Extended-library, designed, or replicated voice resource ID' },
+      },
+    },
+    pricing: { perMInputTokens: 1, perMOutputTokens: 20, currency: 'USD' },
+  },
+
+  'gemini-3.8-flash-lite-tts': {
+    name: 'gemini-3.8-flash-lite-tts',
+    displayName: 'Gemini 3.8 Flash-Lite TTS',
+    provider: Vendor.Google,
+    description: 'Fast, cost-efficient TTS for high-throughput speech, voice-agent cascades, and voice replication',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['audio_speech', 'generate_content', 'batch'],
+    releaseDate: '2026-09-22',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash-lite-tts', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-10-07' },
+    capabilities: {
+      voices: GEMINI_VOICES,
+      formats: ['wav'],
+      languages: [...GEMINI_TTS_LANGUAGES],
+      speed: { supported: false },
+      features: { streaming: false, ssml: false, emotions: true, voiceCloning: true, wordTimestamps: false, instructionSteering: true },
+      limits: { maxInputLength: 8192 },
+      vendorOptions: {
+        stylePrompt: { type: 'string', description: 'Natural-language narration and delivery instructions' },
+        voiceId: { type: 'string', description: 'Extended-library, designed, or replicated voice resource ID' },
+      },
+    },
+    pricing: { perMInputTokens: 0.5, perMOutputTokens: 6, currency: 'USD' },
+  },
+
   'gemini-3.1-flash-tts-preview': {
     name: 'gemini-3.1-flash-tts-preview',
     displayName: 'Gemini 3.1 Flash TTS Preview',
     provider: Vendor.Google,
     description: 'Current low-latency Gemini speech model with steerable prompts and expressive audio tags',
     isActive: true,
-    lifecycle: 'preview',
+    lifecycle: 'legacy',
     availability: 'public',
-    preferred: true,
+    replacementModel: 'gemini-3.8-flash-lite-tts',
     endpoints: ['audio_speech', 'generate_content', 'batch'],
     releaseDate: '2026-04-01',
     sources: {
@@ -262,6 +320,10 @@ export const TTS_MODEL_REGISTRY: Record<string, ITTSModelDescription> = {
     provider: Vendor.Google,
     description: 'Google Gemini 2.5 Flash TTS - optimized for low latency, 30 voices, 70+ languages',
     isActive: true,
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-09-22',
+    retirementDate: '2026-11-17',
+    replacementModel: 'gemini-3.8-flash-lite-tts',
     releaseDate: '2025-01-01',
     sources: {
       documentation: 'https://ai.google.dev/gemini-api/docs/speech-generation',
@@ -295,6 +357,10 @@ export const TTS_MODEL_REGISTRY: Record<string, ITTSModelDescription> = {
     provider: Vendor.Google,
     description: 'Google Gemini 2.5 Pro TTS - optimized for quality, 30 voices, 70+ languages',
     isActive: true,
+    lifecycle: 'deprecated',
+    deprecationDate: '2026-09-22',
+    retirementDate: '2026-11-17',
+    replacementModel: 'gemini-3.8-flash-tts',
     releaseDate: '2025-01-01',
     sources: {
       documentation: 'https://ai.google.dev/gemini-api/docs/speech-generation',
@@ -366,6 +432,7 @@ export const TTS_MODEL_REGISTRY: Record<string, ITTSModelDescription> = {
 // Helper Functions (using shared utilities)
 // =============================================================================
 
+assertNoRegistryAliasCollisions(TTS_MODEL_REGISTRY, 'TTS_MODEL_REGISTRY');
 const helpers = createRegistryHelpers(TTS_MODEL_REGISTRY);
 
 export const getTTSModelInfo = helpers.getInfo;

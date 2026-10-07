@@ -63,6 +63,16 @@ describe('GoogleImageProvider', () => {
     expect(mockGenerateContent.mock.calls[0][0].config.imageConfig).not.toHaveProperty('imageSize');
   });
 
+  it('routes Nano Banana 2.1 through Gemini native image generation', async () => {
+    await provider.generateImage({
+      model: 'gemini-nano-banana-2.1',
+      prompt: 'A lighthouse',
+    });
+
+    expect(mockGenerateContent).toHaveBeenCalledOnce();
+    expect(mockGenerateImages).not.toHaveBeenCalled();
+  });
+
   it('detects JPEG edit input instead of labelling every source as PNG', async () => {
     const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
 

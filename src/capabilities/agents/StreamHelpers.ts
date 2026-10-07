@@ -216,19 +216,65 @@ export class StreamHelpers {
   private static updateStateFromEvent(state: StreamState, event: StreamEvent): void {
     switch (event.type) {
       case StreamEventType.OUTPUT_TEXT_DELTA:
-        state.accumulateTextDelta(event.item_id, event.delta);
+        state.accumulateTextDelta(event.item_id, event.delta, {
+          outputIndex: event.output_index,
+          contentIndex: event.content_index,
+          sequenceNumber: event.sequence_number,
+        });
         break;
 
       case StreamEventType.REASONING_DELTA:
-        state.accumulateReasoningDelta(event.item_id, event.delta);
+        state.accumulateReasoningDelta(event.item_id, event.delta, {
+          outputIndex: event.output_index,
+          contentIndex: event.content_index,
+          sequenceNumber: event.sequence_number,
+        });
         break;
 
       case StreamEventType.REASONING_DONE:
-        // Reasoning done - no specific state update needed (already accumulated via deltas)
+        state.completeReasoning(event.item_id, {
+          signature: event.signature,
+          encryptedContent: event.encrypted_content,
+          effort: event.effort,
+        }, {
+          outputIndex: event.output_index,
+          sequenceNumber: event.sequence_number,
+        });
+        break;
+
+      case StreamEventType.COMPACTION:
+        state.accumulateCompaction({
+          type: 'compaction',
+          id: event.item_id,
+          encrypted_content: event.encrypted_content,
+          content: event.content,
+          signature: event.signature,
+          ...(event.provider_metadata ? { providerMetadata: event.provider_metadata } : {}),
+        }, {
+          outputIndex: event.output_index,
+          sequenceNumber: event.sequence_number,
+        });
+        break;
+
+      case StreamEventType.PROVIDER_STATE:
+        state.accumulateProviderState(event.item_id, {
+          type: ContentType.PROVIDER_STATE,
+          provider: event.provider,
+          data: event.data,
+        }, {
+          outputIndex: event.output_index,
+          sequenceNumber: event.sequence_number,
+        });
         break;
 
       case StreamEventType.TOOL_CALL_START:
-        state.startToolCall(event.tool_call_id, event.tool_name);
+        state.startToolCall(event.tool_call_id, event.tool_name, event.item_id, {
+          outputIndex: event.output_index,
+          sequenceNumber: event.sequence_number,
+        }, {
+          toolType: event.tool_type,
+          async: event.async,
+        });
         break;
 
       case StreamEventType.TOOL_CALL_ARGUMENTS_DELTA:
@@ -253,6 +299,10 @@ export class StreamHelpers {
           console.error('[DEBUG] RESPONSE_COMPLETE event:', event.usage);
         }
         state.updateUsage(event.usage);
+        state.providerStatus = event.status;
+        state.stopReason = event.stop_reason;
+        state.stopDetails = event.stop_details;
+        state.continuationToken = event.continuation_token;
         state.markComplete(event.status);
         break;
     }
@@ -264,69 +314,68 @@ export class StreamHelpers {
    */
   private static reconstructLLMResponse(state: StreamState): LLMResponse {
     const output: OutputItem[] = [];
-    const contentParts: any[] = [];
-
-    // Add reasoning/thinking content if accumulated
-    let thinkingText: string | undefined;
-    if (state.hasReasoning()) {
-      const reasoning = state.getAllReasoning();
-      if (reasoning) {
-        thinkingText = reasoning;
-        contentParts.push({
-          type: ContentType.THINKING,
-          thinking: reasoning,
-          persistInHistory: false, // Vendor-agnostic default; caller can adjust
-        });
-      }
-    }
-
-    // Add text content
-    if (state.hasText()) {
-      const textContent = state.getAllText();
-      if (textContent) {
-        contentParts.push({
-          type: ContentType.OUTPUT_TEXT,
-          text: textContent,
-        });
-      }
-    }
-
-    // Build message from accumulated content parts
-    if (contentParts.length > 0) {
+    let contentParts: any[] = [];
+    const thinkingTexts: string[] = [];
+    const flushContent = (): void => {
+      if (contentParts.length === 0) return;
       output.push({
-        type: 'message' as const,
+        type: 'message',
         role: MessageRole.ASSISTANT,
         content: contentParts,
       });
-    }
+      contentParts = [];
+    };
 
-    // Add tool calls to output
-    const toolCalls = state.getCompletedToolCalls();
-    if (toolCalls.length > 0) {
-      // Tool calls should be part of assistant message content
-      const toolUseContent = toolCalls.map((tc) => ({
-        type: ContentType.TOOL_USE as const,
-        id: tc.id,
-        name: tc.function.name,
-        arguments: tc.function.arguments,
-      }));
-
-      const firstOutput = output[0];
-      if (firstOutput && firstOutput.type === 'message') {
-        // Append to existing message
-        firstOutput.content.push(...toolUseContent);
+    for (const entry of state.getOrderedOutputEntries()) {
+      if (entry.kind === 'compaction') {
+        flushContent();
+        output.push(entry.item);
+      } else if (entry.kind === 'reasoning') {
+        if (entry.thinking) thinkingTexts.push(entry.thinking);
+        if (entry.encryptedContent) {
+          flushContent();
+          output.push({
+            type: 'reasoning',
+            id: entry.itemId,
+            ...(entry.effort ? { effort: entry.effort } : {}),
+            ...(entry.thinking ? { summary: entry.thinking } : {}),
+            encrypted_content: entry.encryptedContent,
+          });
+        } else if (entry.thinking || entry.signature) {
+          contentParts.push({
+            type: ContentType.THINKING,
+            thinking: entry.thinking,
+            providerItemId: entry.itemId,
+            ...(entry.signature ? { signature: entry.signature } : {}),
+            persistInHistory: Boolean(entry.signature),
+          });
+        }
+      } else if (entry.kind === 'text') {
+        if (entry.text) contentParts.push({ type: ContentType.OUTPUT_TEXT, text: entry.text });
+      } else if (entry.kind === 'provider_state') {
+        contentParts.push(entry.state);
+      } else if (entry.toolType === 'custom') {
+        contentParts.push({
+          type: ContentType.CUSTOM_TOOL_USE,
+          id: entry.toolCallId,
+          name: entry.toolName,
+          input: entry.arguments,
+          ...(entry.async !== undefined ? { async: entry.async } : {}),
+        });
       } else {
-        // Create new message with tool calls
-        output.push({
-          type: 'message' as const,
-          role: MessageRole.ASSISTANT,
-          content: toolUseContent,
+        contentParts.push({
+          type: ContentType.TOOL_USE,
+          id: entry.toolCallId,
+          name: entry.toolName,
+          arguments: entry.arguments,
+          ...(entry.async !== undefined ? { async: entry.async } : {}),
         });
       }
     }
+    flushContent();
 
-    // Extract output text
-    const outputText = this.extractOutputText(output);
+    const outputText = state.getAllText();
+    const thinkingText = thinkingTexts.length > 0 ? thinkingTexts.join('\n') : undefined;
 
     return {
       id: state.responseId,
@@ -338,26 +387,10 @@ export class StreamHelpers {
       output_text: outputText,
       thinking: thinkingText,
       usage: state.usage,
+      ...(state.stopReason ? { stop_reason: state.stopReason } : {}),
+      ...(state.stopDetails ? { stop_details: state.stopDetails } : {}),
+      ...(state.continuationToken ? { continuation_token: state.continuationToken } : {}),
     };
   }
 
-  /**
-   * Extract text from output items
-   * @private
-   */
-  private static extractOutputText(output: OutputItem[]): string {
-    const texts: string[] = [];
-
-    for (const item of output) {
-      if (item.type === 'message') {
-        for (const content of item.content) {
-          if (content.type === ContentType.OUTPUT_TEXT) {
-            texts.push(content.text);
-          }
-        }
-      }
-    }
-
-    return texts.join(' ').trim();
-  }
 }

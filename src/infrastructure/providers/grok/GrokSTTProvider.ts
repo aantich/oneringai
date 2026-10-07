@@ -42,6 +42,7 @@ export class GrokSTTProvider extends BaseMediaProvider implements IStreamingSpee
     return this.executeWithCircuitBreaker(async () => {
       const form = new FormData();
       const vendorOptions = options.vendorOptions ?? {};
+      form.append('model', this.resolveModel(options.model));
       this.appendOptions(form, { ...vendorOptions, language: options.language });
       const { bytes, filename, mimeType, isRaw } = await this.readAudio(options.audio, options.encoding);
       if (isRaw) {
@@ -91,6 +92,7 @@ export class GrokSTTProvider extends BaseMediaProvider implements IStreamingSpee
     const url = new URL(`${this.baseURL}/stt`);
     url.protocol = url.protocol === 'http:' ? 'ws:' : 'wss:';
     url.searchParams.set('sample_rate', String(options.sampleRate ?? 16000));
+    url.searchParams.set('model', this.resolveModel(options.model));
     url.searchParams.set('encoding', options.encoding ?? 'pcm');
     url.searchParams.set('interim_results', String(options.interimResults ?? false));
     if (options.language) url.searchParams.set('language', options.language);
@@ -192,6 +194,10 @@ export class GrokSTTProvider extends BaseMediaProvider implements IStreamingSpee
         form.append(key, String(value));
       }
     }
+  }
+
+  private resolveModel(model: string): string {
+    return model === 'xai-stt' ? 'grok-voice-transcribe-2.0' : model;
   }
 
   private toStreamEvent(type: 'transcript' | 'done', raw: Record<string, any>): STTStreamEvent {

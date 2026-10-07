@@ -34,10 +34,21 @@ import {
 const OPENAI_EXTENDED_PROMPT_CACHE_MODELS = /^gpt-(?:5\.(?:4|5|6)|(?:[6-9]|\d{2,})(?:\.\d+)?)(?:-|$)/;
 const OPENAI_EXPLICIT_PROMPT_CACHE_MODELS = /^gpt-(?:5\.(?:6|[7-9]|\d{2,})|(?:[6-9]|\d{2,})(?:\.\d+)?)(?:-|$)/;
 const OPENAI_RESPONSES_TOOL_MODELS = /^(?:gpt-(?:4\.1|4o|(?:[5-9]|\d{2,})(?:\.\d+)?)(?:-|$)|o[134](?:-|$))/;
+const OPENAI_SHELL_AND_PATCH_MODELS = /^gpt-(?:5\.(?:[1-9]|\d{2,})|(?:[6-9]|\d{2,})(?:\.\d+)?)(?:-|$)/;
+const OPENAI_TOOL_SEARCH_AND_COMPUTER_MODELS = /^gpt-(?:5\.(?:[4-9]|\d{2,})|(?:[6-9]|\d{2,})(?:\.\d+)?)(?:-|$)/;
 
 function getOpenAINativeTools(model: string): AdvancedTextCapabilities['nativeTools'] {
   if (!OPENAI_RESPONSES_TOOL_MODELS.test(model)) return [];
-  return ['web_search', 'code_execution', 'file_search', 'remote_mcp'];
+  const tools: AdvancedTextCapabilities['nativeTools'] = [
+    'web_search', 'code_execution', 'file_search', 'remote_mcp', 'image_generation',
+  ];
+  if (OPENAI_SHELL_AND_PATCH_MODELS.test(model)) {
+    tools.push('hosted_shell', 'apply_patch');
+  }
+  if (OPENAI_TOOL_SEARCH_AND_COMPUTER_MODELS.test(model)) {
+    tools.push('computer_use', 'tool_search');
+  }
+  return tools;
 }
 
 export class OpenAITextProvider extends BaseTextProvider {
@@ -52,6 +63,7 @@ export class OpenAITextProvider extends BaseTextProvider {
   private client: OpenAI;
   private converter: OpenAIResponsesConverter;
   private streamConverter: OpenAIResponsesStreamConverter;
+  protected readonly nativeToolVendor: 'openai' | 'grok' = 'openai';
   readonly batch: IAsyncTextBatchProvider<TextGenerateOptions, LLMResponse> = this;
 
   constructor(config: OpenAIConfig) {
@@ -76,6 +88,13 @@ export class OpenAITextProvider extends BaseTextProvider {
    * Check if a parameter is supported by the model
    */
   private supportsParameter(model: string, parameter: 'temperature' | 'topP' | 'frequencyPenalty' | 'presencePenalty'): boolean {
+    // GPT-6 Sol/Luna support sampling when reasoning.effort is `none`. Keep
+    // temperature in the request here and let the effort-aware validator
+    // accept or reject the concrete combination instead of silently dropping it.
+    if (/^(?:gpt-6-astra|gpt-6\.1-sol|gpt-6-sol|gpt-6-luna)(?:-|$)/.test(model)
+      && (parameter === 'temperature' || parameter === 'topP')) {
+      return true;
+    }
     const modelInfo = getModelInfo(model);
     if (!modelInfo?.features.parameters) {
       // If no parameter info, assume supported (backward compatibility)
@@ -130,7 +149,7 @@ export class OpenAITextProvider extends BaseTextProvider {
         if (options.native_tools?.length) {
           params.tools = [
             ...((params.tools as ResponsesAPI.Tool[] | undefined) ?? []),
-            ...this.converter.convertNativeTools(options.native_tools),
+            ...this.converter.convertNativeTools(options.native_tools, this.nativeToolVendor),
           ];
         }
         this.applyPromptCacheConfig(params, options);
@@ -217,7 +236,7 @@ export class OpenAITextProvider extends BaseTextProvider {
       if (options.native_tools?.length) {
         params.tools = [
           ...((params.tools as ResponsesAPI.Tool[] | undefined) ?? []),
-          ...this.converter.convertNativeTools(options.native_tools),
+          ...this.converter.convertNativeTools(options.native_tools, this.nativeToolVendor),
         ];
       }
       this.applyPromptCacheConfig(params, options);
@@ -480,7 +499,7 @@ export class OpenAITextProvider extends BaseTextProvider {
         ? { temperature: options.temperature }
         : {}),
       ...(options.native_tools?.length
-        ? { nativeTools: this.converter.convertNativeTools(options.native_tools) }
+        ? { nativeTools: this.converter.convertNativeTools(options.native_tools, this.nativeToolVendor) }
         : {}),
       ...(options.max_output_tokens ? { max_output_tokens: options.max_output_tokens } : {}),
       ...(options.response_format

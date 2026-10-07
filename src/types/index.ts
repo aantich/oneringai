@@ -138,6 +138,7 @@ export type {
   CustomToolUseContent,
   CustomToolResultContent,
   ThinkingContent,
+  ProviderStateContent,
 } from '../domain/entities/Content.js';
 
 // Messages
@@ -152,6 +153,11 @@ export type {
   CompactionTriggerItem,
   FunctionCallOutputItem,
   CustomToolCallOutputItem,
+  ComputerCallOutputItem,
+  ShellCallOutputContent,
+  ShellCallOutputItem,
+  ApplyPatchCallOutputItem,
+  ToolSearchOutputItem,
   ToolCallOutputContent,
 } from '../domain/entities/Message.js';
 
@@ -415,6 +421,7 @@ export type {
   ReasoningDeltaEvent,
   ReasoningDoneEvent,
   CompactionEvent,
+  ProviderStateEvent,
   ToolCallStartEvent,
   ToolCallArgumentsDeltaEvent,
   ToolCallArgumentsDoneEvent,
@@ -427,6 +434,11 @@ export type {
   AudioChunkErrorEvent,
   AudioStreamCompleteEvent,
 } from '../domain/entities/StreamEvent.js';
+export type {
+  OrderedStreamOutputEntry,
+  StreamOutputPosition,
+  ToolCallBuffer,
+} from '../domain/entities/StreamState.js';
 export {
   isStreamEvent,
   isOutputTextDelta,

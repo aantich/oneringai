@@ -203,9 +203,9 @@ export class ImageGeneration {
 
     switch (vendor) {
       case Vendor.OpenAI:
-        return IMAGE_MODELS[Vendor.OpenAI].GPT_IMAGE_2;
+        return IMAGE_MODELS[Vendor.OpenAI].GPT_IMAGE_2_5_SUNBURST;
       case Vendor.Google:
-        return IMAGE_MODELS[Vendor.Google].GEMINI_3_1_FLASH_IMAGE;
+        return IMAGE_MODELS[Vendor.Google].GEMINI_NANO_BANANA_2_1;
       case Vendor.Grok:
         return IMAGE_MODELS[Vendor.Grok].GROK_IMAGINE_IMAGE_2;
       default:
@@ -221,9 +221,9 @@ export class ImageGeneration {
 
     switch (vendor) {
       case Vendor.OpenAI:
-        return IMAGE_MODELS[Vendor.OpenAI].GPT_IMAGE_2;
+        return IMAGE_MODELS[Vendor.OpenAI].GPT_IMAGE_2_5_SUNBURST;
       case Vendor.Google:
-        return IMAGE_MODELS[Vendor.Google].GEMINI_3_1_FLASH_IMAGE;
+        return IMAGE_MODELS[Vendor.Google].GEMINI_NANO_BANANA_2_1;
       case Vendor.Grok:
         return IMAGE_MODELS[Vendor.Grok].GROK_IMAGINE_IMAGE_2;
       default:

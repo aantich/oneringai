@@ -228,6 +228,7 @@ export function mapAnthropicStatus(stopReason: string | null): ResponseStatus {
     case 'end_turn':
     case 'tool_use':
     case 'stop_sequence':
+    case 'compaction':
       return 'completed';
     case 'max_tokens':
       return 'incomplete';

@@ -605,6 +605,17 @@ export class GoogleConverter {
           return { urlContext: tool.options ?? {} };
         case 'code_execution':
           return { codeExecution: tool.options ?? {} };
+        case 'file_search': {
+          const { vectorStoreIds, ...providerOptions } = tool.options;
+          return {
+            fileSearch: {
+              ...providerOptions,
+              fileSearchStoreNames: vectorStoreIds,
+            },
+          };
+        }
+        case 'computer_use':
+          return { computerUse: tool.options ?? {} };
         default:
           return tool.options ?? {};
       }

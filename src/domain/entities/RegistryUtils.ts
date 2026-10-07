@@ -6,6 +6,24 @@
 import type { Vendor as VendorType } from '../../core/Vendor.js';
 import type { IBaseModelDescription } from '../types/SharedTypes.js';
 
+/** Fail fast when an alias is ambiguous or shadowed by a canonical registry key. */
+export function assertNoRegistryAliasCollisions<T extends { aliases?: readonly string[] }>(
+  registry: Record<string, T>,
+  registryName = 'model registry',
+): void {
+  const owners = new Map<string, string>();
+  for (const [key, model] of Object.entries(registry)) {
+    for (const alias of model.aliases ?? []) {
+      const owner = owners.get(alias);
+      if (alias in registry || owner) {
+        const target = alias in registry ? `canonical key '${alias}'` : `model '${owner}'`;
+        throw new Error(`${registryName} alias '${alias}' on '${key}' conflicts with ${target}`);
+      }
+      owners.set(alias, key);
+    }
+  }
+}
+
 /**
  * Creates standard helper functions for any model registry
  * This eliminates the need to write the same helper functions for each registry

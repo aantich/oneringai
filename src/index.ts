@@ -224,8 +224,34 @@ export type { IEmbeddingProvider, EmbeddingContentPart, EmbeddingOptions, Embedd
 export {
   OpenAIResponsesWebSocketSession,
   OpenAISafetyAPI,
+  OpenAIDecisions,
+  OpenAILiveSession,
+  OpenAIVoices,
 } from './capabilities/openai/index.js';
+
+// Google Live and custom voice APIs
+export { GoogleLiveSession, GoogleVoices } from './capabilities/google/index.js';
 export type {
+  GoogleLiveConnectConfig,
+  GoogleLiveServerMessage,
+  GoogleLiveSessionOptions,
+  GoogleVoice,
+  GoogleVoiceCreateParams,
+  GoogleVoiceDeleteParams,
+  GoogleVoiceGetParams,
+  GoogleVoiceListParams,
+  GoogleVoiceListResponse,
+} from './capabilities/google/index.js';
+export type {
+  OpenAIDecision,
+  OpenAIDecisionCreateParams,
+  OpenAILiveClientEvent,
+  OpenAILiveServerEvent,
+  OpenAILiveSessionConfig,
+  OpenAILiveSessionOptions,
+  OpenAILiveSessionResource,
+  OpenAIVoice,
+  OpenAIVoiceCreateParams,
   OpenAIResponsesCreateEventOptions,
   OpenAIResponseSteerMessage,
   OpenAIResponsesWebSocketSessionEvents,
@@ -753,6 +779,7 @@ export type {
   CustomToolUseContent,
   CustomToolResultContent,
   ThinkingContent,
+  ProviderStateContent,
 } from './domain/entities/Content.js';
 
 // Messages
@@ -767,6 +794,11 @@ export type {
   CompactionTriggerItem,
   FunctionCallOutputItem,
   CustomToolCallOutputItem,
+  ComputerCallOutputItem,
+  ShellCallOutputContent,
+  ShellCallOutputItem,
+  ApplyPatchCallOutputItem,
+  ToolSearchOutputItem,
   ToolCallOutputContent,
 } from './domain/entities/Message.js';
 
@@ -904,6 +936,7 @@ export type {
   ReasoningDeltaEvent,
   ReasoningDoneEvent,
   CompactionEvent,
+  ProviderStateEvent,
   ToolCallStartEvent,
   ToolCallArgumentsDeltaEvent,
   ToolCallArgumentsDoneEvent,
@@ -932,6 +965,11 @@ export {
   isAudioStreamComplete,
 } from './domain/entities/StreamEvent.js';
 export { StreamState } from './domain/entities/StreamState.js';
+export type {
+  OrderedStreamOutputEntry,
+  StreamOutputPosition,
+  ToolCallBuffer,
+} from './domain/entities/StreamState.js';
 export { StreamHelpers } from './capabilities/agents/StreamHelpers.js';
 
 // ============ Hooks & Events (Enterprise) ============

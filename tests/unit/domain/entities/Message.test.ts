@@ -5,7 +5,14 @@
 
 import { describe, it, expect } from 'vitest';
 import { MessageRole } from '@/domain/entities/Message.js';
-import type { Message, CompactionItem, ReasoningItem, InputItem, OutputItem } from '@/domain/entities/Message.js';
+import type {
+  Message,
+  CompactionItem,
+  ReasoningItem,
+  InputItem,
+  OutputItem,
+  ComputerCallOutputItem,
+} from '@/domain/entities/Message.js';
 import { ContentType } from '@/domain/entities/Content.js';
 import type {
   InputTextContent,
@@ -203,6 +210,23 @@ describe('Message entity', () => {
 
       expect(thinking.signature).toBeUndefined();
       expect(thinking.persistInHistory).toBe(false);
+    });
+  });
+
+  describe('ComputerCallOutputItem', () => {
+    it('supports screenshots referenced by an uploaded file', () => {
+      const screenshot: ComputerCallOutputItem = {
+        type: 'computer_call_output',
+        call_id: 'call_computer',
+        output: {
+          type: 'computer_screenshot',
+          file_id: 'file_screenshot',
+        },
+      };
+      const input: InputItem = screenshot;
+
+      expect(input.output.file_id).toBe('file_screenshot');
+      expect(input.output.image_url).toBeUndefined();
     });
   });
 

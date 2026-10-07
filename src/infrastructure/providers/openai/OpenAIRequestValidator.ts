@@ -6,6 +6,8 @@ import {
 import { getModelInfo } from '../../../domain/entities/Model.js';
 
 const GPT_6_ASTRA = /^gpt-6-astra(?:-|$)/;
+const GPT_6_FAMILY = /^(?:gpt-6-astra|gpt-6\.1-sol|gpt-6-sol|gpt-6-luna)(?:-|$)/;
+const GPT_6_FAST_EU_RESTRICTED = /^(?:gpt-6-astra|gpt-6\.1-sol|gpt-6-sol|gpt-6-luna)(?:-|$)/;
 const EU_OPENAI_HOSTS = /^(?:eu\.api\.openai\.com|.*\.openai\.azure\.com)$/i;
 const ASTRA_REASONING_EFFORTS = new Set(['low', 'medium', 'high', 'xhigh', 'max']);
 
@@ -105,27 +107,54 @@ export function validateOpenAIResponsesRequest(
     const effort = reasoning && typeof reasoning === 'object'
       ? (reasoning as { effort?: unknown }).effort
       : undefined;
-    if (typeof effort !== 'string' || !ASTRA_REASONING_EFFORTS.has(effort)) {
+    const supportedEfforts = modelInfo?.features.reasoningEfforts ?? [...ASTRA_REASONING_EFFORTS];
+    if (typeof effort !== 'string' || !supportedEfforts.includes(effort as any)) {
       throw new InvalidConfigError(
-        'OpenAI configuration_update reasoning effort must be low, medium, high, xhigh, or max',
+        `OpenAI configuration_update reasoning effort must be one of: ${supportedEfforts.join(', ')} for ${model}`,
       );
     }
   }
 
-  if (!isAstra) return;
-
   const reasoning = params.reasoning as { effort?: unknown } | undefined;
-  if (reasoning?.effort === 'none' || reasoning?.effort === 'minimal') {
+  if (
+    typeof reasoning?.effort === 'string'
+    && modelInfo?.features.reasoningEfforts
+    && !modelInfo.features.reasoningEfforts.includes(reasoning.effort as any)
+  ) {
     throw new InvalidConfigError(
-      `GPT-6 Astra does not support reasoning effort '${String(reasoning.effort)}'; use low, medium, high, xhigh, or max`,
+      `${model} does not support reasoning effort '${reasoning.effort}'; use ${modelInfo.features.reasoningEfforts.join(', ')}`,
     );
   }
+  if (
+    GPT_6_FAST_EU_RESTRICTED.test(model)
+    && isEUBaseURL(baseURL)
+    && (params.service_tier === 'fast' || params.service_tier === 'priority')
+  ) {
+    throw new InvalidConfigError(
+      `${model} Fast mode is unavailable with EU data residency`,
+    );
+  }
+  if (isEUBaseURL(baseURL) && params.service_tier === 'ultrafast') {
+    throw new InvalidConfigError(
+      `${model} Ultrafast mode is unavailable with EU data residency`,
+    );
+  }
+  if (!GPT_6_FAMILY.test(model)) return;
+  const effectiveReasoningEffort = typeof reasoning?.effort === 'string'
+    ? reasoning.effort
+    : 'medium';
+  if (effectiveReasoningEffort === 'none') return;
+
   if (options.temperature !== undefined || params.temperature !== undefined) {
-    throw new InvalidConfigError('GPT-6 Astra does not support temperature');
+    throw new InvalidConfigError(
+      `${model} does not support temperature when reasoning effort is '${effectiveReasoningEffort}'`,
+    );
   }
   for (const parameter of ['top_p', 'top_logprobs'] as const) {
     if (params[parameter] !== undefined) {
-      throw new InvalidConfigError(`GPT-6 Astra does not support ${parameter}`);
+      throw new InvalidConfigError(
+        `${model} does not support ${parameter} when reasoning effort is '${effectiveReasoningEffort}'`,
+      );
     }
   }
   if (
@@ -133,17 +162,8 @@ export function validateOpenAIResponsesRequest(
     && params.include.includes('message.output_text.logprobs')
   ) {
     throw new InvalidConfigError(
-      'GPT-6 Astra does not support include: message.output_text.logprobs',
+      `${model} does not support include: message.output_text.logprobs when reasoning effort is '${effectiveReasoningEffort}'`,
     );
   }
 
-  const serviceTier = params.service_tier;
-  if (
-    isEUBaseURL(baseURL)
-    && (serviceTier === 'fast' || serviceTier === 'priority')
-  ) {
-    throw new InvalidConfigError(
-      'GPT-6 Astra Fast mode is unavailable with EU data residency',
-    );
-  }
 }

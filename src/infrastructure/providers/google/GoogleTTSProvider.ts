@@ -36,6 +36,7 @@ export class GoogleTTSProvider extends BaseMediaProvider implements ITextToSpeec
 
     this.client = new GoogleGenAI({
       apiKey: config.apiKey,
+      ...(config.baseURL ? { httpOptions: { baseUrl: config.baseURL } } : {}),
     });
   }
 
@@ -67,11 +68,7 @@ export class GoogleTTSProvider extends BaseMediaProvider implements ITextToSpeec
             config: {
               responseModalities: ['AUDIO'],
               speechConfig: {
-                voiceConfig: {
-                  prebuiltVoiceConfig: {
-                    voiceName: options.voice || 'Kore',
-                  },
-                },
+                voiceConfig: this.toVoiceConfig(options.voice),
               },
             },
           });
@@ -103,11 +100,17 @@ export class GoogleTTSProvider extends BaseMediaProvider implements ITextToSpeec
     );
   }
 
-  /**
-   * List available voices (returns static list for Google)
-   */
+  /** List the built-in synthesis voices. Use GoogleVoices for the remote custom-voice catalog. */
   async listVoices(): Promise<IVoiceInfo[]> {
     return GEMINI_VOICES;
+  }
+
+  private toVoiceConfig(voice: string): Record<string, unknown> {
+    const normalized = voice.startsWith('voices/') ? voice.slice('voices/'.length) : voice;
+    if (normalized.startsWith('voice_') || normalized.startsWith('voicekey_')) {
+      return { voice: normalized };
+    }
+    return { prebuiltVoiceConfig: { voiceName: normalized || 'Kore' } };
   }
 
   /**
@@ -129,10 +132,14 @@ export class GoogleTTSProvider extends BaseMediaProvider implements ITextToSpeec
     for (const part of content.parts) {
       if (part.inlineData?.data) {
         // Decode base64 audio data
-        const rawPcm = Buffer.from(part.inlineData.data, 'base64');
+        const audio = Buffer.from(part.inlineData.data, 'base64');
+
+        if (part.inlineData.mimeType === 'audio/wav' || audio.subarray(0, 4).toString() === 'RIFF') {
+          return audio;
+        }
 
         // Wrap PCM in WAV format
-        return this.pcmToWav(rawPcm, 24000, 1, 16);
+        return this.pcmToWav(audio, 24000, 1, 16);
       }
     }
 

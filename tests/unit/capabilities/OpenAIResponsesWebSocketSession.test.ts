@@ -6,7 +6,10 @@ import {
   type OpenAIResponsesWebSocketTransport,
 } from '@/capabilities/openai/OpenAIResponsesWebSocketSession.js';
 
-function fakeTransport(): OpenAIResponsesWebSocketTransport & { sent: any[] } {
+function fakeTransport(): OpenAIResponsesWebSocketTransport & {
+  sent: any[];
+  emit(event: string, ...args: any[]): void;
+} {
   const listeners = new Map<string, Array<(...args: any[]) => void>>();
   return {
     sent: [],
@@ -18,6 +21,9 @@ function fakeTransport(): OpenAIResponsesWebSocketTransport & { sent: any[] } {
     on(event, listener) {
       listeners.set(event, [...(listeners.get(event) ?? []), listener]);
       return this;
+    },
+    emit(event, ...args) {
+      for (const listener of listeners.get(event) ?? []) listener(...args);
     },
     send(event) { this.sent.push(event); },
     async *stream() { /* no events */ },
@@ -138,5 +144,73 @@ describe('OpenAIResponsesWebSocketSession', () => {
         content: [{ type: 'input_text', text: 'Change direction.' }],
       }],
     }]);
+  });
+
+  it('rejects concurrent connects and can cancel during credential resolution', async () => {
+    let releaseToken!: (token: string) => void;
+    const connector = {
+      getToken: () => new Promise<string>((resolve) => { releaseToken = resolve; }),
+      getOptions: () => ({}),
+      baseURL: '',
+    } as any;
+    const factory = vi.fn(() => fakeTransport());
+    const session = new OpenAIResponsesWebSocketSession({
+      connector,
+      transportFactory: factory,
+    });
+
+    const connecting = session.connect();
+    await expect(session.connect()).rejects.toThrow(/already connected or connecting/);
+    expect(() => session.send({ type: 'response.cancel' })).toThrow(/not connected/);
+    session.close();
+    releaseToken('secret');
+
+    await expect(connecting).rejects.toThrow(/cancelled/);
+    expect(factory).not.toHaveBeenCalled();
+    expect(session.isConnected).toBe(false);
+  });
+
+  it('resets connection state after a remote close', async () => {
+    const connector = Connector.create({
+      name: 'openai-ws-test',
+      vendor: Vendor.OpenAI,
+      auth: { type: 'api_key', apiKey: 'secret-test-key' },
+    });
+    const first = fakeTransport();
+    const second = fakeTransport();
+    const transports = [first, second];
+    const session = new OpenAIResponsesWebSocketSession({
+      connector,
+      transportFactory: () => transports.shift()!,
+    });
+
+    await session.connect();
+    expect(session.isConnected).toBe(true);
+    first.emit('close', 1006, 'remote', []);
+    expect(session.isConnected).toBe(false);
+
+    await session.connect();
+    expect(session.isConnected).toBe(true);
+  });
+
+  it('does not throw for an unobserved transport error and forwards observed errors', async () => {
+    const connector = Connector.create({
+      name: 'openai-ws-test',
+      vendor: Vendor.OpenAI,
+      auth: { type: 'api_key', apiKey: 'secret-test-key' },
+    });
+    const transport = fakeTransport();
+    const session = new OpenAIResponsesWebSocketSession({
+      connector,
+      transportFactory: () => transport,
+    });
+    await session.connect();
+
+    expect(() => transport.emit('error', new Error('unobserved'))).not.toThrow();
+    const listener = vi.fn();
+    session.on('error', listener);
+    const observed = new Error('observed');
+    transport.emit('error', observed);
+    expect(listener).toHaveBeenCalledWith(observed);
   });
 });

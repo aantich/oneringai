@@ -2,7 +2,7 @@
  * Google Gemini text provider (using new unified SDK)
  */
 
-import { GoogleGenAI, type BatchJob } from '@google/genai';
+import { GoogleGenAI, type BatchJob, type Interactions } from '@google/genai';
 import { BaseTextProvider } from '../base/BaseTextProvider.js';
 import { TextGenerateOptions, ModelCapabilities } from '../../../domain/interfaces/ITextProvider.js';
 import { LLMResponse } from '../../../domain/entities/Response.js';
@@ -137,7 +137,7 @@ export class GoogleTextProvider extends BaseTextProvider {
         // Only clear mappings when conversation is complete (no pending tool calls)
         // For Gemini 3+, thought signatures must persist across tool execution rounds
         const firstOutput = response.output?.[0];
-        const outputContent = firstOutput && 'content' in firstOutput ? firstOutput.content : [];
+        const outputContent = firstOutput?.type === 'message' ? firstOutput.content : [];
         const hasToolCalls = this.converter.hasToolCalls(outputContent);
         if (!hasToolCalls) {
           this.converter.clearMappings();
@@ -167,7 +167,7 @@ export class GoogleTextProvider extends BaseTextProvider {
         this.logger.debug({ model: options.model }, 'streamGenerate: calling Google Interactions API');
         const stream = await this.client.interactions.create({ ...request, stream: true } as any);
         yield* this.interactionsConverter.convertStream(
-          stream as unknown as AsyncIterable<unknown>,
+          stream as unknown as AsyncIterable<Interactions.InteractionSSEEvent>,
           options.model,
         );
         return;
@@ -253,7 +253,14 @@ export class GoogleTextProvider extends BaseTextProvider {
     const supportsStructuredOutput = info?.features.structuredOutput === true;
     const nativeTools: AdvancedTextCapabilities['nativeTools'] =
       info && GOOGLE_SERVER_TOOL_MODELS.test(model) && !GOOGLE_NON_TEXT_VARIANTS.test(model)
-        ? ['web_search', 'web_fetch', 'code_execution']
+        ? [
+            'web_search',
+            'web_fetch',
+            'code_execution',
+            ...(/^gemini-3\.8(?:-|$)/.test(model)
+              ? (['file_search', 'computer_use'] as const)
+              : []),
+          ]
         : [];
     return {
       promptCaching: {

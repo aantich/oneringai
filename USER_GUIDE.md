@@ -1,7 +1,7 @@
 # @everworker/oneringai - Complete User Guide
 
-**Version:** 1.1.6
-**Last Updated:** 2026-09-04
+**Version:** 1.1.8
+**Last Updated:** 2026-10-07
 
 A comprehensive guide to using all features of the @everworker/oneringai library.
 
@@ -21,6 +21,7 @@ A comprehensive guide to using all features of the @everworker/oneringai library
    - [Structured Output (JSON)](#structured-output-json) — vendor-agnostic `responseFormat`, native or prompt fallback
 4. [Advanced Inference](#advanced-inference) — prompt caching, async batches, provider-hosted tools, telemetry, and data policy
    - [GPT-6 Astra Responses extensions](#gpt-6-astra-responses-extensions) — async tools, steering, configuration updates, and safety monitoring
+   - [Current vendor API additions](#current-vendor-api-additions) — Decisions, Live sessions, custom voices, Anthropic tool search, Gemini computer use, and xAI hosted tools
 5. [Connectors & Authentication](#connectors--authentication)
 6. [Agent Features](#agent-features)
    - [Instruction Templates](#instruction-templates) — `{{DATE}}`, `{{AGENT_ID}}`, custom `{{COMMAND:arg}}` with extensible registry
@@ -547,25 +548,25 @@ The complete protocols, events, and production checklists are documented in
 
 ### 6. Review model defaults and media behavior
 
-Recommended starting points in 1.0.0 are:
+Current recommended starting points are:
 
 | Workload | Recommended model/API |
 |----------|-----------------------|
 | Highest-capability OpenAI text/agents | `gpt-6-astra` |
-| Balanced OpenAI production agents | `gpt-5.6-terra` |
-| Economical OpenAI high-throughput work | `gpt-5.6-luna` |
-| Anthropic frontier work | `claude-opus-5`; use `claude-fable-5-1` for the hardest long-horizon work and `claude-sonnet-5` for a faster path |
+| Balanced OpenAI production agents | `gpt-6.1-sol` |
+| Economical OpenAI high-throughput work | `gpt-6-luna` |
+| Anthropic frontier work | `claude-opus-5-5`; use `claude-sonnet-5-5` for a faster path |
 | Google multimodal/agent work | `gemini-3.8-flash` through Interactions |
-| xAI text/agent work | `grok-4.6` |
-| OpenAI image generation/editing | `gpt-image-2` |
-| Google native image | `gemini-3.1-flash-image` |
+| xAI text/agent work | `grok-4.7` |
+| OpenAI image generation/editing | `gpt-image-2.5-sunburst` |
+| Google native image | `gemini-nano-banana-2.1` |
 | xAI image quality | `grok-imagine-image-2.0` |
 | Google multimodal embeddings | `gemini-embedding-2` |
 | Google low-cost video | `veo-3.1-lite-generate-preview` |
 | xAI higher-fidelity image-to-video | `grok-imagine-video-1.5` |
 | OpenAI realtime voice | `gpt-realtime-2.1` |
 | xAI realtime voice | `grok-voice-latest` |
-| File transcription | `gpt-transcribe`, `gemini-3.5-transcribe`, or `xai-stt` |
+| File transcription | `gpt-transcribe`, `gemini-3.5-transcribe`, or `grok-voice-transcribe-2.0` |
 
 Sora 2 and Sora 2 Pro were deprecated with the Videos API on 2026-03-24 but
 remain callable until 2026-09-24. OpenAI published no replacement. Surface the
@@ -905,7 +906,9 @@ interface AdvancedTextCapabilities {
     nativeWithTools: boolean;
   };
   nativeTools: Array<
-    'web_search' | 'web_fetch' | 'code_execution' | 'file_search' | 'remote_mcp'
+    | 'web_search' | 'x_search' | 'web_fetch' | 'code_execution'
+    | 'file_search' | 'remote_mcp' | 'computer_use' | 'hosted_shell'
+    | 'apply_patch' | 'tool_search' | 'image_generation'
   >;
   nativeToolOptions: { remoteMcpApproval: boolean };
   responsesExtensions?: {
@@ -928,27 +931,37 @@ wire mapping and usage/result conversion for that model family.
 
 #### Provider orientation matrix
 
-| Capability | OpenAI | Anthropic | Google |
-|------------|--------|-----------|--------|
-| Prompt caching | Implicit; normalized key/retention controls where supported | Request-controlled cache markers; short and extended TTL | Implicit hit reporting; normalized TTL control unavailable |
-| Async text batch | Model-gated, up to capability-reported limit | Model-gated, up to capability-reported limit | Model-gated inline batch; one model per submission |
-| Web search | Supported on declared Responses families | Supported on declared server-tool families | Supported on Gemini 2.5/3 text families |
-| Web fetch | No standalone normalized tool | Supported on declared server-tool families | URL Context on Gemini 2.5/3 text families |
-| Code execution | Code Interpreter | Server-side code execution | Gemini code execution |
-| File search | Vector-store file search | Not normalized | Not normalized |
-| Remote MCP | Supported without host-managed approval continuation | Supported on declared families; no normalized approval continuation | Not normalized |
-| Native schema + tools | Supported when schema output is supported | Conservative final tool-free formatting for every tool mix | Gemini 3 text families only; otherwise final tool-free formatting |
+| Capability | OpenAI | Anthropic | Google | xAI |
+|------------|--------|-----------|--------|-----|
+| Prompt caching | Implicit; normalized key/retention controls where supported | Request-controlled cache markers; short and extended TTL | Implicit hit reporting; normalized TTL control unavailable | Model-gated implicit caching and usage |
+| Async text batch | Model-gated, up to capability-reported limit | Model-gated, up to capability-reported limit | Model-gated inline batch; one model per submission | Not normalized |
+| Web/X search | Web search on declared Responses families | Web search on declared server-tool families | Google Search on Gemini 2.5/3 text families | Web and X search |
+| Web fetch | No standalone normalized tool | Supported on declared server-tool families | URL Context on Gemini 2.5/3 text families | Not normalized |
+| Code execution | Code Interpreter | Server-side code execution | Gemini code execution | Hosted code execution |
+| File search | Vector-store file search | Not normalized | Gemini 3.8 Interactions file-search stores | Not normalized |
+| Remote MCP | Supported without host-managed approval continuation | Supported on declared families; no normalized approval continuation | Not normalized | Not normalized |
+| Tool search | Supported on declared Responses families | Regex/BM25 tool search with deferred tools | Not normalized | Not normalized |
+| Computer use | Supported on declared Responses families | Not normalized | Gemini 3.8 Interactions; host executes returned actions | Not normalized |
+| Hosted coding | Hosted shell and apply-patch tools on supported models | Code execution, including programmatic tool callers | Code execution | Code execution |
+| Native schema + tools | Supported when schema output is supported | Conservative final tool-free formatting for every tool mix | Gemini 3 text families only; otherwise final tool-free formatting | Supported where declared by the registry |
 
 This matrix is explanatory and can become stale as vendors change. Runtime code should branch on
 the capability object, never the table.
 
 ### GPT-6 Astra Responses extensions
 
-GPT-6 Astra adds Responses protocol features that are not ordinary sampling
-options. OneRingAI supports them through direct Responses calls and a
-connector-first WebSocket session. Check
+GPT-6 Astra introduced Responses protocol features that are not ordinary
+sampling options. The registry also exposes the verified subset on newer GPT-6
+models such as GPT-6.1 Sol, GPT-6 Sol, and GPT-6 Luna. OneRingAI supports them
+through direct Responses calls and a connector-first WebSocket session. Check
 `agent.getAdvancedCapabilities().responsesExtensions` before exposing the
 features for a selected model.
+
+GPT-6 sampling is effort-dependent. GPT-6 Sol and Luna accept `temperature`,
+`top_p`, and logprob controls only when the effective reasoning effort is
+`none`; omitting reasoning defaults to active reasoning and therefore rejects
+those controls. GPT-6 Astra and GPT-6.1 Sol do not support `none` at all.
+OneRingAI validates these combinations before sending the request.
 
 #### Async function and custom tools
 
@@ -1030,7 +1043,9 @@ const next = await agent.runDirect([
 });
 ```
 
-Only Astra supports this item, and only in standard single-agent responses.
+Use this item only when the selected model reports
+`responsesExtensions.configurationUpdates`, and only in standard single-agent
+responses.
 Consecutive updates are rejected. It is
 incompatible with automatic context management and `truncation: 'auto'`;
 when explicit in-band compaction is needed, place one `compaction_trigger` as
@@ -1038,13 +1053,15 @@ the final input item, then send a fresh configuration update after compaction.
 Direct responses retain encrypted compaction items in `response.output` in
 provider order, and direct streams emit `StreamEventType.COMPACTION`, so
 stateless applications can replay the canonical compacted state.
-Astra accepts `low`, `medium`, `high`, `xhigh`, and `max`—not `none` or
-`minimal`. OneRingAI also rejects Astra requests containing `temperature`,
+The registry declares the exact efforts for each model. Astra accepts `low`,
+`medium`, `high`, `xhigh`, and `max`—not `none` or `minimal`. OneRingAI also
+rejects Astra requests containing `temperature`,
 `top_p`, `top_logprobs`, or `include: ['message.output_text.logprobs']`.
 
 #### Mid-turn steering over WebSocket
 
-Steering is Astra-only and requires the Responses WebSocket transport:
+Steering requires both a model that reports
+`responsesExtensions.midTurnSteering` and the Responses WebSocket transport:
 
 ```typescript
 import { OpenAIResponsesWebSocketSession } from '@everworker/oneringai';
@@ -1106,11 +1123,14 @@ trusted host code.
 #### Fast mode and EU data residency
 
 Request Fast mode with `vendorOptions: { serviceTier: 'fast' }` and inspect
-`response.usage.service_tier` for the provider-reported tier. Astra Fast mode
-is unavailable through the EU data residency endpoint. OneRingAI rejects
-explicit `fast`/`priority` requests when the connector uses
+`response.usage.service_tier` for the provider-reported tier. GPT-6 Astra,
+GPT-6.1 Sol, GPT-6 Sol, and GPT-6 Luna Fast mode are unavailable through the
+EU data residency endpoint. OneRingAI rejects explicit `fast`/`priority`
+requests for those models when the connector uses
 `https://eu.api.openai.com/v1`; a project-level default is
 still ultimately enforced by OpenAI because it is not visible in the request.
+Ultrafast requests are also rejected through the EU endpoint; Ultrafast is
+available only with global processing or US data residency.
 
 Official references: [latest model](https://developers.openai.com/api/docs/guides/latest-model),
 [async tool calling](https://developers.openai.com/api/docs/guides/async-tool-calling),
@@ -1118,6 +1138,142 @@ Official references: [latest model](https://developers.openai.com/api/docs/guide
 [reasoning configuration updates](https://developers.openai.com/api/docs/guides/reasoning#change-reasoning-mid-conversation),
 [misalignment monitoring](https://developers.openai.com/api/docs/guides/safety-checks/misalignment-monitoring),
 and [Fast mode](https://developers.openai.com/api/docs/guides/fast-mode).
+
+### Current vendor API additions
+
+The high-level classes below keep credentials connector-first while exposing
+new vendor APIs that do not fit the ordinary `Agent.run()` lifecycle.
+
+#### OpenAI Decisions, GPT-Live, and custom voices
+
+`OpenAIDecisions` performs ordered predicate, choice, and score evaluations.
+`OpenAILiveSession` is the primary GPT-Live WebSocket transport (separate from
+the existing Realtime voice-agent API), and `OpenAIVoices` creates prompt- or
+consent-based custom voices:
+
+```typescript
+import {
+  OpenAIDecisions,
+  OpenAILiveSession,
+  OpenAIVoices,
+} from '@everworker/oneringai';
+
+const decision = await new OpenAIDecisions('openai-main').create({
+  model: 'gpt-6-luna',
+  input: 'The deployment passed every required check.',
+  questions: [{
+    type: 'predicate',
+    name: 'ready',
+    instructions: 'Is the evidence sufficient to approve deployment?',
+  }],
+});
+
+const voice = await new OpenAIVoices('openai-main').create({
+  type: 'prompt',
+  name: 'Release guide',
+  prompt: 'Warm, precise, calm, and easy to understand.',
+});
+
+const live = new OpenAILiveSession({ connector: 'openai-main' });
+live.on('event', (event) => console.log(event.type));
+await live.connect({
+  model: 'gpt-live-1',
+  instructions: 'Help the user while narrating important actions.',
+  audio: { output: { voice: { id: voice.id } } },
+});
+```
+
+The host owns microphone capture, audio playback, reconnect policy, and clean
+session shutdown. Call `live.close()` during teardown.
+
+#### Claude 5.5 thinking, compaction, and tool search
+
+Claude Opus 5.5 always uses adaptive thinking; Sonnet 5.5 also supports
+`between_tools` at `high` or lower effort. OneRingAI rejects invalid
+mode/effort combinations before inference. Claude Opus 5 supports `disabled`
+only at `high` or lower; `xhigh` and `max` require adaptive thinking. The
+Anthropic adapter maps current
+web-search, web-fetch, and code-execution tool versions and supports deferred
+tools plus regex/BM25 tool search. Provider-owned tool-search blocks are stored
+as opaque provider state and replayed automatically by managed Agent loops.
+
+```typescript
+const claude = Agent.create({
+  connector: 'anthropic-main',
+  model: 'claude-sonnet-5-5',
+});
+
+const result = await claude.run('Load only the tools needed to investigate this issue.', {
+  thinking: { enabled: true, effort: 'high', mode: 'between_tools' },
+  nativeTools: [{ capability: 'tool_search', options: { algorithm: 'bm25' } }],
+  dataHandling: { allowProviderTools: true },
+});
+```
+
+#### Gemini 3.8 Interactions, computer use, Live, and voices
+
+Gemini 3.8 uses Interactions by default. Responses expose
+`continuation_token`; pass it back as `continuationToken` on a later direct or
+managed call. File search uses Google file-search store names through the
+normalized `vectorStoreIds` field. Computer-use actions arrive as ordinary
+tool calls: the host must inspect/approve the action, execute it, capture the
+new screen state, and send the result. Use `runDirect()` when the application
+needs to own that confirmation and screenshot loop.
+
+```typescript
+import { GoogleLiveSession, GoogleVoices } from '@everworker/oneringai';
+
+const gemini = Agent.create({
+  connector: 'google-main',
+  model: 'gemini-3.8-flash',
+});
+
+const firstGeminiTurn = await gemini.runDirect('Find the relevant contract.', {
+  nativeTools: [{
+    capability: 'file_search',
+    options: { vectorStoreIds: ['fileSearchStores/contracts'] },
+  }],
+  dataHandling: { allowProviderTools: true },
+});
+
+const liveGemini = new GoogleLiveSession({
+  connector: 'google-main',
+  model: 'gemini-3.8-live',
+});
+liveGemini.on('interactionStatus', (status) => console.log(status));
+await liveGemini.connect();
+
+const googleVoices = new GoogleVoices('google-main');
+const availableVoices = await googleVoices.list();
+```
+
+`TextToSpeech.listVoices()` is intentionally a deterministic built-in catalog;
+it does not make a remote custom-voice request. Use `GoogleVoices.list()` for
+that account-scoped catalog. A custom voice returned as `voice_…`,
+`voicekey_…`, or `voices/…` can be passed as the normal `voice` string to
+Google TTS; the provider selects the custom-voice field and removes only the
+resource prefix.
+
+#### Grok 4.7 hosted tools and reasoning telemetry
+
+Grok text now uses a dedicated xAI adapter instead of inheriting OpenAI model
+assumptions. It maps xAI web search, X search, and hosted code execution,
+preserves reasoning through tool turns, and reports provider reasoning/native
+tool usage and cost telemetry:
+
+```typescript
+const grok = Agent.create({ connector: 'xai-main', model: 'grok-4.7' });
+const grokResult = await grok.run('Summarize current discussion and verify the calculation.', {
+  thinking: { enabled: true, effort: 'high' },
+  nativeTools: [
+    { capability: 'x_search' },
+    { capability: 'code_execution' },
+  ],
+  dataHandling: { allowProviderTools: true },
+});
+
+console.log(grokResult.usage.native_tool_calls, grokResult.usage.cost_usd_ticks);
+```
 
 ### Prompt caching
 
@@ -1207,6 +1363,7 @@ Provider-hosted tools are different from `ToolFunction`s. A `ToolFunction` runs 
 ```typescript
 type NativeToolRequest =
   | { capability: 'web_search'; options?: Record<string, unknown> }
+  | { capability: 'x_search'; options?: Record<string, unknown> }
   | { capability: 'web_fetch'; options?: Record<string, unknown> }
   | { capability: 'code_execution'; options?: Record<string, unknown> }
   | { capability: 'file_search'; options: { vectorStoreIds: string[]; [key: string]: unknown } }
@@ -1220,7 +1377,12 @@ type NativeToolRequest =
         requireApproval?: 'always' | 'never';
       };
       options?: Record<string, unknown>;
-    };
+    }
+  | { capability: 'computer_use'; options?: Record<string, unknown> }
+  | { capability: 'hosted_shell'; options?: Record<string, unknown> }
+  | { capability: 'apply_patch'; options?: Record<string, unknown> }
+  | { capability: 'tool_search'; options?: Record<string, unknown> }
+  | { capability: 'image_generation'; options?: Record<string, unknown> };
 ```
 
 The `options` object is a provider-specific escape hatch for settings belonging to that normalized
@@ -1250,7 +1412,9 @@ native tool for a client-side search, fetch, shell, or MCP implementation.
 
 #### File search
 
-The normalized file-search contract currently targets OpenAI provider vector stores:
+The normalized file-search contract targets OpenAI vector stores and Gemini
+3.8 Interactions file-search stores. Pass the provider's identifiers without
+rewriting them:
 
 ```typescript
 await agent.run('Find the termination clause', {
@@ -1263,6 +1427,39 @@ await agent.run('Find the termination clause', {
 ```
 
 At least one `vectorStoreIds` entry is required. Validation happens before provider execution.
+
+#### Computer use and hosted coding tools
+
+`computer_use`, `hosted_shell`, `apply_patch`, and `tool_search` are advertised
+only when the selected provider adapter has a concrete wire mapping. OpenAI
+executes a shell in a provider container by default. OpenAI computer use and
+apply patch are host-executed; tool search can be server- or client-executed.
+Gemini computer use likewise returns action calls for your application to
+approve and execute. Use `runDirect()` for host-executed native tools and send
+their results from trusted host code. Never treat `native_tool_events` as
+permission to perform a consequential local action.
+
+OpenAI host continuations use typed top-level input items. Preserve the
+original `call_id`, honor all pending safety checks, and return the appropriate
+result item with the next direct request:
+
+```typescript
+await agent.runDirect([{
+  type: 'apply_patch_call_output',
+  call_id: patchEvent.call_id!,
+  status: 'completed',
+  output: 'Patch applied and tests passed.',
+}], {
+  previousResponseId: response.id,
+  nativeTools: [{ capability: 'apply_patch' }],
+});
+```
+
+The public input union also includes `computer_call_output`,
+`shell_call_output`, and client-executed `tool_search_output`. Computer results
+carry a screenshot data URL and any acknowledged safety checks; shell results
+carry stdout/stderr plus an exit or timeout outcome; tool-search results carry
+the loaded tool definitions.
 
 #### Remote MCP with connector-first authentication
 
@@ -1316,14 +1513,21 @@ Non-streaming responses may include:
 interface NativeToolEvent {
   capability: string;
   id?: string;
+  call_id?: string;
   status?: string;
+  phase?: 'call' | 'output';
+  details?: unknown;
   error?: { code?: string; message: string; details?: unknown };
 }
 ```
 
-`native_tool_events` is diagnostic, not a host execution queue. Provider-native lifecycle and error
-details vary by vendor. Streaming reports detailed usage on the terminal `response_complete` event,
-but does not synthesize non-streaming `native_tool_events` for every intermediate provider event.
+`native_tool_events` is not a `ToolManager` execution queue and never grants
+authorization. For host-executed OpenAI tools, a `phase: 'call'` event exposes
+the provider payload needed by trusted host code; the host must validate and
+execute it, then submit the corresponding typed output item. Provider-native
+lifecycle and error details vary by vendor. Streaming reports detailed usage
+on the terminal `response_complete` event, but does not synthesize
+non-streaming `native_tool_events` for every intermediate provider event.
 
 ### Asynchronous text batches
 
@@ -5360,6 +5564,9 @@ interface RunOptions {
 
   /** Explicit permission for retention-sensitive provider features */
   dataHandling?: DataHandlingPolicy;
+
+  /** Resume an incomplete provider decode on the first request of this run */
+  continuationToken?: string;
 
   /** Vendor-agnostic structured (JSON) output override for this call */
   responseFormat?:
@@ -12605,6 +12812,10 @@ custom-voice reference; everything else is treated as a built-in voice name
 `shimmer`, `verse`, `marin`, `cedar`). `tts.listVoices()` returns only the
 built-ins — the dashboard is the source of truth for custom-voice ids.
 
+For Google custom voices, use the connector-first `GoogleVoices` lifecycle API
+rather than `tts.listVoices()`. Google TTS accepts `voice_…`, `voicekey_…`, and
+resource-prefixed `voices/…` identifiers returned by that API.
+
 #### Audio Formats
 
 ```typescript
@@ -14012,7 +14223,7 @@ and [SIP](https://developers.openai.com/api/docs/guides/realtime-sip).
 
 ## Image Generation
 
-The unified image API supports current OpenAI GPT Image, Google Gemini native-image, and xAI Grok Imagine generation and editing. The high-level helper defaults to `gpt-image-2`, `gemini-3.1-flash-image`, or `grok-imagine-image-2.0` according to the connector vendor.
+The unified image API supports current OpenAI GPT Image, Google Gemini native-image, and xAI Grok Imagine generation and editing. The high-level helper defaults to `gpt-image-2.5-sunburst`, `gemini-nano-banana-2.1`, or `grok-imagine-image-2.0` according to the connector vendor.
 
 ### Basic Usage
 
@@ -14033,7 +14244,7 @@ const imageGen = ImageGeneration.create({ connector: 'openai' });
 // Generate an image
 const result = await imageGen.generate({
   prompt: 'A futuristic city at sunset with flying cars',
-  model: 'gpt-image-2',       // optional: current vendor default
+  model: 'gpt-image-2.5-sunburst', // optional: current vendor default
   size: '1024x1024',
   quality: 'high',
   vendorOptions: { output_format: 'png' },
@@ -14047,10 +14258,10 @@ await fs.writeFile('./output.png', buffer);
 ### OpenAI GPT Image
 
 ```typescript
-// GPT Image 2 is the current default for generation and editing.
+// GPT Image 2.5 Sunburst is the current default for generation and editing.
 const result = await imageGen.generate({
   prompt: 'A serene mountain landscape',
-  model: 'gpt-image-2',
+  model: 'gpt-image-2.5-sunburst',
   size: '1536x1024',
   quality: 'high',         // auto, low, medium, high
   vendorOptions: {
@@ -14059,7 +14270,7 @@ const result = await imageGen.generate({
   },
 });
 
-// The high-level edit API also selects GPT Image 2 when model is omitted.
+// The high-level edit API also selects GPT Image 2.5 Sunburst when model is omitted.
 const edited = await imageGen.edit({
   image: './source.png',
   prompt: 'Keep the composition and change the weather to snowfall',
@@ -14081,10 +14292,10 @@ Connector.create({
 
 const googleGen = ImageGeneration.create({ connector: 'google' });
 
-// Nano Banana 2: current general-purpose native image model.
+// Nano Banana 2.1: current general-purpose native image model.
 const result = await googleGen.generate({
   prompt: 'A beautiful butterfly in a garden',
-  model: 'gemini-3.1-flash-image',
+  model: 'gemini-nano-banana-2.1',
   size: '2048x2048',
   aspectRatio: '16:9',
   n: 2,
@@ -14136,15 +14347,15 @@ const result = await grokImages.generate({
 
 ### Current Image Models
 
-The table highlights current non-retired choices. The image registry contains
-20 records in total, including callable migration entries and retired records;
-use `getActiveImageModels()` and `getDeprecatedImageModels()` rather than
-hard-coding this table in a model picker.
+The table highlights current non-retired choices. Use `getActiveImageModels()`
+and `getDeprecatedImageModels()` rather than hard-coding this table in a model
+picker.
 
 | Vendor | Model | Lifecycle | Main use | Pricing representation |
 |--------|-------|-----------|----------|------------------------|
-| OpenAI | `gpt-image-2` | Active, preferred | High-quality generation/editing, transparent output | Text/image input and image-output tokens |
-| Google | `gemini-3.1-flash-image` | Active, preferred | General generation/editing up to 4K | $0.045-$0.151 by resolution |
+| OpenAI | `gpt-image-2.5-sunburst` | Active, preferred | Highest-quality generation/editing, transparent output | Text/image input and image-output tokens |
+| OpenAI | `gpt-image-2.5-flare` | Active, preferred | Faster generation/editing | Text/image input and image-output tokens |
+| Google | `gemini-nano-banana-2.1` | Active, preferred | General generation/editing up to 4K | $0.067-$0.151 by resolution |
 | Google | `gemini-3.1-flash-lite-image` | Active, preferred | Low-latency 1K work | $0.0336/image |
 | Google | `gemini-3-pro-image` | Active | Professional design and 4K | $0.134-$0.24/image |
 | xAI | `grok-imagine-image-2.0` | Active, preferred | Current generation/editing with quality tiers | $0.04-$0.08; $0.01/input image |
@@ -14161,7 +14372,7 @@ const models = await imageGen.listModels();
 console.log('Available models:', models);
 
 // Get model information
-const info = imageGen.getModelInfo('gpt-image-2');
+const info = imageGen.getModelInfo('gpt-image-2.5-sunburst');
 console.log('Max images:', info.capabilities.maxImagesPerRequest);
 console.log('Supported sizes:', info.capabilities.sizes);
 console.log('Lifecycle:', info.lifecycle);
@@ -14173,8 +14384,8 @@ console.log('Official docs:', info.sources?.documentation);
 ```typescript
 import { calculateImageCost } from '@everworker/oneringai';
 
-// GPT Image 2 uses actual modality-token usage.
-const openaiCost = calculateImageCost('gpt-image-2', 1, {
+// GPT Image 2.5 Sunburst uses actual modality-token usage.
+const openaiCost = calculateImageCost('gpt-image-2.5-sunburst', 1, {
   textInputTokens: 100_000,
   cachedImageInputTokens: 200_000,
   imageOutputTokens: 300_000,
@@ -14182,7 +14393,7 @@ const openaiCost = calculateImageCost('gpt-image-2', 1, {
 console.log(openaiCost); // 9.9
 
 // Resolution and input-image accounting for current models.
-const googleCost = calculateImageCost('gemini-3.1-flash-image', 2, {
+const googleCost = calculateImageCost('gemini-nano-banana-2.1', 2, {
   resolution: '2048px',
   textInputTokens: 1_000,
 });
@@ -16657,7 +16868,7 @@ await agent.run('Show me my recent emails');
 
 ## Model Registry
 
-The library includes registry schema v2 metadata for 96 text/realtime models,
+The library includes registry schema v2 metadata for the current text/realtime catalog,
 plus separate TTS, STT, image, video, and embedding registries.
 
 ### Using the Model Registry
@@ -16678,7 +16889,7 @@ import {
 const model = getModelInfo('gpt-6-astra');
 console.log(model.provider);                   // 'openai'
 console.log(MODEL_REGISTRY_SCHEMA_VERSION);   // 2
-console.log(model.features.input.tokens);     // 922000 maximum input (1,050,000 total context)
+console.log(model.features.input.tokens);     // 1050000 total context-window guardrail
 console.log(model.features.output.tokens);    // 128000
 console.log(model.features.reasoning);        // true
 console.log(model.features.vision);           // true
@@ -16741,18 +16952,25 @@ still be called; `lifecycle` carries the vendor's migration state.
 ### Current provider API selection
 
 - OpenAI text models use Responses by default, including current reasoning,
-  service-tier, explicit/implicit prompt-cache, and long-context cost metadata.
-- Anthropic supports adaptive thinking, effort through `output_config`, and
-  Opus fast mode through the current SDK options. Generic request metadata is
+  service-tier, explicit/implicit prompt-cache, hosted-tool, and long-context
+  cost metadata. Connector-first wrappers also expose Decisions, GPT-Live,
+  and custom voices.
+- Anthropic supports Claude 5.5 adaptive/between-tools thinking, effort through
+  `output_config`, Opus fast mode, tool search/deferred tools, server-side
+  compaction, and current server tools. Generic request metadata is
   narrowed to Anthropic's supported `{ user_id }` shape; unrelated host keys
   remain local rather than producing invalid Messages requests.
-- Gemini 3.5+ uses the GA Interactions API (`steps`, `step.delta`) by default.
+- Gemini 3.5+ uses the GA Interactions API (`steps`, `step.delta`) by default;
+  Gemini 3.8 also supports continuation tokens, file search, and computer use.
   Set `vendorOptions.api = 'generateContent'` to retain the legacy path, or
   `vendorOptions.api = 'interactions'` to force Interactions on another model.
   Named function selection is strict on both paths (`allowed_tools` for
-  Interactions and `allowedFunctionNames` for `generateContent`).
-- xAI text remains OpenAI-compatible; dedicated image, video, TTS, STT, and
-  realtime voice endpoints use their native request contracts.
+  Interactions and `allowedFunctionNames` for `generateContent`). Live sessions
+  and custom voices have connector-first wrappers.
+- xAI text uses a dedicated OpenAI-compatible adapter for Grok reasoning,
+  registry-gated X/web search, hosted code execution, ordered replay, and cost
+  telemetry; dedicated
+  image, video, TTS, STT, and realtime voice endpoints use native contracts.
 
 ### Resolve Model Capabilities
 
@@ -16841,8 +17059,9 @@ interface ILLMDescription {
 
 ### Available Models
 
-**OpenAI (49 models):**
-- GPT-6: Astra (current flagship; limited rollout)
+**OpenAI:**
+- GPT-6: Astra, GPT-6.1 Sol, GPT-6 Sol, and GPT-6 Luna
+- Specialized: GPT-5.6 Cyber and GPT-Rosalind Research (access-controlled)
 - GPT-5.6: Sol, Terra, Luna
 - GPT-5.5 Pro
 - GPT-5.3: codex, chat-latest
@@ -16858,23 +17077,25 @@ interface ILLMDescription {
 - Deep Research: o3-deep-research, o4-mini-deep-research
 - Open-weight: gpt-oss-120b, gpt-oss-20b
 
-**Anthropic (15 models):**
-- Claude 5: Opus 5, Mythos 5, Fable 5
-- Opus 4.8 and Sonnet 5
+**Anthropic:**
+- Claude 5.5: Opus 5.5 and Sonnet 5.5
+- Claude 5: Opus 5, Mythos 5, Fable 5, and Sonnet 5
+- Opus 4.8
 - Claude 4.7: Opus 4.7 (legacy flagship)
 - Claude 4.6: Opus 4.6, Sonnet 4.6
 - Claude 4.5: Opus, Sonnet, Haiku
 - Claude 4.x legacy: Opus 4.1, Opus 4, Sonnet 4
 - Claude 3.7: Sonnet
 
-**Google (15 models):**
+**Google:**
+- Gemini 3.8 Flash, Live, and Live Extended Thinking
 - Gemini 3.7 and 3.6 Flash; Gemini 3.5 and 3.5 Flash-Lite
 - Gemini 3.1: Pro, Flash-Lite, Flash Image, Flash Live
 - Gemini 3 (preview): Flash, Pro Image
 - Gemini 2.5: Pro, Flash, Flash-Lite, Flash Image
 
-**Grok / xAI (12 models):**
-- Grok 4.6, Grok 4.5, Grok 4.3, and Grok Build 0.1
+**Grok / xAI:**
+- Grok 4.7, Grok 4.6, Grok 4.5, Grok 4.3, and Grok Build 0.1
 - Grok 4.20 (2M context, flagship): reasoning, non-reasoning, multi-agent
 - Grok 4.1 fast (2M context): reasoning, non-reasoning
 - Grok Voice Think Fast 2.0 and maintained 1.0 migration entries
@@ -18025,9 +18246,9 @@ if (!toolManager.isDestroyed) {
 ### Performance Tips
 
 1. **Use appropriate models:**
-   - `gpt-5.6-luna`, `gemini-3.5-flash-lite`, or `claude-sonnet-5` for low-latency/high-throughput work
-   - `gpt-5.6-terra`, `gemini-3.8-flash`, or `grok-4.6` for balanced production agents
-   - `gpt-6-astra`, `gpt-5.5-pro`, or `claude-fable-5-1` for the most demanding reasoning and long-horizon work
+   - `gpt-6-luna`, `gemini-3.5-flash-lite`, or `claude-sonnet-5-5` for low-latency/high-throughput work
+   - `gpt-6.1-sol`, `gemini-3.8-flash`, or `grok-4.7` for balanced production agents
+   - `gpt-6-astra`, `gpt-5.5-pro`, or `claude-opus-5-5` for the most demanding reasoning and long-horizon work
 
 2. **Leverage caching:**
    - Use provider-aware prompt caching where `getAdvancedCapabilities()` reports support
@@ -18307,8 +18528,10 @@ const oneRingDriver = new OneRingAIDriver({
 });
 ```
 
-The bundled OneRingAI map covers GPT-6 Astra and GPT-5.6 Sol/Terra/Luna; the
-Codex map covers GPT-5.6 Sol/Terra/Luna, and both retain GPT-5.3 Codex.
+The bundled OneRingAI map covers the current GPT-6 family, GPT-5.6
+Sol/Terra/Luna/Cyber, Claude Opus/Sonnet 5.5, Gemini 3.8 Flash, and Grok 4.7.
+The Codex map covers the current GPT-6 family and GPT-5.6 Sol/Terra/Luna, and
+both retain GPT-5.3 Codex.
 Unsupported efforts, disable requests, and token
 budgets fail before an API call. Known models marked as non-reasoning reject reasoning
 configuration in both drivers. For OneRingAI agents, model overrides also update the
@@ -18486,5 +18709,5 @@ MIT License - see LICENSE file for details.
 
 ---
 
-**Last Updated:** 2026-08-30
-**Version:** 1.1.6
+**Last Updated:** 2026-10-07
+**Version:** 1.1.8

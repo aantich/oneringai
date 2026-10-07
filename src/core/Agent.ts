@@ -187,6 +187,9 @@ export interface RunOptions {
   nativeTools?: NativeToolRequest[];
   dataHandling?: DataHandlingPolicy;
 
+  /** Resume an incomplete provider decode using the token returned by the prior response. */
+  continuationToken?: string;
+
   /**
    * Vendor-agnostic structured (JSON) output. When set, the final answer is
    * constrained to JSON — via the vendor's native mechanism where supported,
@@ -360,6 +363,8 @@ function formatRolloverSource(input: ContextRolloverSummaryInput): string {
           ];
         case ContentType.THINKING:
           return [];
+        case ContentType.PROVIDER_STATE:
+          return [];
       }
     });
     return `[${itemIndex + 1}] ${item.role.toUpperCase()}\n${blocks.join('\n')}`;
@@ -405,6 +410,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
   // Per-call run options (set in run/stream, cleared in finally)
   private _runOptions: RunOptions | undefined;
+  private _pendingContinuationToken: string | undefined;
 
   // Message injection queue (for orchestrator send_message)
   // M4: Use Message[] instead of InputItem[] for type safety (inject() only creates Messages)
@@ -1366,6 +1372,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const { executionId, startTime, maxIterations, lease } =
       await this._prepareExecution(input, 'run');
     this._runOptions = options;
+    this._pendingContinuationToken = options?.continuationToken;
 
     try {
       const finalResponse = await this._runAgenticLoop(executionId, startTime, maxIterations);
@@ -1426,6 +1433,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       throw error;
     } finally {
       this._runOptions = undefined;
+      this._pendingContinuationToken = undefined;
       this.releaseExecution(lease);
       this._cleanupExecution();
     }
@@ -1532,6 +1540,12 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       // If no tool calls, check for empty response retry before committing to context
       if (toolCalls.length === 0) {
         const hasText = !!(response.output_text?.trim());
+        const hasProviderState = response.output.some(
+          (item) => item.type === 'compaction' || item.type === 'reasoning' || (
+            item.type === 'message'
+            && item.content.some((content) => content.type === ContentType.PROVIDER_STATE)
+          ),
+        );
         const isRefusal = response.stop_reason === 'refusal';
 
         // Terminal safety refusal — surface the classifier + explanation clearly
@@ -1558,7 +1572,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           );
         }
 
-        const shouldRetry = !hasText &&
+        const shouldRetry = !hasText && !hasProviderState &&
           response.status !== 'failed' &&
           !isRefusal &&
           retryConfig.enabled &&
@@ -1838,58 +1852,113 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     toolCalls: ToolCall[],
     toolCallsMap?: Map<string, { name: string; args: string; thoughtSignature?: string; async?: boolean }>,
   ): void {
-    const assistantText = streamState.getAllText();
-    const assistantContent: Content[] = [];
+    const output: OutputItem[] = [];
+    let assistantContent: Content[] = [];
+    const toolCallById = new Map(toolCalls.map((call) => [call.id, call]));
+    const historyPolicy =
+      this._provider.getAdvancedCapabilities?.(this.model).reasoningHistory ?? 'discard';
+    const persistReasoning = historyPolicy === 'always' ||
+      (historyPolicy === 'when_tools_configured' && this.getEnabledToolDefinitions().length > 0);
 
-    // Add thinking content if reasoning was accumulated
-    if (streamState.hasReasoning()) {
-      for (const { itemId, thinking } of streamState.getReasoningEntries()) {
-        if (!thinking) continue;
-        const historyPolicy =
-          this._provider.getAdvancedCapabilities?.(this.model).reasoningHistory ?? 'discard';
-        const persistInHistory = historyPolicy === 'always' ||
-          (historyPolicy === 'when_tools_configured' && this.getEnabledToolDefinitions().length > 0);
-        assistantContent.push({
-          type: ContentType.THINKING,
-          thinking,
-          providerItemId: itemId,
-          // Streaming doesn't carry Anthropic signatures, so signature is undefined here.
-          // Non-streaming responses (via convertResponse) capture signatures correctly.
-          signature: undefined,
-          persistInHistory,
-        });
+    const flushAssistantContent = (): void => {
+      if (assistantContent.length === 0) return;
+      output.push({
+        type: 'message',
+        role: MessageRole.ASSISTANT,
+        content: assistantContent,
+      });
+      assistantContent = [];
+    };
+
+    for (const entry of streamState.getOrderedOutputEntries()) {
+      if (entry.kind === 'compaction') {
+        flushAssistantContent();
+        output.push(entry.item);
+      } else if (entry.kind === 'reasoning') {
+        if (!entry.thinking && !entry.signature && !entry.encryptedContent) continue;
+        if (entry.encryptedContent) {
+          // OpenAI/xAI encrypted reasoning is a top-level Responses item. Keep
+          // it outside messages so convertInput can replay it at the same spot.
+          flushAssistantContent();
+          output.push({
+            type: 'reasoning',
+            id: entry.itemId,
+            ...(entry.effort ? { effort: entry.effort } : {}),
+            ...(entry.thinking ? { summary: entry.thinking } : {}),
+            encrypted_content: entry.encryptedContent,
+          });
+        } else {
+          assistantContent.push({
+            type: ContentType.THINKING,
+            thinking: entry.thinking,
+            providerItemId: entry.itemId,
+            ...(entry.signature ? { signature: entry.signature } : {}),
+            persistInHistory: entry.signature ? true : persistReasoning,
+          });
+        }
+      } else if (entry.kind === 'text') {
+        if (entry.text) {
+          assistantContent.push({ type: ContentType.OUTPUT_TEXT, text: entry.text });
+        }
+      } else if (entry.kind === 'provider_state') {
+        assistantContent.push(entry.state);
+      } else {
+        const toolCall = toolCallById.get(entry.toolCallId);
+        const buffered = toolCallsMap?.get(entry.toolCallId);
+        const name = buffered?.name ?? toolCall?.function.name ?? entry.toolName;
+        const args = buffered?.args ?? toolCall?.function.arguments ?? entry.arguments;
+        const isAsync = buffered?.async ?? entry.async;
+        assistantContent.push(entry.toolType === 'custom'
+          ? {
+              type: ContentType.CUSTOM_TOOL_USE,
+              id: entry.toolCallId,
+              name,
+              input: args,
+              ...(isAsync !== undefined ? { async: isAsync } : {}),
+            }
+          : {
+              type: ContentType.TOOL_USE,
+              id: entry.toolCallId,
+              name,
+              arguments: args,
+              ...(buffered?.thoughtSignature
+                ? { thoughtSignature: buffered.thoughtSignature }
+                : {}),
+              ...(isAsync !== undefined ? { async: isAsync } : {}),
+            });
       }
     }
+    flushAssistantContent();
 
-    if (assistantText && assistantText.trim()) {
-      assistantContent.push({
-        type: ContentType.OUTPUT_TEXT,
-        text: assistantText,
+    // Legacy converters without positional events still populate toolCalls.
+    const orderedToolIds = new Set(
+      streamState.getOrderedOutputEntries()
+        .filter((entry) => entry.kind === 'tool_call')
+        .map((entry) => entry.toolCallId),
+    );
+    const missingTools = toolCalls.filter((call) => !orderedToolIds.has(call.id));
+    if (missingTools.length > 0) {
+      output.push({
+        type: 'message',
+        role: MessageRole.ASSISTANT,
+        content: missingTools.map((call) => ({
+          type: ContentType.TOOL_USE,
+          id: call.id,
+          name: call.function.name,
+          arguments: call.function.arguments,
+          ...(toolCallsMap?.get(call.id)?.thoughtSignature
+            ? { thoughtSignature: toolCallsMap.get(call.id)!.thoughtSignature }
+            : {}),
+          ...(toolCallsMap?.get(call.id)?.async !== undefined
+            ? { async: toolCallsMap.get(call.id)!.async }
+            : {}),
+        })),
       });
     }
-
-    // Add tool use blocks
-    for (const tc of toolCalls) {
-      const thoughtSig = toolCallsMap?.get(tc.id)?.thoughtSignature;
-      assistantContent.push({
-        type: ContentType.TOOL_USE,
-        id: tc.id,
-        name: tc.function.name,
-        arguments: tc.function.arguments,
-        ...(thoughtSig && { thoughtSignature: thoughtSig }),
-      });
-    }
-
-    // Build output format for addAssistantResponse (which properly moves _currentInput to _conversation)
-    const outputItem: OutputItem = {
-      type: 'message',
-      role: MessageRole.ASSISTANT,
-      content: assistantContent,
-    };
 
     // Use addAssistantResponse instead of addInputItems to ensure user message
     // in _currentInput is moved to _conversation first (critical for history preservation)
-    this._agentContext.addAssistantResponse([outputItem]);
+    this._agentContext.addAssistantResponse(output);
   }
 
   /**
@@ -1900,16 +1969,68 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     startTime: number,
     streamState: StreamState
   ): AgentResponse {
-    // Include actual text output from stream (previously discarded as empty [])
     const outputText = streamState.getAllText();
     const output: OutputItem[] = [];
-    if (outputText && outputText.trim()) {
+    const thinkingTexts: string[] = [];
+    let assistantContent: Content[] = [];
+    const flushAssistantContent = (): void => {
+      if (assistantContent.length === 0) return;
       output.push({
         type: 'message',
         role: MessageRole.ASSISTANT,
-        content: [{ type: ContentType.OUTPUT_TEXT, text: outputText }],
+        content: assistantContent,
       });
+      assistantContent = [];
+    };
+
+    for (const entry of streamState.getOrderedOutputEntries()) {
+      if (entry.kind === 'compaction') {
+        flushAssistantContent();
+        output.push(entry.item);
+      } else if (entry.kind === 'reasoning') {
+        if (entry.thinking) thinkingTexts.push(entry.thinking);
+        if (entry.encryptedContent) {
+          flushAssistantContent();
+          output.push({
+            type: 'reasoning',
+            id: entry.itemId,
+            ...(entry.effort ? { effort: entry.effort } : {}),
+            ...(entry.thinking ? { summary: entry.thinking } : {}),
+            encrypted_content: entry.encryptedContent,
+          });
+        } else if (entry.thinking || entry.signature) {
+          assistantContent.push({
+            type: ContentType.THINKING,
+            thinking: entry.thinking,
+            providerItemId: entry.itemId,
+            ...(entry.signature ? { signature: entry.signature } : {}),
+            persistInHistory: Boolean(entry.signature),
+          });
+        }
+      } else if (entry.kind === 'text') {
+        if (entry.text) assistantContent.push({ type: ContentType.OUTPUT_TEXT, text: entry.text });
+      } else if (entry.kind === 'provider_state') {
+        assistantContent.push(entry.state);
+      } else if (entry.toolType === 'custom') {
+        assistantContent.push({
+          type: ContentType.CUSTOM_TOOL_USE,
+          id: entry.toolCallId,
+          name: entry.toolName,
+          input: entry.arguments,
+          ...(entry.async !== undefined ? { async: entry.async } : {}),
+        });
+      } else {
+        assistantContent.push({
+          type: ContentType.TOOL_USE,
+          id: entry.toolCallId,
+          name: entry.toolName,
+          arguments: entry.arguments,
+          ...(entry.async !== undefined ? { async: entry.async } : {}),
+        });
+      }
     }
+    flushAssistantContent();
+
     return {
       id: executionId,
       object: 'response',
@@ -1918,7 +2039,13 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       model: this.model,
       output,
       output_text: outputText || undefined,
+      ...(thinkingTexts.length > 0 ? { thinking: thinkingTexts.join('\n') } : {}),
       usage: streamState.usage,
+      ...(streamState.stopReason ? { stop_reason: streamState.stopReason } : {}),
+      ...(streamState.stopDetails ? { stop_details: streamState.stopDetails } : {}),
+      ...(streamState.continuationToken
+        ? { continuation_token: streamState.continuationToken }
+        : {}),
     };
   }
 
@@ -1929,6 +2056,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const { executionId, startTime, maxIterations, lease } =
       await this._prepareExecution(input, 'stream');
     this._runOptions = options;
+    this._pendingContinuationToken = options?.continuationToken;
 
     // Structured output on stream() can only be enforced when it applies inline:
     // natively, or the prompt fallback when no tools are present. Unlike run(),
@@ -2047,6 +2175,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         if (toolCalls.length === 0) {
           const hasText = iterationStreamState.hasText();
           const hasReasoning = iterationStreamState.hasReasoning();
+          const hasCompactions = iterationStreamState.hasCompactions();
+          const hasProviderStates = iterationStreamState.hasProviderStates();
           const providerStatus = iterationStreamState.providerStatus;
           const isRefusal = iterationStreamState.stopReason === 'refusal';
 
@@ -2084,7 +2214,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
           // Retry logic: empty response (no text, no reasoning) that isn't a hard
           // failure and isn't a terminal refusal.
-          const shouldRetry = !hasText && !hasReasoning &&
+          const shouldRetry = !hasText && !hasReasoning && !hasCompactions && !hasProviderStates &&
             providerStatus !== 'failed' &&
             !isRefusal &&
             retryConfig.enabled &&
@@ -2133,6 +2263,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           globalStreamState.providerStatus = providerStatus;
           globalStreamState.stopReason = iterationStreamState.stopReason;
           globalStreamState.stopDetails = iterationStreamState.stopDetails;
+          globalStreamState.continuationToken = iterationStreamState.continuationToken;
 
           // Add the final assistant response to conversation history
           this._addStreamingAssistantMessage(iterationStreamState, []);
@@ -2154,6 +2285,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
             duration_ms: Date.now() - startTime,
             stop_reason: iterationStreamState.stopReason,
             stop_details: iterationStreamState.stopDetails,
+            ...(iterationStreamState.continuationToken
+              ? { continuation_token: iterationStreamState.continuationToken }
+              : {}),
           };
 
           break;
@@ -2289,11 +2423,56 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
         // Stream the wrap-up response
         for await (const event of this._provider.streamGenerate(wrapUpOptions)) {
-          // Update stream state
-          if (event.type === StreamEventType.OUTPUT_TEXT_DELTA) {
-            wrapUpStreamState.accumulateTextDelta(event.item_id, event.delta);
+          if (isReasoningDelta(event)) {
+            wrapUpStreamState.accumulateReasoningDelta(event.item_id, event.delta, {
+              outputIndex: event.output_index,
+              contentIndex: event.content_index,
+              sequenceNumber: event.sequence_number,
+            });
+          } else if (event.type === StreamEventType.REASONING_DONE) {
+            wrapUpStreamState.completeReasoning(event.item_id, {
+              signature: event.signature,
+              encryptedContent: event.encrypted_content,
+              effort: event.effort,
+            }, {
+              outputIndex: event.output_index,
+              sequenceNumber: event.sequence_number,
+            });
+          } else if (event.type === StreamEventType.OUTPUT_TEXT_DELTA) {
+            wrapUpStreamState.accumulateTextDelta(event.item_id, event.delta, {
+              outputIndex: event.output_index,
+              contentIndex: event.content_index,
+              sequenceNumber: event.sequence_number,
+            });
+          } else if (event.type === StreamEventType.COMPACTION) {
+            wrapUpStreamState.accumulateCompaction({
+              type: 'compaction',
+              id: event.item_id,
+              encrypted_content: event.encrypted_content,
+              content: event.content,
+              signature: event.signature,
+              ...(event.provider_metadata
+                ? { providerMetadata: event.provider_metadata }
+                : {}),
+            }, {
+              outputIndex: event.output_index,
+              sequenceNumber: event.sequence_number,
+            });
+          } else if (event.type === StreamEventType.PROVIDER_STATE) {
+            wrapUpStreamState.accumulateProviderState(event.item_id, {
+              type: ContentType.PROVIDER_STATE,
+              provider: event.provider,
+              data: event.data,
+            }, {
+              outputIndex: event.output_index,
+              sequenceNumber: event.sequence_number,
+            });
           } else if (event.type === StreamEventType.RESPONSE_COMPLETE) {
             wrapUpStreamState.updateUsage(event.usage);
+            wrapUpStreamState.providerStatus = event.status;
+            wrapUpStreamState.stopReason = event.stop_reason;
+            wrapUpStreamState.stopDetails = event.stop_details;
+            wrapUpStreamState.continuationToken = event.continuation_token;
             continue; // Don't yield provider's RESPONSE_COMPLETE
           }
           yield event;
@@ -2301,7 +2480,12 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
         // Add wrap-up response to context
         this._addStreamingAssistantMessage(wrapUpStreamState, []);
+        globalStreamState.accumulateFrom(wrapUpStreamState);
         globalStreamState.accumulateUsage(wrapUpStreamState.usage);
+        globalStreamState.providerStatus = wrapUpStreamState.providerStatus;
+        globalStreamState.stopReason = wrapUpStreamState.stopReason;
+        globalStreamState.stopDetails = wrapUpStreamState.stopDetails;
+        globalStreamState.continuationToken = wrapUpStreamState.continuationToken;
 
         // Emit event for max iterations reached
         this.emit('execution:maxIterations', {
@@ -2314,10 +2498,15 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         yield {
           type: StreamEventType.RESPONSE_COMPLETE,
           response_id: executionId,
-          status: 'completed', // Now completed with wrap-up message
+          status: wrapUpStreamState.providerStatus,
           usage: globalStreamState.usage,
           iterations: iteration + 1, // Include wrap-up iteration
           duration_ms: Date.now() - startTime,
+          stop_reason: wrapUpStreamState.stopReason,
+          stop_details: wrapUpStreamState.stopDetails,
+          ...(wrapUpStreamState.continuationToken
+            ? { continuation_token: wrapUpStreamState.continuationToken }
+            : {}),
         };
 
         wrapUpStreamState.clear();
@@ -2345,6 +2534,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       throw error;
     } finally {
       this._runOptions = undefined;
+      this._pendingContinuationToken = undefined;
       this.releaseExecution(lease);
       this._cleanupExecution(globalStreamState);
     }
@@ -2478,6 +2668,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
     // Prepare options (per-call RunOptions override agent-level config)
     const ro = this._runOptions;
+    const continuationToken = this.consumeContinuationToken();
     let generateOptions: TextGenerateOptions = {
       model: this.model,
       input,
@@ -2492,6 +2683,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       prompt_cache: ro?.promptCache ?? this._config.promptCache,
       native_tools: ro?.nativeTools ?? this._config.nativeTools,
       data_handling: ro?.dataHandling ?? this._config.dataHandling,
+      ...(continuationToken ? { continuation_token: continuationToken } : {}),
       credential_context: { userId: this.userId, connectorRegistry: this._config.registry },
       // Context is already managed by AgentContextNextGen.prepare() — skip provider-level check
       skipContextLimitCheck: true,
@@ -2586,6 +2778,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
     // Prepare options (per-call RunOptions override agent-level config)
     const sro = this._runOptions;
+    const continuationToken = this.consumeContinuationToken();
     const generateOptions: TextGenerateOptions = {
       model: this.model,
       input,
@@ -2600,6 +2793,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       prompt_cache: sro?.promptCache ?? this._config.promptCache,
       native_tools: sro?.nativeTools ?? this._config.nativeTools,
       data_handling: sro?.dataHandling ?? this._config.dataHandling,
+      ...(continuationToken ? { continuation_token: continuationToken } : {}),
       credential_context: { userId: this.userId, connectorRegistry: this._config.registry },
       // Context is already managed by AgentContextNextGen.prepare() — skip provider-level check
       skipContextLimitCheck: true,
@@ -2631,11 +2825,57 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       for await (const event of this._provider.streamGenerate(generateOptions)) {
         // Update stream state based on event
         if (isReasoningDelta(event)) {
-          streamState.accumulateReasoningDelta(event.item_id, event.delta);
+          streamState.accumulateReasoningDelta(event.item_id, event.delta, {
+            outputIndex: event.output_index,
+            contentIndex: event.content_index,
+            sequenceNumber: event.sequence_number,
+          });
+        } else if (event.type === StreamEventType.REASONING_DONE) {
+          streamState.completeReasoning(event.item_id, {
+            signature: event.signature,
+            encryptedContent: event.encrypted_content,
+            effort: event.effort,
+          }, {
+            outputIndex: event.output_index,
+            sequenceNumber: event.sequence_number,
+          });
         } else if (event.type === StreamEventType.OUTPUT_TEXT_DELTA) {
-          streamState.accumulateTextDelta(event.item_id, event.delta);
+          streamState.accumulateTextDelta(event.item_id, event.delta, {
+            outputIndex: event.output_index,
+            contentIndex: event.content_index,
+            sequenceNumber: event.sequence_number,
+          });
+        } else if (event.type === StreamEventType.COMPACTION) {
+          streamState.accumulateCompaction({
+            type: 'compaction',
+            id: event.item_id,
+            encrypted_content: event.encrypted_content,
+            content: event.content,
+            signature: event.signature,
+            ...(event.provider_metadata
+              ? { providerMetadata: event.provider_metadata }
+              : {}),
+          }, {
+            outputIndex: event.output_index,
+            sequenceNumber: event.sequence_number,
+          });
+        } else if (event.type === StreamEventType.PROVIDER_STATE) {
+          streamState.accumulateProviderState(event.item_id, {
+            type: ContentType.PROVIDER_STATE,
+            provider: event.provider,
+            data: event.data,
+          }, {
+            outputIndex: event.output_index,
+            sequenceNumber: event.sequence_number,
+          });
         } else if (event.type === StreamEventType.TOOL_CALL_START) {
-          streamState.startToolCall(event.tool_call_id, event.tool_name);
+          streamState.startToolCall(event.tool_call_id, event.tool_name, event.item_id, {
+            outputIndex: event.output_index,
+            sequenceNumber: event.sequence_number,
+          }, {
+            toolType: event.tool_type,
+            async: event.async,
+          });
           toolCallsMap.set(event.tool_call_id, {
             name: event.tool_name,
             args: '',
@@ -2660,6 +2900,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           streamState.providerStatus = completeEvent.status;
           streamState.stopReason = completeEvent.stop_reason;
           streamState.stopDetails = completeEvent.stop_details;
+          streamState.continuationToken = completeEvent.continuation_token;
           // Don't yield provider's RESPONSE_COMPLETE - we emit our own at the end
           continue;
         }
@@ -2723,6 +2964,13 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       });
       throw error;
     }
+  }
+
+  /** A continuation token applies only to the first provider request in a managed run. */
+  private consumeContinuationToken(): string | undefined {
+    const token = this._pendingContinuationToken;
+    this._pendingContinuationToken = undefined;
+    return token;
   }
 
   // ===== Tool Execution =====

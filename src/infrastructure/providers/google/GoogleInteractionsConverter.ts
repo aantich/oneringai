@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import type { Interactions } from '@google/genai';
 import type { TextGenerateOptions, ReasoningEffort } from '../../../domain/interfaces/ITextProvider.js';
 import type { InputItem } from '../../../domain/entities/Message.js';
 import { MessageRole } from '../../../domain/entities/Message.js';
@@ -48,6 +49,7 @@ export class GoogleInteractionsConverter {
     if (options.previous_response_id) {
       request.previous_interaction_id = options.previous_response_id.replace(/^resp_google_/, '');
     }
+    if (options.continuation_token) request.continuation_token = options.continuation_token;
     if (options.metadata) request.labels = options.metadata;
 
     const serviceTier = vendor.serviceTier ?? vendor.service_tier;
@@ -142,6 +144,9 @@ export class GoogleInteractionsConverter {
         case 'code_execution_call':
           nativeCalls.code_execution = (nativeCalls.code_execution ?? 0) + 1;
           break;
+        case 'file_search_call':
+          nativeCalls.file_search = (nativeCalls.file_search ?? 0) + 1;
+          break;
       }
     }
 
@@ -168,25 +173,40 @@ export class GoogleInteractionsConverter {
       },
     });
     response.stop_reason = interaction.status;
+    if (typeof interaction.continuation_token === 'string') {
+      response.continuation_token = interaction.continuation_token;
+    }
     return response;
   }
 
-  async *convertStream(stream: AsyncIterable<any>, model: string): AsyncIterableIterator<StreamEvent> {
+  async *convertStream(
+    stream: AsyncIterable<Interactions.InteractionSSEEvent>,
+    model: string,
+  ): AsyncIterableIterator<StreamEvent> {
     let responseId = `resp_google_${randomUUID()}`;
     let sequence = 0;
     let created = false;
-    let text = '';
-    let thinking = '';
+    const textByStep = new Map<number, string>();
+    const thinkingByStep = new Map<number, string>();
+    const signatureByStep = new Map<number, string>();
     let usage: TokenUsage = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
     // A stream that ends without a terminal provider event is not successful.
     let finalStatus: NormalizedInteractionStatus = 'incomplete';
     let finalStopReason: string | undefined;
+    let continuationToken: string | undefined;
     let failureObserved = false;
     const toolBuffers = new Map<number, { id: string; name: string; arguments: string }>();
 
     for await (const event of stream) {
+      if (event.event_type === 'step.delta' && event.metadata?.total_usage) {
+        usage = this.convertUsage(event.metadata.total_usage);
+      }
+
       if (event.event_type === 'interaction.created') {
         responseId = `resp_google_${event.interaction.id}`;
+        if (typeof event.interaction.continuation_token === 'string') {
+          continuationToken = event.interaction.continuation_token;
+        }
         created = true;
         yield {
           type: StreamEventType.RESPONSE_CREATED,
@@ -209,16 +229,23 @@ export class GoogleInteractionsConverter {
       }
 
       if (event.event_type === 'step.start' && event.step?.type === 'function_call') {
+        const initialArguments = event.step.arguments;
+        const serializedArguments = initialArguments === undefined || initialArguments === null
+          || (typeof initialArguments === 'object' && Object.keys(initialArguments).length === 0)
+          ? ''
+          : JSON.stringify(initialArguments) ?? '';
         const buffer = {
           id: event.step.id,
           name: event.step.name,
-          arguments: event.step.arguments ? JSON.stringify(event.step.arguments) : '',
+          arguments: serializedArguments,
         };
         toolBuffers.set(event.index, buffer);
         yield {
           type: StreamEventType.TOOL_CALL_START,
           response_id: responseId,
-          item_id: `msg_${responseId}`,
+          item_id: `tool_${responseId}_${event.index}`,
+          output_index: event.index,
+          sequence_number: sequence++,
           tool_call_id: buffer.id,
           tool_name: buffer.name,
         };
@@ -234,27 +261,34 @@ export class GoogleInteractionsConverter {
           };
         }
       } else if (event.event_type === 'step.delta' && event.delta?.type === 'text') {
-        text += event.delta.text ?? '';
+        const delta = event.delta.text ?? '';
+        textByStep.set(event.index, `${textByStep.get(event.index) ?? ''}${delta}`);
         yield {
           type: StreamEventType.OUTPUT_TEXT_DELTA,
           response_id: responseId,
-          item_id: `msg_${responseId}`,
-          output_index: 0,
+          item_id: `msg_${responseId}_${event.index}`,
+          output_index: event.index,
           content_index: 0,
-          delta: event.delta.text ?? '',
+          delta,
           sequence_number: sequence++,
         };
       } else if (event.event_type === 'step.delta' && event.delta?.type === 'thought_summary') {
-        const delta = event.delta.content?.text ?? '';
-        thinking += delta;
+        const delta = event.delta.content?.type === 'text' ? event.delta.content.text : '';
+        thinkingByStep.set(event.index, `${thinkingByStep.get(event.index) ?? ''}${delta}`);
         if (delta) {
           yield {
             type: StreamEventType.REASONING_DELTA,
             response_id: responseId,
-            item_id: `thinking_${responseId}`,
+            item_id: `thinking_${responseId}_${event.index}`,
+            output_index: event.index,
             delta,
             sequence_number: sequence++,
           };
+        }
+      } else if (event.event_type === 'step.delta' && event.delta?.type === 'thought_signature') {
+        const delta = event.delta.signature ?? '';
+        if (delta) {
+          signatureByStep.set(event.index, `${signatureByStep.get(event.index) ?? ''}${delta}`);
         }
       } else if (event.event_type === 'step.delta' && event.delta?.type === 'arguments_delta') {
         const buffer = toolBuffers.get(event.index);
@@ -282,17 +316,15 @@ export class GoogleInteractionsConverter {
             arguments: buffer.arguments || '{}',
           };
         }
-        if (event.metadata?.total_usage) {
-          usage = this.convertUsage(event.metadata.total_usage);
+        const accumulatedUsage = event.usage ?? event.step_usage;
+        if (accumulatedUsage) {
+          usage = this.convertUsage(accumulatedUsage);
         }
       } else if (event.event_type === 'interaction.status_update') {
         finalStopReason = typeof event.status === 'string' ? event.status : finalStopReason;
         const status = normalizeInteractionStatus(event.status);
         if (status === 'failed') failureObserved = true;
         if (!failureObserved || status === 'failed') finalStatus = status;
-        if (event.metadata?.total_usage) {
-          usage = this.convertUsage(event.metadata.total_usage);
-        }
       } else if (event.event_type === 'interaction.completed') {
         const interactionStatus = event.interaction?.status;
         finalStopReason = typeof interactionStatus === 'string'
@@ -301,7 +333,12 @@ export class GoogleInteractionsConverter {
         const status = normalizeInteractionStatus(interactionStatus);
         if (status === 'failed') failureObserved = true;
         if (!failureObserved || status === 'failed') finalStatus = status;
-        usage = this.convertUsage(event.interaction?.usage, event.interaction?.service_tier);
+        if (event.interaction?.usage) {
+          usage = this.convertUsage(event.interaction.usage, event.interaction.service_tier);
+        }
+        if (typeof event.interaction?.continuation_token === 'string') {
+          continuationToken = event.interaction.continuation_token;
+        }
       } else if (event.event_type === 'error') {
         failureObserved = true;
         finalStatus = 'failed';
@@ -319,20 +356,26 @@ export class GoogleInteractionsConverter {
       }
     }
 
-    if (thinking) {
+    const reasoningIndexes = new Set([...thinkingByStep.keys(), ...signatureByStep.keys()]);
+    for (const index of [...reasoningIndexes].sort((a, b) => a - b)) {
+      const thinking = thinkingByStep.get(index) ?? '';
+      const signature = signatureByStep.get(index);
       yield {
         type: StreamEventType.REASONING_DONE,
         response_id: responseId,
-        item_id: `thinking_${responseId}`,
+        item_id: `thinking_${responseId}_${index}`,
+        output_index: index,
         thinking,
+        ...(signature ? { signature } : {}),
+        sequence_number: sequence++,
       };
     }
-    if (text) {
+    for (const [index, text] of [...textByStep].sort(([a], [b]) => a - b)) {
       yield {
         type: StreamEventType.OUTPUT_TEXT_DONE,
         response_id: responseId,
-        item_id: `msg_${responseId}`,
-        output_index: 0,
+        item_id: `msg_${responseId}_${index}`,
+        output_index: index,
         text,
       };
     }
@@ -343,6 +386,7 @@ export class GoogleInteractionsConverter {
       usage,
       iterations: 1,
       ...(finalStopReason ? { stop_reason: finalStopReason } : {}),
+      ...(continuationToken ? { continuation_token: continuationToken } : {}),
     };
   }
 
@@ -386,6 +430,15 @@ export class GoogleInteractionsConverter {
         tools.push({ type: 'url_context', ...tool.options });
       } else if (tool.capability === 'code_execution') {
         tools.push({ type: 'code_execution', ...tool.options });
+      } else if (tool.capability === 'file_search') {
+        const { vectorStoreIds, ...providerOptions } = tool.options;
+        tools.push({
+          type: 'file_search',
+          ...providerOptions,
+          file_search_store_names: vectorStoreIds,
+        });
+      } else if (tool.capability === 'computer_use') {
+        tools.push({ type: 'computer_use', ...tool.options });
       }
     }
     return tools;
@@ -394,6 +447,7 @@ export class GoogleInteractionsConverter {
   private async convertInput(input: string | InputItem[]): Promise<string | InteractionStep[]> {
     if (typeof input === 'string') return input;
     const steps: InteractionStep[] = [];
+    const replayedThoughtSignatures = new Set<string>();
     for (const item of input) {
       if (item.type !== 'message') continue;
       let messageContent: InteractionStep[] = [];
@@ -419,7 +473,10 @@ export class GoogleInteractionsConverter {
           messageContent.push({ type: 'document', uri: block.file_id });
         } else if (block.type === ContentType.THINKING && block.signature) {
           flushMessageContent();
-          steps.push({ type: 'thought', signature: block.signature });
+          if (!replayedThoughtSignatures.has(block.signature)) {
+            steps.push({ type: 'thought', signature: block.signature });
+            replayedThoughtSignatures.add(block.signature);
+          }
         } else if (block.type === ContentType.TOOL_USE) {
           flushMessageContent();
           let args: Record<string, unknown>;
@@ -428,7 +485,10 @@ export class GoogleInteractionsConverter {
           } catch (error) {
             throw new InvalidToolArgumentsError(block.name, block.arguments, error as Error);
           }
-          if (block.thoughtSignature) steps.push({ type: 'thought', signature: block.thoughtSignature });
+          if (block.thoughtSignature && !replayedThoughtSignatures.has(block.thoughtSignature)) {
+            steps.push({ type: 'thought', signature: block.thoughtSignature });
+            replayedThoughtSignatures.add(block.thoughtSignature);
+          }
           steps.push({ type: 'function_call', id: block.id, name: block.name, arguments: args });
         } else if (block.type === ContentType.TOOL_RESULT) {
           flushMessageContent();

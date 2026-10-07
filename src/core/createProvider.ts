@@ -16,6 +16,7 @@ import { AnthropicTextProvider } from '../infrastructure/providers/anthropic/Ant
 import { GoogleTextProvider } from '../infrastructure/providers/google/GoogleTextProvider.js';
 import { VertexAITextProvider } from '../infrastructure/providers/vertex/VertexAITextProvider.js';
 import { GenericOpenAIProvider } from '../infrastructure/providers/generic/GenericOpenAIProvider.js';
+import { GrokTextProvider } from '../infrastructure/providers/grok/GrokTextProvider.js';
 import { DeepSeekTextProvider } from '../infrastructure/providers/deepseek/DeepSeekTextProvider.js';
 import type {
   DeepSeekHost,
@@ -118,10 +119,15 @@ export function createProvider(connector: Connector): ITextProvider {
     case Vendor.Groq:
     case Vendor.Together:
     case Vendor.Perplexity:
-    case Vendor.Grok:
     case Vendor.Mistral:
     case Vendor.Ollama:
       return new GenericOpenAIProvider(connector.name, {
+        ...config,
+        baseURL: config.baseURL || getVendorDefaultBaseURL(vendor)!,
+      });
+
+    case Vendor.Grok:
+      return new GrokTextProvider(connector.name, {
         ...config,
         baseURL: config.baseURL || getVendorDefaultBaseURL(vendor)!,
       });

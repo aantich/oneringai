@@ -2,9 +2,22 @@
  * Shared validation for thinking/reasoning configuration across all providers.
  */
 export function validateThinkingConfig(
-  thinking: { enabled: boolean; budgetTokens?: number; effort?: string }
+  thinking: {
+    enabled: boolean;
+    mode?: 'adaptive' | 'enabled' | 'between_tools' | 'disabled';
+    budgetTokens?: number;
+    effort?: string;
+  }
 ): void {
-  if (!thinking.enabled) return;
+  if (thinking.mode && !['adaptive', 'enabled', 'between_tools', 'disabled'].includes(thinking.mode)) {
+    throw new Error(`Invalid thinking mode: '${thinking.mode}'.`);
+  }
+  if (thinking.mode === 'disabled' && thinking.enabled) {
+    throw new Error("Invalid thinking config: mode 'disabled' requires enabled: false.");
+  }
+  if (thinking.mode && thinking.mode !== 'disabled' && !thinking.enabled) {
+    throw new Error(`Invalid thinking config: mode '${thinking.mode}' requires enabled: true.`);
+  }
 
   if (thinking.budgetTokens !== undefined) {
     if (typeof thinking.budgetTokens !== 'number' || thinking.budgetTokens < 1) {

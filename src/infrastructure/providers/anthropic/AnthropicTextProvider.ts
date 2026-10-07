@@ -52,7 +52,7 @@ const ANTHROPIC_SERVER_TOOL_MODELS = [
 
 function getAnthropicNativeTools(model: string): AdvancedTextCapabilities['nativeTools'] {
   if (!ANTHROPIC_SERVER_TOOL_MODELS.some((pattern) => pattern.test(model))) return [];
-  return ['web_search', 'web_fetch', 'code_execution', 'remote_mcp'];
+  return ['web_search', 'web_fetch', 'code_execution', 'tool_search', 'remote_mcp'];
 }
 
 export function supportsAnthropicNativeStructuredOutput(model: string): boolean {

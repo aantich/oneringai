@@ -7,7 +7,7 @@
 
 import { Vendor } from '../../core/Vendor.js';
 import type { ISourceLinks, IBaseModelDescription } from '../types/SharedTypes.js';
-import { createRegistryHelpers } from './RegistryUtils.js';
+import { assertNoRegistryAliasCollisions, createRegistryHelpers } from './RegistryUtils.js';
 
 /**
  * Video model capabilities
@@ -461,6 +461,7 @@ export const VIDEO_MODEL_REGISTRY: VideoModelRegistry = {
 };
 
 // Create helper functions using the registry utility
+assertNoRegistryAliasCollisions(VIDEO_MODEL_REGISTRY, 'VIDEO_MODEL_REGISTRY');
 const helpers = createRegistryHelpers<IVideoModelDescription>(VIDEO_MODEL_REGISTRY);
 
 /**

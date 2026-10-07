@@ -10,6 +10,8 @@ import { Vendor } from '@/core/Vendor.js';
 import { ToolFunction } from '@/domain/entities/Tool.js';
 import { MessageRole } from '@/domain/entities/Message.js';
 import { ContentType } from '@/domain/entities/Content.js';
+import { StreamState } from '@/domain/entities/StreamState.js';
+import { StreamEventType } from '@/domain/entities/StreamEvent.js';
 
 // Mock the createProvider function
 const mockGenerate = vi.fn();
@@ -220,6 +222,7 @@ describe('Agent', () => {
         promptCache: { mode: 'auto', ttl: 'extended', key: 'stable-v1' },
         nativeTools: [{ capability: 'web_search', options: { max_uses: 2 } }],
         dataHandling: { allowProviderCaching: true, allowThirdPartyTools: false },
+        continuationToken: 'continue-managed',
       });
 
       expect(mockGenerate).toHaveBeenCalledWith(
@@ -230,8 +233,49 @@ describe('Agent', () => {
             allowProviderCaching: true,
             allowThirdPartyTools: false,
           },
+          continuation_token: 'continue-managed',
         }),
       );
+    });
+
+    it('uses a managed continuation token only for the first provider request', async () => {
+      const retryingAgent = Agent.create({
+        connector: 'test-openai',
+        model: 'gpt-4',
+        emptyResponseRetry: { enabled: true, maxRetries: 1, initialDelayMs: 0, maxDelayMs: 0 },
+      });
+      mockGenerate
+        .mockResolvedValueOnce({
+          id: 'resp_empty',
+          object: 'response',
+          created_at: Date.now(),
+          status: 'completed',
+          model: 'gpt-4',
+          output: [],
+          usage: { input_tokens: 1, output_tokens: 0, total_tokens: 1 },
+        })
+        .mockResolvedValueOnce({
+          id: 'resp_final',
+          object: 'response',
+          created_at: Date.now(),
+          status: 'completed',
+          model: 'gpt-4',
+          output: [{
+            type: 'message',
+            role: MessageRole.ASSISTANT,
+            content: [{ type: ContentType.OUTPUT_TEXT, text: 'Done' }],
+          }],
+          output_text: 'Done',
+          usage: { input_tokens: 2, output_tokens: 1, total_tokens: 3 },
+        });
+
+      await retryingAgent.run('Continue', { continuationToken: 'continue-once' });
+
+      expect(mockGenerate).toHaveBeenCalledTimes(2);
+      expect(mockGenerate.mock.calls[0][0]).toEqual(expect.objectContaining({
+        continuation_token: 'continue-once',
+      }));
+      expect(mockGenerate.mock.calls[1][0]).not.toHaveProperty('continuation_token');
     });
 
     it('should run with InputItem array', async () => {
@@ -345,6 +389,126 @@ describe('Agent', () => {
 
       const stream = agent.stream('Hello');
       await expect(stream.next()).rejects.toThrow(/destroyed/i);
+    });
+
+    it('forwards a managed continuation token to the first streaming request', async () => {
+      mockStreamGenerate.mockImplementation(async function* () {
+        yield {
+          type: StreamEventType.RESPONSE_CREATED,
+          response_id: 'resp_stream',
+          model: 'gpt-4',
+          created_at: Math.floor(Date.now() / 1000),
+        };
+        yield {
+          type: StreamEventType.OUTPUT_TEXT_DELTA,
+          response_id: 'resp_stream',
+          item_id: 'msg_stream',
+          output_index: 0,
+          content_index: 0,
+          delta: 'Done',
+          sequence_number: 0,
+        };
+        yield {
+          type: StreamEventType.RESPONSE_COMPLETE,
+          response_id: 'resp_stream',
+          status: 'completed',
+          usage: { input_tokens: 2, output_tokens: 1, total_tokens: 3 },
+          iterations: 1,
+        };
+      });
+
+      for await (const _event of agent.stream('Continue', {
+        continuationToken: 'continue-stream',
+      })) {
+        // Drain the managed stream.
+      }
+
+      expect(mockStreamGenerate).toHaveBeenCalledWith(expect.objectContaining({
+        continuation_token: 'continue-stream',
+      }));
+    });
+
+    it('persists streamed custom tools with their input and async metadata', () => {
+      const state = new StreamState('resp_custom', 'gpt-6-astra');
+      state.startToolCall('call_custom', 'shell', 'item_custom', { outputIndex: 0 }, {
+        toolType: 'custom',
+        async: true,
+      });
+      state.accumulateToolArguments('call_custom', 'run tests');
+      agent.context.addUserMessage('Use the shell');
+
+      (agent as any)._addStreamingAssistantMessage(state, [], new Map([
+        ['call_custom', { name: 'shell', args: 'run tests', async: true }],
+      ]));
+
+      expect(agent.context.getConversation()).toContainEqual(expect.objectContaining({
+        type: 'message',
+        role: MessageRole.ASSISTANT,
+        content: [{
+          type: ContentType.CUSTOM_TOOL_USE,
+          id: 'call_custom',
+          name: 'shell',
+          input: 'run tests',
+          async: true,
+        }],
+      }));
+    });
+
+    it('builds the final streamed response from the full ordered provider output', () => {
+      const state = new StreamState('resp_ordered', 'gpt-6-astra');
+      state.accumulateReasoningDelta('reasoning_0', 'Checked the request', { outputIndex: 0 });
+      state.completeReasoning('reasoning_0', {
+        encryptedContent: 'encrypted-reasoning',
+        effort: 'high',
+      }, { outputIndex: 0 });
+      state.accumulateTextDelta('message_1', 'Working on it.', {
+        outputIndex: 1,
+        contentIndex: 0,
+      });
+      state.startToolCall('call_2', 'shell', 'custom_2', { outputIndex: 2 }, {
+        toolType: 'custom',
+        async: true,
+      });
+      state.accumulateToolArguments('call_2', 'npm test');
+      state.accumulateCompaction({
+        type: 'compaction',
+        id: 'compaction_3',
+        encrypted_content: 'encrypted-compaction',
+      }, { outputIndex: 3 });
+      state.providerStatus = 'incomplete';
+      state.stopReason = 'max_output_tokens';
+      state.continuationToken = 'continue-1';
+
+      const response = (agent as any)._buildPlaceholderResponse('exec_ordered', 1_000, state);
+
+      expect(response.output).toEqual([
+        expect.objectContaining({
+          type: 'reasoning',
+          id: 'reasoning_0',
+          summary: 'Checked the request',
+          encrypted_content: 'encrypted-reasoning',
+        }),
+        expect.objectContaining({
+          type: 'message',
+          role: MessageRole.ASSISTANT,
+          content: [
+            { type: ContentType.OUTPUT_TEXT, text: 'Working on it.' },
+            {
+              type: ContentType.CUSTOM_TOOL_USE,
+              id: 'call_2',
+              name: 'shell',
+              input: 'npm test',
+              async: true,
+            },
+          ],
+        }),
+        expect.objectContaining({ type: 'compaction', id: 'compaction_3' }),
+      ]);
+      expect(response.output_text).toBe('Working on it.');
+      expect(response.thinking).toBe('Checked the request');
+      expect(response.status).toBe('incomplete');
+      expect(response.stop_reason).toBe('max_output_tokens');
+      expect(response.continuation_token).toBe('continue-1');
     });
   });
 

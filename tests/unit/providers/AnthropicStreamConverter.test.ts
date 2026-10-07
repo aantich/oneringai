@@ -191,7 +191,85 @@ describe('AnthropicStreamConverter', () => {
     });
   });
 
+  describe('Thinking Content Blocks', () => {
+    it('keeps multiple signed thinking blocks distinct and indexed', async () => {
+      const events = [
+        {
+          type: 'message_start',
+          message: {
+            id: 'msg_multi_thinking', type: 'message', role: 'assistant', content: [],
+            model: 'claude-opus-5-5', stop_reason: null, stop_sequence: null,
+            usage: { input_tokens: 1, output_tokens: 0 },
+          },
+        },
+        { type: 'content_block_start', index: 0, content_block: { type: 'thinking', thinking: '', signature: '' } },
+        { type: 'content_block_delta', index: 0, delta: { type: 'thinking_delta', thinking: 'First' } },
+        { type: 'content_block_delta', index: 0, delta: { type: 'signature_delta', signature: 'sig_0' } },
+        { type: 'content_block_stop', index: 0 },
+        { type: 'content_block_start', index: 1, content_block: { type: 'thinking', thinking: '', signature: '' } },
+        { type: 'content_block_delta', index: 1, delta: { type: 'thinking_delta', thinking: 'Second' } },
+        { type: 'content_block_delta', index: 1, delta: { type: 'signature_delta', signature: 'sig_1' } },
+        { type: 'content_block_stop', index: 1 },
+        { type: 'message_stop' },
+      ] as unknown as Anthropic.MessageStreamEvent[];
+
+      const results: any[] = [];
+      for await (const event of converter.convertStream(
+        createMockStream(events),
+        'claude-opus-5-5',
+      )) results.push(event);
+
+      const done = results.filter((event) => event.type === StreamEventType.REASONING_DONE);
+      expect(done).toEqual([
+        expect.objectContaining({ item_id: 'thinking_msg_multi_thinking_0', output_index: 0, thinking: 'First', signature: 'sig_0' }),
+        expect.objectContaining({ item_id: 'thinking_msg_multi_thinking_1', output_index: 1, thinking: 'Second', signature: 'sig_1' }),
+      ]);
+    });
+  });
+
   describe('Tool Use Content Blocks', () => {
+    it('emits replayable provider state for streamed server-tool blocks', async () => {
+      const events = [
+        {
+          type: 'message_start',
+          message: {
+            id: 'msg_server_tool', type: 'message', role: 'assistant', content: [],
+            model: 'claude-opus-5-5', stop_reason: null, stop_sequence: null,
+            usage: { input_tokens: 1, output_tokens: 0 },
+          },
+        },
+        {
+          type: 'content_block_start', index: 0,
+          content_block: {
+            type: 'server_tool_use', id: 'srvtoolu_1',
+            name: 'tool_search_tool_regex', input: {},
+          },
+        },
+        {
+          type: 'content_block_delta', index: 0,
+          delta: { type: 'input_json_delta', partial_json: '{"pattern":"weather"}' },
+        },
+        { type: 'content_block_stop', index: 0 },
+        { type: 'message_stop' },
+      ] as unknown as Anthropic.MessageStreamEvent[];
+
+      const results: any[] = [];
+      for await (const event of converter.convertStream(
+        createMockStream(events),
+        'claude-opus-5-5',
+      )) results.push(event);
+
+      expect(results).toContainEqual(expect.objectContaining({
+        type: StreamEventType.PROVIDER_STATE,
+        provider: 'anthropic',
+        data: expect.objectContaining({
+          type: 'server_tool_use',
+          id: 'srvtoolu_1',
+          input: { pattern: 'weather' },
+        }),
+      }));
+    });
+
     it('should convert content_block_start for tool_use to TOOL_CALL_START', async () => {
       const events: Anthropic.MessageStreamEvent[] = [
         {

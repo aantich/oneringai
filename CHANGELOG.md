@@ -15,6 +15,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   use it while preserving diagnostic messages and visibility checks. Custom
   registries should adopt this error; their thrown errors still pass through
   unchanged. Hosts choose HTTP mapping and optional fallback behavior.
+- **October model refresh.** Added GPT-6.1 Sol, GPT-6 Sol, GPT-6 Luna,
+  GPT-5.6 Cyber, GPT-Rosalind Research, Claude Opus 5.5, Claude Sonnet 5.5,
+  Gemini 3.8 Flash and Live variants, Grok 4.7, GPT Image 2.5
+  Sunburst/Flare, Gemini Nano Banana 2.1, Gemini 3.8 TTS, and Grok Voice
+  Transcribe 2.0 with current lifecycle, access, endpoint, context, reasoning,
+  and pricing metadata.
+- **Current OpenAI APIs.** Added connector-first `OpenAIDecisions`,
+  `OpenAILiveSession`, and `OpenAIVoices` clients. Responses native-tool
+  requests now cover X search, computer use, hosted shell, apply patch, tool
+  search, and image generation where the selected model supports them. Typed
+  computer, shell, patch, and client tool-search output items complete the
+  host-executed continuation loop.
+- **Current Anthropic APIs.** Added native tool search, deferred tools,
+  programmatic tool callers, current web search/fetch and code-execution tool
+  versions, server-side compaction controls, and Claude 5.5 adaptive-thinking
+  constraints.
+- **Current Google APIs.** Added connector-first `GoogleLiveSession` and
+  `GoogleVoices`, Gemini Interactions continuation tokens, file search,
+  computer-use requests, and Live interaction-status tracking.
+- **Dedicated xAI text adapter.** Added Grok-native X search and hosted coding
+  tools, reasoning configuration, native-tool telemetry, and cost reporting.
+
+### Changed
+
+- Upgraded the OpenAI, Anthropic, and Google SDK baselines to `openai` 7.30,
+  `@anthropic-ai/sdk` 0.131, and `@google/genai` 2.27.
+- Managed Agent and context execution now retain provider reasoning,
+  compaction, and opaque provider state across tool turns instead of reducing
+  continuations to visible text and local function calls. Streaming replay now
+  preserves cross-type provider output order and keeps distinct signed
+  Anthropic thinking blocks separate.
+- Fast/priority validation for the OpenAI EU data-residency endpoint now covers
+  GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol, and GPT-6 Luna. Explicit Ultrafast
+  requests are rejected on the EU endpoint as well.
+
+### Fixed
+
+- Anthropic server tool-search result blocks are retained and replayed in both
+  regular and streaming tool loops, including partial server-tool input.
+- Claude Opus 5.5 and Sonnet 5.5 now enforce their documented, different
+  thinking-mode and effort combinations before inference. Claude Opus 5
+  disabled thinking and Sonnet 5.5 `between_tools` also reject `xhigh`/`max`
+  effort locally, matching the provider contract.
+- Gemini Interactions now reports file-search use in normalized usage and
+  preserves continuation tokens on regular and streaming responses.
+- GPT-6 sampling controls are now validated against the effective reasoning
+  effort: GPT-6 Sol and Luna accept them only with `effort: 'none'`, while
+  Astra and GPT-6.1 Sol continue to reject `none` and active-reasoning sampling.
+- Google TTS now distinguishes prebuilt names from `voice_…`, `voicekey_…`,
+  and resource-prefixed custom voice identifiers. Built-in `listVoices()`
+  remains deterministic; `GoogleVoices` owns the remote custom catalog.
+- OpenAI Responses/Live and Google Live wrappers now reject overlapping
+  connection attempts, recover cleanly from remote closure, and clear stale
+  session/status state.
+- Context budgeting now counts opaque reasoning, compaction, provider-state,
+  and native-tool output payloads; top-level reasoning summaries update
+  `lastThinking` consistently.
+- Stream finalization preserves ordered text, reasoning, native/custom tool,
+  compaction, and provider-state output without duplicating provider item IDs
+  that repeat across content blocks or agent iterations.
+- Context compaction treats every function/custom-tool call connected through
+  one assistant message as an atomic component, preventing orphaned calls or
+  results when only one result crosses a size/age threshold.
+- Gemini Nano Banana 2.1 now routes through native Gemini image generation
+  despite its model ID not ending in `-image`.
+- Grok 4.7 hosted-tool capabilities are registry-gated, its release metadata
+  is corrected, and registry initialization now rejects ambiguous aliases.
 
 ## [1.1.8] — 2026-09-22
 

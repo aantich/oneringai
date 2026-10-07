@@ -24,6 +24,7 @@ export enum StreamEventType {
   REASONING_DELTA = 'response.reasoning.delta',
   REASONING_DONE = 'response.reasoning.done',
   COMPACTION = 'response.compaction',
+  PROVIDER_STATE = 'response.provider_state',
   RESPONSE_COMPLETE = 'response.complete',
   RETRY = 'response.retry',
   ERROR = 'response.error',
@@ -86,6 +87,9 @@ export interface OutputTextDoneEvent extends BaseStreamEvent {
 export interface ToolCallStartEvent extends BaseStreamEvent {
   type: StreamEventType.TOOL_CALL_START;
   item_id: string;
+  /** Provider output position, used to replay mixed text/tool/reasoning output exactly. */
+  output_index?: number;
+  sequence_number?: number;
   tool_call_id: string;
   tool_name: string;
   /** Provider tool kind. Omitted for legacy converters. */
@@ -164,6 +168,8 @@ export interface ResponseCompleteEvent extends BaseStreamEvent {
   duration_ms?: number;
   /** Raw provider stop reason for diagnostics (e.g., 'end_turn', 'max_tokens', 'SAFETY') */
   stop_reason?: string;
+  /** Opaque provider token used to resume an incomplete long decode. */
+  continuation_token?: string;
   /**
    * Structured detail accompanying a terminal stop reason, when the provider
    * supplies one. Anthropic populates this only for `stop_reason: 'refusal'`
@@ -191,6 +197,9 @@ export interface RetryEvent extends BaseStreamEvent {
 export interface ReasoningDeltaEvent extends BaseStreamEvent {
   type: StreamEventType.REASONING_DELTA;
   item_id: string;
+  /** Provider output position for ordered replay. */
+  output_index?: number;
+  content_index?: number;
   delta: string;
   sequence_number: number;
 }
@@ -201,7 +210,16 @@ export interface ReasoningDeltaEvent extends BaseStreamEvent {
 export interface ReasoningDoneEvent extends BaseStreamEvent {
   type: StreamEventType.REASONING_DONE;
   item_id: string;
+  /** Provider output position for ordered replay. */
+  output_index?: number;
+  sequence_number?: number;
   thinking: string; // Complete accumulated thinking
+  /** Provider signature required when replaying Anthropic thinking blocks. */
+  signature?: string;
+  /** Opaque OpenAI/xAI reasoning state required for stateless continuation. */
+  encrypted_content?: string;
+  /** Provider-reported reasoning effort, when present. */
+  effort?: import('../interfaces/ITextProvider.js').ReasoningEffort;
 }
 
 /**
@@ -213,6 +231,22 @@ export interface CompactionEvent extends BaseStreamEvent {
   item_id: string;
   output_index: number;
   encrypted_content: string;
+  /** Provider-readable summary, when the protocol exposes one. */
+  content?: string | null;
+  /** Provider signature that must be replayed verbatim. */
+  signature?: string | null;
+  /** Opaque provider fields that must be replayed verbatim. */
+  provider_metadata?: Record<string, unknown>;
+  sequence_number: number;
+}
+
+/** Opaque provider-owned block that must be replayed on the next request. */
+export interface ProviderStateEvent extends BaseStreamEvent {
+  type: StreamEventType.PROVIDER_STATE;
+  item_id: string;
+  output_index: number;
+  provider: string;
+  data: Record<string, unknown>;
   sequence_number: number;
 }
 
@@ -286,6 +320,7 @@ export type StreamEvent =
   | ReasoningDeltaEvent
   | ReasoningDoneEvent
   | CompactionEvent
+  | ProviderStateEvent
   | ToolCallStartEvent
   | ToolCallArgumentsDeltaEvent
   | ToolCallArgumentsDoneEvent

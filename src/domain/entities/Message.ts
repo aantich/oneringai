@@ -23,6 +23,12 @@ export interface CompactionItem {
   type: 'compaction';
   id: string;
   encrypted_content: string;
+  /** Provider-readable summary when the compaction protocol exposes one. */
+  content?: string | null;
+  /** Provider signature that must be replayed verbatim. */
+  signature?: string | null;
+  /** Opaque provider fields that must be replayed verbatim. */
+  providerMetadata?: Record<string, unknown>;
 }
 
 export interface ReasoningItem {
@@ -38,7 +44,7 @@ export interface ConfigurationUpdateItem {
   type: 'configuration_update';
   id?: string;
   reasoning: {
-    effort: Exclude<ReasoningEffort, 'none' | 'minimal'>;
+    effort: ReasoningEffort;
   };
 }
 
@@ -63,11 +69,68 @@ export interface CustomToolCallOutputItem {
   output: string | ToolCallOutputContent[];
 }
 
+/** Screenshot result returned after executing an OpenAI computer-use call. */
+export interface ComputerCallOutputItem {
+  type: 'computer_call_output';
+  call_id: string;
+  output: ({
+    type: 'computer_screenshot';
+  } & (
+    | { image_url: string; file_id?: string }
+    | { file_id: string; image_url?: string }
+  ));
+  acknowledged_safety_checks?: Array<{
+    id: string;
+    code?: string | null;
+    message?: string | null;
+  }>;
+  status?: 'in_progress' | 'completed' | 'incomplete';
+}
+
+export interface ShellCallOutputContent {
+  stdout: string;
+  stderr: string;
+  outcome:
+    | { type: 'exit'; exit_code: number }
+    | { type: 'timeout' };
+}
+
+/** Result returned after executing an OpenAI client shell call. */
+export interface ShellCallOutputItem {
+  type: 'shell_call_output';
+  call_id: string;
+  output: ShellCallOutputContent[];
+  max_output_length?: number | null;
+  status?: 'in_progress' | 'completed' | 'incomplete';
+}
+
+/** Result returned after applying an OpenAI apply-patch operation. */
+export interface ApplyPatchCallOutputItem {
+  type: 'apply_patch_call_output';
+  call_id: string;
+  status: 'completed' | 'failed';
+  output?: string | null;
+}
+
+/** Tool definitions returned by a client-executed OpenAI tool-search call. */
+export interface ToolSearchOutputItem {
+  type: 'tool_search_output';
+  call_id: string;
+  execution: 'client';
+  tools: Array<Record<string, unknown>>;
+  status?: 'in_progress' | 'completed' | 'incomplete';
+}
+
 export type InputItem =
   | Message
   | CompactionItem
+  | ReasoningItem
   | ConfigurationUpdateItem
   | CompactionTriggerItem
   | FunctionCallOutputItem
-  | CustomToolCallOutputItem;
+  | CustomToolCallOutputItem
+  | ComputerCallOutputItem
+  | ShellCallOutputItem
+  | ApplyPatchCallOutputItem
+  | ToolSearchOutputItem;
 export type OutputItem = Message | CompactionItem | ReasoningItem;

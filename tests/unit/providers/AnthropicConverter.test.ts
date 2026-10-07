@@ -121,6 +121,95 @@ describe('AnthropicConverter', () => {
       });
     });
 
+    it('preserves Anthropic strict, deferred, and programmatic tool properties', () => {
+      const request = converter.convertRequest({
+        model: 'claude-opus-5-5',
+        input: 'Find the right tool',
+        tools: [{
+          type: 'function',
+          function: {
+            name: 'lookup_customer',
+            parameters: { type: 'object', properties: {} },
+            strict: true,
+          },
+          deferLoading: true,
+          allowedCallers: ['direct', 'programmatic'],
+        }],
+        native_tools: [
+          { capability: 'tool_search', options: { algorithm: 'bm25' } },
+          { capability: 'web_fetch' },
+          { capability: 'code_execution' },
+        ],
+      });
+
+      expect(request.tools).toContainEqual(expect.objectContaining({
+        name: 'lookup_customer',
+        strict: true,
+        defer_loading: true,
+        allowed_callers: ['direct', 'code_execution_20260521'],
+      }));
+      expect(request.tools).toContainEqual({
+        type: 'tool_search_tool_bm25_20251119',
+        name: 'tool_search_tool_bm25',
+      });
+      expect(request.tools).toContainEqual({
+        type: 'web_fetch_20260318',
+        name: 'web_fetch',
+      });
+      expect(request.tools).toContainEqual({
+        type: 'code_execution_20260521',
+        name: 'code_execution',
+      });
+    });
+
+    it('enforces Claude 5.5 thinking mode compatibility', () => {
+      expect(() => converter.convertRequest({
+        model: 'claude-opus-5-5',
+        input: 'test',
+        thinking: { enabled: false, mode: 'disabled' },
+      })).toThrow(/does not support Anthropic thinking mode 'disabled'/);
+
+      expect(() => converter.convertRequest({
+        model: 'claude-sonnet-5-5',
+        input: 'test',
+        thinking: { enabled: false, mode: 'disabled' },
+      })).toThrow(/does not support Anthropic thinking mode 'disabled'/);
+
+      expect(() => converter.convertRequest({
+        model: 'claude-sonnet-5-5',
+        input: 'test',
+        thinking: { enabled: true, mode: 'enabled', budgetTokens: 4_000 },
+      })).toThrow(/does not support Anthropic thinking mode 'enabled'/);
+
+      expect(() => converter.convertRequest({
+        model: 'claude-sonnet-5-5',
+        input: 'test',
+        thinking: { enabled: true, mode: 'between_tools', effort: 'xhigh' },
+      })).toThrow(/effort high or below/);
+
+      const supported = converter.convertRequest({
+        model: 'claude-sonnet-5-5',
+        input: 'test',
+        thinking: { enabled: true, mode: 'between_tools', effort: 'high' },
+      }) as any;
+      expect(supported.thinking).toEqual({ type: 'between_tools' });
+      expect(supported.output_config).toEqual({ effort: 'high' });
+
+      expect(() => converter.convertRequest({
+        model: 'claude-opus-5',
+        input: 'test',
+        thinking: { enabled: false, mode: 'disabled', effort: 'max' },
+      })).toThrow(/disabled thinking supports effort high or below/);
+
+      const opusDisabled = converter.convertRequest({
+        model: 'claude-opus-5',
+        input: 'test',
+        thinking: { enabled: false, mode: 'disabled', effort: 'high' },
+      }) as any;
+      expect(opusDisabled.thinking).toEqual({ type: 'disabled' });
+      expect(opusDisabled.output_config).toEqual({ effort: 'high' });
+    });
+
     it('should convert image content (data URI)', () => {
       const request = converter.convertRequest({
         model: 'claude-3-5-sonnet-20241022',
@@ -499,6 +588,130 @@ describe('AnthropicConverter', () => {
       expect(toolUse).toBeTruthy();
       expect(toolUse!.name).toBe('calculator');
       expect(JSON.parse(toolUse!.arguments)).toEqual({ expression: '2+2' });
+    });
+
+    it('replays Anthropic server tool state unchanged before a local tool result', () => {
+      const response = converter.convertResponse({
+        id: 'msg_search',
+        type: 'message',
+        role: 'assistant',
+        model: 'claude-opus-5-5',
+        content: [
+          {
+            type: 'server_tool_use',
+            id: 'srvtoolu_1',
+            name: 'tool_search_tool_regex',
+            input: { pattern: 'customer' },
+          },
+          {
+            type: 'tool_search_tool_result',
+            tool_use_id: 'srvtoolu_1',
+            content: {
+              type: 'tool_search_tool_search_result',
+              tool_references: [{ type: 'tool_reference', tool_name: 'lookup_customer' }],
+            },
+          },
+          {
+            type: 'tool_use',
+            id: 'toolu_1',
+            name: 'lookup_customer',
+            input: { id: 'cus_1' },
+          },
+        ],
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 10, output_tokens: 5 },
+      } as any);
+
+      const request = converter.convertRequest({
+        model: 'claude-opus-5-5',
+        input: [
+          ...(response.output as any),
+          {
+            type: 'message',
+            role: MessageRole.USER,
+            content: [{
+              type: ContentType.TOOL_RESULT,
+              tool_use_id: 'toolu_1',
+              content: '{"name":"Ada"}',
+            }],
+          },
+        ],
+      }) as any;
+
+      expect(request.messages[0].content).toEqual([
+        expect.objectContaining({ type: 'server_tool_use', id: 'srvtoolu_1' }),
+        expect.objectContaining({ type: 'tool_search_tool_result', tool_use_id: 'srvtoolu_1' }),
+        expect.objectContaining({ type: 'tool_use', id: 'toolu_1' }),
+      ]);
+      expect(request.messages[1].content).toEqual([
+        expect.objectContaining({ type: 'tool_result', tool_use_id: 'toolu_1' }),
+      ]);
+    });
+
+    it('lifts Anthropic compaction into one top-level replay item', () => {
+      const response = converter.convertResponse({
+        id: 'msg_compacted',
+        type: 'message',
+        role: 'assistant',
+        model: 'claude-opus-5-5',
+        content: [
+          {
+            type: 'compaction',
+            content: 'Preserved summary',
+            encrypted_content: 'opaque-compaction',
+            signature: 'signed-compaction',
+          },
+          { type: 'text', text: 'Continuing after compaction', citations: [] },
+        ],
+        stop_reason: 'end_turn',
+        usage: { input_tokens: 10, output_tokens: 5 },
+      } as any);
+
+      expect(response.output[0]).toMatchObject({
+        type: 'compaction',
+        encrypted_content: 'opaque-compaction',
+        content: 'Preserved summary',
+        signature: 'signed-compaction',
+      });
+      const messages = response.output.filter((item) => item.type === 'message');
+      expect(messages).toHaveLength(1);
+      expect(messages[0]!.content).toEqual([
+        expect.objectContaining({
+          type: ContentType.OUTPUT_TEXT,
+          text: 'Continuing after compaction',
+        }),
+      ]);
+    });
+
+    it('preserves content order around an Anthropic compaction block', () => {
+      const response = converter.convertResponse({
+        id: 'msg_ordered_compaction',
+        type: 'message',
+        role: 'assistant',
+        model: 'claude-opus-5-5',
+        content: [
+          { type: 'text', text: 'Before', citations: [] },
+          {
+            type: 'compaction',
+            content: 'Summary',
+            encrypted_content: 'opaque',
+            signature: 'signed',
+          },
+          { type: 'text', text: 'After', citations: [] },
+        ],
+        stop_reason: 'end_turn',
+        usage: { input_tokens: 10, output_tokens: 5 },
+      } as any);
+
+      expect(response.output.map((item) => item.type)).toEqual([
+        'message', 'compaction', 'message',
+      ]);
+      expect(response.output[0]).toMatchObject({
+        content: [{ type: ContentType.OUTPUT_TEXT, text: 'Before' }],
+      });
+      expect(response.output[2]).toMatchObject({
+        content: [{ type: ContentType.OUTPUT_TEXT, text: 'After' }],
+      });
     });
   });
 });

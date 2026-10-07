@@ -300,6 +300,9 @@ export interface DirectCallOptions {
   /** Continue a provider-stored response/interaction without resending its history. */
   previousResponseId?: string;
 
+  /** Resume an incomplete provider decode using the token returned by the prior call. */
+  continuationToken?: string;
+
   /**
    * Vendor-agnostic structured (JSON) output. When set, the response is
    * constrained to JSON — via the vendor's native mechanism where supported,
@@ -1061,6 +1064,7 @@ export abstract class BaseAgent<
       temperature: options.temperature,
       max_output_tokens: options.maxOutputTokens,
       previous_response_id: options.previousResponseId,
+      continuation_token: options.continuationToken,
       thinking: options.thinking,
       vendorOptions: options.vendorOptions,
       prompt_cache: options.promptCache,
@@ -1146,6 +1150,7 @@ export abstract class BaseAgent<
       temperature: options.temperature,
       max_output_tokens: options.maxOutputTokens,
       previous_response_id: options.previousResponseId,
+      continuation_token: options.continuationToken,
       thinking: options.thinking,
       vendorOptions: options.vendorOptions,
       prompt_cache: options.promptCache,

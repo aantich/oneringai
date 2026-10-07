@@ -5,6 +5,8 @@
 import { TokenUsage } from './Response.js';
 import { ToolCall } from './Tool.js';
 import { ProviderStopDetails } from './StreamEvent.js';
+import type { CompactionItem } from './Message.js';
+import type { ProviderStateContent } from './Content.js';
 
 /**
  * Buffer for accumulating tool call arguments
@@ -14,6 +16,60 @@ export interface ToolCallBuffer {
   argumentChunks: string[];
   isComplete: boolean;
   startTime: Date;
+  toolType?: 'function' | 'custom';
+  async?: boolean;
+}
+
+export interface StreamOutputPosition {
+  outputIndex?: number;
+  contentIndex?: number;
+  sequenceNumber?: number;
+}
+
+export type OrderedStreamOutputEntry =
+  | {
+      kind: 'text';
+      itemId: string;
+      outputIndex?: number;
+      contentIndex?: number;
+      text: string;
+    }
+  | {
+      kind: 'reasoning';
+      itemId: string;
+      outputIndex?: number;
+      thinking: string;
+      signature?: string;
+      encryptedContent?: string;
+      effort?: import('../interfaces/ITextProvider.js').ReasoningEffort;
+    }
+  | { kind: 'compaction'; itemId: string; outputIndex?: number; item: CompactionItem }
+  | {
+      kind: 'provider_state';
+      itemId: string;
+      outputIndex?: number;
+      state: ProviderStateContent;
+    }
+  | {
+      kind: 'tool_call';
+      itemId: string;
+      outputIndex?: number;
+      toolCallId: string;
+      toolName: string;
+      arguments: string;
+      toolType?: 'function' | 'custom';
+      async?: boolean;
+    };
+
+interface OrderedOutputRef {
+  kind: OrderedStreamOutputEntry['kind'];
+  key: string;
+  dataKey: string;
+  itemId: string;
+  toolCallId?: string;
+  outputIndex?: number;
+  contentIndex?: number;
+  ordinal: number;
 }
 
 /**
@@ -30,6 +86,20 @@ export class StreamState {
 
   // Reasoning accumulation: item_id -> reasoning chunks
   private reasoningBuffers: Map<string, string[]>;
+  private reasoningMetadata: Map<string, {
+    signature?: string;
+    encryptedContent?: string;
+    effort?: import('../interfaces/ITextProvider.js').ReasoningEffort;
+  }>;
+
+  // Provider-signed compaction state for stateless continuation replay.
+  private compactions: Map<string, CompactionItem>;
+  private providerStates: Map<string, ProviderStateContent>;
+
+  // Provider output order. Typed buffers above hold the data; this ledger keeps
+  // the original cross-type sequence needed for exact stateless replay.
+  private orderedOutputs: Map<string, OrderedOutputRef>;
+  private nextOutputOrdinal = 0;
 
   // Tool call accumulation: tool_call_id -> buffer
   private toolCallBuffers: Map<string, ToolCallBuffer>;
@@ -48,6 +118,8 @@ export class StreamState {
   public providerStatus: 'completed' | 'incomplete' | 'failed' = 'incomplete';
   /** Raw stop reason from provider (e.g., 'end_turn', 'max_tokens', 'SAFETY') */
   public stopReason?: string;
+  /** Opaque provider token used to resume an incomplete long decode. */
+  public continuationToken?: string;
   /** Structured stop detail (Anthropic refusals: which classifier fired + why). */
   public stopDetails?: ProviderStopDetails;
   public startTime: Date;
@@ -65,6 +137,10 @@ export class StreamState {
 
     this.textBuffers = new Map();
     this.reasoningBuffers = new Map();
+    this.reasoningMetadata = new Map();
+    this.compactions = new Map();
+    this.providerStates = new Map();
+    this.orderedOutputs = new Map();
     this.toolCallBuffers = new Map();
     this.completedToolCalls = [];
     this.toolResults = new Map();
@@ -86,11 +162,17 @@ export class StreamState {
   /**
    * Accumulate text delta for a specific item
    */
-  accumulateTextDelta(itemId: string, delta: string): void {
-    if (!this.textBuffers.has(itemId)) {
-      this.textBuffers.set(itemId, []);
+  accumulateTextDelta(itemId: string, delta: string, position: StreamOutputPosition = {}): void {
+    // A provider message can contain more than one output_text content block.
+    // Keep those buffers distinct even though they share the same item_id.
+    const dataKey = position.outputIndex !== undefined
+      ? `${itemId}:output:${position.outputIndex}:content:${position.contentIndex ?? 0}`
+      : itemId;
+    const ref = this.trackOutput('text', dataKey, itemId, position);
+    if (!this.textBuffers.has(ref.dataKey)) {
+      this.textBuffers.set(ref.dataKey, []);
     }
-    this.textBuffers.get(itemId)!.push(delta);
+    this.textBuffers.get(ref.dataKey)!.push(delta);
     this.totalTextDeltas++;
     this.totalChunks++;
   }
@@ -99,29 +181,35 @@ export class StreamState {
    * Get complete accumulated text for an item
    */
   getCompleteText(itemId: string): string {
-    const chunks = this.textBuffers.get(itemId);
-    return chunks ? chunks.join('') : '';
+    return this.getOrderedOutputEntries()
+      .flatMap((entry) => (
+        entry.kind === 'text' && entry.itemId === itemId ? [entry.text] : []
+      ))
+      .join('');
   }
 
   /**
    * Get all accumulated text (all items concatenated)
    */
   getAllText(): string {
-    const allText: string[] = [];
-    for (const chunks of this.textBuffers.values()) {
-      allText.push(chunks.join(''));
-    }
-    return allText.join('');
+    return this.getOrderedOutputEntries()
+      .flatMap((entry) => entry.kind === 'text' ? [entry.text] : [])
+      .join('');
   }
 
   /**
    * Accumulate reasoning delta for a specific item
    */
-  accumulateReasoningDelta(itemId: string, delta: string): void {
-    if (!this.reasoningBuffers.has(itemId)) {
-      this.reasoningBuffers.set(itemId, []);
+  accumulateReasoningDelta(
+    itemId: string,
+    delta: string,
+    position: StreamOutputPosition = {},
+  ): void {
+    const ref = this.trackOutput('reasoning', itemId, itemId, position);
+    if (!this.reasoningBuffers.has(ref.dataKey)) {
+      this.reasoningBuffers.set(ref.dataKey, []);
     }
-    this.reasoningBuffers.get(itemId)!.push(delta);
+    this.reasoningBuffers.get(ref.dataKey)!.push(delta);
     this.totalChunks++;
   }
 
@@ -129,27 +217,48 @@ export class StreamState {
    * Get complete accumulated reasoning for an item
    */
   getCompleteReasoning(itemId: string): string {
-    const chunks = this.reasoningBuffers.get(itemId);
-    return chunks ? chunks.join('') : '';
+    return this.getOrderedOutputEntries()
+      .flatMap((entry) => (
+        entry.kind === 'reasoning' && entry.itemId === itemId ? [entry.thinking] : []
+      ))
+      .join('');
   }
 
   /**
    * Get all accumulated reasoning (all items concatenated)
    */
   getAllReasoning(): string {
-    const allReasoning: string[] = [];
-    for (const chunks of this.reasoningBuffers.values()) {
-      allReasoning.push(chunks.join(''));
-    }
-    return allReasoning.join('');
+    return this.getOrderedOutputEntries()
+      .flatMap((entry) => entry.kind === 'reasoning' ? [entry.thinking] : [])
+      .join('');
   }
 
   /** Reasoning blocks with provider item IDs, used by stateless replay APIs. */
-  getReasoningEntries(): Array<{ itemId: string; thinking: string }> {
-    return Array.from(this.reasoningBuffers, ([itemId, chunks]) => ({
-      itemId,
-      thinking: chunks.join(''),
-    }));
+  completeReasoning(
+    itemId: string,
+    metadata: { signature?: string; encryptedContent?: string; effort?: import('../interfaces/ITextProvider.js').ReasoningEffort },
+    position: StreamOutputPosition = {},
+  ): void {
+    const ref = this.trackOutput('reasoning', itemId, itemId, position);
+    if (!this.reasoningBuffers.has(ref.dataKey)) {
+      this.reasoningBuffers.set(ref.dataKey, []);
+    }
+    this.reasoningMetadata.set(ref.dataKey, {
+      ...this.reasoningMetadata.get(ref.dataKey),
+      ...metadata,
+    });
+  }
+
+  getReasoningEntries(): Array<{
+    itemId: string;
+    thinking: string;
+    signature?: string;
+    encryptedContent?: string;
+    effort?: import('../interfaces/ITextProvider.js').ReasoningEffort;
+  }> {
+    return this.getOrderedOutputEntries().flatMap((entry) => (
+      entry.kind === 'reasoning' ? [entry] : []
+    ));
   }
 
   /**
@@ -159,23 +268,156 @@ export class StreamState {
     return this.reasoningBuffers.size > 0;
   }
 
+  accumulateCompaction(item: CompactionItem, position: StreamOutputPosition = {}): void {
+    this.compactions.set(item.id, item);
+    this.trackOutput('compaction', item.id, item.id, position);
+    this.totalChunks++;
+  }
+
+  getCompactions(): CompactionItem[] {
+    return [...this.compactions.values()];
+  }
+
+  hasCompactions(): boolean {
+    return this.compactions.size > 0;
+  }
+
+  accumulateProviderState(
+    itemId: string,
+    state: ProviderStateContent,
+    position: StreamOutputPosition = {},
+  ): void {
+    this.providerStates.set(itemId, state);
+    this.trackOutput('provider_state', itemId, itemId, position);
+    this.totalChunks++;
+  }
+
+  getProviderStates(): ProviderStateContent[] {
+    return [...this.providerStates.values()];
+  }
+
+  hasProviderStates(): boolean {
+    return this.providerStates.size > 0;
+  }
+
   /**
    * Start accumulating tool call arguments
    */
-  startToolCall(toolCallId: string, toolName: string): void {
+  startToolCall(
+    toolCallId: string,
+    toolName: string,
+    itemId = toolCallId,
+    position: StreamOutputPosition = {},
+    metadata: { toolType?: 'function' | 'custom'; async?: boolean } = {},
+  ): void {
     this.toolCallBuffers.set(toolCallId, {
       toolName,
       argumentChunks: [],
       isComplete: false,
       startTime: new Date(),
+      ...metadata,
     });
+    this.trackOutput('tool_call', toolCallId, itemId, position);
+  }
+
+  /** Reconstruct every streamed provider output item in its original order. */
+  getOrderedOutputEntries(): OrderedStreamOutputEntry[] {
+    const refs = [...this.orderedOutputs.values()].sort((a, b) => {
+      if (
+        a.outputIndex !== undefined
+        && b.outputIndex !== undefined
+        && a.outputIndex !== b.outputIndex
+      ) {
+        return a.outputIndex - b.outputIndex;
+      }
+      if (
+        a.outputIndex === b.outputIndex
+        && a.contentIndex !== undefined
+        && b.contentIndex !== undefined
+        && a.contentIndex !== b.contentIndex
+      ) {
+        return a.contentIndex - b.contentIndex;
+      }
+      return a.ordinal - b.ordinal;
+    });
+
+    return refs.flatMap((ref): OrderedStreamOutputEntry[] => {
+      if (ref.kind === 'text') {
+        return [{
+          kind: 'text',
+          itemId: ref.itemId,
+          outputIndex: ref.outputIndex,
+          contentIndex: ref.contentIndex,
+          text: this.textBuffers.get(ref.dataKey)?.join('') ?? '',
+        }];
+      }
+      if (ref.kind === 'reasoning') {
+        return [{
+          kind: 'reasoning',
+          itemId: ref.itemId,
+          outputIndex: ref.outputIndex,
+          thinking: this.reasoningBuffers.get(ref.dataKey)?.join('') ?? '',
+          ...this.reasoningMetadata.get(ref.dataKey),
+        }];
+      }
+      if (ref.kind === 'compaction') {
+        const item = this.compactions.get(ref.dataKey);
+        return item ? [{ kind: 'compaction', itemId: ref.itemId, outputIndex: ref.outputIndex, item }] : [];
+      }
+      if (ref.kind === 'provider_state') {
+        const state = this.providerStates.get(ref.dataKey);
+        return state ? [{ kind: 'provider_state', itemId: ref.itemId, outputIndex: ref.outputIndex, state }] : [];
+      }
+      const buffer = this.toolCallBuffers.get(ref.dataKey);
+      return buffer ? [{
+        kind: 'tool_call',
+        itemId: ref.itemId,
+        outputIndex: ref.outputIndex,
+        toolCallId: ref.toolCallId ?? ref.dataKey,
+        toolName: buffer.toolName,
+        arguments: buffer.argumentChunks.join(''),
+        ...(buffer.toolType ? { toolType: buffer.toolType } : {}),
+        ...(buffer.async !== undefined ? { async: buffer.async } : {}),
+      }] : [];
+    });
+  }
+
+  private trackOutput(
+    kind: OrderedStreamOutputEntry['kind'],
+    dataKey: string,
+    itemId: string,
+    position: StreamOutputPosition,
+  ): OrderedOutputRef {
+    const positionKey = position.outputIndex !== undefined
+      ? `${kind}:output:${position.outputIndex}${kind === 'text' ? `:${position.contentIndex ?? 0}` : ''}`
+      : `${kind}:item:${dataKey}`;
+    const existing = this.orderedOutputs.get(positionKey);
+    if (existing) {
+      existing.itemId = itemId || existing.itemId;
+      existing.outputIndex ??= position.outputIndex;
+      existing.contentIndex ??= position.contentIndex;
+      return existing;
+    }
+    const ref: OrderedOutputRef = {
+      kind,
+      key: positionKey,
+      dataKey,
+      itemId,
+      ...(kind === 'tool_call' ? { toolCallId: dataKey } : {}),
+      outputIndex: position.outputIndex,
+      contentIndex: position.contentIndex,
+      ordinal: position.sequenceNumber ?? this.nextOutputOrdinal,
+    };
+    this.nextOutputOrdinal = Math.max(this.nextOutputOrdinal + 1, ref.ordinal + 1);
+    this.orderedOutputs.set(positionKey, ref);
+    return ref;
   }
 
   /**
    * Accumulate tool argument delta
    */
   accumulateToolArguments(toolCallId: string, delta: string): void {
-    const buffer = this.toolCallBuffers.get(toolCallId);
+    const buffer = this.findToolCallBuffer(toolCallId);
     if (!buffer) {
       throw new Error(`Tool call buffer not found for id: ${toolCallId}`);
     }
@@ -187,7 +429,7 @@ export class StreamState {
    * Mark tool call arguments as complete
    */
   completeToolCall(toolCallId: string): void {
-    const buffer = this.toolCallBuffers.get(toolCallId);
+    const buffer = this.findToolCallBuffer(toolCallId);
     if (!buffer) {
       throw new Error(`Tool call buffer not found for id: ${toolCallId}`);
     }
@@ -199,7 +441,7 @@ export class StreamState {
    * Get complete tool arguments (joined chunks)
    */
   getCompleteToolArguments(toolCallId: string): string {
-    const buffer = this.toolCallBuffers.get(toolCallId);
+    const buffer = this.findToolCallBuffer(toolCallId);
     if (!buffer) {
       throw new Error(`Tool call buffer not found for id: ${toolCallId}`);
     }
@@ -210,7 +452,7 @@ export class StreamState {
    * Check if tool call is complete
    */
   isToolCallComplete(toolCallId: string): boolean {
-    const buffer = this.toolCallBuffers.get(toolCallId);
+    const buffer = this.findToolCallBuffer(toolCallId);
     return buffer ? buffer.isComplete : false;
   }
 
@@ -218,7 +460,19 @@ export class StreamState {
    * Get tool name for a tool call
    */
   getToolName(toolCallId: string): string | undefined {
-    return this.toolCallBuffers.get(toolCallId)?.toolName;
+    return this.findToolCallBuffer(toolCallId)?.toolName;
+  }
+
+  /** Resolve a semantic tool-call ID even after per-response buffers are namespaced. */
+  private findToolCallBuffer(toolCallId: string): ToolCallBuffer | undefined {
+    const direct = this.toolCallBuffers.get(toolCallId);
+    if (direct) return direct;
+    const refs = [...this.orderedOutputs.values()].sort((a, b) => b.ordinal - a.ordinal);
+    const ref = refs.find((candidate) => (
+      candidate.kind === 'tool_call'
+      && (candidate.toolCallId ?? candidate.dataKey) === toolCallId
+    ));
+    return ref ? this.toolCallBuffers.get(ref.dataKey) : undefined;
   }
 
   /**
@@ -274,25 +528,53 @@ export class StreamState {
    * so that the final response built from the global state has full text.
    */
   accumulateFrom(other: StreamState): void {
-    // Merge text buffers
-    for (const [itemId, chunks] of other.textBuffers) {
-      if (!this.textBuffers.has(itemId)) {
-        this.textBuffers.set(itemId, []);
+    // Namespace every imported buffer. Provider item IDs and output indices are
+    // scoped to one response and may repeat across agent iterations; pointing
+    // two ledger entries at a merged buffer would duplicate both outputs.
+    const refs = [...other.orderedOutputs.values()].sort((a, b) => a.ordinal - b.ordinal);
+    for (const ref of refs) {
+      const ordinal = this.nextOutputOrdinal++;
+      const dataKey = `merged:${ordinal}:${ref.dataKey}`;
+      if (ref.kind === 'text') {
+        this.textBuffers.set(dataKey, [...(other.textBuffers.get(ref.dataKey) ?? [])]);
+      } else if (ref.kind === 'reasoning') {
+        this.reasoningBuffers.set(dataKey, [...(other.reasoningBuffers.get(ref.dataKey) ?? [])]);
+        const metadata = other.reasoningMetadata.get(ref.dataKey);
+        if (metadata) this.reasoningMetadata.set(dataKey, { ...metadata });
+      } else if (ref.kind === 'compaction') {
+        const compaction = other.compactions.get(ref.dataKey);
+        if (compaction) this.compactions.set(dataKey, compaction);
+      } else if (ref.kind === 'provider_state') {
+        const state = other.providerStates.get(ref.dataKey);
+        if (state) this.providerStates.set(dataKey, state);
+      } else {
+        const buffer = other.toolCallBuffers.get(ref.dataKey);
+        if (buffer) {
+          this.toolCallBuffers.set(dataKey, {
+            ...buffer,
+            argumentChunks: [...buffer.argumentChunks],
+          });
+        }
       }
-      this.textBuffers.get(itemId)!.push(...chunks);
+      const key = `${ref.key}:merged:${ordinal}`;
+      this.orderedOutputs.set(key, {
+        ...ref,
+        key,
+        dataKey,
+        outputIndex: undefined,
+        contentIndex: undefined,
+        ordinal,
+      });
     }
     this.totalTextDeltas += other.totalTextDeltas;
-
-    // Merge reasoning buffers
-    for (const [itemId, chunks] of other.reasoningBuffers) {
-      if (!this.reasoningBuffers.has(itemId)) {
-        this.reasoningBuffers.set(itemId, []);
-      }
-      this.reasoningBuffers.get(itemId)!.push(...chunks);
+    this.completedToolCalls.push(...other.completedToolCalls);
+    for (const [toolCallId, result] of other.toolResults) {
+      this.toolResults.set(toolCallId, result);
     }
 
     // Merge statistics
     this.totalChunks += other.totalChunks;
+    this.totalToolCalls += other.totalToolCalls;
 
     // Propagate provider status from the last iteration that reported one
     if (other.providerStatus !== 'incomplete') {
@@ -303,6 +585,9 @@ export class StreamState {
     }
     if (other.stopDetails) {
       this.stopDetails = other.stopDetails;
+    }
+    if (other.continuationToken) {
+      this.continuationToken = other.continuationToken;
     }
   }
 
@@ -362,6 +647,11 @@ export class StreamState {
     }
     if (usage.processing_mode) this.usage.processing_mode = usage.processing_mode;
     if (usage.service_tier) this.usage.service_tier = usage.service_tier;
+    if (usage.cost_usd_ticks !== undefined) {
+      this.usage.cost_usd_ticks = accumulate
+        ? (this.usage.cost_usd_ticks ?? 0) + usage.cost_usd_ticks
+        : usage.cost_usd_ticks;
+    }
   }
 
   /**
@@ -430,12 +720,18 @@ export class StreamState {
   clear(): void {
     this.textBuffers.clear();
     this.reasoningBuffers.clear();
+    this.reasoningMetadata.clear();
+    this.compactions.clear();
+    this.providerStates.clear();
+    this.orderedOutputs.clear();
+    this.nextOutputOrdinal = 0;
     this.toolCallBuffers.clear();
     this.completedToolCalls = [];
     this.toolResults.clear();
     this.providerStatus = 'incomplete';
     this.stopReason = undefined;
     this.stopDetails = undefined;
+    this.continuationToken = undefined;
   }
 
   /**
@@ -448,6 +744,11 @@ export class StreamState {
       createdAt: this.createdAt,
       textBuffers: new Map(this.textBuffers),
       reasoningBuffers: new Map(this.reasoningBuffers),
+      reasoningMetadata: new Map(this.reasoningMetadata),
+      compactions: new Map(this.compactions),
+      providerStates: new Map(this.providerStates),
+      orderedOutputs: new Map(this.orderedOutputs),
+      nextOutputOrdinal: this.nextOutputOrdinal,
       toolCallBuffers: new Map(this.toolCallBuffers),
       completedToolCalls: [...this.completedToolCalls],
       toolResults: new Map(this.toolResults),
@@ -457,6 +758,7 @@ export class StreamState {
       providerStatus: this.providerStatus,
       stopReason: this.stopReason,
       stopDetails: this.stopDetails,
+      continuationToken: this.continuationToken,
       startTime: this.startTime,
       endTime: this.endTime,
     };

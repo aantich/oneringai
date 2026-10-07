@@ -30,10 +30,16 @@ export type PromptCachingMode = 'unsupported' | 'implicit' | 'request_controlled
 
 export type NativeToolCapability =
   | 'web_search'
+  | 'x_search'
   | 'web_fetch'
   | 'code_execution'
   | 'file_search'
-  | 'remote_mcp';
+  | 'remote_mcp'
+  | 'computer_use'
+  | 'hosted_shell'
+  | 'apply_patch'
+  | 'tool_search'
+  | 'image_generation';
 
 export interface RemoteMcpDescriptor {
   name: string;
@@ -71,10 +77,16 @@ export interface FileSearchOptions extends Record<string, unknown> {
 
 export type NativeToolRequest =
   | { capability: 'web_search'; options?: Record<string, unknown> }
+  | { capability: 'x_search'; options?: Record<string, unknown> }
   | { capability: 'web_fetch'; options?: Record<string, unknown> }
   | { capability: 'code_execution'; options?: Record<string, unknown> }
   | { capability: 'file_search'; options: FileSearchOptions }
-  | { capability: 'remote_mcp'; server: RemoteMcpDescriptor; options?: Record<string, unknown> };
+  | { capability: 'remote_mcp'; server: RemoteMcpDescriptor; options?: Record<string, unknown> }
+  | { capability: 'computer_use'; options?: Record<string, unknown> }
+  | { capability: 'hosted_shell'; options?: Record<string, unknown> }
+  | { capability: 'apply_patch'; options?: Record<string, unknown> }
+  | { capability: 'tool_search'; options?: Record<string, unknown> }
+  | { capability: 'image_generation'; options?: Record<string, unknown> };
 
 export interface AdvancedTextCapabilities {
   /** Whether normalized reasoning must be replayed in stateless conversation history. */

@@ -36,9 +36,17 @@ const ONERING_REASONING_EFFORTS = new Set<RuntimeReasoningEffort>([
 ]);
 const DEFAULT_MODEL_REASONING_CONTROLS: Readonly<Record<string, NormalizedReasoningControls>> = {
   'gpt-6-astra': reasoningControls(['low', 'medium', 'high', 'xhigh', 'max']),
-  'gpt-5.6-sol': reasoningControls(['low', 'medium', 'high', 'xhigh', 'max']),
-  'gpt-5.6-terra': reasoningControls(['low', 'medium', 'high', 'xhigh', 'max']),
-  'gpt-5.6-luna': reasoningControls(['low', 'medium', 'high', 'xhigh', 'max']),
+  'gpt-6.1-sol': reasoningControls(['low', 'medium', 'high', 'xhigh', 'max']),
+  'gpt-6-sol': reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max']),
+  'gpt-6-luna': reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max']),
+  'gpt-5.6-sol': reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max']),
+  'gpt-5.6-terra': reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max']),
+  'gpt-5.6-luna': reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max']),
+  'gpt-5.6-cyber': reasoningControls(['none', 'low', 'medium', 'high', 'xhigh', 'max']),
+  'claude-opus-5-5': reasoningControls(['low', 'medium', 'high', 'xhigh', 'max']),
+  'claude-sonnet-5-5': reasoningControls(['low', 'medium', 'high', 'xhigh', 'max']),
+  'gemini-3.8-flash': reasoningControls(['low', 'medium', 'high']),
+  'grok-4.7': reasoningControls(['low', 'medium', 'high', 'xhigh']),
   'gpt-5.3-codex': reasoningControls(['low', 'medium', 'high', 'xhigh']),
 };
 

@@ -59,6 +59,10 @@ const REASONING_EFFORTS = new Set<ModelReasoningEffort>([
   'ultra',
 ]);
 const MODEL_REASONING_EFFORTS: Readonly<Record<string, ReadonlySet<ModelReasoningEffort>>> = {
+  'gpt-6-astra': new Set(['low', 'medium', 'high', 'xhigh', 'max', 'ultra']),
+  'gpt-6.1-sol': new Set(['low', 'medium', 'high', 'xhigh', 'max', 'ultra']),
+  'gpt-6-sol': new Set(['low', 'medium', 'high', 'xhigh', 'max', 'ultra']),
+  'gpt-6-luna': new Set(['low', 'medium', 'high', 'xhigh', 'max']),
   'gpt-5.6-sol': new Set(['low', 'medium', 'high', 'xhigh', 'max', 'ultra']),
   'gpt-5.6-terra': new Set(['low', 'medium', 'high', 'xhigh', 'max', 'ultra']),
   'gpt-5.6-luna': new Set(['low', 'medium', 'high', 'xhigh', 'max']),

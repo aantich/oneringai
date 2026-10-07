@@ -37,8 +37,8 @@ describe('ImageGeneration', () => {
   });
 
   it.each([
-    [Vendor.OpenAI, 'gpt-image-2'],
-    [Vendor.Google, 'gemini-3.1-flash-image'],
+    [Vendor.OpenAI, 'gpt-image-2.5-sunburst'],
+    [Vendor.Google, 'gemini-nano-banana-2.1'],
     [Vendor.Grok, 'grok-imagine-image-2.0'],
   ])('uses the current default generation model for %s', async (vendor, model) => {
     Connector.create({ name: `image-${vendor}`, vendor, auth: { type: 'api_key', apiKey: 'test' } });
@@ -60,8 +60,8 @@ describe('ImageGeneration', () => {
   });
 
   it.each([
-    [Vendor.OpenAI, 'gpt-image-2'],
-    [Vendor.Google, 'gemini-3.1-flash-image'],
+    [Vendor.OpenAI, 'gpt-image-2.5-sunburst'],
+    [Vendor.Google, 'gemini-nano-banana-2.1'],
     [Vendor.Grok, 'grok-imagine-image-2.0'],
   ])('uses the current default edit model for %s', async (vendor, model) => {
     Connector.create({ name: `edit-${vendor}`, vendor, auth: { type: 'api_key', apiKey: 'test' } });

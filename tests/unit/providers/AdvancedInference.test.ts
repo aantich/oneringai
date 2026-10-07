@@ -8,6 +8,7 @@ import { OpenAIResponsesConverter } from '@/infrastructure/providers/openai/Open
 import { OpenAITextProvider } from '@/infrastructure/providers/openai/OpenAITextProvider.js';
 import { GoogleConverter } from '@/infrastructure/providers/google/GoogleConverter.js';
 import { GoogleTextProvider } from '@/infrastructure/providers/google/GoogleTextProvider.js';
+import { GrokTextProvider } from '@/infrastructure/providers/grok/GrokTextProvider.js';
 import { calculateCost } from '@/domain/entities/Model.js';
 import {
   ProviderAmbiguousOperationError,
@@ -52,7 +53,7 @@ describe('advanced inference provider contracts', () => {
 
     expect(request.cache_control).toEqual({ type: 'ephemeral', ttl: '1h' });
     expect(request.tools).toContainEqual(
-      expect.objectContaining({ type: 'web_search_20260209', name: 'web_search', max_uses: 2 }),
+      expect.objectContaining({ type: 'web_search_20260318', name: 'web_search', max_uses: 2 }),
     );
     expect(request.tools).toContainEqual(
       expect.objectContaining({ type: 'mcp_toolset', mcp_server_name: 'crm' }),
@@ -147,6 +148,7 @@ describe('advanced inference provider contracts', () => {
     expect(
       converter.convertNativeTools([
         { capability: 'web_search' },
+        { capability: 'hosted_shell' },
         {
           capability: 'remote_mcp',
           server: { name: 'crm', url: 'https://mcp.example.com', allowedTools: ['lookup'] },
@@ -154,6 +156,7 @@ describe('advanced inference provider contracts', () => {
       ]),
     ).toEqual([
       { type: 'web_search' },
+      { type: 'shell', environment: { type: 'container_auto' } },
       expect.objectContaining({
         type: 'mcp',
         server_label: 'crm',
@@ -183,6 +186,120 @@ describe('advanced inference provider contracts', () => {
     expect(response.native_tool_events).toEqual([
       { capability: 'web_search', id: 'ws_1', status: 'completed' },
     ]);
+  });
+
+  it('normalizes current OpenAI and xAI native tool calls with host-execution payloads', () => {
+    const converter = new OpenAIResponsesConverter();
+    const output = [
+      {
+        type: 'computer_call', id: 'computer_1', call_id: 'call_computer',
+        status: 'completed', action: { type: 'screenshot' }, pending_safety_checks: [],
+      },
+      {
+        type: 'shell_call', id: 'shell_1', call_id: 'call_shell', status: 'completed',
+        action: { commands: ['pwd'], timeout_ms: null, max_output_length: null },
+      },
+      {
+        type: 'apply_patch_call', id: 'patch_1', call_id: 'call_patch', status: 'completed',
+        operation: { type: 'delete_file', path: 'tmp.txt' },
+      },
+      {
+        type: 'tool_search_call', id: 'search_1', call_id: 'call_search',
+        status: 'completed', execution: 'client', arguments: { query: 'crm' },
+      },
+      {
+        type: 'image_generation_call', id: 'image_1', status: 'completed',
+        result: 'base64-image',
+      },
+      { type: 'x_search_call', id: 'x_1', status: 'completed', query: 'release' },
+      { type: 'code_execution_call', id: 'code_1', status: 'completed', code: '1 + 1' },
+    ];
+    const response = converter.convertResponse({
+      id: 'resp_native', object: 'response', created_at: 1, status: 'completed',
+      model: 'gpt-6-astra', output_text: '', output,
+      usage: { input_tokens: 1, output_tokens: 1, total_tokens: 2 },
+    } as any);
+
+    expect(response.usage.native_tool_calls).toEqual({
+      computer_use: 1,
+      hosted_shell: 1,
+      apply_patch: 1,
+      tool_search: 1,
+      image_generation: 1,
+      x_search: 1,
+      code_execution: 1,
+    });
+    expect(response.native_tool_events).toContainEqual(expect.objectContaining({
+      capability: 'computer_use',
+      call_id: 'call_computer',
+      phase: 'call',
+      details: output[0],
+    }));
+    expect(response.native_tool_events).toContainEqual(expect.objectContaining({
+      capability: 'apply_patch',
+      call_id: 'call_patch',
+      phase: 'call',
+      details: output[2],
+    }));
+  });
+
+  it('round-trips typed OpenAI host-executed native tool outputs', () => {
+    const converter = new OpenAIResponsesConverter();
+    const input = [
+      {
+        type: 'computer_call_output', call_id: 'call_computer',
+        output: { type: 'computer_screenshot', file_id: 'file_screenshot' },
+        acknowledged_safety_checks: [{ id: 'safety_1' }],
+      },
+      {
+        type: 'shell_call_output', call_id: 'call_shell', status: 'completed',
+        output: [{ stdout: '/tmp\n', stderr: '', outcome: { type: 'exit', exit_code: 0 } }],
+      },
+      {
+        type: 'apply_patch_call_output', call_id: 'call_patch',
+        status: 'completed', output: 'Done',
+      },
+      {
+        type: 'tool_search_output', call_id: 'call_search', execution: 'client',
+        status: 'completed', tools: [{ type: 'function', name: 'lookup', parameters: {} }],
+      },
+    ] as any;
+    expect(converter.convertInput(input).input).toEqual(input);
+
+    const response = converter.convertResponse({
+      id: 'resp_outputs', object: 'response', created_at: 1, status: 'completed',
+      model: 'gpt-6-astra', output_text: '', output: [
+        { ...input[1], id: 'shell_output_1' },
+        { ...input[2], id: 'patch_output_1' },
+        { ...input[3], id: 'search_output_1' },
+      ],
+      usage: { input_tokens: 1, output_tokens: 1, total_tokens: 2 },
+    } as any);
+    expect(response.usage.native_tool_calls).toBeUndefined();
+    expect(response.native_tool_events).toContainEqual(expect.objectContaining({
+      capability: 'hosted_shell', call_id: 'call_shell', phase: 'output',
+      details: expect.objectContaining(input[1]),
+    }));
+    expect(response.native_tool_events).toContainEqual(expect.objectContaining({
+      capability: 'tool_search', call_id: 'call_search', phase: 'output',
+      details: expect.objectContaining(input[3]),
+    }));
+  });
+
+  it('maps xAI-native tools without leaking OpenAI-only tools', () => {
+    const converter = new OpenAIResponsesConverter();
+    expect(converter.convertNativeTools([
+      { capability: 'web_search' },
+      { capability: 'x_search' },
+      { capability: 'code_execution' },
+    ], 'grok')).toEqual([
+      { type: 'web_search' },
+      { type: 'x_search' },
+      { type: 'code_execution' },
+    ]);
+    expect(() => converter.convertNativeTools([
+      { capability: 'computer_use' },
+    ], 'grok')).toThrow(/xAI/);
   });
 
   it('resolves remote MCP authentication only through a named Connector', async () => {
@@ -349,6 +466,10 @@ describe('advanced inference provider contracts', () => {
     const anthropic = new AnthropicTextProvider({ apiKey: 'test' });
     const openai = new OpenAITextProvider({ apiKey: 'test' });
     const google = new GoogleTextProvider({ apiKey: 'test' });
+    const grok = new GrokTextProvider('grok', {
+      apiKey: 'test',
+      baseURL: 'https://api.x.ai/v1',
+    });
     expect(anthropic.getAdvancedCapabilities('claude-opus-4-6').batch.supported).toBe(true);
     expect(anthropic.getAdvancedCapabilities('claude-3-7-sonnet-20250219').structuredOutput.jsonSchema).toBe('prompt');
     expect(openai.getAdvancedCapabilities('gpt-6-astra').nativeTools).toContain('remote_mcp');
@@ -360,6 +481,12 @@ describe('advanced inference provider contracts', () => {
     });
     expect(openai.getAdvancedCapabilities('gpt-5.4').responsesExtensions?.asyncToolCalling).toBe(false);
     expect(openai.getAdvancedCapabilities('gpt-5.4').nativeTools).toContain('remote_mcp');
+    expect(openai.getAdvancedCapabilities('gpt-4.1').nativeTools).not.toContain('hosted_shell');
+    expect(openai.getAdvancedCapabilities('gpt-4.1').nativeTools).not.toContain('computer_use');
+    expect(openai.getAdvancedCapabilities('gpt-5.2').nativeTools).toContain('apply_patch');
+    expect(openai.getAdvancedCapabilities('gpt-5.2').nativeTools).not.toContain('tool_search');
+    expect(openai.getAdvancedCapabilities('gpt-5.4').nativeTools).toContain('computer_use');
+    expect(openai.getAdvancedCapabilities('gpt-5.4').nativeTools).toContain('tool_search');
     expect(openai.getAdvancedCapabilities('gpt-5.4').nativeToolOptions.remoteMcpApproval).toBe(false);
     expect(google.getAdvancedCapabilities('gemini-2.5-pro').nativeTools).toContain('web_search');
     expect(google.getAdvancedCapabilities('gemini-2.5-pro').structuredOutput.nativeWithTools).toBe(false);
@@ -370,6 +497,13 @@ describe('advanced inference provider contracts', () => {
     expect(anthropic.getAdvancedCapabilities('unknown-claude').batch.supported).toBe(false);
     expect(openai.getAdvancedCapabilities('unknown-openai').promptCaching.mode).toBe('unsupported');
     expect(google.getAdvancedCapabilities('unknown-gemini').batch.supported).toBe(false);
+    expect(grok.getAdvancedCapabilities('grok-4.7').nativeTools).toEqual([
+      'web_search',
+      'x_search',
+      'code_execution',
+    ]);
+    expect(grok.getAdvancedCapabilities('grok-4.6').nativeTools).toEqual([]);
+    expect(grok.getAdvancedCapabilities('unknown-grok').nativeTools).toEqual([]);
   });
 
   it('drops unsupported non-strict caching and fails strict caching before execution', () => {

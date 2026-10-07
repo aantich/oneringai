@@ -184,22 +184,21 @@ export class DefaultCompactionStrategy implements ICompactionStrategy {
       if (!item) continue;
 
       // Check if this message is part of a tool pair
-      const toolUseId = this.getToolUseId(item);
-      if (toolUseId) {
-        const pairIndices = toolPairs.get(toolUseId);
-        if (pairIndices && pairIndices.length >= 2) {
-          // Remove entire pair
-          for (const pairIdx of pairIndices) {
-            if (!indicesToRemove.includes(pairIdx)) {
-              indicesToRemove.push(pairIdx);
-              const pairItem = conversation[pairIdx];
-              if (pairItem) {
-                tokensFreed += context.estimateTokens(pairItem);
-              }
+      const pairComponent = this.getToolPairComponent(idx, conversation, toolPairs);
+      if (pairComponent) {
+        // Remove the entire connected component. A single assistant message
+        // may contain several tool calls whose results live in separate
+        // messages; removing only the first pair would orphan the others.
+        for (const pairIdx of pairComponent) {
+          if (!indicesToRemove.includes(pairIdx)) {
+            indicesToRemove.push(pairIdx);
+            const pairItem = conversation[pairIdx];
+            if (pairItem) {
+              tokensFreed += context.estimateTokens(pairItem);
             }
           }
-          continue;
         }
+        continue;
       }
 
       // Not part of a pair, remove single message
@@ -236,14 +235,14 @@ export class DefaultCompactionStrategy implements ICompactionStrategy {
       if (!content) continue;
 
       for (const c of content) {
-        if (c.type === 'tool_use') {
+        if (c.type === 'tool_use' || c.type === 'custom_tool_use') {
           const toolUseId = c.id as string;
           if (toolUseId) {
             const existing = pairs.get(toolUseId) ?? [];
             existing.push(i);
             pairs.set(toolUseId, existing);
           }
-        } else if (c.type === 'tool_result') {
+        } else if (c.type === 'tool_result' || c.type === 'custom_tool_result') {
           const toolUseId = c.tool_use_id as string;
           if (toolUseId) {
             const existing = pairs.get(toolUseId) ?? [];
@@ -257,24 +256,54 @@ export class DefaultCompactionStrategy implements ICompactionStrategy {
     return pairs;
   }
 
-  /**
-   * Get tool_use_id from an item (if it contains tool_use or tool_result).
-   */
-  private getToolUseId(item: unknown): string | null {
+  /** Get every function/custom tool ID referenced by one message. */
+  private getToolUseIds(item: unknown): string[] {
     const msg = item as Record<string, unknown>;
-    if (msg?.type !== 'message') return null;
+    if (msg?.type !== 'message') return [];
 
     const content = msg.content as Array<Record<string, unknown>> | undefined;
-    if (!content) return null;
+    if (!content) return [];
 
+    const ids: string[] = [];
     for (const c of content) {
-      if (c.type === 'tool_use') {
-        return c.id as string;
-      } else if (c.type === 'tool_result') {
-        return c.tool_use_id as string;
+      if (c.type === 'tool_use' || c.type === 'custom_tool_use') {
+        if (typeof c.id === 'string') ids.push(c.id);
+      } else if (c.type === 'tool_result' || c.type === 'custom_tool_result') {
+        if (typeof c.tool_use_id === 'string') ids.push(c.tool_use_id);
+      }
+    }
+    return ids;
+  }
+
+  /**
+   * Return every message connected to a complete tool pair at `startIndex`.
+   * Returns null for non-tool messages or components containing an orphan.
+   */
+  private getToolPairComponent(
+    startIndex: number,
+    conversation: ReadonlyArray<unknown>,
+    toolPairs: Map<string, number[]>,
+  ): number[] | null {
+    const pending = [startIndex];
+    const component = new Set<number>();
+    let containsTool = false;
+
+    while (pending.length > 0) {
+      const index = pending.pop()!;
+      if (component.has(index)) continue;
+      component.add(index);
+      const item = conversation[index];
+      if (!item) continue;
+      for (const id of this.getToolUseIds(item)) {
+        containsTool = true;
+        const pairIndices = toolPairs.get(id);
+        if (!pairIndices || pairIndices.length < 2) return null;
+        for (const pairIndex of pairIndices) {
+          if (!component.has(pairIndex)) pending.push(pairIndex);
+        }
       }
     }
 
-    return null;
+    return containsTool ? [...component] : null;
   }
 }

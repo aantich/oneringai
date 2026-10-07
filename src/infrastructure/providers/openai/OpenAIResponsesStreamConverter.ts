@@ -15,6 +15,7 @@
  */
 
 import * as ResponsesAPI from 'openai/resources/responses/responses.js';
+import { openAINativeToolCapabilityForOutputType } from './OpenAIResponsesConverter.js';
 import { StreamEvent, StreamEventType, ReasoningDeltaEvent, ReasoningDoneEvent } from '../../../domain/entities/StreamEvent.js';
 
 type ResponseStreamEvent = ResponsesAPI.ResponseStreamEvent;
@@ -126,6 +127,8 @@ export class OpenAIResponsesStreamConverter {
               type: StreamEventType.TOOL_CALL_START,
               response_id: responseId,
               item_id: `item_${addedEvent.output_index}`,
+              output_index: addedEvent.output_index,
+              sequence_number: sequenceNumber++,
               tool_call_id: toolCallId,
               tool_name: toolName,
               tool_type: 'function',
@@ -151,6 +154,8 @@ export class OpenAIResponsesStreamConverter {
               type: StreamEventType.TOOL_CALL_START,
               response_id: responseId,
               item_id: customCall.id ?? `item_${addedEvent.output_index}`,
+              output_index: addedEvent.output_index,
+              sequence_number: sequenceNumber++,
               tool_call_id: customCall.call_id,
               tool_name: customCall.name,
               tool_type: 'custom',
@@ -249,6 +254,9 @@ export class OpenAIResponsesStreamConverter {
             type: StreamEventType.REASONING_DELTA,
             response_id: responseId,
             item_id: reasoningEvent.item_id || `reasoning_${responseId}`,
+            ...(reasoningEvent.output_index !== undefined
+              ? { output_index: reasoningEvent.output_index }
+              : {}),
             delta: reasoningEvent.delta || '',
             sequence_number: sequenceNumber++,
           } as ReasoningDeltaEvent;
@@ -256,19 +264,16 @@ export class OpenAIResponsesStreamConverter {
         }
 
         case 'response.reasoning_text.done': {
-          // Full reasoning text completed — emit reasoning done
+          // The text part is complete, but the corresponding output item may
+          // still add replay metadata such as encrypted_content. Keep the
+          // finalized text and emit one terminal reasoning event when the item
+          // itself is done.
           const doneEvent = event as ResponsesAPI.ResponseReasoningTextDoneEvent;
           const outputIdx = doneEvent.output_index.toString();
           const rBuf = this.reasoningBuffers.get(outputIdx);
-          const thinkingText = rBuf ? rBuf.join('') : doneEvent.text || '';
-          this.reasoningDoneEmitted.add(outputIdx);
-
-          yield {
-            type: StreamEventType.REASONING_DONE,
-            response_id: responseId,
-            item_id: doneEvent.item_id || `reasoning_${responseId}`,
-            thinking: thinkingText,
-          } as ReasoningDoneEvent;
+          if (!rBuf || rBuf.length === 0) {
+            this.reasoningBuffers.set(outputIdx, [doneEvent.text || '']);
+          }
           break;
         }
 
@@ -276,18 +281,27 @@ export class OpenAIResponsesStreamConverter {
           const doneEvent = event as ResponsesAPI.ResponseOutputItemDoneEvent;
           const item = doneEvent.item;
 
-          // If reasoning item is done, emit reasoning done (only if not already emitted by reasoning_text.done)
+          // The completed output item is authoritative for replay metadata.
+          // Emit exactly one terminal reasoning event for this output index.
           if (item.type === 'reasoning') {
             const outputIdx = doneEvent.output_index.toString();
+            const encryptedContent = typeof (item as any).encrypted_content === 'string'
+              ? (item as any).encrypted_content
+              : undefined;
             if (!this.reasoningDoneEmitted.has(outputIdx)) {
               const rBuf = this.reasoningBuffers.get(outputIdx);
               const thinkingText = rBuf ? rBuf.join('') : '';
+              this.reasoningDoneEmitted.add(outputIdx);
 
               yield {
                 type: StreamEventType.REASONING_DONE,
                 response_id: responseId,
                 item_id: (item as any).id || `reasoning_${responseId}`,
+                output_index: doneEvent.output_index,
+                sequence_number: sequenceNumber++,
                 thinking: thinkingText,
+                ...(encryptedContent ? { encrypted_content: encryptedContent } : {}),
+                ...(typeof (item as any).effort === 'string' ? { effort: (item as any).effort } : {}),
               } as ReasoningDoneEvent;
             }
           }
@@ -345,16 +359,7 @@ export class OpenAIResponsesStreamConverter {
           const response = completedEvent.response;
           const nativeToolCalls: Record<string, number> = {};
           for (const item of response.output ?? []) {
-            const capability =
-              item.type === 'web_search_call'
-                ? 'web_search'
-                : item.type === 'file_search_call'
-                  ? 'file_search'
-                  : item.type === 'code_interpreter_call'
-                    ? 'code_execution'
-                    : item.type === 'mcp_call'
-                      ? 'remote_mcp'
-                      : undefined;
+            const capability = openAINativeToolCapabilityForOutputType(item.type);
             if (capability) nativeToolCalls[capability] = (nativeToolCalls[capability] ?? 0) + 1;
           }
 
@@ -386,6 +391,9 @@ export class OpenAIResponsesStreamConverter {
                 native_tool_calls: nativeToolCalls,
               }),
               ...(response.service_tier ? { service_tier: response.service_tier } : {}),
+              ...(Number.isFinite(Number((response.usage as any)?.cost_in_usd_ticks)) && {
+                cost_usd_ticks: Number((response.usage as any).cost_in_usd_ticks),
+              }),
             },
             iterations: 1,
           };
@@ -403,6 +411,9 @@ export class OpenAIResponsesStreamConverter {
               output_tokens: response.usage?.output_tokens || 0,
               total_tokens: response.usage?.total_tokens || 0,
               ...(response.service_tier ? { service_tier: response.service_tier } : {}),
+              ...(Number.isFinite(Number((response.usage as any)?.cost_in_usd_ticks)) && {
+                cost_usd_ticks: Number((response.usage as any).cost_in_usd_ticks),
+              }),
             },
             iterations: 1,
             ...(response.incomplete_details?.reason

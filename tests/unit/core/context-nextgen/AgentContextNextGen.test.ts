@@ -138,6 +138,92 @@ describe('AgentContextNextGen', () => {
       expect(currentInput).toHaveLength(0);
     });
 
+    it('preserves provider reasoning order between assistant messages', () => {
+      ctx.addUserMessage('Continue the response');
+      ctx.addAssistantResponse([
+        {
+          type: 'message',
+          id: 'msg_before',
+          role: MessageRole.ASSISTANT,
+          content: [{ type: ContentType.OUTPUT_TEXT, text: 'Before reasoning' }],
+        },
+        {
+          type: 'reasoning',
+          id: 'reasoning_1',
+          summary: 'Provider summary',
+          encrypted_content: 'opaque-reasoning',
+        },
+        {
+          type: 'message',
+          id: 'msg_after',
+          role: MessageRole.ASSISTANT,
+          content: [{ type: ContentType.OUTPUT_TEXT, text: 'After reasoning' }],
+        },
+      ]);
+
+      expect(ctx.getConversation().slice(1).map((item) => item.type)).toEqual([
+        'message',
+        'reasoning',
+        'message',
+      ]);
+      expect(ctx.lastThinking).toBe('Provider summary');
+    });
+
+    it('counts opaque provider replay payloads toward the token budget', () => {
+      const estimate = (item: InputItem): number =>
+        (ctx as unknown as { estimateItemTokens(value: InputItem): number }).estimateItemTokens(item);
+      const opaque = 'opaque '.repeat(4_000);
+
+      expect(estimate({
+        type: 'reasoning',
+        id: 'reasoning_large',
+        encrypted_content: opaque,
+      })).toBeGreaterThan(2_000);
+      expect(estimate({
+        type: 'shell_call_output',
+        call_id: 'shell_large',
+        status: 'completed',
+        output: [{ stdout: opaque, stderr: '', outcome: { type: 'exit', exit_code: 0 } }],
+      })).toBeGreaterThan(2_000);
+      expect(estimate({
+        type: 'message',
+        role: MessageRole.ASSISTANT,
+        content: [{
+          type: ContentType.TOOL_USE,
+          id: 'call_large',
+          name: 'shell',
+          arguments: JSON.stringify({ command: opaque }),
+        }],
+      })).toBeGreaterThan(2_000);
+    });
+
+    it('retains paired custom-tool calls and results during preparation', async () => {
+      ctx.addUserMessage('Use the custom shell');
+      ctx.addAssistantResponse([{
+        type: 'message',
+        role: MessageRole.ASSISTANT,
+        content: [{
+          type: ContentType.CUSTOM_TOOL_USE,
+          id: 'custom_1',
+          name: 'shell',
+          input: 'run tests',
+          async: true,
+        }],
+      }]);
+      ctx.addUserMessage([{
+        type: ContentType.CUSTOM_TOOL_RESULT,
+        tool_use_id: 'custom_1',
+        content: 'passed',
+      }]);
+
+      const prepared = await ctx.prepare();
+      const content = prepared.input.flatMap((item) => item.type === 'message' ? item.content : []);
+      expect(content).toEqual(expect.arrayContaining([
+        expect.objectContaining({ type: ContentType.CUSTOM_TOOL_USE, id: 'custom_1' }),
+        expect.objectContaining({ type: ContentType.CUSTOM_TOOL_RESULT, tool_use_id: 'custom_1' }),
+      ]));
+    });
+
     it('should add tool results', () => {
       ctx.addToolResults([{
         tool_use_id: 'tool_123',
@@ -653,6 +739,46 @@ describe('AgentContextNextGen', () => {
       smallCtx.destroy();
     });
 
+    it('should safely truncate structured custom-tool results', async () => {
+      const smallCtx = AgentContextNextGen.create({
+        model: 'gpt-4',
+        maxContextTokens: 500,
+        responseReserve: 100,
+        strategy: 'default',
+        features: { workingMemory: false, inContextMemory: false },
+      });
+      smallCtx.addAssistantResponse([{
+        type: 'message',
+        role: MessageRole.ASSISTANT,
+        content: [{
+          type: ContentType.CUSTOM_TOOL_USE,
+          id: 'custom_large',
+          name: 'shell',
+          input: 'produce output',
+        }],
+      }]);
+      const structured: Record<string, unknown> = { payload: 'structured output '.repeat(400) };
+      structured.self = structured;
+      smallCtx.addUserMessage([{
+        type: ContentType.CUSTOM_TOOL_RESULT,
+        tool_use_id: 'custom_large',
+        content: structured,
+      }]);
+      const oversizedListener = vi.fn();
+      smallCtx.on('input:oversized', oversizedListener);
+
+      const { input } = await smallCtx.prepare();
+
+      expect(oversizedListener).toHaveBeenCalled();
+      expect(input.flatMap((item) => item.type === 'message' ? item.content : []))
+        .toContainEqual(expect.objectContaining({
+          type: ContentType.CUSTOM_TOOL_RESULT,
+          tool_use_id: 'custom_large',
+          content: expect.stringContaining('[TRUNCATED:'),
+        }));
+      smallCtx.destroy();
+    });
+
     it('should emit budget warnings', async () => {
       // Disable auto-plugins to allow small context for testing budget warnings
       const smallCtx = AgentContextNextGen.create({
@@ -835,7 +961,7 @@ describe('AgentContextNextGen', () => {
       await expect(ctx.prepare()).rejects.toThrow('destroyed');
     });
 
-    it('should destroy plugins on context destroy', () => {
+    it('should destroy plugins on context destroy', async () => {
       // Use the auto-registered memory plugin
       const memoryPlugin = ctx.memory;
       expect(memoryPlugin).not.toBeNull();
@@ -843,7 +969,7 @@ describe('AgentContextNextGen', () => {
       ctx.destroy();
 
       // Plugin should be destroyed (can't store new values)
-      expect(() => memoryPlugin!.store('key', 'desc', {})).rejects.toThrow();
+      await expect(memoryPlugin!.store('key', 'desc', {})).rejects.toThrow();
     });
   });
 

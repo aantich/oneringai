@@ -316,6 +316,47 @@ describe('GoogleTextProvider', () => {
       });
     });
 
+    it('maps Gemini 3.8 file search, computer use, continuation, and usage', async () => {
+      mockInteractionsCreate.mockResolvedValue({
+        id: 'int_native_tools',
+        model: 'gemini-3.8-flash',
+        status: 'completed',
+        continuation_token: 'continue_123',
+        steps: [
+          { type: 'file_search_call', id: 'search_1', status: 'completed' },
+          { type: 'model_output', content: [{ type: 'text', text: 'Found it' }] },
+        ],
+        usage: { input_tokens: 3, output_tokens: 2, total_tokens: 5 },
+      });
+
+      const response = await provider.generate({
+        model: 'gemini-3.8-flash',
+        input: 'Find and open the relevant file',
+        continuation_token: 'continue_previous',
+        native_tools: [
+          {
+            capability: 'file_search',
+            options: { vectorStoreIds: ['fileSearchStores/contract-store'] },
+          },
+          { capability: 'computer_use', options: { environment: 'browser' } },
+        ],
+        data_handling: { allowProviderTools: true },
+      });
+
+      expect(mockInteractionsCreate).toHaveBeenCalledWith(expect.objectContaining({
+        continuation_token: 'continue_previous',
+        tools: [
+          {
+            type: 'file_search',
+            file_search_store_names: ['fileSearchStores/contract-store'],
+          },
+          { type: 'computer_use', environment: 'browser' },
+        ],
+      }));
+      expect(response.continuation_token).toBe('continue_123');
+      expect(response.usage.native_tool_calls).toEqual({ file_search: 1 });
+    });
+
     it('preserves the order of text and tool calls in stateless Interactions history', async () => {
       mockInteractionsCreate.mockResolvedValue({
         id: 'int_ordered',
@@ -341,6 +382,49 @@ describe('GoogleTextProvider', () => {
         { type: 'model_output', content: [{ type: 'text', text: 'Before tool' }] },
         { type: 'function_call', id: 'call_1', name: 'lookup', arguments: { q: 'x' } },
         { type: 'model_output', content: [{ type: 'text', text: 'After tool' }] },
+      ]);
+    });
+
+    it('replays a signed Interactions thought exactly once before its function call', async () => {
+      mockInteractionsCreate.mockResolvedValueOnce({
+        id: 'int_signed_response',
+        model: 'gemini-3.8-flash',
+        status: 'requires_action',
+        steps: [
+          {
+            type: 'thought',
+            signature: 'signed-thought-state',
+            summary: [{ type: 'text', text: 'Checking' }],
+          },
+          { type: 'model_output', content: [{ type: 'text', text: 'Working' }] },
+          { type: 'function_call', id: 'call_1', name: 'lookup', arguments: { q: 'x' } },
+        ],
+      });
+
+      const firstResponse = await provider.generate({
+        model: 'gemini-3.8-flash',
+        input: 'Use the tool',
+        tools: [{
+          type: 'function',
+          function: { name: 'lookup', description: 'Lookup', parameters: { type: 'object' } },
+        }],
+      });
+
+      mockInteractionsCreate.mockResolvedValueOnce({
+        id: 'int_signed_continuation',
+        model: 'gemini-3.8-flash',
+        status: 'completed',
+        steps: [{ type: 'model_output', content: [{ type: 'text', text: 'Done' }] }],
+      });
+      await provider.generate({
+        model: 'gemini-3.8-flash',
+        input: firstResponse.output,
+      });
+
+      expect(mockInteractionsCreate.mock.calls[1][0].input).toEqual([
+        { type: 'thought', signature: 'signed-thought-state' },
+        { type: 'model_output', content: [{ type: 'text', text: 'Working' }] },
+        { type: 'function_call', id: 'call_1', name: 'lookup', arguments: { q: 'x' } },
       ]);
     });
 
@@ -421,6 +505,118 @@ describe('GoogleTextProvider', () => {
       expect(events.some((e) => e.type === StreamEventType.RESPONSE_COMPLETE)).toBe(true);
     });
 
+    it('assigns distinct output positions to interleaved Interactions steps', async () => {
+      mockInteractionsCreate.mockResolvedValue({
+        [Symbol.asyncIterator]: async function* () {
+          yield {
+            event_type: 'interaction.created',
+            interaction: { id: 'int_ordered_stream', model: 'gemini-3.8-flash' },
+          };
+          yield { event_type: 'step.delta', index: 0, delta: { type: 'text', text: 'Before' } };
+          yield {
+            event_type: 'step.start',
+            index: 1,
+            step: { type: 'function_call', id: 'call_1', name: 'lookup', arguments: { q: 'x' } },
+          };
+          yield { event_type: 'step.stop', index: 1 };
+          yield { event_type: 'step.delta', index: 2, delta: { type: 'text', text: 'After' } };
+          yield {
+            event_type: 'interaction.completed',
+            interaction: { id: 'int_ordered_stream', status: 'completed' },
+          };
+        },
+      });
+
+      const events = [];
+      for await (const event of provider.streamGenerate({
+        model: 'gemini-3.8-flash',
+        input: 'Use the tool',
+        tools: [{
+          type: 'function',
+          function: { name: 'lookup', description: 'Lookup', parameters: { type: 'object' } },
+        }],
+      })) events.push(event);
+
+      expect(events.filter((event) => event.type === StreamEventType.OUTPUT_TEXT_DELTA)).toEqual([
+        expect.objectContaining({ item_id: 'msg_resp_google_int_ordered_stream_0', output_index: 0 }),
+        expect.objectContaining({ item_id: 'msg_resp_google_int_ordered_stream_2', output_index: 2 }),
+      ]);
+      expect(events).toContainEqual(expect.objectContaining({
+        type: StreamEventType.TOOL_CALL_START,
+        item_id: 'tool_resp_google_int_ordered_stream_1',
+        output_index: 1,
+      }));
+    });
+
+    it('accumulates Interactions argument deltas and preserves thought signatures', async () => {
+      mockInteractionsCreate.mockResolvedValue({
+        [Symbol.asyncIterator]: async function* () {
+          yield {
+            event_type: 'interaction.created',
+            interaction: { id: 'int_signed_tool', model: 'gemini-3.8-flash' },
+          };
+          yield { event_type: 'step.start', index: 0, step: { type: 'thought' } };
+          yield {
+            event_type: 'step.delta',
+            index: 0,
+            delta: { type: 'thought_summary', content: { type: 'text', text: 'Checking' } },
+          };
+          yield {
+            event_type: 'step.delta',
+            index: 0,
+            delta: { type: 'thought_signature', signature: 'signed-thought-state' },
+          };
+          yield { event_type: 'step.stop', index: 0 };
+          yield {
+            event_type: 'step.start',
+            index: 1,
+            step: { type: 'function_call', id: 'call_1', name: 'lookup', arguments: {} },
+          };
+          yield {
+            event_type: 'step.delta',
+            index: 1,
+            delta: { type: 'arguments_delta', arguments: '{"q":' },
+          };
+          yield {
+            event_type: 'step.delta',
+            index: 1,
+            delta: { type: 'arguments_delta', arguments: '"x"}' },
+          };
+          yield { event_type: 'step.stop', index: 1 };
+          yield {
+            event_type: 'interaction.completed',
+            interaction: { id: 'int_signed_tool', status: 'requires_action' },
+          };
+        },
+      });
+
+      const events = [];
+      for await (const event of provider.streamGenerate({
+        model: 'gemini-3.8-flash',
+        input: 'Use the tool',
+        tools: [{
+          type: 'function',
+          function: { name: 'lookup', description: 'Lookup', parameters: { type: 'object' } },
+        }],
+      })) events.push(event);
+
+      const argumentDeltas = events
+        .filter((event) => event.type === StreamEventType.TOOL_CALL_ARGUMENTS_DELTA)
+        .map((event) => event.delta)
+        .join('');
+      expect(argumentDeltas).toBe('{"q":"x"}');
+      expect(JSON.parse(argumentDeltas)).toEqual({ q: 'x' });
+      expect(events).toContainEqual(expect.objectContaining({
+        type: StreamEventType.TOOL_CALL_ARGUMENTS_DONE,
+        arguments: '{"q":"x"}',
+      }));
+      expect(events).toContainEqual(expect.objectContaining({
+        type: StreamEventType.REASONING_DONE,
+        thinking: 'Checking',
+        signature: 'signed-thought-state',
+      }));
+    });
+
     it.each([
       ['cancelled', 'failed'],
       ['budget_exceeded', 'incomplete'],
@@ -432,10 +628,14 @@ describe('GoogleTextProvider', () => {
             interaction: { id: 'int_status', model: 'gemini-3.6-flash', status: 'in_progress' },
           };
           yield {
+            event_type: 'step.stop',
+            index: 0,
+            usage: { total_input_tokens: 2, total_output_tokens: 1, total_tokens: 3 },
+          };
+          yield {
             event_type: 'interaction.status_update',
             interaction_id: 'int_status',
             status: providerStatus,
-            metadata: { total_usage: { input_tokens: 2, output_tokens: 1, total_tokens: 3 } },
           };
         },
       });
@@ -451,6 +651,41 @@ describe('GoogleTextProvider', () => {
         status: expected,
         stop_reason: providerStatus,
         usage: { total_tokens: 3 },
+      });
+    });
+
+    it('preserves typed Interactions usage when completion omits usage', async () => {
+      mockInteractionsCreate.mockResolvedValue({
+        [Symbol.asyncIterator]: async function* () {
+          yield {
+            event_type: 'interaction.created',
+            interaction: { id: 'int_usage', model: 'gemini-3.8-flash', status: 'in_progress' },
+          };
+          yield {
+            event_type: 'step.delta',
+            index: 0,
+            delta: { type: 'text', text: 'Done' },
+            metadata: {
+              total_usage: { total_input_tokens: 4, total_output_tokens: 2, total_tokens: 6 },
+            },
+          };
+          yield {
+            event_type: 'interaction.completed',
+            interaction: { id: 'int_usage', status: 'completed' },
+          };
+        },
+      });
+
+      const events = [];
+      for await (const event of provider.streamGenerate({
+        model: 'gemini-3.8-flash',
+        input: 'Hello',
+      })) events.push(event);
+
+      expect(events.at(-1)).toMatchObject({
+        type: StreamEventType.RESPONSE_COMPLETE,
+        status: 'completed',
+        usage: { input_tokens: 4, output_tokens: 2, total_tokens: 6 },
       });
     });
 

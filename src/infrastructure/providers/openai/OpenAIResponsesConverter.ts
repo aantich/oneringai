@@ -23,6 +23,35 @@ import * as ResponsesAPI from 'openai/resources/responses/responses.js';
 type ResponsesAPIInputItem = ResponsesAPI.ResponseInputItem;
 type ResponsesAPIResponse = ResponsesAPI.Response;
 
+export function openAINativeToolCapabilityForOutputType(type: string): string | undefined {
+  switch (type) {
+    case 'web_search_call': return 'web_search';
+    case 'x_search_call': return 'x_search';
+    case 'file_search_call': return 'file_search';
+    case 'code_interpreter_call':
+    case 'code_execution_call': return 'code_execution';
+    case 'mcp_call': return 'remote_mcp';
+    case 'computer_call': return 'computer_use';
+    case 'shell_call':
+    case 'local_shell_call': return 'hosted_shell';
+    case 'apply_patch_call': return 'apply_patch';
+    case 'tool_search_call': return 'tool_search';
+    case 'image_generation_call': return 'image_generation';
+    default: return undefined;
+  }
+}
+
+function openAINativeToolCapabilityForResultType(type: string): string | undefined {
+  switch (type) {
+    case 'computer_call_output': return 'computer_use';
+    case 'shell_call_output':
+    case 'local_shell_call_output': return 'hosted_shell';
+    case 'apply_patch_call_output': return 'apply_patch';
+    case 'tool_search_output': return 'tool_search';
+    default: return undefined;
+  }
+}
+
 export class OpenAIResponsesConverter {
   /**
    * Convert our input format to Responses API format
@@ -48,12 +77,28 @@ export class OpenAIResponsesConverter {
     for (const item of input) {
       if (item.type === 'message') {
         // Convert message item
-        const messageContent: any[] = [];
+        let messageContent: any[] = [];
+        let messageSegment = 0;
 
         // OpenAI Responses API requires specific content types based on role:
         // - user messages: input_text, input_image, input_audio, input_file
         // - assistant messages: output_text, refusal
         const isAssistant = item.role === 'assistant';
+        const flushMessageContent = (): void => {
+          if (messageContent.length === 0) return;
+          items.push({
+            type: 'message',
+            role: item.role,
+            content: messageContent,
+            // A provider message ID identifies one output item. When internal
+            // content is split around top-level tool/reasoning items, attach it
+            // only to the first message segment.
+            ...(messageSegment === 0 && item.id?.startsWith('msg_') ? { id: item.id } : {}),
+            status: 'completed' as const,
+          } as ResponsesAPI.ResponseInputItem.Message);
+          messageContent = [];
+          messageSegment++;
+        };
 
         for (const content of item.content) {
           switch (content.type) {
@@ -97,6 +142,7 @@ export class OpenAIResponsesConverter {
 
             case 'tool_use':
               // Tool use becomes a separate function_call item
+              flushMessageContent();
               items.push({
                 type: 'function_call',
                 call_id: content.id,
@@ -107,6 +153,7 @@ export class OpenAIResponsesConverter {
               break;
 
             case 'tool_result': {
+              flushMessageContent();
               // Read images from Content object first (set by addToolResults),
               // fall back to JSON extraction for backward compat
               const contentImages = (content as any).__images as Array<{ base64: string; mediaType: string }> | undefined;
@@ -157,6 +204,7 @@ export class OpenAIResponsesConverter {
             }
 
             case 'custom_tool_use':
+              flushMessageContent();
               items.push({
                 type: 'custom_tool_call',
                 call_id: content.id,
@@ -167,6 +215,7 @@ export class OpenAIResponsesConverter {
               break;
 
             case 'custom_tool_result':
+              flushMessageContent();
               items.push({
                 type: 'custom_tool_call_output',
                 call_id: content.tool_use_id,
@@ -175,21 +224,28 @@ export class OpenAIResponsesConverter {
                   : JSON.stringify(content.content),
               } as ResponsesAPI.ResponseCustomToolCallOutput);
               break;
+
+            case 'thinking': {
+              const encryptedContent = content.providerMetadata?.encrypted_content;
+              if (content.providerItemId && typeof encryptedContent === 'string') {
+                flushMessageContent();
+                items.push({
+                  type: 'reasoning',
+                  id: content.providerItemId,
+                  ...(content.thinking
+                    ? { summary: [{ type: 'summary_text', text: content.thinking }] }
+                    : {}),
+                  encrypted_content: encryptedContent,
+                } as unknown as ResponsesAPIInputItem);
+              }
+              break;
+            }
           }
         }
 
-        // Only add message if it has content (tool_use/tool_result don't go in message)
-        if (messageContent.length > 0) {
-          items.push({
-            type: 'message',
-            role: item.role,
-            content: messageContent,
-            // Only include id if it's a valid OpenAI message ID (starts with msg_)
-            // New messages shouldn't have id; previous outputs keep their original id
-            ...(item.id?.startsWith('msg_') ? { id: item.id } : {}),
-            status: 'completed' as const,
-          } as ResponsesAPI.ResponseInputItem.Message);
-        }
+        // Only add message segments with content; tool/reasoning items remain
+        // separate Responses items in their original relative positions.
+        flushMessageContent();
       } else if (item.type === 'compaction') {
         // Pass through compaction items
         items.push({
@@ -197,6 +253,16 @@ export class OpenAIResponsesConverter {
           id: item.id,
           encrypted_content: item.encrypted_content,
         } as ResponsesAPI.ResponseCompactionItemParam);
+      } else if (item.type === 'reasoning') {
+        items.push({
+          type: 'reasoning',
+          id: item.id,
+          ...(item.effort ? { effort: item.effort } : {}),
+          ...(item.summary
+            ? { summary: [{ type: 'summary_text', text: item.summary }] }
+            : {}),
+          ...(item.encrypted_content ? { encrypted_content: item.encrypted_content } : {}),
+        } as unknown as ResponsesAPIInputItem);
       } else if (item.type === 'configuration_update') {
         items.push({
           type: 'configuration_update',
@@ -217,6 +283,13 @@ export class OpenAIResponsesConverter {
           call_id: item.call_id,
           output: this.convertToolCallOutput(item.output),
         } as ResponsesAPI.ResponseCustomToolCallOutput);
+      } else if (
+        item.type === 'computer_call_output'
+        || item.type === 'shell_call_output'
+        || item.type === 'apply_patch_call_output'
+        || item.type === 'tool_search_output'
+      ) {
+        items.push(item as unknown as ResponsesAPIInputItem);
       }
     }
 
@@ -310,10 +383,12 @@ export class OpenAIResponsesConverter {
           ...(customCall.async !== undefined ? { async: customCall.async } : {}),
         });
       } else if (item.type === 'reasoning') {
-        // Extract reasoning summary as ThinkingContent (unified thinking API)
+        // Preserve encrypted reasoning as a top-level item for stateless
+        // continuation. Summary-only reasoning retains the historical
+        // ThinkingContent shape because it carries no replayable opaque state.
         const reasoning = item as ResponsesAPI.ResponseReasoningItem;
+        let summaryText = '';
         if (reasoning.summary) {
-          let summaryText: string;
           if (typeof reasoning.summary === 'string') {
             summaryText = reasoning.summary;
           } else if (Array.isArray(reasoning.summary)) {
@@ -324,26 +399,62 @@ export class OpenAIResponsesConverter {
           } else {
             summaryText = '';
           }
-          if (summaryText) {
-            appendContent({
-              type: ContentType.THINKING,
-              thinking: summaryText,
-              persistInHistory: false,
-            });
+        }
+        const encryptedContent = typeof reasoning.encrypted_content === 'string'
+          ? reasoning.encrypted_content
+          : undefined;
+        if (encryptedContent) {
+          flushContent();
+          output.push({
+            type: 'reasoning',
+            id: reasoning.id,
+            ...(typeof (reasoning as any).effort === 'string'
+              ? { effort: (reasoning as any).effort }
+              : {}),
+            ...(summaryText ? { summary: summaryText } : {}),
+            encrypted_content: encryptedContent,
+          });
+        }
+        if (summaryText) {
+          const thinkingContent = {
+            type: ContentType.THINKING,
+            thinking: summaryText,
+            providerItemId: reasoning.id,
+            ...(encryptedContent
+              ? { providerMetadata: { encrypted_content: encryptedContent } }
+              : {}),
+            persistInHistory: false,
+          };
+          if (encryptedContent) allContent.push(thinkingContent);
+          else appendContent(thinkingContent);
+        }
+      } else {
+        const nativeCapability = openAINativeToolCapabilityForOutputType(item.type);
+        if (nativeCapability) {
+          nativeToolCalls[nativeCapability] = (nativeToolCalls[nativeCapability] ?? 0) + 1;
+          const includeDetails = ![
+            'web_search_call',
+            'file_search_call',
+            'code_interpreter_call',
+            'mcp_call',
+          ].includes(item.type);
+          nativeToolEvents.push(this.toNativeToolEvent(
+            nativeCapability,
+            item,
+            includeDetails,
+            includeDetails ? 'call' : undefined,
+          ));
+        } else {
+          const resultCapability = openAINativeToolCapabilityForResultType(item.type);
+          if (resultCapability) {
+            nativeToolEvents.push(this.toNativeToolEvent(
+              resultCapability,
+              item,
+              true,
+              'output',
+            ));
           }
         }
-      } else if (item.type === 'web_search_call') {
-        nativeToolCalls.web_search = (nativeToolCalls.web_search ?? 0) + 1;
-        nativeToolEvents.push(this.toNativeToolEvent('web_search', item));
-      } else if (item.type === 'file_search_call') {
-        nativeToolCalls.file_search = (nativeToolCalls.file_search ?? 0) + 1;
-        nativeToolEvents.push(this.toNativeToolEvent('file_search', item));
-      } else if (item.type === 'code_interpreter_call') {
-        nativeToolCalls.code_execution = (nativeToolCalls.code_execution ?? 0) + 1;
-        nativeToolEvents.push(this.toNativeToolEvent('code_execution', item));
-      } else if (item.type === 'mcp_call') {
-        nativeToolCalls.remote_mcp = (nativeToolCalls.remote_mcp ?? 0) + 1;
-        nativeToolEvents.push(this.toNativeToolEvent('remote_mcp', item));
       }
     }
     flushContent();
@@ -397,6 +508,9 @@ export class OpenAIResponsesConverter {
           native_tool_calls: nativeToolCalls,
         }),
         ...(response.service_tier ? { service_tier: response.service_tier } : {}),
+        ...(Number.isFinite(Number((response.usage as any)?.cost_in_usd_ticks)) && {
+          cost_usd_ticks: Number((response.usage as any).cost_in_usd_ticks),
+        }),
       },
       ...(nativeToolEvents.length > 0 && { native_tool_events: nativeToolEvents }),
       ...(response.error
@@ -447,13 +561,18 @@ export class OpenAIResponsesConverter {
   private toNativeToolEvent(
     capability: string,
     item: unknown,
+    includeDetails = false,
+    phase?: 'call' | 'output',
   ): NonNullable<LLMResponse['native_tool_events']>[number] {
     const raw = item as Record<string, unknown>;
     const error = raw.error;
     return {
       capability,
       ...(typeof raw.id === 'string' ? { id: raw.id } : {}),
+      ...(typeof raw.call_id === 'string' ? { call_id: raw.call_id } : {}),
       ...(typeof raw.status === 'string' ? { status: raw.status } : {}),
+      ...(phase ? { phase } : {}),
+      ...(includeDetails ? { details: item } : {}),
       ...(error
         ? {
             error: {
@@ -519,12 +638,18 @@ export class OpenAIResponsesConverter {
     });
   }
 
-  convertNativeTools(tools: import('../../../domain/interfaces/IAdvancedInference.js').NativeToolRequest[]): ResponsesAPI.Tool[] {
+  convertNativeTools(
+    tools: import('../../../domain/interfaces/IAdvancedInference.js').NativeToolRequest[],
+    vendor: 'openai' | 'grok' = 'openai',
+  ): ResponsesAPI.Tool[] {
     return tools.map((tool) => {
       const extra = tool.options ?? {};
       switch (tool.capability) {
         case 'web_search':
           return { ...extra, type: 'web_search' } as ResponsesAPI.Tool;
+        case 'x_search':
+          if (vendor !== 'grok') throw new Error('OpenAI has no native x_search tool');
+          return { ...extra, type: 'x_search' } as unknown as ResponsesAPI.Tool;
         case 'file_search':
           {
             const { vectorStoreIds, ...providerOptions } = extra as Record<string, unknown> & {
@@ -537,6 +662,9 @@ export class OpenAIResponsesConverter {
             } as ResponsesAPI.Tool;
           }
         case 'code_execution':
+          if (vendor === 'grok') {
+            return { ...extra, type: 'code_execution' } as unknown as ResponsesAPI.Tool;
+          }
           return {
             ...extra,
             type: 'code_interpreter',
@@ -561,6 +689,25 @@ export class OpenAIResponsesConverter {
         }
         case 'web_fetch':
           throw new Error('OpenAI has no standalone native web_fetch tool');
+        case 'computer_use':
+          if (vendor === 'grok') throw new Error('xAI has no normalized native computer-use tool');
+          return { ...extra, type: 'computer' } as ResponsesAPI.Tool;
+        case 'hosted_shell':
+          if (vendor === 'grok') throw new Error('xAI has no normalized hosted-shell tool');
+          return {
+            ...extra,
+            type: 'shell',
+            environment: extra.environment ?? { type: 'container_auto' },
+          } as ResponsesAPI.Tool;
+        case 'apply_patch':
+          if (vendor === 'grok') throw new Error('xAI has no normalized apply_patch tool');
+          return { ...extra, type: 'apply_patch' } as ResponsesAPI.Tool;
+        case 'tool_search':
+          if (vendor === 'grok') throw new Error('xAI has no normalized tool-search tool');
+          return { ...extra, type: 'tool_search' } as ResponsesAPI.Tool;
+        case 'image_generation':
+          if (vendor === 'grok') throw new Error('xAI has no normalized Responses image-generation tool');
+          return { ...extra, type: 'image_generation' } as ResponsesAPI.Tool;
       }
     });
   }

@@ -89,6 +89,7 @@ describe('StreamState reasoning buffers', () => {
 
     state.clear();
     expect(state.hasReasoning()).toBe(false);
+    expect(state.getOrderedOutputEntries()).toEqual([]);
   });
 
   it('should include reasoning buffers in snapshot', () => {
@@ -98,6 +99,81 @@ describe('StreamState reasoning buffers', () => {
     const snapshot = state.createSnapshot();
     expect(snapshot.reasoningBuffers).toBeDefined();
     expect(snapshot.reasoningBuffers.size).toBe(1);
+    expect(snapshot.orderedOutputs.size).toBe(1);
+  });
+
+  it('keeps separate text content blocks that share a provider message ID', () => {
+    const state = new StreamState('resp_1', 'gpt-6-astra');
+    state.accumulateTextDelta('msg_1', 'first', { outputIndex: 0, contentIndex: 0 });
+    state.accumulateTextDelta('msg_1', 'second', { outputIndex: 0, contentIndex: 1 });
+
+    expect(state.getOrderedOutputEntries()).toEqual([
+      expect.objectContaining({ kind: 'text', itemId: 'msg_1', contentIndex: 0, text: 'first' }),
+      expect.objectContaining({ kind: 'text', itemId: 'msg_1', contentIndex: 1, text: 'second' }),
+    ]);
+    expect(state.getCompleteText('msg_1')).toBe('firstsecond');
+    expect(state.getAllText()).toBe('firstsecond');
+  });
+
+  it('keeps repeated provider item IDs distinct when merging agent iterations', () => {
+    const first = new StreamState('iteration_1', 'gpt-6-astra');
+    first.accumulateTextDelta('msg_reused', 'first', { outputIndex: 0 });
+    first.accumulateReasoningDelta('reasoning_reused', 'think one', { outputIndex: 1 });
+
+    const second = new StreamState('iteration_2', 'gpt-6-astra');
+    second.accumulateTextDelta('msg_reused', 'second', { outputIndex: 0 });
+    second.accumulateReasoningDelta('reasoning_reused', 'think two', { outputIndex: 1 });
+
+    const execution = new StreamState('execution', 'gpt-6-astra');
+    execution.accumulateFrom(first);
+    execution.accumulateFrom(second);
+
+    expect(execution.getAllText()).toBe('firstsecond');
+    expect(execution.getCompleteText('msg_reused')).toBe('firstsecond');
+    expect(execution.getAllReasoning()).toBe('think onethink two');
+    expect(execution.getCompleteReasoning('reasoning_reused')).toBe('think onethink two');
+    expect(execution.getOrderedOutputEntries()).toEqual([
+      expect.objectContaining({ kind: 'text', itemId: 'msg_reused', text: 'first' }),
+      expect.objectContaining({ kind: 'reasoning', itemId: 'reasoning_reused', thinking: 'think one' }),
+      expect.objectContaining({ kind: 'text', itemId: 'msg_reused', text: 'second' }),
+      expect.objectContaining({ kind: 'reasoning', itemId: 'reasoning_reused', thinking: 'think two' }),
+    ]);
+  });
+
+  it('preserves interleaved provider output order and distinct signed reasoning blocks', () => {
+    const state = new StreamState('resp_1', 'claude-opus-5-5');
+    state.accumulateReasoningDelta('thinking_0', 'First', { outputIndex: 0 });
+    state.completeReasoning('thinking_0', { signature: 'sig_0' }, { outputIndex: 0 });
+    state.accumulateTextDelta('text_1', 'Progress', { outputIndex: 1 });
+    state.accumulateProviderState('server_2', {
+      type: ContentType.PROVIDER_STATE,
+      provider: 'anthropic',
+      data: { type: 'server_tool_use', id: 'srv_2' },
+    }, { outputIndex: 2 });
+    state.accumulateReasoningDelta('thinking_3', 'Second', { outputIndex: 3 });
+    state.completeReasoning('thinking_3', { signature: 'sig_3' }, { outputIndex: 3 });
+    state.startToolCall('tool_4', 'lookup', 'tool_item_4', { outputIndex: 4 });
+    state.accumulateToolArguments('tool_4', '{"q":"weather"}');
+    state.startToolCall('tool_5', 'shell', 'tool_item_5', { outputIndex: 5 }, {
+      toolType: 'custom',
+      async: true,
+    });
+    state.accumulateToolArguments('tool_5', 'run tests');
+
+    expect(state.getOrderedOutputEntries()).toEqual([
+      expect.objectContaining({ kind: 'reasoning', itemId: 'thinking_0', thinking: 'First', signature: 'sig_0' }),
+      expect.objectContaining({ kind: 'text', itemId: 'text_1', text: 'Progress' }),
+      expect.objectContaining({ kind: 'provider_state', itemId: 'server_2' }),
+      expect.objectContaining({ kind: 'reasoning', itemId: 'thinking_3', thinking: 'Second', signature: 'sig_3' }),
+      expect.objectContaining({ kind: 'tool_call', itemId: 'tool_item_4', arguments: '{"q":"weather"}' }),
+      expect.objectContaining({
+        kind: 'tool_call',
+        itemId: 'tool_item_5',
+        arguments: 'run tests',
+        toolType: 'custom',
+        async: true,
+      }),
+    ]);
   });
 });
 
@@ -638,6 +714,80 @@ describe('StreamHelpers.collectResponse with thinking', () => {
     expect(response.output[0]?.content?.length).toBe(1);
     expect(response.output[0]?.content?.[0]?.type).toBe(ContentType.THINKING);
   });
+
+  it('collects replayable stream items in provider order', async () => {
+    async function* mockStream() {
+      yield { type: StreamEventType.RESPONSE_CREATED, response_id: 'r1', model: 'gpt-6-astra', created_at: 1 } as const;
+      yield {
+        type: StreamEventType.REASONING_DELTA,
+        response_id: 'r1', item_id: 'reasoning_0', output_index: 0,
+        delta: 'Summary', sequence_number: 0,
+      } as const;
+      yield {
+        type: StreamEventType.REASONING_DONE,
+        response_id: 'r1', item_id: 'reasoning_0', output_index: 0,
+        thinking: 'Summary', encrypted_content: 'encrypted', sequence_number: 1,
+      } as const;
+      yield {
+        type: StreamEventType.OUTPUT_TEXT_DELTA,
+        response_id: 'r1', item_id: 'text_1', output_index: 1, content_index: 0,
+        delta: 'Progress', sequence_number: 2,
+      } as const;
+      yield {
+        type: StreamEventType.TOOL_CALL_START,
+        response_id: 'r1', item_id: 'custom_2', output_index: 2,
+        tool_call_id: 'call_2', tool_name: 'shell', tool_type: 'custom', async: true,
+        sequence_number: 3,
+      } as const;
+      yield {
+        type: StreamEventType.TOOL_CALL_ARGUMENTS_DELTA,
+        response_id: 'r1', item_id: 'custom_2', tool_call_id: 'call_2',
+        tool_name: 'shell', delta: 'run tests', sequence_number: 4,
+      } as const;
+      yield {
+        type: StreamEventType.TOOL_CALL_ARGUMENTS_DONE,
+        response_id: 'r1', tool_call_id: 'call_2', tool_name: 'shell',
+        arguments: 'run tests', tool_type: 'custom', async: true,
+      } as const;
+      yield {
+        type: StreamEventType.COMPACTION,
+        response_id: 'r1', item_id: 'compact_3', output_index: 3,
+        encrypted_content: 'compact', sequence_number: 5,
+      } as const;
+      yield {
+        type: StreamEventType.RESPONSE_COMPLETE,
+        response_id: 'r1', status: 'incomplete',
+        usage: { input_tokens: 1, output_tokens: 2, total_tokens: 3 },
+        iterations: 1, stop_reason: 'max_output_tokens', continuation_token: 'continue_1',
+      } as const;
+    }
+
+    const response = await StreamHelpers.collectResponse(mockStream());
+    expect(response.output.map((item) => item.type)).toEqual(['reasoning', 'message', 'compaction']);
+    expect(response.output[0]).toMatchObject({
+      type: 'reasoning', id: 'reasoning_0', summary: 'Summary', encrypted_content: 'encrypted',
+    });
+    expect(response.output[1]).toMatchObject({
+      type: 'message',
+      content: [
+        { type: ContentType.OUTPUT_TEXT, text: 'Progress' },
+        {
+          type: ContentType.CUSTOM_TOOL_USE,
+          id: 'call_2', name: 'shell', input: 'run tests', async: true,
+        },
+      ],
+    });
+    expect(response.output[2]).toMatchObject({
+      type: 'compaction', id: 'compact_3', encrypted_content: 'compact',
+    });
+    expect(response).toMatchObject({
+      output_text: 'Progress',
+      thinking: 'Summary',
+      status: 'incomplete',
+      stop_reason: 'max_output_tokens',
+      continuation_token: 'continue_1',
+    });
+  });
 });
 
 describe('AgentContextNextGen.lastThinking lifecycle', () => {
@@ -921,9 +1071,16 @@ describe('Thinking config validation', () => {
     expect(() => validateThinkingConfig({ enabled: true, effort: 'MEDIUM' })).toThrow('Invalid thinking effort');
   });
 
-  it('should skip validation when not enabled', () => {
-    // Even invalid values are OK when not enabled
-    expect(() => validateThinkingConfig({ enabled: false, budgetTokens: -1 })).not.toThrow();
+  it('validates supplied fields and rejects contradictory modes even when disabled', () => {
+    expect(() => validateThinkingConfig({ enabled: false, budgetTokens: -1 })).toThrow(
+      'Invalid thinking budgetTokens',
+    );
+    expect(() => validateThinkingConfig({ enabled: false, mode: 'adaptive' })).toThrow(
+      /requires enabled: true/,
+    );
+    expect(() => validateThinkingConfig({ enabled: true, mode: 'disabled' })).toThrow(
+      /requires enabled: false/,
+    );
   });
 });
 

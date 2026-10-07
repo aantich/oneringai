@@ -31,12 +31,20 @@ export interface TokenUsage {
   service_tier?: string;
   /** Provider-reported inference speed, currently Anthropic `standard`/`fast`. */
   speed?: string;
+  /** xAI provider-reported total cost in one-billionth USD ticks. */
+  cost_usd_ticks?: number;
 }
 
 export interface NativeToolEvent {
   capability: string;
   id?: string;
+  /** Stable call identifier to use when the host must return a tool result. */
+  call_id?: string;
   status?: string;
+  /** Whether this item requests execution or reports its result. */
+  phase?: 'call' | 'output';
+  /** Provider-native call payload. Required for host-executed native tools. */
+  details?: unknown;
   error?: { code?: string; message: string; details?: unknown };
 }
 
@@ -93,6 +101,8 @@ export interface LLMResponse {
   native_tool_events?: NativeToolEvent[];
   /** Raw provider stop reason (e.g. 'end_turn', 'max_tokens', 'refusal'), when known. */
   stop_reason?: string;
+  /** Opaque provider token used to resume an incomplete long decode. */
+  continuation_token?: string;
   /**
    * Structured stop detail accompanying a terminal stop reason. Anthropic
    * populates this for refusals — names which safety classifier fired. Undefined

@@ -252,6 +252,59 @@ describe('AlgorithmicCompactionStrategy', () => {
       expect(removedIndices).toContain(1); // tool_result
     });
 
+    it('should remove and preserve every pair connected through a shared assistant message', async () => {
+      const mockMemory = createMockWorkingMemory();
+      const conversation = [
+        {
+          type: 'message',
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'tool-large',
+              name: 'read_file',
+              input: { path: '/src/index.ts' },
+            },
+            {
+              type: 'custom_tool_use',
+              id: 'tool-small',
+              name: 'shell',
+              input: 'pwd',
+            },
+          ],
+        },
+        createToolResultMessage('tool-large', 'x'.repeat(2000)),
+        {
+          type: 'message',
+          role: 'user',
+          content: [
+            {
+              type: 'custom_tool_result',
+              tool_use_id: 'tool-small',
+              content: '/workspace',
+            },
+          ],
+        },
+      ];
+
+      const context = createMockContext(conversation, mockMemory);
+      const strategy = new AlgorithmicCompactionStrategy({
+        toolResultSizeThreshold: 1024,
+      });
+
+      await strategy.consolidate(context);
+
+      const removedIndices = (context.removeMessages as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(removedIndices.sort((a: number, b: number) => a - b)).toEqual([0, 1, 2]);
+      expect(mockMemory.store).toHaveBeenCalledTimes(2);
+      expect(mockMemory.store.mock.calls.map(call => call[0])).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/^tool_result\.read_file\./),
+          expect.stringMatching(/^tool_result\.shell\./),
+        ]),
+      );
+    });
+
     it('should limit tool pairs to maxToolPairs', async () => {
       const mockMemory = createMockWorkingMemory();
 

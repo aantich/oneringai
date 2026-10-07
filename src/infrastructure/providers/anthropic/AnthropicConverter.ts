@@ -13,11 +13,11 @@ import { transformJSONSchema } from '@anthropic-ai/sdk/lib/transform-json-schema
 import { BaseConverter } from '../base/BaseConverter.js';
 import { TextGenerateOptions } from '../../../domain/interfaces/ITextProvider.js';
 import { LLMResponse } from '../../../domain/entities/Response.js';
-import { InputItem } from '../../../domain/entities/Message.js';
+import { InputItem, MessageRole } from '../../../domain/entities/Message.js';
 import { Content, ContentType } from '../../../domain/entities/Content.js';
 import { Tool } from '../../../domain/entities/Tool.js';
 import { getModelInfo } from '../../../domain/entities/Model.js';
-import { convertToolsToStandardFormat, transformForAnthropic, ProviderToolFormat } from '../shared/ToolConversionUtils.js';
+import { transformForAnthropic, ProviderToolFormat } from '../shared/ToolConversionUtils.js';
 import { mapAnthropicStatus, ResponseStatus } from '../shared/ResponseBuilder.js';
 import { validateThinkingConfig } from '../shared/validateThinkingConfig.js';
 import { logger } from '../../observability/Logger.js';
@@ -40,6 +40,21 @@ function usesAdaptiveThinking(model: string): boolean {
   return ANTHROPIC_ADAPTIVE_THINKING_MODELS.some((pattern) => pattern.test(model));
 }
 
+type AnthropicThinkingMode = 'adaptive' | 'enabled' | 'between_tools' | 'disabled';
+
+function supportedThinkingModes(model: string): ReadonlySet<AnthropicThinkingMode> {
+  if (/^claude-opus-5-5(?:-|$)/.test(model)) return new Set(['adaptive']);
+  if (/^claude-sonnet-5-5(?:-|$)/.test(model)) return new Set(['adaptive', 'between_tools']);
+  if (/^claude-(?:fable|mythos)-5(?:-1)?(?:-|$)/.test(model)) return new Set(['adaptive']);
+  if (/^claude-(?:opus|sonnet)-5(?:-|$)/.test(model)) return new Set(['adaptive', 'disabled']);
+  if (/^claude-opus-4-[78](?:-|$)/.test(model)) return new Set(['adaptive', 'disabled']);
+  if (/^claude-mythos-preview(?:-|$)/.test(model)) return new Set(['adaptive', 'enabled']);
+  if (/^claude-(?:opus|sonnet)-4-6(?:-|$)/.test(model)) {
+    return new Set(['adaptive', 'enabled', 'disabled']);
+  }
+  return new Set(['enabled', 'disabled']);
+}
+
 export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreateParams, Anthropic.Message> {
   readonly providerName = 'anthropic';
 
@@ -47,7 +62,10 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
    * Convert our format -> Anthropic Messages API format
    */
   convertRequest(options: TextGenerateOptions): Anthropic.MessageCreateParams {
-    const messages = this.convertMessages(options.input);
+    const messages = this.convertMessages(
+      options.input,
+      options.vendorOptions?.compaction !== undefined,
+    );
     const tools = [
       ...(this.convertAnthropicTools(options.tools) ?? []),
       ...this.convertNativeTools(options),
@@ -88,12 +106,53 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
     };
     const vendorOptions = options.vendorOptions ?? {};
     const rawParams = params as unknown as Record<string, unknown>;
+    const hasCompactionInput = Array.isArray(options.input) &&
+      options.input.some((item) => item.type === 'compaction');
+    const onDemandCompaction = vendorOptions.compaction !== undefined;
     const serviceTier = vendorOptions.serviceTier ?? vendorOptions.service_tier;
     if (serviceTier !== undefined) rawParams.service_tier = serviceTier;
     if (vendorOptions.inference_geo !== undefined) {
       rawParams.inference_geo = vendorOptions.inference_geo;
     }
     if (vendorOptions.container !== undefined) rawParams.container = vendorOptions.container;
+    if (onDemandCompaction) {
+      rawParams.compaction = vendorOptions.compaction === true
+        ? { type: 'summarize' }
+        : vendorOptions.compaction;
+      rawParams.betas = [
+        ...new Set([
+          ...((rawParams.betas as string[] | undefined) ?? []),
+          'compact-2026-09-04',
+        ]),
+      ];
+    }
+    const contextManagement = vendorOptions.contextManagement ?? vendorOptions.context_management;
+    if (onDemandCompaction && contextManagement !== undefined) {
+      throw new Error(
+        'Anthropic on-demand compaction cannot be combined with context_management threshold compaction',
+      );
+    }
+    if (contextManagement !== undefined) {
+      rawParams.context_management = contextManagement;
+      rawParams.betas = [
+        ...new Set([
+          ...((rawParams.betas as string[] | undefined) ?? []),
+          'compact-2026-01-12',
+        ]),
+      ];
+    }
+    if (hasCompactionInput) {
+      // A signed block can originate from either on-demand or threshold
+      // compaction. Sending both protocol betas makes either replayable while
+      // the block itself is forwarded unchanged.
+      rawParams.betas = [
+        ...new Set([
+          ...((rawParams.betas as string[] | undefined) ?? []),
+          'compact-2026-09-04',
+          'compact-2026-01-12',
+        ]),
+      ];
+    }
     // Anthropic's request metadata schema contains only `user_id`. Generic
     // OneRingAI metadata may carry arbitrary host keys, so never forward the
     // full record and let the remote API reject it.
@@ -159,17 +218,50 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
     const supportsTemperature =
       getModelInfo(options.model)?.features.parameters?.temperature !== false;
 
-    // Add thinking/reasoning support
-    if (options.thinking?.enabled) {
-      validateThinkingConfig(options.thinking);
-      if (usesAdaptiveThinking(options.model)) {
+    const requestedThinkingMode = options.thinking?.mode;
+    const isOpus55 = /^claude-opus-5-5(?:-|$)/.test(options.model);
+    const isSonnet55 = /^claude-sonnet-5-5(?:-|$)/.test(options.model);
+    const requiresAdaptiveThinking = isOpus55;
+    if (options.thinking) validateThinkingConfig(options.thinking);
+    if (requestedThinkingMode) {
+      const supportedModes = supportedThinkingModes(options.model);
+      if (!supportedModes.has(requestedThinkingMode)) {
+        throw new Error(
+          `${options.model} does not support Anthropic thinking mode '${requestedThinkingMode}'; ` +
+          `use ${[...supportedModes].join(', ')}`,
+        );
+      }
+      if (
+        requestedThinkingMode === 'between_tools'
+        && (options.thinking?.budgetTokens !== undefined || vendorOptions.thinkingDisplay !== undefined)
+      ) {
+        throw new Error('Anthropic between_tools thinking does not accept budgetTokens or thinkingDisplay');
+      }
+    }
+
+    // Add thinking/reasoning support. Opus 5.5 always uses adaptive thinking.
+    if (requiresAdaptiveThinking || options.thinking?.enabled || requestedThinkingMode) {
+      if (requestedThinkingMode === 'disabled' && !requiresAdaptiveThinking) {
+        (params as any).thinking = { type: 'disabled' };
+      } else if (requestedThinkingMode === 'between_tools') {
+        (params as any).thinking = { type: 'between_tools' };
+      } else if (requestedThinkingMode === 'enabled') {
+        const budgetTokens = options.thinking?.budgetTokens || 10000;
+        if (budgetTokens < 1024 || budgetTokens >= max_tokens) {
+          throw new Error(
+            `Anthropic thinking budgetTokens must be at least 1024 and less than max_output_tokens (${max_tokens})`,
+          );
+        }
+        (params as any).thinking = { type: 'enabled', budget_tokens: budgetTokens };
+        if (supportsTemperature) params.temperature = 1;
+      } else if (usesAdaptiveThinking(options.model) || requestedThinkingMode === 'adaptive') {
         (params as any).thinking = {
           type: 'adaptive',
           ...(vendorOptions.thinkingDisplay
             ? { display: vendorOptions.thinkingDisplay }
             : {}),
         };
-      } else {
+      } else if (options.thinking?.enabled) {
         const budgetTokens = options.thinking.budgetTokens || 10000;
         if (budgetTokens < 1024 || budgetTokens >= max_tokens) {
           throw new Error(
@@ -188,18 +280,57 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
       params.temperature = options.temperature;
     }
 
-    // `thinking.enabled` gates the provider-neutral effort field. Anthropic's
-    // native effort control is independent of thinking, so callers that want
-    // it without normalized thinking can still use vendorOptions.effort.
-    const requestedEffort = options.thinking?.enabled
-      ? (options.thinking.effort ?? vendorOptions.effort)
+    // Explicit thinking modes also enable the provider-neutral effort field.
+    // Callers that want effort without normalized thinking can use
+    // vendorOptions.effort directly.
+    const requestedEffort = options.thinking?.enabled || requestedThinkingMode
+      ? (options.thinking?.effort ?? vendorOptions.effort)
       : vendorOptions.effort;
+    if (
+      isSonnet55
+      && requestedThinkingMode === 'between_tools'
+      && (requestedEffort === 'xhigh' || requestedEffort === 'max')
+    ) {
+      throw new Error(
+        'Claude Sonnet 5.5 between_tools thinking supports effort high or below',
+      );
+    }
+    if (
+      /^claude-opus-5(?:-|$)/.test(options.model)
+      && requestedThinkingMode === 'disabled'
+      && (requestedEffort === 'xhigh' || requestedEffort === 'max')
+    ) {
+      throw new Error(
+        'Claude Opus 5 disabled thinking supports effort high or below',
+      );
+    }
     if (requestedEffort && requestedEffort !== 'none') {
       const effort = requestedEffort === 'minimal' ? 'low' : requestedEffort;
       params.output_config = { ...(params.output_config ?? {}), effort } as Anthropic.OutputConfig;
+    } else if (requiresAdaptiveThinking) {
+      params.output_config = { ...(params.output_config ?? {}), effort: 'medium' } as Anthropic.OutputConfig;
     }
 
-    if (options.response_format?.type === 'json_schema') {
+    if (options.tool_choice && !onDemandCompaction) {
+      const forcedTool = options.tool_choice === 'required' || typeof options.tool_choice === 'object';
+      if (forcedTool && /^claude-(?:opus|sonnet)-5-5(?:-|$)/.test(options.model)) {
+        throw new Error(
+          `${options.model} does not support forced Anthropic tool_choice; use 'auto'`,
+        );
+      }
+      const disableParallel = options.parallel_tool_calls === false;
+      params.tool_choice = options.tool_choice === 'auto'
+        ? { type: 'auto', ...(disableParallel ? { disable_parallel_tool_use: true } : {}) }
+        : options.tool_choice === 'required'
+          ? { type: 'any', ...(disableParallel ? { disable_parallel_tool_use: true } : {}) }
+          : {
+              type: 'tool',
+              name: options.tool_choice.function.name,
+              ...(disableParallel ? { disable_parallel_tool_use: true } : {}),
+            };
+    }
+
+    if (options.response_format?.type === 'json_schema' && !onDemandCompaction) {
       const jsonSchema = options.response_format.json_schema;
       const schema =
         jsonSchema && typeof jsonSchema === 'object' && 'schema' in jsonSchema
@@ -295,6 +426,49 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
     const nativeToolEvents = this.extractNativeToolEvents(response.content);
     if (nativeToolEvents.length > 0) built.native_tool_events = nativeToolEvents;
 
+    if (response.content.some((block) => (block as { type: string }).type === 'compaction')) {
+      const orderedOutput: LLMResponse['output'] = [];
+      let messageContent: Content[] = [];
+      let messageSegment = 0;
+      const flushMessage = (): void => {
+        if (messageContent.length === 0) return;
+        orderedOutput.push({
+          type: 'message',
+          id: messageSegment === 0 ? response.id : `${response.id}_${messageSegment}`,
+          role: MessageRole.ASSISTANT,
+          content: messageContent,
+        });
+        messageContent = [];
+        messageSegment++;
+      };
+
+      for (const [index, block] of response.content.entries()) {
+        if ((block as { type: string }).type !== 'compaction') {
+          messageContent.push(...this.convertProviderContent([block]));
+          continue;
+        }
+        flushMessage();
+        const compaction = block as unknown as {
+          content?: string | null;
+          encrypted_content?: string | null;
+          signature?: string | null;
+          tool_changes?: unknown;
+        };
+        orderedOutput.push({
+          type: 'compaction',
+          id: `${response.id}_compaction_${index}`,
+          encrypted_content: compaction.encrypted_content ?? '',
+          content: compaction.content ?? null,
+          signature: compaction.signature ?? null,
+          ...(compaction.tool_changes !== undefined
+            ? { providerMetadata: { tool_changes: compaction.tool_changes } }
+            : {}),
+        });
+      }
+      flushMessage();
+      built.output = orderedOutput;
+    }
+
     return built;
   }
 
@@ -339,6 +513,21 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
           signature: thinkingBlock.signature,
           persistInHistory: true,
         });
+      } else if ((block as { type: string }).type === 'compaction') {
+        // convertResponse lifts compaction blocks into top-level CompactionItem
+        // output. Do not also retain a duplicate provider-state copy in the
+        // assistant message.
+        continue;
+      } else {
+        // Server tool calls/results (including tool search references) are
+        // provider-owned continuation state. Anthropic requires clients to
+        // send these blocks back unchanged alongside the eventual local tool
+        // result, so keep the complete block in the assistant message.
+        content.push({
+          type: ContentType.PROVIDER_STATE,
+          provider: 'anthropic',
+          data: { ...(block as unknown as Record<string, unknown>) },
+        });
       }
     }
 
@@ -359,14 +548,28 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
   /**
    * Convert our InputItem[] -> Anthropic messages
    */
-  private convertMessages(input: string | InputItem[]): Anthropic.MessageParam[] {
+  private convertMessages(
+    input: string | InputItem[],
+    preserveTrailingAssistant = false,
+  ): Anthropic.MessageParam[] {
     if (typeof input === 'string') {
       return [{ role: 'user', content: input }];
     }
 
     const messages: Anthropic.MessageParam[] = [];
 
-    for (const item of input) {
+    // A compaction block replaces everything it summarizes. Keep the newest
+    // signed block and any exact turns that follow it.
+    let lastCompactionIndex = -1;
+    for (let index = input.length - 1; index >= 0; index--) {
+      if (input[index]!.type === 'compaction') {
+        lastCompactionIndex = index;
+        break;
+      }
+    }
+    const replayInput = lastCompactionIndex >= 0 ? input.slice(lastCompactionIndex) : input;
+
+    for (const item of replayInput) {
       if (item.type === 'message') {
         // Map roles: 'developer' -> 'user' (Anthropic doesn't have developer role)
         const role = this.mapRole(item.role);
@@ -383,6 +586,19 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
           role: role as 'user' | 'assistant',
           content,
         });
+      } else if (item.type === 'compaction') {
+        messages.push({
+          role: 'assistant',
+          content: [{
+            type: 'compaction',
+            content: item.content ?? null,
+            encrypted_content: item.encrypted_content || null,
+            signature: item.signature ?? null,
+            ...(item.providerMetadata?.tool_changes !== undefined
+              ? { tool_changes: item.providerMetadata.tool_changes }
+              : {}),
+          }] as any,
+        });
       }
     }
 
@@ -390,12 +606,24 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
     // Some models (e.g., claude-opus-4-6) reject assistant prefill entirely.
     // If the last message is assistant (can happen after compaction or context bugs),
     // trim trailing assistant messages to prevent API errors.
-    while (messages.length > 0 && messages[messages.length - 1]!.role === 'assistant') {
+    const isCompactionMessage = (message: Anthropic.MessageParam): boolean =>
+      Array.isArray(message.content) &&
+      message.content.some((block) => (block as { type?: string }).type === 'compaction');
+    while (
+      !preserveTrailingAssistant &&
+      messages.length > 0 &&
+      messages[messages.length - 1]!.role === 'assistant' &&
+      !isCompactionMessage(messages[messages.length - 1]!)
+    ) {
       messages.pop();
     }
 
-    // If all messages were trimmed (shouldn't happen), add a minimal user message
-    if (messages.length === 0) {
+    // Anthropic requires an active user turn after replay state. Preserve a
+    // trailing signed compaction block and add the minimal continuation turn.
+    if (
+      messages.length === 0 ||
+      (!preserveTrailingAssistant && messages[messages.length - 1]!.role === 'assistant')
+    ) {
       messages.push({ role: 'user', content: 'Continue.' });
     }
 
@@ -406,7 +634,7 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
    * Convert our Content[] -> Anthropic content blocks
    */
   private convertContent(content: Content[]): Anthropic.MessageParam['content'] {
-    const blocks: Array<Anthropic.TextBlockParam | Anthropic.ImageBlockParam | Anthropic.ToolUseBlockParam | Anthropic.ToolResultBlockParam> = [];
+    const blocks: any[] = [];
 
     for (const c of content) {
       switch (c.type) {
@@ -470,15 +698,20 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
           }
           break;
         }
+
+        case ContentType.PROVIDER_STATE: {
+          if (c.provider === 'anthropic') blocks.push({ ...c.data });
+          break;
+        }
       }
     }
 
     // If only one text block, return as string
     if (blocks.length === 1 && blocks[0]?.type === 'text') {
-      return (blocks[0] as Anthropic.TextBlockParam).text;
+      return String(blocks[0].text ?? '');
     }
 
-    return blocks;
+    return blocks as Anthropic.MessageParam['content'];
   }
 
   /**
@@ -617,8 +850,23 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
       return undefined;
     }
 
-    const standardTools = convertToolsToStandardFormat(tools);
-    return standardTools.map((tool) => this.transformTool(tool));
+    return tools
+      .filter((tool) => tool.type === 'function')
+      .map((tool) => {
+        const converted = this.transformTool({
+          name: tool.function.name,
+          description: tool.function.description ?? '',
+          parameters: tool.function.parameters ?? { type: 'object', properties: {} },
+        }) as Anthropic.Tool & Record<string, unknown>;
+        if (tool.function.strict !== undefined) converted.strict = tool.function.strict;
+        if (tool.deferLoading !== undefined) converted.defer_loading = tool.deferLoading;
+        if (tool.allowedCallers?.length) {
+          converted.allowed_callers = tool.allowedCallers.map((caller) =>
+            caller === 'programmatic' ? 'code_execution_20260521' : 'direct',
+          );
+        }
+        return converted as Anthropic.Tool;
+      });
   }
 
   private convertNativeTools(options: TextGenerateOptions): unknown[] {
@@ -626,11 +874,21 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
       const extra = tool.options ?? {};
       switch (tool.capability) {
         case 'web_search':
-          return { ...extra, type: 'web_search_20260209', name: 'web_search' };
+          return { ...extra, type: 'web_search_20260318', name: 'web_search' };
         case 'web_fetch':
-          return { ...extra, type: 'web_fetch_20260309', name: 'web_fetch' };
+          return { ...extra, type: 'web_fetch_20260318', name: 'web_fetch' };
         case 'code_execution':
-          return { ...extra, type: 'code_execution_20260120', name: 'code_execution' };
+          return { ...extra, type: 'code_execution_20260521', name: 'code_execution' };
+        case 'tool_search': {
+          const { algorithm, variant, ...toolSearchOptions } = extra;
+          const selected = algorithm ?? variant;
+          const searchVariant = selected === 'bm25' ? 'bm25' : 'regex';
+          return {
+            ...toolSearchOptions,
+            type: `tool_search_tool_${searchVariant}_20251119`,
+            name: `tool_search_tool_${searchVariant}`,
+          };
+        }
         case 'remote_mcp':
           return {
             ...extra,
@@ -663,6 +921,8 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
           ? 'web_fetch'
           : type.includes('code_execution')
             ? 'code_execution'
+            : type.includes('tool_search') || type === 'server_tool_use' && String(block.name).startsWith('tool_search_tool_')
+              ? 'tool_search'
             : type.includes('mcp_') || type === 'server_tool_use' && block.name === 'mcp'
               ? 'remote_mcp'
               : type === 'server_tool_use' && typeof block.name === 'string'

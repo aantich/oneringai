@@ -1013,28 +1013,42 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       this._currentInput = [];
     }
 
-    // Build assistant message
+    // Preserve provider output order. Responses-style reasoning/compaction
+    // items are protocol state and may appear between assistant messages.
     const id = this.generateId();
-    const { content: contentArray, thinkingText } = this.buildAssistantContent(output);
+    const journalItems: InputItem[] = [];
+    let thinkingText: string | null = null;
+    let messageIndex = 0;
+    for (const item of output) {
+      if (item.type === 'compaction' || item.type === 'reasoning') {
+        if (item.type === 'reasoning' && item.summary) thinkingText = item.summary;
+        this._conversation.push(item);
+        journalItems.push(item);
+        continue;
+      }
 
-    // Always update lastThinking (available for inspection via property)
-    this._lastThinking = thinkingText;
+      const built = this.buildAssistantContent([item]);
+      if (built.thinkingText !== null) thinkingText = built.thinkingText;
+      if (built.content.length === 0) continue;
 
-    // Only add if there's content
-    if (contentArray.length > 0) {
       const message: Message = {
         type: 'message',
-        id,
+        id: item.id ?? (messageIndex === 0 ? id : this.generateId()),
         role: MessageRole.ASSISTANT,
-        content: contentArray,
+        content: built.content,
       };
-
+      messageIndex++;
       this._conversation.push(message);
-
-      // Journal: append assistant message (same turn as the user message)
-      this._journalAppend('assistant', [message]);
-
+      journalItems.push(message);
       this.emit('message:added', { role: 'assistant', index: this._conversation.length - 1 });
+    }
+
+    // Always update lastThinking (available for inspection via property).
+    this._lastThinking = thinkingText;
+
+    if (journalItems.length > 0) {
+      // Journal: append provider state and assistant content in the same turn.
+      this._journalAppend('assistant', journalItems);
     }
 
     return id;
@@ -1059,7 +1073,10 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
               type: ContentType.OUTPUT_TEXT,
               text: (c as any).text || '',
             });
-          } else if (c.type === ContentType.TOOL_USE) {
+          } else if (
+            c.type === ContentType.TOOL_USE
+            || c.type === ContentType.CUSTOM_TOOL_USE
+          ) {
             contentArray.push(c);
           } else if (c.type === ContentType.THINKING) {
             // Capture thinking text regardless of persistence
@@ -1069,10 +1086,14 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
             if (thinking.persistInHistory) {
               contentArray.push(c);
             }
+          } else if (c.type === ContentType.PROVIDER_STATE) {
+            contentArray.push(c);
           }
         }
-      } else if (item.type === 'compaction' || item.type === 'reasoning') {
-        // Skip compaction and reasoning items for now
+      } else if (item.type === 'reasoning') {
+        if (item.summary) thinkingText = item.summary;
+      } else if (item.type === 'compaction') {
+        // Top-level provider state is preserved directly by addAssistantResponse.
         continue;
       }
     }
@@ -1621,7 +1642,36 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    * Estimate tokens for a single InputItem.
    */
   private estimateItemTokens(item: InputItem): number {
-    if (item.type !== 'message') return 50; // Default for unknown types
+    switch (item.type) {
+      case 'compaction':
+        return 8
+          + this._estimator.estimateTokens(item.encrypted_content)
+          + this._estimator.estimateTokens(item.content ?? '')
+          + this._estimator.estimateTokens(item.signature ?? '')
+          + this._estimator.estimateDataTokens(item.providerMetadata ?? {});
+      case 'reasoning':
+        return 8
+          + this._estimator.estimateTokens(item.summary ?? '')
+          + this._estimator.estimateTokens(item.encrypted_content ?? '')
+          + this._estimator.estimateTokens(item.effort ?? '');
+      case 'configuration_update':
+        return 8 + this._estimator.estimateDataTokens(item.reasoning);
+      case 'compaction_trigger':
+        return 4;
+      case 'function_call_output':
+      case 'custom_tool_call_output':
+      case 'computer_call_output':
+      case 'shell_call_output':
+      case 'apply_patch_call_output':
+      case 'tool_search_output':
+        return 8 + this._estimator.estimateDataTokens(item);
+      case 'message':
+        break;
+      default: {
+        const exhaustive: never = item;
+        return this._estimator.estimateDataTokens(exhaustive);
+      }
+    }
 
     const msg = item as Message;
     let total = 4; // Message overhead
@@ -1631,10 +1681,10 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         total += this._estimator.estimateTokens((c as any).text || '');
       } else if (c.type === ContentType.TOOL_USE) {
         total += this._estimator.estimateTokens((c as any).name || '');
-        total += this._estimator.estimateDataTokens((c as any).input || {});
+        total += this._estimator.estimateDataTokens((c as any).arguments || '');
       } else if (c.type === ContentType.TOOL_RESULT) {
         // Count text content tokens (images already stripped from content string)
-        total += this._estimator.estimateTokens((c as any).content || '');
+        total += this._estimator.estimateTokens(this.serializeToolResultContent((c as any).content));
         // Count attached images separately using image-aware estimation
         const images = (c as any).__images as Array<{ base64: string; mediaType: string }> | undefined;
         if (images?.length) {
@@ -1642,8 +1692,16 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
             total += this._estimateImageTokens();
           }
         }
+      } else if (c.type === ContentType.CUSTOM_TOOL_USE) {
+        total += this._estimator.estimateTokens(c.name);
+        total += this._estimator.estimateTokens(c.input);
+      } else if (c.type === ContentType.CUSTOM_TOOL_RESULT) {
+        total += this._estimator.estimateTokens(this.serializeToolResultContent(c.content));
+        total += this._estimator.estimateTokens(c.error ?? '');
       } else if (c.type === ContentType.THINKING) {
         total += this._estimator.estimateTokens((c as any).thinking || '');
+      } else if (c.type === ContentType.PROVIDER_STATE) {
+        total += this._estimator.estimateDataTokens((c as any).data || {});
       } else if (c.type === ContentType.INPUT_IMAGE_URL) {
         const imgContent = c as any;
         const detail = imgContent.image_url?.detail;
@@ -1925,7 +1983,10 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     for (let index = 0; index < items.length; index++) {
       const item = items[index];
       if (item?.type !== 'message' || item.role !== MessageRole.USER) continue;
-      if (item.content.some((content) => content.type !== ContentType.TOOL_RESULT)) {
+      if (item.content.some((content) => (
+        content.type !== ContentType.TOOL_RESULT
+        && content.type !== ContentType.CUSTOM_TOOL_RESULT
+      ))) {
         starts.push(index);
       }
     }
@@ -1941,9 +2002,9 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       const item = this._conversation[index];
       if (item?.type !== 'message') continue;
       for (const content of item.content) {
-        const id = content.type === ContentType.TOOL_USE
+        const id = content.type === ContentType.TOOL_USE || content.type === ContentType.CUSTOM_TOOL_USE
           ? content.id
-          : content.type === ContentType.TOOL_RESULT
+          : content.type === ContentType.TOOL_RESULT || content.type === ContentType.CUSTOM_TOOL_RESULT
             ? content.tool_use_id
             : undefined;
         if (!id) continue;
@@ -2096,13 +2157,13 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
   /**
    * Sanitize tool pairs in the input array.
-   * Removes orphan TOOL_USE (no matching TOOL_RESULT) and
-   * orphan TOOL_RESULT (no matching TOOL_USE).
+   * Removes orphan function/custom tool uses (no matching result) and
+   * orphan function/custom tool results (no matching use).
    *
    * This is CRITICAL - LLM APIs require matching pairs.
    */
   private sanitizeToolPairs(items: InputItem[]): InputItem[] {
-    // Collect all TOOL_USE IDs and TOOL_RESULT tool_use_ids
+    // Collect all function/custom tool-use IDs and result tool_use_ids.
     const toolUseIds = new Set<string>();
     const toolResultIds = new Set<string>();
 
@@ -2110,9 +2171,9 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       if (item.type !== 'message') continue;
       const msg = item as Message;
       for (const c of msg.content) {
-        if (c.type === ContentType.TOOL_USE) {
+        if (c.type === ContentType.TOOL_USE || c.type === ContentType.CUSTOM_TOOL_USE) {
           toolUseIds.add((c as any).id);
-        } else if (c.type === ContentType.TOOL_RESULT) {
+        } else if (c.type === ContentType.TOOL_RESULT || c.type === ContentType.CUSTOM_TOOL_RESULT) {
           toolResultIds.add((c as any).tool_use_id);
         }
       }
@@ -2152,12 +2213,12 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       const filteredContent: Content[] = [];
 
       for (const c of msg.content) {
-        if (c.type === ContentType.TOOL_USE) {
+        if (c.type === ContentType.TOOL_USE || c.type === ContentType.CUSTOM_TOOL_USE) {
           const id = (c as any).id;
           if (!orphanToolUseIds.has(id)) {
             filteredContent.push(c);
           }
-        } else if (c.type === ContentType.TOOL_RESULT) {
+        } else if (c.type === ContentType.TOOL_RESULT || c.type === ContentType.CUSTOM_TOOL_RESULT) {
           const id = (c as any).tool_use_id;
           if (!orphanToolResultIds.has(id)) {
             filteredContent.push(c);
@@ -2199,7 +2260,9 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     const msg = input as Message;
 
     // Check if this is user input or tool results
-    const hasToolResult = msg.content.some(c => c.type === ContentType.TOOL_RESULT);
+    const hasToolResult = msg.content.some(c => (
+      c.type === ContentType.TOOL_RESULT || c.type === ContentType.CUSTOM_TOOL_RESULT
+    ));
 
     if (!hasToolResult) {
       // User input - reject with clear error
@@ -2229,9 +2292,9 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     let totalCharsUsed = 0;
 
     for (const c of msg.content) {
-      if (c.type === ContentType.TOOL_RESULT) {
+      if (c.type === ContentType.TOOL_RESULT || c.type === ContentType.CUSTOM_TOOL_RESULT) {
         const toolResult = c as any;
-        const content = toolResult.content || '';
+        const content = this.serializeToolResultContent(toolResult.content);
         const images = toolResult.__images as Array<{ base64: string; mediaType: string }> | undefined;
 
         // Check if content is binary (base64, etc.)
@@ -2239,7 +2302,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         if (!images?.length && this.isBinaryContent(content)) {
           // Reject binary content
           truncatedContent.push({
-            type: ContentType.TOOL_RESULT,
+            type: c.type,
             tool_use_id: toolResult.tool_use_id,
             content: '[Binary content too large - rejected. Please try a different approach or request smaller output.]',
             error: 'Binary content too large',
@@ -2251,7 +2314,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
           if (content.length > availableChars && availableChars > 0) {
             const truncated = content.slice(0, availableChars);
             truncatedContent.push({
-              type: ContentType.TOOL_RESULT,
+              type: c.type,
               tool_use_id: toolResult.tool_use_id,
               content: `${truncated}\n\n[TRUNCATED: Original output was ${Math.round(content.length / 1024)}KB. Only first ${Math.round(availableChars / 1024)}KB shown. Consider using more targeted queries.]`,
               // Preserve images even when text is truncated — they're handled natively by providers
@@ -2264,7 +2327,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
           } else {
             // No space left for text, but still preserve images if present
             truncatedContent.push({
-              type: ContentType.TOOL_RESULT,
+              type: c.type,
               tool_use_id: toolResult.tool_use_id,
               content: '[Output too large - skipped due to context limits. Try a more targeted query.]',
               error: 'Output too large',
@@ -2324,6 +2387,26 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     }
 
     return false;
+  }
+
+  /** Serialize structured tool output before applying string-based size checks. */
+  private serializeToolResultContent(content: unknown): string {
+    if (content === null || content === undefined) return '';
+    if (typeof content === 'string') return content;
+
+    try {
+      const seen = new WeakSet<object>();
+      return JSON.stringify(content, (_key, value: unknown) => {
+        if (typeof value === 'bigint') return value.toString();
+        if (value && typeof value === 'object') {
+          if (seen.has(value)) return '[Circular]';
+          seen.add(value);
+        }
+        return value;
+      }) ?? String(content);
+    } catch {
+      return String(content);
+    }
   }
 
   // ============================================================================

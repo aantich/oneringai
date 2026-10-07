@@ -8,6 +8,8 @@ import type {
   ModelLifecycleStatus,
   ISourceLinks,
 } from '../types/SharedTypes.js';
+import type { NativeToolCapability } from '../interfaces/IAdvancedInference.js';
+import { assertNoRegistryAliasCollisions } from './RegistryUtils.js';
 
 /**
  * Complete description of an LLM model including capabilities, pricing, and features
@@ -120,6 +122,9 @@ export interface ILLMDescription {
     /** Participates in OpenAI's asynchronous misalignment monitoring. */
     misalignmentMonitoring?: boolean;
 
+    /** Provider-hosted tools verified for this exact model. */
+    nativeTools?: readonly NativeToolCapability[];
+
     /** Modality-specific prices. Token prices are USD per million tokens. */
     pricing?: {
       text?: TokenPricing;
@@ -200,6 +205,7 @@ export type ProcessingMode =
   | 'batch'
   | 'flex'
   | 'fast'
+  | 'ultrafast'
   | 'priority'
   | 'off_peak';
 
@@ -225,17 +231,22 @@ export interface TokenPricing {
 
 /**
  * Model name constants organized by vendor
- * Updated: September 2026 - Includes current, preview, and migration-relevant models
+ * Updated: October 2026 - Includes current, preview, and migration-relevant models
  */
 export const LLM_MODELS = {
   [Vendor.OpenAI]: {
     // GPT-6 Series (Current Flagship)
     GPT_6_ASTRA: 'gpt-6-astra',
+    GPT_6_1_SOL: 'gpt-6.1-sol',
+    GPT_6_SOL: 'gpt-6-sol',
+    GPT_6_LUNA: 'gpt-6-luna',
     // GPT-5.6 Series
     GPT_5_6: 'gpt-5.6',
     GPT_5_6_SOL: 'gpt-5.6-sol',
     GPT_5_6_TERRA: 'gpt-5.6-terra',
     GPT_5_6_LUNA: 'gpt-5.6-luna',
+    GPT_5_6_CYBER: 'gpt-5.6-cyber',
+    GPT_ROSALIND_RESEARCH: 'gpt-rosalind-research',
     // GPT-5.5 Series
     GPT_5_5: 'gpt-5.5',
     GPT_5_5_PRO: 'gpt-5.5-pro',
@@ -276,6 +287,7 @@ export const LLM_MODELS = {
     GPT_AUDIO: 'gpt-audio',
     GPT_AUDIO_MINI: 'gpt-audio-mini',
     // Realtime Models
+    GPT_LIVE_1: 'gpt-live-1',
     GPT_REALTIME_2_1: 'gpt-realtime-2.1',
     GPT_REALTIME_2_1_MINI: 'gpt-realtime-2.1-mini',
     GPT_REALTIME_2: 'gpt-realtime-2',
@@ -296,6 +308,8 @@ export const LLM_MODELS = {
   },
   [Vendor.Anthropic]: {
     // Claude 5 Series
+    CLAUDE_OPUS_5_5: 'claude-opus-5-5',
+    CLAUDE_SONNET_5_5: 'claude-sonnet-5-5',
     CLAUDE_FABLE_5_1: 'claude-fable-5-1',
     CLAUDE_MYTHOS_5_1: 'claude-mythos-5-1',
     CLAUDE_OPUS_5: 'claude-opus-5',
@@ -320,6 +334,8 @@ export const LLM_MODELS = {
   },
   [Vendor.Google]: {
     // Current Gemini 3.x production models
+    GEMINI_3_8_LIVE: 'gemini-3.8-live',
+    GEMINI_3_8_LIVE_EXTENDED_THINKING: 'gemini-3.8-live-extended-thinking',
     GEMINI_3_8_FLASH: 'gemini-3.8-flash',
     GEMINI_3_7_FLASH: 'gemini-3.7-flash',
     GEMINI_3_6_FLASH: 'gemini-3.6-flash',
@@ -342,6 +358,7 @@ export const LLM_MODELS = {
   },
   [Vendor.Grok]: {
     // Current production models
+    GROK_4_7: 'grok-4.7',
     GROK_4_6: 'grok-4.6',
     GROK_4_5: 'grok-4.5',
     GROK_4_3: 'grok-4.3',
@@ -371,11 +388,11 @@ export const LLM_MODELS = {
 
 /**
  * Complete model registry with all model metadata
- * Registry schema v2. Last OpenAI model update: 2026-09-04.
+ * Registry schema v2. Last vendor model update: 2026-10-07.
  */
 export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   // ============================================================================
-  // OpenAI Models (Verified from developers.openai.com - September 2026)
+  // OpenAI Models (Verified from developers.openai.com - October 2026)
   // ============================================================================
 
   // GPT-6 Series (current flagship - September 2026)
@@ -385,12 +402,12 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     description: 'OpenAI\'s most capable model for complex reasoning, coding, computer use, research, and document creation',
     isActive: true,
     lifecycle: 'active',
-    availability: 'limited',
+    availability: 'public',
     preferred: true,
     endpoints: ['responses', 'chat_completions', 'batch'],
     releaseDate: '2026-09-04',
     knowledgeCutoff: '2026-04-30',
-    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6-astra', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-09-04' },
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6-astra', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
     features: {
       reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
       streaming: true, structuredOutput: true, functionCalling: true,
@@ -399,12 +416,104 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
       asyncToolCalling: true, midTurnSteering: true, configurationUpdates: true,
       misalignmentMonitoring: true,
       parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
-      input: { tokens: 922000, text: true, image: true, cpm: 10, cpmCached: 1 },
+      input: { tokens: 1_050_000, text: true, image: true, cpm: 10, cpmCached: 1 },
       output: { tokens: 128000, text: true, cpm: 50 },
       pricing: {
         text: {
           input: 10, cachedInput: 1, cacheWrite: 12.5, output: 50,
           longContext: { thresholdTokens: 272000, input: 20, cachedInput: 2, cacheWrite: 25, output: 75 },
+        },
+        processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
+      },
+    },
+  },
+
+  'gpt-6.1-sol': {
+    name: 'gpt-6.1-sol',
+    provider: Vendor.OpenAI,
+    description: 'Latest GPT-6 workhorse for coding, professional work, and long-running agents',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses', 'chat_completions', 'batch'],
+    releaseDate: '2026-09-29',
+    knowledgeCutoff: '2026-04-30',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6.1-sol', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
+      asyncToolCalling: true, midTurnSteering: true, configurationUpdates: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_050_000, text: true, image: true, cpm: 2, cpmCached: 0.1 },
+      output: { tokens: 128_000, text: true, cpm: 10 },
+      pricing: {
+        text: {
+          input: 2, cachedInput: 0.1, cacheWrite: 2.5, output: 10,
+          longContext: { thresholdTokens: 272_000, input: 4, cachedInput: 0.2, cacheWrite: 5, output: 15 },
+        },
+        processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
+      },
+    },
+  },
+
+  'gpt-6-sol': {
+    name: 'gpt-6-sol',
+    provider: Vendor.OpenAI,
+    description: 'GPT-6 workhorse model for coding, professional work, and agentic workloads',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    endpoints: ['responses', 'chat_completions', 'batch'],
+    releaseDate: '2026-09-22',
+    knowledgeCutoff: '2026-04-20',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6-sol', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
+      asyncToolCalling: true, midTurnSteering: true, configurationUpdates: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_050_000, text: true, image: true, cpm: 2, cpmCached: 0.2 },
+      output: { tokens: 128_000, text: true, cpm: 10 },
+      pricing: {
+        text: {
+          input: 2, cachedInput: 0.2, cacheWrite: 2.5, output: 10,
+          longContext: { thresholdTokens: 272_000, input: 4, cachedInput: 0.4, cacheWrite: 5, output: 15 },
+        },
+        processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
+      },
+    },
+  },
+
+  'gpt-6-luna': {
+    name: 'gpt-6-luna',
+    provider: Vendor.OpenAI,
+    description: 'Fast, economical GPT-6 model for high-throughput workloads and Decisions API classification',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses', 'decisions', 'chat_completions', 'batch'],
+    releaseDate: '2026-09-22',
+    knowledgeCutoff: '2026-05-18',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-6-luna', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
+      asyncToolCalling: true, midTurnSteering: true, configurationUpdates: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_050_000, text: true, image: true, cpm: 0.1, cpmCached: 0.01 },
+      output: { tokens: 128_000, text: true, cpm: 0.5 },
+      pricing: {
+        text: {
+          input: 0.1, cachedInput: 0.01, cacheWrite: 0.125, output: 0.5,
+          longContext: { thresholdTokens: 272_000, input: 0.2, cachedInput: 0.02, cacheWrite: 0.25, output: 0.75 },
         },
         processingMultipliers: { batch: 0.5, flex: 0.5, fast: 2 },
       },
@@ -420,14 +529,15 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     lifecycle: 'active',
     availability: 'public',
     preferred: true,
-    aliases: ['gpt-5.6'],
+    aliases: ['gpt-5.6', 'gpt-daybreak-blue-latest'],
     snapshots: ['gpt-5.6-sol-2026-07-09'],
     endpoints: ['responses', 'chat_completions', 'batch'],
     releaseDate: '2026-07-09',
     knowledgeCutoff: '2026-02-16',
     sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-sol', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-08-30' },
     features: {
-      reasoning: true, streaming: true, structuredOutput: true, functionCalling: true,
+      reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
       audio: false, video: false, batchAPI: true, promptCaching: true,
       parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
@@ -457,7 +567,8 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     knowledgeCutoff: '2026-02-16',
     sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-terra', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-08-30' },
     features: {
-      reasoning: true, streaming: true, structuredOutput: true, functionCalling: true,
+      reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
       audio: false, video: false, batchAPI: true, promptCaching: true,
       parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
@@ -486,7 +597,8 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     knowledgeCutoff: '2026-02-16',
     sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-luna', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-08-30' },
     features: {
-      reasoning: true, streaming: true, structuredOutput: true, functionCalling: true,
+      reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
       fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
       audio: false, video: false, batchAPI: true, promptCaching: true,
       parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
@@ -499,6 +611,54 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
         },
         processingMultipliers: { batch: 0.5, fast: 2 },
       },
+    },
+  },
+
+  'gpt-5.6-cyber': {
+    name: 'gpt-5.6-cyber',
+    provider: Vendor.OpenAI,
+    description: 'Purpose-trained cybersecurity model for approved defenders conducting authorized vulnerability research, exploit validation, and security testing',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'limited',
+    aliases: ['gpt-daybreak-red-latest'],
+    endpoints: ['responses', 'chat_completions', 'batch'],
+    knowledgeCutoff: '2026-02-16',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-5.6-cyber', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 400_000, text: true, image: true, cpm: 12.5, cpmCached: 1.25 },
+      output: { tokens: 128_000, text: true, cpm: 75 },
+      pricing: {
+        text: { input: 12.5, cachedInput: 1.25, cacheWrite: 15.625, output: 75 },
+        processingMultipliers: { batch: 0.5 },
+      },
+    },
+  },
+
+  'gpt-rosalind-research': {
+    name: 'gpt-rosalind-research',
+    provider: Vendor.OpenAI,
+    description: 'Specialized GPT-Rosalind model for approved internal life-sciences research through OpenAI trusted access',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'limited',
+    endpoints: ['responses'],
+    releaseDate: '2026-09-08',
+    sources: { documentation: 'https://developers.openai.com/api/docs/changelog', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true,
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: false, promptCaching: true,
+      parameters: { temperature: false, topP: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: null, text: true, image: true, cpm: 5, cpmCached: 0.5 },
+      output: { tokens: null, text: true, cpm: 25 },
+      pricing: { text: { input: 5, cachedInput: 0.5, output: 25 } },
     },
   },
 
@@ -1710,6 +1870,29 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   },
 
   // Realtime Models
+  'gpt-live-1': {
+    name: 'gpt-live-1',
+    provider: Vendor.OpenAI,
+    description: 'Full-duplex voice model for natural conversations, smooth interruptions, and delegation to a backend Responses agent',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['live'],
+    releaseDate: '2026-09-22',
+    knowledgeCutoff: '2025-07-31',
+    voices: OPENAI_REALTIME_VOICES,
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-live-1', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: false, streaming: true, structuredOutput: false, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: true, vision: false,
+      audio: true, video: false, batchAPI: false, promptCaching: false,
+      pricing: { audioDurationPerMinute: 0.05 },
+      input: { tokens: 128_000, text: true, audio: true, cpm: 0 },
+      output: { tokens: null, text: true, audio: true, cpm: 0 },
+    },
+  },
+
   'gpt-realtime-2.1': {
     name: 'gpt-realtime-2.1',
     provider: Vendor.OpenAI,
@@ -2273,9 +2456,63 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   },
 
   // ============================================================================
-  // Anthropic Models (Verified from platform.claude.com - September 2026)
+  // Anthropic Models (Verified from platform.claude.com - October 2026)
   // Source: https://platform.claude.com/docs/en/models/overview
   // ============================================================================
+
+  'claude-opus-5-5': {
+    name: 'claude-opus-5-5',
+    provider: Vendor.Anthropic,
+    description: 'Anthropic flagship for the most demanding reasoning, coding, and long-horizon agentic work',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['messages', 'batch'],
+    releaseDate: '2026-09-22',
+    knowledgeCutoff: '2026-06-01',
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/opus-5-5/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, extendedThinking: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_000_000, text: true, image: true, cpm: 4, cpmCached: 0.2 },
+      output: { tokens: 128_000, text: true, cpm: 20 },
+      pricing: {
+        text: { input: 4, cachedInput: 0.2, cacheWrite: 5, output: 20 },
+        processingMultipliers: { batch: 0.5 },
+      },
+    },
+  },
+
+  'claude-sonnet-5-5': {
+    name: 'claude-sonnet-5-5',
+    provider: Vendor.Anthropic,
+    description: 'Latest balanced Claude model for coding, agents, and production knowledge work',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['messages', 'batch'],
+    releaseDate: '2026-09-28',
+    knowledgeCutoff: '2026-06-01',
+    sources: { documentation: 'https://platform.claude.com/docs/en/models/sonnet-5-5/overview', pricing: 'https://platform.claude.com/docs/en/about-claude/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, extendedThinking: true, batchAPI: true, promptCaching: true,
+      parameters: { temperature: false, topP: false, topK: false, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 1_000_000, text: true, image: true, cpm: 2, cpmCached: 0.2 },
+      output: { tokens: 128_000, text: true, cpm: 10 },
+      pricing: {
+        text: { input: 2, cachedInput: 0.2, cacheWrite: 2.5, output: 10 },
+        processingMultipliers: { batch: 0.5 },
+      },
+    },
+  },
 
   'claude-fable-5-1': {
     name: 'claude-fable-5-1',
@@ -2335,9 +2572,9 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     provider: Vendor.Anthropic,
     description: 'Frontier Claude model for complex agentic coding and enterprise work; adaptive thinking is enabled by default',
     isActive: true,
-    lifecycle: 'active',
+    lifecycle: 'legacy',
     availability: 'public',
-    preferred: true,
+    replacementModel: 'claude-opus-5-5',
     endpoints: ['messages', 'batch'],
     releaseDate: '2026-07-24',
     knowledgeCutoff: '2026-05-01',
@@ -2434,10 +2671,10 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     provider: Vendor.Anthropic,
     description: 'Best combination of speed and intelligence; near-Opus quality on coding and agentic work. 1M context, 128K output, adaptive thinking on by default (low/medium/high/xhigh/max effort), high-resolution vision. New tokenizer. Does not accept `temperature`.',
     isActive: true,
-    lifecycle: 'active',
+    lifecycle: 'legacy',
     availability: 'public',
     endpoints: ['messages', 'batch'],
-    preferred: true,
+    replacementModel: 'claude-sonnet-5-5',
     releaseDate: '2026-06-30',
     knowledgeCutoff: '2026-01-01',
     sources: { documentation: 'https://platform.claude.com/docs/en/models/sonnet-5/overview', pricing: 'https://platform.claude.com/docs/en/models/sonnet-5/overview', lastVerified: '2026-09-04' },
@@ -2904,8 +3141,61 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
 
 
   // ============================================================================
-  // Google Models (Verified from ai.google.dev - September 2026)
+  // Google Models (Verified from ai.google.dev - October 2026)
   // ============================================================================
+
+  'gemini-3.8-live': {
+    name: 'gemini-3.8-live',
+    provider: Vendor.Google,
+    description: 'Default low-latency Gemini audio-to-audio model with interleaved reasoning and asynchronous function calling',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['live'],
+    releaseDate: '2026-09-15',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.8-live', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, streaming: true, structuredOutput: false, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: true, vision: true,
+      audio: true, video: true, batchAPI: false, promptCaching: false,
+      parameters: { temperature: true, topP: true, topK: true, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 131_072, text: true, image: true, audio: true, video: true, cpm: 0.75 },
+      output: { tokens: 65_536, text: true, audio: true, cpm: 4.5 },
+      pricing: {
+        text: { input: 0.75, output: 4.5 },
+        audio: { input: 3, output: 12 },
+        image: { input: 1 },
+      },
+    },
+  },
+
+  'gemini-3.8-live-extended-thinking': {
+    name: 'gemini-3.8-live-extended-thinking',
+    provider: Vendor.Google,
+    description: 'High-reasoning Gemini audio-to-audio model with background reasoning and asynchronous tool execution',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['live'],
+    releaseDate: '2026-09-15',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.8-live-extended-thinking', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high'],
+      streaming: true, structuredOutput: false, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: true, vision: true,
+      audio: true, video: true, batchAPI: false, promptCaching: false,
+      parameters: { temperature: true, topP: true, topK: true, frequencyPenalty: false, presencePenalty: false },
+      input: { tokens: 131_072, text: true, image: true, audio: true, video: true, cpm: 0.75 },
+      output: { tokens: 65_536, text: true, audio: true, cpm: 4.5 },
+      pricing: {
+        text: { input: 0.75, output: 4.5 },
+        audio: { input: 3, output: 12 },
+        image: { input: 1 },
+      },
+    },
+  },
 
   'gemini-3.8-flash': {
     name: 'gemini-3.8-flash',
@@ -3191,8 +3481,13 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     provider: Vendor.Google,
     description: 'Low-latency Live API model for real-time audio dialogue with multimodal awareness',
     isActive: true,
+    lifecycle: 'legacy',
+    availability: 'public',
+    replacementModel: 'gemini-3.8-live',
+    endpoints: ['live'],
     releaseDate: '2026-03-01',
     knowledgeCutoff: '2025-01-01',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-live-preview', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-10-07' },
     features: {
       reasoning: true,
       streaming: true,
@@ -3447,8 +3742,38 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
   },
 
   // ============================================================================
-  // xAI Grok Models (Verified from docs.x.ai - September 2026)
+  // xAI Grok Models (Verified from docs.x.ai - October 2026)
   // ============================================================================
+
+  'grok-4.7': {
+    name: 'grok-4.7',
+    provider: Vendor.Grok,
+    description: 'Latest xAI frontier reasoning model with a 500K context window and native agent tools',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['responses'],
+    releaseDate: '2026-09-21',
+    knowledgeCutoff: '2026-05-01',
+    sources: { documentation: 'https://docs.x.ai/developers/grok-4-7', pricing: 'https://docs.x.ai/developers/pricing', lastVerified: '2026-10-07' },
+    features: {
+      reasoning: true, reasoningEfforts: ['low', 'medium', 'high', 'xhigh'],
+      streaming: true, structuredOutput: true, functionCalling: true,
+      fineTuning: false, predictedOutputs: false, realtime: false, vision: true,
+      audio: false, video: false, batchAPI: false, promptCaching: true,
+      nativeTools: ['web_search', 'x_search', 'code_execution'],
+      parameters: { temperature: true, topP: true, frequencyPenalty: true, presencePenalty: true },
+      input: { tokens: 500_000, text: true, image: true, cpm: 2, cpmCached: 0.5 },
+      output: { tokens: null, text: true, cpm: 6 },
+      pricing: {
+        text: {
+          input: 2, cachedInput: 0.5, output: 6,
+          longContext: { thresholdTokens: 200_000, input: 4, cachedInput: 1, output: 12 },
+        },
+      },
+    },
+  },
 
   'grok-4.6': {
     name: 'grok-4.6',
@@ -3457,7 +3782,6 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
-    preferred: true,
     endpoints: ['responses', 'chat_completions'],
     releaseDate: '2026-08-12',
     knowledgeCutoff: '2026-02-01',
@@ -4031,6 +4355,8 @@ export const MODEL_REGISTRY: Record<string, ILLMDescription> = {
     },
   },
 };
+
+assertNoRegistryAliasCollisions(MODEL_REGISTRY, 'MODEL_REGISTRY');
 
 /**
  * Get model information by name

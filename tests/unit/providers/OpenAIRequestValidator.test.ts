@@ -46,6 +46,28 @@ describe('validateOpenAIResponsesRequest', () => {
     )).toThrow(/logprobs/);
   });
 
+  it('validates GPT-6 sampling controls against effective reasoning effort', () => {
+    expect(() => validateOpenAIResponsesRequest(
+      { model: 'gpt-6.1-sol', temperature: 0.2 },
+      { input: 'hi', reasoning: { effort: 'low' } },
+    )).toThrow(/does not support temperature/);
+
+    for (const model of ['gpt-6-sol', 'gpt-6-luna']) {
+      expect(() => validateOpenAIResponsesRequest(
+        { model, temperature: 0.2 },
+        { input: 'hi', temperature: 0.2, top_p: 0.9, reasoning: { effort: 'none' } },
+      )).not.toThrow();
+      expect(() => validateOpenAIResponsesRequest(
+        { model },
+        { input: 'hi', top_p: 0.9, reasoning: { effort: 'high' } },
+      )).toThrow(/does not support top_p/);
+      expect(() => validateOpenAIResponsesRequest(
+        { model, temperature: 0.2 },
+        { input: 'hi' },
+      )).toThrow(/does not support temperature/);
+    }
+  });
+
   it('gates new protocol features by model capability', () => {
     expect(() => validateOpenAIResponsesRequest(
       { model: 'gpt-5.6-terra' },
@@ -111,10 +133,20 @@ describe('validateOpenAIResponsesRequest', () => {
   });
 
   it('rejects explicit Fast mode on the EU data-residency endpoint', () => {
+    for (const model of ['gpt-6-astra', 'gpt-6.1-sol', 'gpt-6-sol', 'gpt-6-luna']) {
+      expect(() => validateOpenAIResponsesRequest(
+        { model },
+        { input: 'hi', service_tier: 'fast' },
+        'https://eu.api.openai.com/v1',
+      )).toThrow(/Fast mode is unavailable/);
+    }
+  });
+
+  it('rejects Ultrafast mode on the EU data-residency endpoint', () => {
     expect(() => validateOpenAIResponsesRequest(
-      { model: 'gpt-6-astra' },
-      { input: 'hi', service_tier: 'fast' },
+      { model: 'gpt-5.6-sol' },
+      { input: 'hi', service_tier: 'ultrafast' },
       'https://eu.api.openai.com/v1',
-    )).toThrow(/Fast mode is unavailable/);
+    )).toThrow(/Ultrafast mode is unavailable/);
   });
 });

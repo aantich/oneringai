@@ -84,6 +84,8 @@ export class OpenAIResponsesWebSocketSession extends EventEmitter {
   private readonly options: OpenAIResponsesWebSocketSessionOptions;
   private readonly converter = new OpenAIResponsesConverter();
   private transport: OpenAIResponsesWebSocketTransport | null = null;
+  private connectionState: 'idle' | 'connecting' | 'connected' | 'closing' = 'idle';
+  private activeAttempt: symbol | null = null;
 
   constructor(options: OpenAIResponsesWebSocketSessionOptions) {
     super();
@@ -94,60 +96,80 @@ export class OpenAIResponsesWebSocketSession extends EventEmitter {
   }
 
   get isConnected(): boolean {
-    return this.transport?.socket.readyState === 1;
+    return this.connectionState === 'connected' && this.transport?.socket.readyState === 1;
   }
 
   async connect(): Promise<void> {
-    if (this.transport) throw new Error('Responses WebSocket session is already connected or connecting');
+    if (this.connectionState !== 'idle') {
+      throw new Error('Responses WebSocket session is already connected or connecting');
+    }
+    this.connectionState = 'connecting';
+    const attempt = Symbol('openai-responses-ws-connect');
+    this.activeAttempt = attempt;
+    let transport: OpenAIResponsesWebSocketTransport | null = null;
 
-    // ResponsesWS opens synchronously from its constructor, so rotating connector
-    // credentials must be resolved before the SDK client is created.
-    const apiKey = await this.connector.getToken();
-    const connectorOptions = this.connector.getOptions();
-    const client = new OpenAI({
-      apiKey,
-      baseURL: this.connector.baseURL || undefined,
-      organization: typeof connectorOptions.organization === 'string'
-        ? connectorOptions.organization
-        : undefined,
-      project: typeof connectorOptions.project === 'string' ? connectorOptions.project : undefined,
-    });
-    const transportOptions = {
-      ...(this.options.headers ? { headers: this.options.headers } : {}),
-      ...(this.options.reconnect !== undefined ? { reconnect: this.options.reconnect } : {}),
-      ...(this.options.maxQueueSize !== undefined ? { maxQueueSize: this.options.maxQueueSize } : {}),
-    };
-    const transport = this.options.transportFactory
-      ? this.options.transportFactory(client, transportOptions)
-      : new ResponsesWS(client, transportOptions) as unknown as OpenAIResponsesWebSocketTransport;
-    this.transport = transport;
-    this.forwardEvents(transport);
-
-    if (transport.socket.readyState === 1) return;
-    await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => finish(
-        new Error('Timed out connecting to the OpenAI Responses WebSocket'),
-      ), this.options.connectTimeoutMs ?? 15_000);
-      const onOpen = (): void => finish();
-      const onError = (error: Error): void => finish(error);
-      const onClose = (code: number, reason: string): void => finish(
-        new Error(`OpenAI Responses WebSocket closed during connect: ${code} ${reason}`.trim()),
-      );
-      const finish = (error?: Error): void => {
-        clearTimeout(timeout);
-        transport.socket.off('open', onOpen);
-        transport.socket.off('error', onError);
-        transport.socket.off('close', onClose);
-        if (error) reject(error);
-        else resolve();
+    try {
+      // ResponsesWS opens synchronously from its constructor, so rotating connector
+      // credentials must be resolved before the SDK client is created.
+      const apiKey = await this.connector.getToken();
+      if (this.activeAttempt !== attempt) {
+        throw new Error('OpenAI Responses WebSocket connection was cancelled');
+      }
+      const connectorOptions = this.connector.getOptions();
+      const client = new OpenAI({
+        apiKey,
+        baseURL: this.connector.baseURL || undefined,
+        organization: typeof connectorOptions.organization === 'string'
+          ? connectorOptions.organization
+          : undefined,
+        project: typeof connectorOptions.project === 'string' ? connectorOptions.project : undefined,
+      });
+      const transportOptions = {
+        ...(this.options.headers ? { headers: this.options.headers } : {}),
+        ...(this.options.reconnect !== undefined ? { reconnect: this.options.reconnect } : {}),
+        ...(this.options.maxQueueSize !== undefined ? { maxQueueSize: this.options.maxQueueSize } : {}),
       };
-      transport.socket.on('open', onOpen);
-      transport.socket.on('error', onError);
-      transport.socket.on('close', onClose);
-    }).catch((error) => {
-      this.close(1000, 'Connect failed');
+      transport = this.options.transportFactory
+        ? this.options.transportFactory(client, transportOptions)
+        : new ResponsesWS(client, transportOptions) as unknown as OpenAIResponsesWebSocketTransport;
+      this.transport = transport;
+      this.forwardEvents(transport, attempt);
+
+      if (transport.socket.readyState !== 1) {
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => finish(
+            new Error('Timed out connecting to the OpenAI Responses WebSocket'),
+          ), this.options.connectTimeoutMs ?? 15_000);
+          const onOpen = (): void => finish();
+          const onError = (error: Error): void => finish(error);
+          const onClose = (code: number, reason: string): void => finish(
+            new Error(`OpenAI Responses WebSocket closed during connect: ${code} ${reason}`.trim()),
+          );
+          const finish = (error?: Error): void => {
+            clearTimeout(timeout);
+            transport!.socket.off('open', onOpen);
+            transport!.socket.off('error', onError);
+            transport!.socket.off('close', onClose);
+            if (error) reject(error);
+            else resolve();
+          };
+          transport!.socket.on('open', onOpen);
+          transport!.socket.on('error', onError);
+          transport!.socket.on('close', onClose);
+        });
+      }
+      if (this.transport !== transport || this.activeAttempt !== attempt) {
+        throw new Error('OpenAI Responses WebSocket closed before connection completed');
+      }
+      this.connectionState = 'connected';
+    } catch (error) {
+      if (this.transport === transport) this.close(1000, 'Connect failed');
+      else if (this.activeAttempt === attempt) {
+        this.activeAttempt = null;
+        this.connectionState = 'idle';
+      }
       throw error;
-    });
+    }
   }
 
   createResponse(options: OpenAIResponsesCreateEventOptions): void {
@@ -197,8 +219,11 @@ export class OpenAIResponsesWebSocketSession extends EventEmitter {
 
   close(code = 1000, reason = 'OK'): void {
     const transport = this.transport;
+    this.connectionState = 'closing';
+    this.activeAttempt = null;
     this.transport = null;
     transport?.close({ code, reason });
+    this.connectionState = 'idle';
   }
 
   override on<K extends keyof OpenAIResponsesWebSocketSessionEvents>(
@@ -209,21 +234,33 @@ export class OpenAIResponsesWebSocketSession extends EventEmitter {
   }
 
   private requireTransport(): OpenAIResponsesWebSocketTransport {
-    if (!this.transport || this.transport.socket.readyState !== 1) {
+    if (
+      this.connectionState !== 'connected'
+      || !this.transport
+      || this.transport.socket.readyState !== 1
+    ) {
       throw new Error('OpenAI Responses WebSocket is not connected');
     }
     return this.transport;
   }
 
-  private forwardEvents(transport: OpenAIResponsesWebSocketTransport): void {
+  private forwardEvents(transport: OpenAIResponsesWebSocketTransport, attempt: symbol): void {
     transport.on('event', (event: ResponsesAPI.ResponsesServerEvent) => this.emit('event', event));
-    transport.on('error', (error: Error) => this.emit('error', error));
+    transport.on('error', (error: Error) => this.forwardError(error));
     transport.on('close', (code: number, reason: string, unsent: ResponsesUnsentMessage[]) => {
-      if (this.transport === transport) this.transport = null;
+      if (this.transport === transport && this.activeAttempt === attempt) {
+        this.activeAttempt = null;
+        this.transport = null;
+        this.connectionState = 'idle';
+      }
       this.emit('close', code, reason, unsent);
     });
     transport.on('reconnecting', (event: ResponsesReconnectingEvent) => this.emit('reconnecting', event));
     transport.on('reconnected', () => this.emit('reconnected'));
+  }
+
+  private forwardError(error: Error): void {
+    if (this.listenerCount('error') > 0) this.emit('error', error);
   }
 
   private assertStreamId(value: unknown): void {

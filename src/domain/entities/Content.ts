@@ -12,6 +12,7 @@ export enum ContentType {
   CUSTOM_TOOL_USE = 'custom_tool_use',
   CUSTOM_TOOL_RESULT = 'custom_tool_result',
   THINKING = 'thinking',
+  PROVIDER_STATE = 'provider_state',
 }
 
 export interface BaseContent {
@@ -98,6 +99,17 @@ export interface ThinkingContent extends BaseContent {
   persistInHistory: boolean;
 }
 
+/**
+ * Opaque provider-owned content that must be replayed verbatim. This is used
+ * for protocol state such as Anthropic server-tool calls/results; applications
+ * should persist it but must not interpret or manufacture it.
+ */
+export interface ProviderStateContent extends BaseContent {
+  type: ContentType.PROVIDER_STATE;
+  provider: string;
+  data: Record<string, unknown>;
+}
+
 export type Content =
   | InputTextContent
   | InputImageContent
@@ -107,4 +119,5 @@ export type Content =
   | ToolResultContent
   | CustomToolUseContent
   | CustomToolResultContent
-  | ThinkingContent;
+  | ThinkingContent
+  | ProviderStateContent;

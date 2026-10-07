@@ -58,6 +58,15 @@ describe('STTModel Registry', () => {
       const model = getSTTModelInfo('unknown-model');
       expect(model).toBeUndefined();
     });
+
+    it('keeps the legacy xai-stt endpoint distinct from Grok Voice Transcribe 2.0', () => {
+      expect(getSTTModelInfo('xai-stt')?.name).toBe('xai-stt');
+      expect(getSTTModelInfo('grok-voice-transcribe-2.0')).toMatchObject({
+        name: 'grok-voice-transcribe-2.0',
+        releaseDate: '2026-09-17',
+      });
+      expect(getSTTModelInfo('grok-voice-transcribe-2.0')?.aliases).toBeUndefined();
+    });
   });
 
   describe('getSTTModelsByVendor', () => {

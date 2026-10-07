@@ -189,13 +189,16 @@ export abstract class BaseStreamConverter<TEvent = unknown> {
    */
   protected emitReasoningDelta(
     delta: string,
-    itemId?: string
+    itemId?: string,
+    options?: { outputIndex?: number; contentIndex?: number },
   ): StreamEvent {
     this.reasoningBuffer += delta;
     return {
       type: StreamEventType.REASONING_DELTA,
       response_id: this.responseId,
       item_id: itemId || `reasoning_${this.responseId}`,
+      ...(options?.outputIndex !== undefined ? { output_index: options.outputIndex } : {}),
+      ...(options?.contentIndex !== undefined ? { content_index: options.contentIndex } : {}),
       delta,
       sequence_number: this.nextSequence(),
     };
@@ -204,7 +207,11 @@ export abstract class BaseStreamConverter<TEvent = unknown> {
   /**
    * Create REASONING_DONE event with accumulated reasoning
    */
-  protected emitReasoningDone(itemId?: string): StreamEvent {
+  protected emitReasoningDone(
+    itemId?: string,
+    metadata?: Pick<import('../../../domain/entities/StreamEvent.js').ReasoningDoneEvent, 'signature' | 'encrypted_content' | 'effort'>,
+    options?: { outputIndex?: number },
+  ): StreamEvent {
     const id = itemId || `reasoning_${this.responseId}`;
     const thinking = this.reasoningBuffer;
     this.reasoningBuffer = '';
@@ -212,14 +219,22 @@ export abstract class BaseStreamConverter<TEvent = unknown> {
       type: StreamEventType.REASONING_DONE,
       response_id: this.responseId,
       item_id: id,
+      ...(options?.outputIndex !== undefined ? { output_index: options.outputIndex } : {}),
+      sequence_number: this.nextSequence(),
       thinking,
+      ...metadata,
     };
   }
 
   /**
    * Create TOOL_CALL_START event
    */
-  protected emitToolCallStart(toolCallId: string, toolName: string, itemId?: string): StreamEvent {
+  protected emitToolCallStart(
+    toolCallId: string,
+    toolName: string,
+    itemId?: string,
+    options?: { outputIndex?: number },
+  ): StreamEvent {
     // Initialize buffer for this tool call
     this.toolCallBuffers.set(toolCallId, {
       id: toolCallId,
@@ -231,6 +246,8 @@ export abstract class BaseStreamConverter<TEvent = unknown> {
       type: StreamEventType.TOOL_CALL_START,
       response_id: this.responseId,
       item_id: itemId || `msg_${this.responseId}`,
+      ...(options?.outputIndex !== undefined ? { output_index: options.outputIndex } : {}),
+      sequence_number: this.nextSequence(),
       tool_call_id: toolCallId,
       tool_name: toolName,
     };

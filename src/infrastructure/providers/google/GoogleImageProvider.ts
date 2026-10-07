@@ -154,6 +154,7 @@ export class GoogleImageProvider extends BaseMediaProvider implements IImageProv
    */
   async listModels(): Promise<string[]> {
     return [
+      'gemini-nano-banana-2.1',
       'gemini-3.1-flash-image',
       'gemini-3.1-flash-lite-image',
       'gemini-3-pro-image',
@@ -161,7 +162,8 @@ export class GoogleImageProvider extends BaseMediaProvider implements IImageProv
   }
 
   private isNativeGeminiImageModel(model: string): boolean {
-    return model.startsWith('gemini-') && model.includes('-image');
+    return model.startsWith('gemini-nano-banana-')
+      || (model.startsWith('gemini-') && model.includes('-image'));
   }
 
   private async generateImagenImages(options: GoogleImageGenerateOptions): Promise<string[]> {

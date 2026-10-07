@@ -9,7 +9,7 @@ export interface ImageGenerateOptions {
   prompt: string;
   size?: string;
   aspectRatio?: string; // e.g., '16:9', '4:3' - used by xAI and Google
-  quality?: 'standard' | 'hd' | 'low' | 'medium' | 'high' | 'auto';
+  quality?: 'standard' | 'hd' | 'low' | 'medium' | 'high' | 'xhigh' | 'max' | 'auto';
   style?: 'vivid' | 'natural';
   n?: number; // Number of images to generate
   response_format?: 'url' | 'b64_json';

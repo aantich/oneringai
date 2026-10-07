@@ -488,5 +488,5 @@ path. Never add or print secrets to make them pass.
 
 ---
 
-Version: 1.1.6 | Runtime: Node.js 22.13+ or 24+ | Architecture: Connector-first +
+Version: 1.1.8 | Runtime: Node.js 22.13+ or 24+ | Architecture: Connector-first +
 NextGen context

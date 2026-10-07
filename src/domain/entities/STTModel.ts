@@ -4,7 +4,7 @@
 
 import { Vendor } from '../../core/Vendor.js';
 import type { IBaseModelDescription, VendorOptionSchema } from '../types/SharedTypes.js';
-import { createRegistryHelpers } from './RegistryUtils.js';
+import { assertNoRegistryAliasCollisions, createRegistryHelpers } from './RegistryUtils.js';
 import { AUDIO_FORMATS } from './SharedVoices.js';
 
 // =============================================================================
@@ -112,7 +112,9 @@ export const STT_MODELS = {
     GEMINI_3_6_FLASH: 'gemini-3.6-flash',
   },
   [Vendor.Grok]: {
-    /** xAI Speech-to-Text endpoint (the API does not require a model field). */
+    /** Current xAI file and streaming transcription model. */
+    GROK_VOICE_TRANSCRIBE_2: 'grok-voice-transcribe-2.0',
+    /** Legacy library alias retained for compatibility. */
     XAI_STT: 'xai-stt',
   },
   [Vendor.Groq]: {
@@ -145,7 +147,7 @@ const WHISPER_BASE_CAPABILITIES: Omit<STTModelCapabilities, 'features' | 'limits
 
 /**
  * Complete STT model registry
- * Last full audit: August 2026
+ * Last full audit: October 2026
  */
 export const STT_MODEL_REGISTRY: Record<string, ISTTModelDescription> = {
   // ======================== OpenAI ========================
@@ -449,15 +451,45 @@ export const STT_MODEL_REGISTRY: Record<string, ISTTModelDescription> = {
 
   // ======================== xAI ========================
 
+  'grok-voice-transcribe-2.0': {
+    name: 'grok-voice-transcribe-2.0',
+    displayName: 'Grok Voice Transcribe 2.0',
+    provider: Vendor.Grok,
+    description: 'Current xAI file and streaming transcription model with timestamps, diarization, and multichannel support',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'region_limited',
+    preferred: true,
+    endpoints: ['audio_transcription', 'realtime'],
+    releaseDate: '2026-09-17',
+    sources: { documentation: 'https://docs.x.ai/developers/model-capabilities/audio/speech-to-text', pricing: 'https://docs.x.ai/developers/models/speech-to-text', lastVerified: '2026-10-07' },
+    capabilities: {
+      ...WHISPER_BASE_CAPABILITIES,
+      outputFormats: ['json', 'text', 'verbose_json'],
+      features: { translation: false, diarization: true, streaming: true, punctuation: true, profanityFilter: false },
+      limits: { maxFileSizeMB: 500 },
+      vendorOptions: {
+        format: { type: 'boolean', description: 'Apply automatic transcript formatting', default: false },
+        multichannel: { type: 'boolean', description: 'Transcribe channels independently', default: false },
+        channels: { type: 'number', description: 'Number of channels in raw audio', min: 2, max: 8 },
+        diarize: { type: 'boolean', description: 'Identify distinct speakers', default: false },
+        keyterm: { type: 'array', description: 'Terms whose recognition should be boosted' },
+        filler_words: { type: 'boolean', description: 'Retain filler words in the transcript', default: false },
+        vad_threshold: { type: 'number', description: 'Voice-activity detection threshold', min: 0, max: 1, default: 0.08 },
+      },
+    },
+    pricing: { perMinute: 0.0016666667, streamingPerMinute: 0.0033333333, currency: 'USD' },
+  },
+
   'xai-stt': {
     name: 'xai-stt',
     displayName: 'xAI Speech to Text',
     provider: Vendor.Grok,
     description: 'Low-cost xAI file and streaming transcription with timestamps, diarization, and multichannel support',
     isActive: true,
-    lifecycle: 'active',
+    lifecycle: 'legacy',
     availability: 'region_limited',
-    preferred: true,
+    replacementModel: 'grok-voice-transcribe-2.0',
     endpoints: ['audio_transcription', 'realtime'],
     releaseDate: '2026-07-23',
     sources: {
@@ -575,6 +607,7 @@ export const STT_MODEL_REGISTRY: Record<string, ISTTModelDescription> = {
 // Helper Functions (using shared utilities)
 // =============================================================================
 
+assertNoRegistryAliasCollisions(STT_MODEL_REGISTRY, 'STT_MODEL_REGISTRY');
 const helpers = createRegistryHelpers(STT_MODEL_REGISTRY);
 
 export const getSTTModelInfo = helpers.getInfo;

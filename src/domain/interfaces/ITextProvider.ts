@@ -28,6 +28,8 @@ export type ReasoningEffort =
 
 export interface ThinkingConfig {
   enabled: boolean;
+  /** Provider thinking mode. `between_tools` and `disabled` are currently Anthropic-specific. */
+  mode?: 'adaptive' | 'enabled' | 'between_tools' | 'disabled';
   /** Fixed reasoning-token budget for models that still expose budget-based thinking. */
   budgetTokens?: number;
   /** Model-selected reasoning depth for OpenAI, Anthropic, and Gemini models. */
@@ -48,6 +50,8 @@ export interface TextGenerateOptions {
   };
   parallel_tool_calls?: boolean;
   previous_response_id?: string;
+  /** Opaque provider token used to resume an incomplete long decode. */
+  continuation_token?: string;
   metadata?: Record<string, string>;
   /**
    * Provider-neutral prompt-cache policy. Unsupported strict requests fail

@@ -27,11 +27,13 @@ export type ModelAvailability =
 /** Normalized API surfaces used by the first-party provider adapters. */
 export type ModelEndpoint =
   | 'responses'
+  | 'decisions'
   | 'chat_completions'
   | 'completions'
   | 'messages'
   | 'generate_content'
   | 'interactions'
+  | 'live'
   | 'realtime'
   | 'batch'
   | 'image_generation'

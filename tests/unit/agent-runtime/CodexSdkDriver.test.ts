@@ -295,15 +295,15 @@ describe('CodexSdkDriver', () => {
       policy: policy(),
     });
     const result = await (await session.run('override', {
-      model: 'gpt-5.6-sol',
-      reasoning: { effort: 'low' },
+      model: 'gpt-6.1-sol',
+      reasoning: { effort: 'ultra' },
     })).result;
 
     expect(capturedThreadOptions).toMatchObject({
-      model: 'gpt-5.6-sol',
-      modelReasoningEffort: 'low',
+      model: 'gpt-6.1-sol',
+      modelReasoningEffort: 'ultra',
     });
-    expect(result.configuration).toEqual({ model: 'gpt-5.6-sol', reasoning: { effort: 'low' } });
+    expect(result.configuration).toEqual({ model: 'gpt-6.1-sol', reasoning: { effort: 'ultra' } });
     await runtime.destroy();
   });
 

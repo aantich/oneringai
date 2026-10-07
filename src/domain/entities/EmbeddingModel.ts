@@ -4,7 +4,7 @@
 
 import { Vendor } from '../../core/Vendor.js';
 import type { IBaseModelDescription, VendorOptionSchema } from '../types/SharedTypes.js';
-import { createRegistryHelpers } from './RegistryUtils.js';
+import { assertNoRegistryAliasCollisions, createRegistryHelpers } from './RegistryUtils.js';
 
 // =============================================================================
 // Types
@@ -622,6 +622,7 @@ export const EMBEDDING_MODEL_REGISTRY: Record<string, IEmbeddingModelDescription
 // Helpers (via RegistryUtils)
 // =============================================================================
 
+assertNoRegistryAliasCollisions(EMBEDDING_MODEL_REGISTRY, 'EMBEDDING_MODEL_REGISTRY');
 const helpers = createRegistryHelpers(EMBEDDING_MODEL_REGISTRY);
 
 /** Get embedding model information by name */

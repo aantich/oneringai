@@ -228,6 +228,38 @@ describe('OpenAITextProvider', () => {
       );
     });
 
+    it.each(['gpt-6-sol', 'gpt-6-luna'])(
+      'passes sampling controls for %s only when reasoning effort is none',
+      async (model) => {
+        await provider.generate({
+          model,
+          input: 'Hello',
+          temperature: 0.2,
+          thinking: { enabled: true, effort: 'none' },
+        });
+
+        expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({
+          model,
+          temperature: 0.2,
+          reasoning: expect.objectContaining({ effort: 'none' }),
+        }));
+      },
+    );
+
+    it.each(['gpt-6-astra', 'gpt-6.1-sol', 'gpt-6-sol', 'gpt-6-luna'])(
+      'rejects sampling controls for %s when reasoning is active',
+      async (model) => {
+        await expect(provider.generate({
+          model,
+          input: 'Hello',
+          temperature: 0.2,
+          thinking: { enabled: true, effort: 'high' },
+        })).rejects.toThrow(/does not support temperature/);
+
+        expect(mockCreate).not.toHaveBeenCalled();
+      },
+    );
+
     it('should convert tools to Responses API format', async () => {
       const tools = [
         {

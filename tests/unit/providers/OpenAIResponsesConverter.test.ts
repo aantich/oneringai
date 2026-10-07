@@ -162,6 +162,41 @@ describe('OpenAIResponsesConverter', () => {
       expect(result.output[0].content[1].type).toBe('output_text');
     });
 
+    it('preserves encrypted reasoning once for stateless replay', () => {
+      const result = converter.convertResponse({
+        id: 'resp_encrypted',
+        object: 'response',
+        created_at: 1,
+        status: 'completed',
+        model: 'gpt-6-astra',
+        output: [
+          {
+            type: 'reasoning', id: 'reasoning_1', status: 'completed',
+            summary: [{ type: 'summary_text', text: 'Private summary' }],
+            encrypted_content: 'opaque-reasoning',
+          },
+          {
+            type: 'message', id: 'msg_1', status: 'completed', role: 'assistant',
+            content: [{ type: 'output_text', text: 'Answer', annotations: [] }],
+          },
+        ],
+        usage: { input_tokens: 1, output_tokens: 1, total_tokens: 2 },
+      } as any);
+
+      expect(result.output).toEqual([
+        expect.objectContaining({
+          type: 'reasoning', id: 'reasoning_1', encrypted_content: 'opaque-reasoning',
+        }),
+        expect.objectContaining({
+          type: 'message', id: 'msg_1',
+          content: [expect.objectContaining({ type: 'output_text', text: 'Answer' })],
+        }),
+      ]);
+      expect(result.thinking).toBe('Private summary');
+      const replay = converter.convertInput(result.output).input as any[];
+      expect(replay.filter((item) => item.type === 'reasoning')).toHaveLength(1);
+    });
+
     it('should fallback to response ID if no message ID found', () => {
       // Edge case: if there's no message item, use response ID as fallback
       const mockResponse: ResponsesAPI.Response = {
@@ -324,6 +359,31 @@ describe('OpenAIResponsesConverter', () => {
         { type: 'compaction_trigger' },
         { type: 'function_call_output', call_id: 'call_fn', output: 'done' },
       ])).toThrow(InvalidConfigError);
+    });
+
+    it('preserves message text around top-level Responses tool items', () => {
+      const { input } = converter.convertInput([{
+        type: 'message',
+        id: 'msg_ordered',
+        role: MessageRole.ASSISTANT,
+        content: [
+          { type: ContentType.OUTPUT_TEXT, text: 'before' },
+          { type: ContentType.TOOL_USE, id: 'call_1', name: 'lookup', arguments: '{"q":"x"}' },
+          { type: ContentType.OUTPUT_TEXT, text: 'after' },
+        ],
+      }]);
+
+      expect(input).toEqual([
+        expect.objectContaining({
+          type: 'message', id: 'msg_ordered', role: 'assistant',
+          content: [{ type: 'output_text', text: 'before' }],
+        }),
+        { type: 'function_call', call_id: 'call_1', name: 'lookup', arguments: '{"q":"x"}' },
+        expect.objectContaining({
+          type: 'message', role: 'assistant',
+          content: [{ type: 'output_text', text: 'after' }],
+        }),
+      ]);
     });
   });
 

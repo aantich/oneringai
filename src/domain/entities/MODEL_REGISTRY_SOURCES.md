@@ -1,6 +1,6 @@
 # Model Registry Sources
 
-Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`ImageModel.ts`), Video (`VideoModel.ts`), TTS (`TTSModel.ts`), STT (`STTModel.ts`), and embeddings (`EmbeddingModel.ts`). Last audited 2026-09-04.
+Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`ImageModel.ts`), Video (`VideoModel.ts`), TTS (`TTSModel.ts`), STT (`STTModel.ts`), and embeddings (`EmbeddingModel.ts`). Last audited 2026-10-07.
 
 ---
 
@@ -12,11 +12,14 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - **Deprecations**: https://developers.openai.com/api/docs/deprecations
 - **API reference**: https://developers.openai.com/api/reference
 - **Key fields**: context window, max output tokens, pricing (input/cached/output), knowledge cutoff, supported features (vision, audio, reasoning, structured output, function calling)
-- **Notes**: Cached input pricing is 10x cheaper than standard input. Reasoning models (o-series, GPT-5.x) don't support temperature/topP. Chat-latest variants have smaller context (128K) and no reasoning.
+- **Current additions**: GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol/Luna, GPT-5.6 Cyber, and GPT-Rosalind Research. Verify access scope as well as ordinary capabilities.
+- **Notes**: Cache discounts and cache-write rates are model-specific. GPT-6
+  sampling controls depend on effective reasoning effort: Sol/Luna allow them
+  only with `none`, while Astra and GPT-6.1 Sol do not support `none`.
 
 ### Image Models (`ImageModel.ts`)
 - **Image guide**: https://platform.openai.com/docs/guides/images
-- **Models**: `gpt-image-2`; deprecated GPT Image 1 family; retired DALL-E records
+- **Models**: GPT Image 2.5 Sunburst/Flare and `gpt-image-2`; deprecated GPT Image 1 family; retired DALL-E records
 - **Key fields**: sizes, max images per request, quality levels, output formats, editing/variation support
 
 ### Video Models (`VideoModel.ts`)
@@ -42,13 +45,15 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 
 ### LLM Models (`Model.ts`)
 - **Models overview**: https://platform.claude.com/docs/en/models/overview
+- **Opus 5.5**: https://platform.claude.com/docs/en/models/opus-5-5/overview
+- **Sonnet 5.5**: https://platform.claude.com/docs/en/models/sonnet-5-5/overview
 - **Fable 5.1**: https://platform.claude.com/docs/en/models/fable-5-1/overview
 - **Mythos 5.1**: https://platform.claude.com/docs/en/models/mythos-5-1/overview
 - **Pricing page**: https://platform.claude.com/docs/en/about-claude/pricing
 - **Release notes**: https://platform.claude.com/docs/en/release-notes/overview
 - **Deprecations**: https://platform.claude.com/docs/en/about-claude/model-deprecations
 - **Key fields**: context window (200K standard, 1M beta for some), max output, pricing (input/cached/output), extended thinking support
-- **Notes**: Current adaptive-thinking models accept model-specific effort levels. Fable 5.1 and Mythos 5.1 cache reads are $0.25/MTok; their input/output prices remain $10/$50. Prompt caching uses cache_control blocks.
+- **Notes**: Current adaptive-thinking models accept model-specific effort levels. Opus 5.5 is always adaptive; Sonnet 5.5 supports adaptive and `between_tools` under its published effort constraints. Prompt caching uses `cache_control` blocks.
 
 ---
 
@@ -76,7 +81,7 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - **Nano Banana (Gemini 2.5 Flash Image)**: https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash-image
 - **Nano Banana Pro (Gemini 3 Pro Image)**: https://ai.google.dev/gemini-api/docs/models/gemini-3-pro-image-preview
 - **Nano Banana 2 (Gemini 3.1 Flash Image)**: https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-image-preview
-- **Models**: current native-image models (`gemini-3.1-flash-image`, `gemini-3.1-flash-lite-image`, `gemini-3-pro-image`); retired Imagen 4 records; deprecated `gemini-2.5-flash-image`
+- **Models**: current native-image models including Gemini Nano Banana 2.1 and the Gemini 3.1/3 Pro image families; retired Imagen 4 records; deprecated `gemini-2.5-flash-image`
 - **Key fields**: aspect ratios, resolution tiers (0.5K/1K/2K/4K), max prompt tokens, per-image pricing (varies by resolution for Nano Banana), editing support
 - **Notes**: Imagen 4 supports English-only prompts, max 480 token prompt. Nano Banana models are Gemini-based with larger context windows (65K-131K). Nano Banana 2 supports up to 4K resolution. Nano Banana Pro has reasoning/thinking capabilities.
 
@@ -89,7 +94,7 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 ### TTS Models (`TTSModel.ts`)
 - **Speech generation guide**: https://ai.google.dev/gemini-api/docs/speech-generation
 - **Flash TTS detail**: https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash-preview-tts
-- **Models**: `gemini-3.1-flash-tts-preview`, `gemini-2.5-flash-preview-tts`, `gemini-2.5-pro-preview-tts`
+- **Models**: Gemini 3.8 Flash/Flash-Lite TTS, `gemini-3.1-flash-tts-preview`, and maintained Gemini 2.5 preview entries
 - **Key fields**: 30 prebuilt voices, 70+ languages, 32K token context window, PCM output (24kHz 16-bit mono), max 2 speakers per session
 - **Pricing**: Token-based (not character-based like OpenAI). Flash: $0.50/$10 per 1M tokens in/out. Pro: $1/$20 per 1M tokens.
 
@@ -97,9 +102,9 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - **Audio transcription**: https://ai.google.dev/gemini-api/docs/transcribe
 - **Models**: `gemini-3.5-transcribe`, `gemini-3.5-transcribe-live`, plus general-purpose `gemini-3.6-flash`
 
-### Audio Models (not yet in registry)
+### Live Audio Models
 - **Native Audio Preview**: https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash-native-audio-preview
-- **Model**: `gemini-2.5-flash-native-audio-preview` — Live API model for bidirectional voice/video agents. 131K input, 8K output. Not a traditional TTS model.
+- **Models**: Gemini 3.8 Live and Live Extended Thinking are in the LLM registry; older native-audio previews remain lifecycle records rather than traditional TTS entries.
 
 ### Music Models (not yet in registry)
 - **Music generation**: https://ai.google.dev/gemini-api/docs/music-generation
@@ -114,7 +119,8 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 - **Pricing**: https://docs.x.ai/developers/pricing
 - **Release notes**: https://docs.x.ai/developers/release-notes
 - **Key fields**: context window (up to 2M), max output, pricing (input/cached/output), vision support, reasoning
-- **Notes**: Fast variants are available for selected models and Grok Code is specialized for coding. Prompt caching and batch availability are model-specific; Grok 4.6 does not expose batch processing.
+- **Current addition**: [Grok 4.7](https://docs.x.ai/developers/grok-4-7) with Responses, X/web search, hosted code execution, 500K context, and long-context pricing.
+- **Notes**: Fast variants are available for selected models and Grok Code is specialized for coding. Prompt caching and batch availability are model-specific; current Grok 4.7/4.6 entries do not expose batch processing.
 
 ### Image Models (`ImageModel.ts`)
 - **Image generation guide**: https://docs.x.ai/docs/guides/image-generation
@@ -130,7 +136,7 @@ Reference document for updating ALL model registries: LLM (`Model.ts`), Image (`
 ### Speech Models (`TTSModel.ts`, `STTModel.ts`)
 - **Text to speech**: https://docs.x.ai/developers/model-capabilities/audio/text-to-speech
 - **Speech to text**: https://docs.x.ai/developers/model-capabilities/audio/speech-to-text
-- **Models**: model-less `xai-tts` and `xai-stt` endpoint records; voice-agent models remain in the LLM registry
+- **Models**: model-less `xai-tts`/`xai-stt`, Grok Voice Transcribe 2.0, and maintained transcription records; voice-agent models remain in the LLM registry
 
 ---
 

@@ -6,26 +6,32 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-22.13%2B%20%7C%2024%2B-green.svg)](https://nodejs.org/)
 
-## What's new in v1.1.7
+## What's new (next release)
 
-Version 1.1.7 brings GPT-6 Astra's new Responses workflows into the AMOS
-reference app and refreshes OneRingAI's current model catalog.
+The next OneRingAI release expands the GPT-6 Astra work into a current,
+capability-checked API layer for all four major vendors.
 
-- **Astra in AMOS:** The new `/astra` command demonstrates async tools with
-  `call_id` continuations, cached reasoning changes via `configuration_update`,
-  live WebSocket steering, and correlated safety-alert retrieval. AMOS now
-  selects model-safe reasoning and sampling options automatically.
-- **Anthropic:** Adds public Claude Fable 5.1 and invite-only Mythos 5.1, with
-  current context limits, reasoning efforts, lifecycle, and pricing metadata.
-- **Google:** Adds Gemini 3.8 Flash with Interactions API routing, multimodal
-  capabilities, processing tiers, and current pricing.
-- **xAI:** Refreshes Grok 4.6 endpoint and reasoning metadata and records the
-  announced retirement path for Grok Imagine Image Quality.
+- **OpenAI and Astra:** Adds GPT-6.1 Sol, GPT-6 Sol, GPT-6 Luna,
+  GPT-5.6 Cyber, and GPT-Rosalind Research alongside Astra. Responses now
+  preserves ordered text, tool, compaction, and reasoning state through managed
+  tool loops and supports the newest hosted tools. GPT-6 sampling controls are
+  validated against the effective reasoning effort. New connector-first
+  wrappers cover Decisions, GPT-Live WebSockets, and custom voice creation.
+- **Anthropic:** Adds Claude Opus 5.5 and Sonnet 5.5 with their distinct
+  adaptive-thinking rules, current server-tool versions, deferred tools,
+  programmatic callers, compaction, and native tool search. Provider-owned
+  blocks and distinct signed-thinking blocks are retained in provider order so
+  tool-search continuations can be replayed faithfully.
+- **Google:** Adds Gemini 3.8 Flash and Live variants, Interactions continuation
+  tokens, file search, computer use, background Live status, custom voices,
+  Gemini 3.8 TTS, and Nano Banana 2.1 image generation.
+- **xAI:** Adds Grok 4.7, native X search and hosted coding tools, reasoning and
+  cost telemetry, plus Grok Voice Transcribe 2.0 through a dedicated provider.
 
-OpenAI controls Astra availability by organization. Read the
-[complete 1.1.7 release notes](./CHANGELOG.md#117--2026-09-04), the
-[OneRingAI Astra guide](./USER_GUIDE.md#gpt-6-astra-responses-extensions), and
-the [official OpenAI model guide](https://developers.openai.com/api/docs/guides/latest-model).
+Model and API access can still be organization- or region-gated by each vendor.
+Read the [Astra and current vendor API guide](./USER_GUIDE.md#gpt-6-astra-responses-extensions),
+the [unreleased changelog](./CHANGELOG.md#unreleased), and the
+[model registry audit](./docs/MODEL_REGISTRY_AUDIT.md).
 
 ## Built for coding agents
 
@@ -192,7 +198,7 @@ plugin lifecycle, stores, compaction, persistence, and custom plugins.
 
 ## Table of Contents
 
-- [What's new in v1.1.7](#whats-new-in-v117)
+- [What's new (next release)](#whats-new-next-release)
 - [Built for coding agents](#built-for-coding-agents)
 - [Agent Runtime: run complete agents through one API](#agent-runtime-run-complete-agents-through-one-api)
 - [Meet AMOS: a terminal agent built with OneRingAI](#meet-amos-a-terminal-agent-built-with-oneringai)
@@ -290,12 +296,12 @@ Showcasing another amazing "built with oneringai": ["no saas" agentic business t
 - ✨ **Unified API** - One interface for 12 AI providers (OpenAI, Anthropic, Google, Vertex, Groq, Together, Perplexity, Grok, DeepSeek, Mistral, Ollama, Custom)
 - 🧩 **[Agent Runtime preview](./USER_GUIDE.md#agent-runtime-preview)** - Plug-compatible OneRingAI/Codex agent drivers with model and thinking selection, live reasoning/activity events, and capability-gated future interaction
 - 🔑 **Connector-First Architecture** - Single auth system with support for multiple keys per vendor
-- 📊 **Model Registry v2** - Lifecycle, aliases, endpoints, official sources, and modality-aware pricing for 96 text/realtime models plus dedicated image, video, voice, STT, and embedding registries
+- 📊 **Model Registry v2** - Lifecycle, aliases, endpoints, official sources, and modality-aware pricing for current text/realtime models plus dedicated image, video, voice, STT, and embedding registries
 - 🎤 **Audio Capabilities** - Text-to-Speech and Speech-to-Text with OpenAI, Google, and xAI, including xAI WebSocket streaming
 - ☎️ **[OpenAI Realtime API](./USER_GUIDE.md#openai-realtime-api)** - GA voice agents, live transcription, and speech translation over WebSocket/WebRTC, plus SIP call control, tools, VAD, and Twilio bridging
-- 🧭 **[GPT-6 Astra Responses extensions](./USER_GUIDE.md#gpt-6-astra-responses-extensions)** - Async function/custom tools, WebSocket steering, persistent reasoning updates, safety-alert retrieval, and EU Fast-mode validation
+- 🧭 **[GPT-6 Astra Responses extensions](./USER_GUIDE.md#gpt-6-astra-responses-extensions)** - Async tools, WebSocket steering, persistent reasoning/compaction state, safety alerts, Decisions, GPT-Live, and custom voices
 - 📞 **[xAI Voice Agent API](./USER_GUIDE.md#xai-realtime-voice-agent-api)** - JSON or binary audio, browser credentials, conversation resumption, reasoning controls, and SIP refer/hangup
-- 🖼️ **Image Generation** - GPT Image 2, Gemini 3.1 native image models, Imagen, and Grok Imagine generation/editing
+- 🖼️ **Image Generation** - GPT Image 2.5 Sunburst/Flare, Gemini Nano Banana 2.1, Imagen, and Grok Imagine generation/editing
 - 🎬 **Video Generation** - Callable OpenAI Sora 2 (with published retirement metadata), Google Veo/Omni, and Grok Imagine Video 1.5
 - 🔢 **Embeddings** - Text and multimodal embedding generation, including Gemini Embedding 2 for text, image, audio, video, and documents
 - 🔍 **Web Search** - Connector-based search with Serper, Brave, Tavily, and RapidAPI providers
@@ -478,7 +484,7 @@ const imageGen = ImageGeneration.create({ connector: 'openai' });
 
 const result = await imageGen.generate({
   prompt: 'A futuristic city at sunset',
-  model: 'gpt-image-2',
+  model: 'gpt-image-2.5-sunburst',
   size: '1024x1024',
   quality: 'high',
 });
@@ -492,7 +498,7 @@ const googleGen = ImageGeneration.create({ connector: 'google' });
 
 const googleResult = await googleGen.generate({
   prompt: 'A colorful butterfly in a garden',
-  model: 'gemini-3.1-flash-image',
+  model: 'gemini-nano-banana-2.1',
   size: '2048x2048',
   aspectRatio: '16:9',
   n: 2,
@@ -1973,6 +1979,11 @@ console.log(detailed.words);  // [{ word, start, end }, ...]
 const english = await stt.translate(frenchAudio);
 ```
 
+`TextToSpeech.listVoices()` returns the library's deterministic built-in voice
+catalog. For Google's remote custom-voice lifecycle and catalog, use
+`GoogleVoices`; Google TTS accepts returned `voice_…`, `voicekey_…`, and
+`voices/…` identifiers without treating them as prebuilt voice names.
+
 File paths and self-describing buffers retain their container format. For
 headerless `Buffer` input, set `encoding` and `sampleRate`; the default is
 16-bit little-endian PCM at 16 kHz. AAC ADTS buffers—including CRC-protected
@@ -2216,7 +2227,7 @@ console.log(ollamaModels.map(m => `${m.name} (${m.capabilities.defaultDimensions
 
 ### 14. Model Registry
 
-Schema-v2 metadata for 96 text/realtime models, with lifecycle, aliases,
+Schema-v2 metadata for current text/realtime models, with lifecycle, aliases,
 snapshots, endpoints, replacement models, pricing modes, context windows, and
 feature flags:
 
@@ -2226,7 +2237,7 @@ import { getModelInfo, calculateCost, LLM_MODELS, MODEL_REGISTRY_SCHEMA_VERSION,
 // Get model information
 const model = getModelInfo('gpt-6-astra');
 console.log(MODEL_REGISTRY_SCHEMA_VERSION); // 2
-console.log(model?.features.input.tokens);  // 922000 maximum input (1,050,000 total context)
+console.log(model?.features.input.tokens);  // 1050000 total context-window guardrail
 console.log(model?.lifecycle);              // 'active'
 
 // Calculate costs
@@ -2242,14 +2253,14 @@ console.log(`Optimized: $${cachedCost}`); // $0.0035
 ```
 
 **Available text/realtime models:**
-- **OpenAI (49)**: GPT-6 Astra, GPT-5.6 Sol/Terra/Luna, GPT-5.5 Pro and earlier GPT/o-series, Deep Research, audio, Realtime 2.1/2/Translate, and open-weight models
-- **Anthropic (15)**: Claude Opus 5, Mythos 5, Fable 5, Opus 4.8/4.7/4.6, Sonnet 5/4.6, and maintained legacy entries
-- **Google (15)**: Gemini 3.7/3.6 Flash, 3.5/3.1 families, live/image variants, and maintained Gemini 2.5 entries
-- **xAI (12)**: Grok 4.6, 4.5, 4.3, Build 0.1, 4.20/4.1 families, and Grok Voice Think Fast 2.0/1.0
+- **OpenAI**: GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol/Luna, GPT-5.6 Cyber/Sol/Terra/Luna, GPT-Rosalind Research, earlier GPT/o-series, Deep Research, audio, Realtime/Live, and open-weight models
+- **Anthropic**: Claude Opus 5.5 and Sonnet 5.5, Fable/Mythos/Opus/Sonnet 5 families, and maintained legacy entries
+- **Google**: Gemini 3.8 Flash/Live, 3.7/3.6 Flash, 3.5/3.1 families, live/image variants, and maintained Gemini 2.5 entries
+- **xAI**: Grok 4.7, 4.6, 4.5, 4.3, Build 0.1, 4.20/4.1 families, and Grok Voice Think Fast 2.0/1.0
 - **DeepSeek (5)**: V4 Flash, V4 Pro, V4 Flash Vision Experimental, and retired compatibility records
 
 See the [complete Model Registry guide](./USER_GUIDE.md#model-registry) and
-[2026-09-04 registry audit](./docs/MODEL_REGISTRY_AUDIT.md) for migration details,
+[current registry audit](./docs/MODEL_REGISTRY_AUDIT.md) for migration details,
 media registries, API-path changes, and official source links.
 
 ### 15. Streaming
@@ -3474,7 +3485,7 @@ Check your `.env` file and ensure the key is correct for that vendor.
 Each vendor has different model names. Check the [User Guide](./USER_GUIDE.md) for supported models.
 
 ### Vision not working
-Use a current vision-capable model: `gpt-6-astra`, `claude-fable-5-1`, or
+Use a current vision-capable model: `gpt-6.1-sol`, `claude-opus-5-5`, or
 `gemini-3.8-flash`.
 
 ## Contributing
@@ -3487,4 +3498,4 @@ MIT License - See [LICENSE](./LICENSE) file.
 
 ---
 
-**Version:** 1.1.7 | **Last Updated:** 2026-09-04 | **[User Guide](./USER_GUIDE.md)** | **[API Reference](./API_REFERENCE.md)** | **[Changelog](./CHANGELOG.md)**
+**Version:** 1.1.8 | **Last Updated:** 2026-10-07 | **[User Guide](./USER_GUIDE.md)** | **[API Reference](./API_REFERENCE.md)** | **[Changelog](./CHANGELOG.md)**

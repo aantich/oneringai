@@ -4,7 +4,7 @@
 
 import { Vendor } from '../../core/Vendor.js';
 import type { IBaseModelDescription, VendorOptionSchema } from '../types/SharedTypes.js';
-import { createRegistryHelpers } from './RegistryUtils.js';
+import { assertNoRegistryAliasCollisions, createRegistryHelpers } from './RegistryUtils.js';
 
 // =============================================================================
 // Types
@@ -116,6 +116,10 @@ export interface IImageModelDescription extends IBaseModelDescription {
 
 export const IMAGE_MODELS = {
   [Vendor.OpenAI]: {
+    /** GPT Image 2.5 Sunburst: highest-quality generation and precision editing. */
+    GPT_IMAGE_2_5_SUNBURST: 'gpt-image-2.5-sunburst',
+    /** GPT Image 2.5 Flare: fast, high-quality generation and editing. */
+    GPT_IMAGE_2_5_FLARE: 'gpt-image-2.5-flare',
     /** GPT Image 2: current state-of-the-art generation and editing model */
     GPT_IMAGE_2: 'gpt-image-2',
     /** GPT-Image-1.5: State-of-the-art image generation */
@@ -132,6 +136,8 @@ export const IMAGE_MODELS = {
     DALL_E_2: 'dall-e-2',
   },
   [Vendor.Google]: {
+    /** Nano Banana 2.1: current high-efficiency image generation workhorse. */
+    GEMINI_NANO_BANANA_2_1: 'gemini-nano-banana-2.1',
     /** Imagen 4.0: Latest Google image generation model */
     IMAGEN_4_GENERATE: 'imagen-4.0-generate-001',
     /** Imagen 4.0 Ultra: Highest quality */
@@ -165,10 +171,72 @@ export const IMAGE_MODELS = {
 
 /**
  * Complete image model registry
- * Last full audit: September 2026
+ * Last full audit: October 2026
  */
 export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
   // ======================== OpenAI ========================
+
+  'gpt-image-2.5-sunburst': {
+    name: 'gpt-image-2.5-sunburst',
+    displayName: 'GPT Image 2.5 Sunburst',
+    provider: Vendor.OpenAI,
+    description: 'OpenAI\'s most capable image model for high-quality generation and precision editing',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    snapshots: ['gpt-image-2.5-sunburst-2026-09-08'],
+    endpoints: ['image_generation', 'image_edit', 'responses', 'batch'],
+    releaseDate: '2026-09-08',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    capabilities: {
+      sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
+      maxImagesPerRequest: 10,
+      outputFormats: ['png', 'webp', 'jpeg'],
+      features: { generation: true, editing: true, variations: false, styleControl: false, qualityControl: true, transparency: true, promptRevision: false },
+      limits: { maxPromptLength: 32_000, maxRequestsPerMinute: 250 },
+      vendorOptions: {
+        quality: { type: 'enum', description: 'Rendering quality tier', enum: ['auto', 'low', 'medium', 'high', 'xhigh', 'max'], default: 'auto' },
+        background: { type: 'enum', description: 'Background handling', enum: ['auto', 'transparent', 'opaque'], default: 'auto' },
+        output_format: { type: 'enum', description: 'Encoded output image format', enum: ['png', 'jpeg', 'webp'], default: 'png' },
+        output_compression: { type: 'number', description: 'JPEG/WebP compression quality', min: 0, max: 100, default: 100 },
+        moderation: { type: 'enum', description: 'Moderation strictness', enum: ['auto', 'low'], default: 'auto' },
+        input_fidelity: { type: 'enum', description: 'Fidelity applied to editing input images', enum: ['low', 'high'], default: 'low' },
+      },
+    },
+    pricing: { tokenPricing: { textInput: 5, cachedTextInput: 1.25, imageInput: 8, cachedImageInput: 2, imageOutput: 30 }, currency: 'USD' },
+  },
+
+  'gpt-image-2.5-flare': {
+    name: 'gpt-image-2.5-flare',
+    displayName: 'GPT Image 2.5 Flare',
+    provider: Vendor.OpenAI,
+    description: 'Fast GPT Image 2.5 model for high-quality generation and editing',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    snapshots: ['gpt-image-2.5-flare-2026-09-08'],
+    endpoints: ['image_generation', 'image_edit', 'responses', 'batch'],
+    releaseDate: '2026-09-08',
+    sources: { documentation: 'https://developers.openai.com/api/docs/models/gpt-image-2.5-flare', pricing: 'https://developers.openai.com/api/docs/pricing', lastVerified: '2026-10-07' },
+    capabilities: {
+      sizes: ['1024x1024', '1024x1536', '1536x1024', 'auto'],
+      maxImagesPerRequest: 10,
+      outputFormats: ['png', 'webp', 'jpeg'],
+      features: { generation: true, editing: true, variations: false, styleControl: false, qualityControl: true, transparency: true, promptRevision: false },
+      limits: { maxPromptLength: 32_000, maxRequestsPerMinute: 250 },
+      vendorOptions: {
+        quality: { type: 'enum', description: 'Rendering quality tier', enum: ['auto', 'low', 'medium', 'high', 'xhigh', 'max'], default: 'auto' },
+        background: { type: 'enum', description: 'Background handling', enum: ['auto', 'transparent', 'opaque'], default: 'auto' },
+        output_format: { type: 'enum', description: 'Encoded output image format', enum: ['png', 'jpeg', 'webp'], default: 'png' },
+        output_compression: { type: 'number', description: 'JPEG/WebP compression quality', min: 0, max: 100, default: 100 },
+        moderation: { type: 'enum', description: 'Moderation strictness', enum: ['auto', 'low'], default: 'auto' },
+        input_fidelity: { type: 'enum', description: 'Fidelity applied to editing input images', enum: ['low', 'high'], default: 'low' },
+      },
+    },
+    pricing: { tokenPricing: { textInput: 5, cachedTextInput: 1.25, imageInput: 8, cachedImageInput: 2, imageOutput: 30 }, currency: 'USD' },
+  },
 
   'gpt-image-2': {
     name: 'gpt-image-2',
@@ -178,7 +246,7 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     isActive: true,
     lifecycle: 'active',
     availability: 'public',
-    preferred: true,
+    preferred: false,
     snapshots: ['gpt-image-2-2026-04-21'],
     endpoints: ['image_generation', 'image_edit'],
     releaseDate: '2026-04-21',
@@ -207,11 +275,11 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
     },
     pricing: {
       tokenPricing: {
-        textInput: 5,
-        cachedTextInput: 1.25,
-        imageInput: 8,
-        cachedImageInput: 2,
-        imageOutput: 30,
+        textInput: 2.5,
+        cachedTextInput: 0.625,
+        imageInput: 4,
+        cachedImageInput: 1,
+        imageOutput: 15,
       },
       currency: 'USD',
     },
@@ -987,15 +1055,50 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
 
   // ======================== Google Nano Banana (Gemini Native Image) ========================
 
+  'gemini-nano-banana-2.1': {
+    name: 'gemini-nano-banana-2.1',
+    displayName: 'Nano Banana 2.1',
+    provider: Vendor.Google,
+    description: 'Latest high-efficiency Gemini image generation and conversational editing model with stronger typography and multi-turn consistency',
+    isActive: true,
+    lifecycle: 'active',
+    availability: 'public',
+    preferred: true,
+    endpoints: ['image_generation', 'image_edit', 'interactions', 'generate_content', 'batch'],
+    releaseDate: '2026-10-06',
+    sources: { documentation: 'https://ai.google.dev/gemini-api/docs/models/gemini-nano-banana-2.1', pricing: 'https://ai.google.dev/gemini-api/docs/pricing', lastVerified: '2026-10-07' },
+    capabilities: {
+      sizes: ['1024x1024', '2048x2048', '4096x4096', 'auto'],
+      aspectRatios: ['1:1', '3:4', '4:3', '9:16', '16:9', '3:2', '2:3', '1:4', '4:1', '1:8', '8:1'],
+      maxImagesPerRequest: 4,
+      outputFormats: ['png', 'jpeg'],
+      features: { generation: true, editing: true, variations: false, styleControl: false, qualityControl: true, transparency: false, promptRevision: false },
+      limits: { maxPromptLength: 131_072 },
+      vendorOptions: {
+        imageSize: { type: 'enum', description: 'Requested output image resolution', enum: ['1024px', '2048px', '4096px'], default: '1024px' },
+        thinkingLevel: { type: 'enum', description: 'Generation reasoning depth', enum: ['minimal', 'medium', 'high'], default: 'medium' },
+      },
+    },
+    pricing: {
+      perImageStandard: 0.067,
+      perImageHD: 0.151,
+      perImageByResolution: { '1024px': 0.067, '2048px': 0.101, '4096px': 0.151 },
+      tokenPricing: { textInput: 0.5, imageInput: 0.5, imageOutput: 60 },
+      currency: 'USD',
+    },
+  },
+
   'gemini-3.1-flash-image': {
     name: 'gemini-3.1-flash-image',
     displayName: 'Nano Banana 2',
     provider: Vendor.Google,
     description: 'Current all-around Gemini image generation and editing model with up to 4K output',
     isActive: true,
-    lifecycle: 'active',
+    lifecycle: 'deprecated',
     availability: 'public',
-    preferred: true,
+    deprecationDate: '2026-10-06',
+    retirementDate: '2026-10-29',
+    replacementModel: 'gemini-nano-banana-2.1',
     endpoints: ['image_generation', 'image_edit', 'generate_content', 'batch'],
     releaseDate: '2026-06-25',
     sources: {
@@ -1411,6 +1514,7 @@ export const IMAGE_MODEL_REGISTRY: Record<string, IImageModelDescription> = {
 // Helper Functions (using shared utilities)
 // =============================================================================
 
+assertNoRegistryAliasCollisions(IMAGE_MODEL_REGISTRY, 'IMAGE_MODEL_REGISTRY');
 const helpers = createRegistryHelpers(IMAGE_MODEL_REGISTRY);
 
 export const getImageModelInfo = helpers.getInfo;

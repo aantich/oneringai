@@ -9,7 +9,11 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { StreamEvent, ProviderStopDetails } from '../../../domain/entities/StreamEvent.js';
+import {
+  StreamEvent,
+  StreamEventType,
+  ProviderStopDetails,
+} from '../../../domain/entities/StreamEvent.js';
 import { BaseStreamConverter } from '../base/BaseStreamConverter.js';
 import { mapAnthropicStatus } from '../shared/ResponseBuilder.js';
 
@@ -20,6 +24,12 @@ interface ContentBlockInfo {
   type: string;
   id?: string;
   name?: string;
+  signature?: string;
+  content?: string | null;
+  encryptedContent?: string | null;
+  toolChanges?: unknown;
+  rawBlock?: Record<string, unknown>;
+  jsonChunks?: string[];
 }
 
 /**
@@ -111,7 +121,15 @@ export class AnthropicStreamConverter extends BaseStreamConverter<Anthropic.Mess
    */
   private handleContentBlockStart(event: Anthropic.ContentBlockStartEvent): StreamEvent[] {
     const index = event.index;
-    const block = event.content_block;
+    const block = event.content_block as unknown as {
+      type: string;
+      id?: string;
+      name?: string;
+      content?: string | null;
+      encrypted_content?: string | null;
+      signature?: string | null;
+      tool_changes?: unknown;
+    };
 
     // Track block type
     if (block.type === 'thinking') {
@@ -121,14 +139,36 @@ export class AnthropicStreamConverter extends BaseStreamConverter<Anthropic.Mess
       this.contentBlockIndex.set(index, { type: 'text' });
       return []; // No event needed, text will come in deltas
     } else if (block.type === 'tool_use') {
+      const id = block.id ?? '';
+      const name = block.name ?? '';
       this.contentBlockIndex.set(index, {
         type: 'tool_use',
-        id: block.id,
-        name: block.name,
+        id,
+        name,
       });
 
-      return [this.emitToolCallStart(block.id, block.name, `msg_${this.responseId}`)];
+      return [this.emitToolCallStart(id, name, `tool_${this.responseId}_${index}`, {
+        outputIndex: index,
+      })];
+    } else if (block.type === 'compaction') {
+      this.contentBlockIndex.set(index, {
+        type: 'compaction',
+        content: block.content,
+        encryptedContent: block.encrypted_content,
+        signature: block.signature ?? undefined,
+        toolChanges: block.tool_changes,
+      });
+      return [];
     }
+
+    // Preserve Anthropic-owned server tool blocks for exact replay. The
+    // server_tool_use input arrives as input_json_delta chunks; result blocks
+    // are normally complete in content_block_start.
+    this.contentBlockIndex.set(index, {
+      type: 'provider_state',
+      rawBlock: { ...block },
+      jsonChunks: [],
+    });
 
     return [];
   }
@@ -147,18 +187,40 @@ export class AnthropicStreamConverter extends BaseStreamConverter<Anthropic.Mess
       // Anthropic thinking delta
       const thinkingDelta = delta as { type: 'thinking_delta'; thinking: string };
       return [
-        this.emitReasoningDelta(thinkingDelta.thinking || '', `thinking_${this.responseId}`),
+        this.emitReasoningDelta(
+          thinkingDelta.thinking || '',
+          `thinking_${this.responseId}_${index}`,
+          { outputIndex: index, contentIndex: index },
+        ),
       ];
+    } else if (delta.type === 'signature_delta') {
+      const signatureDelta = delta as { type: 'signature_delta'; signature: string };
+      blockInfo.signature = `${blockInfo.signature ?? ''}${signatureDelta.signature ?? ''}`;
+      return [];
     } else if (delta.type === 'text_delta') {
       return [
         this.emitTextDelta(delta.text, {
-          itemId: `msg_${this.responseId}`,
+          itemId: `text_${this.responseId}_${index}`,
+          outputIndex: index,
           contentIndex: index,
         }),
       ];
     } else if (delta.type === 'input_json_delta') {
+      if (blockInfo.type === 'provider_state') {
+        blockInfo.jsonChunks?.push(delta.partial_json);
+        return [];
+      }
       const toolCallId = blockInfo.id || '';
       return [this.emitToolCallArgsDelta(toolCallId, delta.partial_json, blockInfo.name)];
+    } else if ((delta as { type: string }).type === 'compaction_delta') {
+      const compactionDelta = delta as unknown as {
+        type: 'compaction_delta';
+        content: string | null;
+        encrypted_content: string | null;
+      };
+      blockInfo.content = compactionDelta.content;
+      blockInfo.encryptedContent = compactionDelta.encrypted_content;
+      return [];
     }
 
     return [];
@@ -175,12 +237,51 @@ export class AnthropicStreamConverter extends BaseStreamConverter<Anthropic.Mess
 
     // If this was a thinking block, emit reasoning done
     if (blockInfo.type === 'thinking') {
-      return [this.emitReasoningDone(`thinking_${this.responseId}`)];
+      return [this.emitReasoningDone(`thinking_${this.responseId}_${index}`, {
+        ...(blockInfo.signature ? { signature: blockInfo.signature } : {}),
+      }, { outputIndex: index })];
     }
 
     // If this was a tool use block, emit arguments done
     if (blockInfo.type === 'tool_use') {
       return [this.emitToolCallArgsDone(blockInfo.id || '', blockInfo.name)];
+    }
+
+    if (blockInfo.type === 'compaction') {
+      return [{
+        type: StreamEventType.COMPACTION,
+        response_id: this.responseId,
+        item_id: `compaction_${this.responseId}_${index}`,
+        output_index: index,
+        encrypted_content: blockInfo.encryptedContent ?? '',
+        content: blockInfo.content ?? null,
+        signature: blockInfo.signature ?? null,
+        ...(blockInfo.toolChanges !== undefined
+          ? { provider_metadata: { tool_changes: blockInfo.toolChanges } }
+          : {}),
+        sequence_number: this.nextSequence(),
+      }];
+    }
+
+    if (blockInfo.type === 'provider_state' && blockInfo.rawBlock) {
+      const data = { ...blockInfo.rawBlock };
+      const json = blockInfo.jsonChunks?.join('') ?? '';
+      if (json) {
+        try {
+          data.input = JSON.parse(json);
+        } catch {
+          data.input = json;
+        }
+      }
+      return [{
+        type: StreamEventType.PROVIDER_STATE,
+        response_id: this.responseId,
+        item_id: `provider_state_${this.responseId}_${index}`,
+        output_index: index,
+        provider: 'anthropic',
+        data,
+        sequence_number: this.nextSequence(),
+      }];
     }
 
     return [];
