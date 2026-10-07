@@ -1,6 +1,6 @@
 # @everworker/oneringai - Complete User Guide
 
-**Version:** 1.1.8
+**Version:** 1.2.0
 **Last Updated:** 2026-10-07
 
 A comprehensive guide to using all features of the @everworker/oneringai library.
@@ -9,6 +9,7 @@ A comprehensive guide to using all features of the @everworker/oneringai library
 
 ## Table of Contents
 
+- [Upgrading to 1.2.0](#upgrading-to-120) — GPT-6 Astra and current vendor APIs, model refresh, and continuation fidelity
 - [Upgrading to 1.1.3](#upgrading-to-113) — refreshed model registries, lifecycle metadata, pricing, and provider defaults
 - [Upgrading to 1.1.2](#upgrading-to-112) — context rollover, portable protocol v2, rotating OpenAI credentials, and the runtime baseline
 - [Upgrading to 1.1.1](#upgrading-to-111) — portable Agents, Agent-aware Realtime, and WebRTC call metadata
@@ -157,6 +158,48 @@ A comprehensive guide to using all features of the @everworker/oneringai library
 38. [Production Deployment](#production-deployment)
 
 ---
+
+## Upgrading to 1.2.0
+
+OneRingAI 1.2.0 is a source-compatible API and model refresh for OpenAI,
+Anthropic, Google, and xAI. It keeps the connector-first Agent surface intact
+while adding current model metadata, provider-hosted tools, continuation state,
+and connector-first clients for vendor APIs that do not fit `Agent.run()`.
+
+Install the release and rebuild any code that imports OneRingAI's public
+TypeScript unions:
+
+```bash
+npm install @everworker/oneringai@^1.2.0
+```
+
+| Change | Who is affected | Required action |
+|--------|-----------------|-----------------|
+| October model refresh | Model pickers, routers, and cost estimators | Re-read registry metadata and prefer lifecycle/availability fields instead of hard-coded model lists |
+| Expanded output and stream unions | Applications with exhaustive `ContentType`, `InputItem`, or `StreamEventType` switches | Handle provider-state items, replayable reasoning, compaction, continuation tokens, and typed native-tool results |
+| Current OpenAI Responses tools | Hosts executing computer, shell, patch, or client tool-search calls | Use `runDirect()`, preserve the original `call_id`, enforce host approval, and return the matching typed output item |
+| Anthropic tool-search/compaction state | Hosts that persist or inspect managed history | Persist opaque provider state unchanged; do not interpret or manufacture server-owned blocks |
+| Gemini 3.8 Interactions | Google callers using stored interactions, file search, or computer use | Preserve continuation tokens and signed thought state; keep screenshots and tool execution under trusted host control |
+| Dedicated xAI text adapter | Grok callers using hosted tools or usage telemetry | Use the normal Grok connector; read normalized native-tool, reasoning, and cost fields rather than OpenAI-specific wire objects |
+| Current SDK baseline | Custom adapters importing vendor SDK types | Recompile against `openai` 7.30, `@anthropic-ai/sdk` 0.131, and `@google/genai` 2.27 |
+| Refreshed built-in tool fingerprints | Hosts exchanging portable Agent packages | Upgrade exporting and receiving runtimes together so protocol-v2 executable fingerprints match |
+
+The new public clients are `OpenAIDecisions`, `OpenAILiveSession`,
+`OpenAIVoices`, `GoogleLiveSession`, and `GoogleVoices`. They all resolve
+credentials through a named `Connector`; do not pass API keys to their methods.
+See [Current vendor API additions](#current-vendor-api-additions) for runnable
+examples and [Model Registry](#model-registry) for the refreshed catalog.
+
+OpenAI GPT-6 Astra and GPT-6.1 Sol reject `none` and `minimal` reasoning. GPT-6
+Sol and Luna allow sampling controls only when the effective effort is `none`.
+Fast and Ultrafast processing remain unavailable through OpenAI's EU data
+residency endpoint; Ultrafast requires global processing or US data residency.
+OneRingAI validates explicit invalid combinations before inference.
+
+Managed Agent loops now retain ordered reasoning, compaction, native-tool, and
+opaque provider output across tool turns. Direct callers remain responsible for
+resending provider-required state when they construct continuations manually.
+Never synthesize signatures, encrypted reasoning, or provider-state records.
 
 ## Upgrading to 1.1.3
 
@@ -1183,6 +1226,12 @@ await live.connect({
 });
 ```
 
+OpenAI custom-voice access is organization-gated. Prompt-designed voices are
+supported only by GPT-Live. To use a custom voice with TTS or Realtime, create
+it from an audio sample and a previously created consent-recording ID. The
+wrapper exposes the SDK's typed create request and returns the saved voice ID;
+credentials, organization, project, and base URL still come from the connector.
+
 The host owns microphone capture, audio playback, reconnect policy, and clean
 session shutdown. Call `live.close()` during teardown.
 
@@ -1249,7 +1298,8 @@ const availableVoices = await googleVoices.list();
 
 `TextToSpeech.listVoices()` is intentionally a deterministic built-in catalog;
 it does not make a remote custom-voice request. Use `GoogleVoices.list()` for
-that account-scoped catalog. A custom voice returned as `voice_…`,
+that account-scoped catalog; `create()`, `get()`, and `delete()` expose the rest
+of the remote lifecycle. A custom voice returned as `voice_…`,
 `voicekey_…`, or `voices/…` can be passed as the normal `voice` string to
 Google TTS; the provider selects the custom-voice field and removes only the
 resource prefix.
@@ -1457,9 +1507,10 @@ await agent.runDirect([{
 
 The public input union also includes `computer_call_output`,
 `shell_call_output`, and client-executed `tool_search_output`. Computer results
-carry a screenshot data URL and any acknowledged safety checks; shell results
-carry stdout/stderr plus an exit or timeout outcome; tool-search results carry
-the loaded tool definitions.
+carry a `computer_screenshot` with either an `image_url` (including a data URL)
+or an uploaded OpenAI `file_id`, plus any acknowledged safety checks. Shell
+results carry stdout/stderr plus an exit or timeout outcome; tool-search results
+carry the loaded tool definitions.
 
 #### Remote MCP with connector-first authentication
 
@@ -12788,21 +12839,33 @@ const audio = await tts.synthesize('Hello', { voice: 'echo' });
 
 #### Custom Voices (OpenAI)
 
-OpenAI lets you register a custom voice in the dashboard and reference it
-through the API. The library accepts the resulting `voice_…` id wherever a
-built-in voice name is expected — the SDK call shape (`voice: { id }`) is
-handled internally.
+Create OpenAI custom voices through the connector-first `OpenAIVoices` API.
+Prompt-designed voices work only with GPT-Live. Voices intended for TTS or
+Realtime must be created from an audio sample and an existing consent-recording
+ID. Custom voice access and the required `api.voices.read`/`api.voices.write`
+permissions are organization-gated.
 
 ```typescript
+import { createReadStream } from 'node:fs';
+import { OpenAIVoices, TextToSpeech } from '@everworker/oneringai';
+
+const voices = new OpenAIVoices('openai');
+const customVoice = await voices.create({
+  type: 'audio_sample',
+  name: 'Brand narrator',
+  audio_sample: createReadStream('./brand-narrator.wav'),
+  consent: 'cons_1234abcd',
+});
+
 const branded = TextToSpeech.create({
   connector: 'openai',
   model: 'gpt-4o-mini-tts',
-  voice: 'voice_1234abcd', // id returned by OpenAI when the custom voice was created
+  voice: customVoice.id,
 });
 
 await branded.toFile('Spoken in your bespoke voice.', './brand.mp3');
 
-// Override per-call as well
+// A stored audio-sample voice can also be selected per call.
 await branded.synthesize('Different copy.', { voice: 'voice_5678efgh' });
 ```
 
@@ -12810,7 +12873,8 @@ await branded.synthesize('Different copy.', { voice: 'voice_5678efgh' });
 custom-voice reference; everything else is treated as a built-in voice name
 (`alloy`, `ash`, `ballad`, `coral`, `echo`, `fable`, `onyx`, `nova`, `sage`,
 `shimmer`, `verse`, `marin`, `cedar`). `tts.listVoices()` returns only the
-built-ins — the dashboard is the source of truth for custom-voice ids.
+built-ins. Keep returned custom-voice IDs in trusted application storage; do
+not place voice samples, consent recordings, or credentials in prompts.
 
 For Google custom voices, use the connector-first `GoogleVoices` lifecycle API
 rather than `tts.listVoices()`. Google TTS accepts `voice_…`, `voicekey_…`, and
@@ -13161,15 +13225,17 @@ const granularities = stt.getTimestampGranularities();  // model-specific
 
 #### TTS Models
 
-| Model | Provider | Features | Price/1k chars |
-|-------|----------|----------|----------------|
-| `gpt-4o-mini-tts` | OpenAI | Instruction steering, emotions | $0.015 |
-| `tts-1` | OpenAI | Fast, low-latency | $0.015 |
-| `tts-1-hd` | OpenAI | High-quality audio | $0.030 |
-| `gemini-3.1-flash-tts-preview` | Google | Current controllable low-latency TTS | token priced |
-| `gemini-2.5-flash-preview-tts` | Google | Low latency, 30 voices | - |
-| `gemini-2.5-pro-preview-tts` | Google | High quality, 30 voices | - |
-| `xai-tts` | xAI | REST/WebSocket, expressive tags, custom voices, telephony codecs | $0.015 |
+| Model | Provider | Features | Pricing |
+|-------|----------|----------|---------|
+| `gpt-4o-mini-tts` | OpenAI | Instruction steering, emotions | $0.015 / 1K chars |
+| `tts-1` | OpenAI | Fast, low-latency | $0.015 / 1K chars |
+| `tts-1-hd` | OpenAI | High-quality audio | $0.030 / 1K chars |
+| `gemini-3.8-flash-tts` | Google | Preferred creative/studio TTS, voice design and replication | $1/M input tokens; $20/M output tokens |
+| `gemini-3.8-flash-lite-tts` | Google | Preferred low-latency/high-throughput TTS and voice replication | $0.50/M input tokens; $6/M output tokens |
+| `gemini-3.1-flash-tts-preview` | Google | Legacy controllable low-latency TTS | token priced |
+| `gemini-2.5-flash-preview-tts` | Google | Deprecated; migrate to Gemini 3.8 Flash-Lite TTS | token priced |
+| `gemini-2.5-pro-preview-tts` | Google | Deprecated; migrate to Gemini 3.8 Flash TTS | token priced |
+| `xai-tts` | xAI | REST/WebSocket, expressive tags, custom voices, telephony codecs | $0.015 / 1K chars |
 
 #### STT Models
 
@@ -13186,7 +13252,8 @@ const granularities = stt.getTimestampGranularities();  // model-specific
 | `whisper-large-v3-turbo` | Groq | Current cost-optimized multilingual Whisper | $0.00067 |
 | `gemini-3.5-transcribe` | Google | File transcription, word timestamps, vocabulary, diarization | ~$0.005 |
 | `gemini-3.5-transcribe-live` | Google | Bidirectional WebSocket transcription | ~$0.009 |
-| `xai-stt` | xAI | REST + WebSocket, diarization, multichannel, Smart Turn | $0.00167 REST / $0.00333 stream |
+| `grok-voice-transcribe-2.0` | xAI | Current REST + streaming transcription, diarization, multichannel | $0.00167 REST / $0.00333 stream |
+| `xai-stt` | xAI | Legacy alias; migrate to Grok Voice Transcribe 2.0 | $0.00167 REST / $0.00333 stream |
 
 ### Voice Assistant Pipeline
 
@@ -17104,9 +17171,10 @@ interface ILLMDescription {
 - V4 Flash, V4 Pro, and V4 Flash Vision Experimental
 - Retired `deepseek-chat` and `deepseek-reasoner` compatibility records
 
-Dedicated media registries add GPT Image 2, Gemini 3.1 Flash/Lite Image, Grok
-Imagine Image Quality, Sora 2, Veo/Omni, Grok Imagine Video 1.5, current OpenAI
-and xAI speech models, Google/xAI TTS/STT, and Gemini Embedding 2. Use
+Dedicated media registries add GPT Image 2.5 Sunburst/Flare, Gemini Nano Banana
+2.1 and 3.1 Flash-Lite Image, Grok Imagine Image 2.0, Sora 2, Veo/Omni, Grok
+Imagine Video 1.5, current OpenAI speech, Gemini 3.8 TTS, Grok Voice Transcribe
+2.0, Google/xAI voice models, and Gemini Embedding 2. Use
 `getImageModelInfo`, `getVideoModelInfo`, `getTTSModelInfo`, `getSTTModelInfo`,
 and `getEmbeddingModelInfo` for their modality-specific capability schemas.
 
@@ -18710,4 +18778,4 @@ MIT License - see LICENSE file for details.
 ---
 
 **Last Updated:** 2026-10-07
-**Version:** 1.1.8
+**Version:** 1.2.0

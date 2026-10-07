@@ -6,17 +6,19 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-22.13%2B%20%7C%2024%2B-green.svg)](https://nodejs.org/)
 
-## What's new (next release)
+## What's new in 1.2.0
 
-The next OneRingAI release expands the GPT-6 Astra work into a current,
+OneRingAI 1.2.0 expands the GPT-6 Astra work into a current,
 capability-checked API layer for all four major vendors.
 
 - **OpenAI and Astra:** Adds GPT-6.1 Sol, GPT-6 Sol, GPT-6 Luna,
-  GPT-5.6 Cyber, and GPT-Rosalind Research alongside Astra. Responses now
-  preserves ordered text, tool, compaction, and reasoning state through managed
-  tool loops and supports the newest hosted tools. GPT-6 sampling controls are
-  validated against the effective reasoning effort. New connector-first
-  wrappers cover Decisions, GPT-Live WebSockets, and custom voice creation.
+  GPT-5.6 Cyber, and GPT-Rosalind Research alongside Astra. The Responses
+  integration now preserves ordered text, tool, compaction, and reasoning state
+  through managed tool loops and supports the newest hosted tools. Computer-use
+  screenshot continuations accept either data URLs or uploaded file IDs. GPT-6
+  sampling controls are validated against the effective reasoning effort. New
+  connector-first wrappers cover Decisions, GPT-Live WebSockets, and custom
+  voice creation.
 - **Anthropic:** Adds Claude Opus 5.5 and Sonnet 5.5 with their distinct
   adaptive-thinking rules, current server-tool versions, deferred tools,
   programmatic callers, compaction, and native tool search. Provider-owned
@@ -24,13 +26,14 @@ capability-checked API layer for all four major vendors.
   tool-search continuations can be replayed faithfully.
 - **Google:** Adds Gemini 3.8 Flash and Live variants, Interactions continuation
   tokens, file search, computer use, background Live status, custom voices,
-  Gemini 3.8 TTS, and Nano Banana 2.1 image generation.
+  Gemini 3.8 TTS, and Nano Banana 2.1 image generation. Streaming preserves
+  signed thought state and provider usage across continuations.
 - **xAI:** Adds Grok 4.7, native X search and hosted coding tools, reasoning and
   cost telemetry, plus Grok Voice Transcribe 2.0 through a dedicated provider.
 
 Model and API access can still be organization- or region-gated by each vendor.
 Read the [Astra and current vendor API guide](./USER_GUIDE.md#gpt-6-astra-responses-extensions),
-the [unreleased changelog](./CHANGELOG.md#unreleased), and the
+the [1.2.0 changelog](./CHANGELOG.md), and the
 [model registry audit](./docs/MODEL_REGISTRY_AUDIT.md).
 
 ## Built for coding agents
@@ -198,7 +201,7 @@ plugin lifecycle, stores, compaction, persistence, and custom plugins.
 
 ## Table of Contents
 
-- [What's new (next release)](#whats-new-next-release)
+- [What's new in 1.2.0](#whats-new-in-120)
 - [Built for coding agents](#built-for-coding-agents)
 - [Agent Runtime: run complete agents through one API](#agent-runtime-run-complete-agents-through-one-api)
 - [Meet AMOS: a terminal agent built with OneRingAI](#meet-amos-a-terminal-agent-built-with-oneringai)
@@ -1659,8 +1662,9 @@ the provider batch surface:
   fields in application code.
 - **Asynchronous text batches** — submit durable provider jobs, poll/cancel them, and stream
   correlated per-item results.
-- **Provider-hosted tools** — web search/fetch, code execution, file search, and remote MCP executed
-  by the model provider rather than by `ToolManager`.
+- **Provider-hosted tools** — web/X search, web fetch, code execution, file
+  search, and remote MCP executed by the model provider rather than by
+  `ToolManager`.
 - **Detailed telemetry** — cache reads/writes, reasoning tokens, provider-tool counts, service tier,
   and interactive/batch processing mode.
 - **Data-handling policy** — explicit opt-in for provider caching, retained batch data,
@@ -1695,6 +1699,7 @@ support solely from a model name or `Model.features`.
 | OpenAI | Implicit; key/retention controls where supported | Yes, model-gated | Web search, code execution, file search, remote MCP |
 | Anthropic | Request-controlled cache markers with short/extended TTL | Yes, model-gated | Web search, web fetch, code execution, remote MCP on current server-tool families |
 | Google | Implicit cache hits; no normalized TTL control | Yes, model-gated | Web search, web fetch, code execution on Gemini 2.5/3 text families |
+| xAI | Model-gated implicit caching and usage reporting | Not normalized | Web search, X search, hosted code execution |
 
 The table is an orientation, not a substitute for `getAdvancedCapabilities()`: availability is
 model-specific and intentionally conservative.
@@ -1980,9 +1985,12 @@ const english = await stt.translate(frenchAudio);
 ```
 
 `TextToSpeech.listVoices()` returns the library's deterministic built-in voice
-catalog. For Google's remote custom-voice lifecycle and catalog, use
-`GoogleVoices`; Google TTS accepts returned `voice_…`, `voicekey_…`, and
-`voices/…` identifiers without treating them as prebuilt voice names.
+catalog. Use `OpenAIVoices.create()` for OpenAI prompt- or consent-based custom
+voice creation; prompt-designed voices work only with GPT-Live, while voices
+created from an audio sample and consent can also be used by TTS and Realtime.
+For Google's remote custom-voice lifecycle and catalog, use `GoogleVoices`;
+Google TTS accepts returned `voice_…`, `voicekey_…`, and `voices/…` identifiers
+without treating them as prebuilt voice names.
 
 File paths and self-describing buffers retain their container format. For
 headerless `Buffer` input, set `encoding` and `sampleRate`; the default is
@@ -2114,8 +2122,15 @@ the xAI-specific facade retains its full rate range for both paths. See the
 [xAI section of the realtime User Guide](./USER_GUIDE.md#xai-realtime-voice-agent-api).
 
 **Available Models:**
-- **TTS**: OpenAI (`tts-1`, `tts-1-hd`, `gpt-4o-mini-tts`), Google (`gemini-3.1-flash-tts-preview`, Gemini 2.5 TTS), xAI (`xai-tts`, REST and WebSocket)
-- **STT**: OpenAI (`gpt-transcribe`, `gpt-live-transcribe`, `gpt-realtime-whisper`, GPT-4o, Whisper), Google (`gemini-3.5-transcribe`, `gemini-3.5-transcribe-live`), Groq (`whisper-large-v3`, `whisper-large-v3-turbo`), xAI (`xai-stt`, REST and WebSocket)
+
+- **TTS**: OpenAI (`tts-1`, `tts-1-hd`, `gpt-4o-mini-tts`), Google
+  (`gemini-3.8-flash-tts`, `gemini-3.8-flash-lite-tts`, plus maintained older
+  entries), xAI (`xai-tts`, REST and WebSocket)
+- **STT**: OpenAI (`gpt-transcribe`, `gpt-live-transcribe`,
+  `gpt-realtime-whisper`, GPT-4o, Whisper), Google (`gemini-3.5-transcribe`,
+  `gemini-3.5-transcribe-live`), Groq (`whisper-large-v3`,
+  `whisper-large-v3-turbo`), xAI (`grok-voice-transcribe-2.0`; legacy alias
+  `xai-stt`, REST and WebSocket)
 
 ### Embeddings
 
@@ -3498,4 +3513,4 @@ MIT License - See [LICENSE](./LICENSE) file.
 
 ---
 
-**Version:** 1.1.8 | **Last Updated:** 2026-10-07 | **[User Guide](./USER_GUIDE.md)** | **[API Reference](./API_REFERENCE.md)** | **[Changelog](./CHANGELOG.md)**
+**Version:** 1.2.0 | **Last Updated:** 2026-10-07 | **[User Guide](./USER_GUIDE.md)** | **[API Reference](./API_REFERENCE.md)** | **[Changelog](./CHANGELOG.md)**

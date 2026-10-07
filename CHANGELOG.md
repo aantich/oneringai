@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-10-07
+
 ### Added
 
 - Public `ConnectorNotFoundError` (`CONNECTOR_NOT_FOUND`) distinguishes missing
@@ -49,6 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fast/priority validation for the OpenAI EU data-residency endpoint now covers
   GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol, and GPT-6 Luna. Explicit Ultrafast
   requests are rejected on the EU endpoint as well.
+- Regenerated built-in tool implementation fingerprints for the 1.2.0 runtime.
+  Portable Agent package exporters and receiving hosts must run the same release
+  so protocol-v2 executable compatibility continues to fail closed on drift.
 
 ### Fixed
 
@@ -69,6 +74,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OpenAI Responses/Live and Google Live wrappers now reject overlapping
   connection attempts, recover cleanly from remote closure, and clear stale
   session/status state.
+- OpenAI computer-use continuations now accept a screenshot by either
+  `image_url` or uploaded `file_id` in the public `computer_call_output` type.
+- OpenAI streamed reasoning completion coalesces repeated provider completion
+  signals while preserving encrypted reasoning needed for continuation.
+- Gemini Interactions replays each signed thought exactly once and reads usage
+  from the SDK's `step.delta`/`step.stop` fields, retaining accumulated usage
+  when the terminal completion event omits it.
 - Context budgeting now counts opaque reasoning, compaction, provider-state,
   and native-tool output payloads; top-level reasoning summaries update
   `lastThinking` consistently.
@@ -3362,7 +3374,8 @@ StorageRegistry.setContext({ userId: currentUser.id });
 [0.1.2]: https://github.com/aantich/oneringai/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/aantich/oneringai/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/aantich/oneringai/releases/tag/v0.1.0
-[Unreleased]: https://github.com/aantich/oneringai/compare/v1.1.8...HEAD
+[Unreleased]: https://github.com/aantich/oneringai/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/aantich/oneringai/compare/v1.1.8...v1.2.0
 [1.1.8]: https://github.com/aantich/oneringai/compare/v1.1.7...v1.1.8
 [1.1.7]: https://github.com/aantich/oneringai/compare/v1.1.6...v1.1.7
 [1.1.6]: https://github.com/aantich/oneringai/compare/v1.1.5...v1.1.6
