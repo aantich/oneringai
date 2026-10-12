@@ -36,6 +36,17 @@ Read the [Astra and current vendor API guide](./USER_GUIDE.md#gpt-6-astra-respon
 the [1.2.0 changelog](./CHANGELOG.md), and the
 [model registry audit](./docs/MODEL_REGISTRY_AUDIT.md).
 
+Stage 01 context freshness work is available on the development branch. Its
+corrective pass also covers connected native-result recovery, request-event
+mutations, per-call model capacity, replay signatures, and managed JSON repair
+budgets. Known schemas, native tools, and the initial provider window now guide
+compaction; separate spills preserve colliding source keys across save/load, and
+function-result errors are counted. Managed
+requests rebuild context after compaction, preserve active tool dependencies, and
+expose estimated prepared-revision diagnostics. See the
+[preparation guide](./docs/CONTEXT_PREPARATION.md) and
+[living Version 2 guide](./docs/VERSION_2_GUIDE.md) for adoption and validation.
+
 ## Built for coding agents
 
 OneRingAI ships a canonical **[Agent Guide](./AGENTS.md)** that gives Codex,
@@ -271,6 +282,9 @@ plugin lifecycle, stores, compaction, persistence, and custom plugins.
 | **[Agent Guide](./AGENTS.md)** | Canonical context file for Codex, Claude Code, and custom coding agents: architecture, recipes, capability routing, safety invariants, and documentation map |
 | **[Agent Runtime Guide](./USER_GUIDE.md#agent-runtime-preview)** | Detailed usage guide for interchangeable OneRingAI/Codex agents, model and reasoning controls, live observation, capabilities, policy, lifecycle, and cleanup |
 | **[Agent Runtime Design](./docs/designs/AGENT_RUNTIME.md)** | Implemented local preview for OneRingAI and Codex SDK agents: generic model/reasoning controls, live observable autonomous runs, capabilities, policy, and the isolated-server roadmap |
+| **[Agentic Architecture Evolution Plan](./docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md)** | Accepted roadmap direction: nine core stages plus conditional extensions for context, model roles, tools, and learning, with tests, examples, AMOS, and compatibility gates |
+| **[Version 2 Guide (work in progress)](./docs/VERSION_2_GUIDE.md)** | Living adoption guide tracking planned, branch-available, and released capabilities; stages 00 and 01 are validated on the development branch |
+| **[Agentic Baseline Evaluation](./docs/AGENTIC_BASELINE_EVALUATION.md)** | Repository-only offline replay and opt-in live LLM workloads, evidence-based completion checks, compatibility fixtures, and evaluation limits |
 | **[User Guide](./USER_GUIDE.md)** | Comprehensive guide covering every feature with examples — connectors, agents, context, plugins, audio, video, search, MCP, OAuth, and more |
 | **[API Reference](./API_REFERENCE.md)** | Auto-generated reference for all public exports — classes, interfaces, types, and functions with signatures |
 | **[Memory Layer Guide](./docs/MEMORY_GUIDE.md)** | Standalone entity/fact memory system: graph and vector retrieval, ingestion, resolution, profiles, adapters, scaling, and agent integration |

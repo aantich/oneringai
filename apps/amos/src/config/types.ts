@@ -398,6 +398,10 @@ export interface SessionSummaryInfo {
  * Detailed context budget information
  */
 export interface ContextBudgetInfo {
+  /** Counts are estimates; prepared refers to the last selected request. */
+  source?: 'prepared' | 'estimate';
+  revision?: number;
+  preparedAt?: number;
   /** Total tokens available for the model */
   total: number;
   /** Tokens reserved for response generation */
@@ -416,6 +420,9 @@ export interface ContextBudgetInfo {
  * Token breakdown by component
  */
 export interface ContextBreakdownInfo {
+  source?: 'prepared' | 'estimate';
+  revision?: number;
+  preparedAt?: number;
   /** Total tokens used across all components */
   totalUsed: number;
   /** Individual component token usage */

@@ -299,8 +299,20 @@ const catalogAgent = Agent.create({
 });
 ```
 
-Compaction runs once before the LLM call. Tool-call/result pairs are preserved
-or removed together. Do not pre-compact the same turn in application code.
+Preparation runs one bounded compaction pass before the LLM call, then rebuilds
+contributions and counts the sanitized request. Connected tool-call/result groups
+are preserved or removed together; pending results and outstanding native async
+calls protect their dependencies. Duplicate final results are invalid protocol.
+Final dispatch checks cover synchronous request listeners, actual model capacity,
+schemas/native tools, and replay signatures. Managed JSON repair checks fit without
+replacing the main context diagnostic. Spill stores all connected native/message
+results and attachments before removal; failed writes preserve history.
+Known request constraints and provider capacity guide the initial compaction pass.
+Spill allocation includes already stored keys, including after save/load, and
+function-result errors are counted before preparation and dispatch.
+Do not pre-compact the same turn in application code. Inspect `lastPreparation`
+for the selected revision and estimated budget instead of preparing again.
+See [context preparation](docs/CONTEXT_PREPARATION.md) for fit errors and race handling.
 
 ## Long-term memory
 
@@ -438,6 +450,9 @@ during application shutdown.
 | Pre-built agent runtime usage | `USER_GUIDE.md#agent-runtime-preview` and `examples/agent-runtime-local.ts` |
 | Agent runtime architecture and server roadmap | `docs/designs/AGENT_RUNTIME.md` |
 | Server/desktop Agent packages, remote tools, and WebRTC ownership | `docs/designs/DISTRIBUTED_AGENT_EXECUTION.md` |
+| Staged agentic architecture evolution, evaluation, and compatibility requirements | `docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md` |
+| Version 2 adoption, stage availability, and standard-documentation handoff | `docs/VERSION_2_GUIDE.md` |
+| Stage 00 offline/live evaluation, completion gates, compatibility fixtures, and measured pilot | `docs/AGENTIC_BASELINE_EVALUATION.md` |
 
 When documentation and source disagree, verify the public export and tests,
 then fix the stale documentation in the same change.
@@ -458,6 +473,56 @@ examples/                    Runnable integration examples
 apps/amos/                   Terminal agent reference application
 ```
 
+## Staged architecture development
+
+Persistent user instructions (2026-10-07): develop the agentic architecture in
+stages, with extensive test coverage and good examples for every stage. Update
+AMOS to illustrate relevant new capabilities. The detailed roadmap and stage
+records live in
+[Agentic Architecture Evolution](docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md).
+Maintain the outward-facing [Version 2 Guide](docs/VERSION_2_GUIDE.md) as stages
+progress, and use its handoff ledger to update the README, User Guide, API reference,
+examples, AMOS documentation, and release notes without losing delivered details.
+These instructions govern changes to OneRingAI itself, not ordinary applications
+using OneRingAI as a dependency.
+
+- Implement the requested stage and complete its validation before proceeding.
+  Do not treat the roadmap as authorization to implement all stages. If the user
+  explicitly authorizes multiple stages, follow that scope.
+- Follow the roadmap's dependency-valid core delivery sequence. Conditional work
+  is not a prerequisite for core stages; record the smallest requested scope and
+  deferred extensions. Reuse current facilities before adding new abstractions.
+- Include meaningful regression, failure, lifecycle, and compatibility tests,
+  plus mock integration coverage when a stage crosses subsystem boundaries.
+  Cover cancellation, persistence, concurrency, budgets, and authorization where
+  relevant; do not substitute shallow implementation-mirroring tests for coverage.
+- Ship runnable examples with documented setup, expected behavior, and cleanup.
+  Prefer deterministic offline demonstrations plus explicitly opt-in live modes.
+  Update `examples/README.md` and relevant public documentation.
+- Update AMOS when users can use or inspect the new capability. Test the app's
+  adapter/configuration/commands as appropriate. Otherwise record why an AMOS
+  change is not applicable in the stage completion record.
+- Keep the stage table and execution records current with actual validation
+  results, compatibility evidence, examples, limitations, and the next stage.
+- Before marking each stage complete, update the Version 2 Guide's availability,
+  adoption record, and documentation handoff. Record verified public APIs/options,
+  defaults, support boundaries, examples, usage, persistence, failure behavior,
+  compatibility, and limitations; explicitly record internal-only changes. Separate
+  branch availability from a verified package release. Update affected existing
+  usage docs in the delivering stage, and regenerate generated API documentation
+  rather than hand-editing it. Pending release-wide edits remain tracked in the ledger.
+
+**Backward compatibility is required wherever possible.** Prefer additive APIs,
+optional configuration, legacy adapters, and opt-in behavior. Preserve supported
+public signatures, defaults, extension contracts, return/event shapes, and saved
+configuration/session loading. Assess behavioral as well as TypeScript compatibility.
+
+**If proposing a breaking API change, stop the affected work, explain the logic,
+the specific proposed change, affected consumers, alternatives, and migration,
+and obtain the user's explicit approval before implementing it.** Do not treat a
+new branch, major-version label, stage authorization, or this roadmap as approval
+for a break. Record the specific approval and its scope in the stage record.
+
 ## Repository validation
 
 Use the smallest relevant checks while iterating, then broaden in proportion to
@@ -473,6 +538,13 @@ npm run examples:check
 
 Integration tests require real credentials and are not the default validation
 path. Never add or print secrets to make them pass.
+
+For stages that affect agent/context/tool contracts, preserve the Stage 00
+baselines described in [the evaluation guide](docs/AGENTIC_BASELINE_EVALUATION.md).
+After building, `npm run test:agentic:compat` checks a consumer against the built
+public package. `npm run example:agentic-baseline` runs offline; the separately
+opt-in `npm run test:agentic:live` makes real billable LLM calls. Record unavailable
+providers explicitly rather than silently treating skipped tests as validation.
 
 ## Final checklist for coding agents
 

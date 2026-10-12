@@ -24,6 +24,8 @@ export type {
   KnownPluginConfigs,
   ContextBudget,
   PreparedContext,
+  ContextPrepareOptions,
+  ContextPreparation,
   OversizedInputResult,
   IContextStorage,
   SerializedContextState,

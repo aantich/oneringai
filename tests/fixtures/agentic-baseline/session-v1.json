@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "sessionId": "legacy-stage00",
+  "createdAt": "2026-10-07T00:00:00.000Z",
+  "lastSavedAt": "2026-10-07T00:00:00.000Z",
+  "metadata": { "title": "Pinned pre-evolution session" },
+  "state": {
+    "systemPrompt": "Keep the read-only constraint and cite source-a.",
+    "metadata": { "savedAt": 1791331200000, "model": "gpt-4o-mini", "agentId": "legacy-stage00" },
+    "pluginStates": {
+      "in_context_memory": { "entries": [{ "key": "constraint", "value": "read only", "description": "Host constraint", "priority": "critical", "createdAt": 1791331200000, "updatedAt": 1791331200000 }] },
+      "unknown_old_plugin": { "note": "Forward-compatible unknown plugin" }
+    },
+    "conversation": [
+      { "type": "message", "id": "legacy-user", "role": "user", "content": [{ "type": "input_text", "text": "Read source-a." }] },
+      { "type": "message", "id": "legacy-assistant", "role": "assistant", "content": [{ "type": "tool_use", "id": "legacy-call", "name": "read_source", "arguments": "{\"sourceId\":\"source-a\"}" }] },
+      { "type": "message", "id": "legacy-tool", "role": "user", "content": [{ "type": "tool_result", "tool_use_id": "legacy-call", "content": "{\"sourceId\":\"source-a\",\"value\":7}" }] },
+      { "type": "message", "id": "legacy-answer", "role": "assistant", "content": [{ "type": "output_text", "text": "source-a reports 7." }] }
+    ]
+  }
+}

@@ -9,6 +9,9 @@
  * Requires the working_memory plugin to be enabled.
  */
 
+import { removableMessageGroups, toolProtocolKeys } from '../tool-pairs.js';
+import { isDeepStrictEqual } from 'node:util';
+import type { InputItem } from '../../../domain/entities/Message.js';
 import type {
   ICompactionStrategy,
   CompactionContext,
@@ -58,6 +61,9 @@ interface ToolPair {
 
   /** The tool_use_id that links the pair */
   toolUseId: string;
+
+  /** Namespaced protocol identity (function and custom IDs may coincide). */
+  protocolKey: string;
 
   /** Name of the tool */
   toolName: string;
@@ -118,7 +124,9 @@ export class AlgorithmicCompactionStrategy implements ICompactionStrategy {
     log.push(`Algorithmic compaction started: need to free ~${targetToFree} tokens`);
 
     // 1. Run consolidate first to move large tool results to memory (if available)
+    const beforeConsolidation = context.conversation.length;
     const consolidateResult = await this.consolidate(context);
+    messagesRemoved += beforeConsolidation - context.conversation.length;
     if (consolidateResult.performed) {
       tokensFreed += Math.abs(consolidateResult.tokensChanged);
       log.push(...consolidateResult.actions);
@@ -130,7 +138,7 @@ export class AlgorithmicCompactionStrategy implements ICompactionStrategy {
       log.push(`Rolling window: need to free ~${remaining} more tokens`);
       const result = await this.applyRollingWindow(context, remaining, log);
       tokensFreed += result.tokensFreed;
-      messagesRemoved = result.messagesRemoved;
+      messagesRemoved += result.messagesRemoved;
     }
 
     log.push(`Algorithmic compaction complete: freed ~${tokensFreed} tokens total`);
@@ -153,123 +161,65 @@ export class AlgorithmicCompactionStrategy implements ICompactionStrategy {
     let tokensChanged = 0;
 
     const memory = this.getWorkingMemory(context);
-    const toolPairs = this.findToolPairs(context.conversation);
-
-    if (toolPairs.length === 0) {
-      return { performed: false, tokensChanged: 0, actions: [] };
-    }
-
-    const indicesToRemove: number[] = [];
-    const storedToolUseIds = new Set<string>();
-
-    // 1. Move large results to memory (only if working memory is available)
-    if (memory) {
-      for (const pair of toolPairs) {
-        if (pair.resultSizeBytes > this.toolResultSizeThreshold) {
-          const key = this.generateKey(pair.toolName, pair.toolUseId);
-          const desc = this.generateDescription(pair.toolName, pair.toolArgs, context);
-
-          await memory.store(key, desc, pair.resultContent, {
-            tier: 'raw',
-            priority: 'normal',
-          });
-          storedToolUseIds.add(pair.toolUseId);
-
-          // Mark both messages for removal
-          if (!indicesToRemove.includes(pair.toolUseIndex)) {
-            indicesToRemove.push(pair.toolUseIndex);
-          }
-          if (!indicesToRemove.includes(pair.toolResultIndex)) {
-            indicesToRemove.push(pair.toolResultIndex);
-          }
-
-          log.push(
-            `Moved ${pair.toolName} result (${this.formatBytes(pair.resultSizeBytes)}) to memory: ${key}`
-          );
-        }
-      }
-    }
-
-    // 2. Limit remaining tool pairs
-    const remainingPairs = toolPairs.filter(
-      p => !indicesToRemove.includes(p.toolUseIndex) && !indicesToRemove.includes(p.toolResultIndex)
-    );
-
-    if (remainingPairs.length > this.maxToolPairs) {
-      // Age-based eviction — oldest pairs first. When working memory is
-      // available, spill the content there before dropping the pair from
-      // context so the agent can still retrieve it via memory lookup.
-      // Without WM, we drop to stay under the pair cap; this is the only
-      // place in the path where content is genuinely unrecoverable, and it
-      // requires the host to deliberately disable WM.
-      const toRemove = remainingPairs.slice(0, remainingPairs.length - this.maxToolPairs);
-      for (const pair of toRemove) {
-        if (memory) {
-          const key = this.generateKey(pair.toolName, pair.toolUseId);
-          const desc = this.generateDescription(pair.toolName, pair.toolArgs, context);
-          await memory.store(key, desc, pair.resultContent, {
-            tier: 'raw',
-            priority: 'low',
-          });
-          storedToolUseIds.add(pair.toolUseId);
-          log.push(
-            `Spilled aged tool pair to memory: ${pair.toolName} → ${key} (exceeds ${this.maxToolPairs} pair limit)`,
-          );
-        } else {
-          log.push(
-            `Dropped aged tool pair: ${pair.toolName} (exceeds ${this.maxToolPairs} pair limit, no working memory available)`,
-          );
-        }
-        if (!indicesToRemove.includes(pair.toolUseIndex)) {
-          indicesToRemove.push(pair.toolUseIndex);
-        }
-        if (!indicesToRemove.includes(pair.toolResultIndex)) {
-          indicesToRemove.push(pair.toolResultIndex);
-        }
-      }
-    }
-
-    // A message may contain several tool calls, while their results can live
-    // in separate messages. Expand every selected pair to its whole connected
-    // component so removing one pair never strands (or silently sanitizes)
-    // another result. Preserve any newly pulled-in results in memory too.
-    let expanded = true;
-    while (expanded) {
-      expanded = false;
-      for (const pair of toolPairs) {
-        const intersects = indicesToRemove.includes(pair.toolUseIndex)
-          || indicesToRemove.includes(pair.toolResultIndex);
-        if (!intersects) continue;
-        if (memory && !storedToolUseIds.has(pair.toolUseId)) {
-          const key = this.generateKey(pair.toolName, pair.toolUseId);
-          const desc = this.generateDescription(pair.toolName, pair.toolArgs, context);
-          await memory.store(key, desc, pair.resultContent, {
-            tier: 'raw',
-            priority: 'low',
-          });
-          storedToolUseIds.add(pair.toolUseId);
-          log.push(`Spilled connected tool pair to memory: ${pair.toolName} → ${key}`);
-        }
-        for (const index of [pair.toolUseIndex, pair.toolResultIndex]) {
-          if (!indicesToRemove.includes(index)) {
-            indicesToRemove.push(index);
-            expanded = true;
-          }
-        }
-      }
-    }
-
-    // 3. Remove all marked messages
-    if (indicesToRemove.length > 0) {
-      tokensChanged = -(await context.removeMessages(indicesToRemove));
-      log.push(`Removed ${indicesToRemove.length} messages, freed ~${Math.abs(tokensChanged)} tokens`);
-    }
-
-    return {
-      performed: indicesToRemove.length > 0,
-      tokensChanged,
-      actions: log,
+    const conversation = context.conversation;
+    const toolPairs = this.findToolPairs(conversation);
+    const groups = removableMessageGroups(conversation, context.currentInput)
+      .filter(group => !memory || this.canStoreGroup(conversation, group, toolPairs));
+    const eligible = new Set(groups.flat());
+    const pairs = toolPairs.filter(pair => eligible.has(pair.toolUseIndex) && eligible.has(pair.toolResultIndex));
+    const selected = new Set<number>();
+    const select = (pair: ToolPair) => {
+      const group = groups.find(indices => indices.includes(pair.toolUseIndex));
+      group?.forEach(index => selected.add(index));
     };
+    if (memory) pairs.filter(pair => pair.resultSizeBytes > this.toolResultSizeThreshold).forEach(select);
+    const remaining = pairs.filter(pair => !selected.has(pair.toolUseIndex));
+    remaining.slice(0, Math.max(0, remaining.length - this.maxToolPairs)).forEach(select);
+    if (selected.size === 0) return { performed: false, tokensChanged: 0, actions: [] };
+
+    // Resolve the entire removal component before writing anything. Every result
+    // (including native outputs and attachments) must be recoverable first.
+    if (memory) {
+      const stored: Array<{ key: string; value: unknown }> = [];
+      const keys = new Map<string, string>();
+      // Stored entries survive earlier compaction passes and session restoration.
+      const used = new Set((await memory.query({ tier: 'raw' })).entries.map(entry => entry.key));
+      for (const pair of pairs) {
+        const base = this.generateKey(pair.toolName, pair.toolUseId);
+        let key = base;
+        let suffix = 0;
+        while (used.has(`raw.${key}`)) key = `${base}.${pair.protocolKey.split(':')[0]}.${++suffix}`;
+        used.add(`raw.${key}`); keys.set(pair.protocolKey, key);
+      }
+      for (const pair of pairs.filter(pair => selected.has(pair.toolUseIndex))) {
+        const key = keys.get(pair.protocolKey)!;
+        await memory.store(key, this.generateDescription(pair.toolName, pair.toolArgs, context), pair.resultContent, {
+          tier: 'raw', priority: pair.resultSizeBytes > this.toolResultSizeThreshold ? 'normal' : 'low',
+        });
+        stored.push({ key: `raw.${key}`, value: pair.resultContent });
+        log.push(pair.resultSizeBytes > this.toolResultSizeThreshold
+          ? `Moved ${pair.toolName} result (${this.formatBytes(pair.resultSizeBytes)}) to memory: ${key}`
+          : `Spilled connected or aged tool pair to memory: ${pair.toolName} → ${key}`);
+      }
+      // A later write may evict an earlier one from a capacity-limited store.
+      // Retain history if the complete group is no longer recoverable.
+      for (const { key, value } of stored) {
+        if (!isDeepStrictEqual(await memory.retrieve(key), value)) throw new Error(`Cannot remove tool results: working memory did not retain ${key}`);
+      }
+    }
+    const before = context.conversation.length;
+    tokensChanged = -(await context.removeMessages([...selected]));
+    const removed = before - context.conversation.length;
+    log.push(`Removed ${removed} messages, freed ~${Math.abs(tokensChanged)} tokens`);
+    return { performed: removed > 0, tokensChanged, actions: log };
+  }
+
+  private canStoreGroup(conversation: readonly InputItem[], group: number[], pairs: ToolPair[]): boolean {
+    const represented = new Set(pairs.filter(pair => group.includes(pair.toolUseIndex) && group.includes(pair.toolResultIndex))
+      .filter(pair => {
+        try { return JSON.stringify(pair.resultContent) !== undefined; } catch { return false; }
+      }).map(pair => pair.protocolKey));
+    return group.every(index => toolProtocolKeys(conversation[index]!).every(key => represented.has(key)));
   }
 
   /**
@@ -285,11 +235,11 @@ export class AlgorithmicCompactionStrategy implements ICompactionStrategy {
    * Find all tool_use/tool_result pairs in conversation.
    * Returns pairs sorted by oldest first (lowest index).
    */
-  private findToolPairs(conversation: ReadonlyArray<unknown>): ToolPair[] {
+  private findToolPairs(conversation: readonly InputItem[]): ToolPair[] {
     // Map: tool_use_id -> tool_use info
     const toolUses = new Map<
       string,
-      { index: number; toolName: string; toolArgs: unknown }
+      { index: number; id: string; toolName: string; toolArgs: unknown }
     >();
 
     // Map: tool_use_id -> tool_result info
@@ -300,7 +250,13 @@ export class AlgorithmicCompactionStrategy implements ICompactionStrategy {
 
     // Scan conversation for tool_use and tool_result content blocks
     for (let i = 0; i < conversation.length; i++) {
-      const item = conversation[i] as Record<string, unknown>;
+      const item = conversation[i] as unknown as Record<string, unknown>;
+      if (item?.type === 'function_call_output' || item?.type === 'custom_tool_call_output') {
+        toolResults.set(toolProtocolKeys(conversation[i]!)[0]!, {
+          index: i, content: item.output, sizeBytes: this.estimateSize(item.output),
+        });
+        continue;
+      }
       if (item?.type !== 'message') continue;
 
       const content = item.content as Array<Record<string, unknown>> | undefined;
@@ -317,8 +273,9 @@ export class AlgorithmicCompactionStrategy implements ICompactionStrategy {
             } else if (toolArgs === undefined && typeof block.arguments === 'object') {
               toolArgs = block.arguments;
             }
-            toolUses.set(toolUseId, {
+            toolUses.set(`${block.type === 'custom_tool_use' ? 'custom' : 'function'}:${toolUseId}`, {
               index: i,
+              id: toolUseId,
               toolName: (block.name as string) || 'unknown',
               toolArgs,
             });
@@ -326,9 +283,11 @@ export class AlgorithmicCompactionStrategy implements ICompactionStrategy {
         } else if (block.type === 'tool_result' || block.type === 'custom_tool_result') {
           const toolUseId = block.tool_use_id as string;
           if (toolUseId) {
-            const resultContent = block.content;
+            const resultContent = block.__images || block.error
+              ? { content: block.content, ...(block.__images ? { __images: block.__images } : {}), ...(block.error ? { error: block.error } : {}) }
+              : block.content;
             const sizeBytes = this.estimateSize(resultContent);
-            toolResults.set(toolUseId, {
+            toolResults.set(`${block.type === 'custom_tool_result' ? 'custom' : 'function'}:${toolUseId}`, {
               index: i,
               content: resultContent,
               sizeBytes,
@@ -340,11 +299,12 @@ export class AlgorithmicCompactionStrategy implements ICompactionStrategy {
 
     // Match pairs
     const pairs: ToolPair[] = [];
-    for (const [toolUseId, useInfo] of toolUses) {
-      const resultInfo = toolResults.get(toolUseId);
+    for (const [protocolKey, useInfo] of toolUses) {
+      const resultInfo = toolResults.get(protocolKey);
       if (resultInfo) {
         pairs.push({
-          toolUseId,
+          toolUseId: useInfo.id,
+          protocolKey,
           toolUseIndex: useInfo.index,
           toolResultIndex: resultInfo.index,
           toolName: useInfo.toolName,
@@ -480,49 +440,22 @@ export class AlgorithmicCompactionStrategy implements ICompactionStrategy {
       pairIndices.add(pair.toolResultIndex);
     }
 
-    // Build removal order: non-tool messages first, then complete tool pairs
-    const nonToolIndices: number[] = [];
-    for (let i = 0; i < conversation.length; i++) {
-      if (!pairIndices.has(i)) {
-        nonToolIndices.push(i);
-      }
-    }
-
-    // Collect indices to remove, tracking freed tokens
+    // Preserve the existing non-tool-first policy, skipping protected groups
+    // before estimating savings so they cannot prematurely satisfy the target.
+    const memory = this.getWorkingMemory(context);
+    const groups = removableMessageGroups(conversation, context.currentInput)
+      .filter(group => !memory || this.canStoreGroup(conversation, group, toolPairs));
+    const containsPair = (group: number[]) => group.some(index => pairIndices.has(index));
+    const ordered = [...groups.filter(group => !containsPair(group)), ...groups.filter(containsPair)];
     let tokensFreed = 0;
     const indicesToRemove: number[] = [];
-
-    // First, try removing non-tool messages (oldest first)
-    for (const idx of nonToolIndices) {
+    for (const group of ordered) {
       if (tokensFreed >= targetToFree) break;
-
-      const item = conversation[idx];
-      if (item) {
-        tokensFreed += context.estimateTokens(item);
-        indicesToRemove.push(idx);
-      }
+      indicesToRemove.push(...group);
+      tokensFreed += group.reduce((sum, index) => sum + context.estimateTokens(conversation[index]!), 0);
     }
-
-    // If still need more, remove complete tool pairs (oldest first)
-    if (tokensFreed < targetToFree) {
-      for (const pair of toolPairs) {
-        if (tokensFreed >= targetToFree) break;
-
-        for (const connected of this.getConnectedToolPairs(pair, toolPairs)) {
-          for (const index of [connected.toolUseIndex, connected.toolResultIndex]) {
-            const item = conversation[index];
-            if (item && !indicesToRemove.includes(index)) {
-              tokensFreed += context.estimateTokens(item);
-              indicesToRemove.push(index);
-            }
-          }
-        }
-      }
-    }
-
-    // Actually remove the messages
     if (indicesToRemove.length > 0) {
-      await context.removeMessages(indicesToRemove);
+      tokensFreed = await context.removeMessages(indicesToRemove);
       log.push(`Rolling window removed ${indicesToRemove.length} messages`);
     }
 
@@ -532,23 +465,4 @@ export class AlgorithmicCompactionStrategy implements ICompactionStrategy {
     };
   }
 
-  /** Return all pairs connected through a shared tool-use/result message. */
-  private getConnectedToolPairs(seed: ToolPair, pairs: ToolPair[]): ToolPair[] {
-    const connected = new Set<ToolPair>([seed]);
-    const indices = new Set([seed.toolUseIndex, seed.toolResultIndex]);
-    let changed = true;
-    while (changed) {
-      changed = false;
-      for (const pair of pairs) {
-        if (connected.has(pair)) continue;
-        if (indices.has(pair.toolUseIndex) || indices.has(pair.toolResultIndex)) {
-          connected.add(pair);
-          indices.add(pair.toolUseIndex);
-          indices.add(pair.toolResultIndex);
-          changed = true;
-        }
-      }
-    }
-    return [...connected];
-  }
 }

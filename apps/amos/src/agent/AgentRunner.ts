@@ -34,6 +34,7 @@ import type {
   TokenUsage,
   ToolApprovalContext,
 } from '../config/types.js';
+import { inspectContext } from './contextInspection.js';
 import { buildPermissionsConfig } from './permissionUtils.js';
 
 export interface AmosModelRuntimeOptions {
@@ -474,16 +475,7 @@ export class AgentRunner implements IAgentRunner {
     if (!context) return null;
 
     try {
-      const budget = await context.calculateBudget();
-      const utilization = budget.utilizationPercent;
-      return {
-        total: budget.maxTokens,
-        reserved: budget.responseReserve,
-        used: budget.totalUsed,
-        available: Math.max(0, budget.available),
-        utilizationPercent: utilization,
-        status: utilization >= 90 ? 'critical' : utilization >= 75 ? 'warning' : 'ok',
-      };
+      return (await inspectContext(context)).budget;
     } catch {
       return null;
     }
@@ -494,28 +486,7 @@ export class AgentRunner implements IAgentRunner {
     if (!context) return null;
 
     try {
-      const budget = await context.calculateBudget();
-      const flat: Record<string, number> = {
-        systemPrompt: budget.breakdown.systemPrompt,
-        persistentInstructions: budget.breakdown.persistentInstructions,
-        pluginInstructions: budget.breakdown.pluginInstructions,
-        tools: budget.breakdown.tools,
-        conversation: budget.breakdown.conversation,
-        currentInput: budget.breakdown.currentInput,
-        ...Object.fromEntries(
-          Object.entries(budget.breakdown.pluginContents)
-            .map(([name, tokens]) => [`plugin:${name}`, tokens]),
-        ),
-      };
-      const components = Object.entries(flat)
-        .filter(([, tokens]) => tokens > 0)
-        .map(([name, tokens]) => ({
-          name,
-          tokens,
-          percent: budget.totalUsed > 0 ? (tokens / budget.totalUsed) * 100 : 0,
-        }))
-        .sort((a, b) => b.tokens - a.tokens);
-      return { totalUsed: budget.totalUsed, components };
+      return (await inspectContext(context)).breakdown;
     } catch {
       return null;
     }

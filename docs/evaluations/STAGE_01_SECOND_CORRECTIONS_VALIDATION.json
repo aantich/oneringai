@@ -1,0 +1,2572 @@
+{
+  "protocol": "stage-01-second-corrections-validation-v1",
+  "recordedAt": "2026-10-08T13:18:49.840Z",
+  "branch": "version2",
+  "baseRevision": "43b34cd",
+  "packageVersion": "1.2.0",
+  "published": false,
+  "scope": [
+    "S1: separate-pass spill key collisions and stored value verification",
+    "S2: known schema/native-tool contributions participate in initial compaction",
+    "S3: initial provider capacity participates with explicit host/fallback precedence",
+    "S4: function-result errors participate in preparation/final/auxiliary estimates"
+  ],
+  "compatibility": {
+    "breakingChanges": false,
+    "preparationOptions": [
+      "getRequestOptions",
+      "modelMaxContextTokens"
+    ],
+    "defaults": "unchanged",
+    "ownerConfiguration": "unchanged",
+    "savedSessionFormat": 1,
+    "extensionContracts": "unchanged",
+    "directApis": "unchanged",
+    "ordinaryUnusedSpillKeys": "unchanged"
+  },
+  "unit": {
+    "files": 326,
+    "passed": 6895,
+    "addedRegressionCases": 32,
+    "failed": 0,
+    "skipped": 0
+  },
+  "checksPassed": [
+    "ESM/CJS/DTS build and 24 package export checks",
+    "source typecheck",
+    "pinned built-package consumer compatibility",
+    "lint",
+    "example typecheck",
+    "strict added core/live-test compilation (unused-only checks disabled for imported preexisting AMOS declarations)",
+    "AMOS typecheck/build",
+    "public API generation",
+    "new/legacy context and structured-repair offline examples",
+    "AMOS three-state budget/breakdown walkthrough",
+    "offline development and held-out Stage 00 baselines",
+    "npm pack dry-run with isolated temporary cache; public examples and correction docs included"
+  ],
+  "coverage": {
+    "scope": [
+      "src/core/context-nextgen/**/*.ts",
+      "apps/amos/src/agent/contextInspection.ts"
+    ],
+    "testFiles": 30,
+    "passedTests": 806,
+    "excludesAgentFromDenominator": true,
+    "totals": {
+      "lines": {
+        "total": 7113,
+        "covered": 6056,
+        "skipped": 0,
+        "pct": 85.13
+      },
+      "statements": {
+        "total": 7113,
+        "covered": 6056,
+        "skipped": 0,
+        "pct": 85.13
+      },
+      "functions": {
+        "total": 508,
+        "covered": 442,
+        "skipped": 0,
+        "pct": 87
+      },
+      "branches": {
+        "total": 2224,
+        "covered": 1898,
+        "skipped": 0,
+        "pct": 85.34
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "selectedFiles": {
+      "apps/amos/src/agent/contextInspection.ts": {
+        "lines": {
+          "total": 28,
+          "covered": 28,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 1,
+          "covered": 1,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 28,
+          "covered": 28,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 15,
+          "covered": 12,
+          "skipped": 0,
+          "pct": 80
+        }
+      },
+      "src/core/context-nextgen/AgentContextNextGen.ts": {
+        "lines": {
+          "total": 1914,
+          "covered": 1631,
+          "skipped": 0,
+          "pct": 85.21
+        },
+        "functions": {
+          "total": 120,
+          "covered": 108,
+          "skipped": 0,
+          "pct": 90
+        },
+        "statements": {
+          "total": 1914,
+          "covered": 1631,
+          "skipped": 0,
+          "pct": 85.21
+        },
+        "branches": {
+          "total": 663,
+          "covered": 542,
+          "skipped": 0,
+          "pct": 81.74
+        }
+      },
+      "src/core/context-nextgen/tool-pairs.ts": {
+        "lines": {
+          "total": 101,
+          "covered": 101,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 8,
+          "covered": 8,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 101,
+          "covered": 101,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 91,
+          "covered": 90,
+          "skipped": 0,
+          "pct": 98.9
+        }
+      },
+      "src/core/context-nextgen/strategies/AlgorithmicCompactionStrategy.ts": {
+        "lines": {
+          "total": 266,
+          "covered": 254,
+          "skipped": 0,
+          "pct": 95.48
+        },
+        "functions": {
+          "total": 15,
+          "covered": 15,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 266,
+          "covered": 254,
+          "skipped": 0,
+          "pct": 95.48
+        },
+        "branches": {
+          "total": 131,
+          "covered": 114,
+          "skipped": 0,
+          "pct": 87.02
+        }
+      }
+    }
+  },
+  "liveSummary": {
+    "contextCases": 16,
+    "baselineWorkloadSplitScenarios": 24,
+    "passingScenarios": 40,
+    "baselineObservedModelCalls": 49,
+    "baselineToolCalls": 30,
+    "baselineRepeatedCalls": 0,
+    "baselineCorrelationErrors": 0,
+    "unavailableProviders": [],
+    "providerSummary": {
+      "openai": {
+        "contextCases": 5,
+        "baselineScenarios": 8
+      },
+      "anthropic": {
+        "contextCases": 5,
+        "baselineScenarios": 8
+      },
+      "google": {
+        "contextCases": 6,
+        "baselineScenarios": 8
+      }
+    }
+  },
+  "liveContext": {
+    "protocol": "stage-01-corrections-v2",
+    "recordedAt": "2026-10-08T13:03:44.521Z",
+    "sampleCountPerProviderMode": 1,
+    "scope": "Mixed-format and separate-spill evidence retrieval, schema-aware compaction, controlled malformed-answer repair, and Google replay state; real providers with local tools; no comparative quality/cost claim",
+    "reports": [
+      {
+        "scenario": "schema-aware-compaction",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "passed": true,
+        "compactions": 1,
+        "observedModelCalls": 1,
+        "selectedBudget": {
+          "maxTokens": 1000,
+          "responseReserve": 100,
+          "systemMessageTokens": 78,
+          "toolsTokens": 654,
+          "conversationTokens": 0,
+          "currentInputTokens": 13,
+          "totalUsed": 745,
+          "available": 155,
+          "utilizationPercent": 82.77777777777777,
+          "breakdown": {
+            "systemPrompt": 48,
+            "persistentInstructions": 0,
+            "pluginInstructions": 0,
+            "pluginContents": {},
+            "tools": 654,
+            "conversation": 0,
+            "currentInput": 13
+          }
+        },
+        "usage": {
+          "input_tokens": 429,
+          "output_tokens": 10,
+          "total_tokens": 439,
+          "cached_input_tokens": 0,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "service_tier": "default"
+        }
+      },
+      {
+        "scenario": "separate-spill-collision-retrieval",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "passed": true,
+        "memoryReads": 2,
+        "keys": [
+          "raw.tool_result.read_source.12345678",
+          "raw.tool_result.read_source.12345678.function.1"
+        ],
+        "persistence": "JSON context state round trip before real retrieval"
+      },
+      {
+        "scenario": "mixed-format-retrieval",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "mode": "run",
+        "passed": true,
+        "nativeEvidenceRecovered": true,
+        "calls": 2,
+        "memoryReads": 2,
+        "compacted": 1,
+        "firstRevision": 1,
+        "firstBudgetAvailable": 1200,
+        "lastRevision": 2,
+        "finalEstimatedTokens": 2043
+      },
+      {
+        "scenario": "mixed-format-retrieval",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "mode": "stream",
+        "passed": true,
+        "nativeEvidenceRecovered": true,
+        "calls": 2,
+        "memoryReads": 2,
+        "compacted": 1,
+        "firstRevision": 1,
+        "firstBudgetAvailable": 1200,
+        "lastRevision": 2,
+        "finalEstimatedTokens": 2044
+      },
+      {
+        "scenario": "controlled-structured-repair",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "mode": "run",
+        "passed": true,
+        "providerCalls": 2,
+        "mainUsageTokens": 103,
+        "totalUsageTokens": 230,
+        "lastRevision": 1
+      },
+      {
+        "scenario": "schema-aware-compaction",
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "passed": true,
+        "compactions": 1,
+        "observedModelCalls": 1,
+        "selectedBudget": {
+          "maxTokens": 1000,
+          "responseReserve": 100,
+          "systemMessageTokens": 78,
+          "toolsTokens": 654,
+          "conversationTokens": 0,
+          "currentInputTokens": 13,
+          "totalUsed": 745,
+          "available": 155,
+          "utilizationPercent": 82.77777777777777,
+          "breakdown": {
+            "systemPrompt": 48,
+            "persistentInstructions": 0,
+            "pluginInstructions": 0,
+            "pluginContents": {},
+            "tools": 654,
+            "conversation": 0,
+            "currentInput": 13
+          }
+        },
+        "usage": {
+          "input_tokens": 554,
+          "output_tokens": 12,
+          "total_tokens": 566,
+          "service_tier": "standard"
+        }
+      },
+      {
+        "scenario": "separate-spill-collision-retrieval",
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "passed": true,
+        "memoryReads": 3,
+        "keys": [
+          "raw.tool_result.read_source.12345678",
+          "raw.tool_result.read_source.12345678.function.1"
+        ],
+        "persistence": "JSON context state round trip before real retrieval"
+      },
+      {
+        "scenario": "mixed-format-retrieval",
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "mode": "run",
+        "passed": true,
+        "nativeEvidenceRecovered": true,
+        "calls": 2,
+        "memoryReads": 2,
+        "compacted": 1,
+        "firstRevision": 1,
+        "firstBudgetAvailable": 1200,
+        "lastRevision": 2,
+        "finalEstimatedTokens": 2059
+      },
+      {
+        "scenario": "mixed-format-retrieval",
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "mode": "stream",
+        "passed": true,
+        "nativeEvidenceRecovered": true,
+        "calls": 2,
+        "memoryReads": 2,
+        "compacted": 1,
+        "firstRevision": 1,
+        "firstBudgetAvailable": 1200,
+        "lastRevision": 2,
+        "finalEstimatedTokens": 2063
+      },
+      {
+        "scenario": "controlled-structured-repair",
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "mode": "run",
+        "passed": true,
+        "providerCalls": 2,
+        "mainUsageTokens": 227,
+        "totalUsageTokens": 482,
+        "lastRevision": 1
+      },
+      {
+        "scenario": "schema-aware-compaction",
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "passed": true,
+        "compactions": 1,
+        "observedModelCalls": 1,
+        "selectedBudget": {
+          "maxTokens": 1000,
+          "responseReserve": 100,
+          "systemMessageTokens": 78,
+          "toolsTokens": 654,
+          "conversationTokens": 0,
+          "currentInputTokens": 13,
+          "totalUsed": 745,
+          "available": 155,
+          "utilizationPercent": 82.77777777777777,
+          "breakdown": {
+            "systemPrompt": 48,
+            "persistentInstructions": 0,
+            "pluginInstructions": 0,
+            "pluginContents": {},
+            "tools": 654,
+            "conversation": 0,
+            "currentInput": 13
+          }
+        },
+        "usage": {
+          "input_tokens": 75,
+          "output_tokens": 10,
+          "total_tokens": 85
+        }
+      },
+      {
+        "scenario": "separate-spill-collision-retrieval",
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "passed": true,
+        "memoryReads": 2,
+        "keys": [
+          "raw.tool_result.read_source.12345678",
+          "raw.tool_result.read_source.12345678.function.1"
+        ],
+        "persistence": "JSON context state round trip before real retrieval"
+      },
+      {
+        "scenario": "mixed-format-retrieval",
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "mode": "run",
+        "passed": true,
+        "nativeEvidenceRecovered": true,
+        "calls": 2,
+        "memoryReads": 2,
+        "compacted": 1,
+        "firstRevision": 1,
+        "firstBudgetAvailable": 1200,
+        "lastRevision": 2,
+        "finalEstimatedTokens": 2043
+      },
+      {
+        "scenario": "mixed-format-retrieval",
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "mode": "stream",
+        "passed": true,
+        "nativeEvidenceRecovered": true,
+        "calls": 2,
+        "memoryReads": 2,
+        "compacted": 1,
+        "firstRevision": 1,
+        "firstBudgetAvailable": 1200,
+        "lastRevision": 2,
+        "finalEstimatedTokens": 2044
+      },
+      {
+        "scenario": "controlled-structured-repair",
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "mode": "run",
+        "passed": true,
+        "providerCalls": 2,
+        "mainUsageTokens": 77,
+        "totalUsageTokens": 176,
+        "lastRevision": 1
+      },
+      {
+        "scenario": "google-thinking-signature-replay",
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "passed": true,
+        "signaturesObserved": 2,
+        "localSignatureEstimate": 84,
+        "persistence": "JSON context state round trip; no signature contents logged"
+      }
+    ]
+  },
+  "liveBaseline": {
+    "protocol": "stage-00-v1",
+    "recordedAt": "2026-10-08T13:06:11.595Z",
+    "selectedProviders": [
+      "openai",
+      "anthropic",
+      "google"
+    ],
+    "sampleCountPerModelWorkloadSplit": 1,
+    "seed": null,
+    "temperature": null,
+    "thinking": {
+      "enabled": false
+    },
+    "fixtureSettings": {
+      "maxIterations": 6,
+      "maxToolCalls": 6,
+      "maxOutputTokens": 512,
+      "maxExecutionTimeMs": 60000,
+      "emptyResponseRetry": false,
+      "workingMemory": false,
+      "inContextMemory": false
+    },
+    "providerSettings": {
+      "google/gemini-2.5-flash": {
+        "generationConfig": {
+          "thinkingConfig": {
+            "thinkingBudget": 0
+          }
+        }
+      }
+    },
+    "uncertainty": "Pilot only; no comparative quality or cost conclusion.",
+    "reports": [
+      {
+        "fixture": "chat",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1309.644042,
+        "fixtureId": "chat/development",
+        "connector": "stage00-live-openai-chat",
+        "model": "gpt-4o-mini",
+        "runs": [
+          {
+            "id": "chat/development/run-1",
+            "parentId": "chat/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "chat/development/run-1/iteration-0/llm-1",
+            "runId": "chat/development/run-1",
+            "parentId": "chat/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 1291,
+            "usage": {
+              "input": 89,
+              "output": 5,
+              "total": 94
+            }
+          }
+        ],
+        "llmCalls": 1,
+        "toolCalls": 0,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 89,
+            "missingCalls": 0,
+            "total": 89
+          },
+          "output": {
+            "knownSubtotal": 5,
+            "missingCalls": 0,
+            "total": 5
+          },
+          "total": {
+            "knownSubtotal": 94,
+            "missingCalls": 0,
+            "total": 94
+          }
+        }
+      },
+      {
+        "fixture": "chat",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 2615.096375,
+        "fixtureId": "chat/held-out",
+        "connector": "stage00-live-openai-chat",
+        "model": "gpt-4o-mini",
+        "runs": [
+          {
+            "id": "chat/held-out/run-1",
+            "parentId": "chat/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "chat/held-out/run-1/iteration-0/llm-1",
+            "runId": "chat/held-out/run-1",
+            "parentId": "chat/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 2612,
+            "usage": {
+              "input": 91,
+              "output": 7,
+              "total": 98
+            }
+          }
+        ],
+        "llmCalls": 1,
+        "toolCalls": 0,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 91,
+            "missingCalls": 0,
+            "total": 91
+          },
+          "output": {
+            "knownSubtotal": 7,
+            "missingCalls": 0,
+            "total": 7
+          },
+          "total": {
+            "knownSubtotal": 98,
+            "missingCalls": 0,
+            "total": 98
+          }
+        }
+      },
+      {
+        "fixture": "large-observation",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 2665.3154159999995,
+        "fixtureId": "large-observation/development",
+        "connector": "stage00-live-openai-large-observation",
+        "model": "gpt-4o-mini",
+        "runs": [
+          {
+            "id": "large-observation/development/run-1",
+            "parentId": "large-observation/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "large-observation/development/run-1/iteration-0/llm-1",
+            "runId": "large-observation/development/run-1",
+            "parentId": "large-observation/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 1307,
+            "usage": {
+              "input": 144,
+              "output": 17,
+              "total": 161
+            }
+          },
+          {
+            "id": "large-observation/development/run-1/iteration-0/tool-2",
+            "runId": "large-observation/development/run-1",
+            "parentId": "large-observation/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_document",
+            "outcome": "library_completed",
+            "durationMs": 2.5539579999995112,
+            "usage": null
+          },
+          {
+            "id": "large-observation/development/run-1/iteration-1/llm-3",
+            "runId": "large-observation/development/run-1",
+            "parentId": "large-observation/development/run-1/iteration-1",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 1349,
+            "usage": {
+              "input": 7384,
+              "output": 27,
+              "total": 7411
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 1,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 7528,
+            "missingCalls": 0,
+            "total": 7528
+          },
+          "output": {
+            "knownSubtotal": 44,
+            "missingCalls": 0,
+            "total": 44
+          },
+          "total": {
+            "knownSubtotal": 7572,
+            "missingCalls": 0,
+            "total": 7572
+          }
+        }
+      },
+      {
+        "fixture": "large-observation",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 3741.0715,
+        "fixtureId": "large-observation/held-out",
+        "connector": "stage00-live-openai-large-observation",
+        "model": "gpt-4o-mini",
+        "runs": [
+          {
+            "id": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "large-observation/held-out/run-1/iteration-0/llm-1",
+            "runId": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 1790,
+            "usage": {
+              "input": 146,
+              "output": 19,
+              "total": 165
+            }
+          },
+          {
+            "id": "large-observation/held-out/run-1/iteration-0/tool-2",
+            "runId": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_document",
+            "outcome": "library_completed",
+            "durationMs": 0.3758330000000569,
+            "usage": null
+          },
+          {
+            "id": "large-observation/held-out/run-1/iteration-1/llm-3",
+            "runId": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out/run-1/iteration-1",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 1947,
+            "usage": {
+              "input": 7392,
+              "output": 31,
+              "total": 7423
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 1,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 7538,
+            "missingCalls": 0,
+            "total": 7538
+          },
+          "output": {
+            "knownSubtotal": 50,
+            "missingCalls": 0,
+            "total": 50
+          },
+          "total": {
+            "knownSubtotal": 7588,
+            "missingCalls": 0,
+            "total": 7588
+          }
+        }
+      },
+      {
+        "fixture": "research",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 2044.5144999999993,
+        "fixtureId": "research/development",
+        "connector": "stage00-live-openai-research",
+        "model": "gpt-4o-mini",
+        "runs": [
+          {
+            "id": "research/development/run-1",
+            "parentId": "research/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "research/development/run-1/iteration-0/llm-1",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 1250,
+            "usage": {
+              "input": 210,
+              "output": 55,
+              "total": 265
+            }
+          },
+          {
+            "id": "research/development/run-1/iteration-0/tool-2",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_a",
+            "outcome": "library_completed",
+            "durationMs": 0.3685409999998228,
+            "usage": null
+          },
+          {
+            "id": "research/development/run-1/iteration-0/tool-3",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_b",
+            "outcome": "library_completed",
+            "durationMs": 0.12312500000007276,
+            "usage": null
+          },
+          {
+            "id": "research/development/run-1/iteration-1/llm-4",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-1",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 789,
+            "usage": {
+              "input": 296,
+              "output": 20,
+              "total": 316
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 506,
+            "missingCalls": 0,
+            "total": 506
+          },
+          "output": {
+            "knownSubtotal": 75,
+            "missingCalls": 0,
+            "total": 75
+          },
+          "total": {
+            "knownSubtotal": 581,
+            "missingCalls": 0,
+            "total": 581
+          }
+        }
+      },
+      {
+        "fixture": "research",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 4429.007084000001,
+        "fixtureId": "research/held-out",
+        "connector": "stage00-live-openai-research",
+        "model": "gpt-4o-mini",
+        "runs": [
+          {
+            "id": "research/held-out/run-1",
+            "parentId": "research/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "research/held-out/run-1/iteration-0/llm-1",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 3143,
+            "usage": {
+              "input": 212,
+              "output": 57,
+              "total": 269
+            }
+          },
+          {
+            "id": "research/held-out/run-1/iteration-0/tool-2",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_a",
+            "outcome": "library_completed",
+            "durationMs": 0.40404099999796017,
+            "usage": null
+          },
+          {
+            "id": "research/held-out/run-1/iteration-0/tool-3",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_b",
+            "outcome": "library_completed",
+            "durationMs": 0.28537499999947613,
+            "usage": null
+          },
+          {
+            "id": "research/held-out/run-1/iteration-1/llm-4",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-1",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 1281,
+            "usage": {
+              "input": 302,
+              "output": 22,
+              "total": 324
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 514,
+            "missingCalls": 0,
+            "total": 514
+          },
+          "output": {
+            "knownSubtotal": 79,
+            "missingCalls": 0,
+            "total": 79
+          },
+          "total": {
+            "knownSubtotal": 593,
+            "missingCalls": 0,
+            "total": 593
+          }
+        }
+      },
+      {
+        "fixture": "external-workflow",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 3263.0755830000016,
+        "fixtureId": "external-workflow/development",
+        "connector": "stage00-live-openai-external-workflow",
+        "model": "gpt-4o-mini",
+        "runs": [
+          {
+            "id": "external-workflow/development/run-1",
+            "parentId": "external-workflow/development",
+            "outcome": "cancelled"
+          },
+          {
+            "id": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "external-workflow/development/run-1/iteration-0/llm-1",
+            "runId": "external-workflow/development/run-1",
+            "parentId": "external-workflow/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 940,
+            "usage": {
+              "input": 166,
+              "output": 17,
+              "total": 183
+            }
+          },
+          {
+            "id": "external-workflow/development/run-1/iteration-0/tool-2",
+            "runId": "external-workflow/development/run-1",
+            "parentId": "external-workflow/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "submit_job",
+            "outcome": "library_completed",
+            "durationMs": 0.4877919999998994,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/development/run-2/iteration-0/llm-3",
+            "runId": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development/run-2/iteration-0",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 866,
+            "usage": {
+              "input": 234,
+              "output": 17,
+              "total": 251
+            }
+          },
+          {
+            "id": "external-workflow/development/run-2/iteration-0/tool-4",
+            "runId": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development/run-2/iteration-0",
+            "kind": "tool",
+            "name": "check_job",
+            "outcome": "library_completed",
+            "durationMs": 0.15508399999816902,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/development/run-2/iteration-1/llm-5",
+            "runId": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development/run-2/iteration-1",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 1442,
+            "usage": {
+              "input": 273,
+              "output": 23,
+              "total": 296
+            }
+          }
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 673,
+            "missingCalls": 0,
+            "total": 673
+          },
+          "output": {
+            "knownSubtotal": 57,
+            "missingCalls": 0,
+            "total": 57
+          },
+          "total": {
+            "knownSubtotal": 730,
+            "missingCalls": 0,
+            "total": 730
+          }
+        }
+      },
+      {
+        "fixture": "external-workflow",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 6704.078125,
+        "fixtureId": "external-workflow/held-out",
+        "connector": "stage00-live-openai-external-workflow",
+        "model": "gpt-4o-mini",
+        "runs": [
+          {
+            "id": "external-workflow/held-out/run-1",
+            "parentId": "external-workflow/held-out",
+            "outcome": "cancelled"
+          },
+          {
+            "id": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "external-workflow/held-out/run-1/iteration-0/llm-1",
+            "runId": "external-workflow/held-out/run-1",
+            "parentId": "external-workflow/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 847,
+            "usage": {
+              "input": 168,
+              "output": 19,
+              "total": 187
+            }
+          },
+          {
+            "id": "external-workflow/held-out/run-1/iteration-0/tool-2",
+            "runId": "external-workflow/held-out/run-1",
+            "parentId": "external-workflow/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "submit_job",
+            "outcome": "library_completed",
+            "durationMs": 0.18587500000285218,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/held-out/run-2/iteration-0/llm-3",
+            "runId": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out/run-2/iteration-0",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 3383,
+            "usage": {
+              "input": 242,
+              "output": 19,
+              "total": 261
+            }
+          },
+          {
+            "id": "external-workflow/held-out/run-2/iteration-0/tool-4",
+            "runId": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out/run-2/iteration-0",
+            "kind": "tool",
+            "name": "check_job",
+            "outcome": "library_completed",
+            "durationMs": 0.18908300000111922,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/held-out/run-2/iteration-1/llm-5",
+            "runId": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out/run-2/iteration-1",
+            "kind": "llm",
+            "name": "gpt-4o-mini-2024-07-18",
+            "outcome": "response",
+            "durationMs": 2472,
+            "usage": {
+              "input": 286,
+              "output": 22,
+              "total": 308
+            }
+          }
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 696,
+            "missingCalls": 0,
+            "total": 696
+          },
+          "output": {
+            "knownSubtotal": 60,
+            "missingCalls": 0,
+            "total": 60
+          },
+          "total": {
+            "knownSubtotal": 756,
+            "missingCalls": 0,
+            "total": 756
+          }
+        }
+      },
+      {
+        "fixture": "chat",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 805.4162499999984,
+        "fixtureId": "chat/development",
+        "connector": "stage00-live-anthropic-chat",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "chat/development/run-1",
+            "parentId": "chat/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "chat/development/run-1/iteration-0/llm-1",
+            "runId": "chat/development/run-1",
+            "parentId": "chat/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 803,
+            "usage": {
+              "input": 92,
+              "output": 11,
+              "total": 103
+            }
+          }
+        ],
+        "llmCalls": 1,
+        "toolCalls": 0,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 92,
+            "missingCalls": 0,
+            "total": 92
+          },
+          "output": {
+            "knownSubtotal": 11,
+            "missingCalls": 0,
+            "total": 11
+          },
+          "total": {
+            "knownSubtotal": 103,
+            "missingCalls": 0,
+            "total": 103
+          }
+        }
+      },
+      {
+        "fixture": "chat",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 554.6354580000007,
+        "fixtureId": "chat/held-out",
+        "connector": "stage00-live-anthropic-chat",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "chat/held-out/run-1",
+            "parentId": "chat/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "chat/held-out/run-1/iteration-0/llm-1",
+            "runId": "chat/held-out/run-1",
+            "parentId": "chat/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 552,
+            "usage": {
+              "input": 93,
+              "output": 12,
+              "total": 105
+            }
+          }
+        ],
+        "llmCalls": 1,
+        "toolCalls": 0,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 93,
+            "missingCalls": 0,
+            "total": 93
+          },
+          "output": {
+            "knownSubtotal": 12,
+            "missingCalls": 0,
+            "total": 12
+          },
+          "total": {
+            "knownSubtotal": 105,
+            "missingCalls": 0,
+            "total": 105
+          }
+        }
+      },
+      {
+        "fixture": "large-observation",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1711.5134580000013,
+        "fixtureId": "large-observation/development",
+        "connector": "stage00-live-anthropic-large-observation",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "large-observation/development/run-1",
+            "parentId": "large-observation/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "large-observation/development/run-1/iteration-0/llm-1",
+            "runId": "large-observation/development/run-1",
+            "parentId": "large-observation/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 843,
+            "usage": {
+              "input": 674,
+              "output": 57,
+              "total": 731
+            }
+          },
+          {
+            "id": "large-observation/development/run-1/iteration-0/tool-2",
+            "runId": "large-observation/development/run-1",
+            "parentId": "large-observation/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_document",
+            "outcome": "library_completed",
+            "durationMs": 0.2851249999985157,
+            "usage": null
+          },
+          {
+            "id": "large-observation/development/run-1/iteration-1/llm-3",
+            "runId": "large-observation/development/run-1",
+            "parentId": "large-observation/development/run-1/iteration-1",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 864,
+            "usage": {
+              "input": 9167,
+              "output": 34,
+              "total": 9201
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 1,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 9841,
+            "missingCalls": 0,
+            "total": 9841
+          },
+          "output": {
+            "knownSubtotal": 91,
+            "missingCalls": 0,
+            "total": 91
+          },
+          "total": {
+            "knownSubtotal": 9932,
+            "missingCalls": 0,
+            "total": 9932
+          }
+        }
+      },
+      {
+        "fixture": "large-observation",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1720.5509579999962,
+        "fixtureId": "large-observation/held-out",
+        "connector": "stage00-live-anthropic-large-observation",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "large-observation/held-out/run-1/iteration-0/llm-1",
+            "runId": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 837,
+            "usage": {
+              "input": 675,
+              "output": 58,
+              "total": 733
+            }
+          },
+          {
+            "id": "large-observation/held-out/run-1/iteration-0/tool-2",
+            "runId": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_document",
+            "outcome": "library_completed",
+            "durationMs": 0.2477080000026035,
+            "usage": null
+          },
+          {
+            "id": "large-observation/held-out/run-1/iteration-1/llm-3",
+            "runId": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out/run-1/iteration-1",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 881,
+            "usage": {
+              "input": 9171,
+              "output": 36,
+              "total": 9207
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 1,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 9846,
+            "missingCalls": 0,
+            "total": 9846
+          },
+          "output": {
+            "knownSubtotal": 94,
+            "missingCalls": 0,
+            "total": 94
+          },
+          "total": {
+            "knownSubtotal": 9940,
+            "missingCalls": 0,
+            "total": 9940
+          }
+        }
+      },
+      {
+        "fixture": "research",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1905.715959000001,
+        "fixtureId": "research/development",
+        "connector": "stage00-live-anthropic-research",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "research/development/run-1",
+            "parentId": "research/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "research/development/run-1/iteration-0/llm-1",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 1182,
+            "usage": {
+              "input": 795,
+              "output": 106,
+              "total": 901
+            }
+          },
+          {
+            "id": "research/development/run-1/iteration-0/tool-2",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_a",
+            "outcome": "library_completed",
+            "durationMs": 0.31362499999522697,
+            "usage": null
+          },
+          {
+            "id": "research/development/run-1/iteration-0/tool-3",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_b",
+            "outcome": "library_completed",
+            "durationMs": 0.13887500000419095,
+            "usage": null
+          },
+          {
+            "id": "research/development/run-1/iteration-1/llm-4",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-1",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 720,
+            "usage": {
+              "input": 1004,
+              "output": 31,
+              "total": 1035
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 1799,
+            "missingCalls": 0,
+            "total": 1799
+          },
+          "output": {
+            "knownSubtotal": 137,
+            "missingCalls": 0,
+            "total": 137
+          },
+          "total": {
+            "knownSubtotal": 1936,
+            "missingCalls": 0,
+            "total": 1936
+          }
+        }
+      },
+      {
+        "fixture": "research",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1954.5883329999997,
+        "fixtureId": "research/held-out",
+        "connector": "stage00-live-anthropic-research",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "research/held-out/run-1",
+            "parentId": "research/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "research/held-out/run-1/iteration-0/llm-1",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 1224,
+            "usage": {
+              "input": 797,
+              "output": 108,
+              "total": 905
+            }
+          },
+          {
+            "id": "research/held-out/run-1/iteration-0/tool-2",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_a",
+            "outcome": "library_completed",
+            "durationMs": 0.15537500000209548,
+            "usage": null
+          },
+          {
+            "id": "research/held-out/run-1/iteration-0/tool-3",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_b",
+            "outcome": "library_completed",
+            "durationMs": 0.058874999995168764,
+            "usage": null
+          },
+          {
+            "id": "research/held-out/run-1/iteration-1/llm-4",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-1",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 727,
+            "usage": {
+              "input": 1010,
+              "output": 28,
+              "total": 1038
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 1807,
+            "missingCalls": 0,
+            "total": 1807
+          },
+          "output": {
+            "knownSubtotal": 136,
+            "missingCalls": 0,
+            "total": 136
+          },
+          "total": {
+            "knownSubtotal": 1943,
+            "missingCalls": 0,
+            "total": 1943
+          }
+        }
+      },
+      {
+        "fixture": "external-workflow",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 2517.7415000000037,
+        "fixtureId": "external-workflow/development",
+        "connector": "stage00-live-anthropic-external-workflow",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "external-workflow/development/run-1",
+            "parentId": "external-workflow/development",
+            "outcome": "cancelled"
+          },
+          {
+            "id": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "external-workflow/development/run-1/iteration-0/llm-1",
+            "runId": "external-workflow/development/run-1",
+            "parentId": "external-workflow/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 851,
+            "usage": {
+              "input": 738,
+              "output": 57,
+              "total": 795
+            }
+          },
+          {
+            "id": "external-workflow/development/run-1/iteration-0/tool-2",
+            "runId": "external-workflow/development/run-1",
+            "parentId": "external-workflow/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "submit_job",
+            "outcome": "library_completed",
+            "durationMs": 0.22362499999871943,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/development/run-2/iteration-0/llm-3",
+            "runId": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development/run-2/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 858,
+            "usage": {
+              "input": 857,
+              "output": 57,
+              "total": 914
+            }
+          },
+          {
+            "id": "external-workflow/development/run-2/iteration-0/tool-4",
+            "runId": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development/run-2/iteration-0",
+            "kind": "tool",
+            "name": "check_job",
+            "outcome": "library_completed",
+            "durationMs": 0.18579200000385754,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/development/run-2/iteration-1/llm-5",
+            "runId": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development/run-2/iteration-1",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 803,
+            "usage": {
+              "input": 945,
+              "output": 41,
+              "total": 986
+            }
+          }
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 2540,
+            "missingCalls": 0,
+            "total": 2540
+          },
+          "output": {
+            "knownSubtotal": 155,
+            "missingCalls": 0,
+            "total": 155
+          },
+          "total": {
+            "knownSubtotal": 2695,
+            "missingCalls": 0,
+            "total": 2695
+          }
+        }
+      },
+      {
+        "fixture": "external-workflow",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 2531.9767920000013,
+        "fixtureId": "external-workflow/held-out",
+        "connector": "stage00-live-anthropic-external-workflow",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "external-workflow/held-out/run-1",
+            "parentId": "external-workflow/held-out",
+            "outcome": "cancelled"
+          },
+          {
+            "id": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "external-workflow/held-out/run-1/iteration-0/llm-1",
+            "runId": "external-workflow/held-out/run-1",
+            "parentId": "external-workflow/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 852,
+            "usage": {
+              "input": 739,
+              "output": 58,
+              "total": 797
+            }
+          },
+          {
+            "id": "external-workflow/held-out/run-1/iteration-0/tool-2",
+            "runId": "external-workflow/held-out/run-1",
+            "parentId": "external-workflow/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "submit_job",
+            "outcome": "library_completed",
+            "durationMs": 0.29412500000034925,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/held-out/run-2/iteration-0/llm-3",
+            "runId": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out/run-2/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 872,
+            "usage": {
+              "input": 861,
+              "output": 58,
+              "total": 919
+            }
+          },
+          {
+            "id": "external-workflow/held-out/run-2/iteration-0/tool-4",
+            "runId": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out/run-2/iteration-0",
+            "kind": "tool",
+            "name": "check_job",
+            "outcome": "library_completed",
+            "durationMs": 0.3025419999976293,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/held-out/run-2/iteration-1/llm-5",
+            "runId": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out/run-2/iteration-1",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 799,
+            "usage": {
+              "input": 952,
+              "output": 43,
+              "total": 995
+            }
+          }
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 2552,
+            "missingCalls": 0,
+            "total": 2552
+          },
+          "output": {
+            "knownSubtotal": 159,
+            "missingCalls": 0,
+            "total": 159
+          },
+          "total": {
+            "knownSubtotal": 2711,
+            "missingCalls": 0,
+            "total": 2711
+          }
+        }
+      },
+      {
+        "fixture": "chat",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1165.1994169999962,
+        "fixtureId": "chat/development",
+        "connector": "stage00-live-google-chat",
+        "model": "gemini-2.5-flash",
+        "runs": [
+          {
+            "id": "chat/development/run-1",
+            "parentId": "chat/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "chat/development/run-1/iteration-0/llm-1",
+            "runId": "chat/development/run-1",
+            "parentId": "chat/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 1160,
+            "usage": {
+              "input": 84,
+              "output": 5,
+              "total": 89
+            }
+          }
+        ],
+        "llmCalls": 1,
+        "toolCalls": 0,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 84,
+            "missingCalls": 0,
+            "total": 84
+          },
+          "output": {
+            "knownSubtotal": 5,
+            "missingCalls": 0,
+            "total": 5
+          },
+          "total": {
+            "knownSubtotal": 89,
+            "missingCalls": 0,
+            "total": 89
+          }
+        }
+      },
+      {
+        "fixture": "chat",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 505.4145409999983,
+        "fixtureId": "chat/held-out",
+        "connector": "stage00-live-google-chat",
+        "model": "gemini-2.5-flash",
+        "runs": [
+          {
+            "id": "chat/held-out/run-1",
+            "parentId": "chat/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "chat/held-out/run-1/iteration-0/llm-1",
+            "runId": "chat/held-out/run-1",
+            "parentId": "chat/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 503,
+            "usage": {
+              "input": 85,
+              "output": 6,
+              "total": 91
+            }
+          }
+        ],
+        "llmCalls": 1,
+        "toolCalls": 0,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 85,
+            "missingCalls": 0,
+            "total": 85
+          },
+          "output": {
+            "knownSubtotal": 6,
+            "missingCalls": 0,
+            "total": 6
+          },
+          "total": {
+            "knownSubtotal": 91,
+            "missingCalls": 0,
+            "total": 91
+          }
+        }
+      },
+      {
+        "fixture": "large-observation",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1615.737165999999,
+        "fixtureId": "large-observation/development",
+        "connector": "stage00-live-google-large-observation",
+        "model": "gemini-2.5-flash",
+        "runs": [
+          {
+            "id": "large-observation/development/run-1",
+            "parentId": "large-observation/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "large-observation/development/run-1/iteration-0/llm-1",
+            "runId": "large-observation/development/run-1",
+            "parentId": "large-observation/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 594,
+            "usage": {
+              "input": 147,
+              "output": 18,
+              "total": 165
+            }
+          },
+          {
+            "id": "large-observation/development/run-1/iteration-0/tool-2",
+            "runId": "large-observation/development/run-1",
+            "parentId": "large-observation/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_document",
+            "outcome": "library_completed",
+            "durationMs": 0.3704169999982696,
+            "usage": null
+          },
+          {
+            "id": "large-observation/development/run-1/iteration-1/llm-3",
+            "runId": "large-observation/development/run-1",
+            "parentId": "large-observation/development/run-1/iteration-1",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 1016,
+            "usage": {
+              "input": 6198,
+              "output": 28,
+              "total": 6226
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 1,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 6345,
+            "missingCalls": 0,
+            "total": 6345
+          },
+          "output": {
+            "knownSubtotal": 46,
+            "missingCalls": 0,
+            "total": 46
+          },
+          "total": {
+            "knownSubtotal": 6391,
+            "missingCalls": 0,
+            "total": 6391
+          }
+        }
+      },
+      {
+        "fixture": "large-observation",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1375.0802910000057,
+        "fixtureId": "large-observation/held-out",
+        "connector": "stage00-live-google-large-observation",
+        "model": "gemini-2.5-flash",
+        "runs": [
+          {
+            "id": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "large-observation/held-out/run-1/iteration-0/llm-1",
+            "runId": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 568,
+            "usage": {
+              "input": 148,
+              "output": 19,
+              "total": 167
+            }
+          },
+          {
+            "id": "large-observation/held-out/run-1/iteration-0/tool-2",
+            "runId": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_document",
+            "outcome": "library_completed",
+            "durationMs": 0.1562080000003334,
+            "usage": null
+          },
+          {
+            "id": "large-observation/held-out/run-1/iteration-1/llm-3",
+            "runId": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out/run-1/iteration-1",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 803,
+            "usage": {
+              "input": 6202,
+              "output": 30,
+              "total": 6232
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 1,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 6350,
+            "missingCalls": 0,
+            "total": 6350
+          },
+          "output": {
+            "knownSubtotal": 49,
+            "missingCalls": 0,
+            "total": 49
+          },
+          "total": {
+            "knownSubtotal": 6399,
+            "missingCalls": 0,
+            "total": 6399
+          }
+        }
+      },
+      {
+        "fixture": "research",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1912.4341249999998,
+        "fixtureId": "research/development",
+        "connector": "stage00-live-google-research",
+        "model": "gemini-2.5-flash",
+        "runs": [
+          {
+            "id": "research/development/run-1",
+            "parentId": "research/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "research/development/run-1/iteration-0/llm-1",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 537,
+            "usage": {
+              "input": 240,
+              "output": 22,
+              "total": 262
+            }
+          },
+          {
+            "id": "research/development/run-1/iteration-0/tool-2",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_a",
+            "outcome": "library_completed",
+            "durationMs": 0.1575410000004922,
+            "usage": null
+          },
+          {
+            "id": "research/development/run-1/iteration-1/llm-3",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-1",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 718,
+            "usage": {
+              "input": 296,
+              "output": 22,
+              "total": 318
+            }
+          },
+          {
+            "id": "research/development/run-1/iteration-1/tool-4",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-1",
+            "kind": "tool",
+            "name": "read_source_b",
+            "outcome": "library_completed",
+            "durationMs": 0.15604200000234414,
+            "usage": null
+          },
+          {
+            "id": "research/development/run-1/iteration-2/llm-5",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-2",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 654,
+            "usage": {
+              "input": 352,
+              "output": 19,
+              "total": 371
+            }
+          }
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 888,
+            "missingCalls": 0,
+            "total": 888
+          },
+          "output": {
+            "knownSubtotal": 63,
+            "missingCalls": 0,
+            "total": 63
+          },
+          "total": {
+            "knownSubtotal": 951,
+            "missingCalls": 0,
+            "total": 951
+          }
+        }
+      },
+      {
+        "fixture": "research",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1294.5409999999974,
+        "fixtureId": "research/held-out",
+        "connector": "stage00-live-google-research",
+        "model": "gemini-2.5-flash",
+        "runs": [
+          {
+            "id": "research/held-out/run-1",
+            "parentId": "research/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "research/held-out/run-1/iteration-0/llm-1",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 625,
+            "usage": {
+              "input": 242,
+              "output": 46,
+              "total": 288
+            }
+          },
+          {
+            "id": "research/held-out/run-1/iteration-0/tool-2",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_a",
+            "outcome": "library_completed",
+            "durationMs": 0.14591700000164565,
+            "usage": null
+          },
+          {
+            "id": "research/held-out/run-1/iteration-0/tool-3",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_b",
+            "outcome": "library_completed",
+            "durationMs": 0.04916699999739649,
+            "usage": null
+          },
+          {
+            "id": "research/held-out/run-1/iteration-1/llm-4",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-1",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 666,
+            "usage": {
+              "input": 356,
+              "output": 21,
+              "total": 377
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 598,
+            "missingCalls": 0,
+            "total": 598
+          },
+          "output": {
+            "knownSubtotal": 67,
+            "missingCalls": 0,
+            "total": 67
+          },
+          "total": {
+            "knownSubtotal": 665,
+            "missingCalls": 0,
+            "total": 665
+          }
+        }
+      },
+      {
+        "fixture": "external-workflow",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1986.0339590000003,
+        "fixtureId": "external-workflow/development",
+        "connector": "stage00-live-google-external-workflow",
+        "model": "gemini-2.5-flash",
+        "runs": [
+          {
+            "id": "external-workflow/development/run-1",
+            "parentId": "external-workflow/development",
+            "outcome": "cancelled"
+          },
+          {
+            "id": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "external-workflow/development/run-1/iteration-0/llm-1",
+            "runId": "external-workflow/development/run-1",
+            "parentId": "external-workflow/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 737,
+            "usage": {
+              "input": 189,
+              "output": 18,
+              "total": 207
+            }
+          },
+          {
+            "id": "external-workflow/development/run-1/iteration-0/tool-2",
+            "runId": "external-workflow/development/run-1",
+            "parentId": "external-workflow/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "submit_job",
+            "outcome": "library_completed",
+            "durationMs": 0.1433750000069267,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/development/run-2/iteration-0/llm-3",
+            "runId": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development/run-2/iteration-0",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 568,
+            "usage": {
+              "input": 267,
+              "output": 18,
+              "total": 285
+            }
+          },
+          {
+            "id": "external-workflow/development/run-2/iteration-0/tool-4",
+            "runId": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development/run-2/iteration-0",
+            "kind": "tool",
+            "name": "check_job",
+            "outcome": "library_completed",
+            "durationMs": 0.14325000000098953,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/development/run-2/iteration-1/llm-5",
+            "runId": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development/run-2/iteration-1",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 677,
+            "usage": {
+              "input": 318,
+              "output": 23,
+              "total": 341
+            }
+          }
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 774,
+            "missingCalls": 0,
+            "total": 774
+          },
+          "output": {
+            "knownSubtotal": 59,
+            "missingCalls": 0,
+            "total": 59
+          },
+          "total": {
+            "knownSubtotal": 833,
+            "missingCalls": 0,
+            "total": 833
+          }
+        }
+      },
+      {
+        "fixture": "external-workflow",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1822.8529999999955,
+        "fixtureId": "external-workflow/held-out",
+        "connector": "stage00-live-google-external-workflow",
+        "model": "gemini-2.5-flash",
+        "runs": [
+          {
+            "id": "external-workflow/held-out/run-1",
+            "parentId": "external-workflow/held-out",
+            "outcome": "cancelled"
+          },
+          {
+            "id": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "external-workflow/held-out/run-1/iteration-0/llm-1",
+            "runId": "external-workflow/held-out/run-1",
+            "parentId": "external-workflow/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 581,
+            "usage": {
+              "input": 190,
+              "output": 19,
+              "total": 209
+            }
+          },
+          {
+            "id": "external-workflow/held-out/run-1/iteration-0/tool-2",
+            "runId": "external-workflow/held-out/run-1",
+            "parentId": "external-workflow/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "submit_job",
+            "outcome": "library_completed",
+            "durationMs": 0.16191699999762932,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/held-out/run-2/iteration-0/llm-3",
+            "runId": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out/run-2/iteration-0",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 493,
+            "usage": {
+              "input": 271,
+              "output": 19,
+              "total": 290
+            }
+          },
+          {
+            "id": "external-workflow/held-out/run-2/iteration-0/tool-4",
+            "runId": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out/run-2/iteration-0",
+            "kind": "tool",
+            "name": "check_job",
+            "outcome": "library_completed",
+            "durationMs": 0.2381249999962165,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/held-out/run-2/iteration-1/llm-5",
+            "runId": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out/run-2/iteration-1",
+            "kind": "llm",
+            "name": "gemini-2.5-flash",
+            "outcome": "response",
+            "durationMs": 741,
+            "usage": {
+              "input": 325,
+              "output": 39,
+              "total": 364
+            }
+          }
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 786,
+            "missingCalls": 0,
+            "total": 786
+          },
+          "output": {
+            "knownSubtotal": 77,
+            "missingCalls": 0,
+            "total": 77
+          },
+          "total": {
+            "knownSubtotal": 863,
+            "missingCalls": 0,
+            "total": 863
+          }
+        }
+      }
+    ]
+  },
+  "toolingAttempts": [
+    {
+      "phase": "initial-build",
+      "outcome": "sandbox blocked tsx IPC socket",
+      "resolution": "normal build passed with IPC allowed"
+    },
+    {
+      "phase": "initial-full-unit",
+      "passedTests": 6889,
+      "failedTests": 1,
+      "outcome": "sandbox blocked local WebSocket listener",
+      "resolution": "full suite passed with loopback allowed; final rerun includes all added regressions"
+    }
+  ],
+  "limitations": [
+    "One live sample per provider/scenario configuration; no comparative quality/cost claim",
+    "Stage 00 observes managed events, not every hidden provider retry or helper invocation",
+    "Character-based local estimates do not exactly measure provider tokenization or hidden wire/hosted-tool expansion",
+    "Existing working-memory capacity eviction still applies; partial writes can remain and retries can retain duplicates",
+    "Spill allocation is not a transaction against concurrent external writes",
+    "Only the authorized Stage 01 corrections were implemented; Stage 02 remains separately authorized"
+  ],
+  "packaging": {
+    "command": "npm pack --dry-run --ignore-scripts --json --cache /tmp/oneringai-second-fixes-npm-cache",
+    "fileCount": 101,
+    "publicExamplesIncluded": 3,
+    "secondReviewAndRecordIncluded": true,
+    "environmentFilesIncluded": 0
+  },
+  "consistency": {
+    "checkedFiles": 59,
+    "secretValueMatches": 0,
+    "localMarkdownLinks": 264,
+    "brokenLinks": 0,
+    "unbalancedFences": 0
+  }
+}

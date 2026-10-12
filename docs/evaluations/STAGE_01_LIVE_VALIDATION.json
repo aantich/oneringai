@@ -1,0 +1,1089 @@
+{
+  "protocol": "stage-01-context-v1",
+  "recordedAt": "2026-10-07T18:18:21.262Z",
+  "scope": "Live managed run/stream after algorithmic spill; local tools; no comparative quality/cost claim",
+  "repository": {
+    "branch": "version2",
+    "baseRevision": "43b34cd",
+    "stageRevision": "uncommitted Stage 01 working tree",
+    "packageVersion": "1.2.0",
+    "nodeVersion": "v24.20.0",
+    "providerSDKs": {
+      "openai": "7.30.0",
+      "@anthropic-ai/sdk": "0.131.0",
+      "@google/genai": "2.27.0"
+    }
+  },
+  "sampleCountPerProviderMode": 1,
+  "seed": null,
+  "temperature": null,
+  "fixtureSettings": {
+    "maxContextTokens": 3200,
+    "responseReserve": 512,
+    "maxIterations": 5,
+    "emptyResponseRetry": false,
+    "workingMemory": true,
+    "inContextMemory": false,
+    "thinking": {
+      "enabled": false
+    },
+    "runHookMaxOutputTokens": 512,
+    "streamOutputLimit": "Provider default; legacy streaming hook return semantics preserved",
+    "providerSettings": {
+      "google/gemini-2.5-flash": {
+        "generationConfig": {
+          "thinkingConfig": {
+            "thinkingBudget": 0
+          }
+        }
+      }
+    }
+  },
+  "assertions": [
+    "Algorithmic compaction occurs before the first managed model call",
+    "The dispatched first request includes the new working-memory source key",
+    "At least one real store_get call recovers the source verification marker",
+    "Both first and final estimated budgets fit the configured window",
+    "Run and stream return the expected marker for every selected provider"
+  ],
+  "summary": {
+    "passedLiveScenarios": 30,
+    "stage01Cases": 6,
+    "baselineRegressionWorkloadSplitScenarios": 24,
+    "observedManagedLLMCalls": 61,
+    "stage01StoreReads": 6,
+    "baselineToolCalls": 30,
+    "allPassed": true
+  },
+  "reports": [
+    {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "mode": "run",
+      "passed": true,
+      "calls": 2,
+      "memoryReads": 1,
+      "compacted": 2,
+      "firstRevision": 1,
+      "firstBudgetAvailable": 1231,
+      "lastRevision": 2,
+      "finalEstimatedTokens": 2664
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "mode": "stream",
+      "passed": true,
+      "calls": 2,
+      "memoryReads": 1,
+      "compacted": 2,
+      "firstRevision": 1,
+      "firstBudgetAvailable": 1231,
+      "lastRevision": 2,
+      "finalEstimatedTokens": 2664
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-haiku-4-5-20251001",
+      "mode": "run",
+      "passed": true,
+      "calls": 2,
+      "memoryReads": 1,
+      "compacted": 2,
+      "firstRevision": 1,
+      "firstBudgetAvailable": 1231,
+      "lastRevision": 2,
+      "finalEstimatedTokens": 2664
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-haiku-4-5-20251001",
+      "mode": "stream",
+      "passed": true,
+      "calls": 2,
+      "memoryReads": 1,
+      "compacted": 2,
+      "firstRevision": 1,
+      "firstBudgetAvailable": 1231,
+      "lastRevision": 2,
+      "finalEstimatedTokens": 2664
+    },
+    {
+      "provider": "google",
+      "model": "gemini-2.5-flash",
+      "mode": "run",
+      "passed": true,
+      "calls": 2,
+      "memoryReads": 1,
+      "compacted": 2,
+      "firstRevision": 1,
+      "firstBudgetAvailable": 1231,
+      "lastRevision": 2,
+      "finalEstimatedTokens": 2664
+    },
+    {
+      "provider": "google",
+      "model": "gemini-2.5-flash",
+      "mode": "stream",
+      "passed": true,
+      "calls": 2,
+      "memoryReads": 1,
+      "compacted": 2,
+      "firstRevision": 1,
+      "firstBudgetAvailable": 1231,
+      "lastRevision": 2,
+      "finalEstimatedTokens": 2664
+    }
+  ],
+  "baselineRegression": {
+    "protocol": "stage-00-v1",
+    "recordedAt": "2026-10-07T17:53:35.251Z",
+    "selectedProviders": [
+      "openai",
+      "anthropic",
+      "google"
+    ],
+    "sampleCountPerModelWorkloadSplit": 1,
+    "seed": null,
+    "temperature": null,
+    "thinking": {
+      "enabled": false
+    },
+    "fixtureSettings": {
+      "maxIterations": 6,
+      "maxToolCalls": 6,
+      "maxOutputTokens": 512,
+      "maxExecutionTimeMs": 60000,
+      "emptyResponseRetry": false,
+      "workingMemory": false,
+      "inContextMemory": false
+    },
+    "providerSettings": {
+      "google/gemini-2.5-flash": {
+        "generationConfig": {
+          "thinkingConfig": {
+            "thinkingBudget": 0
+          }
+        }
+      }
+    },
+    "vitestCases": 12,
+    "workloadSplitScenarios": 24,
+    "observedManagedLLMCalls": 49,
+    "toolCalls": 30,
+    "repeatedToolCalls": 0,
+    "correlationErrors": 0,
+    "reports": [
+      {
+        "provider": "openai",
+        "fixture": "chat",
+        "split": "development",
+        "model": "gpt-4o-mini",
+        "returnedModels": [
+          "gpt-4o-mini-2024-07-18"
+        ],
+        "passed": true,
+        "durationMs": 3264.24525,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 1,
+        "toolCalls": 0,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 89,
+            "missingCalls": 0,
+            "total": 89
+          },
+          "output": {
+            "knownSubtotal": 5,
+            "missingCalls": 0,
+            "total": 5
+          },
+          "total": {
+            "knownSubtotal": 94,
+            "missingCalls": 0,
+            "total": 94
+          }
+        }
+      },
+      {
+        "provider": "openai",
+        "fixture": "chat",
+        "split": "held-out",
+        "model": "gpt-4o-mini",
+        "returnedModels": [
+          "gpt-4o-mini-2024-07-18"
+        ],
+        "passed": true,
+        "durationMs": 3017.5133750000005,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 1,
+        "toolCalls": 0,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 91,
+            "missingCalls": 0,
+            "total": 91
+          },
+          "output": {
+            "knownSubtotal": 7,
+            "missingCalls": 0,
+            "total": 7
+          },
+          "total": {
+            "knownSubtotal": 98,
+            "missingCalls": 0,
+            "total": 98
+          }
+        }
+      },
+      {
+        "provider": "openai",
+        "fixture": "large-observation",
+        "split": "development",
+        "model": "gpt-4o-mini",
+        "returnedModels": [
+          "gpt-4o-mini-2024-07-18"
+        ],
+        "passed": true,
+        "durationMs": 3856.614708000001,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 2,
+        "toolCalls": 1,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 7528,
+            "missingCalls": 0,
+            "total": 7528
+          },
+          "output": {
+            "knownSubtotal": 44,
+            "missingCalls": 0,
+            "total": 44
+          },
+          "total": {
+            "knownSubtotal": 7572,
+            "missingCalls": 0,
+            "total": 7572
+          }
+        }
+      },
+      {
+        "provider": "openai",
+        "fixture": "large-observation",
+        "split": "held-out",
+        "model": "gpt-4o-mini",
+        "returnedModels": [
+          "gpt-4o-mini-2024-07-18"
+        ],
+        "passed": true,
+        "durationMs": 3226.0859170000003,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 2,
+        "toolCalls": 1,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 7538,
+            "missingCalls": 0,
+            "total": 7538
+          },
+          "output": {
+            "knownSubtotal": 50,
+            "missingCalls": 0,
+            "total": 50
+          },
+          "total": {
+            "knownSubtotal": 7588,
+            "missingCalls": 0,
+            "total": 7588
+          }
+        }
+      },
+      {
+        "provider": "openai",
+        "fixture": "research",
+        "split": "development",
+        "model": "gpt-4o-mini",
+        "returnedModels": [
+          "gpt-4o-mini-2024-07-18"
+        ],
+        "passed": true,
+        "durationMs": 4304.396083000003,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 2,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 506,
+            "missingCalls": 0,
+            "total": 506
+          },
+          "output": {
+            "knownSubtotal": 75,
+            "missingCalls": 0,
+            "total": 75
+          },
+          "total": {
+            "knownSubtotal": 581,
+            "missingCalls": 0,
+            "total": 581
+          }
+        }
+      },
+      {
+        "provider": "openai",
+        "fixture": "research",
+        "split": "held-out",
+        "model": "gpt-4o-mini",
+        "returnedModels": [
+          "gpt-4o-mini-2024-07-18"
+        ],
+        "passed": true,
+        "durationMs": 3993.577207999999,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 2,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 514,
+            "missingCalls": 0,
+            "total": 514
+          },
+          "output": {
+            "knownSubtotal": 79,
+            "missingCalls": 0,
+            "total": 79
+          },
+          "total": {
+            "knownSubtotal": 593,
+            "missingCalls": 0,
+            "total": 593
+          }
+        }
+      },
+      {
+        "provider": "openai",
+        "fixture": "external-workflow",
+        "split": "development",
+        "model": "gpt-4o-mini",
+        "returnedModels": [
+          "gpt-4o-mini-2024-07-18"
+        ],
+        "passed": true,
+        "durationMs": 4363.733791999999,
+        "runOutcomes": [
+          "cancelled",
+          "completed"
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 673,
+            "missingCalls": 0,
+            "total": 673
+          },
+          "output": {
+            "knownSubtotal": 67,
+            "missingCalls": 0,
+            "total": 67
+          },
+          "total": {
+            "knownSubtotal": 740,
+            "missingCalls": 0,
+            "total": 740
+          }
+        }
+      },
+      {
+        "provider": "openai",
+        "fixture": "external-workflow",
+        "split": "held-out",
+        "model": "gpt-4o-mini",
+        "returnedModels": [
+          "gpt-4o-mini-2024-07-18"
+        ],
+        "passed": true,
+        "durationMs": 4547.047207999996,
+        "runOutcomes": [
+          "cancelled",
+          "completed"
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 696,
+            "missingCalls": 0,
+            "total": 696
+          },
+          "output": {
+            "knownSubtotal": 60,
+            "missingCalls": 0,
+            "total": 60
+          },
+          "total": {
+            "knownSubtotal": 756,
+            "missingCalls": 0,
+            "total": 756
+          }
+        }
+      },
+      {
+        "provider": "anthropic",
+        "fixture": "chat",
+        "split": "development",
+        "model": "claude-haiku-4-5-20251001",
+        "returnedModels": [
+          "claude-haiku-4-5-20251001"
+        ],
+        "passed": true,
+        "durationMs": 829.5662919999959,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 1,
+        "toolCalls": 0,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 92,
+            "missingCalls": 0,
+            "total": 92
+          },
+          "output": {
+            "knownSubtotal": 11,
+            "missingCalls": 0,
+            "total": 11
+          },
+          "total": {
+            "knownSubtotal": 103,
+            "missingCalls": 0,
+            "total": 103
+          }
+        }
+      },
+      {
+        "provider": "anthropic",
+        "fixture": "chat",
+        "split": "held-out",
+        "model": "claude-haiku-4-5-20251001",
+        "returnedModels": [
+          "claude-haiku-4-5-20251001"
+        ],
+        "passed": true,
+        "durationMs": 536.0694589999985,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 1,
+        "toolCalls": 0,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 93,
+            "missingCalls": 0,
+            "total": 93
+          },
+          "output": {
+            "knownSubtotal": 12,
+            "missingCalls": 0,
+            "total": 12
+          },
+          "total": {
+            "knownSubtotal": 105,
+            "missingCalls": 0,
+            "total": 105
+          }
+        }
+      },
+      {
+        "provider": "anthropic",
+        "fixture": "large-observation",
+        "split": "development",
+        "model": "claude-haiku-4-5-20251001",
+        "returnedModels": [
+          "claude-haiku-4-5-20251001"
+        ],
+        "passed": true,
+        "durationMs": 1935.710500000001,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 2,
+        "toolCalls": 1,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 9841,
+            "missingCalls": 0,
+            "total": 9841
+          },
+          "output": {
+            "knownSubtotal": 91,
+            "missingCalls": 0,
+            "total": 91
+          },
+          "total": {
+            "knownSubtotal": 9932,
+            "missingCalls": 0,
+            "total": 9932
+          }
+        }
+      },
+      {
+        "provider": "anthropic",
+        "fixture": "large-observation",
+        "split": "held-out",
+        "model": "claude-haiku-4-5-20251001",
+        "returnedModels": [
+          "claude-haiku-4-5-20251001"
+        ],
+        "passed": true,
+        "durationMs": 1761.1887500000012,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 2,
+        "toolCalls": 1,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 9846,
+            "missingCalls": 0,
+            "total": 9846
+          },
+          "output": {
+            "knownSubtotal": 94,
+            "missingCalls": 0,
+            "total": 94
+          },
+          "total": {
+            "knownSubtotal": 9940,
+            "missingCalls": 0,
+            "total": 9940
+          }
+        }
+      },
+      {
+        "provider": "anthropic",
+        "fixture": "research",
+        "split": "development",
+        "model": "claude-haiku-4-5-20251001",
+        "returnedModels": [
+          "claude-haiku-4-5-20251001"
+        ],
+        "passed": true,
+        "durationMs": 1819.2848339999982,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 2,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 1799,
+            "missingCalls": 0,
+            "total": 1799
+          },
+          "output": {
+            "knownSubtotal": 132,
+            "missingCalls": 0,
+            "total": 132
+          },
+          "total": {
+            "knownSubtotal": 1931,
+            "missingCalls": 0,
+            "total": 1931
+          }
+        }
+      },
+      {
+        "provider": "anthropic",
+        "fixture": "research",
+        "split": "held-out",
+        "model": "claude-haiku-4-5-20251001",
+        "returnedModels": [
+          "claude-haiku-4-5-20251001"
+        ],
+        "passed": true,
+        "durationMs": 1865.7033749999973,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 2,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 1807,
+            "missingCalls": 0,
+            "total": 1807
+          },
+          "output": {
+            "knownSubtotal": 141,
+            "missingCalls": 0,
+            "total": 141
+          },
+          "total": {
+            "knownSubtotal": 1948,
+            "missingCalls": 0,
+            "total": 1948
+          }
+        }
+      },
+      {
+        "provider": "anthropic",
+        "fixture": "external-workflow",
+        "split": "development",
+        "model": "claude-haiku-4-5-20251001",
+        "returnedModels": [
+          "claude-haiku-4-5-20251001"
+        ],
+        "passed": true,
+        "durationMs": 2462.341833999999,
+        "runOutcomes": [
+          "cancelled",
+          "completed"
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 2540,
+            "missingCalls": 0,
+            "total": 2540
+          },
+          "output": {
+            "knownSubtotal": 155,
+            "missingCalls": 0,
+            "total": 155
+          },
+          "total": {
+            "knownSubtotal": 2695,
+            "missingCalls": 0,
+            "total": 2695
+          }
+        }
+      },
+      {
+        "provider": "anthropic",
+        "fixture": "external-workflow",
+        "split": "held-out",
+        "model": "claude-haiku-4-5-20251001",
+        "returnedModels": [
+          "claude-haiku-4-5-20251001"
+        ],
+        "passed": true,
+        "durationMs": 2503.997374999999,
+        "runOutcomes": [
+          "cancelled",
+          "completed"
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 2552,
+            "missingCalls": 0,
+            "total": 2552
+          },
+          "output": {
+            "knownSubtotal": 159,
+            "missingCalls": 0,
+            "total": 159
+          },
+          "total": {
+            "knownSubtotal": 2711,
+            "missingCalls": 0,
+            "total": 2711
+          }
+        }
+      },
+      {
+        "provider": "google",
+        "fixture": "chat",
+        "split": "development",
+        "model": "gemini-2.5-flash",
+        "returnedModels": [
+          "gemini-2.5-flash"
+        ],
+        "passed": true,
+        "durationMs": 668.2981250000012,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 1,
+        "toolCalls": 0,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 84,
+            "missingCalls": 0,
+            "total": 84
+          },
+          "output": {
+            "knownSubtotal": 5,
+            "missingCalls": 0,
+            "total": 5
+          },
+          "total": {
+            "knownSubtotal": 89,
+            "missingCalls": 0,
+            "total": 89
+          }
+        }
+      },
+      {
+        "provider": "google",
+        "fixture": "chat",
+        "split": "held-out",
+        "model": "gemini-2.5-flash",
+        "returnedModels": [
+          "gemini-2.5-flash"
+        ],
+        "passed": true,
+        "durationMs": 533.9029999999984,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 1,
+        "toolCalls": 0,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 85,
+            "missingCalls": 0,
+            "total": 85
+          },
+          "output": {
+            "knownSubtotal": 6,
+            "missingCalls": 0,
+            "total": 6
+          },
+          "total": {
+            "knownSubtotal": 91,
+            "missingCalls": 0,
+            "total": 91
+          }
+        }
+      },
+      {
+        "provider": "google",
+        "fixture": "large-observation",
+        "split": "development",
+        "model": "gemini-2.5-flash",
+        "returnedModels": [
+          "gemini-2.5-flash"
+        ],
+        "passed": true,
+        "durationMs": 1335.216207999998,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 2,
+        "toolCalls": 1,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 6345,
+            "missingCalls": 0,
+            "total": 6345
+          },
+          "output": {
+            "knownSubtotal": 46,
+            "missingCalls": 0,
+            "total": 46
+          },
+          "total": {
+            "knownSubtotal": 6391,
+            "missingCalls": 0,
+            "total": 6391
+          }
+        }
+      },
+      {
+        "provider": "google",
+        "fixture": "large-observation",
+        "split": "held-out",
+        "model": "gemini-2.5-flash",
+        "returnedModels": [
+          "gemini-2.5-flash"
+        ],
+        "passed": true,
+        "durationMs": 1345.0469590000066,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 2,
+        "toolCalls": 1,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 6350,
+            "missingCalls": 0,
+            "total": 6350
+          },
+          "output": {
+            "knownSubtotal": 49,
+            "missingCalls": 0,
+            "total": 49
+          },
+          "total": {
+            "knownSubtotal": 6399,
+            "missingCalls": 0,
+            "total": 6399
+          }
+        }
+      },
+      {
+        "provider": "google",
+        "fixture": "research",
+        "split": "development",
+        "model": "gemini-2.5-flash",
+        "returnedModels": [
+          "gemini-2.5-flash"
+        ],
+        "passed": true,
+        "durationMs": 1825.6290420000005,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 888,
+            "missingCalls": 0,
+            "total": 888
+          },
+          "output": {
+            "knownSubtotal": 63,
+            "missingCalls": 0,
+            "total": 63
+          },
+          "total": {
+            "knownSubtotal": 951,
+            "missingCalls": 0,
+            "total": 951
+          }
+        }
+      },
+      {
+        "provider": "google",
+        "fixture": "research",
+        "split": "held-out",
+        "model": "gemini-2.5-flash",
+        "returnedModels": [
+          "gemini-2.5-flash"
+        ],
+        "passed": true,
+        "durationMs": 1265.7746669999979,
+        "runOutcomes": [
+          "completed"
+        ],
+        "llmCalls": 2,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 598,
+            "missingCalls": 0,
+            "total": 598
+          },
+          "output": {
+            "knownSubtotal": 67,
+            "missingCalls": 0,
+            "total": 67
+          },
+          "total": {
+            "knownSubtotal": 665,
+            "missingCalls": 0,
+            "total": 665
+          }
+        }
+      },
+      {
+        "provider": "google",
+        "fixture": "external-workflow",
+        "split": "development",
+        "model": "gemini-2.5-flash",
+        "returnedModels": [
+          "gemini-2.5-flash"
+        ],
+        "passed": true,
+        "durationMs": 1540.320749999999,
+        "runOutcomes": [
+          "cancelled",
+          "completed"
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 774,
+            "missingCalls": 0,
+            "total": 774
+          },
+          "output": {
+            "knownSubtotal": 64,
+            "missingCalls": 0,
+            "total": 64
+          },
+          "total": {
+            "knownSubtotal": 838,
+            "missingCalls": 0,
+            "total": 838
+          }
+        }
+      },
+      {
+        "provider": "google",
+        "fixture": "external-workflow",
+        "split": "held-out",
+        "model": "gemini-2.5-flash",
+        "returnedModels": [
+          "gemini-2.5-flash"
+        ],
+        "passed": true,
+        "durationMs": 1882.7404999999999,
+        "runOutcomes": [
+          "cancelled",
+          "completed"
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 786,
+            "missingCalls": 0,
+            "total": 786
+          },
+          "output": {
+            "knownSubtotal": 77,
+            "missingCalls": 0,
+            "total": 77
+          },
+          "total": {
+            "knownSubtotal": 863,
+            "missingCalls": 0,
+            "total": 863
+          }
+        }
+      }
+    ]
+  },
+  "validationAttempts": [
+    {
+      "recordedAt": "2026-10-07T17:39:22.586Z",
+      "outcome": "test_harness_stream_collector_corrected",
+      "passedCases": 3,
+      "failedCases": 3,
+      "observedManagedLLMCalls": 12,
+      "notes": "All three stream cases consumed a wrong event-type string and failed their final output assertion. Corrected the collector to StreamEventType.OUTPUT_TEXT_DELTA; production stream semantics were unchanged."
+    },
+    {
+      "recordedAt": "2026-10-07T18:18:21.262Z",
+      "outcome": "passed",
+      "passedCases": 6,
+      "failedCases": 0,
+      "observedManagedLLMCalls": 12,
+      "notes": "Final strict-TypeScript fixtures and final source validated. Earlier passing diagnostic reruns are superseded by this retained batch."
+    }
+  ],
+  "validation": {
+    "newUnitTests": 50,
+    "fullUnit": {
+      "files": 324,
+      "tests": 6825,
+      "passed": true
+    },
+    "finalFocusedUnit": {
+      "files": 4,
+      "tests": 50,
+      "passed": true
+    },
+    "scopedCoverage": {
+      "files": 33,
+      "tests": 826,
+      "thresholdsPassed": true,
+      "scope": [
+        "src/core/context-nextgen/AgentContextNextGen.ts",
+        "src/core/context-nextgen/tool-pairs.ts",
+        "apps/amos/src/agent/contextInspection.ts"
+      ],
+      "linesPercent": 86.92,
+      "branchesPercent": 81.61,
+      "functionsPercent": 94.48,
+      "contextManagerLinesPercent": 86.02,
+      "protocolGroupsLinesPercent": 100,
+      "amosInspectionLinesPercent": 100
+    },
+    "checks": [
+      "build (ESM/CJS/declarations and 24 package export files)",
+      "root typecheck and lint",
+      "examples:check",
+      "pinned Stage 00 public consumer compile",
+      "strict TypeScript compile of new core/live tests",
+      "AMOS typecheck and build",
+      "context and AMOS offline examples",
+      "all four Stage 00 workloads in both offline splits",
+      "focused ESLint for new tests/examples/AMOS inspection",
+      "Markdown structure, whitespace, and 75 local documentation links",
+      "script-free package inventory: 94 files, required guides/records and module formats present",
+      "50 changed/untracked files scanned for configured credential values: none found"
+    ]
+  },
+  "accountingScope": "61 observed managed model calls in the two retained passing batches. Stage 01 request-token numbers are local estimates, not provider usage. The baseline reports preserve emitted usage; provider-internal retries, additional diagnostic reruns, hidden service work, external fees, and a complete monetary cost are not included.",
+  "uncertainty": "One sample per provider/mode or model/workload/split. Functional compatibility and retrieval evidence only; no comparative quality, latency, cost, or statistical success-rate claim. Credentials and raw prompts/responses/errors are omitted.",
+  "amosOfflineTranscript": "STAGE_01_AMOS_OFFLINE.txt"
+}

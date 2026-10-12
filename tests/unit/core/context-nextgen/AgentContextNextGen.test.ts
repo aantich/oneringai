@@ -457,7 +457,7 @@ describe('AgentContextNextGen', () => {
       // Disable auto-plugins to manually register plugin
       const smallCtx = AgentContextNextGen.create({
         model: 'gpt-4',
-        maxContextTokens: 1000,
+        maxContextTokens: 2100,
         responseReserve: 200,
         strategy: 'default',
         features: { workingMemory: false, inContextMemory: false },
@@ -473,7 +473,7 @@ describe('AgentContextNextGen', () => {
 
       // Add some conversation
       for (let i = 0; i < 5; i++) {
-        smallCtx.addUserMessage(`Message ${i}`);
+        smallCtx.addUserMessage(`Message ${i} ${'old history '.repeat(50)}`);
         smallCtx.addAssistantResponse([{
           type: 'message',
           role: MessageRole.ASSISTANT,
@@ -483,9 +483,8 @@ describe('AgentContextNextGen', () => {
 
       const { compactionLog } = await smallCtx.prepare();
 
-      // Check that compaction happened and plugins were compacted
-      const memoryCompacted = compactionLog.some(log => log.includes('working_memory'));
-      // May or may not have compacted memory depending on thresholds
+      expect(compactionLog.some(log => log.includes('working_memory'))).toBe(true);
+      expect(smallCtx.lastBudget!.available).toBeGreaterThanOrEqual(0);
 
       smallCtx.destroy();
     });

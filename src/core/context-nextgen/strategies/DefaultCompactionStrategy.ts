@@ -8,6 +8,7 @@
  * This strategy preserves the original AgentContextNextGen behavior.
  */
 
+import { removableMessageGroups } from '../tool-pairs.js';
 import type {
   ICompactionStrategy,
   CompactionContext,
@@ -138,79 +139,16 @@ export class DefaultCompactionStrategy implements ICompactionStrategy {
       return { tokensFreed: 0, messagesRemoved: 0 };
     }
 
-    // Find tool pairs (tool_use_id -> indices)
-    const toolPairs = this.findToolPairs(conversation);
-
-    // Build set of indices that are part of pairs
-    const inPair = new Set<number>();
-    for (const indices of toolPairs.values()) {
-      for (const idx of indices) {
-        inPair.add(idx);
-      }
-    }
-
-    // Find safe indices to remove (from oldest first)
-    const safeToRemove: number[] = [];
-
-    // First pass: find messages not in pairs
-    for (let i = 0; i < conversation.length; i++) {
-      if (!inPair.has(i)) {
-        safeToRemove.push(i);
-      }
-    }
-
-    // Second pass: add complete pairs (both tool_use and tool_result present)
-    for (const [, indices] of toolPairs) {
-      if (indices.length >= 2) {
-        for (const idx of indices) {
-          if (!safeToRemove.includes(idx)) {
-            safeToRemove.push(idx);
-          }
-        }
-      }
-    }
-
-    // Sort by index (oldest first)
-    safeToRemove.sort((a, b) => a - b);
-
-    // Remove messages until we've freed enough tokens
     let tokensFreed = 0;
     const indicesToRemove: number[] = [];
-
-    for (const idx of safeToRemove) {
+    // Oldest-first policy stays intact, with one shared protocol grouping rule.
+    for (const group of removableMessageGroups(conversation, context.currentInput)) {
       if (tokensFreed >= targetToFree) break;
-
-      const item = conversation[idx];
-      if (!item) continue;
-
-      // Check if this message is part of a tool pair
-      const pairComponent = this.getToolPairComponent(idx, conversation, toolPairs);
-      if (pairComponent) {
-        // Remove the entire connected component. A single assistant message
-        // may contain several tool calls whose results live in separate
-        // messages; removing only the first pair would orphan the others.
-        for (const pairIdx of pairComponent) {
-          if (!indicesToRemove.includes(pairIdx)) {
-            indicesToRemove.push(pairIdx);
-            const pairItem = conversation[pairIdx];
-            if (pairItem) {
-              tokensFreed += context.estimateTokens(pairItem);
-            }
-          }
-        }
-        continue;
-      }
-
-      // Not part of a pair, remove single message
-      if (!indicesToRemove.includes(idx)) {
-        indicesToRemove.push(idx);
-        tokensFreed += context.estimateTokens(item);
-      }
+      indicesToRemove.push(...group);
+      tokensFreed += group.reduce((sum, index) => sum + context.estimateTokens(conversation[index]!), 0);
     }
-
-    // Actually remove the messages
     if (indicesToRemove.length > 0) {
-      await context.removeMessages(indicesToRemove);
+      tokensFreed = await context.removeMessages(indicesToRemove);
       log.push(`Removed ${indicesToRemove.length} messages from conversation: freed ~${tokensFreed} tokens`);
     }
 
@@ -220,90 +158,4 @@ export class DefaultCompactionStrategy implements ICompactionStrategy {
     };
   }
 
-  /**
-   * Find tool_use/tool_result pairs in conversation.
-   * Returns Map<tool_use_id, array of message indices>.
-   */
-  private findToolPairs(conversation: ReadonlyArray<unknown>): Map<string, number[]> {
-    const pairs = new Map<string, number[]>();
-
-    for (let i = 0; i < conversation.length; i++) {
-      const item = conversation[i] as Record<string, unknown>;
-      if (item?.type !== 'message') continue;
-
-      const content = item.content as Array<Record<string, unknown>> | undefined;
-      if (!content) continue;
-
-      for (const c of content) {
-        if (c.type === 'tool_use' || c.type === 'custom_tool_use') {
-          const toolUseId = c.id as string;
-          if (toolUseId) {
-            const existing = pairs.get(toolUseId) ?? [];
-            existing.push(i);
-            pairs.set(toolUseId, existing);
-          }
-        } else if (c.type === 'tool_result' || c.type === 'custom_tool_result') {
-          const toolUseId = c.tool_use_id as string;
-          if (toolUseId) {
-            const existing = pairs.get(toolUseId) ?? [];
-            existing.push(i);
-            pairs.set(toolUseId, existing);
-          }
-        }
-      }
-    }
-
-    return pairs;
-  }
-
-  /** Get every function/custom tool ID referenced by one message. */
-  private getToolUseIds(item: unknown): string[] {
-    const msg = item as Record<string, unknown>;
-    if (msg?.type !== 'message') return [];
-
-    const content = msg.content as Array<Record<string, unknown>> | undefined;
-    if (!content) return [];
-
-    const ids: string[] = [];
-    for (const c of content) {
-      if (c.type === 'tool_use' || c.type === 'custom_tool_use') {
-        if (typeof c.id === 'string') ids.push(c.id);
-      } else if (c.type === 'tool_result' || c.type === 'custom_tool_result') {
-        if (typeof c.tool_use_id === 'string') ids.push(c.tool_use_id);
-      }
-    }
-    return ids;
-  }
-
-  /**
-   * Return every message connected to a complete tool pair at `startIndex`.
-   * Returns null for non-tool messages or components containing an orphan.
-   */
-  private getToolPairComponent(
-    startIndex: number,
-    conversation: ReadonlyArray<unknown>,
-    toolPairs: Map<string, number[]>,
-  ): number[] | null {
-    const pending = [startIndex];
-    const component = new Set<number>();
-    let containsTool = false;
-
-    while (pending.length > 0) {
-      const index = pending.pop()!;
-      if (component.has(index)) continue;
-      component.add(index);
-      const item = conversation[index];
-      if (!item) continue;
-      for (const id of this.getToolUseIds(item)) {
-        containsTool = true;
-        const pairIndices = toolPairs.get(id);
-        if (!pairIndices || pairIndices.length < 2) return null;
-        for (const pairIndex of pairIndices) {
-          if (!component.has(pairIndex)) pending.push(pairIndex);
-        }
-      }
-    }
-
-    return containsTool ? [...component] : null;
-  }
 }

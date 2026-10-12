@@ -498,10 +498,10 @@ describeIfAnthropic('Agent Integration - Anthropic (Claude)', () => {
   });
 
   describe('Basic text generation', () => {
-    it('should generate a response with claude-sonnet-4-20250514', async () => {
+    it('should generate a response with claude-sonnet-4-6', async () => {
       const agent = Agent.create({
         connector: 'anthropic-test',
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
       });
 
       const response = await agent.run('Say "Hello, World!" and nothing else.');
@@ -516,7 +516,7 @@ describeIfAnthropic('Agent Integration - Anthropic (Claude)', () => {
     it('should respect system instructions', async () => {
       const agent = Agent.create({
         connector: 'anthropic-test',
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         instructions: 'You are a pirate. Always respond in pirate speak.',
       });
 
@@ -534,7 +534,7 @@ describeIfAnthropic('Agent Integration - Anthropic (Claude)', () => {
     it('should handle multi-turn conversation', async () => {
       const agent = Agent.create({
         connector: 'anthropic-test',
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         context: { features: { workingMemory: false } },
       });
 
@@ -580,7 +580,7 @@ describeIfAnthropic('Agent Integration - Anthropic (Claude)', () => {
     it('should stream text deltas', async () => {
       const agent = Agent.create({
         connector: 'anthropic-test',
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
       });
 
       const deltas: string[] = [];
@@ -608,7 +608,7 @@ describeIfAnthropic('Agent Integration - Anthropic (Claude)', () => {
     it('should call a single tool', async () => {
       const agent = Agent.create({
         connector: 'anthropic-test',
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         tools: [weatherTool],
       });
 
@@ -624,7 +624,7 @@ describeIfAnthropic('Agent Integration - Anthropic (Claude)', () => {
     it('should call calculator tool', async () => {
       const agent = Agent.create({
         connector: 'anthropic-test',
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         tools: [calculatorTool],
       });
 
@@ -638,7 +638,7 @@ describeIfAnthropic('Agent Integration - Anthropic (Claude)', () => {
     it('should stream tool calls', async () => {
       const agent = Agent.create({
         connector: 'anthropic-test',
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         tools: [weatherTool],
       });
 

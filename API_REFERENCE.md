@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-10-07
+**Generated:** 2026-10-08
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -29,7 +29,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Utilities](#utilities) (10 items)
 - [Interfaces](#interfaces) (78 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (766 items)
+- [Other](#other) (768 items)
 
 ## Core
 
@@ -37,7 +37,7 @@ Core classes for authentication, agents, and providers
 
 ### Agent `class`
 
-📍 [`src/core/Agent.ts:387`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:388`](src/core/Agent.ts)
 
 Agent class - represents an AI assistant with tool calling capabilities
 
@@ -1745,7 +1745,7 @@ isDisposed(): boolean
 
 ### AgentConfig `interface`
 
-📍 [`src/core/Agent.ts:73`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:74`](src/core/Agent.ts)
 
 Agent configuration - extends BaseAgentConfig with Agent-specific options
 
@@ -1807,7 +1807,7 @@ Example: `toolExecutionTimeout: 300000` (5 minutes hard cap per tool call) |
 
 ### AgentContextRolloverOptions `interface`
 
-📍 [`src/core/Agent.ts:203`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:204`](src/core/Agent.ts)
 
 Options for {@link Agent.rolloverContext}.
 
@@ -1962,7 +1962,7 @@ Fetch options with additional connector-specific settings
 
 ### ExternalExecutionOptions `interface`
 
-📍 [`src/core/Agent.ts:227`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:228`](src/core/Agent.ts)
 
 Options for a non-LLM execution owned by an external transport.
 
@@ -1979,7 +1979,7 @@ Options for a non-LLM execution owned by an external transport.
 
 ### ExternalExecutionResult `interface`
 
-📍 [`src/core/Agent.ts:240`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:241`](src/core/Agent.ts)
 
 Terminal data supplied when an external execution is completed.
 
@@ -1999,7 +1999,7 @@ Terminal data supplied when an external execution is completed.
 
 ### ExternalToolCall `interface`
 
-📍 [`src/core/Agent.ts:233`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:234`](src/core/Agent.ts)
 
 A function call received from an external model transport.
 
@@ -2018,7 +2018,7 @@ A function call received from an external model transport.
 
 ### RunOptions `interface`
 
-📍 [`src/core/Agent.ts:173`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:174`](src/core/Agent.ts)
 
 Per-call options for run() and stream().
 These override the agent-level config for this single invocation.
@@ -2058,7 +2058,7 @@ type AgentEventListener = (agentId: string, agentName: string, event: string, da
 
 ### AgentRuntimeConfigSnapshot `type`
 
-📍 [`src/core/Agent.ts:153`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:154`](src/core/Agent.ts)
 
 Agent runtime options exposed by getRuntimeConfigSnapshot().
 
@@ -2084,7 +2084,7 @@ type AgentRuntimeConfigSnapshot = Pick&lt;AgentConfig,
 
 ### AgentSessionConfig `type`
 
-📍 [`src/core/Agent.ts:68`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:69`](src/core/Agent.ts)
 
 Session configuration for Agent (same as BaseSessionConfig)
 
@@ -41604,7 +41604,7 @@ destroy(): void
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:137`](src/core/context-nextgen/AgentContextNextGen.ts)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:142`](src/core/context-nextgen/AgentContextNextGen.ts)
 
 Next-generation context manager for AI agents.
 
@@ -41953,10 +41953,34 @@ This method:
 IMPORTANT: Call this ONCE right before each LLM call!
 
 ```typescript
-async prepare(): Promise&lt;PreparedContext&gt;
+async prepare(options: ContextPrepareOptions = {}): Promise&lt;PreparedContext&gt;
 ```
 
+**Parameters:**
+- `options`: `ContextPrepareOptions` *(optional)* (default: `{}`)
+
 **Returns:** `Promise&lt;PreparedContext&gt;`
+
+#### `validateRequestBudget()`
+
+Recount the final managed dispatch after host hooks and synchronous request
+listeners. No hooks or compaction run here. Auxiliary formatting/repair calls
+use recordPreparation:false to check fit without replacing context diagnostics.
+Model/schema/native-tool fields are optional for existing callers.
+
+```typescript
+validateRequestBudget(
+    request: Pick&lt;TextGenerateOptions, 'input' | 'tools' | 'instructions'&gt; &
+      Partial&lt;Pick&lt;TextGenerateOptions, 'model' | 'response_format' | 'native_tools'&gt;&gt;,
+    options: { modelMaxContextTokens?: number; recordPreparation?: boolean } = {},
+  ): ContextBudget
+```
+
+**Parameters:**
+- `request`: `Pick&lt;TextGenerateOptions, "instructions" | "tools" | "input"&gt; & Partial&lt;Pick&lt;TextGenerateOptions, "model" | "response_format" | "native_tools"&gt;&gt;`
+- `options`: `{ modelMaxContextTokens?: number | undefined; recordPreparation?: boolean | undefined; }` *(optional)* (default: `{}`)
+
+**Returns:** `ContextBudget`
 
 #### `consolidate()`
 
@@ -42890,7 +42914,7 @@ destroy(): void
 
 ### DefaultCompactionStrategy `class`
 
-📍 [`src/core/context-nextgen/strategies/DefaultCompactionStrategy.ts:42`](src/core/context-nextgen/strategies/DefaultCompactionStrategy.ts)
+📍 [`src/core/context-nextgen/strategies/DefaultCompactionStrategy.ts:43`](src/core/context-nextgen/strategies/DefaultCompactionStrategy.ts)
 
 Default compaction strategy.
 
@@ -48824,7 +48848,7 @@ Agent configuration (needed for resume)
 
 ### AgentContextNextGenConfig `interface`
 
-📍 [`src/core/context-nextgen/types.ts:826`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:850`](src/core/context-nextgen/types.ts)
 
 AgentContextNextGen configuration
 
@@ -49398,7 +49422,7 @@ All voice processing operates on these frames.
 
 ### AuthIdentity `interface`
 
-📍 [`src/core/context-nextgen/types.ts:24`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:25`](src/core/context-nextgen/types.ts)
 
 A single auth identity: connector + optional account alias.
 
@@ -49633,7 +49657,7 @@ Options for the default SentenceChunkingStrategy
 
 ### CompactionContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1118`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1142`](src/core/context-nextgen/types.ts)
 
 Read-only context passed to compaction strategies.
 Provides access to data needed for compaction decisions and
@@ -49738,7 +49762,7 @@ estimateTokens(item: InputItem): number;
 
 ### CompactionResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1014`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1038`](src/core/context-nextgen/types.ts)
 
 Result of compact() operation.
 
@@ -50059,7 +50083,7 @@ truncate profile generation. See feedback_no_output_limits.md. |
 
 ### ConsolidationResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1031`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1055`](src/core/context-nextgen/types.ts)
 
 Result of consolidate() operation.
 
@@ -50078,7 +50102,7 @@ Result of consolidate() operation.
 
 ### ContextBudget `interface`
 
-📍 [`src/core/context-nextgen/types.ts:633`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:634`](src/core/context-nextgen/types.ts)
 
 Token budget breakdown - clear and simple
 
@@ -50112,7 +50136,7 @@ Token budget breakdown - clear and simple
 
 ### ContextEvents `interface`
 
-📍 [`src/core/context-nextgen/types.ts:961`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:985`](src/core/context-nextgen/types.ts)
 
 Events emitted by AgentContextNextGen
 
@@ -50188,9 +50212,49 @@ are opt-in. Pass `tiers: 'minimal'` to suppress tasks + events for perf. |
 
 ---
 
+### ContextPreparation `interface`
+
+📍 [`src/core/context-nextgen/types.ts:692`](src/core/context-nextgen/types.ts)
+
+Diagnostic snapshot of the last successful prepare; token counts are estimates.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `revision` | `revision: number;` | Monotonic, process-local successful preparation number. |
+| `preparedAt` | `preparedAt: number;` | Millisecond timestamp at selection; later context mutations do not refresh it. |
+| `budget` | `budget: ContextBudget;` | Estimated budget for that selected request, including final host-hook adjustments. |
+
+</details>
+
+---
+
+### ContextPrepareOptions `interface`
+
+📍 [`src/core/context-nextgen/types.ts:679`](src/core/context-nextgen/types.ts)
+
+Optional request contributions, resolved again after compaction.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `getTools?` | `getTools?: () =&gt; FunctionToolDefinition[];` | Obtain the exact visible definitions, including dynamic descriptions and identity filtering. |
+| `instructions?` | `instructions?: string;` | Additional top-level instructions sent separately from the context input. |
+| `getRequestOptions?` | `getRequestOptions?: (tools: FunctionToolDefinition[]) =&gt;
+    Pick&lt;TextGenerateOptions, 'instructions' | 'response_format' | 'native_tools'&gt;;` | Resolve known request contributions from the selected tools; synchronous, without context mutation. |
+| `modelMaxContextTokens?` | `modelMaxContextTokens?: number;` | Usable capacity advertised by the initially selected provider/model; explicit host limits remain an upper bound. |
+
+</details>
+
+---
+
 ### ContextRolloverOptions `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1069`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1093`](src/core/context-nextgen/types.ts)
 
 Options for an explicit context rollover.
 
@@ -50210,7 +50274,7 @@ their results stay with their containing turn. Default: 8. |
 
 ### ContextRolloverResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1084`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1108`](src/core/context-nextgen/types.ts)
 
 Result of an explicit context rollover.
 
@@ -50235,7 +50299,7 @@ Result of an explicit context rollover.
 
 ### ContextRolloverSummaryInput `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1049`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1073`](src/core/context-nextgen/types.ts)
 
 Input passed to a context-rollover summarizer.
 
@@ -50458,7 +50522,7 @@ Conversation message in history
 
 ### DefaultCompactionStrategyConfig `interface`
 
-📍 [`src/core/context-nextgen/strategies/DefaultCompactionStrategy.ts:26`](src/core/context-nextgen/strategies/DefaultCompactionStrategy.ts)
+📍 [`src/core/context-nextgen/strategies/DefaultCompactionStrategy.ts:27`](src/core/context-nextgen/strategies/DefaultCompactionStrategy.ts)
 
 Configuration for DefaultCompactionStrategy
 
@@ -52948,7 +53012,7 @@ reset(): void;
 
 ### ICompactionStrategy `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1180`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1204`](src/core/context-nextgen/types.ts)
 
 Compaction strategy interface.
 
@@ -52964,8 +53028,8 @@ Use `consolidate()` for more expensive operations like summarization.
 
 #### `compact()`
 
-Emergency compaction - triggered when context usage exceeds threshold.
-Called from prepare() when utilization > threshold.
+Emergency compaction - triggered when content usage exceeds the context critical gate.
+The strategy threshold controls how far to reclaim, not when preparation triggers.
 
 Should be fast and focus on freeing tokens quickly.
 
@@ -53008,10 +53072,10 @@ consolidate(context: CompactionContext): Promise&lt;ConsolidationResult&gt;;
 | `name` | `readonly name: string;` | Strategy name (unique identifier) for identification and logging |
 | `displayName` | `readonly displayName: string;` | Human-readable display name for UI |
 | `description` | `readonly description: string;` | Description explaining the strategy behavior |
-| `threshold` | `readonly threshold: number;` | Threshold percentage (0-1) at which compact() is triggered |
+| `threshold` | `readonly threshold: number;` | Reclaim threshold (0-1); the context critical gate decides when compact() runs. |
 | `requiredPlugins?` | `readonly requiredPlugins?: readonly string[];` | Plugin names this strategy requires to function.
 Validation is performed when strategy is assigned to context.
-If any required plugin is missing, an error is thrown. |
+Missing recommendations produce a warning; built-in strategies degrade gracefully. |
 
 </details>
 
@@ -53019,7 +53083,7 @@ If any required plugin is missing, an error is thrown. |
 
 ### IContextPluginNextGen `interface`
 
-📍 [`src/core/context-nextgen/types.ts:186`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:187`](src/core/context-nextgen/types.ts)
 
 Context plugin interface for NextGen context management.
 
@@ -54700,7 +54764,7 @@ Used to track where information came from and when it was last verified
 
 ### IStoreHandler `interface`
 
-📍 [`src/core/context-nextgen/types.ts:588`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:589`](src/core/context-nextgen/types.ts)
 
 Interface for plugins that provide CRUD storage.
 
@@ -54974,7 +55038,7 @@ destroy(): Promise&lt;void&gt;;
 
 ### ITokenEstimator `interface`
 
-📍 [`src/core/context-nextgen/types.ts:62`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:63`](src/core/context-nextgen/types.ts)
 
 Token estimator interface - used for conversation and input estimation
 Plugins handle their own token estimation internally.
@@ -55349,7 +55413,7 @@ For service accounts (Google, Salesforce)
 
 ### KnownContextFeatures `interface`
 
-📍 [`src/core/context-nextgen/types.ts:732`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:756`](src/core/context-nextgen/types.ts)
 
 Feature flags for enabling/disabling plugins
 
@@ -55373,7 +55437,7 @@ Feature flags for enabling/disabling plugins
 
 ### KnownPluginConfigs `interface`
 
-📍 [`src/core/context-nextgen/types.ts:797`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:821`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 When features are enabled, plugins are created with these configs.
@@ -56470,7 +56534,7 @@ Configuration for initiating an outbound call.
 
 ### OversizedInputResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:701`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:725`](src/core/context-nextgen/types.ts)
 
 Result of handling oversized current input
 
@@ -57150,15 +57214,16 @@ source metadata aggregation rather than re-extracted into facts. |
 
 ### PreparedContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:680`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:702`](src/core/context-nextgen/types.ts)
 
-Result of prepare() - ready for LLM call
+Result of prepare() - ready for a model call.
 
 <details>
 <summary><strong>Properties</strong></summary>
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `tools?` | `tools?: FunctionToolDefinition[];` | Snapshot of tool definitions counted for this request (additive). |
 | `input` | `input: InputItem[];` | Final input items array for LLM |
 | `budget` | `budget: ContextBudget;` | Token budget breakdown |
 | `compacted` | `compacted: boolean;` | Whether compaction was performed |
@@ -59547,7 +59612,7 @@ StorageContext for multi-tenant scenarios) and return a storage instance.
 
 ### StoreActionResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:534`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:535`](src/core/context-nextgen/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -59563,7 +59628,7 @@ StorageContext for multi-tenant scenarios) and return a storage instance.
 
 ### StoreDeleteResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:524`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:525`](src/core/context-nextgen/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -59579,7 +59644,7 @@ StorageContext for multi-tenant scenarios) and return a storage instance.
 
 ### StoreEntrySchema `interface`
 
-📍 [`src/core/context-nextgen/types.ts:466`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:467`](src/core/context-nextgen/types.ts)
 
 Describes a store's schema for dynamic tool description generation.
 The `descriptionFactory` on each store tool uses this to build
@@ -59614,7 +59679,7 @@ If undefined or empty, this store has no actions. |
 
 ### StoreGetResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:508`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:509`](src/core/context-nextgen/types.ts)
 
 Result types for store operations.
 These are intentionally loose (Record-based) to accommodate
@@ -59636,7 +59701,7 @@ store-specific fields in responses.
 
 ### StoreListResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:529`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:530`](src/core/context-nextgen/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -59652,7 +59717,7 @@ store-specific fields in responses.
 
 ### StoreSetResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:517`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:518`](src/core/context-nextgen/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -61159,7 +61224,7 @@ type Content = | InputTextContent
 
 ### ContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:763`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:787`](src/core/context-nextgen/types.ts)
 
 Feature flags for enabling/disabling plugins.
 Known keys provide autocomplete; arbitrary string keys are also accepted
@@ -61173,7 +61238,7 @@ type ContextFeatures = KnownContextFeatures & { [key: string]: boolean | undefin
 
 ### ContextRolloverSummarizer `type`
 
-📍 [`src/core/context-nextgen/types.ts:1064`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1088`](src/core/context-nextgen/types.ts)
 
 Host-supplied summarizer used by an explicit context rollover.
 
@@ -61924,7 +61989,7 @@ type PipelineConfig = TextPipelineConfig | RealtimePipelineConfig
 
 ### PluginConfigs `type`
 
-📍 [`src/core/context-nextgen/types.ts:821`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:845`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 Known keys provide autocomplete; arbitrary string keys accepted
@@ -62105,7 +62170,7 @@ type RelatedItemHit = T & { matchedEntityId: EntityId }
 
 ### ResolvedContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:769`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:793`](src/core/context-nextgen/types.ts)
 
 Resolved features — all known keys guaranteed present, plus any extras.
 Used internally after merging with DEFAULT_FEATURES.
@@ -63698,7 +63763,7 @@ export function isMicrosoftFileUrl(source: string): boolean
 
 ### isStoreHandler `function`
 
-📍 [`src/core/context-nextgen/types.ts:611`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:612`](src/core/context-nextgen/types.ts)
 
 Type guard to check if a plugin implements IStoreHandler.
 
@@ -64981,7 +65046,7 @@ transports and are not represented as misleading URL aliases here.
 
 ### DEFAULT_CONFIG `const`
 
-📍 [`src/core/context-nextgen/types.ts:928`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:952`](src/core/context-nextgen/types.ts)
 
 Default configuration values
 
@@ -65052,7 +65117,7 @@ Default configuration values
 
 ### DEFAULT_FEATURES `const`
 
-📍 [`src/core/context-nextgen/types.ts:774`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:798`](src/core/context-nextgen/types.ts)
 
 Default feature configuration for built-in plugins.
 

@@ -22,7 +22,8 @@ function createMockWorkingMemory() {
       storage.set(key, { description, value });
       return { key, sizeBytes: JSON.stringify(value).length };
     }),
-    retrieve: vi.fn(async (key: string) => storage.get(key)?.value),
+    retrieve: vi.fn(async (key: string) => storage.get(key.replace(/^raw\./, ''))?.value),
+    query: vi.fn(async () => ({ entries: [...storage].map(([key, entry]) => ({ key: `raw.${key}`, description: entry.description })) })),
     delete: vi.fn(async (key: string) => storage.delete(key)),
     getStorage: () => storage,
     // Plugin interface methods
@@ -136,6 +137,7 @@ function createMockContext(
           freed += JSON.stringify(item).length / 4; // Rough token estimate
         }
       }
+      for (const idx of [...indices].sort((a, b) => b - a)) conversation.splice(idx, 1);
       return freed;
     }),
     compactPlugin: vi.fn(async () => 0),

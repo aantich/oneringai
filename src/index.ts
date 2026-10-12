@@ -132,6 +132,8 @@ export type {
   ITokenEstimator,
   ContextBudget,
   PreparedContext,
+  ContextPrepareOptions,
+  ContextPreparation,
   OversizedInputResult,
   PluginConfigs,
   PluginFactory,

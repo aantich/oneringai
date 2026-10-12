@@ -96,9 +96,19 @@ Monitor your context usage in real-time:
 ```
 /context                 # Overview with utilization bar
 /context budget          # Detailed token budget
-/context breakdown       # Per-component token usage
+/context breakdown       # Estimated tokens by component, including overhead
 /context memory          # Working memory entries
 ```
+
+Context budget and breakdown display the last prepared revision and label counts
+as estimates rather than provider usage. Before any request is prepared, they show
+an initial estimate. They do not trigger another compaction. For an offline recorded
+demonstration, build the library and run `npm run example:amos-context` at the
+repository root. Final managed budgets include fitting hook/request-event changes,
+per-call model capacity and structured schemas. Auxiliary JSON repair keeps the
+main prepared revision. The offline demonstration also shows the budget and
+breakdown after known schema contributions select a smaller provider window.
+No additional setting or command is needed. See [context preparation](../../docs/CONTEXT_PREPARATION.md).
 
 Example output:
 ```
@@ -197,7 +207,7 @@ npm run typecheck    # Type checking
 ## Documentation
 
 - **[User Guide](docs/USER_GUIDE.md)** - Comprehensive usage documentation
-- **[CLAUDE.md](CLAUDE.md)** - Developer documentation for AI assistants
+- **[AGENTS.md](../../AGENTS.md)** - Developer documentation for AI assistants
 
 ## License
 

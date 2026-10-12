@@ -33,6 +33,9 @@ import type { InputItem, Message } from '../../domain/entities/Message.js';
 import { MessageRole } from '../../domain/entities/Message.js';
 import type { Content } from '../../domain/entities/Content.js';
 import { ContentType } from '../../domain/entities/Content.js';
+import { removableToolGroups, sanitizeToolPairsWithOrigins } from './tool-pairs.js';
+import type { TextGenerateOptions } from '../../domain/interfaces/ITextProvider.js';
+import type { Tool, FunctionToolDefinition } from '../../domain/entities/Tool.js';
 import type { ToolResult } from '../../domain/entities/Tool.js';
 import type { OutputItem } from '../../domain/entities/Message.js';
 import { simpleTokenEstimator } from './BasePluginNextGen.js';
@@ -47,6 +50,8 @@ import type {
   ResolvedContextFeatures,
   ContextBudget,
   PreparedContext,
+  ContextPrepareOptions,
+  ContextPreparation,
   OversizedInputResult,
   SerializedContextState,
   ContextEvents,
@@ -71,7 +76,7 @@ import type { IContextStorage, StoredContextSession } from '../../domain/interfa
 import type { IHistoryJournal, HistoryEntry, HistoryEntryType } from '../../domain/interfaces/IHistoryJournal.js';
 import type { IConnectorRegistry } from '../../domain/interfaces/IConnectorRegistry.js';
 import { Connector } from '../Connector.js';
-import { ConnectorNotFoundError } from '../../domain/errors/AIErrors.js';
+import { ContextOverflowError, ConnectorNotFoundError } from '../../domain/errors/AIErrors.js';
 
 // Plugin imports for auto-initialization
 import {
@@ -203,6 +208,12 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
   /** Cached budget from last prepare() call */
   private _cachedBudget: ContextBudget | null = null;
+  private _lastPreparation: ContextPreparation | null = null;
+  private _preparationRevision = 0;
+  private _preparedSystemContent = '';
+  private _preparedCurrentInputCount = 0;
+  private _lastPrepareOptions: ContextPrepareOptions = {};
+  private _contextOperation: 'prepare' | 'consolidate' | null = null;
 
   /** Callback for beforeCompaction hook (set by Agent) */
   private _beforeCompactionCallback: BeforeCompactionCallback | null = null;
@@ -779,6 +790,12 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     return this._cachedBudget;
   }
 
+  /** Last successfully prepared request. Counts are estimates, never provider usage. */
+  get lastPreparation(): ContextPreparation | null {
+    return this._lastPreparation ? structuredClone(this._lastPreparation) : null;
+  }
+
+
   /**
    * Get the current compaction strategy.
    */
@@ -1256,187 +1273,261 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    *
    * IMPORTANT: Call this ONCE right before each LLM call!
    */
-  async prepare(): Promise<PreparedContext> {
+  async prepare(options: ContextPrepareOptions = {}): Promise<PreparedContext> {
     this.assertNotDestroyed();
 
-    // Reset lastThinking at start of each turn to prevent stale data
-    this._lastThinking = null;
+    this.beginContextOperation('prepare');
+    try {
+      // Reset lastThinking at start of each turn to prevent stale data
+      this._lastThinking = null;
 
-    // Fire onBeforePrepare hooks on plugins that implement it. Intended for
-    // side-effect plugins (e.g. session-learning ingestors) that need to
-    // observe the conversation before compaction potentially evicts messages.
-    // Hooks are fire-and-forget: we do NOT await them, so a slow ingestion
-    // job cannot block the turn. Throws are caught + logged so a buggy plugin
-    // cannot break context preparation.
-    const prepareSnapshot = {
-      messages: this._conversation as ReadonlyArray<unknown>,
-      currentInput: this._currentInput as ReadonlyArray<unknown>,
-    };
-    for (const plugin of this._plugins.values()) {
-      if (typeof plugin.onBeforePrepare === 'function') {
-        try {
-          // The hook signature is `void`, but TS allows `async` implementations
-          // whose rejections would otherwise be unhandled promise rejections.
-          // Capture a thenable return and attach a .catch so async throws get
-          // the same logging treatment as sync ones.
-          const ret: unknown = plugin.onBeforePrepare(prepareSnapshot);
-          if (ret && typeof (ret as { catch?: unknown }).catch === 'function') {
-            (ret as Promise<unknown>).catch((err) => {
-              // eslint-disable-next-line no-console
-              console.warn(
-                `AgentContextNextGen: plugin '${plugin.name}' onBeforePrepare rejected asynchronously:`,
-                err,
-              );
-            });
+      // Fire onBeforePrepare hooks on plugins that implement it. Intended for
+      // side-effect plugins (e.g. session-learning ingestors) that need to
+      // observe the conversation before compaction potentially evicts messages.
+      // Hooks are fire-and-forget: we do NOT await them, so a slow ingestion
+      // job cannot block the turn. Throws are caught + logged so a buggy plugin
+      // cannot break context preparation.
+      const prepareSnapshot = {
+        messages: [...this._conversation] as ReadonlyArray<unknown>,
+        currentInput: [...this._currentInput] as ReadonlyArray<unknown>,
+      };
+      for (const plugin of this._plugins.values()) {
+        if (typeof plugin.onBeforePrepare === 'function') {
+          try {
+            // The hook signature is `void`, but TS allows `async` implementations
+            // whose rejections would otherwise be unhandled promise rejections.
+            // Capture a thenable return and attach a .catch so async throws get
+            // the same logging treatment as sync ones.
+            const ret: unknown = plugin.onBeforePrepare(prepareSnapshot);
+            if (ret && typeof (ret as { catch?: unknown }).catch === 'function') {
+              (ret as Promise<unknown>).catch((err) => {
+                // eslint-disable-next-line no-console
+                console.warn(
+                  `AgentContextNextGen: plugin '${plugin.name}' onBeforePrepare rejected asynchronously:`,
+                  err,
+                );
+              });
+            }
+          } catch (err) {
+            // Swallow — a side-effect plugin must never break prepare().
+            // eslint-disable-next-line no-console
+            console.warn(
+              `AgentContextNextGen: plugin '${plugin.name}' onBeforePrepare threw:`,
+              err,
+            );
           }
-        } catch (err) {
-          // Swallow — a side-effect plugin must never break prepare().
-          // eslint-disable-next-line no-console
-          console.warn(
-            `AgentContextNextGen: plugin '${plugin.name}' onBeforePrepare threw:`,
-            err,
-          );
         }
       }
-    }
 
-    const compactionLog: string[] = [];
-
-    // Step 1: Calculate tool tokens (NEVER compacted - must fit!)
-    const toolsTokens = this.calculateToolsTokens();
-
-    // Available = maxTokens - responseReserve - toolsTokens
-    const availableForContent = this._maxContextTokens - this._config.responseReserve - toolsTokens;
-
-    if (availableForContent <= 0) {
-      throw new Error(
-        `Too many tools registered: tools use ${toolsTokens} tokens, ` +
-        `only ${this._maxContextTokens - this._config.responseReserve} available. ` +
-        `Consider reducing the number of tools or their descriptions.`
-      );
-    }
-
-    // Step 2: Build system message and calculate its tokens
-    const { systemMessage, systemTokens, breakdown } = await this.buildSystemMessage();
-
-    // Step 3: Calculate current input tokens
-    let currentInputTokens = this.calculateInputTokens(this._currentInput);
-
-    // Step 4: Check if current input is too large
-    const systemPlusInput = systemTokens + currentInputTokens;
-    if (systemPlusInput > availableForContent) {
-      // Current input too large - handle it
-      const result = await this.handleOversizedInput(
-        availableForContent - systemTokens
-      );
-      this.emit('input:oversized', { result });
-
-      if (!result.accepted) {
-        throw new Error(result.error || 'Current input is too large for context');
+      const compactionLog: string[] = [];
+      let selected = await this.materializeRequest(options);
+      const availableForContent = () => selected.budget.maxTokens - this._config.responseReserve - selected.budget.toolsTokens;
+      if (availableForContent() <= 0) {
+        if (selected.budget.toolsTokens > this.calculateToolsTokens(selected.tools) || selected.budget.maxTokens !== this._maxContextTokens) {
+          this.assertBudgetFits(selected.budget, compactionLog);
+        }
+        throw new Error(`Too many tools registered: tools use ${selected.budget.toolsTokens} tokens, ` +
+          `only ${selected.budget.maxTokens - this._config.responseReserve} available. ` +
+          'Consider reducing the number of tools or their descriptions.');
       }
 
-      // Recalculate current input tokens after truncation
-      currentInputTokens = this.calculateInputTokens(this._currentInput);
+      // Preserve the existing oversized-input policy. Keep history dependencies of
+      // pending results in the window when determining the emergency text allowance.
+      if (selected.budget.systemMessageTokens + selected.budget.currentInputTokens > availableForContent()) {
+        const protectedIndices = new Set(this._conversation.map((_, index) => index));
+        removableToolGroups(this._conversation, this._currentInput, [...protectedIndices])
+          .forEach(index => protectedIndices.delete(index));
+        const protectedTokens = [...protectedIndices].reduce((sum, index) => sum + this.estimateItemTokens(this._conversation[index]!), 0);
+        const result = await this.handleOversizedInput(availableForContent() - selected.budget.systemMessageTokens - protectedTokens);
+        this.emit('input:oversized', { result });
+        if (!result.accepted) throw new Error(result.error || 'Current input is too large for context');
+        selected = await this.materializeRequest(options);
+      }
+
+      // Keep the existing critical trigger and reclaim floor. There is exactly one
+      // strategy invocation, followed by a full rebuild and an explicit fit check.
+      let compacted = false;
+      const usedContent = selected.budget.totalUsed - selected.budget.toolsTokens;
+      const utilization = usedContent / availableForContent();
+      const criticalThreshold = this._config.criticalCompactionThreshold;
+      if (utilization > criticalThreshold) {
+        const reclaimTo = Math.min(this._compactionStrategy.threshold - 0.1, criticalThreshold - 0.1);
+        const targetToFree = usedContent - Math.floor(availableForContent() * reclaimTo);
+        const freed = await this.runCompaction(targetToFree, compactionLog, selected.budget);
+        compacted = freed > 0;
+        selected = await this.materializeRequest(options);
+      }
+      this.assertBudgetFits(selected.budget, compactionLog);
+      const budget = selected.budget;
+      this._lastPrepareOptions = { ...options };
+      this._preparedSystemContent = this.serializeToolResultContent(selected.input[0]);
+      this._preparedCurrentInputCount = selected.currentInputCount;
+      this._cachedBudget = budget;
+      this._lastPreparation = { revision: ++this._preparationRevision, preparedAt: Date.now(), budget: structuredClone(budget) };
+      this.emit('budget:updated', { budget, timestamp: this._lastPreparation.preparedAt });
+      if (budget.utilizationPercent >= 90) this.emit('budget:critical', { budget });
+      else if (budget.utilizationPercent >= 70) this.emit('budget:warning', { budget });
+      this.emit('context:prepared', { budget, compacted });
+      return { input: selected.input, budget, compacted, compactionLog, tools: selected.tools };
+    } finally {
+      this._contextOperation = null;
     }
+  }
 
-    // Step 5: Calculate conversation tokens
-    let conversationTokens = this.calculateConversationTokens();
-    let totalUsed = systemTokens + conversationTokens + currentInputTokens;
-
-    // Step 6: Check if compaction needed.
-    //
-    // Compaction is gated on the CRITICAL threshold, not the strategy's own
-    // threshold. Below critical, nothing is compacted — every message,
-    // including all tool results, stays verbatim in the input array for the
-    // whole agentic loop. This is the guarantee tool-heavy agents rely on:
-    // file reads / API responses are never spilled to working memory (or
-    // dropped) mid-run just because we crossed 75%.
-    //
-    // The strategy's `threshold` is now only the reclaim FLOOR: once we're
-    // over critical, we free enough to bring utilization back down to
-    // (strategyThreshold - 0.1), giving hysteresis so we don't re-trigger
-    // every turn. We clamp that floor below critical so a misconfigured
-    // strategy threshold (>= critical) can never produce a no-op compaction.
-    let compacted = false;
-    const strategyThreshold = this._compactionStrategy.threshold;
-    const criticalThreshold = this._config.criticalCompactionThreshold;
-    const utilization = totalUsed / availableForContent;
-    if (utilization > criticalThreshold) {
-      const reclaimTo = Math.min(strategyThreshold - 0.1, criticalThreshold - 0.1);
-      const targetToFree = totalUsed - Math.floor(availableForContent * reclaimTo);
-
-      logger.info(
-        {
-          component: 'AgentContextNextGen',
-          utilizationPercent: Math.round(utilization * 100),
-          criticalPercent: Math.round(criticalThreshold * 100),
-          reclaimToPercent: Math.round(reclaimTo * 100),
-          targetToFree,
-          strategy: this._compactionStrategy.name,
-        },
-        'critical compaction threshold crossed — running compaction (tool results kept inline until now)',
-      );
-
-      const freed = await this.runCompaction(targetToFree, compactionLog);
-      compacted = freed > 0;
-
-      // Recalculate after compaction
-      conversationTokens = this.calculateConversationTokens();
-      totalUsed = systemTokens + conversationTokens + currentInputTokens;
+  /**
+   * Recount the final managed dispatch after host hooks and synchronous request
+   * listeners. No hooks or compaction run here. Auxiliary formatting/repair calls
+   * use recordPreparation:false to check fit without replacing context diagnostics.
+   * Model/schema/native-tool fields are optional for existing callers.
+   */
+  validateRequestBudget(
+    request: Pick<TextGenerateOptions, 'input' | 'tools' | 'instructions'> &
+      Partial<Pick<TextGenerateOptions, 'model' | 'response_format' | 'native_tools'>>,
+    options: { modelMaxContextTokens?: number; recordPreparation?: boolean } = {},
+  ): ContextBudget {
+    this.assertNotDestroyed();
+    if (!this._lastPreparation) throw new Error('Prepare context before validating a managed request');
+    const { budget, items } = this.calculateRequestBudget(request, options.modelMaxContextTokens);
+    this.assertBudgetFits(budget, ['Final managed request recounted after host hooks and request listeners; no additional compaction pass']);
+    if (options.recordPreparation === false) return budget;
+    if (typeof request.input !== 'string') request.input = structuredClone(items);
+    const previous = this._lastPreparation.budget;
+    this._cachedBudget = structuredClone(budget);
+    this._lastPreparation.budget = structuredClone(budget);
+    if (JSON.stringify(previous) !== JSON.stringify(budget)) {
+      this.emit('budget:updated', { budget: structuredClone(budget), timestamp: Date.now() });
     }
+    return budget;
+  }
 
-    // Step 7: Build final budget (include tools in totalUsed for accurate reporting)
-    const totalUsedWithTools = totalUsed + toolsTokens;
-    const budget: ContextBudget = {
-      maxTokens: this._maxContextTokens,
-      responseReserve: this._config.responseReserve,
-      systemMessageTokens: systemTokens,
-      toolsTokens,
-      conversationTokens,
-      currentInputTokens,
-      totalUsed: totalUsedWithTools,
-      available: this._maxContextTokens - this._config.responseReserve - totalUsedWithTools,
-      utilizationPercent: (totalUsedWithTools / (this._maxContextTokens - this._config.responseReserve)) * 100,
-      breakdown: {
-        ...breakdown,
-        tools: toolsTokens,
-        conversation: conversationTokens,
-        currentInput: currentInputTokens,
-      },
-    };
-
-    // Cache the budget for inspection via lastBudget getter
-    this._cachedBudget = budget;
-
-    // Emit budget:updated event for reactive monitoring
-    this.emit('budget:updated', { budget, timestamp: Date.now() });
-
-    // Step 8: Emit budget warnings
-    if (budget.utilizationPercent >= 90) {
-      this.emit('budget:critical', { budget });
-    } else if (budget.utilizationPercent >= 70) {
-      this.emit('budget:warning', { budget });
+  /** Pure local accounting; never mutates input, history, revisions, or plugins. */
+  private calculateRequestBudget(
+    request: Pick<TextGenerateOptions, 'input' | 'tools' | 'instructions'> &
+      Partial<Pick<TextGenerateOptions, 'model' | 'response_format' | 'native_tools'>>,
+    modelMaxContextTokens?: number,
+  ): { budget: ContextBudget; items: InputItem[] } {
+    const raw: InputItem[] = typeof request.input === 'string'
+      ? [{ type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: request.input }] }]
+      : request.input;
+    const items = sanitizeToolPairsWithOrigins(raw).map(entry => entry.item);
+    const previous = this._lastPreparation!.budget;
+    const budget = structuredClone(previous);
+    const capacity = modelMaxContextTokens ?? (request.model ? getModelInfo(request.model)?.features?.input?.tokens : undefined);
+    budget.maxTokens = this.resolveRequestCapacity(capacity);
+    const pendingStart = typeof request.input === 'string' ? 0 : Math.max(0, items.length - this._preparedCurrentInputCount);
+    let systemTokens = request.instructions ? this._estimator.estimateTokens(request.instructions) : 0;
+    let conversationTokens = 0;
+    let currentInputTokens = 0;
+    items.forEach((item, index) => {
+      const tokens = this.estimateItemTokens(item);
+      if (item.type === 'message' && item.role === MessageRole.DEVELOPER) systemTokens += tokens;
+      else if (index >= pendingStart) currentInputTokens += tokens;
+      else conversationTokens += tokens;
+    });
+    const toolsTokens = this.calculateToolsTokens(request.tools ?? [])
+      + (request.response_format ? this._estimator.estimateDataTokens(request.response_format) : 0)
+      + (request.native_tools?.length ? this._estimator.estimateDataTokens(request.native_tools) : 0);
+    if (this.serializeToolResultContent(items[0]) !== this._preparedSystemContent ||
+        items.filter(item => item.type === 'message' && item.role === MessageRole.DEVELOPER).length !== 1) {
+      budget.breakdown.systemPrompt = systemTokens;
+      budget.breakdown.pluginInstructions = 0;
+      budget.breakdown.persistentInstructions = 0;
+      budget.breakdown.pluginContents = {};
+    } else {
+      budget.breakdown.systemPrompt += systemTokens - previous.systemMessageTokens;
     }
+    Object.assign(budget, { systemMessageTokens: systemTokens, toolsTokens, conversationTokens, currentInputTokens,
+      totalUsed: systemTokens + toolsTokens + conversationTokens + currentInputTokens });
+    budget.available = budget.maxTokens - budget.responseReserve - budget.totalUsed;
+    budget.utilizationPercent = budget.totalUsed / (budget.maxTokens - budget.responseReserve) * 100;
+    Object.assign(budget.breakdown, { tools: toolsTokens, conversation: conversationTokens, currentInput: currentInputTokens });
+    return { budget, items };
+  }
 
-    // Step 9: Build final input array
-    let input: InputItem[] = [
-      systemMessage,
-      ...this._conversation,
-      ...this._currentInput,
-    ];
+  private beginContextOperation(operation: 'prepare' | 'consolidate'): void {
+    if (this._rolloverInProgress || this._contextOperation) {
+      throw new Error(`Cannot ${operation} context while ${this._rolloverInProgress ? 'rollover' : this._contextOperation} is in progress`);
+    }
+    this._contextOperation = operation;
+  }
 
-    // Step 10: CRITICAL - Sanitize tool pairs before LLM call
-    // Ensures every TOOL_USE has matching TOOL_RESULT and vice versa
-    input = this.sanitizeToolPairs(input);
+  private resolveRequestCapacity(capacity?: number | null): number {
+    return capacity && Number.isFinite(capacity) && capacity > 0
+      ? (this._usesModelContextLimit ? capacity : Math.min(this._maxContextTokens, capacity))
+      : this._maxContextTokens;
+  }
 
-    this.emit('context:prepared', { budget, compacted });
+  private contextStamp(): string {
+    return this.serializeToolResultContent([
+      this._config.model, this._maxContextTokens, this._systemPrompt, this._conversation, this._currentInput,
+    ]);
+  }
 
-    return {
-      input,
-      budget,
-      compacted,
-      compactionLog,
-    };
+  private assertBudgetFits(budget: ContextBudget, log: string[]): void {
+    if (budget.available >= 0) return;
+    throw new ContextOverflowError('Prepared request cannot fit after the bounded compaction pass', {
+      actualTokens: budget.totalUsed + budget.responseReserve, maxTokens: budget.maxTokens,
+      overageTokens: -budget.available,
+      breakdown: { system: budget.systemMessageTokens, tools: budget.toolsTokens,
+        conversation: budget.conversationTokens, currentInput: budget.currentInputTokens, responseReserve: budget.responseReserve },
+      degradationLog: log,
+    });
+  }
+
+  private async materializeRequest(options: ContextPrepareOptions = {}): Promise<{
+    input: InputItem[]; budget: ContextBudget; tools: FunctionToolDefinition[]; currentInputCount: number;
+  }> {
+    // An asynchronous prompt contribution may overlap a host observation. Rebuild
+    // once from the new conversation, then fail rather than spin under churn.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const stamp = this.contextStamp();
+      const { systemMessage, systemTokens, breakdown } = await this.buildSystemMessage();
+      this.assertNotDestroyed();
+      if (stamp !== this.contextStamp()) {
+        if (attempt === 0) continue;
+        throw new Error('Context changed repeatedly during preparation; retry with a stable context');
+      }
+      const tools = structuredClone(options.getTools?.() ?? this._tools.getEnabled().map(tool => {
+        const definition = tool.definition;
+        return tool.descriptionFactory ? { ...definition, function: { ...definition.function,
+          description: tool.descriptionFactory(this._tools.getToolContext()) } } : definition;
+      }));
+      if (stamp !== this.contextStamp()) throw new Error('Context changed while selecting tool definitions; retry preparation');
+      const requestOptions = structuredClone({ instructions: options.instructions, ...options.getRequestOptions?.(tools) });
+      if (stamp !== this.contextStamp()) throw new Error('Context changed while selecting request contributions; retry preparation');
+      const toolsTokens = this.calculateToolsTokens(tools)
+        + (requestOptions.response_format ? this._estimator.estimateDataTokens(requestOptions.response_format) : 0)
+        + (requestOptions.native_tools?.length ? this._estimator.estimateDataTokens(requestOptions.native_tools) : 0);
+      // Sanitize history and pending input together, then retain their accounting
+      // boundaries without mutating the persisted conversation.
+      const raw = [systemMessage, ...this._conversation, ...this._currentInput];
+      const sanitized = sanitizeToolPairsWithOrigins(raw);
+      const input = sanitized.map(entry => entry.item);
+      const pending = new Set(this._currentInput);
+      const selectedHistory: InputItem[] = [];
+      const selectedPending: InputItem[] = [];
+      for (const { original, item } of sanitized) {
+        if (original === systemMessage) continue;
+        (pending.has(original) ? selectedPending : selectedHistory).push(item);
+      }
+      const conversationTokens = this.calculateInputTokens(selectedHistory);
+      const currentInputTokens = this.calculateInputTokens(selectedPending);
+      const currentInputCount = selectedPending.length;
+      const extraInstructions = requestOptions.instructions ? this._estimator.estimateTokens(requestOptions.instructions) : 0;
+      const totalSystem = systemTokens + extraInstructions;
+      const totalUsed = totalSystem + toolsTokens + conversationTokens + currentInputTokens;
+      const maxTokens = this.resolveRequestCapacity(options.modelMaxContextTokens);
+      const capacity = maxTokens - this._config.responseReserve;
+      const budget: ContextBudget = {
+        maxTokens, responseReserve: this._config.responseReserve,
+        systemMessageTokens: totalSystem, toolsTokens, conversationTokens, currentInputTokens, totalUsed,
+        available: capacity - totalUsed, utilizationPercent: totalUsed / capacity * 100,
+        breakdown: { ...breakdown, systemPrompt: breakdown.systemPrompt + extraInstructions,
+          tools: toolsTokens, conversation: conversationTokens, currentInput: currentInputTokens },
+      };
+      return { input: structuredClone(input), budget, tools, currentInputCount };
+    }
+    throw new Error('Context preparation did not converge');
   }
 
   // ============================================================================
@@ -1475,13 +1566,18 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       breakdown.systemPrompt = this._estimator.estimateTokens(resolvedPrompt);
     }
 
+    // Await prompt contributions first. A plugin may update its instructions,
+    // store schema, or enabled tools while producing content.
+    const contents = new Map<string, string | null>();
+    for (const plugin of this._plugins.values()) contents.set(plugin.name, await plugin.getContent());
+
     // 2. Persistent Instructions (from plugin, if enabled)
     const persistentPlugin = this._plugins.get('persistent_instructions');
     if (persistentPlugin) {
-      const content = await persistentPlugin.getContent();
+      const content = contents.get(persistentPlugin.name);
       if (content) {
         parts.push(`# Persistent Instructions\n\n${content}`);
-        breakdown.persistentInstructions = persistentPlugin.getTokenSize();
+        breakdown.persistentInstructions = this._estimator.estimateTokens(content);
       }
     }
 
@@ -1502,7 +1598,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       const instructions = plugin.getInstructions();
       if (instructions) {
         instructionParts.push(`## ${this.pluginSectionTitle(plugin)}\n\n${instructions}`);
-        totalInstructionTokens += plugin.getInstructionsTokenSize();
+        totalInstructionTokens += this._estimator.estimateTokens(instructions);
       }
     }
 
@@ -1515,11 +1611,11 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     for (const plugin of this._plugins.values()) {
       if (plugin.name === 'persistent_instructions') continue; // Already handled above
 
-      const content = await plugin.getContent();
+      const content = contents.get(plugin.name);
       if (content) {
         const sectionTitle = this.pluginSectionTitle(plugin);
         parts.push(`# ${sectionTitle}\n\n${content}`);
-        breakdown.pluginContents[plugin.name] = plugin.getTokenSize();
+        breakdown.pluginContents[plugin.name] = this._estimator.estimateTokens(content);
       }
     }
 
@@ -1539,7 +1635,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
     // Build final system message
     const systemText = parts.join('\n\n---\n\n');
-    const systemTokens = this._estimator.estimateTokens(systemText);
+    const systemTokens = this._estimator.estimateTokens(systemText) + 4;
 
     const systemMessage: Message = {
       type: 'message',
@@ -1583,15 +1679,19 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    * Calculate tokens used by tool definitions.
    * Tools are sent separately to the LLM and take up context space.
    */
-  private calculateToolsTokens(): number {
-    const enabledTools = this._tools.getEnabled();
+  private calculateToolsTokens(definitions?: Tool[]): number {
+    const enabledTools = definitions ?? this._tools.getEnabled().map(tool => tool.definition);
     if (enabledTools.length === 0) return 0;
 
     let total = 0;
 
     for (const tool of enabledTools) {
       // Each tool has: name, description, parameters schema
-      const fn = tool.definition.function;
+      if (tool.type !== 'function') {
+        total += this._estimator.estimateDataTokens(tool) + 10;
+        continue;
+      }
+      const fn = tool.function;
 
       // Name: ~2-5 tokens
       total += this._estimator.estimateTokens(fn.name);
@@ -1627,15 +1727,9 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     return total;
   }
 
-  /**
-   * Calculate tokens for current input.
-   */
+  /** Estimate a selected group of input items. */
   private calculateInputTokens(items: InputItem[]): number {
-    let total = 0;
-    for (const item of items) {
-      total += this.estimateItemTokens(item);
-    }
-    return total;
+    return items.reduce((sum, item) => sum + this.estimateItemTokens(item), 0);
   }
 
   /**
@@ -1660,7 +1754,13 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         return 4;
       case 'function_call_output':
       case 'custom_tool_call_output':
+        return 8 + this._estimator.estimateTokens(item.call_id)
+          + (typeof item.output === 'string' ? this._estimator.estimateTokens(item.output)
+            : Array.isArray(item.output) ? this.estimateItemTokens({ type: 'message', role: MessageRole.USER, content: item.output }) - 4
+              : this._estimator.estimateDataTokens(item.output));
       case 'computer_call_output':
+        return 8 + this._estimator.estimateTokens(item.call_id) + this._estimateImageTokens()
+          + this._estimator.estimateDataTokens(item.acknowledged_safety_checks ?? []);
       case 'shell_call_output':
       case 'apply_patch_call_output':
       case 'tool_search_output':
@@ -1682,9 +1782,11 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       } else if (c.type === ContentType.TOOL_USE) {
         total += this._estimator.estimateTokens((c as any).name || '');
         total += this._estimator.estimateDataTokens((c as any).arguments || '');
+        total += this._estimator.estimateTokens(c.thoughtSignature ?? '');
       } else if (c.type === ContentType.TOOL_RESULT) {
         // Count text content tokens (images already stripped from content string)
         total += this._estimator.estimateTokens(this.serializeToolResultContent((c as any).content));
+        total += this._estimator.estimateTokens(c.error ?? '');
         // Count attached images separately using image-aware estimation
         const images = (c as any).__images as Array<{ base64: string; mediaType: string }> | undefined;
         if (images?.length) {
@@ -1700,8 +1802,13 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         total += this._estimator.estimateTokens(c.error ?? '');
       } else if (c.type === ContentType.THINKING) {
         total += this._estimator.estimateTokens((c as any).thinking || '');
+        total += this._estimator.estimateTokens((c as any).signature || '');
+        total += this._estimator.estimateDataTokens((c as any).providerMetadata || {});
       } else if (c.type === ContentType.PROVIDER_STATE) {
         total += this._estimator.estimateDataTokens((c as any).data || {});
+      } else if (c.type === ContentType.INPUT_FILE) {
+        // The file ID is visible locally; the provider-resolved file size is not.
+        total += 8 + this._estimator.estimateTokens(c.file_id);
       } else if (c.type === ContentType.INPUT_IMAGE_URL) {
         const imgContent = c as any;
         const detail = imgContent.image_url?.detail;
@@ -1732,23 +1839,18 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    * Delegates to the current compaction strategy.
    * Returns total tokens freed.
    */
-  private async runCompaction(targetToFree: number, log: string[]): Promise<number> {
+  private async runCompaction(targetToFree: number, log: string[], budget: ContextBudget): Promise<number> {
+    const context = this.buildCompactionContext(budget);
     const timestamp = Date.now();
 
     // Emit compaction:starting event BEFORE any compaction occurs
-    if (this._cachedBudget) {
-      this.emit('compaction:starting', {
-        budget: this._cachedBudget,
-        targetTokensToFree: targetToFree,
-        timestamp,
-      });
-    }
+    this.emit('compaction:starting', { budget, targetTokensToFree: targetToFree, timestamp });
 
     // Call beforeCompaction callback if set (allows Agent to invoke lifecycle hooks)
-    if (this._beforeCompactionCallback && this._cachedBudget) {
+    if (this._beforeCompactionCallback) {
       try {
         await this._beforeCompactionCallback({
-          budget: this._cachedBudget,
+          budget,
           targetTokensToFree: targetToFree,
           strategy: this._compactionStrategy.name,
         });
@@ -1758,11 +1860,10 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       }
     }
 
-    // Build CompactionContext for strategy
-    const context = this.buildCompactionContext();
-
     // Delegate to strategy
     const result = await this._compactionStrategy.compact(context, targetToFree);
+    // Reading the guarded view also verifies a no-op or plugin-only proposal.
+    void context.conversation;
 
     // Merge strategy log with our log
     log.push(...result.log);
@@ -1790,32 +1891,40 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     // in the conversation — never evicted between turns just because a run
     // finished. Only once the persisted context is genuinely near-full do we
     // let the strategy reclaim space.
-    const utilization = this.estimateUtilization();
-    const criticalThreshold = this._config.criticalCompactionThreshold;
-    if (utilization <= criticalThreshold) {
-      return {
-        performed: false,
-        tokensChanged: 0,
-        actions: [
-          `Consolidation skipped: utilization ${Math.round(utilization * 100)}% ` +
-            `is at or below critical threshold ${Math.round(criticalThreshold * 100)}% ` +
-            `— tool results kept inline.`,
-        ],
-      };
+    this.beginContextOperation('consolidate');
+    try {
+      const { budget } = await this.materializeRequest(this._lastPrepareOptions);
+      const utilization = (budget.totalUsed - budget.toolsTokens) / (budget.maxTokens - budget.responseReserve - budget.toolsTokens);
+      const criticalThreshold = this._config.criticalCompactionThreshold;
+      if (utilization <= criticalThreshold) {
+        return {
+          performed: false,
+          tokensChanged: 0,
+          actions: [
+            `Consolidation skipped: utilization ${Math.round(utilization * 100)}% ` +
+              `is at or below critical threshold ${Math.round(criticalThreshold * 100)}% ` +
+              `— tool results kept inline.`,
+          ],
+        };
+      }
+
+      logger.info(
+        {
+          component: 'AgentContextNextGen',
+          utilizationPercent: Math.round(utilization * 100),
+          criticalPercent: Math.round(criticalThreshold * 100),
+          strategy: this._compactionStrategy.name,
+        },
+        'post-cycle consolidation running — over critical threshold, reclaiming space',
+      );
+
+      const context = this.buildCompactionContext(budget);
+      const result = await this._compactionStrategy.consolidate(context);
+      void context.conversation;
+      return result;
+    } finally {
+      this._contextOperation = null;
     }
-
-    logger.info(
-      {
-        component: 'AgentContextNextGen',
-        utilizationPercent: Math.round(utilization * 100),
-        criticalPercent: Math.round(criticalThreshold * 100),
-        strategy: this._compactionStrategy.name,
-      },
-      'post-cycle consolidation running — over critical threshold, reclaiming space',
-    );
-
-    const context = this.buildCompactionContext();
-    return this._compactionStrategy.consolidate(context);
   }
 
   /**
@@ -1851,6 +1960,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     if (this._rolloverInProgress) {
       throw new Error('A context rollover is already in progress');
     }
+    if (this._contextOperation) throw new Error(`Cannot roll over context while ${this._contextOperation} is in progress`);
 
     const beforeTokens = this.calculateConversationTokens();
     const turnStarts = this.findUserTurnStarts(this._conversation);
@@ -2032,63 +2142,29 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   }
 
   /**
-   * Estimate current context utilization as a ratio of the available content
-   * budget (0..1), consistent with the compaction gate in prepare(). Reuses
-   * the last computed system-message token count from the cached budget to
-   * avoid rebuilding the (async) system message; falls back to 0 for the
-   * system portion if prepare() hasn't run yet this session.
-   */
-  private estimateUtilization(): number {
-    const toolsTokens = this.calculateToolsTokens();
-    const availableForContent =
-      this._maxContextTokens - this._config.responseReserve - toolsTokens;
-    if (availableForContent <= 0) return 1;
-
-    const systemTokens = this._cachedBudget?.systemMessageTokens ?? 0;
-    const conversationTokens = this.calculateConversationTokens();
-    const currentInputTokens = this.calculateInputTokens(this._currentInput);
-    const totalUsed = systemTokens + conversationTokens + currentInputTokens;
-
-    return totalUsed / availableForContent;
-  }
-
-  /**
    * Build CompactionContext for strategy.
    * Provides controlled access to context state.
    */
-  private buildCompactionContext(): CompactionContext {
+  private buildCompactionContext(budget: ContextBudget): CompactionContext {
     const self = this;
+    let stamp = this.contextStamp();
+    const assertCurrent = () => {
+      self.assertNotDestroyed();
+      if (stamp !== self.contextStamp()) throw new Error('Context changed while compaction was in progress; stale proposal rejected');
+    };
 
     return {
       get budget(): ContextBudget {
-        // Return cached budget or calculate fresh
-        return self._cachedBudget ?? {
-          maxTokens: self._maxContextTokens,
-          responseReserve: self._config.responseReserve,
-          systemMessageTokens: 0,
-          toolsTokens: 0,
-          conversationTokens: 0,
-          currentInputTokens: 0,
-          totalUsed: 0,
-          available: self._maxContextTokens - self._config.responseReserve,
-          utilizationPercent: 0,
-          breakdown: {
-            systemPrompt: 0,
-            persistentInstructions: 0,
-            pluginInstructions: 0,
-            pluginContents: {},
-            tools: 0,
-            conversation: 0,
-            currentInput: 0,
-          },
-        };
+        return budget;
       },
 
       get conversation(): ReadonlyArray<InputItem> {
+        assertCurrent();
         return self._conversation;
       },
 
       get currentInput(): ReadonlyArray<InputItem> {
+        assertCurrent();
         return self._currentInput;
       },
 
@@ -2101,15 +2177,21 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       },
 
       async removeMessages(indices: number[]): Promise<number> {
-        return self.removeMessagesByIndices(indices);
+        assertCurrent();
+        const freed = self.removeMessagesByIndices(indices);
+        stamp = self.contextStamp();
+        return freed;
       },
 
       async compactPlugin(pluginName: string, targetTokens: number): Promise<number> {
+        assertCurrent();
         const plugin = self._plugins.get(pluginName);
         if (!plugin || !plugin.isCompactable()) {
           return 0;
         }
-        return plugin.compact(targetTokens);
+        const freed = await plugin.compact(targetTokens);
+        assertCurrent();
+        return freed;
       },
 
       estimateTokens(item: InputItem): number {
@@ -2140,7 +2222,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
     // Calculate tokens being freed
     let tokensFreed = 0;
-    const indicesToRemove = new Set(indices);
+    const indicesToRemove = removableToolGroups(this._conversation, this._currentInput, indices);
 
     for (const idx of indicesToRemove) {
       const item = this._conversation[idx];
@@ -2153,91 +2235,6 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     this._conversation = this._conversation.filter((_, i) => !indicesToRemove.has(i));
 
     return tokensFreed;
-  }
-
-  /**
-   * Sanitize tool pairs in the input array.
-   * Removes orphan function/custom tool uses (no matching result) and
-   * orphan function/custom tool results (no matching use).
-   *
-   * This is CRITICAL - LLM APIs require matching pairs.
-   */
-  private sanitizeToolPairs(items: InputItem[]): InputItem[] {
-    // Collect all function/custom tool-use IDs and result tool_use_ids.
-    const toolUseIds = new Set<string>();
-    const toolResultIds = new Set<string>();
-
-    for (const item of items) {
-      if (item.type !== 'message') continue;
-      const msg = item as Message;
-      for (const c of msg.content) {
-        if (c.type === ContentType.TOOL_USE || c.type === ContentType.CUSTOM_TOOL_USE) {
-          toolUseIds.add((c as any).id);
-        } else if (c.type === ContentType.TOOL_RESULT || c.type === ContentType.CUSTOM_TOOL_RESULT) {
-          toolResultIds.add((c as any).tool_use_id);
-        }
-      }
-    }
-
-    // Find orphans: TOOL_USE without TOOL_RESULT, TOOL_RESULT without TOOL_USE
-    const orphanToolUseIds = new Set<string>();
-    const orphanToolResultIds = new Set<string>();
-
-    for (const id of toolUseIds) {
-      if (!toolResultIds.has(id)) {
-        orphanToolUseIds.add(id);
-      }
-    }
-
-    for (const id of toolResultIds) {
-      if (!toolUseIds.has(id)) {
-        orphanToolResultIds.add(id);
-      }
-    }
-
-    // If no orphans, return as-is
-    if (orphanToolUseIds.size === 0 && orphanToolResultIds.size === 0) {
-      return items;
-    }
-
-    // Remove orphan content from messages
-    const result: InputItem[] = [];
-
-    for (const item of items) {
-      if (item.type !== 'message') {
-        result.push(item);
-        continue;
-      }
-
-      const msg = item as Message;
-      const filteredContent: Content[] = [];
-
-      for (const c of msg.content) {
-        if (c.type === ContentType.TOOL_USE || c.type === ContentType.CUSTOM_TOOL_USE) {
-          const id = (c as any).id;
-          if (!orphanToolUseIds.has(id)) {
-            filteredContent.push(c);
-          }
-        } else if (c.type === ContentType.TOOL_RESULT || c.type === ContentType.CUSTOM_TOOL_RESULT) {
-          const id = (c as any).tool_use_id;
-          if (!orphanToolResultIds.has(id)) {
-            filteredContent.push(c);
-          }
-        } else {
-          filteredContent.push(c);
-        }
-      }
-
-      // Only include message if it has content left
-      if (filteredContent.length > 0) {
-        result.push({
-          ...msg,
-          content: filteredContent,
-        } as Message);
-      }
-    }
-
-    return result;
   }
 
   // ============================================================================
@@ -2632,31 +2629,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       return this._cachedBudget;
     }
 
-    // No cached budget yet - calculate fresh (this happens before first prepare() call)
-    const toolsTokens = this.calculateToolsTokens();
-    const { systemTokens, breakdown } = await this.buildSystemMessage();
-    const conversationTokens = this.calculateConversationTokens();
-    const currentInputTokens = this.calculateInputTokens(this._currentInput);
-    const totalUsed = systemTokens + conversationTokens + currentInputTokens + toolsTokens;
-    const availableForContent = this._maxContextTokens - this._config.responseReserve;
-
-    return {
-      maxTokens: this._maxContextTokens,
-      responseReserve: this._config.responseReserve,
-      systemMessageTokens: systemTokens,
-      toolsTokens,
-      conversationTokens,
-      currentInputTokens,
-      totalUsed,
-      available: availableForContent - totalUsed,
-      utilizationPercent: (totalUsed / availableForContent) * 100,
-      breakdown: {
-        ...breakdown,
-        tools: toolsTokens,
-        conversation: conversationTokens,
-        currentInput: currentInputTokens,
-      },
-    };
+    return (await this.materializeRequest()).budget;
   }
 
   /**

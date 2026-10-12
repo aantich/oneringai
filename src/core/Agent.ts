@@ -36,6 +36,7 @@ import type {
   ContextRolloverResult,
   ContextRolloverSummarizer,
   ContextRolloverSummaryInput,
+  PreparedContext,
 } from './context-nextgen/types.js';
 import type {
   IAgentDefinitionStorage,
@@ -1509,7 +1510,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       const iterationStartTime = Date.now();
 
       // Prepare context (handles compaction)
-      const prepared = await this._agentContext.prepare();
+      const prepared = await this.prepareManagedContext();
       const b1 = prepared.budget;
       const bd1 = b1.breakdown;
       const bp1 = [
@@ -1526,7 +1527,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       );
 
       // Generate LLM response
-      const generated = await this.generateWithHooks(prepared.input, iteration, executionId);
+      const generated = await this.generateWithHooks(prepared.input, iteration, executionId, prepared.tools);
       const response = generated.response;
 
       if (!response || !response.output) {
@@ -1661,9 +1662,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         );
 
         // Final LLM call WITHOUT tools (mirrors max-iterations wrap-up)
-        const suspendPrepared = await this._agentContext.prepare();
+        const suspendPrepared = await this.prepareManagedContext(true);
         const suspendStartTime = Date.now();
-        const suspendOptions: TextGenerateOptions = {
+        let suspendOptions: TextGenerateOptions = {
           model: this.model,
           input: suspendPrepared.input,
           instructions: this._config.instructions,
@@ -1679,6 +1680,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           skipContextLimitCheck: true,
         };
         this._applyInlineResponseFormat(suspendOptions);
+        suspendOptions = this.validateManagedDispatch(suspendOptions);
         const suspendResponse = await this._provider.generate(suspendOptions);
         this._agentContext.addAssistantResponse(suspendResponse.output);
         this._recordIterationMetrics(
@@ -1751,9 +1753,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       this._agentContext.addUserMessage(AGENT_DEFAULTS.MAX_ITERATIONS_MESSAGE);
 
       // Prepare context and generate final response WITHOUT tools
-      const prepared = await this._agentContext.prepare();
+      const prepared = await this.prepareManagedContext(true);
       const wrapUpStartTime = Date.now();
-      const wrapUpOptions: TextGenerateOptions = {
+      let wrapUpOptions: TextGenerateOptions = {
         model: this.model,
         input: prepared.input,
         instructions: this._config.instructions,
@@ -1769,6 +1771,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         skipContextLimitCheck: true,
       };
       this._applyInlineResponseFormat(wrapUpOptions);
+      wrapUpOptions = this.validateManagedDispatch(wrapUpOptions);
       const wrapUpResponse = await this._provider.generate(wrapUpOptions);
 
       // Add the wrap-up response to context
@@ -2135,7 +2138,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
         // Prepare context (handles compaction)
         // Note: instructions are set in systemPrompt during context creation
-        const prepared = await this._agentContext.prepare();
+        const prepared = await this.prepareManagedContext();
         const b2 = prepared.budget;
         const bd2 = b2.breakdown;
         const bp2 = [
@@ -2161,7 +2164,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           iteration,
           executionId,
           iterationStreamState,
-          toolCallsMap
+          toolCallsMap,
+          prepared.tools
         );
 
         // Accumulate text, reasoning, usage from this iteration into global state
@@ -2401,10 +2405,10 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         this._agentContext.addUserMessage(AGENT_DEFAULTS.MAX_ITERATIONS_MESSAGE);
 
         // Prepare context and stream final response WITHOUT tools
-        const prepared = await this._agentContext.prepare();
+        const prepared = await this.prepareManagedContext(true);
         const wrapUpStreamState = new StreamState(executionId, this.model);
 
-        const wrapUpOptions: TextGenerateOptions = {
+        let wrapUpOptions: TextGenerateOptions = {
           model: this.model,
           input: prepared.input,
           instructions: this._config.instructions,
@@ -2420,6 +2424,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           skipContextLimitCheck: true,
         };
         this._applyInlineResponseFormat(wrapUpOptions);
+        wrapUpOptions = this.validateManagedDispatch(wrapUpOptions);
 
         // Stream the wrap-up response
         for await (const event of this._provider.streamGenerate(wrapUpOptions)) {
@@ -2622,7 +2627,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     }
 
     const startedAt = Date.now();
-    const response = await this._provider.generate(generateOptions);
+    const dispatch = this.validateManagedDispatch(generateOptions, false);
+    const response = await this._provider.generate(dispatch);
     this._recordAuxiliaryLLMMetrics(response, Date.now() - startedAt);
     return response;
   }
@@ -2654,6 +2660,52 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     });
   }
 
+  /** Share provider/host capacity precedence between initial preparation and final dispatch. */
+  private resolveManagedModelCapacity(model: string): number | undefined {
+    try {
+      const capabilities = this._provider.getModelCapabilities(model);
+      return [capabilities.maxInputTokens, capabilities.maxTokens]
+        .find(capacity => typeof capacity === 'number' && Number.isFinite(capacity) && capacity > 0) ?? undefined;
+    } catch {
+      // Ordinary custom-provider calls historically did not require capability
+      // lookup to succeed. The context retains registry/host fallback limits;
+      // provider execution still owns unsupported-model validation.
+      return undefined;
+    }
+  }
+
+  /** Count already-known constraints before the single compaction decision. */
+  private prepareManagedContext(toolFree = false): Promise<PreparedContext> {
+    return this._agentContext.prepare({
+      getTools: () => toolFree ? [] : this.getEnabledToolDefinitions(),
+      modelMaxContextTokens: this.resolveManagedModelCapacity(this.model),
+      getRequestOptions: tools => {
+        const options: TextGenerateOptions = {
+          model: this.model, input: [], tools, instructions: this._config.instructions,
+          native_tools: toolFree ? undefined : this._runOptions?.nativeTools ?? this._config.nativeTools,
+        };
+        this._applyInlineResponseFormat(options);
+        return { instructions: options.instructions, response_format: options.response_format, native_tools: options.native_tools };
+      },
+    });
+  }
+
+  /** Capture counted fields before budget events can reenter host listeners. */
+  private validateManagedDispatch(options: TextGenerateOptions, recordPreparation = true): TextGenerateOptions {
+    const dispatch: TextGenerateOptions = {
+      ...options,
+      input: structuredClone(options.input),
+      tools: structuredClone(options.tools),
+      response_format: structuredClone(options.response_format),
+      native_tools: structuredClone(options.native_tools),
+    };
+    this._agentContext.validateRequestBudget(dispatch, {
+      modelMaxContextTokens: this.resolveManagedModelCapacity(dispatch.model),
+      recordPreparation,
+    });
+    return dispatch;
+  }
+
   // ===== LLM Generation with Hooks =====
 
   /**
@@ -2662,7 +2714,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   private async generateWithHooks(
     input: InputItem[],
     iteration: number,
-    executionId: string
+    executionId: string,
+    preparedTools?: import('../domain/entities/Tool.js').FunctionToolDefinition[]
   ): Promise<{ response: AgentResponse; options: TextGenerateOptions }> {
     const llmStartTime = Date.now();
 
@@ -2673,7 +2726,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       model: this.model,
       input,
       instructions: this._config.instructions,
-      tools: this.getEnabledToolDefinitions(),
+      tools: preparedTools ?? this.getEnabledToolDefinitions(),
       tool_choice: 'auto',
       temperature: ro?.temperature ?? this._config.temperature,
       thinking: ro?.thinking ?? this._config.thinking,
@@ -2721,6 +2774,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     });
 
     try {
+      generateOptions = this.validateManagedDispatch(generateOptions);
       // Call provider
       const response = await this._provider.generate(generateOptions);
 
@@ -2772,18 +2826,19 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     iteration: number,
     executionId: string,
     streamState: StreamState,
-    toolCallsMap: Map<string, { name: string; args: string; thoughtSignature?: string; async?: boolean }>
+    toolCallsMap: Map<string, { name: string; args: string; thoughtSignature?: string; async?: boolean }>,
+    preparedTools?: import('../domain/entities/Tool.js').FunctionToolDefinition[]
   ): AsyncIterableIterator<StreamEvent> {
     const llmStartTime = Date.now();
 
     // Prepare options (per-call RunOptions override agent-level config)
     const sro = this._runOptions;
     const continuationToken = this.consumeContinuationToken();
-    const generateOptions: TextGenerateOptions = {
+    let generateOptions: TextGenerateOptions = {
       model: this.model,
       input,
       instructions: this._config.instructions,
-      tools: this.getEnabledToolDefinitions(),
+      tools: preparedTools ?? this.getEnabledToolDefinitions(),
       tool_choice: 'auto',
       temperature: sro?.temperature ?? this._config.temperature,
       thinking: sro?.thinking ?? this._config.thinking,
@@ -2821,6 +2876,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     });
 
     try {
+      generateOptions = this.validateManagedDispatch(generateOptions);
       // Stream from provider
       for await (const event of this._provider.streamGenerate(generateOptions)) {
         // Update stream state based on event

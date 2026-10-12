@@ -168,6 +168,10 @@ EXAMPLES:
       `Status:     ${statusIcon} ${budget.status.toUpperCase()}`,
     ];
 
+    lines.push('');
+    lines.push(budget.source === 'prepared'
+      ? `Last prepared revision: ${budget.revision} — estimated tokens, not provider usage.`
+      : 'Estimate before first preparation — not provider usage.');
     return this.success(lines.join('\n'));
   }
 
@@ -192,6 +196,11 @@ EXAMPLES:
       'Token Breakdown by Component',
       '────────────────────────────────────',
     ];
+
+    lines.push(breakdown.source === 'prepared'
+      ? `Last prepared revision: ${breakdown.revision} — estimated tokens, not provider usage.`
+      : 'Estimate before first preparation — not provider usage.');
+    lines.push('');
 
     for (const comp of breakdown.components) {
       const bar = createProgressBar(comp.percent, 20);

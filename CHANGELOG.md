@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Stage 00 repository evaluation utilities: four deterministic managed-agent
+  workloads with evidence-based completion, strict branch-aware replay, correlated
+  event reporting, and opt-in real-LLM runs. Includes public-consumer and pinned
+  format-v1 session fixtures, failure/cancellation/privacy checks, and existing
+  AMOS context-command baselines. No production API or default changes.
+- Living Version 2 adoption guide, staged architecture roadmap, evaluation recipe,
+  and an OpenAI/Anthropic/Google live pilot with explicit accounting and provider limitations.
+  Stage completion on the development branch does not announce an npm 2.0 release.
+- Additive prepared-revision diagnostics and low-level preparation options; offline
+  context/AMOS examples and real-provider run/stream evidence-retrieval checks.
+- AMOS budget/breakdown revision and estimate labels, with complete overhead totals.
+
+### Fixed
+
+- Stage 01 second corrective pass: allocate distinct spill keys across turns and
+  restored state, verify stored values, prepare against already-known JSON/native
+  tool contributions and provider capacity, and count function-result error text.
+  Optional low-level `getRequestOptions`/`modelMaxContextTokens` preparation options,
+  an offline request-budget example, and expanded live/AMOS checks are included.
+- Stage 01 corrective review: preserve every connected message/native result and
+  its attachments before algorithmic spill removal; retain history on failed or
+  evicted writes; report actual removal counts. Recount synchronous request-event
+  mutations and actual dispatch-model capacity, count schemas/native tools and
+  tool-call replay signatures, and validate managed JSON formatting/repair without
+  replacing the main context diagnostic. Existing valid listener/hook behavior,
+  explicit host limits, defaults, direct APIs, and session format remain compatible.
+
+- Stage 01 managed context freshness: rebuild plugin content/instructions and dynamic
+  schemas after a bounded compaction pass; count sanitized input; supply fresh
+  strategy budgets; protect pending/native async dependencies; reject stale index
+  removals and requests that still cannot fit. Run/stream and tool-free wrap-ups
+  validate their final estimated input/instruction/tool budgets. Existing critical
+  trigger, defaults, plugin/strategy interfaces, and session format remain intact.
+- Duplicate final tool results/call IDs now report invalid protocol before dispatch.
+  Supported asynchronous completion messages and provider continuation items remain.
+
+### Changed
+
+- Anthropic agent integration fixtures now use available `claude-sonnet-4-6`
+  instead of retired Sonnet 4. Existing assertions and production APIs are unchanged.
+
 ## [1.2.0] — 2026-10-07
 
 ### Added

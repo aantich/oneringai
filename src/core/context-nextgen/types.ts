@@ -5,10 +5,11 @@
  */
 
 import type { InputItem } from '../../domain/entities/Message.js';
-import type { ToolFunction } from '../../domain/entities/Tool.js';
+import type { FunctionToolDefinition, ToolFunction } from '../../domain/entities/Tool.js';
 import type { ToolContext } from '../../domain/entities/Tool.js';
 import type { IContextStorage as IContextStorageFromDomain } from '../../domain/interfaces/IContextStorage.js';
 import type { ToolCategoryScope } from '../ToolCatalogRegistry.js';
+import type { TextGenerateOptions } from '../../domain/interfaces/ITextProvider.js';
 
 // ============================================================================
 // Auth Identity
@@ -674,10 +675,33 @@ export interface ContextBudget {
 // Prepared Context
 // ============================================================================
 
-/**
- * Result of prepare() - ready for LLM call
- */
+/** Optional request contributions, resolved again after compaction. */
+export interface ContextPrepareOptions {
+  /** Obtain the exact visible definitions, including dynamic descriptions and identity filtering. */
+  getTools?: () => FunctionToolDefinition[];
+  /** Additional top-level instructions sent separately from the context input. */
+  instructions?: string;
+  /** Resolve known request contributions from the selected tools; synchronous, without context mutation. */
+  getRequestOptions?: (tools: FunctionToolDefinition[]) =>
+    Pick<TextGenerateOptions, 'instructions' | 'response_format' | 'native_tools'>;
+  /** Usable capacity advertised by the initially selected provider/model; explicit host limits remain an upper bound. */
+  modelMaxContextTokens?: number;
+}
+
+/** Diagnostic snapshot of the last successful prepare; token counts are estimates. */
+export interface ContextPreparation {
+  /** Monotonic, process-local successful preparation number. */
+  revision: number;
+  /** Millisecond timestamp at selection; later context mutations do not refresh it. */
+  preparedAt: number;
+  /** Estimated budget for that selected request, including final host-hook adjustments. */
+  budget: ContextBudget;
+}
+
+/** Result of prepare() - ready for a model call. */
 export interface PreparedContext {
+  /** Snapshot of tool definitions counted for this request (additive). */
+  tools?: FunctionToolDefinition[];
   /** Final input items array for LLM */
   input: InputItem[];
 
@@ -1187,13 +1211,13 @@ export interface ICompactionStrategy {
   /** Description explaining the strategy behavior */
   readonly description: string;
 
-  /** Threshold percentage (0-1) at which compact() is triggered */
+  /** Reclaim threshold (0-1); the context critical gate decides when compact() runs. */
   readonly threshold: number;
 
   /**
    * Plugin names this strategy requires to function.
    * Validation is performed when strategy is assigned to context.
-   * If any required plugin is missing, an error is thrown.
+   * Missing recommendations produce a warning; built-in strategies degrade gracefully.
    *
    * @example
    * ```typescript
@@ -1203,8 +1227,8 @@ export interface ICompactionStrategy {
   readonly requiredPlugins?: readonly string[];
 
   /**
-   * Emergency compaction - triggered when context usage exceeds threshold.
-   * Called from prepare() when utilization > threshold.
+   * Emergency compaction - triggered when content usage exceeds the context critical gate.
+   * The strategy threshold controls how far to reclaim, not when preparation triggers.
    *
    * Should be fast and focus on freeing tokens quickly.
    *

@@ -1,8 +1,9 @@
 # OneRingAI examples
 
-This directory contains 35 runnable TypeScript programs covering agents, tools,
-streaming, media, connectors, OAuth, search, and MCP. The examples import the
-repository source directly, so run them from the repository root after installing
+This directory contains runnable TypeScript programs covering agents, tools,
+streaming, media, connectors, OAuth, search, and MCP. Most examples import the
+repository source directly; the context-freshness example imports the built package
+and requires `npm run build`. Run examples from the repository root after installing
 dependencies.
 
 Most AI and search examples make real, billable API calls. Review the prompt,
@@ -64,6 +65,8 @@ capability-aware behavior, and teardown. Start with the
 | [`agent-with-hooks.ts`](./agent-with-hooks.ts) | Execution hooks, simulated approval, tool-result caching, metrics, and pause/resume control. | `OPENAI_API_KEY`; `npm run example:hooks` |
 | [`logging-demo.ts`](./logging-demo.ts) | Logger configuration and structured logs emitted by an agent and a custom calculation tool. | `OPENAI_API_KEY`; `npm run example:logging` |
 | [`custom-infrastructure.ts`](./custom-infrastructure.ts) | Skeleton implementations of `ITextProvider`, `ITokenStorage`, and `IToolExecutor`, plus injecting a custom provider into an agent. It uses local smoke tests rather than calling the hypothetical service. | No credential required; `npm run example:custom-infrastructure` |
+| [`agentic-evaluation-baseline.ts`](./agentic-evaluation-baseline.ts) | Four Stage 00 workloads using the real Agent loop, strict offline replay, evidence-based completion, cancellation/checkpoint/continuation, correlated event reports, and optional actual LLM runs. See the [evaluation guide](../docs/AGENTIC_BASELINE_EVALUATION.md). | Offline: no credentials, `npm run example:agentic-baseline`; held-out: append `-- --held-out`; real OpenAI calls: append `-- --live`. Other live providers require explicit vendor/model configuration. |
+| [`context-request-budget.ts`](./context-request-budget.ts) | Known JSON schema and custom provider window trigger one compaction; separate colliding spills recover both sources; an oversized protected error fails before dispatch. | Build first, then `npm run example:context-budget`. No credentials or network; expects one fitting model call, both recovered markers, and `CONTEXT_OVERFLOW` for the oversized error. Agents, contexts, and the fixture connector are destroyed/removed. |
 | [`provider-config-generator.ts`](./provider-config-generator.ts) | An interactive AI assistant that asks business-level questions and generates an OAuth connector configuration. Choosing to save writes `oauth-<name>-config.json` in the current directory. | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`; `npm run example:provider-config` |
 | [`provider-config-programmatic.ts`](./provider-config-programmatic.ts) | Non-interactive `ProviderConfigAgent` use, including multi-turn generation of GitHub and Microsoft connector configurations. | `OPENAI_API_KEY`; `npx tsx examples/provider-config-programmatic.ts` |
 
@@ -125,3 +128,20 @@ child process access to the repository filesystem.
   repository only supplies the stdio demo server.
 - Delete the three generated MP3 files when you no longer need the audio demo
   output.
+
+### Context freshness (Stage 01)
+
+The context example retrieves native evidence connected to a spilled message
+result. `npm run example:structured-budget` runs
+[`structured-output-budget.ts`](./structured-output-budget.ts) after the build,
+using an injected offline provider: the fitting repair makes two calls and
+returns `{ "value": "Done" }`; the oversized repair raises `CONTEXT_OVERFLOW`
+before a second call. It preserves the main prepared revision and cleans up its
+agents/connectors. No keys, network, or external services are needed.
+
+After `npm run build`, run `npm run example:context-freshness` for the offline
+[compaction demonstration](./context-compaction-freshness.ts). It shows a refreshed
+working-memory index, retained pending tool dependencies, and the final estimated
+budget. `npm run example:amos-context` renders the real AMOS budget/breakdown commands
+without credentials. See [context preparation](../docs/CONTEXT_PREPARATION.md) for
+contracts, failure behavior, and the opt-in billable `npm run test:context:live` suite.

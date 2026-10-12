@@ -16,6 +16,7 @@ A comprehensive guide to using all features of the @everworker/oneringai library
 - [Portable Agent Packages](#portable-agent-packages) — trusted-host hydration with local and remote tools
 - [Upgrading to 1.0.0](#upgrading-to-100) — runtime requirements, breaking changes, compatibility guarantees, and migration checklist
 - [Agent Runtime (preview)](#agent-runtime-preview) — run complete OneRingAI and Codex SDK agents through one observable, capability-gated API
+- [Agentic Evaluation Baselines](#agentic-evaluation-baselines) — repository-only offline and opt-in live validation for the Version 2 initiative
 1. [Getting Started](#getting-started)
 2. [Core Concepts](#core-concepts)
 3. [Basic Text Generation](#basic-text-generation)
@@ -3193,7 +3194,7 @@ const agent = Agent.create({
   model: 'gpt-4.1',
   tools: [weatherTool],
   context: {
-    strategy: 'algorithmic',    // Default strategy: algorithmic compaction at 75% threshold
+    strategy: 'algorithmic',    // Default strategy; 75% reclaim threshold, 90% critical trigger
     features: { workingMemory: true },
   },
 });
@@ -3461,9 +3462,15 @@ ctx.clearConversation('Starting fresh');
 
 **Compaction:**
 
-Compaction happens automatically during `prepare()` when context utilization exceeds the strategy threshold:
+Compaction happens during `prepare()` when content utilization exceeds the configured
+critical threshold (`0.9` by default), after subtracting response reserve and tools.
+The strategy threshold determines the reclaim target; it does not trigger early
+spilling below critical. Each preparation runs at most one strategy pass, rebuilds
+all contributions, sanitizes tool groups before counting, and checks the final fit.
 
-| Strategy | Threshold | Description |
+The strategy metadata is:
+
+| Strategy | Reclaim threshold | Description |
 |----------|-----------|-------------|
 | `algorithmic` | 75% | Moves large tool results to Working Memory, limits tool pairs, applies rolling window (default) |
 
@@ -3478,6 +3485,37 @@ console.log(budget.utilizationPercent);  // Current usage %
 console.log(budget.available);           // Remaining tokens
 console.log(compacted);                  // true if compaction occurred
 ```
+
+Final checks include synchronous request-event changes, the dispatch model’s capacity
+(with explicit host limits retained), structured schemas/native tools, and tool-call
+replay signatures. Managed JSON formatting and repair checks fit without replacing
+the main prepared revision. Algorithmic spill preserves connected native results
+and attachments before removal; storage failures leave history intact.
+Initial preparation also counts known schemas/native tools and resolves the initial
+provider window, so evictable history can be removed before final validation.
+Spill allocation checks existing memory keys across turns and save/load; collisions
+receive distinct suffixes and every new spill is verified before history removal.
+Function-result errors participate in the same accounting as custom-result errors.
+
+Budgets are estimates, not provider-reported usage. `agent.context.lastPreparation`
+returns a detached snapshot with `revision`, `preparedAt`, and `budget` for the last
+selected request. Later context mutations do not rewrite that request's history.
+`lastBudget` and `calculateBudget()` preserve their cached inspection semantics.
+Use these getters for UI inspection instead of calling `prepare()` again.
+
+Managed `run()` and `stream()` send the definitions counted during preparation,
+including dynamic descriptions and identity filtering, and recount host-hook changes
+without another compaction. Native async calls may remain outstanding; pending
+results protect their connected calls. Duplicate final results for one call are
+reported as `INVALID_TOOL_PROTOCOL`, while asynchronous completion messages remain
+supported. Protected content that cannot fit produces `ContextOverflowError`.
+The existing user rejection/tool-text emergency truncation policy is preserved.
+
+See [Context Preparation](./docs/CONTEXT_PREPARATION.md) for additive adapter options,
+legacy strategy behavior, concurrency bounds, estimation limits, and the offline
+`npm run example:context-freshness`, `npm run example:context-budget`, and
+`npm run example:structured-budget` demonstrations. AMOS labels selected revisions in
+`/context budget` and `/context breakdown`.
 
 #### Session Persistence
 
@@ -3744,10 +3782,11 @@ The context management system is built around **AgentContextNextGen** - the clea
     ▼             ▼             ▼
 ┌─────────┐ ┌──────────┐ ┌───────────────┐
 │ Strategy│ │ Plugins  │ │ Context       │
-│ (when)  │ │ (what)   │ │ Structure     │
+│ (how)   │ │ (what)   │ │ Structure     │
 └─────────┘ └──────────┘ └───────────────┘
 
-Strategy: Decides WHEN to compact (algorithmic: 75% threshold, or custom)
+Critical gate: Decides WHEN to compact (90% content utilization by default)
+Strategy: Decides HOW to reclaim and its target (algorithmic threshold: 75%)
 Plugins: WorkingMemoryPluginNextGen, InContextMemoryPluginNextGen, etc.
 Context: Developer Message → Conversation History → Current Input
 ```
@@ -3769,7 +3808,7 @@ const ctx = AgentContextNextGen.create({
   systemPrompt: 'Your system instructions',
   maxContextTokens: 128000,    // Model's context window
   responseReserve: 4096,       // Reserve tokens for response
-  strategy: 'algorithmic',     // Default compaction strategy (75% threshold)
+  strategy: 'algorithmic',     // Default strategy (75% reclaim threshold; critical gate controls triggering)
   features: {
     workingMemory: true,       // Enable WorkingMemoryPluginNextGen
     inContextMemory: true,     // Enable InContextMemoryPluginNextGen
@@ -3984,7 +4023,7 @@ AgentContextNextGen uses a **strategy-based compaction system** with the `ICompa
 
 #### Built-in Strategies
 
-| Strategy | Threshold | Description |
+| Strategy | Reclaim threshold | Description |
 |----------|-----------|-------------|
 | **algorithmic** (default) | 75% | Moves large tool results to Working Memory, limits tool pairs to 10, applies rolling window. Best for tool-heavy agents. |
 
@@ -4173,7 +4212,7 @@ agent.setLifecycleHooks(hooks);
 
 #### 1. Use the Default Strategy
 
-The `algorithmic` strategy (default, 75% threshold) works well for most use cases. It automatically offloads large tool results to Working Memory and manages conversation history:
+The `algorithmic` strategy (default, 75% reclaim threshold; 90% critical trigger) works well for most use cases. It automatically offloads large tool results to Working Memory and manages conversation history:
 
 ```typescript
 import { Agent } from '@everworker/oneringai';
@@ -18761,6 +18800,35 @@ try {
 
 See the [full design](./docs/designs/AGENT_RUNTIME.md) and runnable
 [`agent-runtime-local.ts`](./examples/agent-runtime-local.ts) example.
+
+## Agentic Evaluation Baselines
+
+Stage 00 of the [Version 2 initiative](./docs/VERSION_2_GUIDE.md) adds repository
+evaluation utilities for chat, large tool observations, research/source retention,
+and a mock external workflow with cancellation and checkpoint continuation. The
+offline example exercises the managed Agent loop through strict replay and checks
+actual tool evidence rather than accepting plausible final prose.
+
+From a source checkout with development dependencies installed:
+
+```bash
+npm run example:agentic-baseline
+npm run example:agentic-baseline -- --held-out
+npm run build
+npm run test:agentic:compat
+```
+
+The [evaluation guide](./docs/AGENTIC_BASELINE_EVALUATION.md) documents expected
+reports, fixture extension, provider setup, and the opt-in suite that calls actual
+LLMs using `.env` credentials. Its [recorded live pilot](./docs/evaluations/STAGE_00_LIVE_PILOT.json)
+validates the OpenAI, Anthropic, and Google paths in two separately timestamped
+batches. A single sample per model/workload/split does not establish
+comparative quality, latency, or cost savings.
+
+These utilities require the repository; they are not new package exports. Existing
+applications need no configuration changes. Agent defaults, algorithmic compaction,
+the shared ToolManager, tool payloads, and saved-session format are unchanged.
+See the Version 2 Guide for branch availability and subsequent planned stages.
 
 ## Support & Resources
 
