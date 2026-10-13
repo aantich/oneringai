@@ -1,3 +1,4 @@
+import { markSeparateReasoningUsage } from '../../../core/model-execution/ModelTask.js';
 /**
  * Google Gemini converter - Converts between our Responses API format and Google Gemini API
  * Works with both @google/genai SDK (for Gemini API and Vertex AI)
@@ -497,6 +498,7 @@ export class GoogleConverter {
             : undefined,
       },
     });
+    markSeparateReasoningUsage(built.usage);
     const nativeToolEvents: NonNullable<LLMResponse['native_tool_events']> = [];
     if (candidate?.groundingMetadata?.webSearchQueries?.length) {
       nativeToolEvents.push({ capability: 'web_search', status: 'completed' });

@@ -57,6 +57,16 @@ queued background results are checked again at delivery. A timeout does not esta
 whether an external write happened.
 
 
+Stage 06 on the development branch adds optional, stateless compactor/extractor/verifier models while keeping
+the main model fixed. Share a `ModelTask` across explicit calls for process-local
+call/token/deadline and model token-cost budgets, physical SDK retry accounting,
+and purpose-attributed usage. Tracked requests capture configuration at admission;
+budgets reserve aggregate candidate output and bounded repairs retain selected
+evidence. Helpers are disabled by default. See the
+[model tasks and helpers guide](./docs/MODEL_TASKS_AND_HELPERS.md) for setup,
+conservative reservation limits, supported paths and AMOS `/helpers` commands.
+
+
 ## Built for coding agents
 
 OneRingAI ships a canonical **[Agent Guide](./AGENTS.md)** that gives Codex,

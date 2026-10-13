@@ -115,7 +115,20 @@
     "docs/evaluations/STAGE_02_OPENAI_RETRIEVAL_DIAGNOSIS.json",
     "docs/evaluations/STAGE_02_RETRIEVAL_FIX_VALIDATION.json",
     "docs/evaluations/STAGE_02_ANTHROPIC_REVALIDATION.json",
-    "docs/evaluations/STAGE_02_FINAL_VALIDATION.json"
+    "docs/evaluations/STAGE_02_FINAL_VALIDATION.json",
+    "docs/MODEL_TASKS_AND_HELPERS.md",
+    "docs/designs/STAGE_06_IMPLEMENTATION.md",
+    "docs/designs/STAGE_06_REVIEW_AND_FIX_PLAN.md",
+    "docs/designs/STAGE_06_SECOND_REVIEW.md",
+    "docs/evaluations/STAGE_06_VALIDATION.json",
+    "docs/evaluations/STAGE_06_REVIEW.json",
+    "docs/evaluations/STAGE_06_SECOND_REVIEW.json",
+    "docs/evaluations/STAGE_06_SECOND_CORRECTIONS_VALIDATION.json",
+    "docs/evaluations/STAGE_06_SECOND_AMOS_OFFLINE.txt",
+    "docs/evaluations/STAGE_06_CORRECTIONS_VALIDATION.json",
+    "examples/purpose-specific-models.ts",
+    "examples/shared-run-budget.ts",
+    "docs/evaluations/STAGE_06_AMOS_OFFLINE.txt"
   ],
   "scripts": {
     "generate:tools": "tsx scripts/generate-tool-registry.ts",
@@ -179,7 +192,11 @@
     "example:context-budget": "tsx examples/context-request-budget.ts",
     "test:tools:live": "RUN_TOOL_OUTCOMES_LIVE=1 vitest run tests/integration/text/ToolOutcomes.live.integration.test.ts",
     "example:tool-outcomes": "node --import tsx examples/tool-outcomes-and-cancellation.ts",
-    "example:amos-tool-outcomes": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts"
+    "example:amos-tool-outcomes": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts",
+    "test:models:live": "RUN_MODEL_EXECUTION_LIVE=1 vitest run tests/integration/text/ModelExecution.live.integration.test.ts",
+    "example:purpose-models": "tsx examples/purpose-specific-models.ts",
+    "example:shared-budget": "tsx examples/shared-run-budget.ts",
+    "example:amos-helpers": "tsx apps/amos/examples/model-helpers-offline.ts"
   },
   "keywords": [
     "ai",

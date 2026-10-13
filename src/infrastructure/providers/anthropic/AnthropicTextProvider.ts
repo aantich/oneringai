@@ -3,6 +3,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { modelExecutionFetch, modelRequestOptions, registerModelTransport } from '../../../core/model-execution/ModelTask.js';
 import { BaseTextProvider } from '../base/BaseTextProvider.js';
 import { TextGenerateOptions, ModelCapabilities } from '../../../domain/interfaces/ITextProvider.js';
 import { LLMResponse } from '../../../domain/entities/Response.js';
@@ -81,7 +82,9 @@ export class AnthropicTextProvider extends BaseTextProvider {
       apiKey: this.getApiKey(),
       baseURL: this.getBaseURL(),
       maxRetries: this.getMaxRetries(),
+      fetch: modelExecutionFetch,
     });
+    registerModelTransport(this);
     this.converter = new AnthropicConverter();
     this.streamConverter = new AnthropicStreamConverter();
   }
@@ -128,8 +131,8 @@ export class AnthropicTextProvider extends BaseTextProvider {
         const aggregate = this.emptyAnthropicUsage();
         for (let continuation = 0; continuation <= MAX_SERVER_TOOL_CONTINUATIONS; continuation++) {
           const stream = usesBeta
-            ? this.client.beta.messages.stream(request)
-            : this.client.messages.stream(request);
+            ? this.client.beta.messages.stream(request, ...modelRequestOptions(options))
+            : this.client.messages.stream(request, ...modelRequestOptions(options));
           streamRef = stream;
           anthropicResponse = (await stream.finalMessage()) as unknown as Anthropic.Message;
           for (const block of anthropicResponse.content) {
@@ -213,8 +216,8 @@ export class AnthropicTextProvider extends BaseTextProvider {
         const hasStreamHelper =
           Boolean(options.native_tools?.length) && typeof messagesApi.stream === 'function';
         const stream = hasStreamHelper
-          ? messagesApi.stream(request)
-          : await messagesApi.create({ ...request, stream: true } as any);
+          ? messagesApi.stream(request, ...modelRequestOptions(options))
+          : await messagesApi.create({ ...request, stream: true } as any, ...modelRequestOptions(options));
         streamRef = stream;
         this.logger.debug(
           { model: options.model, duration: Date.now() - streamStartTime, continuation },

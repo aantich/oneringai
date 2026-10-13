@@ -6,7 +6,8 @@
   },
   "include": [
     "consumer.ts",
-    "stage02-consumer.ts"
+    "stage02-consumer.ts",
+    "stage06-consumer.ts"
   ],
   "exclude": []
 }

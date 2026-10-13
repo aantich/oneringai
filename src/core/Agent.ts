@@ -20,6 +20,7 @@ import { Tool, ToolCall, ToolCallState, ToolResult, AsyncToolConfig, PendingAsyn
 import { Content, ContentType } from '../domain/entities/Content.js';
 import { ToolTimeoutError, ToolPermissionDeniedError, ToolExecutionError } from '../domain/errors/AIErrors.js';
 import type { ToolExecutionOptions, ToolExecutionOutcome } from './tool-execution/outcomes.js';
+import { hasConflictingModelPricing, type ModelTask } from './model-execution/ModelTask.js';
 import { ToolManager } from './ToolManager.js';
 import { captureConnectorScope, sameConnectorScope } from './tool-execution/connectorScope.js';
 import type { HookConfig, HookName } from '../capabilities/agents/types/HookTypes.js';
@@ -175,6 +176,8 @@ export type AgentRuntimeConfigSnapshot = Pick<AgentConfig,
  * These override the agent-level config for this single invocation.
  */
 export interface RunOptions {
+  /** Explicit process-local budget/usage shared with helper or other agent calls. */
+  modelTask?: ModelTask;
   /** Vendor-agnostic thinking/reasoning configuration */
   thinking?: ThinkingConfig;
 
@@ -205,6 +208,7 @@ export interface RunOptions {
 
 /** Options for {@link Agent.rolloverContext}. */
 export interface AgentContextRolloverOptions {
+  modelTask?: ModelTask;
   /** Number of most-recent user turns to retain verbatim. Default: 8. */
   preserveRecentTurns?: number;
 
@@ -229,6 +233,8 @@ export interface AgentContextRolloverOptions {
 
 /** Options for a non-LLM execution owned by an external transport. */
 export interface ExternalExecutionOptions {
+  /** Observation only: external transports retain responsibility for admission. */
+  modelTask?: ModelTask;
   /** Stable label recorded in the execution context for observability. */
   source?: string;
 }
@@ -399,6 +405,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   private _paused = false;
   private _cancelled = false;
   private _executionAbort = new AbortController();
+  private _externalUsageCounts: Partial<Pick<TokenUsage, 'input_tokens' | 'output_tokens' | 'total_tokens'>> = {};
+  private _externalModelUsageMetadata: Partial<TokenUsage> = {};
+  private _externalMixedModelPricing = false;
   private _asyncAbort = new Map<string, AbortController>();
   private _pausePromise: Promise<void> | null = null;
   private _resumeCallback: (() => void) | null = null;
@@ -762,7 +771,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     options: AgentContextRolloverOptions = {},
   ): Promise<ContextRolloverResult> {
     assertNotDestroyed(this, 'roll over context');
-    const lease = this.acquireExecution('rollover');
+    const lease = this.acquireExecution('rollover', options.modelTask);
 
     try {
       await this.ensureSessionLoaded();
@@ -778,10 +787,22 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       }
 
       const summarize = options.summarize ?? (async (input: ContextRolloverSummaryInput) => {
+        const compactor = this._config.modelExecution?.helpers?.compactor;
+        if (compactor) {
+          const result = await this.invokeHelper<{ summary: string }>('compactor', () => formatRolloverSource(input), {
+            modelTask: this._activeModelTask,
+            contextTransfer: true,
+            maxOutputTokens: maxSummaryTokens,
+            schema: { type: 'object', properties: { summary: { type: 'string', minLength: 1 } }, required: ['summary'], additionalProperties: false },
+          });
+          return result.value.summary;
+        }
         const response = await this.runDirect(formatRolloverSource(input), {
           instructions: CONTEXT_ROLLOVER_SUMMARY_INSTRUCTIONS,
           includeTools: false,
           maxOutputTokens: maxSummaryTokens,
+          modelTask: this._activeModelTask,
+          purpose: 'compactor',
         });
         const summary = response.output_text?.trim();
         if (!summary) {
@@ -806,7 +827,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   }
 
   /** Acquire the Agent's single mutable execution slot without an async race. */
-  private acquireExecution(kind: AgentExecutionKind): AgentExecutionLease {
+  private acquireExecution(kind: AgentExecutionKind, modelTask?: ModelTask): AgentExecutionLease {
     if (this._executionOwner) {
       throw new Error(
         `Agent already has an active ${this._executionOwner.kind} execution`,
@@ -815,6 +836,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const lease = { kind, token: Symbol(kind) };
     this._executionOwner = lease;
     this._executionAbort = new AbortController();
+    try { this.beginModelTask(modelTask); this._modelExecutionSignal = this._executionAbort.signal; }
+    catch (error) { this._executionOwner = null; throw error; }
     return lease;
   }
 
@@ -822,6 +845,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   private releaseExecution(lease: AgentExecutionLease): void {
     if (this._executionOwner !== lease) return;
     this._executionOwner = null;
+    this.endModelTask();
     this.scheduleAsyncResultFlush();
   }
 
@@ -854,7 +878,10 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    */
   async beginExternalExecution(options: ExternalExecutionOptions = {}): Promise<string> {
     assertNotDestroyed(this, 'begin external execution');
-    const lease = this.acquireExecution('external');
+    const lease = this.acquireExecution('external', options.modelTask);
+    this._externalUsageCounts = {};
+    this._externalModelUsageMetadata = {};
+    this._externalMixedModelPricing = false;
     this._paused = false;
     this._cancelled = false;
     this._externalExecutionLease = lease;
@@ -977,9 +1004,32 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     return result;
   }
 
+  private observeExternalModelPricing(usage: Partial<TokenUsage>): void {
+    for (const key of ['processing_mode', 'service_tier', 'speed'] as const) {
+      const value = usage[key];
+      if (value !== undefined) {
+        const prior = this._externalModelUsageMetadata[key];
+        if (prior !== undefined && prior !== value) this._externalMixedModelPricing = true;
+        Object.assign(this._externalModelUsageMetadata, { [key]: value });
+      }
+    }
+    if (hasConflictingModelPricing(this._externalModelUsageMetadata)) this._externalMixedModelPricing = true;
+  }
+
   /** Add provider-reported usage to the active external execution. */
   recordExternalUsage(usage: Partial<TokenUsage>): void {
     if (!this._externalExecutionId || !this.executionContext) return;
+    for (const key of ['input_tokens', 'output_tokens', 'total_tokens'] as const) {
+      if (usage[key] !== undefined) this._externalUsageCounts[key] = (this._externalUsageCounts[key] ?? 0) + usage[key];
+    }
+    this.observeExternalModelPricing(usage);
+    if (usage.cache_creation_details) {
+      const previous = this._externalModelUsageMetadata.cache_creation_details;
+      this._externalModelUsageMetadata.cache_creation_details = {
+        short_ttl_input_tokens: (previous?.short_ttl_input_tokens ?? 0) + (usage.cache_creation_details.short_ttl_input_tokens ?? 0),
+        extended_ttl_input_tokens: (previous?.extended_ttl_input_tokens ?? 0) + (usage.cache_creation_details.extended_ttl_input_tokens ?? 0),
+      };
+    }
     const current = this.executionContext.metrics;
     this.executionContext.updateMetrics({
       inputTokens: current.inputTokens + (usage.input_tokens ?? 0),
@@ -1044,6 +1094,24 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     this.executionContext.updateMetrics({ totalDuration: duration });
 
     try {
+      if (result.usage) this.observeExternalModelPricing(result.usage);
+      // Legacy responses keep their zero-filled metrics. The task ledger only
+      // considers counts actually reported by the external backend.
+      const counts = { ...this._externalUsageCounts };
+      for (const key of ['input_tokens', 'output_tokens', 'total_tokens'] as const) {
+        if (result.usage?.[key] !== undefined) counts[key] = result.usage[key];
+      }
+      const knownUsage = counts.input_tokens !== undefined && counts.output_tokens !== undefined;
+      this._activeModelTask?.recordExternal({ id: executionId, purpose: 'external', connector: this.connector.name,
+        model: this.model, parentInvocationId: this._activeModelTask.id,
+        status: response.status === 'completed' ? 'succeeded' : response.status === 'cancelled' ? 'cancelled' : 'failed',
+        usage: knownUsage ? {
+          ...response.usage, ...this._externalModelUsageMetadata,
+          ...result.usage,
+          ...(this._externalMixedModelPricing ? { service_tier: 'mixed_external_tiers' } : {}),
+          input_tokens: counts.input_tokens!, output_tokens: counts.output_tokens!,
+          total_tokens: counts.total_tokens ?? counts.input_tokens! + counts.output_tokens!,
+        } : null });
       await this.hookManager.executeHooks('after:execution', {
         executionId,
         response,
@@ -1071,10 +1139,11 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    */
   private async _prepareExecution(
     input: string | InputItem[],
-    methodName: 'run' | 'stream'
+    methodName: 'run' | 'stream',
+    modelTask?: ModelTask,
   ): Promise<ExecutionSetup> {
     assertNotDestroyed(this, `${methodName} agent`);
-    const lease = this.acquireExecution(methodName);
+    const lease = this.acquireExecution(methodName, modelTask);
     this._paused = false;
     this._cancelled = false;
     if (methodName === 'stream') {
@@ -1378,7 +1447,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    */
   async run(input: string | InputItem[], options?: RunOptions): Promise<AgentResponse> {
     const { executionId, startTime, maxIterations, lease } =
-      await this._prepareExecution(input, 'run');
+      await this._prepareExecution(input, 'run', options?.modelTask);
     this._runOptions = options;
     this._pendingContinuationToken = options?.continuationToken;
 
@@ -1696,7 +1765,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         };
         this._applyInlineResponseFormat(suspendOptions);
         suspendOptions = this.validateManagedDispatch(suspendOptions);
-        const suspendResponse = await this._provider.generate(suspendOptions);
+        const suspendResponse = await this.generateTracked(suspendOptions, 'main', 'wrapup');
         this._agentContext.addAssistantResponse(suspendResponse.output);
         this._recordIterationMetrics(
           iteration + 1,
@@ -1787,7 +1856,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       };
       this._applyInlineResponseFormat(wrapUpOptions);
       wrapUpOptions = this.validateManagedDispatch(wrapUpOptions);
-      const wrapUpResponse = await this._provider.generate(wrapUpOptions);
+      const wrapUpResponse = await this.generateTracked(wrapUpOptions, 'main', 'wrapup');
 
       // Add the wrap-up response to context
       this._agentContext.addAssistantResponse(wrapUpResponse.output);
@@ -2072,7 +2141,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    */
   async *stream(input: string | InputItem[], options?: RunOptions): AsyncIterableIterator<StreamEvent> {
     const { executionId, startTime, maxIterations, lease } =
-      await this._prepareExecution(input, 'stream');
+      await this._prepareExecution(input, 'stream', options?.modelTask);
     this._runOptions = options;
     this._pendingContinuationToken = options?.continuationToken;
 
@@ -2437,7 +2506,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         wrapUpOptions = this.validateManagedDispatch(wrapUpOptions);
 
         // Stream the wrap-up response
-        for await (const event of this._provider.streamGenerate(wrapUpOptions)) {
+        for await (const event of this.streamTracked(wrapUpOptions, 'main', 'wrapup')) {
           if (isReasoningDelta(event)) {
             wrapUpStreamState.accumulateReasoningDelta(event.item_id, event.delta, {
               outputIndex: event.output_index,
@@ -2638,7 +2707,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
     const startedAt = Date.now();
     const dispatch = this.validateManagedDispatch(generateOptions, false);
-    const response = await this._provider.generate(dispatch);
+    const response = await this.generateTracked(dispatch, 'main', 'repair');
     this._recordAuxiliaryLLMMetrics(response, Date.now() - startedAt);
     return response;
   }
@@ -2786,7 +2855,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     try {
       generateOptions = this.validateManagedDispatch(generateOptions);
       // Call provider
-      const response = await this._provider.generate(generateOptions);
+      const response = await this.generateTracked(generateOptions);
 
       const llmDuration = Date.now() - llmStartTime;
 
@@ -2888,7 +2957,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     try {
       generateOptions = this.validateManagedDispatch(generateOptions);
       // Stream from provider
-      for await (const event of this._provider.streamGenerate(generateOptions)) {
+      for await (const event of this.streamTracked(generateOptions)) {
         // Update stream state based on event
         if (isReasoningDelta(event)) {
           streamState.accumulateReasoningDelta(event.item_id, event.delta, {
@@ -3853,6 +3922,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   cancel(reason?: string): void {
     this._cancelled = true;
     this._executionAbort.abort(new DOMException(reason || 'Manual cancellation', 'AbortError'));
+    this.cancelModelHelpers(new DOMException(reason || 'Manual cancellation', 'AbortError'));
 
     if (this.executionContext) {
       this.executionContext.cancelled = true;

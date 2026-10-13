@@ -52,6 +52,7 @@ describe('GoogleTextProvider', () => {
     it('should create GoogleGenAI client with API key', () => {
       expect(mockGoogleGenAI).toHaveBeenCalledWith({
         apiKey: 'test-google-api-key',
+        httpOptions: { fetch: expect.any(Function) },
       });
     });
   });

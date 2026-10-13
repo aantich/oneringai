@@ -50,6 +50,9 @@ import type { IContextStorage, ContextSessionMetadata } from '../domain/interfac
 import type { IConnectorRegistry } from '../domain/interfaces/IConnectorRegistry.js';
 import { StorageRegistry } from './StorageRegistry.js';
 import { ConnectorTools } from '../tools/connector/ConnectorTools.js';
+import { ModelTask } from './model-execution/ModelTask.js';
+import { generateModel, streamModel, invokeConfiguredHelper } from './model-execution/ModelExecutor.js';
+import type { ModelExecutionConfig, ModelTaskSnapshot, HelperRole, HelperInputContext, HelperCallOptions, HelperResult } from './model-execution/types.js';
 
 /**
  * Options for tool registration
@@ -201,6 +204,9 @@ export interface AgentLifecycleHooks {
  * Base configuration shared by all agent types
  */
 export interface BaseAgentConfig {
+  /** Optional, runtime-only helper roles and model-task accounting. Disabled by default. */
+  modelExecution?: ModelExecutionConfig;
+  dataHandling?: DataHandlingPolicy;
   /** Connector name or instance */
   connector: string | Connector;
 
@@ -275,6 +281,10 @@ export interface BaseAgentEvents {
  * Options for direct LLM calls (bypassing AgentContext).
  */
 export interface DirectCallOptions {
+  modelTask?: ModelTask;
+  signal?: AbortSignal;
+  /** Host-supplied accounting label; does not select a model or grant authority. */
+  purpose?: string;
   /** System instructions (optional) */
   instructions?: string;
 
@@ -369,6 +379,12 @@ export abstract class BaseAgent<
 
   // Provider for LLM calls - single instance shared by all methods
   protected _provider: ITextProvider;
+  protected _activeModelTask?: ModelTask;
+  protected _modelExecutionSignal?: AbortSignal;
+  private _ownsModelTask = false;
+  private _lastModelTask?: ModelTask;
+  private readonly _modelLifetimeAbort = new AbortController();
+  private readonly _helperControllers = new Set<AbortController>();
 
   // ===== Constructor =====
 
@@ -1054,8 +1070,8 @@ export abstract class BaseAgent<
     }
 
     const provider = this.getProvider();
-
     const generateOptions: TextGenerateOptions = {
+      signal: options.signal,
       model: this.model,
       input,
       instructions: options.instructions,
@@ -1074,13 +1090,14 @@ export abstract class BaseAgent<
       skipContextLimitCheck: options.skipContextLimitCheck,
     };
 
-    // Apply structured-output constraint (native or prompt fallback).
-    this.applyDirectResponseFormat(generateOptions, options.responseFormat);
-
-    this._logger.debug({ inputType: typeof input }, 'runDirect called');
+    const task = options.modelTask ?? (this._config.modelExecution ? new ModelTask({ limits: this._config.modelExecution.limits, signal: options.signal }) : undefined);
+    const ownedTask = !!task && !options.modelTask;
 
     try {
-      const response = await provider.generate(generateOptions);
+      // Keep preflight inside the owned task's cleanup boundary.
+      this.applyDirectResponseFormat(generateOptions, options.responseFormat);
+      this._logger.debug({ inputType: typeof input }, 'runDirect called');
+      const response = await this.generateTracked(generateOptions, options.purpose ?? 'main', 'generation', { task, signal: options.signal });
       if (options.responseFormat) {
         const enforcement = resolveStructuredStrategy(
           options.responseFormat,
@@ -1093,13 +1110,13 @@ export abstract class BaseAgent<
         // Re-ask tool-free, reusing the same (format-applied) options with a
         // repair prompt as the input.
         await this.coerceStructuredOutput(response, options.responseFormat, (repairInput) =>
-          provider.generate({
+          this.generateTracked({
             ...generateOptions,
             input: repairInput,
             tools: undefined,
             native_tools: undefined,
             tool_choice: undefined,
-          }),
+          }, options.purpose ?? 'main', 'repair', { task, signal: options.signal }),
         );
         response.structured_output_enforcement =
           response.output_text === before ? enforcement : 'repair';
@@ -1109,6 +1126,9 @@ export abstract class BaseAgent<
     } catch (error) {
       this._logger.error({ error: (error as Error).message }, 'runDirect failed');
       throw error;
+    } finally {
+      if (task) this._lastModelTask = task;
+      if (ownedTask) task!.destroy();
     }
   }
 
@@ -1139,9 +1159,8 @@ export abstract class BaseAgent<
       throw new Error('Agent has been destroyed');
     }
 
-    const provider = this.getProvider();
-
     const generateOptions: TextGenerateOptions = {
+      signal: options.signal,
       model: this.model,
       input,
       instructions: options.instructions,
@@ -1160,23 +1179,95 @@ export abstract class BaseAgent<
       skipContextLimitCheck: options.skipContextLimitCheck,
     };
 
-    // Apply structured-output constraint (native or prompt fallback). The
-    // streamed text is JSON; callers parse the accumulated output themselves
-    // (`output_parsed` is only attached on the non-streaming runDirect).
-    this.applyDirectResponseFormat(generateOptions, options.responseFormat);
-
-    this._logger.debug({ inputType: typeof input }, 'streamDirect called');
+    const task = options.modelTask ?? (this._config.modelExecution ? new ModelTask({ limits: this._config.modelExecution.limits, signal: options.signal }) : undefined);
+    const ownedTask = !!task && !options.modelTask;
 
     try {
-      yield* provider.streamGenerate(generateOptions);
+      // Streamed JSON is parsed by the caller; preflight still owns cleanup.
+      this.applyDirectResponseFormat(generateOptions, options.responseFormat);
+      this._logger.debug({ inputType: typeof input }, 'streamDirect called');
+      yield* this.streamTracked(generateOptions, options.purpose ?? 'main', 'generation', { task, signal: options.signal });
       this._logger.debug('streamDirect completed');
     } catch (error) {
       this._logger.error({ error: (error as Error).message }, 'streamDirect failed');
       throw error;
+    } finally {
+      if (task) this._lastModelTask = task;
+      if (ownedTask) task!.destroy();
     }
   }
 
   // ===== Structured Output (direct calls) =====
+
+  /** Read a detached diagnostic snapshot; no credentials, prompts or live authority. */
+  getModelUsage(): ModelTaskSnapshot | undefined { return (this._activeModelTask ?? this._lastModelTask)?.snapshot(); }
+
+  protected beginModelTask(task?: ModelTask): void {
+    this._activeModelTask = task ?? (this._config.modelExecution ? new ModelTask({ limits: this._config.modelExecution.limits }) : undefined);
+    this._ownsModelTask = !!this._activeModelTask && !task;
+  }
+
+  protected endModelTask(): void {
+    if (this._activeModelTask) this._lastModelTask = this._activeModelTask;
+    if (this._ownsModelTask) this._activeModelTask?.destroy();
+    this._activeModelTask = undefined; this._ownsModelTask = false; this._modelExecutionSignal = undefined;
+  }
+
+  protected cancelModelHelpers(reason: unknown): void {
+    for (const controller of this._helperControllers) controller.abort(reason);
+  }
+
+  protected generateTracked(options: TextGenerateOptions, purpose = 'main', phase: 'generation' | 'repair' | 'wrapup' = 'generation',
+    scope?: { task?: ModelTask; signal?: AbortSignal }): Promise<LLMResponse> {
+    const task = scope ? scope.task : this._activeModelTask;
+    const signal = scope ? scope.signal : this._modelExecutionSignal;
+    return generateModel(this._provider, this.connector, options, task, this._config.modelExecution, purpose, phase, task?.id,
+      task ? AbortSignal.any([this._modelLifetimeAbort.signal, ...(signal ? [signal] : [])]) : signal);
+  }
+
+  protected streamTracked(options: TextGenerateOptions, purpose = 'main', phase: 'generation' | 'repair' | 'wrapup' = 'generation',
+    scope?: { task?: ModelTask; signal?: AbortSignal }): AsyncIterableIterator<StreamEvent> {
+    const task = scope ? scope.task : this._activeModelTask;
+    const signal = scope ? scope.signal : this._modelExecutionSignal;
+    return streamModel(this._provider, this.connector, options, task, this._config.modelExecution, purpose, phase, task?.id,
+      task ? AbortSignal.any([this._modelLifetimeAbort.signal, ...(signal ? [signal] : [])]) : signal);
+  }
+
+  /** Invoke an explicitly configured, stateless helper without the main agent's tools or history. */
+  async invokeHelper<T = unknown>(role: HelperRole,
+    input: string | ((context: HelperInputContext) => string | Promise<string>), options: HelperCallOptions): Promise<HelperResult<T>> {
+    if (this._isDestroyed) throw new Error('Agent has been destroyed');
+    const profile = this._config.modelExecution?.helpers?.[role];
+    if (!profile) throw new Error(`Helper role '${role}' is not configured`);
+    const selectedProfile = structuredClone(profile);
+    const inheritedHandling = this._config.dataHandling;
+    if (inheritedHandling) {
+      selectedProfile.dataHandling = { ...inheritedHandling, ...selectedProfile.dataHandling };
+      for (const key of ['allowProviderCaching', 'allowBatchRetention', 'allowProviderTools', 'allowThirdPartyTools'] as const) {
+        if (inheritedHandling[key] === false) selectedProfile.dataHandling[key] = false;
+      }
+    }
+    const connector = this.resolveConnector(selectedProfile.connector);
+    if (options.contextTransfer && connector !== this.connector && !selectedProfile.allowContextTransfer) {
+      throw new Error('Compactor context transfer to another connector requires allowContextTransfer: true');
+    }
+    const task = options.modelTask ?? new ModelTask({ limits: this._config.modelExecution?.limits, signal: options.signal });
+    const ownedTask = !options.modelTask;
+    const controller = new AbortController();
+    this._helperControllers.add(controller);
+    let provider: ITextProvider | undefined;
+    try {
+      provider = createProvider(connector);
+      const signal = AbortSignal.any([controller.signal, this._modelLifetimeAbort.signal, ...(options.signal ? [options.signal] : [])]);
+      return await invokeConfiguredHelper<T>({ role, profile: selectedProfile, connector, provider, task, config: this._config.modelExecution,
+        input, options: { ...options, signal, parentInvocationId: options.parentInvocationId ?? task.id }, userId: this.userId });
+    } finally {
+      this._helperControllers.delete(controller);
+      this._lastModelTask = task;
+      if (ownedTask) task.destroy();
+      if (provider && provider !== connector.getOptions().provider && 'destroy' in provider && typeof provider.destroy === 'function') provider.destroy();
+    }
+  }
 
   /**
    * Apply a structured-output constraint to direct-call generate options,
@@ -1458,6 +1549,8 @@ export abstract class BaseAgent<
       return;
     }
     this._isDestroyed = true;
+    this._modelLifetimeAbort.abort(new DOMException('Agent destroyed', 'AbortError'));
+    this.endModelTask();
 
     this._logger.debug('Agent destroy started');
 

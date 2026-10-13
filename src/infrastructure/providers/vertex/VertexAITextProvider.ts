@@ -4,6 +4,7 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
+import { modelExecutionFetch, registerModelTransport } from '../../../core/model-execution/ModelTask.js';
 import { BaseTextProvider } from '../base/BaseTextProvider.js';
 import { TextGenerateOptions, ModelCapabilities } from '../../../domain/interfaces/ITextProvider.js';
 import { LLMResponse } from '../../../domain/entities/Response.js';
@@ -54,8 +55,10 @@ export class VertexAITextProvider extends BaseTextProvider {
 
     // Initialize client for Vertex AI
     this.client = new GoogleGenAI({
+      httpOptions: { fetch: modelExecutionFetch },
       // No API key for Vertex AI - uses Application Default Credentials
     });
+    registerModelTransport(this);
 
     // Reuse Google converter - same API format!
     this.converter = new GoogleConverter();
@@ -87,6 +90,7 @@ export class VertexAITextProvider extends BaseTextProvider {
           tools: googleRequest.tools,
           toolConfig: googleRequest.toolConfig,
           ...googleRequest.generationConfig,
+          ...(options.signal ? { abortSignal: options.signal } : {}),
         },
       });
       console.log(
@@ -129,6 +133,7 @@ export class VertexAITextProvider extends BaseTextProvider {
           tools: googleRequest.tools,
           toolConfig: googleRequest.toolConfig,
           ...googleRequest.generationConfig,
+          ...(options.signal ? { abortSignal: options.signal } : {}),
         },
       });
       console.log(

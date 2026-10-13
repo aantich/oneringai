@@ -327,6 +327,33 @@ Retrieve each source with its exact index key, including tier/collision suffix,
 before using its contents. `store_list` discovers entries omitted from the index.
 See [context preparation](docs/CONTEXT_PREPARATION.md) for fit errors and race handling.
 
+## Explicit helper models and task budgets
+
+Optional `modelExecution.helpers` configures `compactor`, `extractor`, and `verifier`
+through named connectors. `agent.invokeHelper(role, textOrBuilder, { schema, modelTask })`
+is stateless and tool-free; defaults are 512 output tokens and one local-schema
+repair. The main model stays fixed. A configured compactor is used only by explicit
+between-execution `rolloverContext()`; transfer to another connector requires
+`allowContextTransfer: true`.
+
+Share a host-owned `ModelTask` across managed/direct calls and helpers to share
+process-local call/token/deadline/model token-cost reservations. Sharing is
+explicit: a helper without `modelTask` owns an independent task even
+during another execution. Its schema compiler is scoped to that invocation.
+Google GenerateContent/Vertex thinking is inclusive in ledger output/cost counts;
+keep the legacy response/event fields intact. Missing/partial external usage
+stays unknown, and failed/cancelled outcomes are recorded separately from usage.
+Tracked request records are captured before admission. Google/Vertex candidate
+count multiplies output reservations and the aggregate per-call cap. Repair keeps
+the selected evidence and fails before dispatch on overflow. Mixed external pricing
+uncertainty survives final snapshots. Capacity-based reservations can be much larger
+than the prompt. Read `task.snapshot()` or
+`agent.getModelUsage()` alongside unknown-usage/cost counters; registry costs are
+estimates, external fees are excluded. Helpers/tasks are disabled by default;
+saved context does not restore task authority or role configuration. See the
+[complete recipe](docs/MODEL_TASKS_AND_HELPERS.md) before configuring hard limits,
+custom providers, cross-connector history transfer, or external usage reports.
+
 ## Long-term memory
 
 The memory layer is a standalone entity/fact knowledge system, not chat history
@@ -456,6 +483,7 @@ during application shutdown.
 | Complete usage guide | `USER_GUIDE.md` |
 | Public signatures | `API_REFERENCE.md` |
 | Connectors and every tool source | `docs/CONNECTOR_TOOL_CATALOG.md` |
+| Explicit helper models, shared model budgets and purpose usage | `docs/MODEL_TASKS_AND_HELPERS.md` |
 | Tool outcomes, cancellation, and connector deadlines/retries | `docs/TOOL_OUTCOMES_AND_CANCELLATION.md` |
 | Long-term memory | `docs/MEMORY_GUIDE.md` |
 | Memory API / security / predicates / ingestion | `docs/MEMORY_API.md`, `docs/MEMORY_PERMISSIONS.md`, `docs/MEMORY_PREDICATES.md`, `docs/MEMORY_SIGNALS.md` |

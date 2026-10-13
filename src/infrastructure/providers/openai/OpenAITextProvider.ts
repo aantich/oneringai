@@ -3,6 +3,7 @@
  */
 
 import OpenAI, { toFile } from 'openai';
+import { modelExecutionFetch, modelRequestOptions, registerModelTransport } from '../../../core/model-execution/ModelTask.js';
 import { createValidatedOpenAIAPIKeyProvider } from './OpenAIAuth.js';
 import { BaseTextProvider } from '../base/BaseTextProvider.js';
 import { TextGenerateOptions, ModelCapabilities } from '../../../domain/interfaces/ITextProvider.js';
@@ -78,7 +79,9 @@ export class OpenAITextProvider extends BaseTextProvider {
       project: config.project,
       timeout: this.getTimeout(),
       maxRetries: this.getMaxRetries(),
+      fetch: modelExecutionFetch,
     });
+    registerModelTransport(this);
 
     this.converter = new OpenAIResponsesConverter();
     this.streamConverter = new OpenAIResponsesStreamConverter();
@@ -165,7 +168,7 @@ export class OpenAITextProvider extends BaseTextProvider {
         const genStartTime = Date.now();
 
         // Call Responses API
-        const response = await this.client.responses.create(params as any);
+        const response = await this.client.responses.create(params as any, ...modelRequestOptions(options));
         this.logger.debug(
           { model: options.model, duration: Date.now() - genStartTime },
           'generate: response received',
@@ -253,7 +256,7 @@ export class OpenAITextProvider extends BaseTextProvider {
 
       // Call Responses API with streaming
       let streamRef: any;
-      const stream = await this.client.responses.create(params as any) as any;
+      const stream = await this.client.responses.create(params as any, ...modelRequestOptions(options)) as any;
       streamRef = stream;
       this.logger.debug(
         { model: options.model, duration: Date.now() - streamStartTime },

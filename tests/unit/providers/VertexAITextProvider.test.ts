@@ -117,7 +117,7 @@ describe('VertexAITextProvider', () => {
         location: 'us-central1',
       });
 
-      expect(mockGoogleGenAI).toHaveBeenCalledWith({});
+      expect(mockGoogleGenAI).toHaveBeenCalledWith({ httpOptions: { fetch: expect.any(Function) } });
     });
   });
 

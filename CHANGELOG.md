@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Stage 06 optional static compactor/extractor/verifier profiles, explicit text-only
+  schema-validated helpers, and shared process-local `ModelTask` budgets/usage.
+  Main-model selection remains fixed. Physical SDK retries, repairs and wrap-up
+  calls are accounted; unknown usage/prices remain explicit. Conservative capacity
+  reservations and deployment upper prices govern admission. Includes explicit
+  rollover integration, AMOS `/helpers`, offline examples and opt-in live checks.
+  No automatic compaction replacement, durable budget or package release is claimed.
+
 - Stage 02 additive `ToolManager.executeWithOutcome()`, execution options, semantic
   result/stream/error metadata, and original-call late-completion diagnostics.
   Optional connector whole-operation deadlines and safe read-only retry policy;
@@ -27,6 +35,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AMOS budget/breakdown revision and estimate labels, with complete overhead totals.
 
 ### Fixed
+
+- Stage 06 second-review corrections: aggregate Google/Vertex candidate output
+  admission, captured request data across asynchronous SDK setup, mixed external
+  pricing uncertainty preserved through final metadata, and helper repairs that
+  retain selected evidence and recheck input fit. Offline library/AMOS examples
+  demonstrate evidence-preserving repair; real-provider repair checks are opt-in.
+
+- Stage 06 review corrections: raw hosted-tool options obey monetary admission;
+  Google GenerateContent/Vertex thinking usage is normalized only in the ledger;
+  helper schema compilers and standalone tasks are isolated; terminal stream usage
+  survives errors/cancellation; direct task ownership is captured at admission.
+  External count availability and failed/cancelled outcomes remain explicit;
+  valid Anthropic extended-thinking helpers reuse provider preflight checks.
 
 - Explicit Anthropic named-tool requests advertise the selected local function
   while retaining native tools and history. Mismatched response tools raise the

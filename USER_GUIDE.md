@@ -18896,3 +18896,42 @@ switching. Later `auto`/`required` calls retain their normal tool set. To modify
 request options in both managed modes, mutate `context.options` in `before:llm`
 and return `{}`; streaming hook return semantics are unchanged. See the
 [selection contract and opt-in live example](docs/TOOL_OUTCOMES_AND_CANCELLATION.md#explicit-anthropic-tool-selection).
+
+
+## Model tasks and helper models (Stage 06)
+
+Optional `Agent.create({ modelExecution: { helpers: { extractor: {
+connector: 'helper-account', model: 'gpt-4o-mini' } } } })` keeps the main model
+fixed and enables an explicit `invokeHelper()` call. Helpers receive only a text
+packet, have no tools or provider continuation state, and require a locally
+validated JSON schema. Default helper output is 512 tokens with at most one repair;
+unsupported settings and oversize packets fail before dispatch.
+Schema IDs and compiler caches are isolated per invocation. Supported Anthropic
+extended thinking validates its mode and token budget before building the packet.
+Google GenerateContent/Vertex thinking is included in ledger output/cost totals
+and helper output checks; legacy provider response/event fields remain unchanged.
+
+Pass one host-owned `ModelTask` through `{ modelTask }` to managed/direct run and
+stream, helper calls, or explicit rollover to share reservations. Sharing is
+explicit: a helper without `modelTask` owns an independent task,
+even during another active execution. Missing or partial external usage stays
+unknown in the ledger; failed/cancelled external outcomes remain visible. Terminal
+stream usage survives later failure or cancellation without being counted twice.
+Tracked calls snapshot request records before admission. Google/Vertex candidate
+count multiplies output reservations and the configured aggregate per-call cap.
+Helper repairs retain selected evidence and fail before dispatch if the expanded
+packet cannot fit. Mixed external pricing remains unknown through final snapshots.
+Optional limits are calls, tokens, absolute deadline and estimated model token cost. Reservations
+use full provider input capacity plus bounded output, so large-window models need
+large temporary allowances. Unknown usage/prices remain explicit; external fees
+and distributed/external runtime admission are outside the guarantee. With no
+configuration, existing defaults, signatures, hooks and sessions remain unchanged.
+
+Read the [complete recipe](./docs/MODEL_TASKS_AND_HELPERS.md) for named connector
+setup, all options, cancellation/late settlement, registry versus upper-bound
+costs, helper fallback, external usage, ownership and save/load boundaries. Run
+`npm run example:purpose-models` and `npm run example:shared-budget` after a build
+for offline demonstrations; `--live` on the purpose example explicitly opts into
+billable OpenAI calls. AMOS adds `/helpers` configuration and usage inspection.
+Stage 06 is branch work, not an announced package release. Automatic structured
+compaction and comparative helper quality remain Stage 07 work.

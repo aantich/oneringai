@@ -1,0 +1,216 @@
+{
+  "protocol": "stage-06-second-review-v1",
+  "recordedAt": "2026-10-13T12:50:55.090Z",
+  "localDate": "2026-10-13",
+  "timezone": "Europe/Zurich",
+  "status": "review-complete-four-open-findings",
+  "findings": {
+    "P1": 2,
+    "P2": 2,
+    "total": 4
+  },
+  "branch": "version2",
+  "baseRevision": "dcc8dade2f53b0b73ee12d8feae5ae91abfe3593",
+  "scope": [
+    "Full uncommitted Stage 06 task/executor, Agent/BaseAgent integration",
+    "Provider fetch/signal/converter changes",
+    "AMOS commands/configuration/lifecycle",
+    "Public exports, compatibility consumers, tests, examples and documentation"
+  ],
+  "changesInThisReview": "Documentation, review evidence and package documentation inventory only; no runtime source or permanent test edits",
+  "runtimeTestFingerprintsUnchangedSinceCorrections": true,
+  "runtimeTestFilesChecked": 32,
+  "currentFocusedSuite": {
+    "files": 5,
+    "passed": 149,
+    "failed": 0,
+    "skipped": 0,
+    "logSHA256": "a32677a706c1837db9b8913fc2e42901c2c0fb6bf8919ddc497995314ed953cc",
+    "reportSHA256": "e387adbc7928a524f008c448228a01a8f7623c61e6fa105e86203054283a0061",
+    "perFile": [
+      {
+        "file": "tests/unit/providers/ModelExecutionTransport.test.ts",
+        "passed": 26
+      },
+      {
+        "file": "tests/unit/apps/amos/HelpersCommand.test.ts",
+        "passed": 14
+      },
+      {
+        "file": "tests/unit/apps/amos/ModelHelpersAdapter.test.ts",
+        "passed": 4
+      },
+      {
+        "file": "tests/unit/core/Agent.modelExecution.test.ts",
+        "passed": 65
+      },
+      {
+        "file": "tests/unit/core/ModelTask.test.ts",
+        "passed": 40
+      }
+    ]
+  },
+  "observations": [
+    {
+      "finding": "S1",
+      "issue": "Multi-candidate output exceeds the single-output reservation",
+      "wireCandidateCount": 3,
+      "requestedOutputPerCandidate": 4096,
+      "limits": {
+        "maxTokens": 1052672,
+        "maxCostUSD": 0.3248128
+      },
+      "totals": {
+        "calls": 1,
+        "inputTokens": 1044480,
+        "outputTokens": 12288,
+        "totalTokens": 1056768,
+        "cachedInputTokens": 0,
+        "reasoningTokens": 0,
+        "knownModelCostUSD": 0.34406400000000004,
+        "unknownUsageInvocations": 0,
+        "unknownCostInvocations": 0,
+        "unknownChargeAttempts": 0,
+        "chargedTokens": 1056768,
+        "chargedCostUSD": 0.34406400000000004
+      },
+      "note": "Actual installed Google SDK, mocked HTTP and synthetic reported usage. Each candidate fits input+output capacity; no real large prompt or billable request."
+    },
+    {
+      "finding": "S2",
+      "issue": "Post-admission mutation adds raw hosted tools under maxCostUSD",
+      "toolsDispatched": [
+        {
+          "type": "web_search_preview"
+        }
+      ],
+      "calls": 1,
+      "monetaryLimit": 1,
+      "result": "completed without admission rejection",
+      "note": "Actual installed OpenAI SDK and mocked HTTP; no real hosted tool execution or billable request."
+    },
+    {
+      "finding": "S3",
+      "issue": "Final metadata erases observed mixed pricing uncertainty",
+      "observedTiers": [
+        "standard",
+        "priority"
+      ],
+      "finalTier": "standard",
+      "modelCostUSD": 0.000009,
+      "unknownCostInvocations": 0,
+      "subsequentBoundedCallAdmitted": true,
+      "callsAfterSubsequent": 2
+    },
+    {
+      "finding": "S4",
+      "issue": "Repair drops original explicit evidence",
+      "firstCallHasSource": true,
+      "repairCallHasSource": false,
+      "repairedValue": {
+        "answer": "SOURCE_UNAVAILABLE"
+      },
+      "validation": [
+        "failed",
+        "passed"
+      ],
+      "note": "Controlled provider demonstrates packet loss and schema-only acceptance; no claim about real model hallucination rates."
+    }
+  ],
+  "externalSpecification": {
+    "url": "https://ai.google.dev/api/generate-content#v1beta.GenerationConfig",
+    "accessed": "2026-10-13",
+    "scope": "candidateCount controls response multiplicity; maxOutputTokens is a per-candidate cap. Budget-overrun conclusion comes from repository code and mocked SDK fixture, not the external source."
+  },
+  "reproductions": {
+    "scriptPath": "/tmp/oneringai-stage06-second-review-repros.mts",
+    "scriptSHA256": "8db8381e0ead095253cd3704372d6c31fa6933c1f4e68616ffdbdd6a484eee78",
+    "logSHA256": "99e5e74c0c61b4df8450e2eafb151c1d370f7f61e5e0df5808fea44bc7798b2f",
+    "reportSHA256": "367535e9cd203637db224002741b18a633ae29d60db06e328e4a5b2d69364ba8",
+    "status": "all-four-reproduced",
+    "actualInstalledSDKs": [
+      "OpenAI Responses",
+      "Google GenerateContent"
+    ],
+    "otherFixtures": [
+      "Controlled external execution",
+      "Controlled schema-invalid helper and evidence-dependent repair"
+    ],
+    "envLoaded": false,
+    "credentials": "Dummy offline fixture values only",
+    "realProviderNetworkRequests": 0,
+    "billableLLMCalls": 0,
+    "limitations": [
+      "Synthetic wire usage for multi-candidate request; no real large-prompt tokenization/invoice test",
+      "Repair fixture establishes loss of source packet and schema-only acceptance, not a real-model hallucination frequency"
+    ]
+  },
+  "priorValidation": {
+    "record": "STAGE_06_CORRECTIONS_VALIDATION.json",
+    "unchangedSHA256": "32820ad1ca2f5da96e783eb346618d12efe0b7d57028ed13ae212482ea226584",
+    "unit": "7179 tests / 339 files passed in previous corrective pass",
+    "live": "45 cases / 57 scenarios passed in previous corrective pass",
+    "scope": "Not rerun during this review. Fresh focused regression and targeted reproductions performed; prior passing checks do not cover these four cases."
+  },
+  "compatibilityAssessment": "Narrow fixes can preserve existing public signatures/defaults, usage/events, saved state and unbounded vendor options. No breaking API change proposed or approved.",
+  "recommendedFixOrder": [
+    "S1 output multiplicity and S2 admitted request snapshot",
+    "S3 sticky external pricing uncertainty",
+    "S4 evidence-preserving bounded repair",
+    "Permanent regression coverage, documentation/examples/AMOS updates, full local and relevant live revalidation"
+  ],
+  "sourceTestSHA256": {
+    "apps/amos/src/agent/AgentRunner.ts": "26803af5db2ee3ba6d341cdde716b72e89cea8820f7ff41437f040d39bcd1c17",
+    "apps/amos/src/app.ts": "39287c18ad3422a28c71ca5080953481fae880cae12f07f88a61ecd7330e3610",
+    "apps/amos/src/commands/commands/index.ts": "dc7177518b7326bce0b333a4fb16310ed44b8423e80a898a7401bbaea5e7ce5f",
+    "apps/amos/src/config/types.ts": "1994919d164b8110e331f117aed2beca0796209743ac81c62ee63eb6ea8e61f5",
+    "src/core/Agent.ts": "f5c8c6b9b39de0774fdb675db6c0894101d37286448f809bceb89f017a098332",
+    "src/core/BaseAgent.ts": "0184fb590f91b94b34f4406971b255ef0a62ce264161fda15812ef3cb882b69d",
+    "src/core/index.ts": "8c787b62f9fb7c46a622043a590b94d4344d240afd14fd95368fe6d9897540e8",
+    "src/domain/interfaces/ITextProvider.ts": "043e4f2d6c80fc7c5c26ede4b22db18d736354572266c2a650ff0840665e7499",
+    "src/index.ts": "10abb2a8c66c01efc012c056030f87f85ee4a29e5b2f1c17fccdec4bc675ed74",
+    "src/infrastructure/providers/anthropic/AnthropicTextProvider.ts": "583274358d9f24e7f78405831a71c288a2690b76fd7e14f8f748e0e63ca507d7",
+    "src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts": "179a04543f51e23104366351d6ec714676e4194bdb381ea78ebbd732f131dd80",
+    "src/infrastructure/providers/google/GoogleConverter.ts": "b8fa83ae2550f13a04d1c3fb870a6d56fe250977312b595c1cef33947809218f",
+    "src/infrastructure/providers/google/GoogleStreamConverter.ts": "a00f5d78ae6af0dd59535a2b3b7699c57554bbda461679e8b345a56c419cd7d7",
+    "src/infrastructure/providers/google/GoogleTextProvider.ts": "25257eefb3c6b609d73e59754424bd1da390987e04d2e4c9378dfc2cb3a89e64",
+    "src/infrastructure/providers/openai/OpenAITextProvider.ts": "34a8c06a4a368a993973d9a124d20dd26e78b9e8e9ca8a2f8f9139e6e54023e4",
+    "src/infrastructure/providers/vertex/VertexAITextProvider.ts": "cf22d1f9e1cd42a07d89248baf792a48318290ca22b5967ccded37ba5f00ffb1",
+    "src/tools/registry.generated.ts": "d9fd2d0ea37dc29f4822f49db39f0c318d86c6bf902bdce2ff6bf8de98136a28",
+    "tests/fixtures/agentic-baseline/tsconfig.json": "c8dc6bc4a0b6d8d33574f4c8019bc64f65b2d06f67524b02ec7c0676435a872f",
+    "tests/unit/providers/GoogleTextProvider.test.ts": "1595305c3d1f12f599433beb9f0d699ce06a1f91acc0995b04c4479c943dbd24",
+    "tests/unit/providers/VertexAITextProvider.test.ts": "17e17bb515dce0c4bff5e75b29b1e204c0a4c05b1946b9e8485e9aec11cb0ddc",
+    "apps/amos/examples/model-helpers-offline.ts": "91eae3e760fab571aa3273701ae953d273b149d745c0980dc01275b04c62e992",
+    "apps/amos/src/commands/commands/HelpersCommand.ts": "272408949be1216182d4840e31783a08fd84acc0520661cf5db3bd8860177dcd",
+    "src/core/model-execution/ModelExecutor.ts": "99d0e1b866dd12dd3ee1655bc84bba5c9b5b525e7244642ca0e38d6a48fabcd8",
+    "src/core/model-execution/ModelTask.ts": "92c06f7fae864c9827722cb6e59adbde31e4a662fdbd08cd57d0c47704b1fb1a",
+    "src/core/model-execution/types.ts": "54439abbea2d327be3f7c01dd18284fc223d79a86501ce308fe99a1fa2dda684",
+    "tests/fixtures/agentic-baseline/stage06-consumer.ts": "0a87aafdad3bf51c7c9c6a6e456f2dc38e4f2b7625a2265e0371160aa3205fb6",
+    "tests/integration/text/ModelExecution.live.integration.test.ts": "d2733897e32c9eb0de28fae8628640b218397a9f255e53050c3cf175fff079a6",
+    "tests/unit/apps/amos/HelpersCommand.test.ts": "cb1e629c58d7996386fb585df6901b94ace4c5d3166ff016af40033d40441ba9",
+    "tests/unit/apps/amos/ModelHelpersAdapter.test.ts": "58c4b859aeb39ad5e837cfe9e8794b2dc860e5aabdc1861da93ecc2f788c81f3",
+    "tests/unit/core/Agent.modelExecution.test.ts": "a49ed22a9386d5960920584c6d5a888a0790be4c93a1c6316602d6b78d825090",
+    "tests/unit/core/ModelTask.test.ts": "74cf608418695d4db8b7247a1d9ff4388ab86ad72379cca54efdfc193ef64889",
+    "tests/unit/providers/ModelExecutionTransport.test.ts": "1291ff2bd484f46309b04c4424a43bda5cb467b8aee34c3d1b03cffe09c4e0b3"
+  },
+  "artifactChecks": {
+    "status": "passed",
+    "gitDiffCheck": "passed",
+    "reviewedMarkdownLocalLinksAndFences": "passed",
+    "runtimeTestFingerprints": "unchanged and matched",
+    "packageDryRun": {
+      "files": 122,
+      "requiredIncluded": [
+        "docs/designs/STAGE_06_SECOND_REVIEW.md",
+        "docs/evaluations/STAGE_06_SECOND_REVIEW.json"
+      ],
+      "envIncluded": false,
+      "lifecycleScripts": "disabled"
+    },
+    "credentialScan": {
+      "files": 129,
+      "matchingValues": 0,
+      "note": "Only the artifact scanner parsed .env; reproductions and focused tests did not load credentials. No values or credential hashes printed."
+    }
+  }
+}

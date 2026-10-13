@@ -39,6 +39,7 @@ On first run, you'll be prompted to configure an API key.
 | Command | Alias | Description |
 |---------|-------|-------------|
 | `/help` | | Show all commands |
+| `/helpers [sub]` | `/helper` | Configure explicit helper models, invoke them and inspect purpose usage |
 | `/model [name]` | `/m` | List or switch models |
 | `/astra <sub>` | `/gpt6` | Use Astra and demonstrate its Responses APIs |
 | `/vendor [name]` | | List or switch vendors |
@@ -232,3 +233,60 @@ Stage 02 corrective validation also covers throwing background event observers,
 early stream return, queued result scope changes, and connector clone/deadline handling.
 These library fixes preserve AMOS's existing progress presentation; the offline outcome
 example and adapter tests remain the app demonstration and validation.
+
+
+## Helper models (Stage 06)
+
+Helpers and task tracking are disabled in existing configurations. `/helpers`
+shows configuration and explains extra requests before enabling a role. The main
+agent model and its tool manager remain fixed. Configure accessible named connectors
+with `/connector` first, then use active model IDs from the same vendor:
+
+```text
+/helpers
+/helpers set extractor <connector-name> gpt-4o-mini
+/helpers run extractor Extract the exact identifier ALPHA_6 into answer.
+/helpers usage
+/helpers set compactor <connector-name> gpt-4o-mini
+/helpers compact
+/helpers budget 6 3000000
+/helpers off extractor
+/helpers off
+```
+
+Use a matching model for each connector; `[effort]` is optional after the model and
+must be supported. Setting a role makes no model requests. Explicit helper use can
+make one extra request plus at most one JSON repair, with normal SDK retries also
+charged to the budget. Selecting a compactor authorizes older conversation text
+transfer to its connector. `/helpers compact` performs the existing explicit
+rollover and preserves two recent turns; it can be a no-op with no helper call.
+Automatic compaction remains algorithmic.
+
+`/helpers usage` reports the current/latest task's purpose, connector/model,
+validation, known token/cost subtotals and unknown/pending counts. Budget settings
+apply separately to each operation, including normal agent runs; AMOS does not
+share one task across independent commands. Token reservations use full provider
+capacity and can exceed prompt estimates substantially. Ledger totals cover model
+tokens including Google GenerateContent/Vertex thinking; public provider response
+counts keep their legacy shape. Failed/cancelled streams retain any terminal usage
+already received, and missing external counts remain unknown. Repeated helper
+schema IDs are safe across commands. These review corrections use the existing
+helper/usage commands and require no configuration migration. Cost estimates cover model
+tokens, not external service fees. Configuration changes are blocked while the
+runner is busy, preserve the session, and roll back if application fails. Old
+configuration files/session state still load without enabling helpers. Static
+profiles contain connector names, not credentials; runtime budget state is not
+saved or restored. Full `/helpers off` disables tracking, while `off <role>` leaves
+other roles and configured limits intact.
+
+The [library recipe](../../docs/MODEL_TASKS_AND_HELPERS.md) documents all limits,
+unsupported paths, ownership, data handling, cancellation and examples. Small
+synthetic/live checks do not establish model quality or cost savings.
+
+Run `npm run example:amos-helpers` from the repository root after building for a
+deterministic walkthrough of the actual command and runner. It prints help, sets
+an extractor, repairs a deliberate schema failure while preserving `ALPHA_6`,
+displays both validation outcomes and disables helpers.
+It uses synthetic responses/usage, writes no user configuration and cleans up its
+runner and connector. Current output: [repair walkthrough](../../docs/evaluations/STAGE_06_SECOND_AMOS_OFFLINE.txt).
+The [original transcript](../../docs/evaluations/STAGE_06_AMOS_OFFLINE.txt) remains historical evidence.

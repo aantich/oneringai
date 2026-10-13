@@ -6,12 +6,14 @@ the standard documentation before release. Read the
 [architecture roadmap](./designs/AGENTIC_ARCHITECTURE_EVOLUTION.md) for implementation
 scope, dependencies, research, and acceptance criteria.
 
-- **Status:** Work in progress; stages 00–02 delivered and validated on branch. The OpenAI retrieval and Anthropic named-tool corrections pass local checks and the full OpenAI/Anthropic/Google Stage 00–02 live suite. No package release is claimed.
-- **Created / last updated:** 2026-10-07 / 2026-10-12.
+- **Status:** Work in progress; stages 00–02 and 06 complete on branch. All Stage 06 review corrections pass local and real-provider checks. No package release is claimed.
+- **Stage 06 review:** All findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion](./designs/STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
+- **Created / last updated:** 2026-10-07 / 2026-10-13.
 - **Repository package version at creation:** `1.2.0`.
 - **Completed implementation stages:** 00 — evaluation and compatibility baselines;
   01 — fresh request accounting and safe compaction;
-  02 — tool outcomes and per-execution cancellation.
+  02 — tool outcomes and per-execution cancellation;
+  06 — explicit helper roles and process-local model tasks/budgets.
 - **Version 2 release:** Not announced by this document.
 
 “Version 2” names the development initiative. It does not mean that an npm `2.0.0`
@@ -257,29 +259,37 @@ attempts remain in the [validation evidence](./evaluations/STAGE_02_VALIDATION.j
 
 ## A main model with bounded helper models
 
-**Availability: Planned — stage 06.**
+**Availability: Available on branch — stage 06.** Validated on 2026-10-13 in the
+`version2` working tree based on `dcc8dad`; changes are uncommitted and no package
+release is claimed.
 
-The first multi-model capability keeps the main model fixed for an execution and
-adds explicit helper invocations. Compaction is the first intended helper role;
-extraction can be added when selected and validated. Automatic switching of the
-main provider during a trajectory is a conditional extension, not a prerequisite.
+Optional `modelExecution.helpers` configures stateless `compactor`, `extractor`
+and `verifier` roles through named connectors. `invokeHelper()` accepts an explicit
+text packet or a builder invoked after model/capability resolution, plus a host
+JSON schema. Helpers have no tools, history or opaque provider state. The main
+model and shared ToolManager remain fixed. Defaults are 512 output tokens and at
+most one locally validated repair; escalation requires an explicit host decision.
 
-A helper uses a named connector and a supported model configuration. Credentials
-remain in the connector, and capabilities must be checked before unsupported
-settings or oversized input reach a provider. A helper does not acquire the main
-agent's entire tool authority merely because it processes some of its context.
+Share a host-owned `ModelTask` through `{ modelTask }` for managed/direct calls,
+helpers and explicit rollover. It reserves call/token/deadline and model token-cost
+capacity across concurrent in-process calls, counts physical SDK retries and
+logical repair/wrap-up invocations, and reports known usage once with explicit
+unknowns. Reservations use full provider capacity, so a small prompt can still
+need a large temporary allowance. Cost bounds apply to model tokens under known
+upper rates; external fees and external-runtime admission remain host-owned.
 
-Usage reporting must include helper calls, retries, repairs, and any other model
-work in the selected task scope, counted once. Missing prices or usage are unknown,
-not zero. A hard monetary ceiling requires a conservative, known estimate; token,
-call, and time limits remain useful when price information is unavailable. External
-service fees must be distinguished from model usage. Background work needs its own
-explicit budget and lifecycle.
+A configured compactor is used by explicit `rolloverContext()` between executions.
+Cross-connector history transfer requires `allowContextTransfer: true`. Algorithmic
+automatic compaction remains unchanged; Stage 07 supplies structured strategies
+and measured comparisons later. No helper is invoked by merely configuring a role.
 
-**Adoption material to add at delivery:** Public helper-role configuration; named
-connector examples; supported options and capability failures; budget and fallback
-behavior; all-call usage reporting; a measured quality/cost comparison; AMOS role
-and usage settings. Model choices and prices must be checked at publication time.
+The [complete recipe](./MODEL_TASKS_AND_HELPERS.md) covers public options, defaults,
+unknown pricing, scope, failures, cancellation, persistence and support boundaries.
+Run `npm run example:purpose-models` and `npm run example:shared-budget` after
+building for offline demonstrations. The purpose example's explicit `-- --live`
+mode uses `gpt-4.1` plus `gpt-4o-mini` and `.env` OpenAI credentials; small marker
+checks make no comparative quality/cost claim. AMOS adds `/helpers` role selection,
+explicit calls/rollover and purpose usage, plus an offline command walkthrough.
 
 ## Task state that survives compaction
 
@@ -400,7 +410,7 @@ revision, version, or link only when that evidence exists.
 | 03 | Evidence references and projections | Core | Planned | — | — | — |
 | 04 | Task-state view and protected constraints | Core | Planned | — | — | — |
 | 05 | Typed context and selective assembly | Conditional | Conditional / deferred | — | — | — |
-| 06 | Helper roles and task budgets | Core | Planned | — | — | — |
+| 06 | Helper roles and task budgets | Core | Complete on branch; all review corrections validated | `version2` working tree, base `dcc8dad` (uncommitted); latest full local/live gates passed 2026-10-13 | — | [Recipe](./MODEL_TASKS_AND_HELPERS.md); [purpose example](../examples/purpose-specific-models.ts); [budget example](../examples/shared-run-budget.ts) |
 | 07 | Structured summaries and observation masking | Core | Planned | — | — | — |
 | 08 | Episodic retrieval and ingestion | Conditional | Conditional / deferred | — | — | — |
 | 09 | Ranked tool discovery | Conditional | Conditional / deferred | — | — | — |
@@ -783,6 +793,137 @@ failure, correct tool/status correlation, repeated execution, and direct API pro
   reliability or comparative model-quality claim. Stage 06 still requires
   separate authorization.
 
+### Stage 06 adoption record — 2026-10-13
+
+**Review status:** The [subsequent review](./designs/STAGE_06_REVIEW_AND_FIX_PLAN.md)
+reproduced eight defects absent from the original passing suite. All eight are
+fixed and validated in the [corrective evidence](./evaluations/STAGE_06_CORRECTIONS_VALIDATION.json).
+The original validation below remains historical; the corrective adoption record
+following it gives current totals and support details.
+
+- **Scope:** Optional static role profiles and a shared process-local model task;
+  explicit helpers/rollover and AMOS controls. No main-model routing, new context
+  framework, automatic summary strategy or distributed budget.
+- **Public APIs:** `ModelTask`, `ModelBudgetExceededError`, `HelperOutputError`, role/
+  configuration/result/snapshot types; optional `modelExecution` and `modelTask`;
+  `agent.invokeHelper()` and `getModelUsage()`. All root package exports are additive.
+- **Defaults and adoption:** Omitted configuration preserves old single-model
+  behavior with no new calls/tools/prompt content. Helpers require named connectors,
+  a text packet and a synchronous schema. Output defaults to 512 tokens, at most
+  one repair. Share the same task explicitly to aggregate calls; otherwise enabled
+  configuration creates owned per-execution tasks. Main provider and tools stay fixed.
+- **Accounting and failures:** Physical built-in SDK attempts are admitted separately;
+  logical usage is copied before hook/repair mutation. Unknown charges remain
+  conservatively reserved; known cache/reasoning subsets are not double-counted.
+  Host price bounds survive settlement. Unsupported capability/scope, malformed
+  output, deadlines and budget exhaustion fail explicitly. Late settlements remain
+  diagnostic on their original task. External final usage is recorded once; mixed
+  pricing remains unknown and external admission is outside local enforcement.
+- **Persistence/compatibility:** Context, old AMOS configuration/session loading,
+  events, raw returns and custom provider signatures remain compatible. Reapply
+  profiles from trusted host configuration; neither snapshots nor context hydration
+  restore task authority. No break was required or approved.
+- **Support:** Native OneRingAI run/stream/direct/repair/wrap-up and helpers integrate.
+  OpenAI/Anthropic/Google are live-tested; Vertex/DeepSeek/inherited OpenAI-compatible
+  adapters have local regressions. Injected providers need a single-attempt host
+  attestation for hard limits. External SDK internals, batches/media and raw provider
+  use remain outside automatic admission. Service fees and invoice accuracy are
+  not model token-cost guarantees.
+- **Examples/AMOS:** Public offline extract/main/verify and concurrent-budget demos;
+  opt-in OpenAI stronger-main/smaller-helper example; AMOS `/helpers` with no-call
+  profile changes, busy/rollback handling, usage/unknown display and explicit rollover.
+  Static connector names, not keys, are persisted. Independent commands have separate tasks.
+- **Validation:** **339 files / 7,131 unit tests**, including **101 new Stage 06
+  tests**, pass. Final live suites pass **42 cases / 54 distinct scenarios** across
+  OpenAI, Anthropic and Google, with zero failures/skips in those final runs.
+  Scoped new-runtime-module coverage is **97.93% lines / 84.97% branches**. Build/24
+  exports, strict/source/examples/AMOS types, lint, original/additive public
+  consumers, generated API (1,640 items), AMOS build, public offline/live examples,
+  package inventory and artifact checks pass. See [evidence](./evaluations/STAGE_06_VALIDATION.json).
+  Earlier Google development-chat exact-text failures include unrelated model
+  output; wire checks found no request defect and the subsequent unchanged full
+  suite passed. Those failures remain evidence, not a claimed model reliability fix.
+  No published release, statistically measured reliability or comparative quality claim.
+- **Next:** Separately authorize Stage 03 — acknowledged evidence references and
+  projections. Stage 07 structured compaction follows Stage 03 and Stage 06.
+
+### Stage 06 corrective adoption record — 2026-10-13
+
+- **Availability:** All R1–R8 fixes are available on the uncommitted `version2`
+  branch, base `dcc8dad`; no release or breaking API change.
+- **Budget/accounting:** The cost guard covers raw hosted-tool/MCP aliases and
+  nested request configurations. Tier overrides require host price bounds.
+  Google GenerateContent/Vertex output is inclusive of thinking in the ledger and
+  helper output checks, with legacy response/event counts preserved. Terminal
+  stream usage survives subsequent failure/cancellation; unknown retry charges
+  remain reserved and duplicate conflicting terminal reports fail explicitly.
+- **Helpers/lifecycle:** Ajv is invocation-scoped; IDs/local references/formats
+  work without a global schema registry or clone retention. Standalone helpers
+  own independent tasks even during a main execution; pass `modelTask` explicitly
+  to share. Direct cleanup preserves caller ownership despite options mutation.
+  Anthropic extended thinking is supported with provider mode/budget preflight.
+- **External usage:** Empty/metadata-only/partial core counts stay unknown.
+  Explicit zero counts and split incremental counts work; final fields override
+  accumulated counterparts. `recordExternal` adds optional outcome `status`,
+  defaulting to `succeeded`; Agent completion records actual failure/cancellation.
+  Legacy response defaults and external host-owned admission remain unchanged.
+- **Validation:** **7,179 units / 339 files**, including **149 Stage 06 cases**
+  and **48 corrective regressions**; **45 live cases / 57 distinct scenarios**
+  across OpenAI/Anthropic/Google, with no failures/skips in final runs. Scoped
+  runtime coverage: **98.14% lines / 88.34% branches**. Build/exports, all type/lint,
+  built-package compatibility, generated API, examples and AMOS checks pass.
+  The initial two new Google thinking fixtures returned prose instead of the
+  requested numeral. Explicit native-JSON fixtures now validate the exact answer
+  and accounting. Those failures and all earlier evidence remain recorded;
+  established gates were not weakened and no reliability rate is claimed.
+- **Handoff/AMOS:** Recipe, standard docs, generated API, example/index and AMOS
+  support notes, release notes and package inventory are synchronized. Existing
+  AMOS helper/usage commands require no new UI; adapter/command tests and the
+  offline walkthrough pass against the corrected runtime. Stage 03 remains next
+  and separately authorized; Stage 07 automatic compaction is deferred.
+
+### Stage 06 second review — 2026-10-13
+
+The [second review](./designs/STAGE_06_SECOND_REVIEW.md) reproduces four further
+gaps: multi-candidate output reservations, post-admission vendor-option mutation,
+final external metadata overwriting mixed pricing, and helper repair losing its
+original packet. All 149 focused tests passed at that snapshot; the missing cases are documented
+in [review evidence](./evaluations/STAGE_06_SECOND_REVIEW.json). Runtime/test
+fingerprints match the prior corrective pass. No production fix, new stage or
+breaking change was implemented in that review. The subsequent corrective adoption
+below records their resolution; prior validation remains historical evidence.
+
+### Stage 06 second corrective adoption — 2026-10-13
+
+All S1–S4 findings are fixed and validated. Google/Vertex reservations include all
+candidates; the optional per-call output cap is aggregate. Without an explicit
+per-candidate limit, divide that cap by candidate count and round down; preserve
+explicit limits/counts and reject excessive or unsafe bounds. Tracked requests
+capture records/arrays before admission while preserving live signals, registries
+and opaque SDK values. Default untracked behavior remains unchanged.
+
+Mixed external pricing uncertainty survives final metadata/count snapshots;
+contradictory/composite modes cannot receive a known registry cost. Helper repair
+retains the selected evidence and rechecks its complete input fit, without extra
+history, silent trimming or additional retries. Public signatures, legacy returns/
+events, old sessions and host task ownership remain compatible. No API break was
+needed. Internal request capture and pricing normalization add no public API.
+
+Current validation: **7,228 units / 339 files**, including **198 Stage 06 cases**
+and **49 second-pass regressions**; **48 live cases / 60 scenarios** across
+OpenAI/Anthropic/Google, with no final failures/skips. Scoped runtime coverage is
+**98.24% lines / 90.10% branches**. Build/exports, all static/consumer checks,
+generated API, examples and AMOS gates pass. Three new controlled helper-repair
+cases use real model calls; the library and AMOS offline demos now exercise
+deliberate schema repair with preserved source IDs. Earlier failed/passing records
+remain history. See [second corrective evidence](./evaluations/STAGE_06_SECOND_CORRECTIONS_VALIDATION.json).
+
+The recipe, standard guides, generated API, examples/index, AMOS guide/transcript,
+Changelog and package inventory are synchronized. Existing AMOS helper/usage
+commands demonstrate the fixes; no additional command or config migration is
+needed. Availability remains branch-only, with no release or comparative model
+quality/savings claim. Stage 03 remains separately authorized.
+
 ## Handoff to the standard documentation
 
 This ledger prevents improvements, changed guarantees, and limitations from being
@@ -807,7 +948,9 @@ incorrect usage instructions in place.
 | 01 second corrective pass: initial constraints and spill collisions | Existing memory key allocation, partial-write retry limits, known schema/native/capacity preparation, additive adapter options, error accounting, and AMOS inspection. | Preparation guide; README; User Guide; generated API; agent instructions; example/index; AMOS; Changelog; second review and validation record inventory. | Synced on 2026-10-08; 6,895 unit tests and 40 live scenarios pass; prior records retained; no release claimed. |
 | 03, 07: evidence and summaries | Evidence recovery, acknowledgment/retention, save/load, summaries, failure, defaults, and adoption. | README; User Guide; generated API; large-result/summary examples; AMOS evidence views; Changelog. | Pending |
 | 02: tool outcomes | Semantic provenance, cancellation/deadlines, late/account isolation, legacy overrides, counters, raw shapes, defaults, process-local limits, truthful keyed/keyless notes retrieval and explicit Anthropic named-tool selection. | [Recipe](./TOOL_OUTCOMES_AND_CANCELLATION.md); [preparation guide](./CONTEXT_PREPARATION.md); README; User Guide; generated API; agent guide; connector catalog; library/AMOS examples and indexes; Changelog; package inventory. | Synced: 7,030 unit tests and all 46 distinct three-provider live scenarios pass. Offline examples and the opt-in Anthropic example verified; [final evidence](./evaluations/STAGE_02_FINAL_VALIDATION.json) packaged. Stage complete on branch; no release claimed. |
-| 06: helper models | Connector setup, role options, budgets, all-call usage, fallback, unsupported configurations, and unknown-price limits. | README; User Guide; generated API; model-role example; AMOS role/usage controls; Changelog. | Pending |
+| 06: helper models | Connector setup, static roles, budgets/reservations, known subtotals/unknowns, fallback, capability/scope failures, persistence and provider boundaries. | [Recipe](./MODEL_TASKS_AND_HELPERS.md); README; User Guide; generated API; agent guide; examples/index; AMOS roles/usage/offline transcript; Changelog; package inventory. | Synced on 2026-10-13: recipe, standard docs, generated API, examples/AMOS and packaged evidence verified. 7,131 units and final 54 live scenarios pass; earlier Google answer failures retained. No release claimed. |
+| 06 corrective pass: R1–R8 | Raw budget options, inclusive Google thinking, schema isolation, stream settlement, immutable task ownership, explicit helper sharing, honest external reports and supported Anthropic thinking. | Recipe; User Guide; agent guide; generated API; examples/AMOS support notes; Changelog; review/stage records; packaged corrective evidence. | Synced on 2026-10-13: 7,179 units, 45 live cases/57 scenarios, all local delivery gates pass. Earlier failures retained; no release or breaking API change. |
+| 06 second corrective pass: S1–S4 | Effective output multiplicity, aggregate cap defaults, captured request data, sticky pricing uncertainty and evidence-preserving repair. | Recipe; standard guides; generated API; public/AMOS repair demos and indexes; Changelog; stage/review completion; corrective evidence and transcript; package inventory. | Synced: all four fixed, 7,228 units and 48 live cases/60 scenarios pass, prior records retained. No release or API break. |
 | 04, 10: task state and completion | Host-owned state, constraints, recovery, completion, run/stream differences, existing task compatibility, and enabling policies. | README; User Guide; generated API; memory guides where affected; state/recovery examples; AMOS progress; Changelog. | Pending |
 | 12: presets | Both presets, plain Agent baseline, overrides, capability/driver support, old-setting migration, and help. | README quickstarts; User Guide/runtime guide; generated API; preset example/index; AMOS selection/settings/help; Changelog. | Pending |
 | Selected conditional scopes | Delivered benefit, separate recipe, support limits, exact scope, availability, and migration. | README; User Guide; generated API; affected specialist guides; examples; AMOS where useful; Changelog. | Pending |
@@ -868,3 +1011,8 @@ the adoption/release record or explicitly document its successor after handoff.
 | 2026-10-12 | Corrected all seven Stage 02 review findings and added 53 regressions. | Branch-only; local checks pass; live limitations retained explicitly. | Recipe, standard docs, generated API, examples/AMOS, review completion and corrective evidence synced. |
 | 2026-10-12 | Retested the user's updated Anthropic key and all selected Stage 00–02 Anthropic cases; investigated the remaining failure with a direct API request. | Authentication resolved; 10/11 cases pass. One named-tool selection failure remains; Stage 02 completion pending. | Current availability, handoff, roadmap and review record updated; revalidation evidence packaged. Earlier reports retained. |
 | 2026-10-12 | Corrected explicit Anthropic named-tool requests and added pre-execution response checks, 14 regressions, and an opt-in live example. | Stage 02 complete on branch: 7,030 unit tests and all 46 distinct three-provider live scenarios pass; no failures/skips in final suites. | Recipe, User Guide, generated API, examples/index, Changelog, stage records, final evidence and package inventory synced; no release or API break. |
+
+| 2026-10-13 | Implemented Stage 06 static helpers, shared model-task admission/accounting and AMOS commands. | Available on branch: 7,131 units and final 54 live scenarios pass; initial Google answer failures retained. No release or API break. | Recipe, generated API, adoption/standard guides, examples/AMOS, package inventory and evidence synced. |
+| 2026-10-13 | Corrected all eight Stage 06 review findings and added 48 regressions plus live Google/Anthropic thinking checks. | Complete on branch: 7,179 units and final 45 live cases/57 scenarios pass. Initial new Google output-format failures retained; no release or API break. | Corrective adoption, recipe, standard docs, generated API, AMOS support notes, review/stage records, release notes and packaged evidence synced. |
+| 2026-10-13 | Reviewed Stage 06 again and reproduced four further cases with controlled providers and actual SDK/mock HTTP. | Available on branch with two P1/two P2 findings open; fresh 149 focused tests pass. No production fix or API break. | Second review/evidence and current availability/stage records updated; earlier evidence retained. |
+| 2026-10-13 | Corrected all four second-review findings with 49 regressions and three new live helper-repair cases. | Complete on branch: 7,228 units and 48 live cases/60 scenarios pass; no release or API break. | Second corrective adoption, standard docs/API, library/AMOS repair demos, stage/review records, release notes and packaged evidence/transcript synchronized. |

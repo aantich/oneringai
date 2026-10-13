@@ -1,3 +1,4 @@
+import { markSeparateReasoningUsage } from '../../../core/model-execution/ModelTask.js';
 /**
  * Google Gemini stream converter - converts Google streaming responses to our unified StreamEvent format
  */
@@ -140,6 +141,7 @@ export class GoogleStreamConverter {
     if (Object.keys(nativeToolCalls).length > 0) {
       lastUsage.native_tool_calls = nativeToolCalls;
     }
+    markSeparateReasoningUsage(lastUsage);
     yield {
       type: StreamEventType.RESPONSE_COMPLETE,
       response_id: this.responseId,

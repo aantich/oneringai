@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import OpenAI from 'openai';
+import { modelExecutionFetch, modelRequestOptions, registerModelTransport } from '../../../core/model-execution/ModelTask.js';
 import type { ProviderCapabilities } from '../../../domain/interfaces/IProvider.js';
 import type {
   ModelCapabilities,
@@ -96,6 +97,7 @@ export class DeepSeekTextProvider extends BaseTextProvider {
       baseURL: host.baseURL,
       timeout: this.getTimeout(),
       maxRetries: this.getMaxRetries(),
+      fetch: modelExecutionFetch,
     });
     if (host.profile.id === 'official') {
       this.betaClient = new OpenAI({
@@ -103,8 +105,10 @@ export class DeepSeekTextProvider extends BaseTextProvider {
         baseURL: 'https://api.deepseek.com/beta',
         timeout: this.getTimeout(),
         maxRetries: this.getMaxRetries(),
+        fetch: modelExecutionFetch,
       });
     }
+    registerModelTransport(this);
   }
 
   async generate(options: TextGenerateOptions): Promise<LLMResponse> {
@@ -117,7 +121,7 @@ export class DeepSeekTextProvider extends BaseTextProvider {
       try {
         if (model.transport === 'responses') {
           const params = this.converter.convertResponsesRequest(options, model);
-          const response = await this.client.responses.create(params as never);
+          const response = await this.client.responses.create(params as never, ...modelRequestOptions(options));
           return this.converter.convertResponsesResponse(
             response as unknown as Record<string, any>,
             options.model,
@@ -125,7 +129,7 @@ export class DeepSeekTextProvider extends BaseTextProvider {
           );
         }
         const params = this.converter.convertChatRequest(options, model, this.host);
-        const response = await this.getChatClient(options).chat.completions.create(params as never);
+        const response = await this.getChatClient(options).chat.completions.create(params as never, ...modelRequestOptions(options));
         return this.converter.convertChatResponse(
           response as unknown as Record<string, any>,
           options.model,
@@ -152,7 +156,7 @@ export class DeepSeekTextProvider extends BaseTextProvider {
           ...this.converter.convertResponsesRequest(options, model),
           stream: true,
         };
-        stream = await this.client.responses.create(params as never);
+        stream = await this.client.responses.create(params as never, ...modelRequestOptions(options));
         const streamConverter = new OpenAIResponsesStreamConverter();
         yield* streamConverter.convertStream(stream);
       } else {
@@ -161,7 +165,7 @@ export class DeepSeekTextProvider extends BaseTextProvider {
           stream: true,
           stream_options: { include_usage: true },
         };
-        stream = await this.getChatClient(options).chat.completions.create(params as never);
+        stream = await this.getChatClient(options).chat.completions.create(params as never, ...modelRequestOptions(options));
         yield* new DeepSeekChatStreamConverter().convertStream(stream, options.model);
       }
     } catch (error) {

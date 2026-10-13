@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-10-12
+**Generated:** 2026-10-13
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -17,19 +17,19 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Image Generation](#image-generation) (25 items)
 - [Video Generation](#video-generation) (23 items)
 - [Agent Runtime](#agent-runtime) (70 items)
-- [Task Agents](#task-agents) (115 items)
+- [Task Agents](#task-agents) (119 items)
 - [Context Management](#context-management) (14 items)
 - [Session Management](#session-management) (75 items)
 - [Tools & Function Calling](#tools-function-calling) (211 items)
 - [Streaming](#streaming) (35 items)
-- [Model Registry](#model-registry) (29 items)
+- [Model Registry](#model-registry) (35 items)
 - [OAuth & External APIs](#oauth-external-apis) (46 items)
 - [Resilience & Observability](#resilience-observability) (33 items)
-- [Errors](#errors) (42 items)
+- [Errors](#errors) (43 items)
 - [Utilities](#utilities) (10 items)
 - [Interfaces](#interfaces) (78 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (769 items)
+- [Other](#other) (773 items)
 
 ## Core
 
@@ -37,7 +37,7 @@ Core classes for authentication, agents, and providers
 
 ### Agent `class`
 
-📍 [`src/core/Agent.ts:391`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:397`](src/core/Agent.ts)
 
 Agent class - represents an AI assistant with tool calling capabilities
 
@@ -1745,7 +1745,7 @@ isDisposed(): boolean
 
 ### AgentConfig `interface`
 
-📍 [`src/core/Agent.ts:77`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:78`](src/core/Agent.ts)
 
 Agent configuration - extends BaseAgentConfig with Agent-specific options
 
@@ -1807,7 +1807,7 @@ Example: `toolExecutionTimeout: 300000` (5 minutes hard cap per tool call) |
 
 ### AgentContextRolloverOptions `interface`
 
-📍 [`src/core/Agent.ts:207`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:210`](src/core/Agent.ts)
 
 Options for {@link Agent.rolloverContext}.
 
@@ -1816,6 +1816,7 @@ Options for {@link Agent.rolloverContext}.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `modelTask?` | `modelTask?: ModelTask;` | - |
 | `preserveRecentTurns?` | `preserveRecentTurns?: number;` | Number of most-recent user turns to retain verbatim. Default: 8. |
 | `summarize?` | `summarize?: ContextRolloverSummarizer;` | Optional trusted summarizer. When omitted, the Agent makes a tool-free
 direct call through its configured connector and model. |
@@ -1964,7 +1965,7 @@ Fetch options with additional connector-specific settings
 
 ### ExternalExecutionOptions `interface`
 
-📍 [`src/core/Agent.ts:231`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:235`](src/core/Agent.ts)
 
 Options for a non-LLM execution owned by an external transport.
 
@@ -1973,6 +1974,7 @@ Options for a non-LLM execution owned by an external transport.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `modelTask?` | `modelTask?: ModelTask;` | Observation only: external transports retain responsibility for admission. |
 | `source?` | `source?: string;` | Stable label recorded in the execution context for observability. |
 
 </details>
@@ -1981,7 +1983,7 @@ Options for a non-LLM execution owned by an external transport.
 
 ### ExternalExecutionResult `interface`
 
-📍 [`src/core/Agent.ts:244`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:250`](src/core/Agent.ts)
 
 Terminal data supplied when an external execution is completed.
 
@@ -2001,7 +2003,7 @@ Terminal data supplied when an external execution is completed.
 
 ### ExternalToolCall `interface`
 
-📍 [`src/core/Agent.ts:237`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:243`](src/core/Agent.ts)
 
 A function call received from an external model transport.
 
@@ -2020,7 +2022,7 @@ A function call received from an external model transport.
 
 ### RunOptions `interface`
 
-📍 [`src/core/Agent.ts:177`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:178`](src/core/Agent.ts)
 
 Per-call options for run() and stream().
 These override the agent-level config for this single invocation.
@@ -2030,6 +2032,7 @@ These override the agent-level config for this single invocation.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `modelTask?` | `modelTask?: ModelTask;` | Explicit process-local budget/usage shared with helper or other agent calls. |
 | `thinking?` | `thinking?: ThinkingConfig;` | Vendor-agnostic thinking/reasoning configuration |
 | `temperature?` | `temperature?: number;` | Temperature for generation |
 | `vendorOptions?` | `vendorOptions?: Record&lt;string, unknown&gt;;` | Vendor-specific options |
@@ -2060,7 +2063,7 @@ type AgentEventListener = (agentId: string, agentName: string, event: string, da
 
 ### AgentRuntimeConfigSnapshot `type`
 
-📍 [`src/core/Agent.ts:157`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:158`](src/core/Agent.ts)
 
 Agent runtime options exposed by getRuntimeConfigSnapshot().
 
@@ -2086,7 +2089,7 @@ type AgentRuntimeConfigSnapshot = Pick&lt;AgentConfig,
 
 ### AgentSessionConfig `type`
 
-📍 [`src/core/Agent.ts:72`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:73`](src/core/Agent.ts)
 
 Session configuration for Agent (same as BaseSessionConfig)
 
@@ -12373,6 +12376,154 @@ restoreState(_state: unknown): void
 
 ---
 
+### ModelBudgetExceededError `class`
+
+📍 [`src/core/model-execution/ModelTask.ts:9`](src/core/model-execution/ModelTask.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(public readonly limit: string)
+```
+
+**Parameters:**
+- `limit`: `string`
+
+</details>
+
+---
+
+### ModelTask `class`
+
+📍 [`src/core/model-execution/ModelTask.ts:112`](src/core/model-execution/ModelTask.ts)
+
+In-process shared admission, reservations and usage. Never stores prompts or credentials.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(options: { id?: string; limits?: ModelTaskLimits; signal?: AbortSignal } = {})
+```
+
+**Parameters:**
+- `options`: `{ id?: string | undefined; limits?: ModelTaskLimits | undefined; signal?: AbortSignal | undefined; }` *(optional)* (default: `{}`)
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `cancel()`
+
+```typescript
+cancel(reason: unknown = new DOMException('Model task cancelled', 'AbortError')): void
+```
+
+**Parameters:**
+- `reason`: `unknown` *(optional)* (default: `new DOMException('Model task cancelled', 'AbortError')`)
+
+**Returns:** `void`
+
+#### `execute()`
+
+Execute one logical call; installed SDK adapters admit every physical retry separately.
+
+```typescript
+async execute&lt;T&gt;(descriptor: ModelCallDescriptor, operation: (signal: AbortSignal) =&gt; Promise&lt;T&gt;, options: {
+    signal?: AbortSignal; transport?: boolean; usage?: (result: T) =&gt; TokenUsage | undefined;
+    /** @internal Latest terminal usage survives an iterator failure or cancellation. */
+    observedUsage?: () =&gt; TokenUsage | undefined;
+  } = {}): Promise&lt;{ result: T; invocationId: string }&gt;
+```
+
+**Parameters:**
+- `descriptor`: `ModelCallDescriptor`
+- `operation`: `(signal: AbortSignal) =&gt; Promise&lt;T&gt;`
+- `options`: `{ signal?: AbortSignal | undefined; transport?: boolean | undefined; usage?: ((result: T) =&gt; TokenUsage | undefined) | undefined; observedUsage?: (() =&gt; TokenUsage | undefined) | undefined; }` *(optional)* (default: `{}`)
+
+**Returns:** `Promise&lt;{ result: T; invocationId: string; }&gt;`
+
+#### `iterate()`
+
+Streaming variant with pull-based backpressure and invocation-local transport tracking.
+
+```typescript
+async *iterate&lt;T&gt;(descriptor: ModelCallDescriptor, factory: (signal: AbortSignal) =&gt; AsyncIterable&lt;T&gt;, options: {
+    signal?: AbortSignal; transport?: boolean; usage?: (event: T) =&gt; TokenUsage | undefined;
+  } = {}): AsyncIterableIterator&lt;T&gt;
+```
+
+**Parameters:**
+- `descriptor`: `ModelCallDescriptor`
+- `factory`: `(signal: AbortSignal) =&gt; AsyncIterable&lt;T&gt;`
+- `options`: `{ signal?: AbortSignal | undefined; transport?: boolean | undefined; usage?: ((event: T) =&gt; TokenUsage | undefined) | undefined; }` *(optional)* (default: `{}`)
+
+**Returns:** `AsyncIterableIterator&lt;T&gt;`
+
+#### `recordExternal()`
+
+Host-reported usage is idempotent by ID. Conflicting replays fail explicitly.
+
+```typescript
+recordExternal(report: { id: string; purpose: string; connector: string; model: string; parentInvocationId?: string; usage: TokenUsage | null;
+    status?: 'succeeded' | 'failed' | 'cancelled'; }): void
+```
+
+**Parameters:**
+- `report`: `{ id: string; purpose: string; connector: string; model: string; parentInvocationId?: string | undefined; usage: TokenUsage | null; status?: "failed" | "cancelled" | "succeeded" | undefined; }`
+
+**Returns:** `void`
+
+#### `recordValidation()`
+
+Attach a host validation result without recounting the model usage.
+
+```typescript
+recordValidation(invocationId: string, valid: boolean): void
+```
+
+**Parameters:**
+- `invocationId`: `string`
+- `valid`: `boolean`
+
+**Returns:** `void`
+
+#### `snapshot()`
+
+```typescript
+snapshot(): ModelTaskSnapshot
+```
+
+**Returns:** `ModelTaskSnapshot`
+
+#### `destroy()`
+
+```typescript
+destroy(): void
+```
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string` | - |
+| `limits` | `limits: Readonly&lt;ModelTaskLimits&gt;` | - |
+
+</details>
+
+---
+
 ### MongoMemoryAdapter `class`
 
 📍 [`src/memory/adapters/mongo/MongoMemoryAdapter.ts:214`](src/memory/adapters/mongo/MongoMemoryAdapter.ts)
@@ -15253,6 +15404,58 @@ those tokens return "not available". |
 set, such upserts are rejected and the tool description drops those types'
 guidance (see `MemoryToolDeps.forbiddenEntityTypes`). For host-deterministic
 types (e.g. `event` from a calendar pipeline). Omit for no restriction. |
+
+</details>
+
+---
+
+### ModelTaskLimits `interface`
+
+📍 [`src/core/model-execution/types.ts:9`](src/core/model-execution/types.ts)
+
+Limits apply to one explicitly shared, process-local task.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `maxCalls?` | `maxCalls?: number;` | - |
+| `maxTokens?` | `maxTokens?: number;` | Conservative reservations use provider capacity, not estimated prompt size. |
+| `maxCostUSD?` | `maxCostUSD?: number;` | Model token charges only. Requires a known conservative price bound. |
+| `deadline?` | `deadline?: number;` | Absolute Unix time in milliseconds. |
+
+</details>
+
+---
+
+### ModelTaskSnapshot `interface`
+
+📍 [`src/core/model-execution/types.ts:123`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | - |
+| `limits` | `limits: ModelTaskLimits;` | - |
+| `invocations` | `invocations: ModelInvocationRecord[];` | - |
+| `attempts` | `attempts: ModelAttemptRecord[];` | - |
+| `totals` | `totals: {
+    calls: number;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    cachedInputTokens: number;
+    reasoningTokens: number;
+    knownModelCostUSD: number;
+    unknownUsageInvocations: number;
+    unknownCostInvocations: number;
+    unknownChargeAttempts: number;
+    chargedTokens: number;
+    chargedCostUSD: number | null;
+  };` | - |
 
 </details>
 
@@ -29219,6 +29422,31 @@ Embedding model pricing
 
 ---
 
+### HelperModelConfig `interface`
+
+📍 [`src/core/model-execution/types.ts:25`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `connector: string;` | - |
+| `model` | `model: string;` | - |
+| `instructions?` | `instructions?: string;` | - |
+| `thinking?` | `thinking?: ThinkingConfig;` | - |
+| `temperature?` | `temperature?: number;` | - |
+| `maxOutputTokens?` | `maxOutputTokens?: number;` | Defaults to 512. |
+| `maxInputTokens?` | `maxInputTokens?: number;` | Packet estimate limit, bounded by the helper's resolved capacity. |
+| `dataHandling?` | `dataHandling?: DataHandlingPolicy;` | - |
+| `requireNativeStructuredOutput?` | `requireNativeStructuredOutput?: boolean;` | Require native JSON schema support instead of the validated prompt fallback. |
+| `allowContextTransfer?` | `allowContextTransfer?: boolean;` | Required for automatic explicit-rollover transfer to another connector. |
+| `priceBound?` | `priceBound?: ModelPriceBound;` | - |
+
+</details>
+
+---
+
 ### IBaseModelDescription `interface`
 
 📍 [`src/domain/types/SharedTypes.ts:124`](src/domain/types/SharedTypes.ts)
@@ -29452,9 +29680,54 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ---
 
+### ModelAttemptRecord `interface`
+
+📍 [`src/core/model-execution/types.ts:94`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | - |
+| `invocationId` | `invocationId: string;` | - |
+| `boundary` | `boundary: 'transport' | 'provider';` | - |
+| `status` | `status: 'reserved' | 'received' | 'failed' | 'not_dispatched';` | - |
+| `httpStatus?` | `httpStatus?: number;` | - |
+| `dispatched` | `dispatched: boolean;` | - |
+| `reservedTokens` | `reservedTokens: number;` | - |
+| `reservedCostUSD` | `reservedCostUSD: number | null;` | - |
+| `usageCoveredByInvocation` | `usageCoveredByInvocation: boolean;` | Aggregate successful-attempt usage is recorded once on the invocation. |
+
+</details>
+
+---
+
+### ModelCallDescriptor `interface`
+
+📍 [`src/core/model-execution/types.ts:83`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `purpose` | `purpose: string;` | - |
+| `phase?` | `phase?: 'generation' | 'repair' | 'wrapup';` | - |
+| `connector` | `connector: string;` | - |
+| `model` | `model: string;` | - |
+| `parentInvocationId?` | `parentInvocationId?: string;` | - |
+| `inputTokenBound` | `inputTokenBound: number;` | - |
+| `outputTokenBound` | `outputTokenBound: number;` | - |
+| `priceBound?` | `priceBound?: ModelPriceBound;` | - |
+
+</details>
+
+---
+
 ### ModelCapabilities `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:77`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:79`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -29468,6 +29741,69 @@ Complete description of an LLM model including capabilities, pricing, and featur
 | `maxTokens` | `maxTokens: number;` | - |
 | `maxInputTokens?` | `maxInputTokens?: number;` | - |
 | `maxOutputTokens?` | `maxOutputTokens?: number;` | - |
+
+</details>
+
+---
+
+### ModelExecutionConfig `interface`
+
+📍 [`src/core/model-execution/types.ts:43`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `helpers?` | `helpers?: Partial&lt;Record&lt;HelperRole, HelperModelConfig&gt;&gt;;` | - |
+| `limits?` | `limits?: ModelTaskLimits;` | - |
+| `maxOutputTokensPerCall?` | `maxOutputTokensPerCall?: number;` | Optional aggregate main-call output cap across candidates. Omitted preserves provider defaults. |
+| `priceBound?` | `priceBound?: ModelPriceBound;` | Main-model upper rates when registry prices do not bound this deployment. |
+| `customProviderAttempts?` | `customProviderAttempts?: 'single';` | Trusted host attestation for injected providers that make exactly one attempt. |
+
+</details>
+
+---
+
+### ModelInvocationRecord `interface`
+
+📍 [`src/core/model-execution/types.ts:107`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | - |
+| `parentInvocationId?` | `parentInvocationId?: string;` | - |
+| `purpose` | `purpose: string;` | - |
+| `phase` | `phase: 'generation' | 'repair' | 'wrapup';` | - |
+| `connector` | `connector: string;` | - |
+| `model` | `model: string;` | - |
+| `status` | `status: 'running' | 'succeeded' | 'failed' | 'cancelled';` | - |
+| `usage` | `usage: TokenUsage | null;` | - |
+| `modelCostUSD` | `modelCostUSD: number | null;` | - |
+| `lateSettlement` | `lateSettlement: boolean;` | - |
+| `external` | `external: boolean;` | - |
+| `outputValidation?` | `outputValidation?: 'passed' | 'failed';` | Helper output validation is distinct from receiving a model response. |
+
+</details>
+
+---
+
+### ModelPriceBound `interface`
+
+📍 [`src/core/model-execution/types.ts:20`](src/core/model-execution/types.ts)
+
+Host-supplied upper rates, including any service tier or cache-write premium.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `inputPerMillion` | `inputPerMillion: number;` | - |
+| `outputPerMillion` | `outputPerMillion: number;` | - |
 
 </details>
 
@@ -36715,6 +37051,26 @@ constructor(factId: FactId, supersededBy: FactId)
 
 ---
 
+### HelperOutputError `class`
+
+📍 [`src/core/model-execution/ModelExecutor.ts:57`](src/core/model-execution/ModelExecutor.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(message: string)
+```
+
+**Parameters:**
+- `message`: `string`
+
+</details>
+
+---
+
 ### InvalidConfigError `class`
 
 📍 [`src/domain/errors/AIErrors.ts:224`](src/domain/errors/AIErrors.ts)
@@ -40357,7 +40713,7 @@ translate?(options: STTOptions): Promise&lt;STTResponse&gt;;
 
 ### ITextProvider `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:87`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:89`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -40983,6 +41339,7 @@ Used by edit UIs to re-populate form fields without needing to decrypt config.au
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `signal?` | `signal?: AbortSignal;` | Optional cooperative cancellation for this provider call. |
 | `model` | `model: string;` | - |
 | `input` | `input: string | InputItem[];` | - |
 | `instructions?` | `instructions?: string;` | - |
@@ -50528,7 +50885,7 @@ Conversation message in history
 
 ### DeepSeekBalance `interface`
 
-📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:42`](src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts)
+📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:43`](src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -50549,7 +50906,7 @@ Conversation message in history
 
 ### DeepSeekFimRequest `interface`
 
-📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:33`](src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts)
+📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:34`](src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -50569,7 +50926,7 @@ Conversation message in history
 
 ### DeepSeekFimResponse `interface`
 
-📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:52`](src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts)
+📍 [`src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts:53`](src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -51126,7 +51483,7 @@ If omitted, result is stored as `__prestep_{name}` or `__poststep_{name}`. |
 
 ### DirectCallOptions `interface`
 
-📍 [`src/core/BaseAgent.ts:277`](src/core/BaseAgent.ts)
+📍 [`src/core/BaseAgent.ts:283`](src/core/BaseAgent.ts)
 
 Options for direct LLM calls (bypassing AgentContext).
 
@@ -51135,6 +51492,9 @@ Options for direct LLM calls (bypassing AgentContext).
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `modelTask?` | `modelTask?: ModelTask;` | - |
+| `signal?` | `signal?: AbortSignal;` | - |
+| `purpose?` | `purpose?: string;` | Host-supplied accounting label; does not select a model or grant authority. |
 | `instructions?` | `instructions?: string;` | System instructions (optional) |
 | `includeTools?` | `includeTools?: boolean;` | Include registered tools in the call. Default: false |
 | `tools?` | `tools?: Tool[];` | Explicit provider tool definitions for this direct call. This is useful for
@@ -52964,6 +53324,63 @@ Result of a grep operation
 |----------|------|-------------|
 | `value` | `value: string;` | - |
 | `expires_at` | `expires_at: number;` | - |
+
+</details>
+
+---
+
+### HelperCallOptions `interface`
+
+📍 [`src/core/model-execution/types.ts:61`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `maxOutputTokens?` | `maxOutputTokens?: number;` | Optional tighter output cap; cannot increase the configured role limit. |
+| `contextTransfer?` | `contextTransfer?: boolean;` | - |
+| `schema` | `schema: Record&lt;string, unknown&gt;;` | Host-supplied JSON schema, validated locally after generation. |
+| `modelTask?` | `modelTask?: ModelTask;` | Explicit sharing only; omission creates an independent owned helper task. |
+| `parentInvocationId?` | `parentInvocationId?: string;` | - |
+| `signal?` | `signal?: AbortSignal;` | - |
+| `maxRepairAttempts?` | `maxRepairAttempts?: 0 | 1;` | Defaults to one repair; supported values are 0 or 1. |
+
+</details>
+
+---
+
+### HelperInputContext `interface`
+
+📍 [`src/core/model-execution/types.ts:54`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `readonly connector: string;` | - |
+| `model` | `readonly model: string;` | - |
+| `maxInputTokens` | `readonly maxInputTokens: number;` | - |
+| `maxOutputTokens` | `readonly maxOutputTokens: number;` | - |
+
+</details>
+
+---
+
+### HelperResult `interface`
+
+📍 [`src/core/model-execution/types.ts:76`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `value` | `value: T;` | - |
+| `response` | `response: LLMResponse;` | - |
+| `invocationId` | `invocationId: string;` | - |
+| `taskId` | `taskId: string;` | - |
 
 </details>
 
@@ -61650,6 +62067,16 @@ type GrokRealtimeAudioFormat = | { type: 'audio/pcm'; rate: RealtimePCMSampleRat
   | { type: 'audio/opus'; rate?: 24000 }
   | { type: 'audio/pcmu' }
   | { type: 'audio/pcma' }
+```
+
+---
+
+### HelperRole `type`
+
+📍 [`src/core/model-execution/types.ts:6`](src/core/model-execution/types.ts)
+
+```typescript
+type HelperRole = 'compactor' | 'extractor' | 'verifier'
 ```
 
 ---

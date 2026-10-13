@@ -50,6 +50,25 @@ capability-aware behavior, and teardown. Start with the
 |---|---|---|
 | [`agent-runtime-local.ts`](./agent-runtime-local.ts) | Interchangeable local OneRingAI/Codex SDK drivers with generic model/reasoning controls, live autonomous reasoning/activity events, explicit policy, and Codex workspace sandboxing. | `OPENAI_API_KEY`; `npx tsx examples/agent-runtime-local.ts oneringai` or `npx tsx examples/agent-runtime-local.ts codex` |
 
+## Purpose-specific models and shared budgets (Stage 06)
+
+Both programs use public package exports and require `npm run build`. Their default
+mode is deterministic and offline; mock answers/usage establish plumbing, not model
+quality or savings. See the [recipe](../docs/MODEL_TASKS_AND_HELPERS.md).
+
+| Program | What it shows | Run and expected behavior |
+| --- | --- | --- |
+| [`purpose-specific-models.ts`](./purpose-specific-models.ts) | Explicit extract/main/verify with separate windows, a fixed main model and shared task. | `npm run example:purpose-models`: four records including a controlled schema repair that must retain `ALPHA_6`; main/verification then succeed. `npm run example:purpose-models -- --live`: billable `gpt-4.1` main plus `gpt-4o-mini` helpers, `OPENAI_API_KEY` from `.env`. At least three model requests, repairs/retries may add requests. Cleans up owned connectors, agent and task even on failure. |
+| [`shared-run-budget.ts`](./shared-run-budget.ts) | Concurrent reservation denial, known-usage refund, idempotent external usage and unknown-price admission failure. | `npm run example:shared-budget`: rejects an overlapping request before dispatch, reports known synthetic totals and explicit unknown cost; destroys tasks. No credentials or external effects. |
+
+`npm run test:models:live` explicitly makes billable OpenAI/Anthropic/Google calls
+using all three `.env` keys. It checks helper/main run and stream, cross-provider
+explicit rollover and controlled structured repair, plus thinking-enabled Google
+run/stream accounting and an Anthropic fixed-budget extended-thinking helper
+(14 live cases, including three controlled evidence-preserving helper repairs). These are functional marker
+checks, not a quality benchmark. AMOS command examples are in its
+[helper guide](../apps/amos/README.md#helper-models-stage-06).
+
 ## Text, agents, tools, and infrastructure
 
 | Program | What it shows | Requirements and how to run |

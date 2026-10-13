@@ -1,0 +1,36 @@
+
+> @everworker/oneringai@1.2.0 example:amos-helpers
+> tsx apps/amos/examples/model-helpers-offline.ts
+
+/helpers 
+compactor: disabled
+extractor: disabled
+verifier: disabled
+
+/helpers [set <role> <connector> <model> [effort]|off [role]|usage|run <role> <text>|compact|budget <calls> <tokens>]
+
+Roles: compactor, extractor, verifier. Helpers are disabled by default.
+Setting a role makes no model calls. Explicit run/compact makes one additional billable call, with at most one JSON repair.
+Compactor configuration authorizes older conversation text to be sent to that named connector; opaque provider state is omitted.
+Automatic compaction remains algorithmic. /helpers compact performs an explicit rollover and keeps two recent turns.
+Budgets use conservative provider-capacity reservations; retries with missing usage remain unknown.
+Usage lists purposes, known tokens/cost estimates and unknown usage; it is process-local diagnostic data.
+
+
+/helpers set extractor amos-offline-helper-36442 gpt-4o-mini
+Helper configuration saved; no model calls made. Explicit run/compact can make one additional call plus at most one repair.
+
+/helpers run extractor Extract source identifier ALPHA_6 into answer.
+ALPHA_6
+
+/helpers usage
+extractor/generation: amos-offline-helper-36442 / gpt-4o-mini — succeeded, output validation failed; 25 tokens; model cost $0.000006
+extractor/repair: amos-offline-helper-36442 / gpt-4o-mini — succeeded, output validation passed; 25 tokens; model cost $0.000006
+Attempts: 2; unknown-charge attempts: 0
+Known token subtotal: 50; unknown/pending usage: 0
+Unknown/pending model costs: 0
+
+/helpers off
+Helper configuration updated; no model calls made.
+
+AMOS helper demonstration passed; answers and usage are synthetic. No credentials, network calls or configuration writes.

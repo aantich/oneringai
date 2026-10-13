@@ -16,6 +16,8 @@ import {
   type ThinkingConfig,
   type ToolFunction,
   type ToolExecutionOutcome,
+  type HelperRole,
+  type ModelTaskSnapshot,
 } from '@everworker/oneringai';
 import type {
   AgentResponse,
@@ -142,6 +144,7 @@ export class AgentRunner implements IAgentRunner {
       connector: connectorName,
       model,
       tools: this.tools,
+      modelExecution: this.config.modelExecution ?? undefined,
       ...runtimeOptions,
       instructions: this.buildInstructions(),
       session: {
@@ -191,6 +194,7 @@ export class AgentRunner implements IAgentRunner {
   }
 
   async run(input: string): Promise<AgentResponse> {
+    if (this.isRunning()) throw new Error('An operation is already running');
     const agent = this.requireAgent();
     this._isRunning = true;
     const startedAt = Date.now();
@@ -222,6 +226,7 @@ export class AgentRunner implements IAgentRunner {
   }
 
   async *stream(input: string): AsyncGenerator<StreamEvent> {
+    if (this.isRunning()) throw new Error('An operation is already running');
     const agent = this.requireAgent();
     this._isRunning = true;
 
@@ -254,6 +259,30 @@ export class AgentRunner implements IAgentRunner {
 
   getModel(): string {
     return this._currentModel;
+  }
+
+  getModelUsage(): ModelTaskSnapshot | undefined { return this.agent?.getModelUsage(); }
+
+  async invokeHelper(role: HelperRole, input: string): Promise<string> {
+    if (this.isRunning()) throw new Error('An operation is already running');
+    this._isRunning = true;
+    try {
+      const result = await this.requireAgent().invokeHelper<{ answer: string }>(role, input, {
+        schema: { type: 'object', properties: { answer: { type: 'string' } }, required: ['answer'], additionalProperties: false },
+      });
+      return result.value.answer;
+    } finally { this._isRunning = false; }
+  }
+
+  async compactWithHelper(): Promise<string> {
+    if (this.isRunning()) throw new Error('An operation is already running');
+    if (!this.config.modelExecution?.helpers?.compactor) throw new Error('Configure a compactor helper first');
+    this._isRunning = true;
+    try {
+      const result = await this.requireAgent().rolloverContext({ preserveRecentTurns: 2, reason: 'Explicit AMOS helper command' });
+      return result.performed ? `Summarized ${result.itemsSummarized} older items; estimated tokens freed: ${result.tokensFreed}.`
+        : 'No older turns need summarizing; no helper call was made.';
+    } finally { this._isRunning = false; }
   }
 
   setTemperature(temp: number): void {

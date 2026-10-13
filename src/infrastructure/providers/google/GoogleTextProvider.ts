@@ -3,6 +3,7 @@
  */
 
 import { GoogleGenAI, type BatchJob, type Interactions } from '@google/genai';
+import { modelExecutionFetch, modelRequestOptions, registerModelTransport } from '../../../core/model-execution/ModelTask.js';
 import { BaseTextProvider } from '../base/BaseTextProvider.js';
 import { TextGenerateOptions, ModelCapabilities } from '../../../domain/interfaces/ITextProvider.js';
 import { LLMResponse } from '../../../domain/entities/Response.js';
@@ -55,8 +56,9 @@ export class GoogleTextProvider extends BaseTextProvider {
     this.client = new GoogleGenAI({
       apiKey: this.getApiKey(),
       // Pass custom baseURL for proxy support (e.g. when routing through EW proxy)
-      ...(config.baseURL ? { httpOptions: { baseUrl: config.baseURL } } : {}),
+      httpOptions: { ...(config.baseURL ? { baseUrl: config.baseURL } : {}), fetch: modelExecutionFetch },
     });
+    registerModelTransport(this);
     this.converter = new GoogleConverter();
     this.streamConverter = new GoogleStreamConverter();
     this.interactionsConverter = new GoogleInteractionsConverter();
@@ -79,7 +81,7 @@ export class GoogleTextProvider extends BaseTextProvider {
         if (this.usesInteractions(options)) {
           const request = await this.interactionsConverter.convertRequest(options);
           this.logger.debug({ model: options.model }, 'generate: calling Google Interactions API');
-          const result = await this.client.interactions.create(request as any);
+          const result = await this.client.interactions.create(request as any, ...modelRequestOptions(options));
           return this.interactionsConverter.convertResponse(result, options.model);
         }
 
@@ -113,6 +115,7 @@ export class GoogleTextProvider extends BaseTextProvider {
             tools: googleRequest.tools,
             toolConfig: googleRequest.toolConfig,
             ...googleRequest.generationConfig,
+            ...(options.signal ? { abortSignal: options.signal } : {}),
           },
         });
         this.logger.debug(
@@ -165,7 +168,7 @@ export class GoogleTextProvider extends BaseTextProvider {
       if (this.usesInteractions(options)) {
         const request = await this.interactionsConverter.convertRequest(options);
         this.logger.debug({ model: options.model }, 'streamGenerate: calling Google Interactions API');
-        const stream = await this.client.interactions.create({ ...request, stream: true } as any);
+        const stream = await this.client.interactions.create({ ...request, stream: true } as any, ...modelRequestOptions(options));
         yield* this.interactionsConverter.convertStream(
           stream as unknown as AsyncIterable<Interactions.InteractionSSEEvent>,
           options.model,
@@ -191,6 +194,7 @@ export class GoogleTextProvider extends BaseTextProvider {
           tools: googleRequest.tools,
           toolConfig: googleRequest.toolConfig,
           ...googleRequest.generationConfig,
+          ...(options.signal ? { abortSignal: options.signal } : {}),
         },
       });
       this.logger.debug(

@@ -10,6 +10,9 @@ import type {
   RiskLevel,
   ToolFunction,
   Vendor,
+  ModelExecutionConfig,
+  ModelTaskSnapshot,
+  HelperRole,
 } from '@everworker/oneringai';
 import type { ExternalToolManager } from '../tools/ExternalToolManager.js';
 
@@ -18,6 +21,8 @@ import type { ExternalToolManager } from '../tools/ExternalToolManager.js';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface AmosConfig {
+  /** Optional host configuration; null/absence keeps legacy single-model behavior. */
+  modelExecution?: ModelExecutionConfig | null;
   // Current active settings
   activeConnector: string | null;
   activeModel: string | null;
@@ -286,6 +291,9 @@ export interface PromptTemplate {
 }
 
 export interface IAgentRunner {
+  getModelUsage?(): ModelTaskSnapshot | undefined;
+  invokeHelper?(role: HelperRole, input: string): Promise<string>;
+  compactWithHelper?(): Promise<string>;
   // State
   isReady(): boolean;
   isRunning(): boolean;

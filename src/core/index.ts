@@ -34,6 +34,10 @@ export type { StorageConfig, StorageContext } from './StorageRegistry.js';
 export { ToolCatalogRegistry } from './ToolCatalogRegistry.js';
 export type { ToolCategoryDefinition, CatalogToolEntry, ToolCategoryScope, ConnectorCategoryInfo, ParsedConnectorCategory, ToolRegistryEntry as CatalogRegistryEntry } from './ToolCatalogRegistry.js';
 export { Agent } from './Agent.js';
+export { ModelTask, ModelBudgetExceededError } from './model-execution/ModelTask.js';
+export { HelperOutputError } from './model-execution/ModelExecutor.js';
+export type { ModelExecutionConfig, ModelTaskLimits, ModelPriceBound, ModelTaskSnapshot, ModelInvocationRecord,
+  ModelAttemptRecord, ModelCallDescriptor, HelperRole, HelperModelConfig, HelperCallOptions, HelperInputContext, HelperResult } from './model-execution/types.js';
 export type {
   AgentConfig,
   AgentRuntimeConfigSnapshot,

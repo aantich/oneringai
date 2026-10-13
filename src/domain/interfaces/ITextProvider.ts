@@ -37,6 +37,8 @@ export interface ThinkingConfig {
 }
 
 export interface TextGenerateOptions {
+  /** Optional cooperative cancellation for this provider call. */
+  signal?: AbortSignal;
   model: string;
   input: string | InputItem[];
   instructions?: string;

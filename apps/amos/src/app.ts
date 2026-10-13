@@ -27,6 +27,7 @@ import {
   ConfigCommand,
   PromptCommand,
   ContextCommand,
+  HelpersCommand,
   ExternalCommand,
   ClearCommand,
   ExitCommand,
@@ -406,6 +407,7 @@ export class AmosApp implements IAmosApp {
       new SessionCommand(),
       new ConfigCommand(),
       new ContextCommand(),
+      new HelpersCommand(),
       new ExternalCommand(),
       new PlanCommand(),
       new ClearCommand(),
@@ -540,6 +542,9 @@ export class AmosApp implements IAmosApp {
     // Ensure connector is registered
     if (!this.connectorManager.isRegistered(config.activeConnector)) {
       this.connectorManager.registerConnector(config.activeConnector);
+    }
+    for (const profile of Object.values(config.modelExecution?.helpers ?? {})) {
+      if (profile && !this.connectorManager.isRegistered(profile.connector)) this.connectorManager.registerConnector(profile.connector);
     }
 
     const previousRunner = this.agentRunner;

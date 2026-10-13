@@ -1,6 +1,7 @@
 # Agentic Architecture Evolution: Staged Development Plan
 
-- **Status:** Roadmap direction accepted; stages 00 and 01 complete on the development branch.
+- **Status:** Roadmap direction accepted; stages 00–02 and 06 complete on the development branch.
+- **Stage 06 review:** All first- and second-review findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion record](STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
 - **Created:** 2026-10-07.
 - **Revision:** 0.2; holistic review completed 2026-10-07.
 - **Scope:** OneRingAI connectors, context plugins, tool execution, model invocation,
@@ -11,7 +12,7 @@
   the relevant stage begins.
 
 This document turns the architecture review into an implementation sequence.
-Stages 00 and 01's delivered scopes are recorded below; later stages describe proposed
+Delivered-stage scopes are recorded below; remaining stages describe proposed
 capabilities. API names, example filenames, AMOS commands, and new module names
 remain design candidates until their stage is implemented.
 
@@ -428,8 +429,9 @@ fail preflight or use a documented safe fallback.
 
 ## 4. Stage sequence and tracking
 
-Stages 00–02 are complete on the `version2` branch. Stage 02 is validated in the
-working tree based on `fa8f911`; live-provider limits are recorded below.
+Stages 00–02 and 06 are complete on the `version2` branch. Stage 06 is validated
+in the working tree based on committed Stage 02 revision `dcc8dad`; provider and
+validation limits are recorded below.
 Dependencies determine readiness, not authorization. IDs are stable identifiers;
 the core sequence is **00 → 01 → 02 → 06 → 03 → 07 → 04 → 10 → 12**. Later stages
 remain separately authorized work.
@@ -442,7 +444,7 @@ remain separately authorized work.
 | 03 | Acknowledged evidence references, projections, and outcome records | 01, 02 | Core | Not started |
 | 04 | Task-state prompt view and protected host constraints | 03, 06 | Core | Not started |
 | 05 | Typed contributions and selective/cache-aware assembly | 01, 03, 04 | Conditional | Not started |
-| 06 | Fixed main model, bounded helper roles, and task usage/budgets | 01, 02 | Core | Not started |
+| 06 | Fixed main model, bounded helper roles, and task usage/budgets | 01, 02 | Core | Complete on branch; first- and second-review corrections validated, all local/live gates pass |
 | 07 | Structured summaries and observation masking | 03, 06 | Core | Not started |
 | 08 | Episodic retrieval and session ingestion | 03, 04, 06 | Conditional | Not started |
 | 09 | Ranked individual tool discovery | 01, 02 | Conditional | Not started |
@@ -2255,3 +2257,132 @@ package release is claimed. See [final evidence](../evaluations/STAGE_02_FINAL_V
 Earlier failures remain historical evidence, and small functional samples do not
 establish a model reliability rate. Stage 06 is the next separately authorized
 core stage; no new stage has started.
+
+
+### Stage 06 execution record — 2026-10-13
+
+User authorized Stage 06 with “proceed”. Work is on `version2`, based on committed
+Stage 02 revision `dcc8dad`. Scope is the additive fixed-main/helper-model and
+process-local accounting stage. See the [implementation record](STAGE_06_IMPLEMENTATION.md)
+and [public recipe](../MODEL_TASKS_AND_HELPERS.md). No breaking change is authorized
+or needed. Stage 03 remains separately authorized.
+
+Static compactor/extractor/verifier profiles use scoped named connector/provider
+factories; capability/input resolution precedes packet construction. Tool-free text
+packets and locally validated bounded JSON prevent opaque-state transfer. Helpers
+support one repair under the same budget, with explicit host escalation. The first
+compactor integration reuses safe explicit between-execution rollover; algorithmic
+automatic compaction remains unchanged.
+
+`ModelTask` reserves provider capacity and optional upper model token prices
+synchronously across in-process callers. SDK fetch adapters observe physical retries
+without changing default retry policies. Main/helper generation, repair and wrap-up
+usage is counted once; cache/reasoning subsets remain subsets. Unknown attempts keep
+conservative reservations. Cancellation, deadlines and late results stay on their
+original scope. External final usage is deduplicated; external admission is host-owned.
+
+AMOS adds optional static role selection, explicit helper/rollover commands, and
+purpose usage with unknowns. Config changes make no calls, preserve sessions and
+roll back on failure. Public offline examples and a real-provider opt-in mode,
+AMOS command/runner demonstration, old/additive consumer fixtures and extensive
+failure/lifecycle/concurrency tests accompany the change.
+
+**Completed validation:** **339 files / 7,131 unit tests**, including **101 new
+Stage 06 cases**, pass. The final live suites pass **42 test cases / 54 distinct
+scenarios**: 24 baseline workload/splits, 16 context checks, six tool-outcome modes,
+eight Stage 06 cases. Final suites have zero failures/skips. The public real-OpenAI
+`gpt-4.1`/`gpt-4o-mini` example also passes. Scoped new-runtime coverage is **97.93%
+lines / 84.97% branches**. Build/24 exports, source/strict/examples/AMOS types,
+lint, old/additive consumers, generated API/1,640 items, AMOS build, all relevant
+offline examples, package inventory and artifact checks pass.
+
+Earlier SDK-constructor/rollover fixture errors were corrected without weakening
+their contracts. The initial Google development-chat completion gate failed,
+and a diagnostic reproduced unrelated tool-generation JSON. Wire/direct checks
+found the expected request and matching raw/normalized output; a subsequent
+unchanged full three-provider run passed. All attempts remain in
+[Stage 06 evidence](../evaluations/STAGE_06_VALIDATION.json). This is an observed
+model-answer reliability limit, not a demonstrated request-conversion fix.
+This stage makes no comparative quality or savings claim; Stage 07 includes the
+bounded live quality comparison. No package release, main-model routing, automatic
+summary strategy, durable budget or native-state migration is delivered.
+
+
+### Stage 06 review record 2026-10-13
+
+The [review](STAGE_06_REVIEW_AND_FIX_PLAN.md) identifies two P1 and six P2 defects
+in effective budget admission, Google thinking accounting, schema compilation,
+stream settlement, task ownership, external reports and Anthropic thinking.
+All were reproduced offline while the original focused 101 tests passed. No fixes
+were made during the review. User subsequently authorized all corrections with
+“fix all”; the completion record below supersedes that open status. The preceding
+execution record remains historical validation.
+
+### Stage 06 correction completion — 2026-10-13
+
+All R1–R8 findings are fixed. Raw vendor tools/pricing follow cost admission;
+Google GenerateContent/Vertex thinking is normalized only for accounting;
+schema compilers are invocation-scoped; terminal stream usage survives failure;
+direct calls retain captured ownership; helpers share tasks only explicitly;
+external usage availability/outcomes are honest; supported Anthropic extended
+thinking uses existing provider preflight. No new framework or API break was needed.
+
+Final validation passes **7,179 unit tests / 339 files**, including **149 Stage 06
+tests** and **48 corrective regressions**; **45 real-provider cases / 57 distinct
+scenarios** across OpenAI/Anthropic/Google, with no final failures/skips. Scoped
+runtime coverage is **98.14% lines / 88.34% branches**. Build/24 exports, source,
+strict test/example/AMOS types, lint, old/additive consumers, generated API/1,640
+items, nine offline examples, the live stronger-main/smaller-helper example,
+AMOS build, package and artifact checks pass. See [review completion](STAGE_06_REVIEW_AND_FIX_PLAN.md#correction-completion--2026-10-13)
+and [corrective evidence](../evaluations/STAGE_06_CORRECTIONS_VALIDATION.json).
+
+The first two added Google thinking fixtures returned prose and failed their
+numeral-only assertion. Explicit native-JSON fixtures now verify exact answers
+and inclusive usage; original completion gates are unchanged. Failed observations
+and earlier records remain preserved, with no statistical reliability or savings
+claim. The Version 2 adoption/handoff and standard docs are synchronized. Existing
+AMOS helper/usage commands illustrate the corrected runtime; no additional command
+is necessary. Stage 06 is complete on branch, not released. Stage 03 remains the
+next separately authorized stage; Stage 07 and later work have not begun.
+
+### Stage 06 second review — 2026-10-13
+
+The [second review](STAGE_06_SECOND_REVIEW.md) reproduces four additional findings:
+two P1 budget-admission gaps (Google candidate multiplicity and mutable request
+data), and two P2 gaps (mixed external pricing overwritten by final metadata and
+repair dropping explicit source evidence). All **149 focused Stage 06 tests**
+still pass. Actual SDK/mock-HTTP and controlled-provider reproductions require
+no `.env` or billable requests. Runtime/test fingerprints match the earlier
+corrective pass; no production code or permanent tests were changed in this review.
+
+See [recorded evidence](../evaluations/STAGE_06_SECOND_REVIEW.json) and the narrow
+compatible fix plan. Prior full validation remains unchanged history; these new
+cases were not covered by its passing gates. Stage 06 had four open issues at this
+review snapshot; the subsequent completion below records their correction.
+No breaking API change or new architectural framework was proposed.
+
+### Stage 06 second correction completion — 2026-10-13
+
+User authorized all S1–S4 fixes. Google/Vertex output multiplicity now participates
+in reservations and aggregate per-call caps; absent explicit per-candidate limits,
+the cap is divided by count. Request records are captured before admission and
+dispatch uses that view. External mixed/composite pricing stays unknown through
+final snapshots. Helper repair retains the selected source packet, with bounded
+input fit, cancellation and existing budget ownership. No API break or new
+framework was needed; default untracked behavior and public return/events persist.
+
+Validation passes **7,228 units / 339 files**, including **198 Stage 06 cases**
+and **49 second-pass regressions**; **48 real-provider cases / 60 scenarios**
+across OpenAI/Anthropic/Google, with zero final failures/skips. Scoped runtime
+coverage is **98.24% lines / 90.10% branches**. All build/24-export, type/lint,
+compatibility, API generation/1,640-item, examples/AMOS, package and artifact
+checks pass. Library/AMOS offline demos now repair a deliberate invalid answer;
+three new live helper-repair cases use real model calls and preserve source IDs.
+See [completion](STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13) and
+[second corrective evidence](../evaluations/STAGE_06_SECOND_CORRECTIONS_VALIDATION.json).
+
+Earlier failed/passing records remain history, including corrected test fixtures
+and prior Google output-format reliability limits. No published release,
+statistical reliability or comparative model-quality/savings claim is made.
+Version 2 adoption/handoff and standard docs are synchronized. Stage 03 remains
+the next separately authorized stage; Stage 07 and later work have not begun.

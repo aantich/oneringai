@@ -1,0 +1,499 @@
+{
+  "protocol": "stage-06-review-v1",
+  "recordedAt": "2026-10-13T11:40:40.236810+00:00",
+  "localDate": "2026-10-13",
+  "branch": "version2",
+  "baseRevision": "dcc8dade2f53b0b73ee12d8feae5ae91abfe3593",
+  "status": "Eight findings open; review only, no implementation fixes",
+  "priorSourceFingerprintsUnchanged": true,
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P1",
+      "title": "Raw vendor tools bypass cost admission"
+    },
+    {
+      "id": "R2",
+      "priority": "P1",
+      "title": "Google thinking usage is discarded or underpriced"
+    },
+    {
+      "id": "R3",
+      "priority": "P2",
+      "title": "Shared schema compiler breaks reuse and retains every clone"
+    },
+    {
+      "id": "R4",
+      "priority": "P2",
+      "title": "Stream error loses usage already observed"
+    },
+    {
+      "id": "R5",
+      "priority": "P2",
+      "title": "Mutable direct options destroy caller-owned task"
+    },
+    {
+      "id": "R6",
+      "priority": "P2",
+      "title": "Completed main call cancels independent helper"
+    },
+    {
+      "id": "R7",
+      "priority": "P2",
+      "title": "External report invents successful zero usage"
+    },
+    {
+      "id": "R8",
+      "priority": "P2",
+      "title": "Supported Anthropic extended thinking is rejected"
+    }
+  ],
+  "focusedSuite": {
+    "files": 5,
+    "tests": 101,
+    "passed": 101,
+    "failed": 0,
+    "skipped": 0,
+    "logSHA256": "ec76f9a60a01a756a656b1680a845f33cf3ad528e629cd4e2e6aa960c93ea29b"
+  },
+  "reproductions": {
+    "repros": [
+      {
+        "case": "schema-id-reuse",
+        "providerCalls": 1,
+        "error": "Invalid helper JSON schema: schema with key or id \"urn:oneringai:review:reused\" already exists"
+      },
+      {
+        "case": "final-usage-then-stream-error",
+        "snapshot": {
+          "id": "4006a2c7-77aa-412e-a858-fd14485d5096",
+          "limits": {},
+          "invocations": [
+            {
+              "id": "c077abb9-45c9-4b4e-916d-a9a7bfc0f6b6",
+              "purpose": "stream",
+              "phase": "generation",
+              "connector": "review",
+              "model": "gpt-4o-mini",
+              "status": "failed",
+              "usage": null,
+              "modelCostUSD": null,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "144557b8-dc39-42c6-8248-4178916ad767",
+              "invocationId": "c077abb9-45c9-4b4e-916d-a9a7bfc0f6b6",
+              "boundary": "provider",
+              "status": "failed",
+              "dispatched": true,
+              "reservedTokens": 100,
+              "reservedCostUSD": null,
+              "usageCoveredByInvocation": false
+            }
+          ],
+          "totals": {
+            "calls": 1,
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "totalTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0,
+            "unknownUsageInvocations": 1,
+            "unknownCostInvocations": 1,
+            "unknownChargeAttempts": 1,
+            "chargedTokens": 100,
+            "chargedCostUSD": null
+          }
+        }
+      },
+      {
+        "case": "external-metadata-only-and-failed",
+        "responseStatus": "failed",
+        "snapshot": {
+          "id": "97c347fe-0af0-4b60-8970-bec590616aec",
+          "limits": {},
+          "invocations": [
+            {
+              "id": "exec_2c38dccc-d0f6-475a-8079-66cffe14ebcb",
+              "purpose": "external",
+              "connector": "review-schema",
+              "model": "review-model",
+              "parentInvocationId": "97c347fe-0af0-4b60-8970-bec590616aec",
+              "usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_input_tokens": 0,
+                "cache_creation_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "native_tool_calls": {},
+                "service_tier": "standard"
+              },
+              "phase": "generation",
+              "status": "succeeded",
+              "modelCostUSD": null,
+              "lateSettlement": false,
+              "external": true
+            }
+          ],
+          "attempts": [
+            {
+              "id": "72a0bef6-4ba0-4efd-b068-63b64997b874",
+              "invocationId": "exec_2c38dccc-d0f6-475a-8079-66cffe14ebcb",
+              "boundary": "provider",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 0,
+              "reservedCostUSD": null,
+              "usageCoveredByInvocation": true
+            }
+          ],
+          "totals": {
+            "calls": 1,
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "totalTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 1,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 0,
+            "chargedCostUSD": null
+          }
+        }
+      },
+      {
+        "case": "raw-native-tools-under-hard-cost-ceiling",
+        "wireTools": [
+          {
+            "type": "web_search_preview"
+          }
+        ],
+        "task": {
+          "id": "662a18f9-0857-40a4-90b8-3d15ac2016d8",
+          "limits": {
+            "maxCostUSD": 1
+          },
+          "invocations": [
+            {
+              "id": "0ca7f42f-be15-4a57-9b20-68f1dc12b68a",
+              "parentInvocationId": "662a18f9-0857-40a4-90b8-3d15ac2016d8",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "review-vendor-tools",
+              "model": "gpt-4o-mini",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 10,
+                "output_tokens": 5,
+                "total_tokens": 15
+              },
+              "modelCostUSD": 4.5e-06,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "0350d110-1b6c-4f06-b5fa-adea313e7516",
+              "invocationId": "0ca7f42f-be15-4a57-9b20-68f1dc12b68a",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 15,
+              "reservedCostUSD": 4.5e-06,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 1,
+            "inputTokens": 10,
+            "outputTokens": 5,
+            "totalTokens": 15,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 4.5e-06,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 15,
+            "chargedCostUSD": 4.5e-06
+          }
+        }
+      },
+      {
+        "case": "concurrent-main-success-cancels-helper",
+        "outcome": {
+          "error": "Model task destroyed"
+        }
+      }
+    ],
+    "google-usage": [
+      {
+        "visible": 5,
+        "thought": 20,
+        "responseUsage": {
+          "input_tokens": 10,
+          "output_tokens": 5,
+          "total_tokens": 35,
+          "output_tokens_details": {
+            "reasoning_tokens": 20
+          }
+        },
+        "task": {
+          "id": "614d9444-181a-4018-8e3c-37056ad79b1c",
+          "limits": {},
+          "invocations": [
+            {
+              "id": "28f7fed2-a966-4e3c-be86-8bb4f14a2bec",
+              "parentInvocationId": "614d9444-181a-4018-8e3c-37056ad79b1c",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "review-google-usage",
+              "model": "gemini-2.5-flash",
+              "status": "succeeded",
+              "usage": null,
+              "modelCostUSD": null,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "4e21c56c-7413-49b5-bf61-b0c18d15ab96",
+              "invocationId": "28f7fed2-a966-4e3c-be86-8bb4f14a2bec",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 1048704,
+              "reservedCostUSD": 0.3148928,
+              "usageCoveredByInvocation": false,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 1,
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "totalTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0,
+            "unknownUsageInvocations": 1,
+            "unknownCostInvocations": 1,
+            "unknownChargeAttempts": 1,
+            "chargedTokens": 1048704,
+            "chargedCostUSD": 0.3148928
+          }
+        },
+        "expectedInclusiveOutputTokens": 25,
+        "registryCostForInclusiveOutput": 6.55e-05
+      },
+      {
+        "visible": 50,
+        "thought": 20,
+        "responseUsage": {
+          "input_tokens": 10,
+          "output_tokens": 50,
+          "total_tokens": 80,
+          "output_tokens_details": {
+            "reasoning_tokens": 20
+          }
+        },
+        "task": {
+          "id": "904152d1-4a8c-4fd5-b8f1-d6650831a860",
+          "limits": {},
+          "invocations": [
+            {
+              "id": "badd8185-5cbf-47b8-9cbe-33c6f636b361",
+              "parentInvocationId": "904152d1-4a8c-4fd5-b8f1-d6650831a860",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "review-google-usage",
+              "model": "gemini-2.5-flash",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 10,
+                "output_tokens": 50,
+                "total_tokens": 80,
+                "output_tokens_details": {
+                  "reasoning_tokens": 20
+                }
+              },
+              "modelCostUSD": 0.000128,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "fd88f808-aa81-4453-9e32-b85ae5bb2e6f",
+              "invocationId": "badd8185-5cbf-47b8-9cbe-33c6f636b361",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 80,
+              "reservedCostUSD": 0.000128,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 1,
+            "inputTokens": 10,
+            "outputTokens": 50,
+            "totalTokens": 80,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 20,
+            "knownModelCostUSD": 0.000128,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 80,
+            "chargedCostUSD": 0.000128
+          }
+        },
+        "expectedInclusiveOutputTokens": 70,
+        "registryCostForInclusiveOutput": 0.00017799999999999996
+      }
+    ],
+    "ownership": {
+      "case": "caller-owned-task-destroyed-by-options-mutation",
+      "sharedAborted": true,
+      "reason": "Model task destroyed",
+      "replacementAborted": false
+    },
+    "capabilities": [
+      {
+        "case": "global-schema-cache-growth",
+        "cacheSizes": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      {
+        "case": "extended-thinking-rejected",
+        "normalProviderRequestThinking": {
+          "type": "enabled",
+          "budget_tokens": 2048
+        },
+        "helperError": "review-fixture: model 'claude-haiku-4-5-20251001' does not support requested capability 'reasoning'"
+      },
+      {
+        "case": "priced-external-without-token-report",
+        "responseStatus": "failed",
+        "task": {
+          "id": "dfc8e374-1832-4cd7-bd17-f9bab7d7011e",
+          "limits": {},
+          "invocations": [
+            {
+              "id": "exec_d7d52ed7-38f5-45eb-8713-8d2476872139",
+              "purpose": "external",
+              "connector": "review-cap",
+              "model": "claude-haiku-4-5-20251001",
+              "parentInvocationId": "dfc8e374-1832-4cd7-bd17-f9bab7d7011e",
+              "usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_input_tokens": 0,
+                "cache_creation_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "native_tool_calls": {},
+                "service_tier": "standard"
+              },
+              "phase": "generation",
+              "status": "succeeded",
+              "modelCostUSD": 0,
+              "lateSettlement": false,
+              "external": true
+            }
+          ],
+          "attempts": [
+            {
+              "id": "691003a2-daa3-46bf-ad22-3e4d747dc65f",
+              "invocationId": "exec_d7d52ed7-38f5-45eb-8713-8d2476872139",
+              "boundary": "provider",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 0,
+              "reservedCostUSD": 0,
+              "usageCoveredByInvocation": true
+            }
+          ],
+          "totals": {
+            "calls": 1,
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "totalTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 0,
+            "chargedCostUSD": 0
+          }
+        }
+      }
+    ]
+  },
+  "method": "Deterministic isolated source-runtime scripts; actual SDK clients with mocked HTTP, controlled providers/iterators and existing Anthropic converter. No .env or real credentials loaded; no live/billable calls. Temporary fixture reserve initially equalled its window; corrected the fixture before recording the successful reproductions.",
+  "sourceTestExampleSHA256": {
+    "apps/amos/examples/model-helpers-offline.ts": "91eae3e760fab571aa3273701ae953d273b149d745c0980dc01275b04c62e992",
+    "apps/amos/src/agent/AgentRunner.ts": "26803af5db2ee3ba6d341cdde716b72e89cea8820f7ff41437f040d39bcd1c17",
+    "apps/amos/src/app.ts": "39287c18ad3422a28c71ca5080953481fae880cae12f07f88a61ecd7330e3610",
+    "apps/amos/src/commands/commands/HelpersCommand.ts": "272408949be1216182d4840e31783a08fd84acc0520661cf5db3bd8860177dcd",
+    "apps/amos/src/commands/commands/index.ts": "dc7177518b7326bce0b333a4fb16310ed44b8423e80a898a7401bbaea5e7ce5f",
+    "apps/amos/src/config/types.ts": "1994919d164b8110e331f117aed2beca0796209743ac81c62ee63eb6ea8e61f5",
+    "examples/purpose-specific-models.ts": "5682f91a56a8484075bc9fc27ae4e61d453916b9bcf55326129f34ba3113aa04",
+    "examples/shared-run-budget.ts": "fc2738c292c9cc0ca6f3d4bed6387f2be170fc230db85959f01d45fbc49ce725",
+    "package.json": "fc927e41d883269bfd7a029e06bdebc08c9c11e7f711fbf5badc9868ae387b99",
+    "src/core/Agent.ts": "abc74b9f29d340811df6fb967329363e8197e5dd2a8561eccc25276f48be05a9",
+    "src/core/BaseAgent.ts": "c74c35747d3730545988eca4dbf3438859916567fc9d8b8f943aeb4822f80c99",
+    "src/core/index.ts": "8c787b62f9fb7c46a622043a590b94d4344d240afd14fd95368fe6d9897540e8",
+    "src/core/model-execution/ModelExecutor.ts": "b947a9fd12174f71564ffb5f2722364189a48e33c1f0e587d962973fc81ffac0",
+    "src/core/model-execution/ModelTask.ts": "86b8817c0d09b8803c9f36d5696d0bd2da54a02acaae24f4b39ba4e75dd61a3f",
+    "src/core/model-execution/types.ts": "88b6bead897269ed38041306f5ea0b4f75b0506164d1acd3704aaaf27b9d6543",
+    "src/domain/interfaces/ITextProvider.ts": "043e4f2d6c80fc7c5c26ede4b22db18d736354572266c2a650ff0840665e7499",
+    "src/index.ts": "10abb2a8c66c01efc012c056030f87f85ee4a29e5b2f1c17fccdec4bc675ed74",
+    "src/infrastructure/providers/anthropic/AnthropicTextProvider.ts": "583274358d9f24e7f78405831a71c288a2690b76fd7e14f8f748e0e63ca507d7",
+    "src/infrastructure/providers/deepseek/DeepSeekTextProvider.ts": "179a04543f51e23104366351d6ec714676e4194bdb381ea78ebbd732f131dd80",
+    "src/infrastructure/providers/google/GoogleTextProvider.ts": "25257eefb3c6b609d73e59754424bd1da390987e04d2e4c9378dfc2cb3a89e64",
+    "src/infrastructure/providers/openai/OpenAITextProvider.ts": "34a8c06a4a368a993973d9a124d20dd26e78b9e8e9ca8a2f8f9139e6e54023e4",
+    "src/infrastructure/providers/vertex/VertexAITextProvider.ts": "cf22d1f9e1cd42a07d89248baf792a48318290ca22b5967ccded37ba5f00ffb1",
+    "src/tools/registry.generated.ts": "e7cfcdd88e66b72973ade3cb392c451af9e87c57212825393c9fcc8cf59d56d0",
+    "tests/fixtures/agentic-baseline/stage06-consumer.ts": "37619bbe73fce1fd0c1a4d8cb704004c5d0b5ae0f56a85b41a54758752238fde",
+    "tests/fixtures/agentic-baseline/tsconfig.json": "c8dc6bc4a0b6d8d33574f4c8019bc64f65b2d06f67524b02ec7c0676435a872f",
+    "tests/integration/text/ModelExecution.live.integration.test.ts": "34114582530f60b2ba6c85baf48b29d3df26897bfa9b779c8c8375cee16ab15b",
+    "tests/unit/apps/amos/HelpersCommand.test.ts": "cb1e629c58d7996386fb585df6901b94ace4c5d3166ff016af40033d40441ba9",
+    "tests/unit/apps/amos/ModelHelpersAdapter.test.ts": "58c4b859aeb39ad5e837cfe9e8794b2dc860e5aabdc1861da93ecc2f788c81f3",
+    "tests/unit/core/Agent.modelExecution.test.ts": "f56e686957972f7b4608a697b8a3405dd77729e7492545023bc11c17f62feec4",
+    "tests/unit/core/ModelTask.test.ts": "c112d06e98180e54dfdc55e588a9af03b5a3fd12fd4757fe6ce84d3d2b86c6ba",
+    "tests/unit/providers/GoogleTextProvider.test.ts": "1595305c3d1f12f599433beb9f0d699ce06a1f91acc0995b04c4479c943dbd24",
+    "tests/unit/providers/ModelExecutionTransport.test.ts": "63fa4e0f4155e7bf4ec76c37219ffad5cfac81a06218c46d9f1bce890b00600d",
+    "tests/unit/providers/VertexAITextProvider.test.ts": "17e17bb515dce0c4bff5e75b29b1e204c0a4c05b1946b9e8485e9aec11cb0ddc"
+  },
+  "compatibility": "All proposed fixes preserve old defaults, provider public response/event shapes and saved formats. No breaking change proposed or approved.",
+  "report": "docs/designs/STAGE_06_REVIEW_AND_FIX_PLAN.md",
+  "limitations": [
+    "This review reran the focused 101 cases, not the full 7131-unit or live suites. Prior validation remains historical at unchanged implementation fingerprints.",
+    "Google prices in reproductions are calculations using the existing repository registry, not a current provider invoice.",
+    "The schema cache reproduction observes five retained entries; it demonstrates unbounded retention by identity, not a measured production heap failure."
+  ]
+}
