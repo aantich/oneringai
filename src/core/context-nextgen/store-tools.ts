@@ -12,6 +12,8 @@ import type { ToolFunction } from '../../domain/entities/Tool.js';
 import type { ToolContext } from '../../domain/entities/Tool.js';
 import type { IStoreHandler, StoreEntrySchema } from './types.js';
 
+const STORE_GET_DESCRIPTION = "Retrieve an entry's full value by exact key. Without a key, returns the store's default view, which may be index metadata only. See store-specific guidance.";
+
 // ============================================================================
 // StoreToolsManager
 // ============================================================================
@@ -107,7 +109,7 @@ ${storeLines.join('\n')}
 
 **Quick reference:**
 - \`store_set({ store: "...", key: "...", ...fields })\` — create or update an entry
-- \`store_get({ store: "...", key?: "..." })\` — retrieve one entry or all
+- \`store_get({ store: "...", key?: "..." })\` — read a value by key; omitting key returns the store's default view, possibly metadata only
 - \`store_delete({ store: "...", key: "..." })\` — remove an entry
 - \`store_list({ store: "...", ...filters? })\` — list entries with optional filtering
 - \`store_action({ store: "...", action: "...", ...params? })\` — store-specific operations
@@ -128,6 +130,8 @@ See each store's section below for behavior rules, workflows, and store-specific
       if (mode === 'set') {
         // For store_set: show store ID + required/optional fields
         lines.push(`- "${schema.storeId}": ${schema.setDataFields.replace(/\n/g, ', ')}`);
+      } else if (mode === 'get') {
+        lines.push(`- "${schema.storeId}": ${schema.description}`);
       } else if (mode === 'action' && schema.actions) {
         // For store_action: show store ID + available actions
         const actionNames = Object.keys(schema.actions);
@@ -139,7 +143,7 @@ See each store's section below for behavior rules, workflows, and store-specific
           lines.push(`- "${schema.storeId}": ${actionDescs.join('; ')}`);
         }
       } else {
-        // For get/delete/list: just list store IDs
+        // For delete/list: just list store IDs
         lines.push(`"${schema.storeId}"`);
       }
     }
@@ -149,6 +153,9 @@ See each store's section below for behavior rules, workflows, and store-specific
     }
     if (mode === 'action') {
       return `Store-specific actions:\n${lines.join('\n')}`;
+    }
+    if (mode === 'get') {
+      return `Available stores:\n${lines.join('\n')}`;
     }
     return `Available stores: ${lines.join(', ')}`;
   }
@@ -163,19 +170,19 @@ See each store's section below for behavior rules, workflows, and store-specific
         type: 'function',
         function: {
           name: 'store_get',
-          description: 'Retrieve an entry from a data store by key, or get all entries if no key provided.',
+          description: STORE_GET_DESCRIPTION,
           parameters: {
             type: 'object',
             properties: {
               store: { type: 'string', description: 'Target store name' },
-              key: { type: 'string', description: 'Key to retrieve. Omit to get all entries.' },
+              key: { type: 'string', description: 'Exact entry key for full content. Omitting it may return only index metadata, depending on the store.' },
             },
             required: ['store'],
           },
         },
       },
       descriptionFactory: () => {
-        return `Retrieve an entry from a data store by key, or get all entries if no key provided.\n\n${this.buildStoreDescriptions('get')}`;
+        return `${STORE_GET_DESCRIPTION}\n\n${this.buildStoreDescriptions('get')}`;
       },
       execute: async (args: Record<string, unknown>, context?: ToolContext) => {
         const handler = this.resolveHandler(args.store as string);

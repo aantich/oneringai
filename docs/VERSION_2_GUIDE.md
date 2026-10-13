@@ -6,11 +6,12 @@ the standard documentation before release. Read the
 [architecture roadmap](./designs/AGENTIC_ARCHITECTURE_EVOLUTION.md) for implementation
 scope, dependencies, research, and acceptance criteria.
 
-- **Status:** Work in progress; stages 00 and 01 complete and available on branch.
-- **Created / last updated:** 2026-10-07 / 2026-10-08.
+- **Status:** Work in progress; stages 00–02 delivered and validated on branch. The OpenAI retrieval and Anthropic named-tool corrections pass local checks and the full OpenAI/Anthropic/Google Stage 00–02 live suite. No package release is claimed.
+- **Created / last updated:** 2026-10-07 / 2026-10-12.
 - **Repository package version at creation:** `1.2.0`.
 - **Completed implementation stages:** 00 — evaluation and compatibility baselines;
-  01 — fresh request accounting and safe compaction.
+  01 — fresh request accounting and safe compaction;
+  02 — tool outcomes and per-execution cancellation.
 - **Version 2 release:** Not announced by this document.
 
 “Version 2” names the development initiative. It does not mean that an npm `2.0.0`
@@ -211,10 +212,10 @@ save/load and cleanup instructions; relevant AMOS context/evidence views.
 
 ## Reliable tool outcomes and cancellation
 
-**Availability: Planned — stage 02, extended by stage 03.**
+**Availability: Stage 02 available on branch. Durable evidence remains planned in stage 03.**
 
 Applications need to distinguish a successful action from a tool execution that
-returned a normalized error. Version 2 will make those outcomes consistent in the
+returned a normalized error. Stage 02 makes those outcomes inspectable in the
 execution pipeline while preserving existing raw result shapes and public behavior
 wherever possible. An arbitrary application payload containing `success: false`
 must not automatically be reinterpreted as a library execution failure.
@@ -230,9 +231,29 @@ action into a failed action, or cause that action to run again just to recreate
 its evidence. Durable replay and effect reconciliation are separately scoped
 conditional work in stage 11.
 
-**Adoption material to add at delivery:** Verified outcome and cancellation APIs;
-unchanged raw-result examples; normalized error, timeout, and late-result scenarios;
-retry limitations; provider/local execution boundaries; AMOS outcome display.
+**Adopt now:** `agent.tools.executeWithOutcome()` returns `{ result, outcome }`;
+`execute()` retains raw returns and the existing extension point. Optional execution
+options supply signals, deadlines, call/run IDs, and a host observer. Results,
+stream events, and managed errors expose optional outcome metadata. The existing
+`ToolContext.signal` reaches cooperative calls; host/account bindings are captured
+per invocation. Async acceptance placeholders no longer count as completed work.
+
+Connector defaults remain header timeouts and legacy retries. Opt in to
+`timeoutScope: 'operation'` and `retryPolicy: 'safe'` where appropriate. A timeout
+is local uncertainty, not evidence that an external write was prevented. See the
+[complete recipe](./TOOL_OUTCOMES_AND_CANCELLATION.md) for public signatures,
+raw-result compatibility, cleanup, persistence, extension and provider boundaries.
+
+After building, run `npm run example:tool-outcomes` and
+`npm run example:amos-tool-outcomes` for offline demonstrations. OpenAI and Google
+live validation and the initial
+[Anthropic revalidation](./evaluations/STAGE_02_ANTHROPIC_REVALIDATION.json)
+remain historical. The named-tool correction described below passes all three
+providers: **34 live test cases / 46 scenarios, with no failures or skips**.
+See [final validation](./evaluations/STAGE_02_FINAL_VALIDATION.json).
+No skipped provider is counted as passing. Earlier live scenarios
+had two initial completion failures that passed unchanged targeted reruns; both
+attempts remain in the [validation evidence](./evaluations/STAGE_02_VALIDATION.json).
 
 ## A main model with bounded helper models
 
@@ -375,7 +396,7 @@ revision, version, or link only when that evidence exists.
 | --- | --- | --- | --- | --- | --- | --- |
 | 00 | Compatibility and trajectory baselines | Core | Available on branch | `version2` working tree, base `43b34cd` (uncommitted) | — | [Recipe](./AGENTIC_BASELINE_EVALUATION.md); [example](../examples/agentic-evaluation-baseline.ts) |
 | 01 | Final request accounting and safe compaction | Core | Available on branch | `version2` working tree, base `43b34cd` (uncommitted) | — | [Preparation guide](./CONTEXT_PREPARATION.md); [example](../examples/context-compaction-freshness.ts) |
-| 02 | Accurate tool outcomes and cancellation | Core | Planned | — | — | — |
+| 02 | Accurate tool outcomes and cancellation | Core | Available on branch | `version2` working tree, base `fa8f911` (uncommitted); full local and three-provider live gate passed 2026-10-12 | — | [Recipe](./TOOL_OUTCOMES_AND_CANCELLATION.md); [example](../examples/tool-outcomes-and-cancellation.ts); [final validation](./evaluations/STAGE_02_FINAL_VALIDATION.json) |
 | 03 | Evidence references and projections | Core | Planned | — | — | — |
 | 04 | Task-state view and protected constraints | Core | Planned | — | — | — |
 | 05 | Typed context and selective assembly | Conditional | Conditional / deferred | — | — | — |
@@ -619,6 +640,149 @@ validation logs in the roadmap's stage record, linking them where useful.
   comparative quality/cost result. The main routing/helper/retention redesigns
   remain future work.
 
+### Stage 02 adoption record — 2026-10-12
+
+- **Scope/revision:** Existing pipeline and shared ToolManager, managed Agent
+  run/stream/external tools, background execution, generic connector API tools,
+  and AMOS. Branch `version2`, base `fa8f911`; no published release verified.
+- **Public additions:** `ToolExecutionOutcome`, `ToolExecutionOptions`,
+  `ToolExecutionReport`, `PipelineExecutionOptions`; `executeWithOutcome()`; optional
+  execution options/observer;
+  `tool:outcome` and `tool:late-complete`; optional result/stream/error `outcome`;
+  async `ToolResult.pending`; connector `timeoutScope` and `retryPolicy`.
+- **Defaults and compatibility:** Existing raw values, normalizer payloads,
+  default-disabled manager deadline, header timeout/retry defaults, breaker
+  settlement policy, saved formats, two-argument pipeline implementations, and
+  execute overrides remain supported. Legacy async override deadlines are retained.
+  No breaking change proposed or approved.
+- **Corrections:** Framework-normalized failures and streaming counters are
+  accurate. Async placeholders defer success counts. `skipRetry` now skips status
+  retries as documented. Manager safety nets still constrain async calls.
+- **Lifecycle/security:** Trusted identity/correlation snapshots, per-call signals,
+  disposed listeners/timers, one initial outcome, separately correlated late
+  settlement, no duplicate late accounting, and no cross-account background delivery.
+  Noncooperative tools can still perform effects; no remote rollback is claimed.
+- **Persistence/support:** Controllers/provenance are process-local. No new
+  session/config schema, durable outcome/effect ledger, automatic tool retry, or
+  origin restriction. Existing pinned consumers and saved sessions remain valid.
+  Generic API tools forward signals; specialized tools/transports need their own
+  support. Provider-hosted tools/external drivers have independent lifecycle controls.
+- **Review corrections:** All seven findings in the [review](./designs/STAGE_02_REVIEW_AND_FIX_PLAN.md)
+  are implemented: execution-bound connector authority and tool/permission selection,
+  delivery-time scope checks, contained async observers, settlement before streamed
+  completion, abort-aware cleanup, and metadata-preserving chained clones. Internal
+  registry capture introduces no mandatory custom-registry API. Existing counters,
+  explicit host continuations, formats, raw results, and defaults remain supported.
+  Existing injection notification ordering is retained. Reentrant scope changes clear
+  invalid pending input and stop delivery before the provider call.
+- **Examples/app:** The offline library example now demonstrates replacement during
+  a plugin wait and the replacement's use by the next invocation. Existing AMOS
+  outcome rendering remains appropriate; its build, adapter tests, and offline example
+  pass without adding a new UI for these library corrections.
+- **Validation:** **7,010 unit tests / 332 files** pass, including **53 corrective
+  regressions** in addition to the original 62 Stage 02 cases. Scoped coverage is
+  **83.45% lines / 90.48% branches / 83.33% functions**; Agent and the large AMOS
+  adapter remain outside that denominator and have mock integration coverage.
+  Build, strict types, lint, examples, public consumers, AMOS, package checks and
+  offline examples pass. See [corrective evidence](./evaluations/STAGE_02_CORRECTIONS_VALIDATION.json);
+  [original evidence](./evaluations/STAGE_02_VALIDATION.json) remains historical.
+  **30 unique OpenAI/Google live scenarios pass**. One existing OpenAI separate-spill
+  retrieval scenario failed twice unchanged, returning index keys/descriptions rather
+  than source markers; the Google counterpart passes. Anthropic was attempted in both
+  Stage 02 modes and remains unvalidated because the current key returns 401.
+  This is not an all-provider/all-scenario passing result or a release claim.
+  Follow-up diagnosis identified misleading keyless `store_get` guidance: notes
+  returns index metadata, while the tool description implies full retrieval.
+  A description-only diagnostic intervention passed five trials. The production
+  correction and its passing revalidation are recorded below; the diagnosis and
+  earlier failed attempts remain historical evidence.
+- **Next:** The corrections and all-provider validation below complete Stage 02. Separately
+  authorize Stage 06 — fixed main model, bounded helper roles,
+  and aggregate task usage/budgets. Stage 03 follows its dependency sequence.
+
+### Stage 02 notes retrieval correction — 2026-10-12
+
+- **Delivered:** Accurate keyed/keyless retrieval guidance in tool definitions,
+  store overview, notes instructions and memory index. Notes keyless reads return
+  metadata; pass each exact index key to `store_get` for source contents, and use
+  `store_list` for omitted entries. The original optional key, return shapes,
+  custom-store behavior and legacy WorkingMemory formatting are preserved.
+- **Adoption:** Existing managed agents receive the corrected prompt automatically.
+  No configuration, saved-state migration or new public package API is required.
+  The formatter's optional store selector is internal to the library. See the
+  [preparation guide](./CONTEXT_PREPARATION.md#using-the-library) and updated
+  `npm run example:context-freshness`, which demonstrates metadata versus content.
+  AMOS uses this library guidance automatically; existing adapter tests, typecheck
+  and offline context inspection example pass without a new UI control.
+- **Validation:** **7,016 unit tests / 333 files**, including six new retrieval
+  regressions, pass. Build, types, lint, consumers, examples, AMOS, generated API
+  and package checks pass. The original OpenAI collision scenario passes in all
+  **six production trials**, with both keyed reads and source markers. There are
+  **31 distinct passing OpenAI/Google live scenarios**; repetitions are not counted
+  as additional scenarios. Both Anthropic Stage 02 modes still fail with 401 before
+  validating behavior. Full stage completion remains pending that blocker.
+  See [retrieval-fix evidence](./evaluations/STAGE_02_RETRIEVAL_FIX_VALIDATION.json) and
+  [correction record](./designs/STAGE_02_REVIEW_AND_FIX_PLAN.md#openai-retrieval-correction-and-validation--2026-10-12).
+
+### Anthropic authentication and live revalidation — 2026-10-12
+
+The user's updated `.env` key authenticates successfully: a direct Messages API
+call returns HTTP 200. The unchanged Anthropic live suites pass **10 of 11 test
+cases**: eight Stage 00 workload/split scenarios, all five Stage 01 context
+scenarios, and the Stage 02 stream case. The Stage 02 run case fails because its
+observed outcome order is `failed, succeeded` rather than `succeeded, failed`.
+The 23 filtered OpenAI/Google test cases are not passes in this follow-up.
+
+A diagnostic confirms correct classification by tool name, but also observes a
+repeated failure-probe call. The dispatched named choice is `domain_probe`, yet
+the response selects `failure_probe`. A separate direct request to
+`api.anthropic.com/v1/messages`, bypassing OneRingAI and the SDK, reproduces that
+selection with HTTP 200. This remains an unresolved validation failure, not an
+authentication blocker or an all-provider passing result. No source, assertion,
+model, prompt, or limit was changed, and no retry-until-pass was performed.
+
+The previous 7,016 passing unit tests and 31 passing OpenAI/Google scenarios are
+retained validation; their recorded source/test/example fingerprints still match.
+They were not rerun after this credential-only change. See
+[Anthropic evidence](./evaluations/STAGE_02_ANTHROPIC_REVALIDATION.json) for the
+failure, correct tool/status correlation, repeated execution, and direct API probe.
+
+### Stage 02 final correction and validation — 2026-10-12
+
+- **Delivered:** Explicit Anthropic named choices advertise the selected local
+  function while retaining native tools and history. A mismatched local response
+  raises the existing `ProviderError` before execution, in both generated and
+  streamed paths. The provider stream is cleaned up, and no automatic retry or
+  model switch is added. Default `auto`/`required` behavior remains unchanged.
+- **Fixture correction:** Both live modes now mutate `before:llm` options in
+  place, preserving existing streaming hook return semantics. Single-call
+  requests are explicit; the original marker, order, call-count and metric
+  assertions remain, with stricter tool/status correlation. A separate live
+  diagnostic using the original failing request configuration passes as well.
+- **Compatibility/adoption:** No public signature, default, raw return, event
+  shape or saved format changes, and no breaking change needed. Existing agents
+  receive the provider correction automatically. Named-tool requests on
+  unsupported models/settings retain their existing rejection. See the
+  [selection contract](./TOOL_OUTCOMES_AND_CANCELLATION.md#explicit-anthropic-tool-selection).
+- **Examples/AMOS:** `npm run example:tool-outcomes` remains offline by default.
+  With `.env` credentials, `-- --live-anthropic` adds real calls in both managed
+  modes and verifies exact probe names/statuses and markers. Both modes pass.
+  Existing AMOS provider-error rendering needs no new controls; its unit/type
+  checks and both offline demonstrations pass.
+- **Final validation:** **334 files / 7,030 unit tests**, including **14 new
+  provider/Agent regressions**, pass. The full live suite passes **34 test cases /
+  46 distinct scenarios**: 24 baseline workload/splits, 16 context scenarios and
+  six tool-outcome modes across OpenAI, Anthropic and Google. There are **zero
+  failures and zero skipped cases** in both final suites. Build/24 exports,
+  source/strict/examples/AMOS types, lint, original/additive public consumers,
+  generated API, public offline/live examples and package checks pass.
+- **Availability:** Stage 02 is complete on the current branch; no package has
+  been published. Earlier failures and reports remain historical evidence. The
+  [final evidence](./evaluations/STAGE_02_FINAL_VALIDATION.json) records current
+  checks and source fingerprints. These are functional samples, not a statistical
+  reliability or comparative model-quality claim. Stage 06 still requires
+  separate authorization.
+
 ## Handoff to the standard documentation
 
 This ledger prevents improvements, changed guarantees, and limitations from being
@@ -642,7 +806,7 @@ incorrect usage instructions in place.
 | 01 corrective pass: recovery and final dispatch | Mixed native spill, attachments/failure recovery, listener changes, actual model capacity, schema/native/signature estimates, and auxiliary diagnostics. | Preparation guide; README; User Guide; generated API; agent instructions; examples; AMOS; Changelog; packaged corrective validation. | Synced on 2026-10-08; 6,863 unit tests and 34 live scenarios pass; existing records retained. |
 | 01 second corrective pass: initial constraints and spill collisions | Existing memory key allocation, partial-write retry limits, known schema/native/capacity preparation, additive adapter options, error accounting, and AMOS inspection. | Preparation guide; README; User Guide; generated API; agent instructions; example/index; AMOS; Changelog; second review and validation record inventory. | Synced on 2026-10-08; 6,895 unit tests and 40 live scenarios pass; prior records retained; no release claimed. |
 | 03, 07: evidence and summaries | Evidence recovery, acknowledgment/retention, save/load, summaries, failure, defaults, and adoption. | README; User Guide; generated API; large-result/summary examples; AMOS evidence views; Changelog. | Pending |
-| 02: tool outcomes | Reliability guarantees, errors, cancellation, timeouts, late outcomes, compatible shapes, and observable corrections. | README; User Guide; generated API; connector/tool guide where affected; failure example; AMOS outcome display; Changelog. | Pending |
+| 02: tool outcomes | Semantic provenance, cancellation/deadlines, late/account isolation, legacy overrides, counters, raw shapes, defaults, process-local limits, truthful keyed/keyless notes retrieval and explicit Anthropic named-tool selection. | [Recipe](./TOOL_OUTCOMES_AND_CANCELLATION.md); [preparation guide](./CONTEXT_PREPARATION.md); README; User Guide; generated API; agent guide; connector catalog; library/AMOS examples and indexes; Changelog; package inventory. | Synced: 7,030 unit tests and all 46 distinct three-provider live scenarios pass. Offline examples and the opt-in Anthropic example verified; [final evidence](./evaluations/STAGE_02_FINAL_VALIDATION.json) packaged. Stage complete on branch; no release claimed. |
 | 06: helper models | Connector setup, role options, budgets, all-call usage, fallback, unsupported configurations, and unknown-price limits. | README; User Guide; generated API; model-role example; AMOS role/usage controls; Changelog. | Pending |
 | 04, 10: task state and completion | Host-owned state, constraints, recovery, completion, run/stream differences, existing task compatibility, and enabling policies. | README; User Guide; generated API; memory guides where affected; state/recovery examples; AMOS progress; Changelog. | Pending |
 | 12: presets | Both presets, plain Agent baseline, overrides, capability/driver support, old-setting migration, and help. | README quickstarts; User Guide/runtime guide; generated API; preset example/index; AMOS selection/settings/help; Changelog. | Pending |
@@ -700,3 +864,7 @@ the adoption/release record or explicitly document its successor after handoff.
 | 2026-10-07 | Validated Anthropic with the user's workspace-scoped key: eight workload/split runs and 11 existing integration tests pass. Replaced retired Sonnet 4 IDs in integration fixtures with available Sonnet 4.6. | All three selected providers validated for the recorded scope; no runtime/API change. | Combined pilot and current adoption/validation guidance synced; failed attempts retained as history. |
 | 2026-10-07 | Delivered Stage 01 fresh final accounting, bounded compaction/protocol protection, additive diagnostics, offline examples, and AMOS revision/estimate inspection. | Stage 01 available on branch; 6,825 unit tests and 30 live scenarios pass; no npm release or valid API break. | Preparation guide, standard documentation, generated API, AMOS, examples, Changelog, and packaged validation records synced; later scopes remain pending. |
 | 2026-10-08 | Corrected all five Stage 00/01 review findings, added recovery/dispatch/repair regressions and examples, and revalidated real providers. | Corrective Stage 01 complete on branch; 6,863 unit tests and 34 live scenarios pass; no breaking API change or release. | Standard docs, generated API, AMOS, examples and corrective validation record synced; prior reports remain historical evidence. |
+| 2026-10-12 | Delivered Stage 02 semantic outcomes, cancellation, connector deadline/retry options, truthful AMOS rendering, and legacy extension regressions. | Available on branch; local gates pass; OpenAI/Google live checks recorded, Anthropic credential rejected. No release or approved API break. | Recipe, standard guides, generated API, examples/AMOS, Changelog, compatibility fixtures, and validation inventory synced. |
+| 2026-10-12 | Corrected all seven Stage 02 review findings and added 53 regressions. | Branch-only; local checks pass; live limitations retained explicitly. | Recipe, standard docs, generated API, examples/AMOS, review completion and corrective evidence synced. |
+| 2026-10-12 | Retested the user's updated Anthropic key and all selected Stage 00–02 Anthropic cases; investigated the remaining failure with a direct API request. | Authentication resolved; 10/11 cases pass. One named-tool selection failure remains; Stage 02 completion pending. | Current availability, handoff, roadmap and review record updated; revalidation evidence packaged. Earlier reports retained. |
+| 2026-10-12 | Corrected explicit Anthropic named-tool requests and added pre-execution response checks, 14 regressions, and an opt-in live example. | Stage 02 complete on branch: 7,030 unit tests and all 46 distinct three-provider live scenarios pass; no failures/skips in final suites. | Recipe, User Guide, generated API, examples/index, Changelog, stage records, final evidence and package inventory synced; no release or API break. |

@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-10-08
+**Generated:** 2026-10-12
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -20,7 +20,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Task Agents](#task-agents) (115 items)
 - [Context Management](#context-management) (14 items)
 - [Session Management](#session-management) (75 items)
-- [Tools & Function Calling](#tools-function-calling) (208 items)
+- [Tools & Function Calling](#tools-function-calling) (211 items)
 - [Streaming](#streaming) (35 items)
 - [Model Registry](#model-registry) (29 items)
 - [OAuth & External APIs](#oauth-external-apis) (46 items)
@@ -29,7 +29,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Utilities](#utilities) (10 items)
 - [Interfaces](#interfaces) (78 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (768 items)
+- [Other](#other) (769 items)
 
 ## Core
 
@@ -37,7 +37,7 @@ Core classes for authentication, agents, and providers
 
 ### Agent `class`
 
-📍 [`src/core/Agent.ts:388`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:391`](src/core/Agent.ts)
 
 Agent class - represents an AI assistant with tool calling capabilities
 
@@ -1205,7 +1205,7 @@ static clear(): void
 
 ### Connector `class`
 
-📍 [`src/core/Connector.ts:56`](src/core/Connector.ts)
+📍 [`src/core/Connector.ts:61`](src/core/Connector.ts)
 
 Connector class - represents a single authenticated connection
 
@@ -1745,7 +1745,7 @@ isDisposed(): boolean
 
 ### AgentConfig `interface`
 
-📍 [`src/core/Agent.ts:74`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:77`](src/core/Agent.ts)
 
 Agent configuration - extends BaseAgentConfig with Agent-specific options
 
@@ -1807,7 +1807,7 @@ Example: `toolExecutionTimeout: 300000` (5 minutes hard cap per tool call) |
 
 ### AgentContextRolloverOptions `interface`
 
-📍 [`src/core/Agent.ts:204`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:207`](src/core/Agent.ts)
 
 Options for {@link Agent.rolloverContext}.
 
@@ -1943,7 +1943,7 @@ Aggregate statistics across all tracked agents
 
 ### ConnectorFetchOptions `interface`
 
-📍 [`src/core/Connector.ts:44`](src/core/Connector.ts)
+📍 [`src/core/Connector.ts:45`](src/core/Connector.ts)
 
 Fetch options with additional connector-specific settings
 
@@ -1953,6 +1953,8 @@ Fetch options with additional connector-specific settings
 | Property | Type | Description |
 |----------|------|-------------|
 | `timeout?` | `timeout?: number;` | Override timeout for this request |
+| `timeoutScope?` | `timeoutScope?: 'headers' | 'operation';` | Legacy per-attempt header timeout (default), or one deadline through auth, retries and body consumption. |
+| `retryPolicy?` | `retryPolicy?: 'legacy' | 'safe';` | Opt in to retrying only GET/HEAD/OPTIONS; ambiguous writes are never replayed. |
 | `skipRetry?` | `skipRetry?: boolean;` | Skip retry for this request |
 | `skipCircuitBreaker?` | `skipCircuitBreaker?: boolean;` | Skip circuit breaker for this request |
 
@@ -1962,7 +1964,7 @@ Fetch options with additional connector-specific settings
 
 ### ExternalExecutionOptions `interface`
 
-📍 [`src/core/Agent.ts:228`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:231`](src/core/Agent.ts)
 
 Options for a non-LLM execution owned by an external transport.
 
@@ -1979,7 +1981,7 @@ Options for a non-LLM execution owned by an external transport.
 
 ### ExternalExecutionResult `interface`
 
-📍 [`src/core/Agent.ts:241`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:244`](src/core/Agent.ts)
 
 Terminal data supplied when an external execution is completed.
 
@@ -1999,7 +2001,7 @@ Terminal data supplied when an external execution is completed.
 
 ### ExternalToolCall `interface`
 
-📍 [`src/core/Agent.ts:234`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:237`](src/core/Agent.ts)
 
 A function call received from an external model transport.
 
@@ -2018,7 +2020,7 @@ A function call received from an external model transport.
 
 ### RunOptions `interface`
 
-📍 [`src/core/Agent.ts:174`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:177`](src/core/Agent.ts)
 
 Per-call options for run() and stream().
 These override the agent-level config for this single invocation.
@@ -2058,7 +2060,7 @@ type AgentEventListener = (agentId: string, agentName: string, event: string, da
 
 ### AgentRuntimeConfigSnapshot `type`
 
-📍 [`src/core/Agent.ts:154`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:157`](src/core/Agent.ts)
 
 Agent runtime options exposed by getRuntimeConfigSnapshot().
 
@@ -2084,7 +2086,7 @@ type AgentRuntimeConfigSnapshot = Pick&lt;AgentConfig,
 
 ### AgentSessionConfig `type`
 
-📍 [`src/core/Agent.ts:69`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:72`](src/core/Agent.ts)
 
 Session configuration for Agent (same as BaseSessionConfig)
 
@@ -12842,7 +12844,7 @@ async shutdown(): Promise&lt;void&gt;
 
 ### ParallelTasksError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:337`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:339`](src/domain/errors/AIErrors.ts)
 
 Error thrown when multiple tasks fail in parallel execution (fail-all mode)
 
@@ -13014,7 +13016,7 @@ finalizePlanning(): void
 
 ### TaskTimeoutError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:290`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:292`](src/domain/errors/AIErrors.ts)
 
 Error thrown when a task execution times out
 
@@ -13042,7 +13044,7 @@ constructor(
 
 ### TaskValidationError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:309`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:311`](src/domain/errors/AIErrors.ts)
 
 Error thrown when task completion validation fails
 
@@ -15740,7 +15742,7 @@ Set to false to skip re-check for performance if you know condition won't change
 
 ### TaskFailure `interface`
 
-📍 [`src/domain/errors/AIErrors.ts:328`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:330`](src/domain/errors/AIErrors.ts)
 
 Task failure info for parallel execution
 
@@ -21740,7 +21742,7 @@ static forIdentities(
 
 ### InvalidToolArgumentsError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:230`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:232`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -21828,7 +21830,7 @@ constructor(code: string, message: string, retryable = false)
 
 ### StoreToolsManager `class`
 
-📍 [`src/core/context-nextgen/store-tools.ts:19`](src/core/context-nextgen/store-tools.ts)
+📍 [`src/core/context-nextgen/store-tools.ts:21`](src/core/context-nextgen/store-tools.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -22455,11 +22457,20 @@ constructor(
 
 </details>
 
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `outcome?` | `outcome: ToolExecutionOutcome | undefined` | Semantic metadata for a managed invocation; absent on legacy/manual errors. |
+
+</details>
+
 ---
 
 ### ToolExecutionPipeline `class`
 
-📍 [`src/core/tool-execution/ToolExecutionPipeline.ts:84`](src/core/tool-execution/ToolExecutionPipeline.ts)
+📍 [`src/core/tool-execution/ToolExecutionPipeline.ts:87`](src/core/tool-execution/ToolExecutionPipeline.ts)
 
 Tool Execution Pipeline
 
@@ -22571,12 +22582,13 @@ Execution phases:
 4. onError hooks if any phase fails
 
 ```typescript
-async execute(tool: ToolFunction, args: unknown): Promise&lt;unknown&gt;
+async execute(tool: ToolFunction, args: unknown, options: PipelineExecutionOptions = {}): Promise&lt;unknown&gt;
 ```
 
 **Parameters:**
 - `tool`: `ToolFunction&lt;any, any&gt;`
 - `args`: `unknown`
+- `options`: `PipelineExecutionOptions` *(optional)* (default: `{}`)
 
 **Returns:** `Promise&lt;unknown&gt;`
 
@@ -22586,7 +22598,7 @@ async execute(tool: ToolFunction, args: unknown): Promise&lt;unknown&gt;
 
 ### ToolManager `class`
 
-📍 [`src/core/ToolManager.ts:225`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:231`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -23170,14 +23182,30 @@ Simple execution - no caching, no parent context.
 Context must be set via setToolContext() before calling.
 
 ```typescript
-async execute(toolName: string, args: any): Promise&lt;any&gt;
+async execute(toolName: string, args: any, options?: ToolExecutionOptions): Promise&lt;any&gt;
 ```
 
 **Parameters:**
 - `toolName`: `string`
 - `args`: `any`
+- `options`: `ToolExecutionOptions | undefined` *(optional)*
 
 **Returns:** `Promise&lt;any&gt;`
+
+#### `executeWithOutcome()`
+
+Execute with semantic metadata while retaining the legacy raw result contract.
+
+```typescript
+async executeWithOutcome(toolName: string, args: any, options: ToolExecutionOptions = {}): Promise&lt;ToolExecutionReport&lt;any&gt;&gt;
+```
+
+**Parameters:**
+- `toolName`: `string`
+- `args`: `any`
+- `options`: `ToolExecutionOptions` *(optional)* (default: `{}`)
+
+**Returns:** `Promise&lt;ToolExecutionReport&lt;any&gt;&gt;`
 
 #### `hasToolFunction()`
 
@@ -23321,7 +23349,7 @@ loadState(state: SerializedToolState): void
 
 ### ToolNotFoundError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:143`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:145`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -23864,7 +23892,7 @@ static isConnectorTool(entry: ToolRegistryEntry | ConnectorToolEntry): entry is 
 
 ### ToolTimeoutError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:128`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:130`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -23927,7 +23955,7 @@ constructor(
 
 ### AsyncToolConfig `interface`
 
-📍 [`src/domain/entities/Tool.ts:111`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:115`](src/domain/entities/Tool.ts)
 
 Configuration for async (non-blocking) tool behavior
 
@@ -24592,7 +24620,7 @@ getPath(userId: string | undefined): string;
 
 ### IToolExecutionPipeline `interface`
 
-📍 [`src/core/tool-execution/types.ts:145`](src/core/tool-execution/types.ts)
+📍 [`src/core/tool-execution/types.ts:160`](src/core/tool-execution/types.ts)
 
 Pipeline interface for managing and executing plugins.
 
@@ -24667,12 +24695,13 @@ list(): IToolExecutionPlugin[];
 Execute a tool through the plugin pipeline.
 
 ```typescript
-execute(tool: ToolFunction, args: unknown): Promise&lt;unknown&gt;;
+execute(tool: ToolFunction, args: unknown, options?: PipelineExecutionOptions): Promise&lt;unknown&gt;;
 ```
 
 **Parameters:**
 - `tool`: `ToolFunction&lt;any, any&gt;`
 - `args`: `unknown`
+- `options`: `PipelineExecutionOptions | undefined` *(optional)*
 
 **Returns:** `Promise&lt;unknown&gt;`
 
@@ -24682,7 +24711,7 @@ execute(tool: ToolFunction, args: unknown): Promise&lt;unknown&gt;;
 
 ### IToolExecutionPlugin `interface`
 
-📍 [`src/core/tool-execution/types.ts:78`](src/core/tool-execution/types.ts)
+📍 [`src/core/tool-execution/types.ts:93`](src/core/tool-execution/types.ts)
 
 Plugin interface for extending tool execution.
 
@@ -25092,7 +25121,7 @@ Parsed connector category: connector name + optional account alias.
 
 ### PendingAsyncTool `interface`
 
-📍 [`src/domain/entities/Tool.ts:144`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:148`](src/domain/entities/Tool.ts)
 
 Tracks a single async tool execution in flight
 
@@ -25256,7 +25285,7 @@ Called per-invocation; the agent is destroyed after the routine completes. |
 
 ### SerializedToolState `interface`
 
-📍 [`src/core/ToolManager.ts:169`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:173`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -25520,7 +25549,7 @@ Definition of a tool category in the catalog.
 
 ### ToolCondition `interface`
 
-📍 [`src/core/ToolManager.ts:110`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:114`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -25579,7 +25608,7 @@ Resolution order in connector tools:
 
 ### ToolExecutionContext `interface`
 
-📍 [`src/domain/entities/Tool.ts:101`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:105`](src/domain/entities/Tool.ts)
 
 Tool execution context - tracks all tool calls in a generation
 
@@ -25608,6 +25637,7 @@ Tool execution complete
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `outcome?` | `outcome?: import('./Tool.js').ToolExecutionOutcome;` | Additive semantic metadata; raw content retains its existing shape. |
 | `type` | `type: StreamEventType.TOOL_EXECUTION_DONE;` | - |
 | `tool_call_id` | `tool_call_id: string;` | - |
 | `tool_name` | `tool_name: string;` | - |
@@ -25619,9 +25649,58 @@ Tool execution complete
 
 ---
 
+### ToolExecutionOptions `interface`
+
+📍 [`src/domain/entities/Tool.ts:393`](src/domain/entities/Tool.ts)
+
+Additive options for a single ToolManager invocation. Zero disables the additional per-call deadline.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `signal?` | `signal?: AbortSignal;` | - |
+| `timeoutMs?` | `timeoutMs?: number;` | - |
+| `callId?` | `callId?: string;` | - |
+| `runId?` | `runId?: string;` | - |
+| `onOutcome?` | `onOutcome?: (outcome: ToolExecutionOutcome) =&gt; void;` | Host observer for the initial outcome; exceptions do not affect execution. |
+
+</details>
+
+---
+
+### ToolExecutionOutcome `interface`
+
+📍 [`src/domain/entities/Tool.ts:377`](src/domain/entities/Tool.ts)
+
+Semantic execution metadata. It never asserts that a remote side effect was undone.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `executionId` | `executionId: string;` | - |
+| `toolName` | `toolName: string;` | - |
+| `callId?` | `callId?: string;` | - |
+| `runId?` | `runId?: string;` | - |
+| `status` | `status: 'succeeded' | 'failed' | 'denied' | 'cancelled' | 'timed_out';` | - |
+| `startedAt` | `startedAt: number;` | - |
+| `durationMs` | `durationMs: number;` | - |
+| `timeoutMs?` | `timeoutMs?: number;` | - |
+| `executionStarted` | `executionStarted: boolean;` | - |
+| `completion` | `completion: 'settled' | 'unknown' | 'not_started';` | - |
+| `cancellation` | `cancellation: 'none' | 'requested' | 'acknowledged';` | - |
+| `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
 ### ToolExecutionPipelineOptions `interface`
 
-📍 [`src/core/tool-execution/types.ts:195`](src/core/tool-execution/types.ts)
+📍 [`src/core/tool-execution/types.ts:210`](src/core/tool-execution/types.ts)
 
 Options for creating a ToolExecutionPipeline
 
@@ -25633,6 +25712,22 @@ Options for creating a ToolExecutionPipeline
 | `useRandomUUID?` | `useRandomUUID?: boolean;` | Whether to generate unique execution IDs using crypto.randomUUID().
 If false, uses a simpler counter-based ID.
 Default: true (if crypto.randomUUID is available) |
+
+</details>
+
+---
+
+### ToolExecutionReport `interface`
+
+📍 [`src/domain/entities/Tool.ts:402`](src/domain/entities/Tool.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `result` | `result: T;` | - |
+| `outcome` | `outcome: ToolExecutionOutcome;` | - |
 
 </details>
 
@@ -25660,7 +25755,7 @@ Tool execution starting
 
 ### ToolFunction `interface`
 
-📍 [`src/domain/entities/Tool.ts:230`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:234`](src/domain/entities/Tool.ts)
 
 User-provided tool function
 
@@ -25691,7 +25786,7 @@ Used for logging, UI display, and debugging. |
 
 ### ToolManagerConfig `interface`
 
-📍 [`src/core/ToolManager.ts:215`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:221`](src/core/ToolManager.ts)
 
 Configuration for ToolManager
 
@@ -25711,7 +25806,7 @@ Default: 0 (disabled - relies on tool's own timeout) |
 
 ### ToolManagerStats `interface`
 
-📍 [`src/core/ToolManager.ts:159`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:163`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -25732,7 +25827,7 @@ Default: 0 (disabled - relies on tool's own timeout) |
 
 ### ToolMetadata `interface`
 
-📍 [`src/core/ToolManager.ts:149`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:153`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -25771,7 +25866,7 @@ Default: 0 (disabled - relies on tool's own timeout) |
 
 ### ToolOptions `interface`
 
-📍 [`src/core/ToolManager.ts:91`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:95`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -25819,7 +25914,7 @@ If set, session approvals expire after this duration. |
 
 ### ToolPermissionConfig `interface`
 
-📍 [`src/domain/entities/Tool.ts:194`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:198`](src/domain/entities/Tool.ts)
 
 Permission configuration for a tool
 
@@ -25847,7 +25942,7 @@ Used by the ToolPermissionManager.
 
 ### ToolRegistration `interface`
 
-📍 [`src/core/ToolManager.ts:130`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:134`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -25929,6 +26024,8 @@ Metadata for a tool in the registry
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `pending?` | `pending?: boolean;` | Async acceptance placeholder, not evidence of successful completion. |
+| `outcome?` | `outcome?: ToolExecutionOutcome;` | Additive semantic metadata; raw content retains its existing shape. |
 | `tool_use_id` | `tool_use_id: string;` | - |
 | `tool_name?` | `tool_name?: string;` | - |
 | `tool_args?` | `tool_args?: Record&lt;string, unknown&gt;;` | - |
@@ -25985,7 +26082,7 @@ Tool definitions returned by a client-executed OpenAI tool-search call.
 
 ### ToolSelectionContext `interface`
 
-📍 [`src/core/ToolManager.ts:115`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:119`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26128,7 +26225,7 @@ type OpenAIRealtimeTool = OpenAIRealtimeFunctionTool | OpenAIRealtimeMCPTool
 
 ### PendingAsyncToolStatus `type`
 
-📍 [`src/domain/entities/Tool.ts:139`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:143`](src/domain/entities/Tool.ts)
 
 Status of a pending async tool execution
 
@@ -26275,7 +26372,7 @@ type ToolCategoryScope = | string[]                  // shorthand allowlist
 
 ### ToolManagerEvent `type`
 
-📍 [`src/core/ToolManager.ts:183`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:187`](src/core/ToolManager.ts)
 
 ```typescript
 type ToolManagerEvent = | 'tool:registered'
@@ -26283,6 +26380,8 @@ type ToolManagerEvent = | 'tool:registered'
   | 'tool:enabled'
   | 'tool:disabled'
   | 'tool:executed'
+  | 'tool:outcome'
+  | 'tool:late-complete'
   | 'namespace:enabled'
   | 'namespace:disabled'
 ```
@@ -26291,7 +26390,7 @@ type ToolManagerEvent = | 'tool:registered'
 
 ### ToolSource `type`
 
-📍 [`src/core/ToolManager.ts:47`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:51`](src/core/ToolManager.ts)
 
 Source identifier for a registered tool
 
@@ -27287,7 +27386,7 @@ export function createWriteFileTool(config: FilesystemToolConfig = {}): ToolFunc
 
 ### defaultDescribeCall `function`
 
-📍 [`src/domain/entities/Tool.ts:306`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:310`](src/domain/entities/Tool.ts)
 
 Default implementation for describeCall.
 Shows the first meaningful argument value.
@@ -27365,7 +27464,7 @@ export function getToolByName(name: string): ToolRegistryEntry | undefined
 
 ### getToolCallDescription `function`
 
-📍 [`src/domain/entities/Tool.ts:358`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:362`](src/domain/entities/Tool.ts)
 
 Get a human-readable description of a tool call.
 Uses the tool's describeCall method if available, otherwise falls back to default.
@@ -27450,7 +27549,7 @@ export function hydrateCustomTool(
 
 ### isToolCallArgumentsDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:358`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:360`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallArgumentsDelta(
@@ -27462,7 +27561,7 @@ export function isToolCallArgumentsDelta(
 
 ### isToolCallArgumentsDone `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:364`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:366`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallArgumentsDone(
@@ -27474,7 +27573,7 @@ export function isToolCallArgumentsDone(
 
 ### isToolCallStart `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:354`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:356`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallStart(event: StreamEvent): event is ToolCallStartEvent
@@ -28349,7 +28448,7 @@ destroy(): void
 
 ### AudioChunkErrorEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:294`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:296`](src/domain/entities/StreamEvent.ts)
 
 Audio chunk error - TTS synthesis failed for a text chunk
 
@@ -28369,7 +28468,7 @@ Audio chunk error - TTS synthesis failed for a text chunk
 
 ### AudioChunkReadyEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:273`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:275`](src/domain/entities/StreamEvent.ts)
 
 Audio chunk ready - TTS synthesis complete for a text chunk
 
@@ -28393,7 +28492,7 @@ Audio chunk ready - TTS synthesis complete for a text chunk
 
 ### AudioStreamCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:304`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:306`](src/domain/entities/StreamEvent.ts)
 
 Audio stream complete - all TTS chunks have been processed
 
@@ -28413,7 +28512,7 @@ Audio stream complete - all TTS chunks have been processed
 
 ### CompactionEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:229`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:231`](src/domain/entities/StreamEvent.ts)
 
 Encrypted compaction state emitted by the provider. Preserve this item for
 stateless continuation replay; the content is intentionally opaque.
@@ -28438,7 +28537,7 @@ stateless continuation replay; the content is intentionally opaque.
 
 ### ErrorEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:256`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:258`](src/domain/entities/StreamEvent.ts)
 
 Error event
 
@@ -28533,7 +28632,7 @@ synthesizeStream(options: TTSOptions): AsyncIterableIterator&lt;TTSStreamChunk&g
 
 ### IterationCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:153`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:155`](src/domain/entities/StreamEvent.ts)
 
 Iteration complete - end of agentic loop iteration
 
@@ -28595,7 +28694,7 @@ Text output complete for this item
 
 ### ProviderStateEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:244`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:246`](src/domain/entities/StreamEvent.ts)
 
 Opaque provider-owned block that must be replayed on the next request.
 
@@ -28617,7 +28716,7 @@ Opaque provider-owned block that must be replayed on the next request.
 
 ### ReasoningDeltaEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:197`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:199`](src/domain/entities/StreamEvent.ts)
 
 Reasoning/thinking delta - incremental reasoning output
 
@@ -28639,7 +28738,7 @@ Reasoning/thinking delta - incremental reasoning output
 
 ### ReasoningDoneEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:210`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:212`](src/domain/entities/StreamEvent.ts)
 
 Reasoning/thinking complete for this item
 
@@ -28663,7 +28762,7 @@ Reasoning/thinking complete for this item
 
 ### ResponseCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:163`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:165`](src/domain/entities/StreamEvent.ts)
 
 Response complete - final event
 
@@ -28873,7 +28972,7 @@ type OrderedStreamOutputEntry = | {
 
 ### StreamEvent `type`
 
-📍 [`src/domain/entities/StreamEvent.ts:315`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:317`](src/domain/entities/StreamEvent.ts)
 
 Union type of all stream events
 Discriminated by 'type' field for type narrowing
@@ -28905,7 +29004,7 @@ type StreamEvent = | ResponseCreatedEvent
 
 ### isAudioChunkError `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:394`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:396`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioChunkError(event: StreamEvent): event is AudioChunkErrorEvent
@@ -28915,7 +29014,7 @@ export function isAudioChunkError(event: StreamEvent): event is AudioChunkErrorE
 
 ### isAudioChunkReady `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:390`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:392`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioChunkReady(event: StreamEvent): event is AudioChunkReadyEvent
@@ -28925,7 +29024,7 @@ export function isAudioChunkReady(event: StreamEvent): event is AudioChunkReadyE
 
 ### isAudioStreamComplete `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:398`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:400`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioStreamComplete(event: StreamEvent): event is AudioStreamCompleteEvent
@@ -28935,7 +29034,7 @@ export function isAudioStreamComplete(event: StreamEvent): event is AudioStreamC
 
 ### isCompaction `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:378`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:380`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isCompaction(event: StreamEvent): event is CompactionEvent
@@ -28945,7 +29044,7 @@ export function isCompaction(event: StreamEvent): event is CompactionEvent
 
 ### isErrorEvent `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:386`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:388`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isErrorEvent(event: StreamEvent): event is ErrorEvent
@@ -28955,7 +29054,7 @@ export function isErrorEvent(event: StreamEvent): event is ErrorEvent
 
 ### isOutputTextDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:350`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:352`](src/domain/entities/StreamEvent.ts)
 
 Type guards for specific events
 
@@ -28967,7 +29066,7 @@ export function isOutputTextDelta(event: StreamEvent): event is OutputTextDeltaE
 
 ### isReasoningDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:370`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:372`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isReasoningDelta(event: StreamEvent): event is ReasoningDeltaEvent
@@ -28977,7 +29076,7 @@ export function isReasoningDelta(event: StreamEvent): event is ReasoningDeltaEve
 
 ### isReasoningDone `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:374`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:376`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isReasoningDone(event: StreamEvent): event is ReasoningDoneEvent
@@ -28987,7 +29086,7 @@ export function isReasoningDone(event: StreamEvent): event is ReasoningDoneEvent
 
 ### isResponseComplete `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:382`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:384`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isResponseComplete(event: StreamEvent): event is ResponseCompleteEvent
@@ -28997,7 +29096,7 @@ export function isResponseComplete(event: StreamEvent): event is ResponseComplet
 
 ### isStreamEvent `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:340`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:342`](src/domain/entities/StreamEvent.ts)
 
 Type guard to check if event is a specific type
 
@@ -29016,7 +29115,7 @@ Model metadata, pricing, and capabilities
 
 ### ModelNotSupportedError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:175`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:177`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -36330,7 +36429,7 @@ constructor(message = 'Connector not found in current scope.', originalError?: E
 
 ### ContextOverflowError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:424`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:426`](src/domain/errors/AIErrors.ts)
 
 Error thrown when context cannot be reduced to fit within limits
 after all graceful degradation levels have been exhausted.
@@ -36386,7 +36485,7 @@ getTopConsumers(count = 5): Array&lt;{ component: string; tokens: number }&gt;
 
 ### DependencyCycleError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:270`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:272`](src/domain/errors/AIErrors.ts)
 
 Error thrown when a dependency cycle is detected in a plan
 
@@ -36618,7 +36717,7 @@ constructor(factId: FactId, supersededBy: FactId)
 
 ### InvalidConfigError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:222`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:224`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -36921,7 +37020,7 @@ constructor()
 
 ### ProviderAmbiguousOperationError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:204`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:206`](src/domain/errors/AIErrors.ts)
 
 A paid/external submission may have succeeded even though no handle was received.
 
@@ -36972,7 +37071,7 @@ constructor(providerName: string, message: string = 'Authentication failed')
 
 ### ProviderCapabilityNotSupportedError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:187`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:189`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -37024,7 +37123,7 @@ constructor(
 
 ### ProviderError `class`
 
-📍 [`src/domain/errors/AIErrors.ts:247`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:249`](src/domain/errors/AIErrors.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -37372,7 +37471,7 @@ constructor(message: string)
 
 ### ContextOverflowBudget `interface`
 
-📍 [`src/domain/errors/AIErrors.ts:412`](src/domain/errors/AIErrors.ts)
+📍 [`src/domain/errors/AIErrors.ts:414`](src/domain/errors/AIErrors.ts)
 
 Detailed budget information for context overflow diagnosis
 
@@ -53137,9 +53236,9 @@ Built-in plugins use these headers:
 ## Tool Naming Convention
 
 Use a consistent prefix based on plugin name:
-- `working_memory` plugin → `memory_store`, `memory_retrieve`, `memory_delete`, `memory_list`
-- `in_context_memory` plugin → `context_set`, `context_delete`, `context_list`
-- `persistent_instructions` plugin → `instructions_set`, `instructions_remove`, `instructions_list`, `instructions_clear`
+Plugins implementing IStoreHandler share the unified `store_*` tools, routed
+by store ID: `notes`, `whiteboard`, or `instructions`. Other plugins use their
+own consistent tool prefix.
 
 ## State Serialization
 
@@ -56876,6 +56975,24 @@ record has no `groupId`. Default `'read'`. |
 
 ---
 
+### PipelineExecutionOptions `interface`
+
+📍 [`src/core/tool-execution/types.ts:15`](src/core/tool-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `executionId?` | `executionId?: string;` | - |
+| `toolContext?` | `toolContext?: ToolContext;` | - |
+| `registration?` | `registration?: ToolRegistrationInfo;` | Admission-time registration metadata; later registrations apply to future calls. |
+| `onOutcome?` | `onOutcome?: (outcome: PipelineOutcome) =&gt; void;` | - |
+
+</details>
+
+---
+
 ### PlainTextRaw `interface`
 
 📍 [`src/memory/integration/signals/adapters/PlainTextAdapter.ts:12`](src/memory/integration/signals/adapters/PlainTextAdapter.ts)
@@ -56894,7 +57011,7 @@ record has no `groupId`. Default `'read'`. |
 
 ### PluginExecutionContext `interface`
 
-📍 [`src/core/tool-execution/types.ts:16`](src/core/tool-execution/types.ts)
+📍 [`src/core/tool-execution/types.ts:27`](src/core/tool-execution/types.ts)
 
 Context passed through the execution pipeline.
 Contains all information about the current tool execution.
@@ -56911,6 +57028,8 @@ Contains all information about the current tool execution.
 | `startTime` | `startTime: number;` | Timestamp when execution started (ms since epoch) |
 | `tool` | `tool: ToolFunction;` | The tool function being executed |
 | `executionId` | `executionId: string;` | Unique execution ID for tracing |
+| `toolContext?` | `toolContext?: ToolContext;` | Snapshot belonging to this invocation, including its composed signal. |
+| `registration?` | `registration?: ToolRegistrationInfo;` | Admission-time registration metadata; later registrations apply to future calls. |
 
 </details>
 
@@ -59657,7 +59776,7 @@ a comparison table so the LLM knows which store to use.
 |----------|------|-------------|
 | `storeId` | `storeId: string;` | Short identifier used as the `store` parameter value (e.g., "notes", "whiteboard") |
 | `displayName` | `displayName: string;` | Human-readable store name (e.g., "Notes", "Whiteboard") |
-| `description` | `description: string;` | One-line description of what this store holds |
+| `description` | `description: string;` | Description of the store and its retrieval behavior, included in store_get guidance. |
 | `usageHint` | `usageHint: string;` | "Use for:" guidance — tells the LLM when to pick this store.
 Should include explicit "NOT for:" guidance referencing other stores. |
 | `setDataFields` | `setDataFields: string;` | Human-readable description of the data fields accepted by storeSet.
@@ -59693,7 +59812,7 @@ store-specific fields in responses.
 | `found` | `found: boolean;` | - |
 | `key?` | `key?: string;` | - |
 | `entry?` | `entry?: Record&lt;string, unknown&gt;;` | Single entry data (when key provided) |
-| `entries?` | `entries?: Array&lt;Record&lt;string, unknown&gt;&gt;;` | All entries (when no key provided) |
+| `entries?` | `entries?: Array&lt;Record&lt;string, unknown&gt;&gt;;` | Store-specific default view without a key; may contain only index metadata. |
 
 </details>
 
@@ -61048,7 +61167,7 @@ type AudioFormat = 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm' | 'ogg' | 'mu
 
 ### BeforeExecuteResult `type`
 
-📍 [`src/core/tool-execution/types.ts:46`](src/core/tool-execution/types.ts)
+📍 [`src/core/tool-execution/types.ts:61`](src/core/tool-execution/types.ts)
 
 Result of a plugin's beforeExecute hook.
 

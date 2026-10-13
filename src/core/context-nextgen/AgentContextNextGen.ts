@@ -615,6 +615,14 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         : Connector.asRegistry();
 
     return {
+      getById: (id) => {
+        const base = resolveBase();
+        const connector = base.getById ? base.getById(id) : base.listAll().find(c => c.id === id);
+        if (!connector || (computeAllowed() && !computeAllowed()!.has(connector.name))) {
+          throw new ConnectorNotFoundError(`Connector ID '${id}' not found`);
+        }
+        return connector;
+      },
       get: (name) => {
         const base = resolveBase();
         const allowed = computeAllowed();

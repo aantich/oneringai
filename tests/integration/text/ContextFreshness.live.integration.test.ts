@@ -60,7 +60,18 @@ describe.skipIf(!enabled).sequential('Stage 01 live context freshness', () => {
         vendorOptions: provider.name === 'google' ? { generationConfig: { thinkingConfig: { thinkingBudget: 0 } } } : undefined,
         hooks: { 'before:llm': async () => ({ modified: { max_output_tokens: 512 } }) },
       });
-      let reads = 0; agent.on('tool:start', event => { if (event.toolCall.function.name === 'store_get') reads++; });
+      let reads = 0; let calls = 0;
+      const retrievals: Array<{ store?: string; key?: string }> = [];
+      agent.on('llm:request', () => { calls++; });
+      agent.on('tool:start', event => {
+        if (event.toolCall.function.name !== 'store_get') return;
+        reads++;
+        try {
+          const args = JSON.parse(event.toolCall.function.arguments);
+          retrievals.push({ store: typeof args.store === 'string' ? args.store : undefined,
+            key: typeof args.key === 'string' ? args.key : undefined });
+        } catch { /* Invalid arguments are handled and reported by the tool pipeline. */ }
+      });
       try {
         for (const [id, marker] of [['first-12345678', 'FIRST_SOURCE_VERIFIED'], ['second-12345678', 'SECOND_SOURCE_VERIFIED']]) {
           agent.context.addInputItems([
@@ -76,10 +87,13 @@ describe.skipIf(!enabled).sequential('Stage 01 live context freshness', () => {
         expect(reads).toBeGreaterThanOrEqual(2);
         expect(agent.context.lastPreparation!.budget.available).toBeGreaterThanOrEqual(0);
         reports.push({ scenario: 'separate-spill-collision-retrieval', provider: provider.name, model: provider.model, passed: true,
-          memoryReads: reads, keys: ['raw.tool_result.read_source.12345678', 'raw.tool_result.read_source.12345678.function.1'],
+          memoryReads: reads, observedModelCalls: calls, retrievals,
+          keys: ['raw.tool_result.read_source.12345678', 'raw.tool_result.read_source.12345678.function.1'],
           persistence: 'JSON context state round trip before real retrieval' });
       } catch (error) {
-        reports.push({ scenario: 'separate-spill-collision-retrieval', provider: provider.name, passed: false, errorType: error instanceof Error ? error.name : 'unknown' }); throw error;
+        reports.push({ scenario: 'separate-spill-collision-retrieval', provider: provider.name, passed: false,
+          memoryReads: reads, observedModelCalls: calls, retrievals,
+          errorType: error instanceof Error ? error.name : 'unknown' }); throw error;
       } finally { agent.destroy(); Connector.remove(connector); }
     }, 120_000);
 

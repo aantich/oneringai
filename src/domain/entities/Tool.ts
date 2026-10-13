@@ -86,6 +86,10 @@ export interface ToolCall {
 }
 
 export interface ToolResult {
+  /** Async acceptance placeholder, not evidence of successful completion. */
+  pending?: boolean;
+  /** Additive semantic metadata; raw content retains its existing shape. */
+  outcome?: ToolExecutionOutcome;
   tool_use_id: string;
   tool_name?: string; // Name of the tool that was executed (for eviction tracking)
   tool_args?: Record<string, unknown>; // Arguments passed to the tool (for description generation)
@@ -367,4 +371,35 @@ export function getToolCallDescription<TArgs>(
     }
   }
   return defaultDescribeCall(args as Record<string, unknown>);
+}
+
+/** Semantic execution metadata. It never asserts that a remote side effect was undone. */
+export interface ToolExecutionOutcome {
+  executionId: string;
+  toolName: string;
+  callId?: string;
+  runId?: string;
+  status: 'succeeded' | 'failed' | 'denied' | 'cancelled' | 'timed_out';
+  startedAt: number;
+  durationMs: number;
+  timeoutMs?: number;
+  executionStarted: boolean;
+  completion: 'settled' | 'unknown' | 'not_started';
+  cancellation: 'none' | 'requested' | 'acknowledged';
+  error?: string;
+}
+
+/** Additive options for a single ToolManager invocation. Zero disables the additional per-call deadline. */
+export interface ToolExecutionOptions {
+  signal?: AbortSignal;
+  timeoutMs?: number;
+  callId?: string;
+  runId?: string;
+  /** Host observer for the initial outcome; exceptions do not affect execution. */
+  onOutcome?: (outcome: ToolExecutionOutcome) => void;
+}
+
+export interface ToolExecutionReport<T = unknown> {
+  result: T;
+  outcome: ToolExecutionOutcome;
 }

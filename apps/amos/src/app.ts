@@ -13,6 +13,7 @@ import { ConnectorManager } from './connectors/ConnectorManager.js';
 import { ToolLoader } from './tools/ToolLoader.js';
 import { PromptManager } from './prompts/PromptManager.js';
 import { AgentRunner } from './agent/AgentRunner.js';
+import { describeToolOutcome } from './agent/toolOutcomes.js';
 import { Terminal } from './ui/Terminal.js';
 import {
   CommandProcessor,
@@ -161,6 +162,9 @@ export class AmosApp implements IAmosApp {
   stop(): void {
     this.running = false;
     this.astraCommand.reset();
+    if (this.agentRunner?.isRunning()) {
+      this.terminal.printDim('Cancellation requested. External operations may already have occurred or may still complete.');
+    }
     this.agentRunner?.cancel();
     this.terminal.close();
   }
@@ -273,6 +277,10 @@ export class AmosApp implements IAmosApp {
           spinner.stop();
 
           this.terminal.print('\n' + response.text);
+          for (const outcome of response.toolOutcomes ?? []) {
+            const description = describeToolOutcome(outcome);
+            if (description) this.terminal.printError(description);
+          }
 
           if (config.ui.showTokenUsage && response.usage) {
             this.terminal.printDim(

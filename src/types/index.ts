@@ -766,6 +766,7 @@ export type {
   IToolExecutionPlugin,
   IToolExecutionPipeline,
   ToolExecutionPipelineOptions,
+  PipelineExecutionOptions,
 } from '../core/tool-execution/types.js';
 
 export type { LoggingPluginOptions } from '../core/tool-execution/plugins/LoggingPlugin.js';
@@ -788,3 +789,5 @@ export type {
   HistoryManagerEvents,
   SerializedHistoryState,
 } from '../domain/interfaces/IHistoryManager.js';
+
+export type { ToolExecutionOutcome, ToolExecutionOptions, ToolExecutionReport } from '../core/tool-execution/outcomes.js';

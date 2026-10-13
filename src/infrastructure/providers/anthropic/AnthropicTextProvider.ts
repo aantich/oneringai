@@ -26,6 +26,7 @@ import type {
 import {
   ProviderAmbiguousOperationError,
   ProviderCapabilityNotSupportedError,
+  ProviderError,
 } from '../../../domain/errors/AIErrors.js';
 
 const NATIVE_STRUCTURED_OUTPUT_MODELS = [
@@ -107,6 +108,8 @@ export class AnthropicTextProvider extends BaseTextProvider {
       try {
         // Convert our format → Anthropic Messages API format
         const anthropicRequest = this.converter.convertRequest(options);
+        const selectedTool = anthropicRequest.tool_choice?.type === 'tool'
+          ? anthropicRequest.tool_choice.name : undefined;
 
         this.logger.debug(
           { model: options.model, messageCount: anthropicRequest.messages?.length ?? 0, toolCount: anthropicRequest.tools?.length ?? 0 },
@@ -129,6 +132,9 @@ export class AnthropicTextProvider extends BaseTextProvider {
             : this.client.messages.stream(request);
           streamRef = stream;
           anthropicResponse = (await stream.finalMessage()) as unknown as Anthropic.Message;
+          for (const block of anthropicResponse.content) {
+            if (block.type === 'tool_use') this.assertNamedToolChoice(selectedTool, block.name);
+          }
           this.accumulateAnthropicUsage(aggregate, anthropicResponse.usage);
           if (anthropicResponse.stop_reason !== 'pause_turn') break;
           if (continuation === MAX_SERVER_TOOL_CONTINUATIONS) break;
@@ -181,6 +187,8 @@ export class AnthropicTextProvider extends BaseTextProvider {
     try {
       // Convert our format → Anthropic Messages API format
       const anthropicRequest = this.converter.convertRequest(options);
+      const selectedTool = anthropicRequest.tool_choice?.type === 'tool'
+        ? anthropicRequest.tool_choice.name : undefined;
 
       this.logger.debug(
         { model: options.model, messageCount: anthropicRequest.messages?.length ?? 0, toolCount: anthropicRequest.tools?.length ?? 0 },
@@ -218,6 +226,9 @@ export class AnthropicTextProvider extends BaseTextProvider {
           options.model,
         )) {
           chunkCount++;
+          if (event.type === StreamEventType.TOOL_CALL_START) {
+            this.assertNamedToolChoice(selectedTool, event.tool_name);
+          }
           if (event.type === StreamEventType.RESPONSE_COMPLETE) {
             this.accumulateTokenUsage(aggregateUsage, event.usage);
             terminalEvent = { ...event, usage: { ...aggregateUsage } };
@@ -261,6 +272,13 @@ export class AnthropicTextProvider extends BaseTextProvider {
           try { streamRef.abort(); } catch { /* ignore */ }
         }
       }
+    }
+  }
+
+  /** Reject provider selection violations before a client can execute the call. */
+  private assertNamedToolChoice(selected: string | undefined, actual: string): void {
+    if (selected !== undefined && actual !== selected) {
+      throw new ProviderError(this.name, `Named tool choice '${selected}' returned unexpected tool '${actual}'`);
     }
   }
 

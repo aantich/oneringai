@@ -11,6 +11,25 @@ counting, and checks the final estimated request against the configured window.
 
 ## Using the library
 
+The working-memory index contains keys and descriptions, not stored values.
+`store_get({ store: "notes" })` returns that metadata index. To read a source,
+pass its exact key, including any tier prefix and collision suffix:
+
+```typescript
+const source = await agent.tools.execute('store_get', {
+  store: 'notes',
+  key: 'raw.tool_result.read_source.12345678.function.1',
+});
+// Found entries expose their original value in source.entry.value.
+```
+
+Use `store_list({ store: "notes" })` to discover entries omitted from the visible
+index. Read each required source by key before answering from its contents. A
+successful metadata-only lookup does not establish that the source was read.
+Key remains optional, keyless return shapes are unchanged, and other stores retain
+their own keyless behavior. The notes prompt uses unified `store_*` guidance;
+the older WorkingMemory formatter keeps its existing legacy tool guidance.
+
 Existing managed agents need no configuration changes. They continue to share one
 tool manager with their context. Algorithmic compaction remains the default,
 and the existing critical trigger remains `0.9` of the content capacity after

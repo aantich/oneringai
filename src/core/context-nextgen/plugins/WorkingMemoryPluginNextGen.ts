@@ -75,7 +75,7 @@ export interface WorkingMemoryPluginConfig {
 // Instructions
 // ============================================================================
 
-const WORKING_MEMORY_INSTRUCTIONS = `Store: "notes". You see entry descriptions in context but must call store_get to read full values.
+const WORKING_MEMORY_INSTRUCTIONS = `Store: "notes". The index contains metadata only. Read each source with \`store_get({ store: "notes", key: "<exact index key>" })\`. Omitting key returns only keys/descriptions, never source values. Read the values before answering from them.
 
 **Tier System** (for research/analysis):
 - \`raw\`: Low priority, evicted first. Unprocessed data to summarize later.
@@ -138,7 +138,7 @@ export class WorkingMemoryPluginNextGen implements IContextPluginNextGen, IStore
     const index = this.buildMemoryIndex(entries);
 
     // Format as index (descriptions only, not full values)
-    const formatted = formatMemoryIndex(index);
+    const formatted = formatMemoryIndex(index, 'notes');
     this._tokenCache = this.estimator.estimateTokens(formatted);
     return formatted;
   }
@@ -229,7 +229,7 @@ export class WorkingMemoryPluginNextGen implements IContextPluginNextGen, IStore
     return {
       storeId: 'notes',
       displayName: 'Notes',
-      description: 'EXTERNAL storage with an index visible in context. You see descriptions only; use store_get to retrieve full values.',
+      description: 'External storage. Pass each exact index key to store_get to read full values. Omitting key returns only keys/descriptions, never values.',
       usageHint: 'Use for: large data, research findings, intermediate results. NOT for small state you check every turn (use "whiteboard" for that).',
       setDataFields: 'description (required): Brief description shown in context index\nvalue (required): Data to store (any JSON value)\ntier?: "raw" | "summary" | "findings" (default: "raw")\nscope?: "session" | "plan" | "persistent" (default: "session")\npriority?: "low" | "normal" | "high" | "critical"\npinned?: boolean (never evicted if true)',
       actions: {
@@ -483,7 +483,7 @@ export class WorkingMemoryPluginNextGen implements IContextPluginNextGen, IStore
   async formatIndex(): Promise<string> {
     const entries = await this.storage.getAll();
     const index = this.buildMemoryIndex(entries);
-    return formatMemoryIndex(index);
+    return formatMemoryIndex(index, 'notes');
   }
 
   /**

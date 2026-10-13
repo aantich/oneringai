@@ -1,0 +1,2514 @@
+{
+  "protocol": "stage-02-validation-v1",
+  "recordedAt": "2026-10-12T11:09:54.324304+00:00",
+  "branch": "version2",
+  "baseRevision": "fa8f911",
+  "packageVersion": "1.2.0",
+  "published": false,
+  "uncommitted": true,
+  "scope": [
+    "Framework-owned semantic failure provenance without guessing from application data",
+    "Execution-scoped signals, deadlines, captured identity, late correlation and once-only metrics",
+    "Managed run/stream/async/external tools with preserved legacy extension points",
+    "Connector caller cancellation, opt-in operation deadlines and safe retries",
+    "Offline examples, AMOS behavior and documentation handoff"
+  ],
+  "compatibility": {
+    "breakingChanges": false,
+    "rawResultShapes": "preserved",
+    "normalizerPayloads": "preserved",
+    "pipelineTwoArgumentImplementations": "preserved; additive third argument",
+    "toolManagerExecuteOverrides": "preserved; legacy async deadline fallback retained",
+    "savedSessionFormat": 1,
+    "configurationSchema": "unchanged",
+    "defaults": "manager deadline disabled, legacy header timeout and retry policy, legacy breaker promise-settlement policy",
+    "behaviorCorrections": [
+      "Framework-normalized failures count as failures",
+      "Streaming tool counts reflect executions",
+      "Async acceptance placeholders do not count as completed success",
+      "skipRetry suppresses retryable status retries as documented",
+      "Thrown permission denials/tool-owned timeouts keep semantic classification without the normalizer"
+    ]
+  },
+  "unit": {
+    "files": 330,
+    "passed": 6957,
+    "failed": 0,
+    "skipped": 0,
+    "addedRegressionCases": 62,
+    "addedFiles": {
+      "tests/unit/core/tool-execution/ToolOutcomes.test.ts": 28,
+      "tests/unit/core/ConnectorCancellation.test.ts": 16,
+      "tests/unit/core/Agent.toolOutcomes.test.ts": 12,
+      "tests/unit/apps/amos/ToolOutcomes.test.ts": 6
+    }
+  },
+  "checksPassed": [
+    "ESM/CJS/DTS build; 24 package export files verified",
+    "Source typecheck",
+    "Strict new core/live-test compilation",
+    "Lint",
+    "Examples typecheck",
+    "AMOS standard typecheck and build",
+    "Generated public API: 1625 items",
+    "Original pinned and additive Stage 02 built-package consumer compatibility",
+    "Full unit suite with scoped V8 coverage",
+    "New library and AMOS offline examples",
+    "Stage 00 offline development and held-out workload baselines",
+    "Existing freshness, schema/capacity, structured-repair and AMOS context offline examples",
+    "Package dry-run includes guide, example, validation records and built exports; no .env",
+    "Changed-file secret scan, new local Markdown targets, fenced blocks and git diff whitespace check"
+  ],
+  "coverage": {
+    "scope": [
+      "src/core/ToolManager.ts",
+      "src/core/Connector.ts",
+      "src/core/tool-execution/**/*.ts",
+      "src/core/permissions/PermissionEnforcementPlugin.ts",
+      "src/capabilities/agents/ExecutionContext.ts",
+      "apps/amos/src/agent/toolOutcomes.ts"
+    ],
+    "testFiles": 330,
+    "passedTests": 6957,
+    "excludesAgentFromDenominator": true,
+    "excludesLargeAMOSAdapterFromDenominator": true,
+    "qualification": "Scoped implementation coverage, not whole-project coverage. Changed Agent/AMOS adapter behavior is covered in mock integration unit tests.",
+    "total": {
+      "lines": {
+        "total": 1894,
+        "covered": 1580,
+        "skipped": 0,
+        "pct": 83.42
+      },
+      "statements": {
+        "total": 1894,
+        "covered": 1580,
+        "skipped": 0,
+        "pct": 83.42
+      },
+      "functions": {
+        "total": 192,
+        "covered": 158,
+        "skipped": 0,
+        "pct": 82.29
+      },
+      "branches": {
+        "total": 703,
+        "covered": 631,
+        "skipped": 0,
+        "pct": 89.75
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": "Unknown"
+      }
+    },
+    "files": {
+      "apps/amos/src/agent/toolOutcomes.ts": {
+        "lines": {
+          "total": 8,
+          "covered": 8,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 1,
+          "covered": 1,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 8,
+          "covered": 8,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 10,
+          "covered": 9,
+          "skipped": 0,
+          "pct": 90
+        }
+      },
+      "src/capabilities/agents/ExecutionContext.ts": {
+        "lines": {
+          "total": 174,
+          "covered": 134,
+          "skipped": 0,
+          "pct": 77.01
+        },
+        "functions": {
+          "total": 13,
+          "covered": 11,
+          "skipped": 0,
+          "pct": 84.61
+        },
+        "statements": {
+          "total": 174,
+          "covered": 134,
+          "skipped": 0,
+          "pct": 77.01
+        },
+        "branches": {
+          "total": 40,
+          "covered": 32,
+          "skipped": 0,
+          "pct": 80
+        }
+      },
+      "src/core/Connector.ts": {
+        "lines": {
+          "total": 612,
+          "covered": 508,
+          "skipped": 0,
+          "pct": 83
+        },
+        "functions": {
+          "total": 64,
+          "covered": 54,
+          "skipped": 0,
+          "pct": 84.37
+        },
+        "statements": {
+          "total": 612,
+          "covered": 508,
+          "skipped": 0,
+          "pct": 83
+        },
+        "branches": {
+          "total": 250,
+          "covered": 228,
+          "skipped": 0,
+          "pct": 91.2
+        }
+      },
+      "src/core/ToolManager.ts": {
+        "lines": {
+          "total": 722,
+          "covered": 564,
+          "skipped": 0,
+          "pct": 78.11
+        },
+        "functions": {
+          "total": 77,
+          "covered": 56,
+          "skipped": 0,
+          "pct": 72.72
+        },
+        "statements": {
+          "total": 722,
+          "covered": 564,
+          "skipped": 0,
+          "pct": 78.11
+        },
+        "branches": {
+          "total": 238,
+          "covered": 207,
+          "skipped": 0,
+          "pct": 86.97
+        }
+      },
+      "src/core/permissions/PermissionEnforcementPlugin.ts": {
+        "lines": {
+          "total": 44,
+          "covered": 44,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 3,
+          "covered": 3,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 44,
+          "covered": 44,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 16,
+          "covered": 15,
+          "skipped": 0,
+          "pct": 93.75
+        }
+      },
+      "src/core/tool-execution/ToolExecutionPipeline.ts": {
+        "lines": {
+          "total": 137,
+          "covered": 126,
+          "skipped": 0,
+          "pct": 91.97
+        },
+        "functions": {
+          "total": 12,
+          "covered": 12,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 137,
+          "covered": 126,
+          "skipped": 0,
+          "pct": 91.97
+        },
+        "branches": {
+          "total": 66,
+          "covered": 59,
+          "skipped": 0,
+          "pct": 89.39
+        }
+      },
+      "src/core/tool-execution/cancellation.ts": {
+        "lines": {
+          "total": 40,
+          "covered": 40,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 7,
+          "covered": 6,
+          "skipped": 0,
+          "pct": 85.71
+        },
+        "statements": {
+          "total": 40,
+          "covered": 40,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 18,
+          "covered": 17,
+          "skipped": 0,
+          "pct": 94.44
+        }
+      },
+      "src/core/tool-execution/outcomes.ts": {
+        "lines": {
+          "total": 7,
+          "covered": 7,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 2,
+          "covered": 2,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 7,
+          "covered": 7,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 2,
+          "covered": 2,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/core/tool-execution/types.ts": {
+        "lines": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 1,
+          "covered": 1,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 1,
+          "covered": 1,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/core/tool-execution/plugins/LoggingPlugin.ts": {
+        "lines": {
+          "total": 102,
+          "covered": 101,
+          "skipped": 0,
+          "pct": 99.01
+        },
+        "functions": {
+          "total": 7,
+          "covered": 7,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 102,
+          "covered": 101,
+          "skipped": 0,
+          "pct": 99.01
+        },
+        "branches": {
+          "total": 37,
+          "covered": 36,
+          "skipped": 0,
+          "pct": 97.29
+        }
+      },
+      "src/core/tool-execution/plugins/ResultNormalizerPlugin.ts": {
+        "lines": {
+          "total": 48,
+          "covered": 48,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 5,
+          "covered": 5,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 48,
+          "covered": 48,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 25,
+          "covered": 25,
+          "skipped": 0,
+          "pct": 100
+        }
+      }
+    }
+  },
+  "offlineExamples": {
+    "toolOutcomes": "Raw domain data and legacy failure payloads preserved; cooperative/noncooperative deadlines; original IDs on diagnostic-only late completion; native loopback body cancellation",
+    "amos": "docs/evaluations/STAGE_02_AMOS_OFFLINE.txt",
+    "priorStageExamples": [
+      "agentic-evaluation-baseline.ts development and held-out",
+      "context-compaction-freshness.ts",
+      "context-request-budget.ts",
+      "structured-output-budget.ts",
+      "apps/amos/examples/context-budget-offline.ts"
+    ],
+    "cleanup": "Managers/connectors destroyed, agents disposed, HTTP server closed, listener/timer teardown tested"
+  },
+  "live": {
+    "validatedUniqueScenarios": 31,
+    "stage02UniqueScenarios": 4,
+    "stage00UniqueScenarios": 16,
+    "stage01UniqueScenarios": 11,
+    "validatedProviders": {
+      "openai": "gpt-4o-mini",
+      "google": "gemini-2.5-flash"
+    },
+    "unavailableProviders": {
+      "anthropic": {
+        "model": "claude-haiku-4-5-20251001",
+        "status": "unvalidated",
+        "reason": "Both explicitly attempted Stage 02 modes rejected with HTTP 401 invalid x-api-key. Key refresh requested; no update received during validation. Prior-stage Anthropic scenarios were not repeated with a rejected credential."
+      }
+    },
+    "sampleScope": "Functional samples with real LLMs and local tools. No external writes and no comparative quality, cost or statistical reliability claim. Initial failures and repeated attempts are retained, not converted into first-attempt passes.",
+    "attemptNotes": [
+      {
+        "attempt": "live",
+        "result": "Three passes and three failures: OpenAI stream completed correct outputs/counters in two calls, rejected by an exact-three-call test assumption; Anthropic run/stream unauthorized; Google and OpenAI run passed."
+      },
+      {
+        "attempt": "openai-google",
+        "result": "Four pass after correcting model-call count assertion to bounded 2\u20133; expected markers/statuses/counters unchanged."
+      },
+      {
+        "attempt": "final-live",
+        "result": "Four OpenAI/Google modes pass after legacy execute override compatibility correction. Final subsequent change only classifies thrown errors in normalizer-free pipelines, covered by two additional unit regressions."
+      },
+      {
+        "attempt": "baseline-live",
+        "result": "14 passes, one Google development chat completion_not_proven failure; held-out chat not reached for that failed test."
+      },
+      {
+        "attempt": "baseline-retry",
+        "result": "Unchanged Google chat passes development and held-out; together 16 unique Stage 00 scenarios pass. Initial failure retained."
+      },
+      {
+        "attempt": "context-live",
+        "result": "10 pass, one OpenAI separate-spill retrieval fails required source-marker completion; model repeated key names rather than retrieving required values."
+      },
+      {
+        "attempt": "context-retry",
+        "result": "Unchanged OpenAI separate-spill retrieval passes both required source markers and reads; together 11 unique Stage 01 scenarios pass. Initial failure retained."
+      }
+    ],
+    "attempts": {
+      "live": {
+        "protocol": "stage-02",
+        "recordedAt": "2026-10-12T10:51:36.706Z",
+        "scope": "One functional sample per provider/mode; real LLMs with local tools, no external side effects or quality/cost comparison",
+        "reports": [
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "passed": true,
+            "observedModelCalls": 3,
+            "outcomes": [
+              {
+                "tool": "domain_probe",
+                "status": "succeeded",
+                "completion": "settled"
+              },
+              {
+                "tool": "failure_probe",
+                "status": "failed",
+                "completion": "settled"
+              }
+            ],
+            "metrics": {
+              "toolCalls": 2,
+              "successful": 1,
+              "failed": 1
+            }
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream",
+            "passed": false,
+            "errorType": "AssertionError"
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "run",
+            "passed": false,
+            "errorType": "ProviderAuthError"
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "stream",
+            "passed": false,
+            "errorType": "ProviderAuthError"
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "passed": true,
+            "observedModelCalls": 3,
+            "outcomes": [
+              {
+                "tool": "domain_probe",
+                "status": "succeeded",
+                "completion": "settled"
+              },
+              {
+                "tool": "failure_probe",
+                "status": "failed",
+                "completion": "settled"
+              }
+            ],
+            "metrics": {
+              "toolCalls": 2,
+              "successful": 1,
+              "failed": 1
+            }
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream",
+            "passed": true,
+            "observedModelCalls": 3,
+            "outcomes": [
+              {
+                "tool": "domain_probe",
+                "status": "succeeded",
+                "completion": "settled"
+              },
+              {
+                "tool": "failure_probe",
+                "status": "failed",
+                "completion": "settled"
+              }
+            ],
+            "metrics": {
+              "toolCalls": 2,
+              "successful": 1,
+              "failed": 1
+            }
+          }
+        ]
+      },
+      "openai-google": {
+        "protocol": "stage-02",
+        "recordedAt": "2026-10-12T10:53:13.889Z",
+        "scope": "One functional sample per provider/mode; real LLMs with local tools, no external side effects or quality/cost comparison",
+        "reports": [
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "passed": true,
+            "observedModelCalls": 3,
+            "outcomes": [
+              {
+                "tool": "domain_probe",
+                "status": "succeeded",
+                "completion": "settled"
+              },
+              {
+                "tool": "failure_probe",
+                "status": "failed",
+                "completion": "settled"
+              }
+            ],
+            "metrics": {
+              "toolCalls": 2,
+              "successful": 1,
+              "failed": 1
+            }
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream",
+            "passed": true,
+            "observedModelCalls": 2,
+            "outcomes": [
+              {
+                "tool": "domain_probe",
+                "status": "succeeded",
+                "completion": "settled"
+              },
+              {
+                "tool": "failure_probe",
+                "status": "failed",
+                "completion": "settled"
+              }
+            ],
+            "metrics": {
+              "toolCalls": 2,
+              "successful": 1,
+              "failed": 1
+            }
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "passed": true,
+            "observedModelCalls": 3,
+            "outcomes": [
+              {
+                "tool": "domain_probe",
+                "status": "succeeded",
+                "completion": "settled"
+              },
+              {
+                "tool": "failure_probe",
+                "status": "failed",
+                "completion": "settled"
+              }
+            ],
+            "metrics": {
+              "toolCalls": 2,
+              "successful": 1,
+              "failed": 1
+            }
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream",
+            "passed": true,
+            "observedModelCalls": 3,
+            "outcomes": [
+              {
+                "tool": "domain_probe",
+                "status": "succeeded",
+                "completion": "settled"
+              },
+              {
+                "tool": "failure_probe",
+                "status": "failed",
+                "completion": "settled"
+              }
+            ],
+            "metrics": {
+              "toolCalls": 2,
+              "successful": 1,
+              "failed": 1
+            }
+          }
+        ]
+      },
+      "final-live": {
+        "protocol": "stage-02",
+        "recordedAt": "2026-10-12T11:01:15.117Z",
+        "scope": "One functional sample per provider/mode; real LLMs with local tools, no external side effects or quality/cost comparison",
+        "reports": [
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "passed": true,
+            "observedModelCalls": 3,
+            "outcomes": [
+              {
+                "tool": "domain_probe",
+                "status": "succeeded",
+                "completion": "settled"
+              },
+              {
+                "tool": "failure_probe",
+                "status": "failed",
+                "completion": "settled"
+              }
+            ],
+            "metrics": {
+              "toolCalls": 2,
+              "successful": 1,
+              "failed": 1
+            }
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream",
+            "passed": true,
+            "observedModelCalls": 2,
+            "outcomes": [
+              {
+                "tool": "domain_probe",
+                "status": "succeeded",
+                "completion": "settled"
+              },
+              {
+                "tool": "failure_probe",
+                "status": "failed",
+                "completion": "settled"
+              }
+            ],
+            "metrics": {
+              "toolCalls": 2,
+              "successful": 1,
+              "failed": 1
+            }
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "passed": true,
+            "observedModelCalls": 3,
+            "outcomes": [
+              {
+                "tool": "domain_probe",
+                "status": "succeeded",
+                "completion": "settled"
+              },
+              {
+                "tool": "failure_probe",
+                "status": "failed",
+                "completion": "settled"
+              }
+            ],
+            "metrics": {
+              "toolCalls": 2,
+              "successful": 1,
+              "failed": 1
+            }
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream",
+            "passed": true,
+            "observedModelCalls": 3,
+            "outcomes": [
+              {
+                "tool": "domain_probe",
+                "status": "succeeded",
+                "completion": "settled"
+              },
+              {
+                "tool": "failure_probe",
+                "status": "failed",
+                "completion": "settled"
+              }
+            ],
+            "metrics": {
+              "toolCalls": 2,
+              "successful": 1,
+              "failed": 1
+            }
+          }
+        ]
+      },
+      "baseline-live": {
+        "protocol": "stage-00-v1",
+        "recordedAt": "2026-10-12T10:56:51.249Z",
+        "selectedProviders": [
+          "openai",
+          "google"
+        ],
+        "sampleCountPerModelWorkloadSplit": 1,
+        "seed": null,
+        "temperature": null,
+        "thinking": {
+          "enabled": false
+        },
+        "fixtureSettings": {
+          "maxIterations": 6,
+          "maxToolCalls": 6,
+          "maxOutputTokens": 512,
+          "maxExecutionTimeMs": 60000,
+          "emptyResponseRetry": false,
+          "workingMemory": false,
+          "inContextMemory": false
+        },
+        "providerSettings": {
+          "google/gemini-2.5-flash": {
+            "generationConfig": {
+              "thinkingConfig": {
+                "thinkingBudget": 0
+              }
+            }
+          }
+        },
+        "uncertainty": "Pilot only; no comparative quality or cost conclusion.",
+        "reports": [
+          {
+            "fixture": "chat",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 1105.7974159999999,
+            "fixtureId": "chat/development",
+            "connector": "stage00-live-openai-chat",
+            "model": "gpt-4o-mini",
+            "runs": [
+              {
+                "id": "chat/development/run-1",
+                "parentId": "chat/development",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "chat/development/run-1/iteration-0/llm-1",
+                "runId": "chat/development/run-1",
+                "parentId": "chat/development/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 1088,
+                "usage": {
+                  "input": 89,
+                  "output": 5,
+                  "total": 94
+                }
+              }
+            ],
+            "llmCalls": 1,
+            "toolCalls": 0,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 89,
+                "missingCalls": 0,
+                "total": 89
+              },
+              "output": {
+                "knownSubtotal": 5,
+                "missingCalls": 0,
+                "total": 5
+              },
+              "total": {
+                "knownSubtotal": 94,
+                "missingCalls": 0,
+                "total": 94
+              }
+            }
+          },
+          {
+            "fixture": "chat",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 1430.1980419999995,
+            "fixtureId": "chat/held-out",
+            "connector": "stage00-live-openai-chat",
+            "model": "gpt-4o-mini",
+            "runs": [
+              {
+                "id": "chat/held-out/run-1",
+                "parentId": "chat/held-out",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "chat/held-out/run-1/iteration-0/llm-1",
+                "runId": "chat/held-out/run-1",
+                "parentId": "chat/held-out/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 1428,
+                "usage": {
+                  "input": 91,
+                  "output": 7,
+                  "total": 98
+                }
+              }
+            ],
+            "llmCalls": 1,
+            "toolCalls": 0,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 91,
+                "missingCalls": 0,
+                "total": 91
+              },
+              "output": {
+                "knownSubtotal": 7,
+                "missingCalls": 0,
+                "total": 7
+              },
+              "total": {
+                "knownSubtotal": 98,
+                "missingCalls": 0,
+                "total": 98
+              }
+            }
+          },
+          {
+            "fixture": "large-observation",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 2981.3211249999995,
+            "fixtureId": "large-observation/development",
+            "connector": "stage00-live-openai-large-observation",
+            "model": "gpt-4o-mini",
+            "runs": [
+              {
+                "id": "large-observation/development/run-1",
+                "parentId": "large-observation/development",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "large-observation/development/run-1/iteration-0/llm-1",
+                "runId": "large-observation/development/run-1",
+                "parentId": "large-observation/development/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 1838,
+                "usage": {
+                  "input": 144,
+                  "output": 17,
+                  "total": 161
+                }
+              },
+              {
+                "id": "large-observation/development/run-1/iteration-0/tool-2",
+                "runId": "large-observation/development/run-1",
+                "parentId": "large-observation/development/run-1/iteration-0",
+                "kind": "tool",
+                "name": "read_document",
+                "outcome": "library_completed",
+                "durationMs": 1.4300830000001952,
+                "usage": null
+              },
+              {
+                "id": "large-observation/development/run-1/iteration-1/llm-3",
+                "runId": "large-observation/development/run-1",
+                "parentId": "large-observation/development/run-1/iteration-1",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 1138,
+                "usage": {
+                  "input": 7384,
+                  "output": 27,
+                  "total": 7411
+                }
+              }
+            ],
+            "llmCalls": 2,
+            "toolCalls": 1,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 7528,
+                "missingCalls": 0,
+                "total": 7528
+              },
+              "output": {
+                "knownSubtotal": 44,
+                "missingCalls": 0,
+                "total": 44
+              },
+              "total": {
+                "knownSubtotal": 7572,
+                "missingCalls": 0,
+                "total": 7572
+              }
+            }
+          },
+          {
+            "fixture": "large-observation",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 2245.6741250000005,
+            "fixtureId": "large-observation/held-out",
+            "connector": "stage00-live-openai-large-observation",
+            "model": "gpt-4o-mini",
+            "runs": [
+              {
+                "id": "large-observation/held-out/run-1",
+                "parentId": "large-observation/held-out",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "large-observation/held-out/run-1/iteration-0/llm-1",
+                "runId": "large-observation/held-out/run-1",
+                "parentId": "large-observation/held-out/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 859,
+                "usage": {
+                  "input": 146,
+                  "output": 19,
+                  "total": 165
+                }
+              },
+              {
+                "id": "large-observation/held-out/run-1/iteration-0/tool-2",
+                "runId": "large-observation/held-out/run-1",
+                "parentId": "large-observation/held-out/run-1/iteration-0",
+                "kind": "tool",
+                "name": "read_document",
+                "outcome": "library_completed",
+                "durationMs": 0.23808400000052643,
+                "usage": null
+              },
+              {
+                "id": "large-observation/held-out/run-1/iteration-1/llm-3",
+                "runId": "large-observation/held-out/run-1",
+                "parentId": "large-observation/held-out/run-1/iteration-1",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 1384,
+                "usage": {
+                  "input": 7392,
+                  "output": 31,
+                  "total": 7423
+                }
+              }
+            ],
+            "llmCalls": 2,
+            "toolCalls": 1,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 7538,
+                "missingCalls": 0,
+                "total": 7538
+              },
+              "output": {
+                "knownSubtotal": 50,
+                "missingCalls": 0,
+                "total": 50
+              },
+              "total": {
+                "knownSubtotal": 7588,
+                "missingCalls": 0,
+                "total": 7588
+              }
+            }
+          },
+          {
+            "fixture": "research",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 2001.0544170000012,
+            "fixtureId": "research/development",
+            "connector": "stage00-live-openai-research",
+            "model": "gpt-4o-mini",
+            "runs": [
+              {
+                "id": "research/development/run-1",
+                "parentId": "research/development",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "research/development/run-1/iteration-0/llm-1",
+                "runId": "research/development/run-1",
+                "parentId": "research/development/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 1130,
+                "usage": {
+                  "input": 210,
+                  "output": 55,
+                  "total": 265
+                }
+              },
+              {
+                "id": "research/development/run-1/iteration-0/tool-2",
+                "runId": "research/development/run-1",
+                "parentId": "research/development/run-1/iteration-0",
+                "kind": "tool",
+                "name": "read_source_a",
+                "outcome": "library_completed",
+                "durationMs": 0.978291999999783,
+                "usage": null
+              },
+              {
+                "id": "research/development/run-1/iteration-0/tool-3",
+                "runId": "research/development/run-1",
+                "parentId": "research/development/run-1/iteration-0",
+                "kind": "tool",
+                "name": "read_source_b",
+                "outcome": "library_completed",
+                "durationMs": 0.7957919999989826,
+                "usage": null
+              },
+              {
+                "id": "research/development/run-1/iteration-1/llm-4",
+                "runId": "research/development/run-1",
+                "parentId": "research/development/run-1/iteration-1",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 864,
+                "usage": {
+                  "input": 296,
+                  "output": 20,
+                  "total": 316
+                }
+              }
+            ],
+            "llmCalls": 2,
+            "toolCalls": 2,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 506,
+                "missingCalls": 0,
+                "total": 506
+              },
+              "output": {
+                "knownSubtotal": 75,
+                "missingCalls": 0,
+                "total": 75
+              },
+              "total": {
+                "knownSubtotal": 581,
+                "missingCalls": 0,
+                "total": 581
+              }
+            }
+          },
+          {
+            "fixture": "research",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 1944.8467920000003,
+            "fixtureId": "research/held-out",
+            "connector": "stage00-live-openai-research",
+            "model": "gpt-4o-mini",
+            "runs": [
+              {
+                "id": "research/held-out/run-1",
+                "parentId": "research/held-out",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "research/held-out/run-1/iteration-0/llm-1",
+                "runId": "research/held-out/run-1",
+                "parentId": "research/held-out/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 1090,
+                "usage": {
+                  "input": 212,
+                  "output": 57,
+                  "total": 269
+                }
+              },
+              {
+                "id": "research/held-out/run-1/iteration-0/tool-2",
+                "runId": "research/held-out/run-1",
+                "parentId": "research/held-out/run-1/iteration-0",
+                "kind": "tool",
+                "name": "read_source_a",
+                "outcome": "library_completed",
+                "durationMs": 0.5655409999999392,
+                "usage": null
+              },
+              {
+                "id": "research/held-out/run-1/iteration-0/tool-3",
+                "runId": "research/held-out/run-1",
+                "parentId": "research/held-out/run-1/iteration-0",
+                "kind": "tool",
+                "name": "read_source_b",
+                "outcome": "library_completed",
+                "durationMs": 0.33104199999979755,
+                "usage": null
+              },
+              {
+                "id": "research/held-out/run-1/iteration-1/llm-4",
+                "runId": "research/held-out/run-1",
+                "parentId": "research/held-out/run-1/iteration-1",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 849,
+                "usage": {
+                  "input": 302,
+                  "output": 22,
+                  "total": 324
+                }
+              }
+            ],
+            "llmCalls": 2,
+            "toolCalls": 2,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 514,
+                "missingCalls": 0,
+                "total": 514
+              },
+              "output": {
+                "knownSubtotal": 79,
+                "missingCalls": 0,
+                "total": 79
+              },
+              "total": {
+                "knownSubtotal": 593,
+                "missingCalls": 0,
+                "total": 593
+              }
+            }
+          },
+          {
+            "fixture": "external-workflow",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 2593.063,
+            "fixtureId": "external-workflow/development",
+            "connector": "stage00-live-openai-external-workflow",
+            "model": "gpt-4o-mini",
+            "runs": [
+              {
+                "id": "external-workflow/development/run-1",
+                "parentId": "external-workflow/development",
+                "outcome": "cancelled"
+              },
+              {
+                "id": "external-workflow/development/run-2",
+                "parentId": "external-workflow/development",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "external-workflow/development/run-1/iteration-0/llm-1",
+                "runId": "external-workflow/development/run-1",
+                "parentId": "external-workflow/development/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 753,
+                "usage": {
+                  "input": 166,
+                  "output": 17,
+                  "total": 183
+                }
+              },
+              {
+                "id": "external-workflow/development/run-1/iteration-0/tool-2",
+                "runId": "external-workflow/development/run-1",
+                "parentId": "external-workflow/development/run-1/iteration-0",
+                "kind": "tool",
+                "name": "submit_job",
+                "outcome": "library_completed",
+                "durationMs": 0.7131250000002183,
+                "usage": null
+              },
+              {
+                "id": "external-workflow/development/run-2/iteration-0/llm-3",
+                "runId": "external-workflow/development/run-2",
+                "parentId": "external-workflow/development/run-2/iteration-0",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 787,
+                "usage": {
+                  "input": 234,
+                  "output": 17,
+                  "total": 251
+                }
+              },
+              {
+                "id": "external-workflow/development/run-2/iteration-0/tool-4",
+                "runId": "external-workflow/development/run-2",
+                "parentId": "external-workflow/development/run-2/iteration-0",
+                "kind": "tool",
+                "name": "check_job",
+                "outcome": "library_completed",
+                "durationMs": 0.7232500000009168,
+                "usage": null
+              },
+              {
+                "id": "external-workflow/development/run-2/iteration-1/llm-5",
+                "runId": "external-workflow/development/run-2",
+                "parentId": "external-workflow/development/run-2/iteration-1",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 1034,
+                "usage": {
+                  "input": 273,
+                  "output": 19,
+                  "total": 292
+                }
+              }
+            ],
+            "llmCalls": 3,
+            "toolCalls": 2,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 673,
+                "missingCalls": 0,
+                "total": 673
+              },
+              "output": {
+                "knownSubtotal": 53,
+                "missingCalls": 0,
+                "total": 53
+              },
+              "total": {
+                "knownSubtotal": 726,
+                "missingCalls": 0,
+                "total": 726
+              }
+            }
+          },
+          {
+            "fixture": "external-workflow",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 2477.1979580000007,
+            "fixtureId": "external-workflow/held-out",
+            "connector": "stage00-live-openai-external-workflow",
+            "model": "gpt-4o-mini",
+            "runs": [
+              {
+                "id": "external-workflow/held-out/run-1",
+                "parentId": "external-workflow/held-out",
+                "outcome": "cancelled"
+              },
+              {
+                "id": "external-workflow/held-out/run-2",
+                "parentId": "external-workflow/held-out",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "external-workflow/held-out/run-1/iteration-0/llm-1",
+                "runId": "external-workflow/held-out/run-1",
+                "parentId": "external-workflow/held-out/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 866,
+                "usage": {
+                  "input": 168,
+                  "output": 19,
+                  "total": 187
+                }
+              },
+              {
+                "id": "external-workflow/held-out/run-1/iteration-0/tool-2",
+                "runId": "external-workflow/held-out/run-1",
+                "parentId": "external-workflow/held-out/run-1/iteration-0",
+                "kind": "tool",
+                "name": "submit_job",
+                "outcome": "library_completed",
+                "durationMs": 0.4213339999987511,
+                "usage": null
+              },
+              {
+                "id": "external-workflow/held-out/run-2/iteration-0/llm-3",
+                "runId": "external-workflow/held-out/run-2",
+                "parentId": "external-workflow/held-out/run-2/iteration-0",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 797,
+                "usage": {
+                  "input": 242,
+                  "output": 19,
+                  "total": 261
+                }
+              },
+              {
+                "id": "external-workflow/held-out/run-2/iteration-0/tool-4",
+                "runId": "external-workflow/held-out/run-2",
+                "parentId": "external-workflow/held-out/run-2/iteration-0",
+                "kind": "tool",
+                "name": "check_job",
+                "outcome": "library_completed",
+                "durationMs": 0.5570829999996931,
+                "usage": null
+              },
+              {
+                "id": "external-workflow/held-out/run-2/iteration-1/llm-5",
+                "runId": "external-workflow/held-out/run-2",
+                "parentId": "external-workflow/held-out/run-2/iteration-1",
+                "kind": "llm",
+                "name": "gpt-4o-mini-2024-07-18",
+                "outcome": "response",
+                "durationMs": 807,
+                "usage": {
+                  "input": 286,
+                  "output": 22,
+                  "total": 308
+                }
+              }
+            ],
+            "llmCalls": 3,
+            "toolCalls": 2,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 696,
+                "missingCalls": 0,
+                "total": 696
+              },
+              "output": {
+                "knownSubtotal": 60,
+                "missingCalls": 0,
+                "total": 60
+              },
+              "total": {
+                "knownSubtotal": 756,
+                "missingCalls": 0,
+                "total": 756
+              }
+            }
+          },
+          {
+            "fixture": "chat",
+            "split": "development",
+            "mode": "live",
+            "passed": false,
+            "failure": "completion_not_proven",
+            "durationMs": 1069.9442499999968,
+            "fixtureId": "chat/development",
+            "connector": "stage00-live-google-chat",
+            "model": "gemini-2.5-flash",
+            "runs": [
+              {
+                "id": "chat/development/run-1",
+                "parentId": "chat/development",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "chat/development/run-1/iteration-0/llm-1",
+                "runId": "chat/development/run-1",
+                "parentId": "chat/development/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 1065,
+                "usage": {
+                  "input": 86,
+                  "output": 135,
+                  "total": 221
+                }
+              }
+            ],
+            "llmCalls": 1,
+            "toolCalls": 0,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 86,
+                "missingCalls": 0,
+                "total": 86
+              },
+              "output": {
+                "knownSubtotal": 135,
+                "missingCalls": 0,
+                "total": 135
+              },
+              "total": {
+                "knownSubtotal": 221,
+                "missingCalls": 0,
+                "total": 221
+              }
+            }
+          },
+          {
+            "fixture": "large-observation",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 946.827709000001,
+            "fixtureId": "large-observation/development",
+            "connector": "stage00-live-google-large-observation",
+            "model": "gemini-2.5-flash",
+            "runs": [
+              {
+                "id": "large-observation/development/run-1",
+                "parentId": "large-observation/development",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "large-observation/development/run-1/iteration-0/llm-1",
+                "runId": "large-observation/development/run-1",
+                "parentId": "large-observation/development/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 429,
+                "usage": {
+                  "input": 149,
+                  "output": 18,
+                  "total": 167
+                }
+              },
+              {
+                "id": "large-observation/development/run-1/iteration-0/tool-2",
+                "runId": "large-observation/development/run-1",
+                "parentId": "large-observation/development/run-1/iteration-0",
+                "kind": "tool",
+                "name": "read_document",
+                "outcome": "library_completed",
+                "durationMs": 0.7210420000010345,
+                "usage": null
+              },
+              {
+                "id": "large-observation/development/run-1/iteration-1/llm-3",
+                "runId": "large-observation/development/run-1",
+                "parentId": "large-observation/development/run-1/iteration-1",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 513,
+                "usage": {
+                  "input": 6200,
+                  "output": 28,
+                  "total": 6228
+                }
+              }
+            ],
+            "llmCalls": 2,
+            "toolCalls": 1,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 6349,
+                "missingCalls": 0,
+                "total": 6349
+              },
+              "output": {
+                "knownSubtotal": 46,
+                "missingCalls": 0,
+                "total": 46
+              },
+              "total": {
+                "knownSubtotal": 6395,
+                "missingCalls": 0,
+                "total": 6395
+              }
+            }
+          },
+          {
+            "fixture": "large-observation",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 1034.5392920000013,
+            "fixtureId": "large-observation/held-out",
+            "connector": "stage00-live-google-large-observation",
+            "model": "gemini-2.5-flash",
+            "runs": [
+              {
+                "id": "large-observation/held-out/run-1",
+                "parentId": "large-observation/held-out",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "large-observation/held-out/run-1/iteration-0/llm-1",
+                "runId": "large-observation/held-out/run-1",
+                "parentId": "large-observation/held-out/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 479,
+                "usage": {
+                  "input": 150,
+                  "output": 19,
+                  "total": 169
+                }
+              },
+              {
+                "id": "large-observation/held-out/run-1/iteration-0/tool-2",
+                "runId": "large-observation/held-out/run-1",
+                "parentId": "large-observation/held-out/run-1/iteration-0",
+                "kind": "tool",
+                "name": "read_document",
+                "outcome": "library_completed",
+                "durationMs": 0.5053750000006403,
+                "usage": null
+              },
+              {
+                "id": "large-observation/held-out/run-1/iteration-1/llm-3",
+                "runId": "large-observation/held-out/run-1",
+                "parentId": "large-observation/held-out/run-1/iteration-1",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 551,
+                "usage": {
+                  "input": 6204,
+                  "output": 30,
+                  "total": 6234
+                }
+              }
+            ],
+            "llmCalls": 2,
+            "toolCalls": 1,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 6354,
+                "missingCalls": 0,
+                "total": 6354
+              },
+              "output": {
+                "knownSubtotal": 49,
+                "missingCalls": 0,
+                "total": 49
+              },
+              "total": {
+                "knownSubtotal": 6403,
+                "missingCalls": 0,
+                "total": 6403
+              }
+            }
+          },
+          {
+            "fixture": "research",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 1387.996417000002,
+            "fixtureId": "research/development",
+            "connector": "stage00-live-google-research",
+            "model": "gemini-2.5-flash",
+            "runs": [
+              {
+                "id": "research/development/run-1",
+                "parentId": "research/development",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "research/development/run-1/iteration-0/llm-1",
+                "runId": "research/development/run-1",
+                "parentId": "research/development/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 460,
+                "usage": {
+                  "input": 242,
+                  "output": 22,
+                  "total": 264
+                }
+              },
+              {
+                "id": "research/development/run-1/iteration-0/tool-2",
+                "runId": "research/development/run-1",
+                "parentId": "research/development/run-1/iteration-0",
+                "kind": "tool",
+                "name": "read_source_a",
+                "outcome": "library_completed",
+                "durationMs": 0.640041000002384,
+                "usage": null
+              },
+              {
+                "id": "research/development/run-1/iteration-1/llm-3",
+                "runId": "research/development/run-1",
+                "parentId": "research/development/run-1/iteration-1",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 442,
+                "usage": {
+                  "input": 298,
+                  "output": 22,
+                  "total": 320
+                }
+              },
+              {
+                "id": "research/development/run-1/iteration-1/tool-4",
+                "runId": "research/development/run-1",
+                "parentId": "research/development/run-1/iteration-1",
+                "kind": "tool",
+                "name": "read_source_b",
+                "outcome": "library_completed",
+                "durationMs": 0.4773330000025453,
+                "usage": null
+              },
+              {
+                "id": "research/development/run-1/iteration-2/llm-5",
+                "runId": "research/development/run-1",
+                "parentId": "research/development/run-1/iteration-2",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 479,
+                "usage": {
+                  "input": 354,
+                  "output": 19,
+                  "total": 373
+                }
+              }
+            ],
+            "llmCalls": 3,
+            "toolCalls": 2,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 894,
+                "missingCalls": 0,
+                "total": 894
+              },
+              "output": {
+                "knownSubtotal": 63,
+                "missingCalls": 0,
+                "total": 63
+              },
+              "total": {
+                "knownSubtotal": 957,
+                "missingCalls": 0,
+                "total": 957
+              }
+            }
+          },
+          {
+            "fixture": "research",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 1066.444958,
+            "fixtureId": "research/held-out",
+            "connector": "stage00-live-google-research",
+            "model": "gemini-2.5-flash",
+            "runs": [
+              {
+                "id": "research/held-out/run-1",
+                "parentId": "research/held-out",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "research/held-out/run-1/iteration-0/llm-1",
+                "runId": "research/held-out/run-1",
+                "parentId": "research/held-out/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 607,
+                "usage": {
+                  "input": 244,
+                  "output": 46,
+                  "total": 290
+                }
+              },
+              {
+                "id": "research/held-out/run-1/iteration-0/tool-2",
+                "runId": "research/held-out/run-1",
+                "parentId": "research/held-out/run-1/iteration-0",
+                "kind": "tool",
+                "name": "read_source_a",
+                "outcome": "library_completed",
+                "durationMs": 0.5080419999976584,
+                "usage": null
+              },
+              {
+                "id": "research/held-out/run-1/iteration-0/tool-3",
+                "runId": "research/held-out/run-1",
+                "parentId": "research/held-out/run-1/iteration-0",
+                "kind": "tool",
+                "name": "read_source_b",
+                "outcome": "library_completed",
+                "durationMs": 0.23829099999784376,
+                "usage": null
+              },
+              {
+                "id": "research/held-out/run-1/iteration-1/llm-4",
+                "runId": "research/held-out/run-1",
+                "parentId": "research/held-out/run-1/iteration-1",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 455,
+                "usage": {
+                  "input": 358,
+                  "output": 21,
+                  "total": 379
+                }
+              }
+            ],
+            "llmCalls": 2,
+            "toolCalls": 2,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 602,
+                "missingCalls": 0,
+                "total": 602
+              },
+              "output": {
+                "knownSubtotal": 67,
+                "missingCalls": 0,
+                "total": 67
+              },
+              "total": {
+                "knownSubtotal": 669,
+                "missingCalls": 0,
+                "total": 669
+              }
+            }
+          },
+          {
+            "fixture": "external-workflow",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 1381.0559579999972,
+            "fixtureId": "external-workflow/development",
+            "connector": "stage00-live-google-external-workflow",
+            "model": "gemini-2.5-flash",
+            "runs": [
+              {
+                "id": "external-workflow/development/run-1",
+                "parentId": "external-workflow/development",
+                "outcome": "cancelled"
+              },
+              {
+                "id": "external-workflow/development/run-2",
+                "parentId": "external-workflow/development",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "external-workflow/development/run-1/iteration-0/llm-1",
+                "runId": "external-workflow/development/run-1",
+                "parentId": "external-workflow/development/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 389,
+                "usage": {
+                  "input": 191,
+                  "output": 18,
+                  "total": 209
+                }
+              },
+              {
+                "id": "external-workflow/development/run-1/iteration-0/tool-2",
+                "runId": "external-workflow/development/run-1",
+                "parentId": "external-workflow/development/run-1/iteration-0",
+                "kind": "tool",
+                "name": "submit_job",
+                "outcome": "library_completed",
+                "durationMs": 0.5796669999981532,
+                "usage": null
+              },
+              {
+                "id": "external-workflow/development/run-2/iteration-0/llm-3",
+                "runId": "external-workflow/development/run-2",
+                "parentId": "external-workflow/development/run-2/iteration-0",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 512,
+                "usage": {
+                  "input": 269,
+                  "output": 18,
+                  "total": 287
+                }
+              },
+              {
+                "id": "external-workflow/development/run-2/iteration-0/tool-4",
+                "runId": "external-workflow/development/run-2",
+                "parentId": "external-workflow/development/run-2/iteration-0",
+                "kind": "tool",
+                "name": "check_job",
+                "outcome": "library_completed",
+                "durationMs": 0.5201670000024023,
+                "usage": null
+              },
+              {
+                "id": "external-workflow/development/run-2/iteration-1/llm-5",
+                "runId": "external-workflow/development/run-2",
+                "parentId": "external-workflow/development/run-2/iteration-1",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 471,
+                "usage": {
+                  "input": 320,
+                  "output": 23,
+                  "total": 343
+                }
+              }
+            ],
+            "llmCalls": 3,
+            "toolCalls": 2,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 780,
+                "missingCalls": 0,
+                "total": 780
+              },
+              "output": {
+                "knownSubtotal": 59,
+                "missingCalls": 0,
+                "total": 59
+              },
+              "total": {
+                "knownSubtotal": 839,
+                "missingCalls": 0,
+                "total": 839
+              }
+            }
+          },
+          {
+            "fixture": "external-workflow",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 1370.497792000002,
+            "fixtureId": "external-workflow/held-out",
+            "connector": "stage00-live-google-external-workflow",
+            "model": "gemini-2.5-flash",
+            "runs": [
+              {
+                "id": "external-workflow/held-out/run-1",
+                "parentId": "external-workflow/held-out",
+                "outcome": "cancelled"
+              },
+              {
+                "id": "external-workflow/held-out/run-2",
+                "parentId": "external-workflow/held-out",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "external-workflow/held-out/run-1/iteration-0/llm-1",
+                "runId": "external-workflow/held-out/run-1",
+                "parentId": "external-workflow/held-out/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 439,
+                "usage": {
+                  "input": 192,
+                  "output": 19,
+                  "total": 211
+                }
+              },
+              {
+                "id": "external-workflow/held-out/run-1/iteration-0/tool-2",
+                "runId": "external-workflow/held-out/run-1",
+                "parentId": "external-workflow/held-out/run-1/iteration-0",
+                "kind": "tool",
+                "name": "submit_job",
+                "outcome": "library_completed",
+                "durationMs": 0.493666000002122,
+                "usage": null
+              },
+              {
+                "id": "external-workflow/held-out/run-2/iteration-0/llm-3",
+                "runId": "external-workflow/held-out/run-2",
+                "parentId": "external-workflow/held-out/run-2/iteration-0",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 408,
+                "usage": {
+                  "input": 273,
+                  "output": 19,
+                  "total": 292
+                }
+              },
+              {
+                "id": "external-workflow/held-out/run-2/iteration-0/tool-4",
+                "runId": "external-workflow/held-out/run-2",
+                "parentId": "external-workflow/held-out/run-2/iteration-0",
+                "kind": "tool",
+                "name": "check_job",
+                "outcome": "library_completed",
+                "durationMs": 0.44087500000023283,
+                "usage": null
+              },
+              {
+                "id": "external-workflow/held-out/run-2/iteration-1/llm-5",
+                "runId": "external-workflow/held-out/run-2",
+                "parentId": "external-workflow/held-out/run-2/iteration-1",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 515,
+                "usage": {
+                  "input": 327,
+                  "output": 30,
+                  "total": 357
+                }
+              }
+            ],
+            "llmCalls": 3,
+            "toolCalls": 2,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 792,
+                "missingCalls": 0,
+                "total": 792
+              },
+              "output": {
+                "knownSubtotal": 68,
+                "missingCalls": 0,
+                "total": 68
+              },
+              "total": {
+                "knownSubtotal": 860,
+                "missingCalls": 0,
+                "total": 860
+              }
+            }
+          }
+        ]
+      },
+      "baseline-retry": {
+        "protocol": "stage-00-v1",
+        "recordedAt": "2026-10-12T10:58:21.891Z",
+        "selectedProviders": [
+          "google"
+        ],
+        "sampleCountPerModelWorkloadSplit": 1,
+        "seed": null,
+        "temperature": null,
+        "thinking": {
+          "enabled": false
+        },
+        "fixtureSettings": {
+          "maxIterations": 6,
+          "maxToolCalls": 6,
+          "maxOutputTokens": 512,
+          "maxExecutionTimeMs": 60000,
+          "emptyResponseRetry": false,
+          "workingMemory": false,
+          "inContextMemory": false
+        },
+        "providerSettings": {
+          "google/gemini-2.5-flash": {
+            "generationConfig": {
+              "thinkingConfig": {
+                "thinkingBudget": 0
+              }
+            }
+          }
+        },
+        "uncertainty": "Pilot only; no comparative quality or cost conclusion.",
+        "reports": [
+          {
+            "fixture": "chat",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 613.954667,
+            "fixtureId": "chat/development",
+            "connector": "stage00-live-google-chat",
+            "model": "gemini-2.5-flash",
+            "runs": [
+              {
+                "id": "chat/development/run-1",
+                "parentId": "chat/development",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "chat/development/run-1/iteration-0/llm-1",
+                "runId": "chat/development/run-1",
+                "parentId": "chat/development/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 597,
+                "usage": {
+                  "input": 86,
+                  "output": 5,
+                  "total": 91
+                }
+              }
+            ],
+            "llmCalls": 1,
+            "toolCalls": 0,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 86,
+                "missingCalls": 0,
+                "total": 86
+              },
+              "output": {
+                "knownSubtotal": 5,
+                "missingCalls": 0,
+                "total": 5
+              },
+              "total": {
+                "knownSubtotal": 91,
+                "missingCalls": 0,
+                "total": 91
+              }
+            }
+          },
+          {
+            "fixture": "chat",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "failure": null,
+            "durationMs": 511.5387499999997,
+            "fixtureId": "chat/held-out",
+            "connector": "stage00-live-google-chat",
+            "model": "gemini-2.5-flash",
+            "runs": [
+              {
+                "id": "chat/held-out/run-1",
+                "parentId": "chat/held-out",
+                "outcome": "completed"
+              }
+            ],
+            "steps": [
+              {
+                "id": "chat/held-out/run-1/iteration-0/llm-1",
+                "runId": "chat/held-out/run-1",
+                "parentId": "chat/held-out/run-1/iteration-0",
+                "kind": "llm",
+                "name": "gemini-2.5-flash",
+                "outcome": "response",
+                "durationMs": 511,
+                "usage": {
+                  "input": 87,
+                  "output": 6,
+                  "total": 93
+                }
+              }
+            ],
+            "llmCalls": 1,
+            "toolCalls": 0,
+            "repeatedToolCalls": 0,
+            "correlationErrors": 0,
+            "usage": {
+              "input": {
+                "knownSubtotal": 87,
+                "missingCalls": 0,
+                "total": 87
+              },
+              "output": {
+                "knownSubtotal": 6,
+                "missingCalls": 0,
+                "total": 6
+              },
+              "total": {
+                "knownSubtotal": 93,
+                "missingCalls": 0,
+                "total": 93
+              }
+            }
+          }
+        ]
+      },
+      "context-live": {
+        "protocol": "stage-01-corrections-v2",
+        "recordedAt": "2026-10-12T10:56:47.694Z",
+        "sampleCountPerProviderMode": 1,
+        "scope": "Mixed-format and separate-spill evidence retrieval, schema-aware compaction, controlled malformed-answer repair, and Google replay state; real providers with local tools; no comparative quality/cost claim",
+        "reports": [
+          {
+            "scenario": "schema-aware-compaction",
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "passed": true,
+            "compactions": 1,
+            "observedModelCalls": 1,
+            "selectedBudget": {
+              "maxTokens": 1000,
+              "responseReserve": 100,
+              "systemMessageTokens": 78,
+              "toolsTokens": 654,
+              "conversationTokens": 0,
+              "currentInputTokens": 13,
+              "totalUsed": 745,
+              "available": 155,
+              "utilizationPercent": 82.77777777777777,
+              "breakdown": {
+                "systemPrompt": 48,
+                "persistentInstructions": 0,
+                "pluginInstructions": 0,
+                "pluginContents": {},
+                "tools": 654,
+                "conversation": 0,
+                "currentInput": 13
+              }
+            },
+            "usage": {
+              "input_tokens": 429,
+              "output_tokens": 10,
+              "total_tokens": 439,
+              "cached_input_tokens": 0,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "service_tier": "default"
+            }
+          },
+          {
+            "scenario": "separate-spill-collision-retrieval",
+            "provider": "openai",
+            "passed": false,
+            "errorType": "AssertionError"
+          },
+          {
+            "scenario": "mixed-format-retrieval",
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "passed": true,
+            "nativeEvidenceRecovered": true,
+            "calls": 2,
+            "memoryReads": 2,
+            "compacted": 1,
+            "firstRevision": 1,
+            "firstBudgetAvailable": 1200,
+            "lastRevision": 2,
+            "finalEstimatedTokens": 2043
+          },
+          {
+            "scenario": "mixed-format-retrieval",
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream",
+            "passed": true,
+            "nativeEvidenceRecovered": true,
+            "calls": 2,
+            "memoryReads": 2,
+            "compacted": 1,
+            "firstRevision": 1,
+            "firstBudgetAvailable": 1200,
+            "lastRevision": 2,
+            "finalEstimatedTokens": 2044
+          },
+          {
+            "scenario": "controlled-structured-repair",
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "passed": true,
+            "providerCalls": 2,
+            "mainUsageTokens": 103,
+            "totalUsageTokens": 230,
+            "lastRevision": 1
+          },
+          {
+            "scenario": "schema-aware-compaction",
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "passed": true,
+            "compactions": 1,
+            "observedModelCalls": 1,
+            "selectedBudget": {
+              "maxTokens": 1000,
+              "responseReserve": 100,
+              "systemMessageTokens": 78,
+              "toolsTokens": 654,
+              "conversationTokens": 0,
+              "currentInputTokens": 13,
+              "totalUsed": 745,
+              "available": 155,
+              "utilizationPercent": 82.77777777777777,
+              "breakdown": {
+                "systemPrompt": 48,
+                "persistentInstructions": 0,
+                "pluginInstructions": 0,
+                "pluginContents": {},
+                "tools": 654,
+                "conversation": 0,
+                "currentInput": 13
+              }
+            },
+            "usage": {
+              "input_tokens": 77,
+              "output_tokens": 15,
+              "total_tokens": 92
+            }
+          },
+          {
+            "scenario": "separate-spill-collision-retrieval",
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "passed": true,
+            "memoryReads": 2,
+            "keys": [
+              "raw.tool_result.read_source.12345678",
+              "raw.tool_result.read_source.12345678.function.1"
+            ],
+            "persistence": "JSON context state round trip before real retrieval"
+          },
+          {
+            "scenario": "mixed-format-retrieval",
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "passed": true,
+            "nativeEvidenceRecovered": true,
+            "calls": 2,
+            "memoryReads": 2,
+            "compacted": 1,
+            "firstRevision": 1,
+            "firstBudgetAvailable": 1200,
+            "lastRevision": 2,
+            "finalEstimatedTokens": 2043
+          },
+          {
+            "scenario": "mixed-format-retrieval",
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream",
+            "passed": true,
+            "nativeEvidenceRecovered": true,
+            "calls": 2,
+            "memoryReads": 2,
+            "compacted": 1,
+            "firstRevision": 1,
+            "firstBudgetAvailable": 1200,
+            "lastRevision": 2,
+            "finalEstimatedTokens": 2044
+          },
+          {
+            "scenario": "controlled-structured-repair",
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "passed": true,
+            "providerCalls": 2,
+            "mainUsageTokens": 83,
+            "totalUsageTokens": 182,
+            "lastRevision": 1
+          },
+          {
+            "scenario": "google-thinking-signature-replay",
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "passed": true,
+            "signaturesObserved": 2,
+            "localSignatureEstimate": 99,
+            "persistence": "JSON context state round trip; no signature contents logged"
+          }
+        ]
+      },
+      "context-retry": {
+        "protocol": "stage-01-corrections-v2",
+        "recordedAt": "2026-10-12T10:58:25.886Z",
+        "sampleCountPerProviderMode": 1,
+        "scope": "Mixed-format and separate-spill evidence retrieval, schema-aware compaction, controlled malformed-answer repair, and Google replay state; real providers with local tools; no comparative quality/cost claim",
+        "reports": [
+          {
+            "scenario": "separate-spill-collision-retrieval",
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "passed": true,
+            "memoryReads": 2,
+            "keys": [
+              "raw.tool_result.read_source.12345678",
+              "raw.tool_result.read_source.12345678.function.1"
+            ],
+            "persistence": "JSON context state round trip before real retrieval"
+          }
+        ]
+      }
+    }
+  },
+  "baselineHarnessCorrection": "External-workflow host checkpoint now cancels at existing tool:complete after the accepted receipt reaches the host, rather than cancelling inside the active tool. Fixture assertions, required evidence, expected outcomes and call counts unchanged.",
+  "authorizationAndIsolationEvidence": [
+    "Concurrent ToolManager calls keep distinct signals and captured user/account/maps/identities/roles",
+    "OAuth wait cancellation prevents dispatch after token resolution, preserving trusted getToken arguments",
+    "Loopback generic API tool forwards cancellation and original trusted user/account",
+    "Pre-aborted/pending-permission calls cannot enter tool function",
+    "Background completion dropped after cancellation, pending replacement or trusted identity/registry change",
+    "Late result body never re-enters managed context or increments counters twice"
+  ],
+  "toolingNotes": [
+    "Sandbox loopback binding initially returned EPERM; approved binding-enabled execution passed full suites without weakened assertions.",
+    "An earlier coverage run overlapped a dist-cleaning build and AMOS public imports failed; sequential completed build then full coverage passed.",
+    "Strict new core/live tests compile with repository strict settings. AMOS uses its own standard tsconfig because unrelated imported preexisting app declarations fail root unused/return checks.",
+    "Final source review added normalizer-free denied/timeout classification regressions and reran full suite/build/checks."
+  ],
+  "limitations": [
+    "Cancellation acknowledgment is local and never proves remote write prevention or rollback",
+    "Noncooperative JavaScript/remote work can continue after caller stops waiting",
+    "Generic connector tools forward signals; specialized/MCP/subprocess/provider-hosted drivers require their own support",
+    "Signals/provenance/outcomes are process-local; no durable effect/evidence reconciliation or session migration",
+    "Connector success/breaker counters retain header-level semantics even if a later body read fails",
+    "Operation-deadline bodies must be consumed or cancelled; unread bodies remain under their deadline",
+    "Anthropic live validation unavailable until usable credentials are supplied",
+    "Two prior-stage stochastic failures required unchanged targeted reruns; retained results do not establish first-attempt reliability"
+  ],
+  "sourceSHA256": {
+    "apps/amos/examples/tool-outcomes-offline.ts": "31bc59ddd5a7f85371b5f90e3fb4d1c386567a1f09e39309349e935136da520b",
+    "apps/amos/src/agent/AgentRunner.ts": "323b040decc52c7a7abfd117067c59d58d9d8a64b0c36a3cb490a4cede4f0c41",
+    "apps/amos/src/agent/toolOutcomes.ts": "3812695bf22cd9663ece9ca407119d3368d73b449e3b113fe313965faa7e6042",
+    "apps/amos/src/app.ts": "e94a076c03f99f3b7100fccb3b933514b13745085269485f6f4daf22a30ac829",
+    "apps/amos/src/config/types.ts": "ce068423e7ce7609ad5fcebf46ddf044c45bfdc27dd5851d9286da2746b7b147",
+    "examples/README.md": "26d2e75fe477afc8cfe29394e0802311b5f622ec788ed4b6980b56319c7f6ac8",
+    "examples/agentic-baseline/runner.ts": "b5d3fc713a48e202231fd2b50790366da059dd592da368abeb6f9a79bd56706a",
+    "examples/tool-outcomes-and-cancellation.ts": "443fd60af8d94c5dce01ae23f316af6d07b3bb833625ce212e940c2d80b78953",
+    "src/capabilities/agents/ExecutionContext.ts": "c5f6c0d4a03debbcc087dcee68e95431c10365349b55b5324a75f14abec23999",
+    "src/core/Agent.ts": "7ae64e29794a616d10fa06c9443ffffd13fb817959f69ae0448960059b412aa8",
+    "src/core/Connector.ts": "873ec1c140eb031bbd58696ed609b62aa898bcda4ce2821e3d211c7c7fe59d7f",
+    "src/core/ToolManager.ts": "b59070f6ef6e432f7f74c171f058dc25749ea70999cf84b63db96f24739e78cc",
+    "src/core/index.ts": "3b8c3fd0d79c4e52e566053c95f438dff51da5190bd2aa0c1eb27ac18906c22d",
+    "src/core/permissions/PermissionEnforcementPlugin.ts": "3e947692b272218235eaf18df63206cb9ea368d610d807453be841e5429ddca0",
+    "src/core/tool-execution/ToolExecutionPipeline.ts": "30cc439edd7fa8ad57237c907711194fde60c3b2df9c7c2ed6abbd7d2e73ea17",
+    "src/core/tool-execution/cancellation.ts": "c0301f18a79f56f2db07da9c1c9e3aeec3b49033abf744fbf643565bb3c47fec",
+    "src/core/tool-execution/index.ts": "b299fca3efa2c8049ca030280718d65e56b2cb09a138d23a0c306bd94b78bff7",
+    "src/core/tool-execution/outcomes.ts": "6bc6b9ea1e8af69039dc7667bc405c395152e105b18babf9014fa5b97e066f15",
+    "src/core/tool-execution/plugins/ResultNormalizerPlugin.ts": "7616cbaddcded636dde5226cebd75aea89c5c8bb3afd53561dc8fc17b87ed157",
+    "src/core/tool-execution/types.ts": "d764013ad0f228699b6403dbf157b8a9085e34ca1adb48479f0af59e57c60165",
+    "src/domain/entities/StreamEvent.ts": "05a12dc6284423f6f42c63fd93c624304b0fb65383df40d12c27e6bb3309ba81",
+    "src/domain/entities/Tool.ts": "eea70d9541a8e928386b28dbbecf4d290cca823aa1b416e38d1e93c41660c503",
+    "src/domain/errors/AIErrors.ts": "29d9fbb9139f2c418b67606b944c86e15bc59bd9d3d6838f2be6ade01d209abd",
+    "src/index.ts": "3ab167006cca43493400caeb2631bcc6ca8b5dce416366dbce7da387d748a57e",
+    "src/tools/connector/ConnectorTools.ts": "dae613fbd1894c796fbb6079e32aad90f54c8d074b48dca42205cfa1f702e6b9",
+    "src/tools/registry.generated.ts": "b8c00199916b46178694c6578f319f22e74ba26b8cf7936c38d7911c61f8c3c8",
+    "src/types/index.ts": "d637483b810b5bda2ea0b69506f3ac9f81a7c0729291a916d992305f49a4fed1",
+    "tests/fixtures/agentic-baseline/stage02-consumer.ts": "cfa863ea0cd77c59c413de229278189fb17222eacadf80bfd0664afe86ff2cf7",
+    "tests/fixtures/agentic-baseline/tsconfig.json": "149d28f767a188fa84832c3520532762e61355dda04736fa63224cb9fb5580c3",
+    "tests/integration/text/ToolOutcomes.live.integration.test.ts": "00d0a9d04b28991bbbe1810250a37fba364dc9be50a07239d09c42130ff50dc9",
+    "tests/unit/apps/amos/ToolOutcomes.test.ts": "56324a0f2c3d3f77cff7de44153cb2243d88992e93a11daf722abc4dd87802b6",
+    "tests/unit/core/Agent.toolOutcomes.test.ts": "6aeb73a1941b765bfad5188c3eb64aa5df7782327d4200d9af23f780f3d85697",
+    "tests/unit/core/ConnectorCancellation.test.ts": "280ad767fdb673b0a5880f0f90be962b5e243d94fdb85a75c72456f0a7d121d9",
+    "tests/unit/core/tool-execution/ToolOutcomes.test.ts": "38db1da2430a966410c053ed381ffa9ed30f35ff1003939f26783f59784ae746"
+  },
+  "nextSeparatelyAuthorizedCoreStage": "06: fixed main model, bounded helper roles and aggregate task usage/budgets",
+  "package": {
+    "method": "npm pack --dry-run --json --ignore-scripts with isolated temporary cache",
+    "passed": true,
+    "fileCount": 105,
+    "requiredStage02Files": [
+      "docs/TOOL_OUTCOMES_AND_CANCELLATION.md",
+      "docs/evaluations/STAGE_02_VALIDATION.json",
+      "docs/evaluations/STAGE_02_AMOS_OFFLINE.txt",
+      "examples/tool-outcomes-and-cancellation.ts",
+      "dist/index.js",
+      "dist/index.cjs",
+      "dist/index.d.ts",
+      "dist/types/index.d.ts"
+    ],
+    "containsEnvironmentFiles": false,
+    "published": false
+  }
+}

@@ -1,0 +1,1021 @@
+{
+  "protocol": "stage-02-openai-retrieval-diagnosis-v1",
+  "recordedAt": "2026-10-12T16:51:38.463170+00:00",
+  "scope": "Diagnosis only; production source, test fixture and runtime behavior unchanged. Stage validation remains incomplete.",
+  "branch": "version2",
+  "baseRevision": "fa8f911",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "observedModel": "gpt-4o-mini-2024-07-18",
+  "test": "tests/integration/text/ContextFreshness.live.integration.test.ts:53",
+  "conclusion": "Concrete prompt/tool-contract defect: generic store_get advertises reading all entries without a key, while notes keyless retrieval only returns metadata. In every captured failed trial the model makes one keyless store_get call, then returns metadata as markers without reading either stored value.",
+  "sourceLocations": {
+    "incorrectStaticDescription": "src/core/context-nextgen/store-tools.ts:166",
+    "incorrectKeyDescription": "src/core/context-nextgen/store-tools.ts:171",
+    "incorrectDynamicDescription": "src/core/context-nextgen/store-tools.ts:178",
+    "incorrectQuickReference": "src/core/context-nextgen/store-tools.ts:110",
+    "actualKeylessImplementation": "src/core/context-nextgen/plugins/WorkingMemoryPluginNextGen.ts:257",
+    "staleIndexInstructions": "src/domain/entities/Memory.ts:724"
+  },
+  "historicalOrigin": {
+    "retrievalDescriptionAndKeylessImplementation": "git blame identifies 6730ca3b, 2026-03-14; these lines predate stages 01/02. This does not excuse the failing stage completion gate."
+  },
+  "method": {
+    "fixture": "Exact seeds/configuration/user input from the live collision test; maxContextTokens 3200, reserve 512, maxIterations 5, max_output_tokens 512, no empty-response retry.",
+    "instrumentation": "Capture converted Responses API request parameters immediately before SDK dispatch, model responses, and tool arguments/results. No SDK/auth headers/config captured; all contents are synthetic fixture data.",
+    "storageControls": "Verify both marker values in serialized state and via the existing ToolManager after JSON restore. Control results are NOT inserted in conversation or exposed to the model. Reads update access timestamps; indexed keys/descriptions/content remain unchanged.",
+    "comparison": "Separate independent live trials, not seeded/paired calls. Same source/compaction/restore/runtime/output budget for all variants; only model-facing descriptions or instructions are changed by a before:llm hook.",
+    "original": "No prompt or tool modifications.",
+    "toolDescriptionOnly": {
+      "appendToStoreGetDescription": "For notes: omitting key returns only index metadata (keys/descriptions), NOT stored values. To read source contents, pass each exact key from the index in a separate store_get call.",
+      "replaceKeyDescription": "Exact entry key. Required to read full values from notes; omitting it returns only index metadata."
+    },
+    "explicitInstructions": {
+      "appendToInstructions": "The notes index and keyless store_get contain metadata only, never source contents. Retrieve each exact key shown in the index with store_get({store:\"notes\",key:\"<exact key>\"}) before answering. Do not treat keys/descriptions as source evidence."
+    },
+    "exploratoryProbe": "One initial instrumented original trial passed, with two correct keyed reads and two model calls. Its raw file was replaced when the five-trial original cohort started; console evidence remains in the task. Excluded from the comparison below."
+  },
+  "comparisons": {
+    "original": {
+      "trials": 5,
+      "passed": 2,
+      "failed": 3,
+      "samples": [
+        {
+          "sample": 0,
+          "providerCalls": 2,
+          "sourceMarkersReturned": false,
+          "keyedReadCount": 0,
+          "availableBudget": 1139,
+          "allOriginalTestAssertionsSatisfied": false,
+          "storedBeforeRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1557
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1558
+            }
+          ],
+          "hostControlReadsAfterRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1635
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1647
+            }
+          ],
+          "toolCalls": [
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": false,
+              "metadataOnlyResult": {
+                "found": true,
+                "entries": [
+                  {
+                    "key": "raw.tool_result.read_source.12345678",
+                    "description": "Result of read_source()",
+                    "tier": "raw"
+                  },
+                  {
+                    "key": "raw.tool_result.read_source.12345678.function.1",
+                    "description": "Result of read_source()",
+                    "tier": "raw"
+                  }
+                ]
+              }
+            }
+          ],
+          "outputSHA256": "bc69237a2bff4c308b9468e924a84f9876926396e3a85088d0e6ad567394784d",
+          "incorrectOutput": "The verification markers for the stored sources are:\n\n1. **Marker 1:** `raw.tool_result.read_source.12345678`\n2. **Marker 2:** `raw.tool_result.read_source.12345678.function.1`"
+        },
+        {
+          "sample": 1,
+          "providerCalls": 2,
+          "sourceMarkersReturned": false,
+          "keyedReadCount": 0,
+          "availableBudget": 1139,
+          "allOriginalTestAssertionsSatisfied": false,
+          "storedBeforeRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1557
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1558
+            }
+          ],
+          "hostControlReadsAfterRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1635
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1647
+            }
+          ],
+          "toolCalls": [
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": false,
+              "metadataOnlyResult": {
+                "found": true,
+                "entries": [
+                  {
+                    "key": "raw.tool_result.read_source.12345678",
+                    "description": "Result of read_source()",
+                    "tier": "raw"
+                  },
+                  {
+                    "key": "raw.tool_result.read_source.12345678.function.1",
+                    "description": "Result of read_source()",
+                    "tier": "raw"
+                  }
+                ]
+              }
+            }
+          ],
+          "outputSHA256": "f1083498068ac33a4c494966490080a14ed77a5aa0cae1845e595583eb368550",
+          "incorrectOutput": "Here are the verification markers for the stored sources:\n\n1. `raw.tool_result.read_source.12345678`\n2. `raw.tool_result.read_source.12345678.function.1`"
+        },
+        {
+          "sample": 2,
+          "providerCalls": 2,
+          "sourceMarkersReturned": true,
+          "keyedReadCount": 2,
+          "availableBudget": 231,
+          "allOriginalTestAssertionsSatisfied": true,
+          "storedBeforeRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1557
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1558
+            }
+          ],
+          "hostControlReadsAfterRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1635
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1647
+            }
+          ],
+          "toolCalls": [
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678.function.1"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": true
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": true,
+              "resultContainsSecondSource": false
+            }
+          ],
+          "outputSHA256": "78287fe8e742ba0b8c3ab3e234c5a2cb3f8285c990c18afaa30dda500a369302"
+        },
+        {
+          "sample": 3,
+          "providerCalls": 2,
+          "sourceMarkersReturned": false,
+          "keyedReadCount": 0,
+          "availableBudget": 1139,
+          "allOriginalTestAssertionsSatisfied": false,
+          "storedBeforeRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1557
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1558
+            }
+          ],
+          "hostControlReadsAfterRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1635
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1647
+            }
+          ],
+          "toolCalls": [
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": false,
+              "metadataOnlyResult": {
+                "found": true,
+                "entries": [
+                  {
+                    "key": "raw.tool_result.read_source.12345678",
+                    "description": "Result of read_source()",
+                    "tier": "raw"
+                  },
+                  {
+                    "key": "raw.tool_result.read_source.12345678.function.1",
+                    "description": "Result of read_source()",
+                    "tier": "raw"
+                  }
+                ]
+              }
+            }
+          ],
+          "outputSHA256": "f9ad6965a39de2469b5f20f56ce119cc2ed7603f5137893621675347d8395532",
+          "incorrectOutput": "Here are the verification markers for the sources stored in the notes index:\n\n1. `raw.tool_result.read_source.12345678`\n2. `raw.tool_result.read_source.12345678.function.1`"
+        },
+        {
+          "sample": 4,
+          "providerCalls": 2,
+          "sourceMarkersReturned": true,
+          "keyedReadCount": 2,
+          "availableBudget": 231,
+          "allOriginalTestAssertionsSatisfied": true,
+          "storedBeforeRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1557
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1558
+            }
+          ],
+          "hostControlReadsAfterRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1635
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1647
+            }
+          ],
+          "toolCalls": [
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678.function.1"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": true
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": true,
+              "resultContainsSecondSource": false
+            }
+          ],
+          "outputSHA256": "80e2c548fba00b02731cc1a9cfa15b6316d9e00a04a88908fc9ea063cb45d66f"
+        }
+      ],
+      "rawLocalTraceSHA256": "ac191e9eaf8a65688594496fc8d46a8ef674c0b8c4546302bbc05caf206c56ad"
+    },
+    "tool-description-only": {
+      "trials": 5,
+      "passed": 5,
+      "failed": 0,
+      "samples": [
+        {
+          "sample": 0,
+          "providerCalls": 2,
+          "sourceMarkersReturned": true,
+          "keyedReadCount": 2,
+          "availableBudget": 163,
+          "allOriginalTestAssertionsSatisfied": true,
+          "storedBeforeRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1557
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1558
+            }
+          ],
+          "hostControlReadsAfterRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1635
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1647
+            }
+          ],
+          "toolCalls": [
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678.function.1"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": true
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": true,
+              "resultContainsSecondSource": false
+            }
+          ],
+          "outputSHA256": "e57ce199d48588faaad9086f16136b241d3562838e6d4960d50e6708fad609f2"
+        },
+        {
+          "sample": 1,
+          "providerCalls": 3,
+          "sourceMarkersReturned": true,
+          "keyedReadCount": 2,
+          "availableBudget": 193,
+          "allOriginalTestAssertionsSatisfied": true,
+          "storedBeforeRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1557
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1558
+            }
+          ],
+          "hostControlReadsAfterRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1635
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1647
+            }
+          ],
+          "toolCalls": [
+            {
+              "name": "store_list",
+              "arguments": {
+                "store": "notes"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": false
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": true,
+              "resultContainsSecondSource": false
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678.function.1"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": true
+            }
+          ],
+          "outputSHA256": "085df9a299ac58943e304fd450f634657c6cbec792eb65748341f61d2b85ba91"
+        },
+        {
+          "sample": 2,
+          "providerCalls": 3,
+          "sourceMarkersReturned": true,
+          "keyedReadCount": 2,
+          "availableBudget": 193,
+          "allOriginalTestAssertionsSatisfied": true,
+          "storedBeforeRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1557
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1558
+            }
+          ],
+          "hostControlReadsAfterRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1635
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1647
+            }
+          ],
+          "toolCalls": [
+            {
+              "name": "store_list",
+              "arguments": {
+                "store": "notes"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": false
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": true,
+              "resultContainsSecondSource": false
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678.function.1"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": true
+            }
+          ],
+          "outputSHA256": "664f7fa77c6f4bb4d8e5e9bb5741eb38eeb07f8a964fae1c554ae793576d6fd1"
+        },
+        {
+          "sample": 3,
+          "providerCalls": 3,
+          "sourceMarkersReturned": true,
+          "keyedReadCount": 2,
+          "availableBudget": 193,
+          "allOriginalTestAssertionsSatisfied": true,
+          "storedBeforeRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1557
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1558
+            }
+          ],
+          "hostControlReadsAfterRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1635
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1647
+            }
+          ],
+          "toolCalls": [
+            {
+              "name": "store_list",
+              "arguments": {
+                "store": "notes"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": false
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": true,
+              "resultContainsSecondSource": false
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678.function.1"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": true
+            }
+          ],
+          "outputSHA256": "3a90c0616032a9176de79bf3faf43d731d28dce5b16b43d77a1cc25b00244970"
+        },
+        {
+          "sample": 4,
+          "providerCalls": 3,
+          "sourceMarkersReturned": true,
+          "keyedReadCount": 2,
+          "availableBudget": 193,
+          "allOriginalTestAssertionsSatisfied": true,
+          "storedBeforeRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1557
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1558
+            }
+          ],
+          "hostControlReadsAfterRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1635
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1647
+            }
+          ],
+          "toolCalls": [
+            {
+              "name": "store_list",
+              "arguments": {
+                "store": "notes"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": false
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": true,
+              "resultContainsSecondSource": false
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678.function.1"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": true
+            }
+          ],
+          "outputSHA256": "b1205aa69de77a76c7c1fb3bfc14cf345e0dce4f55c06eda4ec090cc55ae2051"
+        }
+      ],
+      "rawLocalTraceSHA256": "01ba4eb07f4606016bb2ea49a932e5342557ed46b08f798754dd8977d19e86aa"
+    },
+    "explicit-instructions": {
+      "trials": 3,
+      "passed": 3,
+      "failed": 0,
+      "samples": [
+        {
+          "sample": 0,
+          "providerCalls": 3,
+          "sourceMarkersReturned": true,
+          "keyedReadCount": 2,
+          "availableBudget": 191,
+          "allOriginalTestAssertionsSatisfied": true,
+          "storedBeforeRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1557
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1558
+            }
+          ],
+          "hostControlReadsAfterRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1635
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1647
+            }
+          ],
+          "toolCalls": [
+            {
+              "name": "store_list",
+              "arguments": {
+                "store": "notes"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": false
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": true,
+              "resultContainsSecondSource": false
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678.function.1"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": true
+            }
+          ],
+          "outputSHA256": "43eaeb37589faf053015d79a62ecf0e3df1a46fbebe48407d2f41fc3d5070573"
+        },
+        {
+          "sample": 1,
+          "providerCalls": 3,
+          "sourceMarkersReturned": true,
+          "keyedReadCount": 2,
+          "availableBudget": 191,
+          "allOriginalTestAssertionsSatisfied": true,
+          "storedBeforeRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1557
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1558
+            }
+          ],
+          "hostControlReadsAfterRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1635
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1647
+            }
+          ],
+          "toolCalls": [
+            {
+              "name": "store_list",
+              "arguments": {
+                "store": "notes"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": false
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": true,
+              "resultContainsSecondSource": false
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678.function.1"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": true
+            }
+          ],
+          "outputSHA256": "3cdb496959321f3db06dd7a711a52d525cce3544da3b7cc5669f38e05a1977d5"
+        },
+        {
+          "sample": 2,
+          "providerCalls": 3,
+          "sourceMarkersReturned": true,
+          "keyedReadCount": 2,
+          "availableBudget": 191,
+          "allOriginalTestAssertionsSatisfied": true,
+          "storedBeforeRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1557
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1558
+            }
+          ],
+          "hostControlReadsAfterRestore": [
+            {
+              "key": "raw.tool_result.read_source.12345678",
+              "first": true,
+              "second": false,
+              "bytes": 1635
+            },
+            {
+              "key": "raw.tool_result.read_source.12345678.function.1",
+              "first": false,
+              "second": true,
+              "bytes": 1647
+            }
+          ],
+          "toolCalls": [
+            {
+              "name": "store_list",
+              "arguments": {
+                "store": "notes"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": false
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": true,
+              "resultContainsSecondSource": false
+            },
+            {
+              "name": "store_get",
+              "arguments": {
+                "store": "notes",
+                "key": "raw.tool_result.read_source.12345678.function.1"
+              },
+              "outcomeStatus": "succeeded",
+              "resultContainsFirstSource": false,
+              "resultContainsSecondSource": true
+            }
+          ],
+          "outputSHA256": "25988a586c68590ed2abf7a773445efbd21e024d23d442f6c866955b1bb8f5b0"
+        }
+      ],
+      "rawLocalTraceSHA256": "908fb3a1fa3d416f8dd1bf86a09f7fd9c8cfe2064d522ae5545b2193763c5dda"
+    }
+  },
+  "representativeFailedWireTrace": {
+    "firstRequestInstructions": "Read both existing sources with store_get from notes. Return both markers verbatim.",
+    "firstRequestInput": [
+      {
+        "type": "message",
+        "role": "developer",
+        "content": [
+          {
+            "type": "input_text",
+            "text": "# System Prompt\n\nRead both existing sources with store_get from notes. Return both markers verbatim.\n\n---\n\n# Instructions for Context Plugins\n\n## Data Stores\n\nYou have 1 data store accessible through 5 unified tools: `store_set`, `store_get`, `store_delete`, `store_list`, `store_action`.\n\nEvery call requires a `store` parameter to select the target store. Pass all other fields as top-level parameters (flat \u2014 no nested `data` or `params` wrapper).\n\n**Available stores:**\n- **\"notes\"** (Notes): EXTERNAL storage with an index visible in context. You see descriptions only; use store_get to retrieve full values.\n  Use for: large data, research findings, intermediate results. NOT for small state you check every turn (use \"whiteboard\" for that).\n\n**Quick reference:**\n- `store_set({ store: \"...\", key: \"...\", ...fields })` \u2014 create or update an entry\n- `store_get({ store: \"...\", key?: \"...\" })` \u2014 retrieve one entry or all\n- `store_delete({ store: \"...\", key: \"...\" })` \u2014 remove an entry\n- `store_list({ store: \"...\", ...filters? })` \u2014 list entries with optional filtering\n- `store_action({ store: \"...\", action: \"...\", ...params? })` \u2014 store-specific operations\n\nSee each store's section below for behavior rules, workflows, and store-specific fields.\n\n## Notes\n\nStore: \"notes\". You see entry descriptions in context but must call store_get to read full values.\n\n**Tier System** (for research/analysis):\n- `raw`: Low priority, evicted first. Unprocessed data to summarize later.\n- `summary`: Normal priority. Processed summaries of raw data.\n- `findings`: High priority, kept longest. Final conclusions and insights.\n\n**Workflow:**\n1. Store raw data: `store_set({ store: \"notes\", key: \"topic\", description: \"...\", value: ..., tier: \"raw\" })`\n2. Process and summarize: `store_set({ store: \"notes\", key: \"topic\", description: \"...\", value: ..., tier: \"summary\" })`\n3. Extract findings: `store_set({ store: \"notes\", key: \"topic\", description: \"...\", value: ..., tier: \"findings\" })`\n4. Clean up raw: `store_action({ store: \"notes\", action: \"cleanup_raw\" })` or `store_delete({ store: \"notes\", key: \"...\" })`\n\n---\n\n# Notes\n\n## Working Memory (3KB / 25MB - 0%)\n\n**Low priority (evicted first):**\n- `raw.tool_result.read_source.12345678` (1.5KB): Result of read_source() [low, session]\n- `raw.tool_result.read_source.12345678.function.1` (1.5KB): Result of read_source() [low, session]\n\nUse `memory_retrieve(\"key\")` to load full content.\nUse `memory_persist(\"key\")` to keep data after task completion.\n\n---\n\nCURRENT DATE AND TIME: Monday, October 12, 2026 at 6:48:34 PM GMT+2"
+          }
+        ],
+        "status": "completed"
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "content": [
+          {
+            "type": "input_text",
+            "text": "Read both sources already stored in the notes index and return both verification markers."
+          }
+        ],
+        "status": "completed"
+      }
+    ],
+    "storeGetDefinition": {
+      "type": "function",
+      "name": "store_get",
+      "description": "Retrieve an entry from a data store by key, or get all entries if no key provided.\n\nAvailable stores: \"notes\"",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "store": {
+            "type": "string",
+            "description": "Target store name"
+          },
+          "key": {
+            "type": "string",
+            "description": "Key to retrieve. Omit to get all entries."
+          }
+        },
+        "required": [
+          "store"
+        ]
+      },
+      "strict": false
+    },
+    "toolChoice": "auto",
+    "secondRequestToolProtocol": [
+      {
+        "type": "function_call",
+        "call_id": "call_uLnB3GqRmhA61Lj3ZqbHQAiT",
+        "name": "store_get",
+        "arguments": "{\"store\":\"notes\"}"
+      },
+      {
+        "type": "function_call_output",
+        "call_id": "call_uLnB3GqRmhA61Lj3ZqbHQAiT",
+        "output": "{\"found\":true,\"entries\":[{\"key\":\"raw.tool_result.read_source.12345678\",\"description\":\"Result of read_source()\",\"tier\":\"raw\"},{\"key\":\"raw.tool_result.read_source.12345678.function.1\",\"description\":\"Result of read_source()\",\"tier\":\"raw\"}]}"
+      }
+    ],
+    "finalOutput": "The verification markers for the stored sources are:\n\n1. **Marker 1:** `raw.tool_result.read_source.12345678`\n2. **Marker 2:** `raw.tool_result.read_source.12345678.function.1`"
+  },
+  "unmodifiedLiveTest": {
+    "command": "RUN_CONTEXT_FRESHNESS_LIVE=1 npx vitest run tests/integration/text/ContextFreshness.live.integration.test.ts -t 'openai retrieves both sources after separate spills with colliding keys'",
+    "passed": false,
+    "failed": 1,
+    "filtered": 15,
+    "failure": "Expected FIRST_SOURCE_VERIFIED; received storage keys as verification markers.",
+    "report": {
+      "protocol": "stage-01-corrections-v2",
+      "recordedAt": "2026-10-12T16:50:07.546Z",
+      "sampleCountPerProviderMode": 1,
+      "scope": "Mixed-format and separate-spill evidence retrieval, schema-aware compaction, controlled malformed-answer repair, and Google replay state; real providers with local tools; no comparative quality/cost claim",
+      "reports": [
+        {
+          "scenario": "separate-spill-collision-retrieval",
+          "provider": "openai",
+          "passed": false,
+          "errorType": "AssertionError"
+        }
+      ]
+    }
+  },
+  "offlineValidation": {
+    "command": "npx vitest run tests/unit/core/context-nextgen/ContextSecondCorrections.test.ts tests/unit/core/context-nextgen/ContextFreshness.test.ts tests/unit/core/context-nextgen/store-tools.test.ts tests/unit/core/context-nextgen/plugins/WorkingMemoryPluginNextGen.test.ts",
+    "files": 4,
+    "passed": 126,
+    "failed": 0
+  },
+  "additionalConfirmedDefect": "Working-memory index recommends memory_query, memory_retrieve and memory_persist; the configured agent exposes store_* tools. These stale instructions are present in the actual provider request. They did not cause an unsupported-tool invocation in the captured failures, so their separate causal impact has not been measured.",
+  "recommendedCorrection": [
+    "Clarify generic store_get descriptions, key field description and overview: keyless result semantics are store-specific, and notes returns an index only.",
+    "Clarify notes plugin instructions and index retrieval guidance with store_get({store:\"notes\",key:\"<exact key>\"}); remove stale unavailable tool guidance from this integration.",
+    "Preserve optional key, current return shapes, default tools and saved formats; do not force tool choice or weaken marker/read assertions.",
+    "Add offline regression coverage for truthful notes guidance and keyed/keyless behavior after spill/restore; improve failure reports with tool-call arguments and retrieval counts.",
+    "Apply the production correction and rerun original OpenAI run/stream/persistence live cases, compatibility and affected context-budget tests before completion."
+  ],
+  "limits": [
+    "Small functional diagnostic sample; not a general failure-rate estimate or a guarantee that description changes remove every model error.",
+    "Original live test still fails. Description-only experiment is not a shipped fix or completion gate.",
+    "Generic agent loop accepts a final answer after valid metadata-only tool execution; it has no task-specific proof that source contents were read. No new universal completion framework proposed for this narrow correction.",
+    "Anthropic authentication was not retried as part of this OpenAI diagnosis."
+  ],
+  "sourceSHA256": {
+    "src/core/context-nextgen/store-tools.ts": "b08db55895f24848c7dad825d66e711af8d58a9384394c26ef48f0b86f7a5996",
+    "src/core/context-nextgen/plugins/WorkingMemoryPluginNextGen.ts": "c7a556776901b16df33d1a7faf92faaaf0bfb489b6e55ca03237b40076aadbed",
+    "src/domain/entities/Memory.ts": "90052964fa88fede1e0a0fece4470c3fa3e1507e4516414577ee54e4ef7ce9b3",
+    "src/core/Agent.ts": "6feb39d3d649c20eb1440b3f7a437c2d19c04235a9c03473347a038dfe444c53",
+    "tests/integration/text/ContextFreshness.live.integration.test.ts": "6e406bc892861d3533ae4e413cf277670687828b2db86e4cdeecd73bbe5fa3a8"
+  }
+}

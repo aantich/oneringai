@@ -42,13 +42,16 @@ export async function demonstrateContextFreshness() {
     const prepared = await context.prepare(options);
     context.validateRequestBudget({ input: prepared.input, tools: prepared.tools });
     const after = describe(context, prepared);
+    // A keyless notes read returns index metadata, not source contents.
+    const notesIndex = await context.tools.execute('store_get', { store: 'notes' });
     const native = await context.tools.execute('store_get', { store: 'notes', key: 'raw.tool_result.read_source.source02' });
     if (!after.memoryIndexPresent || !after.retainedCalls.includes('pending01') ||
         !after.retainedResults.includes('pending01') || prepared.budget.available < 0 ||
-        !JSON.stringify(native).includes('NATIVE_SOURCE_VERIFIED')) {
+        !JSON.stringify(native).includes('NATIVE_SOURCE_VERIFIED') ||
+        JSON.stringify(notesIndex).includes('NATIVE_SOURCE_VERIFIED')) {
       throw new Error('Freshness demonstration failed its invariants');
     }
-    return { before, after, recoveredNativeResult: native };
+    return { before, after, notesIndex, recoveredNativeResult: native };
   } finally { context.destroy(); }
 }
 

@@ -651,9 +651,12 @@ function formatEntryFlags(entry: MemoryIndexEntry): string {
 
 /**
  * Format memory index for context injection
+ * @param storeId Unified store ID when used by store_* tools. Omit to retain
+ * legacy WorkingMemory tool guidance.
  */
-export function formatMemoryIndex(index: MemoryIndex): string {
+export function formatMemoryIndex(index: MemoryIndex, storeId?: string): string {
   const lines: string[] = [];
+  const store = storeId === undefined ? undefined : JSON.stringify(storeId);
 
   // Format utilization percent without unnecessary decimals
   const utilPercent = Number.isInteger(index.utilizationPercent)
@@ -721,13 +724,18 @@ export function formatMemoryIndex(index: MemoryIndex): string {
 
     // Show omitted entries notice
     if (index.omittedCount > 0) {
-      lines.push(`*${index.omittedCount} additional low-priority entries not shown. Use \`memory_query()\` to see all.*`);
+      const listCall = store === undefined ? 'memory_query()' : `store_list({ store: ${store} })`;
+      lines.push(`*${index.omittedCount} additional low-priority entries not shown. Use \`${listCall}\` to see all.*`);
       lines.push('');
     }
   }
 
-  lines.push('Use `memory_retrieve("key")` to load full content.');
-  lines.push('Use `memory_persist("key")` to keep data after task completion.');
+  if (store === undefined) {
+    lines.push('Use `memory_retrieve("key")` to load full content.');
+    lines.push('Use `memory_persist("key")` to keep data after task completion.');
+  } else {
+    lines.push(`Index metadata only. Use \`store_get({ store: ${store}, key: "<exact index key>" })\` for each entry's full content.`);
+  }
 
   return lines.join('\n');
 }

@@ -25,12 +25,16 @@ import type { IDisposable } from '../domain/interfaces/IDisposable.js';
 import type { ToolContext } from '../domain/interfaces/IToolContext.js';
 import { CircuitBreaker } from '../infrastructure/resilience/CircuitBreaker.js';
 import type { CircuitState, CircuitBreakerConfig } from '../infrastructure/resilience/CircuitBreaker.js';
-import { ToolNotFoundError, ToolExecutionError } from '../domain/errors/AIErrors.js';
+import { ToolNotFoundError, ToolExecutionError, ToolTimeoutError } from '../domain/errors/AIErrors.js';
 import { logger, FrameworkLogger } from '../infrastructure/observability/Logger.js';
 import { metrics } from '../infrastructure/observability/Metrics.js';
 import { ToolExecutionPipeline } from './tool-execution/ToolExecutionPipeline.js';
 import { ResultNormalizerPlugin } from './tool-execution/plugins/ResultNormalizerPlugin.js';
 import type { IToolExecutionPipeline } from './tool-execution/types.js';
+import type { PipelineOutcome, ToolExecutionOptions, ToolExecutionOutcome, ToolExecutionReport } from './tool-execution/outcomes.js';
+import { createExecutionSignal, withAbort } from './tool-execution/cancellation.js';
+import { randomUUID } from 'node:crypto';
+import { captureConnectorScope } from './tool-execution/connectorScope.js';
 import type { PermissionPolicyManager } from './permissions/PermissionPolicyManager.js';
 import { PermissionEnforcementPlugin } from './permissions/PermissionEnforcementPlugin.js';
 
@@ -186,6 +190,8 @@ export type ToolManagerEvent =
   | 'tool:enabled'
   | 'tool:disabled'
   | 'tool:executed'
+  | 'tool:outcome'
+  | 'tool:late-complete'
   | 'namespace:enabled'
   | 'namespace:disabled';
 
@@ -229,6 +235,7 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
   private toolLogger: FrameworkLogger;
   private _isDestroyed = false;
   private pipeline: ToolExecutionPipeline;
+  private activeExecutions = new Set<AbortController>();
 
   /** Optional tool context for execution (set by agent before runs) */
   private _toolContext: ToolContext | undefined;
@@ -303,6 +310,8 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
     }
 
     this._isDestroyed = true;
+    for (const controller of this.activeExecutions) controller.abort(new DOMException('Tool manager destroyed', 'AbortError'));
+    this.activeExecutions.clear();
 
     // Clean up circuit breakers and their event listeners
     for (const breaker of this.circuitBreakers.values()) {
@@ -884,6 +893,11 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
     const registration = this.registry.get(name);
     if (!registration) return;
 
+    this.recordRegisteredExecution(name, registration, executionMs, success);
+  }
+
+  private recordRegisteredExecution(name: string, registration: ToolRegistration, executionMs: number, success: boolean): void {
+
     const meta = registration.metadata;
     meta.usageCount++;
     meta.lastUsed = new Date();
@@ -896,12 +910,11 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
       meta.failureCount++;
     }
 
-    this.emit('tool:executed', {
-      name,
-      executionMs,
-      success,
-      totalUsage: meta.usageCount,
-    });
+    try {
+      this.emit('tool:executed', { name, executionMs, success, totalUsage: meta.usageCount });
+    } catch (error) {
+      this.toolLogger.warn({ error: String(error) }, 'Tool execution listener failed');
+    }
   }
 
   /**
@@ -1001,101 +1014,133 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
    * Simple execution - no caching, no parent context.
    * Context must be set via setToolContext() before calling.
    */
-  async execute(toolName: string, args: any): Promise<any> {
-    const registration = this.registry.get(toolName);
-    if (!registration) {
-      throw new ToolNotFoundError(toolName);
-    }
+  async execute(toolName: string, args: any, options?: ToolExecutionOptions): Promise<any> {
+    return (await this.executeWithOutcome(toolName, args, options)).result;
+  }
 
-    // Check if tool is enabled
-    if (!registration.enabled) {
-      throw new ToolExecutionError(toolName, 'Tool is disabled');
-    }
+  /** Execute with semantic metadata while retaining the legacy raw result contract. */
+  async executeWithOutcome(toolName: string, args: any, options: ToolExecutionOptions = {}): Promise<ToolExecutionReport<any>> {
+    options = { ...options };
+    const registered = this.registry.get(toolName);
+    if (!registered) throw new ToolNotFoundError(toolName);
+    if (!registered.enabled) throw new ToolExecutionError(toolName, 'Tool is disabled');
+    if (this._isDestroyed) throw new ToolExecutionError(toolName, 'Tool manager is destroyed');
 
-    // Get or create circuit breaker for this tool
-    const breaker = this.getOrCreateCircuitBreaker(toolName, registration);
-
-    this.toolLogger.debug({ toolName, args }, 'Tool execution started');
-
+    // Keep cumulative counters on this registration; all authority and dispatch data are local.
+    const selectedTool = registered.tool;
+    const selectedExecute = selectedTool.execute;
+    const registration: ToolRegistration = {
+      ...registered,
+      tool: { ...selectedTool, definition: structuredClone(selectedTool.definition) },
+      tags: registered.tags ? [...registered.tags] : undefined,
+      permission: registered.permission ? structuredClone(registered.permission) : undefined,
+    };
+    const executionId = randomUUID();
     const startTime = Date.now();
-    metrics.increment('tool.executed', 1, { tool: toolName });
-
-    try {
-      // Connector-scoped safety net: block execution if the connector is not in the agent's allowlist.
-      // Inside the try block so the circuit breaker tracks repeated failures and opens.
-      // Uses tool.connectorName metadata (set by ConnectorTools.for()) rather than parsing
-      // the source string, which includes accountId suffix for multi-account tools.
-      if (registration.source?.startsWith('connector:')) {
-        const connName = registration.tool.connectorName
-          ?? registration.source.slice('connector:'.length);
-        const registry = this._toolContext?.connectorRegistry;
-        if (registry && !registry.has(connName)) {
-          throw new ToolExecutionError(
-            toolName,
-            `Connector '${connName}' is not available to this agent. This is a configuration error — do NOT retry this tool.`,
-          );
+    // Capture trusted identity before any await; later context changes apply only to new calls.
+    const shared = this._toolContext;
+    const connectorRegistry = shared?.connectorRegistry ? captureConnectorScope(shared.connectorRegistry) : undefined;
+    const scope = createExecutionSignal([shared?.signal, options.signal]);
+    const signal = scope.controller.signal;
+    const context: ToolContext = {
+      ...shared,
+      connectorRegistry,
+      connectorAccounts: shared?.connectorAccounts ? { ...shared.connectorAccounts } : undefined,
+      identities: shared?.identities?.map((identity) => ({ ...identity })),
+      roles: shared?.roles ? [...shared.roles] : undefined,
+      signal,
+    };
+    this.activeExecutions.add(scope.controller);
+    const callDeadline = options.timeoutMs ?? 0;
+    const usesCallDeadline = callDeadline > 0 && (this._toolExecutionTimeout <= 0 || callDeadline <= this._toolExecutionTimeout);
+    const timeout = usesCallDeadline ? callDeadline : this._toolExecutionTimeout;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let timedOut = false;
+    let executionStarted = false;
+    let pipelineOutcome: PipelineOutcome | undefined;
+    let abandoned = false;
+    let settled = false;
+    const outcome = (status: ToolExecutionOutcome['status'], error?: Error, late = false): ToolExecutionOutcome => Object.freeze({
+      executionId, toolName, callId: options.callId, runId: options.runId,
+      ...(timedOut ? { timeoutMs: timeout } : pipelineOutcome?.error instanceof ToolTimeoutError ? { timeoutMs: pipelineOutcome.error.timeoutMs } : {}),
+      status, startedAt: startTime, durationMs: Date.now() - startTime, executionStarted,
+      completion: executionStarted ? (late || settled ? 'settled' : 'unknown') : 'not_started',
+      cancellation: signal.aborted
+        ? (pipelineOutcome?.error && (pipelineOutcome.error === signal.reason || pipelineOutcome.error.name === 'AbortError') ? 'acknowledged' : 'requested')
+        : 'none',
+      error: error?.message,
+    });
+    const notify = (event: 'tool:outcome' | 'tool:late-complete', value: ToolExecutionOutcome): void => {
+      // Diagnostics must never turn a successful external operation into a retryable failure.
+      if (event === 'tool:outcome') {
+        try { options.onOutcome?.(value); } catch (error) {
+          this.toolLogger.warn({ error: String(error) }, 'Tool outcome observer failed');
         }
       }
-
-      // Build the core execution promise (circuit breaker + pipeline)
-      const executionPromise = breaker.execute(async () => {
-        // Create a wrapper tool that includes the tool context
-        // This allows the pipeline to execute the tool with proper context
-        const toolWithContext: ToolFunction = {
-          ...registration.tool,
-          execute: async (pipelineArgs: any) => {
-            return await registration.tool.execute(pipelineArgs, this._toolContext);
-          },
-        };
-
-        // Execute through the plugin pipeline
-        return await this.pipeline.execute(toolWithContext, args);
+      try { this.emit(event, value); } catch (error) {
+        this.toolLogger.warn({ error: String(error), event }, 'Tool outcome listener failed');
+      }
+    };
+    metrics.increment('tool.executed', 1, { tool: toolName });
+    if (timeout > 0 && !signal.aborted) {
+      timer = setTimeout(() => {
+        timedOut = true;
+        scope.controller.abort(usesCallDeadline
+          ? new ToolTimeoutError(toolName, timeout)
+          : new ToolExecutionError(toolName, `Tool execution hard timeout after ${timeout}ms (safety net - tool's own timeout may have failed)`));
+      }, timeout);
+    }
+    try {
+      signal.throwIfAborted();
+      if (registration.source?.startsWith('connector:')) {
+        const connName = registration.tool.connectorName ?? registration.source.slice('connector:'.length);
+        if (context.connectorRegistry && !context.connectorRegistry.has(connName)) {
+          throw new ToolExecutionError(toolName,
+            `Connector '${connName}' is not available to this agent. This is a configuration error — do NOT retry this tool.`);
+        }
+      }
+      const breaker = this.getOrCreateCircuitBreaker(toolName, registration);
+      // Breaker continues to observe legacy promise settlement, not semantic classification.
+      const promise = breaker.execute(() => this.pipeline.execute({
+        ...registration.tool,
+        execute: async (pipelineArgs: any) => {
+          signal.throwIfAborted();
+          executionStarted = true;
+          return selectedExecute.call(selectedTool, pipelineArgs, shared || options.signal || timeout > 0 ? context : undefined);
+        },
+      }, args, { executionId, toolContext: context, registration, onOutcome: (value) => { pipelineOutcome = value; } }));
+      // Observe eventual settlement independently; it must not enter context or count twice.
+      void promise.then(() => {
+        settled = true;
+        if (abandoned && !this._isDestroyed) notify('tool:late-complete', outcome(pipelineOutcome?.status ?? 'succeeded', pipelineOutcome?.error, true));
+      }, (error: unknown) => {
+        settled = true;
+        if (abandoned && !this._isDestroyed) notify('tool:late-complete', outcome(pipelineOutcome?.status ?? 'failed', error instanceof Error ? error : new Error(String(error)), true));
       });
-
-      // Wrap with hard timeout safety net if configured
-      const result = this._toolExecutionTimeout > 0
-        ? await this.withHardTimeout(executionPromise, toolName, this._toolExecutionTimeout)
-        : await executionPromise;
-
-      const duration = Date.now() - startTime;
-
-      // Update metadata
-      this.recordExecution(toolName, duration, true);
-
-      // Log result summary (truncated for large results)
-      const resultSummary = this.summarizeResult(result);
-      this.toolLogger.debug({
-        toolName,
-        duration,
-        resultSummary,
-      }, 'Tool execution completed');
-
-      metrics.timing('tool.duration', duration, { tool: toolName });
-      metrics.increment('tool.success', 1, { tool: toolName });
-
-      return result;
+      const result = await withAbort(promise, signal);
+      // An abort during settlement still belongs to this execution, never to the next run.
+      signal.throwIfAborted();
+      const value = outcome(pipelineOutcome?.status ?? 'succeeded', pipelineOutcome?.error);
+      this.recordRegisteredExecution(toolName, registration, value.durationMs, value.status === 'succeeded');
+      metrics.timing('tool.duration', value.durationMs, { tool: toolName });
+      metrics.increment(value.status === 'succeeded' ? 'tool.success' : 'tool.failed', 1, { tool: toolName });
+      this.toolLogger.debug({ toolName, outcome: value, resultSummary: this.summarizeResult(result) }, 'Tool execution completed');
+      notify('tool:outcome', value);
+      return { result, outcome: value };
     } catch (error) {
-      const duration = Date.now() - startTime;
-
-      // Update metadata
-      this.recordExecution(toolName, duration, false);
-
-      this.toolLogger.error({
-        toolName,
-        error: (error as Error).message,
-        duration,
-      }, 'Tool execution failed');
-
-      metrics.increment('tool.failed', 1, {
-        tool: toolName,
-        error: (error as Error).name,
-      });
-
-      throw new ToolExecutionError(
-        toolName,
-        (error as Error).message,
-        error as Error
-      );
+      abandoned = !settled;
+      const err = error instanceof Error ? error : new Error(String(error));
+      const value = outcome(timedOut ? 'timed_out' : signal.aborted ? 'cancelled' : pipelineOutcome?.status ?? 'failed', err);
+      this.recordRegisteredExecution(toolName, registration, value.durationMs, false);
+      metrics.increment('tool.failed', 1, { tool: toolName, error: err.name });
+      const wrapped = new ToolExecutionError(toolName, err.message, err);
+      wrapped.outcome = value;
+      notify('tool:outcome', value);
+      throw wrapped;
+    } finally {
+      clearTimeout(timer);
+      scope.dispose();
+      this.activeExecutions.delete(scope.controller);
     }
   }
 
@@ -1133,32 +1178,6 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
    */
   listTools(): string[] {
     return this.list();
-  }
-
-  // ==========================================================================
-  // Hard Timeout
-  // ==========================================================================
-
-  /**
-   * Wrap a promise with a hard timeout safety net.
-   * If the promise doesn't resolve within the timeout, throws ToolExecutionError.
-   */
-  private async withHardTimeout<T>(promise: Promise<T>, toolName: string, timeoutMs: number): Promise<T> {
-    let timeoutId: ReturnType<typeof setTimeout>;
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(() => {
-        reject(new ToolExecutionError(
-          toolName,
-          `Tool execution hard timeout after ${timeoutMs}ms (safety net - tool's own timeout may have failed)`
-        ));
-      }, timeoutMs);
-    });
-
-    try {
-      return await Promise.race([promise, timeoutPromise]);
-    } finally {
-      clearTimeout(timeoutId!);
-    }
   }
 
   // ==========================================================================

@@ -254,6 +254,16 @@ Tool guidance:
 
 - Tool names must be unique within an agent.
 - Return serializable data; throw meaningful errors for failed execution.
+- Use `agent.tools.executeWithOutcome()` for semantic diagnostics; `execute()`
+  preserves raw returns. An application `success: false` field is not a framework
+  failure. Observe `ToolContext.signal` and forward it to connector requests.
+- Cancellation/timeouts do not establish whether an external write happened.
+  Late outcomes retain original call/run IDs and are diagnostic-only. See
+  [tool outcomes](docs/TOOL_OUTCOMES_AND_CANCELLATION.md) for defaults, deadlines,
+  retry boundaries, and support limitations.
+- Invocation connector access and selected tool/permission metadata are captured
+  at admission; re-registration affects future calls. Internal background delivery
+  checks scope again. Stream counters settle before completion events.
 - Add `describeCall` when a UI should display a human-readable action.
 - Use `PermissionPolicyManager` and user rules for destructive or sensitive
   tools. The evaluation order is user rules, parent delegation, then policy
@@ -312,6 +322,9 @@ Spill allocation includes already stored keys, including after save/load, and
 function-result errors are counted before preparation and dispatch.
 Do not pre-compact the same turn in application code. Inspect `lastPreparation`
 for the selected revision and estimated budget instead of preparing again.
+The notes index and keyless `store_get({ store: "notes" })` contain metadata only.
+Retrieve each source with its exact index key, including tier/collision suffix,
+before using its contents. `store_list` discovers entries omitted from the index.
 See [context preparation](docs/CONTEXT_PREPARATION.md) for fit errors and race handling.
 
 ## Long-term memory
@@ -443,6 +456,7 @@ during application shutdown.
 | Complete usage guide | `USER_GUIDE.md` |
 | Public signatures | `API_REFERENCE.md` |
 | Connectors and every tool source | `docs/CONNECTOR_TOOL_CATALOG.md` |
+| Tool outcomes, cancellation, and connector deadlines/retries | `docs/TOOL_OUTCOMES_AND_CANCELLATION.md` |
 | Long-term memory | `docs/MEMORY_GUIDE.md` |
 | Memory API / security / predicates / ingestion | `docs/MEMORY_API.md`, `docs/MEMORY_PERMISSIONS.md`, `docs/MEMORY_PREDICATES.md`, `docs/MEMORY_SIGNALS.md` |
 | Release migration | `CHANGELOG.md` and the upgrade section in `USER_GUIDE.md` |

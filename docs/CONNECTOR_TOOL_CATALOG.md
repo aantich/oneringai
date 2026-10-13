@@ -246,3 +246,20 @@ not become a live connector until the application creates or restores one.
 - [Vendor Templates](../USER_GUIDE.md#vendor-templates)
 - [Tool Catalog](../USER_GUIDE.md#tool-catalog-dynamic-tool-loadingunloading)
 - [Tool Permissions](../USER_GUIDE.md#tool-permissions)
+
+
+## Execution outcomes and cancellation
+
+The shared ToolManager exposes additive `executeWithOutcome()` metadata and
+per-execution signals. Generic authenticated API tools forward `ToolContext.signal`
+to `Connector.fetch()`. Caller cancellation is composed with connector deadlines
+and remains effective during native response-body reading and retry backoff.
+Specialized tools and transports must forward/observe signals themselves; local
+cancellation does not guarantee remote effect prevention.
+
+Connector header-timeout and retry defaults remain unchanged. Optional
+`timeoutScope: 'operation'` includes token waiting, retries, and body consumption;
+optional `retryPolicy: 'safe'` permits retries only for eligible GET/HEAD/OPTIONS.
+`skipRetry` skips network and status retries. Consume or cancel response bodies.
+See [Tool outcomes and cancellation](./TOOL_OUTCOMES_AND_CANCELLATION.md) for
+outcome provenance, uncertainty, raw-result compatibility, and examples.

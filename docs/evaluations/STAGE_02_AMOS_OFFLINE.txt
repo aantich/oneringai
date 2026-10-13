@@ -1,0 +1,16 @@
+
+> @everworker/oneringai@1.2.0 example:amos-tool-outcomes
+> node --import tsx apps/amos/examples/tool-outcomes-offline.ts
+
+Raw application data: { success: false, value: 'valid domain data' }
+Legacy normalized failure: {
+  success: false,
+  error: 'Example failure',
+  errorType: 'Error',
+  toolName: 'normalized_failure'
+}
+Late completion (diagnostic only): succeeded noncooperative
+domain_data: succeeded
+normalized_failure: Example failure
+cooperative: Tool 'cooperative' execution timed out after 20ms. Completion is unknown; the operation may still finish. Check external state before retrying.
+noncooperative: Tool 'noncooperative' execution timed out after 20ms. Completion is unknown; the operation may still finish. Check external state before retrying.

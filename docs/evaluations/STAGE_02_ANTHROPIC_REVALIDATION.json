@@ -1,0 +1,1132 @@
+{
+  "protocol": "stage-02-anthropic-revalidation-v1",
+  "recordedAt": "2026-10-12T17:33:19.673636+00:00",
+  "branch": "version2",
+  "baseRevision": "fa8f911",
+  "uncommitted": true,
+  "published": false,
+  "authorization": "User changed ANTHROPIC_API_KEY and requested rerunning tests. Validation and diagnostic recording only; no runtime or test changes.",
+  "credential": {
+    "source": ".env:ANTHROPIC_API_KEY",
+    "inheritedOverride": false,
+    "secretRecorded": false
+  },
+  "status": {
+    "authentication": "resolved; direct request HTTP 200",
+    "anthropicBehavior": "10 passing test cases, one failing Stage 02 run case",
+    "overallStageCompletion": "pending; unresolved Anthropic named-tool selection failure"
+  },
+  "directAuthentication": {
+    "testedAt": "2026-10-12T17:30:39.687Z",
+    "credentialSource": ".env:ANTHROPIC_API_KEY",
+    "inheritedOverride": false,
+    "endpoint": "https://api.anthropic.com/v1/messages",
+    "model": "claude-haiku-4-5-20251001",
+    "httpStatus": 200,
+    "httpStatusText": "OK",
+    "requestId": "req_011Cfxju4gvJK3nLtZZoBjFj",
+    "responseBody": "{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011Cfxju5nA8rFxj56p9nXCg\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"OK.\"}],\"container\":null,\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":11,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}"
+  },
+  "liveCommand": "RUN_AGENTIC_BASELINE_LIVE=1 RUN_CONTEXT_FRESHNESS_LIVE=1 RUN_TOOL_OUTCOMES_LIVE=1 BASELINE_LIVE_PROVIDERS=anthropic BASELINE_REPORT_PATH=/tmp/oneringai-anthropic-key-recheck-baseline.json CONTEXT_FRESHNESS_REPORT_PATH=/tmp/oneringai-anthropic-key-recheck-context.json TOOL_OUTCOMES_REPORT_PATH=/tmp/oneringai-anthropic-key-recheck-outcomes.json npx vitest run tests/integration/text/AgenticBaseline.live.integration.test.ts tests/integration/text/ContextFreshness.live.integration.test.ts tests/integration/text/ToolOutcomes.live.integration.test.ts -t anthropic --maxWorkers=1 --minWorkers=1 --reporter=default --reporter=json --outputFile.json=/tmp/oneringai-anthropic-key-recheck-vitest.json",
+  "testSummary": {
+    "files": 3,
+    "passed": 10,
+    "failed": 1,
+    "filtered": 23,
+    "passingAnthropicScenarios": 14,
+    "failedAnthropicScenarios": 1,
+    "stage00WorkloadSplitsPassed": 8,
+    "stage01ContextPassed": 5,
+    "stage02ModesPassed": 1,
+    "stage02ModesFailed": 1
+  },
+  "failures": [
+    {
+      "file": "tests/integration/text/ToolOutcomes.live.integration.test.ts",
+      "test": "Stage 02 live tool outcomes anthropic run distinguishes domain data from normalized execution failure",
+      "messages": [
+        "AssertionError: expected [ 'failed', 'succeeded' ] to deeply equal [ 'succeeded', 'failed' ]\n    at /Users/aantich/dev/oneringai/tests/integration/text/ToolOutcomes.live.integration.test.ts:44:45\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///Users/aantich/dev/oneringai/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+      ]
+    }
+  ],
+  "baseline": {
+    "protocol": "stage-00-v1",
+    "recordedAt": "2026-10-12T17:31:11.174Z",
+    "selectedProviders": [
+      "anthropic"
+    ],
+    "sampleCountPerModelWorkloadSplit": 1,
+    "seed": null,
+    "temperature": null,
+    "thinking": {
+      "enabled": false
+    },
+    "fixtureSettings": {
+      "maxIterations": 6,
+      "maxToolCalls": 6,
+      "maxOutputTokens": 512,
+      "maxExecutionTimeMs": 60000,
+      "emptyResponseRetry": false,
+      "workingMemory": false,
+      "inContextMemory": false
+    },
+    "providerSettings": {},
+    "uncertainty": "Pilot only; no comparative quality or cost conclusion.",
+    "reports": [
+      {
+        "fixture": "chat",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 574.8317500000003,
+        "fixtureId": "chat/development",
+        "connector": "stage00-live-anthropic-chat",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "chat/development/run-1",
+            "parentId": "chat/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "chat/development/run-1/iteration-0/llm-1",
+            "runId": "chat/development/run-1",
+            "parentId": "chat/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 567,
+            "usage": {
+              "input": 92,
+              "output": 11,
+              "total": 103
+            }
+          }
+        ],
+        "llmCalls": 1,
+        "toolCalls": 0,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 92,
+            "missingCalls": 0,
+            "total": 92
+          },
+          "output": {
+            "knownSubtotal": 11,
+            "missingCalls": 0,
+            "total": 11
+          },
+          "total": {
+            "knownSubtotal": 103,
+            "missingCalls": 0,
+            "total": 103
+          }
+        }
+      },
+      {
+        "fixture": "chat",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 598.3569160000006,
+        "fixtureId": "chat/held-out",
+        "connector": "stage00-live-anthropic-chat",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "chat/held-out/run-1",
+            "parentId": "chat/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "chat/held-out/run-1/iteration-0/llm-1",
+            "runId": "chat/held-out/run-1",
+            "parentId": "chat/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 596,
+            "usage": {
+              "input": 93,
+              "output": 12,
+              "total": 105
+            }
+          }
+        ],
+        "llmCalls": 1,
+        "toolCalls": 0,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 93,
+            "missingCalls": 0,
+            "total": 93
+          },
+          "output": {
+            "knownSubtotal": 12,
+            "missingCalls": 0,
+            "total": 12
+          },
+          "total": {
+            "knownSubtotal": 105,
+            "missingCalls": 0,
+            "total": 105
+          }
+        }
+      },
+      {
+        "fixture": "large-observation",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1962.779375,
+        "fixtureId": "large-observation/development",
+        "connector": "stage00-live-anthropic-large-observation",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "large-observation/development/run-1",
+            "parentId": "large-observation/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "large-observation/development/run-1/iteration-0/llm-1",
+            "runId": "large-observation/development/run-1",
+            "parentId": "large-observation/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 967,
+            "usage": {
+              "input": 674,
+              "output": 57,
+              "total": 731
+            }
+          },
+          {
+            "id": "large-observation/development/run-1/iteration-0/tool-2",
+            "runId": "large-observation/development/run-1",
+            "parentId": "large-observation/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_document",
+            "outcome": "library_completed",
+            "durationMs": 3.8987919999999576,
+            "usage": null
+          },
+          {
+            "id": "large-observation/development/run-1/iteration-1/llm-3",
+            "runId": "large-observation/development/run-1",
+            "parentId": "large-observation/development/run-1/iteration-1",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 984,
+            "usage": {
+              "input": 9167,
+              "output": 34,
+              "total": 9201
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 1,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 9841,
+            "missingCalls": 0,
+            "total": 9841
+          },
+          "output": {
+            "knownSubtotal": 91,
+            "missingCalls": 0,
+            "total": 91
+          },
+          "total": {
+            "knownSubtotal": 9932,
+            "missingCalls": 0,
+            "total": 9932
+          }
+        }
+      },
+      {
+        "fixture": "large-observation",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1883.9567499999994,
+        "fixtureId": "large-observation/held-out",
+        "connector": "stage00-live-anthropic-large-observation",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "large-observation/held-out/run-1/iteration-0/llm-1",
+            "runId": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 985,
+            "usage": {
+              "input": 675,
+              "output": 58,
+              "total": 733
+            }
+          },
+          {
+            "id": "large-observation/held-out/run-1/iteration-0/tool-2",
+            "runId": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_document",
+            "outcome": "library_completed",
+            "durationMs": 0.4660839999996824,
+            "usage": null
+          },
+          {
+            "id": "large-observation/held-out/run-1/iteration-1/llm-3",
+            "runId": "large-observation/held-out/run-1",
+            "parentId": "large-observation/held-out/run-1/iteration-1",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 895,
+            "usage": {
+              "input": 9171,
+              "output": 36,
+              "total": 9207
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 1,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 9846,
+            "missingCalls": 0,
+            "total": 9846
+          },
+          "output": {
+            "knownSubtotal": 94,
+            "missingCalls": 0,
+            "total": 94
+          },
+          "total": {
+            "knownSubtotal": 9940,
+            "missingCalls": 0,
+            "total": 9940
+          }
+        }
+      },
+      {
+        "fixture": "research",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 2080.9102919999987,
+        "fixtureId": "research/development",
+        "connector": "stage00-live-anthropic-research",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "research/development/run-1",
+            "parentId": "research/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "research/development/run-1/iteration-0/llm-1",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 1264,
+            "usage": {
+              "input": 795,
+              "output": 106,
+              "total": 901
+            }
+          },
+          {
+            "id": "research/development/run-1/iteration-0/tool-2",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_a",
+            "outcome": "library_completed",
+            "durationMs": 0.5305420000004233,
+            "usage": null
+          },
+          {
+            "id": "research/development/run-1/iteration-0/tool-3",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_b",
+            "outcome": "library_completed",
+            "durationMs": 0.21199999999953434,
+            "usage": null
+          },
+          {
+            "id": "research/development/run-1/iteration-1/llm-4",
+            "runId": "research/development/run-1",
+            "parentId": "research/development/run-1/iteration-1",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 814,
+            "usage": {
+              "input": 1004,
+              "output": 26,
+              "total": 1030
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 1799,
+            "missingCalls": 0,
+            "total": 1799
+          },
+          "output": {
+            "knownSubtotal": 132,
+            "missingCalls": 0,
+            "total": 132
+          },
+          "total": {
+            "knownSubtotal": 1931,
+            "missingCalls": 0,
+            "total": 1931
+          }
+        }
+      },
+      {
+        "fixture": "research",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 1960.021834000001,
+        "fixtureId": "research/held-out",
+        "connector": "stage00-live-anthropic-research",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "research/held-out/run-1",
+            "parentId": "research/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "research/held-out/run-1/iteration-0/llm-1",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 1272,
+            "usage": {
+              "input": 797,
+              "output": 108,
+              "total": 905
+            }
+          },
+          {
+            "id": "research/held-out/run-1/iteration-0/tool-2",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_a",
+            "outcome": "library_completed",
+            "durationMs": 0.44041699999979755,
+            "usage": null
+          },
+          {
+            "id": "research/held-out/run-1/iteration-0/tool-3",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "read_source_b",
+            "outcome": "library_completed",
+            "durationMs": 0.27995799999916926,
+            "usage": null
+          },
+          {
+            "id": "research/held-out/run-1/iteration-1/llm-4",
+            "runId": "research/held-out/run-1",
+            "parentId": "research/held-out/run-1/iteration-1",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 685,
+            "usage": {
+              "input": 1010,
+              "output": 28,
+              "total": 1038
+            }
+          }
+        ],
+        "llmCalls": 2,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 1807,
+            "missingCalls": 0,
+            "total": 1807
+          },
+          "output": {
+            "knownSubtotal": 136,
+            "missingCalls": 0,
+            "total": 136
+          },
+          "total": {
+            "knownSubtotal": 1943,
+            "missingCalls": 0,
+            "total": 1943
+          }
+        }
+      },
+      {
+        "fixture": "external-workflow",
+        "split": "development",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 2729.983124999999,
+        "fixtureId": "external-workflow/development",
+        "connector": "stage00-live-anthropic-external-workflow",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "external-workflow/development/run-1",
+            "parentId": "external-workflow/development",
+            "outcome": "cancelled"
+          },
+          {
+            "id": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "external-workflow/development/run-1/iteration-0/llm-1",
+            "runId": "external-workflow/development/run-1",
+            "parentId": "external-workflow/development/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 869,
+            "usage": {
+              "input": 738,
+              "output": 57,
+              "total": 795
+            }
+          },
+          {
+            "id": "external-workflow/development/run-1/iteration-0/tool-2",
+            "runId": "external-workflow/development/run-1",
+            "parentId": "external-workflow/development/run-1/iteration-0",
+            "kind": "tool",
+            "name": "submit_job",
+            "outcome": "library_completed",
+            "durationMs": 0.7636249999995925,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/development/run-2/iteration-0/llm-3",
+            "runId": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development/run-2/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 849,
+            "usage": {
+              "input": 857,
+              "output": 57,
+              "total": 914
+            }
+          },
+          {
+            "id": "external-workflow/development/run-2/iteration-0/tool-4",
+            "runId": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development/run-2/iteration-0",
+            "kind": "tool",
+            "name": "check_job",
+            "outcome": "library_completed",
+            "durationMs": 0.3489579999986745,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/development/run-2/iteration-1/llm-5",
+            "runId": "external-workflow/development/run-2",
+            "parentId": "external-workflow/development/run-2/iteration-1",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 992,
+            "usage": {
+              "input": 945,
+              "output": 41,
+              "total": 986
+            }
+          }
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 2540,
+            "missingCalls": 0,
+            "total": 2540
+          },
+          "output": {
+            "knownSubtotal": 155,
+            "missingCalls": 0,
+            "total": 155
+          },
+          "total": {
+            "knownSubtotal": 2695,
+            "missingCalls": 0,
+            "total": 2695
+          }
+        }
+      },
+      {
+        "fixture": "external-workflow",
+        "split": "held-out",
+        "mode": "live",
+        "passed": true,
+        "failure": null,
+        "durationMs": 2437.197124999999,
+        "fixtureId": "external-workflow/held-out",
+        "connector": "stage00-live-anthropic-external-workflow",
+        "model": "claude-haiku-4-5-20251001",
+        "runs": [
+          {
+            "id": "external-workflow/held-out/run-1",
+            "parentId": "external-workflow/held-out",
+            "outcome": "cancelled"
+          },
+          {
+            "id": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out",
+            "outcome": "completed"
+          }
+        ],
+        "steps": [
+          {
+            "id": "external-workflow/held-out/run-1/iteration-0/llm-1",
+            "runId": "external-workflow/held-out/run-1",
+            "parentId": "external-workflow/held-out/run-1/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 857,
+            "usage": {
+              "input": 739,
+              "output": 58,
+              "total": 797
+            }
+          },
+          {
+            "id": "external-workflow/held-out/run-1/iteration-0/tool-2",
+            "runId": "external-workflow/held-out/run-1",
+            "parentId": "external-workflow/held-out/run-1/iteration-0",
+            "kind": "tool",
+            "name": "submit_job",
+            "outcome": "library_completed",
+            "durationMs": 0.268833000001905,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/held-out/run-2/iteration-0/llm-3",
+            "runId": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out/run-2/iteration-0",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 770,
+            "usage": {
+              "input": 861,
+              "output": 58,
+              "total": 919
+            }
+          },
+          {
+            "id": "external-workflow/held-out/run-2/iteration-0/tool-4",
+            "runId": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out/run-2/iteration-0",
+            "kind": "tool",
+            "name": "check_job",
+            "outcome": "library_completed",
+            "durationMs": 0.926833000001352,
+            "usage": null
+          },
+          {
+            "id": "external-workflow/held-out/run-2/iteration-1/llm-5",
+            "runId": "external-workflow/held-out/run-2",
+            "parentId": "external-workflow/held-out/run-2/iteration-1",
+            "kind": "llm",
+            "name": "claude-haiku-4-5-20251001",
+            "outcome": "response",
+            "durationMs": 804,
+            "usage": {
+              "input": 952,
+              "output": 43,
+              "total": 995
+            }
+          }
+        ],
+        "llmCalls": 3,
+        "toolCalls": 2,
+        "repeatedToolCalls": 0,
+        "correlationErrors": 0,
+        "usage": {
+          "input": {
+            "knownSubtotal": 2552,
+            "missingCalls": 0,
+            "total": 2552
+          },
+          "output": {
+            "knownSubtotal": 159,
+            "missingCalls": 0,
+            "total": 159
+          },
+          "total": {
+            "knownSubtotal": 2711,
+            "missingCalls": 0,
+            "total": 2711
+          }
+        }
+      }
+    ]
+  },
+  "context": {
+    "protocol": "stage-01-corrections-v2",
+    "recordedAt": "2026-10-12T17:31:24.940Z",
+    "sampleCountPerProviderMode": 1,
+    "scope": "Mixed-format and separate-spill evidence retrieval, schema-aware compaction, controlled malformed-answer repair, and Google replay state; real providers with local tools; no comparative quality/cost claim",
+    "reports": [
+      {
+        "scenario": "schema-aware-compaction",
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "passed": true,
+        "compactions": 1,
+        "observedModelCalls": 1,
+        "selectedBudget": {
+          "maxTokens": 1000,
+          "responseReserve": 100,
+          "systemMessageTokens": 78,
+          "toolsTokens": 654,
+          "conversationTokens": 0,
+          "currentInputTokens": 13,
+          "totalUsed": 745,
+          "available": 155,
+          "utilizationPercent": 82.77777777777777,
+          "breakdown": {
+            "systemPrompt": 48,
+            "persistentInstructions": 0,
+            "pluginInstructions": 0,
+            "pluginContents": {},
+            "tools": 654,
+            "conversation": 0,
+            "currentInput": 13
+          }
+        },
+        "usage": {
+          "input_tokens": 554,
+          "output_tokens": 12,
+          "total_tokens": 566,
+          "service_tier": "standard"
+        }
+      },
+      {
+        "scenario": "separate-spill-collision-retrieval",
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "passed": true,
+        "memoryReads": 2,
+        "observedModelCalls": 2,
+        "retrievals": [
+          {
+            "store": "notes",
+            "key": "raw.tool_result.read_source.12345678"
+          },
+          {
+            "store": "notes",
+            "key": "raw.tool_result.read_source.12345678.function.1"
+          }
+        ],
+        "keys": [
+          "raw.tool_result.read_source.12345678",
+          "raw.tool_result.read_source.12345678.function.1"
+        ],
+        "persistence": "JSON context state round trip before real retrieval"
+      },
+      {
+        "scenario": "mixed-format-retrieval",
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "mode": "run",
+        "passed": true,
+        "nativeEvidenceRecovered": true,
+        "calls": 2,
+        "memoryReads": 2,
+        "compacted": 1,
+        "firstRevision": 1,
+        "firstBudgetAvailable": 1057,
+        "lastRevision": 2,
+        "finalEstimatedTokens": 2203
+      },
+      {
+        "scenario": "mixed-format-retrieval",
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "mode": "stream",
+        "passed": true,
+        "nativeEvidenceRecovered": true,
+        "calls": 2,
+        "memoryReads": 2,
+        "compacted": 1,
+        "firstRevision": 1,
+        "firstBudgetAvailable": 1057,
+        "lastRevision": 2,
+        "finalEstimatedTokens": 2206
+      },
+      {
+        "scenario": "controlled-structured-repair",
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "mode": "run",
+        "passed": true,
+        "providerCalls": 2,
+        "mainUsageTokens": 227,
+        "totalUsageTokens": 482,
+        "lastRevision": 1
+      }
+    ]
+  },
+  "toolOutcomes": {
+    "protocol": "stage-02",
+    "recordedAt": "2026-10-12T17:30:56.215Z",
+    "scope": "One functional sample per provider/mode; real LLMs with local tools, no external side effects or quality/cost comparison",
+    "reports": [
+      {
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "mode": "run",
+        "passed": false,
+        "errorType": "AssertionError"
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "mode": "stream",
+        "passed": true,
+        "observedModelCalls": 2,
+        "outcomes": [
+          {
+            "tool": "domain_probe",
+            "status": "succeeded",
+            "completion": "settled"
+          },
+          {
+            "tool": "failure_probe",
+            "status": "failed",
+            "completion": "settled"
+          }
+        ],
+        "metrics": {
+          "toolCalls": 2,
+          "successful": 1,
+          "failed": 1
+        }
+      }
+    ]
+  },
+  "diagnostic": {
+    "requests": [
+      {
+        "model": "claude-haiku-4-5-20251001",
+        "tool_choice": {
+          "type": "tool",
+          "name": "domain_probe"
+        },
+        "tools": [
+          "domain_probe",
+          "failure_probe"
+        ],
+        "max_tokens": 256
+      },
+      {
+        "model": "claude-haiku-4-5-20251001",
+        "tool_choice": {
+          "type": "tool",
+          "name": "failure_probe"
+        },
+        "tools": [
+          "domain_probe",
+          "failure_probe"
+        ],
+        "max_tokens": 256
+      },
+      {
+        "model": "claude-haiku-4-5-20251001",
+        "tool_choice": {
+          "type": "auto"
+        },
+        "tools": [
+          "domain_probe",
+          "failure_probe"
+        ],
+        "max_tokens": 256
+      },
+      {
+        "model": "claude-haiku-4-5-20251001",
+        "tool_choice": {
+          "type": "auto"
+        },
+        "tools": [
+          "domain_probe",
+          "failure_probe"
+        ],
+        "max_tokens": 256
+      }
+    ],
+    "responses": [
+      {
+        "tools": [
+          {
+            "id": "toolu_01RT81D9FaDtL2WjJCwV59Qz",
+            "name": "failure_probe"
+          }
+        ]
+      },
+      {
+        "tools": [
+          {
+            "id": "toolu_013zofGS51QNp56vszjJ1X9e",
+            "name": "failure_probe"
+          }
+        ]
+      },
+      {
+        "tools": [
+          {
+            "id": "toolu_019wybBNuUV352thU8bV8oaf",
+            "name": "domain_probe"
+          }
+        ]
+      },
+      {
+        "tools": []
+      }
+    ],
+    "outcomes": [
+      {
+        "tool": "failure_probe",
+        "status": "failed",
+        "completion": "settled"
+      },
+      {
+        "tool": "failure_probe",
+        "status": "failed",
+        "completion": "settled"
+      },
+      {
+        "tool": "domain_probe",
+        "status": "succeeded",
+        "completion": "settled"
+      }
+    ],
+    "text": "## Probe Results\n\n**Marker from failure_probe:**\n```\nLOCAL_FAILURE_VERIFIED\n```\n\n**Marker from domain_probe:**\n```\nDOMAIN_VALID\n```\n\nBoth probes have been executed as requested. The failure_probe returned the expected local failure marker, and the domain_probe returned the business data marker.",
+    "observedModelCalls": 4,
+    "metrics": {
+      "totalDuration": 3469,
+      "llmDuration": 3444,
+      "toolDuration": 1,
+      "hookDuration": 0,
+      "iterationCount": 4,
+      "toolCallCount": 3,
+      "toolSuccessCount": 1,
+      "toolFailureCount": 2,
+      "toolTimeoutCount": 0,
+      "inputTokens": 3426,
+      "outputTokens": 176,
+      "totalTokens": 3602,
+      "cachedInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "reasoningTokens": 0,
+      "nativeToolCalls": {},
+      "errors": []
+    }
+  },
+  "directNamedToolRequest": {
+    "recordedAt": "2026-10-12T17:32:53.548Z",
+    "endpoint": "https://api.anthropic.com/v1/messages",
+    "request": {
+      "model": "claude-haiku-4-5-20251001",
+      "max_tokens": 256,
+      "thinking": {
+        "type": "disabled"
+      },
+      "system": "After both probes, report both marker strings verbatim. domain_probe returns business data; failure_probe fails locally. Do not retry either probe.",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Run the probes and report both markers."
+        }
+      ],
+      "tools": [
+        {
+          "name": "domain_probe",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        },
+        {
+          "name": "failure_probe",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ],
+      "tool_choice": {
+        "type": "tool",
+        "name": "domain_probe"
+      }
+    },
+    "httpStatus": 200,
+    "requestId": "req_011Cfxk4wHTuSyasgnsGko8c",
+    "response": {
+      "model": "claude-haiku-4-5-20251001",
+      "id": "msg_011Cfxk4x5LCGLGs1w17txbZ",
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_01RErHAkCPjsM8dQKGuEziG6",
+          "name": "failure_probe",
+          "input": {},
+          "caller": {
+            "type": "direct"
+          }
+        }
+      ],
+      "container": null,
+      "stop_reason": "tool_use",
+      "stop_sequence": null,
+      "stop_details": null,
+      "usage": {
+        "input_tokens": 714,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 35,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      },
+      "diagnostics": null
+    }
+  },
+  "findings": [
+    "Authentication succeeds with the updated .env key.",
+    "The original unchanged Anthropic run test fails on expected succeeded/failed versus actual failed/succeeded outcome order.",
+    "A separate diagnostic captured a domain_probe named-tool request returning failure_probe; failure_probe was then requested and executed again before domain_probe, yielding four model calls and three tool executions.",
+    "All captured tool outcomes correlate correctly by tool name: failure_probe failed and domain_probe succeeded despite its business payload containing success:false.",
+    "A direct Messages API request to api.anthropic.com, bypassing the library and SDK, explicitly forced domain_probe but returned failure_probe with HTTP 200.",
+    "The run failure is unresolved. Sorting assertions or accepting a passing rerun would not establish named-tool conformance or rule out duplicate execution."
+  ],
+  "retainedValidation": {
+    "record": "docs/evaluations/STAGE_02_RETRIEVAL_FIX_VALIDATION.json",
+    "allRecordedSourceTestExampleFingerprintsMatch": true,
+    "unit": {
+      "files": 333,
+      "passed": 7016,
+      "failed": 0,
+      "newRetrievalCases": 6,
+      "newTest": "tests/unit/core/context-nextgen/WorkingMemoryRetrieval.test.ts",
+      "coverage": "Previous scoped coverage remains historical; not recomputed or claimed for this correction.",
+      "skipped": 0
+    },
+    "distinctOpenAIGoogleScenariosPassed": 31,
+    "checksRerunThisFollowUp": false,
+    "reason": "No source, test or example change; only credentials, validation evidence and documentation changed."
+  },
+  "testIntegrity": {
+    "productionSourceChanged": false,
+    "testsChanged": false,
+    "assertionsWeakened": false,
+    "retryUntilPass": false,
+    "providerFilters": "Only Anthropic selected in this follow-up; 23 other-provider cases filtered, not counted as passing."
+  },
+  "sourceAndTestSHA256": {
+    "src/infrastructure/providers/anthropic/AnthropicConverter.ts": "ad7ccdfb55d4310f14b248d7d8c3e25266c2a90deec421c01229bd18526f30ea",
+    "src/infrastructure/providers/anthropic/AnthropicTextProvider.ts": "5b004d92ad1a456c32786fb0c0eed5fc93afd017057cf510b4706dff57e49b71",
+    "tests/integration/text/AgenticBaseline.live.integration.test.ts": "2f5f124d2f8d19477a4c4c87e1ecd85c3da1ef168bbb6882339ca7c9490c4db0",
+    "tests/integration/text/ContextFreshness.live.integration.test.ts": "6e0574639b4ba0d95b07cd62e950ae675c061ba0745b6187ec4e37e9908e79ce",
+    "tests/integration/text/ToolOutcomes.live.integration.test.ts": "00d0a9d04b28991bbbe1810250a37fba364dc9be50a07239d09c42130ff50dc9"
+  },
+  "rawArtifactSHA256": {
+    "/tmp/oneringai-anthropic-key-recheck-baseline.json": "f2a5642467438800f04ce0bc1eac58c9ca0aad2590e37f0da7fd6fd05a573eb6",
+    "/tmp/oneringai-anthropic-key-recheck-context.json": "03212a311d90bd600c3fe728a3c4ec30d0c0866d9b95350e9f89f798f056b2e2",
+    "/tmp/oneringai-anthropic-key-recheck-direct-tools.json": "ff8a48a692eb63242e736ff0d01da649ab69ec6240d7817384f4a415358c31f5",
+    "/tmp/oneringai-anthropic-key-recheck-direct.json": "01331efad22bbd4dbbbeedcac85f642ce48b9eb1b93069b55874fc64687fae0b",
+    "/tmp/oneringai-anthropic-key-recheck-outcome-diagnosis.json": "5246380203069011511f1657b032387ff2a30c982f27e0a78101119dfa524aba",
+    "/tmp/oneringai-anthropic-key-recheck-outcome-diagnosis.log": "5fdfc874081874e295423379df9c99cedae66aaf59547457c27f56e60793850e",
+    "/tmp/oneringai-anthropic-key-recheck-outcomes.json": "cb12835799c540d3965e6bf7ad861dee44a05d4d41f9dc379226a08f6fb7b860",
+    "/tmp/oneringai-anthropic-key-recheck-tests.log": "8cc4782d97372df0b3f4bbfea3ff62fbb4317240cbff162e85f4694b3f9912ab",
+    "/tmp/oneringai-anthropic-key-recheck-vitest.json": "28d0909601268fec961421f39ff4f21ef2959a7e3c57622b1905409d7ecbecc6"
+  },
+  "limitations": [
+    "Small functional samples; no statistical model reliability or comparative quality claim.",
+    "Direct tool-selection probe is one non-streaming API request. The managed diagnostic uses the SDK streaming transport.",
+    "No runtime fallback or live-fixture correction implemented in this follow-up.",
+    "Prior authentication failures and original validation reports remain historical evidence."
+  ]
+}

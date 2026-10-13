@@ -142,6 +142,39 @@ agents/connectors. No keys, network, or external services are needed.
 After `npm run build`, run `npm run example:context-freshness` for the offline
 [compaction demonstration](./context-compaction-freshness.ts). It shows a refreshed
 working-memory index, retained pending tool dependencies, and the final estimated
-budget. `npm run example:amos-context` renders the real AMOS budget/breakdown commands
+budget. It also contrasts a keyless notes lookup (index metadata only) with a keyed
+lookup that recovers the original source contents. `npm run example:amos-context` renders the real AMOS budget/breakdown commands
 without credentials. See [context preparation](../docs/CONTEXT_PREPARATION.md) for
 contracts, failure behavior, and the opt-in billable `npm run test:context:live` suite.
+
+
+### Tool outcomes and cancellation (Stage 02)
+
+After `npm run build`, run `npm run example:tool-outcomes` for
+[`tool-outcomes-and-cancellation.ts`](./tool-outcomes-and-cancellation.ts). No keys
+are required. It demonstrates preserved domain/failure payloads, cooperative and
+noncooperative deadlines, a correctly correlated late success, and host cancellation
+during a loopback HTTP body read. The server binds an ephemeral localhost port;
+there are no external service calls or writes. Managers, connector, and server are
+cleaned up. Expect unknown completion at the timeout and a separate late diagnostic.
+
+`npm run example:amos-tool-outcomes` renders these real local outcomes through
+AMOS, including an explicit warning that a timed-out operation may still finish.
+`npm run test:tools:live` is a separate, billable opt-in check using `.env` OpenAI,
+Anthropic, and Google credentials with local tools. Missing or rejected credentials
+fail the selected provider check. See the [guide](../docs/TOOL_OUTCOMES_AND_CANCELLATION.md)
+and [corrective validation record](../docs/evaluations/STAGE_02_CORRECTIONS_VALIDATION.json).
+
+Stage 02's `tool-outcomes-and-cancellation.ts` also demonstrates invocation selection:
+an admitted call retains its original implementation during a plugin wait, and the next
+call uses the replacement registration. Run after building; setup requires no keys.
+The example destroys its manager and closes its local HTTP server.
+
+With `ANTHROPIC_API_KEY` in `.env`, opt in to
+`npm run example:tool-outcomes -- --live-anthropic`. After the offline demonstrations,
+it makes billable Anthropic calls in both `run()` and `stream()` modes using a named
+connector and in-place `before:llm` options. Expect `domain_probe=succeeded` followed
+by `failure_probe=failed` in each mode, with both original markers recovered.
+Agents and the example-owned connector are cleaned up. The library narrows explicit
+Anthropic named-tool requests and rejects mismatched provider calls before local
+execution; see the [selection contract](../docs/TOOL_OUTCOMES_AND_CANCELLATION.md#explicit-anthropic-tool-selection).

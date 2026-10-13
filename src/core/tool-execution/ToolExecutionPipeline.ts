@@ -16,7 +16,10 @@ import type {
   IToolExecutionPipeline,
   PluginExecutionContext,
   ToolExecutionPipelineOptions,
+  PipelineExecutionOptions,
 } from './types.js';
+import { getNormalizedFailure } from './outcomes.js';
+import { ToolPermissionDeniedError, ToolTimeoutError } from '../../domain/errors/AIErrors.js';
 
 /**
  * Default plugin priority
@@ -173,7 +176,7 @@ export class ToolExecutionPipeline implements IToolExecutionPipeline {
    * @param args - Arguments for the tool
    * @returns Result from tool execution (possibly transformed by plugins)
    */
-  async execute(tool: ToolFunction, args: unknown): Promise<unknown> {
+  async execute(tool: ToolFunction, args: unknown, options: PipelineExecutionOptions = {}): Promise<unknown> {
     // Create execution context
     const ctx: PluginExecutionContext = {
       toolName: tool.definition.function.name,
@@ -182,12 +185,31 @@ export class ToolExecutionPipeline implements IToolExecutionPipeline {
       metadata: new Map(),
       startTime: Date.now(),
       tool,
-      executionId: generateExecutionId(this.useRandomUUID),
+      executionId: options.executionId ?? generateExecutionId(this.useRandomUUID),
+      toolContext: options.toolContext,
+      registration: options.registration,
+    };
+    const plugins = [...this.sortedPlugins];
+    let executionStarted = false;
+    let failure: Error | undefined;
+    const report = (): void => {
+      const error = getNormalizedFailure(ctx) ?? failure;
+      try {
+        options.onOutcome?.({
+          status: error instanceof ToolPermissionDeniedError ? 'denied' : error instanceof ToolTimeoutError ? 'timed_out' : error ? 'failed' : 'succeeded',
+          executionStarted,
+          error,
+        });
+      } catch {
+        // Outcome observers are diagnostics, never a reason to repeat an effect.
+      }
     };
 
     try {
+      options.toolContext?.signal?.throwIfAborted();
       // Phase 1: beforeExecute hooks
-      for (const plugin of this.sortedPlugins) {
+      for (const plugin of plugins) {
+        options.toolContext?.signal?.throwIfAborted();
         if (plugin.beforeExecute) {
           const hookResult = await plugin.beforeExecute(ctx);
 
@@ -204,10 +226,14 @@ export class ToolExecutionPipeline implements IToolExecutionPipeline {
       }
 
       // Phase 2: Execute the tool
-      let result = await tool.execute(ctx.mutableArgs);
+      options.toolContext?.signal?.throwIfAborted();
+      executionStarted = true;
+      let result = await (options.toolContext
+        ? tool.execute(ctx.mutableArgs, options.toolContext)
+        : tool.execute(ctx.mutableArgs));
 
       // Phase 3: afterExecute hooks (reverse order for proper unwinding)
-      const reversedPlugins = [...this.sortedPlugins].reverse();
+      const reversedPlugins = [...plugins].reverse();
       for (const plugin of reversedPlugins) {
         if (plugin.afterExecute) {
           result = await plugin.afterExecute(ctx, result);
@@ -219,7 +245,7 @@ export class ToolExecutionPipeline implements IToolExecutionPipeline {
       // Phase 4: onError hooks
       const err = error instanceof Error ? error : new Error(String(error));
 
-      for (const plugin of this.sortedPlugins) {
+      for (const plugin of plugins) {
         if (plugin.onError) {
           try {
             const recovered = await plugin.onError(ctx, err);
@@ -234,7 +260,10 @@ export class ToolExecutionPipeline implements IToolExecutionPipeline {
       }
 
       // No plugin recovered, re-throw the original error
+      failure = err;
       throw error;
+    } finally {
+      report();
     }
   }
 

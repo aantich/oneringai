@@ -273,6 +273,7 @@ export type {
   IToolExecutionPlugin,
   IToolExecutionPipeline,
   ToolExecutionPipelineOptions,
+  PipelineExecutionOptions,
   LoggingPluginOptions,
   ResultNormalizerPluginOptions,
   NormalizedErrorResult,
@@ -302,3 +303,5 @@ export type {
   ErrorHandlerConfig,
   ErrorHandlerEvents,
 } from './ErrorHandler.js';
+
+export type { ToolExecutionOutcome, ToolExecutionOptions, ToolExecutionReport } from './tool-execution/outcomes.js';

@@ -52,7 +52,15 @@ export async function runBaseline(fixture: BaselineFixture, options: BaselineOpt
     options.signal?.addEventListener('abort', abort, { once: true });
     options.signal?.throwIfAborted();
     let agent = makeAgent();
-    if (fixture.resumePrompt) fixture.onAccepted = () => agent.cancel('Fixture accepted; host checkpoint');
+    if (fixture.resumePrompt) {
+      // Checkpoint only after the receipt has reached the host. Cancelling inside
+      // execute() now correctly requests cancellation of that still-pending call.
+      const checkpoint = (event: { toolCall: { function: { name: string } } }): void => {
+        if (event.toolCall.function.name === 'submit_job') agent.cancel('Fixture accepted; host checkpoint');
+      };
+      agent.on('tool:complete', checkpoint);
+      detach.push(() => agents[0]?.off('tool:complete', checkpoint));
+    }
     let text = '';
     try { text = (await agent.run(fixture.prompt)).output_text ?? ''; }
     catch (error) {

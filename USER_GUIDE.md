@@ -4294,13 +4294,19 @@ In v0.5.0, the 19 plugin-specific CRUD tools (`memory_store`, `context_set`, `in
 
 | Tool | Signature | Description |
 |------|-----------|-------------|
-| `store_get` | `store_get(store, key?)` | Get one entry by key, or all entries when key is omitted |
+| `store_get` | `store_get(store, key?)` | Read one value by exact key; omitting key returns a store-specific view, which may contain only metadata |
 | `store_set` | `store_set(store, key, data)` | Create or update an entry |
 | `store_delete` | `store_delete(store, key)` | Remove an entry by key |
 | `store_list` | `store_list(store, filter?)` | List entries with optional filters |
 | `store_action` | `store_action(store, action, params?)` | Store-specific operations (query, clear, etc.) |
 
 The `store` parameter is a string identifying which store to target. The `data` parameter is an object whose shape depends on the store.
+
+For `"notes"`, a keyless `store_get({ store: "notes" })` returns only keys,
+descriptions, and tiers. Read each source's contents with
+`store_get({ store: "notes", key: "<exact index key>" })`, including the displayed
+tier prefix and any collision suffix. `store_list` discovers entries omitted from
+the visible index. Other stores retain their own keyless behavior.
 
 ### Available Stores
 
@@ -18847,3 +18853,46 @@ MIT License - see LICENSE file for details.
 
 **Last Updated:** 2026-10-07
 **Version:** 1.2.0
+
+
+## Tool outcomes and cancellation (Stage 02)
+
+Use `agent.tools.executeWithOutcome(name, args, { signal, timeoutMs, callId, runId })`
+when the host needs `{ result, outcome }`; `execute()` still returns raw data. The
+manager recognizes its normalizer's failures without reinterpreting arbitrary
+application `success: false` objects. Agent tool results and streaming completion
+events expose optional `outcome` metadata. Failure/timeout counters now reflect
+those semantic results; async acceptance placeholders are not completed work.
+Settlement is counted before streaming completion events, including early stream exit.
+A tool retains its admitted implementation, definition, permission metadata, and
+resolved connector access through asynchronous waits. Later registration or account
+changes affect future calls. Queued background delivery checks scope again, and
+throwing completion/error/timeout observers cannot replace or double-count a settled
+result.
+
+Tools may observe their existing optional `ToolContext.signal`. `agent.cancel()`
+and async cancellation methods request cancellation of the corresponding calls.
+Late settlement is diagnostic-only, correlated to the original call, and never
+counted twice or automatically delivered to a different account. A noncooperative
+tool can still finish; cancellation does not prove that a remote write was prevented.
+
+Connector requests compose caller signals with deadlines. Header timeouts and
+legacy retry policy remain defaults. Opt in to `timeoutScope: 'operation'` for one
+deadline through token waiting, retries, and body consumption, and
+`retryPolicy: 'safe'` to retry eligible GET/HEAD/OPTIONS only. Consume or cancel
+response bodies. Safe retry and operation-body cleanup remain cancellation/deadline
+aware, and chained response clones preserve metadata and native body checks.
+`skipRetry` skips both network and status retries. Generic API
+tools forward the signal; specialized tools/transports require their own support.
+
+See [Tool outcomes and cancellation](docs/TOOL_OUTCOMES_AND_CANCELLATION.md) for
+public signatures, status/evidence meanings, listener cleanup, persistence and
+breaker boundaries, examples, AMOS behavior, and current live-validation limits.
+
+Explicit Anthropic named-tool requests advertise only the selected local function
+alongside configured native tools. A different returned local tool raises the
+existing `ProviderError` before execution, without automatic retries or model
+switching. Later `auto`/`required` calls retain their normal tool set. To modify
+request options in both managed modes, mutate `context.options` in `before:llm`
+and return `{}`; streaming hook return semantics are unchanged. See the
+[selection contract and opt-in live example](docs/TOOL_OUTCOMES_AND_CANCELLATION.md#explicit-anthropic-tool-selection).

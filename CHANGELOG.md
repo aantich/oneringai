@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Stage 02 additive `ToolManager.executeWithOutcome()`, execution options, semantic
+  result/stream/error metadata, and original-call late-completion diagnostics.
+  Optional connector whole-operation deadlines and safe read-only retry policy;
+  offline library/AMOS examples and real-provider integration coverage.
+
 - Stage 00 repository evaluation utilities: four deterministic managed-agent
   workloads with evidence-based completion, strict branch-aware replay, correlated
   event reporting, and opt-in real-LLM runs. Includes public-consumer and pinned
@@ -22,6 +27,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AMOS budget/breakdown revision and estimate labels, with complete overhead totals.
 
 ### Fixed
+
+- Explicit Anthropic named-tool requests advertise the selected local function
+  while retaining native tools and history. Mismatched response tools raise the
+  existing `ProviderError` before local execution in both modes. Stage 02 live
+  hooks now apply their bounded request options through the existing in-place
+  contract in streaming as well as non-streaming; outcome/name assertions remain
+  strict. Added an opt-in live example; default execution stays offline.
+
+- Notes retrieval guidance now distinguishes keyless index metadata from keyed
+  source contents, uses the available unified store tools, and retains legacy
+  WorkingMemory formatter guidance and existing keyless return shapes.
+
+- Stage 02 review corrections: retain invocation connector authority and selected
+  tool/permission metadata, filter background results again at delivery, contain async
+  observer failures, count streamed settlement before completion events, interrupt safe
+  retry cleanup, and preserve metadata through chained operation-response clones.
+
+- Normalized tool failures and streaming tool counters now report accurate outcomes;
+  async acceptance placeholders no longer count as successful completion. Existing
+  raw results and breaker policy remain compatible. Execution-scoped cancellation
+  reaches cooperative tools and generic connector API requests without rebinding
+  shared identity/context. Late results cannot update another execution/account.
+- Connector caller cancellation applies during token waits, body reads, and retry
+  backoff. Existing `skipRetry` also skips status retries as documented. AMOS
+  displays uncertain completion and retains its running state until cancellation
+  settles. The baseline host checkpoints after receiving the accepted-job result.
 
 - Stage 01 second corrective pass: allocate distinct spill keys across turns and
   restored state, verify stored values, prepare against already-known JSON/native

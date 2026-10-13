@@ -18,7 +18,10 @@ import { StreamEvent, StreamEventType, ResponseCompleteEvent, isToolCallArgument
 import { StreamState } from '../domain/entities/StreamState.js';
 import { Tool, ToolCall, ToolCallState, ToolResult, AsyncToolConfig, PendingAsyncTool } from '../domain/entities/Tool.js';
 import { Content, ContentType } from '../domain/entities/Content.js';
-import { ToolTimeoutError, ToolPermissionDeniedError } from '../domain/errors/AIErrors.js';
+import { ToolTimeoutError, ToolPermissionDeniedError, ToolExecutionError } from '../domain/errors/AIErrors.js';
+import type { ToolExecutionOptions, ToolExecutionOutcome } from './tool-execution/outcomes.js';
+import { ToolManager } from './ToolManager.js';
+import { captureConnectorScope, sameConnectorScope } from './tool-execution/connectorScope.js';
 import type { HookConfig, HookName } from '../capabilities/agents/types/HookTypes.js';
 import { AgentEvents } from '../capabilities/agents/types/EventTypes.js';
 import { IDisposable, assertNotDestroyed } from '../domain/interfaces/IDisposable.js';
@@ -395,6 +398,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   // Pause/resume/cancel state
   private _paused = false;
   private _cancelled = false;
+  private _executionAbort = new AbortController();
+  private _asyncAbort = new Map<string, AbortController>();
   private _pausePromise: Promise<void> | null = null;
   private _resumeCallback: (() => void) | null = null;
   private _pauseResumeMutex: Promise<void> = Promise.resolve();
@@ -402,7 +407,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   // Async tool state
   private _asyncToolTracker: Map<string, PendingAsyncTool> = new Map();
   private _asyncBatchTimer: ReturnType<typeof setTimeout> | null = null;
-  private _asyncResultQueue: ToolResult[] = [];
+  private _asyncResultQueue: Array<{ result: ToolResult; runId: string; isCurrent: () => boolean }> = [];
+  private _asyncDeliveryEpoch = 0;
   private _continuationInProgress = false;
   private _executionOwner: AgentExecutionLease | null = null;
   private _externalExecutionId: string | null = null;
@@ -808,6 +814,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     }
     const lease = { kind, token: Symbol(kind) };
     this._executionOwner = lease;
+    this._executionAbort = new AbortController();
     return lease;
   }
 
@@ -1478,9 +1485,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       // This allows the LLM to see async results mid-loop rather than waiting until run() ends.
       // Formatted as a user message (not tool_result) to avoid orphaned tool_use_id references
       // that would cause API errors with providers expecting tool_result to follow tool_use.
-      if (this._asyncResultQueue.length > 0) {
-        const asyncResults = this._asyncResultQueue.splice(0, this._asyncResultQueue.length);
-
+      const queued = this.selectAsyncResults();
+      if (queued.length > 0) {
+        const asyncResults = queued.map(entry => entry.result);
         const parts: string[] = ['[Async Tool Results]'];
         for (const result of asyncResults) {
           const toolName = result.tool_name || 'unknown';
@@ -1493,18 +1500,26 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
             parts.push(`\nTool "${toolName}" completed:\n${content}`);
           }
         }
-        this._agentContext.addUserMessage(parts.join('\n'));
+        try {
+          this._agentContext.addUserMessage(parts.join('\n'));
+          // Preserve notification ordering: listeners can inspect the inserted input.
+          this.emit('async:results:injected', {
+            executionId, iteration,
+            results: queued.map(({ result: r }) => ({ toolCallId: r.tool_use_id, toolName: r.tool_name || 'unknown' })),
+            timestamp: new Date(),
+          });
+        } finally {
+          this.consumeAsyncResults(queued);
+          // Context and Agent callbacks can rebind or cancel, even when they throw.
+          if (queued.some(entry => !entry.isCurrent())) this._agentContext.setCurrentInput('');
+        }
+        if (queued.some(entry => !entry.isCurrent())) throw new Error('Async result scope changed during injection');
 
         this._logger.info(
           { count: asyncResults.length, tools: asyncResults.map(r => r.tool_name) },
           'Injected async tool results into agentic loop',
         );
-        this.emit('async:results:injected', {
-          executionId,
-          iteration,
-          results: asyncResults.map(r => ({ toolCallId: r.tool_use_id, toolName: r.tool_name || 'unknown' })),
-          timestamp: new Date(),
-        });
+
       }
 
       const iterationStartTime = Date.now();
@@ -2301,6 +2316,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         const toolResults: ToolResult[] = [];
 
         for (const toolCall of toolCalls) {
+          this.executionContext?.addToolCall(toolCall);
           // Parse and validate arguments
           let parsedArgs: Record<string, unknown>;
           try {
@@ -2318,6 +2334,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
               error: errorMessage,
             };
             toolResults.push(failedResult);
+            this.executionContext?.addToolResult(failedResult);
 
             yield {
               type: StreamEventType.TOOL_EXECUTION_DONE,
@@ -2341,43 +2358,36 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
           const toolStartTime = Date.now();
 
+          let result: ToolResult;
+          let executionError: unknown;
           try {
-            const result = await this.executeToolWithHooks(toolCall, iteration, executionId);
-            toolResults.push(result);
-
-            yield {
-              type: StreamEventType.TOOL_EXECUTION_DONE,
-              response_id: executionId,
-              tool_call_id: toolCall.id,
-              tool_name: toolCall.function.name,
-              result: result.content,
-              execution_time_ms: Date.now() - toolStartTime,
-            };
+            result = await this.executeToolWithHooks(toolCall, iteration, executionId);
           } catch (error) {
-            yield {
-              type: StreamEventType.TOOL_EXECUTION_DONE,
-              response_id: executionId,
-              tool_call_id: toolCall.id,
-              tool_name: toolCall.function.name,
-              result: null,
-              execution_time_ms: Date.now() - toolStartTime,
-              error: (error as Error).message,
-            };
-
-            const failureMode = this._config.errorHandling?.toolFailureMode || 'continue';
-            if (failureMode === 'fail') {
-              throw error;
-            }
-
-            toolResults.push({
+            executionError = error;
+            result = {
               tool_use_id: toolCall.id,
               tool_name: toolCall.function.name,
               tool_args: parsedArgs,
               content: '',
               error: (error as Error).message,
-              state: ToolCallState.FAILED,
-            });
+              outcome: error instanceof ToolExecutionError ? error.outcome : undefined,
+              state: error instanceof ToolExecutionError && error.outcome?.status === 'timed_out' ? ToolCallState.TIMEOUT : ToolCallState.FAILED,
+            };
           }
+          toolResults.push(result);
+          // Settlement accounting precedes observable completion, independently of history batching.
+          this.executionContext?.addToolResult(result);
+          yield {
+            type: StreamEventType.TOOL_EXECUTION_DONE,
+            response_id: executionId,
+            tool_call_id: toolCall.id,
+            tool_name: toolCall.function.name,
+            result: executionError ? null : result.content,
+            outcome: result.outcome,
+            error: result.error,
+            execution_time_ms: Date.now() - toolStartTime,
+          };
+          if (executionError && this._config.errorHandling?.toolFailureMode === 'fail') throw executionError;
         }
 
         // Build and add assistant message to context
@@ -3167,7 +3177,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           tool_args: parsedArgs,
           content: '',
           error: (error as Error).message,
-          state: ToolCallState.FAILED,
+          outcome: error instanceof ToolExecutionError ? error.outcome : undefined,
+          state: error instanceof ToolExecutionError && error.outcome?.status === 'timed_out' ? ToolCallState.TIMEOUT : ToolCallState.FAILED,
         };
 
         results.push(toolResult);
@@ -3187,6 +3198,25 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   /**
    * Execute single tool with hooks
    */
+  private async executeManagedTool(name: string, args: unknown, options: ToolExecutionOptions): Promise<{ result: unknown; outcome?: ToolExecutionOutcome }> {
+    let outcome: ToolExecutionOutcome | undefined;
+    // Retain the existing execute extension point. Legacy overrides that bypass
+    // the standard pipeline retain their raw return behavior without invented metadata.
+    const execution = this._agentContext.tools.execute(name, args, { ...options, onOutcome: value => { outcome = value; } });
+    // Older overrides may ignore the additive options. Preserve the pre-existing
+    // async dead-man's switch for that extension path, without a second normal deadline.
+    if (this._agentContext.tools.execute !== ToolManager.prototype.execute && options.timeoutMs && options.timeoutMs > 0) {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const result = await Promise.race([execution, new Promise<never>((_resolve, reject) => {
+          timer = setTimeout(() => reject(new ToolTimeoutError(name, options.timeoutMs!)), options.timeoutMs);
+        })]);
+        return { result, outcome };
+      } finally { clearTimeout(timer); }
+    }
+    return { result: await execution, outcome };
+  }
+
   private async executeToolWithHooks(
     toolCall: ToolCall,
     iteration: number,
@@ -3229,9 +3259,11 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       } catch (parseError) {
         throw new Error(`Failed to parse tool arguments for ${toolCall.function.name}: ${(parseError as Error).message}`);
       }
-      const result = await this._agentContext.tools.execute(toolCall.function.name, args);
+      const { result, outcome } = await this.executeManagedTool(toolCall.function.name, args, {
+        signal: this._executionAbort.signal, callId: toolCall.id, runId: executionId,
+      });
 
-      toolCall.state = ToolCallState.COMPLETED;
+      toolCall.state = !outcome || outcome.status === 'succeeded' ? ToolCallState.COMPLETED : outcome.status === 'timed_out' ? ToolCallState.TIMEOUT : ToolCallState.FAILED;
       toolCall.endTime = new Date();
 
       let toolResult: ToolResult = {
@@ -3239,7 +3271,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         tool_name: toolCall.function.name,
         tool_args: args,
         content: result,
-        state: ToolCallState.COMPLETED,
+        state: toolCall.state,
+        outcome,
+        error: outcome?.error,
         executionTime: Date.now() - toolStartTime,
       };
 
@@ -3269,7 +3303,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
       return toolResult;
     } catch (error) {
-      toolCall.state = ToolCallState.FAILED;
+      toolCall.state = error instanceof ToolExecutionError && error.outcome?.status === 'timed_out' ? ToolCallState.TIMEOUT : ToolCallState.FAILED;
       toolCall.endTime = new Date();
       toolCall.error = (error as Error).message;
 
@@ -3302,12 +3336,12 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       }
 
       // Emit tool error or timeout
-      if (error instanceof ToolTimeoutError) {
+      if (error instanceof ToolTimeoutError || error instanceof ToolExecutionError && error.outcome?.status === 'timed_out') {
         this.emit('tool:timeout', {
           executionId,
           iteration,
           toolCall,
-          timeout: error.timeoutMs,
+          timeout: error instanceof ToolTimeoutError ? error.timeoutMs : error.outcome?.timeoutMs ?? 0,
           timestamp: new Date(),
         });
       } else {
@@ -3401,6 +3435,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     } catch { /* ignore parse errors */ }
 
     const asyncConfig = this._config.asyncTools ?? {};
+    const originatingContext = this.executionContext;
 
     // Resolve timeout: per-tool definition > agent async config > 5 min default.
     // timeout=0 disables the dead-man's switch (e.g., for routine tools with their own timeout).
@@ -3427,48 +3462,61 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       timestamp: new Date(),
     });
 
-    // Fire-and-forget execution, optionally with timeout
-    const executionPromise = this._agentContext.tools.execute(toolCall.function.name, parsedArgs);
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    const racedPromise = timeout > 0
-      ? (() => {
-          const timeoutPromise = new Promise<never>((_, reject) => {
-            timeoutId = setTimeout(() => reject(new ToolTimeoutError(toolCall.function.name, timeout)), timeout);
-          });
-          return Promise.race([executionPromise, timeoutPromise]);
-        })()
-      : executionPromise; // timeout=0: no dead-man's switch
-
-    racedPromise
-      .then((result) => {
-        if (timeoutId) clearTimeout(timeoutId);
-        if (this._isDestroyed) return; // agent destroyed
-        if (!this._asyncToolTracker.has(toolCall.id)) return; // cancelled
-        pending.status = 'completed';
+    const controller = new AbortController();
+    this._asyncAbort.set(toolCall.id, controller);
+    const hostSignal = this._executionAbort.signal;
+    const contextAtStart = this._agentContext.tools.getToolContext();
+    const identityKey = (): string => {
+      const ctx = this._agentContext.tools.getToolContext();
+      return JSON.stringify([ctx?.userId, ctx?.accountId, ctx?.connectorAccounts, ctx?.identities, ctx?.roles, ctx?.sessionId]);
+    };
+    const originalIdentity = identityKey();
+    const deliveryEpoch = this._asyncDeliveryEpoch;
+    const connectorScope = contextAtStart?.connectorRegistry ? captureConnectorScope(contextAtStart.connectorRegistry) : undefined;
+    const scopeCurrent = (): boolean => deliveryEpoch === this._asyncDeliveryEpoch && !this._isDestroyed && !controller.signal.aborted && !hostSignal.aborted
+      && identityKey() === originalIdentity
+      && this._agentContext.tools.getToolContext()?.connectorRegistry === contextAtStart?.connectorRegistry
+      && sameConnectorScope(connectorScope, this._agentContext.tools.getToolContext()?.connectorRegistry);
+    const isCurrent = (): boolean => {
+      if (this._isDestroyed || this._asyncToolTracker.get(toolCall.id) !== pending) return false;
+      if (scopeCurrent()) return true;
+      pending.status = 'cancelled';
+      this._asyncToolTracker.delete(toolCall.id);
+      return false;
+    };
+    // Capture the originating run's signal; a later run cannot rebind this call.
+    const signal = AbortSignal.any([controller.signal, hostSignal]);
+    this.executeManagedTool(toolCall.function.name, parsedArgs, {
+      signal, timeoutMs: timeout, callId: toolCall.id, runId: executionId,
+    })
+      .then(({ result, outcome }) => {
+        if (!isCurrent()) return;
+        pending.status = !outcome || outcome.status === 'succeeded' ? 'completed' : outcome.status === 'timed_out' ? 'timeout' : 'failed';
         const toolResult: ToolResult = {
           tool_use_id: toolCall.id,
           tool_name: toolCall.function.name,
           tool_args: parsedArgs,
           content: result,
-          state: ToolCallState.COMPLETED,
+          state: !outcome || outcome.status === 'succeeded' ? ToolCallState.COMPLETED : outcome.status === 'timed_out' ? ToolCallState.TIMEOUT : ToolCallState.FAILED,
+          outcome,
+          error: outcome?.error,
           executionTime: Date.now() - pending.startTime,
         };
         pending.result = toolResult;
-        this.emit('async:tool:complete', {
+        originatingContext?.addToolResult(toolResult);
+        this.notifyAsyncObserver(() => this.emit('async:tool:complete', {
           executionId,
           toolCallId: toolCall.id,
           toolName: toolCall.function.name,
           result: toolResult,
           duration: toolResult.executionTime!,
           timestamp: new Date(),
-        });
-        this._onAsyncComplete(toolCall.id, toolResult);
-      })
-      .catch((error: Error) => {
-        if (timeoutId) clearTimeout(timeoutId);
-        if (this._isDestroyed) return; // agent destroyed
-        if (!this._asyncToolTracker.has(toolCall.id)) return; // cancelled
-        const isTimeout = error instanceof ToolTimeoutError;
+        }));
+        if (isCurrent()) this._onAsyncComplete(toolCall.id, toolResult, executionId, scopeCurrent);
+      }, (error: Error) => {
+        if (!isCurrent()) return;
+        const outcome = error instanceof ToolExecutionError ? error.outcome : undefined;
+        const isTimeout = error instanceof ToolTimeoutError || outcome?.status === 'timed_out';
         pending.status = isTimeout ? 'timeout' : 'failed';
         pending.error = error;
         const toolResult: ToolResult = {
@@ -3478,28 +3526,35 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           content: '',
           error: error.message,
           state: isTimeout ? ToolCallState.TIMEOUT : ToolCallState.FAILED,
+          outcome,
           executionTime: Date.now() - pending.startTime,
         };
         pending.result = toolResult;
+        originatingContext?.addToolResult(toolResult);
         if (isTimeout) {
-          this.emit('async:tool:timeout', {
+          this.notifyAsyncObserver(() => this.emit('async:tool:timeout', {
             executionId,
             toolCallId: toolCall.id,
             toolName: toolCall.function.name,
-            timeout,
+            timeout: outcome?.timeoutMs ?? timeout,
             timestamp: new Date(),
-          });
+          }));
         } else {
-          this.emit('async:tool:error', {
+          this.notifyAsyncObserver(() => this.emit('async:tool:error', {
             executionId,
             toolCallId: toolCall.id,
             toolName: toolCall.function.name,
             error,
             duration: Date.now() - pending.startTime,
             timestamp: new Date(),
-          });
+          }));
         }
-        this._onAsyncComplete(toolCall.id, toolResult);
+        if (isCurrent()) this._onAsyncComplete(toolCall.id, toolResult, executionId, scopeCurrent);
+      }).catch(error => {
+        this._logger.error({ error: String(error) }, 'Async result delivery failed');
+        if (this._asyncToolTracker.get(toolCall.id) === pending) this._asyncToolTracker.delete(toolCall.id);
+      }).finally(() => {
+        if (this._asyncAbort.get(toolCall.id) === controller) this._asyncAbort.delete(toolCall.id);
       });
 
     // Return placeholder result immediately
@@ -3510,6 +3565,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       content: `Tool "${toolCall.function.name}" is executing asynchronously. The result will be delivered in a follow-up message. Continue with other work in the meantime.`,
       state: ToolCallState.COMPLETED,
       executionTime: 0,
+      pending: true,
     };
   }
 
@@ -3517,10 +3573,27 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    * Called when an async tool completes (success or failure).
    * Queues the result and schedules batch delivery.
    */
-  private _onAsyncComplete(toolCallId: string, result: ToolResult): void {
+  private notifyAsyncObserver(notify: () => unknown): void {
+    try { notify(); } catch (error) {
+      this._logger.warn({ error: String(error) }, 'Async tool observer failed');
+    }
+  }
+
+  private selectAsyncResults(): typeof this._asyncResultQueue {
+    this._asyncResultQueue = this._asyncResultQueue.filter(entry => entry.isCurrent());
+    // Keep entries reachable by cancellation during synchronous host notifications.
+    return [...this._asyncResultQueue];
+  }
+
+  private consumeAsyncResults(entries: typeof this._asyncResultQueue): void {
+    const consumed = new Set(entries);
+    this._asyncResultQueue = this._asyncResultQueue.filter(entry => !consumed.has(entry));
+  }
+
+  private _onAsyncComplete(toolCallId: string, result: ToolResult, runId: string, isCurrent: () => boolean): void {
     if (!this._asyncToolTracker.has(toolCallId)) return; // already cancelled/removed
 
-    this._asyncResultQueue.push(result);
+    this._asyncResultQueue.push({ result, runId, isCurrent });
     this._asyncToolTracker.delete(toolCallId);
 
     const asyncConfig = this._config.asyncTools ?? {};
@@ -3584,9 +3657,12 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     this._paused = false;
     this._cancelled = false;
 
+    let queued: typeof this._asyncResultQueue | undefined;
+    let injected = false;
     try {
       // Drain queue if no explicit results provided
-      const toDeliver = results ?? this._asyncResultQueue.splice(0, this._asyncResultQueue.length);
+      queued = results ? undefined : this.selectAsyncResults();
+      const toDeliver = results ?? queued!.map(entry => entry.result);
       if (toDeliver.length === 0) {
         throw new Error('No async results to deliver');
       }
@@ -3618,10 +3694,12 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         timestamp: new Date(),
       });
 
-      // Set current input for task type detection
+      if (queued && queued.some(entry => !entry.isCurrent())) {
+        this.consumeAsyncResults(queued);
+        throw new Error('Async result scope changed during continuation');
+      }
+      injected = true;
       this._agentContext.setCurrentInput(parts.join('\n'));
-
-      // Inject as user message
       this._agentContext.addUserMessage(parts.join('\n'));
 
       // Create execution context for this continuation
@@ -3637,15 +3715,26 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         timestamp: new Date(),
       });
 
+      if (queued) this.consumeAsyncResults(queued);
+      if (queued && queued.some(entry => !entry.isCurrent())) {
+        this._agentContext.setCurrentInput('');
+        throw new Error('Async result scope changed during continuation');
+      }
+
       // Use shared agentic loop
       const finalResponse = await this._runAgenticLoop(executionId, startTime, maxIterations);
 
       await this._finalizeExecution(executionId, startTime, finalResponse, 'run');
       return finalResponse;
     } finally {
-      this._continuationInProgress = false;
-      this.releaseExecution(lease);
-      this._cleanupExecution();
+      try {
+        if (queued) this.consumeAsyncResults(queued);
+        if (injected && queued?.some(entry => !entry.isCurrent())) this._agentContext.setCurrentInput('');
+      } finally {
+        this._continuationInProgress = false;
+        this.releaseExecution(lease);
+        this._cleanupExecution();
+      }
     }
   }
 
@@ -3669,9 +3758,15 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    * Cancel a specific async tool by toolCallId
    */
   cancelAsyncTool(toolCallId: string): void {
+    for (const entry of this._asyncResultQueue) {
+      if (entry.result.tool_use_id === toolCallId) entry.isCurrent = () => false;
+    }
+    this._asyncResultQueue = this._asyncResultQueue.filter(entry => entry.isCurrent());
     const pending = this._asyncToolTracker.get(toolCallId);
     if (pending) {
       pending.status = 'cancelled';
+      this._asyncAbort.get(toolCallId)?.abort(new DOMException('Async tool cancelled', 'AbortError'));
+      this._asyncAbort.delete(toolCallId);
       this._asyncToolTracker.delete(toolCallId);
     }
   }
@@ -3680,9 +3775,12 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    * Cancel all pending async tools
    */
   cancelAllAsyncTools(): void {
+    this._asyncDeliveryEpoch++;
     for (const pending of this._asyncToolTracker.values()) {
       pending.status = 'cancelled';
     }
+    for (const controller of this._asyncAbort.values()) controller.abort(new DOMException('Async tools cancelled', 'AbortError'));
+    this._asyncAbort.clear();
     this._asyncToolTracker.clear();
     this._asyncResultQueue = [];
     this._pendingInjections = [];
@@ -3754,6 +3852,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    */
   cancel(reason?: string): void {
     this._cancelled = true;
+    this._executionAbort.abort(new DOMException(reason || 'Manual cancellation', 'AbortError'));
 
     if (this.executionContext) {
       this.executionContext.cancelled = true;

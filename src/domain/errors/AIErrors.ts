@@ -109,6 +109,8 @@ export class ProviderContextLengthError extends AIError {
 }
 
 export class ToolExecutionError extends AIError {
+  /** Semantic metadata for a managed invocation; absent on legacy/manual errors. */
+  outcome?: import('../entities/Tool.js').ToolExecutionOutcome;
   constructor(
     toolName: string,
     message: string,

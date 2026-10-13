@@ -232,6 +232,8 @@ export class ExecutionContext {
   addToolResult(result: ToolResult): void {
     this.toolResults.set(result.tool_use_id, result);
 
+    // An async acceptance placeholder is not successful completion.
+    if (result.pending) return;
     // Update metrics
     if (result.state === ToolCallState.COMPLETED) {
       this.metrics.toolSuccessCount++;

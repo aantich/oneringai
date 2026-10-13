@@ -66,8 +66,9 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
       options.input,
       options.vendorOptions?.compaction !== undefined,
     );
+    const localTools = this.convertAnthropicTools(options.tools) ?? [];
     const tools = [
-      ...(this.convertAnthropicTools(options.tools) ?? []),
+      ...localTools,
       ...this.convertNativeTools(options),
     ];
 
@@ -328,6 +329,16 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
               name: options.tool_choice.function.name,
               ...(disableParallel ? { disable_parallel_tool_use: true } : {}),
             };
+      if (typeof options.tool_choice === 'object') {
+        const selectedName = options.tool_choice.function.name;
+        const selected = localTools.find((tool) => tool.name === selectedName);
+        if (selected) {
+          // Some responses select a different advertised function despite a
+          // named choice. Advertise only the requested local function, retaining
+          // native tools and prior messages without mutating caller definitions.
+          params.tools = [selected, ...tools.slice(localTools.length)] as Anthropic.MessageCreateParams['tools'];
+        }
+      }
     }
 
     if (options.response_format?.type === 'json_schema' && !onDemandCompaction) {

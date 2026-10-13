@@ -15,6 +15,7 @@ import {
   type StreamEvent as LibraryStreamEvent,
   type ThinkingConfig,
   type ToolFunction,
+  type ToolExecutionOutcome,
 } from '@everworker/oneringai';
 import type {
   AgentResponse,
@@ -36,6 +37,7 @@ import type {
 } from '../config/types.js';
 import { inspectContext } from './contextInspection.js';
 import { buildPermissionsConfig } from './permissionUtils.js';
+import { describeToolOutcome } from './toolOutcomes.js';
 
 export interface AmosModelRuntimeOptions {
   temperature?: number;
@@ -192,6 +194,9 @@ export class AgentRunner implements IAgentRunner {
     const agent = this.requireAgent();
     this._isRunning = true;
     const startedAt = Date.now();
+    const toolOutcomes: ToolExecutionOutcome[] = [];
+    const collect = (outcome: ToolExecutionOutcome): void => { toolOutcomes.push(outcome); };
+    agent.tools.on('tool:outcome', collect);
 
     try {
       const response = await agent.run(input);
@@ -206,10 +211,12 @@ export class AgentRunner implements IAgentRunner {
         mode: 'interactive',
         usage,
         duration: Date.now() - startedAt,
+        toolOutcomes,
       };
       await this.autoSaveIfEnabled();
       return result;
     } finally {
+      agent.tools.off('tool:outcome', collect);
       this._isRunning = false;
     }
   }
@@ -239,7 +246,6 @@ export class AgentRunner implements IAgentRunner {
 
   cancel(): void {
     this.agent?.cancel();
-    this._isRunning = false;
   }
 
   setModel(model: string): void {
@@ -613,9 +619,11 @@ export class AgentRunner implements IAgentRunner {
       case StreamEventType.TOOL_EXECUTION_START:
         return { type: 'tool:start', tool: { name: event.tool_name, args: event.arguments } };
       case StreamEventType.TOOL_EXECUTION_DONE:
-        return event.error
-          ? { type: 'error', error: new Error(`${event.tool_name}: ${event.error}`) }
-          : { type: 'tool:complete', tool: { name: event.tool_name, result: event.result } };
+        return event.outcome && event.outcome.status !== 'succeeded'
+          ? { type: 'error', error: new Error(describeToolOutcome(event.outcome) ?? event.error) }
+          : event.error
+            ? { type: 'error', error: new Error(`${event.tool_name}: ${event.error}`) }
+            : { type: 'tool:complete', tool: { name: event.tool_name, result: event.result } };
       case StreamEventType.RESPONSE_COMPLETE:
         return {
           type: 'done',

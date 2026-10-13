@@ -47,6 +47,16 @@ expose estimated prepared-revision diagnostics. See the
 [preparation guide](./docs/CONTEXT_PREPARATION.md) and
 [living Version 2 guide](./docs/VERSION_2_GUIDE.md) for adoption and validation.
 
+Stage 02 adds inspectable tool outcomes and per-execution cancellation while
+preserving raw results and existing timeout/retry defaults. See the
+[tool outcomes and cancellation guide](./docs/TOOL_OUTCOMES_AND_CANCELLATION.md)
+for `executeWithOutcome()`, late completion, and opt-in connector deadlines/retry
+policies. `success: false` in application data is not automatically an execution
+failure. Calls retain their admitted connector authority and tool implementation;
+queued background results are checked again at delivery. A timeout does not establish
+whether an external write happened.
+
+
 ## Built for coding agents
 
 OneRingAI ships a canonical **[Agent Guide](./AGENTS.md)** that gives Codex,
@@ -283,7 +293,7 @@ plugin lifecycle, stores, compaction, persistence, and custom plugins.
 | **[Agent Runtime Guide](./USER_GUIDE.md#agent-runtime-preview)** | Detailed usage guide for interchangeable OneRingAI/Codex agents, model and reasoning controls, live observation, capabilities, policy, lifecycle, and cleanup |
 | **[Agent Runtime Design](./docs/designs/AGENT_RUNTIME.md)** | Implemented local preview for OneRingAI and Codex SDK agents: generic model/reasoning controls, live observable autonomous runs, capabilities, policy, and the isolated-server roadmap |
 | **[Agentic Architecture Evolution Plan](./docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md)** | Accepted roadmap direction: nine core stages plus conditional extensions for context, model roles, tools, and learning, with tests, examples, AMOS, and compatibility gates |
-| **[Version 2 Guide (work in progress)](./docs/VERSION_2_GUIDE.md)** | Living adoption guide tracking planned, branch-available, and released capabilities; stages 00 and 01 are validated on the development branch |
+| **[Version 2 Guide (work in progress)](./docs/VERSION_2_GUIDE.md)** | Living adoption guide tracking planned, branch-available, and released capabilities; stages 00–02 are implemented on the development branch; see provider validation limits |
 | **[Agentic Baseline Evaluation](./docs/AGENTIC_BASELINE_EVALUATION.md)** | Repository-only offline replay and opt-in live LLM workloads, evidence-based completion checks, compatibility fixtures, and evaluation limits |
 | **[User Guide](./USER_GUIDE.md)** | Comprehensive guide covering every feature with examples — connectors, agents, context, plugins, audio, video, search, MCP, OAuth, and more |
 | **[API Reference](./API_REFERENCE.md)** | Auto-generated reference for all public exports — classes, interfaces, types, and functions with signatures |
@@ -1394,6 +1404,8 @@ const state = plugin.get('current_state');  // { step: 2, status: 'active' }
 
 **Key Difference from WorkingMemory:**
 - **WorkingMemory**: External storage + index → requires `store_get("notes", key)` for values
+- A keyless notes lookup returns keys/descriptions only. Pass each exact index key
+  (including tier prefix and collision suffix) to read source contents.
 - **InContextMemory**: Full values in context → instant access, no retrieval needed
 
 **UI metadata (`showInUI`):** OneRingAI stores, serializes, and reports this

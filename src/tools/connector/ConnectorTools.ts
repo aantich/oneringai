@@ -694,6 +694,7 @@ export class ConnectorTools {
                 ...safeHeaders,
               },
               body: bodyStr,
+              signal: context?.signal,
             },
             effectiveUserId,
             effectiveAccountId

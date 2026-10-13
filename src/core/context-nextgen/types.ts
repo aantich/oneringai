@@ -139,9 +139,9 @@ export interface ITokenEstimator {
  * ## Tool Naming Convention
  *
  * Use a consistent prefix based on plugin name:
- * - `working_memory` plugin → `memory_store`, `memory_retrieve`, `memory_delete`, `memory_list`
- * - `in_context_memory` plugin → `context_set`, `context_delete`, `context_list`
- * - `persistent_instructions` plugin → `instructions_set`, `instructions_remove`, `instructions_list`, `instructions_clear`
+ * Plugins implementing IStoreHandler share the unified `store_*` tools, routed
+ * by store ID: `notes`, `whiteboard`, or `instructions`. Other plugins use their
+ * own consistent tool prefix.
  *
  * ## State Serialization
  *
@@ -207,8 +207,8 @@ export interface IContextPluginNextGen {
    * getInstructions(): string {
    *   return `## Working Memory
    *
-   * Use memory_store to save important data for later retrieval.
-   * Use memory_retrieve to recall previously stored data.
+   * Use store_set with store="notes" to save data for later retrieval.
+   * Use store_get with store="notes" and an exact key to read stored values.
    *
    * Best practices:
    * - Use descriptive keys like 'user_preferences' not 'data1'
@@ -471,7 +471,7 @@ export interface StoreEntrySchema {
   /** Human-readable store name (e.g., "Notes", "Whiteboard") */
   displayName: string;
 
-  /** One-line description of what this store holds */
+  /** Description of the store and its retrieval behavior, included in store_get guidance. */
   description: string;
 
   /**
@@ -511,7 +511,7 @@ export interface StoreGetResult {
   key?: string;
   /** Single entry data (when key provided) */
   entry?: Record<string, unknown>;
-  /** All entries (when no key provided) */
+  /** Store-specific default view without a key; may contain only index metadata. */
   entries?: Array<Record<string, unknown>>;
 }
 

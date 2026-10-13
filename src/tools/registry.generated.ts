@@ -85,7 +85,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Execute JavaScript code in a secure sandbox with authenticated API access via connectors.",
     tool: executeJavaScript,
     safeByDefault: false,
-    implementationHash: 'sha256:ea9889e8c16d43c1e8d63771436a6bff632a2cd9728df04c563ee7e0644ce571',
+    implementationHash: 'sha256:a5680861407460965ec3b934d6c79b7cf39fc742a717b235f940abcea048d7f5',
   },
   {
     name: 'custom_tool_delete',
@@ -95,7 +95,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Delete a custom tool from persistent storage.",
     tool: customToolDelete,
     safeByDefault: false,
-    implementationHash: 'sha256:650b9a563068ed42af287c774691d00ac4c9706e346c426e13008e2565a91d81',
+    implementationHash: 'sha256:5441645bcd7e8ec02448dcc236b1b5e13afe6edb547562512d0474e7063f0153',
   },
   {
     name: 'custom_tool_draft',
@@ -105,7 +105,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Validate a draft custom tool definition. Checks name format, schema structure, and code syntax.",
     tool: customToolDraft,
     safeByDefault: true,
-    implementationHash: 'sha256:b53baa2d11da5a212d25d45a033e2ee55079d283beaecdf6631f34fa99cc533a',
+    implementationHash: 'sha256:43d3245b1beef6252f297b109f96a0a573f89181151561be43ee9fc6ed59a797',
   },
   {
     name: 'custom_tool_list',
@@ -115,7 +115,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "List saved custom tools from persistent storage. Supports filtering by search text, tags, and category.",
     tool: customToolList,
     safeByDefault: true,
-    implementationHash: 'sha256:fc6e9e2d56a39bdde4a5eeff6e10b73b7540d32d4b44cc7e1b9513becf04ba91',
+    implementationHash: 'sha256:b117532b127354b518633a6d2fce43cefbb6687c63ac7f0681c27b865b1c9173',
   },
   {
     name: 'custom_tool_load',
@@ -125,7 +125,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Load a full custom tool definition from storage (including code).",
     tool: customToolLoad,
     safeByDefault: true,
-    implementationHash: 'sha256:123863ec29dd87612e23169ad95ecdc02d18da53539230e49c3d2407ab2e6261',
+    implementationHash: 'sha256:aa46255aa068d7c3cf18117f697195b0e54d9bc0e0b9297343a70bad6d798d29',
   },
   {
     name: 'custom_tool_save',
@@ -135,7 +135,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Save a custom tool definition to persistent storage.",
     tool: customToolSave,
     safeByDefault: false,
-    implementationHash: 'sha256:d51869a984d4072642e1ffcb0ce5324d558f65cdad4ca14796d0637641250dce',
+    implementationHash: 'sha256:11f5cb108b51b84fefa71ce67aff6a20a7160a02e1dbfa77314202075151a88b',
   },
   {
     name: 'custom_tool_test',
@@ -145,7 +145,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Test custom tool code by executing it in the VM sandbox with provided test input.",
     tool: customToolTest,
     safeByDefault: false,
-    implementationHash: 'sha256:8229b36e7f2de8551ab853de9fc4c2762f965585ec9944f341130db114bbbad2',
+    implementationHash: 'sha256:b164c76af2e07bd4f33ae3cb9309c461bb3416a69e048f4148723fe5ada0e3a4',
   },
   {
     name: 'desktop_get_cursor',
@@ -155,7 +155,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Get the current mouse cursor position in screen pixel coordinates (same space as the screenshot and mouseClick/mouseMove).",
     tool: desktopGetCursor,
     safeByDefault: false,
-    implementationHash: 'sha256:c109141aa59f7cb75e8cbf6ab77c523426294f4235584038f34314d43fa74e11',
+    implementationHash: 'sha256:54b44e3a598a16e3627ef8d09d6e011f8bcf8acadd12c1a129a733c6520c72c0',
   },
   {
     name: 'desktop_get_screen_size',
@@ -165,7 +165,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Get the screen dimensions. Returns physical pixel size (screenshot space), logical size (OS coordinates), and the scale factor (e.g., 2.0 on Retina displays). All desktop tool coordinates use physical",
     tool: desktopGetScreenSize,
     safeByDefault: false,
-    implementationHash: 'sha256:a4595f79c02e19d3a3055a767aadae61db9ee5689a25138d3b11afa42500d0e8',
+    implementationHash: 'sha256:985031819d2baccd38f53f1666af8acfb69b26577c66e59b3c91ca32ebe597d7',
   },
   {
     name: 'desktop_keyboard_key',
@@ -175,7 +175,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Press a keyboard shortcut or special key. Use \"+\" to combine keys (e.g., \"ctrl+c\", \"cmd+shift+s\", \"enter\", \"tab\", \"escape\"). Modifiers: ctrl, cmd/command, alt/option, shift. Special keys: enter, tab, ",
     tool: desktopKeyboardKey,
     safeByDefault: false,
-    implementationHash: 'sha256:a238902c3259ab510fe6b9b579b3b018ac7b5f8d57fdda3f4c81e0cc026bb996',
+    implementationHash: 'sha256:d6726d3b33706445dba3873c0094a2b346925ced8e3bc043259b0765aa1c8c09',
   },
   {
     name: 'desktop_keyboard_type',
@@ -185,7 +185,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Type text using the keyboard. Each character is typed as a keypress. Use this for entering text into focused input fields.",
     tool: desktopKeyboardType,
     safeByDefault: false,
-    implementationHash: 'sha256:a1858cc68e0a5e1973ca110099119f576238d0ec632c61cbee68c728270cd37d',
+    implementationHash: 'sha256:c48dd1ed378ededac3f90fab7ebb2d376c1bd001a669bf61a69949131eeb5591',
   },
   {
     name: 'desktop_mouse_click',
@@ -195,7 +195,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Click the mouse at the specified position or at the current cursor position. Supports left/right/middle button and single/double/triple click.",
     tool: desktopMouseClick,
     safeByDefault: false,
-    implementationHash: 'sha256:6506979cb4c64ef35771477c31e160dc13380abd075b1b0af80763ce95c388ab',
+    implementationHash: 'sha256:1070752d86ed456e50f2bd92b735370ef7f09cafa0cfe2b0ab5f24c4f17bf69c',
   },
   {
     name: 'desktop_mouse_drag',
@@ -205,7 +205,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Drag the mouse from one position to another. Presses the button at the start position, moves to the end position, then releases.",
     tool: desktopMouseDrag,
     safeByDefault: false,
-    implementationHash: 'sha256:e88fd1770ec8bdb0cef53d8fe927f8a5ce30ccb4855d283e4dcd59e765b52bce',
+    implementationHash: 'sha256:4909ef527af9a8ef4caf7bd41d50ef9ae0fc2d349a5429fef8351c334c578f08',
   },
   {
     name: 'desktop_mouse_move',
@@ -215,7 +215,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Move the mouse cursor to the specified (x, y) position. Coordinates are in screen pixel space (full screen). Returns the actual cursor position after the move for verification.",
     tool: desktopMouseMove,
     safeByDefault: false,
-    implementationHash: 'sha256:5bce25c3bd3f3ed17598e97d3225da7d8f4e86c12e22ab9b0616f98e7fb58dac',
+    implementationHash: 'sha256:c0ff9eb16e5b0edde4909b75743454302a0472d332edf0ff2b90c62e110199a8',
   },
   {
     name: 'desktop_mouse_scroll',
@@ -225,7 +225,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Scroll the mouse wheel. Positive deltaY scrolls down, negative scrolls up. Positive deltaX scrolls right, negative scrolls left. Optionally specify position to scroll at.",
     tool: desktopMouseScroll,
     safeByDefault: false,
-    implementationHash: 'sha256:290a536fca9e95704be5b3f1744893986b2fa5c243e4998a56feb669f41f70e5',
+    implementationHash: 'sha256:49209e2066d062520c16c0ec1b601e7b7c2b04edddd8006d333c464be9855142',
   },
   {
     name: 'desktop_screenshot',
@@ -235,7 +235,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Take a screenshot of the entire screen or a specific region. Returns the screenshot image for visual analysis. The image pixel coordinates match the coordinate space used by desktop_mouse_click / desk",
     tool: desktopScreenshot,
     safeByDefault: false,
-    implementationHash: 'sha256:fab54fc1295cbea551534b2f46a9d860b4d70abd426ef22c0669f2d861b87f6e',
+    implementationHash: 'sha256:e973bc4528036ffac46979dd0051e9362cfd0ab982ce81e61cf6c74c03b70b3a',
   },
   {
     name: 'desktop_window_focus',
@@ -245,7 +245,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Focus (bring to front) a window by its ID. Use desktop_window_list to get available window IDs.",
     tool: desktopWindowFocus,
     safeByDefault: false,
-    implementationHash: 'sha256:455f991796ece188d9bcabe580e92db0a262c6cc799322dd8ffc9decee43e71e',
+    implementationHash: 'sha256:865368374a2b2255979e80150b16325dc0965ab91ab5c4011af7ad1801502a20',
   },
   {
     name: 'desktop_window_list',
@@ -255,7 +255,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "List all visible windows on the desktop. Returns window IDs, titles, application names, and bounds. Use the window ID with desktop_window_focus to bring a window to the foreground.",
     tool: desktopWindowList,
     safeByDefault: false,
-    implementationHash: 'sha256:505688704ff6ffc4449bb046c51ba3ea260fe0fc76b1f1bad38efc6d44c75cb7',
+    implementationHash: 'sha256:c1af8df4f19aeaf67b9c6eaa3310683129db17999337faf573ae07a6fad82de3',
   },
   {
     name: 'edit_file',
@@ -265,7 +265,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Perform exact string replacements in files.",
     tool: editFile,
     safeByDefault: false,
-    implementationHash: 'sha256:59b907aafc22701db7e6a81e18b9f5399b0f0d20b10256fc585c08fab28643dc',
+    implementationHash: 'sha256:870eb2f95ea9698f04351f529b8275418aa59f96ec2d705e4997cde147bf8cae',
   },
   {
     name: 'glob',
@@ -275,7 +275,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Fast file pattern matching tool that finds files by name patterns.",
     tool: glob,
     safeByDefault: true,
-    implementationHash: 'sha256:0c7e79a999b27fdf8b002188dfea59b239412b63fb88f0e70c68562e17501653',
+    implementationHash: 'sha256:be9283d456ad058dafedf8ba9ce2277557cf751bc2949fdc908611d1f99ee620',
   },
   {
     name: 'grep',
@@ -285,7 +285,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "A powerful search tool for finding content within files.",
     tool: grep,
     safeByDefault: true,
-    implementationHash: 'sha256:52f90efe7e7c6c08f539f53ed1d2485f5b888d1cd21ee4179b53d99d0cc742fd',
+    implementationHash: 'sha256:78cd2da5bb68e81169b4a533c71d2e2f4d833c00625ae7f9673a6ca712085ff7',
   },
   {
     name: 'list_directory',
@@ -295,7 +295,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "List the contents of a directory on the local filesystem.",
     tool: listDirectory,
     safeByDefault: true,
-    implementationHash: 'sha256:a9096efff4d945fa10bf11c684e03e20271f95a84cb0bf1f2fd0980afcfd3caa',
+    implementationHash: 'sha256:30f92102a98708ce5779c463da867803a26f1b25ae0fd3c94e086489bb60d57f',
   },
   {
     name: 'read_file',
@@ -305,7 +305,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Read content from a file on the local filesystem. Supports text files AND binary document formats — PDF, DOCX, PPTX, XLSX, ODS, ODT, ODP, and images (PNG, JPG, GIF, WEBP) are automatically converted t",
     tool: readFile,
     safeByDefault: true,
-    implementationHash: 'sha256:fec50f0f5b2de7908e904f2ecb254b50816dd90b1d2ee5c3dbd7543ad6ed4c3e',
+    implementationHash: 'sha256:e375de23acdd5c6ea4896ea8c862de0a63c3a3d6e3eb8a5e0f68a23a776cb43c',
   },
   {
     name: 'write_file',
@@ -315,7 +315,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Write content to a file on the local filesystem.",
     tool: writeFile,
     safeByDefault: false,
-    implementationHash: 'sha256:ec21134bb8f7c4d0dc8f5049dfad6af965a1c1d41742807064e1e837fb09e27a',
+    implementationHash: 'sha256:bdd7c2914f1ae4e007745d4bfaab9969f11b75c9ef89661c62c7d6f8e2db8d01',
   },
   {
     name: 'json_manipulate',
@@ -325,7 +325,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Manipulate JSON objects by deleting, adding, or replacing fields at any depth.",
     tool: jsonManipulator,
     safeByDefault: true,
-    implementationHash: 'sha256:bab2319a35d022a8264167de9fa4ab574dfc869b21a08104e8295626534b0d3f',
+    implementationHash: 'sha256:04577df1d29b7829006f2cbb2c87eb3dc430a44ca69ac39f6b1a495d87e373e4',
   },
   {
     name: 'generate_routine',
@@ -335,7 +335,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Complete routine definition input",
     tool: generateRoutine,
     safeByDefault: false,
-    implementationHash: 'sha256:fda127d26f9ff74ceef982f0beb01aa260b3ae15f30b2e87347782958ef82a02',
+    implementationHash: 'sha256:8a5d002f86d9c94febd43d482442ba93e7380903ff336076f69557f34d739d76',
   },
   {
     name: 'routine_delete',
@@ -345,7 +345,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Permanently delete a routine definition. Past execution records are preserved, but any schedules or systems still referencing this routine ID will fail at runtime. Confirm with the user before calling",
     tool: routineDelete,
     safeByDefault: false,
-    implementationHash: 'sha256:ce0afd66c1a60566acd6e38c0a2f918de9fbeb55e5f538cd8a731ddf5b172794',
+    implementationHash: 'sha256:dcd6b287a5a23f86774f93d56061b23d92ea2f51e47e9c2da760faba784f53f4',
   },
   {
     name: 'routine_get',
@@ -355,7 +355,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Retrieve a routine definition by ID or by name search. Returns the full routine structure including tasks, parameters, and metadata.",
     tool: routineGet,
     safeByDefault: false,
-    implementationHash: 'sha256:a5e915d30d28ecf2f72b7585f3b9db39a76a4a3a6924e7c3d2014f563ca8b285',
+    implementationHash: 'sha256:f9003daeecad24e05663d2571106ff66fcd51b661969e3ca3f132944a13fb987',
   },
   {
     name: 'routine_get_task_steps',
@@ -365,7 +365,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Get step-level execution detail for a routine execution. Filter by task name, phase, or step types.\\n\\n",
     tool: routineGetTaskSteps,
     safeByDefault: false,
-    implementationHash: 'sha256:2d54a88f6c3434b878c4c23ed160a959aabe1d23ad99922024a23ac4781f1a62',
+    implementationHash: 'sha256:0cc149d44758934161552ab4ec25e1204fe058a8d9998d22db752f56d3151126',
   },
   {
     name: 'routine_list',
@@ -375,7 +375,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "List routine definitions accessible to the caller. Returns slim summary entries (id, name, description, version, author, tags, task count, parameter names) — fetch the full structure with routine_get.",
     tool: routineList,
     safeByDefault: false,
-    implementationHash: 'sha256:9c38fc23d6df471a1a4cc3f003593e40f45ddfaef385998fd1ab1add9e21faed',
+    implementationHash: 'sha256:6c904a7ca61f684a43d6c81835a159e684c6526c17a13ae51942c938ec2f8183',
   },
   {
     name: 'routine_list_executions',
@@ -385,7 +385,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "List execution records for a routine. Returns summaries of past and current executions including status, timing, and per-task results.",
     tool: routineListExecutions,
     safeByDefault: false,
-    implementationHash: 'sha256:5da3df2b5e287dc3e74695baf125f7c7d04fc920bcb3209c50601045b4bd0f6a',
+    implementationHash: 'sha256:e1419de423187662ee26960e0a9237dbe44889756cccadcced64ffb729a73176',
   },
   {
     name: 'routine_update',
@@ -395,7 +395,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Update an existing routine definition.",
     tool: routineUpdate,
     safeByDefault: false,
-    implementationHash: 'sha256:2c7d0a7a0b59ebb7f4ebab91bea3c283e495da380d7f7ac9c069ca87b8699d96',
+    implementationHash: 'sha256:0129f46fe3f9b909388e819b4f5f679cdec03d0ac14346be03396e2ef52dcefc',
   },
   {
     name: 'routine_update_task',
@@ -405,7 +405,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Update a specific task within an existing routine definition. Validates the updated routine before saving.",
     tool: routineUpdateTask,
     safeByDefault: false,
-    implementationHash: 'sha256:2327dadca5b3ee97b12715a2e85d3b84d9a6523dcb15adbdc0784424aa782e7f',
+    implementationHash: 'sha256:b624b0f25dd6ac100162650a765807aa96ad14786c3649a1732631ffaf532085',
   },
   {
     name: 'bash',
@@ -415,7 +415,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Execute shell commands with optional timeout.",
     tool: bash,
     safeByDefault: false,
-    implementationHash: 'sha256:07f43a47d48c0b66bdc46161798eca1d46ebc0b72be7017323f16dd69ed9c8d9',
+    implementationHash: 'sha256:ec14f0845a6d047e0c41e94d76b5e60732188d79a5f3319426e06c59101b663c',
   },
   {
     name: 'bg_process_kill',
@@ -425,7 +425,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Stop a running background process. Sends SIGTERM for graceful shutdown (allows the process to clean up), then SIGKILL after 3 seconds if it hasn't exited. Kills the entire process tree — so \"npm run d",
     tool: bgProcessKill,
     safeByDefault: false,
-    implementationHash: 'sha256:ca897a863532562e3b4b0c8fb227d4dbc9c9c277e88932f6446d705ab6be6b5c',
+    implementationHash: 'sha256:9791d7e96c1bb2d099b9811acfff37b8551b3bdf046433c0aa0c925de1d5d1b1',
   },
   {
     name: 'bg_process_list',
@@ -435,7 +435,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "List all background processes and their current status. Use this to: see what background processes are running (dev servers, watchers, builds), find a process ID you forgot, check if a background comm",
     tool: bgProcessList,
     safeByDefault: true,
-    implementationHash: 'sha256:5c81823778da7b9783a4f030a6d2abe03f22714832df9ffd92be6eeb5aae001f',
+    implementationHash: 'sha256:2d0479ed61eb4b27679c8e088be774173e85724419ec765c2f3174a9e8a39561',
   },
   {
     name: 'bg_process_output',
@@ -445,7 +445,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Read output from a background process started with dev_server or bash run_in_background=true. Use this to monitor dev servers, file watchers, build processes, or any background command. For processes ",
     tool: bgProcessOutput,
     safeByDefault: true,
-    implementationHash: 'sha256:e51e9cc9e3ef853c2ecfd9d82261d22a8d9ea1a28548c8351222d4bb8bd9af65',
+    implementationHash: 'sha256:9da2d2e800b4f46dff3af34b88a70a58ae101eed123ba9534d65a59de917ac02',
   },
   {
     name: 'dev_server',
@@ -455,7 +455,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Start a development server or long-running process with automatic log file capture.",
     tool: devServer,
     safeByDefault: false,
-    implementationHash: 'sha256:0685362cf7a526f57fb869dc383607d2121f58a3f5af08aef7201af249fdecee',
+    implementationHash: 'sha256:e431e5f83c5117c4e2dc9416c5780becda7f57f0db66268c0cc1f669c14cd0a2',
   },
   {
     name: 'web_fetch',
@@ -465,7 +465,7 @@ export const toolRegistry: ToolRegistryEntry[] = [
     description: "Fetch and extract content from a URL — works with web pages AND document files (PDF, DOCX, XLSX, PPTX, etc.). Document URLs are automatically detected and converted to markdown text.",
     tool: webFetch,
     safeByDefault: true,
-    implementationHash: 'sha256:7c9a8c481dbebae340c5477aef850a4b0e4fd7c36b0b2b120ff3d1deef5606a9',
+    implementationHash: 'sha256:99f4a59463c54ea0def57d3f5ad61544cd28a5ad8307268ac09a380cedca5a0c',
   }
 ];
 

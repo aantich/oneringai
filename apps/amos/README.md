@@ -212,3 +212,23 @@ npm run typecheck    # Type checking
 ## License
 
 MIT
+
+
+### Stage 02 tool outcomes
+
+AMOS renders normalized tool failures accurately in streaming and non-streaming
+runs. Cancellation/timeouts distinguish an unstarted tool from uncertain completion;
+the app never claims that cancellation prevented an external write. A cancelled
+run remains active until its wait settles. Existing app configuration and saved
+sessions remain compatible; no new setting or command is required.
+
+From the repository root, build the library and run
+`npm run example:amos-tool-outcomes` for an offline rendering demonstration using
+real local cooperative/noncooperative tool invocations. No credentials or external
+services are used. See the [library guide](../../docs/TOOL_OUTCOMES_AND_CANCELLATION.md)
+for supported cancellation paths and the separately opt-in live tests.
+
+Stage 02 corrective validation also covers throwing background event observers,
+early stream return, queued result scope changes, and connector clone/deadline handling.
+These library fixes preserve AMOS's existing progress presentation; the offline outcome
+example and adapter tests remain the app demonstration and validation.

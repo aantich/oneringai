@@ -139,6 +139,8 @@ export interface ToolExecutionStartEvent extends BaseStreamEvent {
  * Tool execution complete
  */
 export interface ToolExecutionDoneEvent extends BaseStreamEvent {
+  /** Additive semantic metadata; raw content retains its existing shape. */
+  outcome?: import('./Tool.js').ToolExecutionOutcome;
   type: StreamEventType.TOOL_EXECUTION_DONE;
   tool_call_id: string;
   tool_name: string;

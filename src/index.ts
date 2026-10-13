@@ -449,6 +449,7 @@ export type {
   IToolExecutionPlugin,
   IToolExecutionPipeline,
   ToolExecutionPipelineOptions,
+  PipelineExecutionOptions,
   LoggingPluginOptions,
 } from './core/index.js';
 
@@ -2080,3 +2081,5 @@ export type {
   TestParam,
   RunSuiteOptions,
 } from './testing/integration/types.js';
+
+export type { ToolExecutionOutcome, ToolExecutionOptions, ToolExecutionReport } from './core/tool-execution/outcomes.js';

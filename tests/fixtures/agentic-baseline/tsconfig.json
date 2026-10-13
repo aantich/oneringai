@@ -1,6 +1,12 @@
 {
   "extends": "../../../tsconfig.json",
-  "compilerOptions": { "noEmit": true, "rootDir": "." },
-  "include": ["consumer.ts"],
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": [
+    "consumer.ts",
+    "stage02-consumer.ts"
+  ],
   "exclude": []
 }

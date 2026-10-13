@@ -15,6 +15,7 @@ import type {
   IToolExecutionPlugin,
   PluginExecutionContext,
 } from '../types.js';
+import { markNormalizedFailure } from '../outcomes.js';
 
 /**
  * Configuration options for ResultNormalizerPlugin
@@ -81,6 +82,9 @@ export class ResultNormalizerPlugin implements IToolExecutionPlugin {
    * Converts undefined/null to error objects, optionally wraps primitives.
    */
   async afterExecute(ctx: PluginExecutionContext, result: unknown): Promise<unknown> {
+    if (result === undefined || result === null) {
+      markNormalizedFailure(ctx, new Error(`Tool '${ctx.toolName}' returned no result`));
+    }
     return this.normalize(result, ctx.toolName);
   }
 
@@ -89,6 +93,7 @@ export class ResultNormalizerPlugin implements IToolExecutionPlugin {
    * This allows the tool call to return a valid result instead of throwing.
    */
   async onError(ctx: PluginExecutionContext, error: Error): Promise<NormalizedErrorResult> {
+    markNormalizedFailure(ctx, error);
     return {
       success: false,
       error: error.message,

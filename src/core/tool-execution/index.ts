@@ -33,6 +33,7 @@ export type {
   IToolExecutionPlugin,
   IToolExecutionPipeline,
   ToolExecutionPipelineOptions,
+  PipelineExecutionOptions,
 } from './types.js';
 
 // Pipeline
@@ -45,3 +46,5 @@ export {
   type ResultNormalizerPluginOptions,
   type NormalizedErrorResult,
 } from './plugins/ResultNormalizerPlugin.js';
+
+export type { ToolExecutionOutcome, ToolExecutionOptions, ToolExecutionReport } from './outcomes.js';

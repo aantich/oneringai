@@ -27,6 +27,7 @@ import { metrics } from '../infrastructure/observability/Metrics.js';
 import type { IConnectorRegistry } from '../domain/interfaces/IConnectorRegistry.js';
 import type { IConnectorAccessPolicy, ConnectorAccessContext } from '../domain/interfaces/IConnectorAccessPolicy.js';
 import { ScopedConnectorRegistry } from './ScopedConnectorRegistry.js';
+import { abortableDelay, withAbort } from './tool-execution/cancellation.js';
 import { ConnectorNotFoundError } from '../domain/errors/AIErrors.js';
 
 /**
@@ -44,6 +45,10 @@ export const DEFAULT_MAX_DELAY_MS = 30000;
 export interface ConnectorFetchOptions extends RequestInit {
   /** Override timeout for this request */
   timeout?: number;
+  /** Legacy per-attempt header timeout (default), or one deadline through auth, retries and body consumption. */
+  timeoutScope?: 'headers' | 'operation';
+  /** Opt in to retrying only GET/HEAD/OPTIONS; ambiguous writes are never replayed. */
+  retryPolicy?: 'legacy' | 'safe';
   /** Skip retry for this request */
   skipRetry?: boolean;
   /** Skip circuit breaker for this request */
@@ -665,6 +670,18 @@ export class Connector {
     // Get timeout
     const timeout = options?.timeout ?? this.config.timeout ?? DEFAULT_CONNECTOR_TIMEOUT;
 
+    const operationController = new AbortController();
+    const operationScope = options?.timeoutScope === 'operation';
+    const operationTimer = operationScope && timeout > 0
+      ? setTimeout(() => operationController.abort(new DOMException(`Request timeout after ${timeout}ms: ${url}`, 'TimeoutError')), timeout)
+      : undefined;
+    // Native composition keeps caller cancellation effective during response-body reads.
+    const operationSignal = options?.signal
+      ? AbortSignal.any([options.signal, operationController.signal])
+      : operationController.signal;
+    const method = (options?.method ?? 'GET').toUpperCase();
+    const mayRetry = options?.retryPolicy !== 'safe' || ['GET', 'HEAD', 'OPTIONS'].includes(method);
+
     // Log request if enabled
     if (this.config.logging?.enabled) {
       this.logRequest(url, options);
@@ -673,7 +690,9 @@ export class Connector {
     // Build the actual fetch function
     const doFetch = async (): Promise<Response> => {
       // Get token (may involve refresh)
-      const token = await this.getToken(userId, accountId);
+      operationSignal.throwIfAborted();
+      const token = await withAbort(this.getToken(userId, accountId), operationSignal);
+      operationSignal.throwIfAborted();
       const auth = this.config.auth;
 
       // Query-param auth (e.g., ipapi.co `?key=...`) — inject into URL and
@@ -699,19 +718,20 @@ export class Connector {
 
       // Create abort controller for timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      const timeoutId = !operationScope ? setTimeout(() => controller.abort(), timeout) : undefined;
+      const requestSignal = AbortSignal.any([operationSignal, controller.signal]);
 
       try {
-        const response = await fetch(requestUrl, {
+        const response = await withAbort(fetch(requestUrl, {
           ...options,
-          signal: controller.signal,
+          signal: requestSignal,
           headers: queryParamName
             ? { ...options?.headers }
             : {
                 ...options?.headers,
                 [headerName]: headerValue,
               },
-        });
+        }), requestSignal);
 
         return response;
       } finally {
@@ -744,7 +764,7 @@ export class Connector {
           const response = await doFetch();
 
           // Check if we should retry based on status code
-          if (!response.ok && retryableStatuses.includes(response.status) && attempt <= maxRetries) {
+          if (!response.ok && retryableStatuses.includes(response.status) && attempt <= maxRetries && mayRetry && !options?.skipRetry) {
             lastResponse = response;
             const delay = calculateBackoff(attempt, backoffConfig);
 
@@ -752,7 +772,8 @@ export class Connector {
               logger.debug(`Connector ${this.name}: Retry ${attempt}/${maxRetries} after ${delay}ms (status ${response.status})`);
             }
 
-            await this.sleep(delay);
+            if (options?.retryPolicy === 'safe' && response.body) await withAbort(response.body.cancel(), operationSignal);
+            await abortableDelay(delay, operationSignal);
             continue;
           }
 
@@ -760,20 +781,22 @@ export class Connector {
         } catch (error) {
           lastError = error as Error;
 
+          if (operationSignal.aborted) throw operationSignal.reason;
+
           // Don't retry on abort (timeout)
           if (lastError.name === 'AbortError') {
             throw new Error(`Request timeout after ${timeout}ms: ${url}`);
           }
 
           // Retry on network errors
-          if (attempt <= maxRetries && !options?.skipRetry) {
+          if (attempt <= maxRetries && !options?.skipRetry && mayRetry) {
             const delay = calculateBackoff(attempt, backoffConfig);
 
             if (this.config.logging?.enabled) {
               logger.debug(`Connector ${this.name}: Retry ${attempt}/${maxRetries} after ${delay}ms (error: ${lastError.message})`);
             }
 
-            await this.sleep(delay);
+            await abortableDelay(delay, operationSignal);
             continue;
           }
 
@@ -812,8 +835,45 @@ export class Connector {
         this.logResponse(url, response, latency);
       }
 
-      return response;
+      if (!operationScope || !response.body) {
+        clearTimeout(operationTimer);
+        return response;
+      }
+      const reader = response.body.getReader();
+      let cancellingBody = false;
+      const body = new ReadableStream<Uint8Array>({
+        async pull(stream) {
+          try {
+            const chunk = await withAbort(reader.read(), operationSignal);
+            if (chunk.done) {
+              if (!cancellingBody) clearTimeout(operationTimer);
+              reader.releaseLock();
+              stream.close();
+            } else stream.enqueue(chunk.value);
+          } catch (error) {
+            if (!cancellingBody) clearTimeout(operationTimer);
+            void reader.cancel(error).catch(() => undefined);
+            stream.error(error);
+          }
+        },
+        async cancel(reason) {
+          cancellingBody = true;
+          try { await withAbort(reader.cancel(reason), operationSignal); }
+          finally { clearTimeout(operationTimer); reader.releaseLock(); }
+        },
+      });
+      const wrapped = new Response(body, { status: response.status, statusText: response.statusText, headers: response.headers });
+      const preserveMetadata = (target: Response): Response => {
+        for (const key of ['url', 'redirected', 'type'] as const) {
+          Object.defineProperty(target, key, { value: response[key] });
+        }
+        const nativeClone = target.clone.bind(target);
+        Object.defineProperty(target, 'clone', { value: () => preserveMetadata(nativeClone()) });
+        return target;
+      };
+      return preserveMetadata(wrapped);
     } catch (error) {
+      clearTimeout(operationTimer);
       // Record failure
       const latency = Date.now() - startTime;
       this.failureCount++;
@@ -873,10 +933,6 @@ export class Connector {
   }
 
   // ============ Private Helpers ============
-
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
 
   /**
    * Strip the value of a known auth query parameter from a URL for logging.

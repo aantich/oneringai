@@ -49,8 +49,8 @@ export class PermissionEnforcementPlugin implements IToolExecutionPlugin {
   }
 
   async beforeExecute(ctx: PluginExecutionContext): Promise<BeforeExecuteResult> {
-    const toolCtx = this.getToolContext();
-    const reg = this.getToolRegistration(ctx.toolName);
+    const toolCtx = ctx.toolContext ?? this.getToolContext();
+    const reg = ctx.registration ?? this.getToolRegistration(ctx.toolName);
 
     const policyCtx: PolicyContext = {
       toolName: ctx.toolName,

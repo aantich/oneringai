@@ -8,6 +8,17 @@
  */
 
 import type { ToolFunction } from '../../domain/entities/Tool.js';
+import type { ToolContext } from '../../domain/interfaces/IToolContext.js';
+import type { PipelineOutcome } from './outcomes.js';
+import type { ToolRegistrationInfo } from '../permissions/PermissionEnforcementPlugin.js';
+
+export interface PipelineExecutionOptions {
+  executionId?: string;
+  toolContext?: ToolContext;
+  /** Admission-time registration metadata; later registrations apply to future calls. */
+  registration?: ToolRegistrationInfo;
+  onOutcome?: (outcome: PipelineOutcome) => void;
+}
 
 /**
  * Context passed through the execution pipeline.
@@ -34,6 +45,10 @@ export interface PluginExecutionContext {
 
   /** Unique execution ID for tracing */
   executionId: string;
+  /** Snapshot belonging to this invocation, including its composed signal. */
+  toolContext?: ToolContext;
+  /** Admission-time registration metadata; later registrations apply to future calls. */
+  registration?: ToolRegistrationInfo;
 }
 
 /**
@@ -186,7 +201,7 @@ export interface IToolExecutionPipeline {
    * @param args - Arguments for the tool
    * @returns Result from tool execution (possibly transformed by plugins)
    */
-  execute(tool: ToolFunction, args: unknown): Promise<unknown>;
+  execute(tool: ToolFunction, args: unknown, options?: PipelineExecutionOptions): Promise<unknown>;
 }
 
 /**

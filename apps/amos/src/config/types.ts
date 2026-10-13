@@ -515,6 +515,7 @@ export interface ExternalToolsConfig {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface AgentResponse {
+  toolOutcomes?: import('@everworker/oneringai').ToolExecutionOutcome[];
   text: string;
   mode: 'interactive' | 'planning' | 'executing';
   usage?: TokenUsage;
