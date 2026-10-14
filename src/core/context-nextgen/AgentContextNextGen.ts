@@ -1,3 +1,8 @@
+import type { EvidenceReference } from '../../domain/interfaces/IEvidenceStorage.js';
+import { EvidencePluginNextGen, parseEvidenceSnapshot } from './plugins/EvidencePluginNextGen.js';
+import type { EvidencePluginConfig } from './plugins/EvidencePluginNextGen.js';
+import { InMemoryEvidenceStorage } from '../../infrastructure/storage/EvidenceStorage.js';
+import { evidenceProjection, evidenceProvenance } from '../evidence/ToolEvidenceMiddleware.js';
 /**
  * AgentContextNextGen - Clean, Simple Context Manager
  *
@@ -33,7 +38,7 @@ import type { InputItem, Message } from '../../domain/entities/Message.js';
 import { MessageRole } from '../../domain/entities/Message.js';
 import type { Content } from '../../domain/entities/Content.js';
 import { ContentType } from '../../domain/entities/Content.js';
-import { removableToolGroups, sanitizeToolPairsWithOrigins } from './tool-pairs.js';
+import { hasUnacknowledgedEvidence, removableToolGroups, sanitizeToolPairsWithOrigins } from './tool-pairs.js';
 import type { TextGenerateOptions } from '../../domain/interfaces/ITextProvider.js';
 import type { Tool, FunctionToolDefinition } from '../../domain/entities/Tool.js';
 import type { ToolResult } from '../../domain/entities/Tool.js';
@@ -509,6 +514,13 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       }
     }
 
+    if (features.evidence && !registeredPlugins.has('evidence')) {
+      const config = configs.evidence as EvidencePluginConfig | undefined;
+      const scope = config?.scope ?? config?.storage?.scope ?? { ownerId: this._userId ?? this._agentId, namespace: this._agentId };
+      const storage = config?.storage ?? StorageRegistry.resolve('evidence', () => (s) => new InMemoryEvidenceStorage({ scope: s }))!(scope, StorageRegistry.getContext());
+      this.registerPlugin(new EvidencePluginNextGen({ ...config, storage, scope }));
+    }
+
     // Validate strategy dependencies now that plugins are initialized
     this.validateStrategyDependencies(this._compactionStrategy);
   }
@@ -861,6 +873,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    */
   setCurrentInput(content: string | Content[]): void {
     this.assertNotDestroyed();
+    this.preserveProtectedPendingInput();
     // Clear existing current input array and set new user message as current input.
     // addUserMessage() sets _currentInput = [message] without pushing to _conversation.
     // The user message moves to _conversation later when addAssistantResponse() is called.
@@ -930,6 +943,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       throw new Error(`Plugin '${plugin.name}' is already registered`);
     }
 
+    if (plugin instanceof EvidencePluginNextGen) plugin.attach(this._tools);
     this._plugins.set(plugin.name, plugin);
 
     if (options?.skipDestroyOnContextDestroy) {
@@ -993,6 +1007,38 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   // Conversation Management
   // ============================================================================
 
+  private hasProtectedPendingInput(): boolean {
+    return this.getPlugin('evidence') instanceof EvidencePluginNextGen && this._currentInput.some(hasUnacknowledgedEvidence);
+  }
+
+  /** Preserve the whole pending protocol group before a new input can replace its only raw copy. */
+  private preserveProtectedPendingInput(): void {
+    if (!this.hasProtectedPendingInput()) return;
+    this._conversation.push(...this._currentInput);
+    this._currentInput = [];
+    this._cachedBudget = null;
+  }
+
+  /** The loaded checkpoint owns matching invocations, even when their live acknowledgement has changed. */
+  private removeRestoredProtectedInput(): void {
+    if (!(this.getPlugin('evidence') instanceof EvidencePluginNextGen)) return;
+    const identity = (content: Content): string | undefined =>
+      (content.type === ContentType.TOOL_RESULT || content.type === ContentType.CUSTOM_TOOL_RESULT)
+        && content.evidence?.version === 1 && content.evidence.executionId
+        ? JSON.stringify([content.type, content.tool_use_id, content.evidence.executionId]) : undefined;
+    const restored = new Set(this._conversation.flatMap(item => item.type === 'message'
+      ? item.content.flatMap(content => { const key = identity(content); return key ? [key] : []; }) : []));
+    // Retain the older exact-copy fallback for metadata without an execution ID.
+    const exact = this.hasProtectedPendingInput() ? new Set(this._conversation.map(item => JSON.stringify(item))) : undefined;
+    this._currentInput = this._currentInput.flatMap<InputItem>(item => {
+      if (exact?.has(JSON.stringify(item))) return [];
+      if (item.type !== 'message') return [item];
+      const content = item.content.filter(part => { const key = identity(part); return !key || !restored.has(key); });
+      return content.length === item.content.length ? [item] : content.length ? [{ ...item, content }] : [];
+    });
+    this._cachedBudget = null;
+  }
+
   /**
    * Add a user message.
    * Returns the message ID.
@@ -1013,6 +1059,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     };
 
     // User message becomes current input
+    this.preserveProtectedPendingInput();
     this._currentInput = [message];
 
     // Journal: append user message and increment turn
@@ -1170,7 +1217,21 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       let contentStr: string;
       let images: Array<{ base64: string; mediaType: string }> | undefined;
 
-      if (typeof r.content === 'string') {
+      const plugin = this.getPlugin('evidence');
+      const provenance = evidenceProvenance(r.evidence);
+      const matchingDelivery = plugin instanceof EvidencePluginNextGen && provenance
+        && (provenance.callId === undefined || provenance.callId === r.tool_use_id)
+        && provenance.scope.ownerId === plugin.storage.scope.ownerId
+        && provenance.scope.namespace === plugin.storage.scope.namespace
+        && provenance.scope.tenantId === plugin.storage.scope.tenantId;
+      // An authentic delivery owns its receipt even if a host omits or changes the optional outcome.
+      const receipt = matchingDelivery ? r.evidence : r.outcome?.evidence;
+      const resultMissing = matchingDelivery && !provenance.hasResult;
+      const executionId = matchingDelivery ? provenance.executionId : r.outcome?.executionId;
+      const projection = matchingDelivery ? evidenceProjection(r.evidence, r.content) : undefined;
+      if (projection) {
+        contentStr = projection;
+      } else if (typeof r.content === 'string') {
         contentStr = r.content;
       } else if (r.content && Array.isArray(r.content.__images) && r.content.__images.length > 0) {
         // __images convention: separate images from text content.
@@ -1189,6 +1250,10 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         content: contentStr,
         error: r.error,
         ...(images ? { __images: images } : {}),
+        ...(this.hasPlugin('evidence') && receipt ? { evidence: {
+          version: 1, executionId, status: resultMissing ? 'storage_failed' : receipt.status,
+          ...(!resultMissing && receipt.reference ? { reference: receipt.reference } : {}),
+        } } : {}),
       } as Content;
     });
 
@@ -1200,6 +1265,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     };
 
     // Tool results become current input
+    this.preserveProtectedPendingInput();
     this._currentInput = [message];
 
     // Journal: append tool results (same turn as the preceding assistant tool_use)
@@ -1208,6 +1274,44 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     this.emit('message:added', { role: 'tool', index: this._conversation.length });
 
     return id;
+  }
+
+  /**
+   * Host-only recovery after a failed evidence write. Persist the retained result
+   * without rerunning its tool, then acknowledge the matching invocation here.
+   * Raw content remains unchanged; compaction may subsequently remove its group.
+   */
+  async acknowledgeToolEvidence(callId: string, reference: EvidenceReference): Promise<number> {
+    this.assertNotDestroyed();
+    if (this._contextOperation || this._rolloverInProgress) throw new Error('Context operation in progress');
+    const plugin = this.getPlugin<EvidencePluginNextGen>('evidence');
+    if (!(plugin instanceof EvidencePluginNextGen)) throw new Error('Evidence plugin is disabled');
+    const owner = this._userId;
+    if (owner !== undefined && owner !== plugin.storage.scope.ownerId) throw new Error('Evidence ownership mismatch');
+    const stamp = this.contextStamp();
+    const selectedReference = structuredClone(reference);
+    const record = await plugin.storage.readRecord(selectedReference);
+    this.assertNotDestroyed();
+    if (stamp !== this.contextStamp() || owner !== this._userId || this._contextOperation || this._rolloverInProgress) throw new Error('Context changed while evidence acknowledgement was pending');
+    if (!record || !Object.hasOwn(record, 'result') || (record.source.principal.userId !== undefined && record.source.principal.userId !== plugin.storage.scope.ownerId) || (record.source.callId !== undefined && record.source.callId !== callId)) throw new Error('Evidence does not match the retained tool call');
+    const retainedItems = [...this._conversation, ...this._currentInput];
+    const selected = retainedItems.flatMap(item => item.type === 'message' ? item.content : [])
+      .filter(content => (content.type === ContentType.TOOL_RESULT || content.type === ContentType.CUSTOM_TOOL_RESULT)
+        && content.tool_use_id === callId && content.evidence?.status === 'storage_failed'
+        && content.evidence.executionId === record.source.executionId);
+    if (!selected.length) throw new Error('No matching unacknowledged tool evidence');
+    const callNames = retainedItems.flatMap(item => item.type === 'message' && Array.isArray(item.content) ? item.content : [])
+      .filter(content => ((content.type === ContentType.TOOL_USE && selected.some(result => result.type === ContentType.TOOL_RESULT))
+        || (content.type === ContentType.CUSTOM_TOOL_USE && selected.some(result => result.type === ContentType.CUSTOM_TOOL_RESULT))) && content.id === callId)
+      .map(content => (content as { name: string }).name);
+    if (callNames.some(name => name !== record.source.toolName)) throw new Error('Evidence does not match the retained tool call');
+    for (const content of selected) {
+      if (content.type === ContentType.TOOL_RESULT || content.type === ContentType.CUSTOM_TOOL_RESULT) {
+        content.evidence = { version: 1, executionId: record.source.executionId, status: 'stored', reference: selectedReference };
+      }
+    }
+    this._cachedBudget = null;
+    return selected.length;
   }
 
   /**
@@ -1997,6 +2101,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     const conversationSnapshot = [...this._conversation];
     const currentInputSnapshot = [...this._currentInput];
     const olderPrefix = conversationSnapshot.slice(0, cutoff);
+    if (olderPrefix.some(hasUnacknowledgedEvidence)) throw new Error('Cannot roll over unacknowledged tool evidence; preserve raw results or repair evidence storage first.');
     const opaqueItems = olderPrefix.filter((item) => item.type === 'compaction');
     const summarizableItems = olderPrefix.filter((item) => item.type === 'message');
 
@@ -2290,6 +2395,8 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    */
   private emergencyToolResultsTruncation(msg: Message, maxTokens: number): OversizedInputResult {
     const originalSize = this.estimateItemTokens(msg);
+    if (hasUnacknowledgedEvidence(msg)) return { accepted: false, content: '', originalSize, finalSize: 0,
+      error: 'Unacknowledged tool evidence cannot be truncated. Preserve the raw result and repair evidence storage; do not repeat the tool action.' };
     const truncatedContent: Content[] = [];
 
     // Calculate max chars we can keep (rough: tokens * 3.5)
@@ -2479,8 +2586,10 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     // Extract state from StoredContextSession wrapper
     const state = stored.state;
 
+    this.assertEvidenceState(state);
     // Restore conversation
     this._conversation = state.conversation;
+    this.removeRestoredProtectedInput();
     this._systemPrompt = state.systemPrompt;
 
     // Restore plugin states
@@ -2581,7 +2690,10 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     }
 
     return {
-      conversation: this._conversation,
+      // Retain interrupted observations in the existing session schema, without committing active input.
+      conversation: this.hasProtectedPendingInput()
+        ? structuredClone([...this._conversation, ...this._currentInput])
+        : this._conversation,
       pluginStates,
       systemPrompt: this._systemPrompt,
       metadata: {
@@ -2593,6 +2705,13 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     };
   }
 
+  private assertEvidenceState(state: SerializedContextState): void {
+    const plugin = this.getPlugin('evidence');
+    if (plugin instanceof EvidencePluginNextGen && state.pluginStates && Object.hasOwn(state.pluginStates, 'evidence')) {
+      parseEvidenceSnapshot(state.pluginStates.evidence, plugin.storage.scope);
+    }
+  }
+
   /**
    * Restore state from serialized form.
    * Used by BaseAgent for custom state restoration.
@@ -2600,7 +2719,9 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   restoreState(state: SerializedContextState): void {
     this.assertNotDestroyed();
 
+    this.assertEvidenceState(state);
     this._conversation = state.conversation ?? [];
+    this.removeRestoredProtectedInput();
     this._systemPrompt = state.systemPrompt;
 
     // Restore plugin states (guard against null/undefined)

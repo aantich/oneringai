@@ -179,6 +179,7 @@ connector tools are intentionally discovered at runtime instead.
 | Any enabled `IStoreHandler` plugin | Five shared tools: `store_get`, `store_set`, `store_delete`, `store_list`, `store_action` |
 | `memory: true` | Six reads: `memory_recall`, `memory_graph`, `memory_search`, `memory_search_documents`, `memory_find_entity`, `memory_list_facts` |
 | `memoryWrite: true` | Six writes: `memory_remember`, `memory_link`, `memory_upsert_entity`, `memory_forget`, `memory_restore`, `memory_set_agent_rule` |
+| `evidence: true` | `evidence_read` (bounded exact JSON) and `evidence_list` (metadata only); [scope/durability guide](./DURABLE_EVIDENCE.md) |
 | `toolCatalog: true` | `tool_catalog_search`, `tool_catalog_load`, `tool_catalog_unload` |
 | `userInfo: true` | `todo_add`, `todo_update`, `todo_remove` in addition to the shared store tools |
 | Agent orchestrator | `assign_turn`, `delegate_interactive`, `send_message`, `list_agents`, `destroy_agent` |

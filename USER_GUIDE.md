@@ -18935,3 +18935,58 @@ for offline demonstrations; `--live` on the purpose example explicitly opts into
 billable OpenAI calls. AMOS adds `/helpers` configuration and usage inspection.
 Stage 06 is branch work, not an announced package release. Automatic structured
 compaction and comparative helper quality remain Stage 07 work.
+
+
+## Durable tool evidence (Stage 03)
+
+On the `version2` development branch, enable `context.features.evidence` and
+configure `context.plugins.evidence.storage` with `FileEvidenceStorage` or another
+scoped backend. An optional `StorageRegistry` evidence factory centralizes backend
+configuration. Existing configurations keep evidence disabled and add no tools,
+prompt content, writes, or model calls.
+
+Tools can supply `output.summarize` and host-declared `output.effect`. An acknowledged
+large JSON result can become a bounded model-facing envelope with an exact reference;
+`execute()`, managed result content and application execution events remain raw.
+`evidence_read` retrieves bounded source JSON and `evidence_list` lists metadata.
+The default enabled backend is process-local; deliberately choose file/custom
+storage and stable owner/tenant/namespace scope for restart recovery.
+
+Evidence-write or projection failure does not reclassify a successful tool action.
+Unacknowledged raw results are protected from compaction/truncation/rollover; if
+retaining them cannot fit, model dispatch stops explicitly. Async delivery with
+failed storage stops before injecting a lossy text message. After storing a retained
+result without rerunning its action, host-only `acknowledgeToolEvidence()` can
+release the matching raw group for later compaction. Timeout/cancellation can leave
+an immutable receipt with unknown completion; later observations do not rewrite it.
+Receipt-only records cannot release raw protection. Queued native async results
+remain available for host repair and explicit continuation; automatic delivery
+does not spin on blocked evidence. Mutable host hooks invalidate stale projections,
+and invalid evidence snapshots fail before changing context state.
+
+Authentic `ToolResult.evidence` carries recovery correlation internally, so
+`outcome` remains optional. Protected pending groups survive async insertion and
+follow-up input. Explicit context/Agent session saves include pending unacknowledged
+results in a detached conversation snapshot without changing the session schema
+or committing live input; same-instance restoration avoids duplicate results.
+Stream closure and later fail-fast tool errors retain completed unstored observations
+before cleanup. Receipt-only deliveries cannot release raw-result protection.
+Restoration reconciles matching invocation IDs across acknowledgement changes;
+the loaded checkpoint owns those invocations and unrelated pending content remains.
+
+Bundled storage supplies an optional `serializationLimitBytes` hint for bounded
+argument/result capture. `plugins.evidence.maxSerializationBytes` can override the
+source budget when deliberate redaction reduces a larger input; final storage
+quotas still apply. Existing custom adapters need no new required members.
+
+Read the [complete evidence recipe](./docs/DURABLE_EVIDENCE.md) for exact defaults,
+JSON support, authentication/data-handling boundaries, save/load, read backpressure,
+retention/deletion, restart versus fsync acknowledgement, recovery, and bundled
+file-store single-process writer limits. Run the [durable example](./examples/durable-tool-evidence.ts)
+and [ambiguous-action example](./examples/ambiguous-action-evidence.ts) after building.
+The [failed-write recovery example](./examples/evidence-recovery.ts) demonstrates
+pending-result save/load, repair and acknowledgement without repeating its action.
+The [stream interruption example](./examples/evidence-stream-interruption.ts) also
+checks early closure, receipt-only admission and restore-after-recovery with one action.
+AMOS provides `/context evidence [id] [offset]` with metadata-only lists and explicit
+bounded previews. This stage does not introduce action replay or transaction guarantees.

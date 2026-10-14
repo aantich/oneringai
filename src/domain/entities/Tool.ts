@@ -1,3 +1,4 @@
+import type { ToolEvidenceDelivery, ToolEvidenceReceipt } from '../../core/evidence/ToolEvidenceMiddleware.js';
 /**
  * Tool entities with blocking/non-blocking execution support
  */
@@ -90,6 +91,8 @@ export interface ToolResult {
   pending?: boolean;
   /** Additive semantic metadata; raw content retains its existing shape. */
   outcome?: ToolExecutionOutcome;
+  /** Framework-owned projection; content and application events retain raw results. */
+  evidence?: ToolEvidenceDelivery;
   tool_use_id: string;
   tool_name?: string; // Name of the tool that was executed (for eviction tracking)
   tool_args?: Record<string, unknown>; // Arguments passed to the tool (for description generation)
@@ -164,6 +167,8 @@ export interface PendingAsyncTool {
 export interface ToolOutputHints {
   expectedSize?: 'small' | 'medium' | 'large' | 'variable';
   summarize?: (output: unknown) => string;
+  /** Host-declared effect classification for opt-in evidence receipts. Default unknown. */
+  effect?: 'read' | 'write' | 'unknown';
 }
 
 /**
@@ -387,6 +392,8 @@ export interface ToolExecutionOutcome {
   completion: 'settled' | 'unknown' | 'not_started';
   cancellation: 'none' | 'requested' | 'acknowledged';
   error?: string;
+  /** Opt-in storage diagnostics; never changes the execution status. */
+  evidence?: ToolEvidenceReceipt;
 }
 
 /** Additive options for a single ToolManager invocation. Zero disables the additional per-call deadline. */
@@ -397,9 +404,12 @@ export interface ToolExecutionOptions {
   runId?: string;
   /** Host observer for the initial outcome; exceptions do not affect execution. */
   onOutcome?: (outcome: ToolExecutionOutcome) => void;
+  /** Host observer for opt-in evidence delivery; exceptions are isolated. */
+  onEvidence?: (evidence: ToolEvidenceDelivery) => void;
 }
 
 export interface ToolExecutionReport<T = unknown> {
   result: T;
   outcome: ToolExecutionOutcome;
+  evidence?: ToolEvidenceDelivery;
 }

@@ -1,0 +1,18 @@
+
+> @everworker/oneringai@1.2.0 example:amos-evidence
+> node --import tsx apps/amos/examples/evidence-offline.ts
+
+{"level":"info","time":1791917635918,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-evidence-demo","inputPreview":"Call large_search once.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2364/128000 (1.9%) tools=1199 conversation=0 system=1154 input=11 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+[Agent] [Context] iteration=1 tokens: 2561/128000 (2.1%) tools=1199 conversation=20 system=1246 input=96 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=112
+{"level":"info","time":1791917635947,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-evidence-demo","duration":29,"msg":"Agent run completed"}
+/context evidence
+Evidence acknowledgement: restart (local, not replicated).
+cfe1daa8-d70e-45f8-aea4-0ab4aca4a1ec large_search succeeded/settled effect=read
+Explicit preview: /context evidence <id> [character-offset]
+
+/context evidence cfe1daa8-d70e-45f8-aea4-0ab4aca4a1ec
+{"version":1,"recordedAt":1791917635941,"source":{"toolName":"large_search","executionId":"15320589-ea5c-4dc3-a297-211fa117ad01","arguments":{},"principal":{"userId":"local-example","agentId":"amos"},"effect":"read","status":"succeeded","completion":"settled","startedAt":1791917635939,"durationMs":2,"executionStarted":true,"cancellation":"none","callId":"demo-call","runId":"exec_5a470045-200b-450c-949a-dcc7d4f273f1"},"result":{"ids":["AMOS_SOURCE_03"],"text":"synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source
+Next offset: 1024
+
+AMOS metadata listing and explicit bounded preview passed. Synthetic usage; temporary files cleaned.

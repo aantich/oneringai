@@ -128,7 +128,27 @@
     "docs/evaluations/STAGE_06_CORRECTIONS_VALIDATION.json",
     "examples/purpose-specific-models.ts",
     "examples/shared-run-budget.ts",
-    "docs/evaluations/STAGE_06_AMOS_OFFLINE.txt"
+    "docs/evaluations/STAGE_06_AMOS_OFFLINE.txt",
+    "docs/DURABLE_EVIDENCE.md",
+    "docs/designs/STAGE_03_IMPLEMENTATION.md",
+    "docs/evaluations/STAGE_03_VALIDATION.json",
+    "docs/evaluations/STAGE_03_AMOS_OFFLINE.txt",
+    "examples/durable-tool-evidence.ts",
+    "examples/ambiguous-action-evidence.ts",
+    "docs/designs/STAGE_03_REVIEW_AND_FIX_PLAN.md",
+    "docs/evaluations/STAGE_03_REVIEW.json",
+    "docs/evaluations/STAGE_03_CORRECTIONS_VALIDATION.json",
+    "docs/evaluations/STAGE_03_CORRECTIONS_AMOS_OFFLINE.txt",
+    "examples/evidence-recovery.ts",
+    "docs/designs/STAGE_03_SECOND_REVIEW.md",
+    "docs/evaluations/STAGE_03_SECOND_REVIEW.json",
+    "docs/evaluations/STAGE_03_SECOND_CORRECTIONS_VALIDATION.json",
+    "docs/evaluations/STAGE_03_SECOND_CORRECTIONS_AMOS_OFFLINE.txt",
+    "examples/evidence-stream-interruption.ts",
+    "docs/designs/STAGE_03_THIRD_REVIEW.md",
+    "docs/evaluations/STAGE_03_THIRD_REVIEW.json",
+    "docs/evaluations/STAGE_03_THIRD_CORRECTIONS_VALIDATION.json",
+    "docs/evaluations/STAGE_03_THIRD_CORRECTIONS_AMOS_OFFLINE.txt"
   ],
   "scripts": {
     "generate:tools": "tsx scripts/generate-tool-registry.ts",
@@ -196,7 +216,13 @@
     "test:models:live": "RUN_MODEL_EXECUTION_LIVE=1 vitest run tests/integration/text/ModelExecution.live.integration.test.ts",
     "example:purpose-models": "tsx examples/purpose-specific-models.ts",
     "example:shared-budget": "tsx examples/shared-run-budget.ts",
-    "example:amos-helpers": "tsx apps/amos/examples/model-helpers-offline.ts"
+    "example:amos-helpers": "tsx apps/amos/examples/model-helpers-offline.ts",
+    "example:durable-evidence": "node --import tsx examples/durable-tool-evidence.ts",
+    "example:evidence-recovery": "node --import tsx examples/evidence-recovery.ts",
+    "example:ambiguous-evidence": "node --import tsx examples/ambiguous-action-evidence.ts",
+    "example:amos-evidence": "node --import tsx apps/amos/examples/evidence-offline.ts",
+    "test:evidence:live": "RUN_EVIDENCE_LIVE=1 vitest run tests/integration/text/Evidence.live.integration.test.ts",
+    "example:evidence-interruption": "node --import tsx examples/evidence-stream-interruption.ts"
   },
   "keywords": [
     "ai",

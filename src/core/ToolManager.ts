@@ -1,3 +1,6 @@
+import { ToolEvidenceMiddleware } from './evidence/ToolEvidenceMiddleware.js';
+import type { ToolEvidenceDelivery } from './evidence/ToolEvidenceMiddleware.js';
+import { containAsyncRejection } from './evidence/validation.js';
 /**
  * ToolManager - Unified tool management and execution for agents
  *
@@ -1001,6 +1004,11 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
   // Execution (IToolExecutor implementation)
   // ==========================================================================
 
+  private evidenceMiddleware?: ToolEvidenceMiddleware;
+
+  /** Opt-in post-settlement evidence handling. Does not replace the execution pipeline. */
+  setEvidenceMiddleware(middleware?: ToolEvidenceMiddleware): void { this.evidenceMiddleware = middleware; }
+
   /**
    * Execute a tool function with circuit breaker protection and plugin pipeline.
    * Implements IToolExecutor interface.
@@ -1029,12 +1037,15 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
     // Keep cumulative counters on this registration; all authority and dispatch data are local.
     const selectedTool = registered.tool;
     const selectedExecute = selectedTool.execute;
+    const evidenceMiddleware = ['evidence_read', 'evidence_list'].includes(toolName) ? undefined : this.evidenceMiddleware;
     const registration: ToolRegistration = {
       ...registered,
-      tool: { ...selectedTool, definition: structuredClone(selectedTool.definition) },
+      tool: { ...selectedTool, ...(evidenceMiddleware && selectedTool.output ? { output: { ...selectedTool.output } } : {}), definition: structuredClone(selectedTool.definition) },
       tags: registered.tags ? [...registered.tags] : undefined,
       permission: registered.permission ? structuredClone(registered.permission) : undefined,
     };
+    const captureArgs = (value: unknown): unknown => evidenceMiddleware ? evidenceMiddleware._captureArguments(value) : value;
+    let evidenceArgs = captureArgs(args);
     const executionId = randomUUID();
     const startTime = Date.now();
     // Capture trusted identity before any await; later context changes apply only to new calls.
@@ -1060,6 +1071,7 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
     let pipelineOutcome: PipelineOutcome | undefined;
     let abandoned = false;
     let settled = false;
+    let settledResult: { value: unknown } | undefined;
     const outcome = (status: ToolExecutionOutcome['status'], error?: Error, late = false): ToolExecutionOutcome => Object.freeze({
       executionId, toolName, callId: options.callId, runId: options.runId,
       ...(timedOut ? { timeoutMs: timeout } : pipelineOutcome?.error instanceof ToolTimeoutError ? { timeoutMs: pipelineOutcome.error.timeoutMs } : {}),
@@ -1080,6 +1092,17 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
       try { this.emit(event, value); } catch (error) {
         this.toolLogger.warn({ error: String(error), event }, 'Tool outcome listener failed');
       }
+    };
+    const persist = async (value: ToolExecutionOutcome, result?: { value: unknown }, late = false): Promise<{ outcome: ToolExecutionOutcome; evidence?: ToolEvidenceDelivery }> => {
+      if (!evidenceMiddleware) return { outcome: value };
+      let evidence: ToolEvidenceDelivery;
+      try { evidence = await evidenceMiddleware.record(registration.tool, evidenceArgs, context, value, result, late); }
+      catch { evidence = { status: 'storage_failed', effect: registration.tool.output?.effect ?? 'unknown', errorCode: 'storage' }; }
+      const { projection: _projection, ...receipt } = evidence;
+      // Evidence completion is distinct from execution settlement, including on cancellation.
+      const enriched = Object.freeze({ ...value, evidence: Object.freeze(receipt) });
+      if (!late) { try { containAsyncRejection(options.onEvidence?.(evidence)); } catch { /* Observers do not own effects. */ } }
+      return { outcome: enriched, evidence };
     };
     metrics.increment('tool.executed', 1, { tool: toolName });
     if (timeout > 0 && !signal.aborted) {
@@ -1106,17 +1129,25 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
         execute: async (pipelineArgs: any) => {
           signal.throwIfAborted();
           executionStarted = true;
+          evidenceArgs = captureArgs(pipelineArgs);
           return selectedExecute.call(selectedTool, pipelineArgs, shared || options.signal || timeout > 0 ? context : undefined);
         },
       }, args, { executionId, toolContext: context, registration, onOutcome: (value) => { pipelineOutcome = value; } }));
       // Observe eventual settlement independently; it must not enter context or count twice.
-      void promise.then(() => {
+      void promise.then(async (result) => {
         settled = true;
-        if (abandoned && !this._isDestroyed) notify('tool:late-complete', outcome(pipelineOutcome?.status ?? 'succeeded', pipelineOutcome?.error, true));
-      }, (error: unknown) => {
+        if (evidenceMiddleware) settledResult = { value: result };
+        if (abandoned) {
+          const late = await persist(outcome(pipelineOutcome?.status ?? 'succeeded', pipelineOutcome?.error, true), { value: result }, true);
+          if (!this._isDestroyed) notify('tool:late-complete', late.outcome);
+        }
+      }, async (error: unknown) => {
         settled = true;
-        if (abandoned && !this._isDestroyed) notify('tool:late-complete', outcome(pipelineOutcome?.status ?? 'failed', error instanceof Error ? error : new Error(String(error)), true));
-      });
+        if (abandoned) {
+          const late = await persist(outcome(pipelineOutcome?.status ?? 'failed', error instanceof Error ? error : new Error(String(error)), true), undefined, true);
+          if (!this._isDestroyed) notify('tool:late-complete', late.outcome);
+        }
+      }).catch(() => undefined);
       const result = await withAbort(promise, signal);
       // An abort during settlement still belongs to this execution, never to the next run.
       signal.throwIfAborted();
@@ -1125,8 +1156,10 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
       metrics.timing('tool.duration', value.durationMs, { tool: toolName });
       metrics.increment(value.status === 'succeeded' ? 'tool.success' : 'tool.failed', 1, { tool: toolName });
       this.toolLogger.debug({ toolName, outcome: value, resultSummary: this.summarizeResult(result) }, 'Tool execution completed');
-      notify('tool:outcome', value);
-      return { result, outcome: value };
+      clearTimeout(timer);
+      const report = evidenceMiddleware ? await persist(value, { value: result }) : { outcome: value };
+      notify('tool:outcome', report.outcome);
+      return { result, ...report };
     } catch (error) {
       abandoned = !settled;
       const err = error instanceof Error ? error : new Error(String(error));
@@ -1134,8 +1167,10 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
       this.recordRegisteredExecution(toolName, registration, value.durationMs, false);
       metrics.increment('tool.failed', 1, { tool: toolName, error: err.name });
       const wrapped = new ToolExecutionError(toolName, err.message, err);
-      wrapped.outcome = value;
-      notify('tool:outcome', value);
+      clearTimeout(timer);
+      const report = evidenceMiddleware ? await persist(value, settledResult) : { outcome: value };
+      wrapped.outcome = report.outcome;
+      notify('tool:outcome', report.outcome);
       throw wrapped;
     } finally {
       clearTimeout(timer);

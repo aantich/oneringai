@@ -7,7 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Stage 03 third-review corrections retain partial unstored tool batches on early
+  streaming/fail-fast exits, distinguish receipt-only acknowledgements from stored
+  results, and reconcile checkpointed invocations across receipt changes. Includes
+  an offline interruption/recovery example, AMOS stream-close coverage and live
+  recovery probes; no required public API or session-schema change.
+
+- Stage 03 second-review corrections preserve protected pending groups during async
+  insertion/follow-up input, retain authentic delivery correlation without requiring
+  `ToolResult.outcome`, and save interrupted observations in detached session
+  snapshots. Same-instance restoration avoids duplicates. Adds recovery examples,
+  AMOS save/load coverage and three real-provider restoration probes; no API break.
+
+- Stage 03 review corrections retain undelivered async completions and observations
+  returned during cancellation, reject receipt-only recovery, preflight complete
+  evidence snapshots, invalidate projections after mutable host hooks, and enforce
+  incremental serialization/admission budgets. Optional source-budget configuration
+  and backend hints preserve existing custom adapters. Adds an offline recovery
+  example and targeted regression/live coverage; no action replay or API break.
+
 ### Added
+
+- Stage 03 opt-in scoped evidence stores, acknowledged immutable references,
+  bounded read/list tools, raw-preserving tool projections, versioned session
+  references, and host-only acknowledgement recovery. File-backed observations
+  survive ordinary restart; optional fsync is local filesystem durability.
+  Failed writes protect raw results from lossy context reduction, independently
+  of tool-effect status. Includes AMOS evidence inspection, offline restart and
+  ambiguous-action examples, and opt-in real-provider retrieval/failure checks.
+  Existing defaults, returns and older sessions remain supported.
 
 - Stage 06 optional static compactor/extractor/verifier profiles, explicit text-only
   schema-validated helpers, and shared process-local `ModelTask` budgets/usage.

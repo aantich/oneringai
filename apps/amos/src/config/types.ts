@@ -23,6 +23,8 @@ import type { ExternalToolManager } from '../tools/ExternalToolManager.js';
 export interface AmosConfig {
   /** Optional host configuration; null/absence keeps legacy single-model behavior. */
   modelExecution?: ModelExecutionConfig | null;
+  /** Local evidence is opt-in; ownership and location are host configuration. */
+  evidence?: { enabled: boolean; directory: string; ownerId: string; namespace: string; retentionMs?: number };
   // Current active settings
   activeConnector: string | null;
   activeModel: string | null;
@@ -291,6 +293,7 @@ export interface PromptTemplate {
 }
 
 export interface IAgentRunner {
+  inspectEvidence?(id?: string, offset?: number): Promise<string>;
   getModelUsage?(): ModelTaskSnapshot | undefined;
   invokeHelper?(role: HelperRole, input: string): Promise<string>;
   compactWithHelper?(): Promise<string>;
@@ -539,6 +542,7 @@ export interface TokenUsage {
 export interface StreamEvent {
   type: 'text:delta' | 'text:done' | 'tool:start' | 'tool:complete' | 'error' | 'done';
   delta?: string;
+  notice?: string;
   text?: string;
   tool?: { name: string; args?: unknown; result?: unknown };
   error?: Error;

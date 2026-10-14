@@ -1,6 +1,7 @@
 # Agentic Architecture Evolution: Staged Development Plan
 
-- **Status:** Roadmap direction accepted; stages 00–02 and 06 complete on the development branch.
+- **Status:** Roadmap direction accepted; stages 00–03 and 06 complete on the development branch.
+- **Stage 03 review:** All findings corrected and validated: 7,473 units, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 - **Stage 06 review:** All first- and second-review findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion record](STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
 - **Created:** 2026-10-07.
 - **Revision:** 0.2; holistic review completed 2026-10-07.
@@ -429,9 +430,11 @@ fail preflight or use a documented safe fallback.
 
 ## 4. Stage sequence and tracking
 
-Stages 00–02 and 06 are complete on the `version2` branch. Stage 06 is validated
-in the working tree based on committed Stage 02 revision `dcc8dad`; provider and
-validation limits are recorded below.
+Stages 00–03 and 06 are complete on the `version2` branch. Stage 03 and all three
+corrective passes are implemented and validated in the working tree based on
+Stage 06 revision `a98a498`. See the [third corrective completion](STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14)
+and [evidence](../evaluations/STAGE_03_THIRD_CORRECTIONS_VALIDATION.json).
+Earlier implementation and review records remain historical evidence.
 Dependencies determine readiness, not authorization. IDs are stable identifiers;
 the core sequence is **00 → 01 → 02 → 06 → 03 → 07 → 04 → 10 → 12**. Later stages
 remain separately authorized work.
@@ -441,7 +444,7 @@ remain separately authorized work.
 | 00 | Small compatibility/trajectory baselines and existing-metric reporting | None | Core | Complete |
 | 01 | Fresh final request accounting and protocol-safe compaction | 00 | Core | Complete on branch |
 | 02 | Accurate tool outcomes and per-execution cancellation | 00 | Core | Complete on branch; final local and full OpenAI/Anthropic/Google live validation passed |
-| 03 | Acknowledged evidence references, projections, and outcome records | 01, 02 | Core | Not started |
+| 03 | Acknowledged evidence references, projections, and outcome records | 01, 02 | Core | Complete on branch; all three corrective passes validated: 7,473 units, 66 live cases / 78 scenarios, 15 offline examples |
 | 04 | Task-state prompt view and protected host constraints | 03, 06 | Core | Not started |
 | 05 | Typed contributions and selective/cache-aware assembly | 01, 03, 04 | Conditional | Not started |
 | 06 | Fixed main model, bounded helper roles, and task usage/budgets | 01, 02 | Core | Complete on branch; first- and second-review corrections validated, all local/live gates pass |
@@ -2386,3 +2389,147 @@ and prior Google output-format reliability limits. No published release,
 statistical reliability or comparative model-quality/savings claim is made.
 Version 2 adoption/handoff and standard docs are synchronized. Stage 03 remains
 the next separately authorized stage; Stage 07 and later work have not begun.
+
+
+### Stage 03 completion — 2026-10-13
+
+Implemented the authorized minimal evidence stage in the `version2` working tree,
+based on Stage 06 commit `a98a498`. Scoped in-memory/file stores, acknowledged
+immutable JSON records, bounded read/list and ID lookup, opt-in projections, outcome
+receipts, versioned session references, protected raw failures and host recovery are
+delivered. Raw application returns and disabled defaults remain supported. Existing
+external evidence plugins/custom backends retain their contracts. No breaking API,
+new dependency, commit, publication, distributed transaction or replay engine.
+
+AMOS supports optional scoped file configuration, metadata-only listing, explicit
+bounded previews, and independent persistence/projection/unknown-effect notices.
+Offline examples verify exact source recovery in a separate process after scratch
+cleanup, rollover and save/load, plus an ambiguous local write with no retry.
+
+Validation: **7,337 unit tests / 343 files**, including **109 Stage 03 cases**;
+**57 real-provider cases / 69 scenarios** across OpenAI/Anthropic/Google, with zero
+final failures/skips. **13 offline examples** pass. New evidence-component coverage
+is **99.81% lines / 91.48% branches**. Build/24 exports, root/example/AMOS
+and strict test types, lint, public compatibility, ESM/CJS runtime, generated API,
+AMOS build, package and artifact checks are recorded in the completion evidence.
+
+Read the [implementation record](STAGE_03_IMPLEMENTATION.md),
+[evidence recipe](../DURABLE_EVIDENCE.md), and
+[validation](../evaluations/STAGE_03_VALIDATION.json). Earlier Google schema rejection,
+legacy-message regression and model/fixture failures remain historical evidence;
+none is silently counted as a pass. Version 2 availability/adoption/handoff and
+standard documentation are synchronized. No statistical model-quality/reliability
+or cost-saving claim is made. Stage **07** is next and requires separate authorization.
+
+### Stage 03 review — 2026-10-13
+
+The [review and fix plan](STAGE_03_REVIEW_AND_FIX_PLAN.md) reproduces six defects:
+three P1 findings involving queued async results, receipt-only recovery and
+cancellation settlement; three P2 findings involving partial snapshot restoration,
+mutable hook projections and serialization work before capacity admission.
+All 109 existing Stage 03 tests and the built public compatibility consumer pass
+in a fresh run. Original 7,337-unit and 57-case live validation remains unchanged
+historical evidence, not coverage of these failures. Source and built-export
+reproductions use synthetic tools and controlled providers without credentials
+or external writes. No runtime fixes or permanent tests were made during review.
+Stage 03 corrections precede the separately authorized Stage 07.
+
+### Stage 03 corrective completion — 2026-10-14
+
+All six review findings are corrected on `version2`, without a breaking API change
+or action replay. Async delivery retains blocked completions for explicit host
+recovery, and settlement races preserve returned observations. Acknowledgement
+requires a result-bearing matching invocation; function/custom ID namespaces remain
+independent. Complete evidence snapshots are validated before context mutation;
+mutable host results invalidate stale projections. Incremental serialization and
+mutation admission bound expansion before allocation, with optional source budgets
+and backend hints that preserve custom adapters.
+
+Validation: **7,397 units / 344 files**, **60 new corrective regressions / 169 Stage
+03 cases**, **60 live cases / 72 scenarios**, **14 offline examples**, and all local
+build/type/lint/consumer/AMOS/documentation gates pass. All 12 evidence live cases
+pass again on final source. Scoped evidence-component coverage is **99.83% lines /
+92.36% branches**. Earlier failed null-fixture and Google chat completion attempts
+remain in [corrective evidence](../evaluations/STAGE_03_CORRECTIONS_VALIDATION.json).
+No exact original failed Google answer or model-reliability conclusion is claimed.
+
+The [review completion](STAGE_03_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-14),
+new [recovery example](../../examples/evidence-recovery.ts), usage/API/agent guides,
+AMOS support notes/transcript, Version 2 adoption/handoff, release notes and package
+inventory are synchronized. No new AMOS command is necessary for these boundary
+fixes; its real adapter/commands and existing host settings are verified. Stage
+**03 is complete on branch**; Stage **07** is next, separately authorized.
+
+### Stage 03 second review — 2026-10-14
+
+At review time, the [second review](STAGE_03_SECOND_REVIEW.md) reopened the completion
+assessment with three P1 retention findings. Its later corrective completion is below. Mid-loop async insertion can
+overwrite a protected blocking result; delivery-only tool results omit protection
+metadata; explicit save/load of an interrupted run omits pending raw observations.
+Each reproduces with current source and built public APIs, using synthetic tools,
+controlled providers and bundled file session storage. No external actions or
+credentials are involved.
+
+Fresh validation still passes **7,397 units / 344 files**, including all **169
+Stage 03 cases**, and public-package compatibility. The original six corrections
+remain fixed; these passing gates lack the new failure combinations. The
+[executable evidence](../evaluations/STAGE_03_SECOND_REVIEW.json) preserves exact
+observations and fingerprints. No runtime code or permanent tests were modified
+by the review. Additive fixes, meaningful regressions and final local/live gates
+are required before restoring Stage 03 completion; Stage 07 remains separately
+authorized work.
+
+### Stage 03 second corrective completion — 2026-10-14
+
+All three second-review findings are fixed and validated without breaking APIs.
+Protected pending groups survive async/follow-up input; authentic delivery-only
+results preserve recovery correlation; detached snapshots retain pending raw
+observations in the existing session format and avoid same-instance duplicates.
+
+Validation passes: **7,435 units / 345 files**, **38 new regressions / 207 Stage 03
+cases**, **63 live cases / 75 scenarios**, **14 offline examples** and all local
+build/type/lint/consumer/AMOS/docs gates. The three new real-provider probes recover
+exact pending source markers after save/load with one original tool execution.
+Original failed regressions and sandbox limitations are retained in
+[second corrective evidence](../evaluations/STAGE_03_SECOND_CORRECTIONS_VALIDATION.json).
+The recovery example, AMOS runner save/load test, recipe, standard documentation,
+Version 2 adoption/handoff, generated API and package evidence are synchronized.
+Stage **03 is complete on branch**; Stage **07** remains separately authorized.
+
+### Stage 03 third review — 2026-10-14
+
+At review time, the [third review](STAGE_03_THIRD_REVIEW.md) reopened stage completion with two P1
+findings (partial-batch early exits and receipt-only admission) and one P2 finding
+(restoration after evidence recovery duplicates final results). Synthetic public-API
+reproductions confirm all findings with current source and built exports; a fully
+drained stream and receipt-only acknowledgement rejection are passing controls.
+Fresh 7,435 units / 345 files, including all 207 Stage 03 cases, and public
+compatibility pass despite these gaps. All 35 previous source fingerprints match.
+No runtime code or permanent tests changed during review. See the
+[executable evidence](../evaluations/STAGE_03_THIRD_REVIEW.json); corrections and
+new validation precede completion and the separately authorized Stage 07.
+
+### Stage 03 third corrective completion — 2026-10-14
+
+T1–T3 are fixed: partial completed batches survive stream closure and managed
+failure exits; private delivery provenance distinguishes receipt-only storage from
+an acknowledged result; restoration reconciles invocation identity across recovery
+without duplicating final results or removing unrelated pending content. Raw
+returns/events, defaults, optional outcomes, public signatures, backend requirements
+and saved-session schema are preserved.
+
+Validation passes: **7,473 units / 346 files**, **38 new regressions / 245 Stage 03
+cases**, **66 live cases / 78 scenarios**, and **15 offline examples**, with zero
+unit/live skips. Build, strict types, lint, public ESM/CJS and consumer compatibility,
+examples, AMOS (including real stream closure/save/load), generated API and package
+checks pass. The new public stream interruption demonstration needs no credentials.
+Four evidence components have 99.83% line / 93.30% branch / 98.63% function coverage;
+Agent/context integration is covered by regression/live tests, outside that scope.
+
+[Third corrective evidence](../evaluations/STAGE_03_THIRD_CORRECTIONS_VALIDATION.json)
+retains all initial failures, the stale-bundle AMOS check and successful rerun, and
+the initial 65/66 live batch plus bounded Google diagnostics and final unchanged
+66/66 rerun. The original failed Google answer was not retained; a fresh diagnostic
+showed an exact-format violation. No provider reliability fix or weakened gate is
+claimed. See the [full completion](STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
+Stage 03 is complete on branch; Stage 07 remains separately authorized.

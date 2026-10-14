@@ -289,6 +289,7 @@ compaction into one model request.
 | `sharedWorkspace` | `false` | Versioned multi-agent coordination board |
 | `memory` | `false` | Long-term memory injection plus six read tools |
 | `memoryWrite` | `false` | Six write tools; requires `memory` |
+| `evidence` | disabled | Scoped evidence, bounded retrieval and opt-in tool projections |
 
 ```typescript
 const catalogAgent = Agent.create({
@@ -326,6 +327,34 @@ The notes index and keyless `store_get({ store: "notes" })` contain metadata onl
 Retrieve each source with its exact index key, including tier/collision suffix,
 before using its contents. `store_list` discovers entries omitted from the index.
 See [context preparation](docs/CONTEXT_PREPARATION.md) for fit errors and race handling.
+
+## Durable evidence
+
+Enable `context.features.evidence` explicitly. Use a host-owned stable scope and
+`FileEvidenceStorage` (or a custom acknowledged backend) for restart recovery;
+the enabled default is a new process-local in-memory store. Keep tenant/owner
+selection outside model arguments. `output.summarize` receives a detached redacted
+copy; preserve essential IDs/status. Raw tool returns and execution events stay raw.
+Inspect `outcome.evidence` independently of execution status. Storage/projection
+failure must never trigger repetition of an external action. Unacknowledged raw
+results are protected from compaction/truncation/rollover; oversized/async delivery
+can stop explicitly. Recover by storing the retained observation, then host-only
+`context.acknowledgeToolEvidence(callId, reference)`. Use `evidence_read({ id })` with bounded
+offsets and `evidence_list` for omitted references. Read the [evidence guide](docs/DURABLE_EVIDENCE.md)
+for scope, JSON limitations, redaction, retention, snapshots, and actual durability.
+Authentic deliveries retain recovery correlation when optional `outcome` is omitted.
+Protected pending groups survive new/async input and are copied into session snapshots
+without committing live input or adding required session fields. Save interrupted
+observations before destroying the context; recovery never reruns their action.
+Early stream closure and fail-fast exits retain settled unstored batches. A stored
+receipt without a result cannot release raw protection, including async delivery.
+Loading a checkpoint reconciles matching function/custom call and execution IDs
+across receipt changes; the checkpoint owns matching invocations.
+Acknowledgement requires a result-bearing record. Failed async delivery retains
+queued completions for host repair and explicit continuation. Bundled stores expose
+an optional `serializationLimitBytes` hint; configure `maxSerializationBytes` for
+custom backends or deliberately larger sources reduced by host redaction. Final
+backend quotas still apply; existing adapters need no new required members.
 
 ## Explicit helper models and task budgets
 
@@ -483,6 +512,7 @@ during application shutdown.
 | Complete usage guide | `USER_GUIDE.md` |
 | Public signatures | `API_REFERENCE.md` |
 | Connectors and every tool source | `docs/CONNECTOR_TOOL_CATALOG.md` |
+| Durable tool evidence, projections and recovery | `docs/DURABLE_EVIDENCE.md` |
 | Explicit helper models, shared model budgets and purpose usage | `docs/MODEL_TASKS_AND_HELPERS.md` |
 | Tool outcomes, cancellation, and connector deadlines/retries | `docs/TOOL_OUTCOMES_AND_CANCELLATION.md` |
 | Long-term memory | `docs/MEMORY_GUIDE.md` |

@@ -130,7 +130,7 @@ describe.skipIf(!enabled).sequential('Stage 06 live model-task and helper execut
       });
       try {
         const before = JSON.stringify(agent.context.getConversation());
-        const result = await agent.invokeHelper<{ answer: string }>('extractor', `Source marker=${marker}.`, { schema, modelTask: task });
+        const result = await agent.invokeHelper<{ answer: string }>('extractor', JSON.stringify({ marker }), { schema, modelTask: task });
         expect(result.value.answer).toBe(marker); expect(JSON.stringify(agent.context.getConversation())).toBe(before);
         let text = '';
         if (mode === 'run') text = (await agent.run(`Repeat this verified marker: ${result.value.answer}`, { modelTask: task })).output_text ?? '';

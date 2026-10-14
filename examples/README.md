@@ -197,3 +197,36 @@ by `failure_probe=failed` in each mode, with both original markers recovered.
 Agents and the example-owned connector are cleaned up. The library narrows explicit
 Anthropic named-tool requests and rejects mismatched provider calls before local
 execution; see the [selection contract](../docs/TOOL_OUTCOMES_AND_CANCELLATION.md#explicit-anthropic-tool-selection).
+
+
+## Durable evidence (Stage 03, development branch)
+
+Build the library first. These examples need no credentials or network and clean
+all temporary resources:
+
+- `npm run example:durable-evidence` — [durable-tool-evidence.ts](./durable-tool-evidence.ts)
+  projects a 92 KB synthetic result, preserves status/IDs, evicts scratch, rolls
+  over history, restores a saved context, and verifies exact recovery in a separate
+  Node process. Output labels ordinary-restart acknowledgement explicitly.
+- `npm run example:ambiguous-evidence` — [ambiguous-action-evidence.ts](./ambiguous-action-evidence.ts)
+  simulates one write whose response never arrives. Cancellation records unknown
+  completion without repeating the action; storage is explicitly process-local.
+- `npm run example:evidence-recovery` — [evidence-recovery.ts](./evidence-recovery.ts)
+  retains a successful local action's observation during a storage outage, rejects
+  receipt-only acknowledgement, repairs storage, and permits rollover after exact
+  result recovery. Pending delivery-only results survive file session save/load;
+  the optional outcome is omitted deliberately. The action executes once; a custom backend uses an explicit
+  serialization budget and requires no new adapter methods.
+- `npm run example:evidence-interruption` — [evidence-stream-interruption.ts](./evidence-stream-interruption.ts)
+  closes a synthetic stream at tool completion, saves the unstored observation,
+  rejects receipt-only admission, then restores a checkpoint after acknowledgement
+  and recovers exact data. One tool action and one synthetic model call; no keys
+  or network. Temporary session files are cleaned; evidence is process-local.
+- `npm run example:amos-evidence` — exercises the real AMOS runner and `/context evidence`
+  command with a synthetic provider. Lists metadata and explicitly previews at most
+  1024 characters, showing the next offset.
+
+`npm run test:evidence:live` is separately opt-in and billable, using `.env`
+OpenAI/Anthropic/Google credentials with local synthetic tools. It verifies managed
+run/stream source retrieval and raw fallback after a controlled storage failure.
+Read [setup, bounds, failure recovery and durability](../docs/DURABLE_EVIDENCE.md).

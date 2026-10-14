@@ -1,0 +1,971 @@
+{
+  "protocol": "stage-03-validation-v1",
+  "recordedAt": "2026-10-13T18:58:59.476Z",
+  "status": "passed",
+  "branch": "version2",
+  "baseCommit": "a98a498d18b55fd3329c7ac2b1b379b09eb15ab1",
+  "packageVersion": "1.2.0",
+  "publication": "Not released; working-tree implementation, no commit or push created",
+  "runtime": {
+    "node": "v24.20.0",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "unit": {
+    "passed": 7337,
+    "failed": 0,
+    "skipped": 0,
+    "files": 343,
+    "newStageCases": 109,
+    "path": "/tmp/oneringai-stage03-completion-unit.json",
+    "sha256": "cc1a937c64d22ed8e1186d165ac125643c9a6b64de7dd6b9d10d7f8ac9561262",
+    "stageFiles": [
+      {
+        "file": "tests/unit/apps/amos/Evidence.test.ts",
+        "cases": 5,
+        "passed": true
+      },
+      {
+        "file": "tests/unit/core/evidence/Agent.evidence.test.ts",
+        "cases": 11,
+        "passed": true
+      },
+      {
+        "file": "tests/unit/core/evidence/EvidenceStorage.test.ts",
+        "cases": 49,
+        "passed": true
+      },
+      {
+        "file": "tests/unit/core/evidence/ToolEvidence.test.ts",
+        "cases": 44,
+        "passed": true
+      }
+    ]
+  },
+  "coverage": {
+    "scope": [
+      "src/core/evidence/*.ts",
+      "src/infrastructure/storage/EvidenceStorage.ts",
+      "src/core/context-nextgen/plugins/EvidencePluginNextGen.ts"
+    ],
+    "totals": {
+      "lines": {
+        "total": 541,
+        "covered": 540,
+        "skipped": 0,
+        "pct": 99.81
+      },
+      "statements": {
+        "total": 541,
+        "covered": 540,
+        "skipped": 0,
+        "pct": 99.81
+      },
+      "functions": {
+        "total": 64,
+        "covered": 63,
+        "skipped": 0,
+        "pct": 98.43
+      },
+      "branches": {
+        "total": 423,
+        "covered": 387,
+        "skipped": 0,
+        "pct": 91.48
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "files": {
+      "total": {
+        "lines": {
+          "total": 541,
+          "covered": 540,
+          "skipped": 0,
+          "pct": 99.81
+        },
+        "statements": {
+          "total": 541,
+          "covered": 540,
+          "skipped": 0,
+          "pct": 99.81
+        },
+        "functions": {
+          "total": 64,
+          "covered": 63,
+          "skipped": 0,
+          "pct": 98.43
+        },
+        "branches": {
+          "total": 423,
+          "covered": 387,
+          "skipped": 0,
+          "pct": 91.48
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "/Users/aantich/dev/oneringai/src/core/context-nextgen/plugins/EvidencePluginNextGen.ts": {
+        "lines": {
+          "total": 117,
+          "covered": 117,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 18,
+          "covered": 17,
+          "skipped": 0,
+          "pct": 94.44
+        },
+        "statements": {
+          "total": 117,
+          "covered": 117,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 66,
+          "covered": 57,
+          "skipped": 0,
+          "pct": 86.36
+        }
+      },
+      "/Users/aantich/dev/oneringai/src/core/evidence/ToolEvidenceMiddleware.ts": {
+        "lines": {
+          "total": 101,
+          "covered": 101,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 8,
+          "covered": 8,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 101,
+          "covered": 101,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 72,
+          "covered": 66,
+          "skipped": 0,
+          "pct": 91.66
+        }
+      },
+      "/Users/aantich/dev/oneringai/src/core/evidence/validation.ts": {
+        "lines": {
+          "total": 85,
+          "covered": 85,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 11,
+          "covered": 11,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 85,
+          "covered": 85,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 106,
+          "covered": 103,
+          "skipped": 0,
+          "pct": 97.16
+        }
+      },
+      "/Users/aantich/dev/oneringai/src/infrastructure/storage/EvidenceStorage.ts": {
+        "lines": {
+          "total": 238,
+          "covered": 237,
+          "skipped": 0,
+          "pct": 99.57
+        },
+        "functions": {
+          "total": 27,
+          "covered": 27,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 238,
+          "covered": 237,
+          "skipped": 0,
+          "pct": 99.57
+        },
+        "branches": {
+          "total": 179,
+          "covered": 161,
+          "skipped": 0,
+          "pct": 89.94
+        }
+      }
+    },
+    "claims": "Scoped new-component coverage, not whole repository coverage."
+  },
+  "live": {
+    "passed": 57,
+    "failed": 0,
+    "skipped": 0,
+    "scenarios": 69,
+    "providers": [
+      "openai",
+      "anthropic",
+      "google"
+    ],
+    "path": "/tmp/oneringai-stage03-final-live-verified.json",
+    "sha256": "d06b285c796a56ff219a23c034c31d348738d7c4e75cd29c2b40ea3e6bdbb430",
+    "files": [
+      {
+        "file": "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "cases": 12,
+        "passed": true
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "cases": 16,
+        "passed": true
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "cases": 9,
+        "passed": true
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "cases": 14,
+        "passed": true
+      },
+      {
+        "file": "tests/integration/text/ToolOutcomes.live.integration.test.ts",
+        "cases": 6,
+        "passed": true
+      }
+    ],
+    "evidence": [
+      {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "mode": "run",
+        "passed": true,
+        "modelCalls": 3,
+        "executions": 1,
+        "recoveredExactMarker": true,
+        "terminalInputHasSource": true,
+        "acknowledgement": "restart",
+        "evidenceStatus": "stored",
+        "rawChars": 12089,
+        "projectionChars": 412,
+        "outcomes": [
+          {
+            "tool": "large_search",
+            "status": "succeeded",
+            "completion": "settled"
+          },
+          {
+            "tool": "evidence_read",
+            "status": "succeeded",
+            "completion": "settled"
+          }
+        ]
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "mode": "stream",
+        "passed": true,
+        "modelCalls": 3,
+        "executions": 1,
+        "recoveredExactMarker": true,
+        "terminalInputHasSource": true,
+        "acknowledgement": "restart",
+        "evidenceStatus": "stored",
+        "rawChars": 12089,
+        "projectionChars": 412,
+        "outcomes": [
+          {
+            "tool": "large_search",
+            "status": "succeeded",
+            "completion": "settled"
+          },
+          {
+            "tool": "evidence_read",
+            "status": "succeeded",
+            "completion": "settled"
+          }
+        ]
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "mode": "storage-failure",
+        "passed": true,
+        "modelCalls": 2,
+        "executions": 1,
+        "recoveredExactMarker": true,
+        "terminalInputHasSource": true,
+        "acknowledgement": null,
+        "evidenceStatus": "storage_failed",
+        "rawChars": 12089,
+        "projectionChars": null,
+        "outcomes": [
+          {
+            "tool": "large_search",
+            "status": "succeeded",
+            "completion": "settled"
+          }
+        ]
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "mode": "run",
+        "passed": true,
+        "modelCalls": 3,
+        "executions": 1,
+        "recoveredExactMarker": true,
+        "terminalInputHasSource": true,
+        "acknowledgement": "restart",
+        "evidenceStatus": "stored",
+        "rawChars": 12089,
+        "projectionChars": 413,
+        "outcomes": [
+          {
+            "tool": "large_search",
+            "status": "succeeded",
+            "completion": "settled"
+          },
+          {
+            "tool": "evidence_read",
+            "status": "succeeded",
+            "completion": "settled"
+          }
+        ]
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "mode": "stream",
+        "passed": true,
+        "modelCalls": 3,
+        "executions": 1,
+        "recoveredExactMarker": true,
+        "terminalInputHasSource": true,
+        "acknowledgement": "restart",
+        "evidenceStatus": "stored",
+        "rawChars": 12089,
+        "projectionChars": 413,
+        "outcomes": [
+          {
+            "tool": "large_search",
+            "status": "succeeded",
+            "completion": "settled"
+          },
+          {
+            "tool": "evidence_read",
+            "status": "succeeded",
+            "completion": "settled"
+          }
+        ]
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "mode": "storage-failure",
+        "passed": true,
+        "modelCalls": 2,
+        "executions": 1,
+        "recoveredExactMarker": true,
+        "terminalInputHasSource": true,
+        "acknowledgement": null,
+        "evidenceStatus": "storage_failed",
+        "rawChars": 12089,
+        "projectionChars": null,
+        "outcomes": [
+          {
+            "tool": "large_search",
+            "status": "succeeded",
+            "completion": "settled"
+          }
+        ]
+      },
+      {
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "mode": "run",
+        "passed": true,
+        "modelCalls": 3,
+        "executions": 1,
+        "recoveredExactMarker": true,
+        "terminalInputHasSource": true,
+        "acknowledgement": "restart",
+        "evidenceStatus": "stored",
+        "rawChars": 12089,
+        "projectionChars": 426,
+        "outcomes": [
+          {
+            "tool": "large_search",
+            "status": "succeeded",
+            "completion": "settled"
+          },
+          {
+            "tool": "evidence_read",
+            "status": "succeeded",
+            "completion": "settled"
+          }
+        ]
+      },
+      {
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "mode": "stream",
+        "passed": true,
+        "modelCalls": 3,
+        "executions": 1,
+        "recoveredExactMarker": true,
+        "terminalInputHasSource": true,
+        "acknowledgement": "restart",
+        "evidenceStatus": "stored",
+        "rawChars": 12089,
+        "projectionChars": 451,
+        "outcomes": [
+          {
+            "tool": "large_search",
+            "status": "succeeded",
+            "completion": "settled"
+          },
+          {
+            "tool": "evidence_read",
+            "status": "succeeded",
+            "completion": "settled"
+          }
+        ]
+      },
+      {
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "mode": "storage-failure",
+        "passed": true,
+        "modelCalls": 2,
+        "executions": 1,
+        "recoveredExactMarker": true,
+        "terminalInputHasSource": true,
+        "acknowledgement": null,
+        "evidenceStatus": "storage_failed",
+        "rawChars": 12089,
+        "projectionChars": null,
+        "outcomes": [
+          {
+            "tool": "large_search",
+            "status": "succeeded",
+            "completion": "settled"
+          }
+        ]
+      }
+    ],
+    "foundationReports": [
+      {
+        "name": "baseline",
+        "path": "/tmp/oneringai-stage03-final-baseline-verified.json",
+        "sha256": "2321adf531223c80e406b0c9635b181ca06fe794747b2e54ec71c24493f73091",
+        "protocol": "stage-00-v1",
+        "recordedAt": "2026-10-13T18:39:52.767Z",
+        "scenarios": 24
+      },
+      {
+        "name": "context",
+        "path": "/tmp/oneringai-stage03-final-context-verified.json",
+        "sha256": "8455ad8d1bf553b7c96542e1ec2b4534560ad76782f5f89dfc3872d544f7c1bc",
+        "protocol": "stage-01-corrections-v2",
+        "recordedAt": "2026-10-13T18:39:41.082Z",
+        "scenarios": 16
+      },
+      {
+        "name": "tools",
+        "path": "/tmp/oneringai-stage03-final-tools-verified.json",
+        "sha256": "1ec5bb1c0dfc0619195ba66909c7c516b119f3b92f0b9b719ec18868c558cc79",
+        "protocol": "stage-02",
+        "recordedAt": "2026-10-13T18:40:33.836Z",
+        "scenarios": 6
+      },
+      {
+        "name": "models",
+        "path": "/tmp/oneringai-stage03-final-models-verified.json",
+        "sha256": "8f5b9a5411d454f71f46a8a5a6b9c223a70cd08db41fdb174496d5d23ca84e30",
+        "protocol": "stage-06-live-v1",
+        "recordedAt": "2026-10-13T18:40:19.273Z",
+        "scenarios": 14
+      }
+    ],
+    "scope": "One functional probe per selected provider/mode; local synthetic tools, no external writes, no statistical quality/reliability or cost-saving claim.",
+    "sequencing": "The complete 57-case batch validates scoped-ID retrieval and all Stage 00–02/06 foundations. Subsequent changes contain invalid async callback results and preflight evidence snapshot scope/version before mutation; the final full unit, offline and public CJS gates cover those paths. Valid synchronous live callbacks and evidence-disabled foundation behavior are unchanged."
+  },
+  "offline": {
+    "passed": 13,
+    "failed": 0,
+    "examples": [
+      {
+        "script": "example:agentic-baseline",
+        "passed": true,
+        "log": "/tmp/oneringai-stage03-verified-example-agentic-baseline.log"
+      },
+      {
+        "script": "example:context-freshness",
+        "passed": true,
+        "log": "/tmp/oneringai-stage03-verified-example-context-freshness.log"
+      },
+      {
+        "script": "example:context-budget",
+        "passed": true,
+        "log": "/tmp/oneringai-stage03-verified-example-context-budget.log"
+      },
+      {
+        "script": "example:structured-budget",
+        "passed": true,
+        "log": "/tmp/oneringai-stage03-verified-example-structured-budget.log"
+      },
+      {
+        "script": "example:amos-context",
+        "passed": true,
+        "log": "/tmp/oneringai-stage03-verified-example-amos-context.log"
+      },
+      {
+        "script": "example:tool-outcomes",
+        "passed": true,
+        "log": "/tmp/oneringai-stage03-verified-example-tool-outcomes.log"
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "passed": true,
+        "log": "/tmp/oneringai-stage03-verified-example-amos-tool-outcomes.log"
+      },
+      {
+        "script": "example:purpose-models",
+        "passed": true,
+        "log": "/tmp/oneringai-stage03-verified-example-purpose-models.log"
+      },
+      {
+        "script": "example:shared-budget",
+        "passed": true,
+        "log": "/tmp/oneringai-stage03-verified-example-shared-budget.log"
+      },
+      {
+        "script": "example:amos-helpers",
+        "passed": true,
+        "log": "/tmp/oneringai-stage03-verified-example-amos-helpers.log"
+      },
+      {
+        "script": "example:durable-evidence",
+        "passed": true,
+        "log": "/tmp/oneringai-stage03-verified-example-durable-evidence.log"
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "passed": true,
+        "log": "/tmp/oneringai-stage03-verified-example-ambiguous-evidence.log"
+      },
+      {
+        "script": "example:amos-evidence",
+        "passed": true,
+        "log": "/tmp/oneringai-stage03-verified-example-amos-evidence.log"
+      }
+    ]
+  },
+  "gates": [
+    {
+      "name": "build",
+      "command": "npm run build",
+      "path": "/tmp/oneringai-stage03-completion-build.log",
+      "status": "passed",
+      "sha256": "911e7116df8f2315bb4a6ac443172fa2f58f9d7ef48db9901c3ac86cc66af983"
+    },
+    {
+      "name": "types",
+      "command": "npm run typecheck",
+      "path": "/tmp/oneringai-stage03-completion-types.log",
+      "status": "passed",
+      "sha256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717"
+    },
+    {
+      "name": "lint",
+      "command": "npm run lint",
+      "path": "/tmp/oneringai-stage03-completion-lint.log",
+      "status": "passed",
+      "sha256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e"
+    },
+    {
+      "name": "strict-stage-tests",
+      "command": "npx tsc -p /tmp/oneringai-stage03-strict.json",
+      "path": "/tmp/oneringai-stage03-completion-strict.log",
+      "status": "passed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "strict-amos-tests",
+      "command": "npx tsc -p /tmp/oneringai-stage03-amos-tests.json",
+      "path": "/tmp/oneringai-stage03-completion-amos-tests.log",
+      "status": "passed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "public-compatibility",
+      "command": "npm run test:agentic:compat",
+      "path": "/tmp/oneringai-stage03-completion-compat.log",
+      "status": "passed",
+      "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    {
+      "name": "examples-types",
+      "command": "npm run examples:check",
+      "path": "/tmp/oneringai-stage03-completion-examples-types.log",
+      "status": "passed",
+      "sha256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8"
+    },
+    {
+      "name": "amos-types",
+      "command": "npm run --prefix apps/amos typecheck",
+      "path": "/tmp/oneringai-stage03-completion-amos-types.log",
+      "status": "passed",
+      "sha256": "15c9b914db9ac8a0f39085e9e28df4f483e0442e42350ea4d7615778f29e93ad"
+    },
+    {
+      "name": "amos-build",
+      "command": "npm run --prefix apps/amos build",
+      "path": "/tmp/oneringai-stage03-completion-amos-build.log",
+      "status": "passed",
+      "sha256": "c223badb944034de8fe5fd69c12ad220e0dbb0451808f884cbc91f2fccfc9de4"
+    },
+    {
+      "name": "generated-api",
+      "command": "npm run docs",
+      "path": "/tmp/oneringai-stage03-completion-docs.log",
+      "status": "passed",
+      "sha256": "428a01de50376d440a6c15974203d51afc35fa7f42658f3ed3a45617d641725f"
+    },
+    {
+      "name": "cjs-runtime",
+      "command": "CJS public-package raw return/projection/recovery smoke",
+      "path": "/tmp/oneringai-stage03-completion-cjs.log",
+      "status": "passed",
+      "sha256": "e6339b7c3919d6d8bf9cd03f57d1809ca4fa80a277d2334985b293c314fb430e"
+    }
+  ],
+  "compatibility": {
+    "breakingChanges": [],
+    "existingSignaturesAndDefaults": true,
+    "legacyPluginConfigAndOutputHints": true,
+    "optionalBackendLookup": true,
+    "fullReferenceReadPreserved": true,
+    "versionedOptionalSnapshots": true,
+    "featureDisabledNoModelStoragePromptWork": true
+  },
+  "earlierAttempts": [
+    {
+      "path": "/tmp/oneringai-stage03-live-vitest.json",
+      "sha256": "96841e60e3c737339e885b00e4346a1d381d3dab134920fe96e5001a4d959baa",
+      "passed": 6,
+      "failed": 3,
+      "skipped": 0,
+      "failures": [
+        {
+          "test": "Stage 03 live evidence google run: exact evidence recovery or raw fallback",
+          "status": "failed",
+          "details": [
+            "Error: Stage 03 google run failed (ProviderError); see assertions/report, credentials omitted.\n    at /Users/aantich/dev/oneringai/tests/integration/text/Evidence.live.integration.test.ts:66:15\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///Users/aantich/dev/oneringai/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+          ]
+        },
+        {
+          "test": "Stage 03 live evidence google stream: exact evidence recovery or raw fallback",
+          "status": "failed",
+          "details": [
+            "Error: Stage 03 google stream failed (ProviderError); see assertions/report, credentials omitted.\n    at /Users/aantich/dev/oneringai/tests/integration/text/Evidence.live.integration.test.ts:66:15\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///Users/aantich/dev/oneringai/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+          ]
+        },
+        {
+          "test": "Stage 03 live evidence google storage-failure: exact evidence recovery or raw fallback",
+          "status": "failed",
+          "details": [
+            "Error: Stage 03 google storage-failure failed (ProviderError); see assertions/report, credentials omitted.\n    at /Users/aantich/dev/oneringai/tests/integration/text/Evidence.live.integration.test.ts:66:15\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///Users/aantich/dev/oneringai/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/tmp/oneringai-stage03-verified-live-vitest.json",
+      "sha256": "e1aab6bbff74159868d2e67b1678885f65ff6c9b30e9820b8607d3f859dd8721",
+      "passed": 56,
+      "failed": 1,
+      "skipped": 0,
+      "failures": [
+        {
+          "test": "Stage 06 live model-task and helper execution google stream shares helper/main usage without tools or state transfer",
+          "status": "failed",
+          "details": [
+            "AssertionError: expected 'ROLE_VERIFIED_GOOGLE_STREAM.' to be 'ROLE_VERIFIED_GOOGLE_STREAM' // Object.is equality\n    at /Users/aantich/dev/oneringai/tests/integration/text/ModelExecution.live.integration.test.ts:134:37\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///Users/aantich/dev/oneringai/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/tmp/oneringai-stage03-final-live-vitest.json",
+      "sha256": "e30298e049881e6e9dbd03e219b2a9bd3adb69f845f08a24b5bb35cc76d52d3e",
+      "passed": 57,
+      "failed": 0,
+      "skipped": 0,
+      "failures": []
+    },
+    {
+      "path": "/tmp/oneringai-stage03-release-live-vitest.json",
+      "sha256": "bc2a0316b31307480f463692dc7eb036c84fb7f28376c3fd5fbf70993cdc047c",
+      "passed": 56,
+      "failed": 1,
+      "skipped": 0,
+      "failures": [
+        {
+          "test": "Stage 03 live evidence anthropic storage-failure: exact evidence recovery or raw fallback",
+          "status": "failed",
+          "details": [
+            "Error: Stage 03 anthropic storage-failure failed (AssertionError); see assertions/report, credentials omitted.\n    at /Users/aantich/dev/oneringai/tests/integration/text/Evidence.live.integration.test.ts:66:15\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///Users/aantich/dev/oneringai/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/tmp/oneringai-stage03-terminal-live-vitest.json",
+      "sha256": "67905026dee612167f9de95797b71085ff6f9c8a775f5d15375be69389be65c4",
+      "passed": 8,
+      "failed": 1,
+      "skipped": 0,
+      "failures": [
+        {
+          "test": "Stage 03 live evidence anthropic storage-failure: exact evidence recovery or raw fallback",
+          "status": "failed",
+          "details": [
+            "Error: Stage 03 anthropic storage-failure failed (AssertionError); see assertions/report, credentials omitted.\n    at /Users/aantich/dev/oneringai/tests/integration/text/Evidence.live.integration.test.ts:68:15\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///Users/aantich/dev/oneringai/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/tmp/oneringai-stage03-final-evidence-live-vitest.json",
+      "sha256": "c9b04b8a4ba965fe6a49b7fb6636d4786fbd66b0b4c395effc0a12a81553ec19",
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0,
+      "failures": []
+    },
+    {
+      "path": "/tmp/oneringai-stage03-accepted-live-vitest.json",
+      "sha256": "290a2c3f9379ff5ea657c8587b8d7da4962b34925bb8d36cb550067b0a33fa76",
+      "passed": 8,
+      "failed": 1,
+      "skipped": 0,
+      "failures": [
+        {
+          "test": "Stage 03 live evidence google stream: exact evidence recovery or raw fallback",
+          "status": "failed",
+          "details": [
+            "Error: Stage 03 google stream failed (AssertionError); see assertions/report, credentials omitted.\n    at /Users/aantich/dev/oneringai/tests/integration/text/Evidence.live.integration.test.ts:70:15\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///Users/aantich/dev/oneringai/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/tmp/oneringai-stage03-id-live-vitest.json",
+      "sha256": "2343bd5a100ecc8a3cee70bb02eaf91da3544cb0bcec79cc33c943298bdbd4c0",
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0,
+      "failures": []
+    }
+  ],
+  "corrections": [
+    "Google numeric reference-version enum rejected with HTTP 400; portable schema retains local version=1 validation.",
+    "Legacy string message guard corrected without weakening original rolling-window test.",
+    "Existing Google helper source marker JSON-delimited; exact-match assertion preserved.",
+    "New failure fixture separates raw and projected instructions and removes tools during terminal response; exact source and call-count gates preserved.",
+    "Failed Google full-reference retrieval observed; original rejected fields were not retained. Added scoped-ID lookup with host integrity resolution and optional custom-backend fallback; full-reference API still works.",
+    "Contained invalid asynchronous projector/redactor/observer rejections and protected serialization from accessor execution.",
+    "Retained default output-hint identity, host-hook result keys, external feature/config compatibility and async failed-result dispatch boundaries."
+  ],
+  "limits": [
+    "Strict JSON observations; host-sensitive source/redaction policy remains required.",
+    "Process-local in-memory durability; file restart/fsync acknowledgements are distinct, neither is replicated.",
+    "File mutation admission coordinates one process; distributed writers need host coordination/backend support.",
+    "No automatic semantic compactor, action replay, transaction or external-workflow completion guarantee.",
+    "Functional live passes do not prove infallible model argument copying or semantic accuracy."
+  ],
+  "sourceFingerprints": [
+    {
+      "path": "apps/amos/examples/evidence-offline.ts",
+      "sha256": "8999b0c4cf1eff91243aa56a155acebefbd06064c26847a0a4920b754d6b9d51"
+    },
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "sha256": "7131bfe8ee3c44d09dcd6b9763788488773b131d1152f1b706a5d558393c7de9"
+    },
+    {
+      "path": "apps/amos/src/agent/toolOutcomes.ts",
+      "sha256": "4ba675fd3b5f656d5af0ec8b77f3259d7682623a0aba84c207968da5bd65e765"
+    },
+    {
+      "path": "apps/amos/src/app.ts",
+      "sha256": "617bc13d1d4c57d8215baa964fcc34862e25d345b5a2f1c2882151250557f831"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/ContextCommand.ts",
+      "sha256": "72a69b800d3d29e4d7259a7a9bf05dd75943c8e1c337a4cfdafcac9e3b5967e2"
+    },
+    {
+      "path": "apps/amos/src/config/types.ts",
+      "sha256": "85a6bcad9ca1762e160842f96d699111cf4c2f2693bd1bf60b2128e66c554fac"
+    },
+    {
+      "path": "examples/ambiguous-action-evidence.ts",
+      "sha256": "c394330d6dd0d798108e8700ab989741bfaa42d69974286669d04f0d51e0fd7f"
+    },
+    {
+      "path": "examples/durable-tool-evidence.ts",
+      "sha256": "4ac68f85ab0eee431a2806a1e0026c3c5192a2a89ed7daac98c88d267c3b36a5"
+    },
+    {
+      "path": "package.json",
+      "sha256": "31d667bc2d29805b82f7ca1f3256fe9b0e59f3bfd6a7caa4149e9ea80239d282"
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "924b2efe15dacceaff495db9926b3ab7cf908dc1f76da162c72931113571bd48"
+    },
+    {
+      "path": "src/core/StorageRegistry.ts",
+      "sha256": "0b248c279deea934ff61721085d11dda3e3eb6ca81cd46f946ae8fc474e03bfd"
+    },
+    {
+      "path": "src/core/ToolManager.ts",
+      "sha256": "4b75f56f10322968630a182c073579924582e5122d77c13683b8674bff8db3b6"
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "69efb6824a3f1e1d2d40af4e3a0b17b7395c83f60624cc8b93dc59a8e6a51406"
+    },
+    {
+      "path": "src/core/context-nextgen/plugins/EvidencePluginNextGen.ts",
+      "sha256": "e8e74b86d1e9b52e769f11a2bb0e638204d8048c07aa0ad80e1422a43380e944"
+    },
+    {
+      "path": "src/core/context-nextgen/tool-pairs.ts",
+      "sha256": "d04cb65f568c67c45dd7409826f1a0fd6f72248b775f684de21ce92de029202a"
+    },
+    {
+      "path": "src/core/context-nextgen/types.ts",
+      "sha256": "93d9e9317f3dd78223e25bc062b42c8418dfc61517a4d5a8ef8a84c305a86654"
+    },
+    {
+      "path": "src/core/evidence/ToolEvidenceMiddleware.ts",
+      "sha256": "b6b62879098c4c7e09e915d67990e7425ef77487172105d62ec558a9d3bfc5e8"
+    },
+    {
+      "path": "src/core/evidence/validation.ts",
+      "sha256": "5c517c05120b2cc5142222205e112220139a80503f1ac3f9c39a9f73b1412aff"
+    },
+    {
+      "path": "src/domain/entities/Content.ts",
+      "sha256": "9996ebfb27b3345379b420cb3a7ef93ce0e716cd4cd341473c1545b8dd4464bd"
+    },
+    {
+      "path": "src/domain/entities/Tool.ts",
+      "sha256": "12fe4590163d9dd3f70e5d82c30354d828c732120537d9f59b0c646d99d89c22"
+    },
+    {
+      "path": "src/domain/interfaces/IEvidenceStorage.ts",
+      "sha256": "890381f95cc3453c88b7ec0dbb33c9c64c460c9b799c39ee67691cc305a92e3d"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "f4f2a9e7f82f73dd9f5cba2b8449b130142d5cb52d9022cc8f8cc49432818477"
+    },
+    {
+      "path": "src/infrastructure/storage/EvidenceStorage.ts",
+      "sha256": "aea15d5acc51a5e26a9f6ece9a4f2f8743f430e0c13b0f15066719a3f43118cf"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "cea31202082aca9b876bd9fcbd59ff3b34879192f4e0ead0e392b56882631361"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage03-consumer.ts",
+      "sha256": "6407834664a29297f4206253c684249bc706848c674817efc5d255cc21556e4e"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "sha256": "4d03404c19be21263af814f57247553643b01a5eea6a19e477590cae2b0c2ddf"
+    },
+    {
+      "path": "tests/integration/text/Evidence.live.integration.test.ts",
+      "sha256": "3fb71c894257c231e5721e2b56dfaa86dda5c8a150b7b64cf1c2e8d28202308b"
+    },
+    {
+      "path": "tests/integration/text/ModelExecution.live.integration.test.ts",
+      "sha256": "226856cf22062697016ad7030fa7c1350f61cb9353fd39622e173d89269c9d83"
+    },
+    {
+      "path": "tests/unit/apps/amos/Evidence.test.ts",
+      "sha256": "f1660e96a42b50b131d9a0880a2e50ca8b6e347aaa9af1a6cb492faf64859c67"
+    },
+    {
+      "path": "tests/unit/core/evidence/Agent.evidence.test.ts",
+      "sha256": "aadfbac783fa2cc0068fc42c72588c23df2e5a8bc8e717a7ccfc618951a15521"
+    },
+    {
+      "path": "tests/unit/core/evidence/EvidenceStorage.test.ts",
+      "sha256": "b0f341c407f652fca17670dbf26c03730ae9b7e04821bbfdfe4dad9108778953"
+    },
+    {
+      "path": "tests/unit/core/evidence/ToolEvidence.test.ts",
+      "sha256": "39596d88b557142543ac2b497b6ea5da38602d1bd5efeaa8daa3397774a8564b"
+    }
+  ],
+  "artifactChecks": {
+    "status": "passed",
+    "sourceFingerprintsMatched": true,
+    "newLocalLinksResolved": true,
+    "diffCheck": true,
+    "credentialScan": {
+      "changedDeliverables": 47,
+      "hits": 0,
+      "valuesPrinted": false
+    },
+    "package": {
+      "dryRun": true,
+      "published": false,
+      "files": 130,
+      "requiredIncluded": [
+        "docs/DURABLE_EVIDENCE.md",
+        "docs/designs/STAGE_03_IMPLEMENTATION.md",
+        "docs/evaluations/STAGE_03_VALIDATION.json",
+        "docs/evaluations/STAGE_03_AMOS_OFFLINE.txt",
+        "examples/durable-tool-evidence.ts",
+        "examples/ambiguous-action-evidence.ts"
+      ],
+      "envExcluded": true
+    }
+  },
+  "nextStage": "07 (separate authorization required)"
+}

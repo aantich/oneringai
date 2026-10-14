@@ -819,6 +819,8 @@ export const DEFAULT_FEATURES: Required<KnownContextFeatures> = {
  * Known plugin configurations for built-in plugins (provides autocomplete/docs).
  */
 export interface KnownPluginConfigs {
+  /** Opt-in durable evidence. Enable features.evidence; scope and policy are host-owned. */
+  evidence?: Record<string, unknown>;
   /** Working memory plugin config. See WorkingMemoryPluginConfig. */
   workingMemory?: Record<string, unknown>;
   /** In-context memory plugin config. See InContextMemoryConfig. */

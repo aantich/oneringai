@@ -47,7 +47,7 @@ export class ContextCommand extends BaseCommand {
   readonly name = 'context';
   readonly aliases = ['ctx'];
   readonly description = 'Show context inspection details';
-  readonly usage = '/context [budget|breakdown|cache|memory|history]';
+  readonly usage = '/context [budget|breakdown|cache|memory|history|evidence]';
 
   get detailedHelp(): string {
     return `
@@ -57,6 +57,7 @@ USAGE:
   /context              Show context overview (utilization bar)
   /context budget       Detailed token budget
   /context breakdown    Per-component token breakdown
+  /context evidence [id] [offset]  Metadata list or explicit bounded evidence preview
   /context cache        Cache statistics
   /context memory       Memory entries
   /context history [n]  Show conversation history
@@ -91,6 +92,14 @@ EXAMPLES:
         return this.showCache(context);
       case 'memory':
         return this.showMemory(context);
+      case 'evidence':
+        try {
+          if (args.length > 3) return this.error('Use /context evidence [id] [offset].');
+          const runner = app.getAgent()!;
+          const offset = args[2] === undefined ? 0 : Number(args[2]);
+          if (!Number.isSafeInteger(offset) || offset < 0) return this.error('Offset must be a non-negative integer.');
+          return this.success(await runner.inspectEvidence?.(args[1], offset) ?? 'Evidence inspection is unavailable.');
+        } catch { return this.error('Evidence inspection failed: data may be unavailable, corrupt, or storage may be busy.'); }
       case 'history':
         // Delegate to /history command
         return this.showHistory(context);

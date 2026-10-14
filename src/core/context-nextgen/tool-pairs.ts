@@ -41,6 +41,13 @@ function unresolvedAsyncKeys(items: readonly InputItem[]): Set<string> {
   return asynchronous;
 }
 
+/** Unacknowledged observations cannot lose their raw copy through context reduction. */
+export function hasUnacknowledgedEvidence(item: InputItem): boolean {
+  return item.type === 'message' && Array.isArray(item.content) && item.content.some(content =>
+    (content.type === ContentType.TOOL_RESULT || content.type === ContentType.CUSTOM_TOOL_RESULT)
+    && content.evidence?.version === 1 && content.evidence.status === 'storage_failed');
+}
+
 /** All removable connected components, ordered by their oldest history item. */
 export function removableMessageGroups(history: readonly InputItem[], pending: readonly InputItem[]): number[][] {
   const entries = history.map(toolProtocolKeys);
@@ -59,6 +66,7 @@ export function removableMessageGroups(history: readonly InputItem[], pending: r
     let protectedComponent = false;
     for (const member of component) {
       visited.add(member);
+      if (hasUnacknowledgedEvidence(history[member]!)) protectedComponent = true;
       for (const key of entries[member]!) {
         if (protectedKeys.has(key)) protectedComponent = true;
         for (const related of byKey.get(key) ?? []) component.add(related);

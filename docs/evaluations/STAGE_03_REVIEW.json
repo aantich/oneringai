@@ -1,0 +1,504 @@
+{
+  "protocol": "stage-03-review-v1",
+  "recordedAt": "2026-10-13T19:51:51.343Z",
+  "localDate": "2026-10-13",
+  "timezone": "Europe/Zurich",
+  "status": "review-complete-six-open-findings",
+  "findings": {
+    "P1": 3,
+    "P2": 3,
+    "total": 6
+  },
+  "branch": "version2",
+  "baseRevision": "a98a498d18b55fd3329c7ac2b1b379b09eb15ab1",
+  "scope": [
+    "Uncommitted Stage 03 storage, serializer, middleware, ToolManager and Agent/context integration",
+    "Evidence plugin lifecycle, recovery, persistence and compaction protection",
+    "Public types/exports, custom adapters, compatibility, tests and examples",
+    "AMOS settings, inspection, diagnostics and documentation"
+  ],
+  "changesInThisReview": "Review documentation, status/handoff records and package documentation inventory only; no runtime source or permanent test changes",
+  "recordedSourceFingerprintsMatchedAtReviewStart": true,
+  "recordedFilesChecked": 32,
+  "currentFocusedSuite": {
+    "files": 4,
+    "passed": 109,
+    "failed": 0,
+    "skipped": 0,
+    "success": true,
+    "reportSHA256": "e69f923e38327e695d5d19ec3eb2f6fe67bfc4354de3ae23c39274e571454053",
+    "logSHA256": "ec17d9520c8d2ea62baa9b210c8a88eccb455da946e841ea2d0b4f7a44b655f7",
+    "perFile": [
+      {
+        "file": "tests/unit/apps/amos/Evidence.test.ts",
+        "passed": 5,
+        "failed": 0
+      },
+      {
+        "file": "tests/unit/core/evidence/Agent.evidence.test.ts",
+        "passed": 11,
+        "failed": 0
+      },
+      {
+        "file": "tests/unit/core/evidence/EvidenceStorage.test.ts",
+        "passed": 49,
+        "failed": 0
+      },
+      {
+        "file": "tests/unit/core/evidence/ToolEvidence.test.ts",
+        "passed": 44,
+        "failed": 0
+      }
+    ]
+  },
+  "currentCompatibility": {
+    "command": "npm run test:agentic:compat",
+    "status": "passed",
+    "logSHA256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+  },
+  "observations": [
+    {
+      "id": "R1",
+      "priority": 1,
+      "title": "Failed async delivery consumes undelivered queue",
+      "file": "src/core/Agent.ts",
+      "line": 3825
+    },
+    {
+      "id": "R2",
+      "priority": 1,
+      "title": "Receipt-only record releases raw-data protection",
+      "file": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "line": 1249
+    },
+    {
+      "id": "R3",
+      "priority": 1,
+      "title": "Cancellation settlement race loses returned observation",
+      "file": "src/core/ToolManager.ts",
+      "line": 1166
+    },
+    {
+      "id": "R4",
+      "priority": 2,
+      "title": "Rejected same-scope snapshot partially mutates context",
+      "file": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "line": 2665
+    },
+    {
+      "id": "R5",
+      "priority": 2,
+      "title": "In-place after-tool hook mutation retains stale projection",
+      "file": "src/core/Agent.ts",
+      "line": 3368
+    },
+    {
+      "id": "R6",
+      "priority": 2,
+      "title": "Record cap is enforced after unbounded serialization",
+      "file": "src/infrastructure/storage/EvidenceStorage.ts",
+      "line": 97
+    }
+  ],
+  "reproductions": {
+    "executionAndRecovery": {
+      "script": {
+        "filename": "/tmp/oneringai-stage03-review-source-repro.cjs",
+        "sha256": "178bca1d50aec34e7196aa195123b78f4df8dab11967676996b3c9d66eaa45b3",
+        "source": "const assert = require('node:assert/strict');\nconst fs = require('node:fs');\nconst { createRequire } = require('node:module');\nconst lib = createRequire('/Users/aantich/dev/oneringai/package.json')('tsx/cjs') && require('/Users/aantich/dev/oneringai/src/index.ts');\nconst {Agent, Connector, Vendor, AgentContextNextGen, InMemoryEvidenceStorage, ToolManager, ToolEvidenceMiddleware, ToolCallState} = lib;\nconst results = {};\nconst scope = {ownerId:'alice',namespace:'review'};\nconst raw = {id:'SOURCE_ONLY_COPY',detail:'EXACT_SOURCE_'.repeat(1000)};\nconst probe = (execute=async()=>raw,blocking=true) => ({definition:{type:'function',blocking,function:{name:'probe',parameters:{type:'object',properties:{}}}},execute,output:{effect:'write',summarize:()=> 'short'}});\nconst context = (storage=new InMemoryEvidenceStorage({scope}),extra={}) => AgentContextNextGen.create({model:'gpt-4o-mini',agentId:'review',userId:'alice',features:{workingMemory:false,inContextMemory:false,evidence:true},plugins:{evidence:{storage}},...extra});\nasync function ackWithoutResult(){\n const storage=new InMemoryEvidenceStorage({scope}); const c=context(storage); const realPut=storage.put.bind(storage); storage.put=async()=>{throw new Error('synthetic unavailable')}; const tool=probe(); c.tools.register(tool);\n try {\n c.addUserMessage('query'); c.addAssistantResponse([{type:'message',role:'assistant',content:[{type:'tool_use',id:'call',name:'probe',arguments:'{}'}]}]);\n const report=await c.tools.executeWithOutcome('probe',{}, {callId:'call'});\n c.addToolResults([{tool_use_id:'call',content:raw,state:ToolCallState.COMPLETED,outcome:report.outcome,evidence:report.evidence}]);\n storage.put=realPut;\n const receipt=await new ToolEvidenceMiddleware({storage}).record(tool,{}, {userId:'alice'},report.outcome); // no result, legitimate receipt API\n const acknowledged=await c.acknowledgeToolEvidence('call',receipt.reference);\n c.addAssistantResponse([]);\n const rollover=await c.rollover({preserveRecentTurns:0,summarize:async()=> 'lossy summary'});\n const saved=await storage.readRecord(receipt.reference);\n results.ackWithoutResult={acknowledged,rollover:rollover.performed,storedResultPresent:Object.hasOwn(saved,'result'),rawInHistory:JSON.stringify(c.getConversation()).includes(raw.detail),recordCount:(await storage.list()).entries.length};\n assert.equal(acknowledged,1); assert.equal(rollover.performed,true); assert.equal(Object.hasOwn(saved,'result'),false); assert.equal(results.ackWithoutResult.rawInHistory,false);\n }finally{c.destroy()}\n}\nasync function malformedRestore(){const c=context(); try {\n c.addUserMessage('original'); c.addAssistantResponse([{type:'message',role:'assistant',content:[{type:'output_text',text:'original answer'}]}]);\n const before=JSON.stringify(c.getConversation()); const state=structuredClone(c.getState());\n state.conversation=[{type:'message',role:'user',content:[{type:'input_text',text:'REJECTED_STATE_CONTENT'}]}]; state.systemPrompt='REJECTED_SYSTEM_PROMPT'; state.pluginStates.evidence.recent=[{toolName:'probe',status:'succeeded',completion:'settled',evidence:{status:'stored',effect:'read'}}];\n let error; try{c.restoreState(state)}catch(e){error=e.message}\n results.malformedRestore={error,conversationChanged:before!==JSON.stringify(c.getConversation()),rejectedContentInstalled:JSON.stringify(c.getConversation()).includes('REJECTED_STATE_CONTENT'),systemPrompt:c.getState().systemPrompt};\n assert.ok(error); assert.equal(results.malformedRestore.rejectedContentInstalled,true); const loader=context(undefined,{storage:{load:async()=>({state})}}); try { loader.addUserMessage('loader original'); let loadError;try{await loader.load('malformed')}catch(e){loadError=e.message}; results.malformedLoad={error:loadError,rejectedContentInstalled:JSON.stringify(loader.getConversation()).includes('REJECTED_STATE_CONTENT'),systemPrompt:loader.getState().systemPrompt};assert.ok(loadError);assert.equal(results.malformedLoad.rejectedContentInstalled,true); }finally{loader.destroy()}\n }finally{c.destroy()}}\nasync function cancellationRace(){\n const found=[];\n for(let depth=1;depth<=45;depth++){\n const storage=new InMemoryEvidenceStorage({scope}); const manager=new ToolManager({toolExecutionTimeout:0}); const controller=new AbortController();\n manager.setToolContext({userId:'alice'}); manager.setEvidenceMiddleware(new ToolEvidenceMiddleware({storage}));\n const later=(n)=>{if(n===0)controller.abort(new DOMException('synthetic cancel','AbortError'));else queueMicrotask(()=>later(n-1));};\n manager.register(probe(async()=>{queueMicrotask(()=>later(depth)); return raw;}));\n try {\n let report,error; try {report=await manager.executeWithOutcome('probe',{}, {signal:controller.signal,callId:'race'})}catch(e){error=e}\n await new Promise(r=>setImmediate(r));\n const entries=(await storage.list()).entries; const records=await Promise.all(entries.map(e=>storage.readRecord(e.reference)));\n if(error && error.outcome?.completion==='settled' && !records.some(r=>Object.hasOwn(r,'result'))){found.push({depth,status:error.outcome.status,completion:error.outcome.completion,recordCount:records.length,resultRecords:records.filter(r=>Object.hasOwn(r,'result')).length});}\n }finally{manager.destroy()}\n }\n results.cancellationRace=found; assert.ok(found.length>0);\n}\nasync function asyncQueue(){\n let calls=0, release; const pending=new Promise(r=>release=r);\n const response=(call)=>({id:'r',object:'response',model:'gpt-4o-mini',created_at:1,status:'completed',output_text:call?'':'done',output:[{type:'message',role:'assistant',content:call?[{type:'tool_use',id:'async-call',name:'probe',arguments:'{}'}]:[{type:'output_text',text:'done'}]}],usage:{input_tokens:1,output_tokens:1,total_tokens:2}});\n const provider={name:'review-provider',capabilities:{text:true},generate:async()=>response(++calls===1),getModelCapabilities:()=>({supportsTools:true,supportsVision:false,supportsJSON:true,supportsJSONSchema:true,maxTokens:128000,maxInputTokens:128000,maxOutputTokens:1024}),validateConfig:async()=>true,listModels:async()=>[],destroy:()=>{}};\n const storage=new InMemoryEvidenceStorage({scope}); storage.put=async()=>{throw new Error('synthetic unavailable')};\n Connector.create({name:'stage03-review',vendor:Vendor.OpenAI,auth:{type:'none'},options:{provider}});\n const agent=Agent.create({connector:'stage03-review',model:'gpt-4o-mini',userId:'alice',tools:[probe(async()=>pending,false)],maxIterations:3,emptyResponseRetry:{enabled:false},asyncTools:{autoContinue:false},context:{model:'gpt-4o-mini',features:{workingMemory:false,inContextMemory:false,evidence:true},plugins:{evidence:{storage}}}});\n try{\n await agent.run('start background'); release(raw);\n for(let i=0;i<100 && agent._asyncResultQueue.length===0;i++)await new Promise(r=>setTimeout(r,1));\n const queuedBefore=agent._asyncResultQueue.length; let firstError,secondError;\n try{await agent.continueWithAsyncResults()}catch(e){firstError=e.message}\n const queuedAfter=agent._asyncResultQueue.length;\n try{await agent.continueWithAsyncResults()}catch(e){secondError=e.message}\n results.asyncQueue={queuedBefore,queuedAfter,firstError,secondError,providerCalls:calls};\n assert.equal(queuedBefore,1); assert.equal(queuedAfter,0); assert.match(firstError,/unacknowledged/); assert.match(secondError,/No async results/);\n }finally{agent.destroy();Connector.remove('stage03-review')}\n}\n(async()=>{await ackWithoutResult();await malformedRestore();await cancellationRace();await asyncQueue();fs.writeFileSync('/tmp/oneringai-stage03-review-source-repro.json',JSON.stringify(results,null,2)+'\\n');console.log(JSON.stringify(results,null,2));})().catch(e=>{console.error(e);process.exitCode=1});\n"
+      },
+      "output": {
+        "ackWithoutResult": {
+          "acknowledged": 1,
+          "rollover": true,
+          "storedResultPresent": false,
+          "rawInHistory": false,
+          "recordCount": 1
+        },
+        "malformedRestore": {
+          "error": "Evidence invalid",
+          "conversationChanged": true,
+          "rejectedContentInstalled": true,
+          "systemPrompt": "REJECTED_SYSTEM_PROMPT"
+        },
+        "malformedLoad": {
+          "error": "Evidence invalid",
+          "rejectedContentInstalled": true,
+          "systemPrompt": "REJECTED_SYSTEM_PROMPT"
+        },
+        "cancellationRace": [
+          {
+            "depth": 3,
+            "status": "cancelled",
+            "completion": "settled",
+            "recordCount": 1,
+            "resultRecords": 0
+          },
+          {
+            "depth": 4,
+            "status": "cancelled",
+            "completion": "settled",
+            "recordCount": 1,
+            "resultRecords": 0
+          },
+          {
+            "depth": 5,
+            "status": "cancelled",
+            "completion": "settled",
+            "recordCount": 1,
+            "resultRecords": 0
+          },
+          {
+            "depth": 6,
+            "status": "cancelled",
+            "completion": "settled",
+            "recordCount": 1,
+            "resultRecords": 0
+          },
+          {
+            "depth": 7,
+            "status": "cancelled",
+            "completion": "settled",
+            "recordCount": 1,
+            "resultRecords": 0
+          }
+        ],
+        "asyncQueue": {
+          "queuedBefore": 1,
+          "queuedAfter": 0,
+          "firstError": "Cannot dispatch asynchronous tool results with unacknowledged evidence. Preserve raw results and repair storage; do not repeat the action.",
+          "secondError": "No async results to deliver",
+          "providerCalls": 2
+        }
+      },
+      "logSHA256": "1d7f6bfe204803a2c3a7be262103ef7cff0de898000a1d08412ceccb2d16a0f5"
+    },
+    "hookMutation": {
+      "script": {
+        "filename": "/tmp/oneringai-stage03-review-source-hook.cjs",
+        "sha256": "678861741cd317b47772726f4bbd2b2a82737ba468ffe137858e10324e93b858",
+        "source": "const assert=require('node:assert/strict');const fs=require('node:fs');const lib=require('node:module').createRequire('/Users/aantich/dev/oneringai/package.json')('tsx/cjs') && require('/Users/aantich/dev/oneringai/src/index.ts');\nconst {Agent,Connector,Vendor,InMemoryEvidenceStorage}=lib;\n(async()=>{\n const packets=[];const raw={status:'ORIGINAL',ids:['OLD_ID'],rows:'large '.repeat(3000)};\n const response=call=>({id:'r',object:'response',model:'gpt-4o-mini',created_at:1,status:'completed',output_text:call?'':'done',output:[{type:'message',role:'assistant',content:call?[{type:'tool_use',id:'call',name:'probe',arguments:'{}'}]:[{type:'output_text',text:'done'}]}],usage:{input_tokens:1,output_tokens:1,total_tokens:2}});\n const provider={name:'hook-provider',capabilities:{text:true},generate:async opts=>{packets.push(structuredClone(opts));return response(packets.length===1)},getModelCapabilities:()=>({supportsTools:true,supportsVision:false,supportsJSON:true,supportsJSONSchema:true,maxTokens:128000,maxInputTokens:128000,maxOutputTokens:1024}),destroy:()=>{}};\n Connector.create({name:'review-hook',vendor:Vendor.OpenAI,auth:{type:'none'},options:{provider}});const storage=new InMemoryEvidenceStorage({scope:{ownerId:'alice',namespace:'review'}});\n const agent=Agent.create({connector:'review-hook',model:'gpt-4o-mini',userId:'alice',tools:[{definition:{type:'function',function:{name:'probe',parameters:{type:'object',properties:{}}}},execute:async()=>raw,output:{effect:'read',summarize:v=>JSON.stringify({status:v.status,ids:v.ids})}}],hooks:{'after:tool':async ctx=>{ctx.result.content.status='HOST_CHANGED';ctx.result.content.ids=['NEW_ID'];return {modified:{content:ctx.result.content}};}},context:{model:'gpt-4o-mini',features:{workingMemory:false,inContextMemory:false,evidence:true},plugins:{evidence:{storage}}}});\n let completed;agent.on('tool:complete',e=>completed=e.result);\n try{await agent.run('probe');const packet=JSON.stringify(packets[1].input);const result={applicationStatus:completed.content.status,applicationIDs:completed.content.ids,modelHasOldStatus:packet.includes('ORIGINAL'),modelHasOldID:packet.includes('OLD_ID'),modelHasNewID:packet.includes('NEW_ID')};assert.equal(result.applicationStatus,'HOST_CHANGED');assert.equal(result.modelHasOldID,true);assert.equal(result.modelHasNewID,false);fs.writeFileSync('/tmp/oneringai-stage03-review-source-hook.json',JSON.stringify(result,null,2)+'\\n');console.log(JSON.stringify(result));}finally{agent.destroy();Connector.remove('review-hook');}\n})().catch(e=>{console.error(e);process.exitCode=1});\n"
+      },
+      "output": {
+        "applicationStatus": "HOST_CHANGED",
+        "applicationIDs": [
+          "NEW_ID"
+        ],
+        "modelHasOldStatus": true,
+        "modelHasOldID": true,
+        "modelHasNewID": false
+      },
+      "logSHA256": "cecc3be8f76c76924fb7ae363b6265e95550632f20ed8a9f4dcae96b344f18eb"
+    },
+    "serializationCapacity": {
+      "script": {
+        "filename": "/tmp/oneringai-stage03-review-source-capacity.cjs",
+        "sha256": "7c44fe3a10b875c3dd56144476657bf14f2b6bbd5add3fb7cfad8e90115cd55c",
+        "source": "const {performance}=require('node:perf_hooks');const {InMemoryEvidenceStorage}=require('node:module').createRequire('/Users/aantich/dev/oneringai/package.json')('tsx/cjs') && require('/Users/aantich/dev/oneringai/src/index.ts');\n(async()=>{const store=new InMemoryEvidenceStorage({scope:{ownerId:'alice',namespace:'bounded'},maxRecordBytes:512});let result='LEAF';for(let i=0;i<18;i++)result={left:result,right:result};const record={version:1,recordedAt:1,source:{toolName:'probe',executionId:'e',arguments:{},principal:{userId:'alice'},effect:'read',status:'succeeded',completion:'settled',startedAt:1,durationMs:1},result};const before=process.memoryUsage().heapUsed;const start=performance.now();let code;try{await store.put(record)}catch(e){code=e.code}console.log(JSON.stringify({distinctResultObjects:18,maxRecordBytes:512,code,elapsedMs:Math.round(performance.now()-start),heapUsedDelta:process.memoryUsage().heapUsed-before,expandedResultChars:JSON.stringify(result).length}));})().catch(e=>{console.error(e);process.exitCode=1});\n"
+      },
+      "output": {
+        "distinctResultObjects": 18,
+        "maxRecordBytes": 512,
+        "code": "capacity",
+        "elapsedMs": 571,
+        "heapUsedDelta": 45803936,
+        "expandedResultChars": 6291438
+      },
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "builtExportCrossCheck": {
+    "executionAndRecovery": {
+      "ackWithoutResult": {
+        "acknowledged": 1,
+        "rollover": true,
+        "storedResultPresent": false,
+        "rawInHistory": false,
+        "recordCount": 1
+      },
+      "malformedRestore": {
+        "error": "Evidence invalid",
+        "conversationChanged": true,
+        "rejectedContentInstalled": true,
+        "systemPrompt": "REJECTED_SYSTEM_PROMPT"
+      },
+      "cancellationRace": [
+        {
+          "depth": 3,
+          "status": "cancelled",
+          "completion": "settled",
+          "recordCount": 1,
+          "resultRecords": 0
+        },
+        {
+          "depth": 4,
+          "status": "cancelled",
+          "completion": "settled",
+          "recordCount": 1,
+          "resultRecords": 0
+        },
+        {
+          "depth": 5,
+          "status": "cancelled",
+          "completion": "settled",
+          "recordCount": 1,
+          "resultRecords": 0
+        },
+        {
+          "depth": 6,
+          "status": "cancelled",
+          "completion": "settled",
+          "recordCount": 1,
+          "resultRecords": 0
+        },
+        {
+          "depth": 7,
+          "status": "cancelled",
+          "completion": "settled",
+          "recordCount": 1,
+          "resultRecords": 0
+        }
+      ],
+      "asyncQueue": {
+        "queuedBefore": 1,
+        "queuedAfter": 0,
+        "firstError": "Cannot dispatch asynchronous tool results with unacknowledged evidence. Preserve raw results and repair storage; do not repeat the action.",
+        "secondError": "No async results to deliver",
+        "providerCalls": 2
+      }
+    },
+    "hookMutation": {
+      "applicationStatus": "HOST_CHANGED",
+      "applicationIDs": [
+        "NEW_ID"
+      ],
+      "modelHasOldStatus": true,
+      "modelHasOldID": true,
+      "modelHasNewID": false
+    },
+    "serializationCapacity": {
+      "distinctResultObjects": 18,
+      "maxRecordBytes": 512,
+      "code": "capacity",
+      "elapsedMs": 509,
+      "heapUsedDelta": 62222400,
+      "expandedResultChars": 6291438
+    },
+    "note": "Core reproductions also passed against built public exports; load() rejection was additionally reproduced against current source."
+  },
+  "reproductionBoundary": {
+    "realLLMCalls": false,
+    "envLoaded": false,
+    "externalWrites": false,
+    "controlledProvider": true,
+    "syntheticToolEffects": true,
+    "privateDiagnostics": "Native async queue lengths are inspected for verification; tool/run/continuation/recovery/restore/load calls use the public APIs. The load reproduction uses controlled session storage.",
+    "capacityMeasurement": "Single-run elapsed time and observed used-heap delta, not a stable benchmark or peak-memory measurement; no OOM crash induced."
+  },
+  "priorValidation": {
+    "path": "docs/evaluations/STAGE_03_VALIDATION.json",
+    "sha256": "36b43b72dea526359fbed4cd95f966ee5f22897d7373df5d31fa1c1bfb965683",
+    "unitPassed": 7337,
+    "liveCasesPassed": 57,
+    "liveScenarios": 69,
+    "offlineExamplesPassed": 13,
+    "scope": "Historical implementation validation, unchanged; not a fresh full-suite or live run and not coverage of the new failures"
+  },
+  "compatibilityAssessment": {
+    "breakingChangeProposed": false,
+    "requiredPreservation": [
+      "Disabled defaults and optional evidence configuration",
+      "Legacy raw tool returns, events and mutable hooks",
+      "Custom evidence stores without new mandatory methods",
+      "Old saved sessions and host-owned storage/scope",
+      "No automatic external action retry or replay"
+    ]
+  },
+  "recommendedFixOrder": [
+    "R3",
+    "R1",
+    "R2",
+    "R4",
+    "R5",
+    "R6"
+  ],
+  "sourceFingerprintsAtReview": [
+    {
+      "path": "apps/amos/examples/evidence-offline.ts",
+      "sha256": "8999b0c4cf1eff91243aa56a155acebefbd06064c26847a0a4920b754d6b9d51",
+      "currentSHA256": "8999b0c4cf1eff91243aa56a155acebefbd06064c26847a0a4920b754d6b9d51"
+    },
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "sha256": "7131bfe8ee3c44d09dcd6b9763788488773b131d1152f1b706a5d558393c7de9",
+      "currentSHA256": "7131bfe8ee3c44d09dcd6b9763788488773b131d1152f1b706a5d558393c7de9"
+    },
+    {
+      "path": "apps/amos/src/agent/toolOutcomes.ts",
+      "sha256": "4ba675fd3b5f656d5af0ec8b77f3259d7682623a0aba84c207968da5bd65e765",
+      "currentSHA256": "4ba675fd3b5f656d5af0ec8b77f3259d7682623a0aba84c207968da5bd65e765"
+    },
+    {
+      "path": "apps/amos/src/app.ts",
+      "sha256": "617bc13d1d4c57d8215baa964fcc34862e25d345b5a2f1c2882151250557f831",
+      "currentSHA256": "617bc13d1d4c57d8215baa964fcc34862e25d345b5a2f1c2882151250557f831"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/ContextCommand.ts",
+      "sha256": "72a69b800d3d29e4d7259a7a9bf05dd75943c8e1c337a4cfdafcac9e3b5967e2",
+      "currentSHA256": "72a69b800d3d29e4d7259a7a9bf05dd75943c8e1c337a4cfdafcac9e3b5967e2"
+    },
+    {
+      "path": "apps/amos/src/config/types.ts",
+      "sha256": "85a6bcad9ca1762e160842f96d699111cf4c2f2693bd1bf60b2128e66c554fac",
+      "currentSHA256": "85a6bcad9ca1762e160842f96d699111cf4c2f2693bd1bf60b2128e66c554fac"
+    },
+    {
+      "path": "examples/ambiguous-action-evidence.ts",
+      "sha256": "c394330d6dd0d798108e8700ab989741bfaa42d69974286669d04f0d51e0fd7f",
+      "currentSHA256": "c394330d6dd0d798108e8700ab989741bfaa42d69974286669d04f0d51e0fd7f"
+    },
+    {
+      "path": "examples/durable-tool-evidence.ts",
+      "sha256": "4ac68f85ab0eee431a2806a1e0026c3c5192a2a89ed7daac98c88d267c3b36a5",
+      "currentSHA256": "4ac68f85ab0eee431a2806a1e0026c3c5192a2a89ed7daac98c88d267c3b36a5"
+    },
+    {
+      "path": "package.json",
+      "sha256": "31d667bc2d29805b82f7ca1f3256fe9b0e59f3bfd6a7caa4149e9ea80239d282",
+      "currentSHA256": "31d667bc2d29805b82f7ca1f3256fe9b0e59f3bfd6a7caa4149e9ea80239d282"
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "924b2efe15dacceaff495db9926b3ab7cf908dc1f76da162c72931113571bd48",
+      "currentSHA256": "924b2efe15dacceaff495db9926b3ab7cf908dc1f76da162c72931113571bd48"
+    },
+    {
+      "path": "src/core/StorageRegistry.ts",
+      "sha256": "0b248c279deea934ff61721085d11dda3e3eb6ca81cd46f946ae8fc474e03bfd",
+      "currentSHA256": "0b248c279deea934ff61721085d11dda3e3eb6ca81cd46f946ae8fc474e03bfd"
+    },
+    {
+      "path": "src/core/ToolManager.ts",
+      "sha256": "4b75f56f10322968630a182c073579924582e5122d77c13683b8674bff8db3b6",
+      "currentSHA256": "4b75f56f10322968630a182c073579924582e5122d77c13683b8674bff8db3b6"
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "69efb6824a3f1e1d2d40af4e3a0b17b7395c83f60624cc8b93dc59a8e6a51406",
+      "currentSHA256": "69efb6824a3f1e1d2d40af4e3a0b17b7395c83f60624cc8b93dc59a8e6a51406"
+    },
+    {
+      "path": "src/core/context-nextgen/plugins/EvidencePluginNextGen.ts",
+      "sha256": "e8e74b86d1e9b52e769f11a2bb0e638204d8048c07aa0ad80e1422a43380e944",
+      "currentSHA256": "e8e74b86d1e9b52e769f11a2bb0e638204d8048c07aa0ad80e1422a43380e944"
+    },
+    {
+      "path": "src/core/context-nextgen/tool-pairs.ts",
+      "sha256": "d04cb65f568c67c45dd7409826f1a0fd6f72248b775f684de21ce92de029202a",
+      "currentSHA256": "d04cb65f568c67c45dd7409826f1a0fd6f72248b775f684de21ce92de029202a"
+    },
+    {
+      "path": "src/core/context-nextgen/types.ts",
+      "sha256": "93d9e9317f3dd78223e25bc062b42c8418dfc61517a4d5a8ef8a84c305a86654",
+      "currentSHA256": "93d9e9317f3dd78223e25bc062b42c8418dfc61517a4d5a8ef8a84c305a86654"
+    },
+    {
+      "path": "src/core/evidence/ToolEvidenceMiddleware.ts",
+      "sha256": "b6b62879098c4c7e09e915d67990e7425ef77487172105d62ec558a9d3bfc5e8",
+      "currentSHA256": "b6b62879098c4c7e09e915d67990e7425ef77487172105d62ec558a9d3bfc5e8"
+    },
+    {
+      "path": "src/core/evidence/validation.ts",
+      "sha256": "5c517c05120b2cc5142222205e112220139a80503f1ac3f9c39a9f73b1412aff",
+      "currentSHA256": "5c517c05120b2cc5142222205e112220139a80503f1ac3f9c39a9f73b1412aff"
+    },
+    {
+      "path": "src/domain/entities/Content.ts",
+      "sha256": "9996ebfb27b3345379b420cb3a7ef93ce0e716cd4cd341473c1545b8dd4464bd",
+      "currentSHA256": "9996ebfb27b3345379b420cb3a7ef93ce0e716cd4cd341473c1545b8dd4464bd"
+    },
+    {
+      "path": "src/domain/entities/Tool.ts",
+      "sha256": "12fe4590163d9dd3f70e5d82c30354d828c732120537d9f59b0c646d99d89c22",
+      "currentSHA256": "12fe4590163d9dd3f70e5d82c30354d828c732120537d9f59b0c646d99d89c22"
+    },
+    {
+      "path": "src/domain/interfaces/IEvidenceStorage.ts",
+      "sha256": "890381f95cc3453c88b7ec0dbb33c9c64c460c9b799c39ee67691cc305a92e3d",
+      "currentSHA256": "890381f95cc3453c88b7ec0dbb33c9c64c460c9b799c39ee67691cc305a92e3d"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "f4f2a9e7f82f73dd9f5cba2b8449b130142d5cb52d9022cc8f8cc49432818477",
+      "currentSHA256": "f4f2a9e7f82f73dd9f5cba2b8449b130142d5cb52d9022cc8f8cc49432818477"
+    },
+    {
+      "path": "src/infrastructure/storage/EvidenceStorage.ts",
+      "sha256": "aea15d5acc51a5e26a9f6ece9a4f2f8743f430e0c13b0f15066719a3f43118cf",
+      "currentSHA256": "aea15d5acc51a5e26a9f6ece9a4f2f8743f430e0c13b0f15066719a3f43118cf"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "cea31202082aca9b876bd9fcbd59ff3b34879192f4e0ead0e392b56882631361",
+      "currentSHA256": "cea31202082aca9b876bd9fcbd59ff3b34879192f4e0ead0e392b56882631361"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage03-consumer.ts",
+      "sha256": "6407834664a29297f4206253c684249bc706848c674817efc5d255cc21556e4e",
+      "currentSHA256": "6407834664a29297f4206253c684249bc706848c674817efc5d255cc21556e4e"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "sha256": "4d03404c19be21263af814f57247553643b01a5eea6a19e477590cae2b0c2ddf",
+      "currentSHA256": "4d03404c19be21263af814f57247553643b01a5eea6a19e477590cae2b0c2ddf"
+    },
+    {
+      "path": "tests/integration/text/Evidence.live.integration.test.ts",
+      "sha256": "3fb71c894257c231e5721e2b56dfaa86dda5c8a150b7b64cf1c2e8d28202308b",
+      "currentSHA256": "3fb71c894257c231e5721e2b56dfaa86dda5c8a150b7b64cf1c2e8d28202308b"
+    },
+    {
+      "path": "tests/integration/text/ModelExecution.live.integration.test.ts",
+      "sha256": "226856cf22062697016ad7030fa7c1350f61cb9353fd39622e173d89269c9d83",
+      "currentSHA256": "226856cf22062697016ad7030fa7c1350f61cb9353fd39622e173d89269c9d83"
+    },
+    {
+      "path": "tests/unit/apps/amos/Evidence.test.ts",
+      "sha256": "f1660e96a42b50b131d9a0880a2e50ca8b6e347aaa9af1a6cb492faf64859c67",
+      "currentSHA256": "f1660e96a42b50b131d9a0880a2e50ca8b6e347aaa9af1a6cb492faf64859c67"
+    },
+    {
+      "path": "tests/unit/core/evidence/Agent.evidence.test.ts",
+      "sha256": "aadfbac783fa2cc0068fc42c72588c23df2e5a8bc8e717a7ccfc618951a15521",
+      "currentSHA256": "aadfbac783fa2cc0068fc42c72588c23df2e5a8bc8e717a7ccfc618951a15521"
+    },
+    {
+      "path": "tests/unit/core/evidence/EvidenceStorage.test.ts",
+      "sha256": "b0f341c407f652fca17670dbf26c03730ae9b7e04821bbfdfe4dad9108778953",
+      "currentSHA256": "b0f341c407f652fca17670dbf26c03730ae9b7e04821bbfdfe4dad9108778953"
+    },
+    {
+      "path": "tests/unit/core/evidence/ToolEvidence.test.ts",
+      "sha256": "39596d88b557142543ac2b497b6ea5da38602d1bd5efeaa8daa3397774a8564b",
+      "currentSHA256": "39596d88b557142543ac2b497b6ea5da38602d1bd5efeaa8daa3397774a8564b"
+    }
+  ],
+  "artifactChecks": {
+    "status": "passed",
+    "runtimeTestExampleFingerprintsUnchanged": true,
+    "nonPackageFilesChecked": 31,
+    "originalValidationUnchanged": true,
+    "localDocumentationLinksResolved": true,
+    "diffCheck": true,
+    "reproductionScriptsEmbedded": true,
+    "package": {
+      "dryRun": true,
+      "published": false,
+      "files": 132,
+      "reviewArtifactsIncluded": true,
+      "envExcluded": true
+    },
+    "packageChangeInReview": "Only the files inventory adds the review report and review evidence; scripts, dependencies, public exports and version remain unchanged"
+  }
+}

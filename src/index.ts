@@ -2086,3 +2086,16 @@ export type {
 } from './testing/integration/types.js';
 
 export type { ToolExecutionOutcome, ToolExecutionOptions, ToolExecutionReport } from './core/tool-execution/outcomes.js';
+
+// Durable evidence (opt-in; raw tool returns are preserved).
+export type { EvidenceScope, EvidenceDurability, EvidenceReference, EvidenceRecord, EvidenceReadOptions, EvidenceChunk, EvidenceEntry, IEvidenceStorage } from './domain/interfaces/IEvidenceStorage.js';
+export { EvidenceError } from './core/evidence/validation.js';
+export { ToolEvidenceMiddleware } from './core/evidence/ToolEvidenceMiddleware.js';
+export type { ToolEvidenceConfig, ToolEvidenceReceipt, ToolEvidenceDelivery } from './core/evidence/ToolEvidenceMiddleware.js';
+export { InMemoryEvidenceStorage, FileEvidenceStorage } from './infrastructure/storage/EvidenceStorage.js';
+export type { EvidenceStorageOptions, FileEvidenceStorageOptions } from './infrastructure/storage/EvidenceStorage.js';
+export { EvidencePluginNextGen } from './core/context-nextgen/plugins/EvidencePluginNextGen.js';
+export type { EvidencePluginConfig } from './core/context-nextgen/plugins/EvidencePluginNextGen.js';
+
+export type { ToolResultEvidence } from './domain/entities/Content.js';
+export type { ToolOutputHints } from './domain/entities/Tool.js';

@@ -57,6 +57,20 @@ queued background results are checked again at delivery. A timeout does not esta
 whether an external write happened.
 
 
+Stage 03 on the development branch adds opt-in durable tool evidence and smaller
+model-facing projections. Raw application returns stay intact. Scoped file-backed
+references survive ordinary restart; storage failures preserve raw results and
+protect them from lossy context reduction. See the
+[durable evidence guide](./docs/DURABLE_EVIDENCE.md) for setup, acknowledgement
+strengths, bounded retrieval, host recovery, retention, and AMOS inspection.
+The [recovery example](./examples/evidence-recovery.ts) repairs failed storage,
+requires a result-bearing acknowledgement, and preserves a single action execution.
+It also saves/restores a pending delivery-only result; `outcome` remains optional,
+and protected raw results survive async insertion and subsequent input.
+The [stream interruption example](./examples/evidence-stream-interruption.ts) closes
+at tool completion, retains the source, and restores a checkpoint after recovery
+without duplicate results or repeating the action.
+
 Stage 06 on the development branch adds optional, stateless compactor/extractor/verifier models while keeping
 the main model fixed. Share a `ModelTask` across explicit calls for process-local
 call/token/deadline and model token-cost budgets, physical SDK retry accounting,

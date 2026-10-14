@@ -1,3 +1,4 @@
+import type { EvidenceScope, IEvidenceStorage } from '../domain/interfaces/IEvidenceStorage.js';
 /**
  * StorageRegistry - Centralized storage backend registry
  *
@@ -69,6 +70,8 @@ export type StorageContext = Record<string, unknown>;
  * StorageContext for multi-tenant scenarios) and return a storage instance.
  */
 export interface StorageConfig {
+  /** Optional scoped evidence factory; disabled context features never resolve it. */
+  evidence?: (scope: EvidenceScope, context?: StorageContext) => IEvidenceStorage;
   // Global singletons
   media: IMediaStorage;
   agentDefinitions: IAgentDefinitionStorage;

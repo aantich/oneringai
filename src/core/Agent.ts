@@ -1,3 +1,6 @@
+import { EvidencePluginNextGen } from './context-nextgen/plugins/EvidencePluginNextGen.js';
+import { evidenceProjection, evidenceProvenance } from './evidence/ToolEvidenceMiddleware.js';
+import type { ToolEvidenceDelivery } from './evidence/ToolEvidenceMiddleware.js';
 /**
  * Agent - AI assistant bound to a Connector
  *
@@ -416,7 +419,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   // Async tool state
   private _asyncToolTracker: Map<string, PendingAsyncTool> = new Map();
   private _asyncBatchTimer: ReturnType<typeof setTimeout> | null = null;
-  private _asyncResultQueue: Array<{ result: ToolResult; runId: string; isCurrent: () => boolean }> = [];
+  private _asyncResultQueue: Array<{ result: ToolResult; runId: string; isCurrent: () => boolean; deliveryBlocked?: boolean }> = [];
   private _asyncDeliveryEpoch = 0;
   private _continuationInProgress = false;
   private _executionOwner: AgentExecutionLease | null = null;
@@ -853,6 +856,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   private scheduleAsyncResultFlush(): void {
     if (this._isDestroyed
       || this._asyncResultQueue.length === 0
+      || this._asyncResultQueue.some(entry => entry.isCurrent() && (entry.deliveryBlocked || this.hasUnacknowledgedAsyncEvidence(entry.result)))
       || this._config.asyncTools?.autoContinue === false) {
       return;
     }
@@ -1559,18 +1563,23 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         const asyncResults = queued.map(entry => entry.result);
         const parts: string[] = ['[Async Tool Results]'];
         for (const result of asyncResults) {
+          this.assertAsyncEvidence(result);
           const toolName = result.tool_name || 'unknown';
           if (result.error) {
             parts.push(`\nTool "${toolName}" failed:\nError: ${result.error}`);
           } else {
-            const content = typeof result.content === 'string'
-              ? result.content
-              : JSON.stringify(result.content, null, 2);
+            const modelContent = this.asyncToolContent(result);
+            const content = typeof modelContent === 'string'
+              ? modelContent
+              : JSON.stringify(modelContent, null, 2);
             parts.push(`\nTool "${toolName}" completed:\n${content}`);
           }
         }
+        const content = parts.join('\n');
+        let injected = false;
         try {
-          this._agentContext.addUserMessage(parts.join('\n'));
+          this._agentContext.addUserMessage(content);
+          injected = true;
           // Preserve notification ordering: listeners can inspect the inserted input.
           this.emit('async:results:injected', {
             executionId, iteration,
@@ -1578,7 +1587,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
             timestamp: new Date(),
           });
         } finally {
-          this.consumeAsyncResults(queued);
+          this.settleAsyncDelivery(queued, injected || this.hasAsyncInput(content));
           // Context and Agent callbacks can rebind or cancel, even when they throw.
           if (queued.some(entry => !entry.isCurrent())) this._agentContext.setCurrentInput('');
         }
@@ -2384,84 +2393,100 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         // Execute tools and yield execution events
         const toolResults: ToolResult[] = [];
 
-        for (const toolCall of toolCalls) {
-          this.executionContext?.addToolCall(toolCall);
-          // Parse and validate arguments
-          let parsedArgs: Record<string, unknown>;
-          try {
-            parsedArgs = JSON.parse(toolCall.function.arguments);
-          } catch (error) {
-            const errorMessage = `Invalid tool arguments JSON: ${(error as Error).message}`;
-            // CRITICAL: Add a ToolResult for the failed parse to ensure TOOL_USE has a matching TOOL_RESULT
-            // Without this, subsequent API calls fail with "No tool output found for function call"
-            const failedResult: ToolResult = {
-              tool_use_id: toolCall.id,
-              tool_name: toolCall.function.name,
-              tool_args: {},
-              content: { success: false, error: errorMessage },
-              state: ToolCallState.FAILED,
-              error: errorMessage,
-            };
-            toolResults.push(failedResult);
-            this.executionContext?.addToolResult(failedResult);
+        let assistantCommitStarted = false;
+        let resultCommitStarted = false;
+        try {
+          for (const toolCall of toolCalls) {
+            this.executionContext?.addToolCall(toolCall);
+            // Parse and validate arguments
+            let parsedArgs: Record<string, unknown>;
+            try {
+              parsedArgs = JSON.parse(toolCall.function.arguments);
+            } catch (error) {
+              const errorMessage = `Invalid tool arguments JSON: ${(error as Error).message}`;
+              // CRITICAL: Add a ToolResult for the failed parse to ensure TOOL_USE has a matching TOOL_RESULT
+              // Without this, subsequent API calls fail with "No tool output found for function call"
+              const failedResult: ToolResult = {
+                tool_use_id: toolCall.id,
+                tool_name: toolCall.function.name,
+                tool_args: {},
+                content: { success: false, error: errorMessage },
+                state: ToolCallState.FAILED,
+                error: errorMessage,
+              };
+              toolResults.push(failedResult);
+              this.executionContext?.addToolResult(failedResult);
 
+              yield {
+                type: StreamEventType.TOOL_EXECUTION_DONE,
+                response_id: executionId,
+                tool_call_id: toolCall.id,
+                tool_name: toolCall.function.name,
+                result: failedResult.content,
+                execution_time_ms: 0,
+                error: errorMessage,
+              };
+              continue;
+            }
+
+            yield {
+              type: StreamEventType.TOOL_EXECUTION_START,
+              response_id: executionId,
+              tool_call_id: toolCall.id,
+              tool_name: toolCall.function.name,
+              arguments: parsedArgs,
+            };
+
+            const toolStartTime = Date.now();
+
+            let result: ToolResult;
+            let settledResult: ToolResult | undefined;
+            let executionError: unknown;
+            try {
+              result = await this.executeToolWithHooks(toolCall, iteration, executionId, value => { settledResult = value; });
+            } catch (error) {
+              executionError = error;
+              result = settledResult && this.hasUnacknowledgedAsyncEvidence(settledResult) ? settledResult : {
+                tool_use_id: toolCall.id,
+                tool_name: toolCall.function.name,
+                tool_args: parsedArgs,
+                content: '',
+                error: (error as Error).message,
+                outcome: error instanceof ToolExecutionError ? error.outcome : undefined,
+                state: error instanceof ToolExecutionError && error.outcome?.status === 'timed_out' ? ToolCallState.TIMEOUT : ToolCallState.FAILED,
+              };
+            }
+            toolResults.push(result);
+            // Settlement accounting precedes observable completion, independently of history batching.
+            this.executionContext?.addToolResult(result);
             yield {
               type: StreamEventType.TOOL_EXECUTION_DONE,
               response_id: executionId,
               tool_call_id: toolCall.id,
               tool_name: toolCall.function.name,
-              result: failedResult.content,
-              execution_time_ms: 0,
-              error: errorMessage,
+              result: executionError ? null : result.content,
+              outcome: result.outcome,
+              error: result.error,
+              execution_time_ms: Date.now() - toolStartTime,
             };
-            continue;
+            if (executionError && this._config.errorHandling?.toolFailureMode === 'fail') throw executionError;
           }
 
-          yield {
-            type: StreamEventType.TOOL_EXECUTION_START,
-            response_id: executionId,
-            tool_call_id: toolCall.id,
-            tool_name: toolCall.function.name,
-            arguments: parsedArgs,
-          };
-
-          const toolStartTime = Date.now();
-
-          let result: ToolResult;
-          let executionError: unknown;
-          try {
-            result = await this.executeToolWithHooks(toolCall, iteration, executionId);
-          } catch (error) {
-            executionError = error;
-            result = {
-              tool_use_id: toolCall.id,
-              tool_name: toolCall.function.name,
-              tool_args: parsedArgs,
-              content: '',
-              error: (error as Error).message,
-              outcome: error instanceof ToolExecutionError ? error.outcome : undefined,
-              state: error instanceof ToolExecutionError && error.outcome?.status === 'timed_out' ? ToolCallState.TIMEOUT : ToolCallState.FAILED,
-            };
+          // Build and add assistant message to context
+          assistantCommitStarted = true;
+          this._addStreamingAssistantMessage(iterationStreamState, toolCalls, toolCallsMap);
+          resultCommitStarted = true;
+          this._agentContext.addToolResults(toolResults);
+        } finally {
+          // Closing the generator skips code after its last yield, but still transfers settled observations here.
+          if (!resultCommitStarted && this.shouldRetainToolBatch(toolResults)) {
+            try {
+              if (!assistantCommitStarted) this._addStreamingAssistantMessage(iterationStreamState, toolCalls, toolCallsMap);
+            } finally {
+              this._agentContext.addToolResults(toolResults);
+            }
           }
-          toolResults.push(result);
-          // Settlement accounting precedes observable completion, independently of history batching.
-          this.executionContext?.addToolResult(result);
-          yield {
-            type: StreamEventType.TOOL_EXECUTION_DONE,
-            response_id: executionId,
-            tool_call_id: toolCall.id,
-            tool_name: toolCall.function.name,
-            result: executionError ? null : result.content,
-            outcome: result.outcome,
-            error: result.error,
-            execution_time_ms: Date.now() - toolStartTime,
-          };
-          if (executionError && this._config.errorHandling?.toolFailureMode === 'fail') throw executionError;
         }
-
-        // Build and add assistant message to context
-        this._addStreamingAssistantMessage(iterationStreamState, toolCalls, toolCallsMap);
-        this._agentContext.addToolResults(toolResults);
 
         yield {
           type: StreamEventType.ITERATION_COMPLETE,
@@ -3169,96 +3194,103 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   ): Promise<ToolResult[]> {
     const results: ToolResult[] = [];
 
-    for (const toolCall of toolCalls) {
-      // External transports record calls synchronously at admission so
-      // parallel calls cannot race the maxToolCalls boundary.
-      if (!callsAlreadyTracked) this.executionContext?.addToolCall(toolCall);
+    try {
+      for (const toolCall of toolCalls) {
+        // External transports record calls synchronously at admission so
+        // parallel calls cannot race the maxToolCalls boundary.
+        if (!callsAlreadyTracked) this.executionContext?.addToolCall(toolCall);
 
-      // Check pause before each tool
-      await this.checkPause();
+        // Check pause before each tool
+        await this.checkPause();
 
-      // Execute before:tool hook
-      const beforeTool = await this.hookManager.executeHooks('before:tool', {
-        executionId,
-        iteration,
-        toolCall,
-        context: this.executionContext!,
-        timestamp: new Date(),
-      }, {});
+        // Execute before:tool hook
+        const beforeTool = await this.hookManager.executeHooks('before:tool', {
+          executionId,
+          iteration,
+          toolCall,
+          context: this.executionContext!,
+          timestamp: new Date(),
+        }, {});
 
-      // Check if tool should be skipped
-      if (beforeTool.skip) {
-        this.executionContext?.audit('tool_skipped', { toolCall }, undefined, toolCall.function.name);
+        // Check if tool should be skipped
+        if (beforeTool.skip) {
+          this.executionContext?.audit('tool_skipped', { toolCall }, undefined, toolCall.function.name);
 
-        // Parse args for tracking
-        let parsedArgs: Record<string, unknown> = {};
+          // Parse args for tracking
+          let parsedArgs: Record<string, unknown> = {};
+          try {
+            parsedArgs = JSON.parse(toolCall.function.arguments);
+          } catch (parseErr) {
+            this._logger.debug({ tool: toolCall.function.name, error: (parseErr as Error).message }, 'Failed to parse tool arguments for tracking');
+          }
+
+          const mockResult: ToolResult = {
+            tool_use_id: toolCall.id,
+            tool_name: toolCall.function.name,
+            tool_args: parsedArgs,
+            content: beforeTool.mockResult || '',
+            state: ToolCallState.COMPLETED,
+            executionTime: 0,
+          };
+
+          results.push(mockResult);
+          this.executionContext?.addToolResult(mockResult);
+          continue;
+        }
+
+        // Apply modifications if any
+        if (beforeTool.modified) {
+          Object.assign(toolCall, beforeTool.modified);
+          this.executionContext?.audit('tool_modified', { modifications: beforeTool.modified }, undefined, toolCall.function.name);
+        }
+
+        // Async tool: return placeholder, execute in background
+        if (!toolCall.blocking && !forceBlocking) {
+          const placeholderResult = this._startAsyncExecution(toolCall, executionId);
+          results.push(placeholderResult);
+          this.executionContext?.addToolResult(placeholderResult);
+          continue;
+        }
+
+        // Blocking tool: execute synchronously as before
+        let settledResult: ToolResult | undefined;
         try {
-          parsedArgs = JSON.parse(toolCall.function.arguments);
-        } catch (parseErr) {
-          this._logger.debug({ tool: toolCall.function.name, error: (parseErr as Error).message }, 'Failed to parse tool arguments for tracking');
-        }
+          const result = await this.executeToolWithHooks(toolCall, iteration, executionId, value => { settledResult = value; });
+          results.push(result);
+          this.executionContext?.addToolResult(result);
+        } catch (error) {
+          // Parse args for tracking (even on error)
+          let parsedArgs: Record<string, unknown> = {};
+          try {
+            parsedArgs = JSON.parse(toolCall.function.arguments);
+          } catch (parseErr) {
+            this._logger.debug({ tool: toolCall.function.name, error: (parseErr as Error).message }, 'Failed to parse tool arguments for tracking');
+          }
 
-        const mockResult: ToolResult = {
-          tool_use_id: toolCall.id,
-          tool_name: toolCall.function.name,
-          tool_args: parsedArgs,
-          content: beforeTool.mockResult || '',
-          state: ToolCallState.COMPLETED,
-          executionTime: 0,
-        };
+          const toolResult: ToolResult = settledResult && this.hasUnacknowledgedAsyncEvidence(settledResult) ? settledResult : {
+            tool_use_id: toolCall.id,
+            tool_name: toolCall.function.name,
+            tool_args: parsedArgs,
+            content: '',
+            error: (error as Error).message,
+            outcome: error instanceof ToolExecutionError ? error.outcome : undefined,
+            state: error instanceof ToolExecutionError && error.outcome?.status === 'timed_out' ? ToolCallState.TIMEOUT : ToolCallState.FAILED,
+          };
 
-        results.push(mockResult);
-        this.executionContext?.addToolResult(mockResult);
-        continue;
-      }
+          results.push(toolResult);
+          this.executionContext?.addToolResult(toolResult);
 
-      // Apply modifications if any
-      if (beforeTool.modified) {
-        Object.assign(toolCall, beforeTool.modified);
-        this.executionContext?.audit('tool_modified', { modifications: beforeTool.modified }, undefined, toolCall.function.name);
-      }
-
-      // Async tool: return placeholder, execute in background
-      if (!toolCall.blocking && !forceBlocking) {
-        const placeholderResult = this._startAsyncExecution(toolCall, executionId);
-        results.push(placeholderResult);
-        this.executionContext?.addToolResult(placeholderResult);
-        continue;
-      }
-
-      // Blocking tool: execute synchronously as before
-      try {
-        const result = await this.executeToolWithHooks(toolCall, iteration, executionId);
-        results.push(result);
-        this.executionContext?.addToolResult(result);
-      } catch (error) {
-        // Parse args for tracking (even on error)
-        let parsedArgs: Record<string, unknown> = {};
-        try {
-          parsedArgs = JSON.parse(toolCall.function.arguments);
-        } catch (parseErr) {
-          this._logger.debug({ tool: toolCall.function.name, error: (parseErr as Error).message }, 'Failed to parse tool arguments for tracking');
-        }
-
-        const toolResult: ToolResult = {
-          tool_use_id: toolCall.id,
-          tool_name: toolCall.function.name,
-          tool_args: parsedArgs,
-          content: '',
-          error: (error as Error).message,
-          outcome: error instanceof ToolExecutionError ? error.outcome : undefined,
-          state: error instanceof ToolExecutionError && error.outcome?.status === 'timed_out' ? ToolCallState.TIMEOUT : ToolCallState.FAILED,
-        };
-
-        results.push(toolResult);
-        this.executionContext?.addToolResult(toolResult);
-
-        // Check tool failure mode
-        const failureMode = this._config.errorHandling?.toolFailureMode || 'continue';
-        if (failureMode === 'fail') {
-          throw error;
+          // Check tool failure mode
+          const failureMode = this._config.errorHandling?.toolFailureMode || 'continue';
+          if (failureMode === 'fail') {
+            throw error;
+          }
         }
       }
+    } catch (error) {
+      // The managed caller cannot commit a batch that never returns. External transports own their history.
+      if (!forceBlocking && this.shouldRetainToolBatch(results)) this._agentContext.addToolResults(results);
+      throw error;
     }
 
     return results;
@@ -3267,11 +3299,14 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   /**
    * Execute single tool with hooks
    */
-  private async executeManagedTool(name: string, args: unknown, options: ToolExecutionOptions): Promise<{ result: unknown; outcome?: ToolExecutionOutcome }> {
+  private async executeManagedTool(name: string, args: unknown, options: ToolExecutionOptions): Promise<{ result: unknown; outcome?: ToolExecutionOutcome; evidence?: ToolEvidenceDelivery }> {
+    let evidence: ToolEvidenceDelivery | undefined;
     let outcome: ToolExecutionOutcome | undefined;
     // Retain the existing execute extension point. Legacy overrides that bypass
     // the standard pipeline retain their raw return behavior without invented metadata.
-    const execution = this._agentContext.tools.execute(name, args, { ...options, onOutcome: value => { outcome = value; } });
+    const execution = this._agentContext.tools.execute(name, args, { ...options, onOutcome: value => { outcome = value; },
+      ...(this._agentContext.getPlugin('evidence') instanceof EvidencePluginNextGen ? { onEvidence: (value: ToolEvidenceDelivery) => { evidence = value; } } : {}),
+    });
     // Older overrides may ignore the additive options. Preserve the pre-existing
     // async dead-man's switch for that extension path, without a second normal deadline.
     if (this._agentContext.tools.execute !== ToolManager.prototype.execute && options.timeoutMs && options.timeoutMs > 0) {
@@ -3280,16 +3315,17 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         const result = await Promise.race([execution, new Promise<never>((_resolve, reject) => {
           timer = setTimeout(() => reject(new ToolTimeoutError(name, options.timeoutMs!)), options.timeoutMs);
         })]);
-        return { result, outcome };
+        return { result, outcome, evidence };
       } finally { clearTimeout(timer); }
     }
-    return { result: await execution, outcome };
+    return { result: await execution, outcome, evidence };
   }
 
   private async executeToolWithHooks(
     toolCall: ToolCall,
     iteration: number,
-    executionId: string
+    executionId: string,
+    onSettled?: (result: ToolResult) => void,
   ): Promise<ToolResult> {
     const toolStartTime = Date.now();
 
@@ -3328,7 +3364,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       } catch (parseError) {
         throw new Error(`Failed to parse tool arguments for ${toolCall.function.name}: ${(parseError as Error).message}`);
       }
-      const { result, outcome } = await this.executeManagedTool(toolCall.function.name, args, {
+      const { result, outcome, evidence } = await this.executeManagedTool(toolCall.function.name, args, {
         signal: this._executionAbort.signal, callId: toolCall.id, runId: executionId,
       });
 
@@ -3342,6 +3378,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         content: result,
         state: toolCall.state,
         outcome,
+        ...(evidence ? { evidence } : {}),
         error: outcome?.error,
         executionTime: Date.now() - toolStartTime,
       };
@@ -3356,10 +3393,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         timestamp: new Date(),
       }, {});
 
-      // Apply result modifications
-      if (afterTool.modified) {
-        toolResult = { ...toolResult, ...afterTool.modified };
-      }
+      // Hooks retain their mutable result contract. A projection is valid only for its captured source.
+      if (afterTool.modified) toolResult = { ...toolResult, ...afterTool.modified };
+      if (toolResult.evidence?.projection && !evidenceProjection(toolResult.evidence, toolResult.content)) delete toolResult.evidence;
 
       // Call/result counts are tracked once by ExecutionContext.addToolCall()
       // and addToolResult(). Only duration is owned by this execution stage.
@@ -3368,6 +3404,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       }
 
       // Emit tool complete
+      onSettled?.(toolResult);
       this.emit('tool:complete', { executionId, iteration, toolCall, result: toolResult, timestamp: new Date() });
 
       return toolResult;
@@ -3558,7 +3595,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     this.executeManagedTool(toolCall.function.name, parsedArgs, {
       signal, timeoutMs: timeout, callId: toolCall.id, runId: executionId,
     })
-      .then(({ result, outcome }) => {
+      .then(({ result, outcome, evidence }) => {
         if (!isCurrent()) return;
         pending.status = !outcome || outcome.status === 'succeeded' ? 'completed' : outcome.status === 'timed_out' ? 'timeout' : 'failed';
         const toolResult: ToolResult = {
@@ -3568,6 +3605,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           content: result,
           state: !outcome || outcome.status === 'succeeded' ? ToolCallState.COMPLETED : outcome.status === 'timed_out' ? ToolCallState.TIMEOUT : ToolCallState.FAILED,
           outcome,
+          ...(evidence ? { evidence } : {}),
           error: outcome?.error,
           executionTime: Date.now() - pending.startTime,
         };
@@ -3648,10 +3686,42 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     }
   }
 
+  private hasUnacknowledgedAsyncEvidence(result: ToolResult): boolean {
+    return this._agentContext.hasPlugin('evidence') && (result.evidence?.status === 'storage_failed'
+      || result.outcome?.evidence?.status === 'storage_failed' || evidenceProvenance(result.evidence)?.hasResult === false);
+  }
+
+  private shouldRetainToolBatch(results: ToolResult[]): boolean {
+    return this._agentContext.getPlugin('evidence') instanceof EvidencePluginNextGen
+      && results.some(result => this.hasUnacknowledgedAsyncEvidence(result));
+  }
+
+  private assertAsyncEvidence(result: ToolResult): void {
+    if (this.hasUnacknowledgedAsyncEvidence(result)) {
+      throw new Error('Cannot dispatch asynchronous tool results with unacknowledged evidence. Preserve raw results and repair storage; do not repeat the action.');
+    }
+  }
+
+  private asyncToolContent(result: ToolResult): unknown {
+    return (this._agentContext.hasPlugin('evidence') ? evidenceProjection(result.evidence, result.content) : undefined) ?? result.content;
+  }
+
   private selectAsyncResults(): typeof this._asyncResultQueue {
     this._asyncResultQueue = this._asyncResultQueue.filter(entry => entry.isCurrent());
     // Keep entries reachable by cancellation during synchronous host notifications.
     return [...this._asyncResultQueue];
+  }
+
+  private hasAsyncInput(text: string): boolean {
+    return this._agentContext.getCurrentInput().some(item => item.type === 'message' && Array.isArray(item.content)
+      && item.content.some(content => content.type === ContentType.INPUT_TEXT && content.text === text));
+  }
+
+  private settleAsyncDelivery(entries: typeof this._asyncResultQueue, injected: boolean): void {
+    if (injected || !this._agentContext.hasPlugin('evidence')) { this.consumeAsyncResults(entries); return; }
+    // Keep undelivered current results and suppress automatic retries until an explicit host attempt.
+    entries.forEach(entry => { entry.deliveryBlocked = true; });
+    this.consumeAsyncResults(entries.filter(entry => !entry.isCurrent()));
   }
 
   private consumeAsyncResults(entries: typeof this._asyncResultQueue): void {
@@ -3701,6 +3771,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     if (this._asyncResultQueue.length === 0) return;
     if (this._continuationInProgress) return; // wait for current continuation to finish
     if (this._executionOwner) return; // results stay queued until the current owner releases
+    // Storage repair is host-driven. Do not spin automatic continuations on a retained failed receipt.
+    if (this._asyncResultQueue.some(entry => entry.isCurrent() && (entry.deliveryBlocked || this.hasUnacknowledgedAsyncEvidence(entry.result)))) return;
 
     // Fire and forget — errors logged internally
     this.continueWithAsyncResults().catch((err) => {
@@ -3731,6 +3803,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     try {
       // Drain queue if no explicit results provided
       queued = results ? undefined : this.selectAsyncResults();
+      queued?.forEach(entry => { delete entry.deliveryBlocked; });
       const toDeliver = results ?? queued!.map(entry => entry.result);
       if (toDeliver.length === 0) {
         throw new Error('No async results to deliver');
@@ -3739,14 +3812,16 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       // Build user message with results
       const parts: string[] = ['[Async Tool Results]'];
       for (const result of toDeliver) {
+        this.assertAsyncEvidence(result);
         const toolName = result.tool_name || 'unknown';
         const toolCallId = result.tool_use_id;
         if (result.error) {
           parts.push(`\nTool "${toolName}" (${toolCallId}) failed:\nError: ${result.error}`);
         } else {
-          const content = typeof result.content === 'string'
-            ? result.content
-            : JSON.stringify(result.content, null, 2);
+          const modelContent = this.asyncToolContent(result);
+          const content = typeof modelContent === 'string'
+            ? modelContent
+            : JSON.stringify(modelContent, null, 2);
           parts.push(`\nTool "${toolName}" (${toolCallId}) completed:\n${content}`);
         }
       }
@@ -3767,9 +3842,15 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         this.consumeAsyncResults(queued);
         throw new Error('Async result scope changed during continuation');
       }
-      injected = true;
-      this._agentContext.setCurrentInput(parts.join('\n'));
-      this._agentContext.addUserMessage(parts.join('\n'));
+      const content = parts.join('\n');
+      try {
+        this._agentContext.setCurrentInput(content);
+        injected = true;
+        this._agentContext.addUserMessage(content);
+      } catch (error) {
+        injected = injected || this.hasAsyncInput(content);
+        throw error;
+      }
 
       // Create execution context for this continuation
       this.executionContext = new ExecutionContext(executionId, {
@@ -3797,7 +3878,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       return finalResponse;
     } finally {
       try {
-        if (queued) this.consumeAsyncResults(queued);
+        if (queued) this.settleAsyncDelivery(queued, injected);
         if (injected && queued?.some(entry => !entry.isCurrent())) this._agentContext.setCurrentInput('');
       } finally {
         this._continuationInProgress = false;

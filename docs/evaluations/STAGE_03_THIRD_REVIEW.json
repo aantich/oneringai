@@ -1,0 +1,440 @@
+{
+  "protocol": "stage-03-third-review-v1",
+  "recordedAt": "2026-10-14T15:24:38.369Z",
+  "localDate": "2026-10-14",
+  "timezone": "Europe/Zurich",
+  "status": "findings_open",
+  "stageComplete": false,
+  "reviewOnly": true,
+  "branch": "version2",
+  "baseCommit": "a98a498d18b55fd3329c7ac2b1b379b09eb15ab1",
+  "packageVersion": "1.2.0",
+  "runtimeChanges": 0,
+  "permanentTestChanges": 0,
+  "packageInventoryChanges": 0,
+  "breakingChangesProposed": false,
+  "publication": "No commit, push, publication or Stage 07 implementation",
+  "findings": [
+    {
+      "id": "T1",
+      "priority": 1,
+      "title": "Early exits lose settled results before context batching commits",
+      "locations": [
+        {
+          "path": "src/core/Agent.ts",
+          "line": 2458
+        },
+        {
+          "path": "src/core/Agent.ts",
+          "line": 2471
+        },
+        {
+          "path": "src/core/Agent.ts",
+          "line": 3267
+        }
+      ],
+      "confirmedBy": [
+        "streamStoppedAfterTool",
+        "failFastBatch"
+      ],
+      "control": "fullyDrainedStreamControl",
+      "fix": "Retain settled observations on every exit path, committing partial batches exactly once before cleanup. Cover iterator closure and later fail-fast errors with original call/result ordering and no action replay."
+    },
+    {
+      "id": "T2",
+      "priority": 1,
+      "title": "Receipt-only authentic delivery removes failed-result protection",
+      "locations": [
+        {
+          "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+          "line": 1215
+        },
+        {
+          "path": "src/core/evidence/ToolEvidenceMiddleware.ts",
+          "line": 31
+        }
+      ],
+      "confirmedBy": [
+        "receiptOnlyAdmission"
+      ],
+      "control": "receiptOnlyAcknowledgementControl",
+      "fix": "Track acknowledged result presence in private delivery provenance; a receipt-only record must not release raw-result protection. Preserve optional outcome, redacted/null observations, receipt diagnostics and legacy inputs."
+    },
+    {
+      "id": "T3",
+      "priority": 2,
+      "title": "Recovery between checkpoint and restore creates duplicate final results",
+      "locations": [
+        {
+          "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+          "line": 1023
+        }
+      ],
+      "confirmedBy": [
+        "restoreAfterRecovery",
+        "loadAfterRecovery"
+      ],
+      "fix": "Reconcile folded pending observations by original invocation/protocol identity across receipt transitions, preserving unrelated pending input, namespace separation and one final result."
+    }
+  ],
+  "validation": {
+    "fullUnit": {
+      "command": "npm run test:unit -- --reporter=json --outputFile=/tmp/oneringai-stage03-third-review-full-unit.json",
+      "passed": 7435,
+      "failed": 0,
+      "skipped": 0,
+      "files": 345,
+      "reportSHA256": "7fd755fe8e30c58345ab73f2cffa402100367de7e29d1348edacc3451d9d6d58",
+      "logSHA256": "1e25536c0b4cacbae1a00e0741464bb5e0a8ae216f180654d5a9e436ce6b9074"
+    },
+    "focused": {
+      "command": "npx vitest run tests/unit/core/evidence tests/unit/apps/amos/Evidence.test.ts --reporter=json --outputFile=/tmp/oneringai-stage03-third-review-unit.json",
+      "passed": 207,
+      "failed": 0,
+      "skipped": 0,
+      "files": 6,
+      "reportSHA256": "e647f27d1a4a7534d28389623fac37fbda13130af10a07883ba6d683004116f0",
+      "logSHA256": "012ed069c264a4a5495cc246f9a083343d7d321ba3a642c8e10e5cc389d744b5"
+    },
+    "publicCompatibility": {
+      "command": "npm run test:agentic:compat",
+      "status": "passed",
+      "logSHA256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    "live": {
+      "rerun": false,
+      "reason": "Deterministic local settlement/admission/restoration failures; no runtime/provider changes during review.",
+      "priorRecord": "docs/evaluations/STAGE_03_SECOND_CORRECTIONS_VALIDATION.json",
+      "priorCases": 63,
+      "priorScenarios": 75,
+      "billableCalls": 0,
+      "explicitEnvLoading": false
+    },
+    "build": {
+      "rerun": false,
+      "reason": "All 35 source/consumer fingerprints match; current built public exports independently reproduce each defect."
+    }
+  },
+  "reproduction": {
+    "commands": [
+      "node /tmp/oneringai-stage03-third-review-repro.mjs",
+      "REVIEW_SOURCE=1 node /tmp/oneringai-stage03-third-review-repro.mjs"
+    ],
+    "scriptSHA256": "458cc9e9f85ffcece8bb1e2526de95bd59bceb8d0ef2c6cb1311dd4e2321a801",
+    "script": "import assert from 'node:assert/strict';\nimport { createRequire } from 'node:module';\nimport { writeFileSync } from 'node:fs';\nimport { mkdtemp, rm } from 'node:fs/promises';\nimport { tmpdir } from 'node:os';\nimport { join } from 'node:path';\nconst repo='/Users/aantich/dev/oneringai',require=createRequire(repo+'/package.json');\nconst lib=process.env.REVIEW_SOURCE?(require('tsx/cjs'),require(repo+'/src/index.ts')):await import(repo+'/dist/index.js');\nconst {Agent,AgentContextNextGen,Connector,Vendor,FileContextStorage,InMemoryEvidenceStorage,ToolEvidenceMiddleware,StreamEventType}=lib;\nconst scope={ownerId:'alice',namespace:'third-review'},raw={operationId:'THIRD_REVIEW_914',body:'exact source observation '.repeat(1200)},results={mode:process.env.REVIEW_SOURCE?'source':'built-public'};\nconst tool={definition:{type:'function',function:{name:'probe',parameters:{type:'object',properties:{}}}},execute:async()=>raw,output:{effect:'write',summarize:()=> 'accepted'}};\nconst context=(storage,sessions)=>AgentContextNextGen.create({storage:sessions,model:'gpt-4o-mini',userId:scope.ownerId,features:{workingMemory:false,inContextMemory:false,evidence:true},plugins:{evidence:{storage}}});\nconst add=(c,report,evidence=report.evidence)=>{c.addUserMessage('once');c.addAssistantResponse([{type:'message',role:'assistant',content:[{type:'tool_use',id:'call',name:'probe',arguments:'{}'}]}]);c.addToolResults([{tool_use_id:'call',content:raw,state:'completed',evidence,outcome:report.outcome}]);};\nasync function stopStream(early=true){\n const storage=new InMemoryEvidenceStorage({scope});storage.put=async()=>{throw Error('offline')};let executions=0,calls=0;\n const provider={name:'review',capabilities:{text:true},validateConfig:async()=>true,listModels:async()=>[],getModelCapabilities:()=>({supportsTools:true,supportsVision:false,supportsJSON:true,supportsJSONSchema:true,maxTokens:128000,maxInputTokens:128000,maxOutputTokens:1024}),generate:async()=>{throw Error('unused')},async *streamGenerate(){calls++;if(calls===1){yield {type:StreamEventType.TOOL_CALL_START,response_id:'r',item_id:'i',tool_call_id:'call',tool_name:'probe'};yield {type:StreamEventType.TOOL_CALL_ARGUMENTS_DONE,response_id:'r',tool_call_id:'call',tool_name:'probe',arguments:'{}'};}else yield {type:StreamEventType.OUTPUT_TEXT_DELTA,response_id:'r',item_id:'i',output_index:0,content_index:0,sequence_number:0,delta:'done'};yield {type:StreamEventType.RESPONSE_COMPLETE,response_id:'r',status:'completed',usage:{input_tokens:10,output_tokens:5,total_tokens:15},iterations:1};}};\n Connector.create({name:'third-review-stream',vendor:Vendor.OpenAI,auth:{type:'none'},options:{provider}});\n const agent=Agent.create({connector:'third-review-stream',model:'gpt-4o-mini',userId:scope.ownerId,tools:[{...tool,execute:async()=>{executions++;return raw}}],emptyResponseRetry:{enabled:false},context:{model:'gpt-4o-mini',features:{workingMemory:false,inContextMemory:false,evidence:true},plugins:{evidence:{storage}}}});\n try{let seen=false;for await(const event of agent.stream('write once')){if(event.type===StreamEventType.TOOL_EXECUTION_DONE){seen=event.result===raw&&event.outcome.evidence.status==='storage_failed';if(early)break;}}\n const state=await agent.getContextState();const observation={executions,calls,completionEventHadRaw:seen,retainedHasRaw:JSON.stringify([...agent.context.getConversation(),...agent.context.getCurrentInput()]).includes(raw.body),snapshotHasRaw:JSON.stringify(state).includes(raw.body),storedRecords:(await storage.list()).entries.length};results[early?'streamStoppedAfterTool':'fullyDrainedStreamControl']=observation;assert.equal(seen,true);assert.equal(executions,1);assert.equal(observation.retainedHasRaw,!early);assert.equal(observation.snapshotHasRaw,!early);\n }finally{agent.destroy();Connector.remove('third-review-stream')}\n}\nasync function restoreAfterRecovery(){for(const method of ['restoreState','load']){const directory=await mkdtemp(join(tmpdir(),'third-review-restore-')),storage=new InMemoryEvidenceStorage({scope}),sessions=new FileContextStorage({agentId:'third',baseDirectory:directory}),c=context(storage,sessions);const put=storage.put.bind(storage);storage.put=async()=>{throw Error('offline')};try{c.tools.register(tool);const report=await c.tools.executeWithOutcome('probe',{}, {callId:'call'});add(c,report);const snapshot=c.getState();if(method==='load')await c.save('checkpoint');storage.put=put;const recovered=await new ToolEvidenceMiddleware({storage}).record(tool,{}, {userId:'alice'},report.outcome,{value:raw});await c.acknowledgeToolEvidence('call',recovered.reference);if(method==='load')await c.load('checkpoint');else c.restoreState(snapshot);let error;try{await c.prepare()}catch(e){error=e.message}const count=[...c.getConversation(),...c.getCurrentInput()].flatMap(i=>i.type==='message'?i.content:[]).filter(x=>x.type==='tool_result'&&x.tool_use_id==='call').length;results[method==='load'?'loadAfterRecovery':'restoreAfterRecovery']={resultCount:count,error,rawRetained:JSON.stringify(c.getState()).includes(raw.body)};assert.equal(count,2);assert.match(error,/Duplicate final tool result/);}finally{c.destroy();await rm(directory,{recursive:true,force:true})}}}\n\nasync function receiptOnlyAdmission(){const storage=new InMemoryEvidenceStorage({scope}),c=context(storage);const put=storage.put.bind(storage);storage.put=async()=>{throw Error('offline')};try{c.tools.register(tool);const report=await c.tools.executeWithOutcome('probe',{}, {callId:'call'});storage.put=put;const receipt=await new ToolEvidenceMiddleware({storage}).record(tool,{}, {userId:'alice'},report.outcome);const control=context(storage);try{add(control,report);let error;try{await control.acknowledgeToolEvidence('call',receipt.reference)}catch(e){error=e.message}results.receiptOnlyAcknowledgementControl={error,stillProtected:JSON.stringify(control.getCurrentInput()).includes('storage_failed')};assert.match(error,/does not match/);}finally{control.destroy()}add(c,report,receipt);c.addAssistantResponse([]);const roll=await c.rollover({preserveRecentTurns:0,summarize:async()=> 'discarded'});const persisted=await storage.readRecord(receipt.reference);results.receiptOnlyAdmission={storedReceiptStatus:receipt.status,originalOutcomeEvidence:report.outcome.evidence.status,storedResultPresent:Object.hasOwn(persisted,'result'),rolled:roll.performed,retainedHasRaw:JSON.stringify(c.getConversation()).includes(raw.body)};assert.equal(roll.performed,true);assert.equal(results.receiptOnlyAdmission.storedResultPresent,false);assert.equal(results.receiptOnlyAdmission.retainedHasRaw,false);}finally{c.destroy()}}\nasync function failFastBatch(){const storage=new InMemoryEvidenceStorage({scope});storage.put=async()=>{throw Error('offline')};let writes=0,failures=0,calls=0;const provider={name:'batch',capabilities:{text:true},validateConfig:async()=>true,listModels:async()=>[],getModelCapabilities:()=>({supportsTools:true,supportsVision:false,supportsJSON:true,supportsJSONSchema:true,maxTokens:128000,maxInputTokens:128000,maxOutputTokens:1024}),generate:async()=>{calls++;return{id:'r',object:'response',model:'gpt-4o-mini',created_at:1,status:'completed',output_text:'',output:[{type:'message',role:'assistant',content:[{type:'tool_use',id:'call',name:'probe',arguments:'{}'},{type:'tool_use',id:'failed-call',name:'fail',arguments:'{}'}]}],usage:{input_tokens:10,output_tokens:5,total_tokens:15}}}};Connector.create({name:'third-review-batch',vendor:Vendor.OpenAI,auth:{type:'none'},options:{provider}});const agent=Agent.create({connector:'third-review-batch',model:'gpt-4o-mini',userId:scope.ownerId,errorHandling:{toolFailureMode:'fail'},toolExecutionTimeout:30,emptyResponseRetry:{enabled:false},tools:[{...tool,execute:async()=>{writes++;return raw}},{definition:{type:'function',function:{name:'fail',parameters:{type:'object',properties:{}}}},execute:async(_args,context)=>{failures++;return new Promise((_resolve,reject)=>{context.signal.addEventListener('abort',()=>reject(context.signal.reason),{once:true})})}}],context:{model:'gpt-4o-mini',features:{workingMemory:false,inContextMemory:false,evidence:true},plugins:{evidence:{storage}}}});try{let error;try{await agent.run('both')}catch(e){error=e.message}results.failFastBatch={writes,failures,calls,error,snapshotHasRaw:JSON.stringify(await agent.getContextState()).includes(raw.body),retainedHasRaw:JSON.stringify([...agent.context.getConversation(),...agent.context.getCurrentInput()]).includes(raw.body),storedRecords:(await storage.list()).entries.length};assert.equal(writes,1);assert.match(error,/timeout/);assert.equal(results.failFastBatch.snapshotHasRaw,false);}finally{agent.destroy();Connector.remove('third-review-batch')}}\nawait stopStream();await stopStream(false);await failFastBatch();await restoreAfterRecovery();await receiptOnlyAdmission();\nwriteFileSync('/tmp/oneringai-stage03-third-review-repro'+(process.env.REVIEW_SOURCE?'-source':'')+'.json',JSON.stringify(results,null,2)+'\\n');console.log(JSON.stringify(results,null,2));\n",
+    "observations": {
+      "built": {
+        "mode": "built-public",
+        "streamStoppedAfterTool": {
+          "executions": 1,
+          "calls": 1,
+          "completionEventHadRaw": true,
+          "retainedHasRaw": false,
+          "snapshotHasRaw": false,
+          "storedRecords": 0
+        },
+        "fullyDrainedStreamControl": {
+          "executions": 1,
+          "calls": 2,
+          "completionEventHadRaw": true,
+          "retainedHasRaw": true,
+          "snapshotHasRaw": true,
+          "storedRecords": 0
+        },
+        "failFastBatch": {
+          "writes": 1,
+          "failures": 1,
+          "calls": 1,
+          "error": "Tool 'fail' execution failed: Tool 'fail' execution failed: Tool execution hard timeout after 30ms (safety net - tool's own timeout may have failed)",
+          "snapshotHasRaw": false,
+          "retainedHasRaw": false,
+          "storedRecords": 0
+        },
+        "restoreAfterRecovery": {
+          "resultCount": 2,
+          "error": "Duplicate final tool result for function:call. Return one final result per call; deliver later updates as messages.",
+          "rawRetained": true
+        },
+        "loadAfterRecovery": {
+          "resultCount": 2,
+          "error": "Duplicate final tool result for function:call. Return one final result per call; deliver later updates as messages.",
+          "rawRetained": true
+        },
+        "receiptOnlyAcknowledgementControl": {
+          "error": "Evidence does not match the retained tool call",
+          "stillProtected": true
+        },
+        "receiptOnlyAdmission": {
+          "storedReceiptStatus": "stored",
+          "originalOutcomeEvidence": "storage_failed",
+          "storedResultPresent": false,
+          "rolled": true,
+          "retainedHasRaw": false
+        }
+      },
+      "source": {
+        "mode": "source",
+        "streamStoppedAfterTool": {
+          "executions": 1,
+          "calls": 1,
+          "completionEventHadRaw": true,
+          "retainedHasRaw": false,
+          "snapshotHasRaw": false,
+          "storedRecords": 0
+        },
+        "fullyDrainedStreamControl": {
+          "executions": 1,
+          "calls": 2,
+          "completionEventHadRaw": true,
+          "retainedHasRaw": true,
+          "snapshotHasRaw": true,
+          "storedRecords": 0
+        },
+        "failFastBatch": {
+          "writes": 1,
+          "failures": 1,
+          "calls": 1,
+          "error": "Tool 'fail' execution failed: Tool 'fail' execution failed: Tool execution hard timeout after 30ms (safety net - tool's own timeout may have failed)",
+          "snapshotHasRaw": false,
+          "retainedHasRaw": false,
+          "storedRecords": 0
+        },
+        "restoreAfterRecovery": {
+          "resultCount": 2,
+          "error": "Duplicate final tool result for function:call. Return one final result per call; deliver later updates as messages.",
+          "rawRetained": true
+        },
+        "loadAfterRecovery": {
+          "resultCount": 2,
+          "error": "Duplicate final tool result for function:call. Return one final result per call; deliver later updates as messages.",
+          "rawRetained": true
+        },
+        "receiptOnlyAcknowledgementControl": {
+          "error": "Evidence does not match the retained tool call",
+          "stillProtected": true
+        },
+        "receiptOnlyAdmission": {
+          "storedReceiptStatus": "stored",
+          "originalOutcomeEvidence": "storage_failed",
+          "storedResultPresent": false,
+          "rolled": true,
+          "retainedHasRaw": false
+        }
+      }
+    },
+    "note": "Assertions confirm defects and passing controls, not successful stage completion. Uses public APIs, synthetic local tools, controlled providers, real manager deadline and bundled FileContextStorage; no private Agent field access. Temporary directories are cleaned. Ordinary thrown tool errors are normalized by default, so fail-fast reproduction uses a real timeout boundary."
+  },
+  "compatibilityPlan": {
+    "requiredPublicFieldsAdded": 0,
+    "requiredBackendMethodsAdded": 0,
+    "sessionSchemaChangeProposed": false,
+    "defaultEvidenceDisabledBehavior": "Preserve",
+    "rawReturnEventContracts": "Preserve",
+    "externalActionReplay": "Do not repeat an action for evidence recovery",
+    "breakingChangeRule": "Stop any affected proposed public break and obtain explicit user approval."
+  },
+  "priorEvidence": [
+    {
+      "path": "docs/evaluations/STAGE_03_SECOND_CORRECTIONS_VALIDATION.json",
+      "sha256": "e1d77240bb1bf28cb2a4012672b2b68f6386f0cf13391472029dbf8a339ad324",
+      "preserved": true
+    },
+    {
+      "path": "docs/evaluations/STAGE_03_SECOND_REVIEW.json",
+      "sha256": "e151d56410f7bc9028e3274b5c4bd45d18072e3af7b29b8a95b00b62a85fc8ca",
+      "preserved": true
+    },
+    {
+      "path": "docs/evaluations/STAGE_03_CORRECTIONS_VALIDATION.json",
+      "sha256": "7cfd89428446a5a7386be54ae770a73ac370842968c0153777f52e749ec997fe",
+      "preserved": true
+    },
+    {
+      "path": "docs/evaluations/STAGE_03_REVIEW.json",
+      "sha256": "ba4c8b39a569ff6f64086ea426b72761272c3fdde9cb61418b2a727d871118b8",
+      "preserved": true
+    },
+    {
+      "path": "docs/evaluations/STAGE_03_VALIDATION.json",
+      "sha256": "36b43b72dea526359fbed4cd95f966ee5f22897d7373df5d31fa1c1bfb965683",
+      "preserved": true
+    }
+  ],
+  "initialFingerprintCheck": {
+    "matched": 35,
+    "mismatched": 0
+  },
+  "sourceFingerprints": [
+    {
+      "path": "apps/amos/examples/evidence-offline.ts",
+      "sha256": "8999b0c4cf1eff91243aa56a155acebefbd06064c26847a0a4920b754d6b9d51"
+    },
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "sha256": "7131bfe8ee3c44d09dcd6b9763788488773b131d1152f1b706a5d558393c7de9"
+    },
+    {
+      "path": "apps/amos/src/agent/toolOutcomes.ts",
+      "sha256": "4ba675fd3b5f656d5af0ec8b77f3259d7682623a0aba84c207968da5bd65e765"
+    },
+    {
+      "path": "apps/amos/src/app.ts",
+      "sha256": "617bc13d1d4c57d8215baa964fcc34862e25d345b5a2f1c2882151250557f831"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/ContextCommand.ts",
+      "sha256": "72a69b800d3d29e4d7259a7a9bf05dd75943c8e1c337a4cfdafcac9e3b5967e2"
+    },
+    {
+      "path": "apps/amos/src/config/types.ts",
+      "sha256": "85a6bcad9ca1762e160842f96d699111cf4c2f2693bd1bf60b2128e66c554fac"
+    },
+    {
+      "path": "examples/ambiguous-action-evidence.ts",
+      "sha256": "c394330d6dd0d798108e8700ab989741bfaa42d69974286669d04f0d51e0fd7f"
+    },
+    {
+      "path": "examples/durable-tool-evidence.ts",
+      "sha256": "4ac68f85ab0eee431a2806a1e0026c3c5192a2a89ed7daac98c88d267c3b36a5"
+    },
+    {
+      "path": "examples/evidence-recovery.ts",
+      "sha256": "6a5e4a70fd06eb181a7e5a839c00ff1a957a758678570392bc9ad97eaf1f317c"
+    },
+    {
+      "path": "package.json",
+      "sha256": "92b7de052b0a5a6e42aea9033c36a48d5a7e9a43eb808f0a085da0d82b828195"
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "75ec9d4a6a6e2f9156d4e24dcf9ed0b91328297e13fb169640606f105d7dbe1c"
+    },
+    {
+      "path": "src/core/StorageRegistry.ts",
+      "sha256": "0b248c279deea934ff61721085d11dda3e3eb6ca81cd46f946ae8fc474e03bfd"
+    },
+    {
+      "path": "src/core/ToolManager.ts",
+      "sha256": "cb747072c4081d7feacd2cbd109de5b41110d4c00a9a56912a1594e27b227ac9"
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "4dfb6027fdea752f7635e477f888be8a44a6d017a18ac0f229107ce7dde06ed1"
+    },
+    {
+      "path": "src/core/context-nextgen/plugins/EvidencePluginNextGen.ts",
+      "sha256": "8097a4bfa9a0a0039598c4b153327cf607c375c59215cf695a2f76e1c9b09e4b"
+    },
+    {
+      "path": "src/core/context-nextgen/tool-pairs.ts",
+      "sha256": "d04cb65f568c67c45dd7409826f1a0fd6f72248b775f684de21ce92de029202a"
+    },
+    {
+      "path": "src/core/context-nextgen/types.ts",
+      "sha256": "93d9e9317f3dd78223e25bc062b42c8418dfc61517a4d5a8ef8a84c305a86654"
+    },
+    {
+      "path": "src/core/evidence/ToolEvidenceMiddleware.ts",
+      "sha256": "ef2f1837757ab7b37598947513a26f7877a750299e22e0da39fa04f9a8aa0da2"
+    },
+    {
+      "path": "src/core/evidence/validation.ts",
+      "sha256": "f41cef08aceaecc51bb6baa1b9cdfa9ac8710532c3b8c9bf935be71da07ced2c"
+    },
+    {
+      "path": "src/domain/entities/Content.ts",
+      "sha256": "9996ebfb27b3345379b420cb3a7ef93ce0e716cd4cd341473c1545b8dd4464bd"
+    },
+    {
+      "path": "src/domain/entities/Tool.ts",
+      "sha256": "12fe4590163d9dd3f70e5d82c30354d828c732120537d9f59b0c646d99d89c22"
+    },
+    {
+      "path": "src/domain/interfaces/IEvidenceStorage.ts",
+      "sha256": "59f60576523b34a240039d23461d9e055b3953ea587688257c637109d0bdaa84"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "f4f2a9e7f82f73dd9f5cba2b8449b130142d5cb52d9022cc8f8cc49432818477"
+    },
+    {
+      "path": "src/infrastructure/storage/EvidenceStorage.ts",
+      "sha256": "e0cb0a2736e6c225aa9a763df7079ce0a71b8652b7a1cd81ae1b8b8942df683c"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "9501b0ae001436a91adec66c7d6fddebef2f54bb5d490be3c48ec1a629d6815d"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage03-consumer.ts",
+      "sha256": "6b808338228fcb56affed73c5d60f43cae75e592b188268a38185a1ef42ca3a7"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "sha256": "4d03404c19be21263af814f57247553643b01a5eea6a19e477590cae2b0c2ddf"
+    },
+    {
+      "path": "tests/integration/text/Evidence.live.integration.test.ts",
+      "sha256": "d92593c5326fd7fa05a87736fb926af7e30a5f0ce89a38416714aa7bc690af62"
+    },
+    {
+      "path": "tests/integration/text/ModelExecution.live.integration.test.ts",
+      "sha256": "226856cf22062697016ad7030fa7c1350f61cb9353fd39622e173d89269c9d83"
+    },
+    {
+      "path": "tests/unit/apps/amos/Evidence.test.ts",
+      "sha256": "241fca928c701e5fb76b4ae485e5857c33d05b1c122b12cc19e29ef7de219f61"
+    },
+    {
+      "path": "tests/unit/core/evidence/Agent.evidence.test.ts",
+      "sha256": "56fae98d9220bc917aa3ba80573554e91e317a6dacc6622470db1d46e3ba5f9d"
+    },
+    {
+      "path": "tests/unit/core/evidence/EvidenceStorage.test.ts",
+      "sha256": "b0f341c407f652fca17670dbf26c03730ae9b7e04821bbfdfe4dad9108778953"
+    },
+    {
+      "path": "tests/unit/core/evidence/Stage03Corrections.test.ts",
+      "sha256": "8458f3a9b980b5eba55a17cd6a1409f61611af03d183089e342c371e8c8c7900"
+    },
+    {
+      "path": "tests/unit/core/evidence/ToolEvidence.test.ts",
+      "sha256": "39596d88b557142543ac2b497b6ea5da38602d1bd5efeaa8daa3397774a8564b"
+    },
+    {
+      "path": "tests/unit/core/evidence/Stage03SecondCorrections.test.ts",
+      "sha256": "5733e108222f856d95cc528f95a71c27ec8166d5d20472ef8e90dbd893ed195a"
+    }
+  ],
+  "reviewArtifacts": [
+    {
+      "path": "docs/designs/STAGE_03_THIRD_REVIEW.md",
+      "sha256": "1c9c3bf60fd1625854faf029f28bd7232255bca8618e6407b50c2052274744af"
+    },
+    {
+      "path": "docs/designs/STAGE_03_SECOND_REVIEW.md",
+      "sha256": "bf2ee083e5bab32bdef41898adf82d76736eb990edeea6aedbcf04d8f5289d58"
+    },
+    {
+      "path": "docs/designs/STAGE_03_REVIEW_AND_FIX_PLAN.md",
+      "sha256": "a8a256890253dc63f65dc6621a8c5fca322277b52a80e832ec1cc4a001a89f0d"
+    },
+    {
+      "path": "docs/designs/STAGE_03_IMPLEMENTATION.md",
+      "sha256": "80b232afcd5da8b72453172b585f7bc014389b29f694cb3f5ac2d4dd8e3a3662"
+    },
+    {
+      "path": "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "sha256": "58630cbe3ea8d9a4f39126b8d89c302ce5734e14b42c1f74b7baed3a29c13017"
+    },
+    {
+      "path": "docs/VERSION_2_GUIDE.md",
+      "sha256": "20c67b86b9a2e62fe98e5926269ca80df459819b3652e8b6031e03cecbcdec67"
+    },
+    {
+      "path": "docs/DURABLE_EVIDENCE.md",
+      "sha256": "cdb825d72bcef41e70f10206bda520101e829572bcaa60a714652fcfbfc218f5"
+    }
+  ],
+  "acceptance": "Resolve T1-T3 with meaningful failure/lifecycle/persistence/compatibility regressions, public recovery/example and AMOS checks, documentation/package handoff and full local/live gates before Stage 03 completion. Stage 07 remains separately authorized."
+}

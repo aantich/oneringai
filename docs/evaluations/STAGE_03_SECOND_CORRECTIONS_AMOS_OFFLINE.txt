@@ -1,0 +1,14 @@
+{"level":"info","time":1791990157962,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-evidence-demo","inputPreview":"Call large_search once.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2364/128000 (1.9%) tools=1199 conversation=0 system=1154 input=11 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+[Agent] [Context] iteration=1 tokens: 2561/128000 (2.1%) tools=1199 conversation=20 system=1246 input=96 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=112
+{"level":"info","time":1791990157986,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-evidence-demo","duration":24,"msg":"Agent run completed"}
+/context evidence
+Evidence acknowledgement: restart (local, not replicated).
+936e210a-07ec-4896-8f7a-13e29352da53 large_search succeeded/settled effect=read
+Explicit preview: /context evidence <id> [character-offset]
+
+/context evidence 936e210a-07ec-4896-8f7a-13e29352da53
+{"version":1,"recordedAt":1791990157978,"source":{"toolName":"large_search","executionId":"9241b305-9161-425d-88b0-5d05887f2ffa","arguments":{},"principal":{"userId":"local-example","agentId":"amos"},"effect":"read","status":"succeeded","completion":"settled","startedAt":1791990157977,"durationMs":1,"executionStarted":true,"cancellation":"none","callId":"demo-call","runId":"exec_dcbc7351-ba9d-4529-9628-5150f2f8abc3"},"result":{"ids":["AMOS_SOURCE_03"],"text":"synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source
+Next offset: 1024
+
+AMOS metadata listing and explicit bounded preview passed. Synthetic usage; temporary files cleaned.

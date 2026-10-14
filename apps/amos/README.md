@@ -290,3 +290,65 @@ displays both validation outcomes and disables helpers.
 It uses synthetic responses/usage, writes no user configuration and cleans up its
 runner and connector. Current output: [repair walkthrough](../../docs/evaluations/STAGE_06_SECOND_AMOS_OFFLINE.txt).
 The [original transcript](../../docs/evaluations/STAGE_06_AMOS_OFFLINE.txt) remains historical evidence.
+
+
+## Evidence inspection (Stage 03)
+
+Evidence is disabled in existing configurations. To enable local file-backed
+observations, add host settings to AMOS `config.json`, then reload the agent:
+
+```json
+{
+  "evidence": {
+    "enabled": true,
+    "directory": "./data/evidence",
+    "ownerId": "local-user",
+    "namespace": "amos"
+  }
+}
+```
+
+Use a stable scope; separate host-owned owner/namespace values for different users
+or tasks. Optional `retentionMs` sets expiry for new records. AMOS sets the agent's
+userId from this explicit owner when enabling evidence. Evidence is local JSON,
+with ordinary-restart acknowledgement, and is independent of session/scratch
+cleanup. No model or tool argument can choose a different evidence scope.
+
+- `/context evidence` lists at most 20 metadata records: ID, tool, execution status,
+  completion, and effect classification. It does not print source contents.
+- `/context evidence <id> [offset]` explicitly previews up to 1024 characters of
+  stored record JSON, shows the next UTF-16 character offset, and handles missing,
+  corrupt, or busy storage. The model's `evidence_list` can paginate beyond the
+  first metadata page; `evidence_read` prefers scoped IDs, with full verified references also supported.
+- The run view distinguishes evidence-storage/projection failure from successful
+  tool execution. Cancellation with unknown completion remains unresolved; do not
+  assume a write was prevented or repeat it to recreate a receipt.
+
+Large tools project only if their authors supply `output.summarize`; unhinted
+built-ins keep raw output. Projection defaults and recovery boundaries follow the
+[library recipe](../../docs/DURABLE_EVIDENCE.md). No action replay or distributed
+transaction machinery is added.
+
+Bundled capture now inherits the file store's byte cap and stops oversized
+serialization before expanding the full source. Mutable result hooks invalidate
+stale projections, and invalid evidence snapshots leave the active context intact.
+For hosts using native async tools, failed evidence pauses automatic continuation
+and retains the completion for explicit recovery; status-only receipts cannot
+release retained raw data. The [recovery example](../../examples/evidence-recovery.ts)
+shows the library boundary without repeating an action. AMOS inspection commands
+and persisted settings keep their existing interface.
+
+Explicit AMOS session saves retain pending unacknowledged observations after an
+interrupted run. Loading/saving again preserves the original source and invocation
+without running the tool again. The runner regression exercises this with a real
+file session backend and synthetic storage/model failures. Protected pending groups
+also survive subsequent input and async insertion; recovery remains host-driven.
+Closing AMOS streaming after a tool completion also retains the unstored source
+for explicit session saving. The real runner regression covers closing, saving,
+loading and saving again with one local action. Receipt-only recovery stays
+protected; checkpoint restoration handles changed acknowledgement metadata.
+
+After building from the repository root, `npm run example:amos-evidence` uses the
+real command/runner with a synthetic provider and temporary storage. It verifies
+metadata-only listing and an explicit bounded preview without credentials, network
+calls, or changes to user configuration.

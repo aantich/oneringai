@@ -320,3 +320,17 @@ does not satisfy the completion assertion. See the
 The delivery record and final check results are in the
 [architecture roadmap](./designs/AGENTIC_ARCHITECTURE_EVOLUTION.md) and
 [Version 2 guide](./VERSION_2_GUIDE.md).
+
+
+## Opt-in evidence protection (Stage 03)
+
+With the evidence plugin enabled, raw results whose evidence write was not
+acknowledged carry optional version-1 persistence metadata. Their connected
+call/result groups are excluded from compaction and scratch spill; emergency
+truncation and semantic rollover cannot discard them. A fitting request can retain
+raw results. Otherwise dispatch fails explicitly, preserving the source instead
+of inventing a projection. Host-only `acknowledgeToolEvidence()` can release a
+matching invocation after its retained result is stored, without rerunning the
+action. Native async delivery stops on failed storage before flattening the result
+into an unprotected text message. Existing sessions/configurations have no such
+metadata and retain their existing behavior. See [durable evidence](./DURABLE_EVIDENCE.md).

@@ -6,6 +6,8 @@ import {
   Agent,
   ContentType,
   FileContextStorage,
+  FileEvidenceStorage,
+  EvidencePluginNextGen,
   MessageRole,
   StreamEventType,
   getModelInfo,
@@ -16,6 +18,7 @@ import {
   type ThinkingConfig,
   type ToolFunction,
   type ToolExecutionOutcome,
+  type EvidenceReference,
   type HelperRole,
   type ModelTaskSnapshot,
 } from '@everworker/oneringai';
@@ -145,6 +148,14 @@ export class AgentRunner implements IAgentRunner {
       model,
       tools: this.tools,
       modelExecution: this.config.modelExecution ?? undefined,
+      ...(this.config.evidence?.enabled ? {
+        userId: this.config.evidence.ownerId,
+        context: { model, agentId: 'amos', features: { evidence: true }, plugins: { evidence: {
+          storage: new FileEvidenceStorage({ directory: this.config.evidence.directory,
+            scope: { ownerId: this.config.evidence.ownerId, namespace: this.config.evidence.namespace } }),
+          retentionMs: this.config.evidence.retentionMs,
+        } } },
+      } : {}),
       ...runtimeOptions,
       instructions: this.buildInstructions(),
       session: {
@@ -179,6 +190,38 @@ export class AgentRunner implements IAgentRunner {
     }
 
     return parts.length > 0 ? parts.join('\n\n') : undefined;
+  }
+
+  /** Bounded inspection; listing is metadata-only and previews require an explicit ID. */
+  async inspectEvidence(id?: string, offset = 0): Promise<string> {
+    const plugin = this.agent?.context.getPlugin<EvidencePluginNextGen>('evidence');
+    if (!plugin) return 'Evidence is disabled. Enable the evidence settings in AMOS config.json and reload the agent.';
+    if (!Number.isSafeInteger(offset) || offset < 0) throw new Error('Evidence offset must be a non-negative integer');
+    if (!id) {
+      const page = await plugin.storage.list({ limit: 20 });
+      return `Evidence acknowledgement: ${plugin.storage.durability} (local, not replicated).\n`
+        + page.entries.map(e => `${e.reference.id} ${e.toolName} ${e.status}/${e.completion} effect=${e.effect}`).join('\n')
+        + (page.next ? '\nMore records exist; use evidence_list in the agent or the storage API for pagination.' : '')
+        + '\nExplicit preview: /context evidence <id> [character-offset]';
+    }
+    if (!/^[0-9a-f-]{36}$/.test(id)) throw new Error('Invalid evidence ID');
+    const preview = async (reference: EvidenceReference): Promise<string> => {
+      const chunk = await plugin.storage.read(reference, { offset, limit: 1024 });
+      return chunk ? `${chunk.text}\n${chunk.nextOffset === undefined ? '[End of evidence]' : `Next offset: ${chunk.nextOffset}`}` : 'Evidence missing or expired.';
+    };
+    if (plugin.storage.getReference) {
+      const reference = await plugin.storage.getReference(id);
+      return reference ? preview(reference) : 'Evidence missing or expired.';
+    }
+    let after: string | undefined;
+    for (let pageIndex = 0; pageIndex < 10; pageIndex++) {
+      const page = await plugin.storage.list({ after, limit: 100 });
+      const entry = page.entries.find(e => e.reference.id === id);
+      if (entry) return preview(entry.reference);
+      if (!page.next) return 'Evidence missing or expired.';
+      after = page.next;
+    }
+    throw new Error('Evidence lookup budget exhausted; configure backend ID lookup.');
   }
 
   isReady(): boolean {
@@ -652,7 +695,7 @@ export class AgentRunner implements IAgentRunner {
           ? { type: 'error', error: new Error(describeToolOutcome(event.outcome) ?? event.error) }
           : event.error
             ? { type: 'error', error: new Error(`${event.tool_name}: ${event.error}`) }
-            : { type: 'tool:complete', tool: { name: event.tool_name, result: event.result } };
+            : { type: 'tool:complete', tool: { name: event.tool_name, result: event.result }, notice: event.outcome ? describeToolOutcome(event.outcome) ?? undefined : undefined };
       case StreamEventType.RESPONSE_COMPLETE:
         return {
           type: 'done',

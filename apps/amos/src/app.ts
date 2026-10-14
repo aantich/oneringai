@@ -249,6 +249,7 @@ export class AmosApp implements IAmosApp {
               break;
 
             case 'tool:complete':
+              if (event.notice) this.terminal.printWarning(event.notice);
               // Tool completed (already shown)
               break;
 

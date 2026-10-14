@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-10-13
+**Generated:** 2026-10-14
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -17,19 +17,19 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Image Generation](#image-generation) (25 items)
 - [Video Generation](#video-generation) (23 items)
 - [Agent Runtime](#agent-runtime) (70 items)
-- [Task Agents](#task-agents) (119 items)
+- [Task Agents](#task-agents) (120 items)
 - [Context Management](#context-management) (14 items)
-- [Session Management](#session-management) (75 items)
-- [Tools & Function Calling](#tools-function-calling) (211 items)
+- [Session Management](#session-management) (78 items)
+- [Tools & Function Calling](#tools-function-calling) (217 items)
 - [Streaming](#streaming) (35 items)
 - [Model Registry](#model-registry) (35 items)
 - [OAuth & External APIs](#oauth-external-apis) (46 items)
 - [Resilience & Observability](#resilience-observability) (33 items)
-- [Errors](#errors) (43 items)
+- [Errors](#errors) (44 items)
 - [Utilities](#utilities) (10 items)
-- [Interfaces](#interfaces) (78 items)
+- [Interfaces](#interfaces) (86 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (773 items)
+- [Other](#other) (775 items)
 
 ## Core
 
@@ -37,7 +37,7 @@ Core classes for authentication, agents, and providers
 
 ### Agent `class`
 
-📍 [`src/core/Agent.ts:397`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:400`](src/core/Agent.ts)
 
 Agent class - represents an AI assistant with tool calling capabilities
 
@@ -1745,7 +1745,7 @@ isDisposed(): boolean
 
 ### AgentConfig `interface`
 
-📍 [`src/core/Agent.ts:78`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:81`](src/core/Agent.ts)
 
 Agent configuration - extends BaseAgentConfig with Agent-specific options
 
@@ -1807,7 +1807,7 @@ Example: `toolExecutionTimeout: 300000` (5 minutes hard cap per tool call) |
 
 ### AgentContextRolloverOptions `interface`
 
-📍 [`src/core/Agent.ts:210`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:213`](src/core/Agent.ts)
 
 Options for {@link Agent.rolloverContext}.
 
@@ -1965,7 +1965,7 @@ Fetch options with additional connector-specific settings
 
 ### ExternalExecutionOptions `interface`
 
-📍 [`src/core/Agent.ts:235`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:238`](src/core/Agent.ts)
 
 Options for a non-LLM execution owned by an external transport.
 
@@ -1983,7 +1983,7 @@ Options for a non-LLM execution owned by an external transport.
 
 ### ExternalExecutionResult `interface`
 
-📍 [`src/core/Agent.ts:250`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:253`](src/core/Agent.ts)
 
 Terminal data supplied when an external execution is completed.
 
@@ -2003,7 +2003,7 @@ Terminal data supplied when an external execution is completed.
 
 ### ExternalToolCall `interface`
 
-📍 [`src/core/Agent.ts:243`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:246`](src/core/Agent.ts)
 
 A function call received from an external model transport.
 
@@ -2022,7 +2022,7 @@ A function call received from an external model transport.
 
 ### RunOptions `interface`
 
-📍 [`src/core/Agent.ts:178`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:181`](src/core/Agent.ts)
 
 Per-call options for run() and stream().
 These override the agent-level config for this single invocation.
@@ -2063,7 +2063,7 @@ type AgentEventListener = (agentId: string, agentName: string, event: string, da
 
 ### AgentRuntimeConfigSnapshot `type`
 
-📍 [`src/core/Agent.ts:158`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:161`](src/core/Agent.ts)
 
 Agent runtime options exposed by getRuntimeConfigSnapshot().
 
@@ -2089,7 +2089,7 @@ type AgentRuntimeConfigSnapshot = Pick&lt;AgentConfig,
 
 ### AgentSessionConfig `type`
 
-📍 [`src/core/Agent.ts:73`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:76`](src/core/Agent.ts)
 
 Session configuration for Agent (same as BaseSessionConfig)
 
@@ -4358,7 +4358,7 @@ Image model pricing
 
 ### InputImageContent `interface`
 
-📍 [`src/domain/entities/Content.ts:29`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:30`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -9495,6 +9495,71 @@ async patch(agentId: string, updates: Partial&lt;AgentState&gt;): Promise&lt;voi
 - `updates`: `Partial&lt;AgentState&gt;`
 
 **Returns:** `Promise&lt;void&gt;`
+
+</details>
+
+---
+
+### InMemoryEvidenceStorage `class`
+
+📍 [`src/infrastructure/storage/EvidenceStorage.ts:202`](src/infrastructure/storage/EvidenceStorage.ts)
+
+Bounded process-local store. Share the instance explicitly when resuming in-process.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `inventory()`
+
+```typescript
+protected async inventory(): Promise&lt;Array&lt;{ id: string; bytes: number }&gt;&gt;
+```
+
+**Returns:** `Promise&lt;{ id: string; bytes: number; }[]&gt;`
+
+#### `writeBlob()`
+
+```typescript
+protected async writeBlob(id: string, bytes: Buffer): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `bytes`: `Buffer&lt;ArrayBufferLike&gt;`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `readBlob()`
+
+```typescript
+protected async readBlob(id: string): Promise&lt;Buffer | null&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+
+**Returns:** `Promise&lt;Buffer&lt;ArrayBufferLike&gt; | null&gt;`
+
+#### `removeBlob()`
+
+```typescript
+protected async removeBlob(id: string): Promise&lt;boolean&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+
+**Returns:** `Promise&lt;boolean&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `durability` | `durability: "process"` | - |
+| `queueKey` | `queueKey: `${string}-${string}-${string}-${string}-${string}`` | - |
 
 </details>
 
@@ -18435,6 +18500,85 @@ getPath(userId: string | undefined): string
 
 ---
 
+### FileEvidenceStorage `class`
+
+📍 [`src/infrastructure/storage/EvidenceStorage.ts:213`](src/infrastructure/storage/EvidenceStorage.ts)
+
+Immutable atomic files, hashed scope directories (no sanitization collisions).
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(options: FileEvidenceStorageOptions)
+```
+
+**Parameters:**
+- `options`: `FileEvidenceStorageOptions`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `inventory()`
+
+```typescript
+protected async inventory(): Promise&lt;Array&lt;{ id: string; bytes: number }&gt;&gt;
+```
+
+**Returns:** `Promise&lt;{ id: string; bytes: number; }[]&gt;`
+
+#### `writeBlob()`
+
+```typescript
+protected async writeBlob(id: string, bytes: Buffer): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `bytes`: `Buffer&lt;ArrayBufferLike&gt;`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `readBlob()`
+
+```typescript
+protected async readBlob(id: string): Promise&lt;Buffer | null&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+
+**Returns:** `Promise&lt;Buffer&lt;ArrayBufferLike&gt; | null&gt;`
+
+#### `removeBlob()`
+
+```typescript
+protected async removeBlob(id: string): Promise&lt;boolean&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+
+**Returns:** `Promise&lt;boolean&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `durability` | `durability: "restart" | "fsync"` | - |
+| `queueKey` | `queueKey: string` | - |
+
+</details>
+
+---
+
 ### FileHistoryJournal `class`
 
 📍 [`src/infrastructure/storage/FileHistoryJournal.ts:55`](src/infrastructure/storage/FileHistoryJournal.ts)
@@ -20452,6 +20596,27 @@ Session summary for listing (lightweight, no full state)
 
 ---
 
+### EvidenceStorageOptions `interface`
+
+📍 [`src/infrastructure/storage/EvidenceStorage.ts:7`](src/infrastructure/storage/EvidenceStorage.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `scope` | `scope: EvidenceScope;` | - |
+| `maxRecordBytes?` | `maxRecordBytes?: number;` | Defaults: record 4 MiB, scope 64 MiB / 1000 records; writes fail at capacity. |
+| `maxTotalBytes?` | `maxTotalBytes?: number;` | - |
+| `maxRecords?` | `maxRecords?: number;` | - |
+| `maxReadChars?` | `maxReadChars?: number;` | Defaults: 8192 characters per chunk, 8 simultaneous reads. Busy reads fail. |
+| `maxConcurrentReads?` | `maxConcurrentReads?: number;` | - |
+| `maxPendingWrites?` | `maxPendingWrites?: number;` | Bound queued mutations in this process, default 32. |
+
+</details>
+
+---
+
 ### FileAgentDefinitionStorageConfig `interface`
 
 📍 [`src/infrastructure/storage/FileAgentDefinitionStorage.ts:32`](src/infrastructure/storage/FileAgentDefinitionStorage.ts)
@@ -20534,6 +20699,22 @@ Configuration for FileCustomToolStorage
 |----------|------|-------------|
 | `baseDirectory?` | `baseDirectory?: string;` | Override the base directory (default: ~/.oneringai/users) |
 | `prettyPrint?` | `prettyPrint?: boolean;` | Pretty-print JSON (default: true) |
+
+</details>
+
+---
+
+### FileEvidenceStorageOptions `interface`
+
+📍 [`src/infrastructure/storage/EvidenceStorage.ts:19`](src/infrastructure/storage/EvidenceStorage.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `directory` | `directory: string;` | - |
+| `durability?` | `durability?: 'restart' | 'fsync';` | Default restart; fsync also synchronizes file and directory entries before acknowledgement. |
 
 </details>
 
@@ -22636,6 +22817,59 @@ static reset(): void
 
 ---
 
+### ToolEvidenceMiddleware `class`
+
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:70`](src/core/evidence/ToolEvidenceMiddleware.ts)
+
+Opt-in post-settlement middleware, deliberately outside the execution plugin/error pipeline.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: ToolEvidenceConfig)
+```
+
+**Parameters:**
+- `config`: `ToolEvidenceConfig`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `record()`
+
+```typescript
+async record(tool: ToolFunction, args: unknown, context: ToolContext, outcome: ToolExecutionOutcome,
+    result?: { value: unknown }, late = false): Promise&lt;ToolEvidenceDelivery&gt;
+```
+
+**Parameters:**
+- `tool`: `ToolFunction&lt;any, any&gt;`
+- `args`: `unknown`
+- `context`: `ToolContext`
+- `outcome`: `ToolExecutionOutcome`
+- `result`: `{ value: unknown; } | undefined` *(optional)*
+- `late`: `boolean` *(optional)* (default: `false`)
+
+**Returns:** `Promise&lt;ToolEvidenceDelivery&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `storage` | `storage: IEvidenceStorage` | - |
+
+</details>
+
+---
+
 ### ToolExecutionError `class`
 
 📍 [`src/domain/errors/AIErrors.ts:111`](src/domain/errors/AIErrors.ts)
@@ -22801,7 +23035,7 @@ async execute(tool: ToolFunction, args: unknown, options: PipelineExecutionOptio
 
 ### ToolManager `class`
 
-📍 [`src/core/ToolManager.ts:231`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:234`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -23369,6 +23603,19 @@ getStats(): ToolManagerStats
 ```
 
 **Returns:** `ToolManagerStats`
+
+#### `setEvidenceMiddleware()`
+
+Opt-in post-settlement evidence handling. Does not replace the execution pipeline.
+
+```typescript
+setEvidenceMiddleware(middleware?: ToolEvidenceMiddleware): void
+```
+
+**Parameters:**
+- `middleware`: `ToolEvidenceMiddleware | undefined` *(optional)*
+
+**Returns:** `void`
 
 #### `execute()`
 
@@ -24158,7 +24405,7 @@ constructor(
 
 ### AsyncToolConfig `interface`
 
-📍 [`src/domain/entities/Tool.ts:115`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:118`](src/domain/entities/Tool.ts)
 
 Configuration for async (non-blocking) tool behavior
 
@@ -24201,7 +24448,7 @@ within this window, it's treated as a timeout error. |
 
 ### BuiltInTool `interface`
 
-📍 [`src/domain/entities/Tool.ts:57`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:58`](src/domain/entities/Tool.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -24476,13 +24723,14 @@ Metadata for a custom tool
 
 ### CustomToolResultContent `interface`
 
-📍 [`src/domain/entities/Content.ts:68`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:77`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `evidence?` | `evidence?: ToolResultEvidence;` | - |
 | `type` | `type: ContentType.CUSTOM_TOOL_RESULT;` | - |
 | `tool_use_id` | `tool_use_id: string;` | - |
 | `content` | `content: string | any;` | - |
@@ -24537,7 +24785,7 @@ Test case for a custom tool
 
 ### CustomToolUseContent `interface`
 
-📍 [`src/domain/entities/Content.ts:59`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:60`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -24610,7 +24858,7 @@ When set, read_file will automatically convert binary document formats to markdo
 
 ### FreeformToolDefinition `interface`
 
-📍 [`src/domain/entities/Tool.ts:46`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:47`](src/domain/entities/Tool.ts)
 
 Free-form custom tool definition used by providers that accept text input.
 
@@ -24633,7 +24881,7 @@ Free-form custom tool definition used by providers that accept text input.
 
 ### FunctionToolDefinition `interface`
 
-📍 [`src/domain/entities/Tool.ts:18`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:19`](src/domain/entities/Tool.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -25150,7 +25398,7 @@ Snapshot of a single tool's registration state.
 
 ### JSONSchema `interface`
 
-📍 [`src/domain/entities/Tool.ts:11`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:12`](src/domain/entities/Tool.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -25324,7 +25572,7 @@ Parsed connector category: connector name + optional account alias.
 
 ### PendingAsyncTool `interface`
 
-📍 [`src/domain/entities/Tool.ts:148`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:151`](src/domain/entities/Tool.ts)
 
 Tracks a single async tool execution in flight
 
@@ -25488,7 +25736,7 @@ Called per-invocation; the agent is destroyed after the routine completes. |
 
 ### SerializedToolState `interface`
 
-📍 [`src/core/ToolManager.ts:173`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:176`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -25577,7 +25825,7 @@ Default: true |
 
 ### ToolCall `interface`
 
-📍 [`src/domain/entities/Tool.ts:72`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:73`](src/domain/entities/Tool.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -25752,7 +26000,7 @@ Definition of a tool category in the catalog.
 
 ### ToolCondition `interface`
 
-📍 [`src/core/ToolManager.ts:114`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:117`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -25809,9 +26057,69 @@ Resolution order in connector tools:
 
 ---
 
+### ToolEvidenceConfig `interface`
+
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:14`](src/core/evidence/ToolEvidenceMiddleware.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `storage` | `storage: IEvidenceStorage;` | - |
+| `projectThresholdBytes?` | `projectThresholdBytes?: number;` | Only hinted tools with summarize() and results at least this large are projected. Default 8192 bytes. |
+| `maxSummaryChars?` | `maxSummaryChars?: number;` | Summary cap, default 2000 characters; an oversized summary falls back to raw. |
+| `maxProjectionChars?` | `maxProjectionChars?: number;` | Whole model-facing envelope cap, default 4096 characters. |
+| `writeTimeoutMs?` | `writeTimeoutMs?: number;` | Deadline for acknowledgement; default 5000ms. Late writes do not authorize projection. |
+| `retentionMs?` | `retentionMs?: number;` | - |
+| `maxSerializationBytes?` | `maxSerializationBytes?: number;` | Optional pre-storage UTF-8 serialization cap; inherits storage.serializationLimitBytes when available.
+Custom stores without a hint retain their own capacity policy unless this option is supplied. |
+| `redact?` | `redact?: (value: unknown, kind: 'arguments' | 'result') =&gt; unknown;` | Synchronous host storage policy. Applied separately to arguments and results after credential-key redaction. |
+
+</details>
+
+---
+
+### ToolEvidenceDelivery `interface`
+
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:13`](src/core/evidence/ToolEvidenceMiddleware.ts)
+
+Projection belongs only to the managed prompt view. Raw returns/events stay raw.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `projection?` | `projection?: string` | - |
+
+</details>
+
+---
+
+### ToolEvidenceReceipt `interface`
+
+📍 [`src/core/evidence/ToolEvidenceMiddleware.ts:6`](src/core/evidence/ToolEvidenceMiddleware.ts)
+
+Metadata is diagnostic; storage/projection failures never change tool-effect status.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `status` | `status: 'stored' | 'storage_failed' | 'projection_failed';` | - |
+| `reference?` | `reference?: EvidenceReference;` | - |
+| `effect` | `effect: 'read' | 'write' | 'unknown';` | - |
+| `errorCode?` | `errorCode?: string;` | - |
+
+</details>
+
+---
+
 ### ToolExecutionContext `interface`
 
-📍 [`src/domain/entities/Tool.ts:105`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:108`](src/domain/entities/Tool.ts)
 
 Tool execution context - tracks all tool calls in a generation
 
@@ -25854,7 +26162,7 @@ Tool execution complete
 
 ### ToolExecutionOptions `interface`
 
-📍 [`src/domain/entities/Tool.ts:393`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:400`](src/domain/entities/Tool.ts)
 
 Additive options for a single ToolManager invocation. Zero disables the additional per-call deadline.
 
@@ -25868,6 +26176,7 @@ Additive options for a single ToolManager invocation. Zero disables the addition
 | `callId?` | `callId?: string;` | - |
 | `runId?` | `runId?: string;` | - |
 | `onOutcome?` | `onOutcome?: (outcome: ToolExecutionOutcome) =&gt; void;` | Host observer for the initial outcome; exceptions do not affect execution. |
+| `onEvidence?` | `onEvidence?: (evidence: ToolEvidenceDelivery) =&gt; void;` | Host observer for opt-in evidence delivery; exceptions are isolated. |
 
 </details>
 
@@ -25875,7 +26184,7 @@ Additive options for a single ToolManager invocation. Zero disables the addition
 
 ### ToolExecutionOutcome `interface`
 
-📍 [`src/domain/entities/Tool.ts:377`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:382`](src/domain/entities/Tool.ts)
 
 Semantic execution metadata. It never asserts that a remote side effect was undone.
 
@@ -25896,6 +26205,7 @@ Semantic execution metadata. It never asserts that a remote side effect was undo
 | `completion` | `completion: 'settled' | 'unknown' | 'not_started';` | - |
 | `cancellation` | `cancellation: 'none' | 'requested' | 'acknowledged';` | - |
 | `error?` | `error?: string;` | - |
+| `evidence?` | `evidence?: ToolEvidenceReceipt;` | Opt-in storage diagnostics; never changes the execution status. |
 
 </details>
 
@@ -25922,7 +26232,7 @@ Default: true (if crypto.randomUUID is available) |
 
 ### ToolExecutionReport `interface`
 
-📍 [`src/domain/entities/Tool.ts:402`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:411`](src/domain/entities/Tool.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -25931,6 +26241,7 @@ Default: true (if crypto.randomUUID is available) |
 |----------|------|-------------|
 | `result` | `result: T;` | - |
 | `outcome` | `outcome: ToolExecutionOutcome;` | - |
+| `evidence?` | `evidence?: ToolEvidenceDelivery;` | - |
 
 </details>
 
@@ -25958,7 +26269,7 @@ Tool execution starting
 
 ### ToolFunction `interface`
 
-📍 [`src/domain/entities/Tool.ts:234`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:239`](src/domain/entities/Tool.ts)
 
 User-provided tool function
 
@@ -25989,7 +26300,7 @@ Used for logging, UI display, and debugging. |
 
 ### ToolManagerConfig `interface`
 
-📍 [`src/core/ToolManager.ts:221`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:224`](src/core/ToolManager.ts)
 
 Configuration for ToolManager
 
@@ -26009,7 +26320,7 @@ Default: 0 (disabled - relies on tool's own timeout) |
 
 ### ToolManagerStats `interface`
 
-📍 [`src/core/ToolManager.ts:163`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:166`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26030,7 +26341,7 @@ Default: 0 (disabled - relies on tool's own timeout) |
 
 ### ToolMetadata `interface`
 
-📍 [`src/core/ToolManager.ts:153`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:156`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26069,7 +26380,7 @@ Default: 0 (disabled - relies on tool's own timeout) |
 
 ### ToolOptions `interface`
 
-📍 [`src/core/ToolManager.ts:95`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:98`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26084,6 +26395,25 @@ Default: 0 (disabled - relies on tool's own timeout) |
 | `tags?` | `tags?: string[];` | Tags for categorization and search |
 | `category?` | `category?: string;` | Category grouping |
 | `source?` | `source?: ToolSource;` | Source identifier (built-in, connector, custom, mcp, etc.) |
+
+</details>
+
+---
+
+### ToolOutputHints `interface`
+
+📍 [`src/domain/entities/Tool.ts:167`](src/domain/entities/Tool.ts)
+
+Output handling hints for context management
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `expectedSize?` | `expectedSize?: 'small' | 'medium' | 'large' | 'variable';` | - |
+| `summarize?` | `summarize?: (output: unknown) =&gt; string;` | - |
+| `effect?` | `effect?: 'read' | 'write' | 'unknown';` | Host-declared effect classification for opt-in evidence receipts. Default unknown. |
 
 </details>
 
@@ -26117,7 +26447,7 @@ If set, session approvals expire after this duration. |
 
 ### ToolPermissionConfig `interface`
 
-📍 [`src/domain/entities/Tool.ts:198`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:203`](src/domain/entities/Tool.ts)
 
 Permission configuration for a tool
 
@@ -26145,7 +26475,7 @@ Used by the ToolPermissionManager.
 
 ### ToolRegistration `interface`
 
-📍 [`src/core/ToolManager.ts:134`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:137`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26220,7 +26550,7 @@ Metadata for a tool in the registry
 
 ### ToolResult `interface`
 
-📍 [`src/domain/entities/Tool.ts:88`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:89`](src/domain/entities/Tool.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26229,6 +26559,7 @@ Metadata for a tool in the registry
 |----------|------|-------------|
 | `pending?` | `pending?: boolean;` | Async acceptance placeholder, not evidence of successful completion. |
 | `outcome?` | `outcome?: ToolExecutionOutcome;` | Additive semantic metadata; raw content retains its existing shape. |
+| `evidence?` | `evidence?: ToolEvidenceDelivery;` | Framework-owned projection; content and application events retain raw results. |
 | `tool_use_id` | `tool_use_id: string;` | - |
 | `tool_name?` | `tool_name?: string;` | - |
 | `tool_args?` | `tool_args?: Record&lt;string, unknown&gt;;` | - |
@@ -26243,13 +26574,14 @@ Metadata for a tool in the registry
 
 ### ToolResultContent `interface`
 
-📍 [`src/domain/entities/Content.ts:75`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:85`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `evidence?` | `evidence?: ToolResultEvidence;` | - |
 | `type` | `type: ContentType.TOOL_RESULT;` | - |
 | `tool_use_id` | `tool_use_id: string;` | - |
 | `content` | `content: string | any;` | - |
@@ -26257,6 +26589,26 @@ Metadata for a tool in the registry
 | `__images?` | `__images?: Array&lt;{ base64: string; mediaType: string }&gt;;` | Images extracted from tool results via the __images convention.
 Stored separately from `content` so they don't inflate text-based token counts.
 Provider converters read this field to inject native multimodal image blocks. |
+
+</details>
+
+---
+
+### ToolResultEvidence `interface`
+
+📍 [`src/domain/entities/Content.ts:70`](src/domain/entities/Content.ts)
+
+Versioned optional persistence metadata. Failed acknowledgement protects the raw result from compaction.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `version` | `version: 1;` | - |
+| `executionId?` | `executionId?: string;` | - |
+| `status` | `status: 'stored' | 'storage_failed' | 'projection_failed';` | - |
+| `reference?` | `reference?: EvidenceReference;` | - |
 
 </details>
 
@@ -26285,7 +26637,7 @@ Tool definitions returned by a client-executed OpenAI tool-search call.
 
 ### ToolSelectionContext `interface`
 
-📍 [`src/core/ToolManager.ts:119`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:122`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26305,7 +26657,7 @@ Tool definitions returned by a client-executed OpenAI tool-search call.
 
 ### ToolUseContent `interface`
 
-📍 [`src/domain/entities/Content.ts:48`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:49`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26325,7 +26677,7 @@ Tool definitions returned by a client-executed OpenAI tool-search call.
 
 ### ToolCallState `enum`
 
-📍 [`src/domain/entities/Tool.ts:64`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:65`](src/domain/entities/Tool.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26428,7 +26780,7 @@ type OpenAIRealtimeTool = OpenAIRealtimeFunctionTool | OpenAIRealtimeMCPTool
 
 ### PendingAsyncToolStatus `type`
 
-📍 [`src/domain/entities/Tool.ts:143`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:146`](src/domain/entities/Tool.ts)
 
 Status of a pending async tool execution
 
@@ -26522,7 +26874,7 @@ type ServiceToolFactory = (
 
 ### Tool `type`
 
-📍 [`src/domain/entities/Tool.ts:62`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:63`](src/domain/entities/Tool.ts)
 
 ```typescript
 type Tool = FunctionToolDefinition | FreeformToolDefinition | BuiltInTool
@@ -26575,7 +26927,7 @@ type ToolCategoryScope = | string[]                  // shorthand allowlist
 
 ### ToolManagerEvent `type`
 
-📍 [`src/core/ToolManager.ts:187`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:190`](src/core/ToolManager.ts)
 
 ```typescript
 type ToolManagerEvent = | 'tool:registered'
@@ -26593,7 +26945,7 @@ type ToolManagerEvent = | 'tool:registered'
 
 ### ToolSource `type`
 
-📍 [`src/core/ToolManager.ts:51`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:54`](src/core/ToolManager.ts)
 
 Source identifier for a registered tool
 
@@ -27589,7 +27941,7 @@ export function createWriteFileTool(config: FilesystemToolConfig = {}): ToolFunc
 
 ### defaultDescribeCall `function`
 
-📍 [`src/domain/entities/Tool.ts:310`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:315`](src/domain/entities/Tool.ts)
 
 Default implementation for describeCall.
 Shows the first meaningful argument value.
@@ -27667,7 +28019,7 @@ export function getToolByName(name: string): ToolRegistryEntry | undefined
 
 ### getToolCallDescription `function`
 
-📍 [`src/domain/entities/Tool.ts:362`](src/domain/entities/Tool.ts)
+📍 [`src/domain/entities/Tool.ts:367`](src/domain/entities/Tool.ts)
 
 Get a human-readable description of a tool call.
 Uses the tool's describeCall method if available, otherwise falls back to default.
@@ -37014,6 +37366,28 @@ getConfig(): Readonly&lt;Required&lt;ErrorHandlerConfig&gt;&gt;
 
 ---
 
+### EvidenceError `class`
+
+📍 [`src/core/evidence/validation.ts:5`](src/core/evidence/validation.ts)
+
+Messages contain no source payloads, credentials, or backend exception text.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(readonly code: 'invalid' | 'capacity' | 'corrupt' | 'busy' | 'storage')
+```
+
+**Parameters:**
+- `code`: `"invalid" | "capacity" | "corrupt" | "busy" | "storage"`
+
+</details>
+
+---
+
 ### FactSupersededError `class`
 
 📍 [`src/memory/MemorySystem.ts:245`](src/memory/MemorySystem.ts)
@@ -38569,6 +38943,139 @@ Response from an embedding request
 
 ---
 
+### EvidenceChunk `interface`
+
+📍 [`src/domain/interfaces/IEvidenceStorage.ts:53`](src/domain/interfaces/IEvidenceStorage.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `reference` | `reference: EvidenceReference;` | - |
+| `text` | `text: string;` | - |
+| `nextOffset?` | `nextOffset?: number;` | - |
+| `totalChars` | `totalChars: number;` | - |
+
+</details>
+
+---
+
+### EvidenceEntry `interface`
+
+📍 [`src/domain/interfaces/IEvidenceStorage.ts:59`](src/domain/interfaces/IEvidenceStorage.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `reference` | `reference: EvidenceReference;` | - |
+| `recordedAt` | `recordedAt: number;` | - |
+| `expiresAt?` | `expiresAt?: number;` | - |
+| `toolName` | `toolName: string;` | - |
+| `callId?` | `callId?: string;` | - |
+| `status` | `status: EvidenceRecord['source']['status'];` | - |
+| `completion` | `completion: EvidenceRecord['source']['completion'];` | - |
+| `effect` | `effect: EvidenceRecord['source']['effect'];` | - |
+
+</details>
+
+---
+
+### EvidenceReadOptions `interface`
+
+📍 [`src/domain/interfaces/IEvidenceStorage.ts:46`](src/domain/interfaces/IEvidenceStorage.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `offset?` | `offset?: number;` | UTF-16 character offset in serialized JSON. |
+| `limit?` | `limit?: number;` | Maximum characters, capped at the store's maxReadChars (default 8192). |
+| `signal?` | `signal?: AbortSignal;` | - |
+
+</details>
+
+---
+
+### EvidenceRecord `interface`
+
+📍 [`src/domain/interfaces/IEvidenceStorage.ts:20`](src/domain/interfaces/IEvidenceStorage.ts)
+
+Immutable JSON observation, including receipts with unknown completion.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `version` | `version: 1;` | - |
+| `recordedAt` | `recordedAt: number;` | - |
+| `expiresAt?` | `expiresAt?: number;` | - |
+| `source` | `source: {
+    toolName: string;
+    executionId: string;
+    connectorName?: string;
+    callId?: string;
+    runId?: string;
+    arguments: unknown;
+    principal: { userId?: string; accountId?: string; agentId?: string };
+    effect: 'read' | 'write' | 'unknown';
+    status: 'succeeded' | 'failed' | 'denied' | 'cancelled' | 'timed_out';
+    completion: 'settled' | 'unknown' | 'not_started';
+    startedAt: number;
+    durationMs: number;
+    executionStarted?: boolean;
+    cancellation?: 'none' | 'requested' | 'acknowledged';
+    timeoutMs?: number;
+    late?: boolean;
+  };` | - |
+| `result?` | `result?: unknown;` | Absent for unresolved/error receipts. Exact JSON result after host redaction. |
+
+</details>
+
+---
+
+### EvidenceReference `interface`
+
+📍 [`src/domain/interfaces/IEvidenceStorage.ts:11`](src/domain/interfaces/IEvidenceStorage.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `version` | `version: 1;` | - |
+| `id` | `id: string;` | - |
+| `sha256` | `sha256: string;` | - |
+| `bytes` | `bytes: number;` | - |
+| `durability` | `durability: EvidenceDurability;` | - |
+
+</details>
+
+---
+
+### EvidenceScope `interface`
+
+📍 [`src/domain/interfaces/IEvidenceStorage.ts:2`](src/domain/interfaces/IEvidenceStorage.ts)
+
+Host-bound evidence ownership. Never accept this scope from a model tool argument.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `ownerId` | `ownerId: string;` | - |
+| `namespace` | `namespace: string;` | - |
+| `tenantId?` | `tenantId?: string;` | - |
+
+</details>
+
+---
+
 ### FileSearchOptions `interface`
 
 📍 [`src/domain/interfaces/IAdvancedInference.ts:73`](src/domain/interfaces/IAdvancedInference.ts)
@@ -39527,6 +40034,117 @@ listModels?(): Promise&lt;string[]&gt;;
 ```
 
 **Returns:** `Promise&lt;string[]&gt;`
+
+</details>
+
+---
+
+### IEvidenceStorage `interface`
+
+📍 [`src/domain/interfaces/IEvidenceStorage.ts:71`](src/domain/interfaces/IEvidenceStorage.ts)
+
+Scoped immutable records. Missing/expired references return null; corruption throws.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `put()`
+
+```typescript
+put(record: EvidenceRecord): Promise&lt;EvidenceReference&gt;;
+```
+
+**Parameters:**
+- `record`: `EvidenceRecord`
+
+**Returns:** `Promise&lt;EvidenceReference&gt;`
+
+#### `getReference()?`
+
+Optional efficient scoped ID lookup; implementations verify stored integrity before returning metadata.
+
+```typescript
+getReference?(id: string, signal?: AbortSignal): Promise&lt;EvidenceReference | null&gt;;
+```
+
+**Parameters:**
+- `id`: `string`
+- `signal`: `AbortSignal | undefined` *(optional)*
+
+**Returns:** `Promise&lt;EvidenceReference | null&gt;`
+
+#### `read()`
+
+Integrity checks cover the entire bounded blob even when reading a chunk.
+
+```typescript
+read(reference: EvidenceReference, options?: EvidenceReadOptions): Promise&lt;EvidenceChunk | null&gt;;
+```
+
+**Parameters:**
+- `reference`: `EvidenceReference`
+- `options`: `EvidenceReadOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;EvidenceChunk | null&gt;`
+
+#### `readRecord()`
+
+Host-only full read, still bounded by maxRecordBytes (default 4 MiB).
+
+```typescript
+readRecord(reference: EvidenceReference): Promise&lt;EvidenceRecord | null&gt;;
+```
+
+**Parameters:**
+- `reference`: `EvidenceReference`
+
+**Returns:** `Promise&lt;EvidenceRecord | null&gt;`
+
+#### `list()`
+
+```typescript
+list(options?: { after?: string; limit?: number; signal?: AbortSignal }): Promise&lt;{ entries: EvidenceEntry[]; next?: string }&gt;;
+```
+
+**Parameters:**
+- `options`: `{ after?: string | undefined; limit?: number | undefined; signal?: AbortSignal | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;{ entries: EvidenceEntry[]; next?: string | undefined; }&gt;`
+
+#### `delete()`
+
+```typescript
+delete(reference: EvidenceReference): Promise&lt;boolean&gt;;
+```
+
+**Parameters:**
+- `reference`: `EvidenceReference`
+
+**Returns:** `Promise&lt;boolean&gt;`
+
+#### `pruneExpired()`
+
+Explicit host maintenance; no scratch eviction or compaction deletes evidence.
+
+```typescript
+pruneExpired(now?: number): Promise&lt;number&gt;;
+```
+
+**Parameters:**
+- `now`: `number | undefined` *(optional)*
+
+**Returns:** `Promise&lt;number&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `scope` | `readonly scope: Readonly&lt;EvidenceScope&gt;;` | - |
+| `durability` | `readonly durability: EvidenceDurability;` | - |
+| `serializationLimitBytes?` | `readonly serializationLimitBytes?: number;` | Optional middleware serialization budget. Bundled stores expose their effective record/scope byte cap. |
 
 </details>
 
@@ -41476,6 +42094,18 @@ type EmbeddingContentPart = | { type: 'text'; text: string }
 
 ---
 
+### EvidenceDurability `type`
+
+📍 [`src/domain/interfaces/IEvidenceStorage.ts:9`](src/domain/interfaces/IEvidenceStorage.ts)
+
+Acknowledgement strength; fsync is local filesystem durability, not replication.
+
+```typescript
+type EvidenceDurability = 'process' | 'restart' | 'fsync'
+```
+
+---
+
 ### HistoryEntryType `type`
 
 📍 [`src/domain/interfaces/IHistoryJournal.ts:43`](src/domain/interfaces/IHistoryJournal.ts)
@@ -42060,7 +42690,7 @@ destroy(): void
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:142`](src/core/context-nextgen/AgentContextNextGen.ts)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:147`](src/core/context-nextgen/AgentContextNextGen.ts)
 
 Next-generation context manager for AI agents.
 
@@ -42335,6 +42965,22 @@ addToolResults(results: ToolResult[]): string
 - `results`: `ToolResult[]`
 
 **Returns:** `string`
+
+#### `acknowledgeToolEvidence()`
+
+Host-only recovery after a failed evidence write. Persist the retained result
+without rerunning its tool, then acknowledge the matching invocation here.
+Raw content remains unchanged; compaction may subsequently remove its group.
+
+```typescript
+async acknowledgeToolEvidence(callId: string, reference: EvidenceReference): Promise&lt;number&gt;
+```
+
+**Parameters:**
+- `callId`: `string`
+- `reference`: `EvidenceReference`
+
+**Returns:** `Promise&lt;number&gt;`
 
 #### `getConversation()`
 
@@ -43841,6 +44487,134 @@ destroy(): void
 ```
 
 **Returns:** `void`
+
+</details>
+
+---
+
+### EvidencePluginNextGen `class`
+
+📍 [`src/core/context-nextgen/plugins/EvidencePluginNextGen.ts:55`](src/core/context-nextgen/plugins/EvidencePluginNextGen.ts)
+
+Evidence outlives scratch and history compaction; configuration/scope remain host-owned.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: EvidencePluginConfig & { storage: IEvidenceStorage })
+```
+
+**Parameters:**
+- `config`: `EvidencePluginConfig & { storage: IEvidenceStorage; }`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `attach()`
+
+Bind to the context's existing ToolManager; never creates a second tool pipeline.
+
+```typescript
+attach(manager: ToolManager): void
+```
+
+**Parameters:**
+- `manager`: `ToolManager`
+
+**Returns:** `void`
+
+#### `getInstructions()`
+
+```typescript
+getInstructions(): string
+```
+
+**Returns:** `string`
+
+#### `getContent()`
+
+```typescript
+async getContent(): Promise&lt;string | null&gt;
+```
+
+**Returns:** `Promise&lt;string | null&gt;`
+
+#### `getContents()`
+
+```typescript
+getContents(): unknown
+```
+
+**Returns:** `unknown`
+
+#### `isCompactable()`
+
+```typescript
+isCompactable(): boolean
+```
+
+**Returns:** `boolean`
+
+#### `compact()`
+
+```typescript
+async compact(_target: number): Promise&lt;number&gt;
+```
+
+**Parameters:**
+- `_target`: `number`
+
+**Returns:** `Promise&lt;number&gt;`
+
+#### `getTools()`
+
+```typescript
+getTools(): ToolFunction[]
+```
+
+**Returns:** `ToolFunction&lt;any, any&gt;[]`
+
+#### `getState()`
+
+```typescript
+getState(): unknown
+```
+
+**Returns:** `unknown`
+
+#### `restoreState()`
+
+```typescript
+restoreState(state: unknown): void
+```
+
+**Parameters:**
+- `state`: `unknown`
+
+**Returns:** `void`
+
+#### `destroy()`
+
+```typescript
+destroy(): void
+```
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: "evidence"` | - |
+| `storage` | `storage: IEvidenceStorage` | - |
 
 </details>
 
@@ -47965,7 +48739,7 @@ async validateBinding(_userId: string, anchorId: string): Promise&lt;boolean&gt;
 
 ### StorageRegistry `class`
 
-📍 [`src/core/StorageRegistry.ts:96`](src/core/StorageRegistry.ts)
+📍 [`src/core/StorageRegistry.ts:99`](src/core/StorageRegistry.ts)
 
 <details>
 <summary><strong>Static Methods</strong></summary>
@@ -49304,7 +50078,7 @@ Agent configuration (needed for resume)
 
 ### AgentContextNextGenConfig `interface`
 
-📍 [`src/core/context-nextgen/types.ts:850`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:852`](src/core/context-nextgen/types.ts)
 
 AgentContextNextGen configuration
 
@@ -50113,7 +50887,7 @@ Options for the default SentenceChunkingStrategy
 
 ### CompactionContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1142`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1144`](src/core/context-nextgen/types.ts)
 
 Read-only context passed to compaction strategies.
 Provides access to data needed for compaction decisions and
@@ -50218,7 +50992,7 @@ estimateTokens(item: InputItem): number;
 
 ### CompactionResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1038`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1040`](src/core/context-nextgen/types.ts)
 
 Result of compact() operation.
 
@@ -50539,7 +51313,7 @@ truncate profile generation. See feedback_no_output_limits.md. |
 
 ### ConsolidationResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1055`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1057`](src/core/context-nextgen/types.ts)
 
 Result of consolidate() operation.
 
@@ -50592,7 +51366,7 @@ Token budget breakdown - clear and simple
 
 ### ContextEvents `interface`
 
-📍 [`src/core/context-nextgen/types.ts:985`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:987`](src/core/context-nextgen/types.ts)
 
 Events emitted by AgentContextNextGen
 
@@ -50710,7 +51484,7 @@ Optional request contributions, resolved again after compaction.
 
 ### ContextRolloverOptions `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1093`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1095`](src/core/context-nextgen/types.ts)
 
 Options for an explicit context rollover.
 
@@ -50730,7 +51504,7 @@ their results stay with their containing turn. Default: 8. |
 
 ### ContextRolloverResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1108`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1110`](src/core/context-nextgen/types.ts)
 
 Result of an explicit context rollover.
 
@@ -50755,7 +51529,7 @@ Result of an explicit context rollover.
 
 ### ContextRolloverSummaryInput `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1073`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1075`](src/core/context-nextgen/types.ts)
 
 Input passed to a context-rollover summarizer.
 
@@ -52166,6 +52940,23 @@ as object OR in contextIds, ranked by confidence × recency × predicateWeight
 
 ---
 
+### EvidencePluginConfig `interface`
+
+📍 [`src/core/context-nextgen/plugins/EvidencePluginNextGen.ts:9`](src/core/context-nextgen/plugins/EvidencePluginNextGen.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `storage?` | `storage?: IEvidenceStorage;` | - |
+| `scope?` | `scope?: EvidenceScope;` | - |
+| `maxRecentReceipts?` | `maxRecentReceipts?: number;` | Bounded recent diagnostics in prompt/snapshot. Full records are discovered with evidence_list. Default 20. |
+
+</details>
+
+---
+
 ### ExcelToMarkdownKVOptions `interface`
 
 📍 [`src/capabilities/documents/handlers/ExcelHandler.ts:307`](src/capabilities/documents/handlers/ExcelHandler.ts)
@@ -53528,7 +54319,7 @@ reset(): void;
 
 ### ICompactionStrategy `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1204`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1206`](src/core/context-nextgen/types.ts)
 
 Compaction strategy interface.
 
@@ -54895,7 +55686,7 @@ resolver falls back to legacy behavior. |
 
 ### InputTextContent `interface`
 
-📍 [`src/domain/entities/Content.ts:24`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:25`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -55964,6 +56755,7 @@ The config shapes match each plugin's constructor parameter.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `evidence?` | `evidence?: Record&lt;string, unknown&gt;;` | Opt-in durable evidence. Enable features.evidence; scope and policy are host-owned. |
 | `workingMemory?` | `workingMemory?: Record&lt;string, unknown&gt;;` | Working memory plugin config. See WorkingMemoryPluginConfig. |
 | `inContextMemory?` | `inContextMemory?: Record&lt;string, unknown&gt;;` | In-context memory plugin config. See InContextMemoryConfig. |
 | `persistentInstructions?` | `persistentInstructions?: Record&lt;string, unknown&gt;;` | Persistent instructions plugin config. See PersistentInstructionsConfig. Note: agentId auto-filled. |
@@ -57033,7 +57825,7 @@ Configuration for initiating an outbound call.
 
 ### OutputTextContent `interface`
 
-📍 [`src/domain/entities/Content.ts:42`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:43`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -57850,7 +58642,7 @@ cannot reference them in the updated profile, only remove existing mentions. |
 
 ### ProviderStateContent `interface`
 
-📍 [`src/domain/entities/Content.ts:107`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:118`](src/domain/entities/Content.ts)
 
 Opaque provider-owned content that must be replayed verbatim. This is used
 for protocol state such as Anthropic server-tool calls/results; applications
@@ -60115,7 +60907,7 @@ Context for resolving templates in deterministic step arguments.
 
 ### StorageConfig `interface`
 
-📍 [`src/core/StorageRegistry.ts:71`](src/core/StorageRegistry.ts)
+📍 [`src/core/StorageRegistry.ts:72`](src/core/StorageRegistry.ts)
 
 Storage configuration map.
 
@@ -60128,6 +60920,7 @@ StorageContext for multi-tenant scenarios) and return a storage instance.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `evidence?` | `evidence?: (scope: EvidenceScope, context?: StorageContext) =&gt; IEvidenceStorage;` | Optional scoped evidence factory; disabled context features never resolve it. |
 | `media` | `media: IMediaStorage;` | - |
 | `agentDefinitions` | `agentDefinitions: IAgentDefinitionStorage;` | - |
 | `connectorConfig` | `connectorConfig: IConnectorConfigStorage;` | - |
@@ -60739,7 +61532,7 @@ Text pipeline configuration — STT → Agent → TTS
 
 ### ThinkingContent `interface`
 
-📍 [`src/domain/entities/Content.ts:88`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:99`](src/domain/entities/Content.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -61394,7 +62187,7 @@ Result of a file write operation
 
 ### ContentType `enum`
 
-📍 [`src/domain/entities/Content.ts:5`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:6`](src/domain/entities/Content.ts)
 
 Content types based on OpenAI Responses API format
 
@@ -61741,7 +62534,7 @@ type ConnectorAuth = | OAuthConnectorAuth
 
 ### Content `type`
 
-📍 [`src/domain/entities/Content.ts:113`](src/domain/entities/Content.ts)
+📍 [`src/domain/entities/Content.ts:124`](src/domain/entities/Content.ts)
 
 ```typescript
 type Content = | InputTextContent
@@ -61774,7 +62567,7 @@ type ContextFeatures = KnownContextFeatures & { [key: string]: boolean | undefin
 
 ### ContextRolloverSummarizer `type`
 
-📍 [`src/core/context-nextgen/types.ts:1088`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1090`](src/core/context-nextgen/types.ts)
 
 Host-supplied summarizer used by an explicit context rollover.
 
@@ -62535,7 +63328,7 @@ type PipelineConfig = TextPipelineConfig | RealtimePipelineConfig
 
 ### PluginConfigs `type`
 
-📍 [`src/core/context-nextgen/types.ts:845`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:847`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 Known keys provide autocomplete; arbitrary string keys accepted
@@ -62963,7 +63756,7 @@ type SkepticPassMode = 'off' | 'cheap' | 'strong'
 
 ### StorageContext `type`
 
-📍 [`src/core/StorageRegistry.ts:62`](src/core/StorageRegistry.ts)
+📍 [`src/core/StorageRegistry.ts:63`](src/core/StorageRegistry.ts)
 
 Opaque context passed to per-agent storage factories.
 
@@ -65592,7 +66385,7 @@ transports and are not represented as misleading URL aliases here.
 
 ### DEFAULT_CONFIG `const`
 
-📍 [`src/core/context-nextgen/types.ts:952`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:954`](src/core/context-nextgen/types.ts)
 
 Default configuration values
 

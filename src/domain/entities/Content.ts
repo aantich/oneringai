@@ -1,3 +1,4 @@
+import type { EvidenceReference } from '../interfaces/IEvidenceStorage.js';
 /**
  * Content types based on OpenAI Responses API format
  */
@@ -65,7 +66,16 @@ export interface CustomToolUseContent extends BaseContent {
   async?: boolean;
 }
 
+/** Versioned optional persistence metadata. Failed acknowledgement protects the raw result from compaction. */
+export interface ToolResultEvidence {
+  version: 1;
+  executionId?: string;
+  status: 'stored' | 'storage_failed' | 'projection_failed';
+  reference?: EvidenceReference;
+}
+
 export interface CustomToolResultContent extends BaseContent {
+  evidence?: ToolResultEvidence;
   type: ContentType.CUSTOM_TOOL_RESULT;
   tool_use_id: string;
   content: string | any;
@@ -73,6 +83,7 @@ export interface CustomToolResultContent extends BaseContent {
 }
 
 export interface ToolResultContent extends BaseContent {
+  evidence?: ToolResultEvidence;
   type: ContentType.TOOL_RESULT;
   tool_use_id: string;
   content: string | any;
