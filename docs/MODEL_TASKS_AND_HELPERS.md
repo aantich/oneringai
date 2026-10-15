@@ -203,9 +203,11 @@ view, not a lossless multimodal/native-result export. A custom rollover summariz
 continues to take precedence; without a helper, the original main-model summarizer
 continues to work. A no-op rollover makes no model call.
 
-This is explicit rollover only. Stage 07 will add automatic structured strategies
-and quality evaluation; configuring a compactor does not replace algorithmic
-compaction today. Main-model selection remains fixed.
+The rollover recipe above remains explicit and between executions. Stage 07 also
+provides opt-in [structured summary strategies](CONTEXT_STRATEGIES.md) that share
+the active ModelTask during bounded pre-call preparation. Configuring a compactor
+alone keeps the algorithmic default. The main model stays fixed; the new bounded
+functional comparison does not establish general quality preservation or cost savings.
 
 ## Ownership, persistence and support boundaries
 

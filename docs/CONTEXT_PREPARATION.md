@@ -334,3 +334,21 @@ matching invocation after its retained result is stored, without rerunning the
 action. Native async delivery stops on failed storage before flattening the result
 into an unprotected text message. Existing sessions/configurations have no such
 metadata and retain their existing behavior. See [durable evidence](./DURABLE_EVIDENCE.md).
+
+## Opt-in transactional strategies
+
+Stage 07 adds `observation-masking` and `structured-summary` registrations to the
+existing single pre-call compaction pass. They require evidence retention and
+preserve exact user/action metadata, pending dependencies and opaque state. Sources
+are acknowledged and rechecked before applying a revision-guarded proposal. The
+request is then rebuilt and recounted; no-op/fallback cannot bypass the final fit
+check. A valid partial reduction can remain on a later fit error. Neither strategy
+runs post-cycle compaction or calls explicit rollover mid-execution.
+
+`ContextPrepareOptions` optionally accepts `signal` and a host-owned `summarize`
+callback; Agent binds its configured compactor using the active ModelTask.
+`ContextPreparation.compaction` and `CompactionResult.report` are optional
+observability additions; `CompactionContext.compactConversation` is an optional
+capability, preserving older extension contracts. See
+[Context Strategies](CONTEXT_STRATEGIES.md) for defaults, schema/source checks,
+experimental support, fallback, helper accounting and examples.

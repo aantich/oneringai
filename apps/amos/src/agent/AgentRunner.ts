@@ -8,6 +8,8 @@ import {
   FileContextStorage,
   FileEvidenceStorage,
   EvidencePluginNextGen,
+  StrategyRegistry,
+  type ConversationCompactionReport,
   MessageRole,
   StreamEventType,
   getModelInfo,
@@ -119,6 +121,8 @@ export class AgentRunner implements IAgentRunner {
 
     const agentConfig = this.buildAgentConfig(connectorName, model);
     const sessionId = this.config.session.activeSessionId;
+    if (this.config.contextStrategy && this.config.contextStrategy !== 'algorithmic' && !this.config.evidence?.enabled) throw new Error('Selected context strategy requires enabled evidence');
+    if (this.config.contextStrategy === 'structured-summary' && !this.config.modelExecution?.helpers?.compactor) throw new Error('Selected summary strategy requires a compactor helper');
 
     if (sessionId && await this.storage.exists(sessionId)) {
       this.agent = await Agent.resume(sessionId, {
@@ -148,15 +152,18 @@ export class AgentRunner implements IAgentRunner {
       model,
       tools: this.tools,
       modelExecution: this.config.modelExecution ?? undefined,
-      ...(this.config.evidence?.enabled ? {
-        userId: this.config.evidence.ownerId,
-        context: { model, agentId: 'amos', features: { evidence: true }, plugins: { evidence: {
-          storage: new FileEvidenceStorage({ directory: this.config.evidence.directory,
-            scope: { ownerId: this.config.evidence.ownerId, namespace: this.config.evidence.namespace } }),
-          retentionMs: this.config.evidence.retentionMs,
-        } } },
-      } : {}),
       ...runtimeOptions,
+      ...(this.config.evidence?.enabled || this.config.contextStrategy ? {
+        ...(this.config.evidence?.enabled ? { userId: this.config.evidence.ownerId } : {}),
+        context: { model, agentId: 'amos', strategy: this.config.contextStrategy,
+          ...(this.config.contextStrategy ? { compactionStrategy: this.createContextStrategy(this.config.contextStrategy) } : {}),
+          ...(this.config.evidence?.enabled ? { features: { evidence: true }, plugins: { evidence: {
+            storage: new FileEvidenceStorage({ directory: this.config.evidence.directory,
+              scope: { ownerId: this.config.evidence.ownerId, namespace: this.config.evidence.namespace } }),
+            retentionMs: this.config.evidence.retentionMs,
+          } } } : {}),
+        },
+      } : {}),
       instructions: this.buildInstructions(),
       session: {
         storage: this.storage,
@@ -302,6 +309,26 @@ export class AgentRunner implements IAgentRunner {
 
   getModel(): string {
     return this._currentModel;
+  }
+
+  private createContextStrategy(strategy: NonNullable<AmosConfig['contextStrategy']>) {
+    return StrategyRegistry.create(strategy, strategy === 'structured-summary' ? {
+      maxSummaryTokens: Math.max(1024, this.config.modelExecution?.helpers?.compactor?.maxOutputTokens ?? 512),
+    } : undefined);
+  }
+
+  getContextCompaction(): { strategy: string; last?: ConversationCompactionReport } {
+    const context = this.requireAgent().context;
+    return { strategy: context.compactionStrategy.name, last: context.lastPreparation?.compaction };
+  }
+
+  setContextStrategy(strategy: NonNullable<AmosConfig['contextStrategy']>): void {
+    if (this.isRunning()) throw new Error('Cannot change strategy during an execution');
+    const context = this.requireAgent().context;
+    if (strategy !== 'algorithmic' && !(context.getPlugin('evidence') instanceof EvidencePluginNextGen)) throw new Error('Enable evidence in AMOS configuration and reload before selecting this strategy');
+    if (strategy === 'structured-summary' && !this.config.modelExecution?.helpers?.compactor) throw new Error('Configure the compactor helper first');
+    context.setCompactionStrategy(this.createContextStrategy(strategy));
+    this.config.contextStrategy = strategy;
   }
 
   getModelUsage(): ModelTaskSnapshot | undefined { return this.agent?.getModelUsage(); }

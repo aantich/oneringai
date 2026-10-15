@@ -18933,8 +18933,11 @@ costs, helper fallback, external usage, ownership and save/load boundaries. Run
 `npm run example:purpose-models` and `npm run example:shared-budget` after a build
 for offline demonstrations; `--live` on the purpose example explicitly opts into
 billable OpenAI calls. AMOS adds `/helpers` configuration and usage inspection.
-Stage 06 is branch work, not an announced package release. Automatic structured
-compaction and comparative helper quality remain Stage 07 work.
+Stage 06 is branch work, not an announced package release. Stage 07 adds opt-in experimental automatic strategies through the
+[context strategy recipe](./docs/CONTEXT_STRATEGIES.md). Configuring a compactor
+alone keeps the algorithmic default; selecting `StructuredSummaryStrategy` uses
+that role during bounded pre-call preparation. The bounded comparison is a
+functional pilot, not a general quality or cost-reduction claim.
 
 
 ## Durable tool evidence (Stage 03)
@@ -18990,3 +18993,35 @@ The [stream interruption example](./examples/evidence-stream-interruption.ts) al
 checks early closure, receipt-only admission and restore-after-recovery with one action.
 AMOS provides `/context evidence [id] [offset]` with metadata-only lists and explicit
 bounded previews. This stage does not introduce action replay or transaction guarantees.
+
+## Experimental context strategies (Stage 07)
+
+All three review corrections are validated on branch (2026-10-15): only eligible
+groups consume source capacity, known no-op preparations avoid writes/helpers,
+and failed AMOS saves restore absent as well as explicit settings. See the
+[corrective completion](./docs/designs/STAGE_07_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-15).
+Algorithmic remains the default; both alternatives remain experimental.
+
+Use `ObservationMaskingStrategy` for helper-free masking of older acknowledged
+read observations, or `StructuredSummaryStrategy` for a bounded compactor summary
+plus masking. Both require enabled evidence storage and preserve user messages,
+call arguments/receipt metadata, recent turns, pending dependencies, write/unknown
+effects and opaque state. Summary capsules remain assistant data. The algorithmic
+default and existing explicit rollover/custom strategy contracts are unchanged.
+
+Read [Context Strategies](./docs/CONTEXT_STRATEGIES.md) for verified constructors,
+settings/defaults, source-policy matching, scope, canonical JSON, save/load,
+cancellation, revisions, fallback, diagnostics and support boundaries. A source
+must remain acknowledged before replacement; source storage failure does not
+trigger action repetition. References are process-local with the default store;
+use stable file/custom storage for restart recovery. A valid schema/reference does
+not establish semantic truth. Final preparation explicitly fails if protected
+content still cannot fit.
+
+`npm run example:context-strategies` compares identical deterministic offline
+workflows. `--live --held-out` opts into billable OpenAI main/helper calls; the
+three-provider live test additionally covers Anthropic and Google. The bounded
+pilot is not statistical proof of quality preservation or lower total cost.
+AMOS `/context strategy` selects/inspects the policy; `/helpers usage` shows actual
+task accounting. Selection itself makes no helper request. See the
+[Version 2 adoption record](./docs/VERSION_2_GUIDE.md) for branch/release availability.

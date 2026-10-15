@@ -309,3 +309,6 @@ export type {
 } from './ErrorHandler.js';
 
 export type { ToolExecutionOutcome, ToolExecutionOptions, ToolExecutionReport } from './tool-execution/outcomes.js';
+
+export { ObservationMaskingStrategy, StructuredSummaryStrategy } from './context-nextgen/strategies/index.js';
+export type { ObservationMaskingStrategyConfig, StructuredSummaryStrategyConfig, StructuredContextSummary, ContextSummaryEntry, ContextSummaryRequest, ContextSummaryGenerator, ConversationCompactionReport, ConversationCompactionOptions } from './context-nextgen/strategies/index.js';

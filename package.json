@@ -148,7 +148,17 @@
     "docs/designs/STAGE_03_THIRD_REVIEW.md",
     "docs/evaluations/STAGE_03_THIRD_REVIEW.json",
     "docs/evaluations/STAGE_03_THIRD_CORRECTIONS_VALIDATION.json",
-    "docs/evaluations/STAGE_03_THIRD_CORRECTIONS_AMOS_OFFLINE.txt"
+    "docs/evaluations/STAGE_03_THIRD_CORRECTIONS_AMOS_OFFLINE.txt",
+    "examples/context-strategy-comparison.ts",
+    "docs/CONTEXT_STRATEGIES.md",
+    "docs/designs/STAGE_07_IMPLEMENTATION.md",
+    "docs/evaluations/STAGE_07_VALIDATION.json",
+    "docs/evaluations/STAGE_07_LIVE_COMPARISON.json",
+    "docs/evaluations/STAGE_07_AMOS_OFFLINE.txt",
+    "docs/designs/STAGE_07_REVIEW_AND_FIX_PLAN.md",
+    "docs/evaluations/STAGE_07_REVIEW.json",
+    "docs/evaluations/STAGE_07_CORRECTIONS_VALIDATION.json",
+    "docs/evaluations/STAGE_07_CORRECTIONS_AMOS_OFFLINE.txt"
   ],
   "scripts": {
     "generate:tools": "tsx scripts/generate-tool-registry.ts",
@@ -222,7 +232,10 @@
     "example:ambiguous-evidence": "node --import tsx examples/ambiguous-action-evidence.ts",
     "example:amos-evidence": "node --import tsx apps/amos/examples/evidence-offline.ts",
     "test:evidence:live": "RUN_EVIDENCE_LIVE=1 vitest run tests/integration/text/Evidence.live.integration.test.ts",
-    "example:evidence-interruption": "node --import tsx examples/evidence-stream-interruption.ts"
+    "example:evidence-interruption": "node --import tsx examples/evidence-stream-interruption.ts",
+    "example:context-strategies": "node --import tsx examples/context-strategy-comparison.ts",
+    "test:context-strategies:live": "RUN_CONTEXT_STRATEGIES_LIVE=1 vitest run tests/integration/text/ContextStrategies.live.integration.test.ts",
+    "example:amos-context-strategies": "node --import tsx apps/amos/examples/context-strategies-offline.ts"
   },
   "keywords": [
     "ai",

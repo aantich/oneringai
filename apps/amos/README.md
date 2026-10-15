@@ -352,3 +352,37 @@ After building from the repository root, `npm run example:amos-evidence` uses th
 real command/runner with a synthetic provider and temporary storage. It verifies
 metadata-only listing and an explicit bounded preview without credentials, network
 calls, or changes to user configuration.
+
+## Experimental automatic context strategies
+
+Algorithmic remains the default. Enable scoped evidence in host configuration
+first, then use `/context strategy observation-masking` for helper-free masking.
+Configure `/helpers set compactor <connector> <model>` before selecting
+`/context strategy structured-summary`. Summaries may make one extra billable
+helper request plus one repair per trigger, within the active model-task budget.
+For structured summaries, AMOS permits at least 1024 capsule tokens and forwards
+a larger configured compactor output cap (for example, Google reasoning headroom);
+the helper role's own tighter cap still applies. Selecting a policy makes no immediate model call and preserves the existing agent
+and session. AMOS persists the additive `contextStrategy` setting; older settings
+load with the algorithmic default. Invalid persisted opt-in settings fail clearly,
+including during session resume.
+
+`/context strategy` shows the selected policy and the last pre-call transaction:
+applied status, estimated savings, requested callback, fallback and preserved source
+IDs. `/helpers usage` reports actual calls, known charges and unknown usage/cost;
+a requested callback can fail before dispatch. `/context strategy algorithmic`
+restores the default. Failed settings persistence restores the exact prior runtime
+selection and optional configuration field, including absence. A later unrelated
+save/reload preserves that restored default. If runtime rollback itself fails,
+AMOS reports incomplete restoration and asks for an agent reload; it still attempts
+configuration recovery. Global partial-merge behavior is unchanged. The
+[corrective completion](../../docs/designs/STAGE_07_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-15)
+records the three resolved review findings.
+
+Run `npm run example:amos-context-strategies` from the library root for a real
+runner/command walkthrough with synthetic model responses and temporary files.
+It demonstrates actual masking and inspection with one original read, persisted
+policy selection and no immediate helper request on selection. Usage is scripted;
+no credentials/network or quality/cost measurement. Library
+[Context Strategies](../../docs/CONTEXT_STRATEGIES.md) documents retention,
+persistence, protected state, cancellation, fallback and experimental limitations.

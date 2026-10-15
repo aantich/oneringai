@@ -1,0 +1,1161 @@
+{
+  "protocol": "stage07-review-v1",
+  "recordedAt": "2026-10-15T12:10:30.861Z",
+  "localDate": "2026-10-15",
+  "timezone": "Europe/Zurich",
+  "branch": "version2",
+  "baseCommit": "224e395a9405c52400703a4d7d0755393b64bbc5",
+  "status": "findings-open",
+  "stageComplete": false,
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P2",
+      "title": "Unchangeable messages consume the masking source budget",
+      "path": "src/core/context-nextgen/strategies/conversation-compaction.ts",
+      "line": 204,
+      "status": "open",
+      "fix": "Allocate complete policy-eligible groups before optional unchanged context; preserve user/action data and source cap."
+    },
+    {
+      "id": "R2",
+      "priority": "P2",
+      "title": "Known no-op compactions consume storage and request helpers",
+      "path": "src/core/context-nextgen/strategies/conversation-compaction.ts",
+      "line": 219,
+      "status": "open",
+      "fix": "Preflight any possible minimum saving before source retention or helper work; retain final checks for uncertain proposals."
+    },
+    {
+      "id": "R3",
+      "priority": "P2",
+      "title": "Failed AMOS save does not restore an absent strategy field",
+      "path": "apps/amos/src/commands/commands/ContextCommand.ts",
+      "line": 109,
+      "status": "open",
+      "fix": "Restore exact previous field state through the actual configuration owner, preserving existing undefined-merge semantics."
+    }
+  ],
+  "scope": "Complete uncommitted Stage 07 delivery, with local failure/candidate/retention/helper/persistence/compatibility and AMOS configuration boundaries. No runtime fixes, permanent tests, commits, pushes or releases.",
+  "checks": [
+    {
+      "name": "unit",
+      "command": "npm run test:unit -- --reporter=json --outputFile=/tmp/oneringai-stage07-review-unit.json",
+      "status": "passed",
+      "logSHA256": "e5290bd435f94b7037821c7b13278ac89449a1694a5a7d8b5fac7620fcbd00e1"
+    },
+    {
+      "name": "consumer",
+      "command": "npm run test:agentic:compat",
+      "status": "passed",
+      "logSHA256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    {
+      "name": "types",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "logSHA256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717"
+    },
+    {
+      "name": "examples",
+      "command": "npm run examples:check",
+      "status": "passed",
+      "logSHA256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8"
+    },
+    {
+      "name": "amosTypes",
+      "command": "npm run --prefix apps/amos typecheck",
+      "status": "passed",
+      "logSHA256": "15c9b914db9ac8a0f39085e9e28df4f483e0442e42350ea4d7615778f29e93ad"
+    },
+    {
+      "name": "lint",
+      "command": "npm run lint",
+      "status": "passed",
+      "logSHA256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e"
+    }
+  ],
+  "unit": {
+    "passed": 7594,
+    "failed": 0,
+    "skipped": 0,
+    "files": 349,
+    "reportSHA256": "3f209028639c2ae14152d23b67152736c048b3373d2a19fb297547d81c4f5169"
+  },
+  "reproduction": {
+    "status": "all specified defects and controls observed",
+    "casesAndControls": 16,
+    "results": [
+      {
+        "variant": "source",
+        "case": "source-budget-starvation",
+        "sourceCap": 8192,
+        "tokenSizes": [
+          5662,
+          7,
+          5731,
+          8,
+          5,
+          8,
+          5
+        ],
+        "error": "Context overflow: Prepared request cannot fit after the bounded compaction pass. Actual: 12112, Max: 7000, Overage: 5112",
+        "applied": false,
+        "retainedSourceItemCounts": [
+          1
+        ],
+        "exactUserRetained": true,
+        "rawRetained": true
+      },
+      {
+        "variant": "source",
+        "case": "source-budget-starvation",
+        "sourceCap": 20000,
+        "tokenSizes": [
+          5662,
+          7,
+          5731,
+          8,
+          5,
+          8,
+          5
+        ],
+        "applied": true,
+        "retainedSourceItemCounts": [
+          3
+        ],
+        "exactUserRetained": true,
+        "rawRetained": false
+      },
+      {
+        "variant": "source",
+        "case": "known-noop-storage",
+        "mode": "mask",
+        "helperCallbacks": 0,
+        "cycles": [
+          {
+            "budgetAvailable": 58,
+            "lastSuccessfulReport": {
+              "strategy": "observation-masking",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "8588564e-3ac7-48e4-b211-67d4811eb670",
+                  "sha256": "6bd4df6a4d97a22943304f3847f47de7860a8a0fbdbd07706910843b911f3926",
+                  "bytes": 4867,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": false,
+              "applied": false
+            },
+            "historyUnchanged": true,
+            "records": 1
+          },
+          {
+            "budgetAvailable": 58,
+            "lastSuccessfulReport": {
+              "strategy": "observation-masking",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "7cbc5f9d-d969-478b-959c-f1871d3392c1",
+                  "sha256": "c87f4f09212686ad266ae247d7d09edbfb9b8abd92228ee32fa866792400efe6",
+                  "bytes": 4867,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": false,
+              "applied": false
+            },
+            "historyUnchanged": true,
+            "records": 2
+          },
+          {
+            "error": "Cannot retain compaction source; history remains unchanged",
+            "lastSuccessfulReport": {
+              "strategy": "observation-masking",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "7cbc5f9d-d969-478b-959c-f1871d3392c1",
+                  "sha256": "c87f4f09212686ad266ae247d7d09edbfb9b8abd92228ee32fa866792400efe6",
+                  "bytes": 4867,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": false,
+              "applied": false
+            },
+            "historyUnchanged": true,
+            "records": 2
+          }
+        ]
+      },
+      {
+        "variant": "source",
+        "case": "known-noop-storage",
+        "mode": "summary",
+        "helperCallbacks": 2,
+        "cycles": [
+          {
+            "budgetAvailable": 58,
+            "lastSuccessfulReport": {
+              "strategy": "structured-summary",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "235f4b30-bf69-46f8-b9de-a0c60175a080",
+                  "sha256": "57c6d9d9f2d49c4dde87f57e8046566298a61a5e2becf35aefe2a5364e4210fb",
+                  "bytes": 4870,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": true,
+              "applied": false,
+              "fallback": "mask",
+              "fallbackReason": "Summary produced insufficient token savings"
+            },
+            "historyUnchanged": true,
+            "records": 1
+          },
+          {
+            "budgetAvailable": 58,
+            "lastSuccessfulReport": {
+              "strategy": "structured-summary",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "fe401527-2c3f-48fc-adf0-ceae692cff58",
+                  "sha256": "2b9e1a23364b58b7be38e115bf8951e98ddf9a8a069851ce297a18cb26849cc3",
+                  "bytes": 4870,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": true,
+              "applied": false,
+              "fallback": "mask",
+              "fallbackReason": "Summary produced insufficient token savings"
+            },
+            "historyUnchanged": true,
+            "records": 2
+          },
+          {
+            "error": "Cannot retain compaction source; history remains unchanged",
+            "lastSuccessfulReport": {
+              "strategy": "structured-summary",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "fe401527-2c3f-48fc-adf0-ceae692cff58",
+                  "sha256": "2b9e1a23364b58b7be38e115bf8951e98ddf9a8a069851ce297a18cb26849cc3",
+                  "bytes": 4870,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": true,
+              "applied": false,
+              "fallback": "mask",
+              "fallbackReason": "Summary produced insufficient token savings"
+            },
+            "historyUnchanged": true,
+            "records": 2
+          }
+        ]
+      },
+      {
+        "variant": "public",
+        "case": "source-budget-starvation",
+        "sourceCap": 8192,
+        "tokenSizes": [
+          5662,
+          7,
+          5731,
+          8,
+          5,
+          8,
+          5
+        ],
+        "error": "Context overflow: Prepared request cannot fit after the bounded compaction pass. Actual: 12112, Max: 7000, Overage: 5112",
+        "applied": false,
+        "retainedSourceItemCounts": [
+          1
+        ],
+        "exactUserRetained": true,
+        "rawRetained": true
+      },
+      {
+        "variant": "public",
+        "case": "source-budget-starvation",
+        "sourceCap": 20000,
+        "tokenSizes": [
+          5662,
+          7,
+          5731,
+          8,
+          5,
+          8,
+          5
+        ],
+        "applied": true,
+        "retainedSourceItemCounts": [
+          3
+        ],
+        "exactUserRetained": true,
+        "rawRetained": false
+      },
+      {
+        "variant": "public",
+        "case": "known-noop-storage",
+        "mode": "mask",
+        "helperCallbacks": 0,
+        "cycles": [
+          {
+            "budgetAvailable": 58,
+            "lastSuccessfulReport": {
+              "strategy": "observation-masking",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "f16ccefd-6cd2-412e-9ebb-2ac382b48217",
+                  "sha256": "740760c92bd4bdbec844a63a631ce93f879059556ffe087597a16d54d701099c",
+                  "bytes": 4867,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": false,
+              "applied": false
+            },
+            "historyUnchanged": true,
+            "records": 1
+          },
+          {
+            "budgetAvailable": 58,
+            "lastSuccessfulReport": {
+              "strategy": "observation-masking",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "af1a04bd-4d26-4814-bcae-096ccb4e20d6",
+                  "sha256": "dd3471cdf0c5a2597bcb1bced8d03002082decd852d150904c681a6178bbab07",
+                  "bytes": 4867,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": false,
+              "applied": false
+            },
+            "historyUnchanged": true,
+            "records": 2
+          },
+          {
+            "error": "Cannot retain compaction source; history remains unchanged",
+            "lastSuccessfulReport": {
+              "strategy": "observation-masking",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "af1a04bd-4d26-4814-bcae-096ccb4e20d6",
+                  "sha256": "dd3471cdf0c5a2597bcb1bced8d03002082decd852d150904c681a6178bbab07",
+                  "bytes": 4867,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": false,
+              "applied": false
+            },
+            "historyUnchanged": true,
+            "records": 2
+          }
+        ]
+      },
+      {
+        "variant": "public",
+        "case": "known-noop-storage",
+        "mode": "summary",
+        "helperCallbacks": 2,
+        "cycles": [
+          {
+            "budgetAvailable": 58,
+            "lastSuccessfulReport": {
+              "strategy": "structured-summary",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "0550b8d1-7ff9-411a-930b-1ef3495ad7c0",
+                  "sha256": "d95b5a35a441dd55a27dad164382fb0d9b4505eb39acf751cbb377c35eb21751",
+                  "bytes": 4870,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": true,
+              "applied": false,
+              "fallback": "mask",
+              "fallbackReason": "Summary produced insufficient token savings"
+            },
+            "historyUnchanged": true,
+            "records": 1
+          },
+          {
+            "budgetAvailable": 58,
+            "lastSuccessfulReport": {
+              "strategy": "structured-summary",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "dd3ac2db-3204-4272-9cc0-d331d0a23e49",
+                  "sha256": "8a6cd4e648b08f238e9aea003b49dceb5dbbaf7f5e5451c479c083faf61ce558",
+                  "bytes": 4870,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": true,
+              "applied": false,
+              "fallback": "mask",
+              "fallbackReason": "Summary produced insufficient token savings"
+            },
+            "historyUnchanged": true,
+            "records": 2
+          },
+          {
+            "error": "Cannot retain compaction source; history remains unchanged",
+            "lastSuccessfulReport": {
+              "strategy": "structured-summary",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "dd3ac2db-3204-4272-9cc0-d331d0a23e49",
+                  "sha256": "8a6cd4e648b08f238e9aea003b49dceb5dbbaf7f5e5451c479c083faf61ce558",
+                  "bytes": 4870,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": true,
+              "applied": false,
+              "fallback": "mask",
+              "fallbackReason": "Summary produced insufficient token savings"
+            },
+            "historyUnchanged": true,
+            "records": 2
+          }
+        ]
+      },
+      {
+        "variant": "public-cjs",
+        "case": "source-budget-starvation",
+        "sourceCap": 8192,
+        "tokenSizes": [
+          5662,
+          7,
+          5731,
+          8,
+          5,
+          8,
+          5
+        ],
+        "error": "Context overflow: Prepared request cannot fit after the bounded compaction pass. Actual: 12112, Max: 7000, Overage: 5112",
+        "applied": false,
+        "retainedSourceItemCounts": [
+          1
+        ],
+        "exactUserRetained": true,
+        "rawRetained": true
+      },
+      {
+        "variant": "public-cjs",
+        "case": "source-budget-starvation",
+        "sourceCap": 20000,
+        "tokenSizes": [
+          5662,
+          7,
+          5731,
+          8,
+          5,
+          8,
+          5
+        ],
+        "applied": true,
+        "retainedSourceItemCounts": [
+          3
+        ],
+        "exactUserRetained": true,
+        "rawRetained": false
+      },
+      {
+        "variant": "public-cjs",
+        "case": "known-noop-storage",
+        "mode": "mask",
+        "helperCallbacks": 0,
+        "cycles": [
+          {
+            "budgetAvailable": 58,
+            "lastSuccessfulReport": {
+              "strategy": "observation-masking",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "283a868c-d5e7-432e-a502-8fd7a18e2657",
+                  "sha256": "d5aa6ad6e1947ebe81a4699c54b7509a00eb567b50fea3f846b0a860e70bab60",
+                  "bytes": 4867,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": false,
+              "applied": false
+            },
+            "historyUnchanged": true,
+            "records": 1
+          },
+          {
+            "budgetAvailable": 58,
+            "lastSuccessfulReport": {
+              "strategy": "observation-masking",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "f6c5231a-b485-4aa6-9466-9ca16ddfafb8",
+                  "sha256": "962d8b04b69ae854c90504c1ec55d49b7dfb110f6e4b99d730a178c3c955dbdf",
+                  "bytes": 4867,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": false,
+              "applied": false
+            },
+            "historyUnchanged": true,
+            "records": 2
+          },
+          {
+            "error": "Cannot retain compaction source; history remains unchanged",
+            "lastSuccessfulReport": {
+              "strategy": "observation-masking",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "f6c5231a-b485-4aa6-9466-9ca16ddfafb8",
+                  "sha256": "962d8b04b69ae854c90504c1ec55d49b7dfb110f6e4b99d730a178c3c955dbdf",
+                  "bytes": 4867,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": false,
+              "applied": false
+            },
+            "historyUnchanged": true,
+            "records": 2
+          }
+        ]
+      },
+      {
+        "variant": "public-cjs",
+        "case": "known-noop-storage",
+        "mode": "summary",
+        "helperCallbacks": 2,
+        "cycles": [
+          {
+            "budgetAvailable": 58,
+            "lastSuccessfulReport": {
+              "strategy": "structured-summary",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "8180fd59-15bb-4c2a-8e45-fe46b4461356",
+                  "sha256": "05d3b89ccbbbeffb6f7737632286ab846332c08c4909a2bb856436feae9bd03a",
+                  "bytes": 4870,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": true,
+              "applied": false,
+              "fallback": "mask",
+              "fallbackReason": "Summary produced insufficient token savings"
+            },
+            "historyUnchanged": true,
+            "records": 1
+          },
+          {
+            "budgetAvailable": 58,
+            "lastSuccessfulReport": {
+              "strategy": "structured-summary",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "72790ab7-d1ed-4c2c-be47-2490ddcdfcf9",
+                  "sha256": "f7c967cbc3f05ecb2a66a01e44115bf099ca709f155feb5bf31473472627fdfd",
+                  "bytes": 4870,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": true,
+              "applied": false,
+              "fallback": "mask",
+              "fallbackReason": "Summary produced insufficient token savings"
+            },
+            "historyUnchanged": true,
+            "records": 2
+          },
+          {
+            "error": "Cannot retain compaction source; history remains unchanged",
+            "lastSuccessfulReport": {
+              "strategy": "structured-summary",
+              "trigger": "pre-call",
+              "beforeTokens": 1256,
+              "afterTokens": 1256,
+              "tokensFreed": 0,
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "72790ab7-d1ed-4c2c-be47-2490ddcdfcf9",
+                  "sha256": "f7c967cbc3f05ecb2a66a01e44115bf099ca709f155feb5bf31473472627fdfd",
+                  "bytes": 4870,
+                  "durability": "process"
+                }
+              ],
+              "helperInvoked": true,
+              "applied": false,
+              "fallback": "mask",
+              "fallbackReason": "Summary produced insufficient token savings"
+            },
+            "historyUnchanged": true,
+            "records": 2
+          }
+        ]
+      },
+      {
+        "case": "amos-failed-persistence",
+        "initialStrategy": "absent",
+        "selected": "observation-masking",
+        "before": {
+          "runtime": "algorithmic"
+        },
+        "result": {
+          "success": false,
+          "message": "Unable to save context strategy; previous selection restored."
+        },
+        "after": {
+          "configured": "observation-masking",
+          "runtime": "algorithmic"
+        },
+        "persistedOnNextSave": "observation-masking"
+      },
+      {
+        "case": "amos-failed-persistence",
+        "initialStrategy": "absent",
+        "selected": "structured-summary",
+        "before": {
+          "runtime": "algorithmic"
+        },
+        "result": {
+          "success": false,
+          "message": "Unable to save context strategy; previous selection restored."
+        },
+        "after": {
+          "configured": "structured-summary",
+          "runtime": "algorithmic"
+        },
+        "persistedOnNextSave": "structured-summary"
+      },
+      {
+        "case": "amos-failed-persistence",
+        "initialStrategy": "algorithmic",
+        "selected": "observation-masking",
+        "before": {
+          "configured": "algorithmic",
+          "runtime": "algorithmic"
+        },
+        "result": {
+          "success": false,
+          "message": "Unable to save context strategy; previous selection restored."
+        },
+        "after": {
+          "configured": "algorithmic",
+          "runtime": "algorithmic"
+        },
+        "persistedOnNextSave": "algorithmic"
+      },
+      {
+        "case": "amos-failed-persistence",
+        "initialStrategy": "algorithmic",
+        "selected": "structured-summary",
+        "before": {
+          "configured": "algorithmic",
+          "runtime": "algorithmic"
+        },
+        "result": {
+          "success": false,
+          "message": "Unable to save context strategy; previous selection restored."
+        },
+        "after": {
+          "configured": "algorithmic",
+          "runtime": "algorithmic"
+        },
+        "persistedOnNextSave": "algorithmic"
+      }
+    ],
+    "script": "import { pathToFileURL } from 'node:url';\nimport {createRequire} from 'node:module';\nimport { writeFile, mkdtemp, rm } from 'node:fs/promises';\nimport { tmpdir } from 'node:os';\nimport { join } from 'node:path';\nconst root='/Users/aantich/dev/oneringai';\nconst reports: unknown[]=[];\nfor(const variant of ['source','public','public-cjs'] as const){\n const lib=variant==='source'?await import(pathToFileURL(root+'/src/index.ts').href):variant==='public-cjs'?createRequire(root+'/package.json')('@everworker/oneringai'):await import('@everworker/oneringai');\n const {AgentContextNextGen,InMemoryEvidenceStorage,ObservationMaskingStrategy,StructuredSummaryStrategy,MessageRole,ContentType}=lib;\n const user=(text:string)=>({type:'message',role:MessageRole.USER,content:[{type:ContentType.INPUT_TEXT,text}]});\n const assistant=(text:string)=>({type:'message',role:MessageRole.ASSISTANT,content:[{type:ContentType.OUTPUT_TEXT,text}]});\n for(const sourceCap of [8192,20000]){\n  const scope={ownerId:'owner',namespace:'review-starvation-'+sourceCap};\n  const storage=new InMemoryEvidenceStorage({scope});\n  const raw={answer:'EXACT_REVIEW_VALUE',padding:'Read observation detail. '.repeat(800)};\n  const reference=await storage.put({version:1,recordedAt:1,source:{toolName:'lookup',callId:'call',executionId:'exec',arguments:{},principal:{userId:'owner'},effect:'read',status:'succeeded',completion:'settled',startedAt:1,durationMs:1},result:raw});\n  const ctx=AgentContextNextGen.create({model:'gpt-4o-mini',userId:'owner',maxContextTokens:7000,responseReserve:128,features:{evidence:true,workingMemory:false,inContextMemory:false},plugins:{evidence:{storage}},compactionStrategy:new ObservationMaskingStrategy({maxSourceTokens:sourceCap})});\n  const exactUser='Original exact user constraints. '.repeat(600);\n  ctx.addInputItems([user(exactUser),{type:'message',role:MessageRole.ASSISTANT,content:[{type:ContentType.TOOL_USE,id:'call',name:'lookup',arguments:'{}'}]},{type:'message',role:MessageRole.USER,content:[{type:ContentType.TOOL_RESULT,tool_use_id:'call',content:raw,evidence:{version:1,status:'stored',executionId:'exec',reference}}]},user('Recent first.'),assistant('OK.'),user('Recent second.'),assistant('OK.')]);\n  const tokenSizes=ctx.getState().conversation.map((item:unknown)=>ctx.estimateItemTokens(item));\n  let error;try{await ctx.prepare();}catch(e){error=(e as Error).message;}\n  const entries=(await storage.list()).entries;const sources=[];\n  for(const e of entries)if(e.toolName==='__context_source__'){const r=await storage.readRecord(e.reference);sources.push((r.result as {items:unknown[]}).items.length);}\n  reports.push({variant,case:'source-budget-starvation',sourceCap,tokenSizes,error,applied:ctx.lastPreparation?.compaction?.applied??false,retainedSourceItemCounts:sources,exactUserRetained:JSON.stringify(ctx.getState()).includes(exactUser),rawRetained:JSON.stringify(ctx.getState()).includes(raw.padding)});ctx.destroy();\n }\n for(const mode of ['mask','summary']){\n  let helperCallbacks=0;\n  const storage=new InMemoryEvidenceStorage({scope:{ownerId:'owner',namespace:'review-noop-'+mode},maxRecords:2});\n  const ctx=AgentContextNextGen.create({model:'gpt-4o-mini',userId:'owner',maxContextTokens:2000,responseReserve:128,criticalCompactionThreshold:0.8,features:{evidence:true,workingMemory:false,inContextMemory:false},plugins:{evidence:{storage}},compactionStrategy:mode==='mask'?new ObservationMaskingStrategy():new StructuredSummaryStrategy()});\n  ctx.addInputItems([user('Exact unchanged user constraint. '.repeat(130)),user('Recent first.'),assistant('OK.'),user('Recent second.'),assistant('OK.')]);const cycles=[];const unchanged=JSON.stringify(ctx.getState().conversation);\n  for(let i=0;i<3;i++){let error;try{await ctx.prepare({summarize:async(request: any)=>{helperCallbacks++;return {summary:{completedWork:[{text:\"No narrative can be removed.\",sourceIds:[request.reference.id]}],activeWork:[],constraints:[],decisions:[],uncertainties:[],artifacts:[],actionReceipts:[]}};}});}catch(e){error=(e as Error).message;}cycles.push({error,budgetAvailable:error?undefined:ctx.lastPreparation?.budget.available,lastSuccessfulReport:ctx.lastPreparation?.compaction,historyUnchanged:unchanged===JSON.stringify(ctx.getState().conversation),records:(await storage.list()).entries.length});}\n  reports.push({variant,case:'known-noop-storage',mode,helperCallbacks,cycles});ctx.destroy();\n }\n}\nconst {ConfigManager}=await import(pathToFileURL(root+'/apps/amos/src/config/ConfigManager.ts').href);\nconst {ContextCommand}=await import(pathToFileURL(root+'/apps/amos/src/commands/commands/ContextCommand.ts').href);\nconst {AgentRunner}=await import(pathToFileURL(root+'/apps/amos/src/agent/AgentRunner.ts').href);\nconst lib=await import('@everworker/oneringai');\nconst directory=await mkdtemp(join(tmpdir(),'stage07-review-amos-'));\ntry{\nfor(const initialStrategy of ['absent','algorithmic'])for(const selected of ['observation-masking','structured-summary']){\n const caseDirectory=join(directory,initialStrategy+'-'+selected);\n const manager=new ConfigManager(caseDirectory);const config=await manager.load();\n if(initialStrategy==='algorithmic')config.contextStrategy='algorithmic';\n if(selected==='structured-summary')config.modelExecution={helpers:{compactor:{connector:'synthetic-compactor',model:'gpt-4o-mini'}}};config.evidence={enabled:true,directory:join(directory,'evidence'),ownerId:'owner',namespace:'amos'};\n const runner=new AgentRunner(config,[],directory);const ctx=lib.AgentContextNextGen.create({model:'gpt-4o-mini',features:{evidence:true,workingMemory:false,inContextMemory:false},plugins:{evidence:{storage:new lib.InMemoryEvidenceStorage({scope:{ownerId:'owner',namespace:'amos'}})}}});\n // Real runner/command/ConfigManager; only the otherwise-unused model transport is synthetic.\n (runner as any).agent={context:ctx,isRunning:()=>false,destroy:()=>ctx.destroy()};\n const app={getAgent:()=>runner,getConfig:()=>manager.get(),updateConfig:(p:unknown)=>manager.update(p),saveConfig:async()=>{throw new Error('review save failure');}};\n const before={configured:manager.get().contextStrategy,runtime:runner.getContextCompaction().strategy};\n const result=await new ContextCommand().execute({app,args:['strategy',selected],rawInput:'/context strategy '+selected} as any);\n const after={configured:manager.get().contextStrategy,runtime:runner.getContextCompaction().strategy};\n await manager.save();const persisted=(await new ConfigManager(caseDirectory).load()).contextStrategy;\n reports.push({case:'amos-failed-persistence',initialStrategy,selected,before,result,after,persistedOnNextSave:persisted});runner.destroy();\n}\n}finally{await rm(directory,{recursive:true,force:true});}\nfor(const variant of ['source','public','public-cjs']){\n const rows=reports as any[];\n const starved=rows.find(r=>r.variant===variant&&r.case==='source-budget-starvation'&&r.sourceCap===8192);\n const control=rows.find(r=>r.variant===variant&&r.case==='source-budget-starvation'&&r.sourceCap===20000);\n if(!starved.error?.includes('Context overflow')||starved.retainedSourceItemCounts[0]!==1||!control.applied||!control.exactUserRetained||control.rawRetained)throw new Error('Starvation reproduction or control changed');\n for(const mode of ['mask','summary']){\n  const noop=rows.find(r=>r.variant===variant&&r.case==='known-noop-storage'&&r.mode===mode);\n  if(noop.cycles[0].error||noop.cycles[1].error||noop.cycles[0].lastSuccessfulReport?.applied||noop.cycles[1].lastSuccessfulReport?.applied||!noop.cycles[2].error?.includes('Cannot retain')||noop.helperCallbacks!==(mode==='summary'?2:0))throw new Error('No-op quota reproduction changed');\n }\n}\nfor(const rollback of (reports as any[]).filter(r=>r.case==='amos-failed-persistence')){\n const expected=rollback.initialStrategy==='absent'?rollback.selected:'algorithmic';\n if(rollback.result.success||rollback.after.configured!==expected||rollback.after.runtime!=='algorithmic'||rollback.persistedOnNextSave!==expected)throw new Error('Rollback reproduction/control changed');\n}\nawait writeFile('/tmp/oneringai-stage07-review-reproductions.json',JSON.stringify(reports,null,2)+'\\n');console.log(JSON.stringify(reports));\n",
+    "scriptSHA256": "6f172908e2d9dd103de83d1ac9fccff55f6a7498451ff356890f7eef8c44008a",
+    "command": "Run the embedded .mts script from a temporary module under this repository/tests using node --import tsx; remove that temporary module afterwards. Package self-imports then exercise the import and require export conditions. The recorded script uses the current absolute repository path; adjust root for another checkout.",
+    "logSHA256": "b3ad531d8b0a5d1c4216f8443a21a91c8301c3b1349919f7249f0f45e8106d18",
+    "assertions": "Script exits unsuccessfully if the expected defects or larger-cap/explicit-previous-value controls stop reproducing. An exit of 0 attests reproduction, not correct behavior.",
+    "safety": "No .env reads, real credentials, model calls, billable operations or external actions. Real bundled scoped stores, context transactions and temporary AMOS config files; synthetic agent transport only. Temporary files are removed.",
+    "diagnosticBoundaries": "Token sizes are inspected through runtime reflection solely for diagnostics; behavioral assertions exercise public context operations. AMOS uses a real runner/command/ConfigManager/context with an injected synthetic agent transport. Summary callback counts are requests, not real model dispatches. lastSuccessfulReport on a failed cycle is the prior successful preparation diagnostic.",
+    "fixtureDevelopment": "An initial no-op fixture was over capacity rather than merely critical; adjusted only synthetic history size to show first two successful preparations with 58 tokens still available. Exact observations from that initial diagnostic are retained separately below.",
+    "initialFixture": [
+      {
+        "variant": "source",
+        "case": "source-budget-starvation",
+        "sourceCap": 8192,
+        "tokenSizes": [
+          5662,
+          7,
+          5731,
+          8,
+          5,
+          8,
+          5
+        ],
+        "error": "Context overflow: Prepared request cannot fit after the bounded compaction pass. Actual: 12112, Max: 7000, Overage: 5112",
+        "applied": false,
+        "retainedSourceItemCounts": [
+          1
+        ],
+        "exactUserRetained": true,
+        "rawRetained": true
+      },
+      {
+        "variant": "source",
+        "case": "source-budget-starvation",
+        "sourceCap": 20000,
+        "tokenSizes": [
+          5662,
+          7,
+          5731,
+          8,
+          5,
+          8,
+          5
+        ],
+        "applied": true,
+        "retainedSourceItemCounts": [
+          3
+        ],
+        "exactUserRetained": true,
+        "rawRetained": false
+      },
+      {
+        "variant": "source",
+        "case": "known-noop-storage",
+        "cycles": [
+          {
+            "error": "Context overflow: Prepared request cannot fit after the bounded compaction pass. Actual: 2293, Max: 2000, Overage: 293",
+            "records": 1
+          },
+          {
+            "error": "Context overflow: Prepared request cannot fit after the bounded compaction pass. Actual: 2293, Max: 2000, Overage: 293",
+            "records": 2
+          },
+          {
+            "error": "Cannot retain compaction source; history remains unchanged",
+            "records": 2
+          }
+        ]
+      },
+      {
+        "variant": "public",
+        "case": "source-budget-starvation",
+        "sourceCap": 8192,
+        "tokenSizes": [
+          5662,
+          7,
+          5731,
+          8,
+          5,
+          8,
+          5
+        ],
+        "error": "Context overflow: Prepared request cannot fit after the bounded compaction pass. Actual: 12112, Max: 7000, Overage: 5112",
+        "applied": false,
+        "retainedSourceItemCounts": [
+          1
+        ],
+        "exactUserRetained": true,
+        "rawRetained": true
+      },
+      {
+        "variant": "public",
+        "case": "source-budget-starvation",
+        "sourceCap": 20000,
+        "tokenSizes": [
+          5662,
+          7,
+          5731,
+          8,
+          5,
+          8,
+          5
+        ],
+        "applied": true,
+        "retainedSourceItemCounts": [
+          3
+        ],
+        "exactUserRetained": true,
+        "rawRetained": false
+      },
+      {
+        "variant": "public",
+        "case": "known-noop-storage",
+        "cycles": [
+          {
+            "error": "Context overflow: Prepared request cannot fit after the bounded compaction pass. Actual: 2293, Max: 2000, Overage: 293",
+            "records": 1
+          },
+          {
+            "error": "Context overflow: Prepared request cannot fit after the bounded compaction pass. Actual: 2293, Max: 2000, Overage: 293",
+            "records": 2
+          },
+          {
+            "error": "Cannot retain compaction source; history remains unchanged",
+            "records": 2
+          }
+        ]
+      },
+      {
+        "case": "amos-failed-persistence",
+        "before": {
+          "runtime": "algorithmic"
+        },
+        "result": {
+          "success": false,
+          "message": "Unable to save context strategy; previous selection restored."
+        },
+        "after": {
+          "configured": "observation-masking",
+          "runtime": "algorithmic"
+        },
+        "persistedOnNextSave": "observation-masking"
+      }
+    ]
+  },
+  "live": {
+    "rerun": false,
+    "newCalls": 0,
+    "reason": "Confirmed defects are local candidate selection, zero-work storage/helper admission and configuration rollback. No runtime changed; live quality/reliability is not inferred from this review.",
+    "retainedDelivery": {
+      "path": "docs/evaluations/STAGE_07_VALIDATION.json",
+      "sha256": "73d0ad0745654dae9a5d5d287cfa27ae3e454b84f1a1220cce72f99d02b0fd61",
+      "passed": 105,
+      "batches": "66 unchanged legacy cases from the original full run plus the final fresh 39-case Stage 07 gate; not a claim of one all-green 105-case batch."
+    },
+    "comparison": {
+      "path": "docs/evaluations/STAGE_07_LIVE_COMPARISON.json",
+      "sha256": "d4e7c8e756d03441f64f6fbbbd6bb924ffda0226afe3396afac3f3425552fbc7"
+    },
+    "nextValidation": "After fixes, rebuild and run focused/full local gates, offline examples and the full opt-in three-provider baseline/Stage 07 live regression gate; preserve consumed comparison-task and historical-failure labels."
+  },
+  "compatibility": {
+    "runtimeChanged": false,
+    "permanentTestsChanged": false,
+    "breakingChangeProposed": false,
+    "deliveryRuntimeFingerprintsChecked": 26,
+    "mismatches": [],
+    "packageOnlyChange": "Add this review document and executable evidence to the files inventory; expected 152 dry-run package files."
+  },
+  "runtimeFingerprints": [
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "sha256": "c33760683350f318e5fd4693e28ff0a788e0fa6a636db76e34accc6335672777"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/ContextCommand.ts",
+      "sha256": "b67243d9991b441bfc75936fd3054abd8c60baafa03ed90afbf92ab2af83beea"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/HelpersCommand.ts",
+      "sha256": "85635e876a81325bc7fa282f112da845c6dc861b3b2931655c2a6991c0c787b3"
+    },
+    {
+      "path": "apps/amos/src/config/types.ts",
+      "sha256": "1003726063bb8d380d7ab7e55433b58eee696113af9cd2a8a2aef22849415d91"
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "9004ba71363598b0e457b7b89114dc7e0cef530616a7928033b06e3999f3e972"
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "fc0470f75d1bfdc7e8bc614bc0d8c4ef04147a7adfe41c0b63885b483573340f"
+    },
+    {
+      "path": "src/core/context-nextgen/index.ts",
+      "sha256": "e866f729c65f4b3c22f288264852b00622052bafab2936d8ada6f8b548755c9c"
+    },
+    {
+      "path": "src/core/context-nextgen/plugins/EvidencePluginNextGen.ts",
+      "sha256": "47d466488f56bd2328fd1d396c37d4f61eedf96dc6f96e1a14a770433d988df9"
+    },
+    {
+      "path": "src/core/context-nextgen/strategies/StrategyRegistry.ts",
+      "sha256": "2465233dd426fd150f2b3588b544ba59a4163e00eac943f2194b43ad1508b869"
+    },
+    {
+      "path": "src/core/context-nextgen/strategies/index.ts",
+      "sha256": "02d3bf9f67f354a32349e3109d2516d2082e38a74e82639c4277375cbd66e815"
+    },
+    {
+      "path": "src/core/context-nextgen/types.ts",
+      "sha256": "de52bbf24116af545ba3b456d23f3a2b5f5c62f63e3d7b7db42422f7f6688480"
+    },
+    {
+      "path": "src/core/index.ts",
+      "sha256": "a2272850cf7f20d68f3c62dfe81f28577399bff35353ff558ceefac988999739"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "499e192bbef0804f63d85614e117931986e633a12e9c43d99bccaccdad7f82fb"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "ac9eff19e04a886c832bd0d7b6c07558ca24594ffb5de8ad67b6ac16b1875b83"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "sha256": "b45e2212b813db17832460e5d2054b257b07ecf02ca591abf92279ad399ff3e1"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/strategies/StrategyRegistry.test.ts",
+      "sha256": "944fbd0022a7559ccb6c545729ba46a6a1675a8886b888ce901609926a19bad4"
+    },
+    {
+      "path": "apps/amos/examples/context-strategies-offline.ts",
+      "sha256": "7296f8b64dd669f05140aef32b8537473a5bdb9bfe9e04e8c0208734445ec861"
+    },
+    {
+      "path": "examples/context-strategy-comparison.ts",
+      "sha256": "ade20c21790d05bd7746137f383f9439a8c083d9deab2dd8fddf97cc287c84c1"
+    },
+    {
+      "path": "src/core/context-nextgen/strategies/ObservationMaskingStrategy.ts",
+      "sha256": "a568cc5a9e3f7cad10dbcd4ce0bfd7f19babfe741767bb2be824fe9739eebc0d"
+    },
+    {
+      "path": "src/core/context-nextgen/strategies/StructuredSummaryStrategy.ts",
+      "sha256": "3fcaf4c9d9bcc80887b1b2dfffe69e676ed0fcb1e9781c0d13501a40c3a4d430"
+    },
+    {
+      "path": "src/core/context-nextgen/strategies/conversation-compaction.ts",
+      "sha256": "71f6d32c270db9ff71f38927f15872613ae69716b2dd07fe46f9b64bff51e03f"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage07-consumer.ts",
+      "sha256": "1552faea47a66b75d290fed54122f91fad9150a89ac43bba91ca9c5f7afdc146"
+    },
+    {
+      "path": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+      "sha256": "95416ec6107cd4edef257f175af7f5afb387573291fd84584b83c5cf536931f5"
+    },
+    {
+      "path": "tests/unit/apps/amos/ContextStrategies.test.ts",
+      "sha256": "d7a89b85da60dc17e7b6c2ef06ee6201bafdd2fcfbf4d37ad00df1e7389fb1de"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/strategies/ContextStrategies.agent.test.ts",
+      "sha256": "169d2aa9dde0a933eb78bcc13237b70f9b0f9c702f3dbc6eb7597bcaee2ceec6"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/strategies/ContextStrategies.test.ts",
+      "sha256": "89fbcc7fe872fd5fd2e8f1c828f3bc2897b92f4e3b5cbaee61aecc2bf4a00e6e"
+    }
+  ],
+  "otherReviewedFiles": [
+    {
+      "path": "src/infrastructure/storage/EvidenceStorage.ts",
+      "sha256": "e0cb0a2736e6c225aa9a763df7079ce0a71b8652b7a1cd81ae1b8b8942df683c"
+    },
+    {
+      "path": "src/core/evidence/ToolEvidenceMiddleware.ts",
+      "sha256": "67bc5b905b2f9fb5502b195eccbf14da875b2148d62f9dcd253cf4433fd5df46"
+    },
+    {
+      "path": "src/core/tool-execution/cancellation.ts",
+      "sha256": "c0301f18a79f56f2db07da9c1c9e3aeec3b49033abf744fbf643565bb3c47fec"
+    },
+    {
+      "path": "src/core/context-nextgen/tool-pairs.ts",
+      "sha256": "d04cb65f568c67c45dd7409826f1a0fd6f72248b775f684de21ce92de029202a"
+    },
+    {
+      "path": "apps/amos/src/config/ConfigManager.ts",
+      "sha256": "68e794b6be514b407e80b96c3eb9f5286a5b363abb612ec7e17f8449351a40d9"
+    },
+    {
+      "path": "apps/amos/src/app.ts",
+      "sha256": "617bc13d1d4c57d8215baa964fcc34862e25d345b5a2f1c2882151250557f831"
+    }
+  ],
+  "builtPublicExports": [
+    {
+      "path": "dist/index.js",
+      "sha256": "3d9695777f90d9de2a255442e77238333cbfc14faaf96014669d96e4484202b8"
+    },
+    {
+      "path": "dist/index.cjs",
+      "sha256": "d221b5b0e64ea62d20187d198a13a6269c8359ac0fb6a6630d0d016d29571e47"
+    }
+  ],
+  "documentationFingerprints": [
+    {
+      "path": "docs/designs/STAGE_07_REVIEW_AND_FIX_PLAN.md",
+      "sha256": "f85057a2298a302e66c038c1bb24a777666304e8ce71baa1a8d162291c4c6b56"
+    },
+    {
+      "path": "docs/designs/STAGE_07_IMPLEMENTATION.md",
+      "sha256": "afc68528a7c514af3d34d8fa2e7355e096652feeae3ade45093a1e139d781e6d"
+    },
+    {
+      "path": "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "sha256": "c4fea2bc5ebb5b2d1ccd912cea16c6970260d6823da72f9b8a361fd07ba0104e"
+    },
+    {
+      "path": "docs/VERSION_2_GUIDE.md",
+      "sha256": "460a39a5e292914a4a96d50d769caec66a15257c089929ab536e0ad792aac5fe"
+    },
+    {
+      "path": "docs/CONTEXT_STRATEGIES.md",
+      "sha256": "19cc0c4052941b4a80d3f1ef446d1aa2e0b5d993f86832c184722f12047bed66"
+    },
+    {
+      "path": "apps/amos/README.md",
+      "sha256": "e7dfcada2da5da8ca25fe3f771e870896d02fcd719c2daad0efcbe7c40a82bfa"
+    },
+    {
+      "path": "USER_GUIDE.md",
+      "sha256": "2d0061e52548a1de522c727a431434255481acd99398f3b50f59dbb10c6c4c37"
+    },
+    {
+      "path": "package.json",
+      "sha256": "9d162c9f72806f9e6493a1cde52cfbee4af3beb7a2b11140ce251f53252bd40f"
+    }
+  ],
+  "artifactChecks": {
+    "status": "passed",
+    "recordedAt": "2026-10-15T12:10:31.186Z",
+    "markdown": {
+      "files": 14,
+      "localLinksChecked": 2089,
+      "broken": []
+    },
+    "credentials": {
+      "filesChecked": 45,
+      "knownCredentialMatches": 0,
+      "paths": [],
+      "genericCredentialMatches": 0
+    },
+    "fingerprints": {
+      "checked": 44,
+      "mismatches": []
+    },
+    "package": {
+      "command": "npm pack --dry-run --ignore-scripts --json --cache /tmp/oneringai-stage07-npm-cache",
+      "files": 152,
+      "required": [
+        "docs/CONTEXT_STRATEGIES.md",
+        "docs/designs/STAGE_07_IMPLEMENTATION.md",
+        "docs/evaluations/STAGE_07_VALIDATION.json",
+        "docs/evaluations/STAGE_07_LIVE_COMPARISON.json",
+        "docs/evaluations/STAGE_07_AMOS_OFFLINE.txt",
+        "examples/context-strategy-comparison.ts",
+        "docs/designs/STAGE_07_REVIEW_AND_FIX_PLAN.md",
+        "docs/evaluations/STAGE_07_REVIEW.json"
+      ],
+      "missing": [],
+      "environmentFiles": [],
+      "note": "Dry-run inventory only; no publication or final tarball integrity attestation. Evidence finalization changes JSON byte sizes."
+    },
+    "diffCheck": {
+      "exitCode": 0,
+      "output": ""
+    },
+    "evidenceFingerprints": [
+      {
+        "path": "docs/evaluations/STAGE_07_VALIDATION.json",
+        "sha256": "73d0ad0745654dae9a5d5d287cfa27ae3e454b84f1a1220cce72f99d02b0fd61"
+      },
+      {
+        "path": "docs/evaluations/STAGE_07_LIVE_COMPARISON.json",
+        "sha256": "d4e7c8e756d03441f64f6fbbbd6bb924ffda0226afe3396afac3f3425552fbc7"
+      },
+      {
+        "path": "docs/evaluations/STAGE_07_AMOS_OFFLINE.txt",
+        "sha256": "65de20576ab7871dce9408259bffd0753831792da64faa0d98042e04540d36a8"
+      }
+    ]
+  }
+}

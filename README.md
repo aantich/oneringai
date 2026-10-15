@@ -1377,6 +1377,16 @@ console.log(budget.available);           // Remaining tokens
 console.log(budget.utilizationPercent);  // Usage percentage
 ```
 
+**Optional context strategies:** `ObservationMaskingStrategy` and
+`StructuredSummaryStrategy` add experimental alternatives to the algorithmic
+default. Both require opt-in evidence retention, keep exact user messages and
+action metadata, and run in one bounded pre-call transaction. Summaries use the
+configured compactor with the active task budget and one masking fallback. Inspect
+`agent.context.lastPreparation?.compaction` alongside `getModelUsage()` for estimated
+savings, retained references, actual helper calls and unknown costs. See the
+[complete recipe](docs/CONTEXT_STRATEGIES.md); run `npm run example:context-strategies`
+for an offline comparison. Existing APIs, defaults and rollover remain supported.
+
 **Forced provider-session rollover:** automatic compaction is token-triggered;
 `rolloverContext()` is an explicit semantic checkpoint for a provider lifetime
 boundary such as OpenAI Realtime's 60-minute limit:

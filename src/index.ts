@@ -2099,3 +2099,6 @@ export type { EvidencePluginConfig } from './core/context-nextgen/plugins/Eviden
 
 export type { ToolResultEvidence } from './domain/entities/Content.js';
 export type { ToolOutputHints } from './domain/entities/Tool.js';
+
+export { ObservationMaskingStrategy, StructuredSummaryStrategy } from './core/context-nextgen/strategies/index.js';
+export type { ObservationMaskingStrategyConfig, StructuredSummaryStrategyConfig, StructuredContextSummary, ContextSummaryEntry, ContextSummaryRequest, ContextSummaryGenerator, ConversationCompactionReport, ConversationCompactionOptions } from './core/context-nextgen/strategies/index.js';

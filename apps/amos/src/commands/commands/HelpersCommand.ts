@@ -14,7 +14,7 @@ export class HelpersCommand extends BaseCommand {
     return `${this.usage}\n\nRoles: compactor, extractor, verifier. Helpers are disabled by default.\n`
       + 'Setting a role makes no model calls. Explicit run/compact makes one additional billable call, with at most one JSON repair.\n'
       + 'Compactor configuration authorizes older conversation text to be sent to that named connector; opaque provider state is omitted.\n'
-      + 'Automatic compaction remains algorithmic. /helpers compact performs an explicit rollover and keeps two recent turns.\n'
+      + 'Algorithmic is the automatic default; /context strategy explicitly selects masking or structured summaries. /helpers compact performs a separate between-executions rollover and keeps two recent turns.\n'
       + 'Budgets use conservative provider-capacity reservations; retries with missing usage remain unknown.\n'
       + 'Usage lists purposes, known tokens/cost estimates and unknown usage; it is process-local diagnostic data.\n';
   }

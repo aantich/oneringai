@@ -12,6 +12,7 @@ import type {
   Vendor,
   ModelExecutionConfig,
   ModelTaskSnapshot,
+  ConversationCompactionReport,
   HelperRole,
 } from '@everworker/oneringai';
 import type { ExternalToolManager } from '../tools/ExternalToolManager.js';
@@ -23,6 +24,8 @@ import type { ExternalToolManager } from '../tools/ExternalToolManager.js';
 export interface AmosConfig {
   /** Optional host configuration; null/absence keeps legacy single-model behavior. */
   modelExecution?: ModelExecutionConfig | null;
+  /** Optional explicit automatic strategy; absence preserves algorithmic behavior. */
+  contextStrategy?: 'algorithmic' | 'observation-masking' | 'structured-summary';
   /** Local evidence is opt-in; ownership and location are host configuration. */
   evidence?: { enabled: boolean; directory: string; ownerId: string; namespace: string; retentionMs?: number };
   // Current active settings
@@ -293,6 +296,8 @@ export interface PromptTemplate {
 }
 
 export interface IAgentRunner {
+  getContextCompaction?(): { strategy: string; last?: ConversationCompactionReport };
+  setContextStrategy?(strategy: NonNullable<AmosConfig['contextStrategy']>): void;
   inspectEvidence?(id?: string, offset?: number): Promise<string>;
   getModelUsage?(): ModelTaskSnapshot | undefined;
   invokeHelper?(role: HelperRole, input: string): Promise<string>;

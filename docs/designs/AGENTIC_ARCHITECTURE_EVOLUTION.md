@@ -1,6 +1,7 @@
 # Agentic Architecture Evolution: Staged Development Plan
 
-- **Status:** Roadmap direction accepted; stages 00–03 and 06 complete on the development branch.
+- **Status:** Roadmap direction accepted; stages 00–03, 06 and 07 complete on the development branch.
+- **Stage 07:** All three review findings fixed and validated: 7,631 units, 105 live cases / 117 scenarios and 17 offline examples pass; experimental, no default promotion.
 - **Stage 03 review:** All findings corrected and validated: 7,473 units, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 - **Stage 06 review:** All first- and second-review findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion record](STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
 - **Created:** 2026-10-07.
@@ -448,7 +449,7 @@ remain separately authorized work.
 | 04 | Task-state prompt view and protected host constraints | 03, 06 | Core | Not started |
 | 05 | Typed contributions and selective/cache-aware assembly | 01, 03, 04 | Conditional | Not started |
 | 06 | Fixed main model, bounded helper roles, and task usage/budgets | 01, 02 | Core | Complete on branch; first- and second-review corrections validated, all local/live gates pass |
-| 07 | Structured summaries and observation masking | 03, 06 | Core | Not started |
+| 07 | Structured summaries and observation masking | 03, 06 | Core | Complete on branch, including all review corrections; experimental, no default promotion |
 | 08 | Episodic retrieval and session ingestion | 03, 04, 06 | Conditional | Not started |
 | 09 | Ranked individual tool discovery | 01, 02 | Conditional | Not started |
 | 10 | Shared decision helpers, bounded recovery, and completion predicates | 02, 03, 04, 06 | Core | Not started |
@@ -2533,3 +2534,176 @@ the initial 65/66 live batch plus bounded Google diagnostics and final unchanged
 showed an exact-format violation. No provider reliability fix or weakened gate is
 claimed. See the [full completion](STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 Stage 03 is complete on branch; Stage 07 remains separately authorized.
+
+### Stage 07 execution record — 2026-10-14
+
+User authorized Stage 07 with “proceed”. Work is based on committed Stage 03
+revision `224e395`, on `version2`. Both opt-in strategies, one pre-call transaction,
+helper/task integration, evidence source retention, exact protected content,
+public compatibility types, examples and AMOS selection/inspection are implemented.
+Validation is in progress; see [Stage 07](STAGE_07_IMPLEMENTATION.md) for the frozen
+comparison and initial failures. Schema bounds are enforced locally, with a compact
+provider schema; source-backed summaries remain assistant data. The limited-scope
+experimental delivery follows section 6.3, with no statistical promotion or default
+change. Stage 04 remains separately authorized after completion.
+
+### Stage 07 completion — 2026-10-15
+
+Stage 07 is complete in the `version2` working tree based on Stage 03 commit
+`224e395`. No commit, push, package release, default promotion or breaking API
+approval is claimed. The generic strategy mechanisms are available; the bounded
+pilot is not a statistically powered adoption or cheapest-model recommendation.
+
+Delivered two additive registry entries and public constructors/configuration
+and diagnostic types. Both retain scoped acknowledged source snapshots before
+replacement, keep exact user/action metadata and protected dependencies, and
+operate in one revision-guarded pre-call transaction. Full owner/tenant/namespace
+and strategy admission are rechecked before applying. Sources are verified before
+helper transfer and commit; redacted mismatches, lost sources and stale work keep
+protected data. Canonical JSON handles ordinary undefined metadata without changing
+live returns/events or saved-session schema. Native output-only/opaque/multimodal,
+write/unknown and pending groups stay exact, and can cause explicit overflow.
+
+Structured helpers use the existing named compactor, active ModelTask, bounded
+schema repair and one masking fallback. Generated notes prioritize observed facts
+and exact identifiers, follow the historical material they summarize, and defer
+to current user/host instructions. They remain assistant data, not authority or
+proof of semantic truth. New strategies do no post-cycle consolidation; explicit
+rollover/custom strategy contracts and the algorithmic default are preserved.
+
+AMOS supports persisted selection, last-preparation diagnostics, task usage routing,
+configured helper output headroom, old config loading, actual config roundtrip
+and rollback on failed settings save. Selection preserves the active agent/session
+and makes no immediate model request. The real-runner offline walkthrough shows
+actual masking and one original read with temporary file evidence/settings.
+
+Final validation:
+
+- **7,594 units / 349 files**, including **121 Stage 07 cases** (98 context strategy,
+  13 agent integration, 10 AMOS), with zero failures/skips.
+- **105 live cases / 117 distinct scenarios**: 66 existing cases from the retained
+  full baseline batch plus the final fresh 39-case Stage 07 gate, with zero final
+  failures/skips. New cases include 36 paired/shuffled task-strategy runs and three
+  actual OpenAI/Anthropic/Google helper/read probes. All final task predicates pass.
+- **17 offline examples**, plus 18 final held-out scripted cases. Built public
+  ESM and CJS execute the same comparison body successfully.
+- Root build (24 public export files), source/lint, strict test/example types,
+  public consumer compatibility, AMOS types/build, regenerated API (1,671 items),
+  package inventory and documentation/artifact checks pass.
+- Three strategy modules: **97.22% lines / 88.70% branches / 100% functions**.
+  These percentages exclude Agent/context and AMOS; their integration is tested.
+
+The final pilot records 12/12 completions per strategy. Algorithmic and masking
+use 24 actual model attempts / 12 source reads each; summaries use 36 attempts /
+12 reads including compaction. Actual usage, returned models, known/unknown model
+cost, latency, source reads, parsed answers, tool outcomes and dispatched synthetic
+contexts are retained. Six separately specified variants share one lookup scaffold;
+no representative-task, non-inferiority, reliability-rate or general savings claim
+is made. Algorithmic remains the default and rollback reference.
+
+Earlier failed batches remain explicit: source fixture/setup/type errors, three
+old registry-count assumptions, Google native-schema and output-headroom failures,
+the under-specified first answer contract, suspended/late transport cases, invalid
+source selection and historical-progress distraction. Fresh splits were frozen
+after each diagnostic contract/policy change; the original predicates were not
+weakened, and no library retry or output cleanup was added. A fixed-path development
+report was overwritten; its original answer/source observations are recovered
+excerpts rather than a reconstructed usage report. Uncaptured failed Google text
+is not inferred from later answers. A later fresh all-green pilot does not erase
+those observations or establish provider reliability.
+
+[Validation](../evaluations/STAGE_07_VALIDATION.json) and
+[comparison evidence](../evaluations/STAGE_07_LIVE_COMPARISON.json) retain actual
+results, earlier attempts, commands, fingerprints, uncertainty and package checks.
+The [recipe](../CONTEXT_STRATEGIES.md), standard guides, agent instructions,
+Version 2 adoption/handoff, examples/index, AMOS and Changelog are synchronized.
+**Stage 04 — task state and protected host constraints** is next in the core
+sequence and remains separately authorized.
+
+### Stage 07 review — 2026-10-15
+
+A fresh review reproduced three P2 defects: unchangeable source groups crowd out
+viable masking, known no-op preparations consume storage and request helpers until
+a fitting request fails, and failed AMOS settings saves do not restore an absent
+strategy field. The two library issues reproduce in source and built public ESM/CJS;
+AMOS reproduces with its real runner, command and ConfigManager, including a later
+save/reload. Exact user/history content is retained in these reproductions.
+
+Fresh 7,594 units / 349 files, compatibility, source/example/AMOS types and lint
+pass. Existing tests miss the new cases. No runtime or permanent tests changed;
+prior live/completion records remain historical evidence. Corrections are required
+before restoring Stage 07 completion; Stage 04 remains separately authorized.
+See the [review and fix plan](STAGE_07_REVIEW_AND_FIX_PLAN.md) and
+[executable review evidence](../evaluations/STAGE_07_REVIEW.json).
+
+### Stage 07 corrective completion — 2026-10-15
+
+All three review findings are fixed and validated in the `version2` working tree,
+based on `224e395`. Stage 07 completion is restored as an experimental opt-in
+delivery. No commit, push, release, default promotion or Stage 04 implementation
+is claimed. The earlier review and validation JSON remain immutable snapshots.
+
+- **R1:** Only groups that the selected policy can change enter source allocation.
+  Standalone exact user messages and, for masking, unchanged assistant narration
+  remain in history without consuming the archive budget. Complete connected
+  groups still retain their exact user/action metadata. Oversized and protected
+  groups stay exact; the default source cap remains 8,192 tokens.
+- **R2:** An optimistic bound includes the reference envelope, minimum valid
+  summary capsule, observation threshold and minimum savings. Known no-ops return
+  before source writes or helper requests. A summary that cannot meet its bounds
+  can use permitted masking without requesting the helper. Final checks still
+  use the actual acknowledged reference/output: uncertain rejected proposals can
+  leave orphan sources under the existing retention policy. No new cache,
+  scheduler, cleanup service or default behavior is introduced.
+- **R3:** AMOS restores the optional strategy field's exact previous presence/value
+  on the authoritative configuration and its shared pre-update view, alongside
+  runtime selection. Undefined still means no update in ordinary partial merges.
+  A failed runtime rollback is reported as incomplete while configuration recovery
+  is still attempted. No agent/session recreation or model call is needed.
+
+Validation passes with zero final failures or skips:
+
+- **7,631 units / 350 files**, including **158 Stage 07 cases**. The **37 new
+  regressions** comprise 27 context/preflight cases, two real run/stream shared
+  call-budget cases and eight AMOS configuration/lifecycle cases.
+- **105 live cases / 117 distinct scenarios in one all-green batch**, covering the
+  existing baseline plus all 39 Stage 07 cases and OpenAI/Anthropic/Google probes.
+  The reused six synthetic task variants are regression fixtures, not newly
+  held-out tasks or independent quality evidence. No completion predicate,
+  provider selection, library retry or output cleanup was changed for this gate.
+- **17 offline examples**, 18 retained scripted comparison cases, public CJS
+  execution of the comparison body, and 16 source/public ESM/CJS/AMOS correction
+  observations and controls. The comparison example demonstrates repeated fitting
+  critical preparation with full storage and zero writes/helpers. The AMOS example
+  now uses actual ConfigManager save/reload for failed-selection recovery.
+- Root build/24 export files, types/lint, strict source/app test types, examples,
+  public consumer compatibility, AMOS types/build and regenerated API/1,671 items
+  pass. Package inventory, links, fingerprints, historical-evidence integrity,
+  credential scan and diff checks are recorded in the corrective evidence.
+- Three new strategy modules: **97.59% lines / 92.01% branches / 100% functions**
+  (249 lines, 213 branches, 25 functions). Agent/context/AMOS integration is tested
+  separately and excluded from those percentages.
+
+All 12 cases per strategy complete. Actual model attempts remain 24/24/36 and
+source reads 12 each. Estimated comparison model costs are $0.14400 / $0.14954 /
+$0.15373 for algorithmic/masking/summaries respectively. This includes helpers;
+prior pilots, provider probes and external fees are outside those comparison-only
+subtotals. Registry prices and uncontrolled caching prevent general cost claims.
+Summaries still add overhead with the same final completion count. Algorithmic
+remains the default; alternatives remain experimental and opt-in.
+
+The original failing regressions are retained: 13/25 new core cases and five
+app/agent cases reproduced the defects before fixes. A historical archive assertion
+was narrowed to affected groups while preserving its exact-user/action checks.
+One added boundary fixture initially had no eligible older group and was corrected
+by adding the missing original user turn. A focused run overlapped a build and is
+not the authoritative public/app gate; the completed-build focused run passes
+158/158. Earlier failed pilots and review reproductions remain available.
+
+[Corrective evidence](../evaluations/STAGE_07_CORRECTIONS_VALIDATION.json) records
+commands, results, actual model usage, public reproductions and artifact checks.
+[Corrective AMOS walkthrough](../evaluations/STAGE_07_CORRECTIONS_AMOS_OFFLINE.txt)
+retains the actual output. Public signatures, constructor defaults, custom strategy
+and rollover contracts, session formats, raw tool/events and connector authority
+remain unchanged. **Stage 04 — task state and protected host constraints** remains
+next and separately authorized.

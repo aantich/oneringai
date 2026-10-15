@@ -47,7 +47,7 @@ export class ContextCommand extends BaseCommand {
   readonly name = 'context';
   readonly aliases = ['ctx'];
   readonly description = 'Show context inspection details';
-  readonly usage = '/context [budget|breakdown|cache|memory|history|evidence]';
+  readonly usage = '/context [budget|breakdown|cache|memory|history|evidence|strategy]';
 
   get detailedHelp(): string {
     return `
@@ -58,6 +58,8 @@ USAGE:
   /context budget       Detailed token budget
   /context breakdown    Per-component token breakdown
   /context evidence [id] [offset]  Metadata list or explicit bounded evidence preview
+  /context strategy [algorithmic|observation-masking|structured-summary]
+                        Inspect/select an opt-in automatic strategy. Summaries can bill a helper plus one repair per trigger.
   /context cache        Cache statistics
   /context memory       Memory entries
   /context history [n]  Show conversation history
@@ -92,6 +94,46 @@ EXAMPLES:
         return this.showCache(context);
       case 'memory':
         return this.showMemory(context);
+      case 'strategy': {
+        const runner = app.getAgent()!;
+        const selected = args[1];
+        if (args.length > 2 || (selected && !['algorithmic', 'observation-masking', 'structured-summary'].includes(selected))) return this.error('Use /context strategy [algorithmic|observation-masking|structured-summary].');
+        try {
+          if (selected) {
+            if (!runner.setContextStrategy) return this.error('Strategy selection is unavailable.');
+            const strategy = selected as NonNullable<import('../../config/types.js').AmosConfig['contextStrategy']>;
+            const previousConfig = app.getConfig();
+            const previous = previousConfig.contextStrategy;
+            const hadStrategy = Object.hasOwn(previousConfig, 'contextStrategy');
+            const previousRuntime = runner.getContextCompaction?.().strategy ?? previous ?? 'algorithmic';
+            runner.setContextStrategy(strategy); app.updateConfig({ contextStrategy: strategy });
+            try { await app.saveConfig(); } catch {
+              let restored = true;
+              try {
+                if (!['algorithmic', 'observation-masking', 'structured-summary'].includes(previousRuntime)) throw new Error('Unsupported prior strategy');
+                runner.setContextStrategy(previousRuntime as typeof strategy);
+              } catch { restored = false; }
+              try {
+                app.updateConfig({ contextStrategy: previous });
+                // Partial merges intentionally ignore undefined. Restore this one
+                // optional field explicitly on the owner and pre-update shared view.
+                for (const config of new Set([previousConfig, app.getConfig()])) {
+                  if (hadStrategy) config.contextStrategy = previous;
+                  else delete config.contextStrategy;
+                }
+              } catch { restored = false; }
+              if (!restored) return this.error('Unable to save context strategy; previous selection could not be fully restored. Reload the agent before continuing.');
+              return this.error('Unable to save context strategy; previous selection restored.');
+            }
+          }
+          const diagnostic = runner.getContextCompaction?.();
+          if (!diagnostic) return this.success('Context strategy inspection is unavailable.');
+          const last = diagnostic.last;
+          return this.success(`Strategy: ${diagnostic.strategy}. Algorithmic is the default; alternatives are experimental and opt-in.\n`
+            + (last ? `Last pre-call transaction (${last.strategy}): ${last.applied ? 'applied' : 'not applied'}; estimated savings ${last.tokensFreed} tokens; helper requested ${last.helperInvoked}; fallback ${last.fallback ?? 'none'}.\nSources: ${last.sourceReferences.map(r => r.id).join(', ') || 'none'}.\n` : 'No transactional compaction recorded in the last preparation.\n')
+            + 'Structured summaries use the configured compactor budget with at most one repair. Inspect /helpers usage for actual calls, known cost and unknowns.');
+        } catch (error) { return this.error(error instanceof Error ? error.message : 'Strategy change failed.'); }
+      }
       case 'evidence':
         try {
           if (args.length > 3) return this.error('Use /context evidence [id] [offset].');

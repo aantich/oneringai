@@ -8,7 +8,8 @@
     "consumer.ts",
     "stage02-consumer.ts",
     "stage06-consumer.ts",
-    "stage03-consumer.ts"
+    "stage03-consumer.ts",
+    "stage07-consumer.ts"
   ],
   "exclude": []
 }

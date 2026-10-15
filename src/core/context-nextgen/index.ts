@@ -137,3 +137,6 @@ export {
   type PluginRegisterOptions,
   type PluginRegistryInfo,
 } from './PluginRegistry.js';
+
+export { ObservationMaskingStrategy, StructuredSummaryStrategy } from './strategies/index.js';
+export type { ObservationMaskingStrategyConfig, StructuredSummaryStrategyConfig, StructuredContextSummary, ContextSummaryEntry, ContextSummaryRequest, ContextSummaryGenerator, ConversationCompactionReport, ConversationCompactionOptions } from './strategies/index.js';

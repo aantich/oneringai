@@ -230,3 +230,31 @@ all temporary resources:
 OpenAI/Anthropic/Google credentials with local synthetic tools. It verifies managed
 run/stream source retrieval and raw fallback after a controlled storage failure.
 Read [setup, bounds, failure recovery and durability](../docs/DURABLE_EVIDENCE.md).
+
+### Context strategies (Stage 07)
+
+After building, run `npm run example:context-strategies` or add `-- --held-out`
+for the six retained synthetic regression variants sharing one lookup scaffold.
+The CLI also demonstrates three fitting critical preparations with a full evidence
+store, unchanged history and zero source writes/helper calls under each new policy.
+Algorithmic, masking and summaries
+use the same local read-only environment; a common bounded reader retrieves source
+fields by evidence ID or exact working-memory key. Offline providers and usage are
+scripted. Expected: exact answer/account/status, no repeated action, all completion
+predicates pass. Owned agents/connectors are destroyed and evidence is process-local.
+
+`npm run example:context-strategies -- --live --held-out` loads `.env` and makes
+billable OpenAI `gpt-4o` main / `gpt-4o-mini` helper calls, two repetitions per task
+and strategy in seeded shuffled order. Set `CONTEXT_STRATEGY_REPORT_PATH` to save
+actual usage, helper/repair attempts, returned models, source reads, failures and
+latency. No external writes. This is a bounded functional pilot, not statistical
+proof of non-inferiority or general cost reduction. Both new strategies remain
+experimental and opt-in; algorithmic stays the default.
+
+`npm run example:amos-context-strategies` uses the actual AMOS runner/command with
+synthetic responses, a local file evidence store and temporary persisted settings.
+It demonstrates real masking, diagnostics and policy switching without recreating
+the agent or repeating its original read. Actual ConfigManager also demonstrates
+failed selection restoring an absent setting through a later unrelated save/reload.
+Selection and rollback make no model call; files, agent and connector are cleaned up. No keys/network are required. Read the
+[complete recipe](../docs/CONTEXT_STRATEGIES.md) for setup and support boundaries.

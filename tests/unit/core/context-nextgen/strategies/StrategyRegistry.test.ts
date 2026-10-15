@@ -29,12 +29,12 @@ describe('StrategyRegistry', () => {
       const strategies = StrategyRegistry.list();
       expect(strategies).toContain('default');
       expect(strategies).toContain('algorithmic');
-      expect(strategies).toHaveLength(2);
+      expect(strategies).toEqual(['default', 'algorithmic', 'observation-masking', 'structured-summary']);
     });
 
     it('should return correct info for default strategy', () => {
       const info = StrategyRegistry.getInfo();
-      expect(info).toHaveLength(2);
+      expect(info).toHaveLength(4);
       expect(info.find(s => s.name === 'default')).toEqual({
         name: 'default',
         displayName: 'Dumb',
@@ -112,7 +112,7 @@ describe('StrategyRegistry', () => {
       StrategyRegistry.register(CustomStrategy);
 
       const info = StrategyRegistry.getInfo();
-      expect(info).toHaveLength(3); // 2 built-in + 1 custom
+      expect(info).toHaveLength(5); // 4 built-in + 1 custom
       expect(info.map(s => s.name)).toContain('custom');
     });
 

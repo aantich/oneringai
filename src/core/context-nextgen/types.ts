@@ -677,6 +677,10 @@ export interface ContextBudget {
 
 /** Optional request contributions, resolved again after compaction. */
 export interface ContextPrepareOptions {
+  /** Optional bounded pre-call compaction cancellation. */
+  signal?: AbortSignal;
+  /** Host-owned structured-summary generator; Agent binds its configured compactor. */
+  summarize?: import('./strategies/conversation-compaction.js').ContextSummaryGenerator;
   /** Obtain the exact visible definitions, including dynamic descriptions and identity filtering. */
   getTools?: () => FunctionToolDefinition[];
   /** Additional top-level instructions sent separately from the context input. */
@@ -690,6 +694,8 @@ export interface ContextPrepareOptions {
 
 /** Diagnostic snapshot of the last successful prepare; token counts are estimates. */
 export interface ContextPreparation {
+  /** Diagnostic for the opt-in transactional built-ins in this preparation. */
+  compaction?: import('./strategies/conversation-compaction.js').ConversationCompactionReport;
   /** Monotonic, process-local successful preparation number. */
   revision: number;
   /** Millisecond timestamp at selection; later context mutations do not refresh it. */
@@ -1038,6 +1044,8 @@ export type BeforeCompactionCallback = (info: {
  * Result of compact() operation.
  */
 export interface CompactionResult {
+  /** Additive opt-in strategy diagnostic; legacy result shapes remain valid. */
+  report?: import('./strategies/conversation-compaction.js').ConversationCompactionReport;
   /** Tokens actually freed by compaction */
   tokensFreed: number;
 
@@ -1142,6 +1150,8 @@ export interface ContextRolloverResult {
  * controlled methods to modify state.
  */
 export interface CompactionContext {
+  /** Optional transactional capability supplied by NextGen preparation. Legacy contexts remain valid. */
+  compactConversation?(options: import('./strategies/conversation-compaction.js').ConversationCompactionOptions): Promise<CompactionResult>;
   /** Current budget (from prepare) */
   readonly budget: ContextBudget;
 
@@ -1219,7 +1229,8 @@ export interface ICompactionStrategy {
   /**
    * Plugin names this strategy requires to function.
    * Validation is performed when strategy is assigned to context.
-   * Missing recommendations produce a warning; built-in strategies degrade gracefully.
+   * Missing recommendations produce a warning; strategies own missing-plugin behavior.
+   * Transactional built-ins require source retention; legacy built-ins may degrade.
    *
    * @example
    * ```typescript

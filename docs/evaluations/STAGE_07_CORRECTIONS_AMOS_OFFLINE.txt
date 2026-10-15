@@ -1,0 +1,42 @@
+{"level":"info","time":1792070090737,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","inputPreview":"Read the source once.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2369/128000 (1.9%) tools=1205 conversation=0 system=1154 input=10 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+[Agent] [Context] iteration=1 tokens: 7366/128000 (5.9%) tools=1205 conversation=17 system=1244 input=4900 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=110
+{"level":"info","time":1792070090760,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","duration":22,"msg":"Agent run completed"}
+{"level":"info","time":1792070090760,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","inputPreview":"Progress 0; retain the source.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 7546/128000 (6.1%) tools=1205 conversation=5084 system=1244 input=13 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=110
+{"level":"info","time":1792070090761,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","duration":1,"msg":"Agent run completed"}
+{"level":"info","time":1792070090761,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","inputPreview":"Progress 1; retain the source.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 7726/128000 (6.2%) tools=1205 conversation=5264 system=1244 input=13 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=110
+{"level":"info","time":1792070090763,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","duration":2,"msg":"Agent run completed"}
+{"level":"info","time":1792070090763,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","inputPreview":"Progress 2; retain the source.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 7906/128000 (6.4%) tools=1205 conversation=5444 system=1244 input=13 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=110
+{"level":"info","time":1792070090764,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","duration":1,"msg":"Agent run completed"}
+Failed settings save restored the absent default; an unrelated save/reload kept it absent, with no model call.
+/context strategy observation-masking
+Strategy: observation-masking. Algorithmic is the default; alternatives are experimental and opt-in.
+No transactional compaction recorded in the last preparation.
+Structured summaries use the configured compactor budget with at most one repair. Inspect /helpers usage for actual calls, known cost and unknowns.
+
+{"level":"info","time":1792070090765,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","inputPreview":"Continue with retained source references.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 3292/12000 (41.6%) tools=1205 conversation=827 system=1244 input=16 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=110 COMPACTED: observation-masking: applied; freed ~4797 tokens
+{"level":"info","time":1792070090771,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","duration":6,"msg":"Agent run completed"}
+/context strategy
+Strategy: observation-masking. Algorithmic is the default; alternatives are experimental and opt-in.
+Last pre-call transaction (observation-masking): applied; estimated savings 4797 tokens; helper requested false; fallback none.
+Sources: a31c80ef-e4f2-4199-b8f6-1660b3f60016.
+Structured summaries use the configured compactor budget with at most one repair. Inspect /helpers usage for actual calls, known cost and unknowns.
+
+/context strategy structured-summary
+Strategy: structured-summary. Algorithmic is the default; alternatives are experimental and opt-in.
+Last pre-call transaction (observation-masking): applied; estimated savings 4797 tokens; helper requested false; fallback none.
+Sources: a31c80ef-e4f2-4199-b8f6-1660b3f60016.
+Structured summaries use the configured compactor budget with at most one repair. Inspect /helpers usage for actual calls, known cost and unknowns.
+
+Selection itself made no helper call. A later summary trigger can make one helper call plus one repair, within its task budget.
+/context strategy algorithmic
+Strategy: algorithmic. Algorithmic is the default; alternatives are experimental and opt-in.
+Last pre-call transaction (observation-masking): applied; estimated savings 4797 tokens; helper requested false; fallback none.
+Sources: a31c80ef-e4f2-4199-b8f6-1660b3f60016.
+Structured summaries use the configured compactor budget with at most one repair. Inspect /helpers usage for actual calls, known cost and unknowns.
+
+Actual AMOS masking, inspection and persisted strategy selection passed; one original read action. Usage is scripted, not a cost/quality measurement. Temporary files cleaned.

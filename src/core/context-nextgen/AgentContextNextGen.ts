@@ -1,3 +1,4 @@
+import { compactConversationTransaction } from './strategies/conversation-compaction.js';
 import type { EvidenceReference } from '../../domain/interfaces/IEvidenceStorage.js';
 import { EvidencePluginNextGen, parseEvidenceSnapshot } from './plugins/EvidencePluginNextGen.js';
 import type { EvidencePluginConfig } from './plugins/EvidencePluginNextGen.js';
@@ -31,6 +32,7 @@ import { evidenceProjection, evidenceProvenance } from '../evidence/ToolEvidence
  */
 
 import { EventEmitter } from 'eventemitter3';
+import { isDeepStrictEqual } from 'node:util';
 import { ToolManager } from '../ToolManager.js';
 import { logger } from '../../infrastructure/observability/Logger.js';
 import { getModelInfo } from '../../domain/entities/Model.js';
@@ -65,6 +67,7 @@ import type {
   ICompactionStrategy,
   CompactionContext,
   ConsolidationResult,
+  CompactionResult,
   ContextRolloverOptions,
   ContextRolloverResult,
 } from './types.js';
@@ -1459,14 +1462,16 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       // Keep the existing critical trigger and reclaim floor. There is exactly one
       // strategy invocation, followed by a full rebuild and an explicit fit check.
       let compacted = false;
+      let compaction: CompactionResult['report'];
       const usedContent = selected.budget.totalUsed - selected.budget.toolsTokens;
       const utilization = usedContent / availableForContent();
       const criticalThreshold = this._config.criticalCompactionThreshold;
       if (utilization > criticalThreshold) {
         const reclaimTo = Math.min(this._compactionStrategy.threshold - 0.1, criticalThreshold - 0.1);
         const targetToFree = usedContent - Math.floor(availableForContent() * reclaimTo);
-        const freed = await this.runCompaction(targetToFree, compactionLog, selected.budget);
-        compacted = freed > 0;
+        const freed = await this.runCompaction(targetToFree, compactionLog, selected.budget, options);
+        compacted = freed.tokensFreed > 0;
+        compaction = freed.report;
         selected = await this.materializeRequest(options);
       }
       this.assertBudgetFits(selected.budget, compactionLog);
@@ -1475,7 +1480,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       this._preparedSystemContent = this.serializeToolResultContent(selected.input[0]);
       this._preparedCurrentInputCount = selected.currentInputCount;
       this._cachedBudget = budget;
-      this._lastPreparation = { revision: ++this._preparationRevision, preparedAt: Date.now(), budget: structuredClone(budget) };
+      this._lastPreparation = { revision: ++this._preparationRevision, preparedAt: Date.now(), budget: structuredClone(budget), ...(compaction ? { compaction: structuredClone(compaction) } : {}) };
       this.emit('budget:updated', { budget, timestamp: this._lastPreparation.preparedAt });
       if (budget.utilizationPercent >= 90) this.emit('budget:critical', { budget });
       else if (budget.utilizationPercent >= 70) this.emit('budget:warning', { budget });
@@ -1951,8 +1956,8 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    * Delegates to the current compaction strategy.
    * Returns total tokens freed.
    */
-  private async runCompaction(targetToFree: number, log: string[], budget: ContextBudget): Promise<number> {
-    const context = this.buildCompactionContext(budget);
+  private async runCompaction(targetToFree: number, log: string[], budget: ContextBudget, options: ContextPrepareOptions): Promise<CompactionResult> {
+    const context = this.buildCompactionContext(budget, options);
     const timestamp = Date.now();
 
     // Emit compaction:starting event BEFORE any compaction occurs
@@ -1984,7 +1989,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       this.emit('context:compacted', { tokensFreed: result.tokensFreed, log });
     }
 
-    return result.tokensFreed;
+    return result;
   }
 
   /**
@@ -2258,7 +2263,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    * Build CompactionContext for strategy.
    * Provides controlled access to context state.
    */
-  private buildCompactionContext(budget: ContextBudget): CompactionContext {
+  private buildCompactionContext(budget: ContextBudget, options: ContextPrepareOptions = {}): CompactionContext {
     const self = this;
     let stamp = this.contextStamp();
     const assertCurrent = () => {
@@ -2287,6 +2292,69 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
       get strategyName(): string {
         return self._compactionStrategy.name;
+      },
+
+      async compactConversation(config) {
+        assertCurrent();
+        const plugin = self._plugins.get('evidence');
+        if (!(plugin instanceof EvidencePluginNextGen)) throw new Error('Transactional compaction requires the enabled built-in evidence plugin');
+        const strategy = self._compactionStrategy;
+        const owner = self._userId;
+        const scopeAtAdmission = plugin.storage.scope;
+        const admittedScope = { ownerId: scopeAtAdmission.ownerId, namespace: scopeAtAdmission.namespace, tenantId: scopeAtAdmission.tenantId };
+        const assertAdmission = (): void => {
+          assertCurrent();
+          const currentScope = plugin.storage.scope;
+          if (self._plugins.get('evidence') !== plugin || self._compactionStrategy !== strategy || self._userId !== owner
+            || currentScope.ownerId !== admittedScope.ownerId || currentScope.namespace !== admittedScope.namespace
+            || currentScope.tenantId !== admittedScope.tenantId
+            || (owner !== undefined && owner !== plugin.storage.scope.ownerId)) throw new Error('Compaction scope or strategy changed; proposal rejected');
+        };
+        assertAdmission();
+        return compactConversationTransaction({ history: self._conversation, pending: self._currentInput,
+          options: config, signal: options.signal, summarize: options.summarize,
+          estimate: item => self.estimateItemTokens(item),
+          approveGroup: async items => {
+            const records = new Map<string, import('../../domain/interfaces/IEvidenceStorage.js').EvidenceRecord>();
+            for (const item of items) {
+              if (item.type !== 'message') return false;
+              for (const block of item.content) {
+                if (block.type !== ContentType.TOOL_RESULT && block.type !== ContentType.CUSTOM_TOOL_RESULT) continue;
+                if (!block.evidence?.reference || block.evidence.status === 'storage_failed') return false;
+                const record = await plugin.storage.readRecord(block.evidence.reference);
+                if (!record || !Object.hasOwn(record, 'result') || record.source.effect !== 'read' || record.source.completion !== 'settled'
+                  || record.source.callId !== block.tool_use_id || record.source.executionId !== block.evidence.executionId) return false;
+                // Never archive an unredacted raw view that differs from its admitted storage observation.
+                let body = block.content;
+                if (typeof body === 'string' && typeof record.result !== 'string') { try { body = JSON.parse(body); } catch { return false; } }
+                if (!isDeepStrictEqual(body, record.result)) return false;
+                records.set(`${block.type === ContentType.CUSTOM_TOOL_RESULT ? 'custom' : 'function'}:${block.tool_use_id}`, record);
+              }
+            }
+            for (const item of items) if (item.type === 'message') for (const block of item.content) {
+              if (block.type !== ContentType.TOOL_USE && block.type !== ContentType.CUSTOM_TOOL_USE) continue;
+              const record = records.get(`${block.type === ContentType.CUSTOM_TOOL_USE ? 'custom' : 'function'}:${block.id}`);
+              if (!record) return false;
+              let input: unknown;
+              try { input = block.type === ContentType.TOOL_USE ? JSON.parse(block.arguments) : { input: block.input }; } catch { return false; }
+              if (!isDeepStrictEqual(input, record.source.arguments)) return false;
+            }
+            return true;
+          },
+          retain: async items => { assertAdmission(); return plugin._retainCompactionSource(items); },
+          verify: async (reference, items) => {
+            assertAdmission();
+            const record = await plugin.storage.readRecord(reference);
+            assertAdmission();
+            if (!record || !isDeepStrictEqual(record.result, { items })) throw new Error('Compaction source was lost, expired, redacted or changed; history retained');
+          },
+          apply: items => {
+            assertAdmission();
+            // The planner preserves every call/result component and all opaque items.
+            sanitizeToolPairsWithOrigins([...items, ...self._currentInput]);
+            self._conversation = items; stamp = self.contextStamp();
+          },
+        });
       },
 
       async removeMessages(indices: number[]): Promise<number> {

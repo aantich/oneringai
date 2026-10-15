@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-10-14
+**Generated:** 2026-10-15
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -29,7 +29,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Utilities](#utilities) (10 items)
 - [Interfaces](#interfaces) (86 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (775 items)
+- [Other](#other) (785 items)
 
 ## Core
 
@@ -42690,7 +42690,7 @@ destroy(): void
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:147`](src/core/context-nextgen/AgentContextNextGen.ts)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:150`](src/core/context-nextgen/AgentContextNextGen.ts)
 
 Next-generation context manager for AI agents.
 
@@ -44494,7 +44494,7 @@ destroy(): void
 
 ### EvidencePluginNextGen `class`
 
-📍 [`src/core/context-nextgen/plugins/EvidencePluginNextGen.ts:55`](src/core/context-nextgen/plugins/EvidencePluginNextGen.ts)
+📍 [`src/core/context-nextgen/plugins/EvidencePluginNextGen.ts:57`](src/core/context-nextgen/plugins/EvidencePluginNextGen.ts)
 
 Evidence outlives scratch and history compaction; configuration/scope remain host-owned.
 
@@ -46137,6 +46137,69 @@ async focusWindow(windowId: number): Promise&lt;void&gt;
 - `windowId`: `number`
 
 **Returns:** `Promise&lt;void&gt;`
+
+</details>
+
+---
+
+### ObservationMaskingStrategy `class`
+
+📍 [`src/core/context-nextgen/strategies/ObservationMaskingStrategy.ts:7`](src/core/context-nextgen/strategies/ObservationMaskingStrategy.ts)
+
+Opt-in observation masking; retains exact calls, receipts and recoverable sources.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: ObservationMaskingStrategyConfig = {})
+```
+
+**Parameters:**
+- `config`: `ObservationMaskingStrategyConfig` *(optional)* (default: `{}`)
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `compact()`
+
+```typescript
+async compact(context: CompactionContext, _targetToFree: number): Promise&lt;CompactionResult&gt;
+```
+
+**Parameters:**
+- `context`: `CompactionContext`
+- `_targetToFree`: `number`
+
+**Returns:** `Promise&lt;CompactionResult&gt;`
+
+#### `consolidate()`
+
+```typescript
+async consolidate(_context: CompactionContext): Promise&lt;ConsolidationResult&gt;
+```
+
+**Parameters:**
+- `_context`: `CompactionContext`
+
+**Returns:** `Promise&lt;ConsolidationResult&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: "observation-masking"` | - |
+| `displayName` | `displayName: "Observation masking"` | - |
+| `description` | `description: "Retain exact actions and user messages; replace older observation bodies with evidence references. No helper model."` | - |
+| `requiredPlugins` | `requiredPlugins: readonly ["evidence"]` | - |
+| `threshold` | `threshold: number` | - |
 
 </details>
 
@@ -48872,7 +48935,7 @@ static reset(): void
 
 ### StrategyRegistry `class`
 
-📍 [`src/core/context-nextgen/strategies/StrategyRegistry.ts:85`](src/core/context-nextgen/strategies/StrategyRegistry.ts)
+📍 [`src/core/context-nextgen/strategies/StrategyRegistry.ts:87`](src/core/context-nextgen/strategies/StrategyRegistry.ts)
 
 Strategy Registry - manages compaction strategy registration and creation.
 
@@ -48992,6 +49055,69 @@ static getIfExists(name: string): StrategyRegistryEntry | undefined
 - `name`: `string`
 
 **Returns:** `StrategyRegistryEntry | undefined`
+
+</details>
+
+---
+
+### StructuredSummaryStrategy `class`
+
+📍 [`src/core/context-nextgen/strategies/StructuredSummaryStrategy.ts:7`](src/core/context-nextgen/strategies/StructuredSummaryStrategy.ts)
+
+Opt-in bounded summaries with exact user/action retention and one masking fallback.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: StructuredSummaryStrategyConfig = {})
+```
+
+**Parameters:**
+- `config`: `StructuredSummaryStrategyConfig` *(optional)* (default: `{}`)
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `compact()`
+
+```typescript
+async compact(context: CompactionContext, _targetToFree: number): Promise&lt;CompactionResult&gt;
+```
+
+**Parameters:**
+- `context`: `CompactionContext`
+- `_targetToFree`: `number`
+
+**Returns:** `Promise&lt;CompactionResult&gt;`
+
+#### `consolidate()`
+
+```typescript
+async consolidate(_context: CompactionContext): Promise&lt;ConsolidationResult&gt;
+```
+
+**Parameters:**
+- `_context`: `CompactionContext`
+
+**Returns:** `Promise&lt;ConsolidationResult&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: "structured-summary"` | - |
+| `displayName` | `displayName: "Structured summary"` | - |
+| `description` | `description: "Summarize older assistant narrative and observations with a bounded compactor; retain exact user messages and action receipts."` | - |
+| `requiredPlugins` | `requiredPlugins: readonly ["evidence"]` | - |
+| `threshold` | `threshold: number` | - |
 
 </details>
 
@@ -50078,7 +50204,7 @@ Agent configuration (needed for resume)
 
 ### AgentContextNextGenConfig `interface`
 
-📍 [`src/core/context-nextgen/types.ts:852`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:858`](src/core/context-nextgen/types.ts)
 
 AgentContextNextGen configuration
 
@@ -50887,7 +51013,7 @@ Options for the default SentenceChunkingStrategy
 
 ### CompactionContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1144`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1152`](src/core/context-nextgen/types.ts)
 
 Read-only context passed to compaction strategies.
 Provides access to data needed for compaction decisions and
@@ -50895,6 +51021,19 @@ controlled methods to modify state.
 
 <details>
 <summary><strong>Methods</strong></summary>
+
+#### `compactConversation()?`
+
+Optional transactional capability supplied by NextGen preparation. Legacy contexts remain valid.
+
+```typescript
+compactConversation?(options: import('./strategies/conversation-compaction.js').ConversationCompactionOptions): Promise&lt;CompactionResult&gt;;
+```
+
+**Parameters:**
+- `options`: `ConversationCompactionOptions`
+
+**Returns:** `Promise&lt;CompactionResult&gt;`
 
 #### `describeToolCall()?`
 
@@ -50992,7 +51131,7 @@ estimateTokens(item: InputItem): number;
 
 ### CompactionResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1040`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1046`](src/core/context-nextgen/types.ts)
 
 Result of compact() operation.
 
@@ -51001,6 +51140,7 @@ Result of compact() operation.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `report?` | `report?: import('./strategies/conversation-compaction.js').ConversationCompactionReport;` | Additive opt-in strategy diagnostic; legacy result shapes remain valid. |
 | `tokensFreed` | `tokensFreed: number;` | Tokens actually freed by compaction |
 | `messagesRemoved` | `messagesRemoved: number;` | Number of messages removed from conversation |
 | `pluginsCompacted` | `pluginsCompacted: string[];` | Names of plugins that were compacted |
@@ -51313,7 +51453,7 @@ truncate profile generation. See feedback_no_output_limits.md. |
 
 ### ConsolidationResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1057`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1065`](src/core/context-nextgen/types.ts)
 
 Result of consolidate() operation.
 
@@ -51366,7 +51506,7 @@ Token budget breakdown - clear and simple
 
 ### ContextEvents `interface`
 
-📍 [`src/core/context-nextgen/types.ts:987`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:993`](src/core/context-nextgen/types.ts)
 
 Events emitted by AgentContextNextGen
 
@@ -51444,7 +51584,7 @@ are opt-in. Pass `tiers: 'minimal'` to suppress tasks + events for perf. |
 
 ### ContextPreparation `interface`
 
-📍 [`src/core/context-nextgen/types.ts:692`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:696`](src/core/context-nextgen/types.ts)
 
 Diagnostic snapshot of the last successful prepare; token counts are estimates.
 
@@ -51453,6 +51593,7 @@ Diagnostic snapshot of the last successful prepare; token counts are estimates.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `compaction?` | `compaction?: import('./strategies/conversation-compaction.js').ConversationCompactionReport;` | Diagnostic for the opt-in transactional built-ins in this preparation. |
 | `revision` | `revision: number;` | Monotonic, process-local successful preparation number. |
 | `preparedAt` | `preparedAt: number;` | Millisecond timestamp at selection; later context mutations do not refresh it. |
 | `budget` | `budget: ContextBudget;` | Estimated budget for that selected request, including final host-hook adjustments. |
@@ -51472,6 +51613,8 @@ Optional request contributions, resolved again after compaction.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `signal?` | `signal?: AbortSignal;` | Optional bounded pre-call compaction cancellation. |
+| `summarize?` | `summarize?: import('./strategies/conversation-compaction.js').ContextSummaryGenerator;` | Host-owned structured-summary generator; Agent binds its configured compactor. |
 | `getTools?` | `getTools?: () =&gt; FunctionToolDefinition[];` | Obtain the exact visible definitions, including dynamic descriptions and identity filtering. |
 | `instructions?` | `instructions?: string;` | Additional top-level instructions sent separately from the context input. |
 | `getRequestOptions?` | `getRequestOptions?: (tools: FunctionToolDefinition[]) =&gt;
@@ -51484,7 +51627,7 @@ Optional request contributions, resolved again after compaction.
 
 ### ContextRolloverOptions `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1095`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1103`](src/core/context-nextgen/types.ts)
 
 Options for an explicit context rollover.
 
@@ -51504,7 +51647,7 @@ their results stay with their containing turn. Default: 8. |
 
 ### ContextRolloverResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1110`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1118`](src/core/context-nextgen/types.ts)
 
 Result of an explicit context rollover.
 
@@ -51529,7 +51672,7 @@ Result of an explicit context rollover.
 
 ### ContextRolloverSummaryInput `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1075`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1083`](src/core/context-nextgen/types.ts)
 
 Input passed to a context-rollover summarizer.
 
@@ -51551,6 +51694,41 @@ because they remain verbatim after rollover.
 
 ---
 
+### ContextSummaryEntry `interface`
+
+📍 [`src/core/context-nextgen/strategies/conversation-compaction.ts:33`](src/core/context-nextgen/strategies/conversation-compaction.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `text` | `text: string;` | - |
+| `sourceIds` | `sourceIds: string[]` | - |
+
+</details>
+
+---
+
+### ContextSummaryRequest `interface`
+
+📍 [`src/core/context-nextgen/strategies/conversation-compaction.ts:44`](src/core/context-nextgen/strategies/conversation-compaction.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `items` | `readonly items: ReadonlyArray&lt;InputItem&gt;;` | - |
+| `reference` | `readonly reference: EvidenceReference;` | - |
+| `schema` | `readonly schema: Record&lt;string, unknown&gt;;` | - |
+| `maxOutputTokens` | `readonly maxOutputTokens: number;` | - |
+| `signal` | `readonly signal: AbortSignal;` | - |
+
+</details>
+
+---
+
 ### ControlFlowResult `interface`
 
 📍 [`src/core/routineControlFlow.ts:56`](src/core/routineControlFlow.ts)
@@ -51563,6 +51741,33 @@ because they remain verbatim after rollover.
 | `completed` | `completed: boolean;` | - |
 | `result?` | `result?: unknown;` | - |
 | `error?` | `error?: string;` | - |
+
+</details>
+
+---
+
+### ConversationCompactionReport `interface`
+
+📍 [`src/core/context-nextgen/strategies/conversation-compaction.ts:59`](src/core/context-nextgen/strategies/conversation-compaction.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `strategy` | `strategy: 'observation-masking' | 'structured-summary';` | - |
+| `trigger` | `trigger: 'pre-call';` | - |
+| `beforeTokens` | `beforeTokens: number;` | - |
+| `afterTokens` | `afterTokens: number;` | - |
+| `tokensFreed` | `tokensFreed: number;` | - |
+| `sourceReferences` | `sourceReferences: EvidenceReference[];` | - |
+| `helperInvoked` | `helperInvoked: boolean;` | Summary callback requested; consult ModelTask for actual dispatched model calls. |
+| `helperInvocationId?` | `helperInvocationId?: string;` | - |
+| `helperModel?` | `helperModel?: string;` | Actual model identifier returned by the helper provider, when available. |
+| `taskId?` | `taskId?: string;` | - |
+| `fallback?` | `fallback?: 'mask';` | - |
+| `fallbackReason?` | `fallbackReason?: string;` | - |
+| `applied` | `applied: boolean;` | - |
 
 </details>
 
@@ -52942,7 +53147,7 @@ as object OR in contextIds, ranked by confidence × recency × predicateWeight
 
 ### EvidencePluginConfig `interface`
 
-📍 [`src/core/context-nextgen/plugins/EvidencePluginNextGen.ts:9`](src/core/context-nextgen/plugins/EvidencePluginNextGen.ts)
+📍 [`src/core/context-nextgen/plugins/EvidencePluginNextGen.ts:11`](src/core/context-nextgen/plugins/EvidencePluginNextGen.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -54319,7 +54524,7 @@ reset(): void;
 
 ### ICompactionStrategy `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1206`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1216`](src/core/context-nextgen/types.ts)
 
 Compaction strategy interface.
 
@@ -54382,7 +54587,8 @@ consolidate(context: CompactionContext): Promise&lt;ConsolidationResult&gt;;
 | `threshold` | `readonly threshold: number;` | Reclaim threshold (0-1); the context critical gate decides when compact() runs. |
 | `requiredPlugins?` | `readonly requiredPlugins?: readonly string[];` | Plugin names this strategy requires to function.
 Validation is performed when strategy is assigned to context.
-Missing recommendations produce a warning; built-in strategies degrade gracefully. |
+Missing recommendations produce a warning; strategies own missing-plugin behavior.
+Transactional built-ins require source retention; legacy built-ins may degrade. |
 
 </details>
 
@@ -56720,7 +56926,7 @@ For service accounts (Google, Salesforce)
 
 ### KnownContextFeatures `interface`
 
-📍 [`src/core/context-nextgen/types.ts:756`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:762`](src/core/context-nextgen/types.ts)
 
 Feature flags for enabling/disabling plugins
 
@@ -56744,7 +56950,7 @@ Feature flags for enabling/disabling plugins
 
 ### KnownPluginConfigs `interface`
 
-📍 [`src/core/context-nextgen/types.ts:821`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:827`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 When features are enabled, plugins are created with these configs.
@@ -57622,6 +57828,29 @@ toHexString(): string;
 
 ---
 
+### ObservationMaskingStrategyConfig `interface`
+
+📍 [`src/core/context-nextgen/strategies/conversation-compaction.ts:12`](src/core/context-nextgen/strategies/conversation-compaction.ts)
+
+Shared opt-in retention and transaction bounds.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `threshold?` | `threshold?: number;` | - |
+| `preserveRecentTurns?` | `preserveRecentTurns?: number;` | Exact recent user turns. Default 2; tool-result messages are not user turns. |
+| `preserveRecentMessages?` | `preserveRecentMessages?: number;` | Also keep this many trailing history items exact. Default 4. |
+| `minObservationTokens?` | `minObservationTokens?: number;` | Only larger observation bodies are masked. Default 256 estimated tokens. |
+| `maxSourceTokens?` | `maxSourceTokens?: number;` | Maximum source packet, without truncating individual items. Default 8192. |
+| `minTokensSaved?` | `minTokensSaved?: number;` | Reject a proposal saving less than this many estimated tokens. Default 32. |
+| `timeoutMs?` | `timeoutMs?: number;` | Whole transaction deadline, including storage/helper reads. Default 30000ms. |
+
+</details>
+
+---
+
 ### OpenAIRealtimeChannelTransportOptions `interface`
 
 📍 [`src/capabilities/voice/openai/OpenAIRealtimeChannelTransport.ts:10`](src/capabilities/voice/openai/OpenAIRealtimeChannelTransport.ts)
@@ -57842,7 +58071,7 @@ Configuration for initiating an outbound call.
 
 ### OversizedInputResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:725`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:731`](src/core/context-nextgen/types.ts)
 
 Result of handling oversized current input
 
@@ -58542,7 +58771,7 @@ source metadata aggregation rather than re-extracted into facts. |
 
 ### PreparedContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:702`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:708`](src/core/context-nextgen/types.ts)
 
 Result of prepare() - ready for a model call.
 
@@ -61063,7 +61292,7 @@ store-specific fields in responses.
 
 ### StrategyInfo `interface`
 
-📍 [`src/core/context-nextgen/strategies/StrategyRegistry.ts:42`](src/core/context-nextgen/strategies/StrategyRegistry.ts)
+📍 [`src/core/context-nextgen/strategies/StrategyRegistry.ts:44`](src/core/context-nextgen/strategies/StrategyRegistry.ts)
 
 Strategy information for UI display (serializable, no class reference)
 
@@ -61084,7 +61313,7 @@ Strategy information for UI display (serializable, no class reference)
 
 ### StrategyRegistryEntry `interface`
 
-📍 [`src/core/context-nextgen/strategies/StrategyRegistry.ts:62`](src/core/context-nextgen/strategies/StrategyRegistry.ts)
+📍 [`src/core/context-nextgen/strategies/StrategyRegistry.ts:64`](src/core/context-nextgen/strategies/StrategyRegistry.ts)
 
 Full strategy registry entry (includes class reference)
 
@@ -61094,6 +61323,45 @@ Full strategy registry entry (includes class reference)
 | Property | Type | Description |
 |----------|------|-------------|
 | `strategyClass` | `strategyClass: StrategyClass;` | Strategy constructor class |
+
+</details>
+
+---
+
+### StructuredContextSummary `interface`
+
+📍 [`src/core/context-nextgen/strategies/conversation-compaction.ts:35`](src/core/context-nextgen/strategies/conversation-compaction.ts)
+
+Model-generated data; this object never gains host-instruction authority.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `completedWork` | `completedWork: ContextSummaryEntry[];` | - |
+| `activeWork` | `activeWork: ContextSummaryEntry[];` | - |
+| `constraints` | `constraints: ContextSummaryEntry[];` | - |
+| `decisions` | `decisions: ContextSummaryEntry[];` | - |
+| `uncertainties` | `uncertainties: ContextSummaryEntry[];` | - |
+| `artifacts` | `artifacts: ContextSummaryEntry[];` | - |
+| `actionReceipts` | `actionReceipts: ContextSummaryEntry[];` | - |
+
+</details>
+
+---
+
+### StructuredSummaryStrategyConfig `interface`
+
+📍 [`src/core/context-nextgen/strategies/conversation-compaction.ts:27`](src/core/context-nextgen/strategies/conversation-compaction.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `maxSummaryTokens?` | `maxSummaryTokens?: number;` | Tighter cap for the configured helper. Default 1024; role cap still applies. |
+| `fallback?` | `fallback?: 'mask' | 'error';` | One fallback using the same retained source. Default mask. |
 
 </details>
 
@@ -62553,7 +62821,7 @@ type Content = | InputTextContent
 
 ### ContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:787`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:793`](src/core/context-nextgen/types.ts)
 
 Feature flags for enabling/disabling plugins.
 Known keys provide autocomplete; arbitrary string keys are also accepted
@@ -62567,7 +62835,7 @@ type ContextFeatures = KnownContextFeatures & { [key: string]: boolean | undefin
 
 ### ContextRolloverSummarizer `type`
 
-📍 [`src/core/context-nextgen/types.ts:1090`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1098`](src/core/context-nextgen/types.ts)
 
 Host-supplied summarizer used by an explicit context rollover.
 
@@ -62575,6 +62843,24 @@ Host-supplied summarizer used by an explicit context rollover.
 type ContextRolloverSummarizer = (
   input: ContextRolloverSummaryInput,
 ) =&gt; Promise&lt;string&gt; | string
+```
+
+---
+
+### ContextSummaryGenerator `type`
+
+📍 [`src/core/context-nextgen/strategies/conversation-compaction.ts:52`](src/core/context-nextgen/strategies/conversation-compaction.ts)
+
+Standalone contexts may supply a host-owned callback; Agent binds its compactor role.
+
+```typescript
+type ContextSummaryGenerator = (request: ContextSummaryRequest) =&gt; Promise&lt;{
+  summary: StructuredContextSummary;
+  helperInvocationId?: string;
+  /** Actual model identifier returned by the helper provider, when available. */
+  helperModel?: string;
+  taskId?: string;
+}&gt;
 ```
 
 ---
@@ -62588,6 +62874,18 @@ included BY DEFAULT unless the caller passes { tiers: 'minimal' }.
 
 ```typescript
 type ContextTier = 'documents' | 'semantic' | 'neighbors'
+```
+
+---
+
+### ConversationCompactionOptions `type`
+
+📍 [`src/core/context-nextgen/strategies/conversation-compaction.ts:76`](src/core/context-nextgen/strategies/conversation-compaction.ts)
+
+```typescript
+type ConversationCompactionOptions = StructuredSummaryStrategyConfig & {
+  mode: ConversationCompactionReport['strategy'];
+}
 ```
 
 ---
@@ -63328,7 +63626,7 @@ type PipelineConfig = TextPipelineConfig | RealtimePipelineConfig
 
 ### PluginConfigs `type`
 
-📍 [`src/core/context-nextgen/types.ts:847`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:853`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 Known keys provide autocomplete; arbitrary string keys accepted
@@ -63509,7 +63807,7 @@ type RelatedItemHit = T & { matchedEntityId: EntityId }
 
 ### ResolvedContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:793`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:799`](src/core/context-nextgen/types.ts)
 
 Resolved features — all known keys guaranteed present, plus any extras.
 Used internally after merging with DEFAULT_FEATURES.
@@ -66385,7 +66683,7 @@ transports and are not represented as misleading URL aliases here.
 
 ### DEFAULT_CONFIG `const`
 
-📍 [`src/core/context-nextgen/types.ts:954`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:960`](src/core/context-nextgen/types.ts)
 
 Default configuration values
 
@@ -66456,7 +66754,7 @@ Default configuration values
 
 ### DEFAULT_FEATURES `const`
 
-📍 [`src/core/context-nextgen/types.ts:798`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:804`](src/core/context-nextgen/types.ts)
 
 Default feature configuration for built-in plugins.
 

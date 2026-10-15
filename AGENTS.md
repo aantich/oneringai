@@ -361,8 +361,9 @@ backend quotas still apply; existing adapters need no new required members.
 Optional `modelExecution.helpers` configures `compactor`, `extractor`, and `verifier`
 through named connectors. `agent.invokeHelper(role, textOrBuilder, { schema, modelTask })`
 is stateless and tool-free; defaults are 512 output tokens and one local-schema
-repair. The main model stays fixed. A configured compactor is used only by explicit
-between-execution `rolloverContext()`; transfer to another connector requires
+repair. The main model stays fixed. A configured compactor is used by explicit
+between-execution `rolloverContext()` or an explicitly selected
+`StructuredSummaryStrategy` during bounded pre-call preparation; transfer to another connector requires
 `allowContextTransfer: true`.
 
 Share a host-owned `ModelTask` across managed/direct calls and helpers to share
@@ -634,3 +635,18 @@ providers explicitly rather than silently treating skipped tests as validation.
 
 Version: 1.2.0 | Runtime: Node.js 22.13+ or 24+ | Architecture: Connector-first +
 NextGen context
+
+## Experimental context strategies
+
+`ObservationMaskingStrategy` and `StructuredSummaryStrategy` are opt-in; algorithmic
+remains the default. Both require the enabled built-in evidence plugin and retain
+acknowledged scoped source snapshots before replacing older read bodies. Exact user
+messages, action arguments/metadata, write/unknown effects, pending dependencies
+and opaque/multimodal state remain protected. Summaries are assistant data with
+locally validated bounded sections/references; they do not acquire host authority
+or prove semantic truth. Managed summaries share the configured compactor and
+active ModelTask, including repair/cancellation limits. Read
+[Context Strategies](docs/CONTEXT_STRATEGIES.md) before selecting a policy; inspect
+`lastPreparation.compaction` with actual task usage. The bounded live comparison
+is a functional pilot, not a general quality/cost claim. Preserve existing explicit
+rollover and custom strategy contracts.

@@ -29,6 +29,8 @@
 import type { ICompactionStrategy } from '../types.js';
 import { DefaultCompactionStrategy } from './DefaultCompactionStrategy.js';
 import { AlgorithmicCompactionStrategy } from './AlgorithmicCompactionStrategy.js';
+import { ObservationMaskingStrategy } from './ObservationMaskingStrategy.js';
+import { StructuredSummaryStrategy } from './StructuredSummaryStrategy.js';
 
 /**
  * Strategy constructor type
@@ -95,6 +97,9 @@ export class StrategyRegistry {
     // Register the built-in strategies
     this.registerInternal(DefaultCompactionStrategy, { isBuiltIn: true });
     this.registerInternal(AlgorithmicCompactionStrategy, { isBuiltIn: true });
+
+    this.registerInternal(ObservationMaskingStrategy, { isBuiltIn: true });
+    this.registerInternal(StructuredSummaryStrategy, { isBuiltIn: true });
 
     this.initialized = true;
   }
