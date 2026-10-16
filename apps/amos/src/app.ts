@@ -14,6 +14,7 @@ import { ToolLoader } from './tools/ToolLoader.js';
 import { PromptManager } from './prompts/PromptManager.js';
 import { AgentRunner } from './agent/AgentRunner.js';
 import { describeToolOutcome } from './agent/toolOutcomes.js';
+import { describeLoopDiagnostics } from './agent/loopDiagnostics.js';
 import { Terminal } from './ui/Terminal.js';
 import {
   CommandProcessor,
@@ -249,6 +250,7 @@ export class AmosApp implements IAmosApp {
               break;
 
             case 'tool:complete':
+              if (event.loop) this.terminal.printDim(describeLoopDiagnostics(event.loop));
               if (event.notice) this.terminal.printWarning(event.notice);
               // Tool completed (already shown)
               break;
@@ -258,6 +260,7 @@ export class AmosApp implements IAmosApp {
               break;
 
             case 'done':
+              if (event.loop) this.terminal.printDim(describeLoopDiagnostics(event.loop));
               // If execution completed but no output was shown, display a notice
               if (!hasOutput) {
                 this.terminal.printDim('\n[Execution completed]');
@@ -279,6 +282,7 @@ export class AmosApp implements IAmosApp {
           spinner.stop();
 
           this.terminal.print('\n' + response.text);
+          if (response.loop) this.terminal.printDim(describeLoopDiagnostics(response.loop));
           for (const outcome of response.toolOutcomes ?? []) {
             const description = describeToolOutcome(outcome);
             if (description) this.terminal.printError(description);

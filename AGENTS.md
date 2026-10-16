@@ -515,6 +515,7 @@ during application shutdown.
 | Public signatures | `API_REFERENCE.md` |
 | Connectors and every tool source | `docs/CONNECTOR_TOOL_CATALOG.md` |
 | Protected task state, host corrections and pending actions | `docs/TASK_STATE.md` |
+| Bounded run/stream recovery and host completion checks | `docs/AGENT_LOOP_POLICIES.md` |
 | Durable tool evidence, projections and recovery | `docs/DURABLE_EVIDENCE.md` |
 | Explicit helper models, shared model budgets and purpose usage | `docs/MODEL_TASKS_AND_HELPERS.md` |
 | Tool outcomes, cancellation, and connector deadlines/retries | `docs/TOOL_OUTCOMES_AND_CANCELLATION.md` |
@@ -684,3 +685,38 @@ repair state. Reusing a pruned ID detaches obsolete correction/conflict links wh
 keeping historical predecessors inactive. Final managed task guards also run after
 budget observers. AMOS exposes explicit `task prune`, `resolve-prune`, `prune-action`
 and `confirm-prune` host commands; see the task-state recipe for arguments.
+
+## Bounded managed-loop policies
+
+`loopPolicy` is opt-in on managed run/stream; a per-call `null` disables it.
+Recovery limits share one allowance and existing iteration/ModelTask bounds.
+Declare read effects accurately. Repeated admitted writes/unknown effects stop
+before replay, and uncertain completion requires host inspection. Application
+`success:false` data is not a framework failure. A host `completion` callback
+must verify actual scoped state/evidence; its success appears in optional `loop`
+diagnostics, separately from model/provider completion. No checker means no
+workflow completion assertion. Check packets are bounded/frozen, timed, cancelled
+and stale-view checked. Callbacks/counters are not restored from sessions.
+
+Configured streaming uses shared `before:tool` preparation; unconfigured hook
+traces stay unchanged. Provisional chunks cannot be retracted; JSON repair stays
+run-only. Direct, realtime and external SDK loops keep their existing owner.
+See [Loop Policies](docs/AGENT_LOOP_POLICIES.md) before enabling a policy and inspect
+`response.loop`, existing stream metadata or `agent.getLoopDiagnostics()`.
+AMOS `/context loop` displays these notices separately from assistant prose.
+
+Stage 10 review corrections preserve admitted async effects across re-registration
+and import authentic queued observations before receiving policy dispatch/checks.
+Legacy uncorrelated deliveries use receipt effect or unknown, never current tool
+metadata; missing action outcomes block conservatively. Normal policy stops commit
+settled input without duplicate journal entries; stopped-turn JSON formatting
+appends its final answer while retaining exact calls/results. Class/prototype
+callbacks keep the original host receiver; thresholds/callbacks are captured per
+execution. These helpers/correlation are internal and not saved authority.
+
+
+Helper `validationSchema` optionally adds local constraints to the portable native
+`schema`; both must pass inside the existing repair allowance. Automatic structured
+summaries use it to repair all-empty/blank/overlong content before apply. Do not add
+an outer retry or replay source actions. Pending loop checks also bind tool
+principal/account/identity/role/session and connector scope, rejecting stale verdicts.

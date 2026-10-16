@@ -16,6 +16,8 @@ import type {
   HelperRole,
   TaskStateSnapshot,
   TaskStateHostDelta,
+  AgentLoopPolicy,
+  AgentLoopDiagnostics,
 } from '@everworker/oneringai';
 import type { ExternalToolManager } from '../tools/ExternalToolManager.js';
 
@@ -24,6 +26,8 @@ import type { ExternalToolManager } from '../tools/ExternalToolManager.js';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface AmosConfig {
+  /** JSON-safe opt-in progress/recovery limits. Host callbacks are configured separately. */
+  loopPolicy?: Omit<AgentLoopPolicy, 'completion' | 'progressKey'> | null;
   /** Opt-in deterministic host task state. Commands edit memory; /session save checkpoints it. */
   taskState?: { enabled: boolean; taskId: string; ownerId: string; namespace: string; association?: string };
   /** Optional host configuration; null/absence keeps legacy single-model behavior. */
@@ -300,6 +304,9 @@ export interface PromptTemplate {
 }
 
 export interface IAgentRunner {
+  getLoopDiagnostics?(): AgentLoopDiagnostics | undefined;
+  /** Host-only, process-local override; never restored from a saved session. */
+  setLoopPolicy?(policy: AgentLoopPolicy | null): void;
   getTaskState?(): TaskStateSnapshot | undefined;
   updateTaskState?(delta: TaskStateHostDelta, expectedRevision: number): TaskStateSnapshot;
   getContextCompaction?(): { strategy: string; last?: ConversationCompactionReport };
@@ -537,6 +544,7 @@ export interface ExternalToolsConfig {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface AgentResponse {
+  loop?: AgentLoopDiagnostics;
   toolOutcomes?: import('@everworker/oneringai').ToolExecutionOutcome[];
   text: string;
   mode: 'interactive' | 'planning' | 'executing';
@@ -551,6 +559,7 @@ export interface TokenUsage {
 }
 
 export interface StreamEvent {
+  loop?: AgentLoopDiagnostics;
   type: 'text:delta' | 'text:done' | 'tool:start' | 'tool:complete' | 'error' | 'done';
   delta?: string;
   notice?: string;

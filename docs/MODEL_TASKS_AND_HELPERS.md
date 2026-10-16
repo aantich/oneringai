@@ -78,7 +78,7 @@ least 1,024 tokens and smaller than the helper output allowance.
 | `modelExecution.helpers[role]` | Named `connector`, `model`; optional `instructions`, `thinking`, `temperature`, `maxInputTokens`, `maxOutputTokens`, `dataHandling`, `requireNativeStructuredOutput`, `allowContextTransfer`, and `priceBound`. |
 | Helper output | Defaults to 512 tokens. `invokeHelper` can request a tighter `maxOutputTokens`. It cannot increase the role cap. |
 | Helper input | Estimated packet, instructions and schema must fit the configured allowance and the resolved helper window, reserving output space. Estimates are not provider tokenization guarantees. |
-| `invokeHelper(role, input, options)` | Required host-supplied synchronous JSON `schema`; optional `modelTask`, `signal`, `parentInvocationId`, `maxOutputTokens`, and `maxRepairAttempts` (0 or 1; default 1). Returns `{ value, response, invocationId, taskId }`. |
+| `invokeHelper(role, input, options)` | Required host-supplied synchronous JSON `schema`; optional `validationSchema`, `modelTask`, `signal`, `parentInvocationId`, `maxOutputTokens`, and `maxRepairAttempts` (0 or 1; default 1). Returns `{ value, response, invocationId, taskId }`. |
 | `modelExecution.limits` | Optional per-execution defaults: `maxCalls`, `maxTokens`, `maxCostUSD`, absolute Unix-millisecond `deadline`. No limits are implicit. |
 | `modelExecution.maxOutputTokensPerCall` | Optional positive aggregate cap for main calls, including repair and wrap-up. Google/Vertex `generationConfig.candidateCount` multiplies the per-candidate output request for this check. If no explicit per-candidate limit is supplied, divide the aggregate cap by count and round down. Explicit per-candidate limits and candidate count are preserved; requests above the aggregate cap fail before dispatch. Omission preserves provider defaults. |
 | Per-call `modelTask` | Supported by managed/direct run and stream, explicit rollover, and external execution. A supplied task's limits take precedence over per-execution defaults; share the same object to share a budget. |
@@ -96,6 +96,35 @@ are isolated from other invocations. Local schema references work; schemas from
 previous helper calls are not an implicit reference registry. Native
 providers support different schema subsets; the provider may reject an otherwise
 locally valid schema. Use a small portable object schema for cross-provider work.
+
+Optional `validationSchema` adds stricter local JSON-schema requirements while
+keeping `schema` as the portable native response format. Both must pass; this
+cannot weaken the original schema. The additional constraints appear as prompt
+guidance and are checked inside the same zero-or-one repair allowance. They do
+not add another retry loop. Both schema roots are compiled/snapshotted before the
+packet builder, with independent IDs/references, and released after invocation.
+Invalid schemas fail before packet construction or dispatch. Guidance and repair
+must fit the existing helper input/call/token/deadline limits.
+
+```typescript
+const result = await agent.invokeHelper('extractor', 'Extract the source identifier.', {
+  schema: {
+    type: 'object', properties: { answer: { type: 'string' } },
+    required: ['answer'], additionalProperties: false,
+  },
+  validationSchema: {
+    type: 'object', properties: { answer: { type: 'string', minLength: 1 } },
+  },
+  modelTask: task,
+});
+```
+
+Automatic structured compaction uses this path to reject all-empty sections and
+blank/overlong entries before marking helper output valid. Its existing repair
+gets the retained source, and the ledger records the rejected generation and
+repair separately. Standalone summary callbacks retain their existing one-call
+transaction/fallback contract. See [Context Strategies](CONTEXT_STRATEGIES.md).
+
 
 Helpers request no explicit prompt cache, and inherit the host data-handling policy.
 A helper profile cannot relax an explicit parent `false` restriction. Connector

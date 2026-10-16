@@ -153,6 +153,8 @@ export interface ToolExecutionDoneEvent extends BaseStreamEvent {
  * Iteration complete - end of agentic loop iteration
  */
 export interface IterationCompleteEvent extends BaseStreamEvent {
+  /** Optional managed-loop progress, without changing event discriminants. */
+  loop?: import('./AgentLoop.js').AgentLoopDiagnostics;
   type: StreamEventType.ITERATION_COMPLETE;
   iteration: number;
   tool_calls_count: number;
@@ -163,6 +165,8 @@ export interface IterationCompleteEvent extends BaseStreamEvent {
  * Response complete - final event
  */
 export interface ResponseCompleteEvent extends BaseStreamEvent {
+  /** Optional managed-loop verdict; provider status keeps its existing meaning. */
+  loop?: import('./AgentLoop.js').AgentLoopDiagnostics;
   type: StreamEventType.RESPONSE_COMPLETE;
   status: 'completed' | 'incomplete' | 'failed';
   usage: TokenUsage;

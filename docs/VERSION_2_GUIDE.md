@@ -6,7 +6,7 @@ the standard documentation before release. Read the
 [architecture roadmap](./designs/AGENTIC_ARCHITECTURE_EVOLUTION.md) for implementation
 scope, dependencies, research, and acceptance criteria.
 
-- **Status:** Stages 00–04 and 06 complete on branch. Both Stage 04 reviews' findings are fixed and validated, including legacy public typing and external plugin configuration. Stage 07 is complete on branch as an experimental opt-in delivery, including all three validated review corrections. No package release is claimed.
+- **Status:** Stages 00–04, 06, 07 and 10 complete on branch. Both Stage 10 reviews are fixed and validated, including deterministic recovery from the recorded Google empty-summary failure: 7,988 units, 136 live cases / 148 scenarios across OpenAI/Anthropic/Google, and 22 offline examples pass. Stage 07 remains experimental; no package release is claimed.
 - **Stage 03 review:** All findings fixed and validated: 7,473 units / 245 Stage 03 cases, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](./designs/STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 - **Stage 06 review:** All findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion](./designs/STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
 - **Created / last updated:** 2026-10-07 / 2026-10-16.
@@ -17,7 +17,8 @@ scope, dependencies, research, and acceptance criteria.
   03 — durable evidence, scoped retrieval and opt-in projections;
   04 — protected host task state, explicit receipts and separate workflow confirmations;
   06 — explicit helper roles and process-local model tasks/budgets;
-  07 — experimental observation masking and source-backed historical summaries, including review corrections.
+  07 — experimental observation masking and source-backed historical summaries, including review corrections;
+  10 — bounded managed-loop recovery and host-owned completion checks.
 - **Version 2 release:** Not announced by this document.
 
 “Version 2” names the development initiative. It does not mean that an npm `2.0.0`
@@ -344,25 +345,87 @@ document source/uncertainty, recovery, capacities and support limits.
 
 ## Bounded recovery and verifiable completion
 
-**Availability: Planned — stage 10.**
+**Availability: Stage 10 complete on `version2`, base `d8fce94`; both review passes fixed and validated. No verified package release.**
 
-When a tool fails, an agent repeats an unproductive step, or required evidence is
-missing, the loop should have bounded recovery behavior and a clear stopping
-reason. Shared decision helpers will improve the existing loop incrementally.
+The [second review/fix](./designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md) resolves the
+recorded Google empty-summary failure by validating content inside the existing
+helper repair allowance, and rejects completion/progress verdicts after tool
+principal/account/identity/role/session or connector-scope rebinding. Optional
+`HelperCallOptions.validationSchema` adds local constraints without changing the
+portable native format or weakening `schema`; no additional repair loop.
+Real Google recovery is tested by deliberately injecting the exact recorded bad
+body after a real call, then requiring a real repair and exact source/constraints
+without masking fallback. This replaces reliance on a passing rerun alone.
 
-Workflow hosts can define completion checks against their own required results.
-Ordinary chat must remain usable without a workflow completion predicate. Checks
-should distinguish produced output, accepted work, pending external work, and
-confirmed completion. Retrying an uncertain write requires explicit handling;
-repetition by itself is not evidence of progress.
+The [corrective completion](./designs/STAGE_10_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16)
+and [validation](./evaluations/STAGE_10_CORRECTIONS_VALIDATION.json) cover async
+outcome/effect preservation, stopped connected history and class callbacks.
+Normal run and explicit continuation share observation import; uncertainty and
+failure limits preempt receiving dispatch/checks. Admitted effect remains attached
+to authentic delivery across re-registration, including optional outcome omission.
+Legacy uncorrelated deliveries use receipt effect or unknown, never current tool
+metadata. Scope is rechecked after awaited imported progress callbacks.
 
-Streaming and non-streaming paths may retain their intentional differences,
-including structured-output repair. Their documentation must say which guarantees
-apply to each path.
+Normal policy stops commit settled input without another model response or duplicate
+journal entries. Stopped-turn JSON formatting appends a separate final answer;
+exact calls/arguments/results survive new input, file resume and host evidence
+repair. Class/prototype callbacks retain the original receiver/private state;
+callbacks/options are captured per execution. These are internal corrections,
+with no new required public/session/storage members or restored async authority.
 
-**Adoption material to add at delivery:** Recovery limits and stopping reasons;
-completion-check APIs and ownership; missing-evidence and repeated-failure examples;
-run/stream behavior; user-visible AMOS progress and unresolved outcomes.
+Set `AgentConfig.loopPolicy` or a per-execution `RunOptions.loopPolicy` to enable
+bounded managed run/stream recovery. A per-call `null` disables the configured
+policy. Omission preserves existing chat prompts, hooks, events and stopping
+behavior. No workflow verifier is mandatory, and the main model stays fixed.
+
+Recovery defaults to two shared interventions for actual tool failures, repeated
+normalized read observations, optional unchanged host progress keys and unmet
+completion predicates. Repeated admitted writes/unknown effects stop before
+identical replay in that execution. Unknown action completion requires host
+inspection. Declared repeatable reads support intentional polling; existing
+iteration, permission, tool deadline and ModelTask limits still apply. The policy
+does not provide durable or semantic exactly-once execution.
+
+Host `completion(context)` checks actual scoped evidence/state and returns
+`{complete, reason?, feedback?}`. A successful response, accepted submission or
+model claim alone is insufficient. Optional `response.loop`, metadata on existing
+iteration/complete stream events and `agent.getLoopDiagnostics()` report phase,
+recovery, stopping reason and existing task status separately from provider status.
+An unchecked answer reports `answer_returned` without a workflow completion status.
+Public root and `/types` exports include the six `AgentLoop*` policy/check/result/
+diagnostic/observation/reason types.
+
+Callback packets are frozen detached data: bounded candidate text, last-100
+actual observation metadata, explicit truncation counts/flags, optional full
+built-in task state and cancellation signal. Deadlines, local result validation,
+task generation/owner/plugin/conversation checks prevent late/stale confirmation.
+Callbacks are cooperative host reads, not an automatic model verifier or effect
+executor. Explicit helper checks must pass the same explicit ModelTask to share
+budget. Callback exceptions/timeouts stop with sanitized diagnostics.
+
+Callbacks/counters are process-local and never restored as session authority.
+Fresh agents need an explicitly configured policy; same-agent load retains live
+host configuration/latest diagnostics. Existing task/evidence persistence remains
+available. Async/suspended work reports waiting-external without inventing remote
+completion. Direct, realtime, remote-native and external SDK-owned internal steps
+remain outside this managed text policy.
+
+Configured streaming uses shared `before:tool` skip/argument preparation;
+unconfigured streaming retains its legacy hook trace. Stream chunks remain
+provisional, including rejected candidates. JSON final repair remains run-only,
+with the checker seeing the repaired final candidate. No existing event
+discriminant, provider status, required session field or default was changed.
+
+Build first and run `npm run example:feedback-agent`,
+`npm run example:loop-equivalence`, or `npm run example:amos-loop` offline.
+AMOS supports optional JSON thresholds, an idle host-only policy setter and
+`/context loop`; phase/reason/recovery/completion notices render separately from
+assistant prose. Missing evidence reports input needed without a fabricated
+approval request. Read [Loop Policies](./AGENT_LOOP_POLICIES.md) for exact bounds,
+failure/persistence/support behavior and setup. The [implementation record](./designs/STAGE_10_IMPLEMENTATION.md)
+and [validation](./evaluations/STAGE_10_VALIDATION.json) preserve final and initial
+results. Live probes use synthetic local reads and establish functional wiring,
+not general quality/cost improvements or deterministic model adherence.
 
 ## Easier configuration and capability inspection
 
@@ -446,7 +509,7 @@ revision, version, or link only when that evidence exists.
 | 07 | Structured summaries and observation masking | Core | Available on branch; experimental, all review corrections validated | `version2` working tree, base `224e395` | — | [Recipe](./CONTEXT_STRATEGIES.md); [comparison](../examples/context-strategy-comparison.ts); [stage record](./designs/STAGE_07_IMPLEMENTATION.md) |
 | 08 | Episodic retrieval and ingestion | Conditional | Conditional / deferred | — | — | — |
 | 09 | Ranked tool discovery | Conditional | Conditional / deferred | — | — | — |
-| 10 | Bounded recovery and completion checks | Core | Planned | — | — | — |
+| 10 | Bounded recovery and completion checks | Core | Complete on branch; both reviews fixed, Google recovery verified | `version2`, base `d8fce94`; latest local/live/public gates passed 2026-10-16 | — | [Implementation](./designs/STAGE_10_IMPLEMENTATION.md); [second review/fix](./designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md); [latest evidence](./evaluations/STAGE_10_SECOND_CORRECTIONS_VALIDATION.json) |
 | 11 | Parallel reads and selected resumable effects | Conditional | Conditional / deferred | — | — | — |
 | 12 | Opt-in presets and capability inspection | Core | Planned | — | — | — |
 | 13 | Verified procedures and curated learning | Conditional | Conditional / deferred | — | — | — |
@@ -1190,11 +1253,11 @@ incorrect usage instructions in place.
 | 07: summaries and broader masking | Opt-in strategies, scoped source matching, exact protected content, bounded helper/fallback, defaults, persistence, diagnostics and experimental evaluation limits. | [Recipe](./CONTEXT_STRATEGIES.md); README; User Guide; generated API; agent instructions; comparison/index; AMOS selection/walkthrough; Changelog; stage/evidence/package records. | Synced: 7,594 units / 121 new cases, 66 baseline + 39 new live cases and 17 offline examples pass. Public ESM/CJS, AMOS and package/evidence checked. Algorithmic default and legacy extension/rollover contracts preserved; experimental, no release or statistical promotion. |
 | 07 review: R1–R3 | Eligible-source allocation, zero-work no-op preparation and exact AMOS restore-to-absence semantics. | [Review/fix plan](./designs/STAGE_07_REVIEW_AND_FIX_PLAN.md); [executable evidence](./evaluations/STAGE_07_REVIEW.json); recipe, stage status and roadmap. | Synced: all three fixed; 37 new regressions, 7,631 units, 105 live cases / 117 scenarios and 17 offline examples pass. Source/public ESM/CJS, real AMOS configuration, documentation and package checks pass. Prior review/pilot evidence retained; no default promotion or release. |
 | 02: tool outcomes | Semantic provenance, cancellation/deadlines, late/account isolation, legacy overrides, counters, raw shapes, defaults, process-local limits, truthful keyed/keyless notes retrieval and explicit Anthropic named-tool selection. | [Recipe](./TOOL_OUTCOMES_AND_CANCELLATION.md); [preparation guide](./CONTEXT_PREPARATION.md); README; User Guide; generated API; agent guide; connector catalog; library/AMOS examples and indexes; Changelog; package inventory. | Synced: 7,030 unit tests and all 46 distinct three-provider live scenarios pass. Offline examples and the opt-in Anthropic example verified; [final evidence](./evaluations/STAGE_02_FINAL_VALIDATION.json) packaged. Stage complete on branch; no release claimed. |
-| 06: helper models | Connector setup, static roles, budgets/reservations, known subtotals/unknowns, fallback, capability/scope failures, persistence and provider boundaries. | [Recipe](./MODEL_TASKS_AND_HELPERS.md); README; User Guide; generated API; agent guide; examples/index; AMOS roles/usage/offline transcript; Changelog; package inventory. | Synced on 2026-10-13: recipe, standard docs, generated API, examples/AMOS and packaged evidence verified. 7,131 units and final 54 live scenarios pass; earlier Google answer failures retained. No release claimed. |
+| 06: helper models | Connector setup, static roles, budgets/reservations, known subtotals/unknowns, fallback, capability/scope failures, persistence and provider boundaries. | [Recipe](./MODEL_TASKS_AND_HELPERS.md); README; User Guide; generated API; agent guide; examples/index; AMOS roles/usage/offline transcript; Changelog; package inventory. | Latest 2026-10-16 handoff adds optional HelperCallOptions.validationSchema and automatic summary repair of shape-valid empty content; portable native schema, same repair/task budgets, independent local schemas, failure/cancellation/persistence compatibility. Recipe/generated API/standard guides, public example and AMOS inspection guidance updated. 7,988 units and 136 live cases / 148 scenarios pass; actual Google recorded-fault recovery verified. No release. |
 | 06 corrective pass: R1–R8 | Raw budget options, inclusive Google thinking, schema isolation, stream settlement, immutable task ownership, explicit helper sharing, honest external reports and supported Anthropic thinking. | Recipe; User Guide; agent guide; generated API; examples/AMOS support notes; Changelog; review/stage records; packaged corrective evidence. | Synced on 2026-10-13: 7,179 units, 45 live cases/57 scenarios, all local delivery gates pass. Earlier failures retained; no release or breaking API change. |
 | 06 second corrective pass: S1–S4 | Effective output multiplicity, aggregate cap defaults, captured request data, sticky pricing uncertainty and evidence-preserving repair. | Recipe; standard guides; generated API; public/AMOS repair demos and indexes; Changelog; stage/review completion; corrective evidence and transcript; package inventory. | Synced: all four fixed, 7,228 units and 48 live cases/60 scenarios pass, prior records retained. No release or API break. |
 | 04: task state | Host notes/proposals, revision/scoped recovery, receipt versus workflow confirmation, protected fit/repair, limits, explicit memory authority, host edits and legacy public feature/plugin configuration typing. | [Recipe](./TASK_STATE.md); README; User Guide; generated API; AGENTS; workflow/AMOS examples/index; Changelog; package records. | Synced: both reviews' corrections, additive recovery API/commands and legacy consumers; latest 7,795 units, root/`types` compatibility, ESM/CJS and library/AMOS examples pass. API regenerated. Earlier live evidence remains historical; complete on branch, no release. |
-| 10: bounded recovery/completion | Host policies, stopping reasons, run/stream differences and existing task compatibility. | README; User Guide; generated API; recovery examples; AMOS; Changelog. | Planned; not implemented by Stage 04. |
+| 10: bounded recovery/completion | Opt-in policies/defaults, host verification/bounds, effect uncertainty, shared budgets, session authority, intentional run/stream differences and external ownership. | [Recipe](./AGENT_LOOP_POLICIES.md); README; User Guide; generated API; AGENTS; three examples/index; AMOS; Changelog; package records. | Both corrective handoffs complete: original async/history/class fixes plus principal-bound completion checks and bounded local helper validation/Google recovery. 7,988 units, 167 loop/AMOS cases, 136 live cases / 148 scenarios, 22 examples, 18 ESM/CJS and 18 legacy controls pass. [Latest fix](./designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md) and evidence packaged; optional validationSchema documented/generated with examples/AMOS inspection. Stage 12 separately authorized; no release. |
 | 12: presets | Both presets, plain Agent baseline, overrides, capability/driver support, old-setting migration, and help. | README quickstarts; User Guide/runtime guide; generated API; preset example/index; AMOS selection/settings/help; Changelog. | Pending |
 | Selected conditional scopes | Delivered benefit, separate recipe, support limits, exact scope, availability, and migration. | README; User Guide; generated API; affected specialist guides; examples; AMOS where useful; Changelog. | Pending |
 
@@ -1493,3 +1556,180 @@ and [evidence](./evaluations/STAGE_04_SECOND_CORRECTIONS_VALIDATION.json).
 | Date | Change | Availability/validation | Documentation handoff |
 | --- | --- | --- | --- |
 | 2026-10-16 | Fixed both Stage 04 public feature/configuration typing regressions and pinned unchanged legacy consumers. | Complete on branch: 7,795 units, root/`types` and unchanged review consumers, 18 source/ESM/CJS controls, both offline task examples and all local/AMOS gates pass. Earlier live evidence remains historical. | Recipe/standard docs/API, examples index, release notes, stage/roadmap, packaged evidence and current adoption/handoff synchronized; no release or API break. |
+
+### Stage 10 adoption record — 2026-10-16
+
+- **Authorization/availability:** The user authorized Stage 10 with “proceed” on
+  `version2`, base `d8fce94` (Stage 04). Complete in this working tree; package
+  version remains 1.2.0 and no published release is verified.
+- **Verified surface:** Optional `AgentConfig.loopPolicy`, per-execution
+  `RunOptions.loopPolicy` including null disable, six `AgentLoop*` types at root
+  and `/types`, `agent.getLoopDiagnostics()` and optional `loop` metadata on
+  existing responses/iteration/completion stream events. Internal-only pieces are
+  the per-execution controller, response/empty-retry decisions, shared before-tool
+  preparation and safe feedback append; these are not new public execution APIs.
+- **Defaults/usage:** Disabled by default. Enabled recovery allowance 2;
+  repeated-result/failure/stalled thresholds 3; callback deadline 10000 ms;
+  repeatable-read allowlist empty. Progress/completion callbacks are optional.
+  Existing iterations, tool deadlines/permissions and explicit ModelTask budgets
+  still constrain execution. No automatic helper, routing, retrieval or write replay.
+- **Failure/effect boundary:** Actual outcomes determine framework failure,
+  preserving application `success:false` data. Identical admitted write/unknown
+  calls stop in the same execution; uncertain effects require reconciliation.
+  Fingerprinting, admissions (including pending async calls), observations and
+  failure identities are bounded. This is not semantic or durable idempotency.
+  Read the recipe for exact byte/count bounds and intentional polling.
+- **Host authority/persistence:** Completion requires a bounded locally validated
+  host verdict against actual evidence/state, separate from provider completion.
+  Frozen packets expose omission flags/counts and optional full built-in task
+  state. Cancellation/deadlines and stale identity/generation checks reject late
+  verdicts. Callback functions/counters never restore as session authority;
+  configured evidence/task recovery keeps its existing scope and durability.
+- **Support differences:** With a policy, stream invokes shared before-tool
+  preparation; its disabled legacy trace stays unchanged. Chunks are provisional;
+  repaired final JSON verification remains run-only. Existing suspend/correlation
+  flow and explicit async continuation remain, with waiting-external diagnostics.
+  Direct/realtime/external SDK and remote-native internal steps retain their owner
+  and are not individually controlled by this policy. Runtime observer detachment
+  does not cancel a run; closing the owning Agent stream keeps its existing lifecycle.
+- **Examples/AMOS:** `feedback-driven-agent.ts` and `run-stream-equivalence.ts`
+  are public-package offline examples. The actual AMOS example uses optional
+  JSON limits, host-only in-memory override, `/context loop`, blocked checkpoint
+  recovery and a fresh verifier. AMOS displays notices separately from prose,
+  preserves event discriminants and tests busy/cancel/late-verdict behavior.
+- **Validation:** 7,895 units / 359 files, including 94 core and six AMOS Stage 10
+  cases. Policy-module line/branch coverage 96.46%/91.70%. One final eight-gate
+  batch passes 129 live cases / 141 recorded scenarios across all three providers,
+  including 12 new policy probes; no failures/skips. All 22 offline examples,
+  old/new public root/`types` fixtures, eight new ESM/CJS controls and eighteen
+  unchanged legacy source/ESM/CJS controls pass. Root/AMOS builds, types, lint,
+  examples and separate project-strict checks pass; API regenerated and package
+  dry-run inventory verified.
+- **Evidence/uncertainty:** [Validation](./evaluations/STAGE_10_VALIDATION.json)
+  and [live history](./evaluations/STAGE_10_LIVE.json) retain initial synthetic
+  attestation/setup failures, sandbox socket denial, two Anthropic probe failures
+  before the bounded prompt/cap change, and one unchanged Google exact-marker
+  failure followed by recheck/final success. The initial Anthropic report lacked
+  exact stop reasons, so no exact cause is asserted. The final source is fully
+  validated; these functional probes do not establish statistical reliability,
+  free-planning quality or cost improvements.
+- **Handoff/next:** Recipe, README, User Guide, generated API, AGENTS, examples,
+  AMOS, Changelog, roadmap/stage records and package inventory synchronized.
+  Release-wide promotion remains tracked in the handoff ledger. No break, commit,
+  push or release. Next core stage is **12**, requiring separate authorization;
+  conditional stages remain deferred.
+
+| Date | Change | Availability/validation | Documentation handoff |
+| --- | --- | --- | --- |
+| 2026-10-16 | Completed Stage 10 bounded managed recovery, host completion checks and AMOS diagnostics. | Available on branch: 7,895 units; 129 live cases / 141 scenarios in the final all-provider batch; 22 offline examples and public compatibility pass. Initial failures retained; no release. | Exact recipe/API/defaults/bounds/support/persistence, standard/generated guides, examples/AMOS, release notes, stage/roadmap and packaged evaluation/adoption/handoff synchronized. |
+
+### Stage 10 original review — 2026-10-16
+
+Historical pre-correction findings, superseded by the corrective adoption below.
+At review time, five open findings made completion provisional:
+
+- **P1 R1:** Normal run injection consumes authentic async outcomes as text without
+  importing them into its controller. An unknown write can reach the checker with
+  no observations, while explicit continuation correctly blocks the same case.
+- **P1 R2:** Explicit continuation without evidence derives past effect from the
+  current registration. Re-registering a pending write as a read bypasses the
+  uncertain-effect guard. Admission effect must remain attached to the invocation.
+- **P1 R3:** Structured repair after a tool-induced policy stop replaces the tool
+  call with formatted JSON. Its result becomes unmatched; even an internally
+  retained unacknowledged raw result is omitted from later prepared requests.
+- **P2 R4:** Without structured output/evidence, stopped run and stream leave
+  ordinary results in pending input. The next input discards those observations.
+- **P2 R5:** Class/prototype policy methods compile against the public type but
+  are silently omitted by the spread copy; completion becomes unchecked.
+
+Fresh **7,895 units / 359 files**, root types/lint, examples checks, public
+compatibility and AMOS types pass. Deterministic scripts reproduce the missing
+contracts; a public class consumer compiles. No runtime fix, permanent test or
+new live call was added. Original delivery/live evidence stays unchanged.
+See the [fix plan](./designs/STAGE_10_REVIEW_AND_FIX_PLAN.md) and
+[executable review evidence](./evaluations/STAGE_10_REVIEW.json). Current recipe,
+standard-guide notices, stage/roadmap and package inventory reflect this review.
+Corrections and expanded validation precede restoring completion or Stage 12.
+
+| Date | Change | Availability/validation | Documentation handoff |
+| --- | --- | --- | --- |
+| 2026-10-16 | Reviewed Stage 10 and reproduced async uncertainty, stopped history and class-policy defects. | Three P1/two P2 findings open; completion provisional despite 7,895 existing tests passing. No runtime fixes or fresh live calls. | Review/fix plan and executable evidence packaged; current availability/adoption/handoff, recipe/standard-guide notices and roadmap/stage status synchronized. Historical delivery evidence retained. |
+
+### Stage 10 corrective adoption — 2026-10-16
+
+All R1–R5 findings are fixed on `version2`, base `d8fce94`; no package release.
+Async observations are imported before receiving dispatch/checks with original
+admitted effect, deduplication, failure bounds and scope checks after awaited host
+callbacks. Uncorrelated legacy possible actions block conservatively when outcomes
+are missing. This correlation is internal/process-local and not saved authority.
+
+Stopped connected calls/arguments/results remain available through new input,
+file checkpoints and failed-evidence host repair. Normal stop commits add no
+model response or duplicate journal entry; JSON formatting appends a separate
+answer after a stopped tool turn. Early-close retention remains unchanged.
+Class/prototype callbacks keep the original host receiver/private fields;
+callback selection/thresholds are captured per execution. No new required API,
+session/storage field, default, discriminant, or automatic replay behavior.
+
+Fresh final gates: **7,950 units / 360 files**, including **155 Stage 10/AMOS cases**;
+**135 live cases / 147 scenarios** in one unchanged eight-file all-provider batch;
+**22 offline examples**, **16 ESM/CJS** and **18 legacy controls**. Root/AMOS builds,
+types/lint/examples/project-strict checks, generated API and package inventory pass.
+The first batch's Google schema-valid empty summary was correctly rejected before
+main dispatch and remains recorded; no evaluator or prompt was weakened.
+
+The run/stream example adds stopped-receipt/JSON preservation. The AMOS example
+uses class callbacks/private verification state with fresh host authority after
+checkpoint. All affected recipe/standard/generated guides, AGENTS, examples/AMOS,
+Changelog and availability/handoff are synced. Internal-only helpers are recorded;
+release-wide promotion remains pending. No later stage is implemented.
+See [completion](./designs/STAGE_10_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16),
+[validation](./evaluations/STAGE_10_CORRECTIONS_VALIDATION.json),
+[live history](./evaluations/STAGE_10_CORRECTIONS_LIVE.json) and
+[AMOS walkthrough](./evaluations/STAGE_10_CORRECTIONS_AMOS_OFFLINE.txt).
+
+| Date | Change | Availability/validation | Documentation handoff |
+| --- | --- | --- | --- |
+| 2026-10-16 | Fixed all five Stage 10 async effect/import, stopped history/formatting and class-policy findings. | Complete on branch; final 7,950 units, 135 live cases / 147 scenarios, 22 examples and local/public/AMOS gates pass. First Google empty-summary failure retained; no release. | Recipe/API/standard docs, examples/AMOS, AGENTS, release notes, stage/roadmap, adoption/handoff and packaged correction evidence synchronized. Historical records preserved; Stage 12 separately authorized. |
+
+### Stage 10 second corrective adoption — 2026-10-16
+
+The recorded Google empty-summary failure is fixed. Optional public
+`HelperCallOptions.validationSchema` adds local synchronous constraints to the
+portable native `schema`; both must pass within the existing 0/1 repair allowance.
+No new defaults, required members, provider role, event shape or saved authority.
+Compactor nonempty/nonblank/600-character requirements now participate in helper
+repair and validation accounting. Failed generation and repair are separate task
+records. Repair retains original evidence and respects input/output/call/token/
+deadline/cancellation bounds; exhaustion retains `mask`/`error` behavior. Custom
+standalone summary callbacks keep their one-call transaction contract.
+
+An actual Google call receives an explicitly labeled substitution of the exact
+recorded all-empty body; one actual Google repair passes, the agent reads the
+source and returns exact marker/account/status without masking fallback. Normal
+OpenAI/Anthropic/Google probes also pass. Two rejected native-schema prototypes
+are development history; delivered native schema stays unchanged.
+
+The second review also fixes pending completion/progress authority after tool
+user/account/connector selection/identity/role/session or registry scope changes.
+Such verdicts now stop as `state_changed`; this is internal and policy opt-in.
+
+Final gates: **7,988 units / 360 files**, **38 new regressions**; **136 live cases /
+148 scenarios**, zero failures/skips/unavailable providers; **22 offline examples**,
+**18 ESM/CJS**, **18 legacy controls**, builds/types/lint/examples/strict checks and
+AMOS/public/generation/package gates pass. Selected helper/compaction/loop coverage
+is **97.06% lines / 90.13% branches**, not whole-Agent coverage.
+
+The public purpose-model example demonstrates empty-but-shape-valid repair.
+AMOS uses the existing helper usage/strategy views; its guide explains recovery,
+with no new command/configuration required. Recipes, README/User Guide/generated
+API, AGENTS, examples/AMOS, Changelog, stage/roadmap and packaged evidence/handoff
+are synced. Branch-only availability, no package release or later implementation.
+See [review/fix](./designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md),
+[validation](./evaluations/STAGE_10_SECOND_CORRECTIONS_VALIDATION.json),
+[live proof](./evaluations/STAGE_10_SECOND_CORRECTIONS_LIVE.json) and
+[offline transcript](./evaluations/STAGE_10_SECOND_CORRECTIONS_OFFLINE.txt).
+
+| Date | Change | Availability/validation | Documentation handoff |
+| --- | --- | --- | --- |
+| 2026-10-16 | Fixed recorded Google empty-summary repair gap and stale pending completion authority. | Branch complete; 7,988 units, 136 live cases / 148 scenarios, real Google recorded-fault repair, 22 examples and all local/public/AMOS gates pass. | Optional validationSchema/defaults/native compatibility/budgets/failure/custom callback boundary, scope guards, public example/generated API/AMOS inspection, standard docs and packaged evidence synchronized. No release/later stage. |

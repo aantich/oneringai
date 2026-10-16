@@ -105,6 +105,14 @@ export function contextSummarySchema(referenceId: string): Record<string, unknow
     }, required: ['text', 'sourceIds'], additionalProperties: false },
   }])), required: [...fields], additionalProperties: false };
 }
+/** Internal helper refinement: native providers support different schema subsets. */
+export function contextSummaryValidationSchema(): Record<string, unknown> {
+  return { type: 'object', properties: Object.fromEntries(fields.map(key => [key, {
+    type: 'array', items: { type: 'object', properties: {
+      text: { type: 'string', minLength: 1, maxLength: 600, pattern: '\\S' },
+    } },
+  }])), anyOf: fields.map(key => ({ required: [key], properties: { [key]: { type: 'array', minItems: 1 } } })) };
+}
 function validateSummary(value: StructuredContextSummary, id: string): void {
   if (!value || typeof value !== 'object' || Object.keys(value).length !== fields.length) throw new Error('Invalid structured summary');
   let count = 0;

@@ -64,6 +64,8 @@ export interface ProviderStopDetails {
 }
 
 export interface LLMResponse {
+  /** Opt-in managed-loop diagnostics; separate from provider generation status. */
+  loop?: import('./AgentLoop.js').AgentLoopDiagnostics;
   id: string;
   object: 'response';
   created_at: number;

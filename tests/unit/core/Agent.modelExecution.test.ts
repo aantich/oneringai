@@ -369,6 +369,44 @@ describe('optional Agent model execution', () => {
     expect(task.snapshot().totals.totalTokens).toBe(30);
   });
 
+  it('repairs additional local constraints without changing the native schema', async () => {
+    const agent = create(config()); const task = shared({ maxCalls: 2 });
+    helper.generate.mockResolvedValueOnce(response('{"answer":""}')).mockResolvedValueOnce(response('{"answer":"REPAIRED"}'));
+    const validationSchema = { type: 'object', properties: { answer: { type: 'string', minLength: 1 } } };
+    expect((await agent.invokeHelper('extractor', 'Extract.', { schema, validationSchema, modelTask: task })).value).toEqual({ answer: 'REPAIRED' });
+    expect(task.snapshot().invocations.map(i => [i.phase, i.outputValidation])).toEqual([['generation', 'failed'], ['repair', 'passed']]);
+    expect(helper.generate.mock.calls[0]![0].response_format).toMatchObject({ json_schema: { schema } });
+    expect(JSON.stringify(helper.generate.mock.calls[0]![0].response_format)).not.toContain('minLength');
+    expect(helper.generate.mock.calls[0]![0].instructions).toContain('minLength');
+  });
+  it('additional constraints cannot weaken the original output schema', async () => {
+    const agent = create(config()); helper.generate.mockResolvedValue(response('{"wrong":"shape"}'));
+    await expect(agent.invokeHelper('extractor', 'Extract.', { schema, validationSchema: {} })).rejects.toBeInstanceOf(HelperOutputError);
+    expect(helper.generate).toHaveBeenCalledTimes(2);
+  });
+  it.each([null, [], { $async: true }, { type: 'not-a-schema' }, { unknownKeyword: true }])('rejects invalid local validation schema %j before packet/dispatch', async invalid => {
+    const agent = create(config()); const builder = vi.fn(() => 'private input');
+    await expect(agent.invokeHelper('extractor', builder, { schema, validationSchema: invalid as never })).rejects.toThrow();
+    expect(builder).not.toHaveBeenCalled(); expect(helper.generate).not.toHaveBeenCalled();
+  });
+  it('keeps native and local schema roots independent when identifiers collide', async () => {
+    const agent = create(config());
+    const result = await agent.invokeHelper('extractor', 'Extract.', { schema: { ...schema, $id: 'https://host.invalid/output' },
+      validationSchema: { $id: 'https://host.invalid/output', $defs: { answer: { type: 'string', minLength: 1 } }, type: 'object', properties: { answer: { $ref: '#/$defs/answer' } } } });
+    expect(result.value).toEqual({ answer: 'HELPER_VALID' }); expect(helper.generate).toHaveBeenCalledTimes(1);
+  });
+  it('snapshots local constraints before the packet builder can mutate them', async () => {
+    const agent = create(config()); const validationSchema = { type: 'object', properties: { answer: { minLength: 1 } } };
+    helper.generate.mockResolvedValueOnce(response('{"answer":""}')).mockResolvedValueOnce(response('{"answer":"valid"}'));
+    await agent.invokeHelper('extractor', () => { validationSchema.properties.answer.minLength = 0; return 'Extract.'; }, { schema, validationSchema });
+    expect(helper.generate).toHaveBeenCalledTimes(2);
+  });
+  it('preserves zero-repair configuration for additional local constraints', async () => {
+    const agent = create(config()); helper.generate.mockResolvedValue(response('{"answer":""}'));
+    await expect(agent.invokeHelper('extractor', 'Extract.', { schema, validationSchema: { type: 'object', properties: { answer: { minLength: 1 } } }, maxRepairAttempts: 0 })).rejects.toBeInstanceOf(HelperOutputError);
+    expect(helper.generate).toHaveBeenCalledTimes(1);
+  });
+
   it('repairs once, shares the same task budget and supports explicit escalation to another configured role', async () => {
     const agent = create(config()); const task = shared({ maxCalls: 3 });
     helper.generate.mockResolvedValueOnce(response('broken')).mockResolvedValueOnce(response('{"answer":"REPAIRED"}'));

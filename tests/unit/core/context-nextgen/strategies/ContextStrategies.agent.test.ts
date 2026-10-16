@@ -37,6 +37,67 @@ async function fixture(extra: Partial<ModelExecutionConfig> = {}, strict = false
   agent.context.addInputItems(items); return { agent, main, helper, storage, raw };
 }
 describe('Stage 07 Agent helper integration', () => {
+  it.each(['run', 'stream'] as const)('%s repairs the actual Google all-empty summary before main dispatch', async mode => {
+    const { agent, main, helper } = await fixture({}, true);
+    const valid = helper.getMockImplementation()!;
+    helper.mockImplementationOnce(async o => response('{"completedWork":[],"activeWork":[],"constraints":[],"decisions":[],"uncertainties":[],"artifacts":[],"actionReceipts":[]}', o.model));
+    helper.mockImplementation(valid);
+    const task = new ModelTask({ limits: { maxCalls: 3 } }); tasks.push(task);
+    if (mode === 'run') await agent.run('Continue.', { modelTask: task });
+    else for await (const _event of agent.stream('Continue.', { modelTask: task })) { /* Drain completion. */ }
+    expect(helper).toHaveBeenCalledTimes(2); expect(main).toHaveBeenCalledTimes(1);
+    expect(task.snapshot().invocations.map(i => [i.purpose, i.phase, i.outputValidation])).toEqual([
+      ['compactor', 'generation', 'failed'], ['compactor', 'repair', 'passed'], ['main', 'generation', undefined],
+    ]);
+    expect(agent.context.lastPreparation!.compaction).toMatchObject({ applied: true, helperInvoked: true });
+    expect(agent.context.lastPreparation!.compaction?.fallback).toBeUndefined();
+    expect(JSON.stringify(helper.mock.calls[1]![0].input)).toContain('Original task and evidence');
+  });
+  it.each(['empty', 'whitespace', 'oversized'] as const)('repairs %s content within the original helper allowance', async invalid => {
+    const { agent, helper, main } = await fixture({}, true); const valid = helper.getMockImplementation()!;
+    helper.mockImplementationOnce(async o => {
+      const good = await valid(o); const value = JSON.parse(good.output_text!);
+      if (invalid === 'empty') value.completedWork = [];
+      else value.completedWork[0].text = invalid === 'whitespace' ? ' \n\t ' : 'x'.repeat(601);
+      return response(JSON.stringify(value), o.model);
+    });
+    await agent.run('Continue.');
+    expect(helper).toHaveBeenCalledTimes(2); expect(main).toHaveBeenCalledTimes(1);
+    expect(agent.getModelUsage()!.invocations.filter(i => i.purpose === 'compactor').map(i => i.outputValidation)).toEqual(['failed', 'passed']);
+    expect(agent.context.lastPreparation!.compaction?.fallback).toBeUndefined();
+  });
+  it.each(['completedWork', 'activeWork', 'constraints', 'decisions', 'uncertainties', 'artifacts', 'actionReceipts'])('accepts a nonempty %s section without requiring a new fixed section', async section => {
+    const { agent, helper, main } = await fixture({}, true); const valid = helper.getMockImplementation()!;
+    helper.mockImplementation(async o => { const good = await valid(o); const value = JSON.parse(good.output_text!); value[section] = value.completedWork; if (section !== 'completedWork') value.completedWork = []; return response(JSON.stringify(value), o.model); });
+    await agent.run('Continue.'); expect(helper).toHaveBeenCalledTimes(1); expect(main).toHaveBeenCalledTimes(1);
+    expect(agent.context.lastPreparation!.compaction?.fallback).toBeUndefined();
+  });
+  it.each([false, true])('bounds repeated empty output and preserves fallback=%s', async strict => {
+    const { agent, helper, main, raw } = await fixture({}, strict);
+    helper.mockImplementation(async o => response('{"completedWork":[],"activeWork":[],"constraints":[],"decisions":[],"uncertainties":[],"artifacts":[],"actionReceipts":[]}', o.model));
+    if (strict) {
+      await expect(agent.run('Continue.')).rejects.toThrow('bounded repair'); expect(main).not.toHaveBeenCalled();
+      expect(JSON.stringify(await agent.getContextState())).toContain(raw.padding);
+    } else { await agent.run('Continue.'); expect(main).toHaveBeenCalledTimes(1); expect(agent.context.lastPreparation!.compaction).toMatchObject({ fallback: 'mask', applied: true }); }
+    expect(helper).toHaveBeenCalledTimes(2); expect(agent.getModelUsage()!.invocations.filter(i => i.purpose === 'compactor').map(i => i.outputValidation)).toEqual(['failed', 'failed']);
+  });
+  it('does not dispatch empty-summary repair beyond the shared call budget', async () => {
+    const { agent, helper, main, raw } = await fixture({}, true);
+    helper.mockImplementation(async o => response('{"completedWork":[],"activeWork":[],"constraints":[],"decisions":[],"uncertainties":[],"artifacts":[],"actionReceipts":[]}', o.model));
+    const task = new ModelTask({ limits: { maxCalls: 1 } }); tasks.push(task);
+    await expect(agent.run('Continue.', { modelTask: task })).rejects.toThrow();
+    expect(helper).toHaveBeenCalledTimes(1); expect(main).not.toHaveBeenCalled();
+    expect(task.snapshot().invocations[0]?.outputValidation).toBe('failed'); expect(task.snapshot().totals.calls).toBe(1);
+    expect(JSON.stringify(await agent.getContextState())).toContain(raw.padding);
+  });
+  it('cancels an empty-summary repair without applying or dispatching main', async () => {
+    const { agent, helper, main, raw } = await fixture({}, true);
+    helper.mockImplementationOnce(async o => response('{"completedWork":[],"activeWork":[],"constraints":[],"decisions":[],"uncertainties":[],"artifacts":[],"actionReceipts":[]}', o.model));
+    let entered!: () => void; const ready = new Promise<void>(r => { entered = r; });
+    helper.mockImplementation(async () => { entered(); return new Promise(() => {}); });
+    const work = agent.run('Continue.'); const rejected = expect(work).rejects.toThrow(); await ready; agent.cancel(); await rejected;
+    expect(helper).toHaveBeenCalledTimes(2); expect(main).not.toHaveBeenCalled(); expect(JSON.stringify(await agent.getContextState())).toContain(raw.padding);
+  });
   it.each(['run', 'stream'] as const)('%s shares main/helper task accounting without a second compaction owner', async mode => {
     const { agent, main, helper } = await fixture(); const task = new ModelTask({ limits: { maxCalls: 4 } }); tasks.push(task);
     if (mode === 'run') expect((await agent.run('Continue.', { modelTask: task })).output_text).toBe('MAIN_DONE');

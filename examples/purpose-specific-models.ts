@@ -16,9 +16,10 @@ function mockModel(window: number, helper: boolean): ITextProvider {
     async generate(options: TextGenerateOptions): Promise<LLMResponse> {
       const observed = JSON.stringify(options.input).includes(marker);
       if (!observed) throw new Error('Fixture dependency missing: expected the source marker in this packet');
-      // The first helper answer fails the schema. Its repair must still contain
+      // The first answer fits the native shape but fails local nonempty validation.
+      // Its repair must still contain
       // the selected marker; the evidence assertion above also checks the repair.
-      const text = helper ? ++requests === 1 ? '{"answer":7}' : JSON.stringify({ answer: marker }) : marker;
+      const text = helper ? ++requests === 1 ? '{"answer":""}' : JSON.stringify({ answer: marker }) : marker;
       return { id: 'offline-response', object: 'response', created_at: 1, model: options.model, status: 'completed',
         output_text: text, output: [{ type: 'message', role: MessageRole.ASSISTANT, content: [{ type: ContentType.OUTPUT_TEXT, text }] }],
         usage: { input_tokens: 20, output_tokens: 5, total_tokens: 25 } };
@@ -58,7 +59,7 @@ export async function demonstratePurposeModels(live = false): Promise<void> {
     const extracted = await agent.invokeHelper<{ answer: string }>('extractor', context => {
       console.log(`Resolved helper: ${context.model}; input estimate allowance: ${context.maxInputTokens}`);
       return `Source marker=${marker}. Extract it exactly.`;
-    }, { schema, modelTask: task });
+    }, { schema, validationSchema: { type: 'object', properties: { answer: { type: 'string', minLength: 1 } } }, modelTask: task });
     const main = await agent.run(`Return this extracted marker verbatim: ${extracted.value.answer}`, { modelTask: task });
     const verified = await agent.invokeHelper<{ answer: string }>('verifier',
       `Source marker=${marker}; proposed answer=${main.output_text}`, { schema, modelTask: task });

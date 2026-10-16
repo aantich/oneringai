@@ -31,13 +31,24 @@ describe.skipIf(!enabled).sequential('Stage 07 live structured compaction and he
       if (entry.strategy === 'structured-summary') { expect(result.compaction?.fallback).toBeUndefined(); expect(result.compaction?.helperModel).toBeTruthy(); expect(result.usage.invocations.some(i => i.purpose === 'compactor' && i.outputValidation === 'passed')).toBe(true); }
     }, 150000);
   }
-  for (const p of providers) it(`${p.name} automatic helper produces a valid referenced summary before main`, async () => {
+  for (const p of providers) for (const injectRecordedEmpty of p.name === 'google' ? [false, true] : [false]) it(`${p.name} automatic helper produces a valid referenced summary before main${injectRecordedEmpty ? ' after recorded empty-output injection' : ''}`, async () => {
     if (!p.key) throw new Error(`Missing ${p.name} key for explicitly enabled live test`);
     const capturedResponses: Array<Record<string, unknown>> = [];
     const originalGoogleGenerate = GoogleTextProvider.prototype.generate;
+    let injected = false;
     const capture = p.name === 'google' ? vi.spyOn(GoogleTextProvider.prototype, 'generate').mockImplementation(async function (this: GoogleTextProvider, options) {
       const response = await originalGoogleGenerate.call(this, options);
-      capturedResponses.push({ requestShape: typeof options.input === 'string' ? 'text-packet' : 'managed-items', model: response.model, status: response.status, stopReason: response.stop_reason, text: response.output_text, outputTypes: response.output.map(item => item.type), usage: response.usage });
+      const originalText = response.output_text;
+      const injectHere = injectRecordedEmpty && !injected && typeof options.input === 'string';
+      if (injectHere) {
+        injected = true;
+        // Reproduce the exact recorded failure after an actual provider call.
+        // The bounded repair that follows must also use the actual provider.
+        const text = '{"completedWork":[],"activeWork":[],"constraints":[],"decisions":[],"uncertainties":[],"artifacts":[],"actionReceipts":[]}';
+        response.output_text = text;
+        response.output = [{ type: 'message', role: MessageRole.ASSISTANT, content: [{ type: ContentType.OUTPUT_TEXT, text }] }];
+      }
+      capturedResponses.push({ requestShape: typeof options.input === 'string' ? 'text-packet' : 'managed-items', model: response.model, status: response.status, stopReason: response.stop_reason, text: response.output_text, ...(injectHere ? { faultInjected: 'recorded-empty-summary', actualProviderText: originalText } : {}), outputTypes: response.output.map(item => item.type), usage: response.usage });
       return response;
     }) : undefined;
     const name = `stage07-live-${p.name}`; Connector.create({ name, vendor: p.vendor, auth: { type: 'api_key', apiKey: p.key } });
@@ -71,10 +82,13 @@ describe.skipIf(!enabled).sequential('Stage 07 live structured compaction and he
       const response = await agent.run('Return the marker and exact original account/status.', { modelTask: task,
         responseFormat: { type: 'json_schema', name: 'probe', strict: true, schema: { type: 'object', properties: { marker: { type: 'string' }, account: { type: 'string' }, status: { type: 'string' } }, required: ['marker', 'account', 'status'], additionalProperties: false } } });
       const value = response.output_parsed ?? JSON.parse(response.output_text!);
-      report.push({ kind: 'provider-probe', provider: p.name, capturedResponses, model: response.model, parsed: value, diagnostic, repeats, reads, usage: task.snapshot() });
+      report.push({ kind: 'provider-probe', provider: p.name, injectRecordedEmpty, capturedResponses, model: response.model, parsed: value, diagnostic, repeats, reads, usage: task.snapshot() });
       expect(value).toEqual({ marker, account: 'live-scope', status: 'completion-unknown' }); expect(repeats).toBe(0); expect(reads).toBeGreaterThan(0); expect(diagnostic?.applied).toBe(true); expect(diagnostic?.fallback).toBeUndefined(); expect(diagnostic?.helperModel).toBeTruthy();
-      expect(task.snapshot().invocations[0]).toMatchObject({ purpose: 'compactor', status: 'succeeded', outputValidation: 'passed' });
-    } catch (error) { report.push({ kind: 'provider-probe-failure', provider: p.name, capturedResponses, diagnostic, repeats, reads, usage: task.snapshot(), error: error instanceof Error ? error.name : 'unknown' }); throw error; }
+      if (injectRecordedEmpty) {
+        expect(injected).toBe(true);
+        expect(task.snapshot().invocations.slice(0, 2).map(i => [i.purpose, i.phase, i.outputValidation])).toEqual([['compactor', 'generation', 'failed'], ['compactor', 'repair', 'passed']]);
+      } else expect(task.snapshot().invocations[0]).toMatchObject({ purpose: 'compactor', status: 'succeeded', outputValidation: 'passed' });
+    } catch (error) { report.push({ kind: 'provider-probe-failure', provider: p.name, injectRecordedEmpty, capturedResponses, diagnostic, repeats, reads, usage: task.snapshot(), error: error instanceof Error ? error.name : 'unknown' }); throw error; }
     finally { capture?.mockRestore(); agent.destroy(); task.destroy(); Connector.remove(name); }
   }, 150000);
 });

@@ -1,0 +1,42 @@
+Purpose-model local-validation recovery (synthetic provider):
+{"level":"warn","time":1792160003347,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+Resolved helper: offline-helper; input estimate allowance: 768
+{"level":"info","time":1792160003690,"component":"Agent","agentName":"agent-1792160003320","model":"offline-main","connector":"example-purpose-main-3723bbc5-1a00-4ee9-bc54-2dfe2e013c69","inputPreview":"Return this extracted marker verbatim: ALPHA_6","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 86/8192 (2.1%) tools=0 conversation=0 system=68 input=18 | sysPrompt=38 PI=0
+{"level":"info","time":1792160003843,"component":"Agent","agentName":"agent-1792160003320","model":"offline-main","connector":"example-purpose-main-3723bbc5-1a00-4ee9-bc54-2dfe2e013c69","duration":153,"msg":"Agent run completed"}
+extractor/generation: offline-helper, tokens=25, model cost=unknown, validation=failed
+extractor/repair: offline-helper, tokens=25, model cost=unknown, validation=passed
+main/generation: offline-main, tokens=25, model cost=unknown
+verifier/generation: offline-helper, tokens=25, model cost=unknown, validation=passed
+Offline plumbing check passed; model answers and usage are synthetic.
+
+Actual AMOS loop/checkpoint walkthrough (synthetic provider):
+{"level":"info","time":1792160037606,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","inputPreview":"Verify the artifact.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 1837/128000 (1.5%) tools=841 conversation=0 system=986 input=10 | sysPrompt=148 PI=0 pluginInstr=788
+[Agent] [Context] iteration=1 tokens: 1871/128000 (1.5%) tools=841 conversation=20 system=986 input=24 | sysPrompt=148 PI=0 pluginInstr=788
+{"level":"info","time":1792160037648,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","duration":42,"msg":"Agent run completed"}
+Loop input_needed: Recovery allowance exhausted; input needed. Recovery attempts: 1.
+{
+  "version": 1,
+  "executionId": "exec_5d8b114a-dfb9-4fb5-9428-215024908fbf",
+  "phase": "input_needed",
+  "iterations": 2,
+  "recoveryAttempts": 1,
+  "observedToolCalls": 0,
+  "consecutiveToolFailures": 0,
+  "repeatedResults": 0,
+  "stalledIterations": 0,
+  "uncertainEffects": [],
+  "completion": {
+    "complete": false,
+    "reason": "Required artifact missing"
+  },
+  "reason": "recovery_exhausted",
+  "detail": "predicate_unmet",
+  "status": "blocked"
+}
+{"level":"info","time":1792160037676,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","sessionId":"1792160037650_iwp98yi","msg":"Session loaded"}
+{"level":"info","time":1792160037677,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","inputPreview":"Continue after host verification.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 1900/128000 (1.5%) tools=841 conversation=59 system=986 input=14 | sysPrompt=148 PI=0 pluginInstr=788
+{"level":"info","time":1792160037680,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","duration":3,"msg":"Agent run completed"}
+Checkpoint has conversation data, not restored counters/checker authority. Host supplied a fresh completion check.

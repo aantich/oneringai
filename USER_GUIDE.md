@@ -19106,3 +19106,71 @@ Generic plugin configuration retains external factory records; declare built-in
 configuration with `satisfies TaskStatePluginConfig` for strict scope/task checks.
 Fresh validation passes 7,795 units and the unchanged public consumers. No package
 release or automatic completion policy is claimed.
+
+## Bounded managed-loop policies (Stage 10, opt-in branch capability)
+
+Set `AgentConfig.loopPolicy` or `RunOptions.loopPolicy` to add bounded recovery
+and host completion checks to managed run/stream. `null` disables a configured
+policy for one execution. Without a policy, existing behavior is preserved.
+
+The shared allowance defaults to two recovery interventions. Failed actual tools,
+repeated normalized read observations, optional unchanged host progress keys and
+false completion predicates consume it. Repeated admitted writes/unknown effects
+stop before replay; uncertain outcomes require host inspection. Application
+`success:false` data does not become a framework failure.
+
+`completion(context)` is host-owned and checks actual required state/evidence;
+return `{complete, reason?, feedback?}`. A successful model response or submitted
+job alone is insufficient. Optional `response.loop`/existing stream-event `loop`
+metadata and `agent.getLoopDiagnostics()` report phase/reason/workflow status
+separately from provider status and assistant text. Missing completion callbacks
+yield an ordinary answer without a workflow completion assertion.
+
+Checks receive bounded frozen observations/task state and a cancellation signal;
+they are timed, validated and rejected on stale task/owner/conversation identity.
+Callbacks/counters are not session authority and are never restored. Use explicit
+ModelTask sharing for helper checks and inspect actual model-call usage.
+
+With the policy enabled, stream invokes shared `before:tool` preparation; the
+unconfigured legacy trace remains unchanged. Streamed candidate text stays
+provisional. JSON final repair remains run-only. Async/suspended work retains
+waiting-external semantics. Direct, realtime and external SDK-owned loops remain
+outside this policy. Read [the complete recipe](docs/AGENT_LOOP_POLICIES.md) for
+limits, effects, persistence and exact support boundaries. Build first and run
+`npm run example:feedback-agent`, `npm run example:loop-equivalence`, or
+`npm run example:amos-loop` offline. `npm run test:loop:live` opts into billable
+three-provider checks. No package release is claimed.
+
+All five [Stage 10 review findings](docs/designs/STAGE_10_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16)
+are fixed and validated. Normal-run and explicit async delivery import authentic
+outcomes before receiving policy dispatch/checks, retaining admitted effect across
+re-registration. Legacy uncorrelated deliveries use receipt effect or unknown;
+missing possible-action outcomes block conservatively. Normal policy stops commit
+settled results without extra model calls/journal entries. JSON formatting appends
+a separate answer after a stopped tool turn, preserving exact calls/results across
+new input and file checkpoints. Class/prototype callbacks retain their original
+host receiver and private state; callbacks/thresholds are captured per execution.
+These internal corrections add no required public/session/storage members.
+See [corrective evidence](docs/evaluations/STAGE_10_CORRECTIONS_VALIDATION.json)
+for 7,950 units, 135 live cases / 147 scenarios and 22 offline examples, including
+the retained first Google empty-summary failure. No release is claimed.
+
+### Local helper validation and completion scope (Stage 10 review fixes)
+
+Optional `HelperCallOptions.validationSchema` is an additional synchronous local
+JSON schema. Both it and `schema` must pass inside the same zero-or-one repair
+allowance. It appears as prompt guidance while native `response_format` stays
+portable; it cannot weaken `schema`. Invalid schemas fail before packet building,
+and repair uses the selected evidence and existing task/input/output/deadline bounds.
+
+Automatic structured compaction uses this to reject all-empty summaries and
+blank/overlong entries before helper success. Actual Google recovery from the
+recorded empty body is now verified without masking fallback. Standalone summary
+callbacks retain one invocation and the existing transaction/fallback behavior.
+Pending loop completion/progress checks also reject changes to tool principal,
+account/connector selections, identities, roles, session or connector authority.
+See [helper recipe](docs/MODEL_TASKS_AND_HELPERS.md),
+[context recipe](docs/CONTEXT_STRATEGIES.md), and
+[latest review/fix evidence](docs/designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md).
+Final gates pass 7,988 units, 136 live cases / 148 scenarios and 22 offline examples;
+no breaking API, new defaults or release.

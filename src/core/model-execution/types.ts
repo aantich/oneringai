@@ -65,6 +65,8 @@ export interface HelperCallOptions {
   contextTransfer?: boolean;
   /** Host-supplied JSON schema, validated locally after generation. */
   schema: Record<string, unknown>;
+  /** Additional local JSON-schema constraints supplied as prompt guidance; both schemas must pass within the same repair allowance. */
+  validationSchema?: Record<string, unknown>;
   /** Explicit sharing only; omission creates an independent owned helper task. */
   modelTask?: ModelTask;
   parentInvocationId?: string;

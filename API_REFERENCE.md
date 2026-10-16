@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-10-15
+**Generated:** 2026-10-16
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -29,7 +29,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Utilities](#utilities) (10 items)
 - [Interfaces](#interfaces) (86 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (785 items)
+- [Other](#other) (791 items)
 
 ## Core
 
@@ -37,7 +37,7 @@ Core classes for authentication, agents, and providers
 
 ### Agent `class`
 
-📍 [`src/core/Agent.ts:401`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:409`](src/core/Agent.ts)
 
 Agent class - represents an AI assistant with tool calling capabilities
 
@@ -301,6 +301,16 @@ async completeExternalExecution(result: ExternalExecutionResult = {}): Promise&l
 - `result`: `ExternalExecutionResult` *(optional)* (default: `{}`)
 
 **Returns:** `Promise&lt;LLMResponse&gt;`
+
+#### `getLoopDiagnostics()`
+
+Detached diagnostics for the active/latest opt-in managed execution.
+
+```typescript
+getLoopDiagnostics(): AgentLoopDiagnostics | undefined
+```
+
+**Returns:** `AgentLoopDiagnostics | undefined`
 
 #### `run()`
 
@@ -1745,7 +1755,7 @@ isDisposed(): boolean
 
 ### AgentConfig `interface`
 
-📍 [`src/core/Agent.ts:82`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:86`](src/core/Agent.ts)
 
 Agent configuration - extends BaseAgentConfig with Agent-specific options
 
@@ -1754,6 +1764,7 @@ Agent configuration - extends BaseAgentConfig with Agent-specific options
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `loopPolicy?` | `loopPolicy?: AgentLoopPolicy | null;` | Optional bounded recovery and host completion checks. Disabled by default. |
 | `instructions?` | `instructions?: string;` | System instructions for the agent |
 | `temperature?` | `temperature?: number;` | Temperature for generation |
 | `maxIterations?` | `maxIterations?: number;` | Maximum iterations for tool calling loop |
@@ -1807,7 +1818,7 @@ Example: `toolExecutionTimeout: 300000` (5 minutes hard cap per tool call) |
 
 ### AgentContextRolloverOptions `interface`
 
-📍 [`src/core/Agent.ts:214`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:222`](src/core/Agent.ts)
 
 Options for {@link Agent.rolloverContext}.
 
@@ -1965,7 +1976,7 @@ Fetch options with additional connector-specific settings
 
 ### ExternalExecutionOptions `interface`
 
-📍 [`src/core/Agent.ts:239`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:247`](src/core/Agent.ts)
 
 Options for a non-LLM execution owned by an external transport.
 
@@ -1983,7 +1994,7 @@ Options for a non-LLM execution owned by an external transport.
 
 ### ExternalExecutionResult `interface`
 
-📍 [`src/core/Agent.ts:254`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:262`](src/core/Agent.ts)
 
 Terminal data supplied when an external execution is completed.
 
@@ -2003,7 +2014,7 @@ Terminal data supplied when an external execution is completed.
 
 ### ExternalToolCall `interface`
 
-📍 [`src/core/Agent.ts:247`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:255`](src/core/Agent.ts)
 
 A function call received from an external model transport.
 
@@ -2022,7 +2033,7 @@ A function call received from an external model transport.
 
 ### RunOptions `interface`
 
-📍 [`src/core/Agent.ts:182`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:188`](src/core/Agent.ts)
 
 Per-call options for run() and stream().
 These override the agent-level config for this single invocation.
@@ -2032,6 +2043,7 @@ These override the agent-level config for this single invocation.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `loopPolicy?` | `loopPolicy?: AgentLoopPolicy | null;` | Per-execution override; null disables a configured managed-loop policy. |
 | `modelTask?` | `modelTask?: ModelTask;` | Explicit process-local budget/usage shared with helper or other agent calls. |
 | `thinking?` | `thinking?: ThinkingConfig;` | Vendor-agnostic thinking/reasoning configuration |
 | `temperature?` | `temperature?: number;` | Temperature for generation |
@@ -2063,7 +2075,7 @@ type AgentEventListener = (agentId: string, agentName: string, event: string, da
 
 ### AgentRuntimeConfigSnapshot `type`
 
-📍 [`src/core/Agent.ts:162`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:168`](src/core/Agent.ts)
 
 Agent runtime options exposed by getRuntimeConfigSnapshot().
 
@@ -2089,7 +2101,7 @@ type AgentRuntimeConfigSnapshot = Pick&lt;AgentConfig,
 
 ### AgentSessionConfig `type`
 
-📍 [`src/core/Agent.ts:77`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:81`](src/core/Agent.ts)
 
 Session configuration for Agent (same as BaseSessionConfig)
 
@@ -15721,7 +15733,7 @@ Limits apply to one explicitly shared, process-local task.
 
 ### ModelTaskSnapshot `interface`
 
-📍 [`src/core/model-execution/types.ts:123`](src/core/model-execution/types.ts)
+📍 [`src/core/model-execution/types.ts:125`](src/core/model-execution/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -28494,7 +28506,7 @@ export function hydrateCustomTool(
 
 ### isToolCallArgumentsDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:360`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:364`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallArgumentsDelta(
@@ -28506,7 +28518,7 @@ export function isToolCallArgumentsDelta(
 
 ### isToolCallArgumentsDone `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:366`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:370`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallArgumentsDone(
@@ -28518,7 +28530,7 @@ export function isToolCallArgumentsDone(
 
 ### isToolCallStart `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:356`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:360`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallStart(event: StreamEvent): event is ToolCallStartEvent
@@ -29393,7 +29405,7 @@ destroy(): void
 
 ### AudioChunkErrorEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:296`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:300`](src/domain/entities/StreamEvent.ts)
 
 Audio chunk error - TTS synthesis failed for a text chunk
 
@@ -29413,7 +29425,7 @@ Audio chunk error - TTS synthesis failed for a text chunk
 
 ### AudioChunkReadyEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:275`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:279`](src/domain/entities/StreamEvent.ts)
 
 Audio chunk ready - TTS synthesis complete for a text chunk
 
@@ -29437,7 +29449,7 @@ Audio chunk ready - TTS synthesis complete for a text chunk
 
 ### AudioStreamCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:306`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:310`](src/domain/entities/StreamEvent.ts)
 
 Audio stream complete - all TTS chunks have been processed
 
@@ -29457,7 +29469,7 @@ Audio stream complete - all TTS chunks have been processed
 
 ### CompactionEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:231`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:235`](src/domain/entities/StreamEvent.ts)
 
 Encrypted compaction state emitted by the provider. Preserve this item for
 stateless continuation replay; the content is intentionally opaque.
@@ -29482,7 +29494,7 @@ stateless continuation replay; the content is intentionally opaque.
 
 ### ErrorEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:258`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:262`](src/domain/entities/StreamEvent.ts)
 
 Error event
 
@@ -29586,6 +29598,7 @@ Iteration complete - end of agentic loop iteration
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `loop?` | `loop?: import('./AgentLoop.js').AgentLoopDiagnostics;` | Optional managed-loop progress, without changing event discriminants. |
 | `type` | `type: StreamEventType.ITERATION_COMPLETE;` | - |
 | `iteration` | `iteration: number;` | - |
 | `tool_calls_count` | `tool_calls_count: number;` | - |
@@ -29639,7 +29652,7 @@ Text output complete for this item
 
 ### ProviderStateEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:246`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:250`](src/domain/entities/StreamEvent.ts)
 
 Opaque provider-owned block that must be replayed on the next request.
 
@@ -29661,7 +29674,7 @@ Opaque provider-owned block that must be replayed on the next request.
 
 ### ReasoningDeltaEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:199`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:203`](src/domain/entities/StreamEvent.ts)
 
 Reasoning/thinking delta - incremental reasoning output
 
@@ -29683,7 +29696,7 @@ Reasoning/thinking delta - incremental reasoning output
 
 ### ReasoningDoneEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:212`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:216`](src/domain/entities/StreamEvent.ts)
 
 Reasoning/thinking complete for this item
 
@@ -29707,7 +29720,7 @@ Reasoning/thinking complete for this item
 
 ### ResponseCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:165`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:167`](src/domain/entities/StreamEvent.ts)
 
 Response complete - final event
 
@@ -29716,6 +29729,7 @@ Response complete - final event
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `loop?` | `loop?: import('./AgentLoop.js').AgentLoopDiagnostics;` | Optional managed-loop verdict; provider status keeps its existing meaning. |
 | `type` | `type: StreamEventType.RESPONSE_COMPLETE;` | - |
 | `status` | `status: 'completed' | 'incomplete' | 'failed';` | - |
 | `usage` | `usage: TokenUsage;` | - |
@@ -29917,7 +29931,7 @@ type OrderedStreamOutputEntry = | {
 
 ### StreamEvent `type`
 
-📍 [`src/domain/entities/StreamEvent.ts:317`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:321`](src/domain/entities/StreamEvent.ts)
 
 Union type of all stream events
 Discriminated by 'type' field for type narrowing
@@ -29949,7 +29963,7 @@ type StreamEvent = | ResponseCreatedEvent
 
 ### isAudioChunkError `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:396`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:400`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioChunkError(event: StreamEvent): event is AudioChunkErrorEvent
@@ -29959,7 +29973,7 @@ export function isAudioChunkError(event: StreamEvent): event is AudioChunkErrorE
 
 ### isAudioChunkReady `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:392`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:396`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioChunkReady(event: StreamEvent): event is AudioChunkReadyEvent
@@ -29969,7 +29983,7 @@ export function isAudioChunkReady(event: StreamEvent): event is AudioChunkReadyE
 
 ### isAudioStreamComplete `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:400`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:404`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioStreamComplete(event: StreamEvent): event is AudioStreamCompleteEvent
@@ -29979,7 +29993,7 @@ export function isAudioStreamComplete(event: StreamEvent): event is AudioStreamC
 
 ### isCompaction `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:380`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:384`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isCompaction(event: StreamEvent): event is CompactionEvent
@@ -29989,7 +30003,7 @@ export function isCompaction(event: StreamEvent): event is CompactionEvent
 
 ### isErrorEvent `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:388`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:392`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isErrorEvent(event: StreamEvent): event is ErrorEvent
@@ -29999,7 +30013,7 @@ export function isErrorEvent(event: StreamEvent): event is ErrorEvent
 
 ### isOutputTextDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:352`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:356`](src/domain/entities/StreamEvent.ts)
 
 Type guards for specific events
 
@@ -30011,7 +30025,7 @@ export function isOutputTextDelta(event: StreamEvent): event is OutputTextDeltaE
 
 ### isReasoningDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:372`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:376`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isReasoningDelta(event: StreamEvent): event is ReasoningDeltaEvent
@@ -30021,7 +30035,7 @@ export function isReasoningDelta(event: StreamEvent): event is ReasoningDeltaEve
 
 ### isReasoningDone `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:376`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:380`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isReasoningDone(event: StreamEvent): event is ReasoningDoneEvent
@@ -30031,7 +30045,7 @@ export function isReasoningDone(event: StreamEvent): event is ReasoningDoneEvent
 
 ### isResponseComplete `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:384`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:388`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isResponseComplete(event: StreamEvent): event is ResponseCompleteEvent
@@ -30041,7 +30055,7 @@ export function isResponseComplete(event: StreamEvent): event is ResponseComplet
 
 ### isStreamEvent `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:342`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:346`](src/domain/entities/StreamEvent.ts)
 
 Type guard to check if event is a specific type
 
@@ -30424,7 +30438,7 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ### ModelAttemptRecord `interface`
 
-📍 [`src/core/model-execution/types.ts:94`](src/core/model-execution/types.ts)
+📍 [`src/core/model-execution/types.ts:96`](src/core/model-execution/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -30447,7 +30461,7 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ### ModelCallDescriptor `interface`
 
-📍 [`src/core/model-execution/types.ts:83`](src/core/model-execution/types.ts)
+📍 [`src/core/model-execution/types.ts:85`](src/core/model-execution/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -30509,7 +30523,7 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ### ModelInvocationRecord `interface`
 
-📍 [`src/core/model-execution/types.ts:107`](src/core/model-execution/types.ts)
+📍 [`src/core/model-execution/types.ts:109`](src/core/model-execution/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -50700,6 +50714,120 @@ Map of all event names to their payload types
 
 ---
 
+### AgentLoopCheckContext `interface`
+
+📍 [`src/core/agent-loop/types.ts:7`](src/core/agent-loop/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `executionId` | `executionId: string;` | - |
+| `iteration` | `iteration: number;` | - |
+| `outputText` | `outputText: string;` | Bounded candidate text, not proof that any action completed. |
+| `outputTruncated` | `outputTruncated: boolean;` | - |
+| `observations` | `observations: readonly ReadonlyData&lt;AgentLoopObservation&gt;[];` | Last 100 observed executions, as detached metadata. |
+| `observedToolCalls` | `observedToolCalls: number;` | - |
+| `observationsTruncated` | `observationsTruncated: boolean;` | - |
+| `taskState?` | `taskState?: ReadonlyData&lt;TaskStateSnapshot&gt;;` | - |
+| `signal` | `signal: AbortSignal;` | - |
+
+</details>
+
+---
+
+### AgentLoopCompletionResult `interface`
+
+📍 [`src/core/agent-loop/types.ts:21`](src/core/agent-loop/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `complete` | `complete: boolean;` | - |
+| `reason?` | `reason?: string;` | Human-readable host verdict; maximum 400 characters. |
+| `feedback?` | `feedback?: string;` | Explicit host feedback for another bounded model turn; maximum 2000 characters. |
+
+</details>
+
+---
+
+### AgentLoopDiagnostics `interface`
+
+📍 [`src/domain/entities/AgentLoop.ts:10`](src/domain/entities/AgentLoop.ts)
+
+Detached execution diagnostics, independent of provider generation status.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `version` | `version: 1;` | - |
+| `executionId` | `executionId: string;` | - |
+| `phase` | `phase: 'running' | 'recovering' | 'complete' | 'input_needed' | 'stopped';` | - |
+| `status?` | `status?: TaskStatus;` | Existing task vocabulary. Ordinary unchecked answers have no completion status. |
+| `reason?` | `reason?: AgentLoopReason;` | - |
+| `detail?` | `detail?: string;` | - |
+| `iterations` | `iterations: number;` | - |
+| `recoveryAttempts` | `recoveryAttempts: number;` | - |
+| `observedToolCalls` | `observedToolCalls: number;` | - |
+| `consecutiveToolFailures` | `consecutiveToolFailures: number;` | - |
+| `repeatedResults` | `repeatedResults: number;` | - |
+| `stalledIterations` | `stalledIterations: number;` | - |
+| `completion?` | `completion?: { complete: boolean; reason?: string };` | - |
+| `uncertainEffects` | `uncertainEffects: Array&lt;{ toolName: string; callId?: string; executionId?: string }&gt;;` | - |
+
+</details>
+
+---
+
+### AgentLoopObservation `interface`
+
+📍 [`src/domain/entities/AgentLoop.ts:29`](src/domain/entities/AgentLoop.ts)
+
+Metadata only; raw arguments/results stay in existing tool/evidence surfaces.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `toolName` | `toolName: string;` | - |
+| `callId?` | `callId?: string;` | - |
+| `effect` | `effect: 'read' | 'write' | 'unknown';` | - |
+| `outcome?` | `outcome?: Omit&lt;ToolExecutionOutcome, 'error'&gt;;` | - |
+
+</details>
+
+---
+
+### AgentLoopPolicy `interface`
+
+📍 [`src/core/agent-loop/types.ts:30`](src/core/agent-loop/types.ts)
+
+Opt-in managed text-loop policy. Host callbacks are never restored from sessions.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `maxRecoveryAttempts?` | `maxRecoveryAttempts?: number;` | Shared allowance for failure/progress/completion recovery; default 2. |
+| `maxRepeatedResults?` | `maxRepeatedResults?: number;` | Identical normalized read call/results before intervention; default 3. |
+| `maxConsecutiveToolFailures?` | `maxConsecutiveToolFailures?: number;` | Consecutive failed tool observations before stopping; default 3. |
+| `maxStalledIterations?` | `maxStalledIterations?: number;` | Unchanged host progress keys before intervention; default 3. Requires progressKey. |
+| `repeatableReadTools?` | `repeatableReadTools?: readonly string[];` | Explicitly permit repeated results for these host-declared read tools. |
+| `progressKey?` | `progressKey?: (context: Readonly&lt;AgentLoopCheckContext&gt;) =&gt; string | Promise&lt;string&gt;;` | Host-owned progress state; never infer semantic progress from model prose. |
+| `completion?` | `completion?: (context: Readonly&lt;AgentLoopCheckContext&gt;) =&gt; AgentLoopCompletionResult | Promise&lt;AgentLoopCompletionResult&gt;;` | Host verifies its required evidence/state. Omission adds no workflow verifier. |
+| `callbackTimeoutMs?` | `callbackTimeoutMs?: number;` | Deadline for each host callback; default 10000 ms, at most 60000 ms. |
+
+</details>
+
+---
+
 ### AgentPackageConnectorResolution `interface`
 
 📍 [`src/portable/types.ts:146`](src/portable/types.ts)
@@ -54727,6 +54855,7 @@ Result of a grep operation
 | `maxOutputTokens?` | `maxOutputTokens?: number;` | Optional tighter output cap; cannot increase the configured role limit. |
 | `contextTransfer?` | `contextTransfer?: boolean;` | - |
 | `schema` | `schema: Record&lt;string, unknown&gt;;` | Host-supplied JSON schema, validated locally after generation. |
+| `validationSchema?` | `validationSchema?: Record&lt;string, unknown&gt;;` | Additional local JSON-schema constraints supplied as prompt guidance; both schemas must pass within the same repair allowance. |
 | `modelTask?` | `modelTask?: ModelTask;` | Explicit sharing only; omission creates an independent owned helper task. |
 | `parentInvocationId?` | `parentInvocationId?: string;` | - |
 | `signal?` | `signal?: AbortSignal;` | - |
@@ -54756,7 +54885,7 @@ Result of a grep operation
 
 ### HelperResult `interface`
 
-📍 [`src/core/model-execution/types.ts:76`](src/core/model-execution/types.ts)
+📍 [`src/core/model-execution/types.ts:78`](src/core/model-execution/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -57403,6 +57532,7 @@ optional fields (`identifiers`, `aliases`, `metadata`, `permissions`,
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `loop?` | `loop?: import('./AgentLoop.js').AgentLoopDiagnostics;` | Opt-in managed-loop diagnostics; separate from provider generation status. |
 | `id` | `id: string;` | - |
 | `object` | `object: 'response';` | - |
 | `created_at` | `created_at: number;` | - |
@@ -62937,6 +63067,19 @@ type AgenticLoopEventName = keyof AgenticLoopEvents
 
 ---
 
+### AgentLoopReason `type`
+
+📍 [`src/domain/entities/AgentLoop.ts:4`](src/domain/entities/AgentLoop.ts)
+
+```typescript
+type AgentLoopReason = 'answer_returned' | 'completed' | 'predicate_unmet'
+  | 'recovery_exhausted' | 'repeated_results' | 'repeated_action' | 'tool_failures'
+  | 'no_progress' | 'uncertain_effect' | 'pending_async' | 'refusal' | 'provider_failed' | 'provider_incomplete'
+  | 'iteration_limit' | 'budget_exhausted' | 'checker_error' | 'state_changed' | 'cancelled' | 'suspended'
+```
+
+---
+
 ### AgentPackageContextFactory `type`
 
 📍 [`src/portable/types.ts:127`](src/portable/types.ts)
@@ -62961,7 +63104,7 @@ type AgentPackageProtocolVersion = typeof AGENT_PACKAGE_PROTOCOL_VERSION
 
 ### AgentResponse `type`
 
-📍 [`src/domain/entities/Response.ts:132`](src/domain/entities/Response.ts)
+📍 [`src/domain/entities/Response.ts:134`](src/domain/entities/Response.ts)
 
 ```typescript
 type AgentResponse = LLMResponse

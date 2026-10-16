@@ -26,6 +26,7 @@ export {
 
 // ============ Agent Config (from heavy Agent.ts — type-only, erased at compile) ============
 export type { AgentConfig, AgentSessionConfig, RunOptions } from '../core/Agent.js';
+export type { AgentLoopPolicy, AgentLoopDiagnostics, AgentLoopReason, AgentLoopObservation, AgentLoopCheckContext, AgentLoopCompletionResult } from '../core/agent-loop/types.js';
 export type { BaseAgentConfig, BaseSessionConfig, DirectCallOptions } from '../core/BaseAgent.js';
 
 // ============ Context NextGen Types (type-only from heavy files) ============

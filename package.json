@@ -170,7 +170,24 @@
     "docs/evaluations/STAGE_04_CORRECTIONS_AMOS_OFFLINE.txt",
     "docs/designs/STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md",
     "docs/evaluations/STAGE_04_SECOND_REVIEW.json",
-    "docs/evaluations/STAGE_04_SECOND_CORRECTIONS_VALIDATION.json"
+    "docs/evaluations/STAGE_04_SECOND_CORRECTIONS_VALIDATION.json",
+    "docs/AGENT_LOOP_POLICIES.md",
+    "docs/designs/STAGE_10_IMPLEMENTATION.md",
+    "docs/evaluations/STAGE_10_VALIDATION.json",
+    "docs/evaluations/STAGE_10_LIVE.json",
+    "docs/evaluations/STAGE_10_AMOS_OFFLINE.txt",
+    "examples/feedback-driven-agent.ts",
+    "examples/run-stream-equivalence.ts",
+    "examples/agent-loop/scripted-provider.ts",
+    "docs/designs/STAGE_10_REVIEW_AND_FIX_PLAN.md",
+    "docs/evaluations/STAGE_10_REVIEW.json",
+    "docs/evaluations/STAGE_10_CORRECTIONS_VALIDATION.json",
+    "docs/evaluations/STAGE_10_CORRECTIONS_LIVE.json",
+    "docs/evaluations/STAGE_10_CORRECTIONS_AMOS_OFFLINE.txt",
+    "docs/designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md",
+    "docs/evaluations/STAGE_10_SECOND_CORRECTIONS_VALIDATION.json",
+    "docs/evaluations/STAGE_10_SECOND_CORRECTIONS_LIVE.json",
+    "docs/evaluations/STAGE_10_SECOND_CORRECTIONS_OFFLINE.txt"
   ],
   "scripts": {
     "generate:tools": "tsx scripts/generate-tool-registry.ts",
@@ -250,7 +267,11 @@
     "example:amos-context-strategies": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
     "example:task-state": "node --import tsx examples/task-state-workflow.ts",
     "example:amos-task-state": "node --import tsx apps/amos/examples/task-state-offline.ts",
-    "test:task-state:live": "RUN_TASK_STATE_LIVE=1 vitest run tests/integration/text/TaskState.live.integration.test.ts"
+    "test:task-state:live": "RUN_TASK_STATE_LIVE=1 vitest run tests/integration/text/TaskState.live.integration.test.ts",
+    "example:feedback-agent": "node --import tsx examples/feedback-driven-agent.ts",
+    "example:loop-equivalence": "node --import tsx examples/run-stream-equivalence.ts",
+    "example:amos-loop": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
+    "test:loop:live": "RUN_AGENT_LOOP_LIVE=1 vitest run tests/integration/text/AgentLoop.live.integration.test.ts"
   },
   "keywords": [
     "ai",

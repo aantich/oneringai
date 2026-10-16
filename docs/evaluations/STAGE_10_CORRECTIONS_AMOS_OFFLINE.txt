@@ -1,0 +1,29 @@
+{"level":"info","time":1792144100324,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","inputPreview":"Verify the artifact.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 1837/128000 (1.5%) tools=841 conversation=0 system=986 input=10 | sysPrompt=148 PI=0 pluginInstr=788
+[Agent] [Context] iteration=1 tokens: 1871/128000 (1.5%) tools=841 conversation=20 system=986 input=24 | sysPrompt=148 PI=0 pluginInstr=788
+{"level":"info","time":1792144100343,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","duration":18,"msg":"Agent run completed"}
+Loop input_needed: Recovery allowance exhausted; input needed. Recovery attempts: 1.
+{
+  "version": 1,
+  "executionId": "exec_3d1bdde1-49d0-481c-b21f-2c88e154e6be",
+  "phase": "input_needed",
+  "iterations": 2,
+  "recoveryAttempts": 1,
+  "observedToolCalls": 0,
+  "consecutiveToolFailures": 0,
+  "repeatedResults": 0,
+  "stalledIterations": 0,
+  "uncertainEffects": [],
+  "completion": {
+    "complete": false,
+    "reason": "Required artifact missing"
+  },
+  "reason": "recovery_exhausted",
+  "detail": "predicate_unmet",
+  "status": "blocked"
+}
+{"level":"info","time":1792144100351,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","sessionId":"1792144100343_srrug2b","msg":"Session loaded"}
+{"level":"info","time":1792144100351,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","inputPreview":"Continue after host verification.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 1900/128000 (1.5%) tools=841 conversation=59 system=986 input=14 | sysPrompt=148 PI=0 pluginInstr=788
+{"level":"info","time":1792144100352,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","duration":1,"msg":"Agent run completed"}
+Checkpoint has conversation data, not restored counters/checker authority. Host supplied a fresh completion check.

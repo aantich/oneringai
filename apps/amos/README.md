@@ -433,3 +433,46 @@ latter requires a terminal status and explicit host proof; it does not infer rem
 completion. Archive records/proof first where needed. Edits reject while running,
 make no model call and use the existing session checkpoint flow. The offline AMOS
 walkthrough demonstrates recovery at 100 records, a new constraint and save/reload.
+
+## Bounded loop diagnostics (Stage 10, opt-in)
+
+Optional JSON configuration `loopPolicy` enables bounded managed-loop thresholds
+and repeatable-read allowlists; it is absent by default. For example:
+
+```json
+{ "loopPolicy": { "maxRecoveryAttempts": 2, "maxRepeatedResults": 3 } }
+```
+
+Host embedders can call `AgentRunner.setLoopPolicy(policy | null)` when idle to
+add a completion/progress callback or disable the policy. This override stays in
+memory and never becomes saved session authority. A fresh runner needs fresh host
+callbacks. Class-method policies retain their original host receiver, including
+private verification state. `/context loop` displays active/latest phase, stopping reason, recovery
+count and diagnostic JSON without another model call. Terminal output renders
+loop progress and final workflow notices separately from assistant prose.
+Missing evidence reports input needed; it does not manufacture an approval request.
+
+Existing app event discriminants remain unchanged. Stream iteration notices carry
+optional `loop` metadata on the existing `tool:complete` notification surface
+without a `tool` field; final metadata uses `done`. Consumers must inspect optional
+fields instead of treating every notification as proof of an executed tool.
+Existing adapters may omit the optional inspector/setter. Cancellation releases
+the adapter and ignores late checker verdicts. Checkpoints retain conversation
+and configured plugin state, not checker functions or recovery counters. Normal
+policy stops retain connected calls/results across the next input and checkpoint;
+run-only JSON formatting appends a separate answer after a stopped tool turn.
+
+After building the root library, run `npm run example:amos-loop` from the root
+for the credential-free runner/inspection/checkpoint walkthrough. It cleans up
+temporary files. Read [Loop Policies](../../docs/AGENT_LOOP_POLICIES.md) for tool
+effects, failure limits, provisional stream text and external/realtime boundaries.
+
+
+Structured-summary helper recovery now validates nonempty/nonblank bounded content
+inside the existing helper repair allowance. `/helpers usage` distinguishes the
+failed generation from its charged repair; `/context strategy` reports compaction
+and fallback. The strategy/CLI/configuration defaults are unchanged. The public
+`purpose-specific-models` example demonstrates portable native shape plus local
+nonempty validation; no new AMOS command or saved configuration field is required.
+Loop completion/progress verdicts also reject account/identity/role/session or
+connector-scope rebinding while a host check is pending.

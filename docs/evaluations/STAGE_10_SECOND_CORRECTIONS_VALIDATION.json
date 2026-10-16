@@ -1,0 +1,2337 @@
+{
+  "protocol": "stage10-second-corrections-v1",
+  "recordedAt": "2026-10-16T14:21:27.909978+00:00",
+  "localDate": "2026-10-16",
+  "timezone": "Europe/Zurich",
+  "branch": "version2",
+  "baseCommit": "d8fce9422558565e5a547ce7650f02229f5988fc",
+  "status": "passed",
+  "stageComplete": true,
+  "authorization": "User requested another review and explicitly required fixing the recorded Google failure. Both reproduced findings corrected; no breaking API, later stage, commit, push or release.",
+  "findings": [
+    {
+      "id": "G1",
+      "priority": 2,
+      "status": "fixed",
+      "cause": "All-empty summary matched native schema and skipped helper repair; semantic rejection happened afterward.",
+      "fix": "Portable native schema plus optional additional local validationSchema inside the existing repair loop. Automatic summary requires nonempty, nonblank bounded content. Both schemas must pass; no outer retry or replay."
+    },
+    {
+      "id": "S1",
+      "priority": 1,
+      "status": "fixed",
+      "cause": "Pending loop completion omitted tool principal/account/identity/role/session and connector authority.",
+      "fix": "Capture/recheck the tool principal and connector scope alongside existing task/owner/context guards; stale verdicts become state_changed/blocked."
+    }
+  ],
+  "compatibility": {
+    "breakingAPI": false,
+    "publicAddition": "HelperCallOptions.validationSchema?: Record<string, unknown>",
+    "defaultAdditionalValidation": false,
+    "maximumRepairAttemptsUnchanged": true,
+    "nativeSchemaUnchanged": true,
+    "newRequiredSessionStorageFields": false,
+    "eventDiscriminantsChanged": false,
+    "defaultLoopPolicyChanged": false,
+    "internalOnly": [
+      "contextSummaryValidationSchema",
+      "expanded loop scope capture"
+    ]
+  },
+  "unit": {
+    "passed": 7988,
+    "failed": 0,
+    "skipped": 0,
+    "files": 360,
+    "success": true
+  },
+  "focused": {
+    "passed": 454,
+    "failed": 0,
+    "skipped": 0,
+    "files": 10,
+    "success": true
+  },
+  "affectedUnitFiles": [
+    {
+      "path": "tests/unit/core/Agent.loopCorrections.test.ts",
+      "cases": [
+        {
+          "name": "Stage 10 review corrections R1/R2 run imports authentic successful read after replacement",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1/R2 run imports authentic failed read after replacement",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1/R2 run imports authentic successful write after replacement",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1/R2 run imports authentic failed write after replacement",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1/R2 continuation imports authentic successful read after replacement",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1/R2 continuation imports authentic failed read after replacement",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1/R2 continuation imports authentic successful write after replacement",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1/R2 continuation imports authentic failed write after replacement",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R2 run preserves admitted write/unknown completion with evidence enabled",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1 run imports an unknown async write before dispatch or checking completion",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R2 run retains the admitted write effect after read re-registration",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1 run enforces imported read-failure limits before another model call",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R2 run retains correlation when a legacy observer omits optional outcome",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R2 continuation preserves admitted write/unknown completion with evidence enabled",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1 continuation imports an unknown async write before dispatch or checking completion",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R2 continuation retains the admitted write effect after read re-registration",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1 continuation enforces imported read-failure limits before another model call",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R2 continuation retains correlation when a legacy observer omits optional outcome",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R2 treats uncorrelated legacy deliveries conservatively without inventing outcomes",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1 deduplicates same-run settlement and repeated authentic delivery identities",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1 run rejects reentrant scope before observation dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1 run rejects reentrant cancel before observation dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1 continuation rejects reentrant scope before observation dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1 continuation rejects reentrant cancel before observation dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1 run rechecks account scope after an awaited imported progress callback",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1 continuation rechecks account scope after an awaited imported progress callback",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1 run retains failed evidence for host repair without replay",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R1 continuation retains failed evidence for host repair without replay",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R3 formatting preserves stopped calls and exact results; failed evidence=false",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R3 formatting preserves stopped calls and exact results; failed evidence=true",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R3 formatting a guarded queued write appends an answer without erasing the original call",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections review 2 run rejects a pending completion after account rebinding",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections review 2 run rejects a pending completion after accounts rebinding",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections review 2 run rejects a pending completion after identities rebinding",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections review 2 run rejects a pending completion after roles rebinding",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections review 2 run rejects a pending completion after session rebinding",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections review 2 run rejects a pending completion after registry rebinding",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R3/R4 run preserves tool_failures stopped batches before new input",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R3/R4 run preserves repeated_action stopped batches before new input",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R4 run commits a stopped tool turn before accepting new input",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R3/R4 run persists stopped connected groups and journal once; evidence disabled",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R3/R4 run persists stopped connected groups and journal once; evidence stored",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R3/R4 run persists stopped connected groups and journal once; evidence failed",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R5 run invokes prototype completion with its private host receiver",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R5 run binds inherited progress and snapshots callbacks/options",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R5 run supports own host callbacks",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R5 run supports arrow host callbacks",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R5 run supports bound host callbacks",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections review 2 stream rejects a pending completion after account rebinding",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections review 2 stream rejects a pending completion after accounts rebinding",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections review 2 stream rejects a pending completion after identities rebinding",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections review 2 stream rejects a pending completion after roles rebinding",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections review 2 stream rejects a pending completion after session rebinding",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections review 2 stream rejects a pending completion after registry rebinding",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R3/R4 stream preserves tool_failures stopped batches before new input",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R3/R4 stream preserves repeated_action stopped batches before new input",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R4 stream commits a stopped tool turn before accepting new input",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R3/R4 stream persists stopped connected groups and journal once; evidence disabled",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R3/R4 stream persists stopped connected groups and journal once; evidence stored",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R3/R4 stream persists stopped connected groups and journal once; evidence failed",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R5 stream invokes prototype completion with its private host receiver",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R5 stream binds inherited progress and snapshots callbacks/options",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R5 stream supports own host callbacks",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R5 stream supports arrow host callbacks",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 review corrections R5 stream supports bound host callbacks",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "tests/unit/core/Agent.loopPolicy.test.ts",
+      "cases": [
+        {
+          "name": "Stage 10 opt-in managed-loop policies bounds admissions while repeated asynchronous reads have not settled",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies bounds failure identities for a large rejected batch without inventing executions",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies bounds explicitly delivered observation identities before any further managed dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run remains unchanged when disabled and supports an explicit null override",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run rejects premature prose and completes only after a real read observation",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run preserves pending tool results while adding bounded failure feedback",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run exhausts the completion allowance without another model or tool call",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run bounds normalized identical read results before repeating again",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run permits explicit repeatable reads and changed observations",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run never repeats an admitted write, including duplicate calls in one response",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run does not infer a framework failure from an application success:false field",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run handles a host checker exception without exposing backend error text",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run times out an uncooperative check and aborts its provided signal",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run stops a stale check after a same-revision task restore",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run caps predicate recovery at the configured iteration limit",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run never retries a provider refusal through the completion predicate",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run stops after an unknown write timeout and never asks the model to replay it",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run bounds consecutive failures separately from the recovery allowance",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run admits changed read observations while tracking repetition",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run does not infer identical results from oversized observations",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run stops bounded host progress stalling even when call arguments change",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run provides detached frozen receipt metadata to the host check",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run rejects malformed host completion result null",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run rejects malformed host completion result true",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run rejects malformed host completion result {\"complete\":\"yes\"}",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run rejects malformed host completion result {\"complete\":true,\"authority\":\"system\"}",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run rejects malformed host completion result {\"complete\":true,\"reason\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run rejects completion-result accessors without invoking them",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run cancels a pending check, releases its lease, and ignores its late verdict",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run cannot recover past a shared ModelTask call limit",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run shares opt-in before-tool preparation without changing a skipped tool into evidence",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run uses modified hook arguments for effect admission and retains permission enforcement",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run retains its unconfigured legacy hook trace while sharing response decisions",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run exposes bounded candidate text and explicit observation omission metadata",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run retains existing bounded empty-response retry behavior before checking completion",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run never replays a write to repair failed evidence storage",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run never promotes provider failed to verified completion",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run never promotes provider incomplete to verified completion",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream remains unchanged when disabled and supports an explicit null override",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream rejects premature prose and completes only after a real read observation",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream preserves pending tool results while adding bounded failure feedback",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream exhausts the completion allowance without another model or tool call",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream bounds normalized identical read results before repeating again",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream permits explicit repeatable reads and changed observations",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream never repeats an admitted write, including duplicate calls in one response",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream does not infer a framework failure from an application success:false field",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream handles a host checker exception without exposing backend error text",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream times out an uncooperative check and aborts its provided signal",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream stops a stale check after a same-revision task restore",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream caps predicate recovery at the configured iteration limit",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream never retries a provider refusal through the completion predicate",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream stops after an unknown write timeout and never asks the model to replay it",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream bounds consecutive failures separately from the recovery allowance",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream admits changed read observations while tracking repetition",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream does not infer identical results from oversized observations",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream stops bounded host progress stalling even when call arguments change",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream provides detached frozen receipt metadata to the host check",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream rejects malformed host completion result null",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream rejects malformed host completion result true",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream rejects malformed host completion result {\"complete\":\"yes\"}",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream rejects malformed host completion result {\"complete\":true,\"authority\":\"system\"}",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream rejects malformed host completion result {\"complete\":true,\"reason\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream rejects completion-result accessors without invoking them",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream cancels a pending check, releases its lease, and ignores its late verdict",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream cannot recover past a shared ModelTask call limit",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream shares opt-in before-tool preparation without changing a skipped tool into evidence",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream uses modified hook arguments for effect admission and retains permission enforcement",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream retains its unconfigured legacy hook trace while sharing response decisions",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream exposes bounded candidate text and explicit observation omission metadata",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream retains existing bounded empty-response retry behavior before checking completion",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream never replays a write to repair failed evidence storage",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream never promotes provider failed to verified completion",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream never promotes provider incomplete to verified completion",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies uses the actual repaired nonstream JSON candidate for its host completion check",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies persists task/evidence state without restoring callbacks or execution counters",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies reports pending asynchronous work without invoking a completion predicate, then checks explicit continuation",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies preserves suspension persistence and requires a fresh managed execution for completion",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies compares equivalent opted-in run and stream hook/action traces",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run checks shared helper admission against the same explicit ModelTask",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies run preserves permission denial without inventing an execution or uncertain effect",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream checks shared helper admission against the same explicit ModelTask",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies stream preserves permission denial without inventing an execution or uncertain effect",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies keeps host policy callbacks out of an external transport execution",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies retains settled unacknowledged effects and releases the owning stream on early closure",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"maxRecoveryAttempts\":-1} before model/action dispatch and releases its lease",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"maxRecoveryAttempts\":null} before model/action dispatch and releases its lease",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"maxRepeatedResults\":0} before model/action dispatch and releases its lease",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"maxConsecutiveToolFailures\":1.5} before model/action dispatch and releases its lease",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"maxStalledIterations\":0} before model/action dispatch and releases its lease",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"callbackTimeoutMs\":60001} before model/action dispatch and releases its lease",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"completion\":true} before model/action dispatch and releases its lease",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"progressKey\":\"text\"} before model/action dispatch and releases its lease",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"repeatableReadTools\":\"probe\"} before model/action dispatch and releases its lease",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 10 opt-in managed-loop policies rejects invalid policy %j before model/action dispatch and releases its lease",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "tests/unit/core/Agent.modelExecution.test.ts",
+      "cases": [
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence keeps observed pricing uncertainty through a final override: {\"service_tier\":\"standard\"} {\"service_tier\":\"priority\"} {\"service_tier\":\"standard\"}",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence keeps observed pricing uncertainty through a final override: {\"processing_mode\":\"interactive\"} {\"processing_mode\":\"batch\"} {\"processing_mode\":\"interactive\"}",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence keeps observed pricing uncertainty through a final override: {\"speed\":\"standard\"} {\"speed\":\"fast\"} {\"speed\":\"standard\"}",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence keeps observed pricing uncertainty through a final override: {\"processing_mode\":\"interactive\"} {\"service_tier\":\"priority\"} {\"service_tier\":\"standard\"}",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence keeps observed pricing uncertainty through a final override: {\"speed\":\"fast\"} {\"service_tier\":\"priority\"} {\"speed\":\"standard\",\"service_tier\":\"standard\"}",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence keeps observed pricing uncertainty through a final override: {\"service_tier\":\"unknown-premium\"} {} {\"service_tier\":\"standard\"}",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence observes final-only contradictory pricing and keeps its cost unknown",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence keeps uncertainty through a partial final snapshot while honoring count overrides",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence prices consistent modes/tier aliases normally and resets uncertainty for a later execution",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence retains only selected source evidence in extractor parse/schema repair",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence retains only selected source evidence in verifier parse/schema repair",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence retains only selected source evidence in compactor parse/schema repair",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence preserves source constraints during a repaired explicit compaction before replacing history",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence fails before a repair that cannot fit its original evidence plus candidate, without silently trimming either",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence retains the shared repair budget {\"maxCalls\":1} with original evidence included",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence retains the shared repair budget {\"maxTokens\":1280} with original evidence included",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 second review regressions: external pricing and repair evidence cancels a pending evidence-preserving repair and keeps late usage on its original task",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership isolates repeated schema IDs across calls and agents, while resolving local refs and formats",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership keeps standalone helper tasks independent of concurrent main completion: main-first",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership keeps standalone helper tasks independent of concurrent main completion: helper-first",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership supports an explicitly shared helper in an awaited execution hook without destroying the caller task",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership captures caller task ownership despite mutable run direct options",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership captures caller task ownership despite mutable stream direct options",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership retains caller ownership on direct failed after the options lose their task reference",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership retains caller ownership on direct cancelled after the options lose their task reference",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership preserves unknown external usage for missing reports and blocks further bounded charges",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership preserves unknown external usage for empty reports and blocks further bounded charges",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership preserves unknown external usage for metadata reports and blocks further bounded charges",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership preserves unknown external usage for input-only reports and blocks further bounded charges",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership preserves unknown external usage for total-only reports and blocks further bounded charges",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership records external completed outcome independently of actual zero counts",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership records external failed outcome independently of actual zero counts",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership records external cancelled outcome independently of actual zero counts",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership records external incomplete outcome independently of actual zero counts",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership combines incremental count availability and per-field final overrides without inventing missing zeros",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership accepts supported fixed-budget extended thinking for claude-haiku-4-5-20251001",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership accepts supported fixed-budget extended thinking for claude-sonnet-4-5-20250929",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership rejects invalid Anthropic thinking before constructing a helper packet: {\"enabled\":true,\"budgetTokens\":512}",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership rejects invalid Anthropic thinking before constructing a helper packet: {\"enabled\":true,\"budgetTokens\":4096}",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 06 review regressions: helpers and execution ownership rejects invalid Anthropic thinking before constructing a helper packet: {\"enabled\":true,\"mode\":\"adaptive\"}",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution run preserves disabled single-model behavior without extra requests",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution stream preserves disabled single-model behavior without extra requests",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution direct preserves disabled single-model behavior without extra requests",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution direct-stream preserves disabled single-model behavior without extra requests",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution shares extraction/main/verification usage and preserves main context, provider and tool authority",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution run records its own main-model usage once",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution stream records its own main-model usage once",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution direct records its own main-model usage once",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution direct-stream records its own main-model usage once",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution applies direct structured repair accounting without recounting the merged response",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution accounts for managed JSON repair separately, with no folded-usage double count",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution validates helper JSON schema and bounds repairs rather than accepting parseable wrong shapes",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution repairs additional local constraints without changing the native schema",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution additional constraints cannot weaken the original output schema",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects invalid local validation schema null before packet/dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects invalid local validation schema %j before packet/dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects invalid local validation schema {\"undefined\":true} before packet/dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects invalid local validation schema {\"type\":\"not-a-schema\"} before packet/dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects invalid local validation schema {\"unknownKeyword\":true} before packet/dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution keeps native and local schema roots independent when identifiers collide",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution snapshots local constraints before the packet builder can mutate them",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution preserves zero-repair configuration for additional local constraints",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution repairs once, shares the same task budget and supports explicit escalation to another configured role",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution does not dispatch a repair after exhausting the shared call budget",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution resolves connector access before building a helper packet and preserves scoped denial",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution captures the admitted helper connector even if a packet builder changes the registry",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects unsupported effort, native schema requirements and invalid packets before dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects native/opaque items and oversized text instead of transferring or silently trimming them",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution requires explicit cross-connector context transfer and strips opaque state for rollover",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution does not serialize helper credentials, task authority or usage reservations with context",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution cancels an asynchronous packet builder before dispatch when its task expires",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution destroy cancels a helper that ignores its signal and observes late settlement without updating context",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution attributes external final usage once even when incremental usage and a final snapshot both arrive",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution preserves unknown or mixed external pricing metadata without changing the legacy response usage",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution inherits restrictive host data policy and never requests helper cache state",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects unrequested helper tools even alongside valid JSON, without dispatching or retrying them",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution validates output formats locally and permits only a tighter per-call helper output cap",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution fails hard-budget admission for opaque custom providers unless the host attests single attempts",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution agent.cancel binds to a standalone helper, while a late result cannot contaminate the next main task",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution direct cleans up its owned task when structured preflight fails",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution direct-stream cleans up its owned task when structured preflight fails",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects unsupported host schemas before building or dispatching the packet: {\"type\":\"object\",\"unknownKeyword\":true}",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects unsupported host schemas before building or dispatching the packet: {\"type\":\"not-a-json-schema-type\"}",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects unsupported host schemas before building or dispatching the packet: {\"undefined\":true,\"type\":\"object\"}",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects incomplete helper output without implicit escalation",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects refusal helper output without implicit escalation",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects oversized helper output without implicit escalation",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects invalid main output bounds 0 before dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects invalid main output bounds 2048 before dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects an explicit cap increase, unknown capacity and native-service fees under a monetary ceiling",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution checks registered vendor identity and enabled reasoning before evaluating a helper packet",
+          "status": "passed"
+        },
+        {
+          "name": "optional Agent model execution rejects nonpositive helper capacity and out-of-contract repair configuration before dispatch",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "tests/unit/apps/amos/LoopPolicy.test.ts",
+      "cases": [
+        {
+          "name": "AMOS opt-in managed loop visibility retains class callback authority through the run adapter",
+          "status": "passed"
+        },
+        {
+          "name": "AMOS opt-in managed loop visibility retains class callback authority through the stream adapter",
+          "status": "passed"
+        },
+        {
+          "name": "AMOS opt-in managed loop visibility roundtrips optional JSON configuration while old defaults remain disabled",
+          "status": "passed"
+        },
+        {
+          "name": "AMOS opt-in managed loop visibility shows blocked host diagnostics separately from assistant command text",
+          "status": "passed"
+        },
+        {
+          "name": "AMOS opt-in managed loop visibility preserves legacy text/done events and carries policy iterations on existing notification events",
+          "status": "passed"
+        },
+        {
+          "name": "AMOS opt-in managed loop visibility does not restore callbacks or counters in a fresh runner after a file checkpoint",
+          "status": "passed"
+        },
+        {
+          "name": "AMOS opt-in managed loop visibility cancels a pending host check, releases the adapter and ignores its late verdict",
+          "status": "passed"
+        },
+        {
+          "name": "AMOS opt-in managed loop visibility supports old adapters without the optional inspector and an unused current adapter",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/strategies/ContextStrategies.agent.test.ts",
+      "cases": [
+        {
+          "name": "Stage 07 Agent helper integration run repairs the actual Google all-empty summary before main dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration stream repairs the actual Google all-empty summary before main dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration repairs empty content within the original helper allowance",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration repairs whitespace content within the original helper allowance",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration repairs oversized content within the original helper allowance",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration accepts a nonempty completedWork section without requiring a new fixed section",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration accepts a nonempty activeWork section without requiring a new fixed section",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration accepts a nonempty constraints section without requiring a new fixed section",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration accepts a nonempty decisions section without requiring a new fixed section",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration accepts a nonempty uncertainties section without requiring a new fixed section",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration accepts a nonempty artifacts section without requiring a new fixed section",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration accepts a nonempty actionReceipts section without requiring a new fixed section",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration bounds repeated empty output and preserves fallback=false",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration bounds repeated empty output and preserves fallback=true",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration does not dispatch empty-summary repair beyond the shared call budget",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration cancels an empty-summary repair without applying or dispatching main",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration run shares main/helper task accounting without a second compaction owner",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration stream shares main/helper task accounting without a second compaction owner",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration delivers new source results to the real next request after a summary",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration one schema repair is accounted; a second invalid output falls back without more helper calls",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration a call budget exhausted by the helper prevents main dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration strict mode rejects transfer before helper/main dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration strict mode rejects input-limit before helper/main dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration strict mode rejects missing-role before helper/main dispatch",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration cancel propagates during the automatic helper and retains raw state",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration context changes during a real helper boundary reject apply instead of losing new input",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration opaque replay items stay exact and never enter the helper packet",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration compacts real admitted tool results with optional undefined metadata",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration configuring a compactor alone does not change automatic algorithmic behavior",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration run: known no-op compaction leaves the sole model-call budget for main",
+          "status": "passed"
+        },
+        {
+          "name": "Stage 07 Agent helper integration stream: known no-op compaction leaves the sole model-call budget for main",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "regressions": {
+    "summaryAgentNewCases": 16,
+    "helperContractNewCases": 10,
+    "loopPrincipalNewCases": 12,
+    "totalNew": 38,
+    "stage10Cases": 167,
+    "stage10CoreOriginal": 94,
+    "loopCorrectionCore": 65,
+    "amosCases": 8
+  },
+  "coverage": {
+    "scope": "ModelExecutor, conversation-compaction, and agent-loop modules only; not whole-Agent coverage",
+    "summary": {
+      "total": {
+        "lines": {
+          "total": 648,
+          "covered": 629,
+          "skipped": 0,
+          "pct": 97.06
+        },
+        "statements": {
+          "total": 648,
+          "covered": 629,
+          "skipped": 0,
+          "pct": 97.06
+        },
+        "functions": {
+          "total": 59,
+          "covered": 57,
+          "skipped": 0,
+          "pct": 96.61
+        },
+        "branches": {
+          "total": 649,
+          "covered": 585,
+          "skipped": 0,
+          "pct": 90.13
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/core/agent-loop/LoopController.ts": {
+        "lines": {
+          "total": 218,
+          "covered": 210,
+          "skipped": 0,
+          "pct": 96.33
+        },
+        "functions": {
+          "total": 21,
+          "covered": 20,
+          "skipped": 0,
+          "pct": 95.23
+        },
+        "statements": {
+          "total": 218,
+          "covered": 210,
+          "skipped": 0,
+          "pct": 96.33
+        },
+        "branches": {
+          "total": 217,
+          "covered": 203,
+          "skipped": 0,
+          "pct": 93.54
+        }
+      },
+      "src/core/agent-loop/decisions.ts": {
+        "lines": {
+          "total": 11,
+          "covered": 11,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 2,
+          "covered": 2,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 11,
+          "covered": 11,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 12,
+          "covered": 11,
+          "skipped": 0,
+          "pct": 91.66
+        }
+      },
+      "src/core/agent-loop/types.ts": {
+        "lines": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 1,
+          "covered": 1,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 1,
+          "covered": 1,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "src/core/context-nextgen/strategies/conversation-compaction.ts": {
+        "lines": {
+          "total": 218,
+          "covered": 212,
+          "skipped": 0,
+          "pct": 97.24
+        },
+        "functions": {
+          "total": 18,
+          "covered": 18,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 218,
+          "covered": 212,
+          "skipped": 0,
+          "pct": 97.24
+        },
+        "branches": {
+          "total": 202,
+          "covered": 185,
+          "skipped": 0,
+          "pct": 91.58
+        }
+      },
+      "src/core/model-execution/ModelExecutor.ts": {
+        "lines": {
+          "total": 201,
+          "covered": 196,
+          "skipped": 0,
+          "pct": 97.51
+        },
+        "functions": {
+          "total": 17,
+          "covered": 16,
+          "skipped": 0,
+          "pct": 94.11
+        },
+        "statements": {
+          "total": 201,
+          "covered": 196,
+          "skipped": 0,
+          "pct": 97.51
+        },
+        "branches": {
+          "total": 217,
+          "covered": 185,
+          "skipped": 0,
+          "pct": 85.25
+        }
+      }
+    }
+  },
+  "live": {
+    "passed": 136,
+    "failed": 0,
+    "skipped": 0,
+    "files": 8,
+    "success": true,
+    "scenarios": 148,
+    "providers": [
+      "openai",
+      "anthropic",
+      "google"
+    ],
+    "record": "STAGE_10_SECOND_CORRECTIONS_LIVE.json",
+    "forcedGoogleRecoveryVerified": true,
+    "unavailableProviders": []
+  },
+  "offline": {
+    "count": 22,
+    "scripts": [
+      {
+        "script": "example:agentic-baseline",
+        "command": "node --import tsx examples/agentic-evaluation-baseline.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "f1b367f88b669af6beb1416a1425b823f6c66a1efd8b654474376dcfc0d80bc9",
+        "log": "/tmp/oneringai-second-review-offline-agentic-baseline.log"
+      },
+      {
+        "script": "example:context-freshness",
+        "command": "node --import tsx examples/context-compaction-freshness.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "9317708cd926fd6d46ef895164ed6abc6482a6c5af0b920f395af572683dea5c",
+        "log": "/tmp/oneringai-second-review-offline-context-freshness.log"
+      },
+      {
+        "script": "example:context-budget",
+        "command": "node --import tsx examples/context-request-budget.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "bef37035eeb424dd3500f6c8ba6093466b7120f479d9b26e0e0dce1bdee5320d",
+        "log": "/tmp/oneringai-second-review-offline-context-budget.log"
+      },
+      {
+        "script": "example:structured-budget",
+        "command": "node --import tsx examples/structured-output-budget.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "85acc74b90cd68f399d97c19154d1a816ae13e5a283e663308093c058fdbbf23",
+        "log": "/tmp/oneringai-second-review-offline-structured-budget.log"
+      },
+      {
+        "script": "example:amos-context",
+        "command": "node --import tsx apps/amos/examples/context-budget-offline.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "9e40878f7daf68ed5377eb77289bfa0c9842da66b8c639f419f06f64d4d8ae9f",
+        "log": "/tmp/oneringai-second-review-offline-amos-context.log"
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": "node --import tsx examples/tool-outcomes-and-cancellation.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "78d458b06f893c41560f16d7077c0ce2e90193fa107089cd82f704a5ff9a2aeb",
+        "log": "/tmp/oneringai-second-review-offline-tool-outcomes.log"
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "7762bb7100e11d275a19def86d87b561d0790b2ed4d7d3f4c3b85d2b6e5d141d",
+        "log": "/tmp/oneringai-second-review-offline-amos-tool-outcomes.log"
+      },
+      {
+        "script": "example:purpose-models",
+        "command": "node --import tsx examples/purpose-specific-models.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "cfaa9f4c7764dbe4acd9a79105f6dd92d3f6cef700e0103b8b3356b9b4828667",
+        "log": "/tmp/oneringai-second-review-offline-purpose-models.log"
+      },
+      {
+        "script": "example:shared-budget",
+        "command": "node --import tsx examples/shared-run-budget.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "84261248923a4dbfebf4f3a026da031e926e461662a52766eba4e54c49889f47",
+        "log": "/tmp/oneringai-second-review-offline-shared-budget.log"
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": "node --import tsx apps/amos/examples/model-helpers-offline.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "cbb8a1245adc1371c16c95b6ebc91c9d69e6173517ca53984902bb4627283b8e",
+        "log": "/tmp/oneringai-second-review-offline-amos-helpers.log"
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": "node --import tsx examples/durable-tool-evidence.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "a99cff844dacdc42bba7954fe83d85c3044c9b7eec88108677bd73682d4975e8",
+        "log": "/tmp/oneringai-second-review-offline-durable-evidence.log"
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": "node --import tsx examples/evidence-recovery.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "c47529aa1b63561cc72dc38bbee0914397ac34c7f3f363aa73b1721ea17a93d0",
+        "log": "/tmp/oneringai-second-review-offline-evidence-recovery.log"
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": "node --import tsx examples/ambiguous-action-evidence.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "f49a80bbc66dab0c45d14cc14c426a52b7a0a0fe23dba60d47cb4208facc1acd",
+        "log": "/tmp/oneringai-second-review-offline-ambiguous-evidence.log"
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": "node --import tsx apps/amos/examples/evidence-offline.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "15aa523ad95299c56ed58ad04b89ccdf6d2db5b8835a8b1e603d262a9db7b1b3",
+        "log": "/tmp/oneringai-second-review-offline-amos-evidence.log"
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": "node --import tsx examples/evidence-stream-interruption.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "0653c4c44e2e4fe23ca06967cf81b86ef355d73a58e95da34527d673df29a0b1",
+        "log": "/tmp/oneringai-second-review-offline-evidence-interruption.log"
+      },
+      {
+        "script": "example:context-strategies",
+        "command": "node --import tsx examples/context-strategy-comparison.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "324f6fbf8cbd0c9d766c60351d2693eb549e8217a5984495d1374bc6009d306e",
+        "log": "/tmp/oneringai-second-review-offline-context-strategies.log"
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "2720922d5aa332d6caa5b53126645075420e8c92c6ef0e59a585982488ddb7f2",
+        "log": "/tmp/oneringai-second-review-offline-amos-context-strategies.log"
+      },
+      {
+        "script": "example:task-state",
+        "command": "node --import tsx examples/task-state-workflow.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "5f73f6b249e1cab573ca92c69cc0b743773da9a42460729b0be79a370b7ee591",
+        "log": "/tmp/oneringai-second-review-offline-task-state.log"
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": "node --import tsx apps/amos/examples/task-state-offline.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "4578b44a4dc310b5c3f0ddb915e31457297ca65fb33d8d6ad984cfeaec0ae05f",
+        "log": "/tmp/oneringai-second-review-offline-amos-task-state.log"
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": "node --import tsx examples/feedback-driven-agent.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "255588629c3f1f9f9d5cf71f01691bcc82c1a77ca98d24d6b106fd877f8b5f0c",
+        "log": "/tmp/oneringai-second-review-offline-feedback-agent.log"
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": "node --import tsx examples/run-stream-equivalence.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "fd9cc59a7b528ac016fddd54550bb49b1ef300f630563d4998b50c5101c413f5",
+        "log": "/tmp/oneringai-second-review-offline-loop-equivalence.log"
+      },
+      {
+        "script": "example:amos-loop",
+        "command": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
+        "passed": true,
+        "exitCode": 0,
+        "logSHA256": "6cd597829e942af96dba5131c86c90a599a2f7af19a590983715c19fa57cc22a",
+        "log": "/tmp/oneringai-second-review-offline-amos-loop.log"
+      }
+    ]
+  },
+  "publicProof": {
+    "builtControls": [
+      {
+        "build": "esm",
+        "mode": "run",
+        "passed": true,
+        "checks": 2,
+        "reads": 1,
+        "calls": 3
+      },
+      {
+        "build": "esm",
+        "mode": "stream",
+        "passed": true,
+        "checks": 2,
+        "reads": 1,
+        "calls": 3
+      },
+      {
+        "build": "esm",
+        "mode": "disabled",
+        "passed": true,
+        "checks": 0,
+        "reads": 0,
+        "calls": 1
+      },
+      {
+        "build": "esm",
+        "mode": "override",
+        "passed": true,
+        "checks": 0,
+        "reads": 0,
+        "calls": 1
+      },
+      {
+        "build": "cjs",
+        "mode": "run",
+        "passed": true,
+        "checks": 2,
+        "reads": 1,
+        "calls": 3
+      },
+      {
+        "build": "cjs",
+        "mode": "stream",
+        "passed": true,
+        "checks": 2,
+        "reads": 1,
+        "calls": 3
+      },
+      {
+        "build": "cjs",
+        "mode": "disabled",
+        "passed": true,
+        "checks": 0,
+        "reads": 0,
+        "calls": 1
+      },
+      {
+        "build": "cjs",
+        "mode": "override",
+        "passed": true,
+        "checks": 0,
+        "reads": 0,
+        "calls": 1
+      },
+      {
+        "build": "esm",
+        "mode": "class-run",
+        "passed": true,
+        "checks": 1
+      },
+      {
+        "build": "esm",
+        "mode": "class-stream",
+        "passed": true,
+        "checks": 1
+      },
+      {
+        "build": "esm",
+        "mode": "stopped-run",
+        "passed": true,
+        "writes": 1
+      },
+      {
+        "build": "esm",
+        "mode": "stopped-stream",
+        "passed": true,
+        "writes": 1
+      },
+      {
+        "build": "cjs",
+        "mode": "class-run",
+        "passed": true,
+        "checks": 1
+      },
+      {
+        "build": "cjs",
+        "mode": "class-stream",
+        "passed": true,
+        "checks": 1
+      },
+      {
+        "build": "cjs",
+        "mode": "stopped-run",
+        "passed": true,
+        "writes": 1
+      },
+      {
+        "build": "cjs",
+        "mode": "stopped-stream",
+        "passed": true,
+        "writes": 1
+      },
+      {
+        "build": "esm",
+        "mode": "local-validation-repair",
+        "passed": true,
+        "calls": 2
+      },
+      {
+        "build": "cjs",
+        "mode": "local-validation-repair",
+        "passed": true,
+        "calls": 2
+      }
+    ],
+    "script": "import assert from 'node:assert/strict';\nimport { createRequire } from 'node:module';\nimport { writeFile } from 'node:fs/promises';\nimport * as esm from '@everworker/oneringai';\nimport { ScriptedLoopProvider } from '/Users/aantich/dev/oneringai/examples/agent-loop/scripted-provider.ts';\nconst require = createRequire(import.meta.url);\nconst results: unknown[] = [];\nfor (const [build, api] of [['esm', esm], ['cjs', require('@everworker/oneringai')]] as const) {\n  for (const mode of ['run', 'stream', 'disabled', 'override'] as const) {\n    const name = `stage10-public-${build}-${mode}`;\n    let ready = false, checks = 0, reads = 0;\n    const active = mode === 'run' || mode === 'stream';\n    const provider = new ScriptedLoopProvider(active ? [\n      { text: 'Premature' }, { calls: [{ id: 'read', name: 'read_artifact', args: {} }] }, { text: 'Verified' },\n    ] : [{ text: 'Ordinary answer' }]);\n    api.Connector.create({ name, vendor: api.Vendor.OpenAI, auth: { type: 'none' }, options: { provider } });\n    const agent = api.Agent.create({ connector: name, model: 'gpt-4o-mini', maxIterations: 6,\n      context: { model: 'gpt-4o-mini', features: { workingMemory: false, inContextMemory: false } },\n      tools: [{ definition: { type: 'function', function: { name: 'read_artifact', parameters: { type: 'object', properties: {} } } }, output: { effect: 'read' }, execute: async () => { ready = true; reads++; return { id: 'A42' }; } }],\n      ...(mode === 'disabled' ? {} : { loopPolicy: { completion: context => { checks++; return { complete: ready && context.observations.some(o => o.outcome?.status === 'succeeded') }; } } }),\n    });\n    try {\n      let loop;\n      if (mode === 'stream') {\n        let completions = 0;\n        for await (const event of agent.stream('Verify')) if (event.type === api.StreamEventType.RESPONSE_COMPLETE) { loop = event.loop; completions++; }\n        assert.equal(completions, 1);\n      } else loop = (await agent.run('Verify', mode === 'override' ? { loopPolicy: null } : undefined)).loop;\n      if (active) {\n        assert.equal(loop.status, 'completed'); assert.equal(loop.recoveryAttempts, 1);\n        assert.equal(checks, 2); assert.equal(reads, 1); assert.equal(provider.requests.length, 3);\n        const snapshot = agent.getLoopDiagnostics(); snapshot.reason = 'cancelled';\n        assert.equal(agent.getLoopDiagnostics().reason, 'completed');\n        assert.equal(agent.context.tools, agent.tools);\n      } else { assert.equal(loop, undefined); assert.equal(checks, 0); assert.equal(provider.requests.length, 1); }\n      results.push({ build, mode, passed: true, checks, reads, calls: provider.requests.length });\n    } finally { agent.destroy(); api.Connector.remove(name); }\n  }\n}\n\nfor (const [build, api] of [['esm', esm], ['cjs', require('@everworker/oneringai')]] as const) {\n  for (const mode of ['run', 'stream'] as const) {\n    class HostPolicy {\n      maxRecoveryAttempts = 0; #checks = 0;\n      get checks() { return this.#checks; }\n      completion() { this.#checks++; return { complete: false }; }\n    }\n    const name = `class-${build}-${mode}`, policy = new HostPolicy();\n    const provider = new ScriptedLoopProvider([{ text: 'Unchecked candidate' }]);\n    api.Connector.create({ name, vendor: api.Vendor.OpenAI, auth: { type: 'none' }, options: { provider } });\n    const agent = api.Agent.create({ connector: name, model: 'gpt-4o-mini', loopPolicy: policy, context: { model: 'gpt-4o-mini', features: { workingMemory: false, inContextMemory: false } } });\n    try {\n      let loop;\n      if (mode === 'run') loop = (await agent.run('Verify')).loop;\n      else for await (const e of agent.stream('Verify')) if (e.type === api.StreamEventType.RESPONSE_COMPLETE) loop = e.loop;\n      assert.equal(loop.reason, 'recovery_exhausted'); assert.equal(policy.checks, 1); assert.equal(provider.requests.length, 1);\n      results.push({ build, mode: `class-${mode}`, passed: true, checks: policy.checks });\n    } finally { agent.destroy(); api.Connector.remove(name); }\n  }\n  for (const mode of ['run', 'stream'] as const) {\n    const name = `stopped-${build}-${mode}`; let writes = 0;\n    const provider = new ScriptedLoopProvider([{ calls: [{ id: 'call', name: 'submit', args: { job: 'A42' } }] }, ...(mode === 'run' ? [{ text: '{\"message\":\"Stopped\"}' }] : []), { text: 'Continue' }]);\n    api.Connector.create({ name, vendor: api.Vendor.OpenAI, auth: { type: 'none' }, options: { provider } });\n    const agent = api.Agent.create({ connector: name, model: 'gpt-4o-mini', loopPolicy: {}, maxIterations: 1, context: { model: 'gpt-4o-mini', features: { workingMemory: false, inContextMemory: false } }, tools: [{ definition: { type: 'function', function: { name: 'submit', parameters: { type: 'object', properties: {} } } }, output: { effect: 'write' }, execute: async () => { writes++; return 'PUBLIC_RAW_A42'; } }] });\n    try {\n      let loop;\n      if (mode === 'run') loop = (await agent.run('Submit once', { responseFormat: { type: 'json_object' } })).loop;\n      else for await (const e of agent.stream('Submit once')) if (e.type === api.StreamEventType.RESPONSE_COMPLETE) loop = e.loop;\n      assert.equal(loop.reason, 'iteration_limit'); assert.equal(agent.context.getCurrentInput().length, 0);\n      await agent.run('Resume', { loopPolicy: null });\n      assert.ok(JSON.stringify(provider.requests.at(-1).input).includes('PUBLIC_RAW_A42')); assert.equal(writes, 1);\n      results.push({ build, mode: `stopped-${mode}`, passed: true, writes });\n    } finally { agent.destroy(); api.Connector.remove(name); }\n  }\n}\n\nfor (const [build, api] of [['esm', esm], ['cjs', require('@everworker/oneringai')]] as const) {\n const name = `local-repair-${build}`;\n const provider = new ScriptedLoopProvider([{ text: '{\"answer\":\"\"}' }, { text: '{\"answer\":\"VALID\"}' }]);\n const caps = provider.getModelCapabilities.bind(provider);\n provider.getModelCapabilities = () => ({ ...caps(), supportsJSONSchema: true });\n api.Connector.create({ name, vendor: api.Vendor.OpenAI, auth: { type: 'none' }, options: { provider } });\n const agent = api.Agent.create({ connector: name, model: 'gpt-4o-mini', modelExecution: { customProviderAttempts: 'single', helpers: { extractor: { connector: name, model: 'gpt-4o-mini', maxOutputTokens: 128 } } } });\n const task = new api.ModelTask({ limits: { maxCalls: 2 } });\n try {\n  const schema = { type: 'object', properties: { answer: { type: 'string' } }, required: ['answer'], additionalProperties: false };\n  const result = await agent.invokeHelper('extractor', 'Extract the identifier.', { schema, validationSchema: { type: 'object', properties: { answer: { minLength: 1 } } }, modelTask: task });\n  assert.deepEqual(result.value, { answer: 'VALID' });\n  assert.deepEqual(task.snapshot().invocations.map(i => [i.phase, i.outputValidation]), [['generation', 'failed'], ['repair', 'passed']]);\n  assert.deepEqual(provider.requests[0].response_format.json_schema.schema, schema);\n  results.push({ build, mode: 'local-validation-repair', passed: true, calls: provider.requests.length });\n } finally { task.destroy(); agent.destroy(); api.Connector.remove(name); }\n}\nawait writeFile('/tmp/oneringai-second-review-public.json', JSON.stringify(results, null, 2) + '\\n');\nconsole.log(JSON.stringify(results));\n",
+    "unchangedLegacy": {
+      "observations": [
+        {
+          "build": "source",
+          "case": "legacy features normalized",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "registered factory disabled",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "external configuration preparation/checkpoint",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "missing builtin scope/task rejected",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "builtin selection/protection restored",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "factory cleanup exactly once",
+          "passed": true,
+          "providerCalls": 0
+        },
+        {
+          "build": "esm",
+          "case": "legacy features normalized",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "registered factory disabled",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "external configuration preparation/checkpoint",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "missing builtin scope/task rejected",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "builtin selection/protection restored",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "factory cleanup exactly once",
+          "passed": true,
+          "providerCalls": 0
+        },
+        {
+          "build": "cjs",
+          "case": "legacy features normalized",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "registered factory disabled",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "external configuration preparation/checkpoint",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "missing builtin scope/task rejected",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "builtin selection/protection restored",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "factory cleanup exactly once",
+          "passed": true,
+          "providerCalls": 0
+        }
+      ],
+      "unchangedReviewConsumerDiagnostics": [],
+      "publicImports": true,
+      "providerCalls": 0
+    }
+  },
+  "checks": [
+    {
+      "name": "types",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-second-review-types.log",
+      "passed": true,
+      "logSHA256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717"
+    },
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-second-review-lint.log",
+      "passed": true,
+      "logSHA256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e"
+    },
+    {
+      "name": "compat",
+      "command": [
+        "npm",
+        "run",
+        "test:agentic:compat"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-second-review-compat.log",
+      "passed": true,
+      "logSHA256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    {
+      "name": "examples-types",
+      "command": [
+        "npm",
+        "run",
+        "examples:check"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-second-review-examples-types.log",
+      "passed": true,
+      "logSHA256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8"
+    },
+    {
+      "name": "core-strict",
+      "command": [
+        "npx",
+        "tsc",
+        "-p",
+        "/tmp/oneringai-second-review-core-strict.json"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-second-review-core-strict.log",
+      "passed": true,
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-strict",
+      "command": [
+        "npx",
+        "tsc",
+        "-p",
+        "/tmp/oneringai-stage10-final-amos-strict.json"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-second-review-amos-strict.log",
+      "passed": true,
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-types",
+      "command": [
+        "npm",
+        "run",
+        "--prefix",
+        "apps/amos",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-second-review-amos-types.log",
+      "passed": true,
+      "logSHA256": "15c9b914db9ac8a0f39085e9e28df4f483e0442e42350ea4d7615778f29e93ad"
+    },
+    {
+      "name": "amos-build",
+      "command": [
+        "npm",
+        "run",
+        "--prefix",
+        "apps/amos",
+        "build"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-second-review-amos-build.log",
+      "passed": true,
+      "logSHA256": "1bf0b891bad5b4d0615393c898336caf5c29050afae49eaadb86f7b779183e97"
+    },
+    {
+      "name": "public",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "/tmp/oneringai-stage10-public/corrections-proof.mts"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-second-review-public.log",
+      "passed": true,
+      "logSHA256": "0abaef5250b9e9aef7da30c4b4eb92631f22a72be16b5eda9a2d4ed36cc6e296"
+    },
+    {
+      "name": "legacy-public",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "/tmp/oneringai-stage04-types-fixes-public.mts"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-second-review-legacy-public.log",
+      "passed": true,
+      "logSHA256": "b3d74c39be9ed23f9b929e7dfe92a37f7c734b55d481828e2dc760c52ba60945"
+    },
+    {
+      "name": "build",
+      "command": "npm run build",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "5ae48d9e1eadba9b4e41e388298c958724ec66e692b575a721506f874aec3891"
+    },
+    {
+      "name": "final-build",
+      "command": "npm run build",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "5a749937b1c70acdf072631fc7776aa69dfc9a877c1ce1d626b51cda35e74b6c"
+    },
+    {
+      "name": "api",
+      "command": "node --import tsx scripts/generate-api-docs.ts --mode public",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "6cec832ef838c1c8384b28cda86470146df3f70f9fec4c7235ecd1b970c414fd"
+    },
+    {
+      "name": "expanded-public",
+      "command": "node --import tsx /tmp/oneringai-stage10-public/second-review-proof.mts",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "5dac71d98a5d79c223c2dd8192d7d909c41a468dc4c9bba2107887d89726ad69"
+    },
+    {
+      "name": "final-compat",
+      "command": "npm run test:agentic:compat",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    {
+      "name": "final-units",
+      "command": "npm run test:unit -- --reporter=json --outputFile=/tmp/oneringai-second-review-final-units.json",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "d85d4dc5c9d1c94ea1e002cd7e86590c54408cc29789a686c443b73ddcb5e9d3"
+    }
+  ],
+  "strictCompilerConfig": {
+    "extends": "/Users/aantich/dev/oneringai/tsconfig.json",
+    "compilerOptions": {
+      "noEmit": true,
+      "rootDir": "/Users/aantich/dev/oneringai",
+      "baseUrl": "/Users/aantich/dev/oneringai",
+      "paths": {
+        "@/*": [
+          "src/*"
+        ]
+      },
+      "typeRoots": [
+        "/Users/aantich/dev/oneringai/node_modules/@types"
+      ]
+    },
+    "include": [
+      "/Users/aantich/dev/oneringai/tests/unit/core/context-nextgen/plugins/TaskState.test.ts",
+      "/Users/aantich/dev/oneringai/tests/unit/core/context-nextgen/TaskStateContext.test.ts",
+      "/Users/aantich/dev/oneringai/tests/unit/core/context-nextgen/TaskStateAgent.test.ts",
+      "/Users/aantich/dev/oneringai/src/tools/desktop/driver/nut-tree.d.ts",
+      "/Users/aantich/dev/oneringai/tests/integration/text/TaskState.live.integration.test.ts",
+      "/Users/aantich/dev/oneringai/tests/unit/core/context-nextgen/TaskStateCorrections.test.ts",
+      "/Users/aantich/dev/oneringai/tests/unit/core/context-nextgen/TaskStateCompatibility.test.ts",
+      "/Users/aantich/dev/oneringai/tests/unit/core/Agent.loopPolicy.test.ts",
+      "/Users/aantich/dev/oneringai/examples/agent-loop/scripted-provider.ts",
+      "/Users/aantich/dev/oneringai/tests/integration/text/AgentLoop.live.integration.test.ts",
+      "/Users/aantich/dev/oneringai/tests/unit/core/Agent.loopCorrections.test.ts",
+      "/Users/aantich/dev/oneringai/tests/unit/core/Agent.modelExecution.test.ts",
+      "/Users/aantich/dev/oneringai/tests/unit/core/context-nextgen/strategies/ContextStrategies.agent.test.ts"
+    ],
+    "exclude": []
+  },
+  "validationHistory": {
+    "googleRed": {
+      "passed": 15,
+      "failed": 2,
+      "skipped": 0,
+      "files": 1,
+      "success": false
+    },
+    "scopeRed": {
+      "passed": 0,
+      "failed": 12,
+      "skipped": 53,
+      "files": 1,
+      "success": false
+    },
+    "scopePreFixScript": "import { Agent, Connector, Vendor } from '/Users/aantich/dev/oneringai/src/index.ts';\nimport { ScriptedLoopProvider } from '/Users/aantich/dev/oneringai/examples/agent-loop/scripted-provider.ts';\nconst results = [];\nfor (const mode of ['run', 'stream'] as const) {\n const name = `review-scope-${mode}`; const provider = new ScriptedLoopProvider([{text:'Candidate'}]);\n Connector.create({name,vendor:Vendor.OpenAI,auth:{type:'none'},options:{provider}});\n let agent: Agent;\n agent = Agent.create({connector:name,model:'gpt-4o-mini',context:{model:'gpt-4o-mini',features:{workingMemory:false,inContextMemory:false}},loopPolicy:{completion:async () => { await Promise.resolve(); agent.tools.mergeToolContext({accountId:'personal'}); return {complete:true,reason:'Old work account verified'}; }}});\n agent.tools.mergeToolContext({accountId:'work'});\n try {\n  let loop;\n  if(mode==='run') loop=(await agent.run('Verify work account')).loop;\n  else for await(const e of agent.stream('Verify work account')) if(e.type==='response.complete')loop=e.loop;\n  results.push({mode,loop,finalAccount:agent.tools.getToolContext()?.accountId,modelCalls:provider.requests.length});\n } finally {agent.destroy();Connector.remove(name);}\n}\nconsole.log(JSON.stringify(results));\n",
+    "scopePreFixObservations": [
+      {
+        "mode": "run",
+        "loop": {
+          "version": 1,
+          "executionId": "exec_acc1e1c8-f343-4c90-8dab-c5097dbabd33",
+          "phase": "complete",
+          "iterations": 1,
+          "recoveryAttempts": 0,
+          "observedToolCalls": 0,
+          "consecutiveToolFailures": 0,
+          "repeatedResults": 0,
+          "stalledIterations": 0,
+          "uncertainEffects": [],
+          "completion": {
+            "complete": true,
+            "reason": "Old work account verified"
+          },
+          "reason": "completed",
+          "detail": "Old work account verified",
+          "status": "completed"
+        },
+        "finalAccount": "personal",
+        "modelCalls": 1
+      },
+      {
+        "mode": "stream",
+        "loop": {
+          "version": 1,
+          "executionId": "exec_d2979df6-b548-4d78-98e9-96d8615c19e1",
+          "phase": "complete",
+          "iterations": 1,
+          "recoveryAttempts": 0,
+          "observedToolCalls": 0,
+          "consecutiveToolFailures": 0,
+          "repeatedResults": 0,
+          "stalledIterations": 0,
+          "uncertainEffects": [],
+          "completion": {
+            "complete": true,
+            "reason": "Old work account verified"
+          },
+          "reason": "completed",
+          "detail": "Old work account verified",
+          "status": "completed"
+        },
+        "finalAccount": "personal",
+        "modelCalls": 1
+      }
+    ],
+    "prototypeFailuresRetained": true,
+    "finalDeclarationBuild": {
+      "status": "passed",
+      "explanation": "Final JSDoc-only declaration build changes 39 generated tool source fingerprints because the generator hashes all src TypeScript including comments. Replacing precisely those derived hash strings reconstructs the exact previously tested ESM/CJS bytes. No executable loop/helper code changed.",
+      "fingerprints": 39,
+      "runtimeSourceHashBefore": "c4e9a8094230923775afae66aa2fdb76d6f3167f45f02869e643f361b02c6b38",
+      "runtimeSourceHashAfter": "4e501e4cc99f54f4d2137e8f4c328102393769560f8b42da239504d75433a7d9",
+      "exactPreviousArtifactReconstructed": {
+        "dist/index.js": true,
+        "dist/index.cjs": true,
+        "dist/types/index.js": true,
+        "dist/types/index.cjs": true
+      }
+    },
+    "finalDeclarationBuildProofScript": "import pathlib,hashlib,re,json\nroot=pathlib.Path.cwd();src=root/'src';new_comment='  /** Additional local JSON-schema constraints supplied as prompt guidance; both schemas must pass within the same repair allowance. */';old_comment='  /** Additional local JSON-schema constraints, included as prompt guidance rather\\n   * than native response_format. Both schemas must pass within the same repair allowance. */'\ndef chunk(path,text):return (str(path).replace('\\\\','/')+'\\0'+text.replace('\\r\\n','\\n').replace('\\r','\\n')+'\\0').encode()\ndef runtime(old=False):\n h=hashlib.sha256(b'oneringai-runtime-source-v2\\0')\n for p in sorted(src.rglob('*.ts'),key=lambda p:str(p.relative_to(src))):\n  if p.name.endswith('.generated.ts'):continue\n  t=p.read_text()\n  if old and p.relative_to(src).as_posix()=='core/model-execution/types.ts':assert new_comment in t;t=t.replace(new_comment,old_comment)\n  h.update(chunk(p.relative_to(src),t))\n return h.hexdigest()\ncurrent,prior=runtime(),runtime(True);reg=(src/'tools/registry.generated.ts').read_text();imports=dict(re.findall(r\"import \\{ (\\w+) \\} from '(\\.[^']+)';\",reg));pairs=[]\nfor name,value in re.findall(r\"tool: (\\w+),\\s+safeByDefault: \\w+,\\s+implementationHash: '(sha256:[0-9a-f]+)'\",reg):\n path=(src/'tools'/imports[name]).with_suffix('.ts');part=chunk(path.relative_to(src),path.read_text())\n def tool_hash(r):return 'sha256:'+hashlib.sha256(b'oneringai-built-in-tool-v2\\0'+r.encode()+b'\\0'+part).hexdigest()\n assert tool_hash(current)==value\n pairs.append((value,tool_hash(prior)))\nassert len(pairs)==39\nold=json.load(open('/tmp/oneringai-second-review-runtime-before-doc-build.json'));result={}\nfor name,digest in old.items():\n data=(root/name).read_text()\n for current_value,prior_value in pairs:data=data.replace(current_value,prior_value)\n result[name]=hashlib.sha256(data.encode()).hexdigest()==digest\nassert all(result.values()),result\nrecord=dict(status='passed',explanation='Final JSDoc-only declaration build changes 39 generated tool source fingerprints because the generator hashes all src TypeScript including comments. Replacing precisely those derived hash strings reconstructs the exact previously tested ESM/CJS bytes. No executable loop/helper code changed.',fingerprints=len(pairs),runtimeSourceHashBefore=prior,runtimeSourceHashAfter=current,exactPreviousArtifactReconstructed=result)\npathlib.Path('/tmp/oneringai-second-review-runtime-byte-check.json').write_text(json.dumps(record,indent=2));print(json.dumps(record))\n"
+  },
+  "limitations": [
+    "Model behavior remains nondeterministic; the exact recorded bad response is deterministically validated/repaired in tests and real Google recovery is verified, not silently accepted or skipped.",
+    "One repair can still exhaust its existing budget or fail validation; strict mode retains history and default masking uses retained evidence. No guarantee that every provider output can be repaired.",
+    "Local schemas enforce explicit structure/content bounds, not semantic truth. Host completion still requires authorized actual state/evidence.",
+    "Principal equality is conservative; host scope must remain stable during a pending check. No durable or semantic exactly-once action guarantee is added.",
+    "Standalone summary callbacks retain one invocation and transaction fallback. Public validationSchema is additive; absent options preserve old behavior.",
+    "Direct/external/realtime/native internal loop ownership is unchanged. Stage 12 and conditional Stage 11 remain separately authorized; no release."
+  ],
+  "sourceFiles": [
+    {
+      "path": "apps/amos/examples/loop-policy-offline.ts",
+      "sha256": "f40627d73d00588dc3559424da93485c1e35781557dff9c845da054aee0a8ed0"
+    },
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "sha256": "566f09639c52b2565c2f6d85290b013b39d8d7ce2139ff475e5df087e47fc45e"
+    },
+    {
+      "path": "apps/amos/src/agent/loopDiagnostics.ts",
+      "sha256": "ea365c0927512ccf48f0850e13d7eaacabef7b3f8010c5b24609dd18444b5906"
+    },
+    {
+      "path": "apps/amos/src/app.ts",
+      "sha256": "84d16da7eb1d5a9c3f784dd3684fdebcb6486572edc69ed7f182c3176ba3443f"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/ContextCommand.ts",
+      "sha256": "d5a4c75446e6c26e6f432685ea53ea882939b80a4c6026e0d304eba091de9c92"
+    },
+    {
+      "path": "apps/amos/src/config/types.ts",
+      "sha256": "c36ab34b821efc3eab71ff5ab9607d222a84361b68c1a9cf9bf5bc64641625d8"
+    },
+    {
+      "path": "examples/README.md",
+      "sha256": "ba09b40230f59cee24cbcf2b1014378afa6a9c76c873b7104298ed315924a8ad"
+    },
+    {
+      "path": "examples/agent-loop/scripted-provider.ts",
+      "sha256": "c4abd3e571bfb31e3ce0496f243e20df5a2074396d392b724f19ca6329f463cc"
+    },
+    {
+      "path": "examples/feedback-driven-agent.ts",
+      "sha256": "814cf1ea779eb933ac733ae7c6355f9052fb4daeda02eea4e58e7269ae39c04f"
+    },
+    {
+      "path": "examples/purpose-specific-models.ts",
+      "sha256": "396693f8577a91422b5055b95895e58ed7252002e439bbd13349a9a69b6fbf1a"
+    },
+    {
+      "path": "examples/run-stream-equivalence.ts",
+      "sha256": "3cd1580d58ab560d822a1b8c429f612166744c6e8c0a4833b92d470e597a7205"
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "493d7c88e7e47d8f499494b03ecfda815f74709e0dd978423fc0a830e310b78d"
+    },
+    {
+      "path": "src/core/agent-loop/LoopController.ts",
+      "sha256": "2e2a9ef4e049c802df38d6cb7d99e4b33adfcf743879b1d19e1c604917b1f115"
+    },
+    {
+      "path": "src/core/agent-loop/decisions.ts",
+      "sha256": "56795b11b9185883d070cebf341f63b9f1f29dd04d4004d19002ae3ff9369ef0"
+    },
+    {
+      "path": "src/core/agent-loop/types.ts",
+      "sha256": "9a15ed1ab7fa8a37a624256ead00d7bff08ea3b649c5d5d4feaa479523f2f26e"
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "9bf1129205d6758bcdf48f224673985ef78afc139a739bc6f769695aac0fb258"
+    },
+    {
+      "path": "src/core/context-nextgen/strategies/conversation-compaction.ts",
+      "sha256": "d7c8fad92a46759b5e93cd7613c6a49d467412ed27c9a8fea1acd5f732570f92"
+    },
+    {
+      "path": "src/core/index.ts",
+      "sha256": "68bad5985a1bfaaeaca010a18155b6f40c874ce62f1f8e143bd71131c101b546"
+    },
+    {
+      "path": "src/core/model-execution/ModelExecutor.ts",
+      "sha256": "7dd088488dadd258511fabfccb8ff3affdd87c40123ba2fa4ec1b9c7106527d3"
+    },
+    {
+      "path": "src/core/model-execution/types.ts",
+      "sha256": "20cc78d9b6225d46a81948b0a099625423e79856aed2472dc4474d2abc0db6a9"
+    },
+    {
+      "path": "src/domain/entities/AgentLoop.ts",
+      "sha256": "eccfd2195e6722c37298586d6a2ed9e3b1a0ad9b5f83256b932395e29acd36e1"
+    },
+    {
+      "path": "src/domain/entities/Response.ts",
+      "sha256": "b5c956b605278623465971a9c7fd496f23d7ed8f46de07a0a67ca20f36a341b1"
+    },
+    {
+      "path": "src/domain/entities/StreamEvent.ts",
+      "sha256": "075acace68a15dca79e0f0a573c307ee6860e4fb8a418cac17cf800d09b4e543"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "3d41f79d24b34c88c473bfad229c161c6dc59e1b2b0c0013577d89cd91b0d495"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "5a2d313b7e91cf52bba7e1e091a0d397ae709ee654a57027a630fe4f757e4376"
+    },
+    {
+      "path": "src/types/index.ts",
+      "sha256": "b759868de0af17a631c1e69a8b0fa51cdf92ae468b1d97d9a2c3646b7f4aa755"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage10-consumer.ts",
+      "sha256": "7cbef5bcc1da425b4d193a5f88b48db148dbe97280e307265fe25364b34847fe"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "sha256": "337479736e76676847b0c621a6ccce1f3aba9ffb9bdb9a729657ad43d73914d5"
+    },
+    {
+      "path": "tests/integration/text/AgentLoop.live.integration.test.ts",
+      "sha256": "e5d1bb1e9a007504dd023d4e0f720cf01c693ca1bcb58624017a73bfc549d094"
+    },
+    {
+      "path": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+      "sha256": "39d801944ed216d53ea8c4dd9b8f459af2f5ed6a4e9d9d62e630f0d0c45fbde2"
+    },
+    {
+      "path": "tests/unit/apps/amos/LoopPolicy.test.ts",
+      "sha256": "0dacc338b21fe5e6902b1fe707bf0eadd9890ff4942fdfdbabb7dca930eb26f8"
+    },
+    {
+      "path": "tests/unit/core/Agent.loopCorrections.test.ts",
+      "sha256": "eedf00d74996760d47ecbfced2af92d58f92a017a7f522027267ef915088ddd0"
+    },
+    {
+      "path": "tests/unit/core/Agent.loopPolicy.test.ts",
+      "sha256": "536a878cdb36af99ae416da76efdf0b71e038ff93edb32be5671478c00bd744a"
+    },
+    {
+      "path": "tests/unit/core/Agent.modelExecution.test.ts",
+      "sha256": "2b0b3c45e12a327dc0a4ada2e21f4f910ae44b0785f14e875dcb233ce8442fb7"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/strategies/ContextStrategies.agent.test.ts",
+      "sha256": "7f263df6bf84411e5372d029eb96d4c1799ac8eed2c2f28e44778deb02398180"
+    }
+  ],
+  "builtPublicFiles": [
+    {
+      "path": "dist/index.js",
+      "sha256": "c4bb79fce1267b533718131373411b0f12adbc67aa1799d55d2b54fa70013149"
+    },
+    {
+      "path": "dist/index.cjs",
+      "sha256": "d4c8a14064acfdba37d71bb7e65487492c3ad64351a70163ec31e65c89bfdc80"
+    },
+    {
+      "path": "dist/index.d.ts",
+      "sha256": "118f3d8ca2cbb42d5ccb5f2edf7b216d6a965a14314916104d2c1279f13a3d15"
+    },
+    {
+      "path": "dist/types/index.js",
+      "sha256": "19645a6b8353a94e54fb53df01f85d775a5bb0e9f88fa0b77fcf5728ce464c8b"
+    },
+    {
+      "path": "dist/types/index.cjs",
+      "sha256": "e21c282e8521140b6e525dabb1b6acdceff224dd71ff016dd3941b951734de16"
+    },
+    {
+      "path": "dist/types/index.d.ts",
+      "sha256": "1ccb96d41bcb94ddef1ce6833e314b206c8f71f04769c9ce40df85e1a05cbe98"
+    }
+  ],
+  "documentation": {
+    "review": "docs/designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md",
+    "version2Updated": true,
+    "recipes": [
+      "docs/MODEL_TASKS_AND_HELPERS.md",
+      "docs/CONTEXT_STRATEGIES.md",
+      "docs/AGENT_LOOP_POLICIES.md"
+    ],
+    "standardGuidesSynced": true,
+    "apiRegenerated": true,
+    "amosUpdated": true,
+    "historicalRecordsPreserved": true
+  },
+  "packageInventory": {
+    "entries": 183,
+    "requiredFiles": [
+      "docs/designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md",
+      "docs/evaluations/STAGE_10_SECOND_CORRECTIONS_VALIDATION.json",
+      "docs/evaluations/STAGE_10_SECOND_CORRECTIONS_LIVE.json",
+      "docs/evaluations/STAGE_10_SECOND_CORRECTIONS_OFFLINE.txt",
+      "docs/MODEL_TASKS_AND_HELPERS.md",
+      "docs/CONTEXT_STRATEGIES.md",
+      "docs/VERSION_2_GUIDE.md",
+      "examples/purpose-specific-models.ts"
+    ],
+    "allPresent": true,
+    "exitCode": 0,
+    "command": "npm pack --dry-run --ignore-scripts --json",
+    "note": "Inventory only; self size/hash excluded. No publish."
+  }
+}

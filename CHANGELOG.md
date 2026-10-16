@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Stage 10 opt-in managed `loopPolicy`: bounded failure/progress/completion
+  recovery, normalized repetition tracking and conservative write/unknown-effect
+  admission. Host-owned bounded/cancellable completion checks expose optional
+  diagnostics on existing responses/events and `getLoopDiagnostics()`, preserving
+  statuses/discriminants/defaults/session authority. Includes AMOS inspection,
+  offline semantic run/stream examples, compatibility and live probes. Policies
+  do not control direct/realtime/external SDK loops or provide durable idempotency.
+  All five [review findings](docs/designs/STAGE_10_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16)
+  are corrected: authentic async outcome/effect import with post-callback scope
+  checks, stopped call/result persistence and separate JSON answers, and original
+  class/prototype callback receivers. No required API/session/storage fields or
+  defaults change. Corrective gates pass 7,950 units and 135 live cases / 147 scenarios;
+  the first Google empty-summary failure remains recorded. No release yet.
+
 - Optional atomic task-state host confirmations/pruning through `TaskStateHostDelta`,
   with AMOS prune/resolve-prune/prune-action/confirm-prune commands and actionable
   capacity recovery. Existing calls/defaults/limits and host authority remain intact.
@@ -65,6 +79,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AMOS budget/breakdown revision and estimate labels, with complete overhead totals.
 
 ### Fixed
+
+- Stage 10 second review: shape-valid all-empty structured summaries now fail
+  local helper validation and receive the existing bounded repair. Optional
+  `HelperCallOptions.validationSchema` adds constraints without changing native
+  wire schema or increasing retries. Real Google recovery from the recorded body
+  is verified with exact source/account/status and no masking fallback. Pending
+  completion/progress checks now bind tool principal/connector authority and
+  reject account/identity/role/session rebinding. No breaking API/default change.
+  [Latest evidence](docs/designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md): 7,988 units,
+  136 live cases / 148 scenarios, 22 offline examples and public/AMOS gates pass.
 
 - Stage 04 public TypeScript compatibility: legacy resolved-feature values keep
   their original required keys, and external `taskState` factories retain arbitrary

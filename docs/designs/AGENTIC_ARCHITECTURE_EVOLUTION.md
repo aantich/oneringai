@@ -1,6 +1,7 @@
 # Agentic Architecture Evolution: Staged Development Plan
 
-- **Status:** Roadmap direction accepted; stages 00–04, 06 and 07 complete on the development branch.
+- **Status:** Roadmap direction accepted; stages 00–04, 06, 07 and 10 complete on the development branch. Both Stage 10 reviews are corrected and validated, including real Google recorded-fault recovery; no package release.
+- **Stage 10:** Both review passes fixed and validated, including real Google recovery from the recorded empty summary and stale-principal completion checks. Latest gates pass 7,988 units, 136 live cases / 148 scenarios and 22 offline examples. See the [latest review/fixes](STAGE_10_SECOND_REVIEW_AND_FIXES.md). Stage 12 is next; no release or API break.
 - **Stage 04:** Both reviews' findings fixed and validated. Latest local/public gate passes 7,795 units, legacy root/`types` consumers, public ESM/CJS controls and both task examples. See the [second corrective completion](STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16). Earlier live results remain historical; no release or API break.
 - **Stage 07:** All three review findings fixed and validated: 7,631 units, 105 live cases / 117 scenarios and 17 offline examples pass; experimental, no default promotion.
 - **Stage 03 review:** All findings corrected and validated: 7,473 units, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
@@ -432,10 +433,10 @@ fail preflight or use a documented safe fallback.
 
 ## 4. Stage sequence and tracking
 
-Stages 00–03 and 06 are complete on the `version2` branch. Stage 03 and all three
-corrective passes are implemented and validated in the working tree based on
-Stage 06 revision `a98a498`. See the [third corrective completion](STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14)
-and [evidence](../evaluations/STAGE_03_THIRD_CORRECTIONS_VALIDATION.json).
+Stages 00–04, 06, 07 and 10 are complete on `version2`. Stage 10 based on Stage 04
+revision `d8fce94` has all five review findings corrected and validated. See its
+[corrective completion](STAGE_10_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16)
+and [corrective evidence](../evaluations/STAGE_10_CORRECTIONS_VALIDATION.json).
 Earlier implementation and review records remain historical evidence.
 Dependencies determine readiness, not authorization. IDs are stable identifiers;
 the core sequence is **00 → 01 → 02 → 06 → 03 → 07 → 04 → 10 → 12**. Later stages
@@ -453,7 +454,7 @@ remain separately authorized work.
 | 07 | Structured summaries and observation masking | 03, 06 | Core | Complete on branch, including all review corrections; experimental, no default promotion |
 | 08 | Episodic retrieval and session ingestion | 03, 04, 06 | Conditional | Not started |
 | 09 | Ranked individual tool discovery | 01, 02 | Conditional | Not started |
-| 10 | Shared decision helpers, bounded recovery, and completion predicates | 02, 03, 04, 06 | Core | Not started |
+| 10 | Shared decision helpers, bounded recovery, and completion predicates | 02, 03, 04, 06 | Core | Complete on branch; both reviews fixed, including Google repair. 7,988 units, 136 live cases / 148 scenarios, 22 examples and local/public/AMOS gates pass; Stage 12 separately authorized |
 | 11 | Optional parallel reads and separately scoped resumable effects | 02, 03, 06 | Conditional | Not started |
 | 12 | Minimal opt-in presets and capability inspection | 04, 06, 07, 10 | Core | Not started |
 | 13 | Verified procedural memory and curated learning | 08, 10 | Conditional | Not started |
@@ -2872,3 +2873,114 @@ Existing AMOS behavior/examples need no change for these contracts; its actual
 tests, types, build and walkthrough pass. Stage 04 completion is restored. No
 breaking change, release, commit, push or Stage 10 implementation. Stage 10 remains
 the next separately authorized core stage.
+
+### Stage 10 execution and completion — 2026-10-16
+
+The user's “proceed” authorized the full Stage 10 core scope on `version2`, based
+on Stage 04 commit `d8fce94`. Delivery adds opt-in bounded managed-loop policies
+and host completion checks while reusing preparation, ToolManager, evidence,
+task-state view, explicit helpers/budgets and existing leases/events. No breaking
+change, new workflow engine, model routing, parallel scheduler or later stage.
+
+Public additions: `AgentConfig.loopPolicy`, `RunOptions.loopPolicy`/null disable,
+six `AgentLoop*` types, `getLoopDiagnostics()` and optional metadata on existing
+responses/iteration/completion events. Shared decision/hook/feedback helpers are
+internal. Disabled behavior retains legacy traces/defaults. Configured streaming
+uses shared before-tool preparation; chunks remain provisional and final JSON
+repair stays run-only. Predicates are bounded cancellable host reads, locally
+validated and stale-view checked; they do not restore as checkpoint authority.
+Identical admitted write/unknown effects stop before replay, and uncertain or
+pending work cannot become completed merely through prose. Durable/semantic
+idempotency and external/realtime/native internal control remain outside scope.
+
+The [implementation record](STAGE_10_IMPLEMENTATION.md) maps decisions, scope,
+tests, compatibility, limitations, initial failures and final completion. The
+[recipe](../AGENT_LOOP_POLICIES.md) documents verified defaults, exact capacities,
+callbacks, diagnostics, persistence, support and AMOS. Public offline examples
+show transient-read recovery/host proof and semantic run/stream traces. AMOS
+adds optional thresholds, an in-memory host override, separate policy notices and
+`/context loop`, with actual checkpoint/cancellation adapter tests.
+
+Final validation: **7,895 units / 359 files**, including **94 core + six AMOS
+Stage 10 cases**, policy-module line/branch coverage **96.46%/91.70%**. One final
+eight-file batch passes **129 live cases / 141 recorded scenarios** across OpenAI,
+Anthropic and Google with zero failures/skips. All **22 offline examples** pass.
+Old/new root/`types` consumers, eight new ESM/CJS controls, eighteen unchanged
+legacy controls, root/AMOS builds/types/lint/examples, project-strict checks,
+generated API and package dry-run inventory pass. Initial failures/rechecks are
+preserved in [validation](../evaluations/STAGE_10_VALIDATION.json) and
+[live history](../evaluations/STAGE_10_LIVE.json), including a Google exact-marker
+miss and initial Anthropic probe failures; no broad reliability claim.
+
+Version 2 availability/adoption/handoff and affected standard/generated docs,
+examples/AMOS, Changelog and packaged records are synchronized. Stage 10 is
+complete on branch; no package release, commit or push. **Stage 12 — minimal
+opt-in presets and capability inspection** is the next core stage and requires
+separate authorization. Conditional Stage 11 is not a core prerequisite.
+
+### Stage 10 original review — 2026-10-16
+
+Historical pre-correction review; the corrective completion below records the
+current implementation and validation.
+
+Review of the unchanged delivered Stage 10 source/build reproduced five open
+findings: **P1** normal-run async delivery bypassing outcome import; **P1**
+continuation deriving past effect from mutable registration; **P1** structured
+repair removing a stopped tool call and hiding its unmatched protected result;
+**P2** ordinary observations lost on the next input after run/stream stops; and
+**P2** class/prototype policy callbacks silently omitted.
+
+Fresh 7,895 units / 359 files and root types/lint, public compatibility, examples
+checking and AMOS types pass. Deterministic controlled scripts reproduce the gaps;
+the class consumer also compiles against the built public API. No runtime fixes,
+new permanent tests or billable model calls. Original delivery/live evidence
+remains unchanged and historical.
+
+The [review/fix plan](STAGE_10_REVIEW_AND_FIX_PLAN.md) and
+[executable evidence](../evaluations/STAGE_10_REVIEW.json) define the corrections,
+regressions and exit gate. Current availability/adoption/handoff, stage/recipe and
+standard-guide notices, release notes and package inventory are synchronized.
+Stage 10 completion is provisional until corrections pass expanded validation;
+Stage 12 remains deferred. No breaking change, commit, push or release.
+
+## Corrective completion — 2026-10-16
+
+All five findings are fixed: authentic async observation import and admitted-effect
+correlation, scope rechecks after awaited progress callbacks, stopped connected
+history/journal preservation, separate stopped-turn JSON answers, and original
+class/prototype host callback receivers. These corrections are internal and add
+no required public/session/storage fields, defaults or event discriminants.
+
+Final gates pass **7,950 units / 360 files**, including **155 Stage 10/AMOS cases**,
+**135 live cases / 147 scenarios** across all three providers, **22 examples**,
+**16 ESM/CJS** and **18 unchanged legacy controls**. Policy-module coverage is
+**96.50% lines / 93.01% branches**. Root/AMOS builds, types/lint/examples/strict
+checks, generated API and package inventory pass. The first corrective batch's
+Google empty-summary rejection is retained; final evaluators/prompts are unchanged.
+
+The [detailed completion](STAGE_10_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16),
+[local/public evidence](../evaluations/STAGE_10_CORRECTIONS_VALIDATION.json),
+[live history](../evaluations/STAGE_10_CORRECTIONS_LIVE.json) and
+[AMOS transcript](../evaluations/STAGE_10_CORRECTIONS_AMOS_OFFLINE.txt) supersede
+preceding historical delivery/review results for the current tree. Version 2
+availability/adoption/handoff and all affected guides/examples/AMOS/release notes
+are synchronized. No breaking API, commit, push or release. Stage 12 requires
+separate authorization; conditional Stage 11 remains deferred.
+
+### Second review fixes and Google recovery — 2026-10-16
+
+The [second review/fixes](STAGE_10_SECOND_REVIEW_AND_FIXES.md) resolves the recorded
+Google failure with optional local helper validation inside the existing repair
+allowance, preserving native schema and source/task bounds. Pending loop verdicts
+also bind tool principal/account/identity/role/session and connector authority.
+Both findings are fixed; no breaking API, new defaults, outer retries or action replay.
+
+Latest validation passes **7,988 units / 360 files**, **38 new regressions**,
+**136 live cases / 148 scenarios** across all three providers, **22 offline examples**,
+**18 ESM/CJS** and **18 legacy controls**. A real Google repair succeeds after
+explicit injection of the recorded empty body, with exact source/constraints and
+no masking fallback. Builds/types/lint/examples, strict/public/AMOS checks,
+generated API and package inventory pass. Version 2/standard guides and handoff
+are synchronized; historical evidence remains. No later stage, commit or release.
+See [latest validation](../evaluations/STAGE_10_SECOND_CORRECTIONS_VALIDATION.json)
+and [live recovery](../evaluations/STAGE_10_SECOND_CORRECTIONS_LIVE.json).

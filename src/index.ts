@@ -31,6 +31,7 @@ export { Connector, ScopedConnectorRegistry, StorageRegistry, ToolCatalogRegistr
 export type { TemplateHandler, TemplateContext, TemplateHandlerOptions, ProcessOptions } from './core/index.js';
 export type { StorageConfig, StorageContext, ToolCategoryDefinition, CatalogToolEntry, ToolCategoryScope, ConnectorCategoryInfo, ParsedConnectorCategory, CatalogRegistryEntry, SuspendSignalOptions, OrchestratorConfig, AgentTypeConfig, DelegationDefaults, OrchestrationToolsContext, DelegationState, DelegationReclaimConfig, AgentInfo, AgentInspection, AgentFilter, AgentRegistryStats, AgentRegistryEvents, AgentEventListener } from './core/index.js';
 export type { AgentStatus as RegistryAgentStatus } from './core/index.js';
+export type { AgentLoopPolicy, AgentLoopDiagnostics, AgentLoopReason, AgentLoopObservation, AgentLoopCheckContext, AgentLoopCompletionResult } from './core/agent-loop/types.js';
 export { ModelTask, ModelBudgetExceededError, HelperOutputError } from './core/index.js';
 export type { ModelExecutionConfig, ModelTaskLimits, ModelPriceBound, ModelTaskSnapshot, ModelInvocationRecord,
   ModelAttemptRecord, ModelCallDescriptor, HelperRole, HelperModelConfig, HelperCallOptions, HelperInputContext, HelperResult } from './core/index.js';

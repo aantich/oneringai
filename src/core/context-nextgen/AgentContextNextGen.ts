@@ -1084,6 +1084,27 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     return id;
   }
 
+  /** @internal Append host loop feedback without replacing pending tool results or original user input. */
+  _appendLoopFeedback(text: string): void {
+    this.assertNotDestroyed();
+    const message: Message = { type: 'message', id: this.generateId(), role: MessageRole.USER,
+      content: [{ type: ContentType.INPUT_TEXT, text }] };
+    this._currentInput.push(message);
+    this._cachedBudget = null;
+    this._journalAppend('user', [message]);
+    this.emit('message:added', { role: 'user', index: this._conversation.length });
+  }
+
+  /** @internal Commit already-journalled input when a managed loop stops without another model response. */
+  _commitLoopInput(): void {
+    this.assertNotDestroyed();
+    if (this._currentInput.length > 0) {
+      this._conversation.push(...this._currentInput);
+      this._currentInput = [];
+      this._cachedBudget = null;
+    }
+  }
+
   /**
    * Add assistant response (from LLM output).
    * Also moves current input to conversation history.

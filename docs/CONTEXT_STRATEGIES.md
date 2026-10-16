@@ -114,7 +114,15 @@ and 600 characters per entry before apply. Capsules follow the older material th
 window. They explicitly identify historical state that may be stale; current user
 and host instructions govern. They are assistant context data, never system/developer
 instructions. The compactor prioritizes observed facts and exact identifiers over
-generic progress chatter. Exact user/action
+generic progress chatter. Automatic helpers additionally validate at least one
+nonempty section and nonblank entries of at most 600 characters locally, inside
+the existing bounded repair. The native wire schema stays portable. An all-empty
+JSON response is recorded as failed validation and can receive one charged
+repair with the original retained source; it cannot bypass repair by merely
+matching the native shape. Exhausted repair still obeys `mask`/`error` fallback,
+while cancellation/deadline and task budgets keep their existing limits.
+Standalone host callbacks are still invoked once and checked at the transaction
+boundary. Exact user/action
 content remains separately available. A schema and a valid source ID do not prove
 that a generated statement is true or complete. Retrieve source evidence before
 acting on omitted details or ambiguous summary claims.

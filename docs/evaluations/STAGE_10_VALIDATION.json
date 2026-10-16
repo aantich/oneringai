@@ -1,0 +1,1277 @@
+{
+  "protocol": "stage10-v1",
+  "recordedAt": "2026-10-16T09:04:35.618223+00:00",
+  "localDate": "2026-10-16",
+  "timezone": "Europe/Zurich",
+  "branch": "version2",
+  "baseCommit": "d8fce9422558565e5a547ce7650f02229f5988fc",
+  "status": "passed",
+  "stageComplete": true,
+  "authorization": "User proceeded with full Stage 10 after Stage 04. No breaking API change, commit, push, release or later stage authorized.",
+  "delivery": {
+    "publicAPIs": [
+      "AgentConfig.loopPolicy",
+      "RunOptions.loopPolicy",
+      "Agent.getLoopDiagnostics",
+      "AgentLoopPolicy",
+      "AgentLoopCheckContext",
+      "AgentLoopCompletionResult",
+      "AgentLoopDiagnostics",
+      "AgentLoopObservation",
+      "AgentLoopReason",
+      "optional LLMResponse.loop",
+      "optional existing IterationCompleteEvent.loop",
+      "optional existing ResponseCompleteEvent.loop"
+    ],
+    "internalOnly": [
+      "LoopController",
+      "AgentLoopStop",
+      "classifyManagedResponse",
+      "shouldRetryEmptyResponse",
+      "shared before-tool preparation",
+      "safe context feedback append"
+    ],
+    "defaults": {
+      "enabled": false,
+      "maxRecoveryAttempts": 2,
+      "maxRepeatedResults": 3,
+      "maxConsecutiveToolFailures": 3,
+      "maxStalledIterations": 3,
+      "callbackTimeoutMs": 10000,
+      "repeatableReadTools": []
+    },
+    "bounds": {
+      "thresholdMaximum": 1000,
+      "callbackTimeoutMaximumMs": 60000,
+      "fingerprintBytes": 65536,
+      "callbackPacketBytes": 1048576,
+      "resultBytes": 16384,
+      "candidateCharacters": 32768,
+      "lastObservations": 100,
+      "admissions": 1000,
+      "signatures": 1000,
+      "observationIdentities": 1000,
+      "failureIdentities": 1000
+    },
+    "callbacksRestored": false,
+    "countersRestored": false,
+    "ordinaryDefaultChanged": false,
+    "existingEventDiscriminantsChanged": false,
+    "existingTaskStatusesChanged": false,
+    "requiredStorageSessionRunnerMembersAdded": false,
+    "breakingAPIChange": false
+  },
+  "unit": {
+    "passed": 7895,
+    "failed": 0,
+    "skipped": 0,
+    "files": 359,
+    "success": true
+  },
+  "stage10Unit": {
+    "cases": 100,
+    "coreCases": 94,
+    "amosCases": 6,
+    "files": [
+      {
+        "path": "tests/unit/core/Agent.loopPolicy.test.ts",
+        "passed": 94,
+        "cases": [
+          {
+            "name": "Stage 10 opt-in managed-loop policies bounds admissions while repeated asynchronous reads have not settled",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies bounds failure identities for a large rejected batch without inventing executions",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies bounds explicitly delivered observation identities before any further managed dispatch",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run remains unchanged when disabled and supports an explicit null override",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run rejects premature prose and completes only after a real read observation",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run preserves pending tool results while adding bounded failure feedback",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run exhausts the completion allowance without another model or tool call",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run bounds normalized identical read results before repeating again",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run permits explicit repeatable reads and changed observations",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run never repeats an admitted write, including duplicate calls in one response",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run does not infer a framework failure from an application success:false field",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run handles a host checker exception without exposing backend error text",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run times out an uncooperative check and aborts its provided signal",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run stops a stale check after a same-revision task restore",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run caps predicate recovery at the configured iteration limit",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run never retries a provider refusal through the completion predicate",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run stops after an unknown write timeout and never asks the model to replay it",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run bounds consecutive failures separately from the recovery allowance",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run admits changed read observations while tracking repetition",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run does not infer identical results from oversized observations",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run stops bounded host progress stalling even when call arguments change",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run provides detached frozen receipt metadata to the host check",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run rejects malformed host completion result null",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run rejects malformed host completion result true",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run rejects malformed host completion result {\"complete\":\"yes\"}",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run rejects malformed host completion result {\"complete\":true,\"authority\":\"system\"}",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run rejects malformed host completion result {\"complete\":true,\"reason\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run rejects completion-result accessors without invoking them",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run cancels a pending check, releases its lease, and ignores its late verdict",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run cannot recover past a shared ModelTask call limit",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run shares opt-in before-tool preparation without changing a skipped tool into evidence",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run uses modified hook arguments for effect admission and retains permission enforcement",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run retains its unconfigured legacy hook trace while sharing response decisions",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run exposes bounded candidate text and explicit observation omission metadata",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run retains existing bounded empty-response retry behavior before checking completion",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run never replays a write to repair failed evidence storage",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run never promotes provider failed to verified completion",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run never promotes provider incomplete to verified completion",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream remains unchanged when disabled and supports an explicit null override",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream rejects premature prose and completes only after a real read observation",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream preserves pending tool results while adding bounded failure feedback",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream exhausts the completion allowance without another model or tool call",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream bounds normalized identical read results before repeating again",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream permits explicit repeatable reads and changed observations",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream never repeats an admitted write, including duplicate calls in one response",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream does not infer a framework failure from an application success:false field",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream handles a host checker exception without exposing backend error text",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream times out an uncooperative check and aborts its provided signal",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream stops a stale check after a same-revision task restore",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream caps predicate recovery at the configured iteration limit",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream never retries a provider refusal through the completion predicate",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream stops after an unknown write timeout and never asks the model to replay it",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream bounds consecutive failures separately from the recovery allowance",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream admits changed read observations while tracking repetition",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream does not infer identical results from oversized observations",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream stops bounded host progress stalling even when call arguments change",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream provides detached frozen receipt metadata to the host check",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream rejects malformed host completion result null",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream rejects malformed host completion result true",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream rejects malformed host completion result {\"complete\":\"yes\"}",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream rejects malformed host completion result {\"complete\":true,\"authority\":\"system\"}",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream rejects malformed host completion result {\"complete\":true,\"reason\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream rejects completion-result accessors without invoking them",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream cancels a pending check, releases its lease, and ignores its late verdict",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream cannot recover past a shared ModelTask call limit",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream shares opt-in before-tool preparation without changing a skipped tool into evidence",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream uses modified hook arguments for effect admission and retains permission enforcement",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream retains its unconfigured legacy hook trace while sharing response decisions",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream exposes bounded candidate text and explicit observation omission metadata",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream retains existing bounded empty-response retry behavior before checking completion",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream never replays a write to repair failed evidence storage",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream never promotes provider failed to verified completion",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream never promotes provider incomplete to verified completion",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies uses the actual repaired nonstream JSON candidate for its host completion check",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies persists task/evidence state without restoring callbacks or execution counters",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies reports pending asynchronous work without invoking a completion predicate, then checks explicit continuation",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies preserves suspension persistence and requires a fresh managed execution for completion",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies compares equivalent opted-in run and stream hook/action traces",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run checks shared helper admission against the same explicit ModelTask",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies run preserves permission denial without inventing an execution or uncertain effect",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream checks shared helper admission against the same explicit ModelTask",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies stream preserves permission denial without inventing an execution or uncertain effect",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies keeps host policy callbacks out of an external transport execution",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies retains settled unacknowledged effects and releases the owning stream on early closure",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"maxRecoveryAttempts\":-1} before model/action dispatch and releases its lease",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"maxRecoveryAttempts\":null} before model/action dispatch and releases its lease",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"maxRepeatedResults\":0} before model/action dispatch and releases its lease",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"maxConsecutiveToolFailures\":1.5} before model/action dispatch and releases its lease",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"maxStalledIterations\":0} before model/action dispatch and releases its lease",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"callbackTimeoutMs\":60001} before model/action dispatch and releases its lease",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"completion\":true} before model/action dispatch and releases its lease",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"progressKey\":\"text\"} before model/action dispatch and releases its lease",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies rejects invalid policy {\"repeatableReadTools\":\"probe\"} before model/action dispatch and releases its lease",
+            "status": "passed"
+          },
+          {
+            "name": "Stage 10 opt-in managed-loop policies rejects invalid policy %j before model/action dispatch and releases its lease",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "path": "tests/unit/apps/amos/LoopPolicy.test.ts",
+        "passed": 6,
+        "cases": [
+          {
+            "name": "AMOS opt-in managed loop visibility roundtrips optional JSON configuration while old defaults remain disabled",
+            "status": "passed"
+          },
+          {
+            "name": "AMOS opt-in managed loop visibility shows blocked host diagnostics separately from assistant command text",
+            "status": "passed"
+          },
+          {
+            "name": "AMOS opt-in managed loop visibility preserves legacy text/done events and carries policy iterations on existing notification events",
+            "status": "passed"
+          },
+          {
+            "name": "AMOS opt-in managed loop visibility does not restore callbacks or counters in a fresh runner after a file checkpoint",
+            "status": "passed"
+          },
+          {
+            "name": "AMOS opt-in managed loop visibility cancels a pending host check, releases the adapter and ignores its late verdict",
+            "status": "passed"
+          },
+          {
+            "name": "AMOS opt-in managed loop visibility supports old adapters without the optional inspector and an unused current adapter",
+            "status": "passed"
+          }
+        ]
+      }
+    ]
+  },
+  "coverage": {
+    "scope": "src/core/agent-loop only; not whole-Agent coverage",
+    "summary": {
+      "total": {
+        "lines": {
+          "total": 226,
+          "covered": 218,
+          "skipped": 0,
+          "pct": 96.46
+        },
+        "statements": {
+          "total": 226,
+          "covered": 218,
+          "skipped": 0,
+          "pct": 96.46
+        },
+        "functions": {
+          "total": 24,
+          "covered": 23,
+          "skipped": 0,
+          "pct": 95.83
+        },
+        "branches": {
+          "total": 217,
+          "covered": 199,
+          "skipped": 0,
+          "pct": 91.7
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": "Unknown"
+        }
+      },
+      "src/core/agent-loop/LoopController.ts": {
+        "lines": {
+          "total": 215,
+          "covered": 207,
+          "skipped": 0,
+          "pct": 96.27
+        },
+        "functions": {
+          "total": 21,
+          "covered": 20,
+          "skipped": 0,
+          "pct": 95.23
+        },
+        "statements": {
+          "total": 215,
+          "covered": 207,
+          "skipped": 0,
+          "pct": 96.27
+        },
+        "branches": {
+          "total": 204,
+          "covered": 187,
+          "skipped": 0,
+          "pct": 91.66
+        }
+      },
+      "src/core/agent-loop/decisions.ts": {
+        "lines": {
+          "total": 11,
+          "covered": 11,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 2,
+          "covered": 2,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 11,
+          "covered": 11,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 12,
+          "covered": 11,
+          "skipped": 0,
+          "pct": 91.66
+        }
+      },
+      "src/core/agent-loop/types.ts": {
+        "lines": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        },
+        "functions": {
+          "total": 1,
+          "covered": 1,
+          "skipped": 0,
+          "pct": 100
+        },
+        "statements": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        },
+        "branches": {
+          "total": 1,
+          "covered": 1,
+          "skipped": 0,
+          "pct": 100
+        }
+      }
+    }
+  },
+  "live": {
+    "passed": 129,
+    "failed": 0,
+    "skipped": 0,
+    "files": 8,
+    "success": true,
+    "scenarios": 141,
+    "providers": [
+      "openai",
+      "anthropic",
+      "google"
+    ],
+    "newStage10Cases": 12,
+    "record": "STAGE_10_LIVE.json",
+    "unavailableProviders": [],
+    "initialFailuresRetained": true
+  },
+  "offline": {
+    "count": 22,
+    "scripts": [
+      {
+        "script": "example:agentic-baseline",
+        "command": "node --import tsx examples/agentic-evaluation-baseline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "06acb7928f161237d0580422901c9f013efdd26cf555dfbe455d7ba8b8300abf"
+      },
+      {
+        "script": "example:context-freshness",
+        "command": "node --import tsx examples/context-compaction-freshness.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "1800cf833121645d3df7a3d9f1fd5905bc45c3872a9fa45cdfb1d2808cf288d3"
+      },
+      {
+        "script": "example:context-budget",
+        "command": "node --import tsx examples/context-request-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "a4d8d698238f5b548bf9ec76aa9911bbca8b41805a7a0bf5d46f8ba02487f020"
+      },
+      {
+        "script": "example:structured-budget",
+        "command": "node --import tsx examples/structured-output-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "0a718cc06423e5676c1728e361db7f602596ffc5b8d3f5e81a58f9e45d75b4b4"
+      },
+      {
+        "script": "example:amos-context",
+        "command": "node --import tsx apps/amos/examples/context-budget-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "9e40878f7daf68ed5377eb77289bfa0c9842da66b8c639f419f06f64d4d8ae9f"
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": "node --import tsx examples/tool-outcomes-and-cancellation.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "78d458b06f893c41560f16d7077c0ce2e90193fa107089cd82f704a5ff9a2aeb"
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "7762bb7100e11d275a19def86d87b561d0790b2ed4d7d3f4c3b85d2b6e5d141d"
+      },
+      {
+        "script": "example:purpose-models",
+        "command": "node --import tsx examples/purpose-specific-models.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "1a5090fc6311d14c2b34302f4ac47d98cf437bf0e8fa14e23af336ad9c8dc263"
+      },
+      {
+        "script": "example:shared-budget",
+        "command": "node --import tsx examples/shared-run-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "84261248923a4dbfebf4f3a026da031e926e461662a52766eba4e54c49889f47"
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": "node --import tsx apps/amos/examples/model-helpers-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "ab56993e66f8801d4786814bef6fb1960b0ca28d5014c739b7a405c79c2ad8d9"
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": "node --import tsx examples/durable-tool-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "6723ab6511de7217066618a06b313416ee578c1cd572ca2d13aa6785d8f0adc1"
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": "node --import tsx examples/evidence-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "f938ed4d38ee4b846a5909544856dd93f10b89560b3e251d0df6f9cabc21134e"
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": "node --import tsx examples/ambiguous-action-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "f49a80bbc66dab0c45d14cc14c426a52b7a0a0fe23dba60d47cb4208facc1acd"
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": "node --import tsx apps/amos/examples/evidence-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "e379d140d4b9768581e0ee1f0e202becf84df4678c98d0c21b0b5eb5352ad97a"
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": "node --import tsx examples/evidence-stream-interruption.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "177c5a0be4e3524edbadc3df2ae127d480ee930b53cbabd746f99acd3c99764e"
+      },
+      {
+        "script": "example:context-strategies",
+        "command": "node --import tsx examples/context-strategy-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "355d3edf24b2416c7ed8cf0013a1aec0e230285dd1c3dc505da1c0484a1cea5d"
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "7d50e2daf1bca658b6688df28043a408dd1e372134ac15a72b060a30ce6d473a"
+      },
+      {
+        "script": "example:task-state",
+        "command": "node --import tsx examples/task-state-workflow.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "6bb147b925b19a4c8490ce15f089b1f2eb9432b5e23d4c660b477185b5e950ea"
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": "node --import tsx apps/amos/examples/task-state-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "bc206c7d8531a317d5c1b7230108377c4f6da83e524464064f5a3cecacf4f6fe"
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": "node --import tsx examples/feedback-driven-agent.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "d67272639a5af48617577e27b1a6723c4eb2baeef2aea1cd8323c81323a39c27"
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": "node --import tsx examples/run-stream-equivalence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "d15971f07552f85d3e8d77b144cedf4c456a7ff14d898933ec348e98b26b02b0"
+      },
+      {
+        "script": "example:amos-loop",
+        "command": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "logSHA256": "5b14734043c64dba1eec5304163f2481a390da694f1226596c1ba45715da63ca"
+      }
+    ]
+  },
+  "publicProof": {
+    "newBuiltControls": [
+      {
+        "build": "esm",
+        "mode": "run",
+        "passed": true,
+        "checks": 2,
+        "reads": 1,
+        "calls": 3
+      },
+      {
+        "build": "esm",
+        "mode": "stream",
+        "passed": true,
+        "checks": 2,
+        "reads": 1,
+        "calls": 3
+      },
+      {
+        "build": "esm",
+        "mode": "disabled",
+        "passed": true,
+        "checks": 0,
+        "reads": 0,
+        "calls": 1
+      },
+      {
+        "build": "esm",
+        "mode": "override",
+        "passed": true,
+        "checks": 0,
+        "reads": 0,
+        "calls": 1
+      },
+      {
+        "build": "cjs",
+        "mode": "run",
+        "passed": true,
+        "checks": 2,
+        "reads": 1,
+        "calls": 3
+      },
+      {
+        "build": "cjs",
+        "mode": "stream",
+        "passed": true,
+        "checks": 2,
+        "reads": 1,
+        "calls": 3
+      },
+      {
+        "build": "cjs",
+        "mode": "disabled",
+        "passed": true,
+        "checks": 0,
+        "reads": 0,
+        "calls": 1
+      },
+      {
+        "build": "cjs",
+        "mode": "override",
+        "passed": true,
+        "checks": 0,
+        "reads": 0,
+        "calls": 1
+      }
+    ],
+    "script": "import assert from 'node:assert/strict';\nimport { createRequire } from 'node:module';\nimport { writeFile } from 'node:fs/promises';\nimport * as esm from '@everworker/oneringai';\nimport { ScriptedLoopProvider } from '/Users/aantich/dev/oneringai/examples/agent-loop/scripted-provider.ts';\nconst require = createRequire(import.meta.url);\nconst results: unknown[] = [];\nfor (const [build, api] of [['esm', esm], ['cjs', require('@everworker/oneringai')]] as const) {\n  for (const mode of ['run', 'stream', 'disabled', 'override'] as const) {\n    const name = `stage10-public-${build}-${mode}`;\n    let ready = false, checks = 0, reads = 0;\n    const active = mode === 'run' || mode === 'stream';\n    const provider = new ScriptedLoopProvider(active ? [\n      { text: 'Premature' }, { calls: [{ id: 'read', name: 'read_artifact', args: {} }] }, { text: 'Verified' },\n    ] : [{ text: 'Ordinary answer' }]);\n    api.Connector.create({ name, vendor: api.Vendor.OpenAI, auth: { type: 'none' }, options: { provider } });\n    const agent = api.Agent.create({ connector: name, model: 'gpt-4o-mini', maxIterations: 6,\n      context: { model: 'gpt-4o-mini', features: { workingMemory: false, inContextMemory: false } },\n      tools: [{ definition: { type: 'function', function: { name: 'read_artifact', parameters: { type: 'object', properties: {} } } }, output: { effect: 'read' }, execute: async () => { ready = true; reads++; return { id: 'A42' }; } }],\n      ...(mode === 'disabled' ? {} : { loopPolicy: { completion: context => { checks++; return { complete: ready && context.observations.some(o => o.outcome?.status === 'succeeded') }; } } }),\n    });\n    try {\n      let loop;\n      if (mode === 'stream') {\n        let completions = 0;\n        for await (const event of agent.stream('Verify')) if (event.type === api.StreamEventType.RESPONSE_COMPLETE) { loop = event.loop; completions++; }\n        assert.equal(completions, 1);\n      } else loop = (await agent.run('Verify', mode === 'override' ? { loopPolicy: null } : undefined)).loop;\n      if (active) {\n        assert.equal(loop.status, 'completed'); assert.equal(loop.recoveryAttempts, 1);\n        assert.equal(checks, 2); assert.equal(reads, 1); assert.equal(provider.requests.length, 3);\n        const snapshot = agent.getLoopDiagnostics(); snapshot.reason = 'cancelled';\n        assert.equal(agent.getLoopDiagnostics().reason, 'completed');\n        assert.equal(agent.context.tools, agent.tools);\n      } else { assert.equal(loop, undefined); assert.equal(checks, 0); assert.equal(provider.requests.length, 1); }\n      results.push({ build, mode, passed: true, checks, reads, calls: provider.requests.length });\n    } finally { agent.destroy(); api.Connector.remove(name); }\n  }\n}\nawait writeFile('/tmp/oneringai-stage10-public.json', JSON.stringify(results, null, 2) + '\\n');\nconsole.log(JSON.stringify(results));\n",
+    "unchangedLegacy": {
+      "observations": [
+        {
+          "build": "source",
+          "case": "legacy features normalized",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "registered factory disabled",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "external configuration preparation/checkpoint",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "missing builtin scope/task rejected",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "builtin selection/protection restored",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "factory cleanup exactly once",
+          "passed": true,
+          "providerCalls": 0
+        },
+        {
+          "build": "esm",
+          "case": "legacy features normalized",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "registered factory disabled",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "external configuration preparation/checkpoint",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "missing builtin scope/task rejected",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "builtin selection/protection restored",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "factory cleanup exactly once",
+          "passed": true,
+          "providerCalls": 0
+        },
+        {
+          "build": "cjs",
+          "case": "legacy features normalized",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "registered factory disabled",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "external configuration preparation/checkpoint",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "missing builtin scope/task rejected",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "builtin selection/protection restored",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "factory cleanup exactly once",
+          "passed": true,
+          "providerCalls": 0
+        }
+      ],
+      "unchangedReviewConsumerDiagnostics": [],
+      "publicImports": true,
+      "providerCalls": 0
+    }
+  },
+  "checks": [
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "952ca2234f8a56dcd1984560e06291ade7d975d634a5b8961efe6606439b8c1a"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e"
+    },
+    {
+      "command": "npm run test:agentic:compat",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    {
+      "command": "npm run examples:check",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8"
+    },
+    {
+      "command": "npx tsc --noEmit -p /tmp/oneringai-stage10-final-core-strict.json",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "npx tsc --noEmit -p /tmp/oneringai-stage10-final-amos-strict.json",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "npm run --prefix apps/amos typecheck",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "15c9b914db9ac8a0f39085e9e28df4f483e0442e42350ea4d7615778f29e93ad"
+    },
+    {
+      "command": "npm run --prefix apps/amos build",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "6a007223524dd8b20d6b488833201da5b4604ec878fa5b698d41370419e94a2f"
+    },
+    {
+      "command": "node --import tsx scripts/generate-api-docs.ts --mode public",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "4f03298fee46f5429d0020518f40b7592a1c56d005c0ef7fa5463b2ed7123b47"
+    },
+    {
+      "command": "node --import tsx /tmp/oneringai-stage10-public/proof.mts",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "b42a7223202d5e2eaba6e0b3379ec390c6cdc27a6aa23685e389bf82016ad144"
+    },
+    {
+      "command": "node --import tsx /tmp/oneringai-stage04-types-fixes-public.mts",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "b12dfff349a69e23c7c87916143442e181b80ec7fd808be32eda1beea9bd2a51"
+    },
+    {
+      "command": "npx vitest run tests/unit/core/Agent.loopPolicy.test.ts --coverage.enabled --coverage.include='src/core/agent-loop/*.ts' --coverage.reportsDirectory=/tmp/oneringai-stage10-delivery-coverage --coverage.reporter=json-summary --coverage.reporter=text",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "a5958640aefec19c997563084c4aa46aea87b25d7856f39fda01dbd1f4de6cdd"
+    },
+    {
+      "command": "npm run test:unit -- --reporter=json --outputFile=/tmp/oneringai-stage10-delivery-units.json",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "274b7f054d860907c055876988eb80507afaced3b4d44db322e9ccff908afb34"
+    },
+    {
+      "command": "RUN_AGENTIC_BASELINE_LIVE=1 RUN_CONTEXT_FRESHNESS_LIVE=1 RUN_TOOL_OUTCOMES_LIVE=1 RUN_MODEL_EXECUTION_LIVE=1 RUN_EVIDENCE_LIVE=1 RUN_CONTEXT_STRATEGIES_LIVE=1 RUN_TASK_STATE_LIVE=1 RUN_AGENT_LOOP_LIVE=1 BASELINE_REPORT_PATH=/tmp/oneringai-stage10-delivery-baseline.json CONTEXT_FRESHNESS_REPORT_PATH=/tmp/oneringai-stage10-delivery-freshness.json TOOL_OUTCOMES_REPORT_PATH=/tmp/oneringai-stage10-delivery-outcomes.json MODEL_EXECUTION_REPORT_PATH=/tmp/oneringai-stage10-delivery-models.json EVIDENCE_REPORT_PATH=/tmp/oneringai-stage10-delivery-evidence.json CONTEXT_STRATEGY_REPORT_PATH=/tmp/oneringai-stage10-delivery-strategies.json TASK_STATE_REPORT_PATH=/tmp/oneringai-stage10-delivery-taskstate.json AGENT_LOOP_REPORT_PATH=/tmp/oneringai-stage10-delivery-loop.json npx vitest run tests/integration/text/AgenticBaseline.live.integration.test.ts tests/integration/text/ContextFreshness.live.integration.test.ts tests/integration/text/ToolOutcomes.live.integration.test.ts tests/integration/text/ModelExecution.live.integration.test.ts tests/integration/text/Evidence.live.integration.test.ts tests/integration/text/ContextStrategies.live.integration.test.ts tests/integration/text/TaskState.live.integration.test.ts tests/integration/text/AgentLoop.live.integration.test.ts --reporter=json --outputFile=/tmp/oneringai-stage10-delivery-live-tests.json",
+      "exitCode": 0,
+      "passed": true,
+      "logSHA256": "b37c810d1cebcae0737621622eeddbe663e36be221b32d79fbb721c8e2fcd7c8"
+    }
+  ],
+  "strictCompilerConfigs": {
+    "core": {
+      "extends": "/Users/aantich/dev/oneringai/tsconfig.json",
+      "compilerOptions": {
+        "noEmit": true,
+        "rootDir": "/Users/aantich/dev/oneringai",
+        "baseUrl": "/Users/aantich/dev/oneringai",
+        "paths": {
+          "@/*": [
+            "src/*"
+          ]
+        },
+        "typeRoots": [
+          "/Users/aantich/dev/oneringai/node_modules/@types"
+        ]
+      },
+      "include": [
+        "/Users/aantich/dev/oneringai/tests/unit/core/context-nextgen/plugins/TaskState.test.ts",
+        "/Users/aantich/dev/oneringai/tests/unit/core/context-nextgen/TaskStateContext.test.ts",
+        "/Users/aantich/dev/oneringai/tests/unit/core/context-nextgen/TaskStateAgent.test.ts",
+        "/Users/aantich/dev/oneringai/src/tools/desktop/driver/nut-tree.d.ts",
+        "/Users/aantich/dev/oneringai/tests/integration/text/TaskState.live.integration.test.ts",
+        "/Users/aantich/dev/oneringai/tests/unit/core/context-nextgen/TaskStateCorrections.test.ts",
+        "/Users/aantich/dev/oneringai/tests/unit/core/context-nextgen/TaskStateCompatibility.test.ts",
+        "/Users/aantich/dev/oneringai/tests/unit/core/Agent.loopPolicy.test.ts",
+        "/Users/aantich/dev/oneringai/examples/agent-loop/scripted-provider.ts",
+        "/Users/aantich/dev/oneringai/tests/integration/text/AgentLoop.live.integration.test.ts"
+      ],
+      "exclude": []
+    },
+    "amos": {
+      "extends": "/Users/aantich/dev/oneringai/apps/amos/tsconfig.json",
+      "compilerOptions": {
+        "rootDir": "/Users/aantich/dev/oneringai",
+        "baseUrl": "/Users/aantich/dev/oneringai",
+        "paths": {
+          "@/*": [
+            "src/*"
+          ]
+        },
+        "noEmit": true,
+        "typeRoots": [
+          "/Users/aantich/dev/oneringai/node_modules/@types"
+        ]
+      },
+      "include": [
+        "/Users/aantich/dev/oneringai/tests/unit/apps/amos/TaskState.test.ts",
+        "/Users/aantich/dev/oneringai/apps/amos/examples/task-state-offline.ts",
+        "/Users/aantich/dev/oneringai/tests/unit/apps/amos/TaskStateCorrections.test.ts",
+        "/Users/aantich/dev/oneringai/tests/unit/apps/amos/LoopPolicy.test.ts",
+        "/Users/aantich/dev/oneringai/apps/amos/examples/loop-policy-offline.ts"
+      ],
+      "exclude": []
+    }
+  },
+  "validationHistory": [
+    "Initial offline example/two helper-budget tests lacked existing customProviderAttempts: single attestation; corrected setup without relaxing hard limits.",
+    "One temporary external lifecycle test called nonexistent endExternalExecution; corrected to completeExternalExecution.",
+    "Exploratory combined root/AMOS strict config used incompatible project flags; separate project-strict contracts pass. New optional iterator.return typing corrected.",
+    "First live Stage 10 probe 10/12 and first full live batch 128/129; exact details/rechecks retained in STAGE_10_LIVE.json. Final corrected-source batch 129/129, no skips.",
+    "First sandboxed offline batch 21/22; existing tool-outcomes local HTTP server failed EPERM. Authorized local-server batch 22/22.",
+    "Review hardened tracking against unsettled async admissions and large denied/delivered batches; final source/build/full gates include the correction."
+  ],
+  "limitations": [
+    "Host checks must be authorized semantically correct cooperative reads; bounded local schema/identity checks cannot prove their truth or preempt synchronous blocked JavaScript.",
+    "Configured stream before:tool preparation is shared; disabled legacy trace is preserved. Streaming candidates remain provisional; final JSON repair remains run-only.",
+    "Identical per-execution action protection is neither semantic nor durable exactly-once execution. New runs/continuations have fresh admission state; reconcile uncertain writes explicitly.",
+    "Provider status is unchanged; host workflow status is optional loop metadata. No configured checker means answer_returned without workflow completion status.",
+    "Direct/realtime/external SDK loops and remote/native internal steps are not individually controlled. Existing observer/owning-generator cancellation boundaries remain.",
+    "Policy callbacks/counters are not restored as saved authority; same-agent loads retain live host config/latest diagnostics. ModelTask sharing with helpers is explicit.",
+    "Live steps are bounded synthetic functional probes, not a statistical quality/cost or free-planning benchmark. Earlier model adherence failures remain evidence.",
+    "Stage 12 and conditional Stage 11 remain unimplemented and separately authorized; no package release or default promotion."
+  ],
+  "packageInventory": {
+    "command": "npm --cache /tmp/oneringai-stage10-npm-cache pack --dry-run --ignore-scripts --json",
+    "exitCode": 0,
+    "entries": 174,
+    "requiredFiles": [
+      "docs/AGENT_LOOP_POLICIES.md",
+      "docs/designs/STAGE_10_IMPLEMENTATION.md",
+      "docs/evaluations/STAGE_10_VALIDATION.json",
+      "docs/evaluations/STAGE_10_LIVE.json",
+      "docs/evaluations/STAGE_10_AMOS_OFFLINE.txt",
+      "examples/feedback-driven-agent.ts",
+      "examples/run-stream-equivalence.ts",
+      "examples/agent-loop/scripted-provider.ts"
+    ],
+    "allPresent": true,
+    "note": "File inventory validation only; report self-size/hashes excluded. No publish."
+  },
+  "sourceFiles": [
+    {
+      "path": "apps/amos/examples/loop-policy-offline.ts",
+      "sha256": "c39654fd99d736e3fc04105dc9dc0bb375d39d41fcfd3ba38fa0743d6b94cb14"
+    },
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "sha256": "566f09639c52b2565c2f6d85290b013b39d8d7ce2139ff475e5df087e47fc45e"
+    },
+    {
+      "path": "apps/amos/src/agent/loopDiagnostics.ts",
+      "sha256": "ea365c0927512ccf48f0850e13d7eaacabef7b3f8010c5b24609dd18444b5906"
+    },
+    {
+      "path": "apps/amos/src/app.ts",
+      "sha256": "84d16da7eb1d5a9c3f784dd3684fdebcb6486572edc69ed7f182c3176ba3443f"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/ContextCommand.ts",
+      "sha256": "d5a4c75446e6c26e6f432685ea53ea882939b80a4c6026e0d304eba091de9c92"
+    },
+    {
+      "path": "apps/amos/src/config/types.ts",
+      "sha256": "c36ab34b821efc3eab71ff5ab9607d222a84361b68c1a9cf9bf5bc64641625d8"
+    },
+    {
+      "path": "examples/README.md",
+      "sha256": "9d814c19533f7378297b78071358c4ca18c66e33d18b1561735395947aef5dbb"
+    },
+    {
+      "path": "examples/agent-loop/scripted-provider.ts",
+      "sha256": "c4abd3e571bfb31e3ce0496f243e20df5a2074396d392b724f19ca6329f463cc"
+    },
+    {
+      "path": "examples/feedback-driven-agent.ts",
+      "sha256": "814cf1ea779eb933ac733ae7c6355f9052fb4daeda02eea4e58e7269ae39c04f"
+    },
+    {
+      "path": "examples/run-stream-equivalence.ts",
+      "sha256": "e0aee88410311a6b55229a3044265874c5d9eeda442372014b6fe46adfd46fce"
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "c939d5670285cada3ccd9f3b984c4a79b5dee7c81364aefc3f3b840d58d4d352"
+    },
+    {
+      "path": "src/core/agent-loop/LoopController.ts",
+      "sha256": "0409ed7a624ff316726aaa2c97fd48853b1c153d4b7372088b5da28fe4f69873"
+    },
+    {
+      "path": "src/core/agent-loop/decisions.ts",
+      "sha256": "56795b11b9185883d070cebf341f63b9f1f29dd04d4004d19002ae3ff9369ef0"
+    },
+    {
+      "path": "src/core/agent-loop/types.ts",
+      "sha256": "9a15ed1ab7fa8a37a624256ead00d7bff08ea3b649c5d5d4feaa479523f2f26e"
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "e63440582e7c0987243092af58e645d4d86455fe070842d8be274e4422622269"
+    },
+    {
+      "path": "src/core/index.ts",
+      "sha256": "68bad5985a1bfaaeaca010a18155b6f40c874ce62f1f8e143bd71131c101b546"
+    },
+    {
+      "path": "src/domain/entities/AgentLoop.ts",
+      "sha256": "eccfd2195e6722c37298586d6a2ed9e3b1a0ad9b5f83256b932395e29acd36e1"
+    },
+    {
+      "path": "src/domain/entities/Response.ts",
+      "sha256": "b5c956b605278623465971a9c7fd496f23d7ed8f46de07a0a67ca20f36a341b1"
+    },
+    {
+      "path": "src/domain/entities/StreamEvent.ts",
+      "sha256": "075acace68a15dca79e0f0a573c307ee6860e4fb8a418cac17cf800d09b4e543"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "3d41f79d24b34c88c473bfad229c161c6dc59e1b2b0c0013577d89cd91b0d495"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "ec9012a5b5bd806b1f63d2f271083e54672ea9c3694d78ac0ecaf0dcc0151271"
+    },
+    {
+      "path": "src/types/index.ts",
+      "sha256": "b759868de0af17a631c1e69a8b0fa51cdf92ae468b1d97d9a2c3646b7f4aa755"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage10-consumer.ts",
+      "sha256": "f2bbf6e2a1005805b75e7286f0bb37c138ade2a506b1322d226127f4b8f89c28"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "sha256": "337479736e76676847b0c621a6ccce1f3aba9ffb9bdb9a729657ad43d73914d5"
+    },
+    {
+      "path": "tests/integration/text/AgentLoop.live.integration.test.ts",
+      "sha256": "03dabcf33ff708631fe14f5b1e302699eea58cf2c90310b894e3d3b2c8797d08"
+    },
+    {
+      "path": "tests/unit/apps/amos/LoopPolicy.test.ts",
+      "sha256": "012ce5aa6d60f446d3d74db278ea2fa8fd8436d6f3a48d44ca50905f93e62b5c"
+    },
+    {
+      "path": "tests/unit/core/Agent.loopPolicy.test.ts",
+      "sha256": "2441f1cdb5ccddd425f71bcb30e68ef9590ad694549ef9d89f5f08f6c3d5c33e"
+    }
+  ],
+  "builtPublicFiles": [
+    {
+      "path": "dist/index.js",
+      "sha256": "617a34c2d052118d8b6078a5c0da8bfa9263a7b992e30187dba73879a98124d9"
+    },
+    {
+      "path": "dist/index.cjs",
+      "sha256": "3ab7b524f8a4d37d564ce2deec5238f98361d97df9a1fad6fd0ae4d3c90c1aee"
+    },
+    {
+      "path": "dist/index.d.ts",
+      "sha256": "1018c428a0e73c3e9b3d60d119b1b6a700de53b1fc72ca0c4f9761a6dc165fc7"
+    },
+    {
+      "path": "dist/types/index.js",
+      "sha256": "19645a6b8353a94e54fb53df01f85d775a5bb0e9f88fa0b77fcf5728ce464c8b"
+    },
+    {
+      "path": "dist/types/index.cjs",
+      "sha256": "e21c282e8521140b6e525dabb1b6acdceff224dd71ff016dd3941b951734de16"
+    },
+    {
+      "path": "dist/types/index.d.ts",
+      "sha256": "b18cffcc709c8bc720794d85f87e14cd66bdb3aceadb8b283eb4bcb74a517795"
+    }
+  ],
+  "documentation": {
+    "recipe": "docs/AGENT_LOOP_POLICIES.md",
+    "stage": "docs/designs/STAGE_10_IMPLEMENTATION.md",
+    "adoption": "docs/VERSION_2_GUIDE.md",
+    "standardGuidesSynced": true,
+    "apiRegenerated": true,
+    "amosTranscript": "docs/evaluations/STAGE_10_AMOS_OFFLINE.txt",
+    "historicalStageRecordsUnchanged": true
+  }
+}

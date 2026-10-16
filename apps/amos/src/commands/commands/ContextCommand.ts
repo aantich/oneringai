@@ -14,6 +14,7 @@
 
 import { BaseCommand } from '../BaseCommand.js';
 import type { CommandContext, CommandResult } from '../../config/types.js';
+import { describeLoopDiagnostics } from '../../agent/loopDiagnostics.js';
 
 /**
  * Format bytes to human-readable string
@@ -47,7 +48,7 @@ export class ContextCommand extends BaseCommand {
   readonly name = 'context';
   readonly aliases = ['ctx'];
   readonly description = 'Show context inspection details';
-  readonly usage = '/context [budget|breakdown|cache|memory|history|evidence|strategy|task]';
+  readonly usage = '/context [budget|breakdown|cache|memory|history|evidence|strategy|task|loop]';
 
   get detailedHelp(): string {
     return `
@@ -59,6 +60,7 @@ USAGE:
   /context breakdown    Per-component token breakdown
   /context evidence [id] [offset]  Metadata list or explicit bounded evidence preview
   /context task         Inspect host task state, including unconfirmed/pending actions
+  /context loop         Inspect managed-loop phase, recovery and completion diagnostics
   /context task add <revision> <category> <id> <text...>
   /context task correct <revision> <old-id> <new-id> <text...>
   /context task resolve <revision> <id>
@@ -136,6 +138,14 @@ EXAMPLES:
           if (code === 'TASK_STATE_CAPACITY') return this.error('Task-state capacity reached. Inspect /context task; prune resolved/superseded notes with task prune, or explicitly resolve and remove notes atomically with task resolve-prune. Use task confirm-prune only after verifying a terminal remote outcome. Then /session save.');
           return this.error(code === 'TASK_STATE_CONFLICT' ? 'Task revision changed; inspect /context task and retry with the current revision.' : 'Task-state edit/inspection rejected. Check task configuration, current revision, record IDs, limits, and that no execution is running.');
         }
+      }
+      case 'loop': {
+        if (args.length !== 1) return this.error('Use /context loop to inspect the latest managed execution.');
+        const runner = app.getAgent()!;
+        if (!runner.getLoopDiagnostics) return this.error('Loop inspection is unavailable in this runner.');
+        const diagnostics = runner.getLoopDiagnostics();
+        return this.success(diagnostics ? `${describeLoopDiagnostics(diagnostics)}\n${JSON.stringify(diagnostics, null, 2)}`
+          : 'No managed-loop diagnostics. Enable a loopPolicy and run a task to inspect progress.');
       }
       case 'strategy': {
         const runner = app.getAgent()!;

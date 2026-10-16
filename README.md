@@ -3603,3 +3603,25 @@ public consumers and ESM/CJS controls; runtime defaults and hard limits are unch
 Corrective [validation evidence](docs/evaluations/STAGE_04_CORRECTIONS_VALIDATION.json)
 includes all three providers and unchanged historical review/delivery records.
 No package release is claimed.
+
+Stage 10 adds opt-in [bounded recovery and host completion checks](docs/AGENT_LOOP_POLICIES.md)
+through `loopPolicy` on managed run/stream. Failed reads, repeated observations and
+unmet predicates share a bounded recovery allowance; repeated or uncertain actions
+stop for host inspection. Optional `response.loop` and existing stream-event metadata
+separate workflow checks from model prose/provider status. Existing defaults remain
+unchanged. Build first, then run `npm run example:feedback-agent`,
+`npm run example:loop-equivalence`, or `npm run example:amos-loop` offline.
+
+All five [Stage 10 review findings](docs/designs/STAGE_10_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16)
+are fixed and validated on branch. Async deliveries preserve admitted effect;
+stopped calls/results survive new input and JSON formatting; class callbacks keep
+their host receiver. [Corrective validation](docs/evaluations/STAGE_10_CORRECTIONS_VALIDATION.json)
+passes 7,950 units, 135 live cases / 147 scenarios and 22 offline examples.
+No package release is claimed.
+
+The [second Stage 10 review and fixes](docs/designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md)
+resolve the recorded Google empty-summary failure inside the helper's existing
+repair allowance and reject stale account/identity completion checks. Optional
+`HelperCallOptions.validationSchema` adds local constraints to a portable native
+schema. Latest gates pass 7,988 units and 136 live cases / 148 scenarios, including
+real Google recovery from an injected copy of the recorded fault.

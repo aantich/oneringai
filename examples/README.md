@@ -290,3 +290,31 @@ The second corrective pass preserves legacy resolved-feature and external-plugin
 configuration types. After building, `npm run test:agentic:compat` compiles pinned
 legacy consumers through the root and `/types` exports without spreading current
 defaults. Both task-state walkthroughs remain applicable and pass unchanged.
+
+### Bounded recovery and completion (Stage 10)
+
+Build the library first. These examples are offline and require no `.env` keys:
+
+| Command | Behavior |
+| --- | --- |
+| `npm run example:feedback-agent` | Rejects premature completion, recovers one transient read failure, then verifies host artifact/receipt state within four synthetic calls and two shared recovery attempts. |
+| `npm run example:loop-equivalence` | Compares run/stream semantic hook and blocking-tool traces, recovery and completion, then proves stopped calls/receipts survive new input, including run-only JSON formatting. |
+| `npm run example:amos-loop` | Uses the actual AMOS runner and `/context loop`, a blocked checkpoint and fresh class-method/private-state host verification. |
+
+All examples destroy agents/connectors; the AMOS example removes its temporary
+session directory. `examples/agent-loop/scripted-provider.ts` is a deterministic
+model simulation that throws if its script is exhausted, not a production provider.
+Hard ModelTask bounds use its explicit single-attempt host attestation.
+`npm run test:loop:live` explicitly opts into real billable OpenAI, Anthropic and
+Google run/stream recovery/blocked and stopped-history/formatting checks using `.env`. Tools are synthetic reads;
+there are no real external writes. Read [Loop Policies](../docs/AGENT_LOOP_POLICIES.md)
+for defaults, uncertainty, persistence and intentional run/stream differences.
+
+
+The offline `purpose-specific-models.ts` example now starts with a shape-valid
+empty answer and uses optional `validationSchema` to require content. Its one
+existing repair retains the exact source marker and shares task accounting.
+The structured-compaction live gate additionally injects the recorded empty
+Google summary after a real call, then requires a real Google repair, source
+retrieval and exact final constraints without masking fallback. All fault
+injection is labeled in the report and uses synthetic source data.

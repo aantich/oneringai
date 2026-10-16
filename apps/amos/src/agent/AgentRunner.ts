@@ -26,6 +26,8 @@ import {
   type EvidenceReference,
   type HelperRole,
   type ModelTaskSnapshot,
+  type AgentLoopPolicy,
+  type AgentLoopDiagnostics,
 } from '@everworker/oneringai';
 import type {
   AgentResponse,
@@ -91,6 +93,7 @@ export class AgentRunner implements IAgentRunner {
   private tools: ToolFunction[];
   private readonly storage: FileContextStorage;
   private _isRunning = false;
+  private _loopPolicyOverride?: AgentLoopPolicy | null;
   private _currentModel: string;
   private _currentTemperature: number;
   private _connectorName = '';
@@ -158,6 +161,7 @@ export class AgentRunner implements IAgentRunner {
       model,
       tools: this.tools,
       modelExecution: this.config.modelExecution ?? undefined,
+      ...(this.config.loopPolicy === undefined ? {} : { loopPolicy: this.config.loopPolicy }),
       ...runtimeOptions,
       ...(evidence || task || this.config.contextStrategy ? {
         ...(evidence || task ? { userId: evidence?.ownerId ?? task!.ownerId } : {}),
@@ -190,6 +194,13 @@ export class AgentRunner implements IAgentRunner {
   getTaskState(): TaskStateSnapshot | undefined {
     const plugin = this.agent?.context.getPlugin('task_state');
     return plugin instanceof TaskStatePluginNextGen ? plugin.getState() : undefined;
+  }
+
+  getLoopDiagnostics(): AgentLoopDiagnostics | undefined { return this.agent?.getLoopDiagnostics(); }
+
+  setLoopPolicy(policy: AgentLoopPolicy | null): void {
+    if (this.isRunning()) throw new Error('Cannot change a loop policy during execution');
+    this._loopPolicyOverride = policy;
   }
 
   updateTaskState(delta: TaskStateHostDelta, expectedRevision: number): TaskStateSnapshot {
@@ -275,7 +286,7 @@ export class AgentRunner implements IAgentRunner {
     agent.tools.on('tool:outcome', collect);
 
     try {
-      const response = await agent.run(input);
+      const response = await (this._loopPolicyOverride === undefined ? agent.run(input) : agent.run(input, { loopPolicy: this._loopPolicyOverride }));
       const usage: TokenUsage = {
         inputTokens: response.usage.input_tokens,
         outputTokens: response.usage.output_tokens,
@@ -288,6 +299,7 @@ export class AgentRunner implements IAgentRunner {
         usage,
         duration: Date.now() - startedAt,
         toolOutcomes,
+        ...(response.loop ? { loop: response.loop } : {}),
       };
       await this.autoSaveIfEnabled();
       return result;
@@ -303,7 +315,8 @@ export class AgentRunner implements IAgentRunner {
     this._isRunning = true;
 
     try {
-      for await (const event of agent.stream(input)) {
+      const events = this._loopPolicyOverride === undefined ? agent.stream(input) : agent.stream(input, { loopPolicy: this._loopPolicyOverride });
+      for await (const event of events) {
         const mapped = this.mapStreamEvent(event);
         if (mapped) yield mapped;
       }
@@ -748,12 +761,17 @@ export class AgentRunner implements IAgentRunner {
       case StreamEventType.RESPONSE_COMPLETE:
         return {
           type: 'done',
+          ...(event.loop ? { loop: event.loop } : {}),
           usage: {
             inputTokens: event.usage.input_tokens,
             outputTokens: event.usage.output_tokens,
             totalTokens: event.usage.total_tokens,
           },
         };
+      case StreamEventType.ITERATION_COMPLETE:
+        // Reuse the app's existing non-text notification surface; no public
+        // stream/event discriminant is added for policy progress.
+        return event.loop ? { type: 'tool:complete', loop: event.loop } : null;
       case StreamEventType.ERROR:
         // Agent.stream throws after emitting its terminal provider error. Let the
         // app's catch path render it once instead of showing duplicate errors.
