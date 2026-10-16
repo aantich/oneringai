@@ -19025,3 +19025,84 @@ pilot is not statistical proof of quality preservation or lower total cost.
 AMOS `/context strategy` selects/inspects the policy; `/helpers usage` shows actual
 task accounting. Selection itself makes no helper request. See the
 [Version 2 adoption record](./docs/VERSION_2_GUIDE.md) for branch/release availability.
+
+
+## Protected task state (Stage 04, opt-in branch capability)
+
+Use a named connector as usual, then enable `context.features.taskState` with
+`plugins.taskState: { taskId, scope: { ownerId, namespace, tenantId? }, association? }`.
+Select these values in the trusted host, and keep `userId` consistent with the owner.
+The plugin is named `task_state`; access it through
+`agent.context.getPlugin<TaskStatePluginNextGen>('task_state')`. It shares the
+existing context/tool manager and exposes no model mutation/store tools.
+
+```typescript
+const state = agent.context.getPlugin<TaskStatePluginNextGen>('task_state')!;
+state.updateHost({ notes: [{ id: 'budget', category: 'constraint',
+  text: 'Spend at most 40 EUR.', source: { label: 'Confirmed user instruction' },
+}] }, state.revision);
+state.propose([{ id: 'possible', category: 'decision',
+  text: 'Submission may mean completion.', uncertainty: 'No remote verification.',
+  source: { label: 'Explicit extractor output' },
+}] , state.revision);
+```
+
+Import `TaskStatePluginNextGen` from the public package. Host corrections use new
+IDs with `supersedes`, and conflicts use `conflictsWith`. Action receipts are
+recorded explicitly from `executeWithOutcome` via `recordAction`; they do not set
+workflow completion. `confirmAction` supplies a separate sourced host status such
+as `waiting_external` or `completed` after the host's actual completion check.
+Admission failure never authorizes replay of an external action.
+
+Default limits are 100 combined notes/actions, 8,000 estimated content tokens and
+256 KiB strict JSON. Full protected state is counted in managed prompts; it remains
+through compaction/rollover or fails fit explicitly. Hooks cannot silently remove
+it at dispatch. JSON repair retains it; direct calls bypass it. No automatic
+extraction or model-obedience guarantee is provided.
+
+Existing optional plugin snapshots persist state; foreign/future/malformed records
+fail preflight, and legacy snapshots without task state clear enabled notes. Restore
+only host-owned checkpoints. Task/routine statuses and MemorySystem task transitions
+keep their authority; explicit lifecycle views do not create another workflow engine.
+Read the [complete recipe](./docs/TASK_STATE.md) before configuring memory linkage,
+pruning, capacity handling or recovery. Offline examples: `npm run example:task-state`
+and `npm run example:amos-task-state`; live probes: `npm run test:task-state:live`.
+
+
+Stage 04 corrections are implemented and validated on branch. Atomic host
+recovery at capacity uses the existing `updateHost` method with optional fields:
+
+```typescript
+state.updateHost({ resolve: ['finished-question'],
+  prune: { noteIds: ['finished-question'] },
+}, state.revision);
+// Only after the host verifies a terminal external outcome:
+state.updateHost({
+  confirmActions: [{ executionId, status: 'completed', source: { label: 'Verified remote status' } }],
+  prune: { executionIds: [executionId] },
+}, state.revision);
+```
+
+Notes, resolutions, confirmations and explicit pruning are one atomic transaction;
+only the final snapshot must fit, while the delta still satisfies the input limit.
+Invalid proof/target/status or overflow leaves the original state unchanged. Archive
+records before explicit pruning when needed. ID reuse detaches obsolete correction/
+conflict links and keeps already historical predecessors inactive. Managed guards
+recheck after final budget observers, including repair validation.
+AMOS host commands add `task prune`, `resolve-prune`, `prune-action` and
+`confirm-prune`; they use the same host validation/checkpoint flow and make no model
+calls. Read [Task State](./docs/TASK_STATE.md) and the historical
+[review/fix plan](./docs/designs/STAGE_04_REVIEW_AND_FIX_PLAN.md).
+
+All four corrective findings pass focused/full local and real-provider validation;
+see [corrective evidence](./docs/evaluations/STAGE_04_CORRECTIONS_VALIDATION.json).
+The [second review](./docs/designs/STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md) found
+two additional public TypeScript compatibility regressions; both are now
+[fixed and validated](./docs/designs/STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16).
+Legacy `ResolvedContextFeatures` values retain their eight required fields, while
+later additions remain optional in constructed values. Live contexts still apply
+their defaults; use `features.taskState ?? false` for legacy snapshots/adapters.
+Generic plugin configuration retains external factory records; declare built-in
+configuration with `satisfies TaskStatePluginConfig` for strict scope/task checks.
+Fresh validation passes 7,795 units and the unchanged public consumers. No package
+release or automatic completion policy is claimed.

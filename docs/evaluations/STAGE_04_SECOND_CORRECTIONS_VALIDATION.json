@@ -1,0 +1,598 @@
+{
+  "protocol": "stage04-second-corrections-v1",
+  "recordedAt": "2026-10-15T22:12:04.628518+00:00",
+  "localDate": "2026-10-16",
+  "timezone": "Europe/Zurich",
+  "branch": "version2",
+  "baseCommit": "152a0a3712ec294509cb95257a63df8add47bf92",
+  "status": "passed",
+  "stageComplete": true,
+  "findings": [
+    {
+      "id": "R1",
+      "status": "fixed",
+      "behavior": "The original eight resolved-feature keys stay required; later known additions are optional in legacy constructed values. Live contexts continue applying existing defaults."
+    },
+    {
+      "id": "R2",
+      "status": "fixed",
+      "behavior": "Generic taskState config accepts existing external factory records alongside explicit TaskStatePluginConfig. Strict built-in type and runtime scope/task checks, disabled behavior and factory precedence are retained."
+    }
+  ],
+  "scope": {
+    "productionEdits": "Type declarations/comments only; generated tool implementation fingerprints refreshed automatically. No execution implementation change.",
+    "changedPreviouslyReviewedSourceTestExampleFiles": [
+      "examples/README.md",
+      "src/core/context-nextgen/types.ts",
+      "src/tools/registry.generated.ts",
+      "tests/fixtures/agentic-baseline/tsconfig.json"
+    ],
+    "newPermanentRuntimeTest": "tests/unit/core/context-nextgen/TaskStateCompatibility.test.ts",
+    "newPublicConsumer": "tests/fixtures/agentic-baseline/stage04-legacy-consumer.ts",
+    "runtimeDefaultsChanged": false,
+    "limitsChanged": false,
+    "newRequiredSessionStorageRunnerFields": false,
+    "evidenceBuilderSetup": "Initial bookkeeping assertion omitted the intentional examples/README.md documentation edit; corrected expected changed-file inventory before recording results.",
+    "newModelTools": false,
+    "breakingAPIChange": false,
+    "commitPushRelease": false,
+    "laterStageImplemented": false
+  },
+  "compatibility": {
+    "legacyRequiredKeys": [
+      "workingMemory",
+      "inContextMemory",
+      "persistentInstructions",
+      "userInfo",
+      "toolCatalog",
+      "sharedWorkspace",
+      "memory",
+      "memoryWrite"
+    ],
+    "laterKnownFlagsOptionalInConstructedValues": true,
+    "liveTaskStateDefault": false,
+    "genericTaskStateConfig": "TaskStatePluginConfig | Record<string, unknown>",
+    "explicitBuiltinTypeStillRequiresScopeAndTask": true,
+    "externalFactoryPrecedenceRetained": true,
+    "newAPIs": []
+  },
+  "unit": {
+    "passed": 7795,
+    "failed": 0,
+    "skipped": 0,
+    "files": 357
+  },
+  "stage04Unit": {
+    "cases": 164,
+    "files": [
+      {
+        "path": "tests/unit/apps/amos/TaskState.test.ts",
+        "passed": 12
+      },
+      {
+        "path": "tests/unit/apps/amos/TaskStateCorrections.test.ts",
+        "passed": 10
+      },
+      {
+        "path": "tests/unit/core/context-nextgen/TaskStateAgent.test.ts",
+        "passed": 22
+      },
+      {
+        "path": "tests/unit/core/context-nextgen/TaskStateCompatibility.test.ts",
+        "passed": 11
+      },
+      {
+        "path": "tests/unit/core/context-nextgen/TaskStateContext.test.ts",
+        "passed": 20
+      },
+      {
+        "path": "tests/unit/core/context-nextgen/TaskStateCorrections.test.ts",
+        "passed": 21
+      },
+      {
+        "path": "tests/unit/core/context-nextgen/plugins/TaskState.test.ts",
+        "passed": 68
+      }
+    ],
+    "newCorrectiveCases": 11
+  },
+  "initialFocused": {
+    "passed": 11,
+    "failed": 0,
+    "skipped": 0,
+    "files": 1
+  },
+  "publicConsumer": {
+    "preFix": {
+      "command": "npm run test:agentic:compat",
+      "exitCode": 2,
+      "expectedFailure": true,
+      "diagnostics": 9,
+      "log": "\n> @everworker/oneringai@1.2.0 test:agentic:compat\n> tsc --noEmit -p tests/fixtures/agentic-baseline/tsconfig.json\n\ntests/fixtures/agentic-baseline/stage04-legacy-consumer.ts(18,14): error TS2322: Type '{ workingMemory: boolean; inContextMemory: boolean; persistentInstructions: boolean; userInfo: boolean; toolCatalog: boolean; sharedWorkspace: boolean; memory: boolean; memoryWrite: boolean; }' is not assignable to type 'ResolvedContextFeatures'.\n  Property 'taskState' is missing in type '{ workingMemory: boolean; inContextMemory: boolean; persistentInstructions: boolean; userInfo: boolean; toolCatalog: boolean; sharedWorkspace: boolean; memory: boolean; memoryWrite: boolean; }' but required in type 'Required<KnownContextFeatures>'.\ntests/fixtures/agentic-baseline/stage04-legacy-consumer.ts(19,14): error TS2322: Type '{ workingMemory: boolean; inContextMemory: boolean; persistentInstructions: boolean; userInfo: boolean; toolCatalog: boolean; sharedWorkspace: boolean; memory: boolean; memoryWrite: boolean; }' is not assignable to type 'ResolvedContextFeatures'.\n  Property 'taskState' is missing in type '{ workingMemory: boolean; inContextMemory: boolean; persistentInstructions: boolean; userInfo: boolean; toolCatalog: boolean; sharedWorkspace: boolean; memory: boolean; memoryWrite: boolean; }' but required in type 'Required<KnownContextFeatures>'.\ntests/fixtures/agentic-baseline/stage04-legacy-consumer.ts(20,69): error TS2322: Type '{ workingMemory: boolean; inContextMemory: boolean; persistentInstructions: boolean; userInfo: boolean; toolCatalog: boolean; sharedWorkspace: boolean; memory: boolean; memoryWrite: boolean; }' is not assignable to type 'ResolvedContextFeatures'.\n  Property 'taskState' is missing in type '{ workingMemory: boolean; inContextMemory: boolean; persistentInstructions: boolean; userInfo: boolean; toolCatalog: boolean; sharedWorkspace: boolean; memory: boolean; memoryWrite: boolean; }' but required in type 'Required<KnownContextFeatures>'.\ntests/fixtures/agentic-baseline/stage04-legacy-consumer.ts(21,77): error TS2322: Type '{ workingMemory: boolean; inContextMemory: boolean; persistentInstructions: boolean; userInfo: boolean; toolCatalog: boolean; sharedWorkspace: boolean; memory: boolean; memoryWrite: boolean; }' is not assignable to type 'ResolvedContextFeatures'.\n  Property 'taskState' is missing in type '{ workingMemory: boolean; inContextMemory: boolean; persistentInstructions: boolean; userInfo: boolean; toolCatalog: boolean; sharedWorkspace: boolean; memory: boolean; memoryWrite: boolean; }' but required in type 'Required<KnownContextFeatures>'.\ntests/fixtures/agentic-baseline/stage04-legacy-consumer.ts(26,14): error TS2322: Type '{ taskState: { existingCustomOption: boolean; }; }' is not assignable to type 'PluginConfigs'.\n  Type '{ taskState: { existingCustomOption: boolean; }; }' is not assignable to type 'KnownPluginConfigs'.\n    Types of property 'taskState' are incompatible.\n      Type '{ existingCustomOption: boolean; }' is missing the following properties from type 'TaskStatePluginConfig': scope, taskId\ntests/fixtures/agentic-baseline/stage04-legacy-consumer.ts(27,14): error TS2322: Type '{ taskState: { existingCustomOption: boolean; }; }' is not assignable to type 'KnownPluginConfigs'.\n  Types of property 'taskState' are incompatible.\n    Type '{ existingCustomOption: boolean; }' is missing the following properties from type 'TaskStatePluginConfig': scope, taskId\ntests/fixtures/agentic-baseline/stage04-legacy-consumer.ts(28,14): error TS2322: Type '{ taskState: { existingCustomOption: boolean; }; }' is not assignable to type 'PluginConfigs'.\n  Type '{ taskState: { existingCustomOption: boolean; }; }' is not assignable to type 'KnownPluginConfigs'.\n    Types of property 'taskState' are incompatible.\n      Type '{ existingCustomOption: boolean; }' is missing the following properties from type 'TaskStatePluginConfig': scope, taskId\ntests/fixtures/agentic-baseline/stage04-legacy-consumer.ts(29,14): error TS2322: Type '{ taskState: { existingCustomOption: boolean; }; }' is not assignable to type 'KnownPluginConfigs'.\n  Types of property 'taskState' are incompatible.\n    Type '{ existingCustomOption: boolean; }' is missing the following properties from type 'TaskStatePluginConfig': scope, taskId\ntests/fixtures/agentic-baseline/stage04-legacy-consumer.ts(31,56): error TS2322: Type '{ taskState: { existingCustomOption: boolean; }; }' is not assignable to type 'PluginConfigs'.\n  Type '{ taskState: { existingCustomOption: boolean; }; }' is not assignable to type 'KnownPluginConfigs'.\n    Types of property 'taskState' are incompatible.\n      Type '{ existingCustomOption: boolean; }' is missing the following properties from type 'TaskStatePluginConfig': scope, taskId\n"
+    },
+    "postFix": {
+      "command": "npm run test:agentic:compat",
+      "exitCode": 0,
+      "rootAndTypeOnlyExports": true,
+      "legacyAssignmentsSuppressed": false,
+      "intentionalNegativeCase": "TaskStatePluginConfig without scope/task must remain a compile error."
+    },
+    "fixture": "import { AgentContextNextGen, BasePluginNextGen, DEFAULT_FEATURES, PluginRegistry } from '@everworker/oneringai';\nimport type {\n  AgentContextNextGenConfig, IContextSnapshot, KnownContextFeatures, KnownPluginConfigs,\n  PluginConfigs, ResolvedContextFeatures, TaskStatePluginConfig,\n} from '@everworker/oneringai';\nimport type {\n  IContextSnapshot as TypeOnlySnapshot, KnownPluginConfigs as TypeOnlyKnownPluginConfigs,\n  PluginConfigs as TypeOnlyPluginConfigs, ResolvedContextFeatures as TypeOnlyResolvedFeatures,\n} from '@everworker/oneringai/types';\n\n// Pin the consumer's old value. Spreading today's DEFAULT_FEATURES hides added\n// required members and cannot establish backward compatibility.\nconst previousFeatures = {\n  workingMemory: true, inContextMemory: true, persistentInstructions: false,\n  userInfo: false, toolCatalog: false, sharedWorkspace: false,\n  memory: false, memoryWrite: false,\n};\nexport const legacyResolved: ResolvedContextFeatures = previousFeatures;\nexport const legacyTypeOnlyResolved: TypeOnlyResolvedFeatures = previousFeatures;\nexport const legacySnapshot: Pick<IContextSnapshot, 'features'> = { features: previousFeatures };\nexport const legacyTypeOnlySnapshot: Pick<TypeOnlySnapshot, 'features'> = { features: previousFeatures };\nexport const legacyOptionalFlag: boolean | undefined = legacyResolved.taskState;\nexport const normalizedFlag: boolean = DEFAULT_FEATURES.taskState;\nexport const newFlags: KnownContextFeatures = { taskState: true };\n\nconst previousPluginConfig = { taskState: { existingCustomOption: true } };\nexport const legacyPlugins: PluginConfigs = previousPluginConfig;\nexport const legacyKnownPlugins: KnownPluginConfigs = previousPluginConfig;\nexport const legacyTypeOnlyPlugins: TypeOnlyPluginConfigs = previousPluginConfig;\nexport const legacyTypeOnlyKnownPlugins: TypeOnlyKnownPluginConfigs = previousPluginConfig;\nexport const legacyContextConfig: AgentContextNextGenConfig = {\n  model: 'gpt-4o-mini', features: { taskState: true }, plugins: previousPluginConfig,\n};\n\nexport const builtinConfig: TaskStatePluginConfig = {\n  scope: { ownerId: 'host', namespace: 'work' }, taskId: 'task', maxEntries: 100,\n};\n// Built-in consumers retain a strict explicit configuration type even though\n// generic registry configuration must also accept external records.\n// @ts-expect-error Built-in task state requires a host scope and task ID.\nexport const missingBuiltinScope: TaskStatePluginConfig = { maxEntries: 100 };\n\nexport function existingRegistryConsumer(): AgentContextNextGen {\n  class ExistingTaskView extends BasePluginNextGen {\n    readonly name = 'legacy_task_view';\n    getInstructions(): string { return 'Existing custom plugin'; }\n    async getContent(): Promise<string> { return 'Existing custom data'; }\n    getContents(): unknown { return previousPluginConfig.taskState; }\n  }\n  PluginRegistry.register('legacy_task_view', () => new ExistingTaskView(), { featureKey: 'taskState' });\n  try { return AgentContextNextGen.create(legacyContextConfig); }\n  finally { PluginRegistry.remove('taskState'); }\n}\n"
+  },
+  "publicCorrectionProof": {
+    "command": "node --import tsx /tmp/oneringai-stage04-types-fixes/public.mts",
+    "exitCode": 0,
+    "script": "import assert from 'node:assert/strict';\nimport { createRequire } from 'node:module';\nimport { mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';\nimport { tmpdir } from 'node:os';\nimport { join } from 'node:path';\nconst require=createRequire(import.meta.url);\nconst root='/Users/aantich/dev/oneringai';\nconst publicRequire=createRequire(root+'/package.json');\nconst observations=[];\n// ESM package resolution uses the same public self-reference as source-checkout\n// consumer examples; the temporary loader is saved beside its package symlink.\nconst publicESM=await import('@everworker/oneringai');\nfor(const [build,api] of [\n ['source',await import(root+'/src/index.ts')],['esm',publicESM],['cjs',publicRequire('@everworker/oneringai')],\n] as const){\n const {AgentContextNextGen,BasePluginNextGen,PluginRegistry,TaskStatePluginNextGen,FileContextStorage}=api;\n const directory=await mkdtemp(join(tmpdir(),'task-public-compat-'));\n const contexts:any[]=[];\n let made=0,destroyed=0;const received:unknown[]=[];\n class Existing extends BasePluginNextGen {\n  readonly name='legacy_task_view';value='LEGACY_TASK_DATA';\n  getInstructions(){return 'Existing external plugin';}async getContent(){return this.value;}\n  getContents(){return{value:this.value};}getState(){return{value:this.value};}\n  restoreState(state:any){this.value=state.value;}destroy(){destroyed++;}\n }\n const create=(extra:any={})=>{const context=AgentContextNextGen.create({model:'gpt-4o-mini',agentId:'compat',features:{workingMemory:false,inContextMemory:false,taskState:true},plugins:{taskState:{existingCustomOption:true}},...extra});contexts.push(context);return context;};\n try{\n  const legacyFeatures={workingMemory:false,inContextMemory:false,persistentInstructions:false,userInfo:false,toolCatalog:false,sharedWorkspace:false,memory:false,memoryWrite:false};\n  const legacy=create({features:legacyFeatures,plugins:undefined});\n  assert.equal(legacy.features.taskState,false);assert.equal(legacy.hasPlugin('task_state'),false);\n  observations.push({build,case:'legacy features normalized',passed:true});\n  PluginRegistry.register('legacy_task_view',(config:unknown)=>{made++;received.push(config);return new Existing();},{featureKey:'taskState'});\n  const disabled=create({features:{workingMemory:false,inContextMemory:false,taskState:false}});\n  assert.equal(made,0);assert.ok(!JSON.stringify((await disabled.prepare()).input).includes('LEGACY_TASK_DATA'));\n  observations.push({build,case:'registered factory disabled',passed:true});\n  const storage=new FileContextStorage({agentId:'compat',baseDirectory:directory});\n  const existing=create({storage});assert.deepEqual(received[0],{existingCustomOption:true});assert.equal(existing.hasPlugin('task_state'),false);\n  const prepared=await existing.prepare();existing.validateRequestBudget({input:prepared.input});assert.ok(JSON.stringify(prepared.input).includes('LEGACY_TASK_DATA'));\n  existing.getPlugin('legacy_task_view').value='CHECKPOINTED_CUSTOM_DATA';await existing.save('legacy');existing.destroy();\n  const fresh=create({storage});assert.equal(await fresh.load('legacy'),true);assert.ok(JSON.stringify((await fresh.prepare()).input).includes('CHECKPOINTED_CUSTOM_DATA'));\n  observations.push({build,case:'external configuration preparation/checkpoint',passed:true});\n  assert.equal(PluginRegistry.remove('taskState'),true);\n  assert.throws(()=>create({plugins:undefined}));assert.throws(()=>create({plugins:{taskState:{existingCustomOption:true}}}));\n  observations.push({build,case:'missing builtin scope/task rejected',passed:true});\n  const builtin=create({userId:'host',plugins:{taskState:{scope:{ownerId:'host',namespace:'public'},taskId:'task'}}});\n  const task=builtin.getPlugin('task_state');assert.ok(task instanceof TaskStatePluginNextGen);task.updateHost({notes:[{id:'cap',category:'constraint',text:'HOST_CAP_40',source:{label:'Host'}}]},0);\n  const protectedRequest=await builtin.prepare();builtin.validateRequestBudget({input:protectedRequest.input});assert.ok(JSON.stringify(protectedRequest.input).includes('HOST_CAP_40'));\n  observations.push({build,case:'builtin selection/protection restored',passed:true});\n }finally{contexts.forEach(c=>c.destroy());PluginRegistry.remove('taskState');await rm(directory,{recursive:true,force:true});}\n assert.equal(made,2);assert.equal(destroyed,2);\n observations.push({build,case:'factory cleanup exactly once',passed:true,providerCalls:0});\n}\nconst old=JSON.parse(await readFile(root+'/docs/evaluations/STAGE_04_SECOND_REVIEW.json','utf8'));\nconst ts=publicRequire('typescript');const file='/tmp/oneringai-stage04-review2/unchanged-consumer.mts';\nawait writeFile(file,old.typeProbe.consumer);\nconst program=ts.createProgram([file],{strict:true,noEmit:true,skipLibCheck:true,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.NodeNext,moduleResolution:ts.ModuleResolutionKind.NodeNext});\nconst diagnostics=ts.getPreEmitDiagnostics(program).map((d:any)=>ts.flattenDiagnosticMessageText(d.messageText,'\\n'));\nassert.deepEqual(diagnostics,[]);\nconst result={observations,unchangedReviewConsumerDiagnostics:diagnostics,publicImports:true,providerCalls:0};\nawait writeFile('/tmp/oneringai-stage04-types-fixes-public.json',JSON.stringify(result,null,2)+'\\n');\nconsole.log(JSON.stringify(result,null,2));\n",
+    "results": {
+      "observations": [
+        {
+          "build": "source",
+          "case": "legacy features normalized",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "registered factory disabled",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "external configuration preparation/checkpoint",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "missing builtin scope/task rejected",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "builtin selection/protection restored",
+          "passed": true
+        },
+        {
+          "build": "source",
+          "case": "factory cleanup exactly once",
+          "passed": true,
+          "providerCalls": 0
+        },
+        {
+          "build": "esm",
+          "case": "legacy features normalized",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "registered factory disabled",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "external configuration preparation/checkpoint",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "missing builtin scope/task rejected",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "builtin selection/protection restored",
+          "passed": true
+        },
+        {
+          "build": "esm",
+          "case": "factory cleanup exactly once",
+          "passed": true,
+          "providerCalls": 0
+        },
+        {
+          "build": "cjs",
+          "case": "legacy features normalized",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "registered factory disabled",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "external configuration preparation/checkpoint",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "missing builtin scope/task rejected",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "builtin selection/protection restored",
+          "passed": true
+        },
+        {
+          "build": "cjs",
+          "case": "factory cleanup exactly once",
+          "passed": true,
+          "providerCalls": 0
+        }
+      ],
+      "unchangedReviewConsumerDiagnostics": [],
+      "publicImports": true,
+      "providerCalls": 0
+    },
+    "originalReviewConsumer": "import type { ResolvedContextFeatures, PluginConfigs } from '@everworker/oneringai';\nexport const legacyResolved: ResolvedContextFeatures = {\n  workingMemory: true, inContextMemory: true, persistentInstructions: false,\n  userInfo: false, toolCatalog: false, sharedWorkspace: false,\n  memory: false, memoryWrite: false,\n};\nexport const customTaskPlugin: PluginConfigs = { taskState: { existingCustomOption: true } };\n",
+    "installedDeclarationsModifiedByProbe": false
+  },
+  "checks": [
+    {
+      "command": "npm run build (local IPC access enabled)",
+      "exitCode": 0,
+      "logSHA256": "f63bef926fb9e2b446c89df1164bd23351e9445efa1dad503e29954f217bc8b3"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "logSHA256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717"
+    },
+    {
+      "command": "npm run test:agentic:compat",
+      "exitCode": 0,
+      "logSHA256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    {
+      "command": "tsc --noEmit -p /tmp/oneringai-stage04-types-fixes-strict.json",
+      "exitCode": 0,
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "npm run examples:check",
+      "exitCode": 0,
+      "logSHA256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "logSHA256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e"
+    },
+    {
+      "command": "tsc --noEmit -p /tmp/oneringai-stage04-fixes-amos-strict.json",
+      "exitCode": 0,
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "npm run --prefix apps/amos build",
+      "exitCode": 0,
+      "logSHA256": "1acaa3b3fe8063a073e1eb9377f8de1d24b60bdb5919d52867d812a6a7ab4bf0"
+    },
+    {
+      "command": "vitest run tests/unit (local HTTP/WebSocket fixture access enabled)",
+      "exitCode": 0,
+      "logSHA256": "1a566d2a21059c2885ecb10d66195b81a5dc482365964bb7108a82d2be117fe9"
+    },
+    {
+      "command": "node --import tsx scripts/generate-api-docs.ts --mode public",
+      "exitCode": 0,
+      "logSHA256": "4f052a7d2ed56c720673a432f61b6371ae243b53459ce99e03b5d07cfbc3bd34"
+    },
+    {
+      "command": "node --import tsx /tmp/oneringai-stage04-types-fixes/public.mts",
+      "exitCode": 0,
+      "logSHA256": "b734f043e7294972c7e8d5e67f7ec235e068009366a8a33172ae615fd9b62cdd"
+    },
+    {
+      "command": "npm run example:task-state",
+      "exitCode": 0,
+      "logSHA256": "bd77cefac9fecb88eefaa1b2249b858da59bfff76a03a3f70a7470e117cd8d7c"
+    },
+    {
+      "command": "npm run example:amos-task-state",
+      "exitCode": 0,
+      "logSHA256": "f971ecc0237fd5f5bba7ce9ca7888fa3e1d475874a29570aaccb9d2d94c0d0ad"
+    }
+  ],
+  "publicAPIItems": 1682,
+  "environmentalAttempt": {
+    "command": "npm run build (sandboxed)",
+    "exitCode": 1,
+    "cause": "tsx local IPC listen EPERM before generator/clean/build could run; unchanged command passed with IPC access.",
+    "logSHA256": "e7b4e213e8a8e13c0cc72d223096932355349e1d4bdda4f818188ce47175644b",
+    "log": "\n> @everworker/oneringai@1.2.0 build\n> npm run generate && npm run clean:dist && tsup && npm run build:verify-exports\n\n\n> @everworker/oneringai@1.2.0 generate\n> npm run generate:tools && npm run generate:vendors\n\n\n> @everworker/oneringai@1.2.0 generate:tools\n> tsx scripts/generate-tool-registry.ts\n\nnode:net:2302\n      const error = new UVExceptionWithHostPort(rval, 'listen', address, port);\n                    ^\n\nError: listen EPERM: operation not permitted /var/folders/w4/0_95kdj51l35cqyg07_w5v5r0000gn/T/tsx-501/92061.pipe\n    at Server.setupListenHandle [as _listen2] (node:net:2302:21)\n    at listenInCluster (node:net:2433:12)\n    at Server.listen (node:net:2575:5)\n    at file:///Users/aantich/dev/oneringai/node_modules/tsx/dist/cli.mjs:53:31537\n    at new Promise (<anonymous>)\n    at createIpcServer (file:///Users/aantich/dev/oneringai/node_modules/tsx/dist/cli.mjs:53:31515)\n    at async file:///Users/aantich/dev/oneringai/node_modules/tsx/dist/cli.mjs:55:459 {\n  code: 'EPERM',\n  errno: -1,\n  syscall: 'listen',\n  address: '/var/folders/w4/0_95kdj51l35cqyg07_w5v5r0000gn/T/tsx-501/92061.pipe',\n  port: -1\n}\n\nNode.js v24.20.0\n"
+  },
+  "live": {
+    "freshRun": false,
+    "reason": "Only production type declarations/comments changed; no Agent/context/tool execution implementation change. New live LLM calls are unnecessary for compiler compatibility.",
+    "historicalCorrectiveRecord": "docs/evaluations/STAGE_04_CORRECTIONS_VALIDATION.json",
+    "historicalPassed": 117,
+    "historicalScenarios": 129,
+    "historicalProviders": [
+      "OpenAI",
+      "Anthropic",
+      "Google"
+    ],
+    "note": "Historical live numbers are not included in fresh corrective validation."
+  },
+  "examplesAndAmos": {
+    "freshOfflineScripts": [
+      "example:task-state",
+      "example:amos-task-state"
+    ],
+    "newBehaviorRequired": false,
+    "reason": "No new runtime capability or app command/configuration. Existing actual runner/command/session tests, app types/build and unchanged offline walkthrough validate adoption.",
+    "exactTaskSummary": "Task revision 9; pruned ID reused and checkpoint restored; 1 submission; no LLM calls."
+  },
+  "historicalEvidence": [
+    {
+      "path": "docs/evaluations/STAGE_04_VALIDATION.json",
+      "sha256": "9156ea523cc97a4239bc3820cadfe54cc409c11679d33404749dace5354d722b",
+      "modified": false
+    },
+    {
+      "path": "docs/evaluations/STAGE_04_REVIEW.json",
+      "sha256": "719d73e09c9f12c15fd1b5ecc78ce8dfdd92d2dcbd823b8dd6bda19d51b971c4",
+      "modified": false
+    },
+    {
+      "path": "docs/evaluations/STAGE_04_CORRECTIONS_VALIDATION.json",
+      "sha256": "08596aefca35da9ee09953f5820cec2ac6c328c4b0f3ac74dd5b0b34424c0f6a",
+      "modified": false
+    },
+    {
+      "path": "docs/evaluations/STAGE_04_SECOND_REVIEW.json",
+      "sha256": "b20b74e111b76a15c4b2870feedcd29bff14e0109ff773c48379c1df3c9f7294",
+      "modified": false
+    }
+  ],
+  "builtPublicFiles": [
+    {
+      "path": "dist/index.js",
+      "sha256": "0622027b303161f6b81e1f27859e8ce7f6d1a240b4252d6fba3496cd3254f42c"
+    },
+    {
+      "path": "dist/index.cjs",
+      "sha256": "cb9676d6c2cbf9421f8e8baa322d183c1710b46b21654be904d6f2895804910a"
+    },
+    {
+      "path": "dist/index.d.ts",
+      "sha256": "7f9bb6c9d7ec37c9d84ca55eadf00333336b71601dd09a14a53b7f3a7728e5ca"
+    },
+    {
+      "path": "dist/index.d.cts",
+      "sha256": "8a44bfc2f38b82be2c0d7d1cf6ac7b08f863a64abfec138df6a838079eabaf49"
+    },
+    {
+      "path": "dist/types/index.js",
+      "sha256": "19645a6b8353a94e54fb53df01f85d775a5bb0e9f88fa0b77fcf5728ce464c8b"
+    },
+    {
+      "path": "dist/types/index.cjs",
+      "sha256": "e21c282e8521140b6e525dabb1b6acdceff224dd71ff016dd3941b951734de16"
+    },
+    {
+      "path": "dist/types/index.d.ts",
+      "sha256": "3b0721c1034f500a6778a390a32841e3c4982a8ebc6f8e05fe841325de54ca6d"
+    },
+    {
+      "path": "dist/types/index.d.cts",
+      "sha256": "3b0721c1034f500a6778a390a32841e3c4982a8ebc6f8e05fe841325de54ca6d"
+    },
+    {
+      "path": "dist/HookTypes-CXB5m61L.d.ts",
+      "sha256": "bb72fa64305263766a484020c002f8158a18ac236b8786648297bbab3ed99d07"
+    },
+    {
+      "path": "dist/HookTypes-A-Fz6dIT.d.cts",
+      "sha256": "cb627b83a1274c5dfd46be3f72bf58d2fde7692c61529fc2e8e0e04025bfb346"
+    }
+  ],
+  "limitations": [
+    "Legacy/application-created feature values may omit later optional flags; normalize on inspection.",
+    "Snapshots are host checkpoints; no new authority or semantic truth guarantee.",
+    "No fresh provider, coverage, quality or cost comparison is claimed for this corrective pass.",
+    "Final package membership will be verified without publishing."
+  ],
+  "packageInventory": {
+    "files": 166,
+    "requiredFilesPresent": [
+      "docs/VERSION_2_GUIDE.md",
+      "docs/TASK_STATE.md",
+      "docs/designs/STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md",
+      "docs/evaluations/STAGE_04_SECOND_REVIEW.json",
+      "docs/evaluations/STAGE_04_SECOND_CORRECTIONS_VALIDATION.json",
+      "examples/task-state-workflow.ts",
+      "API_REFERENCE.md"
+    ],
+    "dryRun": true,
+    "scriptsIgnored": true,
+    "published": false,
+    "note": "Final file membership only; evidence metadata is finalized afterward, without claiming final tarball integrity."
+  },
+  "deliveryFiles": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "40e2db4ab63bf77c1810b1abc1d49de182ba371e62452f49afd8a083c54ff966"
+    },
+    {
+      "path": "API_REFERENCE.md",
+      "sha256": "7135b60f196d4bce3ac8ff7ee28f7c95e31c2b0ea93e89ab87d40278f7fe671d"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "52733b9986ce76262ff8c63c7e2c4e34cde1eb8cdac675a3ea16cc34cf82f742"
+    },
+    {
+      "path": "README.md",
+      "sha256": "75a139629a0d0fb49c9122e31e609496944d13444c253fcfeef8865eb3a7c3a5"
+    },
+    {
+      "path": "USER_GUIDE.md",
+      "sha256": "d2a47b4c9fa12b96241624d09c064c989e3c034ae8f3363396d13d1e5df93fe7"
+    },
+    {
+      "path": "apps/amos/README.md",
+      "sha256": "e612ef6e95c868f6bb92115ce2cb5d627bea1504df806558e7321f771297ce46"
+    },
+    {
+      "path": "apps/amos/examples/task-state-offline.ts",
+      "sha256": "90241954883a3be8c0f586fcf3b3a17b05dadde1f568a520c4ecaa59113eb872"
+    },
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "sha256": "8991c52804bd83d8b14fd48d65bb472bea0f4aea97dd791baaf38edfb5b9b3f8"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/ContextCommand.ts",
+      "sha256": "b44ecbe57e13fe7361b02ef490573100161d83e36ec81d53f37db738ed363a7f"
+    },
+    {
+      "path": "apps/amos/src/config/types.ts",
+      "sha256": "f24f2d755e5e90bb1b4deecd38ad5339a67cca1a79524ffa3f2b9b79a1cdb8c5"
+    },
+    {
+      "path": "docs/MEMORY_GUIDE.md",
+      "sha256": "02445c9c53269e78235f4720d43fb971bf3826c11dc609ec4f0beec8099a2cba"
+    },
+    {
+      "path": "docs/TASK_STATE.md",
+      "sha256": "405ae5f2490fd07e8ed473b8af7358a0c20c8ef785a541859e4b6d77d336b656"
+    },
+    {
+      "path": "docs/VERSION_2_GUIDE.md",
+      "sha256": "4d8483f231194c895cd211bc26b90af0eb5cf5dbd8409dcb5a72721fb9ee9a93"
+    },
+    {
+      "path": "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "sha256": "3cc9377e5d24f94a262354e72c5114f77e21fbf867ea2365c9ac36c2bc5a0ab7"
+    },
+    {
+      "path": "docs/designs/STAGE_04_IMPLEMENTATION.md",
+      "sha256": "ff5cec68d341cd1a1b0bdff447c711132968b6e228fc9e9b6853ac057eea6be5"
+    },
+    {
+      "path": "docs/designs/STAGE_04_REVIEW_AND_FIX_PLAN.md",
+      "sha256": "f54b4146cb7d1e274f81be37afb9fa4b47195b9cea4f84e78fcfe87d3fb72cf3"
+    },
+    {
+      "path": "docs/designs/STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md",
+      "sha256": "e48bdeae87eaf006e02e6da3e7ff487ee2c2bf8dfac77a12cd64c54976b59f43"
+    },
+    {
+      "path": "docs/evaluations/STAGE_04_AMOS_OFFLINE.txt",
+      "sha256": "c1fa634c10065b27d77cb9a2e7bd6a6e20e924aad9ac14227ae6405aa732672c"
+    },
+    {
+      "path": "docs/evaluations/STAGE_04_CORRECTIONS_AMOS_OFFLINE.txt",
+      "sha256": "65a919f1ff71c134d97f7558fca293cb2d75a30ec6e6df3f73b8f9428fa83e29"
+    },
+    {
+      "path": "docs/evaluations/STAGE_04_CORRECTIONS_VALIDATION.json",
+      "sha256": "08596aefca35da9ee09953f5820cec2ac6c328c4b0f3ac74dd5b0b34424c0f6a"
+    },
+    {
+      "path": "docs/evaluations/STAGE_04_REVIEW.json",
+      "sha256": "719d73e09c9f12c15fd1b5ecc78ce8dfdd92d2dcbd823b8dd6bda19d51b971c4"
+    },
+    {
+      "path": "docs/evaluations/STAGE_04_SECOND_REVIEW.json",
+      "sha256": "b20b74e111b76a15c4b2870feedcd29bff14e0109ff773c48379c1df3c9f7294"
+    },
+    {
+      "path": "docs/evaluations/STAGE_04_VALIDATION.json",
+      "sha256": "9156ea523cc97a4239bc3820cadfe54cc409c11679d33404749dace5354d722b"
+    },
+    {
+      "path": "examples/README.md",
+      "sha256": "8830ff67226468b518ee04e7dc9434134cd1ff0c27acb60d92687c661e59cbeb"
+    },
+    {
+      "path": "examples/task-state-workflow.ts",
+      "sha256": "bde064f136b15ac5fad2c0d6f77a466b17eb60c3049a1e31a6bf83e2c602206f"
+    },
+    {
+      "path": "package.json",
+      "sha256": "181305a6154decdc75fa80e7565fb0ffcda6fe8aec37d02a2bc7cba10e208d42"
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "cf40714d6fb6b0b0424f928840dfc8dc885a16858541e086b8b3776939b4b649"
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "3755b1aa9cab8cc029add224d6e4887ecb804adb0b2a51c4ec9ac28e559bb0b0"
+    },
+    {
+      "path": "src/core/context-nextgen/index.ts",
+      "sha256": "501870b7fd098bc03ccd149ccf90612aca18b876e77bb3a32f6be119264507d7"
+    },
+    {
+      "path": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts",
+      "sha256": "963244333f581d06e903b1422a9184b37a2ef47fc0ea28c5ec16088f5d1378e4"
+    },
+    {
+      "path": "src/core/context-nextgen/plugins/index.ts",
+      "sha256": "2f3638910bfd680b3720aa3d6a0cc98be48f64d042b4a97150982dca3552fdec"
+    },
+    {
+      "path": "src/core/context-nextgen/types.ts",
+      "sha256": "cd5728afac32f0e7df734e9389a59edae4021e2ab14999d1dd587d0fd0183f72"
+    },
+    {
+      "path": "src/core/index.ts",
+      "sha256": "3e4eb488229bd9fe410f851f5dc7cfae70b1d1b63423864a797376d3c0b3e5fe"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "3db6e68229e768b0799da7b1c4770eae3827c795cc7bfd6a4c143e61ba5105d7"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "99bf33cf4e34d59e08ffcc02ece605385d91daccf3eadbaf8a877940386e9d84"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage04-consumer.ts",
+      "sha256": "1d147c3c3ac340b74cbb84cc10e5eb0d970dc96e33cb67f6679cd5ecf126de9d"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage04-legacy-consumer.ts",
+      "sha256": "6352e268b23157eb198afe67426411cb07dd273a8dfbf398f985e1164f567067"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "sha256": "535aebccce0702f7a2ee594bcfddf81b8cf56f44b9985a2cebd2adc72a28d5f4"
+    },
+    {
+      "path": "tests/integration/text/TaskState.live.integration.test.ts",
+      "sha256": "02aea1ba6332023e72a37fd65e0b92475e0b53b82cedbeebf94d04370c4241d2"
+    },
+    {
+      "path": "tests/unit/apps/amos/TaskState.test.ts",
+      "sha256": "539158ff5776d4cc559c3f5fc17a5c15ce096246b8ac130d9d59dd9acd9b512a"
+    },
+    {
+      "path": "tests/unit/apps/amos/TaskStateCorrections.test.ts",
+      "sha256": "8df76c3b99a2c62306ca6f7ed6fc2dd7ccec8e89f7e70f60bbe42ee213469046"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/TaskStateAgent.test.ts",
+      "sha256": "dd7230ab14d3ed62fcb043217cd92f5604d98166460bc38b184b7a780faf3f69"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/TaskStateCompatibility.test.ts",
+      "sha256": "659b6b1fa8baad8719e533a19fda4088539ef82d43992c50003b887ad0aacae5"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/TaskStateContext.test.ts",
+      "sha256": "b171727ce7ab56c6e47f8da513a96605aee22e77c626e9ef2beb5dedf5524b9a"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/TaskStateCorrections.test.ts",
+      "sha256": "ae46f7844d7a31b0dfad92fe4dbae5c3e5836731a2113b6ea821c56665de5bb7"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/plugins/TaskState.test.ts",
+      "sha256": "d7ca9f23d49ce178dd750971153c49dcac732adaef2df26437035f4cf5970a51"
+    }
+  ]
+}

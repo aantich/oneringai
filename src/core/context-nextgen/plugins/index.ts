@@ -67,3 +67,6 @@ export type {
   SessionIngestorPluginConfig,
   SessionIngestorDiligence,
 } from './SessionIngestorPluginNextGen.js';
+
+export { TaskStatePluginNextGen } from './TaskStatePluginNextGen.js';
+export type { TaskStateCategory, TaskStateSource, TaskStateNoteInput, TaskStateNote, TaskStateLifecycleBinding, TaskStateLifecycleView, TaskStateAction, TaskStateSnapshot, TaskStatePluginConfig, TaskStateHostDelta } from './TaskStatePluginNextGen.js';

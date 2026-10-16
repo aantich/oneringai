@@ -140,3 +140,6 @@ export {
 
 export { ObservationMaskingStrategy, StructuredSummaryStrategy } from './strategies/index.js';
 export type { ObservationMaskingStrategyConfig, StructuredSummaryStrategyConfig, StructuredContextSummary, ContextSummaryEntry, ContextSummaryRequest, ContextSummaryGenerator, ConversationCompactionReport, ConversationCompactionOptions } from './strategies/index.js';
+
+export { TaskStatePluginNextGen } from './plugins/TaskStatePluginNextGen.js';
+export type { TaskStateCategory, TaskStateSource, TaskStateNoteInput, TaskStateNote, TaskStateLifecycleBinding, TaskStateLifecycleView, TaskStateAction, TaskStateSnapshot, TaskStatePluginConfig, TaskStateHostDelta } from './plugins/TaskStatePluginNextGen.js';

@@ -14,6 +14,8 @@ import type {
   ModelTaskSnapshot,
   ConversationCompactionReport,
   HelperRole,
+  TaskStateSnapshot,
+  TaskStateHostDelta,
 } from '@everworker/oneringai';
 import type { ExternalToolManager } from '../tools/ExternalToolManager.js';
 
@@ -22,6 +24,8 @@ import type { ExternalToolManager } from '../tools/ExternalToolManager.js';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface AmosConfig {
+  /** Opt-in deterministic host task state. Commands edit memory; /session save checkpoints it. */
+  taskState?: { enabled: boolean; taskId: string; ownerId: string; namespace: string; association?: string };
   /** Optional host configuration; null/absence keeps legacy single-model behavior. */
   modelExecution?: ModelExecutionConfig | null;
   /** Optional explicit automatic strategy; absence preserves algorithmic behavior. */
@@ -296,6 +300,8 @@ export interface PromptTemplate {
 }
 
 export interface IAgentRunner {
+  getTaskState?(): TaskStateSnapshot | undefined;
+  updateTaskState?(delta: TaskStateHostDelta, expectedRevision: number): TaskStateSnapshot;
   getContextCompaction?(): { strategy: string; last?: ConversationCompactionReport };
   setContextStrategy?(strategy: NonNullable<AmosConfig['contextStrategy']>): void;
   inspectEvidence?(id?: string, offset?: number): Promise<string>;

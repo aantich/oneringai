@@ -1,0 +1,390 @@
+{
+  "protocol": "stage04-second-review-v1",
+  "recordedAt": "2026-10-15T21:52:27.255392+00:00",
+  "localDate": "2026-10-15",
+  "branch": "version2",
+  "baseCommit": "152a0a3712ec294509cb95257a63df8add47bf92",
+  "status": "findings_open",
+  "stageComplete": false,
+  "runtimeChanged": false,
+  "permanentTestsChanged": false,
+  "buildRerun": false,
+  "liveRerun": false,
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P2",
+      "title": "Optional taskState becomes mandatory in exported ResolvedContextFeatures",
+      "file": "src/core/context-nextgen/types.ts",
+      "line": 764,
+      "relatedLine": 802,
+      "status": "open",
+      "diagnosticCode": 2322
+    },
+    {
+      "id": "R2",
+      "priority": "P2",
+      "title": "Known taskState config narrows the supported external plugin feature key",
+      "file": "src/core/context-nextgen/types.ts",
+      "line": 833,
+      "status": "open",
+      "diagnosticCode": 2739
+    }
+  ],
+  "previousRuntimeCorrections": "R1-R4 from the first review remain fixed; no additional runtime defect reproduced.",
+  "reviewScope": [
+    "host/proposal/observation authority",
+    "notes/correction/conflict/prune graph invariants",
+    "action correlation/confirmation",
+    "atomic bounded recovery",
+    "memory lifecycle permissions/cancellation",
+    "asynchronous preparation/rollover",
+    "final dispatch/budget observers/repair",
+    "snapshot scope/preflight/load",
+    "PluginRegistry precedence and configuration",
+    "public declarations and legacy consumers",
+    "AMOS commands/config/session behavior",
+    "offline examples"
+  ],
+  "inputFingerprintVerification": {
+    "all45MatchedBeforeReviewDocumentationChanges": true,
+    "previousCorrectiveRecordSHA256": "08596aefca35da9ee09953f5820cec2ac6c328c4b0f3ac74dd5b0b34424c0f6a",
+    "reviewedSourceTestExampleFiles": [
+      {
+        "path": "apps/amos/examples/task-state-offline.ts",
+        "sha256": "90241954883a3be8c0f586fcf3b3a17b05dadde1f568a520c4ecaa59113eb872"
+      },
+      {
+        "path": "apps/amos/src/agent/AgentRunner.ts",
+        "sha256": "8991c52804bd83d8b14fd48d65bb472bea0f4aea97dd791baaf38edfb5b9b3f8"
+      },
+      {
+        "path": "apps/amos/src/commands/commands/ContextCommand.ts",
+        "sha256": "b44ecbe57e13fe7361b02ef490573100161d83e36ec81d53f37db738ed363a7f"
+      },
+      {
+        "path": "apps/amos/src/config/types.ts",
+        "sha256": "f24f2d755e5e90bb1b4deecd38ad5339a67cca1a79524ffa3f2b9b79a1cdb8c5"
+      },
+      {
+        "path": "examples/README.md",
+        "sha256": "6a64391229dceb25e09c3558f1d3b7cc86071fdf0951a809485317746a5d5543"
+      },
+      {
+        "path": "examples/task-state-workflow.ts",
+        "sha256": "bde064f136b15ac5fad2c0d6f77a466b17eb60c3049a1e31a6bf83e2c602206f"
+      },
+      {
+        "path": "src/core/Agent.ts",
+        "sha256": "cf40714d6fb6b0b0424f928840dfc8dc885a16858541e086b8b3776939b4b649"
+      },
+      {
+        "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+        "sha256": "3755b1aa9cab8cc029add224d6e4887ecb804adb0b2a51c4ec9ac28e559bb0b0"
+      },
+      {
+        "path": "src/core/context-nextgen/index.ts",
+        "sha256": "501870b7fd098bc03ccd149ccf90612aca18b876e77bb3a32f6be119264507d7"
+      },
+      {
+        "path": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts",
+        "sha256": "963244333f581d06e903b1422a9184b37a2ef47fc0ea28c5ec16088f5d1378e4"
+      },
+      {
+        "path": "src/core/context-nextgen/plugins/index.ts",
+        "sha256": "2f3638910bfd680b3720aa3d6a0cc98be48f64d042b4a97150982dca3552fdec"
+      },
+      {
+        "path": "src/core/context-nextgen/types.ts",
+        "sha256": "494d9331ceca8dc5f14639a1e888f282b8a789fe8d5d197d7b30a6ef12aa6110"
+      },
+      {
+        "path": "src/core/index.ts",
+        "sha256": "3e4eb488229bd9fe410f851f5dc7cfae70b1d1b63423864a797376d3c0b3e5fe"
+      },
+      {
+        "path": "src/index.ts",
+        "sha256": "3db6e68229e768b0799da7b1c4770eae3827c795cc7bfd6a4c143e61ba5105d7"
+      },
+      {
+        "path": "src/tools/registry.generated.ts",
+        "sha256": "b029525370393ac426ac16cec12d791ea9fd13c9e6ab609797eedef920922460"
+      },
+      {
+        "path": "tests/fixtures/agentic-baseline/stage04-consumer.ts",
+        "sha256": "1d147c3c3ac340b74cbb84cc10e5eb0d970dc96e33cb67f6679cd5ecf126de9d"
+      },
+      {
+        "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+        "sha256": "6c7eb921df3fd107d4391f54c4e0381e5230cf23a64e45596d9b3c73e407b0d7"
+      },
+      {
+        "path": "tests/integration/text/TaskState.live.integration.test.ts",
+        "sha256": "02aea1ba6332023e72a37fd65e0b92475e0b53b82cedbeebf94d04370c4241d2"
+      },
+      {
+        "path": "tests/unit/apps/amos/TaskState.test.ts",
+        "sha256": "539158ff5776d4cc559c3f5fc17a5c15ce096246b8ac130d9d59dd9acd9b512a"
+      },
+      {
+        "path": "tests/unit/apps/amos/TaskStateCorrections.test.ts",
+        "sha256": "8df76c3b99a2c62306ca6f7ed6fc2dd7ccec8e89f7e70f60bbe42ee213469046"
+      },
+      {
+        "path": "tests/unit/core/context-nextgen/TaskStateAgent.test.ts",
+        "sha256": "dd7230ab14d3ed62fcb043217cd92f5604d98166460bc38b184b7a780faf3f69"
+      },
+      {
+        "path": "tests/unit/core/context-nextgen/TaskStateContext.test.ts",
+        "sha256": "b171727ce7ab56c6e47f8da513a96605aee22e77c626e9ef2beb5dedf5524b9a"
+      },
+      {
+        "path": "tests/unit/core/context-nextgen/TaskStateCorrections.test.ts",
+        "sha256": "ae46f7844d7a31b0dfad92fe4dbae5c3e5836731a2113b6ea821c56665de5bb7"
+      },
+      {
+        "path": "tests/unit/core/context-nextgen/plugins/TaskState.test.ts",
+        "sha256": "d7ca9f23d49ce178dd750971153c49dcac732adaef2df26437035f4cf5970a51"
+      }
+    ],
+    "builtPublicFiles": [
+      {
+        "path": "dist/index.js",
+        "sha256": "2423a528f4405239f805e1a55da9e3008e8f516215c353f83ec5bbf7a1a08a82"
+      },
+      {
+        "path": "dist/index.cjs",
+        "sha256": "5029d4fdd264bdd08a176b240572a3a1b1f0053ed05c40e4df5ecd355ae5675f"
+      },
+      {
+        "path": "dist/index.d.ts",
+        "sha256": "3fda5d0622050ded5568f8c9bf5df50073e310d1f3d54d633badc3bc25bd58d5"
+      },
+      {
+        "path": "dist/index.d.cts",
+        "sha256": "907d0e2a15bace04a4f4679578d55e8f866ef6add2389c0d8118119d1ad1add4"
+      }
+    ]
+  },
+  "freshUnit": {
+    "passed": 7784,
+    "failed": 0,
+    "skipped": 0,
+    "files": 356
+  },
+  "focusedStage04": {
+    "passed": 153,
+    "failed": 0,
+    "skipped": 0,
+    "files": 6
+  },
+  "environmentalAttempt": {
+    "counts": {
+      "passed": 7780,
+      "failed": 4,
+      "skipped": 0,
+      "files": 356
+    },
+    "failedTests": [
+      {
+        "file": "/Users/aantich/dev/oneringai/tests/unit/core/ConnectorCancellation.test.ts",
+        "test": "local HTTP tool/connector integration caller cancellation remains effective during a native fetch body read",
+        "error": "listen EPERM: operation not permitted 127.0.0.1"
+      },
+      {
+        "file": "/Users/aantich/dev/oneringai/tests/unit/core/ConnectorCancellation.test.ts",
+        "test": "local HTTP tool/connector integration generic connector tools receive execution cancellation and retain trusted user/account bindings",
+        "error": "listen EPERM: operation not permitted 127.0.0.1"
+      },
+      {
+        "file": "/Users/aantich/dev/oneringai/tests/unit/core/Stage02Corrections.test.ts",
+        "test": "Stage 02 review corrections native redirect metadata survives operation wrapper and chained clones",
+        "error": "listen EPERM: operation not permitted 127.0.0.1"
+      },
+      {
+        "file": "/Users/aantich/dev/oneringai/tests/unit/voice/OpenAIRealtimeWebSocketBundler.test.ts",
+        "test": "OpenAI Realtime default WebSocket transport uses the portable masker when a bundler stubs the optional bufferutil module",
+        "error": "listen EPERM: operation not permitted 127.0.0.1"
+      }
+    ],
+    "cause": "Sandbox prohibits local HTTP/WebSocket fixture sockets; unchanged full suite passes with local socket access.",
+    "jsonSHA256": "d164bbf1f2bc2571dd19405e78c2ef864c16bb13f9062af6fb7edb84a482370e",
+    "logSHA256": "f873830da542e0ffb7b2782192e92e5973274f311b3de0b79593e57e5063f2b0"
+  },
+  "checks": [
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run test:agentic:compat",
+      "exitCode": 0,
+      "limitation": "Existing fixtures omit the two failing legacy shapes."
+    },
+    {
+      "command": "npm run examples:check",
+      "exitCode": 0
+    },
+    {
+      "command": "npx vitest run tests/unit (local socket access enabled)",
+      "exitCode": 0,
+      "jsonSHA256": "504838777720a44c6bd6972aaca00129e3a28b945bdd8a0626f87d661ef1d07c",
+      "logSHA256": "641aa335d48770340b8beedbc578106bae5076980872202f9a4bb597c7861dce"
+    },
+    {
+      "command": "vitest run six Stage 04 unit files",
+      "exitCode": 0,
+      "jsonSHA256": "1bdaa505a025e4d96f886f09ff32e40ca0fb5da0940c9b8c72d6a298393698fc"
+    },
+    {
+      "command": "npm run example:task-state",
+      "exitCode": 0,
+      "logSHA256": "3021c9d8d30624cf0723844afdc3c3357a847aa76e8c99b25709ad971281387d"
+    },
+    {
+      "command": "npm run example:amos-task-state",
+      "exitCode": 0,
+      "logSHA256": "abb913d85a18ca190093a204e98279ff573f893725e322fe658003209cab57d9"
+    }
+  ],
+  "typeProbe": {
+    "command": "node /tmp/oneringai-stage04-review2/types.cjs",
+    "exitCode": 0,
+    "meaning": "Script succeeds by asserting two reproduced compiler defects and a zero-diagnostic declaration comparison, not by fixing them.",
+    "consumer": "import type { ResolvedContextFeatures, PluginConfigs } from '@everworker/oneringai';\nexport const legacyResolved: ResolvedContextFeatures = {\n  workingMemory: true, inContextMemory: true, persistentInstructions: false,\n  userInfo: false, toolCatalog: false, sharedWorkspace: false,\n  memory: false, memoryWrite: false,\n};\nexport const customTaskPlugin: PluginConfigs = { taskState: { existingCustomOption: true } };\n",
+    "script": "const ts = require('/Users/aantich/dev/oneringai/node_modules/typescript');\nconst fs = require('fs');\nconst path = require('path');\nconst root='/Users/aantich/dev/oneringai';\nconst dts=root+'/dist/index.d.ts';\nconst definitions=root+'/dist/HookTypes-BHxU0CUm.d.ts';\nconst file='/tmp/oneringai-stage04-review2/consumer.mts';\nfs.writeFileSync(file, `import type { ResolvedContextFeatures, PluginConfigs } from '@everworker/oneringai';\nexport const legacyResolved: ResolvedContextFeatures = {\n  workingMemory: true, inContextMemory: true, persistentInstructions: false,\n  userInfo: false, toolCatalog: false, sharedWorkspace: false,\n  memory: false, memoryWrite: false,\n};\nexport const customTaskPlugin: PluginConfigs = { taskState: { existingCustomOption: true } };\n`);\nconst opts={strict:true,noEmit:true,skipLibCheck:true,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.NodeNext,moduleResolution:ts.ModuleResolutionKind.NodeNext};\nconst original=fs.readFileSync(definitions,'utf8');\nconst legacy=original.replace(/\\s*\\/\\*\\* Host-controlled protected task view; disabled by default\\. Requires plugins\\.taskState\\. \\*\\/\\s*taskState\\?: boolean;/,'').replace(/\\s*\\/\\*\\* Host-selected task\\/scope; enable features\\.taskState\\. \\*\\/\\s*taskState\\?: TaskStatePluginConfig;/,'');\nif(original===legacy || legacy.includes('taskState?: boolean') || legacy.includes('taskState?: TaskStatePluginConfig;')) throw Error('Failed to reconstruct original declarations');\nconst results=[];\nfor(const [label,decl] of [['current',original],['preStage04EquivalentFeatureDeclarations',legacy]]) {\n const host=ts.createCompilerHost(opts);const read=host.readFile.bind(host);host.readFile=p=>path.resolve(p)===definitions?decl:read(p);\n const program=ts.createProgram([file],opts,host);\n const diagnostics=ts.getPreEmitDiagnostics(program).map(d=>({code:d.code,file:d.file?.fileName,line:d.file&&d.start!==undefined?d.file.getLineAndCharacterOfPosition(d.start).line+1:null,message:ts.flattenDiagnosticMessageText(d.messageText,'\\n')}));\n results.push({label,diagnostics});\n}\nfs.writeFileSync('/tmp/oneringai-stage04-review2-types.json',JSON.stringify(results,null,2)+'\\n');\nconsole.log(JSON.stringify(results,null,2));\nif(results[0].diagnostics.length!==2||results[1].diagnostics.length)throw Error('Unexpected diagnostic comparison');\n",
+    "results": [
+      {
+        "label": "current",
+        "diagnostics": [
+          {
+            "code": 2322,
+            "file": "/tmp/oneringai-stage04-review2/consumer.mts",
+            "line": 2,
+            "message": "Type '{ workingMemory: true; inContextMemory: true; persistentInstructions: false; userInfo: false; toolCatalog: false; sharedWorkspace: false; memory: false; memoryWrite: false; }' is not assignable to type 'ResolvedContextFeatures'.\n  Property 'taskState' is missing in type '{ workingMemory: true; inContextMemory: true; persistentInstructions: false; userInfo: false; toolCatalog: false; sharedWorkspace: false; memory: false; memoryWrite: false; }' but required in type 'Required<KnownContextFeatures>'."
+          },
+          {
+            "code": 2739,
+            "file": "/tmp/oneringai-stage04-review2/consumer.mts",
+            "line": 7,
+            "message": "Type '{ existingCustomOption: true; }' is missing the following properties from type 'TaskStatePluginConfig': scope, taskId"
+          }
+        ]
+      },
+      {
+        "label": "preStage04EquivalentFeatureDeclarations",
+        "diagnostics": []
+      }
+    ],
+    "comparison": "CompilerHost substitutes only the two new optional members in an in-memory copy of the current public declaration chunk. All other declarations remain current. Corresponding pre-Stage04 source declarations were verified via git show HEAD; this is not a rebuilt historical package. Installed declarations are not modified.",
+    "baselineSourceDeclarations": "export interface KnownContextFeatures {\n  /** Enable WorkingMemory plugin (default: true) */\n  workingMemory?: boolean;\n\n  /** Enable InContextMemory plugin (default: false) */\n  inContextMemory?: boolean;\n\n  /** Enable PersistentInstructions plugin (default: false). @deprecated prefer the `memory` feature. */\n  persistentInstructions?: boolean;\n\n  /** Enable UserInfo plugin (default: false). @deprecated prefer the `memory` feature. */\n  userInfo?: boolean;\n\n  /** Enable ToolCatalog plugin for dynamic tool loading/unloading (default: false) */\n  toolCatalog?: boolean;\n\n  /** Enable SharedWorkspace plugin for multi-agent coordination (default: false) */\n  sharedWorkspace?: boolean;\n\n  /** Enable Memory plugin for self-learning knowledge store (default: false, READ-ONLY tools). Requires `plugins.memory.memory: MemorySystem` in config. */\n  memory?: boolean;\n\n  /** Enable Memory-write sidecar (default: false). Adds the 6 write tools (remember/link/forget/restore/upsert_entity/set_agent_rule). Requires `memory: true`. */\n  memoryWrite?: boolean;\n}\n\n/**\n * Feature flags for enabling/disabling plugins.\n * Known keys provide autocomplete; arbitrary string keys are also accepted\n * for externally registered plugins (via PluginRegistry).\n */\nexport type ContextFeatures = KnownContextFeatures & { [key: string]: boolean | undefined };\n\n/**\n * Resolved features \u2014 all known keys guaranteed present, plus any extras.\n * Used internally after merging with DEFAULT_FEATURES.\n */\nexport type ResolvedContextFeatures = Required<KnownContextFeatures> & Record<string, boolean>;\n\n/**\n * Default feature configuration for built-in plugins.\n */\nexport const DEFAULT_FEATURES: Required<KnownContextFeatures> = {\n  workingMemory: true,\n  inContextMemory: true,\n  persistentInstructions: false,\n  userInfo: false,\n  toolCatalog: false,\n  sharedWorkspace: false,\n  memory: false,\n  memoryWrite: false,\n};\n\n\nexport interface KnownPluginConfigs {\n  /** Opt-in durable evidence. Enable features.evidence; scope and policy are host-owned. */\n  evidence?: Record<string, unknown>;\n  /** Working memory plugin config. See WorkingMemoryPluginConfig. */\n  workingMemory?: Record<string, unknown>;\n  /** In-context memory plugin config. See InContextMemoryConfig. */\n  inContextMemory?: Record<string, unknown>;\n  /** Persistent instructions plugin config. See PersistentInstructionsConfig. Note: agentId auto-filled. */\n  persistentInstructions?: Record<string, unknown>;\n  /** User info plugin config. See UserInfoPluginConfig. */\n  userInfo?: Record<string, unknown>;\n  /** Tool catalog plugin config. See ToolCatalogPluginConfig. */\n  toolCatalog?: Record<string, unknown>;\n  /** Shared workspace plugin config. See SharedWorkspaceConfig. */\n  sharedWorkspace?: Record<string, unknown>;\n  /** Memory plugin config. See MemoryPluginConfig. `agentId` auto-filled from context. `userId` auto-filled from context if unset. Requires `memory: MemorySystem`. */\n  memory?: Record<string, unknown>;\n  /** Memory-write plugin config. See MemoryWritePluginConfig. Shares `memory` / `agentId` / `userId` with the memory plugin when unset. */\n  memoryWrite?: Record<string, unknown>;\n}\n\n/**\n * Plugin configurations for auto-initialization.\n * Known keys provide autocomplete; arbitrary string keys accepted\n * for externally registered plugins (via PluginRegistry).\n */\nexport type PluginConfigs = KnownPluginConfigs & { [key: string]: Record<string, unknown> | undefined };\n\n"
+  },
+  "runtimeControl": {
+    "command": "node --import tsx /tmp/oneringai-stage04-review2/runtime.mts",
+    "exitCode": 0,
+    "script": "import assert from 'node:assert/strict';\nimport { createRequire } from 'node:module';\nimport { writeFile } from 'node:fs/promises';\nconst require=createRequire(import.meta.url);\nconst rows=[];\nfor(const [build,api] of [\n  ['source',await import('/Users/aantich/dev/oneringai/src/index.ts')],\n  ['esm',await import('@everworker/oneringai')],\n  ['cjs',require('@everworker/oneringai')],\n] as const) {\n  const {AgentContextNextGen,BasePluginNextGen,PluginRegistry}=api;\n  let seen:unknown;\n  class Existing extends BasePluginNextGen {\n    readonly name='legacy_task_view';\n    getInstructions(){return 'Existing external task plugin';}\n    async getContent(){return 'LEGACY_TASK_PLUGIN_MARKER';}\n    getContents(){return seen;}\n  }\n  PluginRegistry.register('legacy_task_view',(config:unknown)=>{seen=config;return new Existing();},{featureKey:'taskState'});\n  let context;\n  try {\n    // Plain JavaScript/tsx demonstrates that this existing extension still runs;\n    // the separately compiled public consumer shows the introduced type break.\n    context=AgentContextNextGen.create({model:'gpt-4o-mini',features:{workingMemory:false,inContextMemory:false,taskState:true},plugins:{taskState:{existingCustomOption:true}}} as any);\n    const prepared=await context.prepare();\n    assert.deepEqual(seen,{existingCustomOption:true});\n    assert.ok(JSON.stringify(prepared.input).includes('LEGACY_TASK_PLUGIN_MARKER'));\n    assert.equal(context.getPlugin('task_state'),null);\n    rows.push({build,customRegistryStillWorksAtRuntime:true,config:seen,providerCalls:0});\n  } finally {context?.destroy();PluginRegistry.remove('taskState');}\n}\nawait writeFile('/tmp/oneringai-stage04-review2-runtime.json',JSON.stringify(rows,null,2)+'\\n');\nconsole.log(JSON.stringify(rows,null,2));\n",
+    "observations": [
+      {
+        "build": "source",
+        "customRegistryStillWorksAtRuntime": true,
+        "config": {
+          "existingCustomOption": true
+        },
+        "providerCalls": 0
+      },
+      {
+        "build": "esm",
+        "customRegistryStillWorksAtRuntime": true,
+        "config": {
+          "existingCustomOption": true
+        },
+        "providerCalls": 0
+      },
+      {
+        "build": "cjs",
+        "customRegistryStillWorksAtRuntime": true,
+        "config": {
+          "existingCustomOption": true
+        },
+        "providerCalls": 0
+      }
+    ],
+    "note": "Source is inspected explicitly; ESM/CJS consumers resolve the public package using a temporary node_modules symlink. No provider/network calls."
+  },
+  "harnessSetupAttempts": {
+    "typeProbe": "An initial script targeted index.d.ts instead of the shared declaration chunk and rejected its setup; corrected before deriving findings.",
+    "runtimeProbe": "Two disposable setup attempts used nonexistent registry cleanup method names. Corrected to PluginRegistry.remove; both errors are harness errors, not product defects."
+  },
+  "historicalLive": {
+    "fresh": false,
+    "correctiveRecordSHA256": "08596aefca35da9ee09953f5820cec2ac6c328c4b0f3ac74dd5b0b34424c0f6a",
+    "passed": 117,
+    "scenarios": 129,
+    "providers": [
+      "OpenAI",
+      "Anthropic",
+      "Google"
+    ],
+    "note": "Previously verified on matching source/build fingerprints. Not rerun for this local review and not counted as fresh validation."
+  },
+  "limitations": [
+    "Review does not establish semantic model obedience or quality/cost claims.",
+    "No breaking change approved; fixes should preserve the legacy contracts.",
+    "No runtime fix, permanent test, generated API change, new build, billable LLM call, commit, push or release performed."
+  ],
+  "packageInventory": {
+    "dryRun": true,
+    "ignoreScripts": true,
+    "files": 165,
+    "requiredReviewFilesPresent": [
+      "docs/VERSION_2_GUIDE.md",
+      "docs/TASK_STATE.md",
+      "docs/designs/STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md",
+      "docs/evaluations/STAGE_04_SECOND_REVIEW.json",
+      "docs/evaluations/STAGE_04_CORRECTIONS_VALIDATION.json"
+    ],
+    "note": "File membership only; no publish or final tarball-integrity claim."
+  },
+  "finalReviewDocumentation": [
+    {
+      "path": "docs/designs/STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md",
+      "sha256": "f57917c06fe03808122127405794cbb141aae9e0fcd7a8562b6fee27f2d203cf"
+    },
+    {
+      "path": "docs/VERSION_2_GUIDE.md",
+      "sha256": "ed2afab12ace0bec473703d089da92e89eb528f78415df9cda869d8daa39ad2a"
+    },
+    {
+      "path": "docs/TASK_STATE.md",
+      "sha256": "bf297a707e670a571911d7647fc6c9226c807fd0fd1b7392bc253ef747b5f756"
+    },
+    {
+      "path": "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "sha256": "d91fbd55857286078eb302524bad3670db9ea4da1e34d447001d75c19d42c7d0"
+    },
+    {
+      "path": "docs/designs/STAGE_04_IMPLEMENTATION.md",
+      "sha256": "b92dddaa633f6e2e4f8cdf2e1412e336a5bfd7882f7fdf32bdb2617e90ca7d39"
+    },
+    {
+      "path": "docs/designs/STAGE_04_REVIEW_AND_FIX_PLAN.md",
+      "sha256": "dbee9c814bfd515368d3be69fc70393ef85909f237c20047e42a266599704cff"
+    },
+    {
+      "path": "README.md",
+      "sha256": "5063528e26b86794c44cf4f0ef2b3e203046304ab54d5a4c7e0ff89ca84a1cda"
+    },
+    {
+      "path": "USER_GUIDE.md",
+      "sha256": "2b600e2e56001f877fc14924547ff2f5a1f9c63d9005051a8cd6bdd004e81129"
+    },
+    {
+      "path": "package.json",
+      "sha256": "d75d831434c62455f7c5015922729f539dc5537850b559177ef4080625ecf265"
+    }
+  ]
+}

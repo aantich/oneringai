@@ -17,7 +17,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Image Generation](#image-generation) (25 items)
 - [Video Generation](#video-generation) (23 items)
 - [Agent Runtime](#agent-runtime) (70 items)
-- [Task Agents](#task-agents) (120 items)
+- [Task Agents](#task-agents) (131 items)
 - [Context Management](#context-management) (14 items)
 - [Session Management](#session-management) (78 items)
 - [Tools & Function Calling](#tools-function-calling) (217 items)
@@ -37,7 +37,7 @@ Core classes for authentication, agents, and providers
 
 ### Agent `class`
 
-📍 [`src/core/Agent.ts:400`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:401`](src/core/Agent.ts)
 
 Agent class - represents an AI assistant with tool calling capabilities
 
@@ -1745,7 +1745,7 @@ isDisposed(): boolean
 
 ### AgentConfig `interface`
 
-📍 [`src/core/Agent.ts:81`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:82`](src/core/Agent.ts)
 
 Agent configuration - extends BaseAgentConfig with Agent-specific options
 
@@ -1807,7 +1807,7 @@ Example: `toolExecutionTimeout: 300000` (5 minutes hard cap per tool call) |
 
 ### AgentContextRolloverOptions `interface`
 
-📍 [`src/core/Agent.ts:213`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:214`](src/core/Agent.ts)
 
 Options for {@link Agent.rolloverContext}.
 
@@ -1965,7 +1965,7 @@ Fetch options with additional connector-specific settings
 
 ### ExternalExecutionOptions `interface`
 
-📍 [`src/core/Agent.ts:238`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:239`](src/core/Agent.ts)
 
 Options for a non-LLM execution owned by an external transport.
 
@@ -1983,7 +1983,7 @@ Options for a non-LLM execution owned by an external transport.
 
 ### ExternalExecutionResult `interface`
 
-📍 [`src/core/Agent.ts:253`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:254`](src/core/Agent.ts)
 
 Terminal data supplied when an external execution is completed.
 
@@ -2003,7 +2003,7 @@ Terminal data supplied when an external execution is completed.
 
 ### ExternalToolCall `interface`
 
-📍 [`src/core/Agent.ts:246`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:247`](src/core/Agent.ts)
 
 A function call received from an external model transport.
 
@@ -2022,7 +2022,7 @@ A function call received from an external model transport.
 
 ### RunOptions `interface`
 
-📍 [`src/core/Agent.ts:181`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:182`](src/core/Agent.ts)
 
 Per-call options for run() and stream().
 These override the agent-level config for this single invocation.
@@ -2063,7 +2063,7 @@ type AgentEventListener = (agentId: string, agentName: string, event: string, da
 
 ### AgentRuntimeConfigSnapshot `type`
 
-📍 [`src/core/Agent.ts:161`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:162`](src/core/Agent.ts)
 
 Agent runtime options exposed by getRuntimeConfigSnapshot().
 
@@ -2089,7 +2089,7 @@ type AgentRuntimeConfigSnapshot = Pick&lt;AgentConfig,
 
 ### AgentSessionConfig `type`
 
-📍 [`src/core/Agent.ts:76`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:77`](src/core/Agent.ts)
 
 Session configuration for Agent (same as BaseSessionConfig)
 
@@ -13230,6 +13230,231 @@ finalizePlanning(): void
 
 ---
 
+### TaskStatePluginNextGen `class`
+
+📍 [`src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts:129`](src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts)
+
+Host-controlled semantic notebook and protected prompt view; no model mutation tools.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: TaskStatePluginConfig)
+```
+
+**Parameters:**
+- `config`: `TaskStatePluginConfig`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `emptyState()`
+
+```typescript
+emptyState(): TaskStateSnapshot
+```
+
+**Returns:** `TaskStateSnapshot`
+
+#### `updateHost()`
+
+Host-only atomic update. The model has no tool exposing this method.
+
+```typescript
+updateHost(delta: TaskStateHostDelta, expectedRevision: number): TaskStateSnapshot
+```
+
+**Parameters:**
+- `delta`: `TaskStateHostDelta`
+- `expectedRevision`: `number`
+
+**Returns:** `TaskStateSnapshot`
+
+#### `propose()`
+
+Host submits model output as unconfirmed data, with source and uncertainty.
+
+```typescript
+propose(notes: TaskStateNoteInput[], expectedRevision: number): TaskStateSnapshot
+```
+
+**Parameters:**
+- `notes`: `TaskStateNoteInput[]`
+- `expectedRevision`: `number`
+
+**Returns:** `TaskStateSnapshot`
+
+#### `assume()`
+
+```typescript
+assume(notes: TaskStateNoteInput[], expectedRevision: number): TaskStateSnapshot
+```
+
+**Parameters:**
+- `notes`: `TaskStateNoteInput[]`
+- `expectedRevision`: `number`
+
+**Returns:** `TaskStateSnapshot`
+
+#### `recordAction()`
+
+Host supplies an actual ToolManager outcome; observation recording never reexecutes an action.
+
+```typescript
+recordAction(observed: ToolExecutionOutcome, expectedRevision: number): TaskStateSnapshot
+```
+
+**Parameters:**
+- `observed`: `ToolExecutionOutcome`
+- `expectedRevision`: `number`
+
+**Returns:** `TaskStateSnapshot`
+
+#### `confirmAction()`
+
+Explicit host-defined completion condition; model text/tool success cannot invoke it.
+
+```typescript
+confirmAction(executionId: string, status: TaskStatus, proof: TaskStateSource, expectedRevision: number): TaskStateSnapshot
+```
+
+**Parameters:**
+- `executionId`: `string`
+- `status`: `TaskStatus`
+- `proof`: `TaskStateSource`
+- `expectedRevision`: `number`
+
+**Returns:** `TaskStateSnapshot`
+
+#### `syncLifecycle()`
+
+Snapshot an existing Task/routine authority; this view does not drive its lifecycle.
+
+```typescript
+syncLifecycle(view: TaskStateLifecycleView, expectedRevision: number): TaskStateSnapshot
+```
+
+**Parameters:**
+- `view`: `TaskStateLifecycleView`
+- `expectedRevision`: `number`
+
+**Returns:** `TaskStateSnapshot`
+
+#### `refreshMemoryTask()`
+
+Read linked task metadata through existing MemorySystem authorization. Transition it through MemorySystem directly.
+
+```typescript
+async refreshMemoryTask(memory: Pick&lt;MemorySystem, 'getEntity'&gt;, scope: ScopeFilter, expectedRevision: number, signal?: AbortSignal): Promise&lt;TaskStateSnapshot&gt;
+```
+
+**Parameters:**
+- `memory`: `Pick&lt;MemorySystem, "getEntity"&gt;`
+- `scope`: `ScopeFilter`
+- `expectedRevision`: `number`
+- `signal`: `AbortSignal | undefined` *(optional)*
+
+**Returns:** `Promise&lt;TaskStateSnapshot&gt;`
+
+#### `pruneResolved()`
+
+Explicit host pruning only; unresolved constraints and unconfirmed actions cannot be evicted.
+
+```typescript
+pruneResolved(noteIds: string[], executionIds: string[], expectedRevision: number): TaskStateSnapshot
+```
+
+**Parameters:**
+- `noteIds`: `string[]`
+- `executionIds`: `string[]`
+- `expectedRevision`: `number`
+
+**Returns:** `TaskStateSnapshot`
+
+#### `getInstructions()`
+
+```typescript
+getInstructions(): string
+```
+
+**Returns:** `string`
+
+#### `getContent()`
+
+```typescript
+async getContent(): Promise&lt;string&gt;
+```
+
+**Returns:** `Promise&lt;string&gt;`
+
+#### `getContents()`
+
+```typescript
+getContents(): TaskStateSnapshot
+```
+
+**Returns:** `TaskStateSnapshot`
+
+#### `getState()`
+
+```typescript
+getState(): TaskStateSnapshot
+```
+
+**Returns:** `TaskStateSnapshot`
+
+#### `validateState()`
+
+Pure bounded preflight; future versions/foreign task scopes are rejected before context mutation.
+
+```typescript
+validateState(value: unknown): TaskStateSnapshot
+```
+
+**Parameters:**
+- `value`: `unknown`
+
+**Returns:** `TaskStateSnapshot`
+
+#### `restoreState()`
+
+```typescript
+restoreState(value: unknown): void
+```
+
+**Parameters:**
+- `value`: `unknown`
+
+**Returns:** `void`
+
+#### `destroy()`
+
+```typescript
+destroy(): void
+```
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: "task_state"` | - |
+| `scope` | `scope: Readonly&lt;EvidenceScope&gt;` | - |
+| `taskId` | `taskId: string` | - |
+
+</details>
+
+---
+
 ### TaskTimeoutError `class`
 
 📍 [`src/domain/errors/AIErrors.ts:292`](src/domain/errors/AIErrors.ts)
@@ -16156,6 +16381,23 @@ Reference to a source value for control flow operations.
 
 ---
 
+### TaskStateAction `interface`
+
+📍 [`src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts:34`](src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `authority` | `authority: 'observation';` | - |
+| `outcome` | `outcome: Omit&lt;ToolExecutionOutcome, 'error'&gt;;` | - |
+| `confirmation?` | `confirmation?: { status: TaskStatus; source: TaskStateSource };` | Explicit host confirmation of workflow state; tool success alone never sets it. |
+
+</details>
+
+---
+
 ### TaskStateHistoryEntry `interface`
 
 📍 [`src/memory/MemorySystem.ts:264`](src/memory/MemorySystem.ts)
@@ -16173,6 +16415,83 @@ No cap — retention is the caller's problem (audit systems, GDPR, archival).
 | `at` | `at: Date;` | - |
 | `signalId?` | `signalId?: string;` | - |
 | `reason?` | `reason?: string;` | - |
+
+</details>
+
+---
+
+### TaskStateHostDelta `interface`
+
+📍 [`src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts:64`](src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `notes?` | `notes?: TaskStateNoteInput[];` | - |
+| `resolve?` | `resolve?: string[];` | - |
+| `confirmActions?` | `confirmActions?: Array&lt;{ executionId: string; status: TaskStatus; source: TaskStateSource }&gt;;` | Explicit host confirmations, applied atomically before optional pruning. |
+| `prune?` | `prune?: { noteIds?: string[]; executionIds?: string[] };` | Explicit pruning after notes/resolutions/confirmations; only the final state must fit. |
+
+</details>
+
+---
+
+### TaskStateNote `interface`
+
+📍 [`src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts:24`](src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `authority` | `authority: 'host' | 'proposal' | 'assumption';` | - |
+| `resolved?` | `resolved?: boolean;` | - |
+| `supersededBy?` | `supersededBy?: string;` | - |
+
+</details>
+
+---
+
+### TaskStateNoteInput `interface`
+
+📍 [`src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts:15`](src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | - |
+| `category` | `category: TaskStateCategory;` | - |
+| `text` | `text: string;` | - |
+| `source` | `source: TaskStateSource;` | - |
+| `uncertainty?` | `uncertainty?: string;` | - |
+| `supersedes?` | `supersedes?: string;` | - |
+| `conflictsWith?` | `conflictsWith?: string[];` | - |
+
+</details>
+
+---
+
+### TaskStatePluginConfig `interface`
+
+📍 [`src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts:51`](src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `scope` | `scope: EvidenceScope;` | - |
+| `taskId` | `taskId: string;` | - |
+| `association?` | `association?: string;` | - |
+| `lifecycle?` | `lifecycle?: TaskStateLifecycleBinding;` | - |
+| `maxEntries?` | `maxEntries?: number;` | Combined notes/actions; default 100. No automatic eviction. |
+| `maxPromptTokens?` | `maxPromptTokens?: number;` | Full protected prompt view; default 8000 estimated tokens. |
+| `maxSnapshotBytes?` | `maxSnapshotBytes?: number;` | Strict JSON snapshot/input limit; default 256 KiB. |
 
 </details>
 
@@ -16197,6 +16516,45 @@ override here rather than hardcoding state strings in metadata queries.
 |----------|------|-------------|
 | `active` | `active: string[];` | States treated as "still open" — surfaced in getContext.relatedTasks. |
 | `terminal` | `terminal: string[];` | States treated as "finished" — transitions into these auto-set completedAt. |
+
+</details>
+
+---
+
+### TaskStateSnapshot `interface`
+
+📍 [`src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts:40`](src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `version` | `version: 1;` | - |
+| `scope` | `scope: EvidenceScope;` | - |
+| `taskId` | `taskId: string;` | - |
+| `association?` | `association?: string;` | Optional host-owned session/work association, checked on restoration. |
+| `revision` | `revision: number;` | - |
+| `notes` | `notes: TaskStateNote[];` | - |
+| `actions` | `actions: TaskStateAction[];` | - |
+| `lifecycle?` | `lifecycle?: TaskStateLifecycleView;` | - |
+
+</details>
+
+---
+
+### TaskStateSource `interface`
+
+📍 [`src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts:14`](src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `label` | `label: string;` | - |
+| `turnId?` | `turnId?: string;` | - |
+| `evidence?` | `evidence?: EvidenceReference` | - |
 
 </details>
 
@@ -16635,6 +16993,38 @@ Union of all control flow types
 
 ```typescript
 type TaskControlFlow = TaskMapFlow | TaskFoldFlow | TaskUntilFlow
+```
+
+---
+
+### TaskStateCategory `type`
+
+📍 [`src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts:13`](src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts)
+
+```typescript
+type TaskStateCategory = 'objective' | 'constraint' | 'decision' | 'question' | 'artifact'
+```
+
+---
+
+### TaskStateLifecycleBinding `type`
+
+📍 [`src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts:29`](src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts)
+
+```typescript
+type TaskStateLifecycleBinding = { kind: 'task' | 'routine' | 'memory'; id: string }
+```
+
+---
+
+### TaskStateLifecycleView `type`
+
+📍 [`src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts:30`](src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts)
+
+```typescript
+type TaskStateLifecycleView = | { kind: 'task'; id: string; status?: TaskStatus }
+  | { kind: 'routine'; id: string; status?: RoutineExecutionStatus }
+  | { kind: 'memory'; id: string; state?: string | null }
 ```
 
 ---
@@ -42690,7 +43080,7 @@ destroy(): void
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:150`](src/core/context-nextgen/AgentContextNextGen.ts)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:152`](src/core/context-nextgen/AgentContextNextGen.ts)
 
 Next-generation context manager for AI agents.
 
@@ -50204,7 +50594,7 @@ Agent configuration (needed for resume)
 
 ### AgentContextNextGenConfig `interface`
 
-📍 [`src/core/context-nextgen/types.ts:858`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:873`](src/core/context-nextgen/types.ts)
 
 AgentContextNextGen configuration
 
@@ -51013,7 +51403,7 @@ Options for the default SentenceChunkingStrategy
 
 ### CompactionContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1152`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1167`](src/core/context-nextgen/types.ts)
 
 Read-only context passed to compaction strategies.
 Provides access to data needed for compaction decisions and
@@ -51131,7 +51521,7 @@ estimateTokens(item: InputItem): number;
 
 ### CompactionResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1046`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1061`](src/core/context-nextgen/types.ts)
 
 Result of compact() operation.
 
@@ -51453,7 +51843,7 @@ truncate profile generation. See feedback_no_output_limits.md. |
 
 ### ConsolidationResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1065`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1080`](src/core/context-nextgen/types.ts)
 
 Result of consolidate() operation.
 
@@ -51506,7 +51896,7 @@ Token budget breakdown - clear and simple
 
 ### ContextEvents `interface`
 
-📍 [`src/core/context-nextgen/types.ts:993`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1008`](src/core/context-nextgen/types.ts)
 
 Events emitted by AgentContextNextGen
 
@@ -51627,7 +52017,7 @@ Optional request contributions, resolved again after compaction.
 
 ### ContextRolloverOptions `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1103`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1118`](src/core/context-nextgen/types.ts)
 
 Options for an explicit context rollover.
 
@@ -51647,7 +52037,7 @@ their results stay with their containing turn. Default: 8. |
 
 ### ContextRolloverResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1118`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1133`](src/core/context-nextgen/types.ts)
 
 Result of an explicit context rollover.
 
@@ -51672,7 +52062,7 @@ Result of an explicit context rollover.
 
 ### ContextRolloverSummaryInput `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1083`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1098`](src/core/context-nextgen/types.ts)
 
 Input passed to a context-rollover summarizer.
 
@@ -54524,7 +54914,7 @@ reset(): void;
 
 ### ICompactionStrategy `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1216`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1231`](src/core/context-nextgen/types.ts)
 
 Compaction strategy interface.
 
@@ -56935,6 +57325,7 @@ Feature flags for enabling/disabling plugins
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `taskState?` | `taskState?: boolean;` | Host-controlled protected task view; disabled by default. Requires plugins.taskState. |
 | `workingMemory?` | `workingMemory?: boolean;` | Enable WorkingMemory plugin (default: true) |
 | `inContextMemory?` | `inContextMemory?: boolean;` | Enable InContextMemory plugin (default: false) |
 | `persistentInstructions?` | `persistentInstructions?: boolean;` | Enable PersistentInstructions plugin (default: false). |
@@ -56950,7 +57341,7 @@ Feature flags for enabling/disabling plugins
 
 ### KnownPluginConfigs `interface`
 
-📍 [`src/core/context-nextgen/types.ts:827`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:836`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 When features are enabled, plugins are created with these configs.
@@ -56961,6 +57352,9 @@ The config shapes match each plugin's constructor parameter.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `taskState?` | `taskState?: import('./plugins/TaskStatePluginNextGen.js').TaskStatePluginConfig | Record&lt;string, unknown&gt;;` | Built-in host task/scope config, or an existing external taskState factory's record.
+Use TaskStatePluginConfig for strict built-in validation; runtime validates the
+built-in when no external factory owns this feature key. |
 | `evidence?` | `evidence?: Record&lt;string, unknown&gt;;` | Opt-in durable evidence. Enable features.evidence; scope and policy are host-owned. |
 | `workingMemory?` | `workingMemory?: Record&lt;string, unknown&gt;;` | Working memory plugin config. See WorkingMemoryPluginConfig. |
 | `inContextMemory?` | `inContextMemory?: Record&lt;string, unknown&gt;;` | In-context memory plugin config. See InContextMemoryConfig. |
@@ -62821,7 +63215,7 @@ type Content = | InputTextContent
 
 ### ContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:793`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:796`](src/core/context-nextgen/types.ts)
 
 Feature flags for enabling/disabling plugins.
 Known keys provide autocomplete; arbitrary string keys are also accepted
@@ -62835,7 +63229,7 @@ type ContextFeatures = KnownContextFeatures & { [key: string]: boolean | undefin
 
 ### ContextRolloverSummarizer `type`
 
-📍 [`src/core/context-nextgen/types.ts:1098`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1113`](src/core/context-nextgen/types.ts)
 
 Host-supplied summarizer used by an explicit context rollover.
 
@@ -63626,7 +64020,7 @@ type PipelineConfig = TextPipelineConfig | RealtimePipelineConfig
 
 ### PluginConfigs `type`
 
-📍 [`src/core/context-nextgen/types.ts:853`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:868`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 Known keys provide autocomplete; arbitrary string keys accepted
@@ -63807,13 +64201,18 @@ type RelatedItemHit = T & { matchedEntityId: EntityId }
 
 ### ResolvedContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:799`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:804`](src/core/context-nextgen/types.ts)
 
-Resolved features — all known keys guaranteed present, plus any extras.
-Used internally after merging with DEFAULT_FEATURES.
+Resolved features retain the original required keys, plus optional additions
+and arbitrary external flags. Keep the required set stable so adding an opt-in
+feature does not break existing snapshot/configuration consumers. Live contexts
+still merge every known default; older constructed snapshots can omit additions.
 
 ```typescript
-type ResolvedContextFeatures = Required&lt;KnownContextFeatures&gt; & Record&lt;string, boolean&gt;
+type ResolvedContextFeatures = KnownContextFeatures & Required&lt;Pick&lt;KnownContextFeatures,
+  | 'workingMemory' | 'inContextMemory' | 'persistentInstructions' | 'userInfo'
+  | 'toolCatalog' | 'sharedWorkspace' | 'memory' | 'memoryWrite'
+&gt;&gt; & Record&lt;string, boolean&gt;
 ```
 
 ---
@@ -66683,7 +67082,7 @@ transports and are not represented as misleading URL aliases here.
 
 ### DEFAULT_CONFIG `const`
 
-📍 [`src/core/context-nextgen/types.ts:960`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:975`](src/core/context-nextgen/types.ts)
 
 Default configuration values
 
@@ -66754,7 +67153,7 @@ Default configuration values
 
 ### DEFAULT_FEATURES `const`
 
-📍 [`src/core/context-nextgen/types.ts:804`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:812`](src/core/context-nextgen/types.ts)
 
 Default feature configuration for built-in plugins.
 
@@ -66763,6 +67162,7 @@ Default feature configuration for built-in plugins.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `taskState` | `false` | - |
 | `workingMemory` | `true` | - |
 | `inContextMemory` | `true` | - |
 | `persistentInstructions` | `false` | - |

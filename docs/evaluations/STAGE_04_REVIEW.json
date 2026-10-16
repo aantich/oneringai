@@ -1,0 +1,677 @@
+{
+  "protocol": "stage04-review-v1",
+  "recordedAt": "2026-10-15T20:59:05.422580+00:00",
+  "localDate": "2026-10-15",
+  "branch": "version2",
+  "baseCommit": "152a0a3712ec294509cb95257a63df8add47bf92",
+  "status": "findings_open",
+  "stageComplete": false,
+  "runtimeChanged": false,
+  "permanentTestsChanged": false,
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P1",
+      "title": "Final budget event can invalidate protected state after validation",
+      "file": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "line": 1538,
+      "status": "open"
+    },
+    {
+      "id": "R2",
+      "priority": "P2",
+      "title": "Pruned ID reuse creates a saved state that cannot restore",
+      "file": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts",
+      "line": 183,
+      "status": "open"
+    },
+    {
+      "id": "R3",
+      "priority": "P2",
+      "title": "Exact token/byte capacity prevents resolve/prune recovery",
+      "file": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts",
+      "line": 172,
+      "status": "open"
+    },
+    {
+      "id": "R4",
+      "priority": "P2",
+      "title": "AMOS cannot reclaim resolved task records at its entry cap",
+      "file": "apps/amos/src/commands/commands/ContextCommand.ts",
+      "line": 120,
+      "status": "open"
+    }
+  ],
+  "freshUnit": {
+    "passed": 7743,
+    "failed": 0,
+    "skipped": 0,
+    "files": 354,
+    "stage04Cases": 112
+  },
+  "checks": [
+    {
+      "command": "vitest run tests/unit",
+      "exitCode": 0,
+      "logSHA256": "7fcf4fae04ae61a1d2bdbd459c99ecc8a8a20ff6ae96990ad723b260ea2a3c25"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "logSHA256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "logSHA256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e"
+    },
+    {
+      "command": "npm run test:agentic:compat",
+      "exitCode": 0,
+      "logSHA256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    {
+      "command": "npm run examples:check",
+      "exitCode": 0,
+      "logSHA256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8"
+    },
+    {
+      "command": "tsc --noEmit -p /tmp/oneringai-stage04-strict.json",
+      "exitCode": 0,
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "tsc --noEmit -p /tmp/oneringai-stage04-amos-strict.json",
+      "exitCode": 0,
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "inputFingerprintVerification": {
+    "allMatched": true,
+    "changed": [],
+    "completionEvidenceSHA256": "9156ea523cc97a4239bc3820cadfe54cc409c11679d33404749dace5354d722b",
+    "reviewedDeliveryFiles": [
+      {
+        "path": "AGENTS.md",
+        "sha256": "9ce2a91a0672b865b12b522a1d9e13f519a8194bb3ab1bbca091327154561fc2"
+      },
+      {
+        "path": "API_REFERENCE.md",
+        "sha256": "f568bca552a23e9bad4582da859d55c73d03707253f78cdf27d71119b744bbfa"
+      },
+      {
+        "path": "CHANGELOG.md",
+        "sha256": "86d034a6eb3ea9835544d05ca05bd796e3d2b6ce0025187c076837a6741937b5"
+      },
+      {
+        "path": "README.md",
+        "sha256": "bada764ec852fd6d02352eecf5c1bced04bfa0c01d9d8bc117a58ddd4476dd9f"
+      },
+      {
+        "path": "USER_GUIDE.md",
+        "sha256": "7b56711960d1a4348b573cfb3f9f098463ab1ad76144127c8fdfa4fcc7614001"
+      },
+      {
+        "path": "apps/amos/README.md",
+        "sha256": "740160b51a8d9d86e634db0425cde60eb8ae2a206f4ea0fecb5899f16b896efa"
+      },
+      {
+        "path": "apps/amos/examples/task-state-offline.ts",
+        "sha256": "581defacbc54a915ef63a280b2add0c2618c04d4d52fd3d9a7e7c01b4f6a1252"
+      },
+      {
+        "path": "apps/amos/src/agent/AgentRunner.ts",
+        "sha256": "8991c52804bd83d8b14fd48d65bb472bea0f4aea97dd791baaf38edfb5b9b3f8"
+      },
+      {
+        "path": "apps/amos/src/commands/commands/ContextCommand.ts",
+        "sha256": "e0302de60b8322d8322516a819b6cecbbd8d89f03146851975df16813cd5e0d5"
+      },
+      {
+        "path": "apps/amos/src/config/types.ts",
+        "sha256": "f24f2d755e5e90bb1b4deecd38ad5339a67cca1a79524ffa3f2b9b79a1cdb8c5"
+      },
+      {
+        "path": "docs/MEMORY_GUIDE.md",
+        "sha256": "02445c9c53269e78235f4720d43fb971bf3826c11dc609ec4f0beec8099a2cba"
+      },
+      {
+        "path": "docs/TASK_STATE.md",
+        "sha256": "8a220f87818168ace0973c3968f3e27ea822ac33b572621cf16512d987571919"
+      },
+      {
+        "path": "docs/VERSION_2_GUIDE.md",
+        "sha256": "4a99c3f5c274c4a8dd876aa45c672bc3fee56ac891f24269672187e784721e05"
+      },
+      {
+        "path": "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+        "sha256": "f0381b603a5a2b35aecf2cc059d574fbca00620ec532ff2cb8dee3be125ddf4d"
+      },
+      {
+        "path": "docs/designs/STAGE_04_IMPLEMENTATION.md",
+        "sha256": "67ae1ac779329a8e818e8305e85ad8bd46cdd0c8923910efa01185d882ba389e"
+      },
+      {
+        "path": "docs/evaluations/STAGE_04_AMOS_OFFLINE.txt",
+        "sha256": "c1fa634c10065b27d77cb9a2e7bd6a6e20e924aad9ac14227ae6405aa732672c"
+      },
+      {
+        "path": "examples/README.md",
+        "sha256": "4ba5049669443e18999384689c94dac714637b125b2edffe664da50e2814df64"
+      },
+      {
+        "path": "examples/task-state-workflow.ts",
+        "sha256": "d748428d0c2e22f6311a9a2b6c4eb92eaa479948d74825aa1523ac03483944f7"
+      },
+      {
+        "path": "package.json",
+        "sha256": "7092204b22179094725189e74114c14deb48588503d318fed643ef2c43cf5858"
+      },
+      {
+        "path": "src/core/Agent.ts",
+        "sha256": "cf40714d6fb6b0b0424f928840dfc8dc885a16858541e086b8b3776939b4b649"
+      },
+      {
+        "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+        "sha256": "2ff779e435598ef04b7d3a89c2cef2f1a54b08a03950eed30e04ccd22cda79ec"
+      },
+      {
+        "path": "src/core/context-nextgen/index.ts",
+        "sha256": "501870b7fd098bc03ccd149ccf90612aca18b876e77bb3a32f6be119264507d7"
+      },
+      {
+        "path": "src/core/context-nextgen/plugins/TaskStatePluginNextGen.ts",
+        "sha256": "82d5a1caa19eedac9acb5606164b691d076be6ab0ac823fd3007a6315084e5fd"
+      },
+      {
+        "path": "src/core/context-nextgen/plugins/index.ts",
+        "sha256": "2f3638910bfd680b3720aa3d6a0cc98be48f64d042b4a97150982dca3552fdec"
+      },
+      {
+        "path": "src/core/context-nextgen/types.ts",
+        "sha256": "494d9331ceca8dc5f14639a1e888f282b8a789fe8d5d197d7b30a6ef12aa6110"
+      },
+      {
+        "path": "src/core/index.ts",
+        "sha256": "3e4eb488229bd9fe410f851f5dc7cfae70b1d1b63423864a797376d3c0b3e5fe"
+      },
+      {
+        "path": "src/index.ts",
+        "sha256": "3db6e68229e768b0799da7b1c4770eae3827c795cc7bfd6a4c143e61ba5105d7"
+      },
+      {
+        "path": "src/tools/registry.generated.ts",
+        "sha256": "4dbf8b366bf715691514f7017ad0245e8a376e1066a9d1aa23fb0a252eeff8dc"
+      },
+      {
+        "path": "tests/fixtures/agentic-baseline/stage04-consumer.ts",
+        "sha256": "070f4b57f03fafcc43d1bc72cfe56d40cfb31195089a830a66b274296c09869f"
+      },
+      {
+        "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+        "sha256": "6c7eb921df3fd107d4391f54c4e0381e5230cf23a64e45596d9b3c73e407b0d7"
+      },
+      {
+        "path": "tests/integration/text/TaskState.live.integration.test.ts",
+        "sha256": "05ed687cc69cb78c838628dca6671b55d2da744a131e0872183477e0c778c0ec"
+      },
+      {
+        "path": "tests/unit/apps/amos/TaskState.test.ts",
+        "sha256": "539158ff5776d4cc559c3f5fc17a5c15ce096246b8ac130d9d59dd9acd9b512a"
+      },
+      {
+        "path": "tests/unit/core/context-nextgen/TaskStateAgent.test.ts",
+        "sha256": "4f1bb55a847bac8817cafd11bb3e09a707c02379d7282e37f57500ffeca30e8b"
+      },
+      {
+        "path": "tests/unit/core/context-nextgen/TaskStateContext.test.ts",
+        "sha256": "b171727ce7ab56c6e47f8da513a96605aee22e77c626e9ef2beb5dedf5524b9a"
+      },
+      {
+        "path": "tests/unit/core/context-nextgen/plugins/TaskState.test.ts",
+        "sha256": "d7ca9f23d49ce178dd750971153c49dcac732adaef2df26437035f4cf5970a51"
+      }
+    ],
+    "reviewedBuiltPublicFiles": [
+      {
+        "path": "dist/index.js",
+        "sha256": "c7fd0e14ba831ccf2c90242fd979240d375fba7da1734046f4d95874c77b025d"
+      },
+      {
+        "path": "dist/index.cjs",
+        "sha256": "b5281676150c5d6312057bf1491e2dcfc124a44ba7b8fe62ddd977c3da661e86"
+      },
+      {
+        "path": "dist/index.d.ts",
+        "sha256": "a1bf9032f3fbf9487d511c42dad91cdea7daa0ed409122c2e0bfa726d2c6a423"
+      },
+      {
+        "path": "dist/index.d.cts",
+        "sha256": "29d9cd7b5518773ef5fba1756adcf1e37bc9ab26b519c0ad149a0ffb0fe0b771"
+      }
+    ]
+  },
+  "reproductions": [
+    {
+      "command": "node --import tsx /tmp/oneringai-stage04-review-reproduce.mts",
+      "workingDirectory": "/Users/aantich/dev/oneringai",
+      "script": "import assert from 'node:assert/strict';\nimport { writeFile, mkdtemp, rm } from 'node:fs/promises';\nimport { tmpdir } from 'node:os';\nimport { join } from 'node:path';\nimport { createRequire } from 'node:module';\nimport * as source from '/Users/aantich/dev/oneringai/src/index.ts';\nimport * as publicESM from '/Users/aantich/dev/oneringai/dist/index.js';\nconst publicCJS = createRequire(import.meta.url)('/Users/aantich/dev/oneringai/dist/index.cjs');\nconst reports=[];\nconst scope={ownerId:'review-owner',namespace:'task-review'};\nconst note=(id:string,text='Cap 50',extra={})=>({id,category:'constraint' as const,text,source:{label:'Host'},...extra});\nfunction errorText(fn:()=>unknown){try{fn();return null;}catch(error){return error instanceof Error?error.message:String(error);}}\nfor(const [variant,lib] of [['source',source],['public-esm',publicESM],['public-cjs',publicCJS]] as const){\n  // Every admitted state should be accepted by the plugin's own restoration validator.\n  const p=new lib.TaskStatePluginNextGen({scope,taskId:'task'});\n  try{p.updateHost({notes:[note('old')]},0);p.updateHost({notes:[note('new','Cap40',{supersedes:'old'})]},1);p.pruneResolved(['old'],[],2);p.updateHost({notes:[note('old','Independent new constraint')]},3);const snapshot=p.getState();const validationError=errorText(()=>p.validateState(snapshot));const restoreError=errorText(()=>p.restoreState(snapshot));assert.equal(p.revision,4);assert.match(validationError!,/correction links/);reports.push({variant,case:'pruned-id-reuse',revision:p.revision,notes:snapshot.notes,validationError,restoreError});}finally{p.destroy();}\n  const reference=new lib.TaskStatePluginNextGen({scope,taskId:'capacity'});reference.updateHost({notes:[note('active')]},0);const maxPromptTokens=lib.simpleTokenEstimator.estimateTokens(await reference.getContent());const maxSnapshotBytes=Buffer.byteLength(JSON.stringify(reference.getState()));reference.destroy();\n  for(const [limit,value] of [['maxPromptTokens',maxPromptTokens],['maxSnapshotBytes',maxSnapshotBytes]] as const){const p=new lib.TaskStatePluginNextGen({scope,taskId:'capacity',[limit]:value});try{p.updateHost({notes:[note('active')]},0);const before=p.getState();const resolveError=errorText(()=>p.updateHost({resolve:['active']},1));const pruneError=errorText(()=>p.pruneResolved(['active'],[],1));assert.ok(resolveError);assert.match(pruneError!,/active note/);assert.deepEqual(p.getState(),before);reports.push({variant,case:'capacity-recovery',limit,value,resolveError,pruneError,revision:p.revision,activeRecords:p.getState().notes.length});}finally{p.destroy();}}\n  // The same recovery deadlock occurs at the unmodified default 8000-token cap.\n  const many=Array.from({length:14},(_,i)=>note(`default-${i}`,'x'.repeat(2000)));\n  const measure=new lib.TaskStatePluginNextGen({scope,taskId:'default-capacity',maxPromptTokens:20000});\n  measure.updateHost({notes:many},0);const fullContent=await measure.getContent();const fullTokens=lib.simpleTokenEstimator.estimateTokens(fullContent);measure.destroy();\n  const baseLast=2000-Math.floor((fullTokens-8000)*3.5);let admittedDefault=false;\n  for(let adjust=-5;adjust<=5;adjust++){\n    const length=baseLast+adjust;if(length<1||length>2000)continue;many[13]!.text='x'.repeat(length);\n    const candidate=new lib.TaskStatePluginNextGen({scope,taskId:'default-capacity'});\n    try{candidate.updateHost({notes:many},0);const tokens=lib.simpleTokenEstimator.estimateTokens(await candidate.getContent());if(tokens!==8000)continue;\n      const resolveError=errorText(()=>candidate.updateHost({resolve:['default-0']},1));const pruneError=errorText(()=>candidate.pruneResolved(['default-0'],[],1));assert.ok(resolveError);assert.ok(pruneError);reports.push({variant,case:'default-capacity-recovery',maxPromptTokens:8000,actualTokens:tokens,activeRecords:many.length,resolveError,pruneError});admittedDefault=true;break;\n    }catch(error){if(candidate.revision===1)throw error;}finally{candidate.destroy();}\n  }\n  assert.ok(admittedDefault,'Default-capacity boundary fixture must be admitted exactly');\n  for(const mode of ['run','stream'] as const){\n    const name=`review-budget-${variant}-${mode}`;let calls=0;let selected='';let updates=0;let eventCount=0;let phase='prepare';\n    const provider={name:'synthetic',capabilities:{text:true,images:false,audio:false,videos:false},validateConfig:async()=>true,listModels:async()=>[],getModelCapabilities:()=>({supportsTools:true,supportsVision:false,supportsJSON:true,supportsJSONSchema:true,maxTokens:128000,maxOutputTokens:1024}),\n      generate:async(options:any)=>{calls++;selected=JSON.stringify(options.input);return{id:'r',object:'response',model:options.model,created_at:1,status:'completed',output_text:'OK',output:[{type:'message',role:lib.MessageRole.ASSISTANT,content:[{type:lib.ContentType.OUTPUT_TEXT,text:'OK'}]}],usage:{input_tokens:1,output_tokens:1,total_tokens:2}};},\n      async*streamGenerate(options:any){calls++;selected=JSON.stringify(options.input);yield{type:lib.StreamEventType.OUTPUT_TEXT_DELTA,response_id:'r',item_id:'i',output_index:0,content_index:0,sequence_number:0,delta:'OK'};yield{type:lib.StreamEventType.RESPONSE_COMPLETE,response_id:'r',status:'completed',usage:{input_tokens:1,output_tokens:1,total_tokens:2},iterations:1};}};\n    lib.Connector.create({name,vendor:lib.Vendor.OpenAI,auth:{type:'none'},options:{provider}});\n    const a=lib.Agent.create({connector:name,model:'gpt-4o-mini',userId:scope.ownerId,thinking:{enabled:false},emptyResponseRetry:{enabled:false},context:{model:'gpt-4o-mini',features:{workingMemory:false,inContextMemory:false,taskState:true},plugins:{taskState:{scope,taskId:'race'}}},hooks:{'before:llm':async(c:any)=>{phase='dispatch';c.options.instructions=(c.options.instructions??'')+' Host adds harmless instruction text to trigger final recount event.';return{};}}});\n    try{const task=a.context.getPlugin('task_state')! as source.TaskStatePluginNextGen;task.updateHost({notes:[note('old','CAP50')]},0);a.context.on('budget:updated',()=>{eventCount++;if(phase==='dispatch'&&updates++===0)task.updateHost({notes:[note('corrected','CAP40',{supersedes:'old'})]},task.revision);});if(mode==='run')await a.run('Continue');else for await(const _ of a.stream('Continue')){/*drain*/}const state=task.getState();assert.equal(calls,1);assert.equal(state.revision,2);assert.ok(selected.includes('CAP50'));assert.ok(!selected.includes('CAP40'));reports.push({variant,case:'budget-listener-stale-dispatch',mode,calls,eventCount,revision:state.revision,providerHadOldConstraint:selected.includes('CAP50'),providerHadCorrection:selected.includes('CAP40'),activeConstraint:state.notes.find(n=>n.id==='corrected')?.text});}finally{a.destroy();lib.Connector.remove(name);}\n  }\n}\nawait writeFile('/tmp/oneringai-stage04-review-reproductions.json',JSON.stringify(reports,null,2)+'\\n');console.log(JSON.stringify(reports,null,2));\n",
+      "exitCode": 0,
+      "observations": [
+        {
+          "variant": "source",
+          "case": "pruned-id-reuse",
+          "revision": 4,
+          "notes": [
+            {
+              "id": "new",
+              "category": "constraint",
+              "text": "Cap40",
+              "source": {
+                "label": "Host"
+              },
+              "supersedes": "old",
+              "authority": "host"
+            },
+            {
+              "id": "old",
+              "category": "constraint",
+              "text": "Independent new constraint",
+              "source": {
+                "label": "Host"
+              },
+              "authority": "host"
+            }
+          ],
+          "validationError": "Invalid correction links",
+          "restoreError": "Invalid correction links"
+        },
+        {
+          "variant": "source",
+          "case": "capacity-recovery",
+          "limit": "maxPromptTokens",
+          "value": 152,
+          "resolveError": "Task-state capacity exceeded; resolve/prune records explicitly",
+          "pruneError": "Cannot prune an active note",
+          "revision": 1,
+          "activeRecords": 1
+        },
+        {
+          "variant": "source",
+          "case": "capacity-recovery",
+          "limit": "maxSnapshotBytes",
+          "value": 231,
+          "resolveError": "Task-state data must be bounded plain JSON",
+          "pruneError": "Cannot prune an active note",
+          "revision": 1,
+          "activeRecords": 1
+        },
+        {
+          "variant": "source",
+          "case": "default-capacity-recovery",
+          "maxPromptTokens": 8000,
+          "actualTokens": 8000,
+          "activeRecords": 14,
+          "resolveError": "Task-state capacity exceeded; resolve/prune records explicitly",
+          "pruneError": "Cannot prune an active note"
+        },
+        {
+          "variant": "source",
+          "case": "budget-listener-stale-dispatch",
+          "mode": "run",
+          "calls": 1,
+          "eventCount": 2,
+          "revision": 2,
+          "providerHadOldConstraint": true,
+          "providerHadCorrection": false,
+          "activeConstraint": "CAP40"
+        },
+        {
+          "variant": "source",
+          "case": "budget-listener-stale-dispatch",
+          "mode": "stream",
+          "calls": 1,
+          "eventCount": 2,
+          "revision": 2,
+          "providerHadOldConstraint": true,
+          "providerHadCorrection": false,
+          "activeConstraint": "CAP40"
+        },
+        {
+          "variant": "public-esm",
+          "case": "pruned-id-reuse",
+          "revision": 4,
+          "notes": [
+            {
+              "id": "new",
+              "category": "constraint",
+              "text": "Cap40",
+              "source": {
+                "label": "Host"
+              },
+              "supersedes": "old",
+              "authority": "host"
+            },
+            {
+              "id": "old",
+              "category": "constraint",
+              "text": "Independent new constraint",
+              "source": {
+                "label": "Host"
+              },
+              "authority": "host"
+            }
+          ],
+          "validationError": "Invalid correction links",
+          "restoreError": "Invalid correction links"
+        },
+        {
+          "variant": "public-esm",
+          "case": "capacity-recovery",
+          "limit": "maxPromptTokens",
+          "value": 152,
+          "resolveError": "Task-state capacity exceeded; resolve/prune records explicitly",
+          "pruneError": "Cannot prune an active note",
+          "revision": 1,
+          "activeRecords": 1
+        },
+        {
+          "variant": "public-esm",
+          "case": "capacity-recovery",
+          "limit": "maxSnapshotBytes",
+          "value": 231,
+          "resolveError": "Task-state data must be bounded plain JSON",
+          "pruneError": "Cannot prune an active note",
+          "revision": 1,
+          "activeRecords": 1
+        },
+        {
+          "variant": "public-esm",
+          "case": "default-capacity-recovery",
+          "maxPromptTokens": 8000,
+          "actualTokens": 8000,
+          "activeRecords": 14,
+          "resolveError": "Task-state capacity exceeded; resolve/prune records explicitly",
+          "pruneError": "Cannot prune an active note"
+        },
+        {
+          "variant": "public-esm",
+          "case": "budget-listener-stale-dispatch",
+          "mode": "run",
+          "calls": 1,
+          "eventCount": 2,
+          "revision": 2,
+          "providerHadOldConstraint": true,
+          "providerHadCorrection": false,
+          "activeConstraint": "CAP40"
+        },
+        {
+          "variant": "public-esm",
+          "case": "budget-listener-stale-dispatch",
+          "mode": "stream",
+          "calls": 1,
+          "eventCount": 2,
+          "revision": 2,
+          "providerHadOldConstraint": true,
+          "providerHadCorrection": false,
+          "activeConstraint": "CAP40"
+        },
+        {
+          "variant": "public-cjs",
+          "case": "pruned-id-reuse",
+          "revision": 4,
+          "notes": [
+            {
+              "id": "new",
+              "category": "constraint",
+              "text": "Cap40",
+              "source": {
+                "label": "Host"
+              },
+              "supersedes": "old",
+              "authority": "host"
+            },
+            {
+              "id": "old",
+              "category": "constraint",
+              "text": "Independent new constraint",
+              "source": {
+                "label": "Host"
+              },
+              "authority": "host"
+            }
+          ],
+          "validationError": "Invalid correction links",
+          "restoreError": "Invalid correction links"
+        },
+        {
+          "variant": "public-cjs",
+          "case": "capacity-recovery",
+          "limit": "maxPromptTokens",
+          "value": 152,
+          "resolveError": "Task-state capacity exceeded; resolve/prune records explicitly",
+          "pruneError": "Cannot prune an active note",
+          "revision": 1,
+          "activeRecords": 1
+        },
+        {
+          "variant": "public-cjs",
+          "case": "capacity-recovery",
+          "limit": "maxSnapshotBytes",
+          "value": 231,
+          "resolveError": "Task-state data must be bounded plain JSON",
+          "pruneError": "Cannot prune an active note",
+          "revision": 1,
+          "activeRecords": 1
+        },
+        {
+          "variant": "public-cjs",
+          "case": "default-capacity-recovery",
+          "maxPromptTokens": 8000,
+          "actualTokens": 8000,
+          "activeRecords": 14,
+          "resolveError": "Task-state capacity exceeded; resolve/prune records explicitly",
+          "pruneError": "Cannot prune an active note"
+        },
+        {
+          "variant": "public-cjs",
+          "case": "budget-listener-stale-dispatch",
+          "mode": "run",
+          "calls": 1,
+          "eventCount": 2,
+          "revision": 2,
+          "providerHadOldConstraint": true,
+          "providerHadCorrection": false,
+          "activeConstraint": "CAP40"
+        },
+        {
+          "variant": "public-cjs",
+          "case": "budget-listener-stale-dispatch",
+          "mode": "stream",
+          "calls": 1,
+          "eventCount": 2,
+          "revision": 2,
+          "providerHadOldConstraint": true,
+          "providerHadCorrection": false,
+          "activeConstraint": "CAP40"
+        }
+      ],
+      "logSHA256": "0fe6d2214844cb21112c0d1c09983de5d831a6c80ab4e71afcc0c7a50743d9ec"
+    },
+    {
+      "command": "node --import tsx /tmp/oneringai-stage04-review-recovery.mts",
+      "workingDirectory": "/Users/aantich/dev/oneringai",
+      "script": "import assert from 'node:assert/strict';\nimport { writeFile, mkdtemp, rm } from 'node:fs/promises';\nimport { tmpdir } from 'node:os';\nimport { join } from 'node:path';\nimport { createRequire } from 'node:module';\nimport * as source from '/Users/aantich/dev/oneringai/src/index.ts';\nimport * as publicESM from '/Users/aantich/dev/oneringai/dist/index.js';\nimport { AgentRunner } from '/Users/aantich/dev/oneringai/apps/amos/src/agent/AgentRunner.ts';\nimport { ContextCommand } from '/Users/aantich/dev/oneringai/apps/amos/src/commands/commands/ContextCommand.ts';\nimport { DEFAULT_CONFIG } from '/Users/aantich/dev/oneringai/apps/amos/src/config/types.ts';\nconst publicCJS=createRequire(import.meta.url)('/Users/aantich/dev/oneringai/dist/index.cjs');\nconst reports=[];const directory=await mkdtemp(join(tmpdir(),'stage04-review-'));const scope={ownerId:'review-owner',namespace:'review'};\nconst note=(id:string,text='Budget',extra={})=>({id,category:'constraint' as const,text,source:{label:'Host'},...extra});\ntry{\nfor(const[variant,lib]of[['source',source],['public-esm',publicESM],['public-cjs',publicCJS]]as const){\n const storage=new lib.FileContextStorage({agentId:'review',baseDirectory:join(directory,variant)});\n const create=()=>lib.AgentContextNextGen.create({model:'gpt-4o-mini',userId:scope.ownerId,agentId:'review',storage,features:{workingMemory:false,inContextMemory:false,taskState:true},plugins:{taskState:{scope,taskId:'reuse'}}});\n let ctx=create();try{const p=ctx.getPlugin('task_state')!as source.TaskStatePluginNextGen;p.updateHost({notes:[note('old')]},0);p.updateHost({notes:[note('new','Corrected',{supersedes:'old'})]},1);p.pruneResolved(['old'],[],2);p.updateHost({notes:[note('old','Reused ID')]},3);await ctx.save('broken');assert.ok(await storage.exists('broken'));ctx.destroy();ctx=create();let loadError=null;try{await ctx.load('broken');}catch(e){loadError=e instanceof Error?e.message:String(e);}assert.match(loadError!,/correction links/);reports.push({variant,case:'file-checkpoint-after-reuse',saveSucceeded:true,loadError,restoredNotes:(ctx.getPlugin('task_state')!as source.TaskStatePluginNextGen).getState().notes.length});}finally{ctx.destroy();}\n const p=new lib.TaskStatePluginNextGen({scope,taskId:'control'});try{p.updateHost({notes:[note('old')]},0);p.updateHost({resolve:['old']},1);p.pruneResolved(['old'],[],2);p.updateHost({notes:[note('old','New unlinked incarnation')]},3);p.restoreState(p.getState());reports.push({variant,case:'unlinked-reuse-control',passed:true,revision:p.revision});}finally{p.destroy();}\n const seed=new lib.TaskStatePluginNextGen({scope,taskId:'cap'});seed.updateHost({notes:[note('active')]},0);const tokens=lib.simpleTokenEstimator.estimateTokens(await seed.getContent());const bytes=Buffer.byteLength(JSON.stringify(seed.getState()));seed.destroy();\n for(const[limit,value]of[['maxPromptTokens',tokens+16],['maxSnapshotBytes',bytes+100]]as const){const p=new lib.TaskStatePluginNextGen({scope,taskId:'cap',[limit]:value});try{p.updateHost({notes:[note('active')]},0);p.updateHost({resolve:['active']},1);p.pruneResolved(['active'],[],2);assert.equal(p.getState().notes.length,0);reports.push({variant,case:'capacity-headroom-control',limit,value,passed:true});}finally{p.destroy();}}\n}\nlet modelCalls=0;const name='stage04-review-amos';publicESM.Connector.create({name,vendor:publicESM.Vendor.OpenAI,auth:{type:'none'},options:{provider:{name:'synthetic',capabilities:{text:true,images:false,audio:false,videos:false},validateConfig:async()=>true,listModels:async()=>[],getModelCapabilities:()=>({supportsTools:true,supportsVision:false,supportsJSON:true,supportsJSONSchema:true,maxTokens:128000,maxOutputTokens:1024}),generate:async()=>{modelCalls++;throw Error('No model call expected');},async*streamGenerate(){modelCalls++;throw Error('No model call expected');}}}});\nconst config=structuredClone(DEFAULT_CONFIG);config.session.autoSave=false;config.taskState={enabled:true,taskId:'amos',ownerId:scope.ownerId,namespace:'amos-review'};const runner=new AgentRunner(config,[],join(directory,'amos'));const command=new ContextCommand();const app={getAgent:()=>runner};const invoke=(args:string[])=>command.execute({app,args,rawInput:'/context '+args.join(' ')} as any);\ntry{await runner.initialize(name,'gpt-4o-mini');for(let i=0;i<100;i++){const result=await invoke(['task','add',String(runner.getTaskState()!.revision),'constraint',`note-${i}`,`Confirmed constraint ${i}`]);assert.equal(result.success,true);}const resolve=await invoke(['task','resolve','100','note-0']);assert.equal(resolve.success,true);const add=await invoke(['task','add','101','constraint','new','New constraint']);const correct=await invoke(['task','correct','101','note-1','corrected','Corrected constraint']);const prune=await invoke(['task','prune','101','note-0']);assert.equal(add.success,false);assert.equal(correct.success,false);assert.equal(prune.success,false);const state=runner.getTaskState()!;reports.push({variant:'amos-actual-runner',case:'resolved-record-cap-no-recovery',recordCount:state.notes.length,revision:state.revision,resolved:state.notes[0]?.resolved,resolve,add,correct,prune,modelCalls});assert.equal(modelCalls,0);}finally{runner.destroy();publicESM.Connector.remove(name);}\n}finally{await rm(directory,{recursive:true,force:true});}\nawait writeFile('/tmp/oneringai-stage04-review-recovery.json',JSON.stringify(reports,null,2)+'\\n');console.log(JSON.stringify(reports,null,2));\n",
+      "exitCode": 0,
+      "observations": [
+        {
+          "variant": "source",
+          "case": "file-checkpoint-after-reuse",
+          "saveSucceeded": true,
+          "loadError": "Invalid correction links",
+          "restoredNotes": 0
+        },
+        {
+          "variant": "source",
+          "case": "unlinked-reuse-control",
+          "passed": true,
+          "revision": 4
+        },
+        {
+          "variant": "source",
+          "case": "capacity-headroom-control",
+          "limit": "maxPromptTokens",
+          "value": 166,
+          "passed": true
+        },
+        {
+          "variant": "source",
+          "case": "capacity-headroom-control",
+          "limit": "maxSnapshotBytes",
+          "value": 321,
+          "passed": true
+        },
+        {
+          "variant": "public-esm",
+          "case": "file-checkpoint-after-reuse",
+          "saveSucceeded": true,
+          "loadError": "Invalid correction links",
+          "restoredNotes": 0
+        },
+        {
+          "variant": "public-esm",
+          "case": "unlinked-reuse-control",
+          "passed": true,
+          "revision": 4
+        },
+        {
+          "variant": "public-esm",
+          "case": "capacity-headroom-control",
+          "limit": "maxPromptTokens",
+          "value": 166,
+          "passed": true
+        },
+        {
+          "variant": "public-esm",
+          "case": "capacity-headroom-control",
+          "limit": "maxSnapshotBytes",
+          "value": 321,
+          "passed": true
+        },
+        {
+          "variant": "public-cjs",
+          "case": "file-checkpoint-after-reuse",
+          "saveSucceeded": true,
+          "loadError": "Invalid correction links",
+          "restoredNotes": 0
+        },
+        {
+          "variant": "public-cjs",
+          "case": "unlinked-reuse-control",
+          "passed": true,
+          "revision": 4
+        },
+        {
+          "variant": "public-cjs",
+          "case": "capacity-headroom-control",
+          "limit": "maxPromptTokens",
+          "value": 166,
+          "passed": true
+        },
+        {
+          "variant": "public-cjs",
+          "case": "capacity-headroom-control",
+          "limit": "maxSnapshotBytes",
+          "value": 321,
+          "passed": true
+        },
+        {
+          "variant": "amos-actual-runner",
+          "case": "resolved-record-cap-no-recovery",
+          "recordCount": 100,
+          "revision": 101,
+          "resolved": true,
+          "resolve": {
+            "success": true,
+            "message": "Task state updated to revision 101 in memory. Use /session save to checkpoint it."
+          },
+          "add": {
+            "success": false,
+            "message": "Task-state edit/inspection rejected. Check task configuration, current revision, record IDs, limits, and that no execution is running."
+          },
+          "correct": {
+            "success": false,
+            "message": "Task-state edit/inspection rejected. Check task configuration, current revision, record IDs, limits, and that no execution is running."
+          },
+          "prune": {
+            "success": false,
+            "message": "Use /context task, task add <revision> <category> <id> <text>, task correct <revision> <old-id> <new-id> <text>, or task resolve <revision> <id>."
+          },
+          "modelCalls": 0
+        }
+      ],
+      "logSHA256": "fa34ff5c2ca16612fda5cf7a03126f67fdcdbb0cc0e99c999b5e8c701aa08440"
+    }
+  ],
+  "observationCount": 31,
+  "interpretation": "Scripts assert the presence of unfixed defects and positive controls. Exit 0 means successful reproduction, not a fix or completion gate. Source, public ESM/CJS and actual file/AMOS integrations are verified.",
+  "live": {
+    "rerun": false,
+    "reason": "Deterministic local defects; review changes no runtime. Synthetic providers prove dispatch and no external actions are executed.",
+    "historicalEvidence": "docs/evaluations/STAGE_04_VALIDATION.json",
+    "historicalFinalCases": 117,
+    "historicalFinalScenarios": 129,
+    "historicalFailuresPreserved": true
+  },
+  "scope": "Review and fix plan only. Documentation/status/package inventory updated; no runtime fixes, permanent tests, breaking change, commit, push, release or Stage 10 work.",
+  "packageInventory": {
+    "command": "npm --cache /tmp/oneringai-stage04-review-npm-cache pack --dry-run --ignore-scripts --json",
+    "exitCode": 0,
+    "fileCount": 161,
+    "reviewFilesPresent": [
+      "docs/designs/STAGE_04_REVIEW_AND_FIX_PLAN.md",
+      "docs/evaluations/STAGE_04_REVIEW.json"
+    ],
+    "published": false,
+    "interpretation": "Dry-run membership only; no package integrity/size claim after embedding review metadata."
+  },
+  "postReviewVerification": {
+    "runtimePermanentTestsExamplesAndBuiltExportsUnchanged": true,
+    "packageOnlyAddsReviewDocumentInventory": true,
+    "originalCompletionEvidenceSHA256": "9156ea523cc97a4239bc3820cadfe54cc409c11679d33404749dace5354d722b",
+    "documentationChanges": [
+      {
+        "path": "docs/designs/STAGE_04_REVIEW_AND_FIX_PLAN.md",
+        "sha256": "a509998c23190b39c439befa37d636ed3298d81c253dba7b3e62b766a67fffda"
+      },
+      {
+        "path": "docs/VERSION_2_GUIDE.md",
+        "sha256": "28b85d709157f6fa8b68f41076fd4816d2889aee92ce3e05a553cb2423a24a2d"
+      },
+      {
+        "path": "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+        "sha256": "4d548f5c8c06b0e0214c17e867e849b2b3e2bfac120a3f1c36ff99b71eaff0aa"
+      },
+      {
+        "path": "docs/designs/STAGE_04_IMPLEMENTATION.md",
+        "sha256": "2e91db79173afa2b71864583fc6bb2701fe63d9916c337578b5d385f7ee14ff3"
+      },
+      {
+        "path": "docs/TASK_STATE.md",
+        "sha256": "ffd88b606a9660297b1e4e7367349355b9c87a84d4bdfa5d42aa7edc8cd47683"
+      },
+      {
+        "path": "README.md",
+        "sha256": "5c326fc01a43235163c7a8ebfdafaade6dfedf2ac066f788e1ee2d515d94039f"
+      },
+      {
+        "path": "USER_GUIDE.md",
+        "sha256": "2bf2e4a497e52fd247a9f7db7b64e44f49944b9bbb8c41d42102b57478d774a9"
+      },
+      {
+        "path": "package.json",
+        "sha256": "a4660c41a353031524463937942ac8a91b03616a03f32d15aba64f666e1ad3c6"
+      }
+    ]
+  }
+}

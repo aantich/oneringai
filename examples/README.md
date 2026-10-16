@@ -258,3 +258,35 @@ the agent or repeating its original read. Actual ConfigManager also demonstrates
 failed selection restoring an absent setting through a later unrelated save/reload.
 Selection and rollback make no model call; files, agent and connector are cleaned up. No keys/network are required. Read the
 [complete recipe](../docs/CONTEXT_STRATEGIES.md) for setup and support boundaries.
+
+
+## Protected task-state workflow
+
+After `npm run build`, run `npm run example:task-state`
+([task-state-workflow.ts](./task-state-workflow.ts)). No keys or network are needed.
+It keeps a host correction and unconfirmed proposal distinct, records one simulated
+accepted action, suspends through rollover/checkpoint/restart, verifies recovery
+in a separate Node process, then records host-confirmed remote completion. Expected:
+one submission, corrected 40 EUR constraint, preserved pending state, and no LLM calls.
+Temporary session/evidence files are removed.
+
+`npm run example:amos-task-state` uses the actual AMOS runner and `/context task`
+commands with one synthetic provider call. It demonstrates validated edits, stale
+revision rejection, session reload and model command text remaining data.
+`npm run test:task-state:live` explicitly makes billable OpenAI/Anthropic/Google
+synthetic run/stream/restart and extractor calls using `.env`. Read
+[Task State](../docs/TASK_STATE.md) for host authority, capacities and limitations.
+
+
+The Stage 04 corrective walkthrough also reclaims old notes, reuses a pruned ID and
+checks a second file checkpoint without another submission. The actual AMOS
+walkthrough fills 100 task records, displays an actionable capacity error, uses
+`resolve-prune`, adds a constraint and verifies checkpoint recovery with one total
+synthetic provider call. The live task-state probes additionally validate ID reuse
+and explicit atomic host recovery after their model response, without additional
+model/action calls. No real remote completion or fresh quality benchmark is claimed.
+
+The second corrective pass preserves legacy resolved-feature and external-plugin
+configuration types. After building, `npm run test:agentic:compat` compiles pinned
+legacy consumers through the root and `/types` exports without spreading current
+defaults. Both task-state walkthroughs remain applicable and pass unchanged.

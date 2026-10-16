@@ -2102,3 +2102,6 @@ export type { ToolOutputHints } from './domain/entities/Tool.js';
 
 export { ObservationMaskingStrategy, StructuredSummaryStrategy } from './core/context-nextgen/strategies/index.js';
 export type { ObservationMaskingStrategyConfig, StructuredSummaryStrategyConfig, StructuredContextSummary, ContextSummaryEntry, ContextSummaryRequest, ContextSummaryGenerator, ConversationCompactionReport, ConversationCompactionOptions } from './core/context-nextgen/strategies/index.js';
+
+export { TaskStatePluginNextGen } from './core/context-nextgen/plugins/TaskStatePluginNextGen.js';
+export type { TaskStateCategory, TaskStateSource, TaskStateNoteInput, TaskStateNote, TaskStateLifecycleBinding, TaskStateLifecycleView, TaskStateAction, TaskStateSnapshot, TaskStatePluginConfig, TaskStateHostDelta } from './core/context-nextgen/plugins/TaskStatePluginNextGen.js';

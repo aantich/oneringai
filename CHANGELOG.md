@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Optional atomic task-state host confirmations/pruning through `TaskStateHostDelta`,
+  with AMOS prune/resolve-prune/prune-action/confirm-prune commands and actionable
+  capacity recovery. Existing calls/defaults/limits and host authority remain intact.
+
+- Stage 04 opt-in host-controlled protected task-state plugin: revision-checked
+  sourced notes/corrections, unconfirmed proposals/assumptions, explicit execution
+  receipts and separate host workflow confirmations. Bounded protected prompt
+  content and scoped versioned session recovery preserve existing defaults,
+  Task/routine/memory lifecycle authority and session contracts. Includes AMOS
+  host inspection/edits, offline workflow/restart examples and opt-in live probes.
+  Automatic extraction, action subscription/replay and completion policies are
+  deferred; no package release is claimed.
+
 - Experimental opt-in observation masking and structured-summary context strategies
   with acknowledged source retention, exact user/action metadata protection, bounded
   pre-call helper integration, cancellation/revision checks and one masking fallback.
@@ -52,6 +65,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AMOS budget/breakdown revision and estimate labels, with complete overhead totals.
 
 ### Fixed
+
+- Stage 04 public TypeScript compatibility: legacy resolved-feature values keep
+  their original required keys, and external `taskState` factories retain arbitrary
+  record configuration. Built-in configuration remains explicitly typed and
+  runtime-validated; normalized defaults and factory precedence are unchanged.
+  Adds root/`types` legacy consumers and runtime/checkpoint/lifecycle regressions.
+- Stage 04 protected dispatch rechecks after final budget observers; documented
+  pruned-ID reuse no longer rebinds stale correction/conflict links or reactivates
+  history. Shared candidate/restore validation protects checkpoints. Explicit atomic
+  host reclamation works at exact capacity, including AMOS's record cap.
 
 - Stage 07 review corrections allocate source capacity only to eligible groups,
   skip writes/helper work for known no-op compaction, and restore absent AMOS

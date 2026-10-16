@@ -1,0 +1,49 @@
+
+> @everworker/oneringai@1.2.0 example:amos-task-state
+> node --import tsx apps/amos/examples/task-state-offline.ts
+
+/context task add 0 constraint cap Spend at most 50 EUR
+Task state updated to revision 1 in memory. Use /session save to checkpoint it.
+/context task correct 1 cap cap-corrected Spend at most 40 EUR
+Task state updated to revision 2 in memory. Use /session save to checkpoint it.
+/context task resolve 1 cap-corrected
+Task revision changed; inspect /context task and retry with the current revision.
+{"level":"info","time":1792094151327,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-task-demo","inputPreview":"Continue with the host constraint.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2180/128000 (1.8%) tools=841 conversation=0 system=1325 input=14 | sysPrompt=148 PI=0 pluginInstr=900 plugin:task_state=217
+{"level":"info","time":1792094151343,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-task-demo","duration":16,"msg":"Agent run completed"}
+{"level":"info","time":1792094151344,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-task-demo","sessionId":"1792094151320_qtslb4o","msg":"Session loaded"}
+/context task
+Task "delivery-42", revision 2. Unconfirmed receipts do not prove remote completion.
+{
+  "version": 1,
+  "scope": {
+    "ownerId": "local",
+    "namespace": "demo"
+  },
+  "taskId": "delivery-42",
+  "revision": 2,
+  "notes": [
+    {
+      "id": "cap",
+      "category": "constraint",
+      "text": "Spend at most 50 EUR",
+      "source": {
+        "label": "Explicit AMOS host command"
+      },
+      "authority": "host",
+      "supersededBy": "cap-corrected"
+    },
+    {
+      "id": "cap-corrected",
+      "category": "constraint",
+      "text": "Spend at most 40 EUR",
+      "supersedes": "cap",
+      "source": {
+        "label": "Explicit AMOS host command"
+      },
+      "authority": "host"
+    }
+  ],
+  "actions": []
+}
+Host edits, stale-revision rejection and checkpoint reload passed; model command text stayed data. One synthetic call, no LLM/network. Temporary files cleaned.

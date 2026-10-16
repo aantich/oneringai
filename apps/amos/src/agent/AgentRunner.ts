@@ -8,6 +8,9 @@ import {
   FileContextStorage,
   FileEvidenceStorage,
   EvidencePluginNextGen,
+  TaskStatePluginNextGen,
+  type TaskStateSnapshot,
+  type TaskStateHostDelta,
   StrategyRegistry,
   type ConversationCompactionReport,
   MessageRole,
@@ -141,6 +144,9 @@ export class AgentRunner implements IAgentRunner {
   }
 
   private buildAgentConfig(connectorName: string, model: string) {
+    const task = this.config.taskState?.enabled ? this.config.taskState : undefined;
+    const evidence = this.config.evidence?.enabled ? this.config.evidence : undefined;
+    if (task && evidence && task.ownerId !== evidence.ownerId) throw new Error('Task-state and evidence owners must match');
     const runtimeOptions = resolveAmosModelRuntimeOptions(
       model,
       this._currentTemperature,
@@ -153,15 +159,19 @@ export class AgentRunner implements IAgentRunner {
       tools: this.tools,
       modelExecution: this.config.modelExecution ?? undefined,
       ...runtimeOptions,
-      ...(this.config.evidence?.enabled || this.config.contextStrategy ? {
-        ...(this.config.evidence?.enabled ? { userId: this.config.evidence.ownerId } : {}),
+      ...(evidence || task || this.config.contextStrategy ? {
+        ...(evidence || task ? { userId: evidence?.ownerId ?? task!.ownerId } : {}),
         context: { model, agentId: 'amos', strategy: this.config.contextStrategy,
           ...(this.config.contextStrategy ? { compactionStrategy: this.createContextStrategy(this.config.contextStrategy) } : {}),
-          ...(this.config.evidence?.enabled ? { features: { evidence: true }, plugins: { evidence: {
-            storage: new FileEvidenceStorage({ directory: this.config.evidence.directory,
-              scope: { ownerId: this.config.evidence.ownerId, namespace: this.config.evidence.namespace } }),
-            retentionMs: this.config.evidence.retentionMs,
-          } } } : {}),
+          features: { ...(evidence ? { evidence: true } : {}), ...(task ? { taskState: true } : {}) },
+          plugins: {
+            ...(evidence ? { evidence: {
+              storage: new FileEvidenceStorage({ directory: evidence.directory,
+                scope: { ownerId: evidence.ownerId, namespace: evidence.namespace } }), retentionMs: evidence.retentionMs,
+            } } : {}),
+            ...(task ? { taskState: { taskId: task.taskId, scope: { ownerId: task.ownerId, namespace: task.namespace },
+              ...(task.association === undefined ? {} : { association: task.association }) } } : {}),
+          },
         },
       } : {}),
       instructions: this.buildInstructions(),
@@ -175,6 +185,18 @@ export class AgentRunner implements IAgentRunner {
         this._onApprovalRequired ?? undefined,
       ),
     };
+  }
+
+  getTaskState(): TaskStateSnapshot | undefined {
+    const plugin = this.agent?.context.getPlugin('task_state');
+    return plugin instanceof TaskStatePluginNextGen ? plugin.getState() : undefined;
+  }
+
+  updateTaskState(delta: TaskStateHostDelta, expectedRevision: number): TaskStateSnapshot {
+    if (this.isRunning()) throw new Error('Cannot edit task state during an execution');
+    const plugin = this.agent?.context.getPlugin('task_state');
+    if (!(plugin instanceof TaskStatePluginNextGen)) throw new Error('Task state is disabled; enable taskState in AMOS config and reload');
+    return plugin.updateHost(delta, expectedRevision);
   }
 
   /**

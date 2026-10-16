@@ -47,7 +47,7 @@ export class ContextCommand extends BaseCommand {
   readonly name = 'context';
   readonly aliases = ['ctx'];
   readonly description = 'Show context inspection details';
-  readonly usage = '/context [budget|breakdown|cache|memory|history|evidence|strategy]';
+  readonly usage = '/context [budget|breakdown|cache|memory|history|evidence|strategy|task]';
 
   get detailedHelp(): string {
     return `
@@ -58,6 +58,16 @@ USAGE:
   /context budget       Detailed token budget
   /context breakdown    Per-component token breakdown
   /context evidence [id] [offset]  Metadata list or explicit bounded evidence preview
+  /context task         Inspect host task state, including unconfirmed/pending actions
+  /context task add <revision> <category> <id> <text...>
+  /context task correct <revision> <old-id> <new-id> <text...>
+  /context task resolve <revision> <id>
+  /context task prune <revision> <id> [id...]
+  /context task resolve-prune <revision> <id> [id...]
+  /context task prune-action <revision> <execution-id> [execution-id...]
+  /context task confirm-prune <revision> <execution-id> <terminal-status> <proof...>
+                        Explicit host recovery; confirm only verified remote outcomes.
+                        Validated host edits; /session save checkpoints them.
   /context strategy [algorithmic|observation-masking|structured-summary]
                         Inspect/select an opt-in automatic strategy. Summaries can bill a helper plus one repair per trigger.
   /context cache        Cache statistics
@@ -94,6 +104,39 @@ EXAMPLES:
         return this.showCache(context);
       case 'memory':
         return this.showMemory(context);
+      case 'task': {
+        const runner = app.getAgent()!;
+        if (!runner.getTaskState) return this.error('Task-state inspection is unavailable in this runner.');
+        try {
+          const state = runner.getTaskState();
+          if (!state) return this.error('Task state is disabled. Enable taskState in AMOS config and reload.');
+          if (args.length === 1) return this.success(`Task ${JSON.stringify(state.taskId)}, revision ${state.revision}. Unconfirmed receipts do not prove remote completion.\n${JSON.stringify(state, null, 2)}`);
+          if (!runner.updateTaskState) return this.error('Task-state editing is unavailable.');
+          const revision = /^(0|[1-9][0-9]*)$/.test(args[2] ?? '') ? Number(args[2]) : NaN;
+          if (!Number.isSafeInteger(revision)) return this.error('Provide the current non-negative integer task revision.');
+          const source = { label: 'Explicit AMOS host command' };
+          let delta: import('@everworker/oneringai').TaskStateHostDelta;
+          if (args[1] === 'add' && args.length >= 6 && ['objective','constraint','decision','question','artifact'].includes(args[3]!)) {
+            delta = { notes: [{ id: args[4]!, category: args[3] as import('@everworker/oneringai').TaskStateCategory, text: args.slice(5).join(' '), source }] };
+          } else if (args[1] === 'correct' && args.length >= 6) {
+            const prior = state.notes.find(n => n.id === args[3]);
+            if (!prior) return this.error('Correction target not found; inspect /context task.');
+            delta = { notes: [{ id: args[4]!, category: prior.category, text: args.slice(5).join(' '), supersedes: prior.id, source }] };
+          } else if (args[1] === 'resolve' && args.length === 4) delta = { resolve: [args[3]!] };
+          else if (args[1] === 'prune' && args.length >= 4) delta = { prune: { noteIds: args.slice(3) } };
+          else if (args[1] === 'resolve-prune' && args.length >= 4) delta = { resolve: args.slice(3), prune: { noteIds: args.slice(3) } };
+          else if (args[1] === 'prune-action' && args.length >= 4) delta = { prune: { executionIds: args.slice(3) } };
+          else if (args[1] === 'confirm-prune' && args.length >= 6 && ['completed', 'failed', 'skipped', 'cancelled'].includes(args[4]!)) {
+            delta = { confirmActions: [{ executionId: args[3]!, status: args[4] as import('@everworker/oneringai').TaskStatus, source: { label: args.slice(5).join(' ') } }], prune: { executionIds: [args[3]!] } };
+          } else return this.error('Use /context task add, correct, resolve, prune, resolve-prune, prune-action or confirm-prune with the current revision. See /help context for arguments.');
+          const updated = runner.updateTaskState(delta, revision);
+          return this.success(`Task state updated to revision ${updated.revision} in memory. Use /session save to checkpoint it.`);
+        } catch (error) {
+          const code = (error as { code?: string })?.code;
+          if (code === 'TASK_STATE_CAPACITY') return this.error('Task-state capacity reached. Inspect /context task; prune resolved/superseded notes with task prune, or explicitly resolve and remove notes atomically with task resolve-prune. Use task confirm-prune only after verifying a terminal remote outcome. Then /session save.');
+          return this.error(code === 'TASK_STATE_CONFLICT' ? 'Task revision changed; inspect /context task and retry with the current revision.' : 'Task-state edit/inspection rejected. Check task configuration, current revision, record IDs, limits, and that no execution is running.');
+        }
+      }
       case 'strategy': {
         const runner = app.getAgent()!;
         const selected = args[1];

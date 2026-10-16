@@ -312,3 +312,6 @@ export type { ToolExecutionOutcome, ToolExecutionOptions, ToolExecutionReport } 
 
 export { ObservationMaskingStrategy, StructuredSummaryStrategy } from './context-nextgen/strategies/index.js';
 export type { ObservationMaskingStrategyConfig, StructuredSummaryStrategyConfig, StructuredContextSummary, ContextSummaryEntry, ContextSummaryRequest, ContextSummaryGenerator, ConversationCompactionReport, ConversationCompactionOptions } from './context-nextgen/strategies/index.js';
+
+export { TaskStatePluginNextGen } from './context-nextgen/plugins/TaskStatePluginNextGen.js';
+export type { TaskStateCategory, TaskStateSource, TaskStateNoteInput, TaskStateNote, TaskStateLifecycleBinding, TaskStateLifecycleView, TaskStateAction, TaskStateSnapshot, TaskStatePluginConfig, TaskStateHostDelta } from './context-nextgen/plugins/TaskStatePluginNextGen.js';

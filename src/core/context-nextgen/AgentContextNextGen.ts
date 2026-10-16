@@ -1,3 +1,5 @@
+import { TaskStatePluginNextGen } from './plugins/TaskStatePluginNextGen.js';
+import type { TaskStatePluginConfig, TaskStateSnapshot } from './plugins/TaskStatePluginNextGen.js';
 import { compactConversationTransaction } from './strategies/conversation-compaction.js';
 import type { EvidenceReference } from '../../domain/interfaces/IEvidenceStorage.js';
 import { EvidencePluginNextGen, parseEvidenceSnapshot } from './plugins/EvidencePluginNextGen.js';
@@ -84,7 +86,7 @@ import type { IContextStorage, StoredContextSession } from '../../domain/interfa
 import type { IHistoryJournal, HistoryEntry, HistoryEntryType } from '../../domain/interfaces/IHistoryJournal.js';
 import type { IConnectorRegistry } from '../../domain/interfaces/IConnectorRegistry.js';
 import { Connector } from '../Connector.js';
-import { ContextOverflowError, ConnectorNotFoundError } from '../../domain/errors/AIErrors.js';
+import { AIError, ContextOverflowError, ConnectorNotFoundError } from '../../domain/errors/AIErrors.js';
 
 // Plugin imports for auto-initialization
 import {
@@ -220,6 +222,8 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   private _preparationRevision = 0;
   private _preparedSystemContent = '';
   private _preparedCurrentInputCount = 0;
+  private _preparedTaskGeneration?: number;
+  private _preparedTaskState?: TaskStatePluginNextGen;
   private _lastPrepareOptions: ContextPrepareOptions = {};
   private _contextOperation: 'prepare' | 'consolidate' | null = null;
 
@@ -522,6 +526,11 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       const scope = config?.scope ?? config?.storage?.scope ?? { ownerId: this._userId ?? this._agentId, namespace: this._agentId };
       const storage = config?.storage ?? StorageRegistry.resolve('evidence', () => (s) => new InMemoryEvidenceStorage({ scope: s }))!(scope, StorageRegistry.getContext());
       this.registerPlugin(new EvidencePluginNextGen({ ...config, storage, scope }));
+    }
+
+    if (features.taskState && !registeredPlugins.has('taskState')) {
+      if (!configs.taskState) throw new AIError('taskState requires a host-selected taskId and scope', 'TASK_STATE_INVALID', 400);
+      this.registerPlugin(new TaskStatePluginNextGen(configs.taskState as TaskStatePluginConfig));
     }
 
     // Validate strategy dependencies now that plugins are initialized
@@ -947,6 +956,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     }
 
     if (plugin instanceof EvidencePluginNextGen) plugin.attach(this._tools);
+    if (plugin instanceof TaskStatePluginNextGen) plugin._bindContext(() => this._userId);
     this._plugins.set(plugin.name, plugin);
 
     if (options?.skipDestroyOnContextDestroy) {
@@ -1479,6 +1489,8 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       this._lastPrepareOptions = { ...options };
       this._preparedSystemContent = this.serializeToolResultContent(selected.input[0]);
       this._preparedCurrentInputCount = selected.currentInputCount;
+      this._preparedTaskState = this.taskStatePlugin();
+      this._preparedTaskGeneration = this._preparedTaskState?._generation;
       this._cachedBudget = budget;
       this._lastPreparation = { revision: ++this._preparationRevision, preparedAt: Date.now(), budget: structuredClone(budget), ...(compaction ? { compaction: structuredClone(compaction) } : {}) };
       this.emit('budget:updated', { budget, timestamp: this._lastPreparation.preparedAt });
@@ -1504,16 +1516,34 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   ): ContextBudget {
     this.assertNotDestroyed();
     if (!this._lastPreparation) throw new Error('Prepare context before validating a managed request');
+    const assertTaskState = (): void => {
+      const taskState = this.taskStatePlugin();
+      if (taskState !== this._preparedTaskState) throw new AIError('Protected task-state plugin changed after preparation', 'TASK_STATE_CONFLICT', 409);
+      if (!taskState) return;
+      const trusted = [request.instructions ?? '', ...(typeof request.input === 'string' ? [] : request.input.flatMap(item =>
+        item.type === 'message' && item.role === MessageRole.DEVELOPER ? item.content.flatMap(block =>
+          block.type === ContentType.INPUT_TEXT || block.type === ContentType.OUTPUT_TEXT ? [block.text] : []) : []))];
+      if (this._preparedTaskGeneration !== taskState._generation || !trusted.some(part => part.includes(taskState._promptView()))) {
+        throw new AIError('Protected task state changed or was removed after preparation; prepare again before dispatch', 'TASK_STATE_CONFLICT', 409);
+      }
+    };
+    assertTaskState();
+
     const { budget, items } = this.calculateRequestBudget(request, options.modelMaxContextTokens);
     this.assertBudgetFits(budget, ['Final managed request recounted after host hooks and request listeners; no additional compaction pass']);
-    if (options.recordPreparation === false) return budget;
-    if (typeof request.input !== 'string') request.input = structuredClone(items);
-    const previous = this._lastPreparation.budget;
-    this._cachedBudget = structuredClone(budget);
-    this._lastPreparation.budget = structuredClone(budget);
-    if (JSON.stringify(previous) !== JSON.stringify(budget)) {
-      this.emit('budget:updated', { budget: structuredClone(budget), timestamp: Date.now() });
+    if (options.recordPreparation !== false) {
+      if (typeof request.input !== 'string') request.input = structuredClone(items);
+      const previous = this._lastPreparation.budget;
+      this._cachedBudget = structuredClone(budget);
+      this._lastPreparation.budget = structuredClone(budget);
+      if (JSON.stringify(previous) !== JSON.stringify(budget)) {
+        this.emit('budget:updated', { budget: structuredClone(budget), timestamp: Date.now() });
+      }
     }
+    // Synchronous budget observers can change the authoritative state even though
+    // the request itself is detached. No callback may invalidate admission.
+    this.assertNotDestroyed();
+    assertTaskState();
     return budget;
   }
 
@@ -1577,6 +1607,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   private contextStamp(): string {
     return this.serializeToolResultContent([
       this._config.model, this._maxContextTokens, this._systemPrompt, this._conversation, this._currentInput,
+      ...(this.taskStatePlugin() ? [this.taskStatePlugin()!._generation] : []),
     ]);
   }
 
@@ -2105,6 +2136,8 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
     const conversationSnapshot = [...this._conversation];
     const currentInputSnapshot = [...this._currentInput];
+    const taskStateSnapshot = this.taskStatePlugin();
+    const taskGeneration = taskStateSnapshot?._generation;
     const olderPrefix = conversationSnapshot.slice(0, cutoff);
     if (olderPrefix.some(hasUnacknowledgedEvidence)) throw new Error('Cannot roll over unacknowledged tool evidence; preserve raw results or repair evidence storage first.');
     const opaqueItems = olderPrefix.filter((item) => item.type === 'compaction');
@@ -2153,7 +2186,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       const currentInputUnchanged =
         this._currentInput.length === currentInputSnapshot.length
         && this._currentInput.every((item, index) => item === currentInputSnapshot[index]);
-      if (!conversationUnchanged || !currentInputUnchanged) {
+      if (!conversationUnchanged || !currentInputUnchanged || taskStateSnapshot !== this.taskStatePlugin() || taskGeneration !== this.taskStatePlugin()?._generation) {
         throw new Error('Context changed while rollover summary was being generated');
       }
 
@@ -2655,6 +2688,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     const state = stored.state;
 
     this.assertEvidenceState(state);
+    const taskState = this.preflightTaskState(state);
     // Restore conversation
     this._conversation = state.conversation;
     this.removeRestoredProtectedInput();
@@ -2663,11 +2697,12 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     // Restore plugin states
     for (const [name, pluginState] of Object.entries(state.pluginStates)) {
       const plugin = this._plugins.get(name);
-      if (plugin) {
+      if (plugin && !(plugin instanceof TaskStatePluginNextGen)) {
         plugin.restoreState(pluginState);
       }
     }
 
+    if (taskState) this.getPlugin<TaskStatePluginNextGen>('task_state')!.restoreState(taskState);
     this._sessionId = sessionId;
 
     // Restore turn index from journal (if available) so new entries continue the sequence
@@ -2773,6 +2808,16 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     };
   }
 
+  private preflightTaskState(state: SerializedContextState): TaskStateSnapshot | undefined {
+    const plugin = this.taskStatePlugin();
+    return plugin?.validateState(state.pluginStates && Object.hasOwn(state.pluginStates, 'task_state') ? state.pluginStates.task_state : plugin.emptyState());
+  }
+
+  private taskStatePlugin(): TaskStatePluginNextGen | undefined {
+    const plugin = this.getPlugin('task_state');
+    return plugin instanceof TaskStatePluginNextGen ? plugin : undefined;
+  }
+
   private assertEvidenceState(state: SerializedContextState): void {
     const plugin = this.getPlugin('evidence');
     if (plugin instanceof EvidencePluginNextGen && state.pluginStates && Object.hasOwn(state.pluginStates, 'evidence')) {
@@ -2788,6 +2833,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     this.assertNotDestroyed();
 
     this.assertEvidenceState(state);
+    const taskState = this.preflightTaskState(state);
     this._conversation = state.conversation ?? [];
     this.removeRestoredProtectedInput();
     this._systemPrompt = state.systemPrompt;
@@ -2796,11 +2842,12 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     if (state.pluginStates) {
       for (const [name, pluginState] of Object.entries(state.pluginStates)) {
         const plugin = this._plugins.get(name);
-        if (plugin) {
+        if (plugin && !(plugin instanceof TaskStatePluginNextGen)) {
           plugin.restoreState(pluginState);
         }
       }
     }
+    if (taskState) this.getPlugin<TaskStatePluginNextGen>('task_state')!.restoreState(taskState);
   }
 
   // ============================================================================

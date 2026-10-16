@@ -1,6 +1,7 @@
 # Agentic Architecture Evolution: Staged Development Plan
 
-- **Status:** Roadmap direction accepted; stages 00–03, 06 and 07 complete on the development branch.
+- **Status:** Roadmap direction accepted; stages 00–04, 06 and 07 complete on the development branch.
+- **Stage 04:** Both reviews' findings fixed and validated. Latest local/public gate passes 7,795 units, legacy root/`types` consumers, public ESM/CJS controls and both task examples. See the [second corrective completion](STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16). Earlier live results remain historical; no release or API break.
 - **Stage 07:** All three review findings fixed and validated: 7,631 units, 105 live cases / 117 scenarios and 17 offline examples pass; experimental, no default promotion.
 - **Stage 03 review:** All findings corrected and validated: 7,473 units, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 - **Stage 06 review:** All first- and second-review findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion record](STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
@@ -446,7 +447,7 @@ remain separately authorized work.
 | 01 | Fresh final request accounting and protocol-safe compaction | 00 | Core | Complete on branch |
 | 02 | Accurate tool outcomes and per-execution cancellation | 00 | Core | Complete on branch; final local and full OpenAI/Anthropic/Google live validation passed |
 | 03 | Acknowledged evidence references, projections, and outcome records | 01, 02 | Core | Complete on branch; all three corrective passes validated: 7,473 units, 66 live cases / 78 scenarios, 15 offline examples |
-| 04 | Task-state prompt view and protected host constraints | 03, 06 | Core | Not started |
+| 04 | Task-state prompt view and protected host constraints | 03, 06 | Core | Complete on branch; both reviews' findings validated |
 | 05 | Typed contributions and selective/cache-aware assembly | 01, 03, 04 | Conditional | Not started |
 | 06 | Fixed main model, bounded helper roles, and task usage/budgets | 01, 02 | Core | Complete on branch; first- and second-review corrections validated, all local/live gates pass |
 | 07 | Structured summaries and observation masking | 03, 06 | Core | Complete on branch, including all review corrections; experimental, no default promotion |
@@ -2707,3 +2708,167 @@ retains the actual output. Public signatures, constructor defaults, custom strat
 and rollover contracts, session formats, raw tool/events and connector authority
 remain unchanged. **Stage 04 — task state and protected host constraints** remains
 next and separately authorized.
+
+
+### Stage 04 execution record — 2026-10-15
+
+The user authorized Stage 04 with “proceed”, based on Stage 07 commit `152a0a3`
+on `version2`. The first delivery is deterministic host APIs, one opt-in task view
+per context, protected host notes, explicit unconfirmed proposals/assumptions,
+execution observations and separate host workflow confirmations. Automatic
+extraction remains deferred as proposed; no new workflow engine, automatic action
+subscription or completion-policy loop is added. Existing Task/routine/memory
+lifecycle authorities are reused. See [implementation scope](STAGE_04_IMPLEMENTATION.md)
+and the [adoption recipe](../TASK_STATE.md). Validation is in progress; no stage
+completion, package release, commit/push or Stage 10 implementation is claimed.
+
+
+### Stage 04 completion — 2026-10-15
+
+Stage 04 is complete in the uncommitted `version2` working tree based on Stage 07
+commit `152a0a3`. [Implementation](STAGE_04_IMPLEMENTATION.md),
+[recipe](../TASK_STATE.md), [validation](../evaluations/STAGE_04_VALIDATION.json)
+and [AMOS transcript](../evaluations/STAGE_04_AMOS_OFFLINE.txt) record actual scope.
+
+The additive opt-in task plugin preserves sourced host objectives/constraints/
+corrections/decisions/questions/artifacts, unconfirmed proposals/assumptions and
+explicit execution receipts with separately sourced host workflow confirmations.
+Revision and owner/task/association guards, strict bounded inputs, protected prompt
+fit, final dispatch/JSON repair checks, stale async guards, versioned optional
+plugin snapshots and legacy-session clearing are implemented. Task/routine and
+MemorySystem lifecycle authority remain intact; memory views refresh through
+host permissions rather than create duplicate lifecycle facts. No mutation tools,
+automatic action subscription/extraction, action journal or new workflow engine.
+
+Validation passes: **7,743 units / 354 files**, including **112 Stage 04 cases**
+(68 plugin, 20 context, 12 Agent, 12 AMOS); final plugin coverage **99.55% lines/
+statements, 85.81% branches, 100% functions**. Build/export verification, root and
+strict fixture types, lint, built public compatibility, examples types, AMOS build,
+API regeneration (1,682 items), 19 offline scripts, CJS smoke and 18 retained
+scripted comparison cases pass. The workflow checks a genuinely separate Node
+process; the AMOS example exercises actual host commands/session recovery.
+
+The scoped real-provider gates pass **117 tests / 129 scenarios** with OpenAI,
+Anthropic and Google verified. The first seven-file batch had 116 passes and one
+legacy Google development chat marker failure, with no task state enabled. Its
+original output was not retained, so the precise deviation/cause is unknown. Four
+unchanged diagnostic repetitions returned exact markers; the complete unchanged
+three-provider baseline revalidation passed all 12 cases/24 scenarios. Final
+counts select that revalidation plus the six successful original files; this is
+not one all-green batch. No fixture/predicate was weakened. The failure and
+diagnostics remain in the evidence. Initial localhost EPERM was resolved by
+running all offline scripts with authorized localhost permission. Previously
+consumed comparison tasks remain regression fixtures, not fresh held-out evidence.
+
+README, User Guide, generated API, AGENTS, memory recipe, examples/index, AMOS,
+Changelog, outward Version 2 availability/adoption/handoff and package records
+are synchronized. Defaults, old signatures/event/raw shapes/session requirements
+and extension contracts remain supported; generated tool fingerprints reflect
+transitive source changes. No breaking change, commit, push or release.
+
+**Stage 10 — bounded recovery and verifiable completion** is next in the core
+sequence and requires separate authorization. Automatic extraction and conditional
+stages remain deferred.
+
+
+### Stage 04 review — 2026-10-15
+
+The unchanged Stage 04 delivery based on `152a0a3` has four reproduced open findings:
+one P1 final budget-event stale dispatch and three P2 pruned-ID checkpoint failure,
+exact-capacity resolution/pruning deadlock and missing AMOS record reclamation.
+[Review/fix plan](STAGE_04_REVIEW_AND_FIX_PLAN.md) and
+[executable evidence](../evaluations/STAGE_04_REVIEW.json) record 31 defect/control
+observations against source/public ESM/CJS and actual file/AMOS integrations.
+
+Fresh **7,743 units / 354 files**, types, lint and built public compatibility pass;
+existing tests miss the reproduced paths. Original completion/live evidence,
+including its earlier Google marker failure/revalidation, remains historical. No
+provider calls, runtime fixes or permanent tests were added in this review. Current
+availability, adoption/handoff and usage notices reflect corrections pending.
+
+Corrective implementation and meaningful regressions, examples/AMOS recovery,
+compatibility and fresh final local/live gates must pass before restoring Stage 04
+completion. Fixes should preserve documented ID reuse, limits, explicit host
+authority, raw outcomes/events, old snapshots/defaults and extension contracts.
+No breaking change is approved. No commit, push, release or Stage 10 work.
+
+
+### Stage 04 corrective completion — 2026-10-15
+
+All four user-authorized fixes are complete in the uncommitted `version2` tree
+based on `152a0a3`. [Corrective completion](STAGE_04_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-15),
+[evidence](../evaluations/STAGE_04_CORRECTIONS_VALIDATION.json) and
+[AMOS transcript](../evaluations/STAGE_04_CORRECTIONS_AMOS_OFFLINE.txt) record scope.
+
+Final admission spans budget observers/repair; pruned-ID reuse preserves inactive
+history and checkpoint validity; optional `confirmActions`/`prune` host deltas
+validate atomic final-state recovery at unchanged limits; AMOS exposes explicit
+validated reclamation without a new adapter requirement or model mutation tool.
+Version-1 snapshots, existing signatures/defaults, raw outcomes/events and existing
+Task/routine/memory authority remain supported. No breaking change.
+
+**7,784 units / 356 files** pass, including **153 Stage 04 cases / 41 new regressions**.
+Plugin coverage is **99.61% lines/statements, 88.21% branches, 100% functions**.
+**117 live cases / 129 scenarios pass in one final seven-file batch**, no failures
+or skips, all OpenAI/Anthropic/Google verified. **19 offline scripts**, corrected
+source/ESM/CJS proofs, 18 retained scripted comparison cases, builds/export checks,
+all relevant types, lint, public compatibility and API regeneration (1,682 items)
+pass. Earlier delivery/review evidence, including the initial Google answer failure,
+is preserved unchanged; no new failing final live attempt.
+
+All relevant guides, canonical instructions, examples/AMOS, Changelog, packaged
+records and Version 2 availability/adoption/handoff are synchronized. Completion
+is restored on branch; no commit, push or release. Stage 10 remains the next core
+stage and needs separate authorization. Automatic extraction and conditional
+extensions remain deferred.
+
+
+### Stage 04 second review — 2026-10-15
+
+The [second review/fix plan](STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md) and
+[executable evidence](../evaluations/STAGE_04_SECOND_REVIEW.json) reproduce two P2
+public TypeScript compatibility regressions. The new optional feature becomes
+mandatory in `ResolvedContextFeatures`, and `KnownPluginConfigs.taskState`
+narrows configuration for a previously supported external registry feature key.
+The external extension still works in source/public ESM/CJS; both unchanged
+consumer shapes compile with the previous declarations and fail against current
+public declarations. The prior four runtime corrections remain validated.
+
+Fresh **7,784 units / 356 files** and all **153 Stage 04 tests** pass, along with
+root types, lint, existing built-package compatibility, example types, both task
+offline examples and registry controls. Four initial sandboxed localhost fixture
+failures are retained; the unchanged full run passed with socket access. All 45
+previous delivery/build fingerprints matched before review documentation changed.
+No runtime fix, permanent test, rebuild, new LLM call or breaking change is part
+of this review. The earlier corrective live results remain historical.
+
+Current status, recipe/standard guides, implementation record, package inventory
+and Version 2 availability/adoption/handoff now mark completion provisional until
+compatible fixes and their consumer regressions pass. No release, commit, push,
+Stage 10 implementation or breaking workaround is approved.
+
+
+### Stage 04 second corrective completion — 2026-10-16
+
+The user authorized all fixes. Both public TypeScript compatibility regressions
+are fixed: the original resolved-feature required keys remain stable, and generic
+`taskState` configuration accepts existing external factory records alongside the
+explicit built-in type. Live defaults, external factory precedence and built-in
+runtime scope/task checks are unchanged. No production execution logic change.
+
+The [completion](STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16)
+and [evidence](../evaluations/STAGE_04_SECOND_CORRECTIONS_VALIDATION.json) record
+**7,795 units / 357 files**, including **164 Stage 04 cases / 11 new regressions**;
+the expanded root/`types` fixture, unchanged review consumer, 18 source/public
+ESM/CJS observations, build/export checks, source/live/example/AMOS types, lint,
+AMOS build, both task examples and API generation (1,682 items) pass. Expected
+pre-fix compiler diagnostics and sandbox IPC build failure are retained; final
+checks have no failure/skip. Prior live results are historical; type-only fixes
+did not require another billable provider run.
+
+Recipe/standard docs, generated API, example index, Changelog, implementation/current
+status, Version 2 availability/adoption/handoff and packaged evidence are current.
+Existing AMOS behavior/examples need no change for these contracts; its actual
+tests, types, build and walkthrough pass. Stage 04 completion is restored. No
+breaking change, release, commit, push or Stage 10 implementation. Stage 10 remains
+the next separately authorized core stage.

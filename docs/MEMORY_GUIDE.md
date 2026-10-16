@@ -2923,3 +2923,12 @@ The memory layer + agent-side plugin are both shipped. Remaining future work:
 ---
 
 *For the full API reference, see [MEMORY_API.md](./MEMORY_API.md). For the source, see `src/memory/`.*
+
+
+### Optional protected task view
+
+The opt-in context [task-state plugin](TASK_STATE.md) can cache a linked memory
+task's `metadata.state` through `refreshMemoryTask(memory, trustedScope, revision,
+signal)`. It reads with existing MemorySystem permissions; the host still changes
+state via `transitionTaskState`. Session restoration never reconnects clients or
+restores principals, and no parallel state facts are created.

@@ -1,0 +1,57 @@
+
+> @everworker/oneringai@1.2.0 example:amos-task-state
+> node --import tsx apps/amos/examples/task-state-offline.ts
+
+/context task add 0 constraint cap Spend at most 50 EUR
+Task state updated to revision 1 in memory. Use /session save to checkpoint it.
+/context task correct 1 cap cap-corrected Spend at most 40 EUR
+Task state updated to revision 2 in memory. Use /session save to checkpoint it.
+/context task resolve 1 cap-corrected
+Task revision changed; inspect /context task and retry with the current revision.
+{"level":"info","time":1792099751079,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-task-demo","inputPreview":"Continue with the host constraint.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2181/128000 (1.8%) tools=841 conversation=0 system=1326 input=14 | sysPrompt=148 PI=0 pluginInstr=900 plugin:task_state=217
+{"level":"info","time":1792099751095,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-task-demo","duration":16,"msg":"Agent run completed"}
+{"level":"info","time":1792099751096,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-task-demo","sessionId":"1792099751072_qya9vhh","msg":"Session loaded"}
+/context task
+Task "delivery-42", revision 2. Unconfirmed receipts do not prove remote completion.
+{
+  "version": 1,
+  "scope": {
+    "ownerId": "local",
+    "namespace": "demo"
+  },
+  "taskId": "delivery-42",
+  "revision": 2,
+  "notes": [
+    {
+      "id": "cap",
+      "category": "constraint",
+      "text": "Spend at most 50 EUR",
+      "source": {
+        "label": "Explicit AMOS host command"
+      },
+      "authority": "host",
+      "supersededBy": "cap-corrected"
+    },
+    {
+      "id": "cap-corrected",
+      "category": "constraint",
+      "text": "Spend at most 40 EUR",
+      "supersedes": "cap",
+      "source": {
+        "label": "Explicit AMOS host command"
+      },
+      "authority": "host"
+    }
+  ],
+  "actions": []
+}
+/context task add 3 constraint new-cap Keep 40 EUR
+Task-state capacity reached. Inspect /context task; prune resolved/superseded notes with task prune, or explicitly resolve and remove notes atomically with task resolve-prune. Use task confirm-prune only after verifying a terminal remote outcome. Then /session save.
+/context task resolve-prune 3 bulk-0
+Task state updated to revision 4 in memory. Use /session save to checkpoint it.
+/context task add 4 constraint new-cap Keep 40 EUR
+Task state updated to revision 5 in memory. Use /session save to checkpoint it.
+{"level":"info","time":1792099751112,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-task-demo","sessionId":"1792099751072_qya9vhh","msg":"Session loaded"}
+At the 100-record cap, explicit atomic host recovery reclaimed a slot, accepted a new constraint and survived checkpoint reload.
+Host edits, stale-revision rejection and checkpoint reload passed; model command text stayed data. One synthetic call, no LLM/network. Temporary files cleaned.

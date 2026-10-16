@@ -760,6 +760,9 @@ export interface OversizedInputResult {
  * External plugins register via PluginRegistry and use arbitrary string keys.
  */
 export interface KnownContextFeatures {
+  /** Host-controlled protected task view; disabled by default. Requires plugins.taskState. */
+  taskState?: boolean;
+
   /** Enable WorkingMemory plugin (default: true) */
   workingMemory?: boolean;
 
@@ -793,15 +796,21 @@ export interface KnownContextFeatures {
 export type ContextFeatures = KnownContextFeatures & { [key: string]: boolean | undefined };
 
 /**
- * Resolved features — all known keys guaranteed present, plus any extras.
- * Used internally after merging with DEFAULT_FEATURES.
+ * Resolved features retain the original required keys, plus optional additions
+ * and arbitrary external flags. Keep the required set stable so adding an opt-in
+ * feature does not break existing snapshot/configuration consumers. Live contexts
+ * still merge every known default; older constructed snapshots can omit additions.
  */
-export type ResolvedContextFeatures = Required<KnownContextFeatures> & Record<string, boolean>;
+export type ResolvedContextFeatures = KnownContextFeatures & Required<Pick<KnownContextFeatures,
+  | 'workingMemory' | 'inContextMemory' | 'persistentInstructions' | 'userInfo'
+  | 'toolCatalog' | 'sharedWorkspace' | 'memory' | 'memoryWrite'
+>> & Record<string, boolean>;
 
 /**
  * Default feature configuration for built-in plugins.
  */
 export const DEFAULT_FEATURES: Required<KnownContextFeatures> = {
+  taskState: false,
   workingMemory: true,
   inContextMemory: true,
   persistentInstructions: false,
@@ -825,6 +834,12 @@ export const DEFAULT_FEATURES: Required<KnownContextFeatures> = {
  * Known plugin configurations for built-in plugins (provides autocomplete/docs).
  */
 export interface KnownPluginConfigs {
+  /** Built-in host task/scope config, or an existing external taskState factory's record.
+   * Use TaskStatePluginConfig for strict built-in validation; runtime validates the
+   * built-in when no external factory owns this feature key.
+   */
+  taskState?: import('./plugins/TaskStatePluginNextGen.js').TaskStatePluginConfig | Record<string, unknown>;
+
   /** Opt-in durable evidence. Enable features.evidence; scope and policy are host-owned. */
   evidence?: Record<string, unknown>;
   /** Working memory plugin config. See WorkingMemoryPluginConfig. */

@@ -386,3 +386,50 @@ policy selection and no immediate helper request on selection. Usage is scripted
 no credentials/network or quality/cost measurement. Library
 [Context Strategies](../../docs/CONTEXT_STRATEGIES.md) documents retention,
 persistence, protected state, cancellation, fallback and experimental limitations.
+
+
+## Protected task state (optional)
+
+Add `taskState: { "enabled": true, "taskId": "delivery-42", "ownerId": "local",
+"namespace": "deliveries" }` to config.json and reload. Optional `association`
+binds a stable host workflow/session identity; it is not the generated session ID.
+If evidence is enabled its owner must match. Legacy config remains disabled.
+
+`/context task` prints the host task view with notes, proposals, observed execution
+receipts, host-confirmed pending/completed actions and optional lifecycle. Explicit
+host edits use current revision and the library's validation:
+
+```text
+/context task add 0 constraint cap Spend at most 50 EUR
+/context task correct 1 cap cap-corrected Spend at most 40 EUR
+/context task resolve 2 question-id
+/session save
+```
+
+Edits are in memory until checkpointed by the existing session flow, reject during
+execution and make no model/helper calls. Model-produced commands stay text.
+AMOS does not automatically record action receipts or link MemorySystem tasks.
+Library host APIs support those integrations; the plugin does not add a scheduler,
+authorize writes or prove remote completion.
+`npm run example:amos-task-state` (from the library root, after building) exercises
+the actual adapter/commands with temporary files and one synthetic response, then
+cleans up. See the [full task-state recipe](../../docs/TASK_STATE.md).
+
+
+At the task-state record/content cap, capacity errors now direct hosts to explicit
+reclamation commands (all require the current revision):
+
+```text
+/context task prune 3 resolved-note-id superseded-note-id
+/context task resolve-prune 4 finished-question-id
+/context task prune-action 5 already-confirmed-execution-id
+/context task confirm-prune 6 execution-id completed Host verified terminal remote status
+```
+
+`prune`/`prune-action` refuse active notes or unconfirmed/pending actions.
+`resolve-prune`/`confirm-prune` validate and reclaim atomically against the final
+bounded state, so metadata need not fit an intermediate overfull snapshot. The
+latter requires a terminal status and explicit host proof; it does not infer remote
+completion. Archive records/proof first where needed. Edits reject while running,
+make no model call and use the existing session checkpoint flow. The offline AMOS
+walkthrough demonstrates recovery at 100 records, a new constraint and save/reload.

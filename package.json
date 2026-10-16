@@ -158,7 +158,19 @@
     "docs/designs/STAGE_07_REVIEW_AND_FIX_PLAN.md",
     "docs/evaluations/STAGE_07_REVIEW.json",
     "docs/evaluations/STAGE_07_CORRECTIONS_VALIDATION.json",
-    "docs/evaluations/STAGE_07_CORRECTIONS_AMOS_OFFLINE.txt"
+    "docs/evaluations/STAGE_07_CORRECTIONS_AMOS_OFFLINE.txt",
+    "docs/TASK_STATE.md",
+    "docs/designs/STAGE_04_IMPLEMENTATION.md",
+    "docs/evaluations/STAGE_04_VALIDATION.json",
+    "docs/evaluations/STAGE_04_AMOS_OFFLINE.txt",
+    "examples/task-state-workflow.ts",
+    "docs/designs/STAGE_04_REVIEW_AND_FIX_PLAN.md",
+    "docs/evaluations/STAGE_04_REVIEW.json",
+    "docs/evaluations/STAGE_04_CORRECTIONS_VALIDATION.json",
+    "docs/evaluations/STAGE_04_CORRECTIONS_AMOS_OFFLINE.txt",
+    "docs/designs/STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md",
+    "docs/evaluations/STAGE_04_SECOND_REVIEW.json",
+    "docs/evaluations/STAGE_04_SECOND_CORRECTIONS_VALIDATION.json"
   ],
   "scripts": {
     "generate:tools": "tsx scripts/generate-tool-registry.ts",
@@ -235,7 +247,10 @@
     "example:evidence-interruption": "node --import tsx examples/evidence-stream-interruption.ts",
     "example:context-strategies": "node --import tsx examples/context-strategy-comparison.ts",
     "test:context-strategies:live": "RUN_CONTEXT_STRATEGIES_LIVE=1 vitest run tests/integration/text/ContextStrategies.live.integration.test.ts",
-    "example:amos-context-strategies": "node --import tsx apps/amos/examples/context-strategies-offline.ts"
+    "example:amos-context-strategies": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
+    "example:task-state": "node --import tsx examples/task-state-workflow.ts",
+    "example:amos-task-state": "node --import tsx apps/amos/examples/task-state-offline.ts",
+    "test:task-state:live": "RUN_TASK_STATE_LIVE=1 vitest run tests/integration/text/TaskState.live.integration.test.ts"
   },
   "keywords": [
     "ai",

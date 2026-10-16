@@ -290,6 +290,7 @@ compaction into one model request.
 | `memory` | `false` | Long-term memory injection plus six read tools |
 | `memoryWrite` | `false` | Six write tools; requires `memory` |
 | `evidence` | disabled | Scoped evidence, bounded retrieval and opt-in tool projections |
+| `taskState` | `false` | Host-controlled task view with revision-checked notes/receipts |
 
 ```typescript
 const catalogAgent = Agent.create({
@@ -513,6 +514,7 @@ during application shutdown.
 | Complete usage guide | `USER_GUIDE.md` |
 | Public signatures | `API_REFERENCE.md` |
 | Connectors and every tool source | `docs/CONNECTOR_TOOL_CATALOG.md` |
+| Protected task state, host corrections and pending actions | `docs/TASK_STATE.md` |
 | Durable tool evidence, projections and recovery | `docs/DURABLE_EVIDENCE.md` |
 | Explicit helper models, shared model budgets and purpose usage | `docs/MODEL_TASKS_AND_HELPERS.md` |
 | Tool outcomes, cancellation, and connector deadlines/retries | `docs/TOOL_OUTCOMES_AND_CANCELLATION.md` |
@@ -650,3 +652,35 @@ active ModelTask, including repair/cancellation limits. Read
 `lastPreparation.compaction` with actual task usage. The bounded live comparison
 is a functional pilot, not a general quality/cost claim. Preserve existing explicit
 rollover and custom strategy contracts.
+
+
+## Protected host task state
+
+Enable `context.features.taskState` explicitly with `plugins.taskState` containing
+a host-selected scope/taskId and optional immutable association/lifecycle binding.
+Use `TaskStatePluginNextGen.updateHost(delta, revision)` for confirmed notes;
+`propose`/`assume` keep model interpretations unconfirmed. No mutation/store tools
+are exposed. `recordAction(actualOutcome, revision)` is explicit; enabling the
+plugin does not observe every tool automatically. A succeeded/settled submission
+does not prove remote completion; `confirmAction` records a separate host check.
+Capacity/revision errors never justify replaying an external action.
+
+The bounded full view is noncompactable and protected at final managed dispatch,
+including JSON repair; direct calls bypass managed task state. Optional version-1
+snapshots preflight task/scope/association; legacy snapshots clear enabled notes.
+Task/routine statuses are cached authority views; linked memory tasks are read via
+`refreshMemoryTask` under host scope and transitioned through MemorySystem itself.
+Automatic extraction, duplicate-effect prevention and a new workflow engine are
+outside this stage. Read [Task State](docs/TASK_STATE.md) for limits, trusted
+checkpoint assumptions, pruning, exact APIs, examples and AMOS host commands.
+
+
+Task-state capacity recovery is explicit and atomic: `updateHost` accepts optional
+`confirmActions` (executionId/status/source) and `prune` (noteIds/executionIds), applied
+after notes/resolutions and admitted against the final fitting snapshot. Inputs
+remain bounded and only host-confirmed terminal actions/resolved or superseded
+notes can be pruned. Archive proof first where needed; never repeat a write to
+repair state. Reusing a pruned ID detaches obsolete correction/conflict links while
+keeping historical predecessors inactive. Final managed task guards also run after
+budget observers. AMOS exposes explicit `task prune`, `resolve-prune`, `prune-action`
+and `confirm-prune` host commands; see the task-state recipe for arguments.

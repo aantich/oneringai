@@ -3574,3 +3574,32 @@ MIT License - See [LICENSE](./LICENSE) file.
 ---
 
 **Version:** 1.2.0 | **Last Updated:** 2026-10-07 | **[User Guide](./USER_GUIDE.md)** | **[API Reference](./API_REFERENCE.md)** | **[Changelog](./CHANGELOG.md)**
+
+
+## Protected task state (opt-in)
+
+`context.features.taskState` enables a bounded host-controlled task view with
+revision-checked objectives, constraints/corrections, decisions, questions,
+artifacts and action receipts. Model proposals stay unconfirmed; execution success
+and host-confirmed remote completion remain separate. The full view survives
+compaction and scoped session recovery; no task mutation tools, automatic extraction
+or action replay are added. Existing defaults and task/memory lifecycle APIs remain
+supported. See [Task State](docs/TASK_STATE.md) for setup, capacities, failure and
+provider boundaries. Build first, then run `npm run example:task-state` or
+`npm run example:amos-task-state` offline. This is development-branch functionality;
+a published release is not claimed.
+
+
+Stage 04 corrections add atomic host resolve/confirm-and-prune recovery through
+optional `TaskStateHostDelta.confirmActions`/`prune`, checkpoint-safe pruned-ID
+reuse, a final guard after budget observers, and explicit AMOS recovery commands.
+The first corrective gates passed (7,784 units and 117 live cases / 129 scenarios);
+the [review/fix plan](docs/designs/STAGE_04_REVIEW_AND_FIX_PLAN.md) preserves those
+findings. Both [second-review compatibility regressions](docs/designs/STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16)
+are also fixed: unchanged legacy feature values and external plugin configurations
+compile through the root and `/types` exports. Fresh validation passes 7,795 units,
+public consumers and ESM/CJS controls; runtime defaults and hard limits are unchanged.
+
+Corrective [validation evidence](docs/evaluations/STAGE_04_CORRECTIONS_VALIDATION.json)
+includes all three providers and unchanged historical review/delivery records.
+No package release is claimed.

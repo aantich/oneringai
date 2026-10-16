@@ -1,4 +1,5 @@
 import { EvidencePluginNextGen } from './context-nextgen/plugins/EvidencePluginNextGen.js';
+import { TaskStatePluginNextGen } from './context-nextgen/plugins/TaskStatePluginNextGen.js';
 import { evidenceProjection, evidenceProvenance } from './evidence/ToolEvidenceMiddleware.js';
 import type { ToolEvidenceDelivery } from './evidence/ToolEvidenceMiddleware.js';
 /**
@@ -2705,7 +2706,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       false,
       this._provider.getAdvancedCapabilities?.(this.model),
     );
-    const baseInstructions = this._config.instructions ?? '';
+    const taskState = this._agentContext.getPlugin('task_state');
+    const baseInstructions = (this._config.instructions ?? '') + (taskState instanceof TaskStatePluginNextGen
+      ? '\n\n' + taskState.getInstructions() + '\n' + taskState._promptView() : '');
 
     const generateOptions: TextGenerateOptions = {
       model: this.model,
