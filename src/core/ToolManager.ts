@@ -295,6 +295,25 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
     return this.pipeline;
   }
 
+  /** @internal Undo a rejected Agent binding without cloning executable host objects. */
+  _captureAgentBindingRollback(): () => void {
+    const registrations = new Map([...this.registry].map(([name, value]) => [name, { ...value }]));
+    const namespaces = new Map([...this.namespaceIndex].map(([name, values]) => [name, new Set(values)]));
+    const permission = this.pipeline.get('permission-enforcement');
+    const toolContext = this._toolContext;
+    return () => {
+      if (this._isDestroyed) return;
+      this.registry = registrations;
+      this.namespaceIndex = namespaces;
+      for (const [name, breaker] of this.circuitBreakers) {
+        if (!registrations.has(name)) { breaker.removeAllListeners(); this.circuitBreakers.delete(name); }
+      }
+      this._toolContext = toolContext;
+      this.pipeline.remove('permission-enforcement');
+      if (permission) this.pipeline.use(permission);
+    };
+  }
+
   /**
    * Returns true if destroy() has been called.
    */

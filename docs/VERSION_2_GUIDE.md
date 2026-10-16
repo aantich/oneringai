@@ -6,7 +6,7 @@ the standard documentation before release. Read the
 [architecture roadmap](./designs/AGENTIC_ARCHITECTURE_EVOLUTION.md) for implementation
 scope, dependencies, research, and acceptance criteria.
 
-- **Status:** Stages 00–04, 06, 07 and 10 complete on branch. Both Stage 10 reviews are fixed and validated, including deterministic recovery from the recorded Google empty-summary failure: 7,988 units, 136 live cases / 148 scenarios across OpenAI/Anthropic/Google, and 22 offline examples pass. Stage 07 remains experimental; no package release is claimed.
+- **Status:** Core stages 00–04, 06, 07, 10 and 12 complete on branch. All Stage 12 findings are fixed: 8,143 units, 151 live tests / 163 scenarios, 24 offline examples and 54 public controls pass. See the [third corrective completion](./designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16). Stage 07 strategies remain experimental; no package release is claimed.
 - **Stage 03 review:** All findings fixed and validated: 7,473 units / 245 Stage 03 cases, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](./designs/STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 - **Stage 06 review:** All findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion](./designs/STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
 - **Created / last updated:** 2026-10-07 / 2026-10-16.
@@ -18,7 +18,8 @@ scope, dependencies, research, and acceptance criteria.
   04 — protected host task state, explicit receipts and separate workflow confirmations;
   06 — explicit helper roles and process-local model tasks/budgets;
   07 — experimental observation masking and source-backed historical summaries, including review corrections;
-  10 — bounded managed-loop recovery and host-owned completion checks.
+  10 — bounded managed-loop recovery and host-owned completion checks;
+  12 — opt-in presets, resolved capability inspection and AMOS adoption.
 - **Version 2 release:** Not announced by this document.
 
 “Version 2” names the development initiative. It does not mean that an npm `2.0.0`
@@ -429,21 +430,53 @@ not general quality/cost improvements or deterministic model adherence.
 
 ## Easier configuration and capability inspection
 
-**Availability: Planned — stage 12.**
+**Availability: Implemented on branch — seven review corrections pending (2026-10-16). No verified package release.**
 
-The first presets are a long-running assistant/research composition and an
-evidence-aware workflow composition. Plain `Agent` configuration remains the chat
-baseline. Presets will be small configurations over delivered plugins and policies,
-with explicit overrides and inspection of the resolved capabilities.
+Public `createAgentPreset('research' | 'workflow', config)` returns ordinary
+AgentConfig with no IO or model calls. Research selects observation masking and
+12 iterations; workflow selects algorithmic compaction, protected task state and
+8 iterations. Both enable evidence and bounded recovery. Plain Agent keeps its
+existing defaults. Helpers, task budgets, permissions and completion predicates
+remain explicit host choices.
 
-A preset must work without installing conditional stages. Unsupported features
-must be reported rather than silently substituted or claimed across incompatible
-runtime drivers. Additional presets, including coding, require a demonstrated
-need and appropriate fixtures.
+Require explicit matching evidence scope/backend/userId and workflow taskId/scope.
+Existing settings override defaults; false disables features and null disables
+loopPolicy. Undefined feature entries are absent. A disabled evidence flag also
+requires a compatible strategy. Registered custom strategies/plugins remain host
+extensions; the factory does not instantiate them. Unknown/unavailable features
+and scope/dependency conflicts fail before Agent creation.
 
-**Adoption material to add at delivery:** Verified preset factory names and imports;
-both presets beside plain `Agent`; override precedence; resolved capability output;
-provider/driver support; saved-setting migration; AMOS selection and help.
+`agent.inspectCapabilities()` reports current managed plugins/features/strategy,
+provider capabilities and registry agreement, helper configuration, evidence
+durability and default loop/completion-check presence without private content or
+model/storage calls. Custom-provider capability reports must be cloneable metadata;
+class data is detached and invalid reports propagate inspection errors. It does not prove authentication, semantic quality or workflow
+completion, nor replace task-usage/permission inspection. Per-call overrides,
+direct/realtime/external SDK execution retain their existing boundaries; use
+RuntimeAgent.inspect for drivers. Selecting masking/summary does not enable native
+compaction or native tool search. No coding/adaptive/conditional preset is supplied.
+
+Portable hydration's existing trusted `agentConfig` now additively accepts
+`loopPolicy` and `modelExecution`. They remain excluded from serialized runtime
+configuration; no wire/session protocol changes. Hosts reconstruct policy through
+contextFactory/agentConfig. Legacy unscoped state can adopt a receiving-host preset;
+foreign scoped evidence/task checkpoints reject restoration and are never rebound.
+
+AMOS `/preset` (`/profile`) selects and persists next-agent policy after preflight.
+`/session new` applies it. `/preset inspect` distinguishes active and saved choices;
+save failure restores the previous value/property absence without changing the live
+Agent/history. Invalid next-agent initialization also preserves the active runner.
+Existing explicit settings and optional maxIterations override defaults; missing/null
+preset preserves legacy behavior. Off removes preset defaults, not existing explicit
+features. Explicit session saves record descriptive agenticPreset metadata; loading
+it never restores authority. AMOS supplies no automatic host completion checker.
+
+Read the [recipe](./AGENT_PRESETS.md), [delivery record](./designs/STAGE_12_IMPLEMENTATION.md),
+[runnable preset example](../examples/agentic-presets.ts) and
+[AMOS walkthrough](../apps/amos/examples/presets-offline.ts). Offline modes require
+no keys; test:presets:live is separately opt-in and billable. Stage 07's bounded
+comparison remains the quality evidence; preset assembly makes no new quality or
+cost claim. A package release remains unverified.
 
 ## Conditional extensions
 
@@ -511,7 +544,7 @@ revision, version, or link only when that evidence exists.
 | 09 | Ranked tool discovery | Conditional | Conditional / deferred | — | — | — |
 | 10 | Bounded recovery and completion checks | Core | Complete on branch; both reviews fixed, Google recovery verified | `version2`, base `d8fce94`; latest local/live/public gates passed 2026-10-16 | — | [Implementation](./designs/STAGE_10_IMPLEMENTATION.md); [second review/fix](./designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md); [latest evidence](./evaluations/STAGE_10_SECOND_CORRECTIONS_VALIDATION.json) |
 | 11 | Parallel reads and selected resumable effects | Conditional | Conditional / deferred | — | — | — |
-| 12 | Opt-in presets and capability inspection | Core | Planned | — | — | — |
+| 12 | Opt-in presets and capability inspection | Core | Available on branch; all three corrective passes validated | `version2` working tree, base `393b10c`; validated 2026-10-16 | — | [Recipe](./AGENT_PRESETS.md); [latest completion](./designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16); [fresh validation](./evaluations/STAGE_12_THIRD_CORRECTIONS.json) |
 | 13 | Verified procedures and curated learning | Conditional | Conditional / deferred | — | — | — |
 | 14 | Routing and selected specialist delegation | Conditional | Conditional / deferred | — | — | — |
 | 15 | Sandboxed programmatic tools | Conditional | Conditional / deferred | — | — | — |
@@ -1258,7 +1291,7 @@ incorrect usage instructions in place.
 | 06 second corrective pass: S1–S4 | Effective output multiplicity, aggregate cap defaults, captured request data, sticky pricing uncertainty and evidence-preserving repair. | Recipe; standard guides; generated API; public/AMOS repair demos and indexes; Changelog; stage/review completion; corrective evidence and transcript; package inventory. | Synced: all four fixed, 7,228 units and 48 live cases/60 scenarios pass, prior records retained. No release or API break. |
 | 04: task state | Host notes/proposals, revision/scoped recovery, receipt versus workflow confirmation, protected fit/repair, limits, explicit memory authority, host edits and legacy public feature/plugin configuration typing. | [Recipe](./TASK_STATE.md); README; User Guide; generated API; AGENTS; workflow/AMOS examples/index; Changelog; package records. | Synced: both reviews' corrections, additive recovery API/commands and legacy consumers; latest 7,795 units, root/`types` compatibility, ESM/CJS and library/AMOS examples pass. API regenerated. Earlier live evidence remains historical; complete on branch, no release. |
 | 10: bounded recovery/completion | Opt-in policies/defaults, host verification/bounds, effect uncertainty, shared budgets, session authority, intentional run/stream differences and external ownership. | [Recipe](./AGENT_LOOP_POLICIES.md); README; User Guide; generated API; AGENTS; three examples/index; AMOS; Changelog; package records. | Both corrective handoffs complete: original async/history/class fixes plus principal-bound completion checks and bounded local helper validation/Google recovery. 7,988 units, 167 loop/AMOS cases, 136 live cases / 148 scenarios, 22 examples, 18 ESM/CJS and 18 legacy controls pass. [Latest fix](./designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md) and evidence packaged; optional validationSchema documented/generated with examples/AMOS inspection. Stage 12 separately authorized; no release. |
-| 12: presets | Both presets, plain Agent baseline, overrides, capability/driver support, old-setting migration, and help. | README quickstarts; User Guide/runtime guide; generated API; preset example/index; AMOS selection/settings/help; Changelog. | Pending |
+| 12: presets | Both presets, plain Agent baseline, overrides, capability/driver support, old-setting migration, and help. | Recipe; README; User Guide; generated API; AGENTS; public example/index; AMOS command/config/help/example; Changelog; package records. | Synced: all T1–T3 fixed; full resume admission/JSON conversion/per-plugin recovery and internal-only plumbing documented. 27 new unit regressions, 8,143 units, 151 live tests / 163 scenarios, 24 examples and 54 ESM/CJS controls pass. [Latest completion](./designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16); historical evidence preserved, no release. |
 | Selected conditional scopes | Delivered benefit, separate recipe, support limits, exact scope, availability, and migration. | README; User Guide; generated API; affected specialist guides; examples; AMOS where useful; Changelog. | Pending |
 
 Cross-cutting release handoffs must also be checked:
@@ -1733,3 +1766,295 @@ See [review/fix](./designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md),
 | Date | Change | Availability/validation | Documentation handoff |
 | --- | --- | --- | --- |
 | 2026-10-16 | Fixed recorded Google empty-summary repair gap and stale pending completion authority. | Branch complete; 7,988 units, 136 live cases / 148 scenarios, real Google recorded-fault repair, 22 examples and all local/public/AMOS gates pass. | Optional validationSchema/defaults/native compatibility/budgets/failure/custom callback boundary, scope guards, public example/generated API/AMOS inspection, standard docs and packaged evidence synchronized. No release/later stage. |
+
+## Stage 12 adoption record — 2026-10-16
+
+Core roadmap delivery is complete on branch. Public APIs are
+createAgentPreset, AgentPresetName/AgentPresetConfig/AgentCapabilityInspection,
+Agent.inspectCapabilities and the additive trusted hydration agentConfig fields
+loopPolicy/modelExecution. Defaults, precedence, disabled behavior, explicit
+host scope, custom extension identity, helper/completion/budget authority and
+failure behavior are covered in the [recipe](./AGENT_PRESETS.md).
+
+AMOS is the reference application: next-agent selection/inspection, current-config
+preflight, exact save rollback, explicit settings, migration, descriptive saved
+metadata and preserving a live agent on failed next initialization. Existing
+runtime host factories/bindings and driver inspection are reused. Native compaction,
+adaptive routing, coding profiles, automatic learning and conditional stages stay
+deferred. No second external SDK loop or portable/session protocol change.
+
+Validated: **8,038 units / 363 files**, **48 preset regressions plus two baseline calibration regressions**, **24 live tests / 36
+scenarios** across OpenAI/Anthropic/Google with zero failures/skips/unavailable
+providers, **24 offline examples**, **20 ESM/CJS public controls**, builds/types/lint,
+strict new-test and AMOS checks, legacy/new built-package compatibility and public
+API generation. Focused preset factory/command coverage is **100% lines / 97.22%
+branches**, not whole-Agent coverage. Unrelated stage live suites remain their
+historical validation; this stage reruns the unchanged baseline and preset smoke.
+
+README, User Guide, generated API, AGENTS, recipe, examples/index, AMOS, release
+notes, roadmap/stage record and package evidence/handoff are updated. Release-wide
+Version 2 publication remains pending; no commit, push or package release. Next:
+independent review/release readiness or an explicitly selected conditional scope.
+See [delivery](./designs/STAGE_12_IMPLEMENTATION.md),
+[validation](./evaluations/STAGE_12_VALIDATION.json),
+[live evidence](./evaluations/STAGE_12_LIVE.json) and
+[offline transcript](./evaluations/STAGE_12_OFFLINE.txt).
+
+| Date | Change | Availability/validation | Documentation handoff |
+| --- | --- | --- | --- |
+| 2026-10-16 | Delivered minimal research/workflow presets and active capability inspection, with AMOS adoption. | Available on branch; 8,038 units, 24 live tests / 36 scenarios, 24 examples, 20 public controls and all local gates pass. | Exact APIs/defaults/overrides, explicit authority, scopes/persistence/driver boundaries, hydration type widening, AMOS migration/metadata and examples/standard docs synchronized. Core sequence complete; no release. |
+
+Stage 12 final-gate calibration also pins supported-model baseline temperature to
+zero and adds payload-free response status/length/hash diagnostics. Two regressions
+retain strict rejection of capped/wrong outputs; no model retry, cap increase or
+ordinary Agent default change. Earlier vendor-default pilots remain historical;
+new reports record actual sampling. See [baseline calibration](./AGENTIC_BASELINE_EVALUATION.md#stage-12-fixture-calibration--2026-10-16).
+
+## Stage 12 review — 2026-10-16
+
+At review time, seven confirmed findings were open: host-principal erasure/connector visibility,
+app-level failed replacement, rejected-resume cleanup, capability projection,
+opaque plugin config preservation, built-in protection verification, and autosave
+metadata retention. Nine deterministic observations reproduce them against matching
+source/public build with local providers and real registries/app/storage/timers.
+Existing focused suites pass 75 cases; strict public consumer types also pass.
+No full-unit or live suite was rerun for this review; previous results are historical,
+not proof that these missing paths work. No runtime fixes or API breaks were made.
+
+The review withdrew Stage 12 completion pending the
+[fix plan](./designs/STAGE_12_REVIEW_AND_FIX_PLAN.md). The corrective adoption below
+records all fixes, fresh validation and restored completion. The [review evidence](./evaluations/STAGE_12_REVIEW.json) distinguishes
+new preset/inspection defects from existing integration issues exposed by adoption.
+
+| Date | Change | Availability/validation | Documentation handoff |
+| --- | --- | --- | --- |
+| 2026-10-16 | Thorough Stage 12 review confirmed seven findings in nine probes. | Implemented on branch; corrections pending. Existing 75 focused tests and strict public types pass; no new real-model calls. | Review/fix plan and evidence recorded; availability and corrective handoff updated. Historical delivery validation preserved; runtime unchanged. |
+
+## Stage 12 corrective adoption — 2026-10-16
+
+All seven findings are fixed on branch. The preset context uses the validated
+host principal even for explicit undefined inputs, and enabled scoped protections
+remain checked at managed dispatch. Compatible built-in evidence/task factories
+are supported; incompatible replacements fail at creation before model/action
+work. Plain Agent custom-plugin contracts are unchanged. Accessor/class/symbol
+plugin configurations retain their original receivers. Capability inspection
+projects only declared getter-backed basic/advanced data, rejects invalid declared
+values locally, and never traverses unrelated provider fields or callbacks.
+
+Agent.resume cleans failed candidates and preserves load errors/caller-owned
+resources. Its session type additively accepts existing optional settings such as
+autosave. AMOS performs the real app/SessionCommand handoff after candidate
+validation/loading, keeps the old session on failure, checkpoints unstored raw
+observations before fresh release, and refuses active/background delivery
+replacement. Titles/preset labels survive periodic and unnamed saves and resume;
+AMOS checkpoint saves are ordered per process/location across old/new adapters.
+Metadata is descriptive and never restores policy or completion authority.
+
+Internal-only changes: the preset requirement symbol and projection helpers are
+not root APIs or serialized authority; the metadata adapter and session-change
+callback belong to AMOS. No new required config member, protocol, event/status,
+workflow engine, implicit helper/verifier/permission, default change or API break.
+Host contexts/portable packages must reconstruct selected configuration explicitly.
+
+Final gates: **8,073 units / 365 files**, **35 corrective regressions / 83 Stage 12
+cases**; **148 live tests / 160 scenarios in one nine-suite batch** with all three
+providers, zero failures/skips/unavailable providers; **24 offline examples**,
+**32 ESM/CJS controls**, builds/types/lint/examples, public compatibility, strict
+core/AMOS checking, API generation and package inventory pass. Selected new
+factory/inspection/command/storage helpers have **100% line / 97.09% branch**
+coverage, not whole-Agent coverage. These are functional synthetic tests, not a
+general quality/cost/reliability claim.
+
+The AMOS walkthrough now uses candidate-first replacement, checks named/unnamed
+save retention and proves a failed candidate leaves the live runner ready. All
+recipe/standard/generated docs, AGENTS, examples/index, AMOS, release notes,
+roadmap/stage and packaged evidence/handoff are synchronized. Earlier review/live
+artifacts are historical and unchanged. Core delivery is complete on branch;
+release promotion and conditional stages require separate scope.
+See [completion](./designs/STAGE_12_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16),
+[validation](./evaluations/STAGE_12_CORRECTIONS.json) and
+[offline transcript](./evaluations/STAGE_12_CORRECTIONS_OFFLINE.txt).
+
+| Date | Change | Availability/validation | Documentation handoff |
+| --- | --- | --- | --- |
+| 2026-10-16 | Fixed all seven Stage 12 findings, with actual AMOS/session/autosave and extension/provider regressions. | Complete on branch; 8,073 units, 148 live tests / 160 scenarios, 24 examples, 32 public controls and every final gate pass. | Public/optional APIs, defaults, real protection checks, getter/opaque semantics, host-local constraints, lifecycle/metadata/persistence/support, generated and standard docs, examples/AMOS and packaged evidence synchronized. No release or later stage. |
+
+## Historical Stage 12 second review — 2026-10-16 (resolved)
+
+At second review, four additional findings reopened completion; the first seven fixes remained present.
+Failed resume with caller-owned context can leave a destroyed permission manager
+installed: the same blocklisted local tool is denied before/during loading and
+executes after rejected-candidate cleanup. A rejected foreign scoped session load
+also changes the live checkpoint ID before preflight; real AMOS periodic autosave
+then overwrites that foreign/task checkpoint while the configured pointer still
+names the original session. These are P1 permission/integrity issues.
+
+Two P2 findings: host-local requirement snapshots spread raw scope objects and
+lose valid prototype getter fields; one plugin's teardown exception prevents the
+remaining rejected candidate resources, timers and managers from being released.
+The raw-load/destroy behavior has existing roots, distinguished from the newly
+introduced constraint/cleanup paths in the report.
+
+Fresh review validation passes **114 focused tests / seven files** and strict
+built-public input compilation. **Six deterministic observations** reproduce the
+four findings with actual APIs/app/storage/timers and a local write counter.
+Runtime/build/test/example fingerprints still match the prior final validation;
+no full-unit or real-provider batch was rerun. Prior 8,073-unit/148-live passing
+results do not cover these paths. No runtime fixes or permanent tests were made
+in this review; completion/handoff were pending at that time. The latest adoption below closes all four findings.
+See [fix plan](./designs/STAGE_12_SECOND_REVIEW_AND_FIX_PLAN.md) and
+[evidence](./evaluations/STAGE_12_SECOND_REVIEW.json).
+
+| Date | Change | Availability/validation | Documentation handoff |
+| --- | --- | --- | --- |
+| 2026-10-16 | Second Stage 12 review confirmed two P1 and two P2 defects. | Implemented; corrections pending. 114 focused tests and public types pass; six observations establish missing paths. No new LLM calls. | New review/fix plan and evidence packaged; current availability/adoption/handoff updated. First correction validation preserved as history; runtime unchanged. |
+
+## Stage 12 second corrective adoption — 2026-10-16
+
+All R1–R4 findings are fixed on branch. Failed caller-context resume now preloads
+before candidate binding, retaining the original permissions, prompt, compaction
+callback, roles/tools and save target on load rejection. Success retains the same
+context and one read; the host coordinates shared-context handoff. High-level
+Agent/context loads preflight protected state, restore through existing extension
+hooks and commit the target only on success. Autosave/explicit checkpoint operations
+serialize, retaining immediate first IO. Deferred managed snapshots avoid observing
+tentative state; existing snapshot overrides and raw-load activation remain usable.
+The optional third `context.save` argument additively accepts a sync/async snapshot
+builder. No required storage/config/session/event/result member changed.
+
+Context/plugin state rolls back on custom restore failure; if a plugin refuses
+rollback, saving is blocked until a valid load or host rebuild. Private/external
+hook effects are host-owned; restore hooks cannot await checkpoint IO on the same
+context. Loads require idle execution/host edits; independent contexts/backends
+need host concurrency policy. Normalized getter scope requirements retain tenant
+checks and mutation rejection. Cleanup attempts all reachable owned resources,
+finalizes destruction and respects shared skip ownership; direct destroy reports
+its first error afterwards. Original creation/load failures stay original. A
+throwing destructor remains responsible for its own private resources.
+
+Internal-only: the checkpoint queue/rollback guard, `restoreSession` coordination
+and preload flag; no saved authority or new framework. The factory/inspection/
+permission/provider defaults stay unchanged. The examples now show getter-backed
+host scope and AMOS rejected-load/subsequent-save checkpoint integrity. Public
+ESM/CJS consumers also prove failed shared resume leaves blocked tools denied.
+
+Fresh final gates pass **8,116 units / 366 files**, **43 new regressions / 126
+Stage 12 cases**, **148 live tests / 160 scenarios / nine suites** with OpenAI,
+Anthropic and Google, zero failures/skips/unavailable providers; **30 additional
+load-path live rechecks** pass on the final build; **24 offline
+examples**, **44 public ESM/CJS controls**, builds/types/lint/examples, strict core/
+AMOS, compatibility and API/package gates. Selected new helper coverage is **100%
+lines / 97.07% branches**, not whole-Agent/context coverage. The original six review
+observations verify the fixes against the final build with actual app/storage/
+timers and local counters. First full unit scheduling failures were fixed while
+preserving existing race tests; no failure is waived. These are synthetic functional
+tests, not general model quality/cost claims or real service writes.
+
+All affected standard/generated docs, recipe, examples/index, AMOS, AGENTS,
+Changelog, roadmap/stage records and package handoff are synchronized. Historical
+review/validation records are preserved. Core stages are complete on branch; no
+commit, push, package release, breaking change or later-stage work.
+See [completion](./designs/STAGE_12_SECOND_REVIEW_AND_FIX_PLAN.md#second-corrective-completion--2026-10-16),
+[validation](./evaluations/STAGE_12_SECOND_CORRECTIONS.json) and
+[offline transcript](./evaluations/STAGE_12_SECOND_CORRECTIONS_OFFLINE.txt).
+
+| Date | Change | Availability/validation | Documentation handoff |
+| --- | --- | --- | --- |
+| 2026-10-16 | Fixed all four second-review permission, checkpoint, getter-scope and teardown findings. | Complete on branch; 8,116 units, 148 live tests / 160 scenarios, 24 examples, 44 public controls and all final gates pass. | Additive snapshot builder, internal coordination, ownership/rollback/concurrency/raw-load boundaries, examples/AMOS, standard/generated docs and packaged evidence synchronized. No release or later stage. |
+
+## Stage 12 third review — 2026-10-16
+
+At review time, three findings reopened completion after the second corrective pass. Shared-context
+resume preloads before candidate construction but still leaves a destroyed policy
+manager attached when a successful-load notification throws: the original Agent is
+alive and its blocklisted local tool executes. A constructor rejection also leaves
+preloaded B history/prompt/session on the original A context. These two observations
+share the incomplete handoff transaction and form one P1 finding.
+
+Two P2 findings affect the new rollback path. `structuredClone` rejects an existing
+JSON-serializable plugin state with a `toJSON` conversion hook, despite successful
+FileContextStorage serialization and direct public restoration. A valid legacy
+checkpoint missing a damaged plugin clears the save guard without restoring that
+plugin; saving then persists its unchanged UNCERTAIN_STATE.
+
+Fresh review validation passes **222 focused tests / nine files** and strict
+built-public input compilation. Four deterministic observations use public APIs,
+real file storage and a local counter; no new credentials/network/real-model calls
+or service writes. Runtime/build/test/example fingerprints match the previous final
+validation. Previous 8,116-unit, 148-live-test and 30 targeted live-recheck results
+remain historical and did not cover these paths. No runtime fixes or permanent
+tests were made in that review. Completion/handoff were pending then; JSON-only
+extension contracts and existing callback/event errors must remain compatible.
+See [fix plan](./designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md) and
+[evidence](./evaluations/STAGE_12_THIRD_REVIEW.json).
+
+| Date | Change | Availability/validation | Documentation handoff |
+| --- | --- | --- | --- |
+| 2026-10-16 | Third Stage 12 review confirmed one P1 and two P2 findings in four observations. | Implemented; corrections pending. 222 focused tests and public types pass; no new LLM calls. | Review/fix plan and evidence packaged; availability/adoption/handoff updated. Prior validation preserved; runtime unchanged. |
+
+
+## Stage 12 third corrective adoption record — 2026-10-16
+
+All **T1–T3** findings are fixed on `version2`, base `393b10c`. Shared resume now
+preflights the named connector, then keeps restoration, candidate construction and
+the existing synchronous loaded notification inside one checkpoint transaction.
+Rejection restores original tool registrations, permission authority, roles, prompt,
+compaction callback, conversation and session target before candidate cleanup.
+Partial constructor failures release initialized framework resources; original
+notification/construction errors retain their identity even when teardown throws.
+Ordinary managed loads also roll back a rejected synchronous loaded notification.
+
+Rollback snapshots follow the existing **JSON serialization** contract, including
+own/prototype `toJSON` and Date conversion; serialization failure precedes mutation.
+The save guard tracks actual damaged plugin instances. Missing legacy keys or a
+custom restore hook that ignores them cannot release protection. Every affected
+instance must actually restore successfully from a checkpoint or through existing
+trusted host `context.restoreState(goodSnapshot)`; otherwise saves stay blocked.
+No plugin/storage/session schema, event field, required API, default, or supported
+JSON extension contract was removed or narrowed. No breaking change was proposed.
+
+Permanent regressions add **27 unit cases**: constructor/registry/tool-registration/
+provider/connector/notification failure, policy/tool/role/prompt/callback/history/ID
+rollback, original continuation, queued saves/autosave, original errors and cleanup,
+JSON own/prototype/Date conversions in contexts/Agents/presets with real file storage,
+serialization-before-mutation, multi-plugin/omitted-key/ignored-hook/host repair,
+and actual AMOS commands/checkpoints. Three permanent live tests additionally
+verify original-history continuation after all three recovery paths against each
+provider, with zero blocked local writes. The existing preset example now shows
+rejected shared resume, preserved authority/checkpoint and JSON plugin restoration;
+built ESM/CJS/type consumers exercise the same compatibility contracts. AMOS needs
+no new command: fixes apply to its existing `/session load` and `/session save` flows,
+covered by actual app/command/file-adapter regressions and updated guidance.
+
+Final gates pass **8,143 units / 367 files**, **153 Stage 12 preset/AMOS unit cases**,
+**151 live tests / 163 scenarios / ten suites** (148/160 in the nine-suite batch,
+plus three focused session-continuation cases) with OpenAI, Anthropic and Google,
+zero failures/skips/unavailable providers; **24 offline examples**, **54 ESM/CJS
+public controls**, root/AMOS builds, types/lint/examples, strict core/AMOS, legacy
+public compatibility, generated API, documentation and package checks. Selected
+preset/inspection/AMOS helper coverage remains **100% lines / 97.07% branches**,
+not whole-Agent/context/ToolManager coverage. All four original third-review
+observations verify fixed behavior on the final build. Functional synthetic fixtures
+and local effects do not establish general model quality/cost or real-service writes.
+
+Internal-only plumbing comprises the synchronous checkpoint admission callback,
+ToolManager binding rollback, partial-construction capture and failed-plugin
+identity/restoration tracking. No authority is serialized. Loads require idle host
+execution/edits; separate contexts/backends need host concurrency coordination.
+Successful shared-context handoff still needs host ownership coordination. Rollback
+cannot undo model calls, external actions or arbitrary private listener/hook effects;
+restore hooks must not await checkpoint IO on their own context. Rebuild the context
+if a custom plugin cannot recover. Existing advanced `loadRaw` behavior is retained.
+
+Recipe, README, User Guide, generated API, examples/index, AMOS, AGENTS, Changelog,
+roadmap, stage records, Version 2 availability/adoption/handoff and package evidence
+are synchronized. Historical review/validation records remain unchanged; no failure
+is waived. See [fresh validation](./evaluations/STAGE_12_THIRD_CORRECTIONS.json) and
+[offline transcript](./evaluations/STAGE_12_THIRD_CORRECTIONS_OFFLINE.txt).
+The core sequence is complete on branch. No commit, push, package release or
+later-stage work was performed.
+
+
+| Date | Change | Availability/validation | Documentation handoff |
+| --- | --- | --- | --- |
+| 2026-10-16 | Fixed all three third-review findings: whole resume admission, JSON rollback compatibility and affected-plugin recovery. | Available on branch: 8,143 units, 151 live tests / 163 scenarios across three providers, 24 examples, 54 public controls and all final gates pass. | Scope/defaults/events/JSON/storage compatibility, internal plumbing, host repair/ownership boundaries, example, AMOS, standard/generated docs and packaged evidence synchronized. Historical records retained; no release or later stage. |

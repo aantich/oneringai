@@ -1,4 +1,8 @@
+import { Connector } from './Connector.js';
 import { EvidencePluginNextGen } from './context-nextgen/plugins/EvidencePluginNextGen.js';
+import type { AgentCapabilityInspection } from './presets.js';
+import { inspectModelCapabilities, inspectAdvancedCapabilities } from './capabilityInspection.js';
+import { getModelInfo } from '../domain/entities/Model.js';
 import { TaskStatePluginNextGen } from './context-nextgen/plugins/TaskStatePluginNextGen.js';
 import { contextSummaryValidationSchema } from './context-nextgen/strategies/conversation-compaction.js';
 import { LoopController, AgentLoopStop } from './agent-loop/LoopController.js';
@@ -541,20 +545,40 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    */
   static async resume(
     sessionId: string,
-    config: Omit<AgentConfig, 'session'> & { session: { storage: IContextStorage } }
+    config: Omit<AgentConfig, 'session'> & { session: NonNullable<AgentConfig['session']> & { storage: IContextStorage } }
   ): Promise<Agent> {
-    const agent = new Agent({
-      ...config,
-      session: {
-        ...config.session,
-        id: sessionId,
-      },
-    });
-
-    // Wait for session to load
-    await agent.ensureSessionLoaded();
-
-    return agent;
+    const sharedContext = config.context instanceof AgentContextNextGen ? config.context : undefined;
+    // Resolve the known non-mutating admission requirement before touching state.
+    if (sharedContext && typeof config.connector === 'string') {
+      if (config.registry) config.registry.get(config.connector);
+      else Connector.get(config.connector);
+    }
+    let agent: Agent | undefined;
+    let baseOnly = true;
+    const capture = (candidate: Agent, partialBase: boolean) => { agent = candidate; baseOnly = partialBase; };
+    const candidateConfig = { ...config, session: { ...config.session, id: sessionId } };
+    try {
+      if (sharedContext) {
+        // Keep restoration, construction and synchronous notifications inside one
+        // checkpoint admission. Rejection restores caller bindings before cleanup.
+        await sharedContext.restoreSession(sessionId, state => sharedContext.restoreState(state), false, loaded => {
+          agent = new Agent(candidateConfig, true, capture);
+          if (loaded) agent.notifySessionLoaded(sessionId);
+        });
+      } else {
+        agent = new Agent(candidateConfig, false, capture);
+        await agent.ensureSessionLoaded();
+      }
+      return agent!;
+    } catch (error) {
+      // Construction can fail before Agent fields/hooks exist. Both paths retain
+      // the original error and release the resources actually initialized.
+      try {
+        if (baseOnly) agent?.baseDestroy();
+        else agent?.destroy();
+      } catch { /* Keep the original admission failure. */ }
+      throw error;
+    }
   }
 
   /**
@@ -670,8 +694,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
   // ===== Constructor =====
 
-  private constructor(config: AgentConfig) {
-    super(config, 'Agent');
+  private constructor(config: AgentConfig, sessionAlreadyLoaded = false, captureConstruction?: (agent: Agent, baseOnly: boolean) => void) {
+    super(config, 'Agent', candidate => captureConstruction?.(candidate as Agent, true));
+    captureConstruction?.(this, false);
 
     this._logger.debug({ model: this.model, connector: this.connector.name }, 'Agent created');
     metrics.increment('agent.created', 1, {
@@ -700,6 +725,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
     // Sync tool permission configs from ToolManager (via AgentContext) to PermissionManager
     this._toolRegisteredListener = ({ name }: { name: string }) => {
+      // A shared context may be admitting another Agent. Its registrations must
+      // not mutate the inactive owner's legacy permission diagnostics.
+      if (this._agentContext.tools.getPermissionManager() !== this._policyManager) return;
       const permission = this._agentContext.tools.getPermission(name);
       if (permission) {
         this._permissionManager.setToolConfig(name, permission);
@@ -751,7 +779,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     });
 
     // Initialize session (from BaseAgent)
-    this.initializeSession(config.session);
+    this.initializeSession(config.session, sessionAlreadyLoaded);
 
     // Auto-register with AgentRegistry for global tracking/observability
     AgentRegistry.register(this);
@@ -4380,6 +4408,40 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     return cloneRuntimeConfigValue(snapshot);
   }
 
+  /** Inspect resolved managed-Agent settings and provider support without model or storage IO. */
+  inspectCapabilities(): AgentCapabilityInspection {
+    assertNotDestroyed(this, 'inspect capabilities');
+    const info = getModelInfo(this.model);
+    const provider = this.getProvider();
+    const evidence = this.context.getPlugin('evidence');
+    const policy = this._config.loopPolicy;
+    const helpers: AgentCapabilityInspection['helpers'] = {};
+    for (const role of ['compactor', 'extractor', 'verifier'] as const) {
+      const helper = this._config.modelExecution?.helpers?.[role];
+      if (helper) helpers[role] = { connector: helper.connector, model: helper.model, allowContextTransfer: helper.allowContextTransfer === true };
+    }
+    const advanced = provider.getAdvancedCapabilities?.(this.model);
+    return cloneRuntimeConfigValue({
+      runtime: 'managed-agent', connector: this.connector.name, model: this.model,
+      registry: { known: !!info, vendorMatches: info ? info.provider === this.connector.vendor : null, active: info?.isActive ?? null },
+      provider: inspectModelCapabilities(provider.getModelCapabilities(this.model)),
+      ...(advanced ? { advanced: inspectAdvancedCapabilities(advanced) } : {}),
+      context: { features: { ...this.context.features }, plugins: this.context.getPlugins().map(plugin => plugin.name),
+        strategy: this.context.compactionStrategy.name, maxContextTokens: this.context.maxContextTokens, responseReserve: this.context.responseReserve,
+        ...(evidence instanceof EvidencePluginNextGen ? { evidenceDurability: evidence.storage.durability } : {}) },
+      loop: { enabled: !!policy, hostCompletionCheck: typeof policy?.completion === 'function', maxIterations: this._config.maxIterations || AGENT_DEFAULTS.MAX_ITERATIONS },
+      helpers,
+      notices: [
+        'Managed run/stream configuration only; per-call overrides and external SDK/realtime loops have their own owner.',
+        'Context strategy selection does not enable provider-native compaction or native tool search.',
+        ...(policy?.completion ? [] : ['No host completion check is configured; model completion does not establish workflow completion.']),
+        ...(info ? [] : ['Model is absent from the registry; provider-reported capacities are not independently verified.']),
+        ...(info && info.provider !== this.connector.vendor ? ['Registry model vendor differs from the selected connector.'] : []),
+        ...(evidence instanceof EvidencePluginNextGen && evidence.storage.durability === 'process' ? ['Evidence is process-local; restart recovery requires an acknowledged persistent backend.'] : []),
+      ],
+    });
+  }
+
   /** Return the unrendered instruction template supplied at Agent creation. */
   getInstructionTemplate(): string | undefined {
     return this._config.instructions;
@@ -4564,6 +4626,11 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       return;
     }
 
+    let failed = false;
+    let failure: unknown;
+    const cleanup = (action: () => void) => {
+      try { action(); } catch (error) { if (!failed) { failed = true; failure = error; } }
+    };
     this._logger.debug('Agent destroy started');
 
     // Cancel any ongoing execution
@@ -4574,7 +4641,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     }
 
     // Cancel all pending async tools
-    this.cancelAllAsyncTools();
+    cleanup(() => this.cancelAllAsyncTools());
     if (this._asyncBatchTimer) {
       clearTimeout(this._asyncBatchTimer);
       this._asyncBatchTimer = null;
@@ -4592,10 +4659,10 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     }
 
     // Cleanup hook manager
-    this.hookManager.destroy();
+    cleanup(() => this.hookManager.destroy());
 
     // Cleanup execution context
-    this.executionContext?.cleanup();
+    cleanup(() => this.executionContext?.cleanup());
     this.executionContext = null;
 
     // Note: AgentContext cleanup is handled by baseDestroy() in BaseAgent
@@ -4611,10 +4678,10 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     this._cleanupCallbacks = [];
 
     // Unregister from AgentRegistry
-    AgentRegistry.unregister(this.registryId, 'destroyed');
+    cleanup(() => AgentRegistry.unregister(this.registryId, 'destroyed'));
 
     // Call base destroy (handles session, tool manager, permission manager cleanup)
-    this.baseDestroy();
+    cleanup(() => this.baseDestroy());
 
     metrics.increment('agent.destroyed', 1, {
       model: this.model,
@@ -4622,5 +4689,6 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     });
 
     this._logger.debug('Agent destroyed');
+    if (failed) throw failure;
   }
 }

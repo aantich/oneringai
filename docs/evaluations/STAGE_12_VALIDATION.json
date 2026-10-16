@@ -1,0 +1,498 @@
+{
+  "protocol": "stage12-validation-v1",
+  "recordedAt": "2026-10-16T15:03:23.116634+00:00",
+  "branch": "version2",
+  "baseCommit": "393b10c",
+  "status": "complete on branch; all final gates passed",
+  "breakingChanges": false,
+  "publicAPIs": [
+    "createAgentPreset",
+    "Agent.inspectCapabilities",
+    "HydrateAgentPackageOptions.agentConfig.loopPolicy",
+    "HydrateAgentPackageOptions.agentConfig.modelExecution"
+  ],
+  "gates": [
+    {
+      "name": "unit",
+      "command": [
+        "npm",
+        "run",
+        "test:unit"
+      ],
+      "exitCode": 0,
+      "seconds": 58.14,
+      "log": "/tmp/oneringai-stage12-gate-unit.log",
+      "sha256": "4f504bcb7553f3baa7feb6da2a22dd7e81ef18d1b100ca1a4421aa32b049eda2"
+    },
+    {
+      "name": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "seconds": 30.04,
+      "log": "/tmp/oneringai-stage12-gate-typecheck.log",
+      "sha256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717"
+    },
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exitCode": 0,
+      "seconds": 23.12,
+      "log": "/tmp/oneringai-stage12-gate-lint.log",
+      "sha256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e"
+    },
+    {
+      "name": "examples-check",
+      "command": [
+        "npm",
+        "run",
+        "examples:check"
+      ],
+      "exitCode": 0,
+      "seconds": 33.93,
+      "log": "/tmp/oneringai-stage12-gate-examples-check.log",
+      "sha256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8"
+    },
+    {
+      "name": "compat",
+      "command": [
+        "npm",
+        "run",
+        "test:agentic:compat"
+      ],
+      "exitCode": 0,
+      "seconds": 8.44,
+      "log": "/tmp/oneringai-stage12-gate-compat.log",
+      "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    {
+      "name": "core-strict",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "/tmp/oneringai-stage12-core-strict.json"
+      ],
+      "exitCode": 0,
+      "seconds": 36.13,
+      "log": "/tmp/oneringai-stage12-gate-core-strict.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-types",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "apps/amos/tsconfig.json"
+      ],
+      "exitCode": 0,
+      "seconds": 13.52,
+      "log": "/tmp/oneringai-stage12-gate-amos-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-strict",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "/tmp/oneringai-stage12-amos-strict.json"
+      ],
+      "exitCode": 0,
+      "seconds": 15.02,
+      "log": "/tmp/oneringai-stage12-gate-amos-strict.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-build",
+      "command": [
+        "npm",
+        "run",
+        "--prefix",
+        "apps/amos",
+        "build"
+      ],
+      "exitCode": 0,
+      "seconds": 13.94,
+      "log": "/tmp/oneringai-stage12-gate-amos-build.log",
+      "sha256": "46f348813d794f2779cbacb02b5735e300960cb19a4347e830d90f9cd18a683c"
+    },
+    {
+      "name": "docs",
+      "command": [
+        "npm",
+        "run",
+        "docs"
+      ],
+      "exitCode": 0,
+      "seconds": 14.68,
+      "log": "/tmp/oneringai-stage12-gate-docs.log",
+      "sha256": "343ffa51396e1c4eefb9f061d5c75f8475dc234f036fd6c39bab71a01c9a2ab6"
+    },
+    {
+      "name": "public",
+      "command": [
+        "node",
+        "tests/fixtures/agentic-presets/public-runtime.mjs"
+      ],
+      "exitCode": 0,
+      "seconds": 2.3,
+      "log": "/tmp/oneringai-stage12-gate-public.log",
+      "sha256": "e39a752eff7677d79b5743e663c08552b679468313b42d3b82ff18892c54c8ae"
+    },
+    {
+      "name": "focused-coverage",
+      "command": [
+        "npx",
+        "vitest",
+        "run",
+        "tests/unit/presets",
+        "tests/unit/apps/amos/Presets.test.ts",
+        "--coverage",
+        "--coverage.include=src/core/presets.ts",
+        "--coverage.include=apps/amos/src/commands/commands/PresetCommand.ts",
+        "--coverage.reportsDirectory=/tmp/oneringai-stage12-coverage"
+      ],
+      "exitCode": 0,
+      "seconds": 11.09,
+      "log": "/tmp/oneringai-stage12-gate-focused-coverage.log",
+      "sha256": "0c8bd3603f93ba27dc55e933cf840b6896af43f1db9b7b605e66021a366da055"
+    }
+  ],
+  "build": {
+    "command": "npm run build",
+    "exitCode": 0,
+    "log": "/tmp/oneringai-stage12-final-build.log",
+    "sha256": "faf4e4202b5f3ddfb514d68ae76eedb61483649ed33d88823ed6c355f14e5756"
+  },
+  "unit": {
+    "files": 363,
+    "passed": 8038,
+    "failed": 0,
+    "skipped": 0,
+    "newStageCases": 48,
+    "baselineCalibrationCases": 2,
+    "newUnitCases": 50
+  },
+  "live": {
+    "files": 2,
+    "passed": 24,
+    "presetCases": 12,
+    "baselineCases": 12,
+    "failed": 0,
+    "skipped": 0,
+    "providers": [
+      "openai",
+      "anthropic",
+      "google"
+    ],
+    "unavailableProviders": [],
+    "evidence": "STAGE_12_LIVE.json",
+    "scenarios": 36,
+    "baselineScenarios": 24,
+    "additionalGoogleCalibrationCalls": 20,
+    "totalFinalValidationCasesAndProbes": 44
+  },
+  "offline": {
+    "count": 24,
+    "scripts": [
+      {
+        "script": "example:agentic-baseline",
+        "command": "node --import tsx examples/agentic-evaluation-baseline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-agentic-baseline.log",
+        "sha256": "f43ac5af6940bde8316db9cecbaabfe04bef440b1e93620e4c9cf71d3d2bc35a"
+      },
+      {
+        "script": "example:context-freshness",
+        "command": "node --import tsx examples/context-compaction-freshness.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-context-freshness.log",
+        "sha256": "9317708cd926fd6d46ef895164ed6abc6482a6c5af0b920f395af572683dea5c"
+      },
+      {
+        "script": "example:context-budget",
+        "command": "node --import tsx examples/context-request-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-context-budget.log",
+        "sha256": "a90f24e2c67d7d550f97924bf9964a24dca1382f9c766797f413e64760aa3eb3"
+      },
+      {
+        "script": "example:structured-budget",
+        "command": "node --import tsx examples/structured-output-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-structured-budget.log",
+        "sha256": "021c33974c536ee6df3c3488f81f937773802b55d57a02b289f72c63e94a2aec"
+      },
+      {
+        "script": "example:amos-context",
+        "command": "node --import tsx apps/amos/examples/context-budget-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-amos-context.log",
+        "sha256": "9e40878f7daf68ed5377eb77289bfa0c9842da66b8c639f419f06f64d4d8ae9f"
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": "node --import tsx examples/tool-outcomes-and-cancellation.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-tool-outcomes.log",
+        "sha256": "78d458b06f893c41560f16d7077c0ce2e90193fa107089cd82f704a5ff9a2aeb"
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-amos-tool-outcomes.log",
+        "sha256": "7762bb7100e11d275a19def86d87b561d0790b2ed4d7d3f4c3b85d2b6e5d141d"
+      },
+      {
+        "script": "example:purpose-models",
+        "command": "node --import tsx examples/purpose-specific-models.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-purpose-models.log",
+        "sha256": "61862eae7766bc727e046ea8c8c83acdd3e58017857c26c314083316f54d842b"
+      },
+      {
+        "script": "example:shared-budget",
+        "command": "node --import tsx examples/shared-run-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-shared-budget.log",
+        "sha256": "84261248923a4dbfebf4f3a026da031e926e461662a52766eba4e54c49889f47"
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": "node --import tsx apps/amos/examples/model-helpers-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-amos-helpers.log",
+        "sha256": "a5bf07358d6267ea3d612ae660c4386a9e83a593222a6f69fccf4af4482d1bc2"
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": "node --import tsx examples/durable-tool-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-durable-evidence.log",
+        "sha256": "48ea8e6b5132f5220f89b2548f094281a34dca876510b35c82e0c49093272414"
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": "node --import tsx examples/evidence-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-evidence-recovery.log",
+        "sha256": "0897a6caa0897b3e71e42fe3d32ec26a99cb5dc63e491d2f4c6af7ce5b3fdaee"
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": "node --import tsx examples/ambiguous-action-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-ambiguous-evidence.log",
+        "sha256": "f49a80bbc66dab0c45d14cc14c426a52b7a0a0fe23dba60d47cb4208facc1acd"
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": "node --import tsx apps/amos/examples/evidence-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-amos-evidence.log",
+        "sha256": "8f8943c467516af55cebc4e40cb4bc76902604c8e8abc451b4e894f42de0175b"
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": "node --import tsx examples/evidence-stream-interruption.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-evidence-interruption.log",
+        "sha256": "2876704dbcdf61e94cca85cfb93b7a59916b8c9f8867134289255e9e2f0c903b"
+      },
+      {
+        "script": "example:context-strategies",
+        "command": "node --import tsx examples/context-strategy-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-context-strategies.log",
+        "sha256": "810a258956daa4402b7fbf538a24fa6f452cd7fda2094beda8da3dbcb38a2ee9"
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-amos-context-strategies.log",
+        "sha256": "4906fb9dd040f5b2a442e7e6fac560f42f146ada61230ea1718dcdc1922aabc8"
+      },
+      {
+        "script": "example:task-state",
+        "command": "node --import tsx examples/task-state-workflow.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-task-state.log",
+        "sha256": "5b946585ecccef37bd713f436a769980202dc0fdcabdc0779196f6ee0d8f7e2a"
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": "node --import tsx apps/amos/examples/task-state-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-amos-task-state.log",
+        "sha256": "613be1c862c44be52f6756403fb66a7aa521189d7be81d4798f2a8037c24b176"
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": "node --import tsx examples/feedback-driven-agent.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-feedback-agent.log",
+        "sha256": "be1c231f395e01997071c5ee309bfec13bfe63f2d5c94fa740a84c35f1e16639"
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": "node --import tsx examples/run-stream-equivalence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-loop-equivalence.log",
+        "sha256": "73b8bc8b2d3e10db2d46621f434127ca0fe55c2b07945bed61aa1455392368ea"
+      },
+      {
+        "script": "example:amos-loop",
+        "command": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-amos-loop.log",
+        "sha256": "a78f14d375b7acffa2b1544966eab53758c798c4b560bbbffbc11c5d06799c85"
+      },
+      {
+        "script": "example:agentic-presets",
+        "command": "node --import tsx examples/agentic-presets.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-agentic-presets.log",
+        "sha256": "88cf4f646f32f92368cc606b85e6d8226a9d7a24c4066cc353ca35811a1ecb81"
+      },
+      {
+        "script": "example:amos-presets",
+        "command": "node --import tsx apps/amos/examples/presets-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-stage12-offline-amos-presets.log",
+        "sha256": "d5df9f13920469afd05fd23a3a1ee5a2076285d6c6fd23aedd4694f4c1b1cf78"
+      }
+    ]
+  },
+  "publicConsumers": {
+    "protocol": "stage12-public-v1",
+    "summaries": [
+      {
+        "format": "esm",
+        "checks": 10,
+        "calls": 4
+      },
+      {
+        "format": "cjs",
+        "checks": 10,
+        "calls": 4
+      }
+    ]
+  },
+  "focusedCoverage": {
+    "scope": "New preset factory and AMOS PresetCommand only; not whole-Agent coverage",
+    "linesPercent": 100,
+    "branchesPercent": 97.22,
+    "files": {
+      "apps/amos/src/commands/commands/PresetCommand.ts": {
+        "statements": {
+          "covered": 38,
+          "total": 38
+        },
+        "branches": {
+          "covered": 28,
+          "total": 30
+        },
+        "functions": {
+          "covered": 3,
+          "total": 3
+        }
+      },
+      "src/core/presets.ts": {
+        "statements": {
+          "covered": 63,
+          "total": 63
+        },
+        "branches": {
+          "covered": 77,
+          "total": 78
+        },
+        "functions": {
+          "covered": 2,
+          "total": 2
+        }
+      }
+    }
+  },
+  "runtimeArtifactsSHA256": {
+    "src/core/presets.ts": "1a32ede667087932eddfb8bc986ec2c9b0d1f3bb544fa44711826d9e8517fa7e",
+    "src/core/Agent.ts": "6da865406076904e282b698c7b53a567a807d5e6b956294182df9acac6b9e877",
+    "src/portable/types.ts": "f473cb194a5adea6b9d02be9173e53283e254d822c5b13494179411c2c400616",
+    "src/tools/registry.generated.ts": "d44f38d79307aebc2b599fc6634f9c09961041daa766e1ca4c2624b310764575",
+    "dist/index.js": "4becf5565f42cb700b1e37e11ab34bf70d9eeef8b4f941fe17dcb70da5877cf5",
+    "dist/index.cjs": "93323713a5919e18a56e7f21ac0888d5369a96b25b99bb0ecbc9539799d621b0",
+    "dist/index.d.ts": "591a2d7fe726b94d5775ede8d8d025abb7dcdee027a779babaa74f353d8533f8",
+    "dist/agent-runtime/index.js": "cd96f39a1c42cc5c5ff4d56c7eb3014f97709a0c330ba9ae151b342c08d5d8ad",
+    "apps/amos/dist/index.js": "3548b514e13f740da7c7849f6c08f8f59e11f558e4b49bba207278d2ad26f661"
+  },
+  "scopeBoundaries": [
+    "No conditional stage implemented",
+    "No release/commit/push",
+    "No wire/session protocol change",
+    "External SDK/realtime owners unchanged",
+    "Helper models, budgets, completion and permissions remain explicit",
+    "Foreign scoped checkpoints reject rebinding"
+  ],
+  "baselineArtifactsSHA256": {
+    "examples/agentic-baseline/runner.ts": "c6eecac42463f7f1e55135b92091889a2a8bfd8aea2edd4bb12ff7fa8ba8a21a",
+    "examples/agentic-baseline/reporter.ts": "d3d48941767c122cfdf197eee607e80836727db31414945d44f245f09ccee78a",
+    "tests/unit/testing/agenticBaseline.test.ts": "c322ddca81c810483e10b7776bb26ddaf7dfc067b7508d4202d563cc04df1104",
+    "tests/integration/text/AgenticBaseline.live.integration.test.ts": "8db4364c421508e1b930299f9727a84422894263311b25efbf8873862d6a3535"
+  },
+  "packageInventory": {
+    "command": "npm pack --dry-run --ignore-scripts --json",
+    "files": 189,
+    "requiredArtifacts": [
+      "docs/AGENT_PRESETS.md",
+      "docs/designs/STAGE_12_IMPLEMENTATION.md",
+      "docs/evaluations/STAGE_12_VALIDATION.json",
+      "docs/evaluations/STAGE_12_LIVE.json",
+      "docs/evaluations/STAGE_12_OFFLINE.txt",
+      "examples/agentic-presets.ts",
+      "examples/agent-loop/scripted-provider.ts",
+      "docs/VERSION_2_GUIDE.md",
+      "docs/AGENTIC_BASELINE_EVALUATION.md",
+      "API_REFERENCE.md"
+    ],
+    "allPresent": true,
+    "exportFilesVerified": 24,
+    "published": false
+  }
+}

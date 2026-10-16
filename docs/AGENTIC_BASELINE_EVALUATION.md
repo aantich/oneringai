@@ -273,3 +273,45 @@ The pilot has one sample per model/workload/split and is not a comparative bench
 Earlier diagnostic runs informed fixture output framing and the explicit Gemini
 thinking setting; they are not included in a claim about success rate or savings.
 The report's usage applies to the event boundary described above, not all SDK work.
+
+## Stage 12 fixture calibration — 2026-10-16
+
+The baseline runner now explicitly requests temperature zero when the selected
+model registry permits it; unsupported temperature parameters remain omitted.
+This controls a previously unspecified sampling input, without changing normal
+Agent/preset defaults. Reports include requested/resolved temperature. Historical
+pilots used vendor defaults and must not be presented as matched sampling trials.
+Google's explicit thinkingBudget=0 and the 512-token output cap remain unchanged.
+
+One uncalibrated Google chat run failed exact completion and reported all 512
+output tokens consumed. The old report did not retain response text/status, so
+its exact generated body and internal cause cannot be reconstructed. Three exact
+configuration probes confirmed the intended thinking budget/cap were sent and
+returned the correct five-token marker. This is evidence of an intermittent model
+output failure, not proof of a broken provider conversion or a particular token
+pattern. Explicit sampling is a fixture calibration, not a guarantee that models
+will always comply. See the [generation configuration contract](https://ai.google.dev/api/generate-content#v1beta.GenerationConfig).
+
+Per-model steps now optionally include response status, stop reason, text character
+count and SHA256. No prompts or response bodies are added to trajectory reports.
+This distinguishes provider completion/length limits from failed fixture semantics.
+The evaluator still rejects missing/wrong/truncated output, retains the same tool
+and completion checks, uses no automatic retry and does not increase the output cap.
+Tests verify actual provider-boundary sampling and that capped wrong output remains
+a failure. The Stage 12 evidence records calibration trials and the final full gate.
+
+
+Stage 12 second-correction regression validation preserves baseline scoring and
+provider setup. The final combined gate passes 148 tests / 160 scenarios across
+all nine agentic suites with OpenAI, Anthropic and Google; see the
+[fresh record](evaluations/STAGE_12_SECOND_CORRECTIONS.json). This includes the
+unchanged baseline development/holdout workloads; no new model quality claim.
+
+
+Stage 12 third-correction validation leaves baseline scoring/provider setup intact.
+All nine existing suites pass 148 tests / 160 scenarios; three additional permanent
+session-recovery live cases verify actual original-history continuation and blocked
+local writes across OpenAI, Anthropic and Google. Total final gates: 151 tests / 163
+scenarios, zero failures/skips. See the [latest record](evaluations/STAGE_12_THIRD_CORRECTIONS.json).
+The new recovery fixtures do not change the baseline workload or support a general
+quality/cost claim.

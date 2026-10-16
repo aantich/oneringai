@@ -4,8 +4,10 @@
 
 import {
   Agent,
+  createAgentPreset,
+  type AgentPresetName,
+  type AgentConfig,
   ContentType,
-  FileContextStorage,
   FileEvidenceStorage,
   EvidencePluginNextGen,
   TaskStatePluginNextGen,
@@ -50,6 +52,7 @@ import type {
 import { inspectContext } from './contextInspection.js';
 import { buildPermissionsConfig } from './permissionUtils.js';
 import { describeToolOutcome } from './toolOutcomes.js';
+import { AmosSessionStorage } from './AmosSessionStorage.js';
 
 export interface AmosModelRuntimeOptions {
   temperature?: number;
@@ -89,9 +92,10 @@ export function resolveAmosModelRuntimeOptions(
 
 export class AgentRunner implements IAgentRunner {
   private agent: Agent | null = null;
+  private activePreset: AgentPresetName | null = null;
   private readonly config: AmosConfig;
   private tools: ToolFunction[];
-  private readonly storage: FileContextStorage;
+  private readonly storage: AmosSessionStorage;
   private _isRunning = false;
   private _loopPolicyOverride?: AgentLoopPolicy | null;
   private _currentModel: string;
@@ -100,16 +104,16 @@ export class AgentRunner implements IAgentRunner {
   private _instructions: string | null = null;
   private _onApprovalRequired: ((context: ToolApprovalContext) => Promise<ApprovalDecision>) | null = null;
 
-  constructor(config: AmosConfig, tools: ToolFunction[], sessionDir = './data/sessions') {
+  constructor(config: AmosConfig, tools: ToolFunction[], sessionDir = './data/sessions', private readonly onSessionChange?: (id: string | null) => void) {
     this.config = config;
     this.tools = tools;
     this._currentModel = config.activeModel || config.defaults.model;
     this._currentTemperature = config.defaults.temperature;
-    this.storage = new FileContextStorage({
+    this.storage = new AmosSessionStorage({
       agentId: 'amos',
       baseDirectory: sessionDir,
       prettyPrint: true,
-    });
+    }, () => this.activePreset);
   }
 
   setInstructions(instructions: string | null): void {
@@ -121,55 +125,63 @@ export class AgentRunner implements IAgentRunner {
   }
 
   async initialize(connectorName: string, model: string): Promise<void> {
-    this.destroyAgentOnly();
-    this._connectorName = connectorName;
-    this._currentModel = model;
-
+    this.assertReplaceable();
+    // Build/load first so invalid next-agent settings cannot destroy a live session.
     const agentConfig = this.buildAgentConfig(connectorName, model);
     const sessionId = this.config.session.activeSessionId;
     if (this.config.contextStrategy && this.config.contextStrategy !== 'algorithmic' && !this.config.evidence?.enabled) throw new Error('Selected context strategy requires enabled evidence');
     if (this.config.contextStrategy === 'structured-summary' && !this.config.modelExecution?.helpers?.compactor) throw new Error('Selected summary strategy requires a compactor helper');
-
-    if (sessionId && await this.storage.exists(sessionId)) {
-      this.agent = await Agent.resume(sessionId, {
-        ...agentConfig,
-        session: { storage: this.storage },
-      });
-      return;
-    }
-
-    // Old UniversalAgent session files use a different format and location.
-    // Start clean when a configured session no longer exists in current storage.
-    if (sessionId) {
-      this.config.session.activeSessionId = null;
-    }
-    this.agent = Agent.create(agentConfig);
+    const resumed = !!sessionId && await this.storage.exists(sessionId);
+    const next = resumed ? await Agent.resume(sessionId!, { ...agentConfig, session: { ...agentConfig.session, storage: this.storage } }) : Agent.create(agentConfig);
+    this.destroyAgentOnly();
+    this.agent = next;
+    this._connectorName = connectorName;
+    this._currentModel = model;
+    this.activePreset = this.config.preset ?? null;
+    // Historical UniversalAgent session files use a different format/location.
+    if (sessionId && !resumed) this.config.session.activeSessionId = null;
   }
 
-  private buildAgentConfig(connectorName: string, model: string) {
-    const task = this.config.taskState?.enabled ? this.config.taskState : undefined;
-    const evidence = this.config.evidence?.enabled ? this.config.evidence : undefined;
+  /** AMOS cannot transfer still-running or queued background tool deliveries. */
+  assertReplaceable(): void {
+    if (this.isRunning() || this.agent?.hasPendingAsyncTools()) throw new Error('Cannot replace an agent with active execution or pending asynchronous tools');
+  }
+
+  /** A fresh session still checkpoints unstored observations before releasing their raw copy. */
+  hasUnstoredObservations(): boolean {
+    const context = this.agent?.context;
+    return !!context?.features.evidence && [...context.getConversation(), ...context.getCurrentInput()].some(item =>
+      item.type === 'message' && item.content.some(content =>
+        (content.type === ContentType.TOOL_RESULT || content.type === ContentType.CUSTOM_TOOL_RESULT)
+        && content.evidence?.version === 1 && content.evidence.status === 'storage_failed'));
+  }
+
+  private buildAgentConfig(connectorName: string, model: string, preset = this.config.preset, settings = this.config): AgentConfig {
+    const task = settings.taskState?.enabled ? settings.taskState : undefined;
+    const evidence = settings.evidence?.enabled ? settings.evidence : undefined;
     if (task && evidence && task.ownerId !== evidence.ownerId) throw new Error('Task-state and evidence owners must match');
     const runtimeOptions = resolveAmosModelRuntimeOptions(
       model,
       this._currentTemperature,
-      this.config.defaults.reasoningEffort,
+      settings.defaults.reasoningEffort,
     );
-    return {
+    const config = {
       name: 'amos',
       connector: connectorName,
       model,
+      ...(settings.maxIterations === undefined ? {} : { maxIterations: settings.maxIterations }),
       tools: this.tools,
-      modelExecution: this.config.modelExecution ?? undefined,
-      ...(this.config.loopPolicy === undefined ? {} : { loopPolicy: this.config.loopPolicy }),
+      modelExecution: settings.modelExecution ?? undefined,
+      ...(settings.loopPolicy === undefined ? {} : { loopPolicy: settings.loopPolicy }),
       ...runtimeOptions,
-      ...(evidence || task || this.config.contextStrategy ? {
+      ...(settings.evidence || settings.taskState || settings.contextStrategy ? {
         ...(evidence || task ? { userId: evidence?.ownerId ?? task!.ownerId } : {}),
-        context: { model, agentId: 'amos', strategy: this.config.contextStrategy,
-          ...(this.config.contextStrategy ? { compactionStrategy: this.createContextStrategy(this.config.contextStrategy) } : {}),
-          features: { ...(evidence ? { evidence: true } : {}), ...(task ? { taskState: true } : {}) },
+        context: { model, agentId: 'amos', strategy: settings.contextStrategy,
+          ...(settings.contextStrategy ? { compactionStrategy: this.createContextStrategy(settings.contextStrategy, settings) } : {}),
+          features: { ...(settings.evidence ? { evidence: !!evidence } : {}), ...(settings.taskState ? { taskState: !!task } : {}) },
           plugins: {
             ...(evidence ? { evidence: {
+              scope: { ownerId: evidence.ownerId, namespace: evidence.namespace },
               storage: new FileEvidenceStorage({ directory: evidence.directory,
                 scope: { ownerId: evidence.ownerId, namespace: evidence.namespace } }), retentionMs: evidence.retentionMs,
             } } : {}),
@@ -181,14 +193,31 @@ export class AgentRunner implements IAgentRunner {
       instructions: this.buildInstructions(),
       session: {
         storage: this.storage,
-        autoSave: this.config.session.autoSave,
-        autoSaveIntervalMs: this.config.session.autoSaveIntervalMs,
+        autoSave: settings.session.autoSave,
+        autoSaveIntervalMs: settings.session.autoSaveIntervalMs,
       },
       permissions: buildPermissionsConfig(
         this.config,
         this._onApprovalRequired ?? undefined,
       ),
-    };
+    } satisfies AgentConfig;
+    return preset == null ? config : createAgentPreset(preset, config);
+  }
+
+  validatePreset(preset: AgentPresetName | null, settings = this.config): void {
+    if (this.isRunning()) throw new Error('Wait for the active execution before changing a preset.');
+    this.buildAgentConfig(this._connectorName, this._currentModel, preset, settings);
+  }
+
+  inspectCapabilities() {
+    const capabilities = this.requireAgent().inspectCapabilities();
+    if (this._loopPolicyOverride !== undefined) {
+      capabilities.loop.enabled = !!this._loopPolicyOverride;
+      capabilities.loop.hostCompletionCheck = typeof this._loopPolicyOverride?.completion === 'function';
+      if (capabilities.loop.hostCompletionCheck) capabilities.notices = capabilities.notices.filter(notice => !notice.startsWith('No host completion check'));
+      else if (!capabilities.notices.some(notice => notice.startsWith('No host completion check'))) capabilities.notices.push('No host completion check is configured; model completion does not establish workflow completion.');
+    }
+    return { activePreset: this.activePreset, capabilities };
   }
 
   getTaskState(): TaskStateSnapshot | undefined {
@@ -346,9 +375,9 @@ export class AgentRunner implements IAgentRunner {
     return this._currentModel;
   }
 
-  private createContextStrategy(strategy: NonNullable<AmosConfig['contextStrategy']>) {
+  private createContextStrategy(strategy: NonNullable<AmosConfig['contextStrategy']>, settings = this.config) {
     return StrategyRegistry.create(strategy, strategy === 'structured-summary' ? {
-      maxSummaryTokens: Math.max(1024, this.config.modelExecution?.helpers?.compactor?.maxOutputTokens ?? 512),
+      maxSummaryTokens: Math.max(1024, settings.modelExecution?.helpers?.compactor?.maxOutputTokens ?? 512),
     } : undefined);
   }
 
@@ -524,13 +553,11 @@ export class AgentRunner implements IAgentRunner {
 
   async saveSession(name?: string): Promise<string> {
     const agent = this.requireAgent();
-    await agent.saveSession(undefined, name ? { title: name } : undefined);
+    await agent.saveSession(undefined, { ...(name ? { title: name } : {}), agenticPreset: this.activePreset });
     const sessionId = agent.getSessionId();
     if (!sessionId) throw new Error('Session storage did not assign an ID');
-    if (name) {
-      await this.storage.updateMetadata(sessionId, { title: name });
-    }
     this.config.session.activeSessionId = sessionId;
+    this.onSessionChange?.(sessionId);
     return sessionId;
   }
 
@@ -539,6 +566,7 @@ export class AgentRunner implements IAgentRunner {
     const loaded = await agent.loadSession(sessionId);
     if (!loaded) throw new Error(`Session '${sessionId}' not found`);
     this.config.session.activeSessionId = sessionId;
+    this.onSessionChange?.(sessionId);
   }
 
   async listSessions(): Promise<SessionSummaryInfo[]> {
@@ -557,6 +585,7 @@ export class AgentRunner implements IAgentRunner {
     await this.storage.delete(sessionId);
     if (this.config.session.activeSessionId === sessionId) {
       this.config.session.activeSessionId = null;
+      this.onSessionChange?.(null);
     }
   }
 

@@ -1,11 +1,12 @@
 import { TaskStatePluginNextGen } from './plugins/TaskStatePluginNextGen.js';
 import type { TaskStatePluginConfig, TaskStateSnapshot } from './plugins/TaskStatePluginNextGen.js';
 import { compactConversationTransaction } from './strategies/conversation-compaction.js';
-import type { EvidenceReference } from '../../domain/interfaces/IEvidenceStorage.js';
+import type { EvidenceReference, EvidenceScope } from '../../domain/interfaces/IEvidenceStorage.js';
 import { EvidencePluginNextGen, parseEvidenceSnapshot } from './plugins/EvidencePluginNextGen.js';
 import type { EvidencePluginConfig } from './plugins/EvidencePluginNextGen.js';
 import { InMemoryEvidenceStorage } from '../../infrastructure/storage/EvidenceStorage.js';
 import { evidenceProjection, evidenceProvenance } from '../evidence/ToolEvidenceMiddleware.js';
+import { PRESET_REQUIRED_PLUGINS, type PresetPluginRequirements, type RequiredPresetPlugins } from './presetRequirements.js';
 /**
  * AgentContextNextGen - Clean, Simple Context Manager
  *
@@ -195,6 +196,12 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   /** Session ID (if loaded/saved) */
   private _sessionId: string | null = null;
 
+  /** Checkpoint IO/restoration must not expose tentative state to autosave. */
+  private _sessionOperations: Promise<void> | null = null;
+  /** A failed third-party rollback must not checkpoint uncertain plugin state. */
+  private readonly _failedCheckpointPlugins = new Map<string, IContextPluginNextGen>();
+  private _checkpointRestorations?: Map<string, IContextPluginNextGen>;
+
   /** Agent ID */
   private readonly _agentId: string;
 
@@ -212,6 +219,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
   /** Destroyed flag */
   private _destroyed = false;
+  private _destroying = false;
 
   /** Last thinking/reasoning content from the most recent assistant response */
   private _lastThinking: string | null = null;
@@ -280,6 +288,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
   private constructor(config: AgentContextNextGenConfig) {
     super();
+    this._presetRequiredPlugins = (config as PresetPluginRequirements)[PRESET_REQUIRED_PLUGINS] ?? {};
 
     // Resolve max context tokens from model
     const modelInfo = getModelInfo(config.model);
@@ -333,10 +342,32 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     }
 
     // Auto-initialize plugins based on features config
-    this.initializePlugins(config.plugins);
+    try {
+      this.initializePlugins(config.plugins);
+      this.assertPresetPlugins();
+      // Auto-populate ToolContext with identity fields (agentId, userId)
+      this.syncToolContext();
+    } catch (error) {
+      try { this.destroy(); } catch { /* Preserve the composition error. */ }
+      throw error;
+    }
+  }
 
-    // Auto-populate ToolContext with identity fields (agentId, userId)
-    this.syncToolContext();
+  private readonly _presetRequiredPlugins: RequiredPresetPlugins;
+
+  private assertPresetPlugins(): void {
+    const { evidence, taskState } = this._presetRequiredPlugins;
+    const actualEvidence = this.getPlugin('evidence');
+    const actualTask = this.getPlugin('task_state');
+    const sameScope = (a: EvidenceScope, b: EvidenceScope): boolean => a.ownerId === b.ownerId && a.namespace === b.namespace && a.tenantId === b.tenantId;
+    if (evidence && (this._userId !== evidence.scope.ownerId || !(actualEvidence instanceof EvidencePluginNextGen)
+      || actualEvidence.storage !== evidence.storage || !sameScope(actualEvidence.storage.scope, evidence.scope))) {
+      throw new AIError('Preset requires the enabled built-in evidence plugin with the selected host scope and storage', 'INVALID_CONFIG', 400);
+    }
+    if (taskState && (this._userId !== taskState.scope.ownerId || !(actualTask instanceof TaskStatePluginNextGen)
+      || !sameScope(actualTask.scope, taskState.scope) || actualTask.taskId !== taskState.taskId || actualTask.getState().association !== taskState.association)) {
+      throw new AIError('Preset requires the enabled built-in taskState plugin with the selected host scope, taskId and association', 'INVALID_CONFIG', 400);
+    }
   }
 
   /**
@@ -1421,6 +1452,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    */
   async prepare(options: ContextPrepareOptions = {}): Promise<PreparedContext> {
     this.assertNotDestroyed();
+    this.assertPresetPlugins();
 
     this.beginContextOperation('prepare');
     try {
@@ -1538,6 +1570,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     this.assertNotDestroyed();
     if (!this._lastPreparation) throw new Error('Prepare context before validating a managed request');
     const assertTaskState = (): void => {
+      this.assertPresetPlugins();
       const taskState = this.taskStatePlugin();
       if (taskState !== this._preparedTaskState) throw new AIError('Protected task-state plugin changed after preparation', 'TASK_STATE_CONFLICT', 409);
       if (!taskState) return;
@@ -2652,122 +2685,191 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    *
    * @param sessionId - Optional session ID (uses current or generates new)
    * @param metadata - Optional additional metadata to merge
-   * @param stateOverride - Optional state override (for agent-level state injection)
+   * @param stateOverride - Optional snapshot or builder (agent state injection). Builders run after preceding checkpoint operations.
    */
   async save(
     sessionId?: string,
     metadata?: Record<string, unknown>,
-    stateOverride?: SerializedContextState
+    stateOverride?: SerializedContextState | (() => SerializedContextState | Promise<SerializedContextState>)
   ): Promise<void> {
-    this.assertNotDestroyed();
+    return this.serializeSessionOperation(async () => {
+      this.assertNotDestroyed();
+      if (this._failedCheckpointPlugins.size > 0) throw new Error('Checkpoint rollback failed; load a valid session before saving');
 
-    if (!this._storage) {
-      throw new Error('No storage configured');
-    }
-
-    const targetSessionId = sessionId ?? this._sessionId ?? this.generateId();
-
-    // Flush history buffer on first save (entries buffered before sessionId was set)
-    const journal = this._storage.journal;
-    if (this._historyBuffer.length > 0 && journal) {
-      try {
-        await journal.append(targetSessionId, this._historyBuffer);
-      } catch (err) {
-        logger.warn({ err: (err as Error).message }, 'History journal buffer flush failed');
+      if (!this._storage) {
+        throw new Error('No storage configured');
       }
-      this._historyBuffer = [];
-    }
 
-    // Use provided state override or build from current state
-    const state: SerializedContextState = stateOverride ?? this.getState();
+      const targetSessionId = sessionId ?? this._sessionId ?? this.generateId();
 
-    // Merge additional metadata if provided
-    if (metadata) {
-      state.metadata = { ...state.metadata, ...metadata };
-    }
+      // Flush history buffer on first save (entries buffered before sessionId was set)
+      const journal = this._storage.journal;
+      if (this._historyBuffer.length > 0 && journal) {
+        try {
+          await journal.append(targetSessionId, this._historyBuffer);
+        } catch (err) {
+          logger.warn({ err: (err as Error).message }, 'History journal buffer flush failed');
+        }
+        this._historyBuffer = [];
+      }
 
-    await this._storage.save(targetSessionId, state);
-    this._sessionId = targetSessionId;
+      // Use provided state override or build from current state
+      const state: SerializedContextState = typeof stateOverride === 'function' ? await stateOverride() : stateOverride ?? this.getState();
+
+      // Merge additional metadata if provided
+      if (metadata) {
+        state.metadata = { ...state.metadata, ...metadata };
+      }
+
+      await this._storage.save(targetSessionId, state);
+      this._sessionId = targetSessionId;
+    });
   }
 
   /**
    * Load context state from storage.
    */
   async load(sessionId: string): Promise<boolean> {
-    this.assertNotDestroyed();
+    return this.restoreSession(sessionId, state => {
+      this.restoreState(state);
+    }, true);
+  }
 
-    if (!this._storage) {
-      throw new Error('No storage configured');
-    }
-
-    const stored = await this._storage.load(sessionId);
-    if (!stored) {
-      return false;
-    }
-
-    // Extract state from StoredContextSession wrapper
-    const state = stored.state;
-
-    this.assertEvidenceState(state);
-    const taskState = this.preflightTaskState(state);
-    // Restore conversation
-    this._conversation = state.conversation;
-    this.removeRestoredProtectedInput();
-    this._systemPrompt = state.systemPrompt;
-
-    // Restore plugin states
-    for (const [name, pluginState] of Object.entries(state.pluginStates)) {
-      const plugin = this._plugins.get(name);
-      if (plugin && !(plugin instanceof TaskStatePluginNextGen)) {
-        plugin.restoreState(pluginState);
+  /**
+   * @internal High-level checkpoint restoration. Validates protected scopes before
+   * mutation and commits the session ID only on success. Saves wait for restoration.
+   * Optional synchronous admission participates in rollback, including bindings.
+   * The callback may restore agent-specific state; it must not await checkpoint IO
+   * on this same context. Its private/external side effects remain host-owned.
+   */
+  async restoreSession(
+    sessionId: string,
+    restore: (state: SerializedContextState) => void | Promise<void>,
+    restoreJournal = false,
+    admit?: (loaded: boolean) => void,
+  ): Promise<boolean> {
+    return this.serializeSessionOperation(async () => {
+      this.assertNotDestroyed();
+      if (!this._storage) throw new Error('No storage configured');
+      const stored = await this._storage.load(sessionId);
+      this.assertNotDestroyed();
+      if (!stored && !admit) return false;
+      if (stored) {
+        this.assertEvidenceState(stored.state);
+        this.preflightTaskState(stored.state);
       }
-    }
 
-    if (taskState) this.getPlugin<TaskStatePluginNextGen>('task_state')!.restoreState(taskState);
-    this._sessionId = sessionId;
-
-    // Restore turn index from journal (if available) so new entries continue the sequence
-    const journal = this._storage.journal;
-    if (journal) {
+      // Use the documented JSON state contract, including conversion hooks. Take
+      // the snapshot after IO/preflight so rejected reads cannot undo host edits.
+      const previous = JSON.parse(JSON.stringify({ state: this.getState(),
+        conversation: this._conversation, currentInput: this._currentInput,
+        originalUserInput: this._originalUserInput, historyBuffer: this._historyBuffer,
+      })) as { state: SerializedContextState; conversation: InputItem[]; currentInput: InputItem[];
+        originalUserInput: InputItem[]; historyBuffer: HistoryEntry[] };
+      const prompt = this._systemPrompt;
+      const callback = this._beforeCompactionCallback;
+      const previousSessionId = this._sessionId;
+      const turnIndex = this._turnIndex;
+      const rollbackBindings = admit ? this._tools._captureAgentBindingRollback() : undefined;
+      const previousRestorations = this._checkpointRestorations;
+      const restored = new Map<string, IContextPluginNextGen>();
+      this._checkpointRestorations = restored;
       try {
-        const count = await journal.count(sessionId);
-        if (count > 0) {
-          // Read the last entry to get the highest turnIndex
-          const lastEntries = await journal.read(sessionId, { offset: count - 1, limit: 1 });
-          const lastEntry = lastEntries[0];
-          if (lastEntry) {
-            this._turnIndex = lastEntry.turnIndex + 1;
-          }
+        if (stored) {
+          await restore(stored.state);
+          this.assertNotDestroyed();
+          // Observers of the loaded notification see the selected ID. It remains
+          // tentative until admission/notification returns successfully.
+          this._sessionId = sessionId;
         }
-      } catch {
-        // Non-critical — turnIndex will start from 0 if journal is unavailable
+        admit?.(!!stored);
+        this.assertNotDestroyed();
+      } catch (error) {
+        if (!this._destroyed) {
+          // Restore authority before any candidate destructor can clear its policy.
+          rollbackBindings?.();
+          this._beforeCompactionCallback = callback;
+          for (const [name, state] of Object.entries(previous.state.pluginStates)) {
+            const plugin = this._plugins.get(name);
+            if (!plugin) continue;
+            try { plugin.restoreState(state); } catch (rollbackError) {
+              this._failedCheckpointPlugins.set(name, plugin);
+              logger.error({ plugin: name, err: rollbackError }, 'Plugin checkpoint rollback failed');
+            }
+          }
+          this._conversation = previous.conversation;
+          this._currentInput = previous.currentInput;
+          this._originalUserInput = previous.originalUserInput;
+          this._historyBuffer = previous.historyBuffer;
+          this._turnIndex = turnIndex;
+          this._systemPrompt = prompt;
+          this._sessionId = previousSessionId;
+        }
+        throw error;
+      } finally {
+        this._checkpointRestorations = previousRestorations;
       }
+      this.clearRepairedCheckpointPlugins(restored);
+      if (stored && restoreJournal) {
+        const journal = this._storage.journal;
+        if (journal) {
+          try {
+            const count = await journal.count(sessionId);
+            if (count > 0) {
+              const lastEntries = await journal.read(sessionId, { offset: count - 1, limit: 1 });
+              if (lastEntries[0]) this._turnIndex = lastEntries[0].turnIndex + 1;
+            }
+          } catch { /* Journal recovery is non-critical. */ }
+        }
+        this._historyBuffer = [];
+      }
+      return !!stored;
+    });
+  }
+
+  private clearRepairedCheckpointPlugins(restored: Map<string, IContextPluginNextGen>): void {
+    for (const [name, plugin] of restored) {
+      if (this._failedCheckpointPlugins.get(name) === plugin) this._failedCheckpointPlugins.delete(name);
     }
+  }
 
-    // Clear any stale buffer (we're loading a saved session, not continuing a new one)
-    this._historyBuffer = [];
-
-    return true;
+  private serializeSessionOperation<T>(operation: () => Promise<T>): Promise<T> {
+    const previous = this._sessionOperations;
+    let release!: () => void;
+    const barrier = new Promise<void>(resolve => { release = resolve; });
+    this._sessionOperations = barrier;
+    // Preserve immediate first-IO admission (including constructor session loads).
+    // Install the barrier first so even reentrant backend calls serialize.
+    const pending = previous ? previous.then(operation) : operation();
+    const settle = () => {
+      if (this._sessionOperations === barrier) this._sessionOperations = null;
+      release();
+    };
+    void pending.then(settle, settle);
+    return pending;
   }
 
   /**
    * Load raw state from storage without restoring.
-   * Used by BaseAgent for custom state restoration.
+   * Retains the legacy active-session-ID side effect; does not validate/restore.
+   * Managed Agent loads use transactional restoration instead.
    */
   async loadRaw(sessionId: string): Promise<{ state: SerializedContextState; stored: StoredContextSession } | null> {
-    this.assertNotDestroyed();
+    return this.serializeSessionOperation(async () => {
+      this.assertNotDestroyed();
 
-    if (!this._storage) {
-      throw new Error('No storage configured');
-    }
+      if (!this._storage) {
+        throw new Error('No storage configured');
+      }
 
-    const stored = await this._storage.load(sessionId);
-    if (!stored) {
-      return null;
-    }
+      const stored = await this._storage.load(sessionId);
+      if (!stored) {
+        return null;
+      }
 
-    this._sessionId = sessionId;
-    return { state: stored.state, stored };
+      this._sessionId = sessionId;
+      return { state: stored.state, stored };
+    });
   }
 
   /**
@@ -2784,21 +2886,23 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    * Delete a session from storage.
    */
   async deleteSession(sessionId?: string): Promise<void> {
-    if (!this._storage) {
-      throw new Error('No storage configured');
-    }
+    return this.serializeSessionOperation(async () => {
+      if (!this._storage) {
+        throw new Error('No storage configured');
+      }
 
-    const targetSessionId = sessionId ?? this._sessionId;
-    if (!targetSessionId) {
-      throw new Error('No session ID provided or loaded');
-    }
+      const targetSessionId = sessionId ?? this._sessionId;
+      if (!targetSessionId) {
+        throw new Error('No session ID provided or loaded');
+      }
 
-    await this._storage.delete(targetSessionId);
+      await this._storage.delete(targetSessionId);
 
-    // Clear session ID if deleting current session
-    if (targetSessionId === this._sessionId) {
-      this._sessionId = null;
-    }
+      // Clear session ID if deleting current session
+      if (targetSessionId === this._sessionId) {
+        this._sessionId = null;
+      }
+    });
   }
 
   /**
@@ -2859,16 +2963,28 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     this.removeRestoredProtectedInput();
     this._systemPrompt = state.systemPrompt;
 
+    const restored = new Map<string, IContextPluginNextGen>();
     // Restore plugin states (guard against null/undefined)
     if (state.pluginStates) {
       for (const [name, pluginState] of Object.entries(state.pluginStates)) {
         const plugin = this._plugins.get(name);
         if (plugin && !(plugin instanceof TaskStatePluginNextGen)) {
           plugin.restoreState(pluginState);
+          restored.set(name, plugin);
         }
       }
     }
-    if (taskState) this.getPlugin<TaskStatePluginNextGen>('task_state')!.restoreState(taskState);
+    if (taskState) {
+      const plugin = this.getPlugin<TaskStatePluginNextGen>('task_state')!;
+      plugin.restoreState(taskState);
+      restored.set('task_state', plugin);
+    }
+    if (this._checkpointRestorations) {
+      for (const [name, plugin] of restored) this._checkpointRestorations.set(name, plugin);
+    } else {
+      // Direct restoreState is an existing trusted host repair path.
+      this.clearRepairedCheckpointPlugins(restored);
+    }
   }
 
   // ============================================================================
@@ -3249,30 +3365,32 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    * Destroy context and release resources.
    */
   destroy(): void {
-    if (this._destroyed) return;
-
-    // Destroy plugins (skip shared ones that are owned by another context)
+    if (this._destroyed || this._destroying) return;
+    this._destroying = true;
+    let failed = false;
+    let failure: unknown;
+    const cleanup = (action: () => void) => {
+      try { action(); } catch (error) { if (!failed) { failed = true; failure = error; } }
+    };
+    // A third-party destructor cannot prevent cleanup of unrelated owned resources.
     for (const [name, plugin] of this._plugins) {
-      if (!this._skipDestroyPlugins.has(name)) {
-        plugin.destroy();
-      }
+      if (!this._skipDestroyPlugins.has(name)) cleanup(() => plugin.destroy());
     }
     this._plugins.clear();
+    this._failedCheckpointPlugins.clear();
+    this._checkpointRestorations = undefined;
     this._contextToolNames.clear();
     this._skipDestroyPlugins.clear();
-
-    // Destroy store tools manager
-    this._storeToolsManager.destroy();
-
-    // Destroy tool manager
-    this._tools.destroy();
-
-    // Clear state
+    cleanup(() => this._storeToolsManager.destroy());
+    cleanup(() => this._tools.destroy());
     this._conversation = [];
     this._currentInput = [];
+    this._originalUserInput = [];
+    this._historyBuffer = [];
     this._beforeCompactionCallback = null;
-
     this.removeAllListeners();
     this._destroyed = true;
+    this._destroying = false;
+    if (failed) throw failure;
   }
 }

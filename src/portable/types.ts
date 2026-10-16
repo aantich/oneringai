@@ -171,10 +171,12 @@ interface HydrateAgentPackageBaseOptions {
   /**
    * Trusted host overrides. This is also where omitted vendor options,
    * provider-hosted tools, prompt caching, and data-handling policy can be
-   * reconstructed. Connector, model, executable tools, context, and identity
+   * reconstructed. Managed loop callbacks and helper/task configuration also
+   * come only from this trusted host, never from the serialized package.
+   * Connector, model, executable tools, context, and identity
    * fields are supplied through dedicated options.
    */
-  agentConfig?: Partial<AgentRuntimeConfigSnapshot>;
+  agentConfig?: Partial<AgentRuntimeConfigSnapshot> & Pick<AgentConfig, 'loopPolicy' | 'modelExecution'>;
 }
 
 /**

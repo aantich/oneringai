@@ -187,7 +187,25 @@
     "docs/designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md",
     "docs/evaluations/STAGE_10_SECOND_CORRECTIONS_VALIDATION.json",
     "docs/evaluations/STAGE_10_SECOND_CORRECTIONS_LIVE.json",
-    "docs/evaluations/STAGE_10_SECOND_CORRECTIONS_OFFLINE.txt"
+    "docs/evaluations/STAGE_10_SECOND_CORRECTIONS_OFFLINE.txt",
+    "docs/AGENT_PRESETS.md",
+    "docs/designs/STAGE_12_IMPLEMENTATION.md",
+    "docs/evaluations/STAGE_12_VALIDATION.json",
+    "docs/evaluations/STAGE_12_LIVE.json",
+    "docs/evaluations/STAGE_12_OFFLINE.txt",
+    "examples/agentic-presets.ts",
+    "docs/designs/STAGE_12_REVIEW_AND_FIX_PLAN.md",
+    "docs/evaluations/STAGE_12_REVIEW.json",
+    "docs/evaluations/STAGE_12_CORRECTIONS.json",
+    "docs/evaluations/STAGE_12_CORRECTIONS_OFFLINE.txt",
+    "docs/designs/STAGE_12_SECOND_REVIEW_AND_FIX_PLAN.md",
+    "docs/evaluations/STAGE_12_SECOND_REVIEW.json",
+    "docs/evaluations/STAGE_12_SECOND_CORRECTIONS.json",
+    "docs/evaluations/STAGE_12_SECOND_CORRECTIONS_OFFLINE.txt",
+    "docs/designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md",
+    "docs/evaluations/STAGE_12_THIRD_REVIEW.json",
+    "docs/evaluations/STAGE_12_THIRD_CORRECTIONS.json",
+    "docs/evaluations/STAGE_12_THIRD_CORRECTIONS_OFFLINE.txt"
   ],
   "scripts": {
     "generate:tools": "tsx scripts/generate-tool-registry.ts",
@@ -271,7 +289,10 @@
     "example:feedback-agent": "node --import tsx examples/feedback-driven-agent.ts",
     "example:loop-equivalence": "node --import tsx examples/run-stream-equivalence.ts",
     "example:amos-loop": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
-    "test:loop:live": "RUN_AGENT_LOOP_LIVE=1 vitest run tests/integration/text/AgentLoop.live.integration.test.ts"
+    "test:loop:live": "RUN_AGENT_LOOP_LIVE=1 vitest run tests/integration/text/AgentLoop.live.integration.test.ts",
+    "example:agentic-presets": "node --import tsx examples/agentic-presets.ts",
+    "example:amos-presets": "node --import tsx apps/amos/examples/presets-offline.ts",
+    "test:presets:live": "RUN_AGENT_PRESETS_LIVE=1 vitest run tests/integration/text/AgentPresets.live.integration.test.ts tests/integration/text/AgentSessionCorrections.live.integration.test.ts"
   },
   "keywords": [
     "ai",

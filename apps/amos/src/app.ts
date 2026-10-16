@@ -29,6 +29,7 @@ import {
   PromptCommand,
   ContextCommand,
   HelpersCommand,
+  PresetCommand,
   ExternalCommand,
   ClearCommand,
   ExitCommand,
@@ -49,6 +50,7 @@ export class AmosApp implements IAmosApp {
   private astraCommand: AstraCommand;
   private dataDir: string;
   private running: boolean = false;
+  private creatingAgent = false;
 
   constructor(dataDir: string = './data') {
     this.dataDir = dataDir;
@@ -413,6 +415,7 @@ export class AmosApp implements IAmosApp {
       new ConfigCommand(),
       new ContextCommand(),
       new HelpersCommand(),
+      new PresetCommand(),
       new ExternalCommand(),
       new PlanCommand(),
       new ClearCommand(),
@@ -535,10 +538,18 @@ export class AmosApp implements IAmosApp {
   }
 
   async createAgent(options: { freshSession?: boolean } = {}): Promise<void> {
-    const config = this.configManager.get();
+    if (this.creatingAgent || this.agentRunner?.isRunning()) throw new Error('Cannot replace an active or initializing agent');
+    this.agentRunner?.assertReplaceable();
+    this.creatingAgent = true;
+    try {
+      await this.replaceAgent(options);
+    } finally {
+      this.creatingAgent = false;
+    }
+  }
 
-    // A steering response is bound to its original connector and model.
-    this.astraCommand.reset();
+  private async replaceAgent(options: { freshSession?: boolean }): Promise<void> {
+    const config = this.configManager.get();
 
     if (!config.activeConnector) {
       throw new Error('No active connector configured');
@@ -553,45 +564,60 @@ export class AmosApp implements IAmosApp {
     }
 
     const previousRunner = this.agentRunner;
-    if (previousRunner) {
-      if (!options.freshSession && previousRunner.isReady()) {
+    const previousSessionId = config.session.activeSessionId;
+    // Candidate loading must not mutate the current configuration/session pointer.
+    const candidateConfig = { ...config, session: { ...config.session, activeSessionId: options.freshSession ? null : previousSessionId } };
+    let candidate: AgentRunner | undefined;
+    try {
+      if (previousRunner?.isReady()) {
         const metrics = await previousRunner.getContextMetrics();
-        if ((metrics?.historyMessageCount ?? 0) > 0) {
-          const sessionId = await previousRunner.saveSession();
-          config.session.activeSessionId = sessionId;
-          this.configManager.update({ session: config.session });
+        if ((!options.freshSession && (metrics?.historyMessageCount ?? 0) > 0) || previousRunner.hasUnstoredObservations()) {
+          const checkpoint = await previousRunner.saveSession();
+          if (!options.freshSession) candidateConfig.session.activeSessionId = checkpoint;
         }
       }
-      previousRunner.destroy();
-      this.agentRunner = null;
-    }
 
-    // Get model
-    const model = config.activeModel || config.defaults.model;
+      // Get model
+      const model = config.activeModel || config.defaults.model;
 
-    // Create agent runner
-    this.agentRunner = new AgentRunner(
-      config,
-      this.toolLoader.getEnabledTools(),
-      join(this.dataDir, 'sessions')
-    );
-
-    // Set instructions from active prompt
-    const activePromptContent = this.promptManager.getActiveContent();
-    if (activePromptContent) {
-      this.agentRunner.setInstructions(activePromptContent);
-    }
-
-    // Set up interactive approval handler
-    if (config.permissions.promptForApproval) {
-      this.agentRunner.setApprovalHandler(
-        async (context: ToolApprovalContext): Promise<ApprovalDecision> => {
-          return this.handleToolApproval(context);
-        }
+      // Create agent runner
+      candidate = new AgentRunner(
+        candidateConfig,
+        this.toolLoader.getEnabledTools(),
+        join(this.dataDir, 'sessions'),
+        id => {
+          if (this.agentRunner === candidate) this.configManager.update({ session: { ...this.configManager.get().session, activeSessionId: id } });
+        },
       );
-    }
 
-    await this.agentRunner.initialize(config.activeConnector, model);
+      // Set instructions from active prompt
+      const activePromptContent = this.promptManager.getActiveContent();
+      if (activePromptContent) {
+        candidate.setInstructions(activePromptContent);
+      }
+
+      // Set up interactive approval handler
+      if (config.permissions.promptForApproval) {
+        candidate.setApprovalHandler(
+          async (context: ToolApprovalContext): Promise<ApprovalDecision> => {
+            return this.handleToolApproval(context);
+          }
+        );
+      }
+
+      await candidate.initialize(config.activeConnector, model);
+    } catch (error) {
+      try { candidate?.destroy(); } catch { /* Preserve the initialization error. */ }
+      config.session.activeSessionId = previousSessionId;
+      this.configManager.update({ session: { ...this.configManager.get().session, activeSessionId: previousSessionId } });
+      throw error;
+    }
+    // Commit the handoff only after the candidate has loaded and validated.
+    this.agentRunner = candidate;
+    this.configManager.update({ session: { ...config.session, activeSessionId: candidate.getSessionId() } });
+    // A steering response is bound to its original connector and model.
+    this.astraCommand.reset();
+    previousRunner?.destroy();
   }
 
   /**

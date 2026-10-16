@@ -8,7 +8,7 @@ import { DEFAULT_CONFIG } from '../../../../apps/amos/src/config/types.js';
 import { Agent } from '@everworker/oneringai';
 
 const fake = vi.hoisted(() => ({ invokeHelper: vi.fn(), rolloverContext: vi.fn(), getModelUsage: vi.fn(),
-  cancel: vi.fn(), destroy: vi.fn(), isRunning: () => false }));
+  cancel: vi.fn(), destroy: vi.fn(), isRunning: () => false, hasPendingAsyncTools: vi.fn(() => false) }));
 vi.mock('@everworker/oneringai', async importActual => ({ ...await importActual<Record<string, unknown>>(),
   Agent: { create: vi.fn(() => fake) },
 }));
@@ -25,6 +25,7 @@ describe('AMOS helper adapter and configuration persistence', () => {
     config.modelExecution = { helpers: { extractor: { connector: 'helper', model: 'gpt-4o-mini' } } };
     await runner.initialize('main', 'gpt-4o-mini');
     expect(Agent.create).toHaveBeenLastCalledWith(expect.objectContaining({ modelExecution: config.modelExecution }));
+    expect(fake.hasPendingAsyncTools).toHaveBeenCalled();
   });
 
   it('tracks helper busy state, routes cancellation, prevents overlap and clears busy state after rejection', async () => {

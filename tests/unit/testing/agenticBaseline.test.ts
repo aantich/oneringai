@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { Agent, Connector, ContentType, MessageRole, Vendor } from '../../../src/index.js';
 import type { AgentEvents, TextGenerateOptions, TokenUsage } from '../../../src/index.js';
 import { BaselineReporter, canonicalJSON, usageSummary } from '../../../examples/agentic-baseline/reporter.js';
@@ -83,6 +83,22 @@ describe('Stage 00 deterministic trajectories', () => {
     expect(result.usage.total).toEqual({ knownSubtotal: 0, missingCalls: 1, total: null });
   });
 
+  it('pins supported model sampling at the actual provider boundary', async () => {
+    const fixture = createFixture('chat'); const provider = new ReplayProvider(fixture.frames);
+    const generate = vi.spyOn(provider, 'generate'); const name = 'baseline-sampling-regression';
+    Connector.create({ name, vendor: Vendor.Google, auth: { type: 'none' }, options: { provider } });
+    try {
+      expect((await runBaseline(fixture, { connector: name, model: 'gemini-2.5-flash' })).passed).toBe(true);
+      expect(generate.mock.calls[0]![0]).toMatchObject({ temperature: 0, max_output_tokens: 512, vendorOptions: { generationConfig: { thinkingConfig: { thinkingBudget: 0 } } } });
+    } finally { Connector.remove(name); }
+  });
+  it('keeps capped/wrong output failing and records payload-free completion diagnostics', async () => {
+    const fixture = createFixture('chat'); fixture.frames[0]!.text = 'WRONG '.repeat(512);
+    fixture.frames[0]!.usage = { input_tokens: 85, output_tokens: 512, total_tokens: 597 };
+    const result = await runBaseline(fixture); expect(result.failure).toBe('completion_not_proven');
+    expect(result.steps[0]!.response).toMatchObject({ status: 'completed', textChars: 3072, textSHA256: expect.stringMatching(/^[0-9a-f]{64}$/) });
+    expect(JSON.stringify(result)).not.toContain('WRONG');
+  });
   it('labels missing completion separately from an execution failure', async () => {
     const fixture = createFixture('chat');
     fixture.frames[0]!.text = 'All done!';

@@ -219,8 +219,6 @@ Agent Status: ${agent ? (agent.isRunning() ? 'Running' : 'Ready') : 'No agent'}
 
   private async newSession(context: CommandContext): Promise<CommandResult> {
     const { app } = context;
-    const config = app.getConfig();
-
     // Offer to save current session
     const agent = app.getAgent();
     if (agent && agent.getSessionId()) {
@@ -231,15 +229,7 @@ Agent Status: ${agent ? (agent.isRunning() ? 'Running' : 'Ready') : 'No agent'}
       }
     }
 
-    // Clear session
-    app.updateConfig({
-      session: {
-        ...config.session,
-        activeSessionId: null,
-      },
-    });
-
-    // Recreate agent
+    // The app clears the pointer only after the fresh candidate is ready.
     await app.createAgent({ freshSession: true });
     await app.saveConfig();
 

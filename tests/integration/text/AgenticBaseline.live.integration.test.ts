@@ -2,7 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import dotenv from 'dotenv';
 import { afterAll, describe, expect, it } from 'vitest';
-import { Connector, Vendor } from '../../../src/index.js';
+import { Connector, Vendor, getModelInfo } from '../../../src/index.js';
 import { createFixture, FIXTURE_IDS } from '../../../examples/agentic-baseline/fixtures.js';
 import { runBaseline } from '../../../examples/agentic-baseline/runner.js';
 
@@ -24,7 +24,10 @@ afterAll(async () => {
     await mkdir(dirname(process.env.BASELINE_REPORT_PATH), { recursive: true });
     await writeFile(process.env.BASELINE_REPORT_PATH, JSON.stringify({
       protocol: 'stage-00-v1', recordedAt: new Date().toISOString(), selectedProviders: selected, sampleCountPerModelWorkloadSplit: 1,
-      seed: null, temperature: null, thinking: { enabled: false },
+      seed: null, temperature: 0, thinking: { enabled: false },
+      sampling: 'Explicit zero temperature when supported by registry metadata; not a guarantee of deterministic provider output.',
+      resolvedTemperature: Object.fromEntries(providers.filter(provider => selected.includes(provider.name)).map(provider => [provider.name,
+        getModelInfo(provider.model)?.features.parameters?.temperature === false ? null : 0])),
       fixtureSettings: {
         maxIterations: 6, maxToolCalls: 6, maxOutputTokens: 512, maxExecutionTimeMs: 60_000,
         emptyResponseRetry: false, workingMemory: false, inContextMemory: false,

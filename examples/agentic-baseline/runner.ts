@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Agent, Connector, Vendor, DEFAULT_FEATURES } from '../../src/index.js';
+import { Agent, Connector, Vendor, DEFAULT_FEATURES, getModelInfo } from '../../src/index.js';
 import { BaselineReporter } from './reporter.js';
 import { ReplayProvider } from './replay-provider.js';
 import type { BaselineFixture } from './fixtures.js';
@@ -31,6 +31,8 @@ export async function runBaseline(fixture: BaselineFixture, options: BaselineOpt
   const makeAgent = (): Agent => {
     const agent = Agent.create({
       connector, model, tools: fixture.tools, maxIterations: 6,
+      // Protocol fixtures need controlled sampling, not a vendor's stochastic default.
+      temperature: getModelInfo(model)?.features.parameters?.temperature === false ? undefined : 0,
       thinking: { enabled: false },
       // Gemini 2.5's native default can otherwise spend this fixture's small
       // output cap on thinking. Use the existing explicit provider option.

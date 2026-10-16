@@ -720,3 +720,55 @@ Helper `validationSchema` optionally adds local constraints to the portable nati
 summaries use it to repair all-empty/blank/overlong content before apply. Do not add
 an outer retry or replay source actions. Pending loop checks also bind tool
 principal/account/identity/role/session and connector scope, rejecting stale verdicts.
+
+## Minimal opt-in presets
+
+`createAgentPreset('research' | 'workflow', config)` returns ordinary AgentConfig
+without IO/model calls. Research defaults to observation masking/12 iterations;
+workflow to algorithmic compaction + task state/8. Both enable scoped evidence
+and existing bounded recovery. Require host userId + matching explicit evidence
+scope/storage, and workflow taskId/scope. Explicit settings override defaults;
+null loopPolicy disables recovery. Helpers, hard budgets, permissions and host
+completion predicates remain explicit. Disabled evidence requires a compatible
+strategy. Use `agent.inspectCapabilities()` for actual managed settings/provider
+support, `RuntimeAgent.inspect()` for drivers; neither proves semantic completion.
+Preset names are not authority in portable/session metadata. Foreign scoped state
+must reject restoration, never silently rebind. AMOS `/preset` selects the next
+agent, with active/saved inspection and unchanged live history. Read
+[Agent presets](docs/AGENT_PRESETS.md) before composing or transferring policy.
+
+Preset corrections: undefined context identity cannot erase the validated host
+principal. Enabled protections require matching built-in plugin instances at
+creation/dispatch; compatible factories are allowed and ordinary custom plugin
+contracts remain unchanged. Opaque/accessor plugin configurations keep receivers.
+Inspection projects declared getter-backed capability fields and omits provider
+extras. Failed resume destroys the candidate and preserves the load error; AMOS
+commits replacement after successful loading/checkpointing and keeps descriptive
+metadata through autosave. See the preset recipe for support boundaries.
+
+Stage 12 second corrections (2026-10-16) preserve caller-owned permission/prompt/
+callback/role bindings on rejected resume, commit high-level load targets only after
+validated restoration, serialize checkpoints with autosave and normalize getter
+scopes. Teardown attempts all reachable owned resources despite plugin errors.
+`context.save` additively accepts a deferred snapshot builder; `loadRaw` retains its
+advanced unvalidated ID-selection behavior. Custom rollback failure blocks saving
+until actual restoration of every damaged plugin or context rebuild. Restore hooks must not await checkpoint IO on their own
+context; loads require idle host execution/edits. See the
+[restoration recipe](docs/AGENT_PRESETS.md#session-restoration-and-cleanup) and
+[latest completion](docs/designs/STAGE_12_SECOND_REVIEW_AND_FIX_PLAN.md#second-corrective-completion--2026-10-16).
+
+
+Stage 12 third corrections (2026-10-16) include construction and synchronous loaded
+notification in shared-resume rollback. Restore original policy/tools/roles/prompt/
+compaction callback/history/session ID before candidate cleanup; partial candidates
+release initialized framework resources while retaining the original error. Ordinary
+managed notification failure also rolls back state/ID. Snapshots use JSON semantics,
+including `toJSON`/Date, without a structured-clone requirement. Failed rollback
+keeps saves blocked until every damaged plugin instance actually restores via a
+valid checkpoint or trusted host `context.restoreState`; missing legacy keys or
+ignored restore hooks do not repair it. Individual plugin methods are not tracked
+as context recovery; rebuild if unrecoverable. Internal admission/binding/capture/
+identity tracking adds no portable authority or required API/session/storage fields.
+Preserve existing JSON serialization and event/exception contracts; narrowing them
+requires explicit approval. Read the [latest completion](docs/designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16)
+and [restoration recipe](docs/AGENT_PRESETS.md#session-restoration-and-cleanup).

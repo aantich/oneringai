@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Stage 12 third corrections include candidate construction and synchronous loaded
+  notifications in shared-context resume rollback, restore original authority before
+  cleanup, and clean partially constructed candidates while retaining original
+  errors. Ordinary managed-load notification rejection also restores prior state/ID.
+  Rollback snapshots honor the existing JSON contract (`toJSON`/Date); serialization
+  errors precede mutation. Per-plugin recovery keeps saves blocked across legacy
+  loads missing damaged plugins; actual checkpoint or trusted context restoration
+  repairs them. No required API, session/storage schema, event field or default change.
+  AMOS commands, offline/public consumers and failure regressions cover these paths.
+
+- Stage 12 second corrections preserve caller-owned permission/prompt/callback/role
+  bindings on rejected resumes, commit high-level session IDs after validated
+  restoration, serialize saves with restoration, and normalize getter-backed scope
+  requirements. Teardown attempts all owned resources after plugin errors. Existing
+  raw-load activation and saved formats remain unchanged; `context.save` additively
+  accepts a deferred snapshot builder. Custom rollback failure blocks saves until
+  successful restoration of each damaged plugin. Actual AMOS autosave and public compatibility regressions
+  accompany the [restoration recipe](docs/AGENT_PRESETS.md#session-restoration-and-cleanup).
+
+- Stage 12 review corrections preserve scoped preset principals and opaque plugin
+  configuration, verify actual built-in protections before dispatch, project only
+  declared provider capabilities (including getters), clean failed resume candidates,
+  make AMOS replacement transactional and retain session labels through autosave.
+  Existing Agent, external plugin and file-storage defaults/formats remain unchanged.
+
+- Stage 12 opt-in `createAgentPreset('research' | 'workflow', config)` and detached
+  `Agent.inspectCapabilities()` metadata; explicit evidence/task scope, overrides,
+  existing managed policies, no helper/verifier/default or protocol changes.
+  AMOS `/preset` saves next-agent selection, inspects active capabilities and records
+  descriptive checkpoint metadata. Offline examples and opt-in three-provider smoke
+  coverage accompany the [recipe](docs/AGENT_PRESETS.md). Branch availability only.
+
+
 ### Added
 
 - Stage 10 opt-in managed `loopPolicy`: bounded failure/progress/completion

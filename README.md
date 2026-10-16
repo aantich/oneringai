@@ -6,6 +6,17 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-22.13%2B%20%7C%2024%2B-green.svg)](https://nodejs.org/)
 
+Opt-in managed Agent presets are available on the Version 2 branch:
+`createAgentPreset('research' | 'workflow', config)` composes existing evidence,
+context strategies and bounded recovery; workflow also enables host-controlled
+task state. Supply explicit ownership/storage, inspect `agent.inspectCapabilities()`,
+and keep helpers/completion checks explicit. Failed shared resumes restore caller
+state and authority before cleanup; plugin rollback follows the existing JSON
+contract and blocks saves until affected plugins recover. Ordinary Agent defaults
+are unchanged.
+See [presets and inspection](docs/AGENT_PRESETS.md), the
+[runnable example](examples/agentic-presets.ts), and [Version 2 availability](docs/VERSION_2_GUIDE.md).
+
 ## What's new in 1.2.0
 
 OneRingAI 1.2.0 expands the GPT-6 Astra work into a current,
@@ -1158,7 +1169,11 @@ For complete documentation, see the [User Guide](./USER_GUIDE.md#tool-permission
 
 ### 5. Session Persistence
 
-Save and resume full context state including conversation history and plugin states:
+Save and resume full context state including conversation history and plugin states.
+High-level loads commit their save target only after validated restoration; rejected
+scoped loads preserve the prior session, and autosave waits for restoration. See
+the [restoration boundaries](docs/AGENT_PRESETS.md#session-restoration-and-cleanup)
+for custom restore hooks, shared contexts and the advanced raw-load API.
 
 ```typescript
 import { AgentContextNextGen, createFileContextStorage } from '@everworker/oneringai';

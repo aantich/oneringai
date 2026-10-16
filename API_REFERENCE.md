@@ -29,7 +29,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Utilities](#utilities) (10 items)
 - [Interfaces](#interfaces) (86 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (791 items)
+- [Other](#other) (795 items)
 
 ## Core
 
@@ -37,7 +37,7 @@ Core classes for authentication, agents, and providers
 
 ### Agent `class`
 
-📍 [`src/core/Agent.ts:409`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:413`](src/core/Agent.ts)
 
 Agent class - represents an AI assistant with tool calling capabilities
 
@@ -72,13 +72,13 @@ Resume an agent from a saved session
 ```typescript
 static async resume(
     sessionId: string,
-    config: Omit&lt;AgentConfig, 'session'&gt; & { session: { storage: IContextStorage } }
+    config: Omit&lt;AgentConfig, 'session'&gt; & { session: NonNullable&lt;AgentConfig['session']&gt; & { storage: IContextStorage } }
   ): Promise&lt;Agent&gt;
 ```
 
 **Parameters:**
 - `sessionId`: `string`
-- `config`: `Omit&lt;AgentConfig, "session"&gt; & { session: { storage: IContextStorage; }; }`
+- `config`: `Omit&lt;AgentConfig, "session"&gt; & { session: BaseSessionConfig & { storage: IContextStorage; }; }`
 
 **Returns:** `Promise&lt;Agent&gt;`
 
@@ -484,6 +484,16 @@ getRuntimeConfigSnapshot(
 - `options`: `{ includeHostLocal?: boolean | undefined; }` *(optional)* (default: `{}`)
 
 **Returns:** `AgentRuntimeConfigSnapshot`
+
+#### `inspectCapabilities()`
+
+Inspect resolved managed-Agent settings and provider support without model or storage IO.
+
+```typescript
+inspectCapabilities(): AgentCapabilityInspection
+```
+
+**Returns:** `AgentCapabilityInspection`
 
 #### `getInstructionTemplate()`
 
@@ -1755,7 +1765,7 @@ isDisposed(): boolean
 
 ### AgentConfig `interface`
 
-📍 [`src/core/Agent.ts:86`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:90`](src/core/Agent.ts)
 
 Agent configuration - extends BaseAgentConfig with Agent-specific options
 
@@ -1818,7 +1828,7 @@ Example: `toolExecutionTimeout: 300000` (5 minutes hard cap per tool call) |
 
 ### AgentContextRolloverOptions `interface`
 
-📍 [`src/core/Agent.ts:222`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:226`](src/core/Agent.ts)
 
 Options for {@link Agent.rolloverContext}.
 
@@ -1976,7 +1986,7 @@ Fetch options with additional connector-specific settings
 
 ### ExternalExecutionOptions `interface`
 
-📍 [`src/core/Agent.ts:247`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:251`](src/core/Agent.ts)
 
 Options for a non-LLM execution owned by an external transport.
 
@@ -1994,7 +2004,7 @@ Options for a non-LLM execution owned by an external transport.
 
 ### ExternalExecutionResult `interface`
 
-📍 [`src/core/Agent.ts:262`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:266`](src/core/Agent.ts)
 
 Terminal data supplied when an external execution is completed.
 
@@ -2014,7 +2024,7 @@ Terminal data supplied when an external execution is completed.
 
 ### ExternalToolCall `interface`
 
-📍 [`src/core/Agent.ts:255`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:259`](src/core/Agent.ts)
 
 A function call received from an external model transport.
 
@@ -2033,7 +2043,7 @@ A function call received from an external model transport.
 
 ### RunOptions `interface`
 
-📍 [`src/core/Agent.ts:188`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:192`](src/core/Agent.ts)
 
 Per-call options for run() and stream().
 These override the agent-level config for this single invocation.
@@ -2075,7 +2085,7 @@ type AgentEventListener = (agentId: string, agentName: string, event: string, da
 
 ### AgentRuntimeConfigSnapshot `type`
 
-📍 [`src/core/Agent.ts:168`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:172`](src/core/Agent.ts)
 
 Agent runtime options exposed by getRuntimeConfigSnapshot().
 
@@ -2101,7 +2111,7 @@ type AgentRuntimeConfigSnapshot = Pick&lt;AgentConfig,
 
 ### AgentSessionConfig `type`
 
-📍 [`src/core/Agent.ts:81`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:85`](src/core/Agent.ts)
 
 Session configuration for Agent (same as BaseSessionConfig)
 
@@ -26021,7 +26031,7 @@ tools carry a canonical definition fingerprint for wire consistency. |
 
 ### RemoteToolError `interface`
 
-📍 [`src/portable/types.ts:208`](src/portable/types.ts)
+📍 [`src/portable/types.ts:210`](src/portable/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26038,7 +26048,7 @@ tools carry a canonical definition fingerprint for wire consistency. |
 
 ### RemoteToolExecutionRequest `interface`
 
-📍 [`src/portable/types.ts:200`](src/portable/types.ts)
+📍 [`src/portable/types.ts:202`](src/portable/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26057,7 +26067,7 @@ tools carry a canonical definition fingerprint for wire consistency. |
 
 ### RemoteToolTransport `interface`
 
-📍 [`src/portable/types.ts:231`](src/portable/types.ts)
+📍 [`src/portable/types.ts:233`](src/portable/types.ts)
 
 Host-supplied authenticated transport. OneRingAI owns the wire DTO and proxy tool behavior.
 
@@ -27229,7 +27239,7 @@ type PortableToolPlacementResolver = (
 
 ### RemoteToolExecutionResponse `type`
 
-📍 [`src/portable/types.ts:214`](src/portable/types.ts)
+📍 [`src/portable/types.ts:216`](src/portable/types.ts)
 
 ```typescript
 type RemoteToolExecutionResponse = | {
@@ -43094,7 +43104,7 @@ destroy(): void
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:152`](src/core/context-nextgen/AgentContextNextGen.ts)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:153`](src/core/context-nextgen/AgentContextNextGen.ts)
 
 Next-generation context manager for AI agents.
 
@@ -43534,14 +43544,14 @@ Save context state to storage.
 async save(
     sessionId?: string,
     metadata?: Record&lt;string, unknown&gt;,
-    stateOverride?: SerializedContextState
+    stateOverride?: SerializedContextState | (() =&gt; SerializedContextState | Promise&lt;SerializedContextState&gt;)
   ): Promise&lt;void&gt;
 ```
 
 **Parameters:**
 - `sessionId`: `string | undefined` *(optional)*
 - `metadata`: `Record&lt;string, unknown&gt; | undefined` *(optional)*
-- `stateOverride`: `SerializedContextState | undefined` *(optional)*
+- `stateOverride`: `SerializedContextState | (() =&gt; SerializedContextState | Promise&lt;SerializedContextState&gt;) | undefined` *(optional)*
 
 **Returns:** `Promise&lt;void&gt;`
 
@@ -43558,10 +43568,30 @@ async load(sessionId: string): Promise&lt;boolean&gt;
 
 **Returns:** `Promise&lt;boolean&gt;`
 
+#### `restoreSession()`
+
+```typescript
+async restoreSession(
+    sessionId: string,
+    restore: (state: SerializedContextState) =&gt; void | Promise&lt;void&gt;,
+    restoreJournal = false,
+    admit?: (loaded: boolean) =&gt; void,
+  ): Promise&lt;boolean&gt;
+```
+
+**Parameters:**
+- `sessionId`: `string`
+- `restore`: `(state: SerializedContextState) =&gt; void | Promise&lt;void&gt;`
+- `restoreJournal`: `boolean` *(optional)* (default: `false`)
+- `admit`: `((loaded: boolean) =&gt; void) | undefined` *(optional)*
+
+**Returns:** `Promise&lt;boolean&gt;`
+
 #### `loadRaw()`
 
 Load raw state from storage without restoring.
-Used by BaseAgent for custom state restoration.
+Retains the legacy active-session-ID side effect; does not validate/restore.
+Managed Agent loads use transactional restoration instead.
 
 ```typescript
 async loadRaw(sessionId: string): Promise&lt;{ state: SerializedContextState; stored: StoredContextSession } | null&gt;
@@ -50580,6 +50610,39 @@ Explicit grant beyond owner/group/world. `actions` aligns with `Permission`.
 |----------|------|-------------|
 | `principal` | `principal: Principal;` | - |
 | `actions` | `actions: Array&lt;'read' | 'write'&gt;;` | - |
+
+</details>
+
+---
+
+### AgentCapabilityInspection `interface`
+
+📍 [`src/core/presets.ts:26`](src/core/presets.ts)
+
+Metadata only: no credentials, instructions, tool arguments or stored content.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `runtime` | `runtime: 'managed-agent';` | - |
+| `connector` | `connector: string;` | - |
+| `model` | `model: string;` | - |
+| `registry` | `registry: { known: boolean; vendorMatches: boolean | null; active: boolean | null };` | - |
+| `provider` | `provider: ModelCapabilities;` | - |
+| `advanced?` | `advanced?: AdvancedTextCapabilities;` | - |
+| `context` | `context: {
+    features: ResolvedContextFeatures;
+    plugins: string[];
+    strategy: string;
+    maxContextTokens: number;
+    responseReserve: number;
+    evidenceDurability?: EvidenceDurability;
+  };` | - |
+| `loop` | `loop: { enabled: boolean; hostCompletionCheck: boolean; maxIterations: number };` | - |
+| `helpers` | `helpers: Partial&lt;Record&lt;HelperRole, { connector: string; model: string; allowContextTransfer: boolean }&gt;&gt;;` | - |
+| `notices` | `notices: string[];` | This is configuration inspection, not authentication, semantic quality or host-completion validation. |
 
 </details>
 
@@ -63102,6 +63165,32 @@ type AgentPackageProtocolVersion = typeof AGENT_PACKAGE_PROTOCOL_VERSION
 
 ---
 
+### AgentPresetConfig `type`
+
+📍 [`src/core/presets.ts:21`](src/core/presets.ts)
+
+Existing Agent options; the factory supplies context.model from the main model.
+
+```typescript
+type AgentPresetConfig = Omit&lt;AgentConfig, 'context'&gt; & {
+  context?: Partial&lt;AgentContextNextGenConfig&gt;;
+}
+```
+
+---
+
+### AgentPresetName `type`
+
+📍 [`src/core/presets.ts:18`](src/core/presets.ts)
+
+Explicit compositions of delivered managed-Agent features. Plain Agent remains unchanged.
+
+```typescript
+type AgentPresetName = 'research' | 'workflow'
+```
+
+---
+
 ### AgentResponse `type`
 
 📍 [`src/domain/entities/Response.ts:134`](src/domain/entities/Response.ts)
@@ -63745,7 +63834,7 @@ type HookName = keyof Omit&lt;HookConfig, 'hookTimeout' | 'parallelHooks'&gt;
 
 ### HydrateAgentPackageOptions `type`
 
-📍 [`src/portable/types.ts:184`](src/portable/types.ts)
+📍 [`src/portable/types.ts:186`](src/portable/types.ts)
 
 Hydration always requires the trusted host to select both connector and
 model. Package values are hints for the resolver, never authorization.
@@ -64959,6 +65048,22 @@ stack overflow — wrong failure mode for a library safety net.
 export function coerceMetadataDates&lt;T extends Record&lt;string, unknown&gt; | undefined&gt;(
     metadata: T,
 ): T
+```
+
+---
+
+### createAgentPreset `function`
+
+📍 [`src/core/presets.ts:68`](src/core/presets.ts)
+
+Compose an ordinary AgentConfig without creating an Agent, accessing credentials,
+doing storage IO or calling a model. Explicit values override preset defaults;
+nested feature/plugin maps merge by key. Opaque host objects remain host-owned.
+Evidence requires a host-selected scope, backend and matching userId. Workflow
+also requires host-selected task state. No helper, permission or verifier is invented.
+
+```typescript
+export function createAgentPreset(name: AgentPresetName, config: AgentPresetConfig): AgentConfig
 ```
 
 ---

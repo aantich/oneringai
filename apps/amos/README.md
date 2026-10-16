@@ -39,6 +39,7 @@ On first run, you'll be prompted to configure an API key.
 | Command | Alias | Description |
 |---------|-------|-------------|
 | `/help` | | Show all commands |
+| `/preset [inspect\|set research\|workflow\|off]` | `/profile` | Save next-agent selection and inspect actual capabilities |
 | `/helpers [sub]` | `/helper` | Configure explicit helper models, invoke them and inspect purpose usage |
 | `/model [name]` | `/m` | List or switch models |
 | `/astra <sub>` | `/gpt6` | Use Astra and demonstrate its Responses APIs |
@@ -476,3 +477,35 @@ and fallback. The strategy/CLI/configuration defaults are unchanged. The public
 nonempty validation; no new AMOS command or saved configuration field is required.
 Loop completion/progress verdicts also reject account/identity/role/session or
 connector-scope rebinding while a host check is pending.
+
+## Opt-in presets
+
+`/preset set research` selects evidence + observation masking + bounded recovery
+(12 iterations); `/preset set workflow` selects evidence + protected task state +
+algorithmic compaction + bounded recovery (8). Configure explicit evidence
+ownership/storage first; workflow requires taskState with matching scope/taskId.
+Selection is preflighted and saved for next agent initialization. `/session new`
+applies it; current history and Agent stay unchanged until then. `/preset inspect`
+labels active and saved choices and uses public resolved-capability inspection
+without model calls or stored content. `/profile` is an alias.
+
+Existing `contextStrategy`, `loopPolicy`, helpers, evidence/task settings and optional
+`maxIterations` override presets. `/preset set off` removes preset defaults on next
+initialization; explicitly enabled features remain. Missing/null preset keeps
+legacy behavior. Failed saves restore prior selection/property absence. Explicit
+session saves and periodic autosave retain titles and descriptive `agenticPreset`
+metadata in checkpoint and listing; loading never restores policy authority from
+that name. Candidate startup/load failures keep the old runner and session pointer;
+failed candidates are destroyed. Fresh sessions checkpoint unstored observations
+before release, and active/background tool deliveries block replacement. AMOS supplies no automatic workflow verifier or
+helper model. Rejected `/session load` commands preserve the live context ID,
+configured pointer and original checkpoint; periodic/named/unnamed saves continue
+targeting the active session. Scoped foreign checkpoints remain untouched. A synchronous loaded-notification
+failure also restores the prior state/pointer and reports the original error.
+JSON-converting extension state loads through the existing file adapter. After a
+plugin refuses rollback, `/session save` remains blocked even if a legacy session
+omits that plugin; load a checkpoint that actually restores it, use trusted host
+context repair, or rebuild the context. Never replay an action to repair storage.
+Scope/checkpoint validation remains enforced. Read the
+[full recipe](../../docs/AGENT_PRESETS.md) and run `npm run example:amos-presets`
+from the repository root after building for the deterministic cleanup walkthrough.

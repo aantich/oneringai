@@ -388,7 +388,7 @@ export abstract class BaseAgent<
 
   // ===== Constructor =====
 
-  constructor(config: TConfig, loggerComponent: string) {
+  constructor(config: TConfig, loggerComponent: string, captureConstruction?: (agent: BaseAgent<TConfig, TEvents>) => void) {
     super();
     this._config = config;
 
@@ -413,22 +413,11 @@ export abstract class BaseAgent<
       connector: this.connector.name,
     });
 
+    // Internal resume admission can clean a partially initialized candidate.
+    captureConstruction?.(this);
+
     // Initialize AgentContext FIRST (single source of truth for tools and sessions)
     this._agentContext = this.initializeAgentContext(config);
-
-    // Register tools with AgentContext if provided
-    if (config.tools) {
-      for (const tool of config.tools) {
-        this._agentContext.tools.register(tool);
-      }
-    }
-
-    // Auto-generate and register connector tools from identities.
-    // Each identity produces account-prefixed tools with 'connector:name[:accountId]' source
-    // metadata, enabling identity filtering in getEnabledToolDefinitions().
-    if (config.identities?.length) {
-      this.registerIdentityTools(config.identities, config.userId, config.registry);
-    }
 
     // Initialize permission managers (legacy + policy-based)
     this._permissionManager = this.initializePermissionManager(config.permissions, config.tools);
@@ -444,6 +433,20 @@ export abstract class BaseAgent<
         ...existing,
         roles: config.userRoles,
       });
+    }
+
+    // Register tools with AgentContext if provided
+    if (config.tools) {
+      for (const tool of config.tools) {
+        this._agentContext.tools.register(tool);
+      }
+    }
+
+    // Auto-generate and register connector tools from identities.
+    // Each identity produces account-prefixed tools with 'connector:name[:accountId]' source
+    // metadata, enabling identity filtering in getEnabledToolDefinitions().
+    if (config.identities?.length) {
+      this.registerIdentityTools(config.identities, config.userId, config.registry);
     }
 
     // Initialize lifecycle hooks
@@ -604,14 +607,14 @@ export abstract class BaseAgent<
    * Initialize session management (call from subclass constructor after other setup)
    * Now uses AgentContext.save()/load() for persistence.
    */
-  protected initializeSession(sessionConfig?: BaseSessionConfig): void {
+  protected initializeSession(sessionConfig?: BaseSessionConfig, alreadyLoaded = false): void {
     if (!sessionConfig) {
       return;
     }
 
     this._sessionConfig = sessionConfig;
 
-    if (sessionConfig.id) {
+    if (sessionConfig.id && !alreadyLoaded) {
       // Resume existing session (async)
       this._pendingSessionLoad = this.loadSession(sessionConfig.id);
     }
@@ -675,8 +678,7 @@ export abstract class BaseAgent<
   async saveSession(sessionId?: string, metadata?: ContextSessionMetadata): Promise<void> {
     await this.ensureSessionLoaded();
     // Get state via overridable method (allows agents to inject agentState)
-    const state = await this.getContextState();
-    await this._agentContext.save(sessionId, metadata, state);
+    await this._agentContext.save(sessionId, metadata, () => this.getContextState());
     this._logger.debug({ sessionId: this._agentContext.sessionId }, 'Session saved');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (this.emit as any)('session:saved', { sessionId: this._agentContext.sessionId });
@@ -691,18 +693,21 @@ export abstract class BaseAgent<
    * @throws Error if storage is not configured
    */
   async loadSession(sessionId: string): Promise<boolean> {
-    // Load raw state (doesn't restore yet)
-    const result = await this._agentContext.loadRaw(sessionId);
-    if (!result) {
+    const loaded = await this._agentContext.restoreSession(sessionId, state => this.restoreContextState(state), false, found => {
+      if (found) this.notifySessionLoaded(sessionId);
+    });
+    if (!loaded) {
       this._logger.warn({ sessionId }, 'Session not found');
       return false;
     }
-    // Restore via overridable method (allows agents to restore agentState)
-    await this.restoreContextState(result.state);
+    return true;
+  }
+
+  /** @internal Keep successful preload/resume notifications identical to managed loads. */
+  protected notifySessionLoaded(sessionId: string): void {
     this._logger.info({ sessionId }, 'Session loaded');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (this.emit as any)('session:loaded', { sessionId });
-    return true;
   }
 
   /**
@@ -1567,16 +1572,16 @@ export abstract class BaseAgent<
     }
 
     // Cleanup AgentContext only if we own it (not shared with other agents)
-    if (this._ownsContext) {
-      this._agentContext.destroy();
-    }
-
-    // Cleanup permission managers
-    this._permissionManager.removeAllListeners();
-    this._policyManager.destroy();
-
-    // Remove all event listeners
+    let failed = false;
+    let failure: unknown;
+    const cleanup = (action: () => void) => {
+      try { action(); } catch (error) { if (!failed) { failed = true; failure = error; } }
+    };
+    if (this._ownsContext) cleanup(() => this._agentContext?.destroy());
+    cleanup(() => this._permissionManager?.removeAllListeners());
+    cleanup(() => this._policyManager?.destroy());
     this.removeAllListeners();
+    if (failed) throw failure;
 
     // Emit destroyed event (before removing listeners)
     // Note: This won't be received since we removed listeners above

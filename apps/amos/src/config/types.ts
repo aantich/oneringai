@@ -18,6 +18,8 @@ import type {
   TaskStateHostDelta,
   AgentLoopPolicy,
   AgentLoopDiagnostics,
+  AgentPresetName,
+  AgentCapabilityInspection,
 } from '@everworker/oneringai';
 import type { ExternalToolManager } from '../tools/ExternalToolManager.js';
 
@@ -26,6 +28,10 @@ import type { ExternalToolManager } from '../tools/ExternalToolManager.js';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface AmosConfig {
+  /** Explicit preset for the next agent initialization; absence/null preserves legacy configuration. */
+  preset?: AgentPresetName | null;
+  /** Optional explicit override of preset/Agent iteration limits. */
+  maxIterations?: number;
   /** JSON-safe opt-in progress/recovery limits. Host callbacks are configured separately. */
   loopPolicy?: Omit<AgentLoopPolicy, 'completion' | 'progressKey'> | null;
   /** Opt-in deterministic host task state. Commands edit memory; /session save checkpoints it. */
@@ -304,6 +310,8 @@ export interface PromptTemplate {
 }
 
 export interface IAgentRunner {
+  inspectCapabilities?(): { activePreset: AgentPresetName | null; capabilities: AgentCapabilityInspection };
+  validatePreset?(preset: AgentPresetName | null, settings?: AmosConfig): void;
   getLoopDiagnostics?(): AgentLoopDiagnostics | undefined;
   /** Host-only, process-local override; never restored from a saved session. */
   setLoopPolicy?(policy: AgentLoopPolicy | null): void;

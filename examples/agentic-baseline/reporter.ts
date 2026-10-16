@@ -23,6 +23,8 @@ export interface BaselineStep {
   outcome: 'pending' | 'response' | 'library_completed' | 'error' | 'timeout';
   durationMs: number | null;
   usage: { input: number | null; output: number | null; total: number | null } | null;
+  /** Payload-free completion diagnostics; an HTTP success is not fixture completion. */
+  response?: { status: string; stopReason: string | null; textChars: number; textSHA256: string };
 }
 
 export interface BaselineRun {
@@ -96,6 +98,9 @@ export class BaselineReporter {
       const step = this.pending(event.executionId, event.iteration);
       if (!step) return;
       step.outcome = 'response';
+      const text = event.response.output_text ?? '';
+      step.response = { status: event.response.status, stopReason: event.response.stop_reason ?? null,
+        textChars: text.length, textSHA256: createHash('sha256').update(text).digest('hex') };
       step.name = event.response.model;
       step.durationMs = knownNumber(event.duration);
       step.usage = {

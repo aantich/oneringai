@@ -318,3 +318,23 @@ The structured-compaction live gate additionally injects the recorded empty
 Google summary after a real call, then requires a real Google repair, source
 retrieval and exact final constraints without masking fallback. All fault
 injection is labeled in the report and uses synthetic source data.
+
+### Stage 12: opt-in presets and capability inspection
+
+Build first, then `npm run example:agentic-presets` runs
+[`agentic-presets.ts`](agentic-presets.ts) without keys/network: plain Agent,
+research/workflow compositions, explicit host evidence scope, workflow completion
+override, resolved settings and unavailable-feature diagnostics. It verifies call
+counts, accepts getter-backed host scopes, demonstrates a rejected shared resume
+retaining blocked-tool authority/checkpoint A and JSON-converting plugin recovery,
+and destroys all agents/contexts and temporary files. `npm run example:amos-presets` runs the AMOS
+selection/persistence/inspection walkthrough, verifies rejected-load checkpoint
+protection and removes temporary files.
+`npm run test:presets:live` is a separate billable OpenAI/Anthropic/Google gate
+using `.env`; it also verifies original-history continuation after the three session
+recovery paths on every provider. No external writes. See the [recipe](../docs/AGENT_PRESETS.md).
+
+The Stage 12 AMOS preset walkthrough also demonstrates candidate-first handoff,
+failed-candidate preservation, and title retention across named/unnamed saves.
+The actual app/session command and timer-backed autosave paths are covered by
+[latest corrective validation](../docs/evaluations/STAGE_12_THIRD_CORRECTIONS.json).

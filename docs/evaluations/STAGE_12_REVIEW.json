@@ -1,0 +1,141 @@
+{
+  "protocol": "stage12-review-v1",
+  "recordedAt": "2026-10-16T15:40:02.878355+00:00",
+  "branch": "version2",
+  "baseCommit": "393b10c",
+  "status": "seven confirmed findings open; runtime unchanged by review",
+  "findings": [
+    {
+      "id": "F01",
+      "priority": "P1",
+      "title": "Undefined context principal widens connector access"
+    },
+    {
+      "id": "F02",
+      "priority": "P1",
+      "title": "App replacement destroys the active runner before candidate success"
+    },
+    {
+      "id": "F03",
+      "priority": "P2",
+      "title": "Rejected resume retains an orphan registered Agent"
+    },
+    {
+      "id": "F04",
+      "priority": "P2",
+      "title": "Getter capabilities disappear and unrelated provider fields are exposed"
+    },
+    {
+      "id": "F05",
+      "priority": "P2",
+      "title": "Opaque plugin configurations lose prototype settings"
+    },
+    {
+      "id": "F06",
+      "priority": "P2",
+      "title": "Required built-in protections are not verified"
+    },
+    {
+      "id": "F07",
+      "priority": "P2",
+      "title": "Periodic autosave erases preset metadata and title"
+    }
+  ],
+  "observations": [
+    {
+      "id": "principal",
+      "normalUser": "review-owner",
+      "explicitUndefinedUser": null,
+      "normalCanSeeForeign": false,
+      "undefinedCanSeeForeign": true
+    },
+    {
+      "id": "getterCapabilities",
+      "reported": {},
+      "runText": "valid provider execution"
+    },
+    {
+      "id": "extraCapabilities",
+      "unexpectedField": "REVIEW_SENTINEL_NOT_A_SECRET"
+    },
+    {
+      "id": "pluginConfig",
+      "directValue": 7,
+      "presetValue": null
+    },
+    {
+      "id": "replacedTaskState",
+      "accepted": true,
+      "reportedEnabled": true,
+      "hasBuiltinProtection": false
+    },
+    {
+      "id": "replacedEvidence",
+      "accepted": true,
+      "reportedEnabled": true,
+      "compactionError": "Transactional compaction requires the enabled built-in evidence plugin"
+    },
+    {
+      "id": "autosaveMetadata",
+      "before": {
+        "title": "review-title",
+        "agenticPreset": "workflow"
+      },
+      "after": {},
+      "afterCheckpointPreset": null
+    },
+    {
+      "id": "appReplacement",
+      "selectionSucceeded": true,
+      "startupError": "Injected next-agent startup failure",
+      "previousReady": false,
+      "replacementReady": false,
+      "previousSessionId": null
+    },
+    {
+      "id": "failedCandidate",
+      "loadError": "Evidence invalid",
+      "activePreserved": true,
+      "registryCountDelta": 1
+    }
+  ],
+  "validation": {
+    "existingFocusedTests": {
+      "command": "npx vitest run tests/unit/presets tests/unit/apps/amos/Presets.test.ts tests/unit/testing/agenticBaseline.test.ts",
+      "files": 4,
+      "passed": 75,
+      "failed": 0,
+      "logSHA256": "b2602afa1eda350321be54a729c362d3a492159ac7f060b98fd22bc07cd59631"
+    },
+    "strictConsumerCompile": {
+      "passed": true,
+      "cases": [
+        "getter ModelCapabilities class",
+        "indexed class plugin configuration",
+        "explicit undefined context userId"
+      ],
+      "sourceSHA256": "f1fbd5259da674604ee9a41942e0022c490bfe45d99f487186a8f013eb86b6c5"
+    },
+    "reproductions": {
+      "observations": 9,
+      "providers": "local scripted only",
+      "actualAmosApp": true,
+      "actualFileStorageAndTimers": true,
+      "credentialUse": false,
+      "networkCalls": 0,
+      "scriptPath": "/tmp/oneringai-stage12-review-probes.mts",
+      "scriptSHA256": "10c24df88c4a4b5149abe2f9c71b0006d5a93383b05c1cfe6b08351c35b3822a"
+    },
+    "sourceAndBuildMatchDelivery": {
+      "src/core/presets.ts": "1a32ede667087932eddfb8bc986ec2c9b0d1f3bb544fa44711826d9e8517fa7e",
+      "src/core/Agent.ts": "6da865406076904e282b698c7b53a567a807d5e6b956294182df9acac6b9e877",
+      "src/portable/types.ts": "f473cb194a5adea6b9d02be9173e53283e254d822c5b13494179411c2c400616",
+      "dist/index.js": "4becf5565f42cb700b1e37e11ab34bf70d9eeef8b4f941fe17dcb70da5877cf5",
+      "dist/index.cjs": "93323713a5919e18a56e7f21ac0888d5369a96b25b99bb0ecbc9539799d621b0"
+    },
+    "fullUnitAndLiveSuitesRerunThisReview": false
+  },
+  "plan": "../designs/STAGE_12_REVIEW_AND_FIX_PLAN.md",
+  "breakingChangesProposed": false,
+  "runtimeCodeModifiedByReview": false
+}

@@ -2574,6 +2574,28 @@ agent.identities = undefined;
 
 Save and resume agent conversations across restarts using `AgentContextNextGen` and `FileContextStorage`.
 
+`agent.loadSession()` and `context.load()` validate protected evidence/task scope,
+association and version before restoration, then commit the active save target on
+success. Rejected loads keep the previous target and scoped state; checkpoint saves
+wait for restoration. Custom restore hooks retain their extension point and must
+honor serializable plugin state; saves fail closed if a plugin refuses rollback.
+Recovery requires successful restoration of every affected plugin instance; a legacy
+checkpoint missing it does not clear the guard. Trusted host
+`context.restoreState(goodSnapshot)` can also repair it. Rollback snapshots follow
+the existing JSON contract, including `toJSON` hooks. A synchronous loaded-notification
+error rolls back state and ID with its original error. Run loads while execution/host
+edits are idle.
+
+`context.save(id?, metadata?, state?)` keeps existing serialized overrides and also
+accepts a snapshot builder as its optional third argument; the builder runs after
+preceding checkpoint operations. `loadRaw()` retains its legacy unvalidated session
+ID selection and is not the managed restore path. Failed shared-context resumes
+include construction and synchronous notification in the transaction, restoring
+permission/tool/prompt/callback/role bindings before candidate cleanup. Cleanup attempts all owned resources even if a plugin throws; direct
+`destroy()` reports the first teardown error after cleanup. Read the
+[complete restoration boundaries](docs/AGENT_PRESETS.md#session-restoration-and-cleanup)
+for custom-hook IO, private side effects and shared ownership.
+
 ### Quick Start
 
 ```typescript
@@ -19174,3 +19196,26 @@ See [helper recipe](docs/MODEL_TASKS_AND_HELPERS.md),
 [latest review/fix evidence](docs/designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md).
 Final gates pass 7,988 units, 136 live cases / 148 scenarios and 22 offline examples;
 no breaking API, new defaults or release.
+
+## Opt-in Agent presets and inspection
+
+Use the public `createAgentPreset('research' | 'workflow', config)` factory with
+`Agent.create()`. Research selects observation masking, workflow selects
+algorithmic compaction plus protected task state; both enable explicitly scoped
+evidence and bounded recovery. Defaults are 12/8 main-loop iterations. Explicit
+settings override these defaults, including `loopPolicy: null`. Helpers, hard
+ModelTask limits, permissions and host completion checks remain explicit.
+
+`agent.inspectCapabilities()` reports actual managed configuration and provider
+support without a model/storage call or private content. Per-call overrides and
+external drivers keep their existing ownership. AMOS `/preset` saves next-agent
+selection and distinguishes it from active configuration. Candidate startup/load
+failures preserve the prior AMOS session; recovery observations are checkpointed
+before release. Titles/preset labels survive autosave and unnamed saves. Inspection
+projects declared getter-backed capabilities without exposing provider extras.
+Failed resumes restore caller-owned permission/tool/prompt/role/callback bindings before candidate cleanup, including constructor and synchronous load-notification failures; rejected scoped loads
+retain the active checkpoint and autosave target. Getter-backed scope requirements
+are normalized, and teardown continues after individual plugin errors. JSON-compatible plugin conversion hooks remain supported, and failed rollback keeps saves blocked until every damaged plugin actually recovers. No session/portable protocol changes; scope checks and legacy loading remain intact. Read the
+[complete recipe](docs/AGENT_PRESETS.md) for setup, overrides, failure behavior,
+public examples, runtime boundaries and migration. Availability is on the Version 2
+branch pending a verified package release.

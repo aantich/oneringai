@@ -1,0 +1,189 @@
+{
+  "protocol": "stage12-third-review-v1",
+  "recordedAt": "2026-10-16T18:59:19.738400+00:00",
+  "branch": "version2",
+  "baseCommit": "393b10c",
+  "status": "review complete; one P1 and two P2 findings open; Stage 12 completion withdrawn",
+  "scope": [
+    "All Stage 12 public preset/inspection composition and new second-correction session ownership/restoration/teardown changes.",
+    "AMOS app/runner/command/storage/autosave adoption and portable/runtime/compatibility/documentation boundaries."
+  ],
+  "findings": [
+    {
+      "id": "T1",
+      "priority": "P1",
+      "title": "Shared resume is not transactional through constructor and notification failures",
+      "locations": [
+        "src/core/Agent.ts:553",
+        "src/core/Agent.ts:566",
+        "src/core/Agent.ts:571"
+      ],
+      "observationIds": [
+        "post-load-notification-fail-open",
+        "preload-commits-before-constructor"
+      ],
+      "origin": "New preload and notification/failed-candidate cleanup paths; same earlier permission defect remains reachable after successful storage validation."
+    },
+    {
+      "id": "T2",
+      "priority": "P2",
+      "title": "Rollback snapshot adds unsupported structured-clone requirement to JSON-serializable plugin state",
+      "locations": [
+        "src/core/context-nextgen/AgentContextNextGen.ts:2760",
+        "src/core/context-nextgen/types.ts:381"
+      ],
+      "observationIds": [
+        "json-serializable-plugin-clone-regression"
+      ],
+      "origin": "New rollback cloning rejects an existing documented extension contract before restoration."
+    },
+    {
+      "id": "T3",
+      "priority": "P2",
+      "title": "Loading a checkpoint missing a damaged plugin clears the rollback-save guard without repairing it",
+      "locations": [
+        "src/core/context-nextgen/AgentContextNextGen.ts:2783"
+      ],
+      "observationIds": [
+        "missing-plugin-load-clears-rollback-guard"
+      ],
+      "origin": "New process-local rollback guard is cleared on overall load success even when the failed plugin was never restored."
+    }
+  ],
+  "observations": [
+    {
+      "id": "post-load-notification-fail-open",
+      "originalError": true,
+      "before": "denied",
+      "after": "succeeded",
+      "writes": 1,
+      "attachedPolicyDestroyed": true,
+      "originalAlive": true,
+      "contextAlive": true,
+      "prompt": "REJECTED_PROMPT",
+      "sessionId": "B",
+      "registryDelta": 0
+    },
+    {
+      "id": "preload-commits-before-constructor",
+      "error": "Connector 'not-registered-review-connector' not found. Available: review-main",
+      "sessionId": "B",
+      "prompt": "B_STORED_PROMPT",
+      "history": "[{\"type\":\"message\",\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"HISTORY_B\"}]}]",
+      "ownerAlive": true
+    },
+    {
+      "id": "missing-plugin-load-clears-rollback-guard",
+      "failedLoad": "plugin refuses restore",
+      "blockedSave": "Checkpoint rollback failed; load a valid session before saving",
+      "loadedMissingPlugin": true,
+      "valueAfterLoad": "UNCERTAIN_STATE",
+      "saveError": "",
+      "persistedValue": "UNCERTAIN_STATE"
+    },
+    {
+      "id": "json-serializable-plugin-clone-regression",
+      "jsonSerializationSucceeded": true,
+      "storedState": {
+        "version": 1,
+        "value": "SAVED_VALUE"
+      },
+      "loadError": "toJSON(){return{version:1,value}} could not be cloned.",
+      "loadErrorName": "DataCloneError",
+      "valueAfterFailure": "LATER_VALUE",
+      "directRestoreValue": "SAVED_VALUE"
+    }
+  ],
+  "validation": {
+    "focused": {
+      "command": "npx vitest run tests/unit/presets tests/unit/apps/amos/Presets.test.ts tests/unit/apps/amos/PresetCorrections.test.ts tests/unit/apps/amos/ModelHelpersAdapter.test.ts tests/unit/core/BaseAgent.test.ts tests/unit/core/Agent.test.ts",
+      "passedTests": 222,
+      "files": 9,
+      "exitCode": 0,
+      "logSHA256": "390c8b7f432943cdc8edaad2db57682c1672416dbaca38d9f2587f0069526929"
+    },
+    "publicTypes": {
+      "command": "npx tsc --noEmit -p /tmp/oneringai-stage12-third-review-types/tsconfig.json",
+      "exitCode": 0,
+      "sourceSHA256": "7cd68b14d4dc99c71db21fdc124d838eb9988f138d90c0427707cb5a1cdbedc5",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "probes": [
+      {
+        "command": "node --import tsx /tmp/oneringai-stage12-third-review-probes.mts",
+        "exitCode": 0,
+        "observations": 3,
+        "scriptSHA256": "1c1d1c5f135982dee70ffa578ad957eab70eb06139adc21bde9c40353fd06255",
+        "outputSHA256": "00d1bf8069860a1b6f8f71c2a17509296238ec8e0b75cb7234a35b1785c5674b"
+      },
+      {
+        "command": "node --import tsx /tmp/oneringai-stage12-third-review-json-probe.mts",
+        "exitCode": 0,
+        "observations": 1,
+        "scriptSHA256": "1bdefb15132fe2d3d77db1f5b8123b9f92f83c3c817c4e0819445f198d2d079c",
+        "outputSHA256": "0b47740b9ab5aeda3e03a5a71c10e3befff5ca5564724a21b36c06079bb13560"
+      }
+    ],
+    "runtimeBuildTestExampleFingerprintsMatchPreviousValidation": true,
+    "artifactsSHA256": {
+      "src/core/presets.ts": "3de138ff1dbe4cfb553ac7a220899b05db3928ea79d14d6af09da2afa8dd918d",
+      "src/core/Agent.ts": "dd118e3c23c88fe507abd38baef60c91b8a5c8bcff4e8cd58698338a0565426e",
+      "src/core/BaseAgent.ts": "e82dd69af4d98109680927ad435ceae8db05b564f67a22c4610d7834610ce9f4",
+      "src/core/context-nextgen/AgentContextNextGen.ts": "fa83cdfdde496326c8262740dc53e495c79f093425f674e379a21c622a608d3f",
+      "src/core/context-nextgen/presetRequirements.ts": "563a9444b8298e544effdee3f263c4687ff864c08501cf744806367e7d4fe9e3",
+      "src/core/capabilityInspection.ts": "5d7e4e18a6577ea8719754f8fb691ce9f088ff49cececbdccfd83cf0f12b685d",
+      "src/portable/types.ts": "f473cb194a5adea6b9d02be9173e53283e254d822c5b13494179411c2c400616",
+      "src/tools/registry.generated.ts": "d4220686e993132a2a3381dd28654ca319b196e6aa712050fd5cfa35dbc5bc58",
+      "apps/amos/src/app.ts": "145ca626ad4f4c71b2d2da425de49243b0b62c60f6223ca60b9a5084b65d2667",
+      "apps/amos/src/agent/AgentRunner.ts": "37e914d0b92967904bc2bad6e5f5e535c4f5c1f2fe2e30f0c73c17b1a2b9d5e5",
+      "apps/amos/src/agent/AmosSessionStorage.ts": "a69807ab30ef145b3c720e6e1bae6bd87875117ad865541209deab88de5c4e0f",
+      "apps/amos/src/commands/commands/SessionCommand.ts": "1ff20c346b6d25a987e6b242b99aaa98684b403871f4d4328dc1f5de058f795d",
+      "tests/unit/presets/SecondCorrections.test.ts": "0049461ac1e0105218042a793f29a1c17adcaba5505ba27c6b4f308c5b14301e",
+      "tests/unit/presets/Corrections.test.ts": "1b7f0d49bd417c8f6860385336cbe6727bc8da8e060d36648f9bd7cd81687d8c",
+      "tests/unit/apps/amos/PresetCorrections.test.ts": "794f6f3ebbb3b044ee044f9b8ba701086ec2d8952e5ad3161abc9c82981c9d4a",
+      "tests/unit/apps/amos/ModelHelpersAdapter.test.ts": "a38ccfbc1547adecd340932f11fb8ffbb137cfbb7d7fed7f119e136852e5b4f5",
+      "tests/fixtures/agentic-presets/public-runtime.mjs": "ebc9ac86717ae8dea79826cc1b1a409827d86c1c694ad2d1ed21012e8c8d1f0a",
+      "tests/fixtures/agentic-baseline/stage12-consumer.ts": "a9f70216667137611597559f39419f1cf36f9e4c3e39001c31000ec2045774dc",
+      "examples/agentic-presets.ts": "b9b24ad31fd18902e181dcde884a3cfecd01743b49da02abd59d7afc7117e166",
+      "apps/amos/examples/presets-offline.ts": "86fa5d664d006c01430856ef9517246434a6e3253e1aed2e7f26079b7b9be350",
+      "dist/index.js": "4176d209fee85988095fb90d68064ab1c3465114cd0b8b28080826896a9c3abf",
+      "dist/index.cjs": "16a801215db03f1319b3053f4b55e390112cd213491b762cdc4f36c58222c56e",
+      "dist/index.d.ts": "4dcfe2a890f3c0a12639fd2a79fd0aa002e2a2daed740a6be461189262f0dda6",
+      "dist/agent-runtime/index.js": "5647fa56265f1b0fb7ab62f2f04584d6ede5044cc43b0d9f7ae0d61f8702347b",
+      "apps/amos/dist/index.js": "1ad0ff029bbb3476300ee876fb8feb82b5f612e5152f3cebdc78741ffee7f9f5"
+    },
+    "previousValidation": "docs/evaluations/STAGE_12_SECOND_CORRECTIONS.json",
+    "previousPassingUnits": 8116,
+    "previousLiveTests": 148,
+    "previousLoadPathRechecks": 30,
+    "fullUnitRerun": false,
+    "liveProviderRerun": false,
+    "reason": "These missing host error/serialization/recovery paths reproduce deterministically with local providers and actual public APIs/file storage; no new production or model behavior to validate in review."
+  },
+  "reviewChanges": "Documentation/evidence/package inventory only; no implementation fixes, permanent tests, commit, push, release or later-stage work.",
+  "externalActions": "No credentials/network/real LLMs or external service writes; one deliberately admitted local tool increments a counter to expose the permission failure.",
+  "notPromoted": [
+    "AMOS replacement-versus-new-input concurrency requires host calls outside its serialized REPL; no demonstrated normal CLI failure.",
+    "Nested checkpoint IO in restore hooks is already explicitly excluded by the new recipe; no additional supported-contract regression asserted here.",
+    "Prior second-review controls remain controls: context-option prototype getters and post-handoff config-save partial success."
+  ],
+  "packageInventory": {
+    "command": "npm pack --dry-run --ignore-scripts --cache /tmp/oneringai-stage12-package-cache --json",
+    "exitCode": 0,
+    "fileCount": 199,
+    "requiredPresent": [
+      "docs/designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md",
+      "docs/evaluations/STAGE_12_THIRD_REVIEW.json",
+      "docs/VERSION_2_GUIDE.md",
+      "docs/AGENT_PRESETS.md",
+      "AGENTS.md"
+    ],
+    "pathsSHA256": "995c9fc8e448285bdccf985976c58f3f487fb2ddeaa161aa252a58bdb6e265a1",
+    "note": "Review documents only; no build, tarball, publish, commit or push."
+  },
+  "statusHandoff": [
+    "Version 2 current availability, adoption record and handoff ledger mark Stage 12 corrections pending.",
+    "Roadmap/stage/earlier review headers and recipe/AGENTS status point to the third review.",
+    "Historical validation artifacts are unchanged; implementation/build/test/example fingerprints still match."
+  ]
+}

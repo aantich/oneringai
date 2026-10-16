@@ -1,0 +1,195 @@
+{
+  "protocol": "stage12-second-review-v1",
+  "recordedAt": "2026-10-16T17:52:13.869402+00:00",
+  "branch": "version2",
+  "baseCommit": "393b10c",
+  "status": "review complete; two P1 and two P2 findings open",
+  "scope": "Full Stage 12 working tree and first corrective pass; no implementation fixes or permanent tests added by this review.",
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P1",
+      "title": "Failed resume leaves destroyed candidate policy attached to caller-owned context",
+      "location": "src/core/Agent.ts:560-564",
+      "origin": "New rejected-candidate teardown clears the still-installed manager; constructor context binding is an existing behavior."
+    },
+    {
+      "id": "R2",
+      "priority": "P1",
+      "title": "Rejected scoped session load redirects autosave into another checkpoint",
+      "location": "src/core/context-nextgen/AgentContextNextGen.ts:2790-2796",
+      "origin": "Existing raw-load mutation, exposed by preset/scoped AMOS adoption and retained resume autosave."
+    },
+    {
+      "id": "R3",
+      "priority": "P2",
+      "title": "Preset requirement snapshot drops getter-backed scope fields",
+      "location": "src/core/presets.ts:120-122",
+      "origin": "New internal constraint snapshot introduced by first corrective pass."
+    },
+    {
+      "id": "R4",
+      "priority": "P2",
+      "title": "One teardown exception prevents the remaining rejected candidate cleanup",
+      "location": "src/core/context-nextgen/AgentContextNextGen.ts:343-345",
+      "origin": "New automatic rejection cleanup calls an existing short-circuiting destroy implementation."
+    }
+  ],
+  "confirmedObservations": [
+    {
+      "id": "getter-scope",
+      "preset": "research",
+      "plainCreated": true,
+      "factoryOK": true,
+      "creationError": "Preset requires the enabled built-in evidence plugin with the selected host scope and storage"
+    },
+    {
+      "id": "getter-scope",
+      "preset": "workflow",
+      "plainCreated": true,
+      "factoryOK": true,
+      "creationError": "Preset requires the enabled built-in evidence plugin with the selected host scope and storage"
+    },
+    {
+      "id": "getter-task-scope",
+      "creationError": "Preset requires the enabled built-in taskState plugin with the selected host scope, taskId and association"
+    },
+    {
+      "id": "failed-shared-resume",
+      "blockedBefore": "denied",
+      "blockedDuringCandidateLoad": "denied",
+      "blockedAfter": "succeeded",
+      "blockedWrites": 1,
+      "attachedPolicyDestroyed": true,
+      "before": "local receipt",
+      "after": "local receipt",
+      "afterError": "",
+      "resumeError": "synthetic load rejection",
+      "ownerAlive": true,
+      "contextAlive": true,
+      "prompt": "REJECTED_CANDIDATE_PROMPT",
+      "registryDelta": 0
+    },
+    {
+      "id": "rejected-load-checkpoint-target",
+      "rejectedLoad": "Evidence invalid",
+      "activeBefore": "1792173017580_wjxtllu",
+      "configAfterRejection": "1792173017580_wjxtllu",
+      "persistedPointer": "1792173017580_wjxtllu",
+      "idAfterRejection": "1792173017585_gzktak3",
+      "foreignID": "1792173017585_gzktak3",
+      "foreignOwnerBefore": "foreign",
+      "foreignOwnerAfter": "host",
+      "foreignTaskBefore": "FOREIGN_TASK",
+      "foreignTaskAfter": "T42",
+      "foreignHistoryLost": true
+    },
+    {
+      "id": "teardown-stops-cleanup",
+      "creationError": "Preset requires the enabled built-in taskState plugin with the selected host scope, taskId and association",
+      "resourceDestroyCalls": 0,
+      "ticksAfterRejection": 4,
+      "managerDestroyed": false,
+      "outcomeListeners": 1
+    }
+  ],
+  "controlsNotPromoted": [
+    {
+      "id": "getter-context-limits",
+      "reason": "Plain Agent and preset both use the same fallback values; not a Stage 12 regression.",
+      "observation": {
+        "id": "getter-context-limits",
+        "plain": {
+          "max": 128000,
+          "reserve": 4096,
+          "error": ""
+        },
+        "preset": {
+          "max": 128000,
+          "reserve": 4096,
+          "answer": "local answer"
+        }
+      }
+    },
+    {
+      "id": "session-config-failure",
+      "reason": "Post-handoff config persistence has an existing partial-success boundary; this was not promoted as a newly introduced transactional guarantee.",
+      "observation": {
+        "id": "session-config-failure",
+        "error": "synthetic config save failure",
+        "oldReady": false,
+        "currentIsOld": false,
+        "currentReady": true,
+        "oldCheckpoint": null,
+        "sessions": []
+      }
+    }
+  ],
+  "freshValidation": {
+    "focused": {
+      "command": "npx vitest run tests/unit/presets tests/unit/apps/amos/Presets.test.ts tests/unit/apps/amos/PresetCorrections.test.ts tests/unit/apps/amos/ModelHelpersAdapter.test.ts tests/unit/testing/agenticBaseline.test.ts",
+      "passed": 114,
+      "files": 7,
+      "exitCode": 0,
+      "logSHA256": "057b540f058b7328294d6a74b3cae3223fa06e4ba69141d9e5b52d405b207481"
+    },
+    "strictConsumer": {
+      "command": "npx tsc --noEmit -p /tmp/oneringai-stage12-second-review-types/tsconfig.json",
+      "exitCode": 0,
+      "scope": "Built public declarations accept getter-backed EvidenceScope and existing-context resume.",
+      "sourceSHA256": "6b8db2374cd70930b0bc8d6438015c041b663118e684c9425e6c03faf461eb81"
+    },
+    "probe": {
+      "command": "node --import tsx /tmp/oneringai-stage12-second-review-probes.mts",
+      "exitCode": 0,
+      "sourceSHA256": "a7fc1782fbc541af4489a9ed627c261d7e333876cbc92bbd6207959b4b3174d7",
+      "logSHA256": "3a2866e2b53672e9df0b82a513ae3209b140c4d35f09852d08d404b60a9e44ac",
+      "network": false,
+      "realLLMCalls": 0,
+      "externalServiceWrites": 0,
+      "scope": "Actual public package, live caller context/policies, actual AMOS adapters/app, file storage and timers; local synthetic write counter only. Test resources and registries cleaned afterward."
+    },
+    "runtimeBuildTestFingerprintsMatchPriorValidation": true,
+    "priorArtifactsSHA256": {
+      "src/core/presets.ts": "e4698112fd048e76a8e578ca578b80046fc8e0c290d25255a0e1fbbb695fc4bd",
+      "src/core/Agent.ts": "6ac56d8c8c28e86c3428dc77d0390c0edabb58482d3ae9767e32d2716ecbe99d",
+      "src/core/context-nextgen/AgentContextNextGen.ts": "8725dbdc01c0cf1f078a905cfaebef1e31836f430ef1c5adf1dd75fc3d6ac75d",
+      "src/core/context-nextgen/presetRequirements.ts": "563a9444b8298e544effdee3f263c4687ff864c08501cf744806367e7d4fe9e3",
+      "src/core/capabilityInspection.ts": "5d7e4e18a6577ea8719754f8fb691ce9f088ff49cececbdccfd83cf0f12b685d",
+      "src/portable/types.ts": "f473cb194a5adea6b9d02be9173e53283e254d822c5b13494179411c2c400616",
+      "src/tools/registry.generated.ts": "ee422cf16a5b48e4c845b55cea15a5b6520ebeb3130eb0e5835ac6adfc843f95",
+      "apps/amos/src/app.ts": "145ca626ad4f4c71b2d2da425de49243b0b62c60f6223ca60b9a5084b65d2667",
+      "apps/amos/src/agent/AgentRunner.ts": "37e914d0b92967904bc2bad6e5f5e535c4f5c1f2fe2e30f0c73c17b1a2b9d5e5",
+      "apps/amos/src/agent/AmosSessionStorage.ts": "a69807ab30ef145b3c720e6e1bae6bd87875117ad865541209deab88de5c4e0f",
+      "apps/amos/src/commands/commands/SessionCommand.ts": "1ff20c346b6d25a987e6b242b99aaa98684b403871f4d4328dc1f5de058f795d",
+      "tests/unit/presets/Corrections.test.ts": "1b7f0d49bd417c8f6860385336cbe6727bc8da8e060d36648f9bd7cd81687d8c",
+      "tests/unit/apps/amos/PresetCorrections.test.ts": "22b24ca26213be6011fd63a59eb11d10eea15ec3910efe1830c96c7486b2bd90",
+      "tests/unit/apps/amos/ModelHelpersAdapter.test.ts": "a38ccfbc1547adecd340932f11fb8ffbb137cfbb7d7fed7f119e136852e5b4f5",
+      "tests/fixtures/agentic-presets/public-runtime.mjs": "1b9790123e455601089a325d5fc9a16f59a5463b3645d700e71978f45a28b5ac",
+      "tests/fixtures/agentic-baseline/stage12-consumer.ts": "fc86843f0527f686c125c04e8f90dc74d9666ab4adb11e6615c0aaf52fe7ff98",
+      "apps/amos/examples/presets-offline.ts": "17cbc73268a38240a4cf9eec9526f4e9cbbc51323f1021588d762cbc9834947f",
+      "dist/index.js": "d020dcaca924df4eddd97ac44962783a6b351593450db21eaf026748f475aa4b",
+      "dist/index.cjs": "6c5be797febb1318993a560cb34278c4e999735883a4630197b8bf7f328e4427",
+      "dist/index.d.ts": "81725ba3ea44c8795cf7066ef753bfab7c67bbd1d1c8b0b5774afcc19f28d1ab",
+      "dist/agent-runtime/index.js": "02758be3c76d36b9afa9bcf04d0478811dc06d00e9d8094b57281899210b1f41",
+      "apps/amos/dist/index.js": "1ad0ff029bbb3476300ee876fb8feb82b5f612e5152f3cebdc78741ffee7f9f5"
+    },
+    "documentationPackage": {
+      "command": "npm pack --dry-run --ignore-scripts --json",
+      "exitCode": 0,
+      "fileCount": 195,
+      "reviewPathsIncluded": [
+        "docs/designs/STAGE_12_SECOND_REVIEW_AND_FIX_PLAN.md",
+        "docs/evaluations/STAGE_12_SECOND_REVIEW.json"
+      ],
+      "scope": "File inventory only; no build, publish or final tarball checksum."
+    }
+  },
+  "historicalValidation": {
+    "source": "docs/evaluations/STAGE_12_CORRECTIONS.json",
+    "unitTests": 8073,
+    "liveTests": 148,
+    "liveScenarios": 160,
+    "note": "Previous source/build artifacts still match. No full unit or real-provider batch rerun for this review; those passing results do not cover the reproduced failures."
+  }
+}
