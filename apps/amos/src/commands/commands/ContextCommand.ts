@@ -317,6 +317,17 @@ EXAMPLES:
     lines.push('────────────────────────────────────');
     lines.push(`${'Total:'.padEnd(20)} ${formatNumber(breakdown.totalUsed).padStart(7)} tokens`);
 
+    const selection = breakdown.selection;
+    if (selection) {
+      lines.push('', `Context selection: ${selection.layout}; ${selection.selectedDataTokens}/${selection.maxDataTokens} estimated data tokens.`);
+      for (const entry of selection.entries) lines.push(`${JSON.stringify(entry.id)}: ${entry.status} (${entry.reason}), ~${entry.estimatedTokens} tokens`);
+      if (!selection.entries.length) lines.push('No explicit data blocks; legacy plugin content is retained.');
+      const usage = selection.accounting;
+      if (usage.opaqueOrMultimodal) lines.push('Local input estimate includes opaque or multimodal data; inspect actual provider usage.');
+      const count = (value: number | null) => value === null ? 'unknown' : formatNumber(value);
+      lines.push(`Provider input: ${count(usage.providerInputTokens)}; estimate delta: ${count(usage.inputTokenDelta)}.`);
+      lines.push(`Provider prompt cache: read ${count(usage.cachedInputTokens)}, written ${count(usage.cacheCreationInputTokens)} tokens. Distinct from local tool/memory caches.`);
+    } else lines.push('', 'Context selection unavailable: legacy configuration or no selected preparation yet. Provider prompt cache usage is unknown here.');
     return this.success(lines.join('\n'));
   }
 

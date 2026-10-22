@@ -1,6 +1,6 @@
 # Agentic Architecture Evolution: Staged Development Plan
 
-- **Status:** Roadmap direction accepted; core stages 00–04, 06, 07, 10 and 12 complete on branch. All Stage 12 findings are fixed and validated; see the [third corrective completion](STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16). No package release.
+- **Status:** Stage 05 and all review corrections are complete on branch ([latest completion](STAGE_05_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22)); 8,340 unit tests / 373 files, 190 live tests / 202 scenarios across all three providers, 28 offline examples and 92 public ESM/CJS controls pass. Roadmap direction accepted; core stages 00–04, 06, 07, 10 and 12 complete on branch. All Stage 12 findings are fixed and validated; see the [third corrective completion](STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16). No package release.
 - **Stage 10:** Both review passes fixed and validated, including real Google recovery from the recorded empty summary and stale-principal completion checks. Latest gates pass 7,988 units, 136 live cases / 148 scenarios and 22 offline examples. See the [latest review/fixes](STAGE_10_SECOND_REVIEW_AND_FIXES.md). Stage 12 corrections are complete; no release or API break.
 - **Stage 04:** Both reviews' findings fixed and validated. Latest local/public gate passes 7,795 units, legacy root/`types` consumers, public ESM/CJS controls and both task examples. See the [second corrective completion](STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16). Earlier live results remain historical; no release or API break.
 - **Stage 07:** All three review findings fixed and validated: 7,631 units, 105 live cases / 117 scenarios and 17 offline examples pass; experimental, no default promotion.
@@ -449,7 +449,7 @@ remain separately authorized work.
 | 02 | Accurate tool outcomes and per-execution cancellation | 00 | Core | Complete on branch; final local and full OpenAI/Anthropic/Google live validation passed |
 | 03 | Acknowledged evidence references, projections, and outcome records | 01, 02 | Core | Complete on branch; all three corrective passes validated: 7,473 units, 66 live cases / 78 scenarios, 15 offline examples |
 | 04 | Task-state prompt view and protected host constraints | 03, 06 | Core | Complete on branch; both reviews' findings validated |
-| 05 | Typed contributions and selective/cache-aware assembly | 01, 03, 04 | Conditional | Not started |
+| 05 | Typed contributions and selective/cache-aware assembly | 01, 03, 04 | Conditional | Complete on branch; all review findings fixed, 8,340 units, 190 live tests / 202 scenarios, 28 examples and all gates pass. [Latest completion](STAGE_05_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22); no release |
 | 06 | Fixed main model, bounded helper roles, and task usage/budgets | 01, 02 | Core | Complete on branch; first- and second-review corrections validated, all local/live gates pass |
 | 07 | Structured summaries and observation masking | 03, 06 | Core | Complete on branch, including all review corrections; experimental, no default promotion |
 | 08 | Episodic retrieval and session ingestion | 03, 04, 06 | Conditional | Not started |
@@ -3197,3 +3197,167 @@ is waived. See [fresh validation](../evaluations/STAGE_12_THIRD_CORRECTIONS.json
 [offline transcript](../evaluations/STAGE_12_THIRD_CORRECTIONS_OFFLINE.txt).
 The core sequence is complete on branch. No commit, push, package release or
 later-stage work was performed.
+
+
+### Stage 05 completion — 2026-10-20
+
+Historical completion; current readiness is superseded by the
+[2026-10-21 review/fix plan](STAGE_05_REVIEW_AND_FIX_PLAN.md).
+
+Stage 05 is complete on `version2`, base `539bbd1`, with no package release or
+breaking API change. The selected conditional scope is explicit selectable data
+companions, a built-in whiteboard adapter and optional stable-prefix layout. It
+reuses existing plugin state, storage, ToolManager, compaction, provider conversion
+and usage fields; it adds no retrieval index, router, sandbox or cache service.
+
+The measured offline need fixture estimates **7,174 tokens** for an overflowing
+legacy view and **1,284 tokens** for a fitting selected view, preserving both source
+whiteboard entries. The selected 114-token data message includes the protected
+receipt, a dependent third-party provenance block and an explicit projection.
+These are local estimates for one synthetic fixture, not measured cost savings or
+proof of better general task quality.
+
+Verified public APIs/options: optional `AgentContextNextGenConfig.assembly`,
+`ContextAssemblyConfig`, `ContextContributor`, `ContextContributionRequest`,
+`ContextBlock`, `ContextSelectionEntry`, `ContextSelectionManifest`, explicit
+`registerContextContributor`/`unregisterContextContributor`,
+`createInContextMemoryContributor`, `lastPreparation.selection` and host
+`recordProviderUsage`. Assembly is disabled by default. Enabled defaults are 2048
+estimated data tokens, 1000ms cumulative contributor time, 128 blocks, 65536 characters
+per text/projection, legacy layout and zero extra reasoning reserve. Source caps,
+expiry, priority, protected full dependency closure and explicit projections are
+supported. Optional host tokenEstimator reuses ITokenEstimator, checks nonnegative
+safe counts and preserves method receivers; default estimation remains unchanged.
+
+New data is JSON user data, never host authority. Reserved evidence/task-state/
+persistent-instruction views cannot be replaced. Companions attach only to existing
+plugins, carry scoped/revision-checked source data and observe cancellation. Missing/
+expired protected dependencies, cycles, malformed/oversized blocks, stale input/
+model/principal/account/roles or changed selected prefixes reject explicitly.
+Deadlines count contributors across rebuilds, excluding existing legacy hooks and
+compaction. Legacy observation hooks remain nonblocking. Exactly the existing
+bounded compaction path remains; final dispatch and JSON repair retain all selected
+protections. Formatting reuses frozen selected data without new contribution or
+compaction work, preserving main diagnostics.
+
+Stable-prefix layout retains legacy authority while moving dynamic data/date later
+and sorting visible tools deterministically. Host dynamic instructions may still
+change that prefix. Manifest fingerprints are scoped local diagnostics, not provider
+cache keys. Actual normalized provider input/cache counters remain distinct from
+local estimates, with null for unknown and zero for observed zero. Host/provider/
+registry/fallback capacity is attributed honestly; opaque/multimodal estimates remain
+uncertain. No automatic cache hit, provider cache policy or estimator tuning is claimed.
+
+Existing plugin/storage/session/event/result interfaces and defaults are preserved.
+No structural method discovery occurs, including existing similarly named helper
+methods. Sources persist normally; callbacks, policy, selected views and diagnostics
+are not restored as authority. Reattach trusted companions after restart. Trusted
+host callbacks must maintain pure revisions and scoped access; the framework cannot
+undo private side effects or preempt synchronous host JavaScript. Legacy/default
+execution and direct/external paths retain ownership. All adaptation is opt-in.
+
+AMOS accepts JSON contextAssembly (no callbacks/tokenizer), optionally attaches the
+whiteboard adapter at initialization/resume, and shows selected/omitted/projected
+IDs/reasons plus actual/unknown provider cache counters in `/context breakdown`.
+Inspection does not prepare, compact or call a model. Actual runner/command tests and
+three new public offline examples cover this adoption. No new workflow completion,
+permission authority or default preset behavior is introduced.
+
+Final validation passes **8,217 unit tests / 371 files**, including **74 new Stage 05
+core/AMOS cases**; **166 live tests / 178 scenarios / 11 suites** with OpenAI,
+Anthropic and Google, zero failures/skips/unavailable providers; **27 offline examples**,
+**12 new ESM/CJS controls** plus 54 existing preset controls, root/AMOS builds,
+types/lint/examples, strict core/AMOS, legacy/public consumers, generated API and
+package checks. Selected new assembly/inspection coverage is recorded in the
+validation artifact; it does not describe whole-Agent/context/AMOS coverage.
+
+Development failures are retained and fixed: JSON repair needed the frozen selected
+prefix after normal history commit; cumulative deadline needed to exclude old hooks/
+compaction; host-capacity attribution and changed-model admission needed explicit
+checks. Pre-preparation inspection is metadata/legacy estimation only and never starts new contributors. A queued history-journal teardown race is fixed by awaiting admitted IO before deleting temporary fixtures. An existing comparison reader now returns bounded scoped raw notes keys on selector errors, never answers; its explicit zero-temperature main/helper sampling is recorded and differs from older pilot conditions. An initial Anthropic cache fixture refused repetitive directive text; the
+normal synthetic catalog lookup retains actual answer, output/call budget and usage
+assertions, without requiring cache hits. The final full provider batch passes;
+there is no automatic retry, skip or waiver or output-cap increase. AMOS example/mock type assertions
+were corrected without weakening runtime tests.
+
+Recipe, README/User Guide/generated API, AGENTS, examples/index, AMOS, release notes,
+roadmap, Version 2 availability/adoption/handoff and packaged records are synchronized.
+See [validation](../evaluations/STAGE_05_VALIDATION.json) and
+[offline transcript](../evaluations/STAGE_05_OFFLINE.txt). No commit, push, release,
+approved API break or implementation of another conditional stage was performed.
+
+### Stage 05 review — 2026-10-21
+
+Current Stage 05 completion is withdrawn pending R1–R5 corrections. The
+[review/fix plan](STAGE_05_REVIEW_AND_FIX_PLAN.md) and
+[evidence](../evaluations/STAGE_05_REVIEW.json) record effective account/task
+bindings omitted from authority, submitted-input/repair freshness gaps, conflicting
+selected-whiteboard instructions and missing wrap-up usage observations. Ten
+assertion-backed local observations reproduce these five findings; 293 existing
+tests, the public consumer and 12 ESM/CJS controls pass. All 26 recorded runtime/
+build/test/example fingerprints match the original delivery. The full unit/live
+batches were not rerun during review. Runtime remains unchanged; original validation
+is historical, no release or later stage is authorized, and supported legacy
+hook/plugin/storage/session contracts must remain intact during correction.
+
+
+### Stage 05 corrective completion — 2026-10-21
+
+All R1–R5 findings are fixed; see [completion](STAGE_05_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-21),
+[validation](../evaluations/STAGE_05_CORRECTIONS_VALIDATION.json) and
+[transcript](../evaluations/STAGE_05_CORRECTIONS_OFFLINE.txt). Effective account/task/
+registry guards, one bounded final-input refresh, current-prompt repair checks,
+accurate store guidance with frozen/getter-backed schema compatibility, actual
+wrap-up usage and post-cycle contributor ownership are validated. No required API,
+default hook/history/storage/session contract changed. Final 8,291 units, 184 live
+tests / 196 scenarios across OpenAI/Anthropic/Google, 28 examples, 28 Stage 05 + 54
+preset ESM/CJS controls and build/type/lint/strict/AMOS/API/package gates pass. Fixture
+clock/IO, wrap-up completion and explicit Google helper reasoning settings retain
+all assertions/caps and actual-provider recovery checks. Historical failures are
+preserved; no release, commit/push or later conditional stage was performed.
+
+
+### Stage 05 second review — 2026-10-21
+
+Current completion is withdrawn pending S2-R1/S2-R2 (P2) and S2-R3 (P3).
+See the [review/fix plan](STAGE_05_SECOND_REVIEW_AND_FIX_PLAN.md) and
+[evidence](../evaluations/STAGE_05_SECOND_REVIEW.json). The library's own post-cycle
+consolidation and first suspension/session assignment can invalidate structured
+formatting; uncertainty metadata misses native image/file result arrays and opaque
+tool signatures. These are correction requirements, not completed limitations.
+
+All 34 prior runtime/build/test/example fingerprints still match. Fresh validation
+passes 241 tests in eight files, the built public compatibility consumer and 82
+ESM/CJS controls. Ten assertion-backed offline observations establish the findings
+and controls. Full units and actual-provider suites were not rerun for this
+framework-only review. Prior R1–R5 fixes and their 8,291-unit / 184-live-test /
+196-scenario validation remain historical coverage. No runtime/API changes,
+external service writes, commits, pushes, releases or later-stage implementation.
+
+Correct internal lifecycle coordination without dropping current host/scope/revision
+guards, replaying accepted actions, adding required session fields or expanding
+preparation work. Recheck examples/AMOS, update affected standard/generated docs,
+and record full corrective validation before restoring completion.
+
+
+### Stage 05 second-corrective completion — 2026-10-22
+
+All S2-R1/S2-R2/S2-R3 findings are fixed and validated; the prior first-review
+corrections remain implemented. See the [latest completion](STAGE_05_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22).
+Selected structured formatting precedes consolidation and suspension persistence;
+source/scope/host/task guards remain intact. Failure preserves the accepted
+observation for explicit checkpoint recovery without action replay. Native result
+images/files and opaque tool signatures set uncertainty; AMOS shows a source-free
+notice. The dispatch-safety example illustrates both lifecycle corrections.
+
+Final validation: 8,340 unit tests / 373 files, 190 live tests / 202 scenarios across all three providers, 28 offline examples and 92 public ESM/CJS controls. All build/export/type/lint/examples,
+strict/public/AMOS and generated API gates pass; no live failures/skips or unavailable
+providers. The six added live cases cover actual provider formatting under controlled
+candidate pressure and structured local submission/suspension. Offline/public tests
+force default spill, native repair, storage/cancellation recovery and restored
+continuation. Public signatures, defaults and session/event/result shapes remain
+compatible; internal execution-local coordination adds no persistent authority.
+
+Recipe, standard/generated docs, examples/AMOS, release notes, availability and
+handoff are synchronized. Historical evidence remains intact. No commit, push,
+release, breaking API change or later-stage implementation.

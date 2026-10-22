@@ -315,3 +315,12 @@ local writes across OpenAI, Anthropic and Google. Total final gates: 151 tests /
 scenarios, zero failures/skips. See the [latest record](evaluations/STAGE_12_THIRD_CORRECTIONS.json).
 The new recovery fixtures do not change the baseline workload or support a general
 quality/cost claim.
+
+
+Stage 05 preserves baseline workload scoring and its calibrated provider setup.
+The separate Stage 07 comparison example now records explicit zero-temperature
+main/helper sampling and metadata-only scoped notes-key feedback after unavailable
+selectors. Exact completion, account/status, no-write/no-repeat, call/output bounds
+and failure reporting remain unchanged. Historical failed attempts are retained;
+this example calibration changes neither normal Agent defaults nor general model
+quality claims. See the Stage 05 implementation and validation record.

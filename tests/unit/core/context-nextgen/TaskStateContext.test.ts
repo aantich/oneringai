@@ -13,11 +13,12 @@ function context(extra = {}, config = {}) {
   const task = ctx.getPlugin<TaskStatePluginNextGen>('task_state')!; return { ctx, task };
 }
 const notes = [{ id: 'hard-limit', category: 'constraint' as const, text: 'HARD_LIMIT_04: spend at most 40 EUR; never repeat job J42.', source: { label: 'Confirmed user correction' } }];
-afterEach(() => { contexts.splice(0).forEach(c => c.destroy()); vi.restoreAllMocks(); });
+afterEach(() => { contexts.splice(0).forEach(c => c.destroy()); vi.useRealTimers(); vi.restoreAllMocks(); });
 const summarize: ContextSummaryGenerator = async req => ({ summary: { completedWork: [{ text: 'Read old data.', sourceIds: [req.reference.id] }], activeWork: [], constraints: [], decisions: [], uncertainties: [], artifacts: [], actionReceipts: [] } });
 
 describe('Stage 04 protected task-state context integration', () => {
   it('keeps defaults and disabled legacy context content/tools unchanged', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-10-21T10:00:00Z'));
     const a = AgentContextNextGen.create({ model: 'gpt-4o-mini' }); const b = AgentContextNextGen.create({ model: 'gpt-4o-mini', features: { taskState: false }, plugins: { taskState: { scope, taskId: 'ignored' } } }); contexts.push(a,b);
     const x = await a.prepare(), y = await b.prepare(); expect(x.input).toEqual(y.input); expect(x.tools).toEqual(y.tools); expect(b.getPlugin('task_state')).toBeNull(); expect(JSON.stringify(y)).not.toContain('Task state');
   });

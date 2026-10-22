@@ -18,7 +18,7 @@ afterAll(async () => {
   if (!enabled || !process.env.CONTEXT_STRATEGY_REPORT_PATH) return;
   await mkdir(dirname(process.env.CONTEXT_STRATEGY_REPORT_PATH), { recursive: true });
   await writeFile(process.env.CONTEXT_STRATEGY_REPORT_PATH, JSON.stringify({ protocol: 'stage-07-live-v1', recordedAt: new Date().toISOString(), seed: 707,
-    settings: { main: 'gpt-4o', helper: 'gpt-4o-mini', repetitions: 2, heldOutTasks: 6, maxCallsPerTask: 6, mainOutputCap: 768, helperOutputCap: 1024, helperInputCap: 24000 },
+    settings: { sourceRecoveryFeedback: 'bounded scoped notes selectors on errors; unchanged exact-answer and budgets', mainTemperature: 0, helperTemperature: 0, main: 'gpt-4o', helper: 'gpt-4o-mini', repetitions: 2, heldOutTasks: 6, maxCallsPerTask: 6, mainOutputCap: 768, helperOutputCap: 1024, helperInputCap: 24000, googleProbeHelperThinkingBudget: 128, googleProbeHelperOutputCap: 4096 },
     scope: 'Functional held-out synthetic local-task pilot plus three-provider structured compaction. No statistical non-inferiority, general quality/cost reduction, or external write claim.', report }, null, 2) + '\n');
 });
 describe.skipIf(!enabled).sequential('Stage 07 live structured compaction and held-out comparison', () => {
@@ -48,7 +48,7 @@ describe.skipIf(!enabled).sequential('Stage 07 live structured compaction and he
         response.output_text = text;
         response.output = [{ type: 'message', role: MessageRole.ASSISTANT, content: [{ type: ContentType.OUTPUT_TEXT, text }] }];
       }
-      capturedResponses.push({ requestShape: typeof options.input === 'string' ? 'text-packet' : 'managed-items', model: response.model, status: response.status, stopReason: response.stop_reason, text: response.output_text, ...(injectHere ? { faultInjected: 'recorded-empty-summary', actualProviderText: originalText } : {}), outputTypes: response.output.map(item => item.type), usage: response.usage });
+      capturedResponses.push({ requestShape: typeof options.input === 'string' ? 'text-packet' : 'managed-items', requestedThinking: options.thinking, model: response.model, status: response.status, stopReason: response.stop_reason, text: response.output_text, ...(injectHere ? { faultInjected: 'recorded-empty-summary', actualProviderText: originalText } : {}), outputTypes: response.output.map(item => item.type), usage: response.usage });
       return response;
     }) : undefined;
     const name = `stage07-live-${p.name}`; Connector.create({ name, vendor: p.vendor, auth: { type: 'api_key', apiKey: p.key } });
@@ -60,7 +60,9 @@ describe.skipIf(!enabled).sequential('Stage 07 live structured compaction and he
     const raw = { marker, padding: 'Older synthetic observation details. '.repeat(1000) };
     const reference = await storage.put({ version: 1, recordedAt: Date.now(), source: { toolName: 'lookup', callId: 'lookup-original', executionId: 'original', arguments: {}, principal: {}, effect: 'read', status: 'succeeded', completion: 'settled', startedAt: 1, durationMs: 1 }, result: raw });
     const agent = Agent.create({ connector: name, model: p.model, userId: 'live', thinking: { enabled: false }, emptyResponseRetry: { enabled: false }, maxIterations: 4,
-      modelExecution: { maxOutputTokensPerCall: 512, helpers: { compactor: { connector: name, model: p.model, thinking: { enabled: false }, maxInputTokens: 20000, maxOutputTokens: p.name === 'google' ? 4096 : 1024 } } },
+      modelExecution: { maxOutputTokensPerCall: 512, helpers: { compactor: { connector: name, model: p.model,
+        thinking: p.name === 'google' ? { enabled: true, budgetTokens: 128 } : { enabled: false },
+        ...(p.name === 'google' ? { temperature: 0 } : {}), maxInputTokens: 20000, maxOutputTokens: p.name === 'google' ? 4096 : 1024 } } },
       instructions: 'Use the earlier lookup or its referenced source. Return only the JSON marker, account and status. Account/status are exact user constraints. Never repeat lookup or claim an accepted job has completed. Always call read_source using an exact evidence ID before answering; its returned marker is the data value, not the evidence ID.',
       tools: [{ definition: { type: 'function', function: { name: 'lookup', description: 'Historical action; must never be repeated.', parameters: { type: 'object', properties: {}, additionalProperties: false } } }, execute: async () => { repeats++; throw new Error('Do not repeat'); }, output: { effect: 'read' } },
         { definition: { type: 'function', function: { name: 'read_source', description: 'Bounded exact marker lookup by scoped evidence ID.', parameters: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'], additionalProperties: false } } }, execute: async ({ id }: { id: string }) => {
@@ -84,6 +86,7 @@ describe.skipIf(!enabled).sequential('Stage 07 live structured compaction and he
       const value = response.output_parsed ?? JSON.parse(response.output_text!);
       report.push({ kind: 'provider-probe', provider: p.name, injectRecordedEmpty, capturedResponses, model: response.model, parsed: value, diagnostic, repeats, reads, usage: task.snapshot() });
       expect(value).toEqual({ marker, account: 'live-scope', status: 'completion-unknown' }); expect(repeats).toBe(0); expect(reads).toBeGreaterThan(0); expect(diagnostic?.applied).toBe(true); expect(diagnostic?.fallback).toBeUndefined(); expect(diagnostic?.helperModel).toBeTruthy();
+      if (p.name === 'google') expect(capturedResponses[0]!.requestedThinking).toEqual({ enabled: true, budgetTokens: 128 });
       if (injectRecordedEmpty) {
         expect(injected).toBe(true);
         expect(task.snapshot().invocations.slice(0, 2).map(i => [i.purpose, i.phase, i.outputValidation])).toEqual([['compactor', 'generation', 'failed'], ['compactor', 'repair', 'passed']]);

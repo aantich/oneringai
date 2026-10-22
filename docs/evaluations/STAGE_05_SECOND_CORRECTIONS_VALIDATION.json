@@ -1,0 +1,2994 @@
+{
+  "protocol": "stage05-second-corrections-validation-v1",
+  "clientDate": "2026-10-22",
+  "recordedAt": "2026-10-22T08:15:08.847981+00:00",
+  "branch": "version2",
+  "baseCommit": "539bbd1",
+  "status": "complete on branch; all S2-R1/S2-R2/S2-R3 fixes, full local/live, examples, public/AMOS, documentation and package gates passed",
+  "findings": {
+    "S2-R1": "fixed and validated",
+    "S2-R2": "fixed and validated",
+    "S2-R3": "fixed and validated"
+  },
+  "breakingChanges": false,
+  "implementation": [
+    "Selected structured run finalizes the settled answer before post-cycle consolidation, within the same execution lease and ModelTask. Existing default/stream/continuation order stays unchanged.",
+    "Selected structured suspension uses the same formatter before its existing session/correlation save and suspended notification. It formats once, persists coherent history, and never drops session authority checks or reserves an unwritten identity.",
+    "Opaque/multimodal uncertainty traverses function/custom result content arrays and signed tool calls. AMOS displays a source-free uncertainty notice."
+  ],
+  "unit": {
+    "testsPassed": 8340,
+    "filesPassed": 373,
+    "newCorrectionCases": 49,
+    "newLibraryCases": 48,
+    "newAmosCases": 1,
+    "totalStage05Cases": 197,
+    "failures": 0
+  },
+  "live": {
+    "testsPassed": 190,
+    "filesPassed": 11,
+    "scenarios": 202,
+    "newCorrectionTests": 6,
+    "assemblyCases": 39,
+    "providers": [
+      "openai",
+      "anthropic",
+      "google"
+    ],
+    "failures": 0,
+    "skips": 0,
+    "unavailableProviders": 0,
+    "singleFinalBatch": true,
+    "logSHA256": "0bffa15745145deb1b69e460375137f7fb1a8f73c6595fa103c13dd8f4d0769f",
+    "batches": {
+      "presets": {
+        "protocol": "stage12-live-v1",
+        "rawReportSHA256": "e7b3f27e68a4b0deb3d14927b40704da2268687f33f19d599eb860eb96da1c98",
+        "scenarios": 12,
+        "passed": 12,
+        "results": [
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "preset": "research",
+            "mode": "run",
+            "passed": true,
+            "calls": 2,
+            "reads": 1,
+            "checks": 0
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "preset": "research",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2,
+            "reads": 1,
+            "checks": 0
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "preset": "workflow",
+            "mode": "run",
+            "passed": true,
+            "calls": 2,
+            "reads": 1,
+            "checks": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "preset": "workflow",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2,
+            "reads": 1,
+            "checks": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "preset": "research",
+            "mode": "run",
+            "passed": true,
+            "calls": 2,
+            "reads": 1,
+            "checks": 0
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "preset": "research",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2,
+            "reads": 1,
+            "checks": 0
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "preset": "workflow",
+            "mode": "run",
+            "passed": true,
+            "calls": 2,
+            "reads": 1,
+            "checks": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "preset": "workflow",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2,
+            "reads": 1,
+            "checks": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "preset": "research",
+            "mode": "run",
+            "passed": true,
+            "calls": 2,
+            "reads": 1,
+            "checks": 0
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "preset": "research",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2,
+            "reads": 1,
+            "checks": 0
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "preset": "workflow",
+            "mode": "run",
+            "passed": true,
+            "calls": 2,
+            "reads": 1,
+            "checks": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "preset": "workflow",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2,
+            "reads": 1,
+            "checks": 1
+          }
+        ]
+      },
+      "baseline": {
+        "protocol": "stage-00-v1",
+        "rawReportSHA256": "884119cf2edd4493c43a61eb1ec66ce48c5fa1cb773360ce1d4f449f3d17d5af",
+        "scenarios": 24,
+        "passed": 24,
+        "results": [
+          {
+            "fixture": "chat",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "chat/development",
+            "connector": "stage00-live-openai-chat",
+            "model": "gpt-4o-mini"
+          },
+          {
+            "fixture": "chat",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "chat/held-out",
+            "connector": "stage00-live-openai-chat",
+            "model": "gpt-4o-mini"
+          },
+          {
+            "fixture": "large-observation",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "large-observation/development",
+            "connector": "stage00-live-openai-large-observation",
+            "model": "gpt-4o-mini"
+          },
+          {
+            "fixture": "large-observation",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "large-observation/held-out",
+            "connector": "stage00-live-openai-large-observation",
+            "model": "gpt-4o-mini"
+          },
+          {
+            "fixture": "research",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "research/development",
+            "connector": "stage00-live-openai-research",
+            "model": "gpt-4o-mini"
+          },
+          {
+            "fixture": "research",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "research/held-out",
+            "connector": "stage00-live-openai-research",
+            "model": "gpt-4o-mini"
+          },
+          {
+            "fixture": "external-workflow",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "external-workflow/development",
+            "connector": "stage00-live-openai-external-workflow",
+            "model": "gpt-4o-mini"
+          },
+          {
+            "fixture": "external-workflow",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "external-workflow/held-out",
+            "connector": "stage00-live-openai-external-workflow",
+            "model": "gpt-4o-mini"
+          },
+          {
+            "fixture": "chat",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "chat/development",
+            "connector": "stage00-live-anthropic-chat",
+            "model": "claude-haiku-4-5-20251001"
+          },
+          {
+            "fixture": "chat",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "chat/held-out",
+            "connector": "stage00-live-anthropic-chat",
+            "model": "claude-haiku-4-5-20251001"
+          },
+          {
+            "fixture": "large-observation",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "large-observation/development",
+            "connector": "stage00-live-anthropic-large-observation",
+            "model": "claude-haiku-4-5-20251001"
+          },
+          {
+            "fixture": "large-observation",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "large-observation/held-out",
+            "connector": "stage00-live-anthropic-large-observation",
+            "model": "claude-haiku-4-5-20251001"
+          },
+          {
+            "fixture": "research",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "research/development",
+            "connector": "stage00-live-anthropic-research",
+            "model": "claude-haiku-4-5-20251001"
+          },
+          {
+            "fixture": "research",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "research/held-out",
+            "connector": "stage00-live-anthropic-research",
+            "model": "claude-haiku-4-5-20251001"
+          },
+          {
+            "fixture": "external-workflow",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "external-workflow/development",
+            "connector": "stage00-live-anthropic-external-workflow",
+            "model": "claude-haiku-4-5-20251001"
+          },
+          {
+            "fixture": "external-workflow",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "external-workflow/held-out",
+            "connector": "stage00-live-anthropic-external-workflow",
+            "model": "claude-haiku-4-5-20251001"
+          },
+          {
+            "fixture": "chat",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "chat/development",
+            "connector": "stage00-live-google-chat",
+            "model": "gemini-2.5-flash"
+          },
+          {
+            "fixture": "chat",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "chat/held-out",
+            "connector": "stage00-live-google-chat",
+            "model": "gemini-2.5-flash"
+          },
+          {
+            "fixture": "large-observation",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "large-observation/development",
+            "connector": "stage00-live-google-large-observation",
+            "model": "gemini-2.5-flash"
+          },
+          {
+            "fixture": "large-observation",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "large-observation/held-out",
+            "connector": "stage00-live-google-large-observation",
+            "model": "gemini-2.5-flash"
+          },
+          {
+            "fixture": "research",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "research/development",
+            "connector": "stage00-live-google-research",
+            "model": "gemini-2.5-flash"
+          },
+          {
+            "fixture": "research",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "research/held-out",
+            "connector": "stage00-live-google-research",
+            "model": "gemini-2.5-flash"
+          },
+          {
+            "fixture": "external-workflow",
+            "split": "development",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "external-workflow/development",
+            "connector": "stage00-live-google-external-workflow",
+            "model": "gemini-2.5-flash"
+          },
+          {
+            "fixture": "external-workflow",
+            "split": "held-out",
+            "mode": "live",
+            "passed": true,
+            "fixtureId": "external-workflow/held-out",
+            "connector": "stage00-live-google-external-workflow",
+            "model": "gemini-2.5-flash"
+          }
+        ]
+      },
+      "context": {
+        "protocol": "stage-01-corrections-v2",
+        "rawReportSHA256": "e2ea09a62442a4034d3795e8e97493a2944382b3d545e52606930c72b9b99758",
+        "scenarios": 16,
+        "passed": 16,
+        "results": [
+          {
+            "scenario": "schema-aware-compaction",
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "passed": true,
+            "observedModelCalls": 1
+          },
+          {
+            "scenario": "separate-spill-collision-retrieval",
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "passed": true,
+            "observedModelCalls": 2
+          },
+          {
+            "scenario": "mixed-format-retrieval",
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "passed": true,
+            "calls": 2
+          },
+          {
+            "scenario": "mixed-format-retrieval",
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2
+          },
+          {
+            "scenario": "controlled-structured-repair",
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "passed": true
+          },
+          {
+            "scenario": "schema-aware-compaction",
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "passed": true,
+            "observedModelCalls": 1
+          },
+          {
+            "scenario": "separate-spill-collision-retrieval",
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "passed": true,
+            "observedModelCalls": 2
+          },
+          {
+            "scenario": "mixed-format-retrieval",
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "run",
+            "passed": true,
+            "calls": 2
+          },
+          {
+            "scenario": "mixed-format-retrieval",
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2
+          },
+          {
+            "scenario": "controlled-structured-repair",
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "run",
+            "passed": true
+          },
+          {
+            "scenario": "schema-aware-compaction",
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "passed": true,
+            "observedModelCalls": 1
+          },
+          {
+            "scenario": "separate-spill-collision-retrieval",
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "passed": true,
+            "observedModelCalls": 2
+          },
+          {
+            "scenario": "mixed-format-retrieval",
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "passed": true,
+            "calls": 2
+          },
+          {
+            "scenario": "mixed-format-retrieval",
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2
+          },
+          {
+            "scenario": "controlled-structured-repair",
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "passed": true
+          },
+          {
+            "scenario": "google-thinking-signature-replay",
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "passed": true
+          }
+        ]
+      },
+      "tools": {
+        "protocol": "stage-02",
+        "rawReportSHA256": "b9bac15c4eb98493cd44010ac56a47197725d23b8d395166e572094ac7c9c8f9",
+        "scenarios": 6,
+        "passed": 6,
+        "results": [
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "passed": true,
+            "observedModelCalls": 3
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream",
+            "passed": true,
+            "observedModelCalls": 3
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "run",
+            "passed": true,
+            "observedModelCalls": 3
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "stream",
+            "passed": true,
+            "observedModelCalls": 3
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "passed": true,
+            "observedModelCalls": 3
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream",
+            "passed": true,
+            "observedModelCalls": 3
+          }
+        ]
+      },
+      "models": {
+        "protocol": "stage-06-live-v1",
+        "rawReportSHA256": "5cbf04a5e1a2b78f87dce56896020d4bbe176cbd5b40661d035341d18a7b8642",
+        "scenarios": 14,
+        "passed": 14,
+        "results": [
+          {
+            "scenario": "controlled-helper-evidence-repair",
+            "provider": "openai",
+            "passed": true
+          },
+          {
+            "scenario": "controlled-helper-evidence-repair",
+            "provider": "anthropic",
+            "passed": true
+          },
+          {
+            "scenario": "controlled-helper-evidence-repair",
+            "provider": "google",
+            "passed": true
+          },
+          {
+            "scenario": "google-separate-thinking-accounting",
+            "mode": "run",
+            "passed": true
+          },
+          {
+            "scenario": "google-separate-thinking-accounting",
+            "mode": "stream",
+            "passed": true
+          },
+          {
+            "scenario": "anthropic-fixed-budget-helper",
+            "passed": true
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "passed": true
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream",
+            "passed": true
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "run",
+            "passed": true
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "stream",
+            "passed": true
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "passed": true
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream",
+            "passed": true
+          },
+          {
+            "scenario": "cross-provider-explicit-rollover",
+            "passed": true
+          },
+          {
+            "scenario": "controlled-real-repair-accounting",
+            "passed": true
+          }
+        ]
+      },
+      "evidence": {
+        "protocol": "stage-03",
+        "rawReportSHA256": "7cb7e4a9e1b95e4a68df45007fbf65ab5e30dac7ac82035c0822793ac6900094",
+        "scenarios": 18,
+        "passed": 18,
+        "results": [
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "pending-restore",
+            "passed": true,
+            "modelCalls": 1,
+            "executions": 1,
+            "terminalInputHasSource": true,
+            "recoveredExactMarker": true
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "pending-restore",
+            "passed": true,
+            "modelCalls": 1,
+            "executions": 1,
+            "terminalInputHasSource": true,
+            "recoveredExactMarker": true
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "pending-restore",
+            "passed": true,
+            "modelCalls": 1,
+            "executions": 1,
+            "terminalInputHasSource": true,
+            "recoveredExactMarker": true
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "passed": true,
+            "modelCalls": 3,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream",
+            "passed": true,
+            "modelCalls": 3,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "storage-failure",
+            "passed": true,
+            "modelCalls": 2,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "hook-mutation",
+            "passed": true,
+            "modelCalls": 2,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream-close",
+            "passed": true,
+            "modelCalls": 2,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "run",
+            "passed": true,
+            "modelCalls": 3,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "stream",
+            "passed": true,
+            "modelCalls": 3,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "storage-failure",
+            "passed": true,
+            "modelCalls": 2,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "hook-mutation",
+            "passed": true,
+            "modelCalls": 2,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "stream-close",
+            "passed": true,
+            "modelCalls": 2,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "passed": true,
+            "modelCalls": 3,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream",
+            "passed": true,
+            "modelCalls": 3,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "storage-failure",
+            "passed": true,
+            "modelCalls": 2,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "hook-mutation",
+            "passed": true,
+            "modelCalls": 2,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream-close",
+            "passed": true,
+            "modelCalls": 2,
+            "executions": 1,
+            "recoveredExactMarker": true,
+            "terminalInputHasSource": true
+          }
+        ]
+      },
+      "strategies": {
+        "protocol": "stage-07-live-v1",
+        "rawReportSHA256": "66d69a16e01c698a92dc0c45112af7a4a72133586c2dd64cc8bca6e2a261ec87",
+        "scenarios": 40,
+        "passed": 40,
+        "results": [
+          {
+            "strategy": "observation-masking",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "structured-summary",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "algorithmic",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "structured-summary",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "algorithmic",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "algorithmic",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "observation-masking",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "structured-summary",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "algorithmic",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "structured-summary",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "algorithmic",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "algorithmic",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "observation-masking",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "observation-masking",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "observation-masking",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "observation-masking",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "algorithmic",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "observation-masking",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "structured-summary",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "observation-masking",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "observation-masking",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "structured-summary",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "observation-masking",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "structured-summary",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "algorithmic",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "algorithmic",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "structured-summary",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "algorithmic",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "algorithmic",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "structured-summary",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "structured-summary",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "structured-summary",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "observation-masking",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "algorithmic",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "observation-masking",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "strategy": "structured-summary",
+            "passed": true,
+            "kind": "comparison"
+          },
+          {
+            "kind": "provider-probe",
+            "provider": "openai",
+            "injectRecordedEmpty": false,
+            "model": "gpt-4o-mini-2024-07-18",
+            "parsed": {
+              "marker": "EXACT_STAGE07_OPENAI",
+              "account": "live-scope",
+              "status": "completion-unknown"
+            },
+            "reads": 1,
+            "passed": true,
+            "verdictSource": "all test assertions plus exact recorded marker/account/status, applied helper, single read and no repeats"
+          },
+          {
+            "kind": "provider-probe",
+            "provider": "anthropic",
+            "injectRecordedEmpty": false,
+            "model": "claude-haiku-4-5-20251001",
+            "parsed": {
+              "marker": "EXACT_STAGE07_ANTHROPIC",
+              "account": "live-scope",
+              "status": "completion-unknown"
+            },
+            "reads": 1,
+            "passed": true,
+            "verdictSource": "all test assertions plus exact recorded marker/account/status, applied helper, single read and no repeats"
+          },
+          {
+            "kind": "provider-probe",
+            "provider": "google",
+            "injectRecordedEmpty": false,
+            "model": "gemini-2.5-flash",
+            "parsed": {
+              "marker": "EXACT_STAGE07_GOOGLE",
+              "account": "live-scope",
+              "status": "completion-unknown"
+            },
+            "reads": 1,
+            "passed": true,
+            "verdictSource": "all test assertions plus exact recorded marker/account/status, applied helper, single read and no repeats"
+          },
+          {
+            "kind": "provider-probe",
+            "provider": "google",
+            "injectRecordedEmpty": true,
+            "model": "gemini-2.5-flash",
+            "parsed": {
+              "marker": "EXACT_STAGE07_GOOGLE",
+              "account": "live-scope",
+              "status": "completion-unknown"
+            },
+            "reads": 1,
+            "passed": true,
+            "verdictSource": "all test assertions plus exact recorded marker/account/status, applied helper, single read and no repeats"
+          }
+        ]
+      },
+      "task": {
+        "protocol": "stage04-live-v1",
+        "rawReportSHA256": "8afff3f4c78e0616127c3d1eee5f87d6e7130b67982227470f011986db066b51",
+        "scenarios": 12,
+        "passed": 12,
+        "results": [
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "passed": true,
+            "submissions": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream",
+            "passed": true,
+            "submissions": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "resume",
+            "passed": true,
+            "submissions": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "extractor",
+            "passed": true,
+            "submissions": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "run",
+            "passed": true,
+            "submissions": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "stream",
+            "passed": true,
+            "submissions": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "resume",
+            "passed": true,
+            "submissions": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "extractor",
+            "passed": true,
+            "submissions": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "passed": true,
+            "submissions": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream",
+            "passed": true,
+            "submissions": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "resume",
+            "passed": true,
+            "submissions": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "extractor",
+            "passed": true,
+            "submissions": 1
+          }
+        ]
+      },
+      "loop": {
+        "protocol": "stage10-live-v1",
+        "rawReportSHA256": "ee4cbab7faec7ef9a6d3b61a10ed1ce0d84e29c4b8ad809aa9df4c680f9c5180",
+        "scenarios": 18,
+        "passed": 18,
+        "results": [
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "scenario": "recovery",
+            "passed": true,
+            "calls": 3,
+            "reads": 2,
+            "checks": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "scenario": "blocked",
+            "passed": true,
+            "calls": 1,
+            "reads": 0,
+            "checks": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream",
+            "scenario": "recovery",
+            "passed": true,
+            "calls": 3,
+            "reads": 2,
+            "checks": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream",
+            "scenario": "blocked",
+            "passed": true,
+            "calls": 1,
+            "reads": 0,
+            "checks": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "run",
+            "scenario": "recovery",
+            "passed": true,
+            "calls": 3,
+            "reads": 2,
+            "checks": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "run",
+            "scenario": "blocked",
+            "passed": true,
+            "calls": 1,
+            "reads": 0,
+            "checks": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "stream",
+            "scenario": "recovery",
+            "passed": true,
+            "calls": 3,
+            "reads": 2,
+            "checks": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "stream",
+            "scenario": "blocked",
+            "passed": true,
+            "calls": 1,
+            "reads": 0,
+            "checks": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "scenario": "recovery",
+            "passed": true,
+            "calls": 3,
+            "reads": 2,
+            "checks": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "scenario": "blocked",
+            "passed": true,
+            "calls": 1,
+            "reads": 0,
+            "checks": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream",
+            "scenario": "recovery",
+            "passed": true,
+            "calls": 3,
+            "reads": 2,
+            "checks": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream",
+            "scenario": "blocked",
+            "passed": true,
+            "calls": 1,
+            "reads": 0,
+            "checks": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "scenario": "stopped-history",
+            "passed": true,
+            "reads": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream",
+            "scenario": "stopped-history",
+            "passed": true,
+            "reads": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "run",
+            "scenario": "stopped-history",
+            "passed": true,
+            "reads": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "stream",
+            "scenario": "stopped-history",
+            "passed": true,
+            "reads": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "scenario": "stopped-history",
+            "passed": true,
+            "reads": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream",
+            "scenario": "stopped-history",
+            "passed": true,
+            "reads": 1
+          }
+        ]
+      },
+      "session": {
+        "protocol": "stage12-session-corrections-live-v1",
+        "rawReportSHA256": "dc95af56b635d1a54d5b478c020538913fda5c6baf361a2f4acb970e0a17131e",
+        "scenarios": 3,
+        "passed": 3,
+        "results": [
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "passed": true
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "passed": true
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "passed": true
+          }
+        ]
+      },
+      "assembly": {
+        "protocol": "stage05-live-v1",
+        "rawReportSHA256": "6c14fefdb73c3a7a6f95322a32d41b54f4ea94f4baca2f41be9e126cd2139004",
+        "scenarios": 39,
+        "passed": 39,
+        "results": [
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "kind": "edited-input",
+            "mode": "run",
+            "passed": true,
+            "contributions": 2
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "kind": "edited-input",
+            "mode": "stream",
+            "passed": true,
+            "contributions": 2
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "kind": "wrapup-usage",
+            "mode": "run",
+            "passed": true,
+            "reads": 1,
+            "contributions": 2
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "kind": "wrapup-usage",
+            "mode": "stream",
+            "passed": true,
+            "reads": 1,
+            "contributions": 2
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "kind": "json-repair",
+            "passed": true,
+            "contributions": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "kind": "json-repair",
+            "passed": true,
+            "contributions": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "kind": "edited-input",
+            "mode": "run",
+            "passed": true,
+            "contributions": 2
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "kind": "edited-input",
+            "mode": "stream",
+            "passed": true,
+            "contributions": 2
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "kind": "wrapup-usage",
+            "mode": "run",
+            "passed": true,
+            "reads": 1,
+            "contributions": 2
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "kind": "wrapup-usage",
+            "mode": "stream",
+            "passed": true,
+            "reads": 1,
+            "contributions": 2
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "kind": "json-repair",
+            "passed": true,
+            "contributions": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "kind": "json-repair",
+            "passed": true,
+            "contributions": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "kind": "edited-input",
+            "mode": "run",
+            "passed": true,
+            "contributions": 2
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "kind": "edited-input",
+            "mode": "stream",
+            "passed": true,
+            "contributions": 2
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "kind": "wrapup-usage",
+            "mode": "run",
+            "passed": true,
+            "reads": 1,
+            "contributions": 2
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "kind": "wrapup-usage",
+            "mode": "stream",
+            "passed": true,
+            "reads": 1,
+            "contributions": 2
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "kind": "json-repair",
+            "passed": true,
+            "contributions": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "kind": "json-repair",
+            "passed": true,
+            "contributions": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "passed": true,
+            "calls": 2,
+            "reads": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2,
+            "reads": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "run",
+            "passed": true,
+            "calls": 2,
+            "reads": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2,
+            "reads": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "kind": "cache-observation",
+            "passed": true
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "run",
+            "passed": true,
+            "calls": 2,
+            "reads": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2,
+            "reads": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "run",
+            "passed": true,
+            "calls": 2,
+            "reads": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2,
+            "reads": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "kind": "cache-observation",
+            "passed": true
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "passed": true,
+            "calls": 2,
+            "reads": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2,
+            "reads": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "run",
+            "passed": true,
+            "calls": 2,
+            "reads": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "mode": "stream",
+            "passed": true,
+            "calls": 2,
+            "reads": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "kind": "cache-observation",
+            "passed": true
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "kind": "structured-consolidation",
+            "passed": true,
+            "contributions": 1,
+            "maintenance": 1
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "kind": "structured-suspension",
+            "passed": true,
+            "submissions": 1,
+            "contributions": 2
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "kind": "structured-consolidation",
+            "passed": true,
+            "contributions": 1,
+            "maintenance": 1
+          },
+          {
+            "provider": "anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "kind": "structured-suspension",
+            "passed": true,
+            "submissions": 1,
+            "contributions": 2
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "kind": "structured-consolidation",
+            "passed": true,
+            "contributions": 1,
+            "maintenance": 1
+          },
+          {
+            "provider": "google",
+            "model": "gemini-2.5-flash",
+            "kind": "structured-suspension",
+            "passed": true,
+            "submissions": 1,
+            "contributions": 2
+          }
+        ]
+      }
+    },
+    "newLifecycleDetails": [
+      {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "kind": "structured-consolidation",
+        "passed": true,
+        "contributions": 1,
+        "maintenance": 1,
+        "controlledCandidatePressure": true,
+        "usage": {
+          "id": "e46e39ec-1156-4f11-9719-6e1a52b4c95b",
+          "limits": {
+            "maxCalls": 2
+          },
+          "invocations": [
+            {
+              "id": "8de48479-2d50-4a40-91f2-944ac12cc7ee",
+              "parentInvocationId": "e46e39ec-1156-4f11-9719-6e1a52b4c95b",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "stage05-finalization-openai",
+              "model": "gpt-4o-mini",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 2401,
+                "output_tokens": 10,
+                "total_tokens": 2411,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.00036615,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "0736bbda-9ec2-4a6c-8382-06fccce6f185",
+              "parentInvocationId": "e46e39ec-1156-4f11-9719-6e1a52b4c95b",
+              "purpose": "main",
+              "phase": "repair",
+              "connector": "stage05-finalization-openai",
+              "model": "gpt-4o-mini",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 3011,
+                "output_tokens": 6,
+                "total_tokens": 3017,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.0004552499999999999,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "8c67eb37-d1ff-43d6-89e3-8b014184617a",
+              "invocationId": "8de48479-2d50-4a40-91f2-944ac12cc7ee",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 2411,
+              "reservedCostUSD": 0.00036615,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "8dbb7a1a-d421-4a84-a39c-ff20c39fbdb9",
+              "invocationId": "0736bbda-9ec2-4a6c-8382-06fccce6f185",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 3017,
+              "reservedCostUSD": 0.00045525,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 5412,
+            "outputTokens": 16,
+            "totalTokens": 5428,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.0008213999999999999,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 5428,
+            "chargedCostUSD": 0.0008213999999999999
+          }
+        }
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "kind": "structured-suspension",
+        "passed": true,
+        "submissions": 1,
+        "contributions": 2,
+        "nativeFastPathOrToolFreeFormatting": true,
+        "usage": {
+          "id": "5cf05b5e-9b45-4362-877a-5d3632302d97",
+          "limits": {
+            "maxCalls": 4
+          },
+          "invocations": [
+            {
+              "id": "2ceab349-645a-4fc0-b19f-876ce8e9aeaf",
+              "parentInvocationId": "5cf05b5e-9b45-4362-877a-5d3632302d97",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "stage05-suspension-openai",
+              "model": "gpt-4o-mini",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 227,
+                "output_tokens": 2,
+                "total_tokens": 229,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 3.5249999999999996e-05,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "df7bf7fb-df91-4002-8f82-be1c019586d5",
+              "parentInvocationId": "5cf05b5e-9b45-4362-877a-5d3632302d97",
+              "purpose": "main",
+              "phase": "wrapup",
+              "connector": "stage05-suspension-openai",
+              "model": "gpt-4o-mini",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 218,
+                "output_tokens": 6,
+                "total_tokens": 224,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 3.63e-05,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "8ad2de08-95b0-499b-892e-0c32661f397b",
+              "invocationId": "2ceab349-645a-4fc0-b19f-876ce8e9aeaf",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 229,
+              "reservedCostUSD": 3.525e-05,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "21605253-d5d6-4e6b-b277-840bb8e47e34",
+              "invocationId": "df7bf7fb-df91-4002-8f82-be1c019586d5",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 224,
+              "reservedCostUSD": 3.63e-05,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 445,
+            "outputTokens": 8,
+            "totalTokens": 453,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 7.155e-05,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 453,
+            "chargedCostUSD": 7.155e-05
+          }
+        }
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "kind": "structured-consolidation",
+        "passed": true,
+        "contributions": 1,
+        "maintenance": 1,
+        "controlledCandidatePressure": true,
+        "usage": {
+          "id": "09ae7700-9066-443e-9634-0df2812912b8",
+          "limits": {
+            "maxCalls": 2
+          },
+          "invocations": [
+            {
+              "id": "315d1396-e6a4-403b-9389-209e0c55e55f",
+              "parentInvocationId": "09ae7700-9066-443e-9634-0df2812912b8",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "stage05-finalization-anthropic",
+              "model": "claude-haiku-4-5-20251001",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 3245,
+                "output_tokens": 13,
+                "total_tokens": 3258,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.00331,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "a3307267-08d9-48ec-955f-173e330823bd",
+              "parentInvocationId": "09ae7700-9066-443e-9634-0df2812912b8",
+              "purpose": "main",
+              "phase": "repair",
+              "connector": "stage05-finalization-anthropic",
+              "model": "claude-haiku-4-5-20251001",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 3013,
+                "output_tokens": 8,
+                "total_tokens": 3021,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.003053,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "2f4ced13-592b-4e7d-9eed-73b82e38fb25",
+              "invocationId": "315d1396-e6a4-403b-9389-209e0c55e55f",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 3258,
+              "reservedCostUSD": 0.006555,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "21c1e36b-f94b-4b83-818e-ab7a775c2019",
+              "invocationId": "a3307267-08d9-48ec-955f-173e330823bd",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 3021,
+              "reservedCostUSD": 0.006066,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 6258,
+            "outputTokens": 21,
+            "totalTokens": 6279,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.006363000000000001,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 6279,
+            "chargedCostUSD": 0.012621
+          }
+        }
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "kind": "structured-suspension",
+        "passed": true,
+        "submissions": 1,
+        "contributions": 2,
+        "nativeFastPathOrToolFreeFormatting": true,
+        "usage": {
+          "id": "4f867f82-ef4c-4eab-8fda-d74814ebb869",
+          "limits": {
+            "maxCalls": 4
+          },
+          "invocations": [
+            {
+              "id": "e6f85e34-5234-415f-9481-a3ca11058b3d",
+              "parentInvocationId": "4f867f82-ef4c-4eab-8fda-d74814ebb869",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "stage05-suspension-anthropic",
+              "model": "claude-haiku-4-5-20251001",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 812,
+                "output_tokens": 7,
+                "total_tokens": 819,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.000847,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "ad4cff70-fa16-4368-a18d-73474af5f001",
+              "parentInvocationId": "4f867f82-ef4c-4eab-8fda-d74814ebb869",
+              "purpose": "main",
+              "phase": "wrapup",
+              "connector": "stage05-suspension-anthropic",
+              "model": "claude-haiku-4-5-20251001",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 373,
+                "output_tokens": 8,
+                "total_tokens": 381,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.000413,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "288e8fef-0928-44d6-8d59-13a30d1e33b3",
+              "parentInvocationId": "4f867f82-ef4c-4eab-8fda-d74814ebb869",
+              "purpose": "main",
+              "phase": "repair",
+              "connector": "stage05-suspension-anthropic",
+              "model": "claude-haiku-4-5-20251001",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 333,
+                "output_tokens": 8,
+                "total_tokens": 341,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.000373,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "0ff87de8-29f6-41cd-b09a-3883c03755de",
+              "invocationId": "e6f85e34-5234-415f-9481-a3ca11058b3d",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 819,
+              "reservedCostUSD": 0.001659,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "efa0f633-9609-42b5-b961-6df6fc9ad2d1",
+              "invocationId": "ad4cff70-fa16-4368-a18d-73474af5f001",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 381,
+              "reservedCostUSD": 0.000786,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "a0e43b0c-f345-4175-ba72-79a877f401fa",
+              "invocationId": "288e8fef-0928-44d6-8d59-13a30d1e33b3",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 341,
+              "reservedCostUSD": 0.000706,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 3,
+            "inputTokens": 1518,
+            "outputTokens": 23,
+            "totalTokens": 1541,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.0016330000000000001,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 1541,
+            "chargedCostUSD": 0.003151
+          }
+        }
+      },
+      {
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "kind": "structured-consolidation",
+        "passed": true,
+        "contributions": 1,
+        "maintenance": 1,
+        "controlledCandidatePressure": true,
+        "usage": {
+          "id": "0b50e8ac-d734-4519-acbc-e370def8abce",
+          "limits": {
+            "maxCalls": 2
+          },
+          "invocations": [
+            {
+              "id": "dd620f8e-0a1d-4416-8e98-164e8881dadd",
+              "parentInvocationId": "0b50e8ac-d734-4519-acbc-e370def8abce",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "stage05-finalization-google",
+              "model": "gemini-2.5-flash",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 2510,
+                "output_tokens": 10,
+                "total_tokens": 2520
+              },
+              "modelCostUSD": 0.0007779999999999999,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "61bfefdf-5da8-4325-84ad-477c85a0efe2",
+              "parentInvocationId": "0b50e8ac-d734-4519-acbc-e370def8abce",
+              "purpose": "main",
+              "phase": "repair",
+              "connector": "stage05-finalization-google",
+              "model": "gemini-2.5-flash",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 2833,
+                "output_tokens": 5,
+                "total_tokens": 2838
+              },
+              "modelCostUSD": 0.0008624,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "6edf3956-3aac-421d-a47e-f359ef51131b",
+              "invocationId": "dd620f8e-0a1d-4416-8e98-164e8881dadd",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 2520,
+              "reservedCostUSD": 0.000778,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "7f7e5c16-749b-44ae-b4ab-899d099f2aaa",
+              "invocationId": "61bfefdf-5da8-4325-84ad-477c85a0efe2",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 2838,
+              "reservedCostUSD": 0.0008624,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 5343,
+            "outputTokens": 15,
+            "totalTokens": 5358,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.0016404,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 5358,
+            "chargedCostUSD": 0.0016404000000000002
+          }
+        }
+      },
+      {
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "kind": "structured-suspension",
+        "passed": true,
+        "submissions": 1,
+        "contributions": 2,
+        "nativeFastPathOrToolFreeFormatting": true,
+        "usage": {
+          "id": "524dff13-5b48-48d8-aae4-ea0630654aa8",
+          "limits": {
+            "maxCalls": 4
+          },
+          "invocations": [
+            {
+              "id": "5a207236-d955-425b-8362-26941454a19d",
+              "parentInvocationId": "524dff13-5b48-48d8-aae4-ea0630654aa8",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "stage05-suspension-google",
+              "model": "gemini-2.5-flash",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 187,
+                "output_tokens": 10,
+                "total_tokens": 197
+              },
+              "modelCostUSD": 8.109999999999999e-05,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "be41fe97-b5aa-4bd4-86cc-f00438966cc6",
+              "parentInvocationId": "524dff13-5b48-48d8-aae4-ea0630654aa8",
+              "purpose": "main",
+              "phase": "wrapup",
+              "connector": "stage05-suspension-google",
+              "model": "gemini-2.5-flash",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 198,
+                "output_tokens": 5,
+                "total_tokens": 203
+              },
+              "modelCostUSD": 7.19e-05,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "87701db5-c21d-462b-8c87-d4ec6b25dc70",
+              "parentInvocationId": "524dff13-5b48-48d8-aae4-ea0630654aa8",
+              "purpose": "main",
+              "phase": "repair",
+              "connector": "stage05-suspension-google",
+              "model": "gemini-2.5-flash",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 179,
+                "output_tokens": 5,
+                "total_tokens": 184
+              },
+              "modelCostUSD": 6.62e-05,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "2788d70e-59b6-42ff-9a80-87df615f47ca",
+              "invocationId": "5a207236-d955-425b-8362-26941454a19d",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 197,
+              "reservedCostUSD": 8.109999999999999e-05,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "f743857d-c976-43d9-9ba9-252a7f25ee9c",
+              "invocationId": "be41fe97-b5aa-4bd4-86cc-f00438966cc6",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 203,
+              "reservedCostUSD": 7.19e-05,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "5ddc95d2-6b54-449e-aa95-b99cda65bcbd",
+              "invocationId": "87701db5-c21d-462b-8c87-d4ec6b25dc70",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 184,
+              "reservedCostUSD": 6.62e-05,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 3,
+            "inputTokens": 564,
+            "outputTokens": 20,
+            "totalTokens": 584,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.00021919999999999996,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 584,
+            "chargedCostUSD": 0.00021919999999999996
+          }
+        }
+      }
+    ],
+    "probeBoundaries": "New consolidation cases use controlled post-main candidate pressure, then actual provider formatting. Suspension tools are local simulations; OpenAI uses the valid native fast path, Anthropic/Google use required final formatting. Unit/public consumers separately force native repair and real default spill. No external writes or generalized quality/cost claim."
+  },
+  "build": {
+    "command": "npm run build",
+    "exitCode": 0,
+    "verifiedExportFiles": 24,
+    "logSHA256": "eafa53cbca0f9eb9f43428faeb47b9d4ba7f728bbbd21acda5533f5428337c0a"
+  },
+  "gates": [
+    {
+      "name": "unit",
+      "command": [
+        "npm",
+        "run",
+        "test:unit"
+      ],
+      "exitCode": 0,
+      "seconds": 31.21,
+      "log": "/tmp/stage05-second-corrections-gate-unit.log",
+      "sha256": "4cdb5e0502c1e167991c45aa35bf84a0040d3217f9daaed8478e132a2f204094"
+    },
+    {
+      "name": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "seconds": 6.41,
+      "log": "/tmp/stage05-second-corrections-gate-typecheck.log",
+      "sha256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717"
+    },
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exitCode": 0,
+      "seconds": 6.38,
+      "log": "/tmp/stage05-second-corrections-gate-lint.log",
+      "sha256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e"
+    },
+    {
+      "name": "examples-check",
+      "command": [
+        "npm",
+        "run",
+        "examples:check"
+      ],
+      "exitCode": 0,
+      "seconds": 24.13,
+      "log": "/tmp/stage05-second-corrections-gate-examples-check.log",
+      "sha256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8"
+    },
+    {
+      "name": "compat",
+      "command": [
+        "npm",
+        "run",
+        "test:agentic:compat"
+      ],
+      "exitCode": 0,
+      "seconds": 3.03,
+      "log": "/tmp/stage05-second-corrections-gate-compat.log",
+      "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    {
+      "name": "core-strict",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "/tmp/stage05-strict.json"
+      ],
+      "exitCode": 0,
+      "seconds": 22.99,
+      "log": "/tmp/stage05-second-corrections-gate-core-strict.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-types",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "apps/amos/tsconfig.json"
+      ],
+      "exitCode": 0,
+      "seconds": 2.28,
+      "log": "/tmp/stage05-second-corrections-gate-amos-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-strict",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "/tmp/stage05-amos-strict.json"
+      ],
+      "exitCode": 0,
+      "seconds": 2.69,
+      "log": "/tmp/stage05-second-corrections-gate-amos-strict.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-build",
+      "command": [
+        "npm",
+        "run",
+        "--prefix",
+        "apps/amos",
+        "build"
+      ],
+      "exitCode": 0,
+      "seconds": 3.2,
+      "log": "/tmp/stage05-second-corrections-gate-amos-build.log",
+      "sha256": "b7957e970fb874681ebf84bed16bf4d65cbb85df5d2b3d63017db223207bf49b"
+    },
+    {
+      "name": "docs",
+      "command": [
+        "npm",
+        "run",
+        "docs"
+      ],
+      "exitCode": 0,
+      "seconds": 4.83,
+      "log": "/tmp/stage05-second-corrections-gate-docs.log",
+      "sha256": "9ba2840902fabac04d61a39d908661c7b8ce421f358483a40de53d1ab1592847"
+    },
+    {
+      "name": "public",
+      "command": [
+        "node",
+        "tests/fixtures/agentic-presets/public-runtime.mjs"
+      ],
+      "exitCode": 0,
+      "seconds": 1.4,
+      "log": "/tmp/stage05-second-corrections-gate-public.log",
+      "sha256": "dfe27ae7df1e46c45fafd23fa4ed6a0f679b8bdca015f24cebe8d31b082069a6"
+    },
+    {
+      "name": "stage05-public",
+      "command": [
+        "node",
+        "tests/fixtures/context-assembly/public-runtime.mjs"
+      ],
+      "exitCode": 0,
+      "seconds": 6.21,
+      "log": "/tmp/stage05-second-corrections-gate-stage05-public.log",
+      "sha256": "c8d24ed06eff70210b910e82b260baf9aa48fcdb3e203d269a02de566f265dbb"
+    },
+    {
+      "name": "focused-coverage",
+      "command": [
+        "npx",
+        "vitest",
+        "run",
+        "tests/unit/context-assembly",
+        "tests/unit/apps/amos/ContextInspection.test.ts",
+        "tests/unit/apps/amos/ContextAssembly.test.ts",
+        "--coverage",
+        "--coverage.include=src/core/context-nextgen/assembly.ts",
+        "--coverage.include=apps/amos/src/agent/contextInspection.ts",
+        "--coverage.reportsDirectory=/tmp/stage05-second-corrections-coverage"
+      ],
+      "exitCode": 0,
+      "seconds": 6.95,
+      "log": "/tmp/stage05-second-corrections-gate-focused-coverage.log",
+      "sha256": "28281ada47110350347e9f5dadbf50e4e91b97f02dd7ab8dcd38f488f77b6b53"
+    }
+  ],
+  "offline": {
+    "count": 28,
+    "scripts": [
+      {
+        "script": "example:agentic-baseline",
+        "command": "node --import tsx examples/agentic-evaluation-baseline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-agentic-baseline.log",
+        "sha256": "b2000863ee5b47ef0383f5e2a5cc219e326243d620a5f50ed97a0961b026f5f3"
+      },
+      {
+        "script": "example:context-freshness",
+        "command": "node --import tsx examples/context-compaction-freshness.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-context-freshness.log",
+        "sha256": "0532c044ac7655415d6c0c3b8ede1572840c2e17582f8932dd2fbaf13850e49c"
+      },
+      {
+        "script": "example:context-budget",
+        "command": "node --import tsx examples/context-request-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-context-budget.log",
+        "sha256": "e20d5ee3e5bab20d8fde566171c0fee5c980f28ac3e0122b7c20b5ee0d87d291"
+      },
+      {
+        "script": "example:structured-budget",
+        "command": "node --import tsx examples/structured-output-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-structured-budget.log",
+        "sha256": "e9e135fe6112f5b487dff5746a0c13973393a0c252349b3208bb8c5d444b74eb"
+      },
+      {
+        "script": "example:amos-context",
+        "command": "node --import tsx apps/amos/examples/context-budget-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-amos-context.log",
+        "sha256": "89428897af937eb5896c57426365cfef334ceac041ab84cea882ff31f787e2f3"
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": "node --import tsx examples/tool-outcomes-and-cancellation.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-tool-outcomes.log",
+        "sha256": "78d458b06f893c41560f16d7077c0ce2e90193fa107089cd82f704a5ff9a2aeb"
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-amos-tool-outcomes.log",
+        "sha256": "7762bb7100e11d275a19def86d87b561d0790b2ed4d7d3f4c3b85d2b6e5d141d"
+      },
+      {
+        "script": "example:purpose-models",
+        "command": "node --import tsx examples/purpose-specific-models.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-purpose-models.log",
+        "sha256": "0126b1100e97291397cac73555952cdafae2af7555547c5ca94df2942f4facac"
+      },
+      {
+        "script": "example:shared-budget",
+        "command": "node --import tsx examples/shared-run-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-shared-budget.log",
+        "sha256": "84261248923a4dbfebf4f3a026da031e926e461662a52766eba4e54c49889f47"
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": "node --import tsx apps/amos/examples/model-helpers-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-amos-helpers.log",
+        "sha256": "e29373f02ed776765524d9b5943a0c01fdfb16d030a217a42f0ed6478cae223f"
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": "node --import tsx examples/durable-tool-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-durable-evidence.log",
+        "sha256": "43a822314570163f135423ae54adac76b64431146ecd481e25a58b2cc74370f5"
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": "node --import tsx examples/evidence-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-evidence-recovery.log",
+        "sha256": "80e3d5cc815cbc12757578db98b93712dc33e121e07c05319eb7e1dfb35b812d"
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": "node --import tsx examples/ambiguous-action-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-ambiguous-evidence.log",
+        "sha256": "f49a80bbc66dab0c45d14cc14c426a52b7a0a0fe23dba60d47cb4208facc1acd"
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": "node --import tsx apps/amos/examples/evidence-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-amos-evidence.log",
+        "sha256": "e246df1d629afc66bd2aaa1638c68fb5620f4f6d38a388f884133c0fb3286c32"
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": "node --import tsx examples/evidence-stream-interruption.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-evidence-interruption.log",
+        "sha256": "141c4ca7d0829cc9e0ba00a1b4fce7fb571b615447f042d930045a7af90638d6"
+      },
+      {
+        "script": "example:context-strategies",
+        "command": "node --import tsx examples/context-strategy-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-context-strategies.log",
+        "sha256": "a852fda98ef2d1636f46193742c07d599a7f81d04d2c71e99f5f1579787b8fb2"
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-amos-context-strategies.log",
+        "sha256": "743d37070c80a832d0d82d976bf51fac1118f80fcdb041aa194c71f9df453b0e"
+      },
+      {
+        "script": "example:task-state",
+        "command": "node --import tsx examples/task-state-workflow.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-task-state.log",
+        "sha256": "d519113f7169524a0aea11ccad3ad89c2d5d23f38d951fc41e6518b40b17c9a8"
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": "node --import tsx apps/amos/examples/task-state-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-amos-task-state.log",
+        "sha256": "e5f440e94018ecd25042380f683c6523d3e884af31980d602b4145fffa98621d"
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": "node --import tsx examples/feedback-driven-agent.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-feedback-agent.log",
+        "sha256": "639e9ae258b4657850e38784a7f16250b978c6b3a6a61a6689c4ebdcfebc9815"
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": "node --import tsx examples/run-stream-equivalence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-loop-equivalence.log",
+        "sha256": "3ca70e30613c402922eb167d2605942411d6257fe253787f8ceb67ec655c40cb"
+      },
+      {
+        "script": "example:amos-loop",
+        "command": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-amos-loop.log",
+        "sha256": "366f9e0222d0795ad16e83ef2d900ba0f47025eedf3488e5674c1f63d32dfd8d"
+      },
+      {
+        "script": "example:agentic-presets",
+        "command": "node --import tsx examples/agentic-presets.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-agentic-presets.log",
+        "sha256": "b08cf8db665fb0fcf9bbe09191d5c551d5cad938f49689a5825d757a98d410bd"
+      },
+      {
+        "script": "example:amos-presets",
+        "command": "node --import tsx apps/amos/examples/presets-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-amos-presets.log",
+        "sha256": "8fc7808aa0d42ef0f5e52973f6768fb54286b6977f0985fbeb864cdac03374cf"
+      },
+      {
+        "script": "example:context-selection",
+        "command": "node --import tsx examples/context-block-selection.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-context-selection.log",
+        "sha256": "75334ff0127cd3f9cceae671fafc9c921ca70e6d5a77a11ab0c7b8a06922b4cd"
+      },
+      {
+        "script": "example:cache-aware-context",
+        "command": "node --import tsx examples/cache-aware-context.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-cache-aware-context.log",
+        "sha256": "b4b2fbc862c1c3d0f5fb1c222e770495f83bf72fb16a6a332d8d3a8594367eb0"
+      },
+      {
+        "script": "example:amos-context-selection",
+        "command": "node --import tsx apps/amos/examples/context-selection-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-amos-context-selection.log",
+        "sha256": "2b40d628c2f18d48d7b06875a2468200459113d470bb07d36432bd7d1be9229a"
+      },
+      {
+        "script": "example:context-dispatch-safety",
+        "command": "node --import tsx examples/context-dispatch-safety.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage05-second-corrections-offline-context-dispatch-safety.log",
+        "sha256": "c8bdf28c5eade0d3e8bbdb4ef39a4dddcce9585fab09dee49bdc2ead066cc1f7"
+      }
+    ]
+  },
+  "publicConsumers": {
+    "stage05": {
+      "esmChecks": 19,
+      "cjsChecks": 19
+    },
+    "presets": {
+      "esmChecks": 27,
+      "cjsChecks": 27
+    },
+    "totalChecks": 92,
+    "builtTypeConsumer": "passed"
+  },
+  "focusedCoverage": {
+    "testsPassed": 201,
+    "filesPassed": 7,
+    "linesPercent": 100,
+    "branchesPercent": 91.28,
+    "includes": [
+      "src/core/context-nextgen/assembly.ts",
+      "apps/amos/src/agent/contextInspection.ts"
+    ],
+    "limitation": "Focused metrics do not represent the entire Agent/context manager/AMOS command or repository."
+  },
+  "originalReviewReproductions": {
+    "observations": [
+      {
+        "kind": "postcycle-repair",
+        "assembly": false,
+        "calls": 2,
+        "parsed": {
+          "ok": true
+        },
+        "beforeBudget": 3145,
+        "historyHasPair": false,
+        "historyLength": 2
+      },
+      {
+        "kind": "postcycle-repair",
+        "assembly": true,
+        "calls": 2,
+        "parsed": {
+          "ok": true
+        },
+        "beforeBudget": 3185,
+        "historyHasPair": true,
+        "historyLength": 4
+      },
+      {
+        "kind": "suspend-repair",
+        "assembly": false,
+        "actions": 1,
+        "calls": 3,
+        "parsed": {
+          "ok": true
+        },
+        "status": "suspended",
+        "sessionId": "suspended-8b992485-b2d6-4685-a2ec-0363697bb6d9",
+        "correlationSaved": true
+      },
+      {
+        "kind": "suspend-repair",
+        "assembly": true,
+        "actions": 1,
+        "calls": 3,
+        "parsed": {
+          "ok": true
+        },
+        "status": "suspended",
+        "sessionId": "suspended-b0024aae-6c76-4bf0-a89a-605ae962fc1f",
+        "correlationSaved": true
+      },
+      {
+        "kind": "uncertainty",
+        "shape": "native-image",
+        "accounting": {
+          "estimate": "local",
+          "opaqueOrMultimodal": true,
+          "estimatedInputTokens": 175,
+          "capacitySource": "registry",
+          "providerInputTokens": null,
+          "inputTokenDelta": null,
+          "cachedInputTokens": null,
+          "cacheCreationInputTokens": null
+        },
+        "retained": true
+      },
+      {
+        "kind": "uncertainty",
+        "shape": "native-file",
+        "accounting": {
+          "estimate": "local",
+          "opaqueOrMultimodal": true,
+          "estimatedInputTokens": 102,
+          "capacitySource": "registry",
+          "providerInputTokens": null,
+          "inputTokenDelta": null,
+          "cachedInputTokens": null,
+          "cacheCreationInputTokens": null
+        },
+        "retained": true
+      },
+      {
+        "kind": "uncertainty",
+        "shape": "custom-image",
+        "accounting": {
+          "estimate": "local",
+          "opaqueOrMultimodal": true,
+          "estimatedInputTokens": 176,
+          "capacitySource": "registry",
+          "providerInputTokens": null,
+          "inputTokenDelta": null,
+          "cachedInputTokens": null,
+          "cacheCreationInputTokens": null
+        },
+        "retained": true
+      },
+      {
+        "kind": "uncertainty",
+        "shape": "custom-file",
+        "accounting": {
+          "estimate": "local",
+          "opaqueOrMultimodal": true,
+          "estimatedInputTokens": 103,
+          "capacitySource": "registry",
+          "providerInputTokens": null,
+          "inputTokenDelta": null,
+          "cachedInputTokens": null,
+          "cacheCreationInputTokens": null
+        },
+        "retained": true
+      },
+      {
+        "kind": "uncertainty",
+        "shape": "tool-signature",
+        "accounting": {
+          "estimate": "local",
+          "opaqueOrMultimodal": true,
+          "estimatedInputTokens": 97,
+          "capacitySource": "registry",
+          "providerInputTokens": null,
+          "inputTokenDelta": null,
+          "cachedInputTokens": null,
+          "cacheCreationInputTokens": null
+        },
+        "retained": true
+      },
+      {
+        "kind": "uncertainty",
+        "shape": "plain-text",
+        "accounting": {
+          "estimate": "local",
+          "opaqueOrMultimodal": false,
+          "estimatedInputTokens": 92,
+          "capacitySource": "registry",
+          "providerInputTokens": null,
+          "inputTokenDelta": null,
+          "cachedInputTokens": null,
+          "cacheCreationInputTokens": null
+        },
+        "retained": true
+      }
+    ],
+    "assertionsPassed": true,
+    "sourceSHA256": "93db0f761a9f998a34a16f1d0195e5041e06d2be2548d2a26bc0408c3e516b14",
+    "logSHA256": "26304b8eca2323d8872f67841151c8a17108a0d0b8d82f8a163a4a25d7e4a7e7",
+    "historicalReference": "docs/evaluations/STAGE_05_SECOND_REVIEW.json"
+  },
+  "compatibility": [
+    "No new public configuration, required plugin/storage/session members, return/event shapes, authority or model routing.",
+    "Unconfigured structured run maintenance ordering is retained; selected structured ordering is corrected. Streaming/async continuation ownership remains unchanged.",
+    "Host prompt/input/source/account/task/registry/session and protected task-state guards are retained. No catch-and-ignore stale failures and no second preparation/compaction loop.",
+    "The shared formatter keeps existing prompt/native constraints, repair limits, ModelTask accounting and frozen main-request diagnostics.",
+    "Suspension formats before persistence. Before save acknowledgement, accepted observations remain in live context; after formatting/cancellation/storage failure, checkpoint the retained observation explicitly before destruction. Recovery never repeats the action."
+  ],
+  "internalOnly": [
+    "Extracted existing managed structured finalization and an execution-local optional suspension callback; neither is serialized or restored as authority.",
+    "Ordering of selected structured finalization versus maintenance/checkpointing; no new persistent workflow mechanism.",
+    "Small uncertainty predicate over already-supported content forms."
+  ],
+  "developmentHistory": [
+    {
+      "event": "Initial regression fixture setup lacked explicit single-attempt custom-provider budget attestation, compared volatile getState metadata, and used incomplete typed event/resume options.",
+      "resolution": "Corrected fixture setup and strict consumer options; final full gates pass without weakening runtime guards or acceptance assertions."
+    },
+    {
+      "event": "A cancellation simulation initially ignored cancellation and returned a successful scripted response.",
+      "resolution": "Use a cooperative provider cancellation fault and verify explicit checkpoint recovery with the local action still executed once; existing awaited-cancellation cases also pass."
+    }
+  ],
+  "artifactsSHA256": {
+    "src/core/context-nextgen/assembly.ts": "1f37e2bf54b28d72581f9819ad6b5bd46487a7f1f641459d096f1825bde2a0cf",
+    "src/core/context-nextgen/AgentContextNextGen.ts": "03ae8d407d0a2c01a4ade5d514c8a1015608419caa17659231d732c43c7b3bc6",
+    "src/core/context-nextgen/types.ts": "62b99513d599c8aacb1e56b08f547a717891b23d3f552a1670512475af52b657",
+    "src/core/context-nextgen/index.ts": "2be04009606cd9cc20946d0c450bba52ade4e557f105c98cc99d6dfc4711c5b6",
+    "src/core/Agent.ts": "e990789c1268462f4c68dfbbff18d3923c320e0bdd91ba2e0e395ec76c9d4bbf",
+    "src/index.ts": "37c35c8d4a9cba137d6a0984fe7241574aa4f13ae2a541a2d0897fe7317c9f06",
+    "apps/amos/src/agent/AgentRunner.ts": "a9adad2b9c5c8c9c910a649d22a03810e652823383bb851ddee971c445f2d335",
+    "apps/amos/src/agent/contextInspection.ts": "ce4095480a29afcebaa456afb4d50f5b2f8651acfb82876eb31bb0c7495409a0",
+    "apps/amos/src/commands/commands/ContextCommand.ts": "64954186afe0befe217b6dc9f8a712ce9d8e4d224567917ff93bb48e92ea119b",
+    "apps/amos/src/config/types.ts": "572ad976116acff41073386bfda5acc885c93f2e80fbbee840c045179acaacb9",
+    "dist/index.js": "891c1221eac4302b532bb7b629649c97e007d3c7905f94b9b0f0f2436fd9d207",
+    "dist/index.cjs": "4c55308ec8cf3eb2d314ea0b18cf322bb0ff84aa46972c4bc1afe000c6812b5f",
+    "dist/index.d.ts": "8420079e6ff41084249d7f9feda3f7c1dfd1d3c9aa0f43b6dd33bbffb063693a",
+    "tests/integration/text/ContextAssembly.live.integration.test.ts": "5445060a11fdea57b65d004f1097e6d93f017a8d2116a8a57f72279cd8b230de",
+    "tests/fixtures/context-assembly/public-runtime.mjs": "3afbf913e7f108fda5327dff8e26b95874492b1131f6b3730572994a243eafe7",
+    "examples/context-block-selection.ts": "2ca1c44cd3a1e767022ad78cc784dd45ac8f03ae13ea40fc26736509a7c715d3",
+    "examples/cache-aware-context.ts": "d4d4bb29862c3b8c79d1084af4614de4b7533d2542c6b8d9a14cd0b1f953dfe5",
+    "apps/amos/examples/context-selection-offline.ts": "7a5f9295a918b0f949fbcaeae090a4505b0d10d2177a9ba5911d228dad17c0c6",
+    "tests/unit/context-assembly/persistence-and-failures.test.ts": "dbe195937a9a605341ddda0575d1d0e381d75e8033aa4a6baf012e8d661b2a38",
+    "tests/unit/context-assembly/layout-and-managed.test.ts": "388878738dd292ba3b87d87d843881a3112bebf52685e70dbeb017a0a005c752",
+    "tests/unit/context-assembly/selection.test.ts": "c5ea6a655404321c68e1f7d560879ad6e99943ffedf57b6aacab06b944969286",
+    "tests/unit/apps/amos/ContextAssembly.test.ts": "f38f176f46e8ac3631ce357ba1bd3a1f7fbd5101ad5ec895d894212a2a871285",
+    "tests/fixtures/agentic-baseline/stage05-consumer.ts": "9c7a47662e1bf407c730487b87636b30288dca670c484a30931b702e3a889c32",
+    "examples/context-strategy-comparison.ts": "500da032c049ed5773e0830e9e14a59082f6d5555eff8b5016acbe46f5de9245",
+    "tests/integration/text/ContextStrategies.live.integration.test.ts": "b9950eb4a9ac7b901387ef441e933ece5793176ffd55b566393d5e4dbe350891",
+    "tests/unit/core/Agent.loopCorrections.test.ts": "993eed4c10baba74e49c74d9029a09c99291b4c3fde3a96c022bc20fc9edafe8",
+    "src/core/context-nextgen/store-tools.ts": "4d570b38392fc453bb546e7daffd253ec4d090bede66f6053ef4d1858a125a11",
+    "tests/unit/context-assembly/review-corrections.test.ts": "783bb6236491427cf0436be1157cde670b38d1ce92cccd20a67102cb767bed4f",
+    "examples/context-dispatch-safety.ts": "349b70b11585902f558db50f4303b6b409c1675a085c45c6cf296b7a977fdcb9",
+    "src/tools/registry.generated.ts": "00941bde9d05ee613185c09365e5f90049597b5804c8397d8a3f21b1bab5e82c",
+    "API_REFERENCE.md": "42416ecd1ba376c77ef9d8b501696c6beb821f0a4c9c9074e087b34550d7a651",
+    "apps/amos/dist/index.js": "987280fad06c597784642326bcadb0fef50ae23033a15adbb4fea9bef5f9150b",
+    "tests/unit/core/context-nextgen/TaskStateContext.test.ts": "9fc56e7ae007ffd2c796a15976e4ed62976a52546fed9f7976b54d7b3189d766",
+    "tests/unit/apps/amos/LoopPolicy.test.ts": "c41b3202c844b7e6dd5f1f1f82ca8d9967722854b2f3ea8610fdabddbd1861eb",
+    "tests/unit/context-assembly/second-corrections.test.ts": "523d77981d65ad1c7974e2efec1ec3ea7c80622df5cc5d60321ddb0c512283a1"
+  },
+  "historicalEvidence": [
+    "docs/evaluations/STAGE_05_SECOND_REVIEW.json",
+    "docs/evaluations/STAGE_05_CORRECTIONS_VALIDATION.json"
+  ],
+  "delivery": "No commit, push, release, breaking API change or later-stage implementation.",
+  "packageInventory": {
+    "command": "npm pack --dry-run --ignore-scripts --cache /tmp/oneringai-stage05-package-cache --json",
+    "exitCode": 0,
+    "fileCount": 216,
+    "requiredPresent": [
+      "AGENTS.md",
+      "README.md",
+      "USER_GUIDE.md",
+      "API_REFERENCE.md",
+      "docs/VERSION_2_GUIDE.md",
+      "docs/CONTEXT_ASSEMBLY.md",
+      "docs/designs/STAGE_05_SECOND_REVIEW_AND_FIX_PLAN.md",
+      "docs/evaluations/STAGE_05_SECOND_CORRECTIONS_VALIDATION.json",
+      "docs/evaluations/STAGE_05_SECOND_CORRECTIONS_OFFLINE.txt",
+      "examples/context-dispatch-safety.ts"
+    ],
+    "pathsSHA256": "b86fcd9e7cac4bb97f937be0fdea22d36e7ad4b9dfe986f2d0024969ef50a672",
+    "note": "Inventory before this final metadata update; no self-referential archive checksum, publishing, commit or push."
+  },
+  "documentationVerification": {
+    "runtimeFingerprintsMatch": 35,
+    "linksChecked": 22,
+    "secretPatternScan": "passed",
+    "gitDiffCheck": "passed"
+  },
+  "documentationSHA256": {
+    "AGENTS.md": "55e865629c3bdecc7c08db99287fbfe1edf8bcee87b2b17b3a1311f559a0f400",
+    "README.md": "e1e1a3786753eb8732e3764d088fe96ca75b04ecff75fd7c4c62713da1445c12",
+    "USER_GUIDE.md": "8396ac02f58b377fdf6cffb14da75d50c17caf2259230f1d2cb98b151a366a01",
+    "API_REFERENCE.md": "42416ecd1ba376c77ef9d8b501696c6beb821f0a4c9c9074e087b34550d7a651",
+    "CHANGELOG.md": "a9fb5056e62bddeff1600929f5d3078d3b58568b94ce383454f1a0739769614f",
+    "apps/amos/README.md": "9a95d8cd33baf61debf3490c284f2cb93db5815e764983c1ca6b84c161caea6a",
+    "examples/README.md": "3062d886b2a8d4cbbed22038eae4e65b3777facc6839c5fb589bfec0b067dcc6",
+    "docs/CONTEXT_ASSEMBLY.md": "53f665bfa381c9425be91063734032f4cf07814cfdb5d638a5ff9f2ac7b18829",
+    "docs/CONTEXT_PREPARATION.md": "6d218c7bd45058fb05c8c815a124991765d3b8549c27c304c661fd5f804257cf",
+    "docs/VERSION_2_GUIDE.md": "7d5ac649166e4c8aa6e647cef1e9e39a3c346754e085fe168722298a91c158e4",
+    "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md": "3f8d103f72ff120c89c7a4d96bbc8dd9b4f072fdca7019b2ea6d53fcdad83cd1",
+    "docs/designs/STAGE_05_IMPLEMENTATION.md": "fe27bba57b456254abb0848d346674b90f4d02baac55873aa30e5b03c7a4e7ac",
+    "docs/designs/STAGE_05_REVIEW_AND_FIX_PLAN.md": "22eae35a35c53eab90c18143de4d3de83368ecf9b9746fc18562782d739cceef",
+    "docs/designs/STAGE_05_SECOND_REVIEW_AND_FIX_PLAN.md": "bb356ec653b9e44c7f8ce807e6af7fee887494225dbd25246025ff450482ae92",
+    "package.json": "b8018c7a23bab15df52071e120065b29dfed921971a40bfbcdf4803356797fd0"
+  }
+}

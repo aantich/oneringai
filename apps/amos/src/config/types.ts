@@ -20,6 +20,8 @@ import type {
   AgentLoopDiagnostics,
   AgentPresetName,
   AgentCapabilityInspection,
+  ContextAssemblyConfig,
+  ContextSelectionManifest,
 } from '@everworker/oneringai';
 import type { ExternalToolManager } from '../tools/ExternalToolManager.js';
 
@@ -39,6 +41,8 @@ export interface AmosConfig {
   /** Optional host configuration; null/absence keeps legacy single-model behavior. */
   modelExecution?: ModelExecutionConfig | null;
   /** Optional explicit automatic strategy; absence preserves algorithmic behavior. */
+  /** Optional selection/layout; contributors are recreated by trusted host code, never JSON callbacks. */
+  contextAssembly?: Omit<ContextAssemblyConfig, 'contributors' | 'tokenEstimator'> & { selectWhiteboard?: boolean };
   contextStrategy?: 'algorithmic' | 'observation-masking' | 'structured-summary';
   /** Local evidence is opt-in; ownership and location are host configuration. */
   evidence?: { enabled: boolean; directory: string; ownerId: string; namespace: string; retentionMs?: number };
@@ -457,6 +461,7 @@ export interface ContextBudgetInfo {
  * Token breakdown by component
  */
 export interface ContextBreakdownInfo {
+  selection?: ContextSelectionManifest;
   source?: 'prepared' | 'estimate';
   revision?: number;
   preparedAt?: number;

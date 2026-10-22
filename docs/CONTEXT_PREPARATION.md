@@ -352,3 +352,25 @@ observability additions; `CompactionContext.compactConversation` is an optional
 capability, preserving older extension contracts. See
 [Context Strategies](CONTEXT_STRATEGIES.md) for defaults, schema/source checks,
 experimental support, fallback, helper accounting and examples.
+
+
+Opt-in Stage 05 [context assembly](CONTEXT_ASSEMBLY.md) adds explicit selectable data
+views and stable-prefix layout while retaining this preparation/one-pass/final-fit
+contract. New data, dependencies, expiry and source revisions have additional final
+checks; default plugins and observation hooks are unchanged. JSON formatting/repair
+retains its frozen selected prefix and actual main-call diagnostics without another
+compaction. Inspect lastPreparation.selection for local estimates and normalized
+provider-input/cache observations; no provider cache key or hit is inferred.
+
+Managed history/input edits from hooks can trigger one final contribution refresh
+within the original preparation allowance. Hooks and compaction are not repeated;
+the request and its scope must remain stable during the refresh. Standalone
+synchronous validation rejects a changed task until it is prepared again. Repair
+retains its source frame only while the host prompt and earlier input remain valid;
+ordinary answer commits are allowed. Post-cycle consolidation does not fetch another
+transient contribution. Source stores, frozen/class-backed store schemas and saved
+session formats keep their existing contracts. Selected structured run() formats
+before post-cycle consolidation; selected structured suspension formats before
+its session/correlation save. This preserves the admitted frame without weakening
+current host/scope guards. On formatting/storage failure, checkpoint retained
+accepted observations before destruction; never repeat their actions for recovery.

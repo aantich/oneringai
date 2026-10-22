@@ -1619,58 +1619,21 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       this.startLoopPolicy(executionId, options?.loopPolicy);
       let finalResponse: AgentResponse;
       for (;;) {
-        finalResponse = await this._runAgenticLoop(executionId, startTime, maxIterations);
+        let formattedSuspension: AgentResponse | undefined;
+        const requestedFormat = options?.responseFormat;
+        const formatSuspension = requestedFormat ? async (response: AgentResponse): Promise<void> => {
+          await this.finalizeStructuredCandidate(response, requestedFormat);
+          formattedSuspension = response;
+        } : undefined;
+        finalResponse = await this._runAgenticLoop(executionId, startTime, maxIterations, formatSuspension);
 
-        // Coerce the final answer into the requested structured (JSON) shape and
-        // attach `output_parsed`. Fast-paths when the answer already parses (e.g.
-        // native was applied inline for OpenAI); otherwise re-asks tool-free.
-        if (options?.responseFormat) {
-          const format = options.responseFormat;
-          const beforeText = finalResponse.output_text;
-          const stoppedToolTurn = this._loopController?.isStopped
-            && (this.extractToolCalls(finalResponse.output).length > 0 || finalResponse.output.length === 0);
-          const hasTools =
-            this.getEnabledToolDefinitions().length +
-              ((this._runOptions?.nativeTools ?? this._config.nativeTools)?.length ?? 0) >
-            0;
-          const strategy = resolveStructuredStrategy(
-            format,
-            this._provider.getModelCapabilities(this.model),
-            this.connector.vendor,
-            hasTools,
-            this._provider.getAdvancedCapabilities?.(this.model),
-          );
-          let beforeRepair = finalResponse.output_text;
-          let enforcement: 'native' | 'prompt' | 'repair' = strategy;
-
-          // A prompt fallback cannot constrain the tool-producing turn. Always
-          // run one explicitly constrained, tool-free formatting pass instead of
-          // accepting JSON that happened to parse by chance.
-          if (strategy === 'prompt' && hasTools) {
-            const constrained = await this._generateStructuredToolFree(
-              'Reformat the following answer as the final response. Preserve its meaning and ' +
-                'return only the requested JSON value.\n\n' +
-                (finalResponse.output_text ?? ''),
-              format,
-            );
-            finalResponse.output = constrained.output;
-            finalResponse.output_text = constrained.output_text;
-            this.mergeStructuredUsage(finalResponse, constrained);
-            beforeRepair = constrained.output_text;
-            enforcement = 'prompt';
-          }
-          await this.coerceStructuredOutput(finalResponse, format, (input) =>
-            this._generateStructuredToolFree(input, format),
-          );
-          // If coercion reformatted the answer (a tool-free reformat pass ran), the
-          // loop had already committed the pre-reformat text to context. Sync it so
-          // history, session save/load, and continuation match what we return.
-          if (finalResponse.output_text !== beforeText) {
-            if (stoppedToolTurn) this._agentContext.addAssistantResponse(finalResponse.output);
-            else this._agentContext.replaceLastAssistantResponse(finalResponse.output);
-          }
-          if (finalResponse.output_text !== beforeRepair) enforcement = 'repair';
-          finalResponse.structured_output_enforcement = enforcement;
+        // Selected structured responses finalize against the exact admitted frame.
+        // Suspension formats before assigning/persisting its first session identity.
+        if (options?.responseFormat && finalResponse !== formattedSuspension) {
+          await this.finalizeStructuredCandidate(finalResponse, options.responseFormat);
+        }
+        if (formatSuspension && this._agentContext.lastPreparation?.selection) {
+          await this._agentContext.consolidate();
         }
 
         // The nonstream-only JSON repair contract remains intact. A configured
@@ -1708,7 +1671,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   private async _runAgenticLoop(
     executionId: string,
     _startTime: number,
-    maxIterations: number
+    maxIterations: number,
+    formatSuspension?: (response: AgentResponse) => Promise<void>,
   ): Promise<AgentResponse> {
     let iteration = this._loopController?.snapshot().iterations ?? 0;
     let finalResponse: AgentResponse | null = null;
@@ -1981,6 +1945,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         this._applyInlineResponseFormat(suspendOptions);
         suspendOptions = this.validateManagedDispatch(suspendOptions);
         const suspendResponse = await this.generateTracked(suspendOptions, 'main', 'wrapup');
+        this._agentContext.recordProviderUsage(suspendResponse.usage);
         this._agentContext.addAssistantResponse(suspendResponse.output);
         this._recordIterationMetrics(
           iteration + 1,
@@ -1991,6 +1956,12 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           suspendPrepared,
           suspendOptions,
         );
+
+        // Format the settled answer while the selected session/scope frame still
+        // matches. Persist the formatted history once; never replay the submission.
+        if (formatSuspension && this._agentContext.lastPreparation?.selection) {
+          await formatSuspension(suspendResponse);
+        }
 
         // Generate session ID if not already set
         const sessionId = this._agentContext.sessionId ?? `suspended-${randomUUID()}`;
@@ -2079,6 +2050,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       this._applyInlineResponseFormat(wrapUpOptions);
       wrapUpOptions = this.validateManagedDispatch(wrapUpOptions);
       const wrapUpResponse = await this.generateTracked(wrapUpOptions, 'main', 'wrapup');
+      this._agentContext.recordProviderUsage(wrapUpResponse.usage);
 
       // Add the wrap-up response to context
       this._agentContext.addAssistantResponse(wrapUpResponse.output);
@@ -2104,8 +2076,11 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     }
 
     this.commitStoppedLoopInput();
-    // Run post-cycle consolidation (summarization, memory optimization, etc.)
-    await this._agentContext.consolidate();
+    // Selected structured run() owns consolidation after formatting. Ordinary
+    // runs, streams and async continuations keep their existing maintenance order.
+    if (!(formatSuspension && this._agentContext.lastPreparation?.selection)) {
+      await this._agentContext.consolidate();
+    }
 
     // Attach pending async tools info to response
     if (this._asyncToolTracker.size > 0) {
@@ -2838,6 +2813,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
             });
           } else if (event.type === StreamEventType.RESPONSE_COMPLETE) {
             wrapUpStreamState.updateUsage(event.usage);
+            this._agentContext.recordProviderUsage(event.usage);
             wrapUpStreamState.providerStatus = event.status;
             wrapUpStreamState.stopReason = event.stop_reason;
             wrapUpStreamState.stopDetails = event.stop_details;
@@ -2914,6 +2890,55 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
   // ===== Structured Output =====
 
+  /** Finalize one settled candidate without changing tools, selection or preparation. */
+  private async finalizeStructuredCandidate(finalResponse: AgentResponse, format: ResponseFormat): Promise<void> {
+    const beforeText = finalResponse.output_text;
+    const stoppedToolTurn = this._loopController?.isStopped
+      && (this.extractToolCalls(finalResponse.output).length > 0 || finalResponse.output.length === 0);
+    const hasTools =
+      this.getEnabledToolDefinitions().length +
+        ((this._runOptions?.nativeTools ?? this._config.nativeTools)?.length ?? 0) >
+      0;
+    const strategy = resolveStructuredStrategy(
+      format,
+      this._provider.getModelCapabilities(this.model),
+      this.connector.vendor,
+      hasTools,
+      this._provider.getAdvancedCapabilities?.(this.model),
+    );
+    let beforeRepair = finalResponse.output_text;
+    let enforcement: 'native' | 'prompt' | 'repair' = strategy;
+
+    // A prompt fallback cannot constrain the tool-producing turn. Always
+    // run one explicitly constrained, tool-free formatting pass instead of
+    // accepting JSON that happened to parse by chance.
+    if (strategy === 'prompt' && hasTools) {
+      const constrained = await this._generateStructuredToolFree(
+        'Reformat the following answer as the final response. Preserve its meaning and ' +
+          'return only the requested JSON value.\n\n' +
+          (finalResponse.output_text ?? ''),
+        format,
+      );
+      finalResponse.output = constrained.output;
+      finalResponse.output_text = constrained.output_text;
+      this.mergeStructuredUsage(finalResponse, constrained);
+      beforeRepair = constrained.output_text;
+      enforcement = 'prompt';
+    }
+    await this.coerceStructuredOutput(finalResponse, format, (input) =>
+      this._generateStructuredToolFree(input, format),
+    );
+    // If coercion reformatted the answer (a tool-free reformat pass ran), the
+    // loop had already committed the pre-reformat text to context. Sync it so
+    // history, session save/load, and continuation match what we return.
+    if (finalResponse.output_text !== beforeText) {
+      if (stoppedToolTurn) this._agentContext.addAssistantResponse(finalResponse.output);
+      else this._agentContext.replaceLastAssistantResponse(finalResponse.output);
+    }
+    if (finalResponse.output_text !== beforeRepair) enforcement = 'repair';
+    finalResponse.structured_output_enforcement = enforcement;
+  }
+
   /**
    * Apply the requested structured-output constraint to per-iteration generate
    * options, in-place. Uses the vendor's native mechanism when it composes with
@@ -2974,7 +2999,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
     const generateOptions: TextGenerateOptions = {
       model: this.model,
-      input,
+      input: this._agentContext.formattingContextInput(input),
       instructions:
         strategy === 'native'
           ? baseInstructions
@@ -3162,9 +3187,13 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     });
 
     try {
+      await this._agentContext._reconcileContextRequest(generateOptions, {
+        modelMaxContextTokens: this.resolveManagedModelCapacity(generateOptions.model), signal: this._modelExecutionSignal,
+      });
       generateOptions = this.validateManagedDispatch(generateOptions);
       // Call provider
       const response = await this.generateTracked(generateOptions);
+      this._agentContext.recordProviderUsage(response.usage);
 
       const llmDuration = Date.now() - llmStartTime;
 
@@ -3264,6 +3293,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     });
 
     try {
+      await this._agentContext._reconcileContextRequest(generateOptions, {
+        modelMaxContextTokens: this.resolveManagedModelCapacity(generateOptions.model), signal: this._modelExecutionSignal,
+      });
       generateOptions = this.validateManagedDispatch(generateOptions);
       // Stream from provider
       for await (const event of this.streamTracked(generateOptions)) {
@@ -3341,6 +3373,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         } else if (event.type === StreamEventType.RESPONSE_COMPLETE) {
           const completeEvent = event as ResponseCompleteEvent;
           streamState.updateUsage(completeEvent.usage);
+          this._agentContext.recordProviderUsage(completeEvent.usage);
           streamState.providerStatus = completeEvent.status;
           streamState.stopReason = completeEvent.stop_reason;
           streamState.stopDetails = completeEvent.stop_details;

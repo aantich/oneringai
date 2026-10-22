@@ -1,3 +1,4 @@
+import { createInContextMemoryContributor, InContextMemoryPluginNextGen } from '@everworker/oneringai';
 /**
  * AgentRunner - AMOS adapter for the current OneRingAI Agent API.
  */
@@ -133,6 +134,13 @@ export class AgentRunner implements IAgentRunner {
     if (this.config.contextStrategy === 'structured-summary' && !this.config.modelExecution?.helpers?.compactor) throw new Error('Selected summary strategy requires a compactor helper');
     const resumed = !!sessionId && await this.storage.exists(sessionId);
     const next = resumed ? await Agent.resume(sessionId!, { ...agentConfig, session: { ...agentConfig.session, storage: this.storage } }) : Agent.create(agentConfig);
+    try {
+      if (this.config.contextAssembly?.selectWhiteboard) {
+        const memory = next.context.getPlugin('in_context_memory');
+        if (!(memory instanceof InContextMemoryPluginNextGen)) throw new Error('Whiteboard selection requires the built-in in-context memory plugin');
+        next.context.registerContextContributor(memory.name, createInContextMemoryContributor(memory));
+      }
+    } catch (error) { next.destroy(); throw error; }
     this.destroyAgentOnly();
     this.agent = next;
     this._connectorName = connectorName;
@@ -174,9 +182,9 @@ export class AgentRunner implements IAgentRunner {
       modelExecution: settings.modelExecution ?? undefined,
       ...(settings.loopPolicy === undefined ? {} : { loopPolicy: settings.loopPolicy }),
       ...runtimeOptions,
-      ...(settings.evidence || settings.taskState || settings.contextStrategy ? {
+      ...(settings.evidence || settings.taskState || settings.contextStrategy || settings.contextAssembly ? {
         ...(evidence || task ? { userId: evidence?.ownerId ?? task!.ownerId } : {}),
-        context: { model, agentId: 'amos', strategy: settings.contextStrategy,
+        context: { model, agentId: 'amos', strategy: settings.contextStrategy, assembly: settings.contextAssembly,
           ...(settings.contextStrategy ? { compactionStrategy: this.createContextStrategy(settings.contextStrategy, settings) } : {}),
           features: { ...(settings.evidence ? { evidence: !!evidence } : {}), ...(settings.taskState ? { taskState: !!task } : {}) },
           plugins: {

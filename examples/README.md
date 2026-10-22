@@ -338,3 +338,29 @@ The Stage 12 AMOS preset walkthrough also demonstrates candidate-first handoff,
 failed-candidate preservation, and title retention across named/unnamed saves.
 The actual app/session command and timer-backed autosave paths are covered by
 [latest corrective validation](../docs/evaluations/STAGE_12_THIRD_CORRECTIONS.json).
+
+
+### Stage 05: selective context and cache-aware layout
+
+Build first. `npm run example:context-selection` compares an overflowing legacy
+whiteboard/source view with budgeted selection, retaining the exact stored entries
+and printing selection reasons, exact omitted-source recovery and stale-account
+admission rejection. `npm run example:context-dispatch-safety` demonstrates one
+bounded refresh for hook-edited input, rejection of superseded-prompt JSON repair
+and last-request wrap-up accounting using local scripted providers. It also
+formats before a real default algorithmic spill and persists one coherent structured
+suspension without repeating its local action. Its checkpoint is process-local and
+its temporary correlation file is removed during cleanup; no restart durability is
+implied. Expected output includes formattingBeforeSpill and structuredSuspension.
+`npm run example:cache-aware-context` demonstrates
+stable instruction prefixes with late dynamic data and unknown provider counters.
+`npm run example:amos-context-selection` executes the real AMOS runner and breakdown,
+including a forced local read/wrap-up, then destroys its Agent and removes temporary
+files. All four default to offline and label synthetic usage explicitly.
+
+`npm run test:context-assembly:live` explicitly bills OpenAI/Anthropic/Google calls
+using `.env`, checks run/stream in both layouts with local reads, and reports actual
+cache usage without requiring hits. It also checks final hook edits, ordinary/stale
+JSON repair and actual per-request wrap-up accounting. `STAGE05_PROVIDER=openai|anthropic|google npm run
+example:cache-aware-context -- --live` runs a separate two-call provider observation.
+No service writes or general cache/cost/quality claim. See [setup and boundaries](../docs/CONTEXT_ASSEMBLY.md).

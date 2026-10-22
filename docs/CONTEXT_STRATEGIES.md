@@ -286,3 +286,21 @@ excluded, and caching is uncontrolled. These are regression observations, not
 fresh held-out quality evidence or general savings claims. See the
 [corrective record](evaluations/STAGE_07_CORRECTIONS_VALIDATION.json) for actual
 usage, prior failed regressions, uncertainty and unchanged compatibility.
+
+
+The Stage 05 regression gate improves the comparison example's failed-selector
+feedback with up to eight exact raw notes keys from that agent's own memory. It
+exposes no source values or receipt IDs as proof; the model must still read a valid
+source and satisfy the unchanged exact-answer/account/status/no-write/no-repeat
+checks and call/output limits. Main/helper comparison sampling is now explicitly
+temperature zero, recorded in reports. Earlier pilots used vendor-default sampling
+and different recovery feedback; they are historical functional evidence, not
+matched quality/cost trials. A source-lookup failure remains a failed predicate.
+
+The Google compaction provider probe explicitly requests a 128-token thinking
+budget and temperature zero through the existing helper profile. Its output cap
+remains 4096, and exact source/account/status, no-repeat, one-repair and injected-empty
+recovery checks remain enforced. Request capture verifies the thinking setting;
+provider-default reasoning is not assumed disabled by `enabled: false`. This probe
+setting is separate from the held-out comparison configuration and does not change
+production helper defaults or claim general quality/cost benefits.

@@ -17,6 +17,15 @@ are unchanged.
 See [presets and inspection](docs/AGENT_PRESETS.md), the
 [runnable example](examples/agentic-presets.ts), and [Version 2 availability](docs/VERSION_2_GUIDE.md).
 
+Opt-in selective context assembly adds explicit plugin data contributions,
+budgets/dependencies, selection manifests and a stable-prefix layout. Sources remain
+stored, protected task/evidence views remain intact, and actual provider-cache
+observations stay separate from local estimates. Managed hook edits receive a bounded
+selection refresh; account/task bindings and current host instructions remain checked.
+Selected structured answers finalize before consolidation or suspension persistence;
+native tool image/file results and opaque signatures are reflected in uncertainty metadata.
+See [context assembly](docs/CONTEXT_ASSEMBLY.md).
+
 ## What's new in 1.2.0
 
 OneRingAI 1.2.0 expands the GPT-6 Astra work into a current,

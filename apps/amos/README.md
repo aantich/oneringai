@@ -509,3 +509,31 @@ context repair, or rebuild the context. Never replay an action to repair storage
 Scope/checkpoint validation remains enforced. Read the
 [full recipe](../../docs/AGENT_PRESETS.md) and run `npm run example:amos-presets`
 from the repository root after building for the deterministic cleanup walkthrough.
+
+
+## Selective context and provider-cache diagnostics
+
+Optional `contextAssembly` in config.json selects layout/budgets/deadlines for the
+next Agent initialization; add `selectWhiteboard: true` to select entries without
+removing source data. For example:
+
+```json
+{"contextAssembly":{"layout":"stable-prefix","maxDataTokens":512,"selectWhiteboard":true,"reasoningReserveTokens":256}}
+```
+
+Critical entries stay protected; source state persists, while trusted companions
+are recreated after loading. `/context breakdown` shows selected/omitted/projected
+IDs/reasons and actual or unknown provider input/cache counters. An uncertainty
+notice appears for opaque/multimodal input, including native function/custom
+image/file result arrays and opaque tool-call signatures, without printing source
+bytes. These observations are separate
+from `/context cache` local tool-cache support and are never a cache-hit guarantee.
+These include the last wrap-up request's usage, rather than a stream's aggregate.
+Selected-store overview and store_get descriptions explain partial visibility and
+exact source retrieval. The offline walkthrough forces one local read and a
+max-iteration wrap-up, verifies its recorded usage and retains both source entries.
+No preparation/model call is triggered by inspection. Existing settings without
+contextAssembly and preset defaults remain unchanged. Run
+`npm run example:amos-context-selection` from the built repository for an offline
+walkthrough. Read the [complete recipe](../../docs/CONTEXT_ASSEMBLY.md) for host scope,
+failed/stale preparation, JSON repair and persistence boundaries.

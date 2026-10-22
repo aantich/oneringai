@@ -88,7 +88,12 @@ least 1,024 tokens and smaller than the helper output allowance.
 Reasoning effort and structured-output requirements are capability-checked. Provider
 reasoning defaults still apply when its API has no effective disable mapping;
 `thinking: { enabled: false }` does not promise zero reasoning tokens on every
-model. Prefer a tested model and adequate output cap. Helpers use the existing
+model. Prefer a tested model and adequate output cap. Helpers use their thinking
+configuration independently from main-call vendor options. The Gemini 2.5 Flash
+compaction probe explicitly selects `{ enabled: true, budgetTokens: 128 }` and
+temperature zero within its unchanged 4096-token output cap; request capture
+verifies that setting. This is a tested probe configuration, not an automatic
+production override or a zero-reasoning promise. Helpers use the existing
 native JSON-schema support where available, otherwise the prompt fallback. Both
 paths validate the returned value locally with Ajv, including formats. Each helper
 invocation owns its compiler through its bounded repair; schema IDs and caches

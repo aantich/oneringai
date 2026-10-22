@@ -21,6 +21,9 @@ const STORE_GET_DESCRIPTION = "Retrieve an entry's full value by exact key. With
 export class StoreToolsManager {
   private handlers = new Map<string, IStoreHandler>();
 
+  constructor(private readonly promptView?: (handler: IStoreHandler) =>
+    Pick<StoreEntrySchema, 'description' | 'usageHint'> | undefined) {}
+
   /**
    * Register a store handler. Throws on duplicate storeId.
    */
@@ -51,6 +54,20 @@ export class StoreToolsManager {
    */
   getSchemas(): StoreEntrySchema[] {
     return Array.from(this.handlers.values()).map(h => h.getStoreSchema());
+  }
+
+  private getPromptSchemas(): StoreEntrySchema[] {
+    return Array.from(this.handlers.values()).map(handler => {
+      const schema = handler.getStoreSchema(), view = this.promptView?.(handler);
+      if (!view) return schema;
+      // Keep native/frozen schemas intact and invoke inherited getters with their
+      // original receiver. Only prompt-facing visibility guidance is overridden.
+      return {
+        get storeId() { return schema.storeId; }, get displayName() { return schema.displayName; },
+        description: view.description, usageHint: view.usageHint,
+        get setDataFields() { return schema.setDataFields; }, get actions() { return schema.actions; },
+      };
+    });
   }
 
   /**
@@ -91,7 +108,7 @@ export class StoreToolsManager {
    * Covers: what store_* tools are, available stores, and when to use each.
    */
   buildOverview(): string {
-    const schemas = this.getSchemas();
+    const schemas = this.getPromptSchemas();
     if (schemas.length === 0) return '';
 
     const storeLines = schemas.map(s =>
@@ -122,7 +139,7 @@ See each store's section below for behavior rules, workflows, and store-specific
    * Called dynamically via descriptionFactory so it always reflects current handlers.
    */
   private buildStoreDescriptions(mode: 'get' | 'set' | 'delete' | 'list' | 'action'): string {
-    const schemas = this.getSchemas();
+    const schemas = this.getPromptSchemas();
     if (schemas.length === 0) return 'No stores available.';
 
     const lines: string[] = [];

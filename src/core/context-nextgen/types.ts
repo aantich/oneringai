@@ -695,6 +695,7 @@ export interface ContextPrepareOptions {
 /** Diagnostic snapshot of the last successful prepare; token counts are estimates. */
 export interface ContextPreparation {
   /** Diagnostic for the opt-in transactional built-ins in this preparation. */
+  selection?: import('./assembly.js').ContextSelectionManifest;
   compaction?: import('./strategies/conversation-compaction.js').ConversationCompactionReport;
   /** Monotonic, process-local successful preparation number. */
   revision: number;
@@ -871,6 +872,8 @@ export type PluginConfigs = KnownPluginConfigs & { [key: string]: Record<string,
  * AgentContextNextGen configuration
  */
 export interface AgentContextNextGenConfig {
+  /** Optional budgeted data contributions and explicit stable-prefix layout; host-owned, never restored from sessions. */
+  assembly?: import('./assembly.js').ContextAssemblyConfig;
   /** Model name (used for context window lookup) */
   model: string;
 

@@ -19219,3 +19219,43 @@ are normalized, and teardown continues after individual plugin errors. JSON-comp
 [complete recipe](docs/AGENT_PRESETS.md) for setup, overrides, failure behavior,
 public examples, runtime boundaries and migration. Availability is on the Version 2
 branch pending a verified package release.
+
+
+## Selective context assembly (Stage 05)
+
+Enable optional `context.assembly` on a managed Agent/context. Explicit
+`registerContextContributor(pluginName, companion)` replaces that enabled plugin's
+prompt data view with bounded selectable blocks; no plugin method is auto-detected.
+`createInContextMemoryContributor` adapts the built-in whiteboard while retaining
+all stored entries and protecting critical entries. Default plugin interfaces,
+layout, saved state, observation hooks and single ToolManager remain unchanged.
+
+Selection supports priorities, full dependency closures, protected data, expiry,
+source budgets and explicit host projections. Returned blocks are JSON user data,
+never host instructions. Protected task/evidence/instruction plugins cannot be
+replaced; violations, stale scope/revisions and deadline/fit failures are explicit.
+`assembly.layout: 'stable-prefix'` optionally places legacy dynamic data/date later
+and sorts tool definitions. Use existing `responseReserve` plus optional
+`reasoningReserveTokens` for headroom appropriate to actual model configuration.
+
+Inspect detached `lastPreparation.selection` for IDs/status/reasons/tokens and actual
+provider-input/cache observations. Missing counters stay null, zero stays zero;
+opaque/multimodal estimates and unknown-model fallback remain uncertain. This is
+not a provider cache service or a cost-saving guarantee. Source state persists,
+while callbacks/selection policy must be reattached by trusted host code. AMOS
+`contextAssembly.selectWhiteboard` and `/context breakdown` demonstrate adoption.
+Account/task and registry-instance changes invalidate old selections. Managed
+history/input edits from hooks receive one bounded refresh in the same contributor
+allowance, without repeating hooks or compaction; existing history ownership stays
+unchanged. JSON repair permits the normal answer commit while rejecting a replaced
+host prompt or earlier input. Whiteboard overview/store_get guidance reflects partial
+visibility. Last-request usage includes wrap-up calls and remains separate from stream
+aggregates; consolidation performs no new contributor fetches. Selected structured
+run() formats before consolidation; selected structured suspension formats once
+before saving its session/correlation and emitting suspension. Formatting or storage
+failure retains the accepted observation in live context; checkpoint it before
+destruction instead of repeating the action. Native function/custom image/file
+results and opaque thought signatures set the uncertainty flag, shown by AMOS.
+Run `npm run example:context-dispatch-safety` for a deterministic demonstration.
+Read the [complete recipe](docs/CONTEXT_ASSEMBLY.md) for public signatures, limits,
+JSON repair, lifecycle/authorization boundaries and offline/live setup.

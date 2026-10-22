@@ -2108,3 +2108,6 @@ export type { ObservationMaskingStrategyConfig, StructuredSummaryStrategyConfig,
 
 export { TaskStatePluginNextGen } from './core/context-nextgen/plugins/TaskStatePluginNextGen.js';
 export type { TaskStateCategory, TaskStateSource, TaskStateNoteInput, TaskStateNote, TaskStateLifecycleBinding, TaskStateLifecycleView, TaskStateAction, TaskStateSnapshot, TaskStatePluginConfig, TaskStateHostDelta } from './core/context-nextgen/plugins/TaskStatePluginNextGen.js';
+
+export { createInContextMemoryContributor } from './core/context-nextgen/assembly.js';
+export type { ContextBlock, ContextContributionRequest, ContextContributor, ContextAssemblyConfig, ContextSelectionEntry, ContextSelectionManifest } from './core/context-nextgen/assembly.js';

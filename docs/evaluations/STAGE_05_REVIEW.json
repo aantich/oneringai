@@ -1,0 +1,318 @@
+{
+  "protocol": "stage05-review-v1",
+  "clientDate": "2026-10-21",
+  "recordedAt": "2026-10-21T09:42:48.183265+00:00",
+  "branch": "version2",
+  "baseCommit": "539bbd1",
+  "status": "review complete; one P1 and four P2 findings open; Stage 05 corrective validation pending",
+  "scope": [
+    "All Stage 05 runtime, registration/selection/layout/deadline/freshness/repair/accounting changes and compatibility boundaries.",
+    "AMOS config/runner/inspection/commands, public/legacy consumers, tests, runnable examples and docs."
+  ],
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P1",
+      "title": "Freshness and fingerprinting omit effective account/task bindings",
+      "locations": [
+        "src/core/context-nextgen/AgentContextNextGen.ts:1027",
+        "src/core/context-nextgen/AgentContextNextGen.ts:1030"
+      ],
+      "probes": [
+        "scope-change/accountId",
+        "scope-change/connectorAccounts",
+        "scope-change/taskId"
+      ]
+    },
+    {
+      "id": "R2",
+      "priority": "P2",
+      "title": "The submitted question can change without refreshing its selection",
+      "locations": [
+        "src/core/context-nextgen/AgentContextNextGen.ts:1657",
+        "src/core/context-nextgen/AgentContextNextGen.ts:1662"
+      ],
+      "probes": [
+        "submitted-input-edit/run",
+        "submitted-input-edit/stream"
+      ]
+    },
+    {
+      "id": "R3",
+      "priority": "P2",
+      "title": "Auxiliary repair replays a superseded host prompt",
+      "locations": [
+        "src/core/context-nextgen/AgentContextNextGen.ts:1022",
+        "src/core/context-nextgen/AgentContextNextGen.ts:1657"
+      ],
+      "probes": [
+        "repair-after-host-change/input",
+        "repair-after-host-change/prompt"
+      ]
+    },
+    {
+      "id": "R4",
+      "priority": "P2",
+      "title": "Selected whiteboard instructions contradict the store overview",
+      "locations": [
+        "src/core/context-nextgen/assembly.ts:204",
+        "src/core/context-nextgen/AgentContextNextGen.ts:1917",
+        "src/core/context-nextgen/AgentContextNextGen.ts:1927"
+      ],
+      "probes": [
+        "whiteboard-overview"
+      ]
+    },
+    {
+      "id": "R5",
+      "priority": "P2",
+      "title": "Wrap-up calls leave available provider/cache usage unknown",
+      "locations": [
+        "src/core/Agent.ts:1983",
+        "src/core/Agent.ts:2081",
+        "src/core/Agent.ts:2839"
+      ],
+      "probes": [
+        "wrapup-usage/run",
+        "wrapup-usage/stream"
+      ],
+      "inspectionOnlyAdditionalPath": "suspension run wrap-up"
+    }
+  ],
+  "observations": [
+    {
+      "probe": "scope-change",
+      "field": "accountId",
+      "staleRequestAccepted": true,
+      "fingerprintUnchanged": true,
+      "id": "scope-change/accountId"
+    },
+    {
+      "probe": "scope-change",
+      "field": "connectorAccounts",
+      "staleRequestAccepted": true,
+      "fingerprintUnchanged": true,
+      "id": "scope-change/connectorAccounts"
+    },
+    {
+      "probe": "scope-change",
+      "field": "taskId",
+      "staleRequestAccepted": true,
+      "fingerprintUnchanged": true,
+      "id": "scope-change/taskId"
+    },
+    {
+      "probe": "whiteboard-overview",
+      "bulkOmitted": true,
+      "claimsAllValuesDirectlyVisible": true,
+      "saysNoRetrievalNeeded": true,
+      "alsoSaysOnlySelectedVisible": true,
+      "id": "whiteboard-overview"
+    },
+    {
+      "probe": "submitted-input-edit",
+      "mode": "run",
+      "accepted": true,
+      "requests": 1,
+      "submittedQuestionB": true,
+      "staleSelectedA": true,
+      "id": "submitted-input-edit/run"
+    },
+    {
+      "probe": "submitted-input-edit",
+      "mode": "stream",
+      "accepted": true,
+      "requests": 1,
+      "submittedQuestionB": true,
+      "staleSelectedA": true,
+      "id": "submitted-input-edit/stream"
+    },
+    {
+      "probe": "repair-after-host-change",
+      "change": "input",
+      "accepted": true,
+      "requests": 2,
+      "repairContainsCorrection": false,
+      "pendingCorrection": true,
+      "originalRequestRetained": true,
+      "id": "repair-after-host-change/input"
+    },
+    {
+      "probe": "repair-after-host-change",
+      "change": "prompt",
+      "accepted": true,
+      "requests": 2,
+      "currentPrompt": "NEW_HOST_INSTRUCTION",
+      "repairHasOriginalPrompt": true,
+      "repairHasNewPrompt": false,
+      "id": "repair-after-host-change/prompt"
+    },
+    {
+      "probe": "wrapup-usage",
+      "mode": "run",
+      "requests": 2,
+      "manifestUsage": {
+        "estimate": "local",
+        "opaqueOrMultimodal": false,
+        "estimatedInputTokens": 587,
+        "capacitySource": "provider",
+        "providerInputTokens": null,
+        "inputTokenDelta": null,
+        "cachedInputTokens": null,
+        "cacheCreationInputTokens": null
+      },
+      "lastProviderUsage": {
+        "input_tokens": 10,
+        "output_tokens": 2,
+        "total_tokens": 12,
+        "cached_input_tokens": 3,
+        "cache_creation_input_tokens": 1
+      },
+      "responseUsage": {
+        "input_tokens": 10,
+        "output_tokens": 2,
+        "total_tokens": 12,
+        "cached_input_tokens": 3,
+        "cache_creation_input_tokens": 1
+      },
+      "id": "wrapup-usage/run"
+    },
+    {
+      "probe": "wrapup-usage",
+      "mode": "stream",
+      "requests": 2,
+      "manifestUsage": {
+        "estimate": "local",
+        "opaqueOrMultimodal": false,
+        "estimatedInputTokens": 587,
+        "capacitySource": "provider",
+        "providerInputTokens": null,
+        "inputTokenDelta": null,
+        "cachedInputTokens": null,
+        "cacheCreationInputTokens": null
+      },
+      "lastProviderUsage": {
+        "input_tokens": 10,
+        "output_tokens": 2,
+        "total_tokens": 12,
+        "cached_input_tokens": 3,
+        "cache_creation_input_tokens": 1
+      },
+      "responseUsage": {
+        "input_tokens": 20,
+        "output_tokens": 4,
+        "total_tokens": 24,
+        "cached_input_tokens": 6,
+        "cache_creation_input_tokens": 2
+      },
+      "id": "wrapup-usage/stream"
+    }
+  ],
+  "verification": {
+    "focused": {
+      "command": "npx vitest run tests/unit/context-assembly tests/unit/apps/amos/ContextAssembly.test.ts",
+      "exitCode": 0,
+      "tests": 74,
+      "files": 4,
+      "logSHA256": "b5d05032a7921d1db2adaf69fccfdba57e9029b7e2b11a64908fe83b3856fbdb"
+    },
+    "neighbors": {
+      "command": "npx vitest run tests/unit/core/Agent.contextFreshness.test.ts tests/unit/core/StructuredOutput.behavior.test.ts tests/unit/core/StructuredOutput.test.ts tests/unit/core/context-nextgen/ContextFreshness.test.ts tests/unit/core/context-nextgen/ContextCorrections.test.ts tests/unit/core/context-nextgen/ContextSecondCorrections.test.ts tests/unit/core/context-nextgen/plugins/InContextMemoryPluginNextGen.test.ts tests/unit/apps/amos/ContextInspection.test.ts tests/unit/apps/amos/ContextStrategies.test.ts tests/unit/apps/amos/Presets.test.ts",
+      "exitCode": 0,
+      "tests": 219,
+      "files": 10,
+      "logSHA256": "ae13e3bab7012556f6b02882a809079f31d51bb8f5a8c283f75ffa1ce3889019"
+    },
+    "publicTypes": {
+      "command": "npm run test:agentic:compat",
+      "exitCode": 0,
+      "logSHA256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    "publicRuntime": {
+      "command": "node tests/fixtures/context-assembly/public-runtime.mjs",
+      "exitCode": 0,
+      "checks": 12,
+      "formats": [
+        "esm",
+        "cjs"
+      ],
+      "logSHA256": "c1584db3204f9a0fa59532501ed0cc0d3b3dbaba3270efa98e1a134d3917dc2a"
+    },
+    "probes": {
+      "command": "npx tsx /tmp/stage05-review-probes.mts",
+      "exitCode": 0,
+      "observations": 10,
+      "assertions": "Confirm observed defects, not passing desired behavior or fixes.",
+      "scriptSHA256": "a4a7a1a48db084240dc9ef37e38bfed0a6d01be07ff4003669c6e3e94d4ff1b0",
+      "logSHA256": "8351356048a4f600971bd6fbf58610a27022758ea6753863f1f41565804a155d"
+    },
+    "runtimeBuildTestExampleFingerprintsMatchPreviousValidation": true,
+    "matchedFiles": 26,
+    "artifactsSHA256": {
+      "src/core/context-nextgen/assembly.ts": "168601aa4565f9de52079cf9d74e21b3d6aa1455ebc2631a6061915a0deee0b8",
+      "src/core/context-nextgen/AgentContextNextGen.ts": "d3a89de504f6c7fc23b5291d6091fb5a5fed6d930385dddf538a17fdbec45692",
+      "src/core/context-nextgen/types.ts": "62b99513d599c8aacb1e56b08f547a717891b23d3f552a1670512475af52b657",
+      "src/core/context-nextgen/index.ts": "2be04009606cd9cc20946d0c450bba52ade4e557f105c98cc99d6dfc4711c5b6",
+      "src/core/Agent.ts": "3aed8fd6da5416c43be5a5217bb7c4f9ebfdd28caf73f3f068584695caee25cf",
+      "src/index.ts": "37c35c8d4a9cba137d6a0984fe7241574aa4f13ae2a541a2d0897fe7317c9f06",
+      "apps/amos/src/agent/AgentRunner.ts": "a9adad2b9c5c8c9c910a649d22a03810e652823383bb851ddee971c445f2d335",
+      "apps/amos/src/agent/contextInspection.ts": "ce4095480a29afcebaa456afb4d50f5b2f8651acfb82876eb31bb0c7495409a0",
+      "apps/amos/src/commands/commands/ContextCommand.ts": "ee0d68412bbdb15f244d3292a524783cf3cd78c64bd06d96c4547b83b4125da1",
+      "apps/amos/src/config/types.ts": "572ad976116acff41073386bfda5acc885c93f2e80fbbee840c045179acaacb9",
+      "dist/index.js": "c74a9016917e6b3562f9fa2ec267c677b8970b72a1547b2caf95d4a37d6232a8",
+      "dist/index.cjs": "0c1f84cb8b279dc2a4cfa9de3b187bf3e3d19dd7bbe456e59f0cdc58b6f6d7c7",
+      "dist/index.d.ts": "ed097a4b2d4c70ab904886e9070f82f5f3ea40b9ae00c5c8caddd92f1453ed85",
+      "tests/integration/text/ContextAssembly.live.integration.test.ts": "ceb79b0153594f7a2ca4ff68e415d2e4e6ebcbe40aaa7284ef4607fbf716f72d",
+      "tests/fixtures/context-assembly/public-runtime.mjs": "81b1eecc13f7732b93eda214ccfa2c01b06d182674698328ad6a34a2e997319c",
+      "examples/context-block-selection.ts": "ff4073dc9d4387fce02d4bc4c1727063539b1394358d3524b6f3fafda307ce25",
+      "examples/cache-aware-context.ts": "d4d4bb29862c3b8c79d1084af4614de4b7533d2542c6b8d9a14cd0b1f953dfe5",
+      "apps/amos/examples/context-selection-offline.ts": "354d881586876ea394452cec89d41ec0f104cec529be56b2569a3655c7c25f73",
+      "tests/unit/context-assembly/persistence-and-failures.test.ts": "dbe195937a9a605341ddda0575d1d0e381d75e8033aa4a6baf012e8d661b2a38",
+      "tests/unit/context-assembly/layout-and-managed.test.ts": "388878738dd292ba3b87d87d843881a3112bebf52685e70dbeb017a0a005c752",
+      "tests/unit/context-assembly/selection.test.ts": "c5ea6a655404321c68e1f7d560879ad6e99943ffedf57b6aacab06b944969286",
+      "tests/unit/apps/amos/ContextAssembly.test.ts": "7f3fa4da25de5a88c6e077bf7f59dbd3761b614b592b8cfb97c95290258680b7",
+      "tests/fixtures/agentic-baseline/stage05-consumer.ts": "9c7a47662e1bf407c730487b87636b30288dca670c484a30931b702e3a889c32",
+      "examples/context-strategy-comparison.ts": "500da032c049ed5773e0830e9e14a59082f6d5555eff8b5016acbe46f5de9245",
+      "tests/integration/text/ContextStrategies.live.integration.test.ts": "697f06fc14838ba56138f219de2d7b74d3b42a409357b61b4c25f763c7ac97ac",
+      "tests/unit/core/Agent.loopCorrections.test.ts": "993eed4c10baba74e49c74d9029a09c99291b4c3fde3a96c022bc20fc9edafe8"
+    },
+    "previousValidation": "docs/evaluations/STAGE_05_VALIDATION.json",
+    "previousPassingUnits": 8217,
+    "previousLiveTests": 166,
+    "previousLiveScenarios": 178,
+    "fullUnitRerun": false,
+    "liveProviderRerun": false,
+    "reason": "These missing host binding/edit/repair/guidance/accounting cases reproduce deterministically through public APIs and managed local providers. Runtime remains unchanged; this review does not claim fresh full/live validation.",
+    "newDocumentationLinksChecked": 14,
+    "diffCheckExitCode": 0,
+    "previousValidationSHA256": "4717f434f24a2510b1bb39bee826c3a761cf8a935c4a7a560520affda1f11483"
+  },
+  "reviewChanges": "Documentation, evidence and package inventory only; no runtime fixes, permanent tests, build, commit, push, release or later-stage work.",
+  "externalActions": "No credentials, real LLMs or remote service writes; local scripted model and read-tool fixtures only.",
+  "fixPlan": "docs/designs/STAGE_05_REVIEW_AND_FIX_PLAN.md",
+  "compatibility": "Preserve supported hooks, legacy defaults and plugin/storage/session/event contracts. No breaking proposal or approval; any necessary narrowing requires explicit approval first.",
+  "notPromoted": [
+    "Trusted synchronous host JavaScript cannot be preempted; documented callback limitations remain.",
+    "Explicit block/source/size limits and no provider-cache hit guarantee are intended constraints.",
+    "Whiteboard overview reproduction establishes contradictory instructions, not a measured model quality effect.",
+    "New queued input alone may represent a future turn; the independent host-prompt replacement demonstrates stale repair authority."
+  ],
+  "statusHandoff": [
+    "Version 2 availability, adoption and handoff ledger mark R1-R5 corrections pending.",
+    "Roadmap, implementation header, recipe and AGENTS point to current review; earlier completion and validation remain historical."
+  ],
+  "packageInventory": {
+    "command": "npm pack --dry-run --ignore-scripts --cache /tmp/oneringai-stage05-package-cache --json",
+    "exitCode": 0,
+    "fileCount": 209,
+    "requiredPresent": [
+      "docs/designs/STAGE_05_REVIEW_AND_FIX_PLAN.md",
+      "docs/evaluations/STAGE_05_REVIEW.json",
+      "docs/VERSION_2_GUIDE.md",
+      "docs/CONTEXT_ASSEMBLY.md",
+      "AGENTS.md"
+    ],
+    "pathsSHA256": "bc56708bc4012b690402f485d1d9a476471b5bcf55902e2b268cdf7ce097c9ad",
+    "note": "File inventory only, captured before this metadata update; no self-referential archive hash, build, publish, commit or push."
+  }
+}

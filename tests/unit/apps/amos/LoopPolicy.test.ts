@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Connector, Vendor } from '@everworker/oneringai';
+import { AgentRegistry, Connector, Vendor, type Agent } from '@everworker/oneringai';
 import { ScriptedLoopProvider } from '../../../../examples/agent-loop/scripted-provider.js';
 import { AgentRunner } from '../../../../apps/amos/src/agent/AgentRunner.js';
 import { ContextCommand } from '../../../../apps/amos/src/commands/commands/ContextCommand.js';
@@ -12,7 +12,18 @@ import type { CommandContext, IAgentRunner } from '../../../../apps/amos/src/con
 import type { AgentLoopPolicy } from '@everworker/oneringai';
 
 const runners: AgentRunner[] = [], directories: string[] = [];
-afterEach(async () => { runners.splice(0).forEach(r => r.destroy()); Connector.remove('amos-loop-test'); await Promise.all(directories.splice(0).map(d => rm(d, { recursive: true, force: true }))); vi.restoreAllMocks(); });
+const contexts: Array<Agent['context']> = [];
+const trackContext = ({ agent }: { agent: unknown }) => { contexts.push((agent as Agent).context); };
+beforeEach(() => { AgentRegistry.on('agent:registered', trackContext); });
+afterEach(async () => {
+  AgentRegistry.off('agent:registered', trackContext);
+  runners.splice(0).forEach(r => r.destroy());
+  await Promise.all(contexts.splice(0).map(async context => {
+    const pending = context as unknown as { _sessionOperations: Promise<void> | null; _journalWriteQueue: Promise<void> };
+    await pending._sessionOperations; await pending._journalWriteQueue;
+  }));
+  Connector.remove('amos-loop-test'); await Promise.all(directories.splice(0).map(d => rm(d, { recursive: true, force: true }))); vi.restoreAllMocks();
+});
 async function fixture(frames: ConstructorParameters<typeof ScriptedLoopProvider>[0]) {
   const directory = await mkdtemp(join(tmpdir(), 'amos-loop-test-')); directories.push(directory);
   const config = structuredClone(DEFAULT_CONFIG); config.session.autoSave = false;

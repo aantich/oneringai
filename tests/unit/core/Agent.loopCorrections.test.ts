@@ -8,7 +8,16 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
 const agents: Agent[] = [], names: string[] = [], directories: string[] = [];
-afterEach(async () => { agents.splice(0).forEach(a => a.destroy()); names.splice(0).forEach(n => Connector.remove(n)); vi.useRealTimers(); vi.restoreAllMocks(); await Promise.all(directories.splice(0).map(d => rm(d, { recursive: true, force: true }))); });
+afterEach(async () => {
+  const contexts = agents.map(agent => agent.context);
+  agents.splice(0).forEach(agent => agent.destroy());
+  await Promise.all(contexts.map(async context => {
+    const pending = context as unknown as { _sessionOperations: Promise<void> | null; _journalWriteQueue: Promise<void> };
+    await pending._sessionOperations; await pending._journalWriteQueue;
+  }));
+  names.splice(0).forEach(name => Connector.remove(name)); vi.useRealTimers(); vi.restoreAllMocks();
+  await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true })));
+});
 const context = { model: 'gpt-4o-mini', features: { workingMemory: false, inContextMemory: false } };
 const call = (id: string, args: Record<string, unknown> = {}): ScriptedFrame => ({ calls: [{ id, name: 'probe', args }] });
 function tool(execute: ToolFunction['execute'], effect: 'read' | 'write' | 'unknown' = 'write', blocking = true): ToolFunction {

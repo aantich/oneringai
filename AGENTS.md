@@ -515,6 +515,7 @@ during application shutdown.
 | Public signatures | `API_REFERENCE.md` |
 | Connectors and every tool source | `docs/CONNECTOR_TOOL_CATALOG.md` |
 | Protected task state, host corrections and pending actions | `docs/TASK_STATE.md` |
+| Selective context data, companion registration and cache-aware layout | `docs/CONTEXT_ASSEMBLY.md` |
 | Bounded run/stream recovery and host completion checks | `docs/AGENT_LOOP_POLICIES.md` |
 | Durable tool evidence, projections and recovery | `docs/DURABLE_EVIDENCE.md` |
 | Explicit helper models, shared model budgets and purpose usage | `docs/MODEL_TASKS_AND_HELPERS.md` |
@@ -772,3 +773,48 @@ identity tracking adds no portable authority or required API/session/storage fie
 Preserve existing JSON serialization and event/exception contracts; narrowing them
 requires explicit approval. Read the [latest completion](docs/designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16)
 and [restoration recipe](docs/AGENT_PRESETS.md#session-restoration-and-cleanup).
+
+
+## Selective context assembly
+
+Stage 05 and all review corrections are complete on branch (2026-10-22). See the
+[latest completion](docs/designs/STAGE_05_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22)
+and [validation](docs/evaluations/STAGE_05_SECOND_CORRECTIONS_VALIDATION.json):
+8,340 units, 190 live tests / 202 scenarios, 28 examples and 92 public controls pass.
+Selected structured runs format before consolidation; selected structured suspension
+formats before session/correlation persistence, with host freshness guards intact.
+On formatting/storage failure, checkpoint the retained accepted observation before
+destruction; never replay its action. Uncertainty includes native image/file result
+arrays and tool signatures; AMOS shows a source-free notice. No release.
+
+Effective accountId/connectorAccounts/taskId and registry-instance scope join existing
+identity guards. Managed submitted-input edits get one bounded refresh in the same
+contributor allowance; hooks/compaction are not replayed and source history is not
+implicitly rewritten. Repair permits answer commits while checking the current host
+prompt and earlier input. Selected-store guidance reflects partial visibility;
+frozen/class schemas keep their native objects/getter receivers. Wrap-ups observe
+last-request usage and consolidation fetches no contributors. Custom in-place scope
+changes must still advance source revisions; internal tokens/frames add no authority.
+
+Stage 05 uses optional `context.assembly` and explicit
+`registerContextContributor(pluginName, contributor)`, not structural method detection.
+Existing plugin interfaces/layout/observation hooks stay unchanged. Use
+`createInContextMemoryContributor` for whiteboard selection without source deletion;
+critical entries are protected. New blocks are JSON user data, never instructions or
+authorization. Protected task/evidence/instruction plugins cannot be replaced.
+
+Contributors are trusted host code. Maintain getRevision for all source/scope/task
+changes, observe signal, and attach only to enabled authorized plugins. Component/
+source budgets, full dependency closures, expiry, deadlines and final revision/input/
+scope guards fail closed. Reattach callbacks after session load; sessions never
+restore policy authority. JSON repair keeps the frozen selected prefix without
+another compaction, preserving main diagnostics. Context.responseReserve and optional
+reasoningReserveTokens provide explicit headroom without enabling thinking.
+
+`lastPreparation.selection` reports metadata only, local estimates and actual provider
+usage/cache counters with null for unknown. Stable-prefix layout and tool sorting are
+opt-in; no provider-cache hit/key or model quality/cost improvement is implied. AMOS
+contextAssembly/selectWhiteboard and breakdown show the distinction. Read
+[Context Assembly](docs/CONTEXT_ASSEMBLY.md) before configuring contributors, native/
+opaque state or persistence. Internal formatting-prefix/snapshot bookkeeping is not
+a new public storage/workflow authority.

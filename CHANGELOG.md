@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Stage 05 second corrections finalize selected structured answers before consolidation
+  and selected structured suspension before session/correlation persistence, preserving
+  host freshness guards and avoiding action replay. Uncertainty metadata includes
+  native function/custom image/file results and opaque tool signatures; AMOS displays
+  a source-free notice. Defaults/public/session/event shapes remain compatible.
+
+- Stage 05 corrections bind selections to effective account/task/registry identity
+  and actual dispatched input. Managed hook edits get one bounded refresh without
+  replaying hooks or compaction; repair rejects superseded host prompts/earlier input.
+  Selected-store overview and tool guidance reflect partial visibility. Max-iteration
+  and suspension wrap-ups record per-request usage, and post-cycle consolidation
+  never fetches contributors outside their preparation lifetime. Legacy defaults,
+  public signatures, source/session formats and history ownership remain unchanged.
+
+- Stage 05 opt-in selective context assembly: explicit companion registration,
+  non-destructive whiteboard adapter, bounded priority/projection/dependency selection,
+  protected data and revision/scope/deadline checks, plus optional stable-prefix layout.
+  New data retains user-data authority; legacy/default interfaces and session contracts
+  remain unchanged. Detached manifests report actual provider-input/cache counters
+  separately from estimates/unknowns. AMOS settings/breakdown, public offline examples
+  and opt-in three-provider validation accompany the [recipe](docs/CONTEXT_ASSEMBLY.md).
+
 - Stage 12 third corrections include candidate construction and synchronous loaded
   notifications in shared-context resume rollback, restore original authority before
   cleanup, and clean partially constructed candidates while retaining original

@@ -26,7 +26,7 @@ export async function inspectContext(context: AgentContextNextGen): Promise<{
     budget: { ...metadata, total: budget.maxTokens, reserved: budget.responseReserve, used: budget.totalUsed,
       available: Math.max(0, budget.available), utilizationPercent: budget.utilizationPercent,
       status: budget.utilizationPercent >= 90 ? 'critical' : budget.utilizationPercent >= 75 ? 'warning' : 'ok' },
-    breakdown: { ...metadata, totalUsed: budget.totalUsed, components: Object.entries(flat)
+    breakdown: { ...metadata, ...(prepared?.selection ? { selection: prepared.selection } : {}), totalUsed: budget.totalUsed, components: Object.entries(flat)
       .filter(([, tokens]) => tokens !== 0)
       .map(([name, tokens]) => ({ name, tokens, percent: budget.totalUsed > 0 ? tokens / budget.totalUsed * 100 : 0 }))
       .sort((a, b) => b.tokens - a.tokens) },

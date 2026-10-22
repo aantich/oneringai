@@ -205,7 +205,22 @@
     "docs/designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md",
     "docs/evaluations/STAGE_12_THIRD_REVIEW.json",
     "docs/evaluations/STAGE_12_THIRD_CORRECTIONS.json",
-    "docs/evaluations/STAGE_12_THIRD_CORRECTIONS_OFFLINE.txt"
+    "docs/evaluations/STAGE_12_THIRD_CORRECTIONS_OFFLINE.txt",
+    "docs/CONTEXT_ASSEMBLY.md",
+    "docs/designs/STAGE_05_IMPLEMENTATION.md",
+    "docs/evaluations/STAGE_05_VALIDATION.json",
+    "docs/evaluations/STAGE_05_OFFLINE.txt",
+    "docs/designs/STAGE_05_REVIEW_AND_FIX_PLAN.md",
+    "docs/evaluations/STAGE_05_REVIEW.json",
+    "docs/evaluations/STAGE_05_CORRECTIONS_VALIDATION.json",
+    "docs/evaluations/STAGE_05_CORRECTIONS_OFFLINE.txt",
+    "docs/designs/STAGE_05_SECOND_REVIEW_AND_FIX_PLAN.md",
+    "docs/evaluations/STAGE_05_SECOND_REVIEW.json",
+    "docs/evaluations/STAGE_05_SECOND_CORRECTIONS_VALIDATION.json",
+    "docs/evaluations/STAGE_05_SECOND_CORRECTIONS_OFFLINE.txt",
+    "examples/context-block-selection.ts",
+    "examples/context-dispatch-safety.ts",
+    "examples/cache-aware-context.ts"
   ],
   "scripts": {
     "generate:tools": "tsx scripts/generate-tool-registry.ts",
@@ -292,7 +307,12 @@
     "test:loop:live": "RUN_AGENT_LOOP_LIVE=1 vitest run tests/integration/text/AgentLoop.live.integration.test.ts",
     "example:agentic-presets": "node --import tsx examples/agentic-presets.ts",
     "example:amos-presets": "node --import tsx apps/amos/examples/presets-offline.ts",
-    "test:presets:live": "RUN_AGENT_PRESETS_LIVE=1 vitest run tests/integration/text/AgentPresets.live.integration.test.ts tests/integration/text/AgentSessionCorrections.live.integration.test.ts"
+    "test:presets:live": "RUN_AGENT_PRESETS_LIVE=1 vitest run tests/integration/text/AgentPresets.live.integration.test.ts tests/integration/text/AgentSessionCorrections.live.integration.test.ts",
+    "example:context-selection": "node --import tsx examples/context-block-selection.ts",
+    "example:context-dispatch-safety": "node --import tsx examples/context-dispatch-safety.ts",
+    "example:cache-aware-context": "node --import tsx examples/cache-aware-context.ts",
+    "test:context-assembly:live": "RUN_CONTEXT_ASSEMBLY_LIVE=1 vitest run tests/integration/text/ContextAssembly.live.integration.test.ts",
+    "example:amos-context-selection": "node --import tsx apps/amos/examples/context-selection-offline.ts"
   },
   "keywords": [
     "ai",

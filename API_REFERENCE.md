@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-10-16
+**Generated:** 2026-10-22
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -17,7 +17,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Image Generation](#image-generation) (25 items)
 - [Video Generation](#video-generation) (23 items)
 - [Agent Runtime](#agent-runtime) (70 items)
-- [Task Agents](#task-agents) (131 items)
+- [Task Agents](#task-agents) (132 items)
 - [Context Management](#context-management) (14 items)
 - [Session Management](#session-management) (78 items)
 - [Tools & Function Calling](#tools-function-calling) (217 items)
@@ -29,7 +29,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Utilities](#utilities) (10 items)
 - [Interfaces](#interfaces) (86 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (795 items)
+- [Other](#other) (801 items)
 
 ## Core
 
@@ -17107,6 +17107,18 @@ export function canTaskExecute(task: Task, allTasks: Task[]): boolean
 
 ---
 
+### createInContextMemoryContributor `function`
+
+📍 [`src/core/context-nextgen/assembly.ts:204`](src/core/context-nextgen/assembly.ts)
+
+Optional adapter: select whiteboard entries without deleting their stored source.
+
+```typescript
+export function createInContextMemoryContributor(plugin: InContextMemoryPluginNextGen): ContextContributor
+```
+
+---
+
 ### createMemoryReadTools `function`
 
 📍 [`src/tools/memory/index.ts:146`](src/tools/memory/index.ts)
@@ -22627,6 +22639,21 @@ constructor(code: string, message: string, retryable = false)
 ### StoreToolsManager `class`
 
 📍 [`src/core/context-nextgen/store-tools.ts:21`](src/core/context-nextgen/store-tools.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(private readonly promptView?: (handler: IStoreHandler) =&gt;
+    Pick&lt;StoreEntrySchema, 'description' | 'usageHint'&gt; | undefined)
+```
+
+**Parameters:**
+- `promptView`: `((handler: IStoreHandler) =&gt; Pick&lt;StoreEntrySchema, "description" | "usageHint"&gt; | undefined) | undefined` *(optional)*
+
+</details>
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -43104,7 +43131,7 @@ destroy(): void
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:153`](src/core/context-nextgen/AgentContextNextGen.ts)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:157`](src/core/context-nextgen/AgentContextNextGen.ts)
 
 Next-generation context manager for AI agents.
 
@@ -43254,6 +43281,57 @@ addMessage(role: 'user' | 'assistant', content: string | Content[]): string
 - `content`: `string | Content[]`
 
 **Returns:** `string`
+
+#### `registerContextContributor()`
+
+Explicit opt-in companion; leaves the legacy plugin interface unchanged.
+
+```typescript
+registerContextContributor(pluginName: string, contributor: ContextContributor): void
+```
+
+**Parameters:**
+- `pluginName`: `string`
+- `contributor`: `ContextContributor`
+
+**Returns:** `void`
+
+#### `unregisterContextContributor()`
+
+Return this source to its existing legacy prompt view.
+
+```typescript
+unregisterContextContributor(pluginName: string): boolean
+```
+
+**Parameters:**
+- `pluginName`: `string`
+
+**Returns:** `boolean`
+
+#### `recordProviderUsage()`
+
+Observe one actual managed call; absent provider/cache counters remain unknown.
+
+```typescript
+recordProviderUsage(usage?: Partial&lt;TokenUsage&gt;): void
+```
+
+**Parameters:**
+- `usage`: `Partial&lt;TokenUsage&gt; | undefined` *(optional)*
+
+**Returns:** `void`
+
+#### `formattingContextInput()`
+
+```typescript
+formattingContextInput(input: string): InputItem[] | string
+```
+
+**Parameters:**
+- `input`: `string`
+
+**Returns:** `string | InputItem[]`
 
 #### `registerPlugin()`
 
@@ -50671,7 +50749,7 @@ Agent configuration (needed for resume)
 
 ### AgentContextNextGenConfig `interface`
 
-📍 [`src/core/context-nextgen/types.ts:873`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:874`](src/core/context-nextgen/types.ts)
 
 AgentContextNextGen configuration
 
@@ -50680,6 +50758,7 @@ AgentContextNextGen configuration
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `assembly?` | `assembly?: import('./assembly.js').ContextAssemblyConfig;` | Optional budgeted data contributions and explicit stable-prefix layout; host-owned, never restored from sessions. |
 | `model` | `model: string;` | Model name (used for context window lookup) |
 | `maxContextTokens?` | `maxContextTokens?: number;` | Maximum context tokens (auto-detected from model if not provided) |
 | `responseReserve?` | `responseReserve?: number;` | Tokens to reserve for response (default: 4096) |
@@ -51594,7 +51673,7 @@ Options for the default SentenceChunkingStrategy
 
 ### CompactionContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1167`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1170`](src/core/context-nextgen/types.ts)
 
 Read-only context passed to compaction strategies.
 Provides access to data needed for compaction decisions and
@@ -51712,7 +51791,7 @@ estimateTokens(item: InputItem): number;
 
 ### CompactionResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1061`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1064`](src/core/context-nextgen/types.ts)
 
 Result of compact() operation.
 
@@ -52034,7 +52113,7 @@ truncate profile generation. See feedback_no_output_limits.md. |
 
 ### ConsolidationResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1080`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1083`](src/core/context-nextgen/types.ts)
 
 Result of consolidate() operation.
 
@@ -52046,6 +52125,52 @@ Result of consolidate() operation.
 | `performed` | `performed: boolean;` | Whether any consolidation was performed |
 | `tokensChanged` | `tokensChanged: number;` | Net token change (negative = freed, positive = added, e.g., summaries) |
 | `actions` | `actions: string[];` | Description of actions taken |
+
+</details>
+
+---
+
+### ContextAssemblyConfig `interface`
+
+📍 [`src/core/context-nextgen/assembly.ts:36`](src/core/context-nextgen/assembly.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `tokenEstimator?` | `tokenEstimator?: ITokenEstimator;` | Optional deterministic host estimator for the selected model/provider; no automatic tokenizer/network lookup. |
+| `maxDataTokens?` | `maxDataTokens?: number;` | Default 2048 estimated tokens, including data-message wrappers. |
+| `sourceTokenLimits?` | `sourceTokenLimits?: Record&lt;string, number&gt;;` | - |
+| `timeoutMs?` | `timeoutMs?: number;` | Total awaited contributor time across one preparation and its optional final input refresh; default 1000ms, maximum 30s. |
+| `maxBlocks?` | `maxBlocks?: number;` | Default 128 blocks and 64KiB characters per block/projection. |
+| `maxBlockCharacters?` | `maxBlockCharacters?: number;` | - |
+| `layout?` | `layout?: 'legacy' | 'stable-prefix';` | Legacy layout is retained unless stable-prefix is explicitly selected. |
+| `reasoningReserveTokens?` | `reasoningReserveTokens?: number;` | Additional headroom; does not turn provider thinking on or change output parameters. |
+| `contributors?` | `contributors?: Record&lt;string, ContextContributor&gt;;` | - |
+
+</details>
+
+---
+
+### ContextBlock `interface`
+
+📍 [`src/core/context-nextgen/assembly.ts:9`](src/core/context-nextgen/assembly.ts)
+
+A host-selected data view. This never grants instruction or authorization authority.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | Unique within the source plugin. Manifest/dependency IDs are `plugin/id`. |
+| `text` | `text: string;` | - |
+| `priority?` | `priority?: number;` | - |
+| `protected?` | `protected?: boolean;` | - |
+| `dependencies?` | `dependencies?: string[];` | Fully qualified IDs; selected dependents require their complete dependency closure. |
+| `expiresAt?` | `expiresAt?: number;` | Absolute host timestamp. Expired required data fails instead of disappearing. |
+| `projection?` | `projection?: string;` | Host-supplied smaller data view, used only for optional blocks. |
 
 </details>
 
@@ -52085,9 +52210,70 @@ Token budget breakdown - clear and simple
 
 ---
 
+### ContextContributionRequest `interface`
+
+📍 [`src/core/context-nextgen/assembly.ts:22`](src/core/context-nextgen/assembly.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `input` | `readonly input: ReadonlyArray&lt;InputItem&gt;;` | - |
+| `model` | `readonly model: string;` | - |
+| `maxDataTokens` | `readonly maxDataTokens: number;` | - |
+| `signal` | `readonly signal: AbortSignal;` | - |
+
+</details>
+
+---
+
+### ContextContributor `interface`
+
+📍 [`src/core/context-nextgen/assembly.ts:29`](src/core/context-nextgen/assembly.ts)
+
+Explicit companion registration; no similarly named plugin method is auto-detected.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `getRevision()`
+
+Must change whenever source content, host selection policy, permissions or scope changes; packet input is tracked separately.
+
+```typescript
+getRevision(): string | number;
+```
+
+**Returns:** `string | number`
+
+#### `contribute()`
+
+```typescript
+contribute(request: ContextContributionRequest): ContextBlock[] | Promise&lt;ContextBlock[]&gt;;
+```
+
+**Parameters:**
+- `request`: `ContextContributionRequest`
+
+**Returns:** `ContextBlock[] | Promise&lt;ContextBlock[]&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `instructions?` | `instructions?: string | null;` | Explicit trusted host replacement for this plugin's usage instructions. |
+
+</details>
+
+---
+
 ### ContextEvents `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1008`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1011`](src/core/context-nextgen/types.ts)
 
 Events emitted by AgentContextNextGen
 
@@ -52174,7 +52360,8 @@ Diagnostic snapshot of the last successful prepare; token counts are estimates.
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `compaction?` | `compaction?: import('./strategies/conversation-compaction.js').ConversationCompactionReport;` | Diagnostic for the opt-in transactional built-ins in this preparation. |
+| `selection?` | `selection?: import('./assembly.js').ContextSelectionManifest;` | Diagnostic for the opt-in transactional built-ins in this preparation. |
+| `compaction?` | `compaction?: import('./strategies/conversation-compaction.js').ConversationCompactionReport;` | - |
 | `revision` | `revision: number;` | Monotonic, process-local successful preparation number. |
 | `preparedAt` | `preparedAt: number;` | Millisecond timestamp at selection; later context mutations do not refresh it. |
 | `budget` | `budget: ContextBudget;` | Estimated budget for that selected request, including final host-hook adjustments. |
@@ -52208,7 +52395,7 @@ Optional request contributions, resolved again after compaction.
 
 ### ContextRolloverOptions `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1118`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1121`](src/core/context-nextgen/types.ts)
 
 Options for an explicit context rollover.
 
@@ -52228,7 +52415,7 @@ their results stay with their containing turn. Default: 8. |
 
 ### ContextRolloverResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1133`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1136`](src/core/context-nextgen/types.ts)
 
 Result of an explicit context rollover.
 
@@ -52253,7 +52440,7 @@ Result of an explicit context rollover.
 
 ### ContextRolloverSummaryInput `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1098`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1101`](src/core/context-nextgen/types.ts)
 
 Input passed to a context-rollover summarizer.
 
@@ -52270,6 +52457,49 @@ because they remain verbatim after rollover.
 | `estimatedTokens` | `readonly estimatedTokens: number;` | Estimated size of `items`, using the context's configured estimator. |
 | `preservedRecentTurns` | `readonly preservedRecentTurns: number;` | Number of recent user turns that will remain verbatim. |
 | `reason?` | `readonly reason?: string;` | Optional host-provided reason for observability or prompt selection. |
+
+</details>
+
+---
+
+### ContextSelectionEntry `interface`
+
+📍 [`src/core/context-nextgen/assembly.ts:53`](src/core/context-nextgen/assembly.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | - |
+| `source` | `source: string;` | - |
+| `status` | `status: 'selected' | 'projected' | 'omitted';` | - |
+| `reason` | `reason: 'protected' | 'priority' | 'projection' | 'budget' | 'expired' | 'dependency';` | - |
+| `estimatedTokens` | `estimatedTokens: number;` | - |
+| `dependencies` | `dependencies: string[];` | - |
+| `protected` | `protected: boolean;` | - |
+
+</details>
+
+---
+
+### ContextSelectionManifest `interface`
+
+📍 [`src/core/context-nextgen/assembly.ts:62`](src/core/context-nextgen/assembly.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `layout` | `layout: 'legacy' | 'stable-prefix';` | - |
+| `entries` | `entries: ContextSelectionEntry[];` | - |
+| `maxDataTokens` | `maxDataTokens: number;` | - |
+| `selectedDataTokens` | `selectedDataTokens: number;` | - |
+| `reasoningReserveTokens` | `reasoningReserveTokens: number;` | - |
+| `requestFingerprint?` | `requestFingerprint?: string;` | Hashes include host identity, current authority, model, tools, schemas and submitted input. Not provider cache keys. |
+| `accounting` | `accounting: { estimate: 'local'; opaqueOrMultimodal: boolean; providerInputTokens: number | null;
+    estimatedInputTokens: number; capacitySource: 'host' | 'provider' | 'registry' | 'fallback'; inputTokenDelta: number | null; cachedInputTokens: number | null; cacheCreationInputTokens: number | null };` | - |
 
 </details>
 
@@ -55106,7 +55336,7 @@ reset(): void;
 
 ### ICompactionStrategy `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1231`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1234`](src/core/context-nextgen/types.ts)
 
 Compaction strategy interface.
 
@@ -57508,7 +57738,7 @@ For service accounts (Google, Salesforce)
 
 ### KnownContextFeatures `interface`
 
-📍 [`src/core/context-nextgen/types.ts:762`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:763`](src/core/context-nextgen/types.ts)
 
 Feature flags for enabling/disabling plugins
 
@@ -57533,7 +57763,7 @@ Feature flags for enabling/disabling plugins
 
 ### KnownPluginConfigs `interface`
 
-📍 [`src/core/context-nextgen/types.ts:836`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:837`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 When features are enabled, plugins are created with these configs.
@@ -58658,7 +58888,7 @@ Configuration for initiating an outbound call.
 
 ### OversizedInputResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:731`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:732`](src/core/context-nextgen/types.ts)
 
 Result of handling oversized current input
 
@@ -59358,7 +59588,7 @@ source metadata aggregation rather than re-extracted into facts. |
 
 ### PreparedContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:708`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:709`](src/core/context-nextgen/types.ts)
 
 Result of prepare() - ready for a model call.
 
@@ -63447,7 +63677,7 @@ type Content = | InputTextContent
 
 ### ContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:796`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:797`](src/core/context-nextgen/types.ts)
 
 Feature flags for enabling/disabling plugins.
 Known keys provide autocomplete; arbitrary string keys are also accepted
@@ -63461,7 +63691,7 @@ type ContextFeatures = KnownContextFeatures & { [key: string]: boolean | undefin
 
 ### ContextRolloverSummarizer `type`
 
-📍 [`src/core/context-nextgen/types.ts:1113`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1116`](src/core/context-nextgen/types.ts)
 
 Host-supplied summarizer used by an explicit context rollover.
 
@@ -64252,7 +64482,7 @@ type PipelineConfig = TextPipelineConfig | RealtimePipelineConfig
 
 ### PluginConfigs `type`
 
-📍 [`src/core/context-nextgen/types.ts:868`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:869`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 Known keys provide autocomplete; arbitrary string keys accepted
@@ -64433,7 +64663,7 @@ type RelatedItemHit = T & { matchedEntityId: EntityId }
 
 ### ResolvedContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:804`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:805`](src/core/context-nextgen/types.ts)
 
 Resolved features retain the original required keys, plus optional additions
 and arbitrary external flags. Keep the required set stable so adding an opt-in
@@ -67330,7 +67560,7 @@ transports and are not represented as misleading URL aliases here.
 
 ### DEFAULT_CONFIG `const`
 
-📍 [`src/core/context-nextgen/types.ts:975`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:978`](src/core/context-nextgen/types.ts)
 
 Default configuration values
 
@@ -67401,7 +67631,7 @@ Default configuration values
 
 ### DEFAULT_FEATURES `const`
 
-📍 [`src/core/context-nextgen/types.ts:812`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:813`](src/core/context-nextgen/types.ts)
 
 Default feature configuration for built-in plugins.
 
