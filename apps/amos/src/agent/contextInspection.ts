@@ -22,11 +22,14 @@ export async function inspectContext(context: AgentContextNextGen): Promise<{
   };
   // Wrappers, date/time, message overhead and independent estimator rounding.
   flat.systemOverhead = budget.totalUsed - Object.values(flat).reduce((sum, tokens) => sum + tokens, 0);
+  const used = budget.providerCountedInputTokens ?? budget.totalUsed;
+  const utilization = budget.providerCountedInputTokens === undefined ? budget.utilizationPercent : used / (budget.maxTokens - budget.responseReserve) * 100;
   return {
-    budget: { ...metadata, total: budget.maxTokens, reserved: budget.responseReserve, used: budget.totalUsed,
-      available: Math.max(0, budget.available), utilizationPercent: budget.utilizationPercent,
-      status: budget.utilizationPercent >= 90 ? 'critical' : budget.utilizationPercent >= 75 ? 'warning' : 'ok' },
-    breakdown: { ...metadata, ...(prepared?.selection ? { selection: prepared.selection } : {}), totalUsed: budget.totalUsed, components: Object.entries(flat)
+    budget: { ...metadata, ...(budget.providerCountedInputTokens === undefined ? {} : { accounting: 'provider' as const }), total: budget.maxTokens, reserved: budget.responseReserve, used,
+      available: Math.max(0, budget.providerCountedInputTokens === undefined ? budget.available : budget.maxTokens - budget.responseReserve - used), utilizationPercent: utilization,
+      status: utilization >= 90 ? 'critical' : utilization >= 75 ? 'warning' : 'ok' },
+    breakdown: { ...metadata, ...(budget.providerCountedInputTokens === undefined ? {} : { providerCountedInputTokens: budget.providerCountedInputTokens }),
+      ...(prepared?.selection ? { selection: prepared.selection } : {}), totalUsed: budget.totalUsed, components: Object.entries(flat)
       .filter(([, tokens]) => tokens !== 0)
       .map(([name, tokens]) => ({ name, tokens, percent: budget.totalUsed > 0 ? tokens / budget.totalUsed * 100 : 0 }))
       .sort((a, b) => b.tokens - a.tokens) },

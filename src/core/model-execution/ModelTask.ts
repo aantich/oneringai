@@ -20,8 +20,19 @@ interface InvocationState {
   endTransport(attempt: ModelAttemptRecord, status?: number): void;
 }
 const invocationStorage = new AsyncLocalStorage<InvocationState>();
+/** @internal Counting/discovery are bounded auxiliary I/O, not generation attempts. */
+export function withoutModelTracking<T>(operation: () => T): T { return invocationStorage.exit(operation); }
 const instrumentedProviders = new WeakSet<object>();
 const separateReasoningUsages = new WeakSet<TokenUsage>();
+const failedModelUsages = new WeakMap<object, TokenUsage>();
+/** @internal A decoded but unusable response can still carry acknowledged billable usage. */
+export function markFailedModelUsage(error: unknown, usage: TokenUsage | null): void {
+  if (error && typeof error === 'object' && usage) failedModelUsages.set(error, usage);
+}
+/** @internal Do not infer usage from arbitrary exception properties. */
+export function getFailedModelUsage(error: unknown): TokenUsage | undefined {
+  return error && typeof error === 'object' ? failedModelUsages.get(error) : undefined;
+}
 
 /** @internal Preserve legacy response fields while recording inclusive output usage. */
 export function markSeparateReasoningUsage(usage: TokenUsage): void { separateReasoningUsages.add(usage); }
@@ -186,8 +197,11 @@ export class ModelTask {
     signal?: AbortSignal; transport?: boolean; usage?: (result: T) => TokenUsage | undefined;
     /** @internal Latest terminal usage survives an iterator failure or cancellation. */
     observedUsage?: () => TokenUsage | undefined;
+    /** @internal Final synchronous native request/authority guard, including retries. */
+    beforeDispatch?: () => void;
   } = {}): Promise<{ result: T; invocationId: string }> {
     this.check();
+    options.beforeDispatch?.();
     descriptor = structuredClone(descriptor);
     const call: ModelInvocationRecord = { id: randomUUID(), parentInvocationId: descriptor.parentInvocationId, purpose: descriptor.purpose,
       phase: descriptor.phase ?? 'generation', connector: descriptor.connector, model: descriptor.model, status: 'running',
@@ -204,6 +218,7 @@ export class ModelTask {
     const state: InvocationState = {
       signal: composed.controller.signal,
       beginTransport: () => {
+        options.beforeDispatch?.();
         composed.controller.signal.throwIfAborted();
         let attempt: ModelAttemptRecord;
         try { attempt = transportCount++ === 0 ? first : this.reserve(call, descriptor, 'transport'); }
@@ -269,6 +284,7 @@ export class ModelTask {
   /** Streaming variant with pull-based backpressure and invocation-local transport tracking. */
   async *iterate<T>(descriptor: ModelCallDescriptor, factory: (signal: AbortSignal) => AsyncIterable<T>, options: {
     signal?: AbortSignal; transport?: boolean; usage?: (event: T) => TokenUsage | undefined;
+    beforeDispatch?: () => void;
   } = {}): AsyncIterableIterator<T> {
     const stop = new AbortController();
     const composed = createExecutionSignal([options.signal, stop.signal]);
@@ -290,7 +306,7 @@ export class ModelTask {
       readyResolve();
       await completion;
       return usage;
-    }, { signal: composed.controller.signal, transport: options.transport, usage: value => value, observedUsage: () => usage });
+    }, { signal: composed.controller.signal, transport: options.transport, usage: value => value, observedUsage: () => usage, beforeDispatch: options.beforeDispatch });
     void work.catch(readyReject);
     let ended = false;
     try {

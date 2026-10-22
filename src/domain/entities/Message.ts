@@ -17,6 +17,8 @@ export interface Message {
   id?: string;
   role: MessageRole;
   content: Content[]; // Always an array in Responses API
+  /** Opaque replay metadata for an explicitly selected provider continuation. */
+  providerMetadata?: Record<string, unknown>;
 }
 
 export interface CompactionItem {

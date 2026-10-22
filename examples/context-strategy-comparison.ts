@@ -10,11 +10,11 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { writeFile } from 'node:fs/promises';
 import dotenv from 'dotenv';
-import { Agent, AgentContextNextGen, Connector, Vendor, ModelTask, StrategyRegistry, ObservationMaskingStrategy, StructuredSummaryStrategy,
+import { Agent, AgentContextNextGen, Connector, Vendor, ModelTask, StrategyRegistry, ObservationMaskingStrategy, StructuredSummaryStrategy, ContextCompactionStrategy,
   InMemoryEvidenceStorage, ContentType, MessageRole } from '@everworker/oneringai';
-import type { InputItem, ITextProvider, TextGenerateOptions, ModelTaskSnapshot, ConversationCompactionReport, Content, OutputItem, WorkingMemoryPluginNextGen } from '@everworker/oneringai';
+import type { InputItem, ITextProvider, TextGenerateOptions, ModelTaskSnapshot, ConversationCompactionReport, Content, OutputItem, WorkingMemoryPluginNextGen, ContextCompactionReport } from '@everworker/oneringai';
 
-export type StrategyName = 'algorithmic' | 'observation-masking' | 'structured-summary';
+export type StrategyName = 'algorithmic' | 'observation-masking' | 'structured-summary' | 'context-compaction';
 export interface ComparisonTask { id: string; goal: string; account: string; status: string; answer: string; history: string[] }
 // Frozen independent held-out variants; these are functional probes, not a representative task population.
 export const comparisonTasks: Record<'development' | 'held-out' | 'diagnostic-v1' | 'diagnostic-v2' | 'diagnostic-v3', ComparisonTask[]> = {
@@ -99,7 +99,7 @@ export interface ComparisonResult {
   requestInputs: unknown[];
   toolOutcomes: Array<Record<string, unknown>>;
   latencyMs: number; sourceReads: number; repeatedActions: number;
-  compaction?: ConversationCompactionReport; compactionLog: string[];
+  nativeCompaction?: ContextCompactionReport; compaction?: ConversationCompactionReport; compactionLog: string[];
   usage: ModelTaskSnapshot;
 }
 /** Metadata-only recovery feedback; scoped to this agent's actual notes, bounded and never an answer. */
@@ -110,10 +110,24 @@ export async function buildSourceSelectorHint(memory: { storeList(): Promise<{ e
   return 'Use an exact available notes selector: ' + JSON.stringify(selectors)
     + '. These are index keys, not source values. Read a source before answering. Evidence selectors require an actual supplied reference UUID; receipt IDs are not source proof.';
 }
-export async function compareContextStrategy(task: ComparisonTask, strategy: StrategyName, live = false): Promise<ComparisonResult> {
+export async function compareContextStrategy(task: ComparisonTask, strategy: StrategyName, live = false, options: { mainModel?: string; compactionThreshold?: number } = {}): Promise<ComparisonResult> {
   const suffix = randomUUID(); const mainName = `context-main-${suffix}`, helperName = `context-helper-${suffix}`;
   if (live && !process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is required for the explicitly enabled live comparison');
-  Connector.create({ name: mainName, vendor: Vendor.OpenAI, auth: live ? { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! } : { type: 'none' }, ...(live ? {} : { options: { provider: syntheticProvider(false) } }) });
+  const model = options.mainModel ?? 'gpt-4o';
+  const baseProvider = syntheticProvider(false);
+  const mainProvider: ITextProvider = strategy !== 'context-compaction' ? baseProvider : { ...baseProvider, compaction: {
+    countInput: async request => Math.ceil(JSON.stringify({ ...request, signal: undefined, managedDispatch: undefined }).length / 4),
+    compact: async request => {
+      const items = request.input as InputItem[];
+      const answer = JSON.stringify(items).match(/ANSWER_[A-Z0-9_]+/)?.[0];
+      return { protocol: 'offline-comparison-v1', usage: { input_tokens: 100, output_tokens: 30, total_tokens: 130 }, input: [
+        ...items.filter(item => item.type === 'message' && item.role === MessageRole.USER && item.content.some(c => c.type === ContentType.INPUT_TEXT)).slice(0, 1),
+        { type: 'compaction', id: 'fixture-native', encrypted_content: 'OFFLINE_PROTOCOL_FIXTURE' },
+        { type: 'message', role: MessageRole.ASSISTANT, content: [{ type: ContentType.OUTPUT_TEXT, text: 'Historical data: ' + answer }] },
+      ] };
+    },
+  } };
+  Connector.create({ name: mainName, vendor: Vendor.OpenAI, auth: live ? { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! } : { type: 'none' }, ...(live ? {} : { options: { provider: mainProvider } }) });
   Connector.create({ name: helperName, vendor: Vendor.OpenAI, auth: live ? { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! } : { type: 'none' }, ...(live ? {} : { options: { provider: syntheticProvider(true) } }) });
   const storage = new InMemoryEvidenceStorage({ scope: { ownerId: 'comparison', namespace: suffix } });
   const modelTask = new ModelTask({ limits: { maxCalls: 6, deadline: Date.now() + 120000 } });
@@ -121,8 +135,8 @@ export async function compareContextStrategy(task: ComparisonTask, strategy: Str
   const sourceObservations: Array<Record<string, unknown>> = [], mainResponses: Array<Record<string, unknown>> = [], requestInputs: unknown[] = [], toolOutcomes: Array<Record<string, unknown>> = [];
   let sourceReads = 0, repeatedActions = 0; const compactionLog: string[] = [];
   const strategyOptions = { preserveRecentTurns: 2, preserveRecentMessages: 4, maxSourceTokens: 20000, maxSummaryTokens: 1024 };
-  const agent = Agent.create({ connector: mainName, model: 'gpt-4o', userId: 'comparison', temperature: 0, thinking: { enabled: false }, maxIterations: 4, emptyResponseRetry: { enabled: false },
-    modelExecution: { ...(live ? {} : { customProviderAttempts: 'single' as const }), maxOutputTokensPerCall: 768,
+  const agent = Agent.create({ connector: mainName, model, userId: 'comparison', temperature: options.mainModel ? undefined : 0, thinking: { enabled: false }, maxIterations: 4, emptyResponseRetry: { enabled: false },
+    modelExecution: { ...(live ? {} : { customProviderAttempts: 'single' as const }), ...(strategy === 'context-compaction' ? {} : { maxOutputTokensPerCall: 768 }),
       helpers: { compactor: { connector: helperName, model: 'gpt-4o-mini', temperature: 0, thinking: { enabled: false }, allowContextTransfer: true, maxInputTokens: 24000, maxOutputTokens: 1024 } } },
     instructions: 'Continue the recorded task using its most recent constraints. Find the exact answer from the earlier lookup observation or its retained sources. '
       + 'Working-memory indexes contain metadata only: use read_source with noteKey equal to the exact raw index key. Masked evidence contains a source: use read_source with evidenceId equal to the evidence id. The reader returns bounded answer/artifact fields. '
@@ -148,8 +162,9 @@ export async function compareContextStrategy(task: ComparisonTask, strategy: Str
         };
         const source = find(value); if (!source) throw new Error('This selector has no source fields. ' + await buildSourceSelectorHint(agent.context.getPlugin<WorkingMemoryPluginNextGen>('working_memory')!)); sourceObservations.push({ ...args, ...source }); return source;
       }, output: { effect: 'read' } }, { definition: { type: 'function', function: { name: 'lookup', description: 'Historical lookup; must not be repeated.', parameters: { type: 'object', properties: {}, additionalProperties: false } } }, execute: async () => { repeatedActions++; throw new Error('Historical action must not repeat'); }, output: { effect: 'read' } }],
-    context: { model: 'gpt-4o', maxContextTokens: 11000, responseReserve: 768, criticalCompactionThreshold: 0.9,
-      compactionStrategy: strategy === 'algorithmic' ? StrategyRegistry.create(strategy) : strategy === 'observation-masking' ? new ObservationMaskingStrategy(strategyOptions) : new StructuredSummaryStrategy(strategyOptions),
+    ...(options.mainModel ? { hooks: { 'before:llm': () => ({ modified: { max_output_tokens: 768 } }) } } : {}),
+    context: { model, maxContextTokens: 11000, responseReserve: 768, criticalCompactionThreshold: options.compactionThreshold ?? 0.9,
+      compactionStrategy: strategy === 'context-compaction' ? new ContextCompactionStrategy({ plugins: 'off', history: 'native' }) : strategy === 'algorithmic' ? StrategyRegistry.create(strategy) : strategy === 'observation-masking' ? new ObservationMaskingStrategy(strategyOptions) : new StructuredSummaryStrategy(strategyOptions),
       features: { evidence: true, workingMemory: true, inContextMemory: false }, plugins: { evidence: { storage } } },
   });
   const started = Date.now();
@@ -165,8 +180,8 @@ export async function compareContextStrategy(task: ComparisonTask, strategy: Str
       { type: 'message', role: MessageRole.ASSISTANT, content: [{ type: ContentType.TOOL_USE, id: 'lookup-original', name: 'lookup', arguments: '{}' }] },
       { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.TOOL_RESULT, tool_use_id: 'lookup-original', content: raw, evidence: { version: 1, executionId: 'lookup-original-execution', status: 'stored', reference } }] },
       ...Array.from({ length: 6 }, (_, i) => [msg(MessageRole.USER, `Progress check ${i}; continue the original task.`), msg(MessageRole.ASSISTANT, 'Still inspecting the recorded task. '.repeat(20))]).flat()]);
-    let report: ConversationCompactionReport | undefined;
-    agent.on('llm:request', event => { report ??= agent.context.lastPreparation?.compaction; requestInputs.push(structuredClone(event.options.input)); });
+    let report: ConversationCompactionReport | undefined; let nativeReport: ContextCompactionReport | undefined;
+    agent.on('llm:request', event => { report ??= agent.context.lastPreparation?.compaction; nativeReport ??= agent.context.lastPreparation?.compactionDetails; requestInputs.push(structuredClone(event.options.input)); });
     let parsed: { answer?: string; account?: string; status?: string; writePerformed?: boolean } = {}; let error: string | undefined; let errorDetails: ComparisonResult['errorDetails'];
     try {
       const response = await agent.run('Return the exact source answer field and the original account/status as JSON now. This is a fact-retrieval request; keep workflow state unchanged and do not perform workflow actions.', { modelTask,
@@ -181,7 +196,7 @@ export async function compareContextStrategy(task: ComparisonTask, strategy: Str
     }
     const predicate = { exactAnswer: parsed.answer === task.answer, exactAccount: parsed.account === task.account, exactStatus: parsed.status === task.status, noWrite: parsed.writePerformed === false, noRepeat: repeatedActions === 0 };
     return { task: task.id, strategy, live, passed: !error && Object.values(predicate).every(Boolean), ...(error ? { error, errorDetails } : {}), predicate, returnedMainModels, parsedAnswer: parsed, sourceObservations, mainResponses, requestInputs, toolOutcomes, latencyMs: Date.now() - started,
-      sourceReads, repeatedActions, ...(report ? { compaction: report } : {}), compactionLog, usage: modelTask.snapshot() };
+      sourceReads, repeatedActions, ...(report ? { compaction: report } : {}), ...(nativeReport ? { nativeCompaction: nativeReport } : {}), compactionLog, usage: modelTask.snapshot() };
   } finally { agent.destroy(); modelTask.destroy(); Connector.remove(mainName); Connector.remove(helperName); }
 }
 export function comparisonOrder(tasks: ComparisonTask[], repetitions = 2): Array<{ task: ComparisonTask; strategy: StrategyName; repetition: number }> {

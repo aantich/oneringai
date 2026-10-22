@@ -21,6 +21,7 @@ import { transformForAnthropic, ProviderToolFormat } from '../shared/ToolConvers
 import { mapAnthropicStatus, ResponseStatus } from '../shared/ResponseBuilder.js';
 import { validateThinkingConfig } from '../shared/validateThinkingConfig.js';
 import { logger } from '../../observability/Logger.js';
+import { InvalidConfigError } from '../../../domain/errors/AIErrors.js';
 
 /**
  * Last-resort `max_tokens` default when the model isn't in the registry
@@ -55,6 +56,24 @@ function supportedThinkingModes(model: string): ReadonlySet<AnthropicThinkingMod
   return new Set(['enabled', 'disabled']);
 }
 
+/** @internal Keep native wire output, source headroom and model-task admission aligned. */
+export function prepareAnthropicCompactionOptions(options: TextGenerateOptions, maximumOutput: number,
+  configuredLimit?: number): TextGenerateOptions {
+  const limit = options.max_output_tokens ?? configuredLimit;
+  if (!Number.isSafeInteger(maximumOutput) || maximumOutput <= 0
+    || (configuredLimit !== undefined && (!Number.isSafeInteger(configuredLimit) || configuredLimit <= 0))
+    || (limit !== undefined && (!Number.isSafeInteger(limit) || limit <= 0 || limit > maximumOutput
+      || (configuredLimit !== undefined && limit > configuredLimit)))) throw new InvalidConfigError('Invalid native compaction output limit');
+  // Resolve the provider's actual thinking mode through the same converter used
+  // for dispatch, including model defaults. An explicit cap is never increased.
+  const request = new AnthropicConverter().convertRequest({ ...options, nativeContext: true,
+    max_output_tokens: limit ?? maximumOutput,
+    vendorOptions: { ...options.vendorOptions, compaction: { type: 'summarize' } } });
+  const budget = request.thinking?.type === 'enabled' ? request.thinking.budget_tokens : 0;
+  if (!Number.isSafeInteger(budget) || budget < 0) throw new InvalidConfigError('Invalid native compaction thinking budget');
+  return { ...options, max_output_tokens: limit ?? Math.min(maximumOutput, budget + 4096) };
+}
+
 export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreateParams, Anthropic.Message> {
   readonly providerName = 'anthropic';
 
@@ -62,9 +81,21 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
    * Convert our format -> Anthropic Messages API format
    */
   convertRequest(options: TextGenerateOptions): Anthropic.MessageCreateParams {
+    if (options.nativeContext) {
+      const items = typeof options.input === 'string' ? undefined : options.input;
+      const developer = items?.filter(item => item.type === 'message' && item.role === 'developer');
+      const input = items?.filter(item => !(item.type === 'message' && item.role === 'developer'));
+      const index = input?.findIndex(item => item.type === 'compaction') ?? -1;
+      // Fresh selected data precedes history in the library, but signed on-demand
+      // state must be the first Messages block. It cannot swallow that fresh data.
+      const reordered = input && index > 0 ? [input[index]!, ...input.slice(0, index), ...input.slice(index + 1)] : input;
+      const instructions = [options.instructions, ...(developer ?? []).flatMap(item => item.type === 'message' ? item.content.flatMap(block =>
+        block.type === 'input_text' || block.type === 'output_text' ? [block.text] : []) : [])].filter(Boolean).join('\n\n');
+      options = { ...options, input: reordered ?? options.input, instructions };
+    }
     const messages = this.convertMessages(
       options.input,
-      options.vendorOptions?.compaction !== undefined,
+      options.vendorOptions?.compaction !== undefined || options.nativeContext === true,
     );
     const localTools = this.convertAnthropicTools(options.tools) ?? [];
     const tools = [
@@ -153,6 +184,7 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
           'compact-2026-01-12',
         ]),
       ];
+      if (options.nativeContext) rawParams.betas = (rawParams.betas as string[]).filter(beta => beta !== 'compact-2026-01-12');
     }
     // Anthropic's request metadata schema contains only `user_id`. Generic
     // OneRingAI metadata may carry arbitrary host keys, so never forward the
@@ -598,9 +630,10 @@ export class AnthropicConverter extends BaseConverter<Anthropic.MessageCreatePar
           content,
         });
       } else if (item.type === 'compaction') {
+        const native = item.providerMetadata?.nativeCompaction as { protocol?: string; block?: Record<string, unknown> } | undefined;
         messages.push({
           role: 'assistant',
-          content: [{
+          content: [native?.protocol === 'anthropic-on-demand-v1' && native.block ? structuredClone(native.block) : {
             type: 'compaction',
             content: item.content ?? null,
             encrypted_content: item.encrypted_content || null,

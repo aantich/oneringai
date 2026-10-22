@@ -92,6 +92,14 @@ import type { IHistoryJournal, HistoryEntry, HistoryEntryType } from '../../doma
 import type { IConnectorRegistry } from '../../domain/interfaces/IConnectorRegistry.js';
 import { Connector } from '../Connector.js';
 import { AIError, ContextOverflowError, ConnectorNotFoundError } from '../../domain/errors/AIErrors.js';
+import { isContextCompactionStrategy } from './strategies/ContextCompactionStrategy.js';
+import { composeContext } from './compaction/coordinator.js';
+import type { CompositionFrame } from './compaction/coordinator.js';
+import type { ContextCompactionReport, ContextCompactionStrategyConfig, ContextCompactionTarget, NativeCompactionDriver, NativeContinuationSnapshot } from './compaction/types.js';
+import { COMPOSITION_OPERATION, type CompositionOperation } from './compaction/types.js';
+import { nativeFingerprint } from './compaction/fingerprint.js';
+import { validateReference } from '../evidence/validation.js';
+import { withAbort } from '../tool-execution/cancellation.js';
 
 // Plugin imports for auto-initialization
 import {
@@ -247,7 +255,11 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   private _preparedTaskGeneration?: number;
   private _preparedTaskState?: TaskStatePluginNextGen;
   private _lastPrepareOptions: ContextPrepareOptions = {};
-  private _contextOperation: 'prepare' | 'consolidate' | null = null;
+  private _contextOperation: 'prepare' | 'consolidate' | 'compact' | null = null;
+  private _nativeContinuation?: NativeContinuationSnapshot;
+  private _nativeDriver?: NativeCompactionDriver;
+  private _preparedNativePrefix?: InputItem[];
+  private _lastComposition?: ContextCompactionReport;
 
   /** Callback for beforeCompaction hook (set by Agent) */
   private _beforeCompactionCallback: BeforeCompactionCallback | null = null;
@@ -791,6 +803,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    */
   setModel(model: string): void {
     this.assertNotDestroyed();
+    if (this._nativeContinuation && model !== this._nativeContinuation.binding.model) throw new AIError('Native history cannot switch models; restore a compatible full checkpoint first', 'CONTEXT_COMPACTION_INVALID');
     this._config.model = model;
     if (this._usesModelContextLimit) {
       this._maxContextTokens = getModelInfo(model)?.features?.input?.tokens ?? 128000;
@@ -905,6 +918,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    */
   setCompactionStrategy(strategy: ICompactionStrategy): void {
     this.assertNotDestroyed();
+    if (this._nativeContinuation && (!(isContextCompactionStrategy(strategy)) || strategy.config.history === 'off')) throw new AIError('Cannot replace the owner of active native history', 'CONTEXT_COMPACTION_INVALID');
     this.validateStrategyDependencies(strategy);
     this._compactionStrategy = strategy;
   }
@@ -1033,6 +1047,9 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
   /** @internal Formatting/repair retains the previously selected evidence without another compaction or contribution call. */
   formattingContextInput(input: string): InputItem[] | string {
+    if (this._nativeContinuation) return [...structuredClone(this._preparedNativePrefix ?? this._preparedAssembly?.prefix ?? []),
+      ...structuredClone(this._conversation), ...structuredClone(this._currentInput),
+      { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: input }] }];
     return this._preparedAssembly ? [...structuredClone(this._preparedAssembly.prefix),
       { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: input }] }] : input;
   }
@@ -1099,11 +1116,20 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       this.assertAssemblyRequest(request, false, false);
       if (this._preparedAssembly !== selected || signature() !== originalRequest) throw new AIError('Request changed during bounded selection refresh', 'CONTEXT_ASSEMBLY_STALE', 409);
       const base = this.calculateRequestBudget({ ...request, input: [...prefix, ...suffix] }, options.modelMaxContextTokens).budget;
-      const selection = this._assembler!.select(snapshot, base.available, this._estimator);
+      const native = isContextCompactionStrategy(this._compactionStrategy) && this._compactionStrategy.config.history !== 'off';
+      const check = this.captureNativeState();
+      const count = async (input: InputItem[]): Promise<number> => {
+        const tokens = await this._nativeDriver!.countInput({ ...request, input, signal }); check();
+        if (tokens === null) throw new AIError('Native refresh requires a provider count', 'CONTEXT_COMPACTION_INVALID');
+        return tokens;
+      };
+      const available = native ? base.maxTokens - base.responseReserve - await count([...prefix, ...suffix]) : base.available;
+      const selection = this._assembler!.select(snapshot, available, this._estimator);
       if (selection.text !== undefined) prefix.push({ type: 'message', role: MessageRole.USER,
         content: [{ type: ContentType.INPUT_TEXT, text: selection.text }] });
       const input = [...prefix, ...suffix];
       const budget = this.calculateRequestBudget({ ...request, input }, options.modelMaxContextTokens).budget;
+      if (native) budget.providerCountedInputTokens = await count(input);
       this.assertBudgetFits(budget, ['Bounded input selection refresh; no additional compaction pass']);
       this.describeAssemblyRequest(selection.manifest, input, budget, options.modelMaxContextTokens);
       selection.manifest.requestFingerprint = contextFingerprint({ authority: this.assemblyAuthority(), model: request.model,
@@ -1112,6 +1138,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       this.assertAssemblyRequest(request, false, false);
       this._assembler!.assertCurrent(snapshot);
       request.input = input;
+      if (native) this._preparedNativePrefix = structuredClone(prefix);
       this._preparedAssembly = { ...selected, snapshot, manifest: selection.manifest, prefix: structuredClone(prefix),
         dataText: selection.text, inputHash: contextFingerprint(suffix), remainingMs: this._assemblyRemainingMs };
       this._lastPreparation!.selection = structuredClone(selection.manifest);
@@ -1591,12 +1618,192 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     this.assertNotDestroyed();
     this._conversation = [];
     this._currentInput = [];
+    this._nativeContinuation = undefined;
     this.emit('conversation:cleared', { reason });
   }
 
   // ============================================================================
   // Context Preparation (THE main method)
   // ============================================================================
+
+  /** @internal Bind only wire operations; authentication remains on Agent's connector. */
+  _bindNativeCompaction(driver: NativeCompactionDriver | undefined): NativeCompactionDriver | undefined {
+    const previous = this._nativeDriver; this._nativeDriver = driver; return previous;
+  }
+  /** @internal Structural preflight after Agent binding; asynchronous proofs remain load/preparation work. */
+  _assertNativeContinuation(): void { this.assertNativeSnapshot(this.getState()); }
+  /** @internal Persisted manual outcome; inspection must not retain a stale checkpoint flag. */
+  _recordCompactionCheckpoint(report: ContextCompactionReport): void { this._lastComposition = structuredClone(report); }
+
+  /** @internal Detached composition settings for Agent/AMOS inspection. */
+  _inspectCompaction(): { config: Readonly<ContextCompactionStrategyConfig>; last?: ContextCompactionReport; activeNative: boolean } | undefined {
+    if (!(isContextCompactionStrategy(this._compactionStrategy))) return undefined;
+    return { config: structuredClone(this._compactionStrategy.config), activeNative: !!this._nativeContinuation,
+      ...(this._lastComposition ? { last: structuredClone(this._lastComposition) } : {}) };
+  }
+
+  private captureNativeState(includePluginContent = true): () => void {
+    const strategy = this._compactionStrategy;
+    const native = isContextCompactionStrategy(strategy) && strategy.config.history !== 'off';
+    const plugins = [...this._plugins];
+    const evidence = this.getPlugin('evidence');
+    const storage = evidence instanceof EvidencePluginNextGen ? evidence.storage : undefined;
+    const snapshot = () => ({ context: this.contextStamp(), input: this._originalUserInput, native: this._nativeContinuation,
+      user: this._userId, tools: this._tools.getEnabled().map(tool => tool.definition), evidenceScope: storage?.scope,
+      ...(includePluginContent ? { plugins: plugins.map(([name, plugin]) => [name, plugin.getState()]) } : {}) });
+    const stamp = contextFingerprint(snapshot());
+    return () => {
+      this.assertNotDestroyed(); if (native) this._nativeDriver?.assertCurrent();
+      if (strategy !== this._compactionStrategy || plugins.length !== this._plugins.size
+        || plugins.some(([name, plugin]) => this._plugins.get(name) !== plugin)
+        || (evidence instanceof EvidencePluginNextGen && evidence.storage !== storage)
+        || stamp !== contextFingerprint(snapshot())) {
+        throw new AIError('Context, plugin state or native scope changed during preparation', 'CONTEXT_COMPACTION_STALE', 409);
+      }
+    };
+  }
+
+  private assertNativeSnapshot(state: SerializedContextState): void {
+    const snapshot = state.nativeContinuation;
+    if (!snapshot) return;
+    const evidence = this.getPlugin('evidence');
+    const driver = this._nativeDriver;
+    if (!(isContextCompactionStrategy(this._compactionStrategy)) || this._compactionStrategy.config.history === 'off'
+      || !(evidence instanceof EvidencePluginNextGen) || !driver) throw new AIError('Restore native history with its configured strategy, Agent connector and evidence scope', 'CONTEXT_COMPACTION_INVALID');
+    driver.assertCurrent();
+    const binding = JSON.parse(JSON.stringify({ ...driver.binding, scope: evidence.storage.scope }));
+    if (snapshot.version !== 1 || !isDeepStrictEqual(snapshot.binding, binding) || snapshot.binding.model !== this._config.model
+      || typeof snapshot.protocol !== 'string' || !snapshot.protocol || snapshot.protocol.length > 128
+      || !Number.isSafeInteger(snapshot.prefixLength) || snapshot.prefixLength <= 0 || snapshot.prefixLength > state.conversation.length
+      || !Array.isArray(snapshot.sourceReferences) || !snapshot.sourceReferences.length || snapshot.sourceReferences.length > 128
+      || nativeFingerprint(state.conversation.slice(0, snapshot.prefixLength)) !== snapshot.prefixHash
+      || state.conversation.filter(item => item.type === 'compaction').length !== 1
+      || !state.conversation.slice(0, snapshot.prefixLength).some(item => item.type === 'compaction')) throw new AIError('Native checkpoint binding, version or canonical window is invalid', 'CONTEXT_COMPACTION_INVALID');
+    const ids = new Set<string>();
+    for (const reference of snapshot.sourceReferences) {
+      validateReference(reference);
+      if (ids.has(reference.id)) throw new AIError('Duplicate native source reference', 'CONTEXT_COMPACTION_INVALID');
+      ids.add(reference.id);
+    }
+    if (snapshot.state !== undefined && Buffer.byteLength(JSON.stringify(snapshot.state), 'utf8') > 65536) throw new AIError('Native replay metadata exceeds its bound', 'CONTEXT_COMPACTION_INVALID');
+  }
+
+  private async verifyNativeSources(snapshot: NativeContinuationSnapshot | undefined, signal?: AbortSignal): Promise<void> {
+    if (!snapshot) return;
+    const evidence = this.getPlugin('evidence');
+    if (!(evidence instanceof EvidencePluginNextGen)) throw new AIError('Native evidence backend is unavailable', 'CONTEXT_COMPACTION_INVALID');
+    const check = this.captureNativeState();
+    for (const reference of snapshot.sourceReferences) {
+      signal?.throwIfAborted();
+      const record = await withAbort(evidence.storage.readRecord(reference), signal); check(); signal?.throwIfAborted();
+      if (!record || record.source.toolName !== '__context_source__' || !Object.hasOwn(record, 'result')
+        || !record.result || typeof record.result !== 'object' || !Array.isArray((record.result as { items?: unknown }).items)) {
+        throw new AIError('Native source is missing, expired or invalid; restore a trusted checkpoint', 'CONTEXT_COMPACTION_INVALID');
+      }
+    }
+  }
+
+  private assertNativeFrame(request: Pick<TextGenerateOptions, 'input' | 'model'>): void {
+    const snapshot = this._nativeContinuation;
+    if (!snapshot) {
+      if (typeof request.input !== 'string' && request.input.some(item => item.type === 'compaction')) throw new AIError('Unbound native continuation cannot enter managed context', 'CONTEXT_COMPACTION_INVALID');
+      return;
+    }
+    this.assertNativeSnapshot(this.getState());
+    if (request.model !== snapshot.binding.model || typeof request.input === 'string') throw new AIError('Managed request changed native model or omitted its window', 'CONTEXT_COMPACTION_INVALID');
+    const expected = this._conversation.slice(0, snapshot.prefixLength);
+    const offset = expected.findIndex(item => item.type === 'compaction');
+    const indices = request.input.flatMap((item, index) => item.type === 'compaction' ? [index] : []);
+    const start = (indices[0] ?? -1) - offset;
+    if (indices.length !== 1 || start < 0 || nativeFingerprint(request.input.slice(start, start + expected.length)) !== snapshot.prefixHash) {
+      throw new AIError('Managed request removed or changed the canonical native window', 'CONTEXT_COMPACTION_INVALID');
+    }
+    const tail = sanitizeToolPairsWithOrigins([...this._conversation.slice(snapshot.prefixLength), ...this._currentInput]).map(entry => entry.item);
+    if (!isDeepStrictEqual(request.input.slice(start + expected.length, start + expected.length + tail.length), tail)) {
+      throw new AIError('Managed request removed or changed protected recent history/current input', 'CONTEXT_COMPACTION_INVALID');
+    }
+  }
+
+  /** @internal Count a detached final frame; return a synchronous transport/retry guard. */
+  async _validateNativeDispatch(request: TextGenerateOptions, driver: NativeCompactionDriver, recordPreparation: boolean): Promise<() => void> {
+    if (typeof request.input !== 'string') request.input = structuredClone(sanitizeToolPairsWithOrigins(request.input).map(entry => entry.item));
+    this.assertNativeFrame(request);
+    const check = this.captureNativeState();
+    const signature = () => {
+      const { signal: _signal, managedDispatch: _guard, credential_context: _credentials, ...frame } = request;
+      return contextFingerprint(frame);
+    };
+    const stamp = signature();
+    const counted = await driver.countInput(request); check();
+    if (counted === null) throw new AIError('Provider cannot count the complete native request', 'CONTEXT_COMPACTION_INVALID');
+    this.validateRequestBudget(request, { modelMaxContextTokens: this._lastPrepareOptions.modelMaxContextTokens,
+      recordPreparation, providerCountedInputTokens: counted });
+    const guard = () => {
+      check(); driver.assertCurrent(); this.assertNativeFrame(request);
+      if (stamp !== signature()) throw new AIError('Counted native frame changed before dispatch', 'CONTEXT_COMPACTION_STALE');
+      this.validateRequestBudget(request, { modelMaxContextTokens: this._lastPrepareOptions.modelMaxContextTokens,
+        recordPreparation: false, providerCountedInputTokens: counted });
+    };
+    guard(); return guard;
+  }
+
+  private assertCompositionBinding(config: Readonly<ContextCompactionStrategyConfig>, options: ContextPrepareOptions): NativeCompactionDriver | undefined {
+    const driver = config.history === 'off' ? undefined : options.nativeCompaction ?? this._nativeDriver;
+    const evidence = this.getPlugin('evidence');
+    if (config.history !== 'off') {
+      if (!(evidence instanceof EvidencePluginNextGen) || !driver || (this._userId !== undefined && this._userId !== evidence.storage.scope.ownerId)) {
+        throw new AIError('Native history requires built-in scoped evidence and a managed Agent', 'CONTEXT_COMPACTION_INVALID');
+      }
+      this._nativeDriver = driver;
+      this.assertNativeSnapshot(this.getState());
+    }
+    return driver;
+  }
+
+  private async performComposition(config: Readonly<ContextCompactionStrategyConfig>, trigger: 'manual' | 'pre-call', target: ContextCompactionTarget,
+    options: ContextPrepareOptions, preparedFrame?: CompositionFrame): Promise<ContextCompactionReport> {
+    const driver = this.assertCompositionBinding(config, options);
+    const evidence = this.getPlugin('evidence');
+    const initial = preparedFrame ?? this.compositionFrame(await this.materializeRequest(options));
+    const context = this.buildCompactionContext(initial.budget, options);
+    const targetToFree = this.compositionTarget(initial.budget);
+    return composeContext({ config, trigger, target, criticalThreshold: this._config.criticalCompactionThreshold, targetToFree,
+      signal: options.signal, plugins: [...this._plugins.values()], driver, evidence: evidence instanceof EvidencePluginNextGen ? evidence : undefined,
+      continuation: this._nativeContinuation, history: this._conversation, pending: this._currentInput, initial,
+      capture: () => this.captureNativeState(), compactPlugin: (name, tokens) => context.compactPlugin(name, tokens),
+      measure: async () => this.compositionFrame(await this.materializeRequest(options)),
+      apply: (history, continuation) => {
+        this.assertNativeSnapshot({ ...this.getState(), conversation: history, nativeContinuation: continuation });
+        sanitizeToolPairsWithOrigins([...history, ...this._currentInput]);
+        this._conversation = history; this._nativeContinuation = structuredClone(continuation);
+      },
+    });
+  }
+
+  private compositionTarget(budget: ContextBudget): number {
+    return Math.max(0, (budget.providerCountedInputTokens ?? budget.totalUsed)
+      - Math.floor((budget.maxTokens - budget.responseReserve)
+        * Math.min(this._compactionStrategy.threshold - .1, this._config.criticalCompactionThreshold - .1)));
+  }
+
+  /** @internal Agent holds the execution lease; no recursive preparation or hidden input. */
+  async _compactContext(target: ContextCompactionTarget, options: ContextPrepareOptions): Promise<ContextCompactionReport> {
+    if (!(isContextCompactionStrategy(this._compactionStrategy))) throw new AIError('compactContext requires ContextCompactionStrategy', 'CONTEXT_COMPACTION_INVALID');
+    if (!['all', 'history', 'plugins'].includes(target)) throw new AIError('Invalid compaction target', 'CONTEXT_COMPACTION_INVALID');
+    this.beginContextOperation('compact');
+    const controller = this._assembler ? new AbortController() : undefined;
+    if (controller) { this._assemblyController = controller; this._assemblyRemainingMs = this._assembler!.config.timeoutMs; }
+    try {
+      const signal = controller ? (options.signal ? AbortSignal.any([controller.signal, options.signal]) : controller.signal) : options.signal;
+      this.assertCompositionBinding(this._compactionStrategy.config, options);
+      await this.verifyNativeSources(this._nativeContinuation, signal);
+      const selectedOptions = { ...options, signal };
+      const initial = this.compositionFrame(await this.materializeRequest(selectedOptions));
+      await this.runCompaction(this.compositionTarget(initial.budget), [], initial.budget, selectedOptions, initial,
+        { trigger: 'manual', target });
+      return structuredClone(this._lastComposition!);
+    } finally { controller?.abort(); this._assemblyController = undefined; this._contextOperation = null; }
+  }
 
   /**
    * Prepare context for LLM call.
@@ -1625,6 +1832,15 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     const reserve = this._config.responseReserve + (this._assembler?.config.reasoningReserveTokens ?? 0);
     const selectedOptions = assemblySignal ? { ...options, signal: assemblySignal } : options;
     try {
+      if (isContextCompactionStrategy(this._compactionStrategy) && this._compactionStrategy.config.history !== 'off') {
+        const evidence = this.getPlugin('evidence');
+        this._nativeDriver = options.nativeCompaction ?? this._nativeDriver;
+        if (!(evidence instanceof EvidencePluginNextGen) || !this._nativeDriver
+          || (this._userId !== undefined && this._userId !== evidence.storage.scope.ownerId)) throw new AIError('Native history requires a managed Agent and scoped built-in evidence', 'CONTEXT_COMPACTION_INVALID');
+        this.assertNativeSnapshot(this.getState());
+        await this.verifyNativeSources(this._nativeContinuation, selectedOptions.signal);
+        selectedOptions.signal?.throwIfAborted();
+      }
       // Reset lastThinking at start of each turn to prevent stale data
       this._lastThinking = null;
 
@@ -1681,7 +1897,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
       // Preserve the existing oversized-input policy. Keep history dependencies of
       // pending results in the window when determining the emergency text allowance.
-      if (selected.budget.systemMessageTokens + selected.budget.currentInputTokens > availableForContent()) {
+      if (!(isContextCompactionStrategy(this._compactionStrategy)) && selected.budget.systemMessageTokens + selected.budget.currentInputTokens > availableForContent()) {
         const protectedIndices = new Set(this._conversation.map((_, index) => index));
         removableToolGroups(this._conversation, this._currentInput, [...protectedIndices])
           .forEach(index => protectedIndices.delete(index));
@@ -1696,15 +1912,19 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       // strategy invocation, followed by a full rebuild and an explicit fit check.
       let compacted = false;
       let compaction: CompactionResult['report'];
+      let compositionDetails: ContextCompactionReport | undefined;
       const usedContent = selected.budget.totalUsed - selected.budget.toolsTokens;
-      const utilization = usedContent / availableForContent();
+      const utilization = selected.budget.providerCountedInputTokens !== undefined
+        ? selected.budget.providerCountedInputTokens / (selected.budget.maxTokens - reserve) : usedContent / availableForContent();
       const criticalThreshold = this._config.criticalCompactionThreshold;
-      if (utilization > criticalThreshold) {
+      if (utilization > criticalThreshold && (!(isContextCompactionStrategy(this._compactionStrategy)) || this._compactionStrategy.config.automatic !== false)) {
         const reclaimTo = Math.min(this._compactionStrategy.threshold - 0.1, criticalThreshold - 0.1);
         const targetToFree = usedContent - Math.floor(availableForContent() * reclaimTo);
-        const freed = await this.runCompaction(targetToFree, compactionLog, selected.budget, options);
+        const freed = await this.runCompaction(targetToFree, compactionLog, selected.budget, selectedOptions,
+          isContextCompactionStrategy(this._compactionStrategy) ? this.compositionFrame(selected) : undefined);
         compacted = freed.tokensFreed > 0;
         compaction = freed.report;
+        if (isContextCompactionStrategy(this._compactionStrategy)) compositionDetails = structuredClone(this._lastComposition);
         selected = await this.materializeRequest(selectedOptions);
       }
       this.assertBudgetFits(selected.budget, compactionLog);
@@ -1717,7 +1937,10 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       this._preparedTaskGeneration = this._preparedTaskState?._generation;
       this._cachedBudget = budget;
       this._preparedAssembly = selected.assembly;
-      this._lastPreparation = { ...(selected.assembly ? { selection: structuredClone(selected.assembly.manifest) } : {}), revision: ++this._preparationRevision, preparedAt: Date.now(), budget: structuredClone(budget), ...(compaction ? { compaction: structuredClone(compaction) } : {}) };
+      this._preparedNativePrefix = isContextCompactionStrategy(this._compactionStrategy) && this._compactionStrategy.config.history !== 'off'
+        ? structuredClone(selected.prefix) : undefined;
+      this._lastPreparation = { ...(selected.assembly ? { selection: structuredClone(selected.assembly.manifest) } : {}), revision: ++this._preparationRevision, preparedAt: Date.now(), budget: structuredClone(budget), ...(compaction ? { compaction: structuredClone(compaction) } : {}),
+        ...(compositionDetails ? { compactionDetails: compositionDetails } : {}) };
       this.emit('budget:updated', { budget, timestamp: this._lastPreparation.preparedAt });
       if (budget.utilizationPercent >= 90) this.emit('budget:critical', { budget });
       else if (budget.utilizationPercent >= 70) this.emit('budget:warning', { budget });
@@ -1739,7 +1962,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   validateRequestBudget(
     request: Pick<TextGenerateOptions, 'input' | 'tools' | 'instructions'> &
       Partial<Pick<TextGenerateOptions, 'model' | 'response_format' | 'native_tools'>>,
-    options: { modelMaxContextTokens?: number; recordPreparation?: boolean } = {},
+    options: { modelMaxContextTokens?: number; recordPreparation?: boolean; providerCountedInputTokens?: number } = {},
   ): ContextBudget {
     this.assertNotDestroyed();
     if (!this._lastPreparation) throw new Error('Prepare context before validating a managed request');
@@ -1759,6 +1982,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     assertTaskState(); assertAssembly();
 
     const { budget, items } = this.calculateRequestBudget(request, options.modelMaxContextTokens);
+    if (options.providerCountedInputTokens !== undefined) budget.providerCountedInputTokens = options.providerCountedInputTokens;
     this.assertBudgetFits(budget, ['Final managed request recounted after host hooks and request listeners; no additional compaction pass']);
     if (options.recordPreparation !== false) {
       if (typeof request.input !== 'string') request.input = structuredClone(items);
@@ -1793,6 +2017,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     const items = sanitizeToolPairsWithOrigins(raw).map(entry => entry.item);
     const previous = this._lastPreparation!.budget;
     const budget = structuredClone(previous);
+    delete budget.providerCountedInputTokens;
     const capacity = modelMaxContextTokens ?? (request.model ? getModelInfo(request.model)?.features?.input?.tokens : undefined);
     budget.maxTokens = this.resolveRequestCapacity(capacity);
     const pendingStart = typeof request.input === 'string' ? 0 : Math.max(0, items.length - this._preparedCurrentInputCount);
@@ -1828,7 +2053,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     return { budget, items };
   }
 
-  private beginContextOperation(operation: 'prepare' | 'consolidate'): void {
+  private beginContextOperation(operation: 'prepare' | 'consolidate' | 'compact'): void {
     if (this._rolloverInProgress || this._contextOperation) {
       throw new Error(`Cannot ${operation} context while ${this._rolloverInProgress ? 'rollover' : this._contextOperation} is in progress`);
     }
@@ -1849,10 +2074,11 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   }
 
   private assertBudgetFits(budget: ContextBudget, log: string[]): void {
-    if (budget.available >= 0) return;
+    const available = budget.maxTokens - budget.responseReserve - (budget.providerCountedInputTokens ?? budget.totalUsed);
+    if (available >= 0) return;
     throw new ContextOverflowError('Prepared request cannot fit after the bounded compaction pass', {
-      actualTokens: budget.totalUsed + budget.responseReserve, maxTokens: budget.maxTokens,
-      overageTokens: -budget.available,
+      actualTokens: (budget.providerCountedInputTokens ?? budget.totalUsed) + budget.responseReserve, maxTokens: budget.maxTokens,
+      overageTokens: -available,
       breakdown: { system: budget.systemMessageTokens, tools: budget.toolsTokens,
         conversation: budget.conversationTokens, currentInput: budget.currentInputTokens, responseReserve: budget.responseReserve },
       degradationLog: log,
@@ -1872,8 +2098,10 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     return snapshot;
   }
 
-  private async materializeRequest(options: ContextPrepareOptions = {}, collectContributions = true): Promise<{
+  private async materializeRequest(options: ContextPrepareOptions = {}, collectContributions = true, nativeCounting = true): Promise<{
     input: InputItem[]; budget: ContextBudget; tools: FunctionToolDefinition[]; currentInputCount: number;
+    prefix: InputItem[];
+    request: TextGenerateOptions;
     assembly?: NonNullable<AgentContextNextGen['_preparedAssembly']>;
   }> {
     // An asynchronous prompt contribution may overlap a host observation. Rebuild
@@ -1921,10 +2149,26 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       const maxTokens = this.resolveRequestCapacity(options.modelMaxContextTokens);
       const reserve = this._config.responseReserve + (this._assembler?.config.reasoningReserveTokens ?? 0);
       const capacity = maxTokens - reserve;
-      const selection = assemblySnapshot ? this._assembler!.select(assemblySnapshot, capacity - totalSystem - toolsTokens - conversationTokens - currentInputTokens, this._estimator) : undefined;
+      const native = nativeCounting && isContextCompactionStrategy(this._compactionStrategy) && this._compactionStrategy.config.history !== 'off';
+      const driver = native ? options.nativeCompaction ?? this._nativeDriver : undefined;
+      let providerCountedInputTokens: number | undefined;
+      const count = async (): Promise<number> => {
+        if (!driver) throw new AIError('Native history requires Agent-owned provider operations', 'CONTEXT_COMPACTION_INVALID');
+        const check = this.captureNativeState();
+        this.assertNativeFrame({ model: this.model, input });
+        const counted = await driver.countInput({ model: this.model, input: structuredClone(input), tools: structuredClone(tools),
+          ...requestOptions, signal: options.signal });
+        check();
+        if (counted === null || !Number.isSafeInteger(counted) || counted < 0) throw new AIError('Provider cannot count the complete native frame', 'CONTEXT_COMPACTION_INVALID');
+        return counted;
+      };
+      if (native) providerCountedInputTokens = await count();
+      const selection = assemblySnapshot ? this._assembler!.select(assemblySnapshot,
+        capacity - (providerCountedInputTokens ?? (totalSystem + toolsTokens + conversationTokens + currentInputTokens)), this._estimator) : undefined;
       if (selection?.text) {
         const data: Message = { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: selection.text }] };
         prefix.push(data); input.splice(lateSystemMessage ? 2 : 1, 0, data); conversationTokens += this.estimateItemTokens(data);
+        if (native) providerCountedInputTokens = await count();
       }
       const totalUsed = totalSystem + toolsTokens + conversationTokens + currentInputTokens;
       if (selection) {
@@ -1932,6 +2176,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
       }
       const budget: ContextBudget = {
+        ...(providerCountedInputTokens !== undefined ? { providerCountedInputTokens } : {}),
         maxTokens, responseReserve: reserve,
         systemMessageTokens: totalSystem, toolsTokens, conversationTokens, currentInputTokens, totalUsed,
         available: capacity - totalUsed, utilizationPercent: totalUsed / capacity * 100,
@@ -1943,12 +2188,22 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         options.signal?.throwIfAborted(); this._assembler!.assertCurrent(assemblySnapshot);
         if (authority !== this.assemblyAuthority()) throw new AIError('Context contribution authority changed during preparation', 'CONTEXT_ASSEMBLY_STALE', 409);
       }
-      return { input: structuredClone(input), budget, tools, currentInputCount,
+      return { input: structuredClone(input), prefix: structuredClone(prefix), budget, tools, currentInputCount,
+        request: { model: this.model, ...structuredClone(requestOptions), input: structuredClone(input), tools: structuredClone(tools), signal: options.signal },
         ...(selection && assemblySnapshot ? { assembly: { snapshot: assemblySnapshot, manifest: selection.manifest, dataText: selection.text, prefix: structuredClone(prefix), authority: this.assemblyAuthority(), stamp: contextFingerprint(this.contextStamp()), originalInput: contextFingerprint(this._originalUserInput),
           inputHash: contextFingerprint(input.slice(prefix.length)), repairBase: structuredClone([...this._conversation, ...this._currentInput]),
           systemPrompt: this._systemPrompt, remainingMs: this._assemblyRemainingMs } } : {}) };
     }
     throw new Error('Context preparation did not converge');
+  }
+
+  /** Reuse the counted frame until plugin/history mutation requires new contributions. */
+  private compositionFrame(selected: Awaited<ReturnType<AgentContextNextGen['materializeRequest']>>): CompositionFrame {
+    const assembly = selected.assembly;
+    const check = this.captureNativeState();
+    return { input: selected.input, prefix: selected.prefix, budget: selected.budget, request: selected.request,
+      providerInputTokens: selected.budget.providerCountedInputTokens,
+      assertCurrent: () => { check(); if (assembly) this._assembler!.assertCurrent(assembly.snapshot); } };
   }
 
   // ============================================================================
@@ -2269,8 +2524,12 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    * Delegates to the current compaction strategy.
    * Returns total tokens freed.
    */
-  private async runCompaction(targetToFree: number, log: string[], budget: ContextBudget, options: ContextPrepareOptions): Promise<CompactionResult> {
-    const context = this.buildCompactionContext(budget, options);
+  private async runCompaction(targetToFree: number, log: string[], budget: ContextBudget, options: ContextPrepareOptions, initial?: CompositionFrame,
+    composition?: { trigger: 'manual' | 'pre-call'; target: ContextCompactionTarget }): Promise<CompactionResult> {
+    let context = this.buildCompactionContext(budget, options, initial, composition);
+    // A lifecycle hook may preserve facts in plugin memory. It may not change
+    // the source, host authority, tools, policy or plugin/storage identities.
+    const assertHookBoundary = initial ? this.captureNativeState(false) : undefined;
     const timestamp = Date.now();
 
     // Emit compaction:starting event BEFORE any compaction occurs
@@ -2287,6 +2546,19 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       } catch (error) {
         // Log but don't block compaction
         log.push(`beforeCompaction callback error: ${(error as Error).message}`);
+      }
+    }
+
+    if (initial) {
+      options.signal?.throwIfAborted();
+      assertHookBoundary!();
+      try { initial.assertCurrent?.(); }
+      catch {
+        // Refresh only at this known lifecycle boundary, within the same
+        // contribution allowance. Later asynchronous mutations still fail closed.
+        initial = this.compositionFrame(await this.materializeRequest(options));
+        assertHookBoundary!();
+        context = this.buildCompactionContext(initial.budget, options, initial, composition);
       }
     }
 
@@ -2314,6 +2586,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    */
   async consolidate(): Promise<ConsolidationResult> {
     this.assertNotDestroyed();
+    if (isContextCompactionStrategy(this._compactionStrategy)) return this._compactionStrategy.consolidate(this.buildCompactionContext(this._cachedBudget!));
 
     // Post-cycle consolidation spills large tool results to working memory
     // (and drops aged tool pairs). Gate it on the SAME critical threshold as
@@ -2374,6 +2647,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    * Call it only between agent executions, when there is no pending input.
    */
   async rollover(options: ContextRolloverOptions): Promise<ContextRolloverResult> {
+    if (this._nativeContinuation) throw new AIError('Native history requires explicit compatible checkpoint recovery, not local rollover', 'CONTEXT_COMPACTION_INVALID');
     this.assertNotDestroyed();
 
     if (!options || typeof options.summarize !== 'function') {
@@ -2580,7 +2854,8 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
    * Build CompactionContext for strategy.
    * Provides controlled access to context state.
    */
-  private buildCompactionContext(budget: ContextBudget, options: ContextPrepareOptions = {}): CompactionContext {
+  private buildCompactionContext(budget: ContextBudget, options: ContextPrepareOptions = {}, initial?: CompositionFrame,
+    composition?: { trigger: 'manual' | 'pre-call'; target: ContextCompactionTarget }): CompactionContext {
     const self = this;
     let stamp = this.contextStamp();
     const assertCurrent = () => {
@@ -2588,7 +2863,17 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       if (stamp !== self.contextStamp()) throw new Error('Context changed while compaction was in progress; stale proposal rejected');
     };
 
-    return {
+    const compose: CompositionOperation = async config => {
+        assertCurrent();
+        const before = this._conversation.length;
+        const report = await this.performComposition(config, composition?.trigger ?? 'pre-call', composition?.target ?? 'all', options, initial);
+        stamp = this.contextStamp();
+        this._lastComposition = report;
+        return { tokensFreed: Math.max(0, (report.inputTokensBefore ?? 0) - (report.inputTokensAfter ?? 0)),
+          messagesRemoved: Math.max(0, before - this._conversation.length), pluginsCompacted: [...report.plugins.compacted],
+          log: [`Plugin reduction: ${report.plugins.status}; history: ${report.history.status} (${report.history.reason ?? 'native'})`] };
+      };
+    const context: CompactionContext = {
       get budget(): ContextBudget {
         return budget;
       },
@@ -2706,6 +2991,8 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         }
       },
     };
+    if (isContextCompactionStrategy(this._compactionStrategy)) Object.defineProperty(context, COMPOSITION_OPERATION, { value: compose });
+    return context;
   }
 
   /**
@@ -2987,6 +3274,8 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       if (stored) {
         this.assertEvidenceState(stored.state);
         this.preflightTaskState(stored.state);
+        this.assertNativeSnapshot(stored.state);
+        await this.verifyNativeSources(stored.state.nativeContinuation);
       }
 
       // Use the documented JSON state contract, including conversion hooks. Take
@@ -3028,6 +3317,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
             }
           }
           this._conversation = previous.conversation;
+          this._nativeContinuation = previous.state.nativeContinuation;
           this._currentInput = previous.currentInput;
           this._originalUserInput = previous.originalUserInput;
           this._historyBuffer = previous.historyBuffer;
@@ -3153,6 +3443,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         ? structuredClone([...this._conversation, ...this._currentInput])
         : this._conversation,
       pluginStates,
+      ...(this._nativeContinuation ? { nativeContinuation: structuredClone(this._nativeContinuation) } : {}),
       systemPrompt: this._systemPrompt,
       metadata: {
         savedAt: Date.now(),
@@ -3187,9 +3478,11 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   restoreState(state: SerializedContextState): void {
     this.assertNotDestroyed();
 
+    this.assertNativeSnapshot(state);
     this.assertEvidenceState(state);
     const taskState = this.preflightTaskState(state);
     this._conversation = state.conversation ?? [];
+    this._nativeContinuation = state.nativeContinuation ? structuredClone(state.nativeContinuation) : undefined;
     this.removeRestoredProtectedInput();
     this._systemPrompt = state.systemPrompt;
 
@@ -3241,7 +3534,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     }
 
     // Inspection never starts new async contributors or their deadline/model work.
-    return (await this.materializeRequest({}, false)).budget;
+    return (await this.materializeRequest({}, false, false)).budget;
   }
 
   /**

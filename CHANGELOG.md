@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Stage 16A third corrections reject incompatible/incomplete nested thinking on
+  native paths before I/O, run preservation hooks/events for explicit compaction,
+  and align Anthropic fixed-thinking output, source headroom and ModelTask bounds.
+  Explicit caps and main settings are preserved; internal streaming supports high
+  native limits and cancellation/failed-summary accounting. Manual hook examples,
+  AMOS checkpoint coverage and real-provider checks cover adoption without new
+  required APIs, defaults or session fields.
+
+- Stage 16A second corrections preserve memory written by pre-compaction hooks
+  through one bounded frame refresh, cancel read-only native evidence proofs with
+  execution/task deadlines, preserve an independent checkpoint restore when a
+  startup wait is cancelled, and reject unsupported Anthropic top-level reasoning
+  before I/O. Existing APIs/defaults, storage contracts and admitted-write
+  settlement are preserved; the hook example and AMOS recovery regression cover
+  these paths.
+
+- Stage 16A review corrections bind native state to provider construction-time
+  endpoint/account selection, share OpenAI generation/count normalization, retain
+  assembly cancellation across composition and reuse unchanged frames. Known
+  hosted-tool/server-token conflicts stop before reduction or billable native
+  work. Compatibility fixtures use a stable clock; supported legacy/default APIs
+  and version-1 checkpoint shapes remain unchanged.
+
+- Stage 16A adds opt-in `ContextCompactionStrategy` with independent plugin/history
+  controls and `Agent.compactContext()` targets. OpenAI standalone and Anthropic
+  on-demand history use scoped source evidence, exact provider replay, provider
+  frame counts, shared ModelTask usage and optional bound session metadata.
+  AMOS exposes explicit policy/compaction commands; offline/live examples cover
+  continuation, repeated compaction, restart and checkpoint recovery. Existing
+  defaults, named strategies, custom extension contracts and old sessions remain
+  supported. See `docs/NATIVE_CONTEXT_COMPACTION.md` for limits and verified models.
+
 - Stage 05 second corrections finalize selected structured answers before consolidation
   and selected structured suspension before session/correlation persistence, preserving
   host freshness guards and avoiding action replay. Uncertainty metadata includes

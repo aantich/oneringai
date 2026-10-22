@@ -27,3 +27,5 @@ export { StructuredSummaryStrategy } from './StructuredSummaryStrategy.js';
 export type { ObservationMaskingStrategyConfig, StructuredSummaryStrategyConfig, StructuredContextSummary,
   ContextSummaryEntry, ContextSummaryRequest, ContextSummaryGenerator, ConversationCompactionReport,
   ConversationCompactionOptions } from './conversation-compaction.js';
+
+export { ContextCompactionStrategy } from './ContextCompactionStrategy.js';

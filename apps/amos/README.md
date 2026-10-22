@@ -537,3 +537,29 @@ contextAssembly and preset defaults remain unchanged. Run
 `npm run example:amos-context-selection` from the built repository for an offline
 walkthrough. Read the [complete recipe](../../docs/CONTEXT_ASSEMBLY.md) for host scope,
 failed/stale preparation, JSON repair and persistence boundaries.
+
+## Plugin/native compaction (Stage 16A)
+
+Opt in with `/context policy <auto|off> <native|off> [manual]`. Both controls persist
+independently in `contextCompaction`; old settings retain algorithmic behavior.
+Native history requires enabled scoped evidence and a supported main provider/model.
+`/context compact [all|plugins|history]` performs host-owned work and checkpoints
+accepted state. `/context strategy` inspects phase results and `/helpers usage`
+shows native/main accounting. Provider counts drive native capacity displays; the
+component breakdown remains estimated. Selection itself makes no model call.
+Incompatible model/connector/scope/policy changes preserve active native state;
+explicitly save/start a fresh session or restore a trusted pre-native checkpoint.
+Native transport selection also stays fixed for the current Agent's lifetime:
+changing endpoint/project/organization configuration requires constructing a new
+compatible Agent. A rejected compaction releases the operation slot and keeps
+policy settings/history available; inspect usage before retrying an operation.
+Cancelling a stalled read-only native evidence proof releases the command and
+runner without another native/main call; late read completion cannot restart it.
+An admitted archival write retains operation ownership until its backend settles.
+The existing manual compaction command invokes the host preservation hook once;
+its memory note is included in the accepted checkpoint. No new command or setting
+is needed. Anthropic native thinking/output bounds follow the library recipe;
+known incompatible caps or replay data reject before mutation/native billing.
+Run `npm run example:amos-native-compaction` from the library root for a deterministic
+configuration/command/restart walkthrough. The library
+[native guide](../../docs/NATIVE_CONTEXT_COMPACTION.md) documents support and recovery.

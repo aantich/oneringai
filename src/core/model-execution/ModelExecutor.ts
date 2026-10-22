@@ -3,15 +3,16 @@ import addFormats from 'ajv-formats';
 import { AIError, InvalidConfigError, ProviderCapabilityNotSupportedError } from '../../domain/errors/AIErrors.js';
 import { getModelInfo } from '../../domain/entities/Model.js';
 import type { ITextProvider, TextGenerateOptions } from '../../domain/interfaces/ITextProvider.js';
-import type { LLMResponse } from '../../domain/entities/Response.js';
+import type { TextCompactionResponse } from '../../domain/interfaces/ITextProvider.js';
+import type { LLMResponse, TokenUsage } from '../../domain/entities/Response.js';
 import { ContentType } from '../../domain/entities/Content.js';
 import { StreamEventType, type StreamEvent } from '../../domain/entities/StreamEvent.js';
 import type { Connector } from '../Connector.js';
 import { simpleTokenEstimator } from '../context-nextgen/BasePluginNextGen.js';
 import { buildStructuredInstructionSuffix, buildStructuredRepairInstruction, parseStructuredOutput, resolveStructuredStrategy, toProviderResponseFormat } from '../StructuredOutput.js';
 import { validateThinkingConfig } from '../../infrastructure/providers/shared/validateThinkingConfig.js';
-import { AnthropicConverter } from '../../infrastructure/providers/anthropic/AnthropicConverter.js';
-import { getModelAccountingUsage, hasModelTransport, ModelTask } from './ModelTask.js';
+import { AnthropicConverter, prepareAnthropicCompactionOptions } from '../../infrastructure/providers/anthropic/AnthropicConverter.js';
+import { getModelAccountingUsage, getFailedModelUsage, hasModelTransport, ModelTask } from './ModelTask.js';
 import { withAbort } from '../tool-execution/cancellation.js';
 import type { HelperCallOptions, HelperInputContext, HelperModelConfig, HelperResult, ModelCallDescriptor, ModelExecutionConfig, ModelPriceBound } from './types.js';
 
@@ -111,19 +112,44 @@ function prepare(provider: ITextProvider, connector: Connector, options: TextGen
 /** @internal Shared main/direct/repair invocation boundary. */
 export async function generateModel(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task?: ModelTask,
   config?: ModelExecutionConfig, purpose = 'main', phase: ModelCallDescriptor['phase'] = 'generation', parentInvocationId?: string, signal?: AbortSignal): Promise<LLMResponse> {
-  if (!task) return provider.generate(options);
+  if (options.managedDispatch) await options.managedDispatch.prepare();
+  if (!task) { options.managedDispatch?.assertCurrent(); return provider.generate(options); }
   const selected = prepare(provider, connector, options, task, config, purpose, phase, parentInvocationId);
   return (await task.execute(selected.descriptor, scopedSignal => provider.generate({ ...selected.options, signal: scopedSignal }),
-    { signal, transport: selected.transport, usage: response => response.usage })).result;
+    { signal, transport: selected.transport, usage: response => response.usage, beforeDispatch: options.managedDispatch?.assertCurrent })).result;
+}
+
+/** @internal Billable native operation shares conservative main-model admission, not helper routing. */
+export async function compactModel(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task: ModelTask,
+  config?: ModelExecutionConfig): Promise<{ response: TextCompactionResponse; invocationId: string }> {
+  if (!provider.compaction) throw new ProviderCapabilityNotSupportedError(provider.name, options.model, 'native compaction');
+  let bounded = options;
+  if (provider.name === 'anthropic') {
+    const caps = provider.getModelCapabilities(options.model);
+    bounded = prepareAnthropicCompactionOptions(options, caps.maxOutputTokens ?? caps.maxTokens, config?.maxOutputTokensPerCall);
+  } else if (connector.vendor === 'anthropic') {
+    bounded = { ...options, max_output_tokens: Math.min(options.max_output_tokens ?? config?.maxOutputTokensPerCall ?? 4096, 4096) };
+  }
+  const selected = prepare(provider, connector, bounded, task, config, 'compactor', 'generation');
+  let observed: TokenUsage | undefined;
+  const result = await task.execute(selected.descriptor, async signal => {
+    try { return await provider.compaction!.compact({ ...selected.options, signal }); }
+    catch (error) { observed = getFailedModelUsage(error); throw error; }
+  },
+    { signal: options.signal, transport: selected.transport, usage: response => response.usage ?? undefined,
+      observedUsage: () => observed, beforeDispatch: options.managedDispatch?.assertCurrent });
+  return { response: result.result, invocationId: result.invocationId };
 }
 
 /** @internal Streaming keeps its existing event shapes and backpressure. */
 export async function* streamModel(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task?: ModelTask,
   config?: ModelExecutionConfig, purpose = 'main', phase: ModelCallDescriptor['phase'] = 'generation', parentInvocationId?: string, signal?: AbortSignal): AsyncIterableIterator<StreamEvent> {
-  if (!task) { yield* provider.streamGenerate(options); return; }
+  if (options.managedDispatch) await options.managedDispatch.prepare();
+  if (!task) { options.managedDispatch?.assertCurrent(); yield* provider.streamGenerate(options); return; }
   const selected = prepare(provider, connector, options, task, config, purpose, phase, parentInvocationId);
   yield* task.iterate(selected.descriptor, scopedSignal => provider.streamGenerate({ ...selected.options, signal: scopedSignal }),
-    { signal, transport: selected.transport, usage: event => event.type === StreamEventType.RESPONSE_COMPLETE ? event.usage : undefined });
+    { signal, transport: selected.transport, usage: event => event.type === StreamEventType.RESPONSE_COMPLETE ? event.usage : undefined,
+      beforeDispatch: options.managedDispatch?.assertCurrent });
 }
 
 /** @internal Helpers are explicit text-only, stateless, tool-free calls. */

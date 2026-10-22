@@ -19018,6 +19018,36 @@ bounded previews. This stage does not introduce action replay or transaction gua
 
 ## Experimental context strategies (Stage 07)
 
+For independent plugin/history controls with provider-native continuation, see
+[Stage 16A native compaction](docs/NATIVE_CONTEXT_COMPACTION.md). It is separately
+opted in through the existing strategy-instance field; Stage 07 behavior and the
+algorithmic default remain unchanged.
+
+Native compaction binds the provider's construction-time endpoint/account
+selection; changing it requires a new compatible Agent or fresh context. Known
+hosted-tool/server-token conflicts stop before compaction. Supported raw OpenAI
+prompt controls participate in provider counts, and selected contributions retain
+their shared timeout across plugin/history phases. See the native recipe for
+exact support and recovery boundaries.
+
+Automatic and explicit native composition preserve the existing `beforeCompaction`
+memory-writing hook: plugin content/revision changes receive one bounded refresh
+before reduction. Manual targets retain the same lifecycle and measured compaction
+events, including with `automatic: false`.
+Read-only native source proofs stop waiting on cancellation/ModelTask deadlines,
+and late reads cannot resume a cancelled turn. Admitted archival writes retain
+ownership until settled. Anthropic top-level Responses reasoning is explicitly
+unsupported on this opted-in path; it is rejected before counting or archival.
+Nested thinking must also have replay fields supported by the selected provider;
+foreign/incomplete opaque blocks reject before reduction or archival. Run
+`npm run example:native-hooks` or `npm run example:native-hooks-manual` offline, or
+add `-- --live=openai` / `-- --live=anthropic` for bounded actual calls. Manual live
+Anthropic mode demonstrates an 8192-token fixed-thinking budget. Native output
+defaults to that fixed budget plus 4096 summary tokens (bounded by model capacity);
+explicit host caps are never raised. Known cap conflicts reject before archival.
+Internal streaming supports large native output limits; main thinking remains
+unchanged. See the native recipe for matching reservation/source bounds.
+
 All three review corrections are validated on branch (2026-10-15): only eligible
 groups consume source capacity, known no-op preparations avoid writes/helpers,
 and failed AMOS saves restore absent as well as explicit settings. See the

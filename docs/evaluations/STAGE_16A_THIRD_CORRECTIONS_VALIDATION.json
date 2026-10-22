@@ -1,0 +1,3396 @@
+{
+  "protocol": "stage-16a-third-corrections-validation-v1",
+  "recordedAt": "2026-10-22T14:34:27.820299+00:00",
+  "branch": "version2",
+  "baseCommit": "4ab2c8f",
+  "packageVersion": "1.2.0",
+  "verifiedPackageRelease": false,
+  "status": "T1-T3 corrected and validated on branch; no known failures or remaining required work",
+  "authorization": {
+    "userInstruction": "fix all",
+    "scope": "All three third-review findings, scope preflight, native streaming settlement, regressions, manual example mode, AMOS and documentation. No API break or later-stage work.",
+    "breakingChangeApproved": false
+  },
+  "findings": [
+    {
+      "id": "T1",
+      "status": "fixed",
+      "change": "Validate first-party nested thinking replay before discovery/counting/reduction/archive. Preserve supported matching-provider representations, custom native adapters and ordinary non-native converters.",
+      "evidence": "Both mismatch directions; missing/empty/foreign replay fields; direct count/compact and managed prefix/recent/pending run/stream/manual; zero HTTP/archive/model attempts; actual SDK matching-provider controls and custom-adapter control."
+    },
+    {
+      "id": "T2",
+      "status": "fixed",
+      "change": "Share the existing bounded compaction lifecycle for manual targets, retaining manual trigger, single preservation callback, existing events/error behavior and bounded refresh. Scope preflight precedes hooks/counting.",
+      "evidence": "All/history/plugins targets with automatic disabled; notes/whiteboard; contribution revision/timeout/cancellation; protected boundary/scope rejection; no-op/hook error; settlement lease; checkpoint save retry without replay; AMOS command checkpoints the preserved note; real OpenAI/Anthropic manual continuation."
+    },
+    {
+      "id": "T3",
+      "status": "fixed",
+      "change": "Resolve native fixed-thinking budget through the existing Anthropic converter. Select budget plus 4096 summary tokens by default, bounded by model output ceiling, or respect explicit host/request cap. Use the same output for source headroom, actual native wire and ModelTask reservation; reject conflicts before archival. Internal streaming supports large caps.",
+      "evidence": "Below/at/above old cap; default/large fixed budgets; adaptive/disabled controls; explicit caps and early conflict rejection; source capacity and wire/reservation agreement; managed run/stream/manual; failed/truncated usage and stream cancellation; real Sonnet 4.6 compacts and continues with fixed 8192 thinking."
+    }
+  ],
+  "compatibility": {
+    "breakingChanges": false,
+    "newRequiredProviderOrStorageMembers": false,
+    "newPublicConfiguration": false,
+    "savedContextVersionChanged": false,
+    "defaultsChanged": false,
+    "notes": "Internal replay/lifecycle/native output/transport corrections; algorithmic and existing non-native defaults remain unchanged. Existing context strategy/plugin/storage signatures, public return/event shapes and optional native envelope remain unchanged."
+  },
+  "unit": {
+    "testsPassed": 8584,
+    "filesPassed": 377,
+    "failed": 0,
+    "skipped": 0,
+    "log": "/tmp/stage16-third-final-unit.log",
+    "sha256": "3d37d6a11762f61b03515113c28bf05a10ff4dae7d6305693d03cc66f827798d"
+  },
+  "newUnitCases": 77,
+  "live": {
+    "fullMatrix": {
+      "testsPassed": 201,
+      "filesPassed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/tmp/stage16-third-final-full-live.log",
+      "sha256": "9830b1c7598184b60661bb7233163a37b66afba1feed0b95f0e07de2ef78b34d"
+    },
+    "providers": [
+      "openai",
+      "anthropic",
+      "google"
+    ],
+    "nativeCases": 11,
+    "newLiveCases": 2,
+    "suiteEvidence": [
+      {
+        "path": "/tmp/stage16-third-final-full-live-assembly.json",
+        "observations": 39,
+        "sha256": "a280d7ef8b3ac1a18eaea7d3144e90146f05439b9730a3ca6228c444e401191f"
+      },
+      {
+        "path": "/tmp/stage16-third-final-full-live-baseline.json",
+        "observations": 24,
+        "sha256": "1104f334db76713434f4f496a2a3f4eca7fae42758452179bbb5b23822b9b9f9"
+      },
+      {
+        "path": "/tmp/stage16-third-final-full-live-context.json",
+        "observations": 16,
+        "sha256": "7cf4274f84bfbfed3495b00d67805bcec3273998b41d315e35edbbf442a1c6ea"
+      },
+      {
+        "path": "/tmp/stage16-third-final-full-live-evidence.json",
+        "observations": 18,
+        "sha256": "73767546543fb0f4a4e18b6ce0b944f4876270fe2e66b2880938ac5f6b509ffa"
+      },
+      {
+        "path": "/tmp/stage16-third-final-full-live-loop.json",
+        "observations": 18,
+        "sha256": "25591baa70e6988f4f08e37652d2baaa59581cbed3cdf7b7764af91663db1a9a"
+      },
+      {
+        "path": "/tmp/stage16-third-final-full-live-models.json",
+        "observations": 14,
+        "sha256": "dee57db2784c267f20a5f934c9ca411f99d266faedecf2ec5fe8e49d987dfeef"
+      },
+      {
+        "path": "/tmp/stage16-third-final-full-live-native.json",
+        "observations": 11,
+        "sha256": "bc1159ec2b2a8616635b7f20870b4028d7b11df0ac2cb4e11a3896f1de82776a"
+      },
+      {
+        "path": "/tmp/stage16-third-final-full-live-presets.json",
+        "observations": 12,
+        "sha256": "1e7a89e0a6fb017f7ad3a7c3d8a7c29212e757c7faf9007d8508b963d3e68117"
+      },
+      {
+        "path": "/tmp/stage16-third-final-full-live-session.json",
+        "observations": 3,
+        "sha256": "f1d312debb3349c8756a84ddfb4841a21c60d400602d63968ef58858dcfcc8a9"
+      },
+      {
+        "path": "/tmp/stage16-third-final-full-live-strategies.json",
+        "observations": 40,
+        "sha256": "748b036684f79dc891ddf26ee17b7ad5744bd3657cf327a1c5805c3b31ba745d"
+      },
+      {
+        "path": "/tmp/stage16-third-final-full-live-task.json",
+        "observations": 12,
+        "sha256": "05c12975e2fd410296d9d2ac03473514004041e539aded2ec69671db9ea3d6d5"
+      },
+      {
+        "path": "/tmp/stage16-third-final-full-live-tools.json",
+        "observations": 6,
+        "sha256": "21d13159045753c25742a0bdbac14a9fba314c36aa23f7940bebdc41ca73ddcb"
+      }
+    ],
+    "nativeResults": [
+      {
+        "kind": "compact-and-run",
+        "provider": "openai",
+        "model": "gpt-6-astra",
+        "report": {
+          "status": "compacted",
+          "trigger": "manual",
+          "inputTokensBefore": 8742,
+          "inputTokensAfter": 911,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "ff332da8-656b-4f8a-9033-5d86470bd549",
+                "sha256": "9074bc8e6fd3fdf919b35944f67a1548c0d1290d363983178a7d35cde8c02cf1",
+                "bytes": 62489,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "a34db4f5-8cd8-4f00-b830-d157c0109fad",
+            "provider": "openai"
+          }
+        },
+        "countedFrames": [
+          8742,
+          8742,
+          911,
+          928,
+          928
+        ],
+        "canonicalShape": [
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "compaction"
+          }
+        ],
+        "output": "Project code: **ORBIT_16A**  \nConfirmed limit: **37**",
+        "usage": {
+          "id": "d2b86cac-7125-4f1c-98d6-e8aa4f43f2f4",
+          "limits": {
+            "maxCalls": 8,
+            "deadline": 1792679235589
+          },
+          "invocations": [
+            {
+              "id": "a34db4f5-8cd8-4f00-b830-d157c0109fad",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 8559,
+                "output_tokens": 327,
+                "total_tokens": 8886,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "modelCostUSD": 0.10194,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "71e41dc3-d53e-4a93-9c66-a9d49459d391",
+              "parentInvocationId": "d2b86cac-7125-4f1c-98d6-e8aa4f43f2f4",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 928,
+                "output_tokens": 21,
+                "total_tokens": 949,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.01033,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "095151a9-da4c-4b68-a30c-9b2c31d93fdd",
+              "invocationId": "a34db4f5-8cd8-4f00-b830-d157c0109fad",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 8886,
+              "reservedCostUSD": 0.477,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "b0b4b688-b85a-45ac-88df-e17911bf75a0",
+              "invocationId": "71e41dc3-d53e-4a93-9c66-a9d49459d391",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 949,
+              "reservedCostUSD": 0.04955,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 9487,
+            "outputTokens": 348,
+            "totalTokens": 9835,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.11227000000000001,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 9835,
+            "chargedCostUSD": 0.52655
+          }
+        }
+      },
+      {
+        "kind": "compact-and-run",
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-6",
+        "report": {
+          "status": "compacted",
+          "trigger": "manual",
+          "inputTokensBefore": 10986,
+          "inputTokensAfter": 1505,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "07d44266-5b35-4030-8c81-8185287a65ca",
+                "sha256": "31500e67cc6a6bc4504af53f7c0f88680769a208f1d5d65f2cc162951dd34c99",
+                "bytes": 62489,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "a34a2017-89a3-4449-95d4-87543ecc905e",
+            "provider": "anthropic"
+          }
+        },
+        "countedFrames": [
+          10986,
+          10986,
+          1505,
+          1519,
+          1519,
+          1744,
+          1744,
+          3471,
+          3471
+        ],
+        "canonicalShape": [
+          {
+            "type": "compaction"
+          }
+        ],
+        "output": "Based on the verified evidence record from the stored conversation context, here are the confirmed values:\n\n- **Project Code:** ORBIT_16A\n- **Confirmed Limit:** 37\n\nThese were sourced directly from the evidence record (ID: `07d44266-5b35-4030-8c81-8185287a65ca`), which contains the original user message: *\"Archive step 0. Project code is ORBIT_16A. The confirmed limit is 37.\"*",
+        "usage": {
+          "id": "cde7733f-cbce-42c9-9daf-b756d2a234b6",
+          "limits": {
+            "maxCalls": 8,
+            "deadline": 1792679252079
+          },
+          "invocations": [
+            {
+              "id": "a34a2017-89a3-4449-95d4-87543ecc905e",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 11100,
+                "output_tokens": 477,
+                "total_tokens": 11577,
+                "cache_creation_details": {
+                  "short_ttl_input_tokens": 0,
+                  "extended_ttl_input_tokens": 0
+                },
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.040455000000000005,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "60c17e27-24f3-48ee-b9d4-d7c7dff14553",
+              "parentInvocationId": "cde7733f-cbce-42c9-9daf-b756d2a234b6",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 1519,
+                "output_tokens": 91,
+                "total_tokens": 1610,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.005922,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "1ce05162-0f9c-438d-8d9f-6004d772496a",
+              "parentInvocationId": "cde7733f-cbce-42c9-9daf-b756d2a234b6",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 1744,
+                "output_tokens": 74,
+                "total_tokens": 1818,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.006342,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "3cb91247-adf6-4838-be8a-bfb5651f5788",
+              "parentInvocationId": "cde7733f-cbce-42c9-9daf-b756d2a234b6",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 3471,
+                "output_tokens": 111,
+                "total_tokens": 3582,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.012078,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "4f022c05-18fa-48e7-b882-d4a78e982340",
+              "invocationId": "a34a2017-89a3-4449-95d4-87543ecc905e",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 11577,
+              "reservedCostUSD": 0.073755,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "42c90cb2-eb03-4622-a028-96421a66cfc6",
+              "invocationId": "60c17e27-24f3-48ee-b9d4-d7c7dff14553",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 1610,
+              "reservedCostUSD": 0.010479,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "02419016-38c8-420f-82df-c493ce14195d",
+              "invocationId": "1ce05162-0f9c-438d-8d9f-6004d772496a",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 1818,
+              "reservedCostUSD": 0.011574,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "bfb47375-2505-4d64-8139-6a61207a6565",
+              "invocationId": "3cb91247-adf6-4838-be8a-bfb5651f5788",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 3582,
+              "reservedCostUSD": 0.022491,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 4,
+            "inputTokens": 17834,
+            "outputTokens": 753,
+            "totalTokens": 18587,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.06479700000000001,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 18587,
+            "chargedCostUSD": 0.118299
+          }
+        }
+      },
+      {
+        "kind": "repeated-native-restart-stream",
+        "provider": "openai",
+        "exitCode": 0,
+        "stdout": "{\"level\":\"warn\",\"time\":1792679136983,\"component\":\"Agent\",\"agentName\":\"agent-1792679136883\",\"model\":\"gpt-6-astra\",\"connector\":\"native-recovery\",\"sessionId\":\"native-demo\",\"msg\":\"Session not found\"}\n{\"level\":\"info\",\"time\":1792679160515,\"component\":\"Agent\",\"agentName\":\"agent-1792679160344\",\"model\":\"gpt-6-astra\",\"connector\":\"native-recovery\",\"sessionId\":\"native-demo\",\"msg\":\"Session loaded\"}\n{\"level\":\"info\",\"time\":1792679160518,\"component\":\"Agent\",\"agentName\":\"agent-1792679160344\",\"model\":\"gpt-6-astra\",\"connector\":\"native-recovery\",\"inputPreview\":\"Give the project code ORBIT_16A and its confirmed limit from the saved context. Reply with both only\",\"toolCount\":0,\"msg\":\"Agent stream started\"}\n[Agent] [Context] iteration=1 tokens: 2346/1050000 (0.2%) tools=354 conversation=1755 system=204 input=33 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20\n{\"level\":\"info\",\"time\":1792679165855,\"component\":\"Agent\",\"agentName\":\"agent-1792679160344\",\"model\":\"gpt-6-astra\",\"connector\":\"native-recovery\",\"duration\":5337,\"msg\":\"Agent stream completed\"}\nChild: native resume, cross-model rejection and trusted pre-native recovery pass; no action replay.\n",
+        "stderr": ""
+      },
+      {
+        "kind": "repeated-native-restart-stream",
+        "provider": "anthropic",
+        "exitCode": 0,
+        "stdout": "{\"level\":\"warn\",\"time\":1792679173047,\"component\":\"Agent\",\"agentName\":\"agent-1792679173029\",\"model\":\"claude-sonnet-4-6\",\"connector\":\"native-recovery\",\"sessionId\":\"native-demo\",\"msg\":\"Session not found\"}\n{\"level\":\"info\",\"time\":1792679211180,\"component\":\"Agent\",\"agentName\":\"agent-1792679211146\",\"model\":\"claude-sonnet-4-6\",\"connector\":\"native-recovery\",\"sessionId\":\"native-demo\",\"msg\":\"Session loaded\"}\n{\"level\":\"info\",\"time\":1792679211184,\"component\":\"Agent\",\"agentName\":\"agent-1792679211146\",\"model\":\"claude-sonnet-4-6\",\"connector\":\"native-recovery\",\"inputPreview\":\"Give the project code ORBIT_16A and its confirmed limit from the saved context. Reply with both only\",\"toolCount\":0,\"msg\":\"Agent stream started\"}\n[Agent] [Context] iteration=1 tokens: 2778/1000000 (0.3%) tools=354 conversation=2187 system=204 input=33 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20\n[Agent] [Context] iteration=2 tokens: 2991/1000000 (0.3%) tools=354 conversation=2251 system=204 input=182 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20\n[Agent] [Context] iteration=3 tokens: 7979/1000000 (0.8%) tools=354 conversation=2497 system=204 input=4924 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20\n{\"level\":\"info\",\"time\":1792679218578,\"component\":\"Agent\",\"agentName\":\"agent-1792679211146\",\"model\":\"claude-sonnet-4-6\",\"connector\":\"native-recovery\",\"duration\":7394,\"msg\":\"Agent stream completed\"}\nChild: native resume, cross-model rejection and trusted pre-native recovery pass; no action replay.\n",
+        "stderr": ""
+      },
+      {
+        "kind": "automatic-native-with-selection",
+        "provider": "openai",
+        "collections": 2,
+        "report": {
+          "status": "compacted",
+          "trigger": "pre-call",
+          "inputTokensBefore": 8679,
+          "inputTokensAfter": 931,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "53e33bf2-e11d-4f99-ab9c-9abd1a3f6aad",
+                "sha256": "1705320132e68f018a46d71108870eeca7e7a5b04daf118cb093c496d7c05cf5",
+                "bytes": 61873,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "ba27eba8-d6d4-43ed-846b-d1ead05ec7b9",
+            "provider": "openai"
+          }
+        },
+        "output": "Project code: ORBIT_16A  \nConfirmed limit: 37  \nCurrent host source identifier: CURRENT_SOURCE_16A",
+        "usage": {
+          "id": "1635538a-9ddc-45a0-9094-cea3c85876ba",
+          "limits": {
+            "maxCalls": 8,
+            "deadline": 1792679372115
+          },
+          "invocations": [
+            {
+              "id": "ba27eba8-d6d4-43ed-846b-d1ead05ec7b9",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-selection-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 8434,
+                "output_tokens": 298,
+                "total_tokens": 8732,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "modelCostUSD": 0.09924,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "143d9ee7-0345-4213-bc6e-e86548a19031",
+              "parentInvocationId": "1635538a-9ddc-45a0-9094-cea3c85876ba",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-selection-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 931,
+                "output_tokens": 29,
+                "total_tokens": 960,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.010759999999999999,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "bc36dd28-2a08-4ec3-9cc7-f7398862000c",
+              "invocationId": "ba27eba8-d6d4-43ed-846b-d1ead05ec7b9",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 8732,
+              "reservedCostUSD": 0.4664,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "291637c6-88ba-4b54-ae45-57610db2080a",
+              "invocationId": "143d9ee7-0345-4213-bc6e-e86548a19031",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 960,
+              "reservedCostUSD": 0.0509,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 9365,
+            "outputTokens": 327,
+            "totalTokens": 9692,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.10999999999999999,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 9692,
+            "chargedCostUSD": 0.5173
+          }
+        }
+      },
+      {
+        "kind": "automatic-native-with-selection",
+        "provider": "anthropic",
+        "collections": 2,
+        "report": {
+          "status": "compacted",
+          "trigger": "pre-call",
+          "inputTokensBefore": 10927,
+          "inputTokensAfter": 1498,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "6ec3b106-074c-4908-9cd2-8856e3a6fbf1",
+                "sha256": "58b5f0c994f2d415175b8d851dcdcb878ed0455b2a145dbfe8456fba0a5c4f4d",
+                "bytes": 61873,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "6115b03d-5615-4f84-b47f-4b1bb1dac6b1",
+            "provider": "anthropic"
+          }
+        },
+        "output": "Based on the context provided:\n\n- **Project code:** ORBIT_16A\n- **Confirmed limit:** 37\n- **Current host source identifier:** CURRENT_SOURCE_16A",
+        "usage": {
+          "id": "c66ff3e8-9706-4edf-bcec-7f29f9779f84",
+          "limits": {
+            "maxCalls": 8,
+            "deadline": 1792679389336
+          },
+          "invocations": [
+            {
+              "id": "6115b03d-5615-4f84-b47f-4b1bb1dac6b1",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-selection-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 10977,
+                "output_tokens": 334,
+                "total_tokens": 11311,
+                "cache_creation_details": {
+                  "short_ttl_input_tokens": 0,
+                  "extended_ttl_input_tokens": 0
+                },
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.037941,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "a27219e9-c6ad-4313-b0e1-bacb632d3d0e",
+              "parentInvocationId": "c66ff3e8-9706-4edf-bcec-7f29f9779f84",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-selection-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 1498,
+                "output_tokens": 44,
+                "total_tokens": 1542,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.005154,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "c35b338a-c290-45ed-a8c5-906f5e3cba90",
+              "invocationId": "6115b03d-5615-4f84-b47f-4b1bb1dac6b1",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 11311,
+              "reservedCostUSD": 0.070872,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "80dd477b-34b9-48ec-80b0-7715761d2409",
+              "invocationId": "a27219e9-c6ad-4313-b0e1-bacb632d3d0e",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 1542,
+              "reservedCostUSD": 0.009648,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 12475,
+            "outputTokens": 378,
+            "totalTokens": 12853,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.043095,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 12853,
+            "chargedCostUSD": 0.08052000000000001
+          }
+        }
+      },
+      {
+        "kind": "hook-memory-proof-cancellation-recovery",
+        "provider": "openai",
+        "hooks": 1,
+        "initialCollections": 3,
+        "report": {
+          "status": "compacted",
+          "trigger": "pre-call",
+          "inputTokensBefore": 9458,
+          "inputTokensAfter": 1726,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "f6984f60-4bce-4d74-b387-d66ba852a449",
+                "sha256": "292ed581257ee75c92282e8ab259415ce584797c3177f58075b63b72a6f3b13f",
+                "bytes": 61873,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "37446ae2-3abe-4c42-84f7-a6ed2fdb1cfa",
+            "provider": "openai"
+          }
+        },
+        "output": "- Project code: `ORBIT_16A`\n- Confirmed limit: `37`\n- Preserved host note: `HOOK_SOURCE_37`\n- Current host source: `CURRENT_SOURCE_16A`",
+        "recoveredOutput": "- Project code: `ORBIT_16A`\n- Confirmed limit: `37`\n- Preserved host note: `HOOK_SOURCE_37`\n- Current host source: `CURRENT_SOURCE_16A`",
+        "cancelledUsage": {
+          "id": "d27aab36-11c9-44fd-86b8-95746ad45977",
+          "limits": {
+            "maxCalls": 0,
+            "deadline": 1792679402020
+          },
+          "invocations": [],
+          "attempts": [],
+          "totals": {
+            "calls": 0,
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "totalTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 0,
+            "chargedCostUSD": 0
+          }
+        },
+        "usage": {
+          "id": "3c7860f5-fa39-4ae1-a4cf-cd430971cbed",
+          "limits": {
+            "maxCalls": 8,
+            "deadline": 1792679402020
+          },
+          "invocations": [
+            {
+              "id": "37446ae2-3abe-4c42-84f7-a6ed2fdb1cfa",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-hook-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 8825,
+                "output_tokens": 314,
+                "total_tokens": 9139,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "modelCostUSD": 0.10394999999999999,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "3640517c-7988-4c30-9ef5-06e2b3f7f351",
+              "parentInvocationId": "3c7860f5-fa39-4ae1-a4cf-cd430971cbed",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-hook-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 1726,
+                "output_tokens": 47,
+                "total_tokens": 1773,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.019610000000000002,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "d8285af7-9a80-40c5-8de3-816d2b168d5a",
+              "parentInvocationId": "3c7860f5-fa39-4ae1-a4cf-cd430971cbed",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-hook-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 1795,
+                "output_tokens": 47,
+                "total_tokens": 1842,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.0203,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "e452f1c3-2dfb-4aca-9eeb-a442099950d6",
+              "invocationId": "37446ae2-3abe-4c42-84f7-a6ed2fdb1cfa",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 9139,
+              "reservedCostUSD": 0.48835,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "76cf851b-4cce-4c2b-88be-d582a314834d",
+              "invocationId": "3640517c-7988-4c30-9ef5-06e2b3f7f351",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 1773,
+              "reservedCostUSD": 0.09335,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "031bf819-45fb-45b2-8355-750f9468481e",
+              "invocationId": "d8285af7-9a80-40c5-8de3-816d2b168d5a",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 1842,
+              "reservedCostUSD": 0.0968,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 3,
+            "inputTokens": 12346,
+            "outputTokens": 408,
+            "totalTokens": 12754,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.14386,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 12754,
+            "chargedCostUSD": 0.6785
+          }
+        }
+      },
+      {
+        "kind": "hook-memory-proof-cancellation-recovery",
+        "provider": "anthropic",
+        "hooks": 1,
+        "initialCollections": 3,
+        "report": {
+          "status": "compacted",
+          "trigger": "pre-call",
+          "inputTokensBefore": 12028,
+          "inputTokensAfter": 2536,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "89c594e6-9e2c-4547-9c83-53cafdd3e587",
+                "sha256": "de4798e76f96d50a36370bd953f22c2ddbd7ebd0ff13878dd14b6a9928b19828",
+                "bytes": 61873,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "febb6bff-edab-475d-afcf-ea351ba7e180",
+            "provider": "anthropic"
+          }
+        },
+        "output": "Here are the requested identifiers:\n\n- **Project code:** ORBIT_16A\n- **Confirmed limit:** 37\n- **Preserved host note:** HOOK_SOURCE_37\n- **Current host source:** CURRENT_SOURCE_16A",
+        "recoveredOutput": "Here are the requested identifiers:\n\n- **Project code:** ORBIT_16A\n- **Confirmed limit:** 37\n- **Preserved host note:** HOOK_SOURCE_37\n- **Current host source:** CURRENT_SOURCE_16A",
+        "cancelledUsage": {
+          "id": "decee994-89d0-49c5-adb5-201a3ae75d21",
+          "limits": {
+            "maxCalls": 0,
+            "deadline": 1792679429743
+          },
+          "invocations": [],
+          "attempts": [],
+          "totals": {
+            "calls": 0,
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "totalTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 0,
+            "chargedCostUSD": 0
+          }
+        },
+        "usage": {
+          "id": "744f2998-28dc-4fd4-9e6a-1e89355f4b4e",
+          "limits": {
+            "maxCalls": 8,
+            "deadline": 1792679429742
+          },
+          "invocations": [
+            {
+              "id": "febb6bff-edab-475d-afcf-ea351ba7e180",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-hook-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 12076,
+                "output_tokens": 271,
+                "total_tokens": 12347,
+                "cache_creation_details": {
+                  "short_ttl_input_tokens": 0,
+                  "extended_ttl_input_tokens": 0
+                },
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.040292999999999995,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "589af1b6-b567-436f-a5d9-e15f8e2c8364",
+              "parentInvocationId": "744f2998-28dc-4fd4-9e6a-1e89355f4b4e",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-hook-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 2536,
+                "output_tokens": 58,
+                "total_tokens": 2594,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.008478,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "2b2b6d25-0f28-4996-bed9-e2a3208db6c5",
+              "parentInvocationId": "744f2998-28dc-4fd4-9e6a-1e89355f4b4e",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-hook-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 2613,
+                "output_tokens": 58,
+                "total_tokens": 2671,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.008708999999999998,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "13f85e89-b27c-4638-aaff-1182e394e39e",
+              "invocationId": "febb6bff-edab-475d-afcf-ea351ba7e180",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 12347,
+              "reservedCostUSD": 0.076521,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "423d64c8-d847-42c2-ab16-c443be265d29",
+              "invocationId": "589af1b6-b567-436f-a5d9-e15f8e2c8364",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 2594,
+              "reservedCostUSD": 0.016086,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "541eef2e-91e6-4472-813a-abac37998ad1",
+              "invocationId": "2b2b6d25-0f28-4996-bed9-e2a3208db6c5",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 2671,
+              "reservedCostUSD": 0.016548,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 3,
+            "inputTokens": 17225,
+            "outputTokens": 387,
+            "totalTokens": 17612,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.05747999999999999,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 17612,
+            "chargedCostUSD": 0.109155
+          }
+        }
+      },
+      {
+        "kind": "oversized-raw-instructions",
+        "provider": "openai",
+        "counts": [
+          18352
+        ],
+        "modelCalls": 0,
+        "expectedFailure": "CONTEXT_OVERFLOW"
+      },
+      {
+        "kind": "manual-hook-fixed-thinking",
+        "provider": "openai",
+        "model": "gpt-6-astra",
+        "thinking": {
+          "enabled": false
+        },
+        "report": {
+          "status": "compacted",
+          "trigger": "manual",
+          "inputTokensBefore": 9359,
+          "inputTokensAfter": 1576,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "73fa4e64-9217-4d62-aebb-864b4ad21972",
+                "sha256": "a40ae437c2f4f520e2fae8f71906052123cbcca6f5ef8eaf3591f37c4d27778a",
+                "bytes": 61873,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "84895d8b-b6ca-46b8-8b12-3c766565155b",
+            "provider": "openai"
+          }
+        },
+        "output": "Project code: `ORBIT_16A`\nConfirmed limit: 37\nConfirmed host note: `MANUAL_HOOK_37`",
+        "usage": {
+          "id": "7163b0a9-06a7-45ac-b503-2a0b6b6e7cf1",
+          "limits": {
+            "maxCalls": 4,
+            "deadline": 1792679441886
+          },
+          "invocations": [
+            {
+              "id": "84895d8b-b6ca-46b8-8b12-3c766565155b",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-manual-thinking-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 8786,
+                "output_tokens": 263,
+                "total_tokens": 9049,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "modelCostUSD": 0.10101,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "e08ab145-086a-43aa-b524-edfaca66fed2",
+              "parentInvocationId": "7163b0a9-06a7-45ac-b503-2a0b6b6e7cf1",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-manual-thinking-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 1593,
+                "output_tokens": 32,
+                "total_tokens": 1625,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.01753,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "ab9ec86d-0adc-48cc-b1bc-cbb5c6c69549",
+              "invocationId": "84895d8b-b6ca-46b8-8b12-3c766565155b",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 9049,
+              "reservedCostUSD": 0.47875,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "c3d7a302-8e04-40e8-a2b8-ceb6d5f02a9d",
+              "invocationId": "e08ab145-086a-43aa-b524-edfaca66fed2",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 1625,
+              "reservedCostUSD": 0.08445,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 10379,
+            "outputTokens": 295,
+            "totalTokens": 10674,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.11854,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 10674,
+            "chargedCostUSD": 0.5632
+          }
+        }
+      },
+      {
+        "kind": "manual-hook-fixed-thinking",
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-6",
+        "thinking": {
+          "enabled": true,
+          "mode": "enabled",
+          "budgetTokens": 8192
+        },
+        "report": {
+          "status": "compacted",
+          "trigger": "manual",
+          "inputTokensBefore": 11921,
+          "inputTokensAfter": 2612,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "7fab9f22-ce9f-4658-856c-d77979820e9b",
+                "sha256": "c4707cee42e9a32dc32550f7359d0f1a985f603aafe3794ab5a1200c972d70e2",
+                "bytes": 61873,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "051ad734-0f7b-4c28-a042-151e02380df8",
+            "provider": "anthropic"
+          }
+        },
+        "output": "Here are the requested details, drawn directly from the supplied context:\n\n- **Project Code:** `ORBIT_16A`\n- **Confirmed Limit:** `37`\n- **Exact Confirmed Host Note:** `MANUAL_HOOK_37`",
+        "usage": {
+          "id": "63d5d57a-53f3-4425-991e-3c5c0598e2f7",
+          "limits": {
+            "maxCalls": 4,
+            "deadline": 1792679459441
+          },
+          "invocations": [
+            {
+              "id": "051ad734-0f7b-4c28-a042-151e02380df8",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-manual-thinking-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 12057,
+                "output_tokens": 739,
+                "total_tokens": 12796,
+                "cache_creation_details": {
+                  "short_ttl_input_tokens": 0,
+                  "extended_ttl_input_tokens": 0
+                },
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.047256,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "90a05986-bc0b-4058-9572-469a6f6fafa2",
+              "parentInvocationId": "63d5d57a-53f3-4425-991e-3c5c0598e2f7",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-manual-thinking-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 2626,
+                "output_tokens": 86,
+                "total_tokens": 2712,
+                "output_tokens_details": {
+                  "reasoning_tokens": 24
+                },
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.009167999999999999,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "0eda8b8a-824b-4466-a4a1-916f20d7fec4",
+              "invocationId": "051ad734-0f7b-4c28-a042-151e02380df8",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 12796,
+              "reservedCostUSD": 0.083427,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "0a0fd2b6-7ec8-4e12-a0c3-a28c68b69c28",
+              "invocationId": "90a05986-bc0b-4058-9572-469a6f6fafa2",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 2712,
+              "reservedCostUSD": 0.017046,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 14683,
+            "outputTokens": 825,
+            "totalTokens": 15508,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 24,
+            "knownModelCostUSD": 0.056424,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 15508,
+            "chargedCostUSD": 0.100473
+          }
+        }
+      }
+    ],
+    "finalNativeRevalidation": {
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/tmp/stage16-third-final-native-live.log",
+      "results": [
+        {
+          "kind": "compact-and-run",
+          "provider": "openai",
+          "model": "gpt-6-astra",
+          "report": {
+            "status": "compacted",
+            "trigger": "manual",
+            "inputTokensBefore": 8742,
+            "inputTokensAfter": 921,
+            "accounting": "provider",
+            "checkpointed": false,
+            "plugins": {
+              "status": "skipped",
+              "reason": "disabled",
+              "compacted": []
+            },
+            "history": {
+              "mode": "native",
+              "status": "compacted",
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "0756f029-5c28-46a9-b7e4-f8eb7bd14eec",
+                  "sha256": "bb10e6f36260b917d0b8b090fd6f58db90441ed57336553c140bdd4f36b144e3",
+                  "bytes": 62489,
+                  "durability": "process"
+                }
+              ],
+              "invocationId": "32b3de67-666d-4a9a-8e38-1f1642737045",
+              "provider": "openai"
+            }
+          },
+          "countedFrames": [
+            8742,
+            8742,
+            921,
+            938,
+            938
+          ],
+          "canonicalShape": [
+            {
+              "type": "message",
+              "role": "user"
+            },
+            {
+              "type": "message",
+              "role": "user"
+            },
+            {
+              "type": "message",
+              "role": "user"
+            },
+            {
+              "type": "message",
+              "role": "user"
+            },
+            {
+              "type": "message",
+              "role": "user"
+            },
+            {
+              "type": "message",
+              "role": "user"
+            },
+            {
+              "type": "message",
+              "role": "user"
+            },
+            {
+              "type": "message",
+              "role": "user"
+            },
+            {
+              "type": "compaction"
+            }
+          ],
+          "output": "Project code: ORBIT_16A  \nConfirmed limit: 37",
+          "usage": {
+            "id": "81fd6e52-45c0-4d65-8913-7052878ee822",
+            "limits": {
+              "maxCalls": 8,
+              "deadline": 1792679581543
+            },
+            "invocations": [
+              {
+                "id": "32b3de67-666d-4a9a-8e38-1f1642737045",
+                "purpose": "compactor",
+                "phase": "generation",
+                "connector": "native-live-openai",
+                "model": "gpt-6-astra",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 8559,
+                  "output_tokens": 337,
+                  "total_tokens": 8896,
+                  "cached_input_tokens": 0,
+                  "output_tokens_details": {
+                    "reasoning_tokens": 0
+                  }
+                },
+                "modelCostUSD": 0.10244,
+                "lateSettlement": false,
+                "external": false
+              },
+              {
+                "id": "ea9b56db-bf25-43aa-adea-84a3958f1a22",
+                "parentInvocationId": "81fd6e52-45c0-4d65-8913-7052878ee822",
+                "purpose": "main",
+                "phase": "generation",
+                "connector": "native-live-openai",
+                "model": "gpt-6-astra",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 938,
+                  "output_tokens": 18,
+                  "total_tokens": 956,
+                  "cached_input_tokens": 0,
+                  "output_tokens_details": {
+                    "reasoning_tokens": 0
+                  },
+                  "service_tier": "default"
+                },
+                "modelCostUSD": 0.01028,
+                "lateSettlement": false,
+                "external": false
+              }
+            ],
+            "attempts": [
+              {
+                "id": "d56b4d25-04d7-4c9e-badb-12b02fcd3d76",
+                "invocationId": "32b3de67-666d-4a9a-8e38-1f1642737045",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 8896,
+                "reservedCostUSD": 0.4785,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              },
+              {
+                "id": "5ff0c9c0-a91d-463d-900c-d64e53bab20d",
+                "invocationId": "ea9b56db-bf25-43aa-adea-84a3958f1a22",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 956,
+                "reservedCostUSD": 0.0496,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              }
+            ],
+            "totals": {
+              "calls": 2,
+              "inputTokens": 9497,
+              "outputTokens": 355,
+              "totalTokens": 9852,
+              "cachedInputTokens": 0,
+              "reasoningTokens": 0,
+              "knownModelCostUSD": 0.11272,
+              "unknownUsageInvocations": 0,
+              "unknownCostInvocations": 0,
+              "unknownChargeAttempts": 0,
+              "chargedTokens": 9852,
+              "chargedCostUSD": 0.5281
+            }
+          }
+        },
+        {
+          "kind": "compact-and-run",
+          "provider": "anthropic",
+          "model": "claude-sonnet-4-6",
+          "report": {
+            "status": "compacted",
+            "trigger": "manual",
+            "inputTokensBefore": 10986,
+            "inputTokensAfter": 1434,
+            "accounting": "provider",
+            "checkpointed": false,
+            "plugins": {
+              "status": "skipped",
+              "reason": "disabled",
+              "compacted": []
+            },
+            "history": {
+              "mode": "native",
+              "status": "compacted",
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "c7bf2f21-a8cc-4eb4-845e-45c46e4208ae",
+                  "sha256": "39cf7558ef9e89b2700b8adf4f00e7753c79375708d7454f52eb11bd8b477340",
+                  "bytes": 62489,
+                  "durability": "process"
+                }
+              ],
+              "invocationId": "4a70b42d-ea81-418f-8a0d-f0205cc3b004",
+              "provider": "anthropic"
+            }
+          },
+          "countedFrames": [
+            10986,
+            10986,
+            1434,
+            1448,
+            1448
+          ],
+          "canonicalShape": [
+            {
+              "type": "compaction"
+            }
+          ],
+          "output": "Based on the conversation history summarized in context:\n\n- **Project Code:** ORBIT_16A\n- **Confirmed Limit:** 37 (steps 0 through 36)",
+          "usage": {
+            "id": "03ae946c-41f7-46ef-91e7-9a5580e8443d",
+            "limits": {
+              "maxCalls": 8,
+              "deadline": 1792679604130
+            },
+            "invocations": [
+              {
+                "id": "4a70b42d-ea81-418f-8a0d-f0205cc3b004",
+                "purpose": "compactor",
+                "phase": "generation",
+                "connector": "native-live-anthropic",
+                "model": "claude-sonnet-4-6",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 11100,
+                  "output_tokens": 406,
+                  "total_tokens": 11506,
+                  "cache_creation_details": {
+                    "short_ttl_input_tokens": 0,
+                    "extended_ttl_input_tokens": 0
+                  },
+                  "service_tier": "standard",
+                  "speed": "standard"
+                },
+                "modelCostUSD": 0.03939,
+                "lateSettlement": false,
+                "external": false
+              },
+              {
+                "id": "2d355ab8-765d-4c6b-9780-e4508f641ddb",
+                "parentInvocationId": "03ae946c-41f7-46ef-91e7-9a5580e8443d",
+                "purpose": "main",
+                "phase": "generation",
+                "connector": "native-live-anthropic",
+                "model": "claude-sonnet-4-6",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 1448,
+                  "output_tokens": 44,
+                  "total_tokens": 1492,
+                  "service_tier": "standard",
+                  "speed": "standard"
+                },
+                "modelCostUSD": 0.005004000000000001,
+                "lateSettlement": false,
+                "external": false
+              }
+            ],
+            "attempts": [
+              {
+                "id": "a80bade9-ac25-40fd-9777-5db912f1f227",
+                "invocationId": "4a70b42d-ea81-418f-8a0d-f0205cc3b004",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 11506,
+                "reservedCostUSD": 0.07269,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              },
+              {
+                "id": "2879764b-0609-416b-b3c0-f893d42e1873",
+                "invocationId": "2d355ab8-765d-4c6b-9780-e4508f641ddb",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 1492,
+                "reservedCostUSD": 0.009348,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              }
+            ],
+            "totals": {
+              "calls": 2,
+              "inputTokens": 12548,
+              "outputTokens": 450,
+              "totalTokens": 12998,
+              "cachedInputTokens": 0,
+              "reasoningTokens": 0,
+              "knownModelCostUSD": 0.044394,
+              "unknownUsageInvocations": 0,
+              "unknownCostInvocations": 0,
+              "unknownChargeAttempts": 0,
+              "chargedTokens": 12998,
+              "chargedCostUSD": 0.082038
+            }
+          }
+        },
+        {
+          "kind": "repeated-native-restart-stream",
+          "provider": "openai",
+          "exitCode": 0,
+          "stdout": "{\"level\":\"warn\",\"time\":1792679478443,\"component\":\"Agent\",\"agentName\":\"agent-1792679478390\",\"model\":\"gpt-6-astra\",\"connector\":\"native-recovery\",\"sessionId\":\"native-demo\",\"msg\":\"Session not found\"}\n{\"level\":\"info\",\"time\":1792679503597,\"component\":\"Agent\",\"agentName\":\"agent-1792679503569\",\"model\":\"gpt-6-astra\",\"connector\":\"native-recovery\",\"sessionId\":\"native-demo\",\"msg\":\"Session loaded\"}\n{\"level\":\"info\",\"time\":1792679503599,\"component\":\"Agent\",\"agentName\":\"agent-1792679503569\",\"model\":\"gpt-6-astra\",\"connector\":\"native-recovery\",\"inputPreview\":\"Give the project code ORBIT_16A and its confirmed limit from the saved context. Reply with both only\",\"toolCount\":0,\"msg\":\"Agent stream started\"}\n[Agent] [Context] iteration=1 tokens: 2480/1050000 (0.2%) tools=354 conversation=1889 system=204 input=33 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20\n{\"level\":\"info\",\"time\":1792679507596,\"component\":\"Agent\",\"agentName\":\"agent-1792679503569\",\"model\":\"gpt-6-astra\",\"connector\":\"native-recovery\",\"duration\":3997,\"msg\":\"Agent stream completed\"}\nChild: native resume, cross-model rejection and trusted pre-native recovery pass; no action replay.\n",
+          "stderr": ""
+        },
+        {
+          "kind": "repeated-native-restart-stream",
+          "provider": "anthropic",
+          "exitCode": 0,
+          "stdout": "{\"level\":\"warn\",\"time\":1792679510554,\"component\":\"Agent\",\"agentName\":\"agent-1792679510543\",\"model\":\"claude-sonnet-4-6\",\"connector\":\"native-recovery\",\"sessionId\":\"native-demo\",\"msg\":\"Session not found\"}\n{\"level\":\"info\",\"time\":1792679544221,\"component\":\"Agent\",\"agentName\":\"agent-1792679544209\",\"model\":\"claude-sonnet-4-6\",\"connector\":\"native-recovery\",\"sessionId\":\"native-demo\",\"msg\":\"Session loaded\"}\n{\"level\":\"info\",\"time\":1792679544222,\"component\":\"Agent\",\"agentName\":\"agent-1792679544209\",\"model\":\"claude-sonnet-4-6\",\"connector\":\"native-recovery\",\"inputPreview\":\"Give the project code ORBIT_16A and its confirmed limit from the saved context. Reply with both only\",\"toolCount\":0,\"msg\":\"Agent stream started\"}\n[Agent] [Context] iteration=1 tokens: 2709/1000000 (0.3%) tools=354 conversation=2118 system=204 input=33 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20\n[Agent] [Context] iteration=2 tokens: 2919/1000000 (0.3%) tools=354 conversation=2179 system=204 input=182 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20\n[Agent] [Context] iteration=3 tokens: 7899/1000000 (0.8%) tools=354 conversation=2417 system=204 input=4924 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20\n{\"level\":\"info\",\"time\":1792679551438,\"component\":\"Agent\",\"agentName\":\"agent-1792679544209\",\"model\":\"claude-sonnet-4-6\",\"connector\":\"native-recovery\",\"duration\":7215,\"msg\":\"Agent stream completed\"}\nChild: native resume, cross-model rejection and trusted pre-native recovery pass; no action replay.\n",
+          "stderr": ""
+        },
+        {
+          "kind": "automatic-native-with-selection",
+          "provider": "openai",
+          "collections": 2,
+          "report": {
+            "status": "compacted",
+            "trigger": "pre-call",
+            "inputTokensBefore": 8679,
+            "inputTokensAfter": 973,
+            "accounting": "provider",
+            "checkpointed": false,
+            "plugins": {
+              "status": "skipped",
+              "reason": "disabled",
+              "compacted": []
+            },
+            "history": {
+              "mode": "native",
+              "status": "compacted",
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "2d70b898-8ddb-45da-824f-8f667045d798",
+                  "sha256": "cb2275d5951ee5b14bb8d7f574d714fde1910cb55e45e8dfb0475f606e24d098",
+                  "bytes": 61873,
+                  "durability": "process"
+                }
+              ],
+              "invocationId": "3cba35a1-87ff-4765-afad-dd2b1c887303",
+              "provider": "openai"
+            }
+          },
+          "output": "Project code: ORBIT_16A  \nConfirmed limit: 37  \nCurrent host source identifier: CURRENT_SOURCE_16A",
+          "usage": {
+            "id": "20c47850-94a8-4efe-ab16-728ff170f45f",
+            "limits": {
+              "maxCalls": 8,
+              "deadline": 1792679704258
+            },
+            "invocations": [
+              {
+                "id": "3cba35a1-87ff-4765-afad-dd2b1c887303",
+                "purpose": "compactor",
+                "phase": "generation",
+                "connector": "native-selection-live-openai",
+                "model": "gpt-6-astra",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 8434,
+                  "output_tokens": 340,
+                  "total_tokens": 8774,
+                  "cached_input_tokens": 0,
+                  "output_tokens_details": {
+                    "reasoning_tokens": 0
+                  }
+                },
+                "modelCostUSD": 0.10134,
+                "lateSettlement": false,
+                "external": false
+              },
+              {
+                "id": "48198fe7-2a8d-4202-ba3e-8e0ba35f885f",
+                "parentInvocationId": "20c47850-94a8-4efe-ab16-728ff170f45f",
+                "purpose": "main",
+                "phase": "generation",
+                "connector": "native-selection-live-openai",
+                "model": "gpt-6-astra",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 973,
+                  "output_tokens": 29,
+                  "total_tokens": 1002,
+                  "cached_input_tokens": 0,
+                  "output_tokens_details": {
+                    "reasoning_tokens": 0
+                  },
+                  "service_tier": "default"
+                },
+                "modelCostUSD": 0.01118,
+                "lateSettlement": false,
+                "external": false
+              }
+            ],
+            "attempts": [
+              {
+                "id": "68af474b-f4df-430a-bbe6-4dea9fae15e8",
+                "invocationId": "3cba35a1-87ff-4765-afad-dd2b1c887303",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 8774,
+                "reservedCostUSD": 0.4727,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              },
+              {
+                "id": "fa7c1260-80d7-40d1-94b5-3da7341fe64c",
+                "invocationId": "48198fe7-2a8d-4202-ba3e-8e0ba35f885f",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 1002,
+                "reservedCostUSD": 0.053,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              }
+            ],
+            "totals": {
+              "calls": 2,
+              "inputTokens": 9407,
+              "outputTokens": 369,
+              "totalTokens": 9776,
+              "cachedInputTokens": 0,
+              "reasoningTokens": 0,
+              "knownModelCostUSD": 0.11252,
+              "unknownUsageInvocations": 0,
+              "unknownCostInvocations": 0,
+              "unknownChargeAttempts": 0,
+              "chargedTokens": 9776,
+              "chargedCostUSD": 0.5257000000000001
+            }
+          }
+        },
+        {
+          "kind": "automatic-native-with-selection",
+          "provider": "anthropic",
+          "collections": 2,
+          "report": {
+            "status": "compacted",
+            "trigger": "pre-call",
+            "inputTokensBefore": 10927,
+            "inputTokensAfter": 1596,
+            "accounting": "provider",
+            "checkpointed": false,
+            "plugins": {
+              "status": "skipped",
+              "reason": "disabled",
+              "compacted": []
+            },
+            "history": {
+              "mode": "native",
+              "status": "compacted",
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "b98c3ddb-754c-45d2-8f90-13547455b6ac",
+                  "sha256": "9d8b043cfdb37cf33479f98e2e5c2098a1e1746476847c23053b986193aaa2b4",
+                  "bytes": 61873,
+                  "durability": "process"
+                }
+              ],
+              "invocationId": "173a5d01-6ff2-4a33-986d-ccb118126ec4",
+              "provider": "anthropic"
+            }
+          },
+          "output": "Here are the requested details:\n\n- **Project Code:** ORBIT_16A\n- **Confirmed Limit:** 37\n- **Current Host Source Identifier:** CURRENT_SOURCE_16A",
+          "usage": {
+            "id": "ee35ac00-d52d-42fc-933d-6477eb36d71a",
+            "limits": {
+              "maxCalls": 8,
+              "deadline": 1792679715873
+            },
+            "invocations": [
+              {
+                "id": "173a5d01-6ff2-4a33-986d-ccb118126ec4",
+                "purpose": "compactor",
+                "phase": "generation",
+                "connector": "native-selection-live-anthropic",
+                "model": "claude-sonnet-4-6",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 10977,
+                  "output_tokens": 432,
+                  "total_tokens": 11409,
+                  "cache_creation_details": {
+                    "short_ttl_input_tokens": 0,
+                    "extended_ttl_input_tokens": 0
+                  },
+                  "service_tier": "standard",
+                  "speed": "standard"
+                },
+                "modelCostUSD": 0.039411,
+                "lateSettlement": false,
+                "external": false
+              },
+              {
+                "id": "b48b0d12-2538-4074-be60-8e2e366923ee",
+                "parentInvocationId": "ee35ac00-d52d-42fc-933d-6477eb36d71a",
+                "purpose": "main",
+                "phase": "generation",
+                "connector": "native-selection-live-anthropic",
+                "model": "claude-sonnet-4-6",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 1596,
+                  "output_tokens": 46,
+                  "total_tokens": 1642,
+                  "service_tier": "standard",
+                  "speed": "standard"
+                },
+                "modelCostUSD": 0.005477999999999999,
+                "lateSettlement": false,
+                "external": false
+              }
+            ],
+            "attempts": [
+              {
+                "id": "dbaba40c-cbe9-4c5a-afb3-5d154f38196f",
+                "invocationId": "173a5d01-6ff2-4a33-986d-ccb118126ec4",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 11409,
+                "reservedCostUSD": 0.072342,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              },
+              {
+                "id": "caa74e9b-07ca-4689-a88e-ac85d84f1a95",
+                "invocationId": "b48b0d12-2538-4074-be60-8e2e366923ee",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 1642,
+                "reservedCostUSD": 0.010266,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              }
+            ],
+            "totals": {
+              "calls": 2,
+              "inputTokens": 12573,
+              "outputTokens": 478,
+              "totalTokens": 13051,
+              "cachedInputTokens": 0,
+              "reasoningTokens": 0,
+              "knownModelCostUSD": 0.044889,
+              "unknownUsageInvocations": 0,
+              "unknownCostInvocations": 0,
+              "unknownChargeAttempts": 0,
+              "chargedTokens": 13051,
+              "chargedCostUSD": 0.082608
+            }
+          }
+        },
+        {
+          "kind": "hook-memory-proof-cancellation-recovery",
+          "provider": "openai",
+          "hooks": 1,
+          "initialCollections": 3,
+          "report": {
+            "status": "compacted",
+            "trigger": "pre-call",
+            "inputTokensBefore": 9458,
+            "inputTokensAfter": 1786,
+            "accounting": "provider",
+            "checkpointed": false,
+            "plugins": {
+              "status": "skipped",
+              "reason": "disabled",
+              "compacted": []
+            },
+            "history": {
+              "mode": "native",
+              "status": "compacted",
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "6a63de04-b5f9-4eb6-86fc-c3e8e21c972f",
+                  "sha256": "5595cb966414d004d172f634414a31aaf8a97b9f38f8d313b84fd7170e72f6f4",
+                  "bytes": 61873,
+                  "durability": "process"
+                }
+              ],
+              "invocationId": "e7a702c3-147f-40af-9eff-3fd478333c74",
+              "provider": "openai"
+            }
+          },
+          "output": "- Project code: ORBIT_16A\n- Confirmed limit: 37\n- Preserved host note: HOOK_SOURCE_37\n- Current host source: CURRENT_SOURCE_16A",
+          "recoveredOutput": "- Project code: ORBIT_16A\n- Confirmed limit: 37\n- Preserved host note: HOOK_SOURCE_37\n- Current host source: CURRENT_SOURCE_16A",
+          "cancelledUsage": {
+            "id": "cdee0d2d-309d-4d12-9a2a-345c584ca2cc",
+            "limits": {
+              "maxCalls": 0,
+              "deadline": 1792679731259
+            },
+            "invocations": [],
+            "attempts": [],
+            "totals": {
+              "calls": 0,
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "totalTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningTokens": 0,
+              "knownModelCostUSD": 0,
+              "unknownUsageInvocations": 0,
+              "unknownCostInvocations": 0,
+              "unknownChargeAttempts": 0,
+              "chargedTokens": 0,
+              "chargedCostUSD": 0
+            }
+          },
+          "usage": {
+            "id": "523227da-deaf-4cda-883e-ed3f372219d7",
+            "limits": {
+              "maxCalls": 8,
+              "deadline": 1792679731259
+            },
+            "invocations": [
+              {
+                "id": "e7a702c3-147f-40af-9eff-3fd478333c74",
+                "purpose": "compactor",
+                "phase": "generation",
+                "connector": "native-hook-live-openai",
+                "model": "gpt-6-astra",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 8825,
+                  "output_tokens": 374,
+                  "total_tokens": 9199,
+                  "cached_input_tokens": 0,
+                  "output_tokens_details": {
+                    "reasoning_tokens": 0
+                  }
+                },
+                "modelCostUSD": 0.10694999999999999,
+                "lateSettlement": false,
+                "external": false
+              },
+              {
+                "id": "b9c8379e-ea4e-4c84-a4fa-0618ded41e46",
+                "parentInvocationId": "523227da-deaf-4cda-883e-ed3f372219d7",
+                "purpose": "main",
+                "phase": "generation",
+                "connector": "native-hook-live-openai",
+                "model": "gpt-6-astra",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 1786,
+                  "output_tokens": 44,
+                  "total_tokens": 1830,
+                  "cached_input_tokens": 0,
+                  "output_tokens_details": {
+                    "reasoning_tokens": 0
+                  },
+                  "service_tier": "default"
+                },
+                "modelCostUSD": 0.02006,
+                "lateSettlement": false,
+                "external": false
+              },
+              {
+                "id": "d59d84f0-4e55-464a-bc79-4b7e4c34bea7",
+                "parentInvocationId": "523227da-deaf-4cda-883e-ed3f372219d7",
+                "purpose": "main",
+                "phase": "generation",
+                "connector": "native-hook-live-openai",
+                "model": "gpt-6-astra",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 1852,
+                  "output_tokens": 44,
+                  "total_tokens": 1896,
+                  "cached_input_tokens": 0,
+                  "output_tokens_details": {
+                    "reasoning_tokens": 0
+                  },
+                  "service_tier": "default"
+                },
+                "modelCostUSD": 0.02072,
+                "lateSettlement": false,
+                "external": false
+              }
+            ],
+            "attempts": [
+              {
+                "id": "0ddaeb7b-0fdd-4d94-9d94-b91d78b6520a",
+                "invocationId": "e7a702c3-147f-40af-9eff-3fd478333c74",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 9199,
+                "reservedCostUSD": 0.49735,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              },
+              {
+                "id": "650d30f5-75bb-4161-844f-b1e514c9821b",
+                "invocationId": "b9c8379e-ea4e-4c84-a4fa-0618ded41e46",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 1830,
+                "reservedCostUSD": 0.0959,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              },
+              {
+                "id": "c74ef536-8759-402d-851d-964fac898587",
+                "invocationId": "d59d84f0-4e55-464a-bc79-4b7e4c34bea7",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 1896,
+                "reservedCostUSD": 0.0992,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              }
+            ],
+            "totals": {
+              "calls": 3,
+              "inputTokens": 12463,
+              "outputTokens": 462,
+              "totalTokens": 12925,
+              "cachedInputTokens": 0,
+              "reasoningTokens": 0,
+              "knownModelCostUSD": 0.14772999999999997,
+              "unknownUsageInvocations": 0,
+              "unknownCostInvocations": 0,
+              "unknownChargeAttempts": 0,
+              "chargedTokens": 12925,
+              "chargedCostUSD": 0.69245
+            }
+          }
+        },
+        {
+          "kind": "hook-memory-proof-cancellation-recovery",
+          "provider": "anthropic",
+          "hooks": 1,
+          "initialCollections": 3,
+          "report": {
+            "status": "compacted",
+            "trigger": "pre-call",
+            "inputTokensBefore": 12028,
+            "inputTokensAfter": 2654,
+            "accounting": "provider",
+            "checkpointed": false,
+            "plugins": {
+              "status": "skipped",
+              "reason": "disabled",
+              "compacted": []
+            },
+            "history": {
+              "mode": "native",
+              "status": "compacted",
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "94c404a3-5a0b-4106-b880-e82161373401",
+                  "sha256": "06cfc5a8494eea80120e13e8719a4e7a1a70968ed3a23a5ec9886780d145b16e",
+                  "bytes": 61873,
+                  "durability": "process"
+                }
+              ],
+              "invocationId": "6e803107-a8de-4e57-89b1-3d7fa44508f0",
+              "provider": "anthropic"
+            }
+          },
+          "output": "Here are the requested identifiers:\n\n- **Project code:** ORBIT_16A\n- **Confirmed limit:** 37\n- **Preserved host note:** HOOK_SOURCE_37\n- **Current host source:** CURRENT_SOURCE_16A",
+          "recoveredOutput": "Here are the requested identifiers:\n\n- **Project code:** ORBIT_16A\n- **Confirmed limit:** 37\n- **Preserved host note:** HOOK_SOURCE_37\n- **Current host source:** CURRENT_SOURCE_16A",
+          "cancelledUsage": {
+            "id": "ea2bbf01-d71c-416b-9814-8f5fbf7d0b7e",
+            "limits": {
+              "maxCalls": 0,
+              "deadline": 1792679749128
+            },
+            "invocations": [],
+            "attempts": [],
+            "totals": {
+              "calls": 0,
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "totalTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningTokens": 0,
+              "knownModelCostUSD": 0,
+              "unknownUsageInvocations": 0,
+              "unknownCostInvocations": 0,
+              "unknownChargeAttempts": 0,
+              "chargedTokens": 0,
+              "chargedCostUSD": 0
+            }
+          },
+          "usage": {
+            "id": "3327887e-054c-460c-82bf-08f3ae62b1da",
+            "limits": {
+              "maxCalls": 8,
+              "deadline": 1792679749128
+            },
+            "invocations": [
+              {
+                "id": "6e803107-a8de-4e57-89b1-3d7fa44508f0",
+                "purpose": "compactor",
+                "phase": "generation",
+                "connector": "native-hook-live-anthropic",
+                "model": "claude-sonnet-4-6",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 12076,
+                  "output_tokens": 389,
+                  "total_tokens": 12465,
+                  "cache_creation_details": {
+                    "short_ttl_input_tokens": 0,
+                    "extended_ttl_input_tokens": 0
+                  },
+                  "service_tier": "standard",
+                  "speed": "standard"
+                },
+                "modelCostUSD": 0.042062999999999996,
+                "lateSettlement": false,
+                "external": false
+              },
+              {
+                "id": "fcc460a3-80f0-4504-8469-48daa6ea3f91",
+                "parentInvocationId": "3327887e-054c-460c-82bf-08f3ae62b1da",
+                "purpose": "main",
+                "phase": "generation",
+                "connector": "native-hook-live-anthropic",
+                "model": "claude-sonnet-4-6",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 2654,
+                  "output_tokens": 58,
+                  "total_tokens": 2712,
+                  "service_tier": "standard",
+                  "speed": "standard"
+                },
+                "modelCostUSD": 0.008832,
+                "lateSettlement": false,
+                "external": false
+              },
+              {
+                "id": "c942a2a8-f9f2-474b-88ae-fcef13512403",
+                "parentInvocationId": "3327887e-054c-460c-82bf-08f3ae62b1da",
+                "purpose": "main",
+                "phase": "generation",
+                "connector": "native-hook-live-anthropic",
+                "model": "claude-sonnet-4-6",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 2731,
+                  "output_tokens": 58,
+                  "total_tokens": 2789,
+                  "service_tier": "standard",
+                  "speed": "standard"
+                },
+                "modelCostUSD": 0.009062999999999998,
+                "lateSettlement": false,
+                "external": false
+              }
+            ],
+            "attempts": [
+              {
+                "id": "017c4df1-4b4c-4a02-a9e0-638df7398330",
+                "invocationId": "6e803107-a8de-4e57-89b1-3d7fa44508f0",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 12465,
+                "reservedCostUSD": 0.078291,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              },
+              {
+                "id": "b8d05d9d-b3b2-4e5e-846c-bb927d5fb593",
+                "invocationId": "fcc460a3-80f0-4504-8469-48daa6ea3f91",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 2712,
+                "reservedCostUSD": 0.016794,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              },
+              {
+                "id": "64d7f403-df17-42f7-af1b-e25696673bf1",
+                "invocationId": "c942a2a8-f9f2-474b-88ae-fcef13512403",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 2789,
+                "reservedCostUSD": 0.017256,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              }
+            ],
+            "totals": {
+              "calls": 3,
+              "inputTokens": 17461,
+              "outputTokens": 505,
+              "totalTokens": 17966,
+              "cachedInputTokens": 0,
+              "reasoningTokens": 0,
+              "knownModelCostUSD": 0.059958,
+              "unknownUsageInvocations": 0,
+              "unknownCostInvocations": 0,
+              "unknownChargeAttempts": 0,
+              "chargedTokens": 17966,
+              "chargedCostUSD": 0.112341
+            }
+          }
+        },
+        {
+          "kind": "oversized-raw-instructions",
+          "provider": "openai",
+          "counts": [
+            18352
+          ],
+          "modelCalls": 0,
+          "expectedFailure": "CONTEXT_OVERFLOW"
+        },
+        {
+          "kind": "manual-hook-fixed-thinking",
+          "provider": "openai",
+          "model": "gpt-6-astra",
+          "thinking": {
+            "enabled": false
+          },
+          "report": {
+            "status": "compacted",
+            "trigger": "manual",
+            "inputTokensBefore": 9359,
+            "inputTokensAfter": 1504,
+            "accounting": "provider",
+            "checkpointed": false,
+            "plugins": {
+              "status": "skipped",
+              "reason": "disabled",
+              "compacted": []
+            },
+            "history": {
+              "mode": "native",
+              "status": "compacted",
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "8467ee17-f642-48c9-bf86-38f6de4208d9",
+                  "sha256": "95060d045c1501551ffce86d7566d981d849a9110ec3220339fa031447782284",
+                  "bytes": 61873,
+                  "durability": "process"
+                }
+              ],
+              "invocationId": "3c6b5954-4b8d-4acd-a539-dc7ca59605de",
+              "provider": "openai"
+            }
+          },
+          "output": "Project code: `ORBIT_16A`\nConfirmed limit: `37`\nConfirmed host note: `MANUAL_HOOK_37`",
+          "usage": {
+            "id": "0b7b9b9d-16a5-45a9-b195-03fabde8d4d2",
+            "limits": {
+              "maxCalls": 4,
+              "deadline": 1792679766131
+            },
+            "invocations": [
+              {
+                "id": "3c6b5954-4b8d-4acd-a539-dc7ca59605de",
+                "purpose": "compactor",
+                "phase": "generation",
+                "connector": "native-manual-thinking-openai",
+                "model": "gpt-6-astra",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 8786,
+                  "output_tokens": 191,
+                  "total_tokens": 8977,
+                  "cached_input_tokens": 0,
+                  "output_tokens_details": {
+                    "reasoning_tokens": 0
+                  }
+                },
+                "modelCostUSD": 0.09741000000000001,
+                "lateSettlement": false,
+                "external": false
+              },
+              {
+                "id": "a98e7992-fd48-495c-bf76-f17c4c89ad1c",
+                "parentInvocationId": "0b7b9b9d-16a5-45a9-b195-03fabde8d4d2",
+                "purpose": "main",
+                "phase": "generation",
+                "connector": "native-manual-thinking-openai",
+                "model": "gpt-6-astra",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 1521,
+                  "output_tokens": 32,
+                  "total_tokens": 1553,
+                  "cached_input_tokens": 0,
+                  "output_tokens_details": {
+                    "reasoning_tokens": 0
+                  },
+                  "service_tier": "default"
+                },
+                "modelCostUSD": 0.01681,
+                "lateSettlement": false,
+                "external": false
+              }
+            ],
+            "attempts": [
+              {
+                "id": "78841bf7-91a4-470d-b159-cf6cc198eaf4",
+                "invocationId": "3c6b5954-4b8d-4acd-a539-dc7ca59605de",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 8977,
+                "reservedCostUSD": 0.46795,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              },
+              {
+                "id": "d32cd5b0-bfe4-4241-ae06-994f1c060450",
+                "invocationId": "a98e7992-fd48-495c-bf76-f17c4c89ad1c",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 1553,
+                "reservedCostUSD": 0.08085,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              }
+            ],
+            "totals": {
+              "calls": 2,
+              "inputTokens": 10307,
+              "outputTokens": 223,
+              "totalTokens": 10530,
+              "cachedInputTokens": 0,
+              "reasoningTokens": 0,
+              "knownModelCostUSD": 0.11422000000000002,
+              "unknownUsageInvocations": 0,
+              "unknownCostInvocations": 0,
+              "unknownChargeAttempts": 0,
+              "chargedTokens": 10530,
+              "chargedCostUSD": 0.5488
+            }
+          }
+        },
+        {
+          "kind": "manual-hook-fixed-thinking",
+          "provider": "anthropic",
+          "model": "claude-sonnet-4-6",
+          "thinking": {
+            "enabled": true,
+            "mode": "enabled",
+            "budgetTokens": 8192
+          },
+          "report": {
+            "status": "compacted",
+            "trigger": "manual",
+            "inputTokensBefore": 11921,
+            "inputTokensAfter": 2586,
+            "accounting": "provider",
+            "checkpointed": false,
+            "plugins": {
+              "status": "skipped",
+              "reason": "disabled",
+              "compacted": []
+            },
+            "history": {
+              "mode": "native",
+              "status": "compacted",
+              "sourceReferences": [
+                {
+                  "version": 1,
+                  "id": "65b068c5-536b-493e-ab04-d5f2ade4a7c5",
+                  "sha256": "1768b969ee5b322b1d6e72eb5bd081de9335d017bb23262d90c00818c7321f29",
+                  "bytes": 61873,
+                  "durability": "process"
+                }
+              ],
+              "invocationId": "387e61bc-94ce-4222-9856-d2d8deae5885",
+              "provider": "anthropic"
+            }
+          },
+          "output": "Here are the requested details, drawn directly from context:\n\n- **Project Code:** ORBIT_16A\n- **Confirmed Limit:** 37\n- **Exact Confirmed Host Note:** `MANUAL_HOOK_37`",
+          "usage": {
+            "id": "79ad109a-abcc-4280-af4d-0f62ef64a465",
+            "limits": {
+              "maxCalls": 4,
+              "deadline": 1792679781159
+            },
+            "invocations": [
+              {
+                "id": "387e61bc-94ce-4222-9856-d2d8deae5885",
+                "purpose": "compactor",
+                "phase": "generation",
+                "connector": "native-manual-thinking-anthropic",
+                "model": "claude-sonnet-4-6",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 12057,
+                  "output_tokens": 591,
+                  "total_tokens": 12648,
+                  "cache_creation_details": {
+                    "short_ttl_input_tokens": 0,
+                    "extended_ttl_input_tokens": 0
+                  },
+                  "service_tier": "standard",
+                  "speed": "standard"
+                },
+                "modelCostUSD": 0.04503600000000001,
+                "lateSettlement": false,
+                "external": false
+              },
+              {
+                "id": "1004c799-8353-419b-b5d4-ed13886542ee",
+                "parentInvocationId": "79ad109a-abcc-4280-af4d-0f62ef64a465",
+                "purpose": "main",
+                "phase": "generation",
+                "connector": "native-manual-thinking-anthropic",
+                "model": "claude-sonnet-4-6",
+                "status": "succeeded",
+                "usage": {
+                  "input_tokens": 2600,
+                  "output_tokens": 87,
+                  "total_tokens": 2687,
+                  "output_tokens_details": {
+                    "reasoning_tokens": 30
+                  },
+                  "service_tier": "standard",
+                  "speed": "standard"
+                },
+                "modelCostUSD": 0.009105,
+                "lateSettlement": false,
+                "external": false
+              }
+            ],
+            "attempts": [
+              {
+                "id": "432394c9-bef2-4ea1-bcf5-b00dc33bd088",
+                "invocationId": "387e61bc-94ce-4222-9856-d2d8deae5885",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 12648,
+                "reservedCostUSD": 0.081207,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              },
+              {
+                "id": "a8cdb01f-f6d8-4758-b4d6-0e934b6b6371",
+                "invocationId": "1004c799-8353-419b-b5d4-ed13886542ee",
+                "boundary": "transport",
+                "status": "received",
+                "dispatched": true,
+                "reservedTokens": 2687,
+                "reservedCostUSD": 0.016905,
+                "usageCoveredByInvocation": true,
+                "httpStatus": 200
+              }
+            ],
+            "totals": {
+              "calls": 2,
+              "inputTokens": 14657,
+              "outputTokens": 678,
+              "totalTokens": 15335,
+              "cachedInputTokens": 0,
+              "reasoningTokens": 30,
+              "knownModelCostUSD": 0.05414100000000001,
+              "unknownUsageInvocations": 0,
+              "unknownCostInvocations": 0,
+              "unknownChargeAttempts": 0,
+              "chargedTokens": 15335,
+              "chargedCostUSD": 0.098112
+            }
+          }
+        }
+      ],
+      "reason": "After the final manual scope-preflight refinement and rebuild, reran all 11 affected native cases. Other matrix paths were unchanged by that native-only refinement."
+    }
+  },
+  "build": {
+    "command": "npm run build",
+    "exitCode": 0,
+    "verifiedExports": 24,
+    "log": "/tmp/stage16-third-final-build.log",
+    "sha256": "52660552aafaa6233b4298c3d7e18e6dac1ec58038e34b98ee8871ee53d386d1"
+  },
+  "gates": [
+    {
+      "name": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "seconds": 39.22,
+      "log": "/tmp/stage16-third-final-gate-typecheck.log",
+      "sha256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717"
+    },
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exitCode": 0,
+      "seconds": 29.44,
+      "log": "/tmp/stage16-third-final-gate-lint.log",
+      "sha256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e"
+    },
+    {
+      "name": "examples-check",
+      "command": [
+        "npm",
+        "run",
+        "examples:check"
+      ],
+      "exitCode": 0,
+      "seconds": 43.51,
+      "log": "/tmp/stage16-third-final-gate-examples-check.log",
+      "sha256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8"
+    },
+    {
+      "name": "compat",
+      "command": [
+        "npm",
+        "run",
+        "test:agentic:compat"
+      ],
+      "exitCode": 0,
+      "seconds": 2.46,
+      "log": "/tmp/stage16-third-final-gate-compat.log",
+      "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    {
+      "name": "core-strict",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "/tmp/stage16-strict.json"
+      ],
+      "exitCode": 0,
+      "seconds": 59.68,
+      "log": "/tmp/stage16-third-final-gate-core-strict.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-types",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "apps/amos/tsconfig.json"
+      ],
+      "exitCode": 0,
+      "seconds": 14.53,
+      "log": "/tmp/stage16-third-final-gate-amos-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-strict",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "/tmp/stage16-amos-strict.json"
+      ],
+      "exitCode": 0,
+      "seconds": 18.1,
+      "log": "/tmp/stage16-third-final-gate-amos-strict.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-build",
+      "command": [
+        "npm",
+        "run",
+        "--prefix",
+        "apps/amos",
+        "build"
+      ],
+      "exitCode": 0,
+      "seconds": 20.4,
+      "log": "/tmp/stage16-third-final-gate-amos-build.log",
+      "sha256": "e68b7cbd831eb286fc4968034b3a6e63f97ca144c83332da5162b23064b8c9c5"
+    },
+    {
+      "name": "docs",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/generate-api-docs.ts",
+        "--mode",
+        "public"
+      ],
+      "exitCode": 0,
+      "seconds": 32.89,
+      "log": "/tmp/stage16-third-final-gate-docs.log",
+      "sha256": "30892f65165413044553ade12c65e641e72d28a2191f49514d5aa52e88bf1108"
+    },
+    {
+      "name": "public",
+      "command": [
+        "node",
+        "tests/fixtures/agentic-presets/public-runtime.mjs"
+      ],
+      "exitCode": 0,
+      "seconds": 7.9,
+      "log": "/tmp/stage16-third-final-gate-public.log",
+      "sha256": "e2e5c4d8375b2a25f64d27fde07ce14703d67505dded75150679d8750bb3f1bd"
+    },
+    {
+      "name": "stage05-public",
+      "command": [
+        "node",
+        "tests/fixtures/context-assembly/public-runtime.mjs"
+      ],
+      "exitCode": 0,
+      "seconds": 13.96,
+      "log": "/tmp/stage16-third-final-gate-stage05-public.log",
+      "sha256": "706509c4dfdc1ee58b9b6f13768b370e087a29934194b15797e2eeb2137c5152"
+    },
+    {
+      "name": "native-public",
+      "command": [
+        "node",
+        "tests/fixtures/native-compaction/public-runtime.mjs"
+      ],
+      "exitCode": 0,
+      "seconds": 9.75,
+      "log": "/tmp/stage16-third-final-gate-native-public.log",
+      "sha256": "01891d215be94555be6da7edba1931aa58cdd600a1011ef71f7ff3926095dfb4"
+    },
+    {
+      "name": "focused-coverage",
+      "command": [
+        "npx",
+        "vitest",
+        "run",
+        "tests/unit/core/context-nextgen/NativeCompaction.test.ts",
+        "tests/unit/core/context-nextgen/Stage16Compatibility.test.ts",
+        "tests/unit/providers/NativeCompaction.test.ts",
+        "tests/unit/apps/amos/NativeCompaction.test.ts",
+        "tests/unit/apps/amos/ContextInspection.test.ts",
+        "--coverage",
+        "--coverage.include=src/core/context-nextgen/strategies/ContextCompactionStrategy.ts",
+        "--coverage.include=src/core/context-nextgen/compaction/coordinator.ts",
+        "--coverage.include=src/core/context-nextgen/compaction/fingerprint.ts",
+        "--coverage.include=src/infrastructure/providers/shared/nativeCompaction.ts",
+        "--coverage.include=apps/amos/src/agent/contextInspection.ts",
+        "--coverage.reportsDirectory=/tmp/stage16-third-final-coverage",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile=/tmp/stage16-third-final-focused.json"
+      ],
+      "exitCode": 0,
+      "seconds": 27.3,
+      "log": "/tmp/stage16-third-final-gate-focused-coverage.log",
+      "sha256": "bfcaefbd5a2bddcde557840ad704c98191ac7de82655444fafb45b019ca5816f"
+    }
+  ],
+  "offline": {
+    "count": 34,
+    "scripts": [
+      {
+        "script": "example:agentic-baseline",
+        "command": "node --import tsx examples/agentic-evaluation-baseline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-agentic-baseline.log",
+        "sha256": "8cc6d72eed9ca3031a5ccff3a1490811b6fb2e35655106a6edb01e66a625ed51"
+      },
+      {
+        "script": "example:context-freshness",
+        "command": "node --import tsx examples/context-compaction-freshness.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-context-freshness.log",
+        "sha256": "0532c044ac7655415d6c0c3b8ede1572840c2e17582f8932dd2fbaf13850e49c"
+      },
+      {
+        "script": "example:context-budget",
+        "command": "node --import tsx examples/context-request-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-context-budget.log",
+        "sha256": "eb9c9f561ecc8f8272c67459fb81700c7bce97e9bb2d4a1960254e51eb01045b"
+      },
+      {
+        "script": "example:structured-budget",
+        "command": "node --import tsx examples/structured-output-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-structured-budget.log",
+        "sha256": "36c17c3a3654eafa59a7d3b32c37dc5b7d690f23e8ce35017220b7a74195816e"
+      },
+      {
+        "script": "example:amos-context",
+        "command": "node --import tsx apps/amos/examples/context-budget-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-amos-context.log",
+        "sha256": "89428897af937eb5896c57426365cfef334ceac041ab84cea882ff31f787e2f3"
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": "node --import tsx examples/tool-outcomes-and-cancellation.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-tool-outcomes.log",
+        "sha256": "78d458b06f893c41560f16d7077c0ce2e90193fa107089cd82f704a5ff9a2aeb"
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-amos-tool-outcomes.log",
+        "sha256": "7762bb7100e11d275a19def86d87b561d0790b2ed4d7d3f4c3b85d2b6e5d141d"
+      },
+      {
+        "script": "example:purpose-models",
+        "command": "node --import tsx examples/purpose-specific-models.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-purpose-models.log",
+        "sha256": "9bd2882e8100167c65e75ed6c90460d1a938149d12452741ed0ec0b95cda7934"
+      },
+      {
+        "script": "example:shared-budget",
+        "command": "node --import tsx examples/shared-run-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-shared-budget.log",
+        "sha256": "84261248923a4dbfebf4f3a026da031e926e461662a52766eba4e54c49889f47"
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": "node --import tsx apps/amos/examples/model-helpers-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-amos-helpers.log",
+        "sha256": "48d3da840cfaaa3641d97569c01369c918eeee368ec81460d6506840b5810a1c"
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": "node --import tsx examples/durable-tool-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-durable-evidence.log",
+        "sha256": "8b2dc2c99527683c2b45ce5f66ed57834405c8f8dfc4ce050887a0d9c635b6a8"
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": "node --import tsx examples/evidence-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-evidence-recovery.log",
+        "sha256": "e52ecf83914abf5991c3546b82b72221879aa6d6a8ad4e5171d55547e802e926"
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": "node --import tsx examples/ambiguous-action-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-ambiguous-evidence.log",
+        "sha256": "f49a80bbc66dab0c45d14cc14c426a52b7a0a0fe23dba60d47cb4208facc1acd"
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": "node --import tsx apps/amos/examples/evidence-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-amos-evidence.log",
+        "sha256": "78952f451edc7d52003ef9ea0f7e9374dc72e643672270584f7e44e1501cd6c8"
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": "node --import tsx examples/evidence-stream-interruption.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-evidence-interruption.log",
+        "sha256": "25b8dd4e63a6b15f52a9a643a198b0a764f2b529e817bd2c9bcc350167034d5f"
+      },
+      {
+        "script": "example:context-strategies",
+        "command": "node --import tsx examples/context-strategy-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-context-strategies.log",
+        "sha256": "dc393dcbe5aa92388c723c1cd55d58a889616012b11560cbd250f7152f94ee86"
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-amos-context-strategies.log",
+        "sha256": "79d2bda1696d17f39ed61cb40651c5ef54508b5cfad018bc82b9f8006511fec3"
+      },
+      {
+        "script": "example:task-state",
+        "command": "node --import tsx examples/task-state-workflow.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-task-state.log",
+        "sha256": "e0bdf14e3c0fccfdc5362ba9e48192725c6ccbf2d707934907b33aa96fa166b1"
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": "node --import tsx apps/amos/examples/task-state-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-amos-task-state.log",
+        "sha256": "39c49ecb20c5519393cb9c9a288599d3a3c07c3b59adab91681fd07f3a3eb8dc"
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": "node --import tsx examples/feedback-driven-agent.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-feedback-agent.log",
+        "sha256": "6261ad08884b2e23dcb73e59b31b4c208e47c6b7875ea386fc12b02979d76c92"
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": "node --import tsx examples/run-stream-equivalence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-loop-equivalence.log",
+        "sha256": "e381bb8dccef6b4552107286b21d34fe6abf266985b61c36c2b9dcd52c61d2f4"
+      },
+      {
+        "script": "example:amos-loop",
+        "command": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-amos-loop.log",
+        "sha256": "f2b57868d8d01a32ea4fe1d3a3c7bb2be425139107068216cbf307bec1cc0cbe"
+      },
+      {
+        "script": "example:agentic-presets",
+        "command": "node --import tsx examples/agentic-presets.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-agentic-presets.log",
+        "sha256": "573a1e4fcfbc2ea67f4224b23294a711fce24d8f60f119b480a6a5e4e6069995"
+      },
+      {
+        "script": "example:amos-presets",
+        "command": "node --import tsx apps/amos/examples/presets-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-amos-presets.log",
+        "sha256": "5fa5fd8226efd862b7c4d55de8609656aeb3ff6060de6827ccf32e72835af193"
+      },
+      {
+        "script": "example:context-selection",
+        "command": "node --import tsx examples/context-block-selection.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-context-selection.log",
+        "sha256": "beabf4bde7d27f40bc5efff2a8ce6e197343d7bad77d3b1be8fa5ae82e6ab1cf"
+      },
+      {
+        "script": "example:cache-aware-context",
+        "command": "node --import tsx examples/cache-aware-context.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-cache-aware-context.log",
+        "sha256": "8b328e174372c77ba108de66fdf8db7124bc522efd6f47cbbbde1fe2f6ba7470"
+      },
+      {
+        "script": "example:amos-context-selection",
+        "command": "node --import tsx apps/amos/examples/context-selection-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-amos-context-selection.log",
+        "sha256": "685c06489e6e3fbf2f1b8ef7f254e9099a1e7fc0a3050ced9a46c57225fc35fe"
+      },
+      {
+        "script": "example:context-dispatch-safety",
+        "command": "node --import tsx examples/context-dispatch-safety.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-context-dispatch-safety.log",
+        "sha256": "8aafa44b1443fad499474453eed7c4055a739ceab6cc7ae06f95511f7fac579d"
+      },
+      {
+        "script": "example:native-compaction",
+        "command": "node --import tsx examples/native-context-compaction.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-native-compaction.log",
+        "sha256": "3e96beee65906b630ba61c503053df9f2391e01f23f2c1727f6864291a14fbdd"
+      },
+      {
+        "script": "example:native-recovery",
+        "command": "node --import tsx examples/native-context-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-native-recovery.log",
+        "sha256": "2e741e69f5c5d1a7419ef13484a6157ac39a87e8d5323d86913f1fd6d1af3968"
+      },
+      {
+        "script": "example:native-comparison",
+        "command": "node --import tsx examples/native-context-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-native-comparison.log",
+        "sha256": "4086e06bcf46d08da7c450614553f0b0bb95a39e960eecb327bb5d5b3905defe"
+      },
+      {
+        "script": "example:amos-native-compaction",
+        "command": "node --import tsx apps/amos/examples/native-compaction-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-amos-native-compaction.log",
+        "sha256": "397d413ca27a18809c0740a88e3d5b2ad1959f169df01c829d257551e8c91543"
+      },
+      {
+        "script": "example:native-hooks",
+        "command": "node --import tsx examples/native-context-hooks.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-native-hooks.log",
+        "sha256": "ae12d293973a4016fa96bb17dcc14ae421fe59b0d31a68553bb998424fd746d4"
+      },
+      {
+        "script": "example:native-hooks-manual",
+        "command": "node --import tsx examples/native-context-hooks.ts --manual",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-third-final-offline-native-hooks-manual.log",
+        "sha256": "fe714f5ef862524c8cdc64098dcc5c9f671452998233ea29a6d291266420cc9f"
+      }
+    ]
+  },
+  "publicRuntime": {
+    "public": {
+      "protocol": "stage12-public-v1",
+      "summaries": [
+        {
+          "format": "esm",
+          "checks": 27,
+          "calls": 4
+        },
+        {
+          "format": "cjs",
+          "checks": 27,
+          "calls": 4
+        }
+      ]
+    },
+    "stage05-public": {
+      "protocol": "stage05-public-v1",
+      "results": [
+        {
+          "format": "esm",
+          "checks": 19
+        },
+        {
+          "format": "cjs",
+          "checks": 19
+        }
+      ]
+    },
+    "native-public": {
+      "protocol": "stage-16a-public-runtime-v1",
+      "passed": true,
+      "results": [
+        {
+          "format": "esm",
+          "checks": 33
+        },
+        {
+          "format": "cjs",
+          "checks": 33
+        }
+      ]
+    }
+  },
+  "publicRuntimeChecks": 158,
+  "focusedCoverage": {
+    "testsPassed": 248,
+    "filesPassed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "scope": [
+      "composition coordinator and policy",
+      "native persisted fingerprint helper",
+      "native wire/usage helpers",
+      "AMOS context inspection"
+    ],
+    "limitation": "Narrow focused scope, not whole Agent/context/provider/repository coverage.",
+    "statements": 99.06,
+    "branches": 88.41,
+    "functions": 95.45,
+    "lines": 99.06
+  },
+  "examples": {
+    "updated": "examples/native-context-hooks.ts",
+    "command": "npm run example:native-hooks-manual",
+    "setup": "Build first; offline default needs no keys. -- --live=openai or -- --live=anthropic loads .env and makes bounded billable calls.",
+    "expected": "One hook preserves a critical note during explicit compaction with automatic disabled. Manual live Anthropic uses fixed thinking budget 8192; native and main complete.",
+    "cleanup": "Agent, ModelTask and named connector are destroyed/removed."
+  },
+  "amos": {
+    "newRuntimeSurface": false,
+    "reason": "Existing manual compaction command consumes the corrected lifecycle; no new AMOS configuration or UI is required.",
+    "coverage": "Real AgentRunner/ContextCommand regression preserves the hook note in the manual checkpoint, then continues with unchanged policy. Existing cancellation/recovery and compatibility cases remain passing."
+  },
+  "resolvedValidationIncidents": [
+    {
+      "kind": "Expected red regression phase",
+      "details": "All initial 53 new regression cases failed on the pre-fix runtime. Final provider/core coverage adds matching-provider/custom controls, cap/transport/usage/preflight cases and manual checkpoint/refresh checks."
+    },
+    {
+      "kind": "Test fixture corrections",
+      "details": "Pending input tests now preserve the actual pending packet with the array-input API instead of replacing it with a new string; plugin-count fixtures reflect real reduction rather than forcing constant counts. Strict tool schemas and save mock return types are explicit."
+    },
+    {
+      "kind": "Large native output transport",
+      "details": "A 63000-token fixed-budget control exposed the SDK nonstreaming limit. The adapter now uses internal streaming; all large-cap, usage and cancellation checks pass."
+    },
+    {
+      "kind": "Final ownership preflight refinement",
+      "details": "The shared manual lifecycle preflights evidence ownership before counting or hooks. After this native-only refinement, the final build, full local/unit/offline gates and all 11 affected real native cases were rerun. The 201-case matrix remains separate, with the affected native subset revalidated on final source."
+    }
+  ],
+  "sourceManifest": [
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "sha256": "898d79c5c777d33fb785ab7b28f7f7f01e30513c74223bc993666ed9cad78012"
+    },
+    {
+      "path": "apps/amos/src/agent/contextInspection.ts",
+      "sha256": "b27fcc1d9086907026334abc983784fdc0d51c471070fed417b1e9b7c34ae004"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/ContextCommand.ts",
+      "sha256": "83f7add21661b2b6acad5588a5b25355309d572446526fcae1e90988f344feb8"
+    },
+    {
+      "path": "apps/amos/src/config/types.ts",
+      "sha256": "8675e9cb9440691e53671d9b76ac2aa6b39f4856ddce892d85910257eb1217d6"
+    },
+    {
+      "path": "dist/index.cjs",
+      "sha256": "ebeac9daf80313ea64058a94e7f10f24ca526e8796af64173ce2c8f4dac230d6"
+    },
+    {
+      "path": "dist/index.d.cts",
+      "sha256": "c1016b1b922b4180eb0572ddf32028aa9f4ab4b9511641d0ad6c12007d6be29f"
+    },
+    {
+      "path": "dist/index.d.ts",
+      "sha256": "d27717f4f4ecdde8df53c91ae31149a402b92b298b1418c07a4bdcbcb7a988b4"
+    },
+    {
+      "path": "dist/index.js",
+      "sha256": "8c27dc2ea20e72fabc0a6e36563aa7f118754fd0beac4feb68abf3ebda9307d0"
+    },
+    {
+      "path": "examples/context-strategy-comparison.ts",
+      "sha256": "42d006d4a60504042a63bdf0d706fa209461908b90a90fb493440f4a68dac1ea"
+    },
+    {
+      "path": "examples/native-compaction/fixture.ts",
+      "sha256": "fec33c611ae098bc61718b7de95417f2a37a35b78feaac70b65535eac4835f1d"
+    },
+    {
+      "path": "examples/native-context-compaction.ts",
+      "sha256": "20503d6a6e0d11f7003bba921b7ed5a0d42bc6afe0f1bda17c2ced447975c12f"
+    },
+    {
+      "path": "examples/native-context-comparison.ts",
+      "sha256": "f9f7bb9b6bb6a41187019a56522346bd34d429da4ed9bb974cd39ab4523dddf8"
+    },
+    {
+      "path": "examples/native-context-hooks.ts",
+      "sha256": "92f6c5574721f29b02fd082aea20be61db1dee1e8d7de2044abdd3fb7f77b695"
+    },
+    {
+      "path": "examples/native-context-recovery.ts",
+      "sha256": "6fe00065be0d645d6ac3047a61bf5f15a51ba42dff5eb49483e23f8c5fc29c09"
+    },
+    {
+      "path": "package.json",
+      "sha256": "326aede74dd9209409ea97743e08fba430878bf507bacdf7048e5e17d746e510"
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "e91371bfca761bd973022d9081aecb074a3c8433626c44c9b71ac37915f74c42"
+    },
+    {
+      "path": "src/core/BaseAgent.ts",
+      "sha256": "912244571b18beedafc463b500b3af44c1dd962f31e623fecf8165669726a817"
+    },
+    {
+      "path": "src/core/capabilityInspection.ts",
+      "sha256": "6424d3af0449f184a90b522cdb1ad8e8021edd5d35cb83abae1170528750f56b"
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "d57333286b19ecc9b457b442aea4c278985f911c80194f9d6f21eb88f0fe0d55"
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/coordinator.ts",
+      "sha256": "94ed9e625a626aa1ae9a5874b6e138badf7d55a29d33088c0714735f629ba587"
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/fingerprint.ts",
+      "sha256": "51d76e4ef8df351acc0f1b4a95b1f3611592fb0411745d74f40c211d5f6cb816"
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/types.ts",
+      "sha256": "27ee6e676f75024da1194c68531d003b91083a2c860ecee26e9b00a3899b7846"
+    },
+    {
+      "path": "src/core/context-nextgen/index.ts",
+      "sha256": "a85d30dbbb41c403ec6f454cdb6b17fb5b6013e12a3cb8921c92f701c4dfcfae"
+    },
+    {
+      "path": "src/core/context-nextgen/strategies/ContextCompactionStrategy.ts",
+      "sha256": "01b2b31b391b5a4ec3fc110b5e581c382a48d591c77cf4095551d462b35fc9a6"
+    },
+    {
+      "path": "src/core/context-nextgen/strategies/index.ts",
+      "sha256": "71016b7a33393abfa489da05a8323e5eb64d5723336bca69004c64bec9d910ba"
+    },
+    {
+      "path": "src/core/context-nextgen/types.ts",
+      "sha256": "84239d5a1ee1a22b5f250ba96f2886602a9c1f93d26e0d3b4a92b4c901fe039d"
+    },
+    {
+      "path": "src/core/createProvider.ts",
+      "sha256": "01dd9c048f691a0e7e50849fd85f0b93347f13fbb89e850d0fafd8475f6ea7bd"
+    },
+    {
+      "path": "src/core/index.ts",
+      "sha256": "ec84084a9755c05199932f36d87939eec7c67e4534520585dbba1e9aa0083ade"
+    },
+    {
+      "path": "src/core/model-execution/ModelExecutor.ts",
+      "sha256": "ac4296dab93580ce5f8150d42417e56ae8b2b5a3c83d54b5470ac60b5ba30a5f"
+    },
+    {
+      "path": "src/core/model-execution/ModelTask.ts",
+      "sha256": "5b92b8f36a29b07191723c9dc7dc2aa16f7a834cd3ba09b48dd0df9c2171d604"
+    },
+    {
+      "path": "src/core/presets.ts",
+      "sha256": "9ba4dc558806e704519a5c399d45d7ba004e2dd72bd19258c36f8b82fcfea391"
+    },
+    {
+      "path": "src/domain/entities/Message.ts",
+      "sha256": "ca3000b18fcef618e3868c0473ff7c673e845744a31f1ef5863e7467e4881312"
+    },
+    {
+      "path": "src/domain/interfaces/IAdvancedInference.ts",
+      "sha256": "4f28ce0fbe8598f34a9ad75d61d664d54f7d0955749ba08d610c40ce216b5e21"
+    },
+    {
+      "path": "src/domain/interfaces/IContextStorage.ts",
+      "sha256": "f03bc08223b632461d1b28de3a91a5ef719dd6360a025043b788967ecb94eb26"
+    },
+    {
+      "path": "src/domain/interfaces/INativeContinuation.ts",
+      "sha256": "9da63ada864652efbb70ccc779f45f97b2f0783e34a45fbd4be9afe95a4ede34"
+    },
+    {
+      "path": "src/domain/interfaces/ITextProvider.ts",
+      "sha256": "f772835bd67819be6a213816b3fce257a870f88a38020952f3bc9854374483b3"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "31329d2cae27f0894c39f9dafc0c46e719bda2f9fea7087d9c6a1ffb768815c5"
+    },
+    {
+      "path": "src/infrastructure/providers/anthropic/AnthropicConverter.ts",
+      "sha256": "d4960167c780a117a2a1029341d912113bf492fb80f870f4cac1ec03e5974b57"
+    },
+    {
+      "path": "src/infrastructure/providers/anthropic/AnthropicTextProvider.ts",
+      "sha256": "6034c4ee3192093f8849f520c22ce0d7b336c5145ce59d29fbefcdd6f81a6f0b"
+    },
+    {
+      "path": "src/infrastructure/providers/openai/OpenAIResponsesConverter.ts",
+      "sha256": "866a7721210a4c21ee967782ba41ab5b4351d66ab928be754dd165e82fd8ac20"
+    },
+    {
+      "path": "src/infrastructure/providers/openai/OpenAITextProvider.ts",
+      "sha256": "b5c9c6b28790748de8168d58aa34438fc4bf0e33b5385d4d11c9c9ae4e59116b"
+    },
+    {
+      "path": "src/infrastructure/providers/shared/nativeCompaction.ts",
+      "sha256": "bb0dc9e3d1effa8079d220fb5431d09bc987e6e7f37358bbf848b0be0d0c756f"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "b6a869256dde20801e3faa21f2999b2878384290d87dc5258f41fdda8917258b"
+    },
+    {
+      "path": "src/types/index.ts",
+      "sha256": "ebcefd07dfd6691446109bcc3344d7cc22426e57a474d374ea40d175a24afb50"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage16-consumer.ts",
+      "sha256": "446dee390b8e1ffd41b67018b2e7cba0627cc56c27646a7f2682fba21da30144"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "sha256": "43a4af6bf93985a65987ab91ab6f59c74558c2d7b09e90585ca8e9552b54ae47"
+    },
+    {
+      "path": "tests/fixtures/native-compaction/public-runtime.mjs",
+      "sha256": "2b78d20d079822783ca7410b86de34b3233e7a5f098b420503d3e305a6ec9187"
+    },
+    {
+      "path": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+      "sha256": "bc5d3c1b00880dd250b1c3fab1902ff5e0ebda031c4cda7c3aabae7f710fc829"
+    },
+    {
+      "path": "tests/integration/text/TaskState.live.integration.test.ts",
+      "sha256": "d066ef55fce5bce3df8a35d198233a2e456ee9a0c1e9e2b2fd39e707ef16935f"
+    },
+    {
+      "path": "tests/unit/apps/amos/NativeCompaction.test.ts",
+      "sha256": "4731a6e1d93f4439d3866d48f893f99e9bc6888510924d6c09d544de9389a8df"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/NativeCompaction.test.ts",
+      "sha256": "258da9b6e4fcd52748b83efd6c6861598cc2444815ae20b36549a6755e4d767f"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/Stage16Compatibility.test.ts",
+      "sha256": "b2bff6294137808decd102265f5f89bc6b3c3c829b69757e383d09662e03bac3"
+    },
+    {
+      "path": "tests/unit/providers/NativeCompaction.test.ts",
+      "sha256": "2e3312808e5bf90a4ab9e860f7bbd2eafbc9c7417fc94de3e94cd532fcee3cfd"
+    }
+  ],
+  "knownFailures": [],
+  "remainingRequiredWork": [],
+  "documentation": {
+    "updated": [
+      "README.md",
+      "USER_GUIDE.md",
+      "API_REFERENCE.md (generated)",
+      "AGENTS.md",
+      "CHANGELOG.md",
+      "docs/NATIVE_CONTEXT_COMPACTION.md",
+      "docs/MODEL_TASKS_AND_HELPERS.md",
+      "examples/README.md",
+      "apps/amos/README.md",
+      "docs/VERSION_2_GUIDE.md",
+      "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "docs/designs/STAGE_16A_NATIVE_COMPACTION_API.md",
+      "docs/designs/STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md"
+    ],
+    "checks": {
+      "markdownFiles": 19,
+      "localLinksChecked": 2425,
+      "missingLinks": [],
+      "sourceFingerprintsChecked": 53,
+      "sourceMismatches": []
+    },
+    "internalOnly": [
+      "native output selector",
+      "manual lifecycle target/trigger plumbing",
+      "early binding preflight",
+      "internal native SSE transport"
+    ],
+    "releaseWideWork": "Publication remains a separate unrequested action; no package release asserted."
+  },
+  "packageDryRun": {
+    "command": "npm pack --dry-run --json --ignore-scripts --cache=/tmp/stage16-third-npm-cache",
+    "exitCode": 0,
+    "files": 237,
+    "requiredArtifacts": [
+      "docs/NATIVE_CONTEXT_COMPACTION.md",
+      "docs/designs/STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md",
+      "docs/evaluations/STAGE_16A_THIRD_REVIEW.json",
+      "docs/evaluations/STAGE_16A_THIRD_CORRECTIONS_VALIDATION.json",
+      "docs/evaluations/STAGE_16A_THIRD_CORRECTIONS_OFFLINE.txt",
+      "docs/VERSION_2_GUIDE.md",
+      "examples/native-context-hooks.ts",
+      "API_REFERENCE.md",
+      "README.md"
+    ],
+    "allRequiredPresent": true,
+    "envFilesIncluded": false,
+    "log": "/tmp/stage16-third-final-package.json",
+    "sha256": "d44aedd8656d3fcfa36ef6a63a5b2723c2394b9b246f0fc126f5ccfaec2d3196"
+  },
+  "finalizedAt": "2026-10-22T14:35:33.613998+00:00"
+}

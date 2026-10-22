@@ -374,3 +374,16 @@ before post-cycle consolidation; selected structured suspension formats before
 its session/correlation save. This preserves the admitted frame without weakening
 current host/scope guards. On formatting/storage failure, checkpoint retained
 accepted observations before destruction; never repeat their actions for recovery.
+
+## Optional native history accounting (Stage 16A)
+
+`ContextCompactionStrategy` composes existing plugin reduction with native history
+through the existing strategy-instance field. With native history selected, preparation
+and final transport use provider counts of the whole frame;
+`budget.providerCountedInputTokens` is provenance, not billed usage. Existing component
+estimates remain local and can be large for ciphertext. Fresh selected data, protected
+task state, exact recent history and pending input remain outside replacement.
+At most one native operation runs per preparation; final fit checks never invoke
+another compaction. Inspect `lastPreparation.compactionDetails` and read
+[Native Context Compaction](NATIVE_CONTEXT_COMPACTION.md) for providers, unsupported
+shapes, source protection and failure/recovery. Legacy preparation stays unchanged.

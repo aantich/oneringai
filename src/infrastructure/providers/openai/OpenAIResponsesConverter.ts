@@ -76,6 +76,11 @@ export class OpenAIResponsesConverter {
 
     for (const item of input) {
       if (item.type === 'message') {
+        const native = item.providerMetadata?.nativeCompaction as { protocol?: string; message?: unknown } | undefined;
+        if (native?.protocol === 'openai-responses-compact-v1' && native.message) {
+          items.push(structuredClone(native.message) as ResponsesAPIInputItem);
+          continue;
+        }
         // Convert message item
         let messageContent: any[] = [];
         let messageSegment = 0;

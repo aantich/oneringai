@@ -304,3 +304,15 @@ recovery checks remain enforced. Request capture verifies the thinking setting;
 provider-default reasoning is not assumed disabled by `enabled: false`. This probe
 setting is separate from the held-out comparison configuration and does not change
 production helper defaults or claim general quality/cost benefits.
+
+## Native history and plugin composition (Stage 16A)
+
+Use `new ContextCompactionStrategy({ plugins: 'auto', history: 'native' })` via the
+existing `context.compactionStrategy` instance field for independent reduction
+controls. This is not a new StrategyRegistry name. It can run plugin-only,
+native-only, combined or neither reductions; turning reduction off keeps normal
+plugin features/tools. Native policy can summarize older user and acknowledged
+settled action exchanges, with exact scoped source archival and recent-tail
+protection. It uses the main model/connector, not the configured summary helper.
+Masking/structured-summary and algorithmic retain their existing behavior. Read
+[Native Context Compaction](NATIVE_CONTEXT_COMPACTION.md) before selecting it.

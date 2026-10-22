@@ -1,0 +1,1661 @@
+{
+  "protocol": "stage-16a-validation-v1",
+  "clientDate": "2026-10-22",
+  "recordedAt": "2026-10-22T10:55:58.035031+00:00",
+  "branch": "version2",
+  "baseCommit": "4ab2c8f",
+  "status": "complete on branch; all required local/live/example/public/AMOS gates pass",
+  "packageVersion": "1.2.0",
+  "verifiedPackageRelease": false,
+  "authorization": {
+    "date": "2026-10-22",
+    "scope": "Stage 16A only, approved revision 2 plugin/history composition API",
+    "userInstruction": "proceed with implementation",
+    "breakingChangeApproved": false,
+    "stage16B": "deferred; not authorized"
+  },
+  "breakingChanges": false,
+  "defaultStrategy": "algorithmic",
+  "implementation": [
+    "Additive ContextCompactionStrategy and Agent.compactContext with independent plugin/history controls and per-phase results.",
+    "OpenAI standalone complete canonical-window replay; Anthropic on-demand signed replay and capability discovery.",
+    "Provider-counted whole frames with post-hook and transport/retry freshness guards, faithful scoped source archival and protected recent/pending/task/plugin state.",
+    "Shared ModelTask compactor/main accounting including iteration/cache/pricing metadata, unknown/late usage and decoded unusable responses.",
+    "Optional bound native continuation envelope, legacy session/storage compatibility, separate-process recovery and AMOS commands/configuration."
+  ],
+  "unit": {
+    "testsPassed": 8420,
+    "filesPassed": 377,
+    "failed": 0,
+    "skipped": 0,
+    "logSha256": "cf7239e21734b6d75bfe0e82353a110fd1ce316f0e4b64a84e0dc6f31370d1e3"
+  },
+  "focusedCoverage": {
+    "tests": {
+      "testsPassed": 84,
+      "filesPassed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "logSha256": "fb45bb5a3f2997954ea4e1643df061b376a56cfc5641ac1e7a6a50d0c1146d4c"
+    },
+    "statements": 99.02,
+    "branches": 82.39,
+    "functions": 95.45,
+    "lines": 99.02,
+    "scope": [
+      "composition coordinator",
+      "composition strategy",
+      "native wire/usage helpers",
+      "AMOS context inspection"
+    ]
+  },
+  "gates": [
+    {
+      "name": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/stage16-final-gate-typecheck.log",
+      "sha256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717",
+      "recheckedAfterServiceScopeCorrection": true
+    },
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/stage16-final-gate-lint.log",
+      "sha256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e",
+      "recheckedAfterServiceScopeCorrection": true
+    },
+    {
+      "name": "examples-check",
+      "command": [
+        "npm",
+        "run",
+        "examples:check"
+      ],
+      "exitCode": 0,
+      "seconds": 16.14,
+      "log": "/tmp/stage16-final-gate-examples-check.log",
+      "sha256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8"
+    },
+    {
+      "name": "compat",
+      "command": [
+        "npm",
+        "run",
+        "test:agentic:compat"
+      ],
+      "exitCode": 0,
+      "seconds": 2.49,
+      "log": "/tmp/stage16-final-gate-compat.log",
+      "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    {
+      "name": "core-strict",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "/tmp/stage16-strict.json"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/stage16-final-gate-core-strict.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recheckedAfterServiceScopeCorrection": true
+    },
+    {
+      "name": "amos-types",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "apps/amos/tsconfig.json"
+      ],
+      "exitCode": 0,
+      "seconds": 6.05,
+      "log": "/tmp/stage16-final-gate-amos-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-strict",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "/tmp/stage16-amos-strict.json"
+      ],
+      "exitCode": 0,
+      "seconds": 7.45,
+      "log": "/tmp/stage16-final-gate-amos-strict.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-build",
+      "command": [
+        "npm",
+        "run",
+        "--prefix",
+        "apps/amos",
+        "build"
+      ],
+      "exitCode": 0,
+      "seconds": 9.11,
+      "log": "/tmp/stage16-final-gate-amos-build.log",
+      "sha256": "1dbb1d56929f3ed754f14da9fe875134157dfc30fed214a44a5242b9b657aa9d"
+    },
+    {
+      "name": "docs",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/generate-api-docs.ts",
+        "--mode",
+        "public"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/stage16-final-gate-docs.log",
+      "sha256": "30892f65165413044553ade12c65e641e72d28a2191f49514d5aa52e88bf1108",
+      "recheckedAfterServiceScopeCorrection": true
+    },
+    {
+      "name": "public",
+      "command": [
+        "node",
+        "tests/fixtures/agentic-presets/public-runtime.mjs"
+      ],
+      "exitCode": 0,
+      "seconds": 4.11,
+      "log": "/tmp/stage16-final-gate-public.log",
+      "sha256": "4d01e2dce364ac61305efa97db1dd9a36e69eb72418dd52d9b8d32059fb42571"
+    },
+    {
+      "name": "stage05-public",
+      "command": [
+        "node",
+        "tests/fixtures/context-assembly/public-runtime.mjs"
+      ],
+      "exitCode": 0,
+      "seconds": 7.18,
+      "log": "/tmp/stage16-final-gate-stage05-public.log",
+      "sha256": "9af02ba8b0f878012ab9285755c539c3a5281e404658fb2164ad53b39dedd37d"
+    },
+    {
+      "name": "native-public",
+      "command": [
+        "node",
+        "tests/fixtures/native-compaction/public-runtime.mjs"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/stage16-final-gate-native-public.log",
+      "sha256": "1327bb5017a207953eb0f0231af76b587bdc1d89ef0cc2d23a33b5a7e881308b",
+      "recheckedAfterServiceScopeCorrection": true
+    },
+    {
+      "name": "focused-coverage",
+      "command": [
+        "npx",
+        "vitest",
+        "run",
+        "tests/unit/core/context-nextgen/NativeCompaction.test.ts",
+        "tests/unit/core/context-nextgen/Stage16Compatibility.test.ts",
+        "tests/unit/providers/NativeCompaction.test.ts",
+        "tests/unit/apps/amos/NativeCompaction.test.ts",
+        "tests/unit/apps/amos/ContextInspection.test.ts",
+        "--coverage",
+        "--coverage.include=src/core/context-nextgen/strategies/ContextCompactionStrategy.ts",
+        "--coverage.include=src/core/context-nextgen/compaction/coordinator.ts",
+        "--coverage.include=src/core/context-nextgen/compaction/fingerprint.ts",
+        "--coverage.include=src/infrastructure/providers/shared/nativeCompaction.ts",
+        "--coverage.include=apps/amos/src/agent/contextInspection.ts",
+        "--coverage.reportsDirectory=/tmp/stage16-final-coverage"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/stage16-final-gate-focused-coverage.log",
+      "sha256": "fb45bb5a3f2997954ea4e1643df061b376a56cfc5641ac1e7a6a50d0c1146d4c",
+      "recheckedAfterServiceScopeCorrection": true
+    }
+  ],
+  "build": {
+    "command": "npm run build",
+    "exitCode": 0,
+    "logSha256": "e514d5c4bb21eacd0cfba6da58568d68c69e0b6a24690599e32eb5dba84c44e0",
+    "verifiedExportFiles": 24
+  },
+  "live": {
+    "fullMatrix": {
+      "testsPassed": 194,
+      "filesPassed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "logSha256": "b17f23f2038e195dae7269fad3397a95be0af7e5946bc7400e1f451d7c469736"
+    },
+    "providers": [
+      "openai",
+      "anthropic",
+      "google"
+    ],
+    "suites": [
+      {
+        "path": "tests/integration/text/AgentSessionCorrections.live.integration.test.ts",
+        "testsPassed": 3
+      },
+      {
+        "path": "tests/integration/text/TaskState.live.integration.test.ts",
+        "testsPassed": 12
+      },
+      {
+        "path": "tests/integration/text/ToolOutcomes.live.integration.test.ts",
+        "testsPassed": 6
+      },
+      {
+        "path": "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "testsPassed": 12
+      },
+      {
+        "path": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "testsPassed": 18
+      },
+      {
+        "path": "tests/integration/text/Evidence.live.integration.test.ts",
+        "testsPassed": 18
+      },
+      {
+        "path": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "testsPassed": 14
+      },
+      {
+        "path": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "testsPassed": 16
+      },
+      {
+        "path": "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "testsPassed": 12
+      },
+      {
+        "path": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "testsPassed": 39
+      },
+      {
+        "path": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "testsPassed": 4
+      },
+      {
+        "path": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "testsPassed": 40
+      }
+    ],
+    "nativeRecheck": {
+      "testsPassed": 4,
+      "filesPassed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "logSha256": "f17b9eb4de15be72443d60b6c929e38f9ea698989b754897670d030cbc79e188"
+    },
+    "nativeContracts": [
+      {
+        "kind": "compact-and-run",
+        "provider": "openai",
+        "model": "gpt-6-astra",
+        "report": {
+          "status": "compacted",
+          "trigger": "manual",
+          "inputTokensBefore": 8742,
+          "inputTokensAfter": 946,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "c507a1fd-89be-4277-8d40-b2f7aeae5374",
+                "sha256": "ffc83eba19bf4bd29c8679c59c70f8105ed28ccd7c29c6410d800ca051859c3a",
+                "bytes": 62489,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "ab731a64-71cd-459c-8635-5930defaddca",
+            "provider": "openai"
+          }
+        },
+        "countedFrames": [
+          8742,
+          8742,
+          8742,
+          946,
+          963,
+          963
+        ],
+        "canonicalShape": [
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "compaction"
+          }
+        ],
+        "output": "Project code: ORBIT_16A  \nConfirmed limit: 37",
+        "usage": {
+          "id": "f54c090f-e96d-4d09-ad9d-f8b89a32d504",
+          "limits": {
+            "maxCalls": 8,
+            "deadline": 1792666094228
+          },
+          "invocations": [
+            {
+              "id": "ab731a64-71cd-459c-8635-5930defaddca",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 8559,
+                "output_tokens": 362,
+                "total_tokens": 8921,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "modelCostUSD": 0.10369,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "5cd1b10d-01ce-432b-939a-ecb7020325b5",
+              "parentInvocationId": "f54c090f-e96d-4d09-ad9d-f8b89a32d504",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 963,
+                "output_tokens": 18,
+                "total_tokens": 981,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.01053,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "f3cd817c-b58e-4662-a1c3-ace4bd801be8",
+              "invocationId": "ab731a64-71cd-459c-8635-5930defaddca",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 8921,
+              "reservedCostUSD": 0.48225,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "b6ffd69a-cb35-4e84-be8d-9428b159b3f7",
+              "invocationId": "5cd1b10d-01ce-432b-939a-ecb7020325b5",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 981,
+              "reservedCostUSD": 0.05085,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 9522,
+            "outputTokens": 380,
+            "totalTokens": 9902,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.11422,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 9902,
+            "chargedCostUSD": 0.5331
+          }
+        }
+      },
+      {
+        "kind": "compact-and-run",
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-6",
+        "report": {
+          "status": "compacted",
+          "trigger": "manual",
+          "inputTokensBefore": 10986,
+          "inputTokensAfter": 1441,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "04fd81f5-2a9c-46e2-b94d-f278a11b8a2a",
+                "sha256": "9adfdfe8790e2fadd1a4204d00efc12a114274e3538cf420d582d832e24673ec",
+                "bytes": 62489,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "2f4fd3b0-beb1-48cf-be6d-6fe910e2c79c",
+            "provider": "anthropic"
+          }
+        },
+        "countedFrames": [
+          10986,
+          10986,
+          10986,
+          1441,
+          1455,
+          1455
+        ],
+        "canonicalShape": [
+          {
+            "type": "compaction"
+          }
+        ],
+        "output": "Based on the progress summary from this conversation:\n\n- **Project Code:** ORBIT_16A\n- **Confirmed Limit:** 37",
+        "usage": {
+          "id": "f21771ab-d111-4e44-92dd-b1ba5d7cf05a",
+          "limits": {
+            "maxCalls": 8,
+            "deadline": 1792666107918
+          },
+          "invocations": [
+            {
+              "id": "2f4fd3b0-beb1-48cf-be6d-6fe910e2c79c",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 11100,
+                "output_tokens": 413,
+                "total_tokens": 11513,
+                "cache_creation_details": {
+                  "short_ttl_input_tokens": 0,
+                  "extended_ttl_input_tokens": 0
+                },
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.039495,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "0e07e4f2-67f2-4a73-a387-2f0af9152422",
+              "parentInvocationId": "f21771ab-d111-4e44-92dd-b1ba5d7cf05a",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 1455,
+                "output_tokens": 33,
+                "total_tokens": 1488,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.00486,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "9d8b534f-2393-431d-9b28-6afdf9ead1c8",
+              "invocationId": "2f4fd3b0-beb1-48cf-be6d-6fe910e2c79c",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 11513,
+              "reservedCostUSD": 0.072795,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "f21db7c1-96d6-4670-8f6c-5f7881678a18",
+              "invocationId": "0e07e4f2-67f2-4a73-a387-2f0af9152422",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 1488,
+              "reservedCostUSD": 0.009225,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 12555,
+            "outputTokens": 446,
+            "totalTokens": 13001,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.044355000000000006,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 13001,
+            "chargedCostUSD": 0.08202
+          }
+        }
+      },
+      {
+        "kind": "repeated-native-restart-stream",
+        "provider": "openai",
+        "exitCode": 0,
+        "separateProcessResumeAndStream": true,
+        "repeatedCompaction": true,
+        "crossModelRejected": true,
+        "trustedCheckpointRecovered": true,
+        "noActionReplay": true
+      },
+      {
+        "kind": "repeated-native-restart-stream",
+        "provider": "anthropic",
+        "exitCode": 0,
+        "separateProcessResumeAndStream": true,
+        "repeatedCompaction": true,
+        "crossModelRejected": true,
+        "trustedCheckpointRecovered": true,
+        "noActionReplay": true
+      }
+    ],
+    "fullMatrixLogSha256": "b17f23f2038e195dae7269fad3397a95be0af7e5946bc7400e1f451d7c469736"
+  },
+  "functionalComparison": {
+    "scope": "One fixed held-out synthetic read-only task, identical source/result and host completion predicates. Native uses the main model; structured summary uses a configured helper. Offline results are scripted protocol checks. This pilot does not establish comparative quality, cost, or statistical non-inferiority.",
+    "live": true,
+    "cases": [
+      {
+        "strategy": "algorithmic",
+        "passed": true,
+        "predicate": {
+          "exactAnswer": true,
+          "exactAccount": true,
+          "exactStatus": true,
+          "noWrite": true,
+          "noRepeat": true
+        },
+        "usage": {
+          "id": "caa9132a-37a9-4175-9f19-61bc82ef1ef3",
+          "limits": {
+            "maxCalls": 6,
+            "deadline": 1792663791691
+          },
+          "invocations": [
+            {
+              "id": "8e9de81e-b068-49eb-a2a3-7360f1fb6992",
+              "parentInvocationId": "caa9132a-37a9-4175-9f19-61bc82ef1ef3",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "context-main-95e03e16-8752-4651-8f06-f0c0ae8a529a",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 2215,
+                "output_tokens": 23,
+                "total_tokens": 2238,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.0233,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "dd0bfb9f-c378-4002-8fcb-a50f96086953",
+              "parentInvocationId": "caa9132a-37a9-4175-9f19-61bc82ef1ef3",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "context-main-95e03e16-8752-4651-8f06-f0c0ae8a529a",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 2395,
+                "output_tokens": 34,
+                "total_tokens": 2429,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.02565,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "594e39ad-d8af-4fc3-ad57-29fdb59a6528",
+              "invocationId": "8e9de81e-b068-49eb-a2a3-7360f1fb6992",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 2238,
+              "reservedCostUSD": 0.1142,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "4b53299b-b0e4-4411-b01d-b8cc437de9c4",
+              "invocationId": "dd0bfb9f-c378-4002-8fcb-a50f96086953",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 2429,
+              "reservedCostUSD": 0.12485,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 4610,
+            "outputTokens": 57,
+            "totalTokens": 4667,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.04895,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 4667,
+            "chargedCostUSD": 0.23904999999999998
+          }
+        },
+        "latencyMs": 4767,
+        "sourceReads": 1,
+        "repeatedActions": 0,
+        "nativeCompaction": null
+      },
+      {
+        "strategy": "observation-masking",
+        "passed": true,
+        "predicate": {
+          "exactAnswer": true,
+          "exactAccount": true,
+          "exactStatus": true,
+          "noWrite": true,
+          "noRepeat": true
+        },
+        "usage": {
+          "id": "bc672910-1406-4401-84bd-f87d82d833fc",
+          "limits": {
+            "maxCalls": 6,
+            "deadline": 1792663796463
+          },
+          "invocations": [
+            {
+              "id": "ca65ae4a-e363-4cab-b5b1-36d0da6d33e1",
+              "parentInvocationId": "bc672910-1406-4401-84bd-f87d82d833fc",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "context-main-012c6ed5-8c5c-4fd3-9579-f25b4490f089",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 2268,
+                "output_tokens": 43,
+                "total_tokens": 2311,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.024829999999999998,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "543ac521-39a4-4ac3-8282-05692addfbfb",
+              "parentInvocationId": "bc672910-1406-4401-84bd-f87d82d833fc",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "context-main-012c6ed5-8c5c-4fd3-9579-f25b4490f089",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 2472,
+                "output_tokens": 34,
+                "total_tokens": 2506,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.02642,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "53263be3-d121-469e-a619-a3a165be4480",
+              "invocationId": "ca65ae4a-e363-4cab-b5b1-36d0da6d33e1",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 2311,
+              "reservedCostUSD": 0.11985,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "888f70a6-8ea5-4961-84d2-0ea64960adc5",
+              "invocationId": "543ac521-39a4-4ac3-8282-05692addfbfb",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 2506,
+              "reservedCostUSD": 0.1287,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 4740,
+            "outputTokens": 77,
+            "totalTokens": 4817,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.05125,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 4817,
+            "chargedCostUSD": 0.24855
+          }
+        },
+        "latencyMs": 9318,
+        "sourceReads": 1,
+        "repeatedActions": 0,
+        "nativeCompaction": null
+      },
+      {
+        "strategy": "structured-summary",
+        "passed": true,
+        "predicate": {
+          "exactAnswer": true,
+          "exactAccount": true,
+          "exactStatus": true,
+          "noWrite": true,
+          "noRepeat": true
+        },
+        "usage": {
+          "id": "0935e710-83fa-4700-9cc2-6053c0227da5",
+          "limits": {
+            "maxCalls": 6,
+            "deadline": 1792663805782
+          },
+          "invocations": [
+            {
+              "id": "26cdeb61-9eeb-4e66-bb82-f83c88de4ce2",
+              "parentInvocationId": "0935e710-83fa-4700-9cc2-6053c0227da5",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "context-helper-9dbe6d6b-8c8c-4573-a86c-f91a59a4adc7",
+              "model": "gpt-4o-mini",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 7706,
+                "output_tokens": 142,
+                "total_tokens": 7848,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.0012411,
+              "lateSettlement": false,
+              "external": false,
+              "outputValidation": "passed"
+            },
+            {
+              "id": "2300307c-d267-4c2f-b458-4c4ef61774c2",
+              "parentInvocationId": "0935e710-83fa-4700-9cc2-6053c0227da5",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "context-main-9dbe6d6b-8c8c-4573-a86c-f91a59a4adc7",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 2037,
+                "output_tokens": 41,
+                "total_tokens": 2078,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.022420000000000002,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "641c2fe9-f602-4d77-826e-5bbd59cee1aa",
+              "parentInvocationId": "0935e710-83fa-4700-9cc2-6053c0227da5",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "context-main-9dbe6d6b-8c8c-4573-a86c-f91a59a4adc7",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 2235,
+                "output_tokens": 34,
+                "total_tokens": 2269,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.024050000000000002,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "d9ac04d2-e6ec-4433-8bdb-d513f5e0cf50",
+              "invocationId": "26cdeb61-9eeb-4e66-bb82-f83c88de4ce2",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 7848,
+              "reservedCostUSD": 0.0012411,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "ac4f2069-0ec5-4362-b473-5ad6d170f620",
+              "invocationId": "2300307c-d267-4c2f-b458-4c4ef61774c2",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 2078,
+              "reservedCostUSD": 0.108,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "4b4a2bc7-5cad-4c62-a484-483c49db4539",
+              "invocationId": "641c2fe9-f602-4d77-826e-5bbd59cee1aa",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 2269,
+              "reservedCostUSD": 0.11685,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 3,
+            "inputTokens": 11978,
+            "outputTokens": 217,
+            "totalTokens": 12195,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.047711100000000006,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 12195,
+            "chargedCostUSD": 0.2260911
+          }
+        },
+        "latencyMs": 9476,
+        "sourceReads": 1,
+        "repeatedActions": 0,
+        "nativeCompaction": null
+      },
+      {
+        "strategy": "context-compaction",
+        "passed": true,
+        "predicate": {
+          "exactAnswer": true,
+          "exactAccount": true,
+          "exactStatus": true,
+          "noWrite": true,
+          "noRepeat": true
+        },
+        "usage": {
+          "id": "81147266-891a-439a-a7ad-b57617c08523",
+          "limits": {
+            "maxCalls": 6,
+            "deadline": 1792663815260
+          },
+          "invocations": [
+            {
+              "id": "17f9ea91-e4ae-4028-a43d-dde133d720a3",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "context-main-09a04550-ab75-41e3-b177-027a3449e12c",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 7238,
+                "output_tokens": 276,
+                "total_tokens": 7514,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "modelCostUSD": 0.08618,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "5a45d48c-c232-424b-bf73-8e1c784d984f",
+              "parentInvocationId": "81147266-891a-439a-a7ad-b57617c08523",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "context-main-09a04550-ab75-41e3-b177-027a3449e12c",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 1901,
+                "output_tokens": 34,
+                "total_tokens": 1935,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.02071,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "f8fffad5-d7cf-4c78-8191-2e9ac6a7a6fa",
+              "invocationId": "17f9ea91-e4ae-4028-a43d-dde133d720a3",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 7514,
+              "reservedCostUSD": 0.4033,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "67579c2d-348f-468b-8339-e6fd290496cd",
+              "invocationId": "5a45d48c-c232-424b-bf73-8e1c784d984f",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 1935,
+              "reservedCostUSD": 0.10015,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 9139,
+            "outputTokens": 310,
+            "totalTokens": 9449,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.10689000000000001,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 9449,
+            "chargedCostUSD": 0.50345
+          }
+        },
+        "latencyMs": 13442,
+        "sourceReads": 0,
+        "repeatedActions": 0,
+        "nativeCompaction": {
+          "status": "compacted",
+          "trigger": "pre-call",
+          "inputTokensBefore": 7772,
+          "inputTokensAfter": 1901,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "d54eb12d-588b-4c09-bdff-ac44e889f5f4",
+                "sha256": "8ecad190aaf5034f8cce30dec3c65501ef832b4ddf952aabf5ff4e77ecd83c37",
+                "bytes": 45949,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "17f9ea91-e4ae-4028-a43d-dde133d720a3",
+            "provider": "openai"
+          }
+        }
+      }
+    ],
+    "sourceReportSha256": "d4bbf1a40ab1601b24ac1f771027795950efd4fdd506ed7850ab83dc1e0d18af",
+    "limitations": "One fixed held-out synthetic task per policy. Descriptive known registry cost estimates and latency only; no general ranking, statistical non-inferiority, or cost/quality claim."
+  },
+  "offline": {
+    "count": 32,
+    "scripts": [
+      {
+        "script": "example:agentic-baseline",
+        "command": "node --import tsx examples/agentic-evaluation-baseline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-agentic-baseline.log",
+        "sha256": "769d9793ace969a9ef5000282bb3e729dd80fcf73a1fbd321528ca691cbed856"
+      },
+      {
+        "script": "example:context-freshness",
+        "command": "node --import tsx examples/context-compaction-freshness.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-context-freshness.log",
+        "sha256": "0532c044ac7655415d6c0c3b8ede1572840c2e17582f8932dd2fbaf13850e49c"
+      },
+      {
+        "script": "example:context-budget",
+        "command": "node --import tsx examples/context-request-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-context-budget.log",
+        "sha256": "7e1102faa4638b26bf1bc7e8aba5c586c9b9c17a2e761f95be5a484042e86aa2"
+      },
+      {
+        "script": "example:structured-budget",
+        "command": "node --import tsx examples/structured-output-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-structured-budget.log",
+        "sha256": "80e9e5ca06b2a56e62b178a102077454e20d0d93940c6dbfd2ee7c5fb4902db9"
+      },
+      {
+        "script": "example:amos-context",
+        "command": "node --import tsx apps/amos/examples/context-budget-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-amos-context.log",
+        "sha256": "89428897af937eb5896c57426365cfef334ceac041ab84cea882ff31f787e2f3"
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": "node --import tsx examples/tool-outcomes-and-cancellation.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-tool-outcomes.log",
+        "sha256": "78d458b06f893c41560f16d7077c0ce2e90193fa107089cd82f704a5ff9a2aeb"
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-amos-tool-outcomes.log",
+        "sha256": "7762bb7100e11d275a19def86d87b561d0790b2ed4d7d3f4c3b85d2b6e5d141d"
+      },
+      {
+        "script": "example:purpose-models",
+        "command": "node --import tsx examples/purpose-specific-models.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-purpose-models.log",
+        "sha256": "90ce282e05aa8ee3e05fba27ff3dc40d0f7703c91b6015d764ecdcecdf3c7200"
+      },
+      {
+        "script": "example:shared-budget",
+        "command": "node --import tsx examples/shared-run-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-shared-budget.log",
+        "sha256": "84261248923a4dbfebf4f3a026da031e926e461662a52766eba4e54c49889f47"
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": "node --import tsx apps/amos/examples/model-helpers-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-amos-helpers.log",
+        "sha256": "ea416d272743322d30541a0f9abf41670cc4d6003f0e278b47b35eeaa053a1fa"
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": "node --import tsx examples/durable-tool-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-durable-evidence.log",
+        "sha256": "edfed3d526a85e8ebd0f0c4189898b63f42b9ea291db8e3aa0ce572b3ec5da1d"
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": "node --import tsx examples/evidence-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-evidence-recovery.log",
+        "sha256": "71b1d1b80b1f7eac5798b22765c81b8158ba864cad90f5be77ce677151482ea2"
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": "node --import tsx examples/ambiguous-action-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-ambiguous-evidence.log",
+        "sha256": "f49a80bbc66dab0c45d14cc14c426a52b7a0a0fe23dba60d47cb4208facc1acd"
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": "node --import tsx apps/amos/examples/evidence-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-amos-evidence.log",
+        "sha256": "08e9d416c5bb5f7586292277a226aae1076ad60144f25d3bd301872108faa690"
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": "node --import tsx examples/evidence-stream-interruption.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-evidence-interruption.log",
+        "sha256": "896b41a07a1a812bad4ed3ab2ea3e080f06c1668bc6e2237f1eca99898c25d21"
+      },
+      {
+        "script": "example:context-strategies",
+        "command": "node --import tsx examples/context-strategy-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-context-strategies.log",
+        "sha256": "5b34cb5e340a798dd356a07e0c1dc7801e0e667ec540203c9d08e4ac01df3a96"
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-amos-context-strategies.log",
+        "sha256": "c14169b198bc95ad9a9ede3ceeec8d4aa19072bdebeac935c52e3679b8aedc07"
+      },
+      {
+        "script": "example:task-state",
+        "command": "node --import tsx examples/task-state-workflow.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-task-state.log",
+        "sha256": "2b5c933c426cced38517f047a08cc372e14171a39277cc07eaa021bedaec569d"
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": "node --import tsx apps/amos/examples/task-state-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-amos-task-state.log",
+        "sha256": "1c0c340be267eaff4c2bc981c998d5d585def8ffb6c1f159785f93c7baff3d42"
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": "node --import tsx examples/feedback-driven-agent.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-feedback-agent.log",
+        "sha256": "001f5bbb2d8081f85a0d742ea3cd6b614631e14af74f2548cdb88e636c4ca959"
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": "node --import tsx examples/run-stream-equivalence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-loop-equivalence.log",
+        "sha256": "0d661ec40ae8c53203822056c6f13ced755f3e012f52c18405b8ba6759aa516a"
+      },
+      {
+        "script": "example:amos-loop",
+        "command": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-amos-loop.log",
+        "sha256": "a7453cf1f1bdf608c757c595fcad07c125abe5b7ee088b4c95dd324dffaf850f"
+      },
+      {
+        "script": "example:agentic-presets",
+        "command": "node --import tsx examples/agentic-presets.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-agentic-presets.log",
+        "sha256": "c225988a1e9d888342609aa6ffeec96207d33fbd67eb602ff0c5a00e574bece9"
+      },
+      {
+        "script": "example:amos-presets",
+        "command": "node --import tsx apps/amos/examples/presets-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-amos-presets.log",
+        "sha256": "cf3425e4c81fa89d5b6f44552e5f9883fe086ac6f0f093435dc9bd7a7ae5bb0b"
+      },
+      {
+        "script": "example:context-selection",
+        "command": "node --import tsx examples/context-block-selection.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-context-selection.log",
+        "sha256": "c00d3fd1bdf867b56bee8ca6d35c56c7f95d6bbf7e9e7eaca0227be48168a482"
+      },
+      {
+        "script": "example:cache-aware-context",
+        "command": "node --import tsx examples/cache-aware-context.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-cache-aware-context.log",
+        "sha256": "96f376c2064c11f23a22705170fe5e803d9b1f2e22e0f9460468e492b0f93c52"
+      },
+      {
+        "script": "example:amos-context-selection",
+        "command": "node --import tsx apps/amos/examples/context-selection-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-amos-context-selection.log",
+        "sha256": "cfc2123c577bbe1885fb4d73f30d45a4198a53a8eeac6ccb22a014a13c2164de"
+      },
+      {
+        "script": "example:context-dispatch-safety",
+        "command": "node --import tsx examples/context-dispatch-safety.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-context-dispatch-safety.log",
+        "sha256": "b5894f7b4f5d1e3e1c85ef5754d0cc83130b576dbb2f9ddea4ac7b8167e8e9f5"
+      },
+      {
+        "script": "example:native-compaction",
+        "command": "node --import tsx examples/native-context-compaction.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-native-compaction.log",
+        "sha256": "9a1171a7b4f97009e91fd0c2454a340e6a9d52cc8070fecc8edaf7218589770d"
+      },
+      {
+        "script": "example:native-recovery",
+        "command": "node --import tsx examples/native-context-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-native-recovery.log",
+        "sha256": "d20431b957c38f130bef45492f0d068df813816b39b99de2d89b727ac7b44f70",
+        "recheckedAfterServiceScopeCorrection": true
+      },
+      {
+        "script": "example:native-comparison",
+        "command": "node --import tsx examples/native-context-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-native-comparison.log",
+        "sha256": "1c921b2d5144c6cfbe6fb38d71d0e21fdebdc424f4e645ddd666a8cfb460bfe4"
+      },
+      {
+        "script": "example:amos-native-compaction",
+        "command": "node --import tsx apps/amos/examples/native-compaction-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-final-offline-amos-native-compaction.log",
+        "sha256": "c980a4fe7181c1d9bd4e5407a5b9248aa3f69182f79c549874d5462b0493d8e7"
+      }
+    ]
+  },
+  "publicRuntime": [
+    {
+      "protocol": "stage12-public-v1",
+      "summaries": [
+        {
+          "format": "esm",
+          "checks": 27,
+          "calls": 4
+        },
+        {
+          "format": "cjs",
+          "checks": 27,
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "protocol": "stage05-public-v1",
+      "results": [
+        {
+          "format": "esm",
+          "checks": 19
+        },
+        {
+          "format": "cjs",
+          "checks": 19
+        }
+      ]
+    },
+    {
+      "protocol": "stage-16a-public-runtime-v1",
+      "passed": true,
+      "results": [
+        {
+          "format": "esm",
+          "checks": 33
+        },
+        {
+          "format": "cjs",
+          "checks": 33
+        }
+      ]
+    }
+  ],
+  "review": {
+    "kind": "Whole-diff self-review, compatibility fixtures, wire contracts and fault-injection regression review; no separate agent used.",
+    "fixed": [
+      "Old extension name collision avoided with a symbol capability; ESM/CJS mixed-format policy consumption verified.",
+      "Whole returned canonical windows and signed fields preserved; incomplete returned tool groups rejected before replacement.",
+      "Automatic composition revision advanced only after guarded commit.",
+      "External cancellation reaches source counting/native transport; late output never replaces history while usage can settle.",
+      "Final hook/repair/contributor/task-state guards retain canonical and protected exact state.",
+      "Failed decoded native responses retain acknowledged usage; Anthropic iterations/cache TTL metadata and output reservations are correct.",
+      "Caller-owned unbound contexts resume transactionally; checkpoint errors report already committed state.",
+      "Inspection is provider-I/O-free; AMOS uses provider counts and persists/restores independent settings.",
+      "UTF-8 metadata bound and small provider source capacity validated.",
+      "Persisted native fingerprints canonicalize JSON object keys while preserving arrays and exact signed values.",
+      "Native snapshot binding covers effective SDK environment endpoints and configured OpenAI project/organization identity; changed service scopes reject replay."
+    ],
+    "resolvedValidationIncident": {
+      "kind": "10-second vendor-registry import setup timeout under concurrent unit/type/example jobs; 18 cases did not run in that attempt.",
+      "resolution": "Full suite rerun alone with the existing timeout and no skips; 8420 passed.",
+      "initialLogSha256": "89db129df5e7617257ae35cd6b83042d047496f0a08daf0a5e785e80c387b044"
+    }
+  },
+  "supportBoundaries": [
+    "Managed run/stream text and ordinary local function tools on the verified providers/models.",
+    "Built-in evidence is explicit; restart requires faithful acknowledged persistent evidence/session storage.",
+    "OpenAI compact has no hard output cap; native operations share conservative ModelTask reservations.",
+    "Server-owned/response-ID/in-request automatic/hosted/multimodal/custom-tool/realtime/background variants are deferred.",
+    "Native summary recall is lossy; exact recent/pending/host state and archival remain separate.",
+    "128 source-reference and 64 KiB UTF-8 replay-metadata bounds; storage retention/serialization quotas apply.",
+    "No breaking change, commit, push, release, Stage 16B or additional stage implemented."
+  ],
+  "knownFailures": [],
+  "remainingRequiredWork": [],
+  "sourceManifest": [
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "sha256": "898d79c5c777d33fb785ab7b28f7f7f01e30513c74223bc993666ed9cad78012"
+    },
+    {
+      "path": "apps/amos/src/agent/contextInspection.ts",
+      "sha256": "b27fcc1d9086907026334abc983784fdc0d51c471070fed417b1e9b7c34ae004"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/ContextCommand.ts",
+      "sha256": "83f7add21661b2b6acad5588a5b25355309d572446526fcae1e90988f344feb8"
+    },
+    {
+      "path": "apps/amos/src/config/types.ts",
+      "sha256": "8675e9cb9440691e53671d9b76ac2aa6b39f4856ddce892d85910257eb1217d6"
+    },
+    {
+      "path": "examples/context-strategy-comparison.ts",
+      "sha256": "42d006d4a60504042a63bdf0d706fa209461908b90a90fb493440f4a68dac1ea"
+    },
+    {
+      "path": "examples/native-compaction/fixture.ts",
+      "sha256": "fec33c611ae098bc61718b7de95417f2a37a35b78feaac70b65535eac4835f1d"
+    },
+    {
+      "path": "examples/native-context-compaction.ts",
+      "sha256": "826dffe7e5d6cb3ba4ec3f00c2e7ca69e33cfe8b9d0b09109a8cccc21f44e5a8"
+    },
+    {
+      "path": "examples/native-context-comparison.ts",
+      "sha256": "f9f7bb9b6bb6a41187019a56522346bd34d429da4ed9bb974cd39ab4523dddf8"
+    },
+    {
+      "path": "examples/native-context-recovery.ts",
+      "sha256": "6fe00065be0d645d6ac3047a61bf5f15a51ba42dff5eb49483e23f8c5fc29c09"
+    },
+    {
+      "path": "package.json",
+      "sha256": "c825a42ad71406863d8a2c7d7d147d3581aad5b1634b5e91777183890a3d38bc"
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "4fb57c85b6d869c925445b384485f4674313f468606d9b090e206c01de233a38"
+    },
+    {
+      "path": "src/core/BaseAgent.ts",
+      "sha256": "912244571b18beedafc463b500b3af44c1dd962f31e623fecf8165669726a817"
+    },
+    {
+      "path": "src/core/capabilityInspection.ts",
+      "sha256": "6424d3af0449f184a90b522cdb1ad8e8021edd5d35cb83abae1170528750f56b"
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "615cfec4952a376c87effe4abc250d4d4f10dd97d0c4dc9e7176ec7758ceced2"
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/coordinator.ts",
+      "sha256": "8786eb2fabdb57f09359b4cf19512c3f8476dfc32ec60a3dda245e86fd7d0b18"
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/fingerprint.ts",
+      "sha256": "51d76e4ef8df351acc0f1b4a95b1f3611592fb0411745d74f40c211d5f6cb816"
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/types.ts",
+      "sha256": "27ee6e676f75024da1194c68531d003b91083a2c860ecee26e9b00a3899b7846"
+    },
+    {
+      "path": "src/core/context-nextgen/index.ts",
+      "sha256": "a85d30dbbb41c403ec6f454cdb6b17fb5b6013e12a3cb8921c92f701c4dfcfae"
+    },
+    {
+      "path": "src/core/context-nextgen/strategies/ContextCompactionStrategy.ts",
+      "sha256": "01b2b31b391b5a4ec3fc110b5e581c382a48d591c77cf4095551d462b35fc9a6"
+    },
+    {
+      "path": "src/core/context-nextgen/strategies/index.ts",
+      "sha256": "71016b7a33393abfa489da05a8323e5eb64d5723336bca69004c64bec9d910ba"
+    },
+    {
+      "path": "src/core/context-nextgen/types.ts",
+      "sha256": "84239d5a1ee1a22b5f250ba96f2886602a9c1f93d26e0d3b4a92b4c901fe039d"
+    },
+    {
+      "path": "src/core/index.ts",
+      "sha256": "ec84084a9755c05199932f36d87939eec7c67e4534520585dbba1e9aa0083ade"
+    },
+    {
+      "path": "src/core/model-execution/ModelExecutor.ts",
+      "sha256": "0cb69d056a182ffb7dbc931855b815add0e6cebabbdf703c4344d7a294e77595"
+    },
+    {
+      "path": "src/core/model-execution/ModelTask.ts",
+      "sha256": "5b92b8f36a29b07191723c9dc7dc2aa16f7a834cd3ba09b48dd0df9c2171d604"
+    },
+    {
+      "path": "src/core/presets.ts",
+      "sha256": "9ba4dc558806e704519a5c399d45d7ba004e2dd72bd19258c36f8b82fcfea391"
+    },
+    {
+      "path": "src/domain/entities/Message.ts",
+      "sha256": "ca3000b18fcef618e3868c0473ff7c673e845744a31f1ef5863e7467e4881312"
+    },
+    {
+      "path": "src/domain/interfaces/IAdvancedInference.ts",
+      "sha256": "4f28ce0fbe8598f34a9ad75d61d664d54f7d0955749ba08d610c40ce216b5e21"
+    },
+    {
+      "path": "src/domain/interfaces/IContextStorage.ts",
+      "sha256": "f03bc08223b632461d1b28de3a91a5ef719dd6360a025043b788967ecb94eb26"
+    },
+    {
+      "path": "src/domain/interfaces/INativeContinuation.ts",
+      "sha256": "9da63ada864652efbb70ccc779f45f97b2f0783e34a45fbd4be9afe95a4ede34"
+    },
+    {
+      "path": "src/domain/interfaces/ITextProvider.ts",
+      "sha256": "f772835bd67819be6a213816b3fce257a870f88a38020952f3bc9854374483b3"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "31329d2cae27f0894c39f9dafc0c46e719bda2f9fea7087d9c6a1ffb768815c5"
+    },
+    {
+      "path": "src/infrastructure/providers/anthropic/AnthropicConverter.ts",
+      "sha256": "123ef21dd567d79cfd0a944ececb6dff2e4aa02ff79033d89deb4a0aedcf6d1a"
+    },
+    {
+      "path": "src/infrastructure/providers/anthropic/AnthropicTextProvider.ts",
+      "sha256": "59db9fbc247e94af9f293052728bf36429a869ba4d7e01c335eb6cd3029f33a6"
+    },
+    {
+      "path": "src/infrastructure/providers/openai/OpenAIResponsesConverter.ts",
+      "sha256": "866a7721210a4c21ee967782ba41ab5b4351d66ab928be754dd165e82fd8ac20"
+    },
+    {
+      "path": "src/infrastructure/providers/openai/OpenAITextProvider.ts",
+      "sha256": "1ca8a80ac976fd90043e7b1e7e1cd6ea5f11eec14bfefb3fe79bc2db1b02f591"
+    },
+    {
+      "path": "src/infrastructure/providers/shared/nativeCompaction.ts",
+      "sha256": "7e60b499c4ba9081f7034eab62214fc9bcced204f018f7cf0e58724bf350b151"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "c0d1f5acae206245f07a1d8e650e141a9923300324cdb07801d0340e8ea5298a"
+    },
+    {
+      "path": "src/types/index.ts",
+      "sha256": "ebcefd07dfd6691446109bcc3344d7cc22426e57a474d374ea40d175a24afb50"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage16-consumer.ts",
+      "sha256": "446dee390b8e1ffd41b67018b2e7cba0627cc56c27646a7f2682fba21da30144"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "sha256": "43a4af6bf93985a65987ab91ab6f59c74558c2d7b09e90585ca8e9552b54ae47"
+    },
+    {
+      "path": "tests/fixtures/native-compaction/public-runtime.mjs",
+      "sha256": "2b78d20d079822783ca7410b86de34b3233e7a5f098b420503d3e305a6ec9187"
+    },
+    {
+      "path": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+      "sha256": "869226502af77aed17f8a4d300ede3442cab5b9a5a1e399cc433a374fe3307ac"
+    },
+    {
+      "path": "tests/unit/apps/amos/NativeCompaction.test.ts",
+      "sha256": "0aa106fe5f2ed3b0c27079a2f8945a5e39a8a6f439c6b5ea83249cdd0ae50c9c"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/NativeCompaction.test.ts",
+      "sha256": "62972c45afb792d4d143ca71f0fe4b32b0c712af63c3bc1120ad3b83a4bc77f3"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/Stage16Compatibility.test.ts",
+      "sha256": "b67c10a56e6bf3d22c31dd8804ae29e9160b622ce5db930abc3f2c6eaa9054cd"
+    },
+    {
+      "path": "tests/unit/providers/NativeCompaction.test.ts",
+      "sha256": "c1c2f72db6b0c75ffc2a001281d20fc92cd65a365069096bd32e4795d4c81a8e"
+    }
+  ],
+  "packagePreview": {
+    "command": "npm pack --dry-run --ignore-scripts --json",
+    "passed": true,
+    "requiredNativeDocsExamplesAndExports": true,
+    "envExcluded": true,
+    "files": 224,
+    "reportSha256": "c35552b8f2349918ce1a9cfb64ff3e13af99fa5f005f807cb6597218387b2055"
+  },
+  "documentationChecks": {
+    "localFileLinksVerified": 664,
+    "diffWhitespaceCheck": "passed",
+    "generatedApiItems": 1709
+  }
+}

@@ -7,7 +7,8 @@
 - **Stage 03 review:** All findings corrected and validated: 7,473 units, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 - **Stage 06 review:** All first- and second-review findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion record](STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
 - **Created:** 2026-10-07.
-- **Revision:** 0.2; holistic review completed 2026-10-07.
+- **Revision:** 0.5; Stage 16A third corrections validated 2026-10-22. Original holistic plan review completed 2026-10-07.
+- **Current selected scope (2026-10-22):** Stage **16A only**, revision 2 implementation and all review corrections [complete on branch](STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22). 8,584 units, 201 live tests, 34 offline modes and 158 public controls pass. Stage 16B remains deferred; no breaking change or package release is approved.
 - **Scope:** OneRingAI connectors, context plugins, tool execution, model invocation,
   agent control, memory, evaluation, and relevant AMOS demonstrations.
 - **Working branch at plan creation:** `version2`.
@@ -433,7 +434,7 @@ fail preflight or use a documented safe fallback.
 
 ## 4. Stage sequence and tracking
 
-Stages 00–04, 06, 07 and 10 are complete on `version2`. Stage 10 based on Stage 04
+Stages 00–07, 10, 12 and selected Stage 16A with its [review corrections](STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22) are complete on `version2`. Stage 10 based on Stage 04
 revision `d8fce94` has all five review findings corrected and validated. See its
 [corrective completion](STAGE_10_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16)
 and [corrective evidence](../evaluations/STAGE_10_CORRECTIONS_VALIDATION.json).
@@ -460,7 +461,8 @@ remain separately authorized work.
 | 13 | Verified procedural memory and curated learning | 08, 10 | Conditional | Not started |
 | 14 | Adaptive routing and separately scoped specialist delegation | 06, 10 | Conditional | Not started |
 | 15 | Sandboxed programmatic tools and bounded recursive inspection | 03, 06 | Conditional | Not started |
-| 16 | Native compaction adapters and separately scoped retention experiments | 00, 06, 07 | Conditional | Not started |
+| 16A | Provider-native on-demand compaction with client-owned continuation | 01, 03, 06, 07; 04/05 interoperability | Selected conditional scope | Complete on branch; all review corrections validated, opt-in with no breaks. [Latest completion](STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22); [validation](../evaluations/STAGE_16A_THIRD_CORRECTIONS_VALIDATION.json); [API](STAGE_16A_NATIVE_COMPACTION_API.md); [recipe](../NATIVE_CONTEXT_COMPACTION.md) |
+| 16B | Separately scoped retention research | 00, 06, 07 | Conditional | Deferred; not authorized; does not depend on 16A |
 
 **Recommended core delivery order:** 00 → 01 → 02 → 06 → 03 → 07 → 04 → 10 → 12.
 Stage 04 can follow stage 03 before stage 07 if the first host workload needs task
@@ -1116,66 +1118,126 @@ to this capability only unless explicitly approved otherwise.
 **Exit gate:** Isolation and budget tests pass; corpus-specific evaluation demonstrates
 a benefit. Do not present recursive inspection as a universally better agent loop.
 
-### Stage 16 — Optional native compaction and retention experiments
+### Stage 16 — Optional provider integration and separate retention research
 
-**Goal:** Adopt provider context contracts or test retention research when a workload
-justifies them, without changing the core default.
+Stage 16 is split into independent **16A** and **16B** scopes. The user selected
+16A on 2026-10-22 and required approval of its public API before implementation.
+This does not authorize 16B or every possible native continuation mode.
 
-**Work:** Choose one of two independent scopes. Native compaction uses existing
-provider converters where possible, with an explicit ownership/continuation adapter,
-scope-aware persisted state, and compatibility preflight. Retention research implements
-separate experimental strategies behind the same validated
-compaction boundary: future-utility estimation with bounded helper plans;
-representation-aware retention only when a suitable representation model is
-available; hierarchical folding; or parallel summary generation for independent
-snapshot spans. Select experiments one at a time based on reproducibility and
-workload relevance. Keep explicit algorithmic, masking, structured-summary, and
-task-state comparators, adding retrieval comparisons if that feature is delivered.
-Track representation-model and draft/verifier
-costs, not just main-agent tokens.
+### Stage 16A — Native compaction
 
-For native compaction, follow each supported mode's actual contract:
+**Status:** API proposal awaiting user approval; no runtime implementation or
+provider validation claimed. The [API design](STAGE_16A_NATIVE_COMPACTION_API.md)
+is the detailed scope, contract, implementation sequence and test matrix.
 
-| Continuation mode | Required handling |
-| --- | --- |
-| Client-owned local strategy | Local transaction validates the complete submitted window |
-| Native stateless input-array chaining | Preserve opaque/native output; discard earlier items only when that provider explicitly permits it |
-| Native server-owned response-ID chaining | Submit the permitted new input; do not pretend local transcript pruning edits server-owned history |
-| Standalone native compaction | Use the complete returned window, not just its encrypted summary item |
+**Goal:** Integrate provider-native compaction through the existing strategy
+boundary while retaining host task/evidence authority and default behavior.
 
-Never run incompatible native and local rewriting against the same owned state.
-Native compaction does not make the summary decryptable or automatically portable
-across models/providers. Opaque token estimates may be unavailable; report the
-uncertainty and use provider-supported limits/usage instead of blob string length.
+**Selected delivery:** OpenAI standalone compaction and Anthropic on-demand
+compaction, both with library-owned input-array continuation. Preserve existing
+`context.strategy` / `compactionStrategy` APIs and defaults; propose an optional
+`ContextCompactionStrategy` class through the existing instance extension point,
+with explicit `plugins` and `history` controls and `agent.compactContext()` targets.
+No replacement top-level compaction configuration or migration is required. Require
+the existing evidence plugin and faithful scoped archival before replacing a
+closed source prefix. Preserve the provider's complete canonical returned window
+and the exact unsummarized tail. Keep current host controls outside summary
+authority; preserve pending/unacknowledged dependencies. Selecting this new lossy
+policy can replace older user/action exchanges in active model context, while
+their exact source remains archived; it is not Stage 07's exact-user policy.
 
-**Required tests:** Proposed deletion cannot remove protected dependencies; wrong
-future-plan prediction; verifier failure; unavailable hidden-state access; opaque
-provider state; summary span overlap; revision conflict; bounded helper fan-out;
-training/evaluation leakage; representation version mismatch; fallback; total-budget
-accounting; replay versus genuine counterfactual evaluation.
-For the native scope, add mocked and opt-in live provider-contract checks for
-returned-window preservation, server/client continuation, encrypted item ordering,
-model-switch rejection, save/load, cache interactions, cancellation, and helper cost.
+**Ownership:** One active rewriting owner. No simultaneous local/native
+conversation rewriting. Automatic scheduling is a bounded separate call during
+managed preparation, not a provider's in-generation automatic threshold. Native
+calls use the main connector/model and shared ModelTask, not an implicit cheaper
+helper. Opaque state is not assumed readable, portable or countable from blob
+length. Count the actual provider frame and retain final freshness/scope guards;
+unsupported opaque counting fails explicitly. Native usage, including discarded
+results and Anthropic compaction iterations, must be accounted for honestly.
 
-**Examples:** `experimental-context-retention.ts` runs selected strategies on fixed
-synthetic tasks and clearly labels experiments, required models, limitations, and
-measurement boundaries. Provide opt-in live instructions only when reproducible.
-The native scope ships `native-context-compaction.ts` with mocked behavior and a
-bounded live variant; do not require a trained retention router to use it.
+**Plugin composition:** Native history remains inside the plugin-based context
+manager. Plugins keep their live state, tools, persistence and current contributions;
+Stage 05 companions keep their opt-in selection rules. The new class supports
+plugin-only, native-only, combined and neither-reduction configurations. Disabled
+reduction does not disable a plugin. Automatic pressure handling may first call
+eligible plugins' existing self-compaction once, rebuild/recount, and call native
+only if still needed. Manual operations select `plugins`, `history` or `all`, with
+independent results and explicit partial-failure handling. Do not run a local
+history-pruning strategy alongside native. Protected task state/evidence stay
+intact; history-only operations preserve plugin entries. Test all combinations,
+fresh contributions, shared tools, bounded phases and independent persistence.
 
-**AMOS:** Native integration shows ownership mode and actual provider support.
-Add inspection only for a retention experiment that reaches a usable evaluation
-milestone. Otherwise record AMOS as not applicable because it remains a research
-harness; avoid exposing unstable controls as production settings.
+**Deferred native extensions:** Provider-managed in-request thresholds,
+server-owned response-ID/conversation chaining, background compaction, realtime,
+external SDK loops, and unverified hosted-tool/multimodal/platform combinations.
+Google's existing managed text path keeps local strategies. Any future selected
+continuation mode must follow its own provider contract; standalone output must
+never be pruned to only its encrypted item, and client pruning cannot edit
+server-owned history.
 
-**Compatibility:** Both scopes are additive and explicitly opt-in. Native settings
-are capability-gated; experiments stay labeled. Neither changes automatic defaults
-or weakens validation/authorization.
+**Implementation increments after approval:** (1) additive types/strategy/provider
+capabilities; (2) both provider adapters, counting and usage; (3) scoped source
+archive and atomic native transaction/manual operation; (4) managed run/stream,
+final dispatch/structured repair and budget integration; (5) persisted continuation,
+recovery, inspection and AMOS; (6) examples, comparative pilot, full validation,
+documentation handoff and review. All are within 16A; see the design's gates.
 
-**Exit gate:** Native adapters satisfy their selected provider contract and retain
-durable local task/evidence views. Research experiments require reproduced workload-
-specific benefit with uncertainty and full costs. A failed experiment is a documented
-result, not an unfinished prerequisite for the stable architecture.
+**Required tests:** Complete returned-window and signed-block replay; repeated
+compaction; protocol-dependent reasoning; exact tail/dependency preservation;
+source retention, redaction and quota failures; no partial application on stale
+scope/revision/cancellation; correct compaction usage and conservative budgets;
+final hook-modified frame counting/guards; run/stream and structured-formatting
+parity; suspension/async delivery; separate-process save/load; model/account/endpoint
+switch rejection; cache interactions; checkpoint failure after commit; legacy
+provider/plugin/strategy/storage/session compatibility; ESM/CJS public consumers.
+Use real OpenAI and Anthropic native calls and full relevant three-provider
+regression suites. A failure or skip is not successful provider validation.
+
+**Examples:** Proposed `native-context-compaction.ts` has deterministic offline
+and explicitly opt-in bounded live modes; `native-context-recovery.ts` demonstrates
+durable scope, restart, rejected transfer and trusted checkpoint/source recovery
+without executing historical tools. Compare total task success and main/native
+cost with existing strategies; a small pilot establishes functionality, not a
+general quality or savings claim. No 16B retention harness is required.
+
+**AMOS:** Explicit native selection/prerequisites, actual capability/ownership and
+usage inspection, `/context compact`, compatible settings/session recovery, and
+an offline demonstration with tests. No vendor-string inference of support or
+silent native enablement when loading old settings.
+
+**Compatibility and exit gate:** Backward compatibility is the primary constraint.
+Existing names, instance precedence, custom strategy/plugin/provider/storage
+contracts, default/preset behavior, event semantics and old-session loading remain
+unchanged, with no removals/deprecations or mandatory migration. Pin and retain
+unchanged behavioral/public compatibility fixtures before feature implementation.
+Only the new class and its optional provider/session/diagnostic additions are
+opt-in. This revises an unapproved draft, not an existing supported API. Keep
+the Version 2 availability/adoption/handoff records current and regenerate API
+documentation from implemented exports. Completion requires both native contracts,
+all required validation, examples and applicable AMOS/docs. Revision 2 was approved
+and the gate passed on 2026-10-22; see the completion record. No breaking change
+is proposed, and implementation must stop for separate approval
+if an existing supported contract would need to break.
+
+### Stage 16B — Retention research (deferred)
+
+**Status:** Not selected or authorized. Independent of 16A and not a prerequisite
+for any delivered core capability.
+
+**Possible future scope:** Select one reproducible experiment at a time:
+future-utility estimation with bounded helper plans, representation-aware retention
+when a suitable model exists, hierarchical folding, or parallel summaries of
+independent snapshot spans. Reuse the validated compaction/evidence boundary.
+
+**Future research gates:** Protect dependencies despite wrong future-plan
+predictions; test verifier failure, inaccessible hidden state, span overlap,
+revision conflict, bounded fan-out, representation-version mismatch, leakage,
+fallback and full helper costs. Compare algorithmic/masking/structured-summary
+and task-state baselines, distinguishing replay from genuine counterfactual
+evaluation. A proposed `experimental-context-retention.ts` remains a research
+example until this scope is separately selected. Expose AMOS controls only after
+a usable evaluation milestone. Any benefit claim needs reproduced workload-level
+evidence and uncertainty; a negative research result is not a stable-core blocker.
 
 ## 5. Cross-cutting testing and release gates
 
@@ -3361,3 +3423,210 @@ compatible; internal execution-local coordination adds no persistent authority.
 Recipe, standard/generated docs, examples/AMOS, release notes, availability and
 handoff are synchronized. Historical evidence remains intact. No commit, push,
 release, breaking API change or later-stage implementation.
+
+### Historical Stage 16A API design record — 2026-10-22 (before approval)
+
+The user selected **16A only** and explicitly requested public API approval before
+implementation. The [native API proposal](STAGE_16A_NATIVE_COMPACTION_API.md)
+now defines an optional `ContextCompactionStrategy` through the existing
+`compactionStrategy` extension point, explicit plugin/history controls, targeted
+Agent operation/results, optional provider capability, faithful scoped archival, counted
+client-owned continuation, usage/persistence/recovery, and the test/example/AMOS
+delivery sequence. It targets OpenAI standalone and Anthropic on-demand protocols.
+Server-owned/in-request automatic variants are deferred native extensions; 16B
+retention research remains independent, deferred and unauthorized.
+
+Design baseline: `version2`, `4ab2c8f` (`stage 05`). The roadmap, Version 2 guide
+and persistent agent instructions distinguish the pending API from delivered
+features. Official provider documentation and current SDK/provider/context/storage
+contracts were reviewed. Documentation checks are separate from implementation
+validation: prior Stage 05 test counts are historical evidence, not a new 16A run.
+No runtime/provider/app code, generated API, package version or defaults changed.
+No breaking change is proposed. Await explicit approval of the concrete design
+before starting the implementation increments or advertising availability.
+
+Compatibility/composition revision: existing plugin state/contributions/selection
+remain independent of native history. The proposed class exposes both reduction
+policies, all four combinations, and per-phase manual controls/results. Existing
+strategy APIs/defaults remain; no replacement top-level configuration is proposed.
+The earlier `NativeCompactionStrategy`/`native` names were unapproved draft APIs,
+not implemented package exports. No runtime changes or breaking change approval.
+
+Design checks cover new local documentation links/anchors, whitespace and proposed
+TypeScript syntax; these do not validate implemented APIs. No runtime tests
+or live LLM calls were run for this documentation-only proposal. API approval and
+the complete 16A implementation gate remain pending.
+
+### Stage 16A implementation authorization — 2026-10-22
+
+The user said “proceed with implementation” after the compatibility-first revision 2 API. This supersedes the pending approval statements in the historical design record above. The additive composition class and targeted Agent method are authorized; no breaking change or Stage 16B work is approved. At authorization, runtime adapters, composition, checkpoints, AMOS, examples and final validation were pending. The completed scope and evidence are recorded below.
+
+### Stage 16A completion — 2026-10-22
+
+Historical delivery record. The subsequent [review](STAGE_16A_REVIEW_AND_FIX_PLAN.md)
+found five issues; all are corrected and validated in the completion below.
+
+Authorized scope is complete on `version2`, base `4ab2c8f`, without a package
+version/release, commit or push. Revision 2 uses the existing strategy-instance
+extension point, required independent plugin/history controls, optional automatic
+scheduling and manual targets/results. All four combinations preserve plugin
+ownership/shared tools; no new registry name or replacement context root was added.
+OpenAI standalone complete windows and Anthropic on-demand signed state use the
+main connector/model, provider-counted frames, faithful scoped sources, protected
+recent/pending/host state and shared ModelTask accounting. Optional bound version-1
+snapshots and real separate-process recovery work with persistent source/session
+storage. Native operations do not route through helper configuration.
+
+The [native recipe](../NATIVE_CONTEXT_COMPACTION.md) and
+[Version 2 adoption/handoff](../VERSION_2_GUIDE.md#stage-16a-adoption-record--2026-10-22)
+record signatures/defaults, support, privacy/scope, budgets, failures, recovery,
+limits, examples and AMOS. Native mode is verified on `gpt-6-astra` and
+`claude-sonnet-4-6`; Google retains its existing managed path. There is no semantic
+recall guarantee or generic savings claim. Hosted/multimodal/server-owned/in-request
+threshold/background/realtime variants and 16B remain deferred.
+
+Validation: **8,420 unit tests / 377 files; 194 live tests / 12 suites covering all
+three providers; four native repeat/restart/stream contracts rechecked; 32 offline
+examples; 158 ESM/CJS public runtime checks**, plus build, declarations, types, lint,
+strict core/AMOS, generated docs and focused coverage. The bounded live four-policy
+comparison passes identical completion/constraint/no-repeat predicates. An initial
+parallel-run registry setup timeout was resolved by running the full unit suite
+alone with the original timeout; no failed/skipped cases count as validation.
+See [the evidence](../evaluations/STAGE_16A_VALIDATION.json) and
+[new offline transcripts](../evaluations/STAGE_16A_OFFLINE.txt).
+
+A whole-diff self-review and regression-driven failure review corrected revision,
+source/transport cancellation, exact canonical replay, usage on unusable results,
+formatting/selected/task state, caller-owned resume, checkpoint status, UTF-8 metadata
+bounds, small-provider source reserves, effective SDK endpoint/project/organization scope binding, JSON/JSONB key-order compatibility and AMOS compatibility/inspection. Existing
+compatibility fixtures and old consumer/session contracts pass. No breaking change
+was needed or approved. No further stage is authorized by this completion.
+
+### Stage 16A review corrective completion — 2026-10-22
+
+The user authorized “fix all” for R1–R5. All corrections preserve the approved
+strategy/Agent API, defaults, extension contracts and version-1 checkpoint format.
+Provider transport selection is fixed at SDK construction; rebinding rejects
+endpoint/account drift rather than relabelling a live client. OpenAI counting and
+generation share normalization, including supported raw prompt fields and
+normalized precedence. Uncountable raw controls fail only on the opted-in native
+path. Composition reuses the initial frame, rebuilds after mutations and retains
+one assembly signal/allowance; plugin-only mode ignores an old native driver.
+Manual/managed continuation preflight catches known hosted-tool/server-token
+conflicts before reduction, archive or native billing. Compatibility fixtures
+freeze Date without removing restored-state assertions.
+
+Final validation passes **8,454 units / 377 files**, **197 live tests / 12 suites**
+on all three providers, **32 offline programs**, **158 public ESM/CJS controls**
+and all build/24-export/type/lint/strict/examples/AMOS/generated-doc gates. The
+34 new unit cases and three new live cases cover the reproduced gaps, including
+real automatic native-plus-selection on OpenAI/Anthropic and actual OpenAI
+raw-instruction counting that stops before any model invocation. All seven native
+live contracts pass, including repeated compaction and separate-process recovery.
+
+The initial live run exposed an older task-state fixture's tiny plaintext-output
+allowance. Its corrected three-field JSON protocol, adequate fixture cap and
+host-only tool removal before format selection retain the same semantic/state/
+no-repeat assertions. All 12 task-state cases and the final full matrix pass;
+no library output default, streaming contract or retry was changed. Offline local
+HTTP validation uses localhost permission; no unavailable provider, failing case
+or skipped required gate counts as success.
+
+See [corrective completion](STAGE_16A_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22),
+[validation](../evaluations/STAGE_16A_CORRECTIONS_VALIDATION.json) and
+[offline transcripts](../evaluations/STAGE_16A_CORRECTIONS_OFFLINE.txt). Version 2
+availability/adoption/handoff, native recipe, standard docs/generated API,
+examples, AMOS docs/tests, AGENTS, Changelog and package inventory are synchronized.
+Historical delivery/review records remain available. No release, commit/push,
+breaking change or additional stage is included; 16B remains deferred.
+
+
+### Historical Stage 16A second review — 2026-10-22 (resolved below)
+
+At this review-only checkpoint, **S1–S3 were open**. See the [review and fix plan](STAGE_16A_SECOND_REVIEW_AND_FIX_PLAN.md)
+and [executable evidence](../evaluations/STAGE_16A_SECOND_REVIEW.json). The prior
+R1–R5 corrections remain implemented, but initial frame reuse rejects documented
+pre-compaction memory writes; native proof reads can hold an execution beyond
+cancellation/task deadlines; and unsupported top-level reasoning is omitted by
+Anthropic native processing. The plan uses existing lifecycle/cancellation
+facilities and provider-specific admission, preserving APIs/defaults.
+
+Fresh 8,454 units / 377 files, 118 focused tests, 66 native ESM/CJS checks, consumer
+compatibility and root types pass. Eight additional deterministic repro/control
+cases establish the findings. All 52 prior source/build/test/example hashes match
+before review-documentation edits. No actual LLM call was needed; earlier 197 live
+tests remain historical, not evidence for these new cases. Version 2 availability,
+adoption and handoff now track the open fixes. No runtime fix, later stage, API
+break, release, commit or push is included in this review.
+
+
+### Stage 16A second corrective completion — 2026-10-22
+
+All authorized S1–S3 corrections are complete on branch. The lifecycle boundary
+permits one refresh for legitimate plugin memory/revision changes, then preserves
+all source/authority/staleness guards. Read-only native proofs honor execution and
+task cancellation; admitted writes retain settlement ownership. Cancelled startup
+waits keep the independent session restore intact. Anthropic native admission
+rejects unsupported top-level reasoning before I/O; supported provider reasoning
+and ordinary conversion remain compatible. No new required API/configuration,
+backend member, default or checkpoint version is introduced.
+
+Final validation: **8,507 units / 377 files** (53 new regressions), **199 live tests
+/ 12 suites** across all three providers (nine native cases, two new), **33 offline
+programs**, **158 public ESM/CJS controls**, 171 focused cases and all build/24-export/
+type/lint/examples/strict core/AMOS/generated-doc checks pass. Five startup cases
+cover run/stream/manual/signal/deadline, checkpoint recovery and excluded cancelled
+input. The new hook example and real AMOS cancellation regression illustrate the
+behavior; no new AMOS command/configuration is needed.
+
+See [completion](STAGE_16A_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22),
+[validation](../evaluations/STAGE_16A_SECOND_CORRECTIONS_VALIDATION.json) and
+[transcripts](../evaluations/STAGE_16A_SECOND_CORRECTIONS_OFFLINE.txt). Version 2
+availability, adoption and handoff plus affected standard/specialist/generated
+docs, agent instructions, example index, AMOS notes, Changelog and package inventory
+are synchronized. Earlier evidence remains historical. No known required failure
+remains; no release, commit/push, breaking change or Stage 16B is included.
+
+
+### Historical Stage 16A third review — 2026-10-22 (resolved below)
+
+At the review-only checkpoint, **T1–T3 were open**. The [review and fix plan](STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md)
+and [executable evidence](../evaluations/STAGE_16A_THIRD_REVIEW.json) reproduce
+incompatible nested thinking omitted from native requests, explicit compaction
+bypassing the preservation lifecycle, and a valid Anthropic fixed-thinking budget
+conflicting with the native 4096-token output cap. Nine repro/control cases
+establish the gaps; exact source archives remain intact.
+
+Fresh validation passes 8,507 units / 377 files, 171 focused cases / 5 files,
+root types, built consumer compatibility and 66 native ESM/CJS checks. All 53
+source/build/test/example fingerprints match the previous correction record.
+Prior 199 live tests remain historical; no new real model call was needed for
+this review. No runtime/test-suite edits or later-stage work were performed.
+Version 2 availability/adoption/handoff are updated; completion is reopened until
+corrections, regressions, relevant live/example/AMOS checks and documentation
+handoff pass. No API break is proposed.
+
+
+### Stage 16A third corrective completion — 2026-10-22
+
+The user authorized “fix all”. T1–T3 are corrected: provider-specific nested replay
+validation, shared explicit/automatic preservation lifecycle with early scope
+preflight, and Anthropic native output/source/reservation selection compatible
+with fixed thinking. High caps use internal streaming with cancellation and
+failed-summary usage retained. Main settings, old non-native defaults and all
+required public extension/session contracts remain unchanged.
+
+Validation passes 8,584 units / 377 files (77 new cases), 248 focused cases,
+201 live tests / 12 suites across three providers, 34 offline programs/modes,
+158 public ESM/CJS checks and all build/24-export/types/lint/examples/strict/AMOS/
+generated-doc gates. After the final native-only scope-preflight refinement and
+rebuild, all 11 affected real native cases pass again on final source. The manual
+example includes fixed-thinking live Anthropic; AMOS checkpoints the preserved
+hook note through its existing command. No additional app API is needed.
+
+See [completion](STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22),
+[validation](../evaluations/STAGE_16A_THIRD_CORRECTIONS_VALIDATION.json) and
+[offline transcripts](../evaluations/STAGE_16A_THIRD_CORRECTIONS_OFFLINE.txt).
+Version 2 availability/adoption/handoff, standard/generated docs, agent instructions,
+examples, AMOS, Changelog and package inventory are synchronized. Prior records
+remain historical. No breaking change, release, commit/push or Stage 16B work.

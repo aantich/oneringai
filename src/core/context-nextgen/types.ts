@@ -632,6 +632,8 @@ export function isStoreHandler(plugin: IContextPluginNextGen): plugin is IContex
  * Token budget breakdown - clear and simple
  */
 export interface ContextBudget {
+  /** Optional provider preflight count for a native frame; not response/billing usage. */
+  providerCountedInputTokens?: number;
   /** Maximum context tokens for the model */
   maxTokens: number;
 
@@ -677,6 +679,8 @@ export interface ContextBudget {
 
 /** Optional request contributions, resolved again after compaction. */
 export interface ContextPrepareOptions {
+  /** @internal Optional Agent-owned native compaction; no provider credentials live in plugins. */
+  nativeCompaction?: import('./compaction/types.js').NativeCompactionDriver;
   /** Optional bounded pre-call compaction cancellation. */
   signal?: AbortSignal;
   /** Host-owned structured-summary generator; Agent binds its configured compactor. */
@@ -694,6 +698,8 @@ export interface ContextPrepareOptions {
 
 /** Diagnostic snapshot of the last successful prepare; token counts are estimates. */
 export interface ContextPreparation {
+  /** Optional independent plugin/history outcomes for an explicitly selected composition. */
+  compactionDetails?: import('./compaction/types.js').ContextCompactionReport;
   /** Diagnostic for the opt-in transactional built-ins in this preparation. */
   selection?: import('./assembly.js').ContextSelectionManifest;
   compaction?: import('./strategies/conversation-compaction.js').ConversationCompactionReport;

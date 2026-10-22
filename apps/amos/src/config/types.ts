@@ -22,6 +22,9 @@ import type {
   AgentCapabilityInspection,
   ContextAssemblyConfig,
   ContextSelectionManifest,
+  ContextCompactionStrategyConfig,
+  ContextCompactionReport,
+  ContextCompactionTarget,
 } from '@everworker/oneringai';
 import type { ExternalToolManager } from '../tools/ExternalToolManager.js';
 
@@ -43,7 +46,9 @@ export interface AmosConfig {
   /** Optional explicit automatic strategy; absence preserves algorithmic behavior. */
   /** Optional selection/layout; contributors are recreated by trusted host code, never JSON callbacks. */
   contextAssembly?: Omit<ContextAssemblyConfig, 'contributors' | 'tokenEstimator'> & { selectWhiteboard?: boolean };
-  contextStrategy?: 'algorithmic' | 'observation-masking' | 'structured-summary';
+  contextStrategy?: 'algorithmic' | 'observation-masking' | 'structured-summary' | 'context-compaction';
+  /** Explicit independent controls; used only by context-compaction. Never inferred from legacy settings. */
+  contextCompaction?: ContextCompactionStrategyConfig;
   /** Local evidence is opt-in; ownership and location are host configuration. */
   evidence?: { enabled: boolean; directory: string; ownerId: string; namespace: string; retentionMs?: number };
   // Current active settings
@@ -321,7 +326,9 @@ export interface IAgentRunner {
   setLoopPolicy?(policy: AgentLoopPolicy | null): void;
   getTaskState?(): TaskStateSnapshot | undefined;
   updateTaskState?(delta: TaskStateHostDelta, expectedRevision: number): TaskStateSnapshot;
-  getContextCompaction?(): { strategy: string; last?: ConversationCompactionReport };
+  getContextCompaction?(): { strategy: string; last?: ConversationCompactionReport; composition?: AgentCapabilityInspection['context']['composition'] };
+  setContextCompaction?(config: ContextCompactionStrategyConfig): void;
+  compactContext?(target?: ContextCompactionTarget): Promise<ContextCompactionReport>;
   setContextStrategy?(strategy: NonNullable<AmosConfig['contextStrategy']>): void;
   inspectEvidence?(id?: string, offset?: number): Promise<string>;
   getModelUsage?(): ModelTaskSnapshot | undefined;
@@ -439,6 +446,7 @@ export interface SessionSummaryInfo {
  * Detailed context budget information
  */
 export interface ContextBudgetInfo {
+  accounting?: 'provider';
   /** Counts are estimates; prepared refers to the last selected request. */
   source?: 'prepared' | 'estimate';
   revision?: number;
@@ -461,6 +469,7 @@ export interface ContextBudgetInfo {
  * Token breakdown by component
  */
 export interface ContextBreakdownInfo {
+  providerCountedInputTokens?: number;
   selection?: ContextSelectionManifest;
   source?: 'prepared' | 'estimate';
   revision?: number;

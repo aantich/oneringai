@@ -248,3 +248,14 @@ ordinary/stale JSON repair, wrap-up accounting and actual cache counter observat
 The dispatch safety example illustrates bounded hook edits, stale host-prompt repair
 rejection and synthetic wrap-up accounting without keys. It requires correct source markers and tool execution, not
 a cache hit; it supports no general quality/cost claim or real service writes.
+
+## Composition with native history (Stage 16A)
+
+Explicit native policy keeps contributor instructions and selected data freshly
+assembled outside the replaced history prefix. Selection budgets start from the
+provider-counted base frame and the final candidate is counted again. Contributor
+revision, scope and final-frame guards still apply through asynchronous native work
+and formatting/repair. Contributions remain a transient view; compaction does not
+turn selected data into plugin storage or native source authority. Other strategies
+and old contributor contracts remain unchanged. See
+[Native Context Compaction](NATIVE_CONTEXT_COMPACTION.md).

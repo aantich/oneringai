@@ -4,6 +4,7 @@
 
 import { IProvider } from './IProvider.js';
 import { LLMResponse } from '../entities/Response.js';
+import type { TokenUsage } from '../entities/Response.js';
 import { InputItem } from '../entities/Message.js';
 import { Tool } from '../entities/Tool.js';
 import { StreamEvent } from '../entities/StreamEvent.js';
@@ -37,6 +38,10 @@ export interface ThinkingConfig {
 }
 
 export interface TextGenerateOptions {
+  /** @internal Strict managed native replay; never sent as a vendor parameter. */
+  nativeContext?: boolean;
+  /** @internal Native frame counting before admission and synchronous final freshness. */
+  managedDispatch?: { prepare(): Promise<void>; assertCurrent(): void };
   /** Optional cooperative cancellation for this provider call. */
   signal?: AbortSignal;
   model: string;
@@ -87,6 +92,8 @@ export interface ModelCapabilities {
 }
 
 export interface ITextProvider extends IProvider {
+  /** Optional standalone native context operations; existing providers need no changes. */
+  readonly compaction?: ITextCompactionProvider;
   /**
    * Generate text response
    */
@@ -113,4 +120,19 @@ export interface ITextProvider extends IProvider {
    * List available models from the provider's API
    */
   listModels(): Promise<string[]>;
+}
+
+export interface ITextCompactionProvider {
+  compact(options: TextGenerateOptions): Promise<TextCompactionResponse>;
+  countInput(options: TextGenerateOptions): Promise<number | null>;
+}
+
+export interface TextCompactionResponse {
+  /** Complete canonical next prefix, including retained items and opaque state. */
+  input: InputItem[];
+  usage: TokenUsage | null;
+  protocol: string;
+  providerResponseId?: string;
+  /** Optional persisted diagnostics. All state needed for provider replay belongs in input. */
+  state?: Record<string, unknown>;
 }

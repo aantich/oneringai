@@ -364,3 +364,21 @@ cache usage without requiring hits. It also checks final hook edits, ordinary/st
 JSON repair and actual per-request wrap-up accounting. `STAGE05_PROVIDER=openai|anthropic|google npm run
 example:cache-aware-context -- --live` runs a separate two-call provider observation.
 No service writes or general cache/cost/quality claim. See [setup and boundaries](../docs/CONTEXT_ASSEMBLY.md).
+
+## Plugin/native compaction (Stage 16A)
+
+Build first; all five default programs are offline protocol fixtures, with cleanup
+of owned agents/connectors/tasks and temporary files. They do not measure LLM quality.
+
+| Program | Run / expected behavior |
+| --- | --- |
+| [`native-context-compaction.ts`](./native-context-compaction.ts) | `npm run example:native-compaction`: independent targets, preserved plugins, counted native window, early server-token rejection without a model call/history swap, and main continuation. Optional `-- --live=openai`/`anthropic` uses `.env`, max eight generation attempts and main-only output caps. |
+| [`native-context-hooks.ts`](./native-context-hooks.ts) | `npm run example:native-hooks` (automatic) or `npm run example:native-hooks-manual` (explicit with automatic disabled): preserve a critical whiteboard fact in `beforeCompaction`, refresh once, reduce history and continue. Offline default; add `-- --live=openai`/`anthropic`, with eight-attempt/150-second task bound and cleanup. Manual Anthropic mode uses an 8192-token fixed-thinking budget and a compatible main output cap. |
+| [`native-context-recovery.ts`](./native-context-recovery.ts) | `npm run example:native-recovery`: repeat compaction, durable source/session files, separate-process streamed resume, rejected model change and trusted pre-native recovery. Same opt-in live flags; parent/child each have call/deadline bounds. |
+| [`native-context-comparison.ts`](./native-context-comparison.ts) | `npm run example:native-comparison`: one fixed held-out task across algorithmic/masking/structured/native, exact answer/constraint/no-repeat predicates and known/unknown usage. `-- --live` uses OpenAI `gpt-6-astra` plus a `gpt-4o-mini` summary helper; six attempts per policy. |
+| [`AMOS native walkthrough`](../apps/amos/examples/native-compaction-offline.ts) | `npm run example:amos-native-compaction`: real adapter/configuration/commands, protected/empty result and saved-session resume. No keys. |
+
+Selected live native models are `gpt-6-astra` and `claude-sonnet-4-6`. Native
+callability does not guarantee reduction. Sources stay scoped; never repeat a write
+to repair context. See the [native recipe](../docs/NATIVE_CONTEXT_COMPACTION.md) for
+limits and actual adoption guidance.

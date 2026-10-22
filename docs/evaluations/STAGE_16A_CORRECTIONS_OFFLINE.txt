@@ -1,0 +1,251 @@
+Stage 16A corrective validation: all 32 offline programs pass. New native transcripts follow; model outputs/usage below are deterministic protocol fixtures, not LLM quality/cost evidence. Full command/log hashes are recorded in STAGE_16A_CORRECTIONS_VALIDATION.json.
+
+
+=== example:native-compaction ===
+OFFLINE protocol fixture; no model quality claim
+{
+  plugins: { status: 'skipped', reason: 'not_needed', compacted: [] },
+  history: 'compacted',
+  inputBefore: 14132,
+  inputAfter: 5050,
+  sources: [ 'e0c03fff-2888-4afe-a657-c9b52bd98939' ],
+  evidencePlugin: 'evidence'
+}
+{"level":"info","time":1792671570092,"component":"Agent","agentName":"agent-1792671570020","model":"gpt-6-astra","connector":"native-demo","inputPreview":"Unsupported continuation","toolCount":0,"msg":"Agent run started"}
+{"level":"error","time":1792671570481,"component":"Agent","agentName":"agent-1792671570020","model":"gpt-6-astra","connector":"native-demo","error":"offline-native-fixture: model 'gpt-6-astra' does not support requested capability 'native compaction with server-owned state or hosted tools'","statusCode":400,"code":"PROVIDER_CAPABILITY_NOT_SUPPORTED","stack":"ProviderCapabilityNotSupportedError: offline-native-fixture: model 'gpt-6-astra' does not support requested capability 'native compaction with server-owned state or hosted tools'\n    at assertNativeCompactionOptions (/Users/aantich/dev/oneringai/dist/index.js:28524:11)\n    at Object.countInput (/Users/aantich/dev/oneringai/dist/index.js:41753:13)\n    at count (/Users/aantich/dev/oneringai/dist/index.js:48693:42)\n    at _AgentContextNextGen.materializeRequest (/Users/aantich/dev/oneringai/dist/index.js:48704:58)","duration":8,"msg":"Agent run failed"}
+{"level":"info","time":1792671570483,"component":"Agent","agentName":"agent-1792671570020","model":"gpt-6-astra","connector":"native-demo","inputPreview":"Return the project code and confirmed limit.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 5560/32000 (19.9%) tools=1175 conversation=3369 system=999 input=17 | sysPrompt=0 PI=0 pluginInstr=927 plugin:evidence=20
+{"level":"info","time":1792671570490,"component":"Agent","agentName":"agent-1792671570020","model":"gpt-6-astra","connector":"native-demo","duration":7,"msg":"Agent run completed"}
+ORBIT_16A / limit 37 {
+  calls: 2,
+  inputTokens: 120,
+  outputTokens: 40,
+  totalTokens: 160,
+  cachedInputTokens: 0,
+  reasoningTokens: 0,
+  knownModelCostUSD: 0.0032,
+  unknownUsageInvocations: 0,
+  unknownCostInvocations: 0,
+  unknownChargeAttempts: 0,
+  chargedTokens: 160,
+  chargedCostUSD: 0.012
+}
+
+
+=== example:native-recovery ===
+{"level":"warn","time":1792671570490,"component":"Agent","agentName":"agent-1792671570477","model":"gpt-6-astra","connector":"native-recovery","sessionId":"native-demo","msg":"Session not found"}
+{"level":"info","time":1792671571864,"component":"Agent","agentName":"agent-1792671571854","model":"gpt-6-astra","connector":"native-recovery","sessionId":"native-demo","msg":"Session loaded"}
+{"level":"info","time":1792671571865,"component":"Agent","agentName":"agent-1792671571854","model":"gpt-6-astra","connector":"native-recovery","inputPreview":"Give the project code ORBIT_16A and its confirmed limit from the saved context. Reply with both only","toolCount":0,"msg":"Agent stream started"}
+[Agent] [Context] iteration=1 tokens: 606/32000 (2.2%) tools=354 conversation=15 system=204 input=33 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20
+{"level":"info","time":1792671571887,"component":"Agent","agentName":"agent-1792671571854","model":"gpt-6-astra","connector":"native-recovery","duration":22,"msg":"Agent stream completed"}
+Child: native resume, cross-model rejection and trusted pre-native recovery pass; no action replay.
+
+
+=== example:native-comparison ===
+{"level":"info","time":1792671571272,"component":"Agent","agentName":"agent-1792671571269","model":"gpt-6-astra","connector":"context-main-70c783df-40a9-425c-a16b-9ad11dc2f89a","inputPreview":"Return the exact source answer field and the original account/status as JSON now. This is a fact-ret","toolCount":2,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 3182/11000 (31.1%) tools=342 conversation=1437 system=1347 input=56 | sysPrompt=428 PI=0 pluginInstr=762 plugin:working_memory=78 plugin:evidence=20 COMPACTED: Algorithmic compaction started: need to free ~9507 tokens; Moved lookup result (39.9KB) to memory: tool_result.lookup.original; Removed 2 messages, freed ~11694 tokens; Algorithmic compaction complete: freed ~11694 tokens total
+[Agent] [Context] iteration=1 tokens: 3319/11000 (32.4%) tools=342 conversation=1514 system=1437 input=26 | sysPrompt=428 PI=0 pluginInstr=762 plugin:working_memory=78 plugin:evidence=110
+{"level":"info","time":1792671571302,"component":"Agent","agentName":"agent-1792671571269","model":"gpt-6-astra","connector":"context-main-70c783df-40a9-425c-a16b-9ad11dc2f89a","duration":29,"msg":"Agent run completed"}
+algorithmic {
+  exactAnswer: true,
+  exactAccount: true,
+  exactStatus: true,
+  noWrite: true,
+  noRepeat: true
+} {
+  calls: 2,
+  inputTokens: 200,
+  outputTokens: 80,
+  totalTokens: 280,
+  cachedInputTokens: 0,
+  reasoningTokens: 0,
+  knownModelCostUSD: 0.006,
+  unknownUsageInvocations: 0,
+  unknownCostInvocations: 0,
+  unknownChargeAttempts: 0,
+  chargedTokens: 280,
+  chargedCostUSD: 0.022
+} 
+{"level":"info","time":1792671571304,"component":"Agent","agentName":"agent-1792671571304","model":"gpt-6-astra","connector":"context-main-c90c45d0-1014-44be-a87f-302aa520cb17","inputPreview":"Return the exact source answer field and the original account/status as JSON now. This is a fact-ret","toolCount":2,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 3210/11000 (31.4%) tools=342 conversation=1547 system=1265 input=56 | sysPrompt=428 PI=0 pluginInstr=762 plugin:evidence=20 COMPACTED: observation-masking: applied; freed ~11584 tokens
+[Agent] [Context] iteration=1 tokens: 3350/11000 (32.7%) tools=342 conversation=1627 system=1355 input=26 | sysPrompt=428 PI=0 pluginInstr=762 plugin:evidence=110
+{"level":"info","time":1792671571315,"component":"Agent","agentName":"agent-1792671571304","model":"gpt-6-astra","connector":"context-main-c90c45d0-1014-44be-a87f-302aa520cb17","duration":11,"msg":"Agent run completed"}
+observation-masking {
+  exactAnswer: true,
+  exactAccount: true,
+  exactStatus: true,
+  noWrite: true,
+  noRepeat: true
+} {
+  calls: 2,
+  inputTokens: 200,
+  outputTokens: 80,
+  totalTokens: 280,
+  cachedInputTokens: 0,
+  reasoningTokens: 0,
+  knownModelCostUSD: 0.006,
+  unknownUsageInvocations: 0,
+  unknownCostInvocations: 0,
+  unknownChargeAttempts: 0,
+  chargedTokens: 280,
+  chargedCostUSD: 0.022
+} 
+{"level":"info","time":1792671571316,"component":"Agent","agentName":"agent-1792671571316","model":"gpt-6-astra","connector":"context-main-ca9adc54-46b2-4517-9fbe-98b2ad6a69b7","inputPreview":"Return the exact source answer field and the original account/status as JSON now. This is a fact-ret","toolCount":2,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2572/11000 (25.1%) tools=342 conversation=909 system=1265 input=56 | sysPrompt=428 PI=0 pluginInstr=762 plugin:evidence=20 COMPACTED: structured-summary: applied; freed ~12222 tokens
+{"level":"info","time":1792671571356,"component":"Agent","agentName":"agent-1792671571316","model":"gpt-6-astra","connector":"context-main-ca9adc54-46b2-4517-9fbe-98b2ad6a69b7","duration":40,"msg":"Agent run completed"}
+structured-summary {
+  exactAnswer: true,
+  exactAccount: true,
+  exactStatus: true,
+  noWrite: true,
+  noRepeat: true
+} {
+  calls: 2,
+  inputTokens: 200,
+  outputTokens: 80,
+  totalTokens: 280,
+  cachedInputTokens: 0,
+  reasoningTokens: 0,
+  knownModelCostUSD: 0.003039,
+  unknownUsageInvocations: 0,
+  unknownCostInvocations: 0,
+  unknownChargeAttempts: 0,
+  chargedTokens: 280,
+  chargedCostUSD: 0.011039
+} 
+{"level":"info","time":1792671571357,"component":"Agent","agentName":"agent-1792671571356","model":"gpt-6-astra","connector":"context-main-66755192-e3c7-432b-8fd7-c6e8d0d23ea5","inputPreview":"Return the exact source answer field and the original account/status as JSON now. This is a fact-ret","toolCount":2,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2225/11000 (21.7%) tools=342 conversation=562 system=1265 input=56 | sysPrompt=428 PI=0 pluginInstr=762 plugin:evidence=20 COMPACTED: Plugin reduction: skipped; history: compacted (native)
+{"level":"info","time":1792671571370,"component":"Agent","agentName":"agent-1792671571356","model":"gpt-6-astra","connector":"context-main-66755192-e3c7-432b-8fd7-c6e8d0d23ea5","duration":13,"msg":"Agent run completed"}
+context-compaction {
+  exactAnswer: true,
+  exactAccount: true,
+  exactStatus: true,
+  noWrite: true,
+  noRepeat: true
+} {
+  calls: 2,
+  inputTokens: 200,
+  outputTokens: 70,
+  totalTokens: 270,
+  cachedInputTokens: 0,
+  reasoningTokens: 0,
+  knownModelCostUSD: 0.0055,
+  unknownUsageInvocations: 0,
+  unknownCostInvocations: 0,
+  unknownChargeAttempts: 0,
+  chargedTokens: 270,
+  chargedCostUSD: 0.020499999999999997
+} 
+
+
+=== example:amos-native-compaction ===
+/context policy auto native manual
+Composition selected: plugins=auto, history=native, automatic=false. Inspect /context strategy and /preset inspect for support.
+/context compact history
+{
+  "status": "skipped",
+  "trigger": "manual",
+  "inputTokensBefore": 2157,
+  "inputTokensAfter": 2157,
+  "accounting": "provider",
+  "checkpointed": false,
+  "plugins": {
+    "status": "skipped",
+    "reason": "not_selected",
+    "compacted": []
+  },
+  "history": {
+    "mode": "native",
+    "status": "skipped",
+    "reason": "empty",
+    "sourceReferences": []
+  }
+}
+{"level":"info","time":1792671576009,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","inputPreview":"Completed step 0. Historical source details. Historical source details. Historical source details. H","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 3573/32000 (12.8%) tools=1175 conversation=0 system=1154 input=1244 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+{"level":"info","time":1792671576014,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","duration":5,"msg":"Agent run completed"}
+{"level":"info","time":1792671576014,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","inputPreview":"Completed step 1. Historical source details. Historical source details. Historical source details. H","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 4827/32000 (17.3%) tools=1175 conversation=1254 system=1154 input=1244 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+{"level":"info","time":1792671576016,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","duration":2,"msg":"Agent run completed"}
+{"level":"info","time":1792671576016,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","inputPreview":"Completed step 2. Historical source details. Historical source details. Historical source details. H","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 6081/32000 (21.8%) tools=1175 conversation=2508 system=1154 input=1244 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+{"level":"info","time":1792671576019,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","duration":3,"msg":"Agent run completed"}
+{"level":"info","time":1792671576019,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","inputPreview":"Completed step 3. Historical source details. Historical source details. Historical source details. H","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 7335/32000 (26.3%) tools=1175 conversation=3762 system=1154 input=1244 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+{"level":"info","time":1792671576021,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","duration":2,"msg":"Agent run completed"}
+{"level":"info","time":1792671576021,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","inputPreview":"Completed step 4. Historical source details. Historical source details. Historical source details. H","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 8589/32000 (30.8%) tools=1175 conversation=5016 system=1154 input=1244 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+{"level":"info","time":1792671576023,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","duration":2,"msg":"Agent run completed"}
+/context compact history
+{
+  "status": "compacted",
+  "trigger": "manual",
+  "inputTokensBefore": 7877,
+  "inputTokensAfter": 4450,
+  "accounting": "provider",
+  "checkpointed": true,
+  "plugins": {
+    "status": "skipped",
+    "reason": "not_selected",
+    "compacted": []
+  },
+  "history": {
+    "mode": "native",
+    "status": "compacted",
+    "sourceReferences": [
+      {
+        "version": 1,
+        "id": "1e71966c-ac92-4e62-933f-1cfa91981428",
+        "sha256": "adbf4975d1d22d50bdbef9f5fe1c2ee704de06e2b635be63821600eed2c53f6a",
+        "bytes": 14223,
+        "durability": "restart"
+      }
+    ],
+    "invocationId": "59bca062-4890-4b59-a41f-91197e3e2d7e",
+    "provider": "offline-native-fixture"
+  }
+}
+/context strategy
+Strategy: context-compaction
+{
+  "config": {
+    "plugins": "auto",
+    "history": "native",
+    "automatic": false
+  },
+  "activeNative": true,
+  "last": {
+    "status": "compacted",
+    "trigger": "manual",
+    "inputTokensBefore": 7877,
+    "inputTokensAfter": 4450,
+    "accounting": "provider",
+    "checkpointed": true,
+    "plugins": {
+      "status": "skipped",
+      "reason": "not_selected",
+      "compacted": []
+    },
+    "history": {
+      "mode": "native",
+      "status": "compacted",
+      "sourceReferences": [
+        {
+          "version": 1,
+          "id": "1e71966c-ac92-4e62-933f-1cfa91981428",
+          "sha256": "adbf4975d1d22d50bdbef9f5fe1c2ee704de06e2b635be63821600eed2c53f6a",
+          "bytes": 14223,
+          "durability": "restart"
+        }
+      ],
+      "invocationId": "59bca062-4890-4b59-a41f-91197e3e2d7e",
+      "provider": "offline-native-fixture"
+    }
+  }
+}
+Native accounting is provider-counted; estimates remain local diagnostics. /context compact [all|plugins|history] performs explicit work; /helpers usage shows actual calls and unknown usage.
+{"level":"info","time":1792671576035,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","sessionId":"1792671576030_tynknj3","msg":"Session loaded"}
+{"level":"info","time":1792671576035,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","inputPreview":"Continue after restart","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 4863/32000 (17.4%) tools=1175 conversation=2523 system=1154 input=11 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+{"level":"info","time":1792671576038,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","duration":3,"msg":"Agent run completed"}
+AMOS native policy, protected result, explicit reduction and saved-session resume pass. Offline protocol data only.

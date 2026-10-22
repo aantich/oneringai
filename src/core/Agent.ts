@@ -20,7 +20,7 @@ import type { ToolEvidenceDelivery } from './evidence/ToolEvidenceMiddleware.js'
  * in this class for clarity and simplicity.
  */
 
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { BaseAgent, BaseAgentConfig, BaseSessionConfig } from './BaseAgent.js';
 import { ExecutionContext, HistoryMode } from '../capabilities/agents/ExecutionContext.js';
 import { HookManager } from '../capabilities/agents/HookManager.js';
@@ -33,13 +33,21 @@ import { Content, ContentType } from '../domain/entities/Content.js';
 import { ToolTimeoutError, ToolPermissionDeniedError, ToolExecutionError } from '../domain/errors/AIErrors.js';
 import type { ToolExecutionOptions, ToolExecutionOutcome } from './tool-execution/outcomes.js';
 import { hasConflictingModelPricing, ModelBudgetExceededError, type ModelTask } from './model-execution/ModelTask.js';
+import { compactModel } from './model-execution/ModelExecutor.js';
+import { createProvider, nativeProviderEndpoint } from './createProvider.js';
+import { assertNativeCompactionOptions } from '../infrastructure/providers/shared/nativeCompaction.js';
+import { prepareAnthropicCompactionOptions } from '../infrastructure/providers/anthropic/AnthropicConverter.js';
+import { isContextCompactionStrategy } from './context-nextgen/strategies/ContextCompactionStrategy.js';
+import { nativeJSON } from './context-nextgen/compaction/fingerprint.js';
+import type { ContextCompactionReport, ContextCompactionTarget, NativeCompactionDriver } from './context-nextgen/compaction/types.js';
 import { ToolManager } from './ToolManager.js';
 import { captureConnectorScope, sameConnectorScope } from './tool-execution/connectorScope.js';
+import { withAbort } from './tool-execution/cancellation.js';
 import type { HookConfig, HookName } from '../capabilities/agents/types/HookTypes.js';
 import { AgentEvents } from '../capabilities/agents/types/EventTypes.js';
 import { IDisposable, assertNotDestroyed } from '../domain/interfaces/IDisposable.js';
 import { TextGenerateOptions } from '../domain/interfaces/ITextProvider.js';
-import type { ThinkingConfig } from '../domain/interfaces/ITextProvider.js';
+import type { ThinkingConfig, ITextProvider } from '../domain/interfaces/ITextProvider.js';
 import type { IContextStorage } from '../domain/interfaces/IContextStorage.js';
 import type { PermissionCheckContext } from './permissions/types.js';
 import { metrics } from '../infrastructure/observability/Metrics.js';
@@ -223,6 +231,15 @@ export interface RunOptions {
 }
 
 /** Options for {@link Agent.rolloverContext}. */
+export interface AgentContextCompactionOptions {
+  /** Default all. Manual history compaction may run below the pressure threshold. */
+  target?: ContextCompactionTarget;
+  signal?: AbortSignal;
+  modelTask?: ModelTask;
+  /** Defaults to true when session storage is configured. */
+  checkpoint?: boolean;
+}
+
 export interface AgentContextRolloverOptions {
   modelTask?: ModelTask;
   /** Number of most-recent user turns to retain verbatim. Default: 8. */
@@ -280,7 +297,7 @@ interface ExecutionSetup {
   lease: AgentExecutionLease;
 }
 
-type AgentExecutionKind = 'run' | 'stream' | 'external' | 'continuation' | 'rollover';
+type AgentExecutionKind = 'run' | 'stream' | 'external' | 'continuation' | 'rollover' | 'compact';
 
 interface AgentExecutionLease {
   kind: AgentExecutionKind;
@@ -293,6 +310,19 @@ interface AgentExecutionLease {
 interface IterationPreconditionResult {
   shouldExit: boolean;
   exitReason?: 'cancelled' | 'paused';
+}
+
+function nativePrincipal(context: AgentContextNextGen): string {
+  const tools = context.tools.getToolContext();
+  return nativeJSON({ userId: context.userId, principal: tools?.userId, accountId: tools?.accountId,
+    identities: tools?.identities, connectorAccounts: tools?.connectorAccounts, roles: tools?.roles });
+}
+function nativeBinding(connector: Connector, provider: ITextProvider, model: string, context: AgentContextNextGen): NativeCompactionDriver['binding'] {
+  return { provider: provider.name, connector: connector.name, model,
+    endpoint: nativeProviderEndpoint(provider, connector),
+    authority: createHash('sha256').update(nativePrincipal(context)).digest('hex'),
+    ...(context.userId === undefined ? {} : { userId: context.userId }),
+    ...(context.tools.getToolContext()?.accountId === undefined ? {} : { accountId: context.tools.getToolContext()!.accountId }) };
 }
 
 function cloneRuntimeConfigValue<T>(value: T, seen = new WeakMap<object, unknown>()): T {
@@ -557,8 +587,29 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     let baseOnly = true;
     const capture = (candidate: Agent, partialBase: boolean) => { agent = candidate; baseOnly = partialBase; };
     const candidateConfig = { ...config, session: { ...config.session, id: sessionId } };
+    let undoNativeBinding: (() => void) | undefined;
     try {
       if (sharedContext) {
+        const strategy = sharedContext.compactionStrategy;
+        if (isContextCompactionStrategy(strategy) && strategy.config.history !== 'off') {
+          // Preflight an unattached caller-owned context without constructing an
+          // Agent (which would register tools/permissions before admission).
+          const connector = typeof config.connector === 'string' ? (config.registry?.get(config.connector) ?? Connector.get(config.connector)) : config.connector;
+          const provider = createProvider(connector);
+          if (!provider.compaction) throw new Error('Selected provider does not support native context');
+          const binding = nativeBinding(connector, provider, config.model, sharedContext);
+          const registry = config.registry ? captureConnectorScope(config.registry) : undefined;
+          const principal = nativePrincipal(sharedContext);
+          const previous = sharedContext._bindNativeCompaction({ binding,
+            assertCurrent: () => {
+              if (principal !== nativePrincipal(sharedContext) || binding.endpoint !== nativeProviderEndpoint(provider, connector)
+                || !sameConnectorScope(registry, config.registry)) throw new Error('Native restore scope changed');
+            },
+            countInput: async () => { throw new Error('Native restore preflight has no execution authority'); },
+            compact: async () => { throw new Error('Native restore preflight has no execution authority'); },
+          });
+          undoNativeBinding = () => { sharedContext._bindNativeCompaction(previous); };
+        }
         // Keep restoration, construction and synchronous notifications inside one
         // checkpoint admission. Rejection restores caller bindings before cleanup.
         await sharedContext.restoreSession(sessionId, state => sharedContext.restoreState(state), false, loaded => {
@@ -571,6 +622,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       }
       return agent!;
     } catch (error) {
+      undoNativeBinding?.();
       // Construction can fail before Agent fields/hooks exist. Both paths retain
       // the original error and release the resources actually initialized.
       try {
@@ -778,6 +830,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       });
     });
 
+    this.bindNativeCompaction();
+
     // Initialize session (from BaseAgent)
     this.initializeSession(config.session, sessionAlreadyLoaded);
 
@@ -819,7 +873,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const lease = this.acquireExecution('rollover', options.modelTask);
 
     try {
-      await this.ensureSessionLoaded();
+      await withAbort(this.ensureSessionLoaded(), this._modelExecutionSignal);
 
       const maxSummaryTokens = options.maxSummaryTokens ?? 2048;
       if (!Number.isInteger(maxSummaryTokens) || maxSummaryTokens <= 0) {
@@ -871,6 +925,111 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     }
   }
 
+  /** Explicit bounded reduction through the configured composition policy. */
+  async compactContext(options: AgentContextCompactionOptions = {}): Promise<ContextCompactionReport> {
+    assertNotDestroyed(this, 'compact context');
+    const checkpoint = options.checkpoint ?? this.hasSession();
+    if (checkpoint && !this.hasSession()) throw new Error('Cannot checkpoint compaction without session storage');
+    const lease = this.acquireExecution('compact', options.modelTask);
+    try {
+      const signal = AbortSignal.any([this._executionAbort.signal, ...(options.signal ? [options.signal] : []),
+        ...(this._activeModelTask ? [this._activeModelTask.signal] : [])]);
+      signal.throwIfAborted();
+      await withAbort(this.ensureSessionLoaded(), signal);
+      const report = await this._agentContext._compactContext(options.target ?? 'all', {
+        signal, nativeCompaction: this.bindNativeCompaction(), getTools: () => this.getEnabledToolDefinitions(),
+        modelMaxContextTokens: this.resolveManagedModelCapacity(this.model),
+        getRequestOptions: tools => this.nativeContinuationOptions(tools),
+      });
+      if (report.status === 'compacted' && checkpoint) {
+        try { await this.saveSession(); report.checkpointed = true; this._agentContext._recordCompactionCheckpoint(report); }
+        catch (error) {
+          const failure = error instanceof Error ? error : new Error(String(error));
+          Object.assign(failure, { compaction: report, contextCommitted: true });
+          throw failure;
+        }
+      }
+      return report;
+    } finally { this.releaseExecution(lease); }
+  }
+
+  /** Configure wire ownership without copying credentials into context snapshots. */
+  private bindNativeCompaction(): NativeCompactionDriver | undefined {
+    const strategy = this._agentContext.compactionStrategy;
+    if (!(isContextCompactionStrategy(strategy)) || strategy.config.history === 'off') return undefined;
+    const connector = this.connector;
+    const model = this.model;
+    const provider = this._provider;
+    if (!provider.compaction) throw new Error(`Provider ${provider.name} does not support managed native compaction`);
+    const registry = this._config.registry;
+    const captured = registry ? captureConnectorScope(registry) : undefined;
+    const toolRegistry = this.tools.getToolContext()?.connectorRegistry;
+    const toolScope = toolRegistry ? captureConnectorScope(toolRegistry) : undefined;
+    const owner = this._executionOwner;
+    const endpoint = nativeProviderEndpoint(provider, connector);
+    const principal = () => nativePrincipal(this.context);
+    const authority = principal();
+    const controls = () => JSON.stringify({ instructions: this._config.instructions, thinking: this._config.thinking,
+      vendorOptions: this._config.vendorOptions, nativeTools: this._config.nativeTools,
+      promptCache: this._config.promptCache, dataHandling: this._config.dataHandling,
+      execution: { maxOutputTokensPerCall: this._config.modelExecution?.maxOutputTokensPerCall,
+        priceBound: this._config.modelExecution?.priceBound, customProviderAttempts: this._config.modelExecution?.customProviderAttempts },
+      run: { thinking: this._runOptions?.thinking, temperature: this._runOptions?.temperature,
+        vendorOptions: this._runOptions?.vendorOptions, nativeTools: this._runOptions?.nativeTools,
+        promptCache: this._runOptions?.promptCache, dataHandling: this._runOptions?.dataHandling,
+        responseFormat: this._runOptions?.responseFormat, continuationToken: this._runOptions?.continuationToken } });
+    const capturedControls = controls();
+    const assertCurrent = () => {
+      assertNotDestroyed(this, 'use native context');
+      if (this.connector !== connector || this._provider !== provider || this.model !== model || authority !== principal()
+        || (this._executionOwner && (owner !== this._executionOwner || capturedControls !== controls()))
+        || this._config.registry !== registry || this.tools.getToolContext()?.connectorRegistry !== toolRegistry
+        || !sameConnectorScope(toolScope, toolRegistry)
+        || endpoint !== nativeProviderEndpoint(provider, connector)
+        || !sameConnectorScope(captured, registry)) throw new Error('Native connector, model or host scope changed; prepare again');
+    };
+    const wireOptions = (request: TextGenerateOptions): TextGenerateOptions => ({
+      thinking: this._runOptions?.thinking ?? this._config.thinking,
+      vendorOptions: this._runOptions?.vendorOptions
+        ? { ...this._config.vendorOptions, ...this._runOptions.vendorOptions } : this._config.vendorOptions,
+      prompt_cache: this._runOptions?.promptCache ?? this._config.promptCache,
+      data_handling: this._runOptions?.dataHandling ?? this._config.dataHandling,
+      native_tools: this._runOptions?.nativeTools ?? this._config.nativeTools,
+      continuation_token: this._pendingContinuationToken,
+      ...request, nativeContext: true,
+      credential_context: { userId: this.userId, connectorRegistry: registry },
+      signal: AbortSignal.any([this._executionAbort.signal, ...(request.signal ? [request.signal] : []),
+        ...(this._activeModelTask ? [this._activeModelTask.signal] : [])]),
+    });
+    const caps = provider.getModelCapabilities(model);
+    // Preflight known native thinking/output conflicts before hooks or archival.
+    const nativeOutput = provider.name === 'anthropic'
+      ? prepareAnthropicCompactionOptions(wireOptions({ model, input: [] }), caps.maxOutputTokens ?? caps.maxTokens,
+        this._config.modelExecution?.maxOutputTokensPerCall).max_output_tokens!
+      : Math.min(4096, caps.maxOutputTokens ?? 4096);
+    const driver: NativeCompactionDriver = {
+      maxSourceTokens: Math.max(0, (this.resolveManagedModelCapacity(model) ?? this.context.maxContextTokens)
+        - nativeOutput),
+      binding: nativeBinding(connector, provider, model, this.context),
+      assertCurrent,
+      countInput: async request => {
+        assertCurrent();
+        if (!provider.compaction) throw new Error(`Provider ${provider.name} does not support native compaction`);
+        const selected = wireOptions(request);
+        assertNativeCompactionOptions(selected, provider.name);
+        const count = await withAbort(provider.compaction.countInput(selected), selected.signal!); assertCurrent(); return count;
+      },
+      compact: async request => {
+        assertCurrent();
+        if (!this._executionOwner || !this._activeModelTask) throw new Error('Native compaction requires an active managed ModelTask');
+        return compactModel(provider, connector, wireOptions(request), this._activeModelTask, this._config.modelExecution);
+      },
+    };
+    this._agentContext._bindNativeCompaction(driver);
+    this._agentContext._assertNativeContinuation();
+    return driver;
+  }
+
   /** Acquire the Agent's single mutable execution slot without an async race. */
   private acquireExecution(kind: AgentExecutionKind, modelTask?: ModelTask): AgentExecutionLease {
     if (this._executionOwner) {
@@ -881,8 +1040,14 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const lease = { kind, token: Symbol(kind) };
     this._executionOwner = lease;
     this._executionAbort = new AbortController();
-    try { this.beginModelTask(modelTask); this._modelExecutionSignal = this._executionAbort.signal; }
-    catch (error) { this._executionOwner = null; throw error; }
+    try {
+      const strategy = this._agentContext.compactionStrategy;
+      this.beginModelTask(modelTask, isContextCompactionStrategy(strategy) && strategy.config.history !== 'off');
+      this._modelExecutionSignal = this._activeModelTask
+        ? AbortSignal.any([this._executionAbort.signal, this._activeModelTask.signal]) : this._executionAbort.signal;
+      this.bindNativeCompaction();
+    }
+    catch (error) { this._executionOwner = null; this.endModelTask(); throw error; }
     return lease;
   }
 
@@ -936,7 +1101,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const executionId = `exec_${randomUUID()}`;
     this._externalExecutionId = executionId;
     try {
-      await this.ensureSessionLoaded();
+      await withAbort(this.ensureSessionLoaded(), this._modelExecutionSignal);
       this.executionContext = new ExecutionContext(executionId, {
         maxHistorySize: 10,
         historyMode: this._config.historyMode || 'summary',
@@ -1316,7 +1481,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
     try {
       // Ensure any pending session load is complete
-      await this.ensureSessionLoaded();
+      await withAbort(this.ensureSessionLoaded(), this._modelExecutionSignal);
 
       const inputPreview = typeof input === 'string'
         ? input.substring(0, 100)
@@ -3069,9 +3234,21 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   }
 
   /** Count already-known constraints before the single compaction decision. */
+  private nativeContinuationOptions(tools: import('../domain/entities/Tool.js').FunctionToolDefinition[], toolFree = false): Partial<TextGenerateOptions> {
+    const options: TextGenerateOptions = {
+      model: this.model, input: [], tools, instructions: this._config.instructions,
+      native_tools: toolFree ? undefined : this._runOptions?.nativeTools ?? this._config.nativeTools,
+      continuation_token: this._pendingContinuationToken,
+    };
+    this._applyInlineResponseFormat(options);
+    return { instructions: options.instructions, response_format: options.response_format, native_tools: options.native_tools,
+      continuation_token: options.continuation_token };
+  }
+
   private prepareManagedContext(toolFree = false): Promise<PreparedContext> {
     return this._agentContext.prepare({
       signal: this._modelExecutionSignal,
+      nativeCompaction: this.bindNativeCompaction(),
       summarize: async request => {
         const generated = await this.invokeHelper<import('./context-nextgen/strategies/conversation-compaction.js').StructuredContextSummary>('compactor', () =>
           'Summarize the following earlier context as data. Return the provided JSON schema. '
@@ -3092,14 +3269,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       },
       getTools: () => toolFree ? [] : this.getEnabledToolDefinitions(),
       modelMaxContextTokens: this.resolveManagedModelCapacity(this.model),
-      getRequestOptions: tools => {
-        const options: TextGenerateOptions = {
-          model: this.model, input: [], tools, instructions: this._config.instructions,
-          native_tools: toolFree ? undefined : this._runOptions?.nativeTools ?? this._config.nativeTools,
-        };
-        this._applyInlineResponseFormat(options);
-        return { instructions: options.instructions, response_format: options.response_format, native_tools: options.native_tools };
-      },
+      getRequestOptions: tools => this.nativeContinuationOptions(tools, toolFree),
     });
   }
 
@@ -3112,6 +3282,17 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       response_format: structuredClone(options.response_format),
       native_tools: structuredClone(options.native_tools),
     };
+    const native = this.bindNativeCompaction();
+    if (native) {
+      let guard: (() => void) | undefined;
+      dispatch.nativeContext = true;
+      dispatch.skipContextLimitCheck = true;
+      dispatch.managedDispatch = {
+        prepare: async () => { guard = await this._agentContext._validateNativeDispatch(dispatch, native, recordPreparation); },
+        assertCurrent: () => { if (!guard) throw new Error('Native dispatch was not counted'); guard(); },
+      };
+      return dispatch;
+    }
     this._agentContext.validateRequestBudget(dispatch, {
       modelMaxContextTokens: this.resolveManagedModelCapacity(dispatch.model),
       recordPreparation,
@@ -4461,12 +4642,15 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       ...(advanced ? { advanced: inspectAdvancedCapabilities(advanced) } : {}),
       context: { features: { ...this.context.features }, plugins: this.context.getPlugins().map(plugin => plugin.name),
         strategy: this.context.compactionStrategy.name, maxContextTokens: this.context.maxContextTokens, responseReserve: this.context.responseReserve,
-        ...(evidence instanceof EvidencePluginNextGen ? { evidenceDurability: evidence.storage.durability } : {}) },
+        ...(evidence instanceof EvidencePluginNextGen ? { evidenceDurability: evidence.storage.durability } : {}),
+        ...(this.context._inspectCompaction() ? { composition: this.context._inspectCompaction() } : {}) },
       loop: { enabled: !!policy, hostCompletionCheck: typeof policy?.completion === 'function', maxIterations: this._config.maxIterations || AGENT_DEFAULTS.MAX_ITERATIONS },
       helpers,
       notices: [
         'Managed run/stream configuration only; per-call overrides and external SDK/realtime loops have their own owner.',
-        'Context strategy selection does not enable provider-native compaction or native tool search.',
+        this.context._inspectCompaction()?.config.history !== undefined && this.context._inspectCompaction()?.config.history !== 'off'
+          ? 'Native history uses the main connector/model; plugin reductions and history controls are independent.'
+          : 'Context strategy selection does not enable provider-native compaction or native tool search.',
         ...(policy?.completion ? [] : ['No host completion check is configured; model completion does not establish workflow completion.']),
         ...(info ? [] : ['Model is absent from the registry; provider-reported capacities are not independently verified.']),
         ...(info && info.provider !== this.connector.vendor ? ['Registry model vendor differs from the selected connector.'] : []),
@@ -4518,11 +4702,14 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   // ===== Configuration Methods =====
 
   setModel(model: string): void {
+    const strategy = this._agentContext.compactionStrategy;
+    if (isContextCompactionStrategy(strategy) && strategy.config.history !== 'off') nativeProviderEndpoint(this._provider, this.connector);
     // Update the managed context first so a destroyed context cannot leave the
     // Agent and its context reporting different models.
     this._agentContext.setModel(model);
     (this as { model: string }).model = model;
     this._config.model = model;
+    this.bindNativeCompaction();
   }
 
   getTemperature(): number | undefined {

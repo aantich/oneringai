@@ -15,6 +15,9 @@ import {
   type TaskStateSnapshot,
   type TaskStateHostDelta,
   StrategyRegistry,
+  ContextCompactionStrategy,
+  type ContextCompactionStrategyConfig,
+  type ContextCompactionTarget,
   type ConversationCompactionReport,
   MessageRole,
   StreamEventType,
@@ -127,10 +130,20 @@ export class AgentRunner implements IAgentRunner {
 
   async initialize(connectorName: string, model: string): Promise<void> {
     this.assertReplaceable();
+    if (this.agent?.context?.getState?.().nativeContinuation) {
+      const active = this.agent.context.getState().nativeContinuation!;
+      if (active.binding.connector !== connectorName || active.binding.model !== model
+        || this.config.contextStrategy !== 'context-compaction' || this.config.contextCompaction?.history === 'off'
+        || this.config.evidence?.ownerId !== active.binding.scope.ownerId || this.config.evidence?.namespace !== active.binding.scope.namespace) {
+        throw new Error('Native context is bound to its model, connector and scope. Save it and explicitly start a fresh session or restore a trusted pre-native checkpoint first.');
+      }
+    }
     // Build/load first so invalid next-agent settings cannot destroy a live session.
     const agentConfig = this.buildAgentConfig(connectorName, model);
     const sessionId = this.config.session.activeSessionId;
-    if (this.config.contextStrategy && this.config.contextStrategy !== 'algorithmic' && !this.config.evidence?.enabled) throw new Error('Selected context strategy requires enabled evidence');
+    if (this.config.contextStrategy && this.config.contextStrategy !== 'algorithmic'
+      && !(this.config.contextStrategy === 'context-compaction' && this.config.contextCompaction?.history === 'off')
+      && !this.config.evidence?.enabled) throw new Error('Selected context strategy requires enabled evidence');
     if (this.config.contextStrategy === 'structured-summary' && !this.config.modelExecution?.helpers?.compactor) throw new Error('Selected summary strategy requires a compactor helper');
     const resumed = !!sessionId && await this.storage.exists(sessionId);
     const next = resumed ? await Agent.resume(sessionId!, { ...agentConfig, session: { ...agentConfig.session, storage: this.storage } }) : Agent.create(agentConfig);
@@ -384,20 +397,43 @@ export class AgentRunner implements IAgentRunner {
   }
 
   private createContextStrategy(strategy: NonNullable<AmosConfig['contextStrategy']>, settings = this.config) {
+    if (strategy === 'context-compaction') {
+      if (!settings.contextCompaction) throw new Error('Configure both plugin and history controls before selecting context-compaction');
+      return new ContextCompactionStrategy(settings.contextCompaction);
+    }
     return StrategyRegistry.create(strategy, strategy === 'structured-summary' ? {
       maxSummaryTokens: Math.max(1024, settings.modelExecution?.helpers?.compactor?.maxOutputTokens ?? 512),
     } : undefined);
   }
 
-  getContextCompaction(): { strategy: string; last?: ConversationCompactionReport } {
+  getContextCompaction() {
     const context = this.requireAgent().context;
-    return { strategy: context.compactionStrategy.name, last: context.lastPreparation?.compaction };
+    return { strategy: context.compactionStrategy.name, last: context.lastPreparation?.compaction, composition: context._inspectCompaction?.() };
+  }
+
+  setContextCompaction(config: ContextCompactionStrategyConfig): void {
+    if (this.isRunning()) throw new Error('Cannot change compaction during an execution');
+    const strategy = new ContextCompactionStrategy(config);
+    const context = this.requireAgent().context;
+    if (config.history !== 'off' && !(context.getPlugin('evidence') instanceof EvidencePluginNextGen)) throw new Error('Enable scoped evidence and reload before selecting native history');
+    const supported = this.requireAgent().inspectCapabilities().advanced?.nativeCompaction;
+    if (config.history !== 'off' && (!supported || supported.onDemand === 'unsupported')) throw new Error('Selected provider does not support native history');
+    context.setCompactionStrategy(strategy);
+    this.config.contextStrategy = 'context-compaction'; this.config.contextCompaction = structuredClone(config);
+  }
+
+  async compactContext(target: ContextCompactionTarget = 'all') {
+    if (this.isRunning()) throw new Error('An operation is already running');
+    this._isRunning = true;
+    try { return await this.requireAgent().compactContext({ target }); }
+    finally { this._isRunning = false; }
   }
 
   setContextStrategy(strategy: NonNullable<AmosConfig['contextStrategy']>): void {
     if (this.isRunning()) throw new Error('Cannot change strategy during an execution');
     const context = this.requireAgent().context;
-    if (strategy !== 'algorithmic' && !(context.getPlugin('evidence') instanceof EvidencePluginNextGen)) throw new Error('Enable evidence in AMOS configuration and reload before selecting this strategy');
+    if (strategy !== 'algorithmic' && !(strategy === 'context-compaction' && this.config.contextCompaction?.history === 'off')
+      && !(context.getPlugin('evidence') instanceof EvidencePluginNextGen)) throw new Error('Enable evidence in AMOS configuration and reload before selecting this strategy');
     if (strategy === 'structured-summary' && !this.config.modelExecution?.helpers?.compactor) throw new Error('Configure the compactor helper first');
     context.setCompactionStrategy(this.createContextStrategy(strategy));
     this.config.contextStrategy = strategy;

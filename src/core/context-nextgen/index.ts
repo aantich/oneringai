@@ -11,6 +11,8 @@
 
 // Main context manager
 export { AgentContextNextGen } from './AgentContextNextGen.js';
+export { ContextCompactionStrategy } from './strategies/ContextCompactionStrategy.js';
+export type { ContextCompactionStrategyConfig, NativeHistoryCompactionConfig, ContextCompactionReport, ContextCompactionTarget, NativeContinuationSnapshot, NativeContinuationBinding } from './compaction/types.js';
 
 // Types
 export type {

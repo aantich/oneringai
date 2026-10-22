@@ -296,3 +296,26 @@ makes no model calls, preserves the session, and stores connector names rather
 than keys. Each explicit helper may make one call plus one repair. AMOS does not
 aggregate independent commands into one host-shared task. See the
 [AMOS guide](../apps/amos/README.md#helper-models-stage-06).
+
+## Native compactor accounting (Stage 16A)
+
+`ContextCompactionStrategy` uses the main connector/model for native compaction.
+The local `helpers.compactor` remains the explicit semantic-summary/rollover option.
+Native model invocations have purpose `compactor` and share the active ModelTask;
+provider model discovery/input counting are auxiliary I/O and do not consume
+generation attempts. Discarded/no-reduction results still count. Anthropic native
+usage is read from compaction iterations; missing/partial usage stays unknown.
+OpenAI's compact endpoint cannot honor `maxOutputTokensPerCall`; that combination
+is rejected. Use explicit conservative task call/token/cost/deadline bounds and
+a main-only `before:llm` cap if needed. Provider counts are capacity provenance,
+not billing. Read the [native recipe](NATIVE_CONTEXT_COMPACTION.md) for reservation,
+persistence and cancellation boundaries.
+
+Anthropic native output keeps the main thinking mode/budget. The default allowance
+is 4096 tokens for adaptive/disabled thinking, or the resolved fixed budget plus
+4096 summary tokens, bounded by model output capacity. Explicit output caps and
+`maxOutputTokensPerCall` are respected rather than silently enlarged. Known fixed
+budget/cap conflicts fail before archival; actual native wire caps, source headroom
+and ModelTask reservations use the same selection. Internal streaming supports
+large valid caps and retains iteration usage when a summary is unusable. Main
+generation limits/settings and helper routing remain unchanged.

@@ -16,6 +16,8 @@ import type { IHistoryJournal } from './IHistoryJournal.js';
  * This is the canonical definition - core layer re-exports this type.
  */
 export interface SerializedContextState {
+  /** Optional native continuation; host policy and credentials must be supplied again. */
+  nativeContinuation?: import('./INativeContinuation.js').NativeContinuationSnapshot;
   /** Conversation history */
   conversation: InputItem[];
   /** Plugin states (keyed by plugin name) */

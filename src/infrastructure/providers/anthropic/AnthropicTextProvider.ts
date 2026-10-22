@@ -3,13 +3,15 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { modelExecutionFetch, modelRequestOptions, registerModelTransport } from '../../../core/model-execution/ModelTask.js';
+import { modelExecutionFetch, modelRequestOptions, registerModelTransport, withoutModelTracking, markFailedModelUsage } from '../../../core/model-execution/ModelTask.js';
+import { ANTHROPIC_COMPACTION_BETA, assertNativeCompactionOptions, nativeCompactionUsage } from '../shared/nativeCompaction.js';
+import type { ITextCompactionProvider, TextCompactionResponse } from '../../../domain/interfaces/ITextProvider.js';
 import { BaseTextProvider } from '../base/BaseTextProvider.js';
 import { TextGenerateOptions, ModelCapabilities } from '../../../domain/interfaces/ITextProvider.js';
 import { LLMResponse } from '../../../domain/entities/Response.js';
 import { ProviderCapabilities } from '../../../domain/interfaces/IProvider.js';
 import { AnthropicConfig } from '../../../domain/types/ProviderConfig.js';
-import { AnthropicConverter } from './AnthropicConverter.js';
+import { AnthropicConverter, prepareAnthropicCompactionOptions } from './AnthropicConverter.js';
 import { AnthropicStreamConverter } from './AnthropicStreamConverter.js';
 import { StreamEvent, StreamEventType } from '../../../domain/entities/StreamEvent.js';
 import type { TokenUsage } from '../../../domain/entities/Response.js';
@@ -62,6 +64,60 @@ export function supportsAnthropicNativeStructuredOutput(model: string): boolean 
 }
 
 export class AnthropicTextProvider extends BaseTextProvider {
+  private readonly nativeModelSupport = new Map<string, boolean>();
+  readonly compaction: ITextCompactionProvider = {
+    compact: options => this.compactNative(options),
+    countInput: options => this.countNativeInput(options),
+  };
+
+  private async assertNativeModel(options: TextGenerateOptions): Promise<void> {
+    assertNativeCompactionOptions(options, this.name);
+    if (!this.nativeModelSupport.has(options.model)) {
+      const model = await withoutModelTracking(() => this.client.beta.models.retrieve(options.model,
+        { betas: [ANTHROPIC_COMPACTION_BETA] }, ...modelRequestOptions(options)));
+      this.nativeModelSupport.set(options.model, model.capabilities?.compaction?.supported === true
+        && model.capabilities.compaction.summarize.supported === true);
+    }
+    if (!this.nativeModelSupport.get(options.model)) throw new ProviderCapabilityNotSupportedError(this.name, options.model, 'on-demand compaction');
+  }
+
+  private async compactNative(options: TextGenerateOptions): Promise<TextCompactionResponse> {
+    options = this.applyContextLimitGuardrail({ ...options, skipContextLimitCheck: true });
+    assertNativeCompactionOptions(options, this.name);
+    const caps = this.getModelCapabilities(options.model);
+    options = prepareAnthropicCompactionOptions(options, caps.maxOutputTokens ?? caps.maxTokens);
+    await this.assertNativeModel(options);
+    const request = this.converter.convertRequest({ ...options, nativeContext: true,
+      vendorOptions: { ...options.vendorOptions, compaction: { type: 'summarize' } } });
+    // Large valid thinking budgets require streaming transport in the SDK.
+    // Keep it internal: callers still receive one complete native result.
+    const stream = this.client.beta.messages.stream(request as Anthropic.Beta.MessageCreateParamsNonStreaming,
+      ...modelRequestOptions(options));
+    let response: Anthropic.Beta.BetaMessage;
+    try { response = await stream.finalMessage(); }
+    finally { stream.controller.abort(); }
+    const block = response.content[0];
+    if (response.stop_reason !== 'compaction' || response.content.length !== 1 || block?.type !== 'compaction'
+      || !block.content || !block.signature) {
+      const error = new ProviderError(this.name, 'Anthropic returned no valid signed native summary');
+      markFailedModelUsage(error, nativeCompactionUsage(response.usage, 'anthropic')); throw error;
+    }
+    return { protocol: 'anthropic-on-demand-v1', providerResponseId: response.id,
+      input: [{ type: 'compaction', id: response.id, encrypted_content: block.encrypted_content ?? '', content: block.content, signature: block.signature,
+        providerMetadata: { nativeCompaction: { protocol: 'anthropic-on-demand-v1', block: structuredClone(block) } } }],
+      usage: nativeCompactionUsage(response.usage, 'anthropic') };
+  }
+
+  private async countNativeInput(options: TextGenerateOptions): Promise<number | null> {
+    options = this.applyContextLimitGuardrail({ ...options, skipContextLimitCheck: true });
+    await this.assertNativeModel(options);
+    const request = this.converter.convertRequest({ ...options, nativeContext: true });
+    const { model, messages, system, tools, thinking, tool_choice } = request;
+    const response = await withoutModelTracking(() => this.client.beta.messages.countTokens({ model, messages, system, tools, thinking, tool_choice,
+      betas: [ANTHROPIC_COMPACTION_BETA], ...(request.output_config ? { output_config: request.output_config } : {}) } as Anthropic.Beta.MessageCountTokensParams,
+      ...modelRequestOptions(options)));
+    return Number.isSafeInteger(response.input_tokens) && response.input_tokens >= 0 ? response.input_tokens : null;
+  }
   readonly name = 'anthropic';
   readonly capabilities: ProviderCapabilities = {
     text: true,
@@ -311,6 +367,8 @@ export class AnthropicTextProvider extends BaseTextProvider {
     const supportsNativeSchema = supportsAnthropicNativeStructuredOutput(model);
     const nativeTools = info ? getAnthropicNativeTools(model) : [];
     return {
+      nativeCompaction: { onDemand: this.nativeModelSupport.has(model) ? (this.nativeModelSupport.get(model) ? 'supported' : 'unsupported') : 'unverified',
+        inputTokenCounting: 'provider' },
       reasoningHistory: 'always',
       promptCaching: {
         mode: supportsPromptCaching ? 'request_controlled' : 'unsupported',

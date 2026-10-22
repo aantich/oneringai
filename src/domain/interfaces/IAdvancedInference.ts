@@ -89,6 +89,10 @@ export type NativeToolRequest =
   | { capability: 'image_generation'; options?: Record<string, unknown> };
 
 export interface AdvancedTextCapabilities {
+  nativeCompaction?: {
+    onDemand: 'supported' | 'unsupported' | 'unverified';
+    inputTokenCounting: 'provider' | 'unavailable' | 'unverified';
+  };
   /** Whether normalized reasoning must be replayed in stateless conversation history. */
   reasoningHistory?: 'discard' | 'always' | 'when_tools_configured';
   promptCaching: {

@@ -11,7 +11,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 
 ## Table of Contents
 
-- [Core](#core) (23 items)
+- [Core](#core) (24 items)
 - [Text-to-Speech (TTS)](#text-to-speech-tts-) (13 items)
 - [Speech-to-Text (STT)](#speech-to-text-stt-) (11 items)
 - [Image Generation](#image-generation) (25 items)
@@ -27,9 +27,9 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Resilience & Observability](#resilience-observability) (33 items)
 - [Errors](#errors) (44 items)
 - [Utilities](#utilities) (10 items)
-- [Interfaces](#interfaces) (86 items)
+- [Interfaces](#interfaces) (90 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (801 items)
+- [Other](#other) (806 items)
 
 ## Core
 
@@ -37,7 +37,7 @@ Core classes for authentication, agents, and providers
 
 ### Agent `class`
 
-📍 [`src/core/Agent.ts:413`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:443`](src/core/Agent.ts)
 
 Agent class - represents an AI assistant with tool calling capabilities
 
@@ -225,6 +225,19 @@ async rolloverContext(
 - `options`: `AgentContextRolloverOptions` *(optional)* (default: `{}`)
 
 **Returns:** `Promise&lt;ContextRolloverResult&gt;`
+
+#### `compactContext()`
+
+Explicit bounded reduction through the configured composition policy.
+
+```typescript
+async compactContext(options: AgentContextCompactionOptions = {}): Promise&lt;ContextCompactionReport&gt;
+```
+
+**Parameters:**
+- `options`: `AgentContextCompactionOptions` *(optional)* (default: `{}`)
+
+**Returns:** `Promise&lt;ContextCompactionReport&gt;`
 
 #### `beginExternalExecution()`
 
@@ -1765,7 +1778,7 @@ isDisposed(): boolean
 
 ### AgentConfig `interface`
 
-📍 [`src/core/Agent.ts:90`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:98`](src/core/Agent.ts)
 
 Agent configuration - extends BaseAgentConfig with Agent-specific options
 
@@ -1826,11 +1839,29 @@ Example: `toolExecutionTimeout: 300000` (5 minutes hard cap per tool call) |
 
 ---
 
-### AgentContextRolloverOptions `interface`
+### AgentContextCompactionOptions `interface`
 
-📍 [`src/core/Agent.ts:226`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:234`](src/core/Agent.ts)
 
 Options for {@link Agent.rolloverContext}.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `target?` | `target?: ContextCompactionTarget;` | Default all. Manual history compaction may run below the pressure threshold. |
+| `signal?` | `signal?: AbortSignal;` | - |
+| `modelTask?` | `modelTask?: ModelTask;` | - |
+| `checkpoint?` | `checkpoint?: boolean;` | Defaults to true when session storage is configured. |
+
+</details>
+
+---
+
+### AgentContextRolloverOptions `interface`
+
+📍 [`src/core/Agent.ts:243`](src/core/Agent.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -1986,7 +2017,7 @@ Fetch options with additional connector-specific settings
 
 ### ExternalExecutionOptions `interface`
 
-📍 [`src/core/Agent.ts:251`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:268`](src/core/Agent.ts)
 
 Options for a non-LLM execution owned by an external transport.
 
@@ -2004,7 +2035,7 @@ Options for a non-LLM execution owned by an external transport.
 
 ### ExternalExecutionResult `interface`
 
-📍 [`src/core/Agent.ts:266`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:283`](src/core/Agent.ts)
 
 Terminal data supplied when an external execution is completed.
 
@@ -2024,7 +2055,7 @@ Terminal data supplied when an external execution is completed.
 
 ### ExternalToolCall `interface`
 
-📍 [`src/core/Agent.ts:259`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:276`](src/core/Agent.ts)
 
 A function call received from an external model transport.
 
@@ -2043,7 +2074,7 @@ A function call received from an external model transport.
 
 ### RunOptions `interface`
 
-📍 [`src/core/Agent.ts:192`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:200`](src/core/Agent.ts)
 
 Per-call options for run() and stream().
 These override the agent-level config for this single invocation.
@@ -2085,7 +2116,7 @@ type AgentEventListener = (agentId: string, agentName: string, event: string, da
 
 ### AgentRuntimeConfigSnapshot `type`
 
-📍 [`src/core/Agent.ts:172`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:180`](src/core/Agent.ts)
 
 Agent runtime options exposed by getRuntimeConfigSnapshot().
 
@@ -2111,7 +2142,7 @@ type AgentRuntimeConfigSnapshot = Pick&lt;AgentConfig,
 
 ### AgentSessionConfig `type`
 
-📍 [`src/core/Agent.ts:85`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:93`](src/core/Agent.ts)
 
 Session configuration for Agent (same as BaseSessionConfig)
 
@@ -2145,7 +2176,7 @@ type Vendor = (typeof Vendor)[keyof typeof Vendor]
 
 ### createProvider `function`
 
-📍 [`src/core/createProvider.ts:62`](src/core/createProvider.ts)
+📍 [`src/core/createProvider.ts:87`](src/core/createProvider.ts)
 
 Create a text provider from a connector
 
@@ -2157,7 +2188,7 @@ export function createProvider(connector: Connector): ITextProvider
 
 ### getVendorDefaultBaseURL `function`
 
-📍 [`src/core/createProvider.ts:55`](src/core/createProvider.ts)
+📍 [`src/core/createProvider.ts:57`](src/core/createProvider.ts)
 
 Get the default API base URL for a vendor.
 For OpenAI/Anthropic reads from the installed SDK at runtime.
@@ -12485,7 +12516,7 @@ constructor(public readonly limit: string)
 
 ### ModelTask `class`
 
-📍 [`src/core/model-execution/ModelTask.ts:112`](src/core/model-execution/ModelTask.ts)
+📍 [`src/core/model-execution/ModelTask.ts:123`](src/core/model-execution/ModelTask.ts)
 
 In-process shared admission, reservations and usage. Never stores prompts or credentials.
 
@@ -12526,13 +12557,15 @@ async execute&lt;T&gt;(descriptor: ModelCallDescriptor, operation: (signal: Abor
     signal?: AbortSignal; transport?: boolean; usage?: (result: T) =&gt; TokenUsage | undefined;
     /** @internal Latest terminal usage survives an iterator failure or cancellation. */
     observedUsage?: () =&gt; TokenUsage | undefined;
+    /** @internal Final synchronous native request/authority guard, including retries. */
+    beforeDispatch?: () =&gt; void;
   } = {}): Promise&lt;{ result: T; invocationId: string }&gt;
 ```
 
 **Parameters:**
 - `descriptor`: `ModelCallDescriptor`
 - `operation`: `(signal: AbortSignal) =&gt; Promise&lt;T&gt;`
-- `options`: `{ signal?: AbortSignal | undefined; transport?: boolean | undefined; usage?: ((result: T) =&gt; TokenUsage | undefined) | undefined; observedUsage?: (() =&gt; TokenUsage | undefined) | undefined; }` *(optional)* (default: `{}`)
+- `options`: `{ signal?: AbortSignal | undefined; transport?: boolean | undefined; usage?: ((result: T) =&gt; TokenUsage | undefined) | undefined; observedUsage?: (() =&gt; TokenUsage | undefined) | undefined; beforeDispatch?: (() =&gt; void) | undefined; }` *(optional)* (default: `{}`)
 
 **Returns:** `Promise&lt;{ result: T; invocationId: string; }&gt;`
 
@@ -12543,13 +12576,14 @@ Streaming variant with pull-based backpressure and invocation-local transport tr
 ```typescript
 async *iterate&lt;T&gt;(descriptor: ModelCallDescriptor, factory: (signal: AbortSignal) =&gt; AsyncIterable&lt;T&gt;, options: {
     signal?: AbortSignal; transport?: boolean; usage?: (event: T) =&gt; TokenUsage | undefined;
+    beforeDispatch?: () =&gt; void;
   } = {}): AsyncIterableIterator&lt;T&gt;
 ```
 
 **Parameters:**
 - `descriptor`: `ModelCallDescriptor`
 - `factory`: `(signal: AbortSignal) =&gt; AsyncIterable&lt;T&gt;`
-- `options`: `{ signal?: AbortSignal | undefined; transport?: boolean | undefined; usage?: ((event: T) =&gt; TokenUsage | undefined) | undefined; }` *(optional)* (default: `{}`)
+- `options`: `{ signal?: AbortSignal | undefined; transport?: boolean | undefined; usage?: ((event: T) =&gt; TokenUsage | undefined) | undefined; beforeDispatch?: (() =&gt; void) | undefined; }` *(optional)* (default: `{}`)
 
 **Returns:** `AsyncIterableIterator&lt;T&gt;`
 
@@ -20981,7 +21015,7 @@ async end(reason?: CallEndReason): Promise&lt;CallSummary&gt;
 
 ### ContextSessionMetadata `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:63`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:65`](src/domain/interfaces/IContextStorage.ts)
 
 Session metadata (stored with session)
 
@@ -21000,7 +21034,7 @@ Session metadata (stored with session)
 
 ### ContextSessionSummary `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:40`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:42`](src/domain/interfaces/IContextStorage.ts)
 
 Session summary for listing (lightweight, no full state)
 
@@ -22025,7 +22059,7 @@ if (ref) {
 
 ### StoredContextSession `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:80`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:82`](src/domain/interfaces/IContextStorage.ts)
 
 Full session state wrapper (includes metadata)
 
@@ -25058,7 +25092,7 @@ Must be unique among all registered tools. |
 
 ### CustomToolCallOutputItem `interface`
 
-📍 [`src/domain/entities/Message.ts:66`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:68`](src/domain/entities/Message.ts)
 
 Top-level custom-tool result item for Responses continuations.
 
@@ -27055,7 +27089,7 @@ Versioned optional persistence metadata. Failed acknowledgement protects the raw
 
 ### ToolSearchOutputItem `interface`
 
-📍 [`src/domain/entities/Message.ts:116`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:118`](src/domain/entities/Message.ts)
 
 Tool definitions returned by a client-executed OpenAI tool-search call.
 
@@ -27323,7 +27357,7 @@ type Tool = FunctionToolDefinition | FreeformToolDefinition | BuiltInTool
 
 ### ToolCallOutputContent `type`
 
-📍 [`src/domain/entities/Message.ts:57`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:59`](src/domain/entities/Message.ts)
 
 Top-level function result item for Responses continuations.
 
@@ -30520,7 +30554,7 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ### ModelCapabilities `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:79`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:84`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -37868,7 +37902,7 @@ constructor(factId: FactId, supersededBy: FactId)
 
 ### HelperOutputError `class`
 
-📍 [`src/core/model-execution/ModelExecutor.ts:57`](src/core/model-execution/ModelExecutor.ts)
+📍 [`src/core/model-execution/ModelExecutor.ts:58`](src/core/model-execution/ModelExecutor.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -39068,6 +39102,10 @@ TypeScript interfaces for extensibility
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `nativeCompaction?` | `nativeCompaction?: {
+    onDemand: 'supported' | 'unsupported' | 'unverified';
+    inputTokenCounting: 'provider' | 'unavailable' | 'unverified';
+  };` | - |
 | `reasoningHistory?` | `reasoningHistory?: 'discard' | 'always' | 'when_tools_configured';` | Whether normalized reasoning must be replayed in stateless conversation history. |
 | `promptCaching` | `promptCaching: {
     mode: PromptCachingMode;
@@ -39172,7 +39210,7 @@ Agent definition summary for listing
 
 ### BatchHandle `interface`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:152`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:156`](src/domain/interfaces/IAdvancedInference.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -39201,7 +39239,7 @@ Agent definition summary for listing
 
 ### BatchSubmitOptions `interface`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:146`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:150`](src/domain/interfaces/IAdvancedInference.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -39218,7 +39256,7 @@ Agent definition summary for listing
 
 ### BatchTextRequest `interface`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:140`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:144`](src/domain/interfaces/IAdvancedInference.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -39234,7 +39272,7 @@ Agent definition summary for listing
 
 ### BatchTextResult `interface`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:170`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:174`](src/domain/interfaces/IAdvancedInference.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -39258,7 +39296,7 @@ Agent definition summary for listing
 
 ### ContextStorageListOptions `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:200`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:202`](src/domain/interfaces/IContextStorage.ts)
 
 Options for listing sessions
 
@@ -39843,7 +39881,7 @@ destroy(): Promise&lt;void&gt;;
 
 ### IAsyncTextBatchProvider `interface`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:183`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:187`](src/domain/interfaces/IAdvancedInference.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -40139,7 +40177,7 @@ warmup?(): Promise&lt;void&gt;;
 
 ### IContextStorage `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:112`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:114`](src/domain/interfaces/IContextStorage.ts)
 
 Storage interface for AgentContext persistence
 
@@ -41770,9 +41808,42 @@ translate?(options: STTOptions): Promise&lt;STTResponse&gt;;
 
 ---
 
+### ITextCompactionProvider `interface`
+
+📍 [`src/domain/interfaces/ITextProvider.ts:125`](src/domain/interfaces/ITextProvider.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `compact()`
+
+```typescript
+compact(options: TextGenerateOptions): Promise&lt;TextCompactionResponse&gt;;
+```
+
+**Parameters:**
+- `options`: `TextGenerateOptions`
+
+**Returns:** `Promise&lt;TextCompactionResponse&gt;`
+
+#### `countInput()`
+
+```typescript
+countInput(options: TextGenerateOptions): Promise&lt;number | null&gt;;
+```
+
+**Parameters:**
+- `options`: `TextGenerateOptions`
+
+**Returns:** `Promise&lt;number | null&gt;`
+
+</details>
+
+---
+
 ### ITextProvider `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:89`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:94`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -41847,6 +41918,7 @@ listModels(): Promise&lt;string[]&gt;;
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `compaction?` | `readonly compaction?: ITextCompactionProvider;` | Optional standalone native context operations; existing providers need no changes. |
 | `batch?` | `readonly batch?: IAsyncTextBatchProvider&lt;TextGenerateOptions, LLMResponse&gt;;` | Optional asynchronous batch surface. Present only when implemented by the provider. |
 
 </details>
@@ -42140,6 +42212,53 @@ Result of a save operation
 
 ---
 
+### NativeContinuationBinding `interface`
+
+📍 [`src/domain/interfaces/INativeContinuation.ts:4`](src/domain/interfaces/INativeContinuation.ts)
+
+Secret-free configured identity; metadata does not authenticate an account.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `provider` | `provider: string;` | - |
+| `connector` | `connector: string;` | - |
+| `endpoint` | `endpoint: string;` | - |
+| `model` | `model: string;` | - |
+| `userId?` | `userId?: string;` | - |
+| `accountId?` | `accountId?: string;` | - |
+| `authority?` | `authority?: string;` | Secret-free host principal/account selection fingerprint. |
+| `scope` | `scope: EvidenceScope;` | - |
+
+</details>
+
+---
+
+### NativeContinuationSnapshot `interface`
+
+📍 [`src/domain/interfaces/INativeContinuation.ts:17`](src/domain/interfaces/INativeContinuation.ts)
+
+Optional checkpoint envelope. Never restores policy, credentials or a ModelTask.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `version` | `version: 1;` | - |
+| `binding` | `binding: NativeContinuationBinding;` | - |
+| `protocol` | `protocol: string;` | - |
+| `prefixLength` | `prefixLength: number;` | - |
+| `prefixHash` | `prefixHash: string;` | - |
+| `sourceReferences` | `sourceReferences: EvidenceReference[];` | - |
+| `state?` | `state?: Record&lt;string, unknown&gt;;` | - |
+
+</details>
+
+---
+
 ### ProviderCapabilities `interface`
 
 📍 [`src/domain/interfaces/IProvider.ts:5`](src/domain/interfaces/IProvider.ts)
@@ -42262,6 +42381,7 @@ This is the canonical definition - core layer re-exports this type.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `nativeContinuation?` | `nativeContinuation?: import('./INativeContinuation.js').NativeContinuationSnapshot;` | Optional native continuation; host policy and credentials must be supplied again. |
 | `conversation` | `conversation: InputItem[];` | Conversation history |
 | `pluginStates` | `pluginStates: Record&lt;string, unknown&gt;;` | Plugin states (keyed by plugin name) |
 | `systemPrompt?` | `systemPrompt?: string;` | System prompt |
@@ -42389,15 +42509,36 @@ Used by edit UIs to re-populate form fields without needing to decrypt config.au
 
 ---
 
-### TextGenerateOptions `interface`
+### TextCompactionResponse `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:39`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:130`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `input` | `input: InputItem[];` | Complete canonical next prefix, including retained items and opaque state. |
+| `usage` | `usage: TokenUsage | null;` | - |
+| `protocol` | `protocol: string;` | - |
+| `providerResponseId?` | `providerResponseId?: string;` | - |
+| `state?` | `state?: Record&lt;string, unknown&gt;;` | Optional persisted diagnostics. All state needed for provider replay belongs in input. |
+
+</details>
+
+---
+
+### TextGenerateOptions `interface`
+
+📍 [`src/domain/interfaces/ITextProvider.ts:40`](src/domain/interfaces/ITextProvider.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `nativeContext?` | `nativeContext?: boolean;` | - |
+| `managedDispatch?` | `managedDispatch?: { prepare(): Promise&lt;void&gt;; assertCurrent(): void };` | - |
 | `signal?` | `signal?: AbortSignal;` | Optional cooperative cancellation for this provider call. |
 | `model` | `model: string;` | - |
 | `input` | `input: string | InputItem[];` | - |
@@ -42430,7 +42571,7 @@ but cannot disable provider-implicit caching. |
 
 ### ThinkingConfig `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:29`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:30`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -42496,7 +42637,7 @@ Word-level timestamp
 
 ### BatchProcessingState `type`
 
-📍 [`src/domain/interfaces/IAdvancedInference.ts:131`](src/domain/interfaces/IAdvancedInference.ts)
+📍 [`src/domain/interfaces/IAdvancedInference.ts:135`](src/domain/interfaces/IAdvancedInference.ts)
 
 ```typescript
 type BatchProcessingState = | 'queued'
@@ -42620,7 +42761,7 @@ type PromptCachingMode = 'unsupported' | 'implicit' | 'request_controlled' | 'ex
 
 ### ReasoningEffort `type`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:20`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:21`](src/domain/interfaces/ITextProvider.ts)
 
 Cross-vendor reasoning-depth controls. Individual models may support a subset.
 
@@ -43131,7 +43272,7 @@ destroy(): void
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:157`](src/core/context-nextgen/AgentContextNextGen.ts)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:165`](src/core/context-nextgen/AgentContextNextGen.ts)
 
 Next-generation context manager for AI agents.
 
@@ -43566,13 +43707,13 @@ Model/schema/native-tool fields are optional for existing callers.
 validateRequestBudget(
     request: Pick&lt;TextGenerateOptions, 'input' | 'tools' | 'instructions'&gt; &
       Partial&lt;Pick&lt;TextGenerateOptions, 'model' | 'response_format' | 'native_tools'&gt;&gt;,
-    options: { modelMaxContextTokens?: number; recordPreparation?: boolean } = {},
+    options: { modelMaxContextTokens?: number; recordPreparation?: boolean; providerCountedInputTokens?: number } = {},
   ): ContextBudget
 ```
 
 **Parameters:**
 - `request`: `Pick&lt;TextGenerateOptions, "instructions" | "tools" | "input"&gt; & Partial&lt;Pick&lt;TextGenerateOptions, "model" | "response_format" | "native_tools"&gt;&gt;`
-- `options`: `{ modelMaxContextTokens?: number | undefined; recordPreparation?: boolean | undefined; }` *(optional)* (default: `{}`)
+- `options`: `{ modelMaxContextTokens?: number | undefined; recordPreparation?: boolean | undefined; providerCountedInputTokens?: number | undefined; }` *(optional)* (default: `{}`)
 
 **Returns:** `ContextBudget`
 
@@ -44455,6 +44596,70 @@ destroy(): void
 ```
 
 **Returns:** `void`
+
+</details>
+
+---
+
+### ContextCompactionStrategy `class`
+
+📍 [`src/core/context-nextgen/strategies/ContextCompactionStrategy.ts:14`](src/core/context-nextgen/strategies/ContextCompactionStrategy.ts)
+
+Explicit plugin-content reduction and native history through the existing strategy API.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(config: ContextCompactionStrategyConfig)
+```
+
+**Parameters:**
+- `config`: `ContextCompactionStrategyConfig`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `compact()`
+
+```typescript
+async compact(context: CompactionContext, _targetToFree: number): Promise&lt;CompactionResult&gt;
+```
+
+**Parameters:**
+- `context`: `CompactionContext`
+- `_targetToFree`: `number`
+
+**Returns:** `Promise&lt;CompactionResult&gt;`
+
+#### `consolidate()`
+
+```typescript
+async consolidate(_context: CompactionContext): Promise&lt;ConsolidationResult&gt;
+```
+
+**Parameters:**
+- `_context`: `CompactionContext`
+
+**Returns:** `Promise&lt;ConsolidationResult&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `name: "context-compaction"` | - |
+| `displayName` | `displayName: "Plugin and history compaction"` | - |
+| `description` | `description: "Compose plugin-owned reductions and provider-native history without replacing context plugins."` | - |
+| `threshold` | `threshold: 0.75` | - |
+| `requiredPlugins` | `requiredPlugins: readonly string[]` | - |
+| `config` | `config: Readonly&lt;ContextCompactionStrategyConfig&gt;` | - |
 
 </details>
 
@@ -50714,6 +50919,8 @@ Metadata only: no credentials, instructions, tool arguments or stored content.
     features: ResolvedContextFeatures;
     plugins: string[];
     strategy: string;
+    composition?: { config: Readonly&lt;import('./context-nextgen/compaction/types.js').ContextCompactionStrategyConfig&gt;;
+      last?: import('./context-nextgen/compaction/types.js').ContextCompactionReport; activeNative: boolean };
     maxContextTokens: number;
     responseReserve: number;
     evidenceDurability?: EvidenceDurability;
@@ -50749,7 +50956,7 @@ Agent configuration (needed for resume)
 
 ### AgentContextNextGenConfig `interface`
 
-📍 [`src/core/context-nextgen/types.ts:874`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:880`](src/core/context-nextgen/types.ts)
 
 AgentContextNextGen configuration
 
@@ -51274,7 +51481,7 @@ serializable and ConnectorConfigStore deliberately refuses to persist it.
 
 ### ApplyPatchCallOutputItem `interface`
 
-📍 [`src/domain/entities/Message.ts:108`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:110`](src/domain/entities/Message.ts)
 
 Result returned after applying an OpenAI apply-patch operation.
 
@@ -51673,7 +51880,7 @@ Options for the default SentenceChunkingStrategy
 
 ### CompactionContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1170`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1176`](src/core/context-nextgen/types.ts)
 
 Read-only context passed to compaction strategies.
 Provides access to data needed for compaction decisions and
@@ -51771,7 +51978,7 @@ estimateTokens(item: InputItem): number;
 
 ### CompactionItem `interface`
 
-📍 [`src/domain/entities/Message.ts:22`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:24`](src/domain/entities/Message.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -51791,7 +51998,7 @@ estimateTokens(item: InputItem): number;
 
 ### CompactionResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1064`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1070`](src/core/context-nextgen/types.ts)
 
 Result of compact() operation.
 
@@ -51812,7 +52019,7 @@ Result of compact() operation.
 
 ### CompactionTriggerItem `interface`
 
-📍 [`src/domain/entities/Message.ts:52`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:54`](src/domain/entities/Message.ts)
 
 Explicit in-band compaction request. Must be the final input item.
 
@@ -51902,7 +52109,7 @@ resolveDisplayNames(ids: EntityId[]): Promise&lt;Array&lt;string | null&gt;&gt;;
 
 ### ComputerCallOutputItem `interface`
 
-📍 [`src/domain/entities/Message.ts:73`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:75`](src/domain/entities/Message.ts)
 
 Screenshot result returned after executing an OpenAI computer-use call.
 
@@ -51932,7 +52139,7 @@ Screenshot result returned after executing an OpenAI computer-use call.
 
 ### ConfigurationUpdateItem `interface`
 
-📍 [`src/domain/entities/Message.ts:43`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:45`](src/domain/entities/Message.ts)
 
 GPT-6 Astra conversation-scoped reasoning-effort update.
 
@@ -52113,7 +52320,7 @@ truncate profile generation. See feedback_no_output_limits.md. |
 
 ### ConsolidationResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1083`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1089`](src/core/context-nextgen/types.ts)
 
 Result of consolidate() operation.
 
@@ -52187,6 +52394,7 @@ Token budget breakdown - clear and simple
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `providerCountedInputTokens?` | `providerCountedInputTokens?: number;` | Optional provider preflight count for a native frame; not response/billing usage. |
 | `maxTokens` | `maxTokens: number;` | Maximum context tokens for the model |
 | `responseReserve` | `responseReserve: number;` | Tokens reserved for LLM response |
 | `systemMessageTokens` | `systemMessageTokens: number;` | Tokens used by system message (prompt + instructions + plugin content) |
@@ -52205,6 +52413,56 @@ Token budget breakdown - clear and simple
     conversation: number;
     currentInput: number;
   };` | Breakdown by component for debugging |
+
+</details>
+
+---
+
+### ContextCompactionReport `interface`
+
+📍 [`src/core/context-nextgen/compaction/types.ts:27`](src/core/context-nextgen/compaction/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `status` | `status: 'compacted' | 'skipped';` | - |
+| `trigger` | `trigger: 'manual' | 'pre-call';` | - |
+| `inputTokensBefore` | `inputTokensBefore: number | null;` | - |
+| `inputTokensAfter` | `inputTokensAfter: number | null;` | - |
+| `accounting` | `accounting: 'provider' | 'local' | 'unavailable';` | - |
+| `plugins` | `plugins: {
+    status: 'compacted' | 'skipped';
+    reason?: 'disabled' | 'not_selected' | 'not_needed' | 'no_reduction';
+    compacted: readonly string[];
+  };` | - |
+| `history` | `history: {
+    mode: 'native' | 'off';
+    status: 'compacted' | 'skipped';
+    reason?: 'disabled' | 'not_selected' | 'not_needed' | 'empty' | 'protected' | 'no_reduction';
+    provider?: string;
+    sourceReferences: readonly EvidenceReference[];
+    invocationId?: string;
+  };` | - |
+| `checkpointed` | `checkpointed: boolean;` | - |
+
+</details>
+
+---
+
+### ContextCompactionStrategyConfig `interface`
+
+📍 [`src/core/context-nextgen/compaction/types.ts:17`](src/core/context-nextgen/compaction/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `plugins` | `plugins: 'auto' | 'off';` | Reduction only; off does not disable a plugin or its tools. |
+| `history` | `history: 'native' | 'off' | NativeHistoryCompactionConfig;` | - |
+| `automatic?` | `automatic?: boolean;` | Default true; explicit host operations remain available when false. |
 
 </details>
 
@@ -52273,7 +52531,7 @@ contribute(request: ContextContributionRequest): ContextBlock[] | Promise&lt;Con
 
 ### ContextEvents `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1011`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1017`](src/core/context-nextgen/types.ts)
 
 Events emitted by AgentContextNextGen
 
@@ -52351,7 +52609,7 @@ are opt-in. Pass `tiers: 'minimal'` to suppress tasks + events for perf. |
 
 ### ContextPreparation `interface`
 
-📍 [`src/core/context-nextgen/types.ts:696`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:700`](src/core/context-nextgen/types.ts)
 
 Diagnostic snapshot of the last successful prepare; token counts are estimates.
 
@@ -52360,6 +52618,7 @@ Diagnostic snapshot of the last successful prepare; token counts are estimates.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `compactionDetails?` | `compactionDetails?: import('./compaction/types.js').ContextCompactionReport;` | Optional independent plugin/history outcomes for an explicitly selected composition. |
 | `selection?` | `selection?: import('./assembly.js').ContextSelectionManifest;` | Diagnostic for the opt-in transactional built-ins in this preparation. |
 | `compaction?` | `compaction?: import('./strategies/conversation-compaction.js').ConversationCompactionReport;` | - |
 | `revision` | `revision: number;` | Monotonic, process-local successful preparation number. |
@@ -52372,7 +52631,7 @@ Diagnostic snapshot of the last successful prepare; token counts are estimates.
 
 ### ContextPrepareOptions `interface`
 
-📍 [`src/core/context-nextgen/types.ts:679`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:681`](src/core/context-nextgen/types.ts)
 
 Optional request contributions, resolved again after compaction.
 
@@ -52381,6 +52640,7 @@ Optional request contributions, resolved again after compaction.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `nativeCompaction?` | `nativeCompaction?: import('./compaction/types.js').NativeCompactionDriver;` | - |
 | `signal?` | `signal?: AbortSignal;` | Optional bounded pre-call compaction cancellation. |
 | `summarize?` | `summarize?: import('./strategies/conversation-compaction.js').ContextSummaryGenerator;` | Host-owned structured-summary generator; Agent binds its configured compactor. |
 | `getTools?` | `getTools?: () =&gt; FunctionToolDefinition[];` | Obtain the exact visible definitions, including dynamic descriptions and identity filtering. |
@@ -52395,7 +52655,7 @@ Optional request contributions, resolved again after compaction.
 
 ### ContextRolloverOptions `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1121`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1127`](src/core/context-nextgen/types.ts)
 
 Options for an explicit context rollover.
 
@@ -52415,7 +52675,7 @@ their results stay with their containing turn. Default: 8. |
 
 ### ContextRolloverResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1136`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1142`](src/core/context-nextgen/types.ts)
 
 Result of an explicit context rollover.
 
@@ -52440,7 +52700,7 @@ Result of an explicit context rollover.
 
 ### ContextRolloverSummaryInput `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1101`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1107`](src/core/context-nextgen/types.ts)
 
 Input passed to a context-rollover summarizer.
 
@@ -54782,7 +55042,7 @@ Options for fetch operations
 
 ### FunctionCallOutputItem `interface`
 
-📍 [`src/domain/entities/Message.ts:59`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:61`](src/domain/entities/Message.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -55336,7 +55596,7 @@ reset(): void;
 
 ### ICompactionStrategy `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1234`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1240`](src/core/context-nextgen/types.ts)
 
 Compaction strategy interface.
 
@@ -57738,7 +57998,7 @@ For service accounts (Google, Salesforce)
 
 ### KnownContextFeatures `interface`
 
-📍 [`src/core/context-nextgen/types.ts:763`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:769`](src/core/context-nextgen/types.ts)
 
 Feature flags for enabling/disabling plugins
 
@@ -57763,7 +58023,7 @@ Feature flags for enabling/disabling plugins
 
 ### KnownPluginConfigs `interface`
 
-📍 [`src/core/context-nextgen/types.ts:837`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:843`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 When features are enabled, plugins are created with these configs.
@@ -58217,6 +58477,7 @@ Identical to MeetingSlotSuggestion in both google and microsoft types.
 | `id?` | `id?: string;` | - |
 | `role` | `role: MessageRole;` | - |
 | `content` | `content: Content[];` | - |
+| `providerMetadata?` | `providerMetadata?: Record&lt;string, unknown&gt;;` | Opaque replay metadata for an explicitly selected provider continuation. |
 
 </details>
 
@@ -58584,6 +58845,22 @@ rawCollection(): {
 
 ---
 
+### NativeHistoryCompactionConfig `interface`
+
+📍 [`src/core/context-nextgen/compaction/types.ts:11`](src/core/context-nextgen/compaction/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `mode` | `mode: 'native';` | - |
+| `preserveRecentTurns?` | `preserveRecentTurns?: number;` | Keep this many completed user turns exact. Default 2. |
+
+</details>
+
+---
+
 ### Neighborhood `interface`
 
 📍 [`src/memory/types.ts:459`](src/memory/types.ts)
@@ -58888,7 +59165,7 @@ Configuration for initiating an outbound call.
 
 ### OversizedInputResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:732`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:738`](src/core/context-nextgen/types.ts)
 
 Result of handling oversized current input
 
@@ -59588,7 +59865,7 @@ source metadata aggregation rather than re-extracted into facts. |
 
 ### PreparedContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:709`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:715`](src/core/context-nextgen/types.ts)
 
 Result of prepare() - ready for a model call.
 
@@ -60114,7 +60391,7 @@ when this callback is omitted. |
 
 ### ReasoningItem `interface`
 
-📍 [`src/domain/entities/Message.ts:34`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:36`](src/domain/entities/Message.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -61273,7 +61550,7 @@ Service info lookup (derived from SERVICE_DEFINITIONS)
 
 ### ShellCallOutputContent `interface`
 
-📍 [`src/domain/entities/Message.ts:90`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:92`](src/domain/entities/Message.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -61292,7 +61569,7 @@ Service info lookup (derived from SERVICE_DEFINITIONS)
 
 ### ShellCallOutputItem `interface`
 
-📍 [`src/domain/entities/Message.ts:99`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:101`](src/domain/entities/Message.ts)
 
 Result returned after executing an OpenAI client shell call.
 
@@ -63675,9 +63952,19 @@ type Content = | InputTextContent
 
 ---
 
+### ContextCompactionTarget `type`
+
+📍 [`src/core/context-nextgen/compaction/types.ts:25`](src/core/context-nextgen/compaction/types.ts)
+
+```typescript
+type ContextCompactionTarget = 'all' | 'plugins' | 'history'
+```
+
+---
+
 ### ContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:797`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:803`](src/core/context-nextgen/types.ts)
 
 Feature flags for enabling/disabling plugins.
 Known keys provide autocomplete; arbitrary string keys are also accepted
@@ -63691,7 +63978,7 @@ type ContextFeatures = KnownContextFeatures & { [key: string]: boolean | undefin
 
 ### ContextRolloverSummarizer `type`
 
-📍 [`src/core/context-nextgen/types.ts:1116`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1122`](src/core/context-nextgen/types.ts)
 
 Host-supplied summarizer used by an explicit context rollover.
 
@@ -64120,7 +64407,7 @@ type InContextPriority = 'low' | 'normal' | 'high' | 'critical'
 
 ### InputItem `type`
 
-📍 [`src/domain/entities/Message.ts:124`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:126`](src/domain/entities/Message.ts)
 
 ```typescript
 type InputItem = | Message
@@ -64389,7 +64676,7 @@ type OutputFormat = 'url' | 'base64' | 'buffer'
 
 ### OutputItem `type`
 
-📍 [`src/domain/entities/Message.ts:136`](src/domain/entities/Message.ts)
+📍 [`src/domain/entities/Message.ts:138`](src/domain/entities/Message.ts)
 
 ```typescript
 type OutputItem = Message | CompactionItem | ReasoningItem
@@ -64482,7 +64769,7 @@ type PipelineConfig = TextPipelineConfig | RealtimePipelineConfig
 
 ### PluginConfigs `type`
 
-📍 [`src/core/context-nextgen/types.ts:869`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:875`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 Known keys provide autocomplete; arbitrary string keys accepted
@@ -64663,7 +64950,7 @@ type RelatedItemHit = T & { matchedEntityId: EntityId }
 
 ### ResolvedContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:805`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:811`](src/core/context-nextgen/types.ts)
 
 Resolved features retain the original required keys, plus optional additions
 and arbitrary external flags. Keep the required set stable so adding an opt-in
@@ -65284,7 +65571,7 @@ export function coerceMetadataDates&lt;T extends Record&lt;string, unknown&gt; |
 
 ### createAgentPreset `function`
 
-📍 [`src/core/presets.ts:68`](src/core/presets.ts)
+📍 [`src/core/presets.ts:70`](src/core/presets.ts)
 
 Compose an ordinary AgentConfig without creating an Agent, accessing credentials,
 doing storage IO or calling a model. Explicit values override preset defaults;
@@ -67560,7 +67847,7 @@ transports and are not represented as misleading URL aliases here.
 
 ### DEFAULT_CONFIG `const`
 
-📍 [`src/core/context-nextgen/types.ts:978`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:984`](src/core/context-nextgen/types.ts)
 
 Default configuration values
 
@@ -67631,7 +67918,7 @@ Default configuration values
 
 ### DEFAULT_FEATURES `const`
 
-📍 [`src/core/context-nextgen/types.ts:813`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:819`](src/core/context-nextgen/types.ts)
 
 Default feature configuration for built-in plugins.
 

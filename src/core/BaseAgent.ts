@@ -1207,8 +1207,8 @@ export abstract class BaseAgent<
   /** Read a detached diagnostic snapshot; no credentials, prompts or live authority. */
   getModelUsage(): ModelTaskSnapshot | undefined { return (this._activeModelTask ?? this._lastModelTask)?.snapshot(); }
 
-  protected beginModelTask(task?: ModelTask): void {
-    this._activeModelTask = task ?? (this._config.modelExecution ? new ModelTask({ limits: this._config.modelExecution.limits }) : undefined);
+  protected beginModelTask(task?: ModelTask, required = false): void {
+    this._activeModelTask = task ?? (this._config.modelExecution || required ? new ModelTask({ limits: this._config.modelExecution?.limits }) : undefined);
     this._ownsModelTask = !!this._activeModelTask && !task;
   }
 

@@ -1,9 +1,12 @@
+import type { TokenUsage } from '../../../domain/entities/Response.js';
 /**
  * OpenAI text provider using Responses API
  */
 
 import OpenAI, { toFile } from 'openai';
-import { modelExecutionFetch, modelRequestOptions, registerModelTransport } from '../../../core/model-execution/ModelTask.js';
+import { modelExecutionFetch, modelRequestOptions, registerModelTransport, withoutModelTracking, markFailedModelUsage } from '../../../core/model-execution/ModelTask.js';
+import { assertNativeCompactionOptions, nativeCompactionUsage, openAICompactedWindow } from '../shared/nativeCompaction.js';
+import type { ITextCompactionProvider, TextCompactionResponse } from '../../../domain/interfaces/ITextProvider.js';
 import { createValidatedOpenAIAPIKeyProvider } from './OpenAIAuth.js';
 import { BaseTextProvider } from '../base/BaseTextProvider.js';
 import { TextGenerateOptions, ModelCapabilities } from '../../../domain/interfaces/ITextProvider.js';
@@ -29,6 +32,7 @@ import type {
 } from '../../../domain/interfaces/IAdvancedInference.js';
 import {
   ProviderAmbiguousOperationError,
+  InvalidConfigError,
   ProviderCapabilityNotSupportedError,
 } from '../../../domain/errors/AIErrors.js';
 
@@ -53,6 +57,61 @@ function getOpenAINativeTools(model: string): AdvancedTextCapabilities['nativeTo
 }
 
 export class OpenAITextProvider extends BaseTextProvider {
+  private readonly verifiedCompactionModels = new Set<string>();
+  readonly compaction: ITextCompactionProvider = {
+    compact: options => this.compactNative(options),
+    countInput: options => this.countNativeInput(options),
+  };
+
+  private assertNativeOptions(options: TextGenerateOptions): void {
+    if (this.nativeToolVendor !== 'openai') throw new ProviderCapabilityNotSupportedError(this.name, options.model, 'native compaction');
+    assertNativeCompactionOptions(options, this.name);
+    const supported = new Set(['instructions', 'text', 'tool_choice', 'parallel_tool_calls', 'reasoning', 'personality',
+      'serviceTier', 'service_tier', 'store', 'metadata', 'temperature', 'top_p', 'top_logprobs', 'include',
+      'prompt_cache_key', 'prompt_cache_retention', 'prompt_cache_options', 'safety_identifier', 'user']);
+    if (Object.keys(options.vendorOptions ?? {}).some(key => options.vendorOptions![key] !== undefined && !supported.has(key))) {
+      throw new InvalidConfigError('Raw OpenAI option cannot be faithfully counted in managed native context; use a supported normalized option');
+    }
+  }
+
+  private async compactNative(options: TextGenerateOptions): Promise<TextCompactionResponse> {
+    options = this.applyContextLimitGuardrail({ ...options, skipContextLimitCheck: true });
+    this.assertNativeOptions(options);
+    if (options.max_output_tokens !== undefined) throw new ProviderCapabilityNotSupportedError(this.name, options.model, 'hard native compaction output cap');
+    const { input, instructions } = this.converter.convertInput(options.input, options.instructions);
+    const params: ResponsesAPI.ResponseCompactParams = { model: options.model, input, ...(instructions ? { instructions } : {}) };
+    this.applyPromptCacheConfig(params as unknown as Record<string, unknown>, options);
+    const tier = options.vendorOptions?.serviceTier ?? options.vendorOptions?.service_tier;
+    if (tier !== undefined) params.service_tier = tier;
+    let observed: TokenUsage | null = null;
+    try {
+      const response = await this.client.responses.compact(params, ...modelRequestOptions(options));
+      observed = nativeCompactionUsage(response.usage, 'openai');
+      const actualTier = (response as unknown as { service_tier?: unknown }).service_tier;
+      if (observed && typeof actualTier === 'string') observed.service_tier = actualTier;
+      const window = openAICompactedWindow(response.output);
+      this.verifiedCompactionModels.add(options.model);
+      return { input: window, protocol: 'openai-responses-compact-v1', providerResponseId: response.id,
+        usage: observed };
+    } catch (error) {
+      const mapped = ProviderErrorMapper.mapError(error, { providerName: this.name, model: options.model });
+      markFailedModelUsage(mapped, observed); throw mapped;
+    }
+  }
+
+  private async countNativeInput(options: TextGenerateOptions): Promise<number | null> {
+    options = this.applyContextLimitGuardrail({ ...options, skipContextLimitCheck: true });
+    this.assertNativeOptions(options);
+    const wire = this.buildGenerationRequest(options);
+    // This is the SDK count endpoint's input-bearing projection of the exact
+    // generation request, including raw vendor options and normalized overrides.
+    const keys = ['model', 'input', 'instructions', 'tools', 'text', 'tool_choice', 'parallel_tool_calls', 'reasoning', 'personality'];
+    const params = Object.fromEntries(keys.filter(key => wire[key] !== undefined).map(key => [key, wire[key]]));
+    try {
+      const count = await withoutModelTracking(() => this.client.responses.inputTokens.count(params, ...modelRequestOptions(options)));
+      return Number.isSafeInteger(count.input_tokens) && count.input_tokens >= 0 ? count.input_tokens : null;
+    } catch (error) { throw ProviderErrorMapper.mapError(error, { providerName: this.name, model: options.model }); }
+  }
   readonly name: string = 'openai';
   readonly capabilities: ProviderCapabilities = {
     text: true,
@@ -115,50 +174,7 @@ export class OpenAITextProvider extends BaseTextProvider {
     // Execute with circuit breaker protection and observability
     return this.executeWithCircuitBreaker(async () => {
       try {
-        // Convert to Responses API format
-        const { input, instructions } = this.converter.convertInput(
-          options.input,
-          options.instructions,
-          this.allowsPromptCacheBreakpoints(options),
-        );
-
-        // Build request parameters
-        const params: Record<string, unknown> = {
-          ...this.getVendorRequestOptions(options),
-          model: options.model,
-          input,
-          ...(instructions && { instructions }),
-          ...(options.tools && options.tools.length > 0 && {
-            tools: this.converter.convertTools(options.tools),
-          }),
-          ...(options.tool_choice && {
-            tool_choice: this.converter.convertToolChoice(options.tool_choice),
-          }),
-          ...(options.temperature !== undefined &&
-              this.supportsParameter(options.model, 'temperature') &&
-              { temperature: options.temperature }),
-          ...(options.max_output_tokens && { max_output_tokens: options.max_output_tokens }),
-          ...(options.response_format && {
-            text: this.converter.convertResponseFormat(options.response_format),
-          }),
-          ...(options.parallel_tool_calls !== undefined && {
-            parallel_tool_calls: options.parallel_tool_calls,
-          }),
-          ...(options.previous_response_id && {
-            previous_response_id: options.previous_response_id,
-          }),
-          ...(options.metadata && { metadata: options.metadata }),
-        };
-        if (options.native_tools?.length) {
-          params.tools = [
-            ...((params.tools as ResponsesAPI.Tool[] | undefined) ?? []),
-            ...this.converter.convertNativeTools(options.native_tools, this.nativeToolVendor),
-          ];
-        }
-        this.applyPromptCacheConfig(params, options);
-
-        // Add reasoning config from unified thinking option
-        this.applyReasoningConfig(params, options);
+        const params = this.buildGenerationRequest(options);
         validateOpenAIResponsesRequest(options, params, this.getBaseURL());
 
         this.logger.debug(
@@ -201,51 +217,7 @@ export class OpenAITextProvider extends BaseTextProvider {
     options = await this.resolveAdvancedCredentials(options);
     this.ensureObservabilityInitialized();
     try {
-      // Convert to Responses API format
-      const { input, instructions } = this.converter.convertInput(
-        options.input,
-        options.instructions,
-        this.allowsPromptCacheBreakpoints(options),
-      );
-
-      // Build request parameters
-      const params: Record<string, unknown> = {
-        ...this.getVendorRequestOptions(options),
-        model: options.model,
-        input,
-        ...(instructions && { instructions }),
-        ...(options.tools && options.tools.length > 0 && {
-          tools: this.converter.convertTools(options.tools),
-        }),
-        ...(options.tool_choice && {
-          tool_choice: this.converter.convertToolChoice(options.tool_choice),
-        }),
-        ...(options.temperature !== undefined &&
-            this.supportsParameter(options.model, 'temperature') &&
-            { temperature: options.temperature }),
-        ...(options.max_output_tokens && { max_output_tokens: options.max_output_tokens }),
-        ...(options.response_format && {
-          text: this.converter.convertResponseFormat(options.response_format),
-        }),
-        ...(options.parallel_tool_calls !== undefined && {
-          parallel_tool_calls: options.parallel_tool_calls,
-        }),
-        ...(options.previous_response_id && {
-          previous_response_id: options.previous_response_id,
-        }),
-        ...(options.metadata && { metadata: options.metadata }),
-        stream: true,
-      };
-      if (options.native_tools?.length) {
-        params.tools = [
-          ...((params.tools as ResponsesAPI.Tool[] | undefined) ?? []),
-          ...this.converter.convertNativeTools(options.native_tools, this.nativeToolVendor),
-        ];
-      }
-      this.applyPromptCacheConfig(params, options);
-
-      // Add reasoning config from unified thinking option
-      this.applyReasoningConfig(params, options);
+      const params = this.buildGenerationRequest(options, true);
       validateOpenAIResponsesRequest(options, params, this.getBaseURL());
 
       this.logger.debug(
@@ -314,6 +286,8 @@ export class OpenAITextProvider extends BaseTextProvider {
     const supportsExtendedPromptCaching = OPENAI_EXTENDED_PROMPT_CACHE_MODELS.test(model);
     const nativeTools = info ? getOpenAINativeTools(model) : [];
     return {
+      nativeCompaction: { onDemand: this.nativeToolVendor === 'openai' ? (this.verifiedCompactionModels.has(model) ? 'supported' : 'unverified') : 'unsupported',
+        inputTokenCounting: this.nativeToolVendor === 'openai' ? 'provider' : 'unavailable' },
       promptCaching: {
         mode: supportsPromptCaching ? 'implicit' : 'unsupported',
         ttlModes: supportsPromptCaching
@@ -582,6 +556,57 @@ export class OpenAITextProvider extends BaseTextProvider {
       models.push(model.id);
     }
     return models.sort();
+  }
+
+  /** Shared generation/count normalization; legacy/raw precedence is unchanged. */
+  private buildGenerationRequest(options: TextGenerateOptions, stream = false): Record<string, unknown> {
+    // Convert to Responses API format
+    const { input, instructions } = this.converter.convertInput(
+      options.input,
+      options.instructions,
+      this.allowsPromptCacheBreakpoints(options),
+    );
+
+    // Build request parameters
+    const params: Record<string, unknown> = {
+      ...this.getVendorRequestOptions(options),
+      model: options.model,
+      ...(options.nativeContext ? { store: false } : {}),
+      input,
+      ...(instructions && { instructions }),
+      ...(options.tools && options.tools.length > 0 && {
+        tools: this.converter.convertTools(options.tools),
+      }),
+      ...(options.tool_choice && {
+        tool_choice: this.converter.convertToolChoice(options.tool_choice),
+      }),
+      ...(options.temperature !== undefined &&
+          this.supportsParameter(options.model, 'temperature') &&
+          { temperature: options.temperature }),
+      ...(options.max_output_tokens && { max_output_tokens: options.max_output_tokens }),
+      ...(options.response_format && {
+        text: this.converter.convertResponseFormat(options.response_format),
+      }),
+      ...(options.parallel_tool_calls !== undefined && {
+        parallel_tool_calls: options.parallel_tool_calls,
+      }),
+      ...(options.previous_response_id && {
+        previous_response_id: options.previous_response_id,
+      }),
+      ...(options.metadata && { metadata: options.metadata }),
+    };
+    if (options.native_tools?.length) {
+      params.tools = [
+        ...((params.tools as ResponsesAPI.Tool[] | undefined) ?? []),
+        ...this.converter.convertNativeTools(options.native_tools, this.nativeToolVendor),
+      ];
+    }
+    this.applyPromptCacheConfig(params, options);
+
+    // Add reasoning config from unified thinking option
+    this.applyReasoningConfig(params, options);
+    if (stream) params.stream = true;
+    return params;
   }
 
   /**

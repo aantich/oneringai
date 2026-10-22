@@ -1,0 +1,1607 @@
+COMMAND: node --import tsx examples/agentic-evaluation-baseline.ts
+EXIT: 0
+{"level":"warn","time":1792673988719,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792673988742,"component":"Agent","agentName":"agent-1792673988718","model":"gpt-4o-mini","connector":"baseline-offline-43d3934e-697f-4f7c-9994-db209e9870da","inputPreview":"Return exactly BASELINE_CHAT_DEV and nothing else.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 104/128000 (0.1%) tools=0 conversation=0 system=85 input=19 | sysPrompt=54 PI=0
+{"level":"info","time":1792673988814,"component":"Agent","agentName":"agent-1792673988718","model":"gpt-4o-mini","connector":"baseline-offline-43d3934e-697f-4f7c-9994-db209e9870da","duration":72,"msg":"Agent run completed"}
+{"level":"warn","time":1792673988829,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792673988830,"component":"Agent","agentName":"agent-1792673988829","model":"gpt-4o-mini","connector":"baseline-offline-98d4a347-526c-49b4-940c-45b79628303b","inputPreview":"Call read_document with sourceId \"large-dev\". Find the ANSWER in its text. Return only JSON with ans","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 210/128000 (0.2%) tools=87 conversation=0 system=85 input=38 | sysPrompt=54 PI=0
+[Agent] [Context] iteration=1 tokens: 10531/128000 (8.5%) tools=87 conversation=53 system=85 input=10306 | sysPrompt=54 PI=0
+{"level":"info","time":1792673988859,"component":"Agent","agentName":"agent-1792673988829","model":"gpt-4o-mini","connector":"baseline-offline-98d4a347-526c-49b4-940c-45b79628303b","duration":29,"msg":"Agent run completed"}
+{"level":"warn","time":1792673988860,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792673988860,"component":"Agent","agentName":"agent-1792673988860","model":"gpt-4o-mini","connector":"baseline-offline-b819f3e1-5b6c-41a2-9cce-f31b3a9b866c","inputPreview":"Read source source-a-DEV using read_source_a and source source-b-DEV using read_source_b. Choose the","toolCount":2,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 320/128000 (0.3%) tools=154 conversation=0 system=85 input=81 | sysPrompt=54 PI=0
+[Agent] [Context] iteration=1 tokens: 356/128000 (0.3%) tools=154 conversation=97 system=85 input=20 | sysPrompt=54 PI=0
+[Agent] [Context] iteration=2 tokens: 392/128000 (0.3%) tools=154 conversation=133 system=85 input=20 | sysPrompt=54 PI=0
+{"level":"info","time":1792673988874,"component":"Agent","agentName":"agent-1792673988860","model":"gpt-4o-mini","connector":"baseline-offline-b819f3e1-5b6c-41a2-9cce-f31b3a9b866c","duration":13,"msg":"Agent run completed"}
+{"level":"warn","time":1792673988909,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792673988909,"component":"Agent","agentName":"agent-1792673988909","model":"gpt-4o-mini","connector":"baseline-offline-463d75ab-dd06-4772-9a79-af3f5a4a2128","inputPreview":"Submit job \"job-dev\" using submit_job exactly once. An accepted job is pending, not completed.","toolCount":2,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 263/128000 (0.2%) tools=147 conversation=0 system=85 input=31 | sysPrompt=54 PI=0
+{"level":"error","time":1792673988934,"component":"Agent","agentName":"agent-1792673988909","model":"gpt-4o-mini","connector":"baseline-offline-463d75ab-dd06-4772-9a79-af3f5a4a2128","error":"Execution cancelled","stack":"Error: Execution cancelled\n    at Agent._runAgenticLoop (/Users/aantich/dev/oneringai/src/core/Agent.ts:1861:15)\n    at async Agent.run (/Users/aantich/dev/oneringai/src/core/Agent.ts:1786:25)\n    at async runBaseline (/Users/aantich/dev/oneringai/examples/agentic-baseline/runner.ts:67:19)\n    at async <anonymous> (/Users/aantich/dev/oneringai/examples/agentic-evaluation-baseline.ts:31:18)","duration":2,"msg":"Agent run failed"}
+{"level":"warn","time":1792673988934,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792673988935,"component":"Agent","agentName":"agent-1792673988934","model":"gpt-4o-mini","connector":"baseline-offline-463d75ab-dd06-4772-9a79-af3f5a4a2128","inputPreview":"Resume the existing job \"job-dev\". Do not submit again. Call check_job and return only JSON with job","toolCount":2,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 336/128000 (0.3%) tools=147 conversation=60 system=85 input=44 | sysPrompt=54 PI=0
+[Agent] [Context] iteration=1 tokens: 372/128000 (0.3%) tools=147 conversation=117 system=85 input=23 | sysPrompt=54 PI=0
+{"level":"info","time":1792673988949,"component":"Agent","agentName":"agent-1792673988934","model":"gpt-4o-mini","connector":"baseline-offline-463d75ab-dd06-4772-9a79-af3f5a4a2128","duration":14,"msg":"Agent run completed"}
+{
+  "protocol": "stage-00-v1",
+  "split": "development",
+  "mode": "offline",
+  "reports": [
+    {
+      "fixture": "chat",
+      "split": "development",
+      "mode": "offline",
+      "passed": true,
+      "failure": null,
+      "durationMs": 97.46008299999994,
+      "fixtureId": "chat/development",
+      "connector": "baseline-offline-43d3934e-697f-4f7c-9994-db209e9870da",
+      "model": "gpt-4o-mini",
+      "runs": [
+        {
+          "id": "chat/development/run-1",
+          "parentId": "chat/development",
+          "outcome": "completed"
+        }
+      ],
+      "steps": [
+        {
+          "id": "chat/development/run-1/iteration-0/llm-1",
+          "runId": "chat/development/run-1",
+          "parentId": "chat/development/run-1/iteration-0",
+          "kind": "llm",
+          "name": "gpt-4o-mini",
+          "outcome": "response",
+          "durationMs": 2,
+          "usage": {
+            "input": 100,
+            "output": 10,
+            "total": 110
+          },
+          "response": {
+            "status": "completed",
+            "stopReason": null,
+            "textChars": 17,
+            "textSHA256": "824e4073a4e90170ee17af4187cb5795b3a9e384af48b1d9e51d96deb00d4963"
+          }
+        }
+      ],
+      "llmCalls": 1,
+      "toolCalls": 0,
+      "repeatedToolCalls": 0,
+      "correlationErrors": 0,
+      "usage": {
+        "input": {
+          "knownSubtotal": 100,
+          "missingCalls": 0,
+          "total": 100
+        },
+        "output": {
+          "knownSubtotal": 10,
+          "missingCalls": 0,
+          "total": 10
+        },
+        "total": {
+          "knownSubtotal": 110,
+          "missingCalls": 0,
+          "total": 110
+        }
+      }
+    },
+    {
+      "fixture": "large-observation",
+      "split": "development",
+      "mode": "offline",
+      "passed": true,
+      "failure": null,
+      "durationMs": 30.238083000000188,
+      "fixtureId": "large-observation/development",
+      "connector": "baseline-offline-98d4a347-526c-49b4-940c-45b79628303b",
+      "model": "gpt-4o-mini",
+      "runs": [
+        {
+          "id": "large-observation/development/run-1",
+          "parentId": "large-observation/development",
+          "outcome": "completed"
+        }
+      ],
+      "steps": [
+        {
+          "id": "large-observation/development/run-1/iteration-0/llm-1",
+          "runId": "large-observation/development/run-1",
+          "parentId": "large-observation/development/run-1/iteration-0",
+          "kind": "llm",
+          "name": "gpt-4o-mini",
+          "outcome": "response",
+          "durationMs": 1,
+          "usage": {
+            "input": 100,
+            "output": 10,
+            "total": 110
+          },
+          "response": {
+            "status": "completed",
+            "stopReason": null,
+            "textChars": 0,
+            "textSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "id": "large-observation/development/run-1/iteration-0/tool-2",
+          "runId": "large-observation/development/run-1",
+          "parentId": "large-observation/development/run-1/iteration-0",
+          "kind": "tool",
+          "name": "read_document",
+          "outcome": "library_completed",
+          "durationMs": 8.738667000001442,
+          "usage": null
+        },
+        {
+          "id": "large-observation/development/run-1/iteration-1/llm-3",
+          "runId": "large-observation/development/run-1",
+          "parentId": "large-observation/development/run-1/iteration-1",
+          "kind": "llm",
+          "name": "gpt-4o-mini",
+          "outcome": "response",
+          "durationMs": 5,
+          "usage": {
+            "input": 100,
+            "output": 10,
+            "total": 110
+          },
+          "response": {
+            "status": "completed",
+            "stopReason": null,
+            "textChars": 48,
+            "textSHA256": "8df44e5996dad650a57336b3ce6ba1b482c100f84ba60f5fb5a01348c8ac62df"
+          }
+        }
+      ],
+      "llmCalls": 2,
+      "toolCalls": 1,
+      "repeatedToolCalls": 0,
+      "correlationErrors": 0,
+      "usage": {
+        "input": {
+          "knownSubtotal": 200,
+          "missingCalls": 0,
+          "total": 200
+        },
+        "output": {
+          "knownSubtotal": 20,
+          "missingCalls": 0,
+          "total": 20
+        },
+        "total": {
+          "knownSubtotal": 220,
+          "missingCalls": 0,
+          "total": 220
+        }
+      }
+    },
+    {
+      "fixture": "research",
+      "split": "development",
+      "mode": "offline",
+      "passed": true,
+      "failure": null,
+      "durationMs": 14.313833000000159,
+      "fixtureId": "research/development",
+      "connector": "baseline-offline-b819f3e1-5b6c-41a2-9cce-f31b3a9b866c",
+      "model": "gpt-4o-mini",
+      "runs": [
+        {
+          "id": "research/development/run-1",
+          "parentId": "research/development",
+          "outcome": "completed"
+        }
+      ],
+      "steps": [
+        {
+          "id": "research/development/run-1/iteration-0/llm-1",
+          "runId": "research/development/run-1",
+          "parentId": "research/development/run-1/iteration-0",
+          "kind": "llm",
+          "name": "gpt-4o-mini",
+          "outcome": "response",
+          "durationMs": 0,
+          "usage": {
+            "input": 100,
+            "output": 10,
+            "total": 110
+          },
+          "response": {
+            "status": "completed",
+            "stopReason": null,
+            "textChars": 0,
+            "textSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "id": "research/development/run-1/iteration-0/tool-2",
+          "runId": "research/development/run-1",
+          "parentId": "research/development/run-1/iteration-0",
+          "kind": "tool",
+          "name": "read_source_a",
+          "outcome": "library_completed",
+          "durationMs": 1.1832909999993717,
+          "usage": null
+        },
+        {
+          "id": "research/development/run-1/iteration-1/llm-3",
+          "runId": "research/development/run-1",
+          "parentId": "research/development/run-1/iteration-1",
+          "kind": "llm",
+          "name": "gpt-4o-mini",
+          "outcome": "response",
+          "durationMs": 0,
+          "usage": {
+            "input": 100,
+            "output": 10,
+            "total": 110
+          },
+          "response": {
+            "status": "completed",
+            "stopReason": null,
+            "textChars": 0,
+            "textSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "id": "research/development/run-1/iteration-1/tool-4",
+          "runId": "research/development/run-1",
+          "parentId": "research/development/run-1/iteration-1",
+          "kind": "tool",
+          "name": "read_source_b",
+          "outcome": "library_completed",
+          "durationMs": 0.3192079999989801,
+          "usage": null
+        },
+        {
+          "id": "research/development/run-1/iteration-2/llm-5",
+          "runId": "research/development/run-1",
+          "parentId": "research/development/run-1/iteration-2",
+          "kind": "llm",
+          "name": "gpt-4o-mini",
+          "outcome": "response",
+          "durationMs": 1,
+          "usage": {
+            "input": 100,
+            "output": 10,
+            "total": 110
+          },
+          "response": {
+            "status": "completed",
+            "stopReason": null,
+            "textChars": 60,
+            "textSHA256": "a38a4230b02ffbb0a0ce6035f8eee955ee51a74a8c5bd3c07bbec3922ae216ac"
+          }
+        }
+      ],
+      "llmCalls": 3,
+      "toolCalls": 2,
+      "repeatedToolCalls": 0,
+      "correlationErrors": 0,
+      "usage": {
+        "input": {
+          "knownSubtotal": 300,
+          "missingCalls": 0,
+          "total": 300
+        },
+        "output": {
+          "knownSubtotal": 30,
+          "missingCalls": 0,
+          "total": 30
+        },
+        "total": {
+          "knownSubtotal": 330,
+          "missingCalls": 0,
+          "total": 330
+        }
+      }
+    },
+    {
+      "fixture": "external-workflow",
+      "split": "development",
+      "mode": "offline",
+      "passed": true,
+      "failure": null,
+      "durationMs": 44.04612500000076,
+      "fixtureId": "external-workflow/development",
+      "connector": "baseline-offline-463d75ab-dd06-4772-9a79-af3f5a4a2128",
+      "model": "gpt-4o-mini",
+      "runs": [
+        {
+          "id": "external-workflow/development/run-1",
+          "parentId": "external-workflow/development",
+          "outcome": "cancelled"
+        },
+        {
+          "id": "external-workflow/development/run-2",
+          "parentId": "external-workflow/development",
+          "outcome": "completed"
+        }
+      ],
+      "steps": [
+        {
+          "id": "external-workflow/development/run-1/iteration-0/llm-1",
+          "runId": "external-workflow/development/run-1",
+          "parentId": "external-workflow/development/run-1/iteration-0",
+          "kind": "llm",
+          "name": "gpt-4o-mini",
+          "outcome": "response",
+          "durationMs": 0,
+          "usage": {
+            "input": 100,
+            "output": 10,
+            "total": 110
+          },
+          "response": {
+            "status": "completed",
+            "stopReason": null,
+            "textChars": 0,
+            "textSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "id": "external-workflow/development/run-1/iteration-0/tool-2",
+          "runId": "external-workflow/development/run-1",
+          "parentId": "external-workflow/development/run-1/iteration-0",
+          "kind": "tool",
+          "name": "submit_job",
+          "outcome": "library_completed",
+          "durationMs": 0.2832909999997355,
+          "usage": null
+        },
+        {
+          "id": "external-workflow/development/run-2/iteration-0/llm-3",
+          "runId": "external-workflow/development/run-2",
+          "parentId": "external-workflow/development/run-2/iteration-0",
+          "kind": "llm",
+          "name": "gpt-4o-mini",
+          "outcome": "response",
+          "durationMs": 1,
+          "usage": {
+            "input": 100,
+            "output": 10,
+            "total": 110
+          },
+          "response": {
+            "status": "completed",
+            "stopReason": null,
+            "textChars": 0,
+            "textSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "id": "external-workflow/development/run-2/iteration-0/tool-4",
+          "runId": "external-workflow/development/run-2",
+          "parentId": "external-workflow/development/run-2/iteration-0",
+          "kind": "tool",
+          "name": "check_job",
+          "outcome": "library_completed",
+          "durationMs": 0.289042000000336,
+          "usage": null
+        },
+        {
+          "id": "external-workflow/development/run-2/iteration-1/llm-5",
+          "runId": "external-workflow/development/run-2",
+          "parentId": "external-workflow/development/run-2/iteration-1",
+          "kind": "llm",
+          "name": "gpt-4o-mini",
+          "outcome": "response",
+          "durationMs": 6,
+          "usage": {
+            "input": 100,
+            "output": 10,
+            "total": 110
+          },
+          "response": {
+            "status": "completed",
+            "stopReason": null,
+            "textChars": 64,
+            "textSHA256": "2fdfb716896720945b54afadcded8c5356f0247a2c84a6b9a55e5f3ffb90ca14"
+          }
+        }
+      ],
+      "llmCalls": 3,
+      "toolCalls": 2,
+      "repeatedToolCalls": 0,
+      "correlationErrors": 0,
+      "usage": {
+        "input": {
+          "knownSubtotal": 300,
+          "missingCalls": 0,
+          "total": 300
+        },
+        "output": {
+          "knownSubtotal": 30,
+          "missingCalls": 0,
+          "total": 30
+        },
+        "total": {
+          "knownSubtotal": 330,
+          "missingCalls": 0,
+          "total": 330
+        }
+      }
+    }
+  ]
+}
+
+COMMAND: node --import tsx examples/context-compaction-freshness.ts
+EXIT: 0
+{
+  "before": {
+    "revision": 1,
+    "compacted": false,
+    "memoryIndexPresent": false,
+    "retainedCalls": [],
+    "retainedResults": [],
+    "estimatedBudget": {
+      "maxTokens": 2400,
+      "responseReserve": 100,
+      "systemMessageTokens": 663,
+      "toolsTokens": 749,
+      "conversationTokens": 0,
+      "currentInputTokens": 11,
+      "totalUsed": 1423,
+      "available": 877,
+      "utilizationPercent": 61.86956521739131,
+      "breakdown": {
+        "systemPrompt": 0,
+        "persistentInstructions": 0,
+        "pluginInstructions": 623,
+        "pluginContents": {},
+        "tools": 749,
+        "conversation": 0,
+        "currentInput": 11
+      }
+    },
+    "compactionLog": []
+  },
+  "after": {
+    "revision": 2,
+    "compacted": true,
+    "memoryIndexPresent": true,
+    "retainedCalls": [
+      "pending01"
+    ],
+    "retainedResults": [
+      "pending01"
+    ],
+    "estimatedBudget": {
+      "maxTokens": 2400,
+      "responseReserve": 100,
+      "systemMessageTokens": 774,
+      "toolsTokens": 749,
+      "conversationTokens": 23,
+      "currentInputTokens": 9,
+      "totalUsed": 1555,
+      "available": 745,
+      "utilizationPercent": 67.6086956521739,
+      "breakdown": {
+        "systemPrompt": 0,
+        "persistentInstructions": 0,
+        "pluginInstructions": 623,
+        "pluginContents": {
+          "working_memory": 107
+        },
+        "tools": 749,
+        "conversation": 23,
+        "currentInput": 9
+      }
+    },
+    "compactionLog": [
+      "Algorithmic compaction started: need to free ~1106 tokens",
+      "Moved read_source result (4.7KB) to memory: tool_result.read_source.source01",
+      "Spilled connected or aged tool pair to memory: read_source → tool_result.read_source.source02",
+      "Removed 3 messages, freed ~1419 tokens",
+      "Algorithmic compaction complete: freed ~1419 tokens total"
+    ]
+  },
+  "notesIndex": {
+    "found": true,
+    "entries": [
+      {
+        "key": "raw.tool_result.read_source.source01",
+        "description": "read_source(source=\"sample\")",
+        "tier": "raw"
+      },
+      {
+        "key": "raw.tool_result.read_source.source02",
+        "description": "read_source(source=\"native\")",
+        "tier": "raw"
+      }
+    ]
+  },
+  "recoveredNativeResult": {
+    "found": true,
+    "key": "raw.tool_result.read_source.source02",
+    "entry": {
+      "value": "NATIVE_SOURCE_VERIFIED"
+    }
+  }
+}
+
+COMMAND: node --import tsx examples/context-request-budget.ts
+EXIT: 0
+{"level":"info","time":1792673986308,"component":"Agent","agentName":"agent-1792673986299","model":"offline-budget","connector":"offline-budget","inputPreview":"Return JSON.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 684/1000 (76.0%) tools=652 conversation=0 system=24 input=8 | sysPrompt=0 PI=0 COMPACTED: Compaction started: need to free ~391 tokens; Removed 1 messages from conversation: freed ~507 tokens; Compaction complete: freed ~507 tokens total
+{"level":"info","time":1792673986413,"component":"Agent","agentName":"agent-1792673986299","model":"offline-budget","connector":"offline-budget","duration":104,"msg":"Agent run completed"}
+{"level":"info","time":1792673986417,"component":"AgentContextNextGen","utilizationPercent":205,"criticalPercent":90,"strategy":"algorithmic","msg":"post-cycle consolidation running — over critical threshold, reclaiming space"}
+{"level":"info","time":1792673986434,"component":"AgentContextNextGen","utilizationPercent":208,"criticalPercent":90,"strategy":"algorithmic","msg":"post-cycle consolidation running — over critical threshold, reclaiming space"}
+{"level":"warn","time":1792673986446,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"warn","time":1792673986452,"component":"AgentContextNextGen","originalTokens":4862,"finalTokens":4862,"maxTokens":869,"droppedTokens":0,"msg":"emergency tool-result truncation: tool output exceeded the model context window and was clipped. Consider narrower tool queries or a larger-context model."}
+[
+  {
+    "scenario": "known schema and provider capacity guide compaction",
+    "parsed": {
+      "value": "Done"
+    },
+    "compactions": 1,
+    "providerCalls": 1,
+    "ownerWindow": 128000,
+    "selectedBudget": {
+      "maxTokens": 1000,
+      "responseReserve": 100,
+      "systemMessageTokens": 24,
+      "toolsTokens": 652,
+      "conversationTokens": 0,
+      "currentInputTokens": 8,
+      "totalUsed": 684,
+      "available": 216,
+      "utilizationPercent": 76,
+      "breakdown": {
+        "systemPrompt": 0,
+        "persistentInstructions": 0,
+        "pluginInstructions": 0,
+        "pluginContents": {},
+        "tools": 652,
+        "conversation": 0,
+        "currentInput": 8
+      }
+    }
+  },
+  {
+    "scenario": "separate spills keep both sources",
+    "keys": [
+      "raw.tool_result.lookup.12345678",
+      "raw.tool_result.lookup.12345678.function.1"
+    ],
+    "firstRecovered": true,
+    "secondRecovered": true
+  },
+  {
+    "scenario": "protected error payload cannot fit",
+    "errorCode": "CONTEXT_OVERFLOW",
+    "providerCalls": 0
+  }
+]
+
+COMMAND: node --import tsx examples/structured-output-budget.ts
+EXIT: 0
+{"level":"warn","time":1792673986578,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792673986593,"component":"Agent","agentName":"agent-1792673986577","model":"gpt-4o-mini","connector":"offline-repair-false","inputPreview":"Return a value in JSON.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 141/900 (17.6%) tools=0 conversation=0 system=130 input=11 | sysPrompt=106 PI=0
+{"level":"warn","time":1792673986681,"component":"Agent","agentName":"agent-1792673986577","model":"gpt-4o-mini","connector":"offline-repair-false","reask":1,"error":"All JSON parse strategies failed: unable to parse LLM response as JSON\nRaw text: not json","msg":"Structured output did not parse; re-asking"}
+{"level":"info","time":1792673986681,"component":"Agent","agentName":"agent-1792673986577","model":"gpt-4o-mini","connector":"offline-repair-false","reasks":1,"msg":"Structured output recovered after re-ask"}
+{"level":"info","time":1792673986682,"component":"Agent","agentName":"agent-1792673986577","model":"gpt-4o-mini","connector":"offline-repair-false","duration":89,"msg":"Agent run completed"}
+{"level":"warn","time":1792673986684,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792673986684,"component":"Agent","agentName":"agent-1792673986684","model":"gpt-4o-mini","connector":"offline-repair-true","inputPreview":"Return a value in JSON.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 141/900 (17.6%) tools=0 conversation=0 system=130 input=11 | sysPrompt=106 PI=0
+{"level":"info","time":1792673986696,"component":"AgentContextNextGen","utilizationPercent":179,"criticalPercent":90,"strategy":"algorithmic","msg":"post-cycle consolidation running — over critical threshold, reclaiming space"}
+{"level":"warn","time":1792673986708,"component":"Agent","agentName":"agent-1792673986684","model":"gpt-4o-mini","connector":"offline-repair-true","reask":1,"error":"All JSON parse strategies failed: unable to parse LLM response as JSON\nRaw text: not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not json not j... (4500 chars total)","msg":"Structured output did not parse; re-asking"}
+{"level":"error","time":1792673987881,"component":"Agent","agentName":"agent-1792673986684","model":"gpt-4o-mini","connector":"offline-repair-true","error":"Context overflow: Prepared request cannot fit after the bounded compaction pass. Actual: 1727, Max: 900, Overage: 827","statusCode":413,"code":"CONTEXT_OVERFLOW","stack":"ContextOverflowError: Context overflow: Prepared request cannot fit after the bounded compaction pass. Actual: 1727, Max: 900, Overage: 827\n    at _AgentContextNextGen.assertBudgetFits (/Users/aantich/dev/oneringai/dist/index.js:48620:15)\n    at _AgentContextNextGen.validateRequestBudget (/Users/aantich/dev/oneringai/dist/index.js:48529:14)\n    at _Agent.validateManagedDispatch (/Users/aantich/dev/oneringai/dist/index.js:43597:28)\n    at _Agent._generateStructuredToolFree (/Users/aantich/dev/oneringai/dist/index.js:43502:31)","duration":25,"msg":"Agent run failed"}
+[
+  {
+    "scenario": "fitting repair",
+    "providerCalls": 2,
+    "parsed": {
+      "value": "Done"
+    },
+    "preparedRevision": 1,
+    "estimatedManagedBudget": {
+      "maxTokens": 900,
+      "responseReserve": 100,
+      "systemMessageTokens": 130,
+      "toolsTokens": 0,
+      "conversationTokens": 0,
+      "currentInputTokens": 11,
+      "totalUsed": 141,
+      "available": 659,
+      "utilizationPercent": 17.625,
+      "breakdown": {
+        "systemPrompt": 106,
+        "persistentInstructions": 0,
+        "pluginInstructions": 0,
+        "pluginContents": {},
+        "tools": 0,
+        "conversation": 0,
+        "currentInput": 11
+      }
+    },
+    "fixtureUsage": {
+      "input_tokens": 20,
+      "output_tokens": 10,
+      "total_tokens": 30,
+      "cached_input_tokens": 0,
+      "cache_creation_input_tokens": 0
+    }
+  },
+  {
+    "scenario": "oversized repair rejected",
+    "providerCalls": 1,
+    "errorCode": "CONTEXT_OVERFLOW",
+    "preparedRevision": 1
+  }
+]
+
+COMMAND: node --import tsx apps/amos/examples/context-budget-offline.ts
+EXIT: 0
+before preparation: /context budget
+Context Budget
+────────────────────────────────────
+Total:           3,000 tokens
+Reserved:          100 tokens (3% for response)
+Used:               37 tokens
+Available:       2,863 tokens
+Utilization:       1.3%
+Status:     ✅ OK
+
+Estimate before first preparation — not provider usage.
+
+before preparation: /context breakdown
+Token Breakdown by Component
+────────────────────────────────────
+Estimate before first preparation — not provider usage.
+
+systemOverhead            24   (64.9%)  █████████████░░░░░░░
+currentInput              13   (35.1%)  ███████░░░░░░░░░░░░░
+────────────────────────────────────
+Total:                    37 tokens
+
+Context selection unavailable: legacy configuration or no selected preparation yet. Provider prompt cache usage is unknown here.
+
+after preparation: /context budget
+Context Budget
+────────────────────────────────────
+Total:           3,000 tokens
+Reserved:          100 tokens (3% for response)
+Used:               37 tokens
+Available:       2,863 tokens
+Utilization:       1.3%
+Status:     ✅ OK
+
+Last prepared revision: 1 — estimated tokens, not provider usage.
+
+after preparation: /context breakdown
+Token Breakdown by Component
+────────────────────────────────────
+Last prepared revision: 1 — estimated tokens, not provider usage.
+
+systemOverhead            24   (64.9%)  █████████████░░░░░░░
+currentInput              13   (35.1%)  ███████░░░░░░░░░░░░░
+────────────────────────────────────
+Total:                    37 tokens
+
+Context selection unavailable: legacy configuration or no selected preparation yet. Provider prompt cache usage is unknown here.
+
+after request contributions: /context budget
+Context Budget
+────────────────────────────────────
+Total:           1,000 tokens
+Reserved:          100 tokens (10% for response)
+Used:              294 tokens
+Available:         606 tokens
+Utilization:      32.7%
+Status:     ✅ OK
+
+Last prepared revision: 2 — estimated tokens, not provider usage.
+
+after request contributions: /context breakdown
+Token Breakdown by Component
+────────────────────────────────────
+Last prepared revision: 2 — estimated tokens, not provider usage.
+
+tools                    257   (87.4%)  █████████████████░░░
+systemOverhead            24    (8.2%)  ██░░░░░░░░░░░░░░░░░░
+currentInput              13    (4.4%)  █░░░░░░░░░░░░░░░░░░░
+────────────────────────────────────
+Total:                   294 tokens
+
+Context selection unavailable: legacy configuration or no selected preparation yet. Provider prompt cache usage is unknown here.
+
+
+COMMAND: node --import tsx examples/tool-outcomes-and-cancellation.ts
+EXIT: 0
+Raw application data: { success: false, value: 'valid domain data' }
+Legacy normalized failure: {
+  success: false,
+  error: 'Example failure',
+  errorType: 'Error',
+  toolName: 'normalized_failure'
+}
+Late completion (diagnostic only): succeeded noncooperative
+domain_data succeeded settled none
+normalized_failure failed settled none
+cooperative timed_out unknown requested
+noncooperative timed_out unknown requested
+Invocation selection retained; replacement used by the next call.
+Loopback body read cancelled; no claim about remote effects.
+
+COMMAND: node --import tsx apps/amos/examples/tool-outcomes-offline.ts
+EXIT: 0
+Raw application data: { success: false, value: 'valid domain data' }
+Legacy normalized failure: {
+  success: false,
+  error: 'Example failure',
+  errorType: 'Error',
+  toolName: 'normalized_failure'
+}
+Late completion (diagnostic only): succeeded noncooperative
+domain_data: succeeded
+normalized_failure: Example failure
+cooperative: Tool 'cooperative' execution timed out after 20ms. Completion is unknown; the operation may still finish. Check external state before retrying.
+noncooperative: Tool 'noncooperative' execution timed out after 20ms. Completion is unknown; the operation may still finish. Check external state before retrying.
+
+COMMAND: node --import tsx examples/purpose-specific-models.ts
+EXIT: 0
+{"level":"warn","time":1792674000473,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+Resolved helper: offline-helper; input estimate allowance: 768
+{"level":"info","time":1792674000649,"component":"Agent","agentName":"agent-1792674000469","model":"offline-main","connector":"example-purpose-main-4da22489-32a7-4be3-a20c-fba1c1db061a","inputPreview":"Return this extracted marker verbatim: ALPHA_6","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 87/8192 (2.1%) tools=0 conversation=0 system=69 input=18 | sysPrompt=38 PI=0
+{"level":"info","time":1792674000692,"component":"Agent","agentName":"agent-1792674000469","model":"offline-main","connector":"example-purpose-main-4da22489-32a7-4be3-a20c-fba1c1db061a","duration":43,"msg":"Agent run completed"}
+extractor/generation: offline-helper, tokens=25, model cost=unknown, validation=failed
+extractor/repair: offline-helper, tokens=25, model cost=unknown, validation=passed
+main/generation: offline-main, tokens=25, model cost=unknown
+verifier/generation: offline-helper, tokens=25, model cost=unknown, validation=passed
+Offline plumbing check passed; model answers and usage are synthetic.
+
+COMMAND: node --import tsx examples/shared-run-budget.ts
+EXIT: 0
+Concurrent reservation rejected before dispatch.
+Hard monetary ceiling rejected unknown prices. Token/call limits can still be used.
+{
+  "calls": 3,
+  "inputTokens": 30,
+  "outputTokens": 15,
+  "totalTokens": 45,
+  "cachedInputTokens": 0,
+  "reasoningTokens": 0,
+  "knownModelCostUSD": 0,
+  "unknownUsageInvocations": 0,
+  "unknownCostInvocations": 3,
+  "unknownChargeAttempts": 0,
+  "chargedTokens": 45,
+  "chargedCostUSD": null
+}
+All usage is synthetic. Unknown model prices remain unknown; no LLM calls made.
+
+COMMAND: node --import tsx apps/amos/examples/model-helpers-offline.ts
+EXIT: 0
+/helpers 
+compactor: disabled
+extractor: disabled
+verifier: disabled
+
+/helpers [set <role> <connector> <model> [effort]|off [role]|usage|run <role> <text>|compact|budget <calls> <tokens>]
+
+Roles: compactor, extractor, verifier. Helpers are disabled by default.
+Setting a role makes no model calls. Explicit run/compact makes one additional billable call, with at most one JSON repair.
+Compactor configuration authorizes older conversation text to be sent to that named connector; opaque provider state is omitted.
+Algorithmic is the automatic default; /context strategy explicitly selects masking or structured summaries. /helpers compact performs a separate between-executions rollover and keeps two recent turns.
+Budgets use conservative provider-capacity reservations; retries with missing usage remain unknown.
+Usage lists purposes, known tokens/cost estimates and unknown usage; it is process-local diagnostic data.
+
+
+/helpers set extractor amos-offline-helper-4011 gpt-4o-mini
+Helper configuration saved; no model calls made. Explicit run/compact can make one additional call plus at most one repair.
+
+/helpers run extractor Extract source identifier ALPHA_6 into answer.
+ALPHA_6
+
+/helpers usage
+extractor/generation: amos-offline-helper-4011 / gpt-4o-mini — succeeded, output validation failed; 25 tokens; model cost $0.000006
+extractor/repair: amos-offline-helper-4011 / gpt-4o-mini — succeeded, output validation passed; 25 tokens; model cost $0.000006
+Attempts: 2; unknown-charge attempts: 0
+Known token subtotal: 50; unknown/pending usage: 0
+Unknown/pending model costs: 0
+
+/helpers off
+Helper configuration updated; no model calls made.
+
+AMOS helper demonstration passed; answers and usage are synthetic. No credentials, network calls or configuration writes.
+
+COMMAND: node --import tsx examples/durable-tool-evidence.ts
+EXIT: 0
+{"level":"info","time":1792674001340,"component":"AgentContextNextGen","beforeTokens":135,"afterTokens":75,"tokensFreed":60,"itemsSummarized":4,"retainedTurns":0,"msg":"context rollover completed"}
+Raw application result: 92087 characters; model projection: 355 characters.
+Status and document IDs preserved; scratch evicted; history rolled over; saved context restored.
+Separate-process exact evidence recovery passed
+Acknowledgement: restart. This demonstrates ordinary restart, not crash/replica durability.
+
+COMMAND: node --import tsx examples/evidence-recovery.ts
+EXIT: 0
+{"level":"warn","time":1792674006197,"strategy":"algorithmic","missing":["working_memory"],"available":["evidence"],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"warn","time":1792674006225,"strategy":"algorithmic","missing":["working_memory"],"available":["evidence"],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+Pending delivery-only result survived file session save/load with its original invocation ID.
+Storage outage preserved raw data; a receipt without its result cannot release protection.
+{"level":"info","time":1792674006237,"component":"AgentContextNextGen","beforeTokens":3616,"afterTokens":72,"tokensFreed":3544,"itemsSummarized":3,"retainedTurns":0,"msg":"context rollover completed"}
+Result recovered and rollover allowed; local action executed exactly once.
+This store is process-local. Configure a stable file/custom backend for restart recovery.
+
+COMMAND: node --import tsx examples/ambiguous-action-evidence.ts
+EXIT: 0
+Receipt: cancelled / completion unknown / effect write / original-call.
+The simulated service applied one write. The framework has no completion evidence and does not retry.
+Storage: process-local; configure FileEvidenceStorage or a durable custom backend for restart recovery.
+
+COMMAND: node --import tsx apps/amos/examples/evidence-offline.ts
+EXIT: 0
+{"level":"info","time":1792674006208,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-evidence-demo","inputPreview":"Call large_search once.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2364/128000 (1.9%) tools=1199 conversation=0 system=1154 input=11 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+[Agent] [Context] iteration=1 tokens: 2561/128000 (2.1%) tools=1199 conversation=20 system=1246 input=96 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=112
+{"level":"info","time":1792674006265,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-evidence-demo","duration":56,"msg":"Agent run completed"}
+/context evidence
+Evidence acknowledgement: restart (local, not replicated).
+930ab7c0-17bb-4851-ad0c-93541b00ec42 large_search succeeded/settled effect=read
+Explicit preview: /context evidence <id> [character-offset]
+
+/context evidence 930ab7c0-17bb-4851-ad0c-93541b00ec42
+{"version":1,"recordedAt":1792674006244,"source":{"toolName":"large_search","executionId":"8eea6b5f-ae75-48a2-b233-ffd02eb65147","arguments":{},"principal":{"userId":"local-example","agentId":"amos"},"effect":"read","status":"succeeded","completion":"settled","startedAt":1792674006242,"durationMs":2,"executionStarted":true,"cancellation":"none","callId":"demo-call","runId":"exec_79092182-fbaf-4584-83df-57720b54de05"},"result":{"ids":["AMOS_SOURCE_03"],"text":"synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source synthetic source
+Next offset: 1024
+
+AMOS metadata listing and explicit bounded preview passed. Synthetic usage; temporary files cleaned.
+
+COMMAND: node --import tsx examples/evidence-stream-interruption.ts
+EXIT: 0
+{"level":"warn","time":1792674008201,"strategy":"algorithmic","missing":["working_memory"],"available":["evidence"],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792674008207,"component":"Agent","agentName":"agent-1792674008200","model":"gpt-4o-mini","connector":"offline-stream-recovery","inputPreview":"Perform the local action once.","toolCount":1,"msg":"Agent stream started"}
+[Agent] [Context] iteration=1 tokens: 595/128000 (0.5%) tools=378 conversation=0 system=204 input=13 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20
+Closing at tool completion retained the exact observation in the session checkpoint.
+{"level":"warn","time":1792674008270,"strategy":"algorithmic","missing":["working_memory"],"available":["evidence"],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+A stored receipt without a result cannot authorize discarding the raw source.
+{"level":"info","time":1792674008276,"component":"Agent","agentName":"agent-1792674008200","model":"gpt-4o-mini","connector":"offline-stream-recovery","sessionId":"interrupted","msg":"Session loaded"}
+{"level":"info","time":1792674008278,"component":"AgentContextNextGen","beforeTokens":3761,"afterTokens":71,"tokensFreed":3690,"itemsSummarized":3,"retainedTurns":0,"msg":"context rollover completed"}
+Checkpoint restored after acknowledgement without duplicate results; action and synthetic model each ran once.
+Evidence is process-local in this demo; choose a stable file/custom evidence backend for restart recovery.
+
+COMMAND: node --import tsx examples/context-strategy-comparison.ts
+EXIT: 0
+observation-masking: three fitting critical preparations passed with full evidence storage, unchanged history and zero helper calls.
+structured-summary: three fitting critical preparations passed with full evidence storage, unchanged history and zero helper calls.
+{"level":"info","time":1792674010242,"component":"Agent","agentName":"agent-1792674010238","model":"gpt-4o","connector":"context-main-62d0232f-322f-4556-9f70-c0e36c4bc5ac","inputPreview":"Return the exact source answer field and the original account/status as JSON now. This is a fact-ret","toolCount":2,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 3149/11000 (30.8%) tools=342 conversation=1404 system=1347 input=56 | sysPrompt=428 PI=0 pluginInstr=762 plugin:working_memory=78 plugin:evidence=20 COMPACTED: Algorithmic compaction started: need to free ~7986 tokens; Moved lookup result (39.9KB) to memory: tool_result.lookup.original; Removed 2 messages, freed ~11689 tokens; Algorithmic compaction complete: freed ~11689 tokens total
+[Agent] [Context] iteration=1 tokens: 3281/11000 (32.1%) tools=342 conversation=1481 system=1437 input=21 | sysPrompt=428 PI=0 pluginInstr=762 plugin:working_memory=78 plugin:evidence=110
+{"level":"info","time":1792674010265,"component":"Agent","agentName":"agent-1792674010238","model":"gpt-4o","connector":"context-main-62d0232f-322f-4556-9f70-c0e36c4bc5ac","duration":22,"msg":"Agent run completed"}
+dev-config / algorithmic: passed; calls=2, reads=1, known tokens=280, model cost unknown=0
+{"level":"info","time":1792674010268,"component":"Agent","agentName":"agent-1792674010267","model":"gpt-4o","connector":"context-main-ff810b9e-f43d-4a71-88d2-425222797f1b","inputPreview":"Return the exact source answer field and the original account/status as JSON now. This is a fact-ret","toolCount":2,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 3177/11000 (31.0%) tools=342 conversation=1514 system=1265 input=56 | sysPrompt=428 PI=0 pluginInstr=762 plugin:evidence=20 COMPACTED: observation-masking: applied; freed ~11579 tokens
+[Agent] [Context] iteration=1 tokens: 3312/11000 (32.4%) tools=342 conversation=1594 system=1355 input=21 | sysPrompt=428 PI=0 pluginInstr=762 plugin:evidence=110
+{"level":"info","time":1792674010290,"component":"Agent","agentName":"agent-1792674010267","model":"gpt-4o","connector":"context-main-ff810b9e-f43d-4a71-88d2-425222797f1b","duration":22,"msg":"Agent run completed"}
+dev-config / observation-masking: passed; calls=2, reads=1, known tokens=280, model cost unknown=0
+{"level":"info","time":1792674010292,"component":"Agent","agentName":"agent-1792674010291","model":"gpt-4o","connector":"context-main-c5035207-bd96-4651-89a7-6b117bea8e3b","inputPreview":"Return the exact source answer field and the original account/status as JSON now. This is a fact-ret","toolCount":2,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2538/11000 (24.8%) tools=342 conversation=875 system=1265 input=56 | sysPrompt=428 PI=0 pluginInstr=762 plugin:evidence=20 COMPACTED: structured-summary: applied; freed ~12218 tokens
+{"level":"info","time":1792674010365,"component":"Agent","agentName":"agent-1792674010291","model":"gpt-4o","connector":"context-main-c5035207-bd96-4651-89a7-6b117bea8e3b","duration":73,"msg":"Agent run completed"}
+dev-config / structured-summary: passed; calls=2, reads=0, known tokens=280, model cost unknown=0
+All comparison predicates passed. Both new strategies remain experimental and opt-in; algorithmic remains the default. Stores are process-local and agents/connectors are cleaned up.
+
+COMMAND: node --import tsx apps/amos/examples/context-strategies-offline.ts
+EXIT: 0
+{"level":"info","time":1792674010248,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","inputPreview":"Read the source once.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2369/128000 (1.9%) tools=1205 conversation=0 system=1154 input=10 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+[Agent] [Context] iteration=1 tokens: 7366/128000 (5.9%) tools=1205 conversation=17 system=1244 input=4900 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=110
+{"level":"info","time":1792674010295,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","duration":47,"msg":"Agent run completed"}
+{"level":"info","time":1792674010296,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","inputPreview":"Progress 0; retain the source.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 7546/128000 (6.1%) tools=1205 conversation=5084 system=1244 input=13 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=110
+{"level":"info","time":1792674010299,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","duration":3,"msg":"Agent run completed"}
+{"level":"info","time":1792674010300,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","inputPreview":"Progress 1; retain the source.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 7726/128000 (6.2%) tools=1205 conversation=5264 system=1244 input=13 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=110
+{"level":"info","time":1792674010302,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","duration":2,"msg":"Agent run completed"}
+{"level":"info","time":1792674010303,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","inputPreview":"Progress 2; retain the source.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 7906/128000 (6.4%) tools=1205 conversation=5444 system=1244 input=13 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=110
+{"level":"info","time":1792674010306,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","duration":3,"msg":"Agent run completed"}
+Failed settings save restored the absent default; an unrelated save/reload kept it absent, with no model call.
+/context strategy observation-masking
+Strategy: observation-masking. Algorithmic is the default; alternatives are experimental and opt-in.
+No transactional compaction recorded in the last preparation.
+Structured summaries use the configured compactor budget with at most one repair. Inspect /helpers usage for actual calls, known cost and unknowns.
+
+{"level":"info","time":1792674010315,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","inputPreview":"Continue with retained source references.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 3292/12000 (41.6%) tools=1205 conversation=827 system=1244 input=16 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=110 COMPACTED: observation-masking: applied; freed ~4797 tokens
+{"level":"info","time":1792674010340,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-stage07","duration":25,"msg":"Agent run completed"}
+/context strategy
+Strategy: observation-masking. Algorithmic is the default; alternatives are experimental and opt-in.
+Last pre-call transaction (observation-masking): applied; estimated savings 4797 tokens; helper requested false; fallback none.
+Sources: 1878dfcb-90a2-434b-837e-13c4933bc3db.
+Structured summaries use the configured compactor budget with at most one repair. Inspect /helpers usage for actual calls, known cost and unknowns.
+
+/context strategy structured-summary
+Strategy: structured-summary. Algorithmic is the default; alternatives are experimental and opt-in.
+Last pre-call transaction (observation-masking): applied; estimated savings 4797 tokens; helper requested false; fallback none.
+Sources: 1878dfcb-90a2-434b-837e-13c4933bc3db.
+Structured summaries use the configured compactor budget with at most one repair. Inspect /helpers usage for actual calls, known cost and unknowns.
+
+Selection itself made no helper call. A later summary trigger can make one helper call plus one repair, within its task budget.
+/context strategy algorithmic
+Strategy: algorithmic. Algorithmic is the default; alternatives are experimental and opt-in.
+Last pre-call transaction (observation-masking): applied; estimated savings 4797 tokens; helper requested false; fallback none.
+Sources: 1878dfcb-90a2-434b-837e-13c4933bc3db.
+Structured summaries use the configured compactor budget with at most one repair. Inspect /helpers usage for actual calls, known cost and unknowns.
+
+Actual AMOS masking, inspection and persisted strategy selection passed; one original read action. Usage is scripted, not a cost/quality measurement. Temporary files cleaned.
+
+COMMAND: node --import tsx examples/task-state-workflow.ts
+EXIT: 0
+{"level":"warn","time":1792674010206,"strategy":"algorithmic","missing":["working_memory"],"available":["evidence","task_state"],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792674010229,"component":"AgentContextNextGen","beforeTokens":25,"afterTokens":80,"tokensFreed":-55,"itemsSummarized":2,"retainedTurns":0,"msg":"context rollover completed"}
+{"level":"warn","time":1792674010239,"strategy":"algorithmic","missing":["working_memory"],"available":["evidence","task_state"],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"warn","time":1792674011355,"strategy":"algorithmic","missing":["working_memory"],"available":["task_state"],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+Separate-process pending task recovery passed.
+{"level":"warn","time":1792674011392,"strategy":"algorithmic","missing":["working_memory"],"available":["evidence","task_state"],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+Correction retained, unconfirmed proposal labeled, accepted action suspended/resumed, host confirmed remote completion.
+Task revision 9; pruned ID reused and checkpoint restored; 1 submission; no LLM calls. Temporary files cleaned.
+
+COMMAND: node --import tsx apps/amos/examples/task-state-offline.ts
+EXIT: 0
+/context task add 0 constraint cap Spend at most 50 EUR
+Task state updated to revision 1 in memory. Use /session save to checkpoint it.
+/context task correct 1 cap cap-corrected Spend at most 40 EUR
+Task state updated to revision 2 in memory. Use /session save to checkpoint it.
+/context task resolve 1 cap-corrected
+Task revision changed; inspect /context task and retry with the current revision.
+{"level":"info","time":1792674012205,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-task-demo","inputPreview":"Continue with the host constraint.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2180/128000 (1.8%) tools=841 conversation=0 system=1325 input=14 | sysPrompt=148 PI=0 pluginInstr=900 plugin:task_state=217
+{"level":"info","time":1792674012233,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-task-demo","duration":28,"msg":"Agent run completed"}
+{"level":"info","time":1792674012237,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-task-demo","sessionId":"1792674012195_ppmk10t","msg":"Session loaded"}
+/context task
+Task "delivery-42", revision 2. Unconfirmed receipts do not prove remote completion.
+{
+  "version": 1,
+  "scope": {
+    "ownerId": "local",
+    "namespace": "demo"
+  },
+  "taskId": "delivery-42",
+  "revision": 2,
+  "notes": [
+    {
+      "id": "cap",
+      "category": "constraint",
+      "text": "Spend at most 50 EUR",
+      "source": {
+        "label": "Explicit AMOS host command"
+      },
+      "authority": "host",
+      "supersededBy": "cap-corrected"
+    },
+    {
+      "id": "cap-corrected",
+      "category": "constraint",
+      "text": "Spend at most 40 EUR",
+      "supersedes": "cap",
+      "source": {
+        "label": "Explicit AMOS host command"
+      },
+      "authority": "host"
+    }
+  ],
+  "actions": []
+}
+/context task add 3 constraint new-cap Keep 40 EUR
+Task-state capacity reached. Inspect /context task; prune resolved/superseded notes with task prune, or explicitly resolve and remove notes atomically with task resolve-prune. Use task confirm-prune only after verifying a terminal remote outcome. Then /session save.
+/context task resolve-prune 3 bulk-0
+Task state updated to revision 4 in memory. Use /session save to checkpoint it.
+/context task add 4 constraint new-cap Keep 40 EUR
+Task state updated to revision 5 in memory. Use /session save to checkpoint it.
+{"level":"info","time":1792674012276,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-task-demo","sessionId":"1792674012195_ppmk10t","msg":"Session loaded"}
+At the 100-record cap, explicit atomic host recovery reclaimed a slot, accepted a new constraint and survived checkpoint reload.
+Host edits, stale-revision rejection and checkpoint reload passed; model command text stayed data. One synthetic call, no LLM/network. Temporary files cleaned.
+
+COMMAND: node --import tsx examples/feedback-driven-agent.ts
+EXIT: 0
+{"level":"warn","time":1792674013416,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792674013421,"component":"Agent","agentName":"agent-1792674013415","model":"gpt-4o-mini","connector":"feedback-demo","inputPreview":"Verify artifact A42.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 86/128000 (0.1%) tools=52 conversation=0 system=24 input=10 | sysPrompt=0 PI=0
+[Agent] [Context] iteration=1 tokens: 129/128000 (0.1%) tools=52 conversation=20 system=24 input=33 | sysPrompt=0 PI=0
+[Agent] [Context] iteration=2 tokens: 235/128000 (0.2%) tools=52 conversation=62 system=24 input=97 | sysPrompt=0 PI=0
+[Agent] [Context] iteration=3 tokens: 256/128000 (0.2%) tools=52 conversation=168 system=24 input=12 | sysPrompt=0 PI=0
+{"level":"info","time":1792674013461,"component":"Agent","agentName":"agent-1792674013415","model":"gpt-4o-mini","connector":"feedback-demo","duration":40,"msg":"Agent run completed"}
+Artifact A42 is ready and verified.
+{
+  "version": 1,
+  "executionId": "exec_c5e51329-41a3-4d4e-bea4-3b5a7c0c3980",
+  "phase": "complete",
+  "iterations": 4,
+  "recoveryAttempts": 2,
+  "observedToolCalls": 2,
+  "consecutiveToolFailures": 0,
+  "repeatedResults": 1,
+  "stalledIterations": 0,
+  "uncertainEffects": [],
+  "completion": {
+    "complete": true
+  },
+  "reason": "completed",
+  "status": "completed"
+}
+Premature prose rejected; one failed read recovered; host evidence check passed. Four synthetic calls, no writes.
+
+COMMAND: node --import tsx examples/run-stream-equivalence.ts
+EXIT: 0
+{"level":"warn","time":1792674013424,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792674013427,"component":"Agent","agentName":"agent-1792674013423","model":"gpt-4o-mini","connector":"equivalence-run","inputPreview":"Find the verified result.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 78/128000 (0.1%) tools=42 conversation=0 system=24 input=12 | sysPrompt=0 PI=0
+[Agent] [Context] iteration=1 tokens: 169/128000 (0.1%) tools=42 conversation=19 system=24 input=84 | sysPrompt=0 PI=0
+[Agent] [Context] iteration=2 tokens: 184/128000 (0.1%) tools=42 conversation=110 system=24 input=8 | sysPrompt=0 PI=0
+{"level":"info","time":1792674013465,"component":"Agent","agentName":"agent-1792674013423","model":"gpt-4o-mini","connector":"equivalence-run","duration":38,"msg":"Agent run completed"}
+{"level":"warn","time":1792674013466,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792674013467,"component":"Agent","agentName":"agent-1792674013466","model":"gpt-4o-mini","connector":"equivalence-stream","inputPreview":"Find the verified result.","toolCount":1,"msg":"Agent stream started"}
+[Agent] [Context] iteration=1 tokens: 78/128000 (0.1%) tools=42 conversation=0 system=24 input=12 | sysPrompt=0 PI=0
+[Agent] [Context] iteration=2 tokens: 169/128000 (0.1%) tools=42 conversation=19 system=24 input=84 | sysPrompt=0 PI=0
+[Agent] [Context] iteration=3 tokens: 184/128000 (0.1%) tools=42 conversation=110 system=24 input=8 | sysPrompt=0 PI=0
+{"level":"info","time":1792674013476,"component":"Agent","agentName":"agent-1792674013466","model":"gpt-4o-mini","connector":"equivalence-stream","duration":9,"msg":"Agent stream completed"}
+{
+  "run": {
+    "trace": [
+      "before:tool",
+      "read:1",
+      "before:tool",
+      "read:2"
+    ],
+    "attempts": 2,
+    "calls": 3,
+    "reason": "completed",
+    "recoveryAttempts": 1
+  },
+  "stream": {
+    "trace": [
+      "before:tool",
+      "read:1",
+      "before:tool",
+      "read:2"
+    ],
+    "attempts": 2,
+    "calls": 3,
+    "reason": "completed",
+    "recoveryAttempts": 1
+  }
+}
+Equivalent tool/hook decisions and host completion. Streamed text is provisional; JSON repair remains run-only.
+{"level":"warn","time":1792674013477,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792674013478,"component":"Agent","agentName":"agent-1792674013477","model":"gpt-4o-mini","connector":"stopped-run","inputPreview":"Submit once","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 89/128000 (0.1%) tools=57 conversation=0 system=24 input=8 | sysPrompt=0 PI=0
+{"level":"warn","time":1792674013480,"component":"Agent","agentName":"agent-1792674013477","model":"gpt-4o-mini","connector":"stopped-run","reask":1,"error":"Empty input\nRaw text: ","msg":"Structured output did not parse; re-asking"}
+{"level":"info","time":1792674013481,"component":"Agent","agentName":"agent-1792674013477","model":"gpt-4o-mini","connector":"stopped-run","reasks":1,"msg":"Structured output recovered after re-ask"}
+{"level":"info","time":1792674013481,"component":"Agent","agentName":"agent-1792674013477","model":"gpt-4o-mini","connector":"stopped-run","duration":3,"msg":"Agent run completed"}
+{"level":"info","time":1792674013481,"component":"Agent","agentName":"agent-1792674013477","model":"gpt-4o-mini","connector":"stopped-run","inputPreview":"Inspect the earlier receipt","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 134/128000 (0.1%) tools=50 conversation=48 system=24 input=12 | sysPrompt=0 PI=0
+{"level":"info","time":1792674013482,"component":"Agent","agentName":"agent-1792674013477","model":"gpt-4o-mini","connector":"stopped-run","duration":1,"msg":"Agent run completed"}
+run: stopped call and receipt survive the next turn; one synthetic local write.
+{"level":"warn","time":1792674013483,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792674013483,"component":"Agent","agentName":"agent-1792674013483","model":"gpt-4o-mini","connector":"stopped-stream","inputPreview":"Submit once","toolCount":1,"msg":"Agent stream started"}
+[Agent] [Context] iteration=1 tokens: 82/128000 (0.1%) tools=50 conversation=0 system=24 input=8 | sysPrompt=0 PI=0
+[Agent] WARNING: stream completed with zero text output (status=completed, executionId=exec_d55ae232-d6c6-446f-9d3a-e7d6e2f1a4a3, iterations=0, tokens=12, hadToolCalls=true)
+{"level":"info","time":1792674013485,"component":"Agent","agentName":"agent-1792674013483","model":"gpt-4o-mini","connector":"stopped-stream","duration":2,"msg":"Agent stream completed"}
+{"level":"info","time":1792674013485,"component":"Agent","agentName":"agent-1792674013483","model":"gpt-4o-mini","connector":"stopped-stream","inputPreview":"Inspect the earlier receipt","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 119/128000 (0.1%) tools=50 conversation=33 system=24 input=12 | sysPrompt=0 PI=0
+{"level":"info","time":1792674013486,"component":"Agent","agentName":"agent-1792674013483","model":"gpt-4o-mini","connector":"stopped-stream","duration":1,"msg":"Agent run completed"}
+stream: stopped call and receipt survive the next turn; one synthetic local write.
+
+COMMAND: node --import tsx apps/amos/examples/loop-policy-offline.ts
+EXIT: 0
+{"level":"info","time":1792674014005,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","inputPreview":"Verify the artifact.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 1837/128000 (1.5%) tools=841 conversation=0 system=986 input=10 | sysPrompt=148 PI=0 pluginInstr=788
+[Agent] [Context] iteration=1 tokens: 1871/128000 (1.5%) tools=841 conversation=20 system=986 input=24 | sysPrompt=148 PI=0 pluginInstr=788
+{"level":"info","time":1792674014040,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","duration":34,"msg":"Agent run completed"}
+Loop input_needed: Recovery allowance exhausted; input needed. Recovery attempts: 1.
+{
+  "version": 1,
+  "executionId": "exec_ec3c88fb-a9f9-4fbc-8b93-e38a121930bc",
+  "phase": "input_needed",
+  "iterations": 2,
+  "recoveryAttempts": 1,
+  "observedToolCalls": 0,
+  "consecutiveToolFailures": 0,
+  "repeatedResults": 0,
+  "stalledIterations": 0,
+  "uncertainEffects": [],
+  "completion": {
+    "complete": false,
+    "reason": "Required artifact missing"
+  },
+  "reason": "recovery_exhausted",
+  "detail": "predicate_unmet",
+  "status": "blocked"
+}
+{"level":"info","time":1792674014058,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","sessionId":"1792674014042_ppaoszt","msg":"Session loaded"}
+{"level":"info","time":1792674014059,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","inputPreview":"Continue after host verification.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 1900/128000 (1.5%) tools=841 conversation=59 system=986 input=14 | sysPrompt=148 PI=0 pluginInstr=788
+{"level":"info","time":1792674014061,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-loop-demo","duration":2,"msg":"Agent run completed"}
+Checkpoint has conversation data, not restored counters/checker authority. Host supplied a fresh completion check.
+
+COMMAND: node --import tsx examples/agentic-presets.ts
+EXIT: 0
+{"preset":"plain","strategy":"algorithmic","loop":{"enabled":false,"hostCompletionCheck":false,"maxIterations":50},"helpers":{}}
+{"level":"info","time":1792674014635,"component":"Agent","agentName":"agent-1792674014629","model":"gpt-4o-mini","connector":"preset-plain","inputPreview":"Inspect artifact A42.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 1721/128000 (1.4%) tools=841 conversation=0 system=870 input=10 | sysPrompt=32 PI=0 pluginInstr=788
+{"level":"info","time":1792674014665,"component":"Agent","agentName":"agent-1792674014629","model":"gpt-4o-mini","connector":"preset-plain","duration":30,"msg":"Agent run completed"}
+Plain Agent is unchanged. legacy completion
+{"preset":"research","strategy":"observation-masking","loop":{"enabled":true,"hostCompletionCheck":false,"maxIterations":12},"helpers":{},"evidence":"process"}
+{"level":"info","time":1792674014668,"component":"Agent","agentName":"agent-1792674014667","model":"gpt-4o-mini","connector":"preset-research","inputPreview":"Inspect artifact A42.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2263/128000 (1.8%) tools=1215 conversation=0 system=1038 input=10 | sysPrompt=32 PI=0 pluginInstr=927 plugin:evidence=20
+[Agent] [Context] iteration=1 tokens: 2375/128000 (1.9%) tools=1215 conversation=19 system=1128 input=13 | sysPrompt=32 PI=0 pluginInstr=927 plugin:evidence=111
+{"level":"info","time":1792674014681,"component":"Agent","agentName":"agent-1792674014667","model":"gpt-4o-mini","connector":"preset-research","duration":13,"msg":"Agent run completed"}
+Artifact A42 is ready. answer_returned
+{"preset":"workflow","strategy":"algorithmic","loop":{"enabled":true,"hostCompletionCheck":true,"maxIterations":4},"helpers":{},"evidence":"process"}
+{"level":"info","time":1792674014683,"component":"Agent","agentName":"agent-1792674014682","model":"gpt-4o-mini","connector":"preset-workflow","inputPreview":"Inspect artifact A42.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2541/128000 (2.1%) tools=1215 conversation=0 system=1316 input=10 | sysPrompt=32 PI=0 pluginInstr=1039 plugin:evidence=20 plugin:task_state=157
+[Agent] [Context] iteration=1 tokens: 2654/128000 (2.1%) tools=1215 conversation=19 system=1407 input=13 | sysPrompt=32 PI=0 pluginInstr=1039 plugin:evidence=111 plugin:task_state=157
+{"level":"info","time":1792674014690,"component":"Agent","agentName":"agent-1792674014682","model":"gpt-4o-mini","connector":"preset-workflow","duration":7,"msg":"Agent run completed"}
+Artifact A42 is ready. completed
+Unavailable preset: Unknown agent preset. Choose research or workflow.
+Dependency conflict: Preset strategy requires enabled evidence.
+{"level":"warn","time":1792674014693,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792674014711,"component":"Agent","agentName":"agent-1792674014710","model":"gpt-4o-mini","connector":"preset-handoff","sessionId":"B","msg":"Session loaded"}
+Rejected resume preserved host authority and checkpoint A; JSON conversion hooks restored successfully.
+
+COMMAND: node --import tsx apps/amos/examples/presets-offline.ts
+EXIT: 0
+Saved preset research for the next agent initialization. Use /session new to apply. No model calls made; active agent is unchanged.
+{"level":"info","time":1792674015974,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-presets-offline","inputPreview":"Give a short status.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2585/128000 (2.1%) tools=1175 conversation=0 system=1400 input=10 | sysPrompt=148 PI=0 pluginInstr=1039 plugin:evidence=20 plugin:task_state=124
+{"level":"info","time":1792674016005,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-presets-offline","duration":31,"msg":"Agent run completed"}
+Research response.
+{"active":"research","strategy":"observation-masking","loop":{"enabled":true,"hostCompletionCheck":false,"maxIterations":12}}
+Saved preset workflow for the next agent initialization. Use /session new to apply. No model calls made; active agent is unchanged.
+{"level":"info","time":1792674016037,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-presets-offline","sessionId":"1792674016006_vslh31d","msg":"Session loaded"}
+{"level":"info","time":1792674016039,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-presets-offline","inputPreview":"Give a short status.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2605/128000 (2.1%) tools=1175 conversation=20 system=1400 input=10 | sysPrompt=148 PI=0 pluginInstr=1039 plugin:evidence=20 plugin:task_state=124
+{"level":"info","time":1792674016042,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"amos-presets-offline","duration":3,"msg":"Agent run completed"}
+Workflow response.
+{"active":"workflow","strategy":"algorithmic","loop":{"enabled":true,"hostCompletionCheck":false,"maxIterations":8}}
+Rejected foreign load preserved the active checkpoint and subsequent save target.
+Failed candidate preserved the active runner; unnamed saves retained the title.
+Persisted selection: workflow
+
+COMMAND: node --import tsx examples/context-block-selection.ts
+EXIT: 0
+{
+  "legacyOverflow": true,
+  "legacyEstimatedTokens": 7174,
+  "selectedEstimatedTokens": 1294,
+  "sourceEntriesRetained": 2,
+  "omittedSourceRecovered": true,
+  "scopeChangeBlocked": true,
+  "selection": {
+    "layout": "legacy",
+    "entries": [
+      {
+        "id": "in_context_memory/background",
+        "source": "in_context_memory",
+        "status": "omitted",
+        "reason": "budget",
+        "estimatedTokens": 4739,
+        "dependencies": [],
+        "protected": false
+      },
+      {
+        "id": "in_context_memory/answer",
+        "source": "in_context_memory",
+        "status": "selected",
+        "reason": "protected",
+        "estimatedTokens": 29,
+        "dependencies": [],
+        "protected": true
+      },
+      {
+        "id": "external_source/provenance",
+        "source": "external_source",
+        "status": "selected",
+        "reason": "priority",
+        "estimatedTokens": 8,
+        "dependencies": [
+          "in_context_memory/answer"
+        ],
+        "protected": false
+      },
+      {
+        "id": "external_source/history",
+        "source": "external_source",
+        "status": "projected",
+        "reason": "projection",
+        "estimatedTokens": 14,
+        "dependencies": [],
+        "protected": false
+      }
+    ],
+    "maxDataTokens": 2048,
+    "selectedDataTokens": 114,
+    "reasoningReserveTokens": 0,
+    "accounting": {
+      "estimate": "local",
+      "opaqueOrMultimodal": false,
+      "estimatedInputTokens": 1294,
+      "capacitySource": "host",
+      "providerInputTokens": null,
+      "inputTokenDelta": null,
+      "cachedInputTokens": null,
+      "cacheCreationInputTokens": null
+    },
+    "requestFingerprint": "0bdf87990df677584589fe9a02e3f3251fd88f1c9e7c1880fbf2df881acaa044"
+  }
+}
+
+COMMAND: node --import tsx examples/cache-aware-context.ts
+EXIT: 0
+{"level":"warn","time":1792674017262,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{
+  "stablePrefix": true,
+  "actualProviderUsage": {
+    "estimate": "local",
+    "opaqueOrMultimodal": false,
+    "estimatedInputTokens": 116,
+    "capacitySource": "registry",
+    "providerInputTokens": null,
+    "inputTokenDelta": null,
+    "cachedInputTokens": null,
+    "cacheCreationInputTokens": null
+  },
+  "notice": "Layout is deterministic. This offline check does not establish provider cache hits. Local token caches and provider prompt caches are separate."
+}
+
+COMMAND: node --import tsx apps/amos/examples/context-selection-offline.ts
+EXIT: 0
+{"level":"info","time":1792674018410,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"stage05-amos-example","inputPreview":"Describe the receipt.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 1955/128000 (1.6%) tools=870 conversation=67 system=1008 input=10 | sysPrompt=148 PI=0 pluginInstr=766
+{"level":"info","time":1792674018448,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"stage05-amos-example","maxIterations":1,"msg":"Max iterations reached, generating wrap-up response"}
+{"level":"info","time":1792674018452,"component":"Agent","agentName":"amos","model":"gpt-4o-mini","connector":"stage05-amos-example","duration":42,"msg":"Agent run completed"}
+Token Breakdown by Component
+────────────────────────────────────
+Last prepared revision: 2 — estimated tokens, not provider usage.
+
+pluginInstructions       766   (64.8%)  █████████████░░░░░░░
+systemPrompt             148   (12.5%)  ███░░░░░░░░░░░░░░░░░
+currentInput              98    (8.3%)  ██░░░░░░░░░░░░░░░░░░
+systemOverhead            94    (7.9%)  ██░░░░░░░░░░░░░░░░░░
+conversation              77    (6.5%)  █░░░░░░░░░░░░░░░░░░░
+────────────────────────────────────
+Total:                 1,183 tokens
+
+Context selection: stable-prefix; 67/128 estimated data tokens.
+"in_context_memory/receipt": selected (protected), ~28 tokens
+"in_context_memory/background": omitted (budget), ~3161 tokens
+Provider input: 10; estimate delta: -1,173.
+Provider prompt cache: read unknown, written unknown tokens. Distinct from local tool/memory caches.
+Synthetic provider usage above is fixture data, not a real provider cache measurement.
+
+COMMAND: node --import tsx examples/context-dispatch-safety.ts
+EXIT: 0
+{"level":"warn","time":1792674019215,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792674019220,"component":"Agent","agentName":"agent-1792674019213","model":"gpt-4o-mini","connector":"dispatch-safety-0","inputPreview":"LOOKUP_A","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 131/128000 (0.1%) tools=0 conversation=31 system=93 input=7 | sysPrompt=0 PI=0 pluginInstr=11
+{"level":"info","time":1792674019261,"component":"Agent","agentName":"agent-1792674019213","model":"gpt-4o-mini","connector":"dispatch-safety-0","duration":41,"msg":"Agent run completed"}
+{"level":"warn","time":1792674019262,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792674019262,"component":"Agent","agentName":"agent-1792674019261","model":"gpt-4o-mini","connector":"dispatch-safety-1","inputPreview":"Return ok true.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 181/128000 (0.1%) tools=0 conversation=0 system=172 input=9 | sysPrompt=105 PI=0
+{"level":"warn","time":1792674019265,"component":"Agent","agentName":"agent-1792674019261","model":"gpt-4o-mini","connector":"dispatch-safety-1","reask":1,"error":"All JSON parse strategies failed: unable to parse LLM response as JSON\nRaw text: The value of ok is true.","msg":"Structured output did not parse; re-asking"}
+{"level":"error","time":1792674019725,"component":"Agent","agentName":"agent-1792674019261","model":"gpt-4o-mini","connector":"dispatch-safety-1","error":"Context input or host prompt changed before formatting; prepare again","statusCode":409,"code":"CONTEXT_ASSEMBLY_STALE","stack":"AIError: Context input or host prompt changed before formatting; prepare again\n    at stale (/Users/aantich/dev/oneringai/dist/index.js:47701:17)\n    at _AgentContextNextGen.assertAssemblyRequest (/Users/aantich/dev/oneringai/dist/index.js:47707:410)\n    at assertAssembly (/Users/aantich/dev/oneringai/dist/index.js:48524:43)\n    at _AgentContextNextGen.validateRequestBudget (/Users/aantich/dev/oneringai/dist/index.js:48526:9)","duration":4,"msg":"Agent run failed"}
+{"level":"warn","time":1792674019726,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792674019726,"component":"Agent","agentName":"agent-1792674019725","model":"gpt-4o-mini","connector":"dispatch-safety-2","inputPreview":"Read receipt R42 once.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 122/128000 (0.1%) tools=44 conversation=0 system=67 input=11 | sysPrompt=0 PI=0
+{"level":"info","time":1792674019732,"component":"Agent","agentName":"agent-1792674019725","model":"gpt-4o-mini","connector":"dispatch-safety-2","maxIterations":1,"msg":"Max iterations reached, generating wrap-up response"}
+{"level":"info","time":1792674019734,"component":"Agent","agentName":"agent-1792674019725","model":"gpt-4o-mini","connector":"dispatch-safety-2","duration":8,"msg":"Agent run completed"}
+{"level":"info","time":1792674019735,"component":"Agent","agentName":"agent-1792674019734","model":"gpt-4o-mini","connector":"dispatch-safety-3","inputPreview":"Return ok with detail.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 3191/8000 (56.0%) tools=749 conversation=1726 system=705 input=11 | sysPrompt=0 PI=0 pluginInstr=623
+{"level":"info","time":1792674019741,"component":"AgentContextNextGen","utilizationPercent":95,"criticalPercent":90,"strategy":"algorithmic","msg":"post-cycle consolidation running — over critical threshold, reclaiming space"}
+{"level":"info","time":1792674019743,"component":"Agent","agentName":"agent-1792674019734","model":"gpt-4o-mini","connector":"dispatch-safety-3","duration":8,"msg":"Agent run completed"}
+{"level":"warn","time":1792674019746,"strategy":"algorithmic","missing":["working_memory"],"available":[],"msg":"Strategy 'algorithmic' recommends plugins that are not registered: working_memory. Strategy will degrade gracefully."}
+{"level":"info","time":1792674019746,"component":"Agent","agentName":"agent-1792674019746","model":"gpt-4o-mini","connector":"dispatch-safety-4","inputPreview":"Submit once and return ok.","toolCount":1,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 121/128000 (0.1%) tools=42 conversation=0 system=67 input=12 | sysPrompt=0 PI=0
+{"level":"info","time":1792674019748,"component":"Agent","agentName":"agent-1792674019746","model":"gpt-4o-mini","connector":"dispatch-safety-4","correlationId":"local-job","msg":"SuspendSignal detected, suspending agent loop"}
+{"level":"info","time":1792674019757,"component":"Agent","agentName":"agent-1792674019746","model":"gpt-4o-mini","connector":"dispatch-safety-4","duration":11,"msg":"Agent run completed"}
+{
+  "hostEditedInput": {
+    "contributions": 2,
+    "modelCalls": 1,
+    "selected": "records/B"
+  },
+  "supersededPromptRepairBlocked": true,
+  "wrapup": {
+    "estimate": "local",
+    "opaqueOrMultimodal": false,
+    "estimatedInputTokens": 176,
+    "capacitySource": "provider",
+    "providerInputTokens": 10,
+    "inputTokenDelta": -166,
+    "cachedInputTokens": null,
+    "cacheCreationInputTokens": null
+  },
+  "formattingBeforeSpill": {
+    "modelCalls": 2,
+    "retainedSources": 1
+  },
+  "structuredSuspension": {
+    "submissions": 1,
+    "modelCalls": 3,
+    "checkpointMatches": true
+  },
+  "syntheticProvider": true
+}
+Usage comes from the local scripted provider; it is not a real cache measurement.
+
+COMMAND: node --import tsx examples/native-context-compaction.ts
+EXIT: 0
+OFFLINE protocol fixture; no model quality claim
+{
+  plugins: { status: 'skipped', reason: 'not_needed', compacted: [] },
+  history: 'compacted',
+  inputBefore: 14132,
+  inputAfter: 5050,
+  sources: [ '23200e47-ccbe-4d67-9914-5ceec93ba4d4' ],
+  evidencePlugin: 'evidence'
+}
+{"level":"info","time":1792674020065,"component":"Agent","agentName":"agent-1792674020021","model":"gpt-6-astra","connector":"native-demo","inputPreview":"Unsupported continuation","toolCount":0,"msg":"Agent run started"}
+{"level":"error","time":1792674020311,"component":"Agent","agentName":"agent-1792674020021","model":"gpt-6-astra","connector":"native-demo","error":"offline-native-fixture: model 'gpt-6-astra' does not support requested capability 'native compaction with server-owned state or hosted tools'","statusCode":400,"code":"PROVIDER_CAPABILITY_NOT_SUPPORTED","stack":"ProviderCapabilityNotSupportedError: offline-native-fixture: model 'gpt-6-astra' does not support requested capability 'native compaction with server-owned state or hosted tools'\n    at assertNativeCompactionOptions (/Users/aantich/dev/oneringai/dist/index.js:28526:11)\n    at Object.countInput (/Users/aantich/dev/oneringai/dist/index.js:41758:13)\n    at count (/Users/aantich/dev/oneringai/dist/index.js:48699:42)\n    at _AgentContextNextGen.materializeRequest (/Users/aantich/dev/oneringai/dist/index.js:48710:58)","duration":3,"msg":"Agent run failed"}
+{"level":"info","time":1792674020312,"component":"Agent","agentName":"agent-1792674020021","model":"gpt-6-astra","connector":"native-demo","inputPreview":"Return the project code and confirmed limit.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 5560/32000 (19.9%) tools=1175 conversation=3369 system=999 input=17 | sysPrompt=0 PI=0 pluginInstr=927 plugin:evidence=20
+{"level":"info","time":1792674020319,"component":"Agent","agentName":"agent-1792674020021","model":"gpt-6-astra","connector":"native-demo","duration":7,"msg":"Agent run completed"}
+ORBIT_16A / limit 37 {
+  calls: 2,
+  inputTokens: 120,
+  outputTokens: 40,
+  totalTokens: 160,
+  cachedInputTokens: 0,
+  reasoningTokens: 0,
+  knownModelCostUSD: 0.0032,
+  unknownUsageInvocations: 0,
+  unknownCostInvocations: 0,
+  unknownChargeAttempts: 0,
+  chargedTokens: 160,
+  chargedCostUSD: 0.012
+}
+
+COMMAND: node --import tsx examples/native-context-recovery.ts
+EXIT: 0
+{"level":"warn","time":1792674020643,"component":"Agent","agentName":"agent-1792674020635","model":"gpt-6-astra","connector":"native-recovery","sessionId":"native-demo","msg":"Session not found"}
+{"level":"info","time":1792674021848,"component":"Agent","agentName":"agent-1792674021838","model":"gpt-6-astra","connector":"native-recovery","sessionId":"native-demo","msg":"Session loaded"}
+{"level":"info","time":1792674021850,"component":"Agent","agentName":"agent-1792674021838","model":"gpt-6-astra","connector":"native-recovery","inputPreview":"Give the project code ORBIT_16A and its confirmed limit from the saved context. Reply with both only","toolCount":0,"msg":"Agent stream started"}
+[Agent] [Context] iteration=1 tokens: 606/32000 (2.2%) tools=354 conversation=15 system=204 input=33 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20
+{"level":"info","time":1792674021871,"component":"Agent","agentName":"agent-1792674021838","model":"gpt-6-astra","connector":"native-recovery","duration":21,"msg":"Agent stream completed"}
+Child: native resume, cross-model rejection and trusted pre-native recovery pass; no action replay.
+
+COMMAND: node --import tsx examples/native-context-comparison.ts
+EXIT: 0
+{"level":"info","time":1792674020639,"component":"Agent","agentName":"agent-1792674020635","model":"gpt-6-astra","connector":"context-main-c9372bb2-1932-4928-bf87-64baff7e5c5e","inputPreview":"Return the exact source answer field and the original account/status as JSON now. This is a fact-ret","toolCount":2,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 3182/11000 (31.1%) tools=342 conversation=1437 system=1347 input=56 | sysPrompt=428 PI=0 pluginInstr=762 plugin:working_memory=78 plugin:evidence=20 COMPACTED: Algorithmic compaction started: need to free ~9507 tokens; Moved lookup result (39.9KB) to memory: tool_result.lookup.original; Removed 2 messages, freed ~11694 tokens; Algorithmic compaction complete: freed ~11694 tokens total
+[Agent] [Context] iteration=1 tokens: 3319/11000 (32.4%) tools=342 conversation=1514 system=1437 input=26 | sysPrompt=428 PI=0 pluginInstr=762 plugin:working_memory=78 plugin:evidence=110
+{"level":"info","time":1792674020671,"component":"Agent","agentName":"agent-1792674020635","model":"gpt-6-astra","connector":"context-main-c9372bb2-1932-4928-bf87-64baff7e5c5e","duration":31,"msg":"Agent run completed"}
+algorithmic {
+  exactAnswer: true,
+  exactAccount: true,
+  exactStatus: true,
+  noWrite: true,
+  noRepeat: true
+} {
+  calls: 2,
+  inputTokens: 200,
+  outputTokens: 80,
+  totalTokens: 280,
+  cachedInputTokens: 0,
+  reasoningTokens: 0,
+  knownModelCostUSD: 0.006,
+  unknownUsageInvocations: 0,
+  unknownCostInvocations: 0,
+  unknownChargeAttempts: 0,
+  chargedTokens: 280,
+  chargedCostUSD: 0.022
+} 
+{"level":"info","time":1792674020673,"component":"Agent","agentName":"agent-1792674020673","model":"gpt-6-astra","connector":"context-main-32c163c7-0464-487e-ad92-a6a5fb45934c","inputPreview":"Return the exact source answer field and the original account/status as JSON now. This is a fact-ret","toolCount":2,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 3210/11000 (31.4%) tools=342 conversation=1547 system=1265 input=56 | sysPrompt=428 PI=0 pluginInstr=762 plugin:evidence=20 COMPACTED: observation-masking: applied; freed ~11584 tokens
+[Agent] [Context] iteration=1 tokens: 3350/11000 (32.7%) tools=342 conversation=1627 system=1355 input=26 | sysPrompt=428 PI=0 pluginInstr=762 plugin:evidence=110
+{"level":"info","time":1792674020685,"component":"Agent","agentName":"agent-1792674020673","model":"gpt-6-astra","connector":"context-main-32c163c7-0464-487e-ad92-a6a5fb45934c","duration":11,"msg":"Agent run completed"}
+observation-masking {
+  exactAnswer: true,
+  exactAccount: true,
+  exactStatus: true,
+  noWrite: true,
+  noRepeat: true
+} {
+  calls: 2,
+  inputTokens: 200,
+  outputTokens: 80,
+  totalTokens: 280,
+  cachedInputTokens: 0,
+  reasoningTokens: 0,
+  knownModelCostUSD: 0.006,
+  unknownUsageInvocations: 0,
+  unknownCostInvocations: 0,
+  unknownChargeAttempts: 0,
+  chargedTokens: 280,
+  chargedCostUSD: 0.022
+} 
+{"level":"info","time":1792674020686,"component":"Agent","agentName":"agent-1792674020686","model":"gpt-6-astra","connector":"context-main-7987665e-fabd-4161-9d72-0f88ad5ec175","inputPreview":"Return the exact source answer field and the original account/status as JSON now. This is a fact-ret","toolCount":2,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2572/11000 (25.1%) tools=342 conversation=909 system=1265 input=56 | sysPrompt=428 PI=0 pluginInstr=762 plugin:evidence=20 COMPACTED: structured-summary: applied; freed ~12222 tokens
+{"level":"info","time":1792674020727,"component":"Agent","agentName":"agent-1792674020686","model":"gpt-6-astra","connector":"context-main-7987665e-fabd-4161-9d72-0f88ad5ec175","duration":41,"msg":"Agent run completed"}
+structured-summary {
+  exactAnswer: true,
+  exactAccount: true,
+  exactStatus: true,
+  noWrite: true,
+  noRepeat: true
+} {
+  calls: 2,
+  inputTokens: 200,
+  outputTokens: 80,
+  totalTokens: 280,
+  cachedInputTokens: 0,
+  reasoningTokens: 0,
+  knownModelCostUSD: 0.003039,
+  unknownUsageInvocations: 0,
+  unknownCostInvocations: 0,
+  unknownChargeAttempts: 0,
+  chargedTokens: 280,
+  chargedCostUSD: 0.011039
+} 
+{"level":"info","time":1792674020728,"component":"Agent","agentName":"agent-1792674020727","model":"gpt-6-astra","connector":"context-main-032d8174-0e6a-4096-b0c5-c05649f21cd0","inputPreview":"Return the exact source answer field and the original account/status as JSON now. This is a fact-ret","toolCount":2,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 2225/11000 (21.7%) tools=342 conversation=562 system=1265 input=56 | sysPrompt=428 PI=0 pluginInstr=762 plugin:evidence=20 COMPACTED: Plugin reduction: skipped; history: compacted (native)
+{"level":"info","time":1792674020740,"component":"Agent","agentName":"agent-1792674020727","model":"gpt-6-astra","connector":"context-main-032d8174-0e6a-4096-b0c5-c05649f21cd0","duration":12,"msg":"Agent run completed"}
+context-compaction {
+  exactAnswer: true,
+  exactAccount: true,
+  exactStatus: true,
+  noWrite: true,
+  noRepeat: true
+} {
+  calls: 2,
+  inputTokens: 200,
+  outputTokens: 70,
+  totalTokens: 270,
+  cachedInputTokens: 0,
+  reasoningTokens: 0,
+  knownModelCostUSD: 0.0055,
+  unknownUsageInvocations: 0,
+  unknownCostInvocations: 0,
+  unknownChargeAttempts: 0,
+  chargedTokens: 270,
+  chargedCostUSD: 0.020499999999999997
+} 
+
+COMMAND: node --import tsx apps/amos/examples/native-compaction-offline.ts
+EXIT: 0
+/context policy auto native manual
+Composition selected: plugins=auto, history=native, automatic=false. Inspect /context strategy and /preset inspect for support.
+/context compact history
+{
+  "status": "skipped",
+  "trigger": "manual",
+  "inputTokensBefore": 2157,
+  "inputTokensAfter": 2157,
+  "accounting": "provider",
+  "checkpointed": false,
+  "plugins": {
+    "status": "skipped",
+    "reason": "not_selected",
+    "compacted": []
+  },
+  "history": {
+    "mode": "native",
+    "status": "skipped",
+    "reason": "empty",
+    "sourceReferences": []
+  }
+}
+{"level":"info","time":1792674025485,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","inputPreview":"Completed step 0. Historical source details. Historical source details. Historical source details. H","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 3573/32000 (12.8%) tools=1175 conversation=0 system=1154 input=1244 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+{"level":"info","time":1792674025490,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","duration":5,"msg":"Agent run completed"}
+{"level":"info","time":1792674025490,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","inputPreview":"Completed step 1. Historical source details. Historical source details. Historical source details. H","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 4827/32000 (17.3%) tools=1175 conversation=1254 system=1154 input=1244 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+{"level":"info","time":1792674025492,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","duration":2,"msg":"Agent run completed"}
+{"level":"info","time":1792674025493,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","inputPreview":"Completed step 2. Historical source details. Historical source details. Historical source details. H","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 6081/32000 (21.8%) tools=1175 conversation=2508 system=1154 input=1244 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+{"level":"info","time":1792674025494,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","duration":1,"msg":"Agent run completed"}
+{"level":"info","time":1792674025495,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","inputPreview":"Completed step 3. Historical source details. Historical source details. Historical source details. H","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 7335/32000 (26.3%) tools=1175 conversation=3762 system=1154 input=1244 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+{"level":"info","time":1792674025497,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","duration":2,"msg":"Agent run completed"}
+{"level":"info","time":1792674025497,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","inputPreview":"Completed step 4. Historical source details. Historical source details. Historical source details. H","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 8589/32000 (30.8%) tools=1175 conversation=5016 system=1154 input=1244 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+{"level":"info","time":1792674025499,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","duration":2,"msg":"Agent run completed"}
+/context compact history
+{
+  "status": "compacted",
+  "trigger": "manual",
+  "inputTokensBefore": 7877,
+  "inputTokensAfter": 4450,
+  "accounting": "provider",
+  "checkpointed": true,
+  "plugins": {
+    "status": "skipped",
+    "reason": "not_selected",
+    "compacted": []
+  },
+  "history": {
+    "mode": "native",
+    "status": "compacted",
+    "sourceReferences": [
+      {
+        "version": 1,
+        "id": "8befae60-b4f9-41ea-9a26-960a555d081b",
+        "sha256": "23aaf414911505bd4e0fe4fdbf530c78cafc5a936dd6fd66692afee5d7a0edb8",
+        "bytes": 14223,
+        "durability": "restart"
+      }
+    ],
+    "invocationId": "1d0399b5-90a7-410e-a36a-60609388c1b9",
+    "provider": "offline-native-fixture"
+  }
+}
+/context strategy
+Strategy: context-compaction
+{
+  "config": {
+    "plugins": "auto",
+    "history": "native",
+    "automatic": false
+  },
+  "activeNative": true,
+  "last": {
+    "status": "compacted",
+    "trigger": "manual",
+    "inputTokensBefore": 7877,
+    "inputTokensAfter": 4450,
+    "accounting": "provider",
+    "checkpointed": true,
+    "plugins": {
+      "status": "skipped",
+      "reason": "not_selected",
+      "compacted": []
+    },
+    "history": {
+      "mode": "native",
+      "status": "compacted",
+      "sourceReferences": [
+        {
+          "version": 1,
+          "id": "8befae60-b4f9-41ea-9a26-960a555d081b",
+          "sha256": "23aaf414911505bd4e0fe4fdbf530c78cafc5a936dd6fd66692afee5d7a0edb8",
+          "bytes": 14223,
+          "durability": "restart"
+        }
+      ],
+      "invocationId": "1d0399b5-90a7-410e-a36a-60609388c1b9",
+      "provider": "offline-native-fixture"
+    }
+  }
+}
+Native accounting is provider-counted; estimates remain local diagnostics. /context compact [all|plugins|history] performs explicit work; /helpers usage shows actual calls and unknown usage.
+{"level":"info","time":1792674025512,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","sessionId":"1792674025507_71lj3oo","msg":"Session loaded"}
+{"level":"info","time":1792674025513,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","inputPreview":"Continue after restart","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 4863/32000 (17.4%) tools=1175 conversation=2523 system=1154 input=11 | sysPrompt=148 PI=0 pluginInstr=927 plugin:evidence=20
+{"level":"info","time":1792674025515,"component":"Agent","agentName":"amos","model":"gpt-6-astra","connector":"amos-native","duration":2,"msg":"Agent run completed"}
+AMOS native policy, protected result, explicit reduction and saved-session resume pass. Offline protocol data only.
+
+COMMAND: node --import tsx examples/native-context-hooks.ts
+EXIT: 0
+{"level":"info","time":1792674026468,"component":"Agent","agentName":"agent-1792674026464","model":"gpt-6-astra","connector":"native-hooks","inputPreview":"Return the project code and confirmed limit.","toolCount":0,"msg":"Agent run started"}
+[Agent] [Context] iteration=0 tokens: 1730/22000 (8.0%) tools=997 conversation=15 system=701 input=17 | sysPrompt=34 PI=0 pluginInstr=561 plugin:in_context_memory=24 plugin:evidence=20 COMPACTED: Plugin reduction: skipped; history: compacted (native)
+{"level":"info","time":1792674026502,"component":"Agent","agentName":"agent-1792674026464","model":"gpt-6-astra","connector":"native-hooks","duration":33,"msg":"Agent run completed"}
+OFFLINE protocol fixture; no model quality claim
+Memory preserved by one lifecycle hook; automatic native history reduced; managed continuation completed.
+ORBIT_16A / limit 37 {
+  calls: 2,
+  inputTokens: 120,
+  outputTokens: 40,
+  totalTokens: 160,
+  cachedInputTokens: 0,
+  reasoningTokens: 0,
+  knownModelCostUSD: 0.0032,
+  unknownUsageInvocations: 0,
+  unknownCostInvocations: 0,
+  unknownChargeAttempts: 0,
+  chargedTokens: 160,
+  chargedCostUSD: 0.012
+}
+

@@ -528,6 +528,7 @@ during application shutdown.
 | Agent runtime architecture and server roadmap | `docs/designs/AGENT_RUNTIME.md` |
 | Server/desktop Agent packages, remote tools, and WebRTC ownership | `docs/designs/DISTRIBUTED_AGENT_EXECUTION.md` |
 | Staged agentic architecture evolution, evaluation, and compatibility requirements | `docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md` |
+| Stage 16A approved API and delivery record | `docs/designs/STAGE_16A_NATIVE_COMPACTION_API.md` |
 | Version 2 adoption, stage availability, and standard-documentation handoff | `docs/VERSION_2_GUIDE.md` |
 | Stage 00 offline/live evaluation, completion gates, compatibility fixtures, and measured pilot | `docs/AGENTIC_BASELINE_EVALUATION.md` |
 
@@ -551,6 +552,17 @@ apps/amos/                   Terminal agent reference application
 ```
 
 ## Staged architecture development
+
+Persistent scope instruction (2026-10-22): the user selected **Stage 16A only**
+and approved revision 2 of its API by saying “proceed with implementation” after
+the compatibility-first presentation. Read
+[the API proposal](docs/designs/STAGE_16A_NATIVE_COMPACTION_API.md) and the updated
+roadmap first. Its `ContextCompactionStrategy` and `compactContext()` signatures
+are implemented and validated on branch; read [the native recipe](docs/NATIVE_CONTEXT_COMPACTION.md) for current usage and support. Preserve existing strategy APIs/defaults and use
+the existing `compactionStrategy` instance extension point for optional plugin/history
+composition. No replacement configuration or mandatory migration is authorized.
+Stage 16B retention research remains deferred and unauthorized.
+The recorded approval covers 16A only and does not waive the separate breaking-change approval rule.
 
 Persistent user instructions (2026-10-07): develop the agentic architecture in
 stages, with extensive test coverage and good examples for every stage. Update
@@ -818,3 +830,53 @@ contextAssembly/selectWhiteboard and breakdown show the distinction. Read
 [Context Assembly](docs/CONTEXT_ASSEMBLY.md) before configuring contributors, native/
 opaque state or persistence. Internal formatting-prefix/snapshot bookkeeping is not
 a new public storage/workflow authority.
+
+## Optional plugin/native history composition (Stage 16A)
+
+Use public `ContextCompactionStrategy` through the existing `context.compactionStrategy`
+instance field with explicit `plugins: 'auto' | 'off'` and `history: 'native' | 'off'`
+(or `{ mode: 'native', preserveRecentTurns }`). Do not invent a registry name or a
+new top-level context config. `plugins: 'off'` preserves enabled plugin features/tools.
+`agent.compactContext({ target: 'all' | 'plugins' | 'history' })` owns the execution
+slot; `automatic: false` keeps explicit scheduling. Native requires built-in scoped
+evidence and a verified main-provider adapter; it does not use the helper compactor.
+Use the complete provider window, provider counts and shared ModelTask accounting.
+Never infer native token cost from ciphertext length, discard signed fields, or
+recover by replaying actions. Native snapshots bind model/connector/endpoint and
+host/evidence scope; incompatible switches require trusted checkpoint/fresh-context
+recovery. Read [Native Context Compaction](docs/NATIVE_CONTEXT_COMPACTION.md) for
+models, protected tails, usage, limits, examples and AMOS commands. No breaking
+change or Stage 16B implementation was authorized.
+
+Stage 16A review corrections keep transport identity at provider construction,
+share OpenAI generation/count normalization, and reject known hosted/server-owned
+controls before reduction/archival/billing. Unknown raw input controls fail on the
+opted-in native path; legacy/direct escapes retain their supported behavior.
+Composition reuses its initial frame, rebuilds after mutations and carries one
+assembly cancellation signal/allowance throughout. Plugin-only mode must ignore
+an old native driver. Use a new Agent for changed endpoint/account selection;
+do not relabel an existing SDK by rebinding. See the
+[review/correction record](docs/designs/STAGE_16A_REVIEW_AND_FIX_PLAN.md).
+
+At the pre-compaction hook boundary, a plugin memory write or companion revision
+change gets one bounded frame refresh under the existing contribution allowance.
+Preserve documented `beforeCompaction` facts without weakening source/authority
+guards or rerunning hooks. Read-only native evidence proofs honor cancellation and
+ModelTask deadlines; late reads cannot dispatch/commit. Admitted writes and mutating
+plugins still hold ownership until settled. Anthropic native admission rejects
+top-level Responses reasoning before I/O instead of silently dropping it; retain
+OpenAI reasoning and supported Anthropic signed thinking. See the
+[second review/correction record](docs/designs/STAGE_16A_SECOND_REVIEW_AND_FIX_PLAN.md)
+and `npm run example:native-hooks`.
+
+
+Stage 16A third corrections validate provider-specific nested thinking replay before
+counting/reduction/archive, preserving ordinary converters. Explicit compaction uses
+the existing preservation lifecycle once, including `automatic: false`, with bounded
+refresh/events and protected scope checks before hook execution. Anthropic fixed
+thinking gets matching native wire/source/reservation headroom (budget + 4096 by
+default, bounded by model output capacity); explicit host caps are respected and
+known conflicts reject before archival. Main settings remain unchanged. Native
+streaming is internal and cancellation closes it; unusable summaries retain billed
+iteration usage. Use `npm run example:native-hooks-manual` for the explicit path,
+with `-- --live=anthropic` to exercise an 8192-token fixed budget.

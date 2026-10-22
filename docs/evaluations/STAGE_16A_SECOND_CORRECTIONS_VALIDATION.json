@@ -1,0 +1,1990 @@
+{
+  "protocol": "stage-16a-second-corrections-validation-v1",
+  "recordedAt": "2026-10-22T13:03:49.131650+00:00",
+  "branch": "version2",
+  "baseCommit": "4ab2c8f",
+  "packageVersion": "1.2.0",
+  "verifiedPackageRelease": false,
+  "status": "S1-S3 corrected and validated on branch; no known failures or remaining required work",
+  "authorization": {
+    "userInstruction": "fix all",
+    "scope": "All three second-review findings, their startup-wait lifecycle case, regressions, example, AMOS verification and documentation. No API break or later-stage work.",
+    "breakingChangeApproved": false
+  },
+  "findings": [
+    {
+      "id": "S1",
+      "status": "fixed",
+      "change": "Reuse a stable initial frame, or refresh once after hook changes to plugin memory/contributor revision under the same allowance. Separately guard source, authority, tools, policy, scopes and plugin/storage identities. Later async mutations still reject.",
+      "evidence": "Run/stream whiteboard and notes writes; revision refresh; pressure disappearance; shared timeout/host cancellation; protected-boundary rejections; unchanged collection bounds; plugin-only/algorithmic controls; live OpenAI/Anthropic preserve exact hook and source identifiers."
+    },
+    {
+      "id": "S2",
+      "status": "fixed",
+      "change": "Forward execution+ModelTask signals through preparation and race read-only retained/action/archive proofs with cancellation. A cancelled wait on an existing session restore releases its execution without cancelling, bypassing or poisoning the independent restore. Write settlement leases are preserved; no required backend API changes.",
+      "evidence": "Run/stream/manual cancellation/deadline; later proof; late resolution/rejection; already-aborted operations; slot recovery before old read completion; archival-write settlement; five pending-load cases; missing-source rejection; AMOS command recovery; real provider continuation after a synthetic cancelled proof."
+    },
+    {
+      "id": "S3",
+      "status": "fixed",
+      "change": "Provider-specific native admission rejects Anthropic top-level reasoning before discovery/counting/archive. OpenAI reasoning, valid Anthropic signed thinking and ordinary converter behavior remain supported.",
+      "evidence": "Summary/encrypted/both representations; direct count/compact; eligible/recent history under managed manual/run/stream; zero HTTP/archive/model calls for unsupported shapes; actual intercepted OpenAI reasoning bodies and valid Anthropic nested-thinking control."
+    }
+  ],
+  "compatibility": {
+    "breakingChanges": false,
+    "newRequiredProviderOrStorageMembers": false,
+    "newPublicConfiguration": false,
+    "savedContextVersionChanged": false,
+    "defaultsChanged": false,
+    "notes": "Only internal lifecycle/admission/cancellation changes. Existing context strategy/plugin/storage signatures, public return/event shapes and optional native envelope remain unchanged."
+  },
+  "unit": {
+    "testsPassed": 8507,
+    "filesPassed": 377,
+    "failed": 0,
+    "skipped": 0,
+    "log": "/tmp/stage16-second-final-unit.log",
+    "sha256": "22ace3094bf3f10bd73f758556bc4780f95610a809da0098a95d45ff367b22bc"
+  },
+  "newUnitCases": 53,
+  "live": {
+    "fullMatrix": {
+      "testsPassed": 199,
+      "filesPassed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/tmp/stage16-second-final-full-live.log",
+      "sha256": "bbaf6e88940dd5efe22dcfb2c1c7b19cf34a036c60d1ee3f112dc1551a32ff26"
+    },
+    "providers": [
+      "openai",
+      "anthropic",
+      "google"
+    ],
+    "nativeCases": 9,
+    "newLiveCases": 2,
+    "suiteEvidence": [
+      {
+        "path": "/tmp/stage16-second-final-full-live-assembly.json",
+        "cases": 0,
+        "sha256": "7cfd3540e4d3d69e6f786923dab5fe29a19b8f0677bbf90b58dd4e6798ed673c"
+      },
+      {
+        "path": "/tmp/stage16-second-final-full-live-baseline.json",
+        "cases": 0,
+        "sha256": "1228be3b0ae8e844a6fab0f18c040af0aba8459efa0825766263be9cd7aaf63a"
+      },
+      {
+        "path": "/tmp/stage16-second-final-full-live-context.json",
+        "cases": 0,
+        "sha256": "1a92102ef1d09a99355a2c4335c8668e55568bb09fbb1dd2f57d366662b9b247"
+      },
+      {
+        "path": "/tmp/stage16-second-final-full-live-evidence.json",
+        "cases": 0,
+        "sha256": "5a7a35ed6c52c8a49da882b4fa82f338c30409eaab93670fa6dc09523d8f39ff"
+      },
+      {
+        "path": "/tmp/stage16-second-final-full-live-loop.json",
+        "cases": 0,
+        "sha256": "e5fbe966c6e77ef9711c155875bfd1b56e5d311f7fc3e037c1e00dea03d5d20a"
+      },
+      {
+        "path": "/tmp/stage16-second-final-full-live-models.json",
+        "cases": 0,
+        "sha256": "6532343753d37b4584904553fb2b1563bebd87a5f860a5b3f7969170a50902c0"
+      },
+      {
+        "path": "/tmp/stage16-second-final-full-live-native.json",
+        "cases": 9,
+        "sha256": "5ef032a75c13f91af98676b561af07b5edd6dfcb4e0c7e99b378ca132b2161c2"
+      },
+      {
+        "path": "/tmp/stage16-second-final-full-live-presets.json",
+        "cases": 0,
+        "sha256": "ce971daebb91ad44aa2a2eb1b490748ebc46301c589be266bed8db3488ec5e56"
+      },
+      {
+        "path": "/tmp/stage16-second-final-full-live-session.json",
+        "cases": 0,
+        "sha256": "0c5ddef28fa2f12f7a9e175ea726dc8d9da095062e22133e968a9001dfaaeb4e"
+      },
+      {
+        "path": "/tmp/stage16-second-final-full-live-strategies.json",
+        "cases": 0,
+        "sha256": "28076e025a44351462b8ea22ca1ad00be7f5ab7ee7927679660d72a925cb7ccd"
+      },
+      {
+        "path": "/tmp/stage16-second-final-full-live-task.json",
+        "cases": 0,
+        "sha256": "9c4efc14bc2114efa880c3b9f5dc912d76b489d7f15a57b4c01a325c4107cdc5"
+      },
+      {
+        "path": "/tmp/stage16-second-final-full-live-tools.json",
+        "cases": 0,
+        "sha256": "3cf3fb6a20142f7da58475b8415f91abcaa6c46f988dc0e7b2f4d9b7be6873b5"
+      }
+    ],
+    "nativeResults": [
+      {
+        "kind": "compact-and-run",
+        "provider": "openai",
+        "model": "gpt-6-astra",
+        "report": {
+          "status": "compacted",
+          "trigger": "manual",
+          "inputTokensBefore": 8742,
+          "inputTokensAfter": 910,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "af004753-3809-4798-822f-e64e1c6f4c57",
+                "sha256": "4368cdcc663182593d044c4795202011eb0665b285faaeb8e77239f0f18a35a1",
+                "bytes": 62489,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "f41fa5f5-04a8-4d50-b3a5-3268c191523d",
+            "provider": "openai"
+          }
+        },
+        "countedFrames": [
+          8742,
+          8742,
+          910,
+          927,
+          927
+        ],
+        "canonicalShape": [
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "message",
+            "role": "user"
+          },
+          {
+            "type": "compaction"
+          }
+        ],
+        "output": "Project code: **ORBIT_16A**  \nConfirmed limit: **37**",
+        "usage": {
+          "id": "ab7686c7-4dd1-4e85-8d8f-f5bcfd386d16",
+          "limits": {
+            "maxCalls": 8,
+            "deadline": 1792674142347
+          },
+          "invocations": [
+            {
+              "id": "f41fa5f5-04a8-4d50-b3a5-3268c191523d",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 8559,
+                "output_tokens": 326,
+                "total_tokens": 8885,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "modelCostUSD": 0.10189000000000001,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "c69e6d26-0f20-4e0d-87c4-6bf2602ff6e6",
+              "parentInvocationId": "ab7686c7-4dd1-4e85-8d8f-f5bcfd386d16",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 927,
+                "output_tokens": 21,
+                "total_tokens": 948,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.010320000000000001,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "d01b7675-c38f-4934-8119-43494f4436e8",
+              "invocationId": "f41fa5f5-04a8-4d50-b3a5-3268c191523d",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 8885,
+              "reservedCostUSD": 0.47685,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "13429269-91f0-4504-b457-8b81be8de350",
+              "invocationId": "c69e6d26-0f20-4e0d-87c4-6bf2602ff6e6",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 948,
+              "reservedCostUSD": 0.0495,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 9486,
+            "outputTokens": 347,
+            "totalTokens": 9833,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.11221,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 9833,
+            "chargedCostUSD": 0.52635
+          }
+        }
+      },
+      {
+        "kind": "compact-and-run",
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-6",
+        "report": {
+          "status": "compacted",
+          "trigger": "manual",
+          "inputTokensBefore": 10986,
+          "inputTokensAfter": 1472,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "7cc4042f-f173-45bb-bab9-3b68ff53c6aa",
+                "sha256": "46a54c8c0d0cca9a010dcc316f73d30f25837858dd12b5c32e1ae4c9b848cda9",
+                "bytes": 62489,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "637e2638-45e4-4d5e-a673-85c50387d638",
+            "provider": "anthropic"
+          }
+        },
+        "countedFrames": [
+          10986,
+          10986,
+          1472,
+          1486,
+          1486,
+          1678,
+          1678,
+          3412,
+          3412
+        ],
+        "canonicalShape": [
+          {
+            "type": "compaction"
+          }
+        ],
+        "output": "Based on the verified evidence from the stored record, here are the confirmed parameters:\n\n- **Project Code:** `ORBIT_16A`\n- **Confirmed Limit:** `37`\n\nThese values were established at Step 0 and have been consistently confirmed throughout the archived steps (0\u20137).",
+        "usage": {
+          "id": "7ca11cf1-3761-4dc2-8909-96111f4d3202",
+          "limits": {
+            "maxCalls": 8,
+            "deadline": 1792674153702
+          },
+          "invocations": [
+            {
+              "id": "637e2638-45e4-4d5e-a673-85c50387d638",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 11100,
+                "output_tokens": 444,
+                "total_tokens": 11544,
+                "cache_creation_details": {
+                  "short_ttl_input_tokens": 0,
+                  "extended_ttl_input_tokens": 0
+                },
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.03996,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "a9ec9097-c651-4739-a433-5c060db28fb5",
+              "parentInvocationId": "7ca11cf1-3761-4dc2-8909-96111f4d3202",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 1486,
+                "output_tokens": 52,
+                "total_tokens": 1538,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.0052380000000000005,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "1e9416c3-5462-4f05-88d5-418f4bfccd7d",
+              "parentInvocationId": "7ca11cf1-3761-4dc2-8909-96111f4d3202",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 1678,
+                "output_tokens": 76,
+                "total_tokens": 1754,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.006174000000000001,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "81914954-a929-4274-ab68-acf63a48a433",
+              "parentInvocationId": "7ca11cf1-3761-4dc2-8909-96111f4d3202",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 3412,
+                "output_tokens": 67,
+                "total_tokens": 3479,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.011241000000000001,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "af33b685-955b-4ff8-a34d-7ecb64299d1a",
+              "invocationId": "637e2638-45e4-4d5e-a673-85c50387d638",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 11544,
+              "reservedCostUSD": 0.07326,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "c607943e-bb80-4216-b7cf-63bb37e4cbbb",
+              "invocationId": "a9ec9097-c651-4739-a433-5c060db28fb5",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 1538,
+              "reservedCostUSD": 0.009696,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "3bf45878-251c-4505-b211-55d9b1626b33",
+              "invocationId": "1e9416c3-5462-4f05-88d5-418f4bfccd7d",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 1754,
+              "reservedCostUSD": 0.011208,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "a112ea9c-c60f-49c7-a759-7ee46ee6e8e5",
+              "invocationId": "81914954-a929-4274-ab68-acf63a48a433",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 3479,
+              "reservedCostUSD": 0.021477,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 4,
+            "inputTokens": 17676,
+            "outputTokens": 639,
+            "totalTokens": 18315,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.062613,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 18315,
+            "chargedCostUSD": 0.115641
+          }
+        }
+      },
+      {
+        "kind": "repeated-native-restart-stream",
+        "provider": "openai",
+        "exitCode": 0,
+        "stdout": "{\"level\":\"warn\",\"time\":1792674027541,\"component\":\"Agent\",\"agentName\":\"agent-1792674027533\",\"model\":\"gpt-6-astra\",\"connector\":\"native-recovery\",\"sessionId\":\"native-demo\",\"msg\":\"Session not found\"}\n{\"level\":\"info\",\"time\":1792674046438,\"component\":\"Agent\",\"agentName\":\"agent-1792674046426\",\"model\":\"gpt-6-astra\",\"connector\":\"native-recovery\",\"sessionId\":\"native-demo\",\"msg\":\"Session loaded\"}\n{\"level\":\"info\",\"time\":1792674046440,\"component\":\"Agent\",\"agentName\":\"agent-1792674046426\",\"model\":\"gpt-6-astra\",\"connector\":\"native-recovery\",\"inputPreview\":\"Give the project code ORBIT_16A and its confirmed limit from the saved context. Reply with both only\",\"toolCount\":0,\"msg\":\"Agent stream started\"}\n[Agent] [Context] iteration=1 tokens: 2584/1050000 (0.2%) tools=354 conversation=1993 system=204 input=33 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20\n{\"level\":\"info\",\"time\":1792674050644,\"component\":\"Agent\",\"agentName\":\"agent-1792674046426\",\"model\":\"gpt-6-astra\",\"connector\":\"native-recovery\",\"duration\":4204,\"msg\":\"Agent stream completed\"}\nChild: native resume, cross-model rejection and trusted pre-native recovery pass; no action replay.\n",
+        "stderr": ""
+      },
+      {
+        "kind": "repeated-native-restart-stream",
+        "provider": "anthropic",
+        "exitCode": 0,
+        "stdout": "{\"level\":\"warn\",\"time\":1792674053075,\"component\":\"Agent\",\"agentName\":\"agent-1792674053066\",\"model\":\"claude-sonnet-4-6\",\"connector\":\"native-recovery\",\"sessionId\":\"native-demo\",\"msg\":\"Session not found\"}\n{\"level\":\"info\",\"time\":1792674087829,\"component\":\"Agent\",\"agentName\":\"agent-1792674087818\",\"model\":\"claude-sonnet-4-6\",\"connector\":\"native-recovery\",\"sessionId\":\"native-demo\",\"msg\":\"Session loaded\"}\n{\"level\":\"info\",\"time\":1792674087831,\"component\":\"Agent\",\"agentName\":\"agent-1792674087818\",\"model\":\"claude-sonnet-4-6\",\"connector\":\"native-recovery\",\"inputPreview\":\"Give the project code ORBIT_16A and its confirmed limit from the saved context. Reply with both only\",\"toolCount\":0,\"msg\":\"Agent stream started\"}\n[Agent] [Context] iteration=1 tokens: 2545/1000000 (0.3%) tools=354 conversation=1954 system=204 input=33 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20\n[Agent] [Context] iteration=2 tokens: 2760/1000000 (0.3%) tools=354 conversation=2020 system=204 input=182 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20\n[Agent] [Context] iteration=3 tokens: 7749/1000000 (0.8%) tools=354 conversation=2269 system=204 input=4922 | sysPrompt=0 PI=0 pluginInstr=139 plugin:evidence=20\n{\"level\":\"info\",\"time\":1792674108588,\"component\":\"Agent\",\"agentName\":\"agent-1792674087818\",\"model\":\"claude-sonnet-4-6\",\"connector\":\"native-recovery\",\"duration\":20757,\"msg\":\"Agent stream completed\"}\nChild: native resume, cross-model rejection and trusted pre-native recovery pass; no action replay.\n",
+        "stderr": ""
+      },
+      {
+        "kind": "automatic-native-with-selection",
+        "provider": "openai",
+        "collections": 2,
+        "report": {
+          "status": "compacted",
+          "trigger": "pre-call",
+          "inputTokensBefore": 8679,
+          "inputTokensAfter": 931,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "dda7424c-0d21-43dc-a884-deb91b0b4c00",
+                "sha256": "dda4875ea6053dfd13152ef5deec106c5cd8a5dbec26d4dedc95fb260bfd3520",
+                "bytes": 61873,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "01cf5e0f-1d71-4ce4-bf9c-20a057c78e61",
+            "provider": "openai"
+          }
+        },
+        "output": "Project code: ORBIT_16A\nConfirmed limit: 37\nCurrent host source identifier: CURRENT_SOURCE_16A",
+        "usage": {
+          "id": "fdf68dbe-e3f5-4559-b058-c709584dadc8",
+          "limits": {
+            "maxCalls": 8,
+            "deadline": 1792674258639
+          },
+          "invocations": [
+            {
+              "id": "01cf5e0f-1d71-4ce4-bf9c-20a057c78e61",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-selection-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 8434,
+                "output_tokens": 298,
+                "total_tokens": 8732,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "modelCostUSD": 0.09924,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "a41df48c-8def-407e-b859-4ce446a00e99",
+              "parentInvocationId": "fdf68dbe-e3f5-4559-b058-c709584dadc8",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-selection-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 931,
+                "output_tokens": 29,
+                "total_tokens": 960,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.010759999999999999,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "1e07d34e-8708-4cb7-abb7-0539e04c1a16",
+              "invocationId": "01cf5e0f-1d71-4ce4-bf9c-20a057c78e61",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 8732,
+              "reservedCostUSD": 0.4664,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "ffbfbe50-39d7-4ca4-bc42-9453e1c00190",
+              "invocationId": "a41df48c-8def-407e-b859-4ce446a00e99",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 960,
+              "reservedCostUSD": 0.0509,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 9365,
+            "outputTokens": 327,
+            "totalTokens": 9692,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.10999999999999999,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 9692,
+            "chargedCostUSD": 0.5173
+          }
+        }
+      },
+      {
+        "kind": "automatic-native-with-selection",
+        "provider": "anthropic",
+        "collections": 2,
+        "report": {
+          "status": "compacted",
+          "trigger": "pre-call",
+          "inputTokensBefore": 10927,
+          "inputTokensAfter": 1385,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "e0207e3b-ce13-4670-99a3-1bf805a14692",
+                "sha256": "7c0b6ef3da5cd260344c4b4c1625748cb9871e1de8e68155648f0f6c396f756a",
+                "bytes": 61873,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "c9ee04cc-c18b-46e7-a869-03c01d6a1036",
+            "provider": "anthropic"
+          }
+        },
+        "output": "Here are the requested details:\n\n- **Project Code:** ORBIT_16A\n- **Confirmed Limit:** 37\n- **Current Host Source Identifier:** CURRENT_SOURCE_16A",
+        "usage": {
+          "id": "fe73f3bd-89b6-4ffe-bd81-1cab1a72cb60",
+          "limits": {
+            "maxCalls": 8,
+            "deadline": 1792674270455
+          },
+          "invocations": [
+            {
+              "id": "c9ee04cc-c18b-46e7-a869-03c01d6a1036",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-selection-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 10977,
+                "output_tokens": 221,
+                "total_tokens": 11198,
+                "cache_creation_details": {
+                  "short_ttl_input_tokens": 0,
+                  "extended_ttl_input_tokens": 0
+                },
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.036246,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "5e853e0e-47a8-4b45-b19d-434ad88a6661",
+              "parentInvocationId": "fe73f3bd-89b6-4ffe-bd81-1cab1a72cb60",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-selection-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 1385,
+                "output_tokens": 46,
+                "total_tokens": 1431,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.0048449999999999995,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "f787e1e9-e781-4182-92f3-366d806eeadf",
+              "invocationId": "c9ee04cc-c18b-46e7-a869-03c01d6a1036",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 11198,
+              "reservedCostUSD": 0.069177,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "a8c2248b-3146-40ec-aa61-9e543a5b6338",
+              "invocationId": "5e853e0e-47a8-4b45-b19d-434ad88a6661",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 1431,
+              "reservedCostUSD": 0.009,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 2,
+            "inputTokens": 12362,
+            "outputTokens": 267,
+            "totalTokens": 12629,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.041091,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 12629,
+            "chargedCostUSD": 0.078177
+          }
+        }
+      },
+      {
+        "kind": "hook-memory-proof-cancellation-recovery",
+        "provider": "openai",
+        "hooks": 1,
+        "initialCollections": 3,
+        "report": {
+          "status": "compacted",
+          "trigger": "pre-call",
+          "inputTokensBefore": 9458,
+          "inputTokensAfter": 1675,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "856b1ea5-10ca-4287-b7ac-db95c2e6bf84",
+                "sha256": "cf30775c6e4f266eecddf7666396f834511706e0cb0ffd9f1d432b4bd58320c5",
+                "bytes": 61873,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "7614217a-9b41-4151-bffb-ffd7bc817449",
+            "provider": "openai"
+          }
+        },
+        "output": "- Project code: ORBIT_16A\n- Confirmed limit: 37\n- Preserved host note: HOOK_SOURCE_37\n- Current host source: CURRENT_SOURCE_16A",
+        "recoveredOutput": "- Project code: ORBIT_16A\n- Confirmed limit: 37\n- Preserved host note: HOOK_SOURCE_37\n- Current host source: CURRENT_SOURCE_16A",
+        "cancelledUsage": {
+          "id": "9990e31d-b5aa-4b31-a4a3-b6e757497847",
+          "limits": {
+            "maxCalls": 0,
+            "deadline": 1792674284931
+          },
+          "invocations": [],
+          "attempts": [],
+          "totals": {
+            "calls": 0,
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "totalTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 0,
+            "chargedCostUSD": 0
+          }
+        },
+        "usage": {
+          "id": "f4561b83-7138-438f-85de-a40ea62976c2",
+          "limits": {
+            "maxCalls": 8,
+            "deadline": 1792674284931
+          },
+          "invocations": [
+            {
+              "id": "7614217a-9b41-4151-bffb-ffd7bc817449",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-hook-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 8825,
+                "output_tokens": 263,
+                "total_tokens": 9088,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                }
+              },
+              "modelCostUSD": 0.10139999999999999,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "5b07d940-777b-4e28-86d3-ca5c6b8639b8",
+              "parentInvocationId": "f4561b83-7138-438f-85de-a40ea62976c2",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-hook-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 1675,
+                "output_tokens": 44,
+                "total_tokens": 1719,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.01895,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "169db74e-5680-4e51-b02e-119a64148836",
+              "parentInvocationId": "f4561b83-7138-438f-85de-a40ea62976c2",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-hook-live-openai",
+              "model": "gpt-6-astra",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 1741,
+                "output_tokens": 44,
+                "total_tokens": 1785,
+                "cached_input_tokens": 0,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "service_tier": "default"
+              },
+              "modelCostUSD": 0.01961,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "ab00f9eb-3b21-4fe0-ac9c-f81fd1f449ef",
+              "invocationId": "7614217a-9b41-4151-bffb-ffd7bc817449",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 9088,
+              "reservedCostUSD": 0.4807,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "bf76d804-72eb-4389-8adf-2b24e62d4e9d",
+              "invocationId": "5b07d940-777b-4e28-86d3-ca5c6b8639b8",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 1719,
+              "reservedCostUSD": 0.09035,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "c6ad48ae-3c33-4f90-bcc8-22234dcb6362",
+              "invocationId": "169db74e-5680-4e51-b02e-119a64148836",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 1785,
+              "reservedCostUSD": 0.09365,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 3,
+            "inputTokens": 12241,
+            "outputTokens": 351,
+            "totalTokens": 12592,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.13995999999999997,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 12592,
+            "chargedCostUSD": 0.6647000000000001
+          }
+        }
+      },
+      {
+        "kind": "hook-memory-proof-cancellation-recovery",
+        "provider": "anthropic",
+        "hooks": 1,
+        "initialCollections": 3,
+        "report": {
+          "status": "compacted",
+          "trigger": "pre-call",
+          "inputTokensBefore": 12028,
+          "inputTokensAfter": 2646,
+          "accounting": "provider",
+          "checkpointed": false,
+          "plugins": {
+            "status": "skipped",
+            "reason": "disabled",
+            "compacted": []
+          },
+          "history": {
+            "mode": "native",
+            "status": "compacted",
+            "sourceReferences": [
+              {
+                "version": 1,
+                "id": "6a738312-0c4b-4dd1-ba54-05f0bccd8df5",
+                "sha256": "f1372214094eaf50998f1d875de79268a2f4a971485a2d553404f8c9ab83bddc",
+                "bytes": 61873,
+                "durability": "process"
+              }
+            ],
+            "invocationId": "af2ad00a-3cdf-49e6-b660-d3d5d0a31c31",
+            "provider": "anthropic"
+          }
+        },
+        "output": "Here are the requested identifiers exactly:\n\n- **Project code:** ORBIT_16A\n- **Confirmed limit:** 37\n- **Preserved host note:** HOOK_SOURCE_37\n- **Current host source:** CURRENT_SOURCE_16A",
+        "recoveredOutput": "Here are the requested identifiers exactly:\n\n- **Project code:** ORBIT_16A\n- **Confirmed limit:** 37\n- **Preserved host note:** HOOK_SOURCE_37\n- **Current host source:** CURRENT_SOURCE_16A",
+        "cancelledUsage": {
+          "id": "2ab8f8ed-6170-4fef-97d9-c4d7bec4ac45",
+          "limits": {
+            "maxCalls": 0,
+            "deadline": 1792674303599
+          },
+          "invocations": [],
+          "attempts": [],
+          "totals": {
+            "calls": 0,
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "totalTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 0,
+            "chargedCostUSD": 0
+          }
+        },
+        "usage": {
+          "id": "52e4d0b6-27b4-4b02-862f-b1ecb3c847b7",
+          "limits": {
+            "maxCalls": 8,
+            "deadline": 1792674303599
+          },
+          "invocations": [
+            {
+              "id": "af2ad00a-3cdf-49e6-b660-d3d5d0a31c31",
+              "purpose": "compactor",
+              "phase": "generation",
+              "connector": "native-hook-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 12076,
+                "output_tokens": 381,
+                "total_tokens": 12457,
+                "cache_creation_details": {
+                  "short_ttl_input_tokens": 0,
+                  "extended_ttl_input_tokens": 0
+                },
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.041942999999999994,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "e16aec89-370f-45f7-b87a-dd4d06a42b6c",
+              "parentInvocationId": "52e4d0b6-27b4-4b02-862f-b1ecb3c847b7",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-hook-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 2646,
+                "output_tokens": 59,
+                "total_tokens": 2705,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.008823000000000001,
+              "lateSettlement": false,
+              "external": false
+            },
+            {
+              "id": "d3f34580-f633-43b6-8dd3-a4ae9ea41d46",
+              "parentInvocationId": "52e4d0b6-27b4-4b02-862f-b1ecb3c847b7",
+              "purpose": "main",
+              "phase": "generation",
+              "connector": "native-hook-live-anthropic",
+              "model": "claude-sonnet-4-6",
+              "status": "succeeded",
+              "usage": {
+                "input_tokens": 2724,
+                "output_tokens": 59,
+                "total_tokens": 2783,
+                "service_tier": "standard",
+                "speed": "standard"
+              },
+              "modelCostUSD": 0.009056999999999999,
+              "lateSettlement": false,
+              "external": false
+            }
+          ],
+          "attempts": [
+            {
+              "id": "76c774be-00f9-4004-9da1-9c4e881ea5a6",
+              "invocationId": "af2ad00a-3cdf-49e6-b660-d3d5d0a31c31",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 12457,
+              "reservedCostUSD": 0.078171,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "0a02c369-ca5b-4d02-8b81-13c7701a0bc0",
+              "invocationId": "e16aec89-370f-45f7-b87a-dd4d06a42b6c",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 2705,
+              "reservedCostUSD": 0.016761,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            },
+            {
+              "id": "997ebc29-6145-415c-bad3-56e96b1432b9",
+              "invocationId": "d3f34580-f633-43b6-8dd3-a4ae9ea41d46",
+              "boundary": "transport",
+              "status": "received",
+              "dispatched": true,
+              "reservedTokens": 2783,
+              "reservedCostUSD": 0.017229,
+              "usageCoveredByInvocation": true,
+              "httpStatus": 200
+            }
+          ],
+          "totals": {
+            "calls": 3,
+            "inputTokens": 17446,
+            "outputTokens": 499,
+            "totalTokens": 17945,
+            "cachedInputTokens": 0,
+            "reasoningTokens": 0,
+            "knownModelCostUSD": 0.05982299999999999,
+            "unknownUsageInvocations": 0,
+            "unknownCostInvocations": 0,
+            "unknownChargeAttempts": 0,
+            "chargedTokens": 17945,
+            "chargedCostUSD": 0.11216100000000001
+          }
+        }
+      },
+      {
+        "kind": "oversized-raw-instructions",
+        "provider": "openai",
+        "counts": [
+          18352
+        ],
+        "modelCalls": 0,
+        "expectedFailure": "CONTEXT_OVERFLOW"
+      }
+    ]
+  },
+  "build": {
+    "command": "npm run build",
+    "exitCode": 0,
+    "verifiedExports": 24,
+    "log": "/tmp/stage16-second-final-build.log",
+    "sha256": "9533b79c99b52a79dbffa042546a3067f6ce2c54372b4873688558b891085ff7"
+  },
+  "gates": [
+    {
+      "name": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "seconds": 20.04,
+      "log": "/tmp/stage16-second-final-gate-typecheck.log",
+      "sha256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717"
+    },
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exitCode": 0,
+      "seconds": 16.3,
+      "log": "/tmp/stage16-second-final-gate-lint.log",
+      "sha256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e"
+    },
+    {
+      "name": "examples-check",
+      "command": [
+        "npm",
+        "run",
+        "examples:check"
+      ],
+      "exitCode": 0,
+      "seconds": 21.56,
+      "log": "/tmp/stage16-second-final-gate-examples-check.log",
+      "sha256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8"
+    },
+    {
+      "name": "compat",
+      "command": [
+        "npm",
+        "run",
+        "test:agentic:compat"
+      ],
+      "exitCode": 0,
+      "seconds": 1.59,
+      "log": "/tmp/stage16-second-final-gate-compat.log",
+      "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    {
+      "name": "core-strict",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "/tmp/stage16-strict.json"
+      ],
+      "exitCode": 0,
+      "seconds": 25.37,
+      "log": "/tmp/stage16-second-final-gate-core-strict.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-types",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "apps/amos/tsconfig.json"
+      ],
+      "exitCode": 0,
+      "seconds": 5.98,
+      "log": "/tmp/stage16-second-final-gate-amos-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-strict",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "/tmp/stage16-amos-strict.json"
+      ],
+      "exitCode": 0,
+      "seconds": 6.25,
+      "log": "/tmp/stage16-second-final-gate-amos-strict.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "amos-build",
+      "command": [
+        "npm",
+        "run",
+        "--prefix",
+        "apps/amos",
+        "build"
+      ],
+      "exitCode": 0,
+      "seconds": 6.13,
+      "log": "/tmp/stage16-second-final-gate-amos-build.log",
+      "sha256": "d37e34985eecc94ba57d84f1e12beaff9a3528fcfd3b9995be2616be7d1dc477"
+    },
+    {
+      "name": "docs",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/generate-api-docs.ts",
+        "--mode",
+        "public"
+      ],
+      "exitCode": 0,
+      "seconds": 9.0,
+      "log": "/tmp/stage16-second-final-gate-docs.log",
+      "sha256": "30892f65165413044553ade12c65e641e72d28a2191f49514d5aa52e88bf1108"
+    },
+    {
+      "name": "public",
+      "command": [
+        "node",
+        "tests/fixtures/agentic-presets/public-runtime.mjs"
+      ],
+      "exitCode": 0,
+      "seconds": 2.09,
+      "log": "/tmp/stage16-second-final-gate-public.log",
+      "sha256": "6a88687bb4fa26162c3fa6cce4b1e2452563c2733b44c1bdf4a1a8464736cdf9"
+    },
+    {
+      "name": "stage05-public",
+      "command": [
+        "node",
+        "tests/fixtures/context-assembly/public-runtime.mjs"
+      ],
+      "exitCode": 0,
+      "seconds": 7.12,
+      "log": "/tmp/stage16-second-final-gate-stage05-public.log",
+      "sha256": "8beb18f91c72434bf34ad8db4aa1ff77994a6a9f80cafa98e9d62401802dd50a"
+    },
+    {
+      "name": "native-public",
+      "command": [
+        "node",
+        "tests/fixtures/native-compaction/public-runtime.mjs"
+      ],
+      "exitCode": 0,
+      "seconds": 2.09,
+      "log": "/tmp/stage16-second-final-gate-native-public.log",
+      "sha256": "cdd11fa539a2e8d08729d1e752140df223206c2ee61caa9d6f3bcef23fdd6da1"
+    },
+    {
+      "name": "focused-coverage",
+      "command": [
+        "npx",
+        "vitest",
+        "run",
+        "tests/unit/core/context-nextgen/NativeCompaction.test.ts",
+        "tests/unit/core/context-nextgen/Stage16Compatibility.test.ts",
+        "tests/unit/providers/NativeCompaction.test.ts",
+        "tests/unit/apps/amos/NativeCompaction.test.ts",
+        "tests/unit/apps/amos/ContextInspection.test.ts",
+        "--coverage",
+        "--coverage.include=src/core/context-nextgen/strategies/ContextCompactionStrategy.ts",
+        "--coverage.include=src/core/context-nextgen/compaction/coordinator.ts",
+        "--coverage.include=src/core/context-nextgen/compaction/fingerprint.ts",
+        "--coverage.include=src/infrastructure/providers/shared/nativeCompaction.ts",
+        "--coverage.include=apps/amos/src/agent/contextInspection.ts",
+        "--coverage.reportsDirectory=/tmp/stage16-second-final-coverage",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile=/tmp/stage16-second-final-focused.json"
+      ],
+      "exitCode": 0,
+      "seconds": 12.25,
+      "log": "/tmp/stage16-second-final-gate-focused-coverage.log",
+      "sha256": "e5e25a5e8dd7390b98d3e3ff84e557b0f030f087c5c423b94e5655ecc9ba875b"
+    }
+  ],
+  "offline": {
+    "count": 33,
+    "scripts": [
+      {
+        "script": "example:agentic-baseline",
+        "command": "node --import tsx examples/agentic-evaluation-baseline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-agentic-baseline.log",
+        "sha256": "31cea375736ac18ee8aa368a5b8ed20bc8f5149f80692b06634eaac97c226d72"
+      },
+      {
+        "script": "example:context-freshness",
+        "command": "node --import tsx examples/context-compaction-freshness.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-context-freshness.log",
+        "sha256": "0532c044ac7655415d6c0c3b8ede1572840c2e17582f8932dd2fbaf13850e49c"
+      },
+      {
+        "script": "example:context-budget",
+        "command": "node --import tsx examples/context-request-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-context-budget.log",
+        "sha256": "abfb7239b1a9da2df57b41b41e307b4fd938fc71c81d096097abca2fc7a9eeb2"
+      },
+      {
+        "script": "example:structured-budget",
+        "command": "node --import tsx examples/structured-output-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-structured-budget.log",
+        "sha256": "58cbb143992aabe8353a4002d8562877f05d3f9f3c1b365b9a28a402c64c188f"
+      },
+      {
+        "script": "example:amos-context",
+        "command": "node --import tsx apps/amos/examples/context-budget-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-amos-context.log",
+        "sha256": "89428897af937eb5896c57426365cfef334ceac041ab84cea882ff31f787e2f3"
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": "node --import tsx examples/tool-outcomes-and-cancellation.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-tool-outcomes.log",
+        "sha256": "78d458b06f893c41560f16d7077c0ce2e90193fa107089cd82f704a5ff9a2aeb"
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-amos-tool-outcomes.log",
+        "sha256": "7762bb7100e11d275a19def86d87b561d0790b2ed4d7d3f4c3b85d2b6e5d141d"
+      },
+      {
+        "script": "example:purpose-models",
+        "command": "node --import tsx examples/purpose-specific-models.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-purpose-models.log",
+        "sha256": "c0f0fba45c2a71ba77d472f5a2ecab44614ab6dbba63c031428f778721529250"
+      },
+      {
+        "script": "example:shared-budget",
+        "command": "node --import tsx examples/shared-run-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-shared-budget.log",
+        "sha256": "84261248923a4dbfebf4f3a026da031e926e461662a52766eba4e54c49889f47"
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": "node --import tsx apps/amos/examples/model-helpers-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-amos-helpers.log",
+        "sha256": "853295fe98bf25f3bcd468c5f3ad7e37e8fdac8fb83b6b6d67ce158a15cc772e"
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": "node --import tsx examples/durable-tool-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-durable-evidence.log",
+        "sha256": "5d68412d3caf1c045c5688d3696e369f25be09c1289f40d762951ff71a9f2dbe"
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": "node --import tsx examples/evidence-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-evidence-recovery.log",
+        "sha256": "51dad3a8ebe04484e26fc73aa77852a48fd324aaae64b5b63609bfd3c72c249e"
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": "node --import tsx examples/ambiguous-action-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-ambiguous-evidence.log",
+        "sha256": "f49a80bbc66dab0c45d14cc14c426a52b7a0a0fe23dba60d47cb4208facc1acd"
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": "node --import tsx apps/amos/examples/evidence-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-amos-evidence.log",
+        "sha256": "6fd0f96af5da1e70f135436579896a8d1214a31db75fac4d0297f0d2a6331a86"
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": "node --import tsx examples/evidence-stream-interruption.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-evidence-interruption.log",
+        "sha256": "18868f69a3a727d6ebcce5570336622bdb4be5241f7f46c0278046fda7e1a1b0"
+      },
+      {
+        "script": "example:context-strategies",
+        "command": "node --import tsx examples/context-strategy-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-context-strategies.log",
+        "sha256": "2221d6fe37de167f171bc55d42c952a4b40a416fea534aa410017cacc31056f1"
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-amos-context-strategies.log",
+        "sha256": "3e1a2403a05a6a3c9be151acf86e177084b0b899a3da7edd92b1a2100f8e272d"
+      },
+      {
+        "script": "example:task-state",
+        "command": "node --import tsx examples/task-state-workflow.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-task-state.log",
+        "sha256": "cc5a75eb45e37a1f4e997a9ee62ea51698db0adcdc88c38c3399928d3424878c"
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": "node --import tsx apps/amos/examples/task-state-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-amos-task-state.log",
+        "sha256": "235dbcc52c49f628ef95fd0247118782e9ff7f568322abbfd5b073b483541109"
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": "node --import tsx examples/feedback-driven-agent.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-feedback-agent.log",
+        "sha256": "afcd257fd55986ca47d1dfc6cf21e84489b3e65ffa9717207704c1159fb62e61"
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": "node --import tsx examples/run-stream-equivalence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-loop-equivalence.log",
+        "sha256": "d165e3752d3fbfd40e08eeb4e2fc284ec50446e5b64bbcee461f7f15992cfa91"
+      },
+      {
+        "script": "example:amos-loop",
+        "command": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-amos-loop.log",
+        "sha256": "5406dd2c9b0f68a5c72b5f2a29de21d793ce939353352b4a6189345f85bd7a8f"
+      },
+      {
+        "script": "example:agentic-presets",
+        "command": "node --import tsx examples/agentic-presets.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-agentic-presets.log",
+        "sha256": "c081f3c74b876ab527e16c3cc25015e21516972a30480e40c9ccd393a0c862f5"
+      },
+      {
+        "script": "example:amos-presets",
+        "command": "node --import tsx apps/amos/examples/presets-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-amos-presets.log",
+        "sha256": "e6bd71eeaf76d8068c727649e8a08bb0a3b1d2e30aafa96a55645132513aa7f3"
+      },
+      {
+        "script": "example:context-selection",
+        "command": "node --import tsx examples/context-block-selection.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-context-selection.log",
+        "sha256": "a71efc6ccd8099e7f10ff12ed9e77918bc134427aabd56460f5104d0f125247f"
+      },
+      {
+        "script": "example:cache-aware-context",
+        "command": "node --import tsx examples/cache-aware-context.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-cache-aware-context.log",
+        "sha256": "caa405eab26a103b9983b12aac3a0519b8631b8065fbc42233d3884bef45a6ca"
+      },
+      {
+        "script": "example:amos-context-selection",
+        "command": "node --import tsx apps/amos/examples/context-selection-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-amos-context-selection.log",
+        "sha256": "03ec196631a6798b60e5a9a983d1ef2b2225334dfaec8fdf571f6afb20165498"
+      },
+      {
+        "script": "example:context-dispatch-safety",
+        "command": "node --import tsx examples/context-dispatch-safety.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-context-dispatch-safety.log",
+        "sha256": "fb453f5d54ae906cec73950f89566717e35e49c938682eb534fa3a881eff64dc"
+      },
+      {
+        "script": "example:native-compaction",
+        "command": "node --import tsx examples/native-context-compaction.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-native-compaction.log",
+        "sha256": "9e158a27271e53989ef693eb5b7a212e70d76f1b54260ce777d617f9c1c58fda"
+      },
+      {
+        "script": "example:native-recovery",
+        "command": "node --import tsx examples/native-context-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-native-recovery.log",
+        "sha256": "8c7a59e75d64d582f6542fe7531e01cbf6d5b73c14bca9d8b7c40190a8d34d75"
+      },
+      {
+        "script": "example:native-comparison",
+        "command": "node --import tsx examples/native-context-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-native-comparison.log",
+        "sha256": "86f9203ccebf996f7a026cae6fcc7881704bf681f26a93b8285ee854a514ffba"
+      },
+      {
+        "script": "example:amos-native-compaction",
+        "command": "node --import tsx apps/amos/examples/native-compaction-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-amos-native-compaction.log",
+        "sha256": "a1a5310d93d877051fd268d1a4e46f44d21cd37e8f3b941d81cf08744c83ca9c"
+      },
+      {
+        "script": "example:native-hooks",
+        "command": "node --import tsx examples/native-context-hooks.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage16-second-final-offline-native-hooks.log",
+        "sha256": "79295919422c9c347bbc949360d73fc032c63ed0e736671cea49447608d97790"
+      }
+    ]
+  },
+  "publicRuntime": {
+    "public": {
+      "protocol": "stage12-public-v1",
+      "summaries": [
+        {
+          "format": "esm",
+          "checks": 27,
+          "calls": 4
+        },
+        {
+          "format": "cjs",
+          "checks": 27,
+          "calls": 4
+        }
+      ]
+    },
+    "stage05-public": {
+      "protocol": "stage05-public-v1",
+      "results": [
+        {
+          "format": "esm",
+          "checks": 19
+        },
+        {
+          "format": "cjs",
+          "checks": 19
+        }
+      ]
+    },
+    "native-public": {
+      "protocol": "stage-16a-public-runtime-v1",
+      "passed": true,
+      "results": [
+        {
+          "format": "esm",
+          "checks": 33
+        },
+        {
+          "format": "cjs",
+          "checks": 33
+        }
+      ]
+    }
+  },
+  "publicRuntimeChecks": 158,
+  "focusedCoverage": {
+    "testsPassed": 171,
+    "filesPassed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "scope": [
+      "composition coordinator and policy",
+      "native persisted fingerprint helper",
+      "native wire/usage helpers",
+      "AMOS context inspection"
+    ],
+    "limitation": "Narrow focused scope, not whole Agent/context/provider/repository coverage.",
+    "statements": 99.04,
+    "branches": 87.03,
+    "functions": 95.45,
+    "lines": 99.04
+  },
+  "examples": {
+    "new": "examples/native-context-hooks.ts",
+    "command": "npm run example:native-hooks",
+    "setup": "Build first; offline default needs no keys. -- --live=openai or -- --live=anthropic loads .env and makes bounded billable calls.",
+    "expected": "One hook preserves a critical whiteboard note; automatic native reduction and managed continuation succeed.",
+    "cleanup": "Agent, ModelTask and named connector are destroyed/removed."
+  },
+  "amos": {
+    "newRuntimeSurface": false,
+    "reason": "Existing cancellation and policy/compaction commands consume the corrected library; no new AMOS configuration or UI is required.",
+    "coverage": "Real AgentRunner/ContextCommand regression cancels a stalled file-backed proof, releases the command/runner and continues before the old read returns; existing nine native AMOS cases pass."
+  },
+  "resolvedValidationIncidents": [
+    {
+      "kind": "Expected red regression phase",
+      "details": "Fourteen of nineteen new core regressions failed before S1/S2 fixes. Five unrelated/protection controls passed. Unsupported-reasoning reproduction is retained in the second-review evidence."
+    },
+    {
+      "kind": "Startup self-review follow-up",
+      "details": "Two red pending-load cases demonstrated cancellation still waited for a host-owned restore. The final internal wait correction preserves the independent checkpoint load and passes five run/stream/manual/signal/deadline cases."
+    },
+    {
+      "kind": "Intermediate focused/strict checks",
+      "details": "An old contributor-revision assertion was updated to require one legitimate hook refresh; the protected-scope fixture now actually changes the scope instead of writing a frozen object. New tests use complete ThinkingContent fields, explicit async returns and fake deadline timers. Final strict/focused/full gates pass."
+    },
+    {
+      "kind": "Intermediate full matrix",
+      "details": "All 199 live cases and all 13 nonunit gates passed before the final startup wait refinement. The final build and full validation were repeated after that refinement; only final logs count as current validation."
+    }
+  ],
+  "sourceManifest": [
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "sha256": "898d79c5c777d33fb785ab7b28f7f7f01e30513c74223bc993666ed9cad78012"
+    },
+    {
+      "path": "apps/amos/src/agent/contextInspection.ts",
+      "sha256": "b27fcc1d9086907026334abc983784fdc0d51c471070fed417b1e9b7c34ae004"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/ContextCommand.ts",
+      "sha256": "83f7add21661b2b6acad5588a5b25355309d572446526fcae1e90988f344feb8"
+    },
+    {
+      "path": "apps/amos/src/config/types.ts",
+      "sha256": "8675e9cb9440691e53671d9b76ac2aa6b39f4856ddce892d85910257eb1217d6"
+    },
+    {
+      "path": "dist/index.cjs",
+      "sha256": "4d16228e4836255d2dda35b2835fb098fe71ae6b9ad6c0564fb1b630d8b96368"
+    },
+    {
+      "path": "dist/index.d.cts",
+      "sha256": "4f04da5d7025f358df7b21229c685b14b0d499633008a0763f14add92d572cc4"
+    },
+    {
+      "path": "dist/index.d.ts",
+      "sha256": "a828ac143768a955a2997f5337381cd0b448cdaf46bd9c0e09b8e435f671ac04"
+    },
+    {
+      "path": "dist/index.js",
+      "sha256": "5172df1b4a7a88c846b59dd9dab8c566f43e1621bd0106ed5184215ee63f939d"
+    },
+    {
+      "path": "examples/context-strategy-comparison.ts",
+      "sha256": "42d006d4a60504042a63bdf0d706fa209461908b90a90fb493440f4a68dac1ea"
+    },
+    {
+      "path": "examples/native-compaction/fixture.ts",
+      "sha256": "fec33c611ae098bc61718b7de95417f2a37a35b78feaac70b65535eac4835f1d"
+    },
+    {
+      "path": "examples/native-context-compaction.ts",
+      "sha256": "20503d6a6e0d11f7003bba921b7ed5a0d42bc6afe0f1bda17c2ced447975c12f"
+    },
+    {
+      "path": "examples/native-context-comparison.ts",
+      "sha256": "f9f7bb9b6bb6a41187019a56522346bd34d429da4ed9bb974cd39ab4523dddf8"
+    },
+    {
+      "path": "examples/native-context-hooks.ts",
+      "sha256": "709180c7a8ef35deb3a102e4e08a9be501cfb285b77592b6eec67d61c7053931"
+    },
+    {
+      "path": "examples/native-context-recovery.ts",
+      "sha256": "6fe00065be0d645d6ac3047a61bf5f15a51ba42dff5eb49483e23f8c5fc29c09"
+    },
+    {
+      "path": "package.json",
+      "sha256": "697d369f44a2af05094d535f6b20e7eb514eb9a1bb85fd558621de68bfb6bffe"
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "8eb2a9ab4f4220f102ee7b2c26227f7e570b9d7a1c17a8fbe97084e9ef53d970"
+    },
+    {
+      "path": "src/core/BaseAgent.ts",
+      "sha256": "912244571b18beedafc463b500b3af44c1dd962f31e623fecf8165669726a817"
+    },
+    {
+      "path": "src/core/capabilityInspection.ts",
+      "sha256": "6424d3af0449f184a90b522cdb1ad8e8021edd5d35cb83abae1170528750f56b"
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "23d8dd89f6fc62ffa1fbfaaf3da65f9a6de7651ba25f699798edf08197ecd5b5"
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/coordinator.ts",
+      "sha256": "94ed9e625a626aa1ae9a5874b6e138badf7d55a29d33088c0714735f629ba587"
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/fingerprint.ts",
+      "sha256": "51d76e4ef8df351acc0f1b4a95b1f3611592fb0411745d74f40c211d5f6cb816"
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/types.ts",
+      "sha256": "27ee6e676f75024da1194c68531d003b91083a2c860ecee26e9b00a3899b7846"
+    },
+    {
+      "path": "src/core/context-nextgen/index.ts",
+      "sha256": "a85d30dbbb41c403ec6f454cdb6b17fb5b6013e12a3cb8921c92f701c4dfcfae"
+    },
+    {
+      "path": "src/core/context-nextgen/strategies/ContextCompactionStrategy.ts",
+      "sha256": "01b2b31b391b5a4ec3fc110b5e581c382a48d591c77cf4095551d462b35fc9a6"
+    },
+    {
+      "path": "src/core/context-nextgen/strategies/index.ts",
+      "sha256": "71016b7a33393abfa489da05a8323e5eb64d5723336bca69004c64bec9d910ba"
+    },
+    {
+      "path": "src/core/context-nextgen/types.ts",
+      "sha256": "84239d5a1ee1a22b5f250ba96f2886602a9c1f93d26e0d3b4a92b4c901fe039d"
+    },
+    {
+      "path": "src/core/createProvider.ts",
+      "sha256": "01dd9c048f691a0e7e50849fd85f0b93347f13fbb89e850d0fafd8475f6ea7bd"
+    },
+    {
+      "path": "src/core/index.ts",
+      "sha256": "ec84084a9755c05199932f36d87939eec7c67e4534520585dbba1e9aa0083ade"
+    },
+    {
+      "path": "src/core/model-execution/ModelExecutor.ts",
+      "sha256": "0cb69d056a182ffb7dbc931855b815add0e6cebabbdf703c4344d7a294e77595"
+    },
+    {
+      "path": "src/core/model-execution/ModelTask.ts",
+      "sha256": "5b92b8f36a29b07191723c9dc7dc2aa16f7a834cd3ba09b48dd0df9c2171d604"
+    },
+    {
+      "path": "src/core/presets.ts",
+      "sha256": "9ba4dc558806e704519a5c399d45d7ba004e2dd72bd19258c36f8b82fcfea391"
+    },
+    {
+      "path": "src/domain/entities/Message.ts",
+      "sha256": "ca3000b18fcef618e3868c0473ff7c673e845744a31f1ef5863e7467e4881312"
+    },
+    {
+      "path": "src/domain/interfaces/IAdvancedInference.ts",
+      "sha256": "4f28ce0fbe8598f34a9ad75d61d664d54f7d0955749ba08d610c40ce216b5e21"
+    },
+    {
+      "path": "src/domain/interfaces/IContextStorage.ts",
+      "sha256": "f03bc08223b632461d1b28de3a91a5ef719dd6360a025043b788967ecb94eb26"
+    },
+    {
+      "path": "src/domain/interfaces/INativeContinuation.ts",
+      "sha256": "9da63ada864652efbb70ccc779f45f97b2f0783e34a45fbd4be9afe95a4ede34"
+    },
+    {
+      "path": "src/domain/interfaces/ITextProvider.ts",
+      "sha256": "f772835bd67819be6a213816b3fce257a870f88a38020952f3bc9854374483b3"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "31329d2cae27f0894c39f9dafc0c46e719bda2f9fea7087d9c6a1ffb768815c5"
+    },
+    {
+      "path": "src/infrastructure/providers/anthropic/AnthropicConverter.ts",
+      "sha256": "123ef21dd567d79cfd0a944ececb6dff2e4aa02ff79033d89deb4a0aedcf6d1a"
+    },
+    {
+      "path": "src/infrastructure/providers/anthropic/AnthropicTextProvider.ts",
+      "sha256": "59db9fbc247e94af9f293052728bf36429a869ba4d7e01c335eb6cd3029f33a6"
+    },
+    {
+      "path": "src/infrastructure/providers/openai/OpenAIResponsesConverter.ts",
+      "sha256": "866a7721210a4c21ee967782ba41ab5b4351d66ab928be754dd165e82fd8ac20"
+    },
+    {
+      "path": "src/infrastructure/providers/openai/OpenAITextProvider.ts",
+      "sha256": "b5c9c6b28790748de8168d58aa34438fc4bf0e33b5385d4d11c9c9ae4e59116b"
+    },
+    {
+      "path": "src/infrastructure/providers/shared/nativeCompaction.ts",
+      "sha256": "c304be53e34d819910ab5d02642a9ac685db37989158ff50143c276c69e91d4c"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "35d6f751c7664ee8f2828e179fdb911554455612223871f40462fb13e511b06f"
+    },
+    {
+      "path": "src/types/index.ts",
+      "sha256": "ebcefd07dfd6691446109bcc3344d7cc22426e57a474d374ea40d175a24afb50"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage16-consumer.ts",
+      "sha256": "446dee390b8e1ffd41b67018b2e7cba0627cc56c27646a7f2682fba21da30144"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "sha256": "43a4af6bf93985a65987ab91ab6f59c74558c2d7b09e90585ca8e9552b54ae47"
+    },
+    {
+      "path": "tests/fixtures/native-compaction/public-runtime.mjs",
+      "sha256": "2b78d20d079822783ca7410b86de34b3233e7a5f098b420503d3e305a6ec9187"
+    },
+    {
+      "path": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+      "sha256": "641e98cc2a98f3b94487aec31099a705779afa631d49ed7b07efd6ff0b94c505"
+    },
+    {
+      "path": "tests/integration/text/TaskState.live.integration.test.ts",
+      "sha256": "d066ef55fce5bce3df8a35d198233a2e456ee9a0c1e9e2b2fd39e707ef16935f"
+    },
+    {
+      "path": "tests/unit/apps/amos/NativeCompaction.test.ts",
+      "sha256": "ce9d4c04dc7de6cff8b0f130435b047c217f0f2d80122746f67dee1f8ff3803d"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/NativeCompaction.test.ts",
+      "sha256": "852177a33c37cae82c07006f0dbe6c96368a0c79e195e96a1cae7e066caab2ac"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/Stage16Compatibility.test.ts",
+      "sha256": "b2bff6294137808decd102265f5f89bc6b3c3c829b69757e383d09662e03bac3"
+    },
+    {
+      "path": "tests/unit/providers/NativeCompaction.test.ts",
+      "sha256": "65900d6019595ee54792d96e232ccb269a9f11867f2d430e4f4a8a874e5650d1"
+    }
+  ],
+  "knownFailures": [],
+  "remainingRequiredWork": [],
+  "documentation": {
+    "markdownFiles": 18,
+    "localLinksChecked": 2411,
+    "missingLinks": [],
+    "sourceFingerprintsChecked": 53,
+    "sourceMismatches": [],
+    "availabilityAdoptionHandoffSynced": true,
+    "manifest": [
+      {
+        "path": "AGENTS.md",
+        "sha256": "98e0a4e247e1b8059bb10f9327028a7b8bb5a0e561fdb5cdd9f71b2cc5ad5b44"
+      },
+      {
+        "path": "API_REFERENCE.md",
+        "sha256": "af5f88bb59e74fa1b0ba21331292c420855e54ed2c939a766fc75f3e82f7cfa6"
+      },
+      {
+        "path": "CHANGELOG.md",
+        "sha256": "c477a0b011855376b0e9c807beb3fe0872d10a6e3afe9b37157a041f10fe9083"
+      },
+      {
+        "path": "README.md",
+        "sha256": "bfc38eb0b19703221bb460b12a104f720d5bb5973c734e9dc29551d41e465320"
+      },
+      {
+        "path": "USER_GUIDE.md",
+        "sha256": "0b04f648e65705723894720e10efbfd7f30db8165a6883bab0db6edeb538c779"
+      },
+      {
+        "path": "apps/amos/README.md",
+        "sha256": "3dbd03f57e85fd16f8c5ed10aedf5a16c582626388d2ed55a067b78d1d21df81"
+      },
+      {
+        "path": "docs/CONTEXT_ASSEMBLY.md",
+        "sha256": "ad6ad6bbc57399b6ccabcd0b118cc39c9fcff82e5116477d773c2ef0e7052bb8"
+      },
+      {
+        "path": "docs/CONTEXT_PREPARATION.md",
+        "sha256": "89eab32e1fc06ad161694bb6690152b1155c36d49a8ca0b3b029a8800feeb6a8"
+      },
+      {
+        "path": "docs/CONTEXT_STRATEGIES.md",
+        "sha256": "050de917bb6825ec3b7f3626736cae7f83423bd09ba8adfc865e2fc3c14640d5"
+      },
+      {
+        "path": "docs/DURABLE_EVIDENCE.md",
+        "sha256": "0b3a121b4d2bd14041c4e2546af985fddeaa1b73826de4c52db6bd7dd34d4dcf"
+      },
+      {
+        "path": "docs/MODEL_TASKS_AND_HELPERS.md",
+        "sha256": "2cc7121f8f7860aa377fe3cc6a88eba3c1b0eb0f36828e7b5d1114f201f5513a"
+      },
+      {
+        "path": "docs/NATIVE_CONTEXT_COMPACTION.md",
+        "sha256": "3bea860ab0c380f65ea776bea45919e7d2c9a29aacb8cf6a2efa15717fe1fa7a"
+      },
+      {
+        "path": "docs/VERSION_2_GUIDE.md",
+        "sha256": "0696c3dbcac42da7a141ec397fdc8ff21247688c7851050b83e3b5d4443d8bd8"
+      },
+      {
+        "path": "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+        "sha256": "b1cb651dd6891b5871dceb5b597e1f7c5d47c488f99a37f00b4592f5188c4b7c"
+      },
+      {
+        "path": "docs/designs/STAGE_16A_NATIVE_COMPACTION_API.md",
+        "sha256": "55443993f98728957c2fb36270b58092bce52c321dd42d1227c0afca917359bb"
+      },
+      {
+        "path": "docs/designs/STAGE_16A_REVIEW_AND_FIX_PLAN.md",
+        "sha256": "4e033283d8c132d0a197946cc6f974d1c0cbf486a7cc311bb3cbeb3e8c405183"
+      },
+      {
+        "path": "docs/designs/STAGE_16A_SECOND_REVIEW_AND_FIX_PLAN.md",
+        "sha256": "4b4a422264a9343f4f1bc1ad311aef9afff42572aacb6db7d7b042ef8823af24"
+      },
+      {
+        "path": "examples/README.md",
+        "sha256": "51bb0f5f79b572d3e4b26ce4645730828f63975fd90ab4442fb5d91e4d676dde"
+      }
+    ],
+    "offlineTranscriptSha256": "51131794d7629ca35c55626c95e8d660d9cd5013c7353487ff92b6803eda4e2f"
+  },
+  "packageDryRun": {
+    "files": 233,
+    "requiredReviewArtifactsPresent": [
+      "docs/designs/STAGE_16A_SECOND_REVIEW_AND_FIX_PLAN.md",
+      "docs/evaluations/STAGE_16A_SECOND_REVIEW.json",
+      "docs/evaluations/STAGE_16A_SECOND_CORRECTIONS_VALIDATION.json",
+      "docs/evaluations/STAGE_16A_SECOND_CORRECTIONS_OFFLINE.txt",
+      "examples/native-context-hooks.ts",
+      "docs/VERSION_2_GUIDE.md",
+      "docs/NATIVE_CONTEXT_COMPACTION.md",
+      "AGENTS.md",
+      "API_REFERENCE.md"
+    ],
+    "envExcluded": true,
+    "exitCode": 0,
+    "log": "/tmp/stage16-second-final-package.log",
+    "permissions": "Isolated writable /tmp npm cache; no changes to user cache permissions."
+  },
+  "finalizedAt": "2026-10-22T13:05:15.711638+00:00"
+}

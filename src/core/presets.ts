@@ -34,6 +34,8 @@ export interface AgentCapabilityInspection {
     features: ResolvedContextFeatures;
     plugins: string[];
     strategy: string;
+    composition?: { config: Readonly<import('./context-nextgen/compaction/types.js').ContextCompactionStrategyConfig>;
+      last?: import('./context-nextgen/compaction/types.js').ContextCompactionReport; activeNative: boolean };
     maxContextTokens: number;
     responseReserve: number;
     evidenceDurability?: EvidenceDurability;

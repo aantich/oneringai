@@ -29,6 +29,10 @@ const nativeTools: readonly NativeToolCapability[] = ['web_search', 'x_search', 
 export function inspectAdvancedCapabilities(value: AdvancedTextCapabilities): AdvancedTextCapabilities {
   const { promptCaching: cache, batch, structuredOutput: structured, nativeToolOptions: toolOptions, responsesExtensions: extensions, dataHandling: data } = value;
   return {
+    ...(value.nativeCompaction === undefined ? {} : { nativeCompaction: {
+      onDemand: choice(value.nativeCompaction.onDemand, ['supported', 'unsupported', 'unverified']),
+      inputTokenCounting: choice(value.nativeCompaction.inputTokenCounting, ['provider', 'unavailable', 'unverified']),
+    } }),
     ...(value.reasoningHistory === undefined ? {} : { reasoningHistory: choice(value.reasoningHistory, ['discard', 'always', 'when_tools_configured']) }),
     promptCaching: {
       mode: choice(cache.mode, ['unsupported', 'implicit', 'request_controlled', 'explicit_resource']),

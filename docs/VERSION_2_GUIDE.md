@@ -10,6 +10,7 @@ scope, dependencies, research, and acceptance criteria.
 - **Stage 03 review:** All findings fixed and validated: 7,473 units / 245 Stage 03 cases, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](./designs/STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 - **Stage 06 review:** All findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion](./designs/STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
 - **Created / last updated:** 2026-10-07 / 2026-10-22.
+- **Current selected scope:** Stage 16A and all review corrections are **complete on branch; opt-in**. The [latest completion](./designs/STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22) verifies 8,584 units / 77 new regressions, 201 live tests across three providers, 34 offline programs/modes and 158 public controls. All 11 affected native live cases pass again after final scope preflight/rebuild. Stage 16B remains deferred; package release is unverified and no breaking change was approved.
 - **Repository package version at creation:** `1.2.0`.
 - **Implemented stages:** 00 — evaluation and compatibility baselines;
   01 — fresh request accounting and safe compaction;
@@ -39,6 +40,7 @@ Each new capability will have one of these availability labels:
 | Label | Meaning |
 | --- | --- |
 | Planned | Part of the core roadmap; no delivered API or behavior is claimed. |
+| API proposal / awaiting approval | A scope has been selected and its API documented for review; runtime implementation is waiting for the user's explicit approval. |
 | In development | Work has started; it has not passed the stage's completion gate. |
 | Available on branch | Implemented and validated at an identified revision; not necessarily published. |
 | Released | Included in an identified published package version, with verified documentation and examples. |
@@ -431,7 +433,7 @@ not general quality/cost improvements or deterministic model adherence.
 
 ## Easier configuration and capability inspection
 
-**Availability: Implemented on branch — seven review corrections pending (2026-10-16). No verified package release.**
+**Availability: Complete on branch, including all review corrections. No verified package release.** See the [latest corrective completion](./designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16).
 
 Public `createAgentPreset('research' | 'workflow', config)` returns ordinary
 AgentConfig with no IO or model calls. Research selects observation masking and
@@ -479,22 +481,93 @@ no keys; test:presets:live is separately opt-in and billable. Stage 07's bounded
 comparison remains the quality evidence; preset assembly makes no new quality or
 cost claim. A package release remains unverified.
 
+## Provider-native compaction — Stage 16A
+
+**Availability: complete on branch, opt-in; all review corrections validated; package release unverified.** See the [latest completion](./designs/STAGE_16A_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22). Revision 2
+was approved on 2026-10-22. The [native recipe](./NATIVE_CONTEXT_COMPACTION.md)
+documents the built public API; the [approved design](./designs/STAGE_16A_NATIVE_COMPACTION_API.md)
+and [validation record](./evaluations/STAGE_16A_VALIDATION.json) retain scope and evidence.
+
+```typescript
+context: {
+  model,
+  features: { evidence: true },
+  compactionStrategy: new ContextCompactionStrategy({
+    plugins: 'auto',
+    history: 'native',
+  }),
+}
+// Between executions, optional manual scheduling:
+await agent.compactContext({ target: 'history' });
+```
+
+Import the class from the public package. Both controls are required; automatic
+scheduling defaults to true and native history keeps two recent completed user
+turns exact. The four auto/off and native/off combinations work independently.
+Plugin reduction does not enable/disable plugin features or tools. Under pressure,
+eligible plugins reduce once, the full frame is rebuilt/count-checked, and native
+history runs only if still needed. Manual targets are `all` (default), `plugins`
+and `history`; `automatic: false` retains explicit operations. Plugin-only mode
+needs no native adapter/evidence. Existing strategy instances/names/defaults and
+custom plugin/storage/strategy contracts remain supported; no replacement context
+configuration or migration is required.
+
+OpenAI standalone and Anthropic on-demand adapters use the main connector/model,
+whole-window provider counting, faithful scoped archival and shared ModelTask
+compactor accounting. Verified live models are `gpt-6-astra` and
+`claude-sonnet-4-6`. A configured local helper remains a separate summary choice.
+Native source/history operations preserve canonical provider messages/opaque or
+signed blocks, protected recent/current input, pending dependencies, fresh plugin
+contributions and host task state. Older user/settled action exchanges can leave
+the active prompt; exact source archival does not guarantee model recall.
+
+Reports distinguish plugin/history outcomes, before/after counts, provider/local
+accounting, source references, invocation IDs and checkpoint acknowledgement.
+`lastPreparation.compactionDetails` and capability inspection expose detached
+optional diagnostics. `budget.providerCountedInputTokens` is capacity provenance,
+not usage; existing component estimates remain local. Discarded/billed and late
+native usage remain visible. Missing counters stay unknown. OpenAI native compact
+cannot honor a hard per-call output cap; read the recipe before imposing limits.
+
+Optional version-1 continuation metadata binds model, connector/endpoint, host
+account/principal and evidence scope. File-backed source/session storage and
+separate-process run/stream recovery are verified. Incompatible switches reject;
+use trusted pre-native checkpoint or explicit fresh-context recovery. Archival or
+count/native failures preserve history; prior plugin reductions can remain. A
+failed post-commit checkpoint reports committed state instead of repeating actions.
+Existing sessions remain loadable. Native retained metadata/source quotas and
+backend retention still apply.
+
+AMOS supports `/context policy`, `/context compact` and per-phase inspection,
+independent persisted controls and provider-counted capacity displays. Five runnable
+examples cover targets, restart/recovery, four-policy comparison, the actual AMOS
+adapter and preservation through `beforeCompaction` memory writes. They default
+offline and provide bounded opt-in live modes where relevant.
+
+Latest validation: **8,507 units / 377 files; 199 live tests / 12 suites across
+three providers; nine native cases; 33 offline programs; 158 ESM/CJS public controls**.
+Build, types, lint, strict core/AMOS, generated docs and 171 focused cases pass.
+The original bounded four-policy live pilot remains functional historical evidence,
+not a general quality/cost ranking. Server-owned/in-request automatic, broader request/
+runtime shapes and Stage 16B remain deferred. No further stage is authorized.
+
 ## Conditional extensions
 
-These remain **Conditional / deferred**. Existing memory, tool catalogs,
-orchestration, asynchronous tools, and provider options remain usable; the entries
-below describe possible enhancements to those foundations.
+These are optional tracks. Stages 05 and 16A, including all review corrections, are complete on branch. See the [latest Stage 16A completion](./designs/STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22). Other entries remain **Conditional / deferred**.
+Existing memory, tool catalogs, orchestration, asynchronous tools, and provider
+options remain usable; the entries below describe enhancements to those foundations.
 
 | Stage | Potential user benefit | Scope to keep explicit |
 | --- | --- | --- |
-| 05 | Select useful context contributions and improve cache reuse. | Optional typed contributions and selective layout; not a mandatory replacement for plugin APIs. |
+| 05 | Select useful context contributions and improve cache reuse. | Available on branch; see [Context Assembly](./CONTEXT_ASSEMBLY.md). |
 | 08 | Recall relevant earlier episodes without treating every trace as permanent knowledge. | Retrieval and ingestion, with ownership, retention, and permissions; reuse existing memory facilities. |
 | 09 | Find individual relevant tools in a large catalog. | Ranked discovery beyond existing category loading; provider-native search is a separate integration. |
 | 11 | Reduce independent read latency and support selected resumable effects. | Parallel reads and durable effect handling are separate scopes; no universal exactly-once promise. |
 | 13 | Reuse procedures supported by verified outcomes. | Curated learning with provenance, approval, expiry, and rollback; no automatic promotion of unverified instructions. |
 | 14 | Route selected work to another model or specialist. | Adaptive routing and specialist delegation are separate scopes with explicit state, authority, and budget boundaries. |
 | 15 | Inspect large data or compose tools through a bounded program. | Deterministic queries first; programmatic execution requires a real sandbox, restricted authority, and bounded resources. |
-| 16 | Use supported provider-native compaction or evaluate improved retention policies. | Native adapters and learned retention are separate scopes; provider contracts and experiments need different validation. |
+| 16A | Use supported provider-native compaction. | Complete on branch; all review corrections validated. Optional OpenAI/Anthropic composition API with client-owned continuation. [Latest completion](./designs/STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22); [design](./designs/STAGE_16A_NATIVE_COMPACTION_API.md). |
+| 16B | Evaluate improved retention policies. | Deferred and unauthorized; independent research with its own quality/cost gates. |
 
 New sections and runnable recipes belong here only when a conditional scope is
 selected. Research evidence for a technique does not establish its availability
@@ -549,7 +622,8 @@ revision, version, or link only when that evidence exists.
 | 13 | Verified procedures and curated learning | Conditional | Conditional / deferred | — | — | — |
 | 14 | Routing and selected specialist delegation | Conditional | Conditional / deferred | — | — | — |
 | 15 | Sandboxed programmatic tools | Conditional | Conditional / deferred | — | — | — |
-| 16 | Native compaction and selected retention experiments | Conditional | Conditional / deferred | — | — | — |
+| 16A | Plugin/native compaction and client-owned continuation | Selected conditional scope | Complete on branch; all review corrections validated | `version2` working tree, base `4ab2c8f`; 2026-10-22 | — | [Latest completion](./designs/STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22); [validation](./evaluations/STAGE_16A_THIRD_CORRECTIONS_VALIDATION.json); [recipe](./NATIVE_CONTEXT_COMPACTION.md); [approved API](./designs/STAGE_16A_NATIVE_COMPACTION_API.md) |
+| 16B | Retention research | Conditional | Deferred; not authorized | — | — | — |
 
 An internal stage such as baseline evaluation may have no new consumer API.
 Record that explicitly, together with any visible diagnostic or example benefit;
@@ -1295,6 +1369,11 @@ incorrect usage instructions in place.
 | 12: presets | Both presets, plain Agent baseline, overrides, capability/driver support, old-setting migration, and help. | Recipe; README; User Guide; generated API; AGENTS; public example/index; AMOS command/config/help/example; Changelog; package records. | Synced: all T1–T3 fixed; full resume admission/JSON conversion/per-plugin recovery and internal-only plumbing documented. 27 new unit regressions, 8,143 units, 151 live tests / 163 scenarios, 24 examples and 54 ESM/CJS controls pass. [Latest completion](./designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16); historical evidence preserved, no release. |
 | 05: selected context assembly | Explicit companions, defaults, source/budget/authority/persistence/repair boundaries, stable layout and actual/unknown usage. | Recipe; README/User Guide/generated API; AGENTS; examples/index; AMOS docs/notice; Changelog; roadmap and packaged evidence. | Synced 2026-10-22: all review findings fixed. Selected structured formatting precedes consolidation/persistence; native result/signature uncertainty is accurate. 8,340 units, 190 live tests / 202 scenarios, 28 examples, 92 public controls and all gates pass. Failure checkpoint/no-repeat boundaries documented; no release. |
 | Selected conditional scopes | Delivered benefit, separate recipe, support limits, exact scope, availability, and migration. | README; User Guide; generated API; affected specialist guides; examples; AMOS where useful; Changelog. | Pending |
+| 16A: API design and scope | Explicit approval gate; additive strategy instance with peer plugin/history settings, targeted manual results; compatibility-first defaults/contracts; native ownership/support; 16B deferral. | [Approved API/delivery](./designs/STAGE_16A_NATIVE_COMPACTION_API.md); roadmap; this availability register; AGENTS. | Revised design-only records synced 2026-10-22 on `version2`, base `4ab2c8f`. Existing APIs remain; earlier draft names were not implemented. Revision 2 approved and implemented 2026-10-22; no break approved. Historical design checkpoint is retained separately from runtime validation. |
+| 16A: implementation adoption | Verified signatures/defaults, source retention, exact-tail/lossy-history boundary, capability/model/counting support, usage/budgets, session scope/recovery/failures, examples and AMOS. | README/User Guide; generated API; native recipe and affected specialist guides; examples/index; AMOS/help/tests; AGENTS; Changelog; package inventory; Version 2 adoption record and stage evidence. | Synced 2026-10-22: recipe, README/User Guide, generated API, specialist guides, AGENTS, examples/index, AMOS/help/tests, Changelog and package inventory. 8,420 unit / 194 live / 32 offline / 158 public checks pass; see the Stage 16A adoption record below. Release-wide publication remains pending. |
+| 16A: review corrections | Construction-time transport binding, complete counted wire frames, shared assembly deadlines/frame reuse, early ownership rejection and deterministic compatibility fixtures. | [Corrective completion](./designs/STAGE_16A_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22), [validation](./evaluations/STAGE_16A_CORRECTIONS_VALIDATION.json), native recipe, standard docs/generated API, examples, AMOS, AGENTS and package inventory. | Synced 2026-10-22: R1–R5 fixed; 8,454 units, 197 live tests, 32 offline programs and 158 public controls pass. Legacy/default APIs and checkpoint format preserved; no breaking change or Stage 16B authorized. Release-wide publication remains pending. |
+| 16A: second review | Preserve compaction-hook memory, cancel read-only proofs and startup waits safely, reject unsupported Anthropic top-level reasoning before I/O. | [Completion](./designs/STAGE_16A_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22); [validation](./evaluations/STAGE_16A_SECOND_CORRECTIONS_VALIDATION.json); native recipe, standard/generated docs, agent instructions, hook example/index, AMOS docs/regression, Changelog and package inventory. | Synced: S1–S3 fixed. 8,507 units / 53 new regressions, 199 live tests / two new cases, 33 offline programs, 158 public controls and all local gates pass. No API/default/session break, release or later stage. |
+| 16A: third review | Validate nested replay representations, run preservation hooks on explicit compaction, reconcile Anthropic native thinking/output settings. | [Review/fix plan](./designs/STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md); [executable evidence](./evaluations/STAGE_16A_THIRD_REVIEW.json); current availability, adoption and roadmap. | Synced: T1–T3 corrected. 77 new regressions; 8,584 units, 201 live tests plus all 11 native cases revalidated on final source, 34 offline modes, 158 public controls and all local gates pass. Manual example/AMOS checkpoint, recipe/standard/generated docs, agent instructions, release notes and package inventory synchronized. No API break or later stage. |
 
 Cross-cutting release handoffs must also be checked:
 
@@ -2267,3 +2346,142 @@ compatible; internal execution-local coordination adds no persistent authority.
 Recipe, standard/generated docs, examples/AMOS, release notes, availability and
 handoff are synchronized. Historical evidence remains intact. No commit, push,
 release, breaking API change or later-stage implementation.
+
+## Stage 16A adoption record — 2026-10-22
+
+- **Current review status:** [Third-review T1–T3 are corrected and validated](./designs/STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22). Prior R1–R5 and [second-review S1–S3 corrections remain present](./designs/STAGE_16A_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22).
+  Provider construction-time service selection, shared OpenAI wire/count
+  normalization, bounded frame reuse/cancellation, early ownership rejection and
+  stable-clock compatibility are verified. Plugin-only mode ignores a previously
+  bound native driver. No new public configuration or mandatory migration is added.
+- **API/defaults:** `ContextCompactionStrategy`, configuration/report/target types,
+  optional `ITextProvider.compaction` and `Agent.compactContext()` are public.
+  Algorithmic stays default; instance-over-name precedence and old signatures,
+  feature defaults, return/event shapes and session version remain compatible. Persisted native digests normalize JSON
+  object-key ordering for faithful JSON/JSONB storage.
+  A private symbol bridge avoids colliding with old custom-context methods and
+  works across public ESM/CJS formats. There is no new registry strategy name.
+- **Support/protection:** The [native recipe](./NATIVE_CONTEXT_COMPACTION.md)
+  records verified providers/models, text/local-function support, exact recent/
+  pending/host state, source acknowledgement, counted-frame fit, contributor and
+  transport freshness, and deferred hosted/multimodal/SDK/realtime ownership.
+- **Usage/failures/persistence:** Native calls share the main connector/model and
+  active ModelTask, including late or unusable billed responses. Anthropic uses
+  iteration/cache counters. Optional bound snapshots require faithful source and
+  session storage; authority/configuration is reconstructed by the host. Errors
+  distinguish uncommitted history from an already committed checkpoint failure.
+  Recovery never repeats a historical action. Source/metadata/backend quotas and
+  lossy recall boundaries are explicit.
+- **Examples/adoption:** `example:native-compaction`, `example:native-recovery`,
+  `example:native-comparison`, `example:native-hooks`, `example:amos-native-compaction`; all default offline.
+  Recovery runs in a separate process; native provider tests exercise repeat,
+  persist, resume and stream with actual APIs. AMOS persists both controls,
+  protects incompatible switches and distinguishes actual input counts from
+  component estimates.
+- **Prior corrective validation (historical; does not close T1–T3):** [Evidence](./evaluations/STAGE_16A_SECOND_CORRECTIONS_VALIDATION.json)
+  and [offline transcripts](./evaluations/STAGE_16A_SECOND_CORRECTIONS_OFFLINE.txt).
+  All 8,507 units, 199 live tests across three providers, 33 offline programs and
+  158 public controls pass with no failed/skipped required cases. Nine native live
+  cases include hook facts, selected data, cancellation/recovery, repeat/restart/
+  stream and actual raw-input counting. All build/type/lint/examples/AMOS/strict/
+  generated-doc gates and 171 focused cases pass. The initial delivery, first
+  corrective record and both review repro records remain historical evidence.
+- **Comparison boundary:** One fixed held-out task passes all exact answer,
+  account/status and no-repeat/write predicates under all four policies. Actual
+  task usage and registry cost estimates are retained in the evidence; no general
+  quality/cost improvement or retention-policy result is claimed.
+- **Documentation handoff:** Native recipe, standard README/User Guide, generated
+  API, preparation/strategies/selection/evidence/model-task guides, AGENTS, examples,
+  AMOS, Changelog and package inventory updated. Internal frame/usage/binding
+  guards are implementation details. Package version remains 1.2.0 with an
+  unreleased entry; no package release, commit or push is asserted. Stage 16B and
+  all additional stage work remain unauthorized.
+
+
+### Historical Stage 16A second-review status — 2026-10-22 (resolved)
+
+The second review reopened hook memory, proof cancellation and Anthropic reasoning
+findings despite the passing 8,454-test suite. Eight deterministic repro/control
+cases are retained in [review evidence](./evaluations/STAGE_16A_SECOND_REVIEW.json).
+The completion below closes all three with actual runtime corrections and fresh
+validation; those findings are not supported behavior or outstanding limitations.
+
+### Stage 16A second-corrective adoption — 2026-10-22
+
+- **Available on branch:** Existing `beforeCompaction` hooks may save whiteboard/
+  notes data. One bounded refresh incorporates changed plugin content/revision;
+  unchanged hooks reuse the first frame. Source, host controls, scope, identities,
+  tools and later async changes stay guarded. No hook replay or second compaction
+  pass is added.
+- **Cancellation and persistence:** Execution/ModelTask signals stop read-only
+  native evidence proofs, including action acknowledgements and archive readback.
+  Late reads cannot resume dispatch/commit. Admitted writes retain ownership until
+  settled. Cancelling an execution waiting on an independently started session
+  load releases its slot; the next execution still waits for the original checkpoint
+  and cancelled startup input is not committed. Standalone load APIs keep their
+  storage lifecycle. No storage interface or saved-session field is added.
+- **Provider support:** Anthropic native operations reject top-level Responses
+  reasoning before discovery/counting/archival instead of dropping it. OpenAI
+  reasoning, supported Anthropic signed thinking and ordinary non-native conversion
+  keep their existing behavior. Hosted/multimodal/server-owned and 16B extensions
+  remain deferred.
+- **Adoption:** `npm run example:native-hooks` defaults offline and has bounded
+  `-- --live=openai`/`anthropic` modes, expected behavior and cleanup. AMOS uses its
+  existing cancel and compaction commands; a real runner/command regression verifies
+  recovery before an old file-backed read resolves. No new AMOS setting or command
+  is required.
+- **Validation/handoff:** 53 new unit regressions and two new live cases; 8,507
+  units, 199 live tests on all three providers, 33 offline programs, 158 public
+  controls and all build/24-export/type/lint/examples/strict/AMOS/generated-doc
+  gates pass. Focused coverage is explicitly narrow. Recipe, standard guides,
+  generated API, agent instructions, example index, AMOS docs, Changelog, roadmap
+  and packaged evidence are synchronized. No public API/default/extension/event/
+  return/session break, verified release, commit/push or additional stage is claimed.
+
+
+### Historical Stage 16A third-review status — 2026-10-22 (resolved)
+
+The [review/fix plan](./designs/STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md) reopened
+completion for **T1–T3** at the review-only checkpoint. The completion below closes
+all three; the following reproduction evidence is historical. Native admission can silently omit incompatible nested
+thinking; explicit compaction skips the preservation hook; and valid fixed
+Anthropic thinking can conflict with the native operation's forced output cap.
+Existing source archives remain intact in the reproductions. These are defects
+to correct, not newly accepted support limitations.
+
+Fresh validation passes 8,507 units / 377 files, 171 focused cases / 5 files,
+root/consumer types and 66 native ESM/CJS controls. Nine synthetic repro/control
+cases expose the untested paths. The earlier 199 live tests are historical; no
+real model call was required to establish these local control/conversion defects.
+Runtime and test-suite files are unchanged. The correction handoff must include
+regressions, relevant live/provider verification, examples/AMOS checks and current
+standard/generated docs/package inventory. No API break or Stage 16B is proposed.
+
+
+### Stage 16A third-corrective adoption — 2026-10-22
+
+- **Available on branch:** Explicit `compactContext()` targets run the preservation
+  hook once with automatic mode disabled, retain the same bounded refresh and
+  measured events, and preflight scope before hook/counting work. Checkpoint retry
+  preserves memory without replaying compaction. No new configuration is needed.
+- **Replay:** First-party nested thinking needs a faithful provider representation;
+  foreign/incomplete replay fields reject before I/O/reduction/archive. Exact
+  matching-provider fields and custom native-adapter contracts remain supported.
+  Ordinary non-native converters and legacy defaults are unchanged.
+- **Thinking and budgets:** Anthropic native calls preserve main thinking. Fixed
+  budgets get budget + 4096 summary tokens by default, bounded by model output
+  capacity. Explicit caps are respected; known conflicts reject before archival.
+  Actual wire caps, source headroom and ModelTask reservations agree. Streaming
+  transport remains internal; cancellation closes it, and unusable summaries keep
+  acknowledged iteration usage. No public return/session field is required.
+- **Examples/AMOS:** `npm run example:native-hooks-manual` defaults offline; add
+  `-- --live=anthropic` for fixed thinking budget 8192 or `-- --live=openai`.
+  Existing AMOS manual commands preserve and checkpoint the host note. No new app
+  setting or command is added.
+- **Validation/handoff:** [Evidence](./evaluations/STAGE_16A_THIRD_CORRECTIONS_VALIDATION.json)
+  records 8,584 units / 77 new regressions, 248 focused cases, 201 live tests on all
+  three providers, final-source revalidation of all 11 native cases, 34 offline
+  programs/modes, 158 public controls and all build/type/lint/examples/strict/AMOS/
+  generated-doc gates. Focused coverage is explicitly narrow. Recipe, standard
+  guides, generated API, AGENTS, example index, AMOS docs, Changelog, roadmap and
+  package inventory are synchronized. No break, release or Stage 16B is claimed.

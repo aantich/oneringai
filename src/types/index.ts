@@ -25,7 +25,10 @@ export {
 } from '../core/constants.js';
 
 // ============ Agent Config (from heavy Agent.ts — type-only, erased at compile) ============
-export type { AgentConfig, AgentSessionConfig, RunOptions } from '../core/Agent.js';
+export type { AgentConfig, AgentSessionConfig, RunOptions, AgentContextCompactionOptions } from '../core/Agent.js';
+export type { ContextCompactionStrategyConfig, NativeHistoryCompactionConfig, ContextCompactionReport, ContextCompactionTarget } from '../core/context-nextgen/compaction/types.js';
+export type { NativeContinuationSnapshot, NativeContinuationBinding } from '../domain/interfaces/INativeContinuation.js';
+export type { ITextCompactionProvider, TextCompactionResponse } from '../domain/interfaces/ITextProvider.js';
 export type { AgentLoopPolicy, AgentLoopDiagnostics, AgentLoopReason, AgentLoopObservation, AgentLoopCheckContext, AgentLoopCompletionResult } from '../core/agent-loop/types.js';
 export type { BaseAgentConfig, BaseSessionConfig, DirectCallOptions } from '../core/BaseAgent.js';
 

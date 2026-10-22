@@ -43,6 +43,7 @@ export type {
   AgentSessionConfig,
   RunOptions,
   AgentContextRolloverOptions,
+  AgentContextCompactionOptions,
   ExternalExecutionOptions,
   ExternalToolCall,
   ExternalExecutionResult,
@@ -2104,6 +2105,9 @@ export type { ToolResultEvidence } from './domain/entities/Content.js';
 export type { ToolOutputHints } from './domain/entities/Tool.js';
 
 export { ObservationMaskingStrategy, StructuredSummaryStrategy } from './core/context-nextgen/strategies/index.js';
+export { ContextCompactionStrategy } from './core/context-nextgen/strategies/ContextCompactionStrategy.js';
+export type { ContextCompactionStrategyConfig, NativeHistoryCompactionConfig, ContextCompactionReport, ContextCompactionTarget, NativeContinuationSnapshot, NativeContinuationBinding } from './core/context-nextgen/compaction/types.js';
+export type { ITextCompactionProvider, TextCompactionResponse } from './domain/interfaces/ITextProvider.js';
 export type { ObservationMaskingStrategyConfig, StructuredSummaryStrategyConfig, StructuredContextSummary, ContextSummaryEntry, ContextSummaryRequest, ContextSummaryGenerator, ConversationCompactionReport, ConversationCompactionOptions } from './core/context-nextgen/strategies/index.js';
 
 export { TaskStatePluginNextGen } from './core/context-nextgen/plugins/TaskStatePluginNextGen.js';

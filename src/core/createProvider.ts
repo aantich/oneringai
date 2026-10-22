@@ -9,6 +9,8 @@ import { Connector } from './Connector.js';
 import { Vendor } from './Vendor.js';
 import { ITextProvider } from '../domain/interfaces/ITextProvider.js';
 import { ProviderConfig } from '../domain/types/ProviderConfig.js';
+import { createHash } from 'node:crypto';
+import { InvalidConfigError } from '../domain/errors/AIErrors.js';
 
 // Import providers
 import { OpenAITextProvider } from '../infrastructure/providers/openai/OpenAITextProvider.js';
@@ -56,10 +58,42 @@ export function getVendorDefaultBaseURL(vendor: string): string | undefined {
   return VENDOR_DEFAULT_URLS.get(vendor);
 }
 
+// A factory-created SDK keeps its endpoint/account defaults for its lifetime.
+// Rebinding an Agent must never relabel that existing transport with new defaults.
+const nativeProviderEndpoints = new WeakMap<ITextProvider, string>();
+function configuredNativeEndpoint(connector: Connector): string {
+  const options = connector.getOptions();
+  const openai = connector.vendor === Vendor.OpenAI;
+  const envURL = openai ? process.env.OPENAI_BASE_URL : connector.vendor === Vendor.Anthropic ? process.env.ANTHROPIC_BASE_URL : undefined;
+  return createHash('sha256').update(JSON.stringify({ vendor: connector.vendor,
+    baseURL: connector.baseURL || envURL || getVendorDefaultBaseURL(connector.vendor ?? ''),
+    ...(openai ? { organization: options.organization === undefined ? process.env.OPENAI_ORG_ID ?? null : options.organization,
+      project: options.project === undefined ? process.env.OPENAI_PROJECT_ID ?? null : options.project } : {}),
+    ...(connector.vendor === Vendor.Anthropic ? { apiVersion: options.anthropicVersion } : {}),
+  })).digest('hex');
+}
+
+/** @internal Construction-time, secret-free native transport identity. */
+export function nativeProviderEndpoint(provider: ITextProvider, connector: Connector): string {
+  const configured = configuredNativeEndpoint(connector);
+  const captured = nativeProviderEndpoints.get(provider);
+  if (captured !== configured) throw new InvalidConfigError('Native provider transport configuration changed; create a new Agent with a compatible checkpoint or fresh context');
+  return captured;
+}
+
 /**
  * Create a text provider from a connector
  */
 export function createProvider(connector: Connector): ITextProvider {
+  const endpoint = configuredNativeEndpoint(connector);
+  const provider = createProviderInstance(connector);
+  // Injected providers also retain their first declared host scope. No new
+  // required custom-provider interface or credentials are stored here.
+  if (!nativeProviderEndpoints.has(provider)) nativeProviderEndpoints.set(provider, endpoint);
+  return provider;
+}
+
+function createProviderInstance(connector: Connector): ITextProvider {
   // Allow injecting a provider directly for testing
   const injectedProvider = connector.getOptions().provider;
   if (injectedProvider && typeof (injectedProvider as any).generate === 'function') {

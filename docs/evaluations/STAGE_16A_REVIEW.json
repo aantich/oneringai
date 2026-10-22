@@ -1,0 +1,468 @@
+{
+  "protocol": "stage-16a-review-v1",
+  "clientDate": "2026-10-22",
+  "recordedAt": "2026-10-22T11:55:04.397736+00:00",
+  "branch": "version2",
+  "baseCommit": "4ab2c8f",
+  "status": "review complete; five findings open; no runtime fixes applied",
+  "scope": [
+    "Stage 16A composition policy/coordinator, provider wire/count/replay adapters, scope binding, persistence/recovery, budgets/accounting, cancellation, selection/task protection, AMOS, public compatibility, tests and documentation.",
+    "No later-stage implementation, breaking API change, commit, push or release."
+  ],
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P1",
+      "title": "Native binding can identify a different endpoint/account from the existing SDK transport",
+      "locations": [
+        "src/core/Agent.ts:318",
+        "src/core/Agent.ts:978",
+        "src/core/Agent.ts:1014"
+      ],
+      "observation": {
+        "case": "effective-endpoint-rebinding",
+        "compactURL": "https://endpoint-a.invalid/v1/responses/compact",
+        "generationURL": "https://endpoint-b.invalid/v1/responses",
+        "restoredForeignState": true
+      },
+      "status": "open"
+    },
+    {
+      "id": "R2",
+      "priority": "P1",
+      "title": "OpenAI provider count omits accepted raw generation inputs",
+      "locations": [
+        "src/infrastructure/providers/openai/OpenAITextProvider.ts:99",
+        "src/infrastructure/providers/openai/OpenAITextProvider.ts:181"
+      ],
+      "observation": {
+        "case": "raw-instructions",
+        "countRequests": 2,
+        "countInstructions": null,
+        "dispatchedInstructionsLength": 47500,
+        "diagnosticCount": 556,
+        "capacity": 2800,
+        "wireEstimatedTokens": 12439
+      },
+      "status": "open"
+    },
+    {
+      "id": "R3",
+      "priority": "P2",
+      "title": "Automatic composition loses the assembly cancellation signal and duplicates collection work",
+      "locations": [
+        "src/core/context-nextgen/AgentContextNextGen.ts:1906",
+        "src/core/context-nextgen/AgentContextNextGen.ts:1752",
+        "src/core/context-nextgen/compaction/coordinator.ts:113"
+      ],
+      "observations": {
+        "deadline": {
+          "delay": 0,
+          "automatic": true,
+          "pendingPastDeadline": true,
+          "elapsedMs": 137,
+          "calls": {
+            "collect": 2,
+            "count": 2,
+            "native": 0,
+            "main": 0
+          },
+          "error": {
+            "code": 20,
+            "message": "review cleanup"
+          }
+        },
+        "manualDeadlineControl": {
+          "delay": 0,
+          "automatic": true,
+          "pendingPastDeadline": false,
+          "elapsedMs": 133,
+          "calls": {
+            "collect": 2,
+            "count": 2,
+            "native": 0,
+            "main": 0
+          },
+          "error": {
+            "code": "CONTEXT_ASSEMBLY_TIMEOUT",
+            "message": "Context contribution deadline exceeded"
+          }
+        },
+        "collectionCounts": {
+          "fast": {
+            "delay": 0,
+            "automatic": true,
+            "elapsedMs": 33,
+            "calls": {
+              "collect": 4,
+              "count": 11,
+              "native": 1,
+              "main": 1
+            },
+            "error": null
+          },
+          "slow": {
+            "delay": 350,
+            "automatic": true,
+            "elapsedMs": 1063,
+            "calls": {
+              "collect": 3,
+              "count": 4,
+              "native": 0,
+              "main": 0
+            },
+            "error": {
+              "code": "CONTEXT_ASSEMBLY_TIMEOUT",
+              "message": "Context contribution deadline exceeded"
+            }
+          },
+          "control": {
+            "delay": 350,
+            "automatic": false,
+            "elapsedMs": 357,
+            "calls": {
+              "collect": 1,
+              "count": 3,
+              "native": 0,
+              "main": 1
+            },
+            "error": null
+          }
+        }
+      },
+      "status": "open"
+    },
+    {
+      "id": "R4",
+      "priority": "P2",
+      "title": "Unsupported native ownership can be rejected only after billable compaction commits",
+      "locations": [
+        "src/core/Agent.ts:951",
+        "src/core/Agent.ts:1000",
+        "src/core/Agent.ts:3266"
+      ],
+      "observations": [
+        {
+          "case": "configured-hosted-tools",
+          "historyStatus": "compacted",
+          "nativeCalls": 1,
+          "subsequentRun": "openai: model 'gpt-6-astra' does not support requested capability 'native compaction with server-owned state or hosted tools'"
+        },
+        {
+          "case": "per-call-continuation",
+          "nativeCalls": 1,
+          "hasNative": true,
+          "error": "openai: model 'gpt-6-astra' does not support requested capability 'native compaction with server-owned state or hosted tools'"
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "R5",
+      "priority": "P2",
+      "title": "Compatibility fixture compares live-clock prompt values",
+      "locations": [
+        "tests/unit/core/context-nextgen/Stage16Compatibility.test.ts:56"
+      ],
+      "observation": {
+        "focusedRun": "79 passed, 1 failed; developer prompt time differed by one second: 1:50:41 PM vs 1:50:42 PM GMT+2.",
+        "fullRun": "8420 passed later; no code/test changes or retries configured. Passing run does not remove the fixture race."
+      },
+      "status": "open"
+    }
+  ],
+  "verification": {
+    "reviewedDeliveryManifest": {
+      "matched": 46,
+      "mismatches": []
+    },
+    "focused": {
+      "command": "node node_modules/vitest/vitest.mjs run tests/unit/core/context-nextgen/NativeCompaction.test.ts tests/unit/core/context-nextgen/Stage16Compatibility.test.ts tests/unit/providers/NativeCompaction.test.ts tests/unit/apps/amos/NativeCompaction.test.ts",
+      "passed": 79,
+      "failed": 1,
+      "filesPassed": 3,
+      "filesFailed": 1,
+      "failure": "R5 live clock"
+    },
+    "fullRestricted": {
+      "passed": 8416,
+      "failed": 4,
+      "cause": "Sandbox listen EPERM on localhost HTTP/WebSocket servers, not assertion evidence of a Stage 16A regression.",
+      "files": [
+        "tests/unit/core/ConnectorCancellation.test.ts",
+        "tests/unit/core/Stage02Corrections.test.ts",
+        "tests/unit/voice/OpenAIRealtimeWebSocketBundler.test.ts"
+      ]
+    },
+    "fullLocalNetworkAllowed": {
+      "command": "node node_modules/vitest/vitest.mjs run tests/unit",
+      "passed": 8420,
+      "failed": 0,
+      "filesPassed": 377,
+      "skipped": 0
+    },
+    "live": "Not rerun for this read-only review. Deterministic defects reproduce with actual installed SDKs and intercepted synthetic HTTP; no external service/model calls or writes. The earlier 194 live tests remain historical delivery evidence.",
+    "publicTypes": {
+      "passed": true
+    },
+    "nativePublicRuntime": {
+      "passed": true,
+      "checks": 66
+    }
+  },
+  "fixtures": [
+    {
+      "name": "probes",
+      "usage": "Save source to a .mjs file in repository root after building; run with node. This reproduces the reviewed defect, not a passing correctness regression. Synthetic data, intercepted SDK HTTP, no credentials/network calls.",
+      "source": "import assert from 'node:assert/strict';\nimport { Agent, Connector, ContextCompactionStrategy, ContentType, MessageRole, Vendor } from './dist/index.js';\nconst seen=[];\nconst originalFetch=globalThis.fetch;\nglobalThis.fetch=async(input,init)=>{\n const url=String(input instanceof Request?input.url:input);\n const body=input instanceof Request?await input.clone().json():JSON.parse(String(init?.body));\n seen.push({url,body});\n let result;\n if(url.includes('input_tokens')) result={input_tokens:Math.ceil(JSON.stringify(body).length/4)};\n else if(url.endsWith('/compact')) result={id:'cmp_r',output:[{type:'compaction',id:'cmp',encrypted_content:'OPAQUE'}],usage:{input_tokens:1000,output_tokens:10,total_tokens:1010}};\n else result={id:'resp',object:'response',created_at:1,model:'gpt-6-astra',status:'completed',output:[{type:'message',id:'m',role:'assistant',status:'completed',content:[{type:'output_text',text:'DONE',annotations:[]}]}],usage:{input_tokens:200,output_tokens:10,total_tokens:210}};\n return new Response(JSON.stringify(result),{status:200,headers:{'content-type':'application/json'}});\n};\nconst opts={model:'gpt-6-astra',maxContextTokens:3000,responseReserve:200,criticalCompactionThreshold:.7,features:{workingMemory:false,inContextMemory:false,evidence:true},compactionStrategy:new ContextCompactionStrategy({plugins:'off',history:{mode:'native',preserveRecentTurns:0},automatic:false})};\nfunction make(name,extra={}){\n Connector.create({name,vendor:Vendor.OpenAI,auth:{type:'api_key',apiKey:'offline-fixture'},options:{maxRetries:0}});\n return Agent.create({connector:name,model:'gpt-6-astra',...extra,context:{...opts,...extra.context}});\n}\nfunction fill(a){for(let i=0;i<3;i++){a.context.addUserMessage('Earlier '+i);a.context.addAssistantResponse([{type:'message',role:MessageRole.ASSISTANT,content:[{type:ContentType.OUTPUT_TEXT,text:'Historical detail '.repeat(120)}]}]);}}\nconst results=[];\ntry{\n let a=make('raw',{vendorOptions:{instructions:'MISSING_FROM_COUNT '.repeat(2500)}});let start=seen.length;\n await a.run('Hello');\n const requests=seen.slice(start),counted=requests.filter(r=>r.url.includes('input_tokens')),actual=requests.find(r=>r.url.endsWith('/responses'));\n assert(actual);assert(counted.every(r=>r.body.instructions===undefined));assert(actual.body.instructions.length>40000);\n results.push({case:'raw-instructions',countRequests:counted.length,countInstructions:counted.at(-1).body.instructions??null,dispatchedInstructionsLength:actual.body.instructions.length,diagnosticCount:a.context.lastPreparation.budget.providerCountedInputTokens,capacity:2800,wireEstimatedTokens:Math.ceil(JSON.stringify(actual.body).length/4)});a.destroy();\n a=make('hosted',{nativeTools:[{capability:'web_search'}],dataHandling:{allowProviderTools:true}});fill(a);start=seen.length;\n const report=await a.compactContext();let subsequent;\n try{await a.run('Continue');subsequent='succeeded';}catch(e){subsequent=e.message;}\n assert.equal(report.history.status,'compacted');assert(a.context.getState().nativeContinuation);\n results.push({case:'configured-hosted-tools',historyStatus:report.history.status,nativeCalls:seen.slice(start).filter(r=>r.url.endsWith('/compact')).length,subsequentRun:subsequent});a.destroy();\n a=make('continuation',{context:{...opts,compactionStrategy:new ContextCompactionStrategy({plugins:'off',history:{mode:'native',preserveRecentTurns:0}})}});fill(a);start=seen.length;let error;\n try{await a.run('Continue '+'bulk '.repeat(160),{continuationToken:'server-token'});}catch(e){error=e.message;}\n results.push({case:'per-call-continuation',nativeCalls:seen.slice(start).filter(r=>r.url.endsWith('/compact')).length,hasNative:!!a.context.getState().nativeContinuation,error});a.destroy();\n}finally{Connector.clear();globalThis.fetch=originalFetch;}\nconsole.log(JSON.stringify(results,null,2));\n"
+    },
+    {
+      "name": "binding",
+      "usage": "Save source to a .mjs file in repository root after building; run with node. This reproduces the reviewed defect, not a passing correctness regression. Synthetic data, intercepted SDK HTTP, no credentials/network calls.",
+      "source": "import assert from 'node:assert/strict';\nimport { Agent, Connector, ContextCompactionStrategy, ContentType, MessageRole, Vendor, InMemoryEvidenceStorage } from './dist/index.js';\nconst oldFetch=globalThis.fetch, oldURL=process.env.OPENAI_BASE_URL, seen=[];\nglobalThis.fetch=async(input,init)=>{\n const url=String(input instanceof Request?input.url:input),body=input instanceof Request?await input.clone().json():JSON.parse(String(init?.body));seen.push(url);\n const response=url.includes('input_tokens')?{input_tokens:body.input.some(i=>i.type==='compaction')?200:1000}:url.endsWith('/compact')?{id:'c',output:[{type:'compaction',id:'native',encrypted_content:'A_ORIGIN_STATE'}],usage:{input_tokens:1000,output_tokens:10,total_tokens:1010}}:{id:'r',object:'response',created_at:1,model:'gpt-6-astra',status:'completed',output:[{type:'message',id:'m',role:'assistant',status:'completed',content:[{type:'output_text',text:'DONE',annotations:[]}]}],usage:{input_tokens:200,output_tokens:10,total_tokens:210}};\n return new Response(JSON.stringify(response),{status:200,headers:{'content-type':'application/json'}});\n};\nconst evidence=new InMemoryEvidenceStorage({scope:{ownerId:'owner',namespace:'binding'}});\nconst ctx=()=>({model:'gpt-6-astra',responseReserve:100,features:{workingMemory:false,inContextMemory:false,evidence:true},plugins:{evidence:{storage:evidence}},compactionStrategy:new ContextCompactionStrategy({plugins:'off',history:{mode:'native',preserveRecentTurns:0},automatic:false})});\nlet a,b;\ntry{\n process.env.OPENAI_BASE_URL='https://endpoint-a.invalid/v1';\n Connector.create({name:'main',vendor:Vendor.OpenAI,auth:{type:'api_key',apiKey:'offline-fixture'},options:{maxRetries:0}});\n a=Agent.create({connector:'main',model:'gpt-6-astra',userId:'owner',context:ctx()});\n a.context.addUserMessage('Old');a.context.addAssistantResponse([{type:'message',role:MessageRole.ASSISTANT,content:[{type:ContentType.OUTPUT_TEXT,text:'Old facts '.repeat(100)}]}]);\n process.env.OPENAI_BASE_URL='https://endpoint-b.invalid/v1';\n await a.compactContext();\n const state=structuredClone(a.context.getState());\n const compactURL=seen.find(u=>u.endsWith('/compact'));assert(compactURL.startsWith('https://endpoint-a.'));\n b=Agent.create({connector:'main',model:'gpt-6-astra',userId:'owner',context:ctx()});\n b.context.restoreState(state);await b.run('Continue');\n const generation=seen.find(u=>u.endsWith('/responses'));assert(generation.startsWith('https://endpoint-b.'));\n console.log(JSON.stringify({case:'effective-endpoint-rebinding',compactURL,generationURL:generation,restoredForeignState:true},null,2));\n}finally{a?.destroy();b?.destroy();Connector.clear();globalThis.fetch=oldFetch;if(oldURL===undefined)delete process.env.OPENAI_BASE_URL;else process.env.OPENAI_BASE_URL=oldURL;}\n"
+    },
+    {
+      "name": "assembly",
+      "usage": "Save source to a .mjs file in repository root after building; run with node. This reproduces the reviewed defect, not a passing correctness regression. Synthetic data, intercepted SDK HTTP, no credentials/network calls.",
+      "source": "import assert from 'node:assert/strict';\nimport { Agent, BasePluginNextGen, Connector, ContextCompactionStrategy, ContentType, MessageRole, Vendor } from './dist/index.js';\nclass Data extends BasePluginNextGen {name='retrieval';getInstructions(){return 'Source data.';}async getContent(){return 'VALUE';}getContents(){return 'VALUE';}getState(){return {value:'VALUE'};}restoreState(){}}\nasync function scenario(delay,automatic){\n const calls={collect:0,count:0,native:0,main:0};const usage={input_tokens:100,output_tokens:10,total_tokens:110};\n const provider={name:'fixture',capabilities:{text:true,images:false,videos:false,audio:false},\n  compaction:{async countInput(o){calls.count++;return o.input.some(i=>i.type==='compaction')?1000:5000;},async compact(){calls.native++;return {protocol:'fixture',usage,input:[{type:'compaction',id:'cmp',encrypted_content:'STATE'}]};}},\n  async generate(o){calls.main++;return {id:'r',object:'response',created_at:1,model:o.model,status:'completed',output_text:'DONE',output:[{type:'message',role:MessageRole.ASSISTANT,content:[{type:ContentType.OUTPUT_TEXT,text:'DONE'}]}],usage};},\n  async *streamGenerate(){},getModelCapabilities(){return {supportsTools:true,supportsVision:false,supportsJSON:true,supportsJSONSchema:true,maxTokens:32000,maxInputTokens:32000,maxOutputTokens:512};},validateConfig:async()=>true,listModels:async()=>[]};\n const name=`assembly-${delay}-${automatic}`;Connector.create({name,vendor:Vendor.OpenAI,auth:{type:'none'},options:{provider}});\n const agent=Agent.create({connector:name,model:'fixture',context:{model:'fixture',maxContextTokens:6000,responseReserve:100,criticalCompactionThreshold:.7,assembly:{timeoutMs:1000,maxDataTokens:100},features:{workingMemory:false,inContextMemory:false,evidence:true},compactionStrategy:new ContextCompactionStrategy({plugins:'off',history:{mode:'native',preserveRecentTurns:0},automatic})}});\n agent.context.registerPlugin(new Data());agent.context.registerContextContributor('retrieval',{getRevision:()=>1,contribute:async({signal})=>{calls.collect++;await new Promise((resolve,reject)=>{const timer=setTimeout(resolve,delay);signal.addEventListener('abort',()=>{clearTimeout(timer);reject(signal.reason);},{once:true});});return [{id:'row',text:'CURRENT_VALUE'}];}});\n agent.context.addUserMessage('Old');agent.context.addAssistantResponse([{type:'message',role:MessageRole.ASSISTANT,content:[{type:ContentType.OUTPUT_TEXT,text:'Old details'}]}]);\n let error;const started=Date.now();try{await agent.run('Next');}catch(e){error={code:e.code,message:e.message};}finally{agent.destroy();Connector.remove(name);}\n return {delay,automatic,elapsedMs:Date.now()-started,calls,error:error??null};\n}\nconst fast=await scenario(0,true),slow=await scenario(350,true),control=await scenario(350,false);\nassert.equal(fast.calls.native,1);assert.equal(slow.error.code,'CONTEXT_ASSEMBLY_TIMEOUT');assert.equal(slow.calls.native,0);assert.equal(control.calls.main,1);\nconsole.log(JSON.stringify({fast,slow,control},null,2));\n"
+    },
+    {
+      "name": "deadline",
+      "usage": "Save source to a .mjs file in repository root after building; run with node. This reproduces the reviewed defect, not a passing correctness regression. Synthetic data, intercepted SDK HTTP, no credentials/network calls.",
+      "source": "import assert from 'node:assert/strict';\nimport { Agent, BasePluginNextGen, Connector, ContextCompactionStrategy, ContentType, MessageRole, Vendor } from './dist/index.js';\nclass Data extends BasePluginNextGen {name='retrieval';getInstructions(){return 'Source data.';}async getContent(){return 'VALUE';}getContents(){return 'VALUE';}getState(){return {value:'VALUE'};}restoreState(){}}\nasync function scenario(delay,automatic){\n const calls={collect:0,count:0,native:0,main:0};const usage={input_tokens:100,output_tokens:10,total_tokens:110};\n const provider={name:'fixture',capabilities:{text:true,images:false,videos:false,audio:false},\n  compaction:{async countInput(o){calls.count++;return o.input.some(i=>i.type==='compaction')?1000:5000;},async compact(){calls.native++;return {protocol:'fixture',usage,input:[{type:'compaction',id:'cmp',encrypted_content:'STATE'}]};}},\n  async generate(o){calls.main++;return {id:'r',object:'response',created_at:1,model:o.model,status:'completed',output_text:'DONE',output:[{type:'message',role:MessageRole.ASSISTANT,content:[{type:ContentType.OUTPUT_TEXT,text:'DONE'}]}],usage};},\n  async *streamGenerate(){},getModelCapabilities(){return {supportsTools:true,supportsVision:false,supportsJSON:true,supportsJSONSchema:true,maxTokens:32000,maxInputTokens:32000,maxOutputTokens:512};},validateConfig:async()=>true,listModels:async()=>[]};\n const name=`assembly-${delay}-${automatic}`;Connector.create({name,vendor:Vendor.OpenAI,auth:{type:'none'},options:{provider}});\n const agent=Agent.create({connector:name,model:'fixture',context:{model:'fixture',maxContextTokens:6000,responseReserve:100,criticalCompactionThreshold:.7,assembly:{timeoutMs:40,maxDataTokens:100},features:{workingMemory:false,inContextMemory:false,evidence:true},compactionStrategy:new ContextCompactionStrategy({plugins:'off',history:{mode:'native',preserveRecentTurns:0},automatic})}});\n agent.context.registerPlugin(new Data());agent.context.registerContextContributor('retrieval',{getRevision:()=>1,contribute:async({signal})=>{calls.collect++;await new Promise((resolve,reject)=>{const timer=calls.collect===1?setTimeout(resolve,0):undefined;signal.addEventListener('abort',()=>{clearTimeout(timer);reject(signal.reason);},{once:true});});return [{id:'row',text:'CURRENT_VALUE'}];}});\n agent.context.addUserMessage('Old');agent.context.addAssistantResponse([{type:'message',role:MessageRole.ASSISTANT,content:[{type:ContentType.OUTPUT_TEXT,text:'Old details'}]}]);\n let error;const started=Date.now();let settled=false;const operation=agent.run('Next').finally(()=>{settled=true;});await new Promise(r=>setTimeout(r,130));const pendingPastDeadline=!settled;agent.cancel('review cleanup');try{await operation;}catch(e){error={code:e.code,message:e.message};}finally{agent.destroy();Connector.remove(name);}\n return {delay,automatic,pendingPastDeadline,elapsedMs:Date.now()-started,calls,error:error??null};\n}\nconst observation=await scenario(0,true);assert.equal(observation.pendingPastDeadline,true);assert.equal(observation.calls.native,0);console.log(JSON.stringify(observation,null,2));\n"
+    },
+    {
+      "name": "deadline-control",
+      "usage": "Save source to a .mjs file in repository root after building; run with node. This reproduces the reviewed defect, not a passing correctness regression. Synthetic data, intercepted SDK HTTP, no credentials/network calls.",
+      "source": "import assert from 'node:assert/strict';\nimport { Agent, BasePluginNextGen, Connector, ContextCompactionStrategy, ContentType, MessageRole, Vendor } from './dist/index.js';\nclass Data extends BasePluginNextGen {name='retrieval';getInstructions(){return 'Source data.';}async getContent(){return 'VALUE';}getContents(){return 'VALUE';}getState(){return {value:'VALUE'};}restoreState(){}}\nasync function scenario(delay,automatic){\n const calls={collect:0,count:0,native:0,main:0};const usage={input_tokens:100,output_tokens:10,total_tokens:110};\n const provider={name:'fixture',capabilities:{text:true,images:false,videos:false,audio:false},\n  compaction:{async countInput(o){calls.count++;return o.input.some(i=>i.type==='compaction')?1000:5000;},async compact(){calls.native++;return {protocol:'fixture',usage,input:[{type:'compaction',id:'cmp',encrypted_content:'STATE'}]};}},\n  async generate(o){calls.main++;return {id:'r',object:'response',created_at:1,model:o.model,status:'completed',output_text:'DONE',output:[{type:'message',role:MessageRole.ASSISTANT,content:[{type:ContentType.OUTPUT_TEXT,text:'DONE'}]}],usage};},\n  async *streamGenerate(){},getModelCapabilities(){return {supportsTools:true,supportsVision:false,supportsJSON:true,supportsJSONSchema:true,maxTokens:32000,maxInputTokens:32000,maxOutputTokens:512};},validateConfig:async()=>true,listModels:async()=>[]};\n const name=`assembly-${delay}-${automatic}`;Connector.create({name,vendor:Vendor.OpenAI,auth:{type:'none'},options:{provider}});\n const agent=Agent.create({connector:name,model:'fixture',context:{model:'fixture',maxContextTokens:6000,responseReserve:100,criticalCompactionThreshold:.7,assembly:{timeoutMs:40,maxDataTokens:100},features:{workingMemory:false,inContextMemory:false,evidence:true},compactionStrategy:new ContextCompactionStrategy({plugins:'off',history:{mode:'native',preserveRecentTurns:0},automatic})}});\n agent.context.registerPlugin(new Data());agent.context.registerContextContributor('retrieval',{getRevision:()=>1,contribute:async({signal})=>{calls.collect++;await new Promise((resolve,reject)=>{const timer=calls.collect===1?setTimeout(resolve,0):undefined;signal.addEventListener('abort',()=>{clearTimeout(timer);reject(signal.reason);},{once:true});});return [{id:'row',text:'CURRENT_VALUE'}];}});\n agent.context.addUserMessage('Old');agent.context.addAssistantResponse([{type:'message',role:MessageRole.ASSISTANT,content:[{type:ContentType.OUTPUT_TEXT,text:'Old details'}]}]);\n let error;const started=Date.now();let settled=false;const operation=agent.compactContext().finally(()=>{settled=true;});operation.catch(()=>{});await new Promise(r=>setTimeout(r,130));const pendingPastDeadline=!settled;agent.cancel('review cleanup');try{await operation;}catch(e){error={code:e.code,message:e.message};}finally{agent.destroy();Connector.remove(name);}\n return {delay,automatic,pendingPastDeadline,elapsedMs:Date.now()-started,calls,error:error??null};\n}\nconst observation=await scenario(0,true);assert.equal(observation.pendingPastDeadline,false);assert.equal(observation.error.code,'CONTEXT_ASSEMBLY_TIMEOUT');assert.equal(observation.calls.native,0);console.log(JSON.stringify(observation,null,2));\n"
+    }
+  ],
+  "logs": [
+    {
+      "path": "/tmp/stage16-review-focused.log",
+      "sha256": "526309fcfa6af2b3137a0c55471653ac591a5876f309249d648525ae3d83674f"
+    },
+    {
+      "path": "/tmp/stage16-review-full-unit.log",
+      "sha256": "38d4f4cec91051fff44158926169ad2050d4d52d4f67462bc5cddb417807d901"
+    },
+    {
+      "path": "/tmp/stage16-review-full-unit-localnet.log",
+      "sha256": "501dd6ff2bec9bbd2e71512921eb3490e40bb4039331d4532db8e8ed8495d62d"
+    },
+    {
+      "path": "/tmp/stage16-review-public-types.log",
+      "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+    },
+    {
+      "path": "/tmp/stage16-review-public-runtime.log",
+      "sha256": "e8d59187d8d92281ce974de1523c09ff50227aec612f42a8c21ba5ec7b32036b"
+    },
+    {
+      "path": "/tmp/stage16-review-probes.log",
+      "sha256": "659ed90680b9846796721cedd6c9710f6a95bd07e89c3233e9208b8ed58c32c1"
+    },
+    {
+      "path": "/tmp/stage16-review-binding.log",
+      "sha256": "103514faf298076cf1c593ca800d8731a6aa3a6128bdbe73068732c4d11bd744"
+    },
+    {
+      "path": "/tmp/stage16-review-assembly.log",
+      "sha256": "5994cb442b2385a4bedd621a3274a90b5afb2ee0c6daf91dcf9db1cc9de5556c"
+    },
+    {
+      "path": "/tmp/stage16-review-deadline.log",
+      "sha256": "f8a1acbd4ed8ca62e00cd0c2275e380ca988d4bc07009689daabf9767bde8d6f"
+    },
+    {
+      "path": "/tmp/stage16-review-deadline-control.log",
+      "sha256": "d58f383be6a31c4375fc46822592f02a4cddbaeab281594d3474fbc21355ec1a"
+    }
+  ],
+  "sourceManifest": [
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "sha256": "898d79c5c777d33fb785ab7b28f7f7f01e30513c74223bc993666ed9cad78012"
+    },
+    {
+      "path": "apps/amos/src/agent/contextInspection.ts",
+      "sha256": "b27fcc1d9086907026334abc983784fdc0d51c471070fed417b1e9b7c34ae004"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/ContextCommand.ts",
+      "sha256": "83f7add21661b2b6acad5588a5b25355309d572446526fcae1e90988f344feb8"
+    },
+    {
+      "path": "apps/amos/src/config/types.ts",
+      "sha256": "8675e9cb9440691e53671d9b76ac2aa6b39f4856ddce892d85910257eb1217d6"
+    },
+    {
+      "path": "examples/context-strategy-comparison.ts",
+      "sha256": "42d006d4a60504042a63bdf0d706fa209461908b90a90fb493440f4a68dac1ea"
+    },
+    {
+      "path": "examples/native-compaction/fixture.ts",
+      "sha256": "fec33c611ae098bc61718b7de95417f2a37a35b78feaac70b65535eac4835f1d"
+    },
+    {
+      "path": "examples/native-context-compaction.ts",
+      "sha256": "826dffe7e5d6cb3ba4ec3f00c2e7ca69e33cfe8b9d0b09109a8cccc21f44e5a8"
+    },
+    {
+      "path": "examples/native-context-comparison.ts",
+      "sha256": "f9f7bb9b6bb6a41187019a56522346bd34d429da4ed9bb974cd39ab4523dddf8"
+    },
+    {
+      "path": "examples/native-context-recovery.ts",
+      "sha256": "6fe00065be0d645d6ac3047a61bf5f15a51ba42dff5eb49483e23f8c5fc29c09"
+    },
+    {
+      "path": "package.json",
+      "sha256": "c825a42ad71406863d8a2c7d7d147d3581aad5b1634b5e91777183890a3d38bc"
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "4fb57c85b6d869c925445b384485f4674313f468606d9b090e206c01de233a38"
+    },
+    {
+      "path": "src/core/BaseAgent.ts",
+      "sha256": "912244571b18beedafc463b500b3af44c1dd962f31e623fecf8165669726a817"
+    },
+    {
+      "path": "src/core/capabilityInspection.ts",
+      "sha256": "6424d3af0449f184a90b522cdb1ad8e8021edd5d35cb83abae1170528750f56b"
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "615cfec4952a376c87effe4abc250d4d4f10dd97d0c4dc9e7176ec7758ceced2"
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/coordinator.ts",
+      "sha256": "8786eb2fabdb57f09359b4cf19512c3f8476dfc32ec60a3dda245e86fd7d0b18"
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/fingerprint.ts",
+      "sha256": "51d76e4ef8df351acc0f1b4a95b1f3611592fb0411745d74f40c211d5f6cb816"
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/types.ts",
+      "sha256": "27ee6e676f75024da1194c68531d003b91083a2c860ecee26e9b00a3899b7846"
+    },
+    {
+      "path": "src/core/context-nextgen/index.ts",
+      "sha256": "a85d30dbbb41c403ec6f454cdb6b17fb5b6013e12a3cb8921c92f701c4dfcfae"
+    },
+    {
+      "path": "src/core/context-nextgen/strategies/ContextCompactionStrategy.ts",
+      "sha256": "01b2b31b391b5a4ec3fc110b5e581c382a48d591c77cf4095551d462b35fc9a6"
+    },
+    {
+      "path": "src/core/context-nextgen/strategies/index.ts",
+      "sha256": "71016b7a33393abfa489da05a8323e5eb64d5723336bca69004c64bec9d910ba"
+    },
+    {
+      "path": "src/core/context-nextgen/types.ts",
+      "sha256": "84239d5a1ee1a22b5f250ba96f2886602a9c1f93d26e0d3b4a92b4c901fe039d"
+    },
+    {
+      "path": "src/core/index.ts",
+      "sha256": "ec84084a9755c05199932f36d87939eec7c67e4534520585dbba1e9aa0083ade"
+    },
+    {
+      "path": "src/core/model-execution/ModelExecutor.ts",
+      "sha256": "0cb69d056a182ffb7dbc931855b815add0e6cebabbdf703c4344d7a294e77595"
+    },
+    {
+      "path": "src/core/model-execution/ModelTask.ts",
+      "sha256": "5b92b8f36a29b07191723c9dc7dc2aa16f7a834cd3ba09b48dd0df9c2171d604"
+    },
+    {
+      "path": "src/core/presets.ts",
+      "sha256": "9ba4dc558806e704519a5c399d45d7ba004e2dd72bd19258c36f8b82fcfea391"
+    },
+    {
+      "path": "src/domain/entities/Message.ts",
+      "sha256": "ca3000b18fcef618e3868c0473ff7c673e845744a31f1ef5863e7467e4881312"
+    },
+    {
+      "path": "src/domain/interfaces/IAdvancedInference.ts",
+      "sha256": "4f28ce0fbe8598f34a9ad75d61d664d54f7d0955749ba08d610c40ce216b5e21"
+    },
+    {
+      "path": "src/domain/interfaces/IContextStorage.ts",
+      "sha256": "f03bc08223b632461d1b28de3a91a5ef719dd6360a025043b788967ecb94eb26"
+    },
+    {
+      "path": "src/domain/interfaces/INativeContinuation.ts",
+      "sha256": "9da63ada864652efbb70ccc779f45f97b2f0783e34a45fbd4be9afe95a4ede34"
+    },
+    {
+      "path": "src/domain/interfaces/ITextProvider.ts",
+      "sha256": "f772835bd67819be6a213816b3fce257a870f88a38020952f3bc9854374483b3"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "31329d2cae27f0894c39f9dafc0c46e719bda2f9fea7087d9c6a1ffb768815c5"
+    },
+    {
+      "path": "src/infrastructure/providers/anthropic/AnthropicConverter.ts",
+      "sha256": "123ef21dd567d79cfd0a944ececb6dff2e4aa02ff79033d89deb4a0aedcf6d1a"
+    },
+    {
+      "path": "src/infrastructure/providers/anthropic/AnthropicTextProvider.ts",
+      "sha256": "59db9fbc247e94af9f293052728bf36429a869ba4d7e01c335eb6cd3029f33a6"
+    },
+    {
+      "path": "src/infrastructure/providers/openai/OpenAIResponsesConverter.ts",
+      "sha256": "866a7721210a4c21ee967782ba41ab5b4351d66ab928be754dd165e82fd8ac20"
+    },
+    {
+      "path": "src/infrastructure/providers/openai/OpenAITextProvider.ts",
+      "sha256": "1ca8a80ac976fd90043e7b1e7e1cd6ea5f11eec14bfefb3fe79bc2db1b02f591"
+    },
+    {
+      "path": "src/infrastructure/providers/shared/nativeCompaction.ts",
+      "sha256": "7e60b499c4ba9081f7034eab62214fc9bcced204f018f7cf0e58724bf350b151"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "c0d1f5acae206245f07a1d8e650e141a9923300324cdb07801d0340e8ea5298a"
+    },
+    {
+      "path": "src/types/index.ts",
+      "sha256": "ebcefd07dfd6691446109bcc3344d7cc22426e57a474d374ea40d175a24afb50"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage16-consumer.ts",
+      "sha256": "446dee390b8e1ffd41b67018b2e7cba0627cc56c27646a7f2682fba21da30144"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "sha256": "43a4af6bf93985a65987ab91ab6f59c74558c2d7b09e90585ca8e9552b54ae47"
+    },
+    {
+      "path": "tests/fixtures/native-compaction/public-runtime.mjs",
+      "sha256": "2b78d20d079822783ca7410b86de34b3233e7a5f098b420503d3e305a6ec9187"
+    },
+    {
+      "path": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+      "sha256": "869226502af77aed17f8a4d300ede3442cab5b9a5a1e399cc433a374fe3307ac"
+    },
+    {
+      "path": "tests/unit/apps/amos/NativeCompaction.test.ts",
+      "sha256": "0aa106fe5f2ed3b0c27079a2f8945a5e39a8a6f439c6b5ea83249cdd0ae50c9c"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/NativeCompaction.test.ts",
+      "sha256": "62972c45afb792d4d143ca71f0fe4b32b0c712af63c3bc1120ad3b83a4bc77f3"
+    },
+    {
+      "path": "tests/unit/core/context-nextgen/Stage16Compatibility.test.ts",
+      "sha256": "b67c10a56e6bf3d22c31dd8804ae29e9160b622ce5db930abc3f2c6eaa9054cd"
+    },
+    {
+      "path": "tests/unit/providers/NativeCompaction.test.ts",
+      "sha256": "c1c2f72db6b0c75ffc2a001281d20fc92cd65a365069096bd32e4795d4c81a8e"
+    }
+  ]
+}

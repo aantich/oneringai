@@ -1411,6 +1411,28 @@ savings, retained references, actual helper calls and unknown costs. See the
 [complete recipe](docs/CONTEXT_STRATEGIES.md); run `npm run example:context-strategies`
 for an offline comparison. Existing APIs, defaults and rollover remain supported.
 
+**Plugin and native history composition (Stage 16A, opt-in):** select
+`new ContextCompactionStrategy({ plugins: 'auto', history: 'native' })` through the
+existing `context.compactionStrategy` field. Plugin content/tools stay plugin-owned;
+eligible plugin reductions run once before native history when pressure requires it.
+`agent.compactContext({ target: 'all' | 'plugins' | 'history' })` also supports manual
+scheduling. Native history requires scoped evidence, uses the main connector/model
+and shared ModelTask, and preserves its provider's complete continuation window.
+Provider transport selection is fixed at construction; known ownership conflicts
+stop before native work, and final provider counts include supported raw prompt
+controls as well as normalized options. Contribution deadlines span every phase.
+OpenAI Responses and Anthropic on-demand paths are supplied; algorithmic remains
+the default. Read the [native compaction recipe](docs/NATIVE_CONTEXT_COMPACTION.md)
+for verified models, exact-tail/source retention, provider counts, usage, supported
+shapes and restart/recovery. `npm run example:native-compaction` and
+`npm run example:native-recovery` run offline by default. The companion
+`npm run example:native-hooks` preserves plugin memory in `beforeCompaction` using
+one bounded refresh. Read-only native proofs honor cancellation/task deadlines;
+Unsupported nested thinking replay is also rejected before I/O. Explicit
+compaction uses the same preservation hook; run `npm run example:native-hooks-manual`.
+Anthropic fixed-thinking budgets receive matching native output/source/reservation
+allowances while explicit host caps and main settings are preserved.
+
 **Forced provider-session rollover:** automatic compaction is token-triggered;
 `rolloverContext()` is an explicit semantic checkpoint for a provider lifetime
 boundary such as OpenAI Realtime's 60-minute limit:

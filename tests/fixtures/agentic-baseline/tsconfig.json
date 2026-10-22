@@ -14,7 +14,8 @@
     "stage04-legacy-consumer.ts",
     "stage10-consumer.ts",
     "stage12-consumer.ts",
-    "stage05-consumer.ts"
+    "stage05-consumer.ts",
+    "stage16-consumer.ts"
   ],
   "exclude": []
 }

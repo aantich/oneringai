@@ -343,3 +343,15 @@ response and preserves an unresolved receipt without retrying. All examples clea
 their temporary resources and need no credentials/network. Live probes exercise
 OpenAI, Anthropic and Google run/stream retrieval plus storage-failure raw fallback;
 they do not estimate reliability or claim model-quality/cost improvements.
+
+## Native compaction source retention (Stage 16A)
+
+The optional native history strategy archives each replaced prefix as an exact
+scoped `__context_source__` record and verifies its acknowledgement before swapping
+history. Redaction, quota, loss or mismatch preserves the original history. Older
+settled action exchanges need matching acknowledged evidence; pending/unknown or
+unstored results stay protected. Native checkpoint source references remain subject
+to backend retention; missing proofs stop resume/use until host recovery. Configure
+a restart-capable backend explicitly and keep trusted pre-native checkpoints where
+needed. This never authorizes repeating an external action. See the
+[native guide](NATIVE_CONTEXT_COMPACTION.md).
