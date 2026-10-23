@@ -698,6 +698,8 @@ export interface ContextPrepareOptions {
 
 /** Diagnostic snapshot of the last successful prepare; token counts are estimates. */
 export interface ContextPreparation {
+  /** Effective model for an opt-in routed managed preparation. */
+  model?: string;
   /** Optional independent plugin/history outcomes for an explicitly selected composition. */
   compactionDetails?: import('./compaction/types.js').ContextCompactionReport;
   /** Diagnostic for the opt-in transactional built-ins in this preparation. */

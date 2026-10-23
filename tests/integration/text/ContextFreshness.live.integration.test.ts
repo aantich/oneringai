@@ -103,20 +103,24 @@ describe.skipIf(!enabled).sequential('Stage 01 live context freshness', () => {
       Connector.create({ name: connector, vendor: provider.vendor, auth: { type: 'api_key', apiKey: provider.key } });
       const marker = `SOURCE_VERIFIED_${provider.name.toUpperCase()}_${mode.toUpperCase()}`;
       const nativeMarker = `NATIVE_VERIFIED_${provider.name.toUpperCase()}_${mode.toUpperCase()}`;
-      const agent = Agent.create({ connector, model: provider.model, thinking: { enabled: false }, maxIterations: 5,
+      // This is an exact evidence-transport contract, so disable creative sampling.
+      const agent = Agent.create({ connector, model: provider.model, temperature: 0, thinking: { enabled: false }, maxIterations: 5,
         emptyResponseRetry: { enabled: false },
         instructions: 'Use store_get to read both existing sources from the notes store. Return both markers verbatim. Do not repeat source reads.',
         context: { model: provider.model, maxContextTokens: 3200, responseReserve: 512, features: { ...DEFAULT_FEATURES, workingMemory: true, inContextMemory: false } },
         vendorOptions: provider.name === 'google' ? { generationConfig: { thinkingConfig: { thinkingBudget: 0 } } } : undefined,
         hooks: { 'before:llm': async context => {
           if (calls === 0) freshIndex = ['source01', 'source02'].every(id => JSON.stringify(context.options.input).includes(`tool_result.read_source.${id}`));
-          return { modified: { max_output_tokens: 512 } };
+          // Streaming supports in-place hook edits; returned modifications are run-only.
+          context.options.max_output_tokens = 512;
+          return {};
         } },
       });
       let calls = 0; let memoryReads = 0; let compacted = 0;
       let firstRevision: number | undefined;
       let firstBudgetAvailable: number | undefined;
       let freshIndex = false;
+      let output = '', finalStatus: string | undefined, stopReason: string | undefined;
       agent.on('llm:request', (event: { options?: TextGenerateOptions }) => {
         calls++;
         if (calls === 1) {
@@ -142,11 +146,12 @@ describe.skipIf(!enabled).sequential('Stage 01 live context freshness', () => {
           ] },
           { type: 'function_call_output', call_id: 'call-source02', output: JSON.stringify({ marker: nativeMarker }) },
         ]);
-        let output = '';
         if (mode === 'run') output = (await agent.run('Read both sources already stored in working memory and return both verification markers.')).output_text ?? '';
         else for await (const event of agent.stream('Read both sources already stored in working memory and return both verification markers.')) {
           if (event.type === StreamEventType.OUTPUT_TEXT_DELTA) output += event.delta;
+          if (event.type === StreamEventType.RESPONSE_COMPLETE) { finalStatus = event.status; stopReason = event.stop_reason; }
         }
+        if (mode === 'stream') expect(finalStatus).toBe('completed');
         expect(output).toContain(marker);
         expect(output).toContain(nativeMarker);
         expect(memoryReads).toBeGreaterThanOrEqual(2);
@@ -156,11 +161,11 @@ describe.skipIf(!enabled).sequential('Stage 01 live context freshness', () => {
         expect(agent.context.lastPreparation!.budget.available).toBeGreaterThanOrEqual(0);
         reports.push({ scenario: 'mixed-format-retrieval', provider: provider.name, model: provider.model, mode, passed: true, nativeEvidenceRecovered: true, calls, memoryReads,
           compacted, firstRevision, firstBudgetAvailable, lastRevision: agent.context.lastPreparation!.revision,
-          finalEstimatedTokens: agent.context.lastPreparation!.budget.totalUsed });
+          finalEstimatedTokens: agent.context.lastPreparation!.budget.totalUsed, temperature: 0, outputCap: 512, finalStatus, stopReason });
       } catch (error) {
         // Save only a classification, never raw provider errors/credentials/prompt data.
         reports.push({ provider: provider.name, model: provider.model, mode, passed: false, calls, memoryReads,
-          errorType: error instanceof Error ? error.name : 'unknown' });
+          observedSyntheticOutput: output, finalStatus, stopReason, errorType: error instanceof Error ? error.name : 'unknown' });
         throw error;
       } finally { agent.destroy(); Connector.remove(connector); }
     }, 120_000);

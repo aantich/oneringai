@@ -11,6 +11,9 @@ import type {
   ToolFunction,
   Vendor,
   ModelExecutionConfig,
+  ModelRoutingConfig,
+  ModelRoutingRunOptions,
+  ModelRoutingDiagnostics,
   ModelTaskSnapshot,
   ConversationCompactionReport,
   HelperRole,
@@ -42,7 +45,11 @@ export interface AmosConfig {
   /** Opt-in deterministic host task state. Commands edit memory; /session save checkpoints it. */
   taskState?: { enabled: boolean; taskId: string; ownerId: string; namespace: string; association?: string };
   /** Optional host configuration; null/absence keeps legacy single-model behavior. */
-  modelExecution?: ModelExecutionConfig | null;
+  modelExecution?: (Omit<ModelExecutionConfig, 'routing'> & { routing?: Omit<ModelRoutingConfig, 'select'> | null }) | null;
+  /** JSON-safe host hints/choice for managed calls. No automatic classification. */
+  routing?: ModelRoutingRunOptions | null;
+  /** Explicit task-category table rebuilt into a host selector; absence uses named overrides only. */
+  routingRules?: Record<string, string> | null;
   /** Optional explicit automatic strategy; absence preserves algorithmic behavior. */
   /** Optional selection/layout; contributors are recreated by trusted host code, never JSON callbacks. */
   contextAssembly?: Omit<ContextAssemblyConfig, 'contributors' | 'tokenEstimator'> & { selectWhiteboard?: boolean };
@@ -321,6 +328,8 @@ export interface PromptTemplate {
 export interface IAgentRunner {
   inspectCapabilities?(): { activePreset: AgentPresetName | null; capabilities: AgentCapabilityInspection };
   validatePreset?(preset: AgentPresetName | null, settings?: AmosConfig): void;
+  getRoutingDiagnostics?(): ModelRoutingDiagnostics | undefined;
+  setRoutingOptions?(options: ModelRoutingRunOptions | null): void;
   getLoopDiagnostics?(): AgentLoopDiagnostics | undefined;
   /** Host-only, process-local override; never restored from a saved session. */
   setLoopPolicy?(policy: AgentLoopPolicy | null): void;
@@ -566,6 +575,7 @@ export interface ExternalToolsConfig {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface AgentResponse {
+  routing?: ModelRoutingDiagnostics;
   loop?: AgentLoopDiagnostics;
   toolOutcomes?: import('@everworker/oneringai').ToolExecutionOutcome[];
   text: string;
@@ -581,6 +591,7 @@ export interface TokenUsage {
 }
 
 export interface StreamEvent {
+  routing?: ModelRoutingDiagnostics;
   loop?: AgentLoopDiagnostics;
   type: 'text:delta' | 'text:done' | 'tool:start' | 'tool:complete' | 'error' | 'done';
   delta?: string;

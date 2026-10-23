@@ -7,8 +7,8 @@
 - **Stage 03 review:** All findings corrected and validated: 7,473 units, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 - **Stage 06 review:** All first- and second-review findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion record](STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
 - **Created:** 2026-10-07.
-- **Revision:** 0.5; Stage 16A third corrections validated 2026-10-22. Original holistic plan review completed 2026-10-07.
-- **Current selected scope (2026-10-22):** Stage **16A only**, revision 2 implementation and all review corrections [complete on branch](STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22). 8,584 units, 201 live tests, 34 offline modes and 158 public controls pass. Stage 16B remains deferred; no breaking change or package release is approved.
+- **Revision:** 0.7; Stage 14A delivery added 2026-10-22. Original holistic plan review completed 2026-10-07.
+- **Current selected scope (2026-10-23):** Stage **14A second corrections complete**. All S1–S3 findings are fixed with supported contracts preserved. 8,775 units / 385 files, 224 live tests / 13 suites across OpenAI, Anthropic and Google with no required skips, 39 offline modes and 202 public ESM/CJS controls pass. [Completion](STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-23). No 14B/16B, breaking change or release.
 - **Scope:** OneRingAI connectors, context plugins, tool execution, model invocation,
   agent control, memory, evaluation, and relevant AMOS demonstrations.
 - **Working branch at plan creation:** `version2`.
@@ -459,7 +459,7 @@ remain separately authorized work.
 | 11 | Optional parallel reads and separately scoped resumable effects | 02, 03, 06 | Conditional | Not started |
 | 12 | Minimal opt-in presets and capability inspection | 04, 06, 07, 10 | Core | Complete on branch after all three corrective passes; 8,143 units, 151 live tests / 163 scenarios, 24 examples and 54 public controls pass. [Latest completion](STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16); no release |
 | 13 | Verified procedural memory and curated learning | 08, 10 | Conditional | Not started |
-| 14 | Adaptive routing and separately scoped specialist delegation | 06, 10 | Conditional | Not started |
+| 14 | Adaptive routing and separately scoped specialist delegation | 06, 10 | Conditional | 14A complete on branch; [S1–S3 corrected and validated](STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-23). 14B remains deferred; Stage 14 is partially delivered |
 | 15 | Sandboxed programmatic tools and bounded recursive inspection | 03, 06 | Conditional | Not started |
 | 16A | Provider-native on-demand compaction with client-owned continuation | 01, 03, 06, 07; 04/05 interoperability | Selected conditional scope | Complete on branch; all review corrections validated, opt-in with no breaks. [Latest completion](STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22); [validation](../evaluations/STAGE_16A_THIRD_CORRECTIONS_VALIDATION.json); [API](STAGE_16A_NATIVE_COMPACTION_API.md); [recipe](../NATIVE_CONTEXT_COMPACTION.md) |
 | 16B | Separately scoped retention research | 00, 06, 07 | Conditional | Deferred; not authorized; does not depend on 16A |
@@ -1034,6 +1034,8 @@ promotion, or runaway prompt growth; procedures can be audited and rolled back.
 
 **Goal:** Select model effort and specialists using measured task outcomes.
 
+**Approved delivery — 2026-10-22:** The user approved 14A by replying “proceed” to the [revision 1 API proposal](STAGE_14_ROUTING_AND_DELEGATION_API.md). 14A implements optional named routes and bounded host selection under existing `modelExecution`, explicit per-run hints/overrides/opt-out, one execution-scoped binding, shared-task phase continuity and additive diagnostics. Context plugins, shared tools and configured public defaults stay in place. Native/provider-bound state, scope, data policy, selected capacity and budgets are guarded before dispatch; authorized configured routes resolve exact native checkpoint owners. No automatic cross-model replay or mid-run switching. The [delivery record](STAGE_14A_IMPLEMENTATION.md) separates actual tests/examples/AMOS/docs and the small measured pilot from broader quality claims. 14B remains a companion design requiring separate API approval for worker authority and atomic child budgets. No breaking change is approved.
+
 **Work:** Begin with transparent routing rules and empirical performance tables by
 task type, phase, available evidence, and tool requirements. Add escalation and
 hysteresis to avoid repeated model switching and lost cache value. Evaluate a
@@ -1126,9 +1128,9 @@ This does not authorize 16B or every possible native continuation mode.
 
 ### Stage 16A — Native compaction
 
-**Status:** API proposal awaiting user approval; no runtime implementation or
-provider validation claimed. The [API design](STAGE_16A_NATIVE_COMPACTION_API.md)
-is the detailed scope, contract, implementation sequence and test matrix.
+**Status:** Implemented on branch; all review corrections [validated](STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22). The [approved API/delivery record](STAGE_16A_NATIVE_COMPACTION_API.md)
+retains the detailed scope, contract, implementation sequence and test matrix.
+No package release or Stage 16B approval is claimed.
 
 **Goal:** Integrate provider-native compaction through the existing strategy
 boundary while retaining host task/evidence authority and default behavior.
@@ -3630,3 +3632,125 @@ See [completion](STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2
 Version 2 availability/adoption/handoff, standard/generated docs, agent instructions,
 examples, AMOS, Changelog and package inventory are synchronized. Prior records
 remain historical. No breaking change, release, commit/push or Stage 16B work.
+
+### Stage 14 API design checkpoint — 2026-10-22
+
+The user requested API-first planning of Stage 14. This historical design checkpoint preceded approval,
+based on clean `version2` revision `cf87b4a`. The user subsequently authorized
+14A with “proceed”; see the delivery record below.
+The [revision 1 proposal](STAGE_14_ROUTING_AND_DELEGATION_API.md) recommends 14A
+between-execution routing first: optional named routes under `modelExecution`,
+host selection rules, explicit overrides, one execution binding, phase stickiness,
+existing ModelTask accounting and additive diagnostics. Context plugins and the
+shared ToolManager remain in place; opaque/native state and connector transfer
+require explicit compatibility/authority checks. Automatic cross-model replay,
+mid-run switching and learned routers are deferred.
+
+14B is an independently reviewed companion scope using the current orchestrator
+and workspace primitives. Source review identified missing worker propagation of
+host permissions/identity and shared task budgets; bounded authority views, atomic
+child admission and lifecycle ownership must be designed and approved before that
+implementation. Existing orchestration is not relabeled as bounded delegation.
+
+The proposal includes compatibility decisions, implementation slices, extensive
+failure/lifecycle tests, offline and opt-in live examples, AMOS and documentation
+handoff, plus held-out quality/cost evaluation requirements. Version 2 availability
+and the design/adoption/handoff checkpoint are synchronized. No runtime API,
+default, generated API reference or package release changed. Previous stage test
+results remain historical; see the proposal's design validation record for checks
+actually performed on these documents. This historical approval wait is resolved
+for 14A; 14B still requires separate approval.
+
+
+### Stage 14A delivery — 2026-10-22
+
+**Current status:** All [second-review S1–S3 findings are corrected and validated](STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-23). Original delivery, review and first corrective results below remain historical.
+
+The approved routing slice is implemented through the existing Agent, context and
+ModelTask. See [implementation](STAGE_14A_IMPLEMENTATION.md),
+[public adoption recipe](../MODEL_ROUTING.md),
+[Version 2 adoption](../VERSION_2_GUIDE.md#stage-14a-adoption-record--2026-10-22)
+and [validation](../evaluations/STAGE_14A_VALIDATION.json).
+
+One selected binding covers managed run/stream, tools, retries, repair, native
+history and authentic async/suspended continuation; public defaults and static
+helpers/direct/external owners are retained. Selection precedes new input and
+preparation. Native restore resolves an exact owner only among host-authorized
+routes; policies/pins/task authority are not session data. No fallback repeats an
+external action. All required gates pass: 8,688 unit cases, 216 live cases across 13 suites, 37
+offline modes and 182 public controls. The live gate combines the complete matrix
+with a full 14-case accounting-suite rerun after a fixture-only correction; original
+failures remain in validation provenance.
+
+The outward guide and documentation handoff include named-route signatures,
+limits/defaults, selector failure semantics, phases/shared budgets, native ownership,
+source-preserving JSON repair, observed usage, runnable examples, AMOS commands
+and the fixed functional pilot's limits. Stage 14B is the next independently
+reviewed optional slice, not authorized implementation; the remaining core/conditional
+roadmap does not constitute authorization for later stages.
+
+
+### Stage 14A review — 2026-10-22
+
+The user requested a review, not fixes. Three findings are confirmed by public-API
+counterexamples: P1 replay ownership can be bypassed through a request hook after
+routing is omitted on a restored checkpoint; P1 suspended structured resumption
+skips local output finalization and host completion; P2 construction binds the
+unused default native adapter before a supported route can be selected.
+
+The implementation remains unchanged against its 44-file delivery manifest.
+Fresh focused validation passes 275 tests / eight files and the built public
+consumer. No new live calls were needed for these deterministic defects.
+[Review/fix plan](STAGE_14A_REVIEW_AND_FIX_PLAN.md) and
+[evidence](../evaluations/STAGE_14A_REVIEW.json) govern corrective regressions and
+validation. Version 2 availability/adoption/handoff are reopened; package inventory
+updates belong to corrective delivery. No API break, 14B or release is authorized.
+
+### Stage 14A corrective delivery — 2026-10-22
+
+All R1–R3 fixes are complete: 8,723 units / 383 files, 221 live cases / 13 suites, 38 offline modes and 194 public ESM/CJS controls. 35 new unit cases and five new live-provider cases cover replay without routing, inherited structured suspension and selected native alternatives. The Version 2 availability/adoption/handoff and standard docs/examples/AMOS are synchronized. [Corrective evidence](../evaluations/STAGE_14A_CORRECTIONS_VALIDATION.json) preserves actual gates, source hashes and resolved incidents. No API break, later stage or release is authorized.
+
+<a id="stage-14a-second-review--2026-10-23"></a>
+
+### Historical Stage 14A second review — 2026-10-23 (resolved below)
+
+Three confirmed findings reopen completion: P1 repaired signed-state origin
+bookkeeping, P1 suspended ownership lost after rejected admission, and P2
+suspension checkpoint/publication before structured finalization. All 60 source
+files still match the first corrective manifest. Fresh 830-test / 19-file, public
+consumer and 194 ESM/CJS checks pass; eleven additional public-package observations
+reproduce defects and controls. No runtime/shipped test/package edit or live-model
+call occurred in review.
+
+[Fix plan](STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md) and
+[evidence](../evaluations/STAGE_14A_SECOND_REVIEW.json) govern the next corrective
+slice. Version 2 availability/adoption/handoff and reader status are reopened.
+Preserve compatibility and acknowledged action receipts; no breaking change,
+Stage 14B/16B or release is authorized by this review.
+
+
+### Stage 14A second corrective completion — 2026-10-23
+
+All S1–S3 fixes authorized by “fix all” are complete. Ordered repair replay state
+keeps its admitted owner and stale-boundary protection; empty responses append
+journal corrections without replacing tool receipts. Failed resume attempts retain
+original task/route/options; successful terminal stream closure and explicit host
+cancellation release pending authority without undoing observations. Structured
+suspension finalizes before checkpoint/publication and preserves acknowledged
+waits/correlations with failed-finalization diagnostics when necessary. No tool
+registration is repeated for recovery.
+
+8,775 units / 385 files, 224 live tests / 13 suites across OpenAI, Anthropic and Google with no required skips, 39 offline modes and 202 public ESM/CJS controls pass.
+There are 36 new core, two AMOS and 14 Google converter regressions, three additional real-provider
+cases and one additional offline failure mode. Supported API/default/session and
+provider/storage contracts are preserved; JSON remains parse-only and streaming
+has no repair. The initial controlled-provider fixture omitted its required hard
+budget attestation; it is corrected and the entire 13-suite live matrix rerun.
+The live cost gate also exposed ignored explicit Google thinking opt-out; the shared GenerateContent/Vertex converter now sends zero budget for supported Gemini 2.5 Flash models while preserving defaults, vendor overrides and other models. Cost/quality thresholds remain unchanged. All final source is fixed and checked, with no skipped required provider.
+
+[Completion](STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-23)
+and [validation](../evaluations/STAGE_14A_SECOND_CORRECTIONS_VALIDATION.json) record
+actual gates and compatibility. Version 2 availability/adoption/handoff, public and
+agent guides, generated API, examples/index, AMOS guidance, Changelog and package
+inventory are synchronized. Existing AMOS commands need no new configuration.
+No breaking change, Stage 14B/16B, commit/push or package release is included.

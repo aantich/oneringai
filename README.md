@@ -101,6 +101,24 @@ evidence. Helpers are disabled by default. See the
 conservative reservation limits, supported paths and AMOS `/helpers` commands.
 
 
+Stage 14A adds opt-in [managed model routing](./docs/MODEL_ROUTING.md): named
+alternatives under `modelExecution.routing`, bounded host selection rules and
+per-run choice/opt-out. Each execution retains its selected model through tools,
+repair and compaction, with the same plugins, ToolManager and shared task budget.
+Actual decisions appear on responses/stream completion. Defaults stay fixed when
+routing is absent; native state and other-account transfers are checked explicitly.
+Run `npm run example:model-routing` after building for an offline demonstration.
+`npm run example:routing-suspension` shows a resumed JSON run retaining its format,
+route and task through bounded repair and a host completion check. Saved opaque
+history keeps its owner checks when routing is omitted on restore.
+The same checks cover replay state introduced by JSON repair. Rejected resumes
+retain their original budget; structured suspension finalizes before checkpointing.
+Add `-- --failed-finalization` to the suspension example to inspect a saved wait
+receipt after formatting is denied, without repeating its action.
+Explicit Google `thinking: { enabled: false }` is also honored for supported
+Gemini 2.5 Flash models; the recipe records model and vendor-override boundaries.
+
+
 ## Built for coding agents
 
 OneRingAI ships a canonical **[Agent Guide](./AGENTS.md)** that gives Codex,

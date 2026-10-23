@@ -382,3 +382,30 @@ Selected live native models are `gpt-6-astra` and `claude-sonnet-4-6`. Native
 callability does not guarantee reduction. Sources stay scoped; never repeat a write
 to repair context. See the [native recipe](../docs/NATIVE_CONTEXT_COMPACTION.md) for
 limits and actual adoption guidance.
+
+
+## Managed model routing (Stage 14A)
+
+Build first. These default programs are offline, require no credentials, assert
+their functional contracts and clean up owned agents/connectors/tasks/temp files.
+
+| Example | Command and expected behavior |
+| --- | --- |
+| [adaptive-model-routing.ts](./adaptive-model-routing.ts) | `npm run example:model-routing`: host category selection, shared-task phase continuity, explicit default stream and opt-out; routes `fast,fast,default,default,default`. Prints decisions and actual/synthetic task accounting. |
+| [routing-with-context.ts](./routing-with-context.ts) | `npm run example:routing-context`: memory/evidence plus synthetic native history on an explicitly permitted alternative whose unused default has no native adapter; protected incompatible switch and compatible continuation. |
+| [routing-suspension-recovery.ts](./routing-suspension-recovery.ts) | `npm run example:routing-suspension`: synthetic wait, ordinary event resumption, inherited JSON format, bounded malformed-output repair and host completion on the original route/task. Four model calls, one wait, one resumed completion check. |
+| [Failed suspension finalization](./routing-suspension-recovery.ts) | `npm run example:routing-suspension -- --failed-finalization`: two-call cap denies formatting and two event retries under the original task; one registered wait, zero successful suspension events, saved failed-finalization receipt. Explicit host cancellation releases task authority without undoing the wait. |
+| [AMOS routing](../apps/amos/examples/routing-offline.ts) | `npm run example:amos-routing`: real `/routing` commands, persisted JSON rules/hints, actual run/stream decisions and opt-out. |
+
+`npm run example:model-routing -- --live=openai` (or `anthropic`/`google`) loads
+`.env`, requires that provider key and makes at most eight generation attempts
+within 120 seconds. `npm run test:model-routing:live` bills the complete routing
+contract suite and small fixed quality/cost pilot across all three providers.
+Synthetic usage makes no quality/cost claim; the real pilot is not a general
+benchmark. See the [recipe](../docs/MODEL_ROUTING.md) for setup, model fixtures,
+limits, native ownership, failure semantics and validation evidence.
+
+The Google pilot explicitly disables thinking on supported Gemini 2.5 Flash
+GenerateContent models. The converter now sends the required zero budget; the
+original exact-answer and minimum savings checks are unchanged. This is a measured
+fixture comparison rather than a promise that every routed workload costs less.

@@ -1,0 +1,1357 @@
+{
+  "protocol": "stage-14a-second-corrections-v1",
+  "recordedAt": "2026-10-23T11:45:24.023989+00:00",
+  "branch": "version2",
+  "baseCommit": "cf87b4a78f57f8134deb1b80bae10f81ce44e659",
+  "status": "complete-on-branch",
+  "verifiedPackageRelease": false,
+  "authorization": "User fix all following second Stage 14A review; S1\u2013S3 only, additive and compatibility preserving. No 14B/16B, breaking API, commit/push/publication.",
+  "findings": [
+    {
+      "id": "S1",
+      "priority": "P1",
+      "status": "fixed",
+      "change": "Captured protocol-aware response replacement preserves ordered repaired replay items and admitted owner, rejects stale boundaries, keeps portable hooks and legacy public content-only helper. Empty original output appends journal correction without replacing an earlier tool receipt."
+    },
+    {
+      "id": "S2",
+      "priority": "P1",
+      "status": "fixed",
+      "change": "Retains original task/route/effective options on failed event retries and all budget/preparation/hook admission failures; releases on successful completion/terminal stream closure or explicit host cancellation. Never undoes or replays the observed action."
+    },
+    {
+      "id": "S3",
+      "priority": "P2",
+      "status": "fixed",
+      "change": "Finalizes structured suspension before checkpoint/correlation/success event in ordinary and selected context. Failed finalization retains observation/correlation with optional recovery diagnostic; dual failures retain both errors. Storage errors remain explicit."
+    }
+  ],
+  "compatibility": {
+    "breakingChanges": false,
+    "newRequiredProviderOrStorageMembers": false,
+    "sessionVersionMigration": false,
+    "defaultRoutingEnabled": false,
+    "preserved": [
+      "supported public signatures and defaults",
+      "legacy provider/storage and optional journal contracts",
+      "public content-only replacement behavior",
+      "portable history hooks",
+      "direct/idle/helper ownership",
+      "parse-only JSON coercion",
+      "no JSON repair in streaming"
+    ],
+    "optionalFailureMetadata": "state.metadata.suspensionFinalization contains status failed, correlationId and SessionRef fields. Diagnostic only: no restored task/policy/authorization authority.",
+    "failureBoundary": "Preserve actual observations before teardown when a backend fails. No action replay; cancellation is not proof an external action was undone. A failing backend cannot guarantee restart durability."
+  },
+  "unit": {
+    "success": true,
+    "testsPassed": 8775,
+    "filesPassed": 385,
+    "failed": 0,
+    "skipped": 0,
+    "report": {
+      "path": "/tmp/stage14-s2-unit-complete.json",
+      "sha256": "80257d772adf3cb6bcb9bfe1e3ec6c24d18cc405e99974e4f682af536604683c",
+      "bytes": 2800662
+    },
+    "log": {
+      "path": "/tmp/stage14-s2-unit-complete.log",
+      "sha256": "4057c52c59f9ce9d9e00c43260c530d9ff6e3d3ec4447ab7b6ce94462757b0df",
+      "bytes": 278
+    }
+  },
+  "newUnitCases": {
+    "core": 36,
+    "amos": 2,
+    "googleProvider": 14,
+    "total": 52
+  },
+  "focusedRouting": {
+    "success": true,
+    "testsPassed": 159,
+    "filesPassed": 6,
+    "failed": 0,
+    "skipped": 0,
+    "report": {
+      "path": "/tmp/stage14-s2-routing.json",
+      "sha256": "86ad457198406474a417c9f6c37c08f14e6cf59f49dd540318b597db7d7d5a30",
+      "bytes": 105844
+    }
+  },
+  "focusedRoutingCoverage": {
+    "lines": {
+      "total": 121,
+      "covered": 121,
+      "skipped": 0,
+      "pct": 100
+    },
+    "statements": {
+      "total": 121,
+      "covered": 121,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 12,
+      "covered": 12,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 185,
+      "covered": 172,
+      "skipped": 0,
+      "pct": 92.97
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": "Unknown"
+    }
+  },
+  "live": {
+    "success": true,
+    "testsPassed": 224,
+    "filesPassed": 13,
+    "failed": 0,
+    "skipped": 0,
+    "report": {
+      "path": "/tmp/stage14-s2-complete-live.json",
+      "sha256": "5c505e982579668bf2cf179af0b1f5afd964b6dbae6d7ae453c193f01844f9fb",
+      "bytes": 75926
+    },
+    "log": {
+      "path": "/tmp/stage14-s2-complete-live.log",
+      "sha256": "cd9103ac7edadd82d177e831facff0006ebe41f4bbbfb32e443c6aeaf8b1cc17",
+      "bytes": 148
+    },
+    "providers": [
+      "OpenAI",
+      "Anthropic",
+      "Google"
+    ],
+    "suiteReports": [
+      {
+        "path": "/tmp/stage14-s2-complete-live-agent_loop_report_path.json",
+        "sha256": "10d3485d498b6387b898a6ec6e533f0028da4987d263ab500234387d1115c9a4",
+        "bytes": 69231
+      },
+      {
+        "path": "/tmp/stage14-s2-complete-live-agent_presets_report_path.json",
+        "sha256": "068344cb7d49dc2405cdd6135c070e9d775c746c6974e8827491bd2651f37311",
+        "bytes": 77582
+      },
+      {
+        "path": "/tmp/stage14-s2-complete-live-agent_session_corrections_report_path.json",
+        "sha256": "068c5a2228f8bc867823017e3a6bc194dd6369139a0f2b2399c96c9ae0cb7a68",
+        "bytes": 6228
+      },
+      {
+        "path": "/tmp/stage14-s2-complete-live-baseline_report_path.json",
+        "sha256": "08910962a925d9867d1d910b49ec89bb8f9c7eb0d7739dab760ccc9cdb011dba",
+        "bytes": 70792
+      },
+      {
+        "path": "/tmp/stage14-s2-complete-live-context_assembly_report_path.json",
+        "sha256": "cdfeeb432cb69ccce6fb405c0378bb8288c5ba6c388554dce933d99284479e86",
+        "bytes": 141002
+      },
+      {
+        "path": "/tmp/stage14-s2-complete-live-context_freshness_report_path.json",
+        "sha256": "32f9a6aa84bcbf96fa74fc07fdfb7665cd3d91a43ec5b5600dffa51b92185cfb",
+        "bytes": 9187
+      },
+      {
+        "path": "/tmp/stage14-s2-complete-live-context_strategy_report_path.json",
+        "sha256": "45a779a89f14c39f1870f297d7c8051ee8717905c78d4f29ca02385f922d6f1c",
+        "bytes": 1203098
+      },
+      {
+        "path": "/tmp/stage14-s2-complete-live-evidence_report_path.json",
+        "sha256": "7f14390f52dfe43a2a8fa3ba14ced42699567199006a8d34c46a37ae11a02064",
+        "bytes": 9807
+      },
+      {
+        "path": "/tmp/stage14-s2-complete-live-model_execution_report_path.json",
+        "sha256": "c5bf02b5fbf6e29d2175873500a41b4a5db9398455f39f870ff9e67d31ca71de",
+        "bytes": 42271
+      },
+      {
+        "path": "/tmp/stage14-s2-complete-live-model_routing_report_path.json",
+        "sha256": "95fa8a0acec309d94575aab3c4e0ea4bdad7f2a1c7d3ca7e45b5701f4287e990",
+        "bytes": 222748
+      },
+      {
+        "path": "/tmp/stage14-s2-complete-live-native_compaction_report_path.json",
+        "sha256": "f8265532a67b816b821ac60408c601d41887cc21c26bedc24428a03377398823",
+        "bytes": 41062
+      },
+      {
+        "path": "/tmp/stage14-s2-complete-live-task_state_report_path.json",
+        "sha256": "8ed3106ec15dea5156999926019571c11c96ec98514b5f50e33c40b835902ad2",
+        "bytes": 29942
+      },
+      {
+        "path": "/tmp/stage14-s2-complete-live-tool_outcomes_report_path.json",
+        "sha256": "7dcc47f179d924276e8b7b251c0aa9a8c21bb0ef2888061dcce5f3a2344a7a76",
+        "bytes": 3898
+      }
+    ],
+    "execution": "Fresh complete 13-suite run on the final runtime and fixture revision; no combined partial gate or skipped required provider.",
+    "newContracts": "Google explicit thinking false now sends zero budget for supported Gemini 2.5 Flash GenerateContent models (shared Vertex converter), with omitted defaults and vendor overrides preserved. Three actual-provider failure/checkpoint/budget-retention cases; three existing suspension cases now corrupt a real wrap-up, require repair before checkpoint, then resume under the original task and host completion check."
+  },
+  "offline": {
+    "count": 39,
+    "allPassed": true,
+    "scripts": [
+      {
+        "script": "example:agentic-baseline",
+        "command": "node --import tsx examples/agentic-evaluation-baseline.ts",
+        "log": "/tmp/stage14-s2-offline-example-agentic-baseline.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-agentic-baseline.log",
+        "sha256": "b6d9c964abb3e8df4085d2c32707759f0c97ec95afbea194c4a2421d9d3ea441",
+        "bytes": 17642
+      },
+      {
+        "script": "example:context-freshness",
+        "command": "node --import tsx examples/context-compaction-freshness.ts",
+        "log": "/tmp/stage14-s2-offline-example-context-freshness.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-context-freshness.log",
+        "sha256": "9317708cd926fd6d46ef895164ed6abc6482a6c5af0b920f395af572683dea5c",
+        "bytes": 2417
+      },
+      {
+        "script": "example:context-budget",
+        "command": "node --import tsx examples/context-request-budget.ts",
+        "log": "/tmp/stage14-s2-offline-example-context-budget.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-context-budget.log",
+        "sha256": "eb9265e2ae0b366c11ec183ccd965b367f041d412eed3eca1c9338a96a56deea",
+        "bytes": 2755
+      },
+      {
+        "script": "example:structured-budget",
+        "command": "node --import tsx examples/structured-output-budget.ts",
+        "log": "/tmp/stage14-s2-offline-example-structured-budget.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-structured-budget.log",
+        "sha256": "6aa34c1c49117d1030fd566005a13713fc9f800e77ab792c46d3449be494491e",
+        "bytes": 4818
+      },
+      {
+        "script": "example:amos-context",
+        "command": "node --import tsx apps/amos/examples/context-budget-offline.ts",
+        "log": "/tmp/stage14-s2-offline-example-amos-context.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-amos-context.log",
+        "sha256": "89428897af937eb5896c57426365cfef334ceac041ab84cea882ff31f787e2f3",
+        "bytes": 3503
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": "node --import tsx examples/tool-outcomes-and-cancellation.ts",
+        "log": "/tmp/stage14-s2-offline-example-tool-outcomes.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-tool-outcomes.log",
+        "sha256": "78d458b06f893c41560f16d7077c0ce2e90193fa107089cd82f704a5ff9a2aeb",
+        "bytes": 545
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts",
+        "log": "/tmp/stage14-s2-offline-example-amos-tool-outcomes.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-amos-tool-outcomes.log",
+        "sha256": "7762bb7100e11d275a19def86d87b561d0790b2ed4d7d3f4c3b85d2b6e5d141d",
+        "bytes": 640
+      },
+      {
+        "script": "example:purpose-models",
+        "command": "node --import tsx examples/purpose-specific-models.ts",
+        "log": "/tmp/stage14-s2-offline-example-purpose-models.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-purpose-models.log",
+        "sha256": "687521d9abbd6b25cd7af504c4256399e3527c3fe4a94cb6172ffa5b0e35e911",
+        "bytes": 1317
+      },
+      {
+        "script": "example:shared-budget",
+        "command": "node --import tsx examples/shared-run-budget.ts",
+        "log": "/tmp/stage14-s2-offline-example-shared-budget.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-shared-budget.log",
+        "sha256": "84261248923a4dbfebf4f3a026da031e926e461662a52766eba4e54c49889f47",
+        "bytes": 512
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": "node --import tsx apps/amos/examples/model-helpers-offline.ts",
+        "log": "/tmp/stage14-s2-offline-example-amos-helpers.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-amos-helpers.log",
+        "sha256": "0912ec83210bb78ed77d9b622ee6311c6ebbcd8d609b1a1538eb38cd6cf10b0d",
+        "bytes": 1779
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": "node --import tsx examples/durable-tool-evidence.ts",
+        "log": "/tmp/stage14-s2-offline-example-durable-evidence.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-durable-evidence.log",
+        "sha256": "6e545e38dc41588c380f7b536fd2c8c1e38a9eaccb0eb8a9c0fb22e592d40ec2",
+        "bytes": 511
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": "node --import tsx examples/evidence-recovery.ts",
+        "log": "/tmp/stage14-s2-offline-example-evidence-recovery.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-evidence-recovery.log",
+        "sha256": "d3ca7b8b6abd3c3b3de31fc2f1011ea618b269f02994583e8e678f180d87f4a7",
+        "bytes": 1035
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": "node --import tsx examples/ambiguous-action-evidence.ts",
+        "log": "/tmp/stage14-s2-offline-example-ambiguous-evidence.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-ambiguous-evidence.log",
+        "sha256": "f49a80bbc66dab0c45d14cc14c426a52b7a0a0fe23dba60d47cb4208facc1acd",
+        "bytes": 278
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": "node --import tsx apps/amos/examples/evidence-offline.ts",
+        "log": "/tmp/stage14-s2-offline-example-amos-evidence.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-amos-evidence.log",
+        "sha256": "6a3cf71abb9c14acc5533e3a5745e4bdcaba9bf7d7b1c75ae196eb0d299b3b53",
+        "bytes": 2127
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": "node --import tsx examples/evidence-stream-interruption.ts",
+        "log": "/tmp/stage14-s2-offline-example-evidence-interruption.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-evidence-interruption.log",
+        "sha256": "5efcaaabf9bdc3fdb21e9c5389f6159c8577d5ae2a65055c82dd294dadf0e73d",
+        "bytes": 1665
+      },
+      {
+        "script": "example:context-strategies",
+        "command": "node --import tsx examples/context-strategy-comparison.ts",
+        "log": "/tmp/stage14-s2-offline-example-context-strategies.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-context-strategies.log",
+        "sha256": "df1cda4c78c54b672164e4f3ad7dd3c98870a44b516cf00da354a7f5d1bd9dce",
+        "bytes": 3594
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
+        "log": "/tmp/stage14-s2-offline-example-amos-context-strategies.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-amos-context-strategies.log",
+        "sha256": "a500f1d4636a6ac73ea18905477fb7409509ad1c84252236710f41dcf416251e",
+        "bytes": 5062
+      },
+      {
+        "script": "example:task-state",
+        "command": "node --import tsx examples/task-state-workflow.ts",
+        "log": "/tmp/stage14-s2-offline-example-task-state.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-task-state.log",
+        "sha256": "69f5bb81742b6f3f1003677ed5a33b972cbb282e360ece878018ff7e2f2a8f4a",
+        "bytes": 1486
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": "node --import tsx apps/amos/examples/task-state-offline.ts",
+        "log": "/tmp/stage14-s2-offline-example-amos-task-state.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-amos-task-state.log",
+        "sha256": "220807e70ba7607e7c69c9353e8575e0b136d38218a1b1ac606d859e15287f5f",
+        "bytes": 2920
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": "node --import tsx examples/feedback-driven-agent.ts",
+        "log": "/tmp/stage14-s2-offline-example-feedback-agent.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-feedback-agent.log",
+        "sha256": "57cbe383e85a8b8d25baa88bcc2344263843bfce95387ac81ccccc2d64d8e2a1",
+        "bytes": 1637
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": "node --import tsx examples/run-stream-equivalence.ts",
+        "log": "/tmp/stage14-s2-offline-example-loop-equivalence.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-loop-equivalence.log",
+        "sha256": "4c274ee499421dac51d2ed36f74b7df3cc9979a71fe59a91b8a4da1496041f76",
+        "bytes": 5843
+      },
+      {
+        "script": "example:amos-loop",
+        "command": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
+        "log": "/tmp/stage14-s2-offline-example-amos-loop.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-amos-loop.log",
+        "sha256": "0e2e8c13e621b0c17a126af5d95cd4b7d5d35c68049d6dead130880e0a637687",
+        "bytes": 2032
+      },
+      {
+        "script": "example:agentic-presets",
+        "command": "node --import tsx examples/agentic-presets.ts",
+        "log": "/tmp/stage14-s2-offline-example-agentic-presets.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-agentic-presets.log",
+        "sha256": "753030051285579e0a189b7abfcb6c22628c79d7e1feea87524940787c624b8e",
+        "bytes": 3251
+      },
+      {
+        "script": "example:amos-presets",
+        "command": "node --import tsx apps/amos/examples/presets-offline.ts",
+        "log": "/tmp/stage14-s2-offline-example-amos-presets.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-amos-presets.log",
+        "sha256": "0480ab699a3f8e8c3fcdf69fdf0ef2301cea89fde53d5c50fe134c7794618747",
+        "bytes": 2072
+      },
+      {
+        "script": "example:context-selection",
+        "command": "node --import tsx examples/context-block-selection.ts",
+        "log": "/tmp/stage14-s2-offline-example-context-selection.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-context-selection.log",
+        "sha256": "529a25291d234b3e81a34c5c1137c561c0b715b74e456ae7ec773a9af374ffcb",
+        "bytes": 1763
+      },
+      {
+        "script": "example:cache-aware-context",
+        "command": "node --import tsx examples/cache-aware-context.ts",
+        "log": "/tmp/stage14-s2-offline-example-cache-aware-context.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-cache-aware-context.log",
+        "sha256": "3d414b7a53d413c0e93acfdc587aeb00fddb81a800f98546bba23e1fa278a8ee",
+        "bytes": 705
+      },
+      {
+        "script": "example:amos-context-selection",
+        "command": "node --import tsx apps/amos/examples/context-selection-offline.ts",
+        "log": "/tmp/stage14-s2-offline-example-amos-context-selection.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-amos-context-selection.log",
+        "sha256": "7df1ab43aafcdf66ed1c4ed30a08ed13e5f3844de312e6a8fc46f1d8ec6fb9fd",
+        "bytes": 2021
+      },
+      {
+        "script": "example:context-dispatch-safety",
+        "command": "node --import tsx examples/context-dispatch-safety.ts",
+        "log": "/tmp/stage14-s2-offline-example-context-dispatch-safety.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-context-dispatch-safety.log",
+        "sha256": "741eb90abf911be697025a0bdcc10fb8a7d110c9ea7169be60e016f61e0fd8a0",
+        "bytes": 5893
+      },
+      {
+        "script": "example:native-compaction",
+        "command": "node --import tsx examples/native-context-compaction.ts",
+        "log": "/tmp/stage14-s2-offline-example-native-compaction.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-native-compaction.log",
+        "sha256": "a636acbf78fbd69fc9836dfb09d38c4c682af34693530680085988ad43dab1f1",
+        "bytes": 2307
+      },
+      {
+        "script": "example:native-recovery",
+        "command": "node --import tsx examples/native-context-recovery.ts",
+        "log": "/tmp/stage14-s2-offline-example-native-recovery.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-native-recovery.log",
+        "sha256": "8b2168c7f75686564bfd007079a99c02c781f9c8e273559c9a35f921c86c6738",
+        "bytes": 1138
+      },
+      {
+        "script": "example:native-comparison",
+        "command": "node --import tsx examples/native-context-comparison.ts",
+        "log": "/tmp/stage14-s2-offline-example-native-comparison.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-native-comparison.log",
+        "sha256": "f01a68a57b437cf6225c3412a041fcc05889b2b7fc03558b0ce1abe05b665307",
+        "bytes": 5307
+      },
+      {
+        "script": "example:amos-native-compaction",
+        "command": "node --import tsx apps/amos/examples/native-compaction-offline.ts",
+        "log": "/tmp/stage14-s2-offline-example-amos-native-compaction.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-amos-native-compaction.log",
+        "sha256": "c1a39c6c4d7891383e9de98aed950f7165d6e77215b552a245ed2ca4a6578bea",
+        "bytes": 6289
+      },
+      {
+        "script": "example:native-hooks",
+        "command": "node --import tsx examples/native-context-hooks.ts",
+        "log": "/tmp/stage14-s2-offline-example-native-hooks.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-native-hooks.log",
+        "sha256": "4a9b09038677127a2c6ced69465b7b50b729558034448dc2aeb15965ed30d7bc",
+        "bytes": 1137
+      },
+      {
+        "script": "example:native-hooks-manual",
+        "command": "node --import tsx examples/native-context-hooks.ts --manual",
+        "log": "/tmp/stage14-s2-offline-example-native-hooks-manual.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-native-hooks-manual.log",
+        "sha256": "f5351075a06ddd778f679437d84fa73bb79e437b29dfa521666083e5fbaa6249",
+        "bytes": 1067
+      },
+      {
+        "script": "example:model-routing",
+        "command": "node --import tsx examples/adaptive-model-routing.ts",
+        "log": "/tmp/stage14-s2-offline-example-model-routing.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-model-routing.log",
+        "sha256": "9491d492c9c221f2be353673324b3fd8fa74e1797c0114a1489e38d688a19686",
+        "bytes": 9773
+      },
+      {
+        "script": "example:routing-context",
+        "command": "node --import tsx examples/routing-with-context.ts",
+        "log": "/tmp/stage14-s2-offline-example-routing-context.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-routing-context.log",
+        "sha256": "98381dec3c7cc0bb8b11b8de5dca538f5bdf6e95c8184fa4cf104852e8c63f71",
+        "bytes": 3961
+      },
+      {
+        "script": "example:amos-routing",
+        "command": "node --import tsx apps/amos/examples/routing-offline.ts",
+        "log": "/tmp/stage14-s2-offline-example-amos-routing.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-amos-routing.log",
+        "sha256": "8ede0ba4ab680b3925367640adce0443f492d180ad1249f5b83efc64e80908c1",
+        "bytes": 3107
+      },
+      {
+        "script": "example:routing-suspension",
+        "command": "node --import tsx examples/routing-suspension-recovery.ts",
+        "log": "/tmp/stage14-s2-offline-example-routing-suspension.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-routing-suspension.log",
+        "sha256": "104517afb32b87b65f168db8518acd802a0e5f6e8795fdaa2c6803a47bf4d7a9",
+        "bytes": 2418
+      },
+      {
+        "script": "example:routing-suspension-failure",
+        "command": "node --import tsx examples/routing-suspension-recovery.ts --failed-finalization",
+        "log": "/tmp/stage14-s2-offline-example-routing-suspension-failure.log",
+        "exitCode": 0,
+        "passed": true,
+        "path": "/tmp/stage14-s2-offline-example-routing-suspension-failure.log",
+        "sha256": "865323d53f00a3bedb9417b30b00f511e884cfadfee16f0ff739f2cd9a9d15ee",
+        "bytes": 4458
+      }
+    ]
+  },
+  "publicRuntime": [
+    {
+      "suite": "presets",
+      "command": "node tests/fixtures/agentic-presets/public-runtime.mjs",
+      "exitCode": 0,
+      "log": "/tmp/stage14-s2-public-presets.log",
+      "formats": [
+        {
+          "format": "esm",
+          "checks": 27,
+          "calls": 4
+        },
+        {
+          "format": "cjs",
+          "checks": 27,
+          "calls": 4
+        }
+      ],
+      "checks": 54,
+      "artifact": {
+        "path": "/tmp/stage14-s2-public-presets.log",
+        "sha256": "d6995ccf0a24beb6169ccb472ce3c5defc341bed23c2c0fa6f47a6eb42452bf7",
+        "bytes": 6943
+      }
+    },
+    {
+      "suite": "assembly",
+      "command": "node tests/fixtures/context-assembly/public-runtime.mjs",
+      "exitCode": 0,
+      "log": "/tmp/stage14-s2-public-assembly.log",
+      "formats": [
+        {
+          "format": "esm",
+          "checks": 19
+        },
+        {
+          "format": "cjs",
+          "checks": 19
+        }
+      ],
+      "checks": 38,
+      "artifact": {
+        "path": "/tmp/stage14-s2-public-assembly.log",
+        "sha256": "e5d9f7d544dec4c3f18bb0b9f0e4d26365625c552ec4f25c9a797bea52b1dc29",
+        "bytes": 15951
+      }
+    },
+    {
+      "suite": "native",
+      "command": "node tests/fixtures/native-compaction/public-runtime.mjs",
+      "exitCode": 0,
+      "log": "/tmp/stage14-s2-public-native.log",
+      "formats": [
+        {
+          "format": "esm",
+          "checks": 33
+        },
+        {
+          "format": "cjs",
+          "checks": 33
+        }
+      ],
+      "checks": 66,
+      "artifact": {
+        "path": "/tmp/stage14-s2-public-native.log",
+        "sha256": "4d8c7c87d0297940097da4db8baf5302fa69e1bce90d91b090375313e2810901",
+        "bytes": 4600
+      }
+    },
+    {
+      "suite": "routing",
+      "command": "node tests/fixtures/model-routing/public-runtime.mjs",
+      "exitCode": 0,
+      "log": "/tmp/stage14-s2-public-routing.log",
+      "formats": [
+        {
+          "format": "esm",
+          "checks": 22
+        },
+        {
+          "format": "cjs",
+          "checks": 22
+        }
+      ],
+      "checks": 44,
+      "artifact": {
+        "path": "/tmp/stage14-s2-public-routing.log",
+        "sha256": "5cc103d9ba4794a9bee63efd3b25e1eb07bbf284417df17f98bc49eb34acc685",
+        "bytes": 15993
+      }
+    }
+  ],
+  "publicRuntimeChecks": 202,
+  "gates": [
+    {
+      "name": "build",
+      "command": "npm run build",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-s2-build-complete.log",
+        "sha256": "4b3513c9d80bd348ac5976e24cc5ee28122b2f9606f2f5c027486e88db3f5642",
+        "bytes": 15259
+      }
+    },
+    {
+      "name": "types",
+      "command": "npm run typecheck",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-s2-typecheck.log",
+        "sha256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717",
+        "bytes": 57
+      }
+    },
+    {
+      "name": "lint",
+      "command": "npm run lint",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-s2-lint.log",
+        "sha256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e",
+        "bytes": 60
+      }
+    },
+    {
+      "name": "strict",
+      "command": "npx tsc -p /tmp/stage14-strict.json",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-s2-strict.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "name": "examples-types",
+      "command": "npm run examples:check",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-s2-examples-types.log",
+        "sha256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8",
+        "bytes": 88
+      }
+    },
+    {
+      "name": "public-consumer",
+      "command": "npm run test:agentic:compat",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-s2-consumer.log",
+        "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6",
+        "bytes": 116
+      }
+    },
+    {
+      "name": "amos-types",
+      "command": "npx tsc --noEmit -p apps/amos/tsconfig.json",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-s2-amos-typecheck.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "name": "amos-strict",
+      "command": "npx tsc -p /tmp/stage14-amos-tests.json",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-s2-amos-strict.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "name": "amos-build",
+      "command": "npm --prefix apps/amos run build",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-s2-amos-build.log",
+        "sha256": "92fe60b8cbdc278fc0661ea8dc9acf8fdcc256bb33f6bb5c6ac104afcbd768ed",
+        "bytes": 463
+      }
+    },
+    {
+      "name": "generated-api",
+      "command": "node --import tsx scripts/generate-api-docs.ts --mode public",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-s2-api-docs.log",
+        "sha256": "d22c799437ef352b7974864de0d5a794a3f67be6d1f80e6131b8c15df3da06c4",
+        "bytes": 223
+      }
+    }
+  ],
+  "sourceManifest": [
+    {
+      "path": "apps/amos/examples/routing-offline.ts",
+      "sha256": "d8d2b44add6b4f656f89302951b3c1d572460d471f88e2e2d5b13eb1772105cc",
+      "bytes": 3260
+    },
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "sha256": "6257d9951fc8b089a66b59053851c81289a6af3fbbb3f87bf9a6f03b555ed991",
+      "bytes": 37132
+    },
+    {
+      "path": "apps/amos/src/agent/routing.ts",
+      "sha256": "ed98647740aa7545e6bae33607d357f1511b1ab3753e308180cc3d0ca2c67445",
+      "bytes": 1445
+    },
+    {
+      "path": "apps/amos/src/app.ts",
+      "sha256": "ed10f9be79525cfcf03ab395a090c2c52ca462194597bf98ff9385448184bd1b",
+      "bytes": 28298
+    },
+    {
+      "path": "apps/amos/src/commands/commands/HelpersCommand.ts",
+      "sha256": "19298e99c55997d7b716ae390b8c4ab466cd84edb3c0b06a52e136ae307f3007",
+      "bytes": 7015
+    },
+    {
+      "path": "apps/amos/src/commands/commands/RoutingCommand.ts",
+      "sha256": "f7eb4fd115b550cc3793e175f621cadae89197debb6cc6b9076febd1addbfba0",
+      "bytes": 6284
+    },
+    {
+      "path": "apps/amos/src/commands/commands/index.ts",
+      "sha256": "4fa076b5ffd9d06150043f04e3ac65d4e31acac3450630cb758b9217798798c9",
+      "bytes": 870
+    },
+    {
+      "path": "apps/amos/src/config/types.ts",
+      "sha256": "e1f593190fb57f8da4d65d6ada3d677e01ab17bbb8e14ebc53cf938a6f2a60fd",
+      "bytes": 24456
+    },
+    {
+      "path": "examples/adaptive-model-routing.ts",
+      "sha256": "33bb1f9be1b131e12d9a2ceca7e65c9df49396f1c951279223379eb85b8cc2ed",
+      "bytes": 3491
+    },
+    {
+      "path": "examples/model-routing/fixture.ts",
+      "sha256": "ab9e32dc77a76433d894c025809e674eb178b995a17d57eb8eb1632212aaea07",
+      "bytes": 3018
+    },
+    {
+      "path": "examples/routing-suspension-recovery.ts",
+      "sha256": "9f72f0249bcd003a2b631d9d85e4395e29baf7fac20b49d5f0d5b2c200acce5a",
+      "bytes": 5484
+    },
+    {
+      "path": "examples/routing-with-context.ts",
+      "sha256": "c597038afda36c47a5f56f41bdc2036d03d729351961dd09f3e358b4a2ca5d9c",
+      "bytes": 3181
+    },
+    {
+      "path": "package.json",
+      "sha256": "0d8c1de5acf36b546329395fb826adbb3f6556389d6558c50f8692c983c3b74c",
+      "bytes": 22978
+    },
+    {
+      "path": "scripts/generate-api-docs.ts",
+      "sha256": "5e5077395ee18c338cac45d876aab5874f059102e706c8fcede0e33da2b2b255",
+      "bytes": 29153
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "0cf82141bb76596cae7eccf453bc12371c3380119d6676da7eab0d791f07fc30",
+      "bytes": 234541
+    },
+    {
+      "path": "src/core/BaseAgent.ts",
+      "sha256": "86ff8cd9c1edd8648c6a509207b961e33946da6de49eee5a14d06b6f5d1a0d9b",
+      "bytes": 60543
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "3dcf7744e30a9386c0ca98543c74856f1404b455f5f7253890427bab2fe8bdaa",
+      "bytes": 184688
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/coordinator.ts",
+      "sha256": "640a93bd0a69ca90f37f2c227b067953ee93f2ca04fec9482a63fb6a50d25eb4",
+      "bytes": 13685
+    },
+    {
+      "path": "src/core/context-nextgen/types.ts",
+      "sha256": "ba0fc7f36c32e9d62d87fc1660b8ccf01ec4ba67f4c7a7097e5fcb15f81f1359",
+      "bytes": 46387
+    },
+    {
+      "path": "src/core/createProvider.ts",
+      "sha256": "a2f57b9e65fa7cf0af7701ce354993710c9c0feb0e4e33042d52999f5811b5e5",
+      "bytes": 10218
+    },
+    {
+      "path": "src/core/index.ts",
+      "sha256": "15151552d9c68d90268ee358a99e7d8268117bb23a2799c68e7197a8dd8ce7fb",
+      "bytes": 10857
+    },
+    {
+      "path": "src/core/model-execution/ModelExecutor.ts",
+      "sha256": "b4d00e5ed6b8ff2d79345ab2560503ab1ecbbde18cd64ff885beee8d11e0df88",
+      "bytes": 20754
+    },
+    {
+      "path": "src/core/model-execution/ModelTask.ts",
+      "sha256": "76b431ebfabf8706a877cf7636cd740619376b112866684f2c712eb3a94b238f",
+      "bytes": 23885
+    },
+    {
+      "path": "src/core/model-execution/routing.ts",
+      "sha256": "b701f656c7b025a264f02fb4feed36bcad837d9e7ca30bee9a8f520e6a7c086b",
+      "bytes": 11304
+    },
+    {
+      "path": "src/core/model-execution/types.ts",
+      "sha256": "c1914cf41713b3952559267e9d9439a01f189d2056fece3720b4d4b7207cbcc4",
+      "bytes": 7683
+    },
+    {
+      "path": "src/domain/entities/Response.ts",
+      "sha256": "7c4bf0676f846493eafb2b6fa00aeb424e81d8ee858f8169961c49a26dc797ae",
+      "bytes": 5546
+    },
+    {
+      "path": "src/domain/entities/StreamEvent.ts",
+      "sha256": "2def464b4133e850986ca1b65ed0b0787b9ac489f4fede94c7d6b1d4fa90189e",
+      "bytes": 12391
+    },
+    {
+      "path": "src/domain/interfaces/IContextStorage.ts",
+      "sha256": "1e5d25f3066fe26780efd051ec1ec1db57875f8d4b9365b48013f6779171a48c",
+      "bytes": 6029
+    },
+    {
+      "path": "src/domain/interfaces/ITextProvider.ts",
+      "sha256": "41a26f433bd31f048abeac384c5788a2b532da0d98b3894246e42be5879bede7",
+      "bytes": 5082
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "4fe8c994b28413ec258454c8172c64b88a9477ec166f29a8decffb177eef8e90",
+      "bytes": 63134
+    },
+    {
+      "path": "src/infrastructure/providers/anthropic/AnthropicTextProvider.ts",
+      "sha256": "4de5e09a02b70fe5f1c13c79c4e233af046a7901d9305c590d095ee8148d9bb3",
+      "bytes": 29867
+    },
+    {
+      "path": "src/infrastructure/providers/google/GoogleConverter.ts",
+      "sha256": "0968481f4a9c8b1c3fcf66599d9513fc2cbf334dd0064828a8668a87c4f58c7e",
+      "bytes": 26031
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "32c3b08f86b9b63eb42e289d303b32d45eb08d90508f887eb3e82d632c752dca",
+      "bytes": 21280
+    },
+    {
+      "path": "src/types/index.ts",
+      "sha256": "9f7d6d3e294df9fe4b5078af2bcd30665bf74c9d542c57d4458ec83daf6f1d5d",
+      "bytes": 22518
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage14-consumer.ts",
+      "sha256": "34826347845e095aea67530b131256541f18f266913b36967f52fd061122cbab",
+      "bytes": 1041
+    },
+    {
+      "path": "tests/fixtures/model-routing/public-runtime.mjs",
+      "sha256": "0336880be058196eb3c76de5867fee875ebacf68fc875b90607ff3582c95a60a",
+      "bytes": 7766
+    },
+    {
+      "path": "tests/integration/routines/routineControlFlowExecution.test.ts",
+      "sha256": "f09f23a7845ad28b03bf40fc513bc219f0b7e1f6373a77d4576ad53a65460c14",
+      "bytes": 39772
+    },
+    {
+      "path": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+      "sha256": "b4753f397e2b1db7f86dee421bb003f3bae6005ba3bcdb06d07ef63115906374",
+      "bytes": 19379
+    },
+    {
+      "path": "tests/integration/text/ModelExecution.live.integration.test.ts",
+      "sha256": "fecb39f064312b161bacb862c3e5c327d3cb52bc42bedde4d5d0d90071af5ba1",
+      "bytes": 17038
+    },
+    {
+      "path": "tests/integration/text/ModelRouting.live.integration.test.ts",
+      "sha256": "f138b8f30dc13127338385469616c1950302e111f8f916c43cf9550f9f105b30",
+      "bytes": 28489
+    },
+    {
+      "path": "tests/unit/apps/amos/Routing.test.ts",
+      "sha256": "5440c068e0e54cc9fd6f86a8be59a9246793fe2068da96a3f7569be934224c63",
+      "bytes": 11622
+    },
+    {
+      "path": "tests/unit/core/Agent.asyncTools.test.ts",
+      "sha256": "83079947fb880096746607c51f927f71ea6260af6feac9b82867cd21d31402b1",
+      "bytes": 15306
+    },
+    {
+      "path": "tests/unit/core/Agent.contextFreshness.test.ts",
+      "sha256": "a4699f448af72cd39c96864726f05e79f629cef0b00351ae77318d5eddaac844",
+      "bytes": 31842
+    },
+    {
+      "path": "tests/unit/core/Agent.suspend.test.ts",
+      "sha256": "1f0d6130806b606ea566844cb45e6b28bc9280171465d39c4c306ba7545eab12",
+      "bytes": 12369
+    },
+    {
+      "path": "tests/unit/core/Agent.test.ts",
+      "sha256": "9a6b730b6d70a0b013d0968abd1c9d1cc4909cff8e0a9a32929a3c02bd0f15fd",
+      "bytes": 46124
+    },
+    {
+      "path": "tests/unit/core/Agent.toolOutcomes.test.ts",
+      "sha256": "31f1de03a067ece0a33832a2d0e8d4185ae2c66bfa80bd48996ca22e43725cfd",
+      "bytes": 10365
+    },
+    {
+      "path": "tests/unit/core/AgentRegistry.test.ts",
+      "sha256": "d61040e475718e019de5c6b19aa4bae3c6b13720c3cb6fa0b76cfdbf8f640c9d",
+      "bytes": 23056
+    },
+    {
+      "path": "tests/unit/core/BaseAgent.lifecycle.test.ts",
+      "sha256": "dc29522fb917a0adaba1f0d676d00c3bc2b492a6131c23c9ec87a94c40579f98",
+      "bytes": 8654
+    },
+    {
+      "path": "tests/unit/core/ScopedConnectorRegistry.test.ts",
+      "sha256": "1230063ebc1865f313f30c746877cc92ac0dda74506fd38addad01154f7c794c",
+      "bytes": 14625
+    },
+    {
+      "path": "tests/unit/core/Stage02Corrections.test.ts",
+      "sha256": "e081f7e7fcee63da5464120be340470e25e4b96d45498fb67bc3c0628cd34c07",
+      "bytes": 31825
+    },
+    {
+      "path": "tests/unit/core/StructuredOutput.behavior.test.ts",
+      "sha256": "13a2184b9bbaaeb016e9f4936be7da1db8882b7060b3748757e0a638dca63566",
+      "bytes": 11574
+    },
+    {
+      "path": "tests/unit/core/createRoutineTool.test.ts",
+      "sha256": "5c04325396e8e4dcdaccd02708e348737b54b91ea0f1f1fd372c37af8f468b30",
+      "bytes": 10845
+    },
+    {
+      "path": "tests/unit/core/orchestrator/createOrchestrator.test.ts",
+      "sha256": "cc0825c6a1daf16094b9b187ed6515cf44ef4ac8222df2f749df001874e4863e",
+      "bytes": 19973
+    },
+    {
+      "path": "tests/unit/core/routineRunner.test.ts",
+      "sha256": "55c3fe048621ee14dedc87dac2b10700a9b3dbd135ba721bc69955e0de6c43dc",
+      "bytes": 64831
+    },
+    {
+      "path": "tests/unit/core/routing/anthropic-source.test.ts",
+      "sha256": "ed98b7bd0caf7ecfc2bbee35761234193dfbbbe9aee45b8b2d68f703af886db7",
+      "bytes": 2512
+    },
+    {
+      "path": "tests/unit/core/routing/corrections.test.ts",
+      "sha256": "4f451e0c570d7697ed97fe9cd97b928c09cab071da8b1076a2189599821c36f2",
+      "bytes": 22274
+    },
+    {
+      "path": "tests/unit/core/routing/fixture.ts",
+      "sha256": "4cc90810118577fecf3c850e8e92c497c1351d2c22591e8d5a1ae2045385ee63",
+      "bytes": 3394
+    },
+    {
+      "path": "tests/unit/core/routing/lifecycle.test.ts",
+      "sha256": "3d1fa0cad50213a45d2a7068dd16964e9d58c02f49ff4686fe22ea941306f820",
+      "bytes": 18208
+    },
+    {
+      "path": "tests/unit/core/routing/managed.test.ts",
+      "sha256": "5cd3c2ccd83d2576168d906b55adfc03aa52b1d7f90d3dd29363d08904492a10",
+      "bytes": 15730
+    },
+    {
+      "path": "tests/unit/core/routing/second-corrections.test.ts",
+      "sha256": "4698778eabe21234d51520e78d1086ba1eb56e368eb5f4e00e4c5d0eb0fdc658",
+      "bytes": 22808
+    },
+    {
+      "path": "tests/unit/core/routing/selection.test.ts",
+      "sha256": "d70659add380eec0af1020c5dbaa78677859dedbe678052e3b919b0e67035e6a",
+      "bytes": 7730
+    },
+    {
+      "path": "tests/unit/providers/GoogleThinkingDisabled.test.ts",
+      "sha256": "ed74e04a1f1ce25bdfed022b1433349395df65b40f1fe741a0d115dc04729952",
+      "bytes": 2753
+    },
+    {
+      "path": "tests/unit/providers/NativeCompaction.test.ts",
+      "sha256": "cbd847322674902189f678818fbe3705b6de61d45b5c664c17808d0fcf5f44eb",
+      "bytes": 53936
+    }
+  ],
+  "resolvedValidationIncidents": [
+    {
+      "kind": "google-thinking-opt-out-and-fixture-oracle",
+      "preFixMatrix": {
+        "success": false,
+        "testsPassed": 222,
+        "filesPassed": 12,
+        "failed": 2,
+        "skipped": 0,
+        "report": {
+          "path": "/tmp/stage14-s2-verified-live.json",
+          "sha256": "fafb586a47337a78e5dfa4b463c42aeb3a2eca8e3db6780ba19720847388f8f4",
+          "bytes": 76609
+        }
+      },
+      "resolution": "All quality answers passed; actual reasoning usage revealed explicit false was omitted by GoogleConverter. Supported Flash models now send thinkingBudget zero. The wrap-up corruption fixture now retains the original answer and checks removal of the exact unformatted body, rather than banning a legitimate string inside valid JSON. Cost threshold and exact answer oracles are unchanged. Full 13-suite live matrix rerun on final source."
+    },
+    {
+      "kind": "regression-red",
+      "report": {
+        "path": "/tmp/stage14-s2-red.json",
+        "sha256": "79f5747421f863c5218d1ffb1f70f2ece302b26a61d1dabc94dc25b5004db2b4",
+        "bytes": 13645
+      },
+      "resolution": "Original failing S1\u2013S3 regressions now pass."
+    },
+    {
+      "kind": "provider-wrapper-fixture",
+      "initialMatrix": {
+        "success": false,
+        "testsPassed": 221,
+        "filesPassed": 12,
+        "failed": 3,
+        "skipped": 0,
+        "report": {
+          "path": "/tmp/stage14-s2-final-live.json",
+          "sha256": "2ce21335b8f543a9f8bfee9efdd523e7fe233cade9b9ba3683bbd9f39320d0da",
+          "bytes": 78536
+        }
+      },
+      "resolution": "The controlled real-provider wrapper requires customProviderAttempts single with hard limits; added the missing attestation with backend maxRetries zero. All 13 live suites rerun on final source."
+    },
+    {
+      "kind": "empty-response-journal-regression",
+      "red": {
+        "success": false,
+        "testsPassed": 35,
+        "filesPassed": 0,
+        "failed": 1,
+        "skipped": 0,
+        "report": {
+          "path": "/tmp/stage14-s2-empty-red.json",
+          "sha256": "5849ddb66b4fa72ca925d20bf7f664b25465e8da89f7545f99e6d634c3407d0e",
+          "bytes": 13269
+        }
+      },
+      "resolution": "Disabled empty-response retries to exercise actual repair; asserted exact tool-call receipt and settled final journal text. New append path preserves the preceding receipt and passes final core/full-unit gates."
+    }
+  ],
+  "googleThinkingFix": {
+    "source": "src/infrastructure/providers/google/GoogleConverter.ts",
+    "documentation": "https://ai.google.dev/gemini-api/docs/generate-content/thinking?hl=en",
+    "diagnosis": {
+      "path": "/tmp/stage14-s2-google-thinking-diagnosis.json",
+      "sha256": "c5e8a0805a2a1a67ea06fdbfe9831e62ea4cd3d8cb7399d6fe000f24f1e276d6",
+      "bytes": 46702
+    },
+    "red": {
+      "success": false,
+      "testsPassed": 9,
+      "filesPassed": 0,
+      "failed": 5,
+      "skipped": 0,
+      "report": {
+        "path": "/tmp/stage14-s2-google-red.json",
+        "sha256": "edf493cee0e6bdab9118d9f118865d503bfb66f0643b8ecf04c888424681bb66",
+        "bytes": 7576
+      }
+    },
+    "focused": {
+      "success": true,
+      "testsPassed": 80,
+      "filesPassed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "report": {
+        "path": "/tmp/stage14-s2-google-fixed.json",
+        "sha256": "86311969e3891f9cacd6049bc9b3ae716dacc65e4fca66bf2d1a9d5f4bf1b943",
+        "bytes": 27323
+      }
+    },
+    "scope": "Explicit false on Gemini 2.5 Flash/Flash-Lite and their preview aliases only. Preserve undefined default, enabled config, raw vendor overrides, Pro/3.x/unknown/image models and Interactions behavior."
+  },
+  "historicalEvidence": [
+    {
+      "path": "docs/evaluations/STAGE_14A_SECOND_REVIEW.json",
+      "sha256": "f90fda0209a59e7b205cf20e46ccbabb48d2897f20562443da33b6ffdd6d27d5",
+      "bytes": 25434
+    },
+    {
+      "path": "docs/evaluations/STAGE_14A_CORRECTIONS_VALIDATION.json",
+      "sha256": "a90525a3437360d332b4d79b31e504017191acab0f91147fb869d5aeeec5cc42",
+      "bytes": 130119
+    },
+    {
+      "path": "docs/evaluations/STAGE_14A_VALIDATION.json",
+      "sha256": "edc5083b3059694d7eda5b91781745fd090da27436bbc38a4687d7be6281b020",
+      "bytes": 303786
+    }
+  ],
+  "documentation": {
+    "version2Updated": true,
+    "generatedAPI": "public generator; no hand-edited generated API",
+    "handoff": [
+      "README.md",
+      "USER_GUIDE.md",
+      "AGENTS.md",
+      "API_REFERENCE.md",
+      "CHANGELOG.md",
+      "examples/README.md",
+      "apps/amos/README.md",
+      "docs/MODEL_ROUTING.md",
+      "docs/VERSION_2_GUIDE.md",
+      "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "docs/designs/STAGE_14_ROUTING_AND_DELEGATION_API.md",
+      "docs/designs/STAGE_14A_IMPLEMENTATION.md",
+      "docs/designs/STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md",
+      "package.json"
+    ],
+    "localLinks": {
+      "checked": 2627,
+      "errors": []
+    },
+    "localLinksReport": {
+      "path": "/tmp/stage14-s2-doc-links.json",
+      "sha256": "949c103faf76da59915783bfeb32327cb11fe9b78da1d5b6950ec835e720e4cc",
+      "bytes": 38
+    }
+  },
+  "knownFailures": [],
+  "remainingRequiredWork": [],
+  "packageDryRun": {
+    "command": "npm --cache /tmp/oneringai-stage14-npm-cache pack --dry-run --ignore-scripts --json",
+    "purpose": "Inventory verification after final build; no lifecycle scripts or publication",
+    "files": 251,
+    "missingRequiredFiles": [],
+    "report": {
+      "path": "/tmp/stage14-s2-pack.json",
+      "sha256": "209052a5297bbfbc42fe61ce84f1efe5de642628574072aff036466ffbacf378",
+      "bytes": 29913
+    }
+  },
+  "pilot": {
+    "scope": "Original fixed six-record functional pilot; zero quality loss and at least five percent known-model token-cost reduction required. Not a general quality or savings claim.",
+    "groups": [
+      {
+        "provider": "openai",
+        "qualityLoss": 0,
+        "tokenCostReductionVsMain": 0.3043122270742358,
+        "passed": true,
+        "summaries": [
+          {
+            "mode": "fixed-main",
+            "successes": 6,
+            "total": 6,
+            "knownModelCostUSD": 0.0003664
+          },
+          {
+            "mode": "fixed-fast",
+            "successes": 5,
+            "total": 6,
+            "knownModelCostUSD": 0.0001374
+          },
+          {
+            "mode": "routing",
+            "successes": 6,
+            "total": 6,
+            "knownModelCostUSD": 0.0002549
+          }
+        ]
+      },
+      {
+        "provider": "anthropic",
+        "qualityLoss": 0,
+        "tokenCostReductionVsMain": 0.32784854918612893,
+        "passed": true,
+        "summaries": [
+          {
+            "mode": "fixed-main",
+            "successes": 6,
+            "total": 6,
+            "knownModelCostUSD": 0.005652000000000001
+          },
+          {
+            "mode": "fixed-fast",
+            "successes": 6,
+            "total": 6,
+            "knownModelCostUSD": 0.0018929999999999997
+          },
+          {
+            "mode": "routing",
+            "successes": 6,
+            "total": 6,
+            "knownModelCostUSD": 0.003799
+          }
+        ]
+      },
+      {
+        "provider": "google",
+        "qualityLoss": 0,
+        "tokenCostReductionVsMain": 0.32261273209549046,
+        "passed": true,
+        "summaries": [
+          {
+            "mode": "fixed-main",
+            "successes": 6,
+            "total": 6,
+            "knownModelCostUSD": 0.00030159999999999996
+          },
+          {
+            "mode": "fixed-fast",
+            "successes": 6,
+            "total": 6,
+            "knownModelCostUSD": 9.160000000000002e-05
+          },
+          {
+            "mode": "routing",
+            "successes": 6,
+            "total": 6,
+            "knownModelCostUSD": 0.00020430000000000003
+          }
+        ]
+      }
+    ]
+  }
+}

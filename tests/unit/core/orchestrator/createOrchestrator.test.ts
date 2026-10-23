@@ -22,7 +22,8 @@ import { Vendor } from '@/core/Vendor.js';
 
 // Mock createProvider to avoid real LLM calls
 const mockGenerate = vi.fn();
-vi.mock('@/core/createProvider.js', () => ({
+vi.mock('@/core/createProvider.js', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/core/createProvider.js')>(),
   createProvider: vi.fn(() => ({
     generate: mockGenerate,
     destroy: vi.fn(),

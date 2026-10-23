@@ -64,14 +64,14 @@ describe.skipIf(!enabled).sequential('Stage 06 live model-task and helper execut
     const name = `stage06-thinking-${mode}`;
     Connector.create({ name, vendor: Vendor.Google, auth: { type: 'api_key', apiKey: selected.key } });
     const task = new ModelTask({ limits: { maxCalls: 4, deadline: Date.now() + 90_000 } });
-    const agent = Agent.create({ connector: name, model: selected.model, thinking: { enabled: true, budgetTokens: 1024 },
-      instructions: 'Solve the supplied problem and return only the JSON object {"answer":"decimal integer"}.',
+    const agent = Agent.create({ connector: name, model: selected.model, temperature: 0, thinking: { enabled: true, budgetTokens: 1024 },
+      instructions: 'Solve the supplied problem, verify each condition on your candidate, and return only the JSON object {"answer":"decimal integer"}.',
       vendorOptions: { api: 'generateContent' }, emptyResponseRetry: { enabled: false },
       context: { model: selected.model, features: { workingMemory: false, inContextMemory: false } },
       modelExecution: { maxOutputTokensPerCall: 4096, helpers: { extractor: { connector: name, model: selected.model,
-        thinking: { enabled: true, budgetTokens: 1024 }, maxOutputTokens: 4096 } } },
+        temperature: 0, thinking: { enabled: true, budgetTokens: 1024 }, maxOutputTokens: 4096 } } },
     });
-    const prompt = 'Solve carefully: find the smallest positive integer n such that n mod 3 = 2, n mod 5 = 3, and n mod 7 = 2. Return the decimal answer as a string in answer.';
+    const prompt = 'Solve carefully: find the smallest positive integer n such that n mod 3 = 2, n mod 5 = 3, and n mod 7 = 2. Check all three remainders on your candidate and rule out smaller positive integers. Return the decimal answer as a string in answer.';
     try {
       const helper = await agent.invokeHelper<{ answer: string }>('extractor', prompt + ' Put the decimal answer in the answer string.', { schema, modelTask: task });
       expect(helper.value.answer).toBe('23');

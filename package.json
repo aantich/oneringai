@@ -241,7 +241,21 @@
     "docs/designs/STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md",
     "docs/evaluations/STAGE_16A_THIRD_REVIEW.json",
     "docs/evaluations/STAGE_16A_THIRD_CORRECTIONS_VALIDATION.json",
-    "docs/evaluations/STAGE_16A_THIRD_CORRECTIONS_OFFLINE.txt"
+    "docs/evaluations/STAGE_16A_THIRD_CORRECTIONS_OFFLINE.txt",
+    "docs/MODEL_ROUTING.md",
+    "docs/designs/STAGE_14_ROUTING_AND_DELEGATION_API.md",
+    "docs/designs/STAGE_14A_IMPLEMENTATION.md",
+    "docs/evaluations/STAGE_14A_VALIDATION.json",
+    "docs/designs/STAGE_14A_REVIEW_AND_FIX_PLAN.md",
+    "docs/evaluations/STAGE_14A_REVIEW.json",
+    "docs/evaluations/STAGE_14A_CORRECTIONS_VALIDATION.json",
+    "examples/adaptive-model-routing.ts",
+    "examples/routing-with-context.ts",
+    "examples/routing-suspension-recovery.ts",
+    "examples/model-routing/fixture.ts",
+    "docs/designs/STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md",
+    "docs/evaluations/STAGE_14A_SECOND_REVIEW.json",
+    "docs/evaluations/STAGE_14A_SECOND_CORRECTIONS_VALIDATION.json"
   ],
   "scripts": {
     "generate:tools": "tsx scripts/generate-tool-registry.ts",
@@ -340,7 +354,12 @@
     "example:amos-native-compaction": "node --import tsx apps/amos/examples/native-compaction-offline.ts",
     "test:native-compaction:live": "RUN_NATIVE_COMPACTION_LIVE=1 vitest run tests/integration/text/NativeCompaction.live.integration.test.ts",
     "example:native-hooks": "node --import tsx examples/native-context-hooks.ts",
-    "example:native-hooks-manual": "node --import tsx examples/native-context-hooks.ts --manual"
+    "example:native-hooks-manual": "node --import tsx examples/native-context-hooks.ts --manual",
+    "example:model-routing": "node --import tsx examples/adaptive-model-routing.ts",
+    "example:routing-suspension": "node --import tsx examples/routing-suspension-recovery.ts",
+    "example:routing-context": "node --import tsx examples/routing-with-context.ts",
+    "example:amos-routing": "node --import tsx apps/amos/examples/routing-offline.ts",
+    "test:model-routing:live": "RUN_MODEL_ROUTING_LIVE=1 vitest run tests/integration/text/ModelRouting.live.integration.test.ts"
   },
   "keywords": [
     "ai",

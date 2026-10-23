@@ -16,6 +16,8 @@ import type { IHistoryJournal } from './IHistoryJournal.js';
  * This is the canonical definition - core layer re-exports this type.
  */
 export interface SerializedContextState {
+  /** Optional opaque-state origin; never restores routing policy or authentication. */
+  providerStateBinding?: Omit<import('./INativeContinuation.js').NativeContinuationBinding, 'scope'>;
   /** Optional native continuation; host policy and credentials must be supplied again. */
   nativeContinuation?: import('./INativeContinuation.js').NativeContinuationSnapshot;
   /** Conversation history */

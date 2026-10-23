@@ -35,7 +35,7 @@ export type { StorageConfig, StorageContext, ToolCategoryDefinition, CatalogTool
 export type { AgentStatus as RegistryAgentStatus } from './core/index.js';
 export type { AgentLoopPolicy, AgentLoopDiagnostics, AgentLoopReason, AgentLoopObservation, AgentLoopCheckContext, AgentLoopCompletionResult } from './core/agent-loop/types.js';
 export { ModelTask, ModelBudgetExceededError, HelperOutputError } from './core/index.js';
-export type { ModelExecutionConfig, ModelTaskLimits, ModelPriceBound, ModelTaskSnapshot, ModelInvocationRecord,
+export type { ModelRouteConfig, ModelRoutingHints, ModelRoutingRunOptions, ModelRouteCandidate, ModelRoutingContext, ModelRoutingDecision, ModelRoutingConfig, ModelRoutingDiagnostics, ModelExecutionConfig, ModelTaskLimits, ModelPriceBound, ModelTaskSnapshot, ModelInvocationRecord,
   ModelAttemptRecord, ModelCallDescriptor, HelperRole, HelperModelConfig, HelperCallOptions, HelperInputContext, HelperResult } from './core/index.js';
 export type {
   AgentConfig,

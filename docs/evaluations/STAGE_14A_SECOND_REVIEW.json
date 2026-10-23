@@ -1,0 +1,686 @@
+{
+  "protocol": "stage-14a-second-review-v1",
+  "recordedAt": "2026-10-23T11:03:08.596587+00:00",
+  "reviewDate": "2026-10-23",
+  "branch": "version2",
+  "baseCommit": "cf87b4a",
+  "scope": "Complete pending Stage 14A implementation and first corrective delivery; cross-system lifecycle/repair/budgets/native/context/AMOS/backwards compatibility",
+  "authorization": "Review/report and fix plan only; no runtime fixes, new stage or breaking change authorized by this review request",
+  "status": "Three confirmed open findings; Stage 14A completion reopened",
+  "productionFilesChanged": false,
+  "shippedTestsChanged": false,
+  "packageConfigurationChanged": false,
+  "newLiveModelCalls": 0,
+  "sourceEvidence": {
+    "unchangedSinceCorrectiveValidation": true,
+    "verifiedFiles": 60,
+    "manifest": [
+      {
+        "path": "apps/amos/examples/routing-offline.ts",
+        "sha256": "d8d2b44add6b4f656f89302951b3c1d572460d471f88e2e2d5b13eb1772105cc",
+        "bytes": 3260
+      },
+      {
+        "path": "apps/amos/src/agent/AgentRunner.ts",
+        "sha256": "6257d9951fc8b089a66b59053851c81289a6af3fbbb3f87bf9a6f03b555ed991",
+        "bytes": 37132
+      },
+      {
+        "path": "apps/amos/src/agent/routing.ts",
+        "sha256": "ed98647740aa7545e6bae33607d357f1511b1ab3753e308180cc3d0ca2c67445",
+        "bytes": 1445
+      },
+      {
+        "path": "apps/amos/src/app.ts",
+        "sha256": "ed10f9be79525cfcf03ab395a090c2c52ca462194597bf98ff9385448184bd1b",
+        "bytes": 28298
+      },
+      {
+        "path": "apps/amos/src/commands/commands/HelpersCommand.ts",
+        "sha256": "19298e99c55997d7b716ae390b8c4ab466cd84edb3c0b06a52e136ae307f3007",
+        "bytes": 7015
+      },
+      {
+        "path": "apps/amos/src/commands/commands/RoutingCommand.ts",
+        "sha256": "f7eb4fd115b550cc3793e175f621cadae89197debb6cc6b9076febd1addbfba0",
+        "bytes": 6284
+      },
+      {
+        "path": "apps/amos/src/commands/commands/index.ts",
+        "sha256": "4fa076b5ffd9d06150043f04e3ac65d4e31acac3450630cb758b9217798798c9",
+        "bytes": 870
+      },
+      {
+        "path": "apps/amos/src/config/types.ts",
+        "sha256": "e1f593190fb57f8da4d65d6ada3d677e01ab17bbb8e14ebc53cf938a6f2a60fd",
+        "bytes": 24456
+      },
+      {
+        "path": "examples/adaptive-model-routing.ts",
+        "sha256": "33bb1f9be1b131e12d9a2ceca7e65c9df49396f1c951279223379eb85b8cc2ed",
+        "bytes": 3491
+      },
+      {
+        "path": "examples/model-routing/fixture.ts",
+        "sha256": "ab9e32dc77a76433d894c025809e674eb178b995a17d57eb8eb1632212aaea07",
+        "bytes": 3018
+      },
+      {
+        "path": "examples/routing-suspension-recovery.ts",
+        "sha256": "f6c1090c8d456285fdfe1ec01d50c911bd902a94ad910063573ea7c20bdedc17",
+        "bytes": 3828
+      },
+      {
+        "path": "examples/routing-with-context.ts",
+        "sha256": "c597038afda36c47a5f56f41bdc2036d03d729351961dd09f3e358b4a2ca5d9c",
+        "bytes": 3181
+      },
+      {
+        "path": "package.json",
+        "sha256": "10c95d4de90308cc5379e143ca02b2acebbdebda3429b859250a4e3ec0fce433",
+        "bytes": 22796
+      },
+      {
+        "path": "scripts/generate-api-docs.ts",
+        "sha256": "5e5077395ee18c338cac45d876aab5874f059102e706c8fcede0e33da2b2b255",
+        "bytes": 29153
+      },
+      {
+        "path": "src/core/Agent.ts",
+        "sha256": "9b4d186e76feb55c55dbc44299eca2608b1429f730533eb816bdebd07d2b7ba2",
+        "bytes": 232242
+      },
+      {
+        "path": "src/core/BaseAgent.ts",
+        "sha256": "86ff8cd9c1edd8648c6a509207b961e33946da6de49eee5a14d06b6f5d1a0d9b",
+        "bytes": 60543
+      },
+      {
+        "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+        "sha256": "b86a9f10f641eebe1f8b2555e614ad81ad3a627627023504953fbde52f178001",
+        "bytes": 182750
+      },
+      {
+        "path": "src/core/context-nextgen/compaction/coordinator.ts",
+        "sha256": "640a93bd0a69ca90f37f2c227b067953ee93f2ca04fec9482a63fb6a50d25eb4",
+        "bytes": 13685
+      },
+      {
+        "path": "src/core/context-nextgen/types.ts",
+        "sha256": "ba0fc7f36c32e9d62d87fc1660b8ccf01ec4ba67f4c7a7097e5fcb15f81f1359",
+        "bytes": 46387
+      },
+      {
+        "path": "src/core/createProvider.ts",
+        "sha256": "a2f57b9e65fa7cf0af7701ce354993710c9c0feb0e4e33042d52999f5811b5e5",
+        "bytes": 10218
+      },
+      {
+        "path": "src/core/index.ts",
+        "sha256": "15151552d9c68d90268ee358a99e7d8268117bb23a2799c68e7197a8dd8ce7fb",
+        "bytes": 10857
+      },
+      {
+        "path": "src/core/model-execution/ModelExecutor.ts",
+        "sha256": "b4d00e5ed6b8ff2d79345ab2560503ab1ecbbde18cd64ff885beee8d11e0df88",
+        "bytes": 20754
+      },
+      {
+        "path": "src/core/model-execution/ModelTask.ts",
+        "sha256": "76b431ebfabf8706a877cf7636cd740619376b112866684f2c712eb3a94b238f",
+        "bytes": 23885
+      },
+      {
+        "path": "src/core/model-execution/routing.ts",
+        "sha256": "b701f656c7b025a264f02fb4feed36bcad837d9e7ca30bee9a8f520e6a7c086b",
+        "bytes": 11304
+      },
+      {
+        "path": "src/core/model-execution/types.ts",
+        "sha256": "c1914cf41713b3952559267e9d9439a01f189d2056fece3720b4d4b7207cbcc4",
+        "bytes": 7683
+      },
+      {
+        "path": "src/domain/entities/Response.ts",
+        "sha256": "7c4bf0676f846493eafb2b6fa00aeb424e81d8ee858f8169961c49a26dc797ae",
+        "bytes": 5546
+      },
+      {
+        "path": "src/domain/entities/StreamEvent.ts",
+        "sha256": "2def464b4133e850986ca1b65ed0b0787b9ac489f4fede94c7d6b1d4fa90189e",
+        "bytes": 12391
+      },
+      {
+        "path": "src/domain/interfaces/IContextStorage.ts",
+        "sha256": "1e5d25f3066fe26780efd051ec1ec1db57875f8d4b9365b48013f6779171a48c",
+        "bytes": 6029
+      },
+      {
+        "path": "src/domain/interfaces/ITextProvider.ts",
+        "sha256": "41a26f433bd31f048abeac384c5788a2b532da0d98b3894246e42be5879bede7",
+        "bytes": 5082
+      },
+      {
+        "path": "src/index.ts",
+        "sha256": "4fe8c994b28413ec258454c8172c64b88a9477ec166f29a8decffb177eef8e90",
+        "bytes": 63134
+      },
+      {
+        "path": "src/infrastructure/providers/anthropic/AnthropicTextProvider.ts",
+        "sha256": "4de5e09a02b70fe5f1c13c79c4e233af046a7901d9305c590d095ee8148d9bb3",
+        "bytes": 29867
+      },
+      {
+        "path": "src/tools/registry.generated.ts",
+        "sha256": "fc7c80f2f9181c51f55eb55bed644d304547102c5067bd71e2fd8f6b123079a5",
+        "bytes": 21280
+      },
+      {
+        "path": "src/types/index.ts",
+        "sha256": "9f7d6d3e294df9fe4b5078af2bcd30665bf74c9d542c57d4458ec83daf6f1d5d",
+        "bytes": 22518
+      },
+      {
+        "path": "tests/fixtures/agentic-baseline/stage14-consumer.ts",
+        "sha256": "34826347845e095aea67530b131256541f18f266913b36967f52fd061122cbab",
+        "bytes": 1041
+      },
+      {
+        "path": "tests/fixtures/model-routing/public-runtime.mjs",
+        "sha256": "cb949a93e515160f980d921f74b70e4c9a356b648fd5398af0658550ec33b881",
+        "bytes": 6269
+      },
+      {
+        "path": "tests/integration/routines/routineControlFlowExecution.test.ts",
+        "sha256": "f09f23a7845ad28b03bf40fc513bc219f0b7e1f6373a77d4576ad53a65460c14",
+        "bytes": 39772
+      },
+      {
+        "path": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "sha256": "b4753f397e2b1db7f86dee421bb003f3bae6005ba3bcdb06d07ef63115906374",
+        "bytes": 19379
+      },
+      {
+        "path": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "sha256": "fecb39f064312b161bacb862c3e5c327d3cb52bc42bedde4d5d0d90071af5ba1",
+        "bytes": 17038
+      },
+      {
+        "path": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "sha256": "d1d752b7db536a74d1cf19069bdca8a36f09bcaf9ed9590c948fcd6551111ec9",
+        "bytes": 23189
+      },
+      {
+        "path": "tests/unit/apps/amos/Routing.test.ts",
+        "sha256": "f992569cca4007417d8642a8cc05df6eb26eea21fc78c0e35a42c5ff8914fb73",
+        "bytes": 9343
+      },
+      {
+        "path": "tests/unit/core/Agent.asyncTools.test.ts",
+        "sha256": "83079947fb880096746607c51f927f71ea6260af6feac9b82867cd21d31402b1",
+        "bytes": 15306
+      },
+      {
+        "path": "tests/unit/core/Agent.contextFreshness.test.ts",
+        "sha256": "a4699f448af72cd39c96864726f05e79f629cef0b00351ae77318d5eddaac844",
+        "bytes": 31842
+      },
+      {
+        "path": "tests/unit/core/Agent.suspend.test.ts",
+        "sha256": "1f0d6130806b606ea566844cb45e6b28bc9280171465d39c4c306ba7545eab12",
+        "bytes": 12369
+      },
+      {
+        "path": "tests/unit/core/Agent.test.ts",
+        "sha256": "9a6b730b6d70a0b013d0968abd1c9d1cc4909cff8e0a9a32929a3c02bd0f15fd",
+        "bytes": 46124
+      },
+      {
+        "path": "tests/unit/core/Agent.toolOutcomes.test.ts",
+        "sha256": "31f1de03a067ece0a33832a2d0e8d4185ae2c66bfa80bd48996ca22e43725cfd",
+        "bytes": 10365
+      },
+      {
+        "path": "tests/unit/core/AgentRegistry.test.ts",
+        "sha256": "d61040e475718e019de5c6b19aa4bae3c6b13720c3cb6fa0b76cfdbf8f640c9d",
+        "bytes": 23056
+      },
+      {
+        "path": "tests/unit/core/BaseAgent.lifecycle.test.ts",
+        "sha256": "dc29522fb917a0adaba1f0d676d00c3bc2b492a6131c23c9ec87a94c40579f98",
+        "bytes": 8654
+      },
+      {
+        "path": "tests/unit/core/ScopedConnectorRegistry.test.ts",
+        "sha256": "1230063ebc1865f313f30c746877cc92ac0dda74506fd38addad01154f7c794c",
+        "bytes": 14625
+      },
+      {
+        "path": "tests/unit/core/Stage02Corrections.test.ts",
+        "sha256": "e081f7e7fcee63da5464120be340470e25e4b96d45498fb67bc3c0628cd34c07",
+        "bytes": 31825
+      },
+      {
+        "path": "tests/unit/core/StructuredOutput.behavior.test.ts",
+        "sha256": "13a2184b9bbaaeb016e9f4936be7da1db8882b7060b3748757e0a638dca63566",
+        "bytes": 11574
+      },
+      {
+        "path": "tests/unit/core/createRoutineTool.test.ts",
+        "sha256": "5c04325396e8e4dcdaccd02708e348737b54b91ea0f1f1fd372c37af8f468b30",
+        "bytes": 10845
+      },
+      {
+        "path": "tests/unit/core/orchestrator/createOrchestrator.test.ts",
+        "sha256": "cc0825c6a1daf16094b9b187ed6515cf44ef4ac8222df2f749df001874e4863e",
+        "bytes": 19973
+      },
+      {
+        "path": "tests/unit/core/routineRunner.test.ts",
+        "sha256": "55c3fe048621ee14dedc87dac2b10700a9b3dbd135ba721bc69955e0de6c43dc",
+        "bytes": 64831
+      },
+      {
+        "path": "tests/unit/core/routing/anthropic-source.test.ts",
+        "sha256": "ed98b7bd0caf7ecfc2bbee35761234193dfbbbe9aee45b8b2d68f703af886db7",
+        "bytes": 2512
+      },
+      {
+        "path": "tests/unit/core/routing/corrections.test.ts",
+        "sha256": "4f451e0c570d7697ed97fe9cd97b928c09cab071da8b1076a2189599821c36f2",
+        "bytes": 22274
+      },
+      {
+        "path": "tests/unit/core/routing/fixture.ts",
+        "sha256": "4cc90810118577fecf3c850e8e92c497c1351d2c22591e8d5a1ae2045385ee63",
+        "bytes": 3394
+      },
+      {
+        "path": "tests/unit/core/routing/lifecycle.test.ts",
+        "sha256": "3d1fa0cad50213a45d2a7068dd16964e9d58c02f49ff4686fe22ea941306f820",
+        "bytes": 18208
+      },
+      {
+        "path": "tests/unit/core/routing/managed.test.ts",
+        "sha256": "5cd3c2ccd83d2576168d906b55adfc03aa52b1d7f90d3dd29363d08904492a10",
+        "bytes": 15730
+      },
+      {
+        "path": "tests/unit/core/routing/selection.test.ts",
+        "sha256": "d70659add380eec0af1020c5dbaa78677859dedbe678052e3b919b0e67035e6a",
+        "bytes": 7730
+      },
+      {
+        "path": "tests/unit/providers/NativeCompaction.test.ts",
+        "sha256": "cbd847322674902189f678818fbe3705b6de61d45b5c664c17808d0fcf5f44eb",
+        "bytes": 53936
+      }
+    ],
+    "historicalCorrectiveEvidence": "docs/evaluations/STAGE_14A_CORRECTIONS_VALIDATION.json"
+  },
+  "findings": [
+    {
+      "id": "S1",
+      "priority": "P1",
+      "title": "Structured repair bypasses replay-state origin bookkeeping",
+      "file": "src/core/Agent.ts",
+      "start": 3388,
+      "end": 3390,
+      "status": "open",
+      "reproduction": "Nonrouted JSON run: portable malformed response, then repaired JSON with persistent signed thinking. Checkpoint retains the signature but no providerStateBinding; a subsequent request hook switches model and successfully dispatches the signature to wrong-owner. Ordinary opaque output and routed repair controls block the switch. A provider_state variant also lacks the origin; top-level reasoning returned by repair is dropped from history.",
+      "fix": "Use one protocol-aware replacement/commit boundary for all structured repair/reformat responses, preserving ordered replay items and the actual admitted origin, retain legacy portable hook behavior and optional snapshot compatibility."
+    },
+    {
+      "id": "S2",
+      "priority": "P1",
+      "title": "Budget-rejected resumption loses its original route, format and ModelTask",
+      "file": "src/core/Agent.ts",
+      "start": 1794,
+      "end": 1798,
+      "status": "open",
+      "reproduction": "Suspend on fast with a shared maxCalls:2 task, spending both calls. First ordinary event resume rejects maxCalls without another provider call. Repeat the same event without options: selector runs again, a new task admits main, and inherited output_parsed is absent. The original task remains at two calls; the wait ran only once. A rejected explicit route override control preserves the original origin.",
+      "fix": "Retain or atomically restore suspended ownership/effective options when resume fails before actual dispatch/admission, rather than clearing at setup. Do not obtain another allowance by retrying the same event. Reuse explicit host cancellation/abandonment semantics for intentional new work and preserve action receipts."
+    },
+    {
+      "id": "S3",
+      "priority": "P2",
+      "title": "Suspension is checkpointed and published before structured finalization",
+      "file": "src/core/Agent.ts",
+      "start": 2418,
+      "end": 2428,
+      "status": "open",
+      "reproduction": "With ordinary context (no selective assembly), a malformed suspension wrap-up is saved before outer repair. run() returns suspended with parsed FORMATTED and live history matches, but saved history still contains NOT_JSON and lacks FORMATTED. With maxCalls:2, repair cannot dispatch, yet the raw checkpoint/correlation and one execution:suspended event already exist before run() throws. A Google-style tool/format composition control with an already valid JSON wrap-up also publishes its suspension before a mandatory formatting call fails the two-call cap; malformed output is not required.",
+      "fix": "Finalize the settled suspension candidate on every context path before committing/publishing a successful formatted suspension, while durably retaining the acknowledged wait and preserving recoverable route/task authority on formatting, cancellation, budget or storage failure. Never repeat the external registration to recover."
+    }
+  ],
+  "executableObservations": [
+    {
+      "scenario": "repair-without-routing",
+      "firstParsed": {
+        "answer": "OK"
+      },
+      "checkpointOrigin": null,
+      "checkpointHasOpaque": true,
+      "replayRejected": false,
+      "extraProviderCalls": 1,
+      "lastModel": "wrong-owner",
+      "lastInputHadOpaque": true
+    },
+    {
+      "scenario": "ordinary-opaque-control",
+      "firstParsed": {
+        "answer": "OK"
+      },
+      "checkpointOrigin": {
+        "provider": "review2-fixture",
+        "connector": "review2-1",
+        "model": "main",
+        "endpoint": "d991a502f08dfaa56df780b569fd45b5ad2b1c1b6046c9ecf06878824245bf2b",
+        "authority": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+      },
+      "checkpointHasOpaque": true,
+      "replayRejected": true,
+      "error": "Provider-bound replay requires its original connector, model, endpoint and host principal",
+      "extraProviderCalls": 0,
+      "lastModel": "main",
+      "lastInputHadOpaque": false
+    },
+    {
+      "scenario": "routed-repair-control",
+      "firstParsed": {
+        "answer": "OK"
+      },
+      "checkpointOrigin": {
+        "provider": "review2-fixture",
+        "connector": "review2-2",
+        "model": "fast",
+        "endpoint": "d991a502f08dfaa56df780b569fd45b5ad2b1c1b6046c9ecf06878824245bf2b",
+        "authority": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+      },
+      "checkpointHasOpaque": true,
+      "replayRejected": true,
+      "error": "A routed execution cannot switch models in a request hook",
+      "extraProviderCalls": 0,
+      "lastModel": "fast",
+      "lastInputHadOpaque": false
+    },
+    {
+      "scenario": "portable-repair-control",
+      "firstParsed": {
+        "answer": "OK"
+      },
+      "checkpointOrigin": null,
+      "checkpointHasOpaque": false,
+      "replayRejected": false,
+      "extraProviderCalls": 1,
+      "lastModel": "wrong-owner",
+      "lastInputHadOpaque": false
+    },
+    {
+      "scenario": "repair-state-variant",
+      "kind": "provider_state",
+      "returnedHasOpaque": true,
+      "checkpointHasOpaque": true,
+      "checkpointOrigin": null
+    },
+    {
+      "scenario": "repair-state-variant",
+      "kind": "reasoning",
+      "returnedHasOpaque": true,
+      "checkpointHasOpaque": false,
+      "checkpointOrigin": null
+    },
+    {
+      "scenario": "suspension-persistence-order",
+      "exhausted": false,
+      "error": null,
+      "returnedStatus": "suspended",
+      "returnedParsed": {
+        "answer": "FORMATTED"
+      },
+      "storedHasRaw": true,
+      "storedHasFormatted": false,
+      "liveHasFormatted": true,
+      "correlationPersisted": true,
+      "suspendedEvents": 1,
+      "waits": 1,
+      "calls": 3
+    },
+    {
+      "scenario": "suspension-persistence-order",
+      "exhausted": true,
+      "error": "Model task cannot admit another attempt: maxCalls",
+      "returnedStatus": null,
+      "returnedParsed": null,
+      "storedHasRaw": true,
+      "storedHasFormatted": false,
+      "liveHasFormatted": false,
+      "correlationPersisted": true,
+      "suspendedEvents": 1,
+      "waits": 1,
+      "calls": 2
+    },
+    {
+      "scenario": "failed-resume-loses-origin",
+      "firstError": "Model task cannot admit another attempt: maxCalls",
+      "initialTaskId": "82d04f17-2e30-4cb4-b83d-db74a54c95f8",
+      "initialCalls": 2,
+      "retryTaskId": "9ddd195b-3de1-4f14-8ee0-f92beb63c5e0",
+      "retrySelectedModel": "main",
+      "selectorCalls": 2,
+      "retryParsed": null,
+      "providerModels": [
+        "fast",
+        "fast",
+        "main"
+      ],
+      "waits": 1
+    },
+    {
+      "scenario": "rejected-routing-override-control",
+      "error": "A suspended execution keeps its originating route",
+      "originalTaskId": "c05b3fd0-eb6a-42a3-8e12-de92fe1f7b59",
+      "resumedTaskId": "c05b3fd0-eb6a-42a3-8e12-de92fe1f7b59",
+      "model": "fast",
+      "selectorCalls": 1,
+      "resumedParsed": {
+        "answer": "OK"
+      }
+    },
+    {
+      "scenario": "prompt-suspension-publishes-before-format",
+      "error": "Model task cannot admit another attempt: maxCalls",
+      "storedHasValidAnswer": true,
+      "suspendedEvents": 1,
+      "correlationPersisted": true,
+      "waits": 1,
+      "calls": 2
+    }
+  ],
+  "probe": {
+    "program": {
+      "path": "/tmp/stage14-review2-probes.mjs",
+      "sha256": "1f3ab8f785a9db5e9a81674dd162e5dea9a7bb15a482d9109aa2b633088d94e8",
+      "bytes": 10854
+    },
+    "report": {
+      "path": "/tmp/stage14-review2-probes.json",
+      "sha256": "36d3f6bada849e3634f34345c10a0598289a165df8ab1f8b6f2947004664e0f8",
+      "bytes": 4338
+    },
+    "log": {
+      "path": "/tmp/stage14-review2-probes.log",
+      "sha256": "d81d7b048cf58038f7a4a392e40bf9df879e9b5758891998a795bbfac55d2875",
+      "bytes": 22854
+    },
+    "publicSurface": "Built package via require(@everworker/oneringai), named connectors and injected ITextProvider fixtures; real FileContextStorage and FileCorrelationStorage",
+    "boundaries": "Deterministic protocol/lifecycle counterexamples; no actual provider calls or general model-quality assertion. Temporary session files removed. No credentials loaded."
+  },
+  "freshValidation": {
+    "testsPassed": 830,
+    "filesPassed": 19,
+    "failed": 0,
+    "skipped": 0,
+    "batches": [
+      {
+        "testsPassed": 311,
+        "filesPassed": 10,
+        "failed": 0,
+        "skipped": 0,
+        "report": {
+          "path": "/tmp/stage14-review2-focused.json",
+          "sha256": "cbd2d80f136c24331993213e4275336a67fd75c2dd2801ba30551460c42fd74d",
+          "bytes": 112923
+        },
+        "log": {
+          "path": "/tmp/stage14-review2-focused.log",
+          "sha256": "5105daf45b1b86c3724fa0ebab7417e62f433156a80bc280da8b7c51780fc70a",
+          "bytes": 427638
+        }
+      },
+      {
+        "testsPassed": 519,
+        "filesPassed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "report": {
+          "path": "/tmp/stage14-review2-context.json",
+          "sha256": "1ed7a48341c22b2a9fda32fb7c6ef23e0acbea99f51332cbf2f6ecf99bac1892",
+          "bytes": 197686
+        },
+        "log": {
+          "path": "/tmp/stage14-review2-context.log",
+          "sha256": "b890489fe975dded96d28d24518771ff711f5ea920033848a9d1ce8ff66dbe1d",
+          "bytes": 555611
+        }
+      }
+    ],
+    "publicTypes": {
+      "command": "npm run test:agentic:compat",
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-review2-compat.log",
+        "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6",
+        "bytes": 116
+      }
+    },
+    "publicRuntime": [
+      {
+        "suite": "presets",
+        "checks": 54,
+        "formats": [
+          {
+            "format": "esm",
+            "checks": 27,
+            "calls": 4
+          },
+          {
+            "format": "cjs",
+            "checks": 27,
+            "calls": 4
+          }
+        ],
+        "artifact": {
+          "path": "/tmp/stage14-review2-public-presets.log",
+          "sha256": "72f7bbd936c5d49c77746a515670b5344fd70584a686fb3e855c6f764e89ee51",
+          "bytes": 6936
+        }
+      },
+      {
+        "suite": "assembly",
+        "checks": 38,
+        "formats": [
+          {
+            "format": "esm",
+            "checks": 19
+          },
+          {
+            "format": "cjs",
+            "checks": 19
+          }
+        ],
+        "artifact": {
+          "path": "/tmp/stage14-review2-public-assembly.log",
+          "sha256": "130d112680091d160ed55d42195b65fa5689b55a29aacffe85df39368b5bf2d0",
+          "bytes": 15945
+        }
+      },
+      {
+        "suite": "native",
+        "checks": 66,
+        "formats": [
+          {
+            "format": "esm",
+            "checks": 33
+          },
+          {
+            "format": "cjs",
+            "checks": 33
+          }
+        ],
+        "artifact": {
+          "path": "/tmp/stage14-review2-public-native.log",
+          "sha256": "2100a5bc0e5b63ece4abf215c09491265eca55a2bfd7ee675baf42ae32ca27a5",
+          "bytes": 4595
+        }
+      },
+      {
+        "suite": "routing",
+        "checks": 36,
+        "formats": [
+          {
+            "format": "esm",
+            "checks": 18
+          },
+          {
+            "format": "cjs",
+            "checks": 18
+          }
+        ],
+        "artifact": {
+          "path": "/tmp/stage14-review2-public-routing.log",
+          "sha256": "de1fbe9ff9e5d7007bd25e474dd1c2086c311e21720a6e4a0388883cc0d44024",
+          "bytes": 11284
+        }
+      }
+    ],
+    "publicRuntimeChecks": 194,
+    "fullUnitSuiteRerun": false,
+    "liveSuiteRerun": false,
+    "limitation": "Passing existing tests/consumers miss the eleven asserted observations and do not close the findings."
+  },
+  "historicalValidation": {
+    "unitTests": 8723,
+    "liveCases": 221,
+    "offlineModes": 38,
+    "publicControls": 194,
+    "preservedUnchanged": true,
+    "currentReviewDoesNotRevalidateFullGates": true
+  },
+  "fixOrder": [
+    "S1: unify repaired replay output/origin commits",
+    "S2: atomic resume admission and original budget/options ownership",
+    "S3: coherent suspension formatting/checkpoint/publication with acknowledged wait recovery",
+    "Then full relevant unit/public/example/AMOS/live gates and Version 2 availability/handoff; no later stage or release."
+  ],
+  "compatibilityRequirements": [
+    "No new required provider/storage methods or session-version migration",
+    "No default routing or full local JSON-schema enforcement",
+    "Preserve portable legacy hooks, direct/idle ownership and existing stream no-repair boundary",
+    "No replay of the synthetic or real external wait/action"
+  ],
+  "documentation": {
+    "secondReviewPlan": "docs/designs/STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md",
+    "version2Guide": "Current availability/adoption/handoff reopened",
+    "packaging": "Add second-review artifacts to package inventory during corrective implementation; package configuration unchanged in review.",
+    "linksAndAnchors": {
+      "checked": 2622,
+      "errors": 0,
+      "report": {
+        "path": "/tmp/stage14-review2-doc-links.json",
+        "sha256": "ae7d7319c777d679f8d34927d64c31094fedd199e228be79d7b919cf9a586cfd",
+        "bytes": 38
+      }
+    }
+  }
+}

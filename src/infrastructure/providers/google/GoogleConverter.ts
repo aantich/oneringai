@@ -135,6 +135,12 @@ export class GoogleConverter {
       request.generationConfig.thinkingConfig = {
         thinkingBudget: options.thinking.budgetTokens || 8192,
       };
+    } else if (options.thinking?.enabled === false
+      && /^gemini-2\.5-flash(?:-lite)?(?:$|-preview(?:-|$))/.test(options.model)
+      && request.generationConfig.thinkingConfig === undefined) {
+      // Omission enables dynamic thinking on 2.5 Flash. Explicit opt-out
+      // requires zero; Pro/3.x cannot disable it. Preserve raw vendor overrides.
+      request.generationConfig.thinkingConfig = { thinkingBudget: 0 };
     }
 
     // Disable Google's code execution if we have function tools

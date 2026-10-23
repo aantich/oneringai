@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Fix explicit `thinking.enabled: false` being omitted for Google GenerateContent
+  Gemini 2.5 Flash/Flash-Lite, which otherwise left dynamic thinking and its cost
+  enabled. The shared Vertex converter sends zero budget for supported aliases.
+  Provider defaults, explicit vendor thinking overrides and other model/API
+  families retain existing behavior. Includes 14 converter regressions and a
+  rerun of the original routing quality/cost gates without relaxed thresholds.
+
+- Stage 14A second corrections preserve ordered repaired replay state and its
+  admitted owner, retain the original task/route after failed resume attempts,
+  and finalize structured suspension before checkpoint/publication. Failed
+  finalization retains the registered observation/correlation with optional recovery
+  metadata; explicit host cancellation abandons task authority without replaying or
+  undoing the action. Includes budget/deadline, run/stream, storage, cancellation,
+  journal/restart, AMOS, real-provider and public ESM/CJS regressions. Existing
+  defaults, public signatures and provider/storage/session contracts are preserved.
+
+- Stage 14A corrections retain exact-owner replay guards independently of routing,
+  tag newly observed opaque output with its admitted identity, and share effective
+  resumed JSON finalization/host checks while retaining the original route/task.
+  Routed native binding now waits for selection, allowing a supported alternative
+  with an unsupported default. Legacy portable hooks, direct/idle owners, JSON's
+  parse-only contract and supported API/session defaults remain unchanged.
+
+- Stage 14A adds optional named managed-model routes, bounded host rules, explicit
+  run/stream overrides and opt-out, phase continuity on an explicit shared task,
+  and optional decision diagnostics. One execution retains its connector/model,
+  plugins, tools and budget; authenticated native checkpoints restore only through
+  host-authorized compatible routes. Default, helper, direct and external paths
+  keep their existing owners; automatic cross-model replay and 14B delegation are
+  deferred. Includes AMOS `/routing`, offline/live examples and public type exports.
+- Managed JSON repairs preserve the admitted task evidence and host instructions,
+  including routed async continuations. Native source guards run after budget
+  observers; Anthropic native source counts use the compaction mode and preserve
+  terminal assistant whitespace exactly. No new required provider/storage members
+  or session-version migration.
+
 - Stage 16A third corrections reject incompatible/incomplete nested thinking on
   native paths before I/O, run preservation hooks/events for explicit compaction,
   and align Anthropic fixed-thinking output, source headroom and ModelTask bounds.

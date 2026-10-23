@@ -41,6 +41,8 @@ export interface HelperModelConfig {
 }
 
 export interface ModelExecutionConfig {
+  /** Opt-in managed run/stream model routing. Runtime policy is not session authority. */
+  routing?: ModelRoutingConfig;
   helpers?: Partial<Record<HelperRole, HelperModelConfig>>;
   limits?: ModelTaskLimits;
   /** Optional aggregate main-call output cap across candidates. Omitted preserves provider defaults. */
@@ -141,4 +143,86 @@ export interface ModelTaskSnapshot {
     chargedTokens: number;
     chargedCostUSD: number | null;
   };
+}
+
+
+export interface ModelRouteConfig {
+  model: string;
+  /** Inherit the Agent's configured connector when omitted. */
+  connector?: string;
+  thinking?: ThinkingConfig;
+  temperature?: number;
+  /** Optional tighter cap; cannot increase maxOutputTokensPerCall. */
+  maxOutputTokens?: number;
+  /** Bound for this route; another deployment's price bound is never inherited. */
+  priceBound?: ModelPriceBound;
+  dataHandling?: DataHandlingPolicy;
+  /** Required to send the managed request to a different connector/account. */
+  allowContextTransfer?: boolean;
+}
+
+export interface ModelRoutingHints {
+  taskType?: string;
+  phase?: string;
+}
+
+export interface ModelRoutingRunOptions extends ModelRoutingHints {
+  /** 'default' is the existing configured main connector/model. */
+  route?: string;
+}
+
+export interface ModelRouteCandidate {
+  readonly route: string;
+  readonly connector: string;
+  readonly model: string;
+  /** Preliminary state/capability eligibility, not a reservation or fit promise. */
+  readonly eligible: boolean;
+  readonly reasons: readonly string[];
+}
+
+export interface ModelRoutingContext {
+  readonly hints: Readonly<ModelRoutingHints>;
+  readonly candidates: readonly ModelRouteCandidate[];
+  /** Last admitted route in this explicit ModelTask and phase, if any. */
+  readonly previous?: Readonly<{
+    route: string;
+    connector: string;
+    model: string;
+  }>;
+  readonly signal: AbortSignal;
+}
+
+export interface ModelRoutingDecision {
+  route: string;
+  /** Diagnostic only; never injected as an instruction. */
+  reason?: string;
+}
+
+export interface ModelRoutingConfig {
+  /** Nonempty, bounded names. 'default' is reserved and cannot be redefined. */
+  routes: Record<string, ModelRouteConfig>;
+  /** Omit for explicit named-route overrides only; otherwise default stays selected. */
+  select?: (context: ModelRoutingContext) =>
+    | string
+    | ModelRoutingDecision
+    | Promise<string | ModelRoutingDecision>;
+  /** Default 'default'. Used only for selector exceptions/timeouts. */
+  fallback?: string;
+  /** Default 1000ms; also bounded by the current execution/task deadline. */
+  timeoutMs?: number;
+  /** Default 'run'. 'phase' reuses a route in the same explicit ModelTask/phase. */
+  sticky?: 'run' | 'phase';
+}
+
+export interface ModelRoutingDiagnostics {
+  readonly decisionId: string;
+  readonly executionId: string;
+  readonly requestedRoute?: string;
+  readonly selectedRoute: string;
+  readonly connector: string;
+  readonly model: string;
+  readonly source: 'default' | 'policy' | 'explicit' | 'sticky' | 'fallback' | 'disabled';
+  readonly reason?: string;
+  readonly selectorFailure?: 'timeout' | 'exception';
+  readonly selectionMs: number;
 }

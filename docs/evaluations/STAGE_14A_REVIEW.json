@@ -1,0 +1,443 @@
+{
+  "protocol": "stage-14a-review-v1",
+  "recordedAt": "2026-10-22T19:09:51.786656+00:00",
+  "branch": "version2",
+  "baseCommit": "cf87b4a",
+  "request": "do a review pass",
+  "status": "Three confirmed open findings; no runtime fixes made",
+  "scope": "Entire pending Stage 14A implementation and integration; no 14B or breaking API work",
+  "findings": [
+    {
+      "id": "R1",
+      "priority": 1,
+      "status": "open",
+      "title": "Keep replay ownership guards after disabling routing",
+      "file": "src/core/Agent.ts",
+      "lines": [
+        1062,
+        1064
+      ],
+      "proof": "A restored fast-owned encrypted reasoning item reaches different-model through a public request listener when routing is absent. The routing-enabled control blocks it.",
+      "fix": "Retain actual-request replay/authority guards independently of routing policy, preserving portable legacy overrides."
+    },
+    {
+      "id": "R2",
+      "priority": 1,
+      "status": "open",
+      "title": "Finalize suspended structured runs using effective restored options",
+      "file": "src/core/Agent.ts",
+      "lines": [
+        2045,
+        2048
+      ],
+      "proof": "Resumption carries original native schema but returns NOT_JSON as completed with output_parsed absent, zero host completion checks and a running loop diagnostic.",
+      "fix": "Use one effective options view for inline formatting, local validation/repair and completion checking under the original binding/task."
+    },
+    {
+      "id": "R3",
+      "priority": 2,
+      "status": "open",
+      "title": "Bind native compaction after choosing the managed route",
+      "file": "src/core/Agent.ts",
+      "lines": [
+        881,
+        881
+      ],
+      "proof": "An unsupported unused default prevents construction despite a supported explicitly authorized alternative; supplying a default adapter makes the same alternative work.",
+      "fix": "Defer routed native binding to execution selection while preserving checkpoint and idle-maintenance owners."
+    }
+  ],
+  "reproductions": {
+    "publicApiOnly": true,
+    "usesRealLLMs": false,
+    "nativeAdapterSynthetic": true,
+    "assertions": "All three undesirable counterexamples and matching positive/negative controls reproduced deterministically. Counterexample assertions prove findings, not correct product behavior.",
+    "results": [
+      {
+        "id": "suspended-output-format",
+        "resumedCompletionChecks": 0,
+        "resumedLoop": {
+          "version": 1,
+          "executionId": "exec_79f7585b-226b-44c4-a3dc-6bb03ad549fe",
+          "phase": "running",
+          "iterations": 1,
+          "recoveryAttempts": 0,
+          "observedToolCalls": 0,
+          "consecutiveToolFailures": 0,
+          "repeatedResults": 0,
+          "stalledIterations": 0,
+          "uncertainEffects": []
+        },
+        "initial": {
+          "status": "suspended",
+          "parsed": {
+            "answer": "pending"
+          }
+        },
+        "resumed": {
+          "status": "completed",
+          "text": "NOT_JSON",
+          "parsed": null,
+          "route": {
+            "decisionId": "12307bf0-a45c-4459-91e8-b908a71e9888",
+            "executionId": "exec_79f7585b-226b-44c4-a3dc-6bb03ad549fe",
+            "selectedRoute": "fast",
+            "connector": "review-suspend",
+            "model": "fast",
+            "source": "sticky",
+            "selectionMs": 1.1458339999999794
+          }
+        },
+        "providerRequests": [
+          {
+            "model": "fast",
+            "hasSchema": true
+          },
+          {
+            "model": "fast",
+            "hasSchema": true
+          },
+          {
+            "model": "fast",
+            "hasSchema": true
+          }
+        ],
+        "calls": 3
+      },
+      {
+        "id": "native-default-construction",
+        "nativeDefault": false,
+        "created": false,
+        "error": "Provider review-default-false does not support managed native compaction",
+        "defaultCalls": 0,
+        "alternativeCalls": 0
+      },
+      {
+        "id": "native-default-construction",
+        "nativeDefault": true,
+        "created": true,
+        "selected": {
+          "decisionId": "288f5b24-2671-40b6-a0b5-a7184bfc5f1a",
+          "executionId": "exec_f160972a-a85a-45b2-926f-ab5be4993e1d",
+          "selectedRoute": "native",
+          "connector": "review-alternative-true",
+          "model": "alternative",
+          "source": "policy",
+          "selectionMs": 0.24600000000003774
+        },
+        "defaultCalls": 0,
+        "alternativeCalls": 1
+      },
+      {
+        "id": "disabled-routing-replay-hook",
+        "savedOrigin": {
+          "provider": "replay-review",
+          "connector": "replay-review",
+          "model": "fast",
+          "endpoint": "a65ae58f01ceb5488df8554bef6998d9696553d2f3589974a80e8c6918efc25b",
+          "authority": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+        },
+        "dispatched": 1,
+        "actualModel": "different-model",
+        "opaqueTransferred": true
+      },
+      {
+        "id": "enabled-routing-control",
+        "blocked": true,
+        "error": "A routed execution cannot switch models in a request hook"
+      },
+      {
+        "id": "suspended-valid-native-output",
+        "resumedCompletionChecks": 0,
+        "resumedLoop": {
+          "version": 1,
+          "executionId": "exec_7965c202-1ab0-4bee-b403-3288221e8490",
+          "phase": "running",
+          "iterations": 1,
+          "recoveryAttempts": 0,
+          "observedToolCalls": 0,
+          "consecutiveToolFailures": 0,
+          "repeatedResults": 0,
+          "stalledIterations": 0,
+          "uncertainEffects": []
+        },
+        "initial": {
+          "status": "suspended",
+          "parsed": {
+            "answer": "pending"
+          }
+        },
+        "resumed": {
+          "status": "completed",
+          "text": "{\"answer\":\"valid-but-uncoerced\"}",
+          "parsed": null,
+          "route": {
+            "decisionId": "9df4510b-ee91-4af8-b9d3-cddb064469a5",
+            "executionId": "exec_7965c202-1ab0-4bee-b403-3288221e8490",
+            "selectedRoute": "fast",
+            "connector": "review-suspend",
+            "model": "fast",
+            "source": "sticky",
+            "selectionMs": 1.1469580000000406
+          }
+        },
+        "providerRequests": [
+          {
+            "model": "fast",
+            "hasSchema": true
+          },
+          {
+            "model": "fast",
+            "hasSchema": true
+          },
+          {
+            "model": "fast",
+            "hasSchema": true
+          }
+        ],
+        "calls": 3
+      }
+    ],
+    "programs": [
+      {
+        "file": "/tmp/oneringai-stage14-review.mjs",
+        "sha256": "8f406cd68ff3149e1f6612d8a70f45b28f00954ac284a79f7a4d1a26305efc94",
+        "source": "import { Agent, Connector, ContentType, MessageRole, StreamEventType, Vendor, ModelTask, SuspendSignal, StorageRegistry, createFileContextStorage, FileCorrelationStorage, ContextCompactionStrategy } from '/Users/aantich/dev/oneringai/dist/index.js';\nimport { mkdtemp, rm, writeFile } from 'node:fs/promises';\nimport { join } from 'node:path';\nimport { tmpdir } from 'node:os';\nconst evidence=[];let completionChecks=0;\nfunction provider(name, responses=[], native=false) {\n const requests=[];\n const generate=async o=> { requests.push(o); const output=responses.length ? responses.shift() : 'ACK'; const blocks=typeof output==='string' ? [{type:'message',role:'assistant',content:[{type:'output_text',text:output}]}] : output;\n return { id:'response-'+requests.length,object:'response',created_at:1,model:o.model,status:'completed',output:blocks,output_text:typeof output==='string'?output:'', usage:{input_tokens:10,output_tokens:2,total_tokens:12} }; };\n const value={name,capabilities:{text:true,images:false,videos:false,audio:false},generate,\n async *streamGenerate(o){const r=await generate(o);yield {type:StreamEventType.OUTPUT_TEXT_DELTA,response_id:r.id,item_id:'text',output_index:0,content_index:0,sequence_number:1,delta:r.output_text};yield {type:StreamEventType.RESPONSE_COMPLETE,response_id:r.id,status:'completed',usage:r.usage,iterations:1};},\n getModelCapabilities:()=>({supportsTools:true,supportsVision:false,supportsJSON:true,supportsJSONSchema:true,maxTokens:16000,maxInputTokens:16000,maxOutputTokens:512}),validateConfig:async()=>true,listModels:async()=>[],\n ...(native?{compaction:{countInput:async()=>100,compact:async()=>({protocol:'review-native',input:[{type:'compaction',id:'compact',encrypted_content:'opaque'}],usage:{input_tokens:50,output_tokens:10,total_tokens:60}})}}:{})};\n return {value,requests};\n}\nconst features={workingMemory:false,inContextMemory:false};\nconst directory=await mkdtemp(join(tmpdir(),'routing-review-'));\ntry {\n StorageRegistry.configure({sessions:id=>createFileContextStorage(id,{baseDirectory:directory}),correlations:new FileCorrelationStorage({baseDirectory:join(directory,'correlations')})});\n const toolOutput=[{type:'message',role:'assistant',content:[{type:'tool_use',id:'wait-1',name:'wait_event',arguments:'{}'}]}];\n const p=provider('review-suspend',[toolOutput,'{\"answer\":\"pending\"}','NOT_JSON','{\"answer\":\"repaired\"}']);\n Connector.create({name:'review-suspend',vendor:Vendor.OpenAI,auth:{type:'none'},options:{provider:p.value}});\n const agent=Agent.create({loopPolicy:{completion:()=>{completionChecks++;return {complete:true};}},connector:'review-suspend',model:'main',context:{model:'main',features},modelExecution:{customProviderAttempts:'single',routing:{routes:{fast:{model:'fast'}},select:()=> 'fast'}},tools:[{definition:{type:'function',function:{name:'wait_event',description:'wait',parameters:{type:'object',properties:{}}}},execute:async()=>SuspendSignal.create({result:'waiting',correlationId:'review:event'})}]});\n try {\n const format={type:'json_schema',name:'answer',strict:true,schema:{type:'object',properties:{answer:{type:'string'}},required:['answer'],additionalProperties:false}};\n const first=await agent.run('Wait then answer JSON',{responseFormat:format});\n completionChecks=0;const second=await agent.run('The external event arrived');\n evidence.push({id:'suspended-output-format',resumedCompletionChecks:completionChecks,resumedLoop:second.loop,initial:{status:first.status,parsed:first.output_parsed},resumed:{status:second.status,text:second.output_text,parsed:second.output_parsed??null,route:second.routing},providerRequests:p.requests.map(r=>({model:r.model,hasSchema:!!r.response_format})),calls:agent.getModelUsage()?.totals.calls});\n }finally{agent.destroy();}\n StorageRegistry.reset();\n for(const nativeDefault of [false,true]){\n const a=provider('review-default-'+nativeDefault,[],nativeDefault),b=provider('review-alternative-'+nativeDefault,[],true);\n Connector.create({name:'review-default-'+nativeDefault,vendor:Vendor.Google,auth:{type:'none'},options:{provider:a.value}});\n Connector.create({name:'review-alternative-'+nativeDefault,vendor:Vendor.Anthropic,auth:{type:'none'},options:{provider:b.value}});\n let agent;\n try {agent=Agent.create({connector:'review-default-'+nativeDefault,model:'main',context:{model:'main',features:{...features,evidence:true},compactionStrategy:new ContextCompactionStrategy({plugins:'off',history:'native'})},modelExecution:{customProviderAttempts:'single',routing:{routes:{native:{connector:'review-alternative-'+nativeDefault,model:'alternative',allowContextTransfer:true}},select:()=> 'native'}}});await agent.run('Use the supported native route');evidence.push({id:'native-default-construction',nativeDefault,created:true,selected:agent.getRoutingDiagnostics(),defaultCalls:a.requests.length,alternativeCalls:b.requests.length});}\n catch(error){evidence.push({id:'native-default-construction',nativeDefault,created:false,error:error.message,defaultCalls:a.requests.length,alternativeCalls:b.requests.length});}\n finally{agent?.destroy();}\n }\n} finally {StorageRegistry.reset();Connector.clear();await rm(directory,{recursive:true,force:true});}\nawait writeFile('/tmp/oneringai-stage14-review-probes.json',JSON.stringify(evidence,null,2)+'\\n');\nconsole.log(JSON.stringify(evidence,null,2));\n"
+      },
+      {
+        "file": "/tmp/oneringai-stage14-review-replay.mjs",
+        "sha256": "fb71b674ba41deef8219e52ad640f358e2546edfae785120328daf696e74c507",
+        "source": "import { Agent, Connector, Vendor } from '/Users/aantich/dev/oneringai/dist/index.js';\nimport {writeFile} from 'node:fs/promises';\nconst calls=[];let opaque=true;\nconst provider={name:'replay-review',capabilities:{text:true,images:false,videos:false,audio:false},async generate(o){calls.push(o);const output=[...(opaque?[{type:'reasoning',id:'r',encrypted_content:'OPAQUE_FAST_STATE'}]:[]),{type:'message',role:'assistant',content:[{type:'output_text',text:'ACK'}]}];opaque=false;return {id:'r',object:'response',created_at:1,status:'completed',model:o.model,output,output_text:'ACK',usage:{input_tokens:10,output_tokens:2,total_tokens:12}};},async *streamGenerate(){throw new Error('unused');},getModelCapabilities:()=>({supportsTools:true,supportsVision:false,supportsJSON:true,supportsJSONSchema:true,maxTokens:16000,maxInputTokens:16000,maxOutputTokens:512}),validateConfig:async()=>true,listModels:async()=>[]};\nConnector.create({name:'replay-review',vendor:Vendor.OpenAI,auth:{type:'none'},options:{provider}});\nconst common={connector:'replay-review',context:{model:'fast',features:{workingMemory:false,inContextMemory:false}},modelExecution:{customProviderAttempts:'single'}};\nconst a=Agent.create({...common,model:'main',modelExecution:{...common.modelExecution,routing:{routes:{fast:{model:'fast'}},select:()=> 'fast'}}});\nconst report=[];let b,c;\ntry{\n await a.run('produce signed state'); const state=structuredClone(a.context.getState());\n b=Agent.create({...common,model:'fast'});b.context.restoreState(structuredClone(state));b.on('llm:request',event=>{event.options.model='different-model';});\n const before=calls.length;await b.run('continue checkpoint');report.push({id:'disabled-routing-replay-hook',savedOrigin:state.providerStateBinding,dispatched:calls.length-before,actualModel:calls.at(-1).model,opaqueTransferred:JSON.stringify(calls.at(-1).input).includes('OPAQUE_FAST_STATE')});\n c=Agent.create({...common,model:'fast',modelExecution:{...common.modelExecution,routing:{routes:{}}}});c.context.restoreState(structuredClone(state));c.on('llm:request',event=>{event.options.model='different-model';});\n try{await c.run('control');report.push({id:'enabled-routing-control',blocked:false});}catch(error){report.push({id:'enabled-routing-control',blocked:true,error:error.message});}\n}finally{a.destroy();b?.destroy();c?.destroy();Connector.clear();}\nawait writeFile('/tmp/oneringai-stage14-review-replay.json',JSON.stringify(report,null,2)+'\\n');console.log(JSON.stringify(report,null,2));\n"
+      },
+      {
+        "file": "/tmp/oneringai-stage14-review-valid.mjs",
+        "sha256": "cfedc99d480b82a34fc36f7780761152ead25f9be2234f37a02708c28b107c7c",
+        "source": "import { Agent, Connector, ContentType, MessageRole, StreamEventType, Vendor, ModelTask, SuspendSignal, StorageRegistry, createFileContextStorage, FileCorrelationStorage, ContextCompactionStrategy } from '/Users/aantich/dev/oneringai/dist/index.js';\nimport { mkdtemp, rm, writeFile } from 'node:fs/promises';\nimport { join } from 'node:path';\nimport { tmpdir } from 'node:os';\nconst evidence=[];let completionChecks=0;\nfunction provider(name, responses=[], native=false) {\n const requests=[];\n const generate=async o=> { requests.push(o); const output=responses.length ? responses.shift() : 'ACK'; const blocks=typeof output==='string' ? [{type:'message',role:'assistant',content:[{type:'output_text',text:output}]}] : output;\n return { id:'response-'+requests.length,object:'response',created_at:1,model:o.model,status:'completed',output:blocks,output_text:typeof output==='string'?output:'', usage:{input_tokens:10,output_tokens:2,total_tokens:12} }; };\n const value={name,capabilities:{text:true,images:false,videos:false,audio:false},generate,\n async *streamGenerate(o){const r=await generate(o);yield {type:StreamEventType.OUTPUT_TEXT_DELTA,response_id:r.id,item_id:'text',output_index:0,content_index:0,sequence_number:1,delta:r.output_text};yield {type:StreamEventType.RESPONSE_COMPLETE,response_id:r.id,status:'completed',usage:r.usage,iterations:1};},\n getModelCapabilities:()=>({supportsTools:true,supportsVision:false,supportsJSON:true,supportsJSONSchema:true,maxTokens:16000,maxInputTokens:16000,maxOutputTokens:512}),validateConfig:async()=>true,listModels:async()=>[],\n ...(native?{compaction:{countInput:async()=>100,compact:async()=>({protocol:'review-native',input:[{type:'compaction',id:'compact',encrypted_content:'opaque'}],usage:{input_tokens:50,output_tokens:10,total_tokens:60}})}}:{})};\n return {value,requests};\n}\nconst features={workingMemory:false,inContextMemory:false};\nconst directory=await mkdtemp(join(tmpdir(),'routing-review-'));\ntry {\n StorageRegistry.configure({sessions:id=>createFileContextStorage(id,{baseDirectory:directory}),correlations:new FileCorrelationStorage({baseDirectory:join(directory,'correlations')})});\n const toolOutput=[{type:'message',role:'assistant',content:[{type:'tool_use',id:'wait-1',name:'wait_event',arguments:'{}'}]}];\n const p=provider('review-suspend',[toolOutput,'{\"answer\":\"pending\"}','{\"answer\":\"valid-but-uncoerced\"}','{\"answer\":\"repaired\"}']);\n Connector.create({name:'review-suspend',vendor:Vendor.OpenAI,auth:{type:'none'},options:{provider:p.value}});\n const agent=Agent.create({loopPolicy:{completion:()=>{completionChecks++;return {complete:true};}},connector:'review-suspend',model:'main',context:{model:'main',features},modelExecution:{customProviderAttempts:'single',routing:{routes:{fast:{model:'fast'}},select:()=> 'fast'}},tools:[{definition:{type:'function',function:{name:'wait_event',description:'wait',parameters:{type:'object',properties:{}}}},execute:async()=>SuspendSignal.create({result:'waiting',correlationId:'review:event'})}]});\n try {\n const format={type:'json_schema',name:'answer',strict:true,schema:{type:'object',properties:{answer:{type:'string'}},required:['answer'],additionalProperties:false}};\n const first=await agent.run('Wait then answer JSON',{responseFormat:format});\n completionChecks=0;const second=await agent.run('The external event arrived');\n evidence.push({id:'suspended-valid-native-output',resumedCompletionChecks:completionChecks,resumedLoop:second.loop,initial:{status:first.status,parsed:first.output_parsed},resumed:{status:second.status,text:second.output_text,parsed:second.output_parsed??null,route:second.routing},providerRequests:p.requests.map(r=>({model:r.model,hasSchema:!!r.response_format})),calls:agent.getModelUsage()?.totals.calls});\n }finally{agent.destroy();}\n StorageRegistry.reset();\n for(const nativeDefault of [false,true]){\n const a=provider('review-default-'+nativeDefault,[],nativeDefault),b=provider('review-alternative-'+nativeDefault,[],true);\n Connector.create({name:'review-default-'+nativeDefault,vendor:Vendor.Google,auth:{type:'none'},options:{provider:a.value}});\n Connector.create({name:'review-alternative-'+nativeDefault,vendor:Vendor.Anthropic,auth:{type:'none'},options:{provider:b.value}});\n let agent;\n try {agent=Agent.create({connector:'review-default-'+nativeDefault,model:'main',context:{model:'main',features:{...features,evidence:true},compactionStrategy:new ContextCompactionStrategy({plugins:'off',history:'native'})},modelExecution:{customProviderAttempts:'single',routing:{routes:{native:{connector:'review-alternative-'+nativeDefault,model:'alternative',allowContextTransfer:true}},select:()=> 'native'}}});await agent.run('Use the supported native route');evidence.push({id:'native-default-construction',nativeDefault,created:true,selected:agent.getRoutingDiagnostics(),defaultCalls:a.requests.length,alternativeCalls:b.requests.length});}\n catch(error){evidence.push({id:'native-default-construction',nativeDefault,created:false,error:error.message,defaultCalls:a.requests.length,alternativeCalls:b.requests.length});}\n finally{agent?.destroy();}\n }\n} finally {StorageRegistry.reset();Connector.clear();await rm(directory,{recursive:true,force:true});}\nawait writeFile('/tmp/oneringai-stage14-review-valid-probes.json',JSON.stringify(evidence,null,2)+'\\n');\nconsole.log(JSON.stringify(evidence,null,2));\n"
+      }
+    ],
+    "logs": [
+      {
+        "path": "/tmp/oneringai-stage14-review-probes.log",
+        "sha256": "c3040b41949480f75ade6c27ffee0d27da72d42e23a33ee98c50cd3b99d2e7bb"
+      },
+      {
+        "path": "/tmp/oneringai-stage14-review-replay.log",
+        "sha256": "27611fc64b9c45445a69699eed8dafea7354e9e2e423d351b0cff70f2d2ecb6b"
+      },
+      {
+        "path": "/tmp/oneringai-stage14-review-valid.log",
+        "sha256": "34cf992f85d5ea84dde8fc59d0ebe8711dd250e90ea7aa5e1f3e69fd7be7b64e"
+      }
+    ]
+  },
+  "focusedValidation": {
+    "testsPassed": 275,
+    "filesPassed": 8,
+    "failed": 0,
+    "skipped": 0,
+    "report": {
+      "path": "/tmp/oneringai-stage14-review-unit.json",
+      "sha256": "7f0b6cdc1e890bbd4a4b52c7a6bbdc75c6d5624cd69507862354679dad23d54f"
+    },
+    "log": {
+      "path": "/tmp/oneringai-stage14-review-unit.log",
+      "sha256": "24984f842c68745c0983a6ebcf66274e3569af08ab7995ce11b7f33092a14f75"
+    },
+    "publicCompatibility": {
+      "passed": true,
+      "command": "npm run test:agentic:compat",
+      "log": {
+        "path": "/tmp/oneringai-stage14-review-compat.log",
+        "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+      }
+    },
+    "limits": "The existing focused tests pass but do not cover these counterexamples. No full unit/live rerun claimed for this review; previous delivery evidence is historical."
+  },
+  "implementationUnchanged": true,
+  "implementationManifest": [
+    {
+      "path": "apps/amos/examples/routing-offline.ts",
+      "sha256": "d8d2b44add6b4f656f89302951b3c1d572460d471f88e2e2d5b13eb1772105cc"
+    },
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "sha256": "6257d9951fc8b089a66b59053851c81289a6af3fbbb3f87bf9a6f03b555ed991"
+    },
+    {
+      "path": "apps/amos/src/agent/routing.ts",
+      "sha256": "ed98647740aa7545e6bae33607d357f1511b1ab3753e308180cc3d0ca2c67445"
+    },
+    {
+      "path": "apps/amos/src/app.ts",
+      "sha256": "ed10f9be79525cfcf03ab395a090c2c52ca462194597bf98ff9385448184bd1b"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/HelpersCommand.ts",
+      "sha256": "19298e99c55997d7b716ae390b8c4ab466cd84edb3c0b06a52e136ae307f3007"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/RoutingCommand.ts",
+      "sha256": "f7eb4fd115b550cc3793e175f621cadae89197debb6cc6b9076febd1addbfba0"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/index.ts",
+      "sha256": "4fa076b5ffd9d06150043f04e3ac65d4e31acac3450630cb758b9217798798c9"
+    },
+    {
+      "path": "apps/amos/src/config/types.ts",
+      "sha256": "e1f593190fb57f8da4d65d6ada3d677e01ab17bbb8e14ebc53cf938a6f2a60fd"
+    },
+    {
+      "path": "examples/adaptive-model-routing.ts",
+      "sha256": "33bb1f9be1b131e12d9a2ceca7e65c9df49396f1c951279223379eb85b8cc2ed"
+    },
+    {
+      "path": "examples/model-routing/fixture.ts",
+      "sha256": "ab9e32dc77a76433d894c025809e674eb178b995a17d57eb8eb1632212aaea07"
+    },
+    {
+      "path": "examples/routing-with-context.ts",
+      "sha256": "cccc99c0f87d6a0e67f87f28543048d11ccb3149c68340bf739a66cc60d725c7"
+    },
+    {
+      "path": "package.json",
+      "sha256": "a43165210429c1d27abd3a85a313b65e29f65c56553e7f05ef14c3ce47e67c14"
+    },
+    {
+      "path": "scripts/generate-api-docs.ts",
+      "sha256": "5e5077395ee18c338cac45d876aab5874f059102e706c8fcede0e33da2b2b255"
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "72d5c253fe0fed882f5c4e24f01548fb7b310eb6a365feb4ed3441ef8dc82666"
+    },
+    {
+      "path": "src/core/BaseAgent.ts",
+      "sha256": "86ff8cd9c1edd8648c6a509207b961e33946da6de49eee5a14d06b6f5d1a0d9b"
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "b86a9f10f641eebe1f8b2555e614ad81ad3a627627023504953fbde52f178001"
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/coordinator.ts",
+      "sha256": "640a93bd0a69ca90f37f2c227b067953ee93f2ca04fec9482a63fb6a50d25eb4"
+    },
+    {
+      "path": "src/core/context-nextgen/types.ts",
+      "sha256": "ba0fc7f36c32e9d62d87fc1660b8ccf01ec4ba67f4c7a7097e5fcb15f81f1359"
+    },
+    {
+      "path": "src/core/index.ts",
+      "sha256": "15151552d9c68d90268ee358a99e7d8268117bb23a2799c68e7197a8dd8ce7fb"
+    },
+    {
+      "path": "src/core/model-execution/ModelExecutor.ts",
+      "sha256": "b4d00e5ed6b8ff2d79345ab2560503ab1ecbbde18cd64ff885beee8d11e0df88"
+    },
+    {
+      "path": "src/core/model-execution/ModelTask.ts",
+      "sha256": "76b431ebfabf8706a877cf7636cd740619376b112866684f2c712eb3a94b238f"
+    },
+    {
+      "path": "src/core/model-execution/routing.ts",
+      "sha256": "b701f656c7b025a264f02fb4feed36bcad837d9e7ca30bee9a8f520e6a7c086b"
+    },
+    {
+      "path": "src/core/model-execution/types.ts",
+      "sha256": "c1914cf41713b3952559267e9d9439a01f189d2056fece3720b4d4b7207cbcc4"
+    },
+    {
+      "path": "src/domain/entities/Response.ts",
+      "sha256": "7c4bf0676f846493eafb2b6fa00aeb424e81d8ee858f8169961c49a26dc797ae"
+    },
+    {
+      "path": "src/domain/entities/StreamEvent.ts",
+      "sha256": "2def464b4133e850986ca1b65ed0b0787b9ac489f4fede94c7d6b1d4fa90189e"
+    },
+    {
+      "path": "src/domain/interfaces/IContextStorage.ts",
+      "sha256": "1e5d25f3066fe26780efd051ec1ec1db57875f8d4b9365b48013f6779171a48c"
+    },
+    {
+      "path": "src/domain/interfaces/ITextProvider.ts",
+      "sha256": "41a26f433bd31f048abeac384c5788a2b532da0d98b3894246e42be5879bede7"
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "4fe8c994b28413ec258454c8172c64b88a9477ec166f29a8decffb177eef8e90"
+    },
+    {
+      "path": "src/infrastructure/providers/anthropic/AnthropicTextProvider.ts",
+      "sha256": "4de5e09a02b70fe5f1c13c79c4e233af046a7901d9305c590d095ee8148d9bb3"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "fb50dae590624a2f8aff303b8a2e3163e9b411ff11d2df3e8bfd9aabee7706cd"
+    },
+    {
+      "path": "src/types/index.ts",
+      "sha256": "9f7d6d3e294df9fe4b5078af2bcd30665bf74c9d542c57d4458ec83daf6f1d5d"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage14-consumer.ts",
+      "sha256": "34826347845e095aea67530b131256541f18f266913b36967f52fd061122cbab"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "sha256": "1f3a36ae1c96737d69998a25368b943e9d7be4ceca0a24557355aef2b73896af"
+    },
+    {
+      "path": "tests/fixtures/model-routing/held-out.json",
+      "sha256": "6a28dc8d8b6d870ee57f9c7006b4de9cba3018ed98c14cd5bcdd6c7bf9e9df19"
+    },
+    {
+      "path": "tests/fixtures/model-routing/public-runtime.mjs",
+      "sha256": "ea05853c9422924e70e8a8e95feee26f99178cc36125e177c31084b6571f86e9"
+    },
+    {
+      "path": "tests/integration/text/ModelExecution.live.integration.test.ts",
+      "sha256": "fecb39f064312b161bacb862c3e5c327d3cb52bc42bedde4d5d0d90071af5ba1"
+    },
+    {
+      "path": "tests/integration/text/ModelRouting.live.integration.test.ts",
+      "sha256": "0261abac59618c6ca07ddd43b6097348ea272d1b5fe9be4832d9088c2cf36bb4"
+    },
+    {
+      "path": "tests/unit/apps/amos/Routing.test.ts",
+      "sha256": "625c1abbdc732c6d819eafc42fa201ad37aef1838f9a7c28afd1522e4611417b"
+    },
+    {
+      "path": "tests/unit/core/routing/anthropic-source.test.ts",
+      "sha256": "ed98b7bd0caf7ecfc2bbee35761234193dfbbbe9aee45b8b2d68f703af886db7"
+    },
+    {
+      "path": "tests/unit/core/routing/fixture.ts",
+      "sha256": "4cc90810118577fecf3c850e8e92c497c1351d2c22591e8d5a1ae2045385ee63"
+    },
+    {
+      "path": "tests/unit/core/routing/lifecycle.test.ts",
+      "sha256": "3d1fa0cad50213a45d2a7068dd16964e9d58c02f49ff4686fe22ea941306f820"
+    },
+    {
+      "path": "tests/unit/core/routing/managed.test.ts",
+      "sha256": "5cd3c2ccd83d2576168d906b55adfc03aa52b1d7f90d3dd29363d08904492a10"
+    },
+    {
+      "path": "tests/unit/core/routing/selection.test.ts",
+      "sha256": "d70659add380eec0af1020c5dbaa78677859dedbe678052e3b919b0e67035e6a"
+    },
+    {
+      "path": "tests/unit/providers/NativeCompaction.test.ts",
+      "sha256": "cbd847322674902189f678818fbe3705b6de61d45b5c664c17808d0fcf5f44eb"
+    }
+  ],
+  "breakingChangeApproved": false,
+  "runtimeFixesMade": false,
+  "documentationHandoff": "Review/fix plan, current Stage 14A availability/adoption/handoff and roadmap reopened; delivery validation artifact retained as historical evidence. Package inventory updates pending corrective delivery.",
+  "documentationValidation": {
+    "checked": 2605,
+    "errors": [],
+    "whitespaceErrors": 0
+  }
+}

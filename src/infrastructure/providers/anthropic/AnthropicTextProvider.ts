@@ -111,10 +111,12 @@ export class AnthropicTextProvider extends BaseTextProvider {
   private async countNativeInput(options: TextGenerateOptions): Promise<number | null> {
     options = this.applyContextLimitGuardrail({ ...options, skipContextLimitCheck: true });
     await this.assertNativeModel(options);
-    const request = this.converter.convertRequest({ ...options, nativeContext: true });
+    const request = this.converter.convertRequest({ ...options, nativeContext: true,
+      ...(options.nativeCompactionSource ? { vendorOptions: { ...options.vendorOptions, compaction: { type: 'summarize' } } } : {}) });
     const { model, messages, system, tools, thinking, tool_choice } = request;
     const response = await withoutModelTracking(() => this.client.beta.messages.countTokens({ model, messages, system, tools, thinking, tool_choice,
-      betas: [ANTHROPIC_COMPACTION_BETA], ...(request.output_config ? { output_config: request.output_config } : {}) } as Anthropic.Beta.MessageCountTokensParams,
+      betas: [ANTHROPIC_COMPACTION_BETA], ...(request.output_config ? { output_config: request.output_config } : {}),
+      ...((request as Anthropic.Beta.MessageCountTokensParams).compaction ? { compaction: (request as Anthropic.Beta.MessageCountTokensParams).compaction } : {}) } as Anthropic.Beta.MessageCountTokensParams,
       ...modelRequestOptions(options)));
     return Number.isSafeInteger(response.input_tokens) && response.input_tokens >= 0 ? response.input_tokens : null;
   }

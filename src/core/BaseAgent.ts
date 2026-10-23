@@ -51,6 +51,7 @@ import type { IConnectorRegistry } from '../domain/interfaces/IConnectorRegistry
 import { StorageRegistry } from './StorageRegistry.js';
 import { ConnectorTools } from '../tools/connector/ConnectorTools.js';
 import { ModelTask } from './model-execution/ModelTask.js';
+import { restrictDataHandling, assertNoRoutingOverride } from './model-execution/routing.js';
 import { generateModel, streamModel, invokeConfiguredHelper } from './model-execution/ModelExecutor.js';
 import type { ModelExecutionConfig, ModelTaskSnapshot, HelperRole, HelperInputContext, HelperCallOptions, HelperResult } from './model-execution/types.js';
 
@@ -381,7 +382,9 @@ export abstract class BaseAgent<
   protected _provider: ITextProvider;
   protected _activeModelTask?: ModelTask;
   protected _modelExecutionSignal?: AbortSignal;
-  private _ownsModelTask = false;
+  /** @internal Used only by managed calls; direct/helper calls keep their own binding. */
+  protected _managedModelBinding?: import('./model-execution/routing.js').ModelExecutionBinding;
+  protected _ownsModelTask = false;
   private _lastModelTask?: ModelTask;
   private readonly _modelLifetimeAbort = new AbortController();
   private readonly _helperControllers = new Set<AbortController>();
@@ -1070,6 +1073,7 @@ export abstract class BaseAgent<
     input: string | InputItem[],
     options: DirectCallOptions = {}
   ): Promise<LLMResponse> {
+    assertNoRoutingOverride(options);
     if (this._isDestroyed) {
       throw new Error('Agent has been destroyed');
     }
@@ -1160,6 +1164,7 @@ export abstract class BaseAgent<
     input: string | InputItem[],
     options: DirectCallOptions = {}
   ): AsyncIterableIterator<StreamEvent> {
+    assertNoRoutingOverride(options);
     if (this._isDestroyed) {
       throw new Error('Agent has been destroyed');
     }
@@ -1212,9 +1217,9 @@ export abstract class BaseAgent<
     this._ownsModelTask = !!this._activeModelTask && !task;
   }
 
-  protected endModelTask(): void {
+  protected endModelTask(retain = false): void {
     if (this._activeModelTask) this._lastModelTask = this._activeModelTask;
-    if (this._ownsModelTask) this._activeModelTask?.destroy();
+    if (this._ownsModelTask && !retain) this._activeModelTask?.destroy();
     this._activeModelTask = undefined; this._ownsModelTask = false; this._modelExecutionSignal = undefined;
   }
 
@@ -1226,7 +1231,9 @@ export abstract class BaseAgent<
     scope?: { task?: ModelTask; signal?: AbortSignal }): Promise<LLMResponse> {
     const task = scope ? scope.task : this._activeModelTask;
     const signal = scope ? scope.signal : this._modelExecutionSignal;
-    return generateModel(this._provider, this.connector, options, task, this._config.modelExecution, purpose, phase, task?.id,
+    const binding = scope ? undefined : this._managedModelBinding;
+    options = this.guardManagedModel(options, binding);
+    return generateModel(binding?.provider ?? this._provider, binding?.connector ?? this.connector, options, task, binding?.config ?? this._config.modelExecution, purpose, phase, task?.id,
       task ? AbortSignal.any([this._modelLifetimeAbort.signal, ...(signal ? [signal] : [])]) : signal);
   }
 
@@ -1234,8 +1241,21 @@ export abstract class BaseAgent<
     scope?: { task?: ModelTask; signal?: AbortSignal }): AsyncIterableIterator<StreamEvent> {
     const task = scope ? scope.task : this._activeModelTask;
     const signal = scope ? scope.signal : this._modelExecutionSignal;
-    return streamModel(this._provider, this.connector, options, task, this._config.modelExecution, purpose, phase, task?.id,
+    const binding = scope ? undefined : this._managedModelBinding;
+    options = this.guardManagedModel(options, binding);
+    return streamModel(binding?.provider ?? this._provider, binding?.connector ?? this.connector, options, task, binding?.config ?? this._config.modelExecution, purpose, phase, task?.id,
       task ? AbortSignal.any([this._modelLifetimeAbort.signal, ...(signal ? [signal] : [])]) : signal);
+  }
+
+  private guardManagedModel(options: TextGenerateOptions, binding: import('./model-execution/routing.js').ModelExecutionBinding | undefined): TextGenerateOptions {
+    if (!binding) return options;
+    binding.assertCurrent(options);
+    const dispatch = options.managedDispatch;
+    return { ...options, managedDispatch: {
+      prepare: async () => { binding.assertCurrent(options); await dispatch?.prepare(); binding.assertCurrent(options); },
+      assertCurrent: () => { dispatch?.assertCurrent(); binding.assertCurrent(options); },
+      onDispatch: () => { dispatch?.onDispatch?.(); binding.onDispatch(); },
+    } };
   }
 
   /** Invoke an explicitly configured, stateless helper without the main agent's tools or history. */
@@ -1245,7 +1265,8 @@ export abstract class BaseAgent<
     const profile = this._config.modelExecution?.helpers?.[role];
     if (!profile) throw new Error(`Helper role '${role}' is not configured`);
     const selectedProfile = structuredClone(profile);
-    const inheritedHandling = this._config.dataHandling;
+    const inheritedHandling = options.contextTransfer
+      ? restrictDataHandling(this._config.dataHandling, this._managedModelBinding?.dataHandling) : this._config.dataHandling;
     if (inheritedHandling) {
       selectedProfile.dataHandling = { ...inheritedHandling, ...selectedProfile.dataHandling };
       for (const key of ['allowProviderCaching', 'allowBatchRetention', 'allowProviderTools', 'allowThirdPartyTools'] as const) {
@@ -1253,7 +1274,7 @@ export abstract class BaseAgent<
       }
     }
     const connector = this.resolveConnector(selectedProfile.connector);
-    if (options.contextTransfer && connector !== this.connector && !selectedProfile.allowContextTransfer) {
+    if (options.contextTransfer && connector !== (this._managedModelBinding?.connector ?? this.connector) && !selectedProfile.allowContextTransfer) {
       throw new Error('Compactor context transfer to another connector requires allowContextTransfer: true');
     }
     const task = options.modelTask ?? new ModelTask({ limits: this._config.modelExecution?.limits, signal: options.signal });

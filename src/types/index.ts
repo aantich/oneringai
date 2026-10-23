@@ -795,3 +795,6 @@ export type {
 } from '../domain/interfaces/IHistoryManager.js';
 
 export type { ToolExecutionOutcome, ToolExecutionOptions, ToolExecutionReport } from '../core/tool-execution/outcomes.js';
+
+// Managed model routing is opt-in; type-only exports preserve the lightweight subpath.
+export type { ModelRouteConfig, ModelRoutingHints, ModelRoutingRunOptions, ModelRouteCandidate, ModelRoutingContext, ModelRoutingDecision, ModelRoutingConfig, ModelRoutingDiagnostics } from '../core/model-execution/types.js';

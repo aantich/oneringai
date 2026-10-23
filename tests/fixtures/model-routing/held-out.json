@@ -1,0 +1,8 @@
+[
+  { "id": "lookup-103", "taskType": "lookup", "prompt": "Observed order R103 status is SHIPPED. Return that status.", "expected": "SHIPPED" },
+  { "id": "lookup-207", "taskType": "lookup", "prompt": "Observed invoice I207 payment status is PAID. Return that status.", "expected": "PAID" },
+  { "id": "lookup-319", "taskType": "lookup", "prompt": "Observed request Q319 disposition is BACKORDERED. Return that disposition.", "expected": "BACKORDERED" },
+  { "id": "sum-14", "taskType": "calculation", "prompt": "Sum the confirmed quantities 4, 7 and 3. Return the decimal integer as a string.", "expected": "14" },
+  { "id": "difference-26", "taskType": "calculation", "prompt": "There are 41 confirmed units and 15 reserved units. How many remain? Return the decimal integer as a string.", "expected": "26" },
+  { "id": "unknown-deadline", "taskType": "unclassified", "prompt": "The host-confirmed delivery deadline is 2026-11-12. Return the exact ISO date.", "expected": "2026-11-12" }
+]

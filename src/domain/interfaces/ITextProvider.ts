@@ -38,10 +38,12 @@ export interface ThinkingConfig {
 }
 
 export interface TextGenerateOptions {
+  /** @internal Count a native compaction source using the same operation mode as compaction. */
+  nativeCompactionSource?: boolean;
   /** @internal Strict managed native replay; never sent as a vendor parameter. */
   nativeContext?: boolean;
   /** @internal Native frame counting before admission and synchronous final freshness. */
-  managedDispatch?: { prepare(): Promise<void>; assertCurrent(): void };
+  managedDispatch?: { prepare(): Promise<void>; assertCurrent(): void; onDispatch?(): void };
   /** Optional cooperative cancellation for this provider call. */
   signal?: AbortSignal;
   model: string;

@@ -165,6 +165,8 @@ export interface IterationCompleteEvent extends BaseStreamEvent {
  * Response complete - final event
  */
 export interface ResponseCompleteEvent extends BaseStreamEvent {
+  /** Optional managed routing decision, without a new stream event kind. */
+  routing?: import('../../core/model-execution/types.js').ModelRoutingDiagnostics;
   /** Optional managed-loop verdict; provider status keeps its existing meaning. */
   loop?: import('./AgentLoop.js').AgentLoopDiagnostics;
   type: StreamEventType.RESPONSE_COMPLETE;

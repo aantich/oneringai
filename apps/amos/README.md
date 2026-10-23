@@ -40,6 +40,7 @@ On first run, you'll be prompted to configure an API key.
 |---------|-------|-------------|
 | `/help` | | Show all commands |
 | `/preset [inspect\|set research\|workflow\|off]` | `/profile` | Save next-agent selection and inspect actual capabilities |
+| `/routing [sub]` | `/route` | Configure named models, explicit host rules/hints and inspect actual decisions |
 | `/helpers [sub]` | `/helper` | Configure explicit helper models, invoke them and inspect purpose usage |
 | `/model [name]` | `/m` | List or switch models |
 | `/astra <sub>` | `/gpt6` | Use Astra and demonstrate its Responses APIs |
@@ -563,3 +564,41 @@ known incompatible caps or replay data reject before mutation/native billing.
 Run `npm run example:amos-native-compaction` from the library root for a deterministic
 configuration/command/restart walkthrough. The library
 [native guide](../../docs/NATIVE_CONTEXT_COMPACTION.md) documents support and recovery.
+
+
+## Named model routes (Stage 14A)
+
+`/routing set fast <connector> <model>` adds an active registry model; append
+`allow-transfer` to explicitly allow another connector/account. Set
+`/routing rule lookup fast`, `/routing use auto`, then
+`/routing hints lookup gather` for a host category rule. `/routing use fast` forces
+an alternative, `use default` forces the main model, `/routing` displays config and
+the last actual decision, and `/routing off` returns to default execution while
+preserving separately configured helpers. These commands do not call an LLM.
+
+Rules/hints are JSON host configuration, not model classification or a serialized
+callback. AMOS displays selected model/reason beside run and stream responses;
+`/helpers usage` shows actual model-task attribution. Hints do not automatically
+create a cross-run shared task/phase pin. A run keeps its model through tools and
+compaction; incompatible native state and pending/queued background work protect
+agent replacement. Unsupported transfers fail without replay on another model.
+Ordinary configurations have no routing policy.
+
+After the library build, `npm run example:amos-routing` at repository root exercises
+the real runner/commands/config persistence offline and removes its temp files.
+Read the [routing recipe](../../docs/MODEL_ROUTING.md) for API/defaults, native
+checkpoint restore, cross-vendor options, budgets, diagnostics and live setup.
+
+Stage 14A corrections also apply through the AMOS adapter: a supported native
+alternative can be selected when the unused default lacks a compaction adapter.
+Restored opaque state retains its exact-owner checks when routing is off. The
+library's [suspended recovery example](../../examples/routing-suspension-recovery.ts)
+illustrates inherited JSON parsing/repair and host completion. No additional AMOS
+command or serialized configuration field is required for these fixes.
+
+Repeated failed event resumes now retain the original task limits and route.
+The existing runner cancellation explicitly abandons that execution, without
+undoing its wait or deleting the observation. Adapter tests cover both run and
+stream rejection/retry. JSON repair retains the admitted owner of opaque output;
+structured suspension is checkpointed only after finalization. The library example's
+`--failed-finalization` mode illustrates saved recovery receipts and zero tool replay.

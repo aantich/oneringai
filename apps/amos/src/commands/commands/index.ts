@@ -16,3 +16,5 @@ export { HelpersCommand } from './HelpersCommand.js';
 export { PresetCommand } from './PresetCommand.js';
 export { ClearCommand, ExitCommand, StatusCommand, HistoryCommand, PlanCommand } from './UtilCommands.js';
 export { ExternalCommand } from './ExternalCommand.js';
+
+export { RoutingCommand } from './RoutingCommand.js';

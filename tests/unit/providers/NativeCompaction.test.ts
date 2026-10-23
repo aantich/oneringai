@@ -478,7 +478,7 @@ describe('16A third-review managed Anthropic output admission', () => {
       if (mode === 'manual') await f.agent.compactContext({ modelTask: task });
       else if (mode === 'run') expect((await f.agent.run('Next', { modelTask: task })).output_text).toBe('ANSWER_37');
       else for await (const _event of f.agent.stream('Next', { modelTask: task })) { /* drain */ }
-      const native = sent.find(item => item.body.compaction)!.body;
+      const native = sent.find(item => !item.url.includes('/count_tokens') && item.body.compaction)!.body;
       expect(native.max_tokens).toBe(12288); expect(native.thinking).toEqual({ type: 'enabled', budget_tokens: 8192 });
       expect(execute.mock.calls.find(([descriptor]) => descriptor.purpose === 'compactor')![0].outputTokenBound).toBe(native.max_tokens);
       if (mode !== 'manual') {
@@ -494,12 +494,12 @@ describe('16A third-review managed Anthropic output admission', () => {
     try {
       await expect(f.agent.run('Next', { thinking: { enabled: true, mode: 'enabled', budgetTokens: 8192 } })).rejects.toThrow(/thinking budgetTokens/);
       expect(sent).toHaveLength(0); expect(put).not.toHaveBeenCalled(); expect(hooks).toBe(0); expect(f.agent.getModelUsage()!.totals.calls).toBe(0);
-      await f.agent.compactContext(); expect(sent.find(item => item.body.compaction)!.body.max_tokens).toBe(cap);
+      await f.agent.compactContext(); expect(sent.find(item => !item.url.includes('/count_tokens') && item.body.compaction)!.body.max_tokens).toBe(cap);
     } finally { f.agent.destroy(); }
   });
   it('respects a valid host cap rather than increasing it for the summary allowance', async () => {
     const sent = http(), f = fixture({ maxOutputTokensPerCall: 10000 });
-    try { await f.agent.compactContext(); expect(sent.find(item => item.body.compaction)!.body.max_tokens).toBe(10000); }
+    try { await f.agent.compactContext(); expect(sent.find(item => !item.url.includes('/count_tokens') && item.body.compaction)!.body.max_tokens).toBe(10000); }
     finally { f.agent.destroy(); }
   });
   it('reserves native source headroom for fixed thinking before archival', async () => {
@@ -509,7 +509,7 @@ describe('16A third-review managed Anthropic output admission', () => {
     vi.spyOn(provider, 'getModelCapabilities').mockImplementation(model => ({ ...original(model), maxInputTokens: 16000, maxTokens: 16000 }));
     try {
       await expect(f.agent.compactContext()).rejects.toThrow('source cannot fit');
-      expect(put).not.toHaveBeenCalled(); expect(sent.some(item => item.body.compaction)).toBe(false);
+      expect(put).not.toHaveBeenCalled(); expect(sent.some(item => !item.url.includes('/count_tokens') && item.body.compaction)).toBe(false);
     } finally { f.agent.destroy(); }
   });
 });

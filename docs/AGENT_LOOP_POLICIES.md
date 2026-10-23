@@ -295,3 +295,12 @@ completion in both modes. Host-selected tool steps make this a functional wiring
 test, not a free-planning benchmark or general quality/cost improvement claim.
 See the [implementation/validation record](designs/STAGE_10_IMPLEMENTATION.md)
 and [Version 2 adoption guide](VERSION_2_GUIDE.md) for current gates and limits.
+
+
+## Optional managed routes
+
+[Model routing](./MODEL_ROUTING.md) chooses once before managed execution. Bounded
+loop recovery, JSON repair, tool iterations and background/suspended continuation
+retain the same binding and task allowance. Recovery does not reroute or repeat an
+uncertain action on another model. Model selection diagnostics remain separate
+from host completion checks and do not establish workflow success.

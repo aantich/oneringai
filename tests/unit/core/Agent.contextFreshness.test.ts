@@ -17,7 +17,8 @@ const provider = vi.hoisted(() => ({ generate: vi.fn(), streamGenerate: vi.fn(),
   capabilities: { text: true, images: true, videos: false, audio: false },
   getModelCapabilities: () => ({ supportsTools: true, supportsVision: true, supportsJSON: true,
     supportsJSONSchema: true, maxTokens: 128000, maxOutputTokens: 4096 }) }));
-vi.mock('@/core/createProvider.js', () => ({ createProvider: () => provider }));
+vi.mock('@/core/createProvider.js', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/core/createProvider.js')>(), createProvider: () => provider }));
 const agents: Agent[] = [];
 beforeEach(() => {
   vi.clearAllMocks();

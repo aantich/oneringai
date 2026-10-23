@@ -29,7 +29,8 @@ const mockProvider = {
   })),
 };
 
-vi.mock('@/core/createProvider.js', () => ({
+vi.mock('@/core/createProvider.js', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/core/createProvider.js')>(),
   createProvider: vi.fn(() => mockProvider),
 }));
 

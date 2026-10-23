@@ -738,7 +738,7 @@ function generateMarkdown(items: DocItem[], config: GeneratorConfig): string {
 
   for (const category of sortedCategories) {
     const categoryItems = byCategory.get(category)!;
-    const anchor = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const anchor = category.toLowerCase().replace(/[^a-z0-9 -]/g, '').replace(/ /g, '-');
     lines.push(`- [${category}](#${anchor}) (${categoryItems.length} items)`);
   }
   lines.push('');

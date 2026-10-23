@@ -64,6 +64,8 @@ export interface ProviderStopDetails {
 }
 
 export interface LLMResponse {
+  /** Optional managed routing decision; model/usage retain provider meanings. */
+  routing?: import('../../core/model-execution/types.js').ModelRoutingDiagnostics;
   /** Opt-in managed-loop diagnostics; separate from provider generation status. */
   loop?: import('./AgentLoop.js').AgentLoopDiagnostics;
   id: string;

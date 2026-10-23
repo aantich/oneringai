@@ -518,6 +518,7 @@ during application shutdown.
 | Selective context data, companion registration and cache-aware layout | `docs/CONTEXT_ASSEMBLY.md` |
 | Bounded run/stream recovery and host completion checks | `docs/AGENT_LOOP_POLICIES.md` |
 | Durable tool evidence, projections and recovery | `docs/DURABLE_EVIDENCE.md` |
+| Named managed model routes, host selection, native ownership and diagnostics | `docs/MODEL_ROUTING.md` |
 | Explicit helper models, shared model budgets and purpose usage | `docs/MODEL_TASKS_AND_HELPERS.md` |
 | Tool outcomes, cancellation, and connector deadlines/retries | `docs/TOOL_OUTCOMES_AND_CANCELLATION.md` |
 | Long-term memory | `docs/MEMORY_GUIDE.md` |
@@ -880,3 +881,62 @@ known conflicts reject before archival. Main settings remain unchanged. Native
 streaming is internal and cancellation closes it; unusable summaries retain billed
 iteration usage. Use `npm run example:native-hooks-manual` for the explicit path,
 with `-- --live=anthropic` to exercise an 8192-token fixed budget.
+
+
+## Optional managed model routing (Stage 14A)
+
+The user authorized 14A implementation on 2026-10-22 by replying “proceed” to the
+[API proposal](docs/designs/STAGE_14_ROUTING_AND_DELEGATION_API.md). Stage 14B is
+still deferred; this approval does not permit a breaking change or release.
+
+Use optional `modelExecution.routing` with named `routes` and a bounded host
+`select`, and `RunOptions.routing` for hints, explicit route or `null` opt-out.
+`default` means the configured main model. Selection is before input/preparation;
+one execution keeps its selected connector/model, existing plugins/tools and
+active ModelTask through retries, repair and compaction. Public defaults are not
+mutated. Inspect optional response/stream completion `routing` and task usage;
+selection alone does not prove dispatch or completion.
+
+Other connectors/accounts require `allowContextTransfer: true`. Provider-bound
+state keeps its exact owner; native checkpoint restore resolves only host-configured
+authorized routes and verified scope. Do not replay failed writes on another route.
+Phase continuity requires this exact shared ModelTask and latest phase; callbacks,
+pins and authority are not restored from sessions. Async/suspended work retains its
+original binding/task. Complete/cancel queued work before replacing its owner;
+`hasPendingAsyncTools(true)` includes queued current deliveries.
+
+Helpers/direct/external/explicit maintenance keep their existing owners. Managed
+JSON repair retains the admitted evidence/instructions and remains tool-free;
+streaming repair is still unsupported. Read [routing](docs/MODEL_ROUTING.md) for
+settings, budget/capability checks, cross-vendor options and native cap limitations.
+
+Stage 14A corrective contracts: saved opaque state retains exact-owner guards
+even when routing is omitted; actual post-hook admission owns newly observed
+opaque output. Portable legacy model hooks remain supported. A suspended routed
+`run(event)` inherits its effective format/route/task and performs bounded parsing/
+repair plus the host completion check. Local JSON coercion remains parse-only;
+streaming does not gain repair. Supported explicit resume overrides apply without
+relaxing data prohibitions. Native binding waits for route selection; explicit
+idle maintenance retains its configured owner. See the routing recipe and
+`example:routing-suspension`.
+
+Stage 14A second corrections (2026-10-23) preserve ordered repair replay items and
+their admitted owner even without routing. Repeated rejected resumes retain the
+original task/route/options until successful completion or explicit host `cancel`.
+Cancellation never undoes an action. Structured suspension finalizes before saving
+and publishing success; failed finalization checkpoints the actual wait/correlation
+with optional `metadata.suspensionFinalization` diagnostics. Preserve observations
+when storage fails, and never rerun a registration to repair bookkeeping. Both
+checkpoint and finalization errors survive as an AggregateError when necessary.
+Snapshots do not restore task authority. See the
+[second corrective record](docs/designs/STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md)
+and `example:routing-suspension -- --failed-finalization`. Supported provider/storage
+contracts, public content-only replacement, defaults and no-repair streaming remain.
+No later stage, breaking change or release is authorized.
+
+The Stage 14A live cost gate also corrected Google GenerateContent explicit thinking
+opt-out: `thinking.enabled: false` sends zero budget on Gemini 2.5 Flash/Flash-Lite
+and preview aliases through the shared Google/Vertex converter. Omitted defaults,
+enabled settings and explicit vendor overrides retain their behavior. Do not infer
+that Pro, 3.x, image/unknown models or Interactions can disable thinking; those paths
+are unchanged. The original pilot quality/cost thresholds remain in force.

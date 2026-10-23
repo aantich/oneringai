@@ -12,7 +12,8 @@ import { ToolCallState } from '@/domain/entities/Tool.js';
 import type { ToolFunction } from '@/domain/entities/Tool.js';
 const provider = vi.hoisted(() => ({ name: 'fixture', capabilities: { text: true }, generate: vi.fn(), streamGenerate: vi.fn(),
   getModelCapabilities: () => ({ supportsTools: true, supportsVision: false, supportsJSON: true, supportsJSONSchema: true, maxTokens: 128000 }) }));
-vi.mock('@/core/createProvider.js', () => ({ createProvider: () => provider }));
+vi.mock('@/core/createProvider.js', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/core/createProvider.js')>(), createProvider: () => provider }));
 const agents: Agent[] = [];
 function textResponse() { return { id: 'done', object: 'response', created_at: 1, model: 'gpt-4o-mini', status: 'completed', output_text: 'done',
   output: [{ type: 'message', role: MessageRole.ASSISTANT, content: [{ type: ContentType.OUTPUT_TEXT, text: 'done' }] }], usage: { input_tokens: 1, output_tokens: 1, total_tokens: 2 } }; }

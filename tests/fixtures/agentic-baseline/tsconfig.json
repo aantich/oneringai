@@ -15,7 +15,8 @@
     "stage10-consumer.ts",
     "stage12-consumer.ts",
     "stage05-consumer.ts",
-    "stage16-consumer.ts"
+    "stage16-consumer.ts",
+    "stage14-consumer.ts"
   ],
   "exclude": []
 }

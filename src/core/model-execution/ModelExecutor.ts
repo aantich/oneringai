@@ -113,10 +113,10 @@ function prepare(provider: ITextProvider, connector: Connector, options: TextGen
 export async function generateModel(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task?: ModelTask,
   config?: ModelExecutionConfig, purpose = 'main', phase: ModelCallDescriptor['phase'] = 'generation', parentInvocationId?: string, signal?: AbortSignal): Promise<LLMResponse> {
   if (options.managedDispatch) await options.managedDispatch.prepare();
-  if (!task) { options.managedDispatch?.assertCurrent(); return provider.generate(options); }
+  if (!task) { options.managedDispatch?.assertCurrent(); options.managedDispatch?.onDispatch?.(); return provider.generate(options); }
   const selected = prepare(provider, connector, options, task, config, purpose, phase, parentInvocationId);
   return (await task.execute(selected.descriptor, scopedSignal => provider.generate({ ...selected.options, signal: scopedSignal }),
-    { signal, transport: selected.transport, usage: response => response.usage, beforeDispatch: options.managedDispatch?.assertCurrent })).result;
+    { signal, transport: selected.transport, usage: response => response.usage, beforeDispatch: options.managedDispatch?.assertCurrent, onDispatch: options.managedDispatch?.onDispatch })).result;
 }
 
 /** @internal Billable native operation shares conservative main-model admission, not helper routing. */
@@ -137,7 +137,7 @@ export async function compactModel(provider: ITextProvider, connector: Connector
     catch (error) { observed = getFailedModelUsage(error); throw error; }
   },
     { signal: options.signal, transport: selected.transport, usage: response => response.usage ?? undefined,
-      observedUsage: () => observed, beforeDispatch: options.managedDispatch?.assertCurrent });
+      observedUsage: () => observed, beforeDispatch: options.managedDispatch?.assertCurrent, onDispatch: options.managedDispatch?.onDispatch });
   return { response: result.result, invocationId: result.invocationId };
 }
 
@@ -145,11 +145,11 @@ export async function compactModel(provider: ITextProvider, connector: Connector
 export async function* streamModel(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task?: ModelTask,
   config?: ModelExecutionConfig, purpose = 'main', phase: ModelCallDescriptor['phase'] = 'generation', parentInvocationId?: string, signal?: AbortSignal): AsyncIterableIterator<StreamEvent> {
   if (options.managedDispatch) await options.managedDispatch.prepare();
-  if (!task) { options.managedDispatch?.assertCurrent(); yield* provider.streamGenerate(options); return; }
+  if (!task) { options.managedDispatch?.assertCurrent(); options.managedDispatch?.onDispatch?.(); yield* provider.streamGenerate(options); return; }
   const selected = prepare(provider, connector, options, task, config, purpose, phase, parentInvocationId);
   yield* task.iterate(selected.descriptor, scopedSignal => provider.streamGenerate({ ...selected.options, signal: scopedSignal }),
     { signal, transport: selected.transport, usage: event => event.type === StreamEventType.RESPONSE_COMPLETE ? event.usage : undefined,
-      beforeDispatch: options.managedDispatch?.assertCurrent });
+      beforeDispatch: options.managedDispatch?.assertCurrent, onDispatch: options.managedDispatch?.onDispatch });
 }
 
 /** @internal Helpers are explicit text-only, stateless, tool-free calls. */

@@ -18920,6 +18920,65 @@ and return `{}`; streaming hook return semantics are unchanged. See the
 [selection contract and opt-in live example](docs/TOOL_OUTCOMES_AND_CANCELLATION.md#explicit-anthropic-tool-selection).
 
 
+## Managed model routing (Stage 14A)
+
+Optional `modelExecution.routing` adds named alternative model profiles to the
+same Agent. Configure `routes: { fast: { model: fastModel } }` and a host selector
+such as `select: ({ hints }) => hints.taskType === 'lookup' ? 'fast' : 'default'`.
+Supply `{ routing: { taskType: 'lookup' } }` to managed `run()`/`stream()`, force a
+route with `{ routing: { route: 'fast' } }`, or bypass policy with `{ routing: null }`.
+The implicit default uses the configured connector/model. Selection makes no
+hidden classifier call and precedes context preparation/input mutation.
+
+One execution keeps its selected identity through tool iterations, recovery,
+repair, retries and compaction; public Agent/context defaults stay unchanged.
+Existing plugins and the one shared ToolManager remain in place. Route capacity,
+transfer authority and provider-bound state must be compatible. Another connector
+requires `allowContextTransfer: true`; opaque native/signed state retains its exact
+owner regardless of that permission. Authorized host routes can restore a native
+checkpoint without treating saved policy as authority.
+
+`sticky: 'phase'` reuses a dispatched route only within the same explicitly shared
+`ModelTask`, Agent and latest nonempty phase. Async followups/suspension retain the
+original route/task. Helpers, direct calls, explicit maintenance and external SDK
+loops keep their existing configured owners. Failed provider calls do not replay
+on another model. Stage 14B delegation is separately deferred.
+
+Inspect `response.routing`, the existing stream completion event's optional
+`routing`, or `getRoutingDiagnostics()`. Use task snapshots for actual model costs,
+usage/unknowns and shared limits. Read the [routing recipe](./docs/MODEL_ROUTING.md)
+for complete options, failure behavior, native support and persistence boundaries.
+Build then run `npm run example:model-routing`, `example:routing-context` and
+`example:amos-routing`; all default to offline. AMOS `/routing` configures JSON
+host rules and shows actual selections. Live examples/tests explicitly bill calls.
+This is branch availability, not a verified package release.
+
+Ordinary event resumption of a suspended routed run inherits its output format,
+route and ModelTask. Explicit supported run options override the originating
+options; data-handling prohibitions cannot be relaxed. Local JSON parsing/repair
+and the host completion predicate both run on the resumed final candidate.
+Local coercion guarantees parseability, not full JSON Schema validation. Streaming
+retains its existing no-repair boundary. See `npm run example:routing-suspension`.
+Failed event retries retain the original task and limits; they cannot obtain a
+fresh allowance. Explicit host `agent.cancel(reason)` abandons pending execution
+authority without undoing its action. Structured suspension finalizes before saving
+or publishing success. A formatting failure saves the registered wait/correlation
+with optional `metadata.suspensionFinalization.status: 'failed'`; it never authorizes
+repeating the wait. Storage failure is explicit and may require preserving the
+in-memory observation. See the recipe's recovery boundaries and the example's
+`--failed-finalization` mode. Task budgets and authorization remain process-local.
+Saved opaque state keeps exact-owner dispatch checks even when the restoring
+Agent omits routing. Portable legacy history still permits supported model hooks.
+This includes signed/provider-owned items first produced by JSON repair: ordered
+replay state and its admitted identity survive response replacement and save/load.
+For Google GenerateContent/Vertex, explicit `thinking: { enabled: false }` now
+sends a zero thinking budget on supported Gemini 2.5 Flash/Flash-Lite models.
+Omitted defaults and explicit vendor thinking overrides retain their behavior;
+this does not add a disable capability to Pro, 3.x or Interactions. See the routing
+recipe for the exact supported scope and actual pilot cost evidence.
+A native-capable alternative may be selected with an unsupported default provider;
+idle `compactContext()` still uses its configured owner and requires its adapter.
+
 ## Model tasks and helper models (Stage 06)
 
 Optional `Agent.create({ modelExecution: { helpers: { extractor: {

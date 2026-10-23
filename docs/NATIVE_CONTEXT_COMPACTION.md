@@ -350,3 +350,16 @@ Provider contracts: [OpenAI standalone compaction](https://developers.openai.com
 [Anthropic token counting](https://platform.claude.com/docs/en/build-with-claude/token-counting).
 The small live pilot validates these selected contracts; it does not establish a
 general quality/cost ranking. Stage 16B remains deferred.
+
+
+## Optional managed routes
+
+[Stage 14A](./MODEL_ROUTING.md) binds pre-call counting/compaction to the selected
+managed connector/model and active task. Native source guards compose with route
+scope guards, including after reservation observers. Exact native ownership
+continues across runs and save/load: only host-configured authorized routes can
+resolve the checkpoint owner; saved policy does not grant access. An incompatible
+default selection fails rather than transferring opaque state. Explicit idle
+maintenance keeps its configured default owner. Anthropic source counting uses
+compaction mode, preserving terminal assistant whitespace rather than treating it
+as generation prefill. OpenAI's native hard-output-cap limitation still applies.

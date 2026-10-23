@@ -162,7 +162,7 @@ export async function composeContext(args: {
           }
           const instructions = [frame.request.instructions, ...frame.input.flatMap(item => item.type === 'message' && item.role === 'developer'
             ? item.content.flatMap(block => block.type === ContentType.INPUT_TEXT || block.type === ContentType.OUTPUT_TEXT ? [block.text] : []) : [])].filter(Boolean).join('\n\n');
-          const source = { ...frame.request, input: prefix, instructions, response_format: undefined, tool_choice: undefined };
+          const source = { ...frame.request, nativeCompactionSource: true, input: prefix, instructions, response_format: undefined, tool_choice: undefined };
           const sourceTokens = await args.driver!.countInput(source); stable();
           if (sourceTokens === null || sourceTokens > (args.driver!.maxSourceTokens ?? frameCapacity(frame))) fail('Native compaction source cannot fit the provider window');
           const reference = await args.evidence!._retainCompactionSource(structuredClone(prefix)); stable();

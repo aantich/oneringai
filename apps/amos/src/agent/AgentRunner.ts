@@ -1,3 +1,4 @@
+import { resolveAmosModelExecution } from './routing.js';
 import { createInContextMemoryContributor, InContextMemoryPluginNextGen } from '@everworker/oneringai';
 /**
  * AgentRunner - AMOS adapter for the current OneRingAI Agent API.
@@ -34,6 +35,8 @@ import {
   type ModelTaskSnapshot,
   type AgentLoopPolicy,
   type AgentLoopDiagnostics,
+  type ModelRoutingRunOptions,
+  type ModelRoutingDiagnostics,
 } from '@everworker/oneringai';
 import type {
   AgentResponse,
@@ -102,6 +105,7 @@ export class AgentRunner implements IAgentRunner {
   private readonly storage: AmosSessionStorage;
   private _isRunning = false;
   private _loopPolicyOverride?: AgentLoopPolicy | null;
+  private _routingOverride?: ModelRoutingRunOptions | null;
   private _currentModel: string;
   private _currentTemperature: number;
   private _connectorName = '';
@@ -132,7 +136,11 @@ export class AgentRunner implements IAgentRunner {
     this.assertReplaceable();
     if (this.agent?.context?.getState?.().nativeContinuation) {
       const active = this.agent.context.getState().nativeContinuation!;
-      if (active.binding.connector !== connectorName || active.binding.model !== model
+      const ownerRoute = active.binding.connector === connectorName && active.binding.model === model
+        || Object.values(this.config.modelExecution?.routing?.routes ?? {}).some(route => route.model === active.binding.model
+          && (route.connector ?? connectorName) === active.binding.connector
+          && (active.binding.connector === connectorName || route.allowContextTransfer === true));
+      if (!ownerRoute
         || this.config.contextStrategy !== 'context-compaction' || this.config.contextCompaction?.history === 'off'
         || this.config.evidence?.ownerId !== active.binding.scope.ownerId || this.config.evidence?.namespace !== active.binding.scope.namespace) {
         throw new Error('Native context is bound to its model, connector and scope. Save it and explicitly start a fresh session or restore a trusted pre-native checkpoint first.');
@@ -156,6 +164,7 @@ export class AgentRunner implements IAgentRunner {
     } catch (error) { next.destroy(); throw error; }
     this.destroyAgentOnly();
     this.agent = next;
+    this._routingOverride = undefined;
     this._connectorName = connectorName;
     this._currentModel = model;
     this.activePreset = this.config.preset ?? null;
@@ -165,7 +174,7 @@ export class AgentRunner implements IAgentRunner {
 
   /** AMOS cannot transfer still-running or queued background tool deliveries. */
   assertReplaceable(): void {
-    if (this.isRunning() || this.agent?.hasPendingAsyncTools()) throw new Error('Cannot replace an agent with active execution or pending asynchronous tools');
+    if (this.isRunning() || this.agent?.hasPendingAsyncTools(true)) throw new Error('Cannot replace an agent with active execution or pending asynchronous tools');
   }
 
   /** A fresh session still checkpoints unstored observations before releasing their raw copy. */
@@ -192,7 +201,7 @@ export class AgentRunner implements IAgentRunner {
       model,
       ...(settings.maxIterations === undefined ? {} : { maxIterations: settings.maxIterations }),
       tools: this.tools,
-      modelExecution: settings.modelExecution ?? undefined,
+      modelExecution: resolveAmosModelExecution(settings),
       ...(settings.loopPolicy === undefined ? {} : { loopPolicy: settings.loopPolicy }),
       ...runtimeOptions,
       ...(settings.evidence || settings.taskState || settings.contextStrategy || settings.contextAssembly ? {
@@ -246,6 +255,16 @@ export class AgentRunner implements IAgentRunner {
     return plugin instanceof TaskStatePluginNextGen ? plugin.getState() : undefined;
   }
 
+  getRoutingDiagnostics(): ModelRoutingDiagnostics | undefined { return this.agent?.getRoutingDiagnostics(); }
+  setRoutingOptions(options: ModelRoutingRunOptions | null): void {
+    if (this.isRunning()) throw new Error('Wait for the active operation before changing routing hints');
+    this._routingOverride = options === null ? null : structuredClone(options);
+  }
+  private managedRunOptions(): import('@everworker/oneringai').RunOptions | undefined {
+    const routing = this._routingOverride === undefined ? this.config.routing : this._routingOverride;
+    return this._loopPolicyOverride === undefined && routing === undefined ? undefined
+      : { ...(this._loopPolicyOverride === undefined ? {} : { loopPolicy: this._loopPolicyOverride }), ...(routing === undefined ? {} : { routing }) };
+  }
   getLoopDiagnostics(): AgentLoopDiagnostics | undefined { return this.agent?.getLoopDiagnostics(); }
 
   setLoopPolicy(policy: AgentLoopPolicy | null): void {
@@ -336,7 +355,7 @@ export class AgentRunner implements IAgentRunner {
     agent.tools.on('tool:outcome', collect);
 
     try {
-      const response = await (this._loopPolicyOverride === undefined ? agent.run(input) : agent.run(input, { loopPolicy: this._loopPolicyOverride }));
+      const response = await agent.run(input, this.managedRunOptions());
       const usage: TokenUsage = {
         inputTokens: response.usage.input_tokens,
         outputTokens: response.usage.output_tokens,
@@ -350,6 +369,7 @@ export class AgentRunner implements IAgentRunner {
         duration: Date.now() - startedAt,
         toolOutcomes,
         ...(response.loop ? { loop: response.loop } : {}),
+        ...(response.routing ? { routing: response.routing } : {}),
       };
       await this.autoSaveIfEnabled();
       return result;
@@ -365,7 +385,7 @@ export class AgentRunner implements IAgentRunner {
     this._isRunning = true;
 
     try {
-      const events = this._loopPolicyOverride === undefined ? agent.stream(input) : agent.stream(input, { loopPolicy: this._loopPolicyOverride });
+      const events = agent.stream(input, this.managedRunOptions());
       for await (const event of events) {
         const mapped = this.mapStreamEvent(event);
         if (mapped) yield mapped;
@@ -835,6 +855,7 @@ export class AgentRunner implements IAgentRunner {
         return {
           type: 'done',
           ...(event.loop ? { loop: event.loop } : {}),
+          ...(event.routing ? { routing: event.routing } : {}),
           usage: {
             inputTokens: event.usage.input_tokens,
             outputTokens: event.usage.output_tokens,

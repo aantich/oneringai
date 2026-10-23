@@ -1,0 +1,3288 @@
+{
+  "protocol": "stage-14a-corrections-validation-v1",
+  "recordedAt": "2026-10-22T19:38:32.287683+00:00",
+  "branch": "version2",
+  "baseCommit": "cf87b4a",
+  "status": "All R1\u2013R3 fixed and validated on branch",
+  "verifiedPackageRelease": false,
+  "authorization": {
+    "instruction": "fix all",
+    "scope": "Correct all three confirmed Stage 14A review findings, tests/examples/AMOS/docs",
+    "breakingChangeApproved": false,
+    "deferred": [
+      "14B",
+      "16B",
+      "breaking API changes",
+      "commit/push/PR",
+      "publication"
+    ]
+  },
+  "compatibility": {
+    "breakingChanges": false,
+    "defaultsChanged": false,
+    "newRequiredProviderOrStorageMembers": false,
+    "sessionVersionChanged": false,
+    "legacyPortableHookOverridesPreserved": true,
+    "directAndIdleMaintenanceOwnersPreserved": true,
+    "localJSONContract": "Parseability with bounded repair; no new full schema enforcement",
+    "streamingJSONRepair": false
+  },
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P1",
+      "status": "fixed",
+      "change": "Independent replay guard across post-hook admission, budget observers and tracked retries; newly observed opaque output retains admitted identity."
+    },
+    {
+      "id": "R2",
+      "priority": "P1",
+      "status": "fixed",
+      "change": "One effective-option finalization flow for run/resumption/async, inherited JSON parsing/repair and host completion, same route/task and restrictive data policy."
+    },
+    {
+      "id": "R3",
+      "priority": "P2",
+      "status": "fixed",
+      "change": "Defer routed native binding until route selection; preserve explicit idle/nonrouting owner requirements and host-native checkpoint preflight."
+    }
+  ],
+  "unit": {
+    "success": true,
+    "testsPassed": 8723,
+    "filesPassed": 383,
+    "failed": 0,
+    "skipped": 0,
+    "report": {
+      "path": "/tmp/stage14-fix-final-unit.json",
+      "sha256": "105419b5583300dd769a7c087fc3cb34c21b52864c75ac9f80c1c3fd1b0712d3",
+      "bytes": 2782376
+    },
+    "log": {
+      "path": "/tmp/stage14-fix-final-unit.log",
+      "sha256": "39ccea84d0198094e6bfd4a2fe4bfb099c3e2be41e191c1d69b7947cad3e4bfd",
+      "bytes": 2279324
+    }
+  },
+  "newUnitCases": 35,
+  "focused": {
+    "success": true,
+    "testsPassed": 50,
+    "filesPassed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "report": {
+      "path": "/tmp/stage14-fix-final-focused.json",
+      "sha256": "24855a493a8a61c057f7129bf1d9db71b11afe1a397d9a5d011120ce6fdb9fd8",
+      "bytes": 18581
+    },
+    "log": {
+      "path": "/tmp/stage14-fix-final-focused.log",
+      "sha256": "46dd35721c277902c1114dea831fb907248d24e851c98b46b29e49a4f0c868bd",
+      "bytes": 104307
+    }
+  },
+  "focusedRoutingCoverage": {
+    "lines": {
+      "total": 121,
+      "covered": 121,
+      "skipped": 0,
+      "pct": 100
+    },
+    "statements": {
+      "total": 121,
+      "covered": 121,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 12,
+      "covered": 12,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 183,
+      "covered": 170,
+      "skipped": 0,
+      "pct": 92.89
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": "Unknown"
+    }
+  },
+  "live": {
+    "success": true,
+    "testsPassed": 221,
+    "filesPassed": 13,
+    "failed": 0,
+    "skipped": 0,
+    "report": {
+      "path": "/tmp/stage14-fix-verified-live.json",
+      "sha256": "bb471bfaafcb1bb063a9435d198c3b927ab0176b329b73d508199738a96bad4b",
+      "bytes": 104212
+    },
+    "log": {
+      "path": "/tmp/stage14-fix-verified-live.log",
+      "sha256": "7e4001225a70e68ae6c2b53d59dc261163d610fcafd8ba6bd05751852d00434a",
+      "bytes": 568
+    },
+    "providers": [
+      "OpenAI",
+      "Anthropic",
+      "Google"
+    ],
+    "execution": "Full 13-suite matrix plus entire 16-case ContextFreshness suite rerun after deterministic sampling and intended stream output-cap fixture correction; unique cases counted once. No runtime source change between runs.",
+    "initialMatrix": {
+      "success": false,
+      "testsPassed": 220,
+      "filesPassed": 12,
+      "failed": 1,
+      "skipped": 0,
+      "report": {
+        "path": "/tmp/stage14-fix-final-live.json",
+        "sha256": "7934a85babff0f31c0a7ac1132ffa2546ad2e14ef286cf8d2e9bb41a72ed6df8",
+        "bytes": 75074
+      },
+      "log": {
+        "path": "/tmp/stage14-fix-final-live.log",
+        "sha256": "321f30c0f91f2359dc2af8eb0a8a6940492dfa632ad71fd42848b95e44390bcf",
+        "bytes": 741287
+      }
+    },
+    "affectedWholeSuiteRerun": {
+      "success": true,
+      "testsPassed": 16,
+      "filesPassed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "report": {
+        "path": "/tmp/stage14-fix-freshness-rerun.json",
+        "sha256": "6fe5330e2c17601565dd502c92a9ef3e7c02ba0ce8b26fed15c6a2fbd9a77b3b",
+        "bytes": 5965
+      },
+      "log": {
+        "path": "/tmp/stage14-fix-freshness-rerun.log",
+        "sha256": "6455ad4dc5bcacd1dc97dfee5564916ff655cb096a7c0a4c0bc13d980b83f018",
+        "bytes": 47712
+      }
+    },
+    "initialMatrixSuiteReports": [
+      {
+        "path": "/tmp/stage14-fix-final-live-agent_loop_report_path.json",
+        "sha256": "3df801e381c107e6a6eda0799b21e7f9031a980a6d18234262581259fcc99149",
+        "bytes": 69250,
+        "protocol": "stage10-live-v1",
+        "observations": 18
+      },
+      {
+        "path": "/tmp/stage14-fix-final-live-agent_presets_report_path.json",
+        "sha256": "b2d8e68f6e8635c2a3f74cc69fa6eb97bab0a91834673a91340f8b084b6ad2d2",
+        "bytes": 77702,
+        "protocol": "stage12-live-v1",
+        "observations": 12
+      },
+      {
+        "path": "/tmp/stage14-fix-final-live-agent_session_corrections_report_path.json",
+        "sha256": "a35f82aeefaa249b0936eee220b1f5b4829c769b2dc09fb682205c9372459ecc",
+        "bytes": 6228,
+        "protocol": "stage12-session-corrections-live-v1",
+        "observations": 3
+      },
+      {
+        "path": "/tmp/stage14-fix-final-live-baseline_report_path.json",
+        "sha256": "3ff40bff79ce06f12a914b0d7a606fd3c56ba630ca2b1bb31ae03086e49f2c78",
+        "bytes": 70796,
+        "protocol": "stage-00-v1",
+        "observations": 24
+      },
+      {
+        "path": "/tmp/stage14-fix-final-live-context_assembly_report_path.json",
+        "sha256": "69f91fcf342b8ae3f1f7ed852ecea4df2a329c3d73678f4494939612ec26f562",
+        "bytes": 140951,
+        "protocol": "stage05-live-v1",
+        "observations": 39
+      },
+      {
+        "path": "/tmp/stage14-fix-final-live-context_freshness_report_path.json",
+        "sha256": "d5200cd6ffd7178a7e774dba5fe0db05e658afe75e34b4a18af052ba60d93451",
+        "bytes": 8548,
+        "protocol": "stage-01-corrections-v2",
+        "observations": 16
+      },
+      {
+        "path": "/tmp/stage14-fix-final-live-context_strategy_report_path.json",
+        "sha256": "3fbc4aa2d61b997056684f6b5a97ae2f84a80ff58934419b9848725c77710b6f",
+        "bytes": 1203071,
+        "protocol": "stage-07-live-v1",
+        "observations": 40
+      },
+      {
+        "path": "/tmp/stage14-fix-final-live-evidence_report_path.json",
+        "sha256": "18f8388e4bae535ca6fd8013046ef3b7f28df03507a9459db163fb172b228b83",
+        "bytes": 9807,
+        "protocol": "stage-03",
+        "observations": 18
+      },
+      {
+        "path": "/tmp/stage14-fix-final-live-model_execution_report_path.json",
+        "sha256": "c61879d5d952fa9786fe72c70c5dd0dab2c6825792bc06fd3ffba429aa1d15a0",
+        "bytes": 42258,
+        "protocol": "stage-06-live-v1",
+        "observations": 14
+      },
+      {
+        "path": "/tmp/stage14-fix-final-live-model_routing_report_path.json",
+        "sha256": "7c87fcb22ebb6da50236162ac5c9381b4650fd61cbf6230c9ad14ab8dce00b53",
+        "bytes": 218109,
+        "protocol": "stage-14a-live-v1",
+        "observations": 20
+      },
+      {
+        "path": "/tmp/stage14-fix-final-live-native_compaction_report_path.json",
+        "sha256": "3042e8379f116a3c5bfe0f9cec39fd42b9c5c4f6fc615b0b1705f5f224ddcc48",
+        "bytes": 41336,
+        "protocol": "stage-16a-native-live-v1",
+        "observations": 11
+      },
+      {
+        "path": "/tmp/stage14-fix-final-live-task_state_report_path.json",
+        "sha256": "36f3f219f23d1342989e0f8dc791d8b964bf80c4a80c70abb21517129f034beb",
+        "bytes": 30008,
+        "protocol": "stage04-live-v1",
+        "observations": 12
+      },
+      {
+        "path": "/tmp/stage14-fix-final-live-tool_outcomes_report_path.json",
+        "sha256": "eef1a7e30723ce5de22bbcafe0502b80a052110d0188af58d56575447b4b897a",
+        "bytes": 3898,
+        "protocol": "stage-02",
+        "observations": 6
+      }
+    ],
+    "correctedFreshnessReport": {
+      "path": "/tmp/stage14-fix-freshness-rerun-report.json",
+      "sha256": "5bdd5761563b0cf2a3ec0a0c465b9e6ad8ccb56b68ab093723b240e0686dabb5",
+      "bytes": 9187
+    },
+    "cases": [
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies openai run recovery",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies openai run blocked",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies openai stream recovery",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies openai stream blocked",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies anthropic run recovery",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies anthropic run blocked",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies anthropic stream recovery",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies anthropic stream blocked",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies google run recovery",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies google run blocked",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies google stream recovery",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies google stream blocked",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies openai run stopped read survives formatting and next managed input",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies openai stream stopped read survives formatting and next managed input",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies anthropic run stopped read survives formatting and next managed input",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies anthropic stream stopped read survives formatting and next managed input",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies google run stopped read survives formatting and next managed input",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "name": "Stage 10 live bounded managed policies google stream stopped read survives formatting and next managed input",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "name": "Stage 12 real-provider preset smoke openai research run",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "name": "Stage 12 real-provider preset smoke openai research stream",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "name": "Stage 12 real-provider preset smoke openai workflow run",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "name": "Stage 12 real-provider preset smoke openai workflow stream",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "name": "Stage 12 real-provider preset smoke anthropic research run",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "name": "Stage 12 real-provider preset smoke anthropic research stream",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "name": "Stage 12 real-provider preset smoke anthropic workflow run",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "name": "Stage 12 real-provider preset smoke anthropic workflow stream",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "name": "Stage 12 real-provider preset smoke google research run",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "name": "Stage 12 real-provider preset smoke google research stream",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "name": "Stage 12 real-provider preset smoke google workflow run",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "name": "Stage 12 real-provider preset smoke google workflow stream",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentSessionCorrections.live.integration.test.ts",
+        "name": "Stage 12 session correction continuation openai continues from original history and authority after recovery",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentSessionCorrections.live.integration.test.ts",
+        "name": "Stage 12 session correction continuation anthropic continues from original history and authority after recovery",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgentSessionCorrections.live.integration.test.ts",
+        "name": "Stage 12 session correction continuation google continues from original history and authority after recovery",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "name": "Stage 00 live managed trajectories openai chat completes with real LLM calls and local fixture tools",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "name": "Stage 00 live managed trajectories openai large-observation completes with real LLM calls and local fixture tools",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "name": "Stage 00 live managed trajectories openai research completes with real LLM calls and local fixture tools",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "name": "Stage 00 live managed trajectories openai external-workflow completes with real LLM calls and local fixture tools",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "name": "Stage 00 live managed trajectories anthropic chat completes with real LLM calls and local fixture tools",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "name": "Stage 00 live managed trajectories anthropic large-observation completes with real LLM calls and local fixture tools",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "name": "Stage 00 live managed trajectories anthropic research completes with real LLM calls and local fixture tools",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "name": "Stage 00 live managed trajectories anthropic external-workflow completes with real LLM calls and local fixture tools",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "name": "Stage 00 live managed trajectories google chat completes with real LLM calls and local fixture tools",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "name": "Stage 00 live managed trajectories google large-observation completes with real LLM calls and local fixture tools",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "name": "Stage 00 live managed trajectories google research completes with real LLM calls and local fixture tools",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "name": "Stage 00 live managed trajectories google external-workflow completes with real LLM calls and local fixture tools",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers openai reconciles host-edited run input",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers openai reconciles host-edited stream input",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers openai records actual run wrap-up usage",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers openai records actual stream wrap-up usage",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers openai keeps ordinary JSON repair",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers openai blocks stale JSON repair",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers anthropic reconciles host-edited run input",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers anthropic reconciles host-edited stream input",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers anthropic records actual run wrap-up usage",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers anthropic records actual stream wrap-up usage",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers anthropic keeps ordinary JSON repair",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers anthropic blocks stale JSON repair",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers google reconciles host-edited run input",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers google reconciles host-edited stream input",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers google records actual run wrap-up usage",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers google records actual stream wrap-up usage",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers google keeps ordinary JSON repair",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 review corrections with actual providers google blocks stale JSON repair",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly openai legacy run",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly openai legacy stream",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly openai stable-prefix run",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly openai stable-prefix stream",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly openai observes actual cache counters without requiring a hit",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly anthropic legacy run",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly anthropic legacy stream",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly anthropic stable-prefix run",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly anthropic stable-prefix stream",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly anthropic observes actual cache counters without requiring a hit",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly google legacy run",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly google legacy stream",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly google stable-prefix run",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly google stable-prefix stream",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 actual-provider assembly google observes actual cache counters without requiring a hit",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 second corrections with actual providers openai formats a pressured candidate before consolidation",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 second corrections with actual providers openai persists one structured suspended observation",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 second corrections with actual providers anthropic formats a pressured candidate before consolidation",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 second corrections with actual providers anthropic persists one structured suspended observation",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 second corrections with actual providers google formats a pressured candidate before consolidation",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "name": "Stage 05 second corrections with actual providers google persists one structured suspended observation",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness openai compacts old history using the known structured schema",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness openai retrieves both sources after separate spills with colliding keys",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness openai run retrieves evidence from the rebuilt working-memory index",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness openai stream retrieves evidence from the rebuilt working-memory index",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness openai repairs a controlled malformed answer through a real tool-free call",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness anthropic compacts old history using the known structured schema",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness anthropic retrieves both sources after separate spills with colliding keys",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness anthropic run retrieves evidence from the rebuilt working-memory index",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness anthropic stream retrieves evidence from the rebuilt working-memory index",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness anthropic repairs a controlled malformed answer through a real tool-free call",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness google compacts old history using the known structured schema",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness google retrieves both sources after separate spills with colliding keys",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness google run retrieves evidence from the rebuilt working-memory index",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness google stream retrieves evidence from the rebuilt working-memory index",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness google repairs a controlled malformed answer through a real tool-free call",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "name": "Stage 01 live context freshness Google thinking tool calls retain replay signatures through serialized context",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out configuration-generation/observation-masking/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out distribution-signature/structured-summary/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out namespace-audit/algorithmic/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out replication-checkpoint/structured-summary/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out replication-checkpoint/algorithmic/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out recovery-approval/algorithmic/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out policy-waiver/observation-masking/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out policy-waiver/structured-summary/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out replication-checkpoint/algorithmic/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out recovery-approval/structured-summary/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out configuration-generation/algorithmic/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out distribution-signature/algorithmic/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out replication-checkpoint/observation-masking/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out distribution-signature/observation-masking/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out configuration-generation/observation-masking/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out recovery-approval/observation-masking/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out namespace-audit/algorithmic/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out replication-checkpoint/observation-masking/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out namespace-audit/structured-summary/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out namespace-audit/observation-masking/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out recovery-approval/observation-masking/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out policy-waiver/structured-summary/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out namespace-audit/observation-masking/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out configuration-generation/structured-summary/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out policy-waiver/algorithmic/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out configuration-generation/algorithmic/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out replication-checkpoint/structured-summary/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out policy-waiver/algorithmic/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out recovery-approval/algorithmic/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out recovery-approval/structured-summary/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out configuration-generation/structured-summary/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out namespace-audit/structured-summary/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out policy-waiver/observation-masking/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out distribution-signature/algorithmic/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out distribution-signature/observation-masking/1",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison held-out distribution-signature/structured-summary/0",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison openai automatic helper produces a valid referenced summary before main",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison anthropic automatic helper produces a valid referenced summary before main",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison google automatic helper produces a valid referenced summary before main",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "name": "Stage 07 live structured compaction and held-out comparison google automatic helper produces a valid referenced summary before main after recorded empty-output injection",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence openai restores a delivery-only pending failed observation before a real model request",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence anthropic restores a delivery-only pending failed observation before a real model request",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence google restores a delivery-only pending failed observation before a real model request",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence openai run: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence openai stream: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence openai storage-failure: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence openai hook-mutation: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence openai stream-close: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence anthropic run: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence anthropic stream: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence anthropic storage-failure: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence anthropic hook-mutation: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence anthropic stream-close: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence google run: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence google stream: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence google storage-failure: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence google hook-mutation: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/Evidence.live.integration.test.ts",
+        "name": "Stage 03 live evidence google stream-close: exact evidence recovery or raw fallback",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "name": "Stage 06 live model-task and helper execution openai repairs a controlled helper schema failure using retained source evidence",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "name": "Stage 06 live model-task and helper execution anthropic repairs a controlled helper schema failure using retained source evidence",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "name": "Stage 06 live model-task and helper execution google repairs a controlled helper schema failure using retained source evidence",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "name": "Stage 06 live model-task and helper execution accounts for live Google thinking separately from visible output: run",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "name": "Stage 06 live model-task and helper execution accounts for live Google thinking separately from visible output: stream",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "name": "Stage 06 live model-task and helper execution accepts a live Anthropic fixed-budget extended-thinking helper",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "name": "Stage 06 live model-task and helper execution openai run shares helper/main usage without tools or state transfer",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "name": "Stage 06 live model-task and helper execution openai stream shares helper/main usage without tools or state transfer",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "name": "Stage 06 live model-task and helper execution anthropic run shares helper/main usage without tools or state transfer",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "name": "Stage 06 live model-task and helper execution anthropic stream shares helper/main usage without tools or state transfer",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "name": "Stage 06 live model-task and helper execution google run shares helper/main usage without tools or state transfer",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "name": "Stage 06 live model-task and helper execution google stream shares helper/main usage without tools or state transfer",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "name": "Stage 06 live model-task and helper execution uses a separate Anthropic compactor for an explicit OpenAI context rollover",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "name": "Stage 06 live model-task and helper execution counts a controlled real OpenAI structured repair once per dispatched invocation",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot openai routes run/stream/default within one explicit task",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot openai resumes structured suspension with original evidence, repair and host completion",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot openai keeps a real tool roundtrip and final JSON on the selected model",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot openai meets the predeclared held-out quality and token-cost gates",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot openai retains original evidence during a controlled main JSON repair",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot anthropic routes run/stream/default within one explicit task",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot anthropic resumes structured suspension with original evidence, repair and host completion",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot anthropic keeps a real tool roundtrip and final JSON on the selected model",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot anthropic meets the predeclared held-out quality and token-cost gates",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot anthropic retains original evidence during a controlled main JSON repair",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot google routes run/stream/default within one explicit task",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot google resumes structured suspension with original evidence, repair and host completion",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot google keeps a real tool roundtrip and final JSON on the selected model",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot google meets the predeclared held-out quality and token-cost gates",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot google retains original evidence during a controlled main JSON repair",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot moves only portable text between explicitly authorized real providers",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot openai compacts on an alternative route, saves and restores its exact native owner (Google default=false)",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot anthropic compacts on an alternative route, saves and restores its exact native owner (Google default=false)",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot openai compacts on an alternative route, saves and restores its exact native owner (Google default=true)",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "name": "14A live route contracts and fixed held-out pilot anthropic compacts on an alternative route, saves and restores its exact native owner (Google default=true)",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "name": "Stage 16A native provider contracts openai compacts and continues through managed context",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "name": "Stage 16A native provider contracts anthropic compacts and continues through managed context",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "name": "Stage 16A native provider contracts openai repeats compaction, restarts in a new process and streams without replay",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "name": "Stage 16A native provider contracts anthropic repeats compaction, restarts in a new process and streams without replay",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "name": "Stage 16A native provider contracts openai composes automatic native history with fresh selected data",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "name": "Stage 16A native provider contracts anthropic composes automatic native history with fresh selected data",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "name": "Stage 16A native provider contracts openai preserves compaction-hook memory and recovers from a cancelled proof read",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "name": "Stage 16A native provider contracts anthropic preserves compaction-hook memory and recovers from a cancelled proof read",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "name": "Stage 16A native provider contracts rejects oversized raw OpenAI instructions using the actual input-token endpoint without a model invocation",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "name": "Stage 16A third-corrective native contracts openai preserves manual hook notes and continues with unchanged main thinking",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "name": "Stage 16A third-corrective native contracts anthropic preserves manual hook notes and continues with unchanged main thinking",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/TaskState.live.integration.test.ts",
+        "name": "Stage 04 live protected host task state openai run: protected correction and pending remote action",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/TaskState.live.integration.test.ts",
+        "name": "Stage 04 live protected host task state openai stream: protected correction and pending remote action",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/TaskState.live.integration.test.ts",
+        "name": "Stage 04 live protected host task state openai resume: protected correction and pending remote action",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/TaskState.live.integration.test.ts",
+        "name": "Stage 04 live protected host task state openai extractor: protected correction and pending remote action",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/TaskState.live.integration.test.ts",
+        "name": "Stage 04 live protected host task state anthropic run: protected correction and pending remote action",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/TaskState.live.integration.test.ts",
+        "name": "Stage 04 live protected host task state anthropic stream: protected correction and pending remote action",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/TaskState.live.integration.test.ts",
+        "name": "Stage 04 live protected host task state anthropic resume: protected correction and pending remote action",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/TaskState.live.integration.test.ts",
+        "name": "Stage 04 live protected host task state anthropic extractor: protected correction and pending remote action",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/TaskState.live.integration.test.ts",
+        "name": "Stage 04 live protected host task state google run: protected correction and pending remote action",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/TaskState.live.integration.test.ts",
+        "name": "Stage 04 live protected host task state google stream: protected correction and pending remote action",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/TaskState.live.integration.test.ts",
+        "name": "Stage 04 live protected host task state google resume: protected correction and pending remote action",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/TaskState.live.integration.test.ts",
+        "name": "Stage 04 live protected host task state google extractor: protected correction and pending remote action",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ToolOutcomes.live.integration.test.ts",
+        "name": "Stage 02 live tool outcomes openai run distinguishes domain data from normalized execution failure",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ToolOutcomes.live.integration.test.ts",
+        "name": "Stage 02 live tool outcomes openai stream distinguishes domain data from normalized execution failure",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ToolOutcomes.live.integration.test.ts",
+        "name": "Stage 02 live tool outcomes anthropic run distinguishes domain data from normalized execution failure",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ToolOutcomes.live.integration.test.ts",
+        "name": "Stage 02 live tool outcomes anthropic stream distinguishes domain data from normalized execution failure",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ToolOutcomes.live.integration.test.ts",
+        "name": "Stage 02 live tool outcomes google run distinguishes domain data from normalized execution failure",
+        "status": "passed"
+      },
+      {
+        "file": "tests/integration/text/ToolOutcomes.live.integration.test.ts",
+        "name": "Stage 02 live tool outcomes google stream distinguishes domain data from normalized execution failure",
+        "status": "passed"
+      }
+    ]
+  },
+  "newLiveContracts": [
+    {
+      "scenario": "suspended-structured-repair",
+      "provider": "openai",
+      "passed": true,
+      "waits": 1,
+      "checks": 1,
+      "corrupted": true,
+      "snapshot": {
+        "id": "88c9a003-6b64-48a7-920a-10972fb85d6c",
+        "limits": {
+          "maxCalls": 10,
+          "deadline": 1792697523083
+        },
+        "invocations": [
+          {
+            "id": "62c1a8bc-477d-45b3-89da-9ac520eeef43",
+            "parentInvocationId": "88c9a003-6b64-48a7-920a-10972fb85d6c",
+            "purpose": "main",
+            "phase": "generation",
+            "connector": "stage14-suspended-openai",
+            "model": "gpt-4o-mini",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 191,
+              "output_tokens": 2,
+              "total_tokens": 193,
+              "cached_input_tokens": 0,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "service_tier": "default"
+            },
+            "modelCostUSD": 2.9849999999999997e-05,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "841b686b-5a02-41a3-b5da-087e5ccd1799",
+            "parentInvocationId": "88c9a003-6b64-48a7-920a-10972fb85d6c",
+            "purpose": "main",
+            "phase": "wrapup",
+            "connector": "stage14-suspended-openai",
+            "model": "gpt-4o-mini",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 179,
+              "output_tokens": 8,
+              "total_tokens": 187,
+              "cached_input_tokens": 0,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "service_tier": "default"
+            },
+            "modelCostUSD": 3.165e-05,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "56b3389b-d2b4-4f99-ba73-0d6fc248b3ad",
+            "parentInvocationId": "88c9a003-6b64-48a7-920a-10972fb85d6c",
+            "purpose": "main",
+            "phase": "generation",
+            "connector": "stage14-suspended-openai",
+            "model": "gpt-4o-mini",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 214,
+              "output_tokens": 10,
+              "total_tokens": 224,
+              "cached_input_tokens": 0,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "service_tier": "default"
+            },
+            "modelCostUSD": 3.8100000000000005e-05,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "3468c721-6512-47e3-b9d6-3be48f502edb",
+            "parentInvocationId": "88c9a003-6b64-48a7-920a-10972fb85d6c",
+            "purpose": "main",
+            "phase": "repair",
+            "connector": "stage14-suspended-openai",
+            "model": "gpt-4o-mini",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 302,
+              "output_tokens": 10,
+              "total_tokens": 312,
+              "cached_input_tokens": 0,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "service_tier": "default"
+            },
+            "modelCostUSD": 5.13e-05,
+            "lateSettlement": false,
+            "external": false
+          }
+        ],
+        "attempts": [
+          {
+            "id": "56a5b902-2be3-4254-a7a9-bfaafd6d61d4",
+            "invocationId": "62c1a8bc-477d-45b3-89da-9ac520eeef43",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 193,
+            "reservedCostUSD": 2.9849999999999997e-05,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "a0f613aa-a37a-45b1-bcde-37380d2fa87d",
+            "invocationId": "841b686b-5a02-41a3-b5da-087e5ccd1799",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 187,
+            "reservedCostUSD": 3.165e-05,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "74185dca-94b2-4adf-b275-5678682e9e5c",
+            "invocationId": "56b3389b-d2b4-4f99-ba73-0d6fc248b3ad",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 224,
+            "reservedCostUSD": 3.8100000000000005e-05,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "22c51c2d-3192-4e44-9b65-29d9eec4cd90",
+            "invocationId": "3468c721-6512-47e3-b9d6-3be48f502edb",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 312,
+            "reservedCostUSD": 5.13e-05,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          }
+        ],
+        "totals": {
+          "calls": 4,
+          "inputTokens": 886,
+          "outputTokens": 30,
+          "totalTokens": 916,
+          "cachedInputTokens": 0,
+          "reasoningTokens": 0,
+          "knownModelCostUSD": 0.00015089999999999998,
+          "unknownUsageInvocations": 0,
+          "unknownCostInvocations": 0,
+          "unknownChargeAttempts": 0,
+          "chargedTokens": 916,
+          "chargedCostUSD": 0.00015089999999999998
+        }
+      }
+    },
+    {
+      "scenario": "suspended-structured-repair",
+      "provider": "anthropic",
+      "passed": true,
+      "waits": 1,
+      "checks": 1,
+      "corrupted": true,
+      "snapshot": {
+        "id": "764b0bb3-ec9b-4fb4-8888-74fcd6c7b66f",
+        "limits": {
+          "maxCalls": 10,
+          "deadline": 1792697548833
+        },
+        "invocations": [
+          {
+            "id": "966fbba8-ccae-43f7-8b1f-55a2d87a4c83",
+            "parentInvocationId": "764b0bb3-ec9b-4fb4-8888-74fcd6c7b66f",
+            "purpose": "main",
+            "phase": "generation",
+            "connector": "stage14-suspended-anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 780,
+              "output_tokens": 7,
+              "total_tokens": 787,
+              "service_tier": "standard",
+              "speed": "standard"
+            },
+            "modelCostUSD": 0.000815,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "1ec5ffb9-c3ef-444c-acd8-dd3ef156b086",
+            "parentInvocationId": "764b0bb3-ec9b-4fb4-8888-74fcd6c7b66f",
+            "purpose": "main",
+            "phase": "wrapup",
+            "connector": "stage14-suspended-anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 335,
+              "output_tokens": 11,
+              "total_tokens": 346,
+              "service_tier": "standard",
+              "speed": "standard"
+            },
+            "modelCostUSD": 0.00039,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "01155d48-fe4e-4aed-83f3-9c969b61633a",
+            "parentInvocationId": "764b0bb3-ec9b-4fb4-8888-74fcd6c7b66f",
+            "purpose": "main",
+            "phase": "repair",
+            "connector": "stage14-suspended-anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 372,
+              "output_tokens": 11,
+              "total_tokens": 383,
+              "service_tier": "standard",
+              "speed": "standard"
+            },
+            "modelCostUSD": 0.00042699999999999997,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "a9678eba-2aa5-49a5-babb-ecc03e69b41f",
+            "parentInvocationId": "764b0bb3-ec9b-4fb4-8888-74fcd6c7b66f",
+            "purpose": "main",
+            "phase": "generation",
+            "connector": "stage14-suspended-anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 228,
+              "output_tokens": 24,
+              "total_tokens": 252,
+              "service_tier": "standard",
+              "speed": "standard"
+            },
+            "modelCostUSD": 0.000348,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "3deb71fd-b3de-48e5-beb7-114bb28da100",
+            "parentInvocationId": "764b0bb3-ec9b-4fb4-8888-74fcd6c7b66f",
+            "purpose": "main",
+            "phase": "repair",
+            "connector": "stage14-suspended-anthropic",
+            "model": "claude-haiku-4-5-20251001",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 420,
+              "output_tokens": 14,
+              "total_tokens": 434,
+              "service_tier": "standard",
+              "speed": "standard"
+            },
+            "modelCostUSD": 0.00049,
+            "lateSettlement": false,
+            "external": false
+          }
+        ],
+        "attempts": [
+          {
+            "id": "53981fd9-7855-44ad-8ea9-3ca615f830e0",
+            "invocationId": "966fbba8-ccae-43f7-8b1f-55a2d87a4c83",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 787,
+            "reservedCostUSD": 0.001595,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "ea0899ee-84f9-4693-b23c-701fe99b4657",
+            "invocationId": "1ec5ffb9-c3ef-444c-acd8-dd3ef156b086",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 346,
+            "reservedCostUSD": 0.000725,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "253adb9e-9393-4fd4-88e0-269df34da537",
+            "invocationId": "01155d48-fe4e-4aed-83f3-9c969b61633a",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 383,
+            "reservedCostUSD": 0.000799,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "aabe71ca-d5f0-4838-a476-adcdef8fee23",
+            "invocationId": "a9678eba-2aa5-49a5-babb-ecc03e69b41f",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 252,
+            "reservedCostUSD": 0.000576,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "311dbb5c-caaa-47ef-88ce-f66460f19cb2",
+            "invocationId": "3deb71fd-b3de-48e5-beb7-114bb28da100",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 434,
+            "reservedCostUSD": 0.00091,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          }
+        ],
+        "totals": {
+          "calls": 5,
+          "inputTokens": 2135,
+          "outputTokens": 67,
+          "totalTokens": 2202,
+          "cachedInputTokens": 0,
+          "reasoningTokens": 0,
+          "knownModelCostUSD": 0.00247,
+          "unknownUsageInvocations": 0,
+          "unknownCostInvocations": 0,
+          "unknownChargeAttempts": 0,
+          "chargedTokens": 2202,
+          "chargedCostUSD": 0.004605000000000001
+        }
+      }
+    },
+    {
+      "scenario": "suspended-structured-repair",
+      "provider": "google",
+      "passed": true,
+      "waits": 1,
+      "checks": 1,
+      "corrupted": true,
+      "snapshot": {
+        "id": "4164d67c-df9c-40f9-b9ff-cbeb83670682",
+        "limits": {
+          "maxCalls": 10,
+          "deadline": 1792697583232
+        },
+        "invocations": [
+          {
+            "id": "87abf190-ec12-4cc2-bc0f-a69f91521543",
+            "parentInvocationId": "4164d67c-df9c-40f9-b9ff-cbeb83670682",
+            "purpose": "main",
+            "phase": "generation",
+            "connector": "stage14-suspended-google",
+            "model": "gemini-2.5-flash-lite",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 158,
+              "output_tokens": 12,
+              "total_tokens": 170
+            },
+            "modelCostUSD": 2.0600000000000003e-05,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "34e06d9b-073a-47ca-9db5-4cafce743c3c",
+            "parentInvocationId": "4164d67c-df9c-40f9-b9ff-cbeb83670682",
+            "purpose": "main",
+            "phase": "wrapup",
+            "connector": "stage14-suspended-google",
+            "model": "gemini-2.5-flash-lite",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 166,
+              "output_tokens": 14,
+              "total_tokens": 180
+            },
+            "modelCostUSD": 2.22e-05,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "8f2e6445-b494-4f28-8e9d-9ac8e44a50ab",
+            "parentInvocationId": "4164d67c-df9c-40f9-b9ff-cbeb83670682",
+            "purpose": "main",
+            "phase": "repair",
+            "connector": "stage14-suspended-google",
+            "model": "gemini-2.5-flash-lite",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 203,
+              "output_tokens": 14,
+              "total_tokens": 217
+            },
+            "modelCostUSD": 2.5900000000000003e-05,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "21d023f2-bdb0-4db3-b682-303dced23b5b",
+            "parentInvocationId": "4164d67c-df9c-40f9-b9ff-cbeb83670682",
+            "purpose": "main",
+            "phase": "generation",
+            "connector": "stage14-suspended-google",
+            "model": "gemini-2.5-flash-lite",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 203,
+              "output_tokens": 16,
+              "total_tokens": 219
+            },
+            "modelCostUSD": 2.6700000000000002e-05,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "a0467e85-d9d3-40cd-a8a7-4c5a093497e7",
+            "parentInvocationId": "4164d67c-df9c-40f9-b9ff-cbeb83670682",
+            "purpose": "main",
+            "phase": "repair",
+            "connector": "stage14-suspended-google",
+            "model": "gemini-2.5-flash-lite",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 248,
+              "output_tokens": 16,
+              "total_tokens": 264
+            },
+            "modelCostUSD": 3.12e-05,
+            "lateSettlement": false,
+            "external": false
+          }
+        ],
+        "attempts": [
+          {
+            "id": "17635d04-015e-4293-82a2-1d447e49886e",
+            "invocationId": "87abf190-ec12-4cc2-bc0f-a69f91521543",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 170,
+            "reservedCostUSD": 2.0600000000000003e-05,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "06b8e961-d64c-441b-9aa2-1a989bd2ad48",
+            "invocationId": "34e06d9b-073a-47ca-9db5-4cafce743c3c",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 180,
+            "reservedCostUSD": 2.2200000000000004e-05,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "1aff0460-1660-468d-8d85-4a192f2be918",
+            "invocationId": "8f2e6445-b494-4f28-8e9d-9ac8e44a50ab",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 217,
+            "reservedCostUSD": 2.5900000000000003e-05,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "f2b54a4b-dbcf-42ac-8a0d-29b3bc61aada",
+            "invocationId": "21d023f2-bdb0-4db3-b682-303dced23b5b",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 219,
+            "reservedCostUSD": 2.6700000000000002e-05,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "3370329b-73cb-4c2c-804f-2de70e3a229c",
+            "invocationId": "a0467e85-d9d3-40cd-a8a7-4c5a093497e7",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 264,
+            "reservedCostUSD": 3.1200000000000006e-05,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          }
+        ],
+        "totals": {
+          "calls": 5,
+          "inputTokens": 978,
+          "outputTokens": 72,
+          "totalTokens": 1050,
+          "cachedInputTokens": 0,
+          "reasoningTokens": 0,
+          "knownModelCostUSD": 0.0001266,
+          "unknownUsageInvocations": 0,
+          "unknownCostInvocations": 0,
+          "unknownChargeAttempts": 0,
+          "chargedTokens": 1050,
+          "chargedCostUSD": 0.00012660000000000001
+        }
+      }
+    },
+    {
+      "scenario": "native-route-save-restore",
+      "provider": "openai",
+      "passed": true,
+      "configuredDefault": "gemini-2.5-flash",
+      "crossProvider": true,
+      "selectedNativeModel": "gpt-6-astra",
+      "incompatibleSwitchBlocked": true,
+      "snapshot": {
+        "id": "5c3848a5-e2c9-4a19-a4e1-26de83c759c5",
+        "limits": {
+          "maxCalls": 8,
+          "deadline": 1792697677954
+        },
+        "invocations": [
+          {
+            "id": "b5d374b2-4b4f-4296-bf95-b748aa1651c3",
+            "purpose": "compactor",
+            "phase": "generation",
+            "connector": "stage14-native-openai-true",
+            "model": "gpt-6-astra",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 5260,
+              "output_tokens": 162,
+              "total_tokens": 5422,
+              "cached_input_tokens": 0,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              }
+            },
+            "modelCostUSD": 0.060700000000000004,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "e18f7088-549d-422d-b3c0-f1ea0e409d48",
+            "parentInvocationId": "5c3848a5-e2c9-4a19-a4e1-26de83c759c5",
+            "purpose": "main",
+            "phase": "generation",
+            "connector": "stage14-native-openai-true",
+            "model": "gpt-6-astra",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 736,
+              "output_tokens": 20,
+              "total_tokens": 756,
+              "cached_input_tokens": 0,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "service_tier": "default"
+            },
+            "modelCostUSD": 0.00836,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "51d69cc9-0453-46a2-ae62-670a24ea7e9b",
+            "parentInvocationId": "5c3848a5-e2c9-4a19-a4e1-26de83c759c5",
+            "purpose": "main",
+            "phase": "generation",
+            "connector": "stage14-native-openai-true",
+            "model": "gpt-6-astra",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 770,
+              "output_tokens": 20,
+              "total_tokens": 790,
+              "cached_input_tokens": 0,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "service_tier": "default"
+            },
+            "modelCostUSD": 0.0087,
+            "lateSettlement": false,
+            "external": false
+          }
+        ],
+        "attempts": [
+          {
+            "id": "fa783967-e47c-4273-be4f-5441d29db286",
+            "invocationId": "b5d374b2-4b4f-4296-bf95-b748aa1651c3",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 5422,
+            "reservedCostUSD": 0.2873,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "64129d0f-92a0-47c9-9d07-30a687675b5e",
+            "invocationId": "e18f7088-549d-422d-b3c0-f1ea0e409d48",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 756,
+            "reservedCostUSD": 0.0398,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "9d7f3b21-1d76-4fba-b53c-2d00fcb13690",
+            "invocationId": "51d69cc9-0453-46a2-ae62-670a24ea7e9b",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 790,
+            "reservedCostUSD": 0.0415,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          }
+        ],
+        "totals": {
+          "calls": 3,
+          "inputTokens": 6766,
+          "outputTokens": 202,
+          "totalTokens": 6968,
+          "cachedInputTokens": 0,
+          "reasoningTokens": 0,
+          "knownModelCostUSD": 0.07776000000000001,
+          "unknownUsageInvocations": 0,
+          "unknownCostInvocations": 0,
+          "unknownChargeAttempts": 0,
+          "chargedTokens": 6968,
+          "chargedCostUSD": 0.3686
+        }
+      }
+    },
+    {
+      "scenario": "native-route-save-restore",
+      "provider": "anthropic",
+      "passed": true,
+      "configuredDefault": "gemini-2.5-flash",
+      "crossProvider": true,
+      "selectedNativeModel": "claude-sonnet-4-6",
+      "incompatibleSwitchBlocked": true,
+      "snapshot": {
+        "id": "5d1bd155-dd87-4e2a-ac3e-1095813c781a",
+        "limits": {
+          "maxCalls": 8,
+          "deadline": 1792697691443
+        },
+        "invocations": [
+          {
+            "id": "09e2559d-0cf9-4932-beb5-8d99972872a4",
+            "purpose": "compactor",
+            "phase": "generation",
+            "connector": "stage14-native-anthropic-true",
+            "model": "claude-sonnet-4-6",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 7113,
+              "output_tokens": 478,
+              "total_tokens": 7591,
+              "cache_creation_details": {
+                "short_ttl_input_tokens": 0,
+                "extended_ttl_input_tokens": 0
+              },
+              "service_tier": "standard",
+              "speed": "standard"
+            },
+            "modelCostUSD": 0.028509,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "4ae63a4d-d34c-4eda-956d-3230eda642aa",
+            "parentInvocationId": "5d1bd155-dd87-4e2a-ac3e-1095813c781a",
+            "purpose": "main",
+            "phase": "generation",
+            "connector": "stage14-native-anthropic-true",
+            "model": "claude-sonnet-4-6",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 1561,
+              "output_tokens": 37,
+              "total_tokens": 1598,
+              "service_tier": "standard",
+              "speed": "standard"
+            },
+            "modelCostUSD": 0.0052380000000000005,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "59199f00-2980-4668-95ea-d9efec8d5f85",
+            "parentInvocationId": "5d1bd155-dd87-4e2a-ac3e-1095813c781a",
+            "purpose": "main",
+            "phase": "generation",
+            "connector": "stage14-native-anthropic-true",
+            "model": "claude-sonnet-4-6",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 1743,
+              "output_tokens": 79,
+              "total_tokens": 1822,
+              "service_tier": "standard",
+              "speed": "standard"
+            },
+            "modelCostUSD": 0.0064139999999999996,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "0e20f921-04fd-4d7c-96be-945c379c7f17",
+            "purpose": "compactor",
+            "phase": "generation",
+            "connector": "stage14-native-anthropic-true",
+            "model": "claude-sonnet-4-6",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 1670,
+              "output_tokens": 532,
+              "total_tokens": 2202,
+              "cache_creation_details": {
+                "short_ttl_input_tokens": 0,
+                "extended_ttl_input_tokens": 0
+              },
+              "service_tier": "standard",
+              "speed": "standard"
+            },
+            "modelCostUSD": 0.012990000000000002,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "65f3f30c-9a36-4d94-b36a-1494e51a797c",
+            "parentInvocationId": "5d1bd155-dd87-4e2a-ac3e-1095813c781a",
+            "purpose": "main",
+            "phase": "generation",
+            "connector": "stage14-native-anthropic-true",
+            "model": "claude-sonnet-4-6",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 3865,
+              "output_tokens": 153,
+              "total_tokens": 4018,
+              "service_tier": "standard",
+              "speed": "standard"
+            },
+            "modelCostUSD": 0.01389,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "c2479b8d-aacc-4b2b-9c45-bb5dee9d8cd6",
+            "purpose": "compactor",
+            "phase": "generation",
+            "connector": "stage14-native-anthropic-true",
+            "model": "claude-sonnet-4-6",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 1670,
+              "output_tokens": 497,
+              "total_tokens": 2167,
+              "cache_creation_details": {
+                "short_ttl_input_tokens": 0,
+                "extended_ttl_input_tokens": 0
+              },
+              "service_tier": "standard",
+              "speed": "standard"
+            },
+            "modelCostUSD": 0.012465,
+            "lateSettlement": false,
+            "external": false
+          },
+          {
+            "id": "21b61a6b-1876-4eb3-b720-92fbba9876b7",
+            "parentInvocationId": "5d1bd155-dd87-4e2a-ac3e-1095813c781a",
+            "purpose": "main",
+            "phase": "generation",
+            "connector": "stage14-native-anthropic-true",
+            "model": "claude-sonnet-4-6",
+            "status": "succeeded",
+            "usage": {
+              "input_tokens": 4030,
+              "output_tokens": 83,
+              "total_tokens": 4113,
+              "service_tier": "standard",
+              "speed": "standard"
+            },
+            "modelCostUSD": 0.013335,
+            "lateSettlement": false,
+            "external": false
+          }
+        ],
+        "attempts": [
+          {
+            "id": "53fdc606-ae4b-4bf9-8d87-23db97c85044",
+            "invocationId": "09e2559d-0cf9-4932-beb5-8d99972872a4",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 7591,
+            "reservedCostUSD": 0.049848,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "b8b59650-655c-409f-8d59-9fe6b4bd93e6",
+            "invocationId": "4ae63a4d-d34c-4eda-956d-3230eda642aa",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 1598,
+            "reservedCostUSD": 0.009921,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "8bd63073-e58c-46ba-951d-9af5554c0a94",
+            "invocationId": "59199f00-2980-4668-95ea-d9efec8d5f85",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 1822,
+            "reservedCostUSD": 0.011643,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "cbbcb9b1-d54e-4153-a22f-ef44bfc8d189",
+            "invocationId": "0e20f921-04fd-4d7c-96be-945c379c7f17",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 2202,
+            "reservedCostUSD": 0.018,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "a8443fd0-dd57-4c41-8f0e-5f707434b4f5",
+            "invocationId": "65f3f30c-9a36-4d94-b36a-1494e51a797c",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 4018,
+            "reservedCostUSD": 0.025485,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "212a564e-eb25-46a4-81d3-1f9c2bd4e575",
+            "invocationId": "c2479b8d-aacc-4b2b-9c45-bb5dee9d8cd6",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 2167,
+            "reservedCostUSD": 0.017475,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          },
+          {
+            "id": "2e062e38-911a-4eee-b736-396563614cdf",
+            "invocationId": "21b61a6b-1876-4eb3-b720-92fbba9876b7",
+            "boundary": "transport",
+            "status": "received",
+            "dispatched": true,
+            "reservedTokens": 4113,
+            "reservedCostUSD": 0.025425,
+            "usageCoveredByInvocation": true,
+            "httpStatus": 200
+          }
+        ],
+        "totals": {
+          "calls": 7,
+          "inputTokens": 21652,
+          "outputTokens": 1859,
+          "totalTokens": 23511,
+          "cachedInputTokens": 0,
+          "reasoningTokens": 0,
+          "knownModelCostUSD": 0.092841,
+          "unknownUsageInvocations": 0,
+          "unknownCostInvocations": 0,
+          "unknownChargeAttempts": 0,
+          "chargedTokens": 23511,
+          "chargedCostUSD": 0.157797
+        }
+      }
+    }
+  ],
+  "pilot": {
+    "boundary": "Fixed six-task functional pilot repeated with unchanged models, uniform settings, host rule, quality oracles and cost thresholds. No general quality/cost/latency claim. All failures, calls and repairs count.",
+    "results": [
+      {
+        "provider": "openai",
+        "passed": true,
+        "qualityLoss": 0,
+        "tokenCostReductionVsMain": 0.3043122270742358,
+        "groups": [
+          {
+            "mode": "fixed-main",
+            "successes": 6,
+            "total": 6,
+            "totalWallMs": 5213.181792000003,
+            "knownModelCostUSD": 0.0003664,
+            "qualityFailures": []
+          },
+          {
+            "mode": "fixed-fast",
+            "successes": 5,
+            "total": 6,
+            "totalWallMs": 4753.709123999997,
+            "knownModelCostUSD": 0.0001374,
+            "qualityFailures": [
+              {
+                "id": "difference-26",
+                "observedAnswer": "25"
+              }
+            ]
+          },
+          {
+            "mode": "routing",
+            "successes": 6,
+            "total": 6,
+            "totalWallMs": 4659.739583000002,
+            "knownModelCostUSD": 0.0002549,
+            "qualityFailures": []
+          }
+        ]
+      },
+      {
+        "provider": "anthropic",
+        "passed": true,
+        "qualityLoss": 0,
+        "tokenCostReductionVsMain": 0.32784854918612893,
+        "groups": [
+          {
+            "mode": "fixed-main",
+            "successes": 6,
+            "total": 6,
+            "totalWallMs": 8916.649335000002,
+            "knownModelCostUSD": 0.005652000000000001,
+            "qualityFailures": []
+          },
+          {
+            "mode": "fixed-fast",
+            "successes": 6,
+            "total": 6,
+            "totalWallMs": 6692.676083000006,
+            "knownModelCostUSD": 0.0018929999999999997,
+            "qualityFailures": []
+          },
+          {
+            "mode": "routing",
+            "successes": 6,
+            "total": 6,
+            "totalWallMs": 6806.115082999997,
+            "knownModelCostUSD": 0.003799,
+            "qualityFailures": []
+          }
+        ]
+      },
+      {
+        "provider": "google",
+        "passed": true,
+        "qualityLoss": 0,
+        "tokenCostReductionVsMain": 0.07951395229162872,
+        "groups": [
+          {
+            "mode": "fixed-main",
+            "successes": 6,
+            "total": 6,
+            "totalWallMs": 15006.715710000004,
+            "knownModelCostUSD": 0.0060241,
+            "qualityFailures": []
+          },
+          {
+            "mode": "fixed-fast",
+            "successes": 6,
+            "total": 6,
+            "totalWallMs": 3112.9688340000284,
+            "knownModelCostUSD": 9.000000000000002e-05,
+            "qualityFailures": []
+          },
+          {
+            "mode": "routing",
+            "successes": 6,
+            "total": 6,
+            "totalWallMs": 13074.528709000006,
+            "knownModelCostUSD": 0.0055451,
+            "qualityFailures": []
+          }
+        ]
+      }
+    ]
+  },
+  "offline": {
+    "count": 38,
+    "allPassed": true,
+    "scripts": [
+      {
+        "script": "example:agentic-baseline",
+        "command": "node --import tsx examples/agentic-evaluation-baseline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-agentic-baseline.log",
+        "sha256": "3626908addc6942fb185177481d7eb248b084e43eedb75258d3a89ac1e8832c7"
+      },
+      {
+        "script": "example:context-freshness",
+        "command": "node --import tsx examples/context-compaction-freshness.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-context-freshness.log",
+        "sha256": "0532c044ac7655415d6c0c3b8ede1572840c2e17582f8932dd2fbaf13850e49c"
+      },
+      {
+        "script": "example:context-budget",
+        "command": "node --import tsx examples/context-request-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-context-budget.log",
+        "sha256": "3bf6b1ecd22ed47742601e746c84a354d5cf7960d9abaa12527b8b841cda8516"
+      },
+      {
+        "script": "example:structured-budget",
+        "command": "node --import tsx examples/structured-output-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-structured-budget.log",
+        "sha256": "bf659b9eb7338e0f644b0d03c8a2f000b8623e392da264373798446ed048beee"
+      },
+      {
+        "script": "example:amos-context",
+        "command": "node --import tsx apps/amos/examples/context-budget-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-amos-context.log",
+        "sha256": "89428897af937eb5896c57426365cfef334ceac041ab84cea882ff31f787e2f3"
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": "node --import tsx examples/tool-outcomes-and-cancellation.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-tool-outcomes.log",
+        "sha256": "78d458b06f893c41560f16d7077c0ce2e90193fa107089cd82f704a5ff9a2aeb"
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-amos-tool-outcomes.log",
+        "sha256": "7762bb7100e11d275a19def86d87b561d0790b2ed4d7d3f4c3b85d2b6e5d141d"
+      },
+      {
+        "script": "example:purpose-models",
+        "command": "node --import tsx examples/purpose-specific-models.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-purpose-models.log",
+        "sha256": "819f97ff1f459af601abaebe6ed0385ae9bde72095e2863edbfb385ea3769e5a"
+      },
+      {
+        "script": "example:shared-budget",
+        "command": "node --import tsx examples/shared-run-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-shared-budget.log",
+        "sha256": "84261248923a4dbfebf4f3a026da031e926e461662a52766eba4e54c49889f47"
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": "node --import tsx apps/amos/examples/model-helpers-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-amos-helpers.log",
+        "sha256": "607b277f59c8cafc951cb4ac1fe327ca5ed07a352f3aab8b93b00d70654330b8"
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": "node --import tsx examples/durable-tool-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-durable-evidence.log",
+        "sha256": "6af7ef0b27440aedc20d70120d9e1f145ead9af5fea96a0d1d0c1ce2a7bd6ef3"
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": "node --import tsx examples/evidence-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-evidence-recovery.log",
+        "sha256": "24e8914e92d2b6996566bcd410149e62711ef254b766ee529852800632d718c5"
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": "node --import tsx examples/ambiguous-action-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-ambiguous-evidence.log",
+        "sha256": "f49a80bbc66dab0c45d14cc14c426a52b7a0a0fe23dba60d47cb4208facc1acd"
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": "node --import tsx apps/amos/examples/evidence-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-amos-evidence.log",
+        "sha256": "a88019c868cc3b63e57ed738485aebd374d21d7bca6d74986e7d52fd54ed7298"
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": "node --import tsx examples/evidence-stream-interruption.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-evidence-interruption.log",
+        "sha256": "aa2904c28b25fb2e7556e19a4e4fcd7d26803661389ca297fd6661ab8d804ead"
+      },
+      {
+        "script": "example:context-strategies",
+        "command": "node --import tsx examples/context-strategy-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-context-strategies.log",
+        "sha256": "ab6a225e02ae2a71462649179957d9c626324256b8eef0b77144605f22f9d764"
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-amos-context-strategies.log",
+        "sha256": "6123bb4056d357b032bb2095d010acf31edaec60f4e4dbeb1c4bbf9b228b217e"
+      },
+      {
+        "script": "example:task-state",
+        "command": "node --import tsx examples/task-state-workflow.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-task-state.log",
+        "sha256": "885713c7167d4bd1f133fd68cbfbeac23a4ee288dd33be5c5a0dde64e2cd09dd"
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": "node --import tsx apps/amos/examples/task-state-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-amos-task-state.log",
+        "sha256": "c1a07f9802b7c6233dbda4eb3e4ae50bceed5f18e8a7d992b3ee7b1bb3e2950c"
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": "node --import tsx examples/feedback-driven-agent.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-feedback-agent.log",
+        "sha256": "e012f2f7be3873197afb2be1a9369eab247d1f83215b44a5e18a13aa755bcd92"
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": "node --import tsx examples/run-stream-equivalence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-loop-equivalence.log",
+        "sha256": "3f1bbfc0a18c00635d975bf327dd523994dffd33bd89a3b7afae56b4341ca509"
+      },
+      {
+        "script": "example:amos-loop",
+        "command": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-amos-loop.log",
+        "sha256": "5e75722729658f0e587b05388b9fe1592b8edc0f07e52e36379c30e73a309e67"
+      },
+      {
+        "script": "example:agentic-presets",
+        "command": "node --import tsx examples/agentic-presets.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-agentic-presets.log",
+        "sha256": "d948476e626e4c574cd7a0b56c2d4c490621df828272e9cc706ae9a2462d7dc4"
+      },
+      {
+        "script": "example:amos-presets",
+        "command": "node --import tsx apps/amos/examples/presets-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-amos-presets.log",
+        "sha256": "c5338f9ab7cc2bb3aa5af729cd4c8e26011a99a1c389a2ed63daca14efd7e780"
+      },
+      {
+        "script": "example:context-selection",
+        "command": "node --import tsx examples/context-block-selection.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-context-selection.log",
+        "sha256": "ede460df00ff32e31edddd5d9e4d85d0b9531cc09147f6529a78e0a147fd237a"
+      },
+      {
+        "script": "example:cache-aware-context",
+        "command": "node --import tsx examples/cache-aware-context.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-cache-aware-context.log",
+        "sha256": "66c09e8c867f5eaf5ca1d34313e12f4e471ff67a977ca0342b1ff0beb2fb20d3"
+      },
+      {
+        "script": "example:amos-context-selection",
+        "command": "node --import tsx apps/amos/examples/context-selection-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-amos-context-selection.log",
+        "sha256": "f06e2488f48c48ab2be7d951a3309bb2de548affd567b3f7ee09e9bd53f5baff"
+      },
+      {
+        "script": "example:context-dispatch-safety",
+        "command": "node --import tsx examples/context-dispatch-safety.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-context-dispatch-safety.log",
+        "sha256": "66ee5891c754d99d758a636e877fa36cf830cfc42de278155f6a3406c5176bec"
+      },
+      {
+        "script": "example:native-compaction",
+        "command": "node --import tsx examples/native-context-compaction.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-native-compaction.log",
+        "sha256": "9caaa76627c076c466c6176801946e821f5e4d400aa59f8f61c8e6133d46ab33"
+      },
+      {
+        "script": "example:native-recovery",
+        "command": "node --import tsx examples/native-context-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-native-recovery.log",
+        "sha256": "5b8628484870a3db75a12be3067911436c9fc38c7838c7e54bfd7cd3c97438c0"
+      },
+      {
+        "script": "example:native-comparison",
+        "command": "node --import tsx examples/native-context-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-native-comparison.log",
+        "sha256": "e2e15b9e04d1bc673b9f441aa90084b7335028ee90a559e50b3da23433cf1e90"
+      },
+      {
+        "script": "example:amos-native-compaction",
+        "command": "node --import tsx apps/amos/examples/native-compaction-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-amos-native-compaction.log",
+        "sha256": "02ba2be677f6a9386c47f61965f0200afd9a5be49cc6243df41c0fb39fb68998"
+      },
+      {
+        "script": "example:native-hooks",
+        "command": "node --import tsx examples/native-context-hooks.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-native-hooks.log",
+        "sha256": "8aa6193ca0337d1452dfba1f9f7149756d939abeaecb8911160393472e7052a3"
+      },
+      {
+        "script": "example:native-hooks-manual",
+        "command": "node --import tsx examples/native-context-hooks.ts --manual",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-native-hooks-manual.log",
+        "sha256": "8e5ad7b22638aea22d597404d1d13da51d1868cbd00587f3ef4bbfe33c8a25f8"
+      },
+      {
+        "script": "example:model-routing",
+        "command": "node --import tsx examples/adaptive-model-routing.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-model-routing.log",
+        "sha256": "78f3b254cd85e0b7e4d445ef005ec724185d0eff22930262cc484abef94aeeac"
+      },
+      {
+        "script": "example:routing-context",
+        "command": "node --import tsx examples/routing-with-context.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-routing-context.log",
+        "sha256": "abefbe40851ef36931e2d91ff9f10cb103a0a19f4945d0a2c252ddaedc50e645"
+      },
+      {
+        "script": "example:amos-routing",
+        "command": "node --import tsx apps/amos/examples/routing-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-amos-routing.log",
+        "sha256": "33498c5c60f9cd9d88ee8db52f5f84225ad468775cad5b84d249bf23c8dd28ef"
+      },
+      {
+        "script": "example:routing-suspension",
+        "command": "node --import tsx examples/routing-suspension-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/stage14-fix-offline-example-routing-suspension.log",
+        "sha256": "b0f13f2fbc860e46773b644fdffaa091c702f1dd51e34d03cd1b09584b6fa92e"
+      }
+    ]
+  },
+  "publicRuntime": [
+    {
+      "suite": "presets",
+      "checks": 54,
+      "formats": [
+        {
+          "format": "esm",
+          "checks": 27,
+          "calls": 4
+        },
+        {
+          "format": "cjs",
+          "checks": 27,
+          "calls": 4
+        }
+      ],
+      "path": "/tmp/stage14-fix-public-presets.log",
+      "sha256": "e6384259d4ba80357c50c74d2468a7ff6ba395239584f540b2a95637181bc041",
+      "bytes": 6936
+    },
+    {
+      "suite": "assembly",
+      "checks": 38,
+      "formats": [
+        {
+          "format": "esm",
+          "checks": 19
+        },
+        {
+          "format": "cjs",
+          "checks": 19
+        }
+      ],
+      "path": "/tmp/stage14-fix-public-assembly.log",
+      "sha256": "6a720e4bceb014819ca1d6b8eea0fdccd50e5eca0061ef6ddf3e785b382a595d",
+      "bytes": 15945
+    },
+    {
+      "suite": "native",
+      "checks": 66,
+      "formats": [
+        {
+          "format": "esm",
+          "checks": 33
+        },
+        {
+          "format": "cjs",
+          "checks": 33
+        }
+      ],
+      "path": "/tmp/stage14-fix-public-native.log",
+      "sha256": "c575e80e08524b302515b1102a97a4a70ab99bb9a1d1feb5ecf3dcc2435ffbdc",
+      "bytes": 4595
+    },
+    {
+      "suite": "routing",
+      "checks": 36,
+      "formats": [
+        {
+          "format": "esm",
+          "checks": 18
+        },
+        {
+          "format": "cjs",
+          "checks": 18
+        }
+      ],
+      "path": "/tmp/stage14-fix-public-routing.log",
+      "sha256": "9f2a8cc23204ddc5ff82cf585847c4f600c261dc98e91089b247b429ed3c03f5",
+      "bytes": 11284
+    }
+  ],
+  "publicRuntimeChecks": 194,
+  "gates": [
+    {
+      "name": "build",
+      "command": "npm run build",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-fix-build.log",
+        "sha256": "37768deba95ad3e8929d9e7fc1de079466c36fd43722941941d05a5abddd85c0",
+        "bytes": 15259
+      }
+    },
+    {
+      "name": "types",
+      "command": "npm run typecheck",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-fix-types.log",
+        "sha256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717",
+        "bytes": 57
+      }
+    },
+    {
+      "name": "lint",
+      "command": "npm run lint",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-fix-lint.log",
+        "sha256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e",
+        "bytes": 60
+      }
+    },
+    {
+      "name": "strict",
+      "command": "npx tsc -p /tmp/stage14-strict.json",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-fix-strict.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "name": "compat",
+      "command": "npm run test:agentic:compat",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-fix-compat.log",
+        "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6",
+        "bytes": 116
+      }
+    },
+    {
+      "name": "examples-types",
+      "command": "npm run examples:check",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-fix-examples-types.log",
+        "sha256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8",
+        "bytes": 88
+      }
+    },
+    {
+      "name": "amos-types",
+      "command": "npm run typecheck --prefix apps/amos",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-fix-amos-types.log",
+        "sha256": "15c9b914db9ac8a0f39085e9e28df4f483e0442e42350ea4d7615778f29e93ad",
+        "bytes": 52
+      }
+    },
+    {
+      "name": "final-amos-strict",
+      "command": "npx tsc -p /tmp/stage14-amos-tests.json",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-fix-final-amos-strict.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "name": "amos-build",
+      "command": "npm run build --prefix apps/amos",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-fix-amos-build.log",
+        "sha256": "fe6126516b67c4f464d271c12e01df2299a151c6fae577ba7923b804cb4a550d",
+        "bytes": 463
+      }
+    },
+    {
+      "name": "api-docs",
+      "command": "node --import tsx scripts/generate-api-docs.ts --mode public",
+      "passed": true,
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/stage14-fix-api-docs.log",
+        "sha256": "08d74b5e1b4345ce7b6390ca0359e5f0822a44f2ec12ab8a2949b5c7f16b0aa4",
+        "bytes": 223
+      }
+    }
+  ],
+  "sourceManifest": [
+    {
+      "path": "apps/amos/examples/routing-offline.ts",
+      "sha256": "d8d2b44add6b4f656f89302951b3c1d572460d471f88e2e2d5b13eb1772105cc",
+      "bytes": 3260
+    },
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "sha256": "6257d9951fc8b089a66b59053851c81289a6af3fbbb3f87bf9a6f03b555ed991",
+      "bytes": 37132
+    },
+    {
+      "path": "apps/amos/src/agent/routing.ts",
+      "sha256": "ed98647740aa7545e6bae33607d357f1511b1ab3753e308180cc3d0ca2c67445",
+      "bytes": 1445
+    },
+    {
+      "path": "apps/amos/src/app.ts",
+      "sha256": "ed10f9be79525cfcf03ab395a090c2c52ca462194597bf98ff9385448184bd1b",
+      "bytes": 28298
+    },
+    {
+      "path": "apps/amos/src/commands/commands/HelpersCommand.ts",
+      "sha256": "19298e99c55997d7b716ae390b8c4ab466cd84edb3c0b06a52e136ae307f3007",
+      "bytes": 7015
+    },
+    {
+      "path": "apps/amos/src/commands/commands/RoutingCommand.ts",
+      "sha256": "f7eb4fd115b550cc3793e175f621cadae89197debb6cc6b9076febd1addbfba0",
+      "bytes": 6284
+    },
+    {
+      "path": "apps/amos/src/commands/commands/index.ts",
+      "sha256": "4fa076b5ffd9d06150043f04e3ac65d4e31acac3450630cb758b9217798798c9",
+      "bytes": 870
+    },
+    {
+      "path": "apps/amos/src/config/types.ts",
+      "sha256": "e1f593190fb57f8da4d65d6ada3d677e01ab17bbb8e14ebc53cf938a6f2a60fd",
+      "bytes": 24456
+    },
+    {
+      "path": "examples/adaptive-model-routing.ts",
+      "sha256": "33bb1f9be1b131e12d9a2ceca7e65c9df49396f1c951279223379eb85b8cc2ed",
+      "bytes": 3491
+    },
+    {
+      "path": "examples/model-routing/fixture.ts",
+      "sha256": "ab9e32dc77a76433d894c025809e674eb178b995a17d57eb8eb1632212aaea07",
+      "bytes": 3018
+    },
+    {
+      "path": "examples/routing-suspension-recovery.ts",
+      "sha256": "f6c1090c8d456285fdfe1ec01d50c911bd902a94ad910063573ea7c20bdedc17",
+      "bytes": 3828
+    },
+    {
+      "path": "examples/routing-with-context.ts",
+      "sha256": "c597038afda36c47a5f56f41bdc2036d03d729351961dd09f3e358b4a2ca5d9c",
+      "bytes": 3181
+    },
+    {
+      "path": "package.json",
+      "sha256": "10c95d4de90308cc5379e143ca02b2acebbdebda3429b859250a4e3ec0fce433",
+      "bytes": 22796
+    },
+    {
+      "path": "scripts/generate-api-docs.ts",
+      "sha256": "5e5077395ee18c338cac45d876aab5874f059102e706c8fcede0e33da2b2b255",
+      "bytes": 29153
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "9b4d186e76feb55c55dbc44299eca2608b1429f730533eb816bdebd07d2b7ba2",
+      "bytes": 232242
+    },
+    {
+      "path": "src/core/BaseAgent.ts",
+      "sha256": "86ff8cd9c1edd8648c6a509207b961e33946da6de49eee5a14d06b6f5d1a0d9b",
+      "bytes": 60543
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "b86a9f10f641eebe1f8b2555e614ad81ad3a627627023504953fbde52f178001",
+      "bytes": 182750
+    },
+    {
+      "path": "src/core/context-nextgen/compaction/coordinator.ts",
+      "sha256": "640a93bd0a69ca90f37f2c227b067953ee93f2ca04fec9482a63fb6a50d25eb4",
+      "bytes": 13685
+    },
+    {
+      "path": "src/core/context-nextgen/types.ts",
+      "sha256": "ba0fc7f36c32e9d62d87fc1660b8ccf01ec4ba67f4c7a7097e5fcb15f81f1359",
+      "bytes": 46387
+    },
+    {
+      "path": "src/core/createProvider.ts",
+      "sha256": "a2f57b9e65fa7cf0af7701ce354993710c9c0feb0e4e33042d52999f5811b5e5",
+      "bytes": 10218
+    },
+    {
+      "path": "src/core/index.ts",
+      "sha256": "15151552d9c68d90268ee358a99e7d8268117bb23a2799c68e7197a8dd8ce7fb",
+      "bytes": 10857
+    },
+    {
+      "path": "src/core/model-execution/ModelExecutor.ts",
+      "sha256": "b4d00e5ed6b8ff2d79345ab2560503ab1ecbbde18cd64ff885beee8d11e0df88",
+      "bytes": 20754
+    },
+    {
+      "path": "src/core/model-execution/ModelTask.ts",
+      "sha256": "76b431ebfabf8706a877cf7636cd740619376b112866684f2c712eb3a94b238f",
+      "bytes": 23885
+    },
+    {
+      "path": "src/core/model-execution/routing.ts",
+      "sha256": "b701f656c7b025a264f02fb4feed36bcad837d9e7ca30bee9a8f520e6a7c086b",
+      "bytes": 11304
+    },
+    {
+      "path": "src/core/model-execution/types.ts",
+      "sha256": "c1914cf41713b3952559267e9d9439a01f189d2056fece3720b4d4b7207cbcc4",
+      "bytes": 7683
+    },
+    {
+      "path": "src/domain/entities/Response.ts",
+      "sha256": "7c4bf0676f846493eafb2b6fa00aeb424e81d8ee858f8169961c49a26dc797ae",
+      "bytes": 5546
+    },
+    {
+      "path": "src/domain/entities/StreamEvent.ts",
+      "sha256": "2def464b4133e850986ca1b65ed0b0787b9ac489f4fede94c7d6b1d4fa90189e",
+      "bytes": 12391
+    },
+    {
+      "path": "src/domain/interfaces/IContextStorage.ts",
+      "sha256": "1e5d25f3066fe26780efd051ec1ec1db57875f8d4b9365b48013f6779171a48c",
+      "bytes": 6029
+    },
+    {
+      "path": "src/domain/interfaces/ITextProvider.ts",
+      "sha256": "41a26f433bd31f048abeac384c5788a2b532da0d98b3894246e42be5879bede7",
+      "bytes": 5082
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "4fe8c994b28413ec258454c8172c64b88a9477ec166f29a8decffb177eef8e90",
+      "bytes": 63134
+    },
+    {
+      "path": "src/infrastructure/providers/anthropic/AnthropicTextProvider.ts",
+      "sha256": "4de5e09a02b70fe5f1c13c79c4e233af046a7901d9305c590d095ee8148d9bb3",
+      "bytes": 29867
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "fc7c80f2f9181c51f55eb55bed644d304547102c5067bd71e2fd8f6b123079a5",
+      "bytes": 21280
+    },
+    {
+      "path": "src/types/index.ts",
+      "sha256": "9f7d6d3e294df9fe4b5078af2bcd30665bf74c9d542c57d4458ec83daf6f1d5d",
+      "bytes": 22518
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/stage14-consumer.ts",
+      "sha256": "34826347845e095aea67530b131256541f18f266913b36967f52fd061122cbab",
+      "bytes": 1041
+    },
+    {
+      "path": "tests/fixtures/model-routing/public-runtime.mjs",
+      "sha256": "cb949a93e515160f980d921f74b70e4c9a356b648fd5398af0658550ec33b881",
+      "bytes": 6269
+    },
+    {
+      "path": "tests/integration/routines/routineControlFlowExecution.test.ts",
+      "sha256": "f09f23a7845ad28b03bf40fc513bc219f0b7e1f6373a77d4576ad53a65460c14",
+      "bytes": 39772
+    },
+    {
+      "path": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+      "sha256": "b4753f397e2b1db7f86dee421bb003f3bae6005ba3bcdb06d07ef63115906374",
+      "bytes": 19379
+    },
+    {
+      "path": "tests/integration/text/ModelExecution.live.integration.test.ts",
+      "sha256": "fecb39f064312b161bacb862c3e5c327d3cb52bc42bedde4d5d0d90071af5ba1",
+      "bytes": 17038
+    },
+    {
+      "path": "tests/integration/text/ModelRouting.live.integration.test.ts",
+      "sha256": "d1d752b7db536a74d1cf19069bdca8a36f09bcaf9ed9590c948fcd6551111ec9",
+      "bytes": 23189
+    },
+    {
+      "path": "tests/unit/apps/amos/Routing.test.ts",
+      "sha256": "f992569cca4007417d8642a8cc05df6eb26eea21fc78c0e35a42c5ff8914fb73",
+      "bytes": 9343
+    },
+    {
+      "path": "tests/unit/core/Agent.asyncTools.test.ts",
+      "sha256": "83079947fb880096746607c51f927f71ea6260af6feac9b82867cd21d31402b1",
+      "bytes": 15306
+    },
+    {
+      "path": "tests/unit/core/Agent.contextFreshness.test.ts",
+      "sha256": "a4699f448af72cd39c96864726f05e79f629cef0b00351ae77318d5eddaac844",
+      "bytes": 31842
+    },
+    {
+      "path": "tests/unit/core/Agent.suspend.test.ts",
+      "sha256": "1f0d6130806b606ea566844cb45e6b28bc9280171465d39c4c306ba7545eab12",
+      "bytes": 12369
+    },
+    {
+      "path": "tests/unit/core/Agent.test.ts",
+      "sha256": "9a6b730b6d70a0b013d0968abd1c9d1cc4909cff8e0a9a32929a3c02bd0f15fd",
+      "bytes": 46124
+    },
+    {
+      "path": "tests/unit/core/Agent.toolOutcomes.test.ts",
+      "sha256": "31f1de03a067ece0a33832a2d0e8d4185ae2c66bfa80bd48996ca22e43725cfd",
+      "bytes": 10365
+    },
+    {
+      "path": "tests/unit/core/AgentRegistry.test.ts",
+      "sha256": "d61040e475718e019de5c6b19aa4bae3c6b13720c3cb6fa0b76cfdbf8f640c9d",
+      "bytes": 23056
+    },
+    {
+      "path": "tests/unit/core/BaseAgent.lifecycle.test.ts",
+      "sha256": "dc29522fb917a0adaba1f0d676d00c3bc2b492a6131c23c9ec87a94c40579f98",
+      "bytes": 8654
+    },
+    {
+      "path": "tests/unit/core/ScopedConnectorRegistry.test.ts",
+      "sha256": "1230063ebc1865f313f30c746877cc92ac0dda74506fd38addad01154f7c794c",
+      "bytes": 14625
+    },
+    {
+      "path": "tests/unit/core/Stage02Corrections.test.ts",
+      "sha256": "e081f7e7fcee63da5464120be340470e25e4b96d45498fb67bc3c0628cd34c07",
+      "bytes": 31825
+    },
+    {
+      "path": "tests/unit/core/StructuredOutput.behavior.test.ts",
+      "sha256": "13a2184b9bbaaeb016e9f4936be7da1db8882b7060b3748757e0a638dca63566",
+      "bytes": 11574
+    },
+    {
+      "path": "tests/unit/core/createRoutineTool.test.ts",
+      "sha256": "5c04325396e8e4dcdaccd02708e348737b54b91ea0f1f1fd372c37af8f468b30",
+      "bytes": 10845
+    },
+    {
+      "path": "tests/unit/core/orchestrator/createOrchestrator.test.ts",
+      "sha256": "cc0825c6a1daf16094b9b187ed6515cf44ef4ac8222df2f749df001874e4863e",
+      "bytes": 19973
+    },
+    {
+      "path": "tests/unit/core/routineRunner.test.ts",
+      "sha256": "55c3fe048621ee14dedc87dac2b10700a9b3dbd135ba721bc69955e0de6c43dc",
+      "bytes": 64831
+    },
+    {
+      "path": "tests/unit/core/routing/anthropic-source.test.ts",
+      "sha256": "ed98b7bd0caf7ecfc2bbee35761234193dfbbbe9aee45b8b2d68f703af886db7",
+      "bytes": 2512
+    },
+    {
+      "path": "tests/unit/core/routing/corrections.test.ts",
+      "sha256": "4f451e0c570d7697ed97fe9cd97b928c09cab071da8b1076a2189599821c36f2",
+      "bytes": 22274
+    },
+    {
+      "path": "tests/unit/core/routing/fixture.ts",
+      "sha256": "4cc90810118577fecf3c850e8e92c497c1351d2c22591e8d5a1ae2045385ee63",
+      "bytes": 3394
+    },
+    {
+      "path": "tests/unit/core/routing/lifecycle.test.ts",
+      "sha256": "3d1fa0cad50213a45d2a7068dd16964e9d58c02f49ff4686fe22ea941306f820",
+      "bytes": 18208
+    },
+    {
+      "path": "tests/unit/core/routing/managed.test.ts",
+      "sha256": "5cd3c2ccd83d2576168d906b55adfc03aa52b1d7f90d3dd29363d08904492a10",
+      "bytes": 15730
+    },
+    {
+      "path": "tests/unit/core/routing/selection.test.ts",
+      "sha256": "d70659add380eec0af1020c5dbaa78677859dedbe678052e3b919b0e67035e6a",
+      "bytes": 7730
+    },
+    {
+      "path": "tests/unit/providers/NativeCompaction.test.ts",
+      "sha256": "cbd847322674902189f678818fbe3705b6de61d45b5c664c17808d0fcf5f44eb",
+      "bytes": 53936
+    }
+  ],
+  "resolvedValidationIncidents": [
+    {
+      "issue": "Intentional red regression phase",
+      "result": "14 failures and two passing controls established missing paths before fixes.",
+      "artifacts": [
+        {
+          "path": "/tmp/stage14-fix-red.json",
+          "sha256": "2d78dbcce9724d94a438b168f6fb56740539a904b3ef4363a50a20f85378e779",
+          "bytes": 13577
+        },
+        {
+          "path": "/tmp/stage14-fix-red.log",
+          "sha256": "3c016367e29e8179d65f2319fafa36bd45199dbe4690b6665604bdc174c3dcc5",
+          "bytes": 54256
+        }
+      ]
+    },
+    {
+      "issue": "Old factory mocks omitted a newly imported internal helper",
+      "resolution": "Partial mocks now retain actual module exports; no required provider member added."
+    },
+    {
+      "issue": "Temporary session journals raced recursive cleanup under parallel unit load",
+      "resolution": "Bounded filesystem cleanup retries; final full suite passes.",
+      "artifact": {
+        "path": "/tmp/stage14-fix-unit.json",
+        "sha256": "f48bc939e93b72216766ad2c26171918ce18659849fbf6736010386fbe524281",
+        "bytes": 2782188
+      }
+    },
+    {
+      "issue": "Google suspended test replaced semantic content with bare invalid text; formatter preserved that replacement",
+      "resolution": "Corrupt JSON syntax while preserving actual candidate semantics. Targeted Google rerun and final full matrix pass.",
+      "initialReport": {
+        "path": "/tmp/stage14-fix-target-live-vitest.json",
+        "sha256": "85da9224e949a75e8a45b691b60e20800447f664d2fca7e9bba8bac298fc85f0",
+        "bytes": 8293
+      },
+      "targetedRerun": {
+        "path": "/tmp/stage14-fix-target-live2-vitest.json",
+        "sha256": "00daf79e64ab02379f4d433a57d7fb0b87a9b2b375dedf8aba0351bda76d7dae",
+        "bytes": 7794
+      }
+    }
+  ],
+  "googleStreamingDiagnostic": {
+    "artifact": {
+      "path": "/tmp/stage14-google-stream-diagnosis.json",
+      "sha256": "4163380bbaa8d183c3a39a74a052d28af79c6da9886d175294a50a15650f9445",
+      "bytes": 21844
+    },
+    "defaultSamplingReproduction": {
+      "path": "/tmp/stage14-google-stream-reproduction.json",
+      "sha256": "1fd57c91bde15a33214e0c785aef7429f80c53d06138c969a114d7b3da3e724c",
+      "bytes": 75941
+    },
+    "originalCause": "Unproven: the original suffix miss did not recur in 52 instrumented controls; raw SDK text equaled Agent output in every control. No converter loss was observed.",
+    "resolution": "Preserve exact evidence oracles; use temperature zero and direct streaming hook edits for intended 512-token output cap, retain status/stop-reason diagnostics. Final whole-suite rerun passes.",
+    "sampleCount": 52,
+    "rawSDKAndAgentTextMatchedAllControls": true,
+    "defaultSamplingControls": 48,
+    "temperatureZeroControls": 4
+  },
+  "liveGateIncident": {
+    "issue": "One earlier Google streaming retrieval fixture omitted _STREAM from the second marker in the initial full matrix.",
+    "resolution": "Preserve exact marker oracles; stabilize fixture sampling at zero, apply intended output cap with supported in-place streaming hook edits, retain status/stop-reason diagnostics; entire affected suite rerun passes. No production source change or hidden test retry."
+  },
+  "historicalEvidence": [
+    "docs/evaluations/STAGE_14A_REVIEW.json",
+    "docs/evaluations/STAGE_14A_VALIDATION.json"
+  ],
+  "knownFailures": [],
+  "remainingRequiredWork": [],
+  "documentation": {
+    "version2Guide": "Availability/adoption/handoff updated",
+    "APIReference": "Regenerated from source",
+    "AMOS": "Existing adapter inherits fixes; native alternative regression; no new command required",
+    "examples": [
+      "examples/routing-suspension-recovery.ts",
+      "examples/routing-with-context.ts"
+    ],
+    "publication": "Not performed",
+    "localLinksAndAnchors": {
+      "checked": 2612,
+      "errors": 0,
+      "report": {
+        "path": "/tmp/stage14-fix-doc-links.json",
+        "sha256": "ed6c42c493d5ab4a89dfe9aad5981faa128b7025f0f94981e3d32810bae7f9dd",
+        "bytes": 38
+      }
+    }
+  },
+  "packageDryRun": {
+    "command": "npm --cache /tmp/oneringai-stage14-npm-cache pack --dry-run --ignore-scripts --json",
+    "purpose": "Inventory verification after successful build; no lifecycle scripts/publication",
+    "files": 248,
+    "missingRequiredFiles": [],
+    "report": "/tmp/stage14-fix-pack.json"
+  }
+}

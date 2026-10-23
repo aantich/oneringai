@@ -6,11 +6,11 @@ the standard documentation before release. Read the
 [architecture roadmap](./designs/AGENTIC_ARCHITECTURE_EVOLUTION.md) for implementation
 scope, dependencies, research, and acceptance criteria.
 
-- **Status:** Stage 05 and all review corrections are complete on branch ([latest completion](./designs/STAGE_05_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22)): 8,340 unit tests / 373 files, 190 live tests / 202 scenarios across all three providers, 28 offline examples and 92 public ESM/CJS controls. All build/type/lint/examples/AMOS/public gates pass. Core stages 00–04, 06, 07, 10 and 12 complete on branch. All Stage 12 findings are fixed: 8,143 units, 151 live tests / 163 scenarios, 24 offline examples and 54 public controls pass. See the [third corrective completion](./designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16). Stage 07 strategies remain experimental; no package release is claimed.
+- **Status:** Stage 14A and S1–S3 second-review corrections are complete on branch. 8,775 units / 385 files, 224 live tests / 13 suites across OpenAI, Anthropic and Google with no required skips, 39 offline modes and 202 public ESM/CJS controls pass. [Corrective completion](./designs/STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-23). Core stages and Stage 16A remain delivered; package publication is separate.
 - **Stage 03 review:** All findings fixed and validated: 7,473 units / 245 Stage 03 cases, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](./designs/STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 - **Stage 06 review:** All findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion](./designs/STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
-- **Created / last updated:** 2026-10-07 / 2026-10-22.
-- **Current selected scope:** Stage 16A and all review corrections are **complete on branch; opt-in**. The [latest completion](./designs/STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22) verifies 8,584 units / 77 new regressions, 201 live tests across three providers, 34 offline programs/modes and 158 public controls. All 11 affected native live cases pass again after final scope preflight/rebuild. Stage 16B remains deferred; package release is unverified and no breaking change was approved.
+- **Created / last updated:** 2026-10-07 / 2026-10-23.
+- **Current selected scope:** Stage **14A second-review corrections complete**: repaired replay ownership, retained rejected-resume budgets/routes and coherent suspension checkpoints. Supported contracts preserved. Stage 14B/16B, breaking changes and publication remain deferred.
 - **Repository package version at creation:** `1.2.0`.
 - **Implemented stages:** 00 — evaluation and compatibility baselines;
   01 — fresh request accounting and safe compaction;
@@ -21,7 +21,9 @@ scope, dependencies, research, and acceptance criteria.
   06 — explicit helper roles and process-local model tasks/budgets;
   07 — experimental observation masking and source-backed historical summaries, including review corrections;
   10 — bounded managed-loop recovery and host-owned completion checks;
-  12 — opt-in presets, resolved capability inspection and AMOS adoption.
+  12 — opt-in presets, resolved capability inspection and AMOS adoption;
+  14A — optional managed model routing;
+  16A — opt-in provider-native compaction composed with context plugins, including all review corrections.
 - **Version 2 release:** Not announced by this document.
 
 “Version 2” names the development initiative. It does not mean that an npm `2.0.0`
@@ -564,7 +566,7 @@ options remain usable; the entries below describe enhancements to those foundati
 | 09 | Find individual relevant tools in a large catalog. | Ranked discovery beyond existing category loading; provider-native search is a separate integration. |
 | 11 | Reduce independent read latency and support selected resumable effects. | Parallel reads and durable effect handling are separate scopes; no universal exactly-once promise. |
 | 13 | Reuse procedures supported by verified outcomes. | Curated learning with provenance, approval, expiry, and rollback; no automatic promotion of unverified instructions. |
-| 14 | Route selected work to another model or specialist. | Adaptive routing and specialist delegation are separate scopes with explicit state, authority, and budget boundaries. |
+| 14 | Route selected work to another model; bounded specialists remain separate. | [14A recipe](./MODEL_ROUTING.md); [second-corrective completion](./designs/STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-23). 14B still requires separate API approval. |
 | 15 | Inspect large data or compose tools through a bounded program. | Deterministic queries first; programmatic execution requires a real sandbox, restricted authority, and bounded resources. |
 | 16A | Use supported provider-native compaction. | Complete on branch; all review corrections validated. Optional OpenAI/Anthropic composition API with client-owned continuation. [Latest completion](./designs/STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22); [design](./designs/STAGE_16A_NATIVE_COMPACTION_API.md). |
 | 16B | Evaluate improved retention policies. | Deferred and unauthorized; independent research with its own quality/cost gates. |
@@ -620,7 +622,8 @@ revision, version, or link only when that evidence exists.
 | 11 | Parallel reads and selected resumable effects | Conditional | Conditional / deferred | — | — | — |
 | 12 | Opt-in presets and capability inspection | Core | Available on branch; all three corrective passes validated | `version2` working tree, base `393b10c`; validated 2026-10-16 | — | [Recipe](./AGENT_PRESETS.md); [latest completion](./designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16); [fresh validation](./evaluations/STAGE_12_THIRD_CORRECTIONS.json) |
 | 13 | Verified procedures and curated learning | Conditional | Conditional / deferred | — | — | — |
-| 14 | Routing and selected specialist delegation | Conditional | Conditional / deferred | — | — | — |
+| 14A | Between-execution model routing | Conditional; explicitly approved | Complete on branch; S1–S3 corrected and validated | `version2`, base `cf87b4a` | — | [Second review/fix plan](./designs/STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md); [recipe](./MODEL_ROUTING.md) |
+| 14B | Bounded specialist delegation | Conditional | Companion design; separately frozen API/approval required | — | — | [Design boundaries](./designs/STAGE_14_ROUTING_AND_DELEGATION_API.md#7-companion-14b-design-bounded-tasks-on-the-existing-orchestrator) |
 | 15 | Sandboxed programmatic tools | Conditional | Conditional / deferred | — | — | — |
 | 16A | Plugin/native compaction and client-owned continuation | Selected conditional scope | Complete on branch; all review corrections validated | `version2` working tree, base `4ab2c8f`; 2026-10-22 | — | [Latest completion](./designs/STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22); [validation](./evaluations/STAGE_16A_THIRD_CORRECTIONS_VALIDATION.json); [recipe](./NATIVE_CONTEXT_COMPACTION.md); [approved API](./designs/STAGE_16A_NATIVE_COMPACTION_API.md) |
 | 16B | Retention research | Conditional | Deferred; not authorized | — | — | — |
@@ -1347,6 +1350,7 @@ incorrect usage instructions in place.
 
 | Stages / topic | Required reader guidance | Destinations to update | Status / evidence |
 | --- | --- | --- | --- |
+| 14: API design and scope | Distinguish delivered 14A routing from separately reviewed 14B delegation; preserve default model, context/plugins/tools, native-state binding and existing budgets; no shipped API claim. | [API proposal](./designs/STAGE_14_ROUTING_AND_DELEGATION_API.md); roadmap; availability and design/adoption checkpoint in this guide. Runtime recipes/README/User Guide/generated API/examples/AMOS/Changelog/package inventory follow only after implementation approval and verified delivery. | Synced 2026-10-22, base `cf87b4a`: 14A approved, implemented and corrected; 14B still requires separate approval. Recipe, public exports/generated API, README/User Guide, AGENTS, examples/AMOS, release notes and package inventory are synchronized. No verified release or breaking change. |
 | 00: recipe and discovery | Repository-only setup, exact commands, completion gates, and offline/live limits. | [README](../README.md#documentation); [User Guide](../USER_GUIDE.md#agentic-evaluation-baselines); [examples index](../examples/README.md); [agent instructions](../AGENTS.md). | Synced in the validated Stage 00 working tree, base `43b34cd`. |
 | 00: validation and release distinction | Actual pilot, accounting boundary, uncertainty, provider limitation, and unchanged runtime behavior. | [Evaluation guide](./AGENTIC_BASELINE_EVALUATION.md#recorded-stage-00-validation); [pilot](./evaluations/STAGE_00_LIVE_PILOT.json); [Changelog](../CHANGELOG.md#unreleased); package documentation inventory. | Synced in the same working tree; no published release claimed. |
 | 00: production API and app surfaces | Preserve existing signatures, defaults, and AMOS behavior. | Generated API; AMOS user guide; connector/memory specialist guides. | Not applicable: no production changes or new app commands. Consumer/session and existing AMOS regression fixtures provide compatibility evidence. |
@@ -2485,3 +2489,208 @@ standard/generated docs/package inventory. No API break or Stage 16B is proposed
   generated-doc gates. Focused coverage is explicitly narrow. Recipe, standard
   guides, generated API, AGENTS, example index, AMOS docs, Changelog, roadmap and
   package inventory are synchronized. No break, release or Stage 16B is claimed.
+
+## Stage 14A adoption record — 2026-10-22
+
+**Current review status:** All S1–S3 findings are corrected and validated.
+[Completion and compatibility](./designs/STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-23)
+and [new validation](./evaluations/STAGE_14A_SECOND_CORRECTIONS_VALIDATION.json)
+supersede the historical review and first corrective gates below.
+
+- **Availability:** Implemented on `version2`, based on `cf87b4a`; second-review
+  corrections complete. 8,775 units / 385 files, 224 live tests / 13 suites across OpenAI, Anthropic and Google with no required skips, 39 offline modes and 202 public ESM/CJS controls pass.
+  Package release remains unverified. The user
+  approved 14A with “proceed”; 14B remains separately reviewed and deferred.
+- **Adopt:** Configure optional `modelExecution.routing.routes` with named
+  connector/model profiles and optional bounded `select`. Use managed per-run
+  `routing` hints, explicit route or `null` opt-out. `default` is the configured
+  main identity. [Complete recipe](./MODEL_ROUTING.md).
+- **Defaults/limits:** Routing disabled when absent; no hidden classifier. Up to
+  16 alternatives, 64-character names, 128-character hints and 512-character
+  reasons. Default selector timeout 1000ms, fallback `default` only for selector
+  exception/timeout, stickiness `run`. Invalid/incompatible routes and budget/
+  cancellation failures do not silently fall back. Phase pins require this exact
+  explicitly shared ModelTask and latest nonempty phase, and only follow dispatch.
+- **Context and authority:** Same plugins/tools, selected-model preparation and
+  capacity, one run binding through tools/recovery/retries/repair/compaction.
+  Public default model/connector/context remain unchanged. Other accounts require
+  explicit transfer approval; signed/native state requires exact compatible owner.
+  Host-configured authorized routes resolve native checkpoints with existing scope
+  and evidence proof; saved policy never grants authority. Authentic async/suspended
+  continuation keeps the original task, route and output settings.
+- **Persistence:** Optional credential-free origin metadata; no required snapshot
+  fields/version change. Callbacks, pins, budgets, approvals and ModelTask authority
+  are not restored. Existing sessions/default APIs remain supported.
+- **Usage/failures:** Optional response/existing stream-completion `routing` and
+  `getRoutingDiagnostics()` identify selection, source/reason and wall time. Actual
+  per-model calls, repairs, compaction, unknowns and costs remain in the shared
+  task ledger. No cross-model replay, hidden allowance reset or workflow success
+  assertion. Scope/endpoint/hook drift fails before dispatch.
+- **Support boundaries:** Managed run/stream only; helpers, direct/external loops
+  and explicit maintenance keep configured owners. Cross-vendor vendor options
+  require explicit compatible replacement. Native model support/hard-cap limits
+  still apply. Streaming repair remains unsupported. Managed non-streaming repair
+  now retains original admitted task evidence and host instructions even without
+  routing or selective context. Anthropic native count uses compaction mode for
+  exact terminal assistant bodies; final native source guards survive budget observers.
+- **Examples/AMOS:** `example:model-routing`, `example:routing-context` and
+  `example:amos-routing` default offline, assert lifecycle and clean up. Explicit
+  live modes use `.env` and bound billable calls. `/routing` configures named
+  alternatives, saved JSON host category rules/hints, explicit choice/default/
+  auto/off and shows actual decisions; helpers remain independent.
+- **Historical initial delivery evaluation:** All 8,688 units / 382 files, 216 live cases / 13 suites, 37 offline modes,
+  182 public ESM/CJS controls and build/type/lint/examples/AMOS gates pass. The live
+  gate uses the complete matrix plus an entire 14-case accounting-suite rerun after
+  a fixture correction; earlier failures remain in the evidence. The fixed six-task pilot compares main-only,
+  fast-only and routing across three providers with exact held-out oracles and
+  uniform settings. Main/routed quality and >=5% registry token-cost reduction
+  are required; all failures/repairs/unknowns remain accounted. The pilot supports
+  only its recorded fixtures, not a blind benchmark or general savings/quality
+  claim. [Evidence](./evaluations/STAGE_14A_VALIDATION.json).
+- **Handoff:** Recipe, approved design/delivery, this availability/adoption/ledger,
+  roadmap, README, User Guide, generated API, AGENTS, affected specialist docs,
+  examples/index, AMOS docs/commands/tests, Changelog and package inventory are
+  synchronized. Release-wide publication remains pending.
+- **Internal-only corrections:** Execution-owned provider binding, effective
+  preparation model, native restore resolver, dispatch callback for actual phase
+  admission, source-preserving repair frame, task retention and exact compaction
+  count mode require no new storage/provider members or extra stream event kind.
+
+
+### Historical Stage 14A review checkpoint — 2026-10-22 (resolved)
+
+Reviewed routing/configuration, binding/authority, managed run/stream, structured
+repair, async/suspended lifecycle, budgets, native restore, AMOS and documentation.
+Three deterministic counterexamples were reproduced through the built public API;
+275 existing focused tests and the public compatibility consumer still pass.
+The implementation matches its 44-file delivery manifest. No runtime changes,
+new full-unit/live validation, release or Stage 14B implementation is claimed.
+
+That review required R1–R3 fixes before restoring completion; the corrective record below closes them. Retain original routes/tasks,
+local JSON parsing/repair and host completion checks, checkpoint proof and portable legacy
+contracts. Corrective delivery must add regressions, validate affected/full gates,
+and synchronize the recipe, standard/generated docs where affected, this adoption
+record and package inventory. [Review/fix plan](./designs/STAGE_14A_REVIEW_AND_FIX_PLAN.md).
+
+### Historical Stage 14A first corrective adoption — 2026-10-22
+
+8,723 units / 383 files, 221 live cases / 13 suites, 38 offline modes and 194 public ESM/CJS controls pass with no skipped required case. The complete live matrix
+uses OpenAI, Anthropic and Google and includes five new suspension/native cases.
+35 new unit regressions and the extended ESM/CJS controls close all three findings.
+The focused routing module has 100% lines/functions and 92.89% branches.
+
+- Saved opaque history keeps post-hook/retry/reservation owner guards when routing
+  is omitted. Newly observed opaque output retains its admitted identity; portable
+  legacy model hooks remain supported. No new required session member/version.
+- Suspended `run(event)` inherits format/route/task, applies supported explicit
+  options consistently and performs bounded JSON parsing/repair before the host
+  completion check. Data prohibitions remain restrictive. Local JSON remains
+  parse-only; streaming retains its no-repair boundary.
+- Native binding follows route selection, so an unsupported unused default does
+  not prevent a supported alternative or exact-owner checkpoint restoration.
+  Actually selected unsupported routes fail before generation/new input. Explicit
+  idle maintenance and nonrouting constructors retain their existing owner rules.
+- `example:routing-suspension` adds a deterministic wait/resume/repair/check recipe;
+  `example:routing-context` demonstrates an unsupported default with a supported
+  native alternative and unchanged plugins/tools. AMOS has matching adapter
+  coverage; no new command/configuration field is needed.
+
+The [corrective evidence](./evaluations/STAGE_14A_CORRECTIONS_VALIDATION.json) records
+resolved fixture/mock/temporary-journal incidents without treating earlier failed
+runs as passing. Original evidence remains unchanged. No breaking API, default
+change, additional required provider/storage interface, later stage or release.
+
+| Scope | Destinations / handoff | Status |
+| --- | --- | --- |
+| 14A R1–R3 corrections | Recipe, approved design, implementation/review records, roadmap, Version 2 availability/adoption, README, User Guide, AGENTS, generated API, examples/index, AMOS docs/tests, Changelog, packaged evidence | Synced 2026-10-22; all final gates pass. Package publication remains pending. |
+
+<a id="stage-14a-second-review--2026-10-23"></a>
+
+### Historical Stage 14A second review — 2026-10-23 (resolved below)
+
+At review time, three confirmed findings reopened completion:
+
+- **S1 / P1:** Structured repair can retain signed/provider-owned content without
+  origin bookkeeping, allowing a later nonrouting hook to dispatch it on another
+  model. Top-level repair reasoning is omitted from persisted history.
+- **S2 / P1:** A budget-rejected event resume clears its suspended origin before
+  admission; an ordinary retry can use a fresh ModelTask, choose another route
+  and lose the inherited format.
+- **S3 / P2:** Ordinary-context suspension saves/publishes before formatting, so
+  the durable assistant history can differ from the returned parsed answer; a
+  formatting failure can follow an already published suspension.
+
+At review time all 60 source-manifest files matched the first corrective delivery.
+Those review checks passed 830 tests / 19 files, public types and 194 ESM/CJS controls.
+Eleven additional asserted observations through the built public package establish
+the defects and controls, including real file checkpoint/correlation storage. No
+runtime, shipped test/example or package configuration was changed; no new full-unit
+or live-provider gate is claimed. Original evidence remains unchanged.
+
+Keep legacy portable hooks, parse-only JSON coercion, direct/idle ownership,
+supported snapshot/provider/storage contracts and the streaming no-repair boundary.
+Durably preserve acknowledged waits; never register them again to repair state.
+[Fix plan](./designs/STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md) and
+[review evidence](./evaluations/STAGE_14A_SECOND_REVIEW.json).
+
+| Scope | Destinations / handoff | Status |
+| --- | --- | --- |
+| 14A second review S1–S3 | Recipe, implementation/API status, roadmap, Version 2 availability/adoption, agent guide and review evidence | Historical review handoff preserved; S1–S3 are now fixed and validated by the corrective adoption below. No release or later stage. |
+
+
+### Stage 14A second corrective adoption — 2026-10-23
+
+The three second-review findings are corrected and fully validated on branch.
+8,775 units / 385 files, 224 live tests / 13 suites across OpenAI, Anthropic and Google with no required skips, 39 offline modes and 202 public ESM/CJS controls pass. All build/type/lint/strict/AMOS and generated-documentation gates pass.
+The [completion record](./designs/STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-23)
+and [machine evidence](./evaluations/STAGE_14A_SECOND_CORRECTIONS_VALIDATION.json)
+retain the original review separately from this corrective delivery.
+
+- **Adoption:** No new required API, provider/storage member or AMOS setting.
+  Existing optional routing, response formats and task sharing keep their defaults.
+  Repair preserves ordered opaque state and its actual admitted origin even when
+  routing is absent. Portable-only history keeps supported model hooks. Managed
+  replacement rejects a changed response boundary instead of overwriting another
+  observation; the public content-only helper is unchanged.
+- **Recovery:** Rejected resumed preparation/hook/budget attempts keep the same
+  task, selected owner, effective options and limitations. Success releases them;
+  host `cancel(reason)` deliberately abandons pending execution authority without
+  undoing an action or deleting its receipt. A terminal stream event releases
+  ownership even if the consumer closes there. Streaming still gains no JSON repair.
+- **Persistence/failure:** Structured suspension finalizes before saving/correlating
+  and publishing success. Failed finalization preserves the actual registration
+  with optional snapshot `metadata.suspensionFinalization` diagnostics and its
+  correlation, without claiming a valid suspended answer. Dual finalization and
+  recovery failure retains both errors. Storage failure needs explicit host repair;
+  preserve live observations before teardown. No action is repeated to recover
+  bookkeeping. Snapshots keep existing versions and do not restore budget, callback
+  or authorization authority. Journals keep their existing optional replacement
+  extension point and ordered correction behavior.
+- **Examples/AMOS:** `example:routing-suspension -- --failed-finalization` demonstrates
+  a two-call allowance, repeated denied event retries, one actual wait and its saved
+  diagnostic. Existing success mode still demonstrates inherited JSON repair/host
+  completion. Real AMOS runner tests cover both run/stream rejection and explicit
+  cancellation; no new command is needed. Public ESM/CJS controls exercise repaired
+  protocol ownership; live provider controls check checkpoint ordering and spent
+  allowance without replaying registration.
+- **Handoff:** Routing recipe, README, User Guide, AGENTS, generated API, examples
+  index, AMOS guidance, Changelog, roadmap/design/delivery/review records and package
+  inventory are updated in this delivering slice. Prior review and validation
+  records stay historical. Branch availability remains separate from publication;
+  no breaking change or later stage is authorized.
+
+The final live gate additionally found that Google GenerateContent ignored explicit
+`thinking.enabled: false`. Supported Gemini 2.5 Flash/Flash-Lite models and preview
+aliases now send zero thinking budget through the shared Google/Vertex converter.
+Undefined defaults, enabled thinking, raw vendor overrides and other models/APIs
+retain their behavior. Fourteen new regressions cover this mapping; the original
+pilot quality/cost thresholds remain intact. See the recipe and its linked Google
+documentation for model-specific support. No default or public signature changes.
+
+| Slice | Documentation targets | Delivery status |
+| --- | --- | --- |
+| 14A second corrections S1–S3 | Public/agent/AMOS guides, generated API, examples/index, roadmap/design/delivery/review, availability/adoption/handoff, release notes and packaged validation | 8,775 units, 224 live tests, 39 offline modes and 202 public controls pass; all local gates pass. Supported defaults and signatures preserved. No release or Stage 14B/16B. |
+
+| Date | Change | Availability | Handoff |
+| --- | --- | --- | --- |
+| 2026-10-23 | Fixed all Stage 14A second-review findings, including empty-response journal receipt preservation. | 8,775 units, 224 live tests, 39 offline modes and 202 public controls pass; no known failing required gate. | Public/agent/AMOS guides, generated API, examples, roadmap, availability/adoption/handoff and packaged evidence synchronized. No break, later stage or release. |

@@ -259,3 +259,13 @@ and formatting/repair. Contributions remain a transient view; compaction does no
 turn selected data into plugin storage or native source authority. Other strategies
 and old contributor contracts remain unchanged. See
 [Native Context Compaction](NATIVE_CONTEXT_COMPACTION.md).
+
+
+## Routing and repair frames
+
+Optional [managed routing](./MODEL_ROUTING.md) selects before context preparation
+and uses the selected capacity without changing public Agent/context defaults.
+Managed JSON repair retains the actual sanitized admitted frame and host
+instructions, including with selection disabled. It preserves original task/tool
+evidence under the same binding, task and fit guards; it does not prepare/compact
+a second time. Native formatting continues to use its protocol-aware view.

@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-10-22
+**Generated:** 2026-10-23
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -12,19 +12,19 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 ## Table of Contents
 
 - [Core](#core) (24 items)
-- [Text-to-Speech (TTS)](#text-to-speech-tts-) (13 items)
-- [Speech-to-Text (STT)](#speech-to-text-stt-) (11 items)
+- [Text-to-Speech (TTS)](#text-to-speech-tts) (13 items)
+- [Speech-to-Text (STT)](#speech-to-text-stt) (11 items)
 - [Image Generation](#image-generation) (25 items)
 - [Video Generation](#video-generation) (23 items)
 - [Agent Runtime](#agent-runtime) (70 items)
 - [Task Agents](#task-agents) (132 items)
 - [Context Management](#context-management) (14 items)
 - [Session Management](#session-management) (78 items)
-- [Tools & Function Calling](#tools-function-calling) (217 items)
+- [Tools & Function Calling](#tools--function-calling) (217 items)
 - [Streaming](#streaming) (35 items)
-- [Model Registry](#model-registry) (35 items)
-- [OAuth & External APIs](#oauth-external-apis) (46 items)
-- [Resilience & Observability](#resilience-observability) (33 items)
+- [Model Registry](#model-registry) (43 items)
+- [OAuth & External APIs](#oauth--external-apis) (46 items)
+- [Resilience & Observability](#resilience--observability) (33 items)
 - [Errors](#errors) (44 items)
 - [Utilities](#utilities) (10 items)
 - [Interfaces](#interfaces) (90 items)
@@ -37,7 +37,7 @@ Core classes for authentication, agents, and providers
 
 ### Agent `class`
 
-📍 [`src/core/Agent.ts:443`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:458`](src/core/Agent.ts)
 
 Agent class - represents an AI assistant with tool calling capabilities
 
@@ -239,6 +239,16 @@ async compactContext(options: AgentContextCompactionOptions = {}): Promise&lt;Co
 
 **Returns:** `Promise&lt;ContextCompactionReport&gt;`
 
+#### `getRoutingDiagnostics()`
+
+Read the latest routed execution's detached, secret-free decision.
+
+```typescript
+getRoutingDiagnostics(): ModelRoutingDiagnostics | undefined
+```
+
+**Returns:** `ModelRoutingDiagnostics | undefined`
+
 #### `beginExternalExecution()`
 
 Start a long-lived execution driven by an external model transport.
@@ -374,8 +384,11 @@ async continueWithAsyncResults(results?: ToolResult[]): Promise&lt;AgentResponse
 Check if there are any pending async tools
 
 ```typescript
-hasPendingAsyncTools(): boolean
+hasPendingAsyncTools(includeQueued = false): boolean
 ```
+
+**Parameters:**
+- `includeQueued`: `boolean` *(optional)* (default: `false`)
 
 **Returns:** `boolean`
 
@@ -1778,7 +1791,7 @@ isDisposed(): boolean
 
 ### AgentConfig `interface`
 
-📍 [`src/core/Agent.ts:98`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:103`](src/core/Agent.ts)
 
 Agent configuration - extends BaseAgentConfig with Agent-specific options
 
@@ -1841,7 +1854,7 @@ Example: `toolExecutionTimeout: 300000` (5 minutes hard cap per tool call) |
 
 ### AgentContextCompactionOptions `interface`
 
-📍 [`src/core/Agent.ts:234`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:241`](src/core/Agent.ts)
 
 Options for {@link Agent.rolloverContext}.
 
@@ -1861,7 +1874,7 @@ Options for {@link Agent.rolloverContext}.
 
 ### AgentContextRolloverOptions `interface`
 
-📍 [`src/core/Agent.ts:243`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:250`](src/core/Agent.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -2017,7 +2030,7 @@ Fetch options with additional connector-specific settings
 
 ### ExternalExecutionOptions `interface`
 
-📍 [`src/core/Agent.ts:268`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:275`](src/core/Agent.ts)
 
 Options for a non-LLM execution owned by an external transport.
 
@@ -2035,7 +2048,7 @@ Options for a non-LLM execution owned by an external transport.
 
 ### ExternalExecutionResult `interface`
 
-📍 [`src/core/Agent.ts:283`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:290`](src/core/Agent.ts)
 
 Terminal data supplied when an external execution is completed.
 
@@ -2055,7 +2068,7 @@ Terminal data supplied when an external execution is completed.
 
 ### ExternalToolCall `interface`
 
-📍 [`src/core/Agent.ts:276`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:283`](src/core/Agent.ts)
 
 A function call received from an external model transport.
 
@@ -2074,7 +2087,7 @@ A function call received from an external model transport.
 
 ### RunOptions `interface`
 
-📍 [`src/core/Agent.ts:200`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:205`](src/core/Agent.ts)
 
 Per-call options for run() and stream().
 These override the agent-level config for this single invocation.
@@ -2084,6 +2097,7 @@ These override the agent-level config for this single invocation.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `routing?` | `routing?: ModelRoutingRunOptions | null;` | Optional host model routing hints/override; null selects the configured default. |
 | `loopPolicy?` | `loopPolicy?: AgentLoopPolicy | null;` | Per-execution override; null disables a configured managed-loop policy. |
 | `modelTask?` | `modelTask?: ModelTask;` | Explicit process-local budget/usage shared with helper or other agent calls. |
 | `thinking?` | `thinking?: ThinkingConfig;` | Vendor-agnostic thinking/reasoning configuration |
@@ -2116,7 +2130,7 @@ type AgentEventListener = (agentId: string, agentName: string, event: string, da
 
 ### AgentRuntimeConfigSnapshot `type`
 
-📍 [`src/core/Agent.ts:180`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:185`](src/core/Agent.ts)
 
 Agent runtime options exposed by getRuntimeConfigSnapshot().
 
@@ -2142,7 +2156,7 @@ type AgentRuntimeConfigSnapshot = Pick&lt;AgentConfig,
 
 ### AgentSessionConfig `type`
 
-📍 [`src/core/Agent.ts:93`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:98`](src/core/Agent.ts)
 
 Session configuration for Agent (same as BaseSessionConfig)
 
@@ -2176,7 +2190,7 @@ type Vendor = (typeof Vendor)[keyof typeof Vendor]
 
 ### createProvider `function`
 
-📍 [`src/core/createProvider.ts:87`](src/core/createProvider.ts)
+📍 [`src/core/createProvider.ts:89`](src/core/createProvider.ts)
 
 Create a text provider from a connector
 
@@ -12559,13 +12573,15 @@ async execute&lt;T&gt;(descriptor: ModelCallDescriptor, operation: (signal: Abor
     observedUsage?: () =&gt; TokenUsage | undefined;
     /** @internal Final synchronous native request/authority guard, including retries. */
     beforeDispatch?: () =&gt; void;
+    /** @internal Observed provider/transport dispatch after successful reservation. */
+    onDispatch?: () =&gt; void;
   } = {}): Promise&lt;{ result: T; invocationId: string }&gt;
 ```
 
 **Parameters:**
 - `descriptor`: `ModelCallDescriptor`
 - `operation`: `(signal: AbortSignal) =&gt; Promise&lt;T&gt;`
-- `options`: `{ signal?: AbortSignal | undefined; transport?: boolean | undefined; usage?: ((result: T) =&gt; TokenUsage | undefined) | undefined; observedUsage?: (() =&gt; TokenUsage | undefined) | undefined; beforeDispatch?: (() =&gt; void) | undefined; }` *(optional)* (default: `{}`)
+- `options`: `{ signal?: AbortSignal | undefined; transport?: boolean | undefined; usage?: ((result: T) =&gt; TokenUsage | undefined) | undefined; observedUsage?: (() =&gt; TokenUsage | undefined) | undefined; beforeDispatch?: (() =&gt; void) | undefined; onDispatch?: (() =&gt; void) | undefined; }` *(optional)* (default: `{}`)
 
 **Returns:** `Promise&lt;{ result: T; invocationId: string; }&gt;`
 
@@ -12577,13 +12593,15 @@ Streaming variant with pull-based backpressure and invocation-local transport tr
 async *iterate&lt;T&gt;(descriptor: ModelCallDescriptor, factory: (signal: AbortSignal) =&gt; AsyncIterable&lt;T&gt;, options: {
     signal?: AbortSignal; transport?: boolean; usage?: (event: T) =&gt; TokenUsage | undefined;
     beforeDispatch?: () =&gt; void;
+    /** @internal Observed provider/transport dispatch after successful reservation. */
+    onDispatch?: () =&gt; void;
   } = {}): AsyncIterableIterator&lt;T&gt;
 ```
 
 **Parameters:**
 - `descriptor`: `ModelCallDescriptor`
 - `factory`: `(signal: AbortSignal) =&gt; AsyncIterable&lt;T&gt;`
-- `options`: `{ signal?: AbortSignal | undefined; transport?: boolean | undefined; usage?: ((event: T) =&gt; TokenUsage | undefined) | undefined; beforeDispatch?: (() =&gt; void) | undefined; }` *(optional)* (default: `{}`)
+- `options`: `{ signal?: AbortSignal | undefined; transport?: boolean | undefined; usage?: ((event: T) =&gt; TokenUsage | undefined) | undefined; beforeDispatch?: (() =&gt; void) | undefined; onDispatch?: (() =&gt; void) | undefined; }` *(optional)* (default: `{}`)
 
 **Returns:** `AsyncIterableIterator&lt;T&gt;`
 
@@ -15777,7 +15795,7 @@ Limits apply to one explicitly shared, process-local task.
 
 ### ModelTaskSnapshot `interface`
 
-📍 [`src/core/model-execution/types.ts:125`](src/core/model-execution/types.ts)
+📍 [`src/core/model-execution/types.ts:127`](src/core/model-execution/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -21015,7 +21033,7 @@ async end(reason?: CallEndReason): Promise&lt;CallSummary&gt;
 
 ### ContextSessionMetadata `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:65`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:67`](src/domain/interfaces/IContextStorage.ts)
 
 Session metadata (stored with session)
 
@@ -21034,7 +21052,7 @@ Session metadata (stored with session)
 
 ### ContextSessionSummary `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:42`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:44`](src/domain/interfaces/IContextStorage.ts)
 
 Session summary for listing (lightweight, no full state)
 
@@ -22059,7 +22077,7 @@ if (ref) {
 
 ### StoredContextSession `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:82`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:84`](src/domain/interfaces/IContextStorage.ts)
 
 Full session state wrapper (includes metadata)
 
@@ -28577,7 +28595,7 @@ export function hydrateCustomTool(
 
 ### isToolCallArgumentsDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:364`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:366`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallArgumentsDelta(
@@ -28589,7 +28607,7 @@ export function isToolCallArgumentsDelta(
 
 ### isToolCallArgumentsDone `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:370`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:372`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallArgumentsDone(
@@ -28601,7 +28619,7 @@ export function isToolCallArgumentsDone(
 
 ### isToolCallStart `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:360`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:362`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isToolCallStart(event: StreamEvent): event is ToolCallStartEvent
@@ -29476,7 +29494,7 @@ destroy(): void
 
 ### AudioChunkErrorEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:300`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:302`](src/domain/entities/StreamEvent.ts)
 
 Audio chunk error - TTS synthesis failed for a text chunk
 
@@ -29496,7 +29514,7 @@ Audio chunk error - TTS synthesis failed for a text chunk
 
 ### AudioChunkReadyEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:279`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:281`](src/domain/entities/StreamEvent.ts)
 
 Audio chunk ready - TTS synthesis complete for a text chunk
 
@@ -29520,7 +29538,7 @@ Audio chunk ready - TTS synthesis complete for a text chunk
 
 ### AudioStreamCompleteEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:310`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:312`](src/domain/entities/StreamEvent.ts)
 
 Audio stream complete - all TTS chunks have been processed
 
@@ -29540,7 +29558,7 @@ Audio stream complete - all TTS chunks have been processed
 
 ### CompactionEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:235`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:237`](src/domain/entities/StreamEvent.ts)
 
 Encrypted compaction state emitted by the provider. Preserve this item for
 stateless continuation replay; the content is intentionally opaque.
@@ -29565,7 +29583,7 @@ stateless continuation replay; the content is intentionally opaque.
 
 ### ErrorEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:262`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:264`](src/domain/entities/StreamEvent.ts)
 
 Error event
 
@@ -29723,7 +29741,7 @@ Text output complete for this item
 
 ### ProviderStateEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:250`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:252`](src/domain/entities/StreamEvent.ts)
 
 Opaque provider-owned block that must be replayed on the next request.
 
@@ -29745,7 +29763,7 @@ Opaque provider-owned block that must be replayed on the next request.
 
 ### ReasoningDeltaEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:203`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:205`](src/domain/entities/StreamEvent.ts)
 
 Reasoning/thinking delta - incremental reasoning output
 
@@ -29767,7 +29785,7 @@ Reasoning/thinking delta - incremental reasoning output
 
 ### ReasoningDoneEvent `interface`
 
-📍 [`src/domain/entities/StreamEvent.ts:216`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:218`](src/domain/entities/StreamEvent.ts)
 
 Reasoning/thinking complete for this item
 
@@ -29800,6 +29818,7 @@ Response complete - final event
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `routing?` | `routing?: import('../../core/model-execution/types.js').ModelRoutingDiagnostics;` | Optional managed routing decision, without a new stream event kind. |
 | `loop?` | `loop?: import('./AgentLoop.js').AgentLoopDiagnostics;` | Optional managed-loop verdict; provider status keeps its existing meaning. |
 | `type` | `type: StreamEventType.RESPONSE_COMPLETE;` | - |
 | `status` | `status: 'completed' | 'incomplete' | 'failed';` | - |
@@ -30002,7 +30021,7 @@ type OrderedStreamOutputEntry = | {
 
 ### StreamEvent `type`
 
-📍 [`src/domain/entities/StreamEvent.ts:321`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:323`](src/domain/entities/StreamEvent.ts)
 
 Union type of all stream events
 Discriminated by 'type' field for type narrowing
@@ -30034,7 +30053,7 @@ type StreamEvent = | ResponseCreatedEvent
 
 ### isAudioChunkError `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:400`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:402`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioChunkError(event: StreamEvent): event is AudioChunkErrorEvent
@@ -30044,7 +30063,7 @@ export function isAudioChunkError(event: StreamEvent): event is AudioChunkErrorE
 
 ### isAudioChunkReady `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:396`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:398`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioChunkReady(event: StreamEvent): event is AudioChunkReadyEvent
@@ -30054,7 +30073,7 @@ export function isAudioChunkReady(event: StreamEvent): event is AudioChunkReadyE
 
 ### isAudioStreamComplete `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:404`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:406`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isAudioStreamComplete(event: StreamEvent): event is AudioStreamCompleteEvent
@@ -30064,7 +30083,7 @@ export function isAudioStreamComplete(event: StreamEvent): event is AudioStreamC
 
 ### isCompaction `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:384`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:386`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isCompaction(event: StreamEvent): event is CompactionEvent
@@ -30074,7 +30093,7 @@ export function isCompaction(event: StreamEvent): event is CompactionEvent
 
 ### isErrorEvent `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:392`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:394`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isErrorEvent(event: StreamEvent): event is ErrorEvent
@@ -30084,7 +30103,7 @@ export function isErrorEvent(event: StreamEvent): event is ErrorEvent
 
 ### isOutputTextDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:356`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:358`](src/domain/entities/StreamEvent.ts)
 
 Type guards for specific events
 
@@ -30096,7 +30115,7 @@ export function isOutputTextDelta(event: StreamEvent): event is OutputTextDeltaE
 
 ### isReasoningDelta `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:376`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:378`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isReasoningDelta(event: StreamEvent): event is ReasoningDeltaEvent
@@ -30106,7 +30125,7 @@ export function isReasoningDelta(event: StreamEvent): event is ReasoningDeltaEve
 
 ### isReasoningDone `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:380`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:382`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isReasoningDone(event: StreamEvent): event is ReasoningDoneEvent
@@ -30116,7 +30135,7 @@ export function isReasoningDone(event: StreamEvent): event is ReasoningDoneEvent
 
 ### isResponseComplete `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:388`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:390`](src/domain/entities/StreamEvent.ts)
 
 ```typescript
 export function isResponseComplete(event: StreamEvent): event is ResponseCompleteEvent
@@ -30126,7 +30145,7 @@ export function isResponseComplete(event: StreamEvent): event is ResponseComplet
 
 ### isStreamEvent `function`
 
-📍 [`src/domain/entities/StreamEvent.ts:346`](src/domain/entities/StreamEvent.ts)
+📍 [`src/domain/entities/StreamEvent.ts:348`](src/domain/entities/StreamEvent.ts)
 
 Type guard to check if event is a specific type
 
@@ -30509,7 +30528,7 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ### ModelAttemptRecord `interface`
 
-📍 [`src/core/model-execution/types.ts:96`](src/core/model-execution/types.ts)
+📍 [`src/core/model-execution/types.ts:98`](src/core/model-execution/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -30532,7 +30551,7 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ### ModelCallDescriptor `interface`
 
-📍 [`src/core/model-execution/types.ts:85`](src/core/model-execution/types.ts)
+📍 [`src/core/model-execution/types.ts:87`](src/core/model-execution/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -30554,7 +30573,7 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ### ModelCapabilities `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:84`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:86`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -30582,6 +30601,7 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `routing?` | `routing?: ModelRoutingConfig;` | Opt-in managed run/stream model routing. Runtime policy is not session authority. |
 | `helpers?` | `helpers?: Partial&lt;Record&lt;HelperRole, HelperModelConfig&gt;&gt;;` | - |
 | `limits?` | `limits?: ModelTaskLimits;` | - |
 | `maxOutputTokensPerCall?` | `maxOutputTokensPerCall?: number;` | Optional aggregate main-call output cap across candidates. Omitted preserves provider defaults. |
@@ -30594,7 +30614,7 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ### ModelInvocationRecord `interface`
 
-📍 [`src/core/model-execution/types.ts:109`](src/core/model-execution/types.ts)
+📍 [`src/core/model-execution/types.ts:111`](src/core/model-execution/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -30631,6 +30651,162 @@ Host-supplied upper rates, including any service tier or cache-write premium.
 |----------|------|-------------|
 | `inputPerMillion` | `inputPerMillion: number;` | - |
 | `outputPerMillion` | `outputPerMillion: number;` | - |
+
+</details>
+
+---
+
+### ModelRouteCandidate `interface`
+
+📍 [`src/core/model-execution/types.ts:174`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `route` | `readonly route: string;` | - |
+| `connector` | `readonly connector: string;` | - |
+| `model` | `readonly model: string;` | - |
+| `eligible` | `readonly eligible: boolean;` | Preliminary state/capability eligibility, not a reservation or fit promise. |
+| `reasons` | `readonly reasons: readonly string[];` | - |
+
+</details>
+
+---
+
+### ModelRouteConfig `interface`
+
+📍 [`src/core/model-execution/types.ts:149`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `model` | `model: string;` | - |
+| `connector?` | `connector?: string;` | Inherit the Agent's configured connector when omitted. |
+| `thinking?` | `thinking?: ThinkingConfig;` | - |
+| `temperature?` | `temperature?: number;` | - |
+| `maxOutputTokens?` | `maxOutputTokens?: number;` | Optional tighter cap; cannot increase maxOutputTokensPerCall. |
+| `priceBound?` | `priceBound?: ModelPriceBound;` | Bound for this route; another deployment's price bound is never inherited. |
+| `dataHandling?` | `dataHandling?: DataHandlingPolicy;` | - |
+| `allowContextTransfer?` | `allowContextTransfer?: boolean;` | Required to send the managed request to a different connector/account. |
+
+</details>
+
+---
+
+### ModelRoutingConfig `interface`
+
+📍 [`src/core/model-execution/types.ts:201`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `routes` | `routes: Record&lt;string, ModelRouteConfig&gt;;` | Nonempty, bounded names. 'default' is reserved and cannot be redefined. |
+| `select?` | `select?: (context: ModelRoutingContext) =&gt;
+    | string
+    | ModelRoutingDecision
+    | Promise&lt;string | ModelRoutingDecision&gt;;` | Omit for explicit named-route overrides only; otherwise default stays selected. |
+| `fallback?` | `fallback?: string;` | Default 'default'. Used only for selector exceptions/timeouts. |
+| `timeoutMs?` | `timeoutMs?: number;` | Default 1000ms; also bounded by the current execution/task deadline. |
+| `sticky?` | `sticky?: 'run' | 'phase';` | Default 'run'. 'phase' reuses a route in the same explicit ModelTask/phase. |
+
+</details>
+
+---
+
+### ModelRoutingContext `interface`
+
+📍 [`src/core/model-execution/types.ts:183`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `hints` | `readonly hints: Readonly&lt;ModelRoutingHints&gt;;` | - |
+| `candidates` | `readonly candidates: readonly ModelRouteCandidate[];` | - |
+| `previous?` | `readonly previous?: Readonly&lt;{
+    route: string;
+    connector: string;
+    model: string;
+  }&gt;;` | Last admitted route in this explicit ModelTask and phase, if any. |
+| `signal` | `readonly signal: AbortSignal;` | - |
+
+</details>
+
+---
+
+### ModelRoutingDecision `interface`
+
+📍 [`src/core/model-execution/types.ts:195`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `route` | `route: string;` | - |
+| `reason?` | `reason?: string;` | Diagnostic only; never injected as an instruction. |
+
+</details>
+
+---
+
+### ModelRoutingDiagnostics `interface`
+
+📍 [`src/core/model-execution/types.ts:217`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `decisionId` | `readonly decisionId: string;` | - |
+| `executionId` | `readonly executionId: string;` | - |
+| `requestedRoute?` | `readonly requestedRoute?: string;` | - |
+| `selectedRoute` | `readonly selectedRoute: string;` | - |
+| `connector` | `readonly connector: string;` | - |
+| `model` | `readonly model: string;` | - |
+| `source` | `readonly source: 'default' | 'policy' | 'explicit' | 'sticky' | 'fallback' | 'disabled';` | - |
+| `reason?` | `readonly reason?: string;` | - |
+| `selectorFailure?` | `readonly selectorFailure?: 'timeout' | 'exception';` | - |
+| `selectionMs` | `readonly selectionMs: number;` | - |
+
+</details>
+
+---
+
+### ModelRoutingHints `interface`
+
+📍 [`src/core/model-execution/types.ts:164`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `taskType?` | `taskType?: string;` | - |
+| `phase?` | `phase?: string;` | - |
+
+</details>
+
+---
+
+### ModelRoutingRunOptions `interface`
+
+📍 [`src/core/model-execution/types.ts:169`](src/core/model-execution/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `route?` | `route?: string;` | 'default' is the existing configured main connector/model. |
 
 </details>
 
@@ -39296,7 +39472,7 @@ Agent definition summary for listing
 
 ### ContextStorageListOptions `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:202`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:204`](src/domain/interfaces/IContextStorage.ts)
 
 Options for listing sessions
 
@@ -40177,7 +40353,7 @@ warmup?(): Promise&lt;void&gt;;
 
 ### IContextStorage `interface`
 
-📍 [`src/domain/interfaces/IContextStorage.ts:114`](src/domain/interfaces/IContextStorage.ts)
+📍 [`src/domain/interfaces/IContextStorage.ts:116`](src/domain/interfaces/IContextStorage.ts)
 
 Storage interface for AgentContext persistence
 
@@ -41810,7 +41986,7 @@ translate?(options: STTOptions): Promise&lt;STTResponse&gt;;
 
 ### ITextCompactionProvider `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:125`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:127`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -41843,7 +42019,7 @@ countInput(options: TextGenerateOptions): Promise&lt;number | null&gt;;
 
 ### ITextProvider `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:94`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:96`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -42381,6 +42557,7 @@ This is the canonical definition - core layer re-exports this type.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `providerStateBinding?` | `providerStateBinding?: Omit&lt;import('./INativeContinuation.js').NativeContinuationBinding, 'scope'&gt;;` | Optional opaque-state origin; never restores routing policy or authentication. |
 | `nativeContinuation?` | `nativeContinuation?: import('./INativeContinuation.js').NativeContinuationSnapshot;` | Optional native continuation; host policy and credentials must be supplied again. |
 | `conversation` | `conversation: InputItem[];` | Conversation history |
 | `pluginStates` | `pluginStates: Record&lt;string, unknown&gt;;` | Plugin states (keyed by plugin name) |
@@ -42511,7 +42688,7 @@ Used by edit UIs to re-populate form fields without needing to decrypt config.au
 
 ### TextCompactionResponse `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:130`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:132`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -42537,8 +42714,9 @@ Used by edit UIs to re-populate form fields without needing to decrypt config.au
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `nativeCompactionSource?` | `nativeCompactionSource?: boolean;` | - |
 | `nativeContext?` | `nativeContext?: boolean;` | - |
-| `managedDispatch?` | `managedDispatch?: { prepare(): Promise&lt;void&gt;; assertCurrent(): void };` | - |
+| `managedDispatch?` | `managedDispatch?: { prepare(): Promise&lt;void&gt;; assertCurrent(): void; onDispatch?(): void };` | - |
 | `signal?` | `signal?: AbortSignal;` | Optional cooperative cancellation for this provider call. |
 | `model` | `model: string;` | - |
 | `input` | `input: string | InputItem[];` | - |
@@ -43569,12 +43747,9 @@ addAssistantResponse(output: OutputItem[]): string
 #### `replaceLastAssistantResponse()`
 
 Replace the content of the most recent assistant message in the conversation
-with `output` (rebuilt the same way as {@link addAssistantResponse}). Used
-when the final answer is transformed after it was already committed — e.g.
-the structured-output reformat pass in `Agent.run()` — so the persisted
-history, session save/load, continuation, and the history journal all
-reflect the same answer the caller received rather than the pre-reformat
-text.
+with the message content from `output`. Preserves this legacy content-only
+helper's behavior; top-level replay items are not replaced here. Managed
+structured finalization uses a captured response boundary instead.
 
 ```typescript
 replaceLastAssistantResponse(output: OutputItem[]): boolean
@@ -50956,7 +51131,7 @@ Agent configuration (needed for resume)
 
 ### AgentContextNextGenConfig `interface`
 
-📍 [`src/core/context-nextgen/types.ts:880`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:882`](src/core/context-nextgen/types.ts)
 
 AgentContextNextGen configuration
 
@@ -51880,7 +52055,7 @@ Options for the default SentenceChunkingStrategy
 
 ### CompactionContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1176`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1178`](src/core/context-nextgen/types.ts)
 
 Read-only context passed to compaction strategies.
 Provides access to data needed for compaction decisions and
@@ -51998,7 +52173,7 @@ estimateTokens(item: InputItem): number;
 
 ### CompactionResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1070`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1072`](src/core/context-nextgen/types.ts)
 
 Result of compact() operation.
 
@@ -52320,7 +52495,7 @@ truncate profile generation. See feedback_no_output_limits.md. |
 
 ### ConsolidationResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1089`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1091`](src/core/context-nextgen/types.ts)
 
 Result of consolidate() operation.
 
@@ -52531,7 +52706,7 @@ contribute(request: ContextContributionRequest): ContextBlock[] | Promise&lt;Con
 
 ### ContextEvents `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1017`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1019`](src/core/context-nextgen/types.ts)
 
 Events emitted by AgentContextNextGen
 
@@ -52618,6 +52793,7 @@ Diagnostic snapshot of the last successful prepare; token counts are estimates.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `model?` | `model?: string;` | Effective model for an opt-in routed managed preparation. |
 | `compactionDetails?` | `compactionDetails?: import('./compaction/types.js').ContextCompactionReport;` | Optional independent plugin/history outcomes for an explicitly selected composition. |
 | `selection?` | `selection?: import('./assembly.js').ContextSelectionManifest;` | Diagnostic for the opt-in transactional built-ins in this preparation. |
 | `compaction?` | `compaction?: import('./strategies/conversation-compaction.js').ConversationCompactionReport;` | - |
@@ -52655,7 +52831,7 @@ Optional request contributions, resolved again after compaction.
 
 ### ContextRolloverOptions `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1127`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1129`](src/core/context-nextgen/types.ts)
 
 Options for an explicit context rollover.
 
@@ -52675,7 +52851,7 @@ their results stay with their containing turn. Default: 8. |
 
 ### ContextRolloverResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1142`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1144`](src/core/context-nextgen/types.ts)
 
 Result of an explicit context rollover.
 
@@ -52700,7 +52876,7 @@ Result of an explicit context rollover.
 
 ### ContextRolloverSummaryInput `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1107`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1109`](src/core/context-nextgen/types.ts)
 
 Input passed to a context-rollover summarizer.
 
@@ -53533,7 +53709,7 @@ If omitted, result is stored as `__prestep_{name}` or `__poststep_{name}`. |
 
 ### DirectCallOptions `interface`
 
-📍 [`src/core/BaseAgent.ts:283`](src/core/BaseAgent.ts)
+📍 [`src/core/BaseAgent.ts:284`](src/core/BaseAgent.ts)
 
 Options for direct LLM calls (bypassing AgentContext).
 
@@ -55398,7 +55574,7 @@ Result of a grep operation
 
 ### HelperCallOptions `interface`
 
-📍 [`src/core/model-execution/types.ts:61`](src/core/model-execution/types.ts)
+📍 [`src/core/model-execution/types.ts:63`](src/core/model-execution/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -55420,7 +55596,7 @@ Result of a grep operation
 
 ### HelperInputContext `interface`
 
-📍 [`src/core/model-execution/types.ts:54`](src/core/model-execution/types.ts)
+📍 [`src/core/model-execution/types.ts:56`](src/core/model-execution/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -55438,7 +55614,7 @@ Result of a grep operation
 
 ### HelperResult `interface`
 
-📍 [`src/core/model-execution/types.ts:78`](src/core/model-execution/types.ts)
+📍 [`src/core/model-execution/types.ts:80`](src/core/model-execution/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -55596,7 +55772,7 @@ reset(): void;
 
 ### ICompactionStrategy `interface`
 
-📍 [`src/core/context-nextgen/types.ts:1240`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1242`](src/core/context-nextgen/types.ts)
 
 Compaction strategy interface.
 
@@ -57998,7 +58174,7 @@ For service accounts (Google, Salesforce)
 
 ### KnownContextFeatures `interface`
 
-📍 [`src/core/context-nextgen/types.ts:769`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:771`](src/core/context-nextgen/types.ts)
 
 Feature flags for enabling/disabling plugins
 
@@ -58023,7 +58199,7 @@ Feature flags for enabling/disabling plugins
 
 ### KnownPluginConfigs `interface`
 
-📍 [`src/core/context-nextgen/types.ts:843`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:845`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 When features are enabled, plugins are created with these configs.
@@ -58085,6 +58261,7 @@ optional fields (`identifiers`, `aliases`, `metadata`, `permissions`,
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `routing?` | `routing?: import('../../core/model-execution/types.js').ModelRoutingDiagnostics;` | Optional managed routing decision; model/usage retain provider meanings. |
 | `loop?` | `loop?: import('./AgentLoop.js').AgentLoopDiagnostics;` | Opt-in managed-loop diagnostics; separate from provider generation status. |
 | `id` | `id: string;` | - |
 | `object` | `object: 'response';` | - |
@@ -59165,7 +59342,7 @@ Configuration for initiating an outbound call.
 
 ### OversizedInputResult `interface`
 
-📍 [`src/core/context-nextgen/types.ts:738`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:740`](src/core/context-nextgen/types.ts)
 
 Result of handling oversized current input
 
@@ -59865,7 +60042,7 @@ source metadata aggregation rather than re-extracted into facts. |
 
 ### PreparedContext `interface`
 
-📍 [`src/core/context-nextgen/types.ts:715`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:717`](src/core/context-nextgen/types.ts)
 
 Result of prepare() - ready for a model call.
 
@@ -63700,7 +63877,7 @@ type AgentPresetName = 'research' | 'workflow'
 
 ### AgentResponse `type`
 
-📍 [`src/domain/entities/Response.ts:134`](src/domain/entities/Response.ts)
+📍 [`src/domain/entities/Response.ts:136`](src/domain/entities/Response.ts)
 
 ```typescript
 type AgentResponse = LLMResponse
@@ -63964,7 +64141,7 @@ type ContextCompactionTarget = 'all' | 'plugins' | 'history'
 
 ### ContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:803`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:805`](src/core/context-nextgen/types.ts)
 
 Feature flags for enabling/disabling plugins.
 Known keys provide autocomplete; arbitrary string keys are also accepted
@@ -63978,7 +64155,7 @@ type ContextFeatures = KnownContextFeatures & { [key: string]: boolean | undefin
 
 ### ContextRolloverSummarizer `type`
 
-📍 [`src/core/context-nextgen/types.ts:1122`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:1124`](src/core/context-nextgen/types.ts)
 
 Host-supplied summarizer used by an explicit context rollover.
 
@@ -64769,7 +64946,7 @@ type PipelineConfig = TextPipelineConfig | RealtimePipelineConfig
 
 ### PluginConfigs `type`
 
-📍 [`src/core/context-nextgen/types.ts:875`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:877`](src/core/context-nextgen/types.ts)
 
 Plugin configurations for auto-initialization.
 Known keys provide autocomplete; arbitrary string keys accepted
@@ -64950,7 +65127,7 @@ type RelatedItemHit = T & { matchedEntityId: EntityId }
 
 ### ResolvedContextFeatures `type`
 
-📍 [`src/core/context-nextgen/types.ts:811`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:813`](src/core/context-nextgen/types.ts)
 
 Resolved features retain the original required keys, plus optional additions
 and arbitrary external flags. Keep the required set stable so adding an opt-in
@@ -67847,7 +68024,7 @@ transports and are not represented as misleading URL aliases here.
 
 ### DEFAULT_CONFIG `const`
 
-📍 [`src/core/context-nextgen/types.ts:984`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:986`](src/core/context-nextgen/types.ts)
 
 Default configuration values
 
@@ -67918,7 +68095,7 @@ Default configuration values
 
 ### DEFAULT_FEATURES `const`
 
-📍 [`src/core/context-nextgen/types.ts:819`](src/core/context-nextgen/types.ts)
+📍 [`src/core/context-nextgen/types.ts:821`](src/core/context-nextgen/types.ts)
 
 Default feature configuration for built-in plugins.
 

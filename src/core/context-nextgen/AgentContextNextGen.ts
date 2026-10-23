@@ -1058,7 +1058,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     const ctx = this._tools.getToolContext();
     const registry = ctx?.connectorRegistry;
     if (registry && !this._assemblyRegistryIds.has(registry)) this._assemblyRegistryIds.set(registry, randomUUID());
-    return contextFingerprint({ model: this._config.model, agentId: this._agentId, userId: this._userId, identities: this._identities,
+    return contextFingerprint({ model: this.requestModel, agentId: this._agentId, userId: this._userId, identities: this._identities,
       principal: ctx?.userId, roles: ctx?.roles, accounts: ctx?.identities, accountId: ctx?.accountId,
       connectorAccounts: ctx?.connectorAccounts ? Object.entries(ctx.connectorAccounts).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0) : undefined,
       taskId: ctx?.taskId, registry: registry ? this._assemblyRegistryIds.get(registry) : undefined,
@@ -1069,7 +1069,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     const selected = this._preparedAssembly;
     if (!selected) return;
     const stale = (message: string): never => { throw new AIError(message, 'CONTEXT_ASSEMBLY_STALE', 409); };
-    if (request.model && request.model !== this._config.model) stale('Selected context model changed; prepare for the target model');
+    if (request.model && request.model !== this.requestModel) stale('Selected context model changed; prepare for the target model');
     this._assembler!.assertCurrent(selected.snapshot);
     if (auxiliary) {
       // A model answer may append assistant/opaque output after moving pending input
@@ -1153,7 +1153,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   private describeAssemblyRequest(manifest: ContextSelectionManifest, input: InputItem[], budget: Pick<ContextBudget, 'totalUsed'>, capacity?: number): void {
     manifest.accounting.estimatedInputTokens = budget.totalUsed;
     manifest.accounting.capacitySource = !this._usesModelContextLimit && (!capacity || this._maxContextTokens <= capacity)
-      ? 'host' : capacity ? 'provider' : getModelInfo(this._config.model) ? 'registry' : 'fallback';
+      ? 'host' : capacity ? 'provider' : getModelInfo(this.requestModel) ? 'registry' : 'fallback';
     const uncertain = (block: Content): boolean => block.type === ContentType.INPUT_IMAGE_URL
       || block.type === ContentType.INPUT_FILE || block.type === ContentType.THINKING || block.type === ContentType.PROVIDER_STATE
       || (block.type === ContentType.TOOL_USE && !!block.thoughtSignature)
@@ -1428,12 +1428,9 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
   /**
    * Replace the content of the most recent assistant message in the conversation
-   * with `output` (rebuilt the same way as {@link addAssistantResponse}). Used
-   * when the final answer is transformed after it was already committed — e.g.
-   * the structured-output reformat pass in `Agent.run()` — so the persisted
-   * history, session save/load, continuation, and the history journal all
-   * reflect the same answer the caller received rather than the pre-reformat
-   * text.
+   * with the message content from `output`. Preserves this legacy content-only
+   * helper's behavior; top-level replay items are not replaced here. Managed
+   * structured finalization uses a captured response boundary instead.
    */
   replaceLastAssistantResponse(output: OutputItem[]): boolean {
     this.assertNotDestroyed();
@@ -1452,6 +1449,42 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       }
     }
     return false;
+  }
+
+  /** @internal Replace one settled response without merging adjacent turns or dropping replay items. */
+  _captureAssistantReplacement(previous: OutputItem[]): (output: OutputItem[]) => void {
+    this.assertNotDestroyed();
+    const count = previous.filter(item => item.type === 'reasoning' || item.type === 'compaction'
+      || this.buildAssistantContent([item]).content.length > 0).length;
+    const end = this._conversation.length;
+    const start = end - count;
+    const turn = this._turnIndex;
+    const expected = structuredClone(this._conversation.slice(start));
+    return output => {
+      this.assertNotDestroyed();
+      const target = this._conversation.length - count;
+      if (start < 0 || this._turnIndex !== turn || (count === 0 && this._conversation.length !== end)
+        || !isDeepStrictEqual(this._conversation.slice(target), expected)) {
+        throw new AIError('Assistant response changed during structured finalization; preserve the observation before retrying', 'CONTEXT_ASSEMBLY_STALE', 409);
+      }
+      const items: InputItem[] = [];
+      let thinkingText: string | null = null;
+      for (const item of output) {
+        if (item.type === 'reasoning' || item.type === 'compaction') {
+          items.push(item);
+          if (item.type === 'reasoning' && item.summary) thinkingText = item.summary;
+        } else {
+          const built = this.buildAssistantContent([item]);
+          if (built.thinkingText !== null) thinkingText = built.thinkingText;
+          if (built.content.length) items.push({ type: 'message', id: item.id ?? this.generateId(), role: MessageRole.ASSISTANT, content: built.content });
+        }
+      }
+      this._conversation.splice(target, count, ...items);
+      this._cachedBudget = null;
+      this._lastThinking = thinkingText;
+      if (count === 0) this._journalAppend('assistant', items);
+      else this._journalReplaceLast('assistant', items);
+    };
   }
 
   /**
@@ -1619,12 +1652,33 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     this._conversation = [];
     this._currentInput = [];
     this._nativeContinuation = undefined;
+    this._providerStateBinding = undefined;
     this.emit('conversation:cleared', { reason });
   }
 
   // ============================================================================
   // Context Preparation (THE main method)
   // ============================================================================
+
+  /** @internal Execution-scoped model for preparation; public configured model is unchanged. */
+  private _managedModel: string | undefined;
+  private _providerStateBinding: SerializedContextState['providerStateBinding'];
+  private _nativeRestoreResolver?: (binding: NonNullable<SerializedContextState['nativeContinuation']>['binding']) => NativeCompactionDriver | undefined;
+  private get requestModel(): string { return this._managedModel ?? this._config.model; }
+  _bindManagedModel(model: string | undefined): void { this.assertNotDestroyed(); this._managedModel = model ?? this._nativeContinuation?.binding.model; }
+  /** @internal Retain only source identity, never policy/credentials. */
+  _recordProviderStateBinding(binding: NonNullable<SerializedContextState['providerStateBinding']>): void {
+    this._providerStateBinding = structuredClone(binding);
+  }
+  /** @internal Detached source identity for pre-dispatch portability checks. */
+  _getProviderStateBinding(): SerializedContextState['providerStateBinding'] {
+    const binding = this._nativeContinuation?.binding ?? this._providerStateBinding;
+    return binding ? structuredClone(binding) : undefined;
+  }
+  /** @internal Host-configured routes may verify a checkpoint's exact owner without selecting a run. */
+  _bindNativeRestoreResolver(resolve: typeof this._nativeRestoreResolver): void { this._nativeRestoreResolver = resolve; }
+  /** @internal A destroyed borrower cannot remove another Agent's resolver. */
+  _unbindNativeRestoreResolver(resolve: NonNullable<typeof this._nativeRestoreResolver>): void { if (this._nativeRestoreResolver === resolve) this._nativeRestoreResolver = undefined; }
 
   /** @internal Bind only wire operations; authentication remains on Agent's connector. */
   _bindNativeCompaction(driver: NativeCompactionDriver | undefined): NativeCompactionDriver | undefined {
@@ -1663,16 +1717,25 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     };
   }
 
-  private assertNativeSnapshot(state: SerializedContextState): void {
+  private assertNativeSnapshot(state: SerializedContextState, restoring = false): NativeCompactionDriver | undefined {
+    const origin = state.providerStateBinding;
+    if (origin !== undefined) {
+      if (!origin || typeof origin !== 'object' || Array.isArray(origin)
+        || ['provider', 'connector', 'model', 'endpoint'].some(key => typeof origin[key as keyof typeof origin] !== 'string' || !origin[key as keyof typeof origin])
+        || ['authority', 'userId', 'accountId'].some(key => origin[key as keyof typeof origin] !== undefined && typeof origin[key as keyof typeof origin] !== 'string')
+        || Object.keys(origin).some(key => !['provider', 'connector', 'model', 'endpoint', 'authority', 'userId', 'accountId'].includes(key))) {
+        throw new AIError('Invalid provider-state checkpoint origin', 'INVALID_CONFIG');
+      }
+    }
     const snapshot = state.nativeContinuation;
     if (!snapshot) return;
     const evidence = this.getPlugin('evidence');
-    const driver = this._nativeDriver;
+    const driver = (restoring ? this._nativeRestoreResolver?.(snapshot.binding) : undefined) ?? this._nativeDriver;
     if (!(isContextCompactionStrategy(this._compactionStrategy)) || this._compactionStrategy.config.history === 'off'
       || !(evidence instanceof EvidencePluginNextGen) || !driver) throw new AIError('Restore native history with its configured strategy, Agent connector and evidence scope', 'CONTEXT_COMPACTION_INVALID');
     driver.assertCurrent();
     const binding = JSON.parse(JSON.stringify({ ...driver.binding, scope: evidence.storage.scope }));
-    if (snapshot.version !== 1 || !isDeepStrictEqual(snapshot.binding, binding) || snapshot.binding.model !== this._config.model
+    if (snapshot.version !== 1 || !isDeepStrictEqual(snapshot.binding, binding) || snapshot.binding.model !== (restoring ? driver.binding.model : this.requestModel)
       || typeof snapshot.protocol !== 'string' || !snapshot.protocol || snapshot.protocol.length > 128
       || !Number.isSafeInteger(snapshot.prefixLength) || snapshot.prefixLength <= 0 || snapshot.prefixLength > state.conversation.length
       || !Array.isArray(snapshot.sourceReferences) || !snapshot.sourceReferences.length || snapshot.sourceReferences.length > 128
@@ -1686,6 +1749,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       ids.add(reference.id);
     }
     if (snapshot.state !== undefined && Buffer.byteLength(JSON.stringify(snapshot.state), 'utf8') > 65536) throw new AIError('Native replay metadata exceeds its bound', 'CONTEXT_COMPACTION_INVALID');
+    return driver;
   }
 
   private async verifyNativeSources(snapshot: NativeContinuationSnapshot | undefined, signal?: AbortSignal): Promise<void> {
@@ -1939,7 +2003,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       this._preparedAssembly = selected.assembly;
       this._preparedNativePrefix = isContextCompactionStrategy(this._compactionStrategy) && this._compactionStrategy.config.history !== 'off'
         ? structuredClone(selected.prefix) : undefined;
-      this._lastPreparation = { ...(selected.assembly ? { selection: structuredClone(selected.assembly.manifest) } : {}), revision: ++this._preparationRevision, preparedAt: Date.now(), budget: structuredClone(budget), ...(compaction ? { compaction: structuredClone(compaction) } : {}),
+      this._lastPreparation = { ...(this._managedModel ? { model: this.requestModel } : {}), ...(selected.assembly ? { selection: structuredClone(selected.assembly.manifest) } : {}), revision: ++this._preparationRevision, preparedAt: Date.now(), budget: structuredClone(budget), ...(compaction ? { compaction: structuredClone(compaction) } : {}),
         ...(compositionDetails ? { compactionDetails: compositionDetails } : {}) };
       this.emit('budget:updated', { budget, timestamp: this._lastPreparation.preparedAt });
       if (budget.utilizationPercent >= 90) this.emit('budget:critical', { budget });
@@ -2068,7 +2132,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
   private contextStamp(): string {
     return this.serializeToolResultContent([
-      this._config.model, this._maxContextTokens, this._systemPrompt, this._conversation, this._currentInput,
+      this._config.model, this.requestModel, this._maxContextTokens, this._systemPrompt, this._conversation, this._currentInput,
       ...(this.taskStatePlugin() ? [this.taskStatePlugin()!._generation] : []),
     ]);
   }
@@ -2091,7 +2155,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     const started = Date.now();
     const timer = setTimeout(() => this._assemblyController?.abort(timeout()), this._assemblyRemainingMs);
     let snapshot: AssemblySnapshot;
-    try { snapshot = await this._assembler!.collect(input, this._config.model, signal); }
+    try { snapshot = await this._assembler!.collect(input, this.requestModel, signal); }
     finally { clearTimeout(timer); this._assemblyRemainingMs -= Date.now() - started; }
     signal.throwIfAborted();
     if (this._assemblyRemainingMs < 0) throw timeout();
@@ -2155,8 +2219,8 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       const count = async (): Promise<number> => {
         if (!driver) throw new AIError('Native history requires Agent-owned provider operations', 'CONTEXT_COMPACTION_INVALID');
         const check = this.captureNativeState();
-        this.assertNativeFrame({ model: this.model, input });
-        const counted = await driver.countInput({ model: this.model, input: structuredClone(input), tools: structuredClone(tools),
+        this.assertNativeFrame({ model: this.requestModel, input });
+        const counted = await driver.countInput({ model: this.requestModel, input: structuredClone(input), tools: structuredClone(tools),
           ...requestOptions, signal: options.signal });
         check();
         if (counted === null || !Number.isSafeInteger(counted) || counted < 0) throw new AIError('Provider cannot count the complete native frame', 'CONTEXT_COMPACTION_INVALID');
@@ -2172,7 +2236,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       }
       const totalUsed = totalSystem + toolsTokens + conversationTokens + currentInputTokens;
       if (selection) {
-        selection.manifest.requestFingerprint = contextFingerprint({ authority: this.assemblyAuthority(), model: this._config.model, input, tools, requestOptions });
+        selection.manifest.requestFingerprint = contextFingerprint({ authority: this.assemblyAuthority(), model: this.requestModel, input, tools, requestOptions });
 
       }
       const budget: ContextBudget = {
@@ -2189,7 +2253,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         if (authority !== this.assemblyAuthority()) throw new AIError('Context contribution authority changed during preparation', 'CONTEXT_ASSEMBLY_STALE', 409);
       }
       return { input: structuredClone(input), prefix: structuredClone(prefix), budget, tools, currentInputCount,
-        request: { model: this.model, ...structuredClone(requestOptions), input: structuredClone(input), tools: structuredClone(tools), signal: options.signal },
+        request: { model: this.requestModel, ...structuredClone(requestOptions), input: structuredClone(input), tools: structuredClone(tools), signal: options.signal },
         ...(selection && assemblySnapshot ? { assembly: { snapshot: assemblySnapshot, manifest: selection.manifest, dataText: selection.text, prefix: structuredClone(prefix), authority: this.assemblyAuthority(), stamp: contextFingerprint(this.contextStamp()), originalInput: contextFingerprint(this._originalUserInput),
           inputHash: contextFingerprint(input.slice(prefix.length)), repairBase: structuredClone([...this._conversation, ...this._currentInput]),
           systemPrompt: this._systemPrompt, remainingMs: this._assemblyRemainingMs } } : {}) };
@@ -2236,7 +2300,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     if (this._systemPrompt) {
       const resolvedPrompt = await TemplateEngine.process(this._systemPrompt, {
         agentId: this._agentId,
-        model: this._config.model,
+        model: this.requestModel,
         userId: this._userId,
       }, { phase: 'dynamic' });
       parts.push(`# System Prompt\n\n${resolvedPrompt}`);
@@ -3274,7 +3338,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       if (stored) {
         this.assertEvidenceState(stored.state);
         this.preflightTaskState(stored.state);
-        this.assertNativeSnapshot(stored.state);
+        this.assertNativeSnapshot(stored.state, true);
         await this.verifyNativeSources(stored.state.nativeContinuation);
       }
 
@@ -3285,6 +3349,8 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         originalUserInput: this._originalUserInput, historyBuffer: this._historyBuffer,
       })) as { state: SerializedContextState; conversation: InputItem[]; currentInput: InputItem[];
         originalUserInput: InputItem[]; historyBuffer: HistoryEntry[] };
+      const previousNativeDriver = this._nativeDriver;
+      const previousManagedModel = this._managedModel;
       const prompt = this._systemPrompt;
       const callback = this._beforeCompactionCallback;
       const previousSessionId = this._sessionId;
@@ -3318,6 +3384,9 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
           }
           this._conversation = previous.conversation;
           this._nativeContinuation = previous.state.nativeContinuation;
+          this._providerStateBinding = previous.state.providerStateBinding;
+          this._nativeDriver = previousNativeDriver;
+          this._managedModel = previousManagedModel;
           this._currentInput = previous.currentInput;
           this._originalUserInput = previous.originalUserInput;
           this._historyBuffer = previous.historyBuffer;
@@ -3444,6 +3513,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         : this._conversation,
       pluginStates,
       ...(this._nativeContinuation ? { nativeContinuation: structuredClone(this._nativeContinuation) } : {}),
+      ...(this._providerStateBinding ? { providerStateBinding: structuredClone(this._providerStateBinding) } : {}),
       systemPrompt: this._systemPrompt,
       metadata: {
         savedAt: Date.now(),
@@ -3478,11 +3548,14 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
   restoreState(state: SerializedContextState): void {
     this.assertNotDestroyed();
 
-    this.assertNativeSnapshot(state);
+    const driver = this.assertNativeSnapshot(state, true);
     this.assertEvidenceState(state);
     const taskState = this.preflightTaskState(state);
+    if (driver) this._nativeDriver = driver;
+    this._managedModel = state.nativeContinuation?.binding.model;
     this._conversation = state.conversation ?? [];
     this._nativeContinuation = state.nativeContinuation ? structuredClone(state.nativeContinuation) : undefined;
+    this._providerStateBinding = state.providerStateBinding ? structuredClone(state.providerStateBinding) : undefined;
     this.removeRestoredProtectedInput();
     this._systemPrompt = state.systemPrompt;
 
@@ -3824,13 +3897,13 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     }
   }
 
-  private _journalReplaceLast(type: HistoryEntryType, item: InputItem): void {
+  private _journalReplaceLast(type: HistoryEntryType, item: InputItem | InputItem[]): void {
     const journal = this._storage?.journal;
     if (!journal && !this._storage) {
       return;
     }
 
-    const [entry] = this.buildHistoryEntries(type, [item]);
+    const [entry, ...remaining] = this.buildHistoryEntries(type, Array.isArray(item) ? item : [item]);
     if (!entry) return;
 
     const sessionId = this._sessionId;
@@ -3841,23 +3914,24 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         if (!replaced) {
           await journal.append(sessionId, [entry]);
         }
+        if (remaining.length) await journal.append(sessionId, remaining);
       });
       return;
     }
 
     if (sessionId && journal) {
-      this.enqueueJournalWrite(() => journal.append(sessionId, [entry]));
+      this.enqueueJournalWrite(() => journal.append(sessionId, [entry, ...remaining]));
       return;
     }
 
     for (let i = this._historyBuffer.length - 1; i >= 0; i--) {
       const current = this._historyBuffer[i];
       if (current?.type === type && current.turnIndex === this._turnIndex) {
-        this._historyBuffer[i] = entry;
+        this._historyBuffer.splice(i, 1, entry, ...remaining);
         return;
       }
     }
-    this._historyBuffer.push(entry);
+    this._historyBuffer.push(entry, ...remaining);
   }
 
   private enqueueJournalWrite(work: () => Promise<void>): void {

@@ -1,7 +1,7 @@
 import { getModelInfo } from '@everworker/oneringai';
-import type { HelperRole, ModelExecutionConfig, ReasoningEffort } from '@everworker/oneringai';
+import type { HelperRole, ReasoningEffort } from '@everworker/oneringai';
 import { BaseCommand } from '../BaseCommand.js';
-import type { CommandContext, CommandResult } from '../../config/types.js';
+import type { AmosConfig, CommandContext, CommandResult } from '../../config/types.js';
 
 const roles: HelperRole[] = ['compactor', 'extractor', 'verifier'];
 
@@ -55,9 +55,9 @@ export class HelpersCommand extends BaseCommand {
         if (!runner?.compactWithHelper) return this.error('Initialize an agent before compacting.');
         return this.success(await runner.compactWithHelper());
       }
-      let next: ModelExecutionConfig | null = structuredClone(app.getConfig().modelExecution ?? {});
+      let next: AmosConfig['modelExecution'] = structuredClone(app.getConfig().modelExecution ?? {});
       if (action === 'off') {
-        if (!rest.length) next = null;
+        if (!rest.length) { if (next.routing) delete next.helpers; else next = null; }
         else {
           const role = rest[0] as HelperRole;
           if (!roles.includes(role)) return this.error('Unknown helper role.');
@@ -80,11 +80,13 @@ export class HelpersCommand extends BaseCommand {
       } else return this.error(`Unknown helpers subcommand. ${this.usage}`);
       const previous = structuredClone(app.getConfig().modelExecution ?? null);
       const wasReady = runner?.isReady() ?? false;
+      app.updateConfig({ modelExecution: null });
       app.updateConfig({ modelExecution: next });
       try {
         if (wasReady) await app.createAgent();
         await app.saveConfig();
       } catch (error) {
+        app.updateConfig({ modelExecution: null });
         app.updateConfig({ modelExecution: previous });
         if (wasReady) {
           try { await app.createAgent(); }

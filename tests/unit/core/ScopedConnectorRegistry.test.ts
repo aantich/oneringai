@@ -13,7 +13,8 @@ import type { IConnectorAccessPolicy, ConnectorAccessContext } from '@/domain/in
 import type { IConnectorRegistry } from '@/domain/interfaces/IConnectorRegistry.js';
 
 // Mock createProvider to avoid real provider initialization
-vi.mock('@/core/createProvider.js', () => ({
+vi.mock('@/core/createProvider.js', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/core/createProvider.js')>(),
   createProvider: vi.fn(() => ({
     name: 'mock',
     capabilities: { text: true, images: false, videos: false, audio: false },

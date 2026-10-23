@@ -319,3 +319,13 @@ budget/cap conflicts fail before archival; actual native wire caps, source headr
 and ModelTask reservations use the same selection. Internal streaming supports
 large valid caps and retains iteration usage when a summary is unusable. Main
 generation limits/settings and helper routing remain unchanged.
+
+
+## Optional main-model routing
+
+[Stage 14A routing](./MODEL_ROUTING.md) optionally chooses the managed execution's
+main connector/model before preparation. Helper roles remain static. The selected
+model's capacity/output/price bounds feed the same active ModelTask; selection,
+repair, retries and compaction do not reset its allowance. Automatic helper context
+transfer checks use the selected main connector and inherited restrictions.
+Routing diagnostics identify the decision; ledger invocations identify actual calls.

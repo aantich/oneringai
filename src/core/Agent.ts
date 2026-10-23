@@ -34,7 +34,12 @@ import { ToolTimeoutError, ToolPermissionDeniedError, ToolExecutionError } from 
 import type { ToolExecutionOptions, ToolExecutionOutcome } from './tool-execution/outcomes.js';
 import { hasConflictingModelPricing, ModelBudgetExceededError, type ModelTask } from './model-execution/ModelTask.js';
 import { compactModel } from './model-execution/ModelExecutor.js';
-import { createProvider, nativeProviderEndpoint } from './createProvider.js';
+import { copyRoutingConfig, routingOptions, selectModelRoute, restrictDataHandling, hasProviderBoundState, assertNoRoutingOverride } from './model-execution/routing.js';
+import type { ModelExecutionBinding } from './model-execution/routing.js';
+import type { ModelRoutingConfig, ModelRoutingRunOptions, ModelRoutingDiagnostics, ModelRouteConfig, ModelRouteCandidate } from './model-execution/types.js';
+import { InvalidConfigError, ProviderCapabilityNotSupportedError } from '../domain/errors/AIErrors.js';
+import { validateThinkingConfig } from '../infrastructure/providers/shared/validateThinkingConfig.js';
+import { createProvider, nativeProviderEndpoint, capturedProviderEndpoint } from './createProvider.js';
 import { assertNativeCompactionOptions } from '../infrastructure/providers/shared/nativeCompaction.js';
 import { prepareAnthropicCompactionOptions } from '../infrastructure/providers/anthropic/AnthropicConverter.js';
 import { isContextCompactionStrategy } from './context-nextgen/strategies/ContextCompactionStrategy.js';
@@ -198,6 +203,8 @@ export type AgentRuntimeConfigSnapshot = Pick<AgentConfig,
  * These override the agent-level config for this single invocation.
  */
 export interface RunOptions {
+  /** Optional host model routing hints/override; null selects the configured default. */
+  routing?: ModelRoutingRunOptions | null;
   /** Per-execution override; null disables a configured managed-loop policy. */
   loopPolicy?: AgentLoopPolicy | null;
   /** Explicit process-local budget/usage shared with helper or other agent calls. */
@@ -297,6 +304,13 @@ interface ExecutionSetup {
   lease: AgentExecutionLease;
 }
 
+interface RoutingOrigin {
+  binding: ModelExecutionBinding;
+  diagnostics: ModelRoutingDiagnostics;
+  task: ModelTask;
+  options: RunOptions;
+}
+
 type AgentExecutionKind = 'run' | 'stream' | 'external' | 'continuation' | 'rollover' | 'compact';
 
 interface AgentExecutionLease {
@@ -317,9 +331,10 @@ function nativePrincipal(context: AgentContextNextGen): string {
   return nativeJSON({ userId: context.userId, principal: tools?.userId, accountId: tools?.accountId,
     identities: tools?.identities, connectorAccounts: tools?.connectorAccounts, roles: tools?.roles });
 }
-function nativeBinding(connector: Connector, provider: ITextProvider, model: string, context: AgentContextNextGen): NativeCompactionDriver['binding'] {
+function nativeBinding(connector: Connector, provider: ITextProvider, model: string, context: AgentContextNextGen,
+  endpoint = nativeProviderEndpoint(provider, connector)): NativeCompactionDriver['binding'] {
   return { provider: provider.name, connector: connector.name, model,
-    endpoint: nativeProviderEndpoint(provider, connector),
+    endpoint,
     authority: createHash('sha256').update(nativePrincipal(context)).digest('hex'),
     ...(context.userId === undefined ? {} : { userId: context.userId }),
     ...(context.tools.getToolContext()?.accountId === undefined ? {} : { accountId: context.tools.getToolContext()!.accountId }) };
@@ -478,6 +493,23 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   // Per-call run options (set in run/stream, cleared in finally)
   private _runOptions: RunOptions | undefined;
   private _pendingContinuationToken: string | undefined;
+  private _lastManagedFrame?: { input: InputItem[]; instructions?: string };
+  private _replaceStructuredAssistant?: (output: OutputItem[]) => void;
+  private _managedReplayGuard?: (request: TextGenerateOptions) => void;
+  private _managedRequestOrigin?: { binding: ReturnType<typeof nativeBinding>; guard: (request: TextGenerateOptions) => void };
+  private readonly _routingConfig?: ModelRoutingConfig;
+  private _nativeRoutingResolver?: Parameters<AgentContextNextGen['_bindNativeRestoreResolver']>[0];
+  private _routingDiagnostics?: ModelRoutingDiagnostics;
+  private _phaseRoutes = new WeakMap<ModelTask, { phase: string; decision: ModelRoutingDiagnostics }>();
+  private readonly _routingProviders = new Map<Connector, ITextProvider>();
+  private _routingOrigin?: RoutingOrigin;
+  private _suspendedRoutingOrigin?: RoutingOrigin;
+  private readonly _asyncRoutingOrigins = new Map<string, RoutingOrigin>();
+  private readonly _retainedRoutingTasks = new Set<ModelTask>();
+  private get executionModel(): string { return this._managedModelBinding?.model ?? this.model; }
+  private get executionConnector(): Connector { return this._managedModelBinding?.connector ?? this.connector; }
+  private get executionProvider(): ITextProvider { return this._managedModelBinding?.provider ?? this._provider; }
+
 
   // Message injection queue (for orchestrator send_message)
   // M4: Use Message[] instead of InputItem[] for type safety (inject() only creates Messages)
@@ -747,7 +779,27 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   // ===== Constructor =====
 
   private constructor(config: AgentConfig, sessionAlreadyLoaded = false, captureConstruction?: (agent: Agent, baseOnly: boolean) => void) {
+    const routing = copyRoutingConfig(config.modelExecution?.routing);
+    if (routing) config = { ...config, modelExecution: { ...config.modelExecution, routing } };
     super(config, 'Agent', candidate => captureConstruction?.(candidate as Agent, true));
+    this._routingConfig = routing;
+    if (routing) {
+      this._nativeRoutingResolver = binding => {
+      for (const profile of [undefined, ...Object.values(routing.routes)]) {
+        const model = profile?.model ?? this.model;
+        if (model !== binding.model || (profile?.connector ?? this.connector.name) !== binding.connector) continue;
+        const connector = profile?.connector ? this.resolveConnector(profile.connector) : this.connector;
+        if (connector.name !== binding.connector || connector !== this.connector && !profile?.allowContextTransfer) continue;
+        let provider = connector === this.connector ? this._provider : this._routingProviders.get(connector);
+        if (!provider) { provider = createProvider(connector); this._routingProviders.set(connector, provider); }
+        const identity = nativeBinding(connector, provider, model, this.context);
+        if (Object.entries(identity).some(([key, value]) => binding[key as keyof typeof binding] !== value)) continue;
+        return this.bindNativeCompaction({ connector, provider, model }, true);
+      }
+      return undefined;
+      };
+      this.context._bindNativeRestoreResolver(this._nativeRoutingResolver);
+    }
     captureConstruction?.(this, false);
 
     this._logger.debug({ model: this.model, connector: this.connector.name }, 'Agent created');
@@ -830,7 +882,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       });
     });
 
-    this.bindNativeCompaction();
+    // A routed execution owns adapter selection. Checkpoint loading uses the
+    // host-configured restore resolver; idle maintenance still binds its default.
+    if (!this._routingConfig) this.bindNativeCompaction();
 
     // Initialize session (from BaseAgent)
     this.initializeSession(config.session, sessionAlreadyLoaded);
@@ -953,13 +1007,236 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     } finally { this.releaseExecution(lease); }
   }
 
+  /** Read the latest routed execution's detached, secret-free decision. */
+  getRoutingDiagnostics(): ModelRoutingDiagnostics | undefined {
+    return this._routingDiagnostics ? structuredClone(this._routingDiagnostics) : undefined;
+  }
+
+  private managedVendorOptions(): Record<string, unknown> | undefined {
+    const override = this._runOptions?.vendorOptions;
+    if (this._managedModelBinding && this.executionConnector.vendor !== this.connector.vendor) return override;
+    return override ? { ...this._config.vendorOptions, ...override } : this._config.vendorOptions;
+  }
+
+  private managedDataHandling(): DataHandlingPolicy | undefined {
+    return this._managedModelBinding
+      ? restrictDataHandling(this._config.dataHandling, this._routingOrigin?.options.dataHandling, this._runOptions?.dataHandling)
+      : this._runOptions?.dataHandling ?? this._config.dataHandling;
+  }
+
+  /** Keep saved replay authority guarded even when its routing policy is absent. */
+  private captureReplayGuard(items: readonly InputItem[], continuation = false,
+    source = this.context._getProviderStateBinding()): ((request: TextGenerateOptions) => void) | undefined {
+    if (!source) return undefined;
+    const protectedInput = hasProviderBoundState(items) || continuation;
+    const connector = this.connector, provider = this._provider;
+    const registry = this._config.registry;
+    const registryScope = registry ? captureConnectorScope(registry) : undefined;
+    const toolsRegistry = this.tools.getToolContext()?.connectorRegistry;
+    const toolsScope = toolsRegistry ? captureConnectorScope(toolsRegistry) : undefined;
+    const principal = nativePrincipal(this.context);
+    return request => {
+      const input = typeof request.input === 'string' ? [] : request.input;
+      if (!protectedInput && !hasProviderBoundState(input) && !request.continuation_token) return;
+      assertNotDestroyed(this, 'replay provider state');
+      if (this._config.registry !== registry || !sameConnectorScope(registryScope, registry)
+        || this.tools.getToolContext()?.connectorRegistry !== toolsRegistry || !sameConnectorScope(toolsScope, toolsRegistry)
+        || principal !== nativePrincipal(this.context) || this.resolveConnector(connector.name) !== connector) {
+        throw new InvalidConfigError('Provider-bound replay scope changed before dispatch');
+      }
+      const identity = nativeBinding(connector, provider, request.model, this.context);
+      if (Object.entries(identity).some(([key, value]) => source[key as keyof typeof source] !== value)) {
+        throw new InvalidConfigError('Provider-bound replay requires its original connector, model, endpoint and host principal');
+      }
+      this.routingState(connector, request.model, undefined, input, protectedInput || !!request.continuation_token, provider);
+    };
+  }
+
+  private routingState(connector: Connector, model: string, profile: ModelRouteConfig | undefined, items: readonly InputItem[], continuation = false, provider?: ITextProvider): void {
+    if (connector !== this.connector && profile?.allowContextTransfer !== true) throw new InvalidConfigError('Routing context transfer to another connector/account requires allowContextTransfer: true');
+    const source = this.context._getProviderStateBinding();
+    if (hasProviderBoundState(items) || continuation) {
+      const binding = source ?? nativeBinding(this.connector, this._provider, this.model, this.context);
+      if (binding.connector !== connector.name || binding.model !== model) throw new InvalidConfigError('Provider-bound history or continuation cannot switch connector/model; use its compatible route or a fresh context');
+      if (provider && Object.entries(nativeBinding(connector, provider, model, this.context)).some(([key, value]) => binding[key as keyof typeof binding] !== value)) throw new InvalidConfigError('Provider-bound state endpoint or host principal is incompatible with the selected route');
+    }
+    const info = getModelInfo(model);
+    if (info && (info.provider !== connector.vendor || !info.isActive)) throw new InvalidConfigError('Routed model is inactive or belongs to a different connector vendor');
+  }
+
+  private assertRoutedCapabilities(binding: ModelExecutionBinding, request: TextGenerateOptions): void {
+    const caps = binding.provider.getModelCapabilities(binding.model);
+    if (![caps.maxInputTokens ?? caps.maxTokens, caps.maxOutputTokens ?? caps.maxTokens].every(value => Number.isSafeInteger(value) && value > 0)) throw new InvalidConfigError('Routed model requires known positive input/output capacity');
+    if (request.tools?.length && !caps.supportsTools) throw new ProviderCapabilityNotSupportedError(binding.provider.name, binding.model, 'function tools');
+    const items = typeof request.input === 'string' ? [] : request.input;
+    for (const item of items) if (item.type === 'message') for (const block of item.content) {
+      if (block.type === ContentType.INPUT_IMAGE_URL && !caps.supportsVision) throw new ProviderCapabilityNotSupportedError(binding.provider.name, binding.model, 'image input');
+      if (block.type === ContentType.INPUT_FILE && !binding.provider.capabilities.images && !binding.provider.capabilities.videos && !binding.provider.capabilities.audio) throw new ProviderCapabilityNotSupportedError(binding.provider.name, binding.model, 'file input');
+    }
+    const advanced = binding.provider.getAdvancedCapabilities?.(binding.model);
+    const strategy = this.context.compactionStrategy;
+    if (isContextCompactionStrategy(strategy) && strategy.config.history !== 'off'
+      && (!binding.provider.compaction || advanced?.nativeCompaction?.onDemand === 'unsupported')) throw new ProviderCapabilityNotSupportedError(binding.provider.name, binding.model, 'native compaction');
+    if (isContextCompactionStrategy(strategy) && strategy.config.history !== 'off' && binding.provider.name === 'openai'
+      && binding.config.maxOutputTokensPerCall !== undefined) throw new ProviderCapabilityNotSupportedError(binding.provider.name, binding.model, 'hard native compaction output cap');
+    for (const tool of request.native_tools ?? []) if (!advanced?.nativeTools.includes(tool.capability)) throw new ProviderCapabilityNotSupportedError(binding.provider.name, binding.model, `native tool ${tool.capability}`);
+    if (request.thinking) {
+      validateThinkingConfig(request.thinking);
+      const info = getModelInfo(binding.model);
+      if (request.thinking.enabled && (!info || !(info.features.reasoning || info.features.extendedThinking))) throw new ProviderCapabilityNotSupportedError(binding.provider.name, binding.model, 'verified reasoning support');
+      if (request.thinking.effort && info?.features.reasoningEfforts && !info.features.reasoningEfforts.includes(request.thinking.effort)) throw new ProviderCapabilityNotSupportedError(binding.provider.name, binding.model, `reasoning effort ${request.thinking.effort}`);
+    }
+    if (request.prompt_cache && request.prompt_cache.mode !== 'off' && request.prompt_cache.strict && (!advanced || advanced.promptCaching.mode === 'unsupported')) throw new ProviderCapabilityNotSupportedError(binding.provider.name, binding.model, 'strict prompt caching');
+  }
+
+  private async prepareRouting(input: string | InputItem[], options: RunOptions | undefined, sharedTask: ModelTask | undefined, executionId: string): Promise<void> {
+    const routingStarted = performance.now();
+    const requested = routingOptions(options?.routing);
+    const items = [...this.context.getConversation(), ...this.context.getCurrentInput(), ...(typeof input === 'string' ? [] : input)];
+    if (!this._routingConfig && (requested === undefined || requested === null)) {
+      if (this.context._getProviderStateBinding() && (hasProviderBoundState(items) || options?.continuationToken)) {
+        this.routingState(this.connector, this.model, undefined, items, !!options?.continuationToken, this._provider);
+      }
+      this._managedReplayGuard = this.captureReplayGuard(items, !!options?.continuationToken);
+      this._managedReplayGuard?.({ model: this.model, input: [...items] });
+      return;
+    }
+    const targets = new Map<string, { connector?: Connector; model: string; profile?: ModelRouteConfig }>();
+    const candidates: ModelRouteCandidate[] = [];
+    for (const [route, profile] of [['default', undefined], ...Object.entries(this._routingConfig?.routes ?? {})] as Array<[string, ModelRouteConfig | undefined]>) {
+      const model = profile?.model ?? this.model;
+      let connector: Connector | undefined;
+      const reasons: string[] = [];
+      try {
+        connector = profile?.connector ? this.resolveConnector(profile.connector) : this.connector;
+        this.routingState(connector, model, profile, items, !!options?.continuationToken);
+      } catch (error) { reasons.push(error instanceof Error ? error.message : 'Unavailable route'); }
+      targets.set(route, { connector, model, profile });
+      candidates.push({ route, connector: connector?.name ?? profile?.connector ?? this.connector.name, model, eligible: reasons.length === 0, reasons });
+    }
+    const previous = sharedTask ? this._phaseRoutes.get(sharedTask) : undefined;
+    let decision = await selectModelRoute(this._routingConfig, requested, candidates,
+      previous && previous.phase === requested?.phase ? { route: previous.decision.selectedRoute, connector: previous.decision.connector, model: previous.decision.model } : undefined,
+      this._modelExecutionSignal!, executionId, this._activeModelTask?.limits.deadline);
+    this._routingDiagnostics = decision;
+    const target = targets.get(decision.selectedRoute)!;
+    const candidate = candidates.find(value => value.route === decision.selectedRoute)!;
+    if (!target.connector || !candidate.eligible) throw new InvalidConfigError(`Route '${decision.selectedRoute}' is ineligible: ${candidate.reasons.join('; ')}`);
+    const { connector, model, profile } = target;
+    let provider = connector === this.connector ? this._provider : this._routingProviders.get(connector);
+    if (!provider) { provider = createProvider(connector); this._routingProviders.set(connector, provider); }
+    const endpoint = nativeProviderEndpoint(provider, connector);
+    const source = this.context._getProviderStateBinding();
+    const identity = nativeBinding(connector, provider, model, this.context);
+    if ((hasProviderBoundState(items) || options?.continuationToken) && source && Object.entries(identity).some(([key, value]) => source[key as keyof typeof source] !== value)) throw new InvalidConfigError('Provider-bound state endpoint or host principal is incompatible with the selected route');
+    if (connector.vendor !== this.connector.vendor && Object.keys(this._config.vendorOptions ?? {}).length && options?.vendorOptions === undefined) throw new InvalidConfigError('Cross-provider routing requires explicit compatible vendorOptions; use {} to replace inherited options');
+    const effectiveOptions: RunOptions = { ...options,
+      thinking: options?.thinking ?? profile?.thinking,
+      temperature: options?.temperature ?? profile?.temperature,
+      dataHandling: restrictDataHandling(this._config.dataHandling, profile?.dataHandling, options?.dataHandling),
+    };
+    this._runOptions = effectiveOptions;
+    const registry = this._config.registry;
+    const registryScope = registry ? captureConnectorScope(registry) : undefined;
+    const toolsRegistry = this.tools.getToolContext()?.connectorRegistry;
+    const toolsScope = toolsRegistry ? captureConnectorScope(toolsRegistry) : undefined;
+    const principal = nativePrincipal(this.context);
+    const defaultModel = this.model;
+    const base = this._config.modelExecution;
+    const cap = profile?.maxOutputTokens;
+    const maximum = base?.maxOutputTokensPerCall;
+    const config = { ...base, ...(profile ? { priceBound: profile.priceBound } : {}),
+      ...(cap !== undefined ? { maxOutputTokensPerCall: Math.min(cap, maximum ?? cap) } : {}) };
+    let pinned = false;
+    const getDataHandling = () => this.managedDataHandling();
+    const binding: ModelExecutionBinding = {
+      connector, provider, model, config, get dataHandling() { return getDataHandling(); },
+      assertCurrent: request => {
+        assertNotDestroyed(this, 'use routed model');
+        if (this._managedModelBinding !== binding || this._config.registry !== registry || !sameConnectorScope(registryScope, registry)
+          || this.tools.getToolContext()?.connectorRegistry !== toolsRegistry || !sameConnectorScope(toolsScope, toolsRegistry)
+          || nativePrincipal(this.context) !== principal || this.model !== defaultModel
+          || this.resolveConnector(connector.name) !== connector || nativeProviderEndpoint(provider!, connector) !== endpoint) throw new InvalidConfigError('Routed model binding or host scope changed before dispatch');
+        if (request) {
+          if (request.model !== model) throw new InvalidConfigError('A routed execution cannot switch models in a request hook');
+          this.routingState(connector, model, profile, typeof request.input === 'string' ? [] : request.input, !!request.continuation_token, provider);
+          this.assertRoutedCapabilities(binding, request);
+          const handling = this.managedDataHandling();
+          for (const key of ['allowProviderCaching', 'allowBatchRetention', 'allowProviderTools', 'allowThirdPartyTools'] as const) if (handling?.[key] === false && request.data_handling?.[key] !== false) throw new InvalidConfigError('A request hook cannot relax routed data handling');
+        }
+      },
+      onDispatch: () => {
+        if (pinned) return;
+        pinned = true;
+        if (sharedTask) {
+          if (requested?.phase && requested !== null) this._phaseRoutes.set(sharedTask, { phase: requested.phase, decision });
+          else this._phaseRoutes.delete(sharedTask);
+        }
+      },
+    };
+    this._managedModelBinding = binding;
+    this._routingOrigin = { binding, diagnostics: decision, task: this._activeModelTask!, options: effectiveOptions };
+    this.context._bindManagedModel(model);
+    try {
+      binding.assertCurrent({ model, input: items, tools: this.getEnabledToolDefinitions(), thinking: effectiveOptions.thinking ?? this._config.thinking,
+        native_tools: options?.nativeTools ?? this._config.nativeTools, prompt_cache: options?.promptCache ?? this._config.promptCache,
+        data_handling: effectiveOptions.dataHandling });
+      this.bindNativeCompaction();
+      decision = Object.freeze({ ...decision, selectionMs: performance.now() - routingStarted });
+      this._routingDiagnostics = decision; this._routingOrigin.diagnostics = decision;
+    } catch (error) { this._managedModelBinding = undefined; this._routingOrigin = undefined; this.context._bindManagedModel(undefined); throw error; }
+  }
+
+  private restoreRoutingOrigin(origin: RoutingOrigin, executionId: string, overrides?: RunOptions): void {
+    if (overrides) {
+      const provided = Object.fromEntries(Object.entries(overrides).filter(([, value]) => value !== undefined));
+      origin = { ...origin, options: { ...origin.options, ...provided,
+        dataHandling: restrictDataHandling(origin.options.dataHandling, overrides.dataHandling) } };
+    }
+    this._managedModelBinding = origin.binding;
+    this._routingOrigin = origin;
+    this._runOptions = origin.options;
+    this._routingDiagnostics = Object.freeze({ ...origin.diagnostics, decisionId: randomUUID(), executionId, source: 'sticky' });
+    this.context._bindManagedModel(origin.binding.model);
+    origin.binding.assertCurrent();
+    this.bindNativeCompaction();
+  }
+
+  private cleanupRoutingTasks(): void {
+    for (const [id] of this._asyncRoutingOrigins) if (!this._asyncToolTracker.has(id) && !this._asyncResultQueue.some(entry => entry.result.tool_use_id === id)) this._asyncRoutingOrigins.delete(id);
+    for (const task of this._retainedRoutingTasks) {
+      if (this._routingOrigin?.task === task || this._suspendedRoutingOrigin?.task === task || [...this._asyncRoutingOrigins.values()].some(origin => origin.task === task)) continue;
+      task.destroy(); this._retainedRoutingTasks.delete(task);
+    }
+  }
+
+  private recordAssistantResponse(output: OutputItem[]): string {
+    const id = this._agentContext.addAssistantResponse(output);
+    this._replaceStructuredAssistant = this._runOptions?.responseFormat
+      ? this._agentContext._captureAssistantReplacement(output) : undefined;
+    this.recordAssistantOrigin(output);
+    return id;
+  }
+
+  private recordAssistantOrigin(output: OutputItem[]): void {
+    if (this._managedModelBinding || hasProviderBoundState(output)) {
+      this.context._recordProviderStateBinding(this._managedRequestOrigin?.binding
+        ?? nativeBinding(this.executionConnector, this.executionProvider, this.executionModel, this.context));
+      if (!this._managedModelBinding && this._managedRequestOrigin) this._managedReplayGuard = this._managedRequestOrigin.guard;
+    }
+  }
+
+  private completeRoutingResumption(): void {
+    if (this._suspendedRoutingOrigin === this._routingOrigin) this._suspendedRoutingOrigin = undefined;
+  }
+
   /** Configure wire ownership without copying credentials into context snapshots. */
-  private bindNativeCompaction(): NativeCompactionDriver | undefined {
+  private bindNativeCompaction(restoreBinding?: Pick<ModelExecutionBinding, 'connector' | 'provider' | 'model'>, restoring = false): NativeCompactionDriver | undefined {
     const strategy = this._agentContext.compactionStrategy;
     if (!(isContextCompactionStrategy(strategy)) || strategy.config.history === 'off') return undefined;
-    const connector = this.connector;
-    const model = this.model;
-    const provider = this._provider;
+    const connector = restoreBinding?.connector ?? this.executionConnector;
+    const model = restoreBinding?.model ?? this.executionModel;
+    const provider = restoreBinding?.provider ?? this.executionProvider;
     if (!provider.compaction) throw new Error(`Provider ${provider.name} does not support managed native compaction`);
     const registry = this._config.registry;
     const captured = registry ? captureConnectorScope(registry) : undefined;
@@ -981,7 +1258,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const capturedControls = controls();
     const assertCurrent = () => {
       assertNotDestroyed(this, 'use native context');
-      if (this.connector !== connector || this._provider !== provider || this.model !== model || authority !== principal()
+      if (((restoring ? this._managedModelBinding : this._executionOwner) && (this.executionConnector !== connector || this.executionProvider !== provider || this.executionModel !== model)) || authority !== principal()
         || (this._executionOwner && (owner !== this._executionOwner || capturedControls !== controls()))
         || this._config.registry !== registry || this.tools.getToolContext()?.connectorRegistry !== toolRegistry
         || !sameConnectorScope(toolScope, toolRegistry)
@@ -990,10 +1267,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     };
     const wireOptions = (request: TextGenerateOptions): TextGenerateOptions => ({
       thinking: this._runOptions?.thinking ?? this._config.thinking,
-      vendorOptions: this._runOptions?.vendorOptions
-        ? { ...this._config.vendorOptions, ...this._runOptions.vendorOptions } : this._config.vendorOptions,
+      vendorOptions: this.managedVendorOptions(),
       prompt_cache: this._runOptions?.promptCache ?? this._config.promptCache,
-      data_handling: this._runOptions?.dataHandling ?? this._config.dataHandling,
+      data_handling: this.managedDataHandling(),
       native_tools: this._runOptions?.nativeTools ?? this._config.nativeTools,
       continuation_token: this._pendingContinuationToken,
       ...request, nativeContext: true,
@@ -1003,9 +1279,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     });
     const caps = provider.getModelCapabilities(model);
     // Preflight known native thinking/output conflicts before hooks or archival.
-    const nativeOutput = provider.name === 'anthropic'
+    const nativeOutput = !restoring && provider.name === 'anthropic'
       ? prepareAnthropicCompactionOptions(wireOptions({ model, input: [] }), caps.maxOutputTokens ?? caps.maxTokens,
-        this._config.modelExecution?.maxOutputTokensPerCall).max_output_tokens!
+        (this._managedModelBinding?.config ?? this._config.modelExecution)?.maxOutputTokensPerCall).max_output_tokens!
       : Math.min(4096, caps.maxOutputTokens ?? 4096);
     const driver: NativeCompactionDriver = {
       maxSourceTokens: Math.max(0, (this.resolveManagedModelCapacity(model) ?? this.context.maxContextTokens)
@@ -1013,6 +1289,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       binding: nativeBinding(connector, provider, model, this.context),
       assertCurrent,
       countInput: async request => {
+        if (restoring && !this._managedModelBinding) throw new InvalidConfigError('Prepare restored native history through its compatible managed route');
         assertCurrent();
         if (!provider.compaction) throw new Error(`Provider ${provider.name} does not support native compaction`);
         const selected = wireOptions(request);
@@ -1022,11 +1299,19 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       compact: async request => {
         assertCurrent();
         if (!this._executionOwner || !this._activeModelTask) throw new Error('Native compaction requires an active managed ModelTask');
-        return compactModel(provider, connector, wireOptions(request), this._activeModelTask, this._config.modelExecution);
+        const selected = wireOptions(request);
+        const binding = this._managedModelBinding;
+        if (binding) {
+          const sourceGuard = selected.managedDispatch;
+          selected.managedDispatch = { prepare: async () => { await sourceGuard?.prepare(); binding.assertCurrent(selected); },
+            assertCurrent: () => { sourceGuard?.assertCurrent(); binding.assertCurrent(selected); },
+            onDispatch: () => { sourceGuard?.onDispatch?.(); binding.onDispatch(); } };
+          binding.assertCurrent(selected);
+        }
+        return compactModel(provider, connector, selected, this._activeModelTask, binding?.config ?? this._config.modelExecution);
       },
     };
-    this._agentContext._bindNativeCompaction(driver);
-    this._agentContext._assertNativeContinuation();
+    if (!restoring) { this._agentContext._bindNativeCompaction(driver); this._agentContext._assertNativeContinuation(); }
     return driver;
   }
 
@@ -1045,7 +1330,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       this.beginModelTask(modelTask, isContextCompactionStrategy(strategy) && strategy.config.history !== 'off');
       this._modelExecutionSignal = this._activeModelTask
         ? AbortSignal.any([this._executionAbort.signal, this._activeModelTask.signal]) : this._executionAbort.signal;
-      this.bindNativeCompaction();
+      if (!this._routingConfig || !['run', 'stream', 'continuation'].includes(kind)) this.bindNativeCompaction();
     }
     catch (error) { this._executionOwner = null; this.endModelTask(); throw error; }
     return lease;
@@ -1055,7 +1340,16 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   private releaseExecution(lease: AgentExecutionLease): void {
     if (this._executionOwner !== lease) return;
     this._executionOwner = null;
-    this.endModelTask();
+    const retain = !!this._routingOrigin && (this._suspendedRoutingOrigin === this._routingOrigin || [...this._asyncRoutingOrigins.values()].includes(this._routingOrigin));
+    if (retain && this._ownsModelTask && this._activeModelTask) this._retainedRoutingTasks.add(this._activeModelTask);
+    this.endModelTask(retain);
+    this._managedModelBinding = undefined;
+    this._routingOrigin = undefined;
+    this._managedReplayGuard = undefined;
+    this._managedRequestOrigin = undefined;
+    this._replaceStructuredAssistant = undefined;
+    if (!this._isDestroyed) this._agentContext._bindManagedModel(undefined);
+    this.cleanupRoutingTasks();
     this.scheduleAsyncResultFlush();
   }
 
@@ -1088,6 +1382,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    * text-model loop.
    */
   async beginExternalExecution(options: ExternalExecutionOptions = {}): Promise<string> {
+    assertNoRoutingOverride(options);
     assertNotDestroyed(this, 'begin external execution');
     const lease = this.acquireExecution('external', options.modelTask);
     this._externalUsageCounts = {};
@@ -1111,12 +1406,12 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
       this.emit('execution:start', {
         executionId,
-        config: { model: this.model, maxIterations: this._config.maxIterations || 10 },
+        config: { model: this.executionModel, maxIterations: this._config.maxIterations || 10 },
         timestamp: new Date(),
       });
       await this.hookManager.executeHooks('before:execution', {
         executionId,
-        config: { model: this.model },
+        config: { model: this.executionModel },
         timestamp: new Date(),
       }, undefined);
     } catch (error) {
@@ -1281,7 +1576,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       object: 'response',
       created_at: Math.floor(Date.now() / 1000),
       status: result.status ?? (result.error ? 'failed' : this._cancelled ? 'cancelled' : 'completed'),
-      model: this.model,
+      model: this.executionModel,
       output,
       output_text: outputText,
       usage: {
@@ -1313,8 +1608,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         if (result.usage?.[key] !== undefined) counts[key] = result.usage[key];
       }
       const knownUsage = counts.input_tokens !== undefined && counts.output_tokens !== undefined;
-      this._activeModelTask?.recordExternal({ id: executionId, purpose: 'external', connector: this.connector.name,
-        model: this.model, parentInvocationId: this._activeModelTask.id,
+      this._activeModelTask?.recordExternal({ id: executionId, purpose: 'external', connector: this.executionConnector.name,
+        model: this.executionModel, parentInvocationId: this._activeModelTask.id,
         status: response.status === 'completed' ? 'succeeded' : response.status === 'cancelled' ? 'cancelled' : 'failed',
         usage: knownUsage ? {
           ...response.usage, ...this._externalModelUsageMetadata,
@@ -1469,9 +1764,16 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     input: string | InputItem[],
     methodName: 'run' | 'stream',
     modelTask?: ModelTask,
+    runOptions?: RunOptions,
   ): Promise<ExecutionSetup> {
     assertNotDestroyed(this, `${methodName} agent`);
-    const lease = this.acquireExecution(methodName, modelTask);
+    this.cleanupRoutingTasks();
+    const suspended = this._suspendedRoutingOrigin;
+    if (this._asyncRoutingOrigins.size) throw new InvalidConfigError('Deliver or cancel originating async tool work before starting another routed execution');
+    if (suspended && modelTask && modelTask !== suspended.task) throw new InvalidConfigError('A suspended routed execution must keep its originating ModelTask');
+    const lease = this.acquireExecution(methodName, suspended?.task ?? modelTask);
+    this._routingDiagnostics = undefined;
+    this._lastManagedFrame = undefined;
     this._paused = false;
     this._cancelled = false;
     if (methodName === 'stream') {
@@ -1488,7 +1790,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         : `${input.length} messages`;
 
       this._logger.info({ inputPreview, toolCount: this._config.tools?.length || 0 }, `Agent ${methodName} started`);
-      metrics.increment(`agent.${methodName}.started`, 1, { model: this.model, connector: this.connector.name });
+      metrics.increment(`agent.${methodName}.started`, 1, { model: this.executionModel, connector: this.executionConnector.name });
 
       const startTime = Date.now();
 
@@ -1499,6 +1801,15 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         historyMode: this._config.historyMode || 'summary',
         maxAuditTrailSize: 1000,
       });
+
+      this._runOptions = runOptions;
+      if (suspended) {
+        if (runOptions?.routing !== undefined) throw new InvalidConfigError('A suspended execution keeps its originating route');
+        this.restoreRoutingOrigin(suspended, executionId, runOptions);
+        // Admission, preparation and provider failures must not grant a fresh
+        // task/route on the next ordinary event retry. Retain effective overrides.
+        this._suspendedRoutingOrigin = this._routingOrigin;
+      } else await this.prepareRouting(input, runOptions, modelTask, executionId);
 
       // Add user message to AgentContext
       // NOTE: setCurrentInput() also calls addUserMessage() internally, so we use it
@@ -1513,14 +1824,14 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       // Emit execution start
       this.emit('execution:start', {
         executionId,
-        config: { model: this.model, maxIterations: this._config.maxIterations || 10 },
+        config: { model: this.executionModel, maxIterations: this._config.maxIterations || 10 },
         timestamp: new Date(),
       });
 
       // Execute before:execution hook
       await this.hookManager.executeHooks('before:execution', {
         executionId,
-        config: { model: this.model },
+        config: { model: this.executionModel },
         timestamp: new Date(),
       }, undefined);
 
@@ -1531,6 +1842,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         lease,
       };
     } catch (error) {
+      this._runOptions = undefined;
       this.releaseExecution(lease);
       throw error;
     }
@@ -1596,7 +1908,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
     const { credential_context: _credentialContext, ...recordedRequest } =
       requestOptions ?? {
-        model: this.model,
+        model: this.executionModel,
         input: prepared.input,
         instructions: this._config.instructions,
         tools: this.getEnabledToolDefinitions(),
@@ -1657,6 +1969,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     response: AgentResponse,
     methodName: 'run' | 'stream'
   ): Promise<void> {
+    if (this._routingDiagnostics) response.routing = this.getRoutingDiagnostics();
+    if (response.status === 'suspended' && this._routingOrigin) this._suspendedRoutingOrigin = this._routingOrigin;
     // Calculate total duration
     const totalDuration = this.executionContext
       ? Date.now() - this.executionContext.startTime.getTime()
@@ -1714,8 +2028,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
     const duration = Date.now() - startTime;
     this._logger.info({ duration }, `Agent ${methodName} completed`);
-    metrics.timing(`agent.${methodName}.duration`, duration, { model: this.model, connector: this.connector.name });
-    metrics.increment(`agent.${methodName}.completed`, 1, { model: this.model, connector: this.connector.name, status: 'success' });
+    metrics.timing(`agent.${methodName}.duration`, duration, { model: this.executionModel, connector: this.executionConnector.name });
+    metrics.increment(`agent.${methodName}.completed`, 1, { model: this.executionModel, connector: this.executionConnector.name, status: 'success' });
+    if (response.status !== 'suspended') this.completeRoutingResumption();
   }
 
   /**
@@ -1739,7 +2054,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
     const duration = Date.now() - startTime;
     this._logger.error({ ...ProviderErrorMapper.extractErrorDetails(error), duration }, `Agent ${methodName} failed`);
-    metrics.increment(`agent.${methodName}.completed`, 1, { model: this.model, connector: this.connector.name, status: 'error' });
+    metrics.increment(`agent.${methodName}.completed`, 1, { model: this.executionModel, connector: this.executionConnector.name, status: 'error' });
   }
 
   /**
@@ -1776,43 +2091,12 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    */
   async run(input: string | InputItem[], options?: RunOptions): Promise<AgentResponse> {
     const { executionId, startTime, maxIterations, lease } =
-      await this._prepareExecution(input, 'run', options?.modelTask);
-    this._runOptions = options;
+      await this._prepareExecution(input, 'run', options?.modelTask, options);
     this._pendingContinuationToken = options?.continuationToken;
 
     try {
-      this.startLoopPolicy(executionId, options?.loopPolicy);
-      let finalResponse: AgentResponse;
-      for (;;) {
-        let formattedSuspension: AgentResponse | undefined;
-        const requestedFormat = options?.responseFormat;
-        const formatSuspension = requestedFormat ? async (response: AgentResponse): Promise<void> => {
-          await this.finalizeStructuredCandidate(response, requestedFormat);
-          formattedSuspension = response;
-        } : undefined;
-        finalResponse = await this._runAgenticLoop(executionId, startTime, maxIterations, formatSuspension);
-
-        // Selected structured responses finalize against the exact admitted frame.
-        // Suspension formats before assigning/persisting its first session identity.
-        if (options?.responseFormat && finalResponse !== formattedSuspension) {
-          await this.finalizeStructuredCandidate(finalResponse, options.responseFormat);
-        }
-        if (formatSuspension && this._agentContext.lastPreparation?.selection) {
-          await this._agentContext.consolidate();
-        }
-
-        // The nonstream-only JSON repair contract remains intact. A configured
-        // checker sees the actual repaired final candidate, within the same lease.
-        if (options?.responseFormat && this._loopController && !this._loopController.isStopped) {
-          const feedback = await this.checkLoopCandidate(finalResponse, this._loopController.snapshot().iterations);
-          if (feedback && this._loopController.snapshot().iterations < maxIterations) {
-            this._agentContext._appendLoopFeedback(feedback); continue;
-          }
-          if (feedback) this._loopController.finish('iteration_limit');
-        }
-        this.attachLoopDiagnostics(finalResponse);
-        break;
-      }
+      this.startLoopPolicy(executionId, this._runOptions?.loopPolicy);
+      const finalResponse = await this.runManagedLoop(executionId, startTime, maxIterations);
       await this._finalizeExecution(executionId, startTime, finalResponse, 'run');
       return finalResponse;
     } catch (error) {
@@ -1823,9 +2107,35 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       this.stopLoopPolicy();
       this._runOptions = undefined;
       this._pendingContinuationToken = undefined;
+      this._lastManagedFrame = undefined;
       this.releaseExecution(lease);
       this._cleanupExecution();
     }
+  }
+
+  /** Run-only validation and host completion share the effective execution options. */
+  private async runManagedLoop(executionId: string, startTime: number, maxIterations: number): Promise<AgentResponse> {
+    let finalResponse: AgentResponse;
+    for (;;) {
+      const format = this._runOptions?.responseFormat;
+      let formattedSuspension: AgentResponse | undefined;
+      finalResponse = await this._runAgenticLoop(executionId, startTime, maxIterations, format ? async response => {
+        await this.finalizeStructuredCandidate(response, format);
+        formattedSuspension = response;
+      } : undefined);
+      if (format && finalResponse !== formattedSuspension) await this.finalizeStructuredCandidate(finalResponse, format);
+      if (format && this._agentContext.lastPreparation?.selection) await this._agentContext.consolidate();
+      if (format && this._loopController && !this._loopController.isStopped) {
+        const feedback = await this.checkLoopCandidate(finalResponse, this._loopController.snapshot().iterations);
+        if (feedback && this._loopController.snapshot().iterations < maxIterations) {
+          this._agentContext._appendLoopFeedback(feedback); continue;
+        }
+        if (feedback) this._loopController.finish('iteration_limit');
+      }
+      this.attachLoopDiagnostics(finalResponse);
+      break;
+    }
+    return finalResponse;
   }
 
   /**
@@ -1977,8 +2287,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           this._logger.warn(
             {
               agentName: this.name,
-              model: this.model,
-              connector: this.connector.name,
+              model: this.executionModel,
+              connector: this.executionConnector.name,
               stopReason: response.stop_reason,
               refusalCategory: details?.category ?? null,
               refusalExplanation: details?.explanation ?? null,
@@ -2017,7 +2327,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
         // Accept the response
         emptyRetryCount = 0;
-        this._agentContext.addAssistantResponse(response.output);
+        this.recordAssistantResponse(response.output);
         this._recordIterationMetrics(
           iteration,
           iterationStartTime,
@@ -2039,7 +2349,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       }
 
       // Add assistant response to AgentContext (has tool calls, always accept)
-      this._agentContext.addAssistantResponse(response.output);
+      this.recordAssistantResponse(response.output);
 
       // Emit tool detection
       if (toolCalls.length > 0) {
@@ -2061,6 +2371,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       }
 
       // Add tool results to AgentContext
+      if (suspendSignal && this._routingOrigin) this._suspendedRoutingOrigin = this._routingOrigin;
       this._agentContext.addToolResults(toolResults);
 
       if (!suspendSignal) await this.checkLoopTools(toolResults, iteration);
@@ -2089,67 +2400,67 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           'SuspendSignal detected, suspending agent loop',
         );
 
-        // Final LLM call WITHOUT tools (mirrors max-iterations wrap-up)
-        const suspendPrepared = await this.prepareManagedContext(true);
-        const suspendStartTime = Date.now();
-        let suspendOptions: TextGenerateOptions = {
-          model: this.model,
-          input: suspendPrepared.input,
-          instructions: this._config.instructions,
-          tools: [], // No tools — force text-only wrap-up
-          temperature: this._runOptions?.temperature ?? this._config.temperature,
-          thinking: this._runOptions?.thinking ?? this._config.thinking,
-          vendorOptions: this._runOptions?.vendorOptions
-            ? { ...this._config.vendorOptions, ...this._runOptions.vendorOptions }
-            : this._config.vendorOptions,
-          prompt_cache: this._runOptions?.promptCache ?? this._config.promptCache,
-          data_handling: this._runOptions?.dataHandling ?? this._config.dataHandling,
-          credential_context: { userId: this.userId, connectorRegistry: this._config.registry },
-          skipContextLimitCheck: true,
-        };
-        this._applyInlineResponseFormat(suspendOptions);
-        suspendOptions = this.validateManagedDispatch(suspendOptions);
-        const suspendResponse = await this.generateTracked(suspendOptions, 'main', 'wrapup');
-        this._agentContext.recordProviderUsage(suspendResponse.usage);
-        this._agentContext.addAssistantResponse(suspendResponse.output);
-        this._recordIterationMetrics(
-          iteration + 1,
-          suspendStartTime,
-          suspendResponse,
-          [],
-          [],
-          suspendPrepared,
-          suspendOptions,
-        );
-
-        // Format the settled answer while the selected session/scope frame still
-        // matches. Persist the formatted history once; never replay the submission.
-        if (formatSuspension && this._agentContext.lastPreparation?.selection) {
-          await formatSuspension(suspendResponse);
-        }
-
-        // Generate session ID if not already set
         const sessionId = this._agentContext.sessionId ?? `suspended-${randomUUID()}`;
-
-        // Save session state
-        await this.saveSession(sessionId);
-
-        // Save correlation mapping
         const now = new Date();
         const expiresAt = new Date(now.getTime() + suspendSignal.ttl);
         const correlationRef: SessionRef = {
-          agentId: this._agentContext.agentId,
-          sessionId,
-          suspendedAt: now.toISOString(),
-          expiresAt: expiresAt.toISOString(),
-          resumeAs: suspendSignal.resumeAs,
-          metadata: suspendSignal.metadata,
+          agentId: this._agentContext.agentId, sessionId, suspendedAt: now.toISOString(),
+          expiresAt: expiresAt.toISOString(), resumeAs: suspendSignal.resumeAs, metadata: suspendSignal.metadata,
         };
-
         const correlationStorage = StorageRegistry.resolve(
           'correlations' as keyof import('./StorageRegistry.js').StorageConfig,
           () => new FileCorrelationStorage(),
         ) as ICorrelationStorage;
+        let suspendResponse: AgentResponse;
+        try {
+          // Final LLM call WITHOUT tools (mirrors max-iterations wrap-up)
+          const suspendPrepared = await this.prepareManagedContext(true);
+          const suspendStartTime = Date.now();
+          let suspendOptions: TextGenerateOptions = {
+            model: this.executionModel,
+            input: suspendPrepared.input,
+            instructions: this._config.instructions,
+            tools: [], // No tools — force text-only wrap-up
+            temperature: this._runOptions?.temperature ?? this._config.temperature,
+            thinking: this._runOptions?.thinking ?? this._config.thinking,
+            vendorOptions: this.managedVendorOptions(),
+            prompt_cache: this._runOptions?.promptCache ?? this._config.promptCache,
+            data_handling: this.managedDataHandling(),
+            credential_context: { userId: this.userId, connectorRegistry: this._config.registry },
+            skipContextLimitCheck: true,
+          };
+          this._applyInlineResponseFormat(suspendOptions);
+          suspendOptions = this.validateManagedDispatch(suspendOptions);
+          suspendResponse = await this.generateTracked(suspendOptions, 'main', 'wrapup');
+          this._agentContext.recordProviderUsage(suspendResponse.usage);
+          this.recordAssistantResponse(suspendResponse.output);
+          this._recordIterationMetrics(
+            iteration + 1,
+            suspendStartTime,
+            suspendResponse,
+            [],
+            [],
+            suspendPrepared,
+            suspendOptions,
+          );
+
+          // Format the settled answer while the selected session/scope frame still
+          // matches. Persist the formatted history once; never replay the submission.
+          if (formatSuspension) {
+            await formatSuspension(suspendResponse);
+          }
+        } catch (error) {
+          // Registration already happened. Preserve its observation and correlation,
+          // without claiming formatted suspension success or repeating its tool.
+          try {
+            await this.saveSession(sessionId, { suspensionFinalization: { ...correlationRef, status: 'failed', correlationId: suspendSignal.correlationId } });
+            await correlationStorage.save(suspendSignal.correlationId, correlationRef);
+          } catch (checkpointError) {
+            throw new AggregateError([error, checkpointError], 'Suspension finalization and recovery checkpoint failed; preserve the registered wait before retrying', { cause: error });
+          }
+          throw error;
+        }
+        await this.saveSession(sessionId);
         await correlationStorage.save(suspendSignal.correlationId, correlationRef);
 
         // Set response status to suspended
@@ -2184,7 +2495,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     // Check if we exited normally or hit max iterations
     if (this._loopController && !finalResponse) {
       if (!this._loopController.isStopped) this._loopController.finish(iteration >= maxIterations ? 'iteration_limit' : 'provider_failed');
-      finalResponse = lastResponse ?? { id: executionId, object: 'response', created_at: Math.floor(Date.now() / 1000), status: 'incomplete', model: this.model, output: [], usage: { input_tokens: 0, output_tokens: 0, total_tokens: 0 } };
+      finalResponse = lastResponse ?? { id: executionId, object: 'response', created_at: Math.floor(Date.now() / 1000), status: 'incomplete', model: this.executionModel, output: [], usage: { input_tokens: 0, output_tokens: 0, total_tokens: 0 } };
       this.attachLoopDiagnostics(finalResponse);
     }
     if (iteration >= maxIterations && !finalResponse) {
@@ -2198,17 +2509,15 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       const prepared = await this.prepareManagedContext(true);
       const wrapUpStartTime = Date.now();
       let wrapUpOptions: TextGenerateOptions = {
-        model: this.model,
+        model: this.executionModel,
         input: prepared.input,
         instructions: this._config.instructions,
         tools: [], // No tools - force text-only response
         temperature: this._runOptions?.temperature ?? this._config.temperature,
         thinking: this._runOptions?.thinking ?? this._config.thinking,
-        vendorOptions: this._runOptions?.vendorOptions
-          ? { ...this._config.vendorOptions, ...this._runOptions.vendorOptions }
-          : this._config.vendorOptions,
+        vendorOptions: this.managedVendorOptions(),
         prompt_cache: this._runOptions?.promptCache ?? this._config.promptCache,
-        data_handling: this._runOptions?.dataHandling ?? this._config.dataHandling,
+        data_handling: this.managedDataHandling(),
         credential_context: { userId: this.userId, connectorRegistry: this._config.registry },
         skipContextLimitCheck: true,
       };
@@ -2218,7 +2527,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       this._agentContext.recordProviderUsage(wrapUpResponse.usage);
 
       // Add the wrap-up response to context
-      this._agentContext.addAssistantResponse(wrapUpResponse.output);
+      this.recordAssistantResponse(wrapUpResponse.output);
       this._recordIterationMetrics(
         iteration,
         wrapUpStartTime,
@@ -2306,7 +2615,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     let assistantContent: Content[] = [];
     const toolCallById = new Map(toolCalls.map((call) => [call.id, call]));
     const historyPolicy =
-      this._provider.getAdvancedCapabilities?.(this.model).reasoningHistory ?? 'discard';
+      this.executionProvider.getAdvancedCapabilities?.(this.executionModel).reasoningHistory ?? 'discard';
     const persistReasoning = historyPolicy === 'always' ||
       (historyPolicy === 'when_tools_configured' && this.getEnabledToolDefinitions().length > 0);
 
@@ -2408,7 +2717,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
     // Use addAssistantResponse instead of addInputItems to ensure user message
     // in _currentInput is moved to _conversation first (critical for history preservation)
-    this._agentContext.addAssistantResponse(output);
+    this.recordAssistantResponse(output);
   }
 
   /**
@@ -2486,7 +2795,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       object: 'response',
       created_at: Math.floor(startTime / 1000),
       status: streamState.providerStatus || 'completed',
-      model: this.model,
+      model: this.executionModel,
       output,
       output_text: outputText || undefined,
       ...(thinkingTexts.length > 0 ? { thinking: thinkingTexts.join('\n') } : {}),
@@ -2504,8 +2813,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    */
   async *stream(input: string | InputItem[], options?: RunOptions): AsyncIterableIterator<StreamEvent> {
     const { executionId, startTime, maxIterations, lease } =
-      await this._prepareExecution(input, 'stream', options?.modelTask);
-    this._runOptions = options;
+      await this._prepareExecution(input, 'stream', options?.modelTask, options);
     this._pendingContinuationToken = options?.continuationToken;
 
     // Structured output on stream() can only be enforced when it applies inline:
@@ -2514,7 +2822,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     // prompt-fallback vendor the streamed output is NOT guaranteed to be JSON.
     // Warn loudly rather than silently returning prose.
     if (options?.responseFormat) {
-      const caps = this._provider.getModelCapabilities(this.model);
+      const caps = this.executionProvider.getModelCapabilities(this.executionModel);
       const hasTools =
         this.getEnabledToolDefinitions().length +
           ((options.nativeTools ?? this._config.nativeTools)?.length ?? 0) >
@@ -2524,13 +2832,13 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         resolveStructuredStrategy(
           options.responseFormat,
           caps,
-          this.connector.vendor,
+          this.executionConnector.vendor,
           hasTools,
-          this._provider.getAdvancedCapabilities?.(this.model),
+          this.executionProvider.getAdvancedCapabilities?.(this.executionModel),
         ) === 'prompt'
       ) {
         this._logger.warn(
-          { model: this.model, vendor: this.connector.vendor },
+          { model: this.executionModel, vendor: this.executionConnector.vendor },
           'stream(): responseFormat cannot be enforced while tools are enabled for this vendor — ' +
             'streamed output is not guaranteed to be valid JSON. Use run() for guaranteed structured ' +
             'output, or call stream() without tools.',
@@ -2539,7 +2847,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     }
 
     // Create a single StreamState for the entire execution (tracks usage across iterations)
-    const globalStreamState = new StreamState(executionId, this.model);
+    const globalStreamState = new StreamState(executionId, this.executionModel);
     let iteration = 0;
 
     // Empty response retry config
@@ -2558,7 +2866,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     let emptyRetryCount = 0;
 
     try {
-      this.startLoopPolicy(executionId, options?.loopPolicy);
+      this.startLoopPolicy(executionId, this._runOptions?.loopPolicy);
       // Main agentic loop
       while (iteration < maxIterations) {
         iteration++;
@@ -2605,7 +2913,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         );
 
         // Stream LLM response and accumulate state (per-iteration state)
-        const iterationStreamState = new StreamState(executionId, this.model);
+        const iterationStreamState = new StreamState(executionId, this.executionModel);
         const toolCallsMap = new Map<string, { name: string; args: string; thoughtSignature?: string; async?: boolean }>();
 
         // Stream from provider with hooks
@@ -2651,8 +2959,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
             this._logger.warn(
               {
                 agentName: this.name,
-                model: this.model,
-                connector: this.connector.name,
+                model: this.executionModel,
+                connector: this.executionConnector.name,
                 stopReason: iterationStreamState.stopReason,
                 refusalCategory: details?.category ?? null,
                 refusalExplanation: details?.explanation ?? null,
@@ -2737,8 +3045,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
           if (feedback && iteration < maxIterations) continue;
 
+          this.completeRoutingResumption();
           yield {
-            type: StreamEventType.RESPONSE_COMPLETE,
+            type: StreamEventType.RESPONSE_COMPLETE, ...(this._routingDiagnostics ? { routing: this.getRoutingDiagnostics() } : {}),
             response_id: executionId,
             status: providerStatus,
             usage: globalStreamState.usage,
@@ -2880,8 +3189,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
         if (this._loopController?.isStopped) {
           globalStreamState.providerStatus = iterationStreamState.providerStatus;
+          this.completeRoutingResumption();
           yield {
-            type: StreamEventType.RESPONSE_COMPLETE, response_id: executionId,
+            type: StreamEventType.RESPONSE_COMPLETE, ...(this._routingDiagnostics ? { routing: this.getRoutingDiagnostics() } : {}), response_id: executionId,
             status: iterationStreamState.providerStatus, usage: globalStreamState.usage,
             iterations: iteration, duration_ms: Date.now() - startTime,
             loop: this._loopController.snapshot(),
@@ -2898,7 +3208,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       if (iteration >= maxIterations && this._loopController && !this._loopController.isStopped) {
         this._loopController.finish('iteration_limit');
         this.commitStoppedLoopInput();
-        yield { type: StreamEventType.RESPONSE_COMPLETE, response_id: executionId,
+        this.completeRoutingResumption();
+        yield { type: StreamEventType.RESPONSE_COMPLETE, ...(this._routingDiagnostics ? { routing: this.getRoutingDiagnostics() } : {}), response_id: executionId,
           status: globalStreamState.providerStatus, usage: globalStreamState.usage,
           iterations: iteration, duration_ms: Date.now() - startTime, loop: this._loopController.snapshot() };
       }
@@ -2910,20 +3221,18 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
         // Prepare context and stream final response WITHOUT tools
         const prepared = await this.prepareManagedContext(true);
-        const wrapUpStreamState = new StreamState(executionId, this.model);
+        const wrapUpStreamState = new StreamState(executionId, this.executionModel);
 
         let wrapUpOptions: TextGenerateOptions = {
-          model: this.model,
+          model: this.executionModel,
           input: prepared.input,
           instructions: this._config.instructions,
           tools: [], // No tools - force text-only response
           temperature: this._runOptions?.temperature ?? this._config.temperature,
           thinking: this._runOptions?.thinking ?? this._config.thinking,
-          vendorOptions: this._runOptions?.vendorOptions
-            ? { ...this._config.vendorOptions, ...this._runOptions.vendorOptions }
-            : this._config.vendorOptions,
+          vendorOptions: this.managedVendorOptions(),
           prompt_cache: this._runOptions?.promptCache ?? this._config.promptCache,
-          data_handling: this._runOptions?.dataHandling ?? this._config.dataHandling,
+          data_handling: this.managedDataHandling(),
           credential_context: { userId: this.userId, connectorRegistry: this._config.registry },
           skipContextLimitCheck: true,
         };
@@ -3005,8 +3314,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           timestamp: new Date(),
         });
 
+        this.completeRoutingResumption();
         yield {
-          type: StreamEventType.RESPONSE_COMPLETE,
+          type: StreamEventType.RESPONSE_COMPLETE, ...(this._routingDiagnostics ? { routing: this.getRoutingDiagnostics() } : {}),
           response_id: executionId,
           status: wrapUpStreamState.providerStatus,
           usage: globalStreamState.usage,
@@ -3048,6 +3358,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       this.stopLoopPolicy('cancelled');
       this._runOptions = undefined;
       this._pendingContinuationToken = undefined;
+      this._lastManagedFrame = undefined;
       this.releaseExecution(lease);
       this._cleanupExecution(globalStreamState);
     }
@@ -3060,16 +3371,18 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const beforeText = finalResponse.output_text;
     const stoppedToolTurn = this._loopController?.isStopped
       && (this.extractToolCalls(finalResponse.output).length > 0 || finalResponse.output.length === 0);
+    const replace = !stoppedToolTurn ? this._replaceStructuredAssistant : undefined;
+    let transformed = false;
     const hasTools =
       this.getEnabledToolDefinitions().length +
         ((this._runOptions?.nativeTools ?? this._config.nativeTools)?.length ?? 0) >
       0;
     const strategy = resolveStructuredStrategy(
       format,
-      this._provider.getModelCapabilities(this.model),
-      this.connector.vendor,
+      this.executionProvider.getModelCapabilities(this.executionModel),
+      this.executionConnector.vendor,
       hasTools,
-      this._provider.getAdvancedCapabilities?.(this.model),
+      this.executionProvider.getAdvancedCapabilities?.(this.executionModel),
     );
     let beforeRepair = finalResponse.output_text;
     let enforcement: 'native' | 'prompt' | 'repair' = strategy;
@@ -3086,19 +3399,26 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       );
       finalResponse.output = constrained.output;
       finalResponse.output_text = constrained.output_text;
+      transformed = true;
       this.mergeStructuredUsage(finalResponse, constrained);
       beforeRepair = constrained.output_text;
       enforcement = 'prompt';
     }
-    await this.coerceStructuredOutput(finalResponse, format, (input) =>
-      this._generateStructuredToolFree(input, format),
-    );
+    await this.coerceStructuredOutput(finalResponse, format, async input => {
+      const response = await this._generateStructuredToolFree(input, format);
+      transformed = true;
+      return response;
+    });
     // If coercion reformatted the answer (a tool-free reformat pass ran), the
     // loop had already committed the pre-reformat text to context. Sync it so
     // history, session save/load, and continuation match what we return.
-    if (finalResponse.output_text !== beforeText) {
-      if (stoppedToolTurn) this._agentContext.addAssistantResponse(finalResponse.output);
-      else this._agentContext.replaceLastAssistantResponse(finalResponse.output);
+    if (transformed || finalResponse.output_text !== beforeText) {
+      if (stoppedToolTurn) this.recordAssistantResponse(finalResponse.output);
+      else {
+        if (!replace) throw new InvalidConfigError('Structured finalization requires its original assistant response');
+        replace(finalResponse.output);
+        this.recordAssistantOrigin(finalResponse.output);
+      }
     }
     if (finalResponse.output_text !== beforeRepair) enforcement = 'repair';
     finalResponse.structured_output_enforcement = enforcement;
@@ -3118,15 +3438,15 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const format = this._runOptions?.responseFormat;
     if (!format) return;
 
-    const caps = this._provider.getModelCapabilities(this.model);
+    const caps = this.executionProvider.getModelCapabilities(this.executionModel);
     const hasTools =
       (generateOptions.tools?.length ?? 0) + (generateOptions.native_tools?.length ?? 0) > 0;
     const strategy = resolveStructuredStrategy(
       format,
       caps,
-      this.connector.vendor,
+      this.executionConnector.vendor,
       hasTools,
-      this._provider.getAdvancedCapabilities?.(this.model),
+      this.executionProvider.getAdvancedCapabilities?.(this.executionModel),
     );
 
     if (strategy === 'native') {
@@ -3150,32 +3470,32 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     input: string,
     format: ResponseFormat,
   ): Promise<AgentResponse> {
-    const caps = this._provider.getModelCapabilities(this.model);
+    const caps = this.executionProvider.getModelCapabilities(this.executionModel);
     const strategy = resolveStructuredStrategy(
       format,
       caps,
-      this.connector.vendor,
+      this.executionConnector.vendor,
       false,
-      this._provider.getAdvancedCapabilities?.(this.model),
+      this.executionProvider.getAdvancedCapabilities?.(this.executionModel),
     );
     const taskState = this._agentContext.getPlugin('task_state');
-    const baseInstructions = (this._config.instructions ?? '') + (taskState instanceof TaskStatePluginNextGen
+    const baseInstructions = (this._lastManagedFrame?.instructions ?? this._config.instructions ?? '') + (!this._lastManagedFrame && taskState instanceof TaskStatePluginNextGen
       ? '\n\n' + taskState.getInstructions() + '\n' + taskState._promptView() : '');
 
     const generateOptions: TextGenerateOptions = {
-      model: this.model,
-      input: this._agentContext.formattingContextInput(input),
+      model: this.executionModel,
+      input: this._lastManagedFrame ? [...structuredClone(this._lastManagedFrame.input),
+        { type: 'message', role: MessageRole.USER, content: [{ type: ContentType.INPUT_TEXT, text: input }] }]
+        : this._agentContext.formattingContextInput(input),
       instructions:
         strategy === 'native'
           ? baseInstructions
-          : baseInstructions + buildStructuredInstructionSuffix(format),
+          : baseInstructions.includes(buildStructuredInstructionSuffix(format)) ? baseInstructions : baseInstructions + buildStructuredInstructionSuffix(format),
       temperature: this._runOptions?.temperature ?? this._config.temperature,
       thinking: this._runOptions?.thinking ?? this._config.thinking,
-      vendorOptions: this._runOptions?.vendorOptions
-        ? { ...this._config.vendorOptions, ...this._runOptions.vendorOptions }
-        : this._config.vendorOptions,
+      vendorOptions: this.managedVendorOptions(),
       prompt_cache: this._runOptions?.promptCache ?? this._config.promptCache,
-      data_handling: this._runOptions?.dataHandling ?? this._config.dataHandling,
+      data_handling: this.managedDataHandling(),
       credential_context: { userId: this.userId, connectorRegistry: this._config.registry },
       skipContextLimitCheck: true,
     };
@@ -3222,7 +3542,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   /** Share provider/host capacity precedence between initial preparation and final dispatch. */
   private resolveManagedModelCapacity(model: string): number | undefined {
     try {
-      const capabilities = this._provider.getModelCapabilities(model);
+      const capabilities = this.executionProvider.getModelCapabilities(model);
       return [capabilities.maxInputTokens, capabilities.maxTokens]
         .find(capacity => typeof capacity === 'number' && Number.isFinite(capacity) && capacity > 0) ?? undefined;
     } catch {
@@ -3236,7 +3556,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   /** Count already-known constraints before the single compaction decision. */
   private nativeContinuationOptions(tools: import('../domain/entities/Tool.js').FunctionToolDefinition[], toolFree = false): Partial<TextGenerateOptions> {
     const options: TextGenerateOptions = {
-      model: this.model, input: [], tools, instructions: this._config.instructions,
+      model: this.executionModel, input: [], tools, instructions: this._config.instructions,
       native_tools: toolFree ? undefined : this._runOptions?.nativeTools ?? this._config.nativeTools,
       continuation_token: this._pendingContinuationToken,
     };
@@ -3268,7 +3588,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         return { summary: generated.value, helperInvocationId: generated.invocationId, helperModel: generated.response.model, taskId: generated.taskId };
       },
       getTools: () => toolFree ? [] : this.getEnabledToolDefinitions(),
-      modelMaxContextTokens: this.resolveManagedModelCapacity(this.model),
+      modelMaxContextTokens: this.resolveManagedModelCapacity(this.executionModel),
       getRequestOptions: tools => this.nativeContinuationOptions(tools, toolFree),
     });
   }
@@ -3284,6 +3604,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     };
     const native = this.bindNativeCompaction();
     if (native) {
+      if (recordPreparation) this._lastManagedFrame = undefined;
       let guard: (() => void) | undefined;
       dispatch.nativeContext = true;
       dispatch.skipContextLimitCheck = true;
@@ -3291,12 +3612,32 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         prepare: async () => { guard = await this._agentContext._validateNativeDispatch(dispatch, native, recordPreparation); },
         assertCurrent: () => { if (!guard) throw new Error('Native dispatch was not counted'); guard(); },
       };
-      return dispatch;
+    } else {
+      this._agentContext.validateRequestBudget(dispatch, {
+        modelMaxContextTokens: this.resolveManagedModelCapacity(dispatch.model),
+        recordPreparation,
+      });
+      if (recordPreparation && this._runOptions?.responseFormat && typeof dispatch.input !== 'string') {
+        this._lastManagedFrame = { input: structuredClone(dispatch.input), instructions: dispatch.instructions };
+      }
     }
-    this._agentContext.validateRequestBudget(dispatch, {
-      modelMaxContextTokens: this.resolveManagedModelCapacity(dispatch.model),
-      recordPreparation,
-    });
+    const replay = this._managedReplayGuard;
+    if (replay) {
+      const previous = dispatch.managedDispatch;
+      replay(dispatch);
+      dispatch.managedDispatch = {
+        prepare: async () => { replay(dispatch); await previous?.prepare(); replay(dispatch); },
+        assertCurrent: () => { previous?.assertCurrent(); replay(dispatch); },
+        onDispatch: () => previous?.onDispatch?.(),
+      };
+    }
+    // Opaque output must retain its admitted identity, even if a host hook changes
+    // scope while awaiting the provider. Portable legacy calls need no rebind check.
+    const endpoint = capturedProviderEndpoint(this.executionProvider);
+    if (endpoint) {
+      const origin = nativeBinding(this.executionConnector, this.executionProvider, dispatch.model, this.context, endpoint);
+      this._managedRequestOrigin = { binding: origin, guard: this.captureReplayGuard([], true, origin)! };
+    } else this._managedRequestOrigin = undefined;
     return dispatch;
   }
 
@@ -3317,19 +3658,17 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const ro = this._runOptions;
     const continuationToken = this.consumeContinuationToken();
     let generateOptions: TextGenerateOptions = {
-      model: this.model,
+      model: this.executionModel,
       input,
       instructions: this._config.instructions,
       tools: preparedTools ?? this.getEnabledToolDefinitions(),
       tool_choice: 'auto',
       temperature: ro?.temperature ?? this._config.temperature,
       thinking: ro?.thinking ?? this._config.thinking,
-      vendorOptions: ro?.vendorOptions
-        ? { ...this._config.vendorOptions, ...ro.vendorOptions }
-        : this._config.vendorOptions,
+      vendorOptions: this.managedVendorOptions(),
       prompt_cache: ro?.promptCache ?? this._config.promptCache,
       native_tools: ro?.nativeTools ?? this._config.nativeTools,
-      data_handling: ro?.dataHandling ?? this._config.dataHandling,
+      data_handling: this.managedDataHandling(),
       ...(continuationToken ? { continuation_token: continuationToken } : {}),
       credential_context: { userId: this.userId, connectorRegistry: this._config.registry },
       // Context is already managed by AgentContextNextGen.prepare() — skip provider-level check
@@ -3433,19 +3772,17 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const sro = this._runOptions;
     const continuationToken = this.consumeContinuationToken();
     let generateOptions: TextGenerateOptions = {
-      model: this.model,
+      model: this.executionModel,
       input,
       instructions: this._config.instructions,
       tools: preparedTools ?? this.getEnabledToolDefinitions(),
       tool_choice: 'auto',
       temperature: sro?.temperature ?? this._config.temperature,
       thinking: sro?.thinking ?? this._config.thinking,
-      vendorOptions: sro?.vendorOptions
-        ? { ...this._config.vendorOptions, ...sro.vendorOptions }
-        : this._config.vendorOptions,
+      vendorOptions: this.managedVendorOptions(),
       prompt_cache: sro?.promptCache ?? this._config.promptCache,
       native_tools: sro?.nativeTools ?? this._config.nativeTools,
-      data_handling: sro?.dataHandling ?? this._config.dataHandling,
+      data_handling: this.managedDataHandling(),
       ...(continuationToken ? { continuation_token: continuationToken } : {}),
       credential_context: { userId: this.userId, connectorRegistry: this._config.registry },
       // Context is already managed by AgentContextNextGen.prepare() — skip provider-level check
@@ -3469,7 +3806,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     this.emit('llm:request', {
       executionId,
       iteration,
-      model: this.model,
+      model: this.executionModel,
       timestamp: new Date(),
     });
 
@@ -3594,7 +3931,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         object: 'response',
         created_at: Math.floor(llmStartTime / 1000),
         status: 'completed',
-        model: this.model,
+        model: this.executionModel,
         output: [],
         usage: streamState.usage,
       };
@@ -4062,6 +4399,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       status: 'running',
     };
     this._asyncToolTracker.set(toolCall.id, pending);
+    if (this._routingOrigin) this._asyncRoutingOrigins.set(toolCall.id, this._routingOrigin);
 
     // Emit async:tool:started
     this.emit('async:tool:started', {
@@ -4233,6 +4571,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   private consumeAsyncResults(entries: typeof this._asyncResultQueue): void {
     const consumed = new Set(entries);
     this._asyncResultQueue = this._asyncResultQueue.filter(entry => !consumed.has(entry));
+    for (const entry of entries) this._asyncRoutingOrigins.delete(entry.result.tool_use_id);
   }
 
   private _onAsyncComplete(toolCallId: string, result: ToolResult, runId: string, isCurrent: () => boolean): void {
@@ -4299,7 +4638,12 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       throw new Error('A continuation is already in progress');
     }
 
-    const lease = this.acquireExecution('continuation');
+    const queuedOrigins = (results ?? this._asyncResultQueue.map(entry => entry.result)).map(result => this._asyncRoutingOrigins.get(result.tool_use_id));
+    const origin = queuedOrigins.find(value => value !== undefined);
+    if (origin && queuedOrigins.some(value => value !== origin)) throw new InvalidConfigError('Async result batches must share their originating route/task');
+    if (this._routingConfig && !origin) throw new InvalidConfigError('Routed async continuation requires authentic originating tool results');
+    const lease = this.acquireExecution('continuation', origin?.task);
+    this._lastManagedFrame = undefined;
     this._continuationInProgress = true;
     this._paused = false;
     this._cancelled = false;
@@ -4334,6 +4678,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       parts.push('\nProcess these results and continue.');
 
       const executionId = `exec_async_${randomUUID()}`;
+      if (origin) this.restoreRoutingOrigin(origin, executionId);
+      else this._managedReplayGuard = this.captureReplayGuard([...this.context.getConversation(), ...this.context.getCurrentInput()]);
       const startTime = Date.now();
       const maxIterations = this._config.maxIterations || AGENT_DEFAULTS.MAX_ITERATIONS;
 
@@ -4367,7 +4713,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
       this.emit('execution:start', {
         executionId,
-        config: { model: this.model, maxIterations },
+        config: { model: this.executionModel, maxIterations },
         timestamp: new Date(),
       });
 
@@ -4378,14 +4724,13 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       }
 
       // Use shared agentic loop
-      this.startLoopPolicy(executionId);
+      this.startLoopPolicy(executionId, this._runOptions?.loopPolicy);
       await this.importLoopToolObservations(toDeliver);
       if (queued?.some(entry => !entry.isCurrent())) {
         this._agentContext.setCurrentInput('');
         throw new Error('Async result scope changed during policy observation');
       }
-      const finalResponse = await this._runAgenticLoop(executionId, startTime, maxIterations);
-      this.attachLoopDiagnostics(finalResponse);
+      const finalResponse = await this.runManagedLoop(executionId, startTime, maxIterations);
 
       await this._finalizeExecution(executionId, startTime, finalResponse, 'run');
       return finalResponse;
@@ -4399,6 +4744,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       } finally {
         this._continuationInProgress = false;
         this.stopLoopPolicy();
+        this._runOptions = undefined;
+        this._pendingContinuationToken = undefined;
+        this._lastManagedFrame = undefined;
         this.releaseExecution(lease);
         this._cleanupExecution();
       }
@@ -4410,8 +4758,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   /**
    * Check if there are any pending async tools
    */
-  hasPendingAsyncTools(): boolean {
-    return this._asyncToolTracker.size > 0;
+  hasPendingAsyncTools(includeQueued = false): boolean {
+    return this._asyncToolTracker.size > 0 || includeQueued && this._asyncResultQueue.some(entry => entry.isCurrent());
   }
 
   /**
@@ -4436,6 +4784,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       this._asyncAbort.delete(toolCallId);
       this._asyncToolTracker.delete(toolCallId);
     }
+    this._asyncRoutingOrigins.delete(toolCallId);
+    this.cleanupRoutingTasks();
   }
 
   /**
@@ -4450,6 +4800,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     this._asyncAbort.clear();
     this._asyncToolTracker.clear();
     this._asyncResultQueue = [];
+    this._asyncRoutingOrigins.clear();
+    this.cleanupRoutingTasks();
     this._pendingInjections = [];
     if (this._asyncBatchTimer) {
       clearTimeout(this._asyncBatchTimer);
@@ -4518,6 +4870,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    * Cancel execution
    */
   cancel(reason?: string): void {
+    // Explicit host abandonment releases pending authority, never its observed action.
+    this._suspendedRoutingOrigin = undefined;
+    this.cleanupRoutingTasks();
     this._cancelled = true;
     this._executionAbort.abort(new DOMException(reason || 'Manual cancellation', 'AbortError'));
     this.cancelModelHelpers(new DOMException(reason || 'Manual cancellation', 'AbortError'));
@@ -4702,6 +5057,10 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   // ===== Configuration Methods =====
 
   setModel(model: string): void {
+    if (this._routingConfig) {
+      this.routingState(this.connector, model, undefined, [...this.context.getConversation(), ...this.context.getCurrentInput()]);
+      this._phaseRoutes = new WeakMap();
+    }
     const strategy = this._agentContext.compactionStrategy;
     if (isContextCompactionStrategy(strategy) && strategy.config.history !== 'off') nativeProviderEndpoint(this._provider, this.connector);
     // Update the managed context first so a destroyed context cannot leave the
@@ -4820,6 +5179,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    */
   clearConversation(reason?: string): void {
     this._agentContext.clearConversation(reason);
+    this._suspendedRoutingOrigin = undefined;
+    this._phaseRoutes = new WeakMap();
+    this.cleanupRoutingTasks();
     this._logger.info({ reason }, 'Conversation cleared');
   }
 
@@ -4878,6 +5240,19 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       this._toolRegisteredListener = null;
     }
 
+    this._suspendedRoutingOrigin = undefined;
+    this._routingOrigin = undefined;
+    this._managedModelBinding = undefined;
+    this._managedReplayGuard = undefined;
+    this._managedRequestOrigin = undefined;
+    this._asyncRoutingOrigins.clear();
+    this._replaceStructuredAssistant = undefined;
+    cleanup(() => this.cleanupRoutingTasks());
+    for (const [connector, provider] of this._routingProviders) {
+      if (provider !== connector.getOptions().provider && 'destroy' in provider && typeof provider.destroy === 'function') cleanup(() => (provider as ITextProvider & { destroy(): void }).destroy());
+    }
+    this._routingProviders.clear();
+    if (this._nativeRoutingResolver) cleanup(() => this.context._unbindNativeRestoreResolver(this._nativeRoutingResolver!));
     // Cleanup hook manager
     cleanup(() => this.hookManager.destroy());
 

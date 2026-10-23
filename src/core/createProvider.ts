@@ -61,6 +61,8 @@ export function getVendorDefaultBaseURL(vendor: string): string | undefined {
 // A factory-created SDK keeps its endpoint/account defaults for its lifetime.
 // Rebinding an Agent must never relabel that existing transport with new defaults.
 const nativeProviderEndpoints = new WeakMap<ITextProvider, string>();
+/** @internal Actual construction-time transport identity, independent of later host configuration. */
+export function capturedProviderEndpoint(provider: ITextProvider): string | undefined { return nativeProviderEndpoints.get(provider); }
 function configuredNativeEndpoint(connector: Connector): string {
   const options = connector.getOptions();
   const openai = connector.vendor === Vendor.OpenAI;

@@ -199,6 +199,8 @@ export class ModelTask {
     observedUsage?: () => TokenUsage | undefined;
     /** @internal Final synchronous native request/authority guard, including retries. */
     beforeDispatch?: () => void;
+    /** @internal Observed provider/transport dispatch after successful reservation. */
+    onDispatch?: () => void;
   } = {}): Promise<{ result: T; invocationId: string }> {
     this.check();
     options.beforeDispatch?.();
@@ -212,7 +214,6 @@ export class ModelTask {
     try { first = this.reserve(call, descriptor, options.transport ? 'transport' : 'provider'); }
     catch (error) { composed.dispose(); throw error; }
     this.calls.set(call.id, call);
-    if (!options.transport) first.dispatched = true;
     let transportCount = 0;
     let callerStopped = false;
     const state: InvocationState = {
@@ -223,8 +224,16 @@ export class ModelTask {
         let attempt: ModelAttemptRecord;
         try { attempt = transportCount++ === 0 ? first : this.reserve(call, descriptor, 'transport'); }
         catch (error) { composed.controller.abort(error); throw error; }
+        try {
+          options.beforeDispatch?.();
+          composed.controller.signal.throwIfAborted();
+        } catch (error) {
+          attempt.status = 'not_dispatched'; attempt.reservedTokens = 0; attempt.reservedCostUSD = 0;
+          throw error;
+        }
         attempt.boundary = 'transport';
         attempt.dispatched = true;
+        options.onDispatch?.();
         return attempt;
       },
       endTransport: (attempt, status) => {
@@ -257,6 +266,12 @@ export class ModelTask {
     };
     const pending = invocationStorage.run(state, async () => {
       try {
+        if (!options.transport) {
+          options.beforeDispatch?.();
+          composed.controller.signal.throwIfAborted();
+          first.dispatched = true;
+          options.onDispatch?.();
+        }
         const result = await operation(composed.controller.signal);
         if (!options.transport) first.status = 'received';
         settle(result);
@@ -285,6 +300,8 @@ export class ModelTask {
   async *iterate<T>(descriptor: ModelCallDescriptor, factory: (signal: AbortSignal) => AsyncIterable<T>, options: {
     signal?: AbortSignal; transport?: boolean; usage?: (event: T) => TokenUsage | undefined;
     beforeDispatch?: () => void;
+    /** @internal Observed provider/transport dispatch after successful reservation. */
+    onDispatch?: () => void;
   } = {}): AsyncIterableIterator<T> {
     const stop = new AbortController();
     const composed = createExecutionSignal([options.signal, stop.signal]);
@@ -306,7 +323,7 @@ export class ModelTask {
       readyResolve();
       await completion;
       return usage;
-    }, { signal: composed.controller.signal, transport: options.transport, usage: value => value, observedUsage: () => usage, beforeDispatch: options.beforeDispatch });
+    }, { signal: composed.controller.signal, transport: options.transport, usage: value => value, observedUsage: () => usage, beforeDispatch: options.beforeDispatch, onDispatch: options.onDispatch });
     void work.catch(readyReject);
     let ended = false;
     try {

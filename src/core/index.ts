@@ -37,7 +37,7 @@ export { Agent } from './Agent.js';
 export type { AgentLoopPolicy, AgentLoopDiagnostics, AgentLoopReason, AgentLoopObservation, AgentLoopCheckContext, AgentLoopCompletionResult } from './agent-loop/types.js';
 export { ModelTask, ModelBudgetExceededError } from './model-execution/ModelTask.js';
 export { HelperOutputError } from './model-execution/ModelExecutor.js';
-export type { ModelExecutionConfig, ModelTaskLimits, ModelPriceBound, ModelTaskSnapshot, ModelInvocationRecord,
+export type { ModelRouteConfig, ModelRoutingHints, ModelRoutingRunOptions, ModelRouteCandidate, ModelRoutingContext, ModelRoutingDecision, ModelRoutingConfig, ModelRoutingDiagnostics, ModelExecutionConfig, ModelTaskLimits, ModelPriceBound, ModelTaskSnapshot, ModelInvocationRecord,
   ModelAttemptRecord, ModelCallDescriptor, HelperRole, HelperModelConfig, HelperCallOptions, HelperInputContext, HelperResult } from './model-execution/types.js';
 export type {
   AgentConfig,

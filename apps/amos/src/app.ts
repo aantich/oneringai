@@ -15,6 +15,7 @@ import { PromptManager } from './prompts/PromptManager.js';
 import { AgentRunner } from './agent/AgentRunner.js';
 import { describeToolOutcome } from './agent/toolOutcomes.js';
 import { describeLoopDiagnostics } from './agent/loopDiagnostics.js';
+import { describeRouting } from './agent/routing.js';
 import { Terminal } from './ui/Terminal.js';
 import {
   CommandProcessor,
@@ -29,6 +30,7 @@ import {
   PromptCommand,
   ContextCommand,
   HelpersCommand,
+  RoutingCommand,
   PresetCommand,
   ExternalCommand,
   ClearCommand,
@@ -262,6 +264,7 @@ export class AmosApp implements IAmosApp {
               break;
 
             case 'done':
+              if (event.routing) this.terminal.printDim(describeRouting(event.routing));
               if (event.loop) this.terminal.printDim(describeLoopDiagnostics(event.loop));
               // If execution completed but no output was shown, display a notice
               if (!hasOutput) {
@@ -285,6 +288,7 @@ export class AmosApp implements IAmosApp {
 
           this.terminal.print('\n' + response.text);
           if (response.loop) this.terminal.printDim(describeLoopDiagnostics(response.loop));
+          if (response.routing) this.terminal.printDim(describeRouting(response.routing));
           for (const outcome of response.toolOutcomes ?? []) {
             const description = describeToolOutcome(outcome);
             if (description) this.terminal.printError(description);
@@ -415,6 +419,7 @@ export class AmosApp implements IAmosApp {
       new ConfigCommand(),
       new ContextCommand(),
       new HelpersCommand(),
+      new RoutingCommand(),
       new PresetCommand(),
       new ExternalCommand(),
       new PlanCommand(),
@@ -563,6 +568,9 @@ export class AmosApp implements IAmosApp {
       if (profile && !this.connectorManager.isRegistered(profile.connector)) this.connectorManager.registerConnector(profile.connector);
     }
 
+    for (const profile of Object.values(config.modelExecution?.routing?.routes ?? {})) {
+      if (profile.connector && !this.connectorManager.isRegistered(profile.connector)) this.connectorManager.registerConnector(profile.connector);
+    }
     const previousRunner = this.agentRunner;
     const previousSessionId = config.session.activeSessionId;
     // Candidate loading must not mutate the current configuration/session pointer.
