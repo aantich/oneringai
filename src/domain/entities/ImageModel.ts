@@ -130,9 +130,9 @@ export const IMAGE_MODELS = {
     GPT_IMAGE_1: 'gpt-image-1',
     /** GPT-Image-1-Mini: Cost-efficient version of GPT Image 1 */
     GPT_IMAGE_1_MINI: 'gpt-image-1-mini',
-    /** DALL-E 3: Deprecated. High quality image generation */
+    /** @deprecated DALL-E 3 was retired on 2026-05-12. */
     DALL_E_3: 'dall-e-3',
-    /** DALL-E 2: Deprecated. Supports editing and variations */
+    /** @deprecated DALL-E 2 and image variations were retired on 2026-05-12. */
     DALL_E_2: 'dall-e-2',
   },
   [Vendor.Google]: {

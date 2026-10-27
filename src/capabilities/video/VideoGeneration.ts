@@ -86,12 +86,10 @@ export type SimpleVideoExtendOptions = Omit<VideoExtendOptions, 'model'> & { mod
 export class VideoGeneration {
   private provider: IVideoProvider;
   private connector: Connector;
-  private defaultModel: string;
 
   private constructor(connector: Connector) {
     this.connector = connector;
     this.provider = createVideoProvider(connector);
-    this.defaultModel = this.getDefaultModel();
   }
 
   /**
@@ -116,7 +114,7 @@ export class VideoGeneration {
    */
   async generate(options: SimpleVideoGenerateOptions): Promise<VideoResponse> {
     const fullOptions: VideoGenerateOptions = {
-      model: options.model || this.defaultModel,
+      model: options.model || this.getDefaultModel(),
       prompt: options.prompt,
       duration: options.duration,
       resolution: options.resolution,
@@ -274,7 +272,8 @@ export class VideoGeneration {
     // Fallback to registry
     const vendor = this.connector.vendor;
     if (vendor && VIDEO_MODELS[vendor as keyof typeof VIDEO_MODELS]) {
-      return Object.values(VIDEO_MODELS[vendor as keyof typeof VIDEO_MODELS]);
+      return Object.values(VIDEO_MODELS[vendor as keyof typeof VIDEO_MODELS])
+        .filter((model) => getVideoModelInfo(model)?.isActive);
     }
 
     return [];
@@ -309,7 +308,12 @@ export class VideoGeneration {
 
     switch (vendor) {
       case Vendor.OpenAI:
-        return VIDEO_MODELS[Vendor.OpenAI].SORA_2;
+        throw new ProviderError(
+          'openai',
+          'The OpenAI Videos API (Sora 2 and Sora 2 Pro) was retired on 2026-09-24. ' +
+            'OpenAI lists no replacement; configure a Google or Grok video connector.',
+          410
+        );
       case Vendor.Google:
         return VIDEO_MODELS[Vendor.Google].GEMINI_OMNI_1_1_FLASH;
       case Vendor.Grok:
@@ -327,7 +331,7 @@ export class VideoGeneration {
 
     switch (vendor) {
       case Vendor.OpenAI:
-        return VIDEO_MODELS[Vendor.OpenAI].SORA_2;
+        return this.getDefaultModel();
       case Vendor.Google:
         return VIDEO_MODELS[Vendor.Google].VEO_3_1;
       default:

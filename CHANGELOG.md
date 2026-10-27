@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] — 2026-10-27
+
+### Fixed
+
+- OpenAI image variations no longer default to retired `dall-e-2` or call the
+  removed endpoint. Existing methods reject locally with `ProviderError`
+  (status 410) and guidance to use a prompt-based GPT Image edit. Explicit
+  DALL-E 2/3 generation and editing also reject before requests or file reads.
+- The retired OpenAI Videos API no longer creates Sora jobs or performs status,
+  download, extension, remix, edit, or character requests. Public methods and
+  constants remain exported; operations reject locally with retirement guidance,
+  model discovery returns no OpenAI videos, and cancellation returns `false`.
+- Sora 2/2 Pro registry records now report retired/inactive status while retaining
+  historical capabilities and pricing. OpenAI video defaults were removed;
+  Google and Grok defaults are unchanged, with no automatic provider fallback.
+- OpenAI image discovery uses callable registry entries, including the current
+  GPT Image defaults. Updated image/video usage documentation and regression
+  coverage for public facades, providers, model selectors, and supported uploads.
+- Regenerated built-in tool implementation fingerprints for the patched runtime.
+  Portable Agent package exporters and receiving hosts must run the same release.
+
 ## [1.2.0] — 2026-10-07
 
 ### Added

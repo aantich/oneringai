@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-10-07
+**Generated:** 2026-10-27
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -3980,8 +3980,8 @@ async edit(options: SimpleImageEditOptions): Promise&lt;ImageResponse&gt;
 
 #### `createVariation()`
 
-Create variations of an existing image
-Note: Only DALL-E 2 supports this
+Create variations of an existing image. OpenAI variations are retired and
+reject locally; use edit() with an explicit variation prompt instead.
 
 ```typescript
 async createVariation(options: ImageVariationOptions): Promise&lt;ImageResponse&gt;
@@ -6544,7 +6544,7 @@ type VideoStatus = 'pending' | 'processing' | 'completed' | 'failed'
 
 ### calculateVideoCost `function`
 
-📍 [`src/domain/entities/VideoModel.ts:503`](src/domain/entities/VideoModel.ts)
+📍 [`src/domain/entities/VideoModel.ts:505`](src/domain/entities/VideoModel.ts)
 
 Calculate video generation cost
 
@@ -6586,7 +6586,7 @@ export function createVideoTools(
 
 ### getVideoModelsWithAudio `function`
 
-📍 [`src/domain/entities/VideoModel.ts:496`](src/domain/entities/VideoModel.ts)
+📍 [`src/domain/entities/VideoModel.ts:498`](src/domain/entities/VideoModel.ts)
 
 Get models that support audio
 
@@ -6598,7 +6598,7 @@ export function getVideoModelsWithAudio(): IVideoModelDescription[]
 
 ### getVideoModelsWithFeature `function`
 
-📍 [`src/domain/entities/VideoModel.ts:487`](src/domain/entities/VideoModel.ts)
+📍 [`src/domain/entities/VideoModel.ts:489`](src/domain/entities/VideoModel.ts)
 
 Get models with a specific feature
 
@@ -6610,7 +6610,7 @@ export function getVideoModelsWithFeature(feature: keyof VideoModelCapabilities[
 
 ### VIDEO_MODEL_REGISTRY `const`
 
-📍 [`src/domain/entities/VideoModel.ts:125`](src/domain/entities/VideoModel.ts)
+📍 [`src/domain/entities/VideoModel.ts:127`](src/domain/entities/VideoModel.ts)
 
 Video Model Registry
 
@@ -6623,9 +6623,9 @@ Video Model Registry
     name: 'sora-2',
     displayName: 'Sora 2',
     provider: Vendor.OpenAI,
-    description: 'Deprecated video generation model with synced audio; migrate before the Videos API shutdown',
-    isActive: true,
-    lifecycle: 'deprecated',
+    description: 'Retired video generation model; OpenAI shut down the Videos API with no replacement',
+    isActive: false,
+    lifecycle: 'retired',
     availability: 'public',
     deprecationDate: '2026-03-24',
     retirementDate: '2026-09-24',
@@ -6655,9 +6655,9 @@ Video Model Registry
     name: 'sora-2-pro',
     displayName: 'Sora 2 Pro',
     provider: Vendor.OpenAI,
-    description: 'Deprecated high-resolution video generation model; migrate before the Videos API shutdown',
-    isActive: true,
-    lifecycle: 'deprecated',
+    description: 'Retired high-resolution video generation model; OpenAI shut down the Videos API with no replacement',
+    isActive: false,
+    lifecycle: 'retired',
     availability: 'public',
     deprecationDate: '2026-03-24',
     retirementDate: '2026-09-24',

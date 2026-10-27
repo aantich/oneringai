@@ -8,6 +8,7 @@ import {
   getVideoModelInfo,
   getVideoModelsByVendor,
   getActiveVideoModels,
+  getDeprecatedVideoModels,
   getVideoModelsWithFeature,
   getVideoModelsWithAudio,
   calculateVideoCost,
@@ -68,11 +69,16 @@ describe('VideoModel Registry', () => {
   });
 
   describe('getVideoModelsByVendor', () => {
-    it('should return OpenAI models', () => {
-      const models = getVideoModelsByVendor(Vendor.OpenAI);
-      expect(models.length).toBeGreaterThan(0);
-      expect(models.every((m) => m.provider === Vendor.OpenAI)).toBe(true);
-      expect(models.every((m) => m.isActive)).toBe(true);
+    it('excludes retired OpenAI models from every callable model selector', () => {
+      expect(getVideoModelsByVendor(Vendor.OpenAI)).toEqual([]);
+      for (const model of [...getActiveVideoModels(), ...getDeprecatedVideoModels(), ...getVideoModelsWithAudio()]) {
+        expect(model.provider).not.toBe(Vendor.OpenAI);
+      }
+      for (const name of ['sora-2', 'sora-2-pro']) {
+        expect(getVideoModelInfo(name)).toMatchObject({
+          isActive: false, lifecycle: 'retired', retirementDate: '2026-09-24',
+        });
+      }
     });
 
     it('should return Google models', () => {
@@ -105,20 +111,20 @@ describe('VideoModel Registry', () => {
     it('should find models with upscaling support', () => {
       const models = getVideoModelsWithFeature('upscaling');
       expect(models.length).toBeGreaterThan(0);
-      expect(models.some((m) => m.name === 'sora-2-pro')).toBe(true);
+      expect(models.some((m) => m.name === 'sora-2-pro')).toBe(false);
       expect(models.some((m) => m.name === 'veo-3.1-generate-preview')).toBe(true);
     });
 
     it('should find models with style control', () => {
       const models = getVideoModelsWithFeature('styleControl');
       expect(models.length).toBeGreaterThan(0);
-      expect(models.some((m) => m.name === 'sora-2-pro')).toBe(true);
+      expect(models.some((m) => m.name === 'sora-2-pro')).toBe(false);
     });
 
     it('should find models with seed support', () => {
       const models = getVideoModelsWithFeature('seed');
       expect(models.length).toBeGreaterThan(0);
-      expect(models.some((m) => m.name === 'sora-2')).toBe(true);
+      expect(models.some((m) => m.name === 'sora-2')).toBe(false);
       expect(models.some((m) => m.name === 'veo-3.1-generate-preview')).toBe(true);
       expect(models.some((m) => m.name === 'veo-2.0-generate-001')).toBe(false);
       expect(models.some((m) => m.name === 'grok-imagine-video')).toBe(true);
@@ -129,7 +135,7 @@ describe('VideoModel Registry', () => {
     it('should find models with audio generation', () => {
       const models = getVideoModelsWithAudio();
       expect(models.length).toBeGreaterThan(0);
-      expect(models.some((m) => m.name === 'sora-2')).toBe(true);
+      expect(models.some((m) => m.name === 'sora-2')).toBe(false);
       expect(models.some((m) => m.name === 'veo-3.1-generate-preview')).toBe(true);
       expect(models.some((m) => m.name === 'grok-imagine-video')).toBe(true);
     });

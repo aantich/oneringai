@@ -14345,7 +14345,24 @@ const edited = await imageGen.edit({
 });
 ```
 
-`dall-e-2` and `dall-e-3` remain in the registry as retired records for migration and historical cost lookup; do not use them in new integrations.
+OpenAI retired `dall-e-2` and `dall-e-3` on 2026-05-12. They remain in the
+registry for historical lookup, but generation/editing requests with these
+models now reject locally with `ProviderError` (status 410).
+
+The variations endpoint supported only DALL-E 2 and has no direct replacement.
+`createVariation()` remains available for source compatibility and rejects
+locally before reading the image or making a request. To produce a variation,
+use `edit()` with a GPT Image model and an explicit prompt, for example:
+
+```typescript
+const variation = await imageGen.edit({
+  image: './source.png',
+  prompt: 'Create a variation of this image with warmer lighting',
+});
+```
+
+This is a prompt-based edit, so review its output for your use case. See
+[OpenAI's retirement notice](https://developers.openai.com/api/docs/deprecations).
 
 ### Google Gemini native image
 
@@ -14777,7 +14794,10 @@ const newText = await embeddings.embed('The team scored in the final minute');
 
 ## Video Generation
 
-The unified asynchronous video API supports OpenAI Sora, Google Veo/Gemini Omni, and xAI Grok Imagine. Start a job, poll or wait for completion, then download through the same high-level surface.
+The unified asynchronous video API supports Google Veo/Gemini Omni and xAI Grok
+Imagine. Start a job, poll or wait for completion, then download through the same
+high-level surface. OpenAI's Videos API is retired; see [OpenAI Sora](#openai-sora)
+for compatibility and migration behavior.
 
 ### Basic Usage
 
@@ -14787,20 +14807,19 @@ import * as fs from 'fs/promises';
 
 // Setup connector
 Connector.create({
-  name: 'openai',
-  vendor: Vendor.OpenAI,
-  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
+  name: 'google-video',
+  vendor: Vendor.Google,
+  auth: { type: 'api_key', apiKey: process.env.GOOGLE_API_KEY! },
 });
 
 // Create video generator
-const videoGen = VideoGeneration.create({ connector: 'openai' });
+const videoGen = VideoGeneration.create({ connector: 'google-video' });
 
 // Start video generation (returns immediately with job ID)
 const job = await videoGen.generate({
   prompt: 'A cinematic shot of a sunrise over mountains with clouds rolling',
-  model: 'sora-2',
+  model: 'veo-3.1-lite-generate-preview',
   duration: 8,           // 8 seconds
-  resolution: '1280x720', // 720p landscape
 });
 
 console.log('Job started:', job.jobId);
@@ -14901,36 +14920,24 @@ const dataUrl = `data:video/mp4;base64,${base64}`;
 
 ### OpenAI Sora
 
-Sora 2 and Sora 2 Pro are still callable but have a published retirement date of 2026-09-24. The registry therefore reports `isActive: true` and `lifecycle: 'deprecated'`; use `getDeprecatedVideoModels()` to surface that state in production model pickers.
+OpenAI shut down the Videos API, `sora-2`, `sora-2-pro`, and their snapshots
+on **2026-09-24**, with no replacement listed. See the
+[official retirement notice](https://developers.openai.com/api/docs/deprecations).
 
-```typescript
-// Sora 2 (callable during the deprecation window)
-const result = await videoGen.generate({
-  prompt: 'A futuristic city at sunset with flying cars',
-  model: 'sora-2',
-  duration: 8,              // 4, 8, 12, 16, or 20 seconds
-  resolution: '1280x720',   // 720p landscape
-  seed: 42,                 // For reproducibility
-});
+The provider class, model constants, and high-level methods remain exported for
+source compatibility. Generation (including an omitted model), polling,
+download, extension, remix, edit, and character operations reject locally with
+`ProviderError` (status 410), without SDK requests, uploads, or file reads.
+`listModels()` returns `[]`, the provider advertises no video capabilities, and
+`cancel()` / `cancelJob()` return `false` because no remote cancellation occurs.
+Constructing a video generator with an OpenAI connector still permits discovery.
 
-// Sora 2 Pro (higher quality, more options)
-const proResult = await videoGen.generate({
-  prompt: 'A photorealistic ocean wave crashing',
-  model: 'sora-2-pro',
-  duration: 12,
-  resolution: '1792x1024',  // Landscape, 1.4x higher-resolution export
-  seed: 42,
-});
-
-// Image-to-video (animate a still image)
-const imageBuffer = await fs.readFile('./photo.jpg');
-const animated = await videoGen.generate({
-  prompt: 'Gentle camera pan across the landscape',
-  image: imageBuffer,       // Reference image
-  model: 'sora-2',
-  duration: 4,
-});
-```
+Sora registry records report `isActive: false` and `lifecycle: 'retired'`.
+They retain historical capabilities/pricing for saved
+configuration and cost lookup; active, deprecated, feature, and audio selectors
+exclude them. There is no OpenAI video default or automatic cross-vendor fallback.
+Configure a named Google or Grok connector explicitly to generate new videos.
+Existing OpenAI job IDs and credentials cannot be transferred to these providers.
 
 ### Google Veo
 
@@ -15021,122 +15028,23 @@ const imageJob = await grokVideo.generate({
 
 ### Video Extension
 
-Extend an existing video by generating an additional segment after it.
-For OpenAI Sora the API references completed clips by **id** (the `jobId`
-returned by `generate()` / `generateAndWait()`), not by buffer or URL.
-
-```typescript
-const videoGen = VideoGeneration.create({ connector: 'openai' });
-
-// First, create a video
-const original = await videoGen.generateAndWait({
-  prompt: 'A rocket launching',
-  duration: 4,
-});
-
-// Extend it (Sora: pass the jobId; the new segment length is `extendDuration`)
-const extended = await videoGen.extend({
-  model: 'sora-2',
-  video: original.jobId,
-  prompt: 'The rocket continues into space',
-  extendDuration: 8,        // length of the *new* segment, snapped to 4/8/12
-  direction: 'end',         // currently advisory; OpenAI extends from the end
-});
-
-await videoGen.waitForCompletion(extended.jobId);
-```
-
-> **Note** — older versions of this library aliased `extend()` onto the
-> `videos.remix()` SDK call, which does not actually lengthen the clip.
-> As of the current release, `extend()` is wired to the real
-> `videos.extend()` endpoint; if you relied on the old aliasing behaviour,
-> use `videoGen.remix()` (below) instead.
-
-### Video Remix and Edit (Sora)
-
-OpenAI Sora exposes two more transforms on completed videos:
-
-```typescript
-// Remix — same length, prompt-steered re-generation.
-const remix = await videoGen.remix({
-  videoId: original.jobId,
-  prompt: 'Same composition, but at golden hour',
-});
-
-// Edit — apply a prompt-described change to the completed clip.
-const edited = await videoGen.edit({
-  videoId: original.jobId,
-  prompt: 'Add light snowfall throughout',
-});
-
-await Promise.all([
-  videoGen.waitForCompletion(remix.jobId),
-  videoGen.waitForCompletion(edited.jobId),
-]);
-```
-
-Both methods throw `Video remix not supported by …` / `Video edit not
-supported by …` when the underlying provider does not implement them.
-Today only the OpenAI Sora provider does.
-
-### Reusable Characters (Sora)
-
-The Sora character API lets you upload a reference video to register a
-named character, then thread the returned id back into a future
-`generate()` via `vendorOptions.characterId`.
-
-```typescript
-// Register the character from a reference clip.
-const hero = await videoGen.createCharacter({
-  name: 'Hero',
-  video: './reference-shot.mp4',  // Buffer | local path | URL
-});
-// → { id: 'char_…', name: 'Hero' }
-
-// Reuse on subsequent generations.
-const scene = await videoGen.generate({
-  prompt: 'Hero walks across a windswept beach at dusk',
-  vendorOptions: { characterId: hero.id },
-});
-
-// Look up later.
-const same = await videoGen.getCharacter(hero.id);
-```
-
-The character id is stable across generations, so you can keep a single
-character coherent across multiple shots.
-
-### Higher-Resolution Sora Output
-
-Sora supports four output sizes. Pass either a `resolution` string or an
-`aspectRatio` keyword:
-
-| Resolution | Orientation | Notes |
-|---|---|---|
-| `720x1280` | Portrait | Default |
-| `1280x720` | Landscape | Standard 720p |
-| `1024x1792` | Portrait, 1.4× | Higher-resolution export |
-| `1792x1024` | Landscape, 1.4× | Higher-resolution export |
-
-```typescript
-const hd = await videoGen.generate({
-  prompt: 'Aerial shot of a coastline at dawn',
-  model: 'sora-2-pro',
-  resolution: '1792x1024',
-});
-```
+Use `extend()` with a provider/model that supports extension, such as the Google
+Veo provider. Its default extension model remains `veo-3.1-generate-preview`.
+Supply the video reference expected by that provider. OpenAI Sora extension,
+remix, editing, and reusable-character endpoints are retired and reject locally
+as described above; the public method signatures remain available.
 
 ### Available Models
 
-The video registry contains ten records: the nine callable entries below and
-the retired `veo-2.0-generate-001` migration record.
+The video registry retains retired Sora and Veo 2 records for historical lookup.
+Use the active-model selectors for new work.
 
 #### OpenAI Sora Models
 
 | Model | Features | Durations | Resolutions | Price/Second |
 |-------|----------|-----------|-------------|--------------|
-| `sora-2` | Deprecated/callable; text/image-to-video, audio, extension | 4-20s | 720p | $0.10 ($0.05 batch) |
-| `sora-2-pro` | Deprecated/callable; higher resolution and frame control | 4-20s | 720p-1080p | $0.30-$0.70 ($0.15-$0.35 batch) |
+| `sora-2` | Retired 2026-09-24; historical metadata only | 4-20s | 720p | $0.10 ($0.05 batch) |
+| `sora-2-pro` | Retired 2026-09-24; historical metadata only | 4-20s | 720p-1080p | $0.30-$0.70 ($0.15-$0.35 batch) |
 
 #### Google Veo Models
 
@@ -15162,14 +15070,15 @@ the retired `veo-2.0-generate-001` migration record.
 const models = await videoGen.listModels();
 console.log('Available models:', models);
 
-// Get model information
+// Historical metadata is still available for retired models.
 const info = videoGen.getModelInfo('sora-2');
 console.log('Durations:', info.capabilities.durations);       // [4, 8, 12, 16, 20]
 console.log('Resolutions:', info.capabilities.resolutions);   // ['720x1280', ...]
 console.log('Has audio:', info.capabilities.audio);           // true
 console.log('Image-to-video:', info.capabilities.imageToVideo); // true
 console.log('Style control:', info.capabilities.features.styleControl); // false
-console.log('Lifecycle:', info.lifecycle);                      // deprecated
+console.log('Lifecycle:', info.lifecycle);                      // retired
+console.log('Callable:', info.isActive);                         // false
 ```
 
 ### Cost Estimation
@@ -15177,11 +15086,11 @@ console.log('Lifecycle:', info.lifecycle);                      // deprecated
 ```typescript
 import { calculateVideoCost } from '@everworker/oneringai';
 
-// Sora 2: $0.10/second
+// Historical Sora 2 pricing: $0.10/second (generation is retired)
 const soraCost = calculateVideoCost('sora-2', 8);  // 8 seconds
 console.log(`Sora 2 (8s): $${soraCost}`);  // $0.80
 
-// Sora 2 Pro: $0.30/second
+// Historical Sora 2 Pro pricing: $0.30/second (generation is retired)
 const proCost = calculateVideoCost('sora-2-pro', 12);  // 12 seconds
 console.log(`Sora 2 Pro (12s): $${proCost}`);  // $3.60
 

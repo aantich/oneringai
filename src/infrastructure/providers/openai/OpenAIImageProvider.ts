@@ -1,10 +1,12 @@
 /**
  * OpenAI Image Generation provider
- * Supports: GPT Image 2/1.x and legacy DALL-E models
+ * Supports GPT Image generation and editing; retired DALL-E operations fail locally.
  */
 
 import OpenAI from 'openai';
 import * as fs from 'fs';
+import { getImageModelsByVendor } from '../../../domain/entities/ImageModel.js';
+import { Vendor } from '../../../core/Vendor.js';
 import { BaseMediaProvider } from '../base/BaseMediaProvider.js';
 import type {
   IImageProvider,
@@ -54,6 +56,9 @@ export class OpenAIImageProvider extends BaseMediaProvider implements IImageProv
    * Generate images from a text prompt
    */
   async generateImage(options: ImageGenerateOptions): Promise<ImageResponse> {
+    this.assertModelAvailable(options.model);
+    this.assertModelAvailable(options.vendorOptions?.model);
+
     return this.executeWithCircuitBreaker(
       async () => {
         try {
@@ -120,9 +125,12 @@ export class OpenAIImageProvider extends BaseMediaProvider implements IImageProv
 
   /**
    * Edit an existing image with a prompt
-   * Supported by: gpt-image-1, dall-e-2
+   * Supported by GPT Image models. DALL-E 2 was retired on 2026-05-12.
    */
   async editImage(options: ImageEditOptions): Promise<ImageResponse> {
+    this.assertModelAvailable(options.model);
+    this.assertModelAvailable(options.vendorOptions?.model);
+
     return this.executeWithCircuitBreaker(
       async () => {
         try {
@@ -182,52 +190,15 @@ export class OpenAIImageProvider extends BaseMediaProvider implements IImageProv
   }
 
   /**
-   * Create variations of an existing image
-   * Supported by: dall-e-2 only
+   * @deprecated The DALL-E 2 variations endpoint was retired on 2026-05-12.
+   * Use editImage() with a GPT Image model and an explicit variation prompt.
    */
-  async createVariation(options: ImageVariationOptions): Promise<ImageResponse> {
-    return this.executeWithCircuitBreaker(
-      async () => {
-        try {
-          this.logOperationStart('image.variation', {
-            model: options.model,
-            size: options.size,
-            n: options.n,
-          });
-
-          // Prepare the image
-          const image = this.prepareImageInput(options.image);
-
-          const response = await this.client.images.createVariation({
-            model: options.model,
-            image,
-            size: options.size as any,
-            n: options.n || 1,
-            response_format: options.response_format || 'b64_json',
-          });
-
-          const data = response.data || [];
-
-          this.logOperationComplete('image.variation', {
-            model: options.model,
-            imagesGenerated: data.length,
-          });
-
-          return {
-            created: response.created,
-            data: data.map((img) => ({
-              url: img.url,
-              b64_json: img.b64_json,
-              revised_prompt: img.revised_prompt,
-            })),
-          };
-        } catch (error: any) {
-          this.handleError(error);
-          throw error;
-        }
-      },
-      'image.variation',
-      { model: options.model }
+  async createVariation(_options: ImageVariationOptions): Promise<ImageResponse> {
+    throw new ProviderError(
+      'openai',
+      'Image variations are unavailable: DALL-E 2 was retired on 2026-05-12. ' +
+        'Use edit() / editImage() with a GPT Image model and a prompt describing the desired variation.',
+      410
     );
   }
 
@@ -235,7 +206,17 @@ export class OpenAIImageProvider extends BaseMediaProvider implements IImageProv
    * List available image models
    */
   async listModels(): Promise<string[]> {
-    return ['gpt-image-2', 'gpt-image-1.5', 'gpt-image-1', 'gpt-image-1-mini'];
+    return getImageModelsByVendor(Vendor.OpenAI).map((model) => model.name);
+  }
+
+  private assertModelAvailable(model: unknown): void {
+    if (model === 'dall-e-2' || model === 'dall-e-3') {
+      throw new ProviderError(
+        'openai',
+        `${model} was retired on 2026-05-12. Use a GPT Image model for image generation or editing.`,
+        410
+      );
+    }
   }
 
   /**
