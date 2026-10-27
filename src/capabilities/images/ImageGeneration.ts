@@ -141,20 +141,17 @@ export class ImageGeneration {
   }
 
   /**
-   * Create variations of an existing image
-   * Note: Only DALL-E 2 supports this
+   * Create variations of an existing image. OpenAI variations are retired and
+   * reject locally; use edit() with an explicit variation prompt instead.
+   * @deprecated OpenAI retired the variations endpoint on 2026-05-12.
+   * Use edit() with a GPT Image model and an explicit variation prompt instead.
    */
   async createVariation(options: ImageVariationOptions): Promise<ImageResponse> {
     if (!this.provider.createVariation) {
       throw new Error(`Image variations not supported by ${this.provider.name}`);
     }
 
-    const fullOptions: ImageVariationOptions = {
-      ...options,
-      model: options.model || 'dall-e-2', // Only DALL-E 2 supports variations
-    };
-
-    return this.provider.createVariation(fullOptions);
+    return this.provider.createVariation(options);
   }
 
   /**

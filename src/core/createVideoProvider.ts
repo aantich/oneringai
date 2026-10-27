@@ -29,7 +29,7 @@ export function createVideoProvider(connector: Connector): IVideoProvider {
     default:
       throw new Error(
         `Video generation not supported for vendor: ${vendor}. ` +
-          `Supported vendors: ${Vendor.OpenAI}, ${Vendor.Google}, ${Vendor.Grok}`
+          `Supported vendors: ${Vendor.Google}, ${Vendor.Grok}. OpenAI video was retired on 2026-09-24.`
       );
   }
 }

@@ -78,7 +78,9 @@ type VideoModelRegistry = Record<string, IVideoModelDescription>;
  */
 export const VIDEO_MODELS = {
   [Vendor.OpenAI]: {
+    /** @deprecated Retired on 2026-09-24; retained for historical lookup. */
     SORA_2: 'sora-2',
+    /** @deprecated Retired on 2026-09-24; retained for historical lookup. */
     SORA_2_PRO: 'sora-2-pro',
   },
   [Vendor.Google]: {
@@ -101,10 +103,10 @@ export const VIDEO_MODELS = {
  * Common sources for model information
  */
 const OPENAI_SOURCES: ISourceLinks = {
-  documentation: 'https://developers.openai.com/api/docs/guides/video-generation',
+  documentation: 'https://developers.openai.com/api/docs/deprecations#2026-03-24-sora-2-video-generation-models-and-videos-api',
   apiReference: 'https://developers.openai.com/api/reference/resources/videos',
   pricing: 'https://developers.openai.com/api/docs/pricing',
-  lastVerified: '2026-08-30',
+  lastVerified: '2026-10-27',
 };
 
 const GOOGLE_SOURCES: ISourceLinks = {
@@ -124,16 +126,16 @@ const GROK_SOURCES: ISourceLinks = {
  */
 export const VIDEO_MODEL_REGISTRY: VideoModelRegistry = {
   // ============================================================================
-  // OpenAI Sora Models (callable until the Videos API shutdown on 2026-09-24)
+  // OpenAI Sora Models (retired on 2026-09-24; historical metadata only)
   // ============================================================================
 
   'sora-2': {
     name: 'sora-2',
     displayName: 'Sora 2',
     provider: Vendor.OpenAI,
-    description: 'Deprecated video generation model with synced audio; migrate before the Videos API shutdown',
-    isActive: true,
-    lifecycle: 'deprecated',
+    description: 'Retired video generation model; OpenAI shut down the Videos API with no replacement',
+    isActive: false,
+    lifecycle: 'retired',
     availability: 'public',
     deprecationDate: '2026-03-24',
     retirementDate: '2026-09-24',
@@ -164,9 +166,9 @@ export const VIDEO_MODEL_REGISTRY: VideoModelRegistry = {
     name: 'sora-2-pro',
     displayName: 'Sora 2 Pro',
     provider: Vendor.OpenAI,
-    description: 'Deprecated high-resolution video generation model; migrate before the Videos API shutdown',
-    isActive: true,
-    lifecycle: 'deprecated',
+    description: 'Retired high-resolution video generation model; OpenAI shut down the Videos API with no replacement',
+    isActive: false,
+    lifecycle: 'retired',
     availability: 'public',
     deprecationDate: '2026-03-24',
     retirementDate: '2026-09-24',

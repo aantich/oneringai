@@ -39,7 +39,6 @@ describe('VideoGeneration', () => {
   });
 
   it.each([
-    [Vendor.OpenAI, 'sora-2'],
     [Vendor.Google, 'gemini-omni-1.1-flash'],
     [Vendor.Grok, 'grok-imagine-video-1.5'],
   ])('uses the correct default generation model for %s', async (vendor, model) => {
@@ -51,8 +50,17 @@ describe('VideoGeneration', () => {
     expect(provider.generateVideo).toHaveBeenCalledWith(expect.objectContaining({ model }));
   });
 
+  it('rejects the retired OpenAI default before dispatch and filters registry fallback models', async () => {
+    Connector.create({ name: 'video-openai', vendor: Vendor.OpenAI, auth: { type: 'api_key', apiKey: 'test' } });
+    const videos = VideoGeneration.create({ connector: 'video-openai' });
+    await expect(videos.generate({ prompt: 'A slow camera move' })).rejects.toMatchObject({ statusCode: 410 });
+    await expect(videos.extend({ video: 'job-source', extendDuration: 8 })).rejects.toMatchObject({ statusCode: 410 });
+    expect(provider.generateVideo).not.toHaveBeenCalled();
+    expect(provider.extendVideo).not.toHaveBeenCalled();
+    await expect(videos.listModels()).resolves.toEqual([]);
+  });
+
   it.each([
-    [Vendor.OpenAI, 'sora-2'],
     [Vendor.Google, 'veo-3.1-generate-preview'],
   ])('allows the default extension model to be omitted for %s', async (vendor, model) => {
     Connector.create({ name: `extend-${vendor}`, vendor, auth: { type: 'api_key', apiKey: 'test' } });
