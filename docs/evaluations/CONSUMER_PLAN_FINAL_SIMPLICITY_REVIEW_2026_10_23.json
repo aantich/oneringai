@@ -1,0 +1,641 @@
+{
+  "protocol": "consumer-plan-final-simplicity-review-v1",
+  "recordedAt": "2026-10-23T13:22:08.267628+00:00",
+  "branch": "version2",
+  "headCommit": "dff238759c41431bd24712d3b045dd38fc800b37",
+  "status": "revision-5-final-plan-awaiting-user-approval-not-implemented",
+  "scope": "DRY, overengineering, ownership, API coherence and regression review of the revised consumer plan. Documentation and unexecuted type prototype only; local characterization fixtures do not implement proposed APIs.",
+  "historicalRecords": [
+    {
+      "path": "docs/evaluations/CONSUMER_EXECUTION_REVIEW_2026_10_23.json",
+      "sha256": "141dd5a32ccf00ab343777e301a09d4001a3cd3b6b5532e3110cae427024ecd5",
+      "bytes": 34629
+    },
+    {
+      "path": "docs/evaluations/CONSUMER_PLAN_HOLISTIC_REVIEW_2026_10_23.json",
+      "sha256": "f2736ac8e34ce76ac7c69e4edce94cba5a19f6067dab7919f478c23162925664",
+      "bytes": 17151
+    },
+    {
+      "path": "docs/evaluations/CONSUMER_REGISTRY_FOLLOWUP_2026_10_23.json",
+      "sha256": "bb0c7f87aeb593bb03a3c49532502948baf52ba0a2f040426c3eb4765e9bf73f",
+      "bytes": 24114
+    }
+  ],
+  "historicalArtifactBoundary": "Revision-2/3/4 records retain their original artifact hashes/totals; this record owns revision-5 document/prototype hashes and current runs. Historical full/live delivery totals are not recounted.",
+  "constraints": {
+    "breakingChangesProposed": false,
+    "automaticMigration": false,
+    "defaultFlip": false,
+    "runtimeImplementationAuthorized": false,
+    "consumerUpgradeAuthorized": false,
+    "packageReleaseVerified": false
+  },
+  "findings": [
+    {
+      "id": "D01",
+      "priority": "P2",
+      "decision": "Reuse direct-call signal/task; managed-only cancellation bridge and selected composition admission guard.",
+      "status": "resolved-in-plan-design-not-runtime"
+    },
+    {
+      "id": "D02",
+      "priority": "P1",
+      "decision": "Explicit source-tagged static registration, nonempty actual-name identity filter, catalog disabled; mandatory manager-local C5 catalog gate.",
+      "status": "resolved-in-plan-design-not-runtime"
+    },
+    {
+      "id": "D03",
+      "priority": "P1",
+      "decision": "Single C6 identity/tool/storage/timeout/board ownership table; deliberate shared evidence/tasks versus exclusive conversation state.",
+      "status": "resolved-in-plan-design-not-runtime"
+    },
+    {
+      "id": "D04",
+      "priority": "P1",
+      "decision": "Non-consuming failed continuation admission, single successor and retained correlated recovery; no effect replay.",
+      "status": "resolved-in-plan-design-not-runtime"
+    },
+    {
+      "id": "D05",
+      "priority": "P2",
+      "decision": "One bounded observation set and phase views/references, no quadratic copies or new journal/backend.",
+      "status": "resolved-in-plan-design-not-runtime"
+    },
+    {
+      "id": "D06",
+      "priority": "P2",
+      "decision": "Variable-safe never fields, discriminated request types, runtime checks and async worker name/capacity reservations.",
+      "status": "resolved-in-plan-design-not-runtime"
+    },
+    {
+      "id": "D07",
+      "priority": "P2",
+      "decision": "Logical page fetch versus physical retries; no automatic next page, blanket bound rewrite or new routine deadline from zero.",
+      "status": "resolved-in-plan-design-not-runtime"
+    },
+    {
+      "id": "D08",
+      "priority": "P2",
+      "decision": "Conformance required for current in-memory/file/restart backends; optional shared-backend support only after actual adapter validation.",
+      "status": "resolved-in-plan-design-not-runtime"
+    },
+    {
+      "id": "D09",
+      "priority": "P2",
+      "decision": "One normative document owner per contract; sparse capability projections, reused parameter facts, pure presentation without registries/DSL/theme framework.",
+      "status": "resolved-in-plan-design-not-runtime"
+    }
+  ],
+  "freshValidation": {
+    "existingFocusedTests": {
+      "command": "npx vitest run tests/unit/core/routineRunner.test.ts tests/unit/core/routineControlFlow.test.ts tests/unit/core/createRoutineTool.test.ts tests/unit/core/orchestrator/tools.test.ts tests/unit/core/orchestrator/createOrchestrator.test.ts tests/unit/portable/AgentPackage.test.ts tests/unit/core/evidence/EvidenceStorage.test.ts tests/integration/routines/routineControlFlowExecution.test.ts tests/unit/providers/OpenAITextProvider.test.ts tests/unit/providers/OpenAITextProvider.stream.test.ts tests/unit/capabilities/NewVendorAPIs.test.ts tests/unit/voice/OpenAIRealtime.test.ts tests/unit/audio/STTModel.test.ts tests/unit/domain/entities/Model.test.ts tests/unit/connectors/vendorRegistryCompleteness.test.ts tests/unit/capabilities/OpenAIResponsesWebSocketSession.test.ts --reporter=json --outputFile=/tmp/oneringai-final-simplicity-tests.json",
+      "exitCode": 0,
+      "passed": 500,
+      "failed": 0,
+      "skipped": 0,
+      "files": 16,
+      "report": {
+        "path": "/tmp/oneringai-final-simplicity-tests.json",
+        "sha256": "148e79f7396c738e4da7b10db43dade8f4b7f7c67ac0c6fe47505ad9a0b6e8a8",
+        "bytes": 147637
+      },
+      "log": {
+        "path": "/tmp/oneringai-final-simplicity-tests.log",
+        "sha256": "aab4817bb100747d1ffa5dc3372d02793a3b9a9acd97bb97b17cac36ed1e0f0f",
+        "bytes": 66
+      }
+    },
+    "publicCompatibility": {
+      "checks": 202,
+      "suites": [
+        {
+          "command": "node tests/fixtures/agentic-presets/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 54,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 27,
+              "calls": 4
+            },
+            {
+              "format": "cjs",
+              "checks": 27,
+              "calls": 4
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/agentic-presets/public-runtime.mjs",
+            "sha256": "f83c909cd3cb0d435d0e53b4eb90666ad4a79f9cb4c473ec739625a7d4bec30f",
+            "bytes": 11410
+          },
+          "log": {
+            "path": "/tmp/oneringai-final-simplicity-presets.log",
+            "sha256": "2776c4b17d44900b2a0acfaf45c6b3e620204e07dbf8996a27dfe09774945596",
+            "bytes": 6937
+          }
+        },
+        {
+          "command": "node tests/fixtures/context-assembly/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 38,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 19
+            },
+            {
+              "format": "cjs",
+              "checks": 19
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/context-assembly/public-runtime.mjs",
+            "sha256": "3afbf913e7f108fda5327dff8e26b95874492b1131f6b3730572994a243eafe7",
+            "bytes": 11313
+          },
+          "log": {
+            "path": "/tmp/oneringai-final-simplicity-assembly.log",
+            "sha256": "a16cc61a28a12285cf0ed780dfc11d68f29ed6d7d5946b5ad709bb4ba7a2f322",
+            "bytes": 15948
+          }
+        },
+        {
+          "command": "node tests/fixtures/native-compaction/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 66,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 33
+            },
+            {
+              "format": "cjs",
+              "checks": 33
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/native-compaction/public-runtime.mjs",
+            "sha256": "2b78d20d079822783ca7410b86de34b3233e7a5f098b420503d3e305a6ec9187",
+            "bytes": 4083
+          },
+          "log": {
+            "path": "/tmp/oneringai-final-simplicity-native.log",
+            "sha256": "27544b8293e1ffe8d67e743960876b3617f8b61bec7395ab9da869b86994de09",
+            "bytes": 4599
+          }
+        },
+        {
+          "command": "node tests/fixtures/model-routing/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 44,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 22
+            },
+            {
+              "format": "cjs",
+              "checks": 22
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/model-routing/public-runtime.mjs",
+            "sha256": "0336880be058196eb3c76de5867fee875ebacf68fc875b90607ff3582c95a60a",
+            "bytes": 7766
+          },
+          "log": {
+            "path": "/tmp/oneringai-final-simplicity-routing.log",
+            "sha256": "8d22ccfc5a939d2555ca13ae7b2f0606958a480b8281b3a4171d63000fadae62",
+            "bytes": 15994
+          }
+        }
+      ],
+      "legacyTypeConsumer": {
+        "command": "npm run test:agentic:compat",
+        "exitCode": 0,
+        "log": {
+          "path": "/tmp/oneringai-final-simplicity-legacy-types.log",
+          "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6",
+          "bytes": 116
+        }
+      }
+    },
+    "apiContractPrototype": {
+      "command": "npx tsc --noEmit -p docs/evaluations/consumer-api-design/tsconfig.json",
+      "exitCode": 0,
+      "strict": true,
+      "exactOptionalPropertyTypes": true,
+      "negativeCompileControls": 14,
+      "positiveControls": [
+        "Existing direct signal/modelTask options",
+        "Static source-tagged registration with actual selected-name identity filtering",
+        "Complete pre-construction host config with zero/false/absence"
+      ],
+      "negativeControlsAdded": [
+        "Forbidden keys returned via a non-literal variable",
+        "Worker request missing its authorized type"
+      ],
+      "log": {
+        "path": "/tmp/oneringai-final-simplicity-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "meaning": "Ambient proposed declarations/unexecuted examples check type coherence against built public types; not runtime implementation or proof of proposed behavior."
+    },
+    "characterization": {
+      "matched": 29,
+      "total": 29,
+      "runs": [
+        {
+          "command": "CONSUMER_REVIEW_REPORT_PATH=/tmp/oneringai-final-simplicity-original-probes.json node --import tsx docs/evaluations/consumer-execution-review-probes.mjs",
+          "exitCode": 0,
+          "matched": 17,
+          "total": 17,
+          "report": {
+            "path": "/tmp/oneringai-final-simplicity-original-probes.json",
+            "sha256": "db1bf093f34f8da91b7e2661f8873f58dc007f7007c8d151130b9b347fddb0bd",
+            "bytes": 6341
+          },
+          "log": {
+            "path": "/tmp/oneringai-final-simplicity-original-probes.log",
+            "sha256": "ef4214eefaab01c6a172ff174d0ff096324ed772be7806378cd23b4b17e9d2cd",
+            "bytes": 7494
+          },
+          "fixture": {
+            "path": "docs/evaluations/consumer-execution-review-probes.mjs",
+            "sha256": "99954f798b480a4f9ed60433cd1342fc245691bb1737291abd56c13064285251",
+            "bytes": 14299
+          }
+        },
+        {
+          "command": "CONSUMER_REGISTRY_REVIEW_REPORT_PATH=/tmp/oneringai-final-simplicity-registry-probes.json node --import tsx docs/evaluations/consumer-registry-followup-probes.mjs",
+          "exitCode": 0,
+          "matched": 7,
+          "total": 7,
+          "report": {
+            "path": "/tmp/oneringai-final-simplicity-registry-probes.json",
+            "sha256": "686c3449227f29c32ec1d406f9fa4edaa48c4f4e747755969eb03107a668c0e0",
+            "bytes": 2012
+          },
+          "log": {
+            "path": "/tmp/oneringai-final-simplicity-registry-probes.log",
+            "sha256": "0309d0254330a8222893ea79645eeaa6a029b98e14ea152ac42159a6e7041d11",
+            "bytes": 3593
+          },
+          "fixture": {
+            "path": "docs/evaluations/consumer-registry-followup-probes.mjs",
+            "sha256": "fea279f3cd846a01d15f735bd994c1e4c61bf9b0b42ff7e012d86e591d9a8c82",
+            "bytes": 5867
+          }
+        },
+        {
+          "command": "node docs/evaluations/consumer-final-simplicity-probes.mjs",
+          "exitCode": 0,
+          "matched": 5,
+          "total": 5,
+          "report": {
+            "path": "/tmp/oneringai-final-simplicity-probes.json",
+            "sha256": "83c365795982ed8db3dfebc24f8f0c96f11eb1509bffc08bdffdb37c8728e1b7",
+            "bytes": 1341
+          },
+          "log": {
+            "path": "/tmp/oneringai-final-simplicity-probes.log",
+            "sha256": "f54b443a822834ee155cf6eb169f3edf724e4effe9d0ef78016e0ffca387d41b",
+            "bytes": 1210
+          },
+          "fixture": {
+            "path": "docs/evaluations/consumer-final-simplicity-probes.mjs",
+            "sha256": "33bc06e011d8d78de900189c7b80f1b6451b282249de10ae8fb19d74a4d47845",
+            "bytes": 6157
+          }
+        }
+      ],
+      "newObservations": [
+        {
+          "id": "S01",
+          "matched": true,
+          "kind": "reuse-control",
+          "directCallAlreadyReceivesSignal": true
+        },
+        {
+          "id": "S02",
+          "matched": true,
+          "kind": "registration-gap",
+          "enabled": [
+            "review_read_exec",
+            "simplicity-review-service_api"
+          ],
+          "meaning": "Ordinary tool registration coexists with identity-generated legacy API tools and lacks connector source tagging."
+        },
+        {
+          "id": "S03",
+          "matched": true,
+          "kind": "static-recipe-control",
+          "enabled": [
+            "review_read_exec"
+          ],
+          "source": "connector:simplicity-review-service:work"
+        },
+        {
+          "id": "S04",
+          "matched": true,
+          "kind": "catalog-gap",
+          "legacyAliasLoadedDespiteIdentityToolFilter": true,
+          "meaning": "Static tool filtering is not a profile-aware catalog contract."
+        },
+        {
+          "id": "S05",
+          "matched": true,
+          "kind": "configuration-precedence-control",
+          "effectiveUserId": "context-owner",
+          "meaning": "Legacy context identity overrides top-level identity; new C6 must reject conflicting copies explicitly."
+        }
+      ],
+      "meaning": "Current legacy gaps/support/compatibility controls are asserted; they remain unfixed in runtime. Stand-in registration tool is not an enhanced API implementation."
+    },
+    "documentation": {
+      "localLinks": {
+        "checked": 569,
+        "errors": []
+      },
+      "report": {
+        "path": "/tmp/oneringai-final-simplicity-links.json",
+        "sha256": "fed2aa10a07800e6c8a3a3bd4ee74d60e5de22cac9834bd7357412566fe05655",
+        "bytes": 37
+      },
+      "trackedWhitespaceErrors": 0,
+      "untrackedWhitespaceErrors": 0,
+      "untrackedFilesChecked": 14
+    },
+    "realLLMCalls": 0,
+    "realProviderCalls": 0,
+    "externalWrites": 0,
+    "servicesStarted": 0,
+    "envRead": false,
+    "consumerTestsRun": false,
+    "fullUnitOrLiveSuiteRerun": false
+  },
+  "documentManifest": [
+    {
+      "path": "docs/designs/CONSUMER_EXECUTION_HARDENING.md",
+      "sha256": "a98a1697dae4e46b5643ca8419af366eaa4f6b5db59606914eef3cd05104a566",
+      "bytes": 55673
+    },
+    {
+      "path": "docs/designs/CONSUMER_COMPATIBLE_APIS.md",
+      "sha256": "2ba8660a2d0e5df51eb537af333b0ba980c71d4664255f8121266c903b4dbe73",
+      "bytes": 40863
+    },
+    {
+      "path": "docs/designs/CONSUMER_REGISTRY_FOLLOWUP.md",
+      "sha256": "49986b5b3e3ec597571ac2a2785d04d03a83e6993a5577861e1593534f74b5fa",
+      "bytes": 21916
+    },
+    {
+      "path": "docs/designs/CONSUMER_PLAN_FINAL_SIMPLICITY_REVIEW.md",
+      "sha256": "869ef724a7da6395bbe52d0ea10cba56eac9874a79c9a48cd2b6852f2c0097aa",
+      "bytes": 11406
+    },
+    {
+      "path": "docs/designs/CONSUMER_PLAN_HOLISTIC_REVIEW.md",
+      "sha256": "2052483dc0353fecad8a04307edf42dc3497f95584c67f78dd0d7311fa4cffac",
+      "bytes": 9560
+    },
+    {
+      "path": "docs/VERSION_2_GUIDE.md",
+      "sha256": "f087921c1be5bee64a8ce45d71ab13c5186e1725eb5830b72e67379c020c5d25",
+      "bytes": 230438
+    },
+    {
+      "path": "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "sha256": "fecae416d3b4b771b4790ddd2c12610ab06ad5646179b67fcc0b8d2c1c34b89e",
+      "bytes": 263129
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "3851f1857c7789f19dc68b8afe477c576e109a6480f335821a768a7b80258bb9",
+      "bytes": 54114
+    },
+    {
+      "path": "docs/evaluations/consumer-api-design/contracts.ts",
+      "sha256": "4dfe2435a6ab036232dab80db5874c409d9d1c1e8d2ee9e5b4d5757b599a8935",
+      "bytes": 12689
+    },
+    {
+      "path": "docs/evaluations/consumer-api-design/tsconfig.json",
+      "sha256": "3f8e58eeb92411d89aeb95e33284364741cbf4800f8bcc38fb2cf6a7a6fa8467",
+      "bytes": 197
+    },
+    {
+      "path": "docs/evaluations/consumer-final-simplicity-probes.mjs",
+      "sha256": "33bc06e011d8d78de900189c7b80f1b6451b282249de10ae8fb19d74a4d47845",
+      "bytes": 6157
+    }
+  ],
+  "reviewedSourceManifest": [
+    {
+      "path": "src/capabilities/openai/OpenAIResponsesWebSocketSession.ts",
+      "sha256": "f894573bdbb6ccfb5980bcf1877374e627d52c36d3ea4de4143c4d64a00540cb",
+      "bytes": 12836
+    },
+    {
+      "path": "src/capabilities/voice/openai/OpenAIRealtimeSession.ts",
+      "sha256": "6895bd93469d1111727aa5718087c9f39dfcd420b7f123284399bae227ea8538",
+      "bytes": 17832
+    },
+    {
+      "path": "src/capabilities/voice/openai/RealtimeTypes.ts",
+      "sha256": "71ec11b749df4044d32fd17a733aaac7aa77454ae57aac576198b7e95563f0c4",
+      "bytes": 7586
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "0cf82141bb76596cae7eccf453bc12371c3380119d6676da7eab0d791f07fc30",
+      "bytes": 234541
+    },
+    {
+      "path": "src/core/BaseAgent.ts",
+      "sha256": "86ff8cd9c1edd8648c6a509207b961e33946da6de49eee5a14d06b6f5d1a0d9b",
+      "bytes": 60543
+    },
+    {
+      "path": "src/core/ToolCatalogRegistry.ts",
+      "sha256": "9c627a9ae1e0ed1486632c0211cc0a93181262746bc2321a9bf096838f04ea99",
+      "bytes": 25539
+    },
+    {
+      "path": "src/core/ToolManager.ts",
+      "sha256": "e30b61ec01706fb36885f38df6b674838c5ba72dfbcede7d1187787400014f29",
+      "bytes": 50756
+    },
+    {
+      "path": "src/core/Vendor.ts",
+      "sha256": "4c532d3d57e0148de567627161693e9e76b366a76e2de02ac4429f787f95e482",
+      "bytes": 804
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "3dcf7744e30a9386c0ca98543c74856f1404b455f5f7253890427bab2fe8bdaa",
+      "bytes": 184688
+    },
+    {
+      "path": "src/core/context-nextgen/plugins/SharedWorkspacePluginNextGen.ts",
+      "sha256": "a845d9ef5f1ac0c84bd8548681923f12e92bca4ad3efa56eecea35cda2c23686",
+      "bytes": 17457
+    },
+    {
+      "path": "src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts",
+      "sha256": "f818b0d2267869448081cbb9e34fac6ccb959d2d00944b6cb423609f36698418",
+      "bytes": 29046
+    },
+    {
+      "path": "src/core/context-nextgen/types.ts",
+      "sha256": "ba0fc7f36c32e9d62d87fc1660b8ccf01ec4ba67f4c7a7097e5fcb15f81f1359",
+      "bytes": 46387
+    },
+    {
+      "path": "src/core/orchestrator/createOrchestrator.ts",
+      "sha256": "39b2b8e868acf0419b78004e425df10088c8277776805ff28c2159e678507e2c",
+      "bytes": 34641
+    },
+    {
+      "path": "src/core/orchestrator/tools.ts",
+      "sha256": "6b448e6c23ff93bf44a529a034e1fd7001ebeadf7eab27369411fc1ba4b268fd",
+      "bytes": 20352
+    },
+    {
+      "path": "src/core/routineControlFlow.ts",
+      "sha256": "13bebb310023584e2721d7fd24fa1b56c09215364b6de79f85200f28e24622c9",
+      "bytes": 30752
+    },
+    {
+      "path": "src/core/routineRunner.ts",
+      "sha256": "e1ed978b67d8160be0321f4726347559e5fa0abde4602f6e9a81c8fee77e385a",
+      "bytes": 55563
+    },
+    {
+      "path": "src/core/tool-execution/outcomes.ts",
+      "sha256": "6bc6b9ea1e8af69039dc7667bc405c395152e105b18babf9014fa5b97e066f15",
+      "bytes": 706
+    },
+    {
+      "path": "src/domain/entities/Model.ts",
+      "sha256": "2b8a06de83cb10172882bf5979f694915f32a93ad016697cee7c17fe76a1a28b",
+      "bytes": 140619
+    },
+    {
+      "path": "src/domain/entities/Routine.ts",
+      "sha256": "3ba99e310f374f314b2896759e4f8e7d8afc8885f583c7a9d9af6874f63bd965",
+      "bytes": 10586
+    },
+    {
+      "path": "src/domain/entities/STTModel.ts",
+      "sha256": "ee59e82eae94fdbfa5fa887919649bc5b745bfecc24fa8355e17722ed0eb28fa",
+      "bytes": 24285
+    },
+    {
+      "path": "src/domain/entities/Task.ts",
+      "sha256": "fdc3a7f17d376da3371ce543aaefd4021cace86f56ce8a2be15cdb6db7b9b15c",
+      "bytes": 21965
+    },
+    {
+      "path": "src/infrastructure/providers/openai/OpenAIRequestValidator.ts",
+      "sha256": "a377221111282d902c8bddf30b6a99fff79fe1191ddc26b34422454933fbb66a",
+      "bytes": 6596
+    },
+    {
+      "path": "src/infrastructure/providers/openai/OpenAITextProvider.ts",
+      "sha256": "b5c9c6b28790748de8168d58aa34438fc4bf0e33b5385d4d11c9c9ae4e59116b",
+      "bytes": 28056
+    },
+    {
+      "path": "src/shared/index.ts",
+      "sha256": "c0555843ea2ffffb91d4e43fe67c6bea486d11a8dda5e304638a6b577412e7bb",
+      "bytes": 1454
+    },
+    {
+      "path": "src/tools/connector/ConnectorTools.ts",
+      "sha256": "dae613fbd1894c796fbb6079e32aad90f54c8d074b48dca42205cfa1f702e6b9",
+      "bytes": 27269
+    },
+    {
+      "path": "tests/unit/providers/OpenAITextProvider.test.ts",
+      "sha256": "5b664f573e169e3c94dab85df52161853f3aa105d1f97bc9257993d0d14beebd",
+      "bytes": 18353
+    }
+  ],
+  "unchangedRuntime": {
+    "changedPaths": [
+      "AGENTS.md",
+      "docs/VERSION_2_GUIDE.md",
+      "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "docs/designs/CONSUMER_COMPATIBLE_APIS.md",
+      "docs/designs/CONSUMER_EXECUTION_HARDENING.md",
+      "docs/designs/CONSUMER_PLAN_FINAL_SIMPLICITY_REVIEW.md",
+      "docs/designs/CONSUMER_PLAN_HOLISTIC_REVIEW.md",
+      "docs/designs/CONSUMER_REGISTRY_FOLLOWUP.md",
+      "docs/evaluations/CONSUMER_EXECUTION_REVIEW_2026_10_23.json",
+      "docs/evaluations/CONSUMER_PLAN_FINAL_SIMPLICITY_REVIEW_2026_10_23.json",
+      "docs/evaluations/CONSUMER_PLAN_HOLISTIC_REVIEW_2026_10_23.json",
+      "docs/evaluations/CONSUMER_REGISTRY_FOLLOWUP_2026_10_23.json",
+      "docs/evaluations/consumer-api-design/contracts.ts",
+      "docs/evaluations/consumer-api-design/tsconfig.json",
+      "docs/evaluations/consumer-execution-review-probes.mjs",
+      "docs/evaluations/consumer-final-simplicity-probes.mjs",
+      "docs/evaluations/consumer-registry-followup-probes.mjs"
+    ],
+    "runtimeConsumerOrDependencyEdits": false,
+    "matchingPriorRuntimeSourceHashes": 63,
+    "builtPackageRoots": [
+      {
+        "path": "dist/index.js",
+        "sha256": "83916d9a016ff1e21e37ef2c5ac40b85b39e26410b5cb38c08fae933b35039cc",
+        "bytes": 4248002
+      },
+      {
+        "path": "dist/index.cjs",
+        "sha256": "00230d688e83a67b0e4b22f98e9a45c350f685e72993907d54426311670437b2",
+        "bytes": 4287325
+      },
+      {
+        "path": "dist/index.d.ts",
+        "sha256": "157ac52e56b99c841fac6154ca10f2c0681cd18e3469fca161e6eb94745e94af",
+        "bytes": 923860
+      }
+    ]
+  },
+  "approval": {
+    "planRevision": 5,
+    "ready": "Stage boundaries, additive direction, frozen compatibility gates and exclusions. Explicit slice selection still required before implementation.",
+    "firstSuggestedCoreSlice": "C1",
+    "independentTracks": [
+      "C9-A",
+      "C9-B",
+      "C9-C"
+    ],
+    "stageEntryAPIGates": [
+      "C5 manager-local catalog adapter with legacy/profile/cache/isolation fixtures",
+      "C7 negotiated exact wire schema with v2 peer fixtures",
+      "C9 exact signatures and model/endpoint evidence"
+    ],
+    "unresolvedRequiredGateBlocksSliceCompletion": true
+  },
+  "deferred": [
+    "C3-R durable workflow restore/cross-process resume",
+    "durable cursor codecs",
+    "production database/backend/retention design",
+    "distributed budget authority/exactly-once effects",
+    "Stage 14B/16B",
+    "consumer upgrades and package release"
+  ],
+  "limitations": [
+    "No proposed runtime API is implemented or behavior-tested.",
+    "No full-unit/live/consumer suite was run for documentation-only review; required implementation gates remain.",
+    "Exact future C5 catalog adapter/C7 wire/C9 signatures require explicit stage-entry review under the same nonbreaking constraints.",
+    "Prior provider-research uncertainties and consumer installation/test attribution remain as documented in revision-4 evidence; no new provider capability claim is made.",
+    "Borrowed-agent composition cannot revoke independently held host connector/backend/context references; host must respect ownership.",
+    "Type restrictions do not replace runtime preflight for JavaScript, decoded input or casts."
+  ]
+}

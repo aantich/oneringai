@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Google Calendar - List Meetings Tool
  *
@@ -190,10 +191,10 @@ EXAMPLE:
           totalCount: meetings.length,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatGoogleToolError('Failed to list meetings', error),
-        };
+        });
       }
     },
   };

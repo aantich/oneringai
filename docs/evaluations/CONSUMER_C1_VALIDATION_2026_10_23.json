@@ -1,0 +1,1508 @@
+{
+  "protocol": "consumer-c1-validation-v1",
+  "recordedAt": "2026-10-23T14:09:41.986137+00:00",
+  "status": "complete-on-branch",
+  "verifiedPackageRelease": false,
+  "branch": "version2",
+  "baseCommit": "dff238759c41431bd24712d3b045dd38fc800b37",
+  "authorization": {
+    "request": "proceed with full implementation",
+    "selectedSlice": "C1",
+    "basis": "Recommended first slice after revision-5 approval under persistent staged-development instruction; announced before implementation.",
+    "excluded": [
+      "C2–C9 runtime implementation",
+      "consumer app or dependency upgrades",
+      "breaking changes",
+      "commit/push/publication",
+      "Stage 14B/16B"
+    ]
+  },
+  "publicAPI": {
+    "runtime": [
+      "createOutcomeTool"
+    ],
+    "types": [
+      "OutcomeInvocation",
+      "OutcomeToolOptions"
+    ],
+    "import": "@everworker/oneringai",
+    "privateBridgeExported": false,
+    "defaultEnabled": false,
+    "rootOnlyNewTypes": true,
+    "legacyTypesSubpathModified": false
+  },
+  "compatibility": {
+    "breakingChanges": false,
+    "newRequiredProviderOrStorageMembers": false,
+    "sessionMigration": false,
+    "remoteProtocol": 2,
+    "dependenciesAndPackageExportsUnchanged": true,
+    "preserved": [
+      "ToolFunction and ToolContext callback types and receivers",
+      "legacy raw returns/business-data classification",
+      "default error normalization, retry and breaker policies",
+      "run/stream/event/session shapes",
+      "literal strict v2 messages and existing generic server error envelope",
+      "connector authentication/identity/account precedence",
+      "existing package/source implementation integrity checks"
+    ],
+    "unchangedSourceControls": [
+      {
+        "path": "src/domain/entities/Tool.ts",
+        "sha256": "12fe4590163d9dd3f70e5d82c30354d828c732120537d9f59b0c646d99d89c22",
+        "bytes": 12928
+      },
+      {
+        "path": "src/core/tool-execution/types.ts",
+        "sha256": "4e7506fcb6f5ced637608e60887b7a79eaeeb587801a5dbec13371088fa2887f",
+        "bytes": 6458
+      },
+      {
+        "path": "src/types/index.ts",
+        "sha256": "9f7d6d3e294df9fe4b5078af2bcd30665bf74c9d542c57d4458ec83daf6f1d5d",
+        "bytes": 22518
+      },
+      {
+        "path": "src/agent-runtime/types.ts",
+        "sha256": "bbfffea07da5f37065f9e363a6341cc33d59a895269c3763ca1fe4950c779ff7",
+        "bytes": 7912
+      }
+    ],
+    "generatedRegistry": {
+      "normalGeneratorUsed": true,
+      "implementationHashesUpdated": 39,
+      "otherwiseByteIdenticalToHEAD": true
+    },
+    "scope": "Selected callbacks only; arbitrary replacing decorators are not certified bridges. Cross-version runtimes without this bridge retain only their raw legacy contract. Rich remote parity is deferred C7."
+  },
+  "unit": {
+    "success": true,
+    "passed": 8814,
+    "failed": 0,
+    "skipped": 0,
+    "files": 386,
+    "report": {
+      "path": "/tmp/oneringai-c1-full-unit.json",
+      "sha256": "7722dedb9188c32212ce323adc09550bfa5eeaa9d8792ab03fde76b3de0e41f1",
+      "bytes": 2815618
+    }
+  },
+  "newUnitCases": {
+    "outcomeTool": 33,
+    "agent": 5,
+    "amos": 1,
+    "total": 39
+  },
+  "live": {
+    "success": true,
+    "passed": 230,
+    "failed": 0,
+    "skipped": 0,
+    "files": 14,
+    "report": {
+      "path": "/tmp/oneringai-c1-live-tests.json",
+      "sha256": "4646222b2f9310681337e5957e93ff9db5ce6047168aee3bb63f85b519e90500",
+      "bytes": 78069
+    },
+    "providers": [
+      "OpenAI",
+      "Anthropic",
+      "Google"
+    ],
+    "newC1Cases": 6,
+    "requiredProvidersSkipped": 0,
+    "command": {
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "tests/integration/text/ToolOutcomes.live.integration.test.ts",
+        "tests/integration/text/Evidence.live.integration.test.ts",
+        "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "tests/integration/text/TaskState.live.integration.test.ts",
+        "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "tests/integration/text/AgentSessionCorrections.live.integration.test.ts",
+        "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "tests/integration/text/OutcomeTools.live.integration.test.ts",
+        "--maxWorkers=3",
+        "--minWorkers=1",
+        "--reporter=json",
+        "--outputFile=/tmp/oneringai-c1-live-tests.json"
+      ],
+      "enableFlags": {
+        "RUN_AGENTIC_BASELINE_LIVE": "1",
+        "RUN_CONTEXT_FRESHNESS_LIVE": "1",
+        "RUN_TOOL_OUTCOMES_LIVE": "1",
+        "RUN_EVIDENCE_LIVE": "1",
+        "RUN_CONTEXT_STRATEGIES_LIVE": "1",
+        "RUN_MODEL_EXECUTION_LIVE": "1",
+        "RUN_TASK_STATE_LIVE": "1",
+        "RUN_AGENT_LOOP_LIVE": "1",
+        "RUN_AGENT_PRESETS_LIVE": "1",
+        "RUN_CONTEXT_ASSEMBLY_LIVE": "1",
+        "RUN_NATIVE_COMPACTION_LIVE": "1",
+        "RUN_MODEL_ROUTING_LIVE": "1",
+        "RUN_OUTCOME_TOOLS_LIVE": "1"
+      },
+      "reportPaths": {
+        "BASELINE_REPORT_PATH": "/tmp/oneringai-c1-live-baseline_report_path.json",
+        "CONTEXT_FRESHNESS_REPORT_PATH": "/tmp/oneringai-c1-live-context_freshness_report_path.json",
+        "TOOL_OUTCOMES_REPORT_PATH": "/tmp/oneringai-c1-live-tool_outcomes_report_path.json",
+        "EVIDENCE_REPORT_PATH": "/tmp/oneringai-c1-live-evidence_report_path.json",
+        "CONTEXT_STRATEGY_REPORT_PATH": "/tmp/oneringai-c1-live-context_strategy_report_path.json",
+        "MODEL_EXECUTION_REPORT_PATH": "/tmp/oneringai-c1-live-model_execution_report_path.json",
+        "TASK_STATE_REPORT_PATH": "/tmp/oneringai-c1-live-task_state_report_path.json",
+        "AGENT_LOOP_REPORT_PATH": "/tmp/oneringai-c1-live-agent_loop_report_path.json",
+        "AGENT_PRESETS_REPORT_PATH": "/tmp/oneringai-c1-live-agent_presets_report_path.json",
+        "AGENT_SESSION_CORRECTIONS_REPORT_PATH": "/tmp/oneringai-c1-live-agent_session_corrections_report_path.json",
+        "CONTEXT_ASSEMBLY_REPORT_PATH": "/tmp/oneringai-c1-live-context_assembly_report_path.json",
+        "NATIVE_COMPACTION_REPORT_PATH": "/tmp/oneringai-c1-live-native_compaction_report_path.json",
+        "MODEL_ROUTING_REPORT_PATH": "/tmp/oneringai-c1-live-model_routing_report_path.json",
+        "OUTCOME_TOOLS_REPORT_PATH": "/tmp/oneringai-c1-live-outcome_tools_report_path.json"
+      }
+    },
+    "suiteReports": [
+      {
+        "path": "/tmp/oneringai-c1-live-baseline_report_path.json",
+        "sha256": "82a6bf911f6a83804384ccf6c0c936b70d1afe624a5e30738612b2af95674f93",
+        "bytes": 70147
+      },
+      {
+        "path": "/tmp/oneringai-c1-live-context_freshness_report_path.json",
+        "sha256": "c4e75d08eeb4708e19bbf6d40dce742293d6129be696be58bd9cb4a6cd8bd3bd",
+        "bytes": 9187
+      },
+      {
+        "path": "/tmp/oneringai-c1-live-tool_outcomes_report_path.json",
+        "sha256": "71ab12c3f2a42c26188c2e8a6f15e94decd0afd7d64b974b3b0ae5cec40b482b",
+        "bytes": 3898
+      },
+      {
+        "path": "/tmp/oneringai-c1-live-evidence_report_path.json",
+        "sha256": "ea1e39b6793ca4336bacf7d886a1a82e01716912b4e75d46471d7026e837fbfa",
+        "bytes": 9807
+      },
+      {
+        "path": "/tmp/oneringai-c1-live-context_strategy_report_path.json",
+        "sha256": "01a6d34e0cf6d679de9c95e38daa23c23ee171b3a22a51869fdbf68b3c6b7c85",
+        "bytes": 1203063
+      },
+      {
+        "path": "/tmp/oneringai-c1-live-model_execution_report_path.json",
+        "sha256": "32f750e6ac4ec0ddf79a3a371672c43b55ebcf8e1c13fc12abf318828be544f8",
+        "bytes": 42243
+      },
+      {
+        "path": "/tmp/oneringai-c1-live-task_state_report_path.json",
+        "sha256": "38e32971eb23a0a924c36d3bafe934104d2e0bd9d53da8baeb955b3a6fdd5d18",
+        "bytes": 29875
+      },
+      {
+        "path": "/tmp/oneringai-c1-live-agent_loop_report_path.json",
+        "sha256": "ca5d8a2af3d89f1adf7c55ad549ca016b282836984c917c8dcc27c56ea51f388",
+        "bytes": 69255
+      },
+      {
+        "path": "/tmp/oneringai-c1-live-agent_presets_report_path.json",
+        "sha256": "d11aa95c672763110a71824f02dd5416f6f4803bef312d7faa5b17e3352d1a89",
+        "bytes": 77551
+      },
+      {
+        "path": "/tmp/oneringai-c1-live-agent_session_corrections_report_path.json",
+        "sha256": "4d0a20eab0be624ee26502326ee4793fddfce2976e51c8252bcabc553179deac",
+        "bytes": 6228
+      },
+      {
+        "path": "/tmp/oneringai-c1-live-context_assembly_report_path.json",
+        "sha256": "0379d6d671301ad9bc5760f4f57e5105ccb5222b0cc8366f5d3189ec2cb1a685",
+        "bytes": 140965
+      },
+      {
+        "path": "/tmp/oneringai-c1-live-native_compaction_report_path.json",
+        "sha256": "c81f07e06bec22f1b5f1af4826de7e1b3b486ac07ac590d339d3f6b795336a18",
+        "bytes": 41443
+      },
+      {
+        "path": "/tmp/oneringai-c1-live-model_routing_report_path.json",
+        "sha256": "fabf02fa9d4ab6c9655712870fee96dd535187ed183099686f2a01cb1936962e",
+        "bytes": 227108
+      },
+      {
+        "path": "/tmp/oneringai-c1-live-outcome_tools_report_path.json",
+        "sha256": "4327bd2b711bd385fa948e4e332cccae8e13a02f33c289c389f3ee14a6711c93",
+        "bytes": 3648
+      }
+    ],
+    "execution": "Fresh complete final 14-file matrix; no union of partial passes; all existing pilot quality/cost assertions remain unchanged.",
+    "newC1Results": [
+      {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "mode": "run",
+        "passed": true,
+        "modelCalls": 3,
+        "executions": 2,
+        "identicalRawResults": true,
+        "admissions": [
+          {
+            "id": "call_6lPoUjXoL15P1n2Z8WPDngtk",
+            "name": "declined_probe",
+            "iteration": 0
+          },
+          {
+            "id": "call_M1K6HJZP6h2BSLxAi65JtfDt",
+            "name": "reported_probe",
+            "iteration": 1
+          }
+        ],
+        "statuses": [
+          "succeeded",
+          "failed"
+        ]
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "mode": "stream",
+        "passed": true,
+        "modelCalls": 3,
+        "executions": 2,
+        "identicalRawResults": true,
+        "admissions": [
+          {
+            "id": "call_qz5Q8xAkEeoYLc119GyEgZjx",
+            "name": "declined_probe",
+            "iteration": 1
+          },
+          {
+            "id": "call_5qmO4Hs9Tim89rEvj4TvAlfu",
+            "name": "reported_probe",
+            "iteration": 2
+          }
+        ],
+        "statuses": [
+          "succeeded",
+          "failed"
+        ]
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "mode": "run",
+        "passed": true,
+        "modelCalls": 3,
+        "executions": 2,
+        "identicalRawResults": true,
+        "admissions": [
+          {
+            "id": "toolu_01AqByMqEevmhveB8m53PHq8",
+            "name": "declined_probe",
+            "iteration": 0
+          },
+          {
+            "id": "toolu_01JdWKTKMDAYJeGDR4LRDuC1",
+            "name": "reported_probe",
+            "iteration": 1
+          }
+        ],
+        "statuses": [
+          "succeeded",
+          "failed"
+        ]
+      },
+      {
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "mode": "stream",
+        "passed": true,
+        "modelCalls": 3,
+        "executions": 2,
+        "identicalRawResults": true,
+        "admissions": [
+          {
+            "id": "toolu_01SMFcNUefjAaArvdoHNFeQA",
+            "name": "declined_probe",
+            "iteration": 1
+          },
+          {
+            "id": "toolu_01KwafPQt5Ax6d9QMjwhELGf",
+            "name": "reported_probe",
+            "iteration": 2
+          }
+        ],
+        "statuses": [
+          "succeeded",
+          "failed"
+        ]
+      },
+      {
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "mode": "run",
+        "passed": true,
+        "modelCalls": 3,
+        "executions": 2,
+        "identicalRawResults": true,
+        "admissions": [
+          {
+            "id": "google_c5ee68b2-436c-44b7-aa19-fad85aef71c0",
+            "name": "declined_probe",
+            "iteration": 0
+          },
+          {
+            "id": "google_f236b6ef-648e-46d0-a846-68eafa51ff73",
+            "name": "reported_probe",
+            "iteration": 1
+          }
+        ],
+        "statuses": [
+          "succeeded",
+          "failed"
+        ]
+      },
+      {
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "mode": "stream",
+        "passed": true,
+        "modelCalls": 3,
+        "executions": 2,
+        "identicalRawResults": true,
+        "admissions": [
+          {
+            "id": "call_resp_google_90bb7470-750c-4ef6-b8a8-c485d276a98c_0_declined_probe",
+            "name": "declined_probe",
+            "iteration": 1
+          },
+          {
+            "id": "call_resp_google_4ea8c0d2-7e2d-488f-9863-1d010c3d2e68_0_reported_probe",
+            "name": "reported_probe",
+            "iteration": 2
+          }
+        ],
+        "statuses": [
+          "succeeded",
+          "failed"
+        ]
+      }
+    ]
+  },
+  "publicRuntime": {
+    "passed": 382,
+    "newC1": 180,
+    "existing": 202,
+    "newC1Report": {
+      "protocol": "c1-public-outcomes-v1",
+      "checks": 180,
+      "results": [
+        {
+          "helper": "esm",
+          "manager": "esm",
+          "checks": 10
+        },
+        {
+          "helper": "esm",
+          "manager": "cjs",
+          "checks": 10
+        },
+        {
+          "helper": "esm",
+          "manager": "duplicate-esm",
+          "checks": 10
+        },
+        {
+          "helper": "esm",
+          "manager": "duplicate-cjs",
+          "checks": 10
+        },
+        {
+          "helper": "cjs",
+          "manager": "esm",
+          "checks": 10
+        },
+        {
+          "helper": "cjs",
+          "manager": "cjs",
+          "checks": 10
+        },
+        {
+          "helper": "cjs",
+          "manager": "duplicate-esm",
+          "checks": 10
+        },
+        {
+          "helper": "cjs",
+          "manager": "duplicate-cjs",
+          "checks": 10
+        },
+        {
+          "helper": "duplicate-esm",
+          "manager": "esm",
+          "checks": 10
+        },
+        {
+          "helper": "duplicate-esm",
+          "manager": "cjs",
+          "checks": 10
+        },
+        {
+          "helper": "duplicate-esm",
+          "manager": "duplicate-esm",
+          "checks": 10
+        },
+        {
+          "helper": "duplicate-esm",
+          "manager": "duplicate-cjs",
+          "checks": 10
+        },
+        {
+          "helper": "duplicate-cjs",
+          "manager": "esm",
+          "checks": 10
+        },
+        {
+          "helper": "duplicate-cjs",
+          "manager": "cjs",
+          "checks": 10
+        },
+        {
+          "helper": "duplicate-cjs",
+          "manager": "duplicate-esm",
+          "checks": 10
+        },
+        {
+          "helper": "duplicate-cjs",
+          "manager": "duplicate-cjs",
+          "checks": 10
+        },
+        {
+          "helper": "esm",
+          "wrapper": "cjs",
+          "checks": 3
+        },
+        {
+          "helper": "cjs",
+          "wrapper": "duplicate-esm",
+          "checks": 3
+        },
+        {
+          "helper": "duplicate-esm",
+          "wrapper": "duplicate-cjs",
+          "checks": 3
+        },
+        {
+          "helper": "duplicate-cjs",
+          "wrapper": "esm",
+          "checks": 3
+        },
+        {
+          "format": "esm",
+          "legacyRemoteBoundary": true,
+          "checks": 4
+        },
+        {
+          "format": "cjs",
+          "legacyRemoteBoundary": true,
+          "checks": 4
+        }
+      ]
+    },
+    "existingChecks": {
+      "presets": 54,
+      "contextAssembly": 38,
+      "nativeCompaction": 66,
+      "modelRouting": 44
+    },
+    "artifacts": [
+      {
+        "path": "/tmp/oneringai-c1-public-runtime.log",
+        "sha256": "a02b0a2380dbb7e4e667273c0f9f712dbc6aa7d5572099162596b2ab5c23186f",
+        "bytes": 1734
+      },
+      {
+        "path": "/tmp/oneringai-c1-presets.log",
+        "sha256": "1bb209cc4fcec0ce2ca2dbac01c49e71fbe418c15baeb13d53a028555da9c44a",
+        "bytes": 6936
+      },
+      {
+        "path": "/tmp/oneringai-c1-assembly.log",
+        "sha256": "9f39d32deb7a45543fb8b7149b74baaa2077769fa773cb7daabc74765512bb3f",
+        "bytes": 15945
+      },
+      {
+        "path": "/tmp/oneringai-c1-native.log",
+        "sha256": "7a08388fd7bd4c4d08cb9572b9cfe5d9a07a0a8afd361e07faf0b51320d2c131",
+        "bytes": 4595
+      },
+      {
+        "path": "/tmp/oneringai-c1-routing.log",
+        "sha256": "9b81995d06f8a9dadaa6ff90b36fd81ac27a4deebd27774c264196712739dbfd",
+        "bytes": 15992
+      }
+    ]
+  },
+  "typeCompatibility": {
+    "builtPublicConsumer": true,
+    "newC1NegativeControls": 3,
+    "proposalNegativeControls": 14,
+    "proposalImportsRealC1API": true,
+    "laterSliceDeclarations": "Unimplemented proposals only."
+  },
+  "localChecks": [
+    {
+      "command": "npm run build; generated registries and 24 package export files",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c1-build.log",
+        "sha256": "cd2fb5edf6e86f8216b8148345a6856e9deef91e5ca54369a4c37902fcedd39a",
+        "bytes": 15259
+      }
+    },
+    {
+      "command": "npm run typecheck",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c1-typecheck.log",
+        "sha256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717",
+        "bytes": 57
+      }
+    },
+    {
+      "command": "npm run lint",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c1-lint.log",
+        "sha256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e",
+        "bytes": 60
+      }
+    },
+    {
+      "command": "npm run test:agentic:compat",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c1-compat.log",
+        "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6",
+        "bytes": 116
+      }
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit -p docs/evaluations/consumer-api-design/tsconfig.json",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c1-plan-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "command": "npm run examples:check",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c1-examples-types.log",
+        "sha256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8",
+        "bytes": 88
+      }
+    },
+    {
+      "command": "npm run --prefix apps/amos typecheck",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c1-amos-types.log",
+        "sha256": "15c9b914db9ac8a0f39085e9e28df4f483e0442e42350ea4d7615778f29e93ad",
+        "bytes": 52
+      }
+    },
+    {
+      "command": "npm run --prefix apps/amos build",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c1-amos-build.log",
+        "sha256": "5d8a56c20efa6ec0371e4897f7b1604cd364cd0db264ade898f00e5370f09e8d",
+        "bytes": 462
+      }
+    },
+    {
+      "command": "node --import tsx scripts/generate-api-docs.ts --mode public",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c1-api-docs.log",
+        "sha256": "3d909a6ea1ba92964ff2390cc1d17e23b51727ee36d3ab8a32ecb644f7a50eb7",
+        "bytes": 223
+      }
+    }
+  ],
+  "offline": {
+    "count": 41,
+    "allPassed": true,
+    "scripts": [
+      {
+        "script": "example:agentic-baseline",
+        "command": "node --import tsx examples/agentic-evaluation-baseline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-agentic-baseline.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-agentic-baseline.log",
+          "sha256": "a5dfddbca8510c692f8e54ab5962b348f6765ec455504e967a53b2c3bddd6015",
+          "bytes": 17642
+        }
+      },
+      {
+        "script": "example:context-freshness",
+        "command": "node --import tsx examples/context-compaction-freshness.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-context-freshness.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-context-freshness.log",
+          "sha256": "9317708cd926fd6d46ef895164ed6abc6482a6c5af0b920f395af572683dea5c",
+          "bytes": 2417
+        }
+      },
+      {
+        "script": "example:context-budget",
+        "command": "node --import tsx examples/context-request-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-context-budget.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-context-budget.log",
+          "sha256": "a2a4629aa05c30cb78c46540be4f29e2ebf69add7ccf4d0f9f9da1db2968bf18",
+          "bytes": 2754
+        }
+      },
+      {
+        "script": "example:structured-budget",
+        "command": "node --import tsx examples/structured-output-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-structured-budget.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-structured-budget.log",
+          "sha256": "be7e765f3319e1831d526340b16a846ea3d68b2c2d8d5b04ed79c3300f6ae2f5",
+          "bytes": 4818
+        }
+      },
+      {
+        "script": "example:amos-context",
+        "command": "node --import tsx apps/amos/examples/context-budget-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-amos-context.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-amos-context.log",
+          "sha256": "89428897af937eb5896c57426365cfef334ceac041ab84cea882ff31f787e2f3",
+          "bytes": 3503
+        }
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": "node --import tsx examples/tool-outcomes-and-cancellation.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-tool-outcomes.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-tool-outcomes.log",
+          "sha256": "78d458b06f893c41560f16d7077c0ce2e90193fa107089cd82f704a5ff9a2aeb",
+          "bytes": 545
+        }
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-amos-tool-outcomes.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-amos-tool-outcomes.log",
+          "sha256": "7762bb7100e11d275a19def86d87b561d0790b2ed4d7d3f4c3b85d2b6e5d141d",
+          "bytes": 640
+        }
+      },
+      {
+        "script": "example:purpose-models",
+        "command": "node --import tsx examples/purpose-specific-models.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-purpose-models.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-purpose-models.log",
+          "sha256": "8937c2276efa9f379aebad5f76a1a800a570ada52226807c60fdb541ef4a8c96",
+          "bytes": 1317
+        }
+      },
+      {
+        "script": "example:shared-budget",
+        "command": "node --import tsx examples/shared-run-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-shared-budget.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-shared-budget.log",
+          "sha256": "84261248923a4dbfebf4f3a026da031e926e461662a52766eba4e54c49889f47",
+          "bytes": 512
+        }
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": "node --import tsx apps/amos/examples/model-helpers-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-amos-helpers.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-amos-helpers.log",
+          "sha256": "331cff1ce3e55d73a7a5e66a81c2330ccc2c29ee8fa3aaaf0af7a425c48bcd36",
+          "bytes": 1779
+        }
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": "node --import tsx examples/durable-tool-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-durable-evidence.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-durable-evidence.log",
+          "sha256": "9c70e4f7a87a25ec787cc43d8f09add0c307c181a950a17b59a77c26fae0a316",
+          "bytes": 511
+        }
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": "node --import tsx examples/evidence-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-evidence-recovery.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-evidence-recovery.log",
+          "sha256": "ed92e877b00ca597ac90a9bd26e3525e20c92a197f82debc01bab34d06d30a04",
+          "bytes": 1035
+        }
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": "node --import tsx examples/ambiguous-action-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-ambiguous-evidence.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-ambiguous-evidence.log",
+          "sha256": "f49a80bbc66dab0c45d14cc14c426a52b7a0a0fe23dba60d47cb4208facc1acd",
+          "bytes": 278
+        }
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": "node --import tsx apps/amos/examples/evidence-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-amos-evidence.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-amos-evidence.log",
+          "sha256": "d00bc6a3b2d8bb311ea78eee342d09decf90592a6cad908c3cc359a58761a4f1",
+          "bytes": 2127
+        }
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": "node --import tsx examples/evidence-stream-interruption.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-evidence-interruption.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-evidence-interruption.log",
+          "sha256": "99e047d6d896f1d675aa0775b82077648c8861bbd0039a7dc5cabdc7158c7dcf",
+          "bytes": 1665
+        }
+      },
+      {
+        "script": "example:context-strategies",
+        "command": "node --import tsx examples/context-strategy-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-context-strategies.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-context-strategies.log",
+          "sha256": "1ce2e6f673b37033d0c0f961e72dd49cf430041bc4d5d40adf69c4092b5cb3d6",
+          "bytes": 3593
+        }
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-amos-context-strategies.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-amos-context-strategies.log",
+          "sha256": "c34a4de21db5fc8c8e28c051ccd56bac564dafebc4be2748058984733b2c2f3d",
+          "bytes": 5062
+        }
+      },
+      {
+        "script": "example:task-state",
+        "command": "node --import tsx examples/task-state-workflow.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-task-state.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-task-state.log",
+          "sha256": "bbb0f22ce11be0f2947b1157d2833d8c3f00c7a3efadbf54d23cc66cac1dee14",
+          "bytes": 1486
+        }
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": "node --import tsx apps/amos/examples/task-state-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-amos-task-state.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-amos-task-state.log",
+          "sha256": "3be714f5eb805a9265b08e3011ce4256cfacd703f41de6b38ab3b8d959debc0b",
+          "bytes": 2920
+        }
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": "node --import tsx examples/feedback-driven-agent.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-feedback-agent.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-feedback-agent.log",
+          "sha256": "131fd4754a4ac850650e6bc83aa5abd5b701491015baad30f5f946580d02ffa7",
+          "bytes": 1637
+        }
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": "node --import tsx examples/run-stream-equivalence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-loop-equivalence.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-loop-equivalence.log",
+          "sha256": "83da36e3ce77c4858dcf6e8b3adb6d19b7096757002f923701e868100d0bbe79",
+          "bytes": 5843
+        }
+      },
+      {
+        "script": "example:amos-loop",
+        "command": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-amos-loop.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-amos-loop.log",
+          "sha256": "810f3eb12abcca0c0beef7c87305777457a6e38b91b3aa52ee01625c301dea1e",
+          "bytes": 2032
+        }
+      },
+      {
+        "script": "example:agentic-presets",
+        "command": "node --import tsx examples/agentic-presets.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-agentic-presets.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-agentic-presets.log",
+          "sha256": "5a7d61fbf155dcae39a03f58afda763ce78e8033716d2c97afe16eb4482eaba1",
+          "bytes": 3251
+        }
+      },
+      {
+        "script": "example:amos-presets",
+        "command": "node --import tsx apps/amos/examples/presets-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-amos-presets.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-amos-presets.log",
+          "sha256": "b95c8771f56d6347694e1bf53ac840e539943f9c83cd8a3f72cdbcdbf49843f2",
+          "bytes": 2072
+        }
+      },
+      {
+        "script": "example:context-selection",
+        "command": "node --import tsx examples/context-block-selection.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-context-selection.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-context-selection.log",
+          "sha256": "5e203793e7f5869703fdb68a44fcc5e0b4e6961e0932f32f971f5aa968d1e6c6",
+          "bytes": 1763
+        }
+      },
+      {
+        "script": "example:cache-aware-context",
+        "command": "node --import tsx examples/cache-aware-context.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-cache-aware-context.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-cache-aware-context.log",
+          "sha256": "8d01dba42d11a3211d39b2c7a467d4b7491bd3c3a8cfa7e8f72e016c131ee49a",
+          "bytes": 705
+        }
+      },
+      {
+        "script": "example:amos-context-selection",
+        "command": "node --import tsx apps/amos/examples/context-selection-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-amos-context-selection.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-amos-context-selection.log",
+          "sha256": "ce0895347fd23bb4a693f3d764f9cdb80b1a8a71674a3e274951cfa9335ff402",
+          "bytes": 2021
+        }
+      },
+      {
+        "script": "example:context-dispatch-safety",
+        "command": "node --import tsx examples/context-dispatch-safety.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-context-dispatch-safety.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-context-dispatch-safety.log",
+          "sha256": "7a807d69405d4e831f14d2e3105154c8c4fdc04e5acb4c13d3d16c02eb9e4644",
+          "bytes": 5893
+        }
+      },
+      {
+        "script": "example:native-compaction",
+        "command": "node --import tsx examples/native-context-compaction.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-native-compaction.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-native-compaction.log",
+          "sha256": "89172c03220356e51deba2911baf70c51888480fdb3b68c099bf0f795a62c2ab",
+          "bytes": 2307
+        }
+      },
+      {
+        "script": "example:native-recovery",
+        "command": "node --import tsx examples/native-context-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-native-recovery.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-native-recovery.log",
+          "sha256": "6b58c049b11f34d5e0858ef5f5244e89d475e8384b8f3c41589290004dd81993",
+          "bytes": 1138
+        }
+      },
+      {
+        "script": "example:native-comparison",
+        "command": "node --import tsx examples/native-context-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-native-comparison.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-native-comparison.log",
+          "sha256": "1e4145dd1f12e41019bc7fb00a8da86d4c431c7a1dc18ce6683dade1b594f361",
+          "bytes": 5307
+        }
+      },
+      {
+        "script": "example:amos-native-compaction",
+        "command": "node --import tsx apps/amos/examples/native-compaction-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-amos-native-compaction.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-amos-native-compaction.log",
+          "sha256": "436fa06c5062c87db8ba0ba4bed32bce8edb18d2d00383e51f424d7a5bc2111b",
+          "bytes": 6289
+        }
+      },
+      {
+        "script": "example:native-hooks",
+        "command": "node --import tsx examples/native-context-hooks.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-native-hooks.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-native-hooks.log",
+          "sha256": "4c2c06b34ce2f0b5304b4c5874c00174005a82f5f81451443c23fb822ac9ce7f",
+          "bytes": 1137
+        }
+      },
+      {
+        "script": "example:native-hooks-manual",
+        "command": "node --import tsx examples/native-context-hooks.ts --manual",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-native-hooks-manual.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-native-hooks-manual.log",
+          "sha256": "75ef2f97ce6e94f24480d91142ad640517e3ef42c5f49f5c3d7f89be399dbeb3",
+          "bytes": 1067
+        }
+      },
+      {
+        "script": "example:model-routing",
+        "command": "node --import tsx examples/adaptive-model-routing.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-model-routing.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-model-routing.log",
+          "sha256": "cc833b58dd7f0d25e9bf2f1641288c89c30abe74b89886d5c96ffabd82fda314",
+          "bytes": 9774
+        }
+      },
+      {
+        "script": "example:routing-context",
+        "command": "node --import tsx examples/routing-with-context.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-routing-context.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-routing-context.log",
+          "sha256": "d34316fcffb61fed9a99c364016c08df5c7eeeabf2452993f79a6223a714e1f0",
+          "bytes": 3961
+        }
+      },
+      {
+        "script": "example:amos-routing",
+        "command": "node --import tsx apps/amos/examples/routing-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-amos-routing.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-amos-routing.log",
+          "sha256": "43c9eb1e778e1d68050ae3feeb526a25fe111d311470369d3cec01db2b6ca736",
+          "bytes": 3107
+        }
+      },
+      {
+        "script": "example:routing-suspension",
+        "command": "node --import tsx examples/routing-suspension-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-routing-suspension.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-routing-suspension.log",
+          "sha256": "ada11052ecf2f2649ffac9ebc8616c5615c673115b368c58dbb1936285187f6d",
+          "bytes": 2418
+        }
+      },
+      {
+        "script": "example:routing-suspension-failure",
+        "command": "node --import tsx examples/routing-suspension-recovery.ts --failed-finalization",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-routing-suspension-failure.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-routing-suspension-failure.log",
+          "sha256": "03c6bc5fd72cf3c409aabeb5a22547248d0b23597977d5c72361b3f6e95c3e33",
+          "bytes": 4459
+        }
+      },
+      {
+        "script": "example:outcome-aware-tools",
+        "command": "node --import tsx examples/outcome-aware-tools.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-outcome-aware-tools.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-outcome-aware-tools.log",
+          "sha256": "39d9f8d01536a9606aa0ff5cba006974b2b6e79eafddc40c18b0ea06d91b1d05",
+          "bytes": 152
+        }
+      },
+      {
+        "script": "example:amos-outcome-tools",
+        "command": "node --import tsx apps/amos/examples/outcome-aware-tools-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c1-offline-example-amos-outcome-tools.log",
+        "artifact": {
+          "path": "/tmp/oneringai-c1-offline-example-amos-outcome-tools.log",
+          "sha256": "d4a41551828ea1f887b6279cc721e7fb27c17e9433e4400d85cf47280072bda0",
+          "bytes": 119
+        }
+      }
+    ]
+  },
+  "legacyCharacterization": {
+    "total": 29,
+    "meaning": "Matched existing gaps/controls; not 29 implemented fixes. Bundled legacy connector operational errors remain C4 scope.",
+    "runs": [
+      {
+        "count": 17,
+        "allMatched": true,
+        "report": {
+          "path": "/tmp/oneringai-c1-legacy-probes.json",
+          "sha256": "46d9a3d93d403c8c3bac4fabdde2a7a1e522c5ce1701a3bdb7a1b17203a0b918",
+          "bytes": 6341
+        }
+      },
+      {
+        "count": 7,
+        "allMatched": true,
+        "report": {
+          "path": "/tmp/oneringai-c1-registry-probes.json",
+          "sha256": "f387d925339e8e5b91cb34165931a6f2db3a8b810557130bb981db492f875702",
+          "bytes": 2012
+        }
+      },
+      {
+        "count": 5,
+        "allMatched": true,
+        "report": {
+          "path": "/tmp/oneringai-c1-simplicity-probes.json",
+          "sha256": "7a144f4b18d84a9401a7aaffcd51c2a909f5282161d0d0641752ef7187dbc515",
+          "bytes": 1341
+        }
+      }
+    ]
+  },
+  "amos": {
+    "applicable": true,
+    "newOfflineExample": "apps/amos/examples/outcome-aware-tools-offline.ts",
+    "actualManagerRendererTest": true,
+    "newCommandOrConfiguration": false,
+    "reason": "Existing renderer already consumes the shared ToolExecutionOutcome; no second presentation pipeline is needed."
+  },
+  "documentation": {
+    "generatedAPI": true,
+    "version2AvailabilityAdoptionHandoffUpdated": true,
+    "links": {
+      "checked": 2726,
+      "errors": []
+    },
+    "whitespaceCheckPassed": true
+  },
+  "package": {
+    "command": "npm_config_cache=/tmp/oneringai-c1-npm-cache npm pack --dry-run --ignore-scripts --json",
+    "reportPath": "/tmp/oneringai-c1-package.json",
+    "entryCount": 269,
+    "pathSetSha256": "d1db62efd38421a85783d41284e9e9f5e81d99a57dbcb925c434eda4b55fa641",
+    "requiredC1Files": [
+      "docs/OUTCOME_AWARE_TOOLS.md",
+      "docs/designs/CONSUMER_C1_DELIVERY.md",
+      "docs/evaluations/CONSUMER_C1_VALIDATION_2026_10_23.json",
+      "examples/outcome-aware-tools.ts"
+    ],
+    "secretFilesFound": false,
+    "published": false,
+    "note": "Path-set hash avoids a self-referential content hash: the validation record is itself included in the package. Final inventory is checked again after saving this record."
+  },
+  "resolvedValidationIncidents": [
+    {
+      "kind": "throwing-primary-provenance",
+      "resolution": "Reported message remains primary; later throw retained privately; legacy throwing contract unchanged."
+    },
+    {
+      "kind": "legacy-v2-fixture",
+      "resolution": "Fixture now asserts actual existing generic tool_failed envelope after a failed local server state; no classifier/wire change."
+    },
+    {
+      "kind": "legacy-types-nominal-split",
+      "resolution": "Unsolicited /types extension removed; approved new API/types exported from root only, without casts or legacy type rewrites."
+    },
+    {
+      "kind": "sandbox-ipc-loopback",
+      "resolution": "Build, full unit suite and all 41 offline modes rerun with required local IPC/socket access; zero remaining failures."
+    },
+    {
+      "kind": "google-selected-tool-fixture",
+      "initialMatrix": {
+        "path": "/tmp/oneringai-c1-initial-live-tests.json",
+        "sha256": "15576e034339f1f235f2d7a94e5321f2cfd41b19c00fec91ac82b05426b7edd1",
+        "bytes": 78742
+      },
+      "initialC1Report": {
+        "path": "/tmp/oneringai-c1-initial-outcome-tools-live.json",
+        "sha256": "459360d09f81b24f235928f4f5eb17db92f32456227d00bb336fffc693a59d80",
+        "bytes": 1866
+      },
+      "targetedDiagnostic": {
+        "path": "/tmp/oneringai-c1-google-diagnosis-tests.json",
+        "sha256": "7abb3499d62cc28ab004183d8f2414c1434414d83256e5f516e2810d11ac93c2",
+        "bytes": 2570
+      },
+      "resolution": "Initial 228/230 matrix: fixture invited duplicate Google calls. Present only selected tool and request one call per response. Exact three main calls/two executions/raw/status oracles unchanged. Diagnostic 2 passed/4 deselected is not the full gate; final complete 230-case run passes."
+    },
+    {
+      "kind": "independent-helper-thinking-profile",
+      "initialMatrix": {
+        "path": "/tmp/oneringai-c1-reasoning-cap-live-tests.json",
+        "sha256": "ebd7a582c84b486ed179f4d1a1f453eeff3349a12b47bad499a908330cad0151",
+        "bytes": 78442
+      },
+      "initialTaskStateReport": {
+        "path": "/tmp/oneringai-c1-reasoning-cap-task-state.json",
+        "sha256": "d4db88a1fdb0f72076775f829ecfc1e4ab6d272d135249188eda9fe1c4d379d1",
+        "bytes": 28841
+      },
+      "targetedDiagnostic": {
+        "path": "/tmp/oneringai-c1-google-helper-diagnosis-tests.json",
+        "sha256": "a7cc5964df112c0158ffdf58e36e9926acf9d311ffcc7d7b9eff60186e3c2ab6",
+        "bytes": 4341
+      },
+      "resolution": "Next 229/230 matrix: existing Google extractor spent 241/256 tokens on reasoning because its independent helper profile omitted thinking false. Set explicit helper thinking false and temperature zero; same cap/schema/answer assertions. Diagnostic 1 passed/11 deselected is not the full gate; final complete run passes. Runtime defaults unchanged."
+    },
+    {
+      "kind": "package-allowlist",
+      "resolution": "New recipe/example initially absent; explicit allowlist now includes C1 public docs/example and delivery evidence. Dry-run only; no publication."
+    }
+  ],
+  "changedRuntimeFiles": [
+    "src/core/ToolManager.ts",
+    "src/core/createOutcomeTool.ts",
+    "src/core/index.ts",
+    "src/core/tool-execution/ToolExecutionPipeline.ts",
+    "src/core/tool-execution/outcomeInvocation.ts",
+    "src/core/tool-execution/outcomes.ts",
+    "src/index.ts",
+    "src/tools/connector/ConnectorTools.ts",
+    "src/tools/registry.generated.ts"
+  ],
+  "artifactManifestExcludingThisRecord": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "95f6ed49c3f67e7e2ff7c0589dfcc551046e5075cb98413986507fe34bb0655d",
+      "bytes": 55059
+    },
+    {
+      "path": "API_REFERENCE.md",
+      "sha256": "9234d11c63e80f38852be4bae6b03aa2235989dde082c2969dd025f9d8c96c03",
+      "bytes": 1863376
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "4c373dcde0b5b63779b504d6316a3297e7bacf7487584f44b94bbed0fc9e0c36",
+      "bytes": 429687
+    },
+    {
+      "path": "README.md",
+      "sha256": "2bc2cfced19d2e874ca2eb8b11dd313070d492d09083050da80589743fff61df",
+      "bytes": 163477
+    },
+    {
+      "path": "USER_GUIDE.md",
+      "sha256": "98060b04481aee2a6b815b0c3252fd7feb9030b17ff2972ac4ee24830871f16f",
+      "bytes": 717295
+    },
+    {
+      "path": "apps/amos/README.md",
+      "sha256": "b5138424ae17f0028a695f881916b5271b36e5ee0da95607765c126217717b4f",
+      "bytes": 31382
+    },
+    {
+      "path": "apps/amos/examples/outcome-aware-tools-offline.ts",
+      "sha256": "38bea59577d243e0960ffb6627d9a1d5e49d839c200bffa14671e798eec5633f",
+      "bytes": 425
+    },
+    {
+      "path": "docs/OUTCOME_AWARE_TOOLS.md",
+      "sha256": "41edf25f13352c6aa20d3580600e1cc2062550826218e78f726789f6f733e543",
+      "bytes": 7178
+    },
+    {
+      "path": "docs/TOOL_OUTCOMES_AND_CANCELLATION.md",
+      "sha256": "fb05eebf8e5ad1f2e5b766037bb22980ca0fa763c3670f8e9083f4a5cacb531e",
+      "bytes": 16533
+    },
+    {
+      "path": "docs/VERSION_2_GUIDE.md",
+      "sha256": "a72969fef0d51aa3f9754377e406248065f5b03a4dcd54a582d3807e6b7ca91a",
+      "bytes": 233469
+    },
+    {
+      "path": "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "sha256": "721a67452b392d7a66019124fd9f6c0ccb789e75f3bbfd7cd30058bbefc2da9c",
+      "bytes": 264385
+    },
+    {
+      "path": "docs/designs/CONSUMER_C1_DELIVERY.md",
+      "sha256": "bff818e1ddcaff157c06ce456befc925426e76bc079e72e4ba7fdea5c7a3b204",
+      "bytes": 8794
+    },
+    {
+      "path": "docs/designs/CONSUMER_COMPATIBLE_APIS.md",
+      "sha256": "917f61e49a90da0bfbe78564c81e20a5bdf7fdd9583be51a8b18fc7049b05c4c",
+      "bytes": 41121
+    },
+    {
+      "path": "docs/designs/CONSUMER_EXECUTION_HARDENING.md",
+      "sha256": "706a2e83cf7096623b24d3195868066e851d50bedfa91dc846c83b96bc368d78",
+      "bytes": 55950
+    },
+    {
+      "path": "docs/designs/CONSUMER_PLAN_FINAL_SIMPLICITY_REVIEW.md",
+      "sha256": "cccb7d562166a7bd5b6454cc9cf1c6508e1261bd517c4cb86e210a84d03d9c28",
+      "bytes": 11640
+    },
+    {
+      "path": "docs/designs/CONSUMER_PLAN_HOLISTIC_REVIEW.md",
+      "sha256": "2052483dc0353fecad8a04307edf42dc3497f95584c67f78dd0d7311fa4cffac",
+      "bytes": 9560
+    },
+    {
+      "path": "docs/designs/CONSUMER_REGISTRY_FOLLOWUP.md",
+      "sha256": "49986b5b3e3ec597571ac2a2785d04d03a83e6993a5577861e1593534f74b5fa",
+      "bytes": 21916
+    },
+    {
+      "path": "docs/evaluations/CONSUMER_EXECUTION_REVIEW_2026_10_23.json",
+      "sha256": "141dd5a32ccf00ab343777e301a09d4001a3cd3b6b5532e3110cae427024ecd5",
+      "bytes": 34629
+    },
+    {
+      "path": "docs/evaluations/CONSUMER_PLAN_FINAL_SIMPLICITY_REVIEW_2026_10_23.json",
+      "sha256": "b05a117e21cb8609ff3d705ded617c1df335cd188c8b46dfd8e93405e25cf915",
+      "bytes": 24786
+    },
+    {
+      "path": "docs/evaluations/CONSUMER_PLAN_HOLISTIC_REVIEW_2026_10_23.json",
+      "sha256": "f2736ac8e34ce76ac7c69e4edce94cba5a19f6067dab7919f478c23162925664",
+      "bytes": 17151
+    },
+    {
+      "path": "docs/evaluations/CONSUMER_REGISTRY_FOLLOWUP_2026_10_23.json",
+      "sha256": "bb0c7f87aeb593bb03a3c49532502948baf52ba0a2f040426c3eb4765e9bf73f",
+      "bytes": 24114
+    },
+    {
+      "path": "docs/evaluations/consumer-api-design/contracts.ts",
+      "sha256": "47d522de7ff7f8c3f282268e90b3fae4fc7f3f4097df23e5255e42d0150995e3",
+      "bytes": 12445
+    },
+    {
+      "path": "docs/evaluations/consumer-api-design/tsconfig.json",
+      "sha256": "3f8e58eeb92411d89aeb95e33284364741cbf4800f8bcc38fb2cf6a7a6fa8467",
+      "bytes": 197
+    },
+    {
+      "path": "docs/evaluations/consumer-execution-review-probes.mjs",
+      "sha256": "99954f798b480a4f9ed60433cd1342fc245691bb1737291abd56c13064285251",
+      "bytes": 14299
+    },
+    {
+      "path": "docs/evaluations/consumer-final-simplicity-probes.mjs",
+      "sha256": "33bc06e011d8d78de900189c7b80f1b6451b282249de10ae8fb19d74a4d47845",
+      "bytes": 6157
+    },
+    {
+      "path": "docs/evaluations/consumer-registry-followup-probes.mjs",
+      "sha256": "fea279f3cd846a01d15f735bd994c1e4c61bf9b0b42ff7e012d86e591d9a8c82",
+      "bytes": 5867
+    },
+    {
+      "path": "examples/README.md",
+      "sha256": "473a1eb05eb95d7ac1228fd78f09d0668e5865182d6ad9a8f0c0a18be1ab851d",
+      "bytes": 35730
+    },
+    {
+      "path": "examples/outcome-aware-tools.ts",
+      "sha256": "6ed674ac906116e0ccfa3b2d260fdf165eff682357349a7dee1f7b344020aa9c",
+      "bytes": 2230
+    },
+    {
+      "path": "package.json",
+      "sha256": "a4ad3cef47c70e74fadc4a2e89347b92b0e64ac8a08f36f7d6f676a66a562c75",
+      "bytes": 24257
+    },
+    {
+      "path": "src/core/ToolManager.ts",
+      "sha256": "5a30d1bff784094486ca432a96203c554c536a552d2359e0988f2333e9fa01ee",
+      "bytes": 51547
+    },
+    {
+      "path": "src/core/createOutcomeTool.ts",
+      "sha256": "00f6165de48298b68b7d517dab462468f5346e024f85f715a96ee5bcb15335dc",
+      "bytes": 2290
+    },
+    {
+      "path": "src/core/index.ts",
+      "sha256": "919fb275928afddbe9c1385fb36ff565d85f0bf6342fdc5f185711d60b194fa5",
+      "bytes": 11002
+    },
+    {
+      "path": "src/core/tool-execution/ToolExecutionPipeline.ts",
+      "sha256": "0b1667b863859cfda88978b5adaefa3469d2f95a49e3e9f9b0421c1e4f10cf75",
+      "bytes": 8729
+    },
+    {
+      "path": "src/core/tool-execution/outcomeInvocation.ts",
+      "sha256": "93db55e26950d05a4894f5feb1e81755b31666049be7c57116079d2517bc84e5",
+      "bytes": 1278
+    },
+    {
+      "path": "src/core/tool-execution/outcomes.ts",
+      "sha256": "f332efa38b51b0f33affb23de8d1c709b82e999deef61f573ec8c9818f52058b",
+      "bytes": 1187
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "0337821242851919f49acbf0d82e36da2968b0d2271ab6159690e8c4acc3d704",
+      "bytes": 63289
+    },
+    {
+      "path": "src/tools/connector/ConnectorTools.ts",
+      "sha256": "f91324ca0683965f6e2c8930aeb8007e7874febe2979ce5184a3fa7a273c634d",
+      "bytes": 27899
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "sha256": "7224532f37ddd85bdf7ae74293cfaa9c620ad045ab76d7ddfc6002b45c588307",
+      "bytes": 21280
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/c1-consumer.ts",
+      "sha256": "d891ca25689e9521401df02ae6a0b29c4a62ddd3a000cf72b3f57e0511d3bcf6",
+      "bytes": 1376
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "sha256": "a36c92cac8835b8d989740b677d6020fac2d4ba3c17a10fde308585a3c860516",
+      "bytes": 490
+    },
+    {
+      "path": "tests/fixtures/outcome-tools/public-runtime.mjs",
+      "sha256": "ccf5175ccbe0314781187c4ff5c2ce8d7a3d9eae4770b338387445f6faafd56c",
+      "bytes": 5713
+    },
+    {
+      "path": "tests/integration/text/OutcomeTools.live.integration.test.ts",
+      "sha256": "c03ff21eda8b49add6761f0f4ce19f426772067403936b48c2b4ad0724ad421e",
+      "bytes": 5900
+    },
+    {
+      "path": "tests/integration/text/TaskState.live.integration.test.ts",
+      "sha256": "3b13c318566ce0c338a9a53695efa17e60794bb6335aea0a1cb2a367219eba9a",
+      "bytes": 9066
+    },
+    {
+      "path": "tests/unit/apps/amos/ToolOutcomes.test.ts",
+      "sha256": "180ab0ba8997114985fb2553605901e8e818a7f569552094976f648f832f8afd",
+      "bytes": 5159
+    },
+    {
+      "path": "tests/unit/core/Agent.toolOutcomes.test.ts",
+      "sha256": "a0c02667c0e9e0af2e96dce98d510abb09e1be4e4648aa13e857b464d38f5ffb",
+      "bytes": 13565
+    },
+    {
+      "path": "tests/unit/core/tool-execution/OutcomeTool.test.ts",
+      "sha256": "9241b82a95acad00fbaaafb0cc139495512314a4e525227dff657524819abb22",
+      "bytes": 21520
+    }
+  ],
+  "knownFailures": [],
+  "remainingRequiredWork": [],
+  "nextRecommendedSlice": "C2 private composite accounting/cancellation, followed by the C3 public facade; requires separate selection."
+}

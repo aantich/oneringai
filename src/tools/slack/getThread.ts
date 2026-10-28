@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Slack - Get Thread Tool
  *
@@ -107,10 +108,10 @@ EXAMPLES:
           parentMessage,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatSlackToolError('Failed to get thread', error),
-        };
+        });
       }
     },
   };

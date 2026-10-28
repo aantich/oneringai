@@ -329,3 +329,11 @@ model's capacity/output/price bounds feed the same active ModelTask; selection,
 repair, retries and compaction do not reset its allowance. Automatic helper context
 transfer checks use the selected main connector and inherited restrictions.
 Routing diagnostics identify the decision; ledger invocations identify actual calls.
+
+### Composite accounting recipe
+
+`npm run example:composite-binding` demonstrates one explicit ModelTask across
+managed/direct/helper calls with supported cancellation options and synthetic usage.
+See [the runnable example](../examples/composite-execution-binding.ts). C2 composition
+ownership is private; it does not add `signal` to RunOptions or change independent
+helper defaults. The complete verified-routine facade is delivered separately in C3.

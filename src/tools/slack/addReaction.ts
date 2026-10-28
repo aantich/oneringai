@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Slack - Add Reaction Tool
  *
@@ -101,10 +102,10 @@ EXAMPLES:
         if (error instanceof Error && error.message.includes('already_reacted')) {
           return { success: true };
         }
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatSlackToolError('Failed to add reaction', error),
-        };
+        });
       }
     },
   };

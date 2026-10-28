@@ -1,3 +1,4 @@
+import { connectorFailure, connectorAcceptance } from '../connector/enhancedInvocation.js';
 /**
  * Microsoft Graph - Send Email Tool
  *
@@ -138,6 +139,8 @@ EXAMPLES:
             { method: 'POST', userId: effectiveUserId, accountId: effectiveAccountId, body: {} }
           );
 
+          connectorAcceptance(connector, { kind: 'reply_draft', id: replyDraft.id, state: 'accepted' });
+
           // Step 2: Prepend our HTML body above the quoted original
           const quotedOriginal = replyDraft.body?.content ?? '';
           const combinedBody = `${args.body}<br/>${quotedOriginal}`;
@@ -187,10 +190,10 @@ EXAMPLES:
 
         return { success: true };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatMicrosoftToolError('Failed to send email', error),
-        };
+        });
       }
     },
   };

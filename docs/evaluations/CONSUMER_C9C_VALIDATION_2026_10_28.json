@@ -1,0 +1,172 @@
+{
+  "protocol": "consumer-c9c-validation-v1",
+  "recordedAt": "2026-10-28",
+  "branch": "version2",
+  "baseCommit": "0f159e90586c98efd561f216de87277a6993e340",
+  "status": "complete-on-branch",
+  "verifiedPackageRelease": false,
+  "unit": {
+    "passed": 9196,
+    "failed": 0,
+    "failedSuites": 0,
+    "artifact": {
+      "path": "/tmp/oneringai-final-unit.json",
+      "bytes": 2959166,
+      "sha256": "6911dcd12bdd96fbd9455be4623a9098aec6d0e4fe90ab770015925a29c25d87"
+    }
+  },
+  "newPresentationCases": 23,
+  "finalCrossSliceCapacityCase": 1,
+  "publicMetadata": {
+    "fixture": "tests/fixtures/metadata/public-runtime.mjs",
+    "exitCode": 0,
+    "checks": 53,
+    "report": {
+      "passed": true,
+      "checks": 53,
+      "entries": 4,
+      "browser": true
+    },
+    "log": "/tmp/oneringai-frozen-public-metadata.log"
+  },
+  "allPublic": {
+    "fixtures": 12,
+    "checks": 1413,
+    "failed": 0,
+    "artifact": {
+      "path": "/tmp/oneringai-frozen-public.json",
+      "bytes": 6561,
+      "sha256": "aa9a16082e0a389e8779fba44cd12306dd0cc892849e92b878c3526bc73bd613"
+    }
+  },
+  "gates": [
+    {
+      "name": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-build.log"
+    },
+    {
+      "name": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-typecheck.log"
+    },
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-lint.log"
+    },
+    {
+      "name": "examples",
+      "command": [
+        "npm",
+        "run",
+        "examples:check"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-examples.log"
+    },
+    {
+      "name": "compat",
+      "command": [
+        "npm",
+        "run",
+        "test:agentic:compat"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-compat.log"
+    },
+    {
+      "name": "api-design",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "docs/evaluations/consumer-api-design/tsconfig.json"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-api-design.log"
+    },
+    {
+      "name": "docs",
+      "command": [
+        "npm",
+        "run",
+        "docs"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-docs.log"
+    },
+    {
+      "name": "amos-types",
+      "command": [
+        "npm",
+        "--prefix",
+        "apps/amos",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-amos-types.log"
+    },
+    {
+      "name": "amos-build",
+      "command": [
+        "npm",
+        "--prefix",
+        "apps/amos",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-amos-build.log"
+    },
+    {
+      "name": "unit",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/unit",
+        "--reporter=json",
+        "--outputFile=/tmp/oneringai-final-unit.json"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-unit.log"
+    }
+  ],
+  "live": "Paused by user; none run for C9-C.",
+  "compatibility": {
+    "oldVendorIdsUnchanged": true,
+    "authAndServiceClassificationChanged": false,
+    "modelDefaultsChanged": false,
+    "existingLogoAPIChanged": false,
+    "amosLabelsPreserved": true,
+    "catalogImmutable": true
+  },
+  "paletteSource": {
+    "path": "/Users/aantich/dev/icos/imports/v25/config/llmProviders.ts",
+    "sha256": "6ef80c81fb22d673401520c1ca54b512471782903e55137951b2af8abe3d4669",
+    "purpose": "Read-only consumer label/color parity; no ICOS edits."
+  },
+  "sourceHashes": {
+    "src/capabilities/metadata/vendorPresentation.ts": "094fef61085442b168a0e0227118988e3d5281100d6a30417f1eaab99092784f",
+    "src/shared/index.ts": "fef32ad39e839f560856791e1f69a8b702071bb5c095d1cd12184eaa417b68e1",
+    "apps/amos/src/commands/commands/VendorCommand.ts": "aaaf978181d5742b81c6fe73b344b28ab4dcdb0461dac19317ba598db267a0d6"
+  }
+}

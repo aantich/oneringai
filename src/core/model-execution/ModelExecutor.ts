@@ -111,17 +111,19 @@ function prepare(provider: ITextProvider, connector: Connector, options: TextGen
 
 /** @internal Shared main/direct/repair invocation boundary. */
 export async function generateModel(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task?: ModelTask,
-  config?: ModelExecutionConfig, purpose = 'main', phase: ModelCallDescriptor['phase'] = 'generation', parentInvocationId?: string, signal?: AbortSignal): Promise<LLMResponse> {
+  config?: ModelExecutionConfig, purpose = 'main', phase: ModelCallDescriptor['phase'] = 'generation', parentInvocationId?: string, signal?: AbortSignal,
+  observeWork?: (promise: Promise<unknown>) => void): Promise<LLMResponse> {
   if (options.managedDispatch) await options.managedDispatch.prepare();
-  if (!task) { options.managedDispatch?.assertCurrent(); options.managedDispatch?.onDispatch?.(); return provider.generate(options); }
+  const generate = (request: TextGenerateOptions): Promise<LLMResponse> => { const promise = provider.generate(request); observeWork?.(promise); return promise; };
+  if (!task) { options.managedDispatch?.assertCurrent(); options.managedDispatch?.onDispatch?.(); return generate(options); }
   const selected = prepare(provider, connector, options, task, config, purpose, phase, parentInvocationId);
-  return (await task.execute(selected.descriptor, scopedSignal => provider.generate({ ...selected.options, signal: scopedSignal }),
+  return (await task.execute(selected.descriptor, scopedSignal => generate({ ...selected.options, signal: scopedSignal }),
     { signal, transport: selected.transport, usage: response => response.usage, beforeDispatch: options.managedDispatch?.assertCurrent, onDispatch: options.managedDispatch?.onDispatch })).result;
 }
 
 /** @internal Billable native operation shares conservative main-model admission, not helper routing. */
 export async function compactModel(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task: ModelTask,
-  config?: ModelExecutionConfig): Promise<{ response: TextCompactionResponse; invocationId: string }> {
+  config?: ModelExecutionConfig, observeWork?: (promise: Promise<unknown>) => void, parentInvocationId?: string): Promise<{ response: TextCompactionResponse; invocationId: string }> {
   if (!provider.compaction) throw new ProviderCapabilityNotSupportedError(provider.name, options.model, 'native compaction');
   let bounded = options;
   if (provider.name === 'anthropic') {
@@ -130,10 +132,10 @@ export async function compactModel(provider: ITextProvider, connector: Connector
   } else if (connector.vendor === 'anthropic') {
     bounded = { ...options, max_output_tokens: Math.min(options.max_output_tokens ?? config?.maxOutputTokensPerCall ?? 4096, 4096) };
   }
-  const selected = prepare(provider, connector, bounded, task, config, 'compactor', 'generation');
+  const selected = prepare(provider, connector, bounded, task, config, 'compactor', 'generation', parentInvocationId);
   let observed: TokenUsage | undefined;
   const result = await task.execute(selected.descriptor, async signal => {
-    try { return await provider.compaction!.compact({ ...selected.options, signal }); }
+    try { const promise = provider.compaction!.compact({ ...selected.options, signal }); observeWork?.(promise); return await promise; }
     catch (error) { observed = getFailedModelUsage(error); throw error; }
   },
     { signal: options.signal, transport: selected.transport, usage: response => response.usage ?? undefined,
@@ -143,11 +145,21 @@ export async function compactModel(provider: ITextProvider, connector: Connector
 
 /** @internal Streaming keeps its existing event shapes and backpressure. */
 export async function* streamModel(provider: ITextProvider, connector: Connector, options: TextGenerateOptions, task?: ModelTask,
-  config?: ModelExecutionConfig, purpose = 'main', phase: ModelCallDescriptor['phase'] = 'generation', parentInvocationId?: string, signal?: AbortSignal): AsyncIterableIterator<StreamEvent> {
+  config?: ModelExecutionConfig, purpose = 'main', phase: ModelCallDescriptor['phase'] = 'generation', parentInvocationId?: string, signal?: AbortSignal,
+  observeWork?: (promise: Promise<unknown>) => void): AsyncIterableIterator<StreamEvent> {
+  const stream = (request: TextGenerateOptions): AsyncIterableIterator<StreamEvent> => {
+    const iterator = provider.streamGenerate(request);
+    if (!observeWork) return iterator;
+    return {
+      [Symbol.asyncIterator]() { return this; },
+      next(...args) { const promise = iterator.next(...args); observeWork(promise); return promise; },
+      async return(value) { const promise = iterator.return?.(value) ?? Promise.resolve({ done: true as const, value }); observeWork(promise); return promise; },
+    };
+  };
   if (options.managedDispatch) await options.managedDispatch.prepare();
-  if (!task) { options.managedDispatch?.assertCurrent(); options.managedDispatch?.onDispatch?.(); yield* provider.streamGenerate(options); return; }
+  if (!task) { options.managedDispatch?.assertCurrent(); options.managedDispatch?.onDispatch?.(); yield* stream(options); return; }
   const selected = prepare(provider, connector, options, task, config, purpose, phase, parentInvocationId);
-  yield* task.iterate(selected.descriptor, scopedSignal => provider.streamGenerate({ ...selected.options, signal: scopedSignal }),
+  yield* task.iterate(selected.descriptor, scopedSignal => stream({ ...selected.options, signal: scopedSignal }),
     { signal, transport: selected.transport, usage: event => event.type === StreamEventType.RESPONSE_COMPLETE ? event.usage : undefined,
       beforeDispatch: options.managedDispatch?.assertCurrent, onDispatch: options.managedDispatch?.onDispatch });
 }
@@ -157,6 +169,7 @@ export async function invokeConfiguredHelper<T>(args: {
   role: string; profile: HelperModelConfig; connector: Connector; provider: ITextProvider; task: ModelTask;
   config?: ModelExecutionConfig; input: string | ((context: HelperInputContext) => string | Promise<string>);
   options: HelperCallOptions; userId?: string;
+  observeWork?: (promise: Promise<unknown>) => void;
 }): Promise<HelperResult<T>> {
   const { connector, provider, task, options } = args;
   const profile = structuredClone(args.profile);
@@ -228,7 +241,7 @@ export async function invokeConfiguredHelper<T>(args: {
     if (simpleTokenEstimator.estimateTokens(String(base.input)) + simpleTokenEstimator.estimateTokens(instructions)
       + (strategy === 'native' ? simpleTokenEstimator.estimateTokens(JSON.stringify(schema)) : 0) > maxInputTokens) throw new InvalidConfigError('Helper packet exceeds the resolved input allowance');
     const selected = prepare(provider, connector, base, task, helperConfig, args.role, repair ? 'repair' : 'generation', parent);
-    const generated = await task.execute(selected.descriptor, signal => provider.generate({ ...selected.options, signal }),
+    const generated = await task.execute(selected.descriptor, signal => { const promise = provider.generate({ ...selected.options, signal }); args.observeWork?.(promise); return promise; },
       { signal: options.signal, transport: selected.transport, usage: response => response.usage });
     parent ??= generated.invocationId;
     const response = generated.result;

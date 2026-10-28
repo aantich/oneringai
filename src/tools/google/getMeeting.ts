@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Google Calendar - Get Meeting Tool
  *
@@ -151,11 +152,11 @@ EXAMPLE:
           isOnlineMeeting: Boolean(meetLink || event.hangoutLink || event.conferenceData),
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           isOnlineMeeting: false,
           error: formatGoogleToolError('Failed to get meeting', error),
-        };
+        });
       }
     },
   };

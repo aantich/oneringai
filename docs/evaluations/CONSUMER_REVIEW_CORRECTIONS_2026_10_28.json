@@ -1,0 +1,1515 @@
+{
+  "protocol": "consumer-review-corrections-v1",
+  "recordedAt": "2026-10-28",
+  "branch": "version2",
+  "baseCommit": "0f159e90586c98efd561f216de87277a6993e340",
+  "status": "all-four-findings-fixed-offline-gates-passed",
+  "verifiedPackageRelease": false,
+  "findings": [
+    {
+      "id": "R1",
+      "severity": "P1",
+      "status": "fixed",
+      "change": "Same-origin redirect admission on every selected generic hop; no foreign credential/body forwarding. Existing native same-origin semantics, 20-hop bound and per-hop diagnostics retained.",
+      "tests": [
+        "tests/unit/core/EnhancedConnectorRedirects.test.ts",
+        "tests/unit/core/EnhancedConnectorTools.test.ts"
+      ]
+    },
+    {
+      "id": "R2",
+      "severity": "P1",
+      "status": "fixed",
+      "change": "No authoritative observation after source handoff stays unknown, including returning/throwing legacy execution overrides. Stable lookup/deduplication cannot replay it.",
+      "tests": [
+        "tests/unit/portable/OutcomePackage.test.ts"
+      ]
+    },
+    {
+      "id": "R3",
+      "severity": "P2",
+      "status": "fixed",
+      "change": "Per-invocation receipt reconciliation reauthorizes each lookup and reuses validated observations. Concurrent reads/repair, exact quotas, missing proof, queued cancellation and failed context acknowledgement are covered.",
+      "tests": [
+        "tests/unit/portable/OutcomePackage.test.ts"
+      ]
+    },
+    {
+      "id": "R4",
+      "severity": "P2",
+      "status": "fixed",
+      "change": "Close preserves completion errors/idempotency while always releasing the settled composition lease; the borrowed source Agent stays reusable.",
+      "tests": [
+        "tests/unit/portable/OutcomePackage.test.ts"
+      ]
+    }
+  ],
+  "unit": {
+    "command": [
+      "npm",
+      "run",
+      "test:unit",
+      "--",
+      "--reporter=json",
+      "--outputFile=/tmp/oneringai-fixes-unit.json"
+    ],
+    "exitCode": 0,
+    "passed": 9216,
+    "failed": 0,
+    "failedSuites": 0,
+    "files": 410,
+    "newRegressions": 20,
+    "artifact": {
+      "path": "/tmp/oneringai-fixes-unit.json",
+      "bytes": 2967550,
+      "sha256": "e114b720e8ffa69de4d09c9e50ac13ccc8c1414f29461cc1e61f489e3c5fe120"
+    }
+  },
+  "gates": [
+    {
+      "name": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/oneringai-fixes-build.log",
+        "bytes": 15788,
+        "sha256": "f6faeb2bd4fda23eb54e5d2dbb6c664ba8e1a2e1d2a00d136ac8a23621f128e8"
+      }
+    },
+    {
+      "name": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/oneringai-fixes-typecheck.log",
+        "bytes": 57,
+        "sha256": "f6b1e5a3cac67cbfa88c10cbbef77e441211c6b1a548119565120060bd60327c"
+      }
+    },
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/oneringai-fixes-lint.log",
+        "bytes": 60,
+        "sha256": "baa87ef42846f58fd51bc895d894c46c231cc5faa9b1ab6fb266c09d934d778f"
+      }
+    },
+    {
+      "name": "compat",
+      "command": [
+        "npm",
+        "run",
+        "test:agentic:compat"
+      ],
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/oneringai-fixes-compat.log",
+        "bytes": 116,
+        "sha256": "59705c5cdf595ae07c3185748123c28136500182f1dec3d6b148c12e140b4b2d"
+      }
+    },
+    {
+      "name": "examples-types",
+      "command": [
+        "npm",
+        "run",
+        "examples:check"
+      ],
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/oneringai-fixes-examples-types.log",
+        "bytes": 88,
+        "sha256": "8ee95d2a0d994fc787162a1466717f2695b4385a8e524366536614eade27f9ce"
+      }
+    },
+    {
+      "name": "api-design",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "docs/evaluations/consumer-api-design/tsconfig.json"
+      ],
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/oneringai-fixes-api-design.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "name": "docs",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/generate-api-docs.ts",
+        "--mode",
+        "public"
+      ],
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/oneringai-fixes-docs.log",
+        "bytes": 223,
+        "sha256": "6418703fa9350af8d357ac640201188707a604da7a4dcdf371e78a50eb1c71ac"
+      }
+    },
+    {
+      "name": "amos-types",
+      "command": [
+        "npm",
+        "--prefix",
+        "apps/amos",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/oneringai-fixes-amos-types.log",
+        "bytes": 52,
+        "sha256": "15c9b914db9ac8a0f39085e9e28df4f483e0442e42350ea4d7615778f29e93ad"
+      }
+    },
+    {
+      "name": "amos-build",
+      "command": [
+        "npm",
+        "--prefix",
+        "apps/amos",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/oneringai-fixes-amos-build.log",
+        "bytes": 463,
+        "sha256": "63237436dcb5a41d9bdceb92ceae29e3489386e424da80808e6ab825fc1108fa"
+      }
+    }
+  ],
+  "publicFixtures": {
+    "passed": 12,
+    "assertions": 1413,
+    "results": [
+      {
+        "fixture": "tests/fixtures/agentic-presets/public-runtime.mjs",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "tests/fixtures/agentic-presets/public-runtime.mjs"
+        ],
+        "exitCode": 0,
+        "checks": 54,
+        "report": {
+          "protocol": "stage12-public-v1",
+          "summaries": [
+            {
+              "format": "esm",
+              "checks": 27,
+              "calls": 4
+            },
+            {
+              "format": "cjs",
+              "checks": 27,
+              "calls": 4
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "fixture": "tests/fixtures/collections/public-runtime.mjs",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "tests/fixtures/collections/public-runtime.mjs"
+        ],
+        "exitCode": 0,
+        "checks": 240,
+        "report": {
+          "protocol": "consumer-c5-public-v1",
+          "combinations": 16,
+          "checks": 240,
+          "passed": true
+        },
+        "stderr": ""
+      },
+      {
+        "fixture": "tests/fixtures/composition/public-runtime.mjs",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "--import",
+          "tsx",
+          "tests/fixtures/composition/public-runtime.mjs"
+        ],
+        "exitCode": 0,
+        "checks": 68,
+        "report": {
+          "protocol": "c2-private-cross-bundle-v1",
+          "checks": 68,
+          "combinations": 8,
+          "passed": true
+        },
+        "stderr": ""
+      },
+      {
+        "fixture": "tests/fixtures/context-assembly/public-runtime.mjs",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "tests/fixtures/context-assembly/public-runtime.mjs"
+        ],
+        "exitCode": 0,
+        "checks": 38,
+        "report": {
+          "protocol": "stage05-public-v1",
+          "results": [
+            {
+              "format": "esm",
+              "checks": 19
+            },
+            {
+              "format": "cjs",
+              "checks": 19
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "fixture": "tests/fixtures/enhanced-connectors/public-runtime.mjs",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "tests/fixtures/enhanced-connectors/public-runtime.mjs"
+        ],
+        "exitCode": 0,
+        "checks": 228,
+        "report": {
+          "protocol": "consumer-c4-public-v1",
+          "combinations": 16,
+          "checks": 228,
+          "passed": true
+        },
+        "stderr": ""
+      },
+      {
+        "fixture": "tests/fixtures/metadata/public-runtime.mjs",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "tests/fixtures/metadata/public-runtime.mjs"
+        ],
+        "exitCode": 0,
+        "checks": 53,
+        "report": {
+          "passed": true,
+          "checks": 53,
+          "entries": 4,
+          "browser": true
+        },
+        "stderr": ""
+      },
+      {
+        "fixture": "tests/fixtures/model-routing/public-runtime.mjs",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "tests/fixtures/model-routing/public-runtime.mjs"
+        ],
+        "exitCode": 0,
+        "checks": 44,
+        "report": {
+          "protocol": "stage-14a-public-runtime-v1",
+          "passed": true,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 22
+            },
+            {
+              "format": "cjs",
+              "checks": 22
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "fixture": "tests/fixtures/native-compaction/public-runtime.mjs",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "tests/fixtures/native-compaction/public-runtime.mjs"
+        ],
+        "exitCode": 0,
+        "checks": 66,
+        "report": {
+          "protocol": "stage-16a-public-runtime-v1",
+          "passed": true,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 33
+            },
+            {
+              "format": "cjs",
+              "checks": 33
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "fixture": "tests/fixtures/orchestrator-factory/public-runtime.mjs",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "tests/fixtures/orchestrator-factory/public-runtime.mjs"
+        ],
+        "exitCode": 0,
+        "checks": 208,
+        "report": {
+          "protocol": "consumer-c6-public-v1",
+          "combinations": 16,
+          "checks": 208,
+          "passed": true
+        },
+        "stderr": ""
+      },
+      {
+        "fixture": "tests/fixtures/outcome-tools/public-runtime.mjs",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "tests/fixtures/outcome-tools/public-runtime.mjs"
+        ],
+        "exitCode": 0,
+        "checks": 180,
+        "report": {
+          "protocol": "c1-public-outcomes-v1",
+          "checks": 180,
+          "results": [
+            {
+              "helper": "esm",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "wrapper": "cjs",
+              "checks": 3
+            },
+            {
+              "helper": "cjs",
+              "wrapper": "duplicate-esm",
+              "checks": 3
+            },
+            {
+              "helper": "duplicate-esm",
+              "wrapper": "duplicate-cjs",
+              "checks": 3
+            },
+            {
+              "helper": "duplicate-cjs",
+              "wrapper": "esm",
+              "checks": 3
+            },
+            {
+              "format": "esm",
+              "legacyRemoteBoundary": true,
+              "checks": 4
+            },
+            {
+              "format": "cjs",
+              "legacyRemoteBoundary": true,
+              "checks": 4
+            }
+          ]
+        },
+        "stderr": ""
+      },
+      {
+        "fixture": "tests/fixtures/remote-outcomes/public-runtime.mjs",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "tests/fixtures/remote-outcomes/public-runtime.mjs"
+        ],
+        "exitCode": 0,
+        "checks": 90,
+        "report": {
+          "protocol": "consumer-c7-public-v1",
+          "combinations": 9,
+          "checks": 90,
+          "passed": true
+        },
+        "stderr": ""
+      },
+      {
+        "fixture": "tests/fixtures/verified-routines/public-runtime.mjs",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "tests/fixtures/verified-routines/public-runtime.mjs"
+        ],
+        "exitCode": 0,
+        "checks": 144,
+        "report": {
+          "protocol": "consumer-c3-public-v1",
+          "combinations": 16,
+          "checks": 144,
+          "passed": true
+        },
+        "stderr": ""
+      }
+    ],
+    "artifact": {
+      "path": "/tmp/oneringai-fixes-public.json",
+      "bytes": 7767,
+      "sha256": "db857552bbb33e3f2aad4488de44e809562337701a9b7f5b10ae056838036b3f"
+    }
+  },
+  "offline": {
+    "passed": 52,
+    "results": [
+      {
+        "script": "example:agentic-baseline",
+        "command": [
+          "npm",
+          "run",
+          "example:agentic-baseline"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-0.log"
+      },
+      {
+        "script": "example:context-freshness",
+        "command": [
+          "npm",
+          "run",
+          "example:context-freshness"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-1.log"
+      },
+      {
+        "script": "example:context-budget",
+        "command": [
+          "npm",
+          "run",
+          "example:context-budget"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-2.log"
+      },
+      {
+        "script": "example:structured-budget",
+        "command": [
+          "npm",
+          "run",
+          "example:structured-budget"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-3.log"
+      },
+      {
+        "script": "example:amos-context",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-context"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-4.log"
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": [
+          "npm",
+          "run",
+          "example:tool-outcomes"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-5.log"
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-tool-outcomes"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-6.log"
+      },
+      {
+        "script": "example:purpose-models",
+        "command": [
+          "npm",
+          "run",
+          "example:purpose-models"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-7.log"
+      },
+      {
+        "script": "example:shared-budget",
+        "command": [
+          "npm",
+          "run",
+          "example:shared-budget"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-8.log"
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-helpers"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-9.log"
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": [
+          "npm",
+          "run",
+          "example:durable-evidence"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-10.log"
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": [
+          "npm",
+          "run",
+          "example:evidence-recovery"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-11.log"
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": [
+          "npm",
+          "run",
+          "example:ambiguous-evidence"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-12.log"
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-evidence"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-13.log"
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": [
+          "npm",
+          "run",
+          "example:evidence-interruption"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-14.log"
+      },
+      {
+        "script": "example:context-strategies",
+        "command": [
+          "npm",
+          "run",
+          "example:context-strategies"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-15.log"
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-context-strategies"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-16.log"
+      },
+      {
+        "script": "example:task-state",
+        "command": [
+          "npm",
+          "run",
+          "example:task-state"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-17.log"
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-task-state"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-18.log"
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": [
+          "npm",
+          "run",
+          "example:feedback-agent"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-19.log"
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": [
+          "npm",
+          "run",
+          "example:loop-equivalence"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-20.log"
+      },
+      {
+        "script": "example:amos-loop",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-loop"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-21.log"
+      },
+      {
+        "script": "example:agentic-presets",
+        "command": [
+          "npm",
+          "run",
+          "example:agentic-presets"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-22.log"
+      },
+      {
+        "script": "example:amos-presets",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-presets"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-23.log"
+      },
+      {
+        "script": "example:context-selection",
+        "command": [
+          "npm",
+          "run",
+          "example:context-selection"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-24.log"
+      },
+      {
+        "script": "example:cache-aware-context",
+        "command": [
+          "npm",
+          "run",
+          "example:cache-aware-context"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-25.log"
+      },
+      {
+        "script": "example:amos-context-selection",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-context-selection"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-26.log"
+      },
+      {
+        "script": "example:context-dispatch-safety",
+        "command": [
+          "npm",
+          "run",
+          "example:context-dispatch-safety"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-27.log"
+      },
+      {
+        "script": "example:native-compaction",
+        "command": [
+          "npm",
+          "run",
+          "example:native-compaction"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-28.log"
+      },
+      {
+        "script": "example:native-recovery",
+        "command": [
+          "npm",
+          "run",
+          "example:native-recovery"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-29.log"
+      },
+      {
+        "script": "example:native-comparison",
+        "command": [
+          "npm",
+          "run",
+          "example:native-comparison"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-30.log"
+      },
+      {
+        "script": "example:amos-native-compaction",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-native-compaction"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-31.log"
+      },
+      {
+        "script": "example:native-hooks",
+        "command": [
+          "npm",
+          "run",
+          "example:native-hooks"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-32.log"
+      },
+      {
+        "script": "example:native-hooks-manual",
+        "command": [
+          "npm",
+          "run",
+          "example:native-hooks-manual"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-33.log"
+      },
+      {
+        "script": "example:model-routing",
+        "command": [
+          "npm",
+          "run",
+          "example:model-routing"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-34.log"
+      },
+      {
+        "script": "example:routing-context",
+        "command": [
+          "npm",
+          "run",
+          "example:routing-context"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-35.log"
+      },
+      {
+        "script": "example:amos-routing",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-routing"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-36.log"
+      },
+      {
+        "script": "example:routing-suspension",
+        "command": [
+          "npm",
+          "run",
+          "example:routing-suspension"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-37.log"
+      },
+      {
+        "script": "example:routing-suspension-failure",
+        "command": [
+          "node",
+          "--import",
+          "tsx",
+          "examples/routing-suspension-recovery.ts",
+          "--failed-finalization"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-38.log"
+      },
+      {
+        "script": "example:orchestrator-factory",
+        "command": [
+          "npm",
+          "run",
+          "example:orchestrator-factory"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-39.log"
+      },
+      {
+        "script": "example:connector-pages",
+        "command": [
+          "npm",
+          "run",
+          "example:connector-pages"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-40.log"
+      },
+      {
+        "script": "example:enhanced-connectors",
+        "command": [
+          "npm",
+          "run",
+          "example:enhanced-connectors"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-41.log"
+      },
+      {
+        "script": "example:verified-routines",
+        "command": [
+          "npm",
+          "run",
+          "example:verified-routines"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-42.log"
+      },
+      {
+        "script": "example:composite-binding",
+        "command": [
+          "npm",
+          "run",
+          "example:composite-binding"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-43.log"
+      },
+      {
+        "script": "example:outcome-aware-tools",
+        "command": [
+          "npm",
+          "run",
+          "example:outcome-aware-tools"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-44.log"
+      },
+      {
+        "script": "example:amos-outcome-tools",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-outcome-tools"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-45.log"
+      },
+      {
+        "script": "example:remote-outcomes",
+        "command": [
+          "npm",
+          "run",
+          "example:remote-outcomes"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-46.log"
+      },
+      {
+        "script": "example:composition-evaluation",
+        "command": [
+          "npm",
+          "run",
+          "example:composition-evaluation"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-47.log"
+      },
+      {
+        "script": "example:amos-composition",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-composition"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-48.log"
+      },
+      {
+        "script": "example:endpoint-capabilities",
+        "command": [
+          "npm",
+          "run",
+          "example:endpoint-capabilities"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-49.log"
+      },
+      {
+        "script": "example:parameter-policy",
+        "command": [
+          "npm",
+          "run",
+          "example:parameter-policy"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-50.log"
+      },
+      {
+        "script": "example:vendor-presentation",
+        "command": [
+          "npm",
+          "run",
+          "example:vendor-presentation"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-offline-51.log"
+      }
+    ],
+    "artifact": {
+      "path": "/tmp/oneringai-fixes-offline.json",
+      "bytes": 10615,
+      "sha256": "3f6492cbe50c1e34a9ab2155c98acdb56c4642c4a650d27e1ed60965c57ae45e"
+    }
+  },
+  "package": {
+    "command": [
+      "npm",
+      "pack",
+      "--ignore-scripts",
+      "--cache",
+      "/tmp/oneringai-fixes-npm-cache",
+      "--json",
+      "--pack-destination",
+      "/tmp/oneringai-fixes-package"
+    ],
+    "exitCode": 0,
+    "fileCount": 314,
+    "examples": [
+      {
+        "name": "enhanced-connector-execution",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "--import",
+          "tsx",
+          "/tmp/oneringai-fixes-package/precheck/package/examples/enhanced-connector-execution.ts"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-packed-enhanced-connector-execution.log"
+      },
+      {
+        "name": "remote-tool-outcomes",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "--import",
+          "tsx",
+          "/tmp/oneringai-fixes-package/precheck/package/examples/remote-tool-outcomes.ts"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-packed-remote-tool-outcomes.log"
+      },
+      {
+        "name": "composed-meeting-preparation",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "--import",
+          "tsx",
+          "/tmp/oneringai-fixes-package/precheck/package/examples/composed-meeting-preparation.ts"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-packed-composed-meeting-preparation.log"
+      },
+      {
+        "name": "endpoint-capabilities",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "--import",
+          "tsx",
+          "/tmp/oneringai-fixes-package/precheck/package/examples/endpoint-capabilities.ts"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-packed-endpoint-capabilities.log"
+      },
+      {
+        "name": "parameter-policy",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "--import",
+          "tsx",
+          "/tmp/oneringai-fixes-package/precheck/package/examples/parameter-policy.ts"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-packed-parameter-policy.log"
+      },
+      {
+        "name": "vendor-presentation",
+        "command": [
+          "/Users/aantich/.nvm/versions/node/v24.20.0/bin/node",
+          "--import",
+          "tsx",
+          "/tmp/oneringai-fixes-package/precheck/package/examples/vendor-presentation.ts"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-fixes-packed-vendor-presentation.log"
+      }
+    ],
+    "artifact": {
+      "path": "/tmp/oneringai-fixes-packed.json",
+      "bytes": 2256,
+      "sha256": "79263f2040fd2b9d6695d2e3892565367f641ae6f804bd3a9599628c4657f7c2"
+    },
+    "note": "Six examples ran after actual extraction. The final archive is repacked after documentation/evidence finalization; its runtime/example bytes are checked against this tested manifest.",
+    "finalAudit": "/tmp/oneringai-fixes-finalpack-audit.json",
+    "packedRuntimeSHA256": {
+      "LICENSE": "2de7c6258a31e75774506f7690500ce2b07301bde530988ad058d0aa9977d683",
+      "dist/agent-runtime/codex.cjs": "0d08026703f104877b861e2220288f36aa010b1964dfc1f040484cba6b5e0186",
+      "dist/agent-runtime/codex.cjs.map": "0e3cdb2cd3f130db9c95df95c4d7e8c31f7e475da56b95b44656cc1208fd3710",
+      "dist/agent-runtime/codex.d.cts": "876531162b2d527d6e71cb685e177263791ad78beb03c96447fb5094b12e9bb2",
+      "dist/agent-runtime/codex.d.ts": "23e6e7b3c8a05930ebdc8a1b98ab9bd41b92949b6329ba6d3eb1feec48d60d2d",
+      "dist/agent-runtime/codex.js": "4351751847fda77aad7a07ac4d163aa238f71765fa11a70e78e7bebf2ce71139",
+      "dist/agent-runtime/codex.js.map": "7d0a042275ed4525bea3e3b02965ccfccb17ed7d2e215590ed7e52a34db145c3",
+      "dist/agent-runtime/index.cjs": "07d404590ffa46fa46f984f2782b05d4aaaf7ddd1b65b5f39da45dd02ffd1242",
+      "dist/agent-runtime/index.cjs.map": "a19a2855bdc1c3144abb0c60a79328e3aa6221e59d8570d32ca55d61f327e388",
+      "dist/agent-runtime/index.d.cts": "503add0a7a1310d0ecaebb1f4ec4d321400a805974402b5f64470a5157aae700",
+      "dist/agent-runtime/index.d.ts": "11584f44c093911da4e7e264fb9eb3b902ef394d448bba634db748cf49185ea1",
+      "dist/agent-runtime/index.js": "04592694b272210a3c78b8ef9e6e66673cecb38928b592c8e014959eb1639277",
+      "dist/agent-runtime/index.js.map": "8132cfc1b1bb3a004010b7da70ee20d285f4ab351e1380636b1818b22a0538c9",
+      "dist/AgentDriver-6g5TYcYo.d.ts": "836f0e9f2193a386a14b25f080a6225d4873f78d1c536b133beef20b83d4dcb1",
+      "dist/AgentDriver-BXlBgLfA.d.cts": "ac07d62706bab9e91a9c2abac686f7e532fed91e3385f9a1c77e1002a145ddd2",
+      "dist/capabilities/agents/index.cjs": "61672b042320359bec0d251b5d68d6c4f0dfdaf56a05719d2feb29a2c1a26984",
+      "dist/capabilities/agents/index.cjs.map": "4d6018792034d393338b30171a4ac1a2f3b9c8ff3e7e75e2a4a58fefb118b3b7",
+      "dist/capabilities/agents/index.d.cts": "4ab74723cb434054710a1fc9661d0244c7b80ad4160e3bdd02480a1b78ef5adb",
+      "dist/capabilities/agents/index.d.ts": "fc9a763e68b086aa5841b8c32e465eaaf4f8be84375f41e9c81b0bfdab818514",
+      "dist/capabilities/agents/index.js": "34182889c3cc6075f92409d254111e824cc20ee39c615202ee3eceeedd52b4df",
+      "dist/capabilities/agents/index.js.map": "63614d24358c13970278fa0787c1aff564ab73573f74a8b5ee1d3e6082036616",
+      "dist/capabilities/images/index.cjs": "0c1670770474c2f9a297766fb74484098ac1e4bfefbb425e2b4e808e561a0829",
+      "dist/capabilities/images/index.cjs.map": "a5d16a5f5a591f4aa6e877ab7a32ceca2d4a03f61c9888f785794e227f707952",
+      "dist/capabilities/images/index.d.cts": "7bfdeeb785073f5184fc02f6d2a8acf05fee5c142f20fbcca7551bbce23c3cbf",
+      "dist/capabilities/images/index.d.ts": "9668a7f958387f14cc5d491d597ae738f15a40b281e3a5967c753f806cae567a",
+      "dist/capabilities/images/index.js": "89e0fb32598fa8fb3dc136a88af62af833f31f50d09a98458fe5159a6782c16d",
+      "dist/capabilities/images/index.js.map": "298f686a5fc0abdf976a973da898a31db0763da1febca5843033e175503fbe61",
+      "dist/HookTypes-C8tNowH0.d.ts": "e41be40dbae339df10b5cbf063f8c45f00c5733b2f68ecba1014aeec1cb12dc6",
+      "dist/HookTypes-zGDCxt5K.d.cts": "26c5e8c87f823837bf6e34c60eb79d6f0bd936c2cb02ca98967caac6f51378d6",
+      "dist/IConnectorRegistry-B5MCcr6i.d.cts": "b278f8406b7a89d7da2a31b8a29e91b488b6d44d0c226737573e123ab10d71c4",
+      "dist/IConnectorRegistry-BHLvsHDA.d.ts": "7b779322fbc2686bcaba61d212392cabc9c9e1ecaac56aaed66ea9b1a93daac0",
+      "dist/IDisposable-DtWNzpe3.d.cts": "3cf6a5182ca3f3f4ad614df8b46bb59fd12bf74695e81732a79a51e4935dc850",
+      "dist/IDisposable-DtWNzpe3.d.ts": "3cf6a5182ca3f3f4ad614df8b46bb59fd12bf74695e81732a79a51e4935dc850",
+      "dist/ImageModel-BS1omMF2.d.ts": "b2e79deddb0fb5bdbb5ce10b3ccfb3ee6cf2651d72eb372258f9de2ab770fadf",
+      "dist/ImageModel-D0pzbr7P.d.cts": "001c39812bd57f05f4d6a8b91eb943f6cd21238922309cb921c977b3b703f1dd",
+      "dist/index.cjs": "90bdf3294b7eec6905bce349fe3cee415296fabac5de1cca37ae8a8ffe8b978e",
+      "dist/index.cjs.map": "42706f05e526012832db9b55fcd9a10b19a7f17d8447a37ef5c9bc240311c020",
+      "dist/index.d.cts": "7876228073cae058213d4a199e9767fef51ffaf0a593f7e58562d4dd03c452ec",
+      "dist/index.d.ts": "1bcb4a00694817ee370cee8d56a4f6ad45370274b731dadf598eef98ae337065",
+      "dist/index.js": "9a6f135dd6c94b007f19352d3d5e53f48b332c62856afdd79d9e488cd9b540c8",
+      "dist/index.js.map": "7e00d83e2baec3efb3bd739d613519ed76085454ce9fc4629982c502903592e8",
+      "dist/IProvider-CKGL_lHK.d.cts": "519bf826034617fd7bc530ecb728e2dbe4485eb970f336f691191a00a29f1533",
+      "dist/IProvider-CKGL_lHK.d.ts": "519bf826034617fd7bc530ecb728e2dbe4485eb970f336f691191a00a29f1533",
+      "dist/Model-Bh9kPR4v.d.ts": "5d0b84777006df6371a7fd6260ff927c7314430ef78a8a69c30f289aa61e3128",
+      "dist/Model-D19nwb2a.d.cts": "05fd3a326fe83942d7e06ec020d7fe3c658416cc425dec85ea4a8df94d31f626",
+      "dist/presets-B-yneB-E.d.cts": "68f23ed3f744767398da24e7ba5f5e720076d82d43a71f1215fec3e6f6eb8b6e",
+      "dist/presets-BUnSzI4P.d.ts": "53459bc03c7a77978e12992cf9dee705ab28df1f884b38d6312795fe8fc0250f",
+      "dist/realtime-browser/index.cjs": "b11cf8378604d460a7a6337446b8883b6f63910b37642493b599fe15f512e651",
+      "dist/realtime-browser/index.cjs.map": "d6f56cc625589192ab6aac593c1f23e129a25c6299262a983784e1617550f489",
+      "dist/realtime-browser/index.d.cts": "6d64864b7bcc69229af818841a3c45552acb804e012017c5ceb7a357f4a89444",
+      "dist/realtime-browser/index.d.ts": "6d64864b7bcc69229af818841a3c45552acb804e012017c5ceb7a357f4a89444",
+      "dist/realtime-browser/index.js": "f4db094f91bc777451bae45da34913bd871ef7ef32fc920c8eb37b90f872d162",
+      "dist/realtime-browser/index.js.map": "6ad2d91f9e8ae50155f4c0233bf11e7c444a75686c04a1a8288812554265ba8f",
+      "dist/shared/index.cjs": "9f81067e6c44005144bab46bbb5b7bc04493e3a8703bd90fdfa2edc19cdfe84c",
+      "dist/shared/index.cjs.map": "bf46f54759313026279774a32ad6ef7a7614542dc157564eb22abaadcda7f5f1",
+      "dist/shared/index.d.cts": "69cb4c56271616b4144f4b4640b890f98017d2219dc2dc9efb7714badb3923e2",
+      "dist/shared/index.d.ts": "6d535d234126b7bbf58ab30db9177abe6a07137b4bd42ad6d72e4f5e36baf177",
+      "dist/shared/index.js": "f5d23aec39e05339355e9654d46372533673c301684cef33884881dc4b6c3b26",
+      "dist/shared/index.js.map": "74281734f7a5de23e2dac2f441684a7c8b8894e09bc685232cb3781a84714936",
+      "dist/SharedTypes-BntB497M.d.ts": "cefb1e6f7ac6da8c90088acadab10f2fcb3364bfd89db3e4093e47b0b8c00501",
+      "dist/SharedTypes-wb0GL8uM.d.cts": "e4049da858ee205e11962b6d413f0ea5f8d6a90ab9d047173148385b7c8632a8",
+      "dist/types/index.cjs": "79b5c4de3132ec74dacf1f56eb645c8a0dd72b744e9e97356a854825a757a255",
+      "dist/types/index.cjs.map": "23891cedca643afe06c9cefe0dbf87b654c607b35276b97d7ac6b93cee7d5d77",
+      "dist/types/index.d.cts": "6aabe545560a674d8498db216a35171f397bba2924ee63238545fc08905ad609",
+      "dist/types/index.d.ts": "6aabe545560a674d8498db216a35171f397bba2924ee63238545fc08905ad609",
+      "dist/types/index.js": "72465fb6f3e2ca6940bf1468be3896fb1a30faa8ab0537bd89e81e12c0a26f8d",
+      "dist/types/index.js.map": "6e5fa8aa5ffeabd78aefafbd5d639688fde0ad0bd8f154a917c3e8e8daeb4e78",
+      "dist/Vendor-DYh_bzwo.d.cts": "861355d318ad5c9bb5d55ff14a6e7a249c24196726a0eb03b70cbf01a5abf2ec",
+      "dist/Vendor-DYh_bzwo.d.ts": "861355d318ad5c9bb5d55ff14a6e7a249c24196726a0eb03b70cbf01a5abf2ec",
+      "examples/adaptive-model-routing.ts": "33bb1f9be1b131e12d9a2ceca7e65c9df49396f1c951279223379eb85b8cc2ed",
+      "examples/agent-loop/scripted-provider.ts": "c4abd3e571bfb31e3ce0496f243e20df5a2074396d392b724f19ca6329f463cc",
+      "examples/agent-runtime-local.ts": "e7e5142efae4bebfc0268495979de4afde0f7775f0b83457bc4511cb73cda7ab",
+      "examples/agentic-baseline/composition.ts": "35768414c76e6668d8211e368fdeeed7039d214180d4fd615dda07e22ec90c15",
+      "examples/agentic-baseline/reporter.ts": "a9f236c1d3af8b89d21c0aa32319933d379051f392b718fdac6fa87c37f91bdf",
+      "examples/agentic-presets.ts": "c0edb63ca59acb3ff6bc9724bed0ba2a0fc2d78dace5cdbd732ba9cade2b0593",
+      "examples/ambiguous-action-evidence.ts": "c394330d6dd0d798108e8700ab989741bfaa42d69974286669d04f0d51e0fd7f",
+      "examples/cache-aware-context.ts": "d4d4bb29862c3b8c79d1084af4614de4b7533d2542c6b8d9a14cd0b1f953dfe5",
+      "examples/composed-meeting-preparation.ts": "2c8b74566298315be1e4f852a0108aafe6d0a4c3f320931da8ae598ddeed5b86",
+      "examples/composite-execution-binding.ts": "2020040b5323b20cae56a4e40a1280445e06bfa3708c09c22f0199edc4ce212b",
+      "examples/connector-collection-pages.ts": "a76fdbede67d469704539d9a79aa59dff6972e186316209f955e7331b54b3953",
+      "examples/context-block-selection.ts": "2ca1c44cd3a1e767022ad78cc784dd45ac8f03ae13ea40fc26736509a7c715d3",
+      "examples/context-compaction-freshness.ts": "b3b19a7bad61f292efbce813706f52aee03834d7d439427354eb10799acee40f",
+      "examples/context-dispatch-safety.ts": "349b70b11585902f558db50f4303b6b409c1675a085c45c6cf296b7a977fdcb9",
+      "examples/context-request-budget.ts": "7cf4d571098817410325f4066d3fb2699737660b42ced5aa12e1034c0ca1a518",
+      "examples/context-strategy-comparison.ts": "42d006d4a60504042a63bdf0d706fa209461908b90a90fb493440f4a68dac1ea",
+      "examples/durable-tool-evidence.ts": "4ac68f85ab0eee431a2806a1e0026c3c5192a2a89ed7daac98c88d267c3b36a5",
+      "examples/endpoint-capabilities.ts": "8cf546fe1cad7bf7dec5e18556c38a0a3f347e52177bed14059cf1d1f1ff2059",
+      "examples/enhanced-connector-execution.ts": "f567a522955eee212d071f1b5ad07ccc2a0ba633e61828637ff2948666fabc01",
+      "examples/evidence-recovery.ts": "6a5e4a70fd06eb181a7e5a839c00ff1a957a758678570392bc9ad97eaf1f317c",
+      "examples/evidence-stream-interruption.ts": "1b40ccc6c34990115658ac948a558219bda4856c69d1a7412ae027b92f6f9e04",
+      "examples/feedback-driven-agent.ts": "814cf1ea779eb933ac733ae7c6355f9052fb4daeda02eea4e58e7269ae39c04f",
+      "examples/model-routing/fixture.ts": "ab9e32dc77a76433d894c025809e674eb178b995a17d57eb8eb1632212aaea07",
+      "examples/native-compaction/fixture.ts": "fec33c611ae098bc61718b7de95417f2a37a35b78feaac70b65535eac4835f1d",
+      "examples/native-context-compaction.ts": "20503d6a6e0d11f7003bba921b7ed5a0d42bc6afe0f1bda17c2ced447975c12f",
+      "examples/native-context-comparison.ts": "f9f7bb9b6bb6a41187019a56522346bd34d429da4ed9bb974cd39ab4523dddf8",
+      "examples/native-context-hooks.ts": "92f6c5574721f29b02fd082aea20be61db1dee1e8d7de2044abdd3fb7f77b695",
+      "examples/native-context-recovery.ts": "6fe00065be0d645d6ac3047a61bf5f15a51ba42dff5eb49483e23f8c5fc29c09",
+      "examples/orchestrator-factory.ts": "0d8014b186d4a60ea1c2a7b78e269fca613751f2f9e5024adc8b540535f7d0f3",
+      "examples/outcome-aware-tools.ts": "6ed674ac906116e0ccfa3b2d260fdf165eff682357349a7dee1f7b344020aa9c",
+      "examples/parameter-policy.ts": "86e6af596e9ebcc6bd24b6de843e678149f6ed61cf0cd0315e8c8e5e62c5dc08",
+      "examples/purpose-specific-models.ts": "396693f8577a91422b5055b95895e58ed7252002e439bbd13349a9a69b6fbf1a",
+      "examples/remote-tool-outcomes.ts": "a1d8c7d0581df996420ef5f17b70bd0370957f203fc0cf810f55d38cb0efd3b6",
+      "examples/routing-suspension-recovery.ts": "9f72f0249bcd003a2b631d9d85e4395e29baf7fac20b49d5f0d5b2c200acce5a",
+      "examples/routing-with-context.ts": "c597038afda36c47a5f56f41bdc2036d03d729351961dd09f3e358b4a2ca5d9c",
+      "examples/run-stream-equivalence.ts": "3cd1580d58ab560d822a1b8c429f612166744c6e8c0a4833b92d470e597a7205",
+      "examples/shared-run-budget.ts": "fc2738c292c9cc0ca6f3d4bed6387f2be170fc230db85959f01d45fbc49ce725",
+      "examples/structured-output-budget.ts": "ccb3a7111466c327d5831f307ef73157677a86fa1b631fb8c484b0e8050ea3c2",
+      "examples/task-state-workflow.ts": "bde064f136b15ac5fad2c0d6f77a466b17eb60c3049a1e31a6bf83e2c602206f",
+      "examples/tool-outcomes-and-cancellation.ts": "5a0b6c95f15e0d57700e757f7e1534ed4e1f3a32591affe17c18bda1e52be26b",
+      "examples/vendor-presentation.ts": "7b665f880cbd10f5bc001ec68b7fcdd4751be1b472b1d07eb46b8152962d080f",
+      "examples/verified-routines.ts": "98c35cf8288157e94020eea013050931e60b4b1a2a847328a41119e37d1aa42b",
+      "package.json": "f84f5767463120865c92740718fff6ad9294981f550814a03e9c02c8e9a7fc8c"
+    }
+  },
+  "links": {
+    "files": 90,
+    "checked": 3080,
+    "errors": [],
+    "artifact": {
+      "path": "/tmp/oneringai-fixes-links.json",
+      "bytes": 52,
+      "sha256": "3c75441c85283dbed98ab40eb9b0e1a9355a11734a01836c39987a7d2773876d"
+    }
+  },
+  "compatibility": {
+    "legacyFactoriesAndDefaults": "unchanged",
+    "literalPortableProtocol": 2,
+    "publicSignatures": "unchanged",
+    "pairedLegacyRedirectControl": "passed",
+    "regeneratedRegistry": "Existing generator refreshes implementation fingerprints for changed runtime source; tool inventory/signatures remain unchanged."
+  },
+  "amos": "No new UI/configuration is applicable; existing adapters, app types/build and offline modes were revalidated.",
+  "liveTesting": {
+    "state": "paused-by-explicit-user-instruction",
+    "executed": false,
+    "historicalOutstanding": "Earlier Anthropic endpoint-permission and legacy Google wrap-up trajectory checks remain unverified; see the prior final validation. No live pass is claimed."
+  },
+  "sourceAndFixtureSHA256": {
+    "apps/amos/src/agent/AgentRunner.ts": "10b0bcc0dde20a786bdf4b035380bb4b4aaa98de2c493529f23f70f67ed16573",
+    "apps/amos/src/agent/collectionPages.ts": "971e223c161fec0b4679e02b4383d76508d3b49358d24185132ce8794e27f0f1",
+    "apps/amos/src/app.ts": "5fec241158cdfba1fc0b05c2d933b5532020330fb6b5279a9ddea8885340804b",
+    "apps/amos/src/commands/commands/RoutineCommand.ts": "22bb85d46031c6968b0df4e10eecf3ec6d0abb430cac6263248a1a8833f2406c",
+    "apps/amos/src/commands/commands/VendorCommand.ts": "aaaf978181d5742b81c6fe73b344b28ab4dcdb0461dac19317ba598db267a0d6",
+    "apps/amos/src/commands/commands/index.ts": "cfa3640b82d62a0f94c235b28e36a20b3412284b653585d501aa77f74058d2d4",
+    "examples/README.md": "9634293c8c0566386cbe8471fb8988533d78f14470c2454b44b467d59de9870b",
+    "examples/agentic-baseline/composition.ts": "35768414c76e6668d8211e368fdeeed7039d214180d4fd615dda07e22ec90c15",
+    "examples/agentic-baseline/reporter.ts": "a9f236c1d3af8b89d21c0aa32319933d379051f392b718fdac6fa87c37f91bdf",
+    "examples/composed-meeting-preparation.ts": "2c8b74566298315be1e4f852a0108aafe6d0a4c3f320931da8ae598ddeed5b86",
+    "examples/composite-execution-binding.ts": "2020040b5323b20cae56a4e40a1280445e06bfa3708c09c22f0199edc4ce212b",
+    "examples/connector-collection-pages.ts": "a76fdbede67d469704539d9a79aa59dff6972e186316209f955e7331b54b3953",
+    "examples/endpoint-capabilities.ts": "8cf546fe1cad7bf7dec5e18556c38a0a3f347e52177bed14059cf1d1f1ff2059",
+    "examples/enhanced-connector-execution.ts": "f567a522955eee212d071f1b5ad07ccc2a0ba633e61828637ff2948666fabc01",
+    "examples/orchestrator-factory.ts": "0d8014b186d4a60ea1c2a7b78e269fca613751f2f9e5024adc8b540535f7d0f3",
+    "examples/outcome-aware-tools.ts": "6ed674ac906116e0ccfa3b2d260fdf165eff682357349a7dee1f7b344020aa9c",
+    "examples/parameter-policy.ts": "86e6af596e9ebcc6bd24b6de843e678149f6ed61cf0cd0315e8c8e5e62c5dc08",
+    "examples/remote-tool-outcomes.ts": "a1d8c7d0581df996420ef5f17b70bd0370957f203fc0cf810f55d38cb0efd3b6",
+    "examples/vendor-presentation.ts": "7b665f880cbd10f5bc001ec68b7fcdd4751be1b472b1d07eb46b8152962d080f",
+    "examples/verified-routines.ts": "98c35cf8288157e94020eea013050931e60b4b1a2a847328a41119e37d1aa42b",
+    "src/capabilities/metadata/parameters.ts": "51eb888332bdf6b1e60420ab202e86d93ed69c4fc420e9b9cf11a3c74108eaff",
+    "src/capabilities/metadata/realtime.ts": "787d5f17eb2ff828c4c805df3723e82b375fe2def7adc5a1ee9ebf60044c9366",
+    "src/capabilities/metadata/vendorPresentation.ts": "094fef61085442b168a0e0227118988e3d5281100d6a30417f1eaab99092784f",
+    "src/core/Agent.ts": "b3a679dbe442c492a42055c5d1977fb54db94003892829fb792e2985778a95ae",
+    "src/core/BaseAgent.ts": "46955aac6792a82d979ab246b121a5a218b93356b2fbbf36075c59aeb5f9c91d",
+    "src/core/Connector.ts": "6a1406c1bcdf49841039676f5f7cc65ef47a8981b119afb5902e33fa8ed5eeb8",
+    "src/core/ToolManager.ts": "400da92dfb9d133345e29a64eb8df532d3564df6fc9377f058ce46bbc8904d7d",
+    "src/core/agent-loop/LoopController.ts": "b73bb1ba49e2f70778cb83816dd77a8284b287c4c4dede8934d4eb184f6dcada",
+    "src/core/connector-execution/attempts.ts": "ba12bc271a3a1b353965431d8093c943bdb1a51afb95e0e5514de37e6f52ba42",
+    "src/core/connector-execution/cursors.ts": "82cbae2090f3b96e644aa18a6a179b2b875a9f28bcfd53c299e24d36194a8e72",
+    "src/core/connector-execution/profile.ts": "eade06a080e9f16ae9cae13cf62ec934ac6bf47920c5d805969467b589379ee1",
+    "src/core/connector-execution/registration.ts": "e651a03432a27cd34adde50fccec99086e4dae3f8aa5649582192cea18105b03",
+    "src/core/context-nextgen/AgentContextNextGen.ts": "e2090217c7c30484f8182133491a2680ad51e18b8d62c66a5377d3a01e20eedc",
+    "src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts": "9857676f96c4c66ff7bb76f25c94693a491602e3114aebfa0d059691a3db0ec8",
+    "src/core/createOutcomeTool.ts": "00f6165de48298b68b7d517dab462468f5346e024f85f715a96ee5bcb15335dc",
+    "src/core/evidence/ToolEvidenceMiddleware.ts": "b81ddf0a5777338fc0f42fb17c0e7c6b8397714f864af3824c065a903544c898",
+    "src/core/execution/composition.ts": "3570d9811e2d91aba7d1732f3d9c12ac19295761b0ff81a9ab3671bad80c2cef",
+    "src/core/execution/modelCorrelation.ts": "a7918f4271e8857804a073a928d9240d167f9b28ea8e129861559211c2d73189",
+    "src/core/execution/routineBinding.ts": "be68f6195895099171b81fa690ac174040f0ee85225a8f5ecf76f186fac4b311",
+    "src/core/index.ts": "0d04e890091bce1e4807506fe4d36f4fae8f991049138a0112e4ce9551d80cd6",
+    "src/core/model-execution/ModelExecutor.ts": "4a9febd7cf725cfeb98d5c2734e5b9c089014bbe49fe6f901ea41d570b28885f",
+    "src/core/orchestrator/construction.ts": "46ffc163f2cef60437dc630f6340d7eb946dc4ff8bc49416ce28ff592b9df059",
+    "src/core/orchestrator/createOrchestrator.ts": "c030a613d1c4a7d9c6b7934011c892e0cadfab5a062109637e2a9d25b020090c",
+    "src/core/orchestrator/executionBinding.ts": "5c991248116ac99320350c950429661be9ca9c37489d4b001fd8fce642ee1a0f",
+    "src/core/orchestrator/factoryConfig.ts": "8306663fe71208a7cc58cc38d4cf946b020ccb2996ebc1111b9352af37faf915",
+    "src/core/orchestrator/factoryExecution.ts": "59c99768bb22528e9daee590fbf8be9efb9d05dc557a048422cacf846f5059e4",
+    "src/core/orchestrator/factoryPolicy.ts": "5b46d8b5a5f24f17170c19406e5d140ce00b711b8d862535dc53f385d0b78540",
+    "src/core/orchestrator/factoryTypes.ts": "dd647f02f4165ee4488da1c2928fb8cad4863eea15e2e956c46ba6948d9e2254",
+    "src/core/orchestrator/index.ts": "99d509fb5da915ea5f0064586151691fec0b94979bee2b0dd8e33c5b9c741a16",
+    "src/core/orchestrator/tools.ts": "df2a6280a85ad18d894f8deddfe1c8175d0a725aed5851f46e8ee3ebf33e1914",
+    "src/core/routineControlFlow.ts": "f2cc8cfeb836d992a8c9264023e9c3742daf9f34377f170c76e90cb1e54edb0c",
+    "src/core/routineKeys.ts": "6bb79fa5242f5e01e994e50a537474b9e8bfcbcf57943acddc14309d78f3a4bc",
+    "src/core/routineRunner.ts": "67e47dff329ed9e6a6c6d5390b3eded4a1e5c738e1870079579e76f2f9449b8f",
+    "src/core/routines/createRoutineRunner.ts": "9f94cba161d77099f96fb919ea1297c42088bbbcec5bc7823fb61b64f76d4fd7",
+    "src/core/routines/observations.ts": "fec4007acfc2696309458239b0b14a8a66653d27035c21a7f546be3c89781c3e",
+    "src/core/routines/preflight.ts": "e1f1df49dd75e55e968daa72c970728ada06610a59ccb96d7448d4578d126bf6",
+    "src/core/routines/types.ts": "cd0c8ff6cf9627bf4cb86d1a274adc7be66e3f3f7caa960428dc6dc0caa33ddb",
+    "src/core/tool-execution/ToolExecutionPipeline.ts": "4fb99b655b9b67531046ccab1fc0686a23275d31da7b219e7249b87a21eb5700",
+    "src/core/tool-execution/outcomeInvocation.ts": "93db55e26950d05a4894f5feb1e81755b31666049be7c57116079d2517bc84e5",
+    "src/core/tool-execution/outcomes.ts": "f332efa38b51b0f33affb23de8d1c709b82e999deef61f573ec8c9818f52058b",
+    "src/core/tool-execution/remoteObservation.ts": "7c0b6cba383ee0dc0d13c5cdd8fad2f4b1c3625f0adf75b496809f0a23a4a53f",
+    "src/domain/interfaces/ITextProvider.ts": "405ec479287569c9fe165f77fb0c0ed0fb0085f16634e3b2b65e7c2333c5e04d",
+    "src/index.ts": "82ce66c45de15a7efc4cfac4fcae0f2ead5e19d2f65e38ebf68319d2f3730824",
+    "src/infrastructure/providers/openai/OpenAIRequestValidator.ts": "61e8d81b0e2991239ea05203f24f26ed5ce1948f61231b5755ae9b98a338e184",
+    "src/infrastructure/providers/openai/OpenAITextProvider.ts": "c0e49ff294c243a92583f6b40c20b6692dc37f840b4e68aae9e3223fcf004683",
+    "src/infrastructure/providers/openai/parameterPolicy.ts": "53e67b574a73d5aee46890522d5c1cd8f7e9aaabbbd1fbfb0edfe97b62b79b2c",
+    "src/portable/AgentPackage.ts": "e2259830a14787e322b08ace530df777b1c0a7d43565e3af60f68a08a0b71dcd",
+    "src/portable/OutcomeClient.ts": "a7befd1151dd5aadfaf31a0a112276ee97603d134621810a0f24783e297797c6",
+    "src/portable/OutcomeServer.ts": "4be2436583196335ca5dd2cfb056a5b522c6f45b75fa45e8b06fc1a0741190b0",
+    "src/portable/index.ts": "c67461887b57a956fbce93eacdeb590170df880c8073e5cd65f643ac536892f3",
+    "src/portable/outcomeRecords.ts": "0c88ffd593f4900ddcb34f76b52ceb0612447e4d35c4249aa47e0d01e87d32da",
+    "src/portable/outcomeTypes.ts": "6a5f6d40ab6eb14eee0fe9ace69e1a5321200bed8a43006d0066378c6737cd37",
+    "src/portable/outcomeWire.ts": "20a836ba863bb5967c4f9687e004a758be5fd97ef17ea76e7fc72000750527c1",
+    "src/portable/types.ts": "3e6a338161a7f791fb584063719831fc47a7c8fe99c43f0457d5bbc8bdb2c393",
+    "src/shared/index.ts": "fef32ad39e839f560856791e1f69a8b702071bb5c095d1cd12184eaa417b68e1",
+    "src/tools/connector/ConnectorTools.ts": "f2a155daf661feb22c6fcdcdc24383d309291f0add695a55953631301792712d",
+    "src/tools/connector/enhancedInvocation.ts": "bb10531d4828560c1b10087b8a0fca23fcaf0f09f42e4fb2f67e6f704653d02f",
+    "src/tools/connector/enhancedProfiles.ts": "077016d8c90ee3517001b8defc9d10f724dcf4fd04bae1a56a8ecaf2bf3e76c8",
+    "src/tools/connector/index.ts": "b834bf12266dd4d2f383a7c974f4b5b47384cac19c92fd7dd7353fc8048ed731",
+    "src/tools/connector/pages/common.ts": "c67e5806cbf020091bc51a90c9b817b90e8a7a2deb0faa0d3ddf5979cdd02174",
+    "src/tools/connector/pages/contract.ts": "4bb97ef1505326c8c569fc8fef5533f2bc424b209b4e075835b7f48f0aeddf04",
+    "src/tools/connector/pages/types.ts": "de74be443405463f85eaa320d374ab11bfe24e4756692c9d69ff84eaa34d74e8",
+    "src/tools/github/collectionPages.ts": "57104a6b6dc0050b9d575ec6b005d49a0330ef2206801bd5c3ca6afe19b1dfea",
+    "src/tools/github/createPR.ts": "5c619a4cc8ba66dad128b934e7f58f1d8e78154016572d5d0779961ea330fabb",
+    "src/tools/github/getPR.ts": "594934fda17a3dbc8fc61b965a2c231c9e55cde004fe9956b5eb51632cdbe9e9",
+    "src/tools/github/listBranches.ts": "0301648aebc9ccbb0d02b2b81a313ed3062ca26f2d7c6f69fd7031c6b1f405cc",
+    "src/tools/github/prComments.ts": "8dd0db4759e0ae2fc12d46be55e109e27c7386d8d2e1365e6dc0f303141a8eba",
+    "src/tools/github/prFiles.ts": "ec63c005f9bee3515854acca9df026748cff43e62f1f4a051dbc6a615c81a8f5",
+    "src/tools/github/readFile.ts": "92479d83d5f6e4728b8c3b7401d8a511905c06a18f212864999023d75297cff9",
+    "src/tools/github/register.ts": "fff90d68e30dfc0572f1aa0d7f56aa4110094174a0dc8d2a5c3d452ca0b6904a",
+    "src/tools/github/searchCode.ts": "b7f3b2f15cbf264d8696a58511a54090fbf8cbf7a41689b02017a938fb296a34",
+    "src/tools/github/searchFiles.ts": "9ba7bfb196ae294d2c7f6bca26de5692d265a67577fae032495d7e66dec4a404",
+    "src/tools/google/collectionPages.ts": "999c54b90cf1089df8a8a3605c2bb1b42727623bebb3d6a53a6f7b8db582bbbd",
+    "src/tools/google/createDraftEmail.ts": "39cade833a6a874afc54df3d3020c5986db91a9cc17697e2f2a4156bb144419e",
+    "src/tools/google/createMeeting.ts": "a454b0b617c1260d176a373b7bb9af8853cb36b77e43719c3010be20d84b1f86",
+    "src/tools/google/editMeeting.ts": "fa2329f6e92bd6c811e61de91185ce6b941548a85daa7cf7c0e48555cab1b892",
+    "src/tools/google/findMeetingSlots.ts": "33a7c2b0f8fa2b8c4fa5ab3779f0de5b0696ff2ac0d4cade16a3f42aa726b659",
+    "src/tools/google/getMeeting.ts": "6f1d5ae204ac54dad920e18857e69b273d6759cc2a010b296b157bff3b87be78",
+    "src/tools/google/getMeetingTranscript.ts": "973cb2b83e155077668a92693fbed29255cbe35bc03fa109752740b51e86780a",
+    "src/tools/google/listFiles.ts": "f21f1b435bcd6868fecf8cfd4fd655c1781ad1bce1bd8d9418bb0bb6dce42e0c",
+    "src/tools/google/listMeetings.ts": "37ce6a4884bc704395b163742e090b8a31644affe04a96ade6d7785924efe88c",
+    "src/tools/google/readFile.ts": "87d155796b97a5374fa78ed328db1304279092f0e2a6ff761fc1af31bd25eb1a",
+    "src/tools/google/register.ts": "7b2c737a1100acfdc3d8cc9f1458518a606ecc354f3eb153127019b399273575",
+    "src/tools/google/searchFiles.ts": "b921f8cad51cb9271c1f509668d2757c6019f8687ebc1e246e7f8c3a05bfeac1",
+    "src/tools/google/sendEmail.ts": "b2a105fda7374b05a97d200995d46506346fb61a4b8dcbee5c171f77a700d9db",
+    "src/tools/microsoft/collectionPages.ts": "4db9818f9bb5db6940ca931cac99be7693db6e2226c622880b4516c65cab6405",
+    "src/tools/microsoft/createDraftEmail.ts": "5eb3dfd4f22d2a6c14d8fbbbb09897fac9b2443189a7fe761fdfeb3f0a41d0e3",
+    "src/tools/microsoft/createMeeting.ts": "914b2605a6a9d161b2a338407140ce656bdf2ac6edd47785b3478935d42004b6",
+    "src/tools/microsoft/editMeeting.ts": "b3c2608aaad6793ce5e49f1b0afebffac457c474d37ae3da6370daaedcf9729d",
+    "src/tools/microsoft/findMeetingSlots.ts": "1bd7cc3c9fd8aa6afa959eefead9e5466faa61289b14e8655543e08bdb944795",
+    "src/tools/microsoft/getMeeting.ts": "6317a3fef843c841122948d0d47c8e65e55449e1d762f2e6c113c642bde4c4f4",
+    "src/tools/microsoft/getMeetingTranscript.ts": "f7f41b58dfd20501149780fc6b2851145853cd1afa6d9d53b5c98298a05e9ea1",
+    "src/tools/microsoft/listFiles.ts": "4887e4b9d67fb356bde7bf5b5991b397993c6aabac40a143561d3885cb115134",
+    "src/tools/microsoft/listMeetings.ts": "dba40705acea5f8c52755fcbc14ed759ff4ec04b6bf7f99c41e6ad06627fc32a",
+    "src/tools/microsoft/readFile.ts": "6aa4697eea41de591b9aa6a12ff1fff2feadd640777439bfaa951d5cfd04fbd7",
+    "src/tools/microsoft/register.ts": "1984f258645b58d9e361c560a9a8030cd8e75aee7461f80259b0360e0243b7c5",
+    "src/tools/microsoft/searchFiles.ts": "8a49168f8d734f6398e745076b2e80e54886c71d8a4eceda240bc4e7f20af0a1",
+    "src/tools/microsoft/sendEmail.ts": "0bfeade19019a32695f9bf71d4044cfd50193af39107a7cd3353db127d09d3ff",
+    "src/tools/registry.generated.ts": "6c90029debe76dc0e355e685a096876831a36171ff990ba406ed41609098836e",
+    "src/tools/slack/addReaction.ts": "6cd7d6bf164b4c7703345bd16bbbab8ae5203f8c514f0e7d4df88b3f272bed2a",
+    "src/tools/slack/collectionPages.ts": "711528cb7bb701f5db18028a73f60d5b80b13ef66fb5e428290c9f00cbdcd977",
+    "src/tools/slack/getChannelInfo.ts": "7e6b11fdf484ec49dd423a6be506f77a7f6181c1a699187710208493ddeff4f9",
+    "src/tools/slack/getMentions.ts": "e046e102c4c2a423d90e11704c2b465f76335e7337629c833ff68a744a075da2",
+    "src/tools/slack/getMessages.ts": "d090341c92bd1d1267e1f2d0a8efaf17b180f6c1747eefd5fd7333a5cc610bb4",
+    "src/tools/slack/getThread.ts": "7526f09f1560943e9afb749f9549e7778e9848978bd7d739e92d15e488970ac9",
+    "src/tools/slack/getUsers.ts": "d50650db09db4780ff39d769a2d5c41626d7f06e6970f177f6c5a6cf811a2d71",
+    "src/tools/slack/listChannels.ts": "da71283eaa9b7caa8a02d6ce2d6065e77e947d993db2d89fef9be3d4b553a77b",
+    "src/tools/slack/postMessage.ts": "c58cdd3128c169106c9829b4f24c10333512c32d301e15c7cf94d899bc2a9a6f",
+    "src/tools/slack/register.ts": "c3513a51471641cfeb3172a9822bfcfbf9dfa0c5ad28a215d5ed4fdae4c167b7",
+    "src/tools/slack/searchMessages.ts": "a5fd07b6bb338e05efcf54dc1b9e875cd0c87ce5f72daa5dd7f88ab50ca826d5",
+    "src/tools/slack/setChannelTopic.ts": "f08c9e3a71548d45f930ea5504e6afb2bd10fc85db6efe4223a6799aff04a1d8",
+    "tests/conformance/evidence.ts": "51d32673062b6d70c5583cbf48d4f4a40d153d4e07228e3e13cb659b454421b9",
+    "tests/fixtures/agentic-baseline/c1-consumer.ts": "d891ca25689e9521401df02ae6a0b29c4a62ddd3a000cf72b3f57e0511d3bcf6",
+    "tests/fixtures/agentic-baseline/c3-consumer.ts": "8a9c24dc1aa6b22167499fdab2d29c870ab75147c0926ceb9d180f31ca371c3e",
+    "tests/fixtures/agentic-baseline/c4-consumer.ts": "362eede9ce1c085eb818e98d7cdb63da1fbc78f4d4cf0ed52f06312e23c0d2e9",
+    "tests/fixtures/agentic-baseline/c5-consumer.ts": "cf2dc82a9dc0b7265c2c4ec87d3140a5f0a558808400eea2f1004cec820ad6c6",
+    "tests/fixtures/agentic-baseline/c6-consumer.ts": "5b4479b0d1d83b256ec607c3d8567f53703015cf5344f94018c87af0f87e81e8",
+    "tests/fixtures/agentic-baseline/c7-consumer.ts": "ef1968e059faadd31d750891031e28bc5289a7c7e8548961973223e0073e0d59",
+    "tests/fixtures/agentic-baseline/c9-consumer.ts": "75d217063a910a368e636461a00951be4e8987566fc804cd0cb3c0b8676cf1ff",
+    "tests/fixtures/agentic-baseline/tsconfig.json": "2f1f14310ba8475bee58d00ffcecae1bd1be978f9a52423a5d15b93349cd420a",
+    "tests/fixtures/collections/public-runtime.mjs": "be00d7ecbf67aa8c18e8b52c27000018f77210c1a350b282555b2613e6c5726f",
+    "tests/fixtures/composition-evaluation/restart.mjs": "1e65568bfccb60bee4d0c32d29a395bd8e156868d34726a4a1eb9d437b815f41",
+    "tests/fixtures/composition/public-runtime.mjs": "1d9d81ef6d0bb472f0b7d9b25730d518218b4743b78bd91209ffa1402d762790",
+    "tests/fixtures/enhanced-connectors/public-runtime.mjs": "5f79e5dd71f7a4e523ce1916ee737b17136b6f441bf5260093f44a417ee6ccca",
+    "tests/fixtures/metadata/public-runtime.mjs": "c7cc29228b57f1a273482f1850135f18a47eead8a4168b507e15a3ee445d62e2",
+    "tests/fixtures/orchestrator-factory/public-runtime.mjs": "2552b465f26633464424109ce83f1e3494728daec1d0b71193fc9ff8e99a43fa",
+    "tests/fixtures/outcome-tools/public-runtime.mjs": "ccf5175ccbe0314781187c4ff5c2ce8d7a3d9eae4770b338387445f6faafd56c",
+    "tests/fixtures/remote-outcomes/public-runtime.mjs": "cf0e848d4acbd5fbc7674720656049cd98201869566776ea5b284dcfbf0ee0d3",
+    "tests/fixtures/verified-routines/public-runtime.mjs": "6e983cf75a16657b376700381e7c03a281ee6c04c46ab8d08db92e257ed37504",
+    "tests/integration/text/CompositionExecution.live.integration.test.ts": "7379b47672860d35df9edb9017ab7847e6304d4658df7cf2def0f00924c872d1",
+    "tests/integration/text/ConnectorPages.live.integration.test.ts": "7b12b216bf37761c11406e0da50839aab6b577db4740794ae0af31808ec332d0",
+    "tests/integration/text/ContextAssembly.live.integration.test.ts": "7f670f742df2727c8babb2581182c9c2e1b321d564c89e1ca6a7e616ed9842db",
+    "tests/integration/text/ContextFreshness.live.integration.test.ts": "8a9b84f706e24101b90bae91473c3523ff916963b3d42ca8342c3ec84b4e5f1b",
+    "tests/integration/text/EnhancedConnectors.live.integration.test.ts": "1ddabf5a3054975a378a1f7d288fcb9a061dacd09120f84dc60d1f976c01093e",
+    "tests/integration/text/ModelRouting.live.integration.test.ts": "59d9fcd43f2d0d17b3052ed61cac81ae44c3640c1eff4ac5fc901582b9838cf5",
+    "tests/integration/text/OrchestratorFactory.live.integration.test.ts": "f0b25cb944dfd8c3910b70f7e7ece6f74b97245e9f4af75743eefad4980be44b",
+    "tests/integration/text/OutcomeTools.live.integration.test.ts": "c03ff21eda8b49add6761f0f4ce19f426772067403936b48c2b4ad0724ad421e",
+    "tests/integration/text/RemoteOutcomes.live.integration.test.ts": "3bd379b8884c4032f09040fb7b21f5991529a67fb68b0256a4318c434c229cd4",
+    "tests/integration/text/TaskState.live.integration.test.ts": "3b13c318566ce0c338a9a53695efa17e60794bb6335aea0a1cb2a367219eba9a",
+    "tests/integration/text/VerifiedRoutines.live.integration.test.ts": "4a5530ac937eb836ad2b3d3a8c3b1cc91177d3a15d05c5ccd41ea27c4589c41a",
+    "tests/unit/apps/amos/CollectionPages.test.ts": "b56e6e87558098eedb95e6f8de52b0ba98aa1669c9a275c443ab8ce947f693ac",
+    "tests/unit/apps/amos/EnhancedConnectors.test.ts": "fbd12c8b3cc5f46c226e44a4b075afc377440a590afe9d06fe52d7e2b7604d14",
+    "tests/unit/apps/amos/RoutineCommand.test.ts": "f6735c59b514fa098f0ff53acabc31acf1a85923f166042184bec268e76e0b58",
+    "tests/unit/apps/amos/Routing.test.ts": "cb5976edd06284d6f1f7182b676fe49e295b60b264c62219bc2d559dfa99e884",
+    "tests/unit/apps/amos/ToolOutcomes.test.ts": "9b4ce5d627e295ab7b9b3caec76d54da78e67b63231cc4075180fede92350484",
+    "tests/unit/apps/amos/VendorPresentation.test.ts": "603ece8ae6fccb63b54ba7ed6b44e336ec3b9f1ddadb476ef20a780d8c1598c1",
+    "tests/unit/core/Agent.toolOutcomes.test.ts": "a0c02667c0e9e0af2e96dce98d510abb09e1be4e4648aa13e857b464d38f5ffb",
+    "tests/unit/core/CompositionEvaluation.test.ts": "536c2d05bae63f13b34ff018d4b5930f643bcc029b11a734affe7676b9880e4e",
+    "tests/unit/core/CompositionExecution.test.ts": "aec1cbf3c5805f5cd456d4f6605c0cad485e4359e721f7d164971b85004b797e",
+    "tests/unit/core/ConnectorCollectionPages.test.ts": "a1c550576af28a942bc594dc67b3d6e744e91ba00d62117d0cfc57874b7b0d81",
+    "tests/unit/core/EnhancedConnectorRedirects.test.ts": "f9b61d0166e45f74459b5d83d0f02c205e1373990af7115ff245ce8a9a007590",
+    "tests/unit/core/EnhancedConnectorTools.test.ts": "f1a63997f681994877a698a583f88ec4125db6481ae2625f4eef10f533b57b03",
+    "tests/unit/core/OrchestratorConstruction.test.ts": "0a53c57288cf9edc4c133481286b589604771f7e2158f73af546223f3f7a337e",
+    "tests/unit/core/OrchestratorExecutionBinding.test.ts": "3802d6b3783dd81063fff8a077445fe47e12d7b930330993bf7babf843b20a91",
+    "tests/unit/core/OrchestratorFactory.test.ts": "71331145bb90dcf948e24d48b68283a54d4f97058b5f283451be2118ac08cec6",
+    "tests/unit/core/OrchestratorFactoryConfig.test.ts": "b1da0a27b3d5bd8c4c4f3a34c08f5cca4d2a7c65c051900a2adbb6507f0396ee",
+    "tests/unit/core/VerifiedRoutineFoundation.test.ts": "1ad9f1e3827c031a16bcc82879f928dcf9edbd567b436ed3c0702acebe86097a",
+    "tests/unit/core/VerifiedRoutineRunner.test.ts": "85fa8fe67e351ea6412bf7a59b33d6b5ba9f54158c6540edf53c4de4d9588a3e",
+    "tests/unit/core/evidence/Conformance.test.ts": "51fbbffb9a46e0b0b1e29d6344e5e8dfd1605414ffd273ddf3c2146f8886aaee",
+    "tests/unit/core/tool-execution/OutcomeTool.test.ts": "9d72938bbb301c9a0aceae1c0961fc463d8233114d7e1fadc87d5b7f959775e8",
+    "tests/unit/metadata/RealtimeCapabilities.test.ts": "00f38961c983c2bcb62fcfdca8634747e4b45e9b0e6a9b6dc52df6fcaea6628c",
+    "tests/unit/metadata/VendorPresentation.test.ts": "bc730f1827ad4c4a1f6b18bcb980b02e3d648feccfa923c15ace872a56e4d4cd",
+    "tests/unit/portable/OutcomePackage.test.ts": "e1c5faceceb36762541cede9004ee57da951081f0653eccc9b85b4b4ee01071a",
+    "tests/unit/portable/OutcomeRestart.test.ts": "58be9848d04c5e9c76ac8205de85969e800cf6cb4e684c8ed164b16c29abd775",
+    "tests/unit/portable/OutcomeWire.test.ts": "6aefedbf7b7ef0951b15b0b007c62693ca4c02824833cd2ab4e98f6906e430a0",
+    "tests/unit/portable/RemoteExternalExecution.test.ts": "4b3db380747c6264de66a83ddd9e0be54fc8789dd6d82f10994af18942ef63f4",
+    "tests/unit/portable/RemoteObservationBridge.test.ts": "4904841bbdc87696446d67a0746a4163ac86822ab92b1021073dbfc7d99de76a",
+    "tests/unit/providers/ParameterPolicy.test.ts": "bafee228f0b99238c407ed57fd1aa65a9273b50ae38ddb56c34a63b68e20b054"
+  },
+  "deliverySHA256": {
+    "AGENTS.md": "75b99fa3a08cbadadd0cf07649b16602101ce28cd7bfd11d72b6b2a4bfbf9643",
+    "README.md": "5957dc07106e53a5a724cd4997c5db6d4ac7f897c48e84841f84121346a02409",
+    "USER_GUIDE.md": "22207a82e6a993f600ba5c0ae1f3d4c4afe96f3ceefa4655a18f3d1526e8de87",
+    "API_REFERENCE.md": "4c5503857197b93b8b8f79d6349f2914aa3c4ef48fb3a5195cf62514fbc028e9",
+    "CHANGELOG.md": "8d9f4bb29aa2e51cc25e1049a47625058b18bb8ba0a49ed99243a680a10756a8",
+    "package.json": "f84f5767463120865c92740718fff6ad9294981f550814a03e9c02c8e9a7fc8c",
+    "docs/VERSION_2_GUIDE.md": "a7d453771c9f0b4e5b702d5db5a452db1a4d382ad08dccca3504cc4776536f98",
+    "docs/ENHANCED_CONNECTORS.md": "7018db4c3f7afb42a562631a3836844c85061c70542a7074c48c0e9e475168da",
+    "docs/REMOTE_TOOL_OUTCOMES.md": "01b6eda0e56461572ad8428eeda8be35d09b6fd4ee32ee57a95da09bd005eac4",
+    "docs/designs/CONSUMER_C4_DELIVERY.md": "cf8d8a2cd4026a6ad5db4647625a199853ebccc20f47fb0d37b833bd4ae676a8",
+    "docs/designs/CONSUMER_C7_DELIVERY.md": "4798f061b3279a8495dc089b5b756303cf5fb9c8d207ae5605526617e52fafef",
+    "docs/designs/CONSUMER_DELIVERY_LEDGER.md": "eb4d89e9e1f7262f4c716559848222a7affddd741b6e6450e113764d164dc471",
+    "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md": "c69b38a18485030164accb0d2a18caebad6e39fe63588ec653186859485f2e65"
+  }
+}

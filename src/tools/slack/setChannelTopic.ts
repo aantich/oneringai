@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Slack - Set Channel Topic Tool
  *
@@ -91,10 +92,10 @@ EXAMPLES:
           topic: response.channel.topic?.value,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatSlackToolError('Failed to set topic', error),
-        };
+        });
       }
     },
   };

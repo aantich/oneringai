@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Slack - Get Messages Tool
  *
@@ -122,10 +123,10 @@ EXAMPLES:
           channel: args.channel,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatSlackToolError('Failed to get messages', error),
-        };
+        });
       }
     },
   };

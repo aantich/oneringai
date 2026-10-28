@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import dotenv from 'dotenv';
 import { afterAll, describe, expect, it } from 'vitest';
 import { Agent, Connector, ModelTask, StreamEventType, Vendor, ContextCompactionStrategy, FileContextStorage, FileEvidenceStorage, ContentType, MessageRole, createProvider, SuspendSignal, StorageRegistry, FileCorrelationStorage } from '../../../src/index.js';
-import type { ToolFunction, ITextProvider } from '../../../src/index.js';
+import type { ToolFunction, ITextProvider, TextGenerateOptions } from '../../../src/index.js';
 dotenv.config({ quiet: true });
 const enabled = process.env.RUN_MODEL_ROUTING_LIVE === '1';
 const providers = [
@@ -95,7 +95,13 @@ describe.skipIf(!enabled).sequential('14A live route contracts and fixed held-ou
           if (++hooks === 1) { hook.options.tool_choice = { type: 'function', function: { name: 'wait_for_event' } }; hook.options.parallel_tool_calls = false; }
           else { hook.options.tools = undefined; hook.options.tool_choice = undefined; }
           return {};
-        }, 'after:llm': async hook => { if (resumed && !corrupted) { hook.response.output_text = `CONTROLLED_INVALID_JSON: ${(hook.response.output_text ?? '').replace(/[{}\[\]]/g, '')}`; corrupted = true; } return {}; } },
+        }, 'after:llm': async hook => { if (resumed && !corrupted) {
+          // Corrupt syntax without adding a competing answer-like sentinel value.
+          // The repair must retain the actual model's answer, not echo a fixture label.
+          let value = hook.response.output_text ?? '';
+          try { value = JSON.parse(value).answer; } catch { /* Retain the actual provider text. */ }
+          hook.response.output_text = `answer = ${JSON.stringify(value)}`; corrupted = true;
+        } return {}; } },
         modelExecution: { customProviderAttempts: 'single', maxOutputTokensPerCall: 2048, routing: { routes: { fast: { model: selected.fast } }, select: () => 'fast' } },
       });
       try {
@@ -267,10 +273,16 @@ describe.skipIf(!enabled).sequential('14A live route contracts and fixed held-ou
         features: { evidence: true, workingMemory: false, inContextMemory: false },
         plugins: { evidence: { storage: new FileEvidenceStorage({ directory: join(directory, 'evidence'), scope: { ownerId: 'stage14-owner', namespace: 'routing' } }) } },
         compactionStrategy: new ContextCompactionStrategy({ plugins: 'off', history: { mode: 'native', preserveRecentTurns: 0 } }) },
-      hooks: { 'before:llm': () => ({ modified: { max_output_tokens: 512 } }) },
-      modelExecution: { ...(selected.name === 'openai' ? {} : { maxOutputTokensPerCall: 8192 }), routing: { routes: { compacting: { model: nativeModel, ...(crossProvider ? { connector: name, allowContextTransfer: true } : {}) } }, select: () => 'compacting' } },
+      // This fixture verifies native ownership, not model-led evidence retrieval.
+      // Instructions alone cannot exclude extra evidence tool turns/compactions.
+      hooks: { 'before:llm': (context: { options: TextGenerateOptions }) => {
+        context.options.max_output_tokens = 512; context.options.tools = undefined; context.options.tool_choice = undefined; return {};
+      } },
+      modelExecution: { ...(selected.name === 'openai' ? {} : { maxOutputTokensPerCall: 8192 }), routing: { routes: { compacting: { model: nativeModel,
+        thinking: { enabled: false }, ...(crossProvider ? { connector: name, allowContextTransfer: true } : {}) } }, select: () => 'compacting' } },
     });
-    let agent = Agent.create(makeConfig());
+    let agent = Agent.create(makeConfig()); let phase = 'initial-generation'; const toolNames: string[] = [];
+    const observe = () => agent.on('tool:start', event => toolNames.push(event.toolCall.function.name)); observe();
     try {
       for (let i = 0; i < 8; i++) {
         agent.context.addUserMessage(`Confirmed project ROUTE14_NATIVE has a limit of 43. Historical exchange ${i}.`);
@@ -280,17 +292,25 @@ describe.skipIf(!enabled).sequential('14A live route contracts and fixed held-ou
       expect(response.output_text).toContain('ROUTE14_NATIVE'); expect(response.output_text).toContain('43');
       expect(agent.context.getState().nativeContinuation?.binding.model).toBe(nativeModel);
       expect(task.snapshot().invocations.find(value => value.purpose === 'compactor')?.model).toBe(nativeModel);
+      phase = 'checkpoint-restore';
       await agent.saveSession(); const sessionId = agent.getSessionId()!; expect(sessionId).toBeTruthy(); agent.destroy(); agent = await Agent.resume(sessionId, makeConfig());
+      observe();
       expect(agent.context.getState().nativeContinuation?.binding.model).toBe(nativeModel);
       expect(agent.model).toBe(defaultModel);
       const before = task.snapshot().totals.calls;
       await expect(agent.run('Attempt incompatible default', { routing: null, modelTask: task })).rejects.toThrow('ineligible');
       expect(task.snapshot().totals.calls).toBe(before);
+      phase = 'resumed-generation';
       const resumed = await agent.run('Repeat the project reference and confirmed limit.', { modelTask: task });
       expect(resumed.output_text).toContain('ROUTE14_NATIVE'); expect(resumed.output_text).toContain('43');
       expect(task.snapshot().invocations.every(value => value.model === nativeModel)).toBe(true);
+      expect(toolNames).toEqual([]);
       reports.push({ scenario: 'native-route-save-restore', provider: selected.name, passed: true, configuredDefault: defaultModel, crossProvider,
-        selectedNativeModel: nativeModel, incompatibleSwitchBlocked: true, snapshot: task.snapshot() });
+        selectedNativeModel: nativeModel, incompatibleSwitchBlocked: true, toolNames, snapshot: task.snapshot() });
+    } catch (error) {
+      reports.push({ scenario: 'native-route-save-restore', provider: selected.name, passed: false, crossProvider,
+        phase, toolNames, errorType: error instanceof Error ? error.name : 'unknown', snapshot: task.snapshot() });
+      throw error;
     } finally { agent.destroy(); task.destroy(); Connector.remove(name); if (crossProvider) Connector.remove(defaultName); await rm(directory, { recursive: true, force: true }); }
   }, 180_000);
 });

@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Microsoft Graph - Create Meeting Tool
  *
@@ -157,10 +158,10 @@ EXAMPLES:
           onlineMeetingUrl: event.onlineMeeting?.joinUrl,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatMicrosoftToolError('Failed to create meeting', error),
-        };
+        });
       }
     },
   };

@@ -1,4 +1,9 @@
 import { Connector } from './Connector.js';
+import { remoteOutcome, remoteAgentIssue, hasRemoteAgentGuard, hasRemoteEvidenceOwners, validateRemoteEvidenceRecord } from './tool-execution/remoteObservation.js';
+import { selectedInvocationParent } from './execution/modelCorrelation.js';
+import { orchestratorConstruction, finishOrchestratorConstruction } from './orchestrator/construction.js';
+import { registerOrchestratorAsyncFlusher, beginOrchestratorExecution, orchestratorOperationSignal, captureOrchestratorAsync, settleOrchestratorAsync, forgetOrchestratorAsync, consumeOrchestratorAsync, orchestratorContinuation, isFactoryOrchestrator, allowOrchestratorAutoContinuation, type ParentOperation } from './orchestrator/executionBinding.js';
+import { admitComposition, assertCompositionAdmission, admitCompositionMaintenance, hasCompositionOwner, registerCompositionAgent, trackCompositionWork, checkCompositionRelease } from './execution/composition.js';
 import { EvidencePluginNextGen } from './context-nextgen/plugins/EvidencePluginNextGen.js';
 import type { AgentCapabilityInspection } from './presets.js';
 import { inspectModelCapabilities, inspectAdvancedCapabilities } from './capabilityInspection.js';
@@ -21,6 +26,7 @@ import type { ToolEvidenceDelivery } from './evidence/ToolEvidenceMiddleware.js'
  */
 
 import { createHash, randomUUID } from 'crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { BaseAgent, BaseAgentConfig, BaseSessionConfig } from './BaseAgent.js';
 import { ExecutionContext, HistoryMode } from '../capabilities/agents/ExecutionContext.js';
 import { HookManager } from '../capabilities/agents/HookManager.js';
@@ -96,6 +102,8 @@ import type {
  * Session configuration for Agent (same as BaseSessionConfig)
  */
 export type AgentSessionConfig = BaseSessionConfig;
+
+interface AsyncResultDelivery { result: ToolResult; runId: string; isCurrent: () => boolean; deliveryBlocked?: boolean }
 
 /**
  * Agent configuration - extends BaseAgentConfig with Agent-specific options
@@ -184,6 +192,7 @@ export interface AgentConfig extends BaseAgentConfig {
 /** Agent runtime options exposed by getRuntimeConfigSnapshot(). */
 export type AgentRuntimeConfigSnapshot = Pick<AgentConfig,
   | 'temperature'
+  | 'parameterPolicy'
   | 'maxIterations'
   | 'thinking'
   | 'vendorOptions'
@@ -214,6 +223,7 @@ export interface RunOptions {
 
   /** Temperature for generation */
   temperature?: number;
+  parameterPolicy?: TextGenerateOptions['parameterPolicy'];
 
   /** Vendor-specific options */
   vendorOptions?: Record<string, unknown>;
@@ -467,6 +477,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   // Pause/resume/cancel state
   private _paused = false;
   private _cancelled = false;
+  private _compositionAbortCleanup?: () => void;
+  private _orchestratorExecutionCleanup?: () => void;
   private _executionAbort = new AbortController();
   private _externalUsageCounts: Partial<Pick<TokenUsage, 'input_tokens' | 'output_tokens' | 'total_tokens'>> = {};
   private _externalModelUsageMetadata: Partial<TokenUsage> = {};
@@ -479,7 +491,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   // Async tool state
   private _asyncToolTracker: Map<string, PendingAsyncTool> = new Map();
   private _asyncBatchTimer: ReturnType<typeof setTimeout> | null = null;
-  private _asyncResultQueue: Array<{ result: ToolResult; runId: string; isCurrent: () => boolean; deliveryBlocked?: boolean }> = [];
+  private _asyncResultQueue: AsyncResultDelivery[] = [];
   private _asyncDeliveryEpoch = 0;
   // Invocation-local correlation survives re-registration and optional outcome
   // omission on authentic async deliveries. It is not saved session authority.
@@ -534,6 +546,17 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    * ```
    */
   static create(config: AgentConfig): Agent {
+    if (orchestratorConstruction(config.context)) {
+      let candidate: Agent | undefined, baseOnly = true;
+      try {
+        const agent = new Agent(config, false, (created, partial) => { candidate = created; baseOnly = partial; });
+        finishOrchestratorConstruction(agent.tools);
+        return agent;
+      } catch (error) {
+        try { if (baseOnly) candidate?.baseDestroy(); else candidate?.destroy(); } catch { /* Preserve construction failure. */ }
+        throw error;
+      }
+    }
     return new Agent(config);
   }
 
@@ -782,6 +805,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const routing = copyRoutingConfig(config.modelExecution?.routing);
     if (routing) config = { ...config, modelExecution: { ...config.modelExecution, routing } };
     super(config, 'Agent', candidate => captureConstruction?.(candidate as Agent, true));
+    registerOrchestratorAsyncFlusher(this, () => this.scheduleAsyncResultFlush());
+    registerCompositionAgent(this, () => this._executionOwner !== null || this.hasPendingAsyncTools(true), () => this._isDestroyed);
     this._routingConfig = routing;
     if (routing) {
       this._nativeRoutingResolver = binding => {
@@ -923,6 +948,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   async rolloverContext(
     options: AgentContextRolloverOptions = {},
   ): Promise<ContextRolloverResult> {
+    assertCompositionAdmission(this);
     assertNotDestroyed(this, 'roll over context');
     const lease = this.acquireExecution('rollover', options.modelTask);
 
@@ -950,13 +976,13 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           });
           return result.value.summary;
         }
-        const response = await this.runDirect(formatRolloverSource(input), {
+        const response = await admitCompositionMaintenance(this, () => this.runDirect(formatRolloverSource(input), {
           instructions: CONTEXT_ROLLOVER_SUMMARY_INSTRUCTIONS,
           includeTools: false,
           maxOutputTokens: maxSummaryTokens,
           modelTask: this._activeModelTask,
           purpose: 'compactor',
-        });
+        }));
         const summary = response.output_text?.trim();
         if (!summary) {
           throw new Error('Context rollover provider returned an empty summary');
@@ -981,6 +1007,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
   /** Explicit bounded reduction through the configured composition policy. */
   async compactContext(options: AgentContextCompactionOptions = {}): Promise<ContextCompactionReport> {
+    assertCompositionAdmission(this);
     assertNotDestroyed(this, 'compact context');
     const checkpoint = options.checkpoint ?? this.hasSession();
     if (checkpoint && !this.hasSession()) throw new Error('Cannot checkpoint compaction without session storage');
@@ -1247,11 +1274,12 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const principal = () => nativePrincipal(this.context);
     const authority = principal();
     const controls = () => JSON.stringify({ instructions: this._config.instructions, thinking: this._config.thinking,
+      parameterPolicy: this._config.parameterPolicy?.temperature,
       vendorOptions: this._config.vendorOptions, nativeTools: this._config.nativeTools,
       promptCache: this._config.promptCache, dataHandling: this._config.dataHandling,
       execution: { maxOutputTokensPerCall: this._config.modelExecution?.maxOutputTokensPerCall,
         priceBound: this._config.modelExecution?.priceBound, customProviderAttempts: this._config.modelExecution?.customProviderAttempts },
-      run: { thinking: this._runOptions?.thinking, temperature: this._runOptions?.temperature,
+      run: { thinking: this._runOptions?.thinking, temperature: this._runOptions?.temperature, parameterPolicy: this._runOptions?.parameterPolicy?.temperature,
         vendorOptions: this._runOptions?.vendorOptions, nativeTools: this._runOptions?.nativeTools,
         promptCache: this._runOptions?.promptCache, dataHandling: this._runOptions?.dataHandling,
         responseFormat: this._runOptions?.responseFormat, continuationToken: this._runOptions?.continuationToken } });
@@ -1267,6 +1295,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     };
     const wireOptions = (request: TextGenerateOptions): TextGenerateOptions => ({
       thinking: this._runOptions?.thinking ?? this._config.thinking,
+      ...(this.managedParameterPolicy().parameterPolicy ? { ...this.managedParameterPolicy(), temperature: this._runOptions?.temperature ?? this._config.temperature } : {}),
       vendorOptions: this.managedVendorOptions(),
       prompt_cache: this._runOptions?.promptCache ?? this._config.promptCache,
       data_handling: this.managedDataHandling(),
@@ -1294,7 +1323,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         if (!provider.compaction) throw new Error(`Provider ${provider.name} does not support native compaction`);
         const selected = wireOptions(request);
         assertNativeCompactionOptions(selected, provider.name);
-        const count = await withAbort(provider.compaction.countInput(selected), selected.signal!); assertCurrent(); return count;
+        const pending = provider.compaction.countInput(selected); trackCompositionWork(this, pending);
+        const count = await withAbort(pending, selected.signal!); assertCurrent(); return count;
       },
       compact: async request => {
         assertCurrent();
@@ -1308,7 +1338,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
             onDispatch: () => { sourceGuard?.onDispatch?.(); binding.onDispatch(); } };
           binding.assertCurrent(selected);
         }
-        return compactModel(provider, connector, selected, this._activeModelTask, binding?.config ?? this._config.modelExecution);
+        return compactModel(provider, connector, selected, this._activeModelTask, binding?.config ?? this._config.modelExecution,
+          hasCompositionOwner(this) ? promise => trackCompositionWork(this, promise) : undefined, selectedInvocationParent(this));
       },
     };
     if (!restoring) { this._agentContext._bindNativeCompaction(driver); this._agentContext._assertNativeContinuation(); }
@@ -1316,7 +1347,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   }
 
   /** Acquire the Agent's single mutable execution slot without an async race. */
-  private acquireExecution(kind: AgentExecutionKind, modelTask?: ModelTask): AgentExecutionLease {
+  private acquireExecution(kind: AgentExecutionKind, modelTask?: ModelTask, operation?: ParentOperation): AgentExecutionLease {
+    if (['run', 'stream', 'continuation'].includes(kind)) this.assertRemoteManagedReady();
+    const composition = admitComposition(this);
     if (this._executionOwner) {
       throw new Error(
         `Agent already has an active ${this._executionOwner.kind} execution`,
@@ -1325,20 +1358,37 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     const lease = { kind, token: Symbol(kind) };
     this._executionOwner = lease;
     this._executionAbort = new AbortController();
+    const controller = this._executionAbort;
+    const abort = (): void => { if (this._executionOwner === lease) { this._cancelled = true; controller.abort(composition?.signal?.reason); } };
+    composition?.signal?.addEventListener('abort', abort, { once: true });
+    this._compositionAbortCleanup = () => composition?.signal?.removeEventListener('abort', abort);
     try {
       const strategy = this._agentContext.compactionStrategy;
-      this.beginModelTask(modelTask, isContextCompactionStrategy(strategy) && strategy.config.history !== 'off');
+      if (composition?.modelTask && modelTask && composition.modelTask !== modelTask) throw new InvalidConfigError('Composed execution must retain its ModelTask');
+      this.beginModelTask(composition?.modelTask ?? modelTask, isContextCompactionStrategy(strategy) && strategy.config.history !== 'off');
       this._modelExecutionSignal = this._activeModelTask
         ? AbortSignal.any([this._executionAbort.signal, this._activeModelTask.signal]) : this._executionAbort.signal;
+      this._orchestratorExecutionCleanup = beginOrchestratorExecution(this, kind, composition?.modelTask ?? modelTask, this._modelExecutionSignal, operation);
+      const operationSignal = orchestratorOperationSignal(this);
+      if (operationSignal) {
+        const release = this._orchestratorExecutionCleanup;
+        const abortOperation = (): void => { if (this._executionOwner === lease) { this._cancelled = true; controller.abort(operationSignal.reason); } };
+        operationSignal.addEventListener('abort', abortOperation, { once: true });
+        this._orchestratorExecutionCleanup = () => { operationSignal.removeEventListener('abort', abortOperation); release?.(); };
+        operationSignal.throwIfAborted();
+        this._modelExecutionSignal = AbortSignal.any([this._modelExecutionSignal, operationSignal]);
+      }
       if (!this._routingConfig || !['run', 'stream', 'continuation'].includes(kind)) this.bindNativeCompaction();
     }
-    catch (error) { this._executionOwner = null; this.endModelTask(); throw error; }
+    catch (error) { this._compositionAbortCleanup?.(); this._orchestratorExecutionCleanup?.(); this._orchestratorExecutionCleanup = undefined; this._executionOwner = null; this.endModelTask(); throw error; }
     return lease;
   }
 
   /** Release only the exact execution that acquired the slot. */
   private releaseExecution(lease: AgentExecutionLease): void {
     if (this._executionOwner !== lease) return;
+    this._compositionAbortCleanup?.(); this._compositionAbortCleanup = undefined;
+    this._orchestratorExecutionCleanup?.(); this._orchestratorExecutionCleanup = undefined;
     this._executionOwner = null;
     const retain = !!this._routingOrigin && (this._suspendedRoutingOrigin === this._routingOrigin || [...this._asyncRoutingOrigins.values()].includes(this._routingOrigin));
     if (retain && this._ownsModelTask && this._activeModelTask) this._retainedRoutingTasks.add(this._activeModelTask);
@@ -1351,6 +1401,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     if (!this._isDestroyed) this._agentContext._bindManagedModel(undefined);
     this.cleanupRoutingTasks();
     this.scheduleAsyncResultFlush();
+    checkCompositionRelease(this);
   }
 
   /** Wake queued async results after any execution owner releases its lease. */
@@ -1382,6 +1433,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    * text-model loop.
    */
   async beginExternalExecution(options: ExternalExecutionOptions = {}): Promise<string> {
+    assertCompositionAdmission(this);
     assertNoRoutingOverride(options);
     assertNotDestroyed(this, 'begin external execution');
     const lease = this.acquireExecution('external', options.modelTask);
@@ -1446,9 +1498,10 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    */
   async executeExternalToolCall(
     call: ExternalToolCall,
-    options: { iteration?: number } = {},
+    options: { iteration?: number; signal?: AbortSignal } = {},
   ): Promise<ToolResult> {
     assertNotDestroyed(this, 'execute external tool call');
+    options.signal?.throwIfAborted();
     if (!this._externalExecutionId
       || !this._externalExecutionLease
       || this._executionOwner !== this._externalExecutionLease
@@ -1488,6 +1541,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     executionContext.addToolCall(toolCall);
 
     await this.checkPause();
+    options.signal?.throwIfAborted();
     if (this._cancelled) throw new Error('Agent execution is cancelled');
     executionContext.checkLimits(this._config.limits);
 
@@ -1504,6 +1558,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       executionId,
       true,
       true,
+      options,
     );
     if (!result) throw new Error(`Tool "${call.name}" produced no result`);
     executionContext.iteration = Math.max(executionContext.iteration, iteration + 1);
@@ -1711,6 +1766,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
   private async checkLoopTools(results: ToolResult[], iteration: number): Promise<void> {
     const controller = this._loopController;
+    const remoteIssue = results.map(result => remoteOutcome(result.outcome)?.issue()).find(issue => issue !== undefined) ?? this.remoteManagedIssue();
+    if (remoteIssue) { if (!controller) throw remoteIssue; controller.finish('uncertain_effect', remoteIssue.message); return; }
     if (!controller) return;
     this._executionAbort.signal.throwIfAborted(); this._activeModelTask?.signal.throwIfAborted();
     iteration = controller.snapshot().iterations || iteration;
@@ -1735,18 +1792,23 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
   private async importLoopToolObservations(results: ToolResult[]): Promise<void> {
     const controller = this._loopController;
+    const remoteIssue = results.map(result => remoteOutcome(result.outcome)?.issue()).find(issue => issue !== undefined) ?? this.remoteManagedIssue();
+    if (remoteIssue) { if (!controller) throw remoteIssue; controller.finish('uncertain_effect', remoteIssue.message); return; }
     if (!controller) return;
     const previousCount = controller.snapshot().observedToolCalls;
     for (const result of results) {
       const captured = this._asyncLoopObservations.get(result)
         ?? (result.outcome ? this._asyncLoopObservations.get(result.outcome) : undefined);
-      const outcome = captured?.outcome ?? result.outcome;
+      const localOutcome = captured?.outcome ?? result.outcome;
+      const remote = remoteOutcome(localOutcome);
+      const outcome = remote && !remote.notStarted ? remote.serverOutcome : localOutcome;
       // Legacy deliveries have no admission proof. Never infer a past effect
       // from the current registration, which can describe a different tool.
-      const effect = captured?.effect ?? outcome?.evidence?.effect ?? 'unknown';
+      const effect = remote?.effect ?? captured?.effect ?? outcome?.evidence?.effect ?? 'unknown';
       try {
         controller.observe(outcome?.toolName ?? result.tool_name ?? 'unknown', result.tool_args ?? {},
           result.content, outcome, effect, outcome?.callId ?? result.tool_use_id);
+        if (remote?.notStarted) controller.releaseAdmission(localOutcome?.toolName ?? result.tool_name ?? 'unknown', result.tool_args ?? {});
       } catch { controller.finish('checker_error'); }
     }
     if (controller.snapshot().observedToolCalls > previousCount) await this.checkLoopTools(results, controller.snapshot().iterations);
@@ -1766,6 +1828,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     modelTask?: ModelTask,
     runOptions?: RunOptions,
   ): Promise<ExecutionSetup> {
+    assertCompositionAdmission(this);
     assertNotDestroyed(this, `${methodName} agent`);
     this.cleanupRoutingTasks();
     const suspended = this._suspendedRoutingOrigin;
@@ -1859,7 +1922,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     await this.checkPause();
 
     // Check if cancelled
-    if (this._cancelled) {
+    if (this._cancelled || this._executionAbort.signal.aborted) {
       return { shouldExit: true, exitReason: 'cancelled' };
     }
 
@@ -1913,6 +1976,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         instructions: this._config.instructions,
         tools: this.getEnabledToolDefinitions(),
         temperature: this._runOptions?.temperature ?? this._config.temperature,
+      ...this.managedParameterPolicy(),
       };
 
     // Store iteration record
@@ -2422,6 +2486,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
             instructions: this._config.instructions,
             tools: [], // No tools — force text-only wrap-up
             temperature: this._runOptions?.temperature ?? this._config.temperature,
+      ...this.managedParameterPolicy(),
             thinking: this._runOptions?.thinking ?? this._config.thinking,
             vendorOptions: this.managedVendorOptions(),
             prompt_cache: this._runOptions?.promptCache ?? this._config.promptCache,
@@ -2514,6 +2579,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         instructions: this._config.instructions,
         tools: [], // No tools - force text-only response
         temperature: this._runOptions?.temperature ?? this._config.temperature,
+      ...this.managedParameterPolicy(),
         thinking: this._runOptions?.thinking ?? this._config.thinking,
         vendorOptions: this.managedVendorOptions(),
         prompt_cache: this._runOptions?.promptCache ?? this._config.promptCache,
@@ -3229,6 +3295,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           instructions: this._config.instructions,
           tools: [], // No tools - force text-only response
           temperature: this._runOptions?.temperature ?? this._config.temperature,
+      ...this.managedParameterPolicy(),
           thinking: this._runOptions?.thinking ?? this._config.thinking,
           vendorOptions: this.managedVendorOptions(),
           prompt_cache: this._runOptions?.promptCache ?? this._config.promptCache,
@@ -3492,6 +3559,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
           ? baseInstructions
           : baseInstructions.includes(buildStructuredInstructionSuffix(format)) ? baseInstructions : baseInstructions + buildStructuredInstructionSuffix(format),
       temperature: this._runOptions?.temperature ?? this._config.temperature,
+      ...this.managedParameterPolicy(),
       thinking: this._runOptions?.thinking ?? this._config.thinking,
       vendorOptions: this.managedVendorOptions(),
       prompt_cache: this._runOptions?.promptCache ?? this._config.promptCache,
@@ -3595,6 +3663,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
   /** Capture counted fields before budget events can reenter host listeners. */
   private validateManagedDispatch(options: TextGenerateOptions, recordPreparation = true): TextGenerateOptions {
+    this.assertRemoteManagedReady();
     const dispatch: TextGenerateOptions = {
       ...options,
       input: structuredClone(options.input),
@@ -3638,8 +3707,24 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       const origin = nativeBinding(this.executionConnector, this.executionProvider, dispatch.model, this.context, endpoint);
       this._managedRequestOrigin = { binding: origin, guard: this.captureReplayGuard([], true, origin)! };
     } else this._managedRequestOrigin = undefined;
+    if (hasRemoteAgentGuard(this) || hasRemoteAgentGuard(this.context) || hasRemoteAgentGuard(this.tools)) {
+      const previous = dispatch.managedDispatch;
+      dispatch.managedDispatch = {
+        prepare: async () => { this.assertRemoteManagedReady(); await previous?.prepare(); this.assertRemoteManagedReady(); },
+        assertCurrent: () => { previous?.assertCurrent(); this.assertRemoteManagedReady(); },
+        onDispatch: () => previous?.onDispatch?.(),
+      };
+    }
     return dispatch;
   }
+
+  private managedParameterPolicy(): Pick<TextGenerateOptions, 'parameterPolicy'> {
+    const policy = this._runOptions?.parameterPolicy ?? this._config.parameterPolicy;
+    return policy ? { parameterPolicy: policy } : {};
+  }
+
+  private remoteManagedIssue(): Error | undefined { return remoteAgentIssue(this) ?? remoteAgentIssue(this.context) ?? remoteAgentIssue(this.tools); }
+  private assertRemoteManagedReady(): void { const issue = this.remoteManagedIssue(); if (issue) throw issue; }
 
   // ===== LLM Generation with Hooks =====
 
@@ -3664,6 +3749,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       tools: preparedTools ?? this.getEnabledToolDefinitions(),
       tool_choice: 'auto',
       temperature: ro?.temperature ?? this._config.temperature,
+      ...this.managedParameterPolicy(),
       thinking: ro?.thinking ?? this._config.thinking,
       vendorOptions: this.managedVendorOptions(),
       prompt_cache: ro?.promptCache ?? this._config.promptCache,
@@ -3778,6 +3864,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       tools: preparedTools ?? this.getEnabledToolDefinitions(),
       tool_choice: 'auto',
       temperature: sro?.temperature ?? this._config.temperature,
+      ...this.managedParameterPolicy(),
       thinking: sro?.thinking ?? this._config.thinking,
       vendorOptions: this.managedVendorOptions(),
       prompt_cache: sro?.promptCache ?? this._config.promptCache,
@@ -4045,6 +4132,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     executionId: string,
     forceBlocking = false,
     callsAlreadyTracked = false,
+    executionOptions?: ToolExecutionOptions,
   ): Promise<ToolResult[]> {
     const results: ToolResult[] = [];
 
@@ -4075,7 +4163,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         // Blocking tool: execute synchronously as before
         let settledResult: ToolResult | undefined;
         try {
-          const result = await this.executeToolWithHooks(toolCall, iteration, executionId, value => { settledResult = value; });
+          const result = await this.executeToolWithHooks(toolCall, iteration, executionId, value => { settledResult = value; }, executionOptions);
           results.push(result);
           this.executionContext?.addToolResult(result);
         } catch (error) {
@@ -4127,7 +4215,12 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     let evidence: ToolEvidenceDelivery | undefined;
     let outcome: ToolExecutionOutcome | undefined;
     const observe = (result: unknown): void => {
-      try { controller?.observe(name, args, result, outcome, effect, options.callId); }
+      const remote = remoteOutcome(outcome);
+      try {
+        controller?.observe(name, args, result, remote && !remote.notStarted ? remote.serverOutcome : outcome, remote?.effect ?? effect,
+          remote?.serverOutcome?.callId ?? options.callId);
+        if (remote?.notStarted) controller?.releaseAdmission(name, args);
+      }
       catch { controller?.finish('checker_error'); }
     };
     try {
@@ -4166,7 +4259,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     iteration: number,
     executionId: string,
     onSettled?: (result: ToolResult) => void,
+    executionOptions?: ToolExecutionOptions,
   ): Promise<ToolResult> {
+    executionOptions?.signal?.throwIfAborted();
     if (this._executionOwner?.kind !== 'external' && this._loopController?.isStopped) throw new AgentLoopStop();
     const toolStartTime = Date.now();
 
@@ -4206,7 +4301,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         throw new Error(`Failed to parse tool arguments for ${toolCall.function.name}: ${(parseError as Error).message}`);
       }
       const { result, outcome, evidence } = await this.executeManagedTool(toolCall.function.name, args, {
-        signal: this._executionAbort.signal, callId: toolCall.id, runId: executionId,
+        ...executionOptions,
+        signal: executionOptions?.signal ? AbortSignal.any([this._executionAbort.signal, executionOptions.signal]) : this._executionAbort.signal,
+        callId: toolCall.id, runId: executionId,
       });
 
       toolCall.state = !outcome || outcome.status === 'succeeded' ? ToolCallState.COMPLETED : outcome.status === 'timed_out' ? ToolCallState.TIMEOUT : ToolCallState.FAILED;
@@ -4376,6 +4473,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    * as a new user message when complete.
    */
   private _startAsyncExecution(toolCall: ToolCall, executionId: string): ToolResult {
+    if (isFactoryOrchestrator(this) && (this._asyncToolTracker.has(toolCall.id) || this._asyncResultQueue.some(entry => entry.result.tool_use_id === toolCall.id))) {
+      throw new InvalidConfigError('A selected orchestrator cannot reuse an outstanding async call ID');
+    }
     let parsedArgs: Record<string, unknown> = {};
     try {
       parsedArgs = JSON.parse(toolCall.function.arguments);
@@ -4399,20 +4499,23 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
       status: 'running',
     };
     this._asyncToolTracker.set(toolCall.id, pending);
+    captureOrchestratorAsync(this, toolCall.id);
     if (this._routingOrigin) this._asyncRoutingOrigins.set(toolCall.id, this._routingOrigin);
 
     // Emit async:tool:started
-    this.emit('async:tool:started', {
+    const started = {
       executionId,
       toolCallId: toolCall.id,
       toolName: toolCall.function.name,
       args: parsedArgs,
       timestamp: new Date(),
-    });
+    };
+    if (isFactoryOrchestrator(this)) this.notifyAsyncObserver(() => this.emit('async:tool:started', started));
+    else this.emit('async:tool:started', started);
 
     const controller = new AbortController();
     this._asyncAbort.set(toolCall.id, controller);
-    const hostSignal = this._executionAbort.signal;
+    const hostSignal = isFactoryOrchestrator(this) && this._modelExecutionSignal ? AbortSignal.any([this._executionAbort.signal, this._modelExecutionSignal]) : this._executionAbort.signal;
     const contextAtStart = this._agentContext.tools.getToolContext();
     const identityKey = (): string => {
       const ctx = this._agentContext.tools.getToolContext();
@@ -4551,7 +4654,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   }
 
   private selectAsyncResults(): typeof this._asyncResultQueue {
-    this._asyncResultQueue = this._asyncResultQueue.filter(entry => entry.isCurrent());
+    this._asyncResultQueue = this._asyncResultQueue.filter(entry => { const current = entry.isCurrent(); if (!current) consumeOrchestratorAsync([entry.result]); return current; });
     // Keep entries reachable by cancellation during synchronous host notifications.
     return [...this._asyncResultQueue];
   }
@@ -4562,13 +4665,14 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
   }
 
   private settleAsyncDelivery(entries: typeof this._asyncResultQueue, injected: boolean): void {
-    if (injected || !this._agentContext.hasPlugin('evidence')) { this.consumeAsyncResults(entries); return; }
+    if (injected || !isFactoryOrchestrator(this) && !this._agentContext.hasPlugin('evidence')) { this.consumeAsyncResults(entries); return; }
     // Keep undelivered current results and suppress automatic retries until an explicit host attempt.
     entries.forEach(entry => { entry.deliveryBlocked = true; });
     this.consumeAsyncResults(entries.filter(entry => !entry.isCurrent()));
   }
 
   private consumeAsyncResults(entries: typeof this._asyncResultQueue): void {
+    consumeOrchestratorAsync(entries.map(entry => entry.result));
     const consumed = new Set(entries);
     this._asyncResultQueue = this._asyncResultQueue.filter(entry => !consumed.has(entry));
     for (const entry of entries) this._asyncRoutingOrigins.delete(entry.result.tool_use_id);
@@ -4576,6 +4680,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
 
   private _onAsyncComplete(toolCallId: string, result: ToolResult, runId: string, isCurrent: () => boolean): void {
     if (!this._asyncToolTracker.has(toolCallId)) return; // already cancelled/removed
+    settleOrchestratorAsync(this, toolCallId, result);
 
     this._asyncResultQueue.push({ result, runId, isCurrent });
     this._asyncToolTracker.delete(toolCallId);
@@ -4613,6 +4718,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    */
   private _flushAsyncResults(): void {
     if (this._isDestroyed) return;
+    if (!allowOrchestratorAutoContinuation(this)) return;
+    if (hasCompositionOwner(this)) return;
     if (this._asyncResultQueue.length === 0) return;
     if (this._continuationInProgress) return; // wait for current continuation to finish
     if (this._executionOwner) return; // results stay queued until the current owner releases
@@ -4632,29 +4739,45 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    * Injects results as a user message and re-enters the agentic loop.
    */
   async continueWithAsyncResults(results?: ToolResult[]): Promise<AgentResponse> {
+    assertCompositionAdmission(this);
     assertNotDestroyed(this, 'continue with async results');
 
     if (this._continuationInProgress) {
       throw new Error('A continuation is already in progress');
     }
 
-    const queuedOrigins = (results ?? this._asyncResultQueue.map(entry => entry.result)).map(result => this._asyncRoutingOrigins.get(result.tool_use_id));
+    let selectedEntries = isFactoryOrchestrator(this) ? (results ? results.map(result => {
+      const entry = this._asyncResultQueue.find(candidate => candidate.isCurrent() && candidate.result.tool_use_id === result.tool_use_id);
+      if (!entry || !isDeepStrictEqual(entry.result.content, result.content)
+        || result.tool_name !== undefined && result.tool_name !== entry.result.tool_name
+        || result.tool_args !== undefined && !isDeepStrictEqual(result.tool_args, entry.result.tool_args)
+        || result.error !== undefined && result.error !== entry.result.error
+        || result.state !== undefined && result.state !== entry.result.state) throw new InvalidConfigError('Async continuation must preserve a retained original observation');
+      return entry;
+    }) : this.selectAsyncResults()) : undefined;
+    if (!results && selectedEntries?.length) {
+      const first = orchestratorContinuation(this, [selectedEntries[0]!.result]);
+      selectedEntries = selectedEntries.filter(entry => orchestratorContinuation(this, [entry.result]) === first);
+    }
+    const queuedOrigins = (results ?? selectedEntries?.map(entry => entry.result) ?? this._asyncResultQueue.map(entry => entry.result)).map(result => this._asyncRoutingOrigins.get(result.tool_use_id));
     const origin = queuedOrigins.find(value => value !== undefined);
     if (origin && queuedOrigins.some(value => value !== origin)) throw new InvalidConfigError('Async result batches must share their originating route/task');
     if (this._routingConfig && !origin) throw new InvalidConfigError('Routed async continuation requires authentic originating tool results');
-    const lease = this.acquireExecution('continuation', origin?.task);
+    if (selectedEntries && new Set(selectedEntries).size !== selectedEntries.length) throw new InvalidConfigError('Duplicate async delivery');
+    const operation = selectedEntries ? orchestratorContinuation(this, selectedEntries.map(entry => entry.result)) : undefined;
+    const lease = this.acquireExecution('continuation', origin?.task ?? operation?.modelTask, operation);
     this._lastManagedFrame = undefined;
     this._continuationInProgress = true;
     this._paused = false;
     this._cancelled = false;
 
-    let queued: typeof this._asyncResultQueue | undefined;
+    let queued: AsyncResultDelivery[] | undefined;
     let injected = false;
     try {
       // Drain queue if no explicit results provided
-      queued = results ? undefined : this.selectAsyncResults();
+      queued = selectedEntries ?? (results ? undefined : this.selectAsyncResults());
       queued?.forEach(entry => { delete entry.deliveryBlocked; });
-      const toDeliver = results ?? queued!.map(entry => entry.result);
+      const toDeliver = selectedEntries && results ? await this.prepareOrchestratorAsyncRepair(results, selectedEntries.map(entry => entry.result)) : results ?? queued!.map(entry => entry.result);
       if (toDeliver.length === 0) {
         throw new Error('No async results to deliver');
       }
@@ -4753,6 +4876,41 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
     }
   }
 
+  /** A host may replace a failed receipt, never the action or its original outcome. */
+  private async prepareOrchestratorAsyncRepair(inputs: ToolResult[], originals: ToolResult[]): Promise<ToolResult[]> {
+    const repaired: ToolResult[] = [];
+    for (let index = 0; index < inputs.length; index++) {
+      const input = inputs[index]!, original = originals[index]!;
+      const observation = this._asyncLoopObservations.get(original);
+      const actual = observation?.outcome ?? original.outcome;
+      const operational = (value: ToolExecutionOutcome) => Object.fromEntries(Object.entries(value).filter(([key, field]) => key !== 'evidence' && field !== undefined));
+      if (input.outcome && (!actual || !isDeepStrictEqual(operational(input.outcome), operational(actual)))) throw new InvalidConfigError('Async repair cannot replace the original tool outcome');
+      const candidate = input.evidence ?? input.outcome?.evidence;
+      let evidence = original.evidence, outcome = actual;
+      if (candidate?.reference && candidate.status !== 'storage_failed') {
+        const plugin = this.context.getPlugin('evidence');
+        if (!(plugin instanceof EvidencePluginNextGen)) throw new InvalidConfigError('Async receipt repair requires the owning evidence plugin');
+        if (this.context.userId !== undefined && this.context.userId !== plugin.storage.scope.ownerId) throw new InvalidConfigError('Async receipt repair evidence ownership mismatch');
+        const pending = plugin.storage.readRecord(candidate.reference);
+        trackCompositionWork(this, pending);
+        const record = await withAbort(pending, this._modelExecutionSignal!);
+        const executionId = actual?.executionId ?? evidenceProvenance(original.evidence)?.executionId;
+        if (!record || !Object.hasOwn(record, 'result') || !executionId || record.source.executionId !== executionId
+          || record.source.callId !== original.tool_use_id || record.source.toolName !== (original.tool_name ?? actual?.toolName)
+          || actual && (record.source.status !== actual.status || record.source.completion !== actual.completion)
+          || observation && record.source.effect !== observation.effect
+          || record.source.principal.userId !== undefined && record.source.principal.userId !== plugin.storage.scope.ownerId) throw new InvalidConfigError('Async receipt does not match the original invocation in its owning scope');
+        if (hasRemoteEvidenceOwners(this.tools)) await validateRemoteEvidenceRecord(this.tools, record, candidate.reference, original.tool_use_id, this._modelExecutionSignal);
+        evidence = { status: candidate.status, reference: structuredClone(candidate.reference), effect: record.source.effect };
+        if (actual) outcome = Object.freeze({ ...actual, evidence: Object.freeze({ ...evidence }) });
+      } else if (this.hasUnacknowledgedAsyncEvidence(original)) throw new InvalidConfigError('Retain the original source until its evidence is acknowledged');
+      const value: ToolResult = { ...original, ...(evidence ? { evidence } : {}), ...(outcome ? { outcome } : {}) };
+      if (observation) this._asyncLoopObservations.set(value, { ...observation, outcome });
+      repaired.push(value);
+    }
+    return repaired;
+  }
+
   // ===== Async Tool Public Accessors =====
 
   /**
@@ -4773,8 +4931,9 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    * Cancel a specific async tool by toolCallId
    */
   cancelAsyncTool(toolCallId: string): void {
+    forgetOrchestratorAsync(this, toolCallId);
     for (const entry of this._asyncResultQueue) {
-      if (entry.result.tool_use_id === toolCallId) entry.isCurrent = () => false;
+      if (entry.result.tool_use_id === toolCallId) { consumeOrchestratorAsync([entry.result]); entry.isCurrent = () => false; }
     }
     this._asyncResultQueue = this._asyncResultQueue.filter(entry => entry.isCurrent());
     const pending = this._asyncToolTracker.get(toolCallId);
@@ -4792,6 +4951,8 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
    * Cancel all pending async tools
    */
   cancelAllAsyncTools(): void {
+    forgetOrchestratorAsync(this);
+    consumeOrchestratorAsync(this._asyncResultQueue.map(entry => entry.result));
     this._asyncDeliveryEpoch++;
     for (const pending of this._asyncToolTracker.values()) {
       pending.status = 'cancelled';
@@ -4969,6 +5130,7 @@ export class Agent extends BaseAgent<AgentConfig, AgentEvents> implements IDispo
         : {}),
     };
     if (options.includeHostLocal !== false) {
+      if (this._config.parameterPolicy) snapshot.parameterPolicy = this._config.parameterPolicy;
       if (this._config.vendorOptions) snapshot.vendorOptions = this._config.vendorOptions;
       if (this._config.promptCache) snapshot.promptCache = this._config.promptCache;
       if (this._config.nativeTools) snapshot.nativeTools = this._config.nativeTools;

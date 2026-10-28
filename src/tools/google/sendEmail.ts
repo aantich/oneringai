@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Google Gmail - Send Email Tool
  *
@@ -209,10 +210,10 @@ export function createGoogleSendEmailTool(
           threadId: result.threadId,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatGoogleToolError('Failed to send email', error),
-        };
+        });
       }
     },
   };

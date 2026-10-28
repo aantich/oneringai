@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Microsoft Graph - Search Files Tool
  *
@@ -192,10 +193,10 @@ Use this tool when you need to **find** files by name, content, or metadata acro
           hasMore: container.moreResultsAvailable,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatMicrosoftToolError('Search failed', error),
-        };
+        });
       }
     },
   };

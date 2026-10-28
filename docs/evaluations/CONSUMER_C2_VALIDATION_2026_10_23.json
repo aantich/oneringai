@@ -1,0 +1,794 @@
+{
+  "protocol": "consumer-c2-validation-v1",
+  "recordedAt": "2026-10-23T15:04:56.145533+00:00",
+  "branch": "version2",
+  "baseCommit": "dff238759c41431bd24712d3b045dd38fc800b37",
+  "status": "complete-on-branch-internal-only",
+  "verifiedPackageRelease": false,
+  "authorization": "User requested all remaining slices in order, reviewing/fixing each without routine selection stops. No breaking API, consumer upgrade, durable backend or release.",
+  "scope": {
+    "privateCompositionOwnership": true,
+    "explicitTaskSignalBinding": true,
+    "nestedRoutineBinding": true,
+    "publicRoutineFacade": false,
+    "newRootExports": false,
+    "managedRunSignalOptionAdded": false,
+    "legacyRoutineExecutionChanged": false
+  },
+  "unit": {
+    "passed": 8847,
+    "files": 387,
+    "failed": 0,
+    "skipped": 0,
+    "artifact": {
+      "path": "/tmp/oneringai-c2-unit.json",
+      "bytes": 2826736,
+      "sha256": "c959563edf079942132f4f7db8b1e52b27735507c0292195af2d60cd7b3bf2e5"
+    }
+  },
+  "focused": {
+    "passed": 178,
+    "files": 3,
+    "failed": 0,
+    "skipped": 0,
+    "artifact": {
+      "path": "/tmp/oneringai-c2-routines.json",
+      "bytes": 52081,
+      "sha256": "92e3d15f1467063189cbf6bb03b69edaf2ba59e561bce9a467112ae43403c5f1"
+    }
+  },
+  "newUnitCases": 33,
+  "live": {
+    "passed": 236,
+    "files": 15,
+    "failed": 0,
+    "skipped": 0,
+    "artifact": {
+      "path": "/tmp/oneringai-c2-final-live-tests.json",
+      "bytes": 80315,
+      "sha256": "e99989a1740a0a4c16aa6622960b02304f6191e5f6833baa6b09a1991de0e193"
+    },
+    "providers": [
+      "OpenAI",
+      "Anthropic",
+      "Google"
+    ],
+    "command": {
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "tests/integration/text/ToolOutcomes.live.integration.test.ts",
+        "tests/integration/text/Evidence.live.integration.test.ts",
+        "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "tests/integration/text/TaskState.live.integration.test.ts",
+        "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "tests/integration/text/AgentSessionCorrections.live.integration.test.ts",
+        "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "tests/integration/text/OutcomeTools.live.integration.test.ts",
+        "tests/integration/text/CompositionExecution.live.integration.test.ts",
+        "--maxWorkers=3",
+        "--minWorkers=1",
+        "--reporter=json",
+        "--outputFile=/tmp/oneringai-c2-final-live-tests.json"
+      ],
+      "enableFlags": {
+        "RUN_AGENTIC_BASELINE_LIVE": "1",
+        "RUN_CONTEXT_FRESHNESS_LIVE": "1",
+        "RUN_TOOL_OUTCOMES_LIVE": "1",
+        "RUN_EVIDENCE_LIVE": "1",
+        "RUN_CONTEXT_STRATEGIES_LIVE": "1",
+        "RUN_MODEL_EXECUTION_LIVE": "1",
+        "RUN_TASK_STATE_LIVE": "1",
+        "RUN_AGENT_LOOP_LIVE": "1",
+        "RUN_AGENT_PRESETS_LIVE": "1",
+        "RUN_CONTEXT_ASSEMBLY_LIVE": "1",
+        "RUN_NATIVE_COMPACTION_LIVE": "1",
+        "RUN_MODEL_ROUTING_LIVE": "1",
+        "RUN_OUTCOME_TOOLS_LIVE": "1",
+        "RUN_COMPOSITION_EXECUTION_LIVE": "1"
+      },
+      "reportPaths": {
+        "BASELINE_REPORT_PATH": "/tmp/oneringai-c2-final-live-baseline_report_path.json",
+        "CONTEXT_FRESHNESS_REPORT_PATH": "/tmp/oneringai-c2-final-live-context_freshness_report_path.json",
+        "TOOL_OUTCOMES_REPORT_PATH": "/tmp/oneringai-c2-final-live-tool_outcomes_report_path.json",
+        "EVIDENCE_REPORT_PATH": "/tmp/oneringai-c2-final-live-evidence_report_path.json",
+        "CONTEXT_STRATEGY_REPORT_PATH": "/tmp/oneringai-c2-final-live-context_strategy_report_path.json",
+        "MODEL_EXECUTION_REPORT_PATH": "/tmp/oneringai-c2-final-live-model_execution_report_path.json",
+        "TASK_STATE_REPORT_PATH": "/tmp/oneringai-c2-final-live-task_state_report_path.json",
+        "AGENT_LOOP_REPORT_PATH": "/tmp/oneringai-c2-final-live-agent_loop_report_path.json",
+        "AGENT_PRESETS_REPORT_PATH": "/tmp/oneringai-c2-final-live-agent_presets_report_path.json",
+        "AGENT_SESSION_CORRECTIONS_REPORT_PATH": "/tmp/oneringai-c2-final-live-agent_session_corrections_report_path.json",
+        "CONTEXT_ASSEMBLY_REPORT_PATH": "/tmp/oneringai-c2-final-live-context_assembly_report_path.json",
+        "NATIVE_COMPACTION_REPORT_PATH": "/tmp/oneringai-c2-final-live-native_compaction_report_path.json",
+        "MODEL_ROUTING_REPORT_PATH": "/tmp/oneringai-c2-final-live-model_routing_report_path.json",
+        "OUTCOME_TOOLS_REPORT_PATH": "/tmp/oneringai-c2-final-live-outcome_tools_report_path.json",
+        "COMPOSITION_EXECUTION_REPORT_PATH": "/tmp/oneringai-c2-final-live-composition_execution_report_path.json"
+      }
+    },
+    "suiteReports": [
+      {
+        "path": "/tmp/oneringai-c2-final-live-baseline_report_path.json",
+        "bytes": 70799,
+        "sha256": "c9302b1e4137d6f43f36e358d4163d173fab03c154c110f01199e7cc953d707c"
+      },
+      {
+        "path": "/tmp/oneringai-c2-final-live-context_freshness_report_path.json",
+        "bytes": 9181,
+        "sha256": "57658ddbdaf692e9a840c2b00bdb05c0575c91d46fe9caaa0fed027b1b2825f2"
+      },
+      {
+        "path": "/tmp/oneringai-c2-final-live-tool_outcomes_report_path.json",
+        "bytes": 3898,
+        "sha256": "07edad1f16ec7bd526b8fe49bec7b38354d926712d52ab3712d61d29f2f11820"
+      },
+      {
+        "path": "/tmp/oneringai-c2-final-live-evidence_report_path.json",
+        "bytes": 9807,
+        "sha256": "ef540a912579f15dcb80d4d6d1f03be49180116d39befad1e1d259b3dc8557d6"
+      },
+      {
+        "path": "/tmp/oneringai-c2-final-live-context_strategy_report_path.json",
+        "bytes": 1202573,
+        "sha256": "791151a29399ff70b4e63ff072056efbb6b330c4f5d1cbd71daa5b17be7cc28f"
+      },
+      {
+        "path": "/tmp/oneringai-c2-final-live-model_execution_report_path.json",
+        "bytes": 42280,
+        "sha256": "ac0e68e1b6280f32cf3dc4d70b6a3c2bc9a45f05579daab66344cd7af6236e75"
+      },
+      {
+        "path": "/tmp/oneringai-c2-final-live-task_state_report_path.json",
+        "bytes": 29967,
+        "sha256": "6b16a66aec3adb0a55edc1b31e8a4b8a77b1116872813f872baf60b40697ec92"
+      },
+      {
+        "path": "/tmp/oneringai-c2-final-live-agent_loop_report_path.json",
+        "bytes": 69376,
+        "sha256": "abf8cd954a5d680cc67436be09a95f5e42325249620e280200e75509bcc4d0f3"
+      },
+      {
+        "path": "/tmp/oneringai-c2-final-live-agent_presets_report_path.json",
+        "bytes": 77547,
+        "sha256": "6e167dbae07ef7cbf9a5e4b4efa5fa37bede288a0f185f5c7d21e305bedfdc4a"
+      },
+      {
+        "path": "/tmp/oneringai-c2-final-live-agent_session_corrections_report_path.json",
+        "bytes": 6228,
+        "sha256": "75755a7e52b357b3125196e9ddffbe6fd64f94145034dee68e5a4afee8a1129e"
+      },
+      {
+        "path": "/tmp/oneringai-c2-final-live-context_assembly_report_path.json",
+        "bytes": 140937,
+        "sha256": "1f87dd3650e56ec6d61fd694b046f702c2a18d875fe8c82f3fd10b04a4a576db"
+      },
+      {
+        "path": "/tmp/oneringai-c2-final-live-native_compaction_report_path.json",
+        "bytes": 41119,
+        "sha256": "bf92e4d8ffc78465e2ae94aa48551f2c557437b0517dd63e4ebb78cd62ce2766"
+      },
+      {
+        "path": "/tmp/oneringai-c2-final-live-model_routing_report_path.json",
+        "bytes": 222644,
+        "sha256": "781e9c28455e797a60e2313d7a608973cd4fd0b1ee2811661da87b0b21ba7f9d"
+      },
+      {
+        "path": "/tmp/oneringai-c2-final-live-outcome_tools_report_path.json",
+        "bytes": 3648,
+        "sha256": "1d2f7034c83718bb892b37a52d9dafc7ed6cb3a27f0b81df48d65e63def7ee07"
+      },
+      {
+        "path": "/tmp/oneringai-c2-final-live-composition_execution_report_path.json",
+        "bytes": 18049,
+        "sha256": "3fd0adacab6736a06d21167dc7301a4b6cce226fc471d8341fdc2cb4ef2498ca"
+      }
+    ],
+    "newC2Cases": 6
+  },
+  "runtimeAssertions": {
+    "passed": 450,
+    "retained": 382,
+    "newPrivateBridge": {
+      "protocol": "c2-private-cross-bundle-v1",
+      "checks": 68,
+      "combinations": 8,
+      "passed": true
+    },
+    "artifacts": [
+      {
+        "path": "/tmp/oneringai-c2-cross-bundle.log",
+        "bytes": 6206,
+        "sha256": "e105b244d3473a19c15aecf19cab83fa4ed470ce71a9017c5e886a738f021376"
+      },
+      {
+        "path": "/tmp/oneringai-c2-public-outcomes.log",
+        "bytes": 1734,
+        "sha256": "389d218b828c9dd3eaccbe41988f69354e8a04ba0ff3141acd54015510f6a3ef"
+      },
+      {
+        "path": "/tmp/oneringai-c2-public-presets.log",
+        "bytes": 6936,
+        "sha256": "404264113dd34af269d10442348fedb034622cd520c16b5a34ff925a53eceea7"
+      },
+      {
+        "path": "/tmp/oneringai-c2-public-assembly.log",
+        "bytes": 15950,
+        "sha256": "5bbeffa5f1ab2a86fefe2f8eee1328e97a5a316c84105204a3f47cc8060ff8fb"
+      },
+      {
+        "path": "/tmp/oneringai-c2-public-native.log",
+        "bytes": 4601,
+        "sha256": "54d2b2ad08992fab9b552b3d43d03b19aeb769099fea1bae67596d5846e9a8b8"
+      },
+      {
+        "path": "/tmp/oneringai-c2-public-routing.log",
+        "bytes": 16000,
+        "sha256": "26c012f261f43fdd39fdecc218c86256dbb0f036e51abc70d321cf1c98e0e4da"
+      }
+    ]
+  },
+  "offline": {
+    "count": 42,
+    "allPassed": true,
+    "scripts": [
+      {
+        "script": "example:agentic-baseline",
+        "command": "node --import tsx examples/agentic-evaluation-baseline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-agentic-baseline.log"
+      },
+      {
+        "script": "example:context-freshness",
+        "command": "node --import tsx examples/context-compaction-freshness.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-context-freshness.log"
+      },
+      {
+        "script": "example:context-budget",
+        "command": "node --import tsx examples/context-request-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-context-budget.log"
+      },
+      {
+        "script": "example:structured-budget",
+        "command": "node --import tsx examples/structured-output-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-structured-budget.log"
+      },
+      {
+        "script": "example:amos-context",
+        "command": "node --import tsx apps/amos/examples/context-budget-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-amos-context.log"
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": "node --import tsx examples/tool-outcomes-and-cancellation.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-tool-outcomes.log"
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-amos-tool-outcomes.log"
+      },
+      {
+        "script": "example:purpose-models",
+        "command": "node --import tsx examples/purpose-specific-models.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-purpose-models.log"
+      },
+      {
+        "script": "example:shared-budget",
+        "command": "node --import tsx examples/shared-run-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-shared-budget.log"
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": "node --import tsx apps/amos/examples/model-helpers-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-amos-helpers.log"
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": "node --import tsx examples/durable-tool-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-durable-evidence.log"
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": "node --import tsx examples/evidence-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-evidence-recovery.log"
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": "node --import tsx examples/ambiguous-action-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-ambiguous-evidence.log"
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": "node --import tsx apps/amos/examples/evidence-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-amos-evidence.log"
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": "node --import tsx examples/evidence-stream-interruption.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-evidence-interruption.log"
+      },
+      {
+        "script": "example:context-strategies",
+        "command": "node --import tsx examples/context-strategy-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-context-strategies.log"
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-amos-context-strategies.log"
+      },
+      {
+        "script": "example:task-state",
+        "command": "node --import tsx examples/task-state-workflow.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-task-state.log"
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": "node --import tsx apps/amos/examples/task-state-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-amos-task-state.log"
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": "node --import tsx examples/feedback-driven-agent.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-feedback-agent.log"
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": "node --import tsx examples/run-stream-equivalence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-loop-equivalence.log"
+      },
+      {
+        "script": "example:amos-loop",
+        "command": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-amos-loop.log"
+      },
+      {
+        "script": "example:agentic-presets",
+        "command": "node --import tsx examples/agentic-presets.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-agentic-presets.log"
+      },
+      {
+        "script": "example:amos-presets",
+        "command": "node --import tsx apps/amos/examples/presets-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-amos-presets.log"
+      },
+      {
+        "script": "example:context-selection",
+        "command": "node --import tsx examples/context-block-selection.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-context-selection.log"
+      },
+      {
+        "script": "example:cache-aware-context",
+        "command": "node --import tsx examples/cache-aware-context.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-cache-aware-context.log"
+      },
+      {
+        "script": "example:amos-context-selection",
+        "command": "node --import tsx apps/amos/examples/context-selection-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-amos-context-selection.log"
+      },
+      {
+        "script": "example:context-dispatch-safety",
+        "command": "node --import tsx examples/context-dispatch-safety.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-context-dispatch-safety.log"
+      },
+      {
+        "script": "example:native-compaction",
+        "command": "node --import tsx examples/native-context-compaction.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-native-compaction.log"
+      },
+      {
+        "script": "example:native-recovery",
+        "command": "node --import tsx examples/native-context-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-native-recovery.log"
+      },
+      {
+        "script": "example:native-comparison",
+        "command": "node --import tsx examples/native-context-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-native-comparison.log"
+      },
+      {
+        "script": "example:amos-native-compaction",
+        "command": "node --import tsx apps/amos/examples/native-compaction-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-amos-native-compaction.log"
+      },
+      {
+        "script": "example:native-hooks",
+        "command": "node --import tsx examples/native-context-hooks.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-native-hooks.log"
+      },
+      {
+        "script": "example:native-hooks-manual",
+        "command": "node --import tsx examples/native-context-hooks.ts --manual",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-native-hooks-manual.log"
+      },
+      {
+        "script": "example:model-routing",
+        "command": "node --import tsx examples/adaptive-model-routing.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-model-routing.log"
+      },
+      {
+        "script": "example:routing-context",
+        "command": "node --import tsx examples/routing-with-context.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-routing-context.log"
+      },
+      {
+        "script": "example:amos-routing",
+        "command": "node --import tsx apps/amos/examples/routing-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-amos-routing.log"
+      },
+      {
+        "script": "example:routing-suspension",
+        "command": "node --import tsx examples/routing-suspension-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-routing-suspension.log"
+      },
+      {
+        "script": "example:routing-suspension-failure",
+        "command": "node --import tsx examples/routing-suspension-recovery.ts --failed-finalization",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-routing-suspension-failure.log"
+      },
+      {
+        "script": "example:composite-binding",
+        "command": "node --import tsx examples/composite-execution-binding.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-composite-binding.log"
+      },
+      {
+        "script": "example:outcome-aware-tools",
+        "command": "node --import tsx examples/outcome-aware-tools.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-outcome-aware-tools.log"
+      },
+      {
+        "script": "example:amos-outcome-tools",
+        "command": "node --import tsx apps/amos/examples/outcome-aware-tools-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c2-offline-example-amos-outcome-tools.log"
+      }
+    ]
+  },
+  "localChecks": [
+    {
+      "command": "npm run build",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c2-build.log",
+        "bytes": 15266,
+        "sha256": "653fac8ba77b2f9bc358437115cb4186c8c0f1d9fb5ffc966b9b3a65842f96e1"
+      }
+    },
+    {
+      "command": "npm run typecheck",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c2-types.log",
+        "bytes": 57,
+        "sha256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717"
+      }
+    },
+    {
+      "command": "npm run lint",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c2-lint.log",
+        "bytes": 60,
+        "sha256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e"
+      }
+    },
+    {
+      "command": "npm run test:agentic:compat",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c2-compat.log",
+        "bytes": 116,
+        "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+      }
+    },
+    {
+      "command": "npm run examples:check",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c2-examples-types.log",
+        "bytes": 88,
+        "sha256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8"
+      }
+    },
+    {
+      "command": "npm run --prefix apps/amos typecheck",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c2-amos-types.log",
+        "bytes": 52,
+        "sha256": "15c9b914db9ac8a0f39085e9e28df4f483e0442e42350ea4d7615778f29e93ad"
+      }
+    },
+    {
+      "command": "node --import tsx scripts/generate-api-docs.ts --mode public",
+      "passed": true,
+      "artifact": {
+        "path": "/tmp/oneringai-c2-api-docs.log",
+        "bytes": 223,
+        "sha256": "c75ba8546fb6a61f8867e70ca37159ce89e4161e98ed0153a25d17255646bd5b"
+      }
+    }
+  ],
+  "compatibility": {
+    "breakingChanges": false,
+    "unchangedPublicDeclarations": [
+      "ExecuteRoutineOptions",
+      "RunOptions",
+      "DirectCallOptions"
+    ],
+    "rootExportFilesMatchC1": true,
+    "unchangedSourceControls": [
+      {
+        "path": "src/domain/entities/Tool.ts",
+        "bytes": 12928,
+        "sha256": "12fe4590163d9dd3f70e5d82c30354d828c732120537d9f59b0c646d99d89c22"
+      },
+      {
+        "path": "src/domain/interfaces/ITextProvider.ts",
+        "bytes": 5082,
+        "sha256": "41a26f433bd31f048abeac384c5788a2b532da0d98b3894246e42be5879bede7"
+      },
+      {
+        "path": "src/core/context-nextgen/types.ts",
+        "bytes": 46387,
+        "sha256": "ba0fc7f36c32e9d62d87fc1660b8ccf01ec4ba67f4c7a7097e5fcb15f81f1359"
+      },
+      {
+        "path": "src/core/tool-execution/types.ts",
+        "bytes": 6458,
+        "sha256": "4e7506fcb6f5ced637608e60887b7a79eaeeb587801a5dbec13371088fa2887f"
+      },
+      {
+        "path": "src/types/index.ts",
+        "bytes": 22518,
+        "sha256": "9f7d6d3e294df9fe4b5078af2bcd30665bf74c9d542c57d4458ec83daf6f1d5d"
+      }
+    ],
+    "privateState": "Versioned nonenumerable per-instance coordination, absent from context/session/wire data.",
+    "preserved": [
+      "legacy callback/return/event/default behavior",
+      "ordinary direct-call concurrency",
+      "borrowed Agent/ModelTask ownership",
+      "literal strict protocol v2",
+      "independent helpers when no binding is supplied"
+    ]
+  },
+  "reviewFixes": [
+    "Admission precedes continuation/routing preflight and mutable cleanup.",
+    "A private per-instance bridge prevents mixed ESM/CJS/duplicate modules from bypassing ownership.",
+    "Frozen bindings reject accidental task/signal replacement; destroyed Agents reject acquisition but do not remain retained after close.",
+    "Raw provider/helper/native-count/native-compaction/tool and iterator work retains ownership through actual settlement, including late evidence persistence.",
+    "Coordinator holds protect cleanup without treating a paused phase as active model work.",
+    "Bound routine requests reject a foreign Agent before tools, bookkeeping or generation.",
+    "Recursive map/fold/until, source extraction, reflection and deterministic cancellation use the admitted binding; iteration timeout does not cancel sibling/task.",
+    "Private getter return annotations fix declaration bundling without a public signature change."
+  ],
+  "resolvedLiveIncidents": [
+    {
+      "initialMatrix": {
+        "path": "/tmp/oneringai-c2-pre-fixture-fix-final-live-tests.json",
+        "bytes": 81677,
+        "sha256": "0ba18064469cbcf748d83d5afdc7396c0730f2b39de87da7fc430734136557a3"
+      },
+      "passed": 234,
+      "failed": 2,
+      "source": {
+        "path": "/tmp/oneringai-c2-pre-fixture-fix-final-live-context_freshness_report_path.json",
+        "bytes": 12746,
+        "sha256": "79e7a5d88913eab195726ccffbb9b161e27a24926e4b740f7c250d42909cabb3"
+      },
+      "resolution": "OpenAI stream copied a large synthetic source under a marker request and hit the unchanged 512-token cap. The fixture now explicitly requests only two marker strings; exact marker/completion/source-read assertions remain."
+    },
+    {
+      "diagnostic": {
+        "path": "/tmp/oneringai-c2-routing-diagnostic.json",
+        "bytes": 22509,
+        "sha256": "a42bbc39f71753f245a2184db985a5008b57b5d097d4211be67379009a8eff95"
+      },
+      "confirmed": {
+        "path": "/tmp/oneringai-c2-routing-confirmed.json",
+        "bytes": 18071,
+        "sha256": "3041a255f231a04ac8e377ff751bfe2d6c32a47462e2f7c64965e755ba29a596"
+      },
+      "resolution": "An alternative Anthropic native-owner fixture allowed extra generation/compaction turns despite no-tool prose. Diagnostics observed seven successful HTTP-200 invocations, not retries. The ownership-only fixture now excludes evidence tools at dispatch and explicitly sets selected-route thinking; all four cases pass without raising its eight-call budget. Final complete 236-case matrix passes with no skipped providers."
+    }
+  ],
+  "documentation": {
+    "version2AvailabilityAdoptionHandoff": true,
+    "internalOnlyExplicit": true,
+    "newPublicRecipe": "examples/composite-execution-binding.ts",
+    "amos": "Existing types/regressions pass. The complete operation interface and commands are C3; no temporary C2 configuration/API.",
+    "readmeAndUserGuide": "No new C2 public API; public ModelTask guide/examples updated and C3 facade docs deferred until delivery.",
+    "links": {
+      "checked": 2745,
+      "errors": []
+    },
+    "whitespacePassed": true
+  },
+  "package": {
+    "command": "npm pack --dry-run --ignore-scripts --json",
+    "files": 273,
+    "pathSetSha256": "02c68fa76b2176d0fcb04dccbe4ed32eefbc99b87d445403306a1dbde6a333a2",
+    "validationRecordIncluded": true,
+    "secretsFound": false,
+    "published": false,
+    "reportPath": "/tmp/oneringai-c2-package.json"
+  },
+  "sourceManifest": [
+    {
+      "path": "src/core/Agent.ts",
+      "bytes": 236174,
+      "sha256": "371d716f589093930cb5ec2ee85a7c1bea49cbc1d0f67121fcd523b87b72bd3d"
+    },
+    {
+      "path": "src/core/BaseAgent.ts",
+      "bytes": 61183,
+      "sha256": "23bde21e3af168ff3825448399e4f29c6cbf0dcad8e317d162b3d6d3d5c5d1b4"
+    },
+    {
+      "path": "src/core/ToolManager.ts",
+      "bytes": 51717,
+      "sha256": "2fd7902af0f1fd22b8e8f76f90fd1ed11224c5e9f83d098f2c53553f9c1bb70c"
+    },
+    {
+      "path": "src/core/model-execution/ModelExecutor.ts",
+      "bytes": 21713,
+      "sha256": "999a8cef48554ba14e1ebc6497bee0b174cbd72b36bf6d5b83cd1b09f6bf5f44"
+    },
+    {
+      "path": "src/core/execution/composition.ts",
+      "bytes": 8302,
+      "sha256": "4012188ac3176ac2014b3755b319bfe4d223b8c768a780e6901511b8bc726a8a"
+    },
+    {
+      "path": "src/core/execution/routineBinding.ts",
+      "bytes": 2762,
+      "sha256": "1ca9006276fdd642fabdfe833e2f156f387490086b600a135013e4e180a6b714"
+    },
+    {
+      "path": "src/core/routineRunner.ts",
+      "bytes": 56296,
+      "sha256": "0eff8465ad0e99ca2b89bcaf8526d5b2bf14aa0eaae5fc13b37fea20c3e6f649"
+    },
+    {
+      "path": "src/core/routineControlFlow.ts",
+      "bytes": 31710,
+      "sha256": "89a486fd047dbc182a1d134cc71aab074ee4c88b65ad70927d9d4de0218f6142"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "bytes": 21280,
+      "sha256": "b24cd64a858748e825e6246678afc1b3a9abe021d20fdad5f53c2b75ea53fb1a"
+    },
+    {
+      "path": "tests/unit/core/CompositionExecution.test.ts",
+      "bytes": 20335,
+      "sha256": "e623fcb641ab467f56e7c55f972cfc762d79f062929566974d1925f9af81104b"
+    },
+    {
+      "path": "tests/fixtures/composition/public-runtime.mjs",
+      "bytes": 3186,
+      "sha256": "1d9d81ef6d0bb472f0b7d9b25730d518218b4743b78bd91209ffa1402d762790"
+    },
+    {
+      "path": "tests/integration/text/CompositionExecution.live.integration.test.ts",
+      "bytes": 3737,
+      "sha256": "b19247698263112a20ed5b218b216b7c0bce574c620419b43a26b0ce65514a32"
+    },
+    {
+      "path": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+      "bytes": 19482,
+      "sha256": "8a9b84f706e24101b90bae91473c3523ff916963b3d42ca8342c3ec84b4e5f1b"
+    },
+    {
+      "path": "tests/integration/text/ModelRouting.live.integration.test.ts",
+      "bytes": 29448,
+      "sha256": "f43fdd6d9eaa82cf68464ae243a8c1ec8794acef21d51953c6c71f3f3bf1c6ef"
+    },
+    {
+      "path": "examples/composite-execution-binding.ts",
+      "bytes": 2155,
+      "sha256": "2020040b5323b20cae56a4e40a1280445e06bfa3708c09c22f0199edc4ce212b"
+    },
+    {
+      "path": "package.json",
+      "bytes": 24553,
+      "sha256": "5077067c60c5dc1b366881407340372cdd3eb56301f4b29a8a202652fcdd1d9a"
+    }
+  ],
+  "limitations": [
+    "C2 is internal-only. C3 must finish verification, continuation and shared-manager tool scoping before exposing the new facade. The internal bound entry rejects implicit requiredTools scoping until that integration; the legacy runner remains unchanged."
+  ],
+  "knownFailures": [],
+  "remainingRequiredWorkForC2": [],
+  "next": "Continue immediately with C3 under the full-sequence authorization."
+}

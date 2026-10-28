@@ -169,6 +169,15 @@ contracts, failure behavior, and the opt-in billable `npm run test:context:live`
 
 ### Tool outcomes and cancellation (Stage 02)
 
+C1's [`outcome-aware-tools.ts`](./outcome-aware-tools.ts) uses the public
+`createOutcomeTool()` helper. Build, then run `npm run example:outcome-aware-tools`;
+expect the same frozen raw payload with `declined_lookup succeeded` and
+`unavailable_lookup failed`. No keys, network or external effects are required;
+the manager is destroyed in finally. `npm run example:amos-outcome-tools` renders
+these actual outcomes through AMOS. The separately opt-in, billable
+`npm run test:outcome-tools:live` uses OpenAI/Anthropic/Google `.env` keys for
+run/stream with synthetic local tools. See the [recipe](../docs/OUTCOME_AWARE_TOOLS.md).
+
 After `npm run build`, run `npm run example:tool-outcomes` for
 [`tool-outcomes-and-cancellation.ts`](./tool-outcomes-and-cancellation.ts). No keys
 are required. It demonstrates preserved domain/failure payloads, cooperative and
@@ -409,3 +418,50 @@ The Google pilot explicitly disables thinking on supported Gemini 2.5 Flash
 GenerateContent models. The converter now sends the required zero budget; the
 original exact-answer and minimum savings checks are unchanged. This is a measured
 fixture comparison rather than a promise that every routed workload costs less.
+
+### Explicit shared accounting (C2)
+
+After `npm run build`, run `npm run example:composite-binding`. This deterministic
+offline recipe makes three synthetic managed/direct/helper calls on one ModelTask,
+prints purposes and total usage, and cleans up all resources. No keys are needed.
+Managed cancellation uses the task; direct/helper APIs also take explicit signals.
+The verified routine facade and AMOS operation controls are delivered in C3.
+
+### Verified routines (C3)
+
+After `npm run build`, run `npm run example:verified-routines` (offline, no credentials). It submits one synthetic action, waits for a host check, resumes the same cursor and verifies an artifact created by a post-step. All agents/tasks/connectors are cleaned up. See [the recipe](../docs/VERIFIED_ROUTINES.md) for source archival and live test opt-in.
+
+### Enhanced connectors (C4)
+
+Build, then run `npm run example:enhanced-connectors`. It uses temporary local HTTP servers and an evidence directory, with zero LLM calls/external writes. Expected: two safe-read attempts, complete allowed source recovered after rollover, one synthetic mutation despite HTTP 503, no legacy aliases, same-origin redirects followed and cross-origin redirects blocked before credentials leave the configured origin. It cleans up all resources. See [the connector recipe](../docs/ENHANCED_CONNECTORS.md) for explicitly opt-in live validation.
+
+### Connector collection pages (C5)
+
+Build, then run `npm run example:connector-pages`. No credentials are needed. A local server over-returns, includes an empty intermediate page and ends with a partial page: expected 49 exact IDs across 14 logical pages/HTTP requests and zero LLM calls. The example verifies the stable ID hash, source recovery from a reopened FileEvidenceStorage, catalog reload/context rollover, rejection by a fresh manager, and cleanup. See [the page recipe](../docs/CONNECTOR_COLLECTION_PAGES.md); opt-in live tests use real models and synthetic local provider pages only.
+
+### Complete factory orchestration
+
+After building, `npm run example:orchestrator-factory` runs [orchestrator-factory.ts](orchestrator-factory.ts) offline. It asserts actual distinct root/worker requests, shared operation accounting across delegation/monitoring and cleanup; expected output includes `passed: true` and two shared-operation calls plus an independent root configuration probe. No keys or external writes. See [the recipe](../docs/ORCHESTRATOR_FACTORY.md) for real connector setup and retained-source recovery.
+
+- [Remote tool outcomes](remote-tool-outcomes.ts): `npm run example:remote-outcomes`.
+  Offline authenticated transport; exact chunked sources, business declines,
+  uncertain synthetic write and receipt recovery with one submission. Concurrent
+  receipt polls reuse the same acknowledged record without consuming more quota. No keys or
+  network needed. Opt-in real-provider checks: `npm run test:remote-outcomes:live`.
+
+- [Composed meeting preparation](composed-meeting-preparation.ts):
+  `npm run example:composition-evaluation` runs six offline local/remote cases,
+  host verification, exact source hashing and temporary artifact cleanup.
+- `npm run example:amos-composition` exercises actual AMOS routine inspection and
+  same-process confirmation with a synthetic provider and no credentials.
+
+- [Endpoint capabilities](endpoint-capabilities.ts): `npm run example:endpoint-capabilities`.
+  Offline root/shared metadata, documented constraints and explicit unknowns.
+
+- [Parameter policy](parameter-policy.ts): `npm run example:parameter-policy`.
+  Actual mocked Responses bodies, omission versus supported zero, raw strictness,
+  bounded decisions and saved configuration preserved. No network or keys.
+
+- [Vendor presentation](vendor-presentation.ts): `npm run example:vendor-presentation`.
+  Immutable browser-safe catalog, host label override, explicit unknown fallback
+  and identity/presentation separation. No network or keys.

@@ -1,5 +1,22 @@
 # OneRingAI Agent Guide
 
+Consumer C5's explicitly selected collections-v1 API is documented in
+[whole collection pages](docs/CONNECTOR_COLLECTION_PAGES.md). Use source/account
+registration and actual selected identity filters before run/session loading.
+Returned count, provider pagination end and corpus coverage are independent;
+cursor keys survive catalog/rollover/scopes but not new managers/processes/clear.
+Evidence is separately opt-in. Keep execution-v1's C4 static semantics unchanged.
+The [capacity inventory](docs/CONSUMER_CAPACITY_INVENTORY.md) distinguishes source,
+prompt, parser, storage and work bounds; do not raise them indiscriminately.
+
+Consumer C4 is complete on branch under the full sequential authorization. Use
+`ConnectorTools.enhanced(name, { profile: 'execution-v1' })` explicitly and follow
+[the recipe](docs/ENHANCED_CONNECTORS.md) for exact static identity/source/account
+registration and host approvals. Legacy factories/defaults remain unchanged;
+catalog/page support is C5. [Delivery](docs/designs/CONSUMER_C4_DELIVERY.md) records
+review fixes and validation. Continue the [ledger](docs/designs/CONSUMER_DELIVERY_LEDGER.md)
+without a routine selection stop; this is not a release or consumer upgrade.
+
 This is the canonical, vendor-neutral guide for coding agents that use or
 modify `@everworker/oneringai`. It is written for OpenAI Codex, Claude Code,
 custom coding agents, and humans delegating integration work to them.
@@ -254,6 +271,9 @@ Tool guidance:
 
 - Tool names must be unique within an agent.
 - Return serializable data; throw meaningful errors for failed execution.
+- Use root `createOutcomeTool()` for explicit invocation-owned operational failures
+  with unchanged raw returns. See [the recipe](docs/OUTCOME_AWARE_TOOLS.md); existing
+  tools remain unchanged and rich remote parity remains C7.
 - Use `agent.tools.executeWithOutcome()` for semantic diagnostics; `execute()`
   preserves raw returns. An application `success: false` field is not a framework
   failure. Observe `ToolContext.signal` and forward it to connector requests.
@@ -529,6 +549,7 @@ during application shutdown.
 | Agent runtime architecture and server roadmap | `docs/designs/AGENT_RUNTIME.md` |
 | Server/desktop Agent packages, remote tools, and WebRTC ownership | `docs/designs/DISTRIBUTED_AGENT_EXECUTION.md` |
 | Staged agentic architecture evolution, evaluation, and compatibility requirements | `docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md` |
+| Consumer-validated routine, connector, orchestration and remote execution gaps; proposed hardening slices | `docs/designs/CONSUMER_EXECUTION_HARDENING.md` |
 | Stage 16A approved API and delivery record | `docs/designs/STAGE_16A_NATIVE_COMPACTION_API.md` |
 | Version 2 adoption, stage availability, and standard-documentation handoff | `docs/VERSION_2_GUIDE.md` |
 | Stage 00 offline/live evaluation, completion gates, compatibility fixtures, and measured pilot | `docs/AGENTIC_BASELINE_EVALUATION.md` |
@@ -940,3 +961,143 @@ and preview aliases through the shared Google/Vertex converter. Omitted defaults
 enabled settings and explicit vendor overrides retain their behavior. Do not infer
 that Pro, 3.x, image/unknown models or Interactions can disable thinking; those paths
 are unchanged. The original pilot quality/cost thresholds remain in force.
+
+## Consumer execution hardening — planning checkpoint
+
+The 2026-10-23 consumer report has been independently checked against the current
+library and selected ICOS consumers. Read the
+[validated plan](docs/designs/CONSUMER_EXECUTION_HARDENING.md) and
+[review evidence](docs/evaluations/CONSUMER_EXECUTION_REVIEW_2026_10_23.json)
+before extending routine completion, composite accounting, connector execution,
+worker construction or remote outcomes. The current user request authorizes
+investigation and a plan only. C1–C8 are proposed delivery slices, not implementation
+approval; API and breaking-change review requirements still apply. Existing
+protocol v2 rejects unknown response fields, so optional remote metadata requires
+an explicitly compatible negotiation/version design. Preserve the distinction
+between managed-Agent support and support across every composed runtime.
+
+Persistent consumer-hardening instruction (2026-10-23): **breaking old agents is
+unacceptable**. Read the [compatibility-first API design](docs/designs/CONSUMER_COMPATIBLE_APIS.md).
+The new APIs must adapt to existing contracts; no breaking option or later default
+flip is proposed for this work. Keep old signatures, status unions, callbacks,
+tool schemas/results, events, saved state/storage contracts, protocol-v2 literal
+types/allowlists and default behavior unchanged. Use separate opt-in entry points
+and result/checkpoint/wire types where needed. Do not add fields to old ToolContext
+or infer new semantics from arbitrary payloads. Require paired frozen legacy and
+new-path acceptance gates for each slice. A failed compatibility gate requires
+redesign, not a migration note or a request to accept a break. The plan/API redesign
+does not authorize C1–C8 runtime implementation or consumer upgrades.
+
+Revision 3 of that plan has been holistically reviewed; read the
+[final decisions](docs/designs/CONSUMER_PLAN_HOLISTIC_REVIEW.md) before implementation.
+C2/C3 have one public facade release boundary. C3 requires phase-aware host
+verification and supports same-process single-use handles only; durable workflow
+resume is deferred C3-R. Waiting owned children/leases and unacknowledged evidence
+must survive until safe terminal cleanup. Current RunOptions has no signal: use a
+private selected-path execution binding, not ignored options or cancellation of
+an unrelated Agent. Bind orchestration tasks per operation, not constructor lifetime.
+C4/C5 use fixed private profiles; no new public factory registry/universal inspector.
+C7 uses hydration vocabulary and separate proxy/server observations with explicit
+lookup/cancel semantics; its wire schema is a stage-entry review. No runtime,
+consumer change, breaking change or release follows from plan approval alone.
+
+Revision 4 incorporates the additional
+[ICOS registry follow-up](docs/designs/CONSUMER_REGISTRY_FOLLOWUP.md). C6's proposed
+`configureAgent` returns complete parent/worker configuration before plugin/tool/
+lifecycle initialization; do not return a built Agent and retrofit its configuration.
+Keep documented whole-config precedence, mandatory workspace/tool ownership,
+provider/account isolation, zero/false/absence and no-memory reserve/strategy.
+Old constructors/callbacks remain unchanged. Independent C9-A/B/C plan endpoint-
+specific capability companions, opt-in effective-request temperature policy and
+browser-safe vendor presentation; exact C9 APIs require stage-entry review.
+Preserve raw old registry/session validation/defaults and generic custom-service
+ownership. Reasoning unions/STT streaming do not prove per-model endpoint support;
+keep unknown explicit. Current temperature strictness is intentional, and native
+counting skips that validator; do not change legacy defaults to reconcile them.
+Retain consumer safeguards until new contracts are delivered and adopted. No C6/C9
+runtime, consumer pin/app change, database design or release is authorized here.
+
+
+Revision 5 is the current plan approval candidate. Read the
+[final simplicity review](docs/designs/CONSUMER_PLAN_FINAL_SIMPLICITY_REVIEW.md)
+and follow the canonical document-ownership map instead of historical signatures.
+Reuse direct-call signal/modelTask options; the private cancellation bridge is for
+managed calls. Enhanced factories do not automatically replace identity/catalog
+legacy tools: require explicit source-tagged static registration and the separate
+C5 manager-local catalog gate. C6's API table owns configuration/authority/board
+precedence; new-path forbidden keys need runtime checks and variable-safe types.
+Failed continuation admission must not consume the only paused handle; use bounded
+observation views and existing evidence. Unresolved required gates block completion.
+This remains documentation/planning only; no runtime, app, dependency or release
+implementation is authorized by this review.
+
+
+## Consumer C1 implementation selection — 2026-10-23
+
+The user approved revision 5 and said “proceed with full implementation” after the
+C1 recommendation. This selects C1 under the staged-development rule, superseding
+the historical planning-only scope above for that slice. Read
+[C1 delivery](docs/designs/CONSUMER_C1_DELIVERY.md) and
+[usage](docs/OUTCOME_AWARE_TOOLS.md). C1 is complete on branch with all recorded
+unit/live/public/example/documentation gates passing. C2–C9 remain planned; no later runtime stage, consumer upgrade, breaking
+API, commit/push or release is included. New APIs/types use root public exports;
+legacy ToolContext/ToolFunction, raw results, defaults and protocol v2 remain.
+
+## Consumer hardening — full sequential authorization, 2026-10-23
+
+The user explicitly requested: “implement all slices in order without stopping.
+Review them, fix issues after each slice, but do not stop”. This supersedes the
+earlier one-slice selection limit for C2–C8 and C9-A/B/C. Implement them in the
+plan's dependency order; review and fix each slice, complete its validation and
+documentation, then continue without another routine approval question. Stage-entry
+designs remain required for C5 catalog, C7 wire and C9 APIs; make them concrete and
+review them against the approved compatibility constraints before implementation.
+The breaking-change approval rule remains in force. No consumer app/pin upgrade,
+commit/push/publication, durable routine/cursor backend, Stage 14B or 16B is included.
+Track progress in [the delivery ledger](docs/designs/CONSUMER_DELIVERY_LEDGER.md),
+updating the Version 2 guide and affected public guides as each slice is delivered.
+
+## Consumer C3 — opt-in verified routines
+
+`createRoutineRunner({ verify })` is the additive root-exported facade; preserve legacy
+`executeRoutine`/`createRoutineTool` contracts. Read [verified routines](docs/VERIFIED_ROUTINES.md)
+before using it. Verification gates task readiness and final post-step state; only
+renewed host authorization can resume its opaque same-process continuation. All
+nested calls share the selected execution binding, with absolute deadlines and one
+shared ToolManager. Borrowed Agents/tasks are never destroyed. Recover oversized or
+late sources through host-only reads/acknowledgements and existing storage, without
+action replay or waiving actual context tool-evidence protection. No durable cursor
+or C3-R backend is implemented. Continue the authorized remaining sequence through
+C9 after each slice's passing review/validation/documentation checkpoint.
+
+## Complete orchestration factory
+
+For complete authorized root/worker configuration before initialization, use `createOrchestratorWithFactory` with a required `configureAgent` returning a complete plain `OrchestratedAgentConfig`. Preserve library-owned hierarchy/workspace/tools and resolve each worker independently. Pass ModelTask per operation; inspect child outcomes separately from business verification. Retained worker work/evidence blocks reuse/destruction. Read [the recipe](docs/ORCHESTRATOR_FACTORY.md); old createOrchestrator and synchronous callbacks remain supported.
+
+## Negotiated portable outcomes
+
+For explicit source/proxy parity, use the separate C7 APIs in
+[Remote Tool Outcomes](docs/REMOTE_TOOL_OUTCOMES.md). Old protocol 2 remains unchanged.
+Use scoped evidence and trusted host authorization on all five transport operations.
+Unknown writes require receipt/source reconciliation before managed continuation;
+never allocate a fresh request to retry an uncertain action. Tools-first C6
+construction shares the exact evidence storage handle with its one ToolManager.
+Checkpoints are evidence recovery, not workflow or ModelTask authority.
+Selected generic connector redirects must stay on their admitted origin. Remote
+execution without authoritative outcome metadata stays unknown after handoff;
+never infer not-started from missing instrumentation. Receipt reconciliation reuses
+valid evidence, and failed shutdown completion must release settled ownership.
+
+## Endpoint metadata and selected parameter policy
+
+C9's pure root/shared `getRealtimeModelCapabilities`, `getTranscriptionCapabilities`
+and `assessModelParameters` distinguish supported, unsupported and unknown facts.
+Do not infer vendor from a model name or replace unknown effort sets with generic
+unions. Optional `parameterPolicy` applies to selected OpenAI requests; old defaults
+and raw provider controls remain strict. Policy is host-local and omitted from old
+portable v2 snapshots. Read [endpoint capabilities](docs/ENDPOINT_CAPABILITIES.md)
+and [parameter policy](docs/PARAMETER_POLICY.md).
+`VENDOR_PRESENTATIONS`/`getVendorPresentation` are optional presentation only;
+they never grant LLM/service ownership or authentication authority. Read
+[vendor presentation](docs/VENDOR_PRESENTATION.md). Live LLM testing was explicitly
+paused by the user on 2026-10-28; do not resume it without authorization.

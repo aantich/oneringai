@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Google Meet - Get Meeting Transcript Tool
  *
@@ -127,10 +128,10 @@ Optional: \`since\` (ISO date) restricts to files modified on/after that date. C
         getGoogleUserId(connector, args.targetUser);
 
         if (!args.fileId && !args.meetingTitle && !args.meetingCode) {
-          return {
+          return connectorFailure(connector, {
             success: false,
             error: 'At least one of fileId, meetingTitle, or meetingCode is required.',
-          };
+          });
         }
 
         let transcriptFileId = args.fileId;
@@ -190,10 +191,10 @@ Optional: \`since\` (ISO date) restricts to files modified on/after that date. C
             const subject = args.meetingCode
               ? `meeting code "${args.meetingCode}"`
               : `"${args.meetingTitle}"`;
-            return {
+            return connectorFailure(connector, {
               success: false,
               error: `No transcript or Gemini notes found for ${subject}. Ensure either Meet transcription or "Take notes for me" was enabled, and the resulting Doc lives in the authenticated user's Drive (folder "Meet Recordings" or "Meet Notes").`,
-            };
+            });
           }
 
           // Use the most recent matching file
@@ -230,22 +231,22 @@ Optional: \`since\` (ISO date) restricts to files modified on/after that date. C
       } catch (error) {
         if (error instanceof GoogleAPIError) {
           if (error.status === 404) {
-            return {
+            return connectorFailure(connector, {
               success: false,
               error: 'Transcript file not found. Check that the file ID is correct and you have access.',
-            };
+            });
           }
           if (error.status === 403 || error.status === 401) {
-            return {
+            return connectorFailure(connector, {
               success: false,
               error: 'Access denied. The connector may not have sufficient permissions (drive.readonly or drive scope required).',
-            };
+            });
           }
         }
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatGoogleToolError('Failed to get transcript', error),
-        };
+        });
       }
     },
   };

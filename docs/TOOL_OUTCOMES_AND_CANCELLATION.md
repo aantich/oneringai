@@ -5,6 +5,12 @@ Stage 02 adds semantic execution diagnostics and cancellation to the existing sh
 package release. Existing tools, raw return values, session formats, and defaults
 remain supported.
 
+Consumer C1 adds [`createOutcomeTool()`](OUTCOME_AWARE_TOOLS.md) for callbacks that
+catch an operational error and keep an application-specific raw return. Its
+invocation-owned report feeds this same outcome pipeline. A business decline
+without a report keeps the existing succeeded-execution classification. No field
+is added to ToolContext, raw results or protocol-v2 messages.
+
 ## Read an outcome without changing a raw result
 
 ```typescript

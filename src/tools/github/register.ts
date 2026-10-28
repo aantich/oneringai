@@ -1,3 +1,5 @@
+import { registerEnhancedFactory } from '../connector/enhancedProfiles.js';
+import type { ServiceToolFactory } from '../connector/ConnectorTools.js';
 /**
  * GitHub Tools Registration
  *
@@ -24,7 +26,7 @@ import { createListBranchesTool } from './listBranches.js';
  * return all 8 GitHub tools plus the generic API tool.
  */
 export function registerGitHubTools(): void {
-  ConnectorTools.registerService('github', (connector: Connector, userId?: string) => {
+  const bundledFactory: ServiceToolFactory = (connector: Connector, userId?: string) => {
     return [
       createSearchFilesTool(connector, userId),
       createSearchCodeTool(connector, userId),
@@ -35,5 +37,7 @@ export function registerGitHubTools(): void {
       createPRCommentsTool(connector, userId),
       createCreatePRTool(connector, userId),
     ];
-  });
+  };
+  ConnectorTools.registerService('github', bundledFactory);
+  registerEnhancedFactory('github', bundledFactory);
 }

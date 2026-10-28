@@ -18,3 +18,5 @@ export { ClearCommand, ExitCommand, StatusCommand, HistoryCommand, PlanCommand }
 export { ExternalCommand } from './ExternalCommand.js';
 
 export { RoutingCommand } from './RoutingCommand.js';
+
+export { RoutineCommand } from './RoutineCommand.js';

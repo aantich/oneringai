@@ -1,0 +1,618 @@
+{
+  "protocol": "consumer-registry-followup-review-v1",
+  "recordedAt": "2026-10-23T13:04:34.620960+00:00",
+  "branch": "version2",
+  "headCommit": "dff238759c41431bd24712d3b045dd38fc800b37",
+  "status": "revision-4-final-plan-awaiting-approval-not-implemented",
+  "scope": "Read and validate the additional ICOS registry report; adjust plan/API direction only. No runtime, application, dependency, schema, release or deployment changes.",
+  "input": {
+    "path": "/Users/aantich/dev/icos/docs/oneringai-agent-registry-followup.md",
+    "sha256": "c06f18b7b8d4401003246eae9fd09676d5414b595a80230249f1fe98055b3a48",
+    "bytes": 8863
+  },
+  "consumerPin": {
+    "commit": "991a977b769eabe6c43ec8eff6d057b20f0663d9",
+    "packageLabel": "1.1.8",
+    "reportedBackendCommit": "70fad29d",
+    "reportedDesktopCommit": "33d70ade5",
+    "desktopManifestIndependentlyVerified": false,
+    "consumerTestClaimsIndependentlyRerun": false
+  },
+  "historicalRecords": [
+    {
+      "path": "docs/evaluations/CONSUMER_EXECUTION_REVIEW_2026_10_23.json",
+      "sha256": "141dd5a32ccf00ab343777e301a09d4001a3cd3b6b5532e3110cae427024ecd5",
+      "bytes": 34629
+    },
+    {
+      "path": "docs/evaluations/CONSUMER_PLAN_HOLISTIC_REVIEW_2026_10_23.json",
+      "sha256": "f2736ac8e34ce76ac7c69e4edce94cba5a19f6067dab7919f478c23162925664",
+      "bytes": 17151
+    }
+  ],
+  "historicalArtifactBoundary": "Prior records keep their revision-2/3 artifact hashes and validation; this record owns current revision-4 hashes. No historical unit/live total is recounted as fresh.",
+  "constraints": {
+    "breakingChangesProposed": false,
+    "automaticMigration": false,
+    "defaultFlip": false,
+    "runtimeImplementationAuthorized": false,
+    "consumerUpgradeAuthorized": false,
+    "packageReleaseVerified": false
+  },
+  "planDecisions": [
+    {
+      "id": "C6",
+      "decision": "Replace the unimplemented built-Agent callback proposal with configureAgent returning complete host-selected config before plugin/tool/lifecycle initialization. Explicit precedence, required workspace/tool ownership and provider/account/authority isolation. Preserve old constructors/callbacks."
+    },
+    {
+      "id": "C9-A",
+      "decision": "Independent endpoint/model/transport capability companion, verified/unsupported/unknown distinct. No changes to old raw registry/session unions, saved values, admission or generic STT streaming. Exact 2.1/mini efforts remain unverified."
+    },
+    {
+      "id": "C9-B",
+      "decision": "Independent public effective-request assessment plus opt-in neutral-temperature omission. Preserve intentional strict generation validation and explicit raw controls. Cover native-count divergence and routed/overridden requests."
+    },
+    {
+      "id": "C9-C",
+      "decision": "Independent browser-safe vendor presentation catalog with host overrides. Preserve vendor identity, generic custom-service ownership, service/auth classification and approved consumer labels/colors."
+    }
+  ],
+  "sourceComparison": {
+    "pinnedSources": [
+      {
+        "path": "src/core/orchestrator/createOrchestrator.ts",
+        "commit": "991a977b769eabe6c43ec8eff6d057b20f0663d9",
+        "sha256": "39b2b8e868acf0419b78004e425df10088c8277776805ff28c2159e678507e2c",
+        "bytes": 34641
+      },
+      {
+        "path": "src/infrastructure/providers/openai/OpenAITextProvider.ts",
+        "commit": "991a977b769eabe6c43ec8eff6d057b20f0663d9",
+        "sha256": "0dabd9d1442e2d78d7e9d60db8dcce62487e4b76863e838351d752d7ac756da8",
+        "bytes": 23796
+      },
+      {
+        "path": "src/infrastructure/providers/openai/OpenAIRequestValidator.ts",
+        "commit": "991a977b769eabe6c43ec8eff6d057b20f0663d9",
+        "sha256": "e718715cc0c3f1f748d668ccb1334bc0efb4874f566060b6e21375b2273f9010",
+        "bytes": 5622
+      },
+      {
+        "path": "src/domain/entities/Model.ts",
+        "commit": "991a977b769eabe6c43ec8eff6d057b20f0663d9",
+        "sha256": "3e345c4b0ec10aa10e96ac86e14ba2e424853c41ac01cc85351f6900f0b8b860",
+        "bytes": 124519
+      },
+      {
+        "path": "src/domain/entities/STTModel.ts",
+        "commit": "991a977b769eabe6c43ec8eff6d057b20f0663d9",
+        "sha256": "85878b06f5267824a58d610426af5832c21143f8b1c8cda292d9c1ac2ca82059",
+        "bytes": 22242
+      },
+      {
+        "path": "src/shared/index.ts",
+        "commit": "991a977b769eabe6c43ec8eff6d057b20f0663d9",
+        "sha256": "c0555843ea2ffffb91d4e43fe67c6bea486d11a8dda5e304638a6b577412e7bb",
+        "bytes": 1454
+      },
+      {
+        "path": "src/core/Vendor.ts",
+        "commit": "991a977b769eabe6c43ec8eff6d057b20f0663d9",
+        "sha256": "4c532d3d57e0148de567627161693e9e76b366a76e2de02ac4429f787f95e482",
+        "bytes": 804
+      }
+    ],
+    "findings": [
+      "Both pinned and current sources lack effort lists for all three requested Realtime models.",
+      "Pinned provider filters temperature using static metadata before original-option validation.",
+      "Current GPT-6 provider retains sampling for effort-aware validation; strict rejection is intentional.",
+      "Generation, stream, batch and Responses WebSocket use the validator; native input counting projects fields without it.",
+      "Generic STT streaming does not encode conversation-model/session-mode/transport support.",
+      "Shared exports contain vendor IDs but no LLM display-name/color catalog."
+    ]
+  },
+  "officialDocumentation": [
+    {
+      "url": "https://developers.openai.com/api/docs/guides/voice-prompting#set-reasoning-effort",
+      "supports": "gpt-realtime-2 explicit effort set minimal/low/medium/high/xhigh; do not extrapolate to 2.1 or mini.",
+      "method": "official OpenAI developer-doc search and fetch",
+      "verifiedOn": "2026-10-23"
+    },
+    {
+      "url": "https://developers.openai.com/api/docs/models/gpt-realtime-2.1",
+      "supports": "Reasoning capability; fetched page does not enumerate exact allowed efforts.",
+      "verifiedOn": "2026-10-23"
+    },
+    {
+      "url": "https://developers.openai.com/api/docs/models/gpt-realtime-2.1-mini",
+      "supports": "Reasoning capability; fetched page does not enumerate exact allowed efforts.",
+      "verifiedOn": "2026-10-23"
+    },
+    {
+      "url": "https://developers.openai.com/api/docs/guides/latest-model#gpt-6-astra-update-api-and-model-parameters",
+      "supports": "Effort-dependent sampling restrictions and none support differ by model.",
+      "verifiedOn": "2026-10-23"
+    },
+    {
+      "url": "https://developers.openai.com/api/docs/guides/realtime-transcription",
+      "supports": "Dedicated transcription/conversation session distinction and transport/VAD constraints; not a complete compatibility matrix.",
+      "verifiedOn": "2026-10-23"
+    }
+  ],
+  "freshValidation": {
+    "existingFocusedTests": {
+      "passed": 196,
+      "failed": 0,
+      "skipped": 0,
+      "files": 9,
+      "runs": [
+        {
+          "command": "npx vitest run tests/unit/core/orchestrator/createOrchestrator.test.ts tests/unit/providers/OpenAITextProvider.test.ts tests/unit/providers/OpenAITextProvider.stream.test.ts tests/unit/capabilities/NewVendorAPIs.test.ts tests/unit/voice/OpenAIRealtime.test.ts tests/unit/audio/STTModel.test.ts tests/unit/domain/entities/Model.test.ts tests/unit/connectors/vendorRegistryCompleteness.test.ts --reporter=json --outputFile=/tmp/oneringai-registry-followup-tests.json",
+          "exitCode": 0,
+          "passed": 189,
+          "failed": 0,
+          "skipped": 0,
+          "files": 8,
+          "report": {
+            "path": "/tmp/oneringai-registry-followup-tests.json",
+            "sha256": "6d7f1187b31ad7d997ab4c55d14f2cb30c282253b68cfa79c065a34f99e4da4b",
+            "bytes": 57849
+          },
+          "log": {
+            "path": "/tmp/oneringai-registry-followup-tests.log",
+            "sha256": "ed14973ba61458712e4ed8083d1b582c4135b7be9b4db835d979aa60fd58dd41",
+            "bytes": 67
+          }
+        },
+        {
+          "command": "npx vitest run tests/unit/capabilities/OpenAIResponsesWebSocketSession.test.ts --reporter=json --outputFile=/tmp/oneringai-registry-followup-websocket-tests.json",
+          "exitCode": 0,
+          "passed": 7,
+          "failed": 0,
+          "skipped": 0,
+          "files": 1,
+          "report": {
+            "path": "/tmp/oneringai-registry-followup-websocket-tests.json",
+            "sha256": "b8563f89efcdb354f06957a07bd1694e5e0ca0d53a09d2d8f1b97e94b066b293",
+            "bytes": 2824
+          },
+          "log": {
+            "path": "/tmp/oneringai-registry-followup-websocket-tests.log",
+            "sha256": "8dd442c605f88ff093b8111abe6fb51f730f06f07da2f389644768aeb72663c6",
+            "bytes": 77
+          }
+        }
+      ]
+    },
+    "publicCompatibility": {
+      "checks": 202,
+      "suites": [
+        {
+          "command": "node tests/fixtures/agentic-presets/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 54,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 27,
+              "calls": 4
+            },
+            {
+              "format": "cjs",
+              "checks": 27,
+              "calls": 4
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/agentic-presets/public-runtime.mjs",
+            "sha256": "f83c909cd3cb0d435d0e53b4eb90666ad4a79f9cb4c473ec739625a7d4bec30f",
+            "bytes": 11410
+          },
+          "log": {
+            "path": "/tmp/oneringai-registry-followup-presets.log",
+            "sha256": "2ccccc98498b54d9a33564c13440bc0bdfea4b5b9a2a9e7df637824497c78e76",
+            "bytes": 6936
+          }
+        },
+        {
+          "command": "node tests/fixtures/context-assembly/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 38,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 19
+            },
+            {
+              "format": "cjs",
+              "checks": 19
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/context-assembly/public-runtime.mjs",
+            "sha256": "3afbf913e7f108fda5327dff8e26b95874492b1131f6b3730572994a243eafe7",
+            "bytes": 11313
+          },
+          "log": {
+            "path": "/tmp/oneringai-registry-followup-assembly.log",
+            "sha256": "1c84d5a067db4809cc51b21adf4f6f5524f89c35a9e2deecd5f59f968f1c9de4",
+            "bytes": 15949
+          }
+        },
+        {
+          "command": "node tests/fixtures/native-compaction/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 66,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 33
+            },
+            {
+              "format": "cjs",
+              "checks": 33
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/native-compaction/public-runtime.mjs",
+            "sha256": "2b78d20d079822783ca7410b86de34b3233e7a5f098b420503d3e305a6ec9187",
+            "bytes": 4083
+          },
+          "log": {
+            "path": "/tmp/oneringai-registry-followup-native.log",
+            "sha256": "feaac732646a5228750187c02ffaba32c99d6f6a698c644d24ec7465be2c534b",
+            "bytes": 4597
+          }
+        },
+        {
+          "command": "node tests/fixtures/model-routing/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 44,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 22
+            },
+            {
+              "format": "cjs",
+              "checks": 22
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/model-routing/public-runtime.mjs",
+            "sha256": "0336880be058196eb3c76de5867fee875ebacf68fc875b90607ff3582c95a60a",
+            "bytes": 7766
+          },
+          "log": {
+            "path": "/tmp/oneringai-registry-followup-routing.log",
+            "sha256": "3ab6351c7bebf77f799409c0983b41f8783a3df856e41dd828ab6a7d274315e4",
+            "bytes": 15993
+          }
+        }
+      ],
+      "legacyTypeConsumer": {
+        "command": "npm run test:agentic:compat",
+        "exitCode": 0,
+        "log": {
+          "path": "/tmp/oneringai-registry-followup-legacy-types.log",
+          "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6",
+          "bytes": 116
+        }
+      }
+    },
+    "apiContractPrototype": {
+      "command": "npx tsc --noEmit -p docs/evaluations/consumer-api-design/tsconfig.json",
+      "exitCode": 0,
+      "strict": true,
+      "exactOptionalPropertyTypes": true,
+      "negativeCompileControls": 12,
+      "log": {
+        "path": "/tmp/oneringai-registry-followup-design-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "meaning": "Ambient proposed declarations/unexecuted examples check type coherence against built public types; no proposed runtime behavior is implemented or validated."
+    },
+    "characterization": {
+      "command": "node --import tsx docs/evaluations/consumer-registry-followup-probes.mjs",
+      "exitCode": 0,
+      "matched": 7,
+      "total": 7,
+      "meaning": "Current gaps and intentional legacy controls, not implemented fixes. Expected strict errors are asserted and do not indicate failed tests.",
+      "observations": [
+        {
+          "id": "F01",
+          "matched": true,
+          "kind": "missing-capability-metadata",
+          "models": [
+            "gpt-realtime-2.1",
+            "gpt-realtime-2.1-mini",
+            "gpt-realtime-2"
+          ]
+        },
+        {
+          "id": "F02",
+          "matched": true,
+          "kind": "identity-control",
+          "customStillVendorId": true,
+          "meaning": "Known proposed presentation names are absent; source review confirms no branding catalog."
+        },
+        {
+          "id": "F03",
+          "matched": true,
+          "kind": "generic-streaming-control",
+          "model": "gpt-live-transcribe",
+          "streaming": true,
+          "meaning": "Generic flag alone supplies no conversation-model/transport compatibility contract."
+        },
+        {
+          "id": "F04",
+          "matched": true,
+          "kind": "intentional-strict-control",
+          "rejectedBeforeSDKDispatch": true
+        },
+        {
+          "id": "F05",
+          "matched": true,
+          "kind": "conditional-sampling-control",
+          "model": "gpt-6-sol",
+          "temperature": 0,
+          "effort": "none"
+        },
+        {
+          "id": "F06",
+          "matched": true,
+          "kind": "count-versus-dispatch-gap",
+          "mockedInputCount": 10,
+          "sameGenerationRequestRejected": true,
+          "originalOptionsUnchanged": true
+        },
+        {
+          "id": "F07",
+          "matched": true,
+          "kind": "explicit-provider-control",
+          "rawVendorTemperatureRemainsRejected": true
+        }
+      ],
+      "report": {
+        "path": "/tmp/oneringai-registry-followup-probes.json",
+        "sha256": "0ae665d6399979f82710f3484690efdabdafa4f47cb536a689de4516cab67474",
+        "bytes": 2012
+      },
+      "log": {
+        "path": "/tmp/oneringai-registry-followup-probes.log",
+        "sha256": "a6453203d68767e9060bf325c8e6d42c72fae36b74cd53b1e09e64610aff3221",
+        "bytes": 3593
+      },
+      "fixture": {
+        "path": "docs/evaluations/consumer-registry-followup-probes.mjs",
+        "sha256": "fea279f3cd846a01d15f735bd994c1e4c61bf9b0b42ff7e012d86e591d9a8c82",
+        "bytes": 5867
+      }
+    },
+    "documentation": {
+      "localLinks": {
+        "checked": 541,
+        "errors": []
+      },
+      "report": {
+        "path": "/tmp/oneringai-registry-followup-links.json",
+        "sha256": "ce53d9e6fd4d4443f69ad544bc827d1909b4d9344ec6bb16b07df5611787148b",
+        "bytes": 37
+      },
+      "trackedWhitespaceErrors": 0,
+      "untrackedWhitespaceFilesChecked": 11,
+      "untrackedWhitespaceErrors": 0
+    },
+    "realLLMCalls": 0,
+    "realProviderCalls": 0,
+    "externalWrites": 0,
+    "servicesStarted": 0,
+    "envRead": false,
+    "consumerTestsRun": false,
+    "fullUnitOrLiveSuiteRerun": false
+  },
+  "documentManifest": [
+    {
+      "path": "docs/designs/CONSUMER_EXECUTION_HARDENING.md",
+      "sha256": "dc4be474dd420b7c86cbf3cf96a402ac18b1c5d48218cabb2438e02404c9dfc2",
+      "bytes": 53639
+    },
+    {
+      "path": "docs/designs/CONSUMER_COMPATIBLE_APIS.md",
+      "sha256": "c63d345392c08156940e34e8bffe3e60413e201ed007227fdeae131d67d3042a",
+      "bytes": 33604
+    },
+    {
+      "path": "docs/designs/CONSUMER_REGISTRY_FOLLOWUP.md",
+      "sha256": "e29f46f36f7d5603c8b1553d649eb034d4db7ae95cd8f8292653876a1a087469",
+      "bytes": 23452
+    },
+    {
+      "path": "docs/designs/CONSUMER_PLAN_HOLISTIC_REVIEW.md",
+      "sha256": "9c4c5a170289d97f4f8fcf2ae4d511b0333201de66a53550dc4bb2046735ba3d",
+      "bytes": 9483
+    },
+    {
+      "path": "docs/VERSION_2_GUIDE.md",
+      "sha256": "55630484d688308a2e1f2151c54e9a272250338e0141918ccb63140f613a1718",
+      "bytes": 228777
+    },
+    {
+      "path": "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "sha256": "8005640905cbaef244db158885c606397f03c9733f1d81e7f891e94f11fb8409",
+      "bytes": 261967
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "d2796fa219720ee8bd8eaeb94f63eddc618cdfc9f07f23e1d3399c1a05d9b95f",
+      "bytes": 53188
+    },
+    {
+      "path": "docs/evaluations/consumer-api-design/contracts.ts",
+      "sha256": "195c97b0572c1dc56b887d5b458fd46691f557ce8b6395f76745e5a833005cfb",
+      "bytes": 11001
+    },
+    {
+      "path": "docs/evaluations/consumer-api-design/tsconfig.json",
+      "sha256": "3f8e58eeb92411d89aeb95e33284364741cbf4800f8bcc38fb2cf6a7a6fa8467",
+      "bytes": 197
+    },
+    {
+      "path": "docs/evaluations/consumer-registry-followup-probes.mjs",
+      "sha256": "fea279f3cd846a01d15f735bd994c1e4c61bf9b0b42ff7e012d86e591d9a8c82",
+      "bytes": 5867
+    }
+  ],
+  "reviewedSourceManifest": [
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "0cf82141bb76596cae7eccf453bc12371c3380119d6676da7eab0d791f07fc30",
+      "bytes": 234541
+    },
+    {
+      "path": "src/core/BaseAgent.ts",
+      "sha256": "86ff8cd9c1edd8648c6a509207b961e33946da6de49eee5a14d06b6f5d1a0d9b",
+      "bytes": 60543
+    },
+    {
+      "path": "src/core/orchestrator/createOrchestrator.ts",
+      "sha256": "39b2b8e868acf0419b78004e425df10088c8277776805ff28c2159e678507e2c",
+      "bytes": 34641
+    },
+    {
+      "path": "src/core/orchestrator/tools.ts",
+      "sha256": "6b448e6c23ff93bf44a529a034e1fd7001ebeadf7eab27369411fc1ba4b268fd",
+      "bytes": 20352
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "sha256": "3dcf7744e30a9386c0ca98543c74856f1404b455f5f7253890427bab2fe8bdaa",
+      "bytes": 184688
+    },
+    {
+      "path": "src/domain/entities/Model.ts",
+      "sha256": "2b8a06de83cb10172882bf5979f694915f32a93ad016697cee7c17fe76a1a28b",
+      "bytes": 140619
+    },
+    {
+      "path": "src/domain/entities/STTModel.ts",
+      "sha256": "ee59e82eae94fdbfa5fa887919649bc5b745bfecc24fa8355e17722ed0eb28fa",
+      "bytes": 24285
+    },
+    {
+      "path": "src/core/Vendor.ts",
+      "sha256": "4c532d3d57e0148de567627161693e9e76b366a76e2de02ac4429f787f95e482",
+      "bytes": 804
+    },
+    {
+      "path": "src/shared/index.ts",
+      "sha256": "c0555843ea2ffffb91d4e43fe67c6bea486d11a8dda5e304638a6b577412e7bb",
+      "bytes": 1454
+    },
+    {
+      "path": "src/capabilities/voice/openai/RealtimeTypes.ts",
+      "sha256": "71ec11b749df4044d32fd17a733aaac7aa77454ae57aac576198b7e95563f0c4",
+      "bytes": 7586
+    },
+    {
+      "path": "src/capabilities/voice/openai/OpenAIRealtimeSession.ts",
+      "sha256": "6895bd93469d1111727aa5718087c9f39dfcd420b7f123284399bae227ea8538",
+      "bytes": 17832
+    },
+    {
+      "path": "src/capabilities/openai/OpenAIResponsesWebSocketSession.ts",
+      "sha256": "f894573bdbb6ccfb5980bcf1877374e627d52c36d3ea4de4143c4d64a00540cb",
+      "bytes": 12836
+    },
+    {
+      "path": "src/infrastructure/providers/openai/OpenAITextProvider.ts",
+      "sha256": "b5c9c6b28790748de8168d58aa34438fc4bf0e33b5385d4d11c9c9ae4e59116b",
+      "bytes": 28056
+    },
+    {
+      "path": "src/infrastructure/providers/openai/OpenAIRequestValidator.ts",
+      "sha256": "a377221111282d902c8bddf30b6a99fff79fe1191ddc26b34422454933fbb66a",
+      "bytes": 6596
+    },
+    {
+      "path": "tests/unit/providers/OpenAITextProvider.test.ts",
+      "sha256": "5b664f573e169e3c94dab85df52161853f3aa105d1f97bc9257993d0d14beebd",
+      "bytes": 18353
+    }
+  ],
+  "readOnlyConsumerSpotChecks": [
+    {
+      "path": "/Users/aantich/dev/icos/imports/v25/config/llmProviders.ts",
+      "sha256": "6ef80c81fb22d673401520c1ca54b512471782903e55137951b2af8abe3d4669",
+      "bytes": 1771
+    },
+    {
+      "path": "/Users/aantich/dev/icos/imports/v25/lib/utils/modelHelpers.ts",
+      "sha256": "37672b4a82d8b05e2da557a832c855df486872fdf9bd794fccb88e7826184d04",
+      "bytes": 3704
+    },
+    {
+      "path": "/Users/aantich/dev/icos/imports/v25/memory/agentContextBuilder.ts",
+      "sha256": "7636b0ccd2371f19d391b50636b843c35686403d47056ae963137c745c3316a0",
+      "bytes": 26496
+    },
+    {
+      "path": "/Users/aantich/dev/icos/imports/v25/infrastructure/executors/OneRingAgentExecutor.ts",
+      "sha256": "0ba5a7539b2322f68666cf1b97a4511fc0131989496323fdd5d05f0ade2958ff",
+      "bytes": 105140
+    }
+  ],
+  "unchangedRuntime": {
+    "changedPaths": [
+      "AGENTS.md",
+      "docs/VERSION_2_GUIDE.md",
+      "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "docs/designs/CONSUMER_COMPATIBLE_APIS.md",
+      "docs/designs/CONSUMER_EXECUTION_HARDENING.md",
+      "docs/designs/CONSUMER_PLAN_HOLISTIC_REVIEW.md",
+      "docs/designs/CONSUMER_REGISTRY_FOLLOWUP.md",
+      "docs/evaluations/CONSUMER_EXECUTION_REVIEW_2026_10_23.json",
+      "docs/evaluations/CONSUMER_PLAN_HOLISTIC_REVIEW_2026_10_23.json",
+      "docs/evaluations/CONSUMER_REGISTRY_FOLLOWUP_2026_10_23.json",
+      "docs/evaluations/consumer-api-design/contracts.ts",
+      "docs/evaluations/consumer-api-design/tsconfig.json",
+      "docs/evaluations/consumer-execution-review-probes.mjs",
+      "docs/evaluations/consumer-registry-followup-probes.mjs"
+    ],
+    "runtimeConsumerOrDependencyEdits": false,
+    "matchingPriorRuntimeSourceHashes": 63,
+    "builtPackageRoots": [
+      {
+        "path": "dist/index.js",
+        "sha256": "83916d9a016ff1e21e37ef2c5ac40b85b39e26410b5cb38c08fae933b35039cc",
+        "bytes": 4248002
+      },
+      {
+        "path": "dist/index.cjs",
+        "sha256": "00230d688e83a67b0e4b22f98e9a45c350f685e72993907d54426311670437b2",
+        "bytes": 4287325
+      },
+      {
+        "path": "dist/index.d.ts",
+        "sha256": "157ac52e56b99c841fac6154ca10f2c0681cd18e3469fca161e6eb94745e94af",
+        "bytes": 923860
+      }
+    ]
+  },
+  "approval": {
+    "ready": "Revision-4 direction/gates, strengthened proposed C6 API, independent C9 subtracks; implementation still requires explicit slice selection.",
+    "firstSuggestedCoreSlice": "C1",
+    "C9ExactSignatures": "Stage-entry API review; no invented exports or implicit approval.",
+    "C7ExactWireSchema": "Original stage-entry gate remains."
+  },
+  "limitations": [
+    "No proposed C6/C9 API has been implemented or behavior-tested.",
+    "Exact per-model reasoning efforts for Realtime 2.1 and 2.1-mini remain unknown from the official pages fetched; future delivery must verify or exclude them explicitly.",
+    "Transcription evidence is not a full conversation-model/transport matrix.",
+    "Consumer reported 24 passing tests and 24 existing type diagnostics were not rerun or counted as library validation.",
+    "Desktop pin/installation remains report-attributed; normal consumer adoption is separately required.",
+    "Current native-count/generation divergence is characterized, not fixed; no default validation is changed.",
+    "Vendor labels/colors are an adoption design choice, not verified immutable official branding."
+  ]
+}

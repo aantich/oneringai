@@ -1,0 +1,463 @@
+{
+  "protocol": "consumer-plan-holistic-review-v1",
+  "recordedAt": "2026-10-23T12:44:58.085642+00:00",
+  "branch": "version2",
+  "headCommit": "dff238759c41431bd24712d3b045dd38fc800b37",
+  "status": "revision-3-final-plan-awaiting-user-approval-not-implemented",
+  "scope": "Holistic review and revision of the staged consumer-hardening plan and proposed APIs. No runtime implementation or consumer/dependency changes.",
+  "constraints": {
+    "breakingChangesProposed": false,
+    "automaticMigration": false,
+    "defaultFlip": false,
+    "implementationAuthorized": false,
+    "packageReleaseVerified": false
+  },
+  "parentInvestigation": {
+    "path": "docs/evaluations/CONSUMER_EXECUTION_REVIEW_2026_10_23.json",
+    "sha256": "141dd5a32ccf00ab343777e301a09d4001a3cd3b6b5532e3110cae427024ecd5",
+    "bytes": 34629
+  },
+  "historicalArtifactBoundary": "Parent investigation retains revision-2 document hashes. This record owns revision-3 document/type-prototype hashes; old full/live validation remains historical.",
+  "findings": [
+    {
+      "id": "H01",
+      "priority": "P1",
+      "resolution": "defer-unproven-durable-workflow-resume-to-C3-R",
+      "status": "corrected-in-plan-design-not-runtime"
+    },
+    {
+      "id": "H02",
+      "priority": "P1",
+      "resolution": "correct-managed-signal-assumption-and-derived-cancellation-ownership",
+      "status": "corrected-in-plan-design-not-runtime"
+    },
+    {
+      "id": "H03",
+      "priority": "P1",
+      "resolution": "phase-aware-task-readiness-and-final-post-step-verification",
+      "status": "corrected-in-plan-design-not-runtime"
+    },
+    {
+      "id": "H04",
+      "priority": "P1",
+      "resolution": "single-use-handle-exclusive-lease-waiting-child-and-protected-observation-lifecycle",
+      "status": "corrected-in-plan-design-not-runtime"
+    },
+    {
+      "id": "H05",
+      "priority": "P1",
+      "resolution": "separate-proxy-server-observations-and-authenticated-cancel-receipt-evidence-recovery",
+      "status": "corrected-in-plan-design-not-runtime"
+    },
+    {
+      "id": "H06",
+      "priority": "P2",
+      "resolution": "invocation-capability-bridge-through-official-wrappers-and-module-formats",
+      "status": "corrected-in-plan-design-not-runtime"
+    },
+    {
+      "id": "H07",
+      "priority": "P2",
+      "resolution": "remove-duplicate-legacy-mode-and-freeze-preflight-retry-post-step-contracts",
+      "status": "corrected-in-plan-design-not-runtime"
+    },
+    {
+      "id": "H08",
+      "priority": "P2",
+      "resolution": "private-fixed-profiles-whole-pages-context-owned-ephemeral-cursors-no-public-registry",
+      "status": "corrected-in-plan-design-not-runtime"
+    },
+    {
+      "id": "H09",
+      "priority": "P2",
+      "resolution": "fresh-host-agent-factory-and-per-operation-not-constructor-task-binding",
+      "status": "corrected-in-plan-design-not-runtime"
+    },
+    {
+      "id": "H10",
+      "priority": "P2",
+      "resolution": "reuse-inspection-and-correct-hydration-vocabulary",
+      "status": "corrected-in-plan-design-not-runtime"
+    },
+    {
+      "id": "H11",
+      "priority": "P2",
+      "resolution": "remove-unnecessary-cross-stage-dependencies-and-partial-public-release",
+      "status": "corrected-in-plan-design-not-runtime"
+    },
+    {
+      "id": "H12",
+      "priority": "P2",
+      "resolution": "compile-proposed-core-contracts-and-make-approval-exclusions-explicit",
+      "status": "corrected-in-plan-design-not-runtime"
+    }
+  ],
+  "freshValidation": {
+    "focusedTests": {
+      "command": "npx vitest run tests/unit/core/routineRunner.test.ts tests/unit/core/routineControlFlow.test.ts tests/unit/core/createRoutineTool.test.ts tests/unit/core/orchestrator/tools.test.ts tests/unit/core/orchestrator/createOrchestrator.test.ts tests/unit/portable/AgentPackage.test.ts tests/unit/core/evidence/EvidenceStorage.test.ts tests/integration/routines/routineControlFlowExecution.test.ts --reporter=json --outputFile=/tmp/oneringai-consumer-holistic-tests.json",
+      "passed": 334,
+      "failed": 0,
+      "skipped": 0,
+      "files": 8,
+      "report": {
+        "path": "/tmp/oneringai-consumer-holistic-tests.json",
+        "sha256": "6118fd79ae424122a392c5d14cb178fd7410e6f67e423d4235b416dd5691f880",
+        "bytes": 96969
+      },
+      "log": {
+        "path": "/tmp/oneringai-consumer-holistic-focused.log",
+        "sha256": "6da307bababeccbe911b6a40c8071b961754e50fc72dd972f8c077bdba5c2a35",
+        "bytes": 67
+      }
+    },
+    "publicCompatibility": {
+      "checks": 202,
+      "suites": [
+        {
+          "command": "node tests/fixtures/agentic-presets/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 54,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 27,
+              "calls": 4
+            },
+            {
+              "format": "cjs",
+              "checks": 27,
+              "calls": 4
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/agentic-presets/public-runtime.mjs",
+            "sha256": "f83c909cd3cb0d435d0e53b4eb90666ad4a79f9cb4c473ec739625a7d4bec30f",
+            "bytes": 11410
+          },
+          "log": {
+            "path": "/tmp/oneringai-consumer-holistic-presets.log",
+            "sha256": "01522df5afce2399ce09983742d8955458e59dcfc98aba668d0f4165db1f3b91",
+            "bytes": 6936
+          }
+        },
+        {
+          "command": "node tests/fixtures/context-assembly/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 38,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 19
+            },
+            {
+              "format": "cjs",
+              "checks": 19
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/context-assembly/public-runtime.mjs",
+            "sha256": "3afbf913e7f108fda5327dff8e26b95874492b1131f6b3730572994a243eafe7",
+            "bytes": 11313
+          },
+          "log": {
+            "path": "/tmp/oneringai-consumer-holistic-assembly.log",
+            "sha256": "b2b195620ed647a9fd67a9969d022dd4a21e52fde202e72e905d6a04f59c2df8",
+            "bytes": 15950
+          }
+        },
+        {
+          "command": "node tests/fixtures/native-compaction/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 66,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 33
+            },
+            {
+              "format": "cjs",
+              "checks": 33
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/native-compaction/public-runtime.mjs",
+            "sha256": "2b78d20d079822783ca7410b86de34b3233e7a5f098b420503d3e305a6ec9187",
+            "bytes": 4083
+          },
+          "log": {
+            "path": "/tmp/oneringai-consumer-holistic-native.log",
+            "sha256": "cdeff84db2b78c84b7ba181b3d533035ce2cf959e10bbf659020d6c196a8808a",
+            "bytes": 4596
+          }
+        },
+        {
+          "command": "node tests/fixtures/model-routing/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 44,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 22
+            },
+            {
+              "format": "cjs",
+              "checks": 22
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/model-routing/public-runtime.mjs",
+            "sha256": "0336880be058196eb3c76de5867fee875ebacf68fc875b90607ff3582c95a60a",
+            "bytes": 7766
+          },
+          "log": {
+            "path": "/tmp/oneringai-consumer-holistic-routing.log",
+            "sha256": "ea1c3a3ef309500e73b3de0ca60b993983e1968a8fb54c6386c7ead42a6f07e0",
+            "bytes": 15992
+          }
+        }
+      ],
+      "typeConsumer": {
+        "command": "npm run test:agentic:compat",
+        "exitCode": 0,
+        "log": {
+          "path": "/tmp/oneringai-consumer-holistic-legacy-types.log",
+          "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6",
+          "bytes": 116
+        }
+      }
+    },
+    "apiContractPrototype": {
+      "command": "npx tsc --noEmit -p docs/evaluations/consumer-api-design/tsconfig.json",
+      "exitCode": 0,
+      "strict": true,
+      "exactOptionalPropertyTypes": true,
+      "negativeCompileControls": 8,
+      "log": {
+        "path": "/tmp/oneringai-consumer-holistic-design-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "meaning": "Ambient proposed declarations and unexecuted examples check type coherence against real built public package types; they are not implemented or runtime-tested APIs."
+    },
+    "characterization": {
+      "command": "CONSUMER_REVIEW_REPORT_PATH=/tmp/oneringai-consumer-holistic-probes.json node --import tsx docs/evaluations/consumer-execution-review-probes.mjs",
+      "matched": 17,
+      "total": 17,
+      "meaning": "Current legacy gaps and support/compatibility controls remain reproduced. No underlying defect is claimed fixed by this design review.",
+      "report": {
+        "path": "/tmp/oneringai-consumer-holistic-probes.json",
+        "sha256": "a7523c4ad8cbb260c662735a27d98cdf1c70c70dba6016cc0338bc9fdeb6fc38",
+        "bytes": 6341
+      },
+      "log": {
+        "path": "/tmp/oneringai-consumer-holistic-probes.log",
+        "sha256": "bfc1441464198b0227fa2102480b507ac06ca05704a628042473b33edbf5b6a0",
+        "bytes": 7494
+      },
+      "fixture": {
+        "path": "docs/evaluations/consumer-execution-review-probes.mjs",
+        "sha256": "99954f798b480a4f9ed60433cd1342fc245691bb1737291abd56c13064285251",
+        "bytes": 14299
+      }
+    },
+    "documentation": {
+      "localLinks": {
+        "checked": 519,
+        "errors": []
+      },
+      "report": {
+        "path": "/tmp/oneringai-consumer-holistic-links.json",
+        "sha256": "74f57c00aa90a53346d81add5b3f7b16e98b7eb759e9834345165b88b7f691cf",
+        "bytes": 37
+      },
+      "trackedWhitespaceErrors": 0,
+      "untrackedWhitespaceFilesChecked": 8,
+      "untrackedWhitespaceErrors": 0
+    },
+    "realLLMCalls": 0,
+    "realProviderCalls": 0,
+    "externalWrites": 0,
+    "servicesStarted": 0,
+    "fullUnitOrLiveSuiteRerun": false
+  },
+  "approval": {
+    "ready": "Roadmap, core API direction, same-process scope, explicit exclusions and paired acceptance gates.",
+    "firstSuggestedSlice": "C1",
+    "implementationRequiresSeparateSliceSelection": true,
+    "C7ExactWireSchema": "Requires stage-entry schema/fixture review; no implicit approval for changed v2 types or unreviewed wire bytes."
+  },
+  "deferred": [
+    "C3-R durable workflow restore and cross-process continuation",
+    "durable continuation codecs",
+    "production backend/retention/database design",
+    "distributed hard-budget authority and exactly-once effects",
+    "Stage 14B and Stage 16B",
+    "consumer upgrades and package release"
+  ],
+  "documentManifest": [
+    {
+      "path": "docs/designs/CONSUMER_EXECUTION_HARDENING.md",
+      "sha256": "a999a63c47fbbbbe6aa1890befd6e2ea6c6d868584cdc7972e0b5acd01797dda",
+      "bytes": 49095
+    },
+    {
+      "path": "docs/designs/CONSUMER_COMPATIBLE_APIS.md",
+      "sha256": "64cc584d53a3c147f6d78aaafd8b1bf835119e1f82523beb6a4d2fa1b78b3b8b",
+      "bytes": 29840
+    },
+    {
+      "path": "docs/designs/CONSUMER_PLAN_HOLISTIC_REVIEW.md",
+      "sha256": "88c24b8ee1f4d191748c78659230bf8b4e8ce2e4a9154e51ffa8462115729f7f",
+      "bytes": 9003
+    },
+    {
+      "path": "docs/VERSION_2_GUIDE.md",
+      "sha256": "a40423b5848437845b2e9cb732eaa191c84afca171d12698bff5e31abc3fdd8c",
+      "bytes": 226231
+    },
+    {
+      "path": "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "sha256": "db6df5317032ae39f184bc4b1292413a5d181abc78608eade574bd961886a763",
+      "bytes": 260226
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "a45a4789d5295bad4cb3b95b953d246463aa101dad51b4b60da872af09e36f85",
+      "bytes": 52013
+    },
+    {
+      "path": "docs/evaluations/consumer-api-design/contracts.ts",
+      "sha256": "fe4c6f4a02bcef71788a6850ffc727ee12323b251d0c02153b47dbce8ee73863",
+      "bytes": 9112
+    },
+    {
+      "path": "docs/evaluations/consumer-api-design/tsconfig.json",
+      "sha256": "3f8e58eeb92411d89aeb95e33284364741cbf4800f8bcc38fb2cf6a7a6fa8467",
+      "bytes": 197
+    }
+  ],
+  "reviewedSourceManifest": [
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "0cf82141bb76596cae7eccf453bc12371c3380119d6676da7eab0d791f07fc30",
+      "bytes": 234541
+    },
+    {
+      "path": "src/core/model-execution/ModelTask.ts",
+      "sha256": "76b431ebfabf8706a877cf7636cd740619376b112866684f2c712eb3a94b238f",
+      "bytes": 23885
+    },
+    {
+      "path": "src/core/ToolManager.ts",
+      "sha256": "e30b61ec01706fb36885f38df6b674838c5ba72dfbcede7d1187787400014f29",
+      "bytes": 50756
+    },
+    {
+      "path": "src/core/tool-execution/ToolExecutionPipeline.ts",
+      "sha256": "eaa5ecca3794524a7d622fbb3173f550a017921d57e5c928761ed179098481c1",
+      "bytes": 8068
+    },
+    {
+      "path": "src/core/tool-execution/outcomes.ts",
+      "sha256": "6bc6b9ea1e8af69039dc7667bc405c395152e105b18babf9014fa5b97e066f15",
+      "bytes": 706
+    },
+    {
+      "path": "src/tools/connector/ConnectorTools.ts",
+      "sha256": "dae613fbd1894c796fbb6079e32aad90f54c8d074b48dca42205cfa1f702e6b9",
+      "bytes": 27269
+    },
+    {
+      "path": "src/core/routineRunner.ts",
+      "sha256": "e1ed978b67d8160be0321f4726347559e5fa0abde4602f6e9a81c8fee77e385a",
+      "bytes": 55563
+    },
+    {
+      "path": "src/core/routineControlFlow.ts",
+      "sha256": "13bebb310023584e2721d7fd24fa1b56c09215364b6de79f85200f28e24622c9",
+      "bytes": 30752
+    },
+    {
+      "path": "src/core/createRoutineTool.ts",
+      "sha256": "8aac020c0114f4b380a675fee1247dace0f9fc8c1eb89de7e7be1cfa2744af64",
+      "bytes": 7585
+    },
+    {
+      "path": "src/domain/entities/Routine.ts",
+      "sha256": "3ba99e310f374f314b2896759e4f8e7d8afc8885f583c7a9d9af6874f63bd965",
+      "bytes": 10586
+    },
+    {
+      "path": "src/domain/entities/Task.ts",
+      "sha256": "fdc3a7f17d376da3371ce543aaefd4021cace86f56ce8a2be15cdb6db7b9b15c",
+      "bytes": 21965
+    },
+    {
+      "path": "src/domain/interfaces/IRoutineExecutionStorage.ts",
+      "sha256": "10ebe2d5c2fe3dfc7891c870e61374c44340a90d5199991b0819e5e27dcb4fea",
+      "bytes": 1902
+    },
+    {
+      "path": "src/core/orchestrator/createOrchestrator.ts",
+      "sha256": "39b2b8e868acf0419b78004e425df10088c8277776805ff28c2159e678507e2c",
+      "bytes": 34641
+    },
+    {
+      "path": "src/core/orchestrator/tools.ts",
+      "sha256": "6b448e6c23ff93bf44a529a034e1fd7001ebeadf7eab27369411fc1ba4b268fd",
+      "bytes": 20352
+    },
+    {
+      "path": "src/portable/types.ts",
+      "sha256": "f473cb194a5adea6b9d02be9173e53283e254d822c5b13494179411c2c400616",
+      "bytes": 8161
+    },
+    {
+      "path": "src/portable/index.ts",
+      "sha256": "8ed4ecba245cfe1c4aa6c8c16663a1a0165429f8689591b2125d0ab913c8b926",
+      "bytes": 952
+    }
+  ],
+  "unchangedRuntime": {
+    "changedPaths": [
+      "AGENTS.md",
+      "docs/VERSION_2_GUIDE.md",
+      "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "docs/designs/CONSUMER_COMPATIBLE_APIS.md",
+      "docs/designs/CONSUMER_EXECUTION_HARDENING.md",
+      "docs/designs/CONSUMER_PLAN_HOLISTIC_REVIEW.md",
+      "docs/evaluations/CONSUMER_EXECUTION_REVIEW_2026_10_23.json",
+      "docs/evaluations/CONSUMER_PLAN_HOLISTIC_REVIEW_2026_10_23.json",
+      "docs/evaluations/consumer-api-design/contracts.ts",
+      "docs/evaluations/consumer-api-design/tsconfig.json",
+      "docs/evaluations/consumer-execution-review-probes.mjs"
+    ],
+    "runtimeConsumerOrDependencyEdits": false,
+    "matchingPriorRuntimeSourceHashes": 63,
+    "builtPackageRoots": [
+      {
+        "path": "dist/index.js",
+        "sha256": "83916d9a016ff1e21e37ef2c5ac40b85b39e26410b5cb38c08fae933b35039cc",
+        "bytes": 4248002
+      },
+      {
+        "path": "dist/index.cjs",
+        "sha256": "00230d688e83a67b0e4b22f98e9a45c350f685e72993907d54426311670437b2",
+        "bytes": 4287325
+      },
+      {
+        "path": "dist/index.d.ts",
+        "sha256": "157ac52e56b99c841fac6154ca10f2c0681cd18e3469fca161e6eb94745e94af",
+        "bytes": 923860
+      }
+    ]
+  },
+  "limitations": [
+    "Proposed runtime APIs have not been implemented or behavior-tested.",
+    "Fresh existing fixtures are useful baseline controls, not exhaustive proof for every historical consumer; exact installed-pin golden fixtures are mandatory before delivery.",
+    "No real consumer session or third-party production evidence backend was exercised.",
+    "A host verifier result is validated structurally; the library cannot prove an arbitrary business predicate is semantically truthful.",
+    "Stable traversal completeness needs stable collections or provider snapshot/delta semantics.",
+    "Original investigation consumer manifest observations remain attributed to that record, including the unverified desktop version claim."
+  ]
+}

@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-10-27
+**Generated:** 2026-10-28
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -17,19 +17,19 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Image Generation](#image-generation) (25 items)
 - [Video Generation](#video-generation) (23 items)
 - [Agent Runtime](#agent-runtime) (70 items)
-- [Task Agents](#task-agents) (132 items)
+- [Task Agents](#task-agents) (133 items)
 - [Context Management](#context-management) (14 items)
-- [Session Management](#session-management) (78 items)
-- [Tools & Function Calling](#tools--function-calling) (217 items)
+- [Session Management](#session-management) (79 items)
+- [Tools & Function Calling](#tools--function-calling) (225 items)
 - [Streaming](#streaming) (35 items)
-- [Model Registry](#model-registry) (43 items)
+- [Model Registry](#model-registry) (52 items)
 - [OAuth & External APIs](#oauth--external-apis) (46 items)
 - [Resilience & Observability](#resilience--observability) (33 items)
 - [Errors](#errors) (44 items)
 - [Utilities](#utilities) (10 items)
 - [Interfaces](#interfaces) (90 items)
 - [Base Classes](#base-classes) (3 items)
-- [Other](#other) (806 items)
+- [Other](#other) (862 items)
 
 ## Core
 
@@ -37,7 +37,7 @@ Core classes for authentication, agents, and providers
 
 ### Agent `class`
 
-📍 [`src/core/Agent.ts:458`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:468`](src/core/Agent.ts)
 
 Agent class - represents an AI assistant with tool calling capabilities
 
@@ -289,13 +289,13 @@ event, and metrics path as a tool selected by Agent.run().
 ```typescript
 async executeExternalToolCall(
     call: ExternalToolCall,
-    options: { iteration?: number } = {},
+    options: { iteration?: number; signal?: AbortSignal } = {},
   ): Promise&lt;ToolResult&gt;
 ```
 
 **Parameters:**
 - `call`: `ExternalToolCall`
-- `options`: `{ iteration?: number | undefined; }` *(optional)* (default: `{}`)
+- `options`: `{ iteration?: number | undefined; signal?: AbortSignal | undefined; }` *(optional)* (default: `{}`)
 
 **Returns:** `Promise&lt;ToolResult&gt;`
 
@@ -1251,7 +1251,7 @@ static clear(): void
 
 ### Connector `class`
 
-📍 [`src/core/Connector.ts:61`](src/core/Connector.ts)
+📍 [`src/core/Connector.ts:62`](src/core/Connector.ts)
 
 Connector class - represents a single authenticated connection
 
@@ -1791,7 +1791,7 @@ isDisposed(): boolean
 
 ### AgentConfig `interface`
 
-📍 [`src/core/Agent.ts:103`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:111`](src/core/Agent.ts)
 
 Agent configuration - extends BaseAgentConfig with Agent-specific options
 
@@ -1854,7 +1854,7 @@ Example: `toolExecutionTimeout: 300000` (5 minutes hard cap per tool call) |
 
 ### AgentContextCompactionOptions `interface`
 
-📍 [`src/core/Agent.ts:241`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:251`](src/core/Agent.ts)
 
 Options for {@link Agent.rolloverContext}.
 
@@ -1874,7 +1874,7 @@ Options for {@link Agent.rolloverContext}.
 
 ### AgentContextRolloverOptions `interface`
 
-📍 [`src/core/Agent.ts:250`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:260`](src/core/Agent.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -2009,7 +2009,7 @@ Aggregate statistics across all tracked agents
 
 ### ConnectorFetchOptions `interface`
 
-📍 [`src/core/Connector.ts:45`](src/core/Connector.ts)
+📍 [`src/core/Connector.ts:46`](src/core/Connector.ts)
 
 Fetch options with additional connector-specific settings
 
@@ -2030,7 +2030,7 @@ Fetch options with additional connector-specific settings
 
 ### ExternalExecutionOptions `interface`
 
-📍 [`src/core/Agent.ts:275`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:285`](src/core/Agent.ts)
 
 Options for a non-LLM execution owned by an external transport.
 
@@ -2048,7 +2048,7 @@ Options for a non-LLM execution owned by an external transport.
 
 ### ExternalExecutionResult `interface`
 
-📍 [`src/core/Agent.ts:290`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:300`](src/core/Agent.ts)
 
 Terminal data supplied when an external execution is completed.
 
@@ -2068,7 +2068,7 @@ Terminal data supplied when an external execution is completed.
 
 ### ExternalToolCall `interface`
 
-📍 [`src/core/Agent.ts:283`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:293`](src/core/Agent.ts)
 
 A function call received from an external model transport.
 
@@ -2087,7 +2087,7 @@ A function call received from an external model transport.
 
 ### RunOptions `interface`
 
-📍 [`src/core/Agent.ts:205`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:214`](src/core/Agent.ts)
 
 Per-call options for run() and stream().
 These override the agent-level config for this single invocation.
@@ -2102,6 +2102,7 @@ These override the agent-level config for this single invocation.
 | `modelTask?` | `modelTask?: ModelTask;` | Explicit process-local budget/usage shared with helper or other agent calls. |
 | `thinking?` | `thinking?: ThinkingConfig;` | Vendor-agnostic thinking/reasoning configuration |
 | `temperature?` | `temperature?: number;` | Temperature for generation |
+| `parameterPolicy?` | `parameterPolicy?: TextGenerateOptions['parameterPolicy'];` | - |
 | `vendorOptions?` | `vendorOptions?: Record&lt;string, unknown&gt;;` | Vendor-specific options |
 | `promptCache?` | `promptCache?: PromptCachePolicy;` | Per-run override for provider prompt caching. |
 | `nativeTools?` | `nativeTools?: NativeToolRequest[];` | Per-run override for provider-hosted tools. |
@@ -2130,13 +2131,14 @@ type AgentEventListener = (agentId: string, agentName: string, event: string, da
 
 ### AgentRuntimeConfigSnapshot `type`
 
-📍 [`src/core/Agent.ts:185`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:193`](src/core/Agent.ts)
 
 Agent runtime options exposed by getRuntimeConfigSnapshot().
 
 ```typescript
 type AgentRuntimeConfigSnapshot = Pick&lt;AgentConfig,
   | 'temperature'
+  | 'parameterPolicy'
   | 'maxIterations'
   | 'thinking'
   | 'vendorOptions'
@@ -2156,7 +2158,7 @@ type AgentRuntimeConfigSnapshot = Pick&lt;AgentConfig,
 
 ### AgentSessionConfig `type`
 
-📍 [`src/core/Agent.ts:98`](src/core/Agent.ts)
+📍 [`src/core/Agent.ts:104`](src/core/Agent.ts)
 
 Session configuration for Agent (same as BaseSessionConfig)
 
@@ -16180,6 +16182,26 @@ responsible for visibility-validating the additions. |
 
 ---
 
+### RoutineTaskSummary `interface`
+
+📍 [`src/core/routines/types.ts:23`](src/core/routines/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `readonly id: string;` | - |
+| `executionId?` | `readonly executionId?: string;` | - |
+| `name` | `readonly name: string;` | - |
+| `state` | `readonly state: 'pending' | 'running' | 'settled' | 'skipped' | 'verified' | 'failed';` | - |
+| `verification?` | `readonly verification?: VerificationDecision;` | - |
+| `references?` | `readonly references?: readonly EvidenceReference[];` | - |
+
+</details>
+
+---
+
 ### SerializedInContextMemoryState `interface`
 
 📍 [`src/core/context-nextgen/plugins/InContextMemoryPluginNextGen.ts:51`](src/core/context-nextgen/plugins/InContextMemoryPluginNextGen.ts)
@@ -21970,6 +21992,101 @@ close(props?: { code: number; reason: string }): void;
 
 ---
 
+### RemoteOutcomeSession `interface`
+
+📍 [`src/portable/outcomeTypes.ts:121`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `inspect()`
+
+Pure bounded detached metadata. No model, service, backend or receipt lookup.
+
+```typescript
+inspect(operationId?: string): ReadonlyArray&lt;Readonly&lt;RemoteOutcomeReport&gt;&gt;;
+```
+
+**Parameters:**
+- `operationId`: `string | undefined` *(optional)*
+
+**Returns:** `readonly Readonly&lt;RemoteOutcomeReport&gt;[]`
+
+#### `getReceipt()`
+
+```typescript
+getReceipt(operationId: string, options?: { signal?: AbortSignal }): Promise&lt;RemoteOutcomeReport&gt;;
+```
+
+**Parameters:**
+- `operationId`: `string`
+- `options`: `{ signal?: AbortSignal | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;RemoteOutcomeReport&gt;`
+
+#### `cancel()`
+
+```typescript
+cancel(operationId: string, options?: { signal?: AbortSignal; reason?: string }): Promise&lt;RemoteOutcomeReport&gt;;
+```
+
+**Parameters:**
+- `operationId`: `string`
+- `options`: `{ signal?: AbortSignal | undefined; reason?: string | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;RemoteOutcomeReport&gt;`
+
+#### `readEvidence()`
+
+```typescript
+readEvidence(reference: EvidenceReference, options?: { offset?: number; limit?: number; signal?: AbortSignal }): Promise&lt;EvidenceChunk | null&gt;;
+```
+
+**Parameters:**
+- `reference`: `EvidenceReference`
+- `options`: `{ offset?: number | undefined; limit?: number | undefined; signal?: AbortSignal | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;EvidenceChunk | null&gt;`
+
+#### `checkpoint()`
+
+New envelope; does not serialize callbacks, live task authority or a workflow cursor.
+
+```typescript
+checkpoint(options?: ExportAgentPackageOptions): OutcomeAgentPackage;
+```
+
+**Parameters:**
+- `options`: `ExportAgentPackageOptions | undefined` *(optional)*
+
+**Returns:** `OutcomeAgentPackage`
+
+#### `checkpoint()`
+
+Tools-first construction supplies its owning Agent explicitly.
+
+```typescript
+checkpoint(agent: Agent, options?: ExportAgentPackageOptions): OutcomeAgentPackage;
+```
+
+**Parameters:**
+- `agent`: `Agent`
+- `options`: `ExportAgentPackageOptions | undefined` *(optional)*
+
+**Returns:** `OutcomeAgentPackage`
+
+#### `close()`
+
+```typescript
+close(): void;
+```
+
+**Returns:** `void`
+
+</details>
+
+---
+
 ### SessionIngestorPluginConfig `interface`
 
 📍 [`src/core/context-nextgen/plugins/SessionIngestorPluginNextGen.ts:51`](src/core/context-nextgen/plugins/SessionIngestorPluginNextGen.ts)
@@ -22342,7 +22459,7 @@ Define and execute tools for agents
 
 ### AgentPackageToolServer `class`
 
-📍 [`src/portable/AgentPackage.ts:416`](src/portable/AgentPackage.ts)
+📍 [`src/portable/AgentPackage.ts:425`](src/portable/AgentPackage.ts)
 
 Session-bound server executor for tools exported as `remote`. The host must
 authenticate and authorize every request before calling `execute()`.
@@ -22404,7 +22521,7 @@ close(status: 'completed' | 'failed' | 'cancelled' = 'completed'): Promise&lt;vo
 
 ### ConnectorTools `class`
 
-📍 [`src/tools/connector/ConnectorTools.ts:254`](src/tools/connector/ConnectorTools.ts)
+📍 [`src/tools/connector/ConnectorTools.ts:258`](src/tools/connector/ConnectorTools.ts)
 
 ConnectorTools - Main API for vendor-dependent tools
 
@@ -22426,6 +22543,20 @@ const tools = ConnectorTools.for('slack', undefined, { registry });
 
 <details>
 <summary><strong>Static Methods</strong></summary>
+
+#### `static enhanced()`
+
+Additive fixed audited contracts. Ordinary for()/factories/defaults are unchanged.
+
+```typescript
+static enhanced(connectorOrName: Connector | string, options: EnhancedConnectorOptions): ToolFunction[]
+```
+
+**Parameters:**
+- `connectorOrName`: `string | Connector`
+- `options`: `EnhancedConnectorOptions`
+
+**Returns:** `ToolFunction&lt;any, any&gt;[]`
 
 #### `static clearCache()`
 
@@ -22808,7 +22939,7 @@ buildOverview(): string
 
 ### ToolCatalogPluginNextGen `class`
 
-📍 [`src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts:136`](src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts)
+📍 [`src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts:137`](src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -22834,6 +22965,14 @@ getInstructions(): string
 ```
 
 **Returns:** `string`
+
+#### `getInstructionsTokenSize()`
+
+```typescript
+getInstructionsTokenSize(): number
+```
+
+**Returns:** `number`
 
 #### `getContent()`
 
@@ -23335,7 +23474,7 @@ constructor(config: ToolEvidenceConfig)
 
 ```typescript
 async record(tool: ToolFunction, args: unknown, context: ToolContext, outcome: ToolExecutionOutcome,
-    result?: { value: unknown }, late = false): Promise&lt;ToolEvidenceDelivery&gt;
+    result?: { value: unknown }, late = false, observeWork?: (promise: Promise&lt;unknown&gt;) =&gt; void): Promise&lt;ToolEvidenceDelivery&gt;
 ```
 
 **Parameters:**
@@ -23345,6 +23484,7 @@ async record(tool: ToolFunction, args: unknown, context: ToolContext, outcome: T
 - `outcome`: `ToolExecutionOutcome`
 - `result`: `{ value: unknown; } | undefined` *(optional)*
 - `late`: `boolean` *(optional)* (default: `false`)
+- `observeWork`: `((promise: Promise&lt;unknown&gt;) =&gt; void) | undefined` *(optional)*
 
 **Returns:** `Promise&lt;ToolEvidenceDelivery&gt;`
 
@@ -23398,7 +23538,7 @@ constructor(
 
 ### ToolExecutionPipeline `class`
 
-📍 [`src/core/tool-execution/ToolExecutionPipeline.ts:87`](src/core/tool-execution/ToolExecutionPipeline.ts)
+📍 [`src/core/tool-execution/ToolExecutionPipeline.ts:90`](src/core/tool-execution/ToolExecutionPipeline.ts)
 
 Tool Execution Pipeline
 
@@ -23526,7 +23666,7 @@ async execute(tool: ToolFunction, args: unknown, options: PipelineExecutionOptio
 
 ### ToolManager `class`
 
-📍 [`src/core/ToolManager.ts:234`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:242`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -24875,6 +25015,57 @@ constructor(
 
 ---
 
+### AgentPackageOutcomeToolOptions `interface`
+
+📍 [`src/portable/outcomeTypes.ts:135`](src/portable/outcomeTypes.ts)
+
+Build tools before Agent/C6 factory construction, using the same evidence backend handle.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `onObservation()?`
+
+```typescript
+onObservation?(report: Readonly&lt;RemoteOutcomeReport&gt;): void;
+```
+
+**Parameters:**
+- `report`: `Readonly&lt;RemoteOutcomeReport&gt;`
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `transport` | `transport: RemoteOutcomeTransport;` | - |
+| `storage` | `storage: IEvidenceStorage;` | - |
+| `maxRequests?` | `maxRequests?: number;` | - |
+
+</details>
+
+---
+
+### AgentPackageOutcomeTools `interface`
+
+📍 [`src/portable/outcomeTypes.ts:141`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `tools` | `tools: ToolFunction[];` | - |
+| `session` | `session: RemoteOutcomeSession` | - |
+
+</details>
+
+---
+
 ### ApproveToolContext `interface`
 
 📍 [`src/capabilities/agents/types/HookTypes.ts:78`](src/capabilities/agents/types/HookTypes.ts)
@@ -25022,7 +25213,7 @@ Extended registry entry for connector-generated tools
 
 ### ConnectorToolsOptions `interface`
 
-📍 [`src/tools/connector/ConnectorTools.ts:181`](src/tools/connector/ConnectorTools.ts)
+📍 [`src/tools/connector/ConnectorTools.ts:185`](src/tools/connector/ConnectorTools.ts)
 
 Options for ConnectorTools methods that accept a scoped registry
 
@@ -25404,7 +25595,7 @@ which controls OneRingAI's managed agent execution loop. |
 
 ### GenericAPICallArgs `interface`
 
-📍 [`src/tools/connector/ConnectorTools.ts:160`](src/tools/connector/ConnectorTools.ts)
+📍 [`src/tools/connector/ConnectorTools.ts:164`](src/tools/connector/ConnectorTools.ts)
 
 Arguments for the generic API call tool
 
@@ -25425,7 +25616,7 @@ Arguments for the generic API call tool
 
 ### GenericAPICallResult `interface`
 
-📍 [`src/tools/connector/ConnectorTools.ts:171`](src/tools/connector/ConnectorTools.ts)
+📍 [`src/tools/connector/ConnectorTools.ts:175`](src/tools/connector/ConnectorTools.ts)
 
 Result from the generic API call tool
 
@@ -26023,7 +26214,7 @@ MCP Tool call result
 
 ### OrchestrationToolsContext `interface`
 
-📍 [`src/core/orchestrator/tools.ts:21`](src/core/orchestrator/tools.ts)
+📍 [`src/core/orchestrator/tools.ts:23`](src/core/orchestrator/tools.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26038,6 +26229,41 @@ MCP Tool call result
 | `maxAgents?` | `maxAgents?: number;` | Maximum number of worker agents (default: 20) |
 | `delegationState` | `delegationState: DelegationState;` | Delegation state — shared with createOrchestrator for run()/stream() wrapping |
 | `delegationDefaults?` | `delegationDefaults?: DelegationDefaults;` | Default delegation settings from OrchestratorConfig |
+
+</details>
+
+---
+
+### OutcomeInvocation `interface`
+
+📍 [`src/core/createOutcomeTool.ts:6`](src/core/createOutcomeTool.ts)
+
+Invocation-local diagnostics, separate from the tool's application result.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `reportFailure()`
+
+Report an operational failure. First report wins; inactive after callback settlement.
+
+```typescript
+reportFailure(error: Error): void;
+```
+
+**Parameters:**
+- `error`: `Error`
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `context` | `readonly context: ToolContext | undefined;` | - |
 
 </details>
 
@@ -26225,9 +26451,68 @@ Called per-invocation; the agent is destroyed after the routine completes. |
 
 ---
 
+### RoutineToolOptions `interface`
+
+📍 [`src/core/routines/types.ts:84`](src/core/routines/types.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `createAgent()`
+
+```typescript
+createAgent(): Agent | Promise&lt;Agent&gt;;
+```
+
+**Returns:** `Agent | Promise&lt;Agent&gt;`
+
+#### `resolveExecution()?`
+
+```typescript
+resolveExecution?(args: Record&lt;string, unknown&gt;, context: ToolContext | undefined): ExecutionBinding;
+```
+
+**Parameters:**
+- `args`: `Record&lt;string, unknown&gt;`
+- `context`: `ToolContext | undefined`
+
+**Returns:** `ExecutionBinding`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `definition` | `definition: RoutineDefinition;` | - |
+| `toolName` | `toolName: string;` | - |
+
+</details>
+
+---
+
+### RoutineToolResult `interface`
+
+📍 [`src/core/routines/types.ts:90`](src/core/routines/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `operationId` | `operationId: string;` | - |
+| `state` | `state: RoutineRunResult['state'];` | - |
+| `omittedReferences?` | `omittedReferences?: number;` | More references remain in the host source index. |
+| `references` | `references: readonly EvidenceReference[];` | - |
+
+</details>
+
+---
+
 ### SerializedToolState `interface`
 
-📍 [`src/core/ToolManager.ts:176`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:184`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26248,7 +26533,7 @@ Called per-invocation; the agent is destroyed after the routine completes. |
 
 ### ServiceToolFactoryOptions `interface`
 
-📍 [`src/tools/connector/ConnectorTools.ts:110`](src/tools/connector/ConnectorTools.ts)
+📍 [`src/tools/connector/ConnectorTools.ts:114`](src/tools/connector/ConnectorTools.ts)
 
 Options forwarded from `ConnectorTools.for()` to a `ServiceToolFactory`.
 
@@ -26453,7 +26738,7 @@ Tool call detected and starting
 
 ### ToolCatalogPluginConfig `interface`
 
-📍 [`src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts:48`](src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts)
+📍 [`src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts:49`](src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26491,7 +26776,7 @@ Definition of a tool category in the catalog.
 
 ### ToolCondition `interface`
 
-📍 [`src/core/ToolManager.ts:117`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:125`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26791,7 +27076,7 @@ Used for logging, UI display, and debugging. |
 
 ### ToolManagerConfig `interface`
 
-📍 [`src/core/ToolManager.ts:224`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:232`](src/core/ToolManager.ts)
 
 Configuration for ToolManager
 
@@ -26811,7 +27096,7 @@ Default: 0 (disabled - relies on tool's own timeout) |
 
 ### ToolManagerStats `interface`
 
-📍 [`src/core/ToolManager.ts:166`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:174`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26832,7 +27117,7 @@ Default: 0 (disabled - relies on tool's own timeout) |
 
 ### ToolMetadata `interface`
 
-📍 [`src/core/ToolManager.ts:156`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:164`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26871,7 +27156,7 @@ Default: 0 (disabled - relies on tool's own timeout) |
 
 ### ToolOptions `interface`
 
-📍 [`src/core/ToolManager.ts:98`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:106`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -26966,7 +27251,7 @@ Used by the ToolPermissionManager.
 
 ### ToolRegistration `interface`
 
-📍 [`src/core/ToolManager.ts:137`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:145`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -27128,7 +27413,7 @@ Tool definitions returned by a client-executed OpenAI tool-search call.
 
 ### ToolSelectionContext `interface`
 
-📍 [`src/core/ToolManager.ts:122`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:130`](src/core/ToolManager.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -27269,6 +27554,20 @@ type OpenAIRealtimeTool = OpenAIRealtimeFunctionTool | OpenAIRealtimeMCPTool
 
 ---
 
+### OutcomeToolOptions `type`
+
+📍 [`src/core/createOutcomeTool.ts:13`](src/core/createOutcomeTool.ts)
+
+All ordinary tool options, with an explicitly selected invocation callback.
+
+```typescript
+type OutcomeToolOptions = Omit&lt;ToolFunction&lt;TArgs, TResult&gt;, 'execute'&gt; & {
+  execute: (args: TArgs, invocation: OutcomeInvocation) =&gt; Promise&lt;TResult&gt;;
+}
+```
+
+---
+
 ### PendingAsyncToolStatus `type`
 
 📍 [`src/domain/entities/Tool.ts:146`](src/domain/entities/Tool.ts)
@@ -27341,7 +27640,7 @@ type RemoteToolExecutionResponse = | {
 
 ### ServiceToolFactory `type`
 
-📍 [`src/tools/connector/ConnectorTools.ts:135`](src/tools/connector/ConnectorTools.ts)
+📍 [`src/tools/connector/ConnectorTools.ts:139`](src/tools/connector/ConnectorTools.ts)
 
 Factory function type for creating service-specific tools.
 Takes a Connector and returns an array of tools that use it.
@@ -27418,7 +27717,7 @@ type ToolCategoryScope = | string[]                  // shorthand allowlist
 
 ### ToolManagerEvent `type`
 
-📍 [`src/core/ToolManager.ts:190`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:198`](src/core/ToolManager.ts)
 
 ```typescript
 type ToolManagerEvent = | 'tool:registered'
@@ -27436,7 +27735,7 @@ type ToolManagerEvent = | 'tool:registered'
 
 ### ToolSource `type`
 
-📍 [`src/core/ToolManager.ts:54`](src/core/ToolManager.ts)
+📍 [`src/core/ToolManager.ts:62`](src/core/ToolManager.ts)
 
 Source identifier for a registered tool
 
@@ -27448,7 +27747,7 @@ type ToolSource = 'built-in' | 'connector' | 'custom' | 'mcp' | string
 
 ### buildOrchestrationTools `function`
 
-📍 [`src/core/orchestrator/tools.ts:168`](src/core/orchestrator/tools.ts)
+📍 [`src/core/orchestrator/tools.ts:170`](src/core/orchestrator/tools.ts)
 
 ```typescript
 export function buildOrchestrationTools(ctx: OrchestrationToolsContext): ToolFunction[]
@@ -27458,13 +27757,23 @@ export function buildOrchestrationTools(ctx: OrchestrationToolsContext): ToolFun
 
 ### createAddReactionTool `function`
 
-📍 [`src/tools/slack/addReaction.ts:26`](src/tools/slack/addReaction.ts)
+📍 [`src/tools/slack/addReaction.ts:27`](src/tools/slack/addReaction.ts)
 
 ```typescript
 export function createAddReactionTool(
   connector: Connector,
   userId?: string
 ): ToolFunction&lt;AddReactionArgs, SlackAddReactionResult&gt;
+```
+
+---
+
+### createAgentPackageOutcomeTools `function`
+
+📍 [`src/portable/OutcomeClient.ts:247`](src/portable/OutcomeClient.ts)
+
+```typescript
+export async function createAgentPackageOutcomeTools(input: OutcomeAgentPackage, options: AgentPackageOutcomeToolOptions): Promise&lt;AgentPackageOutcomeTools&gt;
 ```
 
 ---
@@ -27483,7 +27792,7 @@ export function createBashTool(config: ShellToolConfig = {}): ToolFunction&lt;Ba
 
 ### createCreatePRTool `function`
 
-📍 [`src/tools/github/createPR.ts:45`](src/tools/github/createPR.ts)
+📍 [`src/tools/github/createPR.ts:46`](src/tools/github/createPR.ts)
 
 Create a GitHub create_pr tool
 
@@ -27693,7 +28002,7 @@ export function createDesktopWindowListTool(config?: DesktopToolConfig): ToolFun
 
 ### createDraftEmailTool `function`
 
-📍 [`src/tools/microsoft/createDraftEmail.ts:35`](src/tools/microsoft/createDraftEmail.ts)
+📍 [`src/tools/microsoft/createDraftEmail.ts:36`](src/tools/microsoft/createDraftEmail.ts)
 
 Create a Microsoft Graph create_draft_email tool
 
@@ -27721,7 +28030,7 @@ export function createEditFileTool(config: FilesystemToolConfig = {}): ToolFunct
 
 ### createEditMeetingTool `function`
 
-📍 [`src/tools/microsoft/editMeeting.ts:38`](src/tools/microsoft/editMeeting.ts)
+📍 [`src/tools/microsoft/editMeeting.ts:39`](src/tools/microsoft/editMeeting.ts)
 
 Create a Microsoft Graph edit_meeting tool
 
@@ -27768,7 +28077,7 @@ export function createFindEntityTool(
 
 ### createFindMeetingSlotsTool `function`
 
-📍 [`src/tools/microsoft/findMeetingSlots.ts:36`](src/tools/microsoft/findMeetingSlots.ts)
+📍 [`src/tools/microsoft/findMeetingSlots.ts:37`](src/tools/microsoft/findMeetingSlots.ts)
 
 Create a Microsoft Graph find_meeting_slots tool
 
@@ -27794,7 +28103,7 @@ export function createForgetTool(deps: MemoryToolDeps): ToolFunction&lt;ForgetAr
 
 ### createGetChannelInfoTool `function`
 
-📍 [`src/tools/slack/getChannelInfo.ts:23`](src/tools/slack/getChannelInfo.ts)
+📍 [`src/tools/slack/getChannelInfo.ts:24`](src/tools/slack/getChannelInfo.ts)
 
 ```typescript
 export function createGetChannelInfoTool(
@@ -27807,7 +28116,7 @@ export function createGetChannelInfoTool(
 
 ### createGetMeetingTranscriptTool `function`
 
-📍 [`src/tools/microsoft/getMeetingTranscript.ts:56`](src/tools/microsoft/getMeetingTranscript.ts)
+📍 [`src/tools/microsoft/getMeetingTranscript.ts:57`](src/tools/microsoft/getMeetingTranscript.ts)
 
 Create a Microsoft Graph get_meeting_transcript tool
 
@@ -27823,7 +28132,7 @@ export function createGetMeetingTranscriptTool(
 
 ### createGetMentionsTool `function`
 
-📍 [`src/tools/slack/getMentions.ts:29`](src/tools/slack/getMentions.ts)
+📍 [`src/tools/slack/getMentions.ts:30`](src/tools/slack/getMentions.ts)
 
 ```typescript
 export function createGetMentionsTool(
@@ -27836,7 +28145,7 @@ export function createGetMentionsTool(
 
 ### createGetMessagesTool `function`
 
-📍 [`src/tools/slack/getMessages.ts:30`](src/tools/slack/getMessages.ts)
+📍 [`src/tools/slack/getMessages.ts:31`](src/tools/slack/getMessages.ts)
 
 ```typescript
 export function createGetMessagesTool(
@@ -27862,7 +28171,7 @@ export function createGetMessageTool(
 
 ### createGetPRTool `function`
 
-📍 [`src/tools/github/getPR.ts:30`](src/tools/github/getPR.ts)
+📍 [`src/tools/github/getPR.ts:31`](src/tools/github/getPR.ts)
 
 Create a GitHub get_pr tool
 
@@ -27877,7 +28186,7 @@ export function createGetPRTool(
 
 ### createGetThreadTool `function`
 
-📍 [`src/tools/slack/getThread.ts:27`](src/tools/slack/getThread.ts)
+📍 [`src/tools/slack/getThread.ts:28`](src/tools/slack/getThread.ts)
 
 ```typescript
 export function createGetThreadTool(
@@ -27890,7 +28199,7 @@ export function createGetThreadTool(
 
 ### createGetUsersTool `function`
 
-📍 [`src/tools/slack/getUsers.ts:42`](src/tools/slack/getUsers.ts)
+📍 [`src/tools/slack/getUsers.ts:43`](src/tools/slack/getUsers.ts)
 
 ```typescript
 export function createGetUsersTool(
@@ -27903,7 +28212,7 @@ export function createGetUsersTool(
 
 ### createGitHubReadFileTool `function`
 
-📍 [`src/tools/github/readFile.ts:45`](src/tools/github/readFile.ts)
+📍 [`src/tools/github/readFile.ts:46`](src/tools/github/readFile.ts)
 
 Create a GitHub read_file tool
 
@@ -27962,7 +28271,7 @@ export function createLinkTool(deps: MemoryToolDeps): ToolFunction&lt;LinkArgs&g
 
 ### createListBranchesTool `function`
 
-📍 [`src/tools/github/listBranches.ts:42`](src/tools/github/listBranches.ts)
+📍 [`src/tools/github/listBranches.ts:43`](src/tools/github/listBranches.ts)
 
 Create a GitHub list_branches tool
 
@@ -27977,7 +28286,7 @@ export function createListBranchesTool(
 
 ### createListChannelsTool `function`
 
-📍 [`src/tools/slack/listChannels.ts:26`](src/tools/slack/listChannels.ts)
+📍 [`src/tools/slack/listChannels.ts:27`](src/tools/slack/listChannels.ts)
 
 ```typescript
 export function createListChannelsTool(
@@ -28025,7 +28334,7 @@ export function createListMessagesTool(
 
 ### createMeetingTool `function`
 
-📍 [`src/tools/microsoft/createMeeting.ts:37`](src/tools/microsoft/createMeeting.ts)
+📍 [`src/tools/microsoft/createMeeting.ts:38`](src/tools/microsoft/createMeeting.ts)
 
 Create a Microsoft Graph create_meeting tool
 
@@ -28041,7 +28350,7 @@ export function createMeetingTool(
 
 ### createMicrosoftListFilesTool `function`
 
-📍 [`src/tools/microsoft/listFiles.ts:47`](src/tools/microsoft/listFiles.ts)
+📍 [`src/tools/microsoft/listFiles.ts:48`](src/tools/microsoft/listFiles.ts)
 
 ```typescript
 export function createMicrosoftListFilesTool(
@@ -28055,7 +28364,7 @@ export function createMicrosoftListFilesTool(
 
 ### createMicrosoftReadFileTool `function`
 
-📍 [`src/tools/microsoft/readFile.ts:55`](src/tools/microsoft/readFile.ts)
+📍 [`src/tools/microsoft/readFile.ts:56`](src/tools/microsoft/readFile.ts)
 
 ```typescript
 export function createMicrosoftReadFileTool(
@@ -28070,7 +28379,7 @@ export function createMicrosoftReadFileTool(
 
 ### createMicrosoftSearchFilesTool `function`
 
-📍 [`src/tools/microsoft/searchFiles.ts:44`](src/tools/microsoft/searchFiles.ts)
+📍 [`src/tools/microsoft/searchFiles.ts:45`](src/tools/microsoft/searchFiles.ts)
 
 NOTE on `actAs` lock — this tool does NOT participate. It hits Microsoft's
 tenant-global `/search/query` (or `/sites/{siteId}/drive/root/search` when
@@ -28087,9 +28396,26 @@ export function createMicrosoftSearchFilesTool(
 
 ---
 
+### createOutcomeTool `function`
+
+📍 [`src/core/createOutcomeTool.ts:23`](src/core/createOutcomeTool.ts)
+
+Create a standard ToolFunction with invocation-owned operational failure reporting.
+Raw returns and existing tool callback signatures are unchanged. Direct execute()
+calls run the callback but do not publish a framework outcome. Register the tool
+with the shared ToolManager to observe a reported failure via executeWithOutcome().
+
+```typescript
+export function createOutcomeTool&lt;TArgs = any, TResult = any&gt;(
+  options: OutcomeToolOptions&lt;TArgs, TResult&gt;,
+): ToolFunction&lt;TArgs, TResult&gt;
+```
+
+---
+
 ### createPortableToolImplementationFingerprint `function`
 
-📍 [`src/portable/AgentPackage.ts:565`](src/portable/AgentPackage.ts)
+📍 [`src/portable/AgentPackage.ts:574`](src/portable/AgentPackage.ts)
 
 Create the stable wire fingerprint used to reject mismatched local
 executables. Dynamic function descriptions are excluded from the executable
@@ -28106,7 +28432,7 @@ export function createPortableToolImplementationFingerprint(
 
 ### createPostMessageTool `function`
 
-📍 [`src/tools/slack/postMessage.ts:30`](src/tools/slack/postMessage.ts)
+📍 [`src/tools/slack/postMessage.ts:31`](src/tools/slack/postMessage.ts)
 
 ```typescript
 export function createPostMessageTool(
@@ -28119,7 +28445,7 @@ export function createPostMessageTool(
 
 ### createPRCommentsTool `function`
 
-📍 [`src/tools/github/prComments.ts:34`](src/tools/github/prComments.ts)
+📍 [`src/tools/github/prComments.ts:35`](src/tools/github/prComments.ts)
 
 Create a GitHub pr_comments tool
 
@@ -28134,7 +28460,7 @@ export function createPRCommentsTool(
 
 ### createPRFilesTool `function`
 
-📍 [`src/tools/github/prFiles.ts:30`](src/tools/github/prFiles.ts)
+📍 [`src/tools/github/prFiles.ts:31`](src/tools/github/prFiles.ts)
 
 Create a GitHub pr_files tool
 
@@ -28181,7 +28507,7 @@ export function createRememberTool(deps: MemoryToolDeps): ToolFunction&lt;Rememb
 
 ### createRemoteTool `function`
 
-📍 [`src/portable/AgentPackage.ts:383`](src/portable/AgentPackage.ts)
+📍 [`src/portable/AgentPackage.ts:392`](src/portable/AgentPackage.ts)
 
 Build a normal ToolFunction whose execution is delegated through a typed transport.
 
@@ -28217,7 +28543,7 @@ export function createRequestUserInputTool(
 
 ### createResolvedLocalTool `function`
 
-📍 [`src/portable/AgentPackage.ts:616`](src/portable/AgentPackage.ts)
+📍 [`src/portable/AgentPackage.ts:625`](src/portable/AgentPackage.ts)
 
 Resolve a trusted local executable with a fingerprint suitable for package
 hydration. Custom tools require a stable implementation ID shared by the
@@ -28263,7 +28589,7 @@ export function createRoutineTool(options: CreateRoutineToolOptions): ToolFuncti
 
 ### createSearchCodeTool `function`
 
-📍 [`src/tools/github/searchCode.ts:103`](src/tools/github/searchCode.ts)
+📍 [`src/tools/github/searchCode.ts:104`](src/tools/github/searchCode.ts)
 
 Create a GitHub search_code tool
 
@@ -28278,7 +28604,7 @@ export function createSearchCodeTool(
 
 ### createSearchFilesTool `function`
 
-📍 [`src/tools/github/searchFiles.ts:57`](src/tools/github/searchFiles.ts)
+📍 [`src/tools/github/searchFiles.ts:58`](src/tools/github/searchFiles.ts)
 
 Create a GitHub search_files tool
 
@@ -28293,7 +28619,7 @@ export function createSearchFilesTool(
 
 ### createSearchMessagesTool `function`
 
-📍 [`src/tools/slack/searchMessages.ts:28`](src/tools/slack/searchMessages.ts)
+📍 [`src/tools/slack/searchMessages.ts:29`](src/tools/slack/searchMessages.ts)
 
 ```typescript
 export function createSearchMessagesTool(
@@ -28316,7 +28642,7 @@ export function createSearchTool(deps: MemoryToolDeps): ToolFunction&lt;SearchAr
 
 ### createSendEmailTool `function`
 
-📍 [`src/tools/microsoft/sendEmail.ts:37`](src/tools/microsoft/sendEmail.ts)
+📍 [`src/tools/microsoft/sendEmail.ts:38`](src/tools/microsoft/sendEmail.ts)
 
 Create a Microsoft Graph send_email tool
 
@@ -28368,7 +28694,7 @@ export function createSetAgentRuleTool(deps: MemoryToolDeps): ToolFunction&lt;Se
 
 ### createSetChannelTopicTool `function`
 
-📍 [`src/tools/slack/setChannelTopic.ts:24`](src/tools/slack/setChannelTopic.ts)
+📍 [`src/tools/slack/setChannelTopic.ts:25`](src/tools/slack/setChannelTopic.ts)
 
 ```typescript
 export function createSetChannelTopicTool(
@@ -28657,7 +28983,7 @@ registerRoutineToolCategory({
 
 ### resolveConnectorContext `function`
 
-📍 [`src/tools/connector/ConnectorTools.ts:225`](src/tools/connector/ConnectorTools.ts)
+📍 [`src/tools/connector/ConnectorTools.ts:229`](src/tools/connector/ConnectorTools.ts)
 
 Resolve effective userId and accountId from ToolContext.
 
@@ -30573,7 +30899,7 @@ Complete description of an LLM model including capabilities, pricing, and featur
 
 ### ModelCapabilities `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:86`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:88`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -30633,6 +30959,95 @@ Complete description of an LLM model including capabilities, pricing, and featur
 | `lateSettlement` | `lateSettlement: boolean;` | - |
 | `external` | `external: boolean;` | - |
 | `outputValidation?` | `outputValidation?: 'passed' | 'failed';` | Helper output validation is distinct from receiving a model response. |
+
+</details>
+
+---
+
+### ModelParameterAssessment `interface`
+
+📍 [`src/capabilities/metadata/parameters.ts:6`](src/capabilities/metadata/parameters.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `effectiveReasoningEffort` | `readonly effectiveReasoningEffort: string | null;` | - |
+| `reasoningEffort` | `readonly reasoningEffort: EndpointCapabilitySupport;` | - |
+| `temperature` | `readonly temperature: { readonly support: EndpointCapabilitySupport; readonly reason: 'reasoning-active' | 'reasoning-disabled' | 'registry' | 'unverified' };` | - |
+
+</details>
+
+---
+
+### ModelParameterDecision `interface`
+
+📍 [`src/capabilities/metadata/parameters.ts:11`](src/capabilities/metadata/parameters.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `vendor` | `readonly vendor: Vendor;` | - |
+| `model` | `readonly model: string;` | - |
+| `endpoint` | `readonly endpoint: ModelParameterEndpoint;` | - |
+| `action` | `readonly action: 'preserve' | 'omit' | 'reject';` | - |
+| `support` | `readonly support: EndpointCapabilitySupport;` | - |
+| `effectiveReasoningEffort` | `readonly effectiveReasoningEffort: string | null;` | - |
+| `reason` | `readonly reason: ModelParameterAssessment['temperature']['reason'];` | - |
+
+</details>
+
+---
+
+### ModelParameterPolicy `interface`
+
+📍 [`src/capabilities/metadata/parameters.ts:16`](src/capabilities/metadata/parameters.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `observe()?`
+
+Bounded diagnostics, no request payload. Observer failures cannot repeat a request.
+
+```typescript
+observe?(decision: Readonly&lt;ModelParameterDecision&gt;): void;
+```
+
+**Parameters:**
+- `decision`: `Readonly&lt;ModelParameterDecision&gt;`
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `temperature` | `temperature: 'strict' | 'omit-unsupported';` | - |
+
+</details>
+
+---
+
+### ModelParameterQuery `interface`
+
+📍 [`src/capabilities/metadata/parameters.ts:5`](src/capabilities/metadata/parameters.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `vendor` | `vendor: Vendor;` | - |
+| `model` | `model: string;` | - |
+| `endpoint` | `endpoint: ModelParameterEndpoint;` | - |
+| `reasoningEffort?` | `reasoningEffort?: string` | - |
 
 </details>
 
@@ -30812,6 +31227,43 @@ Host-supplied upper rates, including any service tier or cache-write premium.
 
 ---
 
+### RealtimeModelCapabilities `interface`
+
+📍 [`src/capabilities/metadata/realtime.ts:13`](src/capabilities/metadata/realtime.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `vendor` | `readonly vendor: Vendor;` | - |
+| `model` | `readonly model: string;` | - |
+| `transport` | `readonly transport: RealtimeTransport;` | - |
+| `registryKnown` | `readonly registryKnown: boolean;` | - |
+| `reasoning` | `readonly reasoning: { readonly support: EndpointCapabilitySupport; /** null explicitly means the exact set is unknown. */ readonly allowedEfforts: readonly RealtimeReasoningEffort[] | null; readonly provenance?: CapabilityProvenance };` | - |
+
+</details>
+
+---
+
+### RealtimeModelCapabilityQuery `interface`
+
+📍 [`src/capabilities/metadata/realtime.ts:8`](src/capabilities/metadata/realtime.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `vendor` | `vendor: Vendor;` | - |
+| `model` | `model: string;` | - |
+| `transport` | `transport: RealtimeTransport;` | - |
+| `endpoint?` | `endpoint?: 'openai-realtime' | 'custom';` | Custom gateways do not inherit the official endpoint's verified facts. |
+
+</details>
+
+---
+
 ### ResolvedDeepSeekModel `interface`
 
 📍 [`src/infrastructure/providers/deepseek/DeepSeekHostRegistry.ts:174`](src/infrastructure/providers/deepseek/DeepSeekHostRegistry.ts)
@@ -30931,6 +31383,16 @@ type ModelLifecycleStatus = | 'preview'
 
 ---
 
+### ModelParameterEndpoint `type`
+
+📍 [`src/capabilities/metadata/parameters.ts:4`](src/capabilities/metadata/parameters.ts)
+
+```typescript
+type ModelParameterEndpoint = 'responses' | 'chat-completions' | 'custom'
+```
+
+---
+
 ### OpenAIRealtimeModel `type`
 
 📍 [`src/capabilities/voice/openai/RealtimeTypes.ts:3`](src/capabilities/voice/openai/RealtimeTypes.ts)
@@ -30963,6 +31425,18 @@ type ProcessingMode = | 'interactive'
   | 'ultrafast'
   | 'priority'
   | 'off_peak'
+```
+
+---
+
+### assessModelParameters `function`
+
+📍 [`src/capabilities/metadata/parameters.ts:43`](src/capabilities/metadata/parameters.ts)
+
+Pure metadata. Unknown/custom endpoints are preserved rather than silently sanitized.
+
+```typescript
+export function assessModelParameters(query: ModelParameterQuery): ModelParameterAssessment
 ```
 
 ---
@@ -31076,6 +31550,18 @@ Get all models for a specific vendor
 
 ```typescript
 export function getModelsByVendor(vendor: VendorType): ILLMDescription[]
+```
+
+---
+
+### getRealtimeModelCapabilities `function`
+
+📍 [`src/capabilities/metadata/realtime.ts:24`](src/capabilities/metadata/realtime.ts)
+
+Pure sparse companion. Unknown metadata never becomes an unsupported UI choice.
+
+```typescript
+export function getRealtimeModelCapabilities(query: RealtimeModelCapabilityQuery): RealtimeModelCapabilities
 ```
 
 ---
@@ -41986,7 +42472,7 @@ translate?(options: STTOptions): Promise&lt;STTResponse&gt;;
 
 ### ITextCompactionProvider `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:127`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:129`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -42019,7 +42505,7 @@ countInput(options: TextGenerateOptions): Promise&lt;number | null&gt;;
 
 ### ITextProvider `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:96`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:98`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -42688,7 +43174,7 @@ Used by edit UIs to re-populate form fields without needing to decrypt config.au
 
 ### TextCompactionResponse `interface`
 
-📍 [`src/domain/interfaces/ITextProvider.ts:132`](src/domain/interfaces/ITextProvider.ts)
+📍 [`src/domain/interfaces/ITextProvider.ts:134`](src/domain/interfaces/ITextProvider.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -42724,6 +43210,7 @@ Used by edit UIs to re-populate form fields without needing to decrypt config.au
 | `tools?` | `tools?: Tool[];` | - |
 | `tool_choice?` | `tool_choice?: 'auto' | 'required' | { type: 'function'; function: { name: string } };` | - |
 | `temperature?` | `temperature?: number;` | - |
+| `parameterPolicy?` | `parameterPolicy?: import('../../capabilities/metadata/parameters.js').ModelParameterPolicy;` | Explicit request policy; absence preserves legacy validation/count behavior. |
 | `max_output_tokens?` | `max_output_tokens?: number;` | - |
 | `response_format?` | `response_format?: {
     type: 'text' | 'json_object' | 'json_schema';
@@ -43450,7 +43937,7 @@ destroy(): void
 
 ### AgentContextNextGen `class`
 
-📍 [`src/core/context-nextgen/AgentContextNextGen.ts:165`](src/core/context-nextgen/AgentContextNextGen.ts)
+📍 [`src/core/context-nextgen/AgentContextNextGen.ts:167`](src/core/context-nextgen/AgentContextNextGen.ts)
 
 Next-generation context manager for AI agents.
 
@@ -44102,6 +44589,136 @@ destroy(): void
 ```
 
 **Returns:** `void`
+
+</details>
+
+---
+
+### AgentPackageOutcomeServer `class`
+
+📍 [`src/portable/OutcomeServer.ts:25`](src/portable/OutcomeServer.ts)
+
+Explicit authenticated facade over the ordinary Agent tool lifecycle. No HTTP server or credentials are supplied by a package.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(private readonly agent: Agent, pkg: SerializedAgentPackage, private readonly options: AgentPackageOutcomeServerOptions&lt;TContext&gt;)
+```
+
+**Parameters:**
+- `agent`: `Agent`
+- `pkg`: `SerializedAgentPackage`
+- `options`: `AgentPackageOutcomeServerOptions&lt;TContext&gt;`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `package()`
+
+```typescript
+package(): OutcomeAgentPackage
+```
+
+**Returns:** `OutcomeAgentPackage`
+
+#### `negotiate()`
+
+```typescript
+async negotiate(input: unknown, host: TContext): Promise&lt;OutcomeNegotiation&gt;
+```
+
+**Parameters:**
+- `input`: `unknown`
+- `host`: `TContext`
+
+**Returns:** `Promise&lt;OutcomeNegotiation&gt;`
+
+#### `execute()`
+
+```typescript
+async execute(input: unknown, host: TContext): Promise&lt;OutcomeExecuteResponse&gt;
+```
+
+**Parameters:**
+- `input`: `unknown`
+- `host`: `TContext`
+
+**Returns:** `Promise&lt;OutcomeExecuteResponse&gt;`
+
+#### `getReceipt()`
+
+```typescript
+async getReceipt(input: unknown, host: TContext): Promise&lt;RemoteOutcomeReceipt&gt;
+```
+
+**Parameters:**
+- `input`: `unknown`
+- `host`: `TContext`
+
+**Returns:** `Promise&lt;RemoteOutcomeReceipt&gt;`
+
+#### `cancel()`
+
+```typescript
+async cancel(input: unknown, host: TContext): Promise&lt;OutcomeCancelResponse&gt;
+```
+
+**Parameters:**
+- `input`: `unknown`
+- `host`: `TContext`
+
+**Returns:** `Promise&lt;OutcomeCancelResponse&gt;`
+
+#### `readEvidence()`
+
+```typescript
+async readEvidence(input: unknown, host: TContext): Promise&lt;OutcomeEvidenceResponse&gt;
+```
+
+**Parameters:**
+- `input`: `unknown`
+- `host`: `TContext`
+
+**Returns:** `Promise&lt;OutcomeEvidenceResponse&gt;`
+
+#### `readRetainedSource()`
+
+Host-only exact retained record. No action is resubmitted.
+
+```typescript
+readRetainedSource(requestId: string): EvidenceRecord | undefined
+```
+
+**Parameters:**
+- `requestId`: `string`
+
+**Returns:** `EvidenceRecord | undefined`
+
+#### `acknowledgeSource()`
+
+```typescript
+async acknowledgeSource(requestId: string, reference: EvidenceReference): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `requestId`: `string`
+- `reference`: `EvidenceReference`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `close()`
+
+```typescript
+close(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
 
 </details>
 
@@ -51389,6 +52006,43 @@ Trusted connector and model selected by the receiving application host.
 
 ---
 
+### AgentPackageOutcomeServerOptions `interface`
+
+📍 [`src/portable/outcomeTypes.ts:74`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `authorize()`
+
+Rechecked before every operation/cache result. Context comes from the trusted transport host.
+
+```typescript
+authorize(access: Readonly&lt;RemoteOutcomeAccess&gt;, context: TContext): boolean | Promise&lt;boolean&gt;;
+```
+
+**Parameters:**
+- `access`: `Readonly&lt;RemoteOutcomeAccess&gt;`
+- `context`: `TContext`
+
+**Returns:** `boolean | Promise&lt;boolean&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `storage` | `storage: IEvidenceStorage;` | - |
+| `maxRequests?` | `maxRequests?: number;` | - |
+| `maxInlineBytes?` | `maxInlineBytes?: number;` | - |
+| `maxReadChars?` | `maxReadChars?: number;` | - |
+
+</details>
+
+---
+
 ### AgentPermissionsConfig `interface`
 
 📍 [`src/core/permissions/types.ts:234`](src/core/permissions/types.ts)
@@ -51478,7 +52132,7 @@ Full agent state - everything needed to resume
 
 ### AgentTypeConfig `interface`
 
-📍 [`src/core/orchestrator/createOrchestrator.ts:39`](src/core/orchestrator/createOrchestrator.ts)
+📍 [`src/core/orchestrator/createOrchestrator.ts:44`](src/core/orchestrator/createOrchestrator.ts)
 
 Configuration for an agent type that the orchestrator can spawn.
 
@@ -52032,6 +52686,49 @@ in signalText; only the deterministic `attended` seed fact is skipped). |
 
 ---
 
+### CapabilityProvenance `interface`
+
+📍 [`src/capabilities/metadata/realtime.ts:7`](src/capabilities/metadata/realtime.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `kind` | `readonly kind: 'documentation' | 'registry';` | - |
+| `url?` | `readonly url?: string;` | - |
+| `verifiedAt?` | `readonly verifiedAt?: string` | - |
+
+</details>
+
+---
+
+### ChildObservation `interface`
+
+📍 [`src/core/orchestrator/factoryTypes.ts:21`](src/core/orchestrator/factoryTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `parentExecutionId` | `readonly parentExecutionId: string;` | - |
+| `childExecutionId` | `readonly childExecutionId: string;` | - |
+| `childName` | `readonly childName: string;` | - |
+| `state` | `readonly state: 'settled' | 'timed_out' | 'cancelled' | 'uncertain';` | - |
+| `reason?` | `readonly reason?: string;` | - |
+| `response?` | `readonly response?: Readonly&lt;AgentResponse&gt;;` | - |
+| `accounting` | `readonly accounting: 'shared' | 'independent';` | - |
+| `modelTaskId?` | `readonly modelTaskId?: string;` | - |
+| `invocationIds` | `readonly invocationIds: readonly string[];` | - |
+| `references` | `readonly references: readonly EvidenceReference[];` | - |
+| `toolOutcomes?` | `readonly toolOutcomes?: readonly ToolExecutionOutcome[];` | Actual tool diagnostics, including late outcomes; business completion remains host-owned. |
+| `late` | `readonly late: boolean;` | - |
+
+</details>
+
+---
+
 ### ChunkingOptions `interface`
 
 📍 [`src/capabilities/speech/types.ts:39`](src/capabilities/speech/types.ts)
@@ -52333,6 +53030,23 @@ GPT-6 Astra conversation-scoped reasoning-effort update.
 
 ---
 
+### ConnectorAcceptedResource `interface`
+
+📍 [`src/tools/connector/enhancedInvocation.ts:4`](src/tools/connector/enhancedInvocation.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `kind` | `readonly kind: 'reply_draft';` | - |
+| `id` | `readonly id: string;` | - |
+| `state` | `readonly state: 'accepted'` | - |
+
+</details>
+
+---
+
 ### ConnectorConfig `interface`
 
 📍 [`src/domain/entities/Connector.ts:149`](src/domain/entities/Connector.ts)
@@ -52467,6 +53181,25 @@ text before sending it to the embedding provider. |
 | `maxOutputTokens?` | `maxOutputTokens?: number;` | Max output tokens per LLM call. Default: undefined — use the model's own
 ceiling, which is always the maximum it can emit. Hardcoded defaults
 silently truncate long extractions. See feedback_no_output_limits.md. |
+
+</details>
+
+---
+
+### ConnectorPage `interface`
+
+📍 [`src/tools/connector/pages/types.ts:7`](src/tools/connector/pages/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `items` | `items: T[];` | - |
+| `returnedCount` | `returnedCount: number;` | - |
+| `reportedTotal?` | `reportedTotal?: number;` | - |
+| `searchCoverage` | `searchCoverage: 'complete' | 'incomplete' | 'unknown';` | - |
+| `position` | `position: PagePosition;` | - |
 
 </details>
 
@@ -52978,7 +53711,7 @@ because they remain verbatim after rollover.
 
 ### ControlFlowResult `interface`
 
-📍 [`src/core/routineControlFlow.ts:56`](src/core/routineControlFlow.ts)
+📍 [`src/core/routineControlFlow.ts:35`](src/core/routineControlFlow.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -53221,7 +53954,7 @@ Configuration for DefaultCompactionStrategy
 
 ### DelegationDefaults `interface`
 
-📍 [`src/core/orchestrator/createOrchestrator.ts:67`](src/core/orchestrator/createOrchestrator.ts)
+📍 [`src/core/orchestrator/createOrchestrator.ts:72`](src/core/orchestrator/createOrchestrator.ts)
 
 Delegation defaults that apply when delegate_interactive is called
 without explicit monitoring/reclaimOn parameters.
@@ -53244,7 +53977,7 @@ without explicit monitoring/reclaimOn parameters.
 
 ### DelegationReclaimConfig `interface`
 
-📍 [`src/core/orchestrator/tools.ts:52`](src/core/orchestrator/tools.ts)
+📍 [`src/core/orchestrator/tools.ts:54`](src/core/orchestrator/tools.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -53261,7 +53994,7 @@ without explicit monitoring/reclaimOn parameters.
 
 ### DelegationState `interface`
 
-📍 [`src/core/orchestrator/tools.ts:44`](src/core/orchestrator/tools.ts)
+📍 [`src/core/orchestrator/tools.ts:46`](src/core/orchestrator/tools.ts)
 
 Delegation state — tracks whether the orchestrator has handed
 the user-facing session to a sub-agent.
@@ -53709,7 +54442,7 @@ If omitted, result is stored as `__prestep_{name}` or `__poststep_{name}`. |
 
 ### DirectCallOptions `interface`
 
-📍 [`src/core/BaseAgent.ts:284`](src/core/BaseAgent.ts)
+📍 [`src/core/BaseAgent.ts:289`](src/core/BaseAgent.ts)
 
 Options for direct LLM calls (bypassing AgentContext).
 
@@ -53728,6 +54461,7 @@ protocol-managed function/custom tools whose outputs the caller will return
 manually. When set, it takes precedence over `includeTools`. |
 | `toolChoice?` | `toolChoice?: TextGenerateOptions['tool_choice'];` | Tool selection for explicit direct-call tools. |
 | `temperature?` | `temperature?: number;` | Temperature for generation |
+| `parameterPolicy?` | `parameterPolicy?: TextGenerateOptions['parameterPolicy'];` | - |
 | `maxOutputTokens?` | `maxOutputTokens?: number;` | Maximum output tokens |
 | `previousResponseId?` | `previousResponseId?: string;` | Continue a provider-stored response/interaction without resending its history. |
 | `continuationToken?` | `continuationToken?: string;` | Resume an incomplete provider decode using the token returned by the prior call. |
@@ -54043,6 +54777,60 @@ Configuration for the default energy-based VAD
 | `speechFramesThreshold?` | `speechFramesThreshold?: number;` | Consecutive speech frames needed to trigger speech_start. Default: 3 |
 | `silenceTimeout?` | `silenceTimeout?: number;` | Silence duration in ms to trigger speech_end. Default: 1500 |
 | `minSpeechDuration?` | `minSpeechDuration?: number;` | Minimum speech duration in ms to be considered valid. Default: 250 |
+
+</details>
+
+---
+
+### EnhancedConnectorAttempt `interface`
+
+📍 [`src/tools/connector/enhancedProfiles.ts:18`](src/tools/connector/enhancedProfiles.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connector` | `readonly connector: string;` | - |
+| `toolName` | `readonly toolName: string;` | - |
+| `accountId?` | `readonly accountId?: string;` | - |
+| `invocationId` | `readonly invocationId: string;` | - |
+| `requestId` | `readonly requestId: string;` | - |
+
+</details>
+
+---
+
+### EnhancedConnectorOptions `interface`
+
+📍 [`src/tools/connector/enhancedProfiles.ts:25`](src/tools/connector/enhancedProfiles.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `onAttempt()?`
+
+Counts physical transport attempts, distinct from logical pages/model calls.
+
+```typescript
+onAttempt?(attempt: EnhancedConnectorAttempt): void;
+```
+
+**Parameters:**
+- `attempt`: `EnhancedConnectorAttempt`
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `profile` | `profile: string;` | - |
+| `userId?` | `userId?: string;` | - |
+| `timeoutMs?` | `timeoutMs?: number;` | Whole invocation deadline, default connector timeout or 30s; zero disables it. |
 
 </details>
 
@@ -54428,7 +55216,7 @@ as object OR in contextIds, ranked by confidence × recency × predicateWeight
 
 ### ExecuteRoutineOptions `interface`
 
-📍 [`src/core/routineRunner.ts:94`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:97`](src/core/routineRunner.ts)
 
 Options for executing a routine.
 
@@ -54503,6 +55291,24 @@ into `prompts.system` (Mode 1) — the library does not own that surface. |
     /** Override validation prompt builder. Receives task + validation context (response, memory state, tool calls). */
     validation?: (task: Task, context: ValidationContext) =&gt; string;
   };` | Configurable prompts (all have sensible defaults) |
+
+</details>
+
+---
+
+### ExecutionBinding `interface`
+
+📍 [`src/core/execution/composition.ts:11`](src/core/execution/composition.ts)
+
+Private until the complete verified facade is delivered. Never serialized.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `modelTask?` | `modelTask?: ModelTask;` | - |
+| `signal?` | `signal?: AbortSignal` | - |
 
 </details>
 
@@ -59272,7 +60078,7 @@ Counts of operations applied/rejected by the resolver.
 
 ### OrchestratorConfig `interface`
 
-📍 [`src/core/orchestrator/createOrchestrator.ts:81`](src/core/orchestrator/createOrchestrator.ts)
+📍 [`src/core/orchestrator/createOrchestrator.ts:86`](src/core/orchestrator/createOrchestrator.ts)
 
 Configuration for the orchestrator.
 
@@ -59303,6 +60109,48 @@ Default: false |
 
 ---
 
+### OrchestratorFactoryOptions `interface`
+
+📍 [`src/core/orchestrator/factoryTypes.ts:36`](src/core/orchestrator/factoryTypes.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `configureAgent()`
+
+```typescript
+configureAgent(request: AgentConstructionRequest): OrchestratedAgentConfig | Promise&lt;OrchestratedAgentConfig&gt;;
+```
+
+**Parameters:**
+- `request`: `AgentConstructionRequest`
+
+**Returns:** `OrchestratedAgentConfig | Promise&lt;OrchestratedAgentConfig&gt;`
+
+#### `onChildOutcome()?`
+
+```typescript
+onChildOutcome?(observation: ChildObservation): void;
+```
+
+**Parameters:**
+- `observation`: `ChildObservation`
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `descriptionExecution?` | `descriptionExecution?: ExecutionBinding;` | - |
+
+</details>
+
+---
+
 ### OutboundCallConfig `interface`
 
 📍 [`src/capabilities/voice/types.ts:522`](src/capabilities/voice/types.ts)
@@ -59318,6 +60166,191 @@ Configuration for initiating an outbound call.
 | `from` | `from: string;` | Caller ID / from phone number (must be a verified Twilio number) |
 | `timeout?` | `timeout?: number;` | Ring timeout in seconds before giving up. Default: 30 |
 | `machineDetection?` | `machineDetection?: boolean;` | Enable answering machine detection. Default: false |
+
+</details>
+
+---
+
+### OutcomeAgentPackage `interface`
+
+📍 [`src/portable/outcomeTypes.ts:109`](src/portable/outcomeTypes.ts)
+
+Separate outer envelope prevents an old loader from silently dropping required observations.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `protocol` | `protocol: AgentPackageOutcomeProtocol;` | - |
+| `package` | `package: SerializedAgentPackage;` | - |
+| `checkpoint?` | `checkpoint?: RemoteOutcomeCheckpoint;` | - |
+
+</details>
+
+---
+
+### OutcomeCancelRequest `interface`
+
+📍 [`src/portable/outcomeTypes.ts:26`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `reason?` | `reason?: string` | - |
+
+</details>
+
+---
+
+### OutcomeCancelResponse `interface`
+
+📍 [`src/portable/outcomeTypes.ts:52`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `receipt` | `receipt: RemoteOutcomeReceipt;` | - |
+| `cancellationRequested` | `cancellationRequested: boolean` | - |
+
+</details>
+
+---
+
+### OutcomeEvidenceRequest `interface`
+
+📍 [`src/portable/outcomeTypes.ts:20`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `sessionId` | `sessionId: string;` | - |
+| `reference` | `reference: EvidenceReference;` | - |
+| `offset?` | `offset?: number;` | - |
+| `limit?` | `limit?: number;` | - |
+
+</details>
+
+---
+
+### OutcomeEvidenceResponse `interface`
+
+📍 [`src/portable/outcomeTypes.ts:53`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `chunk` | `chunk: EvidenceChunk | null;` | - |
+| `contentSha256?` | `contentSha256?: string;` | - |
+| `contentBytes?` | `contentBytes?: number` | - |
+
+</details>
+
+---
+
+### OutcomeExecuteRequest `interface`
+
+📍 [`src/portable/outcomeTypes.ts:13`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `toolName` | `toolName: string;` | - |
+| `toolFingerprint` | `toolFingerprint: string;` | Expected negotiated callable/effect contract, never a grant of permission. |
+| `arguments` | `arguments: Record&lt;string, unknown&gt;;` | - |
+| `argumentsFingerprint` | `argumentsFingerprint: string;` | - |
+
+</details>
+
+---
+
+### OutcomeExecuteResponse `interface`
+
+📍 [`src/portable/outcomeTypes.ts:46`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `receipt` | `receipt: RemoteOutcomeReceipt;` | - |
+| `hasResult` | `hasResult: boolean;` | True means a complete JSON result is present, including null/false/zero. |
+| `result?` | `result?: unknown;` | - |
+
+</details>
+
+---
+
+### OutcomeHydratedAgent `interface`
+
+📍 [`src/portable/outcomeTypes.ts:133`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `agent` | `agent: Agent;` | - |
+| `session` | `session: RemoteOutcomeSession` | - |
+
+</details>
+
+---
+
+### OutcomeNegotiation `interface`
+
+📍 [`src/portable/outcomeTypes.ts:27`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `sessionId` | `sessionId: string;` | Server-instance epoch. A restart does not restore process-local request authority. |
+| `tools` | `tools: Array&lt;{ name: string; definitionFingerprint: string; effect: RemoteOutcomeEffect }&gt;;` | - |
+| `limits` | `limits: { maxRequests: number; maxInlineBytes: number; maxReadChars: number };` | - |
+
+</details>
+
+---
+
+### OutcomePackageRequest `interface`
+
+📍 [`src/portable/outcomeTypes.ts:11`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `protocol` | `protocol: AgentPackageOutcomeProtocol;` | - |
+| `packageId` | `packageId: string` | - |
+
+</details>
+
+---
+
+### OutcomeRequestIdentity `interface`
+
+📍 [`src/portable/outcomeTypes.ts:12`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `sessionId` | `sessionId: string;` | - |
+| `requestId` | `requestId: string` | - |
 
 </details>
 
@@ -60658,6 +61691,170 @@ callers iterate scopes themselves to match their tenant model. |
 
 ---
 
+### RemoteOutcomeAccess `interface`
+
+📍 [`src/portable/outcomeTypes.ts:63`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `operation` | `operation: keyof RemoteOutcomeTransport;` | - |
+| `packageId` | `packageId: string;` | - |
+| `sessionId?` | `sessionId?: string;` | - |
+| `requestId?` | `requestId?: string;` | - |
+| `toolName?` | `toolName?: string;` | - |
+| `effect?` | `effect?: RemoteOutcomeEffect;` | Actual current registration effect; supplied by the server, never wire hints. |
+| `arguments?` | `arguments?: Readonly&lt;Record&lt;string, unknown&gt;&gt;;` | - |
+| `reference?` | `reference?: Readonly&lt;EvidenceReference&gt;;` | - |
+
+</details>
+
+---
+
+### RemoteOutcomeCheckpoint `interface`
+
+📍 [`src/portable/outcomeTypes.ts:98`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `version` | `version: 1;` | - |
+| `operations` | `operations: Array&lt;{
+    operationId: string; sessionId: string; toolName: string; argumentsFingerprint: string;
+    admission: EvidenceReference;
+    proxyReceipt?: EvidenceReference;
+    reference?: EvidenceReference;
+  }&gt;;` | Metadata is a recovery hint; the owning scoped backend must establish observation proof. |
+
+</details>
+
+---
+
+### RemoteOutcomeReceipt `interface`
+
+📍 [`src/portable/outcomeTypes.ts:33`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `observedSessionId` | `observedSessionId: string;` | Actual server instance answering this lookup; may differ after restart. |
+| `state` | `state: 'pending' | 'settled' | 'unknown';` | - |
+| `admission` | `admission: 'not_started' | 'started' | 'unknown';` | - |
+| `toolName?` | `toolName?: string;` | - |
+| `effect?` | `effect?: RemoteOutcomeEffect;` | Actual current server registration metadata, selected independently of the request hint. |
+| `argumentsFingerprint?` | `argumentsFingerprint?: string;` | - |
+| `serverOutcome?` | `serverOutcome?: ToolExecutionOutcome;` | - |
+| `source?` | `source?: EvidenceReference;` | - |
+| `error?` | `error?: { code: string; message: string };` | - |
+
+</details>
+
+---
+
+### RemoteOutcomeReport `interface`
+
+📍 [`src/portable/outcomeTypes.ts:82`](src/portable/outcomeTypes.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `operationId` | `operationId: string;` | - |
+| `sessionId` | `sessionId: string;` | - |
+| `toolName` | `toolName: string;` | - |
+| `argumentsFingerprint` | `argumentsFingerprint: string;` | - |
+| `state` | `state: 'pending' | 'settled' | 'unknown';` | - |
+| `receipt?` | `receipt?: Readonly&lt;RemoteOutcomeReceipt&gt;;` | - |
+| `proxyOutcome?` | `proxyOutcome?: Readonly&lt;ToolExecutionOutcome&gt;;` | Actual proxy observation; never overwritten with server IDs/time/completion. |
+| `admission?` | `admission?: Readonly&lt;EvidenceReference&gt;;` | Immutable scoped binding of proxy invocation, remote request and argument fingerprint. |
+| `reference?` | `reference?: Readonly&lt;EvidenceReference&gt;;` | - |
+| `pendingSource` | `pendingSource: boolean;` | - |
+| `accounting` | `accounting: 'external_unknown';` | Tool/service charges and nested remote models are not silently charged as local LLM calls. |
+
+</details>
+
+---
+
+### RemoteOutcomeTransport `interface`
+
+📍 [`src/portable/outcomeTypes.ts:56`](src/portable/outcomeTypes.ts)
+
+Host-supplied authenticated transport; none of these fields supply tenant authority.
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `negotiate()`
+
+```typescript
+negotiate(request: OutcomePackageRequest, options?: { signal?: AbortSignal }): Promise&lt;OutcomeNegotiation&gt;;
+```
+
+**Parameters:**
+- `request`: `OutcomePackageRequest`
+- `options`: `{ signal?: AbortSignal | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;OutcomeNegotiation&gt;`
+
+#### `execute()`
+
+```typescript
+execute(request: OutcomeExecuteRequest, options?: { signal?: AbortSignal }): Promise&lt;OutcomeExecuteResponse&gt;;
+```
+
+**Parameters:**
+- `request`: `OutcomeExecuteRequest`
+- `options`: `{ signal?: AbortSignal | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;OutcomeExecuteResponse&gt;`
+
+#### `getReceipt()`
+
+```typescript
+getReceipt(request: OutcomeRequestIdentity, options?: { signal?: AbortSignal }): Promise&lt;RemoteOutcomeReceipt&gt;;
+```
+
+**Parameters:**
+- `request`: `OutcomeRequestIdentity`
+- `options`: `{ signal?: AbortSignal | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;RemoteOutcomeReceipt&gt;`
+
+#### `cancel()`
+
+```typescript
+cancel(request: OutcomeCancelRequest, options?: { signal?: AbortSignal }): Promise&lt;OutcomeCancelResponse&gt;;
+```
+
+**Parameters:**
+- `request`: `OutcomeCancelRequest`
+- `options`: `{ signal?: AbortSignal | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;OutcomeCancelResponse&gt;`
+
+#### `readEvidence()`
+
+```typescript
+readEvidence(request: OutcomeEvidenceRequest, options?: { signal?: AbortSignal }): Promise&lt;OutcomeEvidenceResponse&gt;;
+```
+
+**Parameters:**
+- `request`: `OutcomeEvidenceRequest`
+- `options`: `{ signal?: AbortSignal | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;OutcomeEvidenceResponse&gt;`
+
+</details>
+
+---
+
 ### ResearchFinding `interface`
 
 📍 [`src/capabilities/researchAgent/types.ts:159`](src/capabilities/researchAgent/types.ts)
@@ -60908,6 +62105,23 @@ Resolution-time hint only; does NOT persist on the resolved entity.
 
 ---
 
+### RoutineContinuation `interface`
+
+📍 [`src/core/routines/types.ts:66`](src/core/routines/types.ts)
+
+Same-process capability issued by one runner; JSON cannot restore it.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `[continuationBrand]` | `readonly [continuationBrand]: true` | - |
+
+</details>
+
+---
+
 ### RoutineDefinition `interface`
 
 📍 [`src/domain/entities/Routine.ts:85`](src/domain/entities/Routine.ts)
@@ -61066,6 +62280,29 @@ Created from a RoutineDefinition, delegates task management to Plan.
 
 ---
 
+### RoutineInspection `interface`
+
+📍 [`src/core/routines/types.ts:97`](src/core/routines/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `operationId` | `readonly operationId: string;` | - |
+| `lifecycle` | `readonly lifecycle: 'running' | 'paused' | 'settling';` | - |
+| `lastResult?` | `readonly lastResult?: RoutineRunResult;` | - |
+| `accounting` | `readonly accounting: 'shared' | 'independent';` | - |
+| `closed` | `readonly closed: boolean;` | - |
+| `cleanupError?` | `readonly cleanupError?: string;` | - |
+| `sources` | `readonly sources: readonly RoutineSource[];` | - |
+| `omittedSources` | `readonly omittedSources: number;` | - |
+| `sourceIndexId` | `readonly sourceIndexId: string;` | - |
+
+</details>
+
+---
+
 ### RoutineParameter `interface`
 
 📍 [`src/domain/entities/Routine.ts:19`](src/domain/entities/Routine.ts)
@@ -61082,6 +62319,208 @@ Enables parameterized, reusable routines.
 | `description` | `description: string;` | Human-readable description |
 | `required?` | `required?: boolean;` | Whether this parameter must be provided (default: false) |
 | `default?` | `default?: unknown;` | Default value when not provided |
+
+</details>
+
+---
+
+### RoutineReport `interface`
+
+📍 [`src/core/routines/types.ts:67`](src/core/routines/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `operationId` | `readonly operationId: string;` | - |
+| `observations` | `readonly observations: readonly RoutineObservation[];` | - |
+| `usage?` | `readonly usage?: Readonly&lt;ModelTaskSnapshot&gt;;` | - |
+| `usageOmitted?` | `readonly usageOmitted?: 'observation_capacity' | 'unavailable';` | - |
+| `accounting` | `readonly accounting: 'shared' | 'independent';` | - |
+
+</details>
+
+---
+
+### RoutineRunner `interface`
+
+📍 [`src/core/routines/types.ts:120`](src/core/routines/types.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `run()`
+
+```typescript
+run(request: RoutineRunRequest): Promise&lt;RoutineRunResult&gt;;
+```
+
+**Parameters:**
+- `request`: `RoutineRunRequest`
+
+**Returns:** `Promise&lt;RoutineRunResult&gt;`
+
+#### `resume()`
+
+```typescript
+resume(continuation: RoutineContinuation, options: {
+    authorize(): boolean | Promise&lt;boolean&gt;;
+    execution?: ExecutionBinding;
+  }): Promise&lt;RoutineRunResult&gt;;
+```
+
+**Parameters:**
+- `continuation`: `RoutineContinuation`
+- `options`: `{ authorize(): boolean | Promise&lt;boolean&gt;; execution?: ExecutionBinding | undefined; }`
+
+**Returns:** `Promise&lt;RoutineRunResult&gt;`
+
+#### `asTool()`
+
+```typescript
+asTool(options: RoutineToolOptions): ToolFunction&lt;Record&lt;string, unknown&gt;, RoutineToolResult&gt;;
+```
+
+**Parameters:**
+- `options`: `RoutineToolOptions`
+
+**Returns:** `ToolFunction&lt;Record&lt;string, unknown&gt;, RoutineToolResult&gt;`
+
+#### `inspect()`
+
+```typescript
+inspect(operationId: string): RoutineInspection | null;
+```
+
+**Parameters:**
+- `operationId`: `string`
+
+**Returns:** `RoutineInspection | null`
+
+#### `readSource()`
+
+Host-only source recovery remains available for retained data after close.
+
+```typescript
+readSource(operationId: string, sourceId: string, options?: { maxBytes?: number }): Promise&lt;unknown&gt;;
+```
+
+**Parameters:**
+- `operationId`: `string`
+- `sourceId`: `string`
+- `options`: `{ maxBytes?: number | undefined; } | undefined` *(optional)*
+
+**Returns:** `Promise&lt;unknown&gt;`
+
+#### `acknowledgeSource()`
+
+Host assertion of archival through existing evidence/storage; never resumes actions.
+
+```typescript
+acknowledgeSource(operationId: string, sourceId: string, reference: EvidenceReference): void;
+```
+
+**Parameters:**
+- `operationId`: `string`
+- `sourceId`: `string`
+- `reference`: `EvidenceReference`
+
+**Returns:** `void`
+
+#### `close()`
+
+Invalidates execution handles and requests cancellation; does not assert work stopped.
+
+```typescript
+close(): void;
+```
+
+**Returns:** `void`
+
+</details>
+
+---
+
+### RoutineRunnerOptions `interface`
+
+📍 [`src/core/routines/types.ts:112`](src/core/routines/types.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `verify()`
+
+```typescript
+verify(observation: RoutineObservation, context: VerificationContext): VerificationDecision | Promise&lt;VerificationDecision&gt;;
+```
+
+**Parameters:**
+- `observation`: `RoutineObservation`
+- `context`: `VerificationContext`
+
+**Returns:** `VerificationDecision | Promise&lt;VerificationDecision&gt;`
+
+#### `onProgress()?`
+
+```typescript
+onProgress?(event: RoutineProgress): void;
+```
+
+**Parameters:**
+- `event`: `RoutineProgress`
+
+**Returns:** `void`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `maxObservationBytes?` | `maxObservationBytes?: number;` | Aggregate observation view allowance; default 1 MiB. Unstored sources are retained. |
+| `maxActiveOperations?` | `maxActiveOperations?: number;` | Includes paused and still-settling operations; default 32. |
+
+</details>
+
+---
+
+### RoutineSource `interface`
+
+📍 [`src/core/routines/types.ts:15`](src/core/routines/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `readonly id: string;` | - |
+| `kind` | `readonly kind: 'response' | 'step' | 'tool' | 'observation';` | - |
+| `retained` | `readonly retained: 'operation' | 'evidence';` | - |
+| `reference?` | `readonly reference?: Readonly&lt;EvidenceReference&gt;;` | - |
+| `data?` | `readonly data?: unknown;` | Small tool sources can be inline; other bodies use the phase/step fields or a reference. |
+
+</details>
+
+---
+
+### RoutineStepObservation `interface`
+
+📍 [`src/core/routines/types.ts:31`](src/core/routines/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `readonly id: string;` | - |
+| `name` | `readonly name: string;` | - |
+| `phase` | `readonly phase: 'pre' | 'post';` | - |
+| `state` | `readonly state: 'succeeded' | 'failed' | 'skipped' | 'uncertain';` | - |
+| `result?` | `readonly result?: unknown;` | - |
+| `sourceId?` | `readonly sourceId?: string;` | - |
+| `references?` | `readonly references?: readonly EvidenceReference[];` | - |
 
 </details>
 
@@ -62388,7 +63827,7 @@ Stdio transport configuration
 
 ### StepResolveContext `interface`
 
-📍 [`src/core/routineControlFlow.ts:172`](src/core/routineControlFlow.ts)
+📍 [`src/core/routineControlFlow.ts:151`](src/core/routineControlFlow.ts)
 
 Context for resolving templates in deterministic step arguments.
 
@@ -63123,6 +64562,45 @@ Token usage statistics
 
 ---
 
+### TranscriptionCapabilities `interface`
+
+📍 [`src/capabilities/metadata/realtime.ts:42`](src/capabilities/metadata/realtime.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `support` | `readonly support: EndpointCapabilitySupport;` | - |
+| `constraints` | `readonly constraints: { readonly requiredTransport?: 'websocket'; readonly turnDetection?: 'off' };` | - |
+| `reason` | `readonly reason: string;` | - |
+| `provenance?` | `readonly provenance?: CapabilityProvenance;` | - |
+
+</details>
+
+---
+
+### TranscriptionCapabilityQuery `interface`
+
+📍 [`src/capabilities/metadata/realtime.ts:35`](src/capabilities/metadata/realtime.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `vendor` | `vendor: Vendor;` | - |
+| `model` | `model: string;` | - |
+| `mode` | `mode: 'file' | 'transcription-session' | 'conversation-input';` | - |
+| `transport?` | `transport?: RealtimeTransport;` | - |
+| `conversationModel?` | `conversationModel?: string;` | - |
+| `endpoint?` | `endpoint?: 'openai' | 'custom';` | - |
+| `turnDetection?` | `turnDetection?: 'off' | 'server_vad' | 'semantic_vad';` | - |
+
+</details>
+
+---
+
 ### TranscriptMessage `interface`
 
 📍 [`src/capabilities/voice/types.ts:312`](src/capabilities/voice/types.ts)
@@ -63545,7 +65023,7 @@ If empty/omitted, rule applies to ALL calls of this tool (blanket rule). |
 
 ### ValidationContext `interface`
 
-📍 [`src/core/routineRunner.ts:191`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:194`](src/core/routineRunner.ts)
 
 Context snapshot passed to the validation prompt builder.
 Contains everything the validator needs to evaluate task completion
@@ -63587,6 +65065,39 @@ Used to describe vendor-specific options that fall outside semantic options
 | `max?` | `max?: number;` | Maximum value for numbers |
 | `step?` | `step?: number;` | Step value for number sliders |
 | `controlType?` | `controlType?: 'select' | 'radio' | 'slider' | 'checkbox' | 'text' | 'textarea';` | UI control type hint |
+
+</details>
+
+---
+
+### VendorPresentation `interface`
+
+📍 [`src/capabilities/metadata/vendorPresentation.ts:2`](src/capabilities/metadata/vendorPresentation.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `readonly id: Vendor;` | - |
+| `displayName` | `readonly displayName: string;` | - |
+| `color` | `readonly color: string` | - |
+
+</details>
+
+---
+
+### VerificationContext `interface`
+
+📍 [`src/core/routines/types.ts:60`](src/core/routines/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `execution` | `readonly execution: Readonly&lt;ExecutionBinding&gt;;` | - |
+| `signal` | `readonly signal: AbortSignal;` | - |
 
 </details>
 
@@ -63781,6 +65292,22 @@ type AccessLevel = 'none' | 'read' | 'write'
 
 ---
 
+### AgentConstructionRequest `type`
+
+📍 [`src/core/orchestrator/factoryTypes.ts:14`](src/core/orchestrator/factoryTypes.ts)
+
+```typescript
+type AgentConstructionRequest = {
+  readonly name: string;
+  readonly baseline: Readonly&lt;OrchestratedAgentConfig&gt;;
+} & (
+  | { readonly role: 'parent'; readonly type?: never }
+  | { readonly role: 'worker'; readonly type: string }
+)
+```
+
+---
+
 ### AgentEventName `type`
 
 📍 [`src/capabilities/agents/types/EventTypes.ts:281`](src/capabilities/agents/types/EventTypes.ts)
@@ -63835,6 +65362,16 @@ type AgentLoopReason = 'answer_returned' | 'completed' | 'predicate_unmet'
 type AgentPackageContextFactory = (
   input: AgentPackageContextFactoryInput,
 ) =&gt; AgentContextNextGen | AgentContextNextGenConfig | Promise&lt;AgentContextNextGen | AgentContextNextGenConfig&gt;
+```
+
+---
+
+### AgentPackageOutcomeProtocol `type`
+
+📍 [`src/portable/outcomeTypes.ts:9`](src/portable/outcomeTypes.ts)
+
+```typescript
+type AgentPackageOutcomeProtocol = typeof AGENT_PACKAGE_OUTCOME_PROTOCOL
 ```
 
 ---
@@ -64344,6 +65881,16 @@ type EagernessStage = 'signalExtraction' | 'taskNarrative' | 'priorityScoring'
 
 ---
 
+### EndpointCapabilitySupport `type`
+
+📍 [`src/capabilities/metadata/realtime.ts:4`](src/capabilities/metadata/realtime.ts)
+
+```typescript
+type EndpointCapabilitySupport = 'supported' | 'unsupported' | 'unknown'
+```
+
+---
+
 ### EntityEmbeddingField `type`
 
 📍 [`src/memory/types.ts:640`](src/memory/types.ts)
@@ -64549,6 +66096,21 @@ type HydrateAgentPackageOptions = HydrateAgentPackageBaseOptions & (
       ) =&gt; AgentPackageConnectorResolution | Promise&lt;AgentPackageConnectorResolution&gt;;
     }
 )
+```
+
+---
+
+### HydrateAgentPackageWithOutcomesOptions `type`
+
+📍 [`src/portable/outcomeTypes.ts:115`](src/portable/outcomeTypes.ts)
+
+```typescript
+type HydrateAgentPackageWithOutcomesOptions = WithoutLegacyTransport&lt;HydrateAgentPackageOptions&gt; & {
+  transport: RemoteOutcomeTransport;
+  remoteToolTransport?: never;
+  maxRequests?: number;
+  onObservation?(report: Readonly&lt;RemoteOutcomeReport&gt;): void;
+}
 ```
 
 ---
@@ -64839,6 +66401,21 @@ type OpenAIVoiceCreateParams = Parameters&lt;OpenAI['audio']['voices']['create']
 
 ---
 
+### OrchestratedAgentConfig `type`
+
+📍 [`src/core/orchestrator/factoryTypes.ts:8`](src/core/orchestrator/factoryTypes.ts)
+
+```typescript
+type OrchestratedAgentConfig = Omit&lt;AgentConfig, 'context' | 'toolManager' | 'name' | 'parentAgentId'&gt; & {
+  context?: AgentContextNextGenConfig;
+  toolManager?: never;
+  name?: never;
+  parentAgentId?: never;
+}
+```
+
+---
+
 ### OutputFormat `type`
 
 📍 [`src/domain/types/SharedTypes.ts:70`](src/domain/types/SharedTypes.ts)
@@ -64867,6 +66444,20 @@ type OutputItem = Message | CompactionItem | ReasoningItem
 
 ```typescript
 type OversizeEmbeddingReducer = (input: OversizeEmbeddingInput) =&gt; Promise&lt;string&gt;
+```
+
+---
+
+### PagePosition `type`
+
+📍 [`src/tools/connector/pages/types.ts:2`](src/tools/connector/pages/types.ts)
+
+Position in a provider collection, independent of search coverage.
+
+```typescript
+type PagePosition = | { state: 'more'; continuation: string; positionId: string }
+  | { state: 'end' }
+  | { state: 'unknown'; reason: string }
 ```
 
 ---
@@ -64985,7 +66576,7 @@ are omitted. The receiving trusted host must reconstruct them through
 ```typescript
 type PortableAgentRuntimeConfig = Omit&lt;
   AgentRuntimeConfigSnapshot,
-  'vendorOptions' | 'nativeTools' | 'promptCache' | 'dataHandling'
+  'vendorOptions' | 'nativeTools' | 'promptCache' | 'dataHandling' | 'parameterPolicy'
 &gt;
 ```
 
@@ -65070,6 +66661,26 @@ type RealtimePCMSampleRate = 8000 | 16000 | 22050 | 24000 | 32000 | 44100 | 4800
 
 ---
 
+### RealtimeReasoningEffort `type`
+
+📍 [`src/capabilities/metadata/realtime.ts:6`](src/capabilities/metadata/realtime.ts)
+
+```typescript
+type RealtimeReasoningEffort = 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
+```
+
+---
+
+### RealtimeTransport `type`
+
+📍 [`src/capabilities/metadata/realtime.ts:5`](src/capabilities/metadata/realtime.ts)
+
+```typescript
+type RealtimeTransport = 'websocket' | 'webrtc' | 'sip'
+```
+
+---
+
 ### ReconciliationOp `type`
 
 📍 [`src/memory/integration/ExtractionResolver.ts:100`](src/memory/integration/ExtractionResolver.ts)
@@ -65121,6 +66732,16 @@ A related-task / related-event hit augmented with the input entity that produced
 
 ```typescript
 type RelatedItemHit = T & { matchedEntityId: EntityId }
+```
+
+---
+
+### RemoteOutcomeEffect `type`
+
+📍 [`src/portable/outcomeTypes.ts:10`](src/portable/outcomeTypes.ts)
+
+```typescript
+type RemoteOutcomeEffect = 'read' | 'write' | 'unknown'
 ```
 
 ---
@@ -65258,6 +66879,59 @@ type RoutineExecutionStatus = | 'pending'     // Created but not started
   | 'completed'   // All tasks completed successfully
   | 'failed'      // Failed (unrecoverable)
   | 'cancelled'
+```
+
+---
+
+### RoutineObservation `type`
+
+📍 [`src/core/routines/types.ts:56`](src/core/routines/types.ts)
+
+```typescript
+type RoutineObservation = RoutineObservationBase & (
+  | { readonly phase: 'task'; readonly taskId: string; readonly response?: Readonly&lt;AgentResponse&gt; }
+  | { readonly phase: 'routine'; readonly taskId?: never; readonly response?: never }
+)
+```
+
+---
+
+### RoutineProgress `type`
+
+📍 [`src/core/routines/types.ts:108`](src/core/routines/types.ts)
+
+```typescript
+type RoutineProgress = | { kind: 'started'; operationId: string }
+  | { kind: 'observation'; observation: RoutineObservation }
+  | { kind: 'result'; result: RoutineRunResult }
+```
+
+---
+
+### RoutineRunRequest `type`
+
+📍 [`src/core/routines/types.ts:79`](src/core/routines/types.ts)
+
+```typescript
+type RoutineRunRequest = Pick&lt;ExecuteRoutineOptions,
+  'definition' | 'inputs' | 'initialUserMessage' | 'disableToolScoping' | 'hooks' | 'prompts'&gt; & {
+  agent: Agent;
+  execution?: ExecutionBinding;
+}
+```
+
+---
+
+### RoutineRunResult `type`
+
+📍 [`src/core/routines/types.ts:74`](src/core/routines/types.ts)
+
+```typescript
+type RoutineRunResult = RoutineReport & (
+  | { state: 'completed'; verification: Extract&lt;VerificationDecision, { kind: 'verified' }&gt; }
+  | { state: 'waiting' | 'blocked' | 'uncertain'; reason: string; continuation: RoutineContinuation }
+  | { state: 'failed' | 'cancelled'; reason: string }
+)
 ```
 
 ---
@@ -65441,6 +67115,17 @@ type VADEvent = 'speech_start' | 'speech_end' | null
 
 ---
 
+### VerificationDecision `type`
+
+📍 [`src/core/routines/types.ts:11`](src/core/routines/types.ts)
+
+```typescript
+type VerificationDecision = | { kind: 'verified'; references?: readonly EvidenceReference[] }
+  | { kind: 'waiting' | 'blocked' | 'uncertain'; reason: string; references?: readonly EvidenceReference[] }
+```
+
+---
+
 ### VisibilityPolicy `type`
 
 📍 [`src/memory/AccessControl.ts:123`](src/memory/AccessControl.ts)
@@ -65518,7 +67203,7 @@ export function applyRestrainedExtractionContract(
 
 ### assertAgentPackageCompatible `function`
 
-📍 [`src/portable/AgentPackage.ts:312`](src/portable/AgentPackage.ts)
+📍 [`src/portable/AgentPackage.ts:321`](src/portable/AgentPackage.ts)
 
 Validate the public protocol version and the bounded fields used for routing.
 
@@ -65611,7 +67296,7 @@ export function buildQueryString(params: Record&lt;string, string | number | boo
 
 ### buildWorkspaceDelta `function`
 
-📍 [`src/core/orchestrator/tools.ts:79`](src/core/orchestrator/tools.ts)
+📍 [`src/core/orchestrator/tools.ts:81`](src/core/orchestrator/tools.ts)
 
 ```typescript
 export function buildWorkspaceDelta(
@@ -65764,7 +67449,7 @@ export function createAgentPreset(name: AgentPresetName, config: AgentPresetConf
 
 ### createDelegationState `function`
 
-📍 [`src/core/orchestrator/tools.ts:61`](src/core/orchestrator/tools.ts)
+📍 [`src/core/orchestrator/tools.ts:63`](src/core/orchestrator/tools.ts)
 
 ```typescript
 export function createDelegationState(): DelegationState
@@ -65799,7 +67484,7 @@ export function createExecutionRecorder(options: ExecutionRecorderOptions): Exec
 
 ### createOrchestrator `function`
 
-📍 [`src/core/orchestrator/createOrchestrator.ts:575`](src/core/orchestrator/createOrchestrator.ts)
+📍 [`src/core/orchestrator/createOrchestrator.ts:582`](src/core/orchestrator/createOrchestrator.ts)
 
 Create an orchestrator Agent that can coordinate a team of worker agents.
 
@@ -65852,6 +67537,18 @@ const result = await orchestrator.run('Build an auth module with JWT, tests, and
 
 ---
 
+### createOrchestratorWithFactory `function`
+
+📍 [`src/core/orchestrator/createOrchestrator.ts:587`](src/core/orchestrator/createOrchestrator.ts)
+
+Complete host configuration before one owned construction. Existing factories remain unchanged.
+
+```typescript
+export async function createOrchestratorWithFactory(config: OrchestratorConfig, options: OrchestratorFactoryOptions): Promise&lt;Agent&gt;
+```
+
+---
+
 ### createRoutineDefinition `function`
 
 📍 [`src/domain/entities/Routine.ts:250`](src/domain/entities/Routine.ts)
@@ -65892,6 +67589,18 @@ export function createRoutineExecutionRecord(
   model: string,
   trigger?: RoutineExecutionRecord['trigger'],
 ): RoutineExecutionRecord
+```
+
+---
+
+### createRoutineRunner `function`
+
+📍 [`src/core/routines/createRoutineRunner.ts:50`](src/core/routines/createRoutineRunner.ts)
+
+Opt-in verified, same-process routines. Legacy executeRoutine/createRoutineTool are unchanged.
+
+```typescript
+export function createRoutineRunner(options: RoutineRunnerOptions): RoutineRunner
 ```
 
 ---
@@ -66095,7 +67804,7 @@ export async function excelToMarkdownKV(
 
 ### executeRoutine `function`
 
-📍 [`src/core/routineRunner.ts:883`](src/core/routineRunner.ts)
+📍 [`src/core/routineRunner.ts:904`](src/core/routineRunner.ts)
 
 Execute a routine definition.
 
@@ -66598,6 +68307,18 @@ export function getServicesByCategory(category: ServiceCategory): ServiceDefinit
 
 ---
 
+### getTranscriptionCapabilities `function`
+
+📍 [`src/capabilities/metadata/realtime.ts:49`](src/capabilities/metadata/realtime.ts)
+
+Endpoint/session constraints only. This does not modify legacy STT flags or validate a live session.
+
+```typescript
+export function getTranscriptionCapabilities(query: TranscriptionCapabilityQuery): TranscriptionCapabilities
+```
+
+---
+
 ### getUserPathPrefix `function`
 
 📍 [`src/tools/microsoft/types.ts:84`](src/tools/microsoft/types.ts)
@@ -66624,6 +68345,18 @@ export function getUserPathPrefix(
 
 ---
 
+### getVendorPresentation `function`
+
+📍 [`src/capabilities/metadata/vendorPresentation.ts:20`](src/capabilities/metadata/vendorPresentation.ts)
+
+Pure bounded lookup. Unknown IDs have no implicit vendor/auth fallback.
+
+```typescript
+export function getVendorPresentation(id: string): VendorPresentation | undefined
+```
+
+---
+
 ### hydrateAgentPackage `function`
 
 📍 [`src/portable/AgentPackage.ts:211`](src/portable/AgentPackage.ts)
@@ -66635,6 +68368,16 @@ export async function hydrateAgentPackage(
   packageValue: SerializedAgentPackage,
   options: HydrateAgentPackageOptions,
 ): Promise&lt;Agent&gt;
+```
+
+---
+
+### hydrateAgentPackageWithOutcomes `function`
+
+📍 [`src/portable/OutcomeClient.ts:250`](src/portable/OutcomeClient.ts)
+
+```typescript
+export async function hydrateAgentPackageWithOutcomes(input: OutcomeAgentPackage, options: HydrateAgentPackageWithOutcomesOptions): Promise&lt;OutcomeHydratedAgent&gt;
 ```
 
 ---
@@ -67387,7 +69130,7 @@ export function resolveFileEndpoints(
 
 ### resolveFlowSource `function`
 
-📍 [`src/core/routineControlFlow.ts:549`](src/core/routineControlFlow.ts)
+📍 [`src/core/routineControlFlow.ts:530`](src/core/routineControlFlow.ts)
 
 Resolve the source array for a map/fold control flow using layered resolution:
 1. Determine lookup key(s) from source config
@@ -67467,7 +69210,7 @@ export function resolveRepository(
 
 ### resolveStepArgs `function`
 
-📍 [`src/core/routineControlFlow.ts:193`](src/core/routineControlFlow.ts)
+📍 [`src/core/routineControlFlow.ts:172`](src/core/routineControlFlow.ts)
 
 Resolve template placeholders in deterministic step arguments (deep).
 
@@ -67491,7 +69234,7 @@ export function resolveStepArgs(
 
 ### resolveTemplates `function`
 
-📍 [`src/core/routineControlFlow.ts:76`](src/core/routineControlFlow.ts)
+📍 [`src/core/routineControlFlow.ts:55`](src/core/routineControlFlow.ts)
 
 Resolve template placeholders in text.
 

@@ -6,11 +6,11 @@ the standard documentation before release. Read the
 [architecture roadmap](./designs/AGENTIC_ARCHITECTURE_EVOLUTION.md) for implementation
 scope, dependencies, research, and acceptance criteria.
 
-- **Status:** Stage 14A and S1–S3 second-review corrections are complete on branch. 8,775 units / 385 files, 224 live tests / 13 suites across OpenAI, Anthropic and Google with no required skips, 39 offline modes and 202 public ESM/CJS controls pass. [Corrective completion](./designs/STAGE_14A_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-23). Core stages and Stage 16A remain delivered; package publication is separate.
+- **Status:** Core stages, Stage 16A, Stage 14A and consumer slices C1–C9-C are implemented on branch. The [latest consumer review corrections](#consumer-review-corrections--2026-10-28) track the current corrective validation; earlier stage totals below are historical. Package publication is separate, and live LLM testing remains paused by the user.
 - **Stage 03 review:** All findings fixed and validated: 7,473 units / 245 Stage 03 cases, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](./designs/STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 - **Stage 06 review:** All findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion](./designs/STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
-- **Created / last updated:** 2026-10-07 / 2026-10-23.
-- **Current selected scope:** Stage **14A second-review corrections complete**: repaired replay ownership, retained rejected-resume budgets/routes and coherent suspension checkpoints. Supported contracts preserved. Stage 14B/16B, breaking changes and publication remain deferred.
+- **Created / last updated:** 2026-10-07 / 2026-10-28.
+- **Current selected scope:** Full consumer-hardening sequence C2–C8 and C9-A/B/C is authorized, in order with review/fixes after each slice. C1 is complete. The [delivery ledger](./designs/CONSUMER_DELIVERY_LEDGER.md) records current availability; each slice must pass its own gates. Existing APIs/defaults stay unchanged; no consumer upgrade or release is included.
 - **Repository package version at creation:** `1.2.0`.
 - **Implemented stages:** 00 — evaluation and compatibility baselines;
   01 — fresh request accounting and safe compaction;
@@ -1375,7 +1375,7 @@ incorrect usage instructions in place.
 | Selected conditional scopes | Delivered benefit, separate recipe, support limits, exact scope, availability, and migration. | README; User Guide; generated API; affected specialist guides; examples; AMOS where useful; Changelog. | Pending |
 | 16A: API design and scope | Explicit approval gate; additive strategy instance with peer plugin/history settings, targeted manual results; compatibility-first defaults/contracts; native ownership/support; 16B deferral. | [Approved API/delivery](./designs/STAGE_16A_NATIVE_COMPACTION_API.md); roadmap; this availability register; AGENTS. | Revised design-only records synced 2026-10-22 on `version2`, base `4ab2c8f`. Existing APIs remain; earlier draft names were not implemented. Revision 2 approved and implemented 2026-10-22; no break approved. Historical design checkpoint is retained separately from runtime validation. |
 | 16A: implementation adoption | Verified signatures/defaults, source retention, exact-tail/lossy-history boundary, capability/model/counting support, usage/budgets, session scope/recovery/failures, examples and AMOS. | README/User Guide; generated API; native recipe and affected specialist guides; examples/index; AMOS/help/tests; AGENTS; Changelog; package inventory; Version 2 adoption record and stage evidence. | Synced 2026-10-22: recipe, README/User Guide, generated API, specialist guides, AGENTS, examples/index, AMOS/help/tests, Changelog and package inventory. 8,420 unit / 194 live / 32 offline / 158 public checks pass; see the Stage 16A adoption record below. Release-wide publication remains pending. |
-| 16A: review corrections | Construction-time transport binding, complete counted wire frames, shared assembly deadlines/frame reuse, early ownership rejection and deterministic compatibility fixtures. | [Corrective completion](./designs/STAGE_16A_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22), [validation](./evaluations/STAGE_16A_CORRECTIONS_VALIDATION.json), native recipe, standard docs/generated API, examples, AMOS, AGENTS and package inventory. | Synced 2026-10-22: R1–R5 fixed; 8,454 units, 197 live tests, 32 offline programs and 158 public controls pass. Legacy/default APIs and checkpoint format preserved; no breaking change or Stage 16B authorized. Release-wide publication remains pending. |
+| 16A: review corrections | Construction-time transport binding, complete counted wire frames, shared assembly deadlines/frame reuse, early ownership rejection and deterministic compatibility fixtures. | [Corrective completion](./designs/STAGE_16A_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22), [validation](./evaluations/STAGE_16A_CORRECTIONS_VALIDATION.json), native recipe, standard docs/generated API, examples, AMOS, AGENTS and package inventory. | Synced 2026-10-22: R1–R5 fixed; 8, 454 units, 197 live tests, 32 offline programs and 158 public controls pass. Legacy/default APIs and checkpoint format preserved; no breaking change or Stage 16B authorized. Release-wide publication remains pending. |
 | 16A: second review | Preserve compaction-hook memory, cancel read-only proofs and startup waits safely, reject unsupported Anthropic top-level reasoning before I/O. | [Completion](./designs/STAGE_16A_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22); [validation](./evaluations/STAGE_16A_SECOND_CORRECTIONS_VALIDATION.json); native recipe, standard/generated docs, agent instructions, hook example/index, AMOS docs/regression, Changelog and package inventory. | Synced: S1–S3 fixed. 8,507 units / 53 new regressions, 199 live tests / two new cases, 33 offline programs, 158 public controls and all local gates pass. No API/default/session break, release or later stage. |
 | 16A: third review | Validate nested replay representations, run preservation hooks on explicit compaction, reconcile Anthropic native thinking/output settings. | [Review/fix plan](./designs/STAGE_16A_THIRD_REVIEW_AND_FIX_PLAN.md); [executable evidence](./evaluations/STAGE_16A_THIRD_REVIEW.json); current availability, adoption and roadmap. | Synced: T1–T3 corrected. 77 new regressions; 8,584 units, 201 live tests plus all 11 native cases revalidated on final source, 34 offline modes, 158 public controls and all local gates pass. Manual example/AMOS checkpoint, recipe/standard/generated docs, agent instructions, release notes and package inventory synchronized. No API break or later stage. |
 
@@ -2405,7 +2405,7 @@ release, breaking API change or later-stage implementation.
 ### Historical Stage 16A second-review status — 2026-10-22 (resolved)
 
 The second review reopened hook memory, proof cancellation and Anthropic reasoning
-findings despite the passing 8,454-test suite. Eight deterministic repro/control
+findings despite the passing 8, 454-test suite. Eight deterministic repro/control
 cases are retained in [review evidence](./evaluations/STAGE_16A_SECOND_REVIEW.json).
 The completion below closes all three with actual runtime corrections and fresh
 validation; those findings are not supported behavior or outstanding limitations.
@@ -2694,3 +2694,427 @@ documentation for model-specific support. No default or public signature changes
 | Date | Change | Availability | Handoff |
 | --- | --- | --- | --- |
 | 2026-10-23 | Fixed all Stage 14A second-review findings, including empty-response journal receipt preservation. | 8,775 units, 224 live tests, 39 offline modes and 202 public controls pass; no known failing required gate. | Public/agent/AMOS guides, generated API, examples, roadmap, availability/adoption/handoff and packaged evidence synchronized. No break, later stage or release. |
+
+### Consumer execution hardening — final plan revision 5, 2026-10-23
+
+**Historical planning checkpoint:** revision 5 was subsequently approved and C1
+implemented; see the C1 delivery below. C2–C9 remain proposed and unimplemented.
+The review totals in this checkpoint describe planning validation. Read the
+[validated plan](./designs/CONSUMER_EXECUTION_HARDENING.md),
+[final API design](./designs/CONSUMER_COMPATIBLE_APIS.md),
+[holistic review](./designs/CONSUMER_PLAN_HOLISTIC_REVIEW.md) and
+[revision-3 evidence](./evaluations/CONSUMER_PLAN_HOLISTIC_REVIEW_2026_10_23.json),
+the [registry follow-up](./designs/CONSUMER_REGISTRY_FOLLOWUP.md) and its
+[revision-4 evidence](./evaluations/CONSUMER_REGISTRY_FOLLOWUP_2026_10_23.json).
+The consumer investigation found real integration gaps, not missing foundations
+in every managed Agent. Do not advertise composed support before its delivery.
+
+Breaking old agents is excluded. Existing signatures/defaults, callbacks/statuses,
+raw results/events, configurations/session/storage contracts and literal protocol
+v2/strict messages remain unchanged. Upgrading alone enables nothing new. The
+selected new facades reuse existing engines and separate types where needed.
+No automatic preset change, migration or future default flip is planned.
+
+| Planned slice | Final proposed adoption | Existing behavior preserved |
+| --- | --- | --- |
+| C1 — now available on branch | [`createOutcomeTool()`](./OUTCOME_AWARE_TOOLS.md) with invocation-owned failure reporting; ordinary ToolFunction output. | Old ToolContext/execute callbacks, raw results and unmarked/legacy classification. |
+| C2/C3 | C2 private bindings; C3 `createRoutineRunner({ verify })` with phase-aware verification and same-process single-use continuation. | Old runners, legacy validation/retries/statuses/callbacks and storage requirements. |
+| C4/C5 | `ConnectorTools.enhanced()` with fixed execution/collections profiles; whole provider pages and strict changed-input tools. | Existing factories/registrations, metadata, names/schemas/counts/result keys and input normalization. |
+| C6 | Host `configureAgent` returns complete parent/worker config before initialization; explicit per-operation ModelTask sharing and cooperative child cancellation. | Existing Promise constructor, synchronous worker factory, delegation defaults/results and ordinary Agent instance support. |
+| C7 | `hydrateAgentPackageWithOutcomes()` / separate server; negotiated server observations, lookup/cancel and bounded evidence resolution. | Existing hydration/server/transport, literal protocol v2 and strict messages. |
+| C8 | Reusable test-only conformance, existing inspectors plus operation-owned reports/child observer, composed evaluation. | Existing inspection shapes, loop owners, model budgets and evidence defaults. |
+| C9-A | Opt-in browser-safe endpoint/model/transport capability companion for Realtime efforts and input transcription; verified/unsupported/unknown distinct. | Old raw registry outputs, session effort unions/admission, saved values and STT streaming behavior. |
+| C9-B | Shared effective-request assessment and opt-in neutral temperature omission; exact API at stage entry. | Strict default validation, explicit provider controls, saved configuration and old count behavior. |
+| C9-C | Optional browser-safe vendor names/colors catalog with host overrides. | Vendor IDs, custom-service ownership, service classification and authentication. |
+
+Revision 4 replaces only the unimplemented C6 built-Agent factory proposal: full
+configuration must precede plugin/tool/lifecycle initialization. Returned complete
+config has no hidden deep merge; library hierarchy/required tools/workspace are
+composed with collision rejection. Workers never automatically inherit incompatible
+root inference/account/identity policies. C9 tracks are independent and require
+their own API/evidence gates. Current strict temperature rejection is intentional;
+native count currently does not run that validator. No default behavior is changed
+to reconcile these surfaces by this plan.
+
+Revision 3 removes the duplicate legacy mode, public enhanced-factory registry,
+universal inspector and implied optional workflow database. Durable routine
+restore is deferred **C3-R**; durable cursor codecs, production backend design,
+distributed hard-budget authority, Stage 14B/16B and consumer upgrades are separate.
+After restart, acknowledged evidence may recover; no workflow cursor/task authority
+or exactly-once effect is invented. Uncertain writes are never automatically replayed.
+
+Current public RunOptions has no signal. Private selected-path cancellation must
+respect the actual Agent lease/controller; supported helper/tool APIs receive
+signals directly. Child timeout does not cancel a borrowed shared task/siblings;
+host-shared cancellation can intentionally stop the operation. Verification checks
+task readiness before dependencies and the final artifact after post-steps. Waiting
+routine-tool children retain their Agent/receipts until terminal cleanup/recovery.
+
+Fresh holistic validation passed **334 tests / eight files**, **202 public ESM/CJS
+controls**, the existing built-package TypeScript consumer and the strict compile-
+only API prototype. **17 characterization observations** still match the current
+legacy gaps/support/constraints; these are not 17 fixes. Proposed API declarations
+are not a runtime implementation. No live calls/full-unit rerun are claimed for
+this design-only work. Earlier Stage 14A full/live evidence remains historical.
+
+The inspected backend/web consumers pin Git
+`991a977b769eabe6c43ec8eff6d057b20f0663d9`, labelled `1.1.8` in lockfiles.
+The new follow-up reports desktop `33d70ade5` uses that same 1.1.8 pin, superseding
+its author's earlier 1.1.1 claim; desktop installation remains report-attributed.
+Before delivery freeze exact consumer-pin and
+current-branch fixtures, then require paired legacy/new-path gates. No application
+file or dependency was changed. Historical revision-2 document hashes remain in
+the original investigation record; the holistic record owns revision-3 artifacts,
+and the follow-up record owns revision-4 artifacts and fresh follow-up checks.
+
+| Handoff | Status |
+| --- | --- |
+| Plan/API/review/follow-up, Version 2 availability/adoption, roadmap, agent instructions, type prototype and evidence | Synchronized for revision 5; no implementation availability claim. |
+| README/User Guide/recipes/generated API/examples/AMOS/release notes | Update in each delivering slice; no unavailable API advertised as shipped. C2 is internal-only until C3. |
+| Package inventory/publication and consumer PRs | Separate future work; no release, dependency upgrade or application implementation authorized. |
+
+Approve the roadmap/core direction/exclusions; select implementation one slice at a
+time, starting with C1. C7 exact wire schema is a stage-entry review, with no change
+to the compatibility requirement. C8 coverage starts in C1; C6 and C7 are independent.
+C9-A/B/C are separately selectable. ICOS retains its current temperature guard,
+VAD/email/context/identity fixes and presentation until explicit adoption. Realtime
+companion adoption needs selector integration as well as a normal pin upgrade;
+unknown provider support is never converted into a guessed effort or default.
+
+Fresh revision-4 follow-up validation passes 196 existing tests / nine files,
+202 public ESM/CJS controls, the legacy TypeScript consumer and the revised strict
+proposal with 12 negative type controls. Seven mocked offline observations confirm
+current gaps/controls; all 63 earlier runtime hashes still match. This is planning
+evidence, not runtime delivery, a full/live rerun or app validation.
+
+### Consumer plan simplicity review — revision 5, 2026-10-23
+
+This historical planning checkpoint preceded C1 selection and delivery below.
+The [final review](./designs/CONSUMER_PLAN_FINAL_SIMPLICITY_REVIEW.md) resolves nine
+design issues and owns the current approval boundary. Core API ownership/precedence
+is canonical in the API proposal, with C9 evidence/constraints in the follow-up.
+Direct calls reuse their existing signal; selected routine continuation has explicit
+failed-admission behavior and bounded observations. Enhanced-tool adoption includes
+connector-source registration and no accidental legacy aliases; manager-local catalog
+integration is a required C5 gate. C6 distinguishes shared board/evidence/task scope
+from exclusive conversation ownership. Its forbidden keys apply to variables and
+JavaScript, not just fresh TypeScript literals. C8 requires current backends, without
+an unapproved production backend. C9 reuses model/parameter facts and pure presentation.
+
+Fresh checks pass **500 tests / 16 files**, **202 public ESM/CJS controls**, the
+legacy TypeScript consumer and strict proposal with **14 negative controls**.
+All 29 offline characterization observations match current gaps/compatibility
+controls. The [revision-5 record](./evaluations/CONSUMER_PLAN_FINAL_SIMPLICITY_REVIEW_2026_10_23.json)
+owns current artifact hashes and exact commands. Earlier review/full/live totals
+remain historical. No runtime or consumer code changed and no new capability is
+available. C5 catalog adapter/C7 wire/C9 exact signatures keep explicit stage-entry
+API gates; unresolved required gates block completion. Select one slice after plan
+approval; all existing test/example/AMOS/handoff requirements remain.
+
+### Consumer C1 — invocation-owned failure reporting, 2026-10-23
+
+**Availability: complete on branch; no package release.** The user
+approved revision 5 and selected C1. Root `createOutcomeTool()`, `OutcomeInvocation`
+and `OutcomeToolOptions` provide explicit operational failure provenance through
+the existing shared tool manager. Existing ToolFunction/ToolContext, raw results,
+business declines, callbacks, retry/breaker defaults, sessions and v2 messages remain.
+Read [the recipe](./OUTCOME_AWARE_TOOLS.md) and
+[delivery/validation](./designs/CONSUMER_C1_DELIVERY.md).
+
+Adoption is explicit: construct an outcome-aware callback and call
+`invocation.reportFailure(new Error('Public-safe failure message'))` for a caught
+operational error. Read cancellation from `invocation.context?.signal`. First
+report wins; its reporter retires after callback settlement. Direct execute has
+no framework outcome; use executeWithOutcome for diagnostics. Library account
+wrappers and ESM/CJS/duplicate bundles are supported; arbitrary replacing decorators
+are not implicit bridges. Large/raw evidence and late/cancelled observations retain
+the existing protection/recovery behavior; no failure causes action replay.
+
+Examples: `example:outcome-aware-tools` and `example:amos-outcome-tools`, both offline
+with deterministic outputs and cleanup. AMOS already has the needed outcome renderer;
+its real-result adapter test is extended without new commands/configuration. C1
+live run/stream uses synthetic tools on all three configured providers. Rich remote
+outcome/evidence parity remains C7; bundled connector profiles remain C4/C5. No
+saved executable authority or new storage fields are introduced.
+
+Final gates pass **8,814 units / 386 files**, **230 live tests / 14 files** across
+OpenAI, Anthropic and Google (zero failures/skips), **382 public runtime assertions**,
+**41 offline example modes**, build/export/type/lint/compatibility checks, generated
+API/docs links, AMOS types/build and the 269-file package dry run. The six new live
+cases preserve raw results while distinguishing business declines from reported
+failures. See [exact validation](./evaluations/CONSUMER_C1_VALIDATION_2026_10_23.json)
+for resolved fixture incidents and final artifact hashes. Next is private C2 after
+separate selection; no partial routine facade is published.
+
+| Handoff | Status |
+| --- | --- |
+| README/User Guide/tool-outcome and new recipe/generated API | Updated for root APIs, explicit defaults/support/failure/persistence boundaries. |
+| Examples/index, package scripts and AMOS guide/example/test | Updated; existing configuration/renderer retained. |
+| AGENTS, canonical plan/API, roadmap and Version 2 | C1 completion, passing gates, support/adoption and next-slice boundary recorded. |
+| Release and consumer adoption | No publication or app/dependency upgrade; explicit later work. |
+
+### Consumer C2 — private foundation, complete on branch
+
+The full remaining consumer sequence is authorized. C2 adds private composition
+ownership, explicit task/signal binding and late-work occupancy around existing
+engines. No new public routine options, managed-run signal or status union is
+available in C2. The complete facade is C3. Read [the delivery record](./designs/CONSUMER_C2_DELIVERY.md)
+and run `example:composite-binding` for the supported public accounting recipe.
+AMOS operation commands accompany C3 rather than an incomplete internal API.
+All gates pass: 8,847 units / 387 files, 236 live tests / all three providers
+with zero failures/skips, 450 package/runtime assertions and 42 offline modes.
+The review fixed admission order, cross-bundle and identity guards, native/stream
+late occupancy, cleanup holds and binding immutability. Public signatures, old
+routine semantics, callbacks, contexts and sessions remain.
+
+| Handoff | Status |
+| --- | --- |
+| ModelTask recipe, example/index/script | Explicit supported public accounting example; no temporary routine API. |
+| Generated API, public/agent/roadmap/Version 2 records | No new C2 root export; internal-only support and actual gates recorded. |
+| AMOS | Types/regressions pass; operation controls accompany C3. |
+| Package/release | New example and delivery/evidence included; no publication or consumer adoption. |
+
+## Consumer C3 — verified routine adoption (complete on branch)
+
+`createRoutineRunner` and its root-exported types are opt-in. Required host verification gates leaf/group readiness and final state after post-steps; strict reflection checks boolean plus score. Shared `ExecutionBinding` forwards a borrowed ModelTask/signal through nested execution. Authorized opaque continuation preserves the cursor without replay; close revokes it without claiming external writes stopped. Default view/operation limits are 1 MiB/32. Source recovery uses existing backend references and does not waive context evidence protection. Borrowed Agents/tasks remain host-owned; `asTool` retains and eventually disposes a fresh child. No workflow restart, C3-R backend or old API migration is delivered.
+
+Adoption: read [verified routines](VERIFIED_ROUTINES.md), run [the offline example](../examples/verified-routines.ts), then explicitly supply real host/provider checks. AMOS has `/routine demo|inspect|confirm|cancel` with a synthetic host gate. README, User Guide, examples, AMOS docs and unreleased changelog were updated; regenerate API_REFERENCE from public exports and verify packaging before completion. No package release or ICOS dependency adoption has been verified.
+
+C3 completion gates: 8,885 units, 239 cumulative three-provider live tests plus final
+three-provider C3 smoke, 594 runtime assertions and 43 offline modes pass. Build,
+types/lint, compatibility/prototype negative controls, example/AMOS types, generated
+API, documentation links and 277-file package inventory pass. Read the
+[C3 delivery record](designs/CONSUMER_C3_DELIVERY.md) and
+[exact validation](evaluations/CONSUMER_C3_VALIDATION_2026_10_23.json).
+The final source distinguishes true scheduler skips from business payloads,
+correlates repeated nested task IDs, keeps absolute verification deadlines, and
+retains undelivered/late sources and local cleanup through close. API signatures,
+defaults, JSON limits, host-only recovery, borrowed/owned lifetimes, persistence and
+failure boundaries are documented in the delivering stage. All affected standard
+documents are updated; release-wide publishing and ICOS adoption remain pending.
+The authorized next slice is C4; no further routine selection stop is required.
+
+## Consumer C4 — enhanced connector execution (complete on branch)
+
+The additive `ConnectorTools.enhanced` method and `EnhancedConnectorOptions`, `EnhancedConnectorAttempt`, `ConnectorAcceptedResource` root types select execution-v1 explicitly. The bundled Microsoft/Google/Slack/GitHub inventory has 40 specialized operations (28 read/12 write) and four optional generic unknown APIs. Names end `_exec`; schemas/default legacy APIs stay unchanged. Host deadlines default to connector timeout/30 seconds; zero disables the extra limit. Physical attempt observations are separate from model usage. Partial Microsoft draft acceptance remains explicit, without final-completion claims.
+
+Adoption uses actual enhanced-name identity filters, catalog disabled and source-tagged registration under existing host approval. Acknowledged evidence projections preserve source IDs/metadata and exact allowed raw results; the profile does not enable plugins or promise complete remote collections. Read [the recipe](ENHANCED_CONNECTORS.md) for origin, lifecycle, source, persistence and support limits, and run [the offline HTTP example](../examples/enhanced-connector-execution.ts). README/User Guide/examples/AMOS docs/unreleased notes and generated API are updated. Admission capture and atomic enhanced registration preserve account/connector isolation. All 8,927 units, 245 cumulative live tests plus six frozen C4 checks, 822 runtime assertions and 44 offline modes pass; [delivery/evidence](designs/CONSUMER_C4_DELIVERY.md) records the full gates and review. No release or ICOS adoption is claimed. C5 catalog/page support remains the next required slice.
+
+## Consumer C5 — whole pages and selected catalog (complete on branch)
+
+Root `ConnectorPage<T>`/`PagePosition` and `ConnectorTools.enhanced(..., { profile: 'collections-v1' })` are explicitly adopted. Seventeen `_page` operations replace affected collections, Slack topic uses `_strict`, and other tools keep `_exec`. Page-size hints do not slice over-return; raw allowed provider items/counts, opaque positions and independent coverage preserve source/completeness distinctions. Prior Drive incomplete coverage survives final pagination. Unsupported provider search/branch capabilities fail or remain incomplete/unknown. No new total-data cutoff/crawler/backend is introduced.
+
+Existing source/account registration installs only collections-v1's manager-local adapter; use actual selected identity filters and normal host approvals. Catalog discovery/search/load/unload/compaction, temporary scopes and context rollover retain the selected definitions and cursor key. Invalid/forged/mismatched/oversized continuations fail explicitly; fresh managers/processes/clear lose ephemeral keys. Reapply host selection before loading saved state. Evidence is separately opt-in and protects complete observed source on failure; no cursor authority or key is serialized.
+
+Read [the recipe](CONNECTOR_COLLECTION_PAGES.md), [capacity inventory](CONSUMER_CAPACITY_INVENTORY.md) and [delivery record](designs/CONSUMER_C5_DELIVERY.md); run [the offline traversal](../examples/connector-collection-pages.ts). README/User Guide/examples/AMOS/unreleased notes and generated API are updated in this slice. AMOS distinguishes returned/provider totals, position and coverage. All 9,002 units, 251 cumulative live tests across all three providers, 1,062 runtime assertions, 45 offline modes and full build/type/compatibility/package/documentation gates pass. C4 static/execution-v1, old factories/results/defaults, context/session DTOs and literal wire v2 remain unchanged. Release-wide publishing and ICOS adoption remain pending. Continue C6 under existing authorization.
+
+## Consumer C6 — complete trusted orchestration (available on branch)
+
+`createOrchestratorWithFactory` returns a normal Agent and accepts complete plain
+parent/worker configuration through `configureAgent` before initialization. The
+library supplies its owned hierarchy, workspace and required tools. The callback
+resolves each worker independently; root overrides do not leak accounts/provider
+controls into workers. Ordinary zero/false/omission and context/session precedence
+remain intact. Collisions, mismatched principals, duplicate live conversation/
+session identities and cancelled pending admissions fail explicitly.
+
+An explicit ModelTask per parent operation binds admitted children and active
+monitors; async delivery retains its original task and source. Child observations
+include actual runtime/loop/tool/evidence/usage correlation without proving
+business completion. Timeout/cancellation quarantines actual pending work, never
+cancels a borrowed shared task, and retains unstored worker observations for the
+existing host archive/acknowledgement path. Worker/root async recovery requires
+authentic retained sources; saved sessions do not restore task/factory authority.
+
+Read [the recipe](ORCHESTRATOR_FACTORY.md),
+[delivery](designs/CONSUMER_C6_DELIVERY.md) and
+[machine evidence](evaluations/CONSUMER_C6_VALIDATION_2026_10_23.json); run
+[the offline example](../examples/orchestrator-factory.ts). All 9,044 units,
+257 cumulative three-provider live cases plus six final C6 checks, 1,270 public
+assertions, 46 offline modes and full build/type/compatibility/package/doc gates
+pass. Existing createOrchestrator, synchronous callbacks, ordinary Agent APIs,
+old raw/default/session contracts and literal wire v2 remain unchanged.
+
+| Documentation handoff | Delivered now | Release/adoption work still separate |
+| --- | --- | --- |
+| C6 availability and usage | Recipe, README, User Guide, agent guide, examples/index, generated API, AMOS disposition, roadmap/design/ledger/evidence and unreleased notes | Verify a published package version before announcing release; ICOS adapters/pin upgrade require separate consumer work. |
+
+AMOS builds a single Agent and has no factory control surface; its guide links
+the runnable library demonstration. No AMOS command or saved config is invented.
+No workflow engine/backend, universal inspector, Stage 14B/16B or distributed
+budget is included. C7 follows under the current sequential authorization.
+
+## Consumer C7 — negotiated remote observations (branch implementation)
+
+`AgentPackageOutcomeServer`, `hydrateAgentPackageWithOutcomes` and
+`createAgentPackageOutcomeTools` select the independent
+`oneringai.tool-outcomes/1` protocol. The old literal v2 APIs, DTOs and defaults
+stay unchanged. The new session exposes detached inspection, receipt lookup,
+per-request cancellation, exact bounded source retrieval and proof-checked
+checkpoints. Source and proxy IDs/completion remain separate; business declines
+stay data and C1 operational failures remain failures.
+
+Enable evidence explicitly. Tools-first/C6 construction uses the same scoped
+storage object in the session and ordinary context. Unknown writes stop further
+managed dispatch until explicit reconciliation; recovery does not resubmit an
+action. Persisted admission/full-observation proof is required, and restart does
+not restore workflow authority. Accounting remains `external_unknown`.
+Read [the recipe](REMOTE_TOOL_OUTCOMES.md) and [delivery](designs/CONSUMER_C7_DELIVERY.md);
+run [the offline example](../examples/remote-tool-outcomes.ts). Full completion
+validation is recorded in the delivery record; branch code is not a verified
+package release. AMOS has no portable transport surface; consumer adoption and
+release remain separate.
+
+| C7 documentation handoff | Delivered in this slice | Pending |
+| --- | --- | --- |
+| New protocol, evidence, recovery and tools-first API | Recipe, example/index, README/User Guide, generated API, agent guide, delivery and Version 2 record | Final validation record; published release and consumer transport adoption. |
+
+C7 offline delivery gates now pass (9,085 units, 90 mixed-package assertions,
+compatibility/build/types/lint/docs and runnable recovery example). Live testing was
+explicitly paused by the user on 2026-10-28 after the attempted matrix exposed an
+Anthropic endpoint-permission failure and an unresolved legacy Google wrap-up
+trajectory. Four final C7 OpenAI/Google checks passed; full three-provider validation
+is pending and is not claimed. See [machine evidence](evaluations/CONSUMER_C7_VALIDATION_2026_10_28.json).
+
+## Consumer C8 — conformance and composed evaluation
+
+C8 delivers internal test-only `runEvidenceConformance(profile)` and public-API
+examples, rather than another runtime abstraction. Memory/process, file/restart
+and file/fsync profiles cover exact reconstruction, isolation, immutable records,
+quotas and concurrency. Two actual child processes recover C7 evidence and refuse
+uncertain write replay after a server restart. This is evidence recovery, not
+restored workflow authority.
+
+The meeting composition compares local/remote functional contracts on held-out
+sources: one submission, explicit host confirmation, exact citations and checked
+artifact, with zero false verified completion, duplicate effects or unauthorized
+disclosure in the acceptance set. It reports latency samples and explicit unknown
+costs without claiming a model-quality or cost improvement. Existing Agent/runtime,
+routine/remote and child/task reports compose directly; old inspection shapes stay
+unchanged. AMOS `/routine inspect` now shows observed verification and honest
+accounting; the offline command demo is available.
+
+Read [the recipe](EVIDENCE_CONFORMANCE.md), [delivery](designs/CONSUMER_C8_DELIVERY.md),
+and run `npm run example:composition-evaluation` or `npm run example:amos-composition`.
+The reusable harness remains outside production exports. README, User Guide,
+examples, AMOS docs and release notes are updated here; package publishing and ICOS
+adoption remain pending. Live testing remains paused by explicit user instruction.
+
+C8 completion: 9,090 units, 369 focused cases, 596 generic conformance assertions
+(memory/process, file/restart, file/fsync), two real child processes and six
+composed example samples pass. [Machine evidence](evaluations/CONSUMER_C8_VALIDATION_2026_10_28.json)
+records actual metrics. No new production API or inspection-shape change was
+needed. AMOS and standard documentation are updated; release and consumer adoption
+remain pending. Live validation remains paused.
+
+## Consumer C9-A — endpoint capability companions
+
+`getRealtimeModelCapabilities` and `getTranscriptionCapabilities` are available on
+root and browser-safe `/shared`. Named vendor, actual endpoint/transport and session
+mode determine sparse facts. Reasoning support is separate from exact allowed
+sets: GPT-Realtime-2's five documented efforts are verified; 2.1/2.1-mini exact sets
+and unverified conversation/transcription pairings remain unknown. Dedicated
+transcription transport/VAD constraints and declared file endpoints are distinct.
+Unknown metadata does not hide or migrate saved settings.
+
+Legacy registry JSON, Realtime validation and STT streaming flags are unchanged.
+All 9,114 units, 21 built-package/browser assertions, build/types/lint/compatibility,
+examples and API generation pass. No live calls were made. Read
+[the recipe](ENDPOINT_CAPABILITIES.md), [delivery](designs/CONSUMER_C9A_DELIVERY.md),
+[machine evidence](evaluations/CONSUMER_C9A_VALIDATION_2026_10_28.json), and run
+`npm run example:endpoint-capabilities`. AMOS has no Realtime selector; ICOS adoption
+and package release remain pending. README/User Guide/examples/unreleased notes
+and generated API are updated; no consumer setting changes are implied.
+
+## Consumer C9-B — effective request parameter policy
+
+Pure `assessModelParameters` is available on root and `/shared`. Optional
+`parameterPolicy: { temperature: 'omit-unsupported', observe? }` applies to actual
+selected OpenAI Responses generation/stream/count/batch requests after reasoning,
+native effort updates, routing and per-call overrides. It omits only unsupported
+provider-neutral temperature; supported zero and unknowns remain intact. Raw
+provider controls and invalid reasoning stay strict. No policy preserves legacy
+validation/filtering and count behavior. Explicit `temperature: 'strict'` also
+validates selected counting before its input-only projection.
+
+Runtime host-local snapshots expose configured policy; old portable v2 exports omit
+it before traversal. Saved configuration, event/session shapes and literal v2 stay
+unchanged. Native counting keeps its existing replay/ownership boundaries. Raw
+Responses WebSocket remains strict; no Chat Completions transport or helper policy
+migration is introduced. Isolated bounded decision observers are diagnostics, not
+call counters. AMOS defaults and the ICOS guard remain unchanged pending adoption.
+
+All 9,172 units, 58 new cases (30 actual model/effort pairs), 37 built/browser
+assertions, build/types/lint/compatibility/examples and generated API pass. Live
+calls remain paused. Read [the recipe](PARAMETER_POLICY.md),
+[delivery](designs/CONSUMER_C9B_DELIVERY.md) and
+[machine evidence](evaluations/CONSUMER_C9B_VALIDATION_2026_10_28.json); run
+`npm run example:parameter-policy`. Standard guides/examples/unreleased notes and
+API are updated. Publishing and consumer upgrades remain pending.
+
+## Consumer C9-C — optional vendor presentation
+
+Immutable `VENDOR_PRESENTATIONS` and `getVendorPresentation(id)` are available on
+root and `/shared`, with vendor ID, display name and CSS-ready color. Unknown IDs
+stay unknown. The initial consumer palette is preserved; hosts compose overrides.
+Vendor IDs, service/auth classification, existing logo/color APIs and model defaults
+are unchanged. In particular, SDK Custom endpoint presentation does not classify
+ICOS ordinary custom-service records or grant platform-managed credentials.
+
+AMOS reuses catalog names with its five existing label overrides. All 9,196 units
+and 53 built root/shared/browser assertions pass, with build/types/lint/compatibility,
+examples, AMOS type/build and generated API. Read [the recipe](VENDOR_PRESENTATION.md),
+[delivery](designs/CONSUMER_C9C_DELIVERY.md), and run
+`npm run example:vendor-presentation`. Standard guides/examples/AMOS/unreleased notes
+and generated API are updated; ICOS adoption and a verified package release remain
+pending. All authorized consumer-hardening slices are implemented; live testing
+continues to be paused by the user.
+
+
+## Consumer hardening final handoff — 2026-10-28
+
+All authorized slices are implemented and reviewed. The final offline gate passes
+9,196 units, 1,413 public assertions across twelve package fixtures, 52 offline
+example modes, build/types/lint/compatibility/API-design checks, generated API,
+AMOS type/build and 3,075 local links. The local package artifact contains its
+example helper closure and runs all five new library examples after extraction.
+[Final evidence](evaluations/CONSUMER_FINAL_VALIDATION_2026_10_28.json) and
+[delivery ledger](designs/CONSUMER_DELIVERY_LEDGER.md) are the current completion
+record; earlier stage totals are historical.
+
+The documentation handoff is complete for delivered branch usage: README, User
+Guide, generated API, examples/index, AMOS docs, agent guide, recipes, roadmap and
+unreleased notes. Publishing a package and adopting it in ICOS remain separate.
+Live validation is paused at the user's request, with the earlier Anthropic account
+permission and legacy Google wrap-up failures explicitly unverified. Exact 2.1/
+2.1-mini effort sets and unverified transcription pairings stay unknown. There is
+no remaining authorized implementation slice in this sequence.
+
+## Consumer review corrections — 2026-10-28
+
+Status: 9,216 cumulative units (20 new regressions), 1,413 public assertions, all
+52 offline modes, six examples from the extracted 314-file package, and
+build/type/lint/example compilation/API-design/generated API/AMOS checks pass.
+[Corrective evidence](evaluations/CONSUMER_REVIEW_CORRECTIONS_2026_10_28.json)
+records the commands, artifacts and current source hashes.
+The four requested corrections affect only selected C4/C5
+generic transport and C7 remote recovery/lifecycle behavior:
+
+- Generic connector credentials remain on the configured origin through every
+  redirect hop. Same-origin method/body semantics are preserved, with a 20-hop
+  bound, per-hop observations and cancellation during intermediate body cleanup.
+- An execution handoff without an authoritative source outcome stays unknown.
+  Existing uninstrumented execution overrides cannot manufacture a not-started
+  receipt or clear a potentially committed write's continuation barrier.
+- Repeated receipt lookups reuse validated evidence; concurrent lookups serialize
+  per-invocation reconciliation while each still calls the authenticated transport.
+  Missing proof is repaired without resubmission; failed repair preserves protection.
+- Shutdown completion errors survive while the settled composition lease is released,
+  preserving reuse of the borrowed source Agent and idempotent close results.
+
+Public signatures, wire/schema versions, old factories and defaults are unchanged.
+The [connector](ENHANCED_CONNECTORS.md) and [remote](REMOTE_TOOL_OUTCOMES.md) recipes,
+their runnable offline examples, standard guide handoff, delivery ledger and
+unreleased notes document the corrections. AMOS has no new control or configuration
+to expose; its existing adapters remain covered by the cumulative checks. Consumer
+adoption and publishing remain separate; live validation is still paused.

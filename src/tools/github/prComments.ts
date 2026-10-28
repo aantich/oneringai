@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * GitHub PR Comments Tool
  *
@@ -87,7 +88,7 @@ EXAMPLES:
       const effectiveAccountId = context?.accountId;
       const resolved = resolveRepository(args.repository, connector);
       if (!resolved.success) {
-        return { success: false, error: resolved.error };
+        return connectorFailure(connector, { success: false, error: resolved.error });
       }
       const { owner, repo } = resolved.repo;
 
@@ -163,10 +164,10 @@ EXAMPLES:
           count: allComments.length,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatGitHubToolError('Failed to get PR comments', error),
-        };
+        });
       }
     },
   };

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Consumer review corrections keep enhanced generic credentials on their configured
+  origin through redirects, preserve unknown remote execution when legacy overrides
+  omit authoritative outcomes, reuse evidence on repeated/concurrent receipt lookup,
+  and release borrowed Agent ownership after failed remote shutdown callbacks.
+  Includes real local HTTP redirects, failure/concurrency/quota/cancellation
+  regressions and updated offline examples. Legacy factories and protocol v2 stay
+  unchanged; live LLM testing remains paused.
+
+- Consumer C2 adds private composition ownership and explicit ModelTask/cancellation
+  binding through recursive routine tasks, reflection, extraction and deterministic
+  steps. It retains late native/provider/tool work and cleanup occupancy, including
+  ESM/CJS copies. Existing routine/public signatures and defaults stay unchanged;
+  the complete verified facade is C3. Includes a public offline accounting recipe.
+
+- Consumer C1 adds opt-in `createOutcomeTool()`, `OutcomeInvocation` and
+  `OutcomeToolOptions` on the root public API. Invocation-owned failure reporting
+  preserves raw returns and business declines, survives connector account wrappers
+  and ESM/CJS/duplicate bundles, and retains cancellation/late/evidence semantics.
+  Existing tools, callbacks, breaker/retry defaults, sessions and protocol v2 remain.
+  Includes offline/AMOS examples, compatibility and real-provider run/stream coverage.
+
 - Fix explicit `thinking.enabled: false` being omitted for Google GenerateContent
   Gemini 2.5 Flash/Flash-Lite, which otherwise left dynamic thinking and its cost
   enabled. The shared Vertex converter sends zero budget for supported aliases.
@@ -3716,3 +3737,46 @@ StorageRegistry.setContext({ userId: currentUser.id });
 [1.0.1]: https://github.com/aantich/oneringai/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/aantich/oneringai/compare/v0.11.0...v1.0.0
 [0.11.0]: https://github.com/aantich/oneringai/compare/v0.10.3...v0.11.0
+
+### Consumer hardening C3 (unreleased branch)
+
+- Added opt-in `createRoutineRunner` with required task/final verification, explicit shared execution binding, same-process authorized continuation, scoped shared-manager ownership and fresh-child tool adapter.
+- Added bounded detached observations, explicit host source recovery, local-only inspection, deadline/late-work retention and AMOS synthetic wait/reconcile demo. Legacy routine APIs/defaults/session DTOs remain unchanged.
+
+### Consumer hardening C4 (unreleased, complete on branch)
+
+- Added opt-in `ConnectorTools.enhanced` execution-v1 with a fixed four-family inventory, separate `_exec` names, explicit operational provenance/effects, host whole-operation deadlines and physical transport diagnostics.
+- Added acknowledged read projections and selected Microsoft reply-draft acceptance IDs, preserving old tool results/defaults. New generic API credentials stay on the configured origin.
+- Kept legacy reflective request options and nonextensible context managers usable; added local HTTP/live-model examples and existing AMOS adapter coverage.
+
+### Consumer hardening C5 (unreleased branch)
+
+- Added explicitly selected collections-v1 with whole provider pages, separate position/coverage/counts, scoped encrypted continuations and strict unchanged Unicode topic input.
+- Added manager-local selected catalog discovery/load/unload/compaction without legacy alias reload; context rollover/scopes preserve its ephemeral codec. Fresh managers/clears invalidate tokens; saved state does not restore authority or cursor keys.
+- Preserved legacy/execution-v1 behavior, added exact traversal/source/failure/compatibility examples and AMOS page notices, and published the capacity inventory.
+
+- Opt-in `createOrchestratorWithFactory` forwards complete authorized parent/worker configuration before initialization, with per-operation child/monitor accounting, cancellation quarantine and retained-source recovery. Existing orchestrator/tool/session defaults and protocol v2 remain unchanged.
+
+Unreleased branch C7: additive negotiated portable outcomes, scoped admission/source
+proof, receipt recovery, cancellation/late correlation and tools-first orchestration
+composition. Legacy protocol 2 is unchanged. Track raw evidence writes past their
+acknowledgement deadline; preserve legitimate redacted C6 async repair arguments.
+
+Unreleased branch C8: reusable test-only evidence conformance for current memory/
+file profiles, real child-process recovery, held-out local/remote workflow examples,
+and AMOS observed verification/accounting diagnostics. No production backend,
+workflow resume or old inspection-shape change.
+
+Unreleased C9-A: browser-safe sparse Realtime/transcription companion lookups with
+documentation provenance and explicit unknown effort sets/pairings. Existing model
+registries, session validation and STT streaming flags are unchanged.
+
+Unreleased C9-B: shared pure parameter assessment and opt-in normalized-temperature
+policy on actual selected OpenAI generation/stream/count/batch requests. Preserve
+legacy validation/count defaults, supported zero, explicit raw-control strictness,
+host-only policy authority and portable v2. No live calls in this slice.
+
+Unreleased C9-C: immutable browser-safe vendor presentation catalog and bounded
+lookup, with consumer palette and AMOS label parity. Vendor/service/auth identity,
+model defaults and existing logo utilities remain unchanged. All consumer-hardening
+slices are implemented on branch; live testing remains paused by the user.

@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Slack - Post Message Tool
  *
@@ -122,10 +123,10 @@ EXAMPLES:
           channel: response.channel,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatSlackToolError('Failed to post message', error),
-        };
+        });
       }
     },
   };

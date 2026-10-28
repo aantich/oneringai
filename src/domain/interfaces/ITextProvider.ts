@@ -52,6 +52,8 @@ export interface TextGenerateOptions {
   tools?: Tool[];
   tool_choice?: 'auto' | 'required' | { type: 'function'; function: { name: string } };
   temperature?: number;
+  /** Explicit request policy; absence preserves legacy validation/count behavior. */
+  parameterPolicy?: import('../../capabilities/metadata/parameters.js').ModelParameterPolicy;
   max_output_tokens?: number;
   response_format?: {
     type: 'text' | 'json_object' | 'json_schema';

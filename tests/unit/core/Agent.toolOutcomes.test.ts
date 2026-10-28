@@ -5,6 +5,7 @@ import { Vendor } from '@/core/Vendor.js';
 import { ContentType } from '@/domain/entities/Content.js';
 import { MessageRole } from '@/domain/entities/Message.js';
 import { StreamEventType } from '@/domain/entities/StreamEvent.js';
+import { createOutcomeTool } from '@/core/createOutcomeTool.js';
 import type { ToolFunction } from '@/domain/entities/Tool.js';
 import type { ToolExecutionOutcome } from '@/core/tool-execution/outcomes.js';
 const provider = vi.hoisted(() => ({ name: 'fixture', capabilities: { text: true }, generate: vi.fn(), streamGenerate: vi.fn(),
@@ -39,6 +40,42 @@ beforeEach(() => {
 afterEach(() => { agents.splice(0).forEach(a => a.destroy()); Connector.clear(); vi.useRealTimers(); });
 
 describe('Agent semantic results and cancellation', () => {
+  it.each(['run', 'stream'] as const)('%s carries explicitly reported failures without changing raw events/history', async mode => {
+    const raw = Object.freeze({ success: false, id: 'RAW_OPERATIONAL_RESULT' });
+    const agent = fixture(async () => raw); const definition = agent.tools.get('probe')!.definition;
+    let calls = 0;
+    agent.tools.register(createOutcomeTool({ definition, execute: async (_args, invocation) => {
+      calls++; invocation.reportFailure(new Error('Explicit lookup failure')); return raw;
+    } }));
+    const completions = vi.fn(); agent.on('tool:complete', completions); const events = [];
+    if (mode === 'run') await agent.run('probe'); else for await (const event of agent.stream('probe')) events.push(event);
+    const result = completions.mock.calls[0]![0].result;
+    expect(result.content).toBe(raw); expect(result).toMatchObject({ state: 'failed', outcome: { status: 'failed', error: 'Explicit lookup failure', callId: 'original' } });
+    expect(agent.getMetrics()).toMatchObject({ toolCallCount: 1, toolSuccessCount: 0, toolFailureCount: 1 });
+    expect(JSON.stringify(agent.context.getState())).toContain('RAW_OPERATIONAL_RESULT');
+    expect(calls).toBe(1); expect(agent.tools).toBe(agent.context.tools);
+    if (mode === 'stream') expect(events.find(event => event.type === StreamEventType.TOOL_EXECUTION_DONE)).toMatchObject({
+      result: raw, outcome: { status: 'failed', error: 'Explicit lookup failure' },
+    });
+  });
+  it.each(['run', 'stream'] as const)('%s keeps an unreported outcome-tool business decline successful', async mode => {
+    const agent = fixture(async () => 'unused'); const definition = agent.tools.get('probe')!.definition;
+    agent.tools.register(createOutcomeTool({ definition, execute: async () => ({ success: false, decision: 'declined' }) }));
+    if (mode === 'run') await agent.run('probe'); else for await (const _event of agent.stream('probe')) { /* consume */ }
+    expect(agent.getMetrics()).toMatchObject({ toolCallCount: 1, toolSuccessCount: 1, toolFailureCount: 0 });
+  });
+  it('settles a reported background failure once under its original async call', async () => {
+    let finish!: () => void; const gate = new Promise<void>(resolve => { finish = resolve; });
+    const agent = fixture(async () => 'unused', false); const definition = agent.tools.get('probe')!.definition;
+    agent.tools.register(createOutcomeTool({ definition, execute: async (_args, invocation) => {
+      await gate; invocation.reportFailure(new Error('Background lookup failed')); return { id: 'raw' };
+    } }));
+    const completed = vi.fn(); agent.on('async:tool:complete', completed); await agent.run('background');
+    expect(agent.getMetrics()).toMatchObject({ toolCallCount: 1, toolFailureCount: 0 });
+    finish(); await vi.waitFor(() => expect(completed).toHaveBeenCalledTimes(1));
+    expect(completed.mock.calls[0]![0].result).toMatchObject({ content: { id: 'raw' }, state: 'failed', outcome: { status: 'failed', callId: 'original' } });
+    expect(agent.getMetrics()).toMatchObject({ toolCallCount: 1, toolSuccessCount: 0, toolFailureCount: 1 });
+  });
   it('preserves async deadlines for a legacy execute override that ignores new options', async () => {
     const agent = fixture(async () => 'unused', false);
     const definition = agent.tools.getToolDefinition('probe'); if (definition?.type === 'function') definition.timeout = 20;

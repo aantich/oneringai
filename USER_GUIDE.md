@@ -18788,6 +18788,17 @@ MIT License - see LICENSE file for details.
 
 ## Tool outcomes and cancellation (Stage 02)
 
+For a tool that catches an operational error and returns an application-specific
+value, use `createOutcomeTool({ definition, execute: async (args, invocation) => ... })`.
+Call `invocation.reportFailure(new Error('Public-safe failure message'))` inside that
+callback; read the existing optional signal from `invocation.context?.signal`.
+The helper returns a normal ToolFunction, raw results stay intact, and a business
+decline without a report remains a succeeded execution. First report wins and the
+reporter becomes inert after settlement. Existing callbacks/defaults are unchanged.
+See the [complete recipe and boundaries](docs/OUTCOME_AWARE_TOOLS.md) and
+`npm run example:outcome-aware-tools`. C1 does not add rich remote outcomes to
+legacy protocol v2 or automatically convert bundled connector tools.
+
 Use `agent.tools.executeWithOutcome(name, args, { signal, timeoutMs, callId, runId })`
 when the host needs `{ result, outcome }`; `execute()` still returns raw data. The
 manager recognizes its normalizer's failures without reinterpreting arbitrary
@@ -19257,3 +19268,68 @@ results and opaque thought signatures set the uncertainty flag, shown by AMOS.
 Run `npm run example:context-dispatch-safety` for a deterministic demonstration.
 Read the [complete recipe](docs/CONTEXT_ASSEMBLY.md) for public signatures, limits,
 JSON repair, lifecycle/authorization boundaries and offline/live setup.
+
+## Verified routines (C3)
+
+Use `createRoutineRunner({ verify })` with a host-built Agent for task-readiness and final-artifact gates. Waiting results retain a same-process continuation; `resume` requires renewed host authorization and retains the original task/deadline. `asTool` owns a fresh child across waiting. Read [the complete recipe](docs/VERIFIED_ROUTINES.md) for scopes, bounded source recovery, cancellation and limits. Existing routine/session contracts retain their defaults.
+
+## Enhanced connector execution profiles
+
+Select `ConnectorTools.enhanced` with `profile: "execution-v1"` for the bundled Microsoft/Google/Slack/GitHub execution contract. Register actual names through `agent.tools.registerConnectorTools`, keep host permissions/scopes, and use exact identity filters with catalog disabled for C4. The profile adds host deadlines, physical-attempt diagnostics and evidence-aware read projections; old factory defaults stay unchanged. Read [the full recipe](docs/ENHANCED_CONNECTORS.md) for inventory, partial acceptance, origin checks, cancellation, retries, source limits and persistence.
+Generic requests check each redirect hop before forwarding credentials; same-origin
+redirects retain method/body semantics, while cross-origin destinations are rejected.
+
+## Whole connector pages (C5)
+
+Select `collections-v1` for 17 whole-page read variants and strict Slack topics. `pageSize` is a provider hint; follow opaque `position.more` with identical normalized inputs and detect repeated `positionId`. `position.end`, `returnedCount` and `searchCoverage` have separate meanings. Use existing source/account registration and actual identity filters to adopt the manager-local catalog adapter. Its cursor key survives reload/rollover/scoping, but not a fresh manager/process or explicit clear. Read [the recipe](docs/CONNECTOR_COLLECTION_PAGES.md) for inventory, raw provider items, provider ceilings, query binding, Unicode validation, source recovery and setup; [the capacity inventory](docs/CONSUMER_CAPACITY_INVENTORY.md) classifies retained bounds. Legacy/execution-v1 and saved DTOs remain unchanged.
+
+## Complete orchestration configuration (C6)
+
+Use `createOrchestratorWithFactory(config, { configureAgent, onChildOutcome?, descriptionExecution? })` when root/workers require complete authorized Agent/context settings before initialization. Return a complete plain configuration, resolve workers independently, and pass a ModelTask per operation for shared accounting. Read [the recipe](docs/ORCHESTRATOR_FACTORY.md) for precedence, reservations, async repair, cancellation/quarantine, source retention and cleanup. Existing createOrchestrator and synchronous callbacks retain their contracts.
+
+### Negotiated portable observations (C7)
+
+Use the opt-in [remote outcome recipe](docs/REMOTE_TOOL_OUTCOMES.md) when a consumer
+needs source effects, authentic server outcomes, evidence and recovery. The new
+outer protocol requires five authenticated transport operations and scoped evidence;
+old v2 packages and servers keep their contracts. Tools-first construction composes
+with C6 before Agent initialization. Unknown remote writes stop managed dispatch;
+`session.getReceipt()` repairs acknowledged source without action replay. Checkpoints
+restore observations, not workflow or budget authority.
+Repeated/concurrent receipt lookups reuse validated observations while still invoking
+the authenticated receipt transport. Missing authoritative metadata after source
+handoff remains unknown, including uninstrumented execution overrides. A failed
+shutdown completion callback preserves its error and releases settled ownership of
+the borrowed source Agent. See the recipe for repair, quota and cancellation details.
+
+### Composed guarantees and inspection (C8)
+
+Use [the conformance recipe](docs/EVIDENCE_CONFORMANCE.md) to validate custom evidence
+adapters with the test-only factory harness. Current memory/file profiles and real
+process recovery are covered. Compose existing capability, routine, remote, child
+and ModelTask reports; distinguish configured checks from observed verification,
+proxy settlement from source settlement, and known model subtotal from unknown costs.
+No workflow authority is restored by loading stored evidence.
+
+### Endpoint capability metadata (C9-A)
+
+Use [the capability recipe](docs/ENDPOINT_CAPABILITIES.md) for pure root/shared
+lookups over explicit vendor, endpoint, transport and session mode. Keep supported,
+unsupported and unknown distinct. A reasoning-capable model may still have an
+unverified exact effort set; preserve saved selections and host fallbacks.
+
+### Effective temperature decisions (C9-B)
+
+Select [the parameter policy](docs/PARAMETER_POLICY.md) explicitly when normalized
+temperature should be omitted for a particular model/effort combination. Decisions
+use actual routed/per-call request settings across generation, streaming, selected
+counting and batches. Preserve supported zero and unknown values; keep raw controls
+strict. Old portable snapshots require the trusted receiving host to reconfigure
+policy. `npm run example:parameter-policy` inspects real mocked request bodies offline.
+
+### Vendor labels and colors (C9-C)
+
+Use [vendor presentation](docs/VENDOR_PRESENTATION.md) through root or `/shared`.
+Compose host overrides over immutable rows; unknown IDs return undefined. The
+catalog supplies no model defaults or authorization. Custom external services keep
+their existing service/auth ownership even when an application uses the same ID.

@@ -9,6 +9,8 @@
  * - destroy_agent: Remove a worker (auto-reclaims if delegated)
  */
 
+import { factoryPolicy } from './factoryPolicy.js';
+import { createOutcomeTool } from '../createOutcomeTool.js';
 import type { ToolFunction } from '../../domain/entities/Tool.js';
 import type { Agent } from '../Agent.js';
 import type { SharedWorkspacePluginNextGen } from '../context-nextgen/plugins/SharedWorkspacePluginNextGen.js';
@@ -166,13 +168,20 @@ function isAgentError(result: Agent | { error: string }): result is { error: str
 // ============================================================================
 
 export function buildOrchestrationTools(ctx: OrchestrationToolsContext): ToolFunction[] {
-  return [
+  const tools = [
     buildAssignTurnTool(ctx),
     buildDelegateInteractiveTool(ctx),
     buildSendMessageTool(ctx),
     buildListAgentsTool(ctx),
     buildDestroyAgentTool(ctx),
   ];
+  if (!factoryPolicy(ctx)) return tools;
+  return tools.map(tool => createOutcomeTool({ ...tool, execute: async (args, invocation) => {
+    const result = await tool.execute(args, invocation.context);
+    // These five fixed, library-owned DTOs define success:false as an operational failure.
+    if (result && typeof result === 'object' && 'success' in result && result.success === false) invocation.reportFailure(new Error(String(result.error ?? 'Orchestration failed')));
+    return result;
+  } }));
 }
 
 // ============================================================================
@@ -214,7 +223,9 @@ You can call this multiple times in one turn to launch several agents concurrent
         .join('\n');
       return `Assign work to an agent. Auto-creates if needed. Always async.\n\nAvailable types:\n${types}`;
     },
-    execute: async (args: Record<string, unknown>) => {
+    execute: async (args: Record<string, unknown>, invocationContext) => {
+      const selected = factoryPolicy(ctx);
+      if (selected) return selected.assign(args, invocationContext);
       const name = args.agent as string;
       const instruction = args.instruction as string;
       const type = args.type as string | undefined;
@@ -322,7 +333,7 @@ Control returns to you when: the user says a reclaim keyword, maxTurns is reache
         },
       },
     },
-    execute: async (args: Record<string, unknown>) => {
+    execute: async (args: Record<string, unknown>, invocationContext) => {
       const name = args.agent as string;
       const type = args.type as string | undefined;
       const defaults = ctx.delegationDefaults;
@@ -338,14 +349,18 @@ Control returns to you when: the user says a reclaim keyword, maxTurns is reache
         };
       }
 
-      const agentOrError = getOrCreateAgent(ctx, name, type);
+      const selected = factoryPolicy(ctx);
+      let agentOrError: Agent | { error: string };
+      try { agentOrError = selected ? await selected.get(name, type, selected.operation(invocationContext), invocationContext?.signal) : getOrCreateAgent(ctx, name, type); }
+      catch (error) { return { success: false, error: error instanceof Error ? error.message : String(error) }; }
+      if (selected && ctx.delegationState.active) return { success: false, error: 'Delegation changed during configuration; reclaim before delegating' };
       if (isAgentError(agentOrError)) {
         return { success: false, error: agentOrError.error };
       }
       const agent = agentOrError;
 
       // Can't delegate to a running agent
-      if (agent.isRunning()) {
+      if (selected ? selected.busy(agent) : agent.isRunning()) {
         return {
           success: false,
           error: `Agent "${name}" is currently running. Wait for it to finish before delegating.`,
@@ -488,7 +503,7 @@ function buildDestroyAgentTool(ctx: OrchestrationToolsContext): ToolFunction {
       if (!agent) {
         return { success: false, error: `Agent "${name}" not found.` };
       }
-      if (agent.isRunning()) {
+      if (factoryPolicy(ctx)?.busy(agent) ?? agent.isRunning()) {
         return { success: false, error: `Agent "${name}" is currently running. Wait for it to finish or cancel it first.` };
       }
 

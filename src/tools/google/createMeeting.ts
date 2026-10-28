@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Google Calendar - Create Meeting Tool
  *
@@ -185,10 +186,10 @@ EXAMPLE:
           meetLink: extractMeetLink(event),
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatGoogleToolError('Failed to create meeting', error),
-        };
+        });
       }
     },
   };

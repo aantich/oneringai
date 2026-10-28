@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Google Calendar - Find Meeting Slots Tool
  *
@@ -270,10 +271,10 @@ EXAMPLES:
           emptySuggestionsReason,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatGoogleToolError('Failed to find meeting slots', error),
-        };
+        });
       }
     },
   };

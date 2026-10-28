@@ -59,6 +59,7 @@ import type {
 import { inspectContext } from './contextInspection.js';
 import { buildPermissionsConfig } from './permissionUtils.js';
 import { describeToolOutcome } from './toolOutcomes.js';
+import { describeCollectionPage } from './collectionPages.js';
 import { AmosSessionStorage } from './AmosSessionStorage.js';
 
 export interface AmosModelRuntimeOptions {
@@ -847,10 +848,10 @@ export class AgentRunner implements IAgentRunner {
         return { type: 'tool:start', tool: { name: event.tool_name, args: event.arguments } };
       case StreamEventType.TOOL_EXECUTION_DONE:
         return event.outcome && event.outcome.status !== 'succeeded'
-          ? { type: 'error', error: new Error(describeToolOutcome(event.outcome) ?? event.error) }
+          ? { type: 'error', error: new Error([describeToolOutcome(event.outcome) ?? event.error, describeCollectionPage(event.tool_name, event.result)].filter(Boolean).join(' ')) }
           : event.error
             ? { type: 'error', error: new Error(`${event.tool_name}: ${event.error}`) }
-            : { type: 'tool:complete', tool: { name: event.tool_name, result: event.result }, notice: event.outcome ? describeToolOutcome(event.outcome) ?? undefined : undefined };
+            : { type: 'tool:complete', tool: { name: event.tool_name, result: event.result }, notice: [event.outcome ? describeToolOutcome(event.outcome) : null, describeCollectionPage(event.tool_name, event.result)].filter(Boolean).join(' ') || undefined };
       case StreamEventType.RESPONSE_COMPLETE:
         return {
           type: 'done',

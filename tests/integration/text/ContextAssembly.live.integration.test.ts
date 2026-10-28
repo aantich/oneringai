@@ -55,7 +55,7 @@ describe.skipIf(!enabled).sequential('Stage 05 review corrections with actual pr
       Connector.create({ name, vendor: p.vendor, auth: { type: 'api_key', apiKey: p.key } });
       const task = new ModelTask({ limits: { maxCalls: 3 } }); let reads = 0, contributions = 0;
       const agent = Agent.create({ connector: name, model: p.model, maxIterations: 1, temperature: 0,
-        instructions: 'Read the synthetic receipt once. Your final response, including any summary at an iteration limit, must include the literal marker value from selected source data. Give the value in this response; the local read completes the task.', thinking: { enabled: false }, emptyResponseRetry: { enabled: false },
+        instructions: 'If no receipt result is present, call read_receipt exactly once. When a receipt result is present, the read is complete: return ONLY its exact marker field from selected source data. This also applies to iteration-limit wrap-up. Never print function-call syntax as text. No prose or explanation of limits.', thinking: { enabled: false }, emptyResponseRetry: { enabled: false },
         modelExecution: { maxOutputTokensPerCall: 128 }, vendorOptions: p.name === 'google' ? { generationConfig: { thinkingConfig: { thinkingBudget: 0 } } } : undefined,
         context: { model: p.model, assembly: { layout: 'stable-prefix' }, features: { workingMemory: false, inContextMemory: false } },
         tools: [{ definition: { type: 'function', function: { name: 'read_receipt', description: 'Read a synthetic local receipt', parameters: { type: 'object', properties: {}, additionalProperties: false } } },
@@ -73,7 +73,7 @@ describe.skipIf(!enabled).sequential('Stage 05 review corrections with actual pr
         expect(accounting.providerInputTokens).toBe(actual.input_tokens); expect(accounting.cachedInputTokens).toBe(actual.cached_input_tokens ?? null); expect(accounting.cacheCreationInputTokens).toBe(actual.cache_creation_input_tokens ?? null);
         expect(accounting.inputTokenDelta).toBe(actual.input_tokens - accounting.estimatedInputTokens);
         report.push({ provider: p.name, model: p.model, kind: 'wrapup-usage', mode, passed: true, reads, contributions, accounting, usage });
-      } catch (error) { report.push({ provider: p.name, kind: 'wrapup-usage', mode, passed: false, errorType: error instanceof Error ? error.name : 'unknown' }); throw Error(`Stage05 wrap-up ${p.name}/${mode} failed; secrets omitted.`, { cause: error instanceof Error && error.name === 'AssertionError' ? error : undefined }); }
+      } catch (error) { report.push({ provider: p.name, kind: 'wrapup-usage', mode, passed: false, errorType: error instanceof Error ? error.name : 'unknown', diagnostic: error instanceof Error && error.name === 'AssertionError' ? error.message : undefined, reads, contributions, usage: task.snapshot() }); throw Error(`Stage05 wrap-up ${p.name}/${mode} failed; secrets omitted.`, { cause: error instanceof Error && error.name === 'AssertionError' ? error : undefined }); }
       finally { agent.destroy(); task.destroy(); Connector.remove(name); }
     }, 120000);
 

@@ -1,0 +1,1691 @@
+{
+  "protocol": "consumer-c6-validation-v1",
+  "recordedAt": "2026-10-23T19:07:08.966809+00:00",
+  "branch": "version2",
+  "baseCommit": "dff238759c41431bd24712d3b045dd38fc800b37",
+  "status": "complete-on-branch",
+  "verifiedPackageRelease": false,
+  "scope": {
+    "entryPoint": "createOrchestratorWithFactory",
+    "completeConfigurationBeforeInitialization": true,
+    "existingFiveToolAndDelegationEngine": true,
+    "perOperationModelTaskBinding": true,
+    "childCompositionLeases": true,
+    "legacyDefaultsChanged": false,
+    "literalRemoteProtocol": 2,
+    "newWorkflowOrBackend": false
+  },
+  "unit": {
+    "passed": 9044,
+    "failed": 0,
+    "failedSuites": 0,
+    "skipped": 0,
+    "files": 398,
+    "artifact": {
+      "path": "/tmp/oneringai-c6-completion-unit.json",
+      "bytes": 2898182,
+      "sha256": "b63c5fe2f3a9e39762dbdd119dd740a01e53fc79c9310b4fbc929c55c73a3166"
+    }
+  },
+  "newUnitCases": 42,
+  "breakdown": {
+    "factoryCases": 22,
+    "constructionCases": 5,
+    "operationBindingCases": 5,
+    "configCases": 10
+  },
+  "live": {
+    "passed": 257,
+    "failed": 0,
+    "failedSuites": 0,
+    "skipped": 0,
+    "files": 19,
+    "artifact": {
+      "path": "/tmp/oneringai-c6-final-live-tests.json",
+      "bytes": 88976,
+      "sha256": "053cc049f9cb06e47c58e8f2d017f9d875846987659977000fc4cc6bbf7dc4f7"
+    },
+    "providers": [
+      "OpenAI",
+      "Anthropic",
+      "Google"
+    ],
+    "command": {
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "tests/integration/text/ToolOutcomes.live.integration.test.ts",
+        "tests/integration/text/Evidence.live.integration.test.ts",
+        "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "tests/integration/text/TaskState.live.integration.test.ts",
+        "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "tests/integration/text/AgentSessionCorrections.live.integration.test.ts",
+        "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "tests/integration/text/OutcomeTools.live.integration.test.ts",
+        "tests/integration/text/CompositionExecution.live.integration.test.ts",
+        "tests/integration/text/VerifiedRoutines.live.integration.test.ts",
+        "tests/integration/text/EnhancedConnectors.live.integration.test.ts",
+        "tests/integration/text/ConnectorPages.live.integration.test.ts",
+        "tests/integration/text/OrchestratorFactory.live.integration.test.ts",
+        "--maxWorkers=3",
+        "--minWorkers=1",
+        "--reporter=json",
+        "--outputFile=/tmp/oneringai-c6-final-live-tests.json"
+      ],
+      "enableFlags": {
+        "RUN_AGENTIC_BASELINE_LIVE": "1",
+        "RUN_CONTEXT_FRESHNESS_LIVE": "1",
+        "RUN_TOOL_OUTCOMES_LIVE": "1",
+        "RUN_EVIDENCE_LIVE": "1",
+        "RUN_CONTEXT_STRATEGIES_LIVE": "1",
+        "RUN_MODEL_EXECUTION_LIVE": "1",
+        "RUN_TASK_STATE_LIVE": "1",
+        "RUN_AGENT_LOOP_LIVE": "1",
+        "RUN_AGENT_PRESETS_LIVE": "1",
+        "RUN_CONTEXT_ASSEMBLY_LIVE": "1",
+        "RUN_NATIVE_COMPACTION_LIVE": "1",
+        "RUN_MODEL_ROUTING_LIVE": "1",
+        "RUN_OUTCOME_TOOLS_LIVE": "1",
+        "RUN_COMPOSITION_EXECUTION_LIVE": "1",
+        "RUN_VERIFIED_ROUTINES_LIVE": "1",
+        "RUN_ENHANCED_CONNECTORS_LIVE": "1",
+        "RUN_CONNECTOR_PAGES_LIVE": "1",
+        "RUN_ORCHESTRATOR_FACTORY_LIVE": "1"
+      },
+      "reportPaths": {
+        "BASELINE_REPORT_PATH": "/tmp/oneringai-c6-final-live-baseline_report_path.json",
+        "CONTEXT_FRESHNESS_REPORT_PATH": "/tmp/oneringai-c6-final-live-context_freshness_report_path.json",
+        "TOOL_OUTCOMES_REPORT_PATH": "/tmp/oneringai-c6-final-live-tool_outcomes_report_path.json",
+        "EVIDENCE_REPORT_PATH": "/tmp/oneringai-c6-final-live-evidence_report_path.json",
+        "CONTEXT_STRATEGY_REPORT_PATH": "/tmp/oneringai-c6-final-live-context_strategy_report_path.json",
+        "MODEL_EXECUTION_REPORT_PATH": "/tmp/oneringai-c6-final-live-model_execution_report_path.json",
+        "TASK_STATE_REPORT_PATH": "/tmp/oneringai-c6-final-live-task_state_report_path.json",
+        "AGENT_LOOP_REPORT_PATH": "/tmp/oneringai-c6-final-live-agent_loop_report_path.json",
+        "AGENT_PRESETS_REPORT_PATH": "/tmp/oneringai-c6-final-live-agent_presets_report_path.json",
+        "AGENT_SESSION_CORRECTIONS_REPORT_PATH": "/tmp/oneringai-c6-final-live-agent_session_corrections_report_path.json",
+        "CONTEXT_ASSEMBLY_REPORT_PATH": "/tmp/oneringai-c6-final-live-context_assembly_report_path.json",
+        "NATIVE_COMPACTION_REPORT_PATH": "/tmp/oneringai-c6-final-live-native_compaction_report_path.json",
+        "MODEL_ROUTING_REPORT_PATH": "/tmp/oneringai-c6-final-live-model_routing_report_path.json",
+        "OUTCOME_TOOLS_REPORT_PATH": "/tmp/oneringai-c6-final-live-outcome_tools_report_path.json",
+        "COMPOSITION_EXECUTION_REPORT_PATH": "/tmp/oneringai-c6-final-live-composition_execution_report_path.json",
+        "VERIFIED_ROUTINES_REPORT_PATH": "/tmp/oneringai-c6-final-live-verified_routines_report_path.json",
+        "ENHANCED_CONNECTORS_REPORT_PATH": "/tmp/oneringai-c6-final-live-enhanced_connectors_report_path.json",
+        "CONNECTOR_PAGES_REPORT_PATH": "/tmp/oneringai-c6-final-live-connector_pages_report_path.json"
+      }
+    },
+    "selectedCorrectionChecks": {
+      "passed": 29,
+      "failed": 0,
+      "failedSuites": 0,
+      "skipped": 0,
+      "files": 2,
+      "artifact": {
+        "path": "/tmp/oneringai-c6-corrected-selected-live.json",
+        "bytes": 12134,
+        "sha256": "104d68976f457f9035f55afab93063bdc7024da16977c6ca9e1af779e89e8501"
+      }
+    },
+    "finalFrozenC6Checks": {
+      "passed": 6,
+      "failed": 0,
+      "failedSuites": 0,
+      "skipped": 0,
+      "files": 1,
+      "artifact": {
+        "path": "/tmp/oneringai-c6-frozen-live.json",
+        "bytes": 3095,
+        "sha256": "39ebef0cd68dcbf484a0f09a83e881d697058b382fd7e481e11d8575a5c34db7"
+      }
+    },
+    "finalSourceCoverage": "The cumulative 257-case matrix passed before final C6-only worker-source/identity admission tightening. The complete unit/public/offline gates and all six cross-vendor C6 live cases were rerun on the final built source; unrelated prior provider contracts are unchanged.",
+    "resolvedIncidents": {
+      "initialCumulative": {
+        "passed": 252,
+        "failed": 5,
+        "failedSuites": 4,
+        "skipped": 0,
+        "files": 19,
+        "artifact": {
+          "path": "/tmp/oneringai-c6-initial-live-tests.json",
+          "bytes": 90589,
+          "sha256": "adb8bef4f27cee162ff726d207e0d7f7ccda6726cacd873b8be9b3bf2302b797"
+        }
+      },
+      "diagnosticC6": {
+        "passed": 2,
+        "failed": 4,
+        "failedSuites": 2,
+        "skipped": 0,
+        "files": 1,
+        "artifact": {
+          "path": "/tmp/oneringai-c6-diagnostic-live.json",
+          "bytes": 5785,
+          "sha256": "16aff2c4018d79d079ba99de2debc4acd43149f2a47b1eb3e55aa505ea793050"
+        }
+      },
+      "description": "The initial live run found four ambiguous connectivity-fixture cases (workspace tools exceeded a two-call budget or vague exercise produced a refusal) and a Google routing repair fixture whose corruption label competed with the actual answer. The echo fixture is now explicitly tool-free under host hooks; malformed JSON preserves the actual provider answer. Selected monitors also receive explicit root inference/cache/data controls. All required final suites pass with no provider skip."
+    }
+  },
+  "runtime": {
+    "checks": 1270,
+    "fixtures": [
+      {
+        "name": "presets",
+        "exitCode": 0,
+        "checks": 54,
+        "log": "/tmp/oneringai-c6-public-presets.log",
+        "result": {
+          "protocol": "stage12-public-v1",
+          "summaries": [
+            {
+              "format": "esm",
+              "checks": 27,
+              "calls": 4
+            },
+            {
+              "format": "cjs",
+              "checks": 27,
+              "calls": 4
+            }
+          ]
+        }
+      },
+      {
+        "name": "assembly",
+        "exitCode": 0,
+        "checks": 38,
+        "log": "/tmp/oneringai-c6-public-assembly.log",
+        "result": {
+          "protocol": "stage05-public-v1",
+          "results": [
+            {
+              "format": "esm",
+              "checks": 19
+            },
+            {
+              "format": "cjs",
+              "checks": 19
+            }
+          ]
+        }
+      },
+      {
+        "name": "native",
+        "exitCode": 0,
+        "checks": 66,
+        "log": "/tmp/oneringai-c6-public-native.log",
+        "result": {
+          "protocol": "stage-16a-public-runtime-v1",
+          "passed": true,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 33
+            },
+            {
+              "format": "cjs",
+              "checks": 33
+            }
+          ]
+        }
+      },
+      {
+        "name": "routing",
+        "exitCode": 0,
+        "checks": 44,
+        "log": "/tmp/oneringai-c6-public-routing.log",
+        "result": {
+          "protocol": "stage-14a-public-runtime-v1",
+          "passed": true,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 22
+            },
+            {
+              "format": "cjs",
+              "checks": 22
+            }
+          ]
+        }
+      },
+      {
+        "name": "outcomes",
+        "exitCode": 0,
+        "checks": 180,
+        "log": "/tmp/oneringai-c6-public-outcomes.log",
+        "result": {
+          "protocol": "c1-public-outcomes-v1",
+          "checks": 180,
+          "results": [
+            {
+              "helper": "esm",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "wrapper": "cjs",
+              "checks": 3
+            },
+            {
+              "helper": "cjs",
+              "wrapper": "duplicate-esm",
+              "checks": 3
+            },
+            {
+              "helper": "duplicate-esm",
+              "wrapper": "duplicate-cjs",
+              "checks": 3
+            },
+            {
+              "helper": "duplicate-cjs",
+              "wrapper": "esm",
+              "checks": 3
+            },
+            {
+              "format": "esm",
+              "legacyRemoteBoundary": true,
+              "checks": 4
+            },
+            {
+              "format": "cjs",
+              "legacyRemoteBoundary": true,
+              "checks": 4
+            }
+          ]
+        }
+      },
+      {
+        "name": "routines",
+        "exitCode": 0,
+        "checks": 144,
+        "log": "/tmp/oneringai-c6-public-routines.log",
+        "result": {
+          "protocol": "consumer-c3-public-v1",
+          "combinations": 16,
+          "checks": 144,
+          "passed": true
+        }
+      },
+      {
+        "name": "composition",
+        "exitCode": 0,
+        "checks": 68,
+        "log": "/tmp/oneringai-c6-public-composition.log",
+        "result": {
+          "protocol": "c2-private-cross-bundle-v1",
+          "checks": 68,
+          "combinations": 8,
+          "passed": true
+        }
+      },
+      {
+        "name": "enhanced",
+        "exitCode": 0,
+        "checks": 228,
+        "log": "/tmp/oneringai-c6-public-enhanced.log",
+        "result": {
+          "protocol": "consumer-c4-public-v1",
+          "combinations": 16,
+          "checks": 228,
+          "passed": true
+        }
+      },
+      {
+        "name": "collections",
+        "exitCode": 0,
+        "checks": 240,
+        "log": "/tmp/oneringai-c6-public-collections.log",
+        "result": {
+          "protocol": "consumer-c5-public-v1",
+          "combinations": 16,
+          "checks": 240,
+          "passed": true
+        }
+      },
+      {
+        "name": "factory",
+        "exitCode": 0,
+        "checks": 208,
+        "log": "/tmp/oneringai-c6-public-factory.log",
+        "result": {
+          "protocol": "consumer-c6-public-v1",
+          "combinations": 16,
+          "checks": 208,
+          "passed": true
+        }
+      }
+    ]
+  },
+  "offline": {
+    "count": 46,
+    "allPassed": true,
+    "scripts": [
+      {
+        "script": "example:agentic-baseline",
+        "command": "node --import tsx examples/agentic-evaluation-baseline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-agentic-baseline.log"
+      },
+      {
+        "script": "example:context-freshness",
+        "command": "node --import tsx examples/context-compaction-freshness.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-context-freshness.log"
+      },
+      {
+        "script": "example:context-budget",
+        "command": "node --import tsx examples/context-request-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-context-budget.log"
+      },
+      {
+        "script": "example:structured-budget",
+        "command": "node --import tsx examples/structured-output-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-structured-budget.log"
+      },
+      {
+        "script": "example:amos-context",
+        "command": "node --import tsx apps/amos/examples/context-budget-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-amos-context.log"
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": "node --import tsx examples/tool-outcomes-and-cancellation.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-tool-outcomes.log"
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-amos-tool-outcomes.log"
+      },
+      {
+        "script": "example:purpose-models",
+        "command": "node --import tsx examples/purpose-specific-models.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-purpose-models.log"
+      },
+      {
+        "script": "example:shared-budget",
+        "command": "node --import tsx examples/shared-run-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-shared-budget.log"
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": "node --import tsx apps/amos/examples/model-helpers-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-amos-helpers.log"
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": "node --import tsx examples/durable-tool-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-durable-evidence.log"
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": "node --import tsx examples/evidence-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-evidence-recovery.log"
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": "node --import tsx examples/ambiguous-action-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-ambiguous-evidence.log"
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": "node --import tsx apps/amos/examples/evidence-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-amos-evidence.log"
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": "node --import tsx examples/evidence-stream-interruption.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-evidence-interruption.log"
+      },
+      {
+        "script": "example:context-strategies",
+        "command": "node --import tsx examples/context-strategy-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-context-strategies.log"
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-amos-context-strategies.log"
+      },
+      {
+        "script": "example:task-state",
+        "command": "node --import tsx examples/task-state-workflow.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-task-state.log"
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": "node --import tsx apps/amos/examples/task-state-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-amos-task-state.log"
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": "node --import tsx examples/feedback-driven-agent.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-feedback-agent.log"
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": "node --import tsx examples/run-stream-equivalence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-loop-equivalence.log"
+      },
+      {
+        "script": "example:amos-loop",
+        "command": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-amos-loop.log"
+      },
+      {
+        "script": "example:agentic-presets",
+        "command": "node --import tsx examples/agentic-presets.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-agentic-presets.log"
+      },
+      {
+        "script": "example:amos-presets",
+        "command": "node --import tsx apps/amos/examples/presets-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-amos-presets.log"
+      },
+      {
+        "script": "example:context-selection",
+        "command": "node --import tsx examples/context-block-selection.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-context-selection.log"
+      },
+      {
+        "script": "example:cache-aware-context",
+        "command": "node --import tsx examples/cache-aware-context.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-cache-aware-context.log"
+      },
+      {
+        "script": "example:amos-context-selection",
+        "command": "node --import tsx apps/amos/examples/context-selection-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-amos-context-selection.log"
+      },
+      {
+        "script": "example:context-dispatch-safety",
+        "command": "node --import tsx examples/context-dispatch-safety.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-context-dispatch-safety.log"
+      },
+      {
+        "script": "example:native-compaction",
+        "command": "node --import tsx examples/native-context-compaction.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-native-compaction.log"
+      },
+      {
+        "script": "example:native-recovery",
+        "command": "node --import tsx examples/native-context-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-native-recovery.log"
+      },
+      {
+        "script": "example:native-comparison",
+        "command": "node --import tsx examples/native-context-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-native-comparison.log"
+      },
+      {
+        "script": "example:amos-native-compaction",
+        "command": "node --import tsx apps/amos/examples/native-compaction-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-amos-native-compaction.log"
+      },
+      {
+        "script": "example:native-hooks",
+        "command": "node --import tsx examples/native-context-hooks.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-native-hooks.log"
+      },
+      {
+        "script": "example:native-hooks-manual",
+        "command": "node --import tsx examples/native-context-hooks.ts --manual",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-native-hooks-manual.log"
+      },
+      {
+        "script": "example:model-routing",
+        "command": "node --import tsx examples/adaptive-model-routing.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-model-routing.log"
+      },
+      {
+        "script": "example:routing-context",
+        "command": "node --import tsx examples/routing-with-context.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-routing-context.log"
+      },
+      {
+        "script": "example:amos-routing",
+        "command": "node --import tsx apps/amos/examples/routing-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-amos-routing.log"
+      },
+      {
+        "script": "example:routing-suspension",
+        "command": "node --import tsx examples/routing-suspension-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-routing-suspension.log"
+      },
+      {
+        "script": "example:routing-suspension-failure",
+        "command": "node --import tsx examples/routing-suspension-recovery.ts --failed-finalization",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-routing-suspension-failure.log"
+      },
+      {
+        "script": "example:orchestrator-factory",
+        "command": "node --import tsx examples/orchestrator-factory.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-orchestrator-factory.log"
+      },
+      {
+        "script": "example:connector-pages",
+        "command": "node --import tsx examples/connector-collection-pages.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-connector-pages.log"
+      },
+      {
+        "script": "example:enhanced-connectors",
+        "command": "node --import tsx examples/enhanced-connector-execution.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-enhanced-connectors.log"
+      },
+      {
+        "script": "example:verified-routines",
+        "command": "node --import tsx examples/verified-routines.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-verified-routines.log"
+      },
+      {
+        "script": "example:composite-binding",
+        "command": "node --import tsx examples/composite-execution-binding.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-composite-binding.log"
+      },
+      {
+        "script": "example:outcome-aware-tools",
+        "command": "node --import tsx examples/outcome-aware-tools.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-outcome-aware-tools.log"
+      },
+      {
+        "script": "example:amos-outcome-tools",
+        "command": "node --import tsx apps/amos/examples/outcome-aware-tools-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c6-offline-example-amos-outcome-tools.log"
+      }
+    ]
+  },
+  "gates": [
+    {
+      "name": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c6-completion-build.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c6-completion-build.log",
+        "bytes": 15783,
+        "sha256": "c2fa3f9f9c6251ffe4833981413562c1464d61ebed01a115644f06157a7e4d7d"
+      }
+    },
+    {
+      "name": "unit",
+      "command": [
+        "npm",
+        "run",
+        "test:unit",
+        "--",
+        "--reporter=json",
+        "--outputFile=/tmp/oneringai-c6-completion-unit.json"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c6-completion-unit.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c6-completion-unit.log",
+        "bytes": 286,
+        "sha256": "9dee82565a88f7faef249955589d5392fdbfc9763c6305d70bc2ea79acf77e0e"
+      }
+    },
+    {
+      "name": "types",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c6-completion-types.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c6-completion-types.log",
+        "bytes": 57,
+        "sha256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717"
+      }
+    },
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c6-completion-lint.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c6-completion-lint.log",
+        "bytes": 60,
+        "sha256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e"
+      }
+    },
+    {
+      "name": "examples-types",
+      "command": [
+        "npm",
+        "run",
+        "examples:check"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c6-completion-examples-types.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c6-completion-examples-types.log",
+        "bytes": 88,
+        "sha256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8"
+      }
+    },
+    {
+      "name": "amos-types",
+      "command": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "apps/amos/tsconfig.json"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c6-completion-amos-types.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c6-completion-amos-types.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "name": "compat",
+      "command": [
+        "npm",
+        "run",
+        "test:agentic:compat"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c6-completion-compat.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c6-completion-compat.log",
+        "bytes": 116,
+        "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+      }
+    },
+    {
+      "name": "proposal-types",
+      "command": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "docs/evaluations/consumer-api-design/tsconfig.json"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c6-completion-proposal-types.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c6-completion-proposal-types.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "name": "api-docs",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/generate-api-docs.ts",
+        "--mode",
+        "public"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c6-completion-api-docs.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c6-completion-api-docs.log",
+        "bytes": 223,
+        "sha256": "124623f6e30bf17dd6748ac006ada405d101edac241c823e1945cffeac5035f5"
+      }
+    },
+    {
+      "name": "public",
+      "command": [
+        "python",
+        "/tmp/oneringai-c6-public-run.py"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c6-completion-public.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c6-completion-public.log",
+        "bytes": 33,
+        "sha256": "5f0ba7d099f0b3c3927fc4bf1038f98eca408800786c0f4a029f37ce5bf7cada"
+      }
+    },
+    {
+      "name": "offline",
+      "command": [
+        "python",
+        "/tmp/oneringai-c6-offline-run.py"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c6-completion-offline.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c6-completion-offline.log",
+        "bytes": 28,
+        "sha256": "d7c9a63f3b97b816acc97f0555f37cab63d445c75c3ebad484d97ab45e019f86"
+      }
+    }
+  ],
+  "compatibility": {
+    "legacyConstructorAndSynchronousCallbackPreserved": true,
+    "legacyResultsAndAsyncDefaultsPreserved": true,
+    "oldSnapshotsAndProtocolTypesUnchanged": true,
+    "mixedPublicCombinations": 16,
+    "designNegativeControls": 14,
+    "freshPublicConsumer": true
+  },
+  "reviewCorrections": [
+    "Required workspace/tools before plugin initialization, actual construction collision guard and owned rollback",
+    "Detach option containers while preserving callback/backend/executable/permission-policy handles",
+    "Capture original operation before tool hooks; retain original task and authenticate parent/worker async delivery/receipt repair",
+    "Reserve names/capacity before host lookup and prevent orphan construction after cancellation",
+    "Independent worker connector/model/authority selection; distinguish absent from empty identity scope and reject duplicate live conversation/lazy-session IDs",
+    "Quarantine raw pending work, retain late failed-storage JSON through parent destruction and use existing host acknowledgement",
+    "Do not promote internally routed auto-ledgers into shared authority or infer native strategy from arbitrary config bags",
+    "Forward selected monitor inference/cache/data controls, preserve legacy/direct defaults",
+    "Reuse existing workspace delta builder; zero deadline stops before lookup/I/O",
+    "Separate host-rejected completion and negative business data from settled execution"
+  ],
+  "supportBoundaries": [
+    "Configured shared workspace is visible to every admitted worker; host authorization owns membership",
+    "Callback itself can keep running after abandonment; no claim of remote cancellation/rollback",
+    "Pending source/async work blocks reuse/destruction; host uses existing AgentRegistry/context/evidence repair",
+    "Root interrupted source must be saved before ordinary root destruction",
+    "No durable workflow/ModelTask authority restored from snapshots",
+    "No ICOS edit, release, backend or Stage14B/16B; AMOS has no orchestration factory surface"
+  ],
+  "package": {
+    "files": 290,
+    "requiredDeliveryFilesPresent": true,
+    "secretFilesPresent": false,
+    "pathsSha256": "1a9c5ce9e7ffaed45a5d27c4b8224e1cd5dbad255cf832671f762a64767310df"
+  },
+  "documentationLinks": {
+    "checked": 2854,
+    "errors": []
+  },
+  "changedSourceAndFixtures": [
+    {
+      "path": "apps/amos/src/agent/AgentRunner.ts",
+      "bytes": 37356,
+      "sha256": "10b0bcc0dde20a786bdf4b035380bb4b4aaa98de2c493529f23f70f67ed16573"
+    },
+    {
+      "path": "apps/amos/src/agent/collectionPages.ts",
+      "bytes": 1032,
+      "sha256": "971e223c161fec0b4679e02b4383d76508d3b49358d24185132ce8794e27f0f1"
+    },
+    {
+      "path": "apps/amos/src/app.ts",
+      "bytes": 28425,
+      "sha256": "5fec241158cdfba1fc0b05c2d933b5532020330fb6b5279a9ddea8885340804b"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/RoutineCommand.ts",
+      "bytes": 4159,
+      "sha256": "c9d20bf3286d21f7a84cf7c292d5f1500b6e8a353bc7db21dea11b40cdac3b4a"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/index.ts",
+      "bytes": 925,
+      "sha256": "cfa3640b82d62a0f94c235b28e36a20b3412284b653585d501aa77f74058d2d4"
+    },
+    {
+      "path": "examples/README.md",
+      "bytes": 38137,
+      "sha256": "2aabf925d23dcf3a56bf091f494ecb40d66e2341f2438faf847312deb524904b"
+    },
+    {
+      "path": "examples/composite-execution-binding.ts",
+      "bytes": 2155,
+      "sha256": "2020040b5323b20cae56a4e40a1280445e06bfa3708c09c22f0199edc4ce212b"
+    },
+    {
+      "path": "examples/connector-collection-pages.ts",
+      "bytes": 6068,
+      "sha256": "a76fdbede67d469704539d9a79aa59dff6972e186316209f955e7331b54b3953"
+    },
+    {
+      "path": "examples/enhanced-connector-execution.ts",
+      "bytes": 5038,
+      "sha256": "08cf3851bd9de629642a81bffc11d392cd94021223065840c82223764f98359f"
+    },
+    {
+      "path": "examples/orchestrator-factory.ts",
+      "bytes": 3635,
+      "sha256": "0d8014b186d4a60ea1c2a7b78e269fca613751f2f9e5024adc8b540535f7d0f3"
+    },
+    {
+      "path": "examples/outcome-aware-tools.ts",
+      "bytes": 2230,
+      "sha256": "6ed674ac906116e0ccfa3b2d260fdf165eff682357349a7dee1f7b344020aa9c"
+    },
+    {
+      "path": "examples/verified-routines.ts",
+      "bytes": 2664,
+      "sha256": "98c35cf8288157e94020eea013050931e60b4b1a2a847328a41119e37d1aa42b"
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "bytes": 244393,
+      "sha256": "cdfcd10a97a1c5a505b6400e6bcf7667d1e62814c797c91d5aa1d37982625f58"
+    },
+    {
+      "path": "src/core/BaseAgent.ts",
+      "bytes": 61515,
+      "sha256": "3d1363600e8cfbb7074b495bb95db62a9a35fdcbbbeca9ac6b8b9df793254bdc"
+    },
+    {
+      "path": "src/core/Connector.ts",
+      "bytes": 37619,
+      "sha256": "6a1406c1bcdf49841039676f5f7cc65ef47a8981b119afb5902e33fa8ed5eeb8"
+    },
+    {
+      "path": "src/core/ToolManager.ts",
+      "bytes": 56108,
+      "sha256": "3620b523a76ca2dc6abfcf98d5044f7fe7c469508474ed9ee182a8cd6abda92d"
+    },
+    {
+      "path": "src/core/connector-execution/attempts.ts",
+      "bytes": 1203,
+      "sha256": "ba12bc271a3a1b353965431d8093c943bdb1a51afb95e0e5514de37e6f52ba42"
+    },
+    {
+      "path": "src/core/connector-execution/cursors.ts",
+      "bytes": 3171,
+      "sha256": "82cbae2090f3b96e644aa18a6a179b2b875a9f28bcfd53c299e24d36194a8e72"
+    },
+    {
+      "path": "src/core/connector-execution/profile.ts",
+      "bytes": 2415,
+      "sha256": "eade06a080e9f16ae9cae13cf62ec934ac6bf47920c5d805969467b589379ee1"
+    },
+    {
+      "path": "src/core/connector-execution/registration.ts",
+      "bytes": 5438,
+      "sha256": "e651a03432a27cd34adde50fccec99086e4dae3f8aa5649582192cea18105b03"
+    },
+    {
+      "path": "src/core/context-nextgen/AgentContextNextGen.ts",
+      "bytes": 185482,
+      "sha256": "c67d3c39a35ba1b7a24b6b1e1de70441fefc28be6820a9cc6924164c7cedf7e8"
+    },
+    {
+      "path": "src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts",
+      "bytes": 31031,
+      "sha256": "9857676f96c4c66ff7bb76f25c94693a491602e3114aebfa0d059691a3db0ec8"
+    },
+    {
+      "path": "src/core/createOutcomeTool.ts",
+      "bytes": 2290,
+      "sha256": "00f6165de48298b68b7d517dab462468f5346e024f85f715a96ee5bcb15335dc"
+    },
+    {
+      "path": "src/core/execution/composition.ts",
+      "bytes": 12423,
+      "sha256": "3570d9811e2d91aba7d1732f3d9c12ac19295761b0ff81a9ab3671bad80c2cef"
+    },
+    {
+      "path": "src/core/execution/modelCorrelation.ts",
+      "bytes": 411,
+      "sha256": "a7918f4271e8857804a073a928d9240d167f9b28ea8e129861559211c2d73189"
+    },
+    {
+      "path": "src/core/execution/routineBinding.ts",
+      "bytes": 4410,
+      "sha256": "be68f6195895099171b81fa690ac174040f0ee85225a8f5ecf76f186fac4b311"
+    },
+    {
+      "path": "src/core/index.ts",
+      "bytes": 11700,
+      "sha256": "0d04e890091bce1e4807506fe4d36f4fae8f991049138a0112e4ce9551d80cd6"
+    },
+    {
+      "path": "src/core/model-execution/ModelExecutor.ts",
+      "bytes": 21762,
+      "sha256": "4a9febd7cf725cfeb98d5c2734e5b9c089014bbe49fe6f901ea41d570b28885f"
+    },
+    {
+      "path": "src/core/orchestrator/construction.ts",
+      "bytes": 2196,
+      "sha256": "46ffc163f2cef60437dc630f6340d7eb946dc4ff8bc49416ce28ff592b9df059"
+    },
+    {
+      "path": "src/core/orchestrator/createOrchestrator.ts",
+      "bytes": 38986,
+      "sha256": "c030a613d1c4a7d9c6b7934011c892e0cadfab5a062109637e2a9d25b020090c"
+    },
+    {
+      "path": "src/core/orchestrator/executionBinding.ts",
+      "bytes": 4916,
+      "sha256": "5c991248116ac99320350c950429661be9ca9c37489d4b001fd8fce642ee1a0f"
+    },
+    {
+      "path": "src/core/orchestrator/factoryConfig.ts",
+      "bytes": 4431,
+      "sha256": "8306663fe71208a7cc58cc38d4cf946b020ccb2996ebc1111b9352af37faf915"
+    },
+    {
+      "path": "src/core/orchestrator/factoryExecution.ts",
+      "bytes": 5592,
+      "sha256": "59c99768bb22528e9daee590fbf8be9efb9d05dc557a048422cacf846f5059e4"
+    },
+    {
+      "path": "src/core/orchestrator/factoryPolicy.ts",
+      "bytes": 18823,
+      "sha256": "5b46d8b5a5f24f17170c19406e5d140ce00b711b8d862535dc53f385d0b78540"
+    },
+    {
+      "path": "src/core/orchestrator/factoryTypes.ts",
+      "bytes": 1803,
+      "sha256": "dd647f02f4165ee4488da1c2928fb8cad4863eea15e2e956c46ba6948d9e2254"
+    },
+    {
+      "path": "src/core/orchestrator/index.ts",
+      "bytes": 771,
+      "sha256": "99d509fb5da915ea5f0064586151691fec0b94979bee2b0dd8e33c5b9c741a16"
+    },
+    {
+      "path": "src/core/orchestrator/tools.ts",
+      "bytes": 21668,
+      "sha256": "df2a6280a85ad18d894f8deddfe1c8175d0a725aed5851f46e8ee3ebf33e1914"
+    },
+    {
+      "path": "src/core/routineControlFlow.ts",
+      "bytes": 31093,
+      "sha256": "f2cc8cfeb836d992a8c9264023e9c3742daf9f34377f170c76e90cb1e54edb0c"
+    },
+    {
+      "path": "src/core/routineKeys.ts",
+      "bytes": 1060,
+      "sha256": "6bb79fa5242f5e01e994e50a537474b9e8bfcbcf57943acddc14309d78f3a4bc"
+    },
+    {
+      "path": "src/core/routineRunner.ts",
+      "bytes": 62183,
+      "sha256": "67e47dff329ed9e6a6c6d5390b3eded4a1e5c738e1870079579e76f2f9449b8f"
+    },
+    {
+      "path": "src/core/routines/createRoutineRunner.ts",
+      "bytes": 28077,
+      "sha256": "9f94cba161d77099f96fb919ea1297c42088bbbcec5bc7823fb61b64f76d4fd7"
+    },
+    {
+      "path": "src/core/routines/observations.ts",
+      "bytes": 8804,
+      "sha256": "fec4007acfc2696309458239b0b14a8a66653d27035c21a7f546be3c89781c3e"
+    },
+    {
+      "path": "src/core/routines/preflight.ts",
+      "bytes": 8327,
+      "sha256": "e1f1df49dd75e55e968daa72c970728ada06610a59ccb96d7448d4578d126bf6"
+    },
+    {
+      "path": "src/core/routines/types.ts",
+      "bytes": 6465,
+      "sha256": "cd0c8ff6cf9627bf4cb86d1a274adc7be66e3f3f7caa960428dc6dc0caa33ddb"
+    },
+    {
+      "path": "src/core/tool-execution/ToolExecutionPipeline.ts",
+      "bytes": 9030,
+      "sha256": "4fb99b655b9b67531046ccab1fc0686a23275d31da7b219e7249b87a21eb5700"
+    },
+    {
+      "path": "src/core/tool-execution/outcomeInvocation.ts",
+      "bytes": 1278,
+      "sha256": "93db55e26950d05a4894f5feb1e81755b31666049be7c57116079d2517bc84e5"
+    },
+    {
+      "path": "src/core/tool-execution/outcomes.ts",
+      "bytes": 1187,
+      "sha256": "f332efa38b51b0f33affb23de8d1c709b82e999deef61f573ec8c9818f52058b"
+    },
+    {
+      "path": "src/index.ts",
+      "bytes": 64120,
+      "sha256": "fa6cdbcb1671ade54e72ffb2968e92d5b75550d413b72eb7b8c6eedc11f47b7b"
+    },
+    {
+      "path": "src/tools/connector/ConnectorTools.ts",
+      "bytes": 29111,
+      "sha256": "f2a155daf661feb22c6fcdcdc24383d309291f0add695a55953631301792712d"
+    },
+    {
+      "path": "src/tools/connector/enhancedInvocation.ts",
+      "bytes": 1971,
+      "sha256": "bb10531d4828560c1b10087b8a0fca23fcaf0f09f42e4fb2f67e6f704653d02f"
+    },
+    {
+      "path": "src/tools/connector/enhancedProfiles.ts",
+      "bytes": 12636,
+      "sha256": "799a77f93069558ff292254c53ff56031d0d025d7aedd479447abc4abb8654fc"
+    },
+    {
+      "path": "src/tools/connector/index.ts",
+      "bytes": 1016,
+      "sha256": "b834bf12266dd4d2f383a7c974f4b5b47384cac19c92fd7dd7353fc8048ed731"
+    },
+    {
+      "path": "src/tools/connector/pages/common.ts",
+      "bytes": 4019,
+      "sha256": "c67e5806cbf020091bc51a90c9b817b90e8a7a2deb0faa0d3ddf5979cdd02174"
+    },
+    {
+      "path": "src/tools/connector/pages/contract.ts",
+      "bytes": 9422,
+      "sha256": "4bb97ef1505326c8c569fc8fef5533f2bc424b209b4e075835b7f48f0aeddf04"
+    },
+    {
+      "path": "src/tools/connector/pages/types.ts",
+      "bytes": 737,
+      "sha256": "de74be443405463f85eaa320d374ab11bfe24e4756692c9d69ff84eaa34d74e8"
+    },
+    {
+      "path": "src/tools/github/collectionPages.ts",
+      "bytes": 4030,
+      "sha256": "57104a6b6dc0050b9d575ec6b005d49a0330ef2206801bd5c3ca6afe19b1dfea"
+    },
+    {
+      "path": "src/tools/github/createPR.ts",
+      "bytes": 4593,
+      "sha256": "5c619a4cc8ba66dad128b934e7f58f1d8e78154016572d5d0779961ea330fabb"
+    },
+    {
+      "path": "src/tools/github/getPR.ts",
+      "bytes": 3659,
+      "sha256": "594934fda17a3dbc8fc61b965a2c231c9e55cde004fe9956b5eb51632cdbe9e9"
+    },
+    {
+      "path": "src/tools/github/listBranches.ts",
+      "bytes": 4857,
+      "sha256": "0301648aebc9ccbb0d02b2b81a313ed3062ca26f2d7c6f69fd7031c6b1f405cc"
+    },
+    {
+      "path": "src/tools/github/prComments.ts",
+      "bytes": 5443,
+      "sha256": "8dd0db4759e0ae2fc12d46be55e109e27c7386d8d2e1365e6dc0f303141a8eba"
+    },
+    {
+      "path": "src/tools/github/prFiles.ts",
+      "bytes": 3514,
+      "sha256": "ec63c005f9bee3515854acca9df026748cff43e62f1f4a051dbc6a615c81a8f5"
+    },
+    {
+      "path": "src/tools/github/readFile.ts",
+      "bytes": 7907,
+      "sha256": "92479d83d5f6e4728b8c3b7401d8a511905c06a18f212864999023d75297cff9"
+    },
+    {
+      "path": "src/tools/github/register.ts",
+      "bytes": 1801,
+      "sha256": "fff90d68e30dfc0572f1aa0d7f56aa4110094174a0dc8d2a5c3d452ca0b6904a"
+    },
+    {
+      "path": "src/tools/github/searchCode.ts",
+      "bytes": 11841,
+      "sha256": "b7f3b2f15cbf264d8696a58511a54090fbf8cbf7a41689b02017a938fb296a34"
+    },
+    {
+      "path": "src/tools/github/searchFiles.ts",
+      "bytes": 5339,
+      "sha256": "9ba7bfb196ae294d2c7f6bca26de5692d265a67577fae032495d7e66dec4a404"
+    },
+    {
+      "path": "src/tools/google/collectionPages.ts",
+      "bytes": 2427,
+      "sha256": "999c54b90cf1089df8a8a3605c2bb1b42727623bebb3d6a53a6f7b8db582bbbd"
+    },
+    {
+      "path": "src/tools/google/createDraftEmail.ts",
+      "bytes": 5955,
+      "sha256": "39cade833a6a874afc54df3d3020c5986db91a9cc17697e2f2a4156bb144419e"
+    },
+    {
+      "path": "src/tools/google/createMeeting.ts",
+      "bytes": 6095,
+      "sha256": "a454b0b617c1260d176a373b7bb9af8853cb36b77e43719c3010be20d84b1f86"
+    },
+    {
+      "path": "src/tools/google/editMeeting.ts",
+      "bytes": 5840,
+      "sha256": "fa2329f6e92bd6c811e61de91185ce6b941548a85daa7cf7c0e48555cab1b892"
+    },
+    {
+      "path": "src/tools/google/findMeetingSlots.ts",
+      "bytes": 10298,
+      "sha256": "33a7c2b0f8fa2b8c4fa5ab3779f0de5b0696ff2ac0d4cade16a3f42aa726b659"
+    },
+    {
+      "path": "src/tools/google/getMeeting.ts",
+      "bytes": 5429,
+      "sha256": "6f1d5ae204ac54dad920e18857e69b273d6759cc2a010b296b157bff3b87be78"
+    },
+    {
+      "path": "src/tools/google/getMeetingTranscript.ts",
+      "bytes": 10360,
+      "sha256": "973cb2b83e155077668a92693fbed29255cbe35bc03fa109752740b51e86780a"
+    },
+    {
+      "path": "src/tools/google/listFiles.ts",
+      "bytes": 5645,
+      "sha256": "f21f1b435bcd6868fecf8cfd4fd655c1781ad1bce1bd8d9418bb0bb6dce42e0c"
+    },
+    {
+      "path": "src/tools/google/listMeetings.ts",
+      "bytes": 7100,
+      "sha256": "37ce6a4884bc704395b163742e090b8a31644affe04a96ade6d7785924efe88c"
+    },
+    {
+      "path": "src/tools/google/readFile.ts",
+      "bytes": 12551,
+      "sha256": "87d155796b97a5374fa78ed328db1304279092f0e2a6ff761fc1af31bd25eb1a"
+    },
+    {
+      "path": "src/tools/google/register.ts",
+      "bytes": 3070,
+      "sha256": "7b2c737a1100acfdc3d8cc9f1458518a606ecc354f3eb153127019b399273575"
+    },
+    {
+      "path": "src/tools/google/searchFiles.ts",
+      "bytes": 7380,
+      "sha256": "b921f8cad51cb9271c1f509668d2757c6019f8687ebc1e246e7f8c3a05bfeac1"
+    },
+    {
+      "path": "src/tools/google/sendEmail.ts",
+      "bytes": 7238,
+      "sha256": "b2a105fda7374b05a97d200995d46506346fb61a4b8dcbee5c171f77a700d9db"
+    },
+    {
+      "path": "src/tools/microsoft/collectionPages.ts",
+      "bytes": 4407,
+      "sha256": "4db9818f9bb5db6940ca931cac99be7693db6e2226c622880b4516c65cab6405"
+    },
+    {
+      "path": "src/tools/microsoft/createDraftEmail.ts",
+      "bytes": 6571,
+      "sha256": "5eb3dfd4f22d2a6c14d8fbbbb09897fac9b2443189a7fe761fdfeb3f0a41d0e3"
+    },
+    {
+      "path": "src/tools/microsoft/createMeeting.ts",
+      "bytes": 5973,
+      "sha256": "914b2605a6a9d161b2a338407140ce656bdf2ac6edd47785b3478935d42004b6"
+    },
+    {
+      "path": "src/tools/microsoft/editMeeting.ts",
+      "bytes": 6708,
+      "sha256": "b3c2608aaad6793ce5e49f1b0afebffac457c474d37ae3da6370daaedcf9729d"
+    },
+    {
+      "path": "src/tools/microsoft/findMeetingSlots.ts",
+      "bytes": 6345,
+      "sha256": "1bd7cc3c9fd8aa6afa959eefead9e5466faa61289b14e8655543e08bdb944795"
+    },
+    {
+      "path": "src/tools/microsoft/getMeeting.ts",
+      "bytes": 7799,
+      "sha256": "6317a3fef843c841122948d0d47c8e65e55449e1d762f2e6c113c642bde4c4f4"
+    },
+    {
+      "path": "src/tools/microsoft/getMeetingTranscript.ts",
+      "bytes": 5703,
+      "sha256": "f7f41b58dfd20501149780fc6b2851145853cd1afa6d9d53b5c98298a05e9ea1"
+    },
+    {
+      "path": "src/tools/microsoft/listFiles.ts",
+      "bytes": 7048,
+      "sha256": "4887e4b9d67fb356bde7bf5b5991b397993c6aabac40a143561d3885cb115134"
+    },
+    {
+      "path": "src/tools/microsoft/listMeetings.ts",
+      "bytes": 9323,
+      "sha256": "dba40705acea5f8c52755fcbc14ed759ff4ec04b6bf7f99c41e6ad06627fc32a"
+    },
+    {
+      "path": "src/tools/microsoft/readFile.ts",
+      "bytes": 11528,
+      "sha256": "6aa4697eea41de591b9aa6a12ff1fff2feadd640777439bfaa951d5cfd04fbd7"
+    },
+    {
+      "path": "src/tools/microsoft/register.ts",
+      "bytes": 3304,
+      "sha256": "1984f258645b58d9e361c560a9a8030cd8e75aee7461f80259b0360e0243b7c5"
+    },
+    {
+      "path": "src/tools/microsoft/searchFiles.ts",
+      "bytes": 8853,
+      "sha256": "8a49168f8d734f6398e745076b2e80e54886c71d8a4eceda240bc4e7f20af0a1"
+    },
+    {
+      "path": "src/tools/microsoft/sendEmail.ts",
+      "bytes": 8141,
+      "sha256": "0bfeade19019a32695f9bf71d4044cfd50193af39107a7cd3353db127d09d3ff"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "bytes": 21280,
+      "sha256": "460b5498195134238c531c704f509721980b834f51eaeb569239990e98cac36a"
+    },
+    {
+      "path": "src/tools/slack/addReaction.ts",
+      "bytes": 3453,
+      "sha256": "6cd7d6bf164b4c7703345bd16bbbab8ae5203f8c514f0e7d4df88b3f272bed2a"
+    },
+    {
+      "path": "src/tools/slack/collectionPages.ts",
+      "bytes": 4719,
+      "sha256": "711528cb7bb701f5db18028a73f60d5b80b13ef66fb5e428290c9f00cbdcd977"
+    },
+    {
+      "path": "src/tools/slack/getChannelInfo.ts",
+      "bytes": 3016,
+      "sha256": "7e6b11fdf484ec49dd423a6be506f77a7f6181c1a699187710208493ddeff4f9"
+    },
+    {
+      "path": "src/tools/slack/getMentions.ts",
+      "bytes": 4298,
+      "sha256": "e046e102c4c2a423d90e11704c2b465f76335e7337629c833ff68a744a075da2"
+    },
+    {
+      "path": "src/tools/slack/getMessages.ts",
+      "bytes": 4353,
+      "sha256": "d090341c92bd1d1267e1f2d0a8efaf17b180f6c1747eefd5fd7333a5cc610bb4"
+    },
+    {
+      "path": "src/tools/slack/getThread.ts",
+      "bytes": 3490,
+      "sha256": "7526f09f1560943e9afb749f9549e7778e9848978bd7d739e92d15e488970ac9"
+    },
+    {
+      "path": "src/tools/slack/getUsers.ts",
+      "bytes": 4906,
+      "sha256": "d50650db09db4780ff39d769a2d5c41626d7f06e6970f177f6c5a6cf811a2d71"
+    },
+    {
+      "path": "src/tools/slack/listChannels.ts",
+      "bytes": 4405,
+      "sha256": "da71283eaa9b7caa8a02d6ce2d6065e77e947d993db2d89fef9be3d4b553a77b"
+    },
+    {
+      "path": "src/tools/slack/postMessage.ts",
+      "bytes": 4581,
+      "sha256": "c58cdd3128c169106c9829b4f24c10333512c32d301e15c7cf94d899bc2a9a6f"
+    },
+    {
+      "path": "src/tools/slack/register.ts",
+      "bytes": 2163,
+      "sha256": "c3513a51471641cfeb3172a9822bfcfbf9dfa0c5ad28a215d5ed4fdae4c167b7"
+    },
+    {
+      "path": "src/tools/slack/searchMessages.ts",
+      "bytes": 4499,
+      "sha256": "a5fd07b6bb338e05efcf54dc1b9e875cd0c87ce5f72daa5dd7f88ab50ca826d5"
+    },
+    {
+      "path": "src/tools/slack/setChannelTopic.ts",
+      "bytes": 2971,
+      "sha256": "f08c9e3a71548d45f930ea5504e6afb2bd10fc85db6efe4223a6799aff04a1d8"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/c1-consumer.ts",
+      "bytes": 1376,
+      "sha256": "d891ca25689e9521401df02ae6a0b29c4a62ddd3a000cf72b3f57e0511d3bcf6"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/c3-consumer.ts",
+      "bytes": 978,
+      "sha256": "8a9c24dc1aa6b22167499fdab2d29c870ab75147c0926ceb9d180f31ca371c3e"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/c4-consumer.ts",
+      "bytes": 821,
+      "sha256": "362eede9ce1c085eb818e98d7cdb63da1fbc78f4d4cf0ed52f06312e23c0d2e9"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/c5-consumer.ts",
+      "bytes": 822,
+      "sha256": "cf2dc82a9dc0b7265c2c4ec87d3140a5f0a558808400eea2f1004cec820ad6c6"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/c6-consumer.ts",
+      "bytes": 778,
+      "sha256": "5b4479b0d1d83b256ec607c3d8567f53703015cf5344f94018c87af0f87e81e8"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "bytes": 578,
+      "sha256": "1ab10d5638a7fa53c0e01a0ad8d77783c3e85727d52ac9a42670adaa96746f8a"
+    },
+    {
+      "path": "tests/fixtures/collections/public-runtime.mjs",
+      "bytes": 3417,
+      "sha256": "be00d7ecbf67aa8c18e8b52c27000018f77210c1a350b282555b2613e6c5726f"
+    },
+    {
+      "path": "tests/fixtures/composition/public-runtime.mjs",
+      "bytes": 3186,
+      "sha256": "1d9d81ef6d0bb472f0b7d9b25730d518218b4743b78bd91209ffa1402d762790"
+    },
+    {
+      "path": "tests/fixtures/enhanced-connectors/public-runtime.mjs",
+      "bytes": 3884,
+      "sha256": "5f79e5dd71f7a4e523ce1916ee737b17136b6f441bf5260093f44a417ee6ccca"
+    },
+    {
+      "path": "tests/fixtures/orchestrator-factory/public-runtime.mjs",
+      "bytes": 3477,
+      "sha256": "2552b465f26633464424109ce83f1e3494728daec1d0b71193fc9ff8e99a43fa"
+    },
+    {
+      "path": "tests/fixtures/outcome-tools/public-runtime.mjs",
+      "bytes": 5713,
+      "sha256": "ccf5175ccbe0314781187c4ff5c2ce8d7a3d9eae4770b338387445f6faafd56c"
+    },
+    {
+      "path": "tests/fixtures/verified-routines/public-runtime.mjs",
+      "bytes": 3257,
+      "sha256": "6e983cf75a16657b376700381e7c03a281ee6c04c46ab8d08db92e257ed37504"
+    },
+    {
+      "path": "tests/integration/text/CompositionExecution.live.integration.test.ts",
+      "bytes": 3936,
+      "sha256": "7379b47672860d35df9edb9017ab7847e6304d4658df7cf2def0f00924c872d1"
+    },
+    {
+      "path": "tests/integration/text/ConnectorPages.live.integration.test.ts",
+      "bytes": 7147,
+      "sha256": "7b12b216bf37761c11406e0da50839aab6b577db4740794ae0af31808ec332d0"
+    },
+    {
+      "path": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+      "bytes": 24958,
+      "sha256": "3072794a05dcbb60677a8b67d5133c652bde5c9dde3bc7f3618e0c5638f07527"
+    },
+    {
+      "path": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+      "bytes": 19482,
+      "sha256": "8a9b84f706e24101b90bae91473c3523ff916963b3d42ca8342c3ec84b4e5f1b"
+    },
+    {
+      "path": "tests/integration/text/EnhancedConnectors.live.integration.test.ts",
+      "bytes": 7063,
+      "sha256": "1ddabf5a3054975a378a1f7d288fcb9a061dacd09120f84dc60d1f976c01093e"
+    },
+    {
+      "path": "tests/integration/text/ModelRouting.live.integration.test.ts",
+      "bytes": 29741,
+      "sha256": "59d9fcd43f2d0d17b3052ed61cac81ae44c3640c1eff4ac5fc901582b9838cf5"
+    },
+    {
+      "path": "tests/integration/text/OrchestratorFactory.live.integration.test.ts",
+      "bytes": 4722,
+      "sha256": "f0b25cb944dfd8c3910b70f7e7ece6f74b97245e9f4af75743eefad4980be44b"
+    },
+    {
+      "path": "tests/integration/text/OutcomeTools.live.integration.test.ts",
+      "bytes": 5900,
+      "sha256": "c03ff21eda8b49add6761f0f4ce19f426772067403936b48c2b4ad0724ad421e"
+    },
+    {
+      "path": "tests/integration/text/TaskState.live.integration.test.ts",
+      "bytes": 9066,
+      "sha256": "3b13c318566ce0c338a9a53695efa17e60794bb6335aea0a1cb2a367219eba9a"
+    },
+    {
+      "path": "tests/integration/text/VerifiedRoutines.live.integration.test.ts",
+      "bytes": 4543,
+      "sha256": "4a5530ac937eb836ad2b3d3a8c3b1cc91177d3a15d05c5ccd41ea27c4589c41a"
+    },
+    {
+      "path": "tests/unit/apps/amos/CollectionPages.test.ts",
+      "bytes": 1840,
+      "sha256": "b56e6e87558098eedb95e6f8de52b0ba98aa1669c9a275c443ab8ce947f693ac"
+    },
+    {
+      "path": "tests/unit/apps/amos/EnhancedConnectors.test.ts",
+      "bytes": 1173,
+      "sha256": "fbd12c8b3cc5f46c226e44a4b075afc377440a590afe9d06fe52d7e2b7604d14"
+    },
+    {
+      "path": "tests/unit/apps/amos/RoutineCommand.test.ts",
+      "bytes": 2907,
+      "sha256": "905353d6006c25efd1dd45875ec7210498e4fa25c89c0154c2a38302ba0ed813"
+    },
+    {
+      "path": "tests/unit/apps/amos/ToolOutcomes.test.ts",
+      "bytes": 6191,
+      "sha256": "9b4ce5d627e295ab7b9b3caec76d54da78e67b63231cc4075180fede92350484"
+    },
+    {
+      "path": "tests/unit/core/Agent.toolOutcomes.test.ts",
+      "bytes": 13565,
+      "sha256": "a0c02667c0e9e0af2e96dce98d510abb09e1be4e4648aa13e857b464d38f5ffb"
+    },
+    {
+      "path": "tests/unit/core/CompositionExecution.test.ts",
+      "bytes": 20335,
+      "sha256": "e623fcb641ab467f56e7c55f972cfc762d79f062929566974d1925f9af81104b"
+    },
+    {
+      "path": "tests/unit/core/ConnectorCollectionPages.test.ts",
+      "bytes": 36711,
+      "sha256": "a1c550576af28a942bc594dc67b3d6e744e91ba00d62117d0cfc57874b7b0d81"
+    },
+    {
+      "path": "tests/unit/core/EnhancedConnectorTools.test.ts",
+      "bytes": 26437,
+      "sha256": "a2362f04081e6a391a78b3f1320644bd55fcd27435d01a7776b2d4820ad34ce0"
+    },
+    {
+      "path": "tests/unit/core/OrchestratorConstruction.test.ts",
+      "bytes": 6030,
+      "sha256": "0a53c57288cf9edc4c133481286b589604771f7e2158f73af546223f3f7a337e"
+    },
+    {
+      "path": "tests/unit/core/OrchestratorExecutionBinding.test.ts",
+      "bytes": 5436,
+      "sha256": "3802d6b3783dd81063fff8a077445fe47e12d7b930330993bf7babf843b20a91"
+    },
+    {
+      "path": "tests/unit/core/OrchestratorFactory.test.ts",
+      "bytes": 25222,
+      "sha256": "79131d549fb4d763501ce3e14a86f2f1c20ddfe236be100e24471c25596de18c"
+    },
+    {
+      "path": "tests/unit/core/OrchestratorFactoryConfig.test.ts",
+      "bytes": 4764,
+      "sha256": "b1da0a27b3d5bd8c4c4f3a34c08f5cca4d2a7c65c051900a2adbb6507f0396ee"
+    },
+    {
+      "path": "tests/unit/core/VerifiedRoutineFoundation.test.ts",
+      "bytes": 6728,
+      "sha256": "1ad9f1e3827c031a16bcc82879f928dcf9edbd567b436ed3c0702acebe86097a"
+    },
+    {
+      "path": "tests/unit/core/VerifiedRoutineRunner.test.ts",
+      "bytes": 29056,
+      "sha256": "85fa8fe67e351ea6412bf7a59b33d6b5ba9f54158c6540edf53c4de4d9588a3e"
+    },
+    {
+      "path": "tests/unit/core/tool-execution/OutcomeTool.test.ts",
+      "bytes": 22094,
+      "sha256": "9d72938bbb301c9a0aceae1c0961fc463d8233114d7e1fadc87d5b7f959775e8"
+    }
+  ]
+}

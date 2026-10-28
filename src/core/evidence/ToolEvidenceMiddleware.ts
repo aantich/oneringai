@@ -69,6 +69,19 @@ function redactKeys(serialized: string): unknown {
 /** Opt-in post-settlement middleware, deliberately outside the execution plugin/error pipeline. */
 export class ToolEvidenceMiddleware {
   readonly storage: IEvidenceStorage;
+  /** @internal A new remote sidecar failed validation despite a backend write. */
+  _unacknowledged(value: ToolEvidenceDelivery): ToolEvidenceDelivery {
+    const provenance = evidenceProvenance(value);
+    if (!provenance) return { status: 'storage_failed', effect: value.effect, errorCode: 'invalid' };
+    return this.delivery({ status: 'storage_failed', effect: value.effect, ...(value.reference ? { reference: value.reference } : {}), errorCode: 'invalid' },
+      Object.freeze({ ...provenance, hasResult: false }));
+  }
+  /** @internal The acknowledged envelope contains this raw return plus its observations. */
+  _bindRemoteProjection(value: ToolEvidenceDelivery, raw: unknown): ToolEvidenceDelivery {
+    const provenance = evidenceProvenance(value); if (!provenance || !value.projection || !provenance.hasResult) return value;
+    try { const serialized = json(raw, this.serializationLimit); return this.delivery({ ...value }, provenance, { sha256: hash(serialized), bytes: Buffer.byteLength(serialized) }); }
+    catch { return this.delivery({ status: 'projection_failed', effect: value.effect, reference: value.reference, errorCode: 'projection' }, provenance); }
+  }
   private readonly threshold: number;
   private readonly summaryLimit: number;
   private readonly projectionLimit: number;
@@ -99,7 +112,7 @@ export class ToolEvidenceMiddleware {
     return frozen;
   }
   async record(tool: ToolFunction, args: unknown, context: ToolContext, outcome: ToolExecutionOutcome,
-    result?: { value: unknown }, late = false): Promise<ToolEvidenceDelivery> {
+    result?: { value: unknown }, late = false, observeWork?: (promise: Promise<unknown>) => void): Promise<ToolEvidenceDelivery> {
     const provenance: DeliveryProvenance = Object.freeze({ executionId: outcome.executionId,
       ...(outcome.callId === undefined ? {} : { callId: outcome.callId }), scope: Object.freeze({ ...this.storage.scope }), hasResult: !!result });
     const deliver = (value: ToolEvidenceDelivery, source?: { sha256: string; bytes: number }): ToolEvidenceDelivery => this.delivery(value, provenance, source);
@@ -141,7 +154,9 @@ export class ToolEvidenceMiddleware {
       if (this.serializationLimit !== Infinity) json(record, this.serializationLimit);
       let timer: ReturnType<typeof setTimeout> | undefined;
       try {
-        reference = await Promise.race([this.storage.put(record), new Promise<never>((_resolve, reject) => {
+        const pending = Promise.resolve(this.storage.put(record));
+        try { observeWork?.(pending); } catch { /* Tracking cannot repeat the external tool effect. */ }
+        reference = await Promise.race([pending, new Promise<never>((_resolve, reject) => {
           timer = setTimeout(() => reject(new EvidenceError('storage')), this.timeout);
         })]);
       } finally { clearTimeout(timer); }

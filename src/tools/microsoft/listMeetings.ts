@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Microsoft Graph - List Meetings Tool
  *
@@ -222,10 +223,10 @@ EXAMPLES:
           totalCount: meetings.length,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatMicrosoftToolError('Failed to list meetings', error),
-        };
+        });
       }
     },
   };

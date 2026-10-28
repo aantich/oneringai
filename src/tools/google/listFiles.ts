@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Google Drive - List Files Tool
  *
@@ -169,10 +170,10 @@ EXAMPLES:
           hasMore: Boolean(result.nextPageToken),
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatGoogleToolError('Failed to list files', error),
-        };
+        });
       }
     },
   };

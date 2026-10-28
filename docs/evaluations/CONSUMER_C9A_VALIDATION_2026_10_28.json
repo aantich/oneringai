@@ -1,0 +1,84 @@
+{
+  "protocol": "consumer-c9a-validation-v1",
+  "recordedAt": "2026-10-28",
+  "status": "complete-on-branch",
+  "verifiedPackageRelease": false,
+  "unit": {
+    "passed": 9114,
+    "failed": 0,
+    "failedSuites": 0,
+    "artifact": {
+      "path": "/tmp/oneringai-c9a-unit.json",
+      "bytes": 2925902,
+      "sha256": "2605e3e84e6390c7f9ab3f56ef5b7f68790fa686d9064cda26eb2ba4d4a3ada4"
+    }
+  },
+  "public": {
+    "passed": true,
+    "checks": 21,
+    "entries": 4,
+    "browser": true
+  },
+  "newUnitCases": 24,
+  "live": "Paused by user; none run for C9-A.",
+  "coverageExclusions": [
+    "Exact GPT-Realtime-2.1 effort set remains unknown",
+    "Exact GPT-Realtime-2.1-mini effort set remains unknown",
+    "Unverified conversation/transcription model pairs remain unknown"
+  ],
+  "sources": [
+    "https://developers.openai.com/api/docs/guides/voice-prompting#set-reasoning-effort",
+    "https://developers.openai.com/api/docs/guides/realtime-transcription",
+    "https://developers.openai.com/api/docs/models/gpt-realtime-2.1",
+    "https://developers.openai.com/api/docs/models/gpt-realtime-2.1-mini"
+  ],
+  "compatibility": {
+    "legacyRegistriesUnchanged": true,
+    "sessionValidationUnchanged": true,
+    "streamingFlagsUnchanged": true,
+    "noNetworkInLookup": true
+  },
+  "gates": {
+    "build": {
+      "path": "/tmp/oneringai-c9a-build.log",
+      "bytes": 15788,
+      "sha256": "16cb1f139354a39c46af3bd4226cc1d888ea1a4a168b170d44947650d5f44165"
+    },
+    "typecheck": {
+      "path": "/tmp/oneringai-c9a-types.log",
+      "bytes": 57,
+      "sha256": "f6b1e5a3cac67cbfa88c10cbbef77e441211c6b1a548119565120060bd60327c"
+    },
+    "lint": {
+      "path": "/tmp/oneringai-c9a-lint.log",
+      "bytes": 60,
+      "sha256": "baa87ef42846f58fd51bc895d894c46c231cc5faa9b1ab6fb266c09d934d778f"
+    },
+    "compatibility": {
+      "path": "/tmp/oneringai-c9a-compat.log",
+      "bytes": 116,
+      "sha256": "59705c5cdf595ae07c3185748123c28136500182f1dec3d6b148c12e140b4b2d"
+    },
+    "examples": {
+      "path": "/tmp/oneringai-c9a-examples.log",
+      "bytes": 88,
+      "sha256": "8ee95d2a0d994fc787162a1466717f2695b4385a8e524366536614eade27f9ce"
+    },
+    "offline": {
+      "path": "/tmp/oneringai-c9a-example.log",
+      "bytes": 1769,
+      "sha256": "b34479c3fd2b6c602e622a20be30217e0b5e719b173d4b450a8afe82b5a838b2"
+    },
+    "generatedDocs": {
+      "path": "/tmp/oneringai-c9a-docs.log",
+      "bytes": 309,
+      "sha256": "aea936715df4d7f64a47463bd2508ff9ed63fd6a46a76b728a3de6e453fa5518"
+    },
+    "public": {
+      "path": "/tmp/oneringai-c9a-public.log",
+      "bytes": 55,
+      "sha256": "c62238a5360182691b1d93935d61b031dbda73edda1b57728b6e4f8181d91b26"
+    }
+  },
+  "sourceSHA256": "787d5f17eb2ff828c4c805df3723e82b375fe2def7adc5a1ee9ebf60044c9366"
+}

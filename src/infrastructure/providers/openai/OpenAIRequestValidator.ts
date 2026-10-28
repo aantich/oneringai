@@ -3,10 +3,10 @@ import {
   InvalidConfigError,
   ProviderCapabilityNotSupportedError,
 } from '../../../domain/errors/AIErrors.js';
+import { openAISamplingConstraint, effectiveOpenAIRequestEffort } from '../../../capabilities/metadata/parameters.js';
 import { getModelInfo } from '../../../domain/entities/Model.js';
 
 const GPT_6_ASTRA = /^gpt-6-astra(?:-|$)/;
-const GPT_6_FAMILY = /^(?:gpt-6-astra|gpt-6\.1-sol|gpt-6-sol|gpt-6-luna)(?:-|$)/;
 const GPT_6_FAST_EU_RESTRICTED = /^(?:gpt-6-astra|gpt-6\.1-sol|gpt-6-sol|gpt-6-luna)(?:-|$)/;
 const EU_OPENAI_HOSTS = /^(?:eu\.api\.openai\.com|.*\.openai\.azure\.com)$/i;
 const ASTRA_REASONING_EFFORTS = new Set(['low', 'medium', 'high', 'xhigh', 'max']);
@@ -39,6 +39,7 @@ export function validateOpenAIResponsesRequest(
   options: Pick<TextGenerateOptions, 'model' | 'temperature'>,
   params: Record<string, unknown>,
   baseURL?: string,
+  selectedParameterPolicy = false,
 ): void {
   const model = options.model;
   const isAstra = GPT_6_ASTRA.test(model);
@@ -139,11 +140,11 @@ export function validateOpenAIResponsesRequest(
       `${model} Ultrafast mode is unavailable with EU data residency`,
     );
   }
-  if (!GPT_6_FAMILY.test(model)) return;
-  const effectiveReasoningEffort = typeof reasoning?.effort === 'string'
-    ? reasoning.effort
-    : 'medium';
-  if (effectiveReasoningEffort === 'none') return;
+  const actualEffort = selectedParameterPolicy ? effectiveOpenAIRequestEffort(reasoning, params.input) : typeof reasoning?.effort === 'string' ? reasoning.effort : undefined;
+  const sampling = openAISamplingConstraint(model, actualEffort, !selectedParameterPolicy);
+  if (selectedParameterPolicy && sampling && !sampling.allowsNone && sampling.effort === 'none') throw new InvalidConfigError(`${model} does not support reasoning effort 'none'; use ${[...ASTRA_REASONING_EFFORTS].join(', ')}`);
+  if (!sampling || !sampling.blocked) return;
+  const effectiveReasoningEffort = sampling.effort;
 
   if (options.temperature !== undefined || params.temperature !== undefined) {
     throw new InvalidConfigError(

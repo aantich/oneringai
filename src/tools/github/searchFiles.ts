@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * GitHub Search Files Tool
  *
@@ -33,7 +34,7 @@ export interface SearchFilesArgs {
 /**
  * Simple glob pattern matcher (matches the filesystem glob tool approach)
  */
-function matchGlobPattern(pattern: string, filePath: string): boolean {
+export function matchGlobPattern(pattern: string, filePath: string): boolean {
   let regexPattern = pattern
     .replace(/[.+^${}()|[\]\\]/g, '\\$&')
     .replace(/\*\*/g, '{{GLOBSTAR}}')
@@ -120,7 +121,7 @@ EXAMPLES:
       const effectiveAccountId = context?.accountId;
       const resolved = resolveRepository(args.repository, connector);
       if (!resolved.success) {
-        return { success: false, error: resolved.error };
+        return connectorFailure(connector, { success: false, error: resolved.error });
       }
       const { owner, repo } = resolved.repo;
 
@@ -162,10 +163,10 @@ EXAMPLES:
           truncated: tree.truncated,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatGitHubToolError('Failed to search files', error),
-        };
+        });
       }
     },
   };

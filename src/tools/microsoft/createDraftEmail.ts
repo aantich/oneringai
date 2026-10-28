@@ -1,3 +1,4 @@
+import { connectorFailure, connectorAcceptance } from '../connector/enhancedInvocation.js';
 /**
  * Microsoft Graph - Create Draft Email Tool
  *
@@ -119,6 +120,8 @@ EXAMPLES:
             { method: 'POST', userId: effectiveUserId, accountId: effectiveAccountId, body: {} }
           );
 
+          connectorAcceptance(connector, { kind: 'reply_draft', id: replyDraft.id, state: 'accepted' });
+
           // Prepend our HTML body above the quoted original
           const quotedOriginal = replyDraft.body?.content ?? '';
           const combinedBody = `${args.body}<br/>${quotedOriginal}`;
@@ -170,10 +173,10 @@ EXAMPLES:
           webLink: draft.webLink,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatMicrosoftToolError('Failed to create draft email', error),
-        };
+        });
       }
     },
   };

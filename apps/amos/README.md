@@ -219,6 +219,13 @@ MIT
 
 ### Stage 02 tool outcomes
 
+Consumer C1 is visible through the same adapter: callbacks built with
+`createOutcomeTool()` can report an operational failure while returning the same
+raw data as a valid decline. Build the library and run
+`npm run example:amos-outcome-tools` from the root for the deterministic demo.
+The adapter test uses real manager outcomes; no new AMOS command/configuration or
+saved-session migration is required. [Library recipe](../../docs/OUTCOME_AWARE_TOOLS.md).
+
 AMOS renders normalized tool failures accurately in streaming and non-streaming
 runs. Cancellation/timeouts distinguish an unstarted tool from uncertain completion;
 the app never claims that cancellation prevented an external write. A cancelled
@@ -602,3 +609,27 @@ undoing its wait or deleting the observation. Adapter tests cover both run and
 stream rejection/retry. JSON repair retains the admitted owner of opaque output;
 structured suspension is checkpointed only after finalization. The library example's
 `--failed-finalization` mode illustrates saved recovery receipts and zero tool replay.
+
+### Verified routine demonstration
+
+`/routine demo` makes one billable call on the selected model with synthetic local actions. `/routine inspect` shows phases/verdicts; `/routine confirm` supplies synthetic host proof and reconciles without repeating the submission; `/routine cancel` revokes continuation and requests cancellation. Handles are process-local and never saved in configuration/session files. This demonstrates host verification, not a production remote-state check.
+
+### Enhanced connector contracts (C4)
+
+The existing outcome/evidence adapter renders selected `_exec` failures truthfully; it is tested with an actual enhanced owning factory. Run the library offline `example:enhanced-connectors` to inspect static source-tagged adoption, safe retries, ambiguous mutation failure and exact evidence recovery. C4 adds no default AMOS connector/profile configuration or duplicate command system. The catalog integration follows in C5.
+
+### Whole collection pages (C5)
+
+AMOS now renders selected `_page` results as returned count, optional provider-reported total, pagination position and independent search coverage. End of pagination with incomplete coverage stays explicit; an unknown-position failure retains the count/coverage notice. Legacy/custom rendering remains unchanged. The library `example:connector-pages` demonstrates explicit collections-v1 setup, catalog reload, rollover and ephemeral cursor loss. No AMOS default profile or automatic migration is introduced.
+
+C6 adds a library-only [complete orchestrator factory](../../docs/ORCHESTRATOR_FACTORY.md). AMOS currently constructs a single Agent and exposes no orchestration factory settings, so its commands/saved configuration remain unchanged. Use `npm run example:orchestrator-factory` from the repository root for the deterministic demonstration.
+
+C8 `/routine inspect` separates observed host verification, accounting binding and
+recorded calls (unknown when unavailable). `npm run example:amos-composition` at
+repository root runs the actual command offline. Inspection does not turn accepted
+submissions or model acknowledgements into verified completion.
+
+C9-C `/vendor` reuses the shared presentation catalog while preserving AMOS's existing
+Google AI, Google Vertex AI, xAI Grok, Mistral AI and Ollama (Local) labels. Vendor IDs,
+connector validation and default-model selection are unchanged. C9-B's parameter
+policy does not change AMOS defaults; Realtime metadata does not add a voice UI.

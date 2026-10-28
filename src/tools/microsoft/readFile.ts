@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Microsoft Graph - Read File Tool
  *
@@ -138,21 +139,21 @@ When given a web URL, the tool automatically resolves it to the correct Graph AP
 
       // Validate source is non-empty
       if (!args.source || !args.source.trim()) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: 'The "source" parameter is required. Provide a file URL, path, or item ID.',
-        };
+        });
       }
 
       // Validate URLs are Microsoft-owned (SharePoint/OneDrive)
       if (isWebUrl(args.source) && !isMicrosoftFileUrl(args.source)) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error:
             `The URL "${args.source}" does not appear to be a SharePoint or OneDrive link. ` +
             `This tool only supports URLs from *.sharepoint.com, onedrive.live.com, or 1drv.ms. ` +
             `For other URLs, use the web_fetch tool instead.`,
-        };
+        });
       }
 
       try {
@@ -180,19 +181,19 @@ When given a web URL, the tool automatically resolves it to the correct Graph AP
 
         // Validate it's a file, not a folder
         if (metadata.folder) {
-          return {
+          return connectorFailure(connector, {
             success: false,
             error:
               `"${metadata.name}" is a folder, not a file. ` +
               `Use the list_files tool to browse folder contents.`,
-          };
+          });
         }
 
         // Check file size (per-extension limits, then default)
         const ext = getExtension(metadata.name);
         const sizeLimit = getFileSizeLimit(ext, sizeOverrides, defaultLimit);
         if (metadata.size > sizeLimit) {
-          return {
+          return connectorFailure(connector, {
             success: false,
             filename: metadata.name,
             sizeBytes: metadata.size,
@@ -200,19 +201,19 @@ When given a web URL, the tool automatically resolves it to the correct Graph AP
               `File "${metadata.name}" is ${formatFileSize(metadata.size)}, which exceeds ` +
               `the ${formatFileSize(sizeLimit)} limit for ${ext || 'this file type'}. ` +
               `Consider downloading a smaller version or using the search tool to find an alternative.`,
-          };
+          });
         }
 
         // Check extension support
         if (ext && !SUPPORTED_EXTENSIONS.has(ext) && !FormatDetector.isBinaryDocumentFormat(ext)) {
-          return {
+          return connectorFailure(connector, {
             success: false,
             filename: metadata.name,
             mimeType: metadata.file?.mimeType,
             error:
               `File format "${ext}" is not supported for text extraction. ` +
               `Supported formats: ${[...SUPPORTED_EXTENSIONS].join(', ')}`,
-          };
+          });
         }
 
         // 3. Download binary content
@@ -244,11 +245,11 @@ When given a web URL, the tool automatically resolves it to the correct Graph AP
         );
 
         if (!result.success) {
-          return {
+          return connectorFailure(connector, {
             success: false,
             filename: metadata.name,
             error: `Failed to convert "${metadata.name}" to markdown: ${result.error ?? 'unknown error'}`,
-          };
+          });
         }
 
         const markdown = mergeTextPieces(result.pieces);
@@ -275,22 +276,22 @@ When given a web URL, the tool automatically resolves it to the correct Graph AP
       } catch (error) {
         if (error instanceof MicrosoftAPIError) {
           if (error.status === 404) {
-            return {
+            return connectorFailure(connector, {
               success: false,
               error: `File not found. Check that the source "${args.source}" is correct and you have access.${error.requestId ? ` [request-id: ${error.requestId}]` : ''}`,
-            };
+            });
           }
           if (error.status === 403 || error.status === 401) {
-            return {
+            return connectorFailure(connector, {
               success: false,
               error: `Access denied${error.code ? ` (${error.code})` : ''}. The connector may not have sufficient permissions (Files.Read or Sites.Read.All required).${error.requestId ? ` [request-id: ${error.requestId}]` : ''}`,
-            };
+            });
           }
         }
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatMicrosoftToolError('Failed to read file', error),
-        };
+        });
       }
     },
   };

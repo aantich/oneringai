@@ -15,6 +15,11 @@
  */
 
 import { Agent } from '../Agent.js';
+import { FactoryPolicy, STORE_NAMES, ORCHESTRATION_NAMES } from './factoryPolicy.js';
+import { checkFactoryConfig, detachFactoryConfig } from './factoryConfig.js';
+import { markOrchestratorConstruction } from './construction.js';
+import type { OrchestratedAgentConfig, OrchestratorFactoryOptions } from './factoryTypes.js';
+import type { ExecutionBinding } from '../execution/composition.js';
 import type { AgentConfig, RunOptions } from '../Agent.js';
 import type { AgentResponse } from '../../domain/entities/Response.js';
 import { StreamEventType } from '../../domain/entities/StreamEvent.js';
@@ -351,6 +356,7 @@ When an agent result arrives, classify it:
 async function autoDescribeAgentTypes(
   orchestrator: Agent,
   agentTypes: Record<string, AgentTypeConfig>,
+  execution?: ExecutionBinding,
 ): Promise<void> {
   // Find types that need descriptions
   const needsDescription = Object.entries(agentTypes)
@@ -377,6 +383,7 @@ ${typesSummary}`;
   try {
     const response = await orchestrator.runDirect(prompt, {
       temperature: 0.3,
+      ...execution,
     });
 
     const text = response.output_text ?? '';
@@ -573,6 +580,16 @@ function logDelegationExchange(
  * ```
  */
 export async function createOrchestrator(config: OrchestratorConfig): Promise<Agent> {
+  return createOrchestratorImplementation(config);
+}
+
+/** Complete host configuration before one owned construction. Existing factories remain unchanged. */
+export async function createOrchestratorWithFactory(config: OrchestratorConfig, options: OrchestratorFactoryOptions): Promise<Agent> {
+  if (!options || typeof options.configureAgent !== 'function') throw new Error('configureAgent is required');
+  return createOrchestratorImplementation(detachFactoryConfig(config), options);
+}
+
+async function createOrchestratorImplementation(config: OrchestratorConfig, factory?: OrchestratorFactoryOptions): Promise<Agent> {
   // ---- Closure state ----
   const workspace = new SharedWorkspacePluginNextGen(config.workspace);
   const agents = new Map<string, Agent>();
@@ -628,23 +645,29 @@ export async function createOrchestrator(config: OrchestratorConfig): Promise<Ag
     delegationDefaults: config.delegationDefaults,
   };
 
+  const selected = factory ? new FactoryPolicy(toolsContext, factory, type => {
+    const own = agentTypes.get(type)!;
+    return detachFactoryConfig({ connector: own.connector ?? config.connector, model: own.model ?? config.model,
+      instructions: own.systemPrompt, tools: own.tools, context: { model: own.model ?? config.model, features: { workingMemory: true, inContextMemory: true,
+        ...own.features, sharedWorkspace: false }, plugins: own.plugins } });
+  }) : undefined;
   const orchestrationTools = buildOrchestrationTools(toolsContext);
 
   // ---- Create orchestrator Agent ----
   const systemPrompt = config.systemPrompt ?? buildDefaultSystemPrompt(config);
 
-  const orchestratorAgent = Agent.create({
-    name: config.name ?? 'orchestrator',
+  const parentBaseline: OrchestratedAgentConfig = {
     connector: config.connector,
     model: config.model,
     instructions: systemPrompt,
-    tools: config.tools ? [...orchestrationTools, ...config.tools] : orchestrationTools,
+    tools: selected ? config.tools : config.tools ? [...orchestrationTools, ...config.tools] : orchestrationTools,
     maxIterations: config.maxIterations ?? 100,
     asyncTools: {
       autoContinue: true,
       batchWindowMs: 500,
     },
     context: {
+      model: config.model,
       agentId: config.agentId,
       features: {
         workingMemory: true,
@@ -655,23 +678,44 @@ export async function createOrchestrator(config: OrchestratorConfig): Promise<Ag
       },
       plugins: config.pluginConfigs,
     },
-  } as AgentConfig);
+  };
+  let effective = parentBaseline;
+  if (factory) {
+    try { effective = checkFactoryConfig(await factory.configureAgent({ role: 'parent', name: config.name ?? 'orchestrator',
+      baseline: detachFactoryConfig(parentBaseline) }), new Set([...STORE_NAMES, ...ORCHESTRATION_NAMES])); }
+    catch (error) { workspace.destroy(); throw error; }
+  }
+  // Baseline excludes reserved tools; the host returns a complete configuration.
+  const parentContext = { model: effective.model, ...effective.context };
+  if (selected) markOrchestratorConstruction(parentContext, { version: 1, workspace, worker: false, deferWorkspaceDestroy: true, registry: effective.registry });
+  let orchestratorAgent: Agent;
+  try { orchestratorAgent = Agent.create({ ...effective, name: config.name ?? 'orchestrator',
+    tools: selected ? [...(effective.tools ?? []), ...orchestrationTools] : effective.tools,
+    context: parentContext }); }
+  catch (error) { workspace.destroy(); throw error; }
 
   // M5: Now that orchestratorAgent exists, capture its registryId for future workers
   orchestratorRegistryId = orchestratorAgent.registryId;
 
   // Register the shared workspace on the orchestrator (orchestrator owns it — will destroy on cleanup)
-  orchestratorAgent.context.registerPlugin(workspace);
+  if (selected) selected.attach(orchestratorAgent, effective);
+  else orchestratorAgent.context.registerPlugin(workspace);
 
   // ---- Auto-describe agent types if requested ----
   if (config.autoDescribe) {
-    await autoDescribeAgentTypes(orchestratorAgent, config.agentTypes);
+    await autoDescribeAgentTypes(orchestratorAgent, config.agentTypes, factory?.descriptionExecution);
     // Rebuild system prompt with generated descriptions if we didn't get a custom one
-    if (!config.systemPrompt) {
+    if (!config.systemPrompt && (!selected || effective.instructions === systemPrompt && effective.context?.systemPrompt === undefined)) {
       // Update the orchestrator's instructions with the enriched descriptions
       orchestratorAgent.context.systemPrompt = buildDefaultSystemPrompt(config);
     }
   }
+
+  // This owned call is part of the selected parent's execution. Public runDirect
+  // and legacy monitoring keep their ordinary defaults.
+  const monitorOptions = selected ? { instructions: effective.instructions, temperature: effective.temperature,
+    thinking: effective.thinking, vendorOptions: effective.vendorOptions, promptCache: effective.promptCache,
+    nativeTools: effective.nativeTools, dataHandling: effective.dataHandling } : {};
 
   // ---- Wrap run() for delegation support ----
   const originalRun = orchestratorAgent.run.bind(orchestratorAgent);
@@ -702,7 +746,8 @@ export async function createOrchestrator(config: OrchestratorConfig): Promise<Ag
       return originalRun(summary + '\n\nThe user said: ' + userText, options);
     }
 
-    const response = await delegatedAgent.run(input, options);
+    const operation = selected?.execution.currentOperation();
+    const response = selected ? await selected.run(delegatedAgent, input, options, operation!) : await delegatedAgent.run(input, options);
     delegationState.turnCount++;
 
     // Log exchange to workspace
@@ -718,7 +763,9 @@ Should you intervene, attach other agents, or let the session continue? If no ac
 
       try {
         const monitorResponse = await orchestratorAgent.runDirect(turnSummary, {
+          ...monitorOptions,
           includeTools: true,
+          ...(operation ? { modelTask: operation.modelTask, signal: operation.controller.signal } : {}),
         });
         const monitorText = (monitorResponse.output_text ?? '').trim().toLowerCase();
 
@@ -782,7 +829,9 @@ Should you intervene, attach other agents, or let the session continue? If no ac
     // Collect response text for logging while yielding events
     let responseText = '';
 
-    for await (const event of delegatedAgent.stream(input, options)) {
+    const operation = selected?.execution.currentOperation();
+    const events = selected ? selected.stream(delegatedAgent, input, options, operation!) : delegatedAgent.stream(input, options);
+    for await (const event of events) {
       // Capture text deltas for exchange logging (only output text, not tool call arguments)
       if (event.type === StreamEventType.OUTPUT_TEXT_DELTA && 'delta' in event) {
         responseText += (event as { delta: string }).delta;
@@ -804,7 +853,7 @@ Agent responded: ${responseText}
 Should you intervene, attach other agents, or let the session continue? If no action needed, respond with just "continue".`;
 
       try {
-        const monitorResponse = await orchestratorAgent.runDirect(turnSummary, { includeTools: true });
+        const monitorResponse = await orchestratorAgent.runDirect(turnSummary, { ...monitorOptions, includeTools: true, ...(operation ? { modelTask: operation.modelTask, signal: operation.controller.signal } : {}) });
         const monitorText = (monitorResponse.output_text ?? '').trim().toLowerCase();
         if (monitorText !== 'continue') {
           const summary = reclaimDelegation(delegationState, workspace);
@@ -825,6 +874,18 @@ Should you intervene, attach other agents, or let the session continue? If no ac
     }
   };
 
+  if (selected) {
+    const engineRun = orchestratorAgent.run, engineStream = orchestratorAgent.stream;
+    orchestratorAgent.run = async (input, options) => {
+      const frame = selected.execution.beginPublic(options?.modelTask);
+      try { return await engineRun(input, options); } finally { frame.release(); }
+    };
+    orchestratorAgent.stream = async function* (input, options) {
+      const frame = selected.execution.beginPublic(options?.modelTask);
+      try { yield* engineStream(input, options); } finally { frame.release(); }
+    };
+  }
+
   // ---- Wrap destroy to clean up all workers + shared workspace ----
   const originalDestroy = orchestratorAgent.destroy.bind(orchestratorAgent);
   orchestratorAgent.destroy = () => {
@@ -834,6 +895,8 @@ Should you intervene, attach other agents, or let the session continue? If no ac
       delegationState.agentName = '';
       delegationState.turnCount = 0;
     }
+
+    if (selected) { selected.close(); originalDestroy(); return; }
 
     // Destroy all worker agents first
     const workerAgents = Array.from(agents.values());

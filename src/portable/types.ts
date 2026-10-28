@@ -25,7 +25,7 @@ export type PortableToolPlacement = 'local' | 'remote';
  */
 export type PortableAgentRuntimeConfig = Omit<
   AgentRuntimeConfigSnapshot,
-  'vendorOptions' | 'nativeTools' | 'promptCache' | 'dataHandling'
+  'vendorOptions' | 'nativeTools' | 'promptCache' | 'dataHandling' | 'parameterPolicy'
 >;
 
 /** Serializable tool metadata. Executable code is resolved by the receiving runtime. */

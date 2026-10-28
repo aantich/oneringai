@@ -40,6 +40,7 @@ import {
 } from '../../ToolCatalogRegistry.js';
 import type { ToolManager } from '../../ToolManager.js';
 import { logger } from '../../../infrastructure/observability/Logger.js';
+import { selectedConnectorCategories } from '../../connector-execution/registration.js';
 
 // ============================================================================
 // Types
@@ -147,6 +148,7 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
 
   /** Cached connector categories — discovered once in setToolManager() */
   private _connectorCategories: ConnectorCategoryInfo[] | null = null;
+  private _selectedRevisions = new Map<string, number>();
 
   /** Whether this plugin has been destroyed */
   private _destroyed = false;
@@ -175,10 +177,17 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
   // ========================================================================
 
   getInstructions(): string {
+    this.getConnectorCategories();
     return this.buildInstructions();
   }
 
+  getInstructionsTokenSize(): number {
+    return this._toolManager && selectedConnectorCategories(this._toolManager, this._config.identities).length
+      ? this.estimator.estimateTokens(this.getInstructions()) : super.getInstructionsTokenSize();
+  }
+
   async getContent(): Promise<string | null> {
+    this.getConnectorCategories();
     const categories = this.getAllowedCategories();
     if (categories.length === 0 && this.getConnectorCategories().length === 0) return null;
 
@@ -211,6 +220,7 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
   }
 
   getContents(): unknown {
+    this.getConnectorCategories();
     return {
       loadedCategories: Array.from(this._loadedCategories.entries()).map(([name, tools]) => ({
         category: name,
@@ -252,6 +262,7 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
   }
 
   isCompactable(): boolean {
+    this.getConnectorCategories();
     // Only compactable if there are non-pinned loaded categories
     for (const category of this._loadedCategories.keys()) {
       if (!this._pinnedCategories.has(category)) return true;
@@ -260,6 +271,7 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
   }
 
   async compact(targetTokensToFree: number): Promise<number> {
+    this.getConnectorCategories();
     if (!this._toolManager || this._loadedCategories.size === 0) return 0;
 
     // Sort loaded categories by least recently used, excluding pinned
@@ -288,6 +300,7 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
   }
 
   getState(): unknown {
+    this.getConnectorCategories();
     return {
       loadedCategories: Array.from(this._loadedCategories.keys()),
     };
@@ -313,6 +326,7 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
   }
 
   destroy(): void {
+    this._selectedRevisions.clear();
     this._loadedCategories.clear();
     this._pinnedCategories.clear();
     this._toolManager = null;
@@ -494,7 +508,7 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
     let tools: Array<{ tool: ToolFunction; name: string }>;
 
     if (isConnector) {
-      tools = ToolCatalogRegistry.resolveConnectorCategoryTools(category);
+      tools = this.resolveConnectorCategory(category);
     } else {
       const entries = ToolCatalogRegistry.getToolsInCategory(category);
       if (entries.length === 0) {
@@ -535,6 +549,7 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
   }
 
   private executeUnload(category: string): Record<string, unknown> {
+    this.getConnectorCategories();
     if (this._destroyed) return { error: 'Plugin destroyed' };
 
     if (!this._toolManager) {
@@ -574,7 +589,24 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
    * Get connector categories from cache (populated once in setToolManager).
    */
   private getConnectorCategories(): ConnectorCategoryInfo[] {
-    return this._connectorCategories ?? [];
+    if (!this._toolManager) return this._connectorCategories ?? [];
+    const selected = selectedConnectorCategories(this._toolManager, this._config.identities);
+    if (!selected.length) return this._connectorCategories ?? [];
+    for (const category of selected) {
+      if (this._selectedRevisions.get(category.name) === category.revision) continue;
+      this._selectedRevisions.set(category.name, category.revision);
+      const names = category.tools.map(tool => tool.definition.function.name);
+      if (names.length && names.every(name => this._toolManager!.getRegistration(name)?.enabled)) this._loadedCategories.set(category.name, names);
+      else this._loadedCategories.delete(category.name);
+      this.invalidateTokenCache();
+    }
+    const names = new Set(selected.map(category => category.name));
+    return [...(this._connectorCategories ?? []).filter(category => !names.has(category.name)), ...selected.filter(category => category.tools.length)];
+  }
+
+  private resolveConnectorCategory(category: string): Array<{ tool: ToolFunction; name: string }> {
+    const selected = this._toolManager && selectedConnectorCategories(this._toolManager, this._config.identities).find(value => value.name === category);
+    return selected ? selected.tools.map(tool => ({ tool, name: tool.definition.function.name })) : ToolCatalogRegistry.resolveConnectorCategoryTools(category);
   }
 
   /**
@@ -753,7 +785,7 @@ export class ToolCatalogPluginNextGen extends BasePluginNextGen {
     }
 
     const parsed = ToolCatalogRegistry.parseConnectorCategory(category);
-    const tools = ToolCatalogRegistry.resolveConnectorCategoryTools(category);
+    const tools = this.resolveConnectorCategory(category);
     const loaded = this._loadedCategories.has(category);
 
     return {

@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Microsoft Graph - Find Meeting Slots Tool
  *
@@ -161,10 +162,10 @@ EXAMPLES:
           emptySuggestionsReason: result.emptySuggestionsReason,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatMicrosoftToolError('Failed to find meeting slots', error),
-        };
+        });
       }
     },
   };

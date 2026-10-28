@@ -1,4 +1,5 @@
-import { ToolEvidenceMiddleware } from './evidence/ToolEvidenceMiddleware.js';
+import { ToolEvidenceMiddleware, evidenceProvenance } from './evidence/ToolEvidenceMiddleware.js';
+import type { EvidenceReference } from '../domain/interfaces/IEvidenceStorage.js';
 import type { ToolEvidenceDelivery } from './evidence/ToolEvidenceMiddleware.js';
 import { containAsyncRejection } from './evidence/validation.js';
 /**
@@ -28,7 +29,7 @@ import type { IDisposable } from '../domain/interfaces/IDisposable.js';
 import type { ToolContext } from '../domain/interfaces/IToolContext.js';
 import { CircuitBreaker } from '../infrastructure/resilience/CircuitBreaker.js';
 import type { CircuitState, CircuitBreakerConfig } from '../infrastructure/resilience/CircuitBreaker.js';
-import { ToolNotFoundError, ToolExecutionError, ToolTimeoutError } from '../domain/errors/AIErrors.js';
+import { ToolNotFoundError, ToolExecutionError, ToolTimeoutError, InvalidConfigError } from '../domain/errors/AIErrors.js';
 import { logger, FrameworkLogger } from '../infrastructure/observability/Logger.js';
 import { metrics } from '../infrastructure/observability/Metrics.js';
 import { ToolExecutionPipeline } from './tool-execution/ToolExecutionPipeline.js';
@@ -38,6 +39,13 @@ import type { PipelineOutcome, ToolExecutionOptions, ToolExecutionOutcome, ToolE
 import { createExecutionSignal, withAbort } from './tool-execution/cancellation.js';
 import { randomUUID } from 'node:crypto';
 import { captureConnectorScope } from './tool-execution/connectorScope.js';
+import { attachOutcomeCapture, captureOutcomeExecutor } from './tool-execution/outcomeInvocation.js';
+import { connectorExecutionHint, prepareConnectorInvocation } from './connector-execution/profile.js';
+import { checkConnectorSelection, registerConnectorSelection, managerCursorCodec, resetConnectorSelections, captureConnectorSelections } from './connector-execution/registration.js';
+import { assertConstructionTool } from './orchestrator/construction.js';
+import { captureOrchestratorInvocation } from './orchestrator/executionBinding.js';
+import { trackCompositionWork, captureCompositionToolDenial, attachCompositionDenial, captureCompositionToolObserver, captureCompositionArguments, compositionAllowsTool } from './execution/composition.js';
+import { prepareRemoteInvocation, assertRemoteSourceAdmission, attachRemoteOutcome, initializeRemoteManager, bindRemoteToolOwner, captureRemoteOwners, destroyRemoteManager, type RemoteInvocationObservation } from './tool-execution/remoteObservation.js';
 import type { PermissionPolicyManager } from './permissions/PermissionPolicyManager.js';
 import { PermissionEnforcementPlugin } from './permissions/PermissionEnforcementPlugin.js';
 
@@ -248,6 +256,7 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
 
   constructor(config?: ToolManagerConfig) {
     super();
+    initializeRemoteManager(this, () => this.evidenceMiddleware?.storage);
     this._toolExecutionTimeout = config?.toolExecutionTimeout ?? 0;
     // Initialize default namespace
     this.namespaceIndex.set('default', new Set());
@@ -297,6 +306,8 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
 
   /** @internal Undo a rejected Agent binding without cloning executable host objects. */
   _captureAgentBindingRollback(): () => void {
+    const restoreConnectors = captureConnectorSelections(this);
+    const restoreRemote = captureRemoteOwners(this);
     const registrations = new Map([...this.registry].map(([name, value]) => [name, { ...value }]));
     const namespaces = new Map([...this.namespaceIndex].map(([name, values]) => [name, new Set(values)]));
     const permission = this.pipeline.get('permission-enforcement');
@@ -304,6 +315,8 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
     return () => {
       if (this._isDestroyed) return;
       this.registry = registrations;
+      restoreConnectors();
+      restoreRemote();
       this.namespaceIndex = namespaces;
       for (const [name, breaker] of this.circuitBreakers) {
         if (!registrations.has(name)) { breaker.removeAllListeners(); this.circuitBreakers.delete(name); }
@@ -332,6 +345,8 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
     }
 
     this._isDestroyed = true;
+    destroyRemoteManager(this);
+    resetConnectorSelections(this);
     for (const controller of this.activeExecutions) controller.abort(new DOMException('Tool manager destroyed', 'AbortError'));
     this.activeExecutions.clear();
 
@@ -425,6 +440,9 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
    */
   register(tool: ToolFunction, options: ToolOptions = {}): void {
     const name = this.getToolName(tool);
+    assertConstructionTool(this, name, this.registry.has(name));
+    this.checkEnhancedCollision(tool, options.source);
+    bindRemoteToolOwner(this, tool);
 
     if (this.registry.has(name)) {
       // Update existing registration
@@ -494,8 +512,33 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
     const source = accountId
       ? `connector:${connectorName}:${accountId}`
       : `connector:${connectorName}`;
+    if (tools.some(tool => connectorExecutionHint(tool))) {
+      const names = new Set<string>();
+      checkConnectorSelection(this, connectorName, accountId, tools);
+      for (const tool of tools) {
+        const name = this.getToolName(tool);
+        if (names.has(name)) throw new InvalidConfigError(`Enhanced connector tool name collision: ${name}`);
+        names.add(name);
+        if (!connectorExecutionHint(tool) || connectorExecutionHint(tool)?.profile !== connectorExecutionHint(tools[0]!)?.profile || tool.connectorName !== connectorName || tool.connectorAccountId !== accountId) {
+          throw new InvalidConfigError('Enhanced connector registration must match its selected connector/account');
+        }
+        this.checkEnhancedCollision(tool, source);
+      }
+      registerConnectorSelection(this, connectorName, accountId, tools);
+    }
     for (const tool of tools) {
       this.register(tool, { ...toolOptions, source });
+    }
+  }
+
+  private checkEnhancedCollision(tool: ToolFunction, source?: ToolSource): void {
+    const hint = connectorExecutionHint(tool);
+    if (!hint) return;
+    const existing = this.registry.get(this.getToolName(tool));
+    if (!existing) return;
+    if (connectorExecutionHint(existing.tool)?.profile !== hint.profile || existing.tool.connectorName !== tool.connectorName
+      || existing.tool.connectorAccountId !== tool.connectorAccountId || (source !== undefined && existing.source !== source)) {
+      throw new InvalidConfigError(`Enhanced connector tool name collision: ${this.getToolName(tool)}`);
     }
   }
 
@@ -525,6 +568,7 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
    * Does NOT remove event listeners from this ToolManager (use destroy() for full cleanup).
    */
   clear(): void {
+    resetConnectorSelections(this);
     this.registry.clear();
     this.namespaceIndex.clear();
     this.namespaceIndex.set('default', new Set());
@@ -725,7 +769,7 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
    */
   getEnabled(): ToolFunction[] {
     return this.getSortedByPriority()
-      .filter((reg) => reg.enabled)
+      .filter((reg) => reg.enabled && compositionAllowsTool(this, reg.tool.definition.function.name))
       .map((reg) => reg.tool);
   }
 
@@ -735,7 +779,7 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
    * for use in connector-aware filtering.
    */
   getEnabledRegistrations(): ToolRegistration[] {
-    return this.getSortedByPriority().filter((reg) => reg.enabled);
+    return this.getSortedByPriority().filter((reg) => reg.enabled && compositionAllowsTool(this, reg.tool.definition.function.name));
   }
 
   /**
@@ -754,7 +798,7 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
 
     return Array.from(toolNames)
       .map((name) => this.registry.get(name)!)
-      .filter((reg) => reg.enabled)
+      .filter((reg) => reg.enabled && compositionAllowsTool(this, reg.tool.definition.function.name))
       .sort((a, b) => b.priority - a.priority)
       .map((reg) => reg.tool);
   }
@@ -790,7 +834,7 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
    */
   listEnabled(): string[] {
     return Array.from(this.registry.entries())
-      .filter(([_, reg]) => reg.enabled)
+      .filter(([name, reg]) => reg.enabled && compositionAllowsTool(this, name))
       .map(([name]) => name);
   }
 
@@ -1050,12 +1094,17 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
     options = { ...options };
     const registered = this.registry.get(toolName);
     if (!registered) throw new ToolNotFoundError(toolName);
-    if (!registered.enabled) throw new ToolExecutionError(toolName, 'Tool is disabled');
+    const compositionDenial = captureCompositionToolDenial(this, toolName);
+    if (!registered.enabled && !compositionDenial) throw new ToolExecutionError(toolName, 'Tool is disabled');
     if (this._isDestroyed) throw new ToolExecutionError(toolName, 'Tool manager is destroyed');
 
     // Keep cumulative counters on this registration; all authority and dispatch data are local.
     const selectedTool = registered.tool;
     const selectedExecute = selectedTool.execute;
+    const selectedOutcomeExecute = captureOutcomeExecutor(selectedExecute);
+    const compositionObserver = captureCompositionToolObserver(this);
+    let compositionArguments = compositionObserver ? captureCompositionArguments(args) : undefined;
+    const compositionEffect = selectedTool.output?.effect ?? 'unknown';
     const evidenceMiddleware = ['evidence_read', 'evidence_list'].includes(toolName) ? undefined : this.evidenceMiddleware;
     const registration: ToolRegistration = {
       ...registered,
@@ -1076,22 +1125,29 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
       ...shared,
       connectorRegistry,
       connectorAccounts: shared?.connectorAccounts ? { ...shared.connectorAccounts } : undefined,
-      identities: shared?.identities?.map((identity) => ({ ...identity })),
+      identities: shared?.identities?.map((identity) => ({ ...identity, ...(identity.toolFilter ? { toolFilter: [...identity.toolFilter] } : {}) })),
       roles: shared?.roles ? [...shared.roles] : undefined,
       signal,
     };
+    prepareConnectorInvocation(selectedTool, context, connectorExecutionHint(selectedTool)?.profile === 'collections-v1' ? managerCursorCodec(this) : undefined);
+    captureOrchestratorInvocation(this, context);
     this.activeExecutions.add(scope.controller);
-    const callDeadline = options.timeoutMs ?? 0;
+    const profileDeadline = connectorExecutionHint(selectedTool)?.timeoutMs ?? 0;
+    const requestedDeadline = options.timeoutMs ?? 0;
+    const callDeadline = profileDeadline > 0 ? requestedDeadline > 0 ? Math.min(profileDeadline, requestedDeadline) : profileDeadline : requestedDeadline;
     const usesCallDeadline = callDeadline > 0 && (this._toolExecutionTimeout <= 0 || callDeadline <= this._toolExecutionTimeout);
     const timeout = usesCallDeadline ? callDeadline : this._toolExecutionTimeout;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let timedOut = false;
     let executionStarted = false;
     let pipelineOutcome: PipelineOutcome | undefined;
+    let remoteObservation: RemoteInvocationObservation | undefined;
     let abandoned = false;
     let settled = false;
     let settledResult: { value: unknown } | undefined;
-    const outcome = (status: ToolExecutionOutcome['status'], error?: Error, late = false): ToolExecutionOutcome => Object.freeze({
+    const acknowledgedResults = new WeakMap<object, EvidenceReference>();
+    const outcome = (status: ToolExecutionOutcome['status'], error?: Error, late = false): ToolExecutionOutcome => {
+      const value: ToolExecutionOutcome = {
       executionId, toolName, callId: options.callId, runId: options.runId,
       ...(timedOut ? { timeoutMs: timeout } : pipelineOutcome?.error instanceof ToolTimeoutError ? { timeoutMs: pipelineOutcome.error.timeoutMs } : {}),
       status, startedAt: startTime, durationMs: Date.now() - startTime, executionStarted,
@@ -1100,11 +1156,17 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
         ? (pipelineOutcome?.error && (pipelineOutcome.error === signal.reason || pipelineOutcome.error.name === 'AbortError') ? 'acknowledged' : 'requested')
         : 'none',
       error: error?.message,
-    });
-    const notify = (event: 'tool:outcome' | 'tool:late-complete', value: ToolExecutionOutcome): void => {
+      };
+      attachRemoteOutcome(value, remoteObservation);
+      return Object.freeze(value);
+    };
+    const notify = (event: 'tool:outcome' | 'tool:late-complete', value: ToolExecutionOutcome, result?: { value: unknown }): void => {
+      try { containAsyncRejection(remoteObservation?.observeProxy(value, acknowledgedResults.get(value))); } catch { /* Remote diagnostics cannot repeat effects. */ }
+      compositionObserver?.({ outcome: value, effect: compositionEffect, result, arguments: compositionArguments, acknowledgedResult: acknowledgedResults.get(value), late: event === 'tool:late-complete' });
+      if (this._isDestroyed && event === 'tool:late-complete') return;
       // Diagnostics must never turn a successful external operation into a retryable failure.
       if (event === 'tool:outcome') {
-        try { options.onOutcome?.(value); } catch (error) {
+        try { containAsyncRejection(options.onOutcome?.(value)); } catch (error) {
           this.toolLogger.warn({ error: String(error) }, 'Tool outcome observer failed');
         }
       }
@@ -1115,11 +1177,20 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
     const persist = async (value: ToolExecutionOutcome, result?: { value: unknown }, late = false): Promise<{ outcome: ToolExecutionOutcome; evidence?: ToolEvidenceDelivery }> => {
       if (!evidenceMiddleware) return { outcome: value };
       let evidence: ToolEvidenceDelivery;
-      try { evidence = await evidenceMiddleware.record(registration.tool, evidenceArgs, context, value, result, late); }
+      try { evidence = await evidenceMiddleware.record(registration.tool, evidenceArgs, context, value,
+        remoteObservation ? remoteObservation.evidenceResult(value, result) : result, late, promise => trackCompositionWork(this, promise)); }
       catch { evidence = { status: 'storage_failed', effect: registration.tool.output?.effect ?? 'unknown', errorCode: 'storage' }; }
+      if (remoteObservation && evidence.status !== 'storage_failed' && evidence.reference && evidenceProvenance(evidence)?.hasResult) {
+        let valid = false;
+        try { const pending = remoteObservation.validateEvidence(value, evidence.reference); trackCompositionWork(this, pending); valid = await withAbort(pending, signal); }
+        catch { /* Keep the raw observation until its complete sidecar is proven. */ }
+        if (!valid) evidence = evidenceMiddleware._unacknowledged(evidence);
+        else if (result) evidence = evidenceMiddleware._bindRemoteProjection(evidence, result.value);
+      }
       const { projection: _projection, ...receipt } = evidence;
       // Evidence completion is distinct from execution settlement, including on cancellation.
       const enriched = Object.freeze({ ...value, evidence: Object.freeze(receipt) });
+      if (evidence.status !== 'storage_failed' && evidence.reference && evidenceProvenance(evidence)?.hasResult) acknowledgedResults.set(enriched, evidence.reference);
       if (!late) { try { containAsyncRejection(options.onEvidence?.(evidence)); } catch { /* Observers do not own effects. */ } }
       return { outcome: enriched, evidence };
     };
@@ -1134,6 +1205,9 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
     }
     try {
       signal.throwIfAborted();
+      assertRemoteSourceAdmission(options, registration.tool, context, compositionEffect);
+      remoteObservation = prepareRemoteInvocation(this, selectedTool, context, { executionId, toolName, callId: options.callId, runId: options.runId,
+        startedAt: startTime, principal: { userId: context.userId, accountId: context.accountId, agentId: context.agentId } });
       if (registration.source?.startsWith('connector:')) {
         const connName = registration.tool.connectorName ?? registration.source.slice('connector:'.length);
         if (context.connectorRegistry && !context.connectorRegistry.has(connName)) {
@@ -1143,30 +1217,40 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
       }
       const breaker = this.getOrCreateCircuitBreaker(toolName, registration);
       // Breaker continues to observe legacy promise settlement, not semantic classification.
-      const promise = breaker.execute(() => this.pipeline.execute({
-        ...registration.tool,
-        execute: async (pipelineArgs: any) => {
-          signal.throwIfAborted();
-          executionStarted = true;
-          evidenceArgs = captureArgs(pipelineArgs);
-          return selectedExecute.call(selectedTool, pipelineArgs, shared || options.signal || timeout > 0 ? context : undefined);
-        },
-      }, args, { executionId, toolContext: context, registration, onOutcome: (value) => { pipelineOutcome = value; } }));
+      const invoke = async (pipelineArgs: unknown, reportFailure?: (error: Error) => void): Promise<unknown> => {
+        signal.throwIfAborted();
+        executionStarted = true;
+        evidenceArgs = captureArgs(pipelineArgs);
+        if (compositionObserver) compositionArguments = captureCompositionArguments(pipelineArgs);
+        const selectedContext = shared || options.signal || timeout > 0 || connectorExecutionHint(selectedTool) ? context : undefined;
+        return selectedOutcomeExecute && reportFailure
+          ? selectedOutcomeExecute.call(selectedTool, pipelineArgs, selectedContext, reportFailure)
+          : selectedExecute.call(selectedTool, pipelineArgs, selectedContext);
+      };
+      const execute: ToolFunction['execute'] = args => invoke(args);
+      if (compositionDenial) attachCompositionDenial(execute, compositionDenial);
+      if (selectedOutcomeExecute) attachOutcomeCapture(execute, () => function(args, _context, reportFailure) {
+        return invoke(args, reportFailure);
+      });
+      const promise = breaker.execute(() => this.pipeline.execute({ ...registration.tool, execute }, args,
+        { executionId, toolContext: context, registration, onOutcome: (value) => { pipelineOutcome = value; } }));
+      trackCompositionWork(this, promise);
       // Observe eventual settlement independently; it must not enter context or count twice.
-      void promise.then(async (result) => {
+      const settlement = promise.then(async (result) => {
         settled = true;
-        if (evidenceMiddleware) settledResult = { value: result };
+        if (evidenceMiddleware || compositionObserver) settledResult = { value: result };
         if (abandoned) {
           const late = await persist(outcome(pipelineOutcome?.status ?? 'succeeded', pipelineOutcome?.error, true), { value: result }, true);
-          if (!this._isDestroyed) notify('tool:late-complete', late.outcome);
+          notify('tool:late-complete', late.outcome, { value: result });
         }
       }, async (error: unknown) => {
         settled = true;
         if (abandoned) {
           const late = await persist(outcome(pipelineOutcome?.status ?? 'failed', error instanceof Error ? error : new Error(String(error)), true), undefined, true);
-          if (!this._isDestroyed) notify('tool:late-complete', late.outcome);
+          notify('tool:late-complete', late.outcome);
         }
       }).catch(() => undefined);
+      trackCompositionWork(this, settlement);
       const result = await withAbort(promise, signal);
       // An abort during settlement still belongs to this execution, never to the next run.
       signal.throwIfAborted();
@@ -1177,19 +1261,20 @@ export class ToolManager extends EventEmitter implements IToolExecutor, IDisposa
       this.toolLogger.debug({ toolName, outcome: value, resultSummary: this.summarizeResult(result) }, 'Tool execution completed');
       clearTimeout(timer);
       const report = evidenceMiddleware ? await persist(value, { value: result }) : { outcome: value };
-      notify('tool:outcome', report.outcome);
+      notify('tool:outcome', report.outcome, { value: result });
       return { result, ...report };
     } catch (error) {
       abandoned = !settled;
       const err = error instanceof Error ? error : new Error(String(error));
-      const value = outcome(timedOut ? 'timed_out' : signal.aborted ? 'cancelled' : pipelineOutcome?.status ?? 'failed', err);
+      const reportedError = selectedOutcomeExecute && !signal.aborted ? pipelineOutcome?.error ?? err : err;
+      const value = outcome(timedOut ? 'timed_out' : signal.aborted ? 'cancelled' : pipelineOutcome?.status ?? 'failed', reportedError);
       this.recordRegisteredExecution(toolName, registration, value.durationMs, false);
       metrics.increment('tool.failed', 1, { tool: toolName, error: err.name });
       const wrapped = new ToolExecutionError(toolName, err.message, err);
       clearTimeout(timer);
       const report = evidenceMiddleware ? await persist(value, settledResult) : { outcome: value };
       wrapped.outcome = report.outcome;
-      notify('tool:outcome', report.outcome);
+      notify('tool:outcome', report.outcome, settledResult);
       throw wrapped;
     } finally {
       clearTimeout(timer);

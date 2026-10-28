@@ -1,0 +1,1244 @@
+{
+  "protocol": "consumer-final-validation-v1",
+  "recordedAt": "2026-10-28",
+  "branch": "version2",
+  "baseCommit": "0f159e90586c98efd561f216de87277a6993e340",
+  "status": "all-authorized-slices-implemented-offline-gates-passed",
+  "verifiedPackageRelease": false,
+  "slices": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9-A",
+    "C9-B",
+    "C9-C"
+  ],
+  "unit": {
+    "passed": 9196,
+    "failed": 0,
+    "failedSuites": 0,
+    "files": 409,
+    "artifact": {
+      "path": "/tmp/oneringai-final-unit.json",
+      "bytes": 2959166,
+      "sha256": "6911dcd12bdd96fbd9455be4623a9098aec6d0e4fe90ab770015925a29c25d87"
+    }
+  },
+  "gates": [
+    {
+      "name": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-build.log"
+    },
+    {
+      "name": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-typecheck.log"
+    },
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-lint.log"
+    },
+    {
+      "name": "examples",
+      "command": [
+        "npm",
+        "run",
+        "examples:check"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-examples.log"
+    },
+    {
+      "name": "compat",
+      "command": [
+        "npm",
+        "run",
+        "test:agentic:compat"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-compat.log"
+    },
+    {
+      "name": "api-design",
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "docs/evaluations/consumer-api-design/tsconfig.json"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-api-design.log"
+    },
+    {
+      "name": "docs",
+      "command": [
+        "npm",
+        "run",
+        "docs"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-docs.log"
+    },
+    {
+      "name": "amos-types",
+      "command": [
+        "npm",
+        "--prefix",
+        "apps/amos",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-amos-types.log"
+    },
+    {
+      "name": "amos-build",
+      "command": [
+        "npm",
+        "--prefix",
+        "apps/amos",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-amos-build.log"
+    },
+    {
+      "name": "unit",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/unit",
+        "--reporter=json",
+        "--outputFile=/tmp/oneringai-final-unit.json"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-final-gate-unit.log"
+    }
+  ],
+  "public": {
+    "fixtures": 12,
+    "checks": 1413,
+    "results": [
+      {
+        "fixture": "tests/fixtures/agentic-presets/public-runtime.mjs",
+        "exitCode": 0,
+        "checks": 54,
+        "report": {
+          "protocol": "stage12-public-v1",
+          "summaries": [
+            {
+              "format": "esm",
+              "checks": 27,
+              "calls": 4
+            },
+            {
+              "format": "cjs",
+              "checks": 27,
+              "calls": 4
+            }
+          ]
+        },
+        "log": "/tmp/oneringai-frozen-public-agentic-presets.log"
+      },
+      {
+        "fixture": "tests/fixtures/collections/public-runtime.mjs",
+        "exitCode": 0,
+        "checks": 240,
+        "report": {
+          "protocol": "consumer-c5-public-v1",
+          "combinations": 16,
+          "checks": 240,
+          "passed": true
+        },
+        "log": "/tmp/oneringai-frozen-public-collections.log"
+      },
+      {
+        "fixture": "tests/fixtures/composition/public-runtime.mjs",
+        "exitCode": 0,
+        "checks": 68,
+        "report": {
+          "protocol": "c2-private-cross-bundle-v1",
+          "checks": 68,
+          "combinations": 8,
+          "passed": true
+        },
+        "log": "/tmp/oneringai-frozen-public-composition.log"
+      },
+      {
+        "fixture": "tests/fixtures/context-assembly/public-runtime.mjs",
+        "exitCode": 0,
+        "checks": 38,
+        "report": {
+          "protocol": "stage05-public-v1",
+          "results": [
+            {
+              "format": "esm",
+              "checks": 19
+            },
+            {
+              "format": "cjs",
+              "checks": 19
+            }
+          ]
+        },
+        "log": "/tmp/oneringai-frozen-public-context-assembly.log"
+      },
+      {
+        "fixture": "tests/fixtures/enhanced-connectors/public-runtime.mjs",
+        "exitCode": 0,
+        "checks": 228,
+        "report": {
+          "protocol": "consumer-c4-public-v1",
+          "combinations": 16,
+          "checks": 228,
+          "passed": true
+        },
+        "log": "/tmp/oneringai-frozen-public-enhanced-connectors.log"
+      },
+      {
+        "fixture": "tests/fixtures/metadata/public-runtime.mjs",
+        "exitCode": 0,
+        "checks": 53,
+        "report": {
+          "passed": true,
+          "checks": 53,
+          "entries": 4,
+          "browser": true
+        },
+        "log": "/tmp/oneringai-frozen-public-metadata.log"
+      },
+      {
+        "fixture": "tests/fixtures/model-routing/public-runtime.mjs",
+        "exitCode": 0,
+        "checks": 44,
+        "report": {
+          "protocol": "stage-14a-public-runtime-v1",
+          "passed": true,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 22
+            },
+            {
+              "format": "cjs",
+              "checks": 22
+            }
+          ]
+        },
+        "log": "/tmp/oneringai-frozen-public-model-routing.log"
+      },
+      {
+        "fixture": "tests/fixtures/native-compaction/public-runtime.mjs",
+        "exitCode": 0,
+        "checks": 66,
+        "report": {
+          "protocol": "stage-16a-public-runtime-v1",
+          "passed": true,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 33
+            },
+            {
+              "format": "cjs",
+              "checks": 33
+            }
+          ]
+        },
+        "log": "/tmp/oneringai-frozen-public-native-compaction.log"
+      },
+      {
+        "fixture": "tests/fixtures/orchestrator-factory/public-runtime.mjs",
+        "exitCode": 0,
+        "checks": 208,
+        "report": {
+          "protocol": "consumer-c6-public-v1",
+          "combinations": 16,
+          "checks": 208,
+          "passed": true
+        },
+        "log": "/tmp/oneringai-frozen-public-orchestrator-factory.log"
+      },
+      {
+        "fixture": "tests/fixtures/outcome-tools/public-runtime.mjs",
+        "exitCode": 0,
+        "checks": 180,
+        "report": {
+          "protocol": "c1-public-outcomes-v1",
+          "checks": 180,
+          "results": [
+            {
+              "helper": "esm",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "wrapper": "cjs",
+              "checks": 3
+            },
+            {
+              "helper": "cjs",
+              "wrapper": "duplicate-esm",
+              "checks": 3
+            },
+            {
+              "helper": "duplicate-esm",
+              "wrapper": "duplicate-cjs",
+              "checks": 3
+            },
+            {
+              "helper": "duplicate-cjs",
+              "wrapper": "esm",
+              "checks": 3
+            },
+            {
+              "format": "esm",
+              "legacyRemoteBoundary": true,
+              "checks": 4
+            },
+            {
+              "format": "cjs",
+              "legacyRemoteBoundary": true,
+              "checks": 4
+            }
+          ]
+        },
+        "log": "/tmp/oneringai-frozen-public-outcome-tools.log"
+      },
+      {
+        "fixture": "tests/fixtures/remote-outcomes/public-runtime.mjs",
+        "exitCode": 0,
+        "checks": 90,
+        "report": {
+          "protocol": "consumer-c7-public-v1",
+          "combinations": 9,
+          "checks": 90,
+          "passed": true
+        },
+        "log": "/tmp/oneringai-frozen-public-remote-outcomes.log"
+      },
+      {
+        "fixture": "tests/fixtures/verified-routines/public-runtime.mjs",
+        "exitCode": 0,
+        "checks": 144,
+        "report": {
+          "protocol": "consumer-c3-public-v1",
+          "combinations": 16,
+          "checks": 144,
+          "passed": true
+        },
+        "log": "/tmp/oneringai-frozen-public-verified-routines.log"
+      }
+    ],
+    "artifact": {
+      "path": "/tmp/oneringai-frozen-public.json",
+      "bytes": 6561,
+      "sha256": "aa9a16082e0a389e8779fba44cd12306dd0cc892849e92b878c3526bc73bd613"
+    }
+  },
+  "offline": {
+    "modes": 52,
+    "allPassed": true,
+    "results": [
+      {
+        "script": "example:agentic-baseline",
+        "command": [
+          "npm",
+          "run",
+          "example:agentic-baseline"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-agentic-baseline.log"
+      },
+      {
+        "script": "example:context-freshness",
+        "command": [
+          "npm",
+          "run",
+          "example:context-freshness"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-context-freshness.log"
+      },
+      {
+        "script": "example:context-budget",
+        "command": [
+          "npm",
+          "run",
+          "example:context-budget"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-context-budget.log"
+      },
+      {
+        "script": "example:structured-budget",
+        "command": [
+          "npm",
+          "run",
+          "example:structured-budget"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-structured-budget.log"
+      },
+      {
+        "script": "example:amos-context",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-context"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-amos-context.log"
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": [
+          "npm",
+          "run",
+          "example:tool-outcomes"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-tool-outcomes.log"
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-tool-outcomes"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-amos-tool-outcomes.log"
+      },
+      {
+        "script": "example:purpose-models",
+        "command": [
+          "npm",
+          "run",
+          "example:purpose-models"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-purpose-models.log"
+      },
+      {
+        "script": "example:shared-budget",
+        "command": [
+          "npm",
+          "run",
+          "example:shared-budget"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-shared-budget.log"
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-helpers"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-amos-helpers.log"
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": [
+          "npm",
+          "run",
+          "example:durable-evidence"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-durable-evidence.log"
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": [
+          "npm",
+          "run",
+          "example:evidence-recovery"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-evidence-recovery.log"
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": [
+          "npm",
+          "run",
+          "example:ambiguous-evidence"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-ambiguous-evidence.log"
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-evidence"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-amos-evidence.log"
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": [
+          "npm",
+          "run",
+          "example:evidence-interruption"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-evidence-interruption.log"
+      },
+      {
+        "script": "example:context-strategies",
+        "command": [
+          "npm",
+          "run",
+          "example:context-strategies"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-context-strategies.log"
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-context-strategies"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-amos-context-strategies.log"
+      },
+      {
+        "script": "example:task-state",
+        "command": [
+          "npm",
+          "run",
+          "example:task-state"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-task-state.log"
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-task-state"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-amos-task-state.log"
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": [
+          "npm",
+          "run",
+          "example:feedback-agent"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-feedback-agent.log"
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": [
+          "npm",
+          "run",
+          "example:loop-equivalence"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-loop-equivalence.log"
+      },
+      {
+        "script": "example:amos-loop",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-loop"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-amos-loop.log"
+      },
+      {
+        "script": "example:agentic-presets",
+        "command": [
+          "npm",
+          "run",
+          "example:agentic-presets"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-agentic-presets.log"
+      },
+      {
+        "script": "example:amos-presets",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-presets"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-amos-presets.log"
+      },
+      {
+        "script": "example:context-selection",
+        "command": [
+          "npm",
+          "run",
+          "example:context-selection"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-context-selection.log"
+      },
+      {
+        "script": "example:cache-aware-context",
+        "command": [
+          "npm",
+          "run",
+          "example:cache-aware-context"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-cache-aware-context.log"
+      },
+      {
+        "script": "example:amos-context-selection",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-context-selection"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-amos-context-selection.log"
+      },
+      {
+        "script": "example:context-dispatch-safety",
+        "command": [
+          "npm",
+          "run",
+          "example:context-dispatch-safety"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-context-dispatch-safety.log"
+      },
+      {
+        "script": "example:native-compaction",
+        "command": [
+          "npm",
+          "run",
+          "example:native-compaction"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-native-compaction.log"
+      },
+      {
+        "script": "example:native-recovery",
+        "command": [
+          "npm",
+          "run",
+          "example:native-recovery"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-native-recovery.log"
+      },
+      {
+        "script": "example:native-comparison",
+        "command": [
+          "npm",
+          "run",
+          "example:native-comparison"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-native-comparison.log"
+      },
+      {
+        "script": "example:amos-native-compaction",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-native-compaction"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-amos-native-compaction.log"
+      },
+      {
+        "script": "example:native-hooks",
+        "command": [
+          "npm",
+          "run",
+          "example:native-hooks"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-native-hooks.log"
+      },
+      {
+        "script": "example:native-hooks-manual",
+        "command": [
+          "npm",
+          "run",
+          "example:native-hooks-manual"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-native-hooks-manual.log"
+      },
+      {
+        "script": "example:model-routing",
+        "command": [
+          "npm",
+          "run",
+          "example:model-routing"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-model-routing.log"
+      },
+      {
+        "script": "example:routing-context",
+        "command": [
+          "npm",
+          "run",
+          "example:routing-context"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-routing-context.log"
+      },
+      {
+        "script": "example:amos-routing",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-routing"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-amos-routing.log"
+      },
+      {
+        "script": "example:routing-suspension",
+        "command": [
+          "npm",
+          "run",
+          "example:routing-suspension"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-routing-suspension.log"
+      },
+      {
+        "script": "example:routing-suspension-failure",
+        "command": [
+          "node",
+          "--import",
+          "tsx",
+          "examples/routing-suspension-recovery.ts",
+          "--failed-finalization"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-routing-suspension-failure.log"
+      },
+      {
+        "script": "example:orchestrator-factory",
+        "command": [
+          "npm",
+          "run",
+          "example:orchestrator-factory"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-orchestrator-factory.log"
+      },
+      {
+        "script": "example:connector-pages",
+        "command": [
+          "npm",
+          "run",
+          "example:connector-pages"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-connector-pages.log"
+      },
+      {
+        "script": "example:enhanced-connectors",
+        "command": [
+          "npm",
+          "run",
+          "example:enhanced-connectors"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-enhanced-connectors.log"
+      },
+      {
+        "script": "example:verified-routines",
+        "command": [
+          "npm",
+          "run",
+          "example:verified-routines"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-verified-routines.log"
+      },
+      {
+        "script": "example:composite-binding",
+        "command": [
+          "npm",
+          "run",
+          "example:composite-binding"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-composite-binding.log"
+      },
+      {
+        "script": "example:outcome-aware-tools",
+        "command": [
+          "npm",
+          "run",
+          "example:outcome-aware-tools"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-outcome-aware-tools.log"
+      },
+      {
+        "script": "example:amos-outcome-tools",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-outcome-tools"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-amos-outcome-tools.log"
+      },
+      {
+        "script": "example:remote-outcomes",
+        "command": [
+          "npm",
+          "run",
+          "example:remote-outcomes"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-remote-outcomes.log"
+      },
+      {
+        "script": "example:composition-evaluation",
+        "command": [
+          "npm",
+          "run",
+          "example:composition-evaluation"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-composition-evaluation.log"
+      },
+      {
+        "script": "example:amos-composition",
+        "command": [
+          "npm",
+          "run",
+          "example:amos-composition"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-amos-composition.log"
+      },
+      {
+        "script": "example:endpoint-capabilities",
+        "command": [
+          "npm",
+          "run",
+          "example:endpoint-capabilities"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-endpoint-capabilities.log"
+      },
+      {
+        "script": "example:parameter-policy",
+        "command": [
+          "npm",
+          "run",
+          "example:parameter-policy"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-parameter-policy.log"
+      },
+      {
+        "script": "example:vendor-presentation",
+        "command": [
+          "npm",
+          "run",
+          "example:vendor-presentation"
+        ],
+        "exitCode": 0,
+        "log": "/tmp/oneringai-frozen-offline-example-vendor-presentation.log"
+      }
+    ],
+    "artifact": {
+      "path": "/tmp/oneringai-frozen-offline.json",
+      "bytes": 11854,
+      "sha256": "3e6ba9fdf78a71ae5574edc909396af29e91f2d9ff00809b1938e5fa680ed396"
+    }
+  },
+  "packageArtifact": {
+    "packageFiles": 313,
+    "requiredMissing": [],
+    "examples": [
+      {
+        "example": "remote-tool-outcomes.ts",
+        "exitCode": 0,
+        "log": "/tmp/oneringai-final-packed/remote-tool-outcomes.ts.log"
+      },
+      {
+        "example": "composed-meeting-preparation.ts",
+        "exitCode": 0,
+        "log": "/tmp/oneringai-final-packed/composed-meeting-preparation.ts.log"
+      },
+      {
+        "example": "endpoint-capabilities.ts",
+        "exitCode": 0,
+        "log": "/tmp/oneringai-final-packed/endpoint-capabilities.ts.log"
+      },
+      {
+        "example": "parameter-policy.ts",
+        "exitCode": 0,
+        "log": "/tmp/oneringai-final-packed/parameter-policy.ts.log"
+      },
+      {
+        "example": "vendor-presentation.ts",
+        "exitCode": 0,
+        "log": "/tmp/oneringai-final-packed/vendor-presentation.ts.log"
+      }
+    ],
+    "passed": true,
+    "release": false
+  },
+  "documentationLinks": {
+    "files": 90,
+    "checked": 3075,
+    "errors": []
+  },
+  "live": {
+    "status": "paused-by-user",
+    "instruction": "dont test live for now",
+    "date": "2026-10-28",
+    "noFurtherLiveCalls": true,
+    "priorAttempt": {
+      "passed": 182,
+      "failed": 81,
+      "failureGroups": {
+        "anthropicDirectOrDependent": 80,
+        "legacyGoogleWrapupTrajectory": 1
+      },
+      "c7OpenAIGoogleSubsequentPasses": 4,
+      "anthropicDirectDiagnostic": "403 permission_error on models and messages; account lacks endpoint permission."
+    },
+    "unverified": [
+      "Anthropic endpoint access and live C7",
+      "legacy Google wrap-up trajectory",
+      "full cumulative three-provider pass"
+    ],
+    "earlierRecordsRemainHistorical": true
+  },
+  "coverageBoundaries": [
+    "GPT-Realtime-2.1 and 2.1-mini exact effort sets remain explicitly unknown",
+    "Unverified conversation/transcription pairs stay unknown",
+    "No production backend, distributed hard budget or durable workflow authority",
+    "No ICOS edits, dependency upgrade or release"
+  ],
+  "finalReviewFixes": [
+    "Bound multibyte remote source recovery by serialized bytes before accumulation, with no-replay repair regression",
+    "Include reused reporter in packed example closure and depend on structural event subscriptions",
+    "Use the actual recorded command for the historical failed-finalization offline mode label",
+    "Guard AMOS local vendor overrides against prototype keys",
+    "All final verification runs follow the clean build sequentially"
+  ],
+  "sourceAndFixtureSHA256": {
+    "apps/amos/src/agent/AgentRunner.ts": "10b0bcc0dde20a786bdf4b035380bb4b4aaa98de2c493529f23f70f67ed16573",
+    "apps/amos/src/agent/collectionPages.ts": "971e223c161fec0b4679e02b4383d76508d3b49358d24185132ce8794e27f0f1",
+    "apps/amos/src/app.ts": "5fec241158cdfba1fc0b05c2d933b5532020330fb6b5279a9ddea8885340804b",
+    "apps/amos/src/commands/commands/RoutineCommand.ts": "22bb85d46031c6968b0df4e10eecf3ec6d0abb430cac6263248a1a8833f2406c",
+    "apps/amos/src/commands/commands/VendorCommand.ts": "aaaf978181d5742b81c6fe73b344b28ab4dcdb0461dac19317ba598db267a0d6",
+    "apps/amos/src/commands/commands/index.ts": "cfa3640b82d62a0f94c235b28e36a20b3412284b653585d501aa77f74058d2d4",
+    "examples/README.md": "4f5b9f1dfcd03cdfbe96ab5e03dd95cdb883192a07cb37af81e1ba1ae138559d",
+    "examples/agentic-baseline/composition.ts": "35768414c76e6668d8211e368fdeeed7039d214180d4fd615dda07e22ec90c15",
+    "examples/agentic-baseline/reporter.ts": "a9f236c1d3af8b89d21c0aa32319933d379051f392b718fdac6fa87c37f91bdf",
+    "examples/composed-meeting-preparation.ts": "2c8b74566298315be1e4f852a0108aafe6d0a4c3f320931da8ae598ddeed5b86",
+    "examples/composite-execution-binding.ts": "2020040b5323b20cae56a4e40a1280445e06bfa3708c09c22f0199edc4ce212b",
+    "examples/connector-collection-pages.ts": "a76fdbede67d469704539d9a79aa59dff6972e186316209f955e7331b54b3953",
+    "examples/endpoint-capabilities.ts": "8cf546fe1cad7bf7dec5e18556c38a0a3f347e52177bed14059cf1d1f1ff2059",
+    "examples/enhanced-connector-execution.ts": "08cf3851bd9de629642a81bffc11d392cd94021223065840c82223764f98359f",
+    "examples/orchestrator-factory.ts": "0d8014b186d4a60ea1c2a7b78e269fca613751f2f9e5024adc8b540535f7d0f3",
+    "examples/outcome-aware-tools.ts": "6ed674ac906116e0ccfa3b2d260fdf165eff682357349a7dee1f7b344020aa9c",
+    "examples/parameter-policy.ts": "86e6af596e9ebcc6bd24b6de843e678149f6ed61cf0cd0315e8c8e5e62c5dc08",
+    "examples/remote-tool-outcomes.ts": "8682b96431c5f5d782d8d7436c574c7a6bfc4a96d43818073d49cdeedba61d88",
+    "examples/vendor-presentation.ts": "7b665f880cbd10f5bc001ec68b7fcdd4751be1b472b1d07eb46b8152962d080f",
+    "examples/verified-routines.ts": "98c35cf8288157e94020eea013050931e60b4b1a2a847328a41119e37d1aa42b",
+    "src/capabilities/metadata/parameters.ts": "51eb888332bdf6b1e60420ab202e86d93ed69c4fc420e9b9cf11a3c74108eaff",
+    "src/capabilities/metadata/realtime.ts": "787d5f17eb2ff828c4c805df3723e82b375fe2def7adc5a1ee9ebf60044c9366",
+    "src/capabilities/metadata/vendorPresentation.ts": "094fef61085442b168a0e0227118988e3d5281100d6a30417f1eaab99092784f",
+    "src/core/Agent.ts": "b3a679dbe442c492a42055c5d1977fb54db94003892829fb792e2985778a95ae",
+    "src/core/BaseAgent.ts": "46955aac6792a82d979ab246b121a5a218b93356b2fbbf36075c59aeb5f9c91d",
+    "src/core/Connector.ts": "6a1406c1bcdf49841039676f5f7cc65ef47a8981b119afb5902e33fa8ed5eeb8",
+    "src/core/ToolManager.ts": "400da92dfb9d133345e29a64eb8df532d3564df6fc9377f058ce46bbc8904d7d",
+    "src/core/agent-loop/LoopController.ts": "b73bb1ba49e2f70778cb83816dd77a8284b287c4c4dede8934d4eb184f6dcada",
+    "src/core/connector-execution/attempts.ts": "ba12bc271a3a1b353965431d8093c943bdb1a51afb95e0e5514de37e6f52ba42",
+    "src/core/connector-execution/cursors.ts": "82cbae2090f3b96e644aa18a6a179b2b875a9f28bcfd53c299e24d36194a8e72",
+    "src/core/connector-execution/profile.ts": "eade06a080e9f16ae9cae13cf62ec934ac6bf47920c5d805969467b589379ee1",
+    "src/core/connector-execution/registration.ts": "e651a03432a27cd34adde50fccec99086e4dae3f8aa5649582192cea18105b03",
+    "src/core/context-nextgen/AgentContextNextGen.ts": "e2090217c7c30484f8182133491a2680ad51e18b8d62c66a5377d3a01e20eedc",
+    "src/core/context-nextgen/plugins/ToolCatalogPluginNextGen.ts": "9857676f96c4c66ff7bb76f25c94693a491602e3114aebfa0d059691a3db0ec8",
+    "src/core/createOutcomeTool.ts": "00f6165de48298b68b7d517dab462468f5346e024f85f715a96ee5bcb15335dc",
+    "src/core/evidence/ToolEvidenceMiddleware.ts": "b81ddf0a5777338fc0f42fb17c0e7c6b8397714f864af3824c065a903544c898",
+    "src/core/execution/composition.ts": "3570d9811e2d91aba7d1732f3d9c12ac19295761b0ff81a9ab3671bad80c2cef",
+    "src/core/execution/modelCorrelation.ts": "a7918f4271e8857804a073a928d9240d167f9b28ea8e129861559211c2d73189",
+    "src/core/execution/routineBinding.ts": "be68f6195895099171b81fa690ac174040f0ee85225a8f5ecf76f186fac4b311",
+    "src/core/index.ts": "0d04e890091bce1e4807506fe4d36f4fae8f991049138a0112e4ce9551d80cd6",
+    "src/core/model-execution/ModelExecutor.ts": "4a9febd7cf725cfeb98d5c2734e5b9c089014bbe49fe6f901ea41d570b28885f",
+    "src/core/orchestrator/construction.ts": "46ffc163f2cef60437dc630f6340d7eb946dc4ff8bc49416ce28ff592b9df059",
+    "src/core/orchestrator/createOrchestrator.ts": "c030a613d1c4a7d9c6b7934011c892e0cadfab5a062109637e2a9d25b020090c",
+    "src/core/orchestrator/executionBinding.ts": "5c991248116ac99320350c950429661be9ca9c37489d4b001fd8fce642ee1a0f",
+    "src/core/orchestrator/factoryConfig.ts": "8306663fe71208a7cc58cc38d4cf946b020ccb2996ebc1111b9352af37faf915",
+    "src/core/orchestrator/factoryExecution.ts": "59c99768bb22528e9daee590fbf8be9efb9d05dc557a048422cacf846f5059e4",
+    "src/core/orchestrator/factoryPolicy.ts": "5b46d8b5a5f24f17170c19406e5d140ce00b711b8d862535dc53f385d0b78540",
+    "src/core/orchestrator/factoryTypes.ts": "dd647f02f4165ee4488da1c2928fb8cad4863eea15e2e956c46ba6948d9e2254",
+    "src/core/orchestrator/index.ts": "99d509fb5da915ea5f0064586151691fec0b94979bee2b0dd8e33c5b9c741a16",
+    "src/core/orchestrator/tools.ts": "df2a6280a85ad18d894f8deddfe1c8175d0a725aed5851f46e8ee3ebf33e1914",
+    "src/core/routineControlFlow.ts": "f2cc8cfeb836d992a8c9264023e9c3742daf9f34377f170c76e90cb1e54edb0c",
+    "src/core/routineKeys.ts": "6bb79fa5242f5e01e994e50a537474b9e8bfcbcf57943acddc14309d78f3a4bc",
+    "src/core/routineRunner.ts": "67e47dff329ed9e6a6c6d5390b3eded4a1e5c738e1870079579e76f2f9449b8f",
+    "src/core/routines/createRoutineRunner.ts": "9f94cba161d77099f96fb919ea1297c42088bbbcec5bc7823fb61b64f76d4fd7",
+    "src/core/routines/observations.ts": "fec4007acfc2696309458239b0b14a8a66653d27035c21a7f546be3c89781c3e",
+    "src/core/routines/preflight.ts": "e1f1df49dd75e55e968daa72c970728ada06610a59ccb96d7448d4578d126bf6",
+    "src/core/routines/types.ts": "cd0c8ff6cf9627bf4cb86d1a274adc7be66e3f3f7caa960428dc6dc0caa33ddb",
+    "src/core/tool-execution/ToolExecutionPipeline.ts": "4fb99b655b9b67531046ccab1fc0686a23275d31da7b219e7249b87a21eb5700",
+    "src/core/tool-execution/outcomeInvocation.ts": "93db55e26950d05a4894f5feb1e81755b31666049be7c57116079d2517bc84e5",
+    "src/core/tool-execution/outcomes.ts": "f332efa38b51b0f33affb23de8d1c709b82e999deef61f573ec8c9818f52058b",
+    "src/core/tool-execution/remoteObservation.ts": "7c0b6cba383ee0dc0d13c5cdd8fad2f4b1c3625f0adf75b496809f0a23a4a53f",
+    "src/domain/interfaces/ITextProvider.ts": "405ec479287569c9fe165f77fb0c0ed0fb0085f16634e3b2b65e7c2333c5e04d",
+    "src/index.ts": "82ce66c45de15a7efc4cfac4fcae0f2ead5e19d2f65e38ebf68319d2f3730824",
+    "src/infrastructure/providers/openai/OpenAIRequestValidator.ts": "61e8d81b0e2991239ea05203f24f26ed5ce1948f61231b5755ae9b98a338e184",
+    "src/infrastructure/providers/openai/OpenAITextProvider.ts": "c0e49ff294c243a92583f6b40c20b6692dc37f840b4e68aae9e3223fcf004683",
+    "src/infrastructure/providers/openai/parameterPolicy.ts": "53e67b574a73d5aee46890522d5c1cd8f7e9aaabbbd1fbfb0edfe97b62b79b2c",
+    "src/portable/AgentPackage.ts": "e2259830a14787e322b08ace530df777b1c0a7d43565e3af60f68a08a0b71dcd",
+    "src/portable/OutcomeClient.ts": "57441b06e8a11d2cc36e820e79d93c678fef9a15ecdc2d67a030f8c7ab02c663",
+    "src/portable/OutcomeServer.ts": "ea70a6c804947b78e7cd1ff0878c2fba57524229cc0cb1e9cd6abff811acbd98",
+    "src/portable/index.ts": "c67461887b57a956fbce93eacdeb590170df880c8073e5cd65f643ac536892f3",
+    "src/portable/outcomeRecords.ts": "0c88ffd593f4900ddcb34f76b52ceb0612447e4d35c4249aa47e0d01e87d32da",
+    "src/portable/outcomeTypes.ts": "6a5f6d40ab6eb14eee0fe9ace69e1a5321200bed8a43006d0066378c6737cd37",
+    "src/portable/outcomeWire.ts": "20a836ba863bb5967c4f9687e004a758be5fd97ef17ea76e7fc72000750527c1",
+    "src/portable/types.ts": "3e6a338161a7f791fb584063719831fc47a7c8fe99c43f0457d5bbc8bdb2c393",
+    "src/shared/index.ts": "fef32ad39e839f560856791e1f69a8b702071bb5c095d1cd12184eaa417b68e1",
+    "src/tools/connector/ConnectorTools.ts": "f2a155daf661feb22c6fcdcdc24383d309291f0add695a55953631301792712d",
+    "src/tools/connector/enhancedInvocation.ts": "bb10531d4828560c1b10087b8a0fca23fcaf0f09f42e4fb2f67e6f704653d02f",
+    "src/tools/connector/enhancedProfiles.ts": "799a77f93069558ff292254c53ff56031d0d025d7aedd479447abc4abb8654fc",
+    "src/tools/connector/index.ts": "b834bf12266dd4d2f383a7c974f4b5b47384cac19c92fd7dd7353fc8048ed731",
+    "src/tools/connector/pages/common.ts": "c67e5806cbf020091bc51a90c9b817b90e8a7a2deb0faa0d3ddf5979cdd02174",
+    "src/tools/connector/pages/contract.ts": "4bb97ef1505326c8c569fc8fef5533f2bc424b209b4e075835b7f48f0aeddf04",
+    "src/tools/connector/pages/types.ts": "de74be443405463f85eaa320d374ab11bfe24e4756692c9d69ff84eaa34d74e8",
+    "src/tools/github/collectionPages.ts": "57104a6b6dc0050b9d575ec6b005d49a0330ef2206801bd5c3ca6afe19b1dfea",
+    "src/tools/github/createPR.ts": "5c619a4cc8ba66dad128b934e7f58f1d8e78154016572d5d0779961ea330fabb",
+    "src/tools/github/getPR.ts": "594934fda17a3dbc8fc61b965a2c231c9e55cde004fe9956b5eb51632cdbe9e9",
+    "src/tools/github/listBranches.ts": "0301648aebc9ccbb0d02b2b81a313ed3062ca26f2d7c6f69fd7031c6b1f405cc",
+    "src/tools/github/prComments.ts": "8dd0db4759e0ae2fc12d46be55e109e27c7386d8d2e1365e6dc0f303141a8eba",
+    "src/tools/github/prFiles.ts": "ec63c005f9bee3515854acca9df026748cff43e62f1f4a051dbc6a615c81a8f5",
+    "src/tools/github/readFile.ts": "92479d83d5f6e4728b8c3b7401d8a511905c06a18f212864999023d75297cff9",
+    "src/tools/github/register.ts": "fff90d68e30dfc0572f1aa0d7f56aa4110094174a0dc8d2a5c3d452ca0b6904a",
+    "src/tools/github/searchCode.ts": "b7f3b2f15cbf264d8696a58511a54090fbf8cbf7a41689b02017a938fb296a34",
+    "src/tools/github/searchFiles.ts": "9ba7bfb196ae294d2c7f6bca26de5692d265a67577fae032495d7e66dec4a404",
+    "src/tools/google/collectionPages.ts": "999c54b90cf1089df8a8a3605c2bb1b42727623bebb3d6a53a6f7b8db582bbbd",
+    "src/tools/google/createDraftEmail.ts": "39cade833a6a874afc54df3d3020c5986db91a9cc17697e2f2a4156bb144419e",
+    "src/tools/google/createMeeting.ts": "a454b0b617c1260d176a373b7bb9af8853cb36b77e43719c3010be20d84b1f86",
+    "src/tools/google/editMeeting.ts": "fa2329f6e92bd6c811e61de91185ce6b941548a85daa7cf7c0e48555cab1b892",
+    "src/tools/google/findMeetingSlots.ts": "33a7c2b0f8fa2b8c4fa5ab3779f0de5b0696ff2ac0d4cade16a3f42aa726b659",
+    "src/tools/google/getMeeting.ts": "6f1d5ae204ac54dad920e18857e69b273d6759cc2a010b296b157bff3b87be78",
+    "src/tools/google/getMeetingTranscript.ts": "973cb2b83e155077668a92693fbed29255cbe35bc03fa109752740b51e86780a",
+    "src/tools/google/listFiles.ts": "f21f1b435bcd6868fecf8cfd4fd655c1781ad1bce1bd8d9418bb0bb6dce42e0c",
+    "src/tools/google/listMeetings.ts": "37ce6a4884bc704395b163742e090b8a31644affe04a96ade6d7785924efe88c",
+    "src/tools/google/readFile.ts": "87d155796b97a5374fa78ed328db1304279092f0e2a6ff761fc1af31bd25eb1a",
+    "src/tools/google/register.ts": "7b2c737a1100acfdc3d8cc9f1458518a606ecc354f3eb153127019b399273575",
+    "src/tools/google/searchFiles.ts": "b921f8cad51cb9271c1f509668d2757c6019f8687ebc1e246e7f8c3a05bfeac1",
+    "src/tools/google/sendEmail.ts": "b2a105fda7374b05a97d200995d46506346fb61a4b8dcbee5c171f77a700d9db",
+    "src/tools/microsoft/collectionPages.ts": "4db9818f9bb5db6940ca931cac99be7693db6e2226c622880b4516c65cab6405",
+    "src/tools/microsoft/createDraftEmail.ts": "5eb3dfd4f22d2a6c14d8fbbbb09897fac9b2443189a7fe761fdfeb3f0a41d0e3",
+    "src/tools/microsoft/createMeeting.ts": "914b2605a6a9d161b2a338407140ce656bdf2ac6edd47785b3478935d42004b6",
+    "src/tools/microsoft/editMeeting.ts": "b3c2608aaad6793ce5e49f1b0afebffac457c474d37ae3da6370daaedcf9729d",
+    "src/tools/microsoft/findMeetingSlots.ts": "1bd7cc3c9fd8aa6afa959eefead9e5466faa61289b14e8655543e08bdb944795",
+    "src/tools/microsoft/getMeeting.ts": "6317a3fef843c841122948d0d47c8e65e55449e1d762f2e6c113c642bde4c4f4",
+    "src/tools/microsoft/getMeetingTranscript.ts": "f7f41b58dfd20501149780fc6b2851145853cd1afa6d9d53b5c98298a05e9ea1",
+    "src/tools/microsoft/listFiles.ts": "4887e4b9d67fb356bde7bf5b5991b397993c6aabac40a143561d3885cb115134",
+    "src/tools/microsoft/listMeetings.ts": "dba40705acea5f8c52755fcbc14ed759ff4ec04b6bf7f99c41e6ad06627fc32a",
+    "src/tools/microsoft/readFile.ts": "6aa4697eea41de591b9aa6a12ff1fff2feadd640777439bfaa951d5cfd04fbd7",
+    "src/tools/microsoft/register.ts": "1984f258645b58d9e361c560a9a8030cd8e75aee7461f80259b0360e0243b7c5",
+    "src/tools/microsoft/searchFiles.ts": "8a49168f8d734f6398e745076b2e80e54886c71d8a4eceda240bc4e7f20af0a1",
+    "src/tools/microsoft/sendEmail.ts": "0bfeade19019a32695f9bf71d4044cfd50193af39107a7cd3353db127d09d3ff",
+    "src/tools/registry.generated.ts": "566c2eef8be43b75eb7d0316d181ea2fb130fb0238c92ed191d24d208d8961a2",
+    "src/tools/slack/addReaction.ts": "6cd7d6bf164b4c7703345bd16bbbab8ae5203f8c514f0e7d4df88b3f272bed2a",
+    "src/tools/slack/collectionPages.ts": "711528cb7bb701f5db18028a73f60d5b80b13ef66fb5e428290c9f00cbdcd977",
+    "src/tools/slack/getChannelInfo.ts": "7e6b11fdf484ec49dd423a6be506f77a7f6181c1a699187710208493ddeff4f9",
+    "src/tools/slack/getMentions.ts": "e046e102c4c2a423d90e11704c2b465f76335e7337629c833ff68a744a075da2",
+    "src/tools/slack/getMessages.ts": "d090341c92bd1d1267e1f2d0a8efaf17b180f6c1747eefd5fd7333a5cc610bb4",
+    "src/tools/slack/getThread.ts": "7526f09f1560943e9afb749f9549e7778e9848978bd7d739e92d15e488970ac9",
+    "src/tools/slack/getUsers.ts": "d50650db09db4780ff39d769a2d5c41626d7f06e6970f177f6c5a6cf811a2d71",
+    "src/tools/slack/listChannels.ts": "da71283eaa9b7caa8a02d6ce2d6065e77e947d993db2d89fef9be3d4b553a77b",
+    "src/tools/slack/postMessage.ts": "c58cdd3128c169106c9829b4f24c10333512c32d301e15c7cf94d899bc2a9a6f",
+    "src/tools/slack/register.ts": "c3513a51471641cfeb3172a9822bfcfbf9dfa0c5ad28a215d5ed4fdae4c167b7",
+    "src/tools/slack/searchMessages.ts": "a5fd07b6bb338e05efcf54dc1b9e875cd0c87ce5f72daa5dd7f88ab50ca826d5",
+    "src/tools/slack/setChannelTopic.ts": "f08c9e3a71548d45f930ea5504e6afb2bd10fc85db6efe4223a6799aff04a1d8",
+    "tests/conformance/evidence.ts": "51d32673062b6d70c5583cbf48d4f4a40d153d4e07228e3e13cb659b454421b9",
+    "tests/fixtures/agentic-baseline/c1-consumer.ts": "d891ca25689e9521401df02ae6a0b29c4a62ddd3a000cf72b3f57e0511d3bcf6",
+    "tests/fixtures/agentic-baseline/c3-consumer.ts": "8a9c24dc1aa6b22167499fdab2d29c870ab75147c0926ceb9d180f31ca371c3e",
+    "tests/fixtures/agentic-baseline/c4-consumer.ts": "362eede9ce1c085eb818e98d7cdb63da1fbc78f4d4cf0ed52f06312e23c0d2e9",
+    "tests/fixtures/agentic-baseline/c5-consumer.ts": "cf2dc82a9dc0b7265c2c4ec87d3140a5f0a558808400eea2f1004cec820ad6c6",
+    "tests/fixtures/agentic-baseline/c6-consumer.ts": "5b4479b0d1d83b256ec607c3d8567f53703015cf5344f94018c87af0f87e81e8",
+    "tests/fixtures/agentic-baseline/c7-consumer.ts": "ef1968e059faadd31d750891031e28bc5289a7c7e8548961973223e0073e0d59",
+    "tests/fixtures/agentic-baseline/c9-consumer.ts": "75d217063a910a368e636461a00951be4e8987566fc804cd0cb3c0b8676cf1ff",
+    "tests/fixtures/agentic-baseline/tsconfig.json": "2f1f14310ba8475bee58d00ffcecae1bd1be978f9a52423a5d15b93349cd420a",
+    "tests/fixtures/collections/public-runtime.mjs": "be00d7ecbf67aa8c18e8b52c27000018f77210c1a350b282555b2613e6c5726f",
+    "tests/fixtures/composition-evaluation/restart.mjs": "1e65568bfccb60bee4d0c32d29a395bd8e156868d34726a4a1eb9d437b815f41",
+    "tests/fixtures/composition/public-runtime.mjs": "1d9d81ef6d0bb472f0b7d9b25730d518218b4743b78bd91209ffa1402d762790",
+    "tests/fixtures/enhanced-connectors/public-runtime.mjs": "5f79e5dd71f7a4e523ce1916ee737b17136b6f441bf5260093f44a417ee6ccca",
+    "tests/fixtures/metadata/public-runtime.mjs": "c7cc29228b57f1a273482f1850135f18a47eead8a4168b507e15a3ee445d62e2",
+    "tests/fixtures/orchestrator-factory/public-runtime.mjs": "2552b465f26633464424109ce83f1e3494728daec1d0b71193fc9ff8e99a43fa",
+    "tests/fixtures/outcome-tools/public-runtime.mjs": "ccf5175ccbe0314781187c4ff5c2ce8d7a3d9eae4770b338387445f6faafd56c",
+    "tests/fixtures/remote-outcomes/public-runtime.mjs": "cf0e848d4acbd5fbc7674720656049cd98201869566776ea5b284dcfbf0ee0d3",
+    "tests/fixtures/verified-routines/public-runtime.mjs": "6e983cf75a16657b376700381e7c03a281ee6c04c46ab8d08db92e257ed37504",
+    "tests/integration/text/CompositionExecution.live.integration.test.ts": "7379b47672860d35df9edb9017ab7847e6304d4658df7cf2def0f00924c872d1",
+    "tests/integration/text/ConnectorPages.live.integration.test.ts": "7b12b216bf37761c11406e0da50839aab6b577db4740794ae0af31808ec332d0",
+    "tests/integration/text/ContextAssembly.live.integration.test.ts": "7f670f742df2727c8babb2581182c9c2e1b321d564c89e1ca6a7e616ed9842db",
+    "tests/integration/text/ContextFreshness.live.integration.test.ts": "8a9b84f706e24101b90bae91473c3523ff916963b3d42ca8342c3ec84b4e5f1b",
+    "tests/integration/text/EnhancedConnectors.live.integration.test.ts": "1ddabf5a3054975a378a1f7d288fcb9a061dacd09120f84dc60d1f976c01093e",
+    "tests/integration/text/ModelRouting.live.integration.test.ts": "59d9fcd43f2d0d17b3052ed61cac81ae44c3640c1eff4ac5fc901582b9838cf5",
+    "tests/integration/text/OrchestratorFactory.live.integration.test.ts": "f0b25cb944dfd8c3910b70f7e7ece6f74b97245e9f4af75743eefad4980be44b",
+    "tests/integration/text/OutcomeTools.live.integration.test.ts": "c03ff21eda8b49add6761f0f4ce19f426772067403936b48c2b4ad0724ad421e",
+    "tests/integration/text/RemoteOutcomes.live.integration.test.ts": "3bd379b8884c4032f09040fb7b21f5991529a67fb68b0256a4318c434c229cd4",
+    "tests/integration/text/TaskState.live.integration.test.ts": "3b13c318566ce0c338a9a53695efa17e60794bb6335aea0a1cb2a367219eba9a",
+    "tests/integration/text/VerifiedRoutines.live.integration.test.ts": "4a5530ac937eb836ad2b3d3a8c3b1cc91177d3a15d05c5ccd41ea27c4589c41a",
+    "tests/unit/apps/amos/CollectionPages.test.ts": "b56e6e87558098eedb95e6f8de52b0ba98aa1669c9a275c443ab8ce947f693ac",
+    "tests/unit/apps/amos/EnhancedConnectors.test.ts": "fbd12c8b3cc5f46c226e44a4b075afc377440a590afe9d06fe52d7e2b7604d14",
+    "tests/unit/apps/amos/RoutineCommand.test.ts": "f6735c59b514fa098f0ff53acabc31acf1a85923f166042184bec268e76e0b58",
+    "tests/unit/apps/amos/Routing.test.ts": "cb5976edd06284d6f1f7182b676fe49e295b60b264c62219bc2d559dfa99e884",
+    "tests/unit/apps/amos/ToolOutcomes.test.ts": "9b4ce5d627e295ab7b9b3caec76d54da78e67b63231cc4075180fede92350484",
+    "tests/unit/apps/amos/VendorPresentation.test.ts": "603ece8ae6fccb63b54ba7ed6b44e336ec3b9f1ddadb476ef20a780d8c1598c1",
+    "tests/unit/core/Agent.toolOutcomes.test.ts": "a0c02667c0e9e0af2e96dce98d510abb09e1be4e4648aa13e857b464d38f5ffb",
+    "tests/unit/core/CompositionEvaluation.test.ts": "536c2d05bae63f13b34ff018d4b5930f643bcc029b11a734affe7676b9880e4e",
+    "tests/unit/core/CompositionExecution.test.ts": "aec1cbf3c5805f5cd456d4f6605c0cad485e4359e721f7d164971b85004b797e",
+    "tests/unit/core/ConnectorCollectionPages.test.ts": "a1c550576af28a942bc594dc67b3d6e744e91ba00d62117d0cfc57874b7b0d81",
+    "tests/unit/core/EnhancedConnectorTools.test.ts": "a2362f04081e6a391a78b3f1320644bd55fcd27435d01a7776b2d4820ad34ce0",
+    "tests/unit/core/OrchestratorConstruction.test.ts": "0a53c57288cf9edc4c133481286b589604771f7e2158f73af546223f3f7a337e",
+    "tests/unit/core/OrchestratorExecutionBinding.test.ts": "3802d6b3783dd81063fff8a077445fe47e12d7b930330993bf7babf843b20a91",
+    "tests/unit/core/OrchestratorFactory.test.ts": "71331145bb90dcf948e24d48b68283a54d4f97058b5f283451be2118ac08cec6",
+    "tests/unit/core/OrchestratorFactoryConfig.test.ts": "b1da0a27b3d5bd8c4c4f3a34c08f5cca4d2a7c65c051900a2adbb6507f0396ee",
+    "tests/unit/core/VerifiedRoutineFoundation.test.ts": "1ad9f1e3827c031a16bcc82879f928dcf9edbd567b436ed3c0702acebe86097a",
+    "tests/unit/core/VerifiedRoutineRunner.test.ts": "85fa8fe67e351ea6412bf7a59b33d6b5ba9f54158c6540edf53c4de4d9588a3e",
+    "tests/unit/core/evidence/Conformance.test.ts": "51fbbffb9a46e0b0b1e29d6344e5e8dfd1605414ffd273ddf3c2146f8886aaee",
+    "tests/unit/core/tool-execution/OutcomeTool.test.ts": "9d72938bbb301c9a0aceae1c0961fc463d8233114d7e1fadc87d5b7f959775e8",
+    "tests/unit/metadata/RealtimeCapabilities.test.ts": "00f38961c983c2bcb62fcfdca8634747e4b45e9b0e6a9b6dc52df6fcaea6628c",
+    "tests/unit/metadata/VendorPresentation.test.ts": "bc730f1827ad4c4a1f6b18bcb980b02e3d648feccfa923c15ace872a56e4d4cd",
+    "tests/unit/portable/OutcomePackage.test.ts": "13731dafa01334585ab7045fe8a74eacb3fe3775240aec48d2ae4e2c9819f3eb",
+    "tests/unit/portable/OutcomeRestart.test.ts": "58be9848d04c5e9c76ac8205de85969e800cf6cb4e684c8ed164b16c29abd775",
+    "tests/unit/portable/OutcomeWire.test.ts": "6aefedbf7b7ef0951b15b0b007c62693ca4c02824833cd2ab4e98f6906e430a0",
+    "tests/unit/portable/RemoteExternalExecution.test.ts": "4b3db380747c6264de66a83ddd9e0be54fc8789dd6d82f10994af18942ef63f4",
+    "tests/unit/portable/RemoteObservationBridge.test.ts": "4904841bbdc87696446d67a0746a4163ac86822ab92b1021073dbfc7d99de76a",
+    "tests/unit/providers/ParameterPolicy.test.ts": "bafee228f0b99238c407ed57fd1aa65a9273b50ae38ddb56c34a63b68e20b054"
+  },
+  "finalPackageInventory": {
+    "files": 313,
+    "requiredMissing": [],
+    "lifecycleScriptsDisabled": true
+  },
+  "sourceHashAudit": {
+    "checked": 187,
+    "matches": true
+  }
+}

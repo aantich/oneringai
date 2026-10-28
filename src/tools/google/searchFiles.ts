@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Google Drive - Search Files Tool
  *
@@ -27,7 +28,7 @@ interface SearchFilesArgs {
 /**
  * Map common file type names to Google Drive MIME types or file extensions
  */
-function buildFileTypeQuery(fileTypes: string[]): string {
+export function buildFileTypeQuery(fileTypes: string[]): string {
   const mimeTypeMap: Record<string, string> = {
     'doc': "mimeType = 'application/vnd.google-apps.document'",
     'docs': "mimeType = 'application/vnd.google-apps.document'",
@@ -201,10 +202,10 @@ EXAMPLES:
           hasMore: Boolean(result.nextPageToken),
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatGoogleToolError('Failed to search files', error),
-        };
+        });
       }
     },
   };

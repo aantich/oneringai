@@ -55,3 +55,12 @@ export type {
   ServiceType,
   ServiceInfo,
 } from '../domain/entities/Services.js';
+
+// Sparse endpoint companions; no runtime probing or provider SDK dependency.
+export { getRealtimeModelCapabilities, getTranscriptionCapabilities } from '../capabilities/metadata/realtime.js';
+export type { EndpointCapabilitySupport, RealtimeTransport, RealtimeReasoningEffort, CapabilityProvenance,
+  RealtimeModelCapabilityQuery, RealtimeModelCapabilities, TranscriptionCapabilityQuery, TranscriptionCapabilities } from '../capabilities/metadata/realtime.js';
+export { assessModelParameters } from '../capabilities/metadata/parameters.js';
+export type { ModelParameterEndpoint, ModelParameterQuery, ModelParameterAssessment, ModelParameterDecision, ModelParameterPolicy } from '../capabilities/metadata/parameters.js';
+export { VENDOR_PRESENTATIONS, getVendorPresentation } from '../capabilities/metadata/vendorPresentation.js';
+export type { VendorPresentation } from '../capabilities/metadata/vendorPresentation.js';

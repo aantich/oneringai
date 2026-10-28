@@ -106,7 +106,7 @@ describe.skipIf(!enabled).sequential('Stage 01 live context freshness', () => {
       // This is an exact evidence-transport contract, so disable creative sampling.
       const agent = Agent.create({ connector, model: provider.model, temperature: 0, thinking: { enabled: false }, maxIterations: 5,
         emptyResponseRetry: { enabled: false },
-        instructions: 'Use store_get to read both existing sources from the notes store. Return both markers verbatim. Do not repeat source reads.',
+        instructions: 'Use store_get to read both existing sources from the notes store. Then output only the two marker strings, separated by a newline. Never copy the source records, JSON bodies, labels or explanations. Do not repeat source reads.',
         context: { model: provider.model, maxContextTokens: 3200, responseReserve: 512, features: { ...DEFAULT_FEATURES, workingMemory: true, inContextMemory: false } },
         vendorOptions: provider.name === 'google' ? { generationConfig: { thinkingConfig: { thinkingBudget: 0 } } } : undefined,
         hooks: { 'before:llm': async context => {

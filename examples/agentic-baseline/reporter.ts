@@ -1,6 +1,6 @@
 /** Example/test utility, not a new library API. Retains no prompts or payloads. */
 import { createHash } from 'node:crypto';
-import type { Agent, AgentEventName, AgentEvents } from '../../src/index.js';
+import type { AgentEventName, AgentEvents } from '@everworker/oneringai';
 
 export function canonicalJSON(value: unknown): string {
   const sort = (item: unknown): unknown => {
@@ -31,6 +31,11 @@ export interface BaselineRun {
   id: string;
   parentId: string;
   outcome: 'running' | 'completed' | 'cancelled' | 'error';
+}
+
+export interface BaselineEventSource {
+  on(name: string, listener: (...args: unknown[]) => void): unknown;
+  off(name: string, listener: (...args: unknown[]) => void): unknown;
 }
 
 /** A known subtotal is distinct from a complete total. Never invent a zero. */
@@ -64,7 +69,7 @@ export class BaselineReporter {
     private readonly now: () => number = () => performance.now(),
   ) {}
 
-  attach(agent: Agent): () => void {
+  attach(agent: BaselineEventSource): () => void {
     const detach: Array<() => void> = [];
     const on = <K extends AgentEventName>(name: K, handler: (event: AgentEvents[K]) => void): void => {
       const listener = (...args: unknown[]): void => handler(args[0] as AgentEvents[K]);

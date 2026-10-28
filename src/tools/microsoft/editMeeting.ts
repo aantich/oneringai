@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Microsoft Graph - Edit Meeting Tool
  *
@@ -169,10 +170,10 @@ EXAMPLES:
           webLink: event.webLink,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatMicrosoftToolError('Failed to edit meeting', error),
-        };
+        });
       }
     },
   };

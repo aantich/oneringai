@@ -73,6 +73,11 @@ export class LoopController {
 
   get isStopped(): boolean { return this.stopped; }
   get hasCompletionCheck(): boolean { return !!this.policy.completion; }
+  /** New authenticated remote admission proof; does not fabricate a local outcome. */
+  releaseAdmission(name: string, args: unknown): void {
+    const key = this.key(name, args), entry = key ? this.calls.get(key) : undefined;
+    if (entry) entry.admitted = false;
+  }
   snapshot(): AgentLoopDiagnostics { return structuredClone(this.diagnostics); }
   step(): void { this.diagnostics.iterations++; if (!this.stopped) this.diagnostics.phase = 'running'; }
   finish(reason: AgentLoopReason, detail?: string): void {

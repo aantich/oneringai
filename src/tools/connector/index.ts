@@ -27,3 +27,7 @@ export {
   type GenericAPICallResult,
   type ConnectorToolsOptions,
 } from './ConnectorTools.js';
+
+export type { EnhancedConnectorOptions, EnhancedConnectorAttempt } from './enhancedProfiles.js';
+export type { ConnectorAcceptedResource } from './enhancedInvocation.js';
+export type { PagePosition, ConnectorPage } from './pages/types.js';

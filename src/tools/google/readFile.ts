@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Google Drive - Read File Tool
  *
@@ -118,10 +119,10 @@ Use this tool when you need to read the contents of a document stored in Google 
       const effectiveAccountId = context?.accountId;
 
       if (!args.fileId || !args.fileId.trim()) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: 'The "fileId" parameter is required. Provide a Google Drive file ID.',
-        };
+        });
       }
 
       try {
@@ -143,11 +144,11 @@ Use this tool when you need to read the contents of a document stored in Google 
         );
 
         if (metadata.trashed) {
-          return {
+          return connectorFailure(connector, {
             success: false,
             filename: metadata.name,
             error: `File "${metadata.name}" is in the trash. Restore it first to read its contents.`,
-          };
+          });
         }
 
         const mimeType = metadata.mimeType;
@@ -158,12 +159,12 @@ Use this tool when you need to read the contents of a document stored in Google 
           const exportConfig = GOOGLE_NATIVE_MIME_TYPES[mimeType];
 
           if (!exportConfig) {
-            return {
+            return connectorFailure(connector, {
               success: false,
               filename: metadata.name,
               mimeType,
               error: `Google format "${mimeType}" is not supported for text extraction. Supported: Google Docs, Sheets, Slides.`,
-            };
+            });
           }
 
           // For Google Docs, export as plain text (no conversion needed)
@@ -230,11 +231,11 @@ Use this tool when you need to read the contents of a document stored in Google 
           );
 
           if (!result.success) {
-            return {
+            return connectorFailure(connector, {
               success: false,
               filename: metadata.name,
               error: `Failed to convert "${metadata.name}" to markdown: ${result.error ?? 'unknown error'}`,
-            };
+            });
           }
 
           const markdown = mergeTextPieces(result.pieces);
@@ -257,24 +258,24 @@ Use this tool when you need to read the contents of a document stored in Google 
         // Check file size
         const sizeLimit = getFileSizeLimit(ext, sizeOverrides, defaultLimit);
         if (fileSize > sizeLimit) {
-          return {
+          return connectorFailure(connector, {
             success: false,
             filename: metadata.name,
             sizeBytes: fileSize,
             error: `File "${metadata.name}" is ${formatFileSize(fileSize)}, which exceeds ` +
               `the ${formatFileSize(sizeLimit)} limit for ${ext || 'this file type'}.`,
-          };
+          });
         }
 
         // Check extension support
         if (ext && !SUPPORTED_EXTENSIONS.has(ext) && !FormatDetector.isBinaryDocumentFormat(ext)) {
-          return {
+          return connectorFailure(connector, {
             success: false,
             filename: metadata.name,
             mimeType,
             error: `File format "${ext}" is not supported for text extraction. ` +
               `Supported formats: ${[...SUPPORTED_EXTENSIONS].join(', ')}`,
-          };
+          });
         }
 
         // Download binary content
@@ -304,11 +305,11 @@ Use this tool when you need to read the contents of a document stored in Google 
         );
 
         if (!result.success) {
-          return {
+          return connectorFailure(connector, {
             success: false,
             filename: metadata.name,
             error: `Failed to convert "${metadata.name}" to markdown: ${result.error ?? 'unknown error'}`,
-          };
+          });
         }
 
         const markdown = mergeTextPieces(result.pieces);
@@ -335,22 +336,22 @@ Use this tool when you need to read the contents of a document stored in Google 
       } catch (error) {
         if (error instanceof GoogleAPIError) {
           if (error.status === 404) {
-            return {
+            return connectorFailure(connector, {
               success: false,
               error: `File not found. Check that the file ID "${args.fileId}" is correct and you have access.`,
-            };
+            });
           }
           if (error.status === 403 || error.status === 401) {
-            return {
+            return connectorFailure(connector, {
               success: false,
               error: 'Access denied. The connector may not have sufficient permissions (drive.readonly or drive scope required).',
-            };
+            });
           }
         }
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatGoogleToolError('Failed to read file', error),
-        };
+        });
       }
     },
   };

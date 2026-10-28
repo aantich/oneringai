@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Slack - Get Mentions Tool
  *
@@ -130,10 +131,10 @@ EXAMPLES:
           hasMore: messages.length >= limit,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatSlackToolError('Failed to get mentions', error),
-        };
+        });
       }
     },
   };

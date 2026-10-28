@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Google Calendar - Edit Meeting Tool
  *
@@ -183,10 +184,10 @@ EXAMPLE:
           htmlLink: event.htmlLink,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatGoogleToolError('Failed to edit meeting', error),
-        };
+        });
       }
     },
   };

@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Slack - List Channels Tool
  *
@@ -126,10 +127,10 @@ EXAMPLES:
           hasMore,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatSlackToolError('Failed to list channels', error),
-        };
+        });
       }
     },
   };

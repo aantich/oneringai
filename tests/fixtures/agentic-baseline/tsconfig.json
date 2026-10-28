@@ -16,7 +16,14 @@
     "stage12-consumer.ts",
     "stage05-consumer.ts",
     "stage16-consumer.ts",
-    "stage14-consumer.ts"
+    "stage14-consumer.ts",
+    "c1-consumer.ts",
+    "c3-consumer.ts",
+    "c4-consumer.ts",
+    "c5-consumer.ts",
+    "c6-consumer.ts",
+    "c7-consumer.ts",
+    "c9-consumer.ts"
   ],
   "exclude": []
 }

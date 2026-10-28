@@ -1,0 +1,757 @@
+{
+  "protocol": "consumer-c8-validation-v1",
+  "recordedAt": "2026-10-28",
+  "branch": "version2",
+  "baseCommit": "0f159e90586c98efd561f216de87277a6993e340",
+  "status": "complete-on-branch-offline-validation",
+  "verifiedPackageRelease": false,
+  "live": "Paused by user; no calls made for C8. C7 outstanding live checks remain pending.",
+  "unit": {
+    "passed": 9090,
+    "failed": 0,
+    "failedSuites": 0,
+    "artifact": {
+      "path": "/tmp/oneringai-c8-final-unit.json",
+      "bytes": 2917607,
+      "sha256": "f15b07b5b7038d546b5430ebe4d4dff93cb9c8cd2858bb92c260de0f7931c4bb"
+    }
+  },
+  "review": {
+    "passed": 369,
+    "failed": 0
+  },
+  "profiles": [
+    {
+      "profile": "memory/process",
+      "durability": "process",
+      "assertions": 198,
+      "pages": 89,
+      "exactSourceSHA256": "d6abb847000b00efa56679ede1319c785dba75c8865dd2f18089ac0c58940293",
+      "processReopen": false,
+      "childProcessRecovery": "separate required profile"
+    },
+    {
+      "profile": "file/restart",
+      "durability": "restart",
+      "assertions": 199,
+      "pages": 89,
+      "exactSourceSHA256": "d6abb847000b00efa56679ede1319c785dba75c8865dd2f18089ac0c58940293",
+      "processReopen": true,
+      "childProcessRecovery": "separate required profile"
+    },
+    {
+      "profile": "file/fsync",
+      "durability": "fsync",
+      "assertions": 199,
+      "pages": 89,
+      "exactSourceSHA256": "d6abb847000b00efa56679ede1319c785dba75c8865dd2f18089ac0c58940293",
+      "processReopen": true,
+      "childProcessRecovery": "separate required profile"
+    }
+  ],
+  "actualChildProcesses": 2,
+  "composed": {
+    "protocol": "consumer-composition-evaluation/1",
+    "samples": 6,
+    "passed": true,
+    "falseVerifiedCompletions": 0,
+    "duplicateEffects": 0,
+    "unauthorizedDisclosures": 0,
+    "latencyMs": {
+      "p50": 11.68704200000002,
+      "p95": 60.64787500000011
+    },
+    "comparison": "Functional synthetic acceptance; no comparative model-quality or cost claim",
+    "results": [
+      {
+        "fixture": "development",
+        "variant": "local",
+        "passed": true,
+        "configured": {
+          "loopOwner": "managed-agent",
+          "hostCompletionCheck": false,
+          "evidence": true,
+          "taskState": false,
+          "strategy": "algorithmic"
+        },
+        "observed": {
+          "routineVerification": "completed",
+          "verifierCalls": 3,
+          "initialState": "waiting",
+          "submissions": 1,
+          "artifactWrites": 1,
+          "modelCalls": 1,
+          "remote": [],
+          "sourceHash": "be8902940165d07098c3b86f4318e0688e751cc4edfbeaa1916df59c41bd7fef"
+        },
+        "falseVerifiedCompletions": 0,
+        "duplicateEffects": 0,
+        "unauthorizedDisclosures": 0,
+        "exactSourceAccuracy": 1,
+        "redundantModelCalls": 0,
+        "latencyMs": 60.64787500000011,
+        "knownModelCostSubtotalUSD": 0,
+        "unknownModelCostInvocations": 1,
+        "unknownExternalCost": false,
+        "wholeOperationCost": "unknown",
+        "restartWorkflowAuthority": "not-restored"
+      },
+      {
+        "fixture": "development",
+        "variant": "remote",
+        "passed": true,
+        "configured": {
+          "loopOwner": "managed-agent",
+          "hostCompletionCheck": false,
+          "evidence": true,
+          "taskState": false,
+          "strategy": "algorithmic"
+        },
+        "observed": {
+          "routineVerification": "completed",
+          "verifierCalls": 3,
+          "initialState": "waiting",
+          "submissions": 1,
+          "artifactWrites": 1,
+          "modelCalls": 1,
+          "remote": [
+            {
+              "operationId": "98c33dba-b760-4342-8a99-7b6f8074346a",
+              "sessionId": "7bf760bd-2e2d-4d0e-ac1a-6959a089a25a",
+              "toolName": "meeting_source",
+              "argumentsFingerprint": "5a180f6050c1fd60c914202bc343f3c0f6b914d5aeae116d3ed35a48c74d7aa3",
+              "state": "settled",
+              "pendingSource": false,
+              "accounting": "external_unknown",
+              "admission": {
+                "version": 1,
+                "id": "3d99dff1-ad58-44d6-9b52-9ba709eec051",
+                "sha256": "56d85d307844e074103101d2a7697c31c797d07fa3666f95ab6aebaf30724c16",
+                "bytes": 1115,
+                "durability": "process"
+              },
+              "receipt": {
+                "protocol": "oneringai.tool-outcomes/1",
+                "packageId": "c9b93867-93e8-4640-8ffc-cc06c446d9c3",
+                "sessionId": "7bf760bd-2e2d-4d0e-ac1a-6959a089a25a",
+                "observedSessionId": "7bf760bd-2e2d-4d0e-ac1a-6959a089a25a",
+                "requestId": "98c33dba-b760-4342-8a99-7b6f8074346a",
+                "state": "settled",
+                "admission": "started",
+                "toolName": "meeting_source",
+                "effect": "read",
+                "argumentsFingerprint": "5a180f6050c1fd60c914202bc343f3c0f6b914d5aeae116d3ed35a48c74d7aa3",
+                "serverOutcome": {
+                  "executionId": "5cf540aa-699c-44bc-a10f-52b3ea4c2829",
+                  "toolName": "meeting_source",
+                  "callId": "98c33dba-b760-4342-8a99-7b6f8074346a",
+                  "runId": "exec_e3e813c7-a1a2-4d8c-8501-ce55cab50d4a",
+                  "status": "succeeded",
+                  "startedAt": 1793187039308,
+                  "durationMs": 0,
+                  "executionStarted": true,
+                  "completion": "settled",
+                  "cancellation": "none"
+                },
+                "source": {
+                  "version": 1,
+                  "id": "844521d5-cc1b-4ed7-8393-039db9637a1d",
+                  "sha256": "5d2b53516bfa2d043a1732228215138a4a696bf13859d69a3fac8d7fcaef3d18",
+                  "bytes": 1514,
+                  "durability": "process"
+                }
+              },
+              "proxyOutcome": {
+                "executionId": "ec876216-3c6a-445f-960e-116d6dda5baa",
+                "toolName": "meeting_source",
+                "status": "succeeded",
+                "startedAt": 1793187039306,
+                "durationMs": 5,
+                "executionStarted": true,
+                "completion": "settled",
+                "cancellation": "none",
+                "evidence": {
+                  "status": "stored",
+                  "effect": "read",
+                  "reference": {
+                    "version": 1,
+                    "id": "1c9e14db-ee57-43d3-823c-21acdc6babc3",
+                    "sha256": "d062edf4783032dc7073587b868317d0f2326108e51ac863f156fd5b84b49d27",
+                    "bytes": 2456,
+                    "durability": "process"
+                  }
+                }
+              },
+              "reference": {
+                "version": 1,
+                "id": "1c9e14db-ee57-43d3-823c-21acdc6babc3",
+                "sha256": "d062edf4783032dc7073587b868317d0f2326108e51ac863f156fd5b84b49d27",
+                "bytes": 2456,
+                "durability": "process"
+              }
+            },
+            {
+              "operationId": "480f821f-14f1-4ce7-bfb0-c7028fe7b9f0",
+              "sessionId": "7bf760bd-2e2d-4d0e-ac1a-6959a089a25a",
+              "toolName": "submit_meeting",
+              "argumentsFingerprint": "ce3f06b5bf6a1fe1e6c0808450a015ed48936210518c072bd2585b5bbf247cce",
+              "state": "settled",
+              "pendingSource": false,
+              "accounting": "external_unknown",
+              "admission": {
+                "version": 1,
+                "id": "e1e2e810-6959-42be-8999-7dd0f2ddd98a",
+                "sha256": "d6bc50f98620eb6deeeb93bd84a482c3cb5c016dc4d7420392cdd40ac0e8233c",
+                "bytes": 1115,
+                "durability": "process"
+              },
+              "receipt": {
+                "protocol": "oneringai.tool-outcomes/1",
+                "packageId": "c9b93867-93e8-4640-8ffc-cc06c446d9c3",
+                "sessionId": "7bf760bd-2e2d-4d0e-ac1a-6959a089a25a",
+                "observedSessionId": "7bf760bd-2e2d-4d0e-ac1a-6959a089a25a",
+                "requestId": "480f821f-14f1-4ce7-bfb0-c7028fe7b9f0",
+                "state": "settled",
+                "admission": "started",
+                "toolName": "submit_meeting",
+                "effect": "write",
+                "argumentsFingerprint": "ce3f06b5bf6a1fe1e6c0808450a015ed48936210518c072bd2585b5bbf247cce",
+                "serverOutcome": {
+                  "executionId": "980a41b1-0051-46d7-bd6c-765a9cec322f",
+                  "toolName": "submit_meeting",
+                  "callId": "480f821f-14f1-4ce7-bfb0-c7028fe7b9f0",
+                  "runId": "exec_e3e813c7-a1a2-4d8c-8501-ce55cab50d4a",
+                  "status": "succeeded",
+                  "startedAt": 1793187039313,
+                  "durationMs": 0,
+                  "executionStarted": true,
+                  "completion": "settled",
+                  "cancellation": "none"
+                },
+                "source": {
+                  "version": 1,
+                  "id": "1bb9b107-9b84-49ca-95ec-857db54bc138",
+                  "sha256": "7ce156398ad29c762f02072ce0a5734e38dece18324c553e3b5fa0ce0093b7fc",
+                  "bytes": 1449,
+                  "durability": "process"
+                }
+              },
+              "proxyOutcome": {
+                "executionId": "b99abc95-5fa8-4ca0-9515-36739c6f584c",
+                "toolName": "submit_meeting",
+                "status": "succeeded",
+                "startedAt": 1793187039312,
+                "durationMs": 2,
+                "executionStarted": true,
+                "completion": "settled",
+                "cancellation": "none",
+                "evidence": {
+                  "status": "stored",
+                  "effect": "write",
+                  "reference": {
+                    "version": 1,
+                    "id": "afb4a3ec-6398-44a8-a9ce-862ee67b3a48",
+                    "sha256": "32865a68f37845225f2dcecb160ca8cd080ed3bc0fbf99be31b5638cd1376d4f",
+                    "bytes": 2391,
+                    "durability": "process"
+                  }
+                }
+              },
+              "reference": {
+                "version": 1,
+                "id": "afb4a3ec-6398-44a8-a9ce-862ee67b3a48",
+                "sha256": "32865a68f37845225f2dcecb160ca8cd080ed3bc0fbf99be31b5638cd1376d4f",
+                "bytes": 2391,
+                "durability": "process"
+              }
+            }
+          ],
+          "sourceHash": "be8902940165d07098c3b86f4318e0688e751cc4edfbeaa1916df59c41bd7fef"
+        },
+        "falseVerifiedCompletions": 0,
+        "duplicateEffects": 0,
+        "unauthorizedDisclosures": 0,
+        "exactSourceAccuracy": 1,
+        "redundantModelCalls": 0,
+        "latencyMs": 21.44950000000017,
+        "knownModelCostSubtotalUSD": 0,
+        "unknownModelCostInvocations": 1,
+        "unknownExternalCost": true,
+        "wholeOperationCost": "external_unknown",
+        "restartWorkflowAuthority": "not-restored"
+      },
+      {
+        "fixture": "held-out-budget-735",
+        "variant": "local",
+        "passed": true,
+        "configured": {
+          "loopOwner": "managed-agent",
+          "hostCompletionCheck": false,
+          "evidence": true,
+          "taskState": false,
+          "strategy": "algorithmic"
+        },
+        "observed": {
+          "routineVerification": "completed",
+          "verifierCalls": 3,
+          "initialState": "waiting",
+          "submissions": 1,
+          "artifactWrites": 1,
+          "modelCalls": 1,
+          "remote": [],
+          "sourceHash": "6845e4fbe145daf090c049612012be6816bc2973a8cf8cd71d23d2c5ce0d3037"
+        },
+        "falseVerifiedCompletions": 0,
+        "duplicateEffects": 0,
+        "unauthorizedDisclosures": 0,
+        "exactSourceAccuracy": 1,
+        "redundantModelCalls": 0,
+        "latencyMs": 10.841166000000158,
+        "knownModelCostSubtotalUSD": 0,
+        "unknownModelCostInvocations": 1,
+        "unknownExternalCost": false,
+        "wholeOperationCost": "unknown",
+        "restartWorkflowAuthority": "not-restored"
+      },
+      {
+        "fixture": "held-out-budget-735",
+        "variant": "remote",
+        "passed": true,
+        "configured": {
+          "loopOwner": "managed-agent",
+          "hostCompletionCheck": false,
+          "evidence": true,
+          "taskState": false,
+          "strategy": "algorithmic"
+        },
+        "observed": {
+          "routineVerification": "completed",
+          "verifierCalls": 3,
+          "initialState": "waiting",
+          "submissions": 1,
+          "artifactWrites": 1,
+          "modelCalls": 1,
+          "remote": [
+            {
+              "operationId": "3ea4e0fe-f911-48a7-b548-bb21775e6520",
+              "sessionId": "73ee5100-5043-4313-9f08-d9a7fccbee03",
+              "toolName": "meeting_source",
+              "argumentsFingerprint": "5a180f6050c1fd60c914202bc343f3c0f6b914d5aeae116d3ed35a48c74d7aa3",
+              "state": "settled",
+              "pendingSource": false,
+              "accounting": "external_unknown",
+              "admission": {
+                "version": 1,
+                "id": "a4e01eed-5ab7-4071-970b-4e24293485d5",
+                "sha256": "48ef1619a10e792da7645158edbee6343a420a616957b160f590b832bdc7e447",
+                "bytes": 1123,
+                "durability": "process"
+              },
+              "receipt": {
+                "protocol": "oneringai.tool-outcomes/1",
+                "packageId": "6eb4261f-a2f5-4a0e-925d-a4441640727a",
+                "sessionId": "73ee5100-5043-4313-9f08-d9a7fccbee03",
+                "observedSessionId": "73ee5100-5043-4313-9f08-d9a7fccbee03",
+                "requestId": "3ea4e0fe-f911-48a7-b548-bb21775e6520",
+                "state": "settled",
+                "admission": "started",
+                "toolName": "meeting_source",
+                "effect": "read",
+                "argumentsFingerprint": "5a180f6050c1fd60c914202bc343f3c0f6b914d5aeae116d3ed35a48c74d7aa3",
+                "serverOutcome": {
+                  "executionId": "b5c31d11-f23a-4f3f-b8a5-9982275c61f2",
+                  "toolName": "meeting_source",
+                  "callId": "3ea4e0fe-f911-48a7-b548-bb21775e6520",
+                  "runId": "exec_7bd1f205-581d-4482-8f4e-e2625e376d8d",
+                  "status": "succeeded",
+                  "startedAt": 1793187039338,
+                  "durationMs": 0,
+                  "executionStarted": true,
+                  "completion": "settled",
+                  "cancellation": "none"
+                },
+                "source": {
+                  "version": 1,
+                  "id": "8964db09-7d6d-4f04-9139-390ee094b185",
+                  "sha256": "0497a115125dc68826f03ceae4b977a6c0d10c6525a422b790d8e49e9df34afc",
+                  "bytes": 1538,
+                  "durability": "process"
+                }
+              },
+              "proxyOutcome": {
+                "executionId": "7abca96b-f3b4-4c51-a873-222b039625ad",
+                "toolName": "meeting_source",
+                "status": "succeeded",
+                "startedAt": 1793187039337,
+                "durationMs": 2,
+                "executionStarted": true,
+                "completion": "settled",
+                "cancellation": "none",
+                "evidence": {
+                  "status": "stored",
+                  "effect": "read",
+                  "reference": {
+                    "version": 1,
+                    "id": "172aa4a6-8e57-4a21-af4c-035a1877c4a8",
+                    "sha256": "ed6f7353f0704d777cb921f48a607fc3800e0b2cacb98b69b3d986f41c58e098",
+                    "bytes": 2480,
+                    "durability": "process"
+                  }
+                }
+              },
+              "reference": {
+                "version": 1,
+                "id": "172aa4a6-8e57-4a21-af4c-035a1877c4a8",
+                "sha256": "ed6f7353f0704d777cb921f48a607fc3800e0b2cacb98b69b3d986f41c58e098",
+                "bytes": 2480,
+                "durability": "process"
+              }
+            },
+            {
+              "operationId": "0ce312db-9636-4152-8d6b-76f2372b94e3",
+              "sessionId": "73ee5100-5043-4313-9f08-d9a7fccbee03",
+              "toolName": "submit_meeting",
+              "argumentsFingerprint": "ce3f06b5bf6a1fe1e6c0808450a015ed48936210518c072bd2585b5bbf247cce",
+              "state": "settled",
+              "pendingSource": false,
+              "accounting": "external_unknown",
+              "admission": {
+                "version": 1,
+                "id": "42d756dd-8992-44f0-bfd0-76d7a1d1988d",
+                "sha256": "aa5dd1ee218bfce04371a44cc08c0ca7e85a6b6bfda79d80d9fe8819479171bc",
+                "bytes": 1123,
+                "durability": "process"
+              },
+              "receipt": {
+                "protocol": "oneringai.tool-outcomes/1",
+                "packageId": "6eb4261f-a2f5-4a0e-925d-a4441640727a",
+                "sessionId": "73ee5100-5043-4313-9f08-d9a7fccbee03",
+                "observedSessionId": "73ee5100-5043-4313-9f08-d9a7fccbee03",
+                "requestId": "0ce312db-9636-4152-8d6b-76f2372b94e3",
+                "state": "settled",
+                "admission": "started",
+                "toolName": "submit_meeting",
+                "effect": "write",
+                "argumentsFingerprint": "ce3f06b5bf6a1fe1e6c0808450a015ed48936210518c072bd2585b5bbf247cce",
+                "serverOutcome": {
+                  "executionId": "8b8b6450-de74-458c-b63a-b1e9fcedba61",
+                  "toolName": "submit_meeting",
+                  "callId": "0ce312db-9636-4152-8d6b-76f2372b94e3",
+                  "runId": "exec_7bd1f205-581d-4482-8f4e-e2625e376d8d",
+                  "status": "succeeded",
+                  "startedAt": 1793187039340,
+                  "durationMs": 0,
+                  "executionStarted": true,
+                  "completion": "settled",
+                  "cancellation": "none"
+                },
+                "source": {
+                  "version": 1,
+                  "id": "1c4da621-eb07-4e34-bd8a-5b92b8925c9a",
+                  "sha256": "93a7b5ca0b5603b5c40a10d584508db46a8bd22a42b4b888ad130fda59a21111",
+                  "bytes": 1457,
+                  "durability": "process"
+                }
+              },
+              "proxyOutcome": {
+                "executionId": "3cab421d-e016-44b7-9c39-4beec86a1b0d",
+                "toolName": "submit_meeting",
+                "status": "succeeded",
+                "startedAt": 1793187039340,
+                "durationMs": 1,
+                "executionStarted": true,
+                "completion": "settled",
+                "cancellation": "none",
+                "evidence": {
+                  "status": "stored",
+                  "effect": "write",
+                  "reference": {
+                    "version": 1,
+                    "id": "71d847bc-8f05-4570-977b-d66f296e137c",
+                    "sha256": "6d25f9e5b682d2a2d53e0e42db49c071a908b813fb0d33d48fe8bf62b0872f84",
+                    "bytes": 2399,
+                    "durability": "process"
+                  }
+                }
+              },
+              "reference": {
+                "version": 1,
+                "id": "71d847bc-8f05-4570-977b-d66f296e137c",
+                "sha256": "6d25f9e5b682d2a2d53e0e42db49c071a908b813fb0d33d48fe8bf62b0872f84",
+                "bytes": 2399,
+                "durability": "process"
+              }
+            }
+          ],
+          "sourceHash": "6845e4fbe145daf090c049612012be6816bc2973a8cf8cd71d23d2c5ce0d3037"
+        },
+        "falseVerifiedCompletions": 0,
+        "duplicateEffects": 0,
+        "unauthorizedDisclosures": 0,
+        "exactSourceAccuracy": 1,
+        "redundantModelCalls": 0,
+        "latencyMs": 14.01412500000015,
+        "knownModelCostSubtotalUSD": 0,
+        "unknownModelCostInvocations": 1,
+        "unknownExternalCost": true,
+        "wholeOperationCost": "external_unknown",
+        "restartWorkflowAuthority": "not-restored"
+      },
+      {
+        "fixture": "held-out-quote-947",
+        "variant": "local",
+        "passed": true,
+        "configured": {
+          "loopOwner": "managed-agent",
+          "hostCompletionCheck": false,
+          "evidence": true,
+          "taskState": false,
+          "strategy": "algorithmic"
+        },
+        "observed": {
+          "routineVerification": "completed",
+          "verifierCalls": 3,
+          "initialState": "waiting",
+          "submissions": 1,
+          "artifactWrites": 1,
+          "modelCalls": 1,
+          "remote": [],
+          "sourceHash": "4deb776ced7f77d8c54b03190cdcd1b099526751c7e377d83ffb8e8c4624ce45"
+        },
+        "falseVerifiedCompletions": 0,
+        "duplicateEffects": 0,
+        "unauthorizedDisclosures": 0,
+        "exactSourceAccuracy": 1,
+        "redundantModelCalls": 0,
+        "latencyMs": 6.5743750000001455,
+        "knownModelCostSubtotalUSD": 0,
+        "unknownModelCostInvocations": 1,
+        "unknownExternalCost": false,
+        "wholeOperationCost": "unknown",
+        "restartWorkflowAuthority": "not-restored"
+      },
+      {
+        "fixture": "held-out-quote-947",
+        "variant": "remote",
+        "passed": true,
+        "configured": {
+          "loopOwner": "managed-agent",
+          "hostCompletionCheck": false,
+          "evidence": true,
+          "taskState": false,
+          "strategy": "algorithmic"
+        },
+        "observed": {
+          "routineVerification": "completed",
+          "verifierCalls": 3,
+          "initialState": "waiting",
+          "submissions": 1,
+          "artifactWrites": 1,
+          "modelCalls": 1,
+          "remote": [
+            {
+              "operationId": "23c4a88c-b036-4009-ae3e-1184884e66c8",
+              "sessionId": "08c0fdef-6940-412f-9c99-7457c605241a",
+              "toolName": "meeting_source",
+              "argumentsFingerprint": "5a180f6050c1fd60c914202bc343f3c0f6b914d5aeae116d3ed35a48c74d7aa3",
+              "state": "settled",
+              "pendingSource": false,
+              "accounting": "external_unknown",
+              "admission": {
+                "version": 1,
+                "id": "21513ead-0fcc-41ae-b25f-421f7093c2a0",
+                "sha256": "f75ec5dcf21a72cb92652a2d65a9215c0bce71721f2fee5de1df32b64c1116a0",
+                "bytes": 1122,
+                "durability": "process"
+              },
+              "receipt": {
+                "protocol": "oneringai.tool-outcomes/1",
+                "packageId": "f30c8f13-67dd-4a83-a4e8-bb50f03197ef",
+                "sessionId": "08c0fdef-6940-412f-9c99-7457c605241a",
+                "observedSessionId": "08c0fdef-6940-412f-9c99-7457c605241a",
+                "requestId": "23c4a88c-b036-4009-ae3e-1184884e66c8",
+                "state": "settled",
+                "admission": "started",
+                "toolName": "meeting_source",
+                "effect": "read",
+                "argumentsFingerprint": "5a180f6050c1fd60c914202bc343f3c0f6b914d5aeae116d3ed35a48c74d7aa3",
+                "serverOutcome": {
+                  "executionId": "71a587b5-09a8-4279-9b12-59bbfd134bd7",
+                  "toolName": "meeting_source",
+                  "callId": "23c4a88c-b036-4009-ae3e-1184884e66c8",
+                  "runId": "exec_600b8c0e-1520-4b99-99d2-fb5b3d6d4603",
+                  "status": "succeeded",
+                  "startedAt": 1793187039360,
+                  "durationMs": 0,
+                  "executionStarted": true,
+                  "completion": "settled",
+                  "cancellation": "none"
+                },
+                "source": {
+                  "version": 1,
+                  "id": "a5c98b1b-2dea-4657-b443-759ca2a696ab",
+                  "sha256": "1de98693ac0cc516374c254bcbb50b0d9b7891a94f46b630cc9588938c5cd6e7",
+                  "bytes": 1535,
+                  "durability": "process"
+                }
+              },
+              "proxyOutcome": {
+                "executionId": "eea21a9b-806e-4aa5-b2ac-d86b163367c6",
+                "toolName": "meeting_source",
+                "status": "succeeded",
+                "startedAt": 1793187039359,
+                "durationMs": 2,
+                "executionStarted": true,
+                "completion": "settled",
+                "cancellation": "none",
+                "evidence": {
+                  "status": "stored",
+                  "effect": "read",
+                  "reference": {
+                    "version": 1,
+                    "id": "854d4396-4c95-4f7b-9f17-17d8a8e34acc",
+                    "sha256": "95080c76a3a80cb58e38d44102aa374d239d002bf2b4847e9456b3007414887d",
+                    "bytes": 2477,
+                    "durability": "process"
+                  }
+                }
+              },
+              "reference": {
+                "version": 1,
+                "id": "854d4396-4c95-4f7b-9f17-17d8a8e34acc",
+                "sha256": "95080c76a3a80cb58e38d44102aa374d239d002bf2b4847e9456b3007414887d",
+                "bytes": 2477,
+                "durability": "process"
+              }
+            },
+            {
+              "operationId": "6cdfa64d-c6d0-4f53-a91c-389035c4fe6e",
+              "sessionId": "08c0fdef-6940-412f-9c99-7457c605241a",
+              "toolName": "submit_meeting",
+              "argumentsFingerprint": "ce3f06b5bf6a1fe1e6c0808450a015ed48936210518c072bd2585b5bbf247cce",
+              "state": "settled",
+              "pendingSource": false,
+              "accounting": "external_unknown",
+              "admission": {
+                "version": 1,
+                "id": "51d80f29-c94e-4011-bbfd-c5cd4f7985dd",
+                "sha256": "d2f493749bca1d39c858e8dee222b9800f012218216b0e4158657e227d35ff5a",
+                "bytes": 1122,
+                "durability": "process"
+              },
+              "receipt": {
+                "protocol": "oneringai.tool-outcomes/1",
+                "packageId": "f30c8f13-67dd-4a83-a4e8-bb50f03197ef",
+                "sessionId": "08c0fdef-6940-412f-9c99-7457c605241a",
+                "observedSessionId": "08c0fdef-6940-412f-9c99-7457c605241a",
+                "requestId": "6cdfa64d-c6d0-4f53-a91c-389035c4fe6e",
+                "state": "settled",
+                "admission": "started",
+                "toolName": "submit_meeting",
+                "effect": "write",
+                "argumentsFingerprint": "ce3f06b5bf6a1fe1e6c0808450a015ed48936210518c072bd2585b5bbf247cce",
+                "serverOutcome": {
+                  "executionId": "531ba71e-af10-4d39-a997-376c4bba369d",
+                  "toolName": "submit_meeting",
+                  "callId": "6cdfa64d-c6d0-4f53-a91c-389035c4fe6e",
+                  "runId": "exec_600b8c0e-1520-4b99-99d2-fb5b3d6d4603",
+                  "status": "succeeded",
+                  "startedAt": 1793187039362,
+                  "durationMs": 0,
+                  "executionStarted": true,
+                  "completion": "settled",
+                  "cancellation": "none"
+                },
+                "source": {
+                  "version": 1,
+                  "id": "16984ae4-463c-46e9-9de1-d22f3c517e27",
+                  "sha256": "4032eca4330873676d800b79197c507505286c850b56e01a479538361431e032",
+                  "bytes": 1456,
+                  "durability": "process"
+                }
+              },
+              "proxyOutcome": {
+                "executionId": "4acc6b97-6952-43a5-a249-feacb1ed2b6f",
+                "toolName": "submit_meeting",
+                "status": "succeeded",
+                "startedAt": 1793187039361,
+                "durationMs": 2,
+                "executionStarted": true,
+                "completion": "settled",
+                "cancellation": "none",
+                "evidence": {
+                  "status": "stored",
+                  "effect": "write",
+                  "reference": {
+                    "version": 1,
+                    "id": "da3add88-0918-4401-bdf6-b123ebad9f36",
+                    "sha256": "15de231948784ca9238bf8c63ab8ab95df78236294e4043a0e57aa15c02fdf5e",
+                    "bytes": 2398,
+                    "durability": "process"
+                  }
+                }
+              },
+              "reference": {
+                "version": 1,
+                "id": "da3add88-0918-4401-bdf6-b123ebad9f36",
+                "sha256": "15de231948784ca9238bf8c63ab8ab95df78236294e4043a0e57aa15c02fdf5e",
+                "bytes": 2398,
+                "durability": "process"
+              }
+            }
+          ],
+          "sourceHash": "4deb776ced7f77d8c54b03190cdcd1b099526751c7e377d83ffb8e8c4624ce45"
+        },
+        "falseVerifiedCompletions": 0,
+        "duplicateEffects": 0,
+        "unauthorizedDisclosures": 0,
+        "exactSourceAccuracy": 1,
+        "redundantModelCalls": 0,
+        "latencyMs": 11.68704200000002,
+        "knownModelCostSubtotalUSD": 0,
+        "unknownModelCostInvocations": 1,
+        "unknownExternalCost": true,
+        "wholeOperationCost": "external_unknown",
+        "restartWorkflowAuthority": "not-restored"
+      }
+    ]
+  },
+  "artifacts": {
+    "example": {
+      "path": "/tmp/oneringai-c8-example.log",
+      "bytes": 35134,
+      "sha256": "b7b54cfa2a259342cb8834db0c51b671fa3ea42d5e7a256a03d51a3c306ee2a2"
+    },
+    "amos": {
+      "path": "/tmp/oneringai-c8-amos.log",
+      "bytes": 2892,
+      "sha256": "00d8b66a735fab9258901cc860385eba3cf39d68a6b6ba8a5fbbaee09f54b52c"
+    },
+    "examplesTypes": {
+      "path": "/tmp/oneringai-c8-examples-types.log",
+      "bytes": 88,
+      "sha256": "8ee95d2a0d994fc787162a1466717f2695b4385a8e524366536614eade27f9ce"
+    }
+  },
+  "compatibility": {
+    "productionAPIsChanged": false,
+    "oldInspectionShapesChanged": false,
+    "newRuntimeDependencies": false,
+    "newBackend": false,
+    "literalRemoteProtocol": 2
+  },
+  "reviewCorrections": [
+    "Use existing durability option for fsync profile",
+    "Isolate quota files by backend profile",
+    "Keep unknown pricing distinct from known cost subtotal",
+    "Wait for asynchronous AMOS journal teardown with bounded filesystem removal retries and always clear connectors after cleanup errors"
+  ],
+  "coverage": [
+    "same-process verified continuation",
+    "local/remote source and domain result parity",
+    "held-out exact citations and physical artifact",
+    "one submission and zero false verified completion",
+    "actual process recovery and reauthorization",
+    "existing C3/C5/C6/C7 lifecycle, projection, compaction and pagination regressions"
+  ]
+}

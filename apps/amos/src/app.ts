@@ -30,6 +30,7 @@ import {
   PromptCommand,
   ContextCommand,
   HelpersCommand,
+  RoutineCommand,
   RoutingCommand,
   PresetCommand,
   ExternalCommand,
@@ -50,6 +51,7 @@ export class AmosApp implements IAmosApp {
   private terminal: Terminal;
   private commandProcessor: CommandProcessor;
   private astraCommand: AstraCommand;
+  private routineCommand = new RoutineCommand();
   private dataDir: string;
   private running: boolean = false;
   private creatingAgent = false;
@@ -419,6 +421,7 @@ export class AmosApp implements IAmosApp {
       new ConfigCommand(),
       new ContextCommand(),
       new HelpersCommand(),
+      this.routineCommand,
       new RoutingCommand(),
       new PresetCommand(),
       new ExternalCommand(),
@@ -434,6 +437,7 @@ export class AmosApp implements IAmosApp {
    * Shutdown the application
    */
   private async shutdown(): Promise<void> {
+    this.routineCommand.close();
     this.terminal.print('\nShutting down...');
     this.astraCommand.reset();
 

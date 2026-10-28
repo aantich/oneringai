@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Slack - Get Channel Info Tool
  *
@@ -93,10 +94,10 @@ EXAMPLES:
           },
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatSlackToolError('Failed to get channel info', error),
-        };
+        });
       }
     },
   };

@@ -210,7 +210,7 @@ export { Vendor, VENDORS, isVendor } from './Vendor.js';
 export { createProvider, createProviderAsync, getVendorDefaultBaseURL } from './createProvider.js';
 
 // Orchestrator
-export { createOrchestrator } from './orchestrator/index.js';
+export { createOrchestrator, createOrchestratorWithFactory } from './orchestrator/index.js';
 export type { OrchestratorConfig, AgentTypeConfig, DelegationDefaults } from './orchestrator/index.js';
 export { buildOrchestrationTools, buildWorkspaceDelta, createDelegationState } from './orchestrator/index.js';
 export type { OrchestrationToolsContext, DelegationState, DelegationReclaimConfig } from './orchestrator/index.js';
@@ -311,6 +311,8 @@ export type {
 } from './ErrorHandler.js';
 
 export type { ToolExecutionOutcome, ToolExecutionOptions, ToolExecutionReport } from './tool-execution/outcomes.js';
+export { createOutcomeTool } from './createOutcomeTool.js';
+export type { OutcomeInvocation, OutcomeToolOptions } from './createOutcomeTool.js';
 
 export { ObservationMaskingStrategy, StructuredSummaryStrategy } from './context-nextgen/strategies/index.js';
 export { ContextCompactionStrategy } from './context-nextgen/strategies/ContextCompactionStrategy.js';
@@ -319,3 +321,9 @@ export type { ObservationMaskingStrategyConfig, StructuredSummaryStrategyConfig,
 
 export { TaskStatePluginNextGen } from './context-nextgen/plugins/TaskStatePluginNextGen.js';
 export type { TaskStateCategory, TaskStateSource, TaskStateNoteInput, TaskStateNote, TaskStateLifecycleBinding, TaskStateLifecycleView, TaskStateAction, TaskStateSnapshot, TaskStatePluginConfig, TaskStateHostDelta } from './context-nextgen/plugins/TaskStatePluginNextGen.js';
+
+// Verified routines are opt-in; legacy routine exports retain their contracts.
+export { createRoutineRunner } from './routines/createRoutineRunner.js';
+export type { ExecutionBinding, VerificationDecision, VerificationContext, RoutineSource, RoutineTaskSummary, RoutineStepObservation, RoutineObservation, RoutineContinuation, RoutineReport, RoutineRunResult, RoutineRunRequest, RoutineToolOptions, RoutineToolResult, RoutineInspection, RoutineProgress, RoutineRunnerOptions, RoutineRunner } from './routines/types.js';
+
+export type { OrchestratedAgentConfig, AgentConstructionRequest, ChildObservation, OrchestratorFactoryOptions } from './orchestrator/index.js';

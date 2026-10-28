@@ -11,9 +11,13 @@
  * - Safe JSON serialization
  */
 
+import { buildEnhancedTools, type EnhancedConnectorOptions } from './enhancedProfiles.js';
+import { InvalidConfigError } from '../../domain/errors/AIErrors.js';
+import { connectorFailure } from './enhancedInvocation.js';
 import { Connector } from '../../core/Connector.js';
 import { logger } from '../../infrastructure/observability/Logger.js';
 import { sanitizeToolName } from '../../utils/sanitize.js';
+import { attachOutcomeCapture, captureOutcomeExecutor } from '../../core/tool-execution/outcomeInvocation.js';
 import { ToolFunction, ToolPermissionConfig, ToolContext } from '../../domain/entities/Tool.js';
 import { detectServiceFromURL } from '../../domain/entities/Services.js';
 import type { IConnectorRegistry } from '../../domain/interfaces/IConnectorRegistry.js';
@@ -252,6 +256,16 @@ export function resolveConnectorContext(
  * ```
  */
 export class ConnectorTools {
+  /** Additive fixed audited contracts. Ordinary for()/factories/defaults are unchanged. */
+  static enhanced(connectorOrName: Connector | string, options: EnhancedConnectorOptions): ToolFunction[] {
+    if (!options || typeof options.profile !== 'string') throw new InvalidConfigError('Enhanced connector profile is required');
+    const connector = this.resolveConnector(connectorOrName, options.registry);
+    const service = connector.config.serviceType ?? (connector.baseURL ? detectServiceFromURL(connector.baseURL) : connector.vendor) ?? '';
+    return buildEnhancedTools(connector, service, this.factories.get(service), { ...options },
+      (current, name) => this.createGenericAPITool(current, { toolName: name, userId: options.userId }),
+      tool => this.withAccountBinding(tool, connector.name, options.accountId));
+  }
+
   /** Registry of service-specific tool factories */
   private static factories = new Map<string, ServiceToolFactory>();
 
@@ -582,26 +596,34 @@ export class ConnectorTools {
     connectorName: string,
     explicitAccountId?: string,
   ): ToolFunction {
-    return {
-      ...tool,
-      execute: async (args: any, context?: ToolContext) => {
-        // 1. Explicit binding from forIdentities() takes highest priority
-        if (explicitAccountId) {
-          return tool.execute(args, { ...context, accountId: explicitAccountId });
-        }
-        // 2. Already set on context (by host app or parent wrapper)
-        if (context?.accountId) {
-          return tool.execute(args, context);
-        }
-        // 3. Resolve from per-connector map
-        const resolved = context?.connectorAccounts?.[connectorName];
-        if (resolved) {
-          return tool.execute(args, { ...context, accountId: resolved });
-        }
-        // 4. Legacy path — no account binding
-        return tool.execute(args, context);
-      },
+    const bindContext = (context?: ToolContext): ToolContext | undefined => {
+      // 1. Explicit binding from forIdentities() takes highest priority
+      if (explicitAccountId) {
+        return { ...context, accountId: explicitAccountId };
+      }
+      // 2. Already set on context (by host app or parent wrapper)
+      if (context?.accountId) {
+        return context;
+      }
+      // 3. Resolve from per-connector map
+      const resolved = context?.connectorAccounts?.[connectorName];
+      if (resolved) {
+        return { ...context, accountId: resolved };
+      }
+      // 4. Legacy path — no account binding
+      return context;
     };
+    const wrapped: ToolFunction = { ...tool, execute: async (args, context) => tool.execute(args, bindContext(context)) };
+    const sourceExecute: unknown = Object.getOwnPropertyDescriptor(tool, 'execute')?.value;
+    if (typeof sourceExecute === 'function' && captureOutcomeExecutor(sourceExecute as ToolFunction['execute'])) {
+      attachOutcomeCapture(wrapped.execute, () => {
+        const execute = captureOutcomeExecutor(tool.execute);
+        return execute ? function(args, context, reportFailure) {
+          return execute.call(tool, args, bindContext(context), reportFailure);
+        } : undefined;
+      });
+    }
+    return wrapped;
   }
 
   private static createGenericAPITool(
@@ -677,10 +699,10 @@ export class ConnectorTools {
             const normalized = normalizeBody(args.body);
             bodyStr = safeStringify(normalized);
           } catch (e) {
-            return {
+            return connectorFailure(connector, {
               success: false,
               error: `Failed to serialize request body: ${e instanceof Error ? e.message : String(e)}`,
-            };
+            });
           }
         }
 
@@ -713,7 +735,7 @@ export class ConnectorTools {
           // Check for API-level errors (many APIs return 200 with error in body)
           const apiError = detectAPIError(data);
 
-          return {
+          const result = {
             success: response.ok && !apiError,
             status: response.status,
             data: (response.ok && !apiError) ? data : undefined,
@@ -723,11 +745,12 @@ export class ConnectorTools {
                 ? undefined
                 : typeof data === 'string' ? data : safeStringify(data),
           };
+          return response.ok && !apiError ? result : connectorFailure(connector, result);
         } catch (error) {
-          return {
+          return connectorFailure(connector, {
             success: false,
             error: error instanceof Error ? error.message : String(error),
-          };
+          });
         }
       },
 

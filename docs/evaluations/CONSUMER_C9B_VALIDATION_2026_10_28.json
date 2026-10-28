@@ -1,0 +1,103 @@
+{
+  "protocol": "consumer-c9b-validation-v1",
+  "recordedAt": "2026-10-28",
+  "status": "complete-on-branch",
+  "verifiedPackageRelease": false,
+  "unit": {
+    "passed": 9172,
+    "failed": 0,
+    "failedSuites": 0,
+    "artifact": {
+      "path": "/tmp/oneringai-c9b-completion-unit.json",
+      "bytes": 2950583,
+      "sha256": "79b476200f13e0ce73160a52050f8b3a4b0e16f60219320cf137ceaa6e1a5275"
+    }
+  },
+  "selectedNewCases": 58,
+  "focusedReview": {
+    "passed": 159,
+    "failed": 0
+  },
+  "requestMatrix": {
+    "families": 5,
+    "efforts": 6,
+    "generationPairs": 30,
+    "surfaces": [
+      "generation",
+      "stream",
+      "native-count",
+      "batch"
+    ],
+    "additional": [
+      "raw controls",
+      "unified/raw precedence",
+      "route selection/fallback",
+      "per-call policy",
+      "host-only portable policy",
+      "native configuration updates",
+      "unknown/custom endpoints",
+      "observer isolation"
+    ]
+  },
+  "live": "Paused by user; all HTTP responses mocked; no live calls for C9-B.",
+  "compatibility": {
+    "legacyValidatorDefaultsAndErrorsFrozen": true,
+    "legacyCountValidationUnchanged": true,
+    "literalPortableProtocol": 2,
+    "policyOmittedFromPortableV2": true,
+    "savedConfigurationMutated": false,
+    "rawWebSocketLegacyStrict": true,
+    "chatCompletionsTransportAdded": false
+  },
+  "public": {
+    "passed": true,
+    "checks": 37,
+    "entries": 4,
+    "browser": true
+  },
+  "gates": {
+    "build": {
+      "path": "/tmp/oneringai-c9b-build.log",
+      "bytes": 15788,
+      "sha256": "318cfffff802e7bb9a09060a26492ad262edb5b01748e2bd572581c6ff9b9b25"
+    },
+    "typecheck": {
+      "path": "/tmp/oneringai-c9b-types.log",
+      "bytes": 57,
+      "sha256": "f6b1e5a3cac67cbfa88c10cbbef77e441211c6b1a548119565120060bd60327c"
+    },
+    "lint": {
+      "path": "/tmp/oneringai-c9b-lint.log",
+      "bytes": 60,
+      "sha256": "baa87ef42846f58fd51bc895d894c46c231cc5faa9b1ab6fb266c09d934d778f"
+    },
+    "compatibility": {
+      "path": "/tmp/oneringai-c9b-compat.log",
+      "bytes": 116,
+      "sha256": "59705c5cdf595ae07c3185748123c28136500182f1dec3d6b148c12e140b4b2d"
+    },
+    "examples": {
+      "path": "/tmp/oneringai-c9b-examples.log",
+      "bytes": 88,
+      "sha256": "8ee95d2a0d994fc787162a1466717f2695b4385a8e524366536614eade27f9ce"
+    },
+    "offline": {
+      "path": "/tmp/oneringai-c9b-example.log",
+      "bytes": 2163,
+      "sha256": "f08cc055eae96aa17a54bb2e1690ef4732e08fcd92e50afb834833a9ab18d017"
+    },
+    "generatedDocs": {
+      "path": "/tmp/oneringai-c9b-docs.log",
+      "bytes": 309,
+      "sha256": "8539c081e3e200cc1ca55c2e9f06f29423fa76b207103b96a62ecf56a8c42fc5"
+    }
+  },
+  "sourceHashes": {
+    "src/capabilities/metadata/parameters.ts": "51eb888332bdf6b1e60420ab202e86d93ed69c4fc420e9b9cf11a3c74108eaff",
+    "src/infrastructure/providers/openai/parameterPolicy.ts": "53e67b574a73d5aee46890522d5c1cd8f7e9aaabbbd1fbfb0edfe97b62b79b2c",
+    "src/infrastructure/providers/openai/OpenAIRequestValidator.ts": "61e8d81b0e2991239ea05203f24f26ed5ce1948f61231b5755ae9b98a338e184",
+    "src/infrastructure/providers/openai/OpenAITextProvider.ts": "c0e49ff294c243a92583f6b40c20b6692dc37f840b4e68aae9e3223fcf004683",
+    "src/core/Agent.ts": "b3a679dbe442c492a42055c5d1977fb54db94003892829fb792e2985778a95ae",
+    "src/core/BaseAgent.ts": "46955aac6792a82d979ab246b121a5a218b93356b2fbbf36075c59aeb5f9c91d"
+  }
+}

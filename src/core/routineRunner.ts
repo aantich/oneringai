@@ -1,3 +1,5 @@
+import { boundedData, freezeData } from './routines/observations.js';
+import { ROUTINE_KEYS } from './routineKeys.js';
 /**
  * Routine Execution Runner
  *
@@ -7,6 +9,7 @@
  */
 
 import { Agent } from './Agent.js';
+import { bindRoutineExecution, routineBinding, type RoutineBinding } from './execution/routineBinding.js';
 import type { ToolFunction } from '../domain/entities/Tool.js';
 import type {
   Task,
@@ -49,8 +52,8 @@ import {
   resolveStepArgs,
   storeResult,
   withTimeout,
-  ROUTINE_KEYS,
   getPlugins,
+  readMemoryValue,
 } from './routineControlFlow.js';
 import type { StepResolveContext } from './routineControlFlow.js';
 
@@ -608,7 +611,8 @@ async function injectRoutineContext(
 
   for (const depId of currentTask.dependsOn) {
     const depTask = execution.plan.tasks.find((t) => t.id === depId);
-    if (!depTask?.result?.output) continue;
+    if (!depTask?.result) continue;
+    if (routineBinding(execution)?.verified ? !('output' in depTask.result) : !depTask.result.output) continue;
 
     const output = typeof depTask.result.output === 'string'
       ? depTask.result.output
@@ -686,8 +690,15 @@ async function validateTaskCompletion(
   agent: Agent,
   task: Task,
   responseText: string,
-  validationPromptBuilder: (task: Task, context: ValidationContext) => string
+  validationPromptBuilder: (task: Task, context: ValidationContext) => string,
+  binding?: RoutineBinding,
 ): Promise<TaskValidationResult> {
+  if (binding?.verified && task.validation?.requiredMemoryKeys?.length) {
+    const { icmPlugin, wmPlugin } = getPlugins(agent);
+    for (const key of task.validation.requiredMemoryKeys) if (await readMemoryValue(key, icmPlugin, wmPlugin) === undefined) return {
+      isComplete: false, completionScore: 0, explanation: `Required memory key is missing: ${key}`, requiresUserApproval: false,
+    };
+  }
   // LLM validation is opt-in: only run when skipReflection is explicitly false
   // AND completion criteria are provided. Otherwise auto-pass.
   const hasExplicitValidation =
@@ -707,11 +718,12 @@ async function validateTaskCompletion(
   // Collect full context snapshot for the validator
   const validationContext = await collectValidationContext(agent, responseText);
 
-  const prompt = validationPromptBuilder(task, validationContext);
-  const response = await agent.runDirect(prompt, {
+  const prompt = binding?.verified ? validationPromptBuilder(freezeData(boundedData(task, 1_048_576).data), freezeData(boundedData(validationContext, 1_048_576).data)) : validationPromptBuilder(task, validationContext);
+  const directOptions = {
     instructions: 'You are a task completion evaluator. Return only JSON.',
     temperature: 0.1,
-  });
+  };
+  const response = await (binding ? binding.direct(prompt, { ...directOptions, purpose: 'verifier' }) : agent.runDirect(prompt, directOptions));
 
   const text = response.output_text ?? '';
   const extracted = extractJSON<{
@@ -734,7 +746,7 @@ async function validateTaskCompletion(
   const minScore = task.validation?.minCompletionScore ?? 80;
 
   return {
-    isComplete: completionScore >= minScore,
+    isComplete: binding?.verified ? extracted.data.isComplete === true && Number.isFinite(completionScore) && completionScore <= 100 && completionScore >= minScore : completionScore >= minScore,
     completionScore,
     explanation,
     requiresUserApproval: false,
@@ -749,6 +761,7 @@ const DEFAULT_STEP_TIMEOUT = 30_000;
 const DEFAULT_ROUTINE_TIMEOUT = 3_600_000; // 1 hour
 
 interface StepExecutionContext {
+  binding?: RoutineBinding;
   agent: Agent;
   steps: DeterministicStep[];
   phase: 'pre' | 'post';
@@ -785,6 +798,7 @@ async function executeDeterministicSteps(ctx: StepExecutionContext): Promise<Ste
   const defaultOnError = phase === 'pre' ? 'fail' : 'continue';
 
   for (let i = 0; i < steps.length; i++) {
+    ctx.binding?.signal.throwIfAborted();
     const step = steps[i]!;
     const onError = step.onError ?? defaultOnError;
     const resultKey = step.resultKey ??
@@ -802,16 +816,22 @@ async function executeDeterministicSteps(ctx: StepExecutionContext): Promise<Ste
       // Note: ToolManager's ResultNormalizerPlugin converts exceptions to
       // { success: false, error: '...' } objects instead of throwing.
       const timeoutMs = step.timeoutMs ?? DEFAULT_STEP_TIMEOUT;
-      const result = await withTimeout(
+      const report = ctx.binding?.verified ? await agent.tools.executeWithOutcome(step.toolName, resolvedArgs, { signal: ctx.binding.signal, timeoutMs }) : undefined;
+      const result = report ? report.result : ctx.binding ? await agent.tools.execute(step.toolName, resolvedArgs, {
+        signal: ctx.binding.signal, timeoutMs,
+      }) : await withTimeout(
         agent.tools.execute(step.toolName, resolvedArgs),
         timeoutMs,
         `${phase}-step "${step.name}"`
       );
 
       // Check for normalized error results (tool threw but pipeline recovered)
-      if (result && typeof result === 'object' && 'success' in result && result.success === false && 'error' in result) {
+      if (report && report.outcome.status !== 'succeeded') throw new Error(report.outcome.error ?? report.outcome.status);
+      if (!report && result && typeof result === 'object' && 'success' in result && result.success === false && 'error' in result) {
         throw new Error((result as { error: string }).error);
       }
+
+      await ctx.binding?.verified?.step(execution, step, phase, i, 'succeeded', result, ctx.binding);
 
       // Store result
       stepResults.set(step.name, result);
@@ -827,6 +847,7 @@ async function executeDeterministicSteps(ctx: StepExecutionContext): Promise<Ste
       log.error({ stepName: step.name, error: errorMessage }, `${phase}-step failed`);
       errors.push({ stepName: step.name, error: errorMessage });
       ctx.onStepFailed?.(step, phase, i, error as Error, execution);
+      await ctx.binding?.verified?.step(execution, step, phase, i, 'failed', { error: errorMessage }, ctx.binding);
 
       if (onError === 'fail') {
         return { success: false, results: stepResults, errors, usedResultKeys };
@@ -881,6 +902,7 @@ async function executeDeterministicSteps(ctx: StepExecutionContext): Promise<Ste
  * ```
  */
 export async function executeRoutine(options: ExecuteRoutineOptions): Promise<RoutineExecution> {
+  const binding = routineBinding(options);
   const {
     definition,
     agent: existingAgent,
@@ -915,14 +937,16 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
 
   // 1. Create execution
   const execution = createRoutineExecution(definition);
+  bindRoutineExecution(execution, binding);
   execution.status = 'running';
   execution.startedAt = Date.now();
   execution.lastUpdatedAt = Date.now();
+  binding?.verified?.started(execution, binding);
 
   // 2. Resolve prompt builders
   const buildSystemPrompt = prompts?.system ?? defaultSystemPrompt;
   const userTaskPromptBuilder = prompts?.task ?? defaultTaskPrompt;
-  const buildTaskPrompt = (task: Task) => userTaskPromptBuilder(task, execution);
+  const buildTaskPrompt = (task: Task) => binding?.verified ? userTaskPromptBuilder(freezeData(boundedData(task, 1_048_576).data), freezeData(boundedData(execution, 1_048_576).data)) : userTaskPromptBuilder(task, execution);
   const buildValidationPrompt = prompts?.validation ?? defaultValidationPrompt;
 
   // 3. Resolve agent: reuse existing or create new
@@ -944,10 +968,11 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
         execution.error = `Missing required tools on agent: ${missing.join(', ')}`;
         execution.completedAt = Date.now();
         execution.lastUpdatedAt = Date.now();
+        if (binding?.verified) await binding.verified.final(execution, binding);
         return execution;
       }
 
-      if (disableToolScoping) {
+      if (disableToolScoping || binding?.verified) {
         // Opt-out: keep the caller's full superagent — preSteps + postSteps
         // can use any registered tool. The requiredTools check above served
         // only as a sanity gate. Hooks register/unregister on the existing
@@ -1007,6 +1032,7 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
         execution.error = `Missing required tools: ${missing.join(', ')}`;
         execution.completedAt = Date.now();
         execution.lastUpdatedAt = Date.now();
+        if (binding?.verified) await binding.verified.final(execution, binding);
         return execution;
       }
     }
@@ -1038,7 +1064,8 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
       execution.error = `Missing required plugins: ${missing.join(', ')}`;
       execution.completedAt = Date.now();
       execution.lastUpdatedAt = Date.now();
-      return execution;
+      if (binding?.verified) await binding.verified.final(execution, binding);
+        return execution;
     }
   }
 
@@ -1047,8 +1074,22 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
   // Track custom resultKeys from deterministic steps for cleanup (reused agents)
   const stepResultKeys: string[] = [];
 
+  const { icmPlugin: savedICM, wmPlugin: savedWM } = getPlugins(agent);
+  const customKeys = [...(definition.preSteps ?? []), ...(definition.postSteps ?? [])].flatMap(step => step.resultKey ? [step.resultKey] : []);
+  const routineKey = (key: string) => FULL_CLEANUP_CONFIG.icmPrefixes.some(prefix => key.startsWith(prefix))
+    || FULL_CLEANUP_CONFIG.wmPrefixes.some(prefix => key.startsWith(prefix)) || customKeys.includes(key);
+  const icmBefore = binding?.verified ? savedICM?.getState().entries.filter(entry => routineKey(entry.key)) : undefined;
+  const wmBefore = binding?.verified ? savedWM?.getState().entries.filter(entry => routineKey(entry.key)) : undefined;
+  const restoreSelected = async () => {
+    if (savedICM) for (const entry of savedICM.list()) if (routineKey(entry.key)) savedICM.delete(entry.key);
+    if (savedWM) for (const entry of (await savedWM.query()).entries) if (routineKey(entry.key)) await savedWM.delete(entry.key);
+    for (const entry of icmBefore ?? []) savedICM!.set(entry.key, entry.description, entry.value, entry.priority, entry.showInUI);
+    for (const entry of wmBefore ?? []) await savedWM!.store(entry.key, entry.description, entry.value, { scope: entry.scope, priority: entry.basePriority, pinned: entry.pinned });
+    for (const { name, hook } of registeredHooks) agent.unregisterHook(name as any, hook as any);
+  };
+
   // Global routine timeout — cancels the agent if wall-clock time is exceeded
-  const routineTimeoutMs = definition.timeoutMs !== undefined ? definition.timeoutMs : DEFAULT_ROUTINE_TIMEOUT;
+  const routineTimeoutMs = binding ? 0 : definition.timeoutMs !== undefined ? definition.timeoutMs : DEFAULT_ROUTINE_TIMEOUT;
   let routineTimedOut = false;
   let routineTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -1074,6 +1115,7 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
         execution.error = `Missing tools required by pre/post steps: ${missingStepTools.join(', ')}`;
         execution.completedAt = Date.now();
         execution.lastUpdatedAt = Date.now();
+        if (binding?.verified) await binding.verified.final(execution, binding);
         return execution;
       }
     }
@@ -1116,6 +1158,7 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
     if (definition.preSteps && definition.preSteps.length > 0) {
       log.info({ count: definition.preSteps.length }, 'Executing pre-steps');
       const preResult = await executeDeterministicSteps({
+        binding,
         agent,
         steps: definition.preSteps,
         phase: 'pre',
@@ -1133,6 +1176,7 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
         execution.error = `Pre-step failed: ${preResult.errors.map(e => e.stepName).join(', ')}`;
         execution.completedAt = Date.now();
         execution.lastUpdatedAt = Date.now();
+        if (binding?.verified) await binding.verified.final(execution, binding);
         return execution;
       }
     }
@@ -1147,6 +1191,7 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
     let initialMessageConsumed = false;
 
     while (nextTasks.length > 0) {
+      binding?.signal.throwIfAborted();
       // Check routine timeout before starting next task
       if (routineTimedOut) {
         log.warn('Routine timeout detected between tasks, aborting');
@@ -1159,6 +1204,16 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
 
       log.info({ taskName: task.name, taskId: task.id }, 'Starting task');
 
+      if (binding?.verified && task.condition) {
+        const disposition = await binding.verified.condition(execution, task, binding);
+        if (disposition !== 'run') {
+          execution.plan.tasks[taskIndex] = updateTaskStatus(task, disposition === 'skip' ? 'completed' : 'failed');
+          execution.plan.tasks[taskIndex]!.result = { success: disposition === 'skip', output: { skipped: true } };
+          await binding.verified.task(execution, execution.plan.tasks[taskIndex]!, binding, undefined, undefined, undefined, disposition === 'skip');
+          if (disposition === 'fail' && failureMode === 'fail-fast') { execution.status = 'failed'; break; }
+          nextTasks = getNextExecutableTasks(execution.plan); continue;
+        }
+      }
       // Set task to in_progress
       execution.plan.tasks[taskIndex] = updateTaskStatus(task, 'in_progress');
       execution.lastUpdatedAt = Date.now();
@@ -1201,7 +1256,8 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
           try {
             const cfResult = await executeControlFlow(agent, getTask(), resolvedInputs, execution);
 
-            if (cfResult.completed) {
+            await binding?.verified?.task(execution, { ...getTask(), result: { success: cfResult.completed, output: cfResult.result, error: cfResult.error } }, binding);
+            if (binding?.verified || cfResult.completed) {
               execution.plan.tasks[taskIndex] = updateTaskStatus(getTask(), 'completed');
               execution.plan.tasks[taskIndex]!.result = { success: true, output: cfResult.result };
               taskCompleted = true;
@@ -1230,12 +1286,14 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
               // Build task prompt — caller may override the FIRST task's prompt
               // entirely via options.initialUserMessage (e.g. for kickoff
               // routines where the routine itself doesn't template per-task).
-              const taskPrompt = useInitialMessageForThisTask
+              const taskPromptBase = useInitialMessageForThisTask
                 ? options.initialUserMessage!
                 : buildTaskPrompt(resolvedTask);
 
+              const taskPrompt = binding?.verified
+                ? [(prompts?.system ? prompts.system(freezeData(boundedData(definition, 1_048_576).data)) : definition.instructions ?? ''), 'Complete only this task. Use the available context plugins and their documented tools for cross-task data; do not repeat settled actions.', taskPromptBase].filter(Boolean).join('\n\n') : taskPromptBase;
               // Run agent
-              const response = await agent.run(taskPrompt);
+              const response = await (binding ? binding.run(taskPrompt) : agent.run(taskPrompt));
               const responseText = response.output_text ?? '';
 
               // Validate
@@ -1243,13 +1301,16 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
                 agent,
                 getTask(),
                 responseText,
-                buildValidationPrompt
+                buildValidationPrompt,
+                binding,
               );
 
+              await binding?.verified?.task(execution, getTask(), binding, response, validationResult,
+                () => validateTaskCompletion(agent, getTask(), responseText, buildValidationPrompt, binding));
               // Notify caller of validation result
               onTaskValidation?.(getTask(), validationResult, execution);
 
-              if (validationResult.isComplete) {
+              if (binding?.verified || validationResult.isComplete) {
                 // Mark completed
                 execution.plan.tasks[taskIndex] = updateTaskStatus(getTask(), 'completed');
                 execution.plan.tasks[taskIndex]!.result = {
@@ -1301,6 +1362,12 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
               log.error({ taskName: getTask().name, error: errorMessage }, 'Task execution error');
 
               if (!isTransientError(error) || getTask().attempts >= getTask().maxAttempts) {
+                await binding?.verified?.task(execution, { ...getTask(), result: { success: false, error: errorMessage } }, binding);
+                if (binding?.verified) {
+                  execution.plan.tasks[taskIndex] = updateTaskStatus(getTask(), 'completed');
+                  execution.plan.tasks[taskIndex]!.result = { success: true, output: { reconciledError: errorMessage } };
+                  taskCompleted = true; break;
+                }
                 // Permanent error or max attempts exceeded — mark failed
                 execution.plan.tasks[taskIndex] = updateTaskStatus(getTask(), 'failed');
                 execution.plan.tasks[taskIndex]!.result = {
@@ -1337,7 +1404,7 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
       }
 
       // Clear conversation for next task (memory persists)
-      agent.clearConversation('task-boundary');
+      if (!binding?.verified?.preserve()) agent.clearConversation('task-boundary');
 
       // Get next executable tasks
       nextTasks = getNextExecutableTasks(execution.plan);
@@ -1385,6 +1452,7 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
       (definition.postStepsTrigger === 'always' || execution.status === 'completed');
 
     if (shouldRunPostSteps) {
+      binding?.signal.throwIfAborted();
       // Build task results map for {{result.TASK_ID_OR_NAME}} resolution.
       // Tasks carry both a canonical `id` (referenced by `dependsOn`,
       // control-flow ops, etc.) and a human-readable `name` (display label).
@@ -1393,16 +1461,17 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
       // id is the canonical reference and the name is for display.
       const taskResults = new Map<string, unknown>();
       for (const task of execution.plan.tasks) {
-        if (task.status === 'completed' && task.result?.output) {
-          taskResults.set(task.name, task.result.output);
+        if (task.status === 'completed' && (binding?.verified ? task.result && 'output' in task.result : task.result?.output)) {
+          taskResults.set(task.name, task.result!.output);
           if (task.id && task.id !== task.name) {
-            taskResults.set(task.id, task.result.output);
+            taskResults.set(task.id, task.result!.output);
           }
         }
       }
 
       log.info({ count: definition.postSteps!.length }, 'Executing post-steps');
       const postResult = await executeDeterministicSteps({
+        binding,
         agent,
         steps: definition.postSteps!,
         phase: 'post',
@@ -1430,6 +1499,7 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
       }
     }
 
+    await binding?.verified?.final(execution, binding);
     log.info(
       { status: execution.status, progress: execution.progress },
       'Routine execution finished'
@@ -1440,15 +1510,19 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
     // Clear routine timeout timer (may already be cleared before postSteps)
     if (routineTimer) clearTimeout(routineTimer);
 
+    if (binding?.verified) {
+      // Recovery retries local restoration only, never a step/action.
+      await binding.verified.cleanup(execution, binding, restoreSelected);
+    }
     // Clean up routine-managed keys from ICM/WM (important for reused agents)
     try {
-      await cleanupRoutineContext(agent, stepResultKeys);
+      if (!binding?.verified) await cleanupRoutineContext(agent, stepResultKeys);
     } catch (e) {
       log.debug({ error: (e as Error).message }, 'Failed to clean up routine context');
     }
 
     // Unregister routine-specific hooks from existing agent
-    for (const { name, hook } of registeredHooks) {
+    for (const { name, hook } of binding?.verified ? [] : registeredHooks) {
       try {
         agent.unregisterHook(name as any, hook as any);
       } catch (e) {

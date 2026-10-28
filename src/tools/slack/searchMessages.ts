@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Slack - Search Messages Tool
  *
@@ -129,10 +130,10 @@ EXAMPLES:
           hasMore: messages.length < response.messages.total,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatSlackToolError('Failed to search messages', error),
-        };
+        });
       }
     },
   };

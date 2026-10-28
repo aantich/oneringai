@@ -1,3 +1,5 @@
+import { registerEnhancedFactory } from '../connector/enhancedProfiles.js';
+import type { ServiceToolFactory } from '../connector/ConnectorTools.js';
 /**
  * Microsoft Graph Tools Registration
  *
@@ -34,9 +36,7 @@ import { createMicrosoftSearchFilesTool } from './searchFiles.js';
  * to it. (See `createMicrosoftSearchFilesTool` doc comment.)
  */
 export function registerMicrosoftTools(): void {
-  ConnectorTools.registerService(
-    'microsoft',
-    (connector: Connector, userId?: string, options?: ServiceToolFactoryOptions) => {
+  const bundledFactory: ServiceToolFactory = (connector: Connector, userId?: string, options?: ServiceToolFactoryOptions) => {
       const actAs = options?.actAs;
       return [
         // Email — URL-scoped, participates in actAs lock
@@ -56,6 +56,7 @@ export function registerMicrosoftTools(): void {
         // searchFiles — tenant-global endpoint, NOT URL-scoped, does NOT take actAs
         createMicrosoftSearchFilesTool(connector, userId),
       ];
-    },
-  );
+    };
+  ConnectorTools.registerService('microsoft', bundledFactory);
+  registerEnhancedFactory('microsoft', bundledFactory);
 }

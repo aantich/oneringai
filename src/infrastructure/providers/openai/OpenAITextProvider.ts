@@ -16,6 +16,8 @@ import { OpenAIConfig } from '../../../domain/types/ProviderConfig.js';
 import { StreamEvent } from '../../../domain/entities/StreamEvent.js';
 import { OpenAIResponsesConverter } from './OpenAIResponsesConverter.js';
 import { OpenAIResponsesStreamConverter } from './OpenAIResponsesStreamConverter.js';
+import { applyOpenAIParameterPolicy } from './parameterPolicy.js';
+import { openAISamplingConstraint } from '../../../capabilities/metadata/parameters.js';
 import { validateOpenAIResponsesRequest } from './OpenAIRequestValidator.js';
 import * as ResponsesAPI from 'openai/resources/responses/responses.js';
 import { getModelInfo } from '../../../domain/entities/Model.js';
@@ -100,9 +102,11 @@ export class OpenAITextProvider extends BaseTextProvider {
   }
 
   private async countNativeInput(options: TextGenerateOptions): Promise<number | null> {
+    options = applyOpenAIParameterPolicy(options, this.name, this.getBaseURL());
     options = this.applyContextLimitGuardrail({ ...options, skipContextLimitCheck: true });
     this.assertNativeOptions(options);
     const wire = this.buildGenerationRequest(options);
+    if (options.parameterPolicy) validateOpenAIResponsesRequest(options, wire, this.getBaseURL(), !!options.parameterPolicy);
     // This is the SDK count endpoint's input-bearing projection of the exact
     // generation request, including raw vendor options and normalized overrides.
     const keys = ['model', 'input', 'instructions', 'tools', 'text', 'tool_choice', 'parallel_tool_calls', 'reasoning', 'personality'];
@@ -153,7 +157,7 @@ export class OpenAITextProvider extends BaseTextProvider {
     // GPT-6 Sol/Luna support sampling when reasoning.effort is `none`. Keep
     // temperature in the request here and let the effort-aware validator
     // accept or reject the concrete combination instead of silently dropping it.
-    if (/^(?:gpt-6-astra|gpt-6\.1-sol|gpt-6-sol|gpt-6-luna)(?:-|$)/.test(model)
+    if (openAISamplingConstraint(model, undefined, true)
       && (parameter === 'temperature' || parameter === 'topP')) {
       return true;
     }
@@ -169,13 +173,14 @@ export class OpenAITextProvider extends BaseTextProvider {
    * Generate response using OpenAI Responses API
    */
   async generate(options: TextGenerateOptions): Promise<LLMResponse> {
+    options = applyOpenAIParameterPolicy(options, this.name, this.getBaseURL());
     options = this.applyContextLimitGuardrail(options);
     options = await this.resolveAdvancedCredentials(options);
     // Execute with circuit breaker protection and observability
     return this.executeWithCircuitBreaker(async () => {
       try {
         const params = this.buildGenerationRequest(options);
-        validateOpenAIResponsesRequest(options, params, this.getBaseURL());
+        validateOpenAIResponsesRequest(options, params, this.getBaseURL(), !!options.parameterPolicy);
 
         this.logger.debug(
           { model: options.model, toolCount: (params.tools as unknown[])?.length ?? 0 },
@@ -213,12 +218,13 @@ export class OpenAITextProvider extends BaseTextProvider {
    * Stream response using OpenAI Responses API
    */
   async *streamGenerate(options: TextGenerateOptions): AsyncIterableIterator<StreamEvent> {
+    options = applyOpenAIParameterPolicy(options, this.name, this.getBaseURL());
     options = this.applyContextLimitGuardrail(options);
     options = await this.resolveAdvancedCredentials(options);
     this.ensureObservabilityInitialized();
     try {
       const params = this.buildGenerationRequest(options, true);
-      validateOpenAIResponsesRequest(options, params, this.getBaseURL());
+      validateOpenAIResponsesRequest(options, params, this.getBaseURL(), !!options.parameterPolicy);
 
       this.logger.debug(
         { model: options.model, toolCount: (params.tools as unknown[])?.length ?? 0 },
@@ -457,6 +463,7 @@ export class OpenAITextProvider extends BaseTextProvider {
   }
 
   private buildBatchBody(options: TextGenerateOptions): Record<string, unknown> {
+    options = applyOpenAIParameterPolicy(options, this.name, this.getBaseURL());
     const { input, instructions } = this.converter.convertInput(
       options.input,
       options.instructions,
@@ -499,7 +506,7 @@ export class OpenAITextProvider extends BaseTextProvider {
     }
     this.applyPromptCacheConfig(body, options);
     this.applyReasoningConfig(body, options);
-    validateOpenAIResponsesRequest(options, body, this.getBaseURL());
+    validateOpenAIResponsesRequest(options, body, this.getBaseURL(), !!options.parameterPolicy);
     return body;
   }
 

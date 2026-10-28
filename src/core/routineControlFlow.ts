@@ -13,6 +13,7 @@ import { createRoutineDefinition } from '../domain/entities/Routine.js';
 import type { InContextMemoryPluginNextGen } from './context-nextgen/plugins/InContextMemoryPluginNextGen.js';
 import type { WorkingMemoryPluginNextGen } from './context-nextgen/plugins/WorkingMemoryPluginNextGen.js';
 import { executeRoutine } from './routineRunner.js';
+import { routineBinding, type RoutineBinding } from './execution/routineBinding.js';
 import { logger } from '../infrastructure/observability/Logger.js';
 import { parseJsonPermissive } from '../utils/jsonRepair.js';
 
@@ -24,30 +25,8 @@ const HARD_MAX_ITERATIONS = 1000;
 const ICM_LARGE_THRESHOLD = 5000; // tokens — results above this go to WM
 
 /** Well-known ICM/WM keys used by the routine execution framework. */
-export const ROUTINE_KEYS = {
-  /** Plan overview with task statuses (ICM) */
-  PLAN: '__routine_plan',
-  /** Dependency results location guide (ICM) */
-  DEPS: '__routine_deps',
-  /** Prefix for per-dependency result keys (ICM/WM) */
-  DEP_RESULT_PREFIX: '__dep_result_',
-  /** Current map/fold item (ICM) */
-  MAP_ITEM: '__map_item',
-  /** Current map/fold index, 0-based (ICM) */
-  MAP_INDEX: '__map_index',
-  /** Total items in map/fold (ICM) */
-  MAP_TOTAL: '__map_total',
-  /** Running fold accumulator (ICM) */
-  FOLD_ACCUMULATOR: '__fold_accumulator',
-  /** Prefix for large dep results stored in WM findings tier */
-  WM_DEP_FINDINGS_PREFIX: 'findings/__dep_result_',
-  /** Prefix for auto-stored task outputs (set by output contracts) */
-  TASK_OUTPUT_PREFIX: '__task_output_',
-  /** Prefix for pre-step results stored in ICM/WM */
-  PRE_STEP_PREFIX: '__prestep_',
-  /** Prefix for post-step results stored in ICM/WM */
-  POST_STEP_PREFIX: '__poststep_',
-} as const;
+export { ROUTINE_KEYS } from './routineKeys.js';
+import { ROUTINE_KEYS } from './routineKeys.js';
 
 // ============================================================================
 // Types
@@ -502,19 +481,21 @@ function tryCoerceToArray(value: unknown): unknown {
  * model's own default is always the maximum it can emit.
  */
 export async function llmExtractArray(agent: Agent, rawValue: unknown): Promise<unknown[]> {
+  return extractBoundArray(agent, rawValue);
+}
+
+async function extractBoundArray(agent: Agent, rawValue: unknown, binding?: RoutineBinding): Promise<unknown[]> {
   const serialized = typeof rawValue === 'string' ? rawValue : JSON.stringify(rawValue);
 
-  const response = await agent.runDirect(
-    [
+  const prompt = [
       'Extract a JSON array from the data below for iteration.',
       'Return ONLY a valid JSON array. No explanation, no markdown fences, no extra text.',
       'If the data contains a list in any format (JSON, markdown, numbered list, comma-separated), convert it to a JSON array of items.',
       '',
       'Data:',
       serialized,
-    ].join('\n'),
-    { temperature: 0 }
-  );
+    ].join('\n');
+  const response = await (binding ? binding.direct(prompt, { temperature: 0, purpose: 'extractor' }) : agent.runDirect(prompt, { temperature: 0 }));
 
   const text = response.output_text ?? '';
 
@@ -618,7 +599,7 @@ export async function resolveFlowSource(
   if (!Array.isArray(value)) {
     log.info({ resolvedVia, valueType: typeof value }, 'Source not an array, attempting LLM extraction');
     try {
-      value = await llmExtractArray(agent, rawValue);
+      value = await extractBoundArray(agent, rawValue, execution ? routineBinding(execution) : undefined);
       log.info({ extractedLength: (value as unknown[]).length }, 'LLM extraction succeeded');
     } catch (err) {
       return {
@@ -633,6 +614,7 @@ export async function resolveFlowSource(
     log.warn('Source array is empty');
   }
 
+  if (execution && routineBinding(execution)?.verified && flow.maxIterations === undefined && arr.length > HARD_MAX_ITERATIONS) return { completed: false, error: `${flowType}: source exceeds the implicit iteration allowance; select an explicit maxIterations` };
   const maxIter = Math.min(arr.length, flow.maxIterations ?? arr.length, HARD_MAX_ITERATIONS);
   return { array: arr, maxIter };
 }
@@ -679,7 +661,8 @@ async function handleMap(
       ].join('\n');
 
       // Execute sub-routine recursively (with optional per-iteration timeout)
-      const subExecution = await withTimeout(
+      const binding = execution ? routineBinding(execution) : undefined;
+      const subExecution = binding ? await binding.execute({ definition: augmented, agent, inputs }, flow.iterationTimeoutMs) : await withTimeout(
         executeRoutine({ definition: augmented, agent, inputs }),
         flow.iterationTimeoutMs,
         `Map iteration ${i}`
@@ -749,7 +732,8 @@ async function handleFold(
       ].join('\n');
 
       // Execute sub-routine (with optional per-iteration timeout)
-      const subExecution = await withTimeout(
+      const binding = execution ? routineBinding(execution) : undefined;
+      const subExecution = binding ? await binding.execute({ definition: augmented, agent, inputs }, flow.iterationTimeoutMs) : await withTimeout(
         executeRoutine({ definition: augmented, agent, inputs }),
         flow.iterationTimeoutMs,
         `Fold iteration ${i}`
@@ -795,7 +779,8 @@ async function handleUntil(
   agent: Agent,
   flow: TaskUntilFlow,
   task: Task,
-  inputs: Record<string, unknown>
+  inputs: Record<string, unknown>,
+  execution?: RoutineExecution,
 ): Promise<ControlFlowResult> {
   const { icmPlugin, wmPlugin } = getPlugins(agent);
   const log = logger.child({ controlFlow: 'until', task: task.name });
@@ -827,7 +812,8 @@ async function handleUntil(
       ].join('\n');
 
       // Execute sub-routine (with optional per-iteration timeout)
-      const subExecution = await withTimeout(
+      const binding = execution ? routineBinding(execution) : undefined;
+      const subExecution = binding ? await binding.execute({ definition: augmented, agent, inputs }, flow.iterationTimeoutMs) : await withTimeout(
         executeRoutine({ definition: augmented, agent, inputs }),
         flow.iterationTimeoutMs,
         `Until iteration ${i}`
@@ -878,7 +864,7 @@ export async function executeControlFlow(
     case 'fold':
       return handleFold(agent, flow, task, inputs, execution);
     case 'until':
-      return handleUntil(agent, flow, task, inputs);
+      return handleUntil(agent, flow, task, inputs, execution);
     default:
       return { completed: false, error: `Unknown control flow type: ${(flow as any).type}` };
   }

@@ -1,3 +1,4 @@
+import { bindRemoteContext, hasRemoteEvidenceOwners, validateRemoteEvidenceRecord } from '../tool-execution/remoteObservation.js';
 import { ContextAssembler, contextFingerprint, observeAssemblyUsage } from './assembly.js';
 import type { AssemblySnapshot, ContextContributor, ContextSelectionManifest } from './assembly.js';
 import type { TokenUsage } from '../../domain/entities/Response.js';
@@ -41,6 +42,7 @@ import { EventEmitter } from 'eventemitter3';
 import { randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { ToolManager } from '../ToolManager.js';
+import { orchestratorConstruction, initializeOrchestratorContext, isOrchestratorConstruction } from '../orchestrator/construction.js';
 import { logger } from '../../infrastructure/observability/Logger.js';
 import { getModelInfo } from '../../domain/entities/Model.js';
 import type { InputItem, Message } from '../../domain/entities/Message.js';
@@ -225,6 +227,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
   /** Auth identities this agent is scoped to (connector + optional accountId) */
   private _identities: AuthIdentity[] | undefined;
+  private readonly _constructionRegistry?: IConnectorRegistry;
 
   /** Storage backend */
   private readonly _storage?: IContextStorage;
@@ -321,6 +324,8 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
   private constructor(config: AgentContextNextGenConfig) {
     super();
+    const construction = orchestratorConstruction(config);
+    this._constructionRegistry = construction?.registry;
     const estimator = config.assembly?.tokenEstimator;
     if (estimator) {
       if (typeof estimator.estimateTokens !== 'function' || typeof estimator.estimateDataTokens !== 'function'
@@ -378,15 +383,16 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
       config.toolExecutionTimeout ? { toolExecutionTimeout: config.toolExecutionTimeout } : undefined,
     );
 
-    // Register initial tools
-    if (config.tools) {
-      for (const tool of config.tools) {
-        this._tools.register(tool);
-      }
-    }
+    bindRemoteContext(this._tools, this);
 
+    // Preserve legacy initial-registration behavior outside the selected constructor.
+    if (!construction && config.tools) for (const tool of config.tools) this._tools.register(tool);
     // Auto-initialize plugins based on features config
     try {
+      if (construction) {
+        initializeOrchestratorContext(this, construction);
+        if (config.tools) for (const tool of config.tools) this._tools.register(tool);
+      }
       this.initializePlugins(config.plugins);
       if (config.assembly) this._assembler = new ContextAssembler(config.assembly, source => this.getPlugin(source));
       this.assertPresetPlugins();
@@ -471,7 +477,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     }
 
     // 6. Shared Workspace (default: disabled)
-    if (features.sharedWorkspace) {
+    if (features.sharedWorkspace && !(isOrchestratorConstruction(this._tools) && this._plugins.has('shared_workspace'))) {
       const swConfig = configs.sharedWorkspace as Partial<SharedWorkspaceConfig> | undefined;
       this.registerPlugin(new SharedWorkspacePluginNextGen(swConfig));
     }
@@ -579,6 +585,7 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
 
         // Skip if already manually registered (manual takes precedence)
         if (this._plugins.has(entry.pluginName)) {
+          if (isOrchestratorConstruction(this._tools)) throw new Error(`Orchestrator construction plugin collision: ${entry.pluginName}`);
           logger.debug(
             { plugin: entry.pluginName },
             `Plugin '${entry.pluginName}' already registered, skipping auto-init from PluginRegistry`,
@@ -709,10 +716,10 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
     // Resolve the base registry on each call too — host apps (e.g. v25) install
     // their own custom registry whose visibility depends on ambient context, so
     // we can't snapshot it at construction time either.
-    const resolveBase = (): IConnectorRegistry =>
+    const resolveBase = (): IConnectorRegistry => this._constructionRegistry ?? (
       this._userId && Connector.getAccessPolicy()
         ? Connector.scoped({ userId: this._userId })
-        : Connector.asRegistry();
+        : Connector.asRegistry());
 
     return {
       getById: (id) => {
@@ -1591,6 +1598,11 @@ export class AgentContextNextGen extends EventEmitter<ContextEvents> {
         || (content.type === ContentType.CUSTOM_TOOL_USE && selected.some(result => result.type === ContentType.CUSTOM_TOOL_RESULT))) && content.id === callId)
       .map(content => (content as { name: string }).name);
     if (callNames.some(name => name !== record.source.toolName)) throw new Error('Evidence does not match the retained tool call');
+    if (hasRemoteEvidenceOwners(this._tools)) {
+      await validateRemoteEvidenceRecord(this._tools, record, selectedReference, callId);
+      this.assertNotDestroyed();
+      if (stamp !== this.contextStamp() || owner !== this._userId || this._contextOperation || this._rolloverInProgress) throw new Error('Context changed during remote evidence validation');
+    }
     for (const content of selected) {
       if (content.type === ContentType.TOOL_RESULT || content.type === ContentType.CUSTOM_TOOL_RESULT) {
         content.evidence = { version: 1, executionId: record.source.executionId, status: 'stored', reference: selectedReference };

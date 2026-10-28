@@ -1,0 +1,127 @@
+{
+  "protocol": "consumer-c7-validation-v1",
+  "recordedAt": "2026-10-28",
+  "branch": "version2",
+  "baseCommit": "0f159e90586c98efd561f216de87277a6993e340",
+  "status": "complete-on-branch-offline-validation",
+  "verifiedPackageRelease": false,
+  "livePolicy": "User explicitly paused live testing on 2026-10-28; no further live calls authorized for now.",
+  "unit": {
+    "passed": 9085,
+    "failed": 0,
+    "failedSuites": 0,
+    "artifact": {
+      "path": "/tmp/oneringai-c7-frozen-unit.json",
+      "sha256": "5f90e3a10fc92596167e0935e57b23ed91048caf342df42eaf90c9ee18aed4d4",
+      "bytes": 2915648
+    }
+  },
+  "portableReview": {
+    "passed": 79,
+    "failed": 0
+  },
+  "public": {
+    "combinations": 9,
+    "assertions": 90,
+    "artifact": {
+      "path": "/tmp/oneringai-c7-frozen-public.log",
+      "sha256": "4d6ccd4d7d764d72a052b8fc2c5f4b21a368c6d558a4e352257ba6cc0a9c0c53",
+      "bytes": 4346
+    }
+  },
+  "example": {
+    "passed": true,
+    "submissions": 1,
+    "operations": 2,
+    "sourceRecovered": true,
+    "artifact": {
+      "path": "/tmp/oneringai-c7-frozen-example.log",
+      "sha256": "c2893f40ab11024c80829d282d39bc6228e445b6ddd543b6ee9a818adc407ad4",
+      "bytes": 685
+    }
+  },
+  "liveAttempt": {
+    "passed": 182,
+    "failed": 81,
+    "artifact": {
+      "path": "/tmp/oneringai-c7-final-live-tests.json",
+      "sha256": "7aa7d32eb2994fbca17ab8d15094b7b836d6bea2384469241732c2f2be2518ec",
+      "bytes": 149802
+    },
+    "anthropic": "Direct models/messages both 403 permission_error, account has no permission for endpoint. 80 failures include Anthropic dependency paths.",
+    "google": "One legacy wrap-up trajectory produced different model text; targeted follow-up also skipped the requested read. Counts/accounting were recorded, but the trajectory did not pass.",
+    "correctedSubset": {
+      "c7OpenAIGoogle": 4,
+      "legacyGoogleWrapup": false
+    },
+    "unverified": [
+      "Anthropic C7",
+      "full three-provider cumulative pass",
+      "legacy Google wrap-up trajectory"
+    ]
+  },
+  "gates": {
+    "build": {
+      "artifact": {
+        "path": "/tmp/oneringai-c7-frozen-build.log",
+        "sha256": "165fcf330ea6b179452a2dc43db1dee82870dad25887d1bac8e5e6dae4b6a61e",
+        "bytes": 15789
+      }
+    },
+    "typecheck": {
+      "artifact": {
+        "path": "/tmp/oneringai-c7-frozen-types.log",
+        "sha256": "f6b1e5a3cac67cbfa88c10cbbef77e441211c6b1a548119565120060bd60327c",
+        "bytes": 57
+      }
+    },
+    "lint": {
+      "artifact": {
+        "path": "/tmp/oneringai-c7-frozen-lint.log",
+        "sha256": "baa87ef42846f58fd51bc895d894c46c231cc5faa9b1ab6fb266c09d934d778f",
+        "bytes": 60
+      }
+    },
+    "examplesCheck": {
+      "artifact": {
+        "path": "/tmp/oneringai-c7-frozen-examples-types.log",
+        "sha256": "8ee95d2a0d994fc787162a1466717f2695b4385a8e524366536614eade27f9ce",
+        "bytes": 88
+      }
+    },
+    "compatibility": {
+      "artifact": {
+        "path": "/tmp/oneringai-c7-frozen-compat.log",
+        "sha256": "59705c5cdf595ae07c3185748123c28136500182f1dec3d6b148c12e140b4b2d",
+        "bytes": 116
+      }
+    },
+    "generatedDocs": {
+      "artifact": {
+        "path": "/tmp/oneringai-c7-frozen-docs.log",
+        "sha256": "b374a73df81e7b018370ec994d6a1071659b0c35eb78772b7ef9ac62922deb37",
+        "bytes": 309
+      }
+    }
+  },
+  "compatibility": {
+    "literalOldProtocol": 2,
+    "legacyDefaultSelectionChanged": false,
+    "newProtocol": "oneringai.tool-outcomes/1",
+    "oldDTOsChanged": false
+  },
+  "sourceHashes": {
+    "src/portable/outcomeRecords.ts": "0c88ffd593f4900ddcb34f76b52ceb0612447e4d35c4249aa47e0d01e87d32da",
+    "src/portable/OutcomeClient.ts": "1be3ad5c4df4cf9647326c73c42da2ea780ebb219938d1af7f98db6cd5f11574",
+    "src/portable/AgentPackage.ts": "e2259830a14787e322b08ace530df777b1c0a7d43565e3af60f68a08a0b71dcd",
+    "src/portable/OutcomeServer.ts": "ea70a6c804947b78e7cd1ff0878c2fba57524229cc0cb1e9cd6abff811acbd98",
+    "src/portable/types.ts": "f473cb194a5adea6b9d02be9173e53283e254d822c5b13494179411c2c400616",
+    "src/portable/outcomeWire.ts": "20a836ba863bb5967c4f9687e004a758be5fd97ef17ea76e7fc72000750527c1",
+    "src/portable/index.ts": "c67461887b57a956fbce93eacdeb590170df880c8073e5cd65f643ac536892f3",
+    "src/portable/outcomeTypes.ts": "6a5f6d40ab6eb14eee0fe9ace69e1a5321200bed8a43006d0066378c6737cd37",
+    "src/core/tool-execution/remoteObservation.ts": "7c0b6cba383ee0dc0d13c5cdd8fad2f4b1c3625f0adf75b496809f0a23a4a53f",
+    "src/core/Agent.ts": "bdc6154fea8f9fa4c2a87e8e2694fb5a3db0e87dd550afe6849415501ab91130",
+    "src/core/ToolManager.ts": "400da92dfb9d133345e29a64eb8df532d3564df6fc9377f058ce46bbc8904d7d",
+    "src/core/evidence/ToolEvidenceMiddleware.ts": "b81ddf0a5777338fc0f42fb17c0e7c6b8397714f864af3824c065a903544c898"
+  }
+}

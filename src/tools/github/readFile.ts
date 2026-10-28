@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * GitHub Read File Tool
  *
@@ -114,7 +115,7 @@ NOTE: Files larger than 1MB are fetched via the Git Blob API. Very large files (
       const effectiveAccountId = context?.accountId;
       const resolved = resolveRepository(args.repository, connector);
       if (!resolved.success) {
-        return { success: false, error: resolved.error };
+        return connectorFailure(connector, { success: false, error: resolved.error });
       }
       const { owner, repo } = resolved.repo;
 
@@ -132,11 +133,11 @@ NOTE: Files larger than 1MB are fetched via the Git Blob API. Very large files (
         );
 
         if (contentResp.type !== 'file') {
-          return {
+          return connectorFailure(connector, {
             success: false,
             error: `Path is not a file: ${args.path} (type: ${contentResp.type}). Use search_files to explore the repository.`,
             path: args.path,
-          };
+          });
         }
 
         fileSha = contentResp.sha;
@@ -155,11 +156,11 @@ NOTE: Files larger than 1MB are fetched via the Git Blob API. Very large files (
           fileContent = Buffer.from(blob.content, 'base64').toString('utf-8');
           fileSize = blob.size;
         } else {
-          return {
+          return connectorFailure(connector, {
             success: false,
             error: `Cannot read file content: ${args.path} (no content or git_url in response)`,
             path: args.path,
-          };
+          });
         }
 
         // Apply offset and limit (matching filesystem readFile behavior)
@@ -209,11 +210,11 @@ NOTE: Files larger than 1MB are fetched via the Git Blob API. Very large files (
           sha: fileSha,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatGitHubToolError('Failed to read file', error),
           path: args.path,
-        };
+        });
       }
     },
   };

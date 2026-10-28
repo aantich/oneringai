@@ -1,3 +1,5 @@
+import { registerEnhancedFactory } from '../connector/enhancedProfiles.js';
+import type { ServiceToolFactory } from '../connector/ConnectorTools.js';
 /**
  * Google API Tools - Registration
  *
@@ -30,9 +32,7 @@ import { createGoogleSearchFilesTool } from './searchFiles.js';
  * intentionally NOT forwarded to them. (See each tool's doc comment.)
  */
 export function registerGoogleTools(): void {
-  ConnectorTools.registerService(
-    'google-api',
-    (connector: Connector, userId?: string, options?: ServiceToolFactoryOptions) => {
+  const bundledFactory: ServiceToolFactory = (connector: Connector, userId?: string, options?: ServiceToolFactoryOptions) => {
       const actAs = options?.actAs;
       return [
         // Email (Gmail) — URL-scoped, participate in actAs lock
@@ -52,6 +52,7 @@ export function registerGoogleTools(): void {
         createGoogleListFilesTool(connector, userId),
         createGoogleSearchFilesTool(connector, userId),
       ];
-    },
-  );
+    };
+  ConnectorTools.registerService('google-api', bundledFactory);
+  registerEnhancedFactory('google-api', bundledFactory);
 }

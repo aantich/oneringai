@@ -29,7 +29,7 @@
 // ============ Core API (Primary) ============
 export { createAgentPreset } from './core/presets.js';
 export type { AgentPresetName, AgentPresetConfig, AgentCapabilityInspection } from './core/presets.js';
-export { Connector, ScopedConnectorRegistry, StorageRegistry, ToolCatalogRegistry, Agent, AgentRegistry, Vendor, VENDORS, isVendor, createProvider, getVendorDefaultBaseURL, SuspendSignal, createOrchestrator, buildOrchestrationTools, buildWorkspaceDelta, createDelegationState, TemplateEngine } from './core/index.js';
+export { Connector, ScopedConnectorRegistry, StorageRegistry, ToolCatalogRegistry, Agent, AgentRegistry, Vendor, VENDORS, isVendor, createProvider, getVendorDefaultBaseURL, SuspendSignal, createOrchestrator, createOrchestratorWithFactory, buildOrchestrationTools, buildWorkspaceDelta, createDelegationState, TemplateEngine } from './core/index.js';
 export type { TemplateHandler, TemplateContext, TemplateHandlerOptions, ProcessOptions } from './core/index.js';
 export type { StorageConfig, StorageContext, ToolCategoryDefinition, CatalogToolEntry, ToolCategoryScope, ConnectorCategoryInfo, ParsedConnectorCategory, CatalogRegistryEntry, SuspendSignalOptions, OrchestratorConfig, AgentTypeConfig, DelegationDefaults, OrchestrationToolsContext, DelegationState, DelegationReclaimConfig, AgentInfo, AgentInspection, AgentFilter, AgentRegistryStats, AgentRegistryEvents, AgentEventListener } from './core/index.js';
 export type { AgentStatus as RegistryAgentStatus } from './core/index.js';
@@ -52,6 +52,10 @@ export type {
 // Portable agent packages and cross-runtime tool execution
 export {
   AGENT_PACKAGE_PROTOCOL_VERSION,
+  AgentPackageOutcomeServer,
+  AGENT_PACKAGE_OUTCOME_PROTOCOL,
+  createAgentPackageOutcomeTools,
+  hydrateAgentPackageWithOutcomes,
   AgentPackageCompatibilityError,
   AgentPackageToolServer,
   RemoteToolExecutionError,
@@ -61,6 +65,14 @@ export {
   createPortableToolImplementationFingerprint,
   exportAgentPackage,
   hydrateAgentPackage,
+} from './portable/index.js';
+export type {
+  AgentPackageOutcomeProtocol, OutcomePackageRequest, OutcomeRequestIdentity, OutcomeExecuteRequest,
+  OutcomeEvidenceRequest, OutcomeCancelRequest, OutcomeNegotiation, RemoteOutcomeReceipt,
+  OutcomeExecuteResponse, OutcomeCancelResponse, OutcomeEvidenceResponse, RemoteOutcomeTransport,
+  RemoteOutcomeAccess, AgentPackageOutcomeServerOptions, RemoteOutcomeReport, RemoteOutcomeCheckpoint,
+  OutcomeAgentPackage, HydrateAgentPackageWithOutcomesOptions, RemoteOutcomeSession, OutcomeHydratedAgent,
+  AgentPackageOutcomeToolOptions, AgentPackageOutcomeTools, RemoteOutcomeEffect,
 } from './portable/index.js';
 export type {
   AgentPackageContextFactory,
@@ -1184,6 +1196,11 @@ export type {
   GenericAPICallArgs,
   GenericAPICallResult,
   ConnectorToolsOptions,
+  EnhancedConnectorOptions,
+  EnhancedConnectorAttempt,
+  ConnectorAcceptedResource,
+  PagePosition,
+  ConnectorPage,
 } from './tools/connector/index.js';
 
 // ============ OAuth & Storage (for external APIs) ============
@@ -2090,6 +2107,8 @@ export type {
 } from './testing/integration/types.js';
 
 export type { ToolExecutionOutcome, ToolExecutionOptions, ToolExecutionReport } from './core/tool-execution/outcomes.js';
+export { createOutcomeTool } from './core/createOutcomeTool.js';
+export type { OutcomeInvocation, OutcomeToolOptions } from './core/createOutcomeTool.js';
 
 // Durable evidence (opt-in; raw tool returns are preserved).
 export type { EvidenceScope, EvidenceDurability, EvidenceReference, EvidenceRecord, EvidenceReadOptions, EvidenceChunk, EvidenceEntry, IEvidenceStorage } from './domain/interfaces/IEvidenceStorage.js';
@@ -2115,3 +2134,18 @@ export type { TaskStateCategory, TaskStateSource, TaskStateNoteInput, TaskStateN
 
 export { createInContextMemoryContributor } from './core/context-nextgen/assembly.js';
 export type { ContextBlock, ContextContributionRequest, ContextContributor, ContextAssemblyConfig, ContextSelectionEntry, ContextSelectionManifest } from './core/context-nextgen/assembly.js';
+
+// Verified routines are opt-in; legacy routine exports retain their contracts.
+export { createRoutineRunner } from './core/routines/createRoutineRunner.js';
+export type { ExecutionBinding, VerificationDecision, VerificationContext, RoutineSource, RoutineTaskSummary, RoutineStepObservation, RoutineObservation, RoutineContinuation, RoutineReport, RoutineRunResult, RoutineRunRequest, RoutineToolOptions, RoutineToolResult, RoutineInspection, RoutineProgress, RoutineRunnerOptions, RoutineRunner } from './core/routines/types.js';
+
+export type { OrchestratedAgentConfig, AgentConstructionRequest, ChildObservation, OrchestratorFactoryOptions } from './core/orchestrator/index.js';
+
+// Explicit endpoint/session capability companions (also available from /shared).
+export { getRealtimeModelCapabilities, getTranscriptionCapabilities } from './capabilities/metadata/realtime.js';
+export type { EndpointCapabilitySupport, RealtimeTransport, RealtimeReasoningEffort, CapabilityProvenance,
+  RealtimeModelCapabilityQuery, RealtimeModelCapabilities, TranscriptionCapabilityQuery, TranscriptionCapabilities } from './capabilities/metadata/realtime.js';
+export { assessModelParameters } from './capabilities/metadata/parameters.js';
+export type { ModelParameterEndpoint, ModelParameterQuery, ModelParameterAssessment, ModelParameterDecision, ModelParameterPolicy } from './capabilities/metadata/parameters.js';
+export { VENDOR_PRESENTATIONS, getVendorPresentation } from './capabilities/metadata/vendorPresentation.js';
+export type { VendorPresentation } from './capabilities/metadata/vendorPresentation.js';

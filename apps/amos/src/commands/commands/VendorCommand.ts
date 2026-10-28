@@ -4,7 +4,7 @@
 
 import { BaseCommand } from '../BaseCommand.js';
 import type { CommandContext, CommandResult } from '../../config/types.js';
-import { Vendor, getModelsByVendor, type ILLMDescription } from '@everworker/oneringai';
+import { Vendor, getModelsByVendor, getVendorPresentation, type ILLMDescription } from '@everworker/oneringai';
 
 export class VendorCommand extends BaseCommand {
   readonly name = 'vendor';
@@ -39,27 +39,21 @@ ALIASES:
 `;
   }
 
-  // Static vendor display names
+  // Existing AMOS labels compose over the shared presentation catalog.
   private vendorNames: Record<string, string> = {
-    [Vendor.OpenAI]: 'OpenAI',
-    [Vendor.Anthropic]: 'Anthropic',
     [Vendor.Google]: 'Google AI',
     [Vendor.GoogleVertex]: 'Google Vertex AI',
-    [Vendor.Groq]: 'Groq',
-    [Vendor.Together]: 'Together AI',
     [Vendor.Grok]: 'xAI Grok',
-    [Vendor.DeepSeek]: 'DeepSeek',
     [Vendor.Mistral]: 'Mistral AI',
-    [Vendor.Perplexity]: 'Perplexity',
     [Vendor.Ollama]: 'Ollama (Local)',
-    [Vendor.Custom]: 'Custom',
   };
 
   /**
    * Get vendor info dynamically from MODEL_REGISTRY
    */
   private getVendorInfo(vendorId: string): { name: string; defaultModel: string; description: string } {
-    const name = this.vendorNames[vendorId] || vendorId;
+    const name = Object.hasOwn(this.vendorNames, vendorId)
+      ? this.vendorNames[vendorId]! : getVendorPresentation(vendorId)?.displayName ?? vendorId;
     const models = getModelsByVendor(vendorId as any);
 
     if (models.length === 0) {

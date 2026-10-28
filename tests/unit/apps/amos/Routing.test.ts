@@ -11,9 +11,14 @@ import { HelpersCommand } from '../../../../apps/amos/src/commands/commands/Help
 import { describeRouting, resolveAmosModelExecution } from '../../../../apps/amos/src/agent/routing.js';
 import type { AmosConfig, IAmosApp } from '../../../../apps/amos/src/config/types.js';
 const cleanup: Array<() => Promise<unknown> | void> = [];
-afterEach(async () => { for (const dispose of cleanup.splice(0).reverse()) await dispose(); Connector.clear(); });
+afterEach(async () => {
+  const failures: unknown[] = [];
+  try { for (const dispose of cleanup.splice(0).reverse()) { try { await dispose(); } catch (error) { failures.push(error); } } }
+  finally { Connector.clear(); vi.restoreAllMocks(); }
+  if (failures.length) throw new AggregateError(failures, 'AMOS routing cleanup failed');
+});
 async function setup() {
-  const directory = await mkdtemp(join(tmpdir(), 'amos-routing-')); cleanup.push(() => rm(directory, { recursive: true, force: true }));
+  const directory = await mkdtemp(join(tmpdir(), 'amos-routing-')); cleanup.push(() => rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 20 }));
   const manager = new ConfigManager(directory); await manager.load();
   manager.update({ activeConnector: 'amos-route-primary', activeModel: 'gpt-4.1-mini', session: { ...manager.get().session, autoSave: false }, modelExecution: { customProviderAttempts: 'single' } });
   const fixture = offlineRoutingConnector('amos-route-primary');

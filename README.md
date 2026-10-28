@@ -76,6 +76,11 @@ failure. Calls retain their admitted connector authority and tool implementation
 queued background results are checked again at delivery. A timeout does not establish
 whether an external write happened.
 
+Caught operational errors can opt into [`createOutcomeTool()`](./docs/OUTCOME_AWARE_TOOLS.md):
+report failure for the current invocation while retaining the original application
+return. Business `success: false` values remain ordinary data without a report.
+Existing tools and timeout/retry defaults stay unchanged.
+
 
 Stage 03 on the development branch adds opt-in durable tool evidence and smaller
 model-facing projections. Raw application returns stay intact. Scoped file-backed
@@ -3637,3 +3642,36 @@ repair allowance and reject stale account/identity completion checks. Optional
 `HelperCallOptions.validationSchema` adds local constraints to a portable native
 schema. Latest gates pass 7,988 units and 136 live cases / 148 scenarios, including
 real Google recovery from an injected copy of the recorded fault.
+
+Opt-in verified routines: `createRoutineRunner({ verify })` checks task readiness and final artifacts, retaining same-process continuation without action replay. See [verified routines](docs/VERIFIED_ROUTINES.md). Legacy routines remain available unchanged.
+
+`ConnectorTools.enhanced(name, { profile: "execution-v1" })` explicitly selects audited connector outcomes, effects and cancellation/retry contracts. Use [source-tagged static registration](docs/ENHANCED_CONNECTORS.md); ordinary connector tools remain unchanged.
+Selected generic requests validate every redirect destination before forwarding credentials.
+
+Choose `profile: "collections-v1"` for [whole connector pages](docs/CONNECTOR_COLLECTION_PAGES.md), scoped opaque continuations, independent search coverage, strict topic inputs and manager-local catalog reloads. Old/execution-v1 defaults remain unchanged; source storage is separately opt-in.
+
+`createOrchestratorWithFactory` accepts complete host configuration before parent/worker initialization and binds children/monitors to each explicit task. See [factory orchestration](docs/ORCHESTRATOR_FACTORY.md); existing orchestrator defaults remain unchanged.
+
+Portable tools can explicitly negotiate [remote outcomes](docs/REMOTE_TOOL_OUTCOMES.md)
+with `AgentPackageOutcomeServer` and `hydrateAgentPackageWithOutcomes` (or tools-first
+`createAgentPackageOutcomeTools`). Source/proxy observations remain separate;
+unknown writes require receipt reconciliation. The existing portable protocol 2
+and old factories remain unchanged.
+Unchanged receipt polls reuse acknowledged evidence. Missing source outcome metadata
+after handoff remains unknown; shutdown errors still release settled Agent ownership.
+
+[Evidence conformance and composed evaluation](docs/EVIDENCE_CONFORMANCE.md) document
+current memory/file durability profiles, exact-source recovery across processes,
+and local/remote meeting workflows with explicit host verification.
+
+Browser-safe [endpoint capability companions](docs/ENDPOINT_CAPABILITIES.md) distinguish
+verified Realtime/transcription constraints from unknown combinations, while keeping
+existing registries and session validation unchanged.
+
+[Effective parameter policy](docs/PARAMETER_POLICY.md) adds explicit unsupported
+temperature omission for selected OpenAI requests, with pure assessment and decision
+diagnostics. Existing defaults and explicit raw controls keep their validation.
+
+Optional [vendor presentation](docs/VENDOR_PRESENTATION.md) provides immutable
+browser-safe names and colors. Hosts retain ownership of display overrides,
+service classification and authentication.

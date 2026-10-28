@@ -5,7 +5,9 @@
  * with shared workspace, async execution, interactive delegation, and monitoring.
  */
 
-export { createOrchestrator } from './createOrchestrator.js';
+export { createOrchestrator, createOrchestratorWithFactory } from './createOrchestrator.js';
 export type { OrchestratorConfig, AgentTypeConfig, DelegationDefaults } from './createOrchestrator.js';
 export { buildOrchestrationTools, buildWorkspaceDelta, createDelegationState } from './tools.js';
 export type { OrchestrationToolsContext, DelegationState, DelegationReclaimConfig } from './tools.js';
+
+export type { OrchestratedAgentConfig, AgentConstructionRequest, ChildObservation, OrchestratorFactoryOptions } from './factoryTypes.js';

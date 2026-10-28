@@ -1,3 +1,5 @@
+import { registerEnhancedFactory } from '../connector/enhancedProfiles.js';
+import type { ServiceToolFactory } from '../connector/ConnectorTools.js';
 /**
  * Slack Tools Registration
  *
@@ -26,7 +28,7 @@ import { createSetChannelTopicTool } from './setChannelTopic.js';
  * return all 10 Slack tools plus the generic API tool.
  */
 export function registerSlackTools(): void {
-  ConnectorTools.registerService('slack', (connector: Connector, userId?: string) => {
+  const bundledFactory: ServiceToolFactory = (connector: Connector, userId?: string) => {
     return [
       // Channel discovery
       createListChannelsTool(connector, userId),
@@ -44,5 +46,7 @@ export function registerSlackTools(): void {
       // Users
       createGetUsersTool(connector, userId),
     ];
-  });
+  };
+  ConnectorTools.registerService('slack', bundledFactory);
+  registerEnhancedFactory('slack', bundledFactory);
 }

@@ -18,7 +18,10 @@ import type {
   ToolExecutionPipelineOptions,
   PipelineExecutionOptions,
 } from './types.js';
-import { getNormalizedFailure } from './outcomes.js';
+import { getNormalizedFailure, getReportedFailure, markReportedFailure } from './outcomes.js';
+import { captureOutcomeExecutor } from './outcomeInvocation.js';
+import { isConnectorPolicyDenial } from '../connector-execution/profile.js';
+import { getCompositionDenial } from '../execution/composition.js';
 import { ToolPermissionDeniedError, ToolTimeoutError } from '../../domain/errors/AIErrors.js';
 
 /**
@@ -177,6 +180,8 @@ export class ToolExecutionPipeline implements IToolExecutionPipeline {
    * @returns Result from tool execution (possibly transformed by plugins)
    */
   async execute(tool: ToolFunction, args: unknown, options: PipelineExecutionOptions = {}): Promise<unknown> {
+    const outcomeExecute = captureOutcomeExecutor(tool.execute);
+    const compositionDenial = getCompositionDenial(tool.execute);
     // Create execution context
     const ctx: PluginExecutionContext = {
       toolName: tool.definition.function.name,
@@ -192,11 +197,15 @@ export class ToolExecutionPipeline implements IToolExecutionPipeline {
     const plugins = [...this.sortedPlugins];
     let executionStarted = false;
     let failure: Error | undefined;
+    let reportedCause: Error | undefined;
     const report = (): void => {
-      const error = getNormalizedFailure(ctx) ?? failure;
+      const reported = getReportedFailure(ctx);
+      const cause = getNormalizedFailure(ctx) ?? reportedCause ?? failure;
+      const error = reported && cause && reported.cause !== cause
+        ? new AggregateError([reported, cause], reported.message, { cause }) : reported ?? cause;
       try {
         options.onOutcome?.({
-          status: error instanceof ToolPermissionDeniedError ? 'denied' : error instanceof ToolTimeoutError ? 'timed_out' : error ? 'failed' : 'succeeded',
+          status: reported ? 'failed' : (error instanceof ToolPermissionDeniedError || isConnectorPolicyDenial(error)) ? 'denied' : error instanceof ToolTimeoutError ? 'timed_out' : error ? 'failed' : 'succeeded',
           executionStarted,
           error,
         });
@@ -206,6 +215,7 @@ export class ToolExecutionPipeline implements IToolExecutionPipeline {
     };
 
     try {
+      if (compositionDenial) throw compositionDenial;
       options.toolContext?.signal?.throwIfAborted();
       // Phase 1: beforeExecute hooks
       for (const plugin of plugins) {
@@ -228,7 +238,9 @@ export class ToolExecutionPipeline implements IToolExecutionPipeline {
       // Phase 2: Execute the tool
       options.toolContext?.signal?.throwIfAborted();
       executionStarted = true;
-      let result = await (options.toolContext
+      let result = await (outcomeExecute
+        ? outcomeExecute.call(tool, ctx.mutableArgs, options.toolContext, error => markReportedFailure(ctx, error))
+        : options.toolContext
         ? tool.execute(ctx.mutableArgs, options.toolContext)
         : tool.execute(ctx.mutableArgs));
 
@@ -244,6 +256,7 @@ export class ToolExecutionPipeline implements IToolExecutionPipeline {
     } catch (error) {
       // Phase 4: onError hooks
       const err = error instanceof Error ? error : new Error(String(error));
+      if (getReportedFailure(ctx)) reportedCause = err;
 
       for (const plugin of plugins) {
         if (plugin.onError) {

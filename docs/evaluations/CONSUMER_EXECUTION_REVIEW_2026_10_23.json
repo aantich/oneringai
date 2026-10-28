@@ -1,0 +1,1048 @@
+{
+  "protocol": "consumer-execution-review-v1",
+  "recordedAt": "2026-10-23T12:18:38.851696+00:00",
+  "branch": "version2",
+  "headCommit": "dff238759c41431bd24712d3b045dd38fc800b37",
+  "status": "investigation-complete-plan-proposed-not-implemented",
+  "authorization": "Validate the consumer report and create a staged plan; subsequent user instruction requires redesigning proposed v2 APIs so old agents do not break. No C1-C8 runtime implementation, consumer/dependency change, commit/push or release is claimed or authorized by this planning request.",
+  "inputReport": {
+    "name": "Pasted text.txt",
+    "sha256": "33bb856200fd1cb8ddecd77b2c3b6aa0ded242fc5acdee4f2274d8b4e0726c8a",
+    "bytes": 14484
+  },
+  "freshValidation": {
+    "existingTests": {
+      "command": "npx vitest run tests/unit/core/routineRunner.test.ts tests/unit/core/routineControlFlow.test.ts tests/unit/core/createRoutineTool.test.ts tests/unit/core/orchestrator/tools.test.ts tests/unit/core/orchestrator/createOrchestrator.test.ts tests/unit/portable/AgentPackage.test.ts tests/unit/core/evidence/EvidenceStorage.test.ts tests/integration/routines/routineControlFlowExecution.test.ts --reporter=json --outputFile=/tmp/oneringai-consumer-review-tests.json",
+      "passed": 334,
+      "failed": 0,
+      "skipped": 0,
+      "files": 8,
+      "report": {
+        "path": "/tmp/oneringai-consumer-review-tests.json",
+        "sha256": "81450c9bbe5653182da50ef6794cc41b9f653cfed5cc217356043dbc5eca625f",
+        "bytes": 96945
+      },
+      "log": {
+        "path": "/tmp/oneringai-consumer-review-tests.log",
+        "sha256": "0f6dc8eb5302f6f98c862516b7e980dfa5c2eb3e941c84ce807cfbac55b2d445",
+        "bytes": 65
+      }
+    },
+    "characterization": {
+      "command": "node --import tsx docs/evaluations/consumer-execution-review-probes.mjs",
+      "meaning": "Matched observations assert CURRENT gaps and existing-support/compatibility controls. They do not assert fixes or serve as future green acceptance tests.",
+      "matched": 17,
+      "total": 17,
+      "report": {
+        "path": "/tmp/oneringai-consumer-review-probes.json",
+        "sha256": "5dbe36953d5f9a44e6971482e5020f05fc9badc2aaf586f8ad59b9fa39291b07",
+        "bytes": 6341
+      },
+      "fixture": {
+        "path": "docs/evaluations/consumer-execution-review-probes.mjs",
+        "sha256": "99954f798b480a4f9ed60433cd1342fc245691bb1737291abd56c13064285251",
+        "bytes": 14299
+      },
+      "log": {
+        "path": "/tmp/oneringai-consumer-review-probes.log",
+        "sha256": "4424f18fe3154bdeedb29f55a6b8cdebf8e8e7046462af2f89dbfb137b236996",
+        "bytes": 7494
+      },
+      "observations": [
+        {
+          "id": "P01",
+          "matched": true,
+          "kind": "gap",
+          "managedVerdict": {
+            "complete": false,
+            "reason": "Required artifact does not exist"
+          },
+          "routineStatus": "completed",
+          "taskStatus": "completed"
+        },
+        {
+          "id": "P02",
+          "matched": true,
+          "kind": "gap",
+          "routineStatus": "completed",
+          "distinctModelTasks": 2,
+          "sharedTaskForwarded": [
+            false,
+            false
+          ]
+        },
+        {
+          "id": "P03",
+          "matched": true,
+          "kind": "gap",
+          "localStatus": "succeeded",
+          "raw": {
+            "success": false,
+            "decision": "declined",
+            "reason": "No approval"
+          },
+          "remote": {
+            "protocolVersion": 2,
+            "packageId": "consumer-negative",
+            "requestId": "negative-1",
+            "ok": false,
+            "error": {
+              "code": "tool_failed",
+              "message": "Tool 'business_decision' failed"
+            }
+          }
+        },
+        {
+          "id": "P04",
+          "matched": true,
+          "kind": "gap",
+          "serverOutcome": {
+            "executionId": "e1f31351-1673-4f17-8372-ac1a8c8924de",
+            "callId": "positive-1",
+            "status": "succeeded"
+          },
+          "wireKeys": [
+            "protocolVersion",
+            "packageId",
+            "requestId",
+            "ok",
+            "result"
+          ],
+          "descriptorKeys": [
+            "definition",
+            "placement",
+            "implementationFingerprint"
+          ]
+        },
+        {
+          "id": "P05",
+          "matched": true,
+          "kind": "gap",
+          "preAborted": true,
+          "requestsDispatched": 1,
+          "forwardedSignal": false
+        },
+        {
+          "id": "P06",
+          "matched": true,
+          "kind": "gap",
+          "result": {
+            "success": false,
+            "agent": "worker",
+            "error": "Turn timed out after 0.001s",
+            "destroyed": false
+          },
+          "workerRunningAfterTimeout": true,
+          "cancelCalls": 0,
+          "lateCompleted": true
+        },
+        {
+          "id": "P07",
+          "matched": true,
+          "kind": "gap",
+          "result": {
+            "success": true,
+            "items": [
+              {
+                "name": "one",
+                "type": "folder",
+                "size": 0,
+                "sizeFormatted": "0 B",
+                "id": "ms-file"
+              }
+            ],
+            "totalCount": 1,
+            "hasMore": true
+          },
+          "argumentNames": [
+            "path",
+            "driveId",
+            "siteId",
+            "search",
+            "limit"
+          ],
+          "effect": "unknown"
+        },
+        {
+          "id": "P08",
+          "matched": true,
+          "kind": "gap",
+          "result": {
+            "success": true,
+            "items": [
+              {
+                "name": "one",
+                "type": "file",
+                "size": 0,
+                "sizeFormatted": "0 B",
+                "mimeType": "text/plain",
+                "id": "google-file"
+              }
+            ],
+            "totalCount": 1,
+            "hasMore": true
+          },
+          "argumentNames": [
+            "folderId",
+            "search",
+            "limit",
+            "targetUser"
+          ],
+          "providerIncompleteSearchLost": true,
+          "effect": "unknown"
+        },
+        {
+          "id": "P09",
+          "matched": true,
+          "kind": "gap",
+          "result": {
+            "success": true,
+            "messages": [
+              {
+                "ts": "2.0",
+                "date": "1970-01-01T00:00:02.000Z",
+                "text": "Reply"
+              }
+            ],
+            "count": 1,
+            "parentMessage": {
+              "ts": "1.0",
+              "date": "1970-01-01T00:00:01.000Z",
+              "text": "Parent"
+            }
+          },
+          "argumentNames": [
+            "channel",
+            "ts",
+            "limit"
+          ]
+        },
+        {
+          "id": "P10",
+          "matched": true,
+          "kind": "gap",
+          "pagesFetched": 10,
+          "result": {
+            "items": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10
+            ],
+            "hasMore": true
+          }
+        },
+        {
+          "id": "P11",
+          "matched": true,
+          "kind": "gap",
+          "providerHasNoNextPage": true,
+          "result": {
+            "items": [
+              1,
+              2,
+              3
+            ],
+            "hasMore": true
+          }
+        },
+        {
+          "id": "P12",
+          "matched": true,
+          "kind": "gap-with-provider-constraint",
+          "requestedChars": 270,
+          "sentChars": 250,
+          "result": {
+            "success": true,
+            "topic": "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+          },
+          "reportedTruncation": false
+        },
+        {
+          "id": "P13",
+          "matched": true,
+          "kind": "additional-gap",
+          "validatorBoolean": false,
+          "validatorScore": 100,
+          "routineStatus": "completed",
+          "explanation": "Artifact is missing despite high answer-quality score"
+        },
+        {
+          "id": "P14",
+          "matched": true,
+          "kind": "gap",
+          "toolReturned": {
+            "success": false,
+            "error": "Failed to list files: Microsoft Graph API error 403(AccessDenied): Synthetic denied read"
+          },
+          "outcomeStatus": "succeeded"
+        },
+        {
+          "id": "P15",
+          "matched": true,
+          "kind": "additional-gap",
+          "pagesFetched": 2,
+          "providerItemsFetched": 6,
+          "result": {
+            "items": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "hasMore": true
+          },
+          "discardedItems": [
+            6
+          ]
+        },
+        {
+          "id": "P16",
+          "matched": true,
+          "kind": "existing-support-control",
+          "runtime": "managed-agent",
+          "hostCompletionConfigured": true,
+          "evidenceEnabled": false,
+          "inspectionMakesModelCalls": false,
+          "notice": "Managed run/stream configuration only; per-call overrides and external SDK/realtime loops have their own owner."
+        },
+        {
+          "id": "P17",
+          "matched": true,
+          "kind": "compatibility-control",
+          "protocolVersion": 2,
+          "legacyResponseAccepted": true,
+          "optionalOutcomeFieldRejected": true
+        }
+      ]
+    },
+    "realLLMCalls": 0,
+    "realProviderCalls": 0,
+    "externalWrites": 0,
+    "servicesStarted": 0,
+    "fullUnitOrLiveSuiteRerun": false,
+    "builtPublicCompatibility": {
+      "typeConsumer": {
+        "command": "npm run test:agentic:compat",
+        "exitCode": 0,
+        "configuration": {
+          "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+          "sha256": "1f3a36ae1c96737d69998a25368b943e9d7be4ceca0a24557355aef2b73896af",
+          "bytes": 468
+        },
+        "log": {
+          "path": "/tmp/oneringai-consumer-compat-type-consumer.log",
+          "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6",
+          "bytes": 116
+        },
+        "includedConsumerFiles": 12
+      },
+      "runtimeChecksPassed": 202,
+      "runtimeSuites": [
+        {
+          "command": "node tests/fixtures/agentic-presets/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 54,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 27,
+              "calls": 4
+            },
+            {
+              "format": "cjs",
+              "checks": 27,
+              "calls": 4
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/agentic-presets/public-runtime.mjs",
+            "sha256": "f83c909cd3cb0d435d0e53b4eb90666ad4a79f9cb4c473ec739625a7d4bec30f",
+            "bytes": 11410
+          },
+          "log": {
+            "path": "/tmp/oneringai-consumer-compat-presets.log",
+            "sha256": "8779210b2e79c87a139d92c2ae391752b10722140238ac34dff1e21871219068",
+            "bytes": 6936
+          }
+        },
+        {
+          "command": "node tests/fixtures/context-assembly/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 38,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 19
+            },
+            {
+              "format": "cjs",
+              "checks": 19
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/context-assembly/public-runtime.mjs",
+            "sha256": "3afbf913e7f108fda5327dff8e26b95874492b1131f6b3730572994a243eafe7",
+            "bytes": 11313
+          },
+          "log": {
+            "path": "/tmp/oneringai-consumer-compat-assembly.log",
+            "sha256": "8f4e59e9169b623764d3a9e4ad00a03313a7f8305b6017a5e096d7d1cad86465",
+            "bytes": 15945
+          }
+        },
+        {
+          "command": "node tests/fixtures/native-compaction/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 66,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 33
+            },
+            {
+              "format": "cjs",
+              "checks": 33
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/native-compaction/public-runtime.mjs",
+            "sha256": "2b78d20d079822783ca7410b86de34b3233e7a5f098b420503d3e305a6ec9187",
+            "bytes": 4083
+          },
+          "log": {
+            "path": "/tmp/oneringai-consumer-compat-native.log",
+            "sha256": "9dff3f8b48275acbfa30b040d718426563b5e35b3e522c9844a43d94e67a0305",
+            "bytes": 4595
+          }
+        },
+        {
+          "command": "node tests/fixtures/model-routing/public-runtime.mjs",
+          "exitCode": 0,
+          "checks": 44,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 22
+            },
+            {
+              "format": "cjs",
+              "checks": 22
+            }
+          ],
+          "fixture": {
+            "path": "tests/fixtures/model-routing/public-runtime.mjs",
+            "sha256": "0336880be058196eb3c76de5867fee875ebacf68fc875b90607ff3582c95a60a",
+            "bytes": 7766
+          },
+          "log": {
+            "path": "/tmp/oneringai-consumer-compat-routing.log",
+            "sha256": "5adf16fcdb16d3c2eaa454b07c60813088b7ae5b92e98720e1fb085c2809c273",
+            "bytes": 15992
+          }
+        }
+      ],
+      "builtPackageRoots": [
+        {
+          "path": "dist/index.js",
+          "sha256": "83916d9a016ff1e21e37ef2c5ac40b85b39e26410b5cb38c08fae933b35039cc",
+          "bytes": 4248002
+        },
+        {
+          "path": "dist/index.cjs",
+          "sha256": "00230d688e83a67b0e4b22f98e9a45c350f685e72993907d54426311670437b2",
+          "bytes": 4287325
+        },
+        {
+          "path": "dist/index.d.ts",
+          "sha256": "157ac52e56b99c841fac6154ca10f2c0681cd18e3469fca161e6eb94745e94af",
+          "bytes": 923860
+        }
+      ],
+      "boundary": "Fresh checks of the already built package, not a new build or proof of every installed consumer. Frozen installed-revision golden fixtures remain mandatory before implementation delivery."
+    },
+    "documentation": {
+      "localLinks": {
+        "checked": 497,
+        "errors": []
+      },
+      "linkReport": {
+        "path": "/tmp/oneringai-consumer-review-links.json",
+        "sha256": "a785a6e14c12f36fbce831402e52fb27efa5990bc4e9513eb08408bc87af5e40",
+        "bytes": 37
+      },
+      "diffWhitespace": {
+        "command": "git diff --check",
+        "exitCode": 0
+      },
+      "untrackedWhitespace": {
+        "checkedFiles": 4,
+        "errors": 0,
+        "method": "git diff --no-index --check against /dev/null; ordinary difference exit 1 accepted only with empty diagnostic output."
+      }
+    }
+  },
+  "priorEvidence": {
+    "record": {
+      "path": "docs/evaluations/STAGE_14A_SECOND_CORRECTIONS_VALIDATION.json",
+      "sha256": "2813510d12b292356b4c0fb32a6090cadaee7657572482ef2428498e6c1af94e",
+      "bytes": 49476
+    },
+    "historicalUnitCount": 8775,
+    "historicalLiveCount": 224,
+    "matchingPriorSourceManifestFiles": 63,
+    "allPriorRuntimeSourceHashesStillMatch": true,
+    "boundary": "Historical validation is not recounted as fresh. Current probes use the already built public CJS package plus explicitly internal connector helpers from the same unchanged source."
+  },
+  "librarySourceManifest": [
+    {
+      "path": "src/core/routineRunner.ts",
+      "sha256": "e1ed978b67d8160be0321f4726347559e5fa0abde4602f6e9a81c8fee77e385a",
+      "bytes": 55563
+    },
+    {
+      "path": "src/core/routineControlFlow.ts",
+      "sha256": "13bebb310023584e2721d7fd24fa1b56c09215364b6de79f85200f28e24622c9",
+      "bytes": 30752
+    },
+    {
+      "path": "src/core/createRoutineTool.ts",
+      "sha256": "8aac020c0114f4b380a675fee1247dace0f9fc8c1eb89de7e7be1cfa2744af64",
+      "bytes": 7585
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "sha256": "0cf82141bb76596cae7eccf453bc12371c3380119d6676da7eab0d791f07fc30",
+      "bytes": 234541
+    },
+    {
+      "path": "src/core/orchestrator/createOrchestrator.ts",
+      "sha256": "39b2b8e868acf0419b78004e425df10088c8277776805ff28c2159e678507e2c",
+      "bytes": 34641
+    },
+    {
+      "path": "src/core/orchestrator/tools.ts",
+      "sha256": "6b448e6c23ff93bf44a529a034e1fd7001ebeadf7eab27369411fc1ba4b268fd",
+      "bytes": 20352
+    },
+    {
+      "path": "src/core/ToolManager.ts",
+      "sha256": "e30b61ec01706fb36885f38df6b674838c5ba72dfbcede7d1187787400014f29",
+      "bytes": 50756
+    },
+    {
+      "path": "src/core/tool-execution/outcomes.ts",
+      "sha256": "6bc6b9ea1e8af69039dc7667bc405c395152e105b18babf9014fa5b97e066f15",
+      "bytes": 706
+    },
+    {
+      "path": "src/core/tool-execution/plugins/ResultNormalizerPlugin.ts",
+      "sha256": "7616cbaddcded636dde5226cebd75aea89c5c8bb3afd53561dc8fc17b87ed157",
+      "bytes": 4040
+    },
+    {
+      "path": "src/portable/AgentPackage.ts",
+      "sha256": "bc318163c5968f27313a25ac1fb1a1e3271ee78b5700e232ed40e5c68568e860",
+      "bytes": 59904
+    },
+    {
+      "path": "src/portable/types.ts",
+      "sha256": "f473cb194a5adea6b9d02be9173e53283e254d822c5b13494179411c2c400616",
+      "bytes": 8161
+    },
+    {
+      "path": "src/core/Connector.ts",
+      "sha256": "bd130e61ca715540ea90effa4d39249fc188ba9d43b8a98e3eedeafc8f5e03f5",
+      "bytes": 37014
+    },
+    {
+      "path": "src/domain/entities/Tool.ts",
+      "sha256": "12fe4590163d9dd3f70e5d82c30354d828c732120537d9f59b0c646d99d89c22",
+      "bytes": 12928
+    },
+    {
+      "path": "src/domain/interfaces/IToolContext.ts",
+      "sha256": "696d848332450cc48948b7064bf1c7a28863595b6e81499326a687915e1b0d40",
+      "bytes": 4254
+    },
+    {
+      "path": "src/domain/entities/Task.ts",
+      "sha256": "fdc3a7f17d376da3371ce543aaefd4021cace86f56ce8a2be15cdb6db7b9b15c",
+      "bytes": 21965
+    },
+    {
+      "path": "src/domain/entities/Routine.ts",
+      "sha256": "3ba99e310f374f314b2896759e4f8e7d8afc8885f583c7a9d9af6874f63bd965",
+      "bytes": 10586
+    },
+    {
+      "path": "src/domain/entities/RoutineExecutionRecord.ts",
+      "sha256": "71401bd35bdc713ceef6f8fc7481b27cf0d21f800259b57335ed42cb124cccaf",
+      "bytes": 3973
+    },
+    {
+      "path": "src/domain/interfaces/IRoutineExecutionStorage.ts",
+      "sha256": "10ebe2d5c2fe3dfc7891c870e61374c44340a90d5199991b0819e5e27dcb4fea",
+      "bytes": 1902
+    },
+    {
+      "path": "src/domain/interfaces/IEvidenceStorage.ts",
+      "sha256": "59f60576523b34a240039d23461d9e055b3953ea587688257c637109d0bdaa84",
+      "bytes": 3296
+    },
+    {
+      "path": "src/infrastructure/storage/EvidenceStorage.ts",
+      "sha256": "e0cb0a2736e6c225aa9a763df7079ce0a71b8652b7a1cd81ae1b8b8942df683c",
+      "bytes": 15452
+    },
+    {
+      "path": "src/core/capabilityInspection.ts",
+      "sha256": "6424d3af0449f184a90b522cdb1ad8e8021edd5d35cb83abae1170528750f56b",
+      "bytes": 4221
+    },
+    {
+      "path": "src/tools/microsoft/types.ts",
+      "sha256": "3fe3b7acda7dedace9b14457734710c9c5306dcf14a9c6e38be0a92ed5a7c337",
+      "bytes": 25709
+    },
+    {
+      "path": "src/tools/microsoft/listFiles.ts",
+      "sha256": "853accc9c2f645ccacf353cc517f6c5286b145c72bb22a282bd35872c55f9c8e",
+      "bytes": 6934
+    },
+    {
+      "path": "src/tools/microsoft/listMeetings.ts",
+      "sha256": "ab5b264c75a212d9983445cf0e50faed4b92ed1356c83e769c06af4af2aef18c",
+      "bytes": 9223
+    },
+    {
+      "path": "src/tools/google/types.ts",
+      "sha256": "8088302a1a5bab6edf433fa04973739495eebb6a19dacb176ad61e37295a6e9e",
+      "bytes": 21155
+    },
+    {
+      "path": "src/tools/google/listFiles.ts",
+      "sha256": "8cfe338a0c5fe87c5d18871231f80d4920672438e4cda05df1393272bccaa990",
+      "bytes": 5545
+    },
+    {
+      "path": "src/tools/slack/types.ts",
+      "sha256": "4aae643dc8683ba3a77242c555617b883a3c9886c39ea5e32ba51b3d2b8f6876",
+      "bytes": 13640
+    },
+    {
+      "path": "src/tools/slack/getThread.ts",
+      "sha256": "f85c0de373260b7f399af988280bd9fcf27b15c02b2e429ecf61844daf76f266",
+      "bytes": 3390
+    },
+    {
+      "path": "src/tools/slack/setChannelTopic.ts",
+      "sha256": "ee1071581c2d9893a91a9b829117058d08996c2281616a0d1af2d88f7b8977a9",
+      "bytes": 2871
+    },
+    {
+      "path": "tests/unit/core/evidence/EvidenceStorage.test.ts",
+      "sha256": "b0f341c407f652fca17670dbf26c03730ae9b7e04821bbfdfe4dad9108778953",
+      "bytes": 14206
+    }
+  ],
+  "toolMetadataAudit": [
+    {
+      "family": "microsoft",
+      "definitionBearingFiles": 11,
+      "scanMethod": "Text inventory: non-index/non-types .ts files containing ToolFunction. Does not count factory instances or all generated runtime tools.",
+      "files": [
+        "src/tools/microsoft/readFile.ts",
+        "src/tools/microsoft/getMeeting.ts",
+        "src/tools/microsoft/getMeetingTranscript.ts",
+        "src/tools/microsoft/createMeeting.ts",
+        "src/tools/microsoft/sendEmail.ts",
+        "src/tools/microsoft/listMeetings.ts",
+        "src/tools/microsoft/findMeetingSlots.ts",
+        "src/tools/microsoft/listFiles.ts",
+        "src/tools/microsoft/editMeeting.ts",
+        "src/tools/microsoft/searchFiles.ts",
+        "src/tools/microsoft/createDraftEmail.ts"
+      ],
+      "filesWithEffectDeclaration": 0,
+      "filesWithProjectionDeclaration": 0
+    },
+    {
+      "family": "google",
+      "definitionBearingFiles": 11,
+      "scanMethod": "Text inventory: non-index/non-types .ts files containing ToolFunction. Does not count factory instances or all generated runtime tools.",
+      "files": [
+        "src/tools/google/readFile.ts",
+        "src/tools/google/getMeeting.ts",
+        "src/tools/google/getMeetingTranscript.ts",
+        "src/tools/google/createMeeting.ts",
+        "src/tools/google/sendEmail.ts",
+        "src/tools/google/listMeetings.ts",
+        "src/tools/google/findMeetingSlots.ts",
+        "src/tools/google/listFiles.ts",
+        "src/tools/google/editMeeting.ts",
+        "src/tools/google/searchFiles.ts",
+        "src/tools/google/createDraftEmail.ts"
+      ],
+      "filesWithEffectDeclaration": 0,
+      "filesWithProjectionDeclaration": 0
+    },
+    {
+      "family": "slack",
+      "definitionBearingFiles": 10,
+      "scanMethod": "Text inventory: non-index/non-types .ts files containing ToolFunction. Does not count factory instances or all generated runtime tools.",
+      "files": [
+        "src/tools/slack/listChannels.ts",
+        "src/tools/slack/postMessage.ts",
+        "src/tools/slack/getChannelInfo.ts",
+        "src/tools/slack/getMentions.ts",
+        "src/tools/slack/getThread.ts",
+        "src/tools/slack/getUsers.ts",
+        "src/tools/slack/addReaction.ts",
+        "src/tools/slack/searchMessages.ts",
+        "src/tools/slack/setChannelTopic.ts",
+        "src/tools/slack/getMessages.ts"
+      ],
+      "filesWithEffectDeclaration": 0,
+      "filesWithProjectionDeclaration": 0
+    },
+    {
+      "family": "github",
+      "definitionBearingFiles": 8,
+      "scanMethod": "Text inventory: non-index/non-types .ts files containing ToolFunction. Does not count factory instances or all generated runtime tools.",
+      "files": [
+        "src/tools/github/createPR.ts",
+        "src/tools/github/searchCode.ts",
+        "src/tools/github/readFile.ts",
+        "src/tools/github/getPR.ts",
+        "src/tools/github/searchFiles.ts",
+        "src/tools/github/prFiles.ts",
+        "src/tools/github/prComments.ts",
+        "src/tools/github/listBranches.ts"
+      ],
+      "filesWithEffectDeclaration": 0,
+      "filesWithProjectionDeclaration": 0
+    }
+  ],
+  "consumers": [
+    {
+      "consumer": "backend",
+      "workspace": "/Users/aantich/dev/icos",
+      "headCommit": "70fad29d2d5f3f288f5b96f13d0eb30685b64c47",
+      "requestedDependency": "github:aantich/oneringai#991a977b769eabe6c43ec8eff6d057b20f0663d9",
+      "lockedVersionLabel": "1.1.8",
+      "manifest": {
+        "path": "/Users/aantich/dev/icos/package.json",
+        "sha256": "d90178a183cc1c16b7743e6c9d0dc5b429bdd65f980eb06f047577f5a5ee9509",
+        "bytes": 12515
+      },
+      "lockfile": {
+        "path": "/Users/aantich/dev/icos/package-lock.json",
+        "sha256": "c83ada83a0a6a096e58d0eaf2bce1c1abcb1ff9079ed2dd4c2036fe71acefdd3",
+        "bytes": 836879
+      },
+      "readOnly": true
+    },
+    {
+      "consumer": "web",
+      "workspace": "/Users/aantich/dev/icos-app",
+      "headCommit": "33d70ade50fb983279ff8db4224f8cb40b71b278",
+      "requestedDependency": "github:aantich/oneringai#991a977b769eabe6c43ec8eff6d057b20f0663d9",
+      "lockedVersionLabel": "1.1.8",
+      "manifest": {
+        "path": "/Users/aantich/dev/icos-app/package.json",
+        "sha256": "2c4c65354380711226d118d7bf1fb00291c3ce378014f2fd2985cd96effda270",
+        "bytes": 7536
+      },
+      "lockfile": {
+        "path": "/Users/aantich/dev/icos-app/package-lock.json",
+        "sha256": "4c2378dd495f596dbb73ef7a821ed6c16b08b8e167670826c295c719f2cb6721",
+        "bytes": 720190
+      },
+      "readOnly": true
+    }
+  ],
+  "consumerSourceEvidence": [
+    {
+      "path": "/Users/aantich/dev/icos/imports/v25/api/shared/routineToolInjector.ts",
+      "sha256": "dced20039303c2146b741eac17e9467a318fdebad5f40b8130f2d0c1646bc186",
+      "bytes": 3481
+    },
+    {
+      "path": "/Users/aantich/dev/icos/imports/v25/tools/custom/loadSource.ts",
+      "sha256": "8d6a7e136b2db82578263e6e3002fbb922dee8042e7dd5efc8a68f12222289e0",
+      "bytes": 14490
+    },
+    {
+      "path": "/Users/aantich/dev/icos/imports/v25/api/chat/server/AgentEventBridge.ts",
+      "sha256": "c4bc19c7be079d33a7beb34fa481662881295538fc81b05e9f7e302cd80c8e88",
+      "bytes": 35243
+    }
+  ],
+  "desktopVersionClaim": {
+    "reported": "1.1.1",
+    "independentlyVerified": false,
+    "reason": "No matching desktop manifest located in the inspected consumer roots; exact workspace/manifest required at adoption intake. Backend/web manifests are separately verified."
+  },
+  "reportDispositions": [
+    {
+      "item": 1,
+      "verdict": "confirmed-gap",
+      "observations": [
+        "P01",
+        "P13"
+      ],
+      "slices": [
+        "C3"
+      ]
+    },
+    {
+      "item": 2,
+      "verdict": "confirmed-missing-integration-not-a-standalone-ModelTask-contract-regression",
+      "observations": [
+        "P02"
+      ],
+      "slices": [
+        "C2"
+      ]
+    },
+    {
+      "item": 3,
+      "verdict": "confirmed-gap",
+      "observations": [
+        "P03",
+        "P14"
+      ],
+      "slices": [
+        "C1"
+      ]
+    },
+    {
+      "item": 4,
+      "verdict": "confirmed-in-inspected-paths",
+      "observations": [
+        "P05",
+        "P06"
+      ],
+      "slices": [
+        "C2",
+        "C4"
+      ]
+    },
+    {
+      "item": 5,
+      "verdict": "confirmed-for-audited-families-not-an-exhaustive-runtime-inventory",
+      "observations": [
+        "P07",
+        "P08"
+      ],
+      "slices": [
+        "C4"
+      ]
+    },
+    {
+      "item": 6,
+      "verdict": "confirmed-gap-with-additional-unread-tail-loss",
+      "observations": [
+        "P07",
+        "P08",
+        "P09",
+        "P10",
+        "P11",
+        "P15"
+      ],
+      "slices": [
+        "C5"
+      ]
+    },
+    {
+      "item": 7,
+      "verdict": "confirmed-source-level-missing-host-extension",
+      "slices": [
+        "C6"
+      ]
+    },
+    {
+      "item": 8,
+      "verdict": "confirmed-gap-and-strict-wire-compatibility-constraint",
+      "observations": [
+        "P04",
+        "P17"
+      ],
+      "slices": [
+        "C7"
+      ]
+    },
+    {
+      "item": 9,
+      "verdict": "partly-confirmed-silent-truncation-but-250-is-provider-constraint-and-bounds-need-classification",
+      "observations": [
+        "P12"
+      ],
+      "slices": [
+        "C5"
+      ]
+    },
+    {
+      "item": 10,
+      "verdict": "partly-present-extensive-existing-evidence-tests-conformance-extraction-and-profiles-proposed",
+      "slices": [
+        "C8"
+      ]
+    },
+    {
+      "item": 11,
+      "verdict": "partly-present-managed-and-runtime-inspection-exist-composition-inspection-proposed",
+      "observations": [
+        "P16"
+      ],
+      "slices": [
+        "C8"
+      ]
+    },
+    {
+      "item": 12,
+      "verdict": "validated-composition-coverage-opportunity",
+      "slices": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7",
+        "C8"
+      ]
+    },
+    {
+      "item": 13,
+      "verdict": "deferred-roadmap-proposals-not-authorized-implementation",
+      "stages": [
+        "09",
+        "11",
+        "14B",
+        "08",
+        "13",
+        "15"
+      ]
+    }
+  ],
+  "additionalConstraints": [
+    "Reflection ignores false isComplete if score meets threshold.",
+    "Slack collection helpers can discard unread tails.",
+    "TaskStatus includes waiting_external but RoutineTaskSnapshot omits it; runner creates a fresh execution and execution logs are not a resume engine.",
+    "Protocol v2 strict key validation rejects optional outcome fields.",
+    "Shared accounting does not imply write idempotency, distributed budget authority or verified business completion."
+  ],
+  "providerSources": [
+    {
+      "url": "https://learn.microsoft.com/en-us/graph/paging",
+      "supports": "Follow opaque nextLink until absent; pagination is not a one-page total."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/graph/best-practices-concept",
+      "supports": "Treat entire Graph continuation URL as opaque."
+    },
+    {
+      "url": "https://developers.google.com/workspace/drive/api/reference/rest/v3/files/list",
+      "supports": "pageToken/nextPageToken/incompleteSearch and mutations affecting expected results."
+    },
+    {
+      "url": "https://docs.slack.dev/reference/methods/conversations.replies/",
+      "supports": "Reply cursor pagination and app-dependent limits."
+    },
+    {
+      "url": "https://docs.slack.dev/reference/methods/conversations.setTopic/",
+      "supports": "Topic too_long provider error and documented 250-character constraint."
+    }
+  ],
+  "plan": {
+    "path": "docs/designs/CONSUMER_EXECUTION_HARDENING.md",
+    "deliverySlices": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5",
+      "C6",
+      "C7",
+      "C8"
+    ],
+    "recommendedFirstSlice": "C1 after API/compatibility review",
+    "implementationAuthorized": false,
+    "newDefaultHardLimits": false,
+    "breakingChangesAuthorized": false,
+    "packageReleaseVerified": false,
+    "apiDesign": "docs/designs/CONSUMER_COMPATIBLE_APIS.md",
+    "apiDesignRevision": 2,
+    "breakingChangesProposed": false,
+    "legacyContractChanges": false,
+    "runtimeSourceChanged": false,
+    "newAPIsImplemented": false,
+    "C2Availability": "Internal-only foundation; complete routine facade published with C3, avoiding a partial public closed union that would need widening.",
+    "factoryContractEvolution": "Delivered selected contract IDs keep fixed inventories/schemas/behavior; subsequent capabilities use a separately selected contract ID.",
+    "legacyRemoteClassifier": "Preserved. Corrected semantic parity is proposed only on the separate negotiated C7 outcome surface."
+  },
+  "limitations": [
+    "Deterministic fixture evidence, source review and existing focused tests; no live consumer session or third-party backend was exercised.",
+    "Audited connector family metadata is a lexical file inventory; C4 requires a full owning-factory inventory.",
+    "Desktop version assertion remains unverified.",
+    "Provider pagination cannot guarantee immutable collections without provider snapshot/delta semantics.",
+    "Current shortcomings are planned, not fixed by this documentation change.",
+    "No new API is compiled or runtime-tested: proposed APIs are design sketches. Their individual signatures/schemas are frozen and implemented only within a selected delivery slice.",
+    "Current public compatibility fixtures pass but are not exhaustive proof for every historical or installed consumer. Consumer-pin fixtures are required before delivery."
+  ],
+  "latestUserConstraint": {
+    "text": "breaking old agents is UNACCEPTABLE. So, change the v2 APIs the way thats needed to make sure NOTHING BREAKS",
+    "breakingChangesPermittedByThisPlan": false,
+    "strategy": "Separate opt-in entry points and result/checkpoint/protocol types; preserve legacy signatures, defaults, callbacks, status unions, tool/result/event shapes, persistence and protocol-v2 literals/allowlists. No automatic migration or future default flip.",
+    "gate": "Every delivery must pass frozen legacy-equivalence and independent selected-path acceptance tests. Compatibility failures require redesign, not changed legacy expectations or migration notes."
+  },
+  "designDocuments": [
+    {
+      "path": "docs/designs/CONSUMER_EXECUTION_HARDENING.md",
+      "sha256": "c3b02bbe4c60f52ebac76994ea214aa63d5b8c5e4b5b06f439bbaa762bc9426c",
+      "bytes": 44823
+    },
+    {
+      "path": "docs/designs/CONSUMER_COMPATIBLE_APIS.md",
+      "sha256": "a23cc49bc62e1ce517edd6fa11c6dc1fe28a554c697864183c480a4fccf1631c",
+      "bytes": 22777
+    },
+    {
+      "path": "docs/VERSION_2_GUIDE.md",
+      "sha256": "6caa13be657d484d52b3142e5365bfc1d854c559f4a4c140b1656f4124db22a3",
+      "bytes": 225741
+    },
+    {
+      "path": "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "sha256": "cde39978755ad326ca14bf2ca7fb7497ccab16a6eee6d57cb6f9dbca9094a226",
+      "bytes": 259702
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "2974b34b63031fd04cc64a50d60e26f08502ed6c0865bcf823b54a3670d0aede",
+      "bytes": 51047
+    }
+  ],
+  "unchangedRuntimeGate": {
+    "changedAndUntrackedPaths": [
+      "AGENTS.md",
+      "docs/VERSION_2_GUIDE.md",
+      "docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md",
+      "docs/designs/CONSUMER_COMPATIBLE_APIS.md",
+      "docs/designs/CONSUMER_EXECUTION_HARDENING.md",
+      "docs/evaluations/CONSUMER_EXECUTION_REVIEW_2026_10_23.json",
+      "docs/evaluations/consumer-execution-review-probes.mjs"
+    ],
+    "runtimeConsumerPackageOrDependencyChanges": false,
+    "priorRuntimeSourceHashesMatched": 63
+  }
+}

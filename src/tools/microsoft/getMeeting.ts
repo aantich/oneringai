@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Microsoft Graph - Get Meeting Tool
  *
@@ -203,11 +204,11 @@ EXAMPLES:
           isOnlineMeeting: !!event.isOnlineMeeting,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           isOnlineMeeting: false,
           error: formatMicrosoftToolError('Failed to get meeting', error),
-        };
+        });
       }
     },
   };

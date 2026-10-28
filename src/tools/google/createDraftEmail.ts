@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Google Gmail - Create Draft Email Tool
  *
@@ -183,10 +184,10 @@ The draft will be saved to the user's Drafts folder and can be reviewed and sent
           threadId: draft.message?.threadId,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatGoogleToolError('Failed to create draft email', error),
-        };
+        });
       }
     },
   };

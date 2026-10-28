@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Slack - Get Users Tool
  *
@@ -153,10 +154,10 @@ EXAMPLES:
           hasMore,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatSlackToolError('Failed to get users', error),
-        };
+        });
       }
     },
   };

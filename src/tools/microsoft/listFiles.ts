@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Microsoft Graph - List Files Tool
  *
@@ -180,10 +181,10 @@ Use this tool to browse the contents of a folder, discover available files befor
           hasMore: !!data['@odata.nextLink'],
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatMicrosoftToolError('Failed to list files', error),
-        };
+        });
       }
     },
   };
@@ -205,14 +206,14 @@ function mapDriveItem(item: GraphDriveItem) {
   };
 }
 
-function normalizePath(path: string): string {
+export function normalizePath(path: string): string {
   let p = path.trim();
   if (!p.startsWith('/')) p = '/' + p;
   if (p.endsWith('/') && p.length > 1) p = p.slice(0, -1);
   return p;
 }
 
-function encodeSearchQuery(query: string): string {
+export function encodeSearchQuery(query: string): string {
   // Escape special characters for OData search(q='...') syntax
   return query
     .replace(/\\/g, '\\\\')

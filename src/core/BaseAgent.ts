@@ -15,7 +15,10 @@
 import { randomUUID } from 'crypto';
 import { EventEmitter } from 'eventemitter3';
 import { Connector } from './Connector.js';
+import { admitComposition, beginCompositionDirect, hasCompositionOwner, trackCompositionWork } from './execution/composition.js';
 import { ToolManager } from './ToolManager.js';
+import { isOrchestratorConstruction } from './orchestrator/construction.js';
+import { selectedInvocationParent } from './execution/modelCorrelation.js';
 import type { ToolOptions } from './ToolManager.js';
 import { ToolPermissionManager } from './permissions/ToolPermissionManager.js';
 import { PermissionPolicyManager } from './permissions/PermissionPolicyManager.js';
@@ -205,6 +208,8 @@ export interface AgentLifecycleHooks {
  * Base configuration shared by all agent types
  */
 export interface BaseAgentConfig {
+  /** Explicit provider-neutral request policy; absent preserves legacy behavior. */
+  parameterPolicy?: TextGenerateOptions['parameterPolicy'];
   /** Optional, runtime-only helper roles and model-task accounting. Disabled by default. */
   modelExecution?: ModelExecutionConfig;
   dataHandling?: DataHandlingPolicy;
@@ -304,6 +309,7 @@ export interface DirectCallOptions {
 
   /** Temperature for generation */
   temperature?: number;
+  parameterPolicy?: TextGenerateOptions['parameterPolicy'];
 
   /** Maximum output tokens */
   maxOutputTokens?: number;
@@ -597,6 +603,7 @@ export abstract class BaseAgent<
           );
         }
       } catch (err) {
+        if (isOrchestratorConstruction(this._agentContext.tools)) throw err;
         // Non-fatal: connector may not be registered or have no service tools
         this._logger.warn(
           { connector: identity.connector, error: (err as Error).message },
@@ -1073,6 +1080,7 @@ export abstract class BaseAgent<
     input: string | InputItem[],
     options: DirectCallOptions = {}
   ): Promise<LLMResponse> {
+    admitComposition(this);
     assertNoRoutingOverride(options);
     if (this._isDestroyed) {
       throw new Error('Agent has been destroyed');
@@ -1087,6 +1095,7 @@ export abstract class BaseAgent<
       tools: options.tools ?? (options.includeTools ? this.getEnabledToolDefinitions() : undefined),
       tool_choice: options.toolChoice,
       temperature: options.temperature,
+      ...((options.parameterPolicy ?? this._config.parameterPolicy) ? { parameterPolicy: options.parameterPolicy ?? this._config.parameterPolicy } : {}),
       max_output_tokens: options.maxOutputTokens,
       previous_response_id: options.previousResponseId,
       continuation_token: options.continuationToken,
@@ -1101,7 +1110,7 @@ export abstract class BaseAgent<
 
     const task = options.modelTask ?? (this._config.modelExecution ? new ModelTask({ limits: this._config.modelExecution.limits, signal: options.signal }) : undefined);
     const ownedTask = !!task && !options.modelTask;
-
+    const releaseDirect = beginCompositionDirect(this);
     try {
       // Keep preflight inside the owned task's cleanup boundary.
       this.applyDirectResponseFormat(generateOptions, options.responseFormat);
@@ -1136,6 +1145,7 @@ export abstract class BaseAgent<
       this._logger.error({ error: (error as Error).message }, 'runDirect failed');
       throw error;
     } finally {
+      releaseDirect();
       if (task) this._lastModelTask = task;
       if (ownedTask) task!.destroy();
     }
@@ -1164,6 +1174,7 @@ export abstract class BaseAgent<
     input: string | InputItem[],
     options: DirectCallOptions = {}
   ): AsyncIterableIterator<StreamEvent> {
+    admitComposition(this);
     assertNoRoutingOverride(options);
     if (this._isDestroyed) {
       throw new Error('Agent has been destroyed');
@@ -1177,6 +1188,7 @@ export abstract class BaseAgent<
       tools: options.tools ?? (options.includeTools ? this.getEnabledToolDefinitions() : undefined),
       tool_choice: options.toolChoice,
       temperature: options.temperature,
+      ...((options.parameterPolicy ?? this._config.parameterPolicy) ? { parameterPolicy: options.parameterPolicy ?? this._config.parameterPolicy } : {}),
       max_output_tokens: options.maxOutputTokens,
       previous_response_id: options.previousResponseId,
       continuation_token: options.continuationToken,
@@ -1191,6 +1203,7 @@ export abstract class BaseAgent<
 
     const task = options.modelTask ?? (this._config.modelExecution ? new ModelTask({ limits: this._config.modelExecution.limits, signal: options.signal }) : undefined);
     const ownedTask = !!task && !options.modelTask;
+    const releaseDirect = beginCompositionDirect(this);
 
     try {
       // Streamed JSON is parsed by the caller; preflight still owns cleanup.
@@ -1202,6 +1215,7 @@ export abstract class BaseAgent<
       this._logger.error({ error: (error as Error).message }, 'streamDirect failed');
       throw error;
     } finally {
+      releaseDirect();
       if (task) this._lastModelTask = task;
       if (ownedTask) task!.destroy();
     }
@@ -1233,8 +1247,9 @@ export abstract class BaseAgent<
     const signal = scope ? scope.signal : this._modelExecutionSignal;
     const binding = scope ? undefined : this._managedModelBinding;
     options = this.guardManagedModel(options, binding);
-    return generateModel(binding?.provider ?? this._provider, binding?.connector ?? this.connector, options, task, binding?.config ?? this._config.modelExecution, purpose, phase, task?.id,
-      task ? AbortSignal.any([this._modelLifetimeAbort.signal, ...(signal ? [signal] : [])]) : signal);
+    return generateModel(binding?.provider ?? this._provider, binding?.connector ?? this.connector, options, task, binding?.config ?? this._config.modelExecution, purpose, phase, selectedInvocationParent(this) ?? task?.id,
+      task ? AbortSignal.any([this._modelLifetimeAbort.signal, ...(signal ? [signal] : [])]) : signal,
+      hasCompositionOwner(this) ? promise => trackCompositionWork(this, promise) : undefined);
   }
 
   protected streamTracked(options: TextGenerateOptions, purpose = 'main', phase: 'generation' | 'repair' | 'wrapup' = 'generation',
@@ -1243,8 +1258,9 @@ export abstract class BaseAgent<
     const signal = scope ? scope.signal : this._modelExecutionSignal;
     const binding = scope ? undefined : this._managedModelBinding;
     options = this.guardManagedModel(options, binding);
-    return streamModel(binding?.provider ?? this._provider, binding?.connector ?? this.connector, options, task, binding?.config ?? this._config.modelExecution, purpose, phase, task?.id,
-      task ? AbortSignal.any([this._modelLifetimeAbort.signal, ...(signal ? [signal] : [])]) : signal);
+    return streamModel(binding?.provider ?? this._provider, binding?.connector ?? this.connector, options, task, binding?.config ?? this._config.modelExecution, purpose, phase, selectedInvocationParent(this) ?? task?.id,
+      task ? AbortSignal.any([this._modelLifetimeAbort.signal, ...(signal ? [signal] : [])]) : signal,
+      hasCompositionOwner(this) ? promise => trackCompositionWork(this, promise) : undefined);
   }
 
   private guardManagedModel(options: TextGenerateOptions, binding: import('./model-execution/routing.js').ModelExecutionBinding | undefined): TextGenerateOptions {
@@ -1286,7 +1302,8 @@ export abstract class BaseAgent<
       provider = createProvider(connector);
       const signal = AbortSignal.any([controller.signal, this._modelLifetimeAbort.signal, ...(options.signal ? [options.signal] : [])]);
       return await invokeConfiguredHelper<T>({ role, profile: selectedProfile, connector, provider, task, config: this._config.modelExecution,
-        input, options: { ...options, signal, parentInvocationId: options.parentInvocationId ?? task.id }, userId: this.userId });
+        input, options: { ...options, signal, parentInvocationId: options.parentInvocationId ?? selectedInvocationParent(this) ?? task.id }, userId: this.userId,
+        observeWork: hasCompositionOwner(this) ? promise => trackCompositionWork(this, promise) : undefined });
     } finally {
       this._helperControllers.delete(controller);
       this._lastModelTask = task;

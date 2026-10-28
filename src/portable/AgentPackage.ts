@@ -212,6 +212,15 @@ export async function hydrateAgentPackage(
   packageValue: SerializedAgentPackage,
   options: HydrateAgentPackageOptions,
 ): Promise<Agent> {
+  return hydrateAgentPackageWithToolFactory(packageValue, options);
+}
+
+/** @internal One construction/restore engine; negotiated callers supply their explicit proxy factory. */
+export async function hydrateAgentPackageWithToolFactory(
+  packageValue: SerializedAgentPackage,
+  options: HydrateAgentPackageOptions,
+  remoteFactory?: (packageId: string, descriptor: PortableToolDescriptor) => ToolFunction | Promise<ToolFunction>,
+): Promise<Agent> {
   assertAgentPackageCompatible(packageValue);
   if (!options || !isRecord(options)) {
     throw new AgentPackageCompatibilityError('Trusted hydration options are required');
@@ -235,7 +244,7 @@ export async function hydrateAgentPackage(
     assertNonEmptyString(resolution.connector, 'resolved connector');
   }
   assertNonEmptyString(resolution.model, 'resolved model');
-  const hydratedTools = await hydrateTools(packageValue, options);
+  const hydratedTools = await hydrateTools(packageValue, options, remoteFactory);
   const context = await options.contextFactory({
     package: packageValue,
     connector: resolution.connector,
@@ -640,10 +649,12 @@ function getBuiltInToolFingerprint(
 async function hydrateTools(
   packageValue: SerializedAgentPackage,
   options: HydrateAgentPackageOptions,
+  remoteFactory?: (packageId: string, descriptor: PortableToolDescriptor) => ToolFunction | Promise<ToolFunction>,
 ): Promise<HydratedPortableTool[]> {
   const tools: HydratedPortableTool[] = [];
   for (const descriptor of packageValue.agent.tools) {
     if (descriptor.placement === 'remote') {
+      if (remoteFactory) { tools.push({ descriptor, tool: await remoteFactory(packageValue.packageId, descriptor) }); continue; }
       if (!options.remoteToolTransport) {
         throw new AgentPackageCompatibilityError(
           `Remote tool '${descriptor.definition.function.name}' requires remoteToolTransport`,

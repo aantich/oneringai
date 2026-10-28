@@ -1,0 +1,1427 @@
+{
+  "protocol": "consumer-c4-validation-v1",
+  "recordedAt": "2026-10-23T17:32:00.072331+00:00",
+  "branch": "version2",
+  "baseCommit": "dff238759c41431bd24712d3b045dd38fc800b37",
+  "status": "complete-on-branch",
+  "verifiedPackageRelease": false,
+  "scope": {
+    "profile": "execution-v1",
+    "specializedOperations": 40,
+    "read": 28,
+    "write": 12,
+    "optionalGenericUnknown": 4,
+    "ownerFailureBranches": 73,
+    "staticAdoption": true,
+    "catalogSupport": "C5",
+    "legacyDefaultsChanged": false,
+    "literalRemoteProtocol": 2
+  },
+  "unit": {
+    "passed": 8927,
+    "failed": 0,
+    "skipped": 0,
+    "files": 392,
+    "artifact": {
+      "path": "/tmp/oneringai-c4-completion-unit.json",
+      "bytes": 2855070,
+      "sha256": "1c31759035f25bc58a93fcf3c32ed1276872e0b3c5594e015da901e8ea690eb2"
+    }
+  },
+  "newUnitCases": 42,
+  "admissionAndCollisionRegressions": {
+    "passed": 39,
+    "failed": 0,
+    "skipped": 0,
+    "files": 1,
+    "artifact": {
+      "path": "/tmp/oneringai-c4-admission-review.json",
+      "bytes": 13930,
+      "sha256": "53d9afd21496e84a7c033510fca33229f76d331c700fa527e2f7c0a15e6a58a1"
+    }
+  },
+  "live": {
+    "passed": 245,
+    "failed": 0,
+    "skipped": 0,
+    "files": 17,
+    "artifact": {
+      "path": "/tmp/oneringai-c4-final-live-tests.json",
+      "bytes": 83889,
+      "sha256": "5dd68ddef25a10046530d50b2be88a321292220852f48daa0ddac350f791adb5"
+    },
+    "providers": [
+      "OpenAI",
+      "Anthropic",
+      "Google"
+    ],
+    "command": {
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/integration/text/AgenticBaseline.live.integration.test.ts",
+        "tests/integration/text/ContextFreshness.live.integration.test.ts",
+        "tests/integration/text/ToolOutcomes.live.integration.test.ts",
+        "tests/integration/text/Evidence.live.integration.test.ts",
+        "tests/integration/text/ContextStrategies.live.integration.test.ts",
+        "tests/integration/text/ModelExecution.live.integration.test.ts",
+        "tests/integration/text/TaskState.live.integration.test.ts",
+        "tests/integration/text/AgentLoop.live.integration.test.ts",
+        "tests/integration/text/AgentPresets.live.integration.test.ts",
+        "tests/integration/text/AgentSessionCorrections.live.integration.test.ts",
+        "tests/integration/text/ContextAssembly.live.integration.test.ts",
+        "tests/integration/text/NativeCompaction.live.integration.test.ts",
+        "tests/integration/text/ModelRouting.live.integration.test.ts",
+        "tests/integration/text/OutcomeTools.live.integration.test.ts",
+        "tests/integration/text/CompositionExecution.live.integration.test.ts",
+        "tests/integration/text/VerifiedRoutines.live.integration.test.ts",
+        "tests/integration/text/EnhancedConnectors.live.integration.test.ts",
+        "--maxWorkers=3",
+        "--minWorkers=1",
+        "--reporter=json",
+        "--outputFile=/tmp/oneringai-c4-final-live-tests.json"
+      ],
+      "enableFlags": {
+        "RUN_AGENTIC_BASELINE_LIVE": "1",
+        "RUN_CONTEXT_FRESHNESS_LIVE": "1",
+        "RUN_TOOL_OUTCOMES_LIVE": "1",
+        "RUN_EVIDENCE_LIVE": "1",
+        "RUN_CONTEXT_STRATEGIES_LIVE": "1",
+        "RUN_MODEL_EXECUTION_LIVE": "1",
+        "RUN_TASK_STATE_LIVE": "1",
+        "RUN_AGENT_LOOP_LIVE": "1",
+        "RUN_AGENT_PRESETS_LIVE": "1",
+        "RUN_CONTEXT_ASSEMBLY_LIVE": "1",
+        "RUN_NATIVE_COMPACTION_LIVE": "1",
+        "RUN_MODEL_ROUTING_LIVE": "1",
+        "RUN_OUTCOME_TOOLS_LIVE": "1",
+        "RUN_COMPOSITION_EXECUTION_LIVE": "1",
+        "RUN_VERIFIED_ROUTINES_LIVE": "1",
+        "RUN_ENHANCED_CONNECTORS_LIVE": "1"
+      },
+      "reportPaths": {
+        "BASELINE_REPORT_PATH": "/tmp/oneringai-c4-final-live-baseline_report_path.json",
+        "CONTEXT_FRESHNESS_REPORT_PATH": "/tmp/oneringai-c4-final-live-context_freshness_report_path.json",
+        "TOOL_OUTCOMES_REPORT_PATH": "/tmp/oneringai-c4-final-live-tool_outcomes_report_path.json",
+        "EVIDENCE_REPORT_PATH": "/tmp/oneringai-c4-final-live-evidence_report_path.json",
+        "CONTEXT_STRATEGY_REPORT_PATH": "/tmp/oneringai-c4-final-live-context_strategy_report_path.json",
+        "MODEL_EXECUTION_REPORT_PATH": "/tmp/oneringai-c4-final-live-model_execution_report_path.json",
+        "TASK_STATE_REPORT_PATH": "/tmp/oneringai-c4-final-live-task_state_report_path.json",
+        "AGENT_LOOP_REPORT_PATH": "/tmp/oneringai-c4-final-live-agent_loop_report_path.json",
+        "AGENT_PRESETS_REPORT_PATH": "/tmp/oneringai-c4-final-live-agent_presets_report_path.json",
+        "AGENT_SESSION_CORRECTIONS_REPORT_PATH": "/tmp/oneringai-c4-final-live-agent_session_corrections_report_path.json",
+        "CONTEXT_ASSEMBLY_REPORT_PATH": "/tmp/oneringai-c4-final-live-context_assembly_report_path.json",
+        "NATIVE_COMPACTION_REPORT_PATH": "/tmp/oneringai-c4-final-live-native_compaction_report_path.json",
+        "MODEL_ROUTING_REPORT_PATH": "/tmp/oneringai-c4-final-live-model_routing_report_path.json",
+        "OUTCOME_TOOLS_REPORT_PATH": "/tmp/oneringai-c4-final-live-outcome_tools_report_path.json",
+        "COMPOSITION_EXECUTION_REPORT_PATH": "/tmp/oneringai-c4-final-live-composition_execution_report_path.json",
+        "VERIFIED_ROUTINES_REPORT_PATH": "/tmp/oneringai-c4-final-live-verified_routines_report_path.json",
+        "ENHANCED_CONNECTORS_REPORT_PATH": "/tmp/oneringai-c4-final-live-enhanced_connectors_report_path.json"
+      }
+    },
+    "finalFrozenSourceC4Smoke": {
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "files": 1,
+      "artifact": {
+        "path": "/tmp/oneringai-c4-frozen-live.json",
+        "bytes": 2901,
+        "sha256": "21ddc0e5aab3352ac0cf2a3de5b7b35876504b6fcc64bc15790e6a569dc92050"
+      }
+    },
+    "scopeNote": "The cumulative 245-case matrix passed. Subsequent private admission/collision corrections passed final full units/public/compatibility/offline and six frozen C4 run/stream checks.",
+    "resolvedIncidents": [
+      "Initial fixture permission denial before HTTP: grant synthetic-service host approval explicitly and retain default-denial regression.",
+      "Provider SHA versus evidence digest ambiguity: ask for summary.metadata.sha, preserve two-call budget and exact oracle; six C4 and cumulative 245 rerun pass.",
+      "Admission regression initially explicitly disposed the old connector: use registry authority replacement without disposal; no connector revocation behavior was changed."
+    ]
+  },
+  "runtime": {
+    "checks": 822,
+    "fixtures": [
+      {
+        "name": "presets",
+        "exitCode": 0,
+        "checks": 54,
+        "log": "/tmp/oneringai-c4-public-presets.log",
+        "result": {
+          "protocol": "stage12-public-v1",
+          "summaries": [
+            {
+              "format": "esm",
+              "checks": 27,
+              "calls": 4
+            },
+            {
+              "format": "cjs",
+              "checks": 27,
+              "calls": 4
+            }
+          ]
+        }
+      },
+      {
+        "name": "assembly",
+        "exitCode": 0,
+        "checks": 38,
+        "log": "/tmp/oneringai-c4-public-assembly.log",
+        "result": {
+          "protocol": "stage05-public-v1",
+          "results": [
+            {
+              "format": "esm",
+              "checks": 19
+            },
+            {
+              "format": "cjs",
+              "checks": 19
+            }
+          ]
+        }
+      },
+      {
+        "name": "native",
+        "exitCode": 0,
+        "checks": 66,
+        "log": "/tmp/oneringai-c4-public-native.log",
+        "result": {
+          "protocol": "stage-16a-public-runtime-v1",
+          "passed": true,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 33
+            },
+            {
+              "format": "cjs",
+              "checks": 33
+            }
+          ]
+        }
+      },
+      {
+        "name": "routing",
+        "exitCode": 0,
+        "checks": 44,
+        "log": "/tmp/oneringai-c4-public-routing.log",
+        "result": {
+          "protocol": "stage-14a-public-runtime-v1",
+          "passed": true,
+          "results": [
+            {
+              "format": "esm",
+              "checks": 22
+            },
+            {
+              "format": "cjs",
+              "checks": 22
+            }
+          ]
+        }
+      },
+      {
+        "name": "outcomes",
+        "exitCode": 0,
+        "checks": 180,
+        "log": "/tmp/oneringai-c4-public-outcomes.log",
+        "result": {
+          "protocol": "c1-public-outcomes-v1",
+          "checks": 180,
+          "results": [
+            {
+              "helper": "esm",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "cjs",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-esm",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "cjs",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "duplicate-esm",
+              "checks": 10
+            },
+            {
+              "helper": "duplicate-cjs",
+              "manager": "duplicate-cjs",
+              "checks": 10
+            },
+            {
+              "helper": "esm",
+              "wrapper": "cjs",
+              "checks": 3
+            },
+            {
+              "helper": "cjs",
+              "wrapper": "duplicate-esm",
+              "checks": 3
+            },
+            {
+              "helper": "duplicate-esm",
+              "wrapper": "duplicate-cjs",
+              "checks": 3
+            },
+            {
+              "helper": "duplicate-cjs",
+              "wrapper": "esm",
+              "checks": 3
+            },
+            {
+              "format": "esm",
+              "legacyRemoteBoundary": true,
+              "checks": 4
+            },
+            {
+              "format": "cjs",
+              "legacyRemoteBoundary": true,
+              "checks": 4
+            }
+          ]
+        }
+      },
+      {
+        "name": "routines",
+        "exitCode": 0,
+        "checks": 144,
+        "log": "/tmp/oneringai-c4-public-routines.log",
+        "result": {
+          "protocol": "consumer-c3-public-v1",
+          "combinations": 16,
+          "checks": 144,
+          "passed": true
+        }
+      },
+      {
+        "name": "composition",
+        "exitCode": 0,
+        "checks": 68,
+        "log": "/tmp/oneringai-c4-public-composition.log",
+        "result": {
+          "protocol": "c2-private-cross-bundle-v1",
+          "checks": 68,
+          "combinations": 8,
+          "passed": true
+        }
+      },
+      {
+        "name": "enhanced",
+        "exitCode": 0,
+        "checks": 228,
+        "log": "/tmp/oneringai-c4-public-enhanced.log",
+        "result": {
+          "protocol": "consumer-c4-public-v1",
+          "combinations": 16,
+          "checks": 228,
+          "passed": true
+        }
+      }
+    ]
+  },
+  "offline": {
+    "count": 44,
+    "allPassed": true,
+    "scripts": [
+      {
+        "script": "example:agentic-baseline",
+        "command": "node --import tsx examples/agentic-evaluation-baseline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-agentic-baseline.log"
+      },
+      {
+        "script": "example:context-freshness",
+        "command": "node --import tsx examples/context-compaction-freshness.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-context-freshness.log"
+      },
+      {
+        "script": "example:context-budget",
+        "command": "node --import tsx examples/context-request-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-context-budget.log"
+      },
+      {
+        "script": "example:structured-budget",
+        "command": "node --import tsx examples/structured-output-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-structured-budget.log"
+      },
+      {
+        "script": "example:amos-context",
+        "command": "node --import tsx apps/amos/examples/context-budget-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-amos-context.log"
+      },
+      {
+        "script": "example:tool-outcomes",
+        "command": "node --import tsx examples/tool-outcomes-and-cancellation.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-tool-outcomes.log"
+      },
+      {
+        "script": "example:amos-tool-outcomes",
+        "command": "node --import tsx apps/amos/examples/tool-outcomes-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-amos-tool-outcomes.log"
+      },
+      {
+        "script": "example:purpose-models",
+        "command": "node --import tsx examples/purpose-specific-models.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-purpose-models.log"
+      },
+      {
+        "script": "example:shared-budget",
+        "command": "node --import tsx examples/shared-run-budget.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-shared-budget.log"
+      },
+      {
+        "script": "example:amos-helpers",
+        "command": "node --import tsx apps/amos/examples/model-helpers-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-amos-helpers.log"
+      },
+      {
+        "script": "example:durable-evidence",
+        "command": "node --import tsx examples/durable-tool-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-durable-evidence.log"
+      },
+      {
+        "script": "example:evidence-recovery",
+        "command": "node --import tsx examples/evidence-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-evidence-recovery.log"
+      },
+      {
+        "script": "example:ambiguous-evidence",
+        "command": "node --import tsx examples/ambiguous-action-evidence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-ambiguous-evidence.log"
+      },
+      {
+        "script": "example:amos-evidence",
+        "command": "node --import tsx apps/amos/examples/evidence-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-amos-evidence.log"
+      },
+      {
+        "script": "example:evidence-interruption",
+        "command": "node --import tsx examples/evidence-stream-interruption.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-evidence-interruption.log"
+      },
+      {
+        "script": "example:context-strategies",
+        "command": "node --import tsx examples/context-strategy-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-context-strategies.log"
+      },
+      {
+        "script": "example:amos-context-strategies",
+        "command": "node --import tsx apps/amos/examples/context-strategies-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-amos-context-strategies.log"
+      },
+      {
+        "script": "example:task-state",
+        "command": "node --import tsx examples/task-state-workflow.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-task-state.log"
+      },
+      {
+        "script": "example:amos-task-state",
+        "command": "node --import tsx apps/amos/examples/task-state-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-amos-task-state.log"
+      },
+      {
+        "script": "example:feedback-agent",
+        "command": "node --import tsx examples/feedback-driven-agent.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-feedback-agent.log"
+      },
+      {
+        "script": "example:loop-equivalence",
+        "command": "node --import tsx examples/run-stream-equivalence.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-loop-equivalence.log"
+      },
+      {
+        "script": "example:amos-loop",
+        "command": "node --import tsx apps/amos/examples/loop-policy-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-amos-loop.log"
+      },
+      {
+        "script": "example:agentic-presets",
+        "command": "node --import tsx examples/agentic-presets.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-agentic-presets.log"
+      },
+      {
+        "script": "example:amos-presets",
+        "command": "node --import tsx apps/amos/examples/presets-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-amos-presets.log"
+      },
+      {
+        "script": "example:context-selection",
+        "command": "node --import tsx examples/context-block-selection.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-context-selection.log"
+      },
+      {
+        "script": "example:cache-aware-context",
+        "command": "node --import tsx examples/cache-aware-context.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-cache-aware-context.log"
+      },
+      {
+        "script": "example:amos-context-selection",
+        "command": "node --import tsx apps/amos/examples/context-selection-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-amos-context-selection.log"
+      },
+      {
+        "script": "example:context-dispatch-safety",
+        "command": "node --import tsx examples/context-dispatch-safety.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-context-dispatch-safety.log"
+      },
+      {
+        "script": "example:native-compaction",
+        "command": "node --import tsx examples/native-context-compaction.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-native-compaction.log"
+      },
+      {
+        "script": "example:native-recovery",
+        "command": "node --import tsx examples/native-context-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-native-recovery.log"
+      },
+      {
+        "script": "example:native-comparison",
+        "command": "node --import tsx examples/native-context-comparison.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-native-comparison.log"
+      },
+      {
+        "script": "example:amos-native-compaction",
+        "command": "node --import tsx apps/amos/examples/native-compaction-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-amos-native-compaction.log"
+      },
+      {
+        "script": "example:native-hooks",
+        "command": "node --import tsx examples/native-context-hooks.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-native-hooks.log"
+      },
+      {
+        "script": "example:native-hooks-manual",
+        "command": "node --import tsx examples/native-context-hooks.ts --manual",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-native-hooks-manual.log"
+      },
+      {
+        "script": "example:model-routing",
+        "command": "node --import tsx examples/adaptive-model-routing.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-model-routing.log"
+      },
+      {
+        "script": "example:routing-context",
+        "command": "node --import tsx examples/routing-with-context.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-routing-context.log"
+      },
+      {
+        "script": "example:amos-routing",
+        "command": "node --import tsx apps/amos/examples/routing-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-amos-routing.log"
+      },
+      {
+        "script": "example:routing-suspension",
+        "command": "node --import tsx examples/routing-suspension-recovery.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-routing-suspension.log"
+      },
+      {
+        "script": "example:routing-suspension-failure",
+        "command": "node --import tsx examples/routing-suspension-recovery.ts --failed-finalization",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-routing-suspension-failure.log"
+      },
+      {
+        "script": "example:enhanced-connectors",
+        "command": "node --import tsx examples/enhanced-connector-execution.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-enhanced-connectors.log"
+      },
+      {
+        "script": "example:verified-routines",
+        "command": "node --import tsx examples/verified-routines.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-verified-routines.log"
+      },
+      {
+        "script": "example:composite-binding",
+        "command": "node --import tsx examples/composite-execution-binding.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-composite-binding.log"
+      },
+      {
+        "script": "example:outcome-aware-tools",
+        "command": "node --import tsx examples/outcome-aware-tools.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-outcome-aware-tools.log"
+      },
+      {
+        "script": "example:amos-outcome-tools",
+        "command": "node --import tsx apps/amos/examples/outcome-aware-tools-offline.ts",
+        "exitCode": 0,
+        "passed": true,
+        "log": "/tmp/oneringai-c4-offline-example-amos-outcome-tools.log"
+      }
+    ]
+  },
+  "gates": [
+    {
+      "name": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c4-completion-build.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c4-completion-build.log",
+        "bytes": 15583,
+        "sha256": "f92cfbcd1e371bcf426ca99c4d3d1f4f4338fd419ba76fe2f9acf4c5b60ce6ce"
+      }
+    },
+    {
+      "name": "unit",
+      "command": [
+        "npm",
+        "run",
+        "test:unit",
+        "--",
+        "--reporter=json",
+        "--outputFile=/tmp/oneringai-c4-completion-unit.json"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c4-completion-unit.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c4-completion-unit.log",
+        "bytes": 286,
+        "sha256": "8b9d51e65375f4733a65b8f22fb4aca25b550a97a7fae77913593f251ee2f1a2"
+      }
+    },
+    {
+      "name": "types",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c4-completion-types.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c4-completion-types.log",
+        "bytes": 57,
+        "sha256": "a2e5e9d708935cce4e942e634007f4b0614cc09ac3a50afee67b92e9c0ef2717"
+      }
+    },
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c4-completion-lint.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c4-completion-lint.log",
+        "bytes": 60,
+        "sha256": "fd51866636db1794eb56a710788c33761d4c68de550ef0ea7404c1980392ca0e"
+      }
+    },
+    {
+      "name": "examples-types",
+      "command": [
+        "npm",
+        "run",
+        "examples:check"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c4-completion-examples-types.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c4-completion-examples-types.log",
+        "bytes": 88,
+        "sha256": "778368949d3bc3058bf5078a03f6809a15d8b3ace833a4f7a2f9fa55c93e1ac8"
+      }
+    },
+    {
+      "name": "amos-types",
+      "command": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "apps/amos/tsconfig.json"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c4-completion-amos-types.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c4-completion-amos-types.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "name": "compat",
+      "command": [
+        "npm",
+        "run",
+        "test:agentic:compat"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c4-completion-compat.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c4-completion-compat.log",
+        "bytes": 116,
+        "sha256": "38c3747296c3b5acc3fc7f0fabb73647e8ff21671754863f40484140aa793fd6"
+      }
+    },
+    {
+      "name": "proposal-types",
+      "command": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "docs/evaluations/consumer-api-design/tsconfig.json"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c4-completion-proposal-types.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c4-completion-proposal-types.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "name": "api-docs",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/generate-api-docs.ts",
+        "--mode",
+        "public"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c4-completion-api-docs.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c4-completion-api-docs.log",
+        "bytes": 223,
+        "sha256": "00c72b53d5ce87c52bf38a0e5903ee6c8244eb1e7a47b0642841506625948c68"
+      }
+    },
+    {
+      "name": "public",
+      "command": [
+        "python",
+        "/tmp/oneringai-c4-public-run.py"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c4-completion-public.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c4-completion-public.log",
+        "bytes": 32,
+        "sha256": "3ef5de713b0f1a8b35fd4218e54edacd134a54af7ce357535384a1cdac3cf06e"
+      }
+    },
+    {
+      "name": "offline",
+      "command": [
+        "python",
+        "/tmp/oneringai-c4-offline-run.py"
+      ],
+      "exitCode": 0,
+      "log": "/tmp/oneringai-c4-completion-offline.log",
+      "artifact": {
+        "path": "/tmp/oneringai-c4-completion-offline.log",
+        "bytes": 28,
+        "sha256": "b3319dd99ad1133616b2d789085dfbacada2c64141adb0464a461a3371803786"
+      }
+    }
+  ],
+  "compatibility": {
+    "legacyNamesSchemasResultsDefaultsPreserved": true,
+    "privateCrossBundleControls": 16,
+    "designNegativeControls": 14,
+    "freshPublicConsumer": true,
+    "legacySealedManagerAndRequestProxy": true
+  },
+  "package": {
+    "files": 281,
+    "requiredDeliveryFilesPresent": true,
+    "secretFilesPresent": false,
+    "pathsSha256": "ae3317c4c4e337fb5f01858679bf9659ed33a15598623691cbc890934b7ad04c"
+  },
+  "documentationLinks": {
+    "checked": 2795,
+    "errors": []
+  },
+  "reviewCorrections": [
+    "Selected generic origin/Host policy and cross-bundle denial",
+    "Partial accepted draft ID survives later failed write",
+    "Admission authority captured before yielding hooks",
+    "Atomic selected connector/account/name collision preflight",
+    "Async diagnostic rejection containment",
+    "Legacy nonextensible manager and RequestInit proxy compatibility"
+  ],
+  "supportBoundaries": [
+    "Static registration; catalog/page contracts C5",
+    "No default/plugin/approval change",
+    "No final remote-completion inference from acceptance/cancellation",
+    "Owning allowed raw source, not every provider HTTP body",
+    "No external service write, ICOS edit, release or backend"
+  ],
+  "changedSourceAndFixtures": [
+    {
+      "path": "apps/amos/src/app.ts",
+      "bytes": 28425,
+      "sha256": "5fec241158cdfba1fc0b05c2d933b5532020330fb6b5279a9ddea8885340804b"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/RoutineCommand.ts",
+      "bytes": 4159,
+      "sha256": "c9d20bf3286d21f7a84cf7c292d5f1500b6e8a353bc7db21dea11b40cdac3b4a"
+    },
+    {
+      "path": "apps/amos/src/commands/commands/index.ts",
+      "bytes": 925,
+      "sha256": "cfa3640b82d62a0f94c235b28e36a20b3412284b653585d501aa77f74058d2d4"
+    },
+    {
+      "path": "examples/README.md",
+      "bytes": 37013,
+      "sha256": "b387d85650aaecf04702e7f8c2658a72267143e51cb4eedbfb9094f1ffedc73c"
+    },
+    {
+      "path": "examples/composite-execution-binding.ts",
+      "bytes": 2155,
+      "sha256": "2020040b5323b20cae56a4e40a1280445e06bfa3708c09c22f0199edc4ce212b"
+    },
+    {
+      "path": "examples/enhanced-connector-execution.ts",
+      "bytes": 5038,
+      "sha256": "08cf3851bd9de629642a81bffc11d392cd94021223065840c82223764f98359f"
+    },
+    {
+      "path": "examples/outcome-aware-tools.ts",
+      "bytes": 2230,
+      "sha256": "6ed674ac906116e0ccfa3b2d260fdf165eff682357349a7dee1f7b344020aa9c"
+    },
+    {
+      "path": "examples/verified-routines.ts",
+      "bytes": 2664,
+      "sha256": "98c35cf8288157e94020eea013050931e60b4b1a2a847328a41119e37d1aa42b"
+    },
+    {
+      "path": "src/core/Agent.ts",
+      "bytes": 236174,
+      "sha256": "371d716f589093930cb5ec2ee85a7c1bea49cbc1d0f67121fcd523b87b72bd3d"
+    },
+    {
+      "path": "src/core/BaseAgent.ts",
+      "bytes": 61183,
+      "sha256": "23bde21e3af168ff3825448399e4f29c6cbf0dcad8e317d162b3d6d3d5c5d1b4"
+    },
+    {
+      "path": "src/core/Connector.ts",
+      "bytes": 37619,
+      "sha256": "6a1406c1bcdf49841039676f5f7cc65ef47a8981b119afb5902e33fa8ed5eeb8"
+    },
+    {
+      "path": "src/core/ToolManager.ts",
+      "bytes": 55040,
+      "sha256": "112d75dedf813eeed71c9eca33d7eb8c930acabc55b731c223378729bfd9aa82"
+    },
+    {
+      "path": "src/core/connector-execution/attempts.ts",
+      "bytes": 1203,
+      "sha256": "ba12bc271a3a1b353965431d8093c943bdb1a51afb95e0e5514de37e6f52ba42"
+    },
+    {
+      "path": "src/core/connector-execution/profile.ts",
+      "bytes": 2303,
+      "sha256": "fda97ce68f0936ca95c0a49bbe5a7104f30a8657d68170393dd1aa21931bee0b"
+    },
+    {
+      "path": "src/core/createOutcomeTool.ts",
+      "bytes": 2290,
+      "sha256": "00f6165de48298b68b7d517dab462468f5346e024f85f715a96ee5bcb15335dc"
+    },
+    {
+      "path": "src/core/execution/composition.ts",
+      "bytes": 11855,
+      "sha256": "019ecbf712c3c19d822be03b07bb96e878b6f9cba7932b420aa420edd82f5059"
+    },
+    {
+      "path": "src/core/execution/routineBinding.ts",
+      "bytes": 4410,
+      "sha256": "be68f6195895099171b81fa690ac174040f0ee85225a8f5ecf76f186fac4b311"
+    },
+    {
+      "path": "src/core/index.ts",
+      "bytes": 11524,
+      "sha256": "0a5c49cdf63c73b6b4c3cc64d1159de7f21ea2600f87a7892d4a1b16543fcfe6"
+    },
+    {
+      "path": "src/core/model-execution/ModelExecutor.ts",
+      "bytes": 21713,
+      "sha256": "999a8cef48554ba14e1ebc6497bee0b174cbd72b36bf6d5b83cd1b09f6bf5f44"
+    },
+    {
+      "path": "src/core/routineControlFlow.ts",
+      "bytes": 31093,
+      "sha256": "f2cc8cfeb836d992a8c9264023e9c3742daf9f34377f170c76e90cb1e54edb0c"
+    },
+    {
+      "path": "src/core/routineKeys.ts",
+      "bytes": 1060,
+      "sha256": "6bb79fa5242f5e01e994e50a537474b9e8bfcbcf57943acddc14309d78f3a4bc"
+    },
+    {
+      "path": "src/core/routineRunner.ts",
+      "bytes": 62183,
+      "sha256": "67e47dff329ed9e6a6c6d5390b3eded4a1e5c738e1870079579e76f2f9449b8f"
+    },
+    {
+      "path": "src/core/routines/createRoutineRunner.ts",
+      "bytes": 28077,
+      "sha256": "9f94cba161d77099f96fb919ea1297c42088bbbcec5bc7823fb61b64f76d4fd7"
+    },
+    {
+      "path": "src/core/routines/observations.ts",
+      "bytes": 8804,
+      "sha256": "fec4007acfc2696309458239b0b14a8a66653d27035c21a7f546be3c89781c3e"
+    },
+    {
+      "path": "src/core/routines/preflight.ts",
+      "bytes": 8327,
+      "sha256": "e1f1df49dd75e55e968daa72c970728ada06610a59ccb96d7448d4578d126bf6"
+    },
+    {
+      "path": "src/core/routines/types.ts",
+      "bytes": 6465,
+      "sha256": "cd0c8ff6cf9627bf4cb86d1a274adc7be66e3f3f7caa960428dc6dc0caa33ddb"
+    },
+    {
+      "path": "src/core/tool-execution/ToolExecutionPipeline.ts",
+      "bytes": 9030,
+      "sha256": "4fb99b655b9b67531046ccab1fc0686a23275d31da7b219e7249b87a21eb5700"
+    },
+    {
+      "path": "src/core/tool-execution/outcomeInvocation.ts",
+      "bytes": 1278,
+      "sha256": "93db55e26950d05a4894f5feb1e81755b31666049be7c57116079d2517bc84e5"
+    },
+    {
+      "path": "src/core/tool-execution/outcomes.ts",
+      "bytes": 1187,
+      "sha256": "f332efa38b51b0f33affb23de8d1c709b82e999deef61f573ec8c9818f52058b"
+    },
+    {
+      "path": "src/index.ts",
+      "bytes": 63906,
+      "sha256": "58931dd39d44e0c2edc0d4745b69fb4fb4cb3bccb4d645fe1a13979a39c44ee6"
+    },
+    {
+      "path": "src/tools/connector/ConnectorTools.ts",
+      "bytes": 29111,
+      "sha256": "f2a155daf661feb22c6fcdcdc24383d309291f0add695a55953631301792712d"
+    },
+    {
+      "path": "src/tools/connector/enhancedInvocation.ts",
+      "bytes": 1971,
+      "sha256": "bb10531d4828560c1b10087b8a0fca23fcaf0f09f42e4fb2f67e6f704653d02f"
+    },
+    {
+      "path": "src/tools/connector/enhancedProfiles.ts",
+      "bytes": 11612,
+      "sha256": "d7f2226b12c1617a2d6d1f53bad5d79df82e3cd245c8eff1ee7429f7e8576178"
+    },
+    {
+      "path": "src/tools/connector/index.ts",
+      "bytes": 947,
+      "sha256": "45c20f9611ca805476857b964a1f49811f6f56dea071f873c0adbf85283eca6f"
+    },
+    {
+      "path": "src/tools/github/createPR.ts",
+      "bytes": 4593,
+      "sha256": "5c619a4cc8ba66dad128b934e7f58f1d8e78154016572d5d0779961ea330fabb"
+    },
+    {
+      "path": "src/tools/github/getPR.ts",
+      "bytes": 3659,
+      "sha256": "594934fda17a3dbc8fc61b965a2c231c9e55cde004fe9956b5eb51632cdbe9e9"
+    },
+    {
+      "path": "src/tools/github/listBranches.ts",
+      "bytes": 4857,
+      "sha256": "0301648aebc9ccbb0d02b2b81a313ed3062ca26f2d7c6f69fd7031c6b1f405cc"
+    },
+    {
+      "path": "src/tools/github/prComments.ts",
+      "bytes": 5443,
+      "sha256": "8dd0db4759e0ae2fc12d46be55e109e27c7386d8d2e1365e6dc0f303141a8eba"
+    },
+    {
+      "path": "src/tools/github/prFiles.ts",
+      "bytes": 3514,
+      "sha256": "ec63c005f9bee3515854acca9df026748cff43e62f1f4a051dbc6a615c81a8f5"
+    },
+    {
+      "path": "src/tools/github/readFile.ts",
+      "bytes": 7907,
+      "sha256": "92479d83d5f6e4728b8c3b7401d8a511905c06a18f212864999023d75297cff9"
+    },
+    {
+      "path": "src/tools/github/register.ts",
+      "bytes": 1801,
+      "sha256": "fff90d68e30dfc0572f1aa0d7f56aa4110094174a0dc8d2a5c3d452ca0b6904a"
+    },
+    {
+      "path": "src/tools/github/searchCode.ts",
+      "bytes": 11841,
+      "sha256": "b7f3b2f15cbf264d8696a58511a54090fbf8cbf7a41689b02017a938fb296a34"
+    },
+    {
+      "path": "src/tools/github/searchFiles.ts",
+      "bytes": 5332,
+      "sha256": "453e5f3b5fe9f6d1f0301be4c104de8488dfad0ca9aa6a214b98c47e5a75f9f1"
+    },
+    {
+      "path": "src/tools/google/createDraftEmail.ts",
+      "bytes": 5955,
+      "sha256": "39cade833a6a874afc54df3d3020c5986db91a9cc17697e2f2a4156bb144419e"
+    },
+    {
+      "path": "src/tools/google/createMeeting.ts",
+      "bytes": 6095,
+      "sha256": "a454b0b617c1260d176a373b7bb9af8853cb36b77e43719c3010be20d84b1f86"
+    },
+    {
+      "path": "src/tools/google/editMeeting.ts",
+      "bytes": 5840,
+      "sha256": "fa2329f6e92bd6c811e61de91185ce6b941548a85daa7cf7c0e48555cab1b892"
+    },
+    {
+      "path": "src/tools/google/findMeetingSlots.ts",
+      "bytes": 10298,
+      "sha256": "33a7c2b0f8fa2b8c4fa5ab3779f0de5b0696ff2ac0d4cade16a3f42aa726b659"
+    },
+    {
+      "path": "src/tools/google/getMeeting.ts",
+      "bytes": 5429,
+      "sha256": "6f1d5ae204ac54dad920e18857e69b273d6759cc2a010b296b157bff3b87be78"
+    },
+    {
+      "path": "src/tools/google/getMeetingTranscript.ts",
+      "bytes": 10360,
+      "sha256": "973cb2b83e155077668a92693fbed29255cbe35bc03fa109752740b51e86780a"
+    },
+    {
+      "path": "src/tools/google/listFiles.ts",
+      "bytes": 5645,
+      "sha256": "f21f1b435bcd6868fecf8cfd4fd655c1781ad1bce1bd8d9418bb0bb6dce42e0c"
+    },
+    {
+      "path": "src/tools/google/listMeetings.ts",
+      "bytes": 7100,
+      "sha256": "37ce6a4884bc704395b163742e090b8a31644affe04a96ade6d7785924efe88c"
+    },
+    {
+      "path": "src/tools/google/readFile.ts",
+      "bytes": 12551,
+      "sha256": "87d155796b97a5374fa78ed328db1304279092f0e2a6ff761fc1af31bd25eb1a"
+    },
+    {
+      "path": "src/tools/google/register.ts",
+      "bytes": 3070,
+      "sha256": "7b2c737a1100acfdc3d8cc9f1458518a606ecc354f3eb153127019b399273575"
+    },
+    {
+      "path": "src/tools/google/searchFiles.ts",
+      "bytes": 7373,
+      "sha256": "48473b8bc2d3f36f706f6cec4319d498ec4bc5de73aed75bb612ff015e267e86"
+    },
+    {
+      "path": "src/tools/google/sendEmail.ts",
+      "bytes": 7238,
+      "sha256": "b2a105fda7374b05a97d200995d46506346fb61a4b8dcbee5c171f77a700d9db"
+    },
+    {
+      "path": "src/tools/microsoft/createDraftEmail.ts",
+      "bytes": 6571,
+      "sha256": "5eb3dfd4f22d2a6c14d8fbbbb09897fac9b2443189a7fe761fdfeb3f0a41d0e3"
+    },
+    {
+      "path": "src/tools/microsoft/createMeeting.ts",
+      "bytes": 5973,
+      "sha256": "914b2605a6a9d161b2a338407140ce656bdf2ac6edd47785b3478935d42004b6"
+    },
+    {
+      "path": "src/tools/microsoft/editMeeting.ts",
+      "bytes": 6708,
+      "sha256": "b3c2608aaad6793ce5e49f1b0afebffac457c474d37ae3da6370daaedcf9729d"
+    },
+    {
+      "path": "src/tools/microsoft/findMeetingSlots.ts",
+      "bytes": 6345,
+      "sha256": "1bd7cc3c9fd8aa6afa959eefead9e5466faa61289b14e8655543e08bdb944795"
+    },
+    {
+      "path": "src/tools/microsoft/getMeeting.ts",
+      "bytes": 7799,
+      "sha256": "6317a3fef843c841122948d0d47c8e65e55449e1d762f2e6c113c642bde4c4f4"
+    },
+    {
+      "path": "src/tools/microsoft/getMeetingTranscript.ts",
+      "bytes": 5703,
+      "sha256": "f7f41b58dfd20501149780fc6b2851145853cd1afa6d9d53b5c98298a05e9ea1"
+    },
+    {
+      "path": "src/tools/microsoft/listFiles.ts",
+      "bytes": 7034,
+      "sha256": "174a949126c16e145c32bd7a505a26011caf2bcd0dccff18f97f4d977b42a2b2"
+    },
+    {
+      "path": "src/tools/microsoft/listMeetings.ts",
+      "bytes": 9323,
+      "sha256": "dba40705acea5f8c52755fcbc14ed759ff4ec04b6bf7f99c41e6ad06627fc32a"
+    },
+    {
+      "path": "src/tools/microsoft/readFile.ts",
+      "bytes": 11528,
+      "sha256": "6aa4697eea41de591b9aa6a12ff1fff2feadd640777439bfaa951d5cfd04fbd7"
+    },
+    {
+      "path": "src/tools/microsoft/register.ts",
+      "bytes": 3304,
+      "sha256": "1984f258645b58d9e361c560a9a8030cd8e75aee7461f80259b0360e0243b7c5"
+    },
+    {
+      "path": "src/tools/microsoft/searchFiles.ts",
+      "bytes": 8853,
+      "sha256": "8a49168f8d734f6398e745076b2e80e54886c71d8a4eceda240bc4e7f20af0a1"
+    },
+    {
+      "path": "src/tools/microsoft/sendEmail.ts",
+      "bytes": 8141,
+      "sha256": "0bfeade19019a32695f9bf71d4044cfd50193af39107a7cd3353db127d09d3ff"
+    },
+    {
+      "path": "src/tools/registry.generated.ts",
+      "bytes": 21280,
+      "sha256": "1858edfc3d7acfae7d52a10152c183ca5b945c2e1368b73efd15683439eb4d97"
+    },
+    {
+      "path": "src/tools/slack/addReaction.ts",
+      "bytes": 3453,
+      "sha256": "6cd7d6bf164b4c7703345bd16bbbab8ae5203f8c514f0e7d4df88b3f272bed2a"
+    },
+    {
+      "path": "src/tools/slack/getChannelInfo.ts",
+      "bytes": 3016,
+      "sha256": "7e6b11fdf484ec49dd423a6be506f77a7f6181c1a699187710208493ddeff4f9"
+    },
+    {
+      "path": "src/tools/slack/getMentions.ts",
+      "bytes": 4298,
+      "sha256": "e046e102c4c2a423d90e11704c2b465f76335e7337629c833ff68a744a075da2"
+    },
+    {
+      "path": "src/tools/slack/getMessages.ts",
+      "bytes": 4353,
+      "sha256": "d090341c92bd1d1267e1f2d0a8efaf17b180f6c1747eefd5fd7333a5cc610bb4"
+    },
+    {
+      "path": "src/tools/slack/getThread.ts",
+      "bytes": 3490,
+      "sha256": "7526f09f1560943e9afb749f9549e7778e9848978bd7d739e92d15e488970ac9"
+    },
+    {
+      "path": "src/tools/slack/getUsers.ts",
+      "bytes": 4906,
+      "sha256": "d50650db09db4780ff39d769a2d5c41626d7f06e6970f177f6c5a6cf811a2d71"
+    },
+    {
+      "path": "src/tools/slack/listChannels.ts",
+      "bytes": 4405,
+      "sha256": "da71283eaa9b7caa8a02d6ce2d6065e77e947d993db2d89fef9be3d4b553a77b"
+    },
+    {
+      "path": "src/tools/slack/postMessage.ts",
+      "bytes": 4581,
+      "sha256": "c58cdd3128c169106c9829b4f24c10333512c32d301e15c7cf94d899bc2a9a6f"
+    },
+    {
+      "path": "src/tools/slack/register.ts",
+      "bytes": 2163,
+      "sha256": "c3513a51471641cfeb3172a9822bfcfbf9dfa0c5ad28a215d5ed4fdae4c167b7"
+    },
+    {
+      "path": "src/tools/slack/searchMessages.ts",
+      "bytes": 4499,
+      "sha256": "a5fd07b6bb338e05efcf54dc1b9e875cd0c87ce5f72daa5dd7f88ab50ca826d5"
+    },
+    {
+      "path": "src/tools/slack/setChannelTopic.ts",
+      "bytes": 2971,
+      "sha256": "f08c9e3a71548d45f930ea5504e6afb2bd10fc85db6efe4223a6799aff04a1d8"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/c1-consumer.ts",
+      "bytes": 1376,
+      "sha256": "d891ca25689e9521401df02ae6a0b29c4a62ddd3a000cf72b3f57e0511d3bcf6"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/c3-consumer.ts",
+      "bytes": 978,
+      "sha256": "8a9c24dc1aa6b22167499fdab2d29c870ab75147c0926ceb9d180f31ca371c3e"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/c4-consumer.ts",
+      "bytes": 821,
+      "sha256": "362eede9ce1c085eb818e98d7cdb63da1fbc78f4d4cf0ed52f06312e23c0d2e9"
+    },
+    {
+      "path": "tests/fixtures/agentic-baseline/tsconfig.json",
+      "bytes": 534,
+      "sha256": "1a929dbfb7ddbbd8d4f43d354a14564978d51fbd844c31898924eae543016555"
+    },
+    {
+      "path": "tests/fixtures/composition/public-runtime.mjs",
+      "bytes": 3186,
+      "sha256": "1d9d81ef6d0bb472f0b7d9b25730d518218b4743b78bd91209ffa1402d762790"
+    },
+    {
+      "path": "tests/fixtures/enhanced-connectors/public-runtime.mjs",
+      "bytes": 3884,
+      "sha256": "5f79e5dd71f7a4e523ce1916ee737b17136b6f441bf5260093f44a417ee6ccca"
+    },
+    {
+      "path": "tests/fixtures/outcome-tools/public-runtime.mjs",
+      "bytes": 5713,
+      "sha256": "ccf5175ccbe0314781187c4ff5c2ce8d7a3d9eae4770b338387445f6faafd56c"
+    },
+    {
+      "path": "tests/fixtures/verified-routines/public-runtime.mjs",
+      "bytes": 3257,
+      "sha256": "6e983cf75a16657b376700381e7c03a281ee6c04c46ab8d08db92e257ed37504"
+    },
+    {
+      "path": "tests/integration/text/CompositionExecution.live.integration.test.ts",
+      "bytes": 3936,
+      "sha256": "7379b47672860d35df9edb9017ab7847e6304d4658df7cf2def0f00924c872d1"
+    },
+    {
+      "path": "tests/integration/text/ContextAssembly.live.integration.test.ts",
+      "bytes": 24958,
+      "sha256": "3072794a05dcbb60677a8b67d5133c652bde5c9dde3bc7f3618e0c5638f07527"
+    },
+    {
+      "path": "tests/integration/text/ContextFreshness.live.integration.test.ts",
+      "bytes": 19482,
+      "sha256": "8a9b84f706e24101b90bae91473c3523ff916963b3d42ca8342c3ec84b4e5f1b"
+    },
+    {
+      "path": "tests/integration/text/EnhancedConnectors.live.integration.test.ts",
+      "bytes": 7063,
+      "sha256": "1ddabf5a3054975a378a1f7d288fcb9a061dacd09120f84dc60d1f976c01093e"
+    },
+    {
+      "path": "tests/integration/text/ModelRouting.live.integration.test.ts",
+      "bytes": 29448,
+      "sha256": "f43fdd6d9eaa82cf68464ae243a8c1ec8794acef21d51953c6c71f3f3bf1c6ef"
+    },
+    {
+      "path": "tests/integration/text/OutcomeTools.live.integration.test.ts",
+      "bytes": 5900,
+      "sha256": "c03ff21eda8b49add6761f0f4ce19f426772067403936b48c2b4ad0724ad421e"
+    },
+    {
+      "path": "tests/integration/text/TaskState.live.integration.test.ts",
+      "bytes": 9066,
+      "sha256": "3b13c318566ce0c338a9a53695efa17e60794bb6335aea0a1cb2a367219eba9a"
+    },
+    {
+      "path": "tests/integration/text/VerifiedRoutines.live.integration.test.ts",
+      "bytes": 4543,
+      "sha256": "4a5530ac937eb836ad2b3d3a8c3b1cc91177d3a15d05c5ccd41ea27c4589c41a"
+    },
+    {
+      "path": "tests/unit/apps/amos/EnhancedConnectors.test.ts",
+      "bytes": 1173,
+      "sha256": "fbd12c8b3cc5f46c226e44a4b075afc377440a590afe9d06fe52d7e2b7604d14"
+    },
+    {
+      "path": "tests/unit/apps/amos/RoutineCommand.test.ts",
+      "bytes": 2907,
+      "sha256": "905353d6006c25efd1dd45875ec7210498e4fa25c89c0154c2a38302ba0ed813"
+    },
+    {
+      "path": "tests/unit/apps/amos/ToolOutcomes.test.ts",
+      "bytes": 5159,
+      "sha256": "180ab0ba8997114985fb2553605901e8e818a7f569552094976f648f832f8afd"
+    },
+    {
+      "path": "tests/unit/core/Agent.toolOutcomes.test.ts",
+      "bytes": 13565,
+      "sha256": "a0c02667c0e9e0af2e96dce98d510abb09e1be4e4648aa13e857b464d38f5ffb"
+    },
+    {
+      "path": "tests/unit/core/CompositionExecution.test.ts",
+      "bytes": 20335,
+      "sha256": "e623fcb641ab467f56e7c55f972cfc762d79f062929566974d1925f9af81104b"
+    },
+    {
+      "path": "tests/unit/core/EnhancedConnectorTools.test.ts",
+      "bytes": 25728,
+      "sha256": "0835188c81f47a40e4343e045b0a583ff8afd17b1103c90b1c79d62c52458aed"
+    },
+    {
+      "path": "tests/unit/core/VerifiedRoutineFoundation.test.ts",
+      "bytes": 6728,
+      "sha256": "1ad9f1e3827c031a16bcc82879f928dcf9edbd567b436ed3c0702acebe86097a"
+    },
+    {
+      "path": "tests/unit/core/VerifiedRoutineRunner.test.ts",
+      "bytes": 29056,
+      "sha256": "85fa8fe67e351ea6412bf7a59b33d6b5ba9f54158c6540edf53c4de4d9588a3e"
+    },
+    {
+      "path": "tests/unit/core/tool-execution/OutcomeTool.test.ts",
+      "bytes": 22094,
+      "sha256": "9d72938bbb301c9a0aceae1c0961fc463d8233114d7e1fadc87d5b7f959775e8"
+    }
+  ]
+}

@@ -12,6 +12,7 @@
  * - Request/response logging
  */
 
+import { connectorAttemptObserver } from './connector-execution/attempts.js';
 import { randomUUID } from 'crypto';
 import { ConnectorConfig, ConnectorAuth } from '../domain/entities/Connector.js';
 import { Vendor } from './Vendor.js';
@@ -654,6 +655,7 @@ export class Connector {
       throw new Error(`Connector '${this.name}' has been disposed`);
     }
 
+    const observeAttempt = connectorAttemptObserver(options); let physicalAttempt = 0;
     const startTime = Date.now();
     this.requestCount++;
 
@@ -721,6 +723,8 @@ export class Connector {
       const timeoutId = !operationScope ? setTimeout(() => controller.abort(), timeout) : undefined;
       const requestSignal = AbortSignal.any([operationSignal, controller.signal]);
 
+      const attempt = ++physicalAttempt, startedAt = Date.now();
+      observeAttempt?.({ attempt, state: 'dispatched', method, startedAt });
       try {
         const response = await withAbort(fetch(requestUrl, {
           ...options,
@@ -733,7 +737,11 @@ export class Connector {
               },
         }), requestSignal);
 
+        observeAttempt?.({ attempt, state: 'received', method, startedAt, durationMs: Date.now() - startedAt, httpStatus: response.status });
         return response;
+      } catch (error) {
+        observeAttempt?.({ attempt, state: 'failed', method, startedAt, durationMs: Date.now() - startedAt });
+        throw error;
       } finally {
         clearTimeout(timeoutId);
       }

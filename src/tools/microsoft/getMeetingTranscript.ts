@@ -1,3 +1,4 @@
+import { connectorFailure } from '../connector/enhancedInvocation.js';
 /**
  * Microsoft Graph - Get Meeting Transcript Tool
  *
@@ -124,10 +125,10 @@ EXAMPLES:
         );
 
         if (!transcriptList.value || transcriptList.value.length === 0) {
-          return {
+          return connectorFailure(connector, {
             success: false,
             error: 'No transcripts found for this meeting. The meeting may not have had transcription enabled.',
-          };
+          });
         }
 
         const transcriptId = transcriptList.value[0]!.id;
@@ -144,10 +145,10 @@ EXAMPLES:
 
         if (!response.ok) {
           const errorText = await response.text();
-          return {
+          return connectorFailure(connector, {
             success: false,
             error: `Failed to fetch transcript content: ${response.status} ${errorText}`,
-          };
+          });
         }
 
         const vttContent = await response.text();
@@ -159,10 +160,10 @@ EXAMPLES:
           meetingSubject: resolved.subject,
         };
       } catch (error) {
-        return {
+        return connectorFailure(connector, {
           success: false,
           error: formatMicrosoftToolError('Failed to get meeting transcript', error),
-        };
+        });
       }
     },
   };
