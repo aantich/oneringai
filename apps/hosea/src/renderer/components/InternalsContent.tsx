@@ -3,14 +3,14 @@
  *
  * Manages IPC data fetching, auto-refresh, memory value lazy-loading,
  * and the "View Full Context" modal. All rendering is delegated to
- * the shared @everworker/react-ui components.
+ * the shared Hosea local UI components.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Spinner, Modal, Button } from 'react-bootstrap';
 import { RefreshCw } from 'lucide-react';
-import { LookInsidePanel, ViewContextContent } from '@everworker/react-ui';
-import type { IContextSnapshot, IViewContextData } from '@everworker/react-ui';
+import { LookInsidePanel, ViewContextContent } from '../../ui/index.js';
+import type { IContextSnapshot, IViewContextData } from '../../ui/index.js';
 
 interface InternalsContentProps {
   /** Optional instanceId for multi-tab support. If null, uses legacy single agent. */

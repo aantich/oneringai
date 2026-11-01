@@ -10,7 +10,7 @@ import { dirname, join } from 'node:path';
 import { homedir, tmpdir } from 'node:os';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { AgentService } from './AgentService.js';
-import { AgentRegistry } from '@everworker/oneringai';
+import { AgentRegistry } from 'oneringai';
 import { BrowserService } from './BrowserService.js';
 import { AutoUpdaterService } from './AutoUpdaterService.js';
 import { EWAuthService } from './EWAuthService.js';
@@ -691,23 +691,14 @@ async function setupIPC(): Promise<void> {
     return { success: true };
   });
 
-  // License acceptance
-  ipcMain.handle('license:get-status', () => {
-    const settings = readSettings();
-    return {
-      accepted: settings.licenseAcceptedVersion === '2.0',
-      acceptedVersion: (settings.licenseAcceptedVersion as string) || null,
-      acceptedAt: (settings.licenseAcceptedAt as number) || null,
-    };
-  });
-
-  ipcMain.handle('license:accept', () => {
-    const settings = readSettings();
-    settings.licenseAcceptedVersion = '2.0';
-    settings.licenseAcceptedAt = Date.now();
-    writeSettings(settings);
-    return { success: true };
-  });
+  // Compatibility for existing preload clients. MIT has no acceptance gate and
+  // must never record acceptance of the former commercial agreement.
+  ipcMain.handle('license:get-status', () => ({
+    accepted: true,
+    acceptedVersion: 'MIT',
+    acceptedAt: null,
+  }));
+  ipcMain.handle('license:accept', () => ({ success: true }));
 
   // Telemetry operations
   ipcMain.handle('telemetry:get-status', () => {

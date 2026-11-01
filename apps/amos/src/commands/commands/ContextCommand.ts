@@ -121,9 +121,9 @@ EXAMPLES:
           const revision = /^(0|[1-9][0-9]*)$/.test(args[2] ?? '') ? Number(args[2]) : NaN;
           if (!Number.isSafeInteger(revision)) return this.error('Provide the current non-negative integer task revision.');
           const source = { label: 'Explicit AMOS host command' };
-          let delta: import('@everworker/oneringai').TaskStateHostDelta;
+          let delta: import('oneringai').TaskStateHostDelta;
           if (args[1] === 'add' && args.length >= 6 && ['objective','constraint','decision','question','artifact'].includes(args[3]!)) {
-            delta = { notes: [{ id: args[4]!, category: args[3] as import('@everworker/oneringai').TaskStateCategory, text: args.slice(5).join(' '), source }] };
+            delta = { notes: [{ id: args[4]!, category: args[3] as import('oneringai').TaskStateCategory, text: args.slice(5).join(' '), source }] };
           } else if (args[1] === 'correct' && args.length >= 6) {
             const prior = state.notes.find(n => n.id === args[3]);
             if (!prior) return this.error('Correction target not found; inspect /context task.');
@@ -133,7 +133,7 @@ EXAMPLES:
           else if (args[1] === 'resolve-prune' && args.length >= 4) delta = { resolve: args.slice(3), prune: { noteIds: args.slice(3) } };
           else if (args[1] === 'prune-action' && args.length >= 4) delta = { prune: { executionIds: args.slice(3) } };
           else if (args[1] === 'confirm-prune' && args.length >= 6 && ['completed', 'failed', 'skipped', 'cancelled'].includes(args[4]!)) {
-            delta = { confirmActions: [{ executionId: args[3]!, status: args[4] as import('@everworker/oneringai').TaskStatus, source: { label: args.slice(5).join(' ') } }], prune: { executionIds: [args[3]!] } };
+            delta = { confirmActions: [{ executionId: args[3]!, status: args[4] as import('oneringai').TaskStatus, source: { label: args.slice(5).join(' ') } }], prune: { executionIds: [args[3]!] } };
           } else return this.error('Use /context task add, correct, resolve, prune, resolve-prune, prune-action or confirm-prune with the current revision. See /help context for arguments.');
           const updated = runner.updateTaskState(delta, revision);
           return this.success(`Task state updated to revision ${updated.revision} in memory. Use /session save to checkpoint it.`);
@@ -155,7 +155,7 @@ EXAMPLES:
         if (args.length > 2 || (args[1] && !['all', 'plugins', 'history'].includes(args[1]))) return this.error('Use /context compact [all|plugins|history].');
         const runner = app.getAgent()!;
         if (!runner.compactContext) return this.error('Compaction is unavailable.');
-        try { return this.success(JSON.stringify(await runner.compactContext(args[1] as import('@everworker/oneringai').ContextCompactionTarget | undefined), null, 2)); }
+        try { return this.success(JSON.stringify(await runner.compactContext(args[1] as import('oneringai').ContextCompactionTarget | undefined), null, 2)); }
         catch { return this.error('Compaction failed. Inspect current context, /helpers usage and session storage before retrying. A native call can be billed or context committed even if checkpointing fails. No tool action is replayed.'); }
       }
       case 'policy': {
@@ -167,7 +167,7 @@ EXAMPLES:
         const previous = { strategy: config.contextStrategy, policy: config.contextCompaction,
           hadStrategy: Object.hasOwn(config, 'contextStrategy'), hadPolicy: Object.hasOwn(config, 'contextCompaction') };
         try {
-          const policy: import('@everworker/oneringai').ContextCompactionStrategyConfig = {
+          const policy: import('oneringai').ContextCompactionStrategyConfig = {
             plugins: args[1] as 'auto' | 'off', history: args[2] as 'native' | 'off', automatic: args[3] !== 'manual' };
           runner.setContextCompaction(policy); app.updateConfig({ contextStrategy: 'context-compaction', contextCompaction: policy });
           try { await app.saveConfig(); }

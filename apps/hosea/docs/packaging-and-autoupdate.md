@@ -68,13 +68,13 @@ The build config includes **critical file exclusions** to prevent bundling the e
       "dist/**/*",
       "package.json",
       "node_modules/**/*",
-      "!node_modules/@everworker/oneringai/apps/**/*",
-      "!node_modules/@everworker/oneringai/src/**/*",
-      "!node_modules/@everworker/oneringai/tests/**/*",
-      "!node_modules/@everworker/oneringai/coverage/**/*",
-      "!node_modules/@everworker/oneringai/docs/**/*",
-      "!node_modules/@everworker/oneringai/examples/**/*",
-      "!node_modules/@everworker/oneringai/scripts/**/*",
+      "!node_modules/oneringai/apps/**/*",
+      "!node_modules/oneringai/src/**/*",
+      "!node_modules/oneringai/tests/**/*",
+      "!node_modules/oneringai/coverage/**/*",
+      "!node_modules/oneringai/docs/**/*",
+      "!node_modules/oneringai/examples/**/*",
+      "!node_modules/oneringai/scripts/**/*",
       "... (see package.json for full list)"
     ],
     "publish": {
@@ -91,7 +91,7 @@ The build config includes **critical file exclusions** to prevent bundling the e
 
 **Why exclusions are critical:**
 
-The app uses `"@everworker/oneringai": "file:../.."`  which symlinks to the parent directory. Without exclusions, electron-builder bundles:
+The app uses `"oneringai": "file:../.."`  which symlinks to the parent directory. Without exclusions, electron-builder bundles:
 - The entire `apps/` folder (including hosea itself → recursive!)
 - Source code, tests, coverage (~9GB total)
 

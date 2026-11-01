@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const summaries = [];
-for (const [format, lib] of [['esm', await import('@everworker/oneringai')], ['cjs', require('@everworker/oneringai')]]) {
+for (const [format, lib] of [['esm', await import('oneringai')], ['cjs', require('oneringai')]]) {
   let checks = 0;
   const connector = `public-presets-${format}`;
   let calls = 0;

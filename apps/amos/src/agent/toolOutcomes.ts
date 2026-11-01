@@ -1,4 +1,4 @@
-import type { ToolExecutionOutcome } from '@everworker/oneringai';
+import type { ToolExecutionOutcome } from 'oneringai';
 
 /** Explain available evidence without claiming remote effects stopped or were undone. */
 export function describeToolOutcome(outcome: ToolExecutionOutcome): string | null {

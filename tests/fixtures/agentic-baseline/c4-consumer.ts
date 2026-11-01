@@ -1,5 +1,5 @@
-import { ConnectorTools } from '@everworker/oneringai';
-import type { Agent, EnhancedConnectorOptions, EnhancedConnectorAttempt, ConnectorAcceptedResource } from '@everworker/oneringai';
+import { ConnectorTools } from 'oneringai';
+import type { Agent, EnhancedConnectorOptions, EnhancedConnectorAttempt, ConnectorAcceptedResource } from 'oneringai';
 export function selected(agent: Agent, connector: string): void {
   const attempts: EnhancedConnectorAttempt[] = [];
   const options: EnhancedConnectorOptions = { profile: 'execution-v1', accountId: 'work', timeoutMs: 5000, onAttempt: value => { attempts.push(value); } };

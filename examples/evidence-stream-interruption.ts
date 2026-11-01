@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Agent, AgentContextNextGen, Connector, ContentType, FileContextStorage, InMemoryEvidenceStorage, MessageRole, StreamEventType, ToolCallState, ToolEvidenceMiddleware, Vendor } from '@everworker/oneringai';
-import type { IEvidenceStorage, ITextProvider, ToolExecutionOutcome, ToolFunction } from '@everworker/oneringai';
+import { Agent, AgentContextNextGen, Connector, ContentType, FileContextStorage, InMemoryEvidenceStorage, MessageRole, StreamEventType, ToolCallState, ToolEvidenceMiddleware, Vendor } from 'oneringai';
+import type { IEvidenceStorage, ITextProvider, ToolExecutionOutcome, ToolFunction } from 'oneringai';
 
 const directory = await mkdtemp(join(tmpdir(), 'oneringai-stream-recovery-'));
 const scope = { ownerId: 'example-user', namespace: 'stream-recovery' };

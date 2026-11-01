@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { ConnectorTools } from '@everworker/oneringai';
+ * import { ConnectorTools } from 'oneringai';
  *
  * const tools = ConnectorTools.for('my-zoom-connector');
  * // Returns: zoom_create_meeting, zoom_update_meeting, zoom_get_transcript + generic API tool

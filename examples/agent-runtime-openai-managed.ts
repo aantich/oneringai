@@ -2,10 +2,10 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { Connector, Vendor } from '@everworker/oneringai';
-import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage } from '@everworker/oneringai/agent-runtime';
-import type { RuntimeSessionReference } from '@everworker/oneringai/agent-runtime';
-import { OpenAIManagedDriver } from '@everworker/oneringai/agent-runtime/openai-managed';
+import { Connector, Vendor } from 'oneringai';
+import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage } from 'oneringai/agent-runtime';
+import type { RuntimeSessionReference } from 'oneringai/agent-runtime';
+import { OpenAIManagedDriver } from 'oneringai/agent-runtime/openai-managed';
 import { openAIManagedFixture } from './agent-runtime/openai-managed-fixture.js';
 
 const live = process.argv.includes('--live');

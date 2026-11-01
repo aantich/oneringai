@@ -10,8 +10,8 @@ import { createExecutionSignal } from '../tool-execution/cancellation.js';
 /** Private until the complete verified facade is delivered. Never serialized. */
 export interface ExecutionBinding { modelTask?: ModelTask; signal?: AbortSignal }
 type Owner = ReturnType<typeof createOwner>;
-const COORDINATION = Symbol.for('@everworker/oneringai/composition/v2');
-const SCOPE_DENIAL = Symbol.for('@everworker/oneringai/composition-scope/v1');
+const COORDINATION = Symbol.for('oneringai/composition/v2');
+const SCOPE_DENIAL = Symbol.for('oneringai/composition-scope/v1');
 export interface CompositionToolObservation {
   late?: boolean;
   outcome: ToolExecutionOutcome;

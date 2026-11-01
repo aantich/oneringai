@@ -2,7 +2,7 @@ export { Sidebar } from './Sidebar';
 export { Chat } from './Chat';
 export { Message } from './Message';
 export { SetupModal, SettingsModal } from './modals';
-export { ToolCallCard as ToolCallDisplay, InlineToolCall, type IToolCallInfo as ToolCallInfo } from '@everworker/react-ui';
+export { ToolCallCard as ToolCallDisplay, InlineToolCall, type IToolCallInfo as ToolCallInfo } from '../../ui/index.js';
 export { SidebarPanel, SIDEBAR_PANEL_DEFAULT_WIDTH } from './SidebarPanel';
 export { InternalsContent } from './InternalsContent';
 export { DynamicUIPanel } from './DynamicUIPanel';

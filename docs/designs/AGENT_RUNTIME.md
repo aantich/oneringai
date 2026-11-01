@@ -624,9 +624,9 @@ standards-facing adapter.
 
 ## Packaging
 
-- `@everworker/oneringai/agent-runtime` exports the generic runtime, local backend,
+- `oneringai/agent-runtime` exports the generic runtime, local backend,
   OneRingAI driver, types, and errors.
-- `@everworker/oneringai/agent-runtime/codex` exports the optional Codex SDK driver.
+- `oneringai/agent-runtime/codex` exports the optional Codex SDK driver.
 - Codex remains an optional peer dependency and is lazy-loaded.
 - Codex SDK types do not leak into the generic declarations.
 - Importing the root package or generic runtime works without Codex installed.

@@ -26,8 +26,8 @@ import type {
   RuntimeAgentSpec,
   RuntimeReasoningConfig,
   TrustedRuntimeContext,
-} from '@everworker/oneringai/agent-runtime';
-import type { AgentRuntime } from '@everworker/oneringai/agent-runtime';
+} from 'oneringai/agent-runtime';
+import type { AgentRuntime } from 'oneringai/agent-runtime';
 import type { CodexOptions } from '@openai/codex-sdk';
 
 export interface RuntimeAgentDefinition {
@@ -73,8 +73,8 @@ export interface RuntimeSession extends AgentSession {
   inspectState(): Promise<RuntimeSessionSnapshot>;
   getRun(runId: string): Promise<AgentRun>;
   detach(): Promise<void>;
-  uploadFile: import('@everworker/oneringai/agent-runtime').RuntimeSession['uploadFile'];
-  downloadArtifact: import('@everworker/oneringai/agent-runtime').RuntimeSession['downloadArtifact'];
+  uploadFile: import('oneringai/agent-runtime').RuntimeSession['uploadFile'];
+  downloadArtifact: import('oneringai/agent-runtime').RuntimeSession['downloadArtifact'];
 }
 export interface RuntimeDefinitionAgent {
   readonly definition: Readonly<RuntimeAgentDefinition>;

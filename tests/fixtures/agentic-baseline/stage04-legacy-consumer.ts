@@ -1,12 +1,12 @@
-import { AgentContextNextGen, BasePluginNextGen, DEFAULT_FEATURES, PluginRegistry } from '@everworker/oneringai';
+import { AgentContextNextGen, BasePluginNextGen, DEFAULT_FEATURES, PluginRegistry } from 'oneringai';
 import type {
   AgentContextNextGenConfig, IContextSnapshot, KnownContextFeatures, KnownPluginConfigs,
   PluginConfigs, ResolvedContextFeatures, TaskStatePluginConfig,
-} from '@everworker/oneringai';
+} from 'oneringai';
 import type {
   IContextSnapshot as TypeOnlySnapshot, KnownPluginConfigs as TypeOnlyKnownPluginConfigs,
   PluginConfigs as TypeOnlyPluginConfigs, ResolvedContextFeatures as TypeOnlyResolvedFeatures,
-} from '@everworker/oneringai/types';
+} from 'oneringai/types';
 
 // Pin the consumer's old value. Spreading today's DEFAULT_FEATURES hides added
 // required members and cannot establish backward compatibility.

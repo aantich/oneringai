@@ -9,7 +9,7 @@ it is not evidence of a published package release.
 ## Choose plugin and history behavior independently
 
 ```typescript
-import { Agent, Connector, ContextCompactionStrategy, Vendor } from '@everworker/oneringai';
+import { Agent, Connector, ContextCompactionStrategy, Vendor } from 'oneringai';
 
 Connector.create({
   name: 'main',

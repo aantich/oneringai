@@ -1,5 +1,5 @@
 /** Render real AMOS context commands without credentials or a terminal session. */
-import { AgentContextNextGen } from '@everworker/oneringai';
+import { AgentContextNextGen } from 'oneringai';
 import { inspectContext } from '../src/agent/contextInspection.js';
 import { ContextCommand } from '../src/commands/commands/ContextCommand.js';
 import type { IAgentRunner, IAmosApp } from '../src/config/types.js';

@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "hono": "^4.7.0",
-    "@everworker/oneringai": "file:../.."
+    "oneringai": "file:../.."
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.0",

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Prepare v2 under the unscoped npm package `oneringai` (`2.0.0-beta.1`), with
+  current public imports/examples and generated references migrated from
+  `@everworker/oneringai`. Public subpaths and runtime/session contracts remain.
+  This is an explicitly requested package-identity change, not an automatic v1
+  upgrade or a published release. Legacy deprecation waits for an installable v2.
+- Release the AMOS and Hosea application source under MIT, owned by Anton Antic,
+  with current contact `anton.antich@gmail.com`. Add standalone application
+  licenses and parent-scope exceptions; remove Hosea's commercial acceptance gate
+  while retaining compatible license IPC responses. Other commercial applications
+  and third-party license terms are unchanged.
+
+- AMOS runtime mode now exposes per-run options/request IDs, saved results and
+  activity cursors, explicit upload/download, scoped reference persistence and
+  startup resume, fresh sessions and owned-resource deletion. Recoverable startup
+  failures retain a usable CLI/reference, and stop invalidates queued `/run` input.
+  Adds a five-driver offline-first host, complete command cookbook, expanded
+  five-adapter workflow and native Agent structured-output/recovery example.
+
 - Agent runtime review corrections dispatch the exact admitted request snapshot,
   preserve live cancellation signals, release failed-restore writer ownership, and
   publish restored sessions only after successful initialization. Failed managed

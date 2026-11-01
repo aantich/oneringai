@@ -33,8 +33,8 @@ when it is omitted; use `features.taskState ?? false` when inspecting a feature
 value that may come from an older snapshot or application adapter.
 
 ```typescript
-import { Agent, TaskStatePluginNextGen } from '@everworker/oneringai';
-import type { TaskStatePluginConfig } from '@everworker/oneringai';
+import { Agent, TaskStatePluginNextGen } from 'oneringai';
+import type { TaskStatePluginConfig } from 'oneringai';
 
 const taskConfig = {
   taskId: 'delivery-42',

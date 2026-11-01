@@ -8,7 +8,7 @@ export interface ConnectorTransportAttempt {
   readonly durationMs?: number;
   readonly httpStatus?: number;
 }
-const ATTEMPTS = Symbol.for('@everworker/oneringai/connector-attempts/v1');
+const ATTEMPTS = Symbol.for('oneringai/connector-attempts/v1');
 export function attachConnectorAttempts(options: object, observer: (attempt: ConnectorTransportAttempt) => void): void {
   Object.defineProperty(options, ATTEMPTS, { value: observer });
 }

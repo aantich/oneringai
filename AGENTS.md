@@ -18,7 +18,7 @@ review fixes and validation. Continue the [ledger](docs/designs/CONSUMER_DELIVER
 without a routine selection stop; this is not a release or consumer upgrade.
 
 This is the canonical, vendor-neutral guide for coding agents that use or
-modify `@everworker/oneringai`. It is written for OpenAI Codex, Claude Code,
+modify `oneringai`. It is written for OpenAI Codex, Claude Code,
 custom coding agents, and humans delegating integration work to them.
 
 Read this file before generating OneRingAI code. For exhaustive detail, follow
@@ -26,11 +26,11 @@ the documentation links near the end instead of guessing an API.
 
 ## Fast facts
 
-- Package: `@everworker/oneringai`
+- Package: `oneringai`
 - Runtime: Node.js 22.13+ or 24+
 - Language: strict TypeScript
 - Package format: ESM with ESM and CJS build outputs
-- Public API: import from `@everworker/oneringai` unless a documented subpath is
+- Public API: import from `oneringai` unless a documented subpath is
   explicitly required
 - Architecture: connector-first, plugin-first context, one shared tool manager
 
@@ -42,7 +42,7 @@ the documentation links near the end instead of guessing an API.
 - Do not import `src/**`, `dist/**`, or undocumented implementation paths.
 - Read the installed package's `README.md`, `AGENTS.md`, `USER_GUIDE.md`, and
   `API_REFERENCE.md` when they are available under
-  `node_modules/@everworker/oneringai/`.
+  `node_modules/oneringai/`.
 - Prefer runnable patterns from `examples/` in the repository over invented
   method names or provider-specific SDK calls.
 
@@ -86,7 +86,7 @@ Non-negotiable rules:
 ## Minimal working agent
 
 ```typescript
-import { Agent, Connector, Vendor } from '@everworker/oneringai';
+import { Agent, Connector, Vendor } from 'oneringai';
 
 Connector.create({
   name: 'openai-main',
@@ -145,7 +145,7 @@ const claudeAgent = Agent.create({
 | Embeddings | `Embeddings` |
 | Multiple cooperating agents | `createOrchestrator()` |
 | External MCP servers | `MCPRegistry` |
-| Interchangeable OneRingAI/Codex/Claude harnesses | `@everworker/oneringai/agent-runtime`; `createAgent(definition)` plus session execution binding, inspect then observe `run.events()` |
+| Interchangeable OneRingAI/Codex/Claude harnesses | `oneringai/agent-runtime`; `createAgent(definition)` plus session execution binding, inspect then observe `run.events()` |
 
 ## Connectors and external tools
 
@@ -160,7 +160,7 @@ import {
   Services,
   Vendor,
   tools,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 Connector.create({
   name: 'serper-research',
@@ -246,7 +246,7 @@ Tools come from five places:
 Minimal custom tool:
 
 ```typescript
-import type { ToolFunction } from '@everworker/oneringai';
+import type { ToolFunction } from 'oneringai';
 
 const getWeather: ToolFunction = {
   definition: {
@@ -424,7 +424,7 @@ import {
   Agent,
   InMemoryAdapter,
   createMemorySystemWithConnectors,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 const memory = createMemorySystemWithConnectors({
   store: new InMemoryAdapter(),
@@ -500,7 +500,7 @@ conversation with the user.
 For MCP:
 
 ```typescript
-import { MCPRegistry } from '@everworker/oneringai';
+import { MCPRegistry } from 'oneringai';
 
 const client = MCPRegistry.create({
   name: 'filesystem',
@@ -1106,7 +1106,7 @@ paused by the user on 2026-10-28; do not resume it without authorization.
 H1 adds `AgentRuntime.createAgent(definition)` with per-session execution binding and exact host-resolved tools. Preserve `.agent(spec)` compatibility. See [runtime recipes](USER_GUIDE.md#reusable-definitions-and-harness-bindings) and [H-stage ledger](docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md). Live LLM testing remains paused.
 
 
-Local Claude harness: `ClaudeAgentSdkDriver` from `@everworker/oneringai/agent-runtime/claude`, driver ID `anthropic.agent.sdk`. Read [the tools-only profile](USER_GUIDE.md#local-claude-agent-sdk); do not enable native filesystem/shell/web or ambient configuration through raw SDK options.
+Local Claude harness: `ClaudeAgentSdkDriver` from `oneringai/agent-runtime/claude`, driver ID `anthropic.agent.sdk`. Read [the tools-only profile](USER_GUIDE.md#local-claude-agent-sdk); do not enable native filesystem/shell/web or ambient configuration through raw SDK options.
 
 
 Runtime recovery: configure FileRuntimeSessionStorage or the optional StorageRegistry.runtimeSessions factory. Persist session.reference(), then resume with trusted original scope. Uncertain input/tool effects require original source reconciliation, never action replay. Read [the recovery guide](USER_GUIDE.md#runtime-recovery-and-control-storage). Native configureAgent requires a configurationRevision for checkpoint compatibility.
@@ -1126,3 +1126,11 @@ are scoped locators, never credentials. File storage requires POSIX acknowledged
 single-host primitives; Windows needs a custom adapter. AMOS runtime mode gates native
 context/routine/helper/tool mutation commands. All five adapters have offline conformance;
 new native/live vendor verification remains pending under the existing live pause.
+
+
+AMOS runtime commands and setup are documented in [the cookbook](apps/amos/docs/AGENT_RUNTIME.md).
+Use the trusted [host example](apps/amos/examples/runtime-host.ts) for offline-first
+five-driver selection and atomic locator persistence. Commands delegate per-run
+options, results/activity, scoped references, upload/download and explicit deletion
+to existing runtime APIs. Native-only commands remain in standard AMOS. Preserve
+`--runtime-host`, additive `--runtime-resume`, host scope ownership and the live pause.

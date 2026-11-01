@@ -7,7 +7,7 @@
 import { readFile, writeFile, readdir, unlink, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { Connector, ConnectorTools, Vendor } from '@everworker/oneringai';
+import { Connector, ConnectorTools, Vendor } from 'oneringai';
 import type { StoredConnectorConfig, IConnectorManager } from '../config/types.js';
 
 export class ConnectorManager implements IConnectorManager {

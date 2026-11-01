@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { Connector, ConnectorTools, ToolManager } from '@everworker/oneringai';
+import { Connector, ConnectorTools, ToolManager } from 'oneringai';
 import { describeCollectionPage } from '../../../../apps/amos/src/agent/collectionPages.js';
 afterEach(() => { vi.unstubAllGlobals(); Connector.clear(); });
 it('AMOS describes an actual page as returned count, position and coverage without a false total', async () => {

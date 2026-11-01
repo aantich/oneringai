@@ -6,7 +6,7 @@ for the existing shared ToolManager. Existing tools, defaults, callbacks, events
 and raw result shapes retain their behavior.
 
 ```typescript
-import { createOutcomeTool } from '@everworker/oneringai';
+import { createOutcomeTool } from 'oneringai';
 
 const lookup = createOutcomeTool<{ id: string }, { success: boolean; record: unknown }>({
   definition: {

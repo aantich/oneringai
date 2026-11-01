@@ -1,13 +1,13 @@
 /**
- * @everworker/oneringai/types
+ * oneringai/types
  *
  * Lightweight subpath export: pure types, enums, constants, and model registries.
  * Zero Node.js / SDK dependencies — safe for browsers, Electron renderers,
  * Cloudflare Workers, Deno, and any non-Node environment.
  *
  * Usage:
- *   import type { AgentConfig, InContextEntry } from '@everworker/oneringai/types';
- *   import { Vendor, getModelInfo } from '@everworker/oneringai/types';
+ *   import type { AgentConfig, InContextEntry } from 'oneringai/types';
+ *   import { Vendor, getModelInfo } from 'oneringai/types';
  */
 
 // ============ Vendor (zero imports) ============

@@ -2,7 +2,7 @@
  * VendorLogo Component
  *
  * Renders a vendor logo from SVG with fallback support.
- * Uses the vendor templates logo system from @everworker/oneringai.
+ * Uses the vendor templates logo system from oneringai.
  */
 
 import React, { useState, useEffect } from 'react';

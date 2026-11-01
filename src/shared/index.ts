@@ -1,11 +1,11 @@
 /**
- * @everworker/oneringai/shared
+ * oneringai/shared
  *
  * Lightweight subpath export containing only pure data constants and types.
  * Zero Node.js dependencies — safe for Cloudflare Workers, Deno, and browsers.
  *
  * Usage:
- *   import { Vendor, MODEL_REGISTRY, SERVICE_DEFINITIONS } from '@everworker/oneringai/shared';
+ *   import { Vendor, MODEL_REGISTRY, SERVICE_DEFINITIONS } from 'oneringai/shared';
  */
 
 // ============ Vendor ============

@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { setMediaStorage } from '@everworker/oneringai';
+ * import { setMediaStorage } from 'oneringai';
  *
  * // Use custom S3 storage before creating agents
  * setMediaStorage(myS3Storage);

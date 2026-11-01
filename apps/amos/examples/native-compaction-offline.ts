@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Connector, Vendor } from '@everworker/oneringai';
+import { Connector, Vendor } from 'oneringai';
 import { createNativeFixture } from '../../../examples/native-compaction/fixture.js';
 import { AgentRunner } from '../src/agent/AgentRunner.js';
 import { ContextCommand } from '../src/commands/commands/ContextCommand.js';

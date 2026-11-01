@@ -853,7 +853,7 @@ export function SettingsPage(): React.ReactElement {
                       <tbody>
                         <tr>
                           <td className="text-muted">Built with</td>
-                          <td>@everworker/oneringai</td>
+                          <td>oneringai</td>
                         </tr>
                         <tr>
                           <td className="text-muted">Electron</td>

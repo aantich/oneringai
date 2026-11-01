@@ -2,11 +2,11 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import '@everworker/react-ui/styles';
-import '@everworker/react-ui/styles/markdown';
-import '@everworker/react-ui/styles/chat';
-import '@everworker/react-ui/styles/thinking';
-import '@everworker/react-ui/styles/context-display';
+import '../ui/look-inside/look-inside.css';
+import '../ui/markdown/markdown.css';
+import '../ui/chat/chat.css';
+import '../ui/chat/thinking.css';
+import '../ui/context-display/context-display.css';
 import './styles/global.css';
 
 const container = document.getElementById('root');

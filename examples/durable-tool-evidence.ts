@@ -5,8 +5,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { execFile } from 'node:child_process';
-import { AgentContextNextGen, ContentType, FileContextStorage, FileEvidenceStorage, InMemoryStorage, MessageRole, ToolCallState } from '@everworker/oneringai';
-import type { ToolFunction } from '@everworker/oneringai';
+import { AgentContextNextGen, ContentType, FileContextStorage, FileEvidenceStorage, InMemoryStorage, MessageRole, ToolCallState } from 'oneringai';
+import type { ToolFunction } from 'oneringai';
 
 const directory = await mkdtemp(join(tmpdir(), 'oneringai-evidence-example-'));
 const scope = { ownerId: 'example-user', namespace: 'search-demo' };
@@ -39,7 +39,7 @@ try {
   context = create(restarted); assert.equal(await context.load('evidence-demo'), true);
   assert.deepEqual((await restarted.readRecord(report.evidence.reference))?.result, result);
   // A genuinely separate Node process checks restart recovery through the built public package.
-  const script = `import { FileEvidenceStorage } from '@everworker/oneringai';
+  const script = `import { FileEvidenceStorage } from 'oneringai';
     const [directory, scope, reference] = process.argv.slice(1);
     const storage = new FileEvidenceStorage({directory, scope: JSON.parse(scope)});
     const record = await storage.readRecord(JSON.parse(reference));

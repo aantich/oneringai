@@ -25,7 +25,6 @@ import {
   SettingsPage,
 } from './pages';
 import { SetupModal } from './components/modals/SetupModal';
-import { LicenseAcceptanceModal } from './components/modals/LicenseAcceptanceModal';
 import { WhatsNewModal } from './components/modals/WhatsNewModal';
 import { whatsNewEntries } from './whatsnew';
 import { UpdateNotification } from './components/UpdateNotification';
@@ -147,21 +146,11 @@ function AppContent(): React.ReactElement {
   const initStarted = React.useRef(false);
   const [connectorVersion, setConnectorVersion] = useState(0);
   const [serviceReady, setServiceReady] = useState(false);
-  const [licenseAccepted, setLicenseAccepted] = useState<boolean | null>(null); // null = loading
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [whatsNewChecked, setWhatsNewChecked] = useState(false);
 
-  // Check license acceptance on mount
+  // MIT source requires no commercial-license acceptance before startup.
   useEffect(() => {
-    window.hosea.license.getStatus().then((status) => {
-      setLicenseAccepted(status.accepted);
-    });
-  }, []);
-
-  // Check What's New after license is accepted
-  useEffect(() => {
-    if (!licenseAccepted) return;
-
     const checkWhatsNew = async () => {
       const latestEntry = whatsNewEntries[0];
       if (!latestEntry) {
@@ -183,7 +172,7 @@ function AppContent(): React.ReactElement {
     };
 
     checkWhatsNew();
-  }, [licenseAccepted]);
+  }, []);
 
   // Listen for service readiness (non-blocking startup)
   useEffect(() => {
@@ -359,37 +348,6 @@ function AppContent(): React.ReactElement {
       }
     }
   }, []);
-
-  // Handle license acceptance
-  const handleLicenseAccept = useCallback(async () => {
-    await window.hosea.license.accept();
-    setLicenseAccepted(true);
-  }, []);
-
-  const handleLicenseDecline = useCallback(() => {
-    // Close the app if license is declined
-    window.close();
-  }, []);
-
-  // Show license modal if not yet accepted (blocks everything else)
-  if (licenseAccepted === null) {
-    return (
-      <div className="app-loading">
-        <Spinner animation="border" variant="primary" />
-        <p className="mt-3 text-muted">Starting Everworker Desktop...</p>
-      </div>
-    );
-  }
-
-  if (!licenseAccepted) {
-    return (
-      <LicenseAcceptanceModal
-        show={true}
-        onAccept={handleLicenseAccept}
-        onDecline={handleLicenseDecline}
-      />
-    );
-  }
 
   // Show loading spinner while initializing (but allow What's New modal to overlay)
   if (isInitializing) {

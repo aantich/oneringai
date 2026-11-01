@@ -1,5 +1,5 @@
 /**
- * ContextDisplayPanel — Everworker Desktop wrapper around @everworker/react-ui shared component.
+ * ContextDisplayPanel — Everworker Desktop wrapper around Hosea local UI shared component.
  *
  * Everworker Desktop-specific features:
  * - Pin/unpin entries (persisted via IPC)
@@ -10,8 +10,8 @@
  */
 
 import React, { useCallback, useMemo } from 'react';
-import { ContextDisplayPanel as SharedContextDisplayPanel } from '@everworker/react-ui';
-import type { InContextEntry } from '@everworker/oneringai';
+import { ContextDisplayPanel as SharedContextDisplayPanel } from '../../ui/index.js';
+import type { InContextEntry } from 'oneringai';
 import type { ContextEntryForUI } from '../../preload/index';
 
 interface ContextDisplayPanelProps {

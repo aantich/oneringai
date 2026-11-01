@@ -13,7 +13,7 @@
  * @example
  * ```typescript
  * // In an external package (e.g., @everworker/react-ui/plugins.ts)
- * import { PluginRegistry } from '@everworker/oneringai';
+ * import { PluginRegistry } from 'oneringai';
  * import { DynamicUIPlugin } from './DynamicUIPlugin';
  *
  * PluginRegistry.register('dynamic_ui', (config) => new DynamicUIPlugin(config), {

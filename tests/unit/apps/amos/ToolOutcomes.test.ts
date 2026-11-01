@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EventEmitter } from 'eventemitter3';
-import { Agent, StreamEventType, ToolManager, createOutcomeTool } from '@everworker/oneringai';
-import type { ToolExecutionOutcome } from '@everworker/oneringai';
+import { Agent, StreamEventType, ToolManager, createOutcomeTool } from 'oneringai';
+import type { ToolExecutionOutcome } from 'oneringai';
 import { AgentRunner } from '../../../../apps/amos/src/agent/AgentRunner.js';
 import { describeToolOutcome } from '../../../../apps/amos/src/agent/toolOutcomes.js';
 import { DEFAULT_CONFIG } from '../../../../apps/amos/src/config/types.js';

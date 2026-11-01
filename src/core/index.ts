@@ -5,7 +5,7 @@
  *
  * @example
  * ```typescript
- * import { Connector, Agent, Vendor } from '@everworker/oneringai';
+ * import { Connector, Agent, Vendor } from 'oneringai';
  *
  * // Create a connector
  * Connector.create({

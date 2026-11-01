@@ -15,7 +15,7 @@
  * import {
  *   VoiceBridge,
  *   TwilioAdapter,
- * } from '@everworker/oneringai';
+ * } from 'oneringai';
  *
  * const bridge = VoiceBridge.create({
  *   agent: { connector: 'anthropic', model: 'claude-sonnet-4-6' },

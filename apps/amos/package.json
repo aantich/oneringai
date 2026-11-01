@@ -1,5 +1,5 @@
 {
-  "name": "@everworker/amos",
+  "name": "oneringai-amos",
   "version": "0.1.0",
   "description": "Terminal-based agent app powered by OneRingAI",
   "type": "module",
@@ -24,7 +24,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@everworker/oneringai": "file:../..",
+    "oneringai": "file:../..",
     "chalk": "^5.3.0"
   },
   "devDependencies": {
@@ -35,5 +35,11 @@
   },
   "engines": {
     "node": ">=22.0.0"
-  }
+  },
+  "author": {
+    "name": "Anton Antic",
+    "email": "anton.antich@gmail.com"
+  },
+  "license": "MIT",
+  "private": true
 }

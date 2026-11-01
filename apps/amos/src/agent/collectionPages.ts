@@ -1,4 +1,4 @@
-import type { ConnectorPage } from '@everworker/oneringai';
+import type { ConnectorPage } from 'oneringai';
 
 /** Display only the selected page contract; never turn returnedCount into a total. */
 export function describeCollectionPage(name: string, value: unknown): string | null {

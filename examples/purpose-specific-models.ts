@@ -1,8 +1,8 @@
 /** Build first. Offline by default; --live makes billable OpenAI calls using .env. */
 import { pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { Agent, Connector, ModelTask, Vendor, ContentType, MessageRole } from '@everworker/oneringai';
-import type { ITextProvider, TextGenerateOptions, LLMResponse } from '@everworker/oneringai';
+import { Agent, Connector, ModelTask, Vendor, ContentType, MessageRole } from 'oneringai';
+import type { ITextProvider, TextGenerateOptions, LLMResponse } from 'oneringai';
 
 const marker = 'ALPHA_6';
 const schema = { type: 'object', properties: { answer: { type: 'string' } }, required: ['answer'], additionalProperties: false };

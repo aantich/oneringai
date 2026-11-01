@@ -21,7 +21,7 @@ const managers = new WeakMap<object, OrchestratorExecutionObserver>();
 interface AsyncOrigin { observer: OrchestratorExecutionObserver; operation: ParentOperation; release?: () => void }
 const pending = new WeakMap<object, Map<string, AsyncOrigin>>();
 const results = new WeakMap<object, AsyncOrigin>();
-const INVOCATION = Symbol.for('@everworker/oneringai/orchestrator-invocation/v1');
+const INVOCATION = Symbol.for('oneringai/orchestrator-invocation/v1');
 const flushers = new WeakMap<object, () => void>();
 export function registerOrchestratorAsyncFlusher(agent: object, flush: () => void): void { flushers.set(agent, flush); }
 export function requestOrchestratorAsyncContinuation(agent: object): void { flushers.get(agent)?.(); }

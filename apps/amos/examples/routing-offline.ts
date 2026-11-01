@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Connector, Vendor } from '@everworker/oneringai';
+import { Connector, Vendor } from 'oneringai';
 import { offlineRoutingConnector } from '../../../examples/model-routing/fixture.js';
 import { AgentRunner } from '../src/agent/AgentRunner.js';
 import { RoutingCommand } from '../src/commands/commands/RoutingCommand.js';

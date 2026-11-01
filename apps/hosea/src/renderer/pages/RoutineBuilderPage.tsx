@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button, Form, Badge, Accordion, Alert, Spinner } from 'react-bootstrap';
 import { ArrowLeft, Plus, Trash2, GripVertical, Save, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigation } from '../hooks/useNavigation';
-import type { RoutineDefinitionInput } from '@everworker/oneringai';
+import type { RoutineDefinitionInput } from 'oneringai';
 
 interface TaskInputState {
   key: string; // local key for React rendering

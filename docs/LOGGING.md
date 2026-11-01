@@ -1,6 +1,6 @@
 # Logging Configuration
 
-The `@everworker/oneringai` library provides comprehensive logging capabilities that can be configured using environment variables.
+The `oneringai` library provides comprehensive logging capabilities that can be configured using environment variables.
 
 ## Environment Variables
 
@@ -124,7 +124,7 @@ LOG_PRETTY=true
 ### 5. Programmatic Configuration
 
 ```typescript
-import { logger, FrameworkLogger } from '@everworker/oneringai';
+import { logger, FrameworkLogger } from 'oneringai';
 
 // Use the global logger
 logger.info('Application started');
@@ -263,7 +263,7 @@ interface LoggerConfig {
 If you need more advanced features, you can integrate with Winston:
 
 ```typescript
-import { logger } from '@everworker/oneringai';
+import { logger } from 'oneringai';
 import winston from 'winston';
 
 // Create Winston logger
@@ -287,5 +287,5 @@ import pino from 'pino';
 const pinoLogger = pino({ level: 'info' });
 
 // Use pino for your application
-// @everworker/oneringai logger for library logs
+// oneringai logger for library logs
 ```

@@ -1,10 +1,48 @@
-# @everworker/oneringai
+# oneringai
 
 > **A unified AI agent library with multi-provider support for text generation, image/video generation, audio (TTS/STT), and agentic workflows.**
+
+**Version 2 uses the unscoped npm name `oneringai`: `npm i oneringai`.** This branch
+prepares `2.0.0-beta.1`; it has not been published. Existing v1 installations use
+`@everworker/oneringai` until explicitly migrated. See the
+[package migration guide](https://github.com/aantich/oneringai/blob/version2/docs/PACKAGE_MIGRATION.md)
+for imports, subpaths, release verification and the legacy deprecation notice.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-22.13%2B%20%7C%2024%2B-green.svg)](https://nodejs.org/)
+
+**Try the complete terminal app: start with the [AMOS runtime cookbook](https://github.com/aantich/oneringai/blob/version2/apps/amos/docs/AGENT_RUNTIME.md)**
+for setup, all five agent harnesses, commands, file transfers, saved sessions and recovery.
+
+## Documentation
+
+Choose a guide below or jump to the [Quick Start](#quick-start). These links open
+the `version2` branch on GitHub from both npm and the repository. The
+[Version 2 availability guide](https://github.com/aantich/oneringai/blob/version2/docs/VERSION_2_GUIDE.md)
+distinguishes released features from work available only on the branch.
+
+| Guide | What it covers |
+| --- | --- |
+| **[v1 → v2 package migration](https://github.com/aantich/oneringai/blob/version2/docs/PACKAGE_MIGRATION.md)** | Unscoped `oneringai`, unchanged public subpaths, installation, release status and legacy-package notice |
+| **[AMOS runtime cookbook](https://github.com/aantich/oneringai/blob/version2/apps/amos/docs/AGENT_RUNTIME.md)** | Ready-to-run host, offline setup, five interchangeable harnesses, per-run controls, files, reference persistence, recovery and cleanup |
+| **[AMOS application guide](https://github.com/aantich/oneringai/blob/version2/apps/amos/README.md)** | Terminal application setup, connectors, models, tools, commands, native Agent mode and runtime mode |
+| **[Hosea desktop source](https://github.com/aantich/oneringai/blob/version2/apps/hosea/README.md)** | MIT-licensed Electron application, local UI source, setup and desktop revival boundaries |
+| **[User Guide](https://github.com/aantich/oneringai/blob/version2/USER_GUIDE.md)** | Complete library usage: connectors, agents, context, plugins, memory, multimodal APIs, orchestration and MCP |
+| **[Agent Runtime guide](https://github.com/aantich/oneringai/blob/version2/USER_GUIDE.md#agent-runtime-preview)** | Reusable agent definitions, local SDK and managed API bindings, authentication, capabilities, policy, tools, lifecycle and recovery |
+| **[Agent Runtime examples](https://github.com/aantich/oneringai/blob/version2/examples/README.md#agent-runtime-harness-examples)** | Exact commands and expected behavior for all nine runtime/AMOS scenarios, including continuation, JSON output, transfers and process-crash recovery |
+| **[All runnable examples](https://github.com/aantich/oneringai/blob/version2/examples/README.md)** | Every example's purpose, setup, required credentials, side effects and cleanup |
+| **[API Reference](https://github.com/aantich/oneringai/blob/version2/API_REFERENCE.md)** | Generated public classes, interfaces, types, functions and signatures |
+| **[Agent Guide](https://github.com/aantich/oneringai/blob/version2/AGENTS.md)** | Canonical instructions for Codex, Claude Code and custom coding agents, with architecture, recipes and specialist documentation routing |
+| **[Connector & Tool Catalog](https://github.com/aantich/oneringai/blob/version2/docs/CONNECTOR_TOOL_CATALOG.md)** | Connector templates, authenticated APIs, specialized tool packs, built-ins, plugin tools and discovery |
+| **[Memory Layer Guide](https://github.com/aantich/oneringai/blob/version2/docs/MEMORY_GUIDE.md)** | Entity/fact memory, graph and vector retrieval, ingestion, resolution, profiles, adapters and agent integration |
+| **[Memory API](https://github.com/aantich/oneringai/blob/version2/docs/MEMORY_API.md)** | Public memory API, plus [permissions](https://github.com/aantich/oneringai/blob/version2/docs/MEMORY_PERMISSIONS.md), [predicates](https://github.com/aantich/oneringai/blob/version2/docs/MEMORY_PREDICATES.md) and [signals](https://github.com/aantich/oneringai/blob/version2/docs/MEMORY_SIGNALS.md) |
+| **Context guides** | [Preparation and compaction](https://github.com/aantich/oneringai/blob/version2/docs/CONTEXT_PREPARATION.md), [selective assembly](https://github.com/aantich/oneringai/blob/version2/docs/CONTEXT_ASSEMBLY.md) and [context strategies](https://github.com/aantich/oneringai/blob/version2/docs/CONTEXT_STRATEGIES.md) |
+| **Tool execution and recovery** | [Outcomes and cancellation](https://github.com/aantich/oneringai/blob/version2/docs/TOOL_OUTCOMES_AND_CANCELLATION.md), [outcome-aware tools](https://github.com/aantich/oneringai/blob/version2/docs/OUTCOME_AWARE_TOOLS.md), [durable evidence](https://github.com/aantich/oneringai/blob/version2/docs/DURABLE_EVIDENCE.md) and [protected task state](https://github.com/aantich/oneringai/blob/version2/docs/TASK_STATE.md) |
+| **Model selection and budgets** | [Model routing](https://github.com/aantich/oneringai/blob/version2/docs/MODEL_ROUTING.md), [helper models and task budgets](https://github.com/aantich/oneringai/blob/version2/docs/MODEL_TASKS_AND_HELPERS.md) and [model registry audit](https://github.com/aantich/oneringai/blob/version2/docs/MODEL_REGISTRY_AUDIT.md) |
+| **[Version 2 adoption guide](https://github.com/aantich/oneringai/blob/version2/docs/VERSION_2_GUIDE.md)** | Availability, compatibility, adoption recipes, validation limits and documentation handoff |
+| **Release and migration** | [Changelog](https://github.com/aantich/oneringai/blob/version2/CHANGELOG.md), [1.2.0 upgrade](https://github.com/aantich/oneringai/blob/version2/USER_GUIDE.md#upgrading-to-120) and [1.0.0 migration](https://github.com/aantich/oneringai/blob/version2/USER_GUIDE.md#upgrading-to-100) |
+| **Architecture and evaluation** | [Agent Runtime design](https://github.com/aantich/oneringai/blob/version2/docs/designs/AGENT_RUNTIME.md), [staged architecture roadmap](https://github.com/aantich/oneringai/blob/version2/docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md) and [baseline evaluation](https://github.com/aantich/oneringai/blob/version2/docs/AGENTIC_BASELINE_EVALUATION.md) |
 
 Opt-in managed Agent presets are available on the Version 2 branch:
 `createAgentPreset('research' | 'workflow', config)` composes existing evidence,
@@ -140,7 +178,7 @@ automatically, give it this one instruction:
 
 ```text
 Before writing OneRingAI code, read
-node_modules/@everworker/oneringai/AGENTS.md in full. Follow its connector-first
+node_modules/oneringai/AGENTS.md in full. Follow its connector-first
 patterns, use only public package exports, and consult the specialist document
 it routes you to before guessing an API.
 ```
@@ -189,29 +227,39 @@ See the [canonical guide](USER_GUIDE.md#reusable-definitions-and-harness-binding
 [file-transfer example](examples/agent-runtime-artifacts.ts) and
 [delivery ledger](docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md).
 
-The example below assumes an OpenAI connector named `openai-main`; install
-`@openai/codex-sdk` when enabling the optional Codex driver.
+The example below assumes a named OpenAI connector `openai-main` and the optional
+`@openai/codex-sdk` package. Create the task once and choose its execution binding
+when opening a session:
 
 ```typescript
-import {
-  AgentRuntime,
-  LocalExecutionBackend,
-} from '@everworker/oneringai/agent-runtime';
-import { CodexSdkDriver }
-  from '@everworker/oneringai/agent-runtime/codex';
+import { AgentRuntime, LocalExecutionBackend } from 'oneringai/agent-runtime';
+import { CodexSdkDriver } from 'oneringai/agent-runtime/codex';
 
 const runtime = new AgentRuntime({
   backend: new LocalExecutionBackend({ drivers: [new CodexSdkDriver()] }),
 });
-
-const codingAgent = runtime.agent({
-  id: 'coding-agent',
-  driver: 'openai.codex.sdk',
-  connector: 'openai-main',
-  model: 'gpt-5.3-codex',
-  reasoning: { effort: 'high' },
+const assistant = runtime.createAgent({
+  id: 'coding-assistant', instructions: 'Inspect the project and explain your findings.',
 });
+try {
+  const session = await assistant.openSession({
+    execution: { driver: 'openai.codex.sdk', connector: 'openai-main', model: 'gpt-6.1-sol' },
+    environment: { type: 'local-directory', path: process.cwd() },
+    context: { userId: 'authenticated-owner' },
+    policy: { filesystem: 'read-only', commands: 'sandboxed', sandboxNetwork: 'denied',
+      providerWebSearch: 'denied', approvals: 'deny' },
+  });
+  const run = await session.run('Explain this project.', { requestId: 'project-overview' });
+  for await (const event of run.events()) console.log(event.type, event.data);
+  console.log((await run.result).outputText);
+} finally { await runtime.destroy(); }
 ```
+
+For a deterministic offline start, run `npm run example:agent-runtime-swappable` or
+`npm run example:agent-runtime-run-options` after building. The complete
+[AMOS runtime cookbook](apps/amos/docs/AGENT_RUNTIME.md) includes a ready-to-run
+five-driver host, per-run JSON/model/reasoning controls, transfers, saved results,
+reference persistence, restoration and explicit owned-resource cleanup.
 
 Autonomous does not mean opaque: callers can consume `run.events()` to render
 the agent’s ongoing work without pausing it for approval. Unsupported features
@@ -362,32 +410,6 @@ plugin lifecycle, stores, compaction, persistence, and custom plugins.
 - [Contributing](#contributing)
 - [License](#license)
 
-<!-- For in-depth guides and full API reference, see the docs section below -->
-
-## Documentation
-
-> **Start here if you're looking for detailed docs or the full API reference.**
-
-| Document | Description |
-|----------|-------------|
-| **[Agent Guide](./AGENTS.md)** | Canonical context file for Codex, Claude Code, and custom coding agents: architecture, recipes, capability routing, safety invariants, and documentation map |
-| **[Agent Runtime Guide](./USER_GUIDE.md#agent-runtime-preview)** | Detailed usage guide for interchangeable OneRingAI, Codex and Claude harnesses, model and reasoning controls, live observation, capabilities, policy, lifecycle, and cleanup |
-| **[Agent Runtime Design](./docs/designs/AGENT_RUNTIME.md)** | Local SDK and managed API adapters: generic model/reasoning controls, live observable autonomous runs, capabilities, policy, and the isolated-server roadmap |
-| **[Agentic Architecture Evolution Plan](./docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md)** | Accepted roadmap direction: nine core stages plus conditional extensions for context, model roles, tools, and learning, with tests, examples, AMOS, and compatibility gates |
-| **[Version 2 Guide (work in progress)](./docs/VERSION_2_GUIDE.md)** | Living adoption guide tracking planned, branch-available, and released capabilities; stages 00–02 are implemented on the development branch; see provider validation limits |
-| **[Agentic Baseline Evaluation](./docs/AGENTIC_BASELINE_EVALUATION.md)** | Repository-only offline replay and opt-in live LLM workloads, evidence-based completion checks, compatibility fixtures, and evaluation limits |
-| **[User Guide](./USER_GUIDE.md)** | Comprehensive guide covering every feature with examples — connectors, agents, context, plugins, audio, video, search, MCP, OAuth, and more |
-| **[API Reference](./API_REFERENCE.md)** | Auto-generated reference for all public exports — classes, interfaces, types, and functions with signatures |
-| **[Memory Layer Guide](./docs/MEMORY_GUIDE.md)** | Standalone entity/fact memory system: graph and vector retrieval, ingestion, resolution, profiles, adapters, scaling, and agent integration |
-| **[Memory API & Security](./docs/MEMORY_API.md)** | Complete `MemorySystem` API, with dedicated [permissions](./docs/MEMORY_PERMISSIONS.md), [predicates](./docs/MEMORY_PREDICATES.md), and [signals](./docs/MEMORY_SIGNALS.md) guides |
-| **[Connector & Tool Catalog](./docs/CONNECTOR_TOOL_CATALOG.md)** | All 50 connector templates, generic authenticated API behavior, specialized tool packs, built-ins, plugin tools, and discovery APIs |
-| **[Runnable Examples](https://github.com/aantich/oneringai/blob/main/examples/README.md)** | Every example program, what it demonstrates, required credentials, side effects, and exact run command |
-| **[1.0.0 Upgrade Guide](./USER_GUIDE.md#upgrading-to-100)** | Breaking changes, compatibility guarantees, migration checklist, and before/after examples |
-| [Model Registry Audit](./docs/MODEL_REGISTRY_AUDIT.md) | Vendor-by-vendor gaps, implemented status, model snapshot, API boundaries, and official sources |
-| [CHANGELOG](./CHANGELOG.md#100--2026-08-08) | Full 1.0.0 release notes, breaking changes, validation, and version history |
-
----
-
 ## Tutorial / Architecture Series
 
 **Part 0**. [One Lib to Rule Them All: Why We Built OneRingAI](https://medium.com/superstringtheory/one-library-to-rule-them-all-why-we-built-oneringai-689f904874d6): introduction and architecture overview
@@ -402,7 +424,7 @@ Showcasing another amazing "built with oneringai": ["no saas" agentic business t
 ## Features
 
 - ✨ **Unified API** - One interface for 12 AI providers (OpenAI, Anthropic, Google, Vertex, Groq, Together, Perplexity, Grok, DeepSeek, Mistral, Ollama, Custom)
-- 🧩 **[Agent Runtime preview](./USER_GUIDE.md#agent-runtime-preview)** - Plug-compatible OneRingAI/Codex agent drivers with model and thinking selection, live reasoning/activity events, and capability-gated future interaction
+- 🧩 **[Agent Runtime preview](./USER_GUIDE.md#agent-runtime-preview)** - Interchangeable OneRingAI, Codex and Claude harnesses, per-run controls, scoped recovery, explicit files and complete AMOS runtime commands
 - 🔑 **Connector-First Architecture** - Single auth system with support for multiple keys per vendor
 - 📊 **Model Registry v2** - Lifecycle, aliases, endpoints, official sources, and modality-aware pricing for current text/realtime models plus dedicated image, video, voice, STT, and embedding registries
 - 🎤 **Audio Capabilities** - Text-to-Speech and Speech-to-Text with OpenAI, Google, and xAI, including xAI WebSocket streaming
@@ -466,13 +488,13 @@ Showcasing another amazing "built with oneringai": ["no saas" agentic business t
 ### Installation
 
 ```bash
-npm install @everworker/oneringai
+npm install oneringai
 ```
 
 ### Basic Usage
 
 ```typescript
-import { Connector, Agent, Vendor } from '@everworker/oneringai';
+import { Connector, Agent, Vendor } from 'oneringai';
 
 // 1. Create a connector (authentication)
 Connector.create({
@@ -496,7 +518,7 @@ console.log(response.output_text);
 ### With Tools
 
 ```typescript
-import { ToolFunction } from '@everworker/oneringai';
+import { ToolFunction } from 'oneringai';
 
 const weatherTool: ToolFunction = {
   definition: {
@@ -530,7 +552,7 @@ await agent.run('What is the weather in Paris?');
 ### Vision
 
 ```typescript
-import { createMessageWithImages } from '@everworker/oneringai';
+import { createMessageWithImages } from 'oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
@@ -545,7 +567,7 @@ const response = await agent.run(
 ### Audio
 
 ```typescript
-import { TextToSpeech, SpeechToText } from '@everworker/oneringai';
+import { TextToSpeech, SpeechToText } from 'oneringai';
 
 // Text-to-Speech — built-in voice
 const tts = TextToSpeech.create({
@@ -585,7 +607,7 @@ const phoneResult = await stt.transcribe(pcm16le8kBuffer, {
 ### Image Generation
 
 ```typescript
-import { ImageGeneration } from '@everworker/oneringai';
+import { ImageGeneration } from 'oneringai';
 
 // OpenAI GPT Image
 const imageGen = ImageGeneration.create({ connector: 'openai' });
@@ -622,7 +644,7 @@ and editing with explicitly selected `dall-e-2` or `dall-e-3` also reject locall
 ### Video Generation
 
 ```typescript
-import { VideoGeneration } from '@everworker/oneringai';
+import { VideoGeneration } from 'oneringai';
 
 // Use a named Google connector configured with Vendor.Google.
 const videoGen = VideoGeneration.create({ connector: 'google' });
@@ -649,7 +671,7 @@ and [OpenAI's retirement notice](https://developers.openai.com/api/docs/deprecat
 ### Embeddings
 
 ```typescript
-import { Embeddings } from '@everworker/oneringai';
+import { Embeddings } from 'oneringai';
 
 // OpenAI embeddings
 const embeddings = Embeddings.create({ connector: 'openai' });
@@ -673,7 +695,7 @@ const localResult = await local.embed('search query');
 Read any document format — agents automatically get markdown text from PDFs, Word docs, spreadsheets, and more:
 
 ```typescript
-import { Agent, developerTools } from '@everworker/oneringai';
+import { Agent, developerTools } from 'oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
@@ -690,7 +712,7 @@ await agent.run('Read /path/to/presentation.pptx and list all slides');
 **Programmatic usage:**
 
 ```typescript
-import { DocumentReader, readDocumentAsContent } from '@everworker/oneringai';
+import { DocumentReader, readDocumentAsContent } from 'oneringai';
 
 // Read any file to markdown pieces
 const reader = DocumentReader.create();
@@ -722,7 +744,7 @@ const response = await agent.run([
 Connector-based web search with multiple providers:
 
 ```typescript
-import { Connector, SearchProvider, ConnectorTools, Services, Agent, tools } from '@everworker/oneringai';
+import { Connector, SearchProvider, ConnectorTools, Services, Agent, tools } from 'oneringai';
 
 // Create search connector
 Connector.create({
@@ -763,7 +785,7 @@ await agent.run('Search for quantum computing news and summarize');
 Enterprise web scraping with automatic fallback and bot protection bypass:
 
 ```typescript
-import { Connector, ScrapeProvider, ConnectorTools, Services, Agent, tools } from '@everworker/oneringai';
+import { Connector, ScrapeProvider, ConnectorTools, Services, Agent, tools } from 'oneringai';
 
 // Create ZenRows connector for bot-protected sites
 Connector.create({
@@ -826,7 +848,7 @@ listing, connector-backed FIM/balance access, and first-party native web search.
 can target the official API or a known hosted endpoint:
 
 ```typescript
-import { Agent, Connector, Vendor } from '@everworker/oneringai';
+import { Agent, Connector, Vendor } from 'oneringai';
 
 Connector.create({
   name: 'deepseek-openrouter',
@@ -853,7 +875,7 @@ limits are resolved separately from the canonical DeepSeek model registry.
 The **Agent** class is the primary agent type, supporting all features through composable plugins:
 
 ```typescript
-import { Agent, createFileContextStorage } from '@everworker/oneringai';
+import { Agent, createFileContextStorage } from 'oneringai';
 
 // Create storage for session persistence
 const storage = createFileContextStorage('my-assistant');
@@ -898,7 +920,7 @@ await agent.context.save('session-001');
 Control tools at runtime. **AgentContextNextGen is the single source of truth** - `agent.tools` and `agent.context.tools` are the same ToolManager instance:
 
 ```typescript
-import { Agent } from '@everworker/oneringai';
+import { Agent } from 'oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
@@ -935,7 +957,7 @@ agent.removeTool('old_tool');  // Still works!
 Extend tool execution with custom behavior through a pluggable pipeline architecture. Add logging, analytics, UI updates, permission prompts, or any custom logic:
 
 ```typescript
-import { Agent, LoggingPlugin, type IToolExecutionPlugin } from '@everworker/oneringai';
+import { Agent, LoggingPlugin, type IToolExecutionPlugin } from 'oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
@@ -1040,7 +1062,7 @@ const agent = Agent.create({
 User rules have the **highest priority** -- they override all built-in policies. Rules support argument inspection with conditions:
 
 ```typescript
-import { PermissionPolicyManager } from '@everworker/oneringai';
+import { PermissionPolicyManager } from 'oneringai';
 
 const manager = new PermissionPolicyManager();
 
@@ -1083,7 +1105,7 @@ The concrete classes in that table are not package-root exports in 1.0.0. Use
 the public allowlist/blocklist options, or implement `IPermissionPolicy`:
 
 ```typescript
-import type { IPermissionPolicy } from '@everworker/oneringai';
+import type { IPermissionPolicy } from 'oneringai';
 
 const noPrivilegedShell: IPermissionPolicy = {
   name: 'app:no-privileged-shell',
@@ -1170,7 +1192,7 @@ the [restoration boundaries](docs/AGENT_PRESETS.md#session-restoration-and-clean
 for custom restore hooks, shared contexts and the advanced raw-load API.
 
 ```typescript
-import { AgentContextNextGen, createFileContextStorage } from '@everworker/oneringai';
+import { AgentContextNextGen, createFileContextStorage } from 'oneringai';
 
 // Create storage for the agent
 const storage = createFileContextStorage('my-assistant');
@@ -1212,7 +1234,7 @@ if (loaded) {
 Swap all storage backends (sessions, media, custom tools, OAuth tokens, etc.) with a single `configure()` call at init time. No breaking changes — all existing APIs continue to work.
 
 ```typescript
-import { StorageRegistry } from '@everworker/oneringai';
+import { StorageRegistry } from 'oneringai';
 
 StorageRegistry.configure({
   media: new S3MediaStorage(),
@@ -1240,7 +1262,7 @@ See the [User Guide](./USER_GUIDE.md#centralized-storage-registry) for full docu
 Use the `WorkingMemoryPluginNextGen` for agents that need to store and retrieve data:
 
 ```typescript
-import { Agent } from '@everworker/oneringai';
+import { Agent } from 'oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
@@ -1266,7 +1288,7 @@ await agent.run('Check weather for SF and remember the result');
 Use `Agent` with search tools and `WorkingMemoryPluginNextGen` for research workflows:
 
 ```typescript
-import { Agent, ConnectorTools, Connector, Services, tools } from '@everworker/oneringai';
+import { Agent, ConnectorTools, Connector, Services, tools } from 'oneringai';
 
 // Setup search connector
 Connector.create({
@@ -1302,7 +1324,7 @@ await agent.run('Research AI developments in 2026 and store key findings');
 **AgentContextNextGen** is the modern, plugin-based context manager. It provides clean separation of concerns with composable plugins:
 
 ```typescript
-import { Agent, AgentContextNextGen } from '@everworker/oneringai';
+import { Agent, AgentContextNextGen } from 'oneringai';
 
 // Option 1: Use AgentContextNextGen directly (standalone)
 const ctx = AgentContextNextGen.create({
@@ -1442,7 +1464,7 @@ trusted summarizer or proxy. Standalone contexts expose the lower-level
 Store key-value pairs **directly in context** for instant LLM access without retrieval calls:
 
 ```typescript
-import { AgentContextNextGen } from '@everworker/oneringai';
+import { AgentContextNextGen } from 'oneringai';
 
 const ctx = AgentContextNextGen.create({
   model: 'gpt-4.1',
@@ -1486,7 +1508,7 @@ integration. See the [User Guide](./USER_GUIDE.md#ui-display-showinui).
 Store agent-level custom instructions that persist across sessions on disk:
 
 ```typescript
-import { Agent } from '@everworker/oneringai';
+import { Agent } from 'oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
@@ -1522,7 +1544,7 @@ const agent = Agent.create({
 Store user-specific preferences and context that are automatically injected into the LLM system message:
 
 ```typescript
-import { Agent } from '@everworker/oneringai';
+import { Agent } from 'oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
@@ -1573,7 +1595,7 @@ import {
   createMemorySystemWithConnectors,
   InMemoryAdapter,
   PredicateRegistry,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 const predicates = PredicateRegistry.standard().register({
   name: 'prefers',
@@ -2035,7 +2057,7 @@ console.log(direct.output_parsed); // ['red', 'green', 'blue']
 Text-to-Speech and Speech-to-Text with multiple providers:
 
 ```typescript
-import { TextToSpeech, SpeechToText } from '@everworker/oneringai';
+import { TextToSpeech, SpeechToText } from 'oneringai';
 
 // === Text-to-Speech ===
 const tts = TextToSpeech.create({
@@ -2118,7 +2140,7 @@ connector-first server WebSocket client, ephemeral WebRTC credentials, SIP call
 control, a transport-neutral Agent session, and a production telephony pipeline:
 
 ```typescript
-import { Agent, OpenAIRealtimeAgentSession } from '@everworker/oneringai';
+import { Agent, OpenAIRealtimeAgentSession } from 'oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
@@ -2165,7 +2187,7 @@ For local desktop execution, export the resolved Agent with
 `exportAgentPackage()`, hydrate it in the desktop main process with
 `hydrateAgentPackage()`, and connect its `OpenAIRealtimeAgentSession` to a
 renderer WebRTC peer through `OpenAIRealtimeChannelTransport`. The browser-safe
-peer is exported from `@everworker/oneringai/realtime-browser`. See the
+peer is exported from `oneringai/realtime-browser`. See the
 [distributed execution design](./docs/designs/DISTRIBUTED_AGENT_EXECUTION.md).
 
 Portable packages omit connector credentials, source identity, arbitrary
@@ -2228,7 +2250,7 @@ the xAI-specific facade retains its full rate range for both paths. See the
 Generate text embeddings across multiple vendors and mixed-modality embeddings with Gemini Embedding 2. Supports Matryoshka Representation Learning (MRL) for flexible output dimensions.
 
 ```typescript
-import { Embeddings, Connector, Vendor } from '@everworker/oneringai';
+import { Embeddings, Connector, Vendor } from 'oneringai';
 
 // Setup
 Connector.create({
@@ -2296,7 +2318,7 @@ import {
   calculateEmbeddingCost,
   EMBEDDING_MODELS,
   Vendor,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 // Model details
 const info = getEmbeddingModelInfo('text-embedding-3-small');
@@ -2338,7 +2360,7 @@ snapshots, endpoints, replacement models, pricing modes, context windows, and
 feature flags:
 
 ```typescript
-import { getModelInfo, calculateCost, LLM_MODELS, MODEL_REGISTRY_SCHEMA_VERSION, Vendor } from '@everworker/oneringai';
+import { getModelInfo, calculateCost, LLM_MODELS, MODEL_REGISTRY_SCHEMA_VERSION, Vendor } from 'oneringai';
 
 // Get model information
 const model = getModelInfo('gpt-6-astra');
@@ -2374,7 +2396,7 @@ media registries, API-path changes, and official source links.
 Real-time responses:
 
 ```typescript
-import { StreamHelpers } from '@everworker/oneringai';
+import { StreamHelpers } from 'oneringai';
 
 for await (const text of StreamHelpers.textOnly(agent.stream('Hello'))) {
   process.stdout.write(text);
@@ -2384,7 +2406,7 @@ for await (const text of StreamHelpers.textOnly(agent.stream('Hello'))) {
 ### 16. OAuth for External APIs
 
 ```typescript
-import { OAuthManager, FileStorage } from '@everworker/oneringai';
+import { OAuthManager, FileStorage } from 'oneringai';
 
 const oauth = new OAuthManager({
   flow: 'authorization_code',
@@ -2403,7 +2425,7 @@ const authUrl = await oauth.startAuthFlow('user123');
 File system and shell tools for building coding assistants:
 
 ```typescript
-import { developerTools } from '@everworker/oneringai';
+import { developerTools } from 'oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
@@ -2451,7 +2473,7 @@ await agent.run('Run npm test and report any failures');
 Let agents **create their own tools** at runtime — draft, test, iterate, save, and reuse. The agent writes JavaScript code, validates it, tests it in the VM sandbox, and persists it for future use. All 6 meta-tools are auto-registered through the agent's normal tool manager.
 
 ```typescript
-import { createCustomToolMetaTools, hydrateCustomTool } from '@everworker/oneringai';
+import { createCustomToolMetaTools, hydrateCustomTool } from 'oneringai';
 
 // Give an agent the ability to create tools
 const agent = Agent.create({
@@ -2464,7 +2486,7 @@ const agent = Agent.create({
 await agent.run('Create a tool that fetches weather data from the OpenWeather API');
 
 // Later: load and use a saved tool
-import { createFileCustomToolStorage } from '@everworker/oneringai';
+import { createFileCustomToolStorage } from 'oneringai';
 const storage = createFileCustomToolStorage();
 const definition = await storage.load(undefined, 'fetch_weather'); // undefined = default user
 const weatherTool = hydrateCustomTool(definition!);
@@ -2486,7 +2508,7 @@ agent.tools.register(weatherTool, { source: 'custom', tags: ['weather', 'api'] }
 OS-level desktop automation for building "computer use" agents — screenshot the screen, send to a vision model, receive tool calls (click, type, etc.), execute them, repeat:
 
 ```typescript
-import { desktopTools } from '@everworker/oneringai';
+import { desktopTools } from 'oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
@@ -2522,7 +2544,7 @@ await agent.run('Open Safari and search for "weather forecast"');
 Universal file-to-LLM-content converter. Reads arbitrary document formats and produces clean markdown text with optional image extraction:
 
 ```typescript
-import { DocumentReader, mergeTextPieces } from '@everworker/oneringai';
+import { DocumentReader, mergeTextPieces } from 'oneringai';
 
 const reader = DocumentReader.create({
   defaults: {
@@ -2553,7 +2575,7 @@ console.log(result.metadata.processingTimeMs); // 234
 **Content Bridge for Multimodal Input:**
 
 ```typescript
-import { readDocumentAsContent } from '@everworker/oneringai';
+import { readDocumentAsContent } from 'oneringai';
 
 // Convert document directly to Content[] for LLM input
 const content = await readDocumentAsContent('/path/to/slides.pptx', {
@@ -2587,7 +2609,7 @@ See the [User Guide](./USER_GUIDE.md#document-reader) for complete API reference
 Execute multi-step AI workflows where tasks run in dependency order with automatic validation:
 
 ```typescript
-import { executeRoutine, createRoutineDefinition } from '@everworker/oneringai';
+import { executeRoutine, createRoutineDefinition } from 'oneringai';
 
 const routine = createRoutineDefinition({
   name: 'Research Report',
@@ -2659,7 +2681,7 @@ const routine = createRoutineDefinition({
 import {
   createRoutineExecutionRecord, createExecutionRecorder,
   type IRoutineExecutionStorage,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 const record = createRoutineExecutionRecord(definition, 'openai', 'gpt-4.1');
 const execId = await storage.insert(userId, record);
@@ -2680,7 +2702,7 @@ executeRoutine({
 **Scheduling & Triggers:** Run routines on a timer or from external events:
 
 ```typescript
-import { SimpleScheduler, EventEmitterTrigger } from '@everworker/oneringai';
+import { SimpleScheduler, EventEmitterTrigger } from 'oneringai';
 
 // Schedule: run every hour
 const scheduler = new SimpleScheduler();
@@ -2696,7 +2718,7 @@ trigger.emit('new-order', { orderId: '123' });
 **Routine Persistence:** Save and load routine definitions with `FileRoutineDefinitionStorage` (or implement `IRoutineDefinitionStorage` for custom backends). Per-user isolation via optional `userId`. Integrated into `StorageRegistry` as `routineDefinitions`.
 
 ```typescript
-import { createFileRoutineDefinitionStorage, createRoutineDefinition } from '@everworker/oneringai';
+import { createFileRoutineDefinitionStorage, createRoutineDefinition } from 'oneringai';
 
 const storage = createFileRoutineDefinitionStorage();
 const routine = createRoutineDefinition({ name: 'Daily Report', description: '...', tasks: [] });
@@ -2712,7 +2734,7 @@ const all = await storage.list(undefined, { tags: ['daily'] });
 Connect your AI agents to 50 external services with enterprise-grade resilience:
 
 ```typescript
-import { Connector, ConnectorTools, Services, Agent } from '@everworker/oneringai';
+import { Connector, ConnectorTools, Services, Agent } from 'oneringai';
 
 // Create a connector for an external service
 Connector.create({
@@ -2777,8 +2799,8 @@ console.log(`Success rate: ${metrics.successCount / metrics.requestCount * 100}%
 Limit connector visibility by user, group, or tenant in multi-user systems:
 
 ```typescript
-import { Connector, ScopedConnectorRegistry } from '@everworker/oneringai';
-import type { IConnectorAccessPolicy } from '@everworker/oneringai';
+import { Connector, ScopedConnectorRegistry } from 'oneringai';
+import type { IConnectorAccessPolicy } from 'oneringai';
 
 // Define an access policy
 const policy: IConnectorAccessPolicy = {
@@ -2827,7 +2849,7 @@ import {
   listVendors,
   getVendorTemplate,
   ConnectorTools
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 // List all available vendors
 const vendors = listVendors();
@@ -2881,7 +2903,7 @@ See the [User Guide](./USER_GUIDE.md#vendor-templates) for complete vendor refer
 
 **Vendor Logos:**
 ```typescript
-import { getVendorLogo, getVendorLogoSvg, getVendorColor } from '@everworker/oneringai';
+import { getVendorLogo, getVendorLogoSvg, getVendorColor } from 'oneringai';
 
 // Get logo with metadata
 const logo = getVendorLogo('github');
@@ -2903,7 +2925,7 @@ const color = getVendorColor('stripe');  // "635BFF"
 For UIs or tool inventory, use `ToolRegistry` to get all available tools:
 
 ```typescript
-import { ToolRegistry } from '@everworker/oneringai';
+import { ToolRegistry } from 'oneringai';
 
 const allTools = ToolRegistry.getAllTools();
 
@@ -2921,7 +2943,7 @@ for (const tool of allTools) {
 11 dedicated tools for Microsoft Graph API — email, calendar, meetings, Teams transcripts, and OneDrive/SharePoint files. Auto-registered for connectors with `serviceType: 'microsoft'` or `baseURL` matching `graph.microsoft.com`.
 
 ```typescript
-import { Connector, ConnectorTools, Services, Agent } from '@everworker/oneringai';
+import { Connector, ConnectorTools, Services, Agent } from 'oneringai';
 
 // Create a Microsoft connector (OAuth required for most operations)
 Connector.create({
@@ -2967,7 +2989,7 @@ Supports both **delegated** (`/me` — user signs in) and **application** (`/use
 When agents have 100+ available tools, sending all definitions to the LLM wastes tokens and degrades performance. The Tool Catalog lets agents discover and load only the categories they need:
 
 ```typescript
-import { Agent, ToolCatalogRegistry } from '@everworker/oneringai';
+import { Agent, ToolCatalogRegistry } from 'oneringai';
 
 // Register custom categories (built-in tools auto-register)
 ToolCatalogRegistry.registerCategory({
@@ -3017,7 +3039,7 @@ See the [User Guide](./USER_GUIDE.md#tool-catalog-dynamic-tool-loadingunloading)
 Some tools take seconds or minutes to complete (web scraping, data analysis, API calls). With async tools, the agent doesn't wait — it continues reasoning and receives results later:
 
 ```typescript
-import { Agent, ToolFunction } from '@everworker/oneringai';
+import { Agent, ToolFunction } from 'oneringai';
 
 // Define a long-running tool as non-blocking
 const analyzeData: ToolFunction = {
@@ -3099,7 +3121,7 @@ See the [User Guide](./USER_GUIDE.md#async-non-blocking-tools) for the full guid
 Some workflows span hours or days — an agent sends an email, then waits for a reply. With `SuspendSignal`, tools can pause the agent loop, and external events resume it later:
 
 ```typescript
-import { Agent, SuspendSignal, ToolFunction } from '@everworker/oneringai';
+import { Agent, SuspendSignal, ToolFunction } from 'oneringai';
 
 // Tool that suspends the agent loop
 const presentToUser: ToolFunction = {
@@ -3168,7 +3190,7 @@ See the [User Guide](./USER_GUIDE.md#long-running-sessions-suspendresume) for th
 Every `Agent` automatically registers with `AgentRegistry` on creation and unregisters on destroy. Query, inspect, and control all agents from one place:
 
 ```typescript
-import { Agent, AgentRegistry } from '@everworker/oneringai';
+import { Agent, AgentRegistry } from 'oneringai';
 
 // Agents auto-register — no setup needed
 const researcher = Agent.create({ connector: 'openai', model: 'gpt-4.1', name: 'researcher' });
@@ -3216,7 +3238,7 @@ See the [User Guide](./USER_GUIDE.md#agent-registry) for the full API reference.
 Create autonomous agent teams with conversational delegation and shared workspace:
 
 ```typescript
-import { createOrchestrator, Connector, Vendor } from '@everworker/oneringai';
+import { createOrchestrator, Connector, Vendor } from 'oneringai';
 
 Connector.create({ name: 'openai', vendor: Vendor.OpenAI, auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! } });
 
@@ -3266,7 +3288,7 @@ See the [User Guide](./USER_GUIDE.md#agent-orchestrator) for detailed examples i
 6 tools for Telegram Bot API, auto-registered via `ConnectorTools.for('telegram')`:
 
 ```typescript
-import { createConnectorFromTemplate } from '@everworker/oneringai';
+import { createConnectorFromTemplate } from 'oneringai';
 
 createConnectorFromTemplate('my-bot', 'telegram', 'bot-token', {
   apiKey: process.env.TELEGRAM_BOT_TOKEN!,
@@ -3282,7 +3304,7 @@ createConnectorFromTemplate('my-bot', 'telegram', 'bot-token', {
 4 tools for SMS and WhatsApp via Twilio, auto-registered via `ConnectorTools.for('twilio')`:
 
 ```typescript
-import { createConnectorFromTemplate } from '@everworker/oneringai';
+import { createConnectorFromTemplate } from 'oneringai';
 
 createConnectorFromTemplate('my-twilio', 'twilio', 'api-key', {
   apiKey: process.env.TWILIO_AUTH_TOKEN!,
@@ -3297,7 +3319,7 @@ createConnectorFromTemplate('my-twilio', 'twilio', 'api-key', {
 11 tools for Google APIs (Gmail, Calendar, Meet, Drive), auto-registered via `ConnectorTools.for('google-api')`:
 
 ```typescript
-import { Connector, Agent, Vendor, ConnectorTools } from '@everworker/oneringai';
+import { Connector, Agent, Vendor, ConnectorTools } from 'oneringai';
 
 // OAuth connector for Google
 Connector.create({
@@ -3342,7 +3364,7 @@ const tools = ConnectorTools.for('google');
 3 tools for Zoom meeting management, auto-registered via `ConnectorTools.for('zoom')`:
 
 ```typescript
-import { createConnectorFromTemplate, ConnectorTools } from '@everworker/oneringai';
+import { createConnectorFromTemplate, ConnectorTools } from 'oneringai';
 
 createConnectorFromTemplate('my-zoom', 'zoom', 'oauth-user', {
   clientId: process.env.ZOOM_CLIENT_ID!,
@@ -3358,7 +3380,7 @@ const tools = ConnectorTools.for('my-zoom');
 Cross-provider meeting slot finder — aggregates busy intervals from Google + Microsoft calendars:
 
 ```typescript
-import { tools } from '@everworker/oneringai';
+import { tools } from 'oneringai';
 
 const tool = tools.createUnifiedFindMeetingSlotsTool([
   tools.createGoogleCalendarSlotsProvider(googleConnector),
@@ -3379,7 +3401,7 @@ const result = await tool.execute({
 Use multiple accounts per connector (e.g., work + personal Microsoft accounts):
 
 ```typescript
-import { Agent, Connector, Vendor } from '@everworker/oneringai';
+import { Agent, Connector, Vendor } from 'oneringai';
 
 const agent = Agent.create({
   connector: 'openai',
@@ -3399,7 +3421,7 @@ const agent = Agent.create({
 Reusable test suite framework for validating connector tools against live APIs:
 
 ```typescript
-import { IntegrationTestRunner } from '@everworker/oneringai';
+import { IntegrationTestRunner } from 'oneringai';
 
 // List all available suites (16 total)
 const suites = IntegrationTestRunner.getAllSuites();
@@ -3420,7 +3442,7 @@ const result = await IntegrationTestRunner.runSuite(googleSuite, connectorTools,
 Use `{{COMMAND}}` placeholders in agent instructions that resolve automatically — static values at creation, dynamic values every LLM call. Fully extensible with custom handlers:
 
 ```typescript
-import { Agent, TemplateEngine } from '@everworker/oneringai';
+import { Agent, TemplateEngine } from 'oneringai';
 
 // Built-in templates resolve automatically
 const agent = Agent.create({
@@ -3460,7 +3482,7 @@ See the [User Guide](./USER_GUIDE.md#instruction-templates) for the full referen
 Connect to MCP servers for automatic tool discovery and seamless integration:
 
 ```typescript
-import { MCPRegistry, Agent, Connector, Vendor } from '@everworker/oneringai';
+import { MCPRegistry, Agent, Connector, Vendor } from 'oneringai';
 
 // Setup authentication
 Connector.create({
@@ -3601,6 +3623,10 @@ Contributions are welcome! Please see our [Contributing Guide](./CONTRIBUTING.md
 ## License
 
 MIT License - See [LICENSE](./LICENSE) file.
+
+The library, AMOS and Hosea application source are MIT licensed, Copyright ©
+2025–2026 Anton Antic ([anton.antich@gmail.com](mailto:anton.antich@gmail.com)).
+See [Licensing](LICENSING.md) for application boundaries and third-party terms.
 
 ---
 

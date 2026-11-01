@@ -1,6 +1,6 @@
 /** Example/test utility, not a new library API. Retains no prompts or payloads. */
 import { createHash } from 'node:crypto';
-import type { AgentEventName, AgentEvents } from '@everworker/oneringai';
+import type { AgentEventName, AgentEvents } from 'oneringai';
 
 export function canonicalJSON(value: unknown): string {
   const sort = (item: unknown): unknown => {

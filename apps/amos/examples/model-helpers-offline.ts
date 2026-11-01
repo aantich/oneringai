@@ -1,6 +1,6 @@
 /** Exercise the real AMOS command and runner with a synthetic, offline model. */
-import { Agent, Connector, ContentType, MessageRole, Vendor } from '@everworker/oneringai';
-import type { ITextProvider } from '@everworker/oneringai';
+import { Agent, Connector, ContentType, MessageRole, Vendor } from 'oneringai';
+import type { ITextProvider } from 'oneringai';
 import { AgentRunner } from '../src/agent/AgentRunner.js';
 import { HelpersCommand } from '../src/commands/commands/HelpersCommand.js';
 import { DEFAULT_CONFIG } from '../src/config/types.js';

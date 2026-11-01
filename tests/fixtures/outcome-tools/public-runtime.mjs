@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const esm = await import('@everworker/oneringai');
-const cjsPath = require.resolve('@everworker/oneringai');
+const esm = await import('oneringai');
+const cjsPath = require.resolve('oneringai');
 const cjs = require(cjsPath);
 const duplicateESM = await import(new URL('../../../dist/index.js?outcome-tools-duplicate', import.meta.url));
 delete require.cache[cjsPath];

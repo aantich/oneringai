@@ -4,7 +4,7 @@
  * Import and use with your agents:
  *
  * ```typescript
- * import { tools } from '@everworker/oneringai';
+ * import { tools } from 'oneringai';
  *
  * const agent = Agent.create({
  *   connector: 'openai',
@@ -572,7 +572,7 @@ import { bgProcessKill } from './shell/index.js';
  *
  * @example
  * ```typescript
- * import { tools } from '@everworker/oneringai';
+ * import { tools } from 'oneringai';
  *
  * const agent = Agent.create({
  *   connector: 'openai',

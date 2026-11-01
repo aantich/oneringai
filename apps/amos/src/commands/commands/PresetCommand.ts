@@ -1,4 +1,4 @@
-import type { AgentPresetName } from '@everworker/oneringai';
+import type { AgentPresetName } from 'oneringai';
 import { BaseCommand } from '../BaseCommand.js';
 import type { CommandContext, CommandResult } from '../../config/types.js';
 

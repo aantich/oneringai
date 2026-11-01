@@ -1,5 +1,5 @@
 /** Offline plugin/native-state composition demonstration. Build first; no credentials/network. */
-import { Agent, Connector, ContentType, ContextCompactionStrategy, InContextMemoryPluginNextGen, MessageRole, Vendor } from '@everworker/oneringai';
+import { Agent, Connector, ContentType, ContextCompactionStrategy, InContextMemoryPluginNextGen, MessageRole, Vendor } from 'oneringai';
 import { offlineRoutingConnector } from './model-routing/fixture.js';
 
 const fixture = offlineRoutingConnector('routing-context-example');

@@ -1,5 +1,5 @@
 /** Build first; npm run example:cache-aware-context. Offline by default; --live bills two calls. */
-import { Agent, AgentContextNextGen, BasePluginNextGen, Connector, Vendor, ModelTask } from '@everworker/oneringai';
+import { Agent, AgentContextNextGen, BasePluginNextGen, Connector, Vendor, ModelTask } from 'oneringai';
 class Source extends BasePluginNextGen {
   readonly name = 'dynamic_source'; value = 'FIRST'; getInstructions() { return 'Inspect dynamic observations.'; }
   async getContent() { return this.value; } getContents() { return this.value; }

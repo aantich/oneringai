@@ -2,7 +2,7 @@
 
 ## Overview
 
-Implemented complete Model Context Protocol (MCP) client support for the `@everworker/oneringai` library, enabling seamless integration with both local and remote MCP servers for automatic tool discovery and execution.
+Implemented complete Model Context Protocol (MCP) client support for the `oneringai` library, enabling seamless integration with both local and remote MCP servers for automatic tool discovery and execution.
 
 ## What Was Implemented
 
@@ -142,7 +142,7 @@ Implemented complete Model Context Protocol (MCP) client support for the `@everw
 ### Basic Usage
 
 ```typescript
-import { MCPRegistry, Agent, Connector, Vendor } from '@everworker/oneringai';
+import { MCPRegistry, Agent, Connector, Vendor } from 'oneringai';
 
 // Setup
 Connector.create({
@@ -194,7 +194,7 @@ client.registerTools(agent.tools);
 ### Configuration File
 
 ```typescript
-import { Config, MCPRegistry } from '@everworker/oneringai';
+import { Config, MCPRegistry } from 'oneringai';
 
 // Load config
 await Config.load('./oneringai.config.json');

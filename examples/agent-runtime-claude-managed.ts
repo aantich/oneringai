@@ -3,10 +3,10 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { Connector, Vendor } from '@everworker/oneringai';
-import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage } from '@everworker/oneringai/agent-runtime';
-import type { RuntimeSessionReference } from '@everworker/oneringai/agent-runtime';
-import { ClaudeManagedDriver } from '@everworker/oneringai/agent-runtime/claude-managed';
+import { Connector, Vendor } from 'oneringai';
+import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage } from 'oneringai/agent-runtime';
+import type { RuntimeSessionReference } from 'oneringai/agent-runtime';
+import { ClaudeManagedDriver } from 'oneringai/agent-runtime/claude-managed';
 import { claudeManagedFixture } from './agent-runtime/claude-managed-fixture.js';
 
 const live = process.argv.includes('--live');

@@ -11,8 +11,8 @@ import {
   ToolRegistry,
   toolRegistry,
   desktopTools,
-} from '@everworker/oneringai';
-import type { CatalogToolEntry, ToolFunction } from '@everworker/oneringai';
+} from 'oneringai';
+import type { CatalogToolEntry, ToolFunction } from 'oneringai';
 import type { BrowserService } from '../BrowserService.js';
 import { createBrowserTools } from '../browser/index.js';
 

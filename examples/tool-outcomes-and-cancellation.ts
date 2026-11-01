@@ -1,8 +1,8 @@
 /** Stage 02 offline demonstration; --live-anthropic adds explicitly opt-in LLM calls. Build first. */
 import { createServer } from 'node:http';
 import { pathToFileURL } from 'node:url';
-import { Agent, Connector, StreamEventType, ToolManager, Vendor } from '@everworker/oneringai';
-import type { ToolExecutionOutcome, ToolFunction } from '@everworker/oneringai';
+import { Agent, Connector, StreamEventType, ToolManager, Vendor } from 'oneringai';
+import type { ToolExecutionOutcome, ToolFunction } from 'oneringai';
 
 const tool = (name: string, execute: ToolFunction['execute']): ToolFunction => ({
   definition: { type: 'function', function: { name, description: 'Offline demonstration', parameters: { type: 'object', properties: {} } } }, execute,

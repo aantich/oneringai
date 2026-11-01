@@ -6,7 +6,7 @@
  *
  * Usage:
  * ```typescript
- * import { ConnectorTools } from '@everworker/oneringai';
+ * import { ConnectorTools } from 'oneringai';
  *
  * // Get all tools (generic + service-specific if registered)
  * const tools = ConnectorTools.for('slack');

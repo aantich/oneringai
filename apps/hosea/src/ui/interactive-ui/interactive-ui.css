@@ -1,0 +1,126 @@
+/**
+ * Interactive UI Block styles.
+ *
+ * Uses Bootstrap CSS classes for form components internally.
+ * These styles handle the block wrapper, streaming state, and error display.
+ */
+
+/* ============================================================
+   Block wrapper
+   ============================================================ */
+
+.iui-block {
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  background: var(--bs-body-bg, #fff);
+}
+
+.iui-block__content {
+  /* Let Bootstrap grid handle layout */
+}
+
+.iui-block__actions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--bs-border-color, #dee2e6);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ============================================================
+   Streaming state
+   ============================================================ */
+
+.iui-block--streaming {
+  opacity: 0.7;
+  border-style: dashed;
+}
+
+.iui-block__streaming-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--bs-secondary-color, #6c757d);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.iui-block__streaming-hint::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: iui-spin 0.8s linear infinite;
+}
+
+@keyframes iui-spin {
+  to { transform: rotate(360deg); }
+}
+
+.iui-block__preview {
+  font-size: 12px;
+  color: var(--bs-secondary-color, #6c757d);
+  background: var(--bs-tertiary-bg, #f8f9fa);
+  padding: 8px 12px;
+  border-radius: 4px;
+  max-height: 120px;
+  overflow: auto;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ============================================================
+   Error state
+   ============================================================ */
+
+.iui-block--error {
+  border-color: var(--bs-danger-border-subtle, #f5c2c7);
+  background: var(--bs-danger-bg-subtle, #f8d7da);
+}
+
+.iui-block__error-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--bs-danger, #dc3545);
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.iui-block__error-code {
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 8px 12px;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow: auto;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ============================================================
+   Dark mode adjustments (when Bootstrap dark mode is active)
+   ============================================================ */
+
+[data-bs-theme="dark"] .iui-block {
+  border-color: var(--bs-border-color, #495057);
+  background: var(--bs-body-bg, #212529);
+}
+
+[data-bs-theme="dark"] .iui-block--error {
+  border-color: var(--bs-danger-border-subtle, #842029);
+  background: var(--bs-danger-bg-subtle, #2c0b0e);
+}
+
+[data-bs-theme="dark"] .iui-block__preview {
+  background: var(--bs-tertiary-bg, #2b3035);
+}

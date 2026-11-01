@@ -2,7 +2,7 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { AgentRegistry, Connector, Vendor, type Agent, type InContextMemoryPluginNextGen } from '@everworker/oneringai';
+import { AgentRegistry, Connector, Vendor, type Agent, type InContextMemoryPluginNextGen } from 'oneringai';
 import { AgentRunner } from '../src/agent/AgentRunner.js';
 import { ConfigManager } from '../src/config/ConfigManager.js';
 import { ContextCommand } from '../src/commands/commands/ContextCommand.js';

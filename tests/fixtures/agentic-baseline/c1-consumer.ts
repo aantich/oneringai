@@ -1,6 +1,6 @@
 /** Built public API controls; not executed. Existing tool types remain unchanged. */
-import { createOutcomeTool, ToolManager } from '@everworker/oneringai';
-import type { OutcomeInvocation, OutcomeToolOptions, ToolFunction, ToolContext } from '@everworker/oneringai';
+import { createOutcomeTool, ToolManager } from 'oneringai';
+import type { OutcomeInvocation, OutcomeToolOptions, ToolFunction, ToolContext } from 'oneringai';
 
 const options: OutcomeToolOptions<{ id: string }, { success: boolean; id: string }> = {
   definition: { type: 'function', function: { name: 'lookup', parameters: { type: 'object', properties: { id: { type: 'string' } } } } },

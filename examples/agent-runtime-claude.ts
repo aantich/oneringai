@@ -1,6 +1,6 @@
-import { Connector, Vendor } from '@everworker/oneringai';
-import { AgentRuntime, LocalExecutionBackend } from '@everworker/oneringai/agent-runtime';
-import { ClaudeAgentSdkDriver } from '@everworker/oneringai/agent-runtime/claude';
+import { Connector, Vendor } from 'oneringai';
+import { AgentRuntime, LocalExecutionBackend } from 'oneringai/agent-runtime';
+import { ClaudeAgentSdkDriver } from 'oneringai/agent-runtime/claude';
 import { offlineClaudeSdk } from './agent-runtime/claude-fixture.js';
 
 const live = process.argv.includes('--live');

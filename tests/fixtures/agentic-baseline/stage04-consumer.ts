@@ -1,5 +1,5 @@
-import { Agent, TaskStatePluginNextGen } from '@everworker/oneringai';
-import type { TaskStatePluginConfig, TaskStateHostDelta, TaskStateSnapshot, TaskStateLifecycleView, TaskStateAction, TaskStateNoteInput, TaskStateSource, ToolExecutionOutcome } from '@everworker/oneringai';
+import { Agent, TaskStatePluginNextGen } from 'oneringai';
+import type { TaskStatePluginConfig, TaskStateHostDelta, TaskStateSnapshot, TaskStateLifecycleView, TaskStateAction, TaskStateNoteInput, TaskStateSource, ToolExecutionOutcome } from 'oneringai';
 export const config: TaskStatePluginConfig = { scope: { ownerId: 'host-user', namespace: 'work' }, taskId: 'task', lifecycle: { kind: 'task', id: 'existing-task' } };
 export const note: TaskStateNoteInput = { id: 'budget', category: 'constraint', text: 'Spend at most 40', source: { label: 'User confirmed' } };
 export const delta: TaskStateHostDelta = { notes: [note] };

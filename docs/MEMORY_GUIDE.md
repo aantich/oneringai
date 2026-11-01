@@ -52,7 +52,7 @@ Everything is append-only with supersession (state changes create new facts that
 The minimum to get a working memory system in-process:
 
 ```ts
-import { MemorySystem, InMemoryAdapter } from '@everworker/oneringai';
+import { MemorySystem, InMemoryAdapter } from 'oneringai';
 
 const memory = new MemorySystem({ store: new InMemoryAdapter() });
 const scope = { userId: 'user-123' };
@@ -213,7 +213,7 @@ For structured data, call `upsertEntity` + `addFact` yourself. For unstructured 
 ### In-memory — for tests and small-scale
 
 ```ts
-import { InMemoryAdapter } from '@everworker/oneringai';
+import { InMemoryAdapter } from 'oneringai';
 const store = new InMemoryAdapter();
 ```
 
@@ -237,8 +237,8 @@ import {
   RawMongoCollection,
   ensureIndexes,
   ensureNormalizedNameUniqueIndex,
-} from '@everworker/oneringai';
-import type { IEntity, IFact } from '@everworker/oneringai';
+} from 'oneringai';
+import type { IEntity, IFact } from 'oneringai';
 
 const client = await new MongoClient(url).connect();
 const db = client.db('myapp');
@@ -294,7 +294,7 @@ import {
   MongoMemoryAdapter,
   MeteorMongoCollection,
   ensureIndexes,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 const EntitiesCollection = new Mongo.Collection<IEntity>('memory_entities');
 const FactsCollection = new Mongo.Collection<IFact>('memory_facts');
@@ -360,14 +360,14 @@ Three optional LLM-connected components. All configured **once at startup** and 
 This factory handles all three components in one call. Register connectors first, then configure memory.
 
 ```ts
-import { Connector, Vendor, Agent } from '@everworker/oneringai';
+import { Connector, Vendor, Agent } from 'oneringai';
 import {
   createMemorySystemWithConnectors,
   ExtractionResolver,
   defaultExtractionPrompt,
   InMemoryAdapter,
   PredicateRegistry,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 // 1. Register connectors at app startup.
 Connector.create({
@@ -474,7 +474,7 @@ await memory.addFact(
 **BYO embedder** (bypass connectors):
 
 ```ts
-import { MemorySystem, type IEmbedder } from '@everworker/oneringai';
+import { MemorySystem, type IEmbedder } from 'oneringai';
 
 const myEmbedder: IEmbedder = {
   dimensions: 1536,
@@ -532,7 +532,7 @@ permissions and ACLs govern who else can read them.
 **Custom prompts** — the default prompt is general-purpose (identity + relationships + recent activity). For domain-specific profiles:
 
 ```ts
-import type { ProfileGeneratorInput } from '@everworker/oneringai';
+import type { ProfileGeneratorInput } from 'oneringai';
 
 function salesProfilePrompt(ctx: ProfileGeneratorInput): string {
   return `You are maintaining a living sales profile for a prospect.
@@ -572,7 +572,7 @@ const memory = createMemorySystemWithConnectors({
 **BYO profile generator:**
 
 ```ts
-import type { IProfileGenerator } from '@everworker/oneringai';
+import type { IProfileGenerator } from 'oneringai';
 
 const myGen: IProfileGenerator = {
   async generate(entity, atomicFacts, priorProfile, targetScope) {
@@ -830,7 +830,7 @@ Tasks have no natural external strong key — the same task re-surfaced across e
 Use `canonicalIdentifier()` to build a `{ kind: 'canonical', value: ... }` identifier from the task's structural invariants:
 
 ```ts
-import { canonicalIdentifier } from '@everworker/oneringai';
+import { canonicalIdentifier } from 'oneringai';
 
 const id = canonicalIdentifier('task', {
   assignee: john.id,
@@ -1001,7 +1001,7 @@ import {
   SignalIngestor,
   CalendarSignalAdapter,
   ConnectorExtractor,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 const ingestor = new SignalIngestor({
   memory,
@@ -1315,7 +1315,7 @@ Facts have predicates — strings like `works_at`, `committed_to`, `prepares_for
 ### Three use patterns
 
 ```ts
-import { PredicateRegistry, MemorySystem } from '@everworker/oneringai';
+import { PredicateRegistry, MemorySystem } from 'oneringai';
 
 // Pattern 1: ship with the 44-predicate starter set (10 categories).
 const memory = new MemorySystem({
@@ -1359,7 +1359,7 @@ When attached to `MemorySystem`, every `addFact` call:
 Pass the registry into the extraction prompt so the model learns the house style:
 
 ```ts
-import { defaultExtractionPrompt } from '@everworker/oneringai';
+import { defaultExtractionPrompt } from 'oneringai';
 
 const prompt = defaultExtractionPrompt({
   signalText: emailBody,
@@ -1425,7 +1425,7 @@ import {
   ConnectorExtractor,
   EmailSignalAdapter,
   PredicateRegistry,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 const predicates = PredicateRegistry.standard();
 const memory = createMemorySystemWithConnectors({
@@ -1487,8 +1487,8 @@ import {
   defaultExtractionPrompt,
   InMemoryAdapter,
   PredicateRegistry,
-} from '@everworker/oneringai';
-import { Connector, Vendor, Agent } from '@everworker/oneringai';
+} from 'oneringai';
+import { Connector, Vendor, Agent } from 'oneringai';
 
 // Setup — once at startup.
 Connector.create({
@@ -1799,7 +1799,7 @@ of the same shared entity; permissions/ACLs govern cross-owner reads.
 Override the default:
 
 ```ts
-import type { ProfileGeneratorInput } from '@everworker/oneringai';
+import type { ProfileGeneratorInput } from 'oneringai';
 
 const memory = createMemorySystemWithConnectors({
   store,
@@ -1971,7 +1971,7 @@ import {
   createMemorySystemWithConnectors,
   InMemoryAdapter,
   PredicateRegistry,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 const predicates = PredicateRegistry.standard().register({
   name: 'prefers',
@@ -2348,7 +2348,7 @@ If you're building a custom agent and don't want the full plugin setup, you can 
 - `createMemoryTools(...)` — convenience returning all 12.
 
 ```ts
-import { createMemoryReadTools, createMemoryWriteTools } from '@everworker/oneringai';
+import { createMemoryReadTools, createMemoryWriteTools } from 'oneringai';
 
 const readTools = createMemoryReadTools({
   memory,                              // MemorySystem instance
@@ -2388,7 +2388,7 @@ Where the legacy plugins still fit: small, fixed, agent-side string configuratio
 The `memory_*` tools let the LLM write deliberately. But you shouldn't rely on it alone — agents forget, skip, or race past moments worth remembering. `SessionIngestorPluginNextGen` is a side-effect plugin that observes the conversation **before every `prepare()`** (crucially, BEFORE any compaction that would evict messages) and extracts structured facts through a dedicated LLM call.
 
 ```ts
-import { SessionIngestorPluginNextGen } from '@everworker/oneringai';
+import { SessionIngestorPluginNextGen } from 'oneringai';
 
 const sessionIngestor = new SessionIngestorPluginNextGen({
   memory,

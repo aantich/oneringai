@@ -5,8 +5,8 @@ import { createServer } from 'node:http';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Agent, Connector, ConnectorTools, FileEvidenceStorage, ToolManager, ContentType, MessageRole } from '@everworker/oneringai';
-import type { ConnectorPage } from '@everworker/oneringai';
+import { Agent, Connector, ConnectorTools, FileEvidenceStorage, ToolManager, ContentType, MessageRole } from 'oneringai';
+import type { ConnectorPage } from 'oneringai';
 import { offlineRoutingConnector } from './model-routing/fixture.js';
 
 const pages = Array.from({ length: 14 }, (_, n) => n === 5 ? [] : Array.from({ length: n === 13 ? 1 : 4 }, (_, i) => ({ id: `${n}:${i}`, name: `channel-${n}-${i}`, text: `EXACT-${n}-${i} ` + 'source body '.repeat(400) })));

@@ -7,12 +7,12 @@ export interface ConnectorExecutionHint {
   /** Synchronous authority capture before pipeline hooks can yield. */
   readonly prepare?: (context: ToolContext) => unknown;
 }
-const PROFILE = Symbol.for('@everworker/oneringai/connector-execution/v1');
+const PROFILE = Symbol.for('oneringai/connector-execution/v1');
 export function markConnectorExecution(tool: object, hint: ConnectorExecutionHint): void {
   Object.defineProperty(tool, PROFILE, { value: Object.freeze({ ...hint }) });
 }
 
-const INVOCATION = Symbol.for('@everworker/oneringai/connector-invocation/v1');
+const INVOCATION = Symbol.for('oneringai/connector-invocation/v1');
 type Admission = Readonly<({ value: unknown } | { error: unknown }) & { codec?: CursorCodec }>;
 export function prepareConnectorInvocation(tool: object, context: ToolContext, codec?: CursorCodec): void {
   const prepare = connectorExecutionHint(tool)?.prepare;
@@ -32,7 +32,7 @@ export function connectorExecutionHint(tool: object): ConnectorExecutionHint | u
   } catch { return undefined; }
 }
 
-const DENIAL = Symbol.for('@everworker/oneringai/connector-policy-denial/v1');
+const DENIAL = Symbol.for('oneringai/connector-policy-denial/v1');
 export function markConnectorPolicyDenial(error: Error): void { Object.defineProperty(error, DENIAL, { value: true }); }
 export function isConnectorPolicyDenial(error: unknown): boolean {
   try { return !!error && typeof error === 'object' && Object.getOwnPropertyDescriptor(error, DENIAL)?.value === true; } catch { return false; }

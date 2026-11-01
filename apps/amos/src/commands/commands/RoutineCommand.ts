@@ -1,5 +1,5 @@
-import { Agent, createRoutineDefinition, createRoutineRunner } from '@everworker/oneringai';
-import type { RoutineRunner, RoutineRunResult } from '@everworker/oneringai';
+import { Agent, createRoutineDefinition, createRoutineRunner } from 'oneringai';
+import type { RoutineRunner, RoutineRunResult } from 'oneringai';
 import { BaseCommand } from '../BaseCommand.js';
 import type { CommandContext, CommandResult } from '../../config/types.js';
 

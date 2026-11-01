@@ -161,7 +161,7 @@ function displayConfig(result: ConnectorConfigResult) {
 
   console.log('💻 Code to Register:');
   console.log('```typescript');
-  console.log(`import { Connector } from '@everworker/oneringai';`);
+  console.log(`import { Connector } from 'oneringai';`);
   console.log('');
   console.log(`Connector.create({ name: '${result.name}', ...${JSON.stringify(result.config, null, 2)} });`);
   console.log('```');

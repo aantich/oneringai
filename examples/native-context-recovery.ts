@@ -6,8 +6,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import dotenv from 'dotenv';
-import { Agent, Connector, ContextCompactionStrategy, FileContextStorage, FileEvidenceStorage, ContentType, MessageRole, ModelTask, StreamEventType, Vendor } from '@everworker/oneringai';
-import type { AgentConfig } from '@everworker/oneringai';
+import { Agent, Connector, ContextCompactionStrategy, FileContextStorage, FileEvidenceStorage, ContentType, MessageRole, ModelTask, StreamEventType, Vendor } from 'oneringai';
+import type { AgentConfig } from 'oneringai';
 import { createNativeFixture } from './native-compaction/fixture.js';
 
 const child = process.argv[2] === '--restore';

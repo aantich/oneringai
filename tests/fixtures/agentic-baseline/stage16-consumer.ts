@@ -1,7 +1,7 @@
-import { Agent, ContextCompactionStrategy } from '@everworker/oneringai';
+import { Agent, ContextCompactionStrategy } from 'oneringai';
 import type { ContextCompactionStrategyConfig, ContextCompactionReport, AgentContextCompactionOptions,
-  ITextProvider, ICompactionStrategy, CompactionContext, NativeContinuationSnapshot } from '@everworker/oneringai';
-import type { ContextCompactionTarget } from '@everworker/oneringai/types';
+  ITextProvider, ICompactionStrategy, CompactionContext, NativeContinuationSnapshot } from 'oneringai';
+import type { ContextCompactionTarget } from 'oneringai/types';
 
 export const config: ContextCompactionStrategyConfig = { plugins: 'auto', history: { mode: 'native', preserveRecentTurns: 2 }, automatic: false };
 export const strategy: ICompactionStrategy = new ContextCompactionStrategy(config);

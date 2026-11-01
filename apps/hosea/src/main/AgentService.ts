@@ -1,5 +1,5 @@
 /**
- * AgentService - Manages the @everworker/oneringai integration
+ * AgentService - Manages the oneringai integration
  *
  * This service bridges Electron IPC with the agent library.
  */
@@ -101,12 +101,12 @@ import {
   type RegistryAgentStatus,
   type AgentEventListener,
   type VoiceSessionInfo,
-} from '@everworker/oneringai';
+} from 'oneringai';
 // Side-effect: registers DynamicUI plugin factory with PluginRegistry
-import '@everworker/react-ui/plugins';
+import '../ui/plugins.js';
 import type { BrowserService } from './BrowserService.js';
-import { ToolCatalogRegistry } from '@everworker/oneringai';
-import type { CatalogToolEntry } from '@everworker/oneringai';
+import { ToolCatalogRegistry } from 'oneringai';
+import type { CatalogToolEntry } from 'oneringai';
 import { registerHoseaTools, updateBrowserService, invalidateHoseaTools } from './tools/index.js';
 import { HoseaUIPlugin, type DynamicUIContent } from './plugins/index.js';
 import { VendorOAuthService } from './VendorOAuthService.js';
@@ -695,7 +695,7 @@ export class AgentService {
   private streamEmitter: ((instanceId: string, chunk: StreamChunk) => void) | null = null;
   // Pending tool permission approvals: requestId → { resolve, instanceId, createdAt }
   private pendingApprovals = new Map<string, {
-    resolve: (decision: import('@everworker/oneringai').ApprovalDecision) => void;
+    resolve: (decision: import('oneringai').ApprovalDecision) => void;
     instanceId: string;
     toolName: string;
     createdAt: number;

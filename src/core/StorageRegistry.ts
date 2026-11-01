@@ -17,7 +17,7 @@ import type { EvidenceScope, IEvidenceStorage } from '../domain/interfaces/IEvid
  *
  * @example
  * ```typescript
- * import { StorageRegistry } from '@everworker/oneringai';
+ * import { StorageRegistry } from 'oneringai';
  *
  * // Single-tenant (simple)
  * StorageRegistry.configure({

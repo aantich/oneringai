@@ -5,7 +5,7 @@
  *
  * @example
  * ```typescript
- * import { Embeddings, Connector, Vendor } from '@everworker/oneringai';
+ * import { Embeddings, Connector, Vendor } from 'oneringai';
  *
  * Connector.create({
  *   name: 'openai',

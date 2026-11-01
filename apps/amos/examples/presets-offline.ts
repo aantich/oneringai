@@ -2,7 +2,7 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Connector, Vendor, FileContextStorage, type EvidenceScope } from '@everworker/oneringai';
+import { Connector, Vendor, FileContextStorage, type EvidenceScope } from 'oneringai';
 import { ScriptedLoopProvider } from '../../../examples/agent-loop/scripted-provider.js';
 import { AgentRunner } from '../src/agent/AgentRunner.js';
 import { ConfigManager } from '../src/config/ConfigManager.js';

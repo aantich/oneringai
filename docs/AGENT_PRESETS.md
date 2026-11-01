@@ -31,7 +31,7 @@ cost improvements from preset selection.
 ```typescript
 import {
   Agent, createAgentPreset, FileEvidenceStorage, TaskStatePluginNextGen,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 // A named AI connector must already exist. Identity and scope come from host auth.
 const scope = { ownerId: authenticatedUser.id, namespace: 'invoice-review' };

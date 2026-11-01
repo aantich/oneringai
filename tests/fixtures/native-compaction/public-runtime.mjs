@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-const esm = await import('@everworker/oneringai'), cjs = createRequire(import.meta.url)('@everworker/oneringai');
+const esm = await import('oneringai'), cjs = createRequire(import.meta.url)('oneringai');
 const results = [];
 for (const [format, lib, other] of [['esm', esm, cjs], ['cjs', cjs, esm]]) {
   let checks = 0;

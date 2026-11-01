@@ -1,49 +1,38 @@
 # Licensing
 
-This repository contains both open-source and proprietary components with different licenses.
+The OneRingAI library and the AMOS and Hosea application source are licensed
+under MIT, Copyright (c) 2025-2026 Anton Antic
+([anton.antich@gmail.com](mailto:anton.antich@gmail.com)).
 
-## Quick Summary
+| Component | License | Terms |
+| --- | --- | --- |
+| Core library (`src/`), examples, documentation, tests and root configuration | MIT | [Root LICENSE](LICENSE) |
+| AMOS (`apps/amos/`), including its examples and documentation | MIT | [AMOS LICENSE](apps/amos/LICENSE) |
+| Hosea (`apps/hosea/`), including its local UI and documentation | MIT | [Hosea LICENSE](apps/hosea/LICENSE) |
+| Other applications under `apps/` | Existing commercial terms unless a more specific license applies | [Application scope](apps/LICENSE), [notice](apps/NOTICE) |
 
-| Directory | License | Usage |
-|-----------|---------|-------|
-| `/src`, `/examples`, `/docs` | MIT | Free to use, modify, distribute |
-| `/apps` | Commercial | Proprietary, requires license |
+## AMOS and Hosea
 
-## Open Source Components (MIT License)
+Effective 2026-11-01, the owner expressly releases the AMOS and Hosea application
+source under MIT. The application-specific licenses override the parent app
+commercial terms for these two directories. MIT permits commercial use,
+modification, distribution and sublicensing subject to preserving its notices.
+Contributions to the library, AMOS and Hosea are welcome under MIT.
 
-The core `@everworker/oneringai` library and supporting files are licensed under the **MIT License**:
+The owner also authorized moving the UI source previously maintained in
+`Integrail/react-ui` directly into Hosea under MIT. Its original commit and
+migration boundary are recorded in [the local UI provenance](apps/hosea/src/ui/README.md).
+Hosea no longer requires that separately licensed package or acceptance of the
+former commercial agreement. Other app licenses are not changed by this release.
 
-- `src/` - Core library source code
-- `examples/` - Usage examples
-- `docs/` - Documentation
-- `tests/` - Test suite
-- Root configuration files
+## Third-party components
 
-**You are free to:**
-- Use the library commercially
-- Modify and distribute
-- Include in proprietary software
-- Sublicense
+Dependencies retain their own license, copyright and attribution requirements.
+The MIT notices above apply to repository-owned source and do not relicense
+third-party code, provider services, platform SDKs or vendor trademarks. Preserve
+third-party notices when packaging applications.
 
-See [LICENSE](./LICENSE) for the full MIT License text.
+## Contact
 
-## Proprietary Components (Commercial License)
-
-The applications in the `apps/` directory are **proprietary software**:
-
-- `apps/hosea/` - Hosea application
-- `apps/amos/` - Amos application
-
-These require a commercial license from Everworker AI. See [apps/LICENSE](./apps/LICENSE) for terms.
-
-**For licensing inquiries:** anton@everworker.ai
-
-## Contributing
-
-Contributions to the open-source components (`src/`, `examples/`, `docs/`) are welcome under the MIT License.
-
-We do not accept contributions to the `apps/` directory.
-
-## Third-Party Dependencies
-
-This project uses various open-source dependencies. Each dependency is licensed under its own terms. See `package.json` and `node_modules/*/LICENSE` for details.
+Maintainer and copyright holder: **Anton Antic**.
+Licensing and project contact: **anton.antich@gmail.com**.

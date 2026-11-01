@@ -1,6 +1,6 @@
 /** Build first. Offline by default. --live=openai|anthropic|google makes billable calls. */
 import { pathToFileURL } from 'node:url';
-import { Agent, Connector, ModelTask, StreamEventType } from '@everworker/oneringai';
+import { Agent, Connector, ModelTask, StreamEventType } from 'oneringai';
 import { liveRoutingModels, offlineRoutingConnector } from './model-routing/fixture.js';
 
 export async function demonstrateRouting(live?: keyof typeof liveRoutingModels): Promise<void> {

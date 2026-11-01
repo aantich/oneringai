@@ -1,5 +1,5 @@
-import { createRoutineRunner } from '@everworker/oneringai';
-import type { Agent, RoutineDefinition, ExecutionBinding, RoutineContinuation, RoutineRunResult } from '@everworker/oneringai';
+import { createRoutineRunner } from 'oneringai';
+import type { Agent, RoutineDefinition, ExecutionBinding, RoutineContinuation, RoutineRunResult } from 'oneringai';
 export async function verified(agent: Agent, definition: RoutineDefinition, execution: ExecutionBinding): Promise<RoutineRunResult> {
   const runner = createRoutineRunner({ verify: observation => observation.phase === 'task'
     ? { kind: 'verified' } : { kind: 'waiting', reason: 'Host check' } });

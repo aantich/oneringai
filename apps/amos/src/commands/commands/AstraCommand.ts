@@ -10,7 +10,7 @@ import {
   getModelInfo,
   type InputItem,
   type ResponsesServerEvent,
-} from '@everworker/oneringai';
+} from 'oneringai';
 import { BaseCommand } from '../BaseCommand.js';
 import type {
   AstraReasoningEffort,

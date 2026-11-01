@@ -9,11 +9,8 @@ export default defineConfig({
   build: {
     outDir: resolve(__dirname, 'dist/renderer'),
     emptyOutDir: true,
-    rollupOptions: {
-      // Optional peer deps from @everworker/react-ui — loaded via dynamic import()
-      // and may not be installed. Externalize so Rollup doesn't fail on them.
-      external: ['mermaid', 'markmap-lib', 'markmap-view', 'react-vega', 'vega-lite'],
-    },
+    // UI dependencies are now declared by Hosea. Bundle dynamic chart imports
+    // into browser-loadable chunks rather than leaving unresolved bare imports.
   },
   server: {
     port: 5173,
@@ -24,7 +21,7 @@ export default defineConfig({
       '@': resolve(__dirname, 'src/renderer'),
     },
   },
-  // Pre-bundle optional peer deps from @everworker/react-ui so Vite can
+  // Pre-bundle optional peer deps from the local UI so Vite can
   // resolve their dynamic imports (import("mermaid") etc.) in dev mode.
   optimizeDeps: {
     include: ['mermaid', 'markmap-lib', 'markmap-view', 'react-vega', 'vega-lite'],

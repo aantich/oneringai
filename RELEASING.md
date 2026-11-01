@@ -1,4 +1,4 @@
-# Releasing @everworker/oneringai
+# Releasing oneringai
 
 This document describes how to release new versions of the package to npm.
 
@@ -82,10 +82,10 @@ Then publishes to npm registry.
 
 ```bash
 # Check npm
-npm view @everworker/oneringai
+npm view oneringai
 
 # Check install works
-npm install @everworker/oneringai
+npm install oneringai
 ```
 
 ## Quick Reference
@@ -98,15 +98,15 @@ npm run release:patch
 npm publish
 
 # Verify
-npm view @everworker/oneringai version
+npm view oneringai version
 ```
 
 ## Package Info
 
 | Field | Value |
 |-------|-------|
-| **Package** | `@everworker/oneringai` |
-| **npm** | https://www.npmjs.com/package/@everworker/oneringai |
+| **Package** | `oneringai` |
+| **npm** | https://www.npmjs.com/package/oneringai |
 | **GitHub** | https://github.com/aantich/oneringai |
 | **Registry** | https://registry.npmjs.org/ |
 

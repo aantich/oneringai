@@ -1,14 +1,14 @@
 # Endpoint capability companions
 
 C9-A adds pure `getRealtimeModelCapabilities(query)` and
-`getTranscriptionCapabilities(query)` on root and `@everworker/oneringai/shared`.
+`getTranscriptionCapabilities(query)` on root and `oneringai/shared`.
 They do no network IO and import no provider SDK or Node runtime in browser bundles.
 They do not replace model/STT registries, infer vendor from model text or change
 legacy Realtime validation, settings, registry objects or STT streaming behavior.
 
 ```typescript
 import { Vendor, getRealtimeModelCapabilities, getTranscriptionCapabilities }
-  from '@everworker/oneringai/shared';
+  from 'oneringai/shared';
 const voice = getRealtimeModelCapabilities({
   vendor: Vendor.OpenAI, model: 'gpt-realtime-2', transport: 'webrtc',
 });

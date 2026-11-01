@@ -1,5 +1,5 @@
-import { Agent, createAgentPreset, InMemoryEvidenceStorage, BasePluginNextGen } from '@everworker/oneringai';
-import type { AgentPresetName, AgentPresetConfig, AgentCapabilityInspection, AgentConfig, ITextProvider, ModelCapabilities, IContextStorage, EvidenceScope, SerializedContextState } from '@everworker/oneringai';
+import { Agent, createAgentPreset, InMemoryEvidenceStorage, BasePluginNextGen } from 'oneringai';
+import type { AgentPresetName, AgentPresetConfig, AgentCapabilityInspection, AgentConfig, ITextProvider, ModelCapabilities, IContextStorage, EvidenceScope, SerializedContextState } from 'oneringai';
 const name: AgentPresetName = 'workflow';
 const scope = { ownerId: 'host-user', namespace: 'workflow' };
 export const supplied: AgentPresetConfig = { connector: 'main', model: 'gpt-4o-mini', userId: scope.ownerId,

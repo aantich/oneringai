@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage } from '@everworker/oneringai/agent-runtime';
-import type { RuntimeSessionReference } from '@everworker/oneringai/agent-runtime';
+import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage } from 'oneringai/agent-runtime';
+import type { RuntimeSessionReference } from 'oneringai/agent-runtime';
 import { readRemote, recoveryFixture } from './agent-runtime/recovery-fixture.js';
 
 const [mode, directory, scenario] = process.argv.slice(2);

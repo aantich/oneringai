@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url), path = require.resolve('@everworker/oneringai'), esm = await import('@everworker/oneringai');
+const require = createRequire(import.meta.url), path = require.resolve('oneringai'), esm = await import('oneringai');
 const copies = [esm, require(path), await import(new URL('../../../dist/index.js?remote-copy', import.meta.url))]; let checks = 0, sequence = 0;
 for (const root of copies) for (const wire of copies) {
   const name = `remote-public-${sequence++}`, provider = { name: 'offline', capabilities: { text: true }, getModelCapabilities: () => ({ supportsTools: true, supportsJSON: true, supportsJSONSchema: true, maxTokens: 8000, maxOutputTokens: 128 }) };

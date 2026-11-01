@@ -1,7 +1,7 @@
 /** Additive Stage 02 consumer, compiled against the built public package. */
-import { ToolManager } from '@everworker/oneringai';
-import type { ToolFunction, IToolExecutionPipeline, IToolExecutionPlugin, ToolExecutionOutcome, ToolExecutionReport } from '@everworker/oneringai';
-import type { ToolExecutionOptions } from '@everworker/oneringai/types';
+import { ToolManager } from 'oneringai';
+import type { ToolFunction, IToolExecutionPipeline, IToolExecutionPlugin, ToolExecutionOutcome, ToolExecutionReport } from 'oneringai';
+import type { ToolExecutionOptions } from 'oneringai/types';
 
 // Existing third-party two-argument pipeline implementations remain assignable.
 export class LegacyPipeline implements IToolExecutionPipeline {

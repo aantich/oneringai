@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Form, Badge, Spinner } from 'react-bootstrap';
 import { Plus, Search, Grid, List, Copy, Trash2, Edit, Tag, Clock } from 'lucide-react';
 import { useNavigation } from '../hooks/useNavigation';
-import type { RoutineDefinition } from '@everworker/oneringai';
+import type { RoutineDefinition } from 'oneringai';
 
 type ViewMode = 'card' | 'list';
 type SortBy = 'name' | 'updatedAt';

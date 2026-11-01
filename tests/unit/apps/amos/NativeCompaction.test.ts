@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Connector, Vendor } from '@everworker/oneringai';
+import { Connector, Vendor } from 'oneringai';
 import { createNativeFixture } from '../../../../examples/native-compaction/fixture.js';
 import { AgentRunner } from '../../../../apps/amos/src/agent/AgentRunner.js';
 import { ConfigManager } from '../../../../apps/amos/src/config/ConfigManager.js';
@@ -86,8 +86,8 @@ describe('AMOS second-review native cancellation', () => {
     const f = await setup(true); await f.invoke(['policy', 'off', 'native', 'manual']);
     for (let i = 0; i < 5; i++) await f.runner.run(`Historical ${i}. ` + 'Progress detail. '.repeat(80));
     expect((await f.invoke(['compact', 'history'])).success).toBe(true);
-    const agent = (f.runner as unknown as { agent: import('@everworker/oneringai').Agent }).agent;
-    const storage = agent.context.getPlugin<import('@everworker/oneringai').EvidencePluginNextGen>('evidence')!.storage;
+    const agent = (f.runner as unknown as { agent: import('oneringai').Agent }).agent;
+    const storage = agent.context.getPlugin<import('oneringai').EvidencePluginNextGen>('evidence')!.storage;
     let entered!: () => void, release!: () => void;
     const ready = new Promise<void>(resolve => { entered = resolve; }), pending = new Promise<void>(resolve => { release = resolve; });
     vi.spyOn(storage, 'readRecord').mockImplementationOnce(async () => { entered(); await pending; return null; });
@@ -107,10 +107,10 @@ describe('AMOS third-review manual preservation', () => {
   it('runs the host preservation hook once through the existing command and checkpoints the note', async () => {
     const f = await setup(true); await f.invoke(['policy', 'off', 'native', 'manual']);
     for (let i = 0; i < 5; i++) await f.runner.run(`Historical ${i}. ` + 'Progress detail. '.repeat(80));
-    const agent = (f.runner as unknown as { agent: import('@everworker/oneringai').Agent }).agent;
+    const agent = (f.runner as unknown as { agent: import('oneringai').Agent }).agent;
     let hooks = 0;
     agent.setLifecycleHooks({ beforeCompaction: async () => {
-      hooks++; agent.context.getPlugin<import('@everworker/oneringai').InContextMemoryPluginNextGen>('in_context_memory')!
+      hooks++; agent.context.getPlugin<import('oneringai').InContextMemoryPluginNextGen>('in_context_memory')!
         .set('preserved', 'Confirmed host note', 'AMOS_MANUAL_37', 'critical');
     } });
     const result = await f.invoke(['compact', 'history']);

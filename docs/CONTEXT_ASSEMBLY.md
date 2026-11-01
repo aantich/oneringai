@@ -18,7 +18,7 @@ view over sources, not a new memory backend, model router or retrieval service.
 import {
   AgentContextNextGen, createInContextMemoryContributor,
   type InContextMemoryPluginNextGen,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 const context = AgentContextNextGen.create({
   model: 'gpt-4o-mini',

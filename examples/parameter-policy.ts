@@ -1,7 +1,7 @@
 /** Offline actual Responses request decisions. Fetch is replaced; no keys or network are used. */
 import assert from 'node:assert/strict';
-import { Agent, Connector, Vendor, assessModelParameters } from '@everworker/oneringai';
-import type { ModelParameterDecision } from '@everworker/oneringai';
+import { Agent, Connector, Vendor, assessModelParameters } from 'oneringai';
+import type { ModelParameterDecision } from 'oneringai';
 const originalFetch = globalThis.fetch, bodies: Array<Record<string, any>> = [], decisions: ModelParameterDecision[] = [];
 globalThis.fetch = async (input, init) => {
   const body = input instanceof Request ? await input.clone().json() : JSON.parse(String(init?.body)); bodies.push(body);

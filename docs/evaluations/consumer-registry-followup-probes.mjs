@@ -6,7 +6,7 @@ import { writeFile } from 'node:fs/promises';
 // Uses the built public package and source provider internals deliberately.
 // No .env reads. All provider transport is replaced; network is forbidden.
 const require = createRequire(new URL('../../package.json', import.meta.url));
-const shared = require('@everworker/oneringai/shared');
+const shared = require('oneringai/shared');
 const { STT_MODEL_REGISTRY } = await import('../../src/domain/entities/STTModel.ts');
 const { OpenAITextProvider } = await import('../../src/infrastructure/providers/openai/OpenAITextProvider.ts');
 const observations = [];

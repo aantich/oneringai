@@ -12,7 +12,7 @@ Create named connectors using the normal host credential and account scope. The
 following assumes `openai-main` and `openai-helper` have already been registered:
 
 ```typescript
-import { Agent, ModelTask } from '@everworker/oneringai';
+import { Agent, ModelTask } from 'oneringai';
 
 const agent = Agent.create({
   connector: 'openai-main',

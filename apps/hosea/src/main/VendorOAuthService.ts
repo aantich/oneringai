@@ -14,7 +14,7 @@
  */
 
 import { BrowserWindow, shell } from 'electron';
-import { Connector } from '@everworker/oneringai';
+import { Connector } from 'oneringai';
 import { OAuthCallbackServer } from './OAuthCallbackServer.js';
 import { OAuthCallbackServerHttps } from './OAuthCallbackServerHttps.js';
 

@@ -1,5 +1,5 @@
 /**
- * @everworker/oneringai — memory layer.
+ * oneringai — memory layer.
  *
  * Self-contained knowledge store. Entities are pure identity; facts carry all
  * knowledge (atomic triples + long-form documents including canonical profiles).

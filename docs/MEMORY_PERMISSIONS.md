@@ -224,7 +224,7 @@ A *principal* is an opaque canonical token identifying an access identity:
 | `service:<name>` | `principalService(name)` | A non-human service identity |
 | `world` | `PRINCIPAL_WORLD` | Everyone (the broadest read token) |
 
-All are exported from `@everworker/oneringai`. `parsePrincipal(token)` splits a token into `{kind, id}`; an unrecognized prefix parses as `kind: 'unknown'` — **never** `world`, so a malformed or future-prefixed token is never silently treated as public.
+All are exported from `oneringai`. `parsePrincipal(token)` splits a token into `{kind, id}`; an unrecognized prefix parses as `kind: 'unknown'` — **never** `world`, so a malformed or future-prefixed token is never silently treated as public.
 
 ### The `acl` field
 
@@ -240,7 +240,7 @@ interface ACLEntry {
 Example — a user-private fact that a named participant can also read:
 
 ```ts
-import { principalEntity } from '@everworker/oneringai';
+import { principalEntity } from 'oneringai';
 
 await mem.addFact(
   {
@@ -274,7 +274,7 @@ writePrincipals: string[]   // every principal that may write  (⊆ readPrincipa
 A caller opts into the principal model by passing `ScopeFilter.principals`. The **presence** of the field (any length, including empty) is authoritative:
 
 ```ts
-import { principalUser, principalGroup, principalEntity, PRINCIPAL_WORLD } from '@everworker/oneringai';
+import { principalUser, principalGroup, principalEntity, PRINCIPAL_WORLD } from 'oneringai';
 
 const scope = {
   principals: [
@@ -343,7 +343,7 @@ import {
   materializePrincipals, fromLibraryPermissions, fromNimbleAudit,
   readFilterForPrincipals, writeFilterForPrincipals,
   principalUser, principalEntity, parsePrincipal,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 // Project your collection's native shape → the two arrays, store them, and
 // query with readFilterForPrincipals(callerTokens):
@@ -479,7 +479,7 @@ If you're writing a custom `IMemoryStore` adapter, your contract for permissions
 
 4. Recommended indexes (Mongo example): compound on `(ownerId, groupId)` covers the owner shortcut + group match branches. Single-field on `permissions.world` and `permissions.group` if you frequently query with filters that depend on those levels.
 
-5. **If you support principal mode**, materialize the token arrays on every write by calling `principalsForLibraryRecord(record)` (from `@everworker/oneringai`) at the storage boundary, storing the returned `readPrincipals` / `writePrincipals` on the row — and recompute them whenever a write touches `acl` / `permissions` / `ownerId` / `groupId` (use `patchTouchesAccessFields(patch)` to gate partial updates). `scopeToFilter` already emits the `readPrincipals: { $in }` branch when `scope.principals` is present, and `canAccess` already honours it; the only adapter responsibility is keeping the materialized arrays current. Optionally implement `rewriteEntityPrincipal(from, to, scope)` so entity merges rewrite `entity:` grants (skipped silently if you don't). Both built-in adapters do all of this — read `InMemoryAdapter` for the minimal reference.
+5. **If you support principal mode**, materialize the token arrays on every write by calling `principalsForLibraryRecord(record)` (from `oneringai`) at the storage boundary, storing the returned `readPrincipals` / `writePrincipals` on the row — and recompute them whenever a write touches `acl` / `permissions` / `ownerId` / `groupId` (use `patchTouchesAccessFields(patch)` to gate partial updates). `scopeToFilter` already emits the `readPrincipals: { $in }` branch when `scope.principals` is present, and `canAccess` already honours it; the only adapter responsibility is keeping the materialized arrays current. Optionally implement `rewriteEntityPrincipal(from, to, scope)` so entity merges rewrite `entity:` grants (skipped silently if you don't). Both built-in adapters do all of this — read `InMemoryAdapter` for the minimal reference.
 
 ---
 

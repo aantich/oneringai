@@ -7,7 +7,7 @@
  * This module attempts multiple repair strategies before giving up.
  *
  * Usage:
- *   import { parseJsonPermissive } from '@everworker/oneringai';
+ *   import { parseJsonPermissive } from 'oneringai';
  *   const obj = parseJsonPermissive(llmResponseText);
  *
  * Strategies, tried in order:

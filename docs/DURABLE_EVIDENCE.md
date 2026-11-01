@@ -26,8 +26,8 @@ Use an existing named connector for model authentication. Evidence stores do not
 receive connector credentials or an executable connector registry.
 
 ```typescript
-import { Agent, FileEvidenceStorage } from '@everworker/oneringai';
-import type { ToolFunction } from '@everworker/oneringai';
+import { Agent, FileEvidenceStorage } from 'oneringai';
+import type { ToolFunction } from 'oneringai';
 
 const storage = new FileEvidenceStorage({
   directory: './data/evidence',
@@ -279,7 +279,7 @@ it does not authorize projection delivery or change the cancellation outcome.
 After repairing storage, persist the retained result without executing the tool:
 
 ```typescript
-import { ToolEvidenceMiddleware } from '@everworker/oneringai';
+import { ToolEvidenceMiddleware } from 'oneringai';
 // report is the retained executeWithOutcome() report; tool/args/context are host-owned.
 const recovery = await new ToolEvidenceMiddleware({ storage }).record(
   search, {}, { userId: 'user-123' }, report.outcome, { value: report.result },

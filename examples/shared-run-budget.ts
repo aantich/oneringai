@@ -1,7 +1,7 @@
 /** Deterministic offline reservation, exhaustion and unknown-price demonstration. Build first. */
 import { pathToFileURL } from 'node:url';
-import { ModelTask, ModelBudgetExceededError } from '@everworker/oneringai';
-import type { ModelCallDescriptor } from '@everworker/oneringai';
+import { ModelTask, ModelBudgetExceededError } from 'oneringai';
+import type { ModelCallDescriptor } from 'oneringai';
 
 export async function demonstrateSharedBudget(): Promise<void> {
   const task = new ModelTask({ limits: { maxCalls: 3, maxTokens: 100 } });

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { AgentRegistry, Connector, Vendor, FileContextStorage, FileEvidenceStorage, type ToolFunction, type EvidenceScope, type TaskStateSnapshot, BasePluginNextGen, type Agent } from '@everworker/oneringai';
+import { AgentRegistry, Connector, Vendor, FileContextStorage, FileEvidenceStorage, type ToolFunction, type EvidenceScope, type TaskStateSnapshot, BasePluginNextGen, type Agent } from 'oneringai';
 import { ScriptedLoopProvider } from '../../../../examples/agent-loop/scripted-provider.js';
 import { AmosApp } from '../../../../apps/amos/src/app.js';
 import { AgentRunner } from '../../../../apps/amos/src/agent/AgentRunner.js';

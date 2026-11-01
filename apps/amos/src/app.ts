@@ -5,8 +5,8 @@
  */
 
 import { join } from 'node:path';
-import type { ToolFunction, ApprovalDecision } from '@everworker/oneringai';
-import { ProviderMisalignmentError, defaultDescribeCall } from '@everworker/oneringai';
+import type { ToolFunction, ApprovalDecision } from 'oneringai';
+import { ProviderMisalignmentError, defaultDescribeCall } from 'oneringai';
 import { ConfigManager } from './config/ConfigManager.js';
 import type { AmosConfig, IAmosApp, IConnectorManager, IToolLoader, IAgentRunner, IPromptManager, ICommand, ToolApprovalContext } from './config/types.js';
 import { ConnectorManager } from './connectors/ConnectorManager.js';

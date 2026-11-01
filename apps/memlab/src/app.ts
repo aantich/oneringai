@@ -15,7 +15,7 @@ import {
   type ScopeFilter,
   type NewEntity,
   type NewFact,
-} from '@everworker/oneringai';
+} from 'oneringai';
 import { detectAndRegister, type VendorEntry } from './env.js';
 import { UI } from './ui.js';
 import { runChat } from './chat.js';

@@ -32,7 +32,7 @@ Each plugin is a CommonJS module that exports a `HoseaPlugin` object:
 ```typescript
 // hosea-plugin-contract.d.ts (published as @everworker/hosea-plugin-types)
 
-import type { ToolFunction } from '@everworker/oneringai';
+import type { ToolFunction } from 'oneringai';
 
 export interface HoseaPlugin {
   /** Unique plugin identifier (kebab-case, e.g. "my-weather-tools") */

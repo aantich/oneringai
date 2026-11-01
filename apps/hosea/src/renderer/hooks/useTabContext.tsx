@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useCallback, createContext, useContext, useEffect, useRef } from 'react';
-import type { IChatMessage, IToolCallInfo } from '@everworker/react-ui';
+import type { IChatMessage, IToolCallInfo } from '../../ui/index.js';
 import type { Plan, StreamChunk, DynamicUIContent, ContextEntryForUI } from '../../preload/index';
 
 // Sidebar tab type

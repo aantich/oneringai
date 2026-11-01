@@ -1,4 +1,4 @@
-import type { AgentLoopDiagnostics } from '@everworker/oneringai';
+import type { AgentLoopDiagnostics } from 'oneringai';
 
 /** Human-readable policy state, kept separate from assistant prose. */
 export function describeLoopDiagnostics(value: AgentLoopDiagnostics): string {

@@ -29,7 +29,7 @@ or roll over separately in application code before every managed call.
 import {
   Agent, FileEvidenceStorage, ObservationMaskingStrategy,
   StructuredSummaryStrategy,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 // Register named main/compactor connectors separately. Scope comes from the host.
 const storage = new FileEvidenceStorage({

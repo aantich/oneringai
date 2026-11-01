@@ -1,8 +1,8 @@
 /** Child fixture: public exports only. Producer intentionally exits without cleanup. */
-import { Connector, Vendor } from '@everworker/oneringai';
-import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage } from '@everworker/oneringai/agent-runtime';
-import { OpenAIManagedDriver } from '@everworker/oneringai/agent-runtime/openai-managed';
-import { ClaudeManagedDriver } from '@everworker/oneringai/agent-runtime/claude-managed';
+import { Connector, Vendor } from 'oneringai';
+import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage } from 'oneringai/agent-runtime';
+import { OpenAIManagedDriver } from 'oneringai/agent-runtime/openai-managed';
+import { ClaudeManagedDriver } from 'oneringai/agent-runtime/claude-managed';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 

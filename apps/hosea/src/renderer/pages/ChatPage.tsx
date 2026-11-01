@@ -15,7 +15,7 @@ import {
   ToolApprovalBanner,
   type IChatMessage,
   type IToolApprovalDecision,
-} from '@everworker/react-ui';
+} from '../../ui/index.js';
 import { SidebarPanel, SIDEBAR_PANEL_DEFAULT_WIDTH } from '../components/SidebarPanel';
 import { PlanDisplay } from '../components/plan';
 import { TabBar, NewTabModal } from '../components/tabs';

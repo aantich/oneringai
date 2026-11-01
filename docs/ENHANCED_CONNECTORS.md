@@ -24,7 +24,7 @@ const agent = Agent.create({
 agent.tools.registerConnectorTools('microsoft-main', selected, { accountId: 'work' });
 ```
 
-Import APIs/types from `@everworker/oneringai`. The factory returns tools; registration
+Import APIs/types from `oneringai`. The factory returns tools; registration
 and the Agent's host authorization remain explicit. Use actual returned names in the
 identity filter, not an empty filter (which is not deny-all). Source-tagged registration
 preserves connector/account metadata. Keep one enhanced profile per connector/account.

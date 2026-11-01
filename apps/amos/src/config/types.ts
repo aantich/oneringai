@@ -28,7 +28,7 @@ import type {
   ContextCompactionStrategyConfig,
   ContextCompactionReport,
   ContextCompactionTarget,
-} from '@everworker/oneringai';
+} from 'oneringai';
 import type { ExternalToolManager } from '../tools/ExternalToolManager.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -577,7 +577,7 @@ export interface ExternalToolsConfig {
 export interface AgentResponse {
   routing?: ModelRoutingDiagnostics;
   loop?: AgentLoopDiagnostics;
-  toolOutcomes?: import('@everworker/oneringai').ToolExecutionOutcome[];
+  toolOutcomes?: import('oneringai').ToolExecutionOutcome[];
   text: string;
   mode: 'interactive' | 'planning' | 'executing';
   usage?: TokenUsage;

@@ -1,5 +1,5 @@
-import { Connector, ContentType, MessageRole, StreamEventType, Vendor } from '@everworker/oneringai';
-import type { ITextProvider, TextGenerateOptions, LLMResponse } from '@everworker/oneringai';
+import { Connector, ContentType, MessageRole, StreamEventType, Vendor } from 'oneringai';
+import type { ITextProvider, TextGenerateOptions, LLMResponse } from 'oneringai';
 
 /** Synthetic provider for orchestration demonstrations, with honest synthetic usage. */
 export function offlineRoutingConnector(name = 'routing-example') {

@@ -1,3 +1,15 @@
+SCOPE EXCEPTIONS — 2026-11-01
+
+The applications in apps/amos/ and apps/hosea/, including their source code,
+examples and documentation, are excluded from this commercial license. They
+are Copyright (c) 2025-2026 Anton Antic <anton.antich@gmail.com> and are
+distributed under their respective MIT LICENSE files. Those application-specific
+MIT licenses take precedence over all terms below. Separately licensed
+third-party dependencies retain their own terms.
+
+The commercial license below applies only to other applications in apps/ that
+do not provide a different application-specific license.
+
 EVERWORKER COMMERCIAL LICENSE
 Version 2.0, February 2026
 
@@ -5,7 +17,7 @@ Copyright (c) 2025-2026 Anton Antic / Everworker AI
 All Rights Reserved.
 
 NOTICE: This software and associated documentation files (the "Software")
-contained in this directory and its subdirectories are proprietary and
+within the scope defined above are proprietary and
 confidential. They are NOT licensed under the MIT License that covers
 the parent repository's core library.
 
@@ -351,7 +363,7 @@ If you do not agree, do not install or use the Software.
 
     g) NOTICES: All notices under this Agreement shall be in writing
        and sent to the addresses specified by each party. Notices to
-       Everworker AI shall be sent to: anton@everworker.ai
+       Everworker AI shall be sent to: anton.antich@gmail.com
 
     h) INDEPENDENT CONTRACTORS: The parties are independent contractors.
        Nothing in this Agreement creates a partnership, joint venture,
@@ -360,7 +372,7 @@ If you do not agree, do not install or use the Software.
 
 15. CONTACT
 
-    For licensing inquiries: anton@everworker.ai
+    For licensing inquiries: anton.antich@gmail.com
     Website: https://everworker.ai
 
 ---

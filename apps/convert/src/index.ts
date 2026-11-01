@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-import { DocumentReader } from '@everworker/oneringai';
+import { DocumentReader } from 'oneringai';
 import type {
   DocumentReadOptions,
   DocumentResult,
   DocumentTextPiece,
   DocumentImagePiece,
-} from '@everworker/oneringai';
+} from 'oneringai';
 import path from 'node:path';
 
 // ── CLI Argument Parsing ────────────────────────────────────────────

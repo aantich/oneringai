@@ -1,6 +1,6 @@
 /** Create the agent once, bind all five harnesses; actual adapters with offline transports. */
-import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage } from '@everworker/oneringai/agent-runtime';
-import { Connector } from '@everworker/oneringai';
+import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage } from 'oneringai/agent-runtime';
+import { Connector } from 'oneringai';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';

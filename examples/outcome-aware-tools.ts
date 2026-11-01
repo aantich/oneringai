@@ -1,7 +1,7 @@
 /** C1 offline example. Build first; no credentials or external services are used. */
 import { pathToFileURL } from 'node:url';
-import { createOutcomeTool, ToolManager } from '@everworker/oneringai';
-import type { ToolExecutionReport } from '@everworker/oneringai';
+import { createOutcomeTool, ToolManager } from 'oneringai';
+import type { ToolExecutionReport } from 'oneringai';
 
 export async function demonstrateOutcomeTools(): Promise<ToolExecutionReport[]> {
   const manager = new ToolManager();

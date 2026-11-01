@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document proposes a comprehensive architecture for extending `@everworker/oneringai` to support multiple modalities beyond text generation: **Image Generation**, **Video Generation**, **Text-to-Speech (TTS)**, and **Speech-to-Text (STT)**.
+This document proposes a comprehensive architecture for extending `oneringai` to support multiple modalities beyond text generation: **Image Generation**, **Video Generation**, **Text-to-Speech (TTS)**, and **Speech-to-Text (STT)**.
 
 The design follows Clean Architecture principles, maintains backward compatibility, and leverages existing patterns in the codebase.
 
@@ -2852,7 +2852,7 @@ src/
 ### Multi-Modal Pipeline
 
 ```typescript
-import { Connector, Agent, ImageGenerator, TextToSpeech, SpeechToText, Vendor } from '@everworker/oneringai';
+import { Connector, Agent, ImageGenerator, TextToSpeech, SpeechToText, Vendor } from 'oneringai';
 
 // Single connector for all capabilities
 Connector.create({

@@ -5,7 +5,7 @@
  * Commands are registered with names and aliases.
  */
 
-import { ProviderMisalignmentError } from '@everworker/oneringai';
+import { ProviderMisalignmentError } from 'oneringai';
 import type { CommandContext, CommandResult, ICommand, IAmosApp } from '../config/types.js';
 
 export class CommandProcessor {

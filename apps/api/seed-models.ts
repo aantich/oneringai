@@ -8,7 +8,7 @@
  * Or pipe directly:
  *   npx tsx seed-models.ts | wrangler d1 execute oneringai-db --local --file=-
  */
-import { MODEL_REGISTRY } from '@everworker/oneringai/shared';
+import { MODEL_REGISTRY } from 'oneringai/shared';
 
 const lines: string[] = [];
 

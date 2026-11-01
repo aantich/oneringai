@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { DocumentReader } from '@everworker/oneringai';
+import { DocumentReader } from 'oneringai';
 import path from 'path';
 
 function parseArgs(argv) {

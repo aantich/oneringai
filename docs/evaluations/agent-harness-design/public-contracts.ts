@@ -1,9 +1,9 @@
 /** Compile against the built public package; no runtime or native work is executed. */
-import type { AgentRuntime, RuntimeSessionOptions, RuntimeSessionReference, RuntimeFileUpload, RuntimeArtifactDownload, AgentRunStatus, DriverSession, AgentDriver, RuntimeInspectionDetails } from '@everworker/oneringai/agent-runtime';
-import type { CodexSdkDriverOptions } from '@everworker/oneringai/agent-runtime/codex';
-import type { ClaudeAgentSdkDriverOptions } from '@everworker/oneringai/agent-runtime/claude';
-import type { OpenAIManagedDriverOptions } from '@everworker/oneringai/agent-runtime/openai-managed';
-import type { ClaudeManagedDriverOptions } from '@everworker/oneringai/agent-runtime/claude-managed';
+import type { AgentRuntime, RuntimeSessionOptions, RuntimeSessionReference, RuntimeFileUpload, RuntimeArtifactDownload, AgentRunStatus, DriverSession, AgentDriver, RuntimeInspectionDetails } from 'oneringai/agent-runtime';
+import type { CodexSdkDriverOptions } from 'oneringai/agent-runtime/codex';
+import type { ClaudeAgentSdkDriverOptions } from 'oneringai/agent-runtime/claude';
+import type { OpenAIManagedDriverOptions } from 'oneringai/agent-runtime/openai-managed';
+import type { ClaudeManagedDriverOptions } from 'oneringai/agent-runtime/claude-managed';
 
 export async function publicContract(runtime: AgentRuntime, options: RuntimeSessionOptions, reference: RuntimeSessionReference, upload: RuntimeFileUpload, download: RuntimeArtifactDownload) {
   const agent = runtime.createAgent({ id: 'logical', instructions: 'Keep the native loop.', tools: ['probe'] });

@@ -1,5 +1,5 @@
 /** Explicit bounded file transfer. Actual SDKs with mock HTTP; no credentials or native CLI. */
-import { Connector } from '@everworker/oneringai';
+import { Connector } from 'oneringai';
 import { mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
@@ -8,7 +8,7 @@ import { offlineHarness } from './agent-runtime/harness-fixtures.js';
 for (const driver of ['openai.agents.api', 'anthropic.managed.api'] as const) {
   const root = await mkdtemp(path.join(tmpdir(), 'onering-artifacts-')); const host = offlineHarness(driver, root);
   try {
-    await writeFile(path.join(root, 'input.txt'), 'ACK');
+    await writeFile(path.join(host.transferRoot, 'input.txt'), 'ACK');
     const session = await host.runtime.createAgent(host.definition).openSession(host.options);
     const result = await (await session.run('Generate the synthetic answer.')).result;
     if (result.status !== 'completed') throw new Error(JSON.stringify(result));

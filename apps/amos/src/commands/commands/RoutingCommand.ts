@@ -1,4 +1,4 @@
-import { getModelInfo } from '@everworker/oneringai';
+import { getModelInfo } from 'oneringai';
 import { BaseCommand } from '../BaseCommand.js';
 import { describeRouting } from '../../agent/routing.js';
 import type { AmosConfig, CommandContext, CommandResult } from '../../config/types.js';

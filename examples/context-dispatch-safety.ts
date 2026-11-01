@@ -3,7 +3,7 @@ import { strict as assert } from 'node:assert';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Agent, BasePluginNextGen, Connector, Vendor, ContentType, MessageRole, FileCorrelationStorage, StorageRegistry, SuspendSignal, type IContextStorage, type SerializedContextState, type WorkingMemoryPluginNextGen, type AgentConfig, type InputItem } from '@everworker/oneringai';
+import { Agent, BasePluginNextGen, Connector, Vendor, ContentType, MessageRole, FileCorrelationStorage, StorageRegistry, SuspendSignal, type IContextStorage, type SerializedContextState, type WorkingMemoryPluginNextGen, type AgentConfig, type InputItem } from 'oneringai';
 import { ScriptedLoopProvider, type ScriptedFrame } from './agent-loop/scripted-provider.js';
 
 class Records extends BasePluginNextGen {

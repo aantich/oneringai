@@ -5,7 +5,7 @@ import { writeFile } from 'node:fs/promises';
 // Build first. Root exports exercise Agent/routine/portable contracts; source
 // helpers deliberately inspect connector internals. No real network/model calls.
 const require = createRequire(new URL('../../package.json', import.meta.url));
-const lib = require('@everworker/oneringai');
+const lib = require('oneringai');
 const { microsoftFetch } = await import(new URL('../../src/tools/microsoft/types.ts', import.meta.url));
 const { createMicrosoftListFilesTool } = await import(new URL('../../src/tools/microsoft/listFiles.ts', import.meta.url));
 const { createGoogleListFilesTool } = await import(new URL('../../src/tools/google/listFiles.ts', import.meta.url));

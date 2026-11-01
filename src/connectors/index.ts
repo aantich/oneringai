@@ -2,7 +2,7 @@
  * Connectors - OAuth and authentication utilities
  *
  * Provides OAuth 2.0 infrastructure for authenticated API access.
- * Use Connector.create() from '@everworker/oneringai' for connector registration.
+ * Use Connector.create() from 'oneringai' for connector registration.
  *
  * Supports:
  * - OAuth 2.0 (Authorization Code + PKCE, Client Credentials, JWT Bearer)

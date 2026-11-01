@@ -198,7 +198,7 @@ import {
   ToolRegistry,
   ToolCatalogRegistry,
   listVendors,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 // The 50 configured auth templates.
 const templates = listVendors();

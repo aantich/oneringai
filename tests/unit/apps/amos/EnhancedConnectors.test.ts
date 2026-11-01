@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { Connector, ConnectorTools, ToolManager } from '@everworker/oneringai';
+import { Connector, ConnectorTools, ToolManager } from 'oneringai';
 import { describeToolOutcome } from '../../../../apps/amos/src/agent/toolOutcomes.js';
 afterEach(() => { vi.unstubAllGlobals(); Connector.clear(); });
 it('AMOS renders an actual selected-factory failure through its existing outcome adapter', async () => {

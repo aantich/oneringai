@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { AgentContextNextGen, ContentType, FileContextStorage, InMemoryEvidenceStorage, MessageRole, ToolCallState, ToolEvidenceMiddleware } from '@everworker/oneringai';
-import type { IEvidenceStorage, ToolFunction } from '@everworker/oneringai';
+import { AgentContextNextGen, ContentType, FileContextStorage, InMemoryEvidenceStorage, MessageRole, ToolCallState, ToolEvidenceMiddleware } from 'oneringai';
+import type { IEvidenceStorage, ToolFunction } from 'oneringai';
 
 const scope = { ownerId: 'example-user', namespace: 'recovery-demo' };
 const storage = new InMemoryEvidenceStorage({ scope });

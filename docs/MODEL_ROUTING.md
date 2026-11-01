@@ -26,7 +26,7 @@ from their vendor's registry. These variables refer to your own configured
 connector names, model IDs, tools and existing context configuration:
 
 ```typescript
-import { Agent, ModelTask } from '@everworker/oneringai';
+import { Agent, ModelTask } from 'oneringai';
 
 const agent = Agent.create({
   connector: primaryConnector,

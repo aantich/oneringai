@@ -42,11 +42,11 @@ interface RemoteManager {
   destroyed: boolean;
 }
 type SourceGuard = (tool: ToolFunction, context: ToolContext, effect: 'read' | 'write' | 'unknown') => void;
-const PROXY = Symbol.for('@everworker/oneringai/remote-proxy/v1');
-const INVOCATION = Symbol.for('@everworker/oneringai/remote-invocation/v1');
-const SOURCE = Symbol.for('@everworker/oneringai/remote-source-admission/v1');
-const OWNER = Symbol.for('@everworker/oneringai/remote-tool-owner/v1');
-const MANAGER = Symbol.for('@everworker/oneringai/remote-manager/v1');
+const PROXY = Symbol.for('oneringai/remote-proxy/v1');
+const INVOCATION = Symbol.for('oneringai/remote-invocation/v1');
+const SOURCE = Symbol.for('oneringai/remote-source-admission/v1');
+const OWNER = Symbol.for('oneringai/remote-tool-owner/v1');
+const MANAGER = Symbol.for('oneringai/remote-manager/v1');
 const agentGuards = new WeakMap<object, () => Error | undefined>();
 function own<T>(value: unknown, key: symbol): T | undefined {
   try { return value && typeof value === 'object' ? Object.getOwnPropertyDescriptor(value, key)?.value as T | undefined : undefined; }

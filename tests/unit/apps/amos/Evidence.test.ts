@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Agent, Connector, Vendor, ContentType, MessageRole, StreamEventType, FileEvidenceStorage, FileContextStorage, EvidencePluginNextGen, InMemoryEvidenceStorage } from '@everworker/oneringai';
-import type { ToolExecutionOutcome, ITextProvider } from '@everworker/oneringai';
+import { Agent, Connector, Vendor, ContentType, MessageRole, StreamEventType, FileEvidenceStorage, FileContextStorage, EvidencePluginNextGen, InMemoryEvidenceStorage } from 'oneringai';
+import type { ToolExecutionOutcome, ITextProvider } from 'oneringai';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

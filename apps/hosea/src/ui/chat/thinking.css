@@ -1,0 +1,93 @@
+/**
+ * ThinkingBlock Styles
+ *
+ * Collapsible display for LLM thinking/reasoning content.
+ * Override --rui-thinking-* variables for theming.
+ */
+
+.thinking-block {
+  --rui-thinking-bg: #f8f9fa;
+  --rui-thinking-border: #e5e7eb;
+  --rui-thinking-text: #4b5563;
+  --rui-thinking-header-text: #6b7280;
+  --rui-thinking-icon: #9ca3af;
+
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--rui-thinking-border);
+  border-radius: 0.5rem;
+  background-color: var(--rui-thinking-bg);
+  overflow: hidden;
+}
+
+.thinking-block--streaming {
+  border-color: #93c5fd;
+  background-color: #f0f7ff;
+}
+
+.thinking-block__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--rui-thinking-header-text);
+  transition: background-color 150ms ease;
+}
+.thinking-block__header:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.thinking-block__icon {
+  color: var(--rui-thinking-icon);
+  flex-shrink: 0;
+}
+
+.thinking-block--streaming .thinking-block__icon {
+  color: #3b82f6;
+  animation: rui-thinking-pulse 2s ease-in-out infinite;
+}
+
+.thinking-block__label {
+  font-weight: 500;
+  flex: 1;
+  text-align: left;
+}
+
+.thinking-block__chevron {
+  color: var(--rui-thinking-icon);
+  flex-shrink: 0;
+}
+
+/* Animated dots while streaming */
+.thinking-block__dots::after {
+  content: '';
+  animation: rui-dots 1.5s steps(4, end) infinite;
+}
+
+.thinking-block__content {
+  padding: 0 0.75rem 0.75rem;
+}
+
+.thinking-block__text {
+  font-family: 'SF Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--rui-thinking-text);
+  background-color: rgba(0, 0, 0, 0.03);
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+@keyframes rui-thinking-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

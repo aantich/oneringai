@@ -13,8 +13,8 @@ export default defineConfig({
   splitting: false,
   sourcemap: true,
   external: ['electron'],
-  // Bundle @everworker/oneringai into the output
-  noExternal: [/@everworker/],
+  // Bundle oneringai into the output
+  noExternal: ['oneringai'],
   platform: 'node',
   target: 'node18',
   // Handle dynamic requires

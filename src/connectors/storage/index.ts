@@ -9,7 +9,7 @@
  *   ConnectorConfigStore,
  *   FileConnectorStorage,
  *   MemoryConnectorStorage
- * } from '@everworker/oneringai';
+ * } from 'oneringai';
  *
  * // File-based storage
  * const storage = new FileConnectorStorage({ directory: './connectors' });

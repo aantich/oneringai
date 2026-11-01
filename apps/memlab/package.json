@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@everworker/oneringai": "file:../..",
+    "oneringai": "file:../..",
     "chalk": "^5.3.0",
     "dotenv": "^17.2.3"
   },

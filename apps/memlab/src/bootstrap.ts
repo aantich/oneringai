@@ -1,5 +1,5 @@
 /**
- * Env defaulting — runs BEFORE any `@everworker/oneringai` import so the
+ * Env defaulting — runs BEFORE any `oneringai` import so the
  * library's default logger picks up LOG_FILE at module init. Without this,
  * structured logs would garble the chat UI.
  *

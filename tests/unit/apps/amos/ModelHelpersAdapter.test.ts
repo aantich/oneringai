@@ -5,11 +5,11 @@ import { join } from 'node:path';
 import { AgentRunner } from '../../../../apps/amos/src/agent/AgentRunner.js';
 import { ConfigManager } from '../../../../apps/amos/src/config/ConfigManager.js';
 import { DEFAULT_CONFIG } from '../../../../apps/amos/src/config/types.js';
-import { Agent } from '@everworker/oneringai';
+import { Agent } from 'oneringai';
 
 const fake = vi.hoisted(() => ({ invokeHelper: vi.fn(), rolloverContext: vi.fn(), getModelUsage: vi.fn(),
   cancel: vi.fn(), destroy: vi.fn(), isRunning: () => false, hasPendingAsyncTools: vi.fn(() => false) }));
-vi.mock('@everworker/oneringai', async importActual => ({ ...await importActual<Record<string, unknown>>(),
+vi.mock('oneringai', async importActual => ({ ...await importActual<Record<string, unknown>>(),
   Agent: { create: vi.fn(() => fake) },
 }));
 const runners: AgentRunner[] = []; const directories: string[] = [];

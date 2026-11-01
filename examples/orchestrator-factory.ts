@@ -1,7 +1,7 @@
 /** Offline C6: actual root/worker requests, distinct authority and a shared operation ledger. */
 import assert from 'node:assert/strict';
-import { AgentRegistry, Connector, ContentType, MessageRole, ModelTask, Vendor, createOrchestratorWithFactory } from '@everworker/oneringai';
-import type { TextGenerateOptions, ITextProvider, ChildObservation } from '@everworker/oneringai';
+import { AgentRegistry, Connector, ContentType, MessageRole, ModelTask, Vendor, createOrchestratorWithFactory } from 'oneringai';
+import type { TextGenerateOptions, ITextProvider, ChildObservation } from 'oneringai';
 const requests: TextGenerateOptions[] = [], observations: ChildObservation[] = [];
 const provider: ITextProvider = { name: 'offline-factory', capabilities: { text: true, images: false, videos: false, audio: false },
   generate: async request => { requests.push(request); const text = request.model === 'root' ? 'continue' : 'LOCAL_CHILD_RESULT';

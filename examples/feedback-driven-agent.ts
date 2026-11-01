@@ -1,6 +1,6 @@
 /** Offline: build the package, then npm run example:feedback-agent. No keys/network. */
 import assert from 'node:assert/strict';
-import { Agent, Connector, Vendor, ModelTask } from '@everworker/oneringai';
+import { Agent, Connector, Vendor, ModelTask } from 'oneringai';
 import { ScriptedLoopProvider } from './agent-loop/scripted-provider.js';
 
 let reads = 0;

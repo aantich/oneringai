@@ -1,6 +1,6 @@
 /** Actual AMOS routine command with synthetic provider; no keys or network. */
 import assert from 'node:assert/strict';
-import { Connector } from '@everworker/oneringai';
+import { Connector } from 'oneringai';
 import { offlineRoutingConnector } from '../../../examples/model-routing/fixture.js';
 import { RoutineCommand } from '../src/commands/commands/RoutineCommand.js';
 import { DEFAULT_CONFIG } from '../src/config/types.js';

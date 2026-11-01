@@ -155,7 +155,7 @@ To create one:
 | Build command | `npm run dev` | `npm run build && npm run package` |
 | Output | Hot-reload dev server | `release/*.dmg/exe/AppImage` |
 
-**Note:** Everworker Desktop always uses the local `@everworker/oneringai` library, not the npm-published version.
+**Note:** Everworker Desktop always uses the local `oneringai` library, not the npm-published version.
 
 ## App Info
 
@@ -170,7 +170,7 @@ To create one:
 
 ### Critical: File Exclusions
 
-Everworker Desktop uses a local file dependency (`@everworker/oneringai: "file:../.."`). Without proper exclusions, electron-builder would include the **entire parent repository** (~9GB) including:
+Everworker Desktop uses a local file dependency (`oneringai: "file:../.."`). Without proper exclusions, electron-builder would include the **entire parent repository** (~9GB) including:
 - The `apps/` folder (recursive nightmare - hosea inside oneringai inside hosea)
 - Source files, tests, coverage reports
 - Documentation and examples
@@ -182,10 +182,10 @@ The `package.json` build config includes exclusions to only bundle the necessary
   "dist/**/*",
   "package.json",
   "node_modules/**/*",
-  "!node_modules/@everworker/oneringai/apps/**/*",
-  "!node_modules/@everworker/oneringai/src/**/*",
-  "!node_modules/@everworker/oneringai/tests/**/*",
-  "!node_modules/@everworker/oneringai/coverage/**/*",
+  "!node_modules/oneringai/apps/**/*",
+  "!node_modules/oneringai/src/**/*",
+  "!node_modules/oneringai/tests/**/*",
+  "!node_modules/oneringai/coverage/**/*",
   ...
 ]
 ```

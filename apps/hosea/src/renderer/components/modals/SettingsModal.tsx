@@ -153,7 +153,7 @@ export function SettingsModal({
               <p>Version {appVersion}</p>
               <hr />
               <p className="small text-muted">
-                Built with Electron, React, and @everworker/oneringai
+                Built with Electron, React, and oneringai
               </p>
               <Badge bg="info">OneRing AI</Badge>
             </div>

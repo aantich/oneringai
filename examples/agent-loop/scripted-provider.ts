@@ -1,5 +1,5 @@
-import { ContentType, MessageRole, StreamEventType } from '@everworker/oneringai';
-import type { ITextProvider, LLMResponse, TextGenerateOptions, StreamEvent } from '@everworker/oneringai';
+import { ContentType, MessageRole, StreamEventType } from 'oneringai';
+import type { ITextProvider, LLMResponse, TextGenerateOptions, StreamEvent } from 'oneringai';
 
 export interface ScriptedFrame {
   text?: string;

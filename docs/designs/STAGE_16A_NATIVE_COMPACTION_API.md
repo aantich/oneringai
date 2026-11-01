@@ -19,7 +19,7 @@ published package release. Existing APIs retain their supported contracts.
 Backward compatibility is the starting constraint. Keep the existing `context.strategy`, `context.compactionStrategy`, plugin contracts and defaults. Add one optional strategy class through the existing `compactionStrategy` extension point, with plugin content and conversation history represented explicitly:
 
 ```typescript
-import { Agent, ContextCompactionStrategy } from '@everworker/oneringai';
+import { Agent, ContextCompactionStrategy } from 'oneringai';
 
 const agent = Agent.create({
   connector: 'openai-main', // Existing named connector; no new credentials.

@@ -5,7 +5,7 @@ import type { TextGenerateOptions, TextCompactionResponse } from '../../../domai
 import type { CompactionResult } from '../types.js';
 
 /** @internal Symbol capability avoids adding a collision-prone member to legacy contexts. */
-export const COMPOSITION_OPERATION = Symbol.for('@everworker/oneringai/context-composition-operation/v1');
+export const COMPOSITION_OPERATION = Symbol.for('oneringai/context-composition-operation/v1');
 export type CompositionOperation = (config: Readonly<ContextCompactionStrategyConfig>) => Promise<CompactionResult>;
 
 export interface NativeHistoryCompactionConfig {

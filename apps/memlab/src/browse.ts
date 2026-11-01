@@ -4,7 +4,7 @@
  */
 
 import chalk from 'chalk';
-import type { IFact, IEntity, MemorySystem, ScopeFilter } from '@everworker/oneringai';
+import type { IFact, IEntity, MemorySystem, ScopeFilter } from 'oneringai';
 import type { UI } from './ui.js';
 import { parseArgs, renderTable } from './ui.js';
 

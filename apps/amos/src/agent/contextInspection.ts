@@ -1,4 +1,4 @@
-import type { AgentContextNextGen } from '@everworker/oneringai';
+import type { AgentContextNextGen } from 'oneringai';
 import type { ContextBudgetInfo, ContextBreakdownInfo } from '../config/types.js';
 
 /** Read one diagnostic revision without triggering another preparation/compaction. */

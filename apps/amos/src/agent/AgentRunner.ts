@@ -1,5 +1,5 @@
 import { resolveAmosModelExecution } from './routing.js';
-import { createInContextMemoryContributor, InContextMemoryPluginNextGen } from '@everworker/oneringai';
+import { createInContextMemoryContributor, InContextMemoryPluginNextGen } from 'oneringai';
 /**
  * AgentRunner - AMOS adapter for the current OneRingAI Agent API.
  */
@@ -37,7 +37,7 @@ import {
   type AgentLoopDiagnostics,
   type ModelRoutingRunOptions,
   type ModelRoutingDiagnostics,
-} from '@everworker/oneringai';
+} from 'oneringai';
 import type {
   AgentResponse,
   AstraAsyncToolResponse,
@@ -261,7 +261,7 @@ export class AgentRunner implements IAgentRunner {
     if (this.isRunning()) throw new Error('Wait for the active operation before changing routing hints');
     this._routingOverride = options === null ? null : structuredClone(options);
   }
-  private managedRunOptions(): import('@everworker/oneringai').RunOptions | undefined {
+  private managedRunOptions(): import('oneringai').RunOptions | undefined {
     const routing = this._routingOverride === undefined ? this.config.routing : this._routingOverride;
     return this._loopPolicyOverride === undefined && routing === undefined ? undefined
       : { ...(this._loopPolicyOverride === undefined ? {} : { loopPolicy: this._loopPolicyOverride }), ...(routing === undefined ? {} : { routing }) };

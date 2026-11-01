@@ -2,7 +2,7 @@
 
 Detailed API reference for `src/memory/` (v2).
 
-All supported public symbols are exported from `@everworker/oneringai`. There
+All supported public symbols are exported from `oneringai`. There
 is currently no `./memory` package subpath, so do not import internal
 `src/memory/*` files. The memory core remains architecturally self-contained;
 connector-backed helpers live in its integration layer but are re-exported at
@@ -1178,7 +1178,7 @@ class PredicateRegistry {
 ### Usage
 
 ```ts
-import { MemorySystem, PredicateRegistry } from '@everworker/oneringai';
+import { MemorySystem, PredicateRegistry } from 'oneringai';
 
 // Use the standard library as-is.
 const memory = new MemorySystem({
@@ -1271,7 +1271,7 @@ access. `permissions.group` is silently ignored when `record.groupId` is unset
 
 ### Pure evaluators
 
-Exposed from `@everworker/oneringai` (or `src/memory/AccessControl.ts`):
+Exposed from `oneringai` (or `src/memory/AccessControl.ts`):
 
 ```ts
 function canAccess(
@@ -1368,7 +1368,7 @@ backfillAccessPrincipals(
 
 `mergeEntities(winner, loser, scope)` additionally rewrites every `entity:<loser>` grant to `entity:<winner>` (the "account links later" substrate), via the optional store capability `rewriteEntityPrincipal(from, to, scope)`.
 
-**The principal kit** (exported from `@everworker/oneringai` / `src/access/principals.ts`) — token builders, parser, and the storage-agnostic materializer, usable by hosts to authorize their OWN collections:
+**The principal kit** (exported from `oneringai` / `src/access/principals.ts`) — token builders, parser, and the storage-agnostic materializer, usable by hosts to authorize their OWN collections:
 
 ```ts
 // Token builders + parser

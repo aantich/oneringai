@@ -6,7 +6,7 @@
 
 import { BaseCommand } from '../BaseCommand.js';
 import type { CommandContext, CommandResult, StoredConnectorConfig, ConnectorAuth } from '../../config/types.js';
-import { Vendor } from '@everworker/oneringai';
+import { Vendor } from 'oneringai';
 
 export class ConnectorCommand extends BaseCommand {
   readonly name = 'connector';

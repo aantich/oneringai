@@ -26,7 +26,7 @@ local host observation; a production checker should read its authorized durable
 artifact/status store and verify the required result independently.
 
 ```typescript
-import { Agent, ModelTask } from '@everworker/oneringai';
+import { Agent, ModelTask } from 'oneringai';
 
 let verifiedArtifact: { id: string; ready: boolean } | undefined;
 const agent = Agent.create({

@@ -1,6 +1,6 @@
 /** Pure browser-safe metadata; no keys, network, model or session construction. */
 import assert from 'node:assert/strict';
-import { Vendor, getRealtimeModelCapabilities, getTranscriptionCapabilities } from '@everworker/oneringai/shared';
+import { Vendor, getRealtimeModelCapabilities, getTranscriptionCapabilities } from 'oneringai/shared';
 for (const model of ['gpt-realtime-2', 'gpt-realtime-2.1', 'gpt-realtime-2.1-mini', 'custom-realtime']) {
   const capability = getRealtimeModelCapabilities({ vendor: Vendor.OpenAI, model, transport: 'webrtc' });
   console.log(JSON.stringify({ model, ...capability.reasoning }));

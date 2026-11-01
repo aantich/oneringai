@@ -1,6 +1,6 @@
 # AMOS - Advanced Multimodal Orchestration System
 
-A powerful terminal-based AI assistant powered by `@everworker/oneringai`. Features multi-vendor support, runtime model switching, tool permissions, session management, and comprehensive context inspection.
+A powerful terminal-based AI assistant powered by `oneringai`. Features multi-vendor support, runtime model switching, tool permissions, session management, and comprehensive context inspection.
 
 > The historical name says “Multimodal,” but the current CLI implements text agents and tools only. Image, audio, and video commands are not implemented yet.
 
@@ -214,7 +214,10 @@ npm run typecheck    # Type checking
 
 ## License
 
-MIT
+MIT — Copyright © 2025–2026 Anton Antic
+([anton.antich@gmail.com](mailto:anton.antich@gmail.com)). See [LICENSE](LICENSE).
+AMOS is excluded from the parent directory's commercial license. Contributions
+are welcome under MIT.
 
 
 ### Stage 02 tool outcomes
@@ -645,17 +648,17 @@ no separately published AMOS version is claimed.
 
 The module is **trusted executable host code**, loaded in the main Node.js process.
 It exports `createAmosRuntimeHost(dataDir)` returning `{ runtime, definition, options,
-resume? }`. It uses ordinary public APIs to configure named Connectors, driver
+resume?, saveReference? }`. It uses ordinary public APIs to configure named Connectors, driver
 constructors, tool authorization, control storage, policies and trusted scope; no
 second credential/configuration schema is introduced. Keep this path out of renderer
 or model input. For example, a local Claude tools-only host module:
 
 ```javascript
 import path from 'node:path';
-import { Connector, Vendor } from '@everworker/oneringai';
+import { Connector, Vendor } from 'oneringai';
 import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage }
-  from '@everworker/oneringai/agent-runtime';
-import { ClaudeAgentSdkDriver } from '@everworker/oneringai/agent-runtime/claude';
+  from 'oneringai/agent-runtime';
+import { ClaudeAgentSdkDriver } from 'oneringai/agent-runtime/claude';
 
 export function createAmosRuntimeHost(dataDir) {
   Connector.create({ name: 'amos-claude', vendor: Vendor.Anthropic,
@@ -692,19 +695,27 @@ configure the existing runtime resolver/ToolManager and permissions as documente
 
 | Input | Behavior |
 | --- | --- |
-| Ordinary text | Starts a turn on the current bound session; active runs block another turn. |
+| Ordinary text | Starts a turn on the current bound session; active runs block another fresh turn. |
+| `/run {"input":"task","options":{...}}` | Explicit request ID, model/reasoning/schema/metadata; exact repeats deduplicate and host authority fields reject. |
+| `/result <run-id>` / `/observe {"runId":"...","afterSequence":123}` | Read existing results or activity without new input; expired activity is reported separately. |
+| `/upload {"path":"input.txt","mediaType":"text/plain"}` | Explicit upload inside the host-selected directory, on supporting idle managed sessions. |
+| `/download {"reference":"...","path":"answer.txt"}` | Bounded, owned/scoped artifact download; rejects overwrite/traversal/foreign resources. |
+| `/reference` / `/save` | Display the scoped locator or retry the host reference-persistence callback. |
 | `/inspect` | Displays the attached session's actual capabilities/configuration, including restored bindings. |
 | `/status` | Connection, native activity, wait reason, active run and unresolved effects. |
 | `/stop` or Ctrl-C | Cancels queued input and pending admission, then requests native cancellation for an active turn; its result remains pending until native stop is confirmed. |
 | `/detach` | Releases observation/writer ownership; supported managed native work keeps running. Prints reference. |
-| `/resume` | Reattaches the same saved reference with renewed trusted scope; never sends a prompt. |
+| `/resume [reference-json]` | Reattaches the same or explicitly selected locator with renewed trusted scope; never sends a prompt. An attached failed observer can be recovered. |
+| `/new` | Starts a fresh session while detached; preserves earlier resources for explicit cleanup. |
+| `/delete [reference-json]` | Explicitly cancels/disposes and deletes owned resources/control; successful deletion clears the saved locator, failure retains it. |
 | `/exit` or EOF | Cancels and disposes the attached handle; after detach, preserves native work/control data. |
 | `/context`, `/routing`, `/routine`, `/helpers`, `/model`, tool mutation commands | Rejected in runtime mode; use the standard native AMOS mode. |
 
 The controller prints JSON activity/result/state frames. It observes continuously
 without using observation as approval. Interactive approvals, questions and steering
 are capability-rejected in current profiles. Persist the session frame's reference
-in host application storage; supply it as `resume` after restart. AMOS does not restore
+with optional host `saveReference`; supply it as `resume` or `--runtime-resume` after
+restart. `/save` repairs locator persistence independently of native execution. AMOS does not restore
 routine/ModelTask authority or automatically resubmit input. Native/local history
 restore additionally needs a verified complete checkpoint; the SDK drivers require a
 trusted `verifyNativeCheckpoint` callback before restoring prior native history.
@@ -714,8 +725,12 @@ requires POSIX fsync; other platforms need a custom acknowledged adapter.
 `destroy` releases the local handle; explicit `runtime.deleteSession(reference,
 { context })` also cleans owned native resources and the control record after effects
 are reconciled. Borrowed native environments are preserved. Retain references and
-control data after uncertainty/cleanup errors. No default AMOS command deletes them.
-The host owns connector/backend cleanup and process shutdown. See [desktop/file
+control data after uncertainty/cleanup errors. Only the explicit `/delete` command
+requests their cleanup; `/stop`, `/detach` and ordinary exit do not delete records.
+The host owns connector/backend cleanup and process shutdown. The [complete runtime
+cookbook](docs/AGENT_RUNTIME.md) and [ready-to-run host](examples/runtime-host.ts) cover
+offline startup, all five adapters, every command, reference persistence, failure
+recovery, real-provider opt-in and native support boundaries. See [desktop/file
 boundaries](../../USER_GUIDE.md#desktop-and-amos-integration) before exposing IPC.
 
 Offline verification from the root, after a library build:
@@ -729,8 +744,9 @@ npm run example:agent-runtime-managed-restart
 ```
 
 These run actual adapters with synthetic model/CLI/HTTP transports. The AMOS demo
-checks ACK and exactly one selected tool call for each of five harnesses, plus native
-command rejection. The swappable demo creates one logical agent and continues it
+checks two ACK turns and exactly two selected tool calls for each of five harnesses,
+request replay/conflict checks, result/activity access, both managed transfer paths,
+supported idle detach/resume, explicit cleanup and native command rejection. The swappable demo creates one logical agent and continues it
 twice on every binding. The recovery demo uses real child-process restarts, original
 receipt reconciliation and foreign-scope denial; the transfer demo checks exact bytes,
 foreign references and owned cleanup. Temporary state is removed. Codex's offline

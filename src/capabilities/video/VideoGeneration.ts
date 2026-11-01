@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { VideoGeneration, Connector, Vendor } from '@everworker/oneringai';
+ * import { VideoGeneration, Connector, Vendor } from 'oneringai';
  *
  * Connector.create({
  *   name: 'google-video',

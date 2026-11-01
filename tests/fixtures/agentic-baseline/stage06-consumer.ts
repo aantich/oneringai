@@ -1,6 +1,6 @@
 /** Optional Stage 06 APIs compile against the built package alongside legacy consumers. */
-import { Agent, ModelTask, ModelBudgetExceededError, HelperOutputError } from '@everworker/oneringai';
-import type { HelperInputContext, ModelExecutionConfig, ModelTaskSnapshot } from '@everworker/oneringai';
+import { Agent, ModelTask, ModelBudgetExceededError, HelperOutputError } from 'oneringai';
+import type { HelperInputContext, ModelExecutionConfig, ModelTaskSnapshot } from 'oneringai';
 
 export const profile: ModelExecutionConfig = { helpers: {
   extractor: { connector: 'approved-helper', model: 'gpt-4o-mini', maxOutputTokens: 256 },

@@ -1,8 +1,8 @@
 /** Offline Stage 01 correction examples. Run after npm run build; no credentials required. */
 import {
   Agent, AgentContextNextGen, Connector, ContentType, MessageRole, ToolCallState, Vendor,
-} from '@everworker/oneringai';
-import type { ITextProvider, LLMResponse, StreamEvent, TextGenerateOptions } from '@everworker/oneringai';
+} from 'oneringai';
+import type { ITextProvider, LLMResponse, StreamEvent, TextGenerateOptions } from 'oneringai';
 
 class BudgetProvider implements ITextProvider {
   readonly name = 'offline-budget';

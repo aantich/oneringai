@@ -1,4 +1,4 @@
-import { FileContextStorage, type ContextSessionMetadata, type SerializedContextState, type AgentPresetName } from '@everworker/oneringai';
+import { FileContextStorage, type ContextSessionMetadata, type SerializedContextState, type AgentPresetName } from 'oneringai';
 
 /** Keep AMOS labels in both the checkpoint and listing across all save paths. */
 export class AmosSessionStorage extends FileContextStorage {

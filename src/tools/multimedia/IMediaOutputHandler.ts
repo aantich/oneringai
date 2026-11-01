@@ -1,6 +1,6 @@
 /**
  * @deprecated Use `IMediaStorage`, `MediaStorageMetadata`, `MediaStorageResult` from
- * `@everworker/oneringai` (domain layer) instead. These aliases will be removed in the next major version.
+ * `oneringai` (domain layer) instead. These aliases will be removed in the next major version.
  */
 
 export type {

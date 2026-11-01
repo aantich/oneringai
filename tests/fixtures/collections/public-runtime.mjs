@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url), esm = await import('@everworker/oneringai'), path = require.resolve('@everworker/oneringai');
+const require = createRequire(import.meta.url), esm = await import('oneringai'), path = require.resolve('oneringai');
 const cjs = require(path), duplicate = await import(new URL('../../../dist/index.js?collection-copy', import.meta.url)); delete require.cache[path];
 const copies = [esm, cjs, duplicate, require(path)], original = globalThis.fetch; let checks = 0, sequence = 0;
 try {

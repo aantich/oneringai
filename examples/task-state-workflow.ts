@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { AgentContextNextGen, TaskStatePluginNextGen, FileContextStorage, FileEvidenceStorage, MessageRole, ContentType } from '@everworker/oneringai';
+import { AgentContextNextGen, TaskStatePluginNextGen, FileContextStorage, FileEvidenceStorage, MessageRole, ContentType } from 'oneringai';
 const directory = await mkdtemp(join(tmpdir(), 'oneringai-task-state-'));
 const scope = { ownerId: 'example-owner', namespace: 'delivery-42' };
 const create = () => AgentContextNextGen.create({ model: 'gpt-4o-mini', userId: scope.ownerId, agentId: 'task-example',
@@ -33,7 +33,7 @@ try {
   await context.rollover({ preserveRecentTurns: 0, summarize: async () => 'Older conversation summarized; host task view remains authoritative.' });
   await context.save('delivery'); const pending = task.getState(); context.destroy(); context = create(); task = context.getPlugin<TaskStatePluginNextGen>('task_state')!;
   assert.equal(await context.load('delivery'), true); assert.deepEqual(task.getState(), pending); assert.equal(submissions, 1);
-  const script = `import {AgentContextNextGen,TaskStatePluginNextGen,FileContextStorage} from '@everworker/oneringai';
+  const script = `import {AgentContextNextGen,TaskStatePluginNextGen,FileContextStorage} from 'oneringai';
     const [directory,scope] = process.argv.slice(1); const s=JSON.parse(scope);
     const context=AgentContextNextGen.create({model:'gpt-4o-mini',userId:s.ownerId,agentId:'task-example',storage:new FileContextStorage({agentId:'task-example',baseDirectory:directory}),features:{workingMemory:false,inContextMemory:false,taskState:true},plugins:{taskState:{taskId:'delivery-42',association:'host-workflow-42',scope:s}}});
     try{if(!await context.load('delivery'))throw Error('Missing session');const state=context.getPlugin('task_state').getState();if(state.actions[0].confirmation.status!=='waiting_external'||state.notes[1].supersededBy!=='cap-corrected')throw Error('Lost protected task state');console.log('Separate-process pending task recovery passed.');}finally{context.destroy();}`;

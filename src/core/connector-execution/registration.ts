@@ -6,7 +6,7 @@ import { InvalidConfigError } from '../../domain/errors/AIErrors.js';
 import { connectorExecutionHint } from './profile.js';
 import { createCursorCodec, type CursorCodec } from './cursors.js';
 
-const STATE = Symbol.for('@everworker/oneringai/connector-manager/v1');
+const STATE = Symbol.for('oneringai/connector-manager/v1');
 interface Selection { profile: string; connector: string; accountId?: string; tools: ToolFunction[]; revision: number }
 interface State { codec: CursorCodec; categories: Map<string, Selection>; revision: number }
 function state(manager: object, create = false): State | undefined {

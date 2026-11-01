@@ -13,7 +13,7 @@
  *   LoggingPlugin,
  *   type IToolExecutionPlugin,
  *   type PluginExecutionContext,
- * } from '@everworker/oneringai';
+ * } from 'oneringai';
  *
  * // Access via ToolManager
  * const agent = Agent.create({ connector: 'openai', model: 'gpt-4' });

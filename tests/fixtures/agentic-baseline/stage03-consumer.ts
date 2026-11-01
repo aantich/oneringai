@@ -1,6 +1,6 @@
 /** Compile against built public package; feature/config/storage APIs remain additive. */
-import { Agent, EvidencePluginNextGen, FileEvidenceStorage, InMemoryEvidenceStorage, StorageRegistry, ToolEvidenceMiddleware, ToolManager } from '@everworker/oneringai';
-import type { EvidenceScope, EvidencePluginConfig, ToolEvidenceConfig, ToolFunction, ToolOutputHints, ToolExecutionOutcome, ToolExecutionReport, ToolResultEvidence, ToolResult, IEvidenceStorage } from '@everworker/oneringai';
+import { Agent, EvidencePluginNextGen, FileEvidenceStorage, InMemoryEvidenceStorage, StorageRegistry, ToolEvidenceMiddleware, ToolManager } from 'oneringai';
+import type { EvidenceScope, EvidencePluginConfig, ToolEvidenceConfig, ToolFunction, ToolOutputHints, ToolExecutionOutcome, ToolExecutionReport, ToolResultEvidence, ToolResult, IEvidenceStorage } from 'oneringai';
 const scope: EvidenceScope = { ownerId: 'consumer', namespace: 'task' };
 const memory: IEvidenceStorage = new InMemoryEvidenceStorage({ scope });
 const file: IEvidenceStorage = new FileEvidenceStorage({ directory: '/tmp/consumer-evidence', scope, durability: 'restart' });

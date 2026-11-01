@@ -15,7 +15,7 @@
  *
  * @example
  * ```typescript
- * import { Agent, createRequestUserInputTool } from '@everworker/oneringai';
+ * import { Agent, createRequestUserInputTool } from 'oneringai';
  *
  * const slackDelivery: IUserInteractionDelivery = {
  *   id: 'slack',

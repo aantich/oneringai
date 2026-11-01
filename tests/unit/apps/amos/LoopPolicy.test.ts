@@ -2,14 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { AgentRegistry, Connector, Vendor, type Agent } from '@everworker/oneringai';
+import { AgentRegistry, Connector, Vendor, type Agent } from 'oneringai';
 import { ScriptedLoopProvider } from '../../../../examples/agent-loop/scripted-provider.js';
 import { AgentRunner } from '../../../../apps/amos/src/agent/AgentRunner.js';
 import { ContextCommand } from '../../../../apps/amos/src/commands/commands/ContextCommand.js';
 import { ConfigManager } from '../../../../apps/amos/src/config/ConfigManager.js';
 import { DEFAULT_CONFIG } from '../../../../apps/amos/src/config/types.js';
 import type { CommandContext, IAgentRunner } from '../../../../apps/amos/src/config/types.js';
-import type { AgentLoopPolicy } from '@everworker/oneringai';
+import type { AgentLoopPolicy } from 'oneringai';
 
 const runners: AgentRunner[] = [], directories: string[] = [];
 const contexts: Array<Agent['context']> = [];

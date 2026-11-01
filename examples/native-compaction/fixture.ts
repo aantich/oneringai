@@ -1,6 +1,6 @@
 /** Deterministic protocol fixture. This provider does not call or emulate an LLM. */
-import { ContentType, MessageRole, StreamEventType } from '@everworker/oneringai';
-import type { ITextProvider, TextGenerateOptions } from '@everworker/oneringai';
+import { ContentType, MessageRole, StreamEventType } from 'oneringai';
+import type { ITextProvider, TextGenerateOptions } from 'oneringai';
 
 export function createNativeFixture() {
   const calls = { main: 0, native: 0, counts: 0 };

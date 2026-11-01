@@ -1,5 +1,21 @@
 # OneRingAI Version 2 Guide
 
+**Package identity — 2026-11-01:** The user explicitly selected the unscoped npm
+name `oneringai` for v2 and retained this repository. The branch prepares
+`2.0.0-beta.1`; v1 remains published as `@everworker/oneringai`. This authorized
+package-name change requires explicit dependency/import migration; it does not
+change runtime defaults, public subpaths or saved session formats. See
+[Package migration](PACKAGE_MIGRATION.md) and [Licensing](../LICENSING.md).
+
+AMOS and Hosea source are now MIT licensed under Anton Antic with contact
+`anton.antich@gmail.com`. The owner explicitly authorized incorporating the
+previously separate React UI source into Hosea under MIT. Its external package
+dependency and commercial-license startup gate are removed. Both application
+builds and the local UI typecheck pass; the complete dormant desktop typecheck
+has 24 existing integration diagnostics. The package migration guide records
+the clean-consumer, compatibility, examples and offline test results. This
+does not announce an npm or desktop release.
+
 This is the living, user-facing guide to OneRingAI's Version 2 initiative. It
 explains what each delivered stage enables, how to adopt it, and what must reach
 the standard documentation before release. Read the
@@ -3160,3 +3176,28 @@ and native observation, preserves managed work, and keeps partial observers out 
 the process cache so the original reference can be retried. The public signatures,
 defaults, native checkpoint formats and legacy runtime remain unchanged. Current
 verification is tracked in the H-stage delivery ledger; live testing remains paused.
+
+
+## Agent harness documentation and complete AMOS handoff — 2026-11-01
+
+The user requested thorough documentation, extensive examples and full AMOS support
+for the delivered runtime. The application delegates all currently supported runtime
+operations through its existing trusted-host mode: per-run options and request IDs,
+results/activity cursors, explicit transfers, reference/save/startup restore, fresh
+sessions and owned-resource cleanup. Recoverable open and persistence errors remain
+visible without resubmitting tasks. Native-only internals and unsupported interaction
+profiles retain their existing boundaries; standard AMOS behavior is unchanged.
+
+README now leads with reusable definitions. The canonical User Guide, AGENTS,
+examples index, AMOS setup/command table, [new cookbook](../apps/amos/docs/AGENT_RUNTIME.md),
+Unreleased notes and generated API are synchronized. The [trusted host](../apps/amos/examples/runtime-host.ts)
+uses ordinary public APIs, atomic locator persistence and separate control/workspace/
+transfer directories. The expanded AMOS demonstration covers all five adapters; the
+[new native run-options example](../examples/agent-runtime-run-options.ts) covers
+JSON output, model/reasoning, immutable admission, cancellation and saved-request replay.
+Final checks are tracked in the [delivery ledger](designs/AGENT_HARNESS_DELIVERY_LEDGER.md).
+The handoff passes 9,325 tests, all nine examples from source and the extracted
+package, and the built AMOS workflows for all five adapters, including both managed
+transfer paths and native OneRingAI restoration after a real CLI restart.
+No consumer upgrade, package release, native interaction implementation or live-provider
+verification is included; the live-testing pause remains in force.

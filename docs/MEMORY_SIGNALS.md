@@ -70,7 +70,7 @@ Two things are pluggable:
 | `SignalSourceAdapter`   | `extract(raw) => ExtractedSignal`                 | `PlainTextAdapter`, `EmailSignalAdapter`       |
 | `IExtractor`            | `extract(prompt) => Promise<ExtractionOutput>`    | `ConnectorExtractor` (wraps Connector + model) |
 
-Both are exported from `@everworker/oneringai` — write your own for anything.
+Both are exported from `oneringai` — write your own for anything.
 
 ---
 
@@ -83,7 +83,7 @@ import {
   SignalIngestor,
   ConnectorExtractor,
   PlainTextAdapter,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 const store = new InMemoryAdapter();
 const memory = new MemorySystem({ store });
@@ -115,7 +115,7 @@ The LLM is in charge of inventing mentions here — plain text carries no metada
 ## Quick start — email
 
 ```ts
-import { SignalIngestor, ConnectorExtractor, EmailSignalAdapter } from '@everworker/oneringai';
+import { SignalIngestor, ConnectorExtractor, EmailSignalAdapter } from 'oneringai';
 
 const ingestor = new SignalIngestor({
   memory,
@@ -153,7 +153,7 @@ BCC is intentionally dropped — it's not forwarded to the extractor or seeded, 
 Adapters are trivial — one method, no I/O. Given a Slack message:
 
 ```ts
-import type { SignalSourceAdapter, ExtractedSignal } from '@everworker/oneringai';
+import type { SignalSourceAdapter, ExtractedSignal } from 'oneringai';
 
 interface SlackMessage {
   channel: string;
@@ -205,7 +205,7 @@ Guidelines:
 Any object satisfying the `IExtractor` contract works:
 
 ```ts
-import type { IExtractor, ExtractionOutput } from '@everworker/oneringai';
+import type { IExtractor, ExtractionOutput } from 'oneringai';
 
 class ProxyExtractor implements IExtractor {
   constructor(private proxyUrl: string, private apiKey: string) {}

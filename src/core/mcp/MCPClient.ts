@@ -101,7 +101,7 @@ export class MCPClient extends EventEmitter implements IMCPClient, IDisposable {
       // Create SDK client
       this.client = new Client(
         {
-          name: '@everworker/oneringai',
+          name: 'oneringai',
           version: '0.2.0',
         },
         {

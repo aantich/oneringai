@@ -1,6 +1,6 @@
 {
-  "name": "@everworker/oneringai",
-  "version": "1.2.1",
+  "name": "oneringai",
+  "version": "2.0.0-beta.1",
   "description": "Unified TypeScript AI agent library with multi-vendor models, tools, memory, media, and pluggable OneRingAI/Codex agent runtimes",
   "type": "module",
   "main": "./dist/index.js",
@@ -367,7 +367,21 @@
     "docs/evaluations/agent-harness-design/tsconfig.json",
     "docs/evaluations/agent-harness-design/codex-config-probe.mjs",
     "docs/evaluations/agent-harness-design/baseline-review.json",
-    "docs/evaluations/AGENT_HARNESS_CORRECTIONS_2026_11_01.json"
+    "docs/evaluations/AGENT_HARNESS_CORRECTIONS_2026_11_01.json",
+    "apps/amos/src/runtime/commands.ts",
+    "apps/amos/src/runtime/cli.ts",
+    "apps/amos/examples/runtime-host.ts",
+    "apps/amos/docs/AGENT_RUNTIME.md",
+    "examples/agent-runtime-run-options.ts",
+    "docs/evaluations/AGENT_HARNESS_AMOS_2026_11_01.json",
+    "LICENSING.md",
+    "docs/PACKAGE_MIGRATION.md",
+    "apps/amos/LICENSE",
+    "apps/hosea/LICENSE",
+    "apps/LICENSE",
+    "apps/NOTICE",
+    "apps/hosea/README.md",
+    "apps/hosea/src/ui/README.md"
   ],
   "scripts": {
     "generate:tools": "tsx scripts/generate-tool-registry.ts",
@@ -494,7 +508,8 @@
     "example:agent-runtime-claude-managed": "node --import tsx examples/agent-runtime-claude-managed.ts",
     "example:agent-runtime-artifacts": "node --import tsx examples/agent-runtime-artifacts.ts",
     "example:amos-runtime": "node --import tsx apps/amos/examples/agent-runtime-offline.ts",
-    "example:agent-runtime-managed-restart": "node --import tsx examples/agent-runtime-managed-restart.ts"
+    "example:agent-runtime-managed-restart": "node --import tsx examples/agent-runtime-managed-restart.ts",
+    "example:agent-runtime-run-options": "node --import tsx examples/agent-runtime-run-options.ts"
   },
   "keywords": [
     "ai",
@@ -533,7 +548,7 @@
   ],
   "author": {
     "name": "Anton Antic",
-    "email": "anton@everworker.ai"
+    "email": "anton.antich@gmail.com"
   },
   "license": "MIT",
   "repository": {

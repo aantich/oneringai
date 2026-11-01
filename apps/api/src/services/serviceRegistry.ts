@@ -4,7 +4,7 @@
  *   2. service_overrides (admin config) + library SERVICE_DEFINITIONS
  *   3. library SERVICE_DEFINITIONS alone (fallback)
  */
-import { getServiceInfo, getAllServiceIds } from '@everworker/oneringai/shared';
+import { getServiceInfo, getAllServiceIds } from 'oneringai/shared';
 import type { ResolvedService, CustomService, ServiceOverride } from '../types.js';
 import { queryOne, queryAll } from '../db/queries.js';
 

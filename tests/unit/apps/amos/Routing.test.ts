@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Connector, Vendor, ContentType, MessageRole, SuspendSignal, StorageRegistry, FileCorrelationStorage } from '@everworker/oneringai';
+import { Connector, Vendor, ContentType, MessageRole, SuspendSignal, StorageRegistry, FileCorrelationStorage } from 'oneringai';
 import { offlineRoutingConnector } from '../../../../examples/model-routing/fixture.js';
 import { AgentRunner } from '../../../../apps/amos/src/agent/AgentRunner.js';
 import { ConfigManager } from '../../../../apps/amos/src/config/ConfigManager.js';

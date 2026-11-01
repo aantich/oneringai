@@ -318,7 +318,7 @@ CREATE INDEX idx_usage_created_at ON usage(created_at);
 Instead of storing vendor API keys, users authenticate with your service:
 
 ```typescript
-// New connector type in @everworker/oneringai
+// New connector type in oneringai
 interface ProxyConnectorConfig {
   type: 'proxy';
   name: string;

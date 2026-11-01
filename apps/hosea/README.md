@@ -1,8 +1,26 @@
 # Everworker Desktop by Everworker.ai
 
+The Hosea application source is now **MIT licensed**, Copyright © 2025–2026
+Anton Antic, [anton.antich@gmail.com](mailto:anton.antich@gmail.com). See
+[LICENSE](LICENSE). Startup no longer requires the former commercial agreement.
+Existing product branding and integrations are being migrated separately.
+
+The previously separate React UI source is now included directly in
+[`src/ui`](src/ui/README.md) under the Hosea MIT license. There is no external
+`@everworker/react-ui` dependency. Third-party dependencies retain their own terms;
+see the [repository licensing guide](../../LICENSING.md).
+
+Current revival validation (2026-11-01): the renderer/main/preload build passes,
+and the migrated local UI typechecks independently. The complete desktop
+typecheck reports 24 legacy integration diagnostics in AgentService and renderer
+consumers, with none in `src/ui`. The app still targets Electron
+29; updating its embedded runtime, integration APIs, branding, signing and update
+channel remains desktop revival work. No launch, installer or platform validation
+is claimed by the license/package migration.
+
 **AI Agent Desktop Application** — your "Swiss Army Knife" of AI!
 
-A desktop application for interacting with AI agents and generative AI in general powered by the `@everworker/oneringai` library.
+A desktop application for interacting with AI agents and generative AI in general powered by the `oneringai` library.
 
 ## Features
 

@@ -2,12 +2,12 @@
 import {
   Agent, AgentContextNextGen, BasePluginNextGen, Connector, Vendor,
   DEFAULT_FEATURES, FileContextStorage,
-} from '@everworker/oneringai';
+} from 'oneringai';
 import type {
   ToolFunction, ITextProvider, IContextPluginNextGen, ICompactionStrategy,
   CompactionContext, CompactionResult, ConsolidationResult, SerializedContextState,
   AgentEvents, TokenUsage, IContextStorage,
-} from '@everworker/oneringai';
+} from 'oneringai';
 
 export class ConsumerPlugin extends BasePluginNextGen {
   readonly name = 'consumer-fixture';

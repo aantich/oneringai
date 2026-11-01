@@ -7,25 +7,25 @@ import type {
   Connector, ModelTask,
   OrchestratorConfig, RoutineDefinition, 
   ToolFunction, RunOptions, DirectCallOptions,
-} from '@everworker/oneringai';
-import { Agent, AGENT_PACKAGE_PROTOCOL_VERSION, createOutcomeTool } from '@everworker/oneringai';
+} from 'oneringai';
+import { Agent, AGENT_PACKAGE_PROTOCOL_VERSION, createOutcomeTool } from 'oneringai';
 
 // C1–C3 use delivered root exports; later declarations remain proposals.
-export type { OutcomeInvocation, OutcomeToolOptions } from '@everworker/oneringai';
-import { createRoutineRunner } from '@everworker/oneringai';
-import type { ExecutionBinding, RoutineContinuation, RoutineObservation, RoutineToolResult } from '@everworker/oneringai';
+export type { OutcomeInvocation, OutcomeToolOptions } from 'oneringai';
+import { createRoutineRunner } from 'oneringai';
+import type { ExecutionBinding, RoutineContinuation, RoutineObservation, RoutineToolResult } from 'oneringai';
 export type { ExecutionBinding, VerificationDecision, VerificationContext, RoutineSource,
   RoutineObservation, RoutineContinuation, RoutineReport, RoutineRunResult, RoutineRunRequest,
-  RoutineToolOptions, RoutineToolResult, RoutineInspection, RoutineRunner, RoutineProgress } from '@everworker/oneringai';
+  RoutineToolOptions, RoutineToolResult, RoutineInspection, RoutineRunner, RoutineProgress } from 'oneringai';
 
-import { ConnectorTools } from '@everworker/oneringai';
-import type { EnhancedConnectorOptions, PagePosition } from '@everworker/oneringai';
-export type { EnhancedConnectorOptions, EnhancedConnectorAttempt, ConnectorAcceptedResource } from '@everworker/oneringai';
+import { ConnectorTools } from 'oneringai';
+import type { EnhancedConnectorOptions, PagePosition } from 'oneringai';
+export type { EnhancedConnectorOptions, EnhancedConnectorAttempt, ConnectorAcceptedResource } from 'oneringai';
 export function enhancedConnectorTools(connector: string | Connector, options: EnhancedConnectorOptions): ToolFunction[] {
   return ConnectorTools.enhanced(connector, options);
 }
 
-export type { PagePosition, ConnectorPage } from '@everworker/oneringai';
+export type { PagePosition, ConnectorPage } from 'oneringai';
 
 /** Minimal static registration recipe; never executed, no catalog/profile bypass. */
 export function staticConnectorExample(llmConnector: string, model: string, service: string, accountId: string): Agent {
@@ -41,9 +41,9 @@ export function staticConnectorExample(llmConnector: string, model: string, serv
   return agent; // Caller destroys this Agent; no construction call occurs in this file.
 }
 
-import { createOrchestratorWithFactory } from '@everworker/oneringai';
-import type { OrchestratedAgentConfig, AgentConstructionRequest } from '@everworker/oneringai';
-export type { OrchestratedAgentConfig, AgentConstructionRequest, ChildObservation, OrchestratorFactoryOptions } from '@everworker/oneringai';
+import { createOrchestratorWithFactory } from 'oneringai';
+import type { OrchestratedAgentConfig, AgentConstructionRequest } from 'oneringai';
+export type { OrchestratedAgentConfig, AgentConstructionRequest, ChildObservation, OrchestratorFactoryOptions } from 'oneringai';
 
 /** Positive and negative compile controls; none of these functions are executed. */
 export async function example(agent: Agent, definition: RoutineDefinition, task: ModelTask): Promise<void> {

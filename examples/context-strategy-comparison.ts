@@ -11,8 +11,8 @@ import { resolve } from 'node:path';
 import { writeFile } from 'node:fs/promises';
 import dotenv from 'dotenv';
 import { Agent, AgentContextNextGen, Connector, Vendor, ModelTask, StrategyRegistry, ObservationMaskingStrategy, StructuredSummaryStrategy, ContextCompactionStrategy,
-  InMemoryEvidenceStorage, ContentType, MessageRole } from '@everworker/oneringai';
-import type { InputItem, ITextProvider, TextGenerateOptions, ModelTaskSnapshot, ConversationCompactionReport, Content, OutputItem, WorkingMemoryPluginNextGen, ContextCompactionReport } from '@everworker/oneringai';
+  InMemoryEvidenceStorage, ContentType, MessageRole } from 'oneringai';
+import type { InputItem, ITextProvider, TextGenerateOptions, ModelTaskSnapshot, ConversationCompactionReport, Content, OutputItem, WorkingMemoryPluginNextGen, ContextCompactionReport } from 'oneringai';
 
 export type StrategyName = 'algorithmic' | 'observation-masking' | 'structured-summary' | 'context-compaction';
 export interface ComparisonTask { id: string; goal: string; account: string; status: string; answer: string; history: string[] }

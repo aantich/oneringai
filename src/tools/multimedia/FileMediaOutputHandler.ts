@@ -1,5 +1,5 @@
 /**
- * @deprecated Use `FileMediaStorage` from `@everworker/oneringai` (infrastructure layer) instead.
+ * @deprecated Use `FileMediaStorage` from `oneringai` (infrastructure layer) instead.
  * This alias will be removed in the next major version.
  */
 

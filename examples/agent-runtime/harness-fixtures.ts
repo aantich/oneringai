@@ -1,14 +1,15 @@
-import { Connector, StreamEventType, Vendor } from '@everworker/oneringai';
-import { AgentRuntime, LocalExecutionBackend, OneRingAIDriver, FileRuntimeSessionStorage } from '@everworker/oneringai/agent-runtime';
-import type { RuntimeSessionOptions } from '@everworker/oneringai/agent-runtime';
-import { CodexSdkDriver } from '@everworker/oneringai/agent-runtime/codex';
-import { ClaudeAgentSdkDriver } from '@everworker/oneringai/agent-runtime/claude';
-import { OpenAIManagedDriver } from '@everworker/oneringai/agent-runtime/openai-managed';
-import { ClaudeManagedDriver } from '@everworker/oneringai/agent-runtime/claude-managed';
+import { Connector, StreamEventType, Vendor } from 'oneringai';
+import { AgentRuntime, LocalExecutionBackend, OneRingAIDriver, FileRuntimeSessionStorage } from 'oneringai/agent-runtime';
+import type { RuntimeSessionOptions } from 'oneringai/agent-runtime';
+import { CodexSdkDriver } from 'oneringai/agent-runtime/codex';
+import { ClaudeAgentSdkDriver } from 'oneringai/agent-runtime/claude';
+import { OpenAIManagedDriver } from 'oneringai/agent-runtime/openai-managed';
+import { ClaudeManagedDriver } from 'oneringai/agent-runtime/claude-managed';
 import type { Codex, CodexOptions } from '@openai/codex-sdk';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import path from 'node:path';
+import { mkdirSync } from 'node:fs';
 import { offlineRoutingConnector } from '../model-routing/fixture.js';
 import { offlineClaudeSdk } from './claude-fixture.js';
 import { openAIManagedFixture } from './openai-managed-fixture.js';
@@ -18,6 +19,8 @@ export const harnessFixtureIds = ['oneringai.agent', 'openai.codex.sdk', 'anthro
 
 /** All five actual adapters, one definition/tool contract; only model/CLI/HTTP transports are synthetic. */
 export function offlineHarness(driver: typeof harnessFixtureIds[number], root: string) {
+  const transferRoot = path.join(root, 'transfers'); const workspaceRoot = path.join(root, 'workspace');
+  mkdirSync(transferRoot, { recursive: true, mode: 0o700 }); mkdirSync(workspaceRoot, { recursive: true, mode: 0o700 });
   const connector = `offline-${driver}`; let calls = 0;
   if (driver === 'oneringai.agent') {
     const native = offlineRoutingConnector(connector); let sequence = 0;
@@ -53,8 +56,8 @@ export function offlineHarness(driver: typeof harnessFixtureIds[number], root: s
     : driver === 'anthropic.agent.sdk' ? new ClaudeAgentSdkDriver({ loadSdk: async () => offlineClaudeSdk })
     : driver === 'openai.agents.api' ? new OpenAIManagedDriver({ createClient: openai.createClient }) : new ClaudeManagedDriver({ createClient: claude.createClient });
   const toolResolution = { fingerprint: 'offline-probe-v1', tools: [{ definition: { type: 'function' as const, function: { name: 'probe', description: 'Read the synthetic business value.', parameters: { type: 'object', properties: {}, additionalProperties: false } } }, execute: async () => { calls++; return { success: false, businessValue: 'original' }; } }] };
-  const runtime = new AgentRuntime({ backend: new LocalExecutionBackend({ drivers: [implementation], sessionStorage: new FileRuntimeSessionStorage(path.join(root, 'control')), fileTransfer: () => ({ root, maxBytes: 1024, mediaTypes: ['text/plain'] }), resolveTools: () => toolResolution }) });
+  const runtime = new AgentRuntime({ backend: new LocalExecutionBackend({ drivers: [implementation], sessionStorage: new FileRuntimeSessionStorage(path.join(root, 'control')), fileTransfer: () => ({ root: transferRoot, maxBytes: 1024, mediaTypes: ['text/plain'] }), resolveTools: () => toolResolution }) });
   const local = driver === 'oneringai.agent' || driver === 'openai.codex.sdk';
-  const options: RuntimeSessionOptions = { execution: { driver, connector, model: driver.startsWith('anthropic') ? 'claude-sonnet-4-6' : driver === 'openai.agents.api' ? 'gpt-6-astra' : 'gpt-6.1-sol' }, context: { userId: 'offline-owner' }, environment: local ? { type: 'local-directory', path: root } : driver.endsWith('.api') ? { type: 'provider-managed' } : { type: 'none' }, policy: { filesystem: local ? 'read-only' : driver === 'openai.agents.api' ? 'workspace-write' : 'denied', commands: local || driver === 'openai.agents.api' ? 'sandboxed' : 'denied', sandboxNetwork: 'denied', providerWebSearch: 'denied', approvals: 'deny' } };
-  return { runtime, implementation, toolResolution, options, calls: () => calls, definition: { id: 'shared-assistant', instructions: 'Use probe once and return ACK.', tools: ['probe'] } };
+  const options: RuntimeSessionOptions = { execution: { driver, connector, model: driver.startsWith('anthropic') ? 'claude-sonnet-4-6' : driver === 'openai.agents.api' ? 'gpt-6-astra' : 'gpt-6.1-sol' }, context: { userId: 'offline-owner' }, environment: local ? { type: 'local-directory', path: workspaceRoot } : driver.endsWith('.api') ? { type: 'provider-managed' } : { type: 'none' }, policy: { filesystem: local ? 'read-only' : driver === 'openai.agents.api' ? 'workspace-write' : 'denied', commands: local || driver === 'openai.agents.api' ? 'sandboxed' : 'denied', sandboxNetwork: 'denied', providerWebSearch: 'denied', approvals: 'deny' } };
+  return { runtime, implementation, toolResolution, options, transferRoot, workspaceRoot, calls: () => calls, definition: { id: 'shared-assistant', instructions: 'Use probe once and return ACK.', tools: ['probe'] } };
 }

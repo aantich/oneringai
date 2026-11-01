@@ -1,5 +1,5 @@
-import { Agent, ConnectorTools, AGENT_PACKAGE_PROTOCOL_VERSION } from '@everworker/oneringai';
-import type { ConnectorPage, PagePosition } from '@everworker/oneringai';
+import { Agent, ConnectorTools, AGENT_PACKAGE_PROTOCOL_VERSION } from 'oneringai';
+import type { ConnectorPage, PagePosition } from 'oneringai';
 const selected = ConnectorTools.enhanced('service', { profile: 'collections-v1', accountId: 'work' });
 declare const agent: Agent;
 agent.tools.registerConnectorTools('service', selected, { accountId: 'work' });

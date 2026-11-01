@@ -1,6 +1,6 @@
-import { Agent, ModelTask } from '@everworker/oneringai';
-import type { ModelRoutingConfig, ModelRoutingRunOptions, ModelRoutingDiagnostics } from '@everworker/oneringai';
-import type { ModelRouteConfig, ModelRoutingContext } from '@everworker/oneringai/types';
+import { Agent, ModelTask } from 'oneringai';
+import type { ModelRoutingConfig, ModelRoutingRunOptions, ModelRoutingDiagnostics } from 'oneringai';
+import type { ModelRouteConfig, ModelRoutingContext } from 'oneringai/types';
 const fast: ModelRouteConfig = { connector: 'primary', model: 'gpt-4o-mini', maxOutputTokens: 256 };
 export const routing: ModelRoutingConfig = { routes: { fast }, sticky: 'phase', select: (context: ModelRoutingContext) =>
   ({ route: context.hints.taskType === 'lookup' ? 'fast' : 'default', reason: 'explicit measured category' }) };

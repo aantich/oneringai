@@ -17,7 +17,7 @@ import {
   Collapse,
 } from 'react-bootstrap';
 import { ArrowLeft, Save, Trash2, HelpCircle, AlertCircle, ChevronDown, ChevronRight, Server, Wrench, RefreshCw, Cloud, Shield } from 'lucide-react';
-import { PermissionRulesEditor, type IPermissionRuleInfo, type INewPermissionRule } from '@everworker/react-ui';
+import { PermissionRulesEditor, type IPermissionRuleInfo, type INewPermissionRule } from '../../ui/index.js';
 import { PageHeader } from '../components/layout';
 import { useNavigation } from '../hooks/useNavigation';
 import { useConnectorVersion } from '../App';

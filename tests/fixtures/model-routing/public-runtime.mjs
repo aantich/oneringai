@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const results = [];
-for (const [format, lib] of [['esm', await import('@everworker/oneringai')], ['cjs', require('@everworker/oneringai')]]) {
+for (const [format, lib] of [['esm', await import('oneringai')], ['cjs', require('oneringai')]]) {
   let checks = 0, selections = 0; const requests = [];
   const usage = { input_tokens: 10, output_tokens: 2, total_tokens: 12 };
   const generate = async options => { requests.push(options); return { id: 'answer', object: 'response', created_at: 1, model: options.model, status: 'completed',

@@ -1,11 +1,10 @@
 {
-  "name": "@everworker/hosea",
+  "name": "oneringai-hosea",
   "version": "0.2.1",
-  "description": "Everworker Desktop - AI Agent Desktop Application powered by OneRing AI",
+  "description": "Hosea - open-source AI agent desktop application powered by OneRingAI",
   "author": {
-    "name": "Everworker.ai",
-    "email": "anton@everworker.ai",
-    "url": "https://everworker.ai"
+    "name": "Anton Antic",
+    "email": "anton.antich@gmail.com"
   },
   "type": "module",
   "main": "dist/main/index.cjs",
@@ -32,7 +31,6 @@
     "release:major": "npm --tag-version-prefix='hosea-v' version major -m 'hosea: Release %s'"
   },
   "dependencies": {
-    "@everworker/react-ui": "github:Integrail/react-ui",
     "@nut-tree-fork/nut-js": "^4.2.6",
     "clsx": "^2.1.1",
     "electron-store": "^10.0.0",
@@ -49,7 +47,11 @@
     "remark-gfm": "^4.0.0",
     "remark-math": "^6.0.0",
     "vega": "^5.33.1",
-    "vega-lite": "^5.23.0"
+    "vega-lite": "^5.23.0",
+    "oneringai": "file:../..",
+    "docx": "^9.6.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1"
   },
   "devDependencies": {
     "@electron/notarize": "^3.1.1",
@@ -70,9 +72,6 @@
     "typescript": "^5.3.3",
     "vite": "^5.0.12"
   },
-  "overrides": {
-    "@everworker/oneringai": "file:../.."
-  },
   "build": {
     "appId": "ai.everworker.hosea",
     "productName": "Everworker Desktop",
@@ -84,19 +83,19 @@
       "package.json",
       "LICENSE",
       "node_modules/**/*",
-      "!node_modules/@everworker/oneringai/apps/**/*",
-      "!node_modules/@everworker/oneringai/src/**/*",
-      "!node_modules/@everworker/oneringai/tests/**/*",
-      "!node_modules/@everworker/oneringai/coverage/**/*",
-      "!node_modules/@everworker/oneringai/docs/**/*",
-      "!node_modules/@everworker/oneringai/examples/**/*",
-      "!node_modules/@everworker/oneringai/scripts/**/*",
-      "!node_modules/@everworker/oneringai/.git/**/*",
-      "!node_modules/@everworker/oneringai/*.md",
-      "!node_modules/@everworker/oneringai/tsconfig*.json",
-      "!node_modules/@everworker/oneringai/vitest*.ts",
-      "!node_modules/@everworker/oneringai/.eslint*",
-      "!node_modules/@everworker/oneringai/.prettier*",
+      "!node_modules/oneringai/apps/**/*",
+      "!node_modules/oneringai/src/**/*",
+      "!node_modules/oneringai/tests/**/*",
+      "!node_modules/oneringai/coverage/**/*",
+      "!node_modules/oneringai/docs/**/*",
+      "!node_modules/oneringai/examples/**/*",
+      "!node_modules/oneringai/scripts/**/*",
+      "!node_modules/oneringai/.git/**/*",
+      "!node_modules/oneringai/*.md",
+      "!node_modules/oneringai/tsconfig*.json",
+      "!node_modules/oneringai/vitest*.ts",
+      "!node_modules/oneringai/.eslint*",
+      "!node_modules/oneringai/.prettier*",
       "!**/node_modules/*/{CHANGELOG.md,README.md,readme.md,readme}",
       "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
       "!**/node_modules/*.d.ts",
@@ -132,7 +131,7 @@
         "teamId": "5QKQW4L4PH"
       }
     },
-    "copyright": "Copyright © 2026 Everworker.ai",
+    "copyright": "Copyright \u00a9 2025-2026 Anton Antic <anton.antich@gmail.com>",
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"
@@ -167,5 +166,7 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "license": "MIT",
+  "private": true
 }

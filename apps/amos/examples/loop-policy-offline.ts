@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Connector, Vendor } from '@everworker/oneringai';
+import { Connector, Vendor } from 'oneringai';
 import { ScriptedLoopProvider } from '../../../examples/agent-loop/scripted-provider.js';
 import { AgentRunner } from '../src/agent/AgentRunner.js';
 import { ContextCommand } from '../src/commands/commands/ContextCommand.js';
 import { DEFAULT_CONFIG } from '../src/config/types.js';
 import type { IAmosApp } from '../src/config/types.js';
-import type { AgentLoopPolicy } from '@everworker/oneringai';
+import type { AgentLoopPolicy } from 'oneringai';
 
 const directory = await mkdtemp(join(tmpdir(), 'amos-loop-demo-'));
 const config = structuredClone(DEFAULT_CONFIG);

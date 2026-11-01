@@ -2028,7 +2028,7 @@ h4.dynamic-ui__heading {
   animation: spin 1s linear infinite;
 }
 
-/* Context Display Panel — now provided by @everworker/react-ui/styles/context-display */
+/* Context Display Panel — now provided by Hosea local UI/styles/context-display */
 /* Everworker Desktop-specific overrides for the shared cdp-* classes */
 
 /* Map Everworker Desktop CSS variables to cdp variables */

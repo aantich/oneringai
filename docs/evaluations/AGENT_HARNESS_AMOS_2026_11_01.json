@@ -1,0 +1,254 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-01",
+  "baselineCommit": "17539348c87e7807874c3d3a82d6270e207e07f4",
+  "scope": "Thorough runtime documentation/examples and complete supported AMOS command surface",
+  "availability": "complete on branch; offline, package and built AMOS workflows validated; unreleased",
+  "liveTesting": "paused; synthetic model/SDK/service transports only",
+  "implementation": {
+    "libraryApiChanges": false,
+    "newAmosCommands": [
+      "run",
+      "result",
+      "observe",
+      "upload",
+      "download",
+      "reference",
+      "save",
+      "new",
+      "delete"
+    ],
+    "extendedAmosCommands": [
+      "resume"
+    ],
+    "startupResumeFlag": true,
+    "hostReferencePersistence": "optional saveReference callback, executable trusted host only",
+    "standardNativeMode": "unchanged"
+  },
+  "checks": {
+    "build": "pass: 33 export files and ESM/CJS root/runtime Connector identity",
+    "typecheck": "pass: library, examples, AMOS, new tests and host, built public runtime contracts and legacy consumer",
+    "lint": "pass: library, AMOS and touched examples",
+    "fullUnit": {
+      "files": 424,
+      "passed": 9325,
+      "failed": 0
+    },
+    "amosRegressions": {
+      "newCommandCases": 27,
+      "newSubprocessCliCases": 4,
+      "existingControllerCases": 2,
+      "passed": 33
+    },
+    "generatedApi": {
+      "publicItems": 1825,
+      "generatedFileChanged": false
+    },
+    "offlineStage00Baseline": "pass: chat, large-observation, research, external-workflow",
+    "sourceAndExtractedPackageExamples": "pass: all nine in each location",
+    "publicExports": "pass: six root/runtime/driver entries resolve inside extracted artifact, ESM and CJS; semantic shared Connector identity",
+    "extractedAmosHost": "pass: all five drivers execute ACK, persist locator and clear it after owned deletion",
+    "builtAmosCli": "pass: all five drivers, saved-request/result replay, both managed byte transfers, owned deletion; native OneRingAI actual CLI restart",
+    "additionalBuiltCli": "pass: inspect/status/native-command rejection/detach/resume/exit; queued input and in-flight admission cancellation with zero native input",
+    "addedMarkdownLinks": {
+      "checked": 19,
+      "failed": 0
+    },
+    "diffCheck": "pass",
+    "repack": "final documentation/evidence-only repack is compared against the extracted executable artifact for all other file bytes"
+  },
+  "predecessor": "AGENT_HARNESS_CORRECTIONS_2026_11_01.json",
+  "coverage": [
+    "Only documented JSON fields; scope/credentials/environment/tools/policy remain trusted-host owned",
+    "Stable request IDs, option forwarding, malformed input rejection, literal shell-like text, result and cursor activity replay",
+    "Old saved-result replay preserves a different active observer; duplicate active key does not create another observer",
+    "Observation gaps and errors preserve saved-result access and original observation-error string shape",
+    "Scoped delete, retained references on native cleanup failure, reference persistence failure and save-only repair after successful native deletion",
+    "Recoverable startup uncertainty keeps original reference, CLI inspection and explicit cleanup available without a new task",
+    "Queued text and JSON run commands cancelled before admission; explicit resume uses renewed trusted scope",
+    "Two turns and two selected tool actions per driver; replay performs no additional action",
+    "Explicit managed transfers preserve exact bytes; separate control/workspace/transfer roots",
+    "JSON schema output, per-run model/reasoning, caller mutation isolation, live abort control, native context restore and original-request replay"
+  ],
+  "sourceExamples": [
+    {
+      "example": "examples/agent-runtime-swappable.ts",
+      "exitCode": 0,
+      "outputSHA256": "d2d758643f805b6a6f874dfce2b3ca109b9cd3a965940a9ba3aeb4e6cbe3dcfe"
+    },
+    {
+      "example": "examples/agent-runtime-run-options.ts",
+      "exitCode": 0,
+      "outputSHA256": "ba39d33c1524814d5bff6b15916e766f736d022fb43ae3c9ab000f25a60fe896"
+    },
+    {
+      "example": "examples/agent-runtime-claude.ts",
+      "exitCode": 0,
+      "outputSHA256": "fac07ab96a49cfbcc2b885ab208a5edcac4b89d48dae35f219b9811843505c9a"
+    },
+    {
+      "example": "examples/agent-runtime-recovery.ts",
+      "exitCode": 0,
+      "outputSHA256": "2e59a5a39e340d6f9220a6d6601b58c36811b63c0c50f6dbd1d57b5199ec37ab"
+    },
+    {
+      "example": "examples/agent-runtime-openai-managed.ts",
+      "exitCode": 0,
+      "outputSHA256": "f722e24d8ebaeafecf1d69026aa62479f10f3d7085fe95d0b0962c4f21d9fa68"
+    },
+    {
+      "example": "examples/agent-runtime-claude-managed.ts",
+      "exitCode": 0,
+      "outputSHA256": "b8595e84d16f575a298b0eacccad2868f26d361bb076675bc00f99ee9d26d309"
+    },
+    {
+      "example": "examples/agent-runtime-artifacts.ts",
+      "exitCode": 0,
+      "outputSHA256": "79e957d4f30e5dea3fab5dcea8f92024112eece36f9c199f5d1819578d78cade"
+    },
+    {
+      "example": "examples/agent-runtime-managed-restart.ts",
+      "exitCode": 0,
+      "outputSHA256": "e30e5ec97f808401d7e869a86a84b24befacafb2617d50a6e74fccccd5cc82f0"
+    },
+    {
+      "example": "apps/amos/examples/agent-runtime-offline.ts",
+      "exitCode": 0,
+      "outputSHA256": "6ae3db1eeae805a4b39d98c69fccfd6f446626df55f8e8fbaed79cecd4c1d3d0"
+    }
+  ],
+  "extractedPackageExamples": [
+    {
+      "example": "examples/agent-runtime-swappable.ts",
+      "exitCode": 0,
+      "outputSHA256": "017a882dd136f5c406e6e00b49b040614b4ed192d87ea2e8eb908523b79cc495"
+    },
+    {
+      "example": "examples/agent-runtime-run-options.ts",
+      "exitCode": 0,
+      "outputSHA256": "4b2055369f9c438d41afe92116c3960d45e0c82c094f4b3b74b323148bccd3b9"
+    },
+    {
+      "example": "examples/agent-runtime-claude.ts",
+      "exitCode": 0,
+      "outputSHA256": "fac07ab96a49cfbcc2b885ab208a5edcac4b89d48dae35f219b9811843505c9a"
+    },
+    {
+      "example": "examples/agent-runtime-recovery.ts",
+      "exitCode": 0,
+      "outputSHA256": "2e59a5a39e340d6f9220a6d6601b58c36811b63c0c50f6dbd1d57b5199ec37ab"
+    },
+    {
+      "example": "examples/agent-runtime-openai-managed.ts",
+      "exitCode": 0,
+      "outputSHA256": "f722e24d8ebaeafecf1d69026aa62479f10f3d7085fe95d0b0962c4f21d9fa68"
+    },
+    {
+      "example": "examples/agent-runtime-claude-managed.ts",
+      "exitCode": 0,
+      "outputSHA256": "b8595e84d16f575a298b0eacccad2868f26d361bb076675bc00f99ee9d26d309"
+    },
+    {
+      "example": "examples/agent-runtime-artifacts.ts",
+      "exitCode": 0,
+      "outputSHA256": "79e957d4f30e5dea3fab5dcea8f92024112eece36f9c199f5d1819578d78cade"
+    },
+    {
+      "example": "examples/agent-runtime-managed-restart.ts",
+      "exitCode": 0,
+      "outputSHA256": "e30e5ec97f808401d7e869a86a84b24befacafb2617d50a6e74fccccd5cc82f0"
+    },
+    {
+      "example": "apps/amos/examples/agent-runtime-offline.ts",
+      "exitCode": 0,
+      "outputSHA256": "b13e5e91060ab7c169cd20a705a8fdba6e4a02741160d6be908dccd4e63b2715"
+    }
+  ],
+  "builtCliWorkflows": [
+    {
+      "driver": "oneringai.agent",
+      "builtCli": true,
+      "originalRequestResult": "ACK",
+      "files": false,
+      "realCliProcessRestart": true,
+      "ownedDeletion": true
+    },
+    {
+      "driver": "openai.codex.sdk",
+      "builtCli": true,
+      "originalRequestResult": "ACK",
+      "files": false,
+      "realCliProcessRestart": false,
+      "ownedDeletion": true
+    },
+    {
+      "driver": "anthropic.agent.sdk",
+      "builtCli": true,
+      "originalRequestResult": "ACK",
+      "files": false,
+      "realCliProcessRestart": false,
+      "ownedDeletion": true
+    },
+    {
+      "driver": "openai.agents.api",
+      "builtCli": true,
+      "originalRequestResult": "ACK",
+      "files": true,
+      "realCliProcessRestart": false,
+      "ownedDeletion": true
+    },
+    {
+      "driver": "anthropic.managed.api",
+      "builtCli": true,
+      "originalRequestResult": "ACK",
+      "files": true,
+      "realCliProcessRestart": false,
+      "ownedDeletion": true
+    }
+  ],
+  "packageValidation": {
+    "testedEntryCount": 469,
+    "testedArtifactIntegrity": "sha512-sIVKY3NqpX8wGe+nZrJr2kRTHI2i5S8xh3eDUhNCbUW0N5EyxRR7wy1B1sn3CO8nvm/HHV6zMlz/FE2REtHbZA==",
+    "testedArtifactSHA1": "37e510662c2b8298a365b94c6053c10cb086cd46",
+    "dependencyResolution": "Extracted package uses this checkout's installed node_modules; not a fresh network install.",
+    "finalRepackAllowedChanges": [
+      "docs/VERSION_2_GUIDE.md",
+      "docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md",
+      "docs/evaluations/AGENT_HARNESS_AMOS_2026_11_01.json"
+    ]
+  },
+  "sourceSHA256": {
+    "apps/amos/examples/agent-runtime-offline.ts": "e18526076505e2224a20a952c3131740fe8670fb220bd45f38681de1ed4a7354",
+    "apps/amos/examples/runtime-host.ts": "d7e0b3d48f24f7ca7d20db5119afad4ad9d701bf5d3e7b6c06be6ace0a39240c",
+    "apps/amos/src/index.ts": "5765f6f8390a5aab6216abfa4b913d1571ee59ee73b2a6b7c15ac5d496903861",
+    "apps/amos/src/runtime/AmosRuntimeController.ts": "a706fd7a59150dedd6595237a90b6287a9d02e47638483d20e1e86d0e235c134",
+    "apps/amos/src/runtime/cli.ts": "bff6e09e61ef9b6ee24bab1ca6b62deee66dd93d3f7e45f1155c8cf1d72346f2",
+    "apps/amos/src/runtime/commands.ts": "ac096f6c71cdf565df5c80acfeac05b469694f83c6ea99e88d9c5efbfdc679a6",
+    "examples/agent-runtime-artifacts.ts": "7a3a7b962c4adca8a1123c80914d92978ea61735fb7bfebfaa8c25a3b7d34386",
+    "examples/agent-runtime-run-options.ts": "3e840681d000e0e4dea4efc280e0d6e6a4161bfcd49b8a6cad7cecbf9e9a061a",
+    "examples/agent-runtime/harness-fixtures.ts": "b4168ec707910950aab452617f440f91e6098c6b79f99cefef1c27ef4fd50b25",
+    "package.json": "2c2fbed698c029c5020227e558d4ac111f69bd16a3d04d6d398b38921b37b2dd",
+    "tests/unit/apps/amos/RuntimeCli.test.ts": "34f3d4bc215b5ebe03b0feb827405ba0b2aefe4b3359e59c40f04cbe5f69697b",
+    "tests/unit/apps/amos/RuntimeCommands.test.ts": "28ff82d56aedfa2956f4c99e396cf0a3501828569201c094eb56f4153b2caa45"
+  },
+  "documentationHandoff": [
+    "README.md",
+    "USER_GUIDE.md",
+    "API_REFERENCE.md (regenerated, unchanged)",
+    "AGENTS.md",
+    "examples/README.md",
+    "apps/amos/README.md",
+    "apps/amos/docs/AGENT_RUNTIME.md",
+    "docs/VERSION_2_GUIDE.md",
+    "CHANGELOG.md",
+    "docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md"
+  ],
+  "limitations": [
+    "Live LLM/native provider/account/platform testing remains paused. Synthetic model/SDK/HTTP transports and local mock processes are used.",
+    "Local Codex/Claude SDK prior-history restoration requires a real trusted verifyNativeCheckpoint implementation; the example supplies no no-op verifier.",
+    "Interactive questions/approvals/steering and other unsupported native profiles remain capability-rejected.",
+    "Ready-host mock managed service state is process-local. Both managed restart examples instead use a separate mock service and actual producer-process crashes.",
+    "Bundled acknowledged file storage and locator persistence require POSIX fsync; other platforms need a custom acknowledged adapter.",
+    "No publication, consumer upgrade, commit or push performed."
+  ]
+}

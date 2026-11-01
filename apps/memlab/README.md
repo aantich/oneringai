@@ -1,6 +1,6 @@
 # memlab
 
-Interactive lab for exercising the `@everworker/oneringai` memory subsystem end-to-end. Uses an in-memory adapter so every run starts clean (optional `/dump` + `/load` for persistence across restarts).
+Interactive lab for exercising the `oneringai` memory subsystem end-to-end. Uses an in-memory adapter so every run starts clean (optional `/dump` + `/load` for persistence across restarts).
 
 Four modes, all driven from a single REPL:
 

@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { AgentContextNextGen, AgentRegistry, Connector, Vendor, ContentType, MessageRole, type Agent, type InContextMemoryPluginNextGen } from '@everworker/oneringai';
+import { AgentContextNextGen, AgentRegistry, Connector, Vendor, ContentType, MessageRole, type Agent, type InContextMemoryPluginNextGen } from 'oneringai';
 import { AgentRunner } from '../../../../apps/amos/src/agent/AgentRunner.js';
 import { ConfigManager } from '../../../../apps/amos/src/config/ConfigManager.js';
 import { ContextCommand } from '../../../../apps/amos/src/commands/commands/ContextCommand.js';

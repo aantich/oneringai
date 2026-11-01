@@ -4,7 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const require = createRequire(import.meta.url), results = [];
-for (const [format, lib] of [['esm', await import('@everworker/oneringai')], ['cjs', require('@everworker/oneringai')]]) {
+for (const [format, lib] of [['esm', await import('oneringai')], ['cjs', require('oneringai')]]) {
   let checks = 0;
   const ctx = lib.AgentContextNextGen.create({ model: 'gpt-4o-mini', assembly: { layout: 'stable-prefix', maxDataTokens: 128 }, features: { workingMemory: false } });
   try {

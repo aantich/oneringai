@@ -4,8 +4,8 @@
  * capabilities and explicit unavailable-feature errors. All agents are destroyed.
  * For real providers see the separately opt-in test:presets:live command.
  */
-import { Agent, AgentContextNextGen, AgentRegistry, BasePluginNextGen, Connector, FileContextStorage, Vendor, createAgentPreset, InMemoryEvidenceStorage, TaskStatePluginNextGen } from '@everworker/oneringai';
-import type { AgentPresetName, ToolFunction } from '@everworker/oneringai';
+import { Agent, AgentContextNextGen, AgentRegistry, BasePluginNextGen, Connector, FileContextStorage, Vendor, createAgentPreset, InMemoryEvidenceStorage, TaskStatePluginNextGen } from 'oneringai';
+import type { AgentPresetName, ToolFunction } from 'oneringai';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

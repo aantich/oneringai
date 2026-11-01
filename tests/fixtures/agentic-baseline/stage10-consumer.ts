@@ -1,6 +1,6 @@
-import { Agent } from '@everworker/oneringai';
-import type { AgentConfig, AgentLoopPolicy, AgentLoopDiagnostics, AgentLoopCheckContext, AgentLoopCompletionResult, AgentLoopObservation, AgentLoopReason, LLMResponse, StreamEvent, HelperCallOptions } from '@everworker/oneringai';
-import type { AgentLoopPolicy as TypesPolicy, AgentLoopDiagnostics as TypesDiagnostics } from '@everworker/oneringai/types';
+import { Agent } from 'oneringai';
+import type { AgentConfig, AgentLoopPolicy, AgentLoopDiagnostics, AgentLoopCheckContext, AgentLoopCompletionResult, AgentLoopObservation, AgentLoopReason, LLMResponse, StreamEvent, HelperCallOptions } from 'oneringai';
+import type { AgentLoopPolicy as TypesPolicy, AgentLoopDiagnostics as TypesDiagnostics } from 'oneringai/types';
 const completion = (context: Readonly<AgentLoopCheckContext>): AgentLoopCompletionResult => ({ complete: context.observations.some(o => o.outcome?.status === 'succeeded') });
 const policy: AgentLoopPolicy & TypesPolicy = { completion, maxRecoveryAttempts: 1, progressKey: context => String(context.taskState?.revision ?? 0) };
 const config: AgentConfig = { connector: 'main', model: 'gpt-4o-mini', loopPolicy: policy };

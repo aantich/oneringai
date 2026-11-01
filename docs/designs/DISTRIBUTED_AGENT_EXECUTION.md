@@ -157,7 +157,7 @@ directly between the browser peer and OpenAI.
    are hints; the trusted host resolver selects the authorized connector and
    model while preserving the same prompt, tools, context, and limits.
 2. The renderer creates `OpenAIRealtimeWebRTCPeer` from the browser-safe
-   `@everworker/oneringai/realtime-browser` export.
+   `oneringai/realtime-browser` export.
 3. The renderer obtains microphone permission, adds the audio track, and creates
    the `oai-events` data channel.
 4. A narrow host callback sends the SDP offer to the authenticated server.

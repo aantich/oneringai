@@ -4,8 +4,8 @@ import { createServer } from 'node:http';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Agent, Connector, ConnectorTools, ContentType, MessageRole, ToolCallState, FileEvidenceStorage } from '@everworker/oneringai';
-import type { EnhancedConnectorAttempt } from '@everworker/oneringai';
+import { Agent, Connector, ConnectorTools, ContentType, MessageRole, ToolCallState, FileEvidenceStorage } from 'oneringai';
+import type { EnhancedConnectorAttempt } from 'oneringai';
 import { offlineRoutingConnector } from './model-routing/fixture.js';
 
 const source = 'EXACT_SOURCE_42 ' + 'complete allowed source '.repeat(1500);

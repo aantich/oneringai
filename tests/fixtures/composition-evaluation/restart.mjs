@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises'; import { join } from 'node:path';
-import { Agent, Connector, Vendor, FileEvidenceStorage, AgentPackageOutcomeServer, exportAgentPackage, hydrateAgentPackageWithOutcomes } from '@everworker/oneringai';
+import { Agent, Connector, Vendor, FileEvidenceStorage, AgentPackageOutcomeServer, exportAgentPackage, hydrateAgentPackageWithOutcomes } from 'oneringai';
 const [mode, directory] = process.argv.slice(2); const checkpointPath = join(directory, 'checkpoint.json'), countPath = join(directory, 'effects.json');
 const quote = 'The held-out meeting starts at 14:35; the approved budget is 735 units.';
 const provider = { name: 'no-model', capabilities: { text: true }, generate: async () => { throw new Error('Unexpected model IO during recovery'); }, getModelCapabilities: () => ({ supportsTools: true, supportsJSON: true, supportsJSONSchema: true, maxTokens: 8000, maxOutputTokens: 128 }) };

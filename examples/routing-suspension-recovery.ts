@@ -2,7 +2,7 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Agent, Connector, ContentType, FileContextStorage, FileCorrelationStorage, MessageRole, ModelTask, StorageRegistry, SuspendSignal } from '@everworker/oneringai';
+import { Agent, Connector, ContentType, FileContextStorage, FileCorrelationStorage, MessageRole, ModelTask, StorageRegistry, SuspendSignal } from 'oneringai';
 import { offlineRoutingConnector } from './model-routing/fixture.js';
 
 const directory = await mkdtemp(join(tmpdir(), 'routing-suspension-example-'));

@@ -1,0 +1,632 @@
+/**
+ * Default semantic styles for Look Inside components.
+ *
+ * Uses `look-inside-*` class names throughout — apps can override
+ * any of these styles without importing Bootstrap or any framework.
+ *
+ * Color variables use CSS custom properties for easy theming:
+ *   --li-bg, --li-bg-secondary, --li-text, --li-text-muted,
+ *   --li-border, --li-accent, --li-success, --li-warning, --li-danger
+ */
+
+/* ============================================================================
+   CSS Custom Properties (Light theme defaults)
+   ============================================================================ */
+
+.look-inside-panel {
+  --li-bg: #ffffff;
+  --li-bg-secondary: #f8f9fa;
+  --li-bg-tertiary: #e9ecef;
+  --li-text: #212529;
+  --li-text-muted: #6c757d;
+  --li-border: #dee2e6;
+  --li-accent: #0d6efd;
+  --li-success: #198754;
+  --li-warning: #ffc107;
+  --li-danger: #dc3545;
+  --li-code-bg: #f1f3f5;
+  --li-radius: 6px;
+  --li-spacing: 12px;
+
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--li-text);
+  background: var(--li-bg);
+  border: 1px solid var(--li-border);
+  border-radius: var(--li-radius);
+  overflow: hidden;
+}
+
+/* ============================================================================
+   Header
+   ============================================================================ */
+
+.look-inside-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--li-spacing);
+  border-bottom: 1px solid var(--li-border);
+  background: var(--li-bg-secondary);
+}
+
+.look-inside-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.look-inside-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.look-inside-model-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--li-bg-tertiary);
+  color: var(--li-text-muted);
+  font-family: monospace;
+}
+
+.look-inside-header-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* ============================================================================
+   Buttons
+   ============================================================================ */
+
+.look-inside-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--li-border);
+  background: var(--li-bg);
+  color: var(--li-text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.look-inside-btn:hover {
+  background: var(--li-bg-secondary);
+}
+
+.look-inside-btn-secondary {
+  background: var(--li-bg-secondary);
+}
+
+/* ============================================================================
+   Collapsible Section
+   ============================================================================ */
+
+.look-inside-section {
+  border-bottom: 1px solid var(--li-border);
+}
+
+.look-inside-section:last-child {
+  border-bottom: none;
+}
+
+.look-inside-section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px var(--li-spacing);
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--li-text);
+  text-align: left;
+}
+
+.look-inside-section-header:hover {
+  background: var(--li-bg-secondary);
+}
+
+.look-inside-section-chevron {
+  font-size: 11px;
+  width: 14px;
+  flex-shrink: 0;
+  color: var(--li-text-muted);
+}
+
+.look-inside-section-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.look-inside-section-title {
+  flex: 1;
+}
+
+.look-inside-section-badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--li-bg-tertiary);
+  color: var(--li-text-muted);
+  font-weight: normal;
+}
+
+.look-inside-section-content {
+  padding: 0 var(--li-spacing) var(--li-spacing);
+}
+
+/* ============================================================================
+   Context Window
+   ============================================================================ */
+
+.look-inside-progress-bar-container {
+  height: 8px;
+  background: var(--li-bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.look-inside-progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.look-inside-utilization-normal .look-inside-progress-bar,
+.look-inside-progress-bar.look-inside-utilization-normal {
+  background: var(--li-success);
+}
+
+.look-inside-utilization-warning .look-inside-progress-bar,
+.look-inside-progress-bar.look-inside-utilization-warning {
+  background: var(--li-warning);
+}
+
+.look-inside-utilization-critical .look-inside-progress-bar,
+.look-inside-progress-bar.look-inside-utilization-critical {
+  background: var(--li-danger);
+}
+
+.look-inside-context-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.look-inside-utilization-label {
+  font-weight: 600;
+}
+
+.look-inside-utilization-label.look-inside-utilization-normal {
+  color: var(--li-success);
+}
+
+.look-inside-utilization-label.look-inside-utilization-warning {
+  color: #b58900;
+}
+
+.look-inside-utilization-label.look-inside-utilization-critical {
+  color: var(--li-danger);
+}
+
+.look-inside-context-stat {
+  color: var(--li-text-muted);
+}
+
+.look-inside-context-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.look-inside-stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.look-inside-stat-label {
+  color: var(--li-text-muted);
+}
+
+.look-inside-stat-value {
+  font-weight: 500;
+}
+
+/* ============================================================================
+   Token Breakdown
+   ============================================================================ */
+
+.look-inside-token-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.look-inside-breakdown-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.look-inside-breakdown-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.look-inside-breakdown-name {
+  color: var(--li-text);
+}
+
+.look-inside-breakdown-tokens {
+  color: var(--li-text-muted);
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.look-inside-breakdown-bar-container {
+  height: 4px;
+  background: var(--li-bg-tertiary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.look-inside-breakdown-bar {
+  height: 100%;
+  background: var(--li-accent);
+  border-radius: 2px;
+}
+
+/* ============================================================================
+   Code Blocks
+   ============================================================================ */
+
+.look-inside-code-block {
+  background: var(--li-code-bg);
+  border-radius: 4px;
+  padding: 8px;
+  overflow: auto;
+  max-height: 300px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.look-inside-code-block-sm {
+  background: var(--li-code-bg);
+  border-radius: 3px;
+  padding: 4px 6px;
+  overflow: auto;
+  max-height: 150px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 11px;
+  line-height: 1.3;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ============================================================================
+   Tools
+   ============================================================================ */
+
+.look-inside-tools-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.look-inside-tools-count {
+  font-size: 12px;
+  color: var(--li-text-muted);
+}
+
+.look-inside-tools-filter {
+  font-size: 12px;
+  padding: 3px 8px;
+  border: 1px solid var(--li-border);
+  border-radius: 4px;
+  background: var(--li-bg);
+  color: var(--li-text);
+  width: 150px;
+}
+
+.look-inside-tools-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.look-inside-tool-item {
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: var(--li-bg-secondary);
+}
+
+.look-inside-tool-disabled {
+  opacity: 0.5;
+}
+
+.look-inside-tool-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.look-inside-tool-badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.look-inside-badge-on {
+  background: #d4edda;
+  color: var(--li-success);
+}
+
+.look-inside-badge-off {
+  background: #f8d7da;
+  color: var(--li-danger);
+}
+
+.look-inside-tool-namespace {
+  font-size: 10px;
+  color: var(--li-text-muted);
+  font-style: italic;
+}
+
+.look-inside-tool-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.look-inside-tool-desc {
+  color: var(--li-text-muted);
+  flex: 1;
+}
+
+.look-inside-tool-calls {
+  font-family: monospace;
+  color: var(--li-accent);
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+/* ============================================================================
+   Plugin Entries (shared by all plugin renderers)
+   ============================================================================ */
+
+.look-inside-entry-count {
+  font-size: 12px;
+  color: var(--li-text-muted);
+  margin-bottom: 8px;
+}
+
+.look-inside-entry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.look-inside-entry-item {
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: var(--li-bg-secondary);
+}
+
+.look-inside-entry-clickable {
+  cursor: pointer;
+}
+
+.look-inside-entry-clickable:hover {
+  background: var(--li-bg-tertiary);
+}
+
+.look-inside-entry-expanded {
+  background: var(--li-bg-tertiary);
+}
+
+.look-inside-entry-loading {
+  font-size: 11px;
+  color: var(--li-text-muted);
+  font-style: italic;
+  padding-top: 4px;
+}
+
+.look-inside-entry-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.look-inside-entry-key {
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.look-inside-entry-desc {
+  font-size: 12px;
+  color: var(--li-text-muted);
+  margin-bottom: 4px;
+}
+
+.look-inside-entry-value {
+  margin-bottom: 4px;
+}
+
+.look-inside-entry-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--li-text-muted);
+}
+
+.look-inside-entry-meta-inline {
+  font-size: 11px;
+  color: var(--li-text-muted);
+}
+
+.look-inside-entry-type {
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: var(--li-bg-tertiary);
+  color: var(--li-text-muted);
+}
+
+/* Priority badges */
+.look-inside-priority {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+.look-inside-priority-low {
+  background: var(--li-bg-tertiary);
+  color: var(--li-text-muted);
+}
+
+.look-inside-priority-normal {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.look-inside-priority-high {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.look-inside-priority-critical {
+  background: #f8d7da;
+  color: var(--li-danger);
+}
+
+/* ============================================================================
+   Generic Plugin
+   ============================================================================ */
+
+.look-inside-plugin-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.look-inside-badge-compactable {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: #d4edda;
+  color: var(--li-success);
+}
+
+/* ============================================================================
+   View Context
+   ============================================================================ */
+
+.look-inside-view-context-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--li-spacing);
+}
+
+.look-inside-view-context-total {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.look-inside-view-context-components {
+  display: flex;
+  flex-direction: column;
+  gap: var(--li-spacing);
+}
+
+.look-inside-view-context-component {
+  border: 1px solid var(--li-border);
+  border-radius: var(--li-radius);
+  overflow: hidden;
+}
+
+.look-inside-view-context-component-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px var(--li-spacing);
+  background: var(--li-bg-secondary);
+  border-bottom: 1px solid var(--li-border);
+  font-size: 12px;
+}
+
+.look-inside-view-context-component-name {
+  font-weight: 600;
+}
+
+.look-inside-view-context-component-tokens {
+  color: var(--li-text-muted);
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.look-inside-view-context-component .look-inside-code-block {
+  border-radius: 0;
+  border: none;
+  max-height: 400px;
+}
+
+/* ============================================================================
+   States
+   ============================================================================ */
+
+.look-inside-muted {
+  color: var(--li-text-muted);
+  font-style: italic;
+  font-size: 12px;
+  padding: 8px 0;
+}
+
+.look-inside-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+}
+
+.look-inside-spinner {
+  color: var(--li-text-muted);
+  font-size: 13px;
+}
+
+.look-inside-error-message {
+  color: var(--li-danger);
+  font-size: 13px;
+  padding: var(--li-spacing);
+}

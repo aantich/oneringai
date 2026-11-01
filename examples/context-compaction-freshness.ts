@@ -1,8 +1,8 @@
 /** Offline Stage 01 demonstration. Run after npm run build; no credentials needed. */
 import {
   AgentContextNextGen, ContentType, MessageRole, ToolCallState,
-} from '@everworker/oneringai';
-import type { ContextPreparation, ContextPrepareOptions, PreparedContext } from '@everworker/oneringai';
+} from 'oneringai';
+import type { ContextPreparation, ContextPrepareOptions, PreparedContext } from 'oneringai';
 
 function describe(context: AgentContextNextGen, prepared: PreparedContext) {
   const diagnostic: ContextPreparation | null = context.lastPreparation;

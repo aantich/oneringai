@@ -1,6 +1,6 @@
 /** Offline ambiguous-write receipt. No network, credentials, or external effects. Build first. */
 import assert from 'node:assert/strict';
-import { InMemoryEvidenceStorage, ToolEvidenceMiddleware, ToolManager } from '@everworker/oneringai';
+import { InMemoryEvidenceStorage, ToolEvidenceMiddleware, ToolManager } from 'oneringai';
 const storage = new InMemoryEvidenceStorage({ scope: { ownerId: 'example-user', namespace: 'ambiguous-action' } });
 const tools = new ToolManager({ toolExecutionTimeout: 0 });
 tools.setToolContext({ userId: 'example-user' });

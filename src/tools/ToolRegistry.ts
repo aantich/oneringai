@@ -7,7 +7,7 @@
  *
  * @example
  * ```typescript
- * import { ToolRegistry } from '@everworker/oneringai';
+ * import { ToolRegistry } from 'oneringai';
  *
  * // Get all tools (built-in + connector)
  * const allTools = ToolRegistry.getAllTools();

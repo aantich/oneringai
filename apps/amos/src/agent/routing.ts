@@ -1,4 +1,4 @@
-import type { ModelExecutionConfig, ModelRoutingDiagnostics } from '@everworker/oneringai';
+import type { ModelExecutionConfig, ModelRoutingDiagnostics } from 'oneringai';
 import type { AmosConfig } from '../config/types.js';
 
 /** Rebuild bounded host rules from JSON. Never deserialize an executable callback. */

@@ -7,7 +7,7 @@ chooses its fallback. Lookups do not fetch data, download logos or import provid
 SDKs/Node modules.
 
 ```typescript
-import { Vendor, getVendorPresentation } from '@everworker/oneringai/shared';
+import { Vendor, getVendorPresentation } from 'oneringai/shared';
 const presentation = getVendorPresentation(Vendor.Google);
 const hostChoice = { ...presentation, displayName: 'Google AI' };
 ```

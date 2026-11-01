@@ -1,5 +1,5 @@
-import { AGENT_PACKAGE_PROTOCOL_VERSION, AGENT_PACKAGE_OUTCOME_PROTOCOL, AgentPackageOutcomeServer, createAgentPackageOutcomeTools, hydrateAgentPackageWithOutcomes } from '@everworker/oneringai';
-import type { RemoteOutcomeTransport, RemoteOutcomeReport, OutcomeAgentPackage, SerializedAgentPackage } from '@everworker/oneringai';
+import { AGENT_PACKAGE_PROTOCOL_VERSION, AGENT_PACKAGE_OUTCOME_PROTOCOL, AgentPackageOutcomeServer, createAgentPackageOutcomeTools, hydrateAgentPackageWithOutcomes } from 'oneringai';
+import type { RemoteOutcomeTransport, RemoteOutcomeReport, OutcomeAgentPackage, SerializedAgentPackage } from 'oneringai';
 const oldWire: 2 = AGENT_PACKAGE_PROTOCOL_VERSION;
 const nextWire: 'oneringai.tool-outcomes/1' = AGENT_PACKAGE_OUTCOME_PROTOCOL;
 declare const envelope: OutcomeAgentPackage;

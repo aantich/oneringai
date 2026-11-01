@@ -1,5 +1,5 @@
-import { AgentContextNextGen, BasePluginNextGen, createInContextMemoryContributor } from '@everworker/oneringai';
-import type { ContextContributor, ContextBlock, ContextSelectionManifest, InContextMemoryPluginNextGen } from '@everworker/oneringai';
+import { AgentContextNextGen, BasePluginNextGen, createInContextMemoryContributor } from 'oneringai';
+import type { ContextContributor, ContextBlock, ContextSelectionManifest, InContextMemoryPluginNextGen } from 'oneringai';
 // Existing structural helper method remains unrelated to companion registration.
 export class LegacyPlugin extends BasePluginNextGen {
   name = 'legacy'; getInstructions() { return null; } async getContent() { return 'legacy'; } getContents() { return null; }

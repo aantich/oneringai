@@ -16,7 +16,7 @@ import { readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, resolve, isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { ToolFunction } from '@everworker/oneringai';
+import type { ToolFunction } from 'oneringai';
 import {
   createReadFileTool,
   createWriteFileTool,
@@ -28,7 +28,7 @@ import {
   type FilesystemToolConfig,
   type ShellToolConfig,
   tools as agentTools,
-} from '@everworker/oneringai';
+} from 'oneringai';
 import type { IToolLoader, AmosConfig } from '../config/types.js';
 import { ExternalToolManager, type ExternalToolInfo } from './ExternalToolManager.js';
 

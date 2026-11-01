@@ -5,8 +5,8 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { X, Zap, Layout, ListChecks, Users } from 'lucide-react';
-import { useDynamicUIChangeDetection } from '@everworker/react-ui';
-import type { InContextEntry } from '@everworker/oneringai';
+import { useDynamicUIChangeDetection } from '../../ui/index.js';
+import type { InContextEntry } from 'oneringai';
 import { InternalsContent } from './InternalsContent';
 import { DynamicUIPanel } from './DynamicUIPanel';
 import { ContextDisplayPanel } from './ContextDisplayPanel';

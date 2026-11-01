@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Agent } from '@everworker/oneringai';
+import { Agent } from 'oneringai';
 import { RoutineCommand } from '../../../../apps/amos/src/commands/commands/RoutineCommand.js';
 import { DEFAULT_CONFIG } from '../../../../apps/amos/src/config/types.js';
 import type { CommandContext, IAmosApp } from '../../../../apps/amos/src/config/types.js';

@@ -5,7 +5,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Badge, ProgressBar, Spinner } from 'react-bootstrap';
 import { ArrowLeft, Play, Square, CheckCircle, XCircle, Clock, AlertTriangle, Loader } from 'lucide-react';
-import type { RoutineDefinition } from '@everworker/oneringai';
+import type { RoutineDefinition } from 'oneringai';
 import type { TabState } from '../hooks/useTabContext';
 
 type PanelView = 'list' | 'detail' | 'execution';

@@ -3,7 +3,7 @@
  * Pick sensible defaults for chat / extract / profile / embedding models.
  */
 
-import { Connector, Vendor, type Vendor as VendorT } from '@everworker/oneringai';
+import { Connector, Vendor, type Vendor as VendorT } from 'oneringai';
 
 export interface VendorEntry {
   vendor: VendorT;

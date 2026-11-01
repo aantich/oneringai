@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Connector, Vendor } from '@everworker/oneringai';
+import { Connector, Vendor } from 'oneringai';
 import { ScriptedLoopProvider } from '../../../../examples/agent-loop/scripted-provider.js';
 import { AgentRunner } from '../../../../apps/amos/src/agent/AgentRunner.js';
 import { ConfigManager } from '../../../../apps/amos/src/config/ConfigManager.js';

@@ -1,7 +1,7 @@
 /** Offline: authenticated in-memory transport, exact sources and recovery without action replay. */
 import assert from 'node:assert/strict';
-import { Agent, Connector, Vendor, InMemoryEvidenceStorage, AgentPackageOutcomeServer, exportAgentPackage, hydrateAgentPackageWithOutcomes } from '@everworker/oneringai';
-import type { ITextProvider, RemoteOutcomeTransport } from '@everworker/oneringai';
+import { Agent, Connector, Vendor, InMemoryEvidenceStorage, AgentPackageOutcomeServer, exportAgentPackage, hydrateAgentPackageWithOutcomes } from 'oneringai';
+import type { ITextProvider, RemoteOutcomeTransport } from 'oneringai';
 const provider: ITextProvider = { name: 'offline-remote', capabilities: { text: true, images: false, videos: false, audio: false },
   generate: async () => { throw new Error('This example requires no model call'); }, streamGenerate: async function* () { throw new Error('No model call'); },
   validateConfig: async () => true, listModels: async () => [], getModelCapabilities: () => ({ supportsTools: true, supportsVision: false, supportsJSON: true, supportsJSONSchema: true, maxTokens: 8000, maxOutputTokens: 128 }) };

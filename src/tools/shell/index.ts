@@ -12,7 +12,7 @@
  *
  * @example
  * ```typescript
- * import { tools } from '@everworker/oneringai';
+ * import { tools } from 'oneringai';
  *
  * const agent = Agent.create({
  *   connector: 'openai',

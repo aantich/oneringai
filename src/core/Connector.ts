@@ -341,7 +341,7 @@ export class Connector {
    * or the service has conflicting auth-code strategies.
    *
    * Registered by `vendors/index.ts` at module-load time, so the lookup
-   * works for any host that imports `@everworker/oneringai`. Hosts that
+   * works for any host that imports `oneringai`. Hosts that
    * bypass `buildAuthConfig` (e.g. v25's GroupScopedConnectorRegistry, which
    * reconstructs Connectors from decrypted DB configs) still get the right
    * refresh-grant tokens on every authorize URL — no migration required.

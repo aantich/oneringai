@@ -4,7 +4,7 @@
  * Imports all test suites (side-effect registers them) and re-exports the public API.
  *
  * Usage:
- *   import { IntegrationTestRunner } from '@everworker/oneringai';
+ *   import { IntegrationTestRunner } from 'oneringai';
  *   const suites = IntegrationTestRunner.getAllSuites();
  *   const result = await IntegrationTestRunner.runSuite(suite, tools, params);
  */

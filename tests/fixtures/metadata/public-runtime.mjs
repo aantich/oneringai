@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';import{createRequire}from'node:module';import{build}from'esbuild';
 const require=createRequire(import.meta.url);let checks=0;
-for(const api of [await import('@everworker/oneringai'),require('@everworker/oneringai'),await import('@everworker/oneringai/shared'),require('@everworker/oneringai/shared')]){
+for(const api of [await import('oneringai'),require('oneringai'),await import('oneringai/shared'),require('oneringai/shared')]){
  const before=JSON.stringify(api.MODEL_REGISTRY), r=api.getRealtimeModelCapabilities({vendor:api.Vendor.OpenAI,model:'gpt-realtime-2',transport:'webrtc'});
  assert.equal(r.reasoning.allowedEfforts.length,5);checks++;assert.equal(Object.isFrozen(r.reasoning.allowedEfforts),true);checks++;
  assert.equal(api.getRealtimeModelCapabilities({vendor:api.Vendor.OpenAI,model:'gpt-realtime-2.1',transport:'websocket'}).reasoning.allowedEfforts,null);checks++;

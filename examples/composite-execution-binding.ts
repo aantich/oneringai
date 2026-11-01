@@ -1,5 +1,5 @@
 /** C2 public accounting recipe, using supported APIs only. Offline; build first. */
-import { Agent, Connector, ContentType, MessageRole, ModelTask } from '@everworker/oneringai';
+import { Agent, Connector, ContentType, MessageRole, ModelTask } from 'oneringai';
 import { offlineRoutingConnector } from './model-routing/fixture.js';
 
 const { connector, provider, mainModel } = offlineRoutingConnector('composite-accounting-example');

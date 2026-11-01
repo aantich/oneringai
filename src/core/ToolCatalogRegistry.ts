@@ -230,7 +230,7 @@ export class ToolCatalogRegistry {
    *
    * @example
    * ```typescript
-   * import { ToolCatalogRegistry, ConnectorTools } from '@everworker/oneringai';
+   * import { ToolCatalogRegistry, ConnectorTools } from 'oneringai';
    * ToolCatalogRegistry.setConnectorToolsModule({ ConnectorTools });
    * ```
    */

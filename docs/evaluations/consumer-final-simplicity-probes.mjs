@@ -6,7 +6,7 @@ import { writeFile } from 'node:fs/promises';
 // The tool below is only a stand-in to characterize registration, not an enhanced
 // factory implementation. No secrets, live services, or external writes.
 const require = createRequire(new URL('../../package.json', import.meta.url));
-const lib = require('@everworker/oneringai');
+const lib = require('oneringai');
 lib.ToolCatalogRegistry.setConnectorToolsModule({ ConnectorTools: lib.ConnectorTools });
 const resources = [];
 const observations = [];

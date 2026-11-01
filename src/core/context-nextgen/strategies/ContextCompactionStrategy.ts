@@ -3,7 +3,7 @@ import type { CompactionContext, CompactionResult, ConsolidationResult, ICompact
 import type { ContextCompactionStrategyConfig } from '../compaction/types.js';
 import { COMPOSITION_OPERATION, type CompositionOperation } from '../compaction/types.js';
 export type { ContextCompactionStrategyConfig, NativeHistoryCompactionConfig, ContextCompactionReport } from '../compaction/types.js';
-const COMPOSITION_POLICY = Symbol.for('@everworker/oneringai/context-composition-policy/v1');
+const COMPOSITION_POLICY = Symbol.for('oneringai/context-composition-policy/v1');
 
 /** @internal Works when a consumer combines the public ESM and CJS package surfaces. */
 export function isContextCompactionStrategy(value: ICompactionStrategy): value is ContextCompactionStrategy {

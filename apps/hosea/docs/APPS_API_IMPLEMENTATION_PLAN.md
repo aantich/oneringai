@@ -10,17 +10,17 @@ Create a **fully extensible** Cloudflare Worker that can proxy requests to ANY A
 
 **Key Principles**:
 1. **REUSE existing library types** - `ConnectorAuth`, `VendorTemplate`, `SERVICE_DEFINITIONS`, `MODEL_REGISTRY`
-2. **No duplication** - Don't recreate what exists in `@everworker/oneringai`
+2. **No duplication** - Don't recreate what exists in `oneringai`
 3. **Configuration-driven** - New services via config, not code changes
 
 ---
 
-## Reuse from `@everworker/oneringai`
+## Reuse from `oneringai`
 
 ### Types to Import (not recreate)
 
 ```typescript
-// From @everworker/oneringai - DO NOT DUPLICATE
+// From oneringai - DO NOT DUPLICATE
 import {
   // Auth types
   ConnectorAuth,
@@ -50,7 +50,7 @@ import {
 
   // Vendor enum
   Vendor,
-} from '@everworker/oneringai';
+} from 'oneringai';
 ```
 
 ### What the Library Already Provides
@@ -201,7 +201,7 @@ interface UserCredential {
 
 ```typescript
 // DON'T duplicate - use MODEL_REGISTRY from library
-import { MODEL_REGISTRY, ILLMDescription } from '@everworker/oneringai';
+import { MODEL_REGISTRY, ILLMDescription } from 'oneringai';
 
 function calculateLLMCost(model: string, inputTokens: number, outputTokens: number): number {
   const modelInfo = MODEL_REGISTRY[model];
@@ -950,7 +950,7 @@ INSERT INTO service_overrides (service_id, metering_type, fixed_cost_per_call, p
 
 ```typescript
 // src/services/serviceRegistry.ts
-import { SERVICE_DEFINITIONS, getServiceInfo } from '@everworker/oneringai';
+import { SERVICE_DEFINITIONS, getServiceInfo } from 'oneringai';
 
 export async function resolveService(serviceId: string, db: D1Database): Promise<ResolvedService> {
   // 1. Check custom_services (user-defined)
@@ -985,7 +985,7 @@ export async function resolveService(serviceId: string, db: D1Database): Promise
 
 ```typescript
 // src/services/metering.ts
-import { MODEL_REGISTRY, ILLMDescription } from '@everworker/oneringai';
+import { MODEL_REGISTRY, ILLMDescription } from 'oneringai';
 
 interface UsageResult {
   rawUsage: Record<string, number>;
@@ -1187,7 +1187,7 @@ export async function handleStreamingProxy(
 ```typescript
 // apps/hosea/src/main/AuthService.ts
 import { safeStorage } from 'electron';
-import type { ConnectorAuth, APIKeyConnectorAuth } from '@everworker/oneringai';
+import type { ConnectorAuth, APIKeyConnectorAuth } from 'oneringai';
 
 const API_BASE = 'https://api.oneringai.com';
 
@@ -1224,7 +1224,7 @@ export class AuthService {
 
 ```typescript
 // apps/hosea/src/main/AgentService.ts
-import { Connector, Vendor, SERVICE_DEFINITIONS, getServiceInfo } from '@everworker/oneringai';
+import { Connector, Vendor, SERVICE_DEFINITIONS, getServiceInfo } from 'oneringai';
 
 export class AgentService {
   private authService: AuthService | null = null;
@@ -1481,7 +1481,7 @@ curl https://api.oneringai.com/admin/audit-log?action=balance.grant \
 
 ## Summary: Reuse vs New
 
-### Reused from `@everworker/oneringai` Library
+### Reused from `oneringai` Library
 
 | Component | Location | Used For |
 |-----------|----------|----------|

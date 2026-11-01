@@ -2,7 +2,7 @@ import type { ToolContext, ToolFunction } from '../../domain/entities/Tool.js';
 
 // A function-owned, versioned bridge survives ESM/CJS and duplicate bundles.
 // It is deliberately absent from tool definitions, contexts and raw results.
-const OUTCOME_CAPTURE = Symbol.for('@everworker/oneringai/outcome-invocation/v1');
+const OUTCOME_CAPTURE = Symbol.for('oneringai/outcome-invocation/v1');
 
 export type OutcomeExecutor = (
   this: ToolFunction,

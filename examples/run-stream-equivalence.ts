@@ -1,7 +1,7 @@
 /** Offline semantic parity under equivalent blocking-tool inputs. Build library first. */
 import assert from 'node:assert/strict';
-import { Agent, Connector, Vendor, StreamEventType } from '@everworker/oneringai';
-import type { AgentLoopDiagnostics } from '@everworker/oneringai';
+import { Agent, Connector, Vendor, StreamEventType } from 'oneringai';
+import type { AgentLoopDiagnostics } from 'oneringai';
 import { ScriptedLoopProvider } from './agent-loop/scripted-provider.js';
 
 async function execute(mode: 'run' | 'stream') {

@@ -44,7 +44,7 @@ If none of these apply, skip the registry — the memory layer works fine withou
 ### Pattern 1 — use the standard library as-is
 
 ```ts
-import { MemorySystem, PredicateRegistry, InMemoryAdapter } from '@everworker/oneringai';
+import { MemorySystem, PredicateRegistry, InMemoryAdapter } from 'oneringai';
 
 const memory = new MemorySystem({
   store: new InMemoryAdapter(),
@@ -273,7 +273,7 @@ Note: the memory layer does not implement counter semantics itself — you incre
 Pass the registry into the extraction prompt so the model learns the canonical names:
 
 ```ts
-import { defaultExtractionPrompt } from '@everworker/oneringai';
+import { defaultExtractionPrompt } from 'oneringai';
 
 const prompt = defaultExtractionPrompt({
   signalText: emailBody,

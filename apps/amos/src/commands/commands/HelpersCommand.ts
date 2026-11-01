@@ -1,5 +1,5 @@
-import { getModelInfo } from '@everworker/oneringai';
-import type { HelperRole, ReasoningEffort } from '@everworker/oneringai';
+import { getModelInfo } from 'oneringai';
+import type { HelperRole, ReasoningEffort } from 'oneringai';
 import { BaseCommand } from '../BaseCommand.js';
 import type { AmosConfig, CommandContext, CommandResult } from '../../config/types.js';
 

@@ -60,7 +60,7 @@
 
 ### 2.1 OneRingAI
 
-**Package:** `@everworker/oneringai`  
+**Package:** `oneringai`
 **Language:** TypeScript (strict mode) | **Runtime:** Node.js 22+ | **Module:** ESM
 **Codebase:** ~501 files, ~109,473 lines of code  
 **Architecture:** Connector-First Design

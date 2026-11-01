@@ -11,7 +11,7 @@ When OneRingAI is installed as a dependency rather than opened as its source
 repository, read:
 
 ```text
-node_modules/@everworker/oneringai/AGENTS.md
+node_modules/oneringai/AGENTS.md
 ```
 
 Do not maintain a separate Claude-specific copy of the API guidance here. This

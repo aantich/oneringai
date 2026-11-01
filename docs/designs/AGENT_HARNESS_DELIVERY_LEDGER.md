@@ -252,3 +252,89 @@ this checkout's installed dependency directory, not a fresh network install.
 The canonical recovery guide, Version 2 adoption record and Unreleased notes describe
 the corrected behavior. No live-provider verification, release or consumer upgrade is
 included. Machine-readable evidence: [correction validation](../evaluations/AGENT_HARNESS_CORRECTIONS_2026_11_01.json).
+
+
+## Documentation, examples and complete AMOS surface — 2026-11-01
+
+Selected by the user's request to thoroughly update documentation, expand examples
+and make AMOS fully support the delivered functionality. This extends the application
+and documentation handoff; library API/defaults and native support boundaries stay
+unchanged. Baseline is committed `1753934` on `version2`.
+
+AMOS adds `/run` with exact IDs/options, `/result`, cursor-based `/observe`, explicit
+`/upload`/`/download`, `/reference`/`/save`, `/resume [reference-json]`, `/new` and
+`/delete [reference-json]`, plus `--runtime-resume`. The host can persist locators
+through optional `saveReference`; trusted scope/credentials/policy/tools remain host
+owned. Stop/Ctrl-C invalidates queued ordinary and `/run` input. Startup uncertainty
+retains the reference and a usable CLI. Saved-result replay preserves another active
+observer; failed locator clearing after successful deletion repairs through `/save`
+without another native delete. Shutdown and detached work remain distinct.
+
+A ready-to-run five-driver host defaults to synthetic transports and supports atomic
+locator persistence. Its control/workspace/transfer roots are separate. The complete
+AMOS demonstration runs two turns per adapter, exact request replay/conflict denial,
+result/activity access, supported idle restoration, both managed transfer paths and
+explicit cleanup. A native Agent example additionally demonstrates JSON/model/reasoning,
+immutable input, cancellation and request replay after context restore. Mock process
+restart and native SDK checkpoint-verification boundaries remain explicit.
+
+The README, canonical User Guide, AMOS README/new cookbook, AGENTS, examples inventory,
+Version 2 adoption/handoff, generated API and Unreleased notes are synchronized.
+The full suite passes 9,325 tests in 424 files, including 31 added command/CLI
+regressions (33 AMOS runtime cases overall). Build, source/example/app/test types,
+lint, built public contracts, legacy compatibility, API generation (1,825 items),
+the four Stage 00 offline scenarios and all 19 added local documentation links pass.
+
+All nine runtime/AMOS examples pass from source and the extracted 469-file package.
+All six public entries load as ESM/CJS with shared Connector identity. The extracted
+ready-to-run host executes, persists references and deletes owned sessions for all
+five adapters. Built AMOS CLI checks cover those same five workflows, both managed
+transfer paths, saved-result replay, owned deletion, queued/in-flight cancellation,
+native-command rejection and a native OneRingAI session recovered after an actual
+CLI process restart. Local SDK prior-history restoration is deliberately not claimed;
+it still needs trusted native checkpoint verification. The independent managed
+restart example continues to exercise both SDKs against an external mock service.
+
+Extracted-package checks use this checkout's installed dependencies, not a fresh
+network installation. Final repacking changes only documentation/evidence and is
+compared byte-for-byte with the tested package for every other file. The initial
+legacy CLI probe assumed exactly two session frames; reference selection/persistence
+also emits locator frames, so its corrected assertion verifies at least two
+identical references. No production change was needed for that probe.
+See the [machine-readable record](../evaluations/AGENT_HARNESS_AMOS_2026_11_01.json).
+This handoff is complete on branch. No live-provider call, consumer upgrade or
+release is included; live testing remains paused.
+
+## Unscoped package identity and application MIT migration — 2026-11-01
+
+The user retained this repository, requested personal ownership/contact and MIT
+licensing for AMOS/Hosea, then explicitly rejected a scoped replacement in favor
+of `npm i oneringai`. This authorizes the package-identity change only; public
+signatures, default behavior, export subpaths and saved session formats remain.
+The source prepares `oneringai@2.0.0-beta.1`, with Anton Antic and
+`anton.antich@gmail.com` in current license/author metadata. v1 remains published
+as `@everworker/oneringai@1.2.1`; its maintainer is the signed-in `aantich` account.
+The registry returned E404 for the new name. Nothing is published or deprecated.
+
+Canonical MIT texts now cover the core and both applications. Parent app license
+and notice exceptions preserve the unchanged scope for other commercial apps.
+Hosea no longer requires commercial acceptance; compatible IPC responses report
+MIT without writing an acceptance record. The user separately confirmed ownership
+and authorized moving `Integrail/react-ui` source into Hosea. The 70 local source/
+provenance files record upstream commit `51f1050fc93a4c07089fedafd3beca2abec81b1e`;
+Hosea no longer depends on that Git package or a duplicate legacy library override.
+Third-party licenses remain independent.
+
+Validation passes 9,325 tests / 424 files, core build/type/lint, public consumer
+compatibility, example types, AMOS types/build and the Stage 00 offline baseline.
+All nine examples pass from source and the extracted 477-file package. A clean
+production consumer install verifies all 11 public entries in ESM/CJS, shared
+Connector identity, canonical MIT copies and absence of the legacy dependency.
+Hosea's full build and isolated migrated-UI typecheck pass. Its full desktop
+typecheck reports 24 existing integration diagnostics outside the migrated UI;
+source diffs there change imports only. No desktop runtime/installer validation
+is claimed. The final documentation-only repack preserves tested executable bytes.
+See [the migration guide](../PACKAGE_MIGRATION.md) for staged publication and the
+exact legacy notice; it must wait for an installable stable replacement. Historical
+v1 upgrade recipes and machine-readable validation snapshots retain their original
+package identities. No release-wide namespace/license documentation handoff is deferred.

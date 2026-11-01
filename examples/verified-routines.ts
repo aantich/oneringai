@@ -1,5 +1,5 @@
 /** Offline C3: one submission, host reconciliation, post-step artifact, no replay. Build first. */
-import { Agent, Connector, createRoutineDefinition, createRoutineRunner, ModelTask } from '@everworker/oneringai';
+import { Agent, Connector, createRoutineDefinition, createRoutineRunner, ModelTask } from 'oneringai';
 import { offlineRoutingConnector } from './model-routing/fixture.js';
 const { connector, mainModel } = offlineRoutingConnector('verified-routine-example');
 let submissions = 0, providerComplete = false, artifact = false;

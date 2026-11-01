@@ -3,7 +3,7 @@
  */
 
 import { contextBridge, ipcRenderer } from 'electron';
-import type { IContextSnapshot, IViewContextData, RoutineDefinition, RoutineDefinitionInput } from '@everworker/oneringai';
+import type { IContextSnapshot, IViewContextData, RoutineDefinition, RoutineDefinitionInput } from 'oneringai';
 
 /**
  * Ollama types (mirrored from OllamaService to avoid cross-module imports)
@@ -826,7 +826,7 @@ export interface HoseaAPI {
   };
 
   // Internals monitoring (Look Inside)
-  // Returns IContextSnapshot from @everworker/oneringai core library
+  // Returns IContextSnapshot from oneringai core library
   internals: {
     /** Get snapshot for legacy single agent */
     getAll: () => Promise<IContextSnapshot>;

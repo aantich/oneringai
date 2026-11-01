@@ -1516,7 +1516,7 @@ for await (const event of orchestrator.stream('Build a REST API')) {
 ### 11.1 Minimal Example (Approach B)
 
 ```typescript
-import { OrchestratorAgent } from '@everworker/oneringai';
+import { OrchestratorAgent } from 'oneringai';
 
 const orchestrator = OrchestratorAgent.create({
   connector: 'anthropic',
@@ -1614,7 +1614,7 @@ for await (const event of orchestrator.stream('Build a REST API')) {
 ### 11.3 Tool-Based Delegation (Approach A — Zero Config)
 
 ```typescript
-import { Agent, createDelegationTools } from '@everworker/oneringai';
+import { Agent, createDelegationTools } from 'oneringai';
 
 // Just add delegation tools to a regular Agent
 const agent = Agent.create({
@@ -1638,7 +1638,7 @@ const result = await agent.run('Research best practices for REST APIs, then impl
 ### 11.4 Deterministic Pipeline (Approach C)
 
 ```typescript
-import { Pipeline } from '@everworker/oneringai';
+import { Pipeline } from 'oneringai';
 
 const pipeline = Pipeline.create({
   connector: 'anthropic',

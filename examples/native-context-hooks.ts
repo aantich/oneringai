@@ -4,8 +4,8 @@
  */
 import assert from 'node:assert/strict';
 import dotenv from 'dotenv';
-import { Agent, Connector, ContextCompactionStrategy, ContentType, MessageRole, ModelTask, Vendor } from '@everworker/oneringai';
-import type { InContextMemoryPluginNextGen } from '@everworker/oneringai';
+import { Agent, Connector, ContextCompactionStrategy, ContentType, MessageRole, ModelTask, Vendor } from 'oneringai';
+import type { InContextMemoryPluginNextGen } from 'oneringai';
 import { createNativeFixture } from './native-compaction/fixture.js';
 
 dotenv.config({ quiet: true });

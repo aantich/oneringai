@@ -2,7 +2,7 @@
 
 `createRoutineRunner` is an opt-in facade over the existing routine engine. Existing
 `executeRoutine`, `createRoutineTool`, task unions and session formats retain their
-contracts. Import all consumer APIs from `@everworker/oneringai`.
+contracts. Import all consumer APIs from `oneringai`.
 
 ```typescript
 const runner = createRoutineRunner({

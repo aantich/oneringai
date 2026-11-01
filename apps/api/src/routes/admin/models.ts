@@ -6,7 +6,7 @@ import type { Env } from '../../env.js';
 import { listAllModels, getModel } from '../../services/modelRegistry.js';
 import { execute } from '../../db/queries.js';
 import { logAdminAction } from '../../middleware/auditLog.js';
-import { MODEL_REGISTRY } from '@everworker/oneringai/shared';
+import { MODEL_REGISTRY } from 'oneringai/shared';
 
 const adminModels = new Hono<{ Bindings: Env }>();
 

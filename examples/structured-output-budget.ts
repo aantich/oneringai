@@ -1,6 +1,6 @@
 /** Offline Stage 01 repair demonstration; build first. No keys or network calls. */
-import { Agent, Connector, ContentType, DEFAULT_FEATURES, MessageRole, Vendor } from '@everworker/oneringai';
-import type { ITextProvider, LLMResponse, TextGenerateOptions, StreamEvent } from '@everworker/oneringai';
+import { Agent, Connector, ContentType, DEFAULT_FEATURES, MessageRole, Vendor } from 'oneringai';
+import type { ITextProvider, LLMResponse, TextGenerateOptions, StreamEvent } from 'oneringai';
 
 class ScriptedProvider implements ITextProvider {
   readonly name = 'offline-repair';

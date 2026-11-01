@@ -12,7 +12,7 @@
  *
  * @example
  * ```typescript
- * import { SuspendSignal } from '@everworker/oneringai';
+ * import { SuspendSignal } from 'oneringai';
  *
  * const presentToUser: ToolFunction = {
  *   definition: { ... },

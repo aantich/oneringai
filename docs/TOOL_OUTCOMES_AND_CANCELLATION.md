@@ -14,7 +14,7 @@ is added to ToolContext, raw results or protocol-v2 messages.
 ## Read an outcome without changing a raw result
 
 ```typescript
-import type { ToolExecutionOutcome } from '@everworker/oneringai';
+import type { ToolExecutionOutcome } from 'oneringai';
 
 // agent is an existing Agent; agent.tools === agent.context.tools.
 const { result, outcome } = await agent.tools.executeWithOutcome('lookup', {}, {
@@ -68,7 +68,7 @@ short-circuit return contracts remain supported.
 A tool can use its existing optional `ToolContext.signal`:
 
 ```typescript
-import type { ToolFunction } from '@everworker/oneringai';
+import type { ToolFunction } from 'oneringai';
 
 const read: ToolFunction = {
   definition: {

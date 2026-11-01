@@ -1,5 +1,5 @@
-import { Agent, AgentContextNextGen, FileEvidenceStorage, ObservationMaskingStrategy, StructuredSummaryStrategy, StrategyRegistry } from '@everworker/oneringai';
-import type { CompactionContext, CompactionResult, ContextPrepareOptions, ContextSummaryGenerator, ConversationCompactionReport, ICompactionStrategy } from '@everworker/oneringai';
+import { Agent, AgentContextNextGen, FileEvidenceStorage, ObservationMaskingStrategy, StructuredSummaryStrategy, StrategyRegistry } from 'oneringai';
+import type { CompactionContext, CompactionResult, ContextPrepareOptions, ContextSummaryGenerator, ConversationCompactionReport, ICompactionStrategy } from 'oneringai';
 const storage = new FileEvidenceStorage({ directory: '/tmp/consumer-evidence', scope: { ownerId: 'host-user', namespace: 'consumer' } });
 export const masking: ICompactionStrategy = new ObservationMaskingStrategy({ preserveRecentTurns: 2 });
 export const summaries: ICompactionStrategy = new StructuredSummaryStrategy({ maxSummaryTokens: 1024, fallback: 'mask' });

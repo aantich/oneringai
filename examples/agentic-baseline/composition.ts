@@ -1,8 +1,8 @@
 /** Host-owned composed evaluation utility. It is not a library inspector or workflow backend. */
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto'; import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises'; import { join } from 'node:path'; import { tmpdir } from 'node:os';
-import { Agent, Connector, InMemoryEvidenceStorage, AgentPackageOutcomeServer, exportAgentPackage, createAgentPackageOutcomeTools, createRoutineRunner, createRoutineDefinition, ModelTask } from '@everworker/oneringai';
-import type { RemoteOutcomeTransport, RemoteOutcomeSession, ToolFunction } from '@everworker/oneringai';
+import { Agent, Connector, InMemoryEvidenceStorage, AgentPackageOutcomeServer, exportAgentPackage, createAgentPackageOutcomeTools, createRoutineRunner, createRoutineDefinition, ModelTask } from 'oneringai';
+import type { RemoteOutcomeTransport, RemoteOutcomeSession, ToolFunction } from 'oneringai';
 import { offlineRoutingConnector } from '../model-routing/fixture.js';
 import { canonicalJSON } from './reporter.js';
 export async function runMeetingComposition(variant: 'local' | 'remote', fixture = 'held-out') {

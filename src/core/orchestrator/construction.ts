@@ -4,7 +4,7 @@ import type { SharedWorkspacePluginNextGen } from '../context-nextgen/plugins/Sh
 import type { IConnectorRegistry } from '../../domain/interfaces/IConnectorRegistry.js';
 import { InvalidConfigError } from '../../domain/errors/AIErrors.js';
 
-const CONSTRUCTION = Symbol.for('@everworker/oneringai/orchestrator-construction/v1');
+const CONSTRUCTION = Symbol.for('oneringai/orchestrator-construction/v1');
 const constructing = new WeakSet<object>();
 export interface OrchestratorConstruction {
   readonly version: 1;

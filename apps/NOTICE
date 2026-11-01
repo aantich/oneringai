@@ -1,8 +1,12 @@
-PROPRIETARY SOFTWARE NOTICE
+APPLICATION LICENSING NOTICE
 
-The contents of this directory (apps/) are proprietary software owned by
-Everworker AI and are NOT covered by the MIT License in the repository root.
+AMOS (apps/amos/) and Hosea (apps/hosea/) are open-source application source
+code under the MIT License, Copyright (c) 2025-2026 Anton Antic
+<anton.antich@gmail.com>. See each application's LICENSE file. These applications
+are expressly excluded from the commercial license in apps/LICENSE.
 
-See apps/LICENSE for the commercial license terms.
+Other applications remain subject to apps/LICENSE unless an application-specific
+license states otherwise. Third-party dependencies retain their own licenses;
+an application's MIT license does not relicense its dependencies.
 
-For the open-source @oneringai/agents library, see ../LICENSE (MIT).
+For the open-source oneringai library, see ../LICENSE (MIT).

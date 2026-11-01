@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url), path = require.resolve('@everworker/oneringai'), esm = await import('@everworker/oneringai'), cjs = require(path);
+const require = createRequire(import.meta.url), path = require.resolve('oneringai'), esm = await import('oneringai'), cjs = require(path);
 const duplicate = await import(new URL('../../../dist/index.js?factory-copy', import.meta.url)); delete require.cache[path];
 const copies = [esm, cjs, duplicate, require(path)]; let checks = 0, sequence = 0;
 for (const factory of copies) for (const helper of copies) {

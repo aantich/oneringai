@@ -49,7 +49,7 @@ import type { Permissions, VisibilityPolicy } from './AccessControl.js';
 import type { ACLEntry } from '../access/principals.js';
 
 // Re-export access-control surface so callers only need to import from
-// `@everworker/oneringai` (or the memory barrel) to get the full type set.
+// `oneringai` (or the memory barrel) to get the full type set.
 export type {
   AccessLevel,
   Permission,

@@ -32,7 +32,7 @@ import {
   type IFact,
   type MemorySystem,
   type ScopeFilter,
-} from '@everworker/oneringai';
+} from 'oneringai';
 import chalk from 'chalk';
 import type { UI } from './ui.js';
 import type { VendorEntry } from './env.js';
@@ -228,7 +228,7 @@ async function diffFacts(
   memory: MemorySystem,
   scope: ScopeFilter,
   factsBefore: number,
-): Promise<import('@everworker/oneringai').IFact[]> {
+): Promise<import('oneringai').IFact[]> {
   const factsAfter = await memory.findFacts(
     {},
     { limit: 500, orderBy: { field: 'createdAt', direction: 'desc' } },

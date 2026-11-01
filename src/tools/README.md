@@ -1,6 +1,6 @@
 # Tool Library
 
-Pre-built tools for AI agents in `@everworker/oneringai`.
+Pre-built tools for AI agents in `oneringai`.
 
 ## Overview
 
@@ -27,7 +27,7 @@ This library provides production-ready tools that agents can use. All tools are 
 
 **Example**:
 ```typescript
-import { Connector, Agent, Vendor, tools } from '@everworker/oneringai';
+import { Connector, Agent, Vendor, tools } from 'oneringai';
 
 Connector.create({
   name: 'openai',
@@ -99,7 +99,7 @@ await agent.run('Fetch content from https://example.com/article');
 
 **Example**:
 ```typescript
-import { Connector, Agent, Vendor, ConnectorTools, tools } from '@everworker/oneringai';
+import { Connector, Agent, Vendor, ConnectorTools, tools } from 'oneringai';
 
 // Create a search connector
 Connector.create({
@@ -178,7 +178,7 @@ const scrapeTools = ConnectorTools.for('zenrows');
 
 **Example**:
 ```typescript
-import { Connector, Agent, Vendor, tools } from '@everworker/oneringai';
+import { Connector, Agent, Vendor, tools } from 'oneringai';
 
 // Register OAuth connectors first
 Connector.create({
@@ -373,7 +373,7 @@ export { myTool } from './myCategory/myTool.js';
 ### Step 3: Use
 
 ```typescript
-import { Connector, Agent, Vendor, tools } from '@everworker/oneringai';
+import { Connector, Agent, Vendor, tools } from 'oneringai';
 
 Connector.create({
   name: 'openai',
@@ -460,7 +460,7 @@ Unified API for discovering all available tools (built-in + connector-generated)
 ### Usage
 
 ```typescript
-import { ToolRegistry } from '@everworker/oneringai';
+import { ToolRegistry } from 'oneringai';
 
 // Get ALL tools (built-in + connector)
 const allTools = ToolRegistry.getAllTools();

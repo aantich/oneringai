@@ -1,8 +1,8 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { AgentDriver, DriverOpenSessionRequest, DriverSession, DriverRun, RuntimeToolResolver } from '@everworker/oneringai/agent-runtime';
-import { Connector, Vendor } from '@everworker/oneringai';
-import type { ToolExecutionReport } from '@everworker/oneringai';
+import type { AgentDriver, DriverOpenSessionRequest, DriverSession, DriverRun, RuntimeToolResolver } from 'oneringai/agent-runtime';
+import { Connector, Vendor } from 'oneringai';
+import type { ToolExecutionReport } from 'oneringai';
 
 interface RemoteState { inputs: number; writes: number; acknowledgements: number; runId: string; receipt?: { result: string; timestamp: number } }
 export async function readRemote(directory: string): Promise<RemoteState> { return JSON.parse(await readFile(path.join(directory, 'synthetic-remote.json'), 'utf8')) as RemoteState; }

@@ -15,7 +15,7 @@ import {
   type IngestionResult,
   type MemorySystem,
   type ScopeFilter,
-} from '@everworker/oneringai';
+} from 'oneringai';
 import chalk from 'chalk';
 import type { UI } from './ui.js';
 import type { VendorEntry } from './env.js';

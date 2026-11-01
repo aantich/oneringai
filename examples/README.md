@@ -483,7 +483,8 @@ for the five-harness examples. MCP examples need an authenticated loopback socke
 | `npm run example:agent-runtime-claude-managed` | Actual SDK plus fake HTTP/SSE; ACK after lost result response, then budget waiting and confirmed cancellation with zero actions. Owned cleanup. |
 | `npm run example:agent-runtime-managed-restart` | Both real vendor SDKs use one external loopback mock service. Producer crashes after one accepted tool result; a second process recovers ACK with inputs=1/effects=1 and no cancellation/resubmission. Removes control/mock state. |
 | `npm run example:agent-runtime-artifacts` | Explicit bounded upload/download on both managed drivers; exact bytes, foreign-reference denial and owned cleanup. |
-| `npm run example:amos-runtime` | One AMOS UI consumer across five bindings, one action each, ACK and native-command rejection. Source demo and controller are included in package closure. |
+| `npm run example:amos-runtime` | Complete AMOS workflow across five bindings: two actions each, request-ID deduplication/conflict denial, result/activity replay, both managed file transfers, supported idle detach/resume, explicit deletion and native-command rejection. |
+| `npm run example:agent-runtime-run-options` | Actual native Agent loop with a synthetic provider: schema-validated JSON, model/reasoning override, immutable admitted input, pre-dispatch cancellation, context restore and original-request replay with exactly two provider calls. |
 
 The existing `agent-runtime-local.ts oneringai|codex` commands preserve explicitly
 selected **real/billable** behavior and are excluded from offline runs. The Claude and
@@ -493,3 +494,15 @@ unrun: live LLM/native agent testing remains paused. Managed example failure ret
 its recovery reference/private control directory; keep these for repair rather than
 submitting the task again. No subscription credentials are read. See [the canonical
 guide](../USER_GUIDE.md#agent-runtime-preview) and [delivery ledger](../docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md).
+
+
+For an interactive application, [the AMOS cookbook](../apps/amos/docs/AGENT_RUNTIME.md)
+uses [`runtime-host.ts`](../apps/amos/examples/runtime-host.ts). It selects any of
+five actual adapters using `AMOS_RUNTIME_DRIVER`, defaults to offline transports,
+saves the current locator atomically, and isolates control/workspace/transfers. Real
+provider mode requires both explicit live gates and named Connector credentials; it
+remains unrun under the live-testing pause. The cookbook covers every command, per-run
+endpoint restrictions, file setup, failed recovery/persistence and owned cleanup. Mock
+managed service state does not survive a CLI restart; use the dedicated independent
+mock-service restart example for that scenario. Prior local SDK history requires a
+trusted native checkpoint verifier, which the sample does not replace with a no-op.

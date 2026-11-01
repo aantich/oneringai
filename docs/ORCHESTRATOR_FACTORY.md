@@ -6,7 +6,7 @@ shared workspace, delegation and monitoring engine. Existing orchestrator and
 synchronous worker factory signatures/defaults are unchanged.
 
 ```typescript
-import { createOrchestratorWithFactory, ModelTask } from '@everworker/oneringai';
+import { createOrchestratorWithFactory, ModelTask } from 'oneringai';
 
 const parent = await createOrchestratorWithFactory({
   connector: 'main', model: 'gpt-4o-mini',

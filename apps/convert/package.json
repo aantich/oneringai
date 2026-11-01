@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@everworker/oneringai": "file:../.."
+    "oneringai": "file:../.."
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

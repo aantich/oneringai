@@ -1,5 +1,5 @@
-import { createOrchestratorWithFactory, AGENT_PACKAGE_PROTOCOL_VERSION } from '@everworker/oneringai';
-import type { AgentConstructionRequest, OrchestratedAgentConfig, ChildObservation } from '@everworker/oneringai';
+import { createOrchestratorWithFactory, AGENT_PACKAGE_PROTOCOL_VERSION } from 'oneringai';
+import type { AgentConstructionRequest, OrchestratedAgentConfig, ChildObservation } from 'oneringai';
 const configure = (request: AgentConstructionRequest): OrchestratedAgentConfig => ({ ...request.baseline, temperature: 0, asyncTools: { autoContinue: false } });
 declare const report: ChildObservation;
 const role: string = report.parentExecutionId;
