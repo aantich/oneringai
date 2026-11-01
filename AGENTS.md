@@ -1134,3 +1134,22 @@ five-driver selection and atomic locator persistence. Commands delegate per-run
 options, results/activity, scoped references, upload/download and explicit deletion
 to existing runtime APIs. Native-only commands remain in standard AMOS. Preserve
 `--runtime-host`, additive `--runtime-resume`, host scope ownership and the live pause.
+
+Bounded live validation — 2026-11-01: the user authorized the updated OpenAI `.env`
+key and requested subscription-first Codex tests with very light API usage. The
+[validation record](docs/evaluations/LIVE_VALIDATION_2026_11_01.md) supersedes earlier
+pause statements for that completed bounded run only. Production Codex/AMOS auth
+remains API-key-only; the subscription suite uses an explicit test-only SDK seam.
+Only the private `onering_host` MCP bridge delegates native approval to the host
+ToolManager; its host permissions still apply. Other live gates remain pending;
+this is not standing authorization for an unrestricted live suite or a release.
+
+Runtime review corrections — 2026-11-01: native definition tools must pass both
+resolver and Agent policies through their one ToolManager; resolver policies remain
+borrowed. Structured Claude output is sanitized before schema validation. Managed
+OpenAI state must retain approved vault/desktop/tool configuration. Repair ambiguous
+control acknowledgements through the retained result, never a new action. Late
+recovery detaches observation after runtime destruction; stop/exit interrupt stalled
+read-only admission without authorizing replay of accepted actions. Read the
+[correction record](docs/evaluations/VERSION2_REVIEW_2026_11_01.md) and run the
+[offline safety example](examples/agent-runtime-safety.ts) for these boundaries.

@@ -7369,7 +7369,7 @@ constructor(message: string, cause?: Error)
 
 ### ClaudeAgentSdkDriver `class`
 
-📍 [`src/agent-runtime/drivers/ClaudeAgentSdkDriver.ts:26`](src/agent-runtime/drivers/ClaudeAgentSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/ClaudeAgentSdkDriver.ts:27`](src/agent-runtime/drivers/ClaudeAgentSdkDriver.ts)
 
 Local, tools-only profile. No native shell, file, web, delegation or ambient plugins.
 
@@ -7527,7 +7527,7 @@ async deleteSession(request: DriverOpenSessionRequest & { checkpoint: JsonObject
 
 ### CodexSdkDriver `class`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:92`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:93`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -8004,7 +8004,7 @@ outbox(callId: string, action: () =&gt; Promise&lt;JsonObject&gt;, digest = '', 
 
 ### RuntimeHostTools `class`
 
-📍 [`src/agent-runtime/RuntimeHostTools.ts:47`](src/agent-runtime/RuntimeHostTools.ts)
+📍 [`src/agent-runtime/RuntimeHostTools.ts:48`](src/agent-runtime/RuntimeHostTools.ts)
 
 Serialized blocking execution through the existing manager, not a second tool pipeline.
 
@@ -8600,7 +8600,7 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ### ClaudeAgentSdkDriverOptions `interface`
 
-📍 [`src/agent-runtime/drivers/ClaudeAgentSdkDriver.ts:16`](src/agent-runtime/drivers/ClaudeAgentSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/ClaudeAgentSdkDriver.ts:17`](src/agent-runtime/drivers/ClaudeAgentSdkDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8637,7 +8637,7 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ### CodexSdkDriverOptions `interface`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:75`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:76`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -9365,7 +9365,7 @@ openSession(options: RuntimeSessionOptions): Promise&lt;RuntimeSession&gt;;
 
 ### RuntimeHostToolResult `interface`
 
-📍 [`src/agent-runtime/RuntimeHostTools.ts:30`](src/agent-runtime/RuntimeHostTools.ts)
+📍 [`src/agent-runtime/RuntimeHostTools.ts:31`](src/agent-runtime/RuntimeHostTools.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -9672,7 +9672,7 @@ Acknowledged control snapshots, separate from tool evidence and token activity.
 
 ### RuntimeToolResolution `interface`
 
-📍 [`src/agent-runtime/RuntimeHostTools.ts:16`](src/agent-runtime/RuntimeHostTools.ts)
+📍 [`src/agent-runtime/RuntimeHostTools.ts:17`](src/agent-runtime/RuntimeHostTools.ts)
 
 Executable host objects never enter a saved definition or provider request.
 
@@ -9983,7 +9983,7 @@ type RuntimeResponseFormat = | { type: 'text' }
 
 ### RuntimeToolResolver `type`
 
-📍 [`src/agent-runtime/RuntimeHostTools.ts:37`](src/agent-runtime/RuntimeHostTools.ts)
+📍 [`src/agent-runtime/RuntimeHostTools.ts:38`](src/agent-runtime/RuntimeHostTools.ts)
 
 ```typescript
 type RuntimeToolResolver = (

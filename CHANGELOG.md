@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Fix six runtime review findings: preserve resolver permissions alongside native
+  Agent policies; redact split Claude SDK output and structured values; reject
+  expanded managed OpenAI access/configuration; recover ambiguous control-write
+  acknowledgements without repeating actions; detach late recovery observers after
+  shutdown; and interrupt stalled admission reads on stop/exit. Add failure/lifecycle
+  regressions, AMOS exit coverage and an offline permission/storage-repair example.
+
 - Prepare v2 under the unscoped npm package `oneringai` (`2.0.0-beta.1`), with
   current public imports/examples and generated references migrated from
   `@everworker/oneringai`. Public subpaths and runtime/session contracts remain.

@@ -125,17 +125,45 @@ export class FileRuntimeSessionStorage implements IRuntimeSessionStorage {
 /** One serialized writer shared by admission, checkpoints and the tool-result outbox. */
 export class RuntimeControl {
   private tail: Promise<unknown> = Promise.resolve();
+  private pendingWrite?: { before: RuntimeSessionRecord; data: JsonObject; acknowledgementRequired: boolean };
   private readonly invocations = new Map<string, { digest: string; promise: Promise<JsonObject> }>();
   private readonly retainedReports = new Map<string, JsonObject>();
   constructor(readonly lease: RuntimeSessionLease, private record: RuntimeSessionRecord) {}
   get data(): JsonObject { return structuredClone(this.record.data); }
   update(change: (data: JsonObject) => void): Promise<void> {
-    const operation = this.tail.then(async () => {
+    return this.serialize(async () => {
+      await this.reconcileWrite();
       const data = this.data; change(data);
-      this.record = await this.lease.write(data, this.record.revision);
+      const candidate = controlJson(data);
+      this.pendingWrite = { before: this.record, data: candidate, acknowledgementRequired: false };
+      this.record = await this.lease.write(candidate, this.record.revision);
+      this.pendingWrite = undefined;
     });
+  }
+  private serialize<T>(action: () => Promise<T>): Promise<T> {
+    const operation = this.tail.then(action);
     this.tail = operation.catch(() => undefined);
     return operation;
+  }
+  private async reconcileWrite(): Promise<void> {
+    const pending = this.pendingWrite;
+    if (!pending) return;
+    const current = await this.lease.read();
+    if (current && contentDigest(current) === contentDigest(pending.before)) {
+      // A failed pre-commit write did not advance storage. Do not retroactively
+      // admit an action whose caller already received a failure.
+      if (!pending.acknowledgementRequired) { this.pendingWrite = undefined; return; }
+    } else if (!current || current.id !== pending.before.id || current.scope !== pending.before.scope
+      || current.version !== pending.before.version || current.revision !== pending.before.revision + 1
+      || contentDigest(current.data) !== contentDigest(pending.data)) {
+      throw new AgentBusyError('Runtime control write cannot be reconciled with its original intent');
+    }
+    // Seeing the candidate is not a durability acknowledgement. Rewrite it under
+    // the same exclusive lease and require a successful storage acknowledgement.
+    // Retain the new expected revision even if this acknowledgement also fails.
+    this.pendingWrite = { before: current!, data: pending.data, acknowledgementRequired: true };
+    this.record = await this.lease.write(pending.data, current!.revision);
+    this.pendingWrite = undefined;
   }
   async release(): Promise<void> { await this.tail; await this.lease.release(); }
   async delete(): Promise<void> { await this.tail; await this.lease.delete(); await this.lease.release(); }
@@ -143,6 +171,7 @@ export class RuntimeControl {
     const active = this.invocations.get(callId);
     if (active) return active.digest === digest ? active.promise : Promise.reject(new AgentDriverConfigurationError('Native call ID conflict'));
     const operation = (async () => {
+      await this.serialize(() => this.reconcileWrite());
       const prior = (this.data.outbox as JsonObject | undefined)?.[callId] as JsonObject | undefined;
       if (prior?.digest !== undefined && prior.digest !== digest && (!prior.call || !admission || contentDigest({ name: (prior.call as JsonObject).name, args: (prior.call as JsonObject).args }) !== contentDigest({ name: admission.name, args: admission.args }))) throw new AgentDriverConfigurationError('Native tool call ID was reused with different arguments');
       if (prior) {

@@ -2,6 +2,8 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import OpenAI from 'openai';
+import type { AgentSession as NativeSession } from 'openai/resources/beta/agents/agents';
 import { Connector } from '@/core/Connector.js';
 import { Vendor } from '@/core/Vendor.js';
 import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage, InMemoryRuntimeSessionStorage } from '@/agent-runtime/index.js';
@@ -10,17 +12,65 @@ import { openAIManagedFixture } from '../../../examples/agent-runtime/openai-man
 
 const policy = { filesystem: 'denied', commands: 'denied', sandboxNetwork: 'denied', providerWebSearch: 'denied', approvals: 'deny' } as const;
 afterEach(() => Connector.clear());
-async function setup(fixtureOptions = {}) {
+async function setup(fixtureOptions = {}, transformSession?: (session: NativeSession) => void) {
   const directory = await mkdtemp(path.join(tmpdir(), 'openai-managed-test-'));
   Connector.create({ name: 'managed', vendor: Vendor.OpenAI, auth: { type: 'api_key', apiKey: 'offline-only' } });
   const wire = openAIManagedFixture(fixtureOptions); let tools = 0;
-  const createRuntime = () => new AgentRuntime({ backend: new LocalExecutionBackend({ drivers: [new OpenAIManagedDriver({ createClient: wire.createClient, maxReconnects: 2 })], sessionStorage: new FileRuntimeSessionStorage(directory), resolveTools: () => ({ fingerprint: 'probe-v1', tools: [{ definition: { type: 'function', function: { name: 'probe', parameters: { type: 'object', properties: {} } } }, execute: async () => { tools++; return { success: false, businessValue: 'original' }; } }] }) }) });
+  const createClient = (options: ConstructorParameters<typeof OpenAI>[0]) => new OpenAI({ ...options, fetch: async (input, init) => {
+    const response = await wire.fetch(input, init);
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    if (transformSession && (init?.method ?? 'GET') === 'GET' && url.pathname.endsWith('/agents/sessions/native-session')) {
+      const session = await response.json() as NativeSession; transformSession(session);
+      return new Response(JSON.stringify(session), { headers: { 'Content-Type': 'application/json' } });
+    }
+    return response;
+  } });
+  const createRuntime = () => new AgentRuntime({ backend: new LocalExecutionBackend({ drivers: [new OpenAIManagedDriver({ createClient, maxReconnects: 2 })], sessionStorage: new FileRuntimeSessionStorage(directory), resolveTools: () => ({ fingerprint: 'probe-v1', tools: [{ definition: { type: 'function', function: { name: 'probe', parameters: { type: 'object', properties: {} } } }, execute: async () => { tools++; return { success: false, businessValue: 'original' }; } }] }) }) });
   const runtime = createRuntime();
   const agent = runtime.createAgent({ id: 'logical', instructions: 'test', tools: ['probe'] });
   const options = { execution: { driver: 'openai.agents.api', connector: 'managed', model: 'gpt-6-astra' }, context: { userId: 'owner' }, policy };
   return { runtime, createRuntime, agent, options, wire, tools: () => tools, cleanup: async () => { await runtime.destroy(); await rm(directory, { recursive: true, force: true }); } };
 }
 describe('OpenAI managed native wire adapter', () => {
+  const changes: { name: string; mutate: (session: NativeSession) => void }[] = [
+    { name: 'vault', mutate: session => { session.vault_ids = ['unselected']; } },
+    { name: 'desktop', mutate: session => { if (session.environment.type === 'openai_hosted') session.environment.desktop = { enabled: true }; } },
+    { name: 'network', mutate: session => { if (session.environment.type === 'openai_hosted') session.environment.network.access = 'enabled'; } },
+    { name: 'schema', mutate: session => { const tool = session.agent.tools[0]; if (tool?.type === 'function') tool.parameters = { type: 'object', properties: { changed: { type: 'string' } } }; } },
+    { name: 'description', mutate: session => { const tool = session.agent.tools[0]; if (tool?.type === 'function') tool.description = 'changed instructions'; } },
+    { name: 'deferred tool', mutate: session => { const tool = session.agent.tools[0]; if (tool?.type === 'function') tool.defer_loading = true; } },
+  ];
+  for (const phase of ['continuation', 'restore'] as const) it.each(changes)(`rejects $name access/configuration drift before ${phase} can dispatch`, async ({ mutate }) => {
+    let changed = false;
+    const f = await setup({}, session => { if (changed) mutate(session); });
+    try {
+      const session = await f.agent.openSession({ ...f.options, environment: { type: 'provider-managed' }, policy: { ...policy, filesystem: 'workspace-write', commands: 'sandboxed' } });
+      expect((await (await session.run('first')).result).status).toBe('completed');
+      const reference = session.reference(); if (phase === 'restore') await session.detach(); changed = true;
+      await expect(phase === 'restore' ? f.runtime.resumeSession(reference, { context: f.options.context }) : session.run('must not dispatch')).rejects.toThrow(/changed|expanded|unselected/);
+      expect(f.tools()).toBe(1); expect(f.wire.counts.inputs).toBe(1); expect(f.wire.counts.cancels).toBe(0);
+      changed = false;
+      const repaired = phase === 'restore' ? await f.runtime.resumeSession(reference, { context: f.options.context }) : session;
+      expect((await (await repaired.run('after host repair')).result).status).toBe('completed');
+      expect(f.tools()).toBe(2); expect(f.wire.counts.inputs).toBe(2);
+    } finally { changed = false; await f.cleanup(); }
+  });
+  it.each(['omitted', 'disabled'] as const)('accepts %s desktop defaults and reordered schema keys without changing tool authority', async desktop => {
+    const f = await setup({}, session => {
+      if (session.environment.type === 'openai_hosted') {
+        if (desktop === 'omitted') delete session.environment.desktop;
+        else session.environment.desktop = { enabled: false };
+      }
+      const tool = session.agent.tools[0]; if (tool?.type === 'function') tool.parameters = { properties: {}, type: 'object' };
+    });
+    try {
+      const session = await f.agent.openSession({ ...f.options, environment: { type: 'provider-managed' }, policy: { ...policy, filesystem: 'workspace-write', commands: 'sandboxed' } });
+      expect((await (await session.run('first')).result).status).toBe('completed');
+      const reference = session.reference(); await session.detach();
+      const restored = await f.runtime.resumeSession(reference, { context: f.options.context });
+      expect((await (await restored.run('second')).result).status).toBe('completed'); expect(f.tools()).toBe(2);
+    } finally { await f.cleanup(); }
+  });
   it('defers native creation until input, handles required actions and paginates final items', async () => {
     const f = await setup();
     try {
@@ -30,7 +80,7 @@ describe('OpenAI managed native wire adapter', () => {
       expect(f.tools()).toBe(1); expect(f.wire.counts.inputs).toBe(1); expect(f.wire.counts.itemPages).toBeGreaterThanOrEqual(2);
       expect(await session.run('task', { requestId: 'first' })).toBe(run); expect(f.tools()).toBe(1);
       const creation = f.wire.requests.find(r => r.method === 'POST' && r.path === '/agents/sessions')!.body;
-      expect(creation).toMatchObject({ environment: { type: 'none' }, agent: { multi_agent: { enabled: false }, tools: [{ type: 'function', name: 'probe' }] }, input: 'task', stream: true });
+      expect(creation).toMatchObject({ environment: { type: 'none' }, agent: { multi_agent: { enabled: false }, tools: [{ type: 'function', name: 'probe' }] }, vault_ids: [], input: 'task', stream: true });
       expect((await (await session.run('continue')).result).status).toBe('completed'); expect(f.tools()).toBe(2);
       await f.runtime.deleteSession(session.reference(), { context: f.options.context }); expect(f.wire.counts.deletes).toBe(1);
     } finally { await f.cleanup(); }

@@ -8,6 +8,7 @@ const ajv = new Ajv({ allErrors: true, strict: false });
 export function parseAndValidateStructuredOutput(
   outputText: string,
   format: RuntimeResponseFormat,
+  sanitize?: (value: JsonValue) => JsonValue,
 ): JsonValue | undefined {
   if (format.type === 'text') return undefined;
 
@@ -31,10 +32,11 @@ export function parseAndValidateStructuredOutput(
     );
   }
 
-  if (!validate(parsed.value)) {
+  const value = sanitize ? sanitize(parsed.value as JsonValue) : parsed.value;
+  if (!validate(value)) {
     throw new AgentStructuredOutputError(formatValidationErrors(validate.errors));
   }
-  return parsed.value as JsonValue;
+  return value as JsonValue;
 }
 
 function formatValidationErrors(errors: ErrorObject[] | null | undefined): string {

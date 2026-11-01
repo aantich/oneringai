@@ -1,5 +1,5 @@
 import type { AgentExecutionBackend } from './AgentExecutionBackend.js';
-import { AgentDriverConfigurationError } from './errors.js';
+import { AgentDriverConfigurationError, AgentSessionRecoveryError } from './errors.js';
 import { definitionDigest } from './RuntimeHostTools.js';
 import { cloneAndFreezeJson, cloneAndFreezeSpec } from './internal.js';
 import type {
@@ -88,6 +88,15 @@ export class AgentRuntime {
     this.assertActive();
     if (!this.backend.resumeSession) throw new AgentDriverConfigurationError('Backend does not support recovery');
     const session = await this.backend.resumeSession(reference, options);
+    if (this._isDestroyed) {
+      // Recovery acquires observation, not authority to cancel independent work.
+      // In particular, do not use destroy() as rollback of a late managed resume.
+      if (!session.isDestroyed) {
+        try { await session.detach(); }
+        catch { throw new AgentSessionRecoveryError('AgentRuntime was destroyed during recovery; late observer detach failed, recover the original reference', reference); }
+      }
+      this.assertActive();
+    }
     return this.trackDefinition(session);
   }
 

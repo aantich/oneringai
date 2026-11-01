@@ -42,6 +42,61 @@ describe('file storage bounds and acknowledged result outbox', () => {
 });
 
 describe('outbox failure and concurrency boundaries', () => {
+  it.each(['before', 'after'] as const)('repairs a %s-commit settlement failure without repeating the external action', async failure => {
+    const storage = new InMemoryRuntimeSessionStorage(); const base = await storage.acquire('session_ambiguous', {});
+    let fail = true; let writes = 0;
+    const lease = { ...base, write: async (data: import('@/agent-runtime/types.js').JsonObject, revision: number) => {
+      writes++;
+      const settlement = (data.outbox as { call?: { state?: string } })?.call?.state === 'settled';
+      if (fail && settlement && failure === 'before') throw new Error('acknowledgement lost');
+      const record = await base.write(data, revision);
+      if (fail && settlement) throw new Error('acknowledgement lost');
+      return record;
+    } };
+    const control = new RuntimeControl(lease, await lease.write({ outbox: {} }, 0)); let calls = 0;
+    const action = async () => { calls++; return { result: 'original' }; };
+    try {
+      await expect(control.outbox('call', action, 'original-payload')).rejects.toThrow('acknowledgement lost');
+      fail = false;
+      expect(await control.outbox('call', action, 'original-payload')).toEqual({ result: 'original' });
+      expect(calls).toBe(1); expect(writes).toBeGreaterThanOrEqual(4);
+      await control.update(data => { data.checkpoint = 'after repair'; });
+      expect((await base.read())?.data.checkpoint).toBe('after repair');
+    } finally { await control.release(); }
+  });
+  it('requires a new acknowledged write even after repeated post-commit failures', async () => {
+    const base = await new InMemoryRuntimeSessionStorage().acquire('session_repeated', {});
+    const initial = await base.write({ value: 0 }, 0); let remainingFailures = 2;
+    const control = new RuntimeControl({ ...base, write: async (data, revision) => {
+      const record = await base.write(data, revision);
+      if (remainingFailures-- > 0) throw new Error('post-commit fsync failure');
+      return record;
+    } }, initial);
+    try {
+      await expect(control.update(data => { data.value = 1; })).rejects.toThrow('fsync');
+      await expect(control.update(data => { data.value = 2; })).rejects.toThrow('fsync');
+      expect(control.data.value).toBe(0); expect((await base.read())?.data.value).toBe(1);
+      await control.update(data => { data.value = 3; });
+      expect(control.data.value).toBe(3); expect((await base.read())?.revision).toBe(5);
+    } finally { await control.release(); }
+  });
+  it('does not overwrite a conflicting record or retroactively admit a failed pre-commit intent', async () => {
+    const base = await new InMemoryRuntimeSessionStorage().acquire('session_conflict', {});
+    const initial = await base.write({ value: 0 }, 0); let fail = true;
+    const control = new RuntimeControl({ ...base, write: async (data, revision) => {
+      if (fail) throw new Error('before commit'); return base.write(data, revision);
+    } }, initial);
+    try {
+      await expect(control.update(data => { data.failedAdmission = true; })).rejects.toThrow('before commit');
+      fail = false; await control.update(data => { data.value = 1; });
+      expect(control.data).toEqual({ value: 1 });
+      fail = true; await expect(control.update(data => { data.value = 2; })).rejects.toThrow('before commit');
+      const current = (await base.read())!; await base.write({ value: 'conflicting' }, current.revision);
+      fail = false;
+      await expect(control.update(data => { data.value = 3; })).rejects.toThrow('cannot be reconciled');
+      expect((await base.read())?.data.value).toBe('conflicting');
+    } finally { await control.release(); }
+  });
   it('shares one admitted action under concurrency and rejects a conflicting native call ID', async () => {
     const storage = new InMemoryRuntimeSessionStorage(); const lease = await storage.acquire('session_parallel', {});
     const control = new RuntimeControl(lease, await lease.write({ outbox: {} }, 0));

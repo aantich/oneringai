@@ -18481,11 +18481,23 @@ receives the actual bounded native result/status/error. Native usage stays in th
 runtime result rather than being relabelled/priced as the tool owner's configured model. Bare managers preserve
 manager semantics and do not claim Agent hooks. Native definition mode materializes
 fresh tools into the Agent's one shared manager; it rejects borrowed external owners.
+For selected native definition tools, the resolver's `permissionManager` is an
+additional check on that same manager: both it and the Agent's configured policy
+must allow execution. Resolver permissions remain host-owned and are not destroyed
+with the Agent. Native plugin tools retain their Agent policy. Resolver roles/account
+context is merged while the native Agent retains its principal, memory and cancellation.
 
 Codex receives selected host tools through an authenticated loopback HTTP MCP channel.
 The session token is isolated from shell tool inheritance. This channel is control
-traffic, separate from the selected shell network policy. Real CLI/MCP initialization
-is still live-pending. Native multitenant isolation remains a host responsibility.
+traffic, separate from the selected shell network policy. Only this private server uses
+`default_tools_approval_mode: 'approve'`: OneRingAI's host ToolManager and permission
+policies still decide each invocation, while Codex's native approval policy stays
+`never`. Unrelated MCP/native tools receive no such grant. A bounded current-CLI
+evaluation verified this bridge, continuation, idle recovery, cancellation and shell
+credential isolation; see [the live validation record](docs/evaluations/LIVE_VALIDATION_2026_11_01.md).
+That evaluation uses an explicit test-only SDK authentication bootstrap, not a public
+subscription authentication option. Production still requires a named API-key connector.
+Native multitenant isolation remains a host responsibility.
 
 Runtime results use `outputText`; native `Agent` responses use `output_text`.
 `requestId` deduplicates identical inputs within the session; different payloads reject.
@@ -18573,6 +18585,9 @@ Text, continuation, exposed reasoning/tool progress, cancellation and locally
 validated structured output are supported. `success` is distinguished from error,
 turn/budget limits and stream loss. A terminal SDK limit returns `incomplete`; a
 broken stream cannot establish completion and may quarantine the session.
+Credential redaction spans text/thinking chunks and also sanitizes decoded structured
+strings/keys before local schema validation. If sanitized output cannot satisfy the
+schema, the run fails explicitly instead of returning the credential.
 Usage retains the SDK's model-level report with explicit coverage; cost is an
 estimate. The driver does not claim every internal helper is counted. Destroy the
 runtime to remove its temporary SDK state; with control storage, idle detach preserves
@@ -18624,6 +18639,9 @@ read releases its writer, and a partially restored observer is never published i
 the process cache. Restoration failure releases supported native observation without
 implicitly cancelling existing managed work. Explicit cancellation and deletion remain
 host actions; retrying restoration does not resubmit the original input.
+If runtime destruction wins a race with recovery, the late observer is detached and
+recovery rejects. A failed detach retains the original reference in a recovery error;
+it does not authorize cancelling the independent native task.
 
 The tool-result outbox stores the acknowledged provider-facing payload plus outcome
 and evidence references before delivery. Raw manager returns/events keep their existing
@@ -18660,6 +18678,17 @@ Control records default to a 4 MiB bound; request identity is retained up to 102
 per session. Capacity errors reject before new dispatch or retain a completed result
 for storage repair. After fixing storage, retry `getRun` to store the retained result;
 never retry its action. Use a new session when its bounded request ledger is full.
+When a write committed but its acknowledgement failed, the control writer verifies
+the exact original intent under its exclusive lease and obtains a new acknowledged
+write before advancing its cache. A conflicting record remains blocked. This repairs
+bookkeeping without replaying native input or tool actions. Stop/destruction interrupts
+read-only admission inspection even when its underlying read has not settled; queued
+input cannot dispatch later. Accepted actions and mutating operations retain their
+existing completion/reconciliation requirements.
+
+`npm run example:agent-runtime-safety` demonstrates host denial, a simulated lost
+post-commit acknowledgement, `getRun` repair and restoration with exactly one authorized
+tool execution. It runs offline with dummy data and removes its temporary files.
 
 `npx tsx examples/agent-runtime-recovery.ts` runs actual producer/recovery processes
 over temporary file storage and a synthetic external service. It verifies one input,
@@ -18698,6 +18727,11 @@ disabled. Referenced templates require a host-reviewed `environmentTemplates` al
 Provider web search follows the separate policy flag. No local directory is treated as
 a hosted sandbox or implicitly uploaded. Native command/filesystem behavior belongs
 to the owned provider environment, not the OneRingAI local tool manager.
+Canonical state checks reject unselected vaults, enabled desktop access and changed
+selected function descriptions/schemas/loading configuration before continued execution
+or restoration. Omitted/disabled desktop defaults and reordered JSON object keys are
+accepted. Creation explicitly selects an empty vault list. Owned deletion checks
+names/ownership without loading executable host tools.
 
 The adapter sends exact function schemas, reads current `required_actions`, executes
 through the selected host manager, stores the model payload, rechecks that the request

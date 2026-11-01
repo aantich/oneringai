@@ -136,6 +136,7 @@ describe('CodexSdkDriver', () => {
     expect(capturedCodexOptions?.env?.RUNTIME_TEST_SECRET).toBeUndefined();
     expect(capturedCodexOptions?.env?.OPENAI_API_KEY).toBeUndefined();
     expect(capturedCodexOptions?.env?.HOME).toBe(capturedCodexOptions?.env?.CODEX_HOME);
+    expect(capturedCodexOptions?.config?.mcp_servers).toBeUndefined();
     expect(capturedCodexOptions?.config).toMatchObject({
       developer_instructions: 'Act as a coding agent.',
       model_provider: 'openai',
@@ -158,6 +159,32 @@ describe('CodexSdkDriver', () => {
       approvalPolicy: 'never',
     });
     await runtime.destroy();
+  });
+
+  it('delegates only its selected private MCP bridge approvals to the host manager', async () => {
+    const workspace = await temporaryDirectory();
+    const runtime = new AgentRuntime({ backend: new LocalExecutionBackend({
+      drivers: [new CodexSdkDriver({ loadSdk: async () => ({ Codex: FakeCodex as never }) })],
+      resolveTools: () => ({ fingerprint: 'host-approval-fixture', tools: [{
+        definition: { type: 'function', function: { name: 'selected_probe', parameters: { type: 'object', properties: {} } } },
+        execute: async () => ({ marker: 'OK' }),
+      }] }),
+    }) });
+    try {
+      const session = await runtime.createAgent({ id: 'host-approval', instructions: 'Use the selected probe.', tools: ['selected_probe'] }).openSession({
+        execution: { driver: 'openai.codex.sdk', connector: 'codex-test', model: 'gpt-5.3-codex' },
+        context: { userId: 'host-owner' }, environment: { type: 'local-directory', path: workspace }, policy: policy(),
+      });
+      const servers = capturedCodexOptions?.config?.mcp_servers as Record<string, Record<string, unknown>>;
+      expect(Object.keys(servers)).toEqual(['onering_host']);
+      expect(servers.onering_host).toMatchObject({
+        enabled_tools: ['selected_probe'], required: true,
+        bearer_token_env_var: 'ONERINGAI_HOST_BROKER_TOKEN', default_tools_approval_mode: 'approve',
+      });
+      expect(servers.onering_host?.url).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/mcp$/);
+      await (await session.run('probe')).result;
+      expect(capturedThreadOptions?.approvalPolicy).toBe('never');
+    } finally { await runtime.destroy(); }
   });
 
   it('resolves and validates rotating API keys when opening a Codex session', async () => {

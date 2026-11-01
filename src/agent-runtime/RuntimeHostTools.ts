@@ -6,6 +6,7 @@ import type { ToolContext } from '../domain/interfaces/IToolContext.js';
 import type { Agent, ExternalExecutionResult } from '../core/Agent.js';
 import type { ToolFunction, ToolExecutionReport } from '../domain/entities/Tool.js';
 import type { PermissionPolicyManager } from '../core/permissions/PermissionPolicyManager.js';
+import { PermissionEnforcementPlugin } from '../core/permissions/PermissionEnforcementPlugin.js';
 import { evidenceProjection } from '../core/evidence/ToolEvidenceMiddleware.js';
 import { ToolExecutionError } from '../domain/errors/AIErrors.js';
 import { AgentDriverConfigurationError } from './errors.js';
@@ -87,6 +88,23 @@ export class RuntimeHostTools {
       throw new AgentDriverConfigurationError('Native materialization cannot clone an existing manager/Agent; configure a fresh native session');
     }
     this.manager = agent.tools;
+    const nativeContext = agent.tools.getToolContext();
+    agent.tools.mergeToolContext({
+      ...this.resolution.toolContext,
+      // The native Agent owns identity, memory and cancellation. Host roles and
+      // account selections augment its context without replacing those owners.
+      userId: this.context.userId, agentId: nativeContext?.agentId,
+      memory: nativeContext?.memory, signal: nativeContext?.signal,
+    });
+    if (this.resolution.permissionManager && this.resolution.permissionManager !== agent.tools.getPermissionManager()) {
+      const enforcement = new PermissionEnforcementPlugin(this.resolution.permissionManager,
+        () => agent.tools.getToolContext(), () => undefined);
+      const selected = new Set(this.definitions.map(tool => tool.name));
+      // Both policies must allow a selected tool. Keep the native policy (and
+      // its lifecycle) intact; the resolver's manager remains borrowed.
+      agent.tools.executionPipeline.use({ name: 'runtime-host-permissions', priority: 0,
+        beforeExecute: async ctx => selected.has(ctx.toolName) ? enforcement.beforeExecute(ctx) : undefined });
+    }
   }
 
   async beginRun(id: string, signal: AbortSignal, stop?: (error: Error) => void, input?: string): Promise<void> {

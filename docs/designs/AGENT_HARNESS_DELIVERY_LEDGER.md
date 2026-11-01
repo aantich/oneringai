@@ -1,22 +1,26 @@
 # Agent harness expansion delivery
 
-Current corrections: the 2026-11-01 review found four defects. Their fixes and
-validation are recorded in the correction section below; earlier counts are historical.
+Current corrections: all six findings from the [latest 2026-11-01 review](../evaluations/VERSION2_REVIEW_2026_11_01.md)
+are corrected under the user's “fix all” instruction. The current correction record
+at the end owns validation; earlier review counts and records are historical.
 
 Scope: revision 3 of [the design](AGENT_HARNESS_EXPANSION.md), explicitly authorized
 on 2026-10-28 by “implement everything end to end, verifying and fixing after each
 logical stage”. H0–H6 are sequentially authorized. No release, consumer upgrade,
-breaking change, or live LLM testing is authorized. The existing live-testing pause
-remains in force.
+breaking change, or live LLM testing was included in that initial authorization.
+On 2026-11-01 the user separately authorized subscription-first Codex tests and a
+very light OpenAI API sample. The [bounded validation record](../evaluations/LIVE_VALIDATION_2026_11_01.md)
+owns the current results and support limits; older live-pause statements below are
+historical. This does not authorize unrelated live suites, a release, or consumer upgrades.
 
 Baseline: `53e85de71a4949dc5ce85d3b09d011995782468c` on `version2`.
 
 | Stage | Status | Evidence |
 | --- | --- | --- |
 | H0 contracts and baseline | Complete | Existing 55 runtime tests pass; installed SDK configuration fixture and design contracts were checked in the preceding review. Legacy status/event unions remain unchanged. |
-| H1 definitions and host tools | Offline validated | 62 runtime tests, including native materialization and authenticated MCP; typecheck/build/export checks and built/extracted-package swappable example pass. Live SDK/MCP remains pending. |
+| H1 definitions and host tools | Offline validated; selected Codex live verified | Original 62 runtime tests and package/example checks pass. The 2026-11-01 current-CLI evaluation verifies actual SDK/MCP, structured output and continuation with test-only subscription authentication; the full provider/API-key live matrix remains pending. |
 | H2 local Claude | Offline validated | 68 runtime tests pass; source/example type checks, lint, build/ESM+CJS identity checks, generated API and extracted-package Claude example pass. Official SDK 0.3.312 interface verified; live pending. |
-| H3 durable sessions | Offline validated | 76 runtime tests, source/public-example types, build/export checks, generated API, and source/extracted-package two-process recovery pass. No workflow authority restoration or live-provider claim. |
+| H3 durable sessions | Offline validated; selected Codex idle recovery verified | Original 76 runtime tests and source/extracted-package recovery checks pass. The bounded 2026-11-01 evaluation also verifies exact local Codex transcript restoration and request replay. No workflow authority restoration or active-input recovery is claimed. |
 | H4 OpenAI managed | Offline validated | Seven native-SDK wire cases; 83 runtime tests, source/example types, build/export/docs and extracted-package example pass. Live pending. |
 | H5 Claude managed | Offline validated | Nine actual-SDK wire cases, credential rotation/ambient-header isolation, owned/borrowed cleanup and source/extracted-package gate in H6. Live pending. |
 | H6 files, AMOS, package conformance | Offline validated | 9,294 units / 133 runtime+AMOS cases after the November review corrections; all eight source and extracted-package examples, two managed process-crash recoveries, built AMOS CLI, ESM/CJS entries and public contract checks pass. Live pending. |
@@ -338,3 +342,46 @@ See [the migration guide](../PACKAGE_MIGRATION.md) for staged publication and th
 exact legacy notice; it must wait for an installable stable replacement. Historical
 v1 upgrade recipes and machine-readable validation snapshots retain their original
 package identities. No release-wide namespace/license documentation handoff is deferred.
+
+## Six runtime safety corrections — 2026-11-01
+
+The user replied “fix all” to the [six-finding review](../evaluations/VERSION2_REVIEW_2026_11_01.md).
+R1–R6 are corrected using existing manager, redaction, storage and lifecycle facilities:
+
+- Native selected tools pass both resolver and Agent policies on one pipeline;
+  resolver managers remain borrowed and native plugin policy remains intact.
+- Claude text/thinking chunks and decoded structured strings/keys use the shared
+  internal SDK redactor. Sanitized values must satisfy local schema validation.
+- OpenAI creation explicitly selects no vaults. Canonical state rejects vault/desktop expansion and changed selected
+  function configuration on execution/recovery. Equivalent defaults/schema key order
+  remain supported; owned deletion loads no executable tools.
+- Ambiguous writes retain exact control intent, reconcile under the exclusive lease
+  and require a new acknowledged write. They never replay an external action or
+  retroactively commit an admission that failed before storage changed.
+- A late resume after runtime destruction detaches observation and rejects; detach
+  failure retains the original locator without cancelling independent native work.
+- Stop/destruction interrupt stalled read-only admission. AMOS exit releases the
+  writer and queued input never dispatches after the late read settles. Accepted
+  actions/mutating operations retain existing completion/reconciliation boundaries.
+
+Logical verification passed after each stage. The full suite passes **9,360 tests
+in 424 files**, including 33 new regressions. The [fixed public/source probes](../evaluations/v2-review-2026-11-01/fixed-results.json)
+confirm all six corrections and host denial across all five adapters. Core build/
+export identity, source types/lint, public compatibility, examples/AMOS types, AMOS
+build and generated public API (1,825 items) pass. All ten runtime/AMOS examples and
+the four-scenario Stage 00 baseline pass offline; the [example record](../evaluations/v2-review-2026-11-01/examples.json)
+lists their results. The new safety example demonstrates host denial, renewed host
+authorization and retained-result repair/restoration with exactly one tool execution.
+
+The canonical User Guide, AMOS cookbook, examples index, AGENTS, Version 2 adoption
+and Unreleased notes are synchronized. Public signatures, saved formats, defaults,
+legacy APIs and provider billing/authentication remain unchanged. The repository-wide
+test-type config's inherited rootDir and legacy mock/private-identity diagnostics
+remain explicitly outside passing type gates, as recorded in the review. No live
+provider call, commit, push, merge, consumer upgrade or release is included.
+
+Package closure includes the safety example and correction evidence. The extracted
+safety, five-harness and AMOS workflows pass with installed checkout dependencies;
+no fresh network installation is claimed. All 190 built files are compared against
+the current build, and export targets are present. The final documentation/evidence
+repack preserves verified executable bytes. See the [package check](../evaluations/v2-review-2026-11-01/package-check.json).

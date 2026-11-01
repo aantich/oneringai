@@ -9,7 +9,9 @@ This chapter owns AMOS setup and commands. The [canonical runtime chapter](../..
 owns library signatures, authentication, tools, capabilities and recovery guarantees.
 The [examples index](../../../examples/README.md#agent-runtime-harness-examples)
 contains deterministic checks and expected output. Availability is source on branch;
-live provider/platform/account checks remain paused and no package release is claimed.
+the [2026-11-01 library validation](../../../docs/evaluations/LIVE_VALIDATION_2026_11_01.md)
+records a separately authorized Codex subscription evaluation and small OpenAI API
+sample. AMOS native-provider end-to-end verification remains pending; no release is claimed.
 
 ## Start the ready-to-run host
 
@@ -69,6 +71,15 @@ example allows `text/plain` and `application/json`, maximum 1 MiB. Library limit
 path checks, no-overwrite rules and native ownership checks still apply.
 
 ## Execute, continue and replay safely
+
+Host resolver permissions also apply to native OneRingAI definition tools; they do
+not replace the Agent's own policy. `/stop` and `/exit` can interrupt a stalled
+read-only admission inspection, and its queued input cannot dispatch after the read
+eventually returns. Already accepted actions still require native completion or
+reconciliation. For a retained-result persistence error, repair storage and use
+`/result <original-run-id>`; do not submit another task. The offline
+[`agent-runtime-safety` example](../../../examples/agent-runtime-safety.ts) demonstrates
+host denial and repair after an acknowledgement is lost following a committed write.
 
 Plain text starts a turn. To set a request ID, model, reasoning or output schema,
 use explicit JSON; there is no shell evaluation:
@@ -179,7 +190,7 @@ its original data rather than probing recovery by launching a task.
 
 ## Real providers and troubleshooting
 
-Real mode is prepared but has not been run under the project's live pause. A user
+AMOS real mode has not been exercised by the bounded library validation above. A user
 who intentionally chooses billable provider execution must set `AMOS_RUNTIME_LIVE=1`,
 `ONERINGAI_ALLOW_LIVE=1`, `AMOS_RUNTIME_DRIVER` and the corresponding `OPENAI_API_KEY`
 or `ANTHROPIC_API_KEY`. Keys are read only by named Connectors. ChatGPT/Claude

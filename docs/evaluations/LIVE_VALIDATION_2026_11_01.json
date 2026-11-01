@@ -1,0 +1,213 @@
+{
+  "protocol": "bounded-openai-codex-live-v1",
+  "recordedAt": "2026-11-01T13:48:10.736Z",
+  "sourceBase": "fed745a0ec58e348c791723884a516958cf3a13d",
+  "sourceState": "version2 working tree including the private-MCP approval correction",
+  "authorization": "This bounded run only: Codex subscription first, very light OpenAI API usage; no release or other providers.",
+  "environment": {
+    "node": "v24.20.0",
+    "codexSdk": "0.149.0",
+    "verifiedCli": "0.162.0-alpha.17.2",
+    "platform": "darwin"
+  },
+  "subscription": {
+    "protocol": "codex-subscription-evaluation-v1",
+    "model": "gpt-6.1-sol",
+    "nativeRuns": 5,
+    "probeCalls": 1,
+    "checkpointChecks": 1,
+    "checks": [
+      {
+        "check": "host-tools-schema-streaming",
+        "nativeRuns": 1,
+        "inputTokens": 21384,
+        "outputTokens": 101
+      },
+      {
+        "check": "request-replay-and-conflict",
+        "nativeRuns": 1
+      },
+      {
+        "check": "pre-dispatch-cancellation",
+        "nativeRuns": 1
+      },
+      {
+        "check": "ordered-correlated-event-cursor",
+        "nativeRuns": 1
+      },
+      {
+        "check": "foreign-owner-rejection",
+        "nativeRuns": 1
+      },
+      {
+        "check": "unsupported-transfer-rejection",
+        "nativeRuns": 1
+      },
+      {
+        "check": "native-multiturn-history",
+        "nativeRuns": 2
+      },
+      {
+        "check": "workspace-command-and-key-isolation",
+        "nativeRuns": 3
+      },
+      {
+        "check": "verified-native-restore-and-idempotency",
+        "nativeRuns": 4
+      },
+      {
+        "check": "cancelled-observation-deletion-guard",
+        "nativeRuns": 5
+      },
+      {
+        "check": "in-flight-tool-cancellation",
+        "nativeRuns": 5
+      }
+    ],
+    "nativeErrors": [],
+    "boundary": "Actual Codex SDK/driver/runtime with a test-only ChatGPT login bootstrap; production subscription authentication is not implemented.",
+    "passedTests": 10,
+    "usageCoverage": "First native turn usage only; no aggregate subscription billing estimate.",
+    "productionAuthenticationChanged": false
+  },
+  "api": {
+    "model": "gpt-4o-mini",
+    "requests": 14,
+    "passedTests": 7,
+    "usage": {
+      "inputTokens": 5145,
+      "outputTokens": 113
+    },
+    "estimatedTokenCostUSD": 0.00083955,
+    "estimateSource": "Checked-in model registry; not a billing statement.",
+    "guard": {
+      "maxRequests": 20,
+      "maxOutputTokens": 512,
+      "maxRequestBytes": 65536,
+      "actualMaxOutputTokens": 256,
+      "apiKeyPassedToCodex": false
+    },
+    "suites": [
+      {
+        "name": "task-state",
+        "passed": 2,
+        "cases": [
+          {
+            "provider": "openai",
+            "mode": "run",
+            "passed": true
+          },
+          {
+            "provider": "openai",
+            "mode": "stream",
+            "passed": true
+          }
+        ]
+      },
+      {
+        "name": "outcome-tools",
+        "passed": 2,
+        "cases": [
+          {
+            "provider": "openai",
+            "mode": "run",
+            "passed": true
+          },
+          {
+            "provider": "openai",
+            "mode": "stream",
+            "passed": true
+          }
+        ]
+      },
+      {
+        "name": "presets",
+        "passed": 2,
+        "cases": [
+          {
+            "provider": "openai",
+            "mode": "run",
+            "passed": true
+          },
+          {
+            "provider": "openai",
+            "mode": "stream",
+            "passed": true
+          }
+        ]
+      },
+      {
+        "name": "model-repair",
+        "passed": 1,
+        "cases": [
+          {
+            "provider": "openai",
+            "passed": true
+          }
+        ]
+      }
+    ]
+  },
+  "offline": {
+    "fullUnit": {
+      "files": 424,
+      "passed": 9326
+    },
+    "additionalHostPermissionRegression": {
+      "file": "tests/unit/agent-runtime/HostToolMcpServer.test.ts",
+      "passed": 2,
+      "newDistinctCases": 1
+    },
+    "build": true,
+    "typecheck": true,
+    "lint": true,
+    "exampleTypes": true,
+    "publicConsumerCompatibility": true,
+    "newLiveTestStrictTypes": true,
+    "sdkConfigSerialization": true,
+    "runtimeExamples": [
+      {
+        "program": "examples/agent-runtime-swappable.ts",
+        "passed": true
+      },
+      {
+        "program": "examples/agent-runtime-claude.ts",
+        "passed": true
+      },
+      {
+        "program": "examples/agent-runtime-recovery.ts",
+        "passed": true
+      },
+      {
+        "program": "examples/agent-runtime-openai-managed.ts",
+        "passed": true
+      },
+      {
+        "program": "examples/agent-runtime-claude-managed.ts",
+        "passed": true
+      },
+      {
+        "program": "examples/agent-runtime-artifacts.ts",
+        "passed": true
+      },
+      {
+        "program": "examples/agent-runtime-managed-restart.ts",
+        "passed": true
+      },
+      {
+        "program": "examples/agent-runtime-run-options.ts",
+        "passed": true
+      },
+      {
+        "program": "apps/amos/examples/agent-runtime-offline.ts",
+        "passed": true
+      }
+    ]
+  },
+  "limits": [
+    "SDK-bundled CLI subscription probes rejected the tested models; current app CLI required in the successful subscription evaluation.",
+    "API-key production Codex and hosted managed-agent calls were not run.",
+    "No other provider, media/Realtime, large native compaction or AMOS/Hosea UI live verification."
+  ],
+  "productionChange": "Only private onering_host MCP uses explicit approve mode; host ToolManager permissions and native never policy remain enforced."
+}

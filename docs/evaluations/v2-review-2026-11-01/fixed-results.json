@@ -1,0 +1,62 @@
+{
+  "nativePermissionManager": {
+    "status": "completed",
+    "blockedToolExecutions": 0
+  },
+  "claudeRedaction": {
+    "status": "completed",
+    "outputTextRedacted": true,
+    "parsedCredentialExposed": false,
+    "streamedCredentialExposed": false
+  },
+  "storageAcknowledgement": {
+    "persistedRevision": 5,
+    "persistedValue": 2,
+    "cachedValue": 2,
+    "retryFailures": []
+  },
+  "lateResume": {
+    "runtimeDestroyed": true,
+    "returnedSession": null,
+    "sessionDestroyCalls": 0,
+    "backendDestroyCalls": 0,
+    "detachCalls": 1
+  },
+  "pendingAdmissionShutdown": {
+    "shutdownSettledWhileInspectionPending": true,
+    "cancelCallsBeforeInspectionSettles": 1
+  },
+  "expandedManagedResources": {
+    "resumedWithUnselectedVaultAndDesktop": false,
+    "changedResponses": 1,
+    "nativeInputs": 1,
+    "hostToolExecutions": 1
+  },
+  "allHarnessPermissions": [
+    {
+      "driver": "oneringai.agent",
+      "blockedToolExecutions": 0,
+      "deniedCalls": 1
+    },
+    {
+      "driver": "openai.codex.sdk",
+      "blockedToolExecutions": 0,
+      "deniedCalls": 1
+    },
+    {
+      "driver": "anthropic.agent.sdk",
+      "blockedToolExecutions": 0,
+      "deniedCalls": 1
+    },
+    {
+      "driver": "openai.agents.api",
+      "blockedToolExecutions": 0,
+      "deniedCalls": 1
+    },
+    {
+      "driver": "anthropic.managed.api",
+      "blockedToolExecutions": 0,
+      "deniedCalls": 1
+    }
+  ]
+}

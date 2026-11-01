@@ -1,7 +1,7 @@
 import type { RuntimeFileTransfers } from './RuntimeFileTransfers.js';
 import { randomUUID } from 'node:crypto';
 import { AgentDriverConfigurationError, AgentBusyError, AgentEventHistoryExpiredError, AgentSessionRecoveryError } from './errors.js';
-import { cloneAndFreezeJson, contentDigest, errorMessage } from './internal.js';
+import { cloneAndFreezeJson, contentDigest, errorMessage, raceWithAbort } from './internal.js';
 import { controlJson, controlValue, type RuntimeControl } from './RuntimeSessionStorage.js';
 import type { AgentRun, AgentRunInput, AgentRunResult, AgentSession, JsonObject, RuntimeRunOptions, RuntimeSession, RuntimeSessionReference, RuntimeSessionSnapshot } from './types.js';
 import type { DriverSession } from './AgentDriver.js';
@@ -88,7 +88,7 @@ export class DefinitionSession implements RuntimeSession {
       return this.getRun(String(saved.runId));
     }
     options.signal?.throwIfAborted();
-    if ((await this.inspectState()).unresolvedEffects) throw new AgentSessionRecoveryError('Unresolved effects require host/source reconciliation before new input', this.reference());
+    if ((await raceWithAbort(this.inspectState(), options.signal!)).unresolvedEffects) throw new AgentSessionRecoveryError('Unresolved effects require host/source reconciliation before new input', this.reference());
     if (control?.data.activeRunId) throw new AgentSessionRecoveryError('Recorded native input is still active or its acceptance is unknown; resume it without resubmission', this.reference(), String(control.data.activeRunId));
     options.signal?.throwIfAborted();
     const runId = `run_${randomUUID()}`;
@@ -174,6 +174,7 @@ export class DefinitionSession implements RuntimeSession {
   async destroy(): Promise<void> {
     if (this.closed || this.detached) return;
     this.closed = true;
+    this.admissionAbort?.abort(new AgentBusyError('Session observer closed during admission'));
     await this.admission?.catch(() => undefined);
     await this.transfer?.catch(() => undefined);
     try {

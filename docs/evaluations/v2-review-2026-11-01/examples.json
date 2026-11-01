@@ -1,0 +1,46 @@
+[
+  {
+    "script": "apps/amos/examples/agent-runtime-offline.ts",
+    "status": "passed"
+  },
+  {
+    "script": "examples/agent-runtime-artifacts.ts",
+    "status": "passed"
+  },
+  {
+    "script": "examples/agent-runtime-claude-managed.ts",
+    "status": "passed"
+  },
+  {
+    "script": "examples/agent-runtime-claude.ts",
+    "status": "passed"
+  },
+  {
+    "script": "examples/agent-runtime-managed-restart.ts",
+    "status": "passed"
+  },
+  {
+    "script": "examples/agent-runtime-openai-managed.ts",
+    "status": "passed"
+  },
+  {
+    "script": "examples/agent-runtime-recovery.ts",
+    "status": "passed"
+  },
+  {
+    "script": "examples/agent-runtime-run-options.ts",
+    "status": "passed"
+  },
+  {
+    "script": "examples/agent-runtime-safety.ts",
+    "status": "passed"
+  },
+  {
+    "script": "examples/agent-runtime-swappable.ts",
+    "status": "passed"
+  },
+  {
+    "script": "examples/agentic-evaluation-baseline.ts",
+    "status": "passed"
+  }
+]

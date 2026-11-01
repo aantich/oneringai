@@ -10,6 +10,7 @@ import { AgentDriverConfigurationError, AgentPolicyUnsupportedError, AgentRuntim
 import { type NativeCheckpointVerifier, createNativeStateDirectory, verifyNativeStateDirectory, deleteNativeStateDirectory } from '../NativeStateDirectory.js';
 import { createDeferred, toJsonObject, errorMessage } from '../internal.js';
 import { parseAndValidateStructuredOutput } from '../StructuredOutputValidator.js';
+import { createRedactor, redactJson, StreamingSecretRedactor } from '../SecretRedactor.js';
 import type { JsonObject, RuntimeReasoningConfig } from '../types.js';
 
 type ClaudeSdk = Pick<typeof import('@anthropic-ai/claude-agent-sdk'), 'query' | 'createSdkMcpServer'>;
@@ -81,11 +82,13 @@ export class ClaudeAgentSdkDriver implements AgentDriver {
 }
 
 class ClaudeSdkSession implements DriverSession {
+  private readonly redact: (text: string) => string;
   private destroyed = false;
   private sessionId?: string;
   private active?: Query;
   private readonly mcp: ReturnType<ClaudeSdk['createSdkMcpServer']>;
   constructor(private readonly request: DriverOpenSessionRequest, private readonly sdk: ClaudeSdk, private readonly home: string, private readonly key: string, private readonly baseURL: string | undefined, private readonly validateReasoning: (model: string, reasoning?: RuntimeReasoningConfig) => void, nativeSessionId?: string) {
+    this.redact = createRedactor([key]);
     this.sessionId = nativeSessionId;
     // Register raw schemas on the SDK's real in-process MCP instance, avoiding lossy JSON->Zod conversion.
     this.mcp = sdk.createSdkMcpServer({ name: 'onering_host', version: '1', tools: [], alwaysLoad: true });
@@ -134,14 +137,32 @@ class ClaudeSdkSession implements DriverSession {
     const self = this;
     const events = (async function* (): AsyncGenerator<DriverEvent> {
       let terminal: SDKResultMessage | undefined;
+      const deltas = new Map<string, { type: 'agent.message.delta' | 'reasoning.delta'; redactor: StreamingSecretRedactor }>();
+      function* flush(index?: number): Generator<DriverEvent> {
+        for (const [id, state] of deltas) if (index === undefined || id.endsWith(`:${index}`)) {
+          const text = state.redactor.finish();
+          if (text) yield { type: state.type, data: { text } };
+          deltas.delete(id);
+        }
+      }
       try {
         try { for await (const message of query) {
           if ('session_id' in message && message.session_id) self.sessionId = message.session_id;
-          if (message.type === 'stream_event' && message.event.type === 'content_block_delta') {
-            const delta = message.event.delta;
-            if (delta.type === 'text_delta') yield { type: 'agent.message.delta', data: { text: self.redact(delta.text) } };
-            if (delta.type === 'thinking_delta') yield { type: 'reasoning.delta', data: { text: self.redact(delta.thinking) } };
+          if (message.type === 'stream_event') {
+            if (message.event.type === 'message_start' || message.event.type === 'message_stop') yield* flush();
+            if (message.event.type === 'content_block_stop') yield* flush(message.event.index);
+            if (message.event.type === 'content_block_delta') {
+              const delta = message.event.delta;
+              if (delta.type === 'text_delta' || delta.type === 'thinking_delta') {
+                const id = `${delta.type}:${message.event.index}`;
+                const state = deltas.get(id) ?? { type: delta.type === 'text_delta' ? 'agent.message.delta' as const : 'reasoning.delta' as const, redactor: new StreamingSecretRedactor([self.key]) };
+                deltas.set(id, state);
+                const text = state.redactor.push(delta.type === 'text_delta' ? delta.text : delta.thinking);
+                if (text) yield { type: state.type, data: { text } };
+              }
+            }
           } else if (message.type === 'assistant') {
+            yield* flush();
             for (const part of message.message.content) {
               if (part.type === 'text') yield { type: 'agent.message.completed', data: { text: self.redact(part.text) } };
               if (part.type === 'tool_use') yield { type: 'tool.started', data: { callId: part.id, name: part.name } };
@@ -149,6 +170,7 @@ class ClaudeSdkSession implements DriverSession {
           } else if (message.type === 'tool_progress') yield { type: 'tool.progress', data: { callId: message.tool_use_id, name: message.tool_name, elapsedSeconds: message.elapsed_time_seconds } };
           else if (message.type === 'result') terminal = message;
         } } catch (error) { if (!terminal) throw error; yield { type: 'diagnostic', data: { code: 'CLAUDE_SDK_STREAM_TAIL', message: self.redact(errorMessage(error)) } }; }
+        yield* flush();
         if (!terminal) throw new Error('Claude SDK ended without a terminal result');
         const outputText = terminal.subtype === 'success' ? self.redact(terminal.result) : '';
         const usage = terminal.usage;
@@ -160,8 +182,8 @@ class ClaudeSdkSession implements DriverSession {
           ...(terminal.subtype !== 'success' ? { error: { code: 'CLAUDE_SDK_RESULT', message: self.redact(terminal.errors.join('; ')) } } : {}),
         };
         if (request.responseFormat?.type === 'json_schema' && terminal.subtype === 'success') {
-          try { result.outputParsed = parseAndValidateStructuredOutput(terminal.structured_output !== undefined ? JSON.stringify(terminal.structured_output) : terminal.result, request.responseFormat); }
-          catch (error) { result.status = 'failed'; result.error = { code: 'AGENT_STRUCTURED_OUTPUT', message: errorMessage(error) }; }
+          try { result.outputParsed = parseAndValidateStructuredOutput(terminal.structured_output !== undefined ? JSON.stringify(terminal.structured_output) : terminal.result, request.responseFormat, value => redactJson(value, self.redact)); }
+          catch (error) { result.status = 'failed'; result.error = { code: 'AGENT_STRUCTURED_OUTPUT', message: self.redact(errorMessage(error)) }; }
         }
         yield { type: 'usage.updated', data: toJsonObject(result.usage) };
         deferred.resolve(result);
@@ -185,5 +207,4 @@ class ClaudeSdkSession implements DriverSession {
     try { await this.active?.interrupt(); }
     finally { try { this.active?.close(); await this.mcp.instance.close(); } finally { await rm(this.home, { recursive: true, force: true }); } }
   }
-  private redact(text: string): string { return text.split(this.key).join('[REDACTED]'); }
 }

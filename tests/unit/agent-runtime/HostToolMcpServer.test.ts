@@ -3,6 +3,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { RuntimeHostTools } from '@/agent-runtime/RuntimeHostTools.js';
 import { HostToolMcpServer } from '@/agent-runtime/HostToolMcpServer.js';
+import { PermissionPolicyManager } from '@/core/permissions/PermissionPolicyManager.js';
 
 describe('authenticated host-tool MCP bridge', () => {
   it('lists only selected tools, rejects foreign credentials and calls the real manager', async () => {
@@ -20,5 +21,21 @@ describe('authenticated host-tool MCP bridge', () => {
       expect((await client.callTool({ name: 'not-selected' })).isError).toBe(true);
       await host.endRun(); expect((await client.callTool({ name: 'echo' })).isError).toBe(true);
     } finally { await client.close(); await server.close(); await host.close(); }
+  });
+  it('retains host permission denial for an authenticated selected tool', async () => {
+    let calls = 0;
+    const permissions = PermissionPolicyManager.fromConfig({ blocklist: ['blocked_probe'] });
+    const host = new RuntimeHostTools({ tools: [{
+      definition: { type: 'function', function: { name: 'blocked_probe', parameters: { type: 'object', properties: {} } } },
+      execute: async () => { calls++; return 'must not execute'; },
+    }], fingerprint: 'blocked-host:v1', permissionManager: permissions }, { userId: 'owner' });
+    const server = new HostToolMcpServer(); const client = new Client({ name: 'host-denial-fixture', version: '1' });
+    try {
+      const url = await server.start(host);
+      await client.connect(new StreamableHTTPClientTransport(new URL(url), { requestInit: { headers: { Authorization: `Bearer ${server.token}` } } }));
+      await host.beginRun('host-denied', new AbortController().signal);
+      expect((await client.callTool({ name: 'blocked_probe', arguments: {} })).isError).toBe(true);
+      expect(calls).toBe(0);
+    } finally { await client.close(); await server.close(); await host.close(); permissions.destroy(); }
   });
 });

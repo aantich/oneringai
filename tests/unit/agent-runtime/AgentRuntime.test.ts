@@ -19,6 +19,7 @@ import type {
   DriverRunRequest,
   DriverRunResult,
   DriverSession,
+  AgentExecutionBackend, RuntimeSession,
 } from '@/agent-runtime/index.js';
 
 const temporaryDirectories: string[] = [];
@@ -28,6 +29,28 @@ afterEach(async () => {
 });
 
 describe('AgentRuntime local backend', () => {
+  it.each(['owned', 'borrowed'] as const)('detaches a late recovery after %s runtime destruction without cancelling native work', async backendOwnership => {
+    let release!: () => void; const pending = new Promise<void>(resolve => { release = resolve; });
+    const detach = vi.fn(async () => {}); const destroy = vi.fn(async () => {}); const cancel = vi.fn(async () => {});
+    const session = { id: 'session_late', isDestroyed: false, detach, destroy, cancelActiveRun: cancel } as unknown as RuntimeSession;
+    const backend = { resumeSession: async () => { await pending; return session; }, destroy: vi.fn(async () => {}) } as unknown as AgentExecutionBackend;
+    const runtime = new AgentRuntime({ backend, backendOwnership });
+    const resumed = runtime.resumeSession({ version: 1, id: session.id }, { context: {} });
+    const rejected = expect(resumed).rejects.toThrow('destroyed');
+    await runtime.destroy(); release(); await rejected; await runtime.destroy();
+    expect(detach).toHaveBeenCalledOnce(); expect(destroy).not.toHaveBeenCalled(); expect(cancel).not.toHaveBeenCalled();
+    expect(backend.destroy).toHaveBeenCalledTimes(backendOwnership === 'owned' ? 1 : 0);
+  });
+  it('retains the original recovery reference if late observer cleanup fails', async () => {
+    let release!: () => void; const pending = new Promise<void>(resolve => { release = resolve; });
+    const destroy = vi.fn(async () => {});
+    const session = { isDestroyed: false, detach: async () => { throw new Error('detach failed'); }, destroy } as unknown as RuntimeSession;
+    const backend = { resumeSession: async () => { await pending; return session; }, destroy: async () => {} } as unknown as AgentExecutionBackend;
+    const runtime = new AgentRuntime({ backend, backendOwnership: 'borrowed' }); const reference = { version: 1 as const, id: 'session_original' };
+    const resumed = runtime.resumeSession(reference, { context: {} });
+    const rejected = expect(resumed).rejects.toMatchObject({ code: 'AGENT_SESSION_RECOVERY_REQUIRED', reference });
+    await runtime.destroy(); release(); await rejected; expect(destroy).not.toHaveBeenCalled();
+  });
   it('freezes specs and supports repeatable late event subscriptions', async () => {
     const driver = new ScriptedDriver(async () => scriptedRun([
       { type: 'agent.message.delta', data: { text: 'hel' } },

@@ -22,10 +22,10 @@ the standard documentation before release. Read the
 [architecture roadmap](./designs/AGENTIC_ARCHITECTURE_EVOLUTION.md) for implementation
 scope, dependencies, research, and acceptance criteria.
 
-- **Status:** Core stages, Stage 16A, Stage 14A and consumer slices C1–C9-C and agent-harness H0–H6 are implemented on branch (offline validated; new native/live gates pending). The [latest consumer review corrections](#consumer-review-corrections--2026-10-28) track the current corrective validation; earlier stage totals below are historical. Package publication is separate, and live LLM testing remains paused by the user.
+- **Status:** Core stages, Stage 16A, Stage 14A and consumer slices C1–C9-C and agent-harness H0–H6 are implemented on branch. The user separately authorized [bounded Codex/OpenAI validation on 2026-11-01](evaluations/LIVE_VALIDATION_2026_11_01.md); other new native/provider live gates remain pending. The [latest consumer review corrections](#consumer-review-corrections--2026-10-28) track the preceding corrective validation; earlier totals and live-pause statements below are historical. Publication remains separate; this bounded run is not standing authorization for additional live suites.
 - **Stage 03 review:** All findings fixed and validated: 7,473 units / 245 Stage 03 cases, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](./designs/STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 - **Stage 06 review:** All findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion](./designs/STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
-- **Created / last updated:** 2026-10-07 / 2026-10-28.
+- **Created / last updated:** 2026-10-07 / 2026-11-01.
 - **Current selected scope:** Agent-harness revision 3 H0–H6 is sequentially authorized; see [the delivery ledger](designs/AGENT_HARNESS_DELIVERY_LEDGER.md). The preceding full consumer-hardening sequence C2–C8 and C9-A/B/C is authorized, in order with review/fixes after each slice. C1 is complete. The [delivery ledger](./designs/CONSUMER_DELIVERY_LEDGER.md) records current availability; each slice must pass its own gates. Existing APIs/defaults stay unchanged; no consumer upgrade or release is included.
 - **Repository package version at creation:** `1.2.0`.
 - **Implemented stages:** 00 — evaluation and compatibility baselines;
@@ -3201,3 +3201,23 @@ package, and the built AMOS workflows for all five adapters, including both mana
 transfer paths and native OneRingAI restoration after a real CLI restart.
 No consumer upgrade, package release, native interaction implementation or live-provider
 verification is included; the live-testing pause remains in force.
+
+## Agent harness safety corrections — 2026-11-01
+
+All six findings from the [subsequent review](evaluations/VERSION2_REVIEW_2026_11_01.md)
+are corrected on branch under the user's “fix all” instruction. Native definition
+tools now enforce resolver and Agent permissions together; Claude SDK streaming and
+structured output redact credentials; OpenAI managed recovery rejects expanded
+access/configuration; ambiguous control acknowledgements recover without action
+replay; late resume observers detach after shutdown; and read-only admission can be
+stopped during a stalled inspection, including AMOS exit. Saved formats, public
+signatures, default selection and accepted-action reconciliation remain unchanged.
+
+Adoption requires no migration. Resolver policies are borrowed and cannot override
+native denials. Use `getRun` (AMOS `/result`) to repair retained-result persistence,
+never a fresh task. The [new offline safety example](../examples/agent-runtime-safety.ts)
+demonstrates denial and post-commit acknowledgement recovery with one authorized
+tool execution. The canonical User Guide, AMOS cookbook, examples index, AGENTS,
+release notes and generated API document the changes. The [delivery ledger](designs/AGENT_HARNESS_DELIVERY_LEDGER.md)
+owns final checks; the fixed probes record all-five-harness denial. No package release,
+consumer upgrade or live-provider verification is implied.

@@ -29,6 +29,56 @@ function fixtureDriver(overrides: Partial<DriverSession> = {}): AgentDriver {
 }
 
 describe('review regressions: request identity and failed restoration', () => {
+  it.each(['stop', 'destroy'] as const)('interrupts stalled read-only admission inspection on %s without later dispatch', async operation => {
+    Connector.create({ name: 'fixture', vendor: Vendor.OpenAI, auth: { type: 'none' } });
+    const entered = deferred<void>(); const pending = deferred<void>(); let inspect = true;
+    const dispatch = vi.fn(async () => ({ events: (async function* () {})(), result: Promise.resolve({ status: 'completed' as const, outputText: 'ok' }), cancel: async () => {} }));
+    const nativeDestroyed = vi.fn(async () => {}); const storage = new InMemoryRuntimeSessionStorage();
+    const driver = fixtureDriver({ run: dispatch, destroy: nativeDestroyed, inspectState: async () => { if (inspect) { entered.resolve(); await pending.promise; } return { connection: 'attached', activity: 'ready', unresolvedEffects: false }; } });
+    const runtime = new AgentRuntime({ backend: new LocalExecutionBackend({ drivers: [driver], sessionStorage: storage }) });
+    try {
+      const session = await runtime.createAgent({ id: 'logical', instructions: '' }).openSession(options);
+      const admission = session.run('must not execute'); const rejected = expect(admission).rejects.toThrow(/cancelled|closed/);
+      await entered.promise;
+      const stopped = operation === 'destroy' ? session.destroy() : session.cancelActiveRun();
+      await Promise.race([Promise.all([stopped, rejected]), new Promise((_, reject) => { const timer = setTimeout(() => reject(new Error('Admission cancellation hung')), 500); timer.unref(); })]);
+      expect(dispatch).not.toHaveBeenCalled();
+      if (operation === 'destroy') {
+        const lease = await storage.acquire(session.id, context); await lease.release(); expect(nativeDestroyed).toHaveBeenCalledOnce();
+      }
+      inspect = false; pending.resolve(); await Promise.resolve(); expect(dispatch).not.toHaveBeenCalled();
+      if (operation === 'stop') expect((await (await session.run('a separately authorized input')).result).status).toBe('completed');
+    } finally { pending.resolve(); await runtime.destroy(); }
+  });
+  it.each(['before', 'after'] as const)('getRun repairs %s-commit terminal persistence failure without resubmitting input', async failure => {
+    Connector.create({ name: 'fixture', vendor: Vendor.OpenAI, auth: { type: 'none' } });
+    const base = new InMemoryRuntimeSessionStorage(); let fail = true;
+    const storage: IRuntimeSessionStorage = { durability: base.durability, acquire: async (id, scope) => {
+      const lease = await base.acquire(id, scope);
+      return { ...lease, write: async (data, revision) => {
+        const terminal = Object.values((data.runs ?? {}) as JsonObject).some(run => (run as JsonObject).state === 'terminal');
+        if (fail && terminal && failure === 'before') throw new Error('Terminal acknowledgement lost');
+        const record = await lease.write(data, revision);
+        if (fail && terminal) throw new Error('Terminal acknowledgement lost');
+        return record;
+      } };
+    } };
+    const dispatch = vi.fn(async () => ({ events: (async function* () {})(), result: Promise.resolve({ status: 'completed' as const, outputText: 'original' }), cancel: async () => {} }));
+    const runtime = new AgentRuntime({ backend: new LocalExecutionBackend({ drivers: [fixtureDriver({ run: dispatch })], sessionStorage: storage }) });
+    try {
+      const session = await runtime.createAgent({ id: 'logical', instructions: '' }).openSession(options);
+      const run = await session.run('original input', { requestId: 'stable' });
+      await expect(run.result).rejects.toThrow('Retry getRun');
+      fail = false;
+      const retained = await session.getRun(run.id);
+      expect(await retained.result).toMatchObject({ runId: run.id, outputText: 'original', status: 'completed' });
+      expect(dispatch).toHaveBeenCalledOnce();
+      const reference = session.reference(); await session.detach();
+      const restored = await runtime.resumeSession(reference, { context });
+      expect(await (await restored.getRun(run.id)).result).toMatchObject({ runId: run.id, outputText: 'original' });
+      expect(dispatch).toHaveBeenCalledOnce();
+    } finally { fail = false; await runtime.destroy(); }
+  });
   it.each([false, true])('dispatches the recorded request despite caller mutation during admission, storage=%s', async persisted => {
     Connector.create({ name: 'fixture', vendor: Vendor.OpenAI, auth: { type: 'none' } });
     const inspected = deferred<void>(); const proceed = deferred<void>(); const started = deferred<void>(); const completed = deferred<DriverRunResult>();

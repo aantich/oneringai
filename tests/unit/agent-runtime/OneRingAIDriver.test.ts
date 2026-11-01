@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Agent } from '@/core/Agent.js';
 import { Connector } from '@/core/Connector.js';
+import { ToolManager } from '@/core/ToolManager.js';
+import { PermissionPolicyManager } from '@/core/permissions/PermissionPolicyManager.js';
 import type { ToolFunction } from '@/domain/entities/Tool.js';
 import { StreamEventType } from '@/domain/entities/StreamEvent.js';
 import type { IAgentDefinitionStorage, StoredAgentDefinition } from '@/domain/interfaces/IAgentDefinitionStorage.js';
@@ -33,6 +35,26 @@ describe('OneRingAIDriver', () => {
       expect(execute).toHaveBeenCalledOnce();
       expect(execute.mock.calls[0]?.[1]).toEqual(expect.objectContaining({ userId: 'user' }));
     } finally { await runtime.destroy(); }
+  });
+
+  it.each(['host', 'native', 'neither'] as const)('retains both native and resolver permissions when %s denies', async deniedBy => {
+    const provider = createMockConnector('native-policy'); makeProviderCurrent(provider);
+    provider.queueResponses([{ toolCalls: [{ name: 'probe', arguments: {} }], stopReason: 'tool_use' }, { text: 'done', stopReason: 'end_turn' }]);
+    const execute = vi.fn(async (..._args: Parameters<ToolFunction['execute']>) => 'ok'); const manager = new ToolManager();
+    const hostPolicy = PermissionPolicyManager.fromConfig({ blocklist: deniedBy === 'host' ? ['probe'] : [], allowlist: ['probe'] });
+    const runtime = new AgentRuntime({ backend: new LocalExecutionBackend({
+      drivers: [new OneRingAIDriver({ trustAgentPolicy: true, configurationRevision: 'permissions-v1', configureAgent: base => ({ ...base, toolManager: manager, permissions: { blocklist: deniedBy === 'native' ? ['probe'] : [], allowlist: ['probe'] } }) })],
+      resolveTools: () => ({ tools: [{ definition: { type: 'function', function: { name: 'probe', parameters: { type: 'object' } } }, execute }], fingerprint: 'policy-v1', permissionManager: hostPolicy,
+        toolContext: { roles: ['reviewer'], accountId: 'work', connectorAccounts: { service: 'selected' } } }),
+    }) });
+    try {
+      const session = await runtime.createAgent({ id: 'native', instructions: 'Use probe.', tools: ['probe'] }).openSession({ execution: { driver: 'oneringai.agent', connector: 'native-policy', model: 'gpt-4' }, context: { userId: 'trusted' }, policy: policy() });
+      const nativePolicy = manager.getPermissionManager(); expect(nativePolicy).not.toBe(hostPolicy);
+      await (await session.run('probe')).result;
+      expect(execute).toHaveBeenCalledTimes(deniedBy === 'neither' ? 1 : 0);
+      expect(manager.getPermissionManager()).toBe(nativePolicy);
+      if (deniedBy === 'neither') expect(execute.mock.calls[0]?.[1]).toEqual(expect.objectContaining({ userId: 'trusted', roles: ['reviewer'], accountId: 'work', connectorAccounts: { service: 'selected' } }));
+    } finally { await runtime.destroy(); expect(hostPolicy.isDestroyed).toBe(false); hostPolicy.destroy(); }
   });
 
   it('runs an existing OneRingAI agent with its shared tool manager and normalized tool events', async () => {

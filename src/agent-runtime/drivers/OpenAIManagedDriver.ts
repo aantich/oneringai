@@ -11,7 +11,7 @@ import { AgentDriverConfigurationError, AgentPolicyUnsupportedError } from '../e
 import { controlJson, runtimeScope } from '../RuntimeSessionStorage.js';
 import { bufferManagedEvents } from '../ManagedEventBuffer.js';
 import { definitionDigest } from '../RuntimeHostTools.js';
-import { createDeferred, runtimeTokenProvider, errorMessage, toJsonObject } from '../internal.js';
+import { createDeferred, runtimeTokenProvider, errorMessage, toJsonObject, contentDigest } from '../internal.js';
 import { parseAndValidateStructuredOutput } from '../StructuredOutputValidator.js';
 import type { JsonObject, RuntimeReasoningConfig, RuntimeResponseFormat, RuntimeSessionSnapshot } from '../types.js';
 
@@ -146,7 +146,7 @@ class OpenAIManagedSession implements DriverSession {
         this.stream = await this.client.beta.agents.sessions.create({ environment, agent: { model: input.model ?? this.request.spec.model!, instructions: this.request.spec.definition!.instructions,
           multi_agent: { enabled: false }, tools, ...(this.reasoning(input) ? { reasoning: this.reasoning(input) } : {}),
           ...(this.format?.type === 'json_schema' ? { text: { format: { type: 'json_schema', schema: this.format.schema } } } : {}) },
-          metadata: this.metadata(), input: this.text(input), stream: true }, { idempotencyKey: `onering-create-${this.request.sessionId}`, maxRetries: 0 });
+          metadata: this.metadata(), vault_ids: [], input: this.text(input), stream: true }, { idempotencyKey: `onering-create-${this.request.sessionId}`, maxRetries: 0 });
       } else {
         await this.reconcileOwnership();
         this.stream = await this.client.beta.agents.sessions.events.stream(this.nativeId!);
@@ -330,13 +330,22 @@ class OpenAIManagedSession implements DriverSession {
     const expected = this.metadata();
     if (Object.entries(expected).some(([key, value]) => session.metadata[key] !== value)
       || session.agent.instructions !== this.request.spec.definition!.instructions || session.agent.multi_agent.enabled) throw new AgentDriverConfigurationError('Foreign or changed native session ownership/configuration');
+    if (session.vault_ids.length) throw new AgentPolicyUnsupportedError('Native session added unselected vault access');
     const environment = this.request.spec.environment?.type === 'provider-managed' ? 'openai_hosted' : 'none';
     if (session.environment.type !== environment) throw new AgentDriverConfigurationError('Native environment placement changed');
     if (session.environment.type === 'openai_hosted' && ((this.request.policy.sandboxNetwork === 'denied' && session.environment.network.access !== 'disabled') || session.environment.skills.length || session.environment.plugins.length || session.environment.capability_directories.length)) throw new AgentPolicyUnsupportedError('Native hosted environment expanded network/skill/plugin access');
+    if (session.environment.type === 'openai_hosted' && session.environment.desktop?.enabled) throw new AgentPolicyUnsupportedError('Native hosted environment enabled unselected desktop access');
+    const definitions = new Map(this.request.hostTools?.definitions.map(tool => [tool.name, tool]));
+    // Owned deletion deliberately does not materialize executable host tools.
     const selected = new Set(this.request.hostTools?.definitions.map(tool => tool.name) ?? this.request.spec.definition?.tools ?? []);
+    let webSearch = false;
     for (const tool of session.agent.tools) {
-      if (tool.type === 'function' && selected.delete(tool.name)) continue;
-      if (tool.type === 'web_search' && this.request.policy.providerWebSearch === 'allowed') continue;
+      if (tool.type === 'function' && selected.delete(tool.name)) {
+        const definition = definitions.get(tool.name);
+        if (definition && ((tool.description ?? '') !== definition.description || tool.defer_loading === true || contentDigest(tool.parameters) !== contentDigest(definition.parameters))) throw new AgentDriverConfigurationError('Selected native host tool configuration changed');
+        continue;
+      }
+      if (tool.type === 'web_search' && this.request.policy.providerWebSearch === 'allowed' && !webSearch) { webSearch = true; continue; }
       throw new AgentDriverConfigurationError('Unapproved native tool addition');
     }
     if (selected.size) throw new AgentDriverConfigurationError('Native session is missing selected host tools');

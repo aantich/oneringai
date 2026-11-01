@@ -1,0 +1,21 @@
+{
+  "files": 487,
+  "buildFilesCompared": 190,
+  "exports": "all present",
+  "examples": [
+    {
+      "script": "examples/agent-runtime-safety.ts",
+      "status": "passed"
+    },
+    {
+      "script": "examples/agent-runtime-swappable.ts",
+      "status": "passed"
+    },
+    {
+      "script": "apps/amos/examples/agent-runtime-offline.ts",
+      "status": "passed"
+    }
+  ],
+  "dependencies": "checkout node_modules symlink; no fresh network installation",
+  "published": false
+}

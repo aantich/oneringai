@@ -46,6 +46,10 @@ capability-aware behavior, and teardown. Start with the
 [detailed guide](../USER_GUIDE.md#agent-runtime-preview) and use the
 [design document](../docs/designs/AGENT_RUNTIME.md) for architecture and server plans.
 
+For the separately opt-in, local Codex subscription test suite and the small direct
+OpenAI API sample, see [the live validation record](../docs/evaluations/LIVE_VALIDATION_2026_11_01.md).
+Its test-only login bootstrap does not change authentication in the examples or AMOS.
+
 | Program | What it shows | Requirements and how to run |
 |---|---|---|
 | [`agent-runtime-local.ts`](./agent-runtime-local.ts) | Interchangeable local OneRingAI/Codex SDK drivers with generic model/reasoning controls, live autonomous reasoning/activity events, explicit policy, and Codex workspace sandboxing. | `OPENAI_API_KEY`; `npx tsx examples/agent-runtime-local.ts oneringai` or `npx tsx examples/agent-runtime-local.ts codex` |
@@ -479,6 +483,7 @@ for the five-harness examples. MCP examples need an authenticated loopback socke
 | `npm run example:agent-runtime-swappable` | Creates one logical agent; two ACK turns and one selected host-tool call per turn through all five bindings; one definition digest. Uses the canonical baseline reporter's JSON/usage helpers. Removes private native/workspace/control state. |
 | `npm run example:agent-runtime-claude` | Real in-process MCP with scripted Claude queries, ACK twice and raw business-value handling. Removes private state. |
 | `npm run example:agent-runtime-recovery` | Two actual processes in each scenario; inputs=1, externalWrites=1, foreignDenied=true, recovered=ACK. Stored-result redelivery plus deliberate child exit after a synthetic write; original receipt recovery, no replacement action. Removes temporary files. |
+| `npm run example:agent-runtime-safety` | Offline host-policy denial, then a fresh authorized session. Simulates a storage acknowledgement lost after commit; repairs through `getRun`, restores the original result, and verifies exactly one authorized tool execution. Requires a current package build; no credentials/CLI/provider calls; removes temporary files. |
 | `npm run example:agent-runtime-openai-managed` | Actual SDK plus fake HTTP/SSE; ACK, one input/tool action despite lost result response, paginated output and owned deletion. |
 | `npm run example:agent-runtime-claude-managed` | Actual SDK plus fake HTTP/SSE; ACK after lost result response, then budget waiting and confirmed cancellation with zero actions. Owned cleanup. |
 | `npm run example:agent-runtime-managed-restart` | Both real vendor SDKs use one external loopback mock service. Producer crashes after one accepted tool result; a second process recovers ACK with inputs=1/effects=1 and no cancellation/resubmission. Removes control/mock state. |

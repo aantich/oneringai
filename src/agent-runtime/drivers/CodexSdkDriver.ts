@@ -34,8 +34,9 @@ import {
   AgentStructuredOutputError,
   AgentWorkspaceError,
 } from '../errors.js';
-import { createDeferred, errorMessage, toJsonValue } from '../internal.js';
+import { createDeferred, errorMessage } from '../internal.js';
 import { parseAndValidateStructuredOutput } from '../StructuredOutputValidator.js';
+import { createRedactor, redactJson, StreamingSecretRedactor } from '../SecretRedactor.js';
 import type {
   AgentArtifact,
   AgentCapability,
@@ -160,7 +161,15 @@ export class CodexSdkDriver implements AgentDriver {
         config: {
           model_provider: 'openai',
           developer_instructions: request.spec.definition?.instructions ?? request.spec.instructions ?? '',
-          ...(brokerUrl ? { mcp_servers: { onering_host: { url: brokerUrl, bearer_token_env_var: 'ONERINGAI_HOST_BROKER_TOKEN', enabled_tools: request.hostTools!.definitions.map(t => t.name), required: true } } } : {}),
+          ...(brokerUrl ? { mcp_servers: { onering_host: {
+            url: brokerUrl,
+            bearer_token_env_var: 'ONERINGAI_HOST_BROKER_TOKEN',
+            enabled_tools: request.hostTools!.definitions.map(t => t.name),
+            required: true,
+            // This private bridge delegates approval to the host ToolManager.
+            // Native prompts cannot be answered under approvalPolicy: 'never'.
+            default_tools_approval_mode: 'approve',
+          } } } : {}),
           show_raw_agent_reasoning: false,
           allow_login_shell: false,
           agents: { enabled: false },
@@ -862,26 +871,6 @@ function isolatedCodexEnvironment(codexHome: string): Record<string, string> {
   return environment;
 }
 
-function createRedactor(secrets: string[]): (text: string) => string {
-  const activeSecrets = secrets.filter((secret) => secret.length > 0);
-  return (text: string) => activeSecrets.reduce(
-    (sanitized, secret) => sanitized.split(secret).join('[REDACTED]'),
-    text,
-  );
-}
-
-function redactJson(value: unknown, redact: (text: string) => string): ReturnType<typeof toJsonValue> {
-  const converted = toJsonValue(value);
-  if (typeof converted === 'string') return redact(converted);
-  if (Array.isArray(converted)) return converted.map((item) => redactJson(item, redact));
-  if (converted && typeof converted === 'object') {
-    return Object.fromEntries(
-      Object.entries(converted).map(([key, item]) => [key, redactJson(item, redact)]),
-    );
-  }
-  return converted;
-}
-
 interface IncrementalTextState {
   raw: string;
   redactor: StreamingSecretRedactor;
@@ -906,46 +895,6 @@ function nextSafeDelta(
   const output = `${prefix}${state.redactor.push(delta)}${final ? state.redactor.finish() : ''}`;
   if (final) states.delete(id);
   return boundEventText(output);
-}
-
-class StreamingSecretRedactor {
-  private buffer = '';
-  private readonly secrets: string[];
-
-  constructor(secrets: string[]) {
-    this.secrets = [...new Set(secrets.filter(Boolean))].sort((left, right) => right.length - left.length);
-  }
-
-  push(chunk: string): string {
-    this.buffer += chunk;
-    return this.drain(false);
-  }
-
-  finish(): string {
-    return this.drain(true);
-  }
-
-  private drain(final: boolean): string {
-    let output = '';
-    while (this.buffer) {
-      const complete = this.secrets.find((secret) => this.buffer.startsWith(secret));
-      if (complete) {
-        output += '[REDACTED]';
-        this.buffer = this.buffer.slice(complete.length);
-        continue;
-      }
-      const partial = this.secrets.some((secret) => secret.startsWith(this.buffer));
-      if (partial && !final) break;
-      if (partial && final) {
-        output += '[REDACTED]';
-        this.buffer = '';
-        break;
-      }
-      output += this.buffer[0];
-      this.buffer = this.buffer.slice(1);
-    }
-    return output;
-  }
 }
 
 function workspaceRelativePath(file: string, workspaceRoot: string): string | undefined {

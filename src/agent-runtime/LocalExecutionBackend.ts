@@ -22,7 +22,7 @@ import {
   AgentSessionRecoveryError,
   AgentWorkspaceError,
 } from './errors.js';
-import { cloneAndFreezeJson, contentDigest, runtimeConnectorIdentity, createDeferred, errorMessage, mergeRequirements, toJsonValue, cloneAndFreezeSpec } from './internal.js';
+import { cloneAndFreezeJson, contentDigest, runtimeConnectorIdentity, createDeferred, errorMessage, mergeRequirements, toJsonValue, cloneAndFreezeSpec, raceWithAbort } from './internal.js';
 import type {
   AgentCapabilityRequirement,
   AgentEventSubscriptionOptions,
@@ -1075,20 +1075,6 @@ function shouldPublishEvent(
     return false;
   }
   return true;
-}
-
-async function raceWithAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
-  if (signal.aborted) throw signal.reason ?? new Error('Run aborted');
-  let onAbort!: () => void;
-  const aborted = new Promise<never>((_, reject) => {
-    onAbort = () => reject(signal.reason ?? new Error('Run aborted'));
-    signal.addEventListener('abort', onAbort, { once: true });
-  });
-  try {
-    return await Promise.race([promise, aborted]);
-  } finally {
-    signal.removeEventListener('abort', onAbort);
-  }
 }
 
 async function settleWithin(promise: Promise<unknown> | void, timeoutMs: number): Promise<void> {

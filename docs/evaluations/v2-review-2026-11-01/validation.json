@@ -1,0 +1,97 @@
+{
+  "date": "2026-11-01",
+  "scope": "R1-R6 runtime review corrections",
+  "branch": "version2",
+  "release": false,
+  "liveProviderCalls": 0,
+  "unit": {
+    "passed": 9360,
+    "failed": 0,
+    "files": 424,
+    "newRegressionCases": 33
+  },
+  "checks": {
+    "buildAndExportIdentity": "passed",
+    "sourceTypes": "passed",
+    "lint": "passed",
+    "publicCompatibility": "passed",
+    "exampleTypes": "passed",
+    "amosTypes": "passed",
+    "amosBuild": "passed",
+    "generatedPublicApiItems": 1825,
+    "fixedProbes": "passed",
+    "fiveHarnessPermissionDenial": "passed",
+    "extractedPackage": "passed"
+  },
+  "examples": [
+    {
+      "script": "apps/amos/examples/agent-runtime-offline.ts",
+      "status": "passed"
+    },
+    {
+      "script": "examples/agent-runtime-artifacts.ts",
+      "status": "passed"
+    },
+    {
+      "script": "examples/agent-runtime-claude-managed.ts",
+      "status": "passed"
+    },
+    {
+      "script": "examples/agent-runtime-claude.ts",
+      "status": "passed"
+    },
+    {
+      "script": "examples/agent-runtime-managed-restart.ts",
+      "status": "passed"
+    },
+    {
+      "script": "examples/agent-runtime-openai-managed.ts",
+      "status": "passed"
+    },
+    {
+      "script": "examples/agent-runtime-recovery.ts",
+      "status": "passed"
+    },
+    {
+      "script": "examples/agent-runtime-run-options.ts",
+      "status": "passed"
+    },
+    {
+      "script": "examples/agent-runtime-safety.ts",
+      "status": "passed"
+    },
+    {
+      "script": "examples/agent-runtime-swappable.ts",
+      "status": "passed"
+    },
+    {
+      "script": "examples/agentic-evaluation-baseline.ts",
+      "status": "passed"
+    }
+  ],
+  "limitations": [
+    "Managed-provider live entitlement and Claude native CLI verification remain pending.",
+    "Repository-wide test-only TypeScript configuration and legacy mock/private-identity diagnostics are not passing gates."
+  ],
+  "package": {
+    "files": 487,
+    "buildFilesCompared": 190,
+    "exports": "all present",
+    "examples": [
+      {
+        "script": "examples/agent-runtime-safety.ts",
+        "status": "passed"
+      },
+      {
+        "script": "examples/agent-runtime-swappable.ts",
+        "status": "passed"
+      },
+      {
+        "script": "apps/amos/examples/agent-runtime-offline.ts",
+        "status": "passed"
+      }
+    ],
+    "dependencies": "checkout node_modules symlink; no fresh network installation",
+    "published": false
+  }
+}

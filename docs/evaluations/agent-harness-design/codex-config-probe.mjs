@@ -49,6 +49,7 @@ const fs = require('node:fs');
           bearer_token_env_var: 'ONERINGAI_HOST_BROKER_TOKEN',
           enabled_tools: ['search_records', 'read_record'],
           required: true,
+          default_tools_approval_mode: 'approve',
         },
       },
     },
@@ -58,6 +59,7 @@ const fs = require('node:fs');
   const overrides = observed.args.filter((_, index, args) => args[index - 1] === '--config');
   assert(overrides.includes('mcp_servers.onering_host.url="http://127.0.0.1:12345/mcp"'));
   assert(overrides.includes('mcp_servers.onering_host.required=true'));
+  assert(overrides.includes('mcp_servers.onering_host.default_tools_approval_mode="approve"'));
   assert(overrides.includes('mcp_servers.onering_host.bearer_token_env_var="ONERINGAI_HOST_BROKER_TOKEN"'));
   assert(overrides.some(value => value.startsWith('mcp_servers.onering_host.enabled_tools=')
     && value.includes('search_records') && value.includes('read_record')));

@@ -1,0 +1,38 @@
+{
+  "nativePermissionManager": {
+    "status": "completed",
+    "blockedToolExecutions": 1
+  },
+  "claudeRedaction": {
+    "status": "completed",
+    "outputTextRedacted": true,
+    "parsedCredentialExposed": true,
+    "streamedCredentialExposed": true
+  },
+  "storageAcknowledgement": {
+    "persistedRevision": 2,
+    "persistedValue": 1,
+    "cachedValue": 0,
+    "retryFailures": [
+      "Runtime session revision conflict",
+      "Runtime session revision conflict"
+    ]
+  },
+  "lateResume": {
+    "runtimeDestroyed": true,
+    "returnedSession": "session_review-late",
+    "sessionDestroyCalls": 0,
+    "backendDestroyCalls": 0
+  },
+  "pendingAdmissionShutdown": {
+    "shutdownSettledWhileInspectionPending": false,
+    "cancelCallsBeforeInspectionSettles": 0
+  },
+  "expandedManagedResources": {
+    "resumedWithUnselectedVaultAndDesktop": true,
+    "status": "completed",
+    "changedResponses": 6,
+    "nativeInputs": 2,
+    "hostToolExecutions": 2
+  }
+}

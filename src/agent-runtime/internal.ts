@@ -188,3 +188,21 @@ export function runtimeTokenProvider(registry: Pick<import('../domain/interfaces
     return connector.getToken();
   };
 }
+
+/** Abort observation without abandoning rejection handling on the underlying work. */
+export async function raceWithAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
+  if (signal.aborted) {
+    void promise.catch(() => undefined);
+    throw signal.reason ?? new Error('Run aborted');
+  }
+  let onAbort!: () => void;
+  const aborted = new Promise<never>((_, reject) => {
+    onAbort = () => reject(signal.reason ?? new Error('Run aborted'));
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+  try {
+    return await Promise.race([promise, aborted]);
+  } finally {
+    signal.removeEventListener('abort', onAbort);
+  }
+}
