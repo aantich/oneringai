@@ -1,12 +1,16 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import './verify-version1.mjs';
 
 const packageJsonUrl = new URL('../package.json', import.meta.url);
+const packageRoot = fileURLToPath(new URL('..', import.meta.url));
 const { version } = JSON.parse(readFileSync(packageJsonUrl, 'utf8'));
 const expectedTag = `v${version}`;
 
 function git(...args) {
   return execFileSync('git', args, {
+    cwd: packageRoot,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
   }).trim();

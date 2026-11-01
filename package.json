@@ -91,7 +91,8 @@
     "docs/designs/DISTRIBUTED_AGENT_EXECUTION.md",
     "examples/agent-runtime-local.ts",
     "CHANGELOG.md",
-    "LICENSE"
+    "LICENSE",
+    "docs/VERSION1_MAINTENANCE.md"
   ],
   "scripts": {
     "generate:tools": "tsx scripts/generate-tool-registry.ts",
@@ -114,14 +115,14 @@
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "prepare": "npm run build",
-    "prepublishOnly": "npm run build && npm run typecheck && npm run test:unit && npm run docs && npm run release:verify-tag",
-    "preversion": "npm run build && npm run typecheck",
-    "version": "npm run generate && npm run docs && git add src/tools/registry.generated.ts src/connectors/vendors/registry.generated.ts API_REFERENCE.md",
+    "prepublishOnly": "npm run release:verify-branch && npm run release:test && npm run build && npm run typecheck && npm run test:unit && npm run docs && npm run release:verify-tag",
+    "preversion": "npm run release:verify-branch && npm run release:test && npm run build && npm run typecheck",
+    "version": "npm run release:verify-branch && npm run generate && npm run docs && git add src/tools/registry.generated.ts src/connectors/vendors/registry.generated.ts API_REFERENCE.md",
     "postversion": "git push --follow-tags",
     "release:verify-tag": "node scripts/verify-release-tag.mjs",
     "release:patch": "npm version patch --git-tag-version=true -m 'Release %s'",
     "release:minor": "npm version minor --git-tag-version=true -m 'Release %s'",
-    "release:major": "npm version major --git-tag-version=true -m 'Release %s'",
+    "release:major": "node -e \"console.error('version1 only publishes @everworker/oneringai 1.x maintenance releases.'); process.exit(1)\"",
     "example:agent": "tsx examples/basic-agent.ts",
     "example:agent-runtime": "tsx examples/agent-runtime-local.ts",
     "example:text": "tsx examples/simple-text.ts",
@@ -144,7 +145,9 @@
     "examples:check": "tsc --noEmit -p examples/tsconfig.json",
     "docs": "tsx scripts/generate-api-docs.ts --mode public",
     "docs:public": "tsx scripts/generate-api-docs.ts --mode public",
-    "docs:full": "mkdir -p docs && tsx scripts/generate-api-docs.ts --mode full"
+    "docs:full": "mkdir -p docs && tsx scripts/generate-api-docs.ts --mode full",
+    "release:verify-branch": "node scripts/verify-version1.mjs",
+    "release:test": "node --test tests/release/version1-publishing.test.mjs"
   },
   "keywords": [
     "ai",
@@ -183,14 +186,14 @@
   ],
   "author": {
     "name": "Anton Antic",
-    "email": "anton@everworker.ai"
+    "email": "anton.antich@gmail.com"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aantich/oneringai.git"
+    "url": "git+https://github.com/aantich/oneringai.git#version1"
   },
-  "homepage": "https://oneringai.io",
+  "homepage": "https://github.com/aantich/oneringai/tree/version1",
   "bugs": {
     "url": "https://github.com/aantich/oneringai/issues"
   },

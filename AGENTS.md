@@ -1,5 +1,11 @@
 # OneRingAI Agent Guide
 
+This is the `version1` maintenance branch for `@everworker/oneringai@1.x`.
+Read [the maintenance guide](docs/VERSION1_MAINTENANCE.md) before release work.
+Do not merge version2, rename this package, release a new major, or deprecate v1
+as part of routine maintenance. Release checks require an attached `version1`
+checkout, the scoped package identity, a matching tag at HEAD and a clean tree.
+
 This is the canonical, vendor-neutral guide for coding agents that use or
 modify `@everworker/oneringai`. It is written for OpenAI Codex, Claude Code,
 custom coding agents, and humans delegating integration work to them.

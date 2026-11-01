@@ -1,5 +1,12 @@
 # @everworker/oneringai
 
+**v1 maintenance:** `@everworker/oneringai` is maintained on the
+[`version1` branch](https://github.com/aantich/oneringai/tree/version1).
+This branch receives maintenance fixes during the v2 migration period. Keep
+using `npm install @everworker/oneringai` for v1. The unscoped v2 package and its
+future `main` release are separate; this setup publishes no new version and does
+not deprecate v1. See the [maintenance release guide](https://github.com/aantich/oneringai/blob/version1/docs/VERSION1_MAINTENANCE.md).
+
 > **A unified AI agent library with multi-provider support for text generation, image/video generation, audio (TTS/STT), and agentic workflows.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
