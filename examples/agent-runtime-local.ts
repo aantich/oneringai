@@ -12,15 +12,15 @@ import 'dotenv/config';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { Agent, Connector, Vendor } from '../src/index.js';
-import type { ToolFunction } from '../src/index.js';
+import { Agent, Connector, Vendor } from '@everworker/oneringai';
+import type { ToolFunction } from '@everworker/oneringai';
 import {
   AgentRuntime,
   LocalExecutionBackend,
   OneRingAIDriver,
-} from '../src/agent-runtime/index.js';
-import type { AgentRun } from '../src/agent-runtime/index.js';
-import { CodexSdkDriver } from '../src/agent-runtime/codex.js';
+} from '@everworker/oneringai/agent-runtime';
+import type { AgentRun } from '@everworker/oneringai/agent-runtime';
+import { CodexSdkDriver } from '@everworker/oneringai/agent-runtime/codex';
 
 async function main(): Promise<void> {
   const apiKey = process.env.OPENAI_API_KEY;

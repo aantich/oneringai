@@ -26,7 +26,10 @@ export class AsyncEventHub {
     private readonly sessionId: string,
     private readonly maxJournalBytes: number,
     private readonly maxSubscriberBytes: number = maxJournalBytes,
+    initialSequence = 0,
+    private readonly maxSequence = Number.MAX_SAFE_INTEGER,
   ) {
+    this.sequence = initialSequence;
     if (!Number.isSafeInteger(maxJournalBytes) || maxJournalBytes < 1024) {
       throw new RangeError('maxJournalBytes must be a safe integer of at least 1024');
     }
@@ -41,6 +44,7 @@ export class AsyncEventHub {
 
   publish(type: AgentRunEventType, data: JsonObject, timestamp: string = new Date().toISOString()): AgentRunEvent {
     if (this.completed) throw new Error('Cannot publish to a completed event hub');
+    if (this.sequence >= this.maxSequence) throw new AgentEventHistoryExpiredError(this.runId);
     const boundedData = boundEventData(type, data, this.maxJournalBytes);
     const event = deepFreeze({
       runId: this.runId,

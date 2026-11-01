@@ -7,7 +7,7 @@ restoration.
 
 ## Core rule
 
-Exactly one OneRingAI `Agent` owns each model session. A server and a desktop may
+For native OneRingAI execution, exactly one OneRingAI `Agent` owns each model session. A server and a desktop may
 both use OneRingAI, but they do not concurrently drive the same model session.
 
 | Interface | Agent owner | Model path |
@@ -269,3 +269,35 @@ identities, tools, instructions, memory, or context plugins.
 - The browser peer does not persist audio or transcripts.
 - `RuntimeAgentSpec` remains the agent-runtime execution descriptor and is not
   reused as this portable native-Agent snapshot.
+
+
+Harness expansion ownership: a definition-mode external runtime owns its own native conversation. It does not hydrate a native OneRingAI Agent checkpoint or restore C3/ModelTask authority. Host tools retain the original ToolManager/evidence owner. See [runtime delivery](AGENT_HARNESS_DELIVERY_LEDGER.md). Existing portable v2 semantics are unchanged.
+
+
+Runtime H3 control records and their input/outcome outbox are separate from native portable v2 snapshots, evidence records and worker transport. They preserve native session identity under renewed host authorization; they never grant C3/ModelTask authority. Active local native work cannot be resumed by replaying its original input. Single-host file ownership is not a distributed worker lease.
+
+
+Managed runtime observation is independent from execution ownership. Optional driver observationIndependent prevents native cancellation solely because a service-owned stream disconnected. Restoring its observer uses the same native session/input epoch and scoped control/outcome records. Native portable v2 and single-Agent composition ownership remain unchanged.
+
+
+## External harness desktop ownership (H6)
+
+For `agent-runtime` external bindings, the native harness owns its loop/history;
+the desktop main process owns the observer, named Connector and selected host
+ToolManager. It does not hydrate a second native `Agent` merely to drive an SDK.
+An explicitly selected Agent tool owner may supply C7 external lifecycle hooks,
+but a session reference never restores workflow/ModelTask authority.
+
+Keep trusted scope, binding selection, SDK/bootstrap code, control files and transfer
+roots in the main process. Renderer IPC receives bounded activity/result DTOs and
+an application locator; it cannot assert native resource ownership or supply a
+connector account. Reauthorize run/cancel/detach/resume/delete/transfer independently.
+Control traffic differs from sandbox egress and native artifact URLs are not fetch
+authority. File operations are explicit and bounded, never automatic prompt uploads.
+
+The main process can detach managed observation without cancelling native work.
+After restart it restores the same recorded binding and original run, with activity
+gaps visible; uncertain input/actions are reconciled rather than submitted again.
+Use [the canonical desktop/AMOS recipe](../../USER_GUIDE.md#desktop-and-amos-integration)
+and [AMOS runtime mode](../../apps/amos/README.md#agent-runtime-mode). This delivery
+adds no remote backend, IPC server, or changes to an unrelated desktop app.

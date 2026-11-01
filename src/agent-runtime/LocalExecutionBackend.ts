@@ -2,9 +2,14 @@ import { constants as fsConstants } from 'node:fs';
 import { access, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { RuntimeHostTools, type RuntimeToolResolver } from './RuntimeHostTools.js';
+import { RuntimeFileTransfers, type RuntimeFileTransferAccess } from './RuntimeFileTransfers.js';
+import { DefinitionSession } from './DefinitionSession.js';
+import { StorageRegistry } from '../core/StorageRegistry.js';
+import { RuntimeControl, controlJson, type IRuntimeSessionStorage } from './RuntimeSessionStorage.js';
 import { Connector } from '../core/Connector.js';
 import type { IConnectorRegistry } from '../domain/interfaces/IConnectorRegistry.js';
-import type { AgentDriver, DriverEvent, DriverRun, DriverRunResult, DriverSession } from './AgentDriver.js';
+import type { AgentDriver, DriverDescriptor, DriverEvent, DriverRun, DriverRunResult, DriverSession } from './AgentDriver.js';
 import type { AgentExecutionBackend } from './AgentExecutionBackend.js';
 import { AsyncEventHub } from './AsyncEventHub.js';
 import {
@@ -14,9 +19,10 @@ import {
   AgentDriverNotFoundError,
   AgentNativeExecutionError,
   AgentRunTimeoutError,
+  AgentSessionRecoveryError,
   AgentWorkspaceError,
 } from './errors.js';
-import { cloneAndFreezeJson, createDeferred, errorMessage, mergeRequirements, toJsonValue } from './internal.js';
+import { cloneAndFreezeJson, contentDigest, runtimeConnectorIdentity, createDeferred, errorMessage, mergeRequirements, toJsonValue, cloneAndFreezeSpec } from './internal.js';
 import type {
   AgentCapabilityRequirement,
   AgentEventSubscriptionOptions,
@@ -35,6 +41,7 @@ import type {
   ResolvedWorkspace,
   RuntimeAgentSpec,
   JsonValue,
+  JsonObject,
   WorkspaceRequest,
 } from './types.js';
 
@@ -46,6 +53,11 @@ export interface LocalExecutionBackendOptions {
   drivers: AgentDriver[];
   connectorRegistry?: IConnectorRegistry;
   maxSessionJournalBytes?: number;
+  resolveTools?: RuntimeToolResolver;
+  sessionStorage?: IRuntimeSessionStorage;
+  /** Host-selected per-scope directory; absent means transfers are disabled. */
+  fileTransfer?: (context: Readonly<import('./types.js').TrustedRuntimeContext>) => RuntimeFileTransferAccess | Promise<RuntimeFileTransferAccess>;
+
 }
 
 export class LocalExecutionBackend implements AgentExecutionBackend {
@@ -54,9 +66,10 @@ export class LocalExecutionBackend implements AgentExecutionBackend {
   private readonly maxSessionJournalBytes: number;
   private readonly sessions = new Set<LocalAgentSession>();
   private readonly workspaceLeases = new Map<string, string>();
+  private readonly definitionSessions = new Map<string, { session: DefinitionSession; scope: string; spec: Readonly<RuntimeAgentSpec>; options: OpenAgentSessionOptions; hostTools?: RuntimeHostTools; control?: RuntimeControl }>();
   private _isDestroyed = false;
 
-  constructor(options: LocalExecutionBackendOptions) {
+  constructor(private readonly options: LocalExecutionBackendOptions) {
     if (options.maxSessionJournalBytes !== undefined && (
       !Number.isSafeInteger(options.maxSessionJournalBytes) || options.maxSessionJournalBytes < 1024
     )) {
@@ -80,12 +93,13 @@ export class LocalExecutionBackend implements AgentExecutionBackend {
   ): Promise<ResolvedAgentCapabilities> {
     this.assertActive();
     if (request.policy) validatePolicy(request.policy);
+    const hostTools = await this.resolveHostTools(spec, request.context ?? {});
     const driver = this.getDriver(spec.driver);
     const workspace = request.workspace
       ? await this.resolveWorkspace(request.workspace, request.policy)
       : undefined;
     this.assertActive();
-    const requiredCapabilities = mergeRequirements(spec, request.requiredCapabilities);
+    const requiredCapabilities = mergeRequirements(spec, [...(request.requiredCapabilities ?? []), ...(spec.environment?.type === 'provider-managed' ? [{ id: 'environment.provider-managed' }] : [])]);
     const descriptor = await driver.inspect({
       spec,
       context: request.context,
@@ -93,10 +107,28 @@ export class LocalExecutionBackend implements AgentExecutionBackend {
       policy: request.policy,
       requiredCapabilities,
       connectorRegistry: this.connectorRegistry,
+      durability: this.getStorage(request.context ?? {})?.durability,
     });
     this.assertActive();
-    this.assertCapabilities(descriptor.capabilities, requiredCapabilities);
-    return descriptor.capabilities;
+    const capabilities = this.describe(spec, request, workspace, hostTools, descriptor);
+    this.assertCapabilities(capabilities, requiredCapabilities);
+    return capabilities;
+  }
+
+  private describe(spec: Readonly<RuntimeAgentSpec>, request: AgentInspectionRequest, workspace: ResolvedWorkspace | undefined, hostTools: RuntimeHostTools | undefined, descriptor: DriverDescriptor): ResolvedAgentCapabilities {
+    if (!spec.definition) return descriptor.capabilities;
+    const transferCapabilities = Object.fromEntries(['files.upload', 'files.download'].filter(id => descriptor.capabilities.capabilities[id] && !this.options.fileTransfer).map(id => [id, { id, support: 'unsupported' as const, reason: 'Host fileTransfer access is disabled' }]));
+    return { ...descriptor.capabilities, inspection: {
+      executionDigest: contentDigest({ spec, policy: request.policy, workspace: workspace?.identity, tools: hostTools?.fingerprint, schemas: hostTools?.definitions, connector: this.connectorIdentity(spec), configuration: descriptor.capabilities.configuration, profile: descriptor.capabilities.capabilities['agent.definition']?.constraints }),
+      tools: (hostTools?.definitions ?? []).map(tool => ({ name: tool.name, schemaDigest: contentDigest(tool.parameters), ...(descriptor.inspection?.toolNamePrefix !== undefined ? { transportName: `${descriptor.inspection.toolNamePrefix}${tool.name}` } : {}) })),
+      environment: spec.environment ?? (workspace ? { type: 'local-directory', path: workspace.root } : { type: 'unspecified' }),
+      enforcement: { hostTools: 'host', nativeFilesystem: 'unknown', nativeCommands: 'unknown', sandboxNetwork: 'unknown', providerWebSearch: 'unknown', ...descriptor.inspection?.enforcement },
+      accountAccess: 'unknown', usageCoverage: 'native-reported-partial', activityReplay: 'bounded-process-history',
+      notes: ['Inspection creates no native resources and grants no authorization.', 'Durable control does not prove native checkpoint availability. Restored activity history may have gaps.', ...(descriptor.inspection?.notes ?? [])],
+    }, capabilities: { ...descriptor.capabilities.capabilities, ...transferCapabilities,
+      'runtime.control': { id: 'runtime.control', support: 'emulated', constraints: { durability: this.getStorage(request.context ?? {})?.durability ?? 'process' } },
+      ...(hostTools && descriptor.capabilities.capabilities['tools.host'] ? { 'tools.host': { ...descriptor.capabilities.capabilities['tools.host']!, constraints: { ...descriptor.capabilities.capabilities['tools.host']?.constraints, fingerprint: hostTools.fingerprint, selected: hostTools.definitions.map(t => t.name) } } } : {}),
+    } };
   }
 
   async openSession(
@@ -113,6 +145,7 @@ export class LocalExecutionBackend implements AgentExecutionBackend {
     this.assertActive();
     const requestedCapabilities = [
       ...(immutableOptions.requiredCapabilities ?? []),
+      ...(spec.environment?.type === 'provider-managed' ? [{ id: 'environment.provider-managed' }] : []),
       ...(immutableOptions.controlMode === 'steerable' ? [{ id: 'run.steer' as const }] : []),
     ];
     const requiredCapabilities = mergeRequirements(spec, requestedCapabilities);
@@ -123,52 +156,230 @@ export class LocalExecutionBackend implements AgentExecutionBackend {
       policy: immutableOptions.policy,
       requiredCapabilities,
       connectorRegistry: this.connectorRegistry,
+      durability: this.getStorage(immutableOptions.context)?.durability,
     });
     this.assertActive();
-    this.assertCapabilities(descriptor.capabilities, requiredCapabilities);
-
-    const nativeSession = await driver.openSession({
-      spec,
-      context: immutableOptions.context,
-      workspace,
-      policy: immutableOptions.policy,
-      requiredCapabilities,
-      connectorRegistry: this.connectorRegistry,
-      metadata: immutableOptions.metadata,
-    });
+    const hostTools = await this.resolveHostTools(spec, immutableOptions.context);
+    const capabilities = this.describe(spec, immutableOptions, workspace, hostTools, descriptor);
+    this.assertCapabilities(capabilities, requiredCapabilities);
+    const id = `session_${randomUUID()}`;
+    const storage = spec.definition ? this.getStorage(immutableOptions.context) : undefined;
+    const lease = storage ? await storage.acquire(id, immutableOptions.context) : undefined;
+    let control: RuntimeControl | undefined;
+    if (lease) {
+      try {
+        const record = await lease.write(controlJson({ spec, options: immutableOptions, capabilities,
+          connectorIdentity: this.connectorIdentity(spec), toolsSchemaDigest: contentDigest(hostTools?.definitions ?? []), toolsFingerprint: hostTools?.fingerprint ?? '', workspaceIdentity: workspace?.identity ?? null, state: 'opening', requests: {}, runs: {}, outbox: {} }), 0);
+        control = new RuntimeControl(lease, record);
+      } catch (error) { await lease.release(); throw error; }
+    }
+    if (hostTools) hostTools.control = control;
+    const request = { spec, context: immutableOptions.context, workspace, policy: immutableOptions.policy,
+      requiredCapabilities, connectorRegistry: this.connectorRegistry, metadata: immutableOptions.metadata,
+      hostTools, sessionId: id, control, durability: storage?.durability };
+    let native: DriverSession | undefined;
     try {
-      if (this._isDestroyed) throw new Error('LocalExecutionBackend has been destroyed');
-      const capabilities = cloneAndFreezeJson(
-        descriptor.capabilities,
-        'Resolved agent capabilities',
-      ) as Readonly<ResolvedAgentCapabilities>;
-      const session = new LocalAgentSession({
-        agentId: spec.id,
-        driverId: driver.id,
-        nativeSession,
-        capabilities,
-        policy: immutableOptions.policy,
-        observation: normalizeObservation(immutableOptions.observation),
-        workspace,
-        maxSessionJournalBytes: this.maxSessionJournalBytes,
-        acquireWorkspace: (identity, runId) => this.acquireWorkspace(identity, runId),
-        releaseWorkspace: (identity, runId) => this.releaseWorkspace(identity, runId),
-        onDestroy: () => this.sessions.delete(session),
-      });
-      this.sessions.add(session);
-      return session;
+      native = await driver.openSession(request);
+      const checkpoint = control ? await native.checkpoint?.() : undefined;
+      await control?.update(data => { data.state = 'ready'; if (checkpoint) data.checkpoint = checkpoint; });
+      this.assertActive();
+      const prepared = this.prepareSession(spec, immutableOptions, capabilities, native, hostTools, control, id, workspace);
+      prepared.register();
+      return prepared.session;
     } catch (error) {
-      await settleWithin(
-        Promise.resolve().then(() => nativeSession.destroy()),
-        DEFAULT_CLEANUP_TIMEOUT_MS,
-      );
+      await settleWithin(Promise.resolve().then(() => native?.destroy()), DEFAULT_CLEANUP_TIMEOUT_MS);
+      await hostTools?.close();
+      await control?.release();
+      if (control) throw new AgentSessionRecoveryError(`Session open failed; inspect/reconcile or delete its recorded resources: ${errorMessage(error)}`, { version: 1, id });
       throw error;
     }
+  }
+
+  private prepareSession(
+    spec: Readonly<RuntimeAgentSpec>, options: OpenAgentSessionOptions, capabilities: ResolvedAgentCapabilities,
+    nativeSession: DriverSession, hostTools: RuntimeHostTools | undefined, control: RuntimeControl | undefined,
+    id: string, workspace?: ResolvedWorkspace,
+  ): { session: DefinitionSession | LocalAgentSession; local: LocalAgentSession; register: () => void } {
+    const session = new LocalAgentSession({
+      id, agentId: spec.id, driverId: spec.driver, nativeSession, hostTools,
+      definitionMode: !!spec.definition, capabilities: cloneAndFreezeJson(capabilities, 'Resolved agent capabilities'),
+      policy: options.policy, observation: normalizeObservation(options.observation), workspace,
+      maxSessionJournalBytes: this.maxSessionJournalBytes,
+      onNativeAccepted: control ? async runId => {
+        const checkpoint = await nativeSession.checkpoint?.();
+        await control.update(data => {
+          const run = (data.runs as JsonObject)[runId] as JsonObject;
+          if (run) run.state = 'observing';
+          if (checkpoint) data.checkpoint = checkpoint;
+        });
+      } : undefined,
+      acquireWorkspace: (identity, runId) => this.acquireWorkspace(identity, runId),
+      releaseWorkspace: (identity, runId) => this.releaseWorkspace(identity, runId),
+      onDestroy: () => this.sessions.delete(session),
+    });
+    let expanded: DefinitionSession | undefined;
+    if (spec.definition) {
+      const connectorStamp = this.connectorIdentity(spec);
+      expanded = new DefinitionSession(session, nativeSession, {
+        files: this.options.fileTransfer ? new RuntimeFileTransfers(async () => {
+          if (this.connectorIdentity(spec) !== connectorStamp) throw new AgentDriverConfigurationError('File transfer connector authorization changed');
+          return this.options.fileTransfer!(options.context);
+        }, nativeSession, options.policy.limits?.artifactBytes) : undefined,
+        control, start: (input, runOptions, runId) => session.run(input, runOptions, { id: runId }),
+        detachObserver: () => session.detachObserver(),
+        drainTools: () => hostTools?.close() ?? Promise.resolve(),
+        onDetach: control ? () => { this.sessions.delete(session); this.definitionSessions.delete(id); } : undefined,
+      });
+    }
+    return { session: expanded ?? session, local: session, register: () => {
+      this.sessions.add(session);
+      if (expanded) this.definitionSessions.set(id, { session: expanded, scope: scopeKey(options.context), spec, options, hostTools, control });
+    } };
+  }
+
+  async resumeSession(reference: import('./types.js').RuntimeSessionReference, options: import('./types.js').RuntimeResumeOptions): Promise<import('./types.js').RuntimeSession> {
+    this.assertActive();
+    if (reference.version !== 1) throw new AgentDriverConfigurationError('Unsupported session reference version');
+    const entry = this.definitionSessions.get(reference.id);
+    if (entry && entry.scope !== scopeKey(options.context)) throw new AgentDriverConfigurationError('Session reference is unavailable in this scope');
+    if (entry && entry.session.state === 'failed' && entry.session.canReobserve) await entry.session.detach();
+    if (entry && !entry.session.isDestroyed && !entry.session.isDetached) {
+      if (entry.scope !== scopeKey(options.context)) throw new AgentDriverConfigurationError('Session reference is unavailable in this scope');
+      const host = await this.resolveHostTools(entry.spec, options.context);
+      await this.inspect(entry.spec, { ...entry.options, context: options.context });
+      if ((host?.fingerprint ?? '') !== (entry.hostTools?.fingerprint ?? '')) throw new AgentDriverConfigurationError('Host authorization/tool fingerprint changed');
+      await entry.hostTools?.reconcilePending(host?.resolution.reconcile);
+      return entry.session;
+    }
+    if (entry && !this.getStorage(options.context)) {
+      if (entry.scope !== scopeKey(options.context)) throw new AgentDriverConfigurationError('Session reference is unavailable in this scope');
+      entry.session.reattach(); return entry.session;
+    }
+    const storage = this.getStorage(options.context);
+    if (!storage) throw new AgentDriverConfigurationError('Session reference is unavailable in this scope/process');
+    const lease = await storage.acquire(reference.id, options.context);
+    let control: RuntimeControl | undefined;
+    let native: DriverSession | undefined;
+    let hostTools: RuntimeHostTools | undefined;
+    let local: LocalAgentSession | undefined;
+    try {
+      const record = await lease.read();
+      if (!record) throw new AgentDriverConfigurationError('Session reference is unavailable in this scope');
+      control = new RuntimeControl(lease, record);
+      const spec = cloneAndFreezeSpec(record.data.spec as unknown as RuntimeAgentSpec);
+      const savedOptions = cloneAndFreezeJson(record.data.options, 'Saved runtime options') as unknown as OpenAgentSessionOptions;
+      validateSessionOptions(savedOptions);
+      const restoredOptions = { ...savedOptions, context: options.context, ...(options.observation ? { observation: options.observation } : {}) };
+      const capabilities = await this.inspect(spec, restoredOptions);
+      if (record.data.connectorIdentity && this.connectorIdentity(spec) !== record.data.connectorIdentity) throw new AgentDriverConfigurationError('Connector endpoint/account configuration changed since checkpoint');
+      const oldCapabilities = record.data.capabilities as unknown as ResolvedAgentCapabilities;
+      const stamp = (value: unknown) => contentDigest(value ?? {});
+      if (stamp(oldCapabilities.capabilities['agent.definition']?.constraints) !== stamp(capabilities.capabilities['agent.definition']?.constraints)) throw new AgentDriverConfigurationError('Native configuration changed since checkpoint');
+      hostTools = await this.resolveHostTools(spec, options.context);
+      if (record.data.toolsSchemaDigest && contentDigest(hostTools?.definitions ?? []) !== record.data.toolsSchemaDigest) throw new AgentDriverConfigurationError('Selected tool schemas changed since checkpoint');
+      if ((hostTools?.fingerprint ?? '') !== record.data.toolsFingerprint) throw new AgentDriverConfigurationError('Host tool/schema/authorization fingerprint changed; reauthorize migration explicitly');
+      if (hostTools) { hostTools.control = control; await hostTools.reconcilePending(); }
+      const workspace = savedOptions.workspace ? await this.resolveWorkspace(savedOptions.workspace, savedOptions.policy) : undefined;
+      if ((workspace?.identity ?? null) !== record.data.workspaceIdentity) throw new AgentDriverConfigurationError('Workspace identity changed since checkpoint');
+      const driver = this.getDriver(spec.driver);
+      if (!driver.restoreSession || !record.data.checkpoint) throw new AgentSessionRecoveryError('Driver has no complete native checkpoint; do not resubmit recorded input', reference, record.data.activeRunId as string | undefined);
+      const restored = await driver.restoreSession({ spec, context: options.context, workspace,
+        policy: savedOptions.policy, requiredCapabilities: mergeRequirements(spec, savedOptions.requiredCapabilities),
+        connectorRegistry: this.connectorRegistry, hostTools, control, sessionId: reference.id, durability: storage.durability,
+        checkpoint: record.data.checkpoint as JsonObject });
+      native = restored.session;
+      this.assertActive();
+      const prepared = this.prepareSession(spec, restoredOptions, capabilities, native, hostTools, control, reference.id, workspace);
+      const expanded = prepared.session as DefinitionSession;
+      local = prepared.local;
+      if (record.data.activeRunId && restored.activeRun) {
+        const runId = String(record.data.activeRunId);
+        const savedRun = (record.data.runs as JsonObject)[runId] as JsonObject;
+        const payload = savedRun.payload as JsonObject;
+        const previousHighWater = Number(savedRun.sequenceHighWater ?? 0);
+        await control.update(data => { ((data.runs as JsonObject)[runId] as JsonObject).sequenceHighWater = previousHighWater + 1000000; });
+        this.assertActive();
+        const run = await local.run(payload.input as AgentRunInput, (payload.options ?? {}) as AgentRunOptions,
+          { id: runId, driverRun: restored.activeRun, sequenceStart: previousHighWater });
+        expanded.trackRun(run);
+      } else if (record.data.activeRunId) {
+        // Local native snapshots cannot prove what an interrupted input did.
+        local.markUnknown();
+      }
+      // Publish only after persistence and active-run adoption succeed. Concurrent
+      // restoration must contend on the storage lease, never borrow a partial observer.
+      this.assertActive();
+      prepared.register();
+      return expanded;
+    } catch (error) {
+      local?.detachObserver();
+      // Restoring observation is not authorization to cancel existing native work.
+      await settleWithin(Promise.resolve().then(async () => {
+        if (native?.detach) await native.detach();
+        else if (!native?.observationIndependent) await native?.destroy();
+      }), DEFAULT_CLEANUP_TIMEOUT_MS);
+      try { await hostTools?.close(); }
+      finally { if (control) await control.release(); else await lease.release(); }
+      throw error;
+    }
+  }
+
+  async deleteSession(reference: import('./types.js').RuntimeSessionReference, options: import('./types.js').RuntimeResumeOptions): Promise<void> {
+    const entry = this.definitionSessions.get(reference.id);
+    if (entry) {
+      if (entry.scope !== scopeKey(options.context)) throw new AgentDriverConfigurationError('Session reference is unavailable in this scope');
+      await entry.session.destroy(); this.definitionSessions.delete(reference.id);
+      if (!this.getStorage(options.context)) return;
+    }
+    const storage = this.getStorage(options.context);
+    if (!storage || reference.version !== 1) throw new AgentDriverConfigurationError('Session reference is unavailable in this scope');
+    const lease = await storage.acquire(reference.id, options.context);
+    try {
+      const record = await lease.read(); if (!record) return;
+      const unresolved = Object.values((record.data.outbox ?? {}) as JsonObject).some(value => (value as JsonObject).state !== 'settled' || (((value as JsonObject).report as JsonObject | undefined)?.outcome as JsonObject | undefined)?.completion === 'unknown');
+      if (unresolved) throw new AgentSessionRecoveryError('Reconcile retained tool effects before deleting their control record', reference);
+      const spec = record.data.spec as unknown as RuntimeAgentSpec;
+      const saved = record.data.options as unknown as OpenAgentSessionOptions;
+      cloneAndFreezeSpec(spec); validateSessionOptions(saved);
+      if (spec.connector) this.connectorRegistry.get(spec.connector);
+      if (record.data.connectorIdentity && this.connectorIdentity(spec) !== record.data.connectorIdentity) throw new AgentDriverConfigurationError('Connector endpoint/account configuration changed since checkpoint');
+      const driver = this.getDriver(spec.driver);
+      const cleanupControl = new RuntimeControl(lease, record);
+      if (driver.deleteSession && record.data.checkpoint) await driver.deleteSession({ spec, context: options.context, control: cleanupControl, durability: storage.durability,
+        workspace: saved.workspace ? await this.resolveWorkspace(saved.workspace, saved.policy) : undefined,
+        policy: saved.policy, requiredCapabilities: mergeRequirements(spec, saved.requiredCapabilities), connectorRegistry: this.connectorRegistry,
+        sessionId: reference.id, checkpoint: record.data.checkpoint as JsonObject });
+      else if (record.data.activeRunId) throw new AgentSessionRecoveryError('Native execution must be reconciled before deletion', reference, String(record.data.activeRunId));
+      await lease.delete();
+    } finally { await lease.release(); }
+  }
+
+  private getStorage(context: import('./types.js').TrustedRuntimeContext): IRuntimeSessionStorage | undefined {
+    return this.options.sessionStorage ?? StorageRegistry.get('runtimeSessions')?.(context);
+  }
+
+  private connectorIdentity(spec: Readonly<RuntimeAgentSpec>): string {
+    if (!spec.connector) return '';
+    return runtimeConnectorIdentity(this.connectorRegistry.get(spec.connector));
+  }
+  private async resolveHostTools(spec: Readonly<RuntimeAgentSpec>, context: import('./types.js').TrustedRuntimeContext): Promise<RuntimeHostTools | undefined> {
+    if (!spec.definition) return undefined;
+    if (!spec.connector || !spec.model) throw new AgentDriverConfigurationError('Definition execution requires a named connector and model');
+    this.connectorRegistry.get(spec.connector);
+    if (spec.instructions !== undefined || spec.driverConfig?.source !== undefined) throw new AgentDriverConfigurationError('Definition mode cannot also select legacy instructions/source');
+    const names = spec.definition.tools ?? [];
+    if (!names.length) return undefined;
+    if (!this.options.resolveTools) throw new AgentDriverConfigurationError('Selected tools require a host tool resolver');
+    const resolution = await this.options.resolveTools(names, context);
+    const resolved = resolution.tools.map(t => t.definition.type === 'function' ? t.definition.function.name : '');
+    if (resolved.length !== names.length || names.some(name => !resolved.includes(name))) throw new AgentDriverConfigurationError('Host resolver must return exactly the selected tools');
+    return new RuntimeHostTools(resolution, context, this.connectorRegistry);
   }
 
   async destroy(): Promise<void> {
     if (this._isDestroyed) return;
     this._isDestroyed = true;
+    await Promise.allSettled([...this.definitionSessions.values()].map(entry => entry.session.destroy()));
     await Promise.allSettled([...this.sessions].map((session) => session.destroy()));
     this.sessions.clear();
     this.workspaceLeases.clear();
@@ -209,7 +420,7 @@ export class LocalExecutionBackend implements AgentExecutionBackend {
   ): void {
     for (const requirement of requirements) {
       const capability = resolved.capabilities[requirement.id];
-      if (!capability || capability.support === 'unsupported') {
+      if (!capability || !['native', 'emulated'].includes(capability.support)) {
         throw new AgentCapabilityUnsupportedError(requirement.id, capability?.reason);
       }
       if (requirement.minimum === 'native' && capability.support !== 'native') {
@@ -235,9 +446,13 @@ export class LocalExecutionBackend implements AgentExecutionBackend {
 }
 
 interface LocalAgentSessionOptions {
+  id?: string;
+  definitionMode?: boolean;
+  onNativeAccepted?: (runId: string) => Promise<void>;
   agentId: string;
   driverId: string;
   nativeSession: DriverSession;
+  hostTools?: RuntimeHostTools;
   capabilities: ResolvedAgentCapabilities;
   policy: AgentExecutionPolicy;
   observation: Required<AgentObservationOptions>;
@@ -249,15 +464,17 @@ interface LocalAgentSessionOptions {
 }
 
 class LocalAgentSession implements AgentSession {
-  readonly id = `session_${randomUUID()}`;
+  readonly id: string;
   readonly agentId: string;
   readonly capabilities: ResolvedAgentCapabilities;
   private _state: AgentSessionState = 'ready';
+  private observer?: AbortController;
   private activeRun?: LocalAgentRun;
   private readonly completedHubs: AsyncEventHub[] = [];
   private _isDestroyed = false;
 
   constructor(private readonly options: LocalAgentSessionOptions) {
+    this.id = options.id ?? `session_${randomUUID()}`;
     this.agentId = options.agentId;
     this.capabilities = options.capabilities;
   }
@@ -270,7 +487,10 @@ class LocalAgentSession implements AgentSession {
     return this._isDestroyed;
   }
 
-  async run(input: AgentRunInput, options: AgentRunOptions = {}): Promise<AgentRun> {
+  markUnknown(): void { this._state = 'failed'; }
+  detachObserver(): void { this.observer?.abort(new Error('Observer detached')); }
+
+  async run(input: AgentRunInput, options: AgentRunOptions = {}, adoption?: { id: string; driverRun?: DriverRun; sequenceStart?: number }): Promise<AgentRun> {
     if (this._isDestroyed) throw new Error('AgentSession has been destroyed');
     if (this._state === 'failed') throw new Error('AgentSession cannot run again after unconfirmed native termination');
     if (this.activeRun) throw new AgentBusyError();
@@ -301,12 +521,14 @@ class LocalAgentSession implements AgentSession {
       }
     }
     if (hasWorkspaceFileInput(immutableInput as AgentRunInput)) {
+      if (this.options.hostTools?.resolution.owner) throw new AgentCapabilityUnsupportedError('owner.input.image', 'External Agent lifecycle ownership currently requires text input');
       this.assertRunCapability('input.image');
     }
 
-    const runId = `run_${randomUUID()}`;
+    const runId = adoption?.id ?? `run_${randomUUID()}`;
     this.options.acquireWorkspace(this.options.workspace?.identity, runId);
     const controller = new AbortController();
+    const observer = new AbortController(); this.observer = observer;
     let timedOut = false;
     let timeout: ReturnType<typeof setTimeout> | undefined;
     const onExternalAbort = () => controller.abort(options.signal?.reason);
@@ -324,7 +546,7 @@ class LocalAgentSession implements AgentSession {
       this.options.policy.limits?.eventBufferBytes ?? DEFAULT_EVENT_BUFFER_BYTES,
       this.options.maxSessionJournalBytes,
     );
-    const hub = new AsyncEventHub(runId, this.id, eventBufferBytes);
+    const hub = new AsyncEventHub(runId, this.id, eventBufferBytes, eventBufferBytes, adoption?.sequenceStart ?? 0, this.options.onNativeAccepted ? (adoption?.sequenceStart ?? 0) + 1000000 : Number.MAX_SAFE_INTEGER);
     const deferred = createDeferred<AgentRunResult>();
     const run = new LocalAgentRun(runId, this.id, hub, deferred.promise, controller, this.capabilities);
     this.activeRun = run;
@@ -352,10 +574,12 @@ class LocalAgentSession implements AgentSession {
     const finish = (result: AgentRunResult) => {
       if (finished) return;
       finished = true;
+
       if (timeout) clearTimeout(timeout);
       controller.signal.removeEventListener('abort', onRuntimeAbort);
       options.signal?.removeEventListener('abort', onExternalAbort);
       if (this.activeRun === run) this.activeRun = undefined;
+      this.observer = undefined;
       const nativeTerminationIsUnconfirmed = !run.nativeTerminationConfirmed;
       if (nativeTerminationIsUnconfirmed) {
         // A native process may still be mutating the workspace. Keep the lease
@@ -365,19 +589,25 @@ class LocalAgentSession implements AgentSession {
       }
       if (!this._isDestroyed) this._state = nativeTerminationIsUnconfirmed ? 'failed' : 'ready';
       this.retainHub(hub);
+      if (this.options.definitionMode && nativeTerminationIsUnconfirmed) result = { ...result, status: 'incomplete', finishReason: 'native_state_unknown', error: { code: 'AGENT_SESSION_RECOVERY_REQUIRED', message: 'Native termination is unconfirmed; recover the original run' } };
       deferred.resolve(result);
     };
 
-    void this.executeRun(run, immutableInput as AgentRunInput, runOptions, hub, controller, () => timedOut, wallTimeMs).then(
-      (result) => {
+    void this.executeRun(run, immutableInput as AgentRunInput, runOptions, hub, controller, () => timedOut, wallTimeMs, observer.signal, adoption?.driverRun).then(
+      async (result) => {
+        try { await this.options.hostTools?.endRun({ status: run.nativeTerminationConfirmed ? result.status : 'incomplete', outputText: result.outputText, ...(result.error ? { error: new Error(result.error.message) } : {}) }); }
+        catch (error) { result = { ...result, status: 'failed', error: { code: 'AGENT_EXTERNAL_LIFECYCLE', message: errorMessage(error) } }; }
         try {
-          hub.publish('run.finished', { status: result.status, finishReason: result.finishReason ?? null });
+          if (!this.options.definitionMode || run.nativeTerminationConfirmed) hub.publish('run.finished', { status: result.status, finishReason: result.finishReason ?? null });
+          else hub.publish('diagnostic', { code: 'NATIVE_TERMINATION_UNKNOWN', message: 'Recover the original native run; no terminal event is asserted' });
           hub.complete();
         } finally {
+          hub.complete();
           finish(result);
         }
       },
-      (error) => {
+      async (error) => {
+        try { await this.options.hostTools?.endRun({ status: 'failed', error: error instanceof Error ? error : new Error(String(error)) }); } catch { /* Keep original failure. */ }
         const nativeError = new AgentNativeExecutionError(this.options.driverId, errorMessage(error), error as Error);
         const result: AgentRunResult = {
           runId,
@@ -390,11 +620,12 @@ class LocalAgentSession implements AgentSession {
           configuration: effectiveConfiguration,
         };
         try {
-          hub.publish('run.finished', { status: 'failed', finishReason: 'native_error' });
+          if (!this.options.definitionMode || run.nativeTerminationConfirmed) hub.publish('run.finished', { status: 'failed', finishReason: 'native_error' });
           hub.complete();
         } catch {
           // Preserve the original failure.
         } finally {
+          hub.complete();
           finish(result);
         }
       },
@@ -415,6 +646,7 @@ class LocalAgentSession implements AgentSession {
       Promise.resolve().then(() => this.options.nativeSession.destroy()),
       DEFAULT_CLEANUP_TIMEOUT_MS,
     );
+    await this.options.hostTools?.close();
     for (const hub of this.completedHubs) hub.expire();
     this.completedHubs.length = 0;
     this._state = 'destroyed';
@@ -429,13 +661,17 @@ class LocalAgentSession implements AgentSession {
     controller: AbortController,
     timedOut: () => boolean,
     wallTimeMs?: number,
+    observationSignal?: AbortSignal,
+    adoptedRun?: DriverRun,
   ): Promise<AgentRunResult> {
     let driverResult: DriverRunResult;
     let activeDriverRun: DriverRun | undefined;
     let nativeCompletion: Promise<DriverRunResult> | undefined;
     let nativeStartup: Promise<DriverRun> | undefined;
     try {
-      nativeStartup = this.options.nativeSession.run({
+      if (this.options.definitionMode) run.setNativeTerminationConfirmed(false);
+      await this.options.hostTools?.beginRun(run.id, controller.signal, error => controller.abort(error), typeof input === 'string' ? input : input.parts.filter(part => part.type === 'text').map(part => part.text).join('\n'));
+      nativeStartup = adoptedRun ? Promise.resolve(adoptedRun) : this.options.nativeSession.run({
         input,
         model: options.model,
         reasoning: options.reasoning,
@@ -443,12 +679,16 @@ class LocalAgentSession implements AgentSession {
         signal: controller.signal,
         metadata: mergeRunMetadata(input, options.metadata),
       });
-      activeDriverRun = await raceWithAbort(nativeStartup, controller.signal);
+      activeDriverRun = await raceWithAbort(nativeStartup, observationSignal ? AbortSignal.any([controller.signal, observationSignal]) : controller.signal);
       run.attachDriverRun(activeDriverRun);
+      await this.options.onNativeAccepted?.(run.id);
       nativeCompletion = this.collectDriverRun(activeDriverRun, hub);
-      driverResult = await raceWithAbort(nativeCompletion, controller.signal);
+      driverResult = await raceWithAbort(nativeCompletion, observationSignal ? AbortSignal.any([controller.signal, observationSignal]) : controller.signal);
+      run.setNativeTerminationConfirmed(true);
     } catch (error) {
-      if (controller.signal.aborted) {
+      if (observationSignal?.aborted) {
+        run.setNativeTerminationConfirmed(false);
+      } else if (controller.signal.aborted) {
         const reason = controller.signal.reason;
         await run.cancelNative(
           reason instanceof Error ? reason.message : String(reason ?? 'Runtime abort signal'),
@@ -473,6 +713,8 @@ class LocalAgentSession implements AgentSession {
           }
         }
         run.setNativeTerminationConfirmed(terminationConfirmed);
+      } else if (this.options.definitionMode && this.options.nativeSession.observationIndependent) {
+        run.setNativeTerminationConfirmed(false);
       } else if (activeDriverRun) {
         await run.cancelNative(errorMessage(error), this.options.nativeSession);
         run.setNativeTerminationConfirmed(await confirmDriverRunTermination(activeDriverRun, nativeCompletion));
@@ -492,7 +734,7 @@ class LocalAgentSession implements AgentSession {
       };
     }
 
-    if (timedOut()) {
+    if (timedOut() && (!this.options.definitionMode || !run.nativeTerminationConfirmed)) {
       const timeoutError = new AgentRunTimeoutError(wallTimeMs ?? 0);
       driverResult = {
         ...driverResult,
@@ -500,7 +742,7 @@ class LocalAgentSession implements AgentSession {
         error: { code: timeoutError.code, message: timeoutError.message, retryable: false },
         finishReason: 'timeout',
       };
-    } else if (controller.signal.aborted || run.wasCancelled) {
+    } else if ((controller.signal.aborted || run.wasCancelled) && (!this.options.definitionMode || !run.nativeTerminationConfirmed)) {
       driverResult = {
         ...driverResult,
         status: 'cancelled',
@@ -559,7 +801,7 @@ class LocalAgentSession implements AgentSession {
 
   private assertRunCapability(id: string): void {
     const capability = this.capabilities.capabilities[id];
-    if (!capability || capability.support === 'unsupported') {
+    if (!capability || !['native', 'emulated'].includes(capability.support)) {
       throw new AgentCapabilityUnsupportedError(id, capability?.reason);
     }
   }
@@ -649,7 +891,7 @@ class LocalAgentRun implements AgentRun {
 
   private assertControlCapability(id: string): void {
     const capability = this.capabilities.capabilities[id];
-    if (!capability || capability.support === 'unsupported') {
+    if (!capability || !['native', 'emulated'].includes(capability.support)) {
       throw new AgentCapabilityUnsupportedError(id, capability?.reason);
     }
   }
@@ -908,3 +1150,7 @@ const staticConnectorRegistry: IConnectorRegistry = {
   getById: (id) => Connector.getById(id),
   warmup: () => Connector.warmup(),
 };
+
+function scopeKey(context: import('./types.js').TrustedRuntimeContext): string {
+  return JSON.stringify([context.tenantId ?? null, context.userId ?? null, context.groupId ?? null]);
+}

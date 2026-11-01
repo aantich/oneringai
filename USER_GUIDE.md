@@ -15,7 +15,7 @@ A comprehensive guide to using all features of the @everworker/oneringai library
 - [Upgrading to 1.1.1](#upgrading-to-111) — portable Agents, Agent-aware Realtime, and WebRTC call metadata
 - [Portable Agent Packages](#portable-agent-packages) — trusted-host hydration with local and remote tools
 - [Upgrading to 1.0.0](#upgrading-to-100) — runtime requirements, breaking changes, compatibility guarantees, and migration checklist
-- [Agent Runtime (preview)](#agent-runtime-preview) — run complete OneRingAI and Codex SDK agents through one observable, capability-gated API
+- [Agent Runtime (preview)](#agent-runtime-preview) — run OneRingAI, Codex and Claude harnesses through one observable, capability-gated API
 - [Agentic Evaluation Baselines](#agentic-evaluation-baselines) — repository-only offline and opt-in live validation for the Version 2 initiative
 1. [Getting Started](#getting-started)
 2. [Core Concepts](#core-concepts)
@@ -18428,13 +18428,528 @@ const response = await agent.run(`
 ## Agent Runtime (preview)
 
 The Agent Runtime is a vendor-neutral surface for executing complete agent systems.
-It sits above `Agent`: OneRingAI retains its context/tool loop, while Codex retains
-its coding-agent loop, shell, workspace, and native thread. Drivers normalize both
+It sits above `Agent`: each harness retains its native loop, tools and state.
+Drivers normalize the supported behavior
 into the same specifications, capabilities, sessions, runs, live events, and results.
 
 This is the correct surface when a workflow needs to plug in a pre-built agent harness,
 select its model and reasoning level, observe its autonomous work, and receive one
 normalized result. It is deliberately separate from model-provider adapters.
+
+
+### Reusable definitions and harness bindings
+
+H0–H6 are implemented on branch with offline transport validation; live harness validation
+remains pending. Existing `runtime.agent(spec)` calls and saved native Agent sessions
+retain their behavior. Use `runtime.createAgent({ id, instructions, tools? })` to define
+one logical agent, then `agent.inspect(options)` / `agent.openSession(options)` with
+`execution: { driver, connector, model, reasoning?, driverConfig? }`. The connector
+remains the credential authority. The model does not select the harness.
+
+`environment` accepts `none`, `local-directory` with `path`, or `provider-managed`;
+a driver must support the selected placement. Do not combine it with legacy `workspace`.
+Native OneRingAI and Codex currently require their existing local policy boundaries.
+`OneRingAIDriver({ trustAgentPolicy: true, configureAgent? })` permits host native-only
+configuration before initialization; it cannot override definition/binding/identity
+fields. Additional plugin tools require host approval through `additionalToolNames`;
+the standard `store_*` tools retain their existing defaults.
+
+Select exact application tool names in the definition. Configure backend `resolveTools`
+to return `{ tools, fingerprint, manager?, owner?, permissionManager? }` from trusted
+host authorization. It must return exactly the selected tools. The fingerprint must
+include implementation, authorization, connector and evidence revisions. Inspection
+calls this resolver read-only; it must not launch execution or lease resources.
+Blocking function tools with object-root JSON schemas are supported; background/native-async tools reject. Existing
+C7 tools must retain their original manager/evidence handle rather than be cloned.
+A projection whose original source provenance cannot be verified stops delivery and
+retains the observation; it never silently substitutes the raw body. Use matching
+public ESM or CJS entries for original managers and runtime adapters; arbitrary mixed
+module/duplicate-package evidence handles are not inferred to be equivalent.
+An explicit Agent owner uses its external-execution hooks; lifecycle completion
+receives the actual bounded native result/status/error. Native usage stays in the
+runtime result rather than being relabelled/priced as the tool owner's configured model. Bare managers preserve
+manager semantics and do not claim Agent hooks. Native definition mode materializes
+fresh tools into the Agent's one shared manager; it rejects borrowed external owners.
+
+Codex receives selected host tools through an authenticated loopback HTTP MCP channel.
+The session token is isolated from shell tool inheritance. This channel is control
+traffic, separate from the selected shell network policy. Real CLI/MCP initialization
+is still live-pending. Native multitenant isolation remains a host responsibility.
+
+Runtime results use `outputText`; native `Agent` responses use `output_text`.
+`requestId` deduplicates identical inputs within the session; different payloads reject.
+A session reference is a locator, never authorization. Process-only references require
+the same backend and trusted tenant/user/group. `getRun` returns retained run handles.
+Only drivers with safe native checkpoint/detach support may detach. Local SDK
+checkpoints support idle restoration when their private native state remains complete;
+active interrupted local input stays unknown and is never replayed. Always destroy the runtime
+when finished. No subscription token extraction or consumer ChatGPT/Claude billing
+is provided; API-key entitlement follows the selected endpoint.
+
+Run the deterministic [swappable example](examples/agent-runtime-swappable.ts) with
+`npx tsx examples/agent-runtime-swappable.ts` after building. It uses real runtime
+drivers with synthetic transports and exits without native CLI or provider calls.
+See the [delivery ledger](docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md) for stage status.
+
+A minimal application binding uses ordinary public types and a host-owned resolver:
+
+```typescript
+import path from 'node:path';
+import { Connector, Vendor, type ToolFunction } from '@everworker/oneringai';
+import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage }
+  from '@everworker/oneringai/agent-runtime';
+import { ClaudeAgentSdkDriver } from '@everworker/oneringai/agent-runtime/claude';
+
+Connector.create({ name: 'claude-main', vendor: Vendor.Anthropic,
+  auth: { type: 'api_key', apiKey: process.env.ANTHROPIC_API_KEY! } });
+const lookup: ToolFunction = {
+  definition: { type: 'function', function: { name: 'lookup_status',
+    description: 'Read the application status.',
+    parameters: { type: 'object', properties: {}, additionalProperties: false } } },
+  execute: async () => ({ status: 'ready' }),
+};
+const runtime = new AgentRuntime({ backend: new LocalExecutionBackend({
+  drivers: [new ClaudeAgentSdkDriver()],
+  sessionStorage: new FileRuntimeSessionStorage(path.resolve('.onering-runtime')),
+  resolveTools: (names, context) => {
+    if (context.userId !== 'host-user' || names.some(name => name !== 'lookup_status'))
+      throw new Error('Tool selection not authorized');
+    return { tools: [lookup], fingerprint: 'host-user:lookup-implementation-v1' };
+  },
+}) });
+const assistant = runtime.createAgent({ id: 'assistant',
+  instructions: 'Use lookup_status when checking application status.', tools: ['lookup_status'] });
+try {
+  const options = { execution: { driver: 'anthropic.agent.sdk', connector: 'claude-main', model: 'claude-sonnet-4-6' },
+    context: { userId: 'host-user' }, environment: { type: 'none' as const },
+    policy: { filesystem: 'denied' as const, commands: 'denied' as const,
+      sandboxNetwork: 'denied' as const, providerWebSearch: 'denied' as const, approvals: 'deny' as const } };
+  const inspection = await assistant.inspect(options); // No task/model invocation.
+  const session = await assistant.openSession(options);
+  const run = await session.run('Check the status.', { requestId: 'status-1' });
+  for await (const event of run.events()) console.log(event.type);
+  console.log((await run.result).outputText, inspection.definitionDigest);
+} finally { await runtime.destroy(); }
+```
+
+This real mode needs the optional SDK and API entitlement and is billable; use the
+offline examples for credential-free verification. To swap harnesses, register the
+other driver and named connector and bind that same `assistant` with its model and
+supported policy/environment. Tools/instructions/application logic stay the same;
+unsupported required features reject rather than being silently removed. Register
+all desired drivers at backend construction; the [five-binding example](examples/agent-runtime-swappable.ts)
+creates the logical agent once and exercises this exact pattern.
+
+### Local Claude Agent SDK
+
+Install `@anthropic-ai/claude-agent-sdk` (validated interface: 0.3.312) and import
+`ClaudeAgentSdkDriver` from `@everworker/oneringai/agent-runtime/claude`. Register it
+alongside other drivers and bind `anthropic.agent.sdk` with an Anthropic API-key or
+API-key-provider connector. A Claude consumer subscription is not an API entitlement
+for this integration. SDK process startup/platform support and account access remain
+live-pending; no login token is read from the user's CLI profile.
+
+The initial profile is host-tools-only: select policy `filesystem: 'denied'`,
+`commands: 'denied'`, `providerWebSearch: 'denied'`, `approvals: 'deny'`.
+It disables native tools, subagents, plugins, auto memory, filesystem settings and
+unselected MCP servers, with isolated HOME/config/env and a deny permission callback.
+Host tool authorization still belongs to the resolver/manager. This is process
+execution, not an OS tenant sandbox. Admin-managed SDK settings remain subject to
+Anthropic's platform policy. Unsupported policy/configuration and unverified model
+reasoning controls reject; unknown reasoning values are not translated.
+
+Text, continuation, exposed reasoning/tool progress, cancellation and locally
+validated structured output are supported. `success` is distinguished from error,
+turn/budget limits and stream loss. A terminal SDK limit returns `incomplete`; a
+broken stream cannot establish completion and may quarantine the session.
+Usage retains the SDK's model-level report with explicit coverage; cost is an
+estimate. The driver does not claim every internal helper is counted. Destroy the
+runtime to remove its temporary SDK state; with control storage, idle detach preserves
+its native transcript for recovery. Active local input remains unknown after a crash.
+
+`npx tsx examples/agent-runtime-claude.ts` runs synthetic queries with the real
+in-process SDK MCP implementation. It needs the optional SDK, no credentials or CLI
+launch. `--live` additionally requires `ONERINGAI_ALLOW_LIVE=1` and `ANTHROPIC_API_KEY`;
+it is billable and remains unrun under the project's live-testing pause.
+
+### Runtime recovery and control storage
+
+Configure `new LocalExecutionBackend({ drivers, resolveTools, sessionStorage })` with
+`FileRuntimeSessionStorage(privateDirectory)` for restart recovery. Alternatively set
+`StorageRegistry.configure({ runtimeSessions: context => storageFor(context) })`.
+`InMemoryRuntimeSessionStorage` supports the same control protocol within one process;
+it is not restart durability. The factory is optional and separate from native context
+storage and `evidence`. The file backend uses one exclusive writer per scoped record,
+revision checks, private files, atomic replacement and file/directory acknowledgement.
+It can reclaim a same-host lock only when its recorded process is proven dead. It
+provides no distributed lease service. Do not share its directory across hosts.
+
+Save `session.reference()` in trusted application state. After a restart, call
+`runtime.resumeSession(reference, { context, observation? })` with the original trusted
+tenant/user/group. References contain no authentication. The runtime reauthorizes the
+recorded connector/model, policy, environment identity, tool implementation/schema and
+native configuration. Changed tool fingerprints or native configuration reject rather
+than silently migrating history. A native `configureAgent` callback therefore requires
+a host `configurationRevision`. Do not put credentials into definition/config metadata.
+
+Pass a stable `requestId` to `session.run(input, options)`. Identical repeated requests
+return the original run; different payloads reject. Admission is stored before native
+dispatch. Input and serializable options are captured when `run()` is called; later
+caller mutations cannot change the admitted command or its executed payload. The
+original abort signal remains live throughout admission and execution.
+If native acceptance or termination is unknown, `AgentSessionRecoveryError`
+carries the original reference/run ID. Resume/get that run; do not generate another
+request to repeat it. `session.inspectState()` reports connection, activity, active run
+and unresolved effects separately from the unchanged legacy terminal-status union.
+`session.getRun(runId)` reads a saved terminal result or its current observer. Saved
+terminal results survive activity eviction; their old events throw
+`AgentEventHistoryExpiredError`. Restored live observation starts in a new reserved
+sequence range, with explicit history gaps. Control snapshots are acknowledged;
+token-by-token activity is bounded process memory, not a durable event journal.
+
+If restoration fails, retain the original reference, repair the storage or reported
+prerequisite, and retry `resumeSession` with the same trusted scope. A failed initial
+read releases its writer, and a partially restored observer is never published in
+the process cache. Restoration failure releases supported native observation without
+implicitly cancelling existing managed work. Explicit cancellation and deletion remain
+host actions; retrying restoration does not resubmit the original input.
+
+The tool-result outbox stores the acknowledged provider-facing payload plus outcome
+and evidence references before delivery. Raw manager returns/events keep their existing
+semantics and storage owner; the outbox is not a second evidence backend. An interrupted
+write stays unresolved. A trusted resolver `reconcile(call, context)` may return the
+original source/receipt's `ToolExecutionReport` with matching call/tool/run IDs and a
+settled completion. This callback must read the original source, never execute a fresh
+action. Without proof, continuation stays blocked. C7 source guards remain authoritative.
+Evidence storage/projection failures stop the run and retain the observation; use
+`onRetainedObservation` and the existing scoped evidence repair APIs before teardown.
+An application `success: false` value still does not mean framework execution failed.
+
+`detach()` preserves native work/state and releases observation/writer ownership;
+`destroy()` requests cancellation and disposes the local handle. Local OneRingAI,
+Codex and Claude SDK detach requires configured control storage and an idle native
+session. Active local input cannot be replayed safely after a crash; it remains unknown.
+OneRingAI restores complete serialized context with renewed host configuration; opaque
+native continuations require their own verified source restore and reject here. SDK
+native transcript directories must still exist and match their private ownership marker.
+Restoring prior Codex/Claude SDK history additionally requires the trusted driver
+`verifyNativeCheckpoint({ directory, nativeSessionId }, request)` callback to verify
+complete native transcripts and their dependencies. A marker alone does not prove
+history survived; the default rejects that restore rather than launching a task as a
+probe. Do not supply a no-op verifier. Managed-provider recovery uses canonical native
+state instead of this local callback. Local native/live persistence verification is
+still pending under the live-testing pause.
+Use detach when preserving those directories. No C3 continuation, ModelTask authority,
+routine cursor or collection cursor is restored by this API.
+
+Use `runtime.deleteSession(reference, { context })` for explicit owned-native-resource
+and control-record cleanup. Deletion rechecks scope and driver policy. Keep the reference
+when cleanup fails. Read-only caller observation never grants another tenant's authority.
+Control records default to a 4 MiB bound; request identity is retained up to 1024 requests
+per session. Capacity errors reject before new dispatch or retain a completed result
+for storage repair. After fixing storage, retry `getRun` to store the retained result;
+never retry its action. Use a new session when its bounded request ledger is full.
+
+`npx tsx examples/agent-runtime-recovery.ts` runs actual producer/recovery processes
+over temporary file storage and a synthetic external service. It verifies one input,
+one external write, stored-result redelivery, a crash after a write, original receipt
+reconciliation and foreign-scope denial. It removes its temporary data and makes no
+provider calls. The same observer API applies to managed drivers; their native account
+and retention policies still apply. `npm run example:agent-runtime-managed-restart`
+additionally exercises both actual managed SDK adapters against an external loopback
+mock service: a producer process crashes after its tool result was accepted, and a
+second process recovers the original ACK with one native input/one effect and no
+implicit cancellation. No live provider is used.
+
+### OpenAI managed Agents API
+
+Import `OpenAIManagedDriver` from `@everworker/oneringai/agent-runtime/openai-managed`
+and bind `openai.agents.api`. This uses OpenAI's managed Codex harness through the
+installed `openai` SDK, distinct from the client-side Agents SDK and local Codex SDK.
+Configure durable control storage before opening a session. A named OpenAI API-key or
+API-key-provider connector supplies credentials on each request. Account access needs
+Agents read/write plus model-inference permissions; ChatGPT subscription allowances
+are not used by this integration. See [the provider quickstart](https://developers.openai.com/api/docs/guides/agents-api/quickstart).
+
+The initial verified endpoint model profile is `gpt-6-astra` with low/medium/high/xhigh/max
+reasoning; additional models require explicit host `modelEfforts` assertions. Unknown
+controls, fixed thinking budgets and disabled thinking reject. No model name is silently
+translated. Native resource creation is lazy: OpenAI requires the initial input for a
+no-environment session, so `openSession` records a logical handle and the first run
+creates its owned native session with that input. No duplicate reusable provider agent
+resource is created. Application credentials stay outside provider sandbox configuration.
+
+Choose `environment: { type: 'none' }` with native filesystem/commands denied for host
+functions only. `provider-managed` selects an OpenAI-hosted sandbox and requires
+workspace-write plus sandboxed commands. Network denial is explicitly configured and
+verified; plugins, skills, capability directories, desktop and native delegation are
+disabled. Referenced templates require a host-reviewed `environmentTemplates` allowlist.
+Provider web search follows the separate policy flag. No local directory is treated as
+a hosted sandbox or implicitly uploaded. Native command/filesystem behavior belongs
+to the owned provider environment, not the OneRingAI local tool manager.
+
+The adapter sends exact function schemas, reads current `required_actions`, executes
+through the selected host manager, stores the model payload, rechecks that the request
+is still pending, and submits the result with its original turn/call IDs. Input/result
+writes have SDK automatic retries disabled; input idempotency keys are stable. Lost
+responses are reconciled from saved provider state. Reconnection opens and buffers a
+new stream before fetching saved state and every page of current-turn items. Native
+idle, a closed stream, historical actions, subagent events and pending actions cannot
+complete a root turn. Unknown creation/input retains the original recovery reference.
+Bounded reconciliation stops explicitly rather than claiming complete corpus coverage.
+
+Model/reasoning overrides use the session's supported update endpoint before each
+new input. Output format is fixed when the native session is created: choose it on the
+first run and repeat the same format on continuation. JSON is validated locally.
+Only verified root-turn terminal states produce results; returned text comes from the
+final-answer items, with commentary kept in activity events. Hosted artifact inventory
+is scoped to that completed turn; transfers are a separate host operation. Usage is the
+provider's best-effort root-turn report; external tool/environment fees are excluded.
+OneRingAI wall time controls observation/cancellation, not a guaranteed provider spend cap.
+
+Detach preserves native work and the durable reference. Cancel requests stop and waits
+for native confirmation; HTTP acceptance alone does not prove termination. Destroy
+releases the local handle, while explicit reference-based deletion removes the owned
+provider session only after execution is idle/confirmed. Keep control files/references
+after uncertainty or failed cleanup; provider retention and account billing still apply.
+Interactive approvals, self-hosted environments and native subagents are not enabled.
+
+`npx tsx examples/agent-runtime-openai-managed.ts` exercises the real SDK against mock
+HTTP/SSE responses, including a lost tool-result acknowledgement and paginated output.
+It needs no credentials and cleans up on success. Explicit `--live` requires
+`ONERINGAI_ALLOW_LIVE=1` plus `OPENAI_API_KEY`; it is billable and remains unrun while
+live testing is paused. An error preserves the recovery directory/reference.
+
+### Claude Managed Agents API
+
+Import `ClaudeManagedDriver` from `@everworker/oneringai/agent-runtime/claude-managed`
+and bind `anthropic.managed.api`. It uses the existing official Anthropic SDK and the
+`managed-agents-2026-04-01` protocol. Configure durable runtime control storage and an
+Anthropic API-key/API-key-provider connector. Keys refresh from that connector; ambient
+CLI login profiles, bearer tokens and custom auth headers do not select credentials.
+`workspaceId` is an optional trusted driver-constructor setting for keys spanning native
+workspaces. This API uses Console/API entitlement, not a consumer Claude subscription.
+See [the provider quickstart](https://platform.claude.com/docs/en/managed-agents/quickstart).
+
+Unlike the OpenAI no-environment profile, this API requires `provider-managed` placement.
+The driver creates a per-session owned, version-pinned agent, a cloud environment and
+a session. Metadata/IDs and creation intent are acknowledged after each step. A failed
+setup returns a recovery reference; cleanup reconciles each original resource rather
+than creating another one. A referenced environment must appear in the host's
+`environmentIds` allowlist and pass current cloud/network policy validation. Borrowed
+environments are never deleted. Owned agent cleanup uses the provider's archive API;
+session/environment deletion is separate and physical retention follows provider policy.
+
+`nativeTools` defaults to an empty list. The built-in toolset explicitly defaults to
+`enabled: false`, because the provider otherwise enables it. The host can select bash,
+read/write/edit/glob/grep and web tools through the driver constructor; policy must
+permit their exact filesystem, command and web effects. No MCP servers, skills,
+memory resources, vault credentials, coordinator agents or workflow runs are enabled.
+Network denial is verified against the environment's limited-network configuration.
+Interactive approval, self-hosted environments and native delegation require other
+capabilities and reject here. Host functions continue through the same selected
+ToolManager, evidence owner, permissions and control outbox as other harnesses.
+
+Model/reasoning are selected at session binding time. This endpoint does not update
+those settings mid-session, so run overrides reject before native input. The initial
+profile also rejects runtime JSON-schema output, rather than suggesting an unsupported
+native output-format option. Use another session/harness when that capability is required.
+Native thinking events indicate activity without exposing reasoning text; previews are
+kept distinct from complete assistant messages. Native history is paginated with its own
+cursor API, bounded separately from local event buffering.
+
+Each input is correlated with its actual native user-event echo and the saved preceding
+boundary. A lost response never causes another user message. Only currently pending
+custom-tool IDs or fresh live calls are executable; old historical calls are observations.
+Results use their original `custom_tool_use_id`, and native duplicate-result semantics
+allow safe redelivery after pending-state reconciliation. A naturally ended turn returns
+`completed`; explicit accepted interrupt plus subsequent stop evidence returns `cancelled`.
+Refusal remains a terminal response rather than proof of business acceptance. Budget and
+requires-action idle reasons keep the run waiting and block a second input. A bare idle
+session, stream closure or span error cannot imply successful completion. Observation
+loss in managed execution does not itself cancel provider work; resume its reference.
+
+Optional `driverConfig: { maxListCostUsdCents: '50' }` sends the provider's native USD
+list-cost ceiling (50 cents). Amounts are integer decimal strings, avoiding float
+rounding. This is a vendor-specific native cap, not a universal ModelTask budget.
+`budget_reached` is resumable waiting; the initial runtime API does not expose budget
+increases. Usage is the difference of available native cumulative snapshots; absent or
+inconsistent fields stay unknown. The raw cumulative report and its coverage accompany
+usage, and library estimates exclude external/runtime fees. Final text is the last
+complete native agent message; earlier messages remain observable activity.
+
+Use the same reference, inspection, request-ID, getRun, cancel, detach and deletion
+recipes as other harnesses. Unresolved source effects must be reconciled before their
+control record can be deleted, including after the native turn stopped requesting a
+result. Resume invokes only the trusted original-receipt resolver; it never reexecutes
+an action. If native setup, cleanup, or source proof is incomplete, keep the reference
+and control directory for repair.
+
+`npx tsx examples/agent-runtime-claude-managed.ts` uses actual SDK serialization with
+synthetic HTTP/SSE. It demonstrates one custom action despite a lost result response,
+a waiting budget pause, explicit interrupt and owned cleanup. No credentials are needed.
+`--live` requires `ONERINGAI_ALLOW_LIVE=1`, `ANTHROPIC_API_KEY` and optionally a trusted
+`ANTHROPIC_WORKSPACE_ID`; it runs only the ordinary task scenario and is billable.
+Live testing remains paused and has not been performed.
+
+### Inspect the effective binding
+
+`inspect()` resolves selected tools and validates the same driver/policy profile as
+open, without creating provider resources or acquiring tool-manager execution ownership.
+It returns the logical `definitionDigest`, control `recovery` durability and optional
+`inspection` details: effective execution digest, selected tool/schema fingerprints,
+native transport names where verified, environment, enforcement ownership, replay bounds,
+usage coverage and prerequisites. Account access stays `unknown` until native requests.
+External driver enforcement stays `unknown` unless that driver reports it; no guarantee
+is inferred from its ID. OneRingAI policy trust is an explicit host assertion.
+
+Runtime event/output/history/inventory bounds apply at their documented normalized or
+retained stage. The vendor SDK may parse a complete upstream JSON page or SSE event
+before the adapter can count it; these are not hard upstream parser/allocation caps.
+Transfers count actual response-stream bytes separately. Hosts needing stricter transport
+limits must provide a reviewed SDK client/transport through the driver constructor.
+Native provider quotas, token consumption and external fees remain independent.
+
+A file-backed control log does not prove native state survived. The file adapter is a
+single-host POSIX implementation using exclusive ownership, atomic rename, file/directory
+fsync and revision checks. It is tested on this macOS host; other POSIX filesystems must
+honor those primitives. Windows requires a custom acknowledged storage adapter and is
+rejected by this file implementation. Network filesystems and distributed ownership are
+not claimed. A lock is recovered only after same-host process death is proven; malformed,
+foreign-host or uncertain locks require host repair, never timeout-based action replay.
+Keep the private storage directory inaccessible to other OS users and outside writable
+model workspaces and transfer roots. A model must not be able to edit authoritative
+control/checkpoint files. This is not tenant isolation. Stored state/results are sensitive application data even though credentials
+and executable handles are excluded from runtime configuration.
+
+Request and tool digests canonicalize nested JSON property order. Tool schema changes,
+host authorization/fingerprint changes, connector endpoint/account settings, workspace
+identity and native configuration changes reject recovery rather than silently migrate.
+API-key refresh through the same authorized account remains supported; the host must
+not substitute another account under the same connector name. SDK constructors/factories
+are trusted host code and must preserve origin/authentication controls. Default managed
+transports pin the connector origin, reject redirects and suppress remote error bodies
+that could echo credentials. Provider control traffic is separate from sandbox egress.
+
+### Explicit files and artifacts
+
+Managed runs return `AgentArtifact` references. These are native locators, not downloaded
+files and not permission to read an arbitrary URL. Enable host transfer separately:
+
+```typescript
+const backend = new LocalExecutionBackend({
+  drivers, // Your registered drivers, as above.
+  sessionStorage: new FileRuntimeSessionStorage(controlDirectory),
+  fileTransfer: context => {
+    const root = authorizedTransferRoots.get(context.userId!);
+    if (!root) throw new Error('No transfer directory for this user');
+    return { root, maxBytes: 1024 * 1024, mediaTypes: ['text/plain', 'application/pdf'] };
+  },
+});
+// An attached, idle RuntimeSession, after an explicit host file selection:
+const uploaded = await session.uploadFile({ path: 'input.txt', mediaType: 'text/plain' });
+const saved = await session.downloadArtifact({ reference: artifact.reference, path: 'answer.txt' });
+```
+
+The transfer callback receives trusted scope on each operation; roots are host-owned,
+existing directories. Paths are relative to that directory, parent directories must
+exist, and source/destination symlinks, traversal and overwrites reject. Keep directory
+parents under host control so another process cannot rename them during I/O. MIME types
+are declarations/native response metadata checked against the exact host allowlist, not
+malware scanning. Default maximum is 1 MiB, maximum configurable bound 16 MiB, additionally
+capped by `policy.limits.artifactBytes`. Streams are counted even without Content-Length;
+failed downloads remove the partial destination. Files use private permissions. File
+transfer and new turns/detach are mutually exclusive; it never submits model input.
+
+OpenAI uploads inline bytes into its owned hosted `/workspace/<name>`; provision the
+hosted environment by completing the first turn before uploading. The upload reference
+identifies a live environment file; only published native artifact references are
+immutable/downloadable. Inline-upload intent is acknowledged before native mutation;
+a lost response blocks new input instead of retrying the write. The native file-list
+metadata cannot prove exact contents, so preserve that reference for explicit owned
+environment/session cleanup rather than claiming automatic content reconciliation.
+OpenAI download metadata and content use the exact owned session
+and artifact endpoints; response MIME and byte bounds still apply. No-environment runs
+cannot upload. Hosted template inheritance remains a separately reviewed host decision.
+
+Claude uploads a separately tracked, expiring Files API object, then mounts it explicitly
+at `/mnt/session/uploads/<name>`. Durable upload intent/IDs are separate from native
+session/environment ownership. Lost upload or mount responses are reconciled by original
+intent/resource membership; they never trigger another upload. An unmounted uncertain
+upload blocks new input and can be cleaned up with `deleteSession`. Native generated
+files are enumerated with exact native session scope (session-wide, not attributed to a
+specific turn); foreign or expired file metadata rejects. Uploaded objects that the native
+API marks non-downloadable cannot be downloaded through this abstraction. Explicit session
+deletion removes tracked owned uploads; borrowed environments remain untouched. Native
+provider-generated file retention follows that provider's session/file lifecycle.
+
+Local SDK drivers continue to use their explicit workspace/image capabilities; these
+managed transfer methods reject there. `workspace-file` never silently uploads to a cloud
+harness. Unsupported rich inputs reject before task submission. Transfers don't run the
+OneRingAI tool pipeline or acquire workflow/ModelTask authority.
+
+Run [the bounded transfer example](examples/agent-runtime-artifacts.ts) after building.
+It uses actual SDK serialization with mock HTTP, checks exact bytes and foreign reference
+denial, and cleans up private temporary data. Native expiry and upload-loss cases also
+have offline regression tests. Live file behavior remains pending vendor/platform checks.
+
+### Adding a future harness
+
+Implement `AgentDriver` and register its instance in `LocalExecutionBackend({ drivers })`.
+Keep the driver ID independent of Connector vendor/model. `inspect` must be read-only,
+validate endpoint-specific models/policy/tool translation, and report actual capabilities;
+optional descriptor `inspection` metadata reports transport names/enforcement/prerequisites.
+Unknown guarantees must remain unknown. Return native additions/configuration revisions
+in `agent.definition` constraints so incompatible checkpoint configuration is detected.
+
+`openSession` receives trusted scope, a scoped connector registry, the bound definition,
+policy/environment and optional `RuntimeHostTools` / `RuntimeControl`. Resolve credentials
+through the named Connector. Invoke selected application functions through
+`request.hostTools.execute(name, args, originalCallId)`; this retains the existing manager,
+Agent owner/evidence/permissions and acknowledged outbox. Never construct a duplicate
+pipeline or clone remote proxies. Drivers normalize native events/results; `DriverRun.result`
+settles only when native work is proven terminal and cannot mutate its environment.
+Observer loss or an accepted cancel request is not proof. `observationIndependent` is
+opt-in only for service-owned work that survives local observation loss.
+
+Optional checkpoint/restore/delete/detach hooks preserve native identity and ownership.
+Use the supplied serialized `control.update` for acknowledgements around native mutation;
+never put credentials, executable objects or workflow authority in a checkpoint. Do not
+re-send uncertain input. Driver-specific state is JSON and versioned; unsupported/missing
+native recovery remains explicit. Optional upload/download hooks receive bounded host
+bytes or scoped native references; default runtime filesystem checks remain authoritative.
+No new driver registry, profile DSL or model-provider adapter is needed. Existing drivers
+and backends may omit these additive hooks and retain their legacy runtime behavior.
+
+### Desktop and AMOS integration
+
+Keep `AgentRuntime`, Connectors, SDK clients, tool resolution, trusted scope, durable
+storage and transfer directories in the desktop **main process**. The renderer receives
+sanitized activity/result DTOs and an application session locator. It cannot choose tenant,
+connector accounts, native IDs, policy, tool lists or executable bootstrap code. Authorize
+IPC operations against the authenticated owner and the currently selected binding before
+run/cancel/detach/resume/transfer. Bounded `run.events()` feeds activity independently of
+approval UI. This initial profile rejects interactive approvals/user questions/steering;
+never render an observation as an approval decision.
+
+Distinguish `/stop` (explicit native cancellation, then terminal confirmation), `/detach`
+(release observer; managed work continues), and deletion (explicit owned-resource cleanup).
+Persist the reference outside renderer memory; after restart call `resumeSession` with
+renewed host authorization and `getRun` for the original active ID. Never retry the original
+prompt after uncertain input. Activity gaps and unknown native state must be visible.
+Native Agent-only commands must not reach `Agent.context` for external harnesses.
+
+AMOS illustrates these boundaries with opt-in `--runtime-host <trusted-module.mjs>`.
+The bootstrap exports `createAmosRuntimeHost(dataDir)` and returns `{ runtime, definition,
+options, resume? }` using ordinary public APIs and named Connectors; this avoids another
+credential/tool configuration layer. The same controller renders all five harnesses and
+supports `/inspect`, `/status`, `/stop`, `/detach`, `/resume`, `/exit` and `/help`. Native
+context/routing/routine/helper/tool-mutation commands reject in this mode. Its standard
+Agent-based mode and saved configuration remain unchanged. See [AMOS setup and lifecycle](apps/amos/README.md#agent-runtime-mode).
+The deterministic [AMOS example](apps/amos/examples/agent-runtime-offline.ts) executes the
+same selected tool through all five actual adapters with synthetic transports, one UI
+consumer, and no native CLI or provider calls. The separate recovery example uses actual
+process restart. No unrelated desktop application is modified.
 
 ### Choose the right agent surface
 
@@ -18451,21 +18966,27 @@ choose whether work runs locally or in a future isolated server worker.
 
 ### Current implementation and roadmap
 
+The detailed local recipes below preserve legacy `.agent(spec)` usage. Common
+definitions and managed bindings use the additive recipes above.
+
 | Component | Status | Notes |
 |---|---|---|
-| Native OneRingAI driver | Implemented locally | Stored definition, registered binding, or factory source |
+| Native OneRingAI driver | Implemented | Logical definition materialization; legacy stored/binding/factory sources retained |
 | OpenAI Codex TypeScript SDK driver | Implemented locally | Optional peer dependency; SDK-managed local CLI process |
 | Live autonomous observation | Implemented locally | Messages, vendor-exposed reasoning, and driver-specific activity |
 | Interactive approvals, user questions, and steering | Capability-defined, not implemented locally | Planned for drivers with a bidirectional native protocol, such as Codex App Server |
 | Remote container/microVM execution | Designed, not implemented | Future execution backend with per-active-run isolation leases |
-| Claude Agent SDK and other agent harnesses | Designed, not implemented | Add drivers without changing application lifecycle code |
+| Claude Agent SDK | Implemented on branch, offline validated, live-pending | Optional SDK; tools-only local profile via `anthropic.agent.sdk` |
+| OpenAI managed Agents API | Implemented on branch, offline validated, live-pending | `openai.agents.api`; durable control and explicit placement |
+| Claude Managed Agents API | Implemented on branch, offline validated, live-pending | `anthropic.managed.api`; durable control/provider-managed placement |
+| Explicit managed file transfers | Implemented on branch, offline validated | Host-only authorized directory, byte/MIME bounds and native scoped references |
 | A2A interoperability | Designed, not implemented | External protocol adapter, not the internal worker protocol |
 
-The local preview supports native OneRingAI agents and the OpenAI Codex TypeScript
-SDK. Install the optional peer only when using the Codex driver:
+The runtime supports native OneRingAI, local Codex/Claude SDKs and managed OpenAI/Claude APIs.
+Install optional peers only for local SDK drivers:
 
 ```bash
-npm install @openai/codex-sdk
+npm install @openai/codex-sdk @anthropic-ai/claude-agent-sdk
 ```
 
 The complete local example can run either backend through the same workflow:
@@ -18714,13 +19235,16 @@ The local backend is for trusted development and is not multi-tenant isolation. 
 future server backend should keep this API but schedule an isolated container or
 microVM lease per active run, optionally retaining warm session affinity for a short
 TTL. A permanent VM per tenant/session is a deployment choice, not a runtime
-requirement. Durable events/checkpoints, credential leasing, and A2A adapters remain
-separate future phases.
+requirement. Server-wide durable activity replay, distributed checkpoint coordination,
+credential leasing and A2A remain separate future phases. H3 supplies the scoped
+single-host control/native-checkpoint recovery documented above.
 
 Cancellation, timeout, and post-start driver failures attempt bounded native cleanup.
 Synchronous driver cancellation errors are contained. If the native result and event
-pump cannot both be confirmed terminal within the cleanup window, the run still
-returns its normalized result, but the session fails and the local backend quarantines
+pump cannot both be confirmed terminal within the cleanup window, legacy `.agent(spec)`
+runs return an error result while common-definition runs reject with
+`AgentSessionRecoveryError` and suppress a fabricated terminal event. The session fails
+and the local backend quarantines
 that workspace lease until backend teardown; it never starts a second writer over
 possibly live native work.
 

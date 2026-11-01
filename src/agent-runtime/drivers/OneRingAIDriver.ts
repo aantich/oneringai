@@ -13,6 +13,8 @@ import {
   AgentStructuredOutputError,
 } from '../errors.js';
 import { createDeferred, errorMessage, toJsonObject, toJsonValue } from '../internal.js';
+import type { SerializedContextState } from '../../domain/interfaces/IContextStorage.js';
+import { controlJson } from '../RuntimeSessionStorage.js';
 import { parseAndValidateStructuredOutput } from '../StructuredOutputValidator.js';
 import type {
   AgentCapability,
@@ -87,6 +89,11 @@ export interface OneRingAIDriverOptions {
    * PermissionPolicyManager already enforce the runtime policy.
    */
   trustAgentPolicy?: boolean;
+  /** Complete native-only configuration before Agent initialization. Definition/binding fields remain protected. */
+  configurationRevision?: string;
+  configureAgent?: (config: AgentConfig, request: DriverOpenSessionRequest) => AgentConfig;
+  /** Explicit host-approved plugin/native tool additions for definition mode. */
+  additionalToolNames?: readonly string[];
 }
 
 export class OneRingAIDriver implements AgentDriver {
@@ -99,8 +106,10 @@ export class OneRingAIDriver implements AgentDriver {
   }
 
   async inspect(context: Parameters<AgentDriver['inspect']>[0]): Promise<DriverDescriptor> {
-    const source = parseSource(context.spec);
-    rejectCommonOverrides(context.spec);
+    const source = context.spec.definition ? undefined : parseSource(context.spec);
+    if (context.spec.definition && this.options.configureAgent && !this.options.configurationRevision?.trim()) throw new AgentDriverConfigurationError('Native configureAgent requires a host configurationRevision for recovery compatibility');
+    if (context.spec.definition && Object.keys(context.spec.driverConfig ?? {}).length) throw new AgentDriverConfigurationError('Definition-mode OneRingAI has no driverConfig fields; use the native host configureAgent callback');
+    if (!context.spec.definition) rejectCommonOverrides(context.spec);
     validateReasoning(context.spec.reasoning);
     if (context.policy && !this.options.trustAgentPolicy) {
       throw new AgentPolicyUnsupportedError(
@@ -112,7 +121,10 @@ export class OneRingAIDriver implements AgentDriver {
     }
 
     let resolvedModel = context.spec.model;
-    if (source.type === 'stored-definition') {
+    if (!source) {
+      const connector = context.connectorRegistry.get(context.spec.connector!);
+      validateModel(resolvedModel!, connector.vendor);
+    } else if (source.type === 'stored-definition') {
       const storage = this.options.definitionStorage ?? StorageRegistry.get('agentDefinitions');
       if (!storage) throw new AgentDriverConfigurationError('No OneRingAI agent definition storage is configured');
       const definition = await storage.load(source.agentId);
@@ -135,17 +147,44 @@ export class OneRingAIDriver implements AgentDriver {
     if (resolvedModel) {
       validateReasoningForModel(resolvedModel, context.spec.reasoning, this.modelReasoningControls);
     }
-    return {
-      capabilities: oneRingCapabilities(
+    const capabilities = oneRingCapabilities(
         resolvedModel,
         context.spec.reasoning,
         this.modelReasoningControls,
-      ),
-    };
+      );
+    if (context.spec.definition) {
+      capabilities.capabilities['agent.definition'] = { id: 'agent.definition', support: 'native', constraints: { configurationRevision: this.options.configurationRevision ?? 'builtin-v1', additionalToolNames: ['store_set', 'store_get', 'store_delete', 'store_list', 'store_action', ...(this.options.additionalToolNames ?? [])] } };
+      if (context.durability) capabilities.capabilities['session.restore'] = { id: 'session.restore', support: 'emulated', constraints: { activeLocalInput: 'unknown-requires-host-reconciliation', opaqueNativeState: 'requires-source-restore' } };
+      capabilities.capabilities['tools.host'] = { id: 'tools.host', support: 'native' };
+    }
+    return { capabilities, inspection: { toolNamePrefix: '', notes: ['Native Agent/plugin additions are bounded by additionalToolNames; trustAgentPolicy is a host assertion.'] } };
   }
 
   async openSession(request: DriverOpenSessionRequest): Promise<DriverSession> {
     await this.inspect(request);
+    if (request.spec.definition) {
+      const selectedTools = [...(request.hostTools?.resolution.tools ?? [])];
+      const base: AgentConfig = {
+        connector: request.spec.connector!, model: request.spec.model!, name: request.sessionId,
+        registry: request.connectorRegistry,
+        instructions: request.spec.definition.instructions,
+        userId: request.context.userId,
+        tools: [...selectedTools],
+      };
+      const config = this.options.configureAgent ? this.options.configureAgent(base, request) : base;
+      if (config.connector !== request.spec.connector || config.model !== request.spec.model || config.instructions !== request.spec.definition.instructions || config.userId !== request.context.userId || config.registry !== request.connectorRegistry || config.tools?.length !== selectedTools.length || config.tools?.some((tool, i) => tool !== selectedTools[i])) {
+        throw new AgentDriverConfigurationError('configureAgent cannot override definition, binding, tools or trusted scope');
+      }
+      const agent = Agent.create(config);
+      try {
+        const allowed = new Set([...(request.spec.definition.tools ?? []), 'store_set', 'store_get', 'store_delete', 'store_list', 'store_action', ...(this.options.additionalToolNames ?? [])]);
+        const unexpected = agent.tools.getAll().map(t => t.definition.function.name).filter(name => !allowed.has(name));
+        if (unexpected.length) throw new AgentDriverConfigurationError(`Undeclared native tools: ${unexpected.join(', ')}`);
+        request.hostTools?.attachNative(agent);
+      }
+      catch (error) { agent.destroy(); throw error; }
+      return new OneRingDriverSession(agent, true, request.spec.reasoning, request.spec.model!, undefined, undefined, this.modelReasoningControls, !!request.control);
+    }
     const source = parseSource(request.spec);
     let agent: Agent;
     let owned = true;
@@ -218,6 +257,15 @@ export class OneRingAIDriver implements AgentDriver {
       throw error;
     }
   }
+  async restoreSession(request: DriverOpenSessionRequest & { checkpoint: import('../types.js').JsonObject }): Promise<{ session: DriverSession }> {
+    if (request.checkpoint.kind !== 'onering-context-v1' || !request.checkpoint.state) throw new AgentDriverConfigurationError('Incomplete OneRingAI native checkpoint');
+    const state = request.checkpoint.state as unknown as SerializedContextState;
+    if (state.nativeContinuation) throw new AgentDriverConfigurationError('Opaque native continuation requires its own verified source restoration; runtime cannot fabricate it');
+    const session = await this.openSession(request) as OneRingDriverSession;
+    try { await session.restoreCheckpoint(state); return { session }; }
+    catch (error) { await session.destroy(); throw error; }
+  }
+
 }
 
 class OneRingDriverSession implements DriverSession {
@@ -231,6 +279,7 @@ class OneRingDriverSession implements DriverSession {
     private readonly restoreModel?: string,
     private readonly releaseBinding?: () => void,
     private readonly modelReasoningControls: Readonly<Record<string, NormalizedReasoningControls>> = DEFAULT_MODEL_REASONING_CONTROLS,
+    private readonly canDetach = false,
   ) {}
 
   get nativeSessionId(): string | undefined {
@@ -263,6 +312,15 @@ class OneRingDriverSession implements DriverSession {
         this.releaseBinding?.();
       }
     }
+  }
+
+  async checkpoint(): Promise<import('../types.js').JsonObject> {
+    return controlJson({ kind: 'onering-context-v1', state: await this.agent.getContextState() });
+  }
+  async restoreCheckpoint(state: SerializedContextState): Promise<void> { await this.agent.restoreContextState(state); }
+  async detach(): Promise<void> {
+    if (!this.canDetach || this.agent.isRunning()) throw new AgentDriverConfigurationError('OneRingAI detach requires durable control storage and an idle native Agent');
+    await this.destroy();
   }
 
   private runStreamed(input: string, request: DriverRunRequest): DriverRun {

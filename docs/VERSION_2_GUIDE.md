@@ -6,11 +6,11 @@ the standard documentation before release. Read the
 [architecture roadmap](./designs/AGENTIC_ARCHITECTURE_EVOLUTION.md) for implementation
 scope, dependencies, research, and acceptance criteria.
 
-- **Status:** Core stages, Stage 16A, Stage 14A and consumer slices C1–C9-C are implemented on branch. The [latest consumer review corrections](#consumer-review-corrections--2026-10-28) track the current corrective validation; earlier stage totals below are historical. Package publication is separate, and live LLM testing remains paused by the user.
+- **Status:** Core stages, Stage 16A, Stage 14A and consumer slices C1–C9-C and agent-harness H0–H6 are implemented on branch (offline validated; new native/live gates pending). The [latest consumer review corrections](#consumer-review-corrections--2026-10-28) track the current corrective validation; earlier stage totals below are historical. Package publication is separate, and live LLM testing remains paused by the user.
 - **Stage 03 review:** All findings fixed and validated: 7,473 units / 245 Stage 03 cases, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](./designs/STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 - **Stage 06 review:** All findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion](./designs/STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
 - **Created / last updated:** 2026-10-07 / 2026-10-28.
-- **Current selected scope:** Full consumer-hardening sequence C2–C8 and C9-A/B/C is authorized, in order with review/fixes after each slice. C1 is complete. The [delivery ledger](./designs/CONSUMER_DELIVERY_LEDGER.md) records current availability; each slice must pass its own gates. Existing APIs/defaults stay unchanged; no consumer upgrade or release is included.
+- **Current selected scope:** Agent-harness revision 3 H0–H6 is sequentially authorized; see [the delivery ledger](designs/AGENT_HARNESS_DELIVERY_LEDGER.md). The preceding full consumer-hardening sequence C2–C8 and C9-A/B/C is authorized, in order with review/fixes after each slice. C1 is complete. The [delivery ledger](./designs/CONSUMER_DELIVERY_LEDGER.md) records current availability; each slice must pass its own gates. Existing APIs/defaults stay unchanged; no consumer upgrade or release is included.
 - **Repository package version at creation:** `1.2.0`.
 - **Implemented stages:** 00 — evaluation and compatibility baselines;
   01 — fresh request accounting and safe compaction;
@@ -3118,3 +3118,45 @@ their runnable offline examples, standard guide handoff, delivery ledger and
 unreleased notes document the corrections. AMOS has no new control or configuration
 to expose; its existing adapters remain covered by the cumulative checks. Consumer
 adoption and publishing remain separate; live validation is still paused.
+
+
+H1: additive logical definitions, execution bindings, scoped blocking host tools and Codex MCP bridge are on branch, offline tested, unreleased and live-pending. Adoption is optional; legacy specs/defaults remain. Documentation handoff: README, User Guide, AGENTS, runtime architecture, generated API and swappable example. See [H-stage ledger](designs/AGENT_HARNESS_DELIVERY_LEDGER.md).
+
+
+H2 adoption: optional `agent-runtime/claude` entry and `anthropic.agent.sdk` binding. Defaults deny native tools/config/delegation; continuation and terminal limits are normalized without changing old event/status unions. README/User Guide/AGENTS/runtime docs, generated API and Claude example updated. Source/offline availability only; live testing and release pending.
+
+
+H3 adoption: optional IRuntimeSessionStorage, InMemoryRuntimeSessionStorage/FileRuntimeSessionStorage, StorageRegistry.runtimeSessions, session references, request IDs, getRun/inspectState/detach and reference-based deletion. New observer uncertainty errors retain old terminal unions and legacy behavior. Local idle context/transcript restore is conditional; active local admission/opaque source gaps remain explicit. README/User Guide/AGENTS/runtime/distributed/outcome/evidence guides and the two-process recovery example are updated. Branch/offline only; live/release pending.
+
+
+H4 adoption: OpenAIManagedDriver in agent-runtime/openai-managed, driver openai.agents.api, durable control storage required. SDK writes do not retry automatically; pending/idle/disconnect remain nonterminal. First-turn format is fixed, native delegation/plugins disabled, endpoint model profiles explicit. README/User Guide/AGENTS/runtime docs, generated API and wire example updated. Branch/offline availability only; live and release pending.
+
+
+H5 adoption: ClaudeManagedDriver in agent-runtime/claude-managed, binding anthropic.managed.api. Provider-managed placement, owned version-pinned agent/session and owned-or-borrowed environment; only owned resources are cleaned up. Native tools/delegation/memory off by default, budget wait nonterminal, interrupt confirmation separate, native session settings fixed. README/User Guide/AGENTS/runtime/distributed/outcome guides, generated API and wire example updated. Branch/offline only; live and release pending.
+
+
+## Agent harness expansion adoption and handoff — 2026-10-28
+
+| Slice | Availability and adoption | Public handoff |
+| --- | --- | --- |
+| H0–H1 | Additive `createAgent(definition)` and per-session binding; exact selected blocking tools; original C7 manager/owner retained. Legacy `.agent(spec)` and event/status unions unchanged. | README support matrix, canonical User Guide, AGENTS, runtime architecture, generated API and five-harness example. |
+| H2 | Optional local Claude SDK subpath/profile, in-process MCP, continuation, isolated native settings. | SDK setup, native ownership/reasoning limits, credential-gated example; no CLI/live claim. |
+| H3 | Process/durable control, scoped references, request IDs, source/outbox recovery, optional native checkpoints and observer detach. No workflow/ModelTask authority restoration. | Storage/platform limits, two-process restart example, evidence/outcome guides and architecture ownership. |
+| H4–H5 | Managed OpenAI/Claude SDK adapters with durable control, native pending/terminal reconciliation and owned cleanup. Capabilities remain endpoint-specific. | Optional model/effort profiles, fixed-setting boundaries, budget/interrupt/usage semantics, native-SDK wire examples. |
+| H6 | Host-only bounded files, inspection, five-harness continuation and opt-in AMOS runtime selection/UI. | Canonical file/desktop recipes, AMOS setup/commands, examples index, package closure/compatibility checks and release notes. |
+
+Availability means implemented/offline validated source on this branch. Exact current
+commands/counts, failures/fixes and extracted-package verification are recorded in the
+[H-stage delivery ledger](designs/AGENT_HARNESS_DELIVERY_LEDGER.md); earlier per-stage
+totals above are historical. The API reference is generated. No release-wide runtime
+documentation handoff is deferred. Publication, consumer upgrades and live native
+provider/platform/account verification remain separate and unauthorized. Existing
+live-testing pause remains in force. Deferred App Server interactions, remote backend,
+A2A and native workflows are not completion dependencies for H0–H6.
+
+The 2026-11-01 review corrections preserve admitted input/options despite caller
+mutation and keep abort signals live. Failed restoration releases writer ownership
+and native observation, preserves managed work, and keeps partial observers out of
+the process cache so the original reference can be retried. The public signatures,
+defaults, native checkpoint formats and legacy runtime remain unchanged. Current
+verification is tracked in the H-stage delivery ledger; live testing remains paused.

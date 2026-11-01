@@ -75,3 +75,18 @@ export type {
   TrustedRuntimeContext,
   WorkspaceRequest,
 } from './types.js';
+
+export type { RuntimeAgentDefinition, RuntimeExecutionBinding, RuntimeSessionOptions, RuntimeEnvironmentRequest, RuntimeDefinitionAgent, RuntimeInspection, RuntimeRunOptions, RuntimeSession, RuntimeSessionReference, RuntimeSessionSnapshot, RuntimeResumeOptions } from './types.js';
+export type { RuntimeToolResolution, RuntimeToolResolver } from './RuntimeHostTools.js';
+
+export { InMemoryRuntimeSessionStorage, FileRuntimeSessionStorage } from './RuntimeSessionStorage.js';
+export type { IRuntimeSessionStorage, RuntimeSessionLease, RuntimeSessionRecord } from './RuntimeSessionStorage.js';
+export { AgentSessionRecoveryError } from './errors.js';
+
+export type { RuntimeInspectionDetails, RuntimeFileUpload, RuntimeArtifactDownload } from './types.js';
+export type { RuntimeFileTransferAccess } from './RuntimeFileTransfers.js';
+
+export type { NativeCheckpointVerifier } from './NativeStateDirectory.js';
+
+export type { RuntimeHostTools, RuntimeHostToolResult } from './RuntimeHostTools.js';
+export type { RuntimeControl } from './RuntimeSessionStorage.js';

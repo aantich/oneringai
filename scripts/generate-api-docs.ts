@@ -785,6 +785,9 @@ async function generateApiDocs(config: GeneratorConfig): Promise<void> {
     path.join(srcPath, 'index.ts'),
     path.join(srcPath, 'agent-runtime', 'index.ts'),
     path.join(srcPath, 'agent-runtime', 'codex.ts'),
+    path.join(srcPath, 'agent-runtime', 'claude.ts'),
+    path.join(srcPath, 'agent-runtime', 'openai-managed.ts'),
+    path.join(srcPath, 'agent-runtime', 'claude-managed.ts'),
   ];
 
   // Initialize ts-morph project

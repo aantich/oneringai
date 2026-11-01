@@ -5,6 +5,9 @@ import type {
   OpenAgentSessionOptions,
   ResolvedAgentCapabilities,
   RuntimeAgentSpec,
+  RuntimeSession,
+  RuntimeSessionReference,
+  RuntimeResumeOptions,
 } from './types.js';
 
 export interface AgentExecutionBackend extends IAsyncDisposable {
@@ -17,4 +20,6 @@ export interface AgentExecutionBackend extends IAsyncDisposable {
     spec: Readonly<RuntimeAgentSpec>,
     options: OpenAgentSessionOptions,
   ): Promise<AgentSession>;
+  resumeSession?(reference: RuntimeSessionReference, options: RuntimeResumeOptions): Promise<RuntimeSession>;
+  deleteSession?(reference: RuntimeSessionReference, options: RuntimeResumeOptions): Promise<void>;
 }

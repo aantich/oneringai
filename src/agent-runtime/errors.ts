@@ -95,3 +95,10 @@ export class AgentStructuredOutputError extends AgentRuntimeError {
     super('AgentStructuredOutputError', message, 'AGENT_STRUCTURED_OUTPUT', 422, cause);
   }
 }
+
+/** Observation/admission uncertainty carries a locator; it is never a terminal native result. */
+export class AgentSessionRecoveryError extends AgentRuntimeError {
+  constructor(message: string, readonly reference: import('./types.js').RuntimeSessionReference, readonly runId?: string) {
+    super('AgentSessionRecoveryError', message, 'AGENT_SESSION_RECOVERY_REQUIRED', 409);
+  }
+}

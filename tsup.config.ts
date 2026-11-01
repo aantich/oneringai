@@ -10,10 +10,14 @@ export default defineConfig([
       'capabilities/images/index': 'src/capabilities/images/index.ts',
       'agent-runtime/index': 'src/agent-runtime/index.ts',
       'agent-runtime/codex': 'src/agent-runtime/codex.ts',
+      'agent-runtime/claude': 'src/agent-runtime/claude.ts',
+      'agent-runtime/openai-managed': 'src/agent-runtime/openai-managed.ts',
+      'agent-runtime/claude-managed': 'src/agent-runtime/claude-managed.ts',
     },
     format: ['esm', 'cjs'],
     dts: true,
-    splitting: false,
+    // Share runtime class/registry identity across root and optional driver entries.
+    splitting: true,
     sourcemap: true,
     // Dist is cleaned once before all parallel configs start. Per-config clean
     // races can delete declarations emitted by another config.
@@ -24,7 +28,7 @@ export default defineConfig([
     outDir: 'dist',
     // AJV must stay external: ajv-formats emits runtime require() expressions
     // that are invalid when folded into the ESM bundle.
-    external: ['cross-spawn', '@openai/codex-sdk', 'ajv', 'ajv-formats'],
+    external: ['cross-spawn', '@openai/codex-sdk', '@anthropic-ai/claude-agent-sdk', 'ajv', 'ajv-formats'],
     // Bundle MCP SDK to avoid subpath import resolution issues in Meteor
     noExternal: [
       '@modelcontextprotocol/sdk',

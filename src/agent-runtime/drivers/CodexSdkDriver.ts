@@ -1,6 +1,5 @@
-import { access, mkdtemp, realpath, rm } from 'node:fs/promises';
+import { access, realpath, rm } from 'node:fs/promises';
 import { constants as fsConstants } from 'node:fs';
-import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type {
   Codex,
@@ -13,6 +12,8 @@ import type {
   ThreadOptions,
   Usage,
 } from '@openai/codex-sdk';
+import { type NativeCheckpointVerifier, createNativeStateDirectory, verifyNativeStateDirectory, deleteNativeStateDirectory } from '../NativeStateDirectory.js';
+import { HostToolMcpServer } from '../HostToolMcpServer.js';
 import { Vendor } from '../../core/Vendor.js';
 import { getModelInfo } from '../../domain/entities/Model.js';
 import type {
@@ -72,6 +73,8 @@ const MODEL_REASONING_EFFORTS: Readonly<Record<string, ReadonlySet<ModelReasonin
 type CodexConstructor = new (options?: CodexOptions) => Codex;
 
 export interface CodexSdkDriverOptions {
+  /** Required before restoring an idle native thread with prior history. */
+  verifyNativeCheckpoint?: NativeCheckpointVerifier;
   /** Test/embedding seam. Ordinary applications should use the bundled SDK loader. */
   loadSdk?: () => Promise<{ Codex: CodexConstructor }>;
   /**
@@ -110,33 +113,54 @@ export class CodexSdkDriver implements AgentDriver {
       );
     }
     await this.loadSdk();
-    return {
-      capabilities: codexCapabilities(
+    const capabilities = codexCapabilities(
         context.spec.model!,
         context.spec.reasoning,
         this.modelReasoningEfforts,
-      ),
-    };
+      );
+    if (context.spec.definition) {
+      if (this.options.verifyNativeCheckpoint && context.durability) capabilities.capabilities['session.restore'] = { id: 'session.restore', support: 'emulated', constraints: { idleOnly: true, verification: 'host-native-checkpoint', activeLocalInput: 'unknown' } };
+      capabilities.capabilities['agent.definition'] = { id: 'agent.definition', support: 'native' };
+      capabilities.capabilities['tools.host'] = { id: 'tools.host', support: 'emulated', constraints: { transport: 'authenticated-loopback-mcp' } };
+    }
+    return { capabilities, inspection: { toolNamePrefix: 'mcp__onering_host__', notes: ['Native project configuration is disabled by default; only idle native state is restorable.'] } };
   }
 
-  async openSession(request: DriverOpenSessionRequest): Promise<DriverSession> {
+  async openSession(request: DriverOpenSessionRequest): Promise<DriverSession> { return this.openNative(request); }
+  async restoreSession(request: DriverOpenSessionRequest & { checkpoint: JsonObject }): Promise<{ session: DriverSession }> {
+    if (request.checkpoint.kind !== 'codex-sdk-v1') throw new AgentDriverConfigurationError('Incomplete Codex checkpoint');
+    if (typeof request.checkpoint.threadId === 'string') {
+      if (!this.options.verifyNativeCheckpoint) throw new AgentDriverConfigurationError('Restoring native Codex history requires a host verifyNativeCheckpoint assertion; preserve the original reference');
+      const directory = await verifyNativeStateDirectory(request.checkpoint.home, 'oneringai-codex-', request.sessionId);
+      await this.options.verifyNativeCheckpoint({ directory, nativeSessionId: request.checkpoint.threadId }, request);
+    }
+    return { session: await this.openNative(request, request.checkpoint) };
+  }
+  async deleteSession(request: DriverOpenSessionRequest & { checkpoint: JsonObject }): Promise<void> {
+    if (request.checkpoint.kind !== 'codex-sdk-v1') throw new AgentDriverConfigurationError('Invalid Codex checkpoint');
+    await deleteNativeStateDirectory(request.checkpoint.home, 'oneringai-codex-', request.sessionId);
+  }
+  private async openNative(request: DriverOpenSessionRequest, checkpoint?: JsonObject): Promise<DriverSession> {
     await this.inspect(request);
     const config = parseDriverConfig(request.spec);
     const { Codex: CodexClass } = await this.loadSdk();
     const connector = request.connectorRegistry.get(request.spec.connector!);
     const apiKey = await connector.getToken();
     const redact = createRedactor([apiKey]);
-    const codexHome = await mkdtemp(path.join(tmpdir(), 'oneringai-codex-'));
+    const codexHome = checkpoint ? await verifyNativeStateDirectory(checkpoint.home, 'oneringai-codex-', request.sessionId) : await createNativeStateDirectory('oneringai-codex-', request.sessionId);
+    const broker = request.hostTools ? new HostToolMcpServer() : undefined;
     try {
+      const brokerUrl = broker ? await broker.start(request.hostTools!) : undefined;
       const codex = new CodexClass({
         apiKey,
         // Pin the built-in provider endpoint as a later CLI override so a
         // trusted project config cannot silently redirect connector secrets.
         baseUrl: connector.baseURL || 'https://api.openai.com/v1',
-        env: isolatedCodexEnvironment(codexHome),
+        env: { ...isolatedCodexEnvironment(codexHome), ...(broker ? { ONERINGAI_HOST_BROKER_TOKEN: broker.token } : {}) },
         config: {
           model_provider: 'openai',
-          developer_instructions: request.spec.instructions ?? '',
+          developer_instructions: request.spec.definition?.instructions ?? request.spec.instructions ?? '',
+          ...(brokerUrl ? { mcp_servers: { onering_host: { url: brokerUrl, bearer_token_env_var: 'ONERINGAI_HOST_BROKER_TOKEN', enabled_tools: request.hostTools!.definitions.map(t => t.name), required: true } } } : {}),
           show_raw_agent_reasoning: false,
           allow_login_shell: false,
           agents: { enabled: false },
@@ -175,9 +199,13 @@ export class CodexSdkDriver implements AgentDriver {
         config.allowProjectConfig,
         request.spec.reasoning,
         this.modelReasoningEfforts,
+        broker,
+        !!request.control,
+        typeof checkpoint?.threadId === 'string' ? checkpoint.threadId : undefined,
       );
     } catch (error) {
-      await rm(codexHome, { recursive: true, force: true });
+      await broker?.close();
+      if (!checkpoint) await rm(codexHome, { recursive: true, force: true });
       throw new AgentDriverConfigurationError(`Failed to initialize Codex SDK: ${redact(errorMessage(error))}`);
     }
   }
@@ -205,6 +233,7 @@ export class CodexSdkDriver implements AgentDriver {
 class CodexDriverSession implements DriverSession {
   private _isDestroyed = false;
   private thread?: Thread;
+  private active = false;
 
   constructor(
     private readonly codex: Codex,
@@ -216,7 +245,10 @@ class CodexDriverSession implements DriverSession {
     private readonly allowProjectConfig: boolean,
     private readonly defaultReasoning?: RuntimeReasoningConfig,
     private readonly modelReasoningEfforts: Readonly<Record<string, ReadonlySet<ModelReasoningEffort>>> = MODEL_REASONING_EFFORTS,
-  ) {}
+    private readonly broker?: HostToolMcpServer,
+    private readonly canDetach = false,
+    threadId?: string,
+  ) { if (threadId) this.thread = codex.resumeThread(threadId, baseThreadOptions); }
 
   get nativeSessionId(): string | undefined {
     return this.thread?.id ?? undefined;
@@ -271,6 +303,8 @@ class CodexDriverSession implements DriverSession {
       throw new AgentNativeExecutionError(DRIVER_ID, this.redact(errorMessage(error)));
     }
     const deferred = createDeferred<DriverRunResult>();
+    this.active = true;
+    void deferred.promise.then(() => { this.active = false; });
     const workspaceRoot = this.workspaceRoot;
     const events = mapCodexEvents(
       streamed.events,
@@ -294,9 +328,17 @@ class CodexDriverSession implements DriverSession {
     // The local backend owns the active run's AbortController.
   }
 
+  async checkpoint(): Promise<JsonObject> { return { kind: 'codex-sdk-v1', home: this.codexHome, ...(this.thread?.id ? { threadId: this.thread.id } : {}) }; }
+  async detach(): Promise<void> {
+    if (!this.canDetach || this.active) throw new AgentDriverConfigurationError('Codex detach requires durable storage and an idle native thread');
+    this._isDestroyed = true;
+    await this.broker?.close();
+  }
+
   async destroy(): Promise<void> {
     if (this._isDestroyed) return;
     this._isDestroyed = true;
+    await this.broker?.close();
     await rm(this.codexHome, { recursive: true, force: true });
   }
 }

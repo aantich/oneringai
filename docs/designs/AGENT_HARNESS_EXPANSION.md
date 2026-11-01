@@ -1,10 +1,28 @@
 # Agent Harness Expansion Design and Delivery Plan
 
-**Revision 2 — final proposal for approval, 2026-10-28.** Design only; no new runtime implementation or package release. This revision replaces revision 1 after holistic review.
+> Implementation status: H0–H6 were subsequently authorized and implemented on branch.
+> This document preserves the approved proposal/baseline; current availability,
+> verification and live-pending gates are in the [delivery ledger](AGENT_HARNESS_DELIVERY_LEDGER.md).
+
+**Revision 3 — final proposal for approval, 2026-10-28.** Checked against `version2` commit `53e85de71a4949dc5ce85d3b09d011995782468c` (`new stage`). Design only; no new runtime implementation or package release. This revision supersedes revision 2, incorporates the newly committed consumer work, and makes documentation/examples explicit stage deliverables.
 
 OneRingAI will expose one reusable agent definition and the existing session/run interface across its own harness, local Codex, local Claude Agent SDK, OpenAI Agents API and Claude Managed Agents. Execution is selected when opening a session. New vendors implement the existing driver contract with optional capabilities.
 
 The implementation extends [Agent Runtime](AGENT_RUNTIME.md). Existing `Agent.create()`, runtime `.agent(spec)`, provider integrations, plugin contracts and saved native Agent sessions keep their current behavior. No breaking change, unrelated architecture stage, release or consumer upgrade is included.
+
+## Verified codebase baseline
+
+The working tree was clean at review entry. The current commit includes the consumer C1–C9-C sequence and its corrective work. Comparing `0f159e9` with this commit shows **no changes under `src/agent-runtime`**: the existing OneRingAI/Codex preview and the three missing vendor drivers remain as assessed. Related production/test infrastructure has advanced and must be reused rather than rebuilt.
+
+| Current facility | Source of truth | Effect on this plan |
+| --- | --- | --- |
+| C1/C4/C5 outcomes and connector execution | [Outcome tools](../OUTCOME_AWARE_TOOLS.md), [enhanced connectors](../ENHANCED_CONNECTORS.md), [collection pages](../CONNECTOR_COLLECTION_PAGES.md) | Preserve invocation-owned failures, admitted origin/account/source identity, manager-local cursors and independent capacity bounds. |
+| C3/C6 composed execution | [Verified routines](../VERIFIED_ROUTINES.md), [orchestrator factory](../ORCHESTRATOR_FACTORY.md) | Reuse existing ownership/cancellation principles and complete pre-construction configuration. Runtime restore does not restore routine continuations or task authority. |
+| C7 negotiated remote outcomes and corrections | [Remote Tool Outcomes](../REMOTE_TOOL_OUTCOMES.md), `src/portable/OutcomeClient.ts`, `OutcomeServer.ts` | Reuse authenticated receipt/source reconciliation, tools-first construction and exact evidence ownership; do not create another remote outcome protocol. |
+| C8 conformance and composed evaluation | [Evidence conformance](../EVIDENCE_CONFORMANCE.md), `tests/conformance/evidence.ts`, `examples/agentic-baseline/composition.ts` and `reporter.ts` | Reuse evidence profiles, real-process recovery patterns and canonical reporting. Extend runtime-specific cases without exporting a testing framework or global inspector. |
+| C9-A/B/C endpoint facts, parameter policy and presentation | [Endpoint capabilities](../ENDPOINT_CAPABILITIES.md), [parameter policy](../PARAMETER_POLICY.md), [vendor presentation](../VENDOR_PRESENTATION.md) | Reuse applicable metadata/policy/UI utilities; distinguish text-harness support from Realtime/transcription facts and preserve unknown endpoint support. |
+
+The [current consumer ledger](CONSUMER_DELIVERY_LEDGER.md) records historical full-suite/package gates and their later corrections; those are baseline evidence, not newly executed checks of this proposal. Live LLM testing remains **paused by explicit user instruction** in `AGENTS.md`. This plan does not lift that pause.
 
 ## 1. Scope and completion criteria
 
@@ -136,7 +154,7 @@ Each common field has one owner. `driverConfig` is a validated vendor escape hat
 
 Driver IDs remain open-ended strings. The connector declares its vendor. The model registry describes the model; the driver separately checks whether its endpoint/harness accepts that model and the requested reasoning controls. Model names and effort values are never translated silently. Host-declared controls for a new/custom model follow existing explicit extension patterns.
 
-OneRingAI's native-only settings come from a host callback on `OneRingAIDriver`, using existing `AgentConfig`/plugin facilities. The callback cannot replace definition-owned instructions/tools, execution-owned model/connector or trusted identity. Existing stored-definition, binding and factory modes remain unchanged through `.agent(spec)`; definition mode rejects a conflicting legacy `source`.
+OneRingAI's native-only settings come from a host callback on `OneRingAIDriver`, using existing `AgentConfig`/plugin facilities. The callback cannot replace definition-owned instructions/tools, execution-owned model/connector or trusted identity. Assemble and validate the complete final configuration before Agent/plugin/tool lifecycle initialization, following C6's construction rule; never build an Agent and retrofit new configuration. Reuse compatible existing helpers without forcing ordinary agents through an orchestrator. Existing stored-definition, binding and factory modes remain unchanged through `.agent(spec)`; definition mode rejects a conflicting legacy `source`.
 
 The definition's tool list governs application tools. Native built-ins and OneRingAI plugin-owned tools are separately reported additions, governed by the same host-approved native configuration and policy. Existing OneRingAI plugin defaults are not silently rewritten. Open validates the materialized native/plugin tool set before the first model request; an undeclared or unauthorized addition rejects rather than expanding access.
 
@@ -209,6 +227,10 @@ ToolManager-level guarantees and Agent-level lifecycle hooks are different. Stan
 
 The broker preserves scope, captured account/identity metadata, call/run IDs, raw returns, operational outcomes, optional evidence and late results. A business `{ success: false }` remains business data unless execution actually failed. Host outcomes determine transport failure flags; driver code must not classify failures by inspecting arbitrary application fields.
 
+The current C7 path needs its existing owned remote companion and the exact evidence backend handle, not just a copied `ToolFunction`. Prefer `createAgentPackageOutcomeTools` or `hydrateAgentPackageWithOutcomes` when the host deliberately supplies that owner. A C7 toolset cannot be copied into another manager or a bare manager without its required context/evidence binding. Before returning a brokered result to the vendor or admitting more work, reuse the actual source/proxy uncertainty guards. Unknown source writes block continuation even when the local proxy settled or missing instrumentation looks like a normal return. Preserve separate source and proxy outcomes; `RemoteOutcomeSession.inspect/getReceipt/cancel/readEvidence` remain the existing diagnostic/recovery surface. Rejected reconciliation never allocates a new request to retry the action.
+
+C4/C5 host registration must still precede context/session loading with actual selected source/account/identity filters. Collection cursors remain manager-local: saving a runtime session does not make those cursors valid in a new manager/process. Recreate registration and let the existing APIs reject stale cursors. Do not raise source/prompt/parser/storage/work bounds to make a new transport fit; follow the [capacity inventory](../CONSUMER_CAPACITY_INVENTORY.md).
+
 Resolve/check tool names and schemas before opening. Reject reserved-name collisions, lossy schema conversion and incompatible result content. Native transport prefixes are mapped internally. Start with eager selected definitions and serialized blocking host calls in the new common-definition path; selected background/nonblocking tools reject in this initial profile rather than silently changing their execution metadata. Existing legacy execution defaults remain unchanged. Avoid adding dynamic catalogs or parallel-call configuration in the first delivery. Native requests can arrive concurrently and queue under the same scope, retaining separate invocation identities.
 
 Durable restoration requires stable implementation fingerprints as well as schema equality. Reuse generated fingerprints where available; a custom host tool supplies its own explicit implementation revision. Do not guess executable compatibility from `Function.toString()` or a matching name/schema. Process-only sessions can retain their actual host registration identity instead.
@@ -245,6 +267,8 @@ A crash after a side effect and before outcome persistence remains uncertain. `e
 
 The execution ledger is separate from optional evidence. UI events are redacted; exact recovery payloads may be private and are protected by scoped storage/host encryption policy. Persist the vendor-visible projection once and redeliver that payload. Storage exhaustion blocks new admissions and preserves unresolved records. Ordinary in-process calls may use volatile records; managed execution requires durable records.
 
+This runtime ledger adds vendor input/submission/result-delivery state only. Existing C7 admission/source/proxy proof and idempotent receipt reconciliation stay in their existing records and protocol. Store references/checkpoints rather than duplicating those bodies or interpreting a server epoch as durable execution authority. C7 evidence recovery alone does not implement the new harness-session command ledger.
+
 ## 6. Environments and artifacts
 
 Keep current workspace types intact. Add a separate optional `RuntimeEnvironmentRequest`:
@@ -270,6 +294,8 @@ Sessions, reusable agent resources, environments and uploaded files have separat
 
 Introduce one `IRuntimeSessionStorage` through an optional scoped `StorageRegistry` factory, with explicit backend injection following existing storage conventions. Reuse path/serialization utilities, but do not claim `FileContextStorage` or its history journal already supplies acknowledged cross-process command transactions.
 
+Reuse `runEvidenceConformance` for any evidence adapter used by a driver, including its existing process/restart/fsync profiles. Add a separate narrow runtime-record acceptance suite for command atomicity, writer ownership and input/outbox recovery; do not rename the evidence harness or pretend immutable evidence records supply mutable session transactions. Reuse C8's two-process fixture pattern and baseline reporter instead of building another evaluation/reporting subsystem.
+
 Provide an in-memory implementation for tests/process-only execution and a single-host file implementation for desktop recovery. The minimal interface is scoped load/create/update with expected revision plus exclusive session ownership; control-state updates include related command/outbox records atomically. Do not build a distributed lease service or general transactional database. The file adapter must use a tested lock and acknowledged crash-safe commit, document supported filesystems/platforms and reject a second writer. It must not expire a lock and replay work simply because a timer elapsed.
 
 Persist definition/binding/tool fingerprints, authorized resource references, native IDs/checkpoints, command intents/acknowledgments, pending calls/interactions, outcomes/outbox, terminal results, usage high-water marks and owned cleanup. Store no provider credentials. A host that retains definitions by reference must make that immutable revision available again; otherwise persist the detached definition in protected storage.
@@ -287,6 +313,8 @@ Keep public session/run IDs stable on restore. Allocate event sequences from dur
 Resume reauthorizes the runtime reference, acquires single-writer ownership, reconstructs the exact definition/binding and tool scope, reads native status/pending actions, and reconciles input/tool-result commands before pumping events. It never sends the original user task again.
 
 Definition, schema, implementation, workspace or relevant policy changes require an explicit compatible migration or a new session. Do not turn a changed file path/configuration into a supposed continuation. Credential refresh/rotation is permitted for the same authorized account/project; account substitution is not. A stricter policy must actually constrain still-running native work or leave the session quarantined.
+
+C3 same-process continuation handles, C6 operation ownership and a live `ModelTask` are not restored by this session record. A host can recover observations and reauthorize the same native harness session without gaining durable workflow execution or reusing another operation's lease. Preserve the existing composition helpers' admission and settled-cleanup behavior when an actual native Agent is the host tool owner.
 
 Use documented native idempotency for creation/input/result commands where available. Lost acknowledgment after dispatch otherwise remains uncertain until native state/correlation can establish the outcome. Disable SDK automatic mutation retries where idempotency is unproven. Bounded reads/replay can retry with backoff, jitter and vendor retry hints. Reconcile provider-managed retries rather than starting another run.
 
@@ -347,31 +375,35 @@ Subscription login is a separately selected extension, contingent on provider ap
 
 Preserve existing `RuntimeUsage`. Cumulative provider counters are deduplicated by source/session and high-water mark. Report a per-run value only if the adapter can attribute it; otherwise keep it unknown and expose session totals in inspection/state metadata. Cache/reasoning counts follow native definitions. Never add child totals to a session aggregate that already includes them.
 
+For OneRingAI-native execution, retain host-selected C9-B `parameterPolicy` through ordinary Agent configuration and effective-request dispatch. Reuse `assessModelParameters` only on endpoints it actually describes; Responses/Realtime/transcription support does not establish support in Codex or a managed agent endpoint. Do not copy a per-model sampling table into drivers or silently add temperature-policy semantics to an external harness. AMOS can reuse `getVendorPresentation` for display while driver IDs, model ownership and authentication remain independent.
+
 `ModelTask` controls only calls whose dispatch OneRingAI owns. External harness usage can be observed without pretending OneRingAI admitted every hidden call. No new universal budget ledger is included. Verified native budget settings remain in validated driver configuration with precise scope/overshoot semantics. Existing wall-time policy triggers cancellation; it cannot promise immediate remote stop. Do not advertise a hard token/currency ceiling or complete invoice from partial usage events.
 
 ## 11. Incremental implementation sequence
 
-The stage IDs below replace revision 1's H0–H8 table. Approving this revision can authorize H0–H6 sequentially; finish each stage and its validation before the next. No optional extension is implied.
+The stage IDs below retain revision 2's H0–H6 sequence. Approving this revision can authorize H0–H6 sequentially; finish each stage's authorized validation and documentation before the next. No optional extension is implied. The live-testing pause is preserved throughout: create credential-gated live fixtures/examples, but do not invoke any live LLM/native-agent workload until the user explicitly resumes live testing.
 
 | Stage | Delivery | Required exit evidence |
 | --- | --- | --- |
-| H0 | Freeze final signatures, characterize legacy runtime, confirm pinned SDK/managed-wire mappings and compile proposed contracts. | Old public/custom-driver/backend fixtures pass; no unresolved ownership or public breaking change. Codex MCP route/configuration is concretely exercised offline. |
-| H1 | Common-definition facade, optional driver fields, OneRingAI materialization and shared broker; Codex MCP bridge. | One definition/tool fixture works through native scripted providers and local harness transport. Scope/outcomes/schema/permission tests pass. Codex bridge is delivered, not deferred behind a parity claim. |
-| H2 | Local Claude Agent SDK. | Mock SDK and opt-in live autonomous tool loops, continuation, cancellation and owned cleanup; advertised interaction features tested. |
-| H3 | Scoped durable runtime storage, command/outcome outbox, same-driver resume, detach and deletion. | Crash-boundary/input deduplication/replayed tool-call tests, second-writer rejection, file corruption/quota handling and actual single-host restart recovery. Local native restore remains separately capability-gated. |
-| H4 | OpenAI managed API driver and provider-managed environment/native artifact references. | Accepted-input recovery, pending-action broker delivery, loss/reconnect, stop uncertainty and owned-resource cleanup; official-wire fixtures plus opt-in live smoke. |
-| H5 | Claude managed API driver. | Agent/session resource ownership, custom-tool recovery, natural stop versus interrupt/required action/budget, no shared-config mutation; fixtures plus opt-in live smoke. |
-| H6 | Explicit file transfer, cross-driver conformance, AMOS runtime selection and documented desktop integration. | Same definition/UI on advertised bindings; app restart and shutdown walkthrough; bounded authorized file transfer and full compatibility/docs gates. |
+| H0 | Freeze final signatures against this baseline; characterize legacy runtime and existing C7/C8/C9 integration; compile contracts. | Old/custom extension fixtures pass; Codex configuration is exercised offline; reuse map, documentation ownership and example inventory are fixed. |
+| H1 | Common-definition facade, optional driver fields, OneRingAI materialization and shared broker; Codex MCP bridge. | Scripted-provider/SDK and local MCP-transport tests cover one definition/tool fixture. C7 uncertainty, source/account scope, outcomes/schema/permission tests pass. Actual native-agent live trajectory remains unverified while paused. |
+| H2 | Local Claude Agent SDK. | Mock SDK autonomous tool loops, continuation, cancellation and owned cleanup; advertised interactions tested offline. Credential-gated live fixture written but not run. |
+| H3 | Scoped durable runtime storage, vendor command/outcome outbox, same-driver resume, detach and deletion. | Crash/input-dedup/outbox tests, second-writer rejection, corruption/quota cases and actual two-process offline restart pass; existing evidence conformance is reused. |
+| H4 | OpenAI managed API driver and provider-managed environment/native artifact references. | Official-wire fixtures cover input recovery, pending actions, reconnect, stop uncertainty and owned cleanup. Live smoke fixture is pending explicit reauthorization. |
+| H5 | Claude managed API driver. | Wire fixtures cover owned resources, custom-tool recovery, end-turn versus interrupt/required action/budget and immutable config. Live smoke remains pending. |
+| H6 | Explicit file transfer, cross-driver conformance, AMOS runtime selection and documented desktop integration. | Offline same-definition/UI, real-process restart and bounded transfer/cleanup walkthroughs; documentation/package/example closure passes; outstanding live gates remain explicit. |
 
 Dependencies are H0 → H1 → H2 → H3 → H4 → H5 → H6 for the approved delivery sequence. H3 does not depend on implementing a remote backend; H4/H5 cannot ship durable claims before H3. H6 documents desktop integration and provides AMOS demonstrations; it does not authorize modifying an unrelated desktop application repository.
 
 Each stage ships deterministic offline examples, setup/expected behavior/cleanup, focused regression/failure tests and public documentation. Live examples are explicitly enabled and billable. Native-only AMOS commands remain capability-gated; external sessions cannot be treated as native `Agent.context` instances.
 
+Offline-validated implementation may progress through these stages under the paused-live constraint. Its availability register must say **implemented on branch, offline validated, live pending** where applicable. It must not say fully live-verified, deployment-ready or released. After separate authorization lifts the pause, run the bounded live acceptance cases and record their actual results before making those stronger claims; cached/historical consumer results do not validate the new harnesses.
+
 The full required profile is reusable instructions plus selected application tools, session continuation, live activity, cancellation and honest recovery semantics. Rich approvals, native command/file events, structured output and local cross-process restore remain individually negotiated. A missing required feature is a typed preflight rejection, not a skipped success. If a required vendor/account/platform guarantee is unavailable, record the exact blocker and revise the affected support claim before completion.
 
 Deferred extensions: approved subscription authentication, Codex App Server, OpenAI Agents SDK runner as its own driver, self-hosted executors, native subagents/workflows/memory, lazy discovery, parallel host tools, cross-harness history transfer, distributed ownership/server backend and A2A. These are independent future slices under the same existing extension points; no scaffolding beyond required optional fields is built now.
 
-## 12. Validation and documentation gates
+## 12. Validation gates
 
 | Area | Minimum meaningful coverage |
 | --- | --- |
@@ -386,13 +418,71 @@ Deferred extensions: approved subscription authentication, Codex App Server, Ope
 
 Run focused relevant tests while iterating. At each public-contract stage run build, typecheck, lint, unit tests, examples checks, the built-package `test:agentic:compat` and offline agentic baseline. Regenerate generated API documentation rather than editing it manually. Avoid retesting unrelated live providers by default.
 
-Live suites use disposable owned resources and harmless deterministic host tools. Include forced disconnect/reconnect and cancellation/cleanup for each managed vendor. Missing credentials/entitlements/platform support are unavailable validation, not passes. No production mutations or secret printing; retain cleanup references after test failure.
+Live suites remain disabled while the user's pause is active. Their written acceptance cases use disposable owned resources and harmless deterministic host tools, including forced disconnect/reconnect and cancellation/cleanup for each managed vendor. Missing credentials/entitlements/platform support are unavailable validation, not passes. No production mutations or secret printing; retain cleanup references after test failure. Do not run broad integration commands that could bypass the pause.
 
-Update the runtime design/support matrix, README, User Guide, API reference, examples index, AMOS docs, CHANGELOG and Version 2 availability/adoption/handoff ledger in the delivering stage. Record actual branch availability, versions/platforms/auth modes, limitations and checks separately from release status. Add stage records without renumbering the existing architecture roadmap or claiming unrelated stages complete. Consumer collection/static semantics and portable wire versions remain unchanged.
+Reuse the C8 canonical reporter for source hashes, sample counts, known/unknown usage, exact artifact checks and functional observations. Add runtime driver cases to the existing baseline framework rather than creating another scorecard. Metadata or a smaller prompt is not proof of better quality, cost or latency. Preserve consumer collection/static semantics and existing portable wire versions.
 
 Any discovered breaking API or behavioral change stops only that affected work for a specific explanation, alternatives, migration and separate approval. Approval of this plan does not waive the standing compatibility rule or authorize Stage 16B, a release, consumer upgrades or unrelated repository changes.
 
-## 13. Holistic review resolutions
+## 13. Documentation and examples delivery contract
+
+Documentation is part of each stage's completion, not an H6 or release-time cleanup task. Every new public API, default, failure mode and unsupported path needs the relevant guide/reference/example update in the same delivery. Keep one canonical user-facing runtime chapter in `USER_GUIDE.md` and architecture ownership in `docs/designs/AGENT_RUNTIME.md`; do not create another competing all-purpose runtime guide.
+
+### 13.1 Required document updates
+
+| Document or surface | Required content and ownership |
+| --- | --- |
+| `README.md` | Update the existing runtime overview, execution-option matrix, installation/quickstart and links incrementally as H1–H5 become available. Explain model provider versus complete harness; distinguish branch/offline/live/released status. |
+| `USER_GUIDE.md` runtime chapter | Canonical end-to-end setup: optional dependencies, named connectors, tool resolver, one definition/multiple bindings, inspection, environments/policy, observation/results, supported controls and cleanup. H3 adds recovery/uncertain-input recipes; H4/H5 add managed setup; H6 adds files and desktop main/renderer boundaries. Preserve the existing `#agent-runtime-preview` anchor and existing recipes. |
+| `USER_GUIDE.md` adjacent chapters | Update API-selection, connectors/authentication, tools, persistence, cancellation, troubleshooting and migration cross-references. Explain `AgentResponse.output_text` versus runtime `outputText`, native versus runtime run options, and APIs that remain native-only. No mandatory migration or new release claim. |
+| `API_REFERENCE.md` | Generate with `npm run docs:public`; publish the actual new exports/types/options, capability-gated methods, defaults and errors. New driver subpaths must be added to `scripts/generate-api-docs.ts`'s explicit public entry list or they will be omitted. Never hand-edit generated signatures. |
+| `AGENTS.md` | Update the API-selection table, documentation routing, public import examples, runtime/native ownership, scoped tool integration and stage availability as delivered. Preserve the live-testing pause and current consumer rules. `CLAUDE.md` continues delegating to this file; do not duplicate API guidance. |
+| `docs/designs/AGENT_RUNTIME.md` | Keep the architectural decisions, actual public contracts, driver/platform/version matrix, enforcement/persistence limits and delivered versus deferred features current. Link stage delivery evidence and the canonical user recipes. |
+| `docs/designs/DISTRIBUTED_AGENT_EXECUTION.md` | Scope its existing single-native-Agent ownership and portable hydration rules correctly. Explain that an external harness has its own owner and does not consume a native Agent checkpoint. Preserve the native package/Realtime protocol contract. |
+| Existing specialist guides | Update `docs/TOOL_OUTCOMES_AND_CANCELLATION.md`, `docs/REMOTE_TOOL_OUTCOMES.md`, `docs/DURABLE_EVIDENCE.md` and `docs/EVIDENCE_CONFORMANCE.md` with the new runtime integration boundaries. Add targeted links in connector/catalog/capacity, model-task and parameter-policy guides only where behavior or a supported integration actually changes; avoid copying their detailed rules. |
+| `examples/README.md` | Add a runtime example table with public import/subpath, package/dependency setup, command, default offline behavior, explicit live gate, environment variables, expected result/events, supported limitations and cleanup. Preserve the old local example invocation modes. |
+| `apps/amos/README.md` and demonstrations | Explain harness selection, inspection, activity/approval display, native-only command restrictions, storage paths and stop/detach/restart behavior when each becomes usable. Include tested offline commands; retain current command/default behavior until intentionally adding a capability. |
+| `docs/VERSION_2_GUIDE.md` | Add the runtime expansion's availability, adoption recipe and documentation-handoff rows per H-stage, including actual names/defaults, auth, persistence, failures, examples and limits. Separate offline implementation from pending live verification and package release. |
+| `CHANGELOG.md` and stage delivery records | Record additive changes under unreleased work, public support boundaries and validation evidence. Add H-stage records and roadmap links without renumbering architecture stages, rewriting consumer delivery history, implying release or upgrading consumers. |
+
+### 13.2 Concrete example inventory
+
+The following filenames are planned delivery targets; H0 checks the existing inventory and fixes final names before implementation. Consumer examples must use public exports and documented subpaths, not `src/**` or `dist/**` imports. Reuse existing offline providers/reporters where suitable and include every helper in package closure.
+
+| Stage | Example and scenarios |
+| --- | --- |
+| H0 | Keep `docs/evaluations/agent-harness-design/contracts.ts` as the proposed-contract prototype; add frozen legacy/new-path type fixtures. Update setup/availability wording without presenting unimplemented APIs as available. |
+| H1 | `examples/agent-runtime-swappable.ts`: same definition and tools with scripted OneRingAI/model and Codex transports, inspection, raw business failure versus operational outcome and unsupported-feature rejection. Update `examples/agent-runtime-local.ts` to documented public imports while preserving its old commands and explicitly gated real modes. |
+| H2 | `examples/agent-runtime-claude.ts`: deterministic offline SDK transport, tool invocation, continuation, events and cancellation; documented optional SDK install. Real native-agent mode exists only behind an explicit live gate and remains unrun while paused. |
+| H3 | `examples/agent-runtime-recovery.ts`: actual producer/recovery processes over temporary storage, accepted input without resubmission, uncertain synthetic write, stored result redelivery, changed-scope denial and cleanup. Reuse C8's restart pattern; distinguish recovered evidence from workflow authority. |
+| H4 | `examples/agent-runtime-openai-managed.ts`: default recorded/mock wire flow, pending function action, reconnect and owned cleanup; explicit live mode and account prerequisites documented but not executed. |
+| H5 | `examples/agent-runtime-claude-managed.ts`: default wire fixtures, custom tool, required-action wait, budget wait versus completed turn, interrupt and owned-resource cleanup. Live mode follows the same paused gate. |
+| H6 | `examples/agent-runtime-artifacts.ts` and `apps/amos/examples/agent-runtime-offline.ts`: bounded authorized transfer, expired/foreign artifact denial, one UI consumer across harnesses, stop/detach and restart walkthrough. Reuse shared helpers rather than repeat driver setup/protocol mocks in every file. |
+
+Each default offline mode must exit deterministically, need no real credentials, avoid accidental native-agent/API work, report what was mocked and remove temporary resources. Every live example must state that it is billable and that API-key/subscription entitlement depends on the exact endpoint. Documentation of a live mode does not authorize its execution.
+
+### 13.3 Stage-owned documentation checkpoints
+
+- **H0:** Freeze the document ownership/example map and current support matrix; check the installed/public package baseline. Changes here remain proposal/characterization material.
+- **H1:** Deliver the README/User Guide quickstart, definition/binding/tool-resolver reference, actual Codex scope, API generator coverage, AGENTS routing and offline swappable example. Publish none of the later drivers as available.
+- **H2:** Deliver local Claude installation, platform/version/auth/ambient-config boundaries, supported controls, continuation/cleanup recipe and its example.
+- **H3:** Deliver storage setup, safe input retry/resume/getRun/detach/delete recipes, durable-control versus activity-replay limits, C7/evidence integration and real-process recovery example. Record that C3/ModelTask authority is not restored.
+- **H4/H5:** Deliver each managed driver's account setup, native resource ownership, function/custom-tool flow, pending/unknown state, cancellation, cleanup, billing/retention boundaries, offline wire example and pending-live register.
+- **H6:** Reconcile every support table/link and the complete public examples inventory; finish file-transfer/AMOS/desktop guides and package extraction checks. Retain any live-pending qualification rather than silently promoting availability.
+
+### 13.4 Documentation and package acceptance gate
+
+Before marking a stage delivered:
+
+1. Verify documented APIs/options against source exports and the built public declarations. Compile complete guide snippets and runnable examples; ensure the same names, defaults and errors appear in guide, generated reference and example output.
+2. Update `package.json` exports, `typesVersions`, `tsup.config.ts` entries/externals and optional dependency metadata for delivered subpaths. Extend the API generator's public entry list and run `npm run docs:public`; run the existing `build:verify-exports` check against the resulting artifact. No optional vendor SDK may leak into mandatory base runtime imports.
+3. Run `npm run examples:check` plus the stage's default offline modes. Check all local Markdown links and referenced section anchors, including retained old runtime anchors and the Version 2 handoff. Do not use a whole-repository link pass to claim new example behavior was tested.
+4. Inspect `package.json.files` for every new consumer guide/example and its helper dependency closure, including reused baseline reporters. After a build, create a local package artifact with lifecycle scripts disabled, extract it outside the checkout, verify exports and run new offline examples against that artifact. Do not run release/version/publish commands.
+5. Record exact commands/results, baseline commit/source hashes, public import coverage, examples exercised, documentation updates and unavailable live checks in the H-stage delivery record and Version 2 ledger. Missing required docs, broken snippets/links or missing packaged helpers prevent stage completion.
+
+Current design review adds no unimplemented API claims to the existing public guides; the extensive edits above ship with their delivering stages. This avoids documenting future behavior as if it were already available.
+
+## 14. Holistic review resolutions
 
 | Revision 1 issue | Final resolution |
 | --- | --- |
@@ -409,19 +499,24 @@ Any discovered breaking API or behavioral change stops only that affected work f
 | Environment/file-transfer and desktop scope were spread across phases. | Native artifacts in driver stages; explicit transfer/desktop integration in H6; no unrelated app edits. |
 | Vendor pauses/disconnects could be confused with terminal completion. | Separate operational state; result remains pending until verified terminal or observer rejection. |
 
-Review evidence: current runtime, Agent external-execution path, ToolManager pipeline, storage implementations and installed Codex SDK declarations were inspected. Current official Codex MCP, managed-function and Claude session/tool documentation was checked. The representative proposal fixture checks additive type compatibility against the built public package. The SDK probe invokes a temporary fake executable to check nested MCP configuration serialization and isolated fixture environment forwarding; it does not start Codex, connect MCP or make API calls.
+Revision 3 additionally checked the committed C7–C9 APIs/corrections, C8 helpers, scoped storage, current public exports, explicit API-generator entries, build configuration and package file inventory against the baseline commit above. It preserves the simplified API and H0–H6 scope; it adds reuse and documentation obligations rather than another production framework.
+
+Review evidence: current runtime, Agent external-execution path, ToolManager pipeline, storage implementations and installed Codex SDK declarations were inspected. Vendor research from this conversation remains dated 2026-10-28; implementation rechecks pinned endpoint/SDK contracts without making live calls. The representative proposal fixture checks additive type compatibility against the built public package. The SDK probe invokes a temporary fake executable to check nested MCP configuration serialization and isolated fixture environment forwarding; it does not start Codex, connect MCP or make API calls.
 
 - [Proposed contract fixture](../evaluations/agent-harness-design/contracts.ts)
 - [Fixture configuration](../evaluations/agent-harness-design/tsconfig.json)
 - [Offline SDK serialization probe](../evaluations/agent-harness-design/codex-config-probe.mjs)
+- [Current-baseline review record](../evaluations/agent-harness-design/baseline-review.json)
 
-Design checks passed on 2026-10-28:
+Design checks were rerun successfully against the current baseline on 2026-10-28:
 
 ```bash
 node node_modules/typescript/bin/tsc -p docs/evaluations/agent-harness-design/tsconfig.json
 node docs/evaluations/agent-harness-design/codex-config-probe.mjs
 ```
 
-Local document links, fenced blocks and whitespace were checked. Runtime, live vendor and operating-system enforcement tests remain stage delivery requirements; no implementation conformance is claimed by these design checks.
+The focused offline source baseline passes **238 unique tests in 14 files**: 135 runtime/metadata/outcome-wire/external-execution/observation/evidence-conformance cases, 92 parameter-policy/composition cases, and 11 enhanced-connector redirect cases. The redirect cases initially could not bind a loopback socket in the sandbox (`listen EPERM`); they all passed on the approved local-socket retry. These exercise current delivered code, not the proposed new harness APIs. Exact commands, environment qualification and selected source hashes are in the review record. Historical full-suite totals were not rerun or presented as a fresh result.
 
-Approval requested: **revision 2 and sequential H0–H6 implementation**, retaining all support gates, examples/tests/documentation requirements and the separate breaking-change rule. Runtime implementation has not started.
+Local document links, fenced blocks and whitespace were checked. New-harness/runtime implementation, live vendor and operating-system enforcement acceptance remain stage delivery requirements; no new implementation conformance is claimed by these design checks. Live LLM testing was not resumed.
+
+Approval requested: **revision 3 and sequential H0–H6 implementation**, including the per-stage documentation/example/package gates. This does not lift the live-testing pause or authorize breaking changes, a release, consumer upgrades or unrelated app changes. Runtime implementation had not started when this proposal was presented; see the subsequent delivery ledger above.

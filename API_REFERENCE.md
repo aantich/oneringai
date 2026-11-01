@@ -1,6 +1,6 @@
 # @everworker/oneringai - API Reference
 
-**Generated:** 2026-10-28
+**Generated:** 2026-11-01
 **Mode:** public
 
 This document provides a complete reference for the public API of `@everworker/oneringai`.
@@ -16,7 +16,7 @@ For usage examples and tutorials, see the [User Guide](./USER_GUIDE.md).
 - [Speech-to-Text (STT)](#speech-to-text-stt) (11 items)
 - [Image Generation](#image-generation) (25 items)
 - [Video Generation](#video-generation) (23 items)
-- [Agent Runtime](#agent-runtime) (70 items)
+- [Agent Runtime](#agent-runtime) (103 items)
 - [Task Agents](#task-agents) (133 items)
 - [Context Management](#context-management) (14 items)
 - [Session Management](#session-management) (79 items)
@@ -2432,7 +2432,7 @@ getSupportedLanguages(model?: string): readonly string[] | string[]
 **Parameters:**
 - `model`: `string | undefined` *(optional)*
 
-**Returns:** `string[] | readonly string[]`
+**Returns:** `readonly string[] | string[]`
 
 #### `supportsSpeedControl()`
 
@@ -3243,7 +3243,7 @@ getSupportedInputFormats(model?: string): readonly string[] | string[]
 **Parameters:**
 - `model`: `string | undefined` *(optional)*
 
-**Returns:** `string[] | readonly string[]`
+**Returns:** `readonly string[] | string[]`
 
 #### `getSupportedOutputFormats()`
 
@@ -7182,7 +7182,7 @@ constructor(message: string)
 
 ### AgentRuntime `class`
 
-📍 [`src/agent-runtime/AgentRuntime.ts:17`](src/agent-runtime/AgentRuntime.ts)
+📍 [`src/agent-runtime/AgentRuntime.ts:20`](src/agent-runtime/AgentRuntime.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -7211,6 +7211,41 @@ agent(spec: RuntimeAgentSpec): RuntimeAgent
 - `spec`: `RuntimeAgentSpec`
 
 **Returns:** `RuntimeAgent`
+
+#### `createAgent()`
+
+```typescript
+createAgent(definition: RuntimeAgentDefinition): RuntimeDefinitionAgent
+```
+
+**Parameters:**
+- `definition`: `RuntimeAgentDefinition`
+
+**Returns:** `RuntimeDefinitionAgent`
+
+#### `resumeSession()`
+
+```typescript
+async resumeSession(reference: RuntimeSessionReference, options: RuntimeResumeOptions): Promise&lt;RuntimeSession&gt;
+```
+
+**Parameters:**
+- `reference`: `RuntimeSessionReference`
+- `options`: `RuntimeResumeOptions`
+
+**Returns:** `Promise&lt;RuntimeSession&gt;`
+
+#### `deleteSession()`
+
+```typescript
+async deleteSession(reference: RuntimeSessionReference, options: RuntimeResumeOptions): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `reference`: `RuntimeSessionReference`
+- `options`: `RuntimeResumeOptions`
+
+**Returns:** `Promise&lt;void&gt;`
 
 #### `destroy()`
 
@@ -7266,6 +7301,30 @@ constructor(timeoutMs: number)
 
 ---
 
+### AgentSessionRecoveryError `class`
+
+📍 [`src/agent-runtime/errors.ts:100`](src/agent-runtime/errors.ts)
+
+Observation/admission uncertainty carries a locator; it is never a terminal native result.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(message: string, readonly reference: import('./types.js').RuntimeSessionReference, readonly runId?: string)
+```
+
+**Parameters:**
+- `message`: `string`
+- `reference`: `RuntimeSessionReference`
+- `runId`: `string | undefined` *(optional)*
+
+</details>
+
+---
+
 ### AgentStructuredOutputError `class`
 
 📍 [`src/agent-runtime/errors.ts:93`](src/agent-runtime/errors.ts)
@@ -7308,9 +7367,167 @@ constructor(message: string, cause?: Error)
 
 ---
 
+### ClaudeAgentSdkDriver `class`
+
+📍 [`src/agent-runtime/drivers/ClaudeAgentSdkDriver.ts:26`](src/agent-runtime/drivers/ClaudeAgentSdkDriver.ts)
+
+Local, tools-only profile. No native shell, file, web, delegation or ambient plugins.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(private readonly options: ClaudeAgentSdkDriverOptions = {})
+```
+
+**Parameters:**
+- `options`: `ClaudeAgentSdkDriverOptions` *(optional)* (default: `{}`)
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `inspect()`
+
+```typescript
+async inspect(request: Parameters&lt;AgentDriver['inspect']&gt;[0])
+```
+
+**Parameters:**
+- `request`: `DriverInspectionContext`
+
+**Returns:** `Promise&lt;{ inspection: { toolNamePrefix: string; enforcement: { nativeFilesystem: "native"; nativeCommands: "native"; sandboxNetwork: "native"; providerWebSearch: "native"; }; notes: string[]; }; capabilities: { driverId: string; configuration: { reasoning?: RuntimeReasoningConfig | undefined; model: string; }; capabilities: { [k: string]: { constraints?: { nativeTools: never[]; profile: string; } | undefined; id: string; support: "native"; }; }; }; }&gt;`
+
+#### `openSession()`
+
+```typescript
+async openSession(request: DriverOpenSessionRequest): Promise&lt;DriverSession&gt;
+```
+
+**Parameters:**
+- `request`: `DriverOpenSessionRequest`
+
+**Returns:** `Promise&lt;DriverSession&gt;`
+
+#### `restoreSession()`
+
+```typescript
+async restoreSession(request: DriverOpenSessionRequest & { checkpoint: JsonObject }): Promise&lt;{ session: DriverSession }&gt;
+```
+
+**Parameters:**
+- `request`: `DriverOpenSessionRequest & { checkpoint: JsonObject; }`
+
+**Returns:** `Promise&lt;{ session: DriverSession; }&gt;`
+
+#### `deleteSession()`
+
+```typescript
+async deleteSession(request: DriverOpenSessionRequest & { checkpoint: JsonObject }): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `request`: `DriverOpenSessionRequest & { checkpoint: JsonObject; }`
+
+**Returns:** `Promise&lt;void&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: "anthropic.agent.sdk"` | - |
+
+</details>
+
+---
+
+### ClaudeManagedDriver `class`
+
+📍 [`src/agent-runtime/drivers/ClaudeManagedDriver.ts:32`](src/agent-runtime/drivers/ClaudeManagedDriver.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(private readonly options: ClaudeManagedDriverOptions = {})
+```
+
+**Parameters:**
+- `options`: `ClaudeManagedDriverOptions` *(optional)* (default: `{}`)
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `inspect()`
+
+```typescript
+async inspect(request: Parameters&lt;AgentDriver['inspect']&gt;[0])
+```
+
+**Parameters:**
+- `request`: `DriverInspectionContext`
+
+**Returns:** `Promise&lt;{ inspection: { toolNamePrefix: string; enforcement: { nativeFilesystem: "native"; nativeCommands: "native"; sandboxNetwork: "native"; providerWebSearch: "native"; }; notes: string[]; }; capabilities: { driverId: string; configuration: { reasoning?: RuntimeReasoningConfig | undefined; model: string; }; capabilities: { 'event.reasoning': { id: string; support: "unsupported"; reason: string; }; }; }; }&gt;`
+
+#### `openSession()`
+
+```typescript
+async openSession(request: DriverOpenSessionRequest): Promise&lt;DriverSession&gt;
+```
+
+**Parameters:**
+- `request`: `DriverOpenSessionRequest`
+
+**Returns:** `Promise&lt;DriverSession&gt;`
+
+#### `restoreSession()`
+
+```typescript
+async restoreSession(request: DriverOpenSessionRequest & { checkpoint: JsonObject }): Promise&lt;{ session: DriverSession; activeRun?: DriverRun }&gt;
+```
+
+**Parameters:**
+- `request`: `DriverOpenSessionRequest & { checkpoint: JsonObject; }`
+
+**Returns:** `Promise&lt;{ session: DriverSession; activeRun?: DriverRun | undefined; }&gt;`
+
+#### `deleteSession()`
+
+```typescript
+async deleteSession(request: DriverOpenSessionRequest & { checkpoint: JsonObject }): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `request`: `DriverOpenSessionRequest & { checkpoint: JsonObject; }`
+
+**Returns:** `Promise&lt;void&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: "anthropic.managed.api"` | - |
+
+</details>
+
+---
+
 ### CodexSdkDriver `class`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:89`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:92`](src/agent-runtime/drivers/CodexSdkDriver.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -7351,6 +7568,28 @@ async openSession(request: DriverOpenSessionRequest): Promise&lt;DriverSession&g
 
 **Returns:** `Promise&lt;DriverSession&gt;`
 
+#### `restoreSession()`
+
+```typescript
+async restoreSession(request: DriverOpenSessionRequest & { checkpoint: JsonObject }): Promise&lt;{ session: DriverSession }&gt;
+```
+
+**Parameters:**
+- `request`: `DriverOpenSessionRequest & { checkpoint: JsonObject; }`
+
+**Returns:** `Promise&lt;{ session: DriverSession; }&gt;`
+
+#### `deleteSession()`
+
+```typescript
+async deleteSession(request: DriverOpenSessionRequest & { checkpoint: JsonObject }): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `request`: `DriverOpenSessionRequest & { checkpoint: JsonObject; }`
+
+**Returns:** `Promise&lt;void&gt;`
+
 </details>
 
 <details>
@@ -7364,9 +7603,11 @@ async openSession(request: DriverOpenSessionRequest): Promise&lt;DriverSession&g
 
 ---
 
-### LocalExecutionBackend `class`
+### FileRuntimeSessionStorage `class`
 
-📍 [`src/agent-runtime/LocalExecutionBackend.ts:51`](src/agent-runtime/LocalExecutionBackend.ts)
+📍 [`src/agent-runtime/RuntimeSessionStorage.ts:51`](src/agent-runtime/RuntimeSessionStorage.ts)
+
+Single-host exclusive writer, atomic rename and acknowledged file+directory fsync.
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -7374,7 +7615,100 @@ async openSession(request: DriverOpenSessionRequest): Promise&lt;DriverSession&g
 #### `constructor`
 
 ```typescript
-constructor(options: LocalExecutionBackendOptions)
+constructor(private readonly directory: string, private readonly maxRecordBytes = 4 * 1024 * 1024)
+```
+
+**Parameters:**
+- `directory`: `string`
+- `maxRecordBytes`: `number` *(optional)* (default: `4 * 1024 * 1024`)
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `acquire()`
+
+```typescript
+async acquire(id: string, context: TrustedRuntimeContext): Promise&lt;RuntimeSessionLease&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `context`: `TrustedRuntimeContext`
+
+**Returns:** `Promise&lt;RuntimeSessionLease&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `durability` | `durability: "durable"` | - |
+
+</details>
+
+---
+
+### InMemoryRuntimeSessionStorage `class`
+
+📍 [`src/agent-runtime/RuntimeSessionStorage.ts:26`](src/agent-runtime/RuntimeSessionStorage.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(private readonly maxRecordBytes = 4 * 1024 * 1024)
+```
+
+**Parameters:**
+- `maxRecordBytes`: `number` *(optional)* (default: `4 * 1024 * 1024`)
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `acquire()`
+
+```typescript
+async acquire(id: string, context: TrustedRuntimeContext): Promise&lt;RuntimeSessionLease&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `context`: `TrustedRuntimeContext`
+
+**Returns:** `Promise&lt;RuntimeSessionLease&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `durability` | `durability: "process"` | - |
+
+</details>
+
+---
+
+### LocalExecutionBackend `class`
+
+📍 [`src/agent-runtime/LocalExecutionBackend.ts:63`](src/agent-runtime/LocalExecutionBackend.ts)
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(private readonly options: LocalExecutionBackendOptions)
 ```
 
 **Parameters:**
@@ -7415,6 +7749,30 @@ async openSession(
 
 **Returns:** `Promise&lt;AgentSession&gt;`
 
+#### `resumeSession()`
+
+```typescript
+async resumeSession(reference: import('./types.js').RuntimeSessionReference, options: import('./types.js').RuntimeResumeOptions): Promise&lt;import('./types.js').RuntimeSession&gt;
+```
+
+**Parameters:**
+- `reference`: `RuntimeSessionReference`
+- `options`: `RuntimeResumeOptions`
+
+**Returns:** `Promise&lt;RuntimeSession&gt;`
+
+#### `deleteSession()`
+
+```typescript
+async deleteSession(reference: import('./types.js').RuntimeSessionReference, options: import('./types.js').RuntimeResumeOptions): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `reference`: `RuntimeSessionReference`
+- `options`: `RuntimeResumeOptions`
+
+**Returns:** `Promise&lt;void&gt;`
+
 #### `destroy()`
 
 ```typescript
@@ -7429,7 +7787,7 @@ async destroy(): Promise&lt;void&gt;
 
 ### OneRingAIDriver `class`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:92`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:99`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 <details>
 <summary><strong>Constructor</strong></summary>
@@ -7470,6 +7828,17 @@ async openSession(request: DriverOpenSessionRequest): Promise&lt;DriverSession&g
 
 **Returns:** `Promise&lt;DriverSession&gt;`
 
+#### `restoreSession()`
+
+```typescript
+async restoreSession(request: DriverOpenSessionRequest & { checkpoint: import('../types.js').JsonObject }): Promise&lt;{ session: DriverSession }&gt;
+```
+
+**Parameters:**
+- `request`: `DriverOpenSessionRequest & { checkpoint: JsonObject; }`
+
+**Returns:** `Promise&lt;{ session: DriverSession; }&gt;`
+
 </details>
 
 <details>
@@ -7478,6 +7847,281 @@ async openSession(request: DriverOpenSessionRequest): Promise&lt;DriverSession&g
 | Property | Type | Description |
 |----------|------|-------------|
 | `id` | `id: "oneringai.agent"` | - |
+
+</details>
+
+---
+
+### OpenAIManagedDriver `class`
+
+📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:29`](src/agent-runtime/drivers/OpenAIManagedDriver.ts)
+
+Official managed Codex harness. This is distinct from the client-side OpenAI Agents SDK.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(private readonly options: OpenAIManagedDriverOptions = {})
+```
+
+**Parameters:**
+- `options`: `OpenAIManagedDriverOptions` *(optional)* (default: `{}`)
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `inspect()`
+
+```typescript
+async inspect(request: Parameters&lt;AgentDriver['inspect']&gt;[0])
+```
+
+**Parameters:**
+- `request`: `DriverInspectionContext`
+
+**Returns:** `Promise&lt;{ inspection: { toolNamePrefix: string; enforcement: { nativeFilesystem: "native"; nativeCommands: "native"; sandboxNetwork: "native"; providerWebSearch: "native"; }; notes: string[]; }; capabilities: { driverId: string; configuration: { reasoning?: RuntimeReasoningConfig | undefined; model: string; }; capabilities: { [k: string]: { constraints?: { profile: string; environment: string; nativeDelegation: boolean; memory: boolean; format: string; } | undefined; id: string; support: "native" | "emulated"; }; }; }; }&gt;`
+
+#### `openSession()`
+
+```typescript
+async openSession(request: DriverOpenSessionRequest): Promise&lt;DriverSession&gt;
+```
+
+**Parameters:**
+- `request`: `DriverOpenSessionRequest`
+
+**Returns:** `Promise&lt;DriverSession&gt;`
+
+#### `restoreSession()`
+
+```typescript
+async restoreSession(request: DriverOpenSessionRequest & { checkpoint: JsonObject }): Promise&lt;{ session: DriverSession; activeRun?: DriverRun }&gt;
+```
+
+**Parameters:**
+- `request`: `DriverOpenSessionRequest & { checkpoint: JsonObject; }`
+
+**Returns:** `Promise&lt;{ session: DriverSession; activeRun?: DriverRun | undefined; }&gt;`
+
+#### `deleteSession()`
+
+```typescript
+async deleteSession(request: DriverOpenSessionRequest & { checkpoint: JsonObject }): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `request`: `DriverOpenSessionRequest & { checkpoint: JsonObject; }`
+
+**Returns:** `Promise&lt;void&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: "openai.agents.api"` | - |
+
+</details>
+
+---
+
+### RuntimeControl `class`
+
+📍 [`src/agent-runtime/RuntimeSessionStorage.ts:126`](src/agent-runtime/RuntimeSessionStorage.ts)
+
+One serialized writer shared by admission, checkpoints and the tool-result outbox.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(readonly lease: RuntimeSessionLease, private record: RuntimeSessionRecord)
+```
+
+**Parameters:**
+- `lease`: `RuntimeSessionLease`
+- `record`: `RuntimeSessionRecord`
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `update()`
+
+```typescript
+update(change: (data: JsonObject) =&gt; void): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `change`: `(data: JsonObject) =&gt; void`
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `release()`
+
+```typescript
+async release(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `delete()`
+
+```typescript
+async delete(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `outbox()`
+
+```typescript
+outbox(callId: string, action: () =&gt; Promise&lt;JsonObject&gt;, digest = '', recover?: (originalCall?: JsonObject) =&gt; Promise&lt;JsonObject | undefined&gt;, admission?: JsonObject): Promise&lt;JsonObject&gt;
+```
+
+**Parameters:**
+- `callId`: `string`
+- `action`: `() =&gt; Promise&lt;JsonObject&gt;`
+- `digest`: `string` *(optional)* (default: `''`)
+- `recover`: `((originalCall?: JsonObject | undefined) =&gt; Promise&lt;JsonObject | undefined&gt;) | undefined` *(optional)*
+- `admission`: `JsonObject | undefined` *(optional)*
+
+**Returns:** `Promise&lt;JsonObject&gt;`
+
+</details>
+
+---
+
+### RuntimeHostTools `class`
+
+📍 [`src/agent-runtime/RuntimeHostTools.ts:47`](src/agent-runtime/RuntimeHostTools.ts)
+
+Serialized blocking execution through the existing manager, not a second tool pipeline.
+
+<details>
+<summary><strong>Constructor</strong></summary>
+
+#### `constructor`
+
+```typescript
+constructor(readonly resolution: RuntimeToolResolution, private readonly context: TrustedRuntimeContext, private readonly connectorRegistry?: IConnectorRegistry)
+```
+
+**Parameters:**
+- `resolution`: `RuntimeToolResolution`
+- `context`: `TrustedRuntimeContext`
+- `connectorRegistry`: `IConnectorRegistry | undefined` *(optional)*
+
+</details>
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `attachNative()`
+
+Called by the native driver after complete Agent construction.
+
+```typescript
+attachNative(agent: Agent): void
+```
+
+**Parameters:**
+- `agent`: `Agent`
+
+**Returns:** `void`
+
+#### `beginRun()`
+
+```typescript
+async beginRun(id: string, signal: AbortSignal, stop?: (error: Error) =&gt; void, input?: string): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `id`: `string`
+- `signal`: `AbortSignal`
+- `stop`: `((error: Error) =&gt; void) | undefined` *(optional)*
+- `input`: `string | undefined` *(optional)*
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `endRun()`
+
+```typescript
+async endRun(result: ExternalExecutionResult = {}): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `result`: `ExternalExecutionResult` *(optional)* (default: `{}`)
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `execute()`
+
+```typescript
+execute(name: string, args: unknown, callId: string): Promise&lt;RuntimeHostToolResult&gt;
+```
+
+**Parameters:**
+- `name`: `string`
+- `args`: `unknown`
+- `callId`: `string`
+
+**Returns:** `Promise&lt;RuntimeHostToolResult&gt;`
+
+#### `reconcilePending()`
+
+Reconcile retained effects even when a stopped native turn no longer requests their results.
+
+```typescript
+async reconcilePending(reconcile = this.resolution.reconcile): Promise&lt;void&gt;
+```
+
+**Parameters:**
+- `reconcile`: `((call: { name: string; args: unknown; callId: string; runId: string; runtimeRunId?: string | undefined; }, context: TrustedRuntimeContext) =&gt; Promise&lt;ToolExecutionReport&lt;unknown&gt; | undefined&gt;) | undefined` *(optional)* (default: `this.resolution.reconcile`)
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `retainedObservation()`
+
+Host-only recovery inspection; never serialize this raw source into credentials/control config.
+
+```typescript
+retainedObservation(callId: string): ToolExecutionReport | undefined
+```
+
+**Parameters:**
+- `callId`: `string`
+
+**Returns:** `ToolExecutionReport&lt;unknown&gt; | undefined`
+
+#### `close()`
+
+```typescript
+async close(): Promise&lt;void&gt;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `definitions` | `definitions: readonly { name: string; description: string; parameters: JsonObject; }[]` | - |
+| `fingerprint` | `fingerprint: string` | - |
+| `control?` | `control: RuntimeControl | undefined` | - |
 
 </details>
 
@@ -7519,7 +8163,7 @@ async openSession(request: DriverOpenSessionRequest): Promise&lt;DriverSession&g
 
 ### AgentDriver `interface`
 
-📍 [`src/agent-runtime/AgentDriver.ts:108`](src/agent-runtime/AgentDriver.ts)
+📍 [`src/agent-runtime/AgentDriver.ts:129`](src/agent-runtime/AgentDriver.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -7546,6 +8190,31 @@ openSession(request: DriverOpenSessionRequest): Promise&lt;DriverSession&gt;;
 
 **Returns:** `Promise&lt;DriverSession&gt;`
 
+#### `restoreSession()?`
+
+```typescript
+restoreSession?(request: DriverOpenSessionRequest & { checkpoint: JsonObject }): Promise&lt;{
+    session: DriverSession;
+    activeRun?: DriverRun;
+  }&gt;;
+```
+
+**Parameters:**
+- `request`: `DriverOpenSessionRequest & { checkpoint: JsonObject; }`
+
+**Returns:** `Promise&lt;{ session: DriverSession; activeRun?: DriverRun | undefined; }&gt;`
+
+#### `deleteSession()?`
+
+```typescript
+deleteSession?(request: DriverOpenSessionRequest & { checkpoint: JsonObject }): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `request`: `DriverOpenSessionRequest & { checkpoint: JsonObject; }`
+
+**Returns:** `Promise&lt;void&gt;`
+
 </details>
 
 <details>
@@ -7561,7 +8230,7 @@ openSession(request: DriverOpenSessionRequest): Promise&lt;DriverSession&gt;;
 
 ### AgentEventSubscriptionOptions `interface`
 
-📍 [`src/agent-runtime/types.ts:225`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:230`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -7576,7 +8245,7 @@ openSession(request: DriverOpenSessionRequest): Promise&lt;DriverSession&gt;;
 
 ### AgentExecutionBackend `interface`
 
-📍 [`src/agent-runtime/AgentExecutionBackend.ts:10`](src/agent-runtime/AgentExecutionBackend.ts)
+📍 [`src/agent-runtime/AgentExecutionBackend.ts:13`](src/agent-runtime/AgentExecutionBackend.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -7611,13 +8280,37 @@ openSession(
 
 **Returns:** `Promise&lt;AgentSession&gt;`
 
+#### `resumeSession()?`
+
+```typescript
+resumeSession?(reference: RuntimeSessionReference, options: RuntimeResumeOptions): Promise&lt;RuntimeSession&gt;;
+```
+
+**Parameters:**
+- `reference`: `RuntimeSessionReference`
+- `options`: `RuntimeResumeOptions`
+
+**Returns:** `Promise&lt;RuntimeSession&gt;`
+
+#### `deleteSession()?`
+
+```typescript
+deleteSession?(reference: RuntimeSessionReference, options: RuntimeResumeOptions): Promise&lt;void&gt;;
+```
+
+**Parameters:**
+- `reference`: `RuntimeSessionReference`
+- `options`: `RuntimeResumeOptions`
+
+**Returns:** `Promise&lt;void&gt;`
+
 </details>
 
 ---
 
 ### AgentExecutionPolicy `interface`
 
-📍 [`src/agent-runtime/types.ts:110`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:115`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -7642,7 +8335,7 @@ openSession(
 
 ### AgentInspectionRequest `interface`
 
-📍 [`src/agent-runtime/types.ts:124`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:129`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -7660,7 +8353,7 @@ openSession(
 
 ### AgentInteractionResponse `interface`
 
-📍 [`src/agent-runtime/types.ts:230`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:235`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -7676,7 +8369,7 @@ openSession(
 
 ### AgentObservationOptions `interface`
 
-📍 [`src/agent-runtime/types.ts:145`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:150`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -7692,7 +8385,7 @@ openSession(
 
 ### AgentRun `interface`
 
-📍 [`src/agent-runtime/types.ts:284`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:289`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -7759,7 +8452,7 @@ respondToInteraction(interactionId: string, response: AgentInteractionResponse):
 
 ### AgentRunErrorInfo `interface`
 
-📍 [`src/agent-runtime/types.ts:245`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:250`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -7777,7 +8470,7 @@ respondToInteraction(interactionId: string, response: AgentInteractionResponse):
 
 ### AgentRunEvent `interface`
 
-📍 [`src/agent-runtime/types.ts:216`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:221`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -7797,7 +8490,7 @@ respondToInteraction(interactionId: string, response: AgentInteractionResponse):
 
 ### AgentRunOptions `interface`
 
-📍 [`src/agent-runtime/types.ts:173`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:178`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -7816,7 +8509,7 @@ respondToInteraction(interactionId: string, response: AgentInteractionResponse):
 
 ### AgentRunResult `interface`
 
-📍 [`src/agent-runtime/types.ts:266`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:271`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -7845,7 +8538,7 @@ respondToInteraction(interactionId: string, response: AgentInteractionResponse):
 
 ### AgentRuntimeOptions `interface`
 
-📍 [`src/agent-runtime/AgentRuntime.ts:12`](src/agent-runtime/AgentRuntime.ts)
+📍 [`src/agent-runtime/AgentRuntime.ts:15`](src/agent-runtime/AgentRuntime.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -7861,7 +8554,7 @@ respondToInteraction(interactionId: string, response: AgentInteractionResponse):
 
 ### AgentSession `interface`
 
-📍 [`src/agent-runtime/types.ts:295`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:300`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -7905,15 +8598,53 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ---
 
-### CodexSdkDriverOptions `interface`
+### ClaudeAgentSdkDriverOptions `interface`
 
-📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:74`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+📍 [`src/agent-runtime/drivers/ClaudeAgentSdkDriver.ts:16`](src/agent-runtime/drivers/ClaudeAgentSdkDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `verifyNativeCheckpoint?` | `verifyNativeCheckpoint?: NativeCheckpointVerifier;` | Required before restoring idle native history after observer/process restart. |
+| `loadSdk?` | `loadSdk?: () =&gt; Promise&lt;ClaudeSdk&gt;;` | - |
+| `modelEfforts?` | `modelEfforts?: Readonly&lt;Record&lt;string, readonly ('low' | 'medium' | 'high' | 'xhigh' | 'max')[]&gt;&gt;;` | Explicit endpoint/model reasoning controls; unsupported/unknown efforts fail closed. |
+
+</details>
+
+---
+
+### ClaudeManagedDriverOptions `interface`
+
+📍 [`src/agent-runtime/drivers/ClaudeManagedDriver.ts:22`](src/agent-runtime/drivers/ClaudeManagedDriver.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `createClient?` | `createClient?: (options: ClientOptions) =&gt; Anthropic;` | - |
+| `nativeTools?` | `nativeTools?: readonly NativeTool[];` | - |
+| `environmentIds?` | `environmentIds?: readonly string[];` | - |
+| `workspaceId?` | `workspaceId?: string;` | - |
+| `modelEfforts?` | `modelEfforts?: Readonly&lt;Record&lt;string, readonly string[]&gt;&gt;;` | - |
+| `maxReconnects?` | `maxReconnects?: number;` | - |
+
+</details>
+
+---
+
+### CodexSdkDriverOptions `interface`
+
+📍 [`src/agent-runtime/drivers/CodexSdkDriver.ts:75`](src/agent-runtime/drivers/CodexSdkDriver.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `verifyNativeCheckpoint?` | `verifyNativeCheckpoint?: NativeCheckpointVerifier;` | Required before restoring an idle native thread with prior history. |
 | `loadSdk?` | `loadSdk?: () =&gt; Promise&lt;{ Codex: CodexConstructor }&gt;;` | Test/embedding seam. Ordinary applications should use the bundled SDK loader. |
 | `modelReasoningEfforts?` | `modelReasoningEfforts?: Readonly&lt;Record&lt;string, readonly ModelReasoningEffort[]&gt;&gt;;` | Verified model/effort combinations for models newer than the bundled map.
 Explicit efforts fail closed when a model has no verified entry. |
@@ -7924,7 +8655,7 @@ Explicit efforts fail closed when a model has no verified entry. |
 
 ### DriverDescriptor `interface`
 
-📍 [`src/agent-runtime/AgentDriver.ts:32`](src/agent-runtime/AgentDriver.ts)
+📍 [`src/agent-runtime/AgentDriver.ts:36`](src/agent-runtime/AgentDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -7932,6 +8663,11 @@ Explicit efforts fail closed when a model has no verified entry. |
 | Property | Type | Description |
 |----------|------|-------------|
 | `capabilities` | `capabilities: ResolvedAgentCapabilities;` | - |
+| `inspection?` | `inspection?: {
+    toolNamePrefix?: string;
+    enforcement?: Record&lt;string, 'native' | 'host' | 'unknown'&gt;;
+    notes?: string[];
+  };` | - |
 
 </details>
 
@@ -7939,7 +8675,7 @@ Explicit efforts fail closed when a model has no verified entry. |
 
 ### DriverEvent `interface`
 
-📍 [`src/agent-runtime/AgentDriver.ts:55`](src/agent-runtime/AgentDriver.ts)
+📍 [`src/agent-runtime/AgentDriver.ts:68`](src/agent-runtime/AgentDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -7974,7 +8710,7 @@ Explicit efforts fail closed when a model has no verified entry. |
 
 ### DriverInspectionContext `interface`
 
-📍 [`src/agent-runtime/AgentDriver.ts:23`](src/agent-runtime/AgentDriver.ts)
+📍 [`src/agent-runtime/AgentDriver.ts:26`](src/agent-runtime/AgentDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -7987,6 +8723,7 @@ Explicit efforts fail closed when a model has no verified entry. |
 | `policy?` | `policy?: AgentExecutionPolicy;` | - |
 | `requiredCapabilities` | `requiredCapabilities: AgentCapabilityRequirement[];` | - |
 | `connectorRegistry` | `connectorRegistry: IConnectorRegistry;` | - |
+| `durability?` | `durability?: 'process' | 'durable';` | - |
 
 </details>
 
@@ -7994,7 +8731,7 @@ Explicit efforts fail closed when a model has no verified entry. |
 
 ### DriverOpenSessionRequest `interface`
 
-📍 [`src/agent-runtime/AgentDriver.ts:36`](src/agent-runtime/AgentDriver.ts)
+📍 [`src/agent-runtime/AgentDriver.ts:45`](src/agent-runtime/AgentDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8002,12 +8739,16 @@ Explicit efforts fail closed when a model has no verified entry. |
 | Property | Type | Description |
 |----------|------|-------------|
 | `spec` | `spec: Readonly&lt;RuntimeAgentSpec&gt;;` | - |
+| `sessionId?` | `sessionId?: string;` | - |
+| `control?` | `control?: RuntimeControl;` | - |
+| `durability?` | `durability?: 'process' | 'durable';` | - |
 | `context` | `context: TrustedRuntimeContext;` | - |
 | `workspace?` | `workspace?: ResolvedWorkspace;` | - |
 | `policy` | `policy: AgentExecutionPolicy;` | - |
 | `requiredCapabilities` | `requiredCapabilities: AgentCapabilityRequirement[];` | - |
 | `connectorRegistry` | `connectorRegistry: IConnectorRegistry;` | - |
 | `metadata?` | `metadata?: JsonObject;` | - |
+| `hostTools?` | `hostTools?: RuntimeHostTools;` | - |
 
 </details>
 
@@ -8015,7 +8756,7 @@ Explicit efforts fail closed when a model has no verified entry. |
 
 ### DriverRun `interface`
 
-📍 [`src/agent-runtime/AgentDriver.ts:92`](src/agent-runtime/AgentDriver.ts)
+📍 [`src/agent-runtime/AgentDriver.ts:105`](src/agent-runtime/AgentDriver.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -8072,7 +8813,7 @@ respondToInteraction?(interactionId: string, response: AgentInteractionResponse)
 
 ### DriverRunRequest `interface`
 
-📍 [`src/agent-runtime/AgentDriver.ts:46`](src/agent-runtime/AgentDriver.ts)
+📍 [`src/agent-runtime/AgentDriver.ts:59`](src/agent-runtime/AgentDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8092,7 +8833,7 @@ respondToInteraction?(interactionId: string, response: AgentInteractionResponse)
 
 ### DriverRunResult `interface`
 
-📍 [`src/agent-runtime/AgentDriver.ts:79`](src/agent-runtime/AgentDriver.ts)
+📍 [`src/agent-runtime/AgentDriver.ts:92`](src/agent-runtime/AgentDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8116,7 +8857,7 @@ respondToInteraction?(interactionId: string, response: AgentInteractionResponse)
 
 ### DriverSession `interface`
 
-📍 [`src/agent-runtime/AgentDriver.ts:102`](src/agent-runtime/AgentDriver.ts)
+📍 [`src/agent-runtime/AgentDriver.ts:115`](src/agent-runtime/AgentDriver.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -8143,6 +8884,53 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 **Returns:** `Promise&lt;void&gt;`
 
+#### `checkpoint()?`
+
+```typescript
+checkpoint?(): Promise&lt;JsonObject&gt;;
+```
+
+**Returns:** `Promise&lt;JsonObject&gt;`
+
+#### `inspectState()?`
+
+```typescript
+inspectState?(): Promise&lt;RuntimeSessionSnapshot&gt;;
+```
+
+**Returns:** `Promise&lt;RuntimeSessionSnapshot&gt;`
+
+#### `detach()?`
+
+```typescript
+detach?(): Promise&lt;void&gt;;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `uploadFile()?`
+
+```typescript
+uploadFile?(file: { name: string; data: Uint8Array; mediaType: string }): Promise&lt;AgentArtifact&gt;;
+```
+
+**Parameters:**
+- `file`: `{ name: string; data: Uint8Array&lt;ArrayBufferLike&gt;; mediaType: string; }`
+
+**Returns:** `Promise&lt;AgentArtifact&gt;`
+
+#### `downloadArtifact()?`
+
+```typescript
+downloadArtifact?(reference: string, limits: { maxBytes: number; mediaTypes: readonly string[] }): Promise&lt;Response&gt;;
+```
+
+**Parameters:**
+- `reference`: `string`
+- `limits`: `{ maxBytes: number; mediaTypes: readonly string[]; }`
+
+**Returns:** `Promise&lt;Response&gt;`
+
 </details>
 
 <details>
@@ -8150,7 +8938,40 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `observationIndependent?` | `readonly observationIndependent?: boolean;` | Managed native work survives observation loss; only explicit cancellation stops it. |
 | `nativeSessionId?` | `readonly nativeSessionId?: string;` | - |
+
+</details>
+
+---
+
+### IRuntimeSessionStorage `interface`
+
+📍 [`src/agent-runtime/RuntimeSessionStorage.ts:19`](src/agent-runtime/RuntimeSessionStorage.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `acquire()`
+
+```typescript
+acquire(id: string, context: TrustedRuntimeContext): Promise&lt;RuntimeSessionLease&gt;;
+```
+
+**Parameters:**
+- `id`: `string`
+- `context`: `TrustedRuntimeContext`
+
+**Returns:** `Promise&lt;RuntimeSessionLease&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `durability` | `readonly durability: 'process' | 'durable';` | - |
 
 </details>
 
@@ -8158,7 +8979,7 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ### LocalAgentFactoryContext `interface`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:58`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:60`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8176,7 +8997,7 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ### LocalExecutionBackendOptions `interface`
 
-📍 [`src/agent-runtime/LocalExecutionBackend.ts:45`](src/agent-runtime/LocalExecutionBackend.ts)
+📍 [`src/agent-runtime/LocalExecutionBackend.ts:52`](src/agent-runtime/LocalExecutionBackend.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8186,6 +9007,9 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 | `drivers` | `drivers: AgentDriver[];` | - |
 | `connectorRegistry?` | `connectorRegistry?: IConnectorRegistry;` | - |
 | `maxSessionJournalBytes?` | `maxSessionJournalBytes?: number;` | - |
+| `resolveTools?` | `resolveTools?: RuntimeToolResolver;` | - |
+| `sessionStorage?` | `sessionStorage?: IRuntimeSessionStorage;` | - |
+| `fileTransfer?` | `fileTransfer?: (context: Readonly&lt;import('./types.js').TrustedRuntimeContext&gt;) =&gt; RuntimeFileTransferAccess | Promise&lt;RuntimeFileTransferAccess&gt;;` | Host-selected per-scope directory; absent means transfers are disabled. |
 
 </details>
 
@@ -8193,7 +9017,7 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ### OneRingAgentBinding `interface`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:65`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:67`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8209,7 +9033,7 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 
 ### OneRingAIDriverOptions `interface`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:79`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:81`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8222,6 +9046,9 @@ cancelActiveRun(reason?: string): Promise&lt;void&gt;;
 | `modelReasoningControls?` | `modelReasoningControls?: Readonly&lt;Record&lt;string, OneRingModelReasoningControls&gt;&gt;;` | Verified controls for models not covered by the bundled map. |
 | `trustAgentPolicy?` | `trustAgentPolicy?: boolean;` | Explicit host assertion that every supplied/stored agent's tools and
 PermissionPolicyManager already enforce the runtime policy. |
+| `configurationRevision?` | `configurationRevision?: string;` | Complete native-only configuration before Agent initialization. Definition/binding fields remain protected. |
+| `configureAgent?` | `configureAgent?: (config: AgentConfig, request: DriverOpenSessionRequest) =&gt; AgentConfig;` | - |
+| `additionalToolNames?` | `additionalToolNames?: readonly string[];` | Explicit host-approved plugin/native tool additions for definition mode. |
 
 </details>
 
@@ -8229,7 +9056,7 @@ PermissionPolicyManager already enforce the runtime policy. |
 
 ### OneRingModelReasoningControls `interface`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:70`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:72`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8246,7 +9073,7 @@ PermissionPolicyManager already enforce the runtime policy. |
 
 ### OpenAgentSessionOptions `interface`
 
-📍 [`src/agent-runtime/types.ts:131`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:136`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8265,6 +9092,24 @@ PermissionPolicyManager already enforce the runtime policy. |
 
 ---
 
+### OpenAIManagedDriverOptions `interface`
+
+📍 [`src/agent-runtime/drivers/OpenAIManagedDriver.ts:19`](src/agent-runtime/drivers/OpenAIManagedDriver.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `createClient?` | `createClient?: (options: ClientOptions) =&gt; OpenAI;` | - |
+| `modelEfforts?` | `modelEfforts?: Readonly&lt;Record&lt;string, readonly string[]&gt;&gt;;` | Endpoint-specific host assertions for models beyond the documented quickstart. |
+| `environmentTemplates?` | `environmentTemplates?: readonly string[];` | Trusted hosted templates whose inherited provisioning configuration was reviewed by the host. |
+| `maxReconnects?` | `maxReconnects?: number;` | - |
+
+</details>
+
+---
+
 ### ResolvedAgentCapabilities `interface`
 
 📍 [`src/agent-runtime/types.ts:52`](src/agent-runtime/types.ts)
@@ -8277,6 +9122,7 @@ PermissionPolicyManager already enforce the runtime policy. |
 | `driverId` | `driverId: string;` | - |
 | `capabilities` | `capabilities: Record&lt;string, AgentCapability&gt;;` | - |
 | `configuration?` | `configuration?: ResolvedAgentConfiguration;` | - |
+| `inspection?` | `inspection?: RuntimeInspectionDetails;` | Present for common definitions; legacy capability descriptors remain unchanged. |
 
 </details>
 
@@ -8284,7 +9130,7 @@ PermissionPolicyManager already enforce the runtime policy. |
 
 ### ResolvedAgentConfiguration `interface`
 
-📍 [`src/agent-runtime/types.ts:75`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:77`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8300,7 +9146,7 @@ PermissionPolicyManager already enforce the runtime policy. |
 
 ### ResolvedWorkspace `interface`
 
-📍 [`src/agent-runtime/types.ts:104`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:109`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8317,7 +9163,7 @@ PermissionPolicyManager already enforce the runtime policy. |
 
 ### RuntimeAgent `interface`
 
-📍 [`src/agent-runtime/types.ts:305`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:310`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Methods</strong></summary>
@@ -8357,9 +9203,32 @@ openSession(options: OpenAgentSessionOptions): Promise&lt;AgentSession&gt;;
 
 ---
 
+### RuntimeAgentDefinition `interface`
+
+📍 [`src/agent-runtime/types.ts:318`](src/agent-runtime/types.ts)
+
+A harness-independent task definition. Tools are exact host-resolved names.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `id: string;` | - |
+| `revision?` | `revision?: string;` | - |
+| `name?` | `name?: string;` | - |
+| `instructions` | `instructions: string;` | - |
+| `tools?` | `tools?: readonly string[];` | - |
+| `requiredCapabilities?` | `requiredCapabilities?: readonly AgentCapabilityRequirement[];` | - |
+| `metadata?` | `metadata?: JsonObject;` | - |
+
+</details>
+
+---
+
 ### RuntimeAgentSpec `interface`
 
-📍 [`src/agent-runtime/types.ts:80`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:82`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8368,6 +9237,8 @@ openSession(options: OpenAgentSessionOptions): Promise&lt;AgentSession&gt;;
 |----------|------|-------------|
 | `id` | `id: string;` | - |
 | `name?` | `name?: string;` | - |
+| `definition?` | `definition?: RuntimeAgentDefinition;` | Opt-in logical definition; legacy specs are unchanged. |
+| `environment?` | `environment?: RuntimeEnvironmentRequest;` | - |
 | `driver` | `driver: string;` | - |
 | `connector?` | `connector?: string;` | - |
 | `model?` | `model?: string;` | - |
@@ -8381,9 +9252,176 @@ openSession(options: OpenAgentSessionOptions): Promise&lt;AgentSession&gt;;
 
 ---
 
+### RuntimeArtifactDownload `interface`
+
+📍 [`src/agent-runtime/types.ts:392`](src/agent-runtime/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `reference` | `reference: string;` | - |
+| `path` | `path: string;` | New relative file within the host-authorized transfer directory; never overwritten. |
+
+</details>
+
+---
+
+### RuntimeDefinitionAgent `interface`
+
+📍 [`src/agent-runtime/types.ts:375`](src/agent-runtime/types.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `inspect()`
+
+```typescript
+inspect(options: RuntimeSessionOptions): Promise&lt;RuntimeInspection&gt;;
+```
+
+**Parameters:**
+- `options`: `RuntimeSessionOptions`
+
+**Returns:** `Promise&lt;RuntimeInspection&gt;`
+
+#### `openSession()`
+
+```typescript
+openSession(options: RuntimeSessionOptions): Promise&lt;RuntimeSession&gt;;
+```
+
+**Parameters:**
+- `options`: `RuntimeSessionOptions`
+
+**Returns:** `Promise&lt;RuntimeSession&gt;`
+
+</details>
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `definition` | `readonly definition: Readonly&lt;RuntimeAgentDefinition&gt;;` | - |
+
+</details>
+
+---
+
+### RuntimeExecutionBinding `interface`
+
+📍 [`src/agent-runtime/types.ts:327`](src/agent-runtime/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `driver` | `driver: string;` | - |
+| `connector` | `connector: string;` | - |
+| `model` | `model: string;` | - |
+| `reasoning?` | `reasoning?: RuntimeReasoningConfig;` | - |
+| `driverConfig?` | `driverConfig?: JsonObject;` | - |
+
+</details>
+
+---
+
+### RuntimeFileTransferAccess `interface`
+
+📍 [`src/agent-runtime/RuntimeFileTransfers.ts:8`](src/agent-runtime/RuntimeFileTransfers.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `root` | `root: string;` | Existing directory owned by the host; keep other processes from renaming its parents. |
+| `maxBytes?` | `maxBytes?: number;` | Positive bound, at most 16 MiB; default 1 MiB. |
+| `mediaTypes` | `mediaTypes: readonly string[];` | Exact MIME allowlist, applied to upload declarations and download response headers. |
+
+</details>
+
+---
+
+### RuntimeFileUpload `interface`
+
+📍 [`src/agent-runtime/types.ts:385`](src/agent-runtime/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `path` | `path: string;` | Relative path within the host-authorized transfer directory. |
+| `name?` | `name?: string;` | Single portable filename, defaulting to the source filename. |
+| `mediaType` | `mediaType: string;` | - |
+
+</details>
+
+---
+
+### RuntimeHostToolResult `interface`
+
+📍 [`src/agent-runtime/RuntimeHostTools.ts:30`](src/agent-runtime/RuntimeHostTools.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `modelText` | `modelText: string;` | - |
+| `outcome` | `outcome: ToolExecutionReport['outcome'];` | - |
+| `evidence?` | `evidence?: ToolExecutionReport['evidence'];` | - |
+| `rawResult?` | `rawResult?: unknown;` | Ephemeral raw return; durable replay uses only the acknowledged model payload. |
+
+</details>
+
+---
+
+### RuntimeInspection `interface`
+
+📍 [`src/agent-runtime/types.ts:352`](src/agent-runtime/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `definitionDigest` | `definitionDigest: string;` | - |
+| `recovery` | `recovery: 'process' | 'durable';` | - |
+
+</details>
+
+---
+
+### RuntimeInspectionDetails `interface`
+
+📍 [`src/agent-runtime/types.ts:342`](src/agent-runtime/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `executionDigest` | `executionDigest: string;` | - |
+| `tools` | `tools: { name: string; schemaDigest: string; transportName?: string }[];` | - |
+| `environment` | `environment: RuntimeEnvironmentRequest | { type: 'unspecified' };` | - |
+| `enforcement` | `enforcement: Record&lt;string, 'native' | 'host' | 'unknown'&gt;;` | - |
+| `accountAccess` | `accountAccess: 'unknown';` | - |
+| `usageCoverage` | `usageCoverage: 'native-reported-partial';` | - |
+| `activityReplay` | `activityReplay: 'bounded-process-history';` | - |
+| `notes` | `notes: string[];` | - |
+
+</details>
+
+---
+
 ### RuntimeReasoningConfig `interface`
 
-📍 [`src/agent-runtime/types.ts:68`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:70`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8398,9 +9436,268 @@ openSession(options: OpenAgentSessionOptions): Promise&lt;AgentSession&gt;;
 
 ---
 
+### RuntimeResumeOptions `interface`
+
+📍 [`src/agent-runtime/types.ts:380`](src/agent-runtime/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `context` | `context: TrustedRuntimeContext;` | - |
+| `observation?` | `observation?: AgentObservationOptions;` | - |
+
+</details>
+
+---
+
+### RuntimeRunOptions `interface`
+
+📍 [`src/agent-runtime/types.ts:364`](src/agent-runtime/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `requestId?` | `requestId?: string` | - |
+
+</details>
+
+---
+
+### RuntimeSession `interface`
+
+📍 [`src/agent-runtime/types.ts:365`](src/agent-runtime/types.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `run()`
+
+```typescript
+run(input: AgentRunInput, options?: RuntimeRunOptions): Promise&lt;AgentRun&gt;;
+```
+
+**Parameters:**
+- `input`: `AgentRunInput`
+- `options`: `RuntimeRunOptions | undefined` *(optional)*
+
+**Returns:** `Promise&lt;AgentRun&gt;`
+
+#### `reference()`
+
+```typescript
+reference(): RuntimeSessionReference;
+```
+
+**Returns:** `RuntimeSessionReference`
+
+#### `inspectState()`
+
+```typescript
+inspectState(): Promise&lt;RuntimeSessionSnapshot&gt;;
+```
+
+**Returns:** `Promise&lt;RuntimeSessionSnapshot&gt;`
+
+#### `getRun()`
+
+```typescript
+getRun(runId: string): Promise&lt;AgentRun&gt;;
+```
+
+**Parameters:**
+- `runId`: `string`
+
+**Returns:** `Promise&lt;AgentRun&gt;`
+
+#### `detach()`
+
+```typescript
+detach(): Promise&lt;void&gt;;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `uploadFile()`
+
+Host-only transfers within the backend's explicitly authorized directory.
+
+```typescript
+uploadFile(request: RuntimeFileUpload): Promise&lt;AgentArtifact&gt;;
+```
+
+**Parameters:**
+- `request`: `RuntimeFileUpload`
+
+**Returns:** `Promise&lt;AgentArtifact&gt;`
+
+#### `downloadArtifact()`
+
+```typescript
+downloadArtifact(request: RuntimeArtifactDownload): Promise&lt;{ path: string; bytes: number; mediaType: string }&gt;;
+```
+
+**Parameters:**
+- `request`: `RuntimeArtifactDownload`
+
+**Returns:** `Promise&lt;{ path: string; bytes: number; mediaType: string; }&gt;`
+
+</details>
+
+---
+
+### RuntimeSessionLease `interface`
+
+📍 [`src/agent-runtime/RuntimeSessionStorage.ts:12`](src/agent-runtime/RuntimeSessionStorage.ts)
+
+<details>
+<summary><strong>Methods</strong></summary>
+
+#### `read()`
+
+```typescript
+read(): Promise&lt;RuntimeSessionRecord | undefined&gt;;
+```
+
+**Returns:** `Promise&lt;RuntimeSessionRecord | undefined&gt;`
+
+#### `write()`
+
+expectedRevision is 0 for creation. Revision conflicts never overwrite another writer.
+
+```typescript
+write(data: JsonObject, expectedRevision: number): Promise&lt;RuntimeSessionRecord&gt;;
+```
+
+**Parameters:**
+- `data`: `JsonObject`
+- `expectedRevision`: `number`
+
+**Returns:** `Promise&lt;RuntimeSessionRecord&gt;`
+
+#### `delete()`
+
+```typescript
+delete(): Promise&lt;void&gt;;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+#### `release()`
+
+```typescript
+release(): Promise&lt;void&gt;;
+```
+
+**Returns:** `Promise&lt;void&gt;`
+
+</details>
+
+---
+
+### RuntimeSessionOptions `interface`
+
+📍 [`src/agent-runtime/types.ts:338`](src/agent-runtime/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `execution` | `execution: RuntimeExecutionBinding;` | - |
+| `environment?` | `environment?: RuntimeEnvironmentRequest;` | - |
+
+</details>
+
+---
+
+### RuntimeSessionRecord `interface`
+
+📍 [`src/agent-runtime/RuntimeSessionStorage.ts:11`](src/agent-runtime/RuntimeSessionStorage.ts)
+
+Acknowledged control snapshots, separate from tool evidence and token activity.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `version` | `version: 1;` | - |
+| `id` | `id: string;` | - |
+| `revision` | `revision: number;` | - |
+| `scope` | `scope: string;` | - |
+| `data` | `data: JsonObject` | - |
+
+</details>
+
+---
+
+### RuntimeSessionReference `interface`
+
+📍 [`src/agent-runtime/types.ts:356`](src/agent-runtime/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `version` | `version: 1;` | - |
+| `id` | `id: string` | - |
+
+</details>
+
+---
+
+### RuntimeSessionSnapshot `interface`
+
+📍 [`src/agent-runtime/types.ts:357`](src/agent-runtime/types.ts)
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connection` | `connection: 'attached' | 'reconnecting';` | - |
+| `activity` | `activity: 'ready' | 'running' | 'waiting' | 'unknown' | 'terminal';` | - |
+| `activeRunId?` | `activeRunId?: string;` | - |
+| `waitReason?` | `waitReason?: string;` | - |
+| `unresolvedEffects` | `unresolvedEffects: boolean;` | - |
+
+</details>
+
+---
+
+### RuntimeToolResolution `interface`
+
+📍 [`src/agent-runtime/RuntimeHostTools.ts:16`](src/agent-runtime/RuntimeHostTools.ts)
+
+Executable host objects never enter a saved definition or provider request.
+
+<details>
+<summary><strong>Properties</strong></summary>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `tools` | `tools: readonly ToolFunction[];` | - |
+| `fingerprint` | `fingerprint: string;` | Includes host authorization, connector selections, implementation and evidence revisions. |
+| `manager?` | `manager?: ToolManager;` | Retain an existing C7 manager and its evidence handle; never clone its proxies. |
+| `owner?` | `owner?: Agent;` | - |
+| `ownership?` | `ownership?: 'owned' | 'borrowed';` | - |
+| `permissionManager?` | `permissionManager?: PermissionPolicyManager;` | - |
+| `toolContext?` | `toolContext?: Omit&lt;ToolContext, 'userId' | 'signal'&gt;;` | - |
+| `reconcile?` | `reconcile?: (call: { name: string; args: unknown; callId: string; runId: string; runtimeRunId?: string }, context: TrustedRuntimeContext) =&gt; Promise&lt;ToolExecutionReport | undefined&gt;;` | Trusted receipt/source reconciliation only; never a fresh execution/retry. |
+| `onRetainedObservation?` | `onRetainedObservation?: (callId: string, report: ToolExecutionReport) =&gt; void;` | - |
+
+</details>
+
+---
+
 ### RuntimeUsage `interface`
 
-📍 [`src/agent-runtime/types.ts:235`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:240`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8421,7 +9718,7 @@ openSession(options: OpenAgentSessionOptions): Promise&lt;AgentSession&gt;;
 
 ### TrustedRuntimeContext `interface`
 
-📍 [`src/agent-runtime/types.ts:93`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:98`](src/agent-runtime/types.ts)
 
 <details>
 <summary><strong>Properties</strong></summary>
@@ -8439,7 +9736,7 @@ openSession(options: OpenAgentSessionOptions): Promise&lt;AgentSession&gt;;
 
 ### AgentArtifact `type`
 
-📍 [`src/agent-runtime/types.ts:252`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:257`](src/agent-runtime/types.ts)
 
 ```typescript
 type AgentArtifact = | {
@@ -8492,7 +9789,7 @@ type AgentCapabilityId = | 'session.continue'
 
 ### AgentControlMode `type`
 
-📍 [`src/agent-runtime/types.ts:143`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:148`](src/agent-runtime/types.ts)
 
 ```typescript
 type AgentControlMode = 'observe-only' | 'steerable'
@@ -8502,7 +9799,7 @@ type AgentControlMode = 'observe-only' | 'steerable'
 
 ### AgentInputPart `type`
 
-📍 [`src/agent-runtime/types.ts:159`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:164`](src/agent-runtime/types.ts)
 
 ```typescript
 type AgentInputPart = | { type: 'text'; text: string }
@@ -8514,7 +9811,7 @@ type AgentInputPart = | { type: 'text'; text: string }
 
 ### AgentRunEventType `type`
 
-📍 [`src/agent-runtime/types.ts:194`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:199`](src/agent-runtime/types.ts)
 
 ```typescript
 type AgentRunEventType = | 'run.started'
@@ -8543,7 +9840,7 @@ type AgentRunEventType = | 'run.started'
 
 ### AgentRunInput `type`
 
-📍 [`src/agent-runtime/types.ts:152`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:157`](src/agent-runtime/types.ts)
 
 ```typescript
 type AgentRunInput = | string
@@ -8557,7 +9854,7 @@ type AgentRunInput = | string
 
 ### AgentRunStatus `type`
 
-📍 [`src/agent-runtime/types.ts:192`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:197`](src/agent-runtime/types.ts)
 
 ```typescript
 type AgentRunStatus = 'completed' | 'failed' | 'cancelled' | 'incomplete'
@@ -8567,7 +9864,7 @@ type AgentRunStatus = 'completed' | 'failed' | 'cancelled' | 'incomplete'
 
 ### AgentSessionState `type`
 
-📍 [`src/agent-runtime/types.ts:184`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:189`](src/agent-runtime/types.ts)
 
 ```typescript
 type AgentSessionState = | 'opening'
@@ -8615,9 +9912,21 @@ type JsonValue = | null
 
 ---
 
+### NativeCheckpointVerifier `type`
+
+📍 [`src/agent-runtime/NativeStateDirectory.ts:29`](src/agent-runtime/NativeStateDirectory.ts)
+
+Trusted host assertion of complete native transcript/dependency recovery; never send a task to probe.
+
+```typescript
+type NativeCheckpointVerifier = (state: { directory: string; nativeSessionId: string }, request: import('./AgentDriver.js').DriverOpenSessionRequest) =&gt; Promise&lt;void&gt;
+```
+
+---
+
 ### OneRingAgentSource `type`
 
-📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:53`](src/agent-runtime/drivers/OneRingAIDriver.ts)
+📍 [`src/agent-runtime/drivers/OneRingAIDriver.ts:55`](src/agent-runtime/drivers/OneRingAIDriver.ts)
 
 ```typescript
 type OneRingAgentSource = | { type: 'stored-definition'; agentId: string }
@@ -8627,9 +9936,21 @@ type OneRingAgentSource = | { type: 'stored-definition'; agentId: string }
 
 ---
 
+### RuntimeEnvironmentRequest `type`
+
+📍 [`src/agent-runtime/types.ts:334`](src/agent-runtime/types.ts)
+
+```typescript
+type RuntimeEnvironmentRequest = | { type: 'none' }
+  | { type: 'local-directory'; path: string }
+  | { type: 'provider-managed'; reference?: string }
+```
+
+---
+
 ### RuntimeReasoningEffort `type`
 
-📍 [`src/agent-runtime/types.ts:58`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:60`](src/agent-runtime/types.ts)
 
 ```typescript
 type RuntimeReasoningEffort = | 'none'
@@ -8646,7 +9967,7 @@ type RuntimeReasoningEffort = | 'none'
 
 ### RuntimeResponseFormat `type`
 
-📍 [`src/agent-runtime/types.ts:164`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:169`](src/agent-runtime/types.ts)
 
 ```typescript
 type RuntimeResponseFormat = | { type: 'text' }
@@ -8660,9 +9981,22 @@ type RuntimeResponseFormat = | { type: 'text' }
 
 ---
 
+### RuntimeToolResolver `type`
+
+📍 [`src/agent-runtime/RuntimeHostTools.ts:37`](src/agent-runtime/RuntimeHostTools.ts)
+
+```typescript
+type RuntimeToolResolver = (
+  names: readonly string[],
+  context: Readonly&lt;TrustedRuntimeContext&gt;,
+) =&gt; RuntimeToolResolution | Promise&lt;RuntimeToolResolution&gt;
+```
+
+---
+
 ### WorkspaceRequest `type`
 
-📍 [`src/agent-runtime/types.ts:100`](src/agent-runtime/types.ts)
+📍 [`src/agent-runtime/types.ts:105`](src/agent-runtime/types.ts)
 
 ```typescript
 type WorkspaceRequest = | { type: 'local-directory'; path: string }
@@ -46370,7 +47704,7 @@ static detect(filename: string, _buffer?: Buffer | Uint8Array): FormatDetectionR
 
 **Parameters:**
 - `filename`: `string`
-- `_buffer`: `Buffer&lt;ArrayBufferLike&gt; | Uint8Array&lt;ArrayBufferLike&gt; | undefined` *(optional)*
+- `_buffer`: `Uint8Array&lt;ArrayBufferLike&gt; | Buffer&lt;ArrayBufferLike&gt; | undefined` *(optional)*
 
 **Returns:** `FormatDetectionResult`
 
@@ -50311,7 +51645,7 @@ async validateBinding(_userId: string, anchorId: string): Promise&lt;boolean&gt;
 
 ### StorageRegistry `class`
 
-📍 [`src/core/StorageRegistry.ts:99`](src/core/StorageRegistry.ts)
+📍 [`src/core/StorageRegistry.ts:101`](src/core/StorageRegistry.ts)
 
 <details>
 <summary><strong>Static Methods</strong></summary>
@@ -63859,6 +65193,7 @@ StorageContext for multi-tenant scenarios) and return a storage instance.
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `runtimeSessions?` | `runtimeSessions?: (context: import('../agent-runtime/types.js').TrustedRuntimeContext) =&gt; import('../agent-runtime/RuntimeSessionStorage.js').IRuntimeSessionStorage;` | Optional scoped runtime control storage; independent of native sessions/evidence. |
 | `evidence?` | `evidence?: (scope: EvidenceScope, context?: StorageContext) =&gt; IEvidenceStorage;` | Optional scoped evidence factory; disabled context features never resolve it. |
 | `media` | `media: IMediaStorage;` | - |
 | `agentDefinitions` | `agentDefinitions: IAgentDefinitionStorage;` | - |

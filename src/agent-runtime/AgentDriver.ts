@@ -1,3 +1,5 @@
+import type { RuntimeControl } from './RuntimeSessionStorage.js';
+import type { RuntimeHostTools } from './RuntimeHostTools.js';
 import type { IAsyncDisposable } from '../domain/interfaces/IDisposable.js';
 import type { IConnectorRegistry } from '../domain/interfaces/IConnectorRegistry.js';
 import type {
@@ -18,6 +20,7 @@ import type {
   RuntimeResponseFormat,
   RuntimeUsage,
   TrustedRuntimeContext,
+  RuntimeSessionSnapshot,
 } from './types.js';
 
 export interface DriverInspectionContext {
@@ -27,20 +30,30 @@ export interface DriverInspectionContext {
   policy?: AgentExecutionPolicy;
   requiredCapabilities: AgentCapabilityRequirement[];
   connectorRegistry: IConnectorRegistry;
+  durability?: 'process' | 'durable';
 }
 
 export interface DriverDescriptor {
   capabilities: ResolvedAgentCapabilities;
+  inspection?: {
+    toolNamePrefix?: string;
+    enforcement?: Record<string, 'native' | 'host' | 'unknown'>;
+    notes?: string[];
+  };
 }
 
 export interface DriverOpenSessionRequest {
   spec: Readonly<RuntimeAgentSpec>;
+  sessionId?: string;
+  control?: RuntimeControl;
+  durability?: 'process' | 'durable';
   context: TrustedRuntimeContext;
   workspace?: ResolvedWorkspace;
   policy: AgentExecutionPolicy;
   requiredCapabilities: AgentCapabilityRequirement[];
   connectorRegistry: IConnectorRegistry;
   metadata?: JsonObject;
+  hostTools?: RuntimeHostTools;
 }
 
 export interface DriverRunRequest {
@@ -100,13 +113,26 @@ export interface DriverRun {
 }
 
 export interface DriverSession extends IAsyncDisposable {
+  /** Managed native work survives observation loss; only explicit cancellation stops it. */
+  readonly observationIndependent?: boolean;
   readonly nativeSessionId?: string;
   run(request: DriverRunRequest): Promise<DriverRun>;
   cancelActiveRun(reason?: string): Promise<void>;
+  checkpoint?(): Promise<JsonObject>;
+  inspectState?(): Promise<RuntimeSessionSnapshot>;
+  detach?(): Promise<void>;
+  uploadFile?(file: { name: string; data: Uint8Array; mediaType: string }): Promise<AgentArtifact>;
+  downloadArtifact?(reference: string, limits: { maxBytes: number; mediaTypes: readonly string[] }): Promise<Response>;
+
 }
 
 export interface AgentDriver {
   readonly id: string;
   inspect(context: DriverInspectionContext): Promise<DriverDescriptor>;
   openSession(request: DriverOpenSessionRequest): Promise<DriverSession>;
+  restoreSession?(request: DriverOpenSessionRequest & { checkpoint: JsonObject }): Promise<{
+    session: DriverSession;
+    activeRun?: DriverRun;
+  }>;
+  deleteSession?(request: DriverOpenSessionRequest & { checkpoint: JsonObject }): Promise<void>;
 }

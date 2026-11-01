@@ -94,3 +94,12 @@ Run `npm run example:remote-outcomes` for the offline authenticated transport de
 submission). `RUN_REMOTE_OUTCOMES_LIVE=1 npx vitest run
 tests/integration/text/RemoteOutcomes.live.integration.test.ts` opts into billable
 OpenAI/Anthropic/Google run/stream checks using `.env`.
+
+
+Runtime H1 integrations must resolve C7 proxies with their original manager/Agent owner and exact evidence storage handle. Native materialization cannot clone a borrowed external manager. The existing source guard/reconciliation remains authoritative; no new runtime outcome wire format is introduced.
+
+
+Runtime H3 uses the existing ToolExecutionReport in a trusted original-receipt reconcile callback. It does not define another outcome wire protocol, clone C7 managers, or treat a missing report as not-started. Saved provider payloads may be redelivered; unresolved original effects require source/receipt reconciliation. Native routine authority remains outside control checkpoints.
+
+
+Managed runtime resume can reconcile retained outbox effects even after the native turn stopped requesting a result. The admission record retains the original name/arguments/call/run IDs; the trusted resolver reads the original source receipt and returns the existing ToolExecutionReport. It never allocates a replacement action. Unknown effects prevent deletion of their control record.

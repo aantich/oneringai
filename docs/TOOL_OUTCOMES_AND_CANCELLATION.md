@@ -278,3 +278,9 @@ It runs the offline examples first, then real `run()` and `stream()` calls throu
 a named connector. Each mode must report exactly `domain_probe=succeeded` and
 `failure_probe=failed`, and recover both markers. All agents and the example-owned
 connector are cleaned up. The domain probe's `success: false` remains valid data.
+
+
+Runtime H1: external host calls use executeWithOutcome on the selected original manager; an explicit Agent owner uses its external-execution lifecycle. Raw business failure fields remain application data. Only blocking function tools are admitted. Cancellation still does not establish whether an external action happened. See [runtime guide](../USER_GUIDE.md#reusable-definitions-and-harness-bindings).
+
+
+Runtime H3 stores input admission and provider-facing result payloads before native handoff. Unknown effects stop common runtime continuation; an optional trusted resolver reconciles the original source receipt with matching invocation IDs. Cancellation/detach is not evidence an action was undone. New definition sessions reject observation uncertainty with AgentSessionRecoveryError and suppress false terminal events; legacy runtime behavior remains unchanged.

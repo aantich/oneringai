@@ -70,6 +70,8 @@ export type StorageContext = Record<string, unknown>;
  * StorageContext for multi-tenant scenarios) and return a storage instance.
  */
 export interface StorageConfig {
+  /** Optional scoped runtime control storage; independent of native sessions/evidence. */
+  runtimeSessions?: (context: import('../agent-runtime/types.js').TrustedRuntimeContext) => import('../agent-runtime/RuntimeSessionStorage.js').IRuntimeSessionStorage;
   /** Optional scoped evidence factory; disabled context features never resolve it. */
   evidence?: (scope: EvidenceScope, context?: StorageContext) => IEvidenceStorage;
   // Global singletons

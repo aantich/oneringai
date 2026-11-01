@@ -1,5 +1,7 @@
 import type { AgentExecutionBackend } from './AgentExecutionBackend.js';
-import { cloneAndFreezeSpec } from './internal.js';
+import { AgentDriverConfigurationError } from './errors.js';
+import { definitionDigest } from './RuntimeHostTools.js';
+import { cloneAndFreezeJson, cloneAndFreezeSpec } from './internal.js';
 import type {
   AgentInspectionRequest,
   AgentSession,
@@ -7,6 +9,7 @@ import type {
   ResolvedAgentCapabilities,
   RuntimeAgent,
   RuntimeAgentSpec,
+  RuntimeAgentDefinition, RuntimeDefinitionAgent, RuntimeInspection, RuntimeSession, RuntimeSessionOptions, RuntimeSessionReference, RuntimeResumeOptions,
 } from './types.js';
 
 export interface AgentRuntimeOptions {
@@ -18,6 +21,7 @@ export class AgentRuntime {
   private readonly backend: AgentExecutionBackend;
   private readonly ownsBackend: boolean;
   private readonly sessions = new Set<AgentSession>();
+  private readonly definitionSessions = new Map<string, { source: RuntimeSession; tracked: RuntimeSession }>();
   private _isDestroyed = false;
 
   constructor(options: AgentRuntimeOptions) {
@@ -39,11 +43,80 @@ export class AgentRuntime {
     });
   }
 
+  createAgent(definition: RuntimeAgentDefinition): RuntimeDefinitionAgent {
+    this.assertActive();
+    if (!definition || typeof definition.id !== 'string' || !definition.id.trim() || typeof definition.instructions !== 'string') {
+      throw new AgentDriverConfigurationError('Definition requires id and instructions');
+    }
+    if (Object.keys(definition).some(key => !['id','revision','name','instructions','tools','requiredCapabilities','metadata'].includes(key))) throw new AgentDriverConfigurationError('Definition contains an execution-owned or unknown field');
+    if (definition.revision !== undefined && (typeof definition.revision !== 'string' || !definition.revision.trim())) throw new AgentDriverConfigurationError('Definition revision must be a non-empty string');
+    if (definition.tools && (!Array.isArray(definition.tools) || definition.tools.some(t => typeof t !== 'string' || !t.trim()) || new Set(definition.tools).size !== definition.tools.length)) {
+      throw new AgentDriverConfigurationError('Definition tools must be unique exact names');
+    }
+    const frozen = cloneAndFreezeJson(definition, 'Agent definition');
+    const bind = (options: RuntimeSessionOptions) => {
+      if (Object.keys(options.execution ?? {}).some(key => !['driver','connector','model','reasoning','driverConfig'].includes(key))) throw new AgentDriverConfigurationError('Execution binding contains a definition-owned or unknown field');
+      if (typeof options.execution?.connector !== 'string' || !options.execution.connector.trim() || typeof options.execution.model !== 'string' || !options.execution.model.trim()) throw new AgentDriverConfigurationError('Execution requires a named connector and model');
+      if (options.workspace && options.environment) throw new AgentDriverConfigurationError('Select workspace or environment, not both');
+      const workspace = options.environment?.type === 'local-directory' ? options.environment : options.workspace;
+      const spec = cloneAndFreezeSpec(cloneAndFreezeJson({ id: frozen.id, name: frozen.name, definition: frozen, ...options.execution,
+        environment: options.environment,
+        requiredCapabilities: [...(frozen.requiredCapabilities ?? []), { id: 'agent.definition' }, ...(frozen.tools?.length ? [{ id: 'tools.host' }] : [])],
+      }, 'Execution binding'));
+      return { spec, options: { ...options, workspace } };
+    };
+    return {
+      definition: frozen,
+      inspect: async (options): Promise<RuntimeInspection> => {
+        this.assertActive();
+        const bound = bind(options);
+        const capabilities = await this.backend.inspect(bound.spec, bound.options);
+        return { ...capabilities, definitionDigest: definitionDigest(frozen), recovery: capabilities.capabilities['runtime.control']?.constraints?.durability === 'durable' ? 'durable' : 'process' };
+      },
+      openSession: async options => {
+        this.assertActive();
+        const bound = bind(options);
+        const session = await this.backend.openSession(bound.spec, bound.options);
+        if (!('reference' in session)) { await session.destroy(); throw new AgentDriverConfigurationError('Backend does not implement definition sessions'); }
+        if (this._isDestroyed) { await session.destroy(); this.assertActive(); }
+        return this.trackDefinition(session as RuntimeSession);
+      },
+    };
+  }
+
+  async resumeSession(reference: RuntimeSessionReference, options: RuntimeResumeOptions): Promise<RuntimeSession> {
+    this.assertActive();
+    if (!this.backend.resumeSession) throw new AgentDriverConfigurationError('Backend does not support recovery');
+    const session = await this.backend.resumeSession(reference, options);
+    return this.trackDefinition(session);
+  }
+
+  async deleteSession(reference: RuntimeSessionReference, options: RuntimeResumeOptions): Promise<void> {
+    this.assertActive();
+    if (!this.backend.deleteSession) throw new AgentDriverConfigurationError('Backend does not support deletion');
+    await this.backend.deleteSession(reference, options);
+  }
+
+  private trackDefinition(session: RuntimeSession): RuntimeSession {
+    const prior = this.definitionSessions.get(session.id);
+    if (prior?.source === session) return prior.tracked;
+    if (prior) this.sessions.delete(prior.tracked);
+    let tracked!: TrackedRuntimeSession;
+    tracked = new TrackedRuntimeSession(session, () => {
+      this.sessions.delete(tracked);
+      if (this.definitionSessions.get(session.id)?.tracked === tracked) this.definitionSessions.delete(session.id);
+    });
+    this.definitionSessions.set(session.id, { source: session, tracked });
+    this.sessions.add(tracked);
+    return tracked;
+  }
+
   async destroy(): Promise<void> {
     if (this._isDestroyed) return;
     this._isDestroyed = true;
     await Promise.allSettled([...this.sessions].map((session) => session.destroy()));
     this.sessions.clear();
+    this.definitionSessions.clear();
     if (this.ownsBackend) await this.backend.destroy();
   }
 
@@ -111,4 +184,15 @@ class TrackedAgentSession implements AgentSession {
       this.onDestroy();
     }
   }
+}
+
+class TrackedRuntimeSession extends TrackedAgentSession implements RuntimeSession {
+  constructor(private readonly runtimeSession: RuntimeSession, onDestroy: () => void) { super(runtimeSession, onDestroy); }
+  override run(input: import('./types.js').AgentRunInput, options?: import('./types.js').RuntimeRunOptions) { return this.runtimeSession.run(input, options); }
+  reference() { return this.runtimeSession.reference(); }
+  inspectState() { return this.runtimeSession.inspectState(); }
+  getRun(runId: string) { return this.runtimeSession.getRun(runId); }
+  detach() { return this.runtimeSession.detach(); }
+  uploadFile(request: import('./types.js').RuntimeFileUpload) { return this.runtimeSession.uploadFile(request); }
+  downloadArtifact(request: import('./types.js').RuntimeArtifactDownload) { return this.runtimeSession.downloadArtifact(request); }
 }

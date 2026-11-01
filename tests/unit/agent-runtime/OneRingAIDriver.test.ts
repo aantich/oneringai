@@ -19,6 +19,22 @@ describe('OneRingAIDriver', () => {
     resetMockProviders();
   });
 
+  it('materializes definition tools before initialization and preserves the single native manager', async () => {
+    const provider = createMockConnector('definition-native'); makeProviderCurrent(provider);
+    provider.queueResponses([{ toolCalls: [{ name: 'probe', arguments: {} }], stopReason: 'tool_use' }, { text: 'done', stopReason: 'end_turn' }]);
+    const execute = vi.fn(async () => ({ success: false }));
+    const runtime = new AgentRuntime({ backend: new LocalExecutionBackend({
+      drivers: [new OneRingAIDriver({ trustAgentPolicy: true })],
+      resolveTools: () => ({ tools: [{ definition: { type: 'function', function: { name: 'probe', parameters: { type: 'object' } } }, execute }], fingerprint: 'scope-v1' }),
+    }) });
+    try {
+      const session = await runtime.createAgent({ id: 'native', instructions: 'Use probe.', tools: ['probe'] }).openSession({ execution: { driver: 'oneringai.agent', connector: 'definition-native', model: 'gpt-4' }, context: { userId: 'user' }, policy: policy() });
+      expect((await (await session.run('probe')).result).status).toBe('completed');
+      expect(execute).toHaveBeenCalledOnce();
+      expect(execute.mock.calls[0]?.[1]).toEqual(expect.objectContaining({ userId: 'user' }));
+    } finally { await runtime.destroy(); }
+  });
+
   it('runs an existing OneRingAI agent with its shared tool manager and normalized tool events', async () => {
     const provider = createMockConnector('runtime-mock');
     makeProviderCurrent(provider);

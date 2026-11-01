@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { JsonObject, JsonValue, RuntimeAgentSpec } from './types.js';
 import { AgentDriverConfigurationError } from './errors.js';
 
@@ -72,6 +73,20 @@ export function cloneAndFreezeSpec(spec: RuntimeAgentSpec): Readonly<RuntimeAgen
       throw new AgentDriverConfigurationError('Runtime agent reasoning.budgetTokens must be a positive safe integer');
     }
     validateReasoningEffort(spec.reasoning.effort, 'Runtime agent reasoning.effort');
+  }
+  if (spec.environment !== undefined) {
+    if (!spec.environment || typeof spec.environment !== 'object' || Array.isArray(spec.environment)) throw new AgentDriverConfigurationError('Runtime environment must be a placement object');
+    const environment = spec.environment;
+    if (!['none','local-directory','provider-managed'].includes(environment.type)) throw new AgentDriverConfigurationError('Unknown runtime environment type');
+    const keys = environment.type === 'none' ? ['type'] : environment.type === 'local-directory' ? ['type','path'] : ['type','reference'];
+    if (Object.keys(environment).some(key => !keys.includes(key))) throw new AgentDriverConfigurationError('Runtime environment has unknown fields');
+    if (environment.type === 'local-directory' && (typeof environment.path !== 'string' || !environment.path.trim())) throw new AgentDriverConfigurationError('Local environment path is required');
+    if (environment.type === 'provider-managed' && environment.reference !== undefined && (typeof environment.reference !== 'string' || !environment.reference.trim())) throw new AgentDriverConfigurationError('Managed environment reference must be non-empty');
+  }
+  if (spec.definition) {
+    if (spec.definition.id !== spec.id || typeof spec.definition.instructions !== 'string') throw new AgentDriverConfigurationError('Definition id must match its runtime spec and instructions must be a string');
+    const names = spec.definition.tools;
+    if (names && (!Array.isArray(names) || names.some(name => typeof name !== 'string' || !name.trim()) || new Set(names).size !== names.length)) throw new AgentDriverConfigurationError('Definition tools must be unique exact names');
   }
   validateCapabilityRequirements(spec.requiredCapabilities, 'Runtime agent requiredCapabilities');
   if (!isJsonValue(spec as unknown)) {
@@ -148,4 +163,28 @@ function validateReasoningEffort(effort: unknown, label: string): void {
   if (typeof effort !== 'string' || !efforts.has(effort)) {
     throw new AgentDriverConfigurationError(`${label} is invalid`);
   }
+}
+
+/** Stable digest for JSON records, including nested argument/property order. */
+export function contentDigest(value: unknown): string {
+  const canonical = (item: unknown): unknown => Array.isArray(item) ? item.map(canonical)
+    : item && typeof item === 'object'
+      ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([key, child]) => [key, canonical(child)]))
+      : item;
+  return createHash('sha256').update(JSON.stringify(canonical(value))).digest('hex');
+}
+
+/** Credential-free account/endpoint binding stamp. Credential refresh does not change it. */
+export function runtimeConnectorIdentity(connector: import('../core/Connector.js').Connector): string {
+  return contentDigest({ vendor: connector.vendor, baseURL: connector.baseURL, serviceType: connector.config.serviceType,
+    organization: connector.config.options?.organization, project: connector.config.options?.project, anthropicVersion: connector.config.options?.anthropicVersion });
+}
+/** Recheck current scoped connector authorization before each managed SDK request. */
+export function runtimeTokenProvider(registry: Pick<import('../domain/interfaces/IConnectorRegistry.js').IConnectorRegistry, 'get'>, name: string): () => Promise<string> {
+  const expected = runtimeConnectorIdentity(registry.get(name));
+  return async () => {
+    const connector = registry.get(name);
+    if (runtimeConnectorIdentity(connector) !== expected || !['api_key', 'api_key_provider'].includes(connector.config.auth.type)) throw new AgentDriverConfigurationError('Managed connector endpoint/account/authentication changed');
+    return connector.getToken();
+  };
 }

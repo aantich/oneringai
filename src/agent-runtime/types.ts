@@ -53,6 +53,8 @@ export interface ResolvedAgentCapabilities {
   driverId: string;
   capabilities: Record<string, AgentCapability>;
   configuration?: ResolvedAgentConfiguration;
+  /** Present for common definitions; legacy capability descriptors remain unchanged. */
+  inspection?: RuntimeInspectionDetails;
 }
 
 export type RuntimeReasoningEffort =
@@ -80,6 +82,9 @@ export interface ResolvedAgentConfiguration {
 export interface RuntimeAgentSpec {
   id: string;
   name?: string;
+  /** Opt-in logical definition; legacy specs are unchanged. */
+  definition?: RuntimeAgentDefinition;
+  environment?: RuntimeEnvironmentRequest;
   driver: string;
   connector?: string;
   model?: string;
@@ -307,4 +312,85 @@ export interface RuntimeAgent {
 
   inspect(request?: AgentInspectionRequest): Promise<ResolvedAgentCapabilities>;
   openSession(options: OpenAgentSessionOptions): Promise<AgentSession>;
+}
+
+/** A harness-independent task definition. Tools are exact host-resolved names. */
+export interface RuntimeAgentDefinition {
+  id: string;
+  revision?: string;
+  name?: string;
+  instructions: string;
+  tools?: readonly string[];
+  requiredCapabilities?: readonly AgentCapabilityRequirement[];
+  metadata?: JsonObject;
+}
+export interface RuntimeExecutionBinding {
+  driver: string;
+  connector: string;
+  model: string;
+  reasoning?: RuntimeReasoningConfig;
+  driverConfig?: JsonObject;
+}
+export type RuntimeEnvironmentRequest =
+  | { type: 'none' }
+  | { type: 'local-directory'; path: string }
+  | { type: 'provider-managed'; reference?: string };
+export interface RuntimeSessionOptions extends OpenAgentSessionOptions {
+  execution: RuntimeExecutionBinding;
+  environment?: RuntimeEnvironmentRequest;
+}
+export interface RuntimeInspectionDetails {
+  executionDigest: string;
+  tools: { name: string; schemaDigest: string; transportName?: string }[];
+  environment: RuntimeEnvironmentRequest | { type: 'unspecified' };
+  enforcement: Record<string, 'native' | 'host' | 'unknown'>;
+  accountAccess: 'unknown';
+  usageCoverage: 'native-reported-partial';
+  activityReplay: 'bounded-process-history';
+  notes: string[];
+}
+export interface RuntimeInspection extends ResolvedAgentCapabilities {
+  definitionDigest: string;
+  recovery: 'process' | 'durable';
+}
+export interface RuntimeSessionReference { version: 1; id: string }
+export interface RuntimeSessionSnapshot {
+  connection: 'attached' | 'reconnecting';
+  activity: 'ready' | 'running' | 'waiting' | 'unknown' | 'terminal';
+  activeRunId?: string;
+  waitReason?: string;
+  unresolvedEffects: boolean;
+}
+export interface RuntimeRunOptions extends AgentRunOptions { requestId?: string }
+export interface RuntimeSession extends AgentSession {
+  run(input: AgentRunInput, options?: RuntimeRunOptions): Promise<AgentRun>;
+  reference(): RuntimeSessionReference;
+  inspectState(): Promise<RuntimeSessionSnapshot>;
+  getRun(runId: string): Promise<AgentRun>;
+  detach(): Promise<void>;
+  /** Host-only transfers within the backend's explicitly authorized directory. */
+  uploadFile(request: RuntimeFileUpload): Promise<AgentArtifact>;
+  downloadArtifact(request: RuntimeArtifactDownload): Promise<{ path: string; bytes: number; mediaType: string }>;
+}
+export interface RuntimeDefinitionAgent {
+  readonly definition: Readonly<RuntimeAgentDefinition>;
+  inspect(options: RuntimeSessionOptions): Promise<RuntimeInspection>;
+  openSession(options: RuntimeSessionOptions): Promise<RuntimeSession>;
+}
+export interface RuntimeResumeOptions {
+  context: TrustedRuntimeContext;
+  observation?: AgentObservationOptions;
+}
+
+export interface RuntimeFileUpload {
+  /** Relative path within the host-authorized transfer directory. */
+  path: string;
+  /** Single portable filename, defaulting to the source filename. */
+  name?: string;
+  mediaType: string;
+}
+export interface RuntimeArtifactDownload {
+  reference: string;
+  /** New relative file within the host-authorized transfer directory; never overwritten. */
+  path: string;
 }

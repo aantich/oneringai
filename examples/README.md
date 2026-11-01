@@ -465,3 +465,31 @@ After building, `npm run example:orchestrator-factory` runs [orchestrator-factor
 - [Vendor presentation](vendor-presentation.ts): `npm run example:vendor-presentation`.
   Immutable browser-safe catalog, host label override, explicit unknown fallback
   and identity/presentation separation. No network or keys.
+
+
+## Agent runtime harness examples
+
+Build the public package first. These examples import only documented public exports
+and subpaths. The defaults are offline: synthetic model/CLI/HTTP transports, actual
+adapters/SDK serialization, no provider account. Install both optional local SDK peers
+for the five-harness examples. MCP examples need an authenticated loopback socket.
+
+| Command from repository root | Expected behavior and cleanup |
+| --- | --- |
+| `npm run example:agent-runtime-swappable` | Creates one logical agent; two ACK turns and one selected host-tool call per turn through all five bindings; one definition digest. Uses the canonical baseline reporter's JSON/usage helpers. Removes private native/workspace/control state. |
+| `npm run example:agent-runtime-claude` | Real in-process MCP with scripted Claude queries, ACK twice and raw business-value handling. Removes private state. |
+| `npm run example:agent-runtime-recovery` | Two actual processes in each scenario; inputs=1, externalWrites=1, foreignDenied=true, recovered=ACK. Stored-result redelivery plus deliberate child exit after a synthetic write; original receipt recovery, no replacement action. Removes temporary files. |
+| `npm run example:agent-runtime-openai-managed` | Actual SDK plus fake HTTP/SSE; ACK, one input/tool action despite lost result response, paginated output and owned deletion. |
+| `npm run example:agent-runtime-claude-managed` | Actual SDK plus fake HTTP/SSE; ACK after lost result response, then budget waiting and confirmed cancellation with zero actions. Owned cleanup. |
+| `npm run example:agent-runtime-managed-restart` | Both real vendor SDKs use one external loopback mock service. Producer crashes after one accepted tool result; a second process recovers ACK with inputs=1/effects=1 and no cancellation/resubmission. Removes control/mock state. |
+| `npm run example:agent-runtime-artifacts` | Explicit bounded upload/download on both managed drivers; exact bytes, foreign-reference denial and owned cleanup. |
+| `npm run example:amos-runtime` | One AMOS UI consumer across five bindings, one action each, ACK and native-command rejection. Source demo and controller are included in package closure. |
+
+The existing `agent-runtime-local.ts oneringai|codex` commands preserve explicitly
+selected **real/billable** behavior and are excluded from offline runs. The Claude and
+managed examples' `--live` path additionally requires `ONERINGAI_ALLOW_LIVE=1` and the
+vendor API key (optional trusted Anthropic workspace). These gates are prepared but
+unrun: live LLM/native agent testing remains paused. Managed example failure retains
+its recovery reference/private control directory; keep these for repair rather than
+submitting the task again. No subscription credentials are read. See [the canonical
+guide](../USER_GUIDE.md#agent-runtime-preview) and [delivery ledger](../docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md).

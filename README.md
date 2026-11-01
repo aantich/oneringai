@@ -160,20 +160,34 @@ and runnable examples when deeper work is required.
 
 ## Agent Runtime: run complete agents through one API
 
-The preview **Agent Runtime** is the integration layer for pre-built agent
-systems—not merely another text-model adapter. It lets an application or
-workflow select a native OneRingAI agent or an OpenAI Codex SDK agent through
-the same specification/session/run API while each driver keeps its own agent
-loop, tools, context, and workspace behavior.
+The preview **Agent Runtime** runs complete agent harnesses through one definition,
+session and run API. OneRingAI retains its own loop; external drivers retain their
+vendor harness and normalize supported tools, activity, results and recovery.
 
-| What the runtime normalizes | Current local-preview behavior |
-|-----------------------------|--------------------------------|
-| Drivers | Native OneRingAI agents and the optional Codex TypeScript SDK |
-| Selection | Agent, model, and model-validated reasoning effort at spec or per-run scope |
-| Observation | Live messages, vendor-exposed reasoning, and tool/command/file activity when exposed by the selected driver, plus usage and terminal results |
-| Control | Autonomous, observable runs; approvals and steering are capability-gated and not yet implemented locally |
-| Safety | Explicit policy, bounded output/events, cancellation cleanup, one writer per workspace, and fail-closed workspace quarantine |
-| Placement | Trusted local execution today; isolated container/microVM execution is the planned server backend |
+| Execution binding | Driver | Branch availability |
+| --- | --- | --- |
+| OneRingAI harness with supported text providers | `oneringai.agent` | Implemented; existing `Agent` APIs remain supported |
+| Local OpenAI Codex SDK | `openai.codex.sdk` | Optional SDK; authenticated host-tool MCP |
+| Local Claude Agent SDK | `anthropic.agent.sdk` | Optional SDK; host-tools-only profile |
+| OpenAI managed Agents API | `openai.agents.api` | Durable control required; no-environment or hosted sandbox |
+| Claude Managed Agents API | `anthropic.managed.api` | Durable control and provider-managed environment required |
+
+The additive `runtime.createAgent(definition)` API separates reusable instructions
+and selected host tools from `execution: { driver, connector, model, reasoning? }`
+at session binding. Named Connectors remain the credential authority. Capabilities,
+policy and environment support are checked before execution. Legacy `.agent(spec)`
+usage remains supported. Managed activity can detach and recover through scoped
+references without resubmitting input; explicit file transfers have host-selected
+byte/MIME/path bounds. AMOS has an opt-in harness-neutral runtime mode.
+
+All new bindings have deterministic offline adapter/SDK coverage. **Live vendor,
+CLI, platform and account verification remains pending under the live-testing pause.**
+This is source on the branch, not a verified package release. API-key billing is
+used; consumer ChatGPT/Claude subscription credentials are not extracted or reused.
+See the [canonical guide](USER_GUIDE.md#reusable-definitions-and-harness-bindings),
+[five-harness example](examples/agent-runtime-swappable.ts),
+[file-transfer example](examples/agent-runtime-artifacts.ts) and
+[delivery ledger](docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md).
 
 The example below assumes an OpenAI connector named `openai-main`; install
 `@openai/codex-sdk` when enabling the optional Codex driver.
@@ -206,7 +220,7 @@ fail in capability preflight instead of silently degrading.
 Start with the **[detailed Agent Runtime guide](./USER_GUIDE.md#agent-runtime-preview)**,
 run the **[local OneRingAI/Codex example](./examples/agent-runtime-local.ts)**,
 and use the **[design document](./docs/designs/AGENT_RUNTIME.md)** for architectural
-decisions, security boundaries, and the server/App Server/Claude/A2A roadmap.
+decisions, ownership boundaries and remaining server/App Server/A2A designs.
 
 ## Meet AMOS: a terminal agent built with OneRingAI
 
@@ -357,8 +371,8 @@ plugin lifecycle, stores, compaction, persistence, and custom plugins.
 | Document | Description |
 |----------|-------------|
 | **[Agent Guide](./AGENTS.md)** | Canonical context file for Codex, Claude Code, and custom coding agents: architecture, recipes, capability routing, safety invariants, and documentation map |
-| **[Agent Runtime Guide](./USER_GUIDE.md#agent-runtime-preview)** | Detailed usage guide for interchangeable OneRingAI/Codex agents, model and reasoning controls, live observation, capabilities, policy, lifecycle, and cleanup |
-| **[Agent Runtime Design](./docs/designs/AGENT_RUNTIME.md)** | Implemented local preview for OneRingAI and Codex SDK agents: generic model/reasoning controls, live observable autonomous runs, capabilities, policy, and the isolated-server roadmap |
+| **[Agent Runtime Guide](./USER_GUIDE.md#agent-runtime-preview)** | Detailed usage guide for interchangeable OneRingAI, Codex and Claude harnesses, model and reasoning controls, live observation, capabilities, policy, lifecycle, and cleanup |
+| **[Agent Runtime Design](./docs/designs/AGENT_RUNTIME.md)** | Local SDK and managed API adapters: generic model/reasoning controls, live observable autonomous runs, capabilities, policy, and the isolated-server roadmap |
 | **[Agentic Architecture Evolution Plan](./docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md)** | Accepted roadmap direction: nine core stages plus conditional extensions for context, model roles, tools, and learning, with tests, examples, AMOS, and compatibility gates |
 | **[Version 2 Guide (work in progress)](./docs/VERSION_2_GUIDE.md)** | Living adoption guide tracking planned, branch-available, and released capabilities; stages 00–02 are implemented on the development branch; see provider validation limits |
 | **[Agentic Baseline Evaluation](./docs/AGENTIC_BASELINE_EVALUATION.md)** | Repository-only offline replay and opt-in live LLM workloads, evidence-based completion checks, compatibility fixtures, and evaluation limits |

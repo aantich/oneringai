@@ -6,7 +6,12 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["contracts.ts"]
+  "include": [
+    "contracts.ts",
+    "public-contracts.ts"
+  ]
 }

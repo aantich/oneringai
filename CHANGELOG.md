@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Agent runtime review corrections dispatch the exact admitted request snapshot,
+  preserve live cancellation signals, release failed-restore writer ownership, and
+  publish restored sessions only after successful initialization. Failed managed
+  observation restoration preserves native work and permits retry of the original
+  reference without cancellation or resubmission.
+
+- Agent harness H0–H6 adds reusable logical definitions with per-session execution
+  bindings, exact host-resolved blocking tools, optional durable scoped control
+  storage, request/outbox reconciliation, inspection and explicit managed file
+  transfers. Native OneRingAI, local Codex/Claude SDKs and managed OpenAI/Claude APIs
+  share one observable session/run surface while retaining their native loops.
+  AMOS adds opt-in runtime mode; guides, generated API and offline examples cover
+  setup, policies, recovery, file ownership and desktop boundaries. Legacy APIs,
+  defaults and run/event/status unions remain supported. Branch availability only;
+  live vendor/platform verification remains paused/pending and no release is implied.
+
+
 - Consumer review corrections keep enhanced generic credentials on their configured
   origin through redirects, preserve unknown remote execution when legacy overrides
   omit authoritative outcomes, reuse evidence on repeated/concurrent receipt lookup,

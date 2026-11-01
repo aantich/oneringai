@@ -1,13 +1,12 @@
 # Vendor-Neutral Agent Runtime
 
-**Status:** local preview implemented; server and additional-vendor phases are designs only
+**Status:** H0–H6 implemented on branch with offline validation; live vendor verification and release pending
 
-**Date:** 2026-08-22
+**Date:** 2026-08-22; harness expansion updated 2026-10-28
 
-**Implemented drivers:** native OneRingAI agents and the OpenAI Codex TypeScript SDK
+**Implemented drivers:** native OneRingAI, local Codex/Claude SDKs, OpenAI managed Agents API and Claude Managed Agents API
 
-**Designed extensions:** Codex App Server, Claude Agent SDK, other agent harnesses,
-isolated server workers, hosted agents, and A2A interoperability
+**Designed extensions:** Codex App Server, other harnesses, isolated server workers and A2A interoperability
 
 **Public documentation:** [README overview](../../README.md#agent-runtime-run-complete-agents-through-one-api),
 [detailed User Guide](../../USER_GUIDE.md#agent-runtime-preview), and
@@ -36,13 +35,16 @@ The implemented local preview contains:
 - live, sequence-numbered, bounded event observation;
 - cancellation, limits, structured results, and explicit errors;
 - a trusted in-process local backend;
-- OneRingAI and optional Codex SDK drivers;
+- five interchangeable harness drivers, scoped host tools and explicit managed transfers;
+- optional same-host acknowledged control storage and native checkpoint reconciliation;
 - deterministic unit coverage and credential-gated live integration tests.
 
-It intentionally does not implement a server control plane, durable cross-process
-sessions, containers, Claude, Codex App Server, A2A, approval callbacks, user-input
-callbacks, or live steering. Those require separately reviewed phases. The public
-contract already represents their capabilities without falsely advertising them.
+The local backend executes adapters in the trusted host process; managed harnesses run
+remotely at the vendor. Durable control/native restore are explicitly capability-bound,
+not durable event replay. Server control planes, containers, Codex App Server, A2A,
+interactive approvals, user input and steering remain deferred. The approved
+[harness design](AGENT_HARNESS_EXPANSION.md) and [delivery ledger](AGENT_HARNESS_DELIVERY_LEDGER.md)
+record current contracts and validation; the User Guide owns usage recipes.
 
 ## Documentation contract
 
@@ -326,9 +328,9 @@ interface AgentRun {
 }
 ```
 
-`steer()` and `respondToInteraction()` are stable capability-gated methods. Both
-implemented drivers report them unsupported; calls fail with a typed capability
-error. This permits future App Server/Claude drivers without equating event streaming
+`steer()` and `respondToInteraction()` are stable capability-gated methods. Current
+drivers report them unsupported; calls fail with a typed capability
+error. This permits future bidirectional drivers without equating event streaming
 with intervention.
 
 ### Session options
@@ -433,7 +435,7 @@ The model-provider connection is distinct from shell/tool egress. Denying
 
 `commands: 'denied'` is accepted only when the driver can prevent command execution.
 `approvals: 'interactive'` requires a complete driver/backend/caller interaction
-bridge. Both current drivers reject it. Current autonomous runs use
+bridge. Current drivers reject it. Current autonomous runs use
 `approvals: 'deny'`; the Codex SDK maps that to `approvalPolicy: 'never'`.
 
 Trusted tenant/user/group context is derived from host authentication, never model
@@ -526,8 +528,9 @@ with `finishReason: 'runtime_limit'`.
 - Rejects project `.codex/config.toml` by default and rechecks before every turn.
   `allowProjectConfig: true` is an explicit local-workspace trust decision and remains
   unsuitable as a tenant boundary.
-- Uses `approvalPolicy: 'never'`; interactive approval, user input, steering, durable
-  restore, and tenant isolation remain unsupported.
+- Uses `approvalPolicy: 'never'`; interaction, steering and tenant isolation remain unsupported.
+  Common definitions add authenticated loopback MCP and idle private-state checkpoint
+  restoration when native dependencies survive. Active interrupted local input stays unknown.
 
 ### Future `openai.codex.app-server`
 
@@ -537,7 +540,16 @@ request IDs, server notifications, turn cancellation, process supervision, and
 version compatibility. App Server is still run inside the host's local process domain
 or isolated worker; it is not the remote OneRingAI server boundary itself.
 
-### Future Claude/other drivers
+### Claude and managed harness drivers
+
+`anthropic.agent.sdk` uses an isolated optional local SDK with selected host tools.
+`openai.agents.api` and `anthropic.managed.api` retain vendor-owned loops, native
+resource ownership and canonical pending/terminal state. Durable admission/outbox
+records are acknowledged before dispatch/delivery; only original receipts can
+reconcile effects. `inspectState` separates observer connection from native activity.
+See [current setup and support](../../USER_GUIDE.md#agent-runtime-preview).
+
+### Future drivers
 
 Each maps native model/reasoning options, permissions, interactions, sessions, and
 events to capabilities. Vendor-specific options belong only in reviewed driver config
@@ -545,7 +557,9 @@ when no honest generic field exists. Arbitrary vendor passthrough is prohibited.
 
 ## Local lifecycle and safety
 
-The local backend accepts trusted `local-directory` workspaces only. It resolves the
+Local workspace drivers accept trusted `local-directory` workspaces. Managed drivers
+accept only their declared `none`/`provider-managed` placements; no local directory
+is implicitly transferred. It resolves the
 real path, rejects filesystem roots and traversal, checks requested access, permits
 one active run per session, and permits one writer per resolved workspace.
 
@@ -654,7 +668,7 @@ npm run test:unit
 npm run examples:check
 ```
 
-The local preview is accepted when both drivers use the same caller workflow, expose
+The harness expansion is accepted when all five declared profiles use the same caller workflow, expose
 useful live autonomous activity, support multi-turn sessions, apply model/reasoning
 selection, complete without subscribers, cancel/clean up correctly, preserve secrets,
 and fail unsupported capabilities honestly.
@@ -664,9 +678,8 @@ and fail unsupported capabilities honestly.
 1. Server threat model, remote backend, queue, worker image, execution leases,
    credential leasing, durable event/replay/checkpoint protocol, and control API.
 2. Codex App Server driver with interaction and steering semantics.
-3. Claude Agent SDK driver.
-4. A2A inbound/outbound adapters.
-5. Workflow/orchestrator integrations that schedule runtime agents.
+3. A2A inbound/outbound adapters.
+4. Workflow/orchestrator integrations that schedule runtime agents.
 
 ## Rejected alternatives
 
@@ -685,7 +698,10 @@ and fail unsupported capabilities honestly.
 - **Generic replacement for `StoredAgentDefinition`:** would destabilize a valid
   OneRingAI-native persistence contract without proving value.
 
-## Frozen agreements
+## Original preview agreements
+
+Items 9 and 11 below describe the original August preview. H0–H6 extend drivers and
+acknowledged control/native recovery; bounded activity replay remains process-local.
 
 1. Add a preview runtime above the existing `Agent` API.
 2. Keep drivers independent from execution backends.
@@ -715,3 +731,18 @@ and fail unsupported capabilities honestly.
 - [Claude Agent SDK overview](https://platform.claude.com/docs/en/agent-sdk/overview)
 - [A2A specification](https://a2a-protocol.org/latest/specification/)
 - `src/agent-runtime/`
+
+
+H1 additive definitions use the existing backend/driver/session contracts. Native materialization shares Agent/context tools; external tools retain their original manager/evidence owner. Codex uses a session-authenticated loopback MCP broker. See [delivery status](AGENT_HARNESS_DELIVERY_LEDGER.md) and [user recipes](../../USER_GUIDE.md#reusable-definitions-and-harness-bindings). No live parity claim is made.
+
+
+H2 implements local Claude via optional SDK 0.3.312 with real in-process MCP raw schemas and synthetic-query coverage. Tools-only policy, isolated config/env, no native delegation/plugins/memory. Cross-process restore and live platform/account validation are not implied. See [setup](../../USER_GUIDE.md#local-claude-agent-sdk).
+
+
+H3 control ownership: optional scoped IRuntimeSessionStorage (memory or acknowledged single-host file), one writer/revision queue, input admission before dispatch, settled result/outbox before delivery, explicit observation gaps. Existing DriverSession checkpoint/inspectState/detach and AgentDriver restoreSession/deleteSession hooks remain optional. Local restore uses complete context/transcript state only; interrupted local input stays unknown. [Recovery recipes](../../USER_GUIDE.md#runtime-recovery-and-control-storage) and [delivery evidence](AGENT_HARNESS_DELIVERY_LEDGER.md) are canonical.
+
+
+H4 adds OpenAI managed sessions via official openai SDK: lazy inline-session creation, no-environment/explicit hosted placement, exact host functions, root-turn terminal reconciliation, all-page output recovery, idempotent result delivery and scoped owned deletion. Fixed-first-turn output schema and verified model/effort profiles are explicit limits. Source/wire validation is not live account authorization. See [canonical setup](../../USER_GUIDE.md#openai-managed-agents-api).
+
+
+H5 implements Claude managed agent/environment/session ownership with pinned versions and explicit native tool denial, actual SDK custom-tool events, epoch-bound input echoes, paginated history and exact idle/interrupt semantics. Managed DriverSession.observationIndependent is optional/additive: observer loss does not itself cancel service-owned work. Per-session model/reasoning, unsupported native schema output and reasoning activity-only signals are explicit capability boundaries. [Canonical recipe](../../USER_GUIDE.md#claude-managed-agents-api).

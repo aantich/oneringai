@@ -633,3 +633,107 @@ C9-C `/vendor` reuses the shared presentation catalog while preserving AMOS's ex
 Google AI, Google Vertex AI, xAI Grok, Mistral AI and Ollama (Local) labels. Vendor IDs,
 connector validation and default-model selection are unchanged. C9-B's parameter
 policy does not change AMOS defaults; Realtime metadata does not add a voice UI.
+
+
+## Agent runtime mode
+
+The default AMOS mode still owns a native `Agent` and its existing saved settings.
+An explicit `--runtime-host /absolute/path/host.mjs` selects the generic runtime
+controller. It accepts any registered current/future driver and never assumes an
+external session has `Agent.context`. This is available in the source AMOS app;
+no separately published AMOS version is claimed.
+
+The module is **trusted executable host code**, loaded in the main Node.js process.
+It exports `createAmosRuntimeHost(dataDir)` returning `{ runtime, definition, options,
+resume? }`. It uses ordinary public APIs to configure named Connectors, driver
+constructors, tool authorization, control storage, policies and trusted scope; no
+second credential/configuration schema is introduced. Keep this path out of renderer
+or model input. For example, a local Claude tools-only host module:
+
+```javascript
+import path from 'node:path';
+import { Connector, Vendor } from '@everworker/oneringai';
+import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage }
+  from '@everworker/oneringai/agent-runtime';
+import { ClaudeAgentSdkDriver } from '@everworker/oneringai/agent-runtime/claude';
+
+export function createAmosRuntimeHost(dataDir) {
+  Connector.create({ name: 'amos-claude', vendor: Vendor.Anthropic,
+    auth: { type: 'api_key_provider', getApiKey: async () => {
+      if (!process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY required');
+      return process.env.ANTHROPIC_API_KEY;
+    } },
+  });
+  return {
+    runtime: new AgentRuntime({ backend: new LocalExecutionBackend({
+      drivers: [new ClaudeAgentSdkDriver()],
+      sessionStorage: new FileRuntimeSessionStorage(path.join(dataDir, 'runtime-control')),
+    }) }),
+    definition: { id: 'amos-assistant', instructions: 'Be accurate and concise.' },
+    options: {
+      execution: { driver: 'anthropic.agent.sdk', connector: 'amos-claude', model: 'claude-sonnet-4-6' },
+      context: { userId: 'local-owner' }, // Host-selected authenticated owner.
+      environment: { type: 'none' },
+      policy: { filesystem: 'denied', commands: 'denied', sandboxNetwork: 'denied',
+        providerWebSearch: 'denied', approvals: 'deny' },
+    },
+  };
+}
+```
+
+Install the optional Claude SDK and build the library and AMOS before using that
+module (`npm run build`, then `npm run --prefix apps/amos build`). From the repository
+root run `node apps/amos/dist/index.js --runtime-host /absolute/path/host.mjs`.
+This real SDK mode is billable; it has not been invoked while live testing is paused.
+Host modules can instead register native OneRingAI, Codex, managed drivers or custom
+future drivers without changing the controller. For selected application tools,
+configure the existing runtime resolver/ToolManager and permissions as documented in
+[the canonical runtime chapter](../../USER_GUIDE.md#reusable-definitions-and-harness-bindings).
+
+| Input | Behavior |
+| --- | --- |
+| Ordinary text | Starts a turn on the current bound session; active runs block another turn. |
+| `/inspect` | Displays the attached session's actual capabilities/configuration, including restored bindings. |
+| `/status` | Connection, native activity, wait reason, active run and unresolved effects. |
+| `/stop` or Ctrl-C | Cancels queued input and pending admission, then requests native cancellation for an active turn; its result remains pending until native stop is confirmed. |
+| `/detach` | Releases observation/writer ownership; supported managed native work keeps running. Prints reference. |
+| `/resume` | Reattaches the same saved reference with renewed trusted scope; never sends a prompt. |
+| `/exit` or EOF | Cancels and disposes the attached handle; after detach, preserves native work/control data. |
+| `/context`, `/routing`, `/routine`, `/helpers`, `/model`, tool mutation commands | Rejected in runtime mode; use the standard native AMOS mode. |
+
+The controller prints JSON activity/result/state frames. It observes continuously
+without using observation as approval. Interactive approvals, questions and steering
+are capability-rejected in current profiles. Persist the session frame's reference
+in host application storage; supply it as `resume` after restart. AMOS does not restore
+routine/ModelTask authority or automatically resubmit input. Native/local history
+restore additionally needs a verified complete checkpoint; the SDK drivers require a
+trusted `verifyNativeCheckpoint` callback before restoring prior native history.
+Managed resume instead retrieves canonical provider state. File-backed control
+requires POSIX fsync; other platforms need a custom acknowledged adapter.
+
+`destroy` releases the local handle; explicit `runtime.deleteSession(reference,
+{ context })` also cleans owned native resources and the control record after effects
+are reconciled. Borrowed native environments are preserved. Retain references and
+control data after uncertainty/cleanup errors. No default AMOS command deletes them.
+The host owns connector/backend cleanup and process shutdown. See [desktop/file
+boundaries](../../USER_GUIDE.md#desktop-and-amos-integration) before exposing IPC.
+
+Offline verification from the root, after a library build:
+
+```bash
+npm run example:amos-runtime
+npm run example:agent-runtime-swappable
+npm run example:agent-runtime-recovery
+npm run example:agent-runtime-artifacts
+npm run example:agent-runtime-managed-restart
+```
+
+These run actual adapters with synthetic model/CLI/HTTP transports. The AMOS demo
+checks ACK and exactly one selected tool call for each of five harnesses, plus native
+command rejection. The swappable demo creates one logical agent and continues it
+twice on every binding. The recovery demo uses real child-process restarts, original
+receipt reconciliation and foreign-scope denial; the transfer demo checks exact bytes,
+foreign references and owned cleanup. Temporary state is removed. Codex's offline
+fixture uses a real authenticated **loopback** MCP listener, requiring local socket
+permission but no provider account or native CLI. Native provider/platform tests remain
+pending under the live-testing pause.

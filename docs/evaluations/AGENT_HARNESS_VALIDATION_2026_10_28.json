@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-28",
+  "baselineCommit": "53e85de71a4949dc5ce85d3b09d011995782468c",
+  "scope": "Agent Harness Expansion revision 3, H0-H6",
+  "availability": "branch implementation, offline and extracted-package validated; unreleased; live provider verification pending",
+  "liveTesting": "paused; no live provider/CLI/LLM workload invoked",
+  "environment": {
+    "platform": "macOS-26.4-arm64-arm-64bit-Mach-O",
+    "node": "v24.20.0"
+  },
+  "unit": {
+    "files": 421,
+    "passed": 9285,
+    "runtimeAndAmos": 124
+  },
+  "sourceExamples": [
+    {
+      "example": "examples/agent-runtime-swappable.ts",
+      "exitCode": 0,
+      "outputSHA256": "b04deed675abea5ed2bca3f0ca53f88dbb204bc55918d451d5f32bf645ea3c12"
+    },
+    {
+      "example": "examples/agent-runtime-claude.ts",
+      "exitCode": 0,
+      "outputSHA256": "fac07ab96a49cfbcc2b885ab208a5edcac4b89d48dae35f219b9811843505c9a"
+    },
+    {
+      "example": "examples/agent-runtime-recovery.ts",
+      "exitCode": 0,
+      "outputSHA256": "2e59a5a39e340d6f9220a6d6601b58c36811b63c0c50f6dbd1d57b5199ec37ab"
+    },
+    {
+      "example": "examples/agent-runtime-openai-managed.ts",
+      "exitCode": 0,
+      "outputSHA256": "f722e24d8ebaeafecf1d69026aa62479f10f3d7085fe95d0b0962c4f21d9fa68"
+    },
+    {
+      "example": "examples/agent-runtime-claude-managed.ts",
+      "exitCode": 0,
+      "outputSHA256": "b8595e84d16f575a298b0eacccad2868f26d361bb076675bc00f99ee9d26d309"
+    },
+    {
+      "example": "examples/agent-runtime-artifacts.ts",
+      "exitCode": 0,
+      "outputSHA256": "79e957d4f30e5dea3fab5dcea8f92024112eece36f9c199f5d1819578d78cade"
+    },
+    {
+      "example": "examples/agent-runtime-managed-restart.ts",
+      "exitCode": 0,
+      "outputSHA256": "e30e5ec97f808401d7e869a86a84b24befacafb2617d50a6e74fccccd5cc82f0"
+    },
+    {
+      "example": "apps/amos/examples/agent-runtime-offline.ts",
+      "exitCode": 0,
+      "outputSHA256": "2de3d6f41da19eba112eb463681a25361f963294046a6d3d9aaaf67e4ae44f67"
+    }
+  ],
+  "checks": {
+    "build": "pass: 33 exports and ESM/CJS Connector identity",
+    "typecheck": "pass",
+    "lint": "pass",
+    "examplesCheck": "pass",
+    "legacyPublicCompatibility": "pass",
+    "designAndCurrentPublicContracts": "pass",
+    "offlineStage00Baseline": "pass",
+    "amosTypecheckBuildLint": "pass",
+    "amosBuiltCli": "pass: same reference after detach/resume, native command denied, queued/in-flight admission stops both admit zero inputs",
+    "managedRealProcessRestart": "pass: both vendors, one input/one effect, no implicit cancel",
+    "addedMarkdownLinks": "pass: 145 added local paths/anchors",
+    "package": "pass: all eight examples from extracted 461-file artifact; ESM/CJS entries and Connector identity; final evidence/documentation-only repack preserves all other bytes",
+    "finalFailureReview": "pass: failed result acknowledgement stops native continuation, repair redelivers once; all four statuses/output reach explicit owner lifecycle",
+    "admissionConcurrency": "pass: synchronous admission reservation excludes transfers/detach; destroy/cancel prevent dispatch"
+  },
+  "boundaries": [
+    "API-key authentication through named connectors; account access unknown until native requests",
+    "POSIX single-host file control; macOS tested; Windows needs a custom adapter",
+    "Prior local SDK history restore requires host native-checkpoint verification; active local interrupted input stays unknown",
+    "Initial local Claude profile is host-tools-only; managed settings/capabilities remain endpoint-specific",
+    "No native workflow/ModelTask authority restored; interactive approvals/steering/remote backend/A2A deferred"
+  ],
+  "sourceSHA256": {
+    "apps/amos/examples/agent-runtime-offline.ts": "da38ff2f5fb4228c448e1727bead4a9433d42df30be11fa00d6a23277fb44782",
+    "apps/amos/src/index.ts": "f15fe4bffca0c6a40ad7a2fec57970ed0cac7bc5479abce3250345929f674280",
+    "apps/amos/src/runtime/AmosRuntimeController.ts": "f08c0dbb201d4aa4533a7a7fcff7a14c984049a3ce1ed26cd80bb927cb924478",
+    "apps/amos/src/runtime/cli.ts": "f5b94e56e347c92b732507c151228a8bb4d474542356267337c682f126cd4c9c",
+    "docs/evaluations/agent-harness-design/contracts.ts": "7976f30df816329f3127ab7fef4f103db2c315c8a9e656824b35b9849f6a73a4",
+    "docs/evaluations/agent-harness-design/public-contracts.ts": "1a391f3dad30b105d2be992e871d730c1ff8cb16dd163b40d30c514a898cb43f",
+    "docs/evaluations/agent-harness-design/tsconfig.json": "65546d6099a2ee1e52134999026d4f09b612d093b5bf8154b3b98bcd7cd6ce77",
+    "examples/agent-runtime-artifacts.ts": "06e4b7668e539eec428b42c1f2f2ab5408a88783a5d3963e84503873495709b1",
+    "examples/agent-runtime-claude-managed.ts": "5c32310ba47cb8e4e01e92d94c13f713f23ae95d25e12e0ccb36e0aad4901b12",
+    "examples/agent-runtime-claude.ts": "c61752210836bbe65fcd8208fe4af10a2a5f6ae61718e91c86061548c90fe0f6",
+    "examples/agent-runtime-managed-restart.ts": "27c545c303b95f40acf5d97e5e6c5b2f3615aa10e91f1eedee684c61b12306c7",
+    "examples/agent-runtime-openai-managed.ts": "8a81a31afd496244b7c355b4b5d63b675735cd996b4562ad85b5bb7f25dc807d",
+    "examples/agent-runtime-recovery.ts": "935b319d22ea6ff238dbf0937968d8e2c06fbbde0f08df804d336e85c8916506",
+    "examples/agent-runtime-swappable.ts": "23c3ac5829f83bd4048f90f46689982da4cc74cbc886491f07cda2a84a1757b6",
+    "examples/agent-runtime/claude-fixture.ts": "69a2be5494050fabe0e13cfd1469638c681305086e5ee5823fbc32d39a5e2e4d",
+    "examples/agent-runtime/claude-managed-fixture.ts": "1d6c1c717742f355be65cbfd853bba84585fcaa69daa2645f4d0da739c893578",
+    "examples/agent-runtime/harness-fixtures.ts": "091e61db1baf2cd5cb05fa6c42568aefd25585c6f4b5321a98190f41aa917e27",
+    "examples/agent-runtime/managed-restart-child.ts": "26ee594631a2fc0008114fb7fc8cd5d186c24161b92f59724b04c7c19e4219c7",
+    "examples/agent-runtime/openai-managed-fixture.ts": "5183fa644591754c525b1558f037cf7c43cba988d3e814f1078d0da40719d8b1",
+    "examples/agent-runtime/recovery-fixture.ts": "40ba70f4f6a1c6d82b3eb5ef1e358c33bdcfec42a50ecfbd5703f7d5d78307c6",
+    "package.json": "50b0faaa142826616e3c0e18a1515164708ca726e0560f28c75535fe83667a41",
+    "scripts/generate-api-docs.ts": "a82bc4181e4b288b861ca799882d7001b5002668fdd6244bd589ee4918ab8278",
+    "scripts/verify-package-exports.mjs": "63556f2a7c7c302241111e988ccee9d9263ac72d8f05b334910031a01b0a4e54",
+    "src/agent-runtime/AgentDriver.ts": "6f426f02f3a500fcd08bf3a59f3ccf60ffbd4ec15cbfa0fc05ad323df2a99c57",
+    "src/agent-runtime/AgentExecutionBackend.ts": "35a917aeb1794a876d0f86fd0c39b940a25464cf087cab7b3456ed9d3cca6116",
+    "src/agent-runtime/AgentRuntime.ts": "5d995f4c8e82895c5373743178f9c60f93f1e885d3068b9288380fafdfec443b",
+    "src/agent-runtime/AsyncEventHub.ts": "218f528c3be9b2e95030a83dda663637f65566f5bf5021fc3aeb0db027e32029",
+    "src/agent-runtime/DefinitionSession.ts": "62a119f25f702e72e06a4b2b6fe44bb05df0ca66874f1bfe5a4e648e643056ca",
+    "src/agent-runtime/HostToolMcpServer.ts": "918df2ae6fa04a738344a68176e5d25e3f4544c4979371b283f304169d3fc6f4",
+    "src/agent-runtime/LocalExecutionBackend.ts": "98fe107beecee5c3bcf0e09d00da3fb4a765a27f58d523f9a40a090bb76fa48f",
+    "src/agent-runtime/ManagedEventBuffer.ts": "3fb31145bc0bd605ac00e809d5d40f0be6470afde0bc8fa4722016e9d513b81c",
+    "src/agent-runtime/ManagedTransport.ts": "0f085f208986980b47df03549b719c372a0736c50f0195c3a97bfc416e71cf99",
+    "src/agent-runtime/NativeStateDirectory.ts": "4631b0c5c9273282905e57917c3bcd578aae7af0430a0bac30faeef9dc2c059f",
+    "src/agent-runtime/RuntimeFileTransfers.ts": "433764875a8bacd320d3e221342330304eed98bf7b095e19c11d0e62551a2bcc",
+    "src/agent-runtime/RuntimeHostTools.ts": "889be0a7f251bd61f2e1b35d5f5cd204cefc609149a7236e48fbae4cdf650e04",
+    "src/agent-runtime/RuntimeSessionStorage.ts": "92a07c08790bf7f0b441cdf6b18781fd532d896954238a1c3b842297dd37b414",
+    "src/agent-runtime/StructuredOutputValidator.ts": "b93860d3bfe3c8575bb1cad707b73526a2a14fe46f4dfdb658b92bae9356065e",
+    "src/agent-runtime/claude-managed.ts": "6faaf8f7d37bd95a8b4abcd51dcfa37a46a20ab3f522c23a70bfb9b85b6b5eb2",
+    "src/agent-runtime/claude.ts": "ed7ac48414384eb9eca5a00b1ef54b86fa85b06db9059a5028157d732e1b2b5f",
+    "src/agent-runtime/codex.ts": "6c695c47f733cd797b1a894763ddfb0d53086a2f81df62fa29866a929baba2ff",
+    "src/agent-runtime/drivers/ClaudeAgentSdkDriver.ts": "763cf9c5004e0d85f9817734617c596bbe6f0e30ff05aeca1b22ccfe32900531",
+    "src/agent-runtime/drivers/ClaudeManagedDriver.ts": "5fa586107457684df04f7bf0e5d377ea80fbc93768a06b5f16942f9828d6b0cc",
+    "src/agent-runtime/drivers/CodexSdkDriver.ts": "e8ccd69f01f71582a6d8915b4997eae35740ce87c7e83065e3e3d92a1995935a",
+    "src/agent-runtime/drivers/OneRingAIDriver.ts": "86486cbfed1ccba063374fb7b33e61b88fc82f6c5b6798773e9e96fbcd1ad436",
+    "src/agent-runtime/drivers/OpenAIManagedDriver.ts": "6eb469bab7667a8f9599dc41d55dfeb902dad9666a04b1300dbbfad8d7086929",
+    "src/agent-runtime/errors.ts": "06f59781486e7c8b72751d2f63203bccc0fd6fc30eddbf8190dba1b00ca06adb",
+    "src/agent-runtime/index.ts": "7635a47c44242aa4577aaf9812338b0a56ddcf93e8633ad3359b36558d67fe37",
+    "src/agent-runtime/internal.ts": "744624443eccab74bb07cbd6d30bb2e5db12ec0ccce58b3d82df96bc50c54a57",
+    "src/agent-runtime/openai-managed.ts": "9cc55d4fbe4aab9d449f4e21d619ccaad419258cd5cf6e23dd75ec8f5b5a22e3",
+    "src/agent-runtime/types.ts": "d5da99fe3e86720adc745f023a8d12cce416695dec0716ad55f2ac89cf505be4",
+    "src/core/StorageRegistry.ts": "a59f3e889a0f4eac1b3b37228a2adc59d297d082aeff0686106cb04d5bea745a",
+    "tests/unit/agent-runtime/AgentRuntime.test.ts": "00348249f9626817205931020b83757a8111703e8084b4aada2b4628287db7b1",
+    "tests/unit/agent-runtime/AsyncEventHub.test.ts": "474d7a2e17d2882a94be450db49dbb94a19769109e501aafc432a6ff7f16c299",
+    "tests/unit/agent-runtime/ClaudeAgentSdkDriver.test.ts": "a716f260ed9a53b0898f80ead976ff524fd6196f0887d010b81fc5f290ab8a1d",
+    "tests/unit/agent-runtime/ClaudeManagedDriver.test.ts": "3e567aa9b73ea07a9c1ace77c36e14893e2a5cad095a790daf820500a980d68c",
+    "tests/unit/agent-runtime/CodexSdkDriver.test.ts": "679260db63b853f297878bde47a7d56de0810c7d0bf65038cf369921c06463aa",
+    "tests/unit/agent-runtime/DefinitionRuntime.test.ts": "bd664ee550d1c779ed48dff8595061be658fac35e286a3cf1ef40eb30bfe5477",
+    "tests/unit/agent-runtime/DurableRuntime.test.ts": "0a3cd941fe104a7de0444f98d4eee8332907bfc566858ec2b9113ec4a8cdac12",
+    "tests/unit/agent-runtime/HostToolMcpServer.test.ts": "520a08ec4f1bf915ebd579dce3c5be7ac34c20831091bceb103ceda1af92aee0",
+    "tests/unit/agent-runtime/ManagedTransport.test.ts": "b39eb82bdfe1cfa06647030e9e6e1752f5fff59c31b2c2d96969375ed153927f",
+    "tests/unit/agent-runtime/NativeCheckpoint.test.ts": "8b70ae106bf2821f1cda5e869d1ca5416fbe82f2102ed63685785e2a5655ad01",
+    "tests/unit/agent-runtime/OneRingAIDriver.test.ts": "a7e1d610cc1740c607a31ae8d08a6ddf60ee159231552ad15790243904d4a831",
+    "tests/unit/agent-runtime/OpenAIManagedDriver.test.ts": "b50457e196fa4df98d3ca3856c075a2aaf0c78fb03d3e456b2a3e761e85f36ee",
+    "tests/unit/agent-runtime/RuntimeFiles.test.ts": "cc2be4d1f7bbede1d2e0edea301b6e3a73974519fb52a72c38f17fb25ddbdfae",
+    "tests/unit/agent-runtime/RuntimeSessionStorage.test.ts": "f93956ce2729b3ab99746c2d5fc228f29af5d49b1e365c54594607d2cbd645aa",
+    "tests/unit/agent-runtime/StructuredOutputValidator.test.ts": "32aae3fee7f64c763ae15f43d73b2ed64964e25c5c2e77161e2ada4d5000019a",
+    "tests/unit/apps/amos/RuntimeController.test.ts": "40a4cab69cf90a220018dec71156ec84478f56e700c0a0ab53f40d812536f97b",
+    "tsup.config.ts": "0225d6675a9ae8c8cb35dfee029f02a22e2e22b872385659b44a07c7f48fa7c0"
+  },
+  "finalReviews": [
+    "Stop native continuation after settled action/control acknowledgement failure, preserving original observation and no repeated action.",
+    "Forward actual native status/output/error to explicit Agent lifecycle owner; preserve unknown usage attribution.",
+    "Reserve admission before native inspection/control writes; transfers/detach cannot overlap, and destroy/explicit cancellation prevent new native input. Built AMOS checks include queued and in-flight admission stop."
+  ],
+  "package": {
+    "files": 461,
+    "scriptsDisabled": true,
+    "dependencyResolution": "extracted artifact with node_modules symlink to checkout installation; no fresh dependency install",
+    "moduleEntries": 6,
+    "formats": [
+      "ESM",
+      "CJS"
+    ],
+    "examples": [
+      {
+        "example": "examples/agent-runtime-swappable.ts",
+        "exitCode": 0,
+        "outputSHA256": "ba29e9f2c8a298fa8aa03a4e7020412cd8d7fd8ce16518394962c0fcfdaad56e"
+      },
+      {
+        "example": "examples/agent-runtime-claude.ts",
+        "exitCode": 0,
+        "outputSHA256": "fac07ab96a49cfbcc2b885ab208a5edcac4b89d48dae35f219b9811843505c9a"
+      },
+      {
+        "example": "examples/agent-runtime-recovery.ts",
+        "exitCode": 0,
+        "outputSHA256": "2e59a5a39e340d6f9220a6d6601b58c36811b63c0c50f6dbd1d57b5199ec37ab"
+      },
+      {
+        "example": "examples/agent-runtime-openai-managed.ts",
+        "exitCode": 0,
+        "outputSHA256": "f722e24d8ebaeafecf1d69026aa62479f10f3d7085fe95d0b0962c4f21d9fa68"
+      },
+      {
+        "example": "examples/agent-runtime-claude-managed.ts",
+        "exitCode": 0,
+        "outputSHA256": "b8595e84d16f575a298b0eacccad2868f26d361bb076675bc00f99ee9d26d309"
+      },
+      {
+        "example": "examples/agent-runtime-artifacts.ts",
+        "exitCode": 0,
+        "outputSHA256": "79e957d4f30e5dea3fab5dcea8f92024112eece36f9c199f5d1819578d78cade"
+      },
+      {
+        "example": "examples/agent-runtime-managed-restart.ts",
+        "exitCode": 0,
+        "outputSHA256": "e30e5ec97f808401d7e869a86a84b24befacafb2617d50a6e74fccccd5cc82f0"
+      },
+      {
+        "example": "apps/amos/examples/agent-runtime-offline.ts",
+        "exitCode": 0,
+        "outputSHA256": "4286af11f4e0018c5e1194a796c8d3af62848d31ae9d1db45965d6bced663107"
+      }
+    ],
+    "publication": false
+  }
+}

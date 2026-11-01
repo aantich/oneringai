@@ -145,7 +145,7 @@ const claudeAgent = Agent.create({
 | Embeddings | `Embeddings` |
 | Multiple cooperating agents | `createOrchestrator()` |
 | External MCP servers | `MCPRegistry` |
-| Pre-built OneRingAI or Codex agent runtime | `@everworker/oneringai/agent-runtime`; select `model`/`reasoning`, observe with `run.events()` |
+| Interchangeable OneRingAI/Codex/Claude harnesses | `@everworker/oneringai/agent-runtime`; `createAgent(definition)` plus session execution binding, inspect then observe `run.events()` |
 
 ## Connectors and external tools
 
@@ -545,7 +545,7 @@ during application shutdown.
 | Memory API / security / predicates / ingestion | `docs/MEMORY_API.md`, `docs/MEMORY_PERMISSIONS.md`, `docs/MEMORY_PREDICATES.md`, `docs/MEMORY_SIGNALS.md` |
 | Release migration | `CHANGELOG.md` and the upgrade section in `USER_GUIDE.md` |
 | Runnable examples | `examples/README.md` and `examples/*.ts` |
-| Pre-built agent runtime usage | `USER_GUIDE.md#agent-runtime-preview` and `examples/agent-runtime-local.ts` |
+| Pre-built agent runtime usage | `USER_GUIDE.md#agent-runtime-preview`, `examples/agent-runtime-swappable.ts` and `examples/README.md` |
 | Agent runtime architecture and server roadmap | `docs/designs/AGENT_RUNTIME.md` |
 | Server/desktop Agent packages, remote tools, and WebRTC ownership | `docs/designs/DISTRIBUTED_AGENT_EXECUTION.md` |
 | Staged agentic architecture evolution, evaluation, and compatibility requirements | `docs/designs/AGENTIC_ARCHITECTURE_EVOLUTION.md` |
@@ -1101,3 +1101,28 @@ and [parameter policy](docs/PARAMETER_POLICY.md).
 they never grant LLM/service ownership or authentication authority. Read
 [vendor presentation](docs/VENDOR_PRESENTATION.md). Live LLM testing was explicitly
 paused by the user on 2026-10-28; do not resume it without authorization.
+
+
+H1 adds `AgentRuntime.createAgent(definition)` with per-session execution binding and exact host-resolved tools. Preserve `.agent(spec)` compatibility. See [runtime recipes](USER_GUIDE.md#reusable-definitions-and-harness-bindings) and [H-stage ledger](docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md). Live LLM testing remains paused.
+
+
+Local Claude harness: `ClaudeAgentSdkDriver` from `@everworker/oneringai/agent-runtime/claude`, driver ID `anthropic.agent.sdk`. Read [the tools-only profile](USER_GUIDE.md#local-claude-agent-sdk); do not enable native filesystem/shell/web or ambient configuration through raw SDK options.
+
+
+Runtime recovery: configure FileRuntimeSessionStorage or the optional StorageRegistry.runtimeSessions factory. Persist session.reference(), then resume with trusted original scope. Uncertain input/tool effects require original source reconciliation, never action replay. Read [the recovery guide](USER_GUIDE.md#runtime-recovery-and-control-storage). Native configureAgent requires a configurationRevision for checkpoint compatibility.
+
+
+Managed OpenAI: use OpenAIManagedDriver from the documented openai-managed subpath, a named API-key connector, and durable runtime control storage. Native creation includes first input; never resend an uncertain task. See [managed setup](USER_GUIDE.md#openai-managed-agents-api). Native idle is not root-turn completion.
+
+
+Managed Claude: use ClaudeManagedDriver from agent-runtime/claude-managed, durable control storage and provider-managed placement. Native toolset defaults are explicitly disabled. Budget/requires-action idle is waiting, not completion. Model/reasoning are session-bound; runtime schema output is unsupported. See [the canonical guide](USER_GUIDE.md#claude-managed-agents-api).
+
+
+Runtime H6 adds rich definition inspection, explicit `RuntimeSession.uploadFile` /
+`downloadArtifact`, and AMOS `--runtime-host` mode. Read [file and desktop boundaries](USER_GUIDE.md#explicit-files-and-artifacts)
+before exposing transfers/IPC. Backend `fileTransfer(context)` selects host-owned roots,
+exact MIME allowlists and byte bounds; it is disabled by default. Session references
+are scoped locators, never credentials. File storage requires POSIX acknowledged
+single-host primitives; Windows needs a custom adapter. AMOS runtime mode gates native
+context/routine/helper/tool mutation commands. All five adapters have offline conformance;
+new native/live vendor verification remains pending under the existing live pause.

@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-28",
+  "planRevision": 3,
+  "branch": "version2",
+  "baselineCommit": "53e85de71a4949dc5ce85d3b09d011995782468c",
+  "workingTreeCleanAtEntry": true,
+  "runtimeChangedSinceMainMerge": false,
+  "comparedFromCommit": "0f159e9",
+  "scope": "design review and existing offline baseline; no runtime implementation",
+  "checks": [
+    {
+      "command": "node node_modules/typescript/bin/tsc -p docs/evaluations/agent-harness-design/tsconfig.json",
+      "exitCode": 0,
+      "meaning": "representative proposed optional extensions compile against built public exports"
+    },
+    {
+      "command": "node docs/evaluations/agent-harness-design/codex-config-probe.mjs",
+      "exitCode": 0,
+      "meaning": "SDK serializes MCP configuration into a fake local executable; no Codex/MCP/API invocation"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run tests/unit/agent-runtime tests/unit/metadata tests/unit/portable/OutcomeWire.test.ts tests/unit/portable/RemoteExternalExecution.test.ts tests/unit/portable/RemoteObservationBridge.test.ts tests/unit/core/evidence/Conformance.test.ts",
+      "exitCode": 0,
+      "passedTests": 135,
+      "passedFiles": 11
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run tests/unit/providers/ParameterPolicy.test.ts tests/unit/core/EnhancedConnectorRedirects.test.ts tests/unit/core/CompositionExecution.test.ts",
+      "exitCode": 1,
+      "passedTests": 92,
+      "passedFiles": 2,
+      "environmentBlockedTests": 11,
+      "environmentBlockedFiles": 1,
+      "reason": "sandbox denies temporary loopback socket binding: listen EPERM 127.0.0.1"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run tests/unit/core/EnhancedConnectorRedirects.test.ts --silent",
+      "exitCode": 0,
+      "passedTests": 11,
+      "passedFiles": 1,
+      "environment": "approved escalation for local temporary HTTP sockets only"
+    }
+  ],
+  "finalUniqueTestsPassed": 238,
+  "finalUniqueFilesPassed": 14,
+  "liveLLMTesting": "paused by existing user instruction; no live calls performed",
+  "fullSuiteRun": false,
+  "newHarnessLiveConformance": "not implemented or validated",
+  "sourceSha256": {
+    "src/agent-runtime/AgentRuntime.ts": "df0a1f91e6c8ffb611b99c80d597cb6526d549620ec7c1c0100e6ec4ae09a176",
+    "src/agent-runtime/AgentDriver.ts": "4dfd556a21472aeeed9d1a5af75933e3f547cd73109cfeb1fa695d09d439a64f",
+    "src/agent-runtime/LocalExecutionBackend.ts": "17f15cb35be112657992ba588dd8d94f84a39a476e5fa3636bd6490cd30a2d0c",
+    "src/agent-runtime/types.ts": "bbfffea07da5f37065f9e363a6341cc33d59a895269c3763ca1fe4950c779ff7",
+    "src/core/ToolManager.ts": "400da92dfb9d133345e29a64eb8df532d3564df6fc9377f058ce46bbc8904d7d",
+    "src/core/execution/composition.ts": "3570d9811e2d91aba7d1732f3d9c12ac19295761b0ff81a9ab3671bad80c2cef",
+    "src/portable/OutcomeClient.ts": "a7befd1151dd5aadfaf31a0a112276ee97603d134621810a0f24783e297797c6",
+    "src/portable/OutcomeServer.ts": "4be2436583196335ca5dd2cfb056a5b522c6f45b75fa45e8b06fc1a0741190b0",
+    "src/portable/outcomeTypes.ts": "6a5f6d40ab6eb14eee0fe9ace69e1a5321200bed8a43006d0066378c6737cd37",
+    "src/capabilities/metadata/parameters.ts": "51eb888332bdf6b1e60420ab202e86d93ed69c4fc420e9b9cf11a3c74108eaff",
+    "src/capabilities/metadata/realtime.ts": "787d5f17eb2ff828c4c805df3723e82b375fe2def7adc5a1ee9ebf60044c9366",
+    "src/capabilities/metadata/vendorPresentation.ts": "094fef61085442b168a0e0227118988e3d5281100d6a30417f1eaab99092784f",
+    "tests/conformance/evidence.ts": "51d32673062b6d70c5583cbf48d4f4a40d153d4e07228e3e13cb659b454421b9",
+    "examples/agentic-baseline/composition.ts": "35768414c76e6668d8211e368fdeeed7039d214180d4fd615dda07e22ec90c15",
+    "examples/agentic-baseline/reporter.ts": "a9f236c1d3af8b89d21c0aa32319933d379051f392b718fdac6fa87c37f91bdf",
+    "scripts/generate-api-docs.ts": "5e5077395ee18c338cac45d876aab5874f059102e706c8fcede0e33da2b2b255",
+    "package.json": "f84f5767463120865c92740718fff6ad9294981f550814a03e9c02c8e9a7fc8c",
+    "tsup.config.ts": "bf96bb65a8f51b62bb08187184ff05e007aaa5f94a534c47d857f37e1b754532"
+  }
+}

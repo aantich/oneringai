@@ -355,3 +355,9 @@ to backend retention; missing proofs stop resume/use until host recovery. Config
 a restart-capable backend explicitly and keep trusted pre-native checkpoints where
 needed. This never authorizes repeating an external action. See the
 [native guide](NATIVE_CONTEXT_COMPACTION.md).
+
+
+Runtime H1 retains the selected manager/evidence owner. A runtime session reference does not itself persist tool evidence or waive unacknowledged-source protection. Control recovery and evidence recovery are separate. See [runtime delivery](designs/AGENT_HARNESS_DELIVERY_LEDGER.md).
+
+
+Runtime H3 acknowledges control/input and model-facing tool-result delivery separately from evidence. It reuses authentic evidenceProjection for the provider payload, retains raw returns in the source manager/observation owner, and stops on storage/projection failure. Use the resolver onRetainedObservation callback to preserve an interrupted source before teardown. A control record or stored outcome without a result-bearing evidence acknowledgement cannot waive source protection.

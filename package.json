@@ -46,6 +46,21 @@
       "types": "./dist/realtime-browser/index.d.ts",
       "import": "./dist/realtime-browser/index.js",
       "require": "./dist/realtime-browser/index.cjs"
+    },
+    "./agent-runtime/claude": {
+      "types": "./dist/agent-runtime/claude.d.ts",
+      "import": "./dist/agent-runtime/claude.js",
+      "require": "./dist/agent-runtime/claude.cjs"
+    },
+    "./agent-runtime/openai-managed": {
+      "types": "./dist/agent-runtime/openai-managed.d.ts",
+      "import": "./dist/agent-runtime/openai-managed.js",
+      "require": "./dist/agent-runtime/openai-managed.cjs"
+    },
+    "./agent-runtime/claude-managed": {
+      "types": "./dist/agent-runtime/claude-managed.d.ts",
+      "import": "./dist/agent-runtime/claude-managed.js",
+      "require": "./dist/agent-runtime/claude-managed.cjs"
     }
   },
   "typesVersions": {
@@ -70,6 +85,15 @@
       ],
       "realtime-browser": [
         "./dist/realtime-browser/index.d.ts"
+      ],
+      "agent-runtime/claude": [
+        "./dist/agent-runtime/claude.d.ts"
+      ],
+      "agent-runtime/openai-managed": [
+        "./dist/agent-runtime/openai-managed.d.ts"
+      ],
+      "agent-runtime/claude-managed": [
+        "./dist/agent-runtime/claude-managed.d.ts"
       ]
     }
   },
@@ -317,7 +341,33 @@
     "examples/agentic-baseline/reporter.ts",
     "docs/evaluations/CONSUMER_C9C_VALIDATION_2026_10_28.json",
     "docs/evaluations/CONSUMER_FINAL_VALIDATION_2026_10_28.json",
-    "docs/evaluations/CONSUMER_REVIEW_CORRECTIONS_2026_10_28.json"
+    "docs/evaluations/CONSUMER_REVIEW_CORRECTIONS_2026_10_28.json",
+    "examples/agent-runtime-swappable.ts",
+    "docs/designs/AGENT_HARNESS_EXPANSION.md",
+    "docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md",
+    "examples/agent-runtime-claude.ts",
+    "examples/agent-runtime/claude-fixture.ts",
+    "examples/agent-runtime-recovery.ts",
+    "examples/agent-runtime/recovery-fixture.ts",
+    "examples/agent-runtime-openai-managed.ts",
+    "examples/agent-runtime/openai-managed-fixture.ts",
+    "examples/agent-runtime-claude-managed.ts",
+    "examples/agent-runtime/claude-managed-fixture.ts",
+    "examples/agent-runtime-artifacts.ts",
+    "examples/agent-runtime/harness-fixtures.ts",
+    "apps/amos/examples/agent-runtime-offline.ts",
+    "apps/amos/src/runtime/AmosRuntimeController.ts",
+    "apps/amos/README.md",
+    "examples/README.md",
+    "examples/agent-runtime-managed-restart.ts",
+    "examples/agent-runtime/managed-restart-child.ts",
+    "docs/evaluations/AGENT_HARNESS_VALIDATION_2026_10_28.json",
+    "docs/evaluations/agent-harness-design/contracts.ts",
+    "docs/evaluations/agent-harness-design/public-contracts.ts",
+    "docs/evaluations/agent-harness-design/tsconfig.json",
+    "docs/evaluations/agent-harness-design/codex-config-probe.mjs",
+    "docs/evaluations/agent-harness-design/baseline-review.json",
+    "docs/evaluations/AGENT_HARNESS_CORRECTIONS_2026_11_01.json"
   ],
   "scripts": {
     "generate:tools": "tsx scripts/generate-tool-registry.ts",
@@ -436,7 +486,15 @@
     "example:amos-composition": "node --import tsx apps/amos/examples/composition-offline.ts",
     "example:endpoint-capabilities": "node --import tsx examples/endpoint-capabilities.ts",
     "example:parameter-policy": "node --import tsx examples/parameter-policy.ts",
-    "example:vendor-presentation": "node --import tsx examples/vendor-presentation.ts"
+    "example:vendor-presentation": "node --import tsx examples/vendor-presentation.ts",
+    "example:agent-runtime-swappable": "node --import tsx examples/agent-runtime-swappable.ts",
+    "example:agent-runtime-claude": "node --import tsx examples/agent-runtime-claude.ts",
+    "example:agent-runtime-recovery": "node --import tsx examples/agent-runtime-recovery.ts",
+    "example:agent-runtime-openai-managed": "node --import tsx examples/agent-runtime-openai-managed.ts",
+    "example:agent-runtime-claude-managed": "node --import tsx examples/agent-runtime-claude-managed.ts",
+    "example:agent-runtime-artifacts": "node --import tsx examples/agent-runtime-artifacts.ts",
+    "example:amos-runtime": "node --import tsx apps/amos/examples/agent-runtime-offline.ts",
+    "example:agent-runtime-managed-restart": "node --import tsx examples/agent-runtime-managed-restart.ts"
   },
   "keywords": [
     "ai",
@@ -512,6 +570,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.312",
     "@faker-js/faker": "^9.9.0",
     "@openai/codex-sdk": "^0.149.0",
     "@types/jsdom": "^27.0.0",
@@ -530,9 +589,10 @@
     "vitest": "^3.2.7"
   },
   "peerDependencies": {
-    "@openai/codex-sdk": "^0.149.0",
     "@nut-tree-fork/nut-js": ">=4.0.0",
-    "mongodb": ">=5.0.0"
+    "@openai/codex-sdk": "^0.149.0",
+    "mongodb": ">=5.0.0",
+    "@anthropic-ai/claude-agent-sdk": "^0.3.312"
   },
   "peerDependenciesMeta": {
     "@openai/codex-sdk": {
@@ -542,6 +602,9 @@
       "optional": true
     },
     "mongodb": {
+      "optional": true
+    },
+    "@anthropic-ai/claude-agent-sdk": {
       "optional": true
     }
   },

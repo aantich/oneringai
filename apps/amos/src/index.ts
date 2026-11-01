@@ -37,6 +37,11 @@ process.on('unhandledRejection', (reason) => {
 
 // Main entry point
 async function main(): Promise<void> {
+  const runtimeHostIndex = process.argv.indexOf('--runtime-host');
+  if (runtimeHostIndex >= 0) {
+    const host = process.argv[runtimeHostIndex + 1]; if (!host || host.startsWith('--')) throw new Error('--runtime-host requires a trusted host module path');
+    const { runRuntimeCli } = await import('./runtime/cli.js'); await runRuntimeCli(host, dataDir); return;
+  }
   const app = new AmosApp(dataDir);
 
   // Handle interrupt signals

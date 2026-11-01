@@ -52,3 +52,9 @@ call count or unknown, and same-process continuation limits. Run
 No new voice/remote transport UI is introduced. ICOS adoption, releases, new database
 adapters and durable workflow resume remain separate work. Live LLM testing is
 paused at the user's request as of 2026-10-28.
+
+
+Runtime harness adapters must retain the original C7 ToolManager and evidence handle and preserve raw tool returns independently of normalized outcomes. The existing conformance profiles remain the evidence contract; runtime control records are separate.
+
+
+H3 recovery checks include actual producer/recovery processes, original-result redelivery, write-before-crash receipt reconciliation, foreign-scope denial and acknowledgement-failure retention. They exercise control durability separately from the existing evidence conformance profiles. Neither mock service receipts nor runtime metadata assert business verification or restore workflow authority.

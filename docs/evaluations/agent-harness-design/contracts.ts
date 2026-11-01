@@ -1,5 +1,6 @@
 /**
- * Compile-only revision 2 design prototype. This file implements no runtime API.
+ * Compile-only design contract, with H6 transfer signatures linked to the delivered public API.
+ * This file implements no runtime API.
  * Uses the current built public package, not implementation source paths.
  */
 import type {
@@ -72,6 +73,8 @@ export interface RuntimeSession extends AgentSession {
   inspectState(): Promise<RuntimeSessionSnapshot>;
   getRun(runId: string): Promise<AgentRun>;
   detach(): Promise<void>;
+  uploadFile: import('@everworker/oneringai/agent-runtime').RuntimeSession['uploadFile'];
+  downloadArtifact: import('@everworker/oneringai/agent-runtime').RuntimeSession['downloadArtifact'];
 }
 export interface RuntimeDefinitionAgent {
   readonly definition: Readonly<RuntimeAgentDefinition>;
