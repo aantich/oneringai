@@ -2,11 +2,18 @@
 
 **Documentation/release review — 2026-11-02:** The README is rewritten for v2,
 and the complete User Guide is reviewed and reorganized. Use those documents for
-current integration and [Release readiness](RELEASE_READINESS_V2.md) for validation
+current integration, the [v2 changelog](../CHANGELOG.md#unreleased) for a consolidated
+feature/upgrade summary, and [Release readiness](RELEASE_READINESS_V2.md) for validation
 and the corrected routine prompts, consumer dependency assessment, and final validation. Historical counts and availability statements
 below retain their delivery dates. Hosea's subsequent revival now passes its full
 desktop typecheck; the older 24-diagnostic statement below is historical. npm
-publication, stable-version selection, merge and tags remain separate actions.
+publication, stable-version selection and tags remain separate actions.
+
+**Repository handoff — 2026-11-02:** v2 was committed and merged into `main` at
+`9c18dfa`, and that revision was pushed to GitHub. `main` is now the canonical v2
+development line; `version1` remains the legacy maintenance line. This source
+promotion does not announce an npm release. Older stage records below retain
+their original branch names and uncommitted-at-validation statements as history.
 
 **Package identity — 2026-11-01:** The user explicitly selected the unscoped npm
 name `oneringai` for v2 and retained this repository. The branch prepares

@@ -1,4 +1,4 @@
-# oneringai
+# oneringai v2
 
 **Build agents around your application, and choose who runs them.**
 
@@ -20,7 +20,8 @@ switch harnesses, inspect activity, and recover saved sessions. Its
 **v2 package:** **`oneringai`**, without a scope. This documentation targets
 `2.0.0-beta.1`; use the matching package version and retain the preview boundaries
 below. Existing v1 users must migrate explicitly from `@everworker/oneringai`.
-See [migration](docs/PACKAGE_MIGRATION.md) and [release readiness](docs/RELEASE_READINESS_V2.md).
+See the **[v2 changelog](CHANGELOG.md#unreleased)**,
+[migration](docs/PACKAGE_MIGRATION.md), and [release readiness](docs/RELEASE_READINESS_V2.md).
 
 ## What changes in v2
 
@@ -354,9 +355,9 @@ requests; ordinary offline examples do not establish provider access.
 Repository documentation links are relative so they follow the checkout's
 branch. The following two links are the deliberate **npm landing-page version
 navigation exception**: [legacy v1 documentation](https://github.com/aantich/oneringai/blob/version1/README.md)
-and [v2 documentation on main after the release merge](https://github.com/aantich/oneringai/blob/main/README.md).
-Until that merge, main may still describe v1; use this checkout's relative links
-for the prepared v2 documentation.
+and [v2 documentation on main](https://github.com/aantich/oneringai/blob/main/README.md).
+`main` is the v2 development line; `version1` retains legacy maintenance and
+documentation. Use this checkout's relative links for its matching documentation.
 
 ## Development
 

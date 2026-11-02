@@ -7,403 +7,373 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Correct PDF image extraction to use unpdf's per-page raw-pixel API, encode valid
-  PNG bytes for RGB/grayscale/alpha, respect selected pages, and release one shared
-  PDF proxy on success/failure. Add real image-bearing PDF and lifecycle regressions.
-- Ship WebSocket declarations required by provider public types as a production
-  dependency. Compile the installed tarball's ESM/CJS entries and compatibility
-  fixtures with strict library checking and consumer-only type resolution.
+### OneRingAI v2 — `oneringai@2.0.0-beta.1`
 
-- Correct all default/generated routine prompts to use unified stores. Deliver
-  nested map/fold/until instructions to reused agents without changing their
-  system prompt or tool manager. Resolve findings-tier spill keys with exact-key
-  precedence and clean/restore routine-owned tiered data. Add request/tool execution
-  regressions and an offline store/map/fold example; retain reflection opt-in,
-  custom prompt signatures and fold task-output precedence.
-- Upgrade the published graph to officeparser 8.0.0 and glob 14.0.3+. Add a real
-  tarball/default-install/ESM+CJS/document/audit gate and source-reviewed disposition
-  for two non-applicable ExcelJS advisories. Keep the moderate audit entries
-  visible; unknown findings fail. Document the parser pin and Node compatibility.
-- Make lost-continuation recovery tests end synthetic idle streams explicitly,
-  exercising reconnect exhaustion without imposing a 500 ms deadline on a healthy
-  first turn. Native ambiguity and no-resubmission assertions remain intact.
+Version 2 adds interchangeable agent harnesses, durable execution evidence,
+protected task state, explicit model budgets and routing, stronger connector
+contracts, and verified workflows. It builds on the existing connector-first,
+plugin-first architecture, long-term memory, tools, media APIs and shared
+ToolManager. These foundations remain central; they are not newly introduced
+features or replaced subsystems.
 
-- Rewrite the README around v2 adoption, inherited connectors/memory, harness
-  boundaries and prominent AMOS documentation. Review and reorganize the full
-  User Guide, archive v1 migration history with compatible anchors, correct
-  stale examples/behavior claims and generated relative source links, and add
-  repeatable documentation checks plus an explicit release-readiness report.
-  Publication and currently unverified native/provider gates remain separate.
+**Source status — 2026-11-02:** v2 is committed on `main`; legacy v1 maintenance
+continues on `version1`. The prepared package is a **beta candidate**. This entry
+does not announce an npm publication, a stable `2.0.0` release, or signed desktop
+installers. External harness integrations retain their preview boundaries.
 
-- Fix six runtime review findings: preserve resolver permissions alongside native
-  Agent policies; redact split Claude SDK output and structured values; reject
-  expanded managed OpenAI access/configuration; recover ambiguous control-write
-  acknowledgements without repeating actions; detach late recovery observers after
-  shutdown; and interrupt stalled admission reads on stop/exit. Add failure/lifecycle
-  regressions, AMOS exit coverage and an offline permission/storage-repair example.
+Start with the [v2 README](README.md), [User Guide](USER_GUIDE.md),
+[adoption guide](docs/VERSION_2_GUIDE.md), and
+**[AMOS runtime cookbook](apps/amos/docs/AGENT_RUNTIME.md)**.
 
-- Prepare v2 under the unscoped npm package `oneringai` (`2.0.0-beta.1`), with
-  current public imports/examples and generated references migrated from
-  `@everworker/oneringai`. Public subpaths and runtime/session contracts remain.
-  This is an explicitly requested package-identity change, not an automatic v1
-  upgrade or a published release. Legacy deprecation waits for an installable v2.
-- Release the AMOS and Hosea application source under MIT, owned by Anton Antic,
-  with current contact `anton.antich@gmail.com`. Add standalone application
-  licenses and parent-scope exceptions; remove Hosea's commercial acceptance gate
-  while retaining compatible license IPC responses. Other commercial applications
-  and third-party license terms are unchanged.
+### Highlights
 
-- AMOS runtime mode now exposes per-run options/request IDs, saved results and
-  activity cursors, explicit upload/download, scoped reference persistence and
-  startup resume, fresh sessions and owned-resource deletion. Recoverable startup
-  failures retain a usable CLI/reference, and stop invalidates queued `/run` input.
-  Adds a five-driver offline-first host, complete command cookbook, expanded
-  five-adapter workflow and native Agent structured-output/recovery example.
+- **Define an agent once and choose its harness per session:** native OneRingAI,
+  local OpenAI Codex SDK, local Claude Agent SDK, OpenAI managed Agents API, or
+  Claude Managed Agents API, through one runtime session/run surface.
+- **Keep long tasks grounded:** retain scoped source observations, protect
+  host-confirmed constraints and action receipts, and select bounded context
+  assembly, summaries, observation masking or supported native compaction.
+- **Control model work explicitly:** named routes, tool-free helper models,
+  shared call/token/deadline/cost reservations, and diagnostics that distinguish
+  known usage from unknown usage and external fees.
+- **Build verifiable workflows:** semantic tool outcomes, explicit connector
+  execution profiles, complete collection pages, host-verified routines,
+  fully configured worker agents and negotiated remote observations.
+- **Use the reference applications:** expanded AMOS commands and five-harness
+  examples; MIT-licensed AMOS and Hosea source; a revived Hosea desktop workspace
+  with a reusable monochrome design system.
 
-- Agent runtime review corrections dispatch the exact admitted request snapshot,
-  preserve live cancellation signals, release failed-restore writer ownership, and
-  publish restored sessions only after successful initialization. Failed managed
-  observation restoration preserves native work and permits retry of the original
-  reference without cancellation or resubmission.
+### Upgrade and compatibility
 
-- Agent harness H0–H6 adds reusable logical definitions with per-session execution
-  bindings, exact host-resolved blocking tools, optional durable scoped control
-  storage, request/outbox reconciliation, inspection and explicit managed file
-  transfers. Native OneRingAI, local Codex/Claude SDKs and managed OpenAI/Claude APIs
-  share one observable session/run surface while retaining their native loops.
-  AMOS adds opt-in runtime mode; guides, generated API and offline examples cover
-  setup, policies, recovery, file ownership and desktop boundaries. Legacy APIs,
-  defaults and run/event/status unions remain supported. Branch availability only;
-  live vendor/platform verification remains paused/pending and no release is implied.
-
-
-- Consumer review corrections keep enhanced generic credentials on their configured
-  origin through redirects, preserve unknown remote execution when legacy overrides
-  omit authoritative outcomes, reuse evidence on repeated/concurrent receipt lookup,
-  and release borrowed Agent ownership after failed remote shutdown callbacks.
-  Includes real local HTTP redirects, failure/concurrency/quota/cancellation
-  regressions and updated offline examples. Legacy factories and protocol v2 stay
-  unchanged; live LLM testing remains paused.
-
-- Consumer C2 adds private composition ownership and explicit ModelTask/cancellation
-  binding through recursive routine tasks, reflection, extraction and deterministic
-  steps. It retains late native/provider/tool work and cleanup occupancy, including
-  ESM/CJS copies. Existing routine/public signatures and defaults stay unchanged;
-  the complete verified facade is C3. Includes a public offline accounting recipe.
-
-- Consumer C1 adds opt-in `createOutcomeTool()`, `OutcomeInvocation` and
-  `OutcomeToolOptions` on the root public API. Invocation-owned failure reporting
-  preserves raw returns and business declines, survives connector account wrappers
-  and ESM/CJS/duplicate bundles, and retains cancellation/late/evidence semantics.
-  Existing tools, callbacks, breaker/retry defaults, sessions and protocol v2 remain.
-  Includes offline/AMOS examples, compatibility and real-provider run/stream coverage.
-
-- Fix explicit `thinking.enabled: false` being omitted for Google GenerateContent
-  Gemini 2.5 Flash/Flash-Lite, which otherwise left dynamic thinking and its cost
-  enabled. The shared Vertex converter sends zero budget for supported aliases.
-  Provider defaults, explicit vendor thinking overrides and other model/API
-  families retain existing behavior. Includes 14 converter regressions and a
-  rerun of the original routing quality/cost gates without relaxed thresholds.
-
-- Stage 14A second corrections preserve ordered repaired replay state and its
-  admitted owner, retain the original task/route after failed resume attempts,
-  and finalize structured suspension before checkpoint/publication. Failed
-  finalization retains the registered observation/correlation with optional recovery
-  metadata; explicit host cancellation abandons task authority without replaying or
-  undoing the action. Includes budget/deadline, run/stream, storage, cancellation,
-  journal/restart, AMOS, real-provider and public ESM/CJS regressions. Existing
-  defaults, public signatures and provider/storage/session contracts are preserved.
-
-- Stage 14A corrections retain exact-owner replay guards independently of routing,
-  tag newly observed opaque output with its admitted identity, and share effective
-  resumed JSON finalization/host checks while retaining the original route/task.
-  Routed native binding now waits for selection, allowing a supported alternative
-  with an unsupported default. Legacy portable hooks, direct/idle owners, JSON's
-  parse-only contract and supported API/session defaults remain unchanged.
-
-- Stage 14A adds optional named managed-model routes, bounded host rules, explicit
-  run/stream overrides and opt-out, phase continuity on an explicit shared task,
-  and optional decision diagnostics. One execution retains its connector/model,
-  plugins, tools and budget; authenticated native checkpoints restore only through
-  host-authorized compatible routes. Default, helper, direct and external paths
-  keep their existing owners; automatic cross-model replay and 14B delegation are
-  deferred. Includes AMOS `/routing`, offline/live examples and public type exports.
-- Managed JSON repairs preserve the admitted task evidence and host instructions,
-  including routed async continuations. Native source guards run after budget
-  observers; Anthropic native source counts use the compaction mode and preserve
-  terminal assistant whitespace exactly. No new required provider/storage members
-  or session-version migration.
-
-- Stage 16A third corrections reject incompatible/incomplete nested thinking on
-  native paths before I/O, run preservation hooks/events for explicit compaction,
-  and align Anthropic fixed-thinking output, source headroom and ModelTask bounds.
-  Explicit caps and main settings are preserved; internal streaming supports high
-  native limits and cancellation/failed-summary accounting. Manual hook examples,
-  AMOS checkpoint coverage and real-provider checks cover adoption without new
-  required APIs, defaults or session fields.
-
-- Stage 16A second corrections preserve memory written by pre-compaction hooks
-  through one bounded frame refresh, cancel read-only native evidence proofs with
-  execution/task deadlines, preserve an independent checkpoint restore when a
-  startup wait is cancelled, and reject unsupported Anthropic top-level reasoning
-  before I/O. Existing APIs/defaults, storage contracts and admitted-write
-  settlement are preserved; the hook example and AMOS recovery regression cover
-  these paths.
-
-- Stage 16A review corrections bind native state to provider construction-time
-  endpoint/account selection, share OpenAI generation/count normalization, retain
-  assembly cancellation across composition and reuse unchanged frames. Known
-  hosted-tool/server-token conflicts stop before reduction or billable native
-  work. Compatibility fixtures use a stable clock; supported legacy/default APIs
-  and version-1 checkpoint shapes remain unchanged.
-
-- Stage 16A adds opt-in `ContextCompactionStrategy` with independent plugin/history
-  controls and `Agent.compactContext()` targets. OpenAI standalone and Anthropic
-  on-demand history use scoped source evidence, exact provider replay, provider
-  frame counts, shared ModelTask usage and optional bound session metadata.
-  AMOS exposes explicit policy/compaction commands; offline/live examples cover
-  continuation, repeated compaction, restart and checkpoint recovery. Existing
-  defaults, named strategies, custom extension contracts and old sessions remain
-  supported. See `docs/NATIVE_CONTEXT_COMPACTION.md` for limits and verified models.
-
-- Stage 05 second corrections finalize selected structured answers before consolidation
-  and selected structured suspension before session/correlation persistence, preserving
-  host freshness guards and avoiding action replay. Uncertainty metadata includes
-  native function/custom image/file results and opaque tool signatures; AMOS displays
-  a source-free notice. Defaults/public/session/event shapes remain compatible.
-
-- Stage 05 corrections bind selections to effective account/task/registry identity
-  and actual dispatched input. Managed hook edits get one bounded refresh without
-  replaying hooks or compaction; repair rejects superseded host prompts/earlier input.
-  Selected-store overview and tool guidance reflect partial visibility. Max-iteration
-  and suspension wrap-ups record per-request usage, and post-cycle consolidation
-  never fetches contributors outside their preparation lifetime. Legacy defaults,
-  public signatures, source/session formats and history ownership remain unchanged.
-
-- Stage 05 opt-in selective context assembly: explicit companion registration,
-  non-destructive whiteboard adapter, bounded priority/projection/dependency selection,
-  protected data and revision/scope/deadline checks, plus optional stable-prefix layout.
-  New data retains user-data authority; legacy/default interfaces and session contracts
-  remain unchanged. Detached manifests report actual provider-input/cache counters
-  separately from estimates/unknowns. AMOS settings/breakdown, public offline examples
-  and opt-in three-provider validation accompany the [recipe](docs/CONTEXT_ASSEMBLY.md).
-
-- Stage 12 third corrections include candidate construction and synchronous loaded
-  notifications in shared-context resume rollback, restore original authority before
-  cleanup, and clean partially constructed candidates while retaining original
-  errors. Ordinary managed-load notification rejection also restores prior state/ID.
-  Rollback snapshots honor the existing JSON contract (`toJSON`/Date); serialization
-  errors precede mutation. Per-plugin recovery keeps saves blocked across legacy
-  loads missing damaged plugins; actual checkpoint or trusted context restoration
-  repairs them. No required API, session/storage schema, event field or default change.
-  AMOS commands, offline/public consumers and failure regressions cover these paths.
-
-- Stage 12 second corrections preserve caller-owned permission/prompt/callback/role
-  bindings on rejected resumes, commit high-level session IDs after validated
-  restoration, serialize saves with restoration, and normalize getter-backed scope
-  requirements. Teardown attempts all owned resources after plugin errors. Existing
-  raw-load activation and saved formats remain unchanged; `context.save` additively
-  accepts a deferred snapshot builder. Custom rollback failure blocks saves until
-  successful restoration of each damaged plugin. Actual AMOS autosave and public compatibility regressions
-  accompany the [restoration recipe](docs/AGENT_PRESETS.md#session-restoration-and-cleanup).
-
-- Stage 12 review corrections preserve scoped preset principals and opaque plugin
-  configuration, verify actual built-in protections before dispatch, project only
-  declared provider capabilities (including getters), clean failed resume candidates,
-  make AMOS replacement transactional and retain session labels through autosave.
-  Existing Agent, external plugin and file-storage defaults/formats remain unchanged.
-
-- Stage 12 opt-in `createAgentPreset('research' | 'workflow', config)` and detached
-  `Agent.inspectCapabilities()` metadata; explicit evidence/task scope, overrides,
-  existing managed policies, no helper/verifier/default or protocol changes.
-  AMOS `/preset` saves next-agent selection, inspects active capabilities and records
-  descriptive checkpoint metadata. Offline examples and opt-in three-provider smoke
-  coverage accompany the [recipe](docs/AGENT_PRESETS.md). Branch availability only.
-
+- **Package identity:** v2 uses the unscoped **`oneringai`** package. Existing
+  `@everworker/oneringai` users must explicitly change their dependency and
+  imports; npm cannot automatically move an installation between package names.
+  V1 remains available and must not be deprecated before a verified replacement
+  is installable. See [package migration](docs/PACKAGE_MIGRATION.md).
+- **Runtime and formats:** Node.js **22.13+ or 24+**, ESM and CommonJS builds,
+  TypeScript declarations, and 11 public entry points. Local Codex/Claude SDK
+  adapters use documented optional peer dependencies and explicit subpaths;
+  ordinary core imports do not require those SDKs.
+- **Incremental adoption:** existing supported Agent, connector, tool, context,
+  strategy, session and orchestration contracts remain. New policies/profiles
+  are opt-in; algorithmic compaction remains the default. Native and external
+  harnesses retain separate enforcement and context ownership.
+- **Existing strengths remain:** named multi-account connectors and OAuth,
+  standalone entity/fact memory and ingestion, working memory, catalog and MCP,
+  streaming, media, embeddings, Realtime and saved conversations. V2 also includes
+  the v1.2.1 media-retirement corrections described below, without reviving retired
+  OpenAI image/video endpoints or selecting another provider automatically.
 
 ### Added
 
-- Stage 10 opt-in managed `loopPolicy`: bounded failure/progress/completion
-  recovery, normalized repetition tracking and conservative write/unknown-effect
-  admission. Host-owned bounded/cancellable completion checks expose optional
-  diagnostics on existing responses/events and `getLoopDiagnostics()`, preserving
-  statuses/discriminants/defaults/session authority. Includes AMOS inspection,
-  offline semantic run/stream examples, compatibility and live probes. Policies
-  do not control direct/realtime/external SDK loops or provide durable idempotency.
-  All five [review findings](docs/designs/STAGE_10_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16)
-  are corrected: authentic async outcome/effect import with post-callback scope
-  checks, stopped call/result persistence and separate JSON answers, and original
-  class/prototype callback receivers. No required API/session/storage fields or
-  defaults change. Corrective gates pass 7,950 units and 135 live cases / 147 scenarios;
-  the first Google empty-summary failure remains recorded. No release yet.
+#### Interchangeable agent runtimes
 
-- Optional atomic task-state host confirmations/pruning through `TaskStateHostDelta`,
-  with AMOS prune/resolve-prune/prune-action/confirm-prune commands and actionable
-  capacity recovery. Existing calls/defaults/limits and host authority remain intact.
+- Reusable logical agent definitions through `AgentRuntime.createAgent()`, with
+  per-session execution binding, explicit named connectors and host-selected
+  application tools. A model name does not select a harness.
+- Five adapters, sharing observable sessions, runs and activity while retaining
+  each harness's native loop:
 
-- Stage 04 opt-in host-controlled protected task-state plugin: revision-checked
-  sourced notes/corrections, unconfirmed proposals/assumptions, explicit execution
-  receipts and separate host workflow confirmations. Bounded protected prompt
-  content and scoped versioned session recovery preserve existing defaults,
-  Task/routine/memory lifecycle authority and session contracts. Includes AMOS
-  host inspection/edits, offline workflow/restart examples and opt-in live probes.
-  Automatic extraction, action subscription/replay and completion policies are
-  deferred; no package release is claimed.
+  | Harness | Driver ID |
+  | --- | --- |
+  | Native OneRingAI Agent | `oneringai.agent` |
+  | Local OpenAI Codex SDK | `openai.codex.sdk` |
+  | Local Claude Agent SDK | `anthropic.agent.sdk` |
+  | OpenAI managed Agents API | `openai.agents.api` |
+  | Claude Managed Agents API | `anthropic.managed.api` |
 
-- Experimental opt-in observation masking and structured-summary context strategies
-  with acknowledged source retention, exact user/action metadata protection, bounded
-  pre-call helper integration, cancellation/revision checks and one masking fallback.
-  Algorithmic defaults and existing custom strategies/rollover remain supported.
-- Optional compaction diagnostics and public strategy/configuration types; deterministic
-  comparison example, bounded real-provider pilot and AMOS strategy selection/inspection.
-  No general quality/cost guarantee or package release is implied.
+- Explicit schema-bound host tools, capability/configuration inspection,
+  structured output, per-run options, request identity, activity cursors and
+  partial/unknown usage reporting. Host tools continue through the shared
+  ToolManager and host permission policies.
+- Optional scoped durable control storage with exclusive-writer/revision
+  checks, input outboxes, retained results and receipt reconciliation. Ambiguous
+  submissions are recovered through their original observation rather than
+  automatically replaying an external action.
+- Host-authorized `RuntimeSession.uploadFile()` / `downloadArtifact()` with
+  bounded bytes, MIME allowlists, scoped roots, provider ownership checks and
+  partial-file cleanup. File transfer is disabled until the host configures it.
+- Explicit stop, detach, resume and deletion semantics. Runtime session references
+  are scoped locators; they do not restore host authorization, routine
+  continuations or ModelTask authority. Bundled file control storage supports
+  acknowledged single-host POSIX operation; other deployments need an appropriate
+  custom adapter. Local SDK history restoration requires proof of the complete
+  native checkpoint/transcript; a local ownership marker alone is insufficient.
 
-- Stage 03 opt-in scoped evidence stores, acknowledged immutable references,
-  bounded read/list tools, raw-preserving tool projections, versioned session
-  references, and host-only acknowledgement recovery. File-backed observations
-  survive ordinary restart; optional fsync is local filesystem durability.
-  Failed writes protect raw results from lossy context reduction, independently
-  of tool-effect status. Includes AMOS evidence inspection, offline restart and
-  ambiguous-action examples, and opt-in real-provider retrieval/failure checks.
-  Existing defaults, returns and older sessions remain supported.
+See [Agent Runtime](USER_GUIDE.md#agent-runtime-preview),
+[harness examples](examples/README.md#agent-runtime-harness-examples), and the
+[delivery record](docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md).
 
-- Stage 06 optional static compactor/extractor/verifier profiles, explicit text-only
-  schema-validated helpers, and shared process-local `ModelTask` budgets/usage.
-  Main-model selection remains fixed. Physical SDK retries, repairs and wrap-up
-  calls are accounted; unknown usage/prices remain explicit. Conservative capacity
-  reservations and deployment upper prices govern admission. Includes explicit
-  rollover integration, AMOS `/helpers`, offline examples and opt-in live checks.
-  No automatic compaction replacement, durable budget or package release is claimed.
+#### Managed context, source evidence and protected task state
 
-- Stage 02 additive `ToolManager.executeWithOutcome()`, execution options, semantic
-  result/stream/error metadata, and original-call late-completion diagnostics.
-  Optional connector whole-operation deadlines and safe read-only retry policy;
-  offline library/AMOS examples and real-provider integration coverage.
+- Fresh, bounded request preparation after compaction, with sanitized input
+  accounting, final dispatch checks and prepared-revision diagnostics. Connected
+  tool-call/result groups, pending native/async dependencies and protected source
+  observations stay intact. See [context preparation](docs/CONTEXT_PREPARATION.md).
+- Opt-in durable evidence with immutable scoped references, bounded read/list
+  tools, raw-preserving projections and host acknowledgement recovery. File-backed
+  observations support restart recovery; failed storage protects raw observations
+  from lossy reduction independently of whether an external action succeeded.
+  See [durable evidence](docs/DURABLE_EVIDENCE.md).
+- Opt-in protected task state: revision-checked host notes and corrections,
+  unconfirmed model interpretations, explicit action receipts, separate workflow
+  confirmations, and atomic host reclamation/pruning. No model mutation tool or
+  automatic action subscription is introduced. See [task state](docs/TASK_STATE.md).
+- Selective context assembly through explicit companion registration, bounded
+  projections, priorities/dependencies and optional stable-prefix layout, with
+  revision/scope checks and actual-versus-estimated cache diagnostics. Existing
+  plugins need no mandatory interface migration. See [assembly](docs/CONTEXT_ASSEMBLY.md).
+- Experimental `ObservationMaskingStrategy` and `StructuredSummaryStrategy`,
+  retaining acknowledged source evidence and protecting exact user/action
+  metadata. Summaries are bounded assistant data, not host authority or proof
+  of semantic truth. See [context strategies](docs/CONTEXT_STRATEGIES.md).
+- Opt-in `ContextCompactionStrategy` with independent plugin/history controls,
+  plus `Agent.compactContext()` targets. Supported OpenAI standalone and Anthropic
+  on-demand paths retain exact native replay ownership, source evidence,
+  accounting and checkpoint boundaries. Existing custom strategies, named
+  defaults and version-1 sessions remain supported.
+  See [native compaction](docs/NATIVE_CONTEXT_COMPACTION.md).
 
-- Stage 00 repository evaluation utilities: four deterministic managed-agent
-  workloads with evidence-based completion, strict branch-aware replay, correlated
-  event reporting, and opt-in real-LLM runs. Includes public-consumer and pinned
-  format-v1 session fixtures, failure/cancellation/privacy checks, and existing
-  AMOS context-command baselines. No production API or default changes.
-- Living Version 2 adoption guide, staged architecture roadmap, evaluation recipe,
-  and an OpenAI/Anthropic/Google live pilot with explicit accounting and provider limitations.
-  Stage completion on the development branch does not announce an npm 2.0 release.
-- Additive prepared-revision diagnostics and low-level preparation options; offline
-  context/AMOS examples and real-provider run/stream evidence-retrieval checks.
-- AMOS budget/breakdown revision and estimate labels, with complete overhead totals.
+#### Model execution, budgets, routing and metadata
+
+- Named `compactor`, `extractor` and `verifier` helper profiles and explicit
+  `agent.invokeHelper()` calls. Helpers are stateless and tool-free, with local
+  schema validation, optional `validationSchema` constraints and bounded repair.
+  Cross-connector context transfer requires
+  explicit host permission; the main model remains fixed.
+- Explicit shared `ModelTask` accounting for calls, tokens, deadlines and estimated
+  model cost across managed/direct/helper work and selected compositions. Missing
+  usage/prices remain unknown; failed/cancelled outcomes are recorded separately.
+  Reservations are process-local, not a durable or distributed spending ledger.
+  See [helpers and model tasks](docs/MODEL_TASKS_AND_HELPERS.md).
+- Optional named managed-model routes with bounded host rules, per-call selection
+  or opt-out, continuity on an explicit task and decision diagnostics. One admitted
+  execution retains its route and owner; automatic cross-model replay is not added.
+  See [model routing](docs/MODEL_ROUTING.md).
+- Browser-safe `getRealtimeModelCapabilities()` and
+  `getTranscriptionCapabilities()` companions, distinguishing supported,
+  unsupported and unknown endpoint/transport/effort combinations without changing
+  legacy registry validation. See [endpoint capabilities](docs/ENDPOINT_CAPABILITIES.md).
+- Pure `assessModelParameters()` and opt-in normalized-temperature policy on
+  selected OpenAI generation, streaming, counting and batch requests. Supported
+  zero remains valid; raw provider controls retain strict validation and saved
+  settings are not rewritten. See [parameter policy](docs/PARAMETER_POLICY.md).
+- Immutable browser-safe `VENDOR_PRESENTATIONS` and `getVendorPresentation()`;
+  AMOS reuses the catalog with its existing display overrides. Presentation does
+  not determine authentication, service identity or model defaults.
+  See [vendor presentation](docs/VENDOR_PRESENTATION.md).
+
+#### Tools, connector profiles and verifiable workflows
+
+- `ToolManager.executeWithOutcome()`, execution-scoped cancellation, semantic
+  diagnostics and original-call late outcomes, while `execute()` and tool events
+  retain raw application data. Business `success: false` is not automatically a
+  framework failure. Optional connector deadlines and safe read-only retries are
+  explicit. See [outcomes and cancellation](docs/TOOL_OUTCOMES_AND_CANCELLATION.md).
+- Opt-in `createOutcomeTool()` with invocation-owned operational failure reporting,
+  preserving raw returns, connector account wrappers and mixed ESM/CJS identity.
+  See [outcome-aware tools](docs/OUTCOME_AWARE_TOOLS.md).
+- `ConnectorTools.enhanced(name, { profile: 'execution-v1' })`: fixed Microsoft,
+  Google API, Slack and GitHub inventory, separate `_exec` names, declared
+  effects/provenance, physical transport diagnostics, whole-operation deadlines,
+  acknowledged read projections and selected reply-draft acceptance IDs. Legacy
+  factories and results are unchanged. See [enhanced connectors](docs/ENHANCED_CONNECTORS.md).
+- Explicit `collections-v1` whole provider pages, independent returned counts,
+  pagination position and corpus coverage, strict Slack topic input and scoped
+  encrypted continuations. Manager-local catalog loading/rollover retains the
+  selected profile; new managers/clear invalidate cursor keys. Saved data does not
+  recreate authorization. See [collection pages](docs/CONNECTOR_COLLECTION_PAGES.md)
+  and the [capacity inventory](docs/CONSUMER_CAPACITY_INVENTORY.md).
+- Opt-in `createRoutineRunner()` with required task/final host verification,
+  bounded detached observations, shared execution binding, source recovery and
+  same-process authorized continuation. Static sequential templates and nested
+  map/fold/until reuse the existing routine engine. Model text or accepted
+  submission alone cannot establish workflow completion.
+  See [verified routines](docs/VERIFIED_ROUTINES.md).
+- Opt-in managed `loopPolicy` bounds failure, repetition/progress and completion
+  recovery, with conservative write/unknown-effect admission, cancellable host
+  checks and `agent.getLoopDiagnostics()`. Existing response/event discriminants
+  remain; direct, Realtime and external SDK loops keep their own owners.
+  See [loop policies](docs/AGENT_LOOP_POLICIES.md).
+- `createOrchestratorWithFactory()` configures authorized parent/worker settings
+  before initialization, with child/monitor accounting, cancellation quarantine
+  and retained-source recovery. The original orchestrator and its five tools
+  retain their contracts. See [factory orchestration](docs/ORCHESTRATOR_FACTORY.md).
+- Negotiated remote outcomes through `AgentPackageOutcomeServer`,
+  `hydrateAgentPackageWithOutcomes()` and `createAgentPackageOutcomeTools()`.
+  Scoped admission,
+  source receipts, evidence recovery and late/cancellation correlation use a
+  separate envelope; literal legacy protocol v2 remains unchanged.
+  See [remote outcomes](docs/REMOTE_TOOL_OUTCOMES.md).
+- Internal composition ownership shares explicit ModelTask/cancellation binding
+  across supported nested routine/orchestration work. Test-only evidence
+  conformance and held-out local/remote examples verify current memory/file
+  profiles and real child-process recovery; no new production storage backend
+  or durable workflow engine is introduced. See [conformance](docs/EVIDENCE_CONFORMANCE.md).
+- Small opt-in `research` / `workflow` presets through `createAgentPreset()` and
+  detached `Agent.inspectCapabilities()` diagnostics. Helpers, host scope,
+  permissions and completion checks remain explicit.
+  See [presets](docs/AGENT_PRESETS.md).
+
+#### AMOS and Hosea
+
+- AMOS exposes `/helpers`, `/routing`, `/preset`, protected task-state edits and
+  pruning, evidence/context/compaction inspection, and verified-routine diagnostics.
+  Save/load and agent replacement retain actual active capabilities and recover
+  transactionally after rejected restoration.
+- AMOS runtime mode adds a trusted `--runtime-host` bootstrap and startup resume,
+  per-run options/request IDs, activity/results inspection, scoped reference
+  persistence, explicit file transfer and stop/detach/resume/delete controls.
+  Five-adapter offline hosts and a complete command cookbook demonstrate adoption;
+  native-only mutation commands are gated in external runtime mode.
+  See the [AMOS guide](apps/amos/README.md) and
+  [runtime cookbook](apps/amos/docs/AGENT_RUNTIME.md).
+- AMOS and Hosea application source, including Hosea's incorporated local React
+  UI, are MIT licensed under Anton Antic, `anton.antich@gmail.com`. Hosea's
+  commercial-license startup gate is removed; third-party license obligations
+  and other applications' licensing remain unchanged. See [licensing](LICENSING.md).
+- Hosea gains a reusable monochrome design system, original logo and native icons,
+  local Geist font, light/dark/system appearance, persistent text size and redesigned
+  sidebar, chat, connections and settings. The isolated `npm run design` launcher,
+  updated Electron runtime and app-owned data root support local UI testing.
+- Hosea retains auth, proxying and backend profile infrastructure for future
+  Youetal integration, disabled by default behind `HOSEA_ENABLE_BACKEND=1` and
+  always disabled in design preview. Company login surfaces/startup telemetry are
+  removed, and host-owned OAuth registrations replace bundled organization apps.
+  See [Hosea](apps/hosea/README.md), its [design system](apps/hosea/docs/DESIGN_SYSTEM.md),
+  [backend boundaries](apps/hosea/docs/BACKEND_INTEGRATION.md), and
+  [application changelog](apps/hosea/CHANGELOG.md).
 
 ### Fixed
 
-- Stage 10 second review: shape-valid all-empty structured summaries now fail
-  local helper validation and receive the existing bounded repair. Optional
-  `HelperCallOptions.validationSchema` adds constraints without changing native
-  wire schema or increasing retries. Real Google recovery from the recorded body
-  is verified with exact source/account/status and no masking fallback. Pending
-  completion/progress checks now bind tool principal/connector authority and
-  reject account/identity/role/session rebinding. No breaking API/default change.
-  [Latest evidence](docs/designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md): 7,988 units,
-  136 live cases / 148 scenarios, 22 offline examples and public/AMOS gates pass.
-
-- Stage 04 public TypeScript compatibility: legacy resolved-feature values keep
-  their original required keys, and external `taskState` factories retain arbitrary
-  record configuration. Built-in configuration remains explicitly typed and
-  runtime-validated; normalized defaults and factory precedence are unchanged.
-  Adds root/`types` legacy consumers and runtime/checkpoint/lifecycle regressions.
-- Stage 04 protected dispatch rechecks after final budget observers; documented
-  pruned-ID reuse no longer rebinds stale correction/conflict links or reactivates
-  history. Shared candidate/restore validation protects checkpoints. Explicit atomic
-  host reclamation works at exact capacity, including AMOS's record cap.
-
-- Stage 07 review corrections allocate source capacity only to eligible groups,
-  skip writes/helper work for known no-op compaction, and restore absent AMOS
-  strategy settings after failed saves. Includes repeated preparation/shared-budget,
-  whole-group and real configuration save/reload regressions and offline examples.
-  Algorithmic defaults, public signatures and partial-merge semantics are preserved.
-
-- Stage 03 third-review corrections retain partial unstored tool batches on early
-  streaming/fail-fast exits, distinguish receipt-only acknowledgements from stored
-  results, and reconcile checkpointed invocations across receipt changes. Includes
-  an offline interruption/recovery example, AMOS stream-close coverage and live
-  recovery probes; no required public API or session-schema change.
-
-- Stage 03 second-review corrections preserve protected pending groups during async
-  insertion/follow-up input, retain authentic delivery correlation without requiring
-  `ToolResult.outcome`, and save interrupted observations in detached session
-  snapshots. Same-instance restoration avoids duplicates. Adds recovery examples,
-  AMOS save/load coverage and three real-provider restoration probes; no API break.
-
-- Stage 03 review corrections retain undelivered async completions and observations
-  returned during cancellation, reject receipt-only recovery, preflight complete
-  evidence snapshots, invalidate projections after mutable host hooks, and enforce
-  incremental serialization/admission budgets. Optional source-budget configuration
-  and backend hints preserve existing custom adapters. Adds an offline recovery
-  example and targeted regression/live coverage; no action replay or API break.
-
-- Stage 06 second-review corrections: aggregate Google/Vertex candidate output
-  admission, captured request data across asynchronous SDK setup, mixed external
-  pricing uncertainty preserved through final metadata, and helper repairs that
-  retain selected evidence and recheck input fit. Offline library/AMOS examples
-  demonstrate evidence-preserving repair; real-provider repair checks are opt-in.
-
-- Stage 06 review corrections: raw hosted-tool options obey monetary admission;
-  Google GenerateContent/Vertex thinking usage is normalized only in the ledger;
-  helper schema compilers and standalone tasks are isolated; terminal stream usage
-  survives errors/cancellation; direct task ownership is captured at admission.
-  External count availability and failed/cancelled outcomes remain explicit;
-  valid Anthropic extended-thinking helpers reuse provider preflight checks.
-
-- Explicit Anthropic named-tool requests advertise the selected local function
-  while retaining native tools and history. Mismatched response tools raise the
-  existing `ProviderError` before local execution in both modes. Stage 02 live
-  hooks now apply their bounded request options through the existing in-place
-  contract in streaming as well as non-streaming; outcome/name assertions remain
-  strict. Added an opt-in live example; default execution stays offline.
-
-- Notes retrieval guidance now distinguishes keyless index metadata from keyed
-  source contents, uses the available unified store tools, and retains legacy
-  WorkingMemory formatter guidance and existing keyless return shapes.
-
-- Stage 02 review corrections: retain invocation connector authority and selected
-  tool/permission metadata, filter background results again at delivery, contain async
-  observer failures, count streamed settlement before completion events, interrupt safe
-  retry cleanup, and preserve metadata through chained operation-response clones.
-
-- Normalized tool failures and streaming tool counters now report accurate outcomes;
-  async acceptance placeholders no longer count as successful completion. Existing
-  raw results and breaker policy remain compatible. Execution-scoped cancellation
-  reaches cooperative tools and generic connector API requests without rebinding
-  shared identity/context. Late results cannot update another execution/account.
-- Connector caller cancellation applies during token waits, body reads, and retry
-  backoff. Existing `skipRetry` also skips status retries as documented. AMOS
-  displays uncertain completion and retains its running state until cancellation
-  settles. The baseline host checkpoints after receiving the accepted-job result.
-
-- Stage 01 second corrective pass: allocate distinct spill keys across turns and
-  restored state, verify stored values, prepare against already-known JSON/native
-  tool contributions and provider capacity, and count function-result error text.
-  Optional low-level `getRequestOptions`/`modelMaxContextTokens` preparation options,
-  an offline request-budget example, and expanded live/AMOS checks are included.
-- Stage 01 corrective review: preserve every connected message/native result and
-  its attachments before algorithmic spill removal; retain history on failed or
-  evicted writes; report actual removal counts. Recount synchronous request-event
-  mutations and actual dispatch-model capacity, count schemas/native tools and
-  tool-call replay signatures, and validate managed JSON formatting/repair without
-  replacing the main context diagnostic. Existing valid listener/hook behavior,
-  explicit host limits, defaults, direct APIs, and session format remain compatible.
-
-- Stage 01 managed context freshness: rebuild plugin content/instructions and dynamic
-  schemas after a bounded compaction pass; count sanitized input; supply fresh
-  strategy budgets; protect pending/native async dependencies; reject stale index
-  removals and requests that still cannot fit. Run/stream and tool-free wrap-ups
-  validate their final estimated input/instruction/tool budgets. Existing critical
-  trigger, defaults, plugin/strategy interfaces, and session format remain intact.
-- Duplicate final tool results/call IDs now report invalid protocol before dispatch.
-  Supported asynchronous completion messages and provider continuation items remain.
+- **Context fit and spill:** retain connected message/native results and attachments
+  until storage succeeds; preserve history on failed writes; allocate distinct
+  spill keys across turns and restored sessions; count error text, JSON schemas,
+  native tools and replay signatures. Final checks include actual model capacity
+  and synchronous request listeners. Duplicate final results fail before dispatch.
+- **Evidence delivery:** preserve partial unstored batches on early streaming or
+  fail-fast exits, async insertion/follow-up input and detached checkpoints.
+  Receipt-only acknowledgements cannot release raw protection; restored invocation
+  correlation avoids duplicates and storage repair never repeats the action.
+- **Invocation scope and cancellation:** capture connector/principal/tool metadata
+  at admission, recheck background delivery, contain observer failures and settle
+  streaming counters before completion. Cancellation reaches token waits, body
+  reads and retry cleanup; `skipRetry` also skips status retries. Late results
+  retain their original identity.
+- **Budget accounting and helpers:** normalize inclusive Google/Vertex thinking
+  only in the ledger, reserve aggregate candidate output and count physical
+  retries/repairs/wrap-ups. Preserve unknown external prices and terminal usage
+  through failure. Helper repairs retain selected evidence and recheck input fit.
+- **Compaction and selected context:** reject empty structured summaries through
+  bounded repair, avoid writes/helper calls for known no-op reductions, retain
+  hook-written memory and refresh bounded contributions. Native thinking/count
+  constraints, endpoint/account ownership, source headroom and checkpoint replay
+  are checked before incompatible or stale work can dispatch.
+- **Routing and structured continuation:** retain original route/task/source
+  ownership through suspension and failed resume; finalize selected JSON before
+  checkpointing; allow only host-authorized compatible native restoration.
+  Failed finalization preserves recovery correlation without replaying an action.
+- **Session restoration and cleanup:** roll back rejected loads/replacements,
+  preserve host callbacks/roles/permissions and labels, serialize saves with
+  restoration, retain per-plugin recovery barriers and clean partially constructed
+  resources while preserving the original error.
+- **Runtime authorization and recovery:** selected native tools evaluate both
+  resolver and Agent policies; Claude streaming/structured redaction handles split
+  credentials; managed OpenAI restoration rejects expanded vault/desktop/tool
+  configuration. Ambiguous control writes reconcile under their original lease;
+  late recovery and stalled read-only admission cannot escape shutdown cleanup.
+- **Connector/remote safety:** selected generic tools check every redirect before
+  forwarding credentials, retaining configured-origin restrictions. Missing
+  authoritative outcomes after remote handoff remain unknown; repeated/concurrent
+  receipt recovery reuses evidence. Failed shutdown callbacks still release settled
+  borrowed ownership.
+- **Routine instructions and stores:** default/generated prompts use actual
+  `store_set` / `store_get` tools and `whiteboard` / `notes` stores. Nested control
+  flow reaches reused agents without changing their system prompt or ToolManager.
+  Exact notes keys and tiered spill cleanup preserve unrelated host data, custom
+  prompt contracts, reflection opt-in and fold task-output precedence.
+- **Provider controls:** explicit Anthropic named-tool calls retain the advertised
+  selected function and reject mismatched returns before local execution.
+  Explicit Google GenerateContent/Vertex `thinking.enabled: false` reaches supported
+  Gemini 2.5 Flash/Flash-Lite requests instead of leaving dynamic thinking enabled.
+- **PDF extraction:** use unpdf's per-page raw-pixel API, encode actual PNG bytes
+  for RGB/grayscale/alpha, respect page selection and reuse/release one private
+  loading task on success or failure. Text survives partial metadata/image failures.
+- **Published types and interop:** ship required WebSocket declarations as a
+  production dependency; verify strict installed-package ESM/CJS types and shared
+  Connector/Agent identity without relying on development-only dependencies.
+- **Deterministic recovery fixtures:** close synthetic idle streams explicitly
+  instead of making healthy initial execution depend on a 500 ms deadline.
+  Original ambiguity, no-resubmission and no-cancellation assertions remain.
 
 ### Changed
 
-- Anthropic agent integration fixtures now use available `claude-sonnet-4-6`
-  instead of retired Sonnet 4. Existing assertions and production APIs are unchanged.
+- Rewritten README and fully reviewed/reorganized User Guide feature v2 adoption,
+  inherited connector/memory strengths, preview boundaries and prominent AMOS
+  navigation. Generated public/internal references, examples and specialist guides
+  cover the delivered APIs; v1 upgrade history retains compatible anchors.
+- Internal documentation links are relative, apart from the README's explicit npm
+  version-navigation links. `main` is the v2 source/documentation line; `version1`
+  retains legacy maintenance. No automatic consumer upgrade is implied.
+- AMOS's Node engine declaration matches the library floor. Documentation corrects
+  in-context memory's existing 40,000-token default without changing that default;
+  Anthropic integration fixtures use an available Sonnet model.
+- Consolidated the misplaced C3–C9 entries from below the historical releases into
+  this v2 entry. Published v1 release notes remain intact.
+
+### Security
+
+- Harden the library candidate's consumer graph with officeparser **8.0.0**,
+  patched PDF.js **6.2.108**, glob **14.0.3+** and unpdf **1.9.1+**. Root overrides
+  are not treated as fixes for downstream consumers. The officeparser pin
+  preserves the supported Node floor and must be revalidated before upgrading.
+- The November 2 clean tarball audits recorded **0 critical / 0 high / 10 moderate
+  package entries**, from two source-reviewed non-applicable ExcelJS dependency
+  advisories. The release gate checks exact versions, advisory IDs and affected
+  code paths; findings remain visible. This is not a zero-finding audit or an
+  assessment of every application in the repository.
+- Upgrade the private API app's Vitest **2.1.x → 4.1.12+** and replace its deprecated
+  Cloudflare pool with **`@cloudflare/vitest-plugin` 1.4.12+**. This removes the
+  exposed test-server critical advisory and the additional critical worker-pool
+  path. Its local audit records **0 critical / 6 high / 1 low**; remaining app
+  findings are explicit. Correct invalid test D1 configuration and unsupported
+  Worker filesystem schema loading. See [dependency security](docs/DEPENDENCY_SECURITY.md).
+
+### Validation and remaining boundaries
+
+- **Recorded library candidate gate — 2026-11-02:** build, types, lint,
+  **9,374 unit tests across 427 files**, public-consumer fixtures, examples types,
+  **27 offline demonstrations**, generated references and documentation checks pass.
+  These are dated results, not claims that every later revision reran the suite.
+- Repository evaluation utilities cover four deterministic agent workloads with
+  evidence-based completion, correlated reporting and held-out data, plus public
+  consumer and pinned format-v1 session fixtures. Live evaluation is separately
+  opt-in. See [baseline evaluation](docs/AGENTIC_BASELINE_EVALUATION.md).
+- Clean npm tarball installs exercise all **11 entries / 33 export files**, both
+  module formats, strict core and optional-SDK declarations, shared identity,
+  licenses/docs and nine representative document formats, including PDF image
+  pixels. Node **22.13.0 / 24.20.0** and optional SDK loading were checked.
+  See [release readiness](docs/RELEASE_READINESS_V2.md) for exact scope and evidence.
+- AMOS types/build and five-adapter offline command scenarios pass; Hosea types,
+  renderer/main builds and six design/storage tests pass. The later API app
+  security check passes types and **29/30 tests**; its repaired harness exposes an
+  existing registry-null-limit versus database-`NOT NULL` model-seeding mismatch.
+  That app is not covered by the earlier all-green AMOS/Hosea source checks.
+- The separately authorized [November 1 live validation](docs/evaluations/LIVE_VALIDATION_2026_11_01.md)
+  covers its bounded Codex subscription experiment and small OpenAI direct-model
+  sample. Subscription authentication used an explicit test-only seam; production
+  Codex/AMOS auth remains API-key-only. Other live account/adapter/file/platform
+  gates remain pending, and offline wire tests do not establish vendor entitlement.
+- `release:check` now includes repeatable offline examples, documentation validation
+  and an actual clean-consumer install/type/document/audit gate. `prepublishOnly`
+  also requires a clean tree and the exact version tag at HEAD. Neither a local
+  tarball nor a source merge publishes a package.
+- Stage 14B delegation research, Stage 16B retention research, new distributed
+  workflow/storage authority and signed desktop distribution remain outside the
+  delivered scope. Detailed stage and corrective history lives in the
+  [v2 adoption record](docs/VERSION_2_GUIDE.md),
+  [consumer delivery ledger](docs/designs/CONSUMER_DELIVERY_LEDGER.md), and
+  [harness delivery ledger](docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md).
 
 ## [1.2.1] — 2026-10-27
 
@@ -3793,7 +3763,7 @@ StorageRegistry.setContext({ userId: currentUser.id });
 [0.1.2]: https://github.com/aantich/oneringai/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/aantich/oneringai/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/aantich/oneringai/releases/tag/v0.1.0
-[Unreleased]: https://github.com/aantich/oneringai/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/aantich/oneringai/compare/v1.2.1...HEAD
 [1.2.0]: https://github.com/aantich/oneringai/compare/v1.1.8...v1.2.0
 [1.1.8]: https://github.com/aantich/oneringai/compare/v1.1.7...v1.1.8
 [1.1.7]: https://github.com/aantich/oneringai/compare/v1.1.6...v1.1.7
@@ -3807,46 +3777,3 @@ StorageRegistry.setContext({ userId: currentUser.id });
 [1.0.1]: https://github.com/aantich/oneringai/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/aantich/oneringai/compare/v0.11.0...v1.0.0
 [0.11.0]: https://github.com/aantich/oneringai/compare/v0.10.3...v0.11.0
-
-### Consumer hardening C3 (unreleased branch)
-
-- Added opt-in `createRoutineRunner` with required task/final verification, explicit shared execution binding, same-process authorized continuation, scoped shared-manager ownership and fresh-child tool adapter.
-- Added bounded detached observations, explicit host source recovery, local-only inspection, deadline/late-work retention and AMOS synthetic wait/reconcile demo. Legacy routine APIs/defaults/session DTOs remain unchanged.
-
-### Consumer hardening C4 (unreleased, complete on branch)
-
-- Added opt-in `ConnectorTools.enhanced` execution-v1 with a fixed four-family inventory, separate `_exec` names, explicit operational provenance/effects, host whole-operation deadlines and physical transport diagnostics.
-- Added acknowledged read projections and selected Microsoft reply-draft acceptance IDs, preserving old tool results/defaults. New generic API credentials stay on the configured origin.
-- Kept legacy reflective request options and nonextensible context managers usable; added local HTTP/live-model examples and existing AMOS adapter coverage.
-
-### Consumer hardening C5 (unreleased branch)
-
-- Added explicitly selected collections-v1 with whole provider pages, separate position/coverage/counts, scoped encrypted continuations and strict unchanged Unicode topic input.
-- Added manager-local selected catalog discovery/load/unload/compaction without legacy alias reload; context rollover/scopes preserve its ephemeral codec. Fresh managers/clears invalidate tokens; saved state does not restore authority or cursor keys.
-- Preserved legacy/execution-v1 behavior, added exact traversal/source/failure/compatibility examples and AMOS page notices, and published the capacity inventory.
-
-- Opt-in `createOrchestratorWithFactory` forwards complete authorized parent/worker configuration before initialization, with per-operation child/monitor accounting, cancellation quarantine and retained-source recovery. Existing orchestrator/tool/session defaults and protocol v2 remain unchanged.
-
-Unreleased branch C7: additive negotiated portable outcomes, scoped admission/source
-proof, receipt recovery, cancellation/late correlation and tools-first orchestration
-composition. Legacy protocol 2 is unchanged. Track raw evidence writes past their
-acknowledgement deadline; preserve legitimate redacted C6 async repair arguments.
-
-Unreleased branch C8: reusable test-only evidence conformance for current memory/
-file profiles, real child-process recovery, held-out local/remote workflow examples,
-and AMOS observed verification/accounting diagnostics. No production backend,
-workflow resume or old inspection-shape change.
-
-Unreleased C9-A: browser-safe sparse Realtime/transcription companion lookups with
-documentation provenance and explicit unknown effort sets/pairings. Existing model
-registries, session validation and STT streaming flags are unchanged.
-
-Unreleased C9-B: shared pure parameter assessment and opt-in normalized-temperature
-policy on actual selected OpenAI generation/stream/count/batch requests. Preserve
-legacy validation/count defaults, supported zero, explicit raw-control strictness,
-host-only policy authority and portable v2. No live calls in this slice.
-
-Unreleased C9-C: immutable browser-safe vendor presentation catalog and bounded
-lookup, with consumer palette and AMOS label parity. Vendor/service/auth identity,
-model defaults and existing logo utilities remain unchanged. All consumer-hardening
-slices are implemented on branch; live testing remains paused by the user.

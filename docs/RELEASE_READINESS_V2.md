@@ -8,8 +8,13 @@ not represent an npm publication, a merge, or a signed desktop installer release
 `npm run release:check` passed end to end, with the default and optional-SDK consumer
 installs. No known implementation blocker remains in the reviewed scope. The two
 source-reviewed non-applicable dependency advisories remain explicit; external
-harnesses and experimental policies keep their preview labels. The tree remains
-uncommitted and no merge, release tag or publication has been performed.
+harnesses and experimental policies keep their preview labels. At validation
+time, the tree was uncommitted and no merge, release tag or publication had been
+performed. The subsequent source handoff committed and merged v2 into `main` at
+`9c18dfa` and pushed it to GitHub on **2026-11-02**. This does not announce an npm
+release. The later [API app security assessment](DEPENDENCY_SECURITY.md#api-application-development-tooling--2026-11-02)
+records its development-tooling correction and separately exposed model-seeding
+test failure; the earlier application checks below concern AMOS and Hosea.
 
 ## Corrections delivered
 
@@ -64,7 +69,7 @@ with inherited connectors/memory strengths and prominent AMOS navigation. The
 User Guide routes to specialist guides and preserves legacy migration anchors.
 Incorrect examples, lifecycle/permission/reflection claims and generated source
 links were corrected. Internal links are relative; only the README's two npm
-version-navigation links target the required `version1` and eventual `main` pages.
+version-navigation links target the required `version1` and current `main` pages.
 
 Repeatable checks:
 
@@ -139,8 +144,8 @@ provider calls were made.
 
 After final candidate checks pass, review/commit the intended tree and select the
 publication revision. This checkout still prepares **a beta**, not stable `2.0.0`.
-Keep v1 maintenance on `version1`; merge v2 into `main`, choose the release version,
-tag and publish only with separate authorization. The tag/clean-tree gate remains
+Keep v1 maintenance on `version1` and v2 development on `main`. Choose the release
+version, tag and publish only with separate authorization. The tag/clean-tree gate remains
 an intentional final release step. Recheck npm account access and the unscoped name
 at publication time, then verify a real registry install. Only after v2 is
 installable should the [legacy migration/deprecation notice](PACKAGE_MIGRATION.md)

@@ -7,18 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
----
+The workspace revival targets OneRingAI v2 source (`oneringai@2.0.0-beta.1`).
+Hosea has its own application version and installer release process; these source
+changes do not announce a signed desktop release.
 
-## Unreleased — hosea workspace redesign
+### Added
 
 - Original open-arch logo, native platform icons, local Geist font, shared neutral
   design tokens and controls, and a redesigned sidebar/chat/connections/settings.
 - Functional light/dark/system appearance and persistent text size.
 - Isolated `npm run design` launch and ordered developer startup.
+- Shared `~/.hosea` data root with a `HOSEA_DATA_DIR` override and isolated preview
+  storage; design/storage tests cover these boundaries.
+
+### Changed
+
+- MIT-licensed application and incorporated local React UI source, owned by
+  Anton Antic, `anton.antich@gmail.com`. Removed the commercial-license acceptance
+  gate; third-party notices remain applicable.
 - Updated Electron runtime; fixed app/library adapter mismatches exposed by the revival.
 - Preserved backend auth/proxy/profile code under neutral names, disabled by default
-  for future Youetal work. Removed company login surfaces and startup telemetry.
+  behind `HOSEA_ENABLE_BACKEND=1` for future Youetal work and always disabled during
+  design preview. Removed company login surfaces and startup telemetry.
 - Local OAuth app registrations replace bundled organization credentials.
+
+See the [design system](docs/DESIGN_SYSTEM.md),
+[backend integration boundaries](docs/BACKEND_INTEGRATION.md), and
+[library v2 changelog](../../CHANGELOG.md#unreleased).
 
 ## [0.2.1] - 2026-03-12
 

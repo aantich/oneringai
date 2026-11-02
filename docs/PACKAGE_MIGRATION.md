@@ -13,8 +13,9 @@ npm account and existing v1 maintainer are `aantich`. E404 confirms no visible
 published package at the time of the check; it does not reserve the name or
 guarantee a future publication will be accepted.
 
-V1 maintenance stays on `version1`; the eventual v2 release comes from `main`.
-This documentation review creates no new branch and performs no merge.
+V2 was committed and merged into `main` at `9c18dfa` on **2026-11-02** and pushed
+to GitHub. `main` is the canonical v2 development line. V1 maintenance stays on
+`version1`; npm publication and release tags remain separate steps.
 
 Published v1 remains `@everworker/oneringai@1.2.1`. It is not renamed, removed,
 silently redirected or deprecated before a verified replacement is installable.

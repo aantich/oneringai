@@ -6,6 +6,11 @@ repository source directly; the context-freshness example imports the built pack
 and requires `npm run build`. Run examples from the repository root after installing
 dependencies.
 
+**Starting with v2:** use the [five-harness examples](#agent-runtime-harness-examples),
+the **[AMOS runtime cookbook](../apps/amos/docs/AGENT_RUNTIME.md)**, and the
+[v2 capability map](../USER_GUIDE.md#version-2-capability-map) to choose an entry
+point. The [package migration guide](../docs/PACKAGE_MIGRATION.md) covers v1 users.
+
 Most AI and search examples make real, billable API calls. Review the prompt,
 model, and enabled tools before running them with production credentials.
 
@@ -17,7 +22,7 @@ cp .env.example .env
 npm run examples:check
 ```
 
-Use Node.js 22 or newer. Add only the credentials needed by the program you want
+Use Node.js 22.13+ or 24+. Add only the credentials needed by the program you want
 to run, then use its command below. `npm run examples:check` type-checks every
 example without making network calls.
 

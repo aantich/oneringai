@@ -2,6 +2,12 @@
 
 A powerful terminal-based AI assistant powered by `oneringai`. Features multi-vendor support, runtime model switching, tool permissions, session management, and comprehensive context inspection.
 
+**OneRingAI v2:** start with the **[agent runtime cookbook](docs/AGENT_RUNTIME.md)**
+to select among all five harness adapters, inspect activity, and recover saved
+runtime sessions. External harness integrations retain their preview boundaries.
+Native mode also exposes context diagnostics, model routing, helper models and
+adoption presets; see the commands below and the [v2 guide](../../docs/VERSION_2_GUIDE.md).
+
 > The historical name says “Multimodal,” but the current CLI implements text agents and tools only. Image, audio, and video commands are not implemented yet.
 
 ## Features
@@ -20,7 +26,7 @@ A powerful terminal-based AI assistant powered by `oneringai`. Features multi-ve
 ## Quick Start
 
 ```bash
-# Requires Node.js 22+
+# Requires Node.js 22.13+ or 24+
 
 # Install dependencies
 npm install
