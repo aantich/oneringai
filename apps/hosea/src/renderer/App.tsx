@@ -1,5 +1,5 @@
 /**
- * Everworker Desktop Main App Component
+ * hosea Main App Component
  */
 
 import React, { useState, useCallback, useEffect, useContext, createContext, Component, ErrorInfo, ReactNode } from 'react';
@@ -32,6 +32,8 @@ import {
   NavigationContext,
   useNavigationState,
 } from './hooks/useNavigation';
+import { AppearanceProvider } from './design-system/AppearanceProvider';
+import { HardDrive } from 'lucide-react';
 import { TabProvider } from './hooks/useTabContext';
 
 // Default models for each vendor
@@ -46,7 +48,7 @@ const DEFAULT_MODELS: Record<string, string> = {
 };
 
 // ============ Connector Version Context ============
-// Bumped when EW profile switch causes connector changes, so pages auto-refresh
+// Bumped when backend profile switch causes connector changes, so pages auto-refresh
 export const ConnectorVersionContext = createContext(0);
 export function useConnectorVersion(): number {
   return useContext(ConnectorVersionContext);
@@ -101,7 +103,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
           <Alert variant="danger">
             <Alert.Heading>Something went wrong</Alert.Heading>
             <p>
-              Everworker Desktop encountered an unexpected error. This is usually caused by a
+              hosea encountered an unexpected error. This is usually caused by a
               temporary issue with the AI service or network connection.
             </p>
             <hr />
@@ -152,6 +154,7 @@ function AppContent(): React.ReactElement {
   // MIT source requires no commercial-license acceptance before startup.
   useEffect(() => {
     const checkWhatsNew = async () => {
+      if (await window.hosea.app.getDesignPreview()) { setWhatsNewChecked(true); return; }
       const latestEntry = whatsNewEntries[0];
       if (!latestEntry) {
         setWhatsNewChecked(true);
@@ -185,14 +188,10 @@ function AppContent(): React.ReactElement {
     };
   }, []);
 
-  // Listen for connector changes from EW profile switches
+  // Dormant backend support retains connector invalidation without showing login UI.
   useEffect(() => {
-    window.hosea.everworker.onConnectorsChanged(() => {
-      setConnectorVersion(prev => prev + 1);
-    });
-    return () => {
-      window.hosea.everworker.removeConnectorsChangedListener();
-    };
+    window.hosea.backend.onConnectorsChanged(() => setConnectorVersion(value => value + 1));
+    return () => window.hosea.backend.removeConnectorsChangedListener();
   }, []);
 
   // App initialization flow (waits for service to be ready):
@@ -263,7 +262,7 @@ function AppContent(): React.ReactElement {
         }
 
         // Step 4: No connectors - show setup modal
-        setShowSetup(true);
+        setShowSetup(!(await window.hosea.app.getDesignPreview()));
         setIsInitializing(false);
       } catch (error) {
         console.error('Error initializing app:', error);
@@ -355,7 +354,7 @@ function AppContent(): React.ReactElement {
       <>
         <div className="app-loading">
           <Spinner animation="border" variant="primary" />
-          <p className="mt-3 text-muted">Starting Everworker Desktop...</p>
+          <p className="mt-3 text-muted">Starting hosea...</p>
         </div>
         <WhatsNewModal show={showWhatsNew} onClose={handleWhatsNewClose} />
       </>
@@ -373,7 +372,7 @@ function AppContent(): React.ReactElement {
             <Sidebar />
             <main className="app-main">
               {/* macOS drag region for window dragging */}
-              <div className="app-main__drag-region" />
+              <div className="app-main__drag-region"><span className="h-workspace-label"><HardDrive size={12} /> Local workspace</span></div>
               {renderPage()}
             </main>
           </div>
@@ -398,7 +397,7 @@ function AppContent(): React.ReactElement {
 export function App(): React.ReactElement {
   return (
     <ErrorBoundary>
-      <AppContent />
+      <AppearanceProvider><AppContent /></AppearanceProvider>
     </ErrorBoundary>
   );
 }

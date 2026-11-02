@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Everworker Desktop will be documented in this file.
+All notable changes to hosea will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+
+## Unreleased — hosea workspace redesign
+
+- Original open-arch logo, native platform icons, local Geist font, shared neutral
+  design tokens and controls, and a redesigned sidebar/chat/connections/settings.
+- Functional light/dark/system appearance and persistent text size.
+- Isolated `npm run design` launch and ordered developer startup.
+- Updated Electron runtime; fixed app/library adapter mismatches exposed by the revival.
+- Preserved backend auth/proxy/profile code under neutral names, disabled by default
+  for future Youetal work. Removed company login surfaces and startup telemetry.
+- Local OAuth app registrations replace bundled organization credentials.
 
 ## [0.2.1] - 2026-03-12
 
@@ -30,11 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Smart model recommendations** — Based on system RAM: qwen3:8b (<12GB), qwen3:14b (12-24GB), qwen3:30b (24GB+)
   - **Settings > Local AI** — New settings tab with full Ollama management: status, model list, pull/delete, auto-start toggle, system info
   - **Onboarding integration** — SetupModal now shows "Run Locally with Ollama" as a first-class option alongside "Add API Key" for new users with no connectors
-  - **LLM Connectors page** — Managed Ollama connector shows "Managed by Everworker Desktop" badge; hint banner for users without Ollama set up
-  - **External Ollama detection** — If Ollama is already installed or running externally, Everworker Desktop detects and reuses it without redundant downloads
-  - **Auto-start** — Optional auto-start on Everworker Desktop launch (enabled by default)
+  - **LLM Connectors page** — Managed Ollama connector shows "Managed by hosea" badge; hint banner for users without Ollama set up
+  - **External Ollama detection** — If Ollama is already installed or running externally, hosea detects and reuses it without redundant downloads
+  - **Auto-start** — Optional auto-start on hosea launch (enabled by default)
   - **IPC + Preload bridge** — Full `window.hosea.ollama` API with push events for download progress, pull progress, and state changes
-  - Binary stored at `~/.everworker/hosea/ollama/`, config at `~/.everworker/hosea/ollama-config.json`
+  - Binary stored at `~/.hosea/ollama/`, config at `~/.hosea/ollama-config.json`
   - Supports macOS (arm64/x64), Linux (amd64/arm64); Windows download stubbed with manual install fallback
 - **OAuth Scope Selector** — New `ScopeSelector` component in the connector creation and edit forms. Replaces the plain-text scope input with a checkbox-based selector showing template-defined scopes with human-readable descriptions. All template scopes are pre-checked by default. Users can toggle individual scopes on/off and add custom scopes via a text input. Available in both the Create Connector page and the Edit Connector modal.
 - **Automatic OAuth Flow for Vendor Connectors** — One-click OAuth authorization for any vendor that requires OAuth (QuickBooks, GitHub OAuth, Ramp, etc.)
@@ -45,8 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Auto-refresh: token refresh happens transparently via the core library's `AuthCodePKCEFlow`.
   - UI: Redirect URI is shown as a read-only info box (not an editable field) during connector creation. After creation, an "Authorize" button opens the OAuth flow. Connector cards on the list page show "Authorize" for OAuth connectors that haven't been authorized yet.
   - IPC bridge: `oauth:start-flow`, `oauth:cancel-flow`, `oauth:token-status`, `oauth:get-redirect-uri` handlers with full preload typing.
-- **Browser-Based EverWorker Login** - One-click authentication replaces manual JWT token entry
-  - "Login to EverWorker" button opens a browser window to the EW login page
+- **Browser-Based Youetal Login** - One-click authentication replaces manual JWT token entry
+  - "Login to Youetal" button opens a browser window to the EW login page
   - Supports all EW auth methods (password, Microsoft SSO, OIDC, etc.) via generic `returnTo` mechanism
   - Token (30-day, `llm:proxy` scope) is automatically generated and stored in profile after login
   - Token status badges on profile cards: "Token expired" (red) or "Expires in Xd" (yellow)
@@ -56,14 +67,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Version detection: checks `/api/v1/hosea-auth/status` before opening auth window
   - Token expiry checked on app startup with push notification to renderer
   - Expired tokens block sync attempts with clear error message
-- **Multi-Profile Everworker Backend** - Support multiple named EW backend profiles with instant switching
+- **Multi-Profile Youetal Backend** - Support multiple named EW backend profiles with instant switching
   - Add, edit, delete named profiles (e.g., Production, Staging, Dev)
   - Active profile dropdown with live switching — purges old connectors and syncs new ones immediately
   - Per-profile test connection and sync buttons
   - Profile cards showing connector count, last sync time, and status
-  - Auto-migration from old single `everworker-backend.json` format to new `everworker-profiles.json`
+  - Auto-migration from old single `backend-backend.json` format to new `backend-profiles.json`
   - Legacy API wrappers maintained for backward compatibility
-- **Live Connector Refresh** - Switching EW profiles now pushes `everworker:connectors-changed` events to the renderer
+- **Live Connector Refresh** - Switching EW profiles now pushes `backend:connectors-changed` events to the renderer
   - LLM Connectors, Universal Connectors, Tool Connectors, Agent Editor, and Agents pages auto-refresh when connectors change
   - Uses React Context (`ConnectorVersionContext`) for efficient re-rendering
 - **Agent Connector Availability** - Agents page now checks if each agent's connector is available
@@ -93,10 +104,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Better agent error handling** — Improved error messages and recovery during agent execution
 
 ### Changed
-- **Settings > Everworker Backend** - Complete UI redesign for multi-profile management
+- **Settings > Youetal Backend** - Complete UI redesign for multi-profile management
   - Replaced single URL/token form with profile-based card layout
   - Added Add/Edit modal, Delete confirmation, and per-profile action buttons (Test, Sync, Activate, Edit, Delete)
-- **Product name** — App renamed from "HOSEA" to "Everworker Desktop"
+- **Product name** — App renamed from "HOSEA" to "hosea"
 
 ### Fixed
 - **Version display** - About page now shows actual app version instead of hardcoded "0.1.0"
@@ -106,34 +117,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.5] - 2026-02-08
 
 ### Added
-- **Everworker Backend Proxy Integration** - Connect Everworker Desktop to an Everworker backend for centrally managed AI connectors
+- **Youetal Backend Proxy Integration** - Connect hosea to an Youetal backend for centrally managed AI connectors
   - API keys managed on the EW server, not stored on desktops
   - JWT-based authentication with `llm:proxy` scope
   - Transparent HTTP reverse proxy - all vendor SDKs work without changes via `baseURL` override
   - **Mixed mode**: local connectors and EW connectors coexist seamlessly
   - Works for all connector types: LLM text, image, video, TTS, web search, universal APIs
-- **Settings > Everworker Backend** - New settings section to configure EW backend connection
+- **Settings > Youetal Backend** - New settings section to configure EW backend connection
   - Backend URL and JWT token configuration
   - Test connection button to verify connectivity
   - Sync connectors button to fetch available connectors from EW
   - Enable/disable toggle for EW integration
-- **Connector Source Badges** - LLM Providers page shows "EW" badge for Everworker connectors and "Local" badge for local ones
+- **Connector Source Badges** - LLM Providers page shows "EW" badge for Youetal connectors and "Local" badge for local ones
   - EW connectors show available models
-  - EW connectors are marked as "Managed by Everworker" (key management disabled)
-- **IPC Bridge** - New `window.hosea.everworker` API for renderer communication
+  - EW connectors are marked as "Managed by Youetal" (key management disabled)
+- **IPC Bridge** - New `window.hosea.backend` API for renderer communication
   - `getConfig()`, `setConfig()`, `testConnection()`, `syncConnectors()`
-- **Connector Source Tracking** - `StoredConnectorConfig` now includes `source` field (`'local' | 'everworker'`)
+- **Connector Source Tracking** - `StoredConnectorConfig` now includes `source` field (`'local' | 'backend'`)
 
 ### Fixed
 - **EW Sync: Non-LLM connectors no longer appear in LLM Providers** - `syncEWConnectors()` now routes connectors by type: LLM vendors (openai, anthropic, etc.) go to the LLM providers store, while non-LLM services (slack, github, zenrows, serper, etc.) go to the Universal Connectors store
 - **EW Sync counter** - Sync now reports "X added, Y updated, Z removed" instead of showing "0 added" on re-sync
 - **EW Proxy: 0 connectors available** - Proxy discovery endpoint now reads from the oneringai `Connector` registry (populated by V25 startup) instead of a separate empty Map
 - **EW discovery endpoint** - Now includes `type` ('llm' | 'universal') and `serviceType` fields for each connector
-- **Improved logging** - Added detailed logging for EW connection testing and connector discovery on both Everworker Desktop and EW sides
+- **Improved logging** - Added detailed logging for EW connection testing and connector discovery on both hosea and EW sides
 
 ### Changed
 - **Universal Connectors page** - Now shows EW/Local source badges, similar to LLM Providers page; EW-managed connectors show "Managed" instead of Edit
-- **StoredUniversalConnector** - Added optional `source` field (`'local' | 'everworker'`)
+- **StoredUniversalConnector** - Added optional `source` field (`'local' | 'backend'`)
 
 ### Removed
 - **Legacy API Connectors system** - Removed dead `apiConnectors` Map, `StoredAPIConnectorConfig` interface, `loadAPIConnectors()` method, CRUD methods, IPC handlers (`api-connector:*`), and preload bridge. The migration function (`migrateAPIConnectorsToUniversal`) is preserved for existing users
@@ -141,7 +152,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2026-02-05
 
 ### Added
-- Initial release of Everworker Desktop (Human-Oriented System for Engaging Agents)
+- Initial release of hosea (Human-Oriented System for Engaging Agents)
 - **Desktop Application** - Electron-based cross-platform UI for AI agents
 - **Chat Interface** - Multi-turn conversation with AI agents
 - **Agent Configuration** - Configure connectors, models, and tools
@@ -162,7 +173,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Built with Electron 29, React 18, TypeScript 5
 - Vite for fast development and building
 - Bootstrap 5 + React Bootstrap for UI components
-- Integrates with `@everworker/oneringai` core library
+- Integrates with `oneringai` core library
 
 [Unreleased]: https://github.com/aantich/oneringai/compare/hosea-v0.1.0...HEAD
 [0.1.0]: https://github.com/aantich/oneringai/releases/tag/hosea-v0.1.0

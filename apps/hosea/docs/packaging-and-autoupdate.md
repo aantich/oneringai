@@ -1,8 +1,8 @@
-# Everworker Desktop Packaging and Auto-Update Architecture
+# hosea Packaging and Auto-Update Architecture
 
 ## Overview
 
-This document describes the packaging and auto-update architecture for Everworker Desktop. All components described here have been **fully implemented**.
+This document describes the packaging and auto-update architecture for hosea. All components described here have been **fully implemented**.
 
 **Current Release:** v0.1.0 (February 2025)
 **GitHub Releases:** https://github.com/aantich/oneringai/releases
@@ -16,7 +16,7 @@ This document describes the packaging and auto-update architecture for Everworke
 | electron-builder | ✅ Implemented | v24.9.1 |
 | electron-updater | ✅ Implemented | v6.7.3 |
 | Build scripts | ✅ Implemented | `npm run build`, `npm run package` |
-| App metadata | ✅ Implemented | appId: `ai.everworker.hosea`, productName: `HOSEA` |
+| App metadata | ✅ Implemented | appId: `ai.backend.hosea`, productName: `HOSEA` |
 | Mac target | ✅ Implemented | DMG format (Apple Silicon) |
 | Windows target | ✅ Implemented | NSIS installer |
 | Linux target | ✅ Implemented | AppImage format |
@@ -61,7 +61,7 @@ The build config includes **critical file exclusions** to prevent bundling the e
 ```json
 {
   "build": {
-    "appId": "ai.everworker.hosea",
+    "appId": "ai.backend.hosea",
     "productName": "HOSEA",
     "directories": { "output": "release" },
     "files": [
@@ -79,7 +79,7 @@ The build config includes **critical file exclusions** to prevent bundling the e
     ],
     "publish": {
       "provider": "github",
-      "owner": "Integrail",
+      "owner": "aantich",
       "repo": "oneringai"
     },
     "mac": { "target": "dmg", "icon": "assets/icon.icns" },
@@ -196,7 +196,7 @@ Optional but recommended to avoid "Unknown publisher" warnings:
 
 3. **macOS test:**
    - Mount the `.dmg` file
-   - Drag Everworker Desktop to Applications
+   - Drag hosea to Applications
    - Launch from Applications folder
    - Verify app opens and works correctly
 
@@ -269,7 +269,7 @@ This is the official auto-update module from electron-builder.
   "build": {
     "publish": {
       "provider": "github",
-      "owner": "Integrail",
+      "owner": "aantich",
       "repo": "oneringai"
     }
   }
@@ -285,7 +285,7 @@ The auto-updater checks these manifests to detect new versions.
 
 **Alternative options** (not currently used):
 
-- **S3**: `"provider": "s3", "bucket": "everworker-updates"`
+- **S3**: `"provider": "s3", "bucket": "backend-updates"`
 - **Generic server**: `"provider": "generic", "url": "https://updates.example.com"`
 
 ### Phase 6: Main Process - AutoUpdater Service

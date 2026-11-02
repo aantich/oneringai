@@ -23,7 +23,8 @@ export function TabBar({ onNewTabClick, showInternals, onToggleInternals, isVoic
   return (
     <div className="chat-tabs">
       {/* Tabs list */}
-      <div className="chat-tabs__list">
+      <div className="chat-tabs__list" role="tablist" aria-label="Conversations">
+        {tabOrder.length === 0 && <span className="chat-tabs__empty-title">New conversation</span>}
         {tabOrder.map(tabId => {
           const tab = tabs.get(tabId);
           if (!tab) return null;

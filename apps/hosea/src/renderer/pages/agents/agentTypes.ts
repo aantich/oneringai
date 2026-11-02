@@ -26,7 +26,7 @@ export interface AgentListItem {
 export interface ConnectorListItem {
   name: string;
   vendor: string;
-  source?: 'local' | 'everworker' | 'built-in';
+  source?: 'local' | 'backend' | 'built-in';
   models?: string[];
   createdAt: number;
 }

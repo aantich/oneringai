@@ -12,10 +12,11 @@ import type { RoutineDefinition, RoutineExecution, RoutineParameter } from '../d
 import { createRoutineDefinition } from '../domain/entities/Routine.js';
 import type { InContextMemoryPluginNextGen } from './context-nextgen/plugins/InContextMemoryPluginNextGen.js';
 import type { WorkingMemoryPluginNextGen } from './context-nextgen/plugins/WorkingMemoryPluginNextGen.js';
-import { executeRoutine } from './routineRunner.js';
+import { executeRoutine, defaultTaskPrompt } from './routineRunner.js';
 import { routineBinding, type RoutineBinding } from './execution/routineBinding.js';
 import { logger } from '../infrastructure/observability/Logger.js';
 import { parseJsonPermissive } from '../utils/jsonRepair.js';
+import { addTierPrefix, getTierFromKey } from '../domain/entities/Memory.js';
 
 // ============================================================================
 // Constants
@@ -266,6 +267,13 @@ export async function readMemoryValue(
   if (wmPlugin) {
     const wmValue = await wmPlugin.retrieve(key);
     if (wmValue !== undefined) return wmValue;
+    // Routine spill/dependency writes use the findings tier. Keep exact-key
+    // precedence, then resolve that routine-owned spill location explicitly.
+    const findingsKey = addTierPrefix(key, 'findings');
+    if (!getTierFromKey(key)) {
+      const findingsValue = await wmPlugin.retrieve(findingsKey);
+      if (findingsValue !== undefined) return findingsValue;
+    }
   }
 
   return undefined;
@@ -351,6 +359,16 @@ function prepareSubRoutine(
   return {
     augmented: { ...subRoutine },
     baseInstructions: subRoutine.instructions ?? '',
+  };
+}
+
+/** Reused agents keep their own system instructions. Deliver iteration guidance
+ * in the nested task prompt without mutating that shared agent or its tools. */
+function subRoutineOptions(agent: Agent, definition: RoutineDefinition, inputs: Record<string, unknown>) {
+  return {
+    definition, agent, inputs,
+    prompts: { task: (task: Task, execution?: RoutineExecution) =>
+      [definition.instructions, defaultTaskPrompt(task, execution)].filter(Boolean).join('\n\n') },
   };
 }
 
@@ -663,7 +681,7 @@ async function handleMap(
       // Execute sub-routine recursively (with optional per-iteration timeout)
       const binding = execution ? routineBinding(execution) : undefined;
       const subExecution = binding ? await binding.execute({ definition: augmented, agent, inputs }, flow.iterationTimeoutMs) : await withTimeout(
-        executeRoutine({ definition: augmented, agent, inputs }),
+        executeRoutine(subRoutineOptions(agent, augmented, inputs)),
         flow.iterationTimeoutMs,
         `Map iteration ${i}`
       );
@@ -718,15 +736,15 @@ async function handleFold(
     for (let i = 0; i < maxIter; i++) {
       setIterationKeys(icmPlugin, array[i], i, array.length, 'fold');
       if (icmPlugin) {
-        icmPlugin.set(ROUTINE_KEYS.FOLD_ACCUMULATOR, 'Running accumulator — update via context_set', accumulator, 'high');
+        icmPlugin.set(ROUTINE_KEYS.FOLD_ACCUMULATOR, 'Running accumulator in the whiteboard store', accumulator, 'high');
       }
 
       // Inject iteration-specific instructions
       augmented.instructions = [
         `You are processing item ${i + 1} of ${array.length} in a fold/accumulate operation.`,
         'The current item is in __map_item. The running accumulator is in __fold_accumulator.',
-        'After processing, use context_set to update __fold_accumulator with the new accumulated value.',
-        'Your final text response will also be captured as the result.',
+        'Return the new accumulated value as your final response; this task output takes precedence over the whiteboard accumulator.',
+        'If no task output is produced and whiteboard is available, the fallback is store_set({ store: "whiteboard", key: "__fold_accumulator", description: "Running accumulator", value: <new value>, priority: "high" }).',
         '',
         baseInstructions,
       ].join('\n');
@@ -734,7 +752,7 @@ async function handleFold(
       // Execute sub-routine (with optional per-iteration timeout)
       const binding = execution ? routineBinding(execution) : undefined;
       const subExecution = binding ? await binding.execute({ definition: augmented, agent, inputs }, flow.iterationTimeoutMs) : await withTimeout(
-        executeRoutine({ definition: augmented, agent, inputs }),
+        executeRoutine(subRoutineOptions(agent, augmented, inputs)),
         flow.iterationTimeoutMs,
         `Fold iteration ${i}`
       );
@@ -748,13 +766,13 @@ async function handleFold(
 
       // Read new accumulator: try sub-execution's last task output first.
       // getSubRoutineOutput() returns null when no completed task exists —
-      // any other value (including '', undefined, 0, false) is a valid accumulator.
+      // any other non-nullish value (including '', 0, false) is a valid accumulator.
       const taskOutput = getSubRoutineOutput(subExecution);
 
       if (taskOutput !== null) {
         accumulator = taskOutput;
       } else if (icmPlugin) {
-        // Fallback: LLM may have updated via context_set
+        // Fallback: the model may have updated the whiteboard via store_set.
         const icmAccumulator = icmPlugin.get(ROUTINE_KEYS.FOLD_ACCUMULATOR);
         if (icmAccumulator !== undefined) {
           accumulator = icmAccumulator;
@@ -814,7 +832,7 @@ async function handleUntil(
       // Execute sub-routine (with optional per-iteration timeout)
       const binding = execution ? routineBinding(execution) : undefined;
       const subExecution = binding ? await binding.execute({ definition: augmented, agent, inputs }, flow.iterationTimeoutMs) : await withTimeout(
-        executeRoutine({ definition: augmented, agent, inputs }),
+        executeRoutine(subRoutineOptions(agent, augmented, inputs)),
         flow.iterationTimeoutMs,
         `Until iteration ${i}`
       );

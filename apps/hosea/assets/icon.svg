@@ -1,14 +1,1 @@
-<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background with rounded corners -->
-  <rect width="1024" height="1024" rx="180" fill="#FF0D40"/>
-
-  <!-- EW Logo centered and scaled (original 72x36, scaled ~10x to ~720x360, centered) -->
-  <g transform="translate(152, 332) scale(10)">
-    <!-- Red shape (hidden since bg is red) -->
-    <path d="M54.9883 0L52.836 4.06399V0H43.7013L41.5501 4.06399V0L12.8838 0.0798625L0.5 36L38.4463 35.9201L40.5998 31.855V35.9201H59.1151L71.5 0H54.9883Z" fill="#FF0D40"/>
-    <!-- E letter -->
-    <path d="M31.2057 12.4597L32.553 8.55203H18.9784L12.7944 26.4896C12.6457 26.9204 12.9632 27.3692 13.4171 27.3692H26.0659L27.4132 23.4616H18.2472L19.4704 19.9139H28.6364L29.9837 16.0062H20.8177L22.0408 12.4585H31.2068L31.2057 12.4597Z" fill="#F8F8F8"/>
-    <!-- W letter -->
-    <path d="M55.0911 8.55203L48.2977 21.3874V8.55203H43.8366L37.0175 21.4346V8.55203H32.5597V26.7067C32.5597 27.0723 32.8549 27.3692 33.2182 27.3692H38.3346L44.4873 15.7498V27.3692H49.6238L59.5523 8.55203H55.0911Z" fill="#F8F8F8"/>
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><rect x="64" y="64" width="896" height="896" rx="218" fill="#242423"/><path d="M322 244v536m0-291c0-224 402-224 402 0v291" fill="none" stroke="#f8f7f3" stroke-width="100" stroke-linecap="round"/></svg>

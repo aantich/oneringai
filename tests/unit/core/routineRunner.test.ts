@@ -1223,7 +1223,9 @@ describe('executeRoutine', () => {
       // Task A's prompt (call 0) should contain output storage instructions
       const taskAInput = getSerializedInputFromCall(0);
       expect(taskAInput).toContain('### Output Storage');
-      expect(taskAInput).toContain('context_set(\\"__task_output_Task A\\"');
+      expect(taskAInput).toContain('store_set');
+      expect(taskAInput).toContain('__task_output_Task A');
+      expect(taskAInput).not.toMatch(/context_set|memory_store|memory_retrieve/);
       expect(taskAInput).toContain('Task B');
 
       // Task B's prompt (call 1) should NOT contain output storage (no downstream consumers)

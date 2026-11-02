@@ -17,7 +17,7 @@ const vendorLabels: Record<string, string> = {
 interface ConnectorInfo {
   name: string;
   vendor: string;
-  source?: 'local' | 'everworker' | 'built-in';
+  source?: 'local' | 'backend' | 'built-in';
 }
 
 interface ConnectorSelectorProps {
@@ -103,7 +103,7 @@ export function ConnectorSelector({
               {vendorConnectors.map((c) => (
                 <option key={c.name} value={c.name}>
                   {c.name}
-                  {c.source === 'everworker' ? ' (EW)' : ''}
+                  {c.source === 'backend' ? ' (backend)' : ''}
                 </option>
               ))}
             </optgroup>

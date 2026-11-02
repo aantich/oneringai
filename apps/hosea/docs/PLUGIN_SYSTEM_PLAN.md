@@ -1,10 +1,10 @@
-# Everworker Desktop Plugin System - Implementation Plan
+# hosea Plugin System - Implementation Plan
 
-> Runtime-loadable tool plugins for pre-built Everworker Desktop Electron app
+> Runtime-loadable tool plugins for pre-built hosea Electron app
 
 ## 1. Overview
 
-Allow users of the pre-built Everworker Desktop app (installed via dmg/exe/AppImage) to extend the agent with custom tools by loading JavaScript plugins at runtime. Plugins are discovered from a well-known directory on disk and optionally installed via npm packages through the UI.
+Allow users of the pre-built hosea app (installed via dmg/exe/AppImage) to extend the agent with custom tools by loading JavaScript plugins at runtime. Plugins are discovered from a well-known directory on disk and optionally installed via npm packages through the UI.
 
 ### Goals
 
@@ -30,7 +30,7 @@ Allow users of the pre-built Everworker Desktop app (installed via dmg/exe/AppIm
 Each plugin is a CommonJS module that exports a `HoseaPlugin` object:
 
 ```typescript
-// hosea-plugin-contract.d.ts (published as @everworker/hosea-plugin-types)
+// hosea-plugin-contract.d.ts (published as hosea-plugin-types)
 
 import type { ToolFunction } from 'oneringai';
 
@@ -81,7 +81,7 @@ export interface PluginActivationContext {
 ### 2.2 Plugin Directory Structure
 
 ```
-~/.everworker/hosea/plugins/
+~/.hosea/plugins/
 ├── manifest.json              # Tracks installed plugins + enabled state
 ├── my-weather-tools/
 │   ├── index.js               # Plugin entry point (CJS)
@@ -120,7 +120,7 @@ export interface PluginActivationContext {
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│  Everworker Desktop Main Process                     │
+│  hosea Main Process                     │
 │                                                      │
 │  ┌─────────────────────────────────────────────────┐ │
 │  │  UnifiedToolCatalog                             │ │
@@ -158,7 +158,7 @@ export interface PluginActivationContext {
 └──────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────┐
-│  Everworker Desktop Renderer                         │
+│  hosea Renderer                         │
 │                                                      │
 │  ┌─────────────────────────────────────────────────┐ │
 │  │  PluginsPage                    (NEW)           │ │
@@ -496,7 +496,7 @@ Plugins run in Electron's main process with full Node.js access. This is the sam
 ### Minimal Plugin Example
 
 ```javascript
-// ~/.everworker/hosea/plugins/hello-world/index.js
+// ~/.hosea/plugins/hello-world/index.js
 
 module.exports = {
   name: 'hello-world',

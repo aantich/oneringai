@@ -9,7 +9,7 @@
   "type": "module",
   "main": "dist/main/index.cjs",
   "scripts": {
-    "dev": "concurrently -k \"npm run dev:renderer\" \"npm run dev:electron\"",
+    "dev": "node scripts/launch.mjs --dev",
     "dev:renderer": "vite",
     "dev:electron": "npm run build:main && electron . --dev",
     "dev:watch": "concurrently -k \"npm run dev:renderer\" \"npm run watch:main\" \"sleep 2 && npm run dev:electron\"",
@@ -28,18 +28,26 @@
     "postversion": "git push && git push --tags",
     "release:patch": "npm --tag-version-prefix='hosea-v' version patch -m 'hosea: Release %s'",
     "release:minor": "npm --tag-version-prefix='hosea-v' version minor -m 'hosea: Release %s'",
-    "release:major": "npm --tag-version-prefix='hosea-v' version major -m 'hosea: Release %s'"
+    "release:major": "npm --tag-version-prefix='hosea-v' version major -m 'hosea: Release %s'",
+    "design": "node scripts/launch.mjs --preview",
+    "test:design": "node --import tsx --test tests/*.test.ts",
+    "icons:generate": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "^5.3.0",
     "@nut-tree-fork/nut-js": "^4.2.6",
     "clsx": "^2.1.1",
+    "docx": "^9.6.1",
     "electron-store": "^10.0.0",
     "electron-updater": "^6.7.3",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "katex": "^0.16.28",
     "lucide-react": "^0.563.0",
     "markmap-lib": "^0.18.12",
     "markmap-view": "^0.18.12",
     "mermaid": "^11.12.2",
+    "oneringai": "file:../..",
     "react-markdown": "^9.0.0",
     "react-syntax-highlighter": "^16.1.1",
     "react-vega": "^7.7.1",
@@ -47,14 +55,11 @@
     "remark-gfm": "^4.0.0",
     "remark-math": "^6.0.0",
     "vega": "^5.33.1",
-    "vega-lite": "^5.23.0",
-    "oneringai": "file:../..",
-    "docx": "^9.6.1",
-    "html2canvas": "^1.4.1",
-    "jspdf": "^4.2.1"
+    "vega-lite": "^5.23.0"
   },
   "devDependencies": {
     "@electron/notarize": "^3.1.1",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
@@ -62,7 +67,7 @@
     "@vitejs/plugin-react": "^4.2.1",
     "bootstrap": "^5.3.3",
     "concurrently": "^8.2.2",
-    "electron": "^29.0.0",
+    "electron": "^45.2.1",
     "electron-builder": "^24.9.1",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.0",
@@ -73,8 +78,8 @@
     "vite": "^5.0.12"
   },
   "build": {
-    "appId": "ai.everworker.hosea",
-    "productName": "Everworker Desktop",
+    "appId": "com.antonantich.hosea",
+    "productName": "hosea",
     "directories": {
       "output": "release"
     },
@@ -111,11 +116,11 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "Integrail",
+      "owner": "aantich",
       "repo": "oneringai",
       "vPrefixedTagName": false
     },
-    "artifactName": "Everworker-Desktop-${version}-${arch}.${ext}",
+    "artifactName": "hosea-${version}-${arch}.${ext}",
     "mac": {
       "target": [
         "dmg",
@@ -147,7 +152,7 @@
       "installerIcon": "assets/icon.ico",
       "uninstallerIcon": "assets/icon.ico",
       "license": "LICENSE",
-      "artifactName": "Everworker-Desktop-Setup-${version}-${arch}.${ext}"
+      "artifactName": "hosea-setup-${version}-${arch}.${ext}"
     },
     "dmg": {
       "contents": [
@@ -165,7 +170,7 @@
     }
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "^22.13.0 || >=24.0.0"
   },
   "license": "MIT",
   "private": true

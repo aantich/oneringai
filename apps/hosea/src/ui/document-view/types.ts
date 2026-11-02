@@ -67,7 +67,7 @@ export interface IDocumentViewProps {
   onLoadDocument?: (docId: string) => Promise<void>;
   /** Optional LLM-powered prefill for title/description. Called with current sections. */
   onPrefillMetadata?: (sections: SaveDocumentInput['sections']) => Promise<PrefillMetadata>;
-  /** Base URL for shared document links (e.g. "https://app.everworker.ai/shared/docs"). If provided, shows link after save. */
+  /** Base URL for shared document links (e.g. "https://example.com/shared/docs"). If provided, shows link after save. */
   sharedDocsBaseUrl?: string;
 }
 

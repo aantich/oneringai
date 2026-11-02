@@ -9,16 +9,15 @@
    ============================================================ */
 
 .agents-page {
-  /* Intentionally darker red than --color-primary (#FF0D40) for less eye-strain in data-dense UI */
-  --agent-primary: #b91030;
-  --agent-primary-hover: #9f0d29;
-  --agent-primary-light: #fdf2f4;
-  --agent-chat-border: #f0a0b0;
-  --agent-chat-hover-bg: #fce8ec;
-  --agent-chat-hover-border: #e88898;
+  --agent-primary: var(--h-accent);
+  --agent-primary-hover: var(--color-primary-hover);
+  --agent-primary-light: var(--color-primary-light);
+  --agent-chat-border: var(--h-line);
+  --agent-chat-hover-bg: var(--h-surface-hover);
+  --agent-chat-hover-border: var(--color-gray-400);
   --agent-fix-bg-hover: var(--color-warning-light);
-  --agent-fix-border: #fde68a;
-  --agent-fix-border-hover: #fcd34d;
+  --agent-fix-border: var(--color-warning);
+  --agent-fix-border-hover: var(--color-warning);
 }
 
 /* ============================================================
@@ -127,7 +126,7 @@
 
 .agents-search-input:focus {
   border-color: var(--agent-primary);
-  box-shadow: 0 0 0 3px rgba(185, 16, 48, 0.12);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--h-focus) 16%, transparent);
 }
 
 .agents-filter-btn {
@@ -161,7 +160,7 @@
 }
 
 .agents-filter-btn--active:hover {
-  background: #f9e0e6;
+  background: var(--color-primary-light);
   border-color: var(--agent-primary-hover);
 }
 
@@ -338,9 +337,9 @@
   white-space: nowrap;
 }
 
-/* EW badge (Everworker built-in indicator) */
+/* backend badge (Backend built-in indicator) */
 
-.agent-card__ew-badge {
+.agent-card__backend-badge {
   display: inline-flex;
   align-items: center;
   font-size: 10px;
@@ -521,7 +520,7 @@
   color: var(--color-gray-800);
 }
 
-/* Chat button — light pink style (NOT solid red) */
+/* Secondary chat action uses the shared neutral accent. */
 .btn-card-chat {
   color: var(--agent-primary);
   background: var(--agent-primary-light);
@@ -599,7 +598,7 @@
 }
 
 .agent-card--new:hover .agent-card__new-icon {
-  background: #f5cdd5;
+  background: var(--color-primary-light);
   color: var(--agent-primary);
 }
 

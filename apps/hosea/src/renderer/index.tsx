@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import '@fontsource-variable/geist';
 import '../ui/look-inside/look-inside.css';
 import '../ui/markdown/markdown.css';
 import '../ui/chat/chat.css';

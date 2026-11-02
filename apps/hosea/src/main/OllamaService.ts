@@ -1,3 +1,4 @@
+import { getHoseaDataDir } from './runtimeConfig.js';
 /**
  * OllamaService - Manages Ollama lifecycle for local AI support
  *
@@ -71,11 +72,11 @@ const STOP_TIMEOUT_MS = 5000;
 // ============ Helpers ============
 
 function getOllamaDir(): string {
-  return join(homedir(), '.everworker', 'hosea', 'ollama');
+  return join(getHoseaDataDir(), 'ollama');
 }
 
 function getConfigPath(): string {
-  return join(homedir(), '.everworker', 'hosea', 'ollama-config.json');
+  return join(getHoseaDataDir(), 'ollama-config.json');
 }
 
 function getRecommendedModel(): { model: string; reason: string } {
@@ -818,7 +819,7 @@ export class OllamaService {
 
   private async saveConfig(): Promise<void> {
     const configPath = getConfigPath();
-    const dir = join(homedir(), '.everworker', 'hosea');
+    const dir = getHoseaDataDir();
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
     }

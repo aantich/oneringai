@@ -1,8 +1,8 @@
 /**
- * PDFHandler — live round-trip regression test.
+ * PDFHandler — real PDF round-trip regression test.
  *
- * Why this exists: PDFHandler explicitly copies the input buffer on every
- * unpdf call because pdf.js detaches the underlying ArrayBuffer when posting
+ * Why this exists: PDFHandler parses a private copy of the input buffer because
+ * pdf.js detaches the underlying ArrayBuffer when posting
  * to a worker. The Buffer→File refactor (eliminating `new Uint8Array(buf)`
  * wrappers in upload providers) deliberately did NOT touch PDFHandler — but
  * we want a permanent guard so any future "cleanup" PR that drops the
@@ -11,10 +11,13 @@
  * Strategy: build a minimal valid PDF in memory, run it through
  * `PDFHandler.handle` twice with the SAME source buffer, assert text comes
  * back both times. If the buffer's underlying ArrayBuffer were detached on
- * the first call, round 2 would either throw or return an empty page.
+ * the first read, round 2 would either throw or return an empty page. Extraction
+ * operations share one proxy whose loading task is released after each read.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { PNG } from 'pngjs';
+import { imagePdfFixture } from '../../../../scripts/release/pdf-fixture.mjs';
 import { PDFHandler } from '../../../../src/capabilities/documents/handlers/PDFHandler.js';
 import type { DocumentReadOptions } from '../../../../src/capabilities/documents/types.js';
 
@@ -59,7 +62,29 @@ function buildMinimalPdf(text: string): Buffer {
   return Buffer.from(body + xref + trailer, 'binary');
 }
 
-describe('PDFHandler — live unpdf round-trip', () => {
+describe('PDFHandler — real unpdf round-trip', () => {
+  it('encodes real RGB, grayscale and alpha pixels as valid PNG and honors page selection', async () => {
+    const handler = new PDFHandler(), buffer = imagePdfFixture();
+    const warning = vi.spyOn(console, 'warn');
+    try {
+      const pieces = await handler.handle(buffer, 'images.pdf', 'pdf', {});
+      const images = pieces.filter(piece => piece.type === 'image');
+      expect(images).toHaveLength(3);
+      const pixels = images.map(image => {
+        const bytes = Buffer.from(image.base64, 'base64'), png = PNG.sync.read(bytes);
+        expect(image.metadata.sizeBytes).toBe(bytes.length);
+        expect([png.width, png.height]).toEqual([64, 64]);
+        return [...png.data.subarray(0, 4)];
+      });
+      expect(pixels).toEqual([[255, 0, 0, 255], [80, 80, 80, 255], [0, 255, 0, 128]]);
+      const selected = await handler.handle(buffer, 'images.pdf', 'pdf', { pages: [2] });
+      expect(selected.filter(piece => piece.type === 'image').map(piece => piece.metadata.section)).toEqual(['Page 2']);
+      const disabled = await handler.handle(buffer, 'images.pdf', 'pdf', { extractImages: false });
+      expect(disabled.some(piece => piece.type === 'image')).toBe(false);
+      expect(warning.mock.calls.filter(args => String(args[0]).includes('[PDFHandler]'))).toEqual([]);
+    } finally { warning.mockRestore(); }
+  });
+
   it('extracts text from a freshly built PDF buffer', async () => {
     const handler = new PDFHandler();
     const pdfBuffer = buildMinimalPdf('Hello PDFHandler refactor');

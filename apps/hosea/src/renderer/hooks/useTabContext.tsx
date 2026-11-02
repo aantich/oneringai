@@ -583,6 +583,7 @@ export function TabProvider({ children, defaultAgentConfigId, defaultAgentName }
     window.hosea.voiceBridge.onTranscript((data: {
       agentConfigId: string;
       sessionId: string;
+      from?: string;
       role: 'caller' | 'agent';
       text: string;
       timestamp: number;

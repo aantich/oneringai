@@ -15,6 +15,7 @@
 @import './plan.css';
 @import './mcp.css';
 @import './orchestrator.css';
+@import './design-system.css';
 
 /* Base Reset */
 *,

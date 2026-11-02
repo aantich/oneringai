@@ -1,0 +1,361 @@
+{
+  "reviewed": "2026-11-02",
+  "originalDocuments": {
+    "README.md": {
+      "lines": 3717,
+      "reviewed": "all sections",
+      "disposition": "rewritten as the v2 entry point"
+    },
+    "USER_GUIDE.md": {
+      "lines": 19914,
+      "reviewed": "all sections",
+      "chapters": [
+        {
+          "heading": "Table of Contents",
+          "originalLine": 10,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Upgrading to the unscoped v2 package",
+          "originalLine": 164,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Upgrading to 1.2.0",
+          "originalLine": 174,
+          "disposition": "archived with preserved guide anchor"
+        },
+        {
+          "heading": "Upgrading to 1.1.3",
+          "originalLine": 216,
+          "disposition": "archived with preserved guide anchor"
+        },
+        {
+          "heading": "Upgrading to 1.1.2",
+          "originalLine": 230,
+          "disposition": "archived with preserved guide anchor"
+        },
+        {
+          "heading": "Upgrading to 1.1.1",
+          "originalLine": 300,
+          "disposition": "archived with preserved guide anchor"
+        },
+        {
+          "heading": "Portable Agent Packages",
+          "originalLine": 322,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Upgrading to 1.0.0",
+          "originalLine": 443,
+          "disposition": "archived with preserved guide anchor"
+        },
+        {
+          "heading": "Getting Started",
+          "originalLine": 654,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Core Concepts",
+          "originalLine": 704,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Basic Text Generation",
+          "originalLine": 728,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Advanced Inference",
+          "originalLine": 869,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Connectors & Authentication",
+          "originalLine": 1950,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Agent Features",
+          "originalLine": 2229,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Session Persistence",
+          "originalLine": 2584,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Context Management",
+          "originalLine": 3045,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Unified Store Tools",
+          "originalLine": 4322,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Shared Workspace",
+          "originalLine": 4637,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "InContextMemory (NextGen Plugin)",
+          "originalLine": 4780,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Persistent Instructions (NextGen Plugin)",
+          "originalLine": 5201,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Direct LLM Access",
+          "originalLine": 5529,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "User Info (NextGen Plugin)",
+          "originalLine": 5801,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Self-Learning Memory (NextGen Plugin)",
+          "originalLine": 5930,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Tool Catalog: Dynamic Tool Loading/Unloading",
+          "originalLine": 6464,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Routine Execution",
+          "originalLine": 6661,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Tools & Function Calling",
+          "originalLine": 7409,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Dynamic Tool Management",
+          "originalLine": 9467,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Async (Non-Blocking) Tools",
+          "originalLine": 9955,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Long-Running Sessions (Suspend/Resume)",
+          "originalLine": 10227,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Tool Execution Plugins",
+          "originalLine": 10460,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Tool Permissions",
+          "originalLine": 10830,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "MCP (Model Context Protocol)",
+          "originalLine": 12178,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Multimodal (Vision)",
+          "originalLine": 12766,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Audio (TTS/STT)",
+          "originalLine": 12861,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "OpenAI Realtime API",
+          "originalLine": 13392,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Image Generation",
+          "originalLine": 14369,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Embeddings",
+          "originalLine": 14577,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Video Generation",
+          "originalLine": 14873,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Custom Media Storage",
+          "originalLine": 15230,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Web Search",
+          "originalLine": 15356,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Web Scraping",
+          "originalLine": 15656,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Streaming",
+          "originalLine": 15768,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "External API Integration",
+          "originalLine": 15854,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Vendor Templates",
+          "originalLine": 16369,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "OAuth for External APIs",
+          "originalLine": 16801,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Model Registry",
+          "originalLine": 16923,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Scoped Connector Registry",
+          "originalLine": 17173,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Agent Registry",
+          "originalLine": 17401,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Agent Orchestrator",
+          "originalLine": 17622,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Advanced Features",
+          "originalLine": 17948,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Production Deployment",
+          "originalLine": 18138,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Examples",
+          "originalLine": 18327,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Agent Runtime (preview)",
+          "originalLine": 18439,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Agentic Evaluation Baselines",
+          "originalLine": 19320,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Support & Resources",
+          "originalLine": 19349,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "License",
+          "originalLine": 19358,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Tool outcomes and cancellation (Stage 02)",
+          "originalLine": 19368,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Managed model routing (Stage 14A)",
+          "originalLine": 19422,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Model tasks and helper models (Stage 06)",
+          "originalLine": 19481,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Durable tool evidence (Stage 03)",
+          "originalLine": 19523,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Experimental context strategies (Stage 07)",
+          "originalLine": 19577,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Protected task state (Stage 04, opt-in branch capability)",
+          "originalLine": 19640,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Bounded managed-loop policies (Stage 10, opt-in branch capability)",
+          "originalLine": 19720,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Opt-in Agent presets and inspection",
+          "originalLine": 19788,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Selective context assembly (Stage 05)",
+          "originalLine": 19812,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Verified routines (C3)",
+          "originalLine": 19851,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Enhanced connector execution profiles",
+          "originalLine": 19855,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Whole connector pages (C5)",
+          "originalLine": 19861,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        },
+        {
+          "heading": "Complete orchestration configuration (C6)",
+          "originalLine": 19865,
+          "disposition": "reviewed; retained/reorganized or consolidated"
+        }
+      ]
+    }
+  }
+}

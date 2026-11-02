@@ -12,14 +12,14 @@ export class PDFTemplateManager {
         showPageNumbers: true,
 
         // Color Scheme
-        primaryColor: '#1a5490',
+        primaryColor: '#242423',
         secondaryColor: '#666666',
-        accentColor: '#e74c3c',
+        accentColor: '#767570',
         textColor: '#333333',
 
         // Typography
-        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        headingFont: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        fontFamily: 'Geist Variable, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        headingFont: 'Geist Variable, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         fontSize: 14,
         headingScale: 1.5,
 
@@ -34,8 +34,8 @@ export class PDFTemplateManager {
         footerHeight: 40,
 
         // Branding
-        companyName: 'EverWorker',
-        companyTagline: 'AI-Powered Agent Platform',
+        companyName: 'hosea',
+        companyTagline: '',
         documentTitle: 'Chat Export',
 
         // Watermark
@@ -52,7 +52,7 @@ export class PDFTemplateManager {
         appendHtml: '',
 
         // Theme
-        theme: 'everworker',
+        theme: 'hosea',
     };
 
     /**
@@ -88,14 +88,14 @@ export class PDFTemplateManager {
      */
     static getPredefinedTheme(theme: string): Partial<PDFTemplate> {
         const themes: Record<string, Partial<PDFTemplate>> = {
-            everworker: {
-                primaryColor: '#1a5490',
+            hosea: {
+                primaryColor: '#242423',
                 secondaryColor: '#666666',
-                accentColor: '#e74c3c',
+                accentColor: '#767570',
                 fontFamily:
-                    'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                companyName: 'EverWorker',
-                companyTagline: 'AI-Powered Agent Platform',
+                    'Geist Variable, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                companyName: 'hosea',
+                companyTagline: '',
                 headerLogo: '',
             },
             professional: {
@@ -464,8 +464,8 @@ export class PDFTemplateManager {
 }
 
 export const CorporateTemplates = {
-    EVERWORKER: {
-        theme: 'everworker' as const,
+    HOSEA: {
+        theme: 'hosea' as const,
     },
     PROFESSIONAL: {
         theme: 'professional' as const,

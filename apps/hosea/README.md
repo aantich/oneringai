@@ -1,26 +1,72 @@
-# Everworker Desktop by Everworker.ai
+# hosea
 
-The Hosea application source is now **MIT licensed**, Copyright © 2025–2026
-Anton Antic, [anton.antich@gmail.com](mailto:anton.antich@gmail.com). See
-[LICENSE](LICENSE). Startup no longer requires the former commercial agreement.
-Existing product branding and integrations are being migrated separately.
+<img src="assets/icon.svg" alt="hosea open-arch logo" width="64" />
 
-The previously separate React UI source is now included directly in
-[`src/ui`](src/ui/README.md) under the Hosea MIT license. There is no external
-`@everworker/react-ui` dependency. Third-party dependencies retain their own terms;
-see the [repository licensing guide](../../LICENSING.md).
+An open-source desktop workspace for your models, tools, and agents. Built with
+[OneRingAI](../../README.md). MIT licensed, © 2025–2026 Anton Antic
+<[anton.antich@gmail.com](mailto:anton.antich@gmail.com)>.
 
-Current revival validation (2026-11-01): the renderer/main/preload build passes,
-and the migrated local UI typechecks independently. The complete desktop
-typecheck reports 24 legacy integration diagnostics in AgentService and renderer
-consumers, with none in `src/ui`. The app still targets Electron
-29; updating its embedded runtime, integration APIs, branding, signing and update
-channel remains desktop revival work. No launch, installer or platform validation
-is claimed by the license/package migration.
+**Start here:** [Design system](docs/DESIGN_SYSTEM.md) ·
+[Backend integration status](docs/BACKEND_INTEGRATION.md) ·
+[OAuth registrations](docs/OAUTH_VENDOR_SETUP.md) · [License](LICENSE)
 
-**AI Agent Desktop Application** — your "Swiss Army Knife" of AI!
+## Run the design preview
 
-A desktop application for interacting with AI agents and generative AI in general powered by the `oneringai` library.
+Use Node.js 22.13+ or 24+ and npm. From the repository root:
+
+```bash
+npm install
+npm run build
+cd apps/hosea
+npm install
+npm run design
+```
+
+`npm run design` builds and opens the actual Electron app using isolated data in
+`apps/hosea/.preview-data/` (gitignored). No API key is needed to explore the UI.
+It skips first-run popups and backend sync. It does not make model calls by itself.
+You can add models and agents in this workspace to test further; calls you initiate
+use the configured provider and its billing. Close the app with Quit / Ctrl+C.
+
+For everyday development, `npm run dev` builds the main process, starts Vite,
+then opens Electron after the renderer is ready. Renderer edits reload live;
+restart after editing main/preload code. For a built normal launch, use
+`npm run build && npm start`. DevTools are available from the View menu.
+
+## Your workspace
+
+- **Chat:** open a conversation with a configured agent.
+- **Connections:** add your own model keys and service connectors.
+- **Agents:** choose a model, instructions, tools, context, and permissions.
+- **Settings → Local AI:** set up Ollama without a cloud model key.
+- **Settings → Appearance:** select light, dark, or system mode and text size.
+- **Advanced:** model providers, service connectors, tool library, and MCP servers.
+
+The default data directory is `~/.hosea/`; `HOSEA_DATA_DIR` overrides it for the
+app, OAuth token storage, built-in OAuth registrations, and managed Ollama files.
+Chromium's local profile is stored under `desktop/` there. Previous installations'
+data is left untouched; credentials and sessions are not imported automatically.
+Keep backups and migrate selectively. The preview always uses its own directory.
+
+The optional auth/profile/proxy infrastructure is **preserved and disabled by
+default** for future Youetal integration. It has no login prompts in the current
+UI. See [backend integration status](docs/BACKEND_INTEGRATION.md). There is no
+startup installation telemetry and no bundled organization OAuth credentials.
+Manual provider keys and locally configured vendor OAuth remain available.
+
+The UI lives directly in [`src/ui`](src/ui/README.md); it has no separate UI repo
+or package dependency. Geist is bundled locally under OFL-1.1; all other
+third-party packages retain their own licenses. No new installers or releases
+have been published as part of this redesign.
+
+## Validate and maintain the design
+
+```bash
+npm run typecheck
+npm run test:design
+npm run build
+npm run icons:generate  # after editing assets/icon.svg
+```
 
 ## Features
 
@@ -34,66 +80,6 @@ A desktop application for interacting with AI agents and generative AI in genera
 - **Native experience** - Electron-based desktop app for macOS, Windows, Linux
 - **And much, much more!**
 
-## Installation
-
-For developers, simply clone the `oneringai` repo, then:
-
-```
-npm install
-npm run build
-cd apps/hosea
-npm install
-npm run dev
-```
-
-that's it, you are set!
-
-For non-developers, [go to releases](https://github.com/aantich/oneringai/releases/), find your platform's installer and follow the usual steps.
-
-### Note for Mac users
-If you are using an installer, you may get "an untrusted developer" notice or something. This is Apple's fault as they are extremely slow in processing the so-called "notarization requests", but usually you just need to right click on the app once you installed it and then "open", and then allow it to run. In some cases it may forbid running it altogether, then you have to go to "System Settings", "Privacy and Security", and change the corresponding setting. Once you go through it once, the updates are automatic!
-
-## Initial Setup
-
-!IMPORTANT! There will ALWAYS be a FREE version of Everworker Desktop, but it requires you to bring your own keys to all the providers you want to use. Very soon we will introduce a proxied but paid version, where you get ALL functionality out of box, but we plan to charge for it a small fee to cover our expenses.
-
-Normally, after first run the system should ask you to configure your first LLM provider. If it doesn't or if you want to have more than one provider (which we definitely recommend, especially if you want multimedia capabilities) - go to "LLM Providers" tab and simply add a new one!
-
- ![LLMs configuration](docs/images/01llms.png)
-
- Optionally, configure Universal Connectors as well - we recommend at least something to provide you web search and web scrape, without them research tools would be somewhat limited. Serp and Zenrows are good defaults for this.
-
- Then, proceed to creating agents and create as many as you like:
-
- ![Agents page](docs/images/02agents.png)
-
- 1. Fill in the basic info, by selecting a connector, model, name and system instructions (see the section below for good system prompt examples that fully utilize our smart-context management system for agents)
-
-![Agent Creation](docs/images/03agents.png)
-
-2. Select tools you want to make available to the agent. Tools are where the main POWER of your agents come from, but be careful not to give too many (vendors recommend giving not more than a 100, but be mindful of your context tokens). Also, some tools are EXTREMELY POWERFUL so you need to excercise caution if you are using them - e.g., `bash` tool basically allows to run ANY terminal command on your system, so it is **YOUR RESPONSIBILITY** to introduce guardrails, prompt limitations, and monitor what your agents are doing to avoid damaging your files and systems!
-
-![Agents Tools](docs/images/04agents.png)
-
-**!NB** Be sure to study which tools we have - there are a bunch coming out of box, a lot are enabled depending on the connectors you have configured and you can also add your own via the `oneringai` library itself. However, be mindful that different sets of tools are for different purposes, e.g. Browser tools implement actual in-UI browser automation but mixing them with API-based tools might not be the best idea. Having said that, feel free to experiment!
-
-3. Finally, setup the **Context Plugins**. Our agents use a very sophisticated smart context management system that is fully pluggable and extendable (again, see `oneringai` documentation), providing 3 key plugins out of box:
-
- - **Working Memory**: allows agents to keep large pieces of information *outside* of the context with ability to easily retrieve when relevant via key-value-pair index in context. This comes extremely handy when an agent executes a lot of tool calls that return large amounts of information.
-
- - **In Context Memory**: similar to working memory, but keeps key-value based information right in the context. The power of this plugin comes from the fact that this allows you to implement plan / task execution agents, agents that work with constantly updating "artefact" that lives in the context without the issue of "sliding window" disappearing message history etc. See also prompt templates.
-
- - **Persistent Instructions**: this provides *updateable* instructions that get included into system prompt automatically, but the agent can manipulate them directly via special built-in tools. This basically allows you to implement *self-learning* -- the agent can update its own instructions on the fly following your requests or by its own! Experiment!
-
-Finally, select one of the context management strategies. Currently, default "Algorithmic" is good enough, we do not recommend "Dumb", but many more are coming soon!
-
-![Agents Context](docs/images/05agents.png)
-
-Once you are done, start chatting with your Agent(s)!
-
-![Agents Context](docs/images/06agents.png)
-
-On the right, you see extremely useful "Look Inside" tab that gives you **full access* to the current context state of your agent -- absolutely invaluable for agent builders! Play with it and let us know what else you need!
 
 ## Starting prompt templates
 To get the most power out of your agents, you need some starting points for your system prompts. Feel free to build upon them and customize!
@@ -300,7 +286,6 @@ You are an autonomous agent that plans and executes complex tasks methodically.
 ### Dynamic UI Agent
 There is another cool feature all your agents can reuse - called "Dynamic UI". It generates the rich markdown components from in-memory context so that you can work on the constantly updating "artefact" that is ALWAYS in memory and is the center of attention! Learn from the prompt below how to use it!
 
-![Agents Context](docs/images/07agents.png)
 
 ```
 ### workspace_protocol
@@ -328,7 +313,7 @@ Every UI-visible key (`showInUI: true`) MUST leverage rich markdown:
 4. **Confirm:** Briefly explain what was updated in the chat.
 
 ## Formatting Requirement
-The `value` in `context_set` should be the raw markdown string. Everworker will handle the rendering.
+The `value` in `context_set` should be the raw markdown string. Youetal will handle the rendering.
 ```
 
 ### Software Requirements Document Agent

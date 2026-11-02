@@ -1,7 +1,7 @@
 /**
  * Browser Automation Types
  *
- * Type definitions for browser automation tools in Everworker Desktop.
+ * Type definitions for browser automation tools in hosea.
  * These types are shared between BrowserService and browser tools.
  */
 

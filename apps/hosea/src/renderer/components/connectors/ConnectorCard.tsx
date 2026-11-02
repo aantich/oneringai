@@ -36,7 +36,7 @@ interface StoredUniversalConnector {
   lastTestedAt?: number;
   status: 'active' | 'error' | 'untested';
   legacyServiceType?: string;
-  source?: 'local' | 'everworker' | 'built-in';
+  source?: 'local' | 'backend' | 'built-in';
 }
 
 interface ConnectorCardProps {
@@ -98,7 +98,7 @@ export function ConnectorCard({
 }: ConnectorCardProps): React.ReactElement {
   const statusConfig = getStatusConfig(connector.status);
   const displayName = connector.displayName || connector.vendorName;
-  const isEW = connector.source === 'everworker';
+  const isRemote = connector.source === 'backend';
 
   return (
     <div className="connector-card">
@@ -111,10 +111,10 @@ export function ConnectorCard({
               {statusConfig.icon}
               <span className="ms-1">{statusConfig.label}</span>
             </Badge>
-            {connector.source === 'everworker' ? (
+            {connector.source === 'backend' ? (
               <Badge bg="info" className="connector-card__status">
                 <Cloud size={10} />
-                <span className="ms-1">EW</span>
+                <span className="ms-1">backend</span>
               </Badge>
             ) : connector.source === 'local' ? (
               <Badge bg="secondary" className="connector-card__status">
@@ -192,9 +192,9 @@ export function ConnectorCard({
       </div>
 
       <div className="connector-card__footer">
-        <Button variant="outline-secondary" size="sm" onClick={onEdit} disabled={isEW}>
+        <Button variant="outline-secondary" size="sm" onClick={onEdit} disabled={isRemote}>
           <Edit2 size={14} className="me-1" />
-          {isEW ? 'Managed' : 'Edit'}
+          {isRemote ? 'Managed' : 'Edit'}
         </Button>
         {onAuthorize && connector.status !== 'active' && (
           <Button

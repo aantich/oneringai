@@ -1,653 +1,143 @@
-# oneringai - Complete User Guide
+# OneRingAI v2 User Guide
 
-**Version:** 2.0.0-beta.1 (unpublished branch)
-**Last Updated:** 2026-11-01
+**Documented version:** `oneringai@2.0.0-beta.1` · **Reviewed:** 2026-11-02
 
-A comprehensive guide to using all features of the oneringai library.
+This guide describes the v2 APIs; use documentation matching your installed
+version. The dated [release readiness](docs/RELEASE_READINESS_V2.md) record separates
+local validation from publication and live-provider gates. For a running application, start with
+**[AMOS](apps/amos/README.md)** and its **[runtime cookbook](apps/amos/docs/AGENT_RUNTIME.md)**.
 
----
+## Reading paths
+
+- **First integration:** [Getting started](#getting-started), [core concepts](#core-concepts),
+  [tools](#tools--function-calling), then [persistence](#session-persistence).
+- **Coming from v1:** [Package migration](docs/PACKAGE_MIGRATION.md), then the
+  [v2 capability map](#version-2-capability-map). Historical release-specific
+  upgrade notes are [archived separately](docs/MIGRATION_V1_HISTORY.md).
+- **Switching harnesses:** [Agent Runtime](#agent-runtime-preview), the
+  [five-harness example](examples/agent-runtime-swappable.ts), and the AMOS cookbook.
+- **Connecting services:** [Authentication](#connectors--authentication),
+  [external APIs](#external-api-integration), and the [tool catalog](docs/CONNECTOR_TOOL_CATALOG.md).
+- **Building knowledge:** [Memory integration](#self-learning-memory-nextgen-plugin),
+  [standalone Memory Guide](docs/MEMORY_GUIDE.md), and [permissions](docs/MEMORY_PERMISSIONS.md).
+- **Public signatures:** [Generated API Reference](API_REFERENCE.md).
+  [Runnable examples](examples/README.md) document setup and cleanup for each scenario.
+
+All repository documentation links are relative. External provider references
+remain external; npm's version-navigation exception is confined to the README.
+
+## Version 2 capability map
+
+Version 2 keeps the connector-first, plugin-first model and one shared ToolManager.
+The new surfaces are incremental: choose the capabilities your application needs.
+
+| Need | V2 surface | Defaults and boundaries |
+| --- | --- | --- |
+| Fresh, correctly bounded requests | [Context preparation](docs/CONTEXT_PREPARATION.md) | One bounded preparation; connected tool groups and protected source results stay intact |
+| Inspect execution failure and cancellation | [Outcomes](#tool-outcomes-and-cancellation) | Raw returns preserved; business `success: false` is ordinary data |
+| Keep exact source behind a concise observation | [Durable evidence](#durable-tool-evidence) | Disabled by default; stable scope and durable backend are explicit |
+| Protect constraints and action receipts | [Task state](#protected-task-state) | Disabled by default; host updates and confirmations, no model mutation tools |
+| Select plugin data and prompt layout | [Selective assembly](#selective-context-assembly) | Opt-in companions; protected data cannot be substituted |
+| Reduce older read observations | [Context strategies](#experimental-context-strategies) | Algorithmic remains default; masking/summaries require acknowledged evidence |
+| Compose plugin and provider-native reduction | [Native compaction](docs/NATIVE_CONTEXT_COMPACTION.md) | Opt-in `ContextCompactionStrategy`; endpoint/ownership/capacity restrictions apply |
+| Route one managed execution | [Model routing](#managed-model-routing) | No classifier call by default; selected identity stays fixed throughout the execution |
+| Invoke helper models and share allowances | [Helpers and ModelTask](#model-tasks-and-helper-models) | Explicit tool-free helpers; budgets are process-local, with unknown usage/cost reported |
+| Verify completion and bound recovery | [Loop policies](#bounded-managed-loop-policies), [verified routines](#verified-routines) | Opt-in host checks; a model answer is not proof of remote completion |
+| Adopt a tested composition | [Presets and inspection](#opt-in-agent-presets-and-inspection) | `research` / `workflow`; permissions, helpers, and completion predicates remain explicit |
+| Strengthen service reads and actions | [Enhanced connectors](#enhanced-connector-execution-profiles), [whole pages](#whole-connector-pages) | Explicit profiles; legacy factories retain defaults |
+| Carry authentic outcomes across hosts | [Remote observations](#negotiated-portable-observations) | Negotiated protocol; source receipts are reconciled without repeating uncertain actions |
+| Fully configure agent teams | [Factory orchestration](#complete-orchestration-configuration) | Complete host settings before initialization; no implied distributed budget authority |
+| Swap entire harnesses | [Agent Runtime preview](#agent-runtime-preview) | Five adapters; capability-gated policy/environment, separate live-validation limits |
+| Select endpoint controls and presentation | [Endpoint metadata](#endpoint-capability-metadata), [parameter policy](#effective-temperature-decisions), [vendor presentation](#vendor-labels-and-colors) | Supported, unsupported, and unknown remain distinct |
+
+The existing strengths remain central: named multi-account connectors, OAuth,
+long-term entity/fact memory, working notes and whiteboard, tools and MCP,
+streaming, media, embeddings, Realtime, orchestration, and saved conversations.
+The [Version 2 Guide](docs/VERSION_2_GUIDE.md) retains detailed adoption/delivery
+records; the [Changelog](CHANGELOG.md) records release history.
+
+## Example conventions
+
+Complete starting examples include imports and connector setup. Later snippets
+extend that setup: `agent`, named connectors, application tools, trusted identity,
+and storage objects must already exist where indicated. Host functions such as
+`promptUser`, `authorizeHostedTool`, or `saveDurableBatchHandle` are integration
+points, not library exports. Type/interface sketches show only the fields under
+discussion; consult the generated reference for full public declarations.
+
+Use `import type` for types and documented package subpaths for runtime/browser
+adapters. Native responses use `output_text`; Agent Runtime results use
+`outputText`. Always destroy agents/runtimes and close MCP/database/media resources.
+Examples making actual model calls require provider credentials and may be billable.
+Offline demonstrations are explicitly identified in the examples index.
 
 ## Table of Contents
 
-- [Upgrading to the unscoped v2 package](#upgrading-to-the-unscoped-v2-package)
-- [Upgrading to 1.2.0](#upgrading-to-120) — GPT-6 Astra and current vendor APIs, model refresh, and continuation fidelity
-- [Upgrading to 1.1.3](#upgrading-to-113) — refreshed model registries, lifecycle metadata, pricing, and provider defaults
-- [Upgrading to 1.1.2](#upgrading-to-112) — context rollover, portable protocol v2, rotating OpenAI credentials, and the runtime baseline
-- [Upgrading to 1.1.1](#upgrading-to-111) — portable Agents, Agent-aware Realtime, and WebRTC call metadata
-- [Portable Agent Packages](#portable-agent-packages) — trusted-host hydration with local and remote tools
-- [Upgrading to 1.0.0](#upgrading-to-100) — runtime requirements, breaking changes, compatibility guarantees, and migration checklist
-- [Agent Runtime (preview)](#agent-runtime-preview) — run OneRingAI, Codex and Claude harnesses through one observable, capability-gated API
-- [Agentic Evaluation Baselines](#agentic-evaluation-baselines) — repository-only offline and opt-in live validation for the Version 2 initiative
-1. [Getting Started](#getting-started)
-2. [Core Concepts](#core-concepts)
-3. [Basic Text Generation](#basic-text-generation)
-   - [Structured Output (JSON)](#structured-output-json) — vendor-agnostic `responseFormat`, native or prompt fallback
-4. [Advanced Inference](#advanced-inference) — prompt caching, async batches, provider-hosted tools, telemetry, and data policy
-   - [GPT-6 Astra Responses extensions](#gpt-6-astra-responses-extensions) — async tools, steering, configuration updates, and safety monitoring
-   - [Current vendor API additions](#current-vendor-api-additions) — Decisions, Live sessions, custom voices, Anthropic tool search, Gemini computer use, and xAI hosted tools
-5. [Connectors & Authentication](#connectors--authentication)
-6. [Agent Features](#agent-features)
-   - [Instruction Templates](#instruction-templates) — `{{DATE}}`, `{{AGENT_ID}}`, custom `{{COMMAND:arg}}` with extensible registry
-   - Multi-User Support (`userId`)
-   - Auth Identities (`identities`)
-7. [Tools & Function Calling](#tools--function-calling)
-    - Built-in, plugin-provided, and connector-generated tools
-    - [Connector & Tool Catalog](./docs/CONNECTOR_TOOL_CATALOG.md) — complete 50-template matrix and every specialized pack
-    - Developer Tools (Filesystem & Shell — 11 tools)
-    - [Custom Tool Generation](#custom-tool-generation) — Agents create, test, and persist their own tools
-    - [Document Reader](#document-reader) — PDF, DOCX, XLSX, PPTX, CSV, HTML, images
-    - Web Tools (webFetch, web_search via ConnectorTools, web_scrape via ConnectorTools)
-    - JSON Tool
-    - GitHub Connector Tools (8 tools, including list_branches)
-    - [Slack Connector Tools](#slack-connector-tools) — channels, messages, threads, search, mentions, reactions, and users (10 tools)
-    - Microsoft Graph Connector Tools (11 tools: email, calendar, meetings, Teams transcripts, OneDrive/SharePoint files)
-    - [Google Workspace Connector Tools](#google-workspace-connector-tools) — Gmail, Calendar, Meet, Drive (11 tools)
-    - [Zoom Connector Tools](#zoom-connector-tools) — Meeting management and transcripts (3 tools)
-    - [Telegram Connector Tools](#telegram-connector-tools) — Bot API tools (send_message, send_photo, get_updates, set_webhook, get_me, get_chat)
-    - [Twilio Connector Tools](#twilio-connector-tools) — SMS and WhatsApp (send_sms, send_whatsapp, list_messages, get_message)
-    - [Unified Calendar Tool](#unified-calendar-tool) — Cross-provider meeting slot finder (Google + Microsoft)
-    - [Multi-Account Connectors](#multi-account-connectors) — Multiple accounts per vendor with automatic routing
-8. [Dynamic Tool Management](#dynamic-tool-management)
-9. [Session Persistence](#session-persistence)
-   - [Centralized Storage Registry](#centralized-storage-registry) — One `configure()` for all backends, multi-tenant `StorageContext`
-10. [Context Management](#context-management)
-   - Strategy Deep Dive (Algorithmic, Custom)
-   - Token Estimation
-   - Lifecycle Hooks
-11. [Unified Store Tools](#unified-store-tools)
-    - Generic CRUD Interface (store_get, store_set, store_delete, store_list, store_action)
-    - Available Stores (notes, whiteboard, instructions, user_info, workspace)
-    - Custom Store Plugins
-12. [Shared Workspace](#shared-workspace)
-    - Multi-Agent Coordination
-    - Entry Model and Actions
-13. [InContextMemory](#incontextmemory-nextgen-plugin)
-    - Setup and Configuration
-    - Priority-Based Eviction
-    - Tools (store_set/store_delete/store_list with store="whiteboard")
-    - Host UI metadata (`showInUI`) and host-defined pinning
-    - Use Cases and Best Practices
-14. [Persistent Instructions](#persistent-instructions-nextgen-plugin)
-    - Setup and Configuration
-    - Tools (store_set/store_delete/store_list/store_action with store="instructions")
-    - Storage and Persistence
-    - Use Cases and Best Practices
-15. [User Info](#user-info-nextgen-plugin) — ⚠️ deprecated, prefer Self-Learning Memory
-    - Setup and Configuration
-    - Context Injection (auto-rendered in system message)
-    - Tools (store_set/store_get/store_delete/store_action with store="user_info", plus todo_add, todo_update, todo_remove)
-    - Storage and Multi-User Isolation
-    - Use Cases and Best Practices
-16. [Self-Learning Memory](#self-learning-memory-nextgen-plugin) — `MemoryPluginNextGen` + `MemoryWritePluginNextGen` + 12 `memory_*` tools (entities, facts, graph, document search, semantic search, profile auto-regen, three-principal permissions)
-    - What it is — entities + facts data model
-    - When to use which plugin (working / in-context / memory / memoryWrite / session ingestor)
-    - Quick Start (in-process, dev)
-    - Storage backends (InMemoryAdapter, MongoMemoryAdapter — raw + Meteor)
-    - What gets injected into the system message (rules, user profile, optional org profile)
-    - Plugin config (incl. `groupBootstrap`, `personaEntityId`, ACL principals, `recentActivity`, and host visibility policy)
-    - The 12 `memory_*` tools (6 read + 6 write incl. `memory_set_agent_rule`)
-    - Behavior rules — `memory_set_agent_rule`
-    - Background ingestion via `SessionIngestorPluginNextGen`
-    - Permissions and scope (three-principal model)
-    - Principal-based ACLs (explicit grants, `setAccess`, `scope.principals`, backfill)
-    - Security invariants (no ghost-writes, contextId downgrade, numeric clamping)
-    - Using the tools without the plugin
-    - Direct `MemorySystem` access
-17. [Routine Execution](#routine-execution)
-    - Overview and Architecture
-    - Quick Start
-    - RoutineDefinition and Tasks
-    - Task Dependencies and Ordering
-    - Memory as Inter-Task Bridge
-    - Validation and Self-Reflection
-    - Retry Logic and Failure Modes
-    - Custom Prompts
-    - Callbacks and Progress Tracking
-    - Complete Example
-18. [Async (Non-Blocking) Tools](#async-non-blocking-tools)
-    - How It Works (Lifecycle)
-    - Auto-Continue vs Manual Mode
-    - Configuration (AsyncToolConfig)
-    - Events
-    - Public API
-    - Edge Cases
-19. [Long-Running Sessions (Suspend/Resume)](#long-running-sessions-suspendresume)
-    - Creating Suspend Tools (SuspendSignal)
-    - Running and Detecting Suspension
-    - Resuming with Agent.hydrate()
-    - Correlation Storage
-    - Multi-Step Workflows
-20. [MCP (Model Context Protocol)](#mcp-model-context-protocol)
-21. [Multimodal (Vision)](#multimodal-vision)
-22. [Audio (TTS/STT)](#audio-ttsstt)
-23. [Realtime Voice APIs](#openai-realtime-api) — OpenAI and xAI voice agents, live transcription/translation, WebSocket/WebRTC, SIP, and telephony
-24. [Image Generation](#image-generation)
-25. [Embeddings](#embeddings)
-26. [Video Generation](#video-generation)
-27. [Custom Media Storage](#custom-media-storage)
-    - IMediaStorage Interface
-    - Custom S3 Backend Example
-    - FileMediaStorage Default
-28. [Web Search](#web-search)
-29. [Streaming](#streaming)
-30. [External API Integration](#external-api-integration)
-    - [Complete Connector & Tool Catalog](./docs/CONNECTOR_TOOL_CATALOG.md)
-31. [Vendor Templates](#vendor-templates)
-    - Quick Setup for 50 Services
-    - Authentication Methods
-    - Complete Vendor Reference
-32. [OAuth for External APIs](#oauth-for-external-apis)
-33. [Model Registry](#model-registry)
-34. [Scoped Connector Registry](#scoped-connector-registry)
-    - Access Control Policies
-    - Multi-Tenant Isolation
-    - Using with Agent and ConnectorTools
-35. [Agent Registry](#agent-registry) — Global tracking, deep inspection, parent/child hierarchy, event fan-in, external control
-36. [Agent Orchestrator](#agent-orchestrator) — Multi-agent teams with shared workspace, delegation, and async execution
-    - Quick Start
-    - Architecture
-    - OrchestratorConfig
-    - Orchestration Tools (assign_turn, delegate_interactive, send_message, list_agents, destroy_agent)
-    - 3-Tier Routing (DIRECT, DELEGATE, ORCHESTRATE)
-    - Interactive Delegation (monitoring modes, reclaim conditions)
-    - 5-Phase Planning (UNDERSTAND, PLAN, APPROVE, EXECUTE, REPORT)
-    - Workspace Delta
-    - Agent.inject()
-    - Worker Agent Lifecycle
-    - Custom System Prompt
-    - Per-Type Configuration
-37. [Advanced Features](#advanced-features)
-38. [Production Deployment](#production-deployment)
-
----
-
-## Upgrading to the unscoped v2 package
-
-The v2 package name is `oneringai`, without an npm scope. This branch prepares
-`2.0.0-beta.1`; no publication is claimed. The published v1 package remains
-`@everworker/oneringai`. Change root and subpath imports explicitly when adopting
-v2; all documented subpaths remain. A normal npm update cannot change package names.
-See [Package migration](docs/PACKAGE_MIGRATION.md) for installation, compatibility,
-saved data, release validation and the staged legacy deprecation notice. Historical
-v1 upgrade recipes below retain their original package name.
-
-## Upgrading to 1.2.0
-
-OneRingAI 1.2.0 is a source-compatible API and model refresh for OpenAI,
-Anthropic, Google, and xAI. It keeps the connector-first Agent surface intact
-while adding current model metadata, provider-hosted tools, continuation state,
-and connector-first clients for vendor APIs that do not fit `Agent.run()`.
-
-Install the release and rebuild any code that imports OneRingAI's public
-TypeScript unions:
-
-```bash
-npm install @everworker/oneringai@^1.2.0
-```
-
-| Change | Who is affected | Required action |
-|--------|-----------------|-----------------|
-| October model refresh | Model pickers, routers, and cost estimators | Re-read registry metadata and prefer lifecycle/availability fields instead of hard-coded model lists |
-| Expanded output and stream unions | Applications with exhaustive `ContentType`, `InputItem`, or `StreamEventType` switches | Handle provider-state items, replayable reasoning, compaction, continuation tokens, and typed native-tool results |
-| Current OpenAI Responses tools | Hosts executing computer, shell, patch, or client tool-search calls | Use `runDirect()`, preserve the original `call_id`, enforce host approval, and return the matching typed output item |
-| Anthropic tool-search/compaction state | Hosts that persist or inspect managed history | Persist opaque provider state unchanged; do not interpret or manufacture server-owned blocks |
-| Gemini 3.8 Interactions | Google callers using stored interactions, file search, or computer use | Preserve continuation tokens and signed thought state; keep screenshots and tool execution under trusted host control |
-| Dedicated xAI text adapter | Grok callers using hosted tools or usage telemetry | Use the normal Grok connector; read normalized native-tool, reasoning, and cost fields rather than OpenAI-specific wire objects |
-| Current SDK baseline | Custom adapters importing vendor SDK types | Recompile against `openai` 7.30, `@anthropic-ai/sdk` 0.131, and `@google/genai` 2.27 |
-| Refreshed built-in tool fingerprints | Hosts exchanging portable Agent packages | Upgrade exporting and receiving runtimes together so protocol-v2 executable fingerprints match |
-
-The new public clients are `OpenAIDecisions`, `OpenAILiveSession`,
-`OpenAIVoices`, `GoogleLiveSession`, and `GoogleVoices`. They all resolve
-credentials through a named `Connector`; do not pass API keys to their methods.
-See [Current vendor API additions](#current-vendor-api-additions) for runnable
-examples and [Model Registry](#model-registry) for the refreshed catalog.
-
-OpenAI GPT-6 Astra and GPT-6.1 Sol reject `none` and `minimal` reasoning. GPT-6
-Sol and Luna allow sampling controls only when the effective effort is `none`.
-Fast and Ultrafast processing remain unavailable through OpenAI's EU data
-residency endpoint; Ultrafast requires global processing or US data residency.
-OneRingAI validates explicit invalid combinations before inference.
-
-Managed Agent loops now retain ordered reasoning, compaction, native-tool, and
-opaque provider output across tool turns. Direct callers remain responsible for
-resending provider-required state when they construct continuations manually.
-Never synthesize signatures, encrypted reasoning, or provider-state records.
-
-## Upgrading to 1.1.3
-
-OneRingAI 1.1.3 updates the text, image, video, speech, and embedding model
-registries against current vendor documentation. Public APIs remain
-source-compatible. Registry-driven model selection now prefers current models
-and excludes retired entries, while callable deprecated models retain explicit
-deprecation and retirement dates.
-
-Sora 2 and Sora 2 Pro remain callable and are marked deprecated until OpenAI's
-Videos API shutdown on September 24, 2026. Applications with explicit Sora
-configuration should migrate before that date. See the
-[model registry audit](./docs/MODEL_REGISTRY_AUDIT.md) for the complete vendor,
-model, lifecycle, and validation record.
-
-## Upgrading to 1.1.2
-
-OneRingAI 1.1.2 is a focused release for long provider sessions and portable
-Agent execution across trusted hosts. Normal connector-first Agent and Agent
-Runtime applications remain source-compatible, but portable package peers must
-move to protocol v2 together and Node.js 22 installations must be at least
-22.13.0.
-
-| Change | Who is affected | Required action |
-|--------|-----------------|-----------------|
-| Explicit semantic rollover | Long-lived Realtime or other provider sessions | End the active execution, then call `agent.rolloverContext()` before creating the replacement provider session |
-| Portable protocol v2 | Applications exchanging Agent packages or remote-tool DTOs | Upgrade exporting and receiving runtimes together; do not mix v1 and v2 in one tool-server session |
-| Local executable fingerprints | Portable custom tools placed `local` | Share a stable implementation ID and return a `ResolvedLocalTool`; use `createResolvedLocalTool()` for generated built-ins |
-| Host-owned portable permissions | Receiving portable-Agent hosts | Derive effective per-tool policy with `toolPermissionResolver`; never trust packaged permission metadata directly |
-| Rotating OpenAI credentials | Hosts using short-lived or brokered keys | Use runtime-only `api_key_provider`; keep the callback out of connector persistence |
-| Updated runtime baseline | All Node.js 22 consumers | Run Node.js 22.13.0+ or Node.js 24+; non-LTS Node.js 23 is outside the declared engine range |
-
-Rollover is an explicit provider-session operation, not a replacement for the
-normal token-triggered compaction performed by `prepare()`. The Agent-level API
-uses the configured connector/model for a tool-free continuity summary by
-default, preserves eight recent user turns and complete tool pairs, leaves
-plugin state and the append-only history journal intact, and checkpoints
-configured session storage. Call it only after the old Realtime or external
-session has released the Agent's execution lease:
-
-```typescript
-await oldRealtimeSession.close();
-
-const result = await agent.rolloverContext({
-  preserveRecentTurns: 8,
-  reason: 'provider-session-expiring',
-});
-
-if (result.performed) {
-  console.log({ estimatedNetTokensFreed: result.tokensFreed });
-}
-
-const replacementSession = new OpenAIRealtimeAgentSession({ agent });
-await replacementSession.connect();
-```
-
-If the Agent's configured model cannot make a normal text generation call,
-pass a trusted `summarize` callback backed by a text-capable Agent or server
-proxy. Standalone contexts expose
-`ctx.rollover({ summarize, preserveRecentTurns, reason })` and require the host
-to supply that summarizer.
-
-Portable package version 2 treats executable compatibility separately from the
-JSON tool definition. Custom local tools must use the same stable
-implementation ID on both sides with
-`createPortableToolImplementationFingerprint()`. Generated OneRingAI built-ins
-carry runtime-aware registry fingerprints and can be returned with
-`createResolvedLocalTool(tool)`. Remote definitions carry their own canonical
-fingerprint. A matching tool name or schema alone is insufficient.
-
-Packaged `descriptor.permission` data is informational. Hydration applies a
-per-tool override only when the trusted receiving host returns one from
-`toolPermissionResolver`; the required host-owned Agent permission system still
-governs every execution.
-
-For brokered OpenAI credentials, `api_key_provider` resolves and validates a
-fresh value for text, image, audio, video, and embedding SDK requests. The
-Codex SDK driver resolves it once while opening each Codex session. The auth
-form is OpenAI-only and `ConnectorConfigStore` deliberately rejects it because
-callbacks and runtime secrets are not serializable.
-
-The dependency refresh moves the direct OpenAI SDK baseline to 7.8, Google Gen
-AI to 2.19, MCP to 1.30, and the test runner to Vitest 3.2. Recompile custom
-provider wrappers that consume SDK-native types and run their contract tests.
-
-## Upgrading to 1.1.1
-
-OneRingAI 1.1.1 is additive. Existing connector-first Agents, the preview Agent
-Runtime, and callers that use `createWebRTCCall()` for an SDP string do not
-need to migrate.
-
-Use the new surfaces when an application needs one of these flows:
-
-| Goal | Current surface |
-|------|---------------|
-| Move one resolved native Agent to a trusted desktop runtime | `exportAgentPackage()` and `hydrateAgentPackage()` |
-| Keep selected tools on the source server | `AgentPackageToolServer` and `RemoteToolTransport` |
-| Run browser WebRTC media without importing Node dependencies | `@everworker/oneringai/realtime-browser` |
-| Bridge renderer Realtime events to a main-process Agent | `OpenAIRealtimeChannelTransport` |
-| Obtain the opaque WebRTC call ID for sideband control or cleanup | `createWebRTCCallWithMetadata()` |
-| Resolve call-specific identity, context, and permissions | `VoiceBridge({ agentFactory })` |
-
-Portable packages are editable data, not authorization. Keep connector
-credentials, source identity, permission policy, provider-native tools,
-`vendorOptions`, prompt caching, data-handling policy, and plugin factories in
-the trusted receiving host. Node.js 22 remains the minimum runtime.
-
-## Portable Agent Packages
-
-`exportAgentPackage()` captures the serializable state of an already-resolved
-native `Agent`: its unrendered instructions, portable runtime limits, context
-state, tool definitions and placement, plus optional Realtime metadata. It
-never serializes executable functions or connector credentials.
-
-```typescript
-import {
-  AgentPackageToolServer,
-  createPortableToolImplementationFingerprint,
-  exportAgentPackage,
-  hydrateAgentPackage,
-} from '@everworker/oneringai';
-
-const localToolFingerprints = new Map([
-  ['read_desktop_file', createPortableToolImplementationFingerprint(
-    readDesktopFile.definition,
-    'desktop:read_desktop_file:v3',
-  )],
-]);
-
-// Trusted source server
-const packageValue = exportAgentPackage(serverAgent, {
-  expiresAt: new Date(Date.now() + 10 * 60_000),
-  toolPlacement: (name) => name === 'read_desktop_file' ? 'local' : 'remote',
-  toolImplementationFingerprint: (name) => localToolFingerprints.get(name),
-  realtime: {
-    provider: 'openai',
-    connectorName: 'server-openai',
-    model: 'gpt-realtime-2.1',
-    voice: 'marin',
-  },
-});
-const toolServer = new AgentPackageToolServer(serverAgent, packageValue);
-
-// Trusted desktop main process
-const desktopAgent = await hydrateAgentPackage(packageValue, {
-  connector: 'desktop-openai',
-  model: 'gpt-5.6-terra',
-  userId: authenticatedUser.id,
-  permissions: desktopPermissionPolicy,
-  contextFactory: ({ package: pkg, model, userId, identities }) => ({
-    model,
-    agentId: pkg.agent.id,
-    systemPrompt: pkg.agent.instructions,
-    userId,
-    identities,
-    features: trustedContextFeatures,
-    plugins: trustedContextPlugins,
-  }),
-  localToolResolver: (descriptor) => {
-    const tool = resolveAuthorizedDesktopTool(descriptor);
-    const implementationFingerprint = localToolFingerprints.get(
-      descriptor.definition.function.name,
-    );
-    return tool && implementationFingerprint
-      ? { tool, implementationFingerprint }
-      : undefined;
-  },
-  remoteToolTransport: {
-    execute: (request) => authenticatedRpc.executeRemoteTool(request),
-  },
-  agentConfig: trustedProviderPolicy,
-});
-```
-
-Custom tools placed `local` must use a stable implementation ID that both
-trusted runtimes map through `createPortableToolImplementationFingerprint()`.
-The implementation ID is required and must change whenever executable behavior
-or one of its dependencies changes.
-Hydration requires `localToolResolver` to return a `ResolvedLocalTool`; returning
-a bare `ToolFunction` is rejected. Generated OneRingAI built-ins use their
-runtime-aware registry fingerprints automatically and can be wrapped with
-`createResolvedLocalTool(tool)` on the receiving host. A matching name or JSON
-schema alone is never treated as executable compatibility.
-
-Fingerprint inputs follow JSON-wire semantics, so omitted and explicitly
-`undefined` optional fields do not diverge after serialization. A tool's
-dynamic function description is prompt presentation generated independently on
-each host and is excluded from its local executable contract; its callable
-schema, blocking mode, and timeout still must match. Remote tool definitions
-retain their full canonical definition fingerprint, which package validation
-recomputes before hydration or tool-server construction.
-
-The RPC host must authenticate and authorize each request before forwarding it
-to `toolServer.execute(request)`. Hydration also rejects a package tool whose
-name collides with a trusted context, identity, or host tool; package tools
-never overwrite host authority.
-
-Packaged `descriptor.permission` values are informational and are never applied
-directly. If a portable tool needs a receiving-host override, provide
-`toolPermissionResolver: (descriptor) => trustedPolicyFor(descriptor)` to
-`hydrateAgentPackage()`. Returning `undefined` leaves the tool without a
-per-tool override; the Agent's required host-owned permission system still
-governs execution.
-
-The package and remote-tool protocol require exact JSON objects. A package is
-limited to 10,000,000 UTF-8 bytes. Remote arguments and successful results are
-limited to 1,000,000 UTF-8 bytes each, and one tool-server session accepts at
-most 1,000 distinct request IDs. Unknown fields, non-JSON values, expired or
-incompatible packages, cross-package requests, and non-allowlisted tools fail
-closed. Exact request retries are idempotent for the bounded server-session
-lifetime.
-
-Agent packages and remote-tool DTOs use exact protocol version 2. Version 1
-peers reject version 2 objects, and version 2 peers reject version 1 objects.
-Deploy the exporting server and receiving host together, or keep the old pair
-active until all in-flight version 1 sessions have ended. Do not mix protocol
-versions within one tool-server session.
-
-Call `await toolServer.close()` and `desktopAgent.destroy()` when the session
-ends. Concurrent close callers share the same shutdown operation, so every
-caller waits for in-flight tool execution to settle.
-
-For a voice package, pass `executionProfile: 'realtime'` during hydration.
-The package's connector and model remain hints; an authorized
-`connectorResolver` may replace both. See
-[Distributed Agent Execution](./docs/designs/DISTRIBUTED_AGENT_EXECUTION.md)
-for ownership, Electron/WebRTC flow, and security boundaries.
-
-## Upgrading to 1.0.0
-
-OneRingAI 1.0.0 is the first major release and the supported baseline for the
-current OpenAI, Anthropic, Google, and xAI APIs. The connector-first application
-flow remains the same, but the runtime baseline, registry contract, and the
-default Google API path have changed.
-
-### Migration summary
-
-| Change | Who is affected | Required action |
-|--------|-----------------|-----------------|
-| Node.js 22 minimum | Every application and build pipeline | Upgrade local runtimes, CI, containers, and serverless functions before installing 1.0.0 |
-| Registry schema v2 | Code reading model metadata | Handle nullable token limits and use lifecycle/alias helpers as described below |
-| Gemini 3.5+ uses Interactions | Google callers that inspect native wire data or provider options | Adopt `steps`/`step.delta`, or temporarily opt out with `vendorOptions.api = 'generateContent'` |
-| Current SDK baseline | Custom provider wrappers or code importing SDK-native types | Recompile against OpenAI 7.4, Anthropic 0.116, and Google Gen AI 2.16 |
-| Current Realtime contract | Preview Realtime integrations | Move audio settings under `session.audio`, consume current output events, and use the dedicated transcription/translation paths |
-| Updated model lifecycle | Routers and model pickers | Stop assuming every `isActive` model is recommended; filter by `lifecycle`, `availability`, and `preferred` |
-
-### 1. Upgrade the runtime and dependencies
-
-OneRingAI now declares `node >= 22.0.0` and builds its primary output for
-Node.js 22. Confirm every execution environment before upgrading:
-
-```bash
-node --version
-npm install @everworker/oneringai@^1.0.0
-```
-
-The built-in providers use `openai@7.4`, `@anthropic-ai/sdk@0.116`, and
-`@google/genai@2.16`. Applications normally do not need to import those SDKs
-directly. If a custom provider or proxy depends on their native types, rebuild
-and run its contract tests after the upgrade.
-
-### 2. Migrate registry consumers to schema v2
-
-The stable v1 fields remain available: `name`, `provider`, `isActive`,
-`features`, and the original cost fields. Schema v2 adds:
-
-- `lifecycle`, `availability`, and `preferred` for selection policy;
-- `aliases` and `snapshots` for floating and pinned identifiers;
-- `endpoints` for API routing;
-- `deprecationDate`, `retirementDate`, and `replacementModel` for migrations;
-- source links and verification dates; and
-- long-context, processing-tier, duration, resolution, message, cached-write,
-  and multimodal pricing dimensions.
-
-The only narrowing change to existing registry value types is that token limits
-are now `number | null`:
-
-```typescript
-import {
-  MODEL_REGISTRY_SCHEMA_VERSION,
-  getModelInfo,
-  resolveMaxContextTokens,
-} from '@everworker/oneringai';
-
-if (MODEL_REGISTRY_SCHEMA_VERSION !== 2) {
-  throw new Error('Unsupported registry schema');
-}
-
-const model = getModelInfo('grok-voice-latest');
-const publishedLimit = model?.features.input.tokens; // number | null
-const operationalLimit = resolveMaxContextTokens(model?.name ?? '', 128_000);
-```
-
-Do not coerce `null` to zero. It means the vendor bills or constrains that model
-using another dimension and has not published a token window.
-
-### 3. Separate model identity, callability, and recommendation
-
-Lookup helpers resolve aliases without inserting duplicate registry records:
-
-```typescript
-import {
-  MODEL_REGISTRY,
-  getDeprecatedModels,
-  getModelInfo,
-} from '@everworker/oneringai';
-
-getModelInfo('gpt-5.6')?.name;          // 'gpt-5.6-sol'
-getModelInfo('grok-voice-latest')?.name; // 'grok-voice-think-fast-2.0'
-MODEL_REGISTRY['gpt-5.6'];              // undefined: direct keys are canonical
-
-const migrationQueue = getDeprecatedModels().map(model => ({
-  from: model.name,
-  to: model.replacementModel,
-  retireAt: model.retirementDate,
-}));
-```
-
-Use these fields deliberately:
-
-- `isActive`: the provider still accepts requests;
-- `lifecycle`: preview, active, legacy, deprecated, or retired;
-- `availability`: public, limited, invite-only, enterprise, or region-limited;
-- `preferred`: a recommended choice for that vendor/modality; and
-- `replacementModel`: the migration target when one is published.
-
-Persist canonical `model.name` values when stable identity matters. Persist an
-alias only when following the vendor's moving target is intentional.
-
-### 4. Adopt Google Interactions
-
-`gemini-3.5-*` through `gemini-3.8-*` use the Google Interactions API by default.
-Normal `Agent.run()`, `runDirect()`, and streaming callers receive the same
-OneRingAI response types; only callers depending on native Google wire details
-need immediate changes.
-
-```typescript
-const agent = Agent.create({
-  connector: 'google',
-  model: 'gemini-3.8-flash',
-});
-
-// Default: stored Interactions API (`steps` responses and `step.delta` streams).
-const first = await agent.runDirect('Remember the code word: aurora');
-
-// Continue the provider-stored interaction without resending its history.
-await agent.runDirect('What was the code word?', {
-  previousResponseId: first.id,
-});
-
-// Temporary compatibility path while migrating native integrations.
-await agent.runDirect('Summarize this document', {
-  vendorOptions: { api: 'generateContent' },
-});
-```
-
-Interactions supports tools, reasoning, structured output, usage conversion,
-streaming, and `previous_interaction_id` continuity through the normalized
-`previousResponseId` option. Interactions are stored by default because Google
-requires storage for this continuity flow; set `vendorOptions.store: false`
-only when the interaction will not be continued. Prefer the default path for
-new code; the opt-out is a migration bridge, not the recommended steady state.
-Named `toolChoice` values are translated to Interactions
-`generation_config.tool_choice.allowed_tools`. The temporary `generateContent`
-path emits `functionCallingConfig.mode = 'ANY'` together with
-`allowedFunctionNames`. Forcing one function therefore remains enforced on
-both Google API paths rather than degrading to automatic selection.
-Streaming conversion also consumes `interaction.status_update`, terminal
-`interaction.completed`, and SSE `error` events. Cancellation and failures map
-to `failed`, token-budget exhaustion maps to `incomplete`, and a stream that
-ends without a terminal event is never reported as successful.
-
-### 5. Migrate Realtime integrations
-
-For OpenAI, use `gpt-realtime-2.1` (or the mini variant), nest formats and VAD
-under `session.audio.input/output`, and consume `response.output_audio.*`,
-`response.output_text.*`, and `response.output_audio_transcript.*` events.
-Transcription connects with `intent=transcription`; continuous translation uses
-`/v1/realtime/translations` and its `session.*` event namespace.
-
-For xAI, create a normal `Vendor.Grok` connector and use
-`GrokRealtimeSession`. It shares the transport implementation but exposes
-xAI's provider-specific session type and full PCM rate set. Use
-`GrokRealtimeAPI` for ephemeral browser credentials and SIP refer/hangup.
-
-The complete protocols, events, and production checklists are documented in
-[OpenAI Realtime API](#openai-realtime-api) and
-[xAI Realtime Voice Agent API](#xai-realtime-voice-agent-api).
-
-### 6. Review model defaults and media behavior
-
-Current recommended starting points are:
-
-| Workload | Recommended model/API |
-|----------|-----------------------|
-| Highest-capability OpenAI text/agents | `gpt-6-astra` |
-| Balanced OpenAI production agents | `gpt-6.1-sol` |
-| Economical OpenAI high-throughput work | `gpt-6-luna` |
-| Anthropic frontier work | `claude-opus-5-5`; use `claude-sonnet-5-5` for a faster path |
-| Google multimodal/agent work | `gemini-3.8-flash` through Interactions |
-| xAI text/agent work | `grok-4.7` |
-| OpenAI image generation/editing | `gpt-image-2.5-sunburst` |
-| Google native image | `gemini-nano-banana-2.1` |
-| xAI image quality | `grok-imagine-image-2.0` |
-| Google multimodal embeddings | `gemini-embedding-2` |
-| Google low-cost video | `veo-3.1-lite-generate-preview` |
-| xAI higher-fidelity image-to-video | `grok-imagine-video-1.5` |
-| OpenAI realtime voice | `gpt-realtime-2.1` |
-| xAI realtime voice | `grok-voice-latest` |
-| File transcription | `gpt-transcribe`, `gemini-3.5-transcribe`, or `grok-voice-transcribe-2.0` |
-
-Sora 2 and Sora 2 Pro were deprecated with the Videos API on 2026-03-24 but
-remain callable until 2026-09-24. OpenAI published no replacement. Surface the
-warning and shutdown date while `isActive` remains true.
-
-### 7. Verify the upgrade
-
-At minimum, run:
-
-```bash
-npm run typecheck
-npm run lint
-npm run test:unit
-npm run build
-```
-
-For applications with credentials, add a small authenticated smoke test for
-each enabled vendor and every production-critical Realtime/media flow. The
-library's 1.0.0 validation included 6,381 unit tests across 284 files and 21 live
-API checks covering current text models, Google stored Interactions, strict
-named-tool selection on both API paths, native images, bounded external-media
-embeddings, Omni video, OpenAI Realtime protocols, and xAI TTS/STT/Voice Agent
-flows including 32 kHz PCM.
-
-For the complete vendor-by-vendor before/after analysis, see
-[`docs/MODEL_REGISTRY_AUDIT.md`](./docs/MODEL_REGISTRY_AUDIT.md).
+- [Getting Started](#getting-started)
+- [Core Concepts](#core-concepts)
+- [Basic Text Generation](#basic-text-generation)
+- [Direct LLM Access](#direct-llm-access)
+- [Streaming](#streaming)
+- [Advanced Inference](#advanced-inference)
+- [Connectors & Authentication](#connectors--authentication)
+- [External API Integration](#external-api-integration)
+- [Vendor Templates](#vendor-templates)
+- [OAuth for External APIs](#oauth-for-external-apis)
+- [Scoped Connector Registry](#scoped-connector-registry)
+- [Enhanced connector execution profiles](#enhanced-connector-execution-profiles)
+- [Whole connector pages](#whole-connector-pages)
+- [Model Registry](#model-registry)
+- [Endpoint capability metadata](#endpoint-capability-metadata)
+- [Effective temperature decisions](#effective-temperature-decisions)
+- [Vendor labels and colors](#vendor-labels-and-colors)
+- [Agent Features](#agent-features)
+- [Tools & Function Calling](#tools--function-calling)
+- [Dynamic Tool Management](#dynamic-tool-management)
+- [Tool outcomes and cancellation](#tool-outcomes-and-cancellation)
+- [Tool Permissions](#tool-permissions)
+- [Tool Execution Plugins](#tool-execution-plugins)
+- [MCP (Model Context Protocol)](#mcp-model-context-protocol)
+- [Context Management](#context-management)
+- [Selective context assembly](#selective-context-assembly)
+- [Experimental context strategies](#experimental-context-strategies)
+- [Durable tool evidence](#durable-tool-evidence)
+- [Protected task state](#protected-task-state)
+- [Managed model routing](#managed-model-routing)
+- [Model tasks and helper models](#model-tasks-and-helper-models)
+- [Bounded managed-loop policies](#bounded-managed-loop-policies)
+- [Opt-in Agent presets and inspection](#opt-in-agent-presets-and-inspection)
+- [Unified Store Tools](#unified-store-tools)
+- [InContextMemory (NextGen Plugin)](#incontextmemory-nextgen-plugin)
+- [Self-Learning Memory (NextGen Plugin)](#self-learning-memory-nextgen-plugin)
+- [Tool Catalog: Dynamic Tool Loading/Unloading](#tool-catalog-dynamic-tool-loadingunloading)
+- [Shared Workspace](#shared-workspace)
+- [Session Persistence](#session-persistence)
+- [Portable Agent Packages](#portable-agent-packages)
+- [Negotiated portable observations](#negotiated-portable-observations)
+- [Async (Non-Blocking) Tools](#async-non-blocking-tools)
+- [Long-Running Sessions (Suspend/Resume)](#long-running-sessions-suspendresume)
+- [Routine Execution](#routine-execution)
+- [Verified routines](#verified-routines)
+- [Agent Registry](#agent-registry)
+- [Agent Orchestrator](#agent-orchestrator)
+- [Complete orchestration configuration](#complete-orchestration-configuration)
+- [Composed guarantees and inspection](#composed-guarantees-and-inspection)
+- [Agent Runtime (preview)](#agent-runtime-preview)
+- [Multimodal (Vision)](#multimodal-vision)
+- [Audio (TTS/STT)](#audio-ttsstt)
+- [OpenAI Realtime API](#openai-realtime-api)
+- [Image Generation](#image-generation)
+- [Embeddings](#embeddings)
+- [Video Generation](#video-generation)
+- [Custom Media Storage](#custom-media-storage)
+- [Web Search](#web-search)
+- [Web Scraping](#web-scraping)
+- [Advanced Features](#advanced-features)
+- [Production Deployment](#production-deployment)
+- [Examples](#examples)
+- [Agentic Evaluation Baselines](#agentic-evaluation-baselines)
+- [Persistent Instructions (NextGen Plugin)](#persistent-instructions-nextgen-plugin)
+- [User Info (NextGen Plugin)](#user-info-nextgen-plugin)
 
 ---
 
@@ -655,13 +145,21 @@ For the complete vendor-by-vendor before/after analysis, see
 
 ### Installation
 
+Use Node.js 22.13+ or 24+. After v2 publication, install the unscoped package:
+
 ```bash
 npm install oneringai
 ```
 
+For the current unpublished source, follow [the local-package recipe](docs/PACKAGE_MIGRATION.md#try-v2-before-publication).
+ESM and CommonJS outputs and declarations are supplied. Optional SDK, Mongo, and
+native desktop dependencies are needed only for their respective integrations.
+
 ### Environment Setup
 
-Create a `.env` file in your project root:
+Create a `.env` file in your project root, keep it out of Git, and load it in
+your application (for example, Node's `--env-file=.env` flag). Merely creating the
+file does not populate `process.env` for the library:
 
 ```env
 # AI Provider Keys
@@ -678,6 +176,7 @@ OAUTH_ENCRYPTION_KEY=your-32-byte-hex-key
 ### First Agent
 
 ```typescript
+// Documentation check: complete example
 import { Connector, Agent, Vendor } from 'oneringai';
 
 // 1. Create a connector (authentication)
@@ -688,15 +187,18 @@ Connector.create({
 });
 
 // 2. Create an agent
-const legacyAgent = Agent.create({
+const agent = Agent.create({
   connector: 'openai',
   model: 'gpt-5.6-terra',
 });
 
-// 3. Run the agent
-const response = await agent.run('What is the capital of France?');
-console.log(response.output_text);
-// Output: "The capital of France is Paris."
+// 3. Run, then release the agent and its resources.
+try {
+  const response = await agent.run('What is the capital of France?');
+  console.log(response.output_text);
+} finally {
+  agent.destroy();
+}
 ```
 
 ---
@@ -717,11 +219,17 @@ User Code → Connector Registry → Agent → Provider → LLM
 - **Named connectors** for easy reference
 - **No API key management in agent code**
 
-### The Three Core Classes
+### The Core Building Blocks
 
 1. **Connector** - Manages authentication
 2. **Agent** - Orchestrates LLM interactions
-3. **Vendor** - Const object of supported AI providers (e.g., `Vendor.OpenAI`, `Vendor.Anthropic`)
+3. **Vendor** - Const object identifying AI providers (e.g., `Vendor.OpenAI`, `Vendor.Anthropic`).
+4. **AgentContextNextGen** - Plugin composition, conversation, preparation, and one shared ToolManager.
+5. **MemorySystem** - Standalone long-term entity/fact knowledge.
+6. **AgentRuntime** - Complete harness definitions, execution bindings, sessions, and observable runs.
+
+Use [Agent Runtime](#agent-runtime-preview) for whole harnesses. Model adapters
+implement individual calls; harness drivers retain their own loops and state.
 
 ---
 
@@ -863,6 +371,364 @@ console.log(direct.output_parsed); // ['red', 'green', 'blue']
 | Where to set it | `RunOptions.responseFormat` (`run`/`stream`) and `DirectCallOptions.responseFormat` (`runDirect`/`streamDirect`); the `ResponseFormat` type is exported from the package root |
 
 > **Per-vendor:** OpenAI, current supported Anthropic families, and Google/Vertex use native schema output when the concrete model supports it. Older or unknown Claude models use the prompt fallback; Anthropic `json_object` also remains prompt-based because its native contract is schema-based. Tool composition is model-specific—when it is unavailable, `run()` performs the final tool-free pass described above. Non-streaming formatted responses report `structured_output_enforcement` as `native`, `prompt`, or `repair`.
+
+---
+
+## Direct LLM Access
+
+Agent inherits `runDirect()` and `streamDirect()` methods from BaseAgent. These methods bypass all context management for simple, stateless LLM calls.
+
+### When to Use Direct Access
+
+| Use Case | Recommended Method |
+|----------|-------------------|
+| Conversational agent with history | `run()` |
+| Task with memory and tools | `run()` with context features |
+| Per-call reasoning control | `run(input, { thinking })` |
+| Quick one-off query | `runDirect()` |
+| Embedding-like simplicity | `runDirect()` |
+| Testing/debugging | `runDirect()` |
+| Hybrid workflows | Mix both |
+
+### Basic Usage
+
+```typescript
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
+
+// Direct call - bypasses all context management
+const response = await agent.runDirect('What is 2 + 2?');
+console.log(response.output_text);  // "4"
+
+// Conversation is NOT affected
+console.log(agent.context.getConversation().length);  // 0
+```
+
+### DirectCallOptions
+
+```typescript
+interface DirectCallOptions {
+  /** System instructions */
+  instructions?: string;
+
+  /** Include registered tools (default: false) */
+  includeTools?: boolean;
+
+  /** Explicit per-call definitions (used instead of registered tools) */
+  tools?: Tool[];
+
+  /** Tool-selection policy for explicit or included tools */
+  toolChoice?: 'auto' | 'required' | { type: 'function'; function: { name: string } };
+
+  /** Temperature for generation */
+  temperature?: number;
+
+  /** Maximum output tokens */
+  maxOutputTokens?: number;
+
+  /** Continue a provider-stored response/interaction */
+  previousResponseId?: string;
+
+  /** Vendor-agnostic structured (JSON) output */
+  responseFormat?:
+    | { type: 'json_object' }
+    | { type: 'json_schema'; schema: Record<string, unknown>; name?: string; description?: string; strict?: boolean };
+
+  /** Vendor-agnostic thinking/reasoning configuration */
+  thinking?: {
+    enabled: boolean;
+    budgetTokens?: number;   // Fixed-budget models
+    effort?: 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+  };
+
+  /** Vendor-specific options */
+  vendorOptions?: Record<string, unknown>;
+
+  /** Provider-neutral prompt-cache policy */
+  promptCache?: PromptCachePolicy;
+
+  /** Provider-hosted tools (not executed by ToolManager) */
+  nativeTools?: NativeToolRequest[];
+
+  /** Explicit permission for retention-sensitive provider features */
+  dataHandling?: DataHandlingPolicy;
+
+  /** Skip the provider pre-flight context limit check (default: false) */
+  skipContextLimitCheck?: boolean;
+}
+```
+
+### Examples
+
+```typescript
+// With options
+const response = await agent.runDirect('Summarize this text', {
+  instructions: 'Be concise. Use bullet points.',
+  temperature: 0.5,
+  maxOutputTokens: 200,
+});
+
+// JSON response
+const responseVariant2 = await agent.runDirect('List 3 fruits', {
+  responseFormat: { type: 'json_object' },
+  instructions: 'Return a JSON array of fruit names',
+});
+
+// Multimodal (text + image)
+const responseVariant3 = await agent.runDirect([
+  {
+    type: 'message',
+    role: 'user',
+    content: [
+      { type: 'input_text', text: 'What is in this image?' },
+      { type: 'input_image', image_url: 'https://example.com/image.png' }
+    ]
+  }
+]);
+
+// With tools (single call - you handle tool calls manually)
+const responseVariant4 = await agent.runDirect('Get the weather in Paris', {
+  includeTools: true,
+});
+// If response contains tool_calls, you must execute them yourself
+if (responseVariant4.output.some(item => item.type === 'function_call')) {
+  // Handle tool calls manually
+}
+```
+
+### Streaming
+
+```typescript
+// Stream responses for real-time output
+for await (const event of agent.streamDirect('Tell me a story')) {
+  if (event.type === 'response.output_text.delta') {
+    process.stdout.write(event.delta);
+  }
+}
+
+// With options
+for await (const event of agent.streamDirect('Explain quantum computing', {
+  instructions: 'Use simple terms',
+  temperature: 0.7,
+})) {
+  // Handle events...
+}
+```
+
+### Per-Call RunOptions
+
+`run()` and `stream()` accept an optional second argument to override agent-level config for a single invocation:
+
+```typescript
+interface RunOptions {
+  /** Vendor-agnostic thinking/reasoning configuration */
+  thinking?: {
+    enabled: boolean;
+    budgetTokens?: number;         // Fixed-budget models
+    effort?: 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+  };
+
+  /** Temperature override */
+  temperature?: number;
+
+  /** Vendor-specific options (shallow-merged with agent-level vendorOptions) */
+  vendorOptions?: Record<string, unknown>;
+
+  /** Provider-neutral prompt-cache policy */
+  promptCache?: PromptCachePolicy;
+
+  /** Provider-hosted tools (not executed by ToolManager) */
+  nativeTools?: NativeToolRequest[];
+
+  /** Explicit permission for retention-sensitive provider features */
+  dataHandling?: DataHandlingPolicy;
+
+  /** Resume an incomplete provider decode on the first request of this run */
+  continuationToken?: string;
+
+  /** Vendor-agnostic structured (JSON) output override for this call */
+  responseFormat?:
+    | { type: 'json_object' }
+    | { type: 'json_schema'; schema: Record<string, unknown>; name?: string; description?: string; strict?: boolean };
+}
+```
+
+```typescript
+// Override reasoning effort per call
+const deep = await agent.run('Prove this theorem', {
+  thinking: { enabled: true, effort: 'high' },
+});
+
+const quick = await agent.run('What is 2+2?', {
+  thinking: { enabled: true, effort: 'low' },
+});
+
+// Override temperature per call
+const creative = await agent.run('Write a poem', { temperature: 0.9 });
+
+// Streaming with per-call options
+for await (const event of agent.stream('Analyze this', {
+  thinking: { enabled: true, budgetTokens: 16384 },
+})) {
+  // ...
+}
+```
+
+RunOptions take precedence over agent-level config. `vendorOptions` are shallow-merged (per-call keys override agent-level keys). Advanced inference options replace their agent-level value as a whole; see [Advanced Inference](#advanced-inference) for the complete contract.
+
+### Thinking / Reasoning
+
+Vendor-agnostic reasoning configuration that maps to each provider's native API:
+
+| Provider | `effort` maps to | `budgetTokens` maps to |
+|----------|-----------------|----------------------|
+| OpenAI | `reasoning.effort` | N/A |
+| Anthropic | `output_config.effort` | `thinking.budget_tokens` on fixed-budget models |
+| Google | Gemini thinking level (the exact supported subset is model-dependent) | `thinkingConfig.thinkingBudget` on fixed-budget models |
+
+```typescript
+// Agent-level (applies to all calls)
+const agent = Agent.create({
+  connector: 'openai', model: 'o3-mini',
+  thinking: { enabled: true, effort: 'medium' },
+});
+
+// Per-call override
+await agent.run('Complex analysis', { thinking: { enabled: true, effort: 'high' } });
+await agent.run('Simple lookup', { thinking: { enabled: true, effort: 'low' } });
+
+// Anthropic with budget tokens
+const agent2 = Agent.create({ connector: 'anthropic', model: 'claude-sonnet-4-6' });
+await agent2.run('Deep reasoning task', { thinking: { enabled: true, budgetTokens: 16384 } });
+
+// runDirect() also supports thinking
+await agent.runDirect('Quick Q', { thinking: { enabled: true, effort: 'low' } });
+```
+
+The normalized `thinking.enabled` flag gates both its nested `effort` and
+budget. Anthropic also supports native effort independently of thinking; use
+`vendorOptions: { effort: 'low' | 'medium' | 'high' | ... }` when that distinct
+provider behavior is intended while normalized thinking is disabled.
+
+### Comparison: run() vs runDirect()
+
+| Aspect | `run()` | `runDirect()` |
+|--------|-------------------|---------------|
+| History tracking | ✅ Automatic | ❌ None |
+| WorkingMemory | ✅ Available | ❌ Not used |
+| Context preparation | ✅ Full preparation | ❌ None |
+| Agentic loop | ✅ Executes tools automatically | ❌ Single call only |
+| Compaction | ✅ Auto-compacts when needed | ❌ None |
+| Overhead | Full context management | Minimal |
+
+### Hybrid Workflows
+
+You can mix both approaches in the same agent:
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools: [weatherTool, searchTool],
+});
+
+// Use run() for complex interactions with tool use
+await agent.run('Search for the latest news and summarize');
+
+// Use runDirect() for quick follow-ups that don't need context
+const clarification = await agent.runDirect(
+  'What is a good synonym for "excellent"?',
+  { temperature: 0.3 }
+);
+
+// Back to run() for continued conversation
+await agent.run('Now tell me more about the first item');
+```
+
+---
+
+## Streaming
+
+### Basic Streaming
+
+```typescript
+import { Agent, isOutputTextDelta } from 'oneringai';
+
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+});
+
+// Stream response
+for await (const event of agent.stream('Tell me a story')) {
+  if (isOutputTextDelta(event)) {
+    process.stdout.write(event.delta);
+  }
+}
+```
+
+### Stream Helpers
+
+```typescript
+import { StreamHelpers } from 'oneringai';
+
+// Text only (filters to just text deltas)
+for await (const text of StreamHelpers.textOnly(agent.stream('Hello'))) {
+  process.stdout.write(text);
+}
+
+// All events
+for await (const event of agent.stream('Hello')) {
+  switch (event.type) {
+    case 'response.created':
+      console.log('🔄 Starting...');
+      break;
+
+    case 'response.output_text.delta':
+      process.stdout.write(event.delta);
+      break;
+
+    case 'response.tool_call.start':
+      console.log(`\n🔧 Calling ${event.tool_name}...`);
+      break;
+
+    case 'response.tool_execution.done':
+      console.log(`✅ Tool complete`);
+      break;
+
+    case 'response.complete':
+      console.log('\n✓ Done');
+      break;
+
+    case 'response.error':
+      console.error('Error:', event.error);
+      break;
+  }
+}
+```
+
+### Streaming with Tools
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools: [weatherTool, calculatorTool],
+});
+
+for await (const event of agent.stream('What is the weather in Paris?')) {
+  if (event.type === 'response.tool_call.start') {
+    console.log(`🔧 Calling ${event.tool_name}...`);
+  }
+
+  if (event.type === 'response.tool_execution.done') {
+    console.log(`✅ Tool result: ${JSON.stringify(event.result)}`);
+  }
+
+  if (event.type === 'response.output_text.delta') {
+    process.stdout.write(event.delta);
+  }
+}
+```
 
 ---
 
@@ -2226,6 +2092,1596 @@ endpoint; choose a separate embedding connector for memory and RAG.
 
 ---
 
+## External API Integration
+
+Connect your AI agents to 50 external services with enterprise-grade resilience. The library provides both connector-based tools and direct fetch capabilities.
+
+> **Need the inventory rather than a tutorial?** The
+> [Connector & Tool Catalog](./docs/CONNECTOR_TOOL_CATALOG.md) lists every
+> template, the generic tool each connector receives, all specialized packs,
+> connector-free built-ins, plugin tools, and the runtime discovery APIs.
+
+### Overview
+
+External API integration uses the **Connector-First Architecture** - the same pattern used for AI providers. This means:
+- Single source of truth for authentication
+- Built-in resilience (retry, timeout, circuit breaker)
+- Automatic tool generation for any service
+
+### Quick Start
+
+```typescript
+import { Connector, ConnectorTools, Services, Agent } from 'oneringai';
+
+// 1. Create a connector for an external service
+Connector.create({
+  name: 'github',
+  serviceType: Services.Github,
+  auth: { type: 'api_key', apiKey: process.env.GITHUB_TOKEN! },
+  baseURL: 'https://api.github.com',
+});
+
+// 2. Generate tools from the connector
+const tools = ConnectorTools.for('github');
+
+// 3. Use with an agent
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools: tools,
+});
+
+// 4. Agent can now call the GitHub API
+await agent.run('List all open issues in owner/repo');
+```
+
+### Connector Configuration
+
+#### Basic Configuration
+
+```typescript
+Connector.create({
+  name: 'slack',
+  serviceType: Services.Slack,  // Optional: explicit service type
+  auth: { type: 'api_key', apiKey: process.env.SLACK_TOKEN! },
+  baseURL: 'https://slack.com/api',
+});
+```
+
+#### Enterprise Resilience Features
+
+```typescript
+Connector.create({
+  name: 'stripe',
+  serviceType: Services.Stripe,
+  auth: { type: 'api_key', apiKey: process.env.STRIPE_SECRET_KEY! },
+  baseURL: 'https://api.stripe.com/v1',
+
+  // Timeout
+  timeout: 30000,  // 30 seconds (default)
+
+  // Retry with exponential backoff
+  retry: {
+    maxRetries: 3,
+    baseDelayMs: 1000,
+    maxDelayMs: 30000,
+    retryableStatuses: [429, 500, 502, 503, 504],
+  },
+
+  // Circuit breaker
+  circuitBreaker: {
+    enabled: true,
+    failureThreshold: 5,      // Open after 5 failures
+    successThreshold: 2,      // Close after 2 successes
+    resetTimeoutMs: 60000,    // Try again after 60s
+  },
+
+  // Logging
+  logging: {
+    enabled: true,
+    logBody: false,           // Don't log request/response bodies
+    logHeaders: false,        // Don't log headers
+  },
+});
+```
+
+### Supported Services (50)
+
+The library includes built-in definitions for 50 popular services:
+
+| Category | Services |
+|----------|----------|
+| **Major Vendors** | Microsoft, Google |
+| **Communication** | Slack, Discord, Telegram, X (Twitter), Zoom, HeyReach |
+| **Development** | GitHub, GitLab, Bitbucket, Jira, Linear, Asana, Trello |
+| **Productivity** | Notion, Airtable, Confluence, Cal.com, Calendly |
+| **CRM** | Salesforce, HubSpot, Pipedrive |
+| **Payments** | Stripe, PayPal, QuickBooks, Ramp |
+| **Cloud** | AWS, Cloudflare |
+| **Storage** | Dropbox, Box |
+| **Email** | SendGrid, Mailchimp, Postmark, Mailgun, EmailBison |
+| **Monitoring** | Datadog, PagerDuty, Sentry |
+| **Search** | Serper, Brave Search, Tavily, RapidAPI Search |
+| **Scrape** | ZenRows |
+| **Other** | Twilio, Zendesk, Intercom, Shopify, ipinfo, Clay |
+
+```typescript
+import { Services, getServiceInfo, getServicesByCategory } from 'oneringai';
+
+// Use service constants
+Connector.create({
+  name: 'my-slack',
+  serviceType: Services.Slack,  // Type-safe
+  // ...
+});
+
+// Get service metadata
+const info = getServiceInfo('slack');
+console.log(info?.name);        // 'Slack'
+console.log(info?.category);    // 'communication'
+console.log(info?.docsURL);     // 'https://api.slack.com/methods'
+console.log(info?.commonScopes); // ['chat:write', 'channels:read', ...]
+
+// Filter by category
+const devServices = getServicesByCategory('development');
+// Returns: github, gitlab, jira, linear, bitbucket, ...
+```
+
+### Using Connector.fetch()
+
+For direct API calls without tools:
+
+```typescript
+const connector = Connector.get('github');
+
+// Basic fetch
+const query = new URLSearchParams({ state: 'open', per_page: '10' });
+const response = await connector.fetch(`/repos/owner/repo/issues?${query}`, { method: 'GET' });
+
+// JSON helper with automatic parsing
+const issues = await connector.fetchJSON<Issue[]>('/repos/owner/repo/issues');
+
+// POST with body
+const newIssue = await connector.fetchJSON('/repos/owner/repo/issues', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    title: 'New Issue', body: 'Issue description', labels: ['bug'],
+  }),
+});
+
+// Per-request options
+const urgent = await connector.fetch('/chat.postMessage', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ channel: 'C123', text: 'Urgent!' }),
+  timeout: 5000,           // Override timeout
+  skipRetry: true,         // Skip retry for this request
+  skipCircuitBreaker: true, // Bypass circuit breaker
+});
+```
+
+Direct `Connector.fetch`/`fetchJSON` options extend native `RequestInit`: encode
+query parameters in the URL and serialize JSON bodies with a content type. The
+`queryParams` and object-body fields documented below belong to generated API
+tool arguments, not to `ConnectorFetchOptions`.
+
+### ConnectorTools API
+
+#### Generate Tools for a Connector
+
+```typescript
+import { ConnectorTools } from 'oneringai';
+
+// Get all tools for a connector (generic API + any registered service tools)
+const tools = ConnectorTools.for('github');
+const toolsVariant2 = ConnectorTools.for(connector);  // Can pass instance too
+
+// userId is automatic — all generated tools read it from ToolContext at execution time.
+// No need to pass userId to ConnectorTools.for().
+// Just set it on the agent: Agent.create({ userId: 'user-123', tools })
+
+// With scoped registry (access control)
+const registry = Connector.scoped({ tenantId: 'acme' });
+const toolsVariant3 = ConnectorTools.for('github', undefined, { registry });
+
+// The generic API tool is included automatically by ConnectorTools.for()
+// (named `{connectorName}_api` whenever the connector has a baseURL)
+const toolsVariant4 = ConnectorTools.for('github');
+const apiTool = toolsVariant4.find(t => t.definition.function.name === 'github_api');
+```
+
+#### Tool Naming Convention
+
+All tools generated by `ConnectorTools.for()` are prefixed with the connector name to prevent naming collisions when multiple connectors provide tools with the same base name:
+
+| Tool type | Naming pattern | Example |
+|-----------|---------------|---------|
+| Generic API | `{connectorName}_api` | `github_api`, `slack_api` |
+| Service-specific | `{connectorName}_{toolName}` | `github_search_files`, `google_generate_image`, `main-openai_text_to_speech` |
+
+**Services with built-in tools:**
+- **GitHub** — 8 tools: `search_files`, `search_code`, `read_file`, `list_branches`, `get_pr`, `pr_files`, `pr_comments`, `create_pr` (see [GitHub Connector Tools](#github-connector-tools))
+- **Microsoft** — 11 tools: email, calendar, meetings, Teams transcripts, OneDrive/SharePoint files (see [Microsoft Graph Connector Tools](#microsoft-graph-connector-tools))
+- **Google Workspace** — 11 tools: Gmail, Calendar, Meet transcripts, Drive files (see [Google Workspace Connector Tools](#google-workspace-connector-tools))
+- **Zoom** — 3 tools: `zoom_create_meeting`, `zoom_update_meeting`, `zoom_get_transcript` (see [Zoom Connector Tools](#zoom-connector-tools))
+- **Telegram** — 6 tools: `telegram_send_message`, `telegram_send_photo`, `telegram_get_updates`, `telegram_set_webhook`, `telegram_get_me`, `telegram_get_chat` (see [Telegram Connector Tools](#telegram-connector-tools))
+- **Twilio** — 4 tools: `send_sms`, `send_whatsapp`, `list_messages`, `get_message` (see [Twilio Connector Tools](#twilio-connector-tools))
+- **AI Vendors** (OpenAI, Google, Grok) — Multimedia tools: `generate_image`, `generate_video`, `text_to_speech`, `speech_to_text`
+
+This ensures that tools from different vendors (e.g., `google_generate_image` vs `main-openai_generate_image`) never collide, and are clearly identified by connector in UIs and agent configs.
+
+`ToolRegistry` automatically derives clean display names from these prefixed names using vendor metadata (e.g., `google_generate_image` displays as "Google Generate Image").
+
+#### The Generic API Tool
+
+Every connector with a `baseURL` gets a generic API tool that allows the agent to make any API call:
+
+```jsonc
+// Tool schema:
+{
+  name: 'github_api',  // {connectorName}_api
+  description: 'Make API requests to api.github.com',
+  parameters: {
+    method: { enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] },
+    endpoint: { type: 'string' },          // API path, e.g., '/repos/owner/repo'
+    body: { type: 'object' },              // JSON request body (POST/PUT/PATCH)
+    queryParams: { type: 'object' },       // URL query parameters (GET filtering/pagination)
+    headers: { type: 'object' },           // Additional headers (auth headers are protected)
+  }
+}
+```
+
+**Important:** For `POST`/`PUT`/`PATCH` requests, data must be passed in the `body` parameter as a JSON object — **not** as query string parameters in the endpoint URL. The body is sent as `application/json`. For example, to post a Slack message:
+
+```jsonc
+// Correct: data in body
+{ method: 'POST', endpoint: '/chat.postMessage', body: { channel: 'C123', text: 'Hello!' } }
+
+// Wrong: data in query string — many APIs will reject this
+{ method: 'POST', endpoint: '/chat.postMessage?channel=C123&text=Hello!' }
+```
+
+**Security:** Authorization headers cannot be overridden by the agent.
+
+#### Register Custom Service Tools
+
+For frequently-used operations, register service-specific tools. Note that tool names returned by the factory use generic names — `ConnectorTools.for()` automatically prefixes them with the connector name:
+
+```typescript
+import { ConnectorTools, type ToolFunction } from 'oneringai';
+
+// Register tools for a service type
+ConnectorTools.registerService('slack', (connector) => {
+  const listChannels: ToolFunction = {
+    definition: {
+      type: 'function',
+      function: {
+        name: 'list_channels',
+        description: 'List all Slack channels',
+        parameters: {
+          type: 'object',
+          properties: {
+            types: {
+              type: 'string',
+              description: 'Filter by channel types',
+              enum: ['public_channel', 'private_channel'],
+            },
+            limit: { type: 'number', description: 'Max results' },
+          },
+        },
+      },
+    },
+    execute: async (args) => {
+      const query = new URLSearchParams({ types: String(args.types ?? 'public_channel'), limit: String(args.limit ?? 100) });
+      return connector.fetchJSON(`/conversations.list?${query}`);
+    },
+    describeCall: (args) => `List ${args.types || 'all'} channels`,
+  };
+
+  const postMessage: ToolFunction = {
+    definition: {
+      type: 'function',
+      function: {
+        name: 'post_message',
+        description: 'Post a message to a Slack channel',
+        parameters: {
+          type: 'object',
+          properties: {
+            channel: { type: 'string', description: 'Channel ID' },
+            text: { type: 'string', description: 'Message text' },
+          },
+          required: ['channel', 'text'],
+        },
+      },
+    },
+    execute: async (args) => {
+      return connector.fetchJSON('/chat.postMessage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel: args.channel, text: args.text }),
+      });
+    },
+    describeCall: (args) => `Post to ${args.channel}`,
+    permission: { riskLevel: 'medium', scope: 'session' },
+  };
+
+  return [listChannels, postMessage];
+});
+
+// Now ConnectorTools.for('slack-connector') returns:
+// slack-connector_api, slack-connector_list_channels, slack-connector_post_message
+```
+
+#### Discover All Connectors
+
+```typescript
+// Get tools for all connectors with serviceType
+const allTools = ConnectorTools.discoverAll();
+// Returns: Map<connectorName, ToolFunction[]>
+
+for (const [name, tools] of allTools) {
+  console.log(`${name}: ${tools.length} tools`);
+}
+
+// Find connector by service type
+const slackConnector = ConnectorTools.findConnector(Services.Slack);
+
+// Find all connectors for a service type
+const allSlackConnectors = ConnectorTools.findConnectors(Services.Slack);
+
+// Check if service has custom tools
+if (ConnectorTools.hasServiceTools('slack')) {
+  // ...
+}
+
+// List all services with custom tools registered
+const services = ConnectorTools.listSupportedServices();
+```
+
+### ToolRegistry API
+
+Unified view of all tools (built-in + connector-generated). Use this for UI tool pickers, inventory screens, or any code that needs to enumerate available tools.
+
+#### Basic Usage
+
+```typescript
+import { ToolRegistry } from 'oneringai';
+
+// Get ALL tools (main API for UIs)
+const allTools = ToolRegistry.getAllTools();
+
+// Built-in tools only (filesystem, shell, web, code, json, connector, desktop, custom-tools, routines, other)
+const builtInTools = ToolRegistry.getBuiltInTools();
+
+// All connector-generated tools
+const connectorTools = ToolRegistry.getAllConnectorTools();
+
+// Tools for a specific connector
+const githubTools = ToolRegistry.getConnectorTools('github');
+
+// Filter by service type
+const slackTools = ToolRegistry.getToolsByService('slack');
+
+// Filter by connector name
+const myApiTools = ToolRegistry.getToolsByConnector('my-api');
+```
+
+#### Type Guard
+
+Use `isConnectorTool()` to distinguish built-in from connector tools:
+
+```typescript
+for (const tool of ToolRegistry.getAllTools()) {
+  if (ToolRegistry.isConnectorTool(tool)) {
+    // ConnectorToolEntry - has connectorName, serviceType
+    console.log(`API: ${tool.displayName} (${tool.connectorName})`);
+  } else {
+    // ToolRegistryEntry - built-in tool
+    console.log(`Built-in: ${tool.displayName}`);
+  }
+}
+```
+
+#### Methods Reference
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `getAllTools()` | `(ToolRegistryEntry \| ConnectorToolEntry)[]` | All tools (main API) |
+| `getBuiltInTools()` | `ToolRegistryEntry[]` | Built-in tools only |
+| `getAllConnectorTools()` | `ConnectorToolEntry[]` | All connector tools |
+| `getConnectorTools(name)` | `ConnectorToolEntry[]` | Tools for specific connector |
+| `getToolsByService(type)` | `ConnectorToolEntry[]` | Filter by service type |
+| `getToolsByConnector(name)` | `ConnectorToolEntry[]` | Filter by connector name |
+| `isConnectorTool(entry)` | `boolean` | Type guard for ConnectorToolEntry |
+
+#### Entry Properties
+
+**ToolRegistryEntry** (built-in tools):
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `string` | Tool name (e.g., `read_file`) |
+| `displayName` | `string` | Human-readable name (e.g., `Read File`) |
+| `category` | `ToolCategory` | `filesystem`, `shell`, `web`, `code`, `json`, `connector`, `desktop`, `custom-tools`, `routines`, `other` |
+| `description` | `string` | Brief description |
+| `safeByDefault` | `boolean` | Whether safe without approval |
+| `tool` | `ToolFunction` | The actual tool function |
+| `requiresConnector` | `boolean?` | If tool needs a connector |
+| `connectorServiceTypes` | `string[]?` | Supported service types |
+
+**ConnectorToolEntry** extends ToolRegistryEntry with:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `connectorName` | `string` | Source connector name |
+| `serviceType` | `string?` | Detected service type (e.g., `github`) |
+
+### Service Detection
+
+Services are detected from URL patterns or explicit `serviceType`:
+
+```typescript
+import { detectServiceFromURL, Services } from 'oneringai';
+
+// Automatic detection from URL
+detectServiceFromURL('https://api.github.com/repos');     // 'github'
+detectServiceFromURL('https://slack.com/api/chat');       // 'slack'
+detectServiceFromURL('https://api.stripe.com/v1');        // 'stripe'
+detectServiceFromURL('https://company.atlassian.net/jira'); // 'jira'
+
+// Explicit serviceType takes precedence
+Connector.create({
+  name: 'custom',
+  serviceType: Services.Jira,                        // Explicit
+  baseURL: 'https://api.github.com',                 // Ignored for detection
+});
+```
+
+### Metrics and Monitoring
+
+```typescript
+const connector = Connector.get('github');
+
+// Get metrics
+const metrics = connector.getMetrics();
+console.log(`Requests: ${metrics.requestCount}`);
+console.log(`Success: ${metrics.successCount}`);
+console.log(`Failures: ${metrics.failureCount}`);
+console.log(`Avg Latency: ${metrics.avgLatencyMs}ms`);
+console.log(`Circuit: ${metrics.circuitBreakerState}`);
+
+// Reset circuit breaker manually
+connector.resetCircuitBreaker();
+
+// Check if connector is disposed
+if (connector.isDisposed()) {
+  // Recreate connector
+}
+```
+
+### Complete Example
+
+```typescript
+import { Connector, ConnectorTools, Services, Agent, Vendor } from 'oneringai';
+
+// Setup AI connector
+Connector.create({
+  name: 'openai',
+  vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
+});
+
+// Setup GitHub connector with resilience
+Connector.create({
+  name: 'github',
+  serviceType: Services.Github,
+  auth: { type: 'api_key', apiKey: process.env.GITHUB_TOKEN! },
+  baseURL: 'https://api.github.com',
+  timeout: 15000,
+  retry: { maxRetries: 2, baseDelayMs: 500 },
+  circuitBreaker: { enabled: true, failureThreshold: 3 },
+});
+
+// Setup Slack connector
+Connector.create({
+  name: 'slack',
+  serviceType: Services.Slack,
+  auth: { type: 'api_key', apiKey: process.env.SLACK_TOKEN! },
+  baseURL: 'https://slack.com/api',
+});
+
+// Create agent with external API tools
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools: [
+    ...ConnectorTools.for('github'),
+    ...ConnectorTools.for('slack'),
+  ],
+});
+
+// Agent can now interact with both services
+await agent.run(`
+  Check if there are any critical issues in owner/repo,
+  and if so, post a summary to the #alerts Slack channel.
+`);
+```
+
+---
+
+## Vendor Templates
+
+Quickly set up connectors for 50 services with pre-configured authentication templates. No need to look up URLs, headers, or scopes - just provide your credentials!
+
+### Quick Start
+
+```typescript
+import {
+  createConnectorFromTemplate,
+  listVendors,
+  getVendorTemplate,
+  ConnectorTools
+} from 'oneringai';
+
+// Create GitHub connector with Personal Access Token
+const connector = createConnectorFromTemplate(
+  'my-github',           // Connector name
+  'github',              // Vendor ID
+  'pat',                 // Auth method
+  { apiKey: process.env.GITHUB_TOKEN! }
+);
+
+// Get tools for the connector
+const tools = ConnectorTools.for('my-github');
+
+// Use with agent
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools,
+});
+
+await agent.run('List my GitHub repositories');
+```
+
+### Discovering Available Vendors
+
+```typescript
+import { listVendors, getVendorTemplate, getVendorInfo } from 'oneringai';
+
+// List all available vendors
+const vendors = listVendors();
+console.log(vendors.length);  // 50
+
+// Get specific vendor info
+const github = getVendorInfo('github');
+console.log(github);
+// {
+//   id: 'github',
+//   name: 'GitHub',
+//   category: 'development',
+//   docsURL: 'https://docs.github.com/en/rest',
+//   credentialsSetupURL: 'https://github.com/settings/developers',
+//   authMethods: [
+//     { id: 'pat', name: 'Personal Access Token', type: 'api_key', ... },
+//     { id: 'oauth-user', name: 'OAuth App (User Authorization)', type: 'oauth', ... },
+//     { id: 'github-app', name: 'GitHub App (Installation Token)', type: 'oauth', ... }
+//   ]
+// }
+
+// Filter by category
+import { listVendorsByCategory, listVendorsByAuthType } from 'oneringai';
+
+const devVendors = listVendorsByCategory('development');
+// [github, gitlab, bitbucket, jira, linear, asana, trello]
+
+const apiKeyVendors = listVendorsByAuthType('api_key');
+// All vendors that support API key authentication
+```
+
+### Vendor Logos
+
+Access vendor logos for use in UIs. Logos come from the Simple Icons library where available, with branded placeholders for others:
+
+```typescript
+import {
+  getVendorLogo,
+  getVendorLogoSvg,
+  getVendorColor,
+  hasVendorLogo,
+  listVendorsWithLogos,
+  getAllVendorLogos
+} from 'oneringai';
+
+// Check if logo is available
+if (hasVendorLogo('github')) {
+  const logo = getVendorLogo('github');
+  if (!logo) throw new Error('Vendor logo is unavailable');
+  console.log(logo.svg);           // Full SVG content
+  console.log(logo.hex);           // Brand color: "181717"
+  console.log(logo.isPlaceholder); // false (has official icon)
+}
+
+// Get just the SVG content
+const svg = getVendorLogoSvg('slack');
+
+// Get SVG with custom color
+const whiteSvg = getVendorLogoSvg('github', 'FFFFFF');
+
+// Get brand color
+const stripeColor = getVendorColor('stripe');  // "635BFF"
+
+// List all vendors with logos
+const vendorsWithLogos = listVendorsWithLogos();  // 54 known logo IDs
+
+// Get all logos at once
+const allLogos = getAllVendorLogos();  // Map<vendorId, VendorLogo>
+```
+
+**VendorLogo Interface:**
+```typescript
+interface VendorLogo {
+  vendorId: string;          // e.g., 'github'
+  svg: string;               // Full SVG content
+  hex: string;               // Brand color (without #)
+  isPlaceholder: boolean;    // true if using generated placeholder
+  simpleIconsSlug?: string;  // Simple Icons slug if available
+}
+```
+
+### Authentication Methods
+
+Each vendor template includes one or more authentication methods:
+
+#### API Key
+
+Simple token-based authentication:
+
+```typescript
+// GitHub Personal Access Token
+createConnectorFromTemplate('my-github', 'github', 'pat', {
+  apiKey: process.env.GITHUB_TOKEN!
+});
+
+// Slack Bot Token
+createConnectorFromTemplate('my-slack', 'slack', 'bot-token', {
+  apiKey: process.env.SLACK_BOT_TOKEN!
+});
+
+// Stripe Secret Key
+createConnectorFromTemplate('my-stripe', 'stripe', 'api-key', {
+  apiKey: process.env.STRIPE_SECRET_KEY!
+});
+
+// HeyReach (LinkedIn sequencing) — key sent via the X-API-KEY header
+createConnectorFromTemplate('my-heyreach', 'heyreach', 'api-key', {
+  apiKey: process.env.HEYREACH_API_KEY!
+});
+
+// EmailBison (cold-email sequencing) — per-instance deployment, so you MUST
+// override baseURL with your own instance domain.
+createConnectorFromTemplate('my-emailbison', 'emailbison', 'api-token', {
+  apiKey: process.env.EMAILBISON_TOKEN!
+}, { baseURL: 'https://acme.emailbison.com/api' });
+
+// Cal.com — API v1 key passed automatically as the ?apiKey query parameter
+createConnectorFromTemplate('my-calcom', 'cal-com', 'api-key', {
+  apiKey: process.env.CALCOM_API_KEY!  // cal_live_...
+});
+
+// Calendly — Personal Access Token (Bearer). See OAuth section for multi-account.
+createConnectorFromTemplate('my-calendly', 'calendly', 'personal-token', {
+  apiKey: process.env.CALENDLY_TOKEN!
+});
+```
+
+#### OAuth (User Authorization)
+
+For apps where users grant permissions:
+
+```typescript
+// GitHub OAuth App
+createConnectorFromTemplate('my-github-oauth', 'github', 'oauth-user', {
+  clientId: process.env.GITHUB_CLIENT_ID!,
+  clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+  redirectUri: 'https://myapp.com/callback',
+  scope: 'repo read:user'  // Optional - uses template defaults
+});
+
+// Google OAuth (unified template also covers Workspace: Drive, Gmail, Calendar, Sheets, Docs)
+createConnectorFromTemplate('my-google', 'google-api', 'oauth-user', {
+  clientId: process.env.GOOGLE_CLIENT_ID!,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+  redirectUri: 'https://myapp.com/google/callback',
+});
+
+// Calendly OAuth (multi-account/public apps; auto-refresh, PKCE)
+createConnectorFromTemplate('my-calendly-oauth', 'calendly', 'oauth-user', {
+  clientId: process.env.CALENDLY_CLIENT_ID!,
+  clientSecret: process.env.CALENDLY_CLIENT_SECRET!,
+  redirectUri: 'https://myapp.com/calendly/callback',
+});
+```
+
+#### Service Account (JWT Bearer)
+
+For server-to-server authentication:
+
+```typescript
+// Google Service Account (same unified 'google-api' vendor template)
+createConnectorFromTemplate('my-gcp', 'google-api', 'service-account', {
+  clientId: process.env.GOOGLE_SERVICE_CLIENT_ID!,
+  privateKey: process.env.GOOGLE_SERVICE_PRIVATE_KEY!,
+  scope: 'https://www.googleapis.com/auth/cloud-platform'
+});
+
+// Salesforce JWT Bearer
+createConnectorFromTemplate('my-salesforce', 'salesforce', 'jwt-bearer', {
+  clientId: process.env.SF_CLIENT_ID!,
+  privateKey: process.env.SF_PRIVATE_KEY!,
+  username: process.env.SF_USERNAME!
+});
+```
+
+#### Client Credentials
+
+For app-level authentication:
+
+```typescript
+// Microsoft 365 App-Only (unified 'microsoft' vendor template covers 365, Teams, OneDrive, Outlook)
+createConnectorFromTemplate('my-m365', 'microsoft', 'client-credentials', {
+  clientId: process.env.AZURE_CLIENT_ID!,
+  clientSecret: process.env.AZURE_CLIENT_SECRET!,
+  tenantId: process.env.AZURE_TENANT_ID!
+});
+
+// PayPal
+createConnectorFromTemplate('my-paypal', 'paypal', 'oauth-client-credentials', {
+  clientId: process.env.PAYPAL_CLIENT_ID!,
+  clientSecret: process.env.PAYPAL_CLIENT_SECRET!
+});
+```
+
+### Getting Credentials Setup URLs
+
+Each vendor template includes the URL where you create credentials:
+
+```typescript
+import { getCredentialsSetupURL, getDocsURL } from 'oneringai';
+
+// Get where to create credentials
+const setupUrl = getCredentialsSetupURL('github');
+// 'https://github.com/settings/developers'
+
+// Get API documentation
+const docsUrl = getDocsURL('github');
+// 'https://docs.github.com/en/rest'
+```
+
+### Configuration Options
+
+Override defaults when creating connectors:
+
+```typescript
+createConnectorFromTemplate(
+  'my-github',
+  'github',
+  'pat',
+  { apiKey: process.env.GITHUB_TOKEN! },
+  {
+    // Override baseURL (e.g., for GitHub Enterprise)
+    baseURL: 'https://github.mycompany.com/api/v3',
+
+    // Add description
+    description: 'GitHub connector for CI/CD automation',
+
+    // Set display name
+    displayName: 'GitHub (Production)',
+
+    // Configure timeout
+    timeout: 30000,
+
+    // Enable logging
+    logging: true,
+  }
+);
+```
+
+### Complete Vendor Reference
+
+#### Major Vendors (2 vendors)
+
+| Vendor | ID | Auth Methods | Credentials URL |
+|--------|-----|-------------|-----------------|
+| Microsoft | `microsoft` | `oauth-user`, `client-credentials` | [Azure app registrations](https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) |
+| Google Workspace | `google-api` | `oauth-user`, `service-account` | [Google Cloud credentials](https://console.cloud.google.com/apis/credentials) |
+
+#### Communication (6 vendors)
+
+| Vendor | ID | Auth Methods | Credentials URL |
+|--------|-----|-------------|-----------------|
+| Slack | `slack` | `bot-token`, `oauth-user` | [api.slack.com/apps](https://api.slack.com/apps) |
+| Discord | `discord` | `bot-token`, `oauth-user` | [discord.com/developers](https://discord.com/developers/applications) |
+| Telegram | `telegram` | `bot-token` | [t.me/BotFather](https://t.me/BotFather) |
+| X (Twitter) | `twitter` | `oauth-user`, `bearer-token` | [developer.x.com](https://developer.x.com/en/portal/dashboard) |
+| Zoom | `zoom` | `oauth-user`, `server-to-server` | [marketplace.zoom.us](https://marketplace.zoom.us/develop/create) |
+| HeyReach | `heyreach` | `api-key` | [app.heyreach.io](https://app.heyreach.io/) |
+
+#### Development (7 vendors)
+
+| Vendor | ID | Auth Methods | Credentials URL |
+|--------|-----|-------------|-----------------|
+| GitHub | `github` | `pat`, `oauth-user`, `github-app` | [github.com/settings/developers](https://github.com/settings/developers) |
+| GitLab | `gitlab` | `pat`, `oauth-user` | [gitlab.com/-/profile/personal_access_tokens](https://gitlab.com/-/profile/personal_access_tokens) |
+| Bitbucket | `bitbucket` | `app-password`, `oauth-user` | [bitbucket.org/account/settings/app-passwords](https://bitbucket.org/account/settings/app-passwords/) |
+| Jira | `jira` | `api-token`, `oauth-3lo` | [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens) |
+| Linear | `linear` | `api-key`, `oauth-user` | [linear.app/settings/api](https://linear.app/settings/api) |
+| Asana | `asana` | `pat`, `oauth-user` | [app.asana.com/0/developer-console](https://app.asana.com/0/developer-console) |
+| Trello | `trello` | `api-key`, `oauth-user` | [trello.com/power-ups/admin](https://trello.com/power-ups/admin) |
+
+#### Productivity (5 vendors)
+
+| Vendor | ID | Auth Methods | Credentials URL |
+|--------|-----|-------------|-----------------|
+| Notion | `notion` | `internal-token`, `oauth-user` | [notion.so/my-integrations](https://www.notion.so/my-integrations) |
+| Airtable | `airtable` | `pat`, `oauth-user` | [airtable.com/create/tokens](https://airtable.com/create/tokens) |
+| Confluence | `confluence` | `api-token`, `oauth-3lo` | [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens) |
+| Cal.com | `cal-com` | `api-key` | [Cal.com API keys](https://app.cal.com/settings/developer/api-keys) |
+| Calendly | `calendly` | `personal-token`, `oauth-user` | [Calendly integrations](https://calendly.com/integrations/api_webhooks) |
+
+Google Workspace and Microsoft 365 use the unified `google-api` and `microsoft`
+templates listed under Major Vendors; there are no separate product-specific
+template IDs.
+
+#### CRM (3 vendors)
+
+| Vendor | ID | Auth Methods | Credentials URL |
+|--------|-----|-------------|-----------------|
+| Salesforce | `salesforce` | `oauth-user`, `jwt-bearer` | [Salesforce Connected Apps](https://login.salesforce.com/lightning/setup/ConnectedApplication/home) |
+| HubSpot | `hubspot` | `api-key`, `oauth-user`, `oauth-mcp` | [developers.hubspot.com](https://developers.hubspot.com/get-started) |
+| Pipedrive | `pipedrive` | `api-token`, `oauth-user` | [app.pipedrive.com/settings/api](https://app.pipedrive.com/settings/api) |
+
+#### Payments (4 vendors)
+
+| Vendor | ID | Auth Methods | Credentials URL |
+|--------|-----|-------------|-----------------|
+| Stripe | `stripe` | `api-key`, `oauth-connect` | [dashboard.stripe.com/apikeys](https://dashboard.stripe.com/apikeys) |
+| PayPal | `paypal` | `oauth-client-credentials` | [developer.paypal.com/dashboard](https://developer.paypal.com/dashboard/applications) |
+| QuickBooks | `quickbooks` | `oauth-user` | [developer.intuit.com](https://developer.intuit.com/app/developer/dashboard) |
+| Ramp | `ramp` | `oauth-client-credentials`, `oauth-user` | [app.ramp.com/settings/developer](https://app.ramp.com/settings/developer) |
+
+#### Cloud (2 vendors)
+
+| Vendor | ID | Auth Methods | Credentials URL |
+|--------|-----|-------------|-----------------|
+| AWS | `aws` | `access-key` | [AWS IAM Console](https://console.aws.amazon.com/iam/home#/security_credentials) |
+| Cloudflare | `cloudflare` | `api-token`, `global-api-key` | [dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens) |
+
+#### Storage (2 vendors)
+
+| Vendor | ID | Auth Methods | Credentials URL |
+|--------|-----|-------------|-----------------|
+| Dropbox | `dropbox` | `oauth-user` | [dropbox.com/developers/apps](https://www.dropbox.com/developers/apps) |
+| Box | `box` | `oauth-user`, `client-credentials` | [developer.box.com/console](https://developer.box.com/console) |
+
+#### Email (5 vendors)
+
+| Vendor | ID | Auth Methods | Credentials URL |
+|--------|-----|-------------|-----------------|
+| SendGrid | `sendgrid` | `api-key` | [app.sendgrid.com/settings/api_keys](https://app.sendgrid.com/settings/api_keys) |
+| Mailchimp | `mailchimp` | `api-key`, `oauth-user` | [admin.mailchimp.com/account/api](https://admin.mailchimp.com/account/api/) |
+| Mailgun | `mailgun` | `api-key` | [app.mailgun.com/settings/api_security](https://app.mailgun.com/settings/api_security) |
+| Postmark | `postmark` | `server-token`, `account-token` | [account.postmarkapp.com/api_tokens](https://account.postmarkapp.com/api_tokens) |
+| EmailBison | `emailbison` | `api-token` | [EmailBison authentication](https://docs.emailbison.com/get-started/authentication) |
+
+#### Monitoring (3 vendors)
+
+| Vendor | ID | Auth Methods | Credentials URL |
+|--------|-----|-------------|-----------------|
+| Datadog | `datadog` | `api-key` | [app.datadoghq.com/organization-settings/api-keys](https://app.datadoghq.com/organization-settings/api-keys) |
+| PagerDuty | `pagerduty` | `api-key`, `oauth-user` | [PagerDuty API Keys](https://support.pagerduty.com/main/docs/api-access-keys) |
+| Sentry | `sentry` | `auth-token`, `oauth-user` | [sentry.io/settings/account/api/auth-tokens](https://sentry.io/settings/account/api/auth-tokens/) |
+
+#### Search (4 vendors)
+
+| Vendor | ID | Auth Methods | Credentials URL |
+|--------|-----|-------------|-----------------|
+| Serper | `serper` | `api-key` | [serper.dev/api-key](https://serper.dev/api-key) |
+| Brave Search | `brave-search` | `api-key` | [brave.com/search/api](https://brave.com/search/api/) |
+| Tavily | `tavily` | `api-key` | [tavily.com/#api](https://tavily.com/#api) |
+| RapidAPI Web Search | `rapidapi-search` | `api-key` | [rapidapi.com/developer/dashboard](https://rapidapi.com/developer/dashboard) |
+
+#### Scrape (1 vendor)
+
+| Vendor | ID | Auth Methods | Credentials URL |
+|--------|-----|-------------|-----------------|
+| ZenRows | `zenrows` | `api-key` | [zenrows.com/register](https://www.zenrows.com/register) |
+
+#### Other (6 vendors)
+
+| Vendor | ID | Auth Methods | Credentials URL |
+|--------|-----|-------------|-----------------|
+| Twilio | `twilio` | `api-key`, `api-key-sid` | [Twilio Console](https://console.twilio.com/us1/account/keys-credentials/api-keys) |
+| Zendesk | `zendesk` | `api-token`, `oauth-user` | [Zendesk API Tokens](https://support.zendesk.com/hc/en-us/articles/4408889192858) |
+| Intercom | `intercom` | `access-token`, `oauth-user` | [developers.intercom.com](https://developers.intercom.com/docs/build-an-integration) |
+| Shopify | `shopify` | `access-token`, `oauth-user` | [partners.shopify.com](https://partners.shopify.com/) |
+| ipinfo | `ipinfo` | `api-key` | [ipinfo.io/signup](https://ipinfo.io/signup) |
+| Clay | `clay` | `api-key` | [Clay API key guide](https://university.clay.com/docs/guide-find-clay-api-key) |
+
+### Template vs Manual Configuration
+
+**Use templates when:**
+- Setting up a well-known service
+- You want sensible defaults for headers, URLs, and scopes
+- You want the credentials setup URL handy
+
+**Use manual Connector.create() when:**
+- Connecting to a custom API not in the template list
+- You need complete control over configuration
+- The service has non-standard authentication
+
+```typescript
+// Template approach (recommended for supported vendors)
+createConnectorFromTemplate('my-github', 'github', 'pat', {
+  apiKey: process.env.GITHUB_TOKEN!
+});
+
+// Manual approach (for custom/unsupported APIs)
+Connector.create({
+  name: 'my-custom-api',
+  serviceType: 'custom',
+  auth: {
+    type: 'api_key',
+    apiKey: process.env.CUSTOM_API_KEY!,
+    headerName: 'X-Custom-Auth',
+    headerPrefix: '',
+  },
+  baseURL: 'https://api.custom-service.com/v1',
+});
+```
+
+---
+
+## OAuth for External APIs
+
+The library includes full OAuth 2.0 support for external APIs.
+
+### Basic OAuth Setup
+
+```typescript
+import { OAuthManager, FileStorage } from 'oneringai';
+
+const oauth = new OAuthManager({
+  flow: 'authorization_code',
+  clientId: process.env.GITHUB_CLIENT_ID!,
+  clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+  authorizationUrl: 'https://github.com/login/oauth/authorize',
+  tokenUrl: 'https://github.com/login/oauth/access_token',
+  redirectUri: 'http://localhost:3000/callback',
+  scope: 'repo user',
+
+  // Token storage
+  storage: new FileStorage({
+    directory: './tokens',
+    encryptionKey: process.env.OAUTH_ENCRYPTION_KEY!,
+  }),
+});
+
+// Start OAuth flow
+const authUrl = await oauth.startAuthFlow('user-123');
+console.log('Visit:', authUrl);
+
+// After user authorizes and is redirected back with ?code=...&state=...
+await oauth.handleCallback(callbackUrl, 'user-123');  // Result can be ignored for ordinary OAuth API access
+
+// Use token
+const accessToken = await oauth.getToken('user-123');  // returns the access token string
+```
+
+### OpenID Connect callback result
+
+`OAuthManager.handleCallback()` and `Connector.handleCallback()` return an
+`OAuthCallbackResult` (`{ idToken?: string }`), exported from
+`oneringai`. For providers that return `id_token`, the result contains
+that raw token; otherwise it is `{}`. Existing callers can continue to ignore
+the result. Wrappers explicitly typed as `Promise<void>` must either await and
+discard the result or update their return type.
+
+An ID token is **not verified** by this API. Before using it to authenticate a
+user, the host must verify its signature, issuer, exact client audience, expiry
+and the attempt's nonce. The library does not persist it in `StoredToken`, make
+it available through `getToken()`, or return it again during access-token refresh.
+Do not log the ID token or expose it to an untrusted client. Access and refresh
+token storage and user/account scoping are unchanged.
+
+### Authenticated Fetch
+
+```typescript
+import { createAuthenticatedFetch } from 'oneringai';
+
+// Create connector for external API using a pre-obtained access token
+Connector.create({
+  name: 'github',
+  serviceType: Services.Github,
+  baseURL: 'https://api.github.com',
+  auth: {
+    type: 'api_key',
+    apiKey: userToken.access_token,
+    headerName: 'Authorization',
+    headerPrefix: 'Bearer',
+  },
+});
+
+// Create authenticated fetch
+const githubFetch = createAuthenticatedFetch('github');
+
+// Make API calls using the configured static token; API-key auth cannot refresh it
+const response = await githubFetch('https://api.github.com/user/repos');
+const repos = await response.json();
+```
+
+### OAuth as a Connector
+
+For automatic refresh, configure `auth.type: 'oauth'` with token storage and the
+provider flow. The static-token example below is useful only when the host owns
+refresh and replaces the credential.
+
+```typescript
+// Create connector with a pre-obtained access token
+Connector.create({
+  name: 'microsoft-graph',
+  serviceType: Services.Microsoft,
+  baseURL: 'https://graph.microsoft.com/v1.0',
+  auth: {
+    type: 'api_key',
+    apiKey: token.access_token,
+    headerName: 'Authorization',
+    headerPrefix: 'Bearer',
+  },
+});
+
+// Use in tools
+const listEmailsTool: ToolFunction = {
+  definition: {
+    type: 'function',
+    function: {
+      name: 'list_emails',
+      description: 'List user emails',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+  },
+  execute: async () => {
+    const fetch = createAuthenticatedFetch('microsoft-graph');
+    const response = await fetch('/me/messages');
+    return await response.json();
+  },
+};
+
+// Use with agent
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools: [listEmailsTool],
+});
+
+await agent.run('Show me my recent emails');
+```
+
+---
+
+## Scoped Connector Registry
+
+In multi-user or multi-tenant systems, you often need to limit which connectors are visible to which users. The **Scoped Connector Registry** provides a pluggable access control layer over the Connector registry — a lightweight filtered view gated by a user-provided policy predicate. Zero changes to the existing API; scoping is entirely opt-in.
+
+### Access Control Policies
+
+Define a policy that determines which connectors a given context can access:
+
+```typescript
+import { Connector, ScopedConnectorRegistry } from 'oneringai';
+import type { IConnectorAccessPolicy, ConnectorAccessContext } from 'oneringai';
+
+// Tag-based policy: connector must have a matching tenant tag
+const tenantPolicy: IConnectorAccessPolicy = {
+  canAccess: (connector, context) => {
+    const tags = connector.config.tags as string[] | undefined;
+    const tenantId = context.tenantId as string;
+    return !!tags && tags.includes(tenantId);
+  },
+};
+
+// Role-based policy
+const rolePolicy: IConnectorAccessPolicy = {
+  canAccess: (connector, context) => {
+    const roles = context.roles as string[];
+    if (roles.includes('admin')) return true;
+    // Non-admins can only see connectors in their department
+    const dept = connector.config.tags as string[] | undefined;
+    return !!dept && dept.includes(context.department as string);
+  },
+};
+```
+
+**Policy rules:**
+- `canAccess()` is **synchronous** — access checks must be fast, policy data should be in-memory
+- `context` is an opaque `Record<string, unknown>` — the library imposes no structure
+- The policy receives the full `Connector` instance so it can inspect `config.tags`, `vendor`, `serviceType`, `baseURL`, etc.
+
+### Setting a Global Policy
+
+```typescript
+// Set the policy (required before calling Connector.scoped())
+Connector.setAccessPolicy(tenantPolicy);
+
+// Check current policy
+const current = Connector.getAccessPolicy(); // IConnectorAccessPolicy | null
+
+// Clear the policy
+Connector.setAccessPolicy(null);
+```
+
+### Creating Scoped Views
+
+```typescript
+// Create a scoped view for tenant "acme"
+const acmeRegistry = Connector.scoped({ tenantId: 'acme' });
+
+// Only connectors tagged with "acme" are visible
+acmeRegistry.list();       // ['acme-openai', 'acme-slack']
+acmeRegistry.size();       // 2
+acmeRegistry.has('other'); // false
+
+// Accessing a denied connector gives the same "not found" error
+// as a truly non-existent one — no information leakage
+acmeRegistry.get('competitor-key');
+// throws: "Connector 'competitor-key' not found. Available: acme-openai, acme-slack"
+```
+
+You can also create a `ScopedConnectorRegistry` directly with any policy (not just the global one):
+
+```typescript
+import { ScopedConnectorRegistry } from 'oneringai';
+
+const custom = new ScopedConnectorRegistry(myPolicy, { userId: 'user-123' });
+```
+
+### Unfiltered Admin View
+
+When your code accepts `IConnectorRegistry` but you want the full, unfiltered view:
+
+```typescript
+import type { IConnectorRegistry } from 'oneringai';
+
+// Returns an IConnectorRegistry that delegates to Connector static methods
+const adminRegistry: IConnectorRegistry = Connector.asRegistry();
+
+// Full access, no filtering
+adminRegistry.list(); // all connectors
+```
+
+### Using with Agent
+
+Pass a scoped registry to `Agent.create()` via the `registry` option:
+
+```typescript
+const registry = Connector.scoped({ tenantId: 'acme' });
+
+const agent = Agent.create({
+  connector: 'acme-openai',  // Resolved via scoped registry
+  model: 'gpt-4.1',
+  registry,
+});
+
+// The agent can only see connectors accessible to 'acme'
+```
+
+If the connector name isn't accessible through the scoped registry, agent creation throws the standard "Connector not found" error listing only visible connectors.
+
+### Using with ConnectorTools
+
+All major `ConnectorTools` methods accept an optional `{ registry }` option:
+
+```typescript
+const registry = Connector.scoped({ tenantId: 'acme' });
+
+// Get tools for a specific connector (resolved via scoped registry)
+const tools = ConnectorTools.for('acme-slack', undefined, { registry });
+
+// Discover tools for all accessible connectors
+const allTools = ConnectorTools.discoverAll(undefined, { registry });
+
+// Find connectors by service type (searches only accessible connectors)
+const github = ConnectorTools.findConnector('github', { registry });
+const allGithubs = ConnectorTools.findConnectors('github', { registry });
+```
+
+### Multi-Tenant Example
+
+```typescript
+import { Connector, Agent, Vendor, ConnectorTools } from 'oneringai';
+import type { IConnectorAccessPolicy } from 'oneringai';
+
+// 1. Create connectors with tenant tags
+Connector.create({
+  name: 'acme-openai',
+  vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.ACME_OPENAI_KEY! },
+  tags: ['acme'],
+});
+
+Connector.create({
+  name: 'globex-openai',
+  vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.GLOBEX_OPENAI_KEY! },
+  tags: ['globex'],
+});
+
+Connector.create({
+  name: 'acme-github',
+  auth: { type: 'api_key', apiKey: process.env.ACME_GITHUB_TOKEN! },
+  baseURL: 'https://api.github.com',
+  tags: ['acme'],
+});
+
+// 2. Set up the policy
+const policy: IConnectorAccessPolicy = {
+  canAccess: (connector, ctx) => {
+    const tags = connector.config.tags as string[] | undefined;
+    return !!tags && tags.includes(ctx.tenantId as string);
+  },
+};
+Connector.setAccessPolicy(policy);
+
+// 3. Per-request: create a scoped view
+function handleRequest(tenantId: string) {
+  const registry = Connector.scoped({ tenantId });
+
+  // This tenant can only see their own connectors
+  const agent = Agent.create({
+    connector: `${tenantId}-openai`,
+    model: 'gpt-4.1',
+    registry,
+  });
+
+  // Discover tools only for this tenant's connectors
+  const tools = ConnectorTools.discoverAll(undefined, { registry });
+
+  return { agent, tools };
+}
+
+// Acme sees: acme-openai, acme-github
+handleRequest('acme');
+
+// Globex sees: globex-openai
+handleRequest('globex');
+```
+
+### IConnectorRegistry Interface
+
+The `IConnectorRegistry` interface covers the read-only subset of Connector static methods:
+
+| Method | Description |
+|--------|-------------|
+| `get(name)` | Get connector by name (throws if not found/denied) |
+| `has(name)` | Check if connector exists and is accessible |
+| `list()` | List accessible connector names |
+| `listAll()` | List accessible connector instances |
+| `size()` | Count of accessible connectors |
+| `getDescriptionsForTools()` | Formatted descriptions for LLM tool parameters |
+| `getInfo()` | Connector info map for UI/documentation |
+| `getById(id)` | Optional ID lookup; same error contract as `get(name)` |
+
+Missing connectors throw the public `ConnectorNotFoundError`, which extends
+`AIError` and carries `code: 'CONNECTOR_NOT_FOUND'`. Scoped registries and agent
+identity views use the same error for hidden connectors; absence does not reveal
+whether a connector exists in another scope. The error has no HTTP status: the
+host decides how to report it and whether an optional read can use a separately
+authorized cache. It never grants access to a connector or cached data.
+
+Custom `IConnectorRegistry` implementations should throw this error for missing
+or scope-hidden connectors. `Connector.get()` and `Connector.getById()` delegate
+without wrapping errors: authentication, broken configuration and storage errors
+must propagate as their original failures, not be converted into absence.
+
+```typescript
+import { ConnectorNotFoundError } from 'oneringai';
+
+// Inside a custom registry, after applying its scope/visibility checks:
+throw new ConnectorNotFoundError();
+```
+
+The default message is safe and generic. A custom diagnostic message and optional
+original error may be supplied as `new ConnectorNotFoundError(message, cause)`.
+Built-in diagnostics retain the requested name/ID and visible connector names;
+HTTP adapters should avoid exposing these diagnostics to clients.
+
+---
+
+## Enhanced connector execution profiles
+
+Select `ConnectorTools.enhanced` with `profile: "execution-v1"` for the bundled Microsoft/Google/Slack/GitHub execution contract. Register actual names through `agent.tools.registerConnectorTools`, keep host permissions/scopes, and use exact identity filters with catalog disabled for C4. The profile adds host deadlines, physical-attempt diagnostics and evidence-aware read projections; old factory defaults stay unchanged. Read [the full recipe](docs/ENHANCED_CONNECTORS.md) for inventory, partial acceptance, origin checks, cancellation, retries, source limits and persistence.
+Generic requests check each redirect hop before forwarding credentials; same-origin
+redirects retain method/body semantics, while cross-origin destinations are rejected.
+
+## Whole connector pages
+
+Select `collections-v1` for 17 whole-page read variants and strict Slack topics. `pageSize` is a provider hint; follow opaque `position.more` with identical normalized inputs and detect repeated `positionId`. `position.end`, `returnedCount` and `searchCoverage` have separate meanings. Use existing source/account registration and actual identity filters to adopt the manager-local catalog adapter. Its cursor key survives reload/rollover/scoping, but not a fresh manager/process or explicit clear. Read [the recipe](docs/CONNECTOR_COLLECTION_PAGES.md) for inventory, raw provider items, provider ceilings, query binding, Unicode validation, source recovery and setup; [the capacity inventory](docs/CONSUMER_CAPACITY_INVENTORY.md) classifies retained bounds. Legacy/execution-v1 and saved DTOs remain unchanged.
+
+## Model Registry
+
+The library includes registry schema v2 metadata for the current text/realtime catalog,
+plus separate TTS, STT, image, video, and embedding registries.
+
+### Using the Model Registry
+
+```typescript
+import {
+  getModelInfo,
+  calculateCost,
+  getModelsByVendor,
+  getActiveModels,
+  getDeprecatedModels,
+  LLM_MODELS,
+  MODEL_REGISTRY_SCHEMA_VERSION,
+  Vendor,
+} from 'oneringai';
+
+// Get model information
+const model = getModelInfo('gpt-6-astra');
+if (!model) throw new Error('Model is not registered');
+console.log(model.provider);                   // 'openai'
+console.log(MODEL_REGISTRY_SCHEMA_VERSION);   // 2
+console.log(model.features.input.tokens);     // 1050000 total context-window guardrail
+console.log(model.features.output.tokens);    // 128000
+console.log(model.features.reasoning);        // true
+console.log(model.features.vision);           // true
+console.log(model.lifecycle);                  // 'active'
+console.log(model.endpoints);                  // ['responses', 'chat_completions', 'batch']
+
+// Calculate API costs
+const cost = calculateCost('gpt-5.6-luna', 50000, 2000);
+console.log(`Cost: $${cost}`); // $0.0124
+
+// With mixed cached and uncached input, using batch pricing
+const cachedCost = calculateCost('gpt-5.6-luna', 50000, 2000, {
+  cachedInputTokens: 30000,
+  processingMode: 'batch',
+});
+console.log(`Optimized: $${cachedCost}`); // $0.0035
+
+// Get all models for a vendor
+const openaiModels = getModelsByVendor(Vendor.OpenAI);
+console.log(openaiModels.map(m => m.name));
+// ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', ...]
+
+// Get all active models
+const activeModels = getActiveModels();
+console.log(activeModels.length); // lifecycle-aware active records only
+
+// Use model constants
+const flagship = LLM_MODELS[Vendor.OpenAI].GPT_6_ASTRA;
+const efficient = LLM_MODELS[Vendor.OpenAI].GPT_5_6_LUNA;
+```
+
+### Registry schema v2 and API compatibility
+
+Schema v2 is additive for existing consumers. `name`, `provider`, `isActive`,
+features, and the original cost fields retain their meaning. New metadata is:
+
+- `lifecycle`: `preview`, `active`, `legacy`, `deprecated`, or `retired`;
+- `availability`, `preferred`, `aliases`, and `snapshots`;
+- `endpoints`, `deprecationDate`, `retirementDate`, and `replacementModel`;
+- official `sources` on media records and newly audited text entries; and
+- long-context, processing-mode, duration, message, resolution, and modality
+  pricing where the vendor publishes it.
+
+Unknown token limits are represented as `null`, not `0`. This currently matters
+for duration-priced voice-agent models. Existing code that assumes a number
+should use `resolveMaxContextTokens()` or check for `null`.
+
+Lookup helpers resolve aliases. Direct indexing remains canonical-only:
+
+```typescript
+getModelInfo('gpt-5.6')?.name;          // 'gpt-5.6-sol'
+getModelInfo('grok-voice-latest')?.name; // 'grok-voice-think-fast-2.0'
+MODEL_REGISTRY['gpt-5.6'];              // undefined by design
+```
+
+Use `getDeprecatedModels()` and the equivalent media helpers instead of treating
+every callable-but-deprecated model as inactive. `isActive` means the API can
+still be called; `lifecycle` carries the vendor's migration state.
+
+### Current provider API selection
+
+- OpenAI text models use Responses by default, including current reasoning,
+  service-tier, explicit/implicit prompt-cache, hosted-tool, and long-context
+  cost metadata. Connector-first wrappers also expose Decisions, GPT-Live,
+  and custom voices.
+- Anthropic supports Claude 5.5 adaptive/between-tools thinking, effort through
+  `output_config`, Opus fast mode, tool search/deferred tools, server-side
+  compaction, and current server tools. Generic request metadata is
+  narrowed to Anthropic's supported `{ user_id }` shape; unrelated host keys
+  remain local rather than producing invalid Messages requests.
+- Gemini 3.5+ uses the GA Interactions API (`steps`, `step.delta`) by default;
+  Gemini 3.8 also supports continuation tokens, file search, and computer use.
+  Set `vendorOptions.api = 'generateContent'` to retain the legacy path, or
+  `vendorOptions.api = 'interactions'` to force Interactions on another model.
+  Named function selection is strict on both paths (`allowed_tools` for
+  Interactions and `allowedFunctionNames` for `generateContent`). Live sessions
+  and custom voices have connector-first wrappers.
+- xAI text uses a dedicated OpenAI-compatible adapter for Grok reasoning,
+  registry-gated X/web search, hosted code execution, ordered replay, and cost
+  telemetry; dedicated
+  image, video, TTS, STT, and realtime voice endpoints use native contracts.
+
+### Resolve Model Capabilities
+
+Providers use the registry to resolve model capabilities automatically, but you can also use the helper directly:
+
+```typescript
+import { resolveModelCapabilities, resolveMaxContextTokens } from 'oneringai';
+
+// Get full capabilities for a registered model
+const caps = resolveModelCapabilities('gpt-5.6-terra', {
+  supportsTools: true, supportsVision: false, supportsJSON: true,
+  supportsJSONSchema: false, maxTokens: 128000, maxOutputTokens: 4096,
+});
+console.log(caps.maxTokens);       // 1050000 (from registry)
+console.log(caps.maxOutputTokens); // 128000 (from registry)
+
+// For unregistered models, vendor defaults are returned
+const unknown = resolveModelCapabilities('my-custom-model', { ...vendorDefaults });
+console.log(unknown.maxTokens);    // falls back to vendorDefaults
+
+// Quick context limit lookup (useful for error messages)
+const limit = resolveMaxContextTokens('gpt-5.6-terra', 128000);
+console.log(limit); // 1050000
+```
+
+### Model Information
+
+```typescript
+interface ILLMDescription {
+  name: string;
+  provider: string;
+  description?: string;
+  isActive: boolean; // callable, not necessarily recommended
+  lifecycle?: 'preview' | 'active' | 'legacy' | 'deprecated' | 'retired';
+  availability?: 'public' | 'limited' | 'invite_only' | 'enterprise' | 'region_limited';
+  preferred?: boolean;
+  aliases?: readonly string[];
+  snapshots?: readonly string[];
+  endpoints?: readonly ModelEndpoint[];
+  releaseDate?: string;
+  deprecationDate?: string;
+  retirementDate?: string;
+  replacementModel?: string;
+  knowledgeCutoff?: string;
+  sources?: {
+    documentation: string;
+    pricing?: string;
+    apiReference?: string;
+    lastVerified: string;
+  };
+
+  features: {
+    input: {
+      tokens: number | null;
+      cpm: number;
+      cpmCached?: number;
+    };
+    output: {
+      tokens: number | null;
+      cpm: number;
+    };
+
+    // Feature flags
+    reasoning: boolean;
+    streaming: boolean;
+    structuredOutput: boolean;
+    functionCalling: boolean;
+    vision: boolean;
+    audio: boolean;
+    video: boolean;
+    extendedThinking: boolean;
+    batchAPI: boolean;
+    promptCaching: boolean;
+
+    pricing?: {
+      text?: TokenPricing;
+      audio?: TokenPricing;
+      image?: TokenPricing;
+      audioDurationPerMinute?: number;
+      textInputPerMessage?: number;
+      processingMultipliers?: Partial<Record<ProcessingMode, number>>;
+    };
+  };
+}
+```
+
+### Available Models
+
+**OpenAI:**
+- GPT-6: Astra, GPT-6.1 Sol, GPT-6 Sol, and GPT-6 Luna
+- Specialized: GPT-5.6 Cyber and GPT-Rosalind Research (access-controlled)
+- GPT-5.6: Sol, Terra, Luna
+- GPT-5.5 Pro
+- GPT-5.3: codex, chat-latest
+- GPT-5.2: standard, pro, codex, chat-latest
+- GPT-5.1: standard, codex, codex-max, codex-mini, chat-latest
+- GPT-5: standard, mini, nano, codex, chat-latest
+- GPT-4.1: standard, mini, nano
+- GPT-4o: standard, mini
+- Audio: gpt-audio-1.5, gpt-audio, gpt-audio-mini
+- Realtime: gpt-realtime-2.1 (recommended), gpt-realtime-2.1-mini, gpt-realtime-2, gpt-realtime-translate, gpt-realtime-1.5; gpt-realtime and gpt-realtime-mini are deprecated
+- Realtime transcription: gpt-live-transcribe (recommended) and gpt-realtime-whisper ($0.017/audio minute)
+- o-series: o3, o4-mini, o3-mini, o1
+- Deep Research: o3-deep-research, o4-mini-deep-research
+- Open-weight: gpt-oss-120b, gpt-oss-20b
+
+**Anthropic:**
+- Claude 5.5: Opus 5.5 and Sonnet 5.5
+- Claude 5: Opus 5, Mythos 5, Fable 5, and Sonnet 5
+- Opus 4.8
+- Claude 4.7: Opus 4.7 (legacy flagship)
+- Claude 4.6: Opus 4.6, Sonnet 4.6
+- Claude 4.5: Opus, Sonnet, Haiku
+- Claude 4.x legacy: Opus 4.1, Opus 4, Sonnet 4
+- Claude 3.7: Sonnet
+
+**Google:**
+- Gemini 3.8 Flash, Live, and Live Extended Thinking
+- Gemini 3.7 and 3.6 Flash; Gemini 3.5 and 3.5 Flash-Lite
+- Gemini 3.1: Pro, Flash-Lite, Flash Image, Flash Live
+- Gemini 3 (preview): Flash, Pro Image
+- Gemini 2.5: Pro, Flash, Flash-Lite, Flash Image
+
+**Grok / xAI:**
+- Grok 4.7, Grok 4.6, Grok 4.5, Grok 4.3, and Grok Build 0.1
+- Grok 4.20 (2M context, flagship): reasoning, non-reasoning, multi-agent
+- Grok 4.1 fast (2M context): reasoning, non-reasoning
+- Grok Voice Think Fast 2.0 and maintained 1.0 migration entries
+
+**DeepSeek (5 models):**
+- V4 Flash, V4 Pro, and V4 Flash Vision Experimental
+- Retired `deepseek-chat` and `deepseek-reasoner` compatibility records
+
+Dedicated media registries add GPT Image 2.5 Sunburst/Flare, Gemini Nano Banana
+2.1 and 3.1 Flash-Lite Image, Grok Imagine Image 2.0, Sora 2, Veo/Omni, Grok
+Imagine Video 1.5, current OpenAI speech, Gemini 3.8 TTS, Grok Voice Transcribe
+2.0, Google/xAI voice models, and Gemini Embedding 2. Use
+`getImageModelInfo`, `getVideoModelInfo`, `getTTSModelInfo`, `getSTTModelInfo`,
+and `getEmbeddingModelInfo` for their modality-specific capability schemas.
+
+The complete official-source audit and migration table is in
+[`docs/MODEL_REGISTRY_AUDIT.md`](./docs/MODEL_REGISTRY_AUDIT.md).
+
+---
+
+## Endpoint capability metadata
+
+Use [the capability recipe](docs/ENDPOINT_CAPABILITIES.md) for pure root/shared
+lookups over explicit vendor, endpoint, transport and session mode. Keep supported,
+unsupported and unknown distinct. A reasoning-capable model may still have an
+unverified exact effort set; preserve saved selections and host fallbacks.
+
+## Effective temperature decisions
+
+Select [the parameter policy](docs/PARAMETER_POLICY.md) explicitly when normalized
+temperature should be omitted for a particular model/effort combination. Decisions
+use actual routed/per-call request settings across generation, streaming, selected
+counting and batches. Preserve supported zero and unknown values; keep raw controls
+strict. Old portable snapshots require the trusted receiving host to reconfigure
+policy. `npm run example:parameter-policy` inspects real mocked request bodies offline.
+
+## Vendor labels and colors
+
+Use [vendor presentation](docs/VENDOR_PRESENTATION.md) through root or `/shared`.
+Compose host overrides over immutable rows; unknown IDs return undefined. The
+catalog supplies no model defaults or authorization. Custom external services keep
+their existing service/auth ownership even when an application uses the same ID.
+
 ## Agent Features
 
 ### Instructions (System Prompt)
@@ -2319,7 +3775,7 @@ TemplateEngine.register('DB_COUNT', async (collection) => {
 // Usage: {{DB_COUNT:users}} → "4210"
 
 // i18n translation handler
-const translations = { en: { hello: 'Hello' }, es: { hello: 'Hola' } };
+const translations: Record<string, Record<string, string>> = { en: { hello: 'Hello' }, es: { hello: 'Hola' } };
 TemplateEngine.register('T', (key, ctx) => {
   const lang = (ctx.lang as string) ?? 'en';
   return translations[lang]?.[key ?? ''] ?? `[missing: ${key}]`;
@@ -2492,29 +3948,29 @@ agent.destroy();
 For multi-user systems, set `userId` once at agent creation and it automatically flows to all tool executions via `ToolContext.userId` — no need to manually thread it through every call:
 
 ```typescript
-// Set userId at creation
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  userId: 'user-123',
-  tools: [myTool],
-});
-
-// All tool executions automatically receive userId in their context
 const myTool: ToolFunction = {
-  definition: { /* ... */ },
-  execute: async (args, context) => {
-    console.log(context?.userId);  // 'user-123'
-    // Use for per-user storage, OAuth tokens, audit trails, etc.
-  },
+  definition: { type: 'function', function: {
+    name: 'current_user', description: 'Read the current host-selected user ID.',
+    parameters: { type: 'object', properties: {}, additionalProperties: false },
+  } },
+  execute: async (_args, context) => ({ userId: context?.userId }),
 };
 
-// Change userId at runtime (e.g., when reusing agent across users)
+const agent = Agent.create({
+  connector: 'openai', model: 'gpt-4.1', userId: 'user-123', tools: [myTool],
+});
+
+// Existing setter; change only while idle and with compatible host-owned scope.
 agent.userId = 'user-456';
 
 // Also accessible via context
 console.log(agent.context.userId);  // 'user-456'
 ```
+
+`userId` propagates identity; it is not authentication or a tenant boundary.
+Use a fresh Agent/context for unrelated users and derive connector visibility,
+memory/evidence scope, permissions, and storage from trusted host authorization.
+Changing the setter does not erase an earlier conversation or transfer its scope.
 
 **What userId enables:**
 - **Tool context** — Every `tool.execute(args, context)` receives `context.userId` automatically
@@ -2529,14 +3985,14 @@ console.log(agent.context.userId);  // 'user-456'
 const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1', userId: 'user-123' });
 
 // Option 2: At context level
-const agent = Agent.create({
+const agentVariant2 = Agent.create({
   connector: 'openai',
   model: 'gpt-4.1',
-  context: { userId: 'user-123' },
+  context: { model: 'gpt-4.1', userId: 'user-123' },
 });
 
 // Option 3: At runtime
-agent.userId = 'user-123';
+agentVariant2.userId = 'user-123';
 ```
 
 ### Auth Identities (`identities`)
@@ -2581,4837 +4037,13 @@ agent.identities = undefined;
 
 ---
 
-## Session Persistence
-
-Save and resume agent conversations across restarts using `AgentContextNextGen` and `FileContextStorage`.
-
-`agent.loadSession()` and `context.load()` validate protected evidence/task scope,
-association and version before restoration, then commit the active save target on
-success. Rejected loads keep the previous target and scoped state; checkpoint saves
-wait for restoration. Custom restore hooks retain their extension point and must
-honor serializable plugin state; saves fail closed if a plugin refuses rollback.
-Recovery requires successful restoration of every affected plugin instance; a legacy
-checkpoint missing it does not clear the guard. Trusted host
-`context.restoreState(goodSnapshot)` can also repair it. Rollback snapshots follow
-the existing JSON contract, including `toJSON` hooks. A synchronous loaded-notification
-error rolls back state and ID with its original error. Run loads while execution/host
-edits are idle.
-
-`context.save(id?, metadata?, state?)` keeps existing serialized overrides and also
-accepts a snapshot builder as its optional third argument; the builder runs after
-preceding checkpoint operations. `loadRaw()` retains its legacy unvalidated session
-ID selection and is not the managed restore path. Failed shared-context resumes
-include construction and synchronous notification in the transaction, restoring
-permission/tool/prompt/callback/role bindings before candidate cleanup. Cleanup attempts all owned resources even if a plugin throws; direct
-`destroy()` reports the first teardown error after cleanup. Read the
-[complete restoration boundaries](docs/AGENT_PRESETS.md#session-restoration-and-cleanup)
-for custom-hook IO, private side effects and shared ownership.
-
-### Quick Start
-
-```typescript
-import { AgentContextNextGen, createFileContextStorage } from 'oneringai';
-
-// Create storage for the agent
-const storage = createFileContextStorage('my-assistant');
-// Sessions stored at: ~/.oneringai/agents/my-assistant/sessions/
-
-// Create context with storage
-const ctx = AgentContextNextGen.create({
-  model: 'gpt-4.1',
-  features: { workingMemory: true },
-  storage,
-});
-
-// Build up state
-ctx.addUserMessage('Remember: my name is Alice');
-await ctx.memory?.store('user_name', 'User name', 'Alice');
-
-// Save session
-await ctx.save('session-001', { title: 'User Session' });
-
-// Later... load session
-const ctx2 = AgentContextNextGen.create({ model: 'gpt-4.1', storage });
-const loaded = await ctx2.load('session-001');
-
-if (loaded) {
-  // Full state restored
-  const name = await ctx2.memory?.retrieve('user_name');
-  console.log(name); // 'Alice'
-}
-```
-
-### Storage Backend: FileContextStorage
-
-```typescript
-import { FileContextStorage, createFileContextStorage } from 'oneringai';
-
-// Simple: use helper function
-const storage = createFileContextStorage('my-agent');
-
-// Advanced: custom config
-const storage = new FileContextStorage({
-  agentId: 'my-agent',
-  baseDirectory: '/custom/path/agents',  // Override default ~/.oneringai/agents
-  prettyPrint: true,  // Human-readable JSON
-});
-```
-
-**Storage Location:** `~/.oneringai/agents/<agentId>/sessions/<sessionId>.json`
-
-### Custom Storage
-
-Implement `IContextStorage` interface:
-
-```typescript
-import type { IContextStorage, StoredContextSession } from 'oneringai';
-
-class DatabaseContextStorage implements IContextStorage {
-  async save(sessionId: string, state: SerializedContextState, metadata?) { /* ... */ }
-  async load(sessionId: string): Promise<StoredContextSession | null> { /* ... */ }
-  async delete(sessionId: string) { /* ... */ }
-  async exists(sessionId: string) { /* ... */ }
-  async list(options?) { /* ... */ }
-  getPath() { return 'database://...'; }
-}
-```
-
-### Centralized Storage Registry
-
-Instead of configuring each subsystem separately, use `StorageRegistry` to set storage backends in one call. Custom tools, media, sessions, context plugins, OAuth, routines, correlation records, agent/connector definitions, and permission rules consult the registry. Resolution can happen during construction or lazily at execution time depending on the subsystem; the table below records each actual default.
-
-```typescript
-import { StorageRegistry } from 'oneringai';
-
-// Configure all storage backends at init time
-StorageRegistry.configure({
-  // Global singletons
-  media: new S3MediaStorage(),
-  oauthTokens: new FileTokenStorage({ directory: './tokens' }),
-
-  // Context-aware factories (called with optional StorageContext for multi-tenant)
-  customTools: (ctx) => new MongoCustomToolStorage(ctx?.userId),
-  sessions: (agentId) => new RedisContextStorage(agentId),
-  persistentInstructions: (agentId) => new DBInstructionsStorage(agentId),
-  workingMemory: () => new RedisMemoryStorage(),
-  userInfo: (ctx) => new MongoUserInfoStorage(ctx?.userId),
-  routineDefinitions: (ctx) => new MongoRoutineDefinitionStorage(ctx?.userId),
-  routineExecutions: (ctx) => new MongoRoutineExecutionStorage(ctx?.userId),
-
-  // Additional global backends
-  correlations: new MongoCorrelationStorage(),
-  permissionRules: new MongoPermissionRulesStorage(),
-});
-
-// That's it! All agents, tools, and plugins will use these backends automatically.
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
-```
-
-**Resolution order** (every subsystem follows this):
-1. Explicit parameter passed to constructor/factory (e.g., `createCustomToolMetaTools({ storage })`)
-2. Value registered in `StorageRegistry`
-3. Built-in file-based (or in-memory) default
-
-**No breaking changes** — `setMediaStorage()`, `Connector.setDefaultStorage()`, and all explicit constructor params continue to work exactly as before. They now delegate to the registry internally.
-
-**Available storage keys:**
-
-| Key | Type | Default | Consumed By |
-|-----|------|---------|-------------|
-| `customTools` | `(ctx?) => ICustomToolStorage` | `FileCustomToolStorage` | `custom_tool_save/list/load/delete` meta-tools |
-| `media` | `IMediaStorage` | `FileMediaStorage` | Image/video/TTS output tools |
-| `oauthTokens` | `ITokenStorage` | `MemoryStorage` | `Connector` OAuth token persistence |
-| `agentDefinitions` | `IAgentDefinitionStorage` | — | `Agent.saveDefinition()`, `Agent.fromStorage()` |
-| `connectorConfig` | `IConnectorConfigStorage` | — | `ConnectorConfigStore.create()` |
-| `sessions` | `(agentId, ctx?) => IContextStorage` | — | `AgentContextNextGen` constructor |
-| `persistentInstructions` | `(agentId, ctx?) => IPersistentInstructionsStorage` | `FilePersistentInstructionsStorage` | `PersistentInstructionsPluginNextGen` |
-| `workingMemory` | `(ctx?) => IMemoryStorage` | `InMemoryStorage` | `WorkingMemoryPluginNextGen` |
-| `userInfo` | `(ctx?) => IUserInfoStorage` | `FileUserInfoStorage` | `UserInfoPluginNextGen` |
-| `routineDefinitions` | `(ctx?) => IRoutineDefinitionStorage` | `FileRoutineDefinitionStorage` | Routine definition persistence |
-| `routineExecutions` | `(ctx?) => IRoutineExecutionStorage` | — | Routine execution detail/list tools |
-| `correlations` | `ICorrelationStorage` | — | Agent correlation/result routing |
-| `permissionRules` | `IUserPermissionRulesStorage` | — | Persistent per-user permission rules |
-
-**Individual access:**
-
-```typescript
-// Set one backend
-StorageRegistry.set('media', new S3MediaStorage());
-
-// Get (returns undefined if not configured)
-const storage = StorageRegistry.get('customTools');
-
-// Check if configured
-if (StorageRegistry.has('sessions')) { /* ... */ }
-
-// Reset all (useful in tests)
-StorageRegistry.reset();
-```
-
-**Multi-Tenant / Multi-User:**
-
-Per-agent factories receive an optional `StorageContext` — an opaque object (like `ConnectorAccessContext`) that carries userId, tenantId, or any custom fields:
-
-```typescript
-import { StorageRegistry } from 'oneringai';
-
-// Configure factories that partition by tenant
-StorageRegistry.configure({
-  sessions: (agentId, ctx) => new TenantSessionStorage(agentId, ctx?.tenantId as string),
-  persistentInstructions: (agentId, ctx) => new TenantInstructionsStorage(agentId, ctx?.userId as string),
-  workingMemory: (ctx) => new TenantMemoryStorage(ctx?.tenantId as string),
-});
-
-// Set the context globally (e.g., at app startup or per-request)
-StorageRegistry.setContext({ userId: 'alice', tenantId: 'acme-corp' });
-
-// All agents now get tenant-scoped storage automatically
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1', userId: 'alice' });
-```
-
-If no global context is set, `AgentContextNextGen` derives `{ userId }` for the `sessions` factory. Custom-tool, user-info, and routine tools can derive `{ userId }` from their per-call `ToolContext`. The `workingMemory` and `persistentInstructions` factories receive only `StorageRegistry.getContext()` and have no per-instance fallback, so call `StorageRegistry.setContext({ userId, tenantId })` when those backends must be partitioned. Because the registry context is process-global, request-concurrent multi-tenant servers should prefer explicitly scoped factories/instances over mutating global context during overlapping requests.
-
-### Session Management APIs
-
-```typescript
-// Check if session exists
-const exists = await ctx.sessionExists('session-001');
-
-// Delete session
-await ctx.deleteSession('session-001');
-
-// Get current session ID
-console.log(ctx.sessionId);  // 'session-001' or null
-
-// List all sessions for this agent
-const sessions = await storage.list();
-for (const s of sessions) {
-  console.log(`${s.sessionId}: ${s.metadata?.title} (${s.messageCount} messages)`);
-}
-```
-
-### Using with Agent
-
-```typescript
-import { Agent, createFileContextStorage } from 'oneringai';
-
-const storage = createFileContextStorage('my-agent');
-
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  context: {
-    agentId: 'my-agent',
-    features: { workingMemory: true },
-    storage,
-  },
-});
-
-// Run agent
-await agent.run('Remember: my favorite color is blue');
-
-// Save session
-await agent.context.save('session-001');
-
-// Later... load session
-await agent.context.load('session-001');
-await agent.run('What is my favorite color?');
-// Output: "Your favorite color is blue."
-```
-
-### What Gets Persisted
-
-| Component | Persisted? | Notes |
-|-----------|------------|-------|
-| Conversation history | ✅ | All messages with timestamps |
-| WorkingMemory entries | ✅ | Full values, not just index |
-| InContextMemory entries | ✅ | Via plugin state |
-| Tool enable/disable state | ❌ | `ToolManager.getState()/loadState()` exist but are not wired into `ctx.save()`/`ctx.load()` — persist/restore separately if needed |
-| System prompt | ✅ | |
-
-
-### AgentContextNextGen Session Persistence
-
-The recommended approach to session persistence using `AgentContextNextGen`:
-
-```typescript
-import { AgentContextNextGen, createFileContextStorage } from 'oneringai';
-
-// Create storage for the agent
-const storage = createFileContextStorage('my-assistant');
-// Sessions stored at: ~/.oneringai/agents/my-assistant/sessions/
-
-// Create context with storage
-const ctx = AgentContextNextGen.create({
-  model: 'gpt-4.1',
-  features: { workingMemory: true, inContextMemory: true },
-  storage,
-});
-
-// Build up state
-ctx.addUserMessage('My name is Alice and I prefer dark mode.');
-ctx.addAssistantResponse({ output_text: 'Nice to meet you, Alice!' });
-await ctx.memory?.store('user_name', 'User name', 'Alice');
-await ctx.memory?.store('user_pref', 'User preferences', { theme: 'dark' });
-
-// Save session with metadata
-// Note: this metadata is merged into the serialized state's internal
-// `metadata` field, NOT into StoredContextSession.metadata (the field
-// storage.list() uses for s.metadata?.title / tags filtering below).
-// To make title/tags queryable via storage.list(), call
-// storage.updateMetadata(sessionId, { title, tags }) as well.
-await ctx.save('session-001', {
-  title: 'Alice Support Chat',
-  tags: ['support', 'vip'],
-});
-
-console.log(ctx.sessionId);  // 'session-001'
-```
-
-#### Loading Sessions
-
-```typescript
-// Create new context and load
-const ctx2 = AgentContextNextGen.create({
-  model: 'gpt-4.1',
-  features: { workingMemory: true, inContextMemory: true },
-  storage,
-});
-
-const loaded = await ctx2.load('session-001');
-
-if (loaded) {
-  // Everything is restored:
-  const conversation = ctx2.getConversation();
-  console.log(conversation[0]);  // User message about Alice
-
-  const name = await ctx2.memory?.retrieve('user_name');
-  console.log(name);  // 'Alice'
-
-  const prefs = await ctx2.memory?.retrieve('user_pref');
-  console.log(prefs);  // { theme: 'dark' }
-}
-```
-
-#### What Gets Persisted
-
-| Component | Persisted? | Notes |
-|-----------|------------|-------|
-| Conversation history | ✅ | All messages with timestamps |
-| WorkingMemory entries | ✅ | **Full values**, not just index |
-| Tool enable/disable state | ❌ | `ToolManager.getState()/loadState()` exist but are not wired into `ctx.save()`/`ctx.load()` — persist/restore separately if needed |
-| Permission approvals | ❌ | `ToolPermissionManager.getState()/loadState()` exist but are not wired into `ctx.save()`/`ctx.load()` — persist/restore separately if needed |
-| InContextMemory entries | ✅ | Via plugin state |
-| System prompt | ✅ | |
-| Instructions | ✅ | |
-
-#### Session Management APIs
-
-```typescript
-// Check if session exists
-const exists = await ctx.sessionExists('session-001');
-
-// Delete session
-await ctx.deleteSession('session-001');
-
-// Delete current session
-await ctx.deleteSession();  // Uses ctx.sessionId
-
-// List all sessions for this agent
-const sessions = await storage.list();
-for (const s of sessions) {
-  console.log(`${s.sessionId}: ${s.metadata?.title} (${s.messageCount} messages)`);
-}
-
-// List with filtering
-const recentSessions = await storage.list({
-  savedAfter: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),  // Last week
-  tags: ['support'],
-  limit: 10,
-});
-```
-
-#### Storage Backends
-
-**FileContextStorage** (default):
-```typescript
-import { FileContextStorage, createFileContextStorage } from 'oneringai';
-
-// Simple: use helper
-const storage = createFileContextStorage('my-agent');
-
-// Advanced: custom config
-const storage = new FileContextStorage({
-  agentId: 'my-agent',
-  baseDirectory: '/custom/path/agents',  // Override default ~/.oneringai/agents
-  prettyPrint: true,  // Human-readable JSON
-});
-```
-
-**Custom Storage** (implement `IContextStorage`):
-```typescript
-import type { IContextStorage, StoredContextSession } from 'oneringai';
-
-class RedisContextStorage implements IContextStorage {
-  async save(sessionId: string, state: SerializedContextState, metadata?) { /* ... */ }
-  async load(sessionId: string): Promise<StoredContextSession | null> { /* ... */ }
-  async delete(sessionId: string) { /* ... */ }
-  async exists(sessionId: string) { /* ... */ }
-  async list(options?) { /* ... */ }
-  getPath() { return 'redis://...'; }
-}
-```
-
-### Agent Definition Persistence (NEW)
-
-Store agent **configuration** separately from sessions for easy instantiation:
-
-```typescript
-import { Agent, createFileAgentDefinitionStorage } from 'oneringai';
-
-const defStorage = createFileAgentDefinitionStorage();
-// Stores at: ~/.oneringai/agents/<agentId>/definition.json
-
-// Create and configure agent
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  instructions: 'You are a helpful support assistant.',
-  context: {
-    agentId: 'support-bot',
-    features: { workingMemory: true, persistentInstructions: true }
-  }
-});
-
-// Save definition with metadata
-await agent.saveDefinition(defStorage, {
-  description: 'Customer support chatbot',
-  tags: ['support', 'production'],
-  author: 'Team A'
-});
-```
-
-#### Loading Agents from Definitions
-
-```typescript
-// Later: recreate agent from stored definition
-const restored = await Agent.fromStorage('support-bot', defStorage);
-
-if (restored) {
-  // Agent has same model, instructions, features as when saved
-  const response = await restored.run('Hello!');
-}
-
-// With config overrides
-const devAgent = await Agent.fromStorage('support-bot', defStorage, {
-  model: 'gpt-5.6-luna',  // Override with an economical current model
-});
-```
-
-#### Listing Agent Definitions
-
-```typescript
-const definitions = await defStorage.list();
-
-for (const def of definitions) {
-  console.log(`${def.agentId}: ${def.name}`);
-  console.log(`  Type: ${def.agentType}, Model: ${def.model}`);
-  console.log(`  Created: ${def.createdAt}`);
-}
-
-// Filter by type
-const taskAgents = await defStorage.list({ agentType: 'task-agent' });
-```
-
-#### Storage Structure
-
-```
-~/.oneringai/agents/
-├── support-bot/
-│   ├── definition.json          # Agent configuration
-│   ├── custom_instructions.json  # Persistent instructions (if enabled)
-│   └── sessions/
-│       ├── _index.json          # Session index for fast listing
-│       ├── session-001.json     # Full session state
-│       └── session-002.json
-├── research-bot/
-│   ├── definition.json
-│   └── sessions/
-│       └── ...
-└── _agents_index.json           # Agent definitions index
-```
-
-
-## Context Management
-
-The library includes a **powerful, universal context management system** that automatically handles the complexity of managing LLM context windows. `AgentContextNextGen` is the primary context manager with a clean, plugin-based architecture.
-
-### AgentContextNextGen - The Modern API
-
-**AgentContextNextGen** is the modern, plugin-first context manager. It provides clean separation of concerns with composable plugins:
-
-#### What the plugin architecture is for
-
-A context plugin is a bounded capability, not just a prompt fragment. A plugin
-can own all of the following as one lifecycle unit:
-
-| Responsibility | Why it belongs in the plugin |
-|----------------|------------------------------|
-| Static instructions | Teaches the model when and how to use the capability |
-| Dynamic context content | Injects only the state needed for the current call |
-| Tools | Makes feature-specific operations available through the shared `ToolManager` |
-| Token accounting | Lets the context budget show exactly what each capability costs |
-| Compaction | Lets a feature reduce its own content safely when the context fills |
-| Persistence | Saves and restores plugin state with the conversation session |
-| Cleanup | Releases resources through the common `IDisposable` lifecycle |
-
-`AgentContextNextGen.prepare()` assembles one system message from the enabled
-plugins and compacts at most once immediately before the LLM call. Conversation
-tool-call/result pairs remain atomic, the newest input is never compacted, and
-disabling a feature removes its prompt content and feature tools.
-
-The word “memory” appears in several plugin names because they solve different
-problems:
-
-| Use case | Choose | Data location / retrieval model |
-|----------|--------|---------------------------------|
-| Scratch notes and large intermediate findings | `WorkingMemoryPluginNextGen` | Values live outside the prompt; an index is injected and the agent retrieves details with `store_*` |
-| Small state the model must always see | `InContextMemoryPluginNextGen` | Full values live directly in the prompt |
-| Durable people, organizations, tasks, events, documents, relationships, and learned profiles | `MemoryPluginNextGen` | Standalone entity/fact system with ranked, graph, vector, and bitemporal retrieval |
-| Let the LLM mutate durable memory | `MemoryWritePluginNextGen` | Six controlled write tools layered on the read plugin |
-| Learn from conversations without LLM write tools | `SessionIngestorPluginNextGen` | Background extraction into the same `MemorySystem` |
-
-See the [Memory Layer Guide](./docs/MEMORY_GUIDE.md) for the standalone system
-and the [Self-Learning Memory](#self-learning-memory-nextgen-plugin) section for
-agent wiring.
-
-```typescript
-import { AgentContextNextGen } from 'oneringai';
-
-// Create a context instance
-const ctx = AgentContextNextGen.create({
-  model: 'gpt-4.1',
-  systemPrompt: 'You are a helpful assistant.',
-  features: {
-    workingMemory: true,      // WorkingMemoryPluginNextGen
-    inContextMemory: true,    // InContextMemoryPluginNextGen
-    persistentInstructions: false,
-  },
-  strategy: 'algorithmic', // Default strategy (75% threshold)
-});
-
-// Add user message
-ctx.addUserMessage('What is the weather in Paris?');
-
-// Prepare context for LLM call (handles compaction if needed)
-const { input, budget, compacted } = await ctx.prepare();
-
-// After LLM call, add response
-ctx.addAssistantResponse(response.output);
-
-// Add tool results
-ctx.addToolResults([{ tool_use_id: '...', content: '...', state: ToolCallState.COMPLETED }]);
-
-// Access plugins
-const memory = ctx.memory;  // WorkingMemoryPluginNextGen | null
-await memory?.store('key', 'description', value);
-
-// Access tools
-ctx.tools.disable('risky_tool');
-
-// Budget information
-console.log(`Tokens: ${budget.totalUsed}/${budget.maxTokens}`);
-console.log(`Utilization: ${budget.utilizationPercent}%`);
-console.log(`Available: ${budget.available}`);
-```
-
-### Semantic Rollover at Provider-Session Boundaries
-
-Automatic compaction is token-triggered. Use explicit rollover when the
-provider session itself must be replaced—for example, before OpenAI Realtime's
-hard session lifetime—but the same OneRingAI Agent should continue:
-
-```typescript
-const result = await agent.rolloverContext({
-  preserveRecentTurns: 8,
-  maxSummaryTokens: 2048,
-  reason: 'provider-session-expiring',
-});
-```
-
-The Agent obtains its normal exclusive execution lease, loads persisted state,
-summarizes the older prefix with a tool-free direct call, and commits a
-developer continuity brief only after a non-empty summary succeeds. Recent
-turns and complete tool-call/result pairs remain exact. Plugin state and the
-append-only history journal are not compacted. With session storage,
-`checkpoint` defaults to `true`; without it, checkpointing defaults to `false`.
-
-Use a trusted custom summarizer when the Agent model is not text-capable or the
-summary must run through another service:
-
-```typescript
-await agent.rolloverContext({
-  summarize: async ({ items, estimatedTokens, preservedRecentTurns, reason }) =>
-    summaryService.createContinuityBrief({
-      items,
-      estimatedTokens,
-      preservedRecentTurns,
-      reason,
-    }),
-});
-```
-
-The lower-level context API requires the summarizer explicitly:
-
-```typescript
-const result = await agent.context.rollover({
-  preserveRecentTurns: 8,
-  reason: 'manual-handoff',
-  summarize: ({ items }) => summarizeWithTrustedModel(items),
-});
-```
-
-Call either API only between turns, with no pending input. Agent-level rollover
-cannot overlap `run()`, `stream()`, async continuation, or external execution;
-context-level rollover rejects concurrent rollover and aborts if the live
-context changes while the summary is being generated. Observe committed
-rollovers with `context:rolled_over` and inspect the returned token/item counts.
-
-### Context Structure
-
-AgentContextNextGen organizes context into clear sections:
-
-```
-[Developer Message - All glued together]
-  # System Prompt
-  # Persistent Instructions (if plugin enabled)
-  # Plugin Instructions (for enabled plugins)
-  # In-Context Memory (if plugin enabled)
-  # Working Memory Index (if plugin enabled)
-
-[Conversation History]
-  ... messages including tool_use/tool_result pairs ...
-
-[Current Input]
-  User message OR tool results (newest, never compacted)
-```
-
-#### AgentContextNextGen Components
-
-AgentContextNextGen uses a plugin architecture with these core components:
-
-| Component | Access | Purpose |
-|-----------|--------|---------|
-| **ToolManager** | `ctx.tools` | Tool registration, execution, circuit breakers |
-| **WorkingMemoryPluginNextGen** | `ctx.getPlugin('working_memory')` | Tiered memory (raw/summary/findings) |
-| **InContextMemoryPluginNextGen** | `ctx.getPlugin('in_context_memory')` | Live key-value storage in context |
-| **PersistentInstructionsPluginNextGen** | `ctx.getPlugin('persistent_instructions')` | Disk-persisted agent instructions |
-| **UserInfoPluginNextGen** | `ctx.getPlugin('user_info')` | User-scoped preferences + TODO tracking, auto-injected into context |
-| **ToolCatalogPluginNextGen** | `ctx.getPlugin('tool_catalog')` | Scoped discovery and dynamic loading/unloading of tool categories |
-| **SharedWorkspacePluginNextGen** | `ctx.getPlugin('shared_workspace')` | Versioned multi-agent coordination board |
-| **MemoryPluginNextGen** | `ctx.getPlugin('memory')` | Profile injection plus six graph/vector/document retrieval tools |
-| **MemoryWritePluginNextGen** | `ctx.getPlugin('memory_write')` | Six controlled durable-memory mutation tools |
-| **SessionIngestorPluginNextGen** | Manually registered | Optional background extraction from accumulated conversation turns |
-| **Conversation** | `ctx.getConversation()` | Built-in conversation tracking (Message[]) |
-
-#### Using AgentContextNextGen with Agent
-
-**AgentContextNextGen is always available** - BaseAgent creates it in the constructor, making it the single source of truth for ToolManager:
-
-```typescript
-import { Agent, AgentContextNextGen } from 'oneringai';
-
-// AgentContextNextGen is auto-created with default config
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  tools: [weatherTool],
-  context: {
-    strategy: 'algorithmic',    // Default strategy; 75% reclaim threshold, 90% critical trigger
-    features: { workingMemory: true },
-  },
-});
-
-// UNIFIED TOOL MANAGEMENT: agent.tools and agent.context.tools are the SAME instance
-console.log(agent.tools === agent.context.tools);  // true
-console.log(agent.hasContext());  // Always true
-
-// Tool changes via either path are immediately reflected
-agent.tools.disable('weather_tool');
-console.log(agent.context.tools.listEnabled().includes('weather_tool'));  // false
-
-agent.context.tools.enable('weather_tool');
-console.log(agent.tools.listEnabled().includes('weather_tool'));  // true
-
-// Agent automatically tracks messages and tool calls
-await agent.run('What is the weather?');
-
-// Access the context (never null)
-const ctx = agent.context;
-const conversation = ctx.getConversation(); // Message[] - NextGen API
-const { budget } = await ctx.prepare();
-console.log(`Used: ${budget.totalUsed}/${budget.maxTokens} tokens`);
-
-// Option 2: Pass existing AgentContextNextGen instance
-const sharedContext = AgentContextNextGen.create({ model: 'gpt-4.1' });
-const agent1 = Agent.create({ connector: 'openai', model: 'gpt-4.1', context: sharedContext });
-const agent2 = Agent.create({ connector: 'anthropic', model: 'claude-sonnet-5', context: sharedContext });
-// Both agents share the same context state and ToolManager!
-```
-
-#### AgentContextNextGen Configuration
-
-```typescript
-interface AgentContextNextGenConfig {
-  /** Model name (used for token limits) — REQUIRED */
-  model: string;
-
-  /** Max context tokens (overrides model default) */
-  maxContextTokens?: number;
-
-  /** Response token reserve in tokens (default: 4096) */
-  responseReserve?: number;
-
-  /** System prompt */
-  systemPrompt?: string;
-
-  /** Agent ID (used for persistent storage paths) */
-  agentId?: string;
-
-  /** Tools to register */
-  tools?: ToolFunction[];
-
-  /** Feature flags for enabling/disabling plugins */
-  features?: ContextFeatures;
-
-  /** Compaction strategy */
-  strategy?: string;  // 'algorithmic' (default, 75%) or custom registered strategy name
-
-  /** Context storage for session persistence */
-  storage?: IContextStorage;
-
-  /** Plugin configurations */
-  plugins?: PluginConfigs;
-}
-
-interface ContextFeatures {
-  /** Enable WorkingMemoryPluginNextGen (default: true) */
-  workingMemory?: boolean;
-
-  /** Enable InContextMemoryPluginNextGen (default: true) */
-  inContextMemory?: boolean;
-
-  /** Enable PersistentInstructionsPluginNextGen (default: false) */
-  persistentInstructions?: boolean;
-
-  /** Enable UserInfoPluginNextGen (default: false) */
-  userInfo?: boolean;
-
-  /** Enable ToolCatalogPluginNextGen for dynamic tool loading/unloading (default: false) */
-  toolCatalog?: boolean;
-
-  /** Enable SharedWorkspacePluginNextGen (default: false) */
-  sharedWorkspace?: boolean;
-
-  /** Enable MemoryPluginNextGen read tools/profile injection (default: false) */
-  memory?: boolean;
-
-  /** Enable MemoryWritePluginNextGen write tools (default: false; requires memory) */
-  memoryWrite?: boolean;
-}
-```
-
-#### Feature Configuration
-
-AgentContextNextGen features enable plugins independently. When a feature is disabled, its associated tools are **not registered**, giving the LLM a cleaner tool set:
-
-```typescript
-import { AgentContextNextGen, DEFAULT_FEATURES } from 'oneringai';
-
-// View default feature settings
-console.log(DEFAULT_FEATURES);
-// { workingMemory: true, inContextMemory: true, persistentInstructions: false, userInfo: false, toolCatalog: false, sharedWorkspace: false, memory: false, memoryWrite: false }
-```
-
-**Available Features:**
-
-| Feature | Default | Plugin | When Disabled |
-|---------|---------|--------|---------------|
-| `workingMemory` | `true` | WorkingMemoryPluginNextGen - tiered memory (raw/summary/findings) | `store_*` tools cannot target `"notes"` store; `ctx.memory` returns `null` |
-| `inContextMemory` | `true` | InContextMemoryPluginNextGen - live key-value storage directly in context | `store_*` tools cannot target `"whiteboard"` store |
-| `persistentInstructions` | `false` | PersistentInstructionsPluginNextGen - agent instructions persisted to disk (KVP entries) | `store_*` tools cannot target `"instructions"` store |
-| `userInfo` | `false` | UserInfoPluginNextGen - user-scoped preferences + TODO tracking auto-injected into context | `store_*` tools cannot target `"user_info"` store; `todo_*` tools not registered |
-| `toolCatalog` | `false` | ToolCatalogPluginNextGen - dynamic tool loading/unloading by category | `tool_catalog_*` tools not registered; all tools must be pre-loaded |
-| `sharedWorkspace` | `false` | SharedWorkspacePluginNextGen - versioned multi-agent coordination board | `store_*` tools cannot target `"workspace"` |
-| `memory` | `false` | MemoryPluginNextGen - profile injection and six read tools | No durable graph/vector memory content or `memory_*` read tools; requires `plugins.memory.memory` when enabled |
-| `memoryWrite` | `false` | MemoryWritePluginNextGen - six controlled write tools | Agent remains unable to mutate durable memory; requires `memory: true` when enabled |
-
-**Usage Examples:**
-
-```typescript
-// 1. Minimal stateless agent (no working memory)
-const ctx = AgentContextNextGen.create({
-  model: 'gpt-4.1',
-  features: { workingMemory: false },  // Disable working memory
-});
-
-console.log(ctx.memory);  // null
-
-// 2. Full-featured agent with all capabilities
-const ctx = AgentContextNextGen.create({
-  model: 'gpt-4.1',
-  features: {
-    workingMemory: true,          // default: true
-    inContextMemory: true,        // default: true
-    persistentInstructions: true, // default: false
-    userInfo: true,               // default: false
-  },
-});
-
-// 3. Via Agent.create() - inline config
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  context: {
-    features: { workingMemory: false },  // Disable working memory
-  },
-});
-
-// 4. Agent with all features
-const fullAgent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  userId: 'alice',  // Optional for userInfo isolation
-  context: {
-    agentId: 'my-agent',
-    features: {
-      workingMemory: true,
-      inContextMemory: true,
-      persistentInstructions: true,
-      userInfo: true,
-    },
-  },
-});
-```
-
-**Feature-Aware APIs:**
-
-```typescript
-// Check if a feature is enabled
-ctx.features.workingMemory;           // boolean
-ctx.features.inContextMemory;         // boolean
-ctx.features.persistentInstructions;  // boolean
-ctx.features.userInfo;                // boolean
-
-// Get read-only feature configuration
-ctx.features; // also includes sharedWorkspace, memory, memoryWrite, and registered external feature keys
-
-// Access nullable memory
-ctx.memory;  // WorkingMemoryPluginNextGen | null
-
-// Access plugins by name
-ctx.getPlugin('working_memory');            // WorkingMemoryPluginNextGen | null
-ctx.getPlugin('in_context_memory');         // InContextMemoryPluginNextGen | null
-ctx.getPlugin('persistent_instructions');   // PersistentInstructionsPluginNextGen | null
-ctx.getPlugin('user_info');                 // UserInfoPluginNextGen | null
-ctx.getPlugin('tool_catalog');              // ToolCatalogPluginNextGen | null
-ctx.getPlugin('shared_workspace');          // SharedWorkspacePluginNextGen | null
-ctx.getPlugin('memory');                    // MemoryPluginNextGen | null
-ctx.getPlugin('memory_write');              // MemoryWritePluginNextGen | null
-
-// Check if plugin exists
-ctx.hasPlugin('working_memory');  // boolean
-```
-
-**Tool Auto-Registration:**
-
-AgentContextNextGen automatically registers feature-aware tools based on enabled features:
-
-```typescript
-import { AgentContextNextGen } from 'oneringai';
-
-// With workingMemory enabled (default)
-const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
-console.log(ctx.tools.has('store_set'));     // true (store_* tools registered)
-
-// With workingMemory disabled - memory store not available
-const ctx2 = AgentContextNextGen.create({
-  model: 'gpt-4.1',
-  features: { workingMemory: false },
-});
-// store_* tools are still registered, but store_set("notes", ...) will fail
-```
-
-**Tools registered by feature:**
-
-All plugin stores are accessed through 5 unified `store_*` tools: `store_get`, `store_set`, `store_delete`, `store_list`, `store_action`. Each feature flag enables its corresponding store:
-
-- **workingMemory=true** (default): enables `"notes"` store (e.g., `store_set("notes", key, { description, value })`)
-- **inContextMemory=true**: enables `"whiteboard"` store (e.g., `store_set("whiteboard", key, { description, value })`)
-- **persistentInstructions=true**: enables `"instructions"` store (e.g., `store_set("instructions", key, { content })`)
-- **userInfo=true**: enables `"user_info"` store (e.g., `store_set("user_info", key, { value })`)
-- **sharedWorkspace=true**: enables `"workspace"` store (e.g., `store_set("workspace", key, { summary, content })`)
-- **memory=true**: adds six `memory_*` read tools and injects the configured user/profile view (these are not `store_*` tools)
-- **memoryWrite=true**: adds six `memory_*` write tools and requires `memory=true`
-
-TODO tools (`todo_add`, `todo_update`, `todo_remove`) remain separate and are registered when `userInfo=true`.
-
-**Backward Compatibility:**
-
-- Default features: `workingMemory: true`, `inContextMemory: true`, `persistentInstructions: false`, `sharedWorkspace: false`
-- Code not using `features` config works unchanged
-
-#### Conversation Management
-
-AgentContextNextGen provides a simple API for managing conversation history:
-
-```typescript
-import { AgentContextNextGen } from 'oneringai';
-
-const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
-
-// Add user message
-ctx.addUserMessage('Hello!');
-
-// Prepare for LLM call (handles compaction if needed)
-const { input, budget } = await ctx.prepare();
-
-// ... call LLM with input ...
-
-// Add assistant response
-ctx.addAssistantResponse(response.output);
-
-// Add tool results
-ctx.addToolResults([
-  { tool_use_id: 'call_123', content: JSON.stringify({ result: 'success' }), state: ToolCallState.COMPLETED }
-]);
-
-// Get conversation history
-const conversation = ctx.getConversation();
-
-// Clear conversation
-ctx.clearConversation('Starting fresh');
-```
-
-**Compaction:**
-
-Compaction happens during `prepare()` when content utilization exceeds the configured
-critical threshold (`0.9` by default), after subtracting response reserve and tools.
-The strategy threshold determines the reclaim target; it does not trigger early
-spilling below critical. Each preparation runs at most one strategy pass, rebuilds
-all contributions, sanitizes tool groups before counting, and checks the final fit.
-
-The strategy metadata is:
-
-| Strategy | Reclaim threshold | Description |
-|----------|-----------|-------------|
-| `algorithmic` | 75% | Moves large tool results to Working Memory, limits tool pairs, applies rolling window (default) |
-
-Custom strategies can be registered via `StrategyRegistry.register()`.
-
-**Context Budget:**
-
-```typescript
-const { input, budget, compacted } = await ctx.prepare();
-
-console.log(budget.utilizationPercent);  // Current usage %
-console.log(budget.available);           // Remaining tokens
-console.log(compacted);                  // true if compaction occurred
-```
-
-Final checks include synchronous request-event changes, the dispatch model’s capacity
-(with explicit host limits retained), structured schemas/native tools, and tool-call
-replay signatures. Managed JSON formatting and repair checks fit without replacing
-the main prepared revision. Algorithmic spill preserves connected native results
-and attachments before removal; storage failures leave history intact.
-Initial preparation also counts known schemas/native tools and resolves the initial
-provider window, so evictable history can be removed before final validation.
-Spill allocation checks existing memory keys across turns and save/load; collisions
-receive distinct suffixes and every new spill is verified before history removal.
-Function-result errors participate in the same accounting as custom-result errors.
-
-Budgets are estimates, not provider-reported usage. `agent.context.lastPreparation`
-returns a detached snapshot with `revision`, `preparedAt`, and `budget` for the last
-selected request. Later context mutations do not rewrite that request's history.
-`lastBudget` and `calculateBudget()` preserve their cached inspection semantics.
-Use these getters for UI inspection instead of calling `prepare()` again.
-
-Managed `run()` and `stream()` send the definitions counted during preparation,
-including dynamic descriptions and identity filtering, and recount host-hook changes
-without another compaction. Native async calls may remain outstanding; pending
-results protect their connected calls. Duplicate final results for one call are
-reported as `INVALID_TOOL_PROTOCOL`, while asynchronous completion messages remain
-supported. Protected content that cannot fit produces `ContextOverflowError`.
-The existing user rejection/tool-text emergency truncation policy is preserved.
-
-See [Context Preparation](./docs/CONTEXT_PREPARATION.md) for additive adapter options,
-legacy strategy behavior, concurrency bounds, estimation limits, and the offline
-`npm run example:context-freshness`, `npm run example:context-budget`, and
-`npm run example:structured-budget` demonstrations. AMOS labels selected revisions in
-`/context budget` and `/context breakdown`.
-
-#### Session Persistence
-
-AgentContextNextGen supports saving and loading sessions:
-
-```typescript
-import { AgentContextNextGen, createFileContextStorage } from 'oneringai';
-
-// Create storage
-const storage = createFileContextStorage('my-agent');
-
-// Create context with storage
-const ctx = AgentContextNextGen.create({
-  model: 'gpt-4.1',
-  features: { workingMemory: true },
-  storage,
-});
-
-// Add messages and data
-ctx.addUserMessage('Hello');
-
-// Save session
-await ctx.save('session-001', { title: 'My Session' });
-
-// Later: Load session
-const ctx2 = AgentContextNextGen.create({ model: 'gpt-4.1', storage });
-await ctx2.load('session-001');
-// ctx2 now has full conversation and plugin states restored
-```
-
-#### Plugin System (NextGen)
-
-Extend AgentContextNextGen with custom plugins:
-
-```typescript
-import { IContextPluginNextGen, BasePluginNextGen, AgentContextNextGen } from 'oneringai';
-
-// Create a custom plugin by extending BasePluginNextGen
-class MyPlugin extends BasePluginNextGen {
-  readonly name = 'my_plugin';
-
-  private data: string[] = [];
-
-  // Static usage instructions for the LLM (never compacted)
-  getInstructions(): string | null {
-    return null;
-  }
-
-  // Return content to be included in context (must update the token cache)
-  async getContent(): Promise<string | null> {
-    if (this.data.length === 0) return null;
-    const content = `## My Plugin Data\n${this.data.join('\n')}`;
-    this.updateTokenCache(this.estimator.estimateTokens(content));
-    return content;
-  }
-
-  // Raw data for programmatic inspection
-  getContents(): unknown {
-    return this.data;
-  }
-
-  addData(item: string) {
-    this.data.push(item);
-    this.invalidateTokenCache();
-  }
-
-  // Opt in to compaction (base class defaults to false)
-  isCompactable(): boolean {
-    return this.data.length > 0;
-  }
-
-  // Compact: reduce content to fit within targetTokensToFree
-  async compact(targetTokensToFree: number): Promise<number> {
-    const before = this.getTokenSize();
-    while (this.getTokenSize() > targetTokensToFree && this.data.length > 1) {
-      this.data.shift();
-      await this.getContent(); // refreshes the token cache
-    }
-    return before - this.getTokenSize();
-  }
-
-  // Serialize state for persistence
-  getState(): unknown {
-    return { data: this.data };
-  }
-
-  // Restore state
-  restoreState(state: unknown): void {
-    this.data = ((state as { data?: string[] }).data) || [];
-    this.invalidateTokenCache();
-  }
-}
-
-// Use the plugin
-const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
-const plugin = new MyPlugin();
-ctx.registerPlugin(plugin);
-plugin.addData('Custom data');
-```
-
-#### Events
-
-Monitor AgentContextNextGen activity:
-
-```typescript
-const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
-
-// Message events
-ctx.on('message:added', ({ role }) => {
-  console.log(`New ${role} message`);
-});
-
-// Compaction events
-ctx.on('context:compacted', ({ tokensFreed }) => {
-  console.log(`Freed ${tokensFreed} tokens`);
-});
-
-// Budget events
-ctx.on('budget:warning', ({ budget }) => {
-  console.log(`Context at ${budget.utilizationPercent.toFixed(1)}%`);
-});
-
-// Context prepared event
-ctx.on('context:prepared', ({ budget }) => {
-  console.log(`Context prepared: ${budget.totalUsed}/${budget.maxTokens} tokens`);
-});
-```
-
-#### Accessing Context in Agent
-
-Agent uses **AgentContextNextGen** with plugins for extended functionality:
-
-```typescript
-import { Agent, AgentContextNextGen, WorkingMemoryPluginNextGen } from 'oneringai';
-
-// Create Agent with NextGen context
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  tools: [myTool],
-  context: {
-    features: { workingMemory: true, inContextMemory: true },
-  },
-});
-
-// Access AgentContextNextGen directly
-agent.context.addUserMessage('Hello');
-const { input, budget } = await agent.context.prepare();
-agent.context.addAssistantResponse(response);
-
-// Get conversation
-const conversation = agent.context.getConversation();  // Message[]
-
-// Access WorkingMemory via plugin
-const memoryPlugin = agent.context.getPlugin('working_memory') as WorkingMemoryPluginNextGen;
-await memoryPlugin.store('key', 'description', value);
-
-// Access tools via context
-agent.context.tools.disable('tool_name');
-```
-
-**AgentContextNextGen API:**
-```typescript
-// AgentContextNextGen provides clean context management:
-ctx.addUserMessage(content);              // Set current user input
-ctx.addAssistantResponse(response);       // Add response to conversation
-await ctx.prepare();                      // Prepare context for LLM call, returns { input, budget }
-ctx.getConversation();                    // Get conversation history
-ctx.registerPlugin(plugin);               // Register context plugin
-ctx.getPlugin(name);                      // Get registered plugin by name
-await ctx.consolidate();                  // Post-cycle consolidation (strategy-driven cleanup)
-await ctx.save(sessionId);                // Save session (if storage configured)
-await ctx.load(sessionId);                // Load session (if storage configured)
-
-// Access ToolManager:
-ctx.tools;                                // ToolManager instance
-```
-
-**NextGen Plugin System:**
-
-Use NextGen plugins to extend AgentContextNextGen:
-
-```typescript
-import { BasePluginNextGen, WorkingMemoryPluginNextGen, InContextMemoryPluginNextGen } from 'oneringai';
-
-// Built-in NextGen plugins:
-// - WorkingMemoryPluginNextGen: Tiered memory (raw/summary/findings)
-// - InContextMemoryPluginNextGen: Live key-value storage in context
-// - PersistentInstructionsPluginNextGen: Disk-persisted instructions
-
-// Custom plugin example:
-class MyPlugin extends BasePluginNextGen {
-  readonly name = 'my_plugin';
-
-  getInstructions(): string | null {
-    return null;
-  }
-
-  async getContent(): Promise<string | null> {
-    const content = 'Custom context content';
-    this.updateTokenCache(this.estimator.estimateTokens(content));
-    return content;
-  }
-
-  getContents(): unknown {
-    return null;
-  }
-}
-
-ctx.registerPlugin(new MyPlugin());
-```
-
----
-
-### Why Context Management Matters
-
-LLMs have fixed context windows (e.g., 128K tokens for GPT-4, 200K for Claude). As conversations grow, you must:
-- **Track usage** to avoid hitting limits
-- **Prioritize content** (instructions vs history vs memory)
-- **Compact intelligently** when approaching limits
-- **Preserve critical information** while freeing space
-
-The context management system handles all of this automatically.
-
-### Basic Context Management
-
-Context management is **automatic** with AgentContextNextGen:
-
-```typescript
-import { Agent } from 'oneringai';
-
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  tools: [myTool],
-  context: {
-    strategy: 'algorithmic',  // Default: compact at 75% utilization
-    features: { workingMemory: true },
-  },
-});
-
-// AgentContextNextGen will automatically:
-// 1. Track context usage across all plugins
-// 2. Compact when approaching limits (at prepare() time)
-// 3. Evict low-priority memory entries when needed
-// 4. Call plugin compact() methods in priority order
-// 5. Emit events for monitoring
-```
-
-### Architecture Overview
-
-The context management system is built around **AgentContextNextGen** - the clean, plugin-first context manager:
-
-```
-┌─────────────────────────────────────────────────────┐
-│               AgentContextNextGen                    │
-│  - Plugin-first architecture                        │
-│  - Clean message flow (addUserMessage → prepare)    │
-│  - Single compaction point (right before LLM call)  │
-└─────────────────┬───────────────────────────────────┘
-                  │
-    ┌─────────────┼─────────────┐
-    │             │             │
-    ▼             ▼             ▼
-┌─────────┐ ┌──────────┐ ┌───────────────┐
-│ Strategy│ │ Plugins  │ │ Context       │
-│ (how)   │ │ (what)   │ │ Structure     │
-└─────────┘ └──────────┘ └───────────────┘
-
-Critical gate: Decides WHEN to compact (90% content utilization by default)
-Strategy: Decides HOW to reclaim and its target (algorithmic threshold: 75%)
-Plugins: WorkingMemoryPluginNextGen, InContextMemoryPluginNextGen, etc.
-Context: Developer Message → Conversation History → Current Input
-```
-
-### Manual Context Management
-
-For advanced use cases, use **AgentContextNextGen** with plugins:
-
-```typescript
-import {
-  AgentContextNextGen,
-  WorkingMemoryPluginNextGen,
-  InContextMemoryPluginNextGen,
-} from 'oneringai';
-
-// Create AgentContextNextGen with configuration
-const ctx = AgentContextNextGen.create({
-  model: 'gpt-4.1',
-  systemPrompt: 'Your system instructions',
-  maxContextTokens: 128000,    // Model's context window
-  responseReserve: 4096,       // Reserve tokens for response
-  strategy: 'algorithmic',     // Default strategy (75% reclaim threshold; critical gate controls triggering)
-  features: {
-    workingMemory: true,       // Enable WorkingMemoryPluginNextGen
-    inContextMemory: true,     // Enable InContextMemoryPluginNextGen
-  },
-});
-
-// Plugins are auto-registered when features are enabled
-// Access them via getPlugin():
-const memoryPlugin = ctx.getPlugin('working_memory') as WorkingMemoryPluginNextGen;
-const inContextPlugin = ctx.getPlugin('in_context_memory') as InContextMemoryPluginNextGen;
-
-// Add user message (sets _currentInput)
-ctx.addUserMessage('Current task description');
-
-// Prepare context before each LLM call
-const { input, budget } = await ctx.prepare();
-console.log(`Context: ${budget.totalUsed}/${budget.maxTokens} tokens`);
-console.log(`Utilization: ${budget.utilizationPercent.toFixed(1)}%`);
-
-// After LLM response, add it to conversation
-ctx.addAssistantResponse(llmResponse);
-
-// Get conversation history
-const conversation = ctx.getConversation();  // Message[]
-```
-
-### Compactors Deep Dive
-
-> **Note:** `TruncateCompactor`, `MemoryEvictionCompactor`, and `SummarizeCompactor` implement the legacy `IContextCompactor`/`IContextComponent` interfaces (`src/core/context/types.ts`) and are standalone utility classes — `AgentContextNextGen` never uses them. Its actual compaction is driven entirely by `ICompactionStrategy` implementations (e.g. `AlgorithmicCompactionStrategy`), which contain no reference to these compactor classes.
-
-Compactors determine **how** content is reduced during compaction. Each compactor handles components with a matching `strategy` metadata.
-
-#### Available Compactors
-
-| Compactor | Strategy | Priority | What It Does |
-|-----------|----------|----------|--------------|
-| **TruncateCompactor** | `truncate` | 10 | Removes content from the end |
-| **MemoryEvictionCompactor** | `evict` | 8 | Evicts low-priority memory entries |
-| **SummarizeCompactor** | `summarize` | 5 | Uses LLM to create intelligent summaries |
-
-**Lower priority number = runs earlier** (summarize before truncate).
-
-#### SummarizeCompactor (LLM-Based)
-
-The `SummarizeCompactor` uses an LLM to intelligently summarize content, preserving key information while reducing token count.
-
-```typescript
-import { SummarizeCompactor, ApproximateTokenEstimator } from 'oneringai';
-
-const estimator = new ApproximateTokenEstimator();
-
-// Create summarize compactor with LLM
-const summarizeCompactor = new SummarizeCompactor(estimator, {
-  textProvider: myTextProvider,     // Required: LLM for summarization
-  model: 'gpt-4o-mini',             // Optional: model to use (default: same as agent)
-  maxSummaryTokens: 500,            // Optional: max tokens for summary
-  preserveStructure: true,          // Optional: keep headings/lists (default: true)
-  fallbackToTruncate: true,         // Optional: truncate if LLM fails (default: true)
-});
-
-// Components with strategy: 'summarize' will use this compactor
-const component = {
-  name: 'conversation_history',
-  content: longConversation,
-  priority: 6,
-  compactable: true,
-  metadata: { strategy: 'summarize' },  // Uses SummarizeCompactor
-};
-```
-
-**What SummarizeCompactor Preserves:**
-
-For **conversation history**:
-- Key decisions made
-- Important facts discovered
-- User preferences expressed
-- Unresolved questions
-
-For **tool outputs** (search/scrape results):
-- Key findings relevant to the task
-- Source URLs and main points
-- Factual data (numbers, dates, names)
-- Contradictions between sources
-
-```typescript
-// Example: Research task with summarization
-// AgentContextNextGen is the unified context manager - configure via Agent.create()
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  context: {
-    features: { workingMemory: true },
-  },
-});
-
-// Access context management via agent.context (AgentContextNextGen instance)
-const { budget } = await agent.context.prepare();
-```
-
-#### MemoryEvictionCompactor
-
-Evicts low-priority memory entries based on the `avgEntrySize` metadata.
-
-```typescript
-import { MemoryEvictionCompactor } from 'oneringai';
-
-const evictionCompactor = new MemoryEvictionCompactor(estimator);
-
-// Components with strategy: 'evict' will use this compactor
-const memoryComponent = {
-  name: 'memory_index',
-  content: memoryIndex,
-  priority: 8,
-  compactable: true,
-  metadata: {
-    strategy: 'evict',
-    avgEntrySize: 100,                    // Average tokens per entry
-    evict: async (count) => { await evictMemoryEntries(count); },
-    getUpdatedContent: async () => getMemoryIndex(),
-  },
-};
-```
-
-### Pre-Compaction Hooks
-
-The `beforeCompaction` lifecycle hook allows agents to save important data before compaction occurs. This is critical for research tasks where tool outputs may contain valuable information.
-
-```typescript
-import { Agent } from 'oneringai';
-// Note: the `BeforeCompactionContext` type shown below is defined internally
-// (src/core/BaseAgent.ts) and is not currently re-exported from the package root —
-// inline-type your handler's parameter or mirror the shape shown below until it is exported.
-
-// Define lifecycle hooks when creating the agent
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  lifecycleHooks: {
-    beforeCompaction: async (context: BeforeCompactionContext) => {
-      console.log(`Agent ${context.agentId}: Compaction starting`);
-      console.log(`Current usage: ${context.currentBudget.used}/${context.currentBudget.total}`);
-      console.log(`Need to free: ${context.estimatedTokensToFree} tokens`);
-      console.log(`Strategy: ${context.strategy}`);
-      console.log(`Components to compact: ${context.components.length}`);
-
-      // Example: Save important tool outputs before they're compacted
-      for (const component of context.components) {
-        if (component.name === 'tool_outputs' && component.compactable) {
-          // Extract key findings and save to memory
-          await saveKeyFindings(component.content);
-        }
-      }
-    },
-  },
-});
-
-// AgentContextNextGen handles all context management internally
-// No separate ContextManager needed
-```
-
-#### BeforeCompactionContext
-
-The hook receives detailed context about the upcoming compaction:
-
-```typescript
-interface BeforeCompactionContext {
-  /** Agent identifier */
-  agentId: string;
-
-  /** Current context budget info (a lightweight summary, not the full ContextBudget) */
-  currentBudget: {
-    total: number;
-    used: number;
-    available: number;
-    utilizationPercent: number;
-    status: 'ok' | 'warning' | 'critical';
-  };
-
-  /** Strategy being used (e.g. 'algorithmic') */
-  strategy: string;
-
-  /** Components about to be compacted (read-only summaries) */
-  components: ReadonlyArray<{
-    name: string;
-    priority: number;
-    compactable: boolean;
-  }>;
-
-  /** Estimated tokens that need to be freed */
-  estimatedTokensToFree: number;
-}
-```
-
-#### Error Handling in Hooks
-
-Hooks are designed to be resilient - errors are logged but don't prevent compaction:
-
-```typescript
-const hooks = {
-  beforeCompaction: async (context) => {
-    // Even if this throws, compaction will continue
-    throw new Error('Hook error');
-  },
-};
-
-// Compaction proceeds, error is logged to console
-```
-
-### Context Strategies Deep Dive
-
-AgentContextNextGen uses a **strategy-based compaction system** with the `ICompactionStrategy` interface. The strategy controls when and how context is compacted.
-
-#### Built-in Strategies
-
-| Strategy | Reclaim threshold | Description |
-|----------|-----------|-------------|
-| **algorithmic** (default) | 75% | Moves large tool results to Working Memory, limits tool pairs to 10, applies rolling window. Best for tool-heavy agents. |
-
-The `algorithmic` strategy is the recommended default. It requires the `working_memory` plugin to be enabled (which it is by default).
-
-```typescript
-// Default - uses algorithmic strategy automatically
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  context: { features: { workingMemory: true } },
-});
-
-// Explicit strategy selection
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  context: { strategy: 'algorithmic' },
-});
-```
-
----
-
-### Creating Custom Strategies
-
-For specialized use cases, implement `ICompactionStrategy` and register it via `StrategyRegistry`:
-
-```typescript
-import {
-  ICompactionStrategy,
-  CompactionContext,
-  CompactionResult,
-  ConsolidationResult,
-  StrategyRegistry,
-  Agent,
-} from 'oneringai';
-
-// Implement the ICompactionStrategy interface
-class TimeBasedStrategy implements ICompactionStrategy {
-  readonly name = 'time-based';
-  readonly displayName = 'Time-Based';
-  readonly description = 'Adjusts compaction threshold based on time of day';
-
-  get threshold(): number {
-    const hour = new Date().getHours();
-    const isBusinessHours = hour >= 9 && hour <= 17;
-    return isBusinessHours ? 0.60 : 0.85;
-  }
-
-  async compact(context: CompactionContext, targetToFree: number): Promise<CompactionResult> {
-    const log: string[] = [];
-
-    // Remove old messages from conversation
-    const messages = context.conversation;
-    const toRemove = Math.floor(messages.length * 0.3);
-    const indices = Array.from({ length: toRemove }, (_, i) => i);
-    const tokensFreed = await context.removeMessages(indices);
-
-    log.push(`Time-based: removed ${toRemove} old messages`);
-    return { tokensFreed, messagesRemoved: indices.length, pluginsCompacted: [], log };
-  }
-
-  async consolidate(context: CompactionContext): Promise<ConsolidationResult> {
-    // Post-cycle cleanup (optional)
-    return { performed: false, tokensChanged: 0, actions: [] };
-  }
-}
-
-// Register the custom strategy
-StrategyRegistry.register(TimeBasedStrategy);
-
-// Use your custom strategy via Agent.create()
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  context: {
-    strategy: 'time-based',  // Uses your registered strategy
-  },
-});
-
-// Or provide a strategy instance directly
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  context: {
-    compactionStrategy: new TimeBasedStrategy(),
-  },
-});
-```
-
-### Using Strategies
-
-```typescript
-// Default - algorithmic strategy (recommended for most use cases)
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  // strategy defaults to 'algorithmic' (75% threshold)
-});
-
-// Custom registered strategy
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  context: { strategy: 'time-based' },  // Your registered strategy
-});
-```
-
-### Token Estimation
-
-The `ApproximateTokenEstimator` provides content-type-aware estimation:
-
-```typescript
-import { ApproximateTokenEstimator } from 'oneringai';
-
-const estimator = new ApproximateTokenEstimator();
-
-// Basic estimation (mixed content assumed)
-const tokens1 = estimator.estimateTokens('Hello, world!');
-
-// Content-type-aware estimation for better accuracy
-const codeTokens = estimator.estimateTokens(sourceCode, 'code');    // ~3 chars/token
-const proseTokens = estimator.estimateTokens(essay, 'prose');       // ~4 chars/token
-const mixedTokens = estimator.estimateTokens(readme, 'mixed');      // ~3.5 chars/token
-
-// Estimate structured data
-const dataTokens = estimator.estimateDataTokens({ users: [], config: {} });
-```
-
-**Why content type matters:**
-- Code has more special characters and shorter words → fewer chars/token
-- Prose has longer words and punctuation → more chars/token
-- Accurate estimation prevents over/under-compaction
-
-### Context Budget Monitoring
-
-```typescript
-// Get budget from prepare() call
-const { input, budget, compacted } = await agent.context.prepare();
-
-console.log(`Max tokens: ${budget.maxTokens}`);
-console.log(`Used tokens: ${budget.totalUsed}`);
-console.log(`Available: ${budget.available}`);
-console.log(`Utilization: ${budget.utilizationPercent.toFixed(1)}%`);
-
-// Check if compaction occurred
-if (compacted) {
-  console.log('Context was compacted to make room');
-}
-
-// Detailed breakdown
-console.log('Breakdown:');
-console.log(`  System prompt: ${budget.breakdown.systemPrompt} tokens`);
-console.log(`  Plugin instructions: ${budget.breakdown.pluginInstructions} tokens`);
-console.log(`  Conversation: ${budget.breakdown.conversation} tokens`);
-console.log(`  Current input: ${budget.breakdown.currentInput} tokens`);
-```
-
-### Agent Lifecycle Hooks for Context
-
-Use lifecycle hooks to integrate context management with your application. **Caveat:** in the current `Agent` implementation, only `beforeCompaction` is actually invoked at runtime (wired in `Agent`'s constructor via `AgentContextNextGen.setBeforeCompactionCallback`). `beforeContextPrepare`, `afterCompaction`, `beforeToolExecution`, `afterToolExecution`, and `onError` can be registered via `agent.setLifecycleHooks()`, but no code path in `Agent`/`BaseAgent` currently calls their `invoke*` helpers, so they will not fire.
-
-```typescript
-import type { AgentConfig } from 'oneringai';
-
-type LifecycleHooks = NonNullable<AgentConfig['lifecycleHooks']>;
-
-const hooks: LifecycleHooks = {
-  // This is the lifecycle hook currently wired by Agent.
-  beforeCompaction: async (context) => {
-    await monitoring.record({
-      event: 'context_compaction_starting',
-      agentId: context.agentId,
-      utilizationPercent: context.currentBudget.utilizationPercent,
-      strategy: context.strategy,
-      estimatedTokensToFree: context.estimatedTokensToFree,
-    });
-  },
-};
-
-// Apply hooks to agent
-agent.setLifecycleHooks(hooks);
-```
-
-### Best Practices for Context Management
-
-#### 1. Use the Default Strategy
-
-The `algorithmic` strategy (default, 75% reclaim threshold; 90% critical trigger) works well for most use cases. It automatically offloads large tool results to Working Memory and manages conversation history:
-
-```typescript
-import { Agent } from 'oneringai';
-
-// Default algorithmic strategy - recommended for most use cases
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  context: { features: { workingMemory: true } },
-});
-
-// For custom compaction behavior, register a custom strategy via StrategyRegistry
-```
-
-#### 2. Monitor in Production
-
-```typescript
-// Set up monitoring with AgentContextNextGen events
-const ctx = agent.context;
-
-ctx.on('context:compacted', async ({ tokensFreed }) => {
-  await metrics.gauge('context.tokens_freed', tokensFreed);
-});
-
-ctx.on('context:prepared', async ({ budget }) => {
-  await metrics.gauge('context.usage', budget.totalUsed);
-  await metrics.gauge('context.total', budget.maxTokens);
-});
-
-ctx.on('budget:warning', async ({ budget }) => {
-  const utilization = Math.round(budget.utilizationPercent);
-  await alerts.warn(`Context warning: ${utilization}%`);
-});
-```
-
-#### 3. Use WorkingMemory Tiers
-
-```typescript
-// Store data in appropriate tiers based on importance
-const memoryPlugin = ctx.getPlugin('working_memory') as WorkingMemoryPluginNextGen;
-
-// Raw tier: Large, unprocessed data (evicted first)
-await memoryPlugin.store('search.results', 'Raw search results', largeResults, { tier: 'raw' });
-
-// Summary tier: Condensed information
-await memoryPlugin.store('search.summary', 'Search summary', summaryData, { tier: 'summary' });
-
-// Findings tier: Key insights (evicted last)
-await memoryPlugin.store('search.findings', 'Key findings', findings, { tier: 'findings' });
-```
-
-#### 4. Plan for Compaction
-
-```typescript
-// Structure data for efficient compaction using tiers
-const memoryPlugin = ctx.getPlugin('working_memory') as WorkingMemoryPluginNextGen;
-
-// BAD: Single large object in findings (won't be evicted easily)
-await memoryPlugin.store('all.data', 'All data', hugeObject, { tier: 'findings' });
-
-// GOOD: Split by importance using tiers
-// Raw tier: Evicted first during compaction
-await memoryPlugin.store('data.raw', 'Raw data', rawData, { tier: 'raw' });
-
-// Summary tier: Evicted second
-await memoryPlugin.store('data.summary', 'Summarized data', summaryData, { tier: 'summary' });
-
-// Findings tier: Evicted last (most important)
-await memoryPlugin.store('data.findings', 'Key findings', findings, { tier: 'findings' });
-```
-
----
-
-## Unified Store Tools
-
-In v0.5.0, the 19 plugin-specific CRUD tools (`memory_store`, `context_set`, `instructions_set`, `user_info_set`, etc.) were replaced with **5 generic `store_*` tools** that work across all stores. This reduces tool clutter, simplifies the LLM's decision-making, and makes it trivial to add new stores.
-
-### The 5 Generic Tools
-
-| Tool | Signature | Description |
-|------|-----------|-------------|
-| `store_get` | `store_get(store, key?)` | Read one value by exact key; omitting key returns a store-specific view, which may contain only metadata |
-| `store_set` | `store_set(store, key, data)` | Create or update an entry |
-| `store_delete` | `store_delete(store, key)` | Remove an entry by key |
-| `store_list` | `store_list(store, filter?)` | List entries with optional filters |
-| `store_action` | `store_action(store, action, params?)` | Store-specific operations (query, clear, etc.) |
-
-The `store` parameter is a string identifying which store to target. The `data` parameter is an object whose shape depends on the store.
-
-For `"notes"`, a keyless `store_get({ store: "notes" })` returns only keys,
-descriptions, and tiers. Read each source's contents with
-`store_get({ store: "notes", key: "<exact index key>" })`, including the displayed
-tier prefix and any collision suffix. `store_list` discovers entries omitted from
-the visible index. Other stores retain their own keyless behavior.
-
-### Available Stores
-
-| Store | Feature Flag | Description | Data Shape for `store_set` |
-|-------|-------------|-------------|---------------------------|
-| `"notes"` | `workingMemory: true` | Tiered working memory (raw/summary/findings) | `{ description, value, tier?, priority? }` |
-| `"whiteboard"` | `inContextMemory: true` | Key-value pairs visible directly in LLM context | `{ description, value, priority? }` (`showInUI` is host-owned metadata; see below) |
-| `"instructions"` | `persistentInstructions: true` | Agent instructions persisted to disk | `{ content }` |
-| `"user_info"` | `userInfo: true` | User-scoped preferences across agents | `{ value, description? }` |
-| `"workspace"` | `sharedWorkspace: true` | Multi-agent coordination workspace | `{ summary, content?, references?, status?, tags? }` |
-
-### When to Use Each Store
-
-| Need | Store | Why |
-|------|-------|-----|
-| Large data, external retrieval | `"notes"` | Index in context, full data via `store_get` |
-| Small live state, instant access | `"whiteboard"` | Full values rendered directly in context |
-| Cross-session agent rules | `"instructions"` | Persists to disk, auto-loaded on start |
-| User preferences shared across agents | `"user_info"` | User-scoped, not agent-scoped |
-| Multi-agent data sharing | `"workspace"` | Versioned entries with author tracking |
-
-### Migration from Old Tool Names
-
-| Old Tool | New Equivalent |
-|----------|---------------|
-| `memory_store(key, desc, value, ...)` | `store_set("notes", key, { description, value, tier?, ... })` |
-| `memory_retrieve(key)` | `store_get("notes", key)` |
-| `memory_delete(key)` | `store_delete("notes", key)` |
-| `memory_query(...)` | `store_action("notes", "query", { pattern?, tier?, ... })` |
-| `memory_cleanup_raw()` | `store_action("notes", "cleanup_raw")` |
-| `context_set(key, desc, value, ...)` | `store_set("whiteboard", key, { description, value, priority? })` |
-| `context_delete(key)` | `store_delete("whiteboard", key)` |
-| `context_list()` | `store_list("whiteboard")` |
-| `instructions_set(key, content)` | `store_set("instructions", key, { content })` |
-| `instructions_remove(key)` | `store_delete("instructions", key)` |
-| `instructions_list()` | `store_list("instructions")` |
-| `instructions_clear(confirm)` | `store_action("instructions", "clear", { confirm: true })` |
-| `user_info_set(key, value, desc?)` | `store_set("user_info", key, { value, description? })` |
-| `user_info_get(key?)` | `store_get("user_info", key?)` |
-| `user_info_remove(key)` | `store_delete("user_info", key)` |
-| `user_info_clear(confirm)` | `store_action("user_info", "clear", { confirm: true })` |
-
-> **Note:** TODO tools (`todo_add`, `todo_update`, `todo_remove`) are unchanged.
-
-### Example Usage by Store
-
-#### Memory Store
-
-```jsonc
-// Store data in working memory
-// Tool call from LLM:
-{
-  "name": "store_set",
-  "arguments": {
-    "store": "notes",
-    "key": "api_response",
-    "data": {
-      "description": "Full API response from /users endpoint",
-      "value": { "users": ["Alice", "Bob", "Charlie"] },
-      "tier": "findings",
-      "priority": "high"
-    }
-  }
-}
-
-// Retrieve data
-{
-  "name": "store_get",
-  "arguments": {
-    "store": "notes",
-    "key": "api_response"
-  }
-}
-
-// Query memory entries
-{
-  "name": "store_action",
-  "arguments": {
-    "store": "notes",
-    "action": "query",
-    "params": { "tier": "findings", "pattern": "api_*" }
-  }
-}
-
-// Clean up raw tier
-{
-  "name": "store_action",
-  "arguments": {
-    "store": "notes",
-    "action": "cleanup_raw"
-  }
-}
-```
-
-#### Context Store
-
-```jsonc
-// Store live state visible directly in context
-{
-  "name": "store_set",
-  "arguments": {
-    "store": "whiteboard",
-    "key": "current_state",
-    "data": {
-      "description": "Processing state for current task",
-      "value": { "step": 3, "status": "active" },
-      "priority": "high"
-    }
-  }
-}
-
-// Delete an entry
-{
-  "name": "store_delete",
-  "arguments": {
-    "store": "whiteboard",
-    "key": "temp_data"
-  }
-}
-
-// List all entries
-{
-  "name": "store_list",
-  "arguments": {
-    "store": "whiteboard"
-  }
-}
-```
-
-#### Instructions Store
-
-```jsonc
-// Set a persistent instruction
-{
-  "name": "store_set",
-  "arguments": {
-    "store": "instructions",
-    "key": "personality",
-    "data": {
-      "content": "Always be friendly and helpful. Use clear, simple language."
-    }
-  }
-}
-
-// Remove an instruction
-{
-  "name": "store_delete",
-  "arguments": {
-    "store": "instructions",
-    "key": "personality"
-  }
-}
-
-// Clear all instructions
-{
-  "name": "store_action",
-  "arguments": {
-    "store": "instructions",
-    "action": "clear",
-    "params": { "confirm": true }
-  }
-}
-```
-
-#### User Info Store
-
-```jsonc
-// Store user preference
-{
-  "name": "store_set",
-  "arguments": {
-    "store": "user_info",
-    "key": "theme",
-    "data": {
-      "value": "dark",
-      "description": "User preferred theme"
-    }
-  }
-}
-
-// Get all user info
-{
-  "name": "store_get",
-  "arguments": {
-    "store": "user_info"
-  }
-}
-
-// Clear all user info
-{
-  "name": "store_action",
-  "arguments": {
-    "store": "user_info",
-    "action": "clear",
-    "params": { "confirm": true }
-  }
-}
-```
-
-### Creating a Custom Store Plugin
-
-Any plugin that implements `IContextPluginNextGen` and `IStoreHandler` automatically becomes available as a store target. The `IStoreHandler` interface defines the CRUD operations:
-
-```typescript
-import {
-  BasePluginNextGen,
-  IStoreHandler,
-  StoreEntrySchema,
-  StoreGetResult,
-  StoreSetResult,
-  StoreDeleteResult,
-  StoreListResult,
-  StoreActionResult,
-} from 'oneringai';
-
-class SnippetsPlugin extends BasePluginNextGen implements IStoreHandler {
-  readonly name = 'snippets';
-
-  private snippets = new Map<string, { text: string; createdAt: number }>();
-
-  getStoreSchema(): StoreEntrySchema {
-    return {
-      storeId: 'snippets',
-      displayName: 'Snippets',
-      description: 'Text snippets keyed by name',
-      usageHint: 'Use for: quick reusable text snippets.',
-      setDataFields: 'text (required): Snippet content',
-    };
-  }
-
-  // IStoreHandler implementation
-  async storeGet(key?: string): Promise<StoreGetResult> {
-    if (key) {
-      const snippet = this.snippets.get(key);
-      return snippet ? { found: true, key, entry: snippet } : { found: false, key };
-    }
-    // Return all entries when key is omitted
-    const entries = Array.from(this.snippets.entries()).map(([k, v]) => ({ key: k, ...v }));
-    return { found: true, entries };
-  }
-
-  async storeSet(key: string, data: Record<string, unknown>): Promise<StoreSetResult> {
-    const text = data.text as string;
-    if (!text) return { success: false, key, error: 'Missing "text" field' };
-    this.snippets.set(key, { text, createdAt: Date.now() });
-    return { success: true, key, message: `Snippet "${key}" saved` };
-  }
-
-  async storeDelete(key: string): Promise<StoreDeleteResult> {
-    const deleted = this.snippets.delete(key);
-    return { deleted, key };
-  }
-
-  async storeList(filter?: Record<string, unknown>): Promise<StoreListResult> {
-    const entries = Array.from(this.snippets.entries()).map(([k, v]) => ({
-      key: k,
-      text: v.text,
-      createdAt: v.createdAt,
-    }));
-    return { entries, total: entries.length };
-  }
-
-  async storeAction(action: string, params?: Record<string, unknown>): Promise<StoreActionResult> {
-    if (action === 'clear') {
-      if (!params?.confirm) return { success: false, action, error: 'Requires confirm: true' };
-      this.snippets.clear();
-      return { success: true, action, message: 'All snippets cleared' };
-    }
-    return { success: false, action, error: `Unknown action: ${action}` };
-  }
-
-  // Standard plugin methods
-  getInstructions(): string | null { return 'Use store_set("snippets", key, { text }) to save text snippets.'; }
-  async getContent(): Promise<string | null> { return null; }
-  getContents(): unknown { return Object.fromEntries(this.snippets); }
-  getTools() { return []; }  // No plugin-specific tools needed; store_* tools handle everything
-}
-```
-
-Register and use:
-
-```typescript
-const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
-ctx.registerPlugin(new SnippetsPlugin());
-
-// Now the LLM can use:
-// store_set("snippets", "meeting", { text: "Discussed Q3 roadmap" })
-// store_get("snippets", "meeting")
-// store_list("snippets")
-// store_action("snippets", "clear", { confirm: true })
-```
-
----
-
-## Shared Workspace
-
-The **Shared Workspace** store enables multi-agent coordination by providing a shared, versioned key-value space that multiple agents can read from and write to.
-
-### Setup
-
-```typescript
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  context: {
-    features: { sharedWorkspace: true },
-  },
-});
-```
-
-### Entry Model
-
-Each workspace entry has richer metadata than other stores:
-
-```typescript
-interface WorkspaceEntry {
-  key: string;
-  content?: string;           // Inline text content (for collaborative documents)
-  references?: string[];      // External pointers: file paths, DB IDs, URLs
-  summary: string;            // Human-readable summary (always required)
-  status?: string;            // e.g., "draft", "final", "in-review"
-  author?: string;            // Agent or user who wrote it
-  version: number;            // Auto-incremented on each update
-  tags?: string[];            // Categorization tags
-  createdAt: number;
-  updatedAt: number;
-}
-```
-
-### Usage
-
-```jsonc
-// Store a workspace entry
-{
-  "name": "store_set",
-  "arguments": {
-    "store": "workspace",
-    "key": "research_findings",
-    "data": {
-      "summary": "Analysis of competitor pricing models",
-      "content": "Competitors: ...\nInsights: ...",
-      "status": "draft",
-      "tags": ["research", "pricing"],
-      "references": ["market_data"]
-    }
-  }
-}
-
-// Get a specific entry
-{
-  "name": "store_get",
-  "arguments": {
-    "store": "workspace",
-    "key": "research_findings"
-  }
-}
-
-// List entries (with optional filter)
-{
-  "name": "store_list",
-  "arguments": {
-    "store": "workspace",
-    "filter": { "tags": ["research"], "status": "draft" }
-  }
-}
-```
-
-### Workspace-Specific Actions
-
-The workspace store supports additional actions via `store_action`:
-
-| Action | Params | Description |
-|--------|--------|-------------|
-| `log` | `{ message, author? }` | Append a log entry (for coordination/debugging) |
-| `history` | `{ limit? }` | Get recent entries from the shared team log (default limit: 20) |
-| `archive` | `{ key }` | Archive an entry (soft-delete) |
-| `clear` | `{ confirm: true }` | Clear all entries |
-
-```jsonc
-// Log a coordination message
-{
-  "name": "store_action",
-  "arguments": {
-    "store": "workspace",
-    "action": "log",
-    "params": { "message": "Starting phase 2 of analysis", "author": "researcher" }
-  }
-}
-
-// Get recent team log entries
-{
-  "name": "store_action",
-  "arguments": {
-    "store": "workspace",
-    "action": "history",
-    "params": { "limit": 20 }
-  }
-}
-```
-
-### Multi-Agent Example
-
-```typescript
-import { Agent, Connector, Vendor } from 'oneringai';
-
-Connector.create({
-  name: 'openai',
-  vendor: Vendor.OpenAI,
-  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
-});
-
-// Two agents share the same workspace via shared storage
-const researcher = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  instructions: 'You are a research agent. Store findings in the workspace.',
-  context: { features: { sharedWorkspace: true } },
-});
-
-const writer = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  instructions: 'You are a writing agent. Read findings from workspace and write reports.',
-  context: { features: { sharedWorkspace: true } },
-});
-
-// Researcher stores findings
-await researcher.run('Research AI trends for 2026');
-// Agent calls: store_set("workspace", "ai_trends", { summary: "Key AI trends...", content: {...} })
-
-// Writer reads findings and writes report
-await writer.run('Write a report based on the workspace findings');
-// Agent calls: store_get("workspace", "ai_trends"), then produces a report
-```
-
----
-
-## InContextMemory (NextGen Plugin)
-
-**InContextMemoryPluginNextGen** is a context plugin that stores key-value pairs **directly in the LLM context** (not just an index like WorkingMemory). This is ideal for small, frequently-updated state that the LLM needs instant access to without retrieval calls.
-
-### Key Difference from WorkingMemory
-
-| Feature | WorkingMemory | InContextMemory |
-|---------|---------------|-----------------|
-| **Storage** | External (in-memory or file) | Directly in LLM context |
-| **Context visibility** | Index only (keys + descriptions) | Full values visible |
-| **Access pattern** | Requires `store_get("notes", key)` call | Immediate - no retrieval needed |
-| **UI integration** | Host-defined | `showInUI` metadata and `onEntriesChanged` are available to hosts; core renders no UI |
-| **Best for** | Large data, rarely accessed info | Small state, frequently updated, live dashboards |
-| **Default capacity** | 25MB | 20 entries, 40000 tokens |
-
-### Quick Setup
-
-```typescript
-import { AgentContextNextGen, InContextMemoryPluginNextGen } from 'oneringai';
-
-const ctx = AgentContextNextGen.create({
-  model: 'gpt-4.1',
-  features: { inContextMemory: true },  // Enables InContextMemoryPluginNextGen
-});
-
-// Plugin is automatically registered when feature is enabled
-// Access it via the plugin registry
-const plugin = ctx.getPlugin('in_context_memory') as InContextMemoryPluginNextGen;
-plugin.set('state', 'Current processing state', { step: 1, status: 'active' });
-```
-
-### Manual Setup
-
-For more control, you can set up the plugin manually:
-
-```typescript
-import { AgentContextNextGen, InContextMemoryPluginNextGen } from 'oneringai';
-
-const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
-
-// Create and configure plugin
-const plugin = new InContextMemoryPluginNextGen({
-  maxEntries: 20,
-  maxTotalTokens: 40000,
-  defaultPriority: 'normal',
-  showTimestamps: false,
-});
-
-// Register plugin with context
-ctx.registerPlugin(plugin);
-```
-
-### Configuration Options
-
-```typescript
-interface InContextMemoryConfig {
-  /** Maximum number of entries (default: 20) */
-  maxEntries?: number;
-
-  /** Maximum total tokens for all entries (default: 40000) */
-  maxTotalTokens?: number;
-
-  /** Default priority for new entries (default: 'normal') */
-  defaultPriority?: 'low' | 'normal' | 'high' | 'critical';
-
-  /** Whether to show timestamps in output (default: false) */
-  showTimestamps?: boolean;
-
-  /** Callback fired when entries change (set/delete/clear/restore). Debounced at 100ms. */
-  onEntriesChanged?: (entries: InContextEntry[]) => void;
-}
-```
-
-### Available Tools
-
-The LLM manages in-context memory through the unified `store_*` tools with `store="whiteboard"` (values are always visible directly in context, so no `store_get` is needed):
-
-#### store_set("whiteboard", ...)
-
-Store or update a key-value pair in the live context:
-
-```jsonc
-// Tool call from LLM
-{
-  "name": "store_set",
-  "arguments": {
-    "store": "whiteboard",
-    "key": "current_state",
-    "data": {
-      "description": "Processing state for current task",
-      "value": { "step": 3, "status": "active", "errors": [] },
-      "priority": "high"     // optional: low, normal, high, critical
-    }
-  }
-}
-```
-
-#### store_delete("whiteboard", ...)
-
-Remove an entry to free space:
-
-```jsonc
-// Tool call from LLM
-{
-  "name": "store_delete",
-  "arguments": {
-    "store": "whiteboard",
-    "key": "temp_data"
-  }
-}
-// Returns: { "deleted": true, "key": "temp_data" }
-```
-
-#### store_list("whiteboard")
-
-List all entries with metadata:
-
-```jsonc
-// Tool call from LLM
-{
-  "name": "store_list",
-  "arguments": {
-    "store": "whiteboard"
-  }
-}
-// Returns: {
-//   "entries": [
-//     { "key": "current_state", "description": "...", "priority": "high", "showInUI": true, "updatedAt": 1769798400000 },
-//     { "key": "user_prefs", "description": "...", "priority": "normal", "showInUI": false, "updatedAt": 1769798400000 }
-//   ],
-//   "total": 2
-// }
-```
-
-### Direct API Access
-
-The plugin provides a programmatic API for direct manipulation:
-
-```typescript
-const plugin = ctx.getPlugin('in_context_memory') as InContextMemoryPluginNextGen;
-
-// Store entries
-plugin.set('state', 'Current state', { step: 1 });
-plugin.set('prefs', 'User preferences', { verbose: true }, 'high');
-plugin.set('temp', 'Temporary data', 'xyz', 'low');
-
-// Store with UI display (5th argument)
-plugin.set('dashboard', 'Live dashboard', '## Status\n- OK', 'normal', true);
-
-// Retrieve
-const state = plugin.get('state');        // { step: 1 }
-const missing = plugin.get('nonexistent'); // undefined
-
-// Check existence
-plugin.has('state');  // true
-plugin.has('missing'); // false
-
-// Delete
-plugin.delete('temp');  // true (existed and deleted)
-plugin.delete('missing'); // false (didn't exist)
-
-// List all entries
-const entries = plugin.list();
-// [{ key: 'state', description: '...', priority: 'normal', showInUI: false, updatedAt: 1706... }, ...]
-
-// Get entry count
-console.log(plugin.list().length);  // 2
-
-// Clear all
-plugin.clear();
-```
-
-### Priority-Based Eviction
-
-When space is needed (either due to `maxEntries` or `compact()` being called), entries are evicted in this order:
-
-1. **Priority**: `low` → `normal` → `high` (lowest first)
-2. **Age**: Within the same priority, oldest entries (by `updatedAt`) are evicted first
-3. **Critical**: Entries with `priority: 'critical'` are **never** auto-evicted
-
-```typescript
-// Example: limited to 3 entries
-const plugin = new InContextMemoryPluginNextGen({ maxEntries: 3 });
-ctx.registerPlugin(plugin);
-
-plugin.set('critical1', 'Critical data', 'value', 'critical');
-plugin.set('high1', 'High priority', 'value', 'high');
-plugin.set('normal1', 'Normal data', 'value', 'normal');
-plugin.set('low1', 'Low priority', 'value', 'low');  // Triggers eviction
-
-// 'normal1' is evicted (lowest priority among non-critical)
-console.log(plugin.has('critical1')); // true
-console.log(plugin.has('high1'));     // true
-console.log(plugin.has('low1'));      // true (just added)
-console.log(plugin.has('normal1'));   // false (evicted)
-```
-
-### Context Output Format
-
-When the LLM context is prepared, InContextMemory adds a formatted section titled after the store's display name ("Whiteboard"):
-
-```markdown
-# Whiteboard
-
-**current_state** (high): Processing state for current task
-{
-  "step": 3,
-  "status": "active",
-  "errors": []
-}
-
-**user_preferences** (normal): User preferences for this session
-{
-  "theme": "dark",
-  "verbose": true
-}
-```
-
-Each entry renders as `**key** (priority): description` followed by a plain fenced, pretty-printed JSON block. The LLM can read this section directly without making any tool calls.
-
-### UI Display (`showInUI`)
-
-Each InContextMemory entry can carry optional `showInUI` metadata. OneRingAI stores, serializes, and returns the flag, but it does not render a sidebar or define pinning behavior. Those are host-application responsibilities.
-
-The built-in whiteboard schema intentionally does **not** advertise `showInUI` to the LLM. The `store_set` handler still accepts it for compatibility, but an agent will only know to send the field when a host plugin or application instruction explicitly teaches that extension (for example, a UI integration layer). The direct `set()` API always supports it.
-
-#### How It Works
-
-1. **Host code sets `showInUI: true`** through the direct `set()` API, or explicitly extends the LLM's instructions/schema to permit the field.
-2. **Host app receives updates** via the `onEntriesChanged` callback (debounced at 100ms).
-3. **Host code chooses rendering, sanitization, pinning, and persistence behavior.**
-
-#### Via `store_set` in a host-enabled UI integration
-
-```jsonc
-// This field is accepted by the handler, but the default LLM-facing store
-// schema does not advertise it. Expose it deliberately in host instructions.
-{
-  "name": "store_set",
-  "arguments": {
-    "store": "whiteboard",
-    "key": "progress",
-    "data": {
-      "description": "Task progress dashboard",
-      "value": "## Research Progress\n\n| Topic | Status |\n|-------|--------|\n| API Design | Done |\n| Implementation | In Progress |\n\n**Next:** Write tests",
-      "priority": "high",
-      "showInUI": true
-    }
-  }
-}
-```
-
-#### Via Direct API
-
-```typescript
-// Show a progress dashboard in the UI
-plugin.set(
-  'progress',
-  'Task progress',
-  '## Progress\n- [x] Step 1: Research\n- [x] Step 2: Design\n- [ ] Step 3: Implement',
-  'high',
-  true  // showInUI
-);
-
-// Update it later (showInUI persists with the entry)
-plugin.set('progress', 'Task progress',
-  '## Progress\n- [x] Step 1\n- [x] Step 2\n- [x] Step 3: Implement',
-  'high',
-  true
-);
-
-// Hide from UI
-plugin.set('progress', 'Task progress', value, 'high', false);
-```
-
-#### Real-Time Updates with `onEntriesChanged`
-
-Host applications can subscribe to entry changes to update their UI in real time:
-
-```typescript
-const plugin = new InContextMemoryPluginNextGen({
-  maxEntries: 20,
-  onEntriesChanged: (entries) => {
-    // Called whenever entries are set, deleted, cleared, or restored
-    // Debounced at 100ms to avoid excessive updates during batch operations
-    const visibleEntries = entries.filter(e => e.showInUI);
-    updateSidebarUI(visibleEntries);
-  },
-});
-```
-
-The callback fires on: `set()`, `delete()`, `clear()`, `restoreState()`, and `compact()`.
-
-#### User Pinning
-
-Host applications can let users **pin** specific entries regardless of the entry's `showInUI` value. This is useful when:
-
-- An agent stores useful state but doesn't mark it as `showInUI`
-- The user wants to monitor a specific key during a session
-- The agent sets `showInUI: false` on an entry the user still wants to see
-
-Pin persistence belongs to the host application. A host can store the selected keys per agent so they survive application restarts; OneRingAI supplies the entry data and change callback, not a UI-specific persistence layer.
-
-#### Rendering
-
-Rendering is not part of OneRingAI. A host may pass string values through its
-normal Markdown renderer and support features such as:
-
-- **Code blocks** with syntax highlighting
-- **Tables** with alignment
-- **LaTeX math** (`$inline$` and `$$block$$`)
-- **Mermaid diagrams** (flowcharts, sequence diagrams, etc.)
-- **Vega-Lite charts** (bar, line, pie, etc.)
-- **Markmap mindmaps**
-- **Checklists**, **blockquotes**, **images**, and more
-
-Within the LLM context, objects and arrays are serialized as formatted JSON code blocks. A host UI decides independently how to render every value and must apply its own sanitization policy.
-
-### Session Persistence
-
-InContextMemoryPluginNextGen supports full state serialization for session persistence:
-
-```typescript
-// Save state
-const state = plugin.getState();
-// state = { entries: [...] }
-
-// Later, restore state
-const newPlugin = new InContextMemoryPluginNextGen();
-newPlugin.restoreState(state);
-```
-
-When using with `AgentContextNextGen`, the state is automatically included:
-
-```typescript
-// AgentContextNextGen synchronously captures plugin state
-const ctxState = ctx.getState();
-
-// Restore entire context (including InContextMemory)
-const newCtx = AgentContextNextGen.create({
-  model: 'gpt-4.1',
-  features: { inContextMemory: true },
-});
-newCtx.restoreState(ctxState);  // Plugins are restored automatically
-```
-
-### Use Cases
-
-**Ideal for:**
-- **Current state/status** that changes during task execution
-- **User preferences** for the session (theme, verbosity, etc.)
-- **Counters and flags** (iteration count, feature flags)
-- **Small accumulated results** (running totals, collected IDs)
-- **Control variables** (abort flags, mode switches)
-- **Live dashboards** (with `showInUI: true`) — progress trackers, status displays, structured results
-
-**Not ideal for (use WorkingMemory instead):**
-- Large data (documents, API responses, search results)
-- Rarely accessed reference data
-- Historical data that doesn't need instant access
-- Data that exceeds 4000 tokens
-
-### Best Practices
-
-#### 1. Use Appropriate Priorities
-
-```typescript
-// Critical: Never evicted - for essential state
-plugin.set('session_id', 'Session identifier', 'sess_123', 'critical');
-
-// High: Kept as long as possible - important state
-plugin.set('user_context', 'User context', { name: 'Alice' }, 'high');
-
-// Normal (default): Standard data
-plugin.set('current_step', 'Current step', 3);
-
-// Low: Can be evicted - temporary/reconstructable data
-plugin.set('last_check', 'Last health check', Date.now(), 'low');
-```
-
-#### 2. Keep Values Small
-
-```typescript
-// GOOD: Small, focused values
-plugin.set('state', 'Task state', { step: 2, status: 'active' });
-
-// BAD: Large objects (use WorkingMemory instead)
-plugin.set('results', 'All results', hugeArrayOfResults);  // Don't do this!
-```
-
-#### 3. Clean Up When Done
-
-```typescript
-// Delete temporary entries when no longer needed
-plugin.delete('temp_calculation');
-plugin.delete('iteration_data');
-
-// Or use low priority for auto-cleanup
-plugin.set('temp', 'Temporary', value, 'low');
-```
-
-#### 4. Combine with WorkingMemory
-
-Use both systems for their strengths:
-
-```typescript
-// Large data goes to WorkingMemoryPluginNextGen (index-based)
-const memoryPlugin = ctx.getPlugin('working_memory') as WorkingMemoryPluginNextGen;
-await memoryPlugin.store('search_results', 'Web search results', largeResults);
-
-// Small, frequently-accessed state goes to InContextMemoryPluginNextGen (full values)
-const inContextPlugin = ctx.getPlugin('in_context_memory') as InContextMemoryPluginNextGen;
-inContextPlugin.set('search_status', 'Search status', { completed: 3, pending: 2 });
-
-// LLM sees:
-// - Memory Index: "search_results: Web search results" (needs store_get("notes", "search_results"))
-// - Live Context: Full search_status value (instant access)
-```
-
----
-
-## Persistent Instructions (NextGen Plugin)
-
-> ⚠️ **Deprecated** in favour of [`MemoryPluginNextGen`](#self-learning-memory-nextgen-plugin). This plugin keeps working unchanged for existing integrations — no breaking change — but new code should prefer the memory plugin, which replaces dumb KV with append-only facts + LLM-synthesised profiles that evolve from observations.
-
-**PersistentInstructionsPluginNextGen** is a context plugin that stores agent-level custom instructions on disk as **individually keyed entries**. Unlike InContextMemory (volatile key-value pairs), persistent instructions survive process restarts and are automatically loaded when the agent starts.
-
-### Key Difference from InContextMemory
-
-| Feature | InContextMemory | Persistent Instructions |
-|---------|-----------------|------------------------|
-| **Storage** | In-memory (volatile) | Disk (persistent JSON) |
-| **Survives restarts** | No | Yes |
-| **Best for** | Session state, counters, flags | Agent personality, learned rules |
-| **LLM can modify** | Yes (store_set("whiteboard", ...)) | Yes (store_set/store_delete("instructions", ...)) |
-| **Auto-loaded** | Via session restore | Always on agent start |
-| **Default capacity** | 20 entries, 40,000 tokens | 50 entries, 50,000 chars total |
-
-### Quick Setup
-
-```typescript
-import { Agent } from 'oneringai';
-
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  context: {
-    agentId: 'my-assistant',  // Used for storage path
-    features: {
-      persistentInstructions: true,  // Enables PersistentInstructionsPluginNextGen
-    },
-  },
-});
-
-// Plugin is accessible via ctx.getPlugin('persistent_instructions')
-// Instructions are automatically loaded from disk on first context prepare
-```
-
-### Manual Setup
-
-For more control, you can set up the plugin manually:
-
-```typescript
-import { AgentContextNextGen, PersistentInstructionsPluginNextGen } from 'oneringai';
-
-const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
-
-// Create and configure plugin
-const plugin = new PersistentInstructionsPluginNextGen({
-  agentId: 'my-assistant',
-  maxTotalLength: 100000,  // Characters across all entries, default is 50000
-  maxEntries: 50,          // Maximum number of keyed entries, default is 50
-});
-
-// Register with context
-ctx.registerPlugin(plugin);
-
-// Set instructions programmatically (keyed entries)
-await plugin.set('personality', 'Always respond in a friendly tone.');
-await plugin.set('formatting', 'Prefer bullet points for lists.');
-```
-
-### Configuration Options
-
-```typescript
-interface PersistentInstructionsConfig {
-  /** Agent ID - used to determine storage path (required) */
-  agentId: string;
-
-  /** Custom storage implementation (default: FilePersistentInstructionsStorage) */
-  storage?: IPersistentInstructionsStorage;
-
-  /** Maximum total content length across all entries in characters (default: 50000) */
-  maxTotalLength?: number;
-
-  /** Maximum number of entries (default: 50) */
-  maxEntries?: number;
-}
-```
-
-### Storage Path
-
-Instructions are stored at:
-- **Unix/macOS**: `~/.oneringai/agents/<agentId>/custom_instructions.json`
-- **Windows**: `%APPDATA%/oneringai/agents/<agentId>/custom_instructions.json`
-
-The agent ID is sanitized to be filesystem-safe (lowercase, special chars replaced with underscores).
-
-### Available Tools
-
-The LLM manages persistent instructions through the unified `store_*` tools with `store="instructions"`:
-
-#### store_set("instructions", ...)
-
-Add or update a single instruction by key:
-
-```jsonc
-// Tool call from LLM
-{
-  "name": "store_set",
-  "arguments": {
-    "store": "instructions",
-    "key": "personality",
-    "data": {
-      "content": "Always be friendly and helpful. Use clear, simple language."
-    }
-  }
-}
-// Returns: { "success": true, "message": "Instruction 'personality' added", "key": "personality", "contentLength": 57 }
-```
-
-#### store_delete("instructions", ...)
-
-Remove a single instruction by key:
-
-```jsonc
-// Tool call from LLM
-{
-  "name": "store_delete",
-  "arguments": {
-    "store": "instructions",
-    "key": "personality"
-  }
-}
-// Returns: { "deleted": true, "key": "personality" }
-```
-
-#### store_list("instructions")
-
-List all instructions with their keys and content:
-
-```jsonc
-// Tool call from LLM
-{
-  "name": "store_list",
-  "arguments": {
-    "store": "instructions"
-  }
-}
-// Returns: {
-//   "total": 2,
-//   "entries": [
-//     { "key": "personality", "contentLength": 57, "createdAt": ..., "updatedAt": ... },
-//     { "key": "formatting", "contentLength": 35, "createdAt": ..., "updatedAt": ... }
-//   ]
-// }
-```
-
-#### store_action("instructions", "clear", ...)
-
-Remove all instructions (requires confirmation):
-
-```jsonc
-// Tool call from LLM
-{
-  "name": "store_action",
-  "arguments": {
-    "store": "instructions",
-    "action": "clear",
-    "params": { "confirm": true }
-  }
-}
-// Returns: { "success": true, "action": "clear", "message": "All custom instructions cleared" }
-```
-
-### Direct API Access
-
-The plugin provides a programmatic API for direct manipulation:
-
-```typescript
-const plugin = ctx.getPlugin<PersistentInstructionsPluginNextGen>('persistent_instructions')!;
-
-// Add/update entry by key
-await plugin.set('personality', 'Always be friendly and helpful.');
-await plugin.set('formatting', 'Use bullet points for lists.');
-
-// Get single entry by key
-const entry = await plugin.get('personality');  // InstructionEntry | null
-// entry = { id: 'personality', content: '...', createdAt: ..., updatedAt: ... }
-
-// Get all entries (sorted by createdAt)
-const all = await plugin.get();  // InstructionEntry[] | null
-
-// List metadata for all entries
-const list = await plugin.list();
-// [{ key: 'personality', contentLength: 35, createdAt: ..., updatedAt: ... }, ...]
-
-// Remove a single entry
-await plugin.remove('formatting');  // true if found, false if not
-
-// Clear all
-await plugin.clear();
-```
-
-### Context Output Format
-
-When the LLM context is prepared, persistent instruction entries are rendered as markdown sections:
-
-```markdown
-### personality
-Always be friendly and helpful. Use clear, simple language.
-
-### formatting
-- Use bullet points for lists
-- Keep responses concise
-
-### user_preferences
-The user prefers dark mode and verbose explanations.
-```
-
-### Session Persistence
-
-PersistentInstructionsPluginNextGen supports state serialization. The state format includes all entries:
-
-```typescript
-// State includes all entries
-const state = plugin.getState();
-// state = { entries: [...], agentId: "my-assistant", version: 2 }
-
-// Restore state (useful for in-memory state sync)
-plugin.restoreState(state);
-// Also handles legacy format: { content: string | null, agentId: string }
-```
-
-### Use Cases
-
-**Ideal for:**
-- **Agent personality/behavior** - Tone, style, expertise areas
-- **User preferences** - Formatting, verbosity, topics of interest
-- **Learned rules** - Patterns discovered during conversation
-- **Tool usage guidelines** - When to use specific tools
-- **Custom instructions** - Domain-specific knowledge
-
-**Example: Building a Learning Assistant**
-
-```typescript
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  instructions: `You are a learning assistant. When the user expresses preferences or
-gives feedback about your responses, use store_set("instructions", key, { content }) to remember them for
-future sessions. Use descriptive keys like "user_preferences", "response_style", etc.
-Review your instructions with store_list("instructions") at the start of each conversation.`,
-  context: {
-    agentId: 'learning-assistant',
-    features: { persistentInstructions: true },
-  },
-});
-
-// User: "I prefer when you explain things with analogies"
-// Agent calls: store_set("instructions", "response_style", { content: "Explain concepts using analogies when possible" })
-// Next session, agent sees this in context automatically
-```
-
-### Best Practices
-
-#### 1. Use Descriptive Keys
-
-```typescript
-// GOOD: Descriptive, categorical keys
-await plugin.set('personality', 'Be friendly and approachable');
-await plugin.set('formatting_rules', 'Use bullet points for lists');
-await plugin.set('domain_knowledge', 'User works in fintech');
-
-// AVOID: Generic or numbered keys
-await plugin.set('rule1', '...');  // Not descriptive
-await plugin.set('misc', '...');   // Too vague
-```
-
-#### 2. One Concern Per Entry
-
-```typescript
-// GOOD: Each entry covers one topic
-await plugin.set('tone', 'Use formal language');
-await plugin.set('code_style', 'Use TypeScript, follow existing patterns');
-await plugin.set('response_length', 'Keep responses concise, 2-3 paragraphs max');
-
-// AVOID: Mixing concerns in one entry
-await plugin.set('rules', 'Be formal. Use TypeScript. Keep it short.');
-```
-
-#### 3. Combine with InContextMemory
-
-Use both systems for their strengths:
-
-```typescript
-// Persistent instructions for long-term knowledge
-// - Agent personality
-// - User preferences
-// - Learned rules
-
-// InContextMemory for session-specific state
-// - Current task progress
-// - Temporary flags
-// - Running totals
-```
-
-#### 4. Set Reasonable Limits
-
-```typescript
-// For simple agents
-const agent = Agent.create({
-  context: {
-    features: { persistentInstructions: true },
-    plugins: { persistentInstructions: { maxTotalLength: 10000, maxEntries: 20 } },
-  },
-});
-
-// For complex agents with lots of learned rules
-const agent = Agent.create({
-  context: {
-    features: { persistentInstructions: true },
-    plugins: { persistentInstructions: { maxTotalLength: 100000, maxEntries: 100 } },
-  },
-});
-```
-
-### Upgrade Guide (from single-string to KVP)
-
-If upgrading from the previous single-string persistent instructions:
-
-1. **File storage**: Auto-migrated. Legacy `custom_instructions.md` files are read as a single `legacy_instructions` entry and converted to `custom_instructions.json` on next save. No action needed.
-2. **Custom storage backends**: Update `load()` to return `InstructionEntry[] | null` and `save()` to accept `InstructionEntry[]` instead of `string`.
-3. **Tool API**: `instructions_append` is removed — use `store_set("instructions", key, { content })` to add new entries. `instructions_get` is removed — use `store_list("instructions")` to see all entries.
-4. **Programmatic API**: `plugin.set(content)` → `plugin.set(key, content)`. `plugin.append(section)` → `plugin.set(newKey, section)`. `plugin.get()` now returns `InstructionEntry[] | null` (or a single `InstructionEntry` when called with a key).
-5. **Session state**: Existing saved sessions with old format (`{ content: string | null }`) are auto-migrated on `restoreState()`.
-
----
-
-## Direct LLM Access
-
-Agent inherits `runDirect()` and `streamDirect()` methods from BaseAgent. These methods bypass all context management for simple, stateless LLM calls.
-
-### When to Use Direct Access
-
-| Use Case | Recommended Method |
-|----------|-------------------|
-| Conversational agent with history | `run()` |
-| Task with memory and tools | `run()` with context features |
-| Per-call reasoning control | `run(input, { thinking })` |
-| Quick one-off query | `runDirect()` |
-| Embedding-like simplicity | `runDirect()` |
-| Testing/debugging | `runDirect()` |
-| Hybrid workflows | Mix both |
-
-### Basic Usage
-
-```typescript
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
-
-// Direct call - bypasses all context management
-const response = await agent.runDirect('What is 2 + 2?');
-console.log(response.output_text);  // "4"
-
-// Conversation is NOT affected
-console.log(agent.context.getConversation().length);  // 0
-```
-
-### DirectCallOptions
-
-```typescript
-interface DirectCallOptions {
-  /** System instructions */
-  instructions?: string;
-
-  /** Include registered tools (default: false) */
-  includeTools?: boolean;
-
-  /** Explicit per-call definitions (used instead of registered tools) */
-  tools?: Tool[];
-
-  /** Tool-selection policy for explicit or included tools */
-  toolChoice?: 'auto' | 'required' | { type: 'function'; function: { name: string } };
-
-  /** Temperature for generation */
-  temperature?: number;
-
-  /** Maximum output tokens */
-  maxOutputTokens?: number;
-
-  /** Continue a provider-stored response/interaction */
-  previousResponseId?: string;
-
-  /** Vendor-agnostic structured (JSON) output */
-  responseFormat?:
-    | { type: 'json_object' }
-    | { type: 'json_schema'; schema: Record<string, unknown>; name?: string; description?: string; strict?: boolean };
-
-  /** Vendor-agnostic thinking/reasoning configuration */
-  thinking?: {
-    enabled: boolean;
-    budgetTokens?: number;   // Fixed-budget models
-    effort?: 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
-  };
-
-  /** Vendor-specific options */
-  vendorOptions?: Record<string, unknown>;
-
-  /** Provider-neutral prompt-cache policy */
-  promptCache?: PromptCachePolicy;
-
-  /** Provider-hosted tools (not executed by ToolManager) */
-  nativeTools?: NativeToolRequest[];
-
-  /** Explicit permission for retention-sensitive provider features */
-  dataHandling?: DataHandlingPolicy;
-
-  /** Skip the provider pre-flight context limit check (default: false) */
-  skipContextLimitCheck?: boolean;
-}
-```
-
-### Examples
-
-```typescript
-// With options
-const response = await agent.runDirect('Summarize this text', {
-  instructions: 'Be concise. Use bullet points.',
-  temperature: 0.5,
-  maxOutputTokens: 200,
-});
-
-// JSON response
-const response = await agent.runDirect('List 3 fruits', {
-  responseFormat: { type: 'json_object' },
-  instructions: 'Return a JSON array of fruit names',
-});
-
-// Multimodal (text + image)
-const response = await agent.runDirect([
-  {
-    type: 'message',
-    role: 'user',
-    content: [
-      { type: 'input_text', text: 'What is in this image?' },
-      { type: 'input_image', image_url: 'https://example.com/image.png' }
-    ]
-  }
-]);
-
-// With tools (single call - you handle tool calls manually)
-const response = await agent.runDirect('Get the weather in Paris', {
-  includeTools: true,
-});
-// If response contains tool_calls, you must execute them yourself
-if (response.output.some(item => item.type === 'function_call')) {
-  // Handle tool calls manually
-}
-```
-
-### Streaming
-
-```typescript
-// Stream responses for real-time output
-for await (const event of agent.streamDirect('Tell me a story')) {
-  if (event.type === 'output_text_delta') {
-    process.stdout.write(event.delta);
-  }
-}
-
-// With options
-for await (const event of agent.streamDirect('Explain quantum computing', {
-  instructions: 'Use simple terms',
-  temperature: 0.7,
-})) {
-  // Handle events...
-}
-```
-
-### Per-Call RunOptions
-
-`run()` and `stream()` accept an optional second argument to override agent-level config for a single invocation:
-
-```typescript
-interface RunOptions {
-  /** Vendor-agnostic thinking/reasoning configuration */
-  thinking?: {
-    enabled: boolean;
-    budgetTokens?: number;         // Fixed-budget models
-    effort?: 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
-  };
-
-  /** Temperature override */
-  temperature?: number;
-
-  /** Vendor-specific options (shallow-merged with agent-level vendorOptions) */
-  vendorOptions?: Record<string, unknown>;
-
-  /** Provider-neutral prompt-cache policy */
-  promptCache?: PromptCachePolicy;
-
-  /** Provider-hosted tools (not executed by ToolManager) */
-  nativeTools?: NativeToolRequest[];
-
-  /** Explicit permission for retention-sensitive provider features */
-  dataHandling?: DataHandlingPolicy;
-
-  /** Resume an incomplete provider decode on the first request of this run */
-  continuationToken?: string;
-
-  /** Vendor-agnostic structured (JSON) output override for this call */
-  responseFormat?:
-    | { type: 'json_object' }
-    | { type: 'json_schema'; schema: Record<string, unknown>; name?: string; description?: string; strict?: boolean };
-}
-```
-
-```typescript
-// Override reasoning effort per call
-const deep = await agent.run('Prove this theorem', {
-  thinking: { enabled: true, effort: 'high' },
-});
-
-const quick = await agent.run('What is 2+2?', {
-  thinking: { enabled: true, effort: 'low' },
-});
-
-// Override temperature per call
-const creative = await agent.run('Write a poem', { temperature: 0.9 });
-
-// Streaming with per-call options
-for await (const event of agent.stream('Analyze this', {
-  thinking: { enabled: true, budgetTokens: 16384 },
-})) {
-  // ...
-}
-```
-
-RunOptions take precedence over agent-level config. `vendorOptions` are shallow-merged (per-call keys override agent-level keys). Advanced inference options replace their agent-level value as a whole; see [Advanced Inference](#advanced-inference) for the complete contract.
-
-### Thinking / Reasoning
-
-Vendor-agnostic reasoning configuration that maps to each provider's native API:
-
-| Provider | `effort` maps to | `budgetTokens` maps to |
-|----------|-----------------|----------------------|
-| OpenAI | `reasoning.effort` | N/A |
-| Anthropic | `output_config.effort` | `thinking.budget_tokens` on fixed-budget models |
-| Google | Gemini thinking level (the exact supported subset is model-dependent) | `thinkingConfig.thinkingBudget` on fixed-budget models |
-
-```typescript
-// Agent-level (applies to all calls)
-const agent = Agent.create({
-  connector: 'openai', model: 'o3-mini',
-  thinking: { enabled: true, effort: 'medium' },
-});
-
-// Per-call override
-await agent.run('Complex analysis', { thinking: { enabled: true, effort: 'high' } });
-await agent.run('Simple lookup', { thinking: { enabled: true, effort: 'low' } });
-
-// Anthropic with budget tokens
-const agent2 = Agent.create({ connector: 'anthropic', model: 'claude-sonnet-4-6' });
-await agent2.run('Deep reasoning task', { thinking: { enabled: true, budgetTokens: 16384 } });
-
-// runDirect() also supports thinking
-await agent.runDirect('Quick Q', { thinking: { enabled: true, effort: 'low' } });
-```
-
-The normalized `thinking.enabled` flag gates both its nested `effort` and
-budget. Anthropic also supports native effort independently of thinking; use
-`vendorOptions: { effort: 'low' | 'medium' | 'high' | ... }` when that distinct
-provider behavior is intended while normalized thinking is disabled.
-
-### Comparison: run() vs runDirect()
-
-| Aspect | `run()` | `runDirect()` |
-|--------|-------------------|---------------|
-| History tracking | ✅ Automatic | ❌ None |
-| WorkingMemory | ✅ Available | ❌ Not used |
-| Context preparation | ✅ Full preparation | ❌ None |
-| Agentic loop | ✅ Executes tools automatically | ❌ Single call only |
-| Compaction | ✅ Auto-compacts when needed | ❌ None |
-| Overhead | Full context management | Minimal |
-
-### Hybrid Workflows
-
-You can mix both approaches in the same agent:
-
-```typescript
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  tools: [weatherTool, searchTool],
-});
-
-// Use run() for complex interactions with tool use
-await agent.run('Search for the latest news and summarize');
-
-// Use runDirect() for quick follow-ups that don't need context
-const clarification = await agent.runDirect(
-  'What is a good synonym for "excellent"?',
-  { temperature: 0.3 }
-);
-
-// Back to run() for continued conversation
-await agent.run('Now tell me more about the first item');
-```
-
----
-
-## User Info (NextGen Plugin)
-
-> ⚠️ **Deprecated** in favour of [`MemoryPluginNextGen`](#self-learning-memory-nextgen-plugin). This plugin keeps working unchanged; the memory plugin supersedes it with facts-over-KV, supersession-preserved history, LLM-synthesised profiles, three-principal permissions, and semantic recall.
-
-Store user-specific preferences and context that persist across sessions and agents. Unlike other plugins, user info is **user-scoped** (not agent-scoped) — different agents share the same user's data.
-
-User info entries are **automatically injected into the LLM system message** as markdown, so the LLM always knows the user's preferences without needing to call `store_get("user_info")` each turn.
-
-### Setup
-
-```typescript
-import { Agent } from 'oneringai';
-
-// Single-user app — no userId needed
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  context: {
-    features: { userInfo: true },
-  },
-});
-
-// Multi-user app — opt-in per-user isolation
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  userId: 'alice',
-  context: {
-    features: { userInfo: true },
-  },
-});
-```
-
-### How It Works
-
-1. **Lazy Loading** — On first access (tool call or `getContent()`), entries are loaded from storage into an in-memory cache
-2. **Context Injection** — `getContent()` renders entries as markdown in the system message. Regular user info and TODOs are shown in separate sections:
-   ```
-   ### theme
-   dark
-
-   ### language
-   en
-
-   ## Current TODOs
-   - [ ] todo_a1b2c3: Review PR for auth module (due: 2026-03-01, people: Alice) [work]
-     Check the error handling changes
-   - [x] todo_d4e5f6: Buy groceries (due: 2026-02-25) [personal]
-   ```
-3. **Write-Through** — Tool mutations (set/remove/clear) update both the in-memory cache and persist to storage immediately
-4. **Session Persistence** — `getState()`/`restoreState()` serialize/deserialize entries for session save/load
-
-### User Info Tools
-
-| Tool Call | Description | Permission |
-|-----------|-------------|------------|
-| `store_set("user_info", key, { value, description? })` | Store/update entry by key | Always allowed |
-| `store_get("user_info", key?)` | Retrieve one entry by key, or all entries (key optional) | Always allowed |
-| `store_delete("user_info", key)` | Remove a specific entry by key | Always allowed |
-| `store_action("user_info", "clear", { confirm: true })` | Clear all entries | Requires approval |
-
-### TODO Tools
-
-TODOs are stored as user info entries with a `todo_` key prefix. They are rendered in a dedicated **"Current TODOs"** checklist section in context, separate from regular user info.
-
-| Tool | Description | Permission |
-|------|-------------|------------|
-| `todo_add` | Create a TODO (`title`, `description?`, `people?`, `dueDate?`, `tags?`) | Always allowed |
-| `todo_update` | Update a TODO — partial updates (`id`, `title?`, `description?`, `people?`, `dueDate?`, `tags?`, `status?`) | Always allowed |
-| `todo_remove` | Delete a TODO by id | Always allowed |
-
-**TODO fields:**
-- `title` (required) — short description of the task
-- `description` (optional) — additional details
-- `people` (optional) — other people involved besides the current user
-- `dueDate` (optional) — deadline in `YYYY-MM-DD` format
-- `tags` (optional) — categorization tags (e.g. `["work", "urgent"]`)
-- `status` — `'pending'` or `'done'`
-
-**Agent behavior (built into plugin instructions):**
-- **Proactive creation** — When conversation implies an action item, the agent suggests creating a TODO. Explicit requests like "remind me" or "track this" create one immediately.
-- **Daily reminders** — Once per day, the agent reminds about overdue and soon-due items (within 2 days). Uses a `_todo_last_reminded` internal entry to avoid repeating.
-- **Auto-cleanup** — Completed TODOs older than 48 hours are automatically removed. Pending TODOs overdue by more than 7 days prompt the user: "Still relevant or should I remove it?"
-
-### Storage
-
-- **Default path:** `~/.oneringai/users/<userId>/user_info.json` (defaults to `~/.oneringai/users/default/user_info.json`)
-- **Custom storage:** Implement `IUserInfoStorage` and pass via config or `StorageRegistry`
-
-```typescript
-// Via StorageRegistry
-StorageRegistry.set('userInfo', (context?: StorageContext) => {
-  return new MongoUserInfoStorage(collection);
-});
-```
-
-### Configuration
-
-```typescript
-interface UserInfoPluginConfig {
-  storage?: IUserInfoStorage;    // Custom storage backend
-  maxTotalSize?: number;         // Default: 100000 (~100KB)
-  maxEntries?: number;           // Default: 100
-  userId?: string;               // Auto-set from AgentContextNextGen._userId
-}
-```
-
-### Differences from Other Plugins
-
-| | PersistentInstructions | UserInfo | InContextMemory |
-|---|---|---|---|
-| **Scope** | Agent-scoped | User-scoped | Session only |
-| **Storage key** | `agentId` | `userId` | None (in memory) |
-| **Persists to disk** | Yes | Yes | No |
-| **In system message** | Yes | Yes | Yes |
-| **Value type** | `string` | `unknown` (any JSON) | `unknown` (any JSON) |
-
-### Use Cases
-
-- User preferences: theme, language, timezone, notification settings
-- User context: role, location, department
-- Accumulated knowledge about the user
-- Profile information the LLM should always have access to
-- TODO tracking: tasks with deadlines, involved people, and tags — with proactive reminders and auto-cleanup
-
-> ⚠️ **Deprecated** in favour of the Self-Learning Memory plugin below. `UserInfoPluginNextGen` keeps working unchanged; the memory plugin supersedes it with append-only facts (history preserved via supersession), LLM-synthesised profiles that evolve with new observations, three-principal permissions, and semantic recall.
-
----
-
-## Self-Learning Memory (NextGen Plugin)
-
-The Self-Learning Memory system is a brain-like, queryable knowledge store that lets agents *learn from observation* — the user's profile and any user-given behavior rules are injected into the system message on every turn, and the agent can read or mutate the knowledge graph mid-conversation through 12 dedicated tools. It supersedes both `PersistentInstructionsPluginNextGen` and `UserInfoPluginNextGen`.
-
-The underlying `MemorySystem` is a first-class standalone module: it has no
-dependency on `Agent` or the context plugins. Server code can use its entity and
-fact model, vector embeddings, document search, graph traversal, bitemporal
-queries, signal ingestion, profile generation, storage adapters, and permission
-model directly. The context plugins are adapters that expose that same system
-to an LLM safely; they are not the memory implementation itself.
-
-This section is the user-guide-level walkthrough. For the full conceptual model, adapter setup, signal ingestion pipeline, predicate vocabulary, and resolution tiers, see:
-- [docs/MEMORY_GUIDE.md](./docs/MEMORY_GUIDE.md) — the canonical memory layer guide.
-- [docs/MEMORY_API.md](./docs/MEMORY_API.md) — full `MemorySystem` API reference.
-- [docs/MEMORY_PERMISSIONS.md](./docs/MEMORY_PERMISSIONS.md) — three-principal permission model.
-- [docs/MEMORY_SIGNALS.md](./docs/MEMORY_SIGNALS.md) — signal → fact extraction.
-- [docs/MEMORY_PREDICATES.md](./docs/MEMORY_PREDICATES.md) — predicate registry.
-
-### What it is
-
-Two first-class concepts:
-
-- **Entities** are pure identity. People, organizations, projects, tasks, events, topics — each carries a `displayName`, `aliases`, strong `identifiers` (email, domain, slack_id, github, custom canonical id), and type-specific `metadata` (e.g. task `state` / `dueAt`, event `startTime` / `attendeeIds`).
-- **Facts** are knowledge. Triples like `(John, works_at, Microsoft)` or document facts (long-form prose). Facts carry `confidence`, `importance`, `sourceSignalId`, temporal validity (`validFrom` / `validUntil`), supersession links, and can bind to additional entities via `contextIds` ("this fact is about John but also relates to the Acme deal").
-
-Facts preserve history through supersession; task entities are mutable through
-the state-machine API and keep a bounded `stateHistory`. Every record has an
-owner, can be tenant-scoped by group, supports owner/group/world permissions
-plus explicit principal ACLs, and is retrievable as profile + ranked facts +
-related tasks + related events in one query.
-
-**Self-learning loop:**
-1. The user tells the agent something ("I prefer concise answers"), or a background ingestor extracts facts from the conversation.
-2. A fact lands in the store via `memory_remember` (LLM-driven) or `SessionIngestorPluginNextGen` (passive).
-3. When the new-facts threshold is crossed (default 3), **incremental profile regeneration** fires in the background — the configured LLM gets the prior profile + new facts + invalidated IDs and returns an evolved profile document.
-4. On the next turn, the system message reflects the change. No manual prompt engineering.
-
-### When to use which plugin
-
-| Plugin | Feature flag | Purpose |
-|---|---|---|
-| `WorkingMemoryPluginNextGen` | `workingMemory` (default true) | Ephemeral per-session scratchpad with tiered eviction (raw / summary / findings). NOT a knowledge store. |
-| `InContextMemoryPluginNextGen` | `inContextMemory` (default true) | Live KV values rendered directly in the system message. Use for small, high-signal state the LLM must always see. |
-| **`MemoryPluginNextGen`** | `memory` (default false) | **Recommended.** Self-learning knowledge store. Read-side: profile injection + 6 retrieval tools. |
-| **`MemoryWritePluginNextGen`** | `memoryWrite` (default false) | Optional sidecar — adds the 6 write `memory_*` tools. Requires `memory: true`. |
-| `SessionIngestorPluginNextGen` | n/a (registered manually) | Background pipeline — extracts facts from each batch of messages and writes them to the same `MemorySystem`. Pair with `memory: true` (no `memoryWrite`) for retrieval-only agents whose memory updates happen passively. |
-| `PersistentInstructionsPluginNextGen`, `UserInfoPluginNextGen` | `persistentInstructions`, `userInfo` | ⚠️ Deprecated — use `MemoryPluginNextGen` instead. |
-
-### Quick Start (in-process, dev)
-
-```typescript
-import {
-  Agent,
-  createMemorySystemWithConnectors,
-  InMemoryAdapter,
-  PredicateRegistry,
-} from 'oneringai';
-
-const predicates = PredicateRegistry.standard().register({
-  name: 'prefers',
-  description: 'A durable user preference.',
-  category: 'preference',
-  payloadKind: 'attribute',
-  subjectTypes: ['person'],
-  lifecycle: 'stable',
-});
-
-// 1. Build the MemorySystem. Embedder + profile-generator are optional but
-//    recommended (without them: no semantic search, no profile auto-regen).
-const memory = createMemorySystemWithConnectors({
-  store: new InMemoryAdapter(),
-  connectors: {
-    embedding: { connector: 'openai', model: 'text-embedding-3-small', dimensions: 1536 },
-    profile:   { connector: 'anthropic', model: 'claude-sonnet-4-6' },
-  },
-  predicates,
-  predicateMode: 'strict',
-  visibilityPolicy: () => ({ group: 'read', world: 'none' }),
-});
-
-// 2. Agent with feature flags + plugin config (under `context.features` /
-//    `context.plugins`).
-const agent = Agent.create({
-  connector: 'anthropic',
-  model: 'claude-sonnet-4-6',
-  userId: 'alice',                              // REQUIRED — memory's owner invariant
-  context: {
-    agentId: 'my-assistant',                    // optional — auto-generated if omitted
-    features: {
-      memory: true,                             // reads: profile injection + 6 retrieval tools
-      memoryWrite: true,                        // writes: 6 mutation tools (omit for retrieval-only)
-    },
-    plugins: {
-      memory: {
-        memory,                                 // the MemorySystem instance — shared by both plugins
-        // groupId: 'team-A',                   // optional, trusted from your auth layer
-        // userDisplayName: 'Alice Smith',
-        // userProfileInjection: { topFacts: 20, relatedTasks: true },
-      },
-      // `memoryWrite` inherits memory / agentId / userId from plugins.memory.
-    },
-  },
-});
-
-await agent.run('Remember that I prefer concise answers');
-await agent.run('What are my preferences?');
-// → The fact is available to retrieval immediately and appears in injected
-//   top facts; the synthesized profile refreshes after the configured threshold.
-```
-
-> The `context.features.memory` and `context.features.memoryWrite` flags are independent. `memoryWrite: true` requires `memory: true`. Enable just `memory` for a retrieval-only agent (and pair with `SessionIngestorPluginNextGen` to keep memory growing passively).
-
-### Storage backends
-
-`MemorySystem` is an `IMemoryStore` adapter away from any database. Three adapters ship out of the box; full setup details live in [docs/MEMORY_GUIDE.md § Choosing a storage backend](./docs/MEMORY_GUIDE.md#choosing-a-storage-backend).
-
-| Adapter | When to use |
-|---|---|
-| `InMemoryAdapter` | Tests, REPL, single-user desktop apps that snapshot externally. Zero deps. |
-| `MongoMemoryAdapter` + `RawMongoCollection` | Production servers using the `mongodb` driver. Supports native `$graphLookup` and Atlas Vector Search. |
-| `MongoMemoryAdapter` + `MeteorMongoCollection` | Meteor apps — writes flow through Meteor's async API and trigger reactive publications. |
-
-```typescript
-import { MongoClient } from 'mongodb';
-import {
-  MongoMemoryAdapter,
-  RawMongoCollection,
-} from 'oneringai';
-
-const client = await new MongoClient(url).connect();
-const db = client.db('myapp');
-const entitiesColl = new RawMongoCollection(db.collection('memory_entities'), client);
-const factsColl   = new RawMongoCollection(db.collection('memory_facts'), client);
-const memoryAdapter = new MongoMemoryAdapter({
-  entities: entitiesColl,
-  facts: factsColl,
-  factsCollectionName: 'memory_facts',     // required for native $graphLookup
-  useNativeGraphLookup: true,
-  vectorIndexName: 'memory_facts_vector',
-  entityVectorIndexName: 'memory_entities_identity_vector',
-  entityContentVectorIndexName: 'memory_entities_content_vector',
-});
-
-const memory = createMemorySystemWithConnectors({
-  store: memoryAdapter,
-  connectors: {
-    embedding: { connector: 'openai', model: 'text-embedding-3-small', dimensions: 1536 },
-    profile:   { connector: 'anthropic', model: 'claude-sonnet-4-6' },
-  },
-});
-
-// Run once on startup — creates all required performance + correctness indexes.
-await memory.ensureAdapterIndexes();
-
-// For semantic search at scale, also create Atlas Vector Search indexes
-// programmatically (UI creation is a security footgun — see MEMORY_GUIDE.md).
-await memoryAdapter.ensureVectorSearchIndexes({ dimensions: 1536 });
-```
-
-> Mongo deployments need two host-managed uniqueness migrations in addition to
-> `ensureAdapterIndexes()`: a unique partial index on
-> `{identifiers.kind: 1, identifiers.value: 1}` to prevent connector/bootstrap
-> identity races, and `ensureNormalizedNameUniqueIndex(entitiesColl)` to make
-> normalized-name find-or-create atomic across processes. For an existing
-> database, backfill normalized fields and deduplicate before installing either
-> index; the library intentionally cannot make that destructive migration for
-> you. See the Memory Guide's Mongo deployment checklist.
-
-### What gets injected into the system message
-
-Up to four blocks are rendered when `features.memory: true` (the rules block and the priorities block only appear when applicable facts exist):
-
-```
-## Your persona — how YOU (the assistant) present yourself
-_These lines define the ASSISTANT — you, the AI — NOT the user. Each line begins with `[ruleId=<id>]` — pass that exact id to `memory_set_agent_rule.replaces` to supersede or to `memory_forget.factId` to drop._
-- [ruleId=fact_abc123_…] Be terse in replies.
-- [ruleId=fact_def456_…] Reply in English again.
-
-## About the User (Alice Smith)
-Alice prefers concise replies, leads product strategy at Acme, …
-
-### Recent top facts (up to 20)
-- prefers: "concise answers" (conf=1.00)
-- works_at: Acme (conf=0.95)
-- role: "product lead" (conf=0.9)
-
-## User's Active Priorities        ← only when the user has tracks_priority facts
-- **Ship NA launch** _(horizon=Q, weight=0.80, deadline=2026-06-30T00:00:00.000Z)_
-
-## About the User's Organization (Acme)        ← only when groupBootstrap is set
-Acme is a 500-person SaaS company in the logistics space …
-
-### Recent top facts (up to 20)
-- …
-```
-
-The blocks are rendered **before** every LLM call, never trimmed by compaction (`isCompactable() === false`). Empty blocks are omitted — a brand-new user with no facts gets nothing rendered until something is learned.
-
-> Global agent personality / base instructions are NOT auto-rendered any more — set them via `Agent.create({ instructions })`. The `agent` entity still exists for graph queries and as the `this_agent` subject for `memory_set_agent_rule`, but its profile is not synthesised or injected.
-
-### Plugin config
-
-```typescript
-interface MemoryPluginConfig {
-  memory: MemorySystem;                  // REQUIRED
-  agentId: string;                       // auto-filled from context.agentId
-  userId: string;                        // auto-filled from agent.userId
-  groupId?: string;                      // TRUSTED — from your auth layer
-  principals?: string[];                 // TRUSTED host-resolved ACL principal set
-  timezone?: string;                     // Viewer IANA timezone for rendered instants
-
-  // Optional shared persona subject for multiple agent variants.
-  personaEntityId?: string;
-
-  // Permissions stamped on the bootstrapped user / agent / group entities.
-  userEntityPermissions?:  { group?: 'none'|'read'|'write'; world?: 'none'|'read'|'write' };
-  agentEntityPermissions?: { group?: 'none'|'read'|'write'; world?: 'none'|'read'|'write' };
-
-  // Optional org bootstrap — when set AND groupId is set, a third entity
-  // (`organization`, identifier `system_group_id`) is upserted and rendered
-  // as "About the User's Organization". Visibility of facts on it is controlled
-  // by your MemorySystem.visibilityPolicy + per-write permissions.
-  groupBootstrap?: {
-    displayName: string;
-    identifiers?: { kind: string; value: string }[];   // e.g. [{kind:'domain', value:'acme.com'}]
-    permissions?: { group?: 'none'|'read'|'write'; world?: 'none'|'read'|'write' };
-  };
-
-  // What to inject for each profile block. Defaults to { profile:true, topFacts:20,
-  // recentActivity: { limit: 20, windowDays: 7 } }.
-  userProfileInjection?:  ProfileInjection;
-  groupProfileInjection?: ProfileInjection;
-
-  // Legacy compatibility field. The 1.0 write tools do not consult it when
-  // the LLM omits visibility; configure MemorySystem.visibilityPolicy instead.
-  defaultVisibility?: {
-    forUser?:  'private' | 'group' | 'public';
-    forAgent?: 'private' | 'group' | 'public';
-    forOther?: 'private' | 'group' | 'public';
-  };
-
-  autoResolveThreshold?: number;        // Fuzzy-match threshold for {surface}. Default 0.9.
-  userDisplayName?: string;             // Used on first bootstrap; ignored if entity exists.
-  agentDisplayName?: string;            // Same.
-}
-
-interface ProfileInjection {
-  profile?: boolean;          // Include profile.details. Default true.
-  topFacts?: number;          // Top N ranked facts. 0 disables. Default 20 (cap 100).
-  factPredicates?: string[];  // Restrict topFacts to these predicates.
-  relatedTasks?: boolean;     // Include active related tasks. Default false.
-  relatedEvents?: boolean;    // Include recent related events. Default false.
-  identifiers?: boolean;      // Render entity identifier list. Default false.
-  maxFactLineChars?: number;  // Cap each rendered fact line. Default undefined (no cap).
-  recentActivity?: {          // Time-ordered "Recent activity" tail. Default ON, limit 20, 7d.
-    limit?: number;           // 0 disables.
-    windowDays?: number;
-    predicates?: string[];    // Optional predicate allowlist.
-  };
-}
-
-interface MemoryWritePluginConfig {
-  memory: MemorySystem;                  // REQUIRED
-  agentId: string;                       // auto-filled
-  userId: string;                        // auto-filled
-  groupId?: string;
-  predicates?: PredicateRegistry;       // Usually inherited from MemorySystem.
-  defaultVisibility?: { /* same shape as above */ };
-  autoResolveThreshold?: number;
-  forgetRateLimit?: { maxCallsPerWindow?: number; windowMs?: number };       // default 10/60s/user; also fallback for setAgentRuleRateLimit
-  setAgentRuleRateLimit?: { maxCallsPerWindow?: number; windowMs?: number }; // default: falls back to forgetRateLimit, then 10/60s/user
-  forbiddenEntityTypes?: readonly string[]; // Reject host-managed entity types.
-}
-```
-
-### The 12 `memory_*` tools
-
-All tools accept a flexible **`SubjectRef`** so the LLM never has to know an entity id:
-
-```typescript
-type SubjectRef =
-  | string                                             // entity id, "me", or "this_agent"
-  | { id: string }
-  | { identifier: { kind: string; value: string } }    // exact identifier match
-  | { surface: string };                               // fuzzy resolution by name/alias
-```
-
-**Read tools (6)** — registered when `features.memory: true`:
-
-| Tool | What it does | Example |
-|------|--------------|---------|
-| `memory_recall` | Profile + top facts + optional tiers (`documents` / `semantic` / `neighbors`) | `{"subject":"me"}` · `{"subject":{"surface":"Acme deal"},"include":["neighbors"]}` |
-| `memory_graph` | N-hop graph traversal (Mongo `$graphLookup` for `direction:'out'`/`'in'`; iterative BFS for `'both'`) | `{"start":"me","direction":"out","maxDepth":2}` |
-| `memory_search` | Semantic text search across embedded facts | `{"query":"deployment incidents last quarter","topK":10}` |
-| `memory_search_documents` | Search long-form documents (`type='document'`) by content. `mode:'semantic'\|'keyword'`; filters by `attachedTo` / `role`. | `{"query":"Q3 launch brief"}` · `{"query":"TODO","mode":"keyword","role":"notes"}` |
-| `memory_find_entity` | Lookup or list by id, identifier, surface, or type+metadata (read-only — actions: `find` / `list`) | `{"by":{"identifier":{"kind":"email","value":"alice@a.com"}}}` |
-| `memory_list_facts` | Paginated raw fact enumeration; `archivedOnly: true` returns audit view | `{"subject":"me","predicate":"prefers"}` |
-
-**Write tools (6)** — registered when `features.memoryWrite: true` (requires `memory: true`):
-
-| Tool | What it does | Example |
-|------|--------------|---------|
-| `memory_remember` | Write an atomic fact (or document fact via `kind: "document"` + `details`) | `{"subject":"me","predicate":"prefers","value":"concise"}` |
-| `memory_link` | Write a relational fact between two entities | `{"from":{"surface":"Alice"},"predicate":"attended","to":{"surface":"Q3 planning"}}` |
-| `memory_upsert_entity` | Create or merge an entity by identifiers (multi-ID auto-merge) | `{"type":"person","displayName":"Alice","identifiers":[{"kind":"email","value":"alice@a.com"}]}` |
-| `memory_forget` | Archive a fact (optionally supersede with a correction). Rate-limited 10/60s/user. | `{"factId":"fact_xyz","replaceWith":{"predicate":"role","value":"senior engineer"}}` |
-| `memory_restore` | Un-archive a previously forgotten fact (undo). Rejects when superseded by a live successor. | `{"factId":"fact_xyz"}` |
-| `memory_set_agent_rule` | Record a user-specific behavior rule for THIS agent. Rendered back into the system-message rules block. | `{"rule":"Be terse in replies."}` · `{"rule":"Reply in Russian.","replaces":"fact_abc123"}` |
-
-**Write visibility:** the LLM-facing schemas for `memory_remember`,
-`memory_link`, and `memory_upsert_entity` deliberately do not expose a
-`visibility` argument. When those tools write a record, they pass no explicit
-permissions and `MemorySystem.visibilityPolicy` decides what to stamp. Configure
-that policy at the memory-system boundary; do not rely on prompt instructions
-for authorization. Programmatic callers using `MemorySystem` directly can pass
-explicit `permissions`.
-
-**Multi-ID enrichment** — `memory_upsert_entity` auto-merges identifiers when any one matches an existing entity. Useful when the LLM observes a person via Slack today and via email tomorrow:
-
-```json
-{"type":"person","displayName":"Alice Smith",
- "identifiers":[{"kind":"email","value":"alice@a.com"},
-                {"kind":"slack_user_id","value":"U07ABC"}]}
-```
-
-If any identifier already belongs to an entity, the others are added to it — so future `memory_find_entity` lookups by either identifier resolve to the same Alice.
-
-### Behavior rules — `memory_set_agent_rule`
-
-When the user gives a directive about *the agent itself* ("be terse", "stop apologizing", "reply in Russian", "your name is Jason now"), the LLM calls `memory_set_agent_rule`. The rule is stored as a fact on the agent entity scoped to the calling user (`ownerId = userId`, `predicate = 'agent_behavior_rule'`, importance 0.95, private visibility) and rendered back into the **`## Your persona — how YOU (the assistant) present yourself`** block on every subsequent turn. Each rule shows its `ruleId` so the LLM can pass `replaces` to supersede it cleanly when the user contradicts a prior rule.
-
-The plugin's instructions teach the LLM a narrow trigger:
-
-- ✅ Identity / name / persona, role assignment, tone, format, language, meta-interaction rules.
-- ❌ Task creation ("remind me to X" → `memory_upsert_entity` task or a tracker connector), calendar actions, factual corrections, user statements about themselves.
-
-Rules are scoped per-user-per-agent — another user of the same agent gets a different set, all derived from the same single `agentEntityId` plus per-fact `ownerId` filtering.
-
-### Background ingestion via `SessionIngestorPluginNextGen`
-
-`memory_*` write tools depend on the agent remembering to call them. For deployments where the agent should be retrieval-only or where you want belt-and-suspenders capture, register `SessionIngestorPluginNextGen` alongside `MemoryPluginNextGen`. It hooks `onBeforePrepare`, snapshots the conversation slice since its watermark, and (when the slice meets `minBatchMessages`) kicks off an async LLM extraction that writes facts directly to the same `MemorySystem`.
-
-```typescript
-import { SessionIngestorPluginNextGen } from 'oneringai';
-
-// After Agent.create(...):
-agent.context.registerPlugin(new SessionIngestorPluginNextGen({
-  memory,
-  agentId: agent.context.agentId,
-  userId: 'alice',
-  groupId: 'team-A',                    // optional, trusted
-  connectorName: 'fast-extractor',      // REQUIRED — typically a cheap, NON-reasoning model
-  model: 'gpt-4.1',
-  diligence: 'normal',                  // 'minimal' | 'normal' | 'thorough'
-  minBatchMessages: 6,                  // default
-}));
-```
-
-Pair `memory: true` with the ingestor (and **without** `memoryWrite`) for an agent that reads memory but never mutates it directly — useful when the agent operator wants ambient learning without trusting the LLM to write. See [docs/MEMORY_GUIDE.md § Learning from agent runs](./docs/MEMORY_GUIDE.md#learning-from-agent-runs-with-sessioningestorpluginnextgen) for batching, watermark, dedup-merge, and graceful-shutdown details.
-
-> On graceful shutdown the host MUST `await ingestor.flush()` before destroying the agent — `flush()` ignores the batch threshold and awaits completion, so the trailing batch is captured.
-
-For **non-agent flows** (process this email / text now, no conversation involved), use `SignalIngestor` directly — see [docs/MEMORY_SIGNALS.md](./docs/MEMORY_SIGNALS.md). Reference adapters: `EmailSignalAdapter`, `CalendarSignalAdapter`, `PlainTextAdapter`. Custom adapters implement `SignalSourceAdapter`.
-
-### Permissions and scope
-
-Every entity and fact carries:
-- **`ownerId`** (required) — the user who created the record. Owner always has full access.
-- **`groupId`** (optional) — the group the record belongs to.
-- **`permissions: { group?, world? }`** — `'none' | 'read' | 'write'`. Defaults: `group: 'read'`, `world: 'read'` (public-read, owner-write).
-
-Reads are filtered at the storage adapter (defence-in-depth); writes are checked at the `MemorySystem` layer (`assertCanAccess(..., 'write')` throws `PermissionDeniedError`). Scope visibility cuts orthogonal: a record with `groupId: 'A'` is invisible to callers in group `'B'` regardless of permissions.
-
-The plugin config still accepts `defaultVisibility` for compatibility, but the
-current write-tool implementations do not apply it when the LLM omits
-visibility. Use `MemorySystem.visibilityPolicy` for deployment-wide defaults.
-`memory_set_agent_rule` is a special case: it always writes the user-specific
-agent rule as private. Writes whose `contextIds` include foreign or
-unverifiable entities are fail-safe restricted to owner-only visibility.
-Full model: [docs/MEMORY_PERMISSIONS.md](./docs/MEMORY_PERMISSIONS.md).
-
-### Principal-based ACLs (explicit grants)
-
-Owner / group / world handles the common cases, but it can't say *"this **specific** other person, agent, or service can read this record."* The principal-ACL layer adds that — explicit per-identity grants that sit **alongside** owner/group/world. It is fully opt-in and backwards compatible: set no `acl` and pass no `scope.principals`, and nothing below changes.
-
-**Principals** are opaque tokens — `user:<id>`, `entity:<id>` (typically a `person`), `group:<id>`, `service:<name>`, and `world` — built with the exported helpers `principalUser`, `principalEntity`, `principalGroup`, `principalService`, and `PRINCIPAL_WORLD`. (`parsePrincipal(token)` parses one back; an unknown prefix is `kind: 'unknown'`, never `world`.)
-
-**Grant** access with an `acl` on any entity or fact:
-
-```typescript
-import { principalEntity } from 'oneringai';
-
-await memory.addFact(
-  {
-    subjectId: deal.id,
-    predicate: 'note',
-    kind: 'atomic',
-    details: 'Pricing discussed with Alice',
-    permissions: { group: 'none', world: 'none' },              // owner-private base
-    acl: [{ principal: principalEntity('alice'), actions: ['read'] }],  // …plus Alice
-  },
-  { userId: 'owner', groupId: 'g1' },
-);
-```
-
-`ACLEntry` is `{ principal, actions: Array<'read' | 'write'> }`; an empty `actions` array grants nothing (never a silent read). On every write the storage boundary projects `ownerId` + `groupId` + `permissions` + `acl` into two **library-owned** arrays on the record — `readPrincipals` and `writePrincipals` (`writePrincipals ⊆ readPrincipals`). Never set these by hand; they're recomputed on each write.
-
-**Query in principal mode** by passing `scope.principals` — its *presence* (any length) is authoritative, and a record is visible iff the token sets intersect:
-
-```typescript
-import { principalUser, principalGroup, principalEntity, PRINCIPAL_WORLD } from 'oneringai';
-
-const scope = {
-  principals: [
-    principalUser('alice'),            // own user token → owner access
-    principalGroup('g1'),              // groups alice belongs to
-    principalEntity(alicePersonId),    // alice's Person entity (account-link grants)
-    PRINCIPAL_WORLD,                   // see public records
-  ],
-};
-await memory.getFact(id, scope);       // visible iff tokens ∩ readPrincipals ≠ ∅
-```
-
-- **Empty set** (`{ principals: [] }`) → sees/authorizes nothing. **Absent** → the legacy owner/group/world path runs unchanged.
-- When present, `userId` / `groupId` are ignored for the access decision — encode them as tokens instead.
-- The **host owns token-set correctness** (the library trusts it like `scope.userId`): include `PRINCIPAL_WORLD` to see public records and the caller's own `user:<id>` for owner access (both fail *closed* if omitted), and include **only** `group:` tokens the caller truly belongs to (over-including one **leaks** that group — fails *open*).
-
-**Mutate access** after creation with `setAccess` (requires `write`; replaces the `acl` and re-materializes the arrays — it does not touch `ownerId` or the `permissions` block):
-
-```typescript
-await memory.setAccess('fact', factId, [{ principal: principalEntity('bob'), actions: ['read'] }], scope);
-```
-
-**"Account links later."** When two `person` entities turn out to be the same identity, `mergeEntities(winner, loser, scope)` rewrites every `entity:<loser>` grant to `entity:<winner>` across all records — so a linked contact's prior facts stay visible under the surviving identity.
-
-> ⚠️ **Migration gate.** Principal callers have **no legacy fallback**: a row written before the principal model (no `readPrincipals`) is invisible to a `scope.principals` caller. Before any host code starts passing `scope.principals`, run the idempotent backfill to completion:
-> ```typescript
-> await memory.backfillAccessPrincipals(scope, { batchSize: 500 });
-> // → { entitiesScanned, entitiesUpdated, factsScanned, factsUpdated }
-> ```
-
-The same primitives (`materializePrincipals`, `fromLibraryPermissions`, `fromNimbleAudit`, `readFilterForPrincipals`, …) are exported so a host can authorize its **own** collections with identical grammar. Full reference: [docs/MEMORY_PERMISSIONS.md § Principal-based ACLs](./docs/MEMORY_PERMISSIONS.md#principal-based-acls-explicit-grants).
-
-### Security invariants
-
-The library trusts scope (`{userId, groupId}`) because the host authenticates the caller. The plugin + tools preserve that trust boundary:
-
-- **`userId` and `groupId` come from plugin config, NEVER from tool arguments.** Tools silently ignore any `groupId` passed by the LLM. (Otherwise a user in group A could ask the agent to call `memory_remember({..., groupId: "B"})` and escalate.)
-- **No ghost-writes.** `memory_remember` and `memory_link` reject writes whose subject is owned by another user — the memory layer enforces `fact.ownerId == subject.ownerId`, so without this guard a write against someone else's entity would silently attribute the fact to *them*. The tools return a structured error; the LLM should `memory_upsert_entity` its own entity instead.
-- **`contextIds` fail-safe restriction.** A write specifying `contextIds` that include foreign-owned or unverifiable entities is forced to owner-only whenever the host policy could otherwise choose wider visibility. The response includes a warning. This prevents planting cross-owner facts that surface in another owner's graph walks.
-- **Numeric clamping.** All LLM-controllable numeric limits are capped (`maxDepth ≤ 5`, `topK ≤ 100`, `limit ≤ 200/500`, `topFactsLimit ≤ 100`, `neighborDepth ≤ 5`, `confidence`/`importance` ∈ [0, 1]). DoS and ranking-pollution mitigated.
-- **`kind` is a strict enum.** Every fact is `'atomic'` or `'document'`. Anything else is rejected at both the tool and `MemorySystem.addFact` boundary.
-- **`value` and `objectId` are mutually exclusive.** Either relational or attribute, never both.
-
-### Using the tools without the plugin
-
-If you want the LLM tools but not the plugin's profile injection (e.g. you already have a custom system prompt strategy), call the factories directly. All three share the same `CreateMemoryToolsArgs`:
-
-```typescript
-import {
-  createMemoryReadTools,
-  createMemoryWriteTools,
-  createMemoryTools,            // convenience: all 12
-} from 'oneringai';
-
-const readTools = createMemoryReadTools({
-  memory,                                   // MemorySystem instance
-  agentId: 'my-agent',
-  defaultUserId: 'alice',                   // fallback when ToolContext.userId is unset
-  defaultGroupId: 'team-A',                 // TRUSTED — from your auth layer
-  defaultPrincipals: ['user:alice', 'group:team-A', 'world'],
-  // Optional: wire "me" / "this_agent" token resolution via your own bootstrap.
-  getOwnSubjectIds: () => ({ userEntityId, agentEntityId }),
-  autoResolveThreshold: 0.9,
-});
-
-agent.tools.registerMany(readTools);
-
-// Or full read+write:
-const writeTools = createMemoryWriteTools({ memory, agentId: 'my-agent', defaultUserId: 'alice' });
-agent.tools.registerMany(writeTools);
-```
-
-Without `getOwnSubjectIds`, the `"me"` / `"this_agent"` `SubjectRef` tokens return a structured error; callers must reference entities by id, identifier, or surface.
-
-### Direct `MemorySystem` access
-
-For server-side code (jobs, migrations, CLI tooling) you can bypass the agent layer entirely and use the `MemorySystem` API directly:
-
-```typescript
-const scope = { userId: 'alice', groupId: 'team-A' };
-
-// Upsert an entity
-const { entity: john } = await memory.upsertEntity({
-  type: 'person',
-  displayName: 'John Doe',
-  identifiers: [{ kind: 'email', value: 'john@acme.com' }],
-}, scope);
-
-// Add a fact
-await memory.addFact({
-  subjectId: john.id,
-  predicate: 'works_at',
-  kind: 'atomic',
-  objectId: acmeId,
-  importance: 0.8,
-}, scope);
-
-// Brain-like retrieval — profile + top facts + related tasks + related events
-const view = await memory.getContext(john.id, {}, scope);
-
-// Surface-form lookup (for callers that don't know the id yet)
-const candidates = await memory.resolveEntity(
-  { surface: 'John from Acme', type: 'person' },
-  scope,
-);
-
-// Graph traversal
-const neighborhood = await memory.traverse(john.id, {
-  direction: 'out',
-  maxDepth: 2,
-}, scope);
-
-// Semantic search (requires embedder)
-const hits = await memory.semanticSearch('budget concerns', {}, scope);
-
-// Bitemporal — what did we know about this entity on a specific date?
-const past = await memory.getContext(john.id, { asOf: new Date('2026-01-15') }, scope);
-```
-
-Full API reference: [docs/MEMORY_API.md](./docs/MEMORY_API.md).
-
----
-
-## Tool Catalog: Dynamic Tool Loading/Unloading
-
-When agents need 100+ tools, sending all tool definitions to the LLM wastes tokens and degrades performance. The Tool Catalog lets agents dynamically discover and load only the tool categories they need.
-
-### Quick Start
-
-```typescript
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  tools: [readFile, writeFile],  // always-on tools (outside catalog)
-  identities: [{ connector: 'github' }],  // connector scope
-  context: {
-    features: { toolCatalog: true },
-    toolCategories: ['web', 'code'],  // built-in category scope
-    plugins: {
-      toolCatalog: {
-        pinned: ['web'],  // always loaded, LLM can't unload
-      },
-    },
-  },
-});
-```
-
-The agent gets 3 metatools: `tool_catalog_search`, `tool_catalog_load`, `tool_catalog_unload`. It can browse available categories, load what it needs, and unload when done.
-
-**Important:** Plugin tools (memory, context, instructions, etc.) are always available and completely separate from the catalog. They cannot be unloaded.
-
-### How Scoping Works
-
-The Tool Catalog has two independent scoping mechanisms:
-
-| Scope | Controls | Config |
-|-------|----------|--------|
-| **`toolCategories`** | Built-in categories (filesystem, web, code, shell, etc.) | `context.toolCategories` |
-| **`identities`** | Connector categories (connector:github, connector:slack, etc.) | `Agent.create({ identities })` |
-
-```typescript
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-
-  // Controls which connector categories appear in catalog
-  identities: [
-    { connector: 'github' },
-    { connector: 'slack' },
-    { connector: 'microsoft', accountId: 'work' },
-  ],
-
-  context: {
-    features: { toolCatalog: true },
-    // Controls which built-in categories appear in catalog
-    toolCategories: ['filesystem', 'web', 'code'],
-  },
-});
-
-// LLM sees: filesystem, web, code, connector:github, connector:slack, connector:microsoft:work
-```
-
-**Scoping syntax for `toolCategories`:**
-
-```text
-// Allowlist (string[] shorthand)
-toolCategories: ['web', 'knowledge']
-
-// Explicit allowlist
-toolCategories: { include: ['web', 'knowledge'] }
-
-// Blocklist (all except these)
-toolCategories: { exclude: ['desktop', 'shell'] }
-
-// No scope = all built-in categories visible
-```
-
-### Pinned Categories
-
-Pinned categories are always loaded and the LLM cannot unload them. Use this for tools the agent must always have access to:
-
-```typescript
-const contextConfig = {
-  features: { toolCatalog: true },
-  toolCategories: ['filesystem', 'web', 'code'],
-  plugins: {
-    toolCatalog: {
-      pinned: ['filesystem'],  // always loaded, can't unload
-    },
-  },
-};
-```
-
-**Pinned vs always-on tools (`tools` array):**
-- `tools: [myTool]` on `Agent.create()` — individual tools always available, outside the catalog entirely
-- `pinned: ['filesystem']` — entire category loaded via catalog, visible in catalog listings as `[PINNED]`, but cannot be unloaded
-
-**Behavior:**
-- Pinned categories are loaded automatically when the plugin initializes
-- `tool_catalog_unload` returns an error for pinned categories
-- Pinned categories don't count toward `maxLoadedCategories` limit
-- During compaction, pinned categories are never evicted
-
-### Auto-Loading Categories
-
-Pre-load categories so the agent doesn't need an extra turn. Unlike pinned, auto-loaded categories **can** be unloaded by the LLM:
-
-```typescript
-const pluginConfigs = {
-  plugins: {
-  toolCatalog: {
-    pinned: ['filesystem'],                     // always loaded
-    autoLoadCategories: ['web', 'knowledge'],   // pre-loaded, can be unloaded
-    maxLoadedCategories: 10,                    // limit (excludes pinned)
-  },
-  },
-};
-```
-
-### Dynamic Instructions
-
-The LLM receives dynamic instructions that list exactly which categories are available, with markers:
-
-```
-## Tool Catalog
-
-Your core tools (memory, context, instructions, etc.) are always available.
-Additional tool categories can be loaded on demand from the catalog below.
-
-**Available categories:**
-- filesystem (6 tools) [PINNED]: Read, write, edit, search, and list files
-- web (1 tool): Fetch and process web content
-- code (1 tool): Execute JavaScript code in sandboxed VM
-- connector:github (9 tools): Authenticated API + 8 GitHub tools
-- connector:slack (11 tools): Authenticated API + 10 Slack tools
-
-**Best practices:**
-- Search first to find the right category before loading.
-- Unload categories you no longer need to keep context lean.
-- Categories marked [PINNED] are always available and cannot be unloaded.
-```
-
-### ToolCatalogRegistry
-
-Static global registry for tool categories (like `Connector` and `StorageRegistry`). Register your custom categories at app startup:
-
-```typescript
-import { ToolCatalogRegistry } from 'oneringai';
-
-ToolCatalogRegistry.registerCategory({
-  name: 'knowledge',
-  displayName: 'Knowledge Graph',
-  description: 'Search entities, get facts, manage references',
-});
-
-ToolCatalogRegistry.registerTools('knowledge', [
-  { name: 'entity_search', displayName: 'Entity Search', description: 'Search people/orgs', tool: entitySearch, safeByDefault: true },
-]);
-```
-
-Built-in tools from `registry.generated.ts` are auto-registered on first access.
-
-### Resolving Tool Names
-
-For executors that resolve `string[]` tool names to `ToolFunction[]`:
-
-```typescript
-const tools = ToolCatalogRegistry.resolveTools(
-  ['entity_search', 'github_api'],
-  { includeConnectors: true }
-);
-```
-
-### Tools
-
-| Tool | Description | Permission |
-|------|-------------|------------|
-| `tool_catalog_search` | Browse categories, list tools, keyword search | Always allowed |
-| `tool_catalog_load` | Load a category's tools into the agent | Always allowed |
-| `tool_catalog_unload` | Unload a category to free token budget | Always allowed |
-
-### Full Configuration Reference
-
-```typescript
-interface ToolCatalogPluginConfig {
-  /** Scope for built-in categories (does NOT affect connector categories) */
-  categoryScope?: string[] | { include: string[] } | { exclude: string[] };
-  /** Categories pre-loaded on init (can be unloaded by LLM) */
-  autoLoadCategories?: string[];
-  /** Categories always loaded (cannot be unloaded by LLM) */
-  pinned?: string[];
-  /** Max loaded categories at once, excluding pinned (default: 10) */
-  maxLoadedCategories?: number;
-  /** Auth identities for connector filtering (usually set via Agent.create) */
-  identities?: AuthIdentity[];
-}
-```
-
----
-
-## Routine Execution
-
-Execute multi-step workflows where an AI agent runs tasks in dependency order, validates completion via LLM self-reflection, and uses memory as the bridge between tasks.
-
-### Overview
-
-The **Routine Runner** (`executeRoutine()`) takes a `RoutineDefinition` and executes it end-to-end:
-
-1. Creates an Agent with working memory + in-context memory enabled
-2. Runs tasks in dependency order (respecting `dependsOn`)
-3. After each task, validates completion using LLM self-reflection against criteria
-4. Clears conversation between tasks but **preserves memory plugins** — this is how tasks share data
-5. Retries failed tasks up to `maxAttempts`
-6. Returns a `RoutineExecution` with status, progress, and per-task results
-
-```
-Task A → validate → clear conversation → Task B → validate → clear → Task C → done
-           ↓                                ↓
-    memory persists ──────────────→ memory persists
-```
-
-### Quick Start
-
-```typescript
-import {
-  Connector, Vendor, executeRoutine,
-  createRoutineDefinition,
-} from 'oneringai';
-
-// 1. Setup connector
-Connector.create({
-  name: 'openai',
-  vendor: Vendor.OpenAI,
-  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
-});
-
-// 2. Define a routine
-const routine = createRoutineDefinition({
-  name: 'Research Report',
-  description: 'Research a topic and write a report',
-  instructions: 'You are a research assistant. Be thorough and cite sources.',
-  tasks: [
-    {
-      name: 'Research',
-      description: 'Search for information about quantum computing advances in 2026',
-      expectedOutput: 'A summary of key findings stored in memory',
-      suggestedTools: ['web_search', 'web_fetch'],
-      validation: {
-        completionCriteria: [
-          'At least 3 distinct sources were found',
-          'Key findings were stored in memory',
-        ],
-      },
-    },
-    {
-      name: 'Write Report',
-      description: 'Write a structured report based on the research findings',
-      expectedOutput: 'A markdown report with introduction, findings, and conclusion',
-      dependsOn: ['Research'],
-      validation: {
-        completionCriteria: [
-          'Report has an introduction, findings section, and conclusion',
-          'Report cites specific sources from the research',
-        ],
-      },
-    },
-  ],
-});
-
-// 3. Execute
-const execution = await executeRoutine({
-  definition: routine,
-  connector: 'openai',
-  model: 'gpt-4.1',
-  onTaskComplete: (task) => console.log(`Done: ${task.name}`),
-  onTaskFailed: (task) => console.error(`Failed: ${task.name}`),
-});
-
-console.log(execution.status);   // 'completed' | 'failed'
-console.log(execution.progress); // 100
-```
-
-### RoutineDefinition Structure
-
-```typescript
-interface RoutineDefinition {
-  name: string;                    // Routine name
-  description: string;             // Human-readable description (required)
-  instructions?: string;           // System prompt for the agent
-  requiredTools?: string[];        // Tool names that must be available
-  requiredPlugins?: string[];      // Plugin names that must be registered
-
-  tasks: TaskInput[];              // Array of task definitions (TaskDefinition does not exist)
-
-  concurrency?: {
-    maxParallelTasks: number;      // Required if concurrency is set; runner executes tasks sequentially regardless
-    strategy: 'fifo' | 'priority' | 'shortest-first';
-    failureMode?: 'fail-fast' | 'continue' | 'fail-all';  // Default: 'fail-fast'
-  };
-}
-```
-
-### Task Definition
-
-Each task in a routine has:
-
-```typescript
-interface TaskInput {
-  name: string;                    // Task name (used as ID)
-  description: string;             // What the agent should do
-  expectedOutput?: string;         // What success looks like
-  suggestedTools?: string[];       // Hint to the agent about useful tools
-  dependsOn?: string[];            // Task names this depends on
-  maxAttempts?: number;            // Max retry attempts (default: 3)
-
-  validation?: {
-    completionCriteria?: string[]; // Criteria for LLM self-reflection
-    minCompletionScore?: number;   // Minimum score 0-100 (default: 80)
-    skipReflection?: boolean;      // Skip validation, auto-pass
-  };
-}
-```
-
-### Control Flow (Map / Fold / Until)
-
-Tasks can use control flow to iterate over data. Three flow types are available:
-
-- **`map`** — Execute a sub-routine for each element in an array (from memory key)
-- **`fold`** — Accumulate a result across array elements (like `Array.reduce`)
-- **`until`** — Repeat a sub-routine until a condition is met
-
-All three support an optional `iterationTimeoutMs` to prevent infinite hangs:
-
-```typescript
-const mapTask = {
-  name: 'Process Items',
-  description: 'Process each item from the list',
-  controlFlow: {
-    type: 'map',
-    source: '__items_list',
-    resultKey: '__processed_items',
-    maxIterations: 50,
-    iterationTimeoutMs: 120000, // 2 min per iteration
-    tasks: [
-      { name: 'Process', description: 'Process the current item' },
-    ],
-  },
-};
-```
-
-When `iterationTimeoutMs` is set, each sub-execution is wrapped with `Promise.race`. If an iteration exceeds the timeout (or its sub-execution otherwise fails), the entire `map`/`fold`/`until` task fails immediately — there is no per-iteration failure mode or skip-and-continue; the loop does not proceed to remaining iterations.
-
-### Error Classification
-
-The routine runner classifies errors as **transient** or **permanent**:
-
-- **Permanent errors** (auth failures, context length exceeded, model not found, config errors) immediately fail the task without retrying
-- **Transient errors** (network issues, rate limits, unknown errors) are retried up to `maxAttempts`
-
-This prevents wasting retries on errors that will never succeed.
-
-### `ROUTINE_KEYS` Constant
-
-The `ROUTINE_KEYS` constant is exported from the core library and contains all well-known ICM/WM key names used internally by the routine framework:
-
-```typescript
-import { ROUTINE_KEYS } from 'oneringai';
-
-// ROUTINE_KEYS.PLAN            → '__routine_plan'
-// ROUTINE_KEYS.DEPS            → '__routine_deps'
-// ROUTINE_KEYS.DEP_RESULT_PREFIX → '__dep_result_'
-// ROUTINE_KEYS.MAP_ITEM        → '__map_item'
-// ROUTINE_KEYS.MAP_INDEX       → '__map_index'
-// ROUTINE_KEYS.MAP_TOTAL       → '__map_total'
-// ROUTINE_KEYS.FOLD_ACCUMULATOR → '__fold_accumulator'
-```
-
-Useful for custom integrations that need to read or set routine state programmatically.
-
-### Task Dependencies and Ordering
-
-Tasks execute in dependency order. Use `dependsOn` to create a DAG:
-
-```typescript
-const routine = createRoutineDefinition({
-  name: 'Data Pipeline',
-  tasks: [
-    { name: 'Fetch Data', description: '...' },
-    { name: 'Clean Data', description: '...', dependsOn: ['Fetch Data'] },
-    { name: 'Analyze', description: '...', dependsOn: ['Clean Data'] },
-    { name: 'Visualize', description: '...', dependsOn: ['Analyze'] },
-  ],
-});
-```
-
-Tasks with no dependencies run first. A task only becomes eligible when all its dependencies are completed.
-
-### Memory as the Inter-Task Bridge
-
-Between tasks, conversation history is cleared but **memory plugins persist**. This is how tasks share information:
-
-- **In-Context Memory** (`store_set("whiteboard", ...)`): Small key results that subsequent tasks see immediately in context. No retrieval call needed.
-  ```
-  Task 1 calls: store_set("whiteboard", "api_endpoints", { description: "...", value: "Found 3 endpoints: /users, /orders, /products" })
-  Task 2 sees this automatically in its context window
-  ```
-
-- **Working Memory** (`store_set("notes", ...)` / `store_get("notes", ...)`): Larger data stored externally, retrieved on demand.
-  ```
-  Task 1 calls: store_set("notes", "raw_data", { description: "Full API response", value: "...", tier: "findings" })
-  Task 2 calls: store_get("notes", "raw_data") → gets the full response
-  ```
-
-Note: the built-in default system prompt does not use this pattern — it still instructs the agent to use `context_set`, `memory_store` (tier="findings"), and `memory_retrieve`, none of which are registered tools. Use `prompts.system` to override it with instructions that reference the `store_set`/`store_get` tools shown above.
-
-### Validation and Self-Reflection
-
-After each task completes, the runner validates the output:
-
-1. LLM validation is opt-in: it only runs when the task sets `skipReflection: false` explicitly AND provides non-empty `completionCriteria`
-2. Otherwise (the default — `skipReflection` omitted/`true`, or no `completionCriteria`) the task auto-passes with `completionScore: 100`
-3. When enabled: calls `agent.runDirect()` with the task criteria and agent's response
-4. The validation LLM is asked to return `{ isComplete, completionScore, explanation }`, but only `completionScore`/`explanation` are used — the LLM's own `isComplete` is ignored
-5. Task passes if `completionScore >= minCompletionScore` (default 80)
-
-```typescript
-const validation = {
-  validation: {
-    completionCriteria: [
-      'All API endpoints were documented',
-      'Error codes were listed for each endpoint',
-      'Authentication requirements were specified',
-    ],
-    minCompletionScore: 85,  // Strict: require 85+ score
-  },
-};
-```
-
-### Retry Logic
-
-If validation fails and the task hasn't exhausted `maxAttempts`:
-
-- The conversation is **NOT cleared** (agent builds on previous attempt)
-- Task status returns to `in_progress` (increments attempt counter)
-- Agent retries with the same prompt
-
-If `maxAttempts` is exceeded, the task is marked `failed`.
-
-### Failure Modes
-
-```typescript
-const routine = createRoutineDefinition({
-  name: 'Pipeline',
-  concurrency: {
-    maxParallelTasks: 1,
-    strategy: 'fifo',
-    failureMode: 'fail-fast',  // Default: stop on first failure
-    // failureMode: 'continue', // Skip failed tasks, continue with independents
-  },
-  tasks: [],
-});
-```
-
-| Mode | Behavior |
-|------|----------|
-| `fail-fast` | Stop entire routine on first task failure |
-| `continue` | Skip failed task, proceed to next independent task |
-
-### Custom Prompts
-
-Override any prompt builder to customize agent behavior:
-
-```typescript
-const execution = await executeRoutine({
-  definition: routine,
-  connector: 'openai',
-  model: 'gpt-4.1',
-  prompts: {
-    // Custom system prompt
-    system: (definition) => `You are ${definition.name}. Follow these rules...`,
-
-    // Custom task prompt
-    task: (task) => `
-      ## ${task.name}
-      ${task.description}
-      Remember to store results using store_set("whiteboard", key, { description, value }).
-    `,
-
-    // Custom validation prompt
-    validation: (task, context) => `
-      Did the agent complete "${task.name}"?
-      Criteria: ${task.validation?.completionCriteria?.join(', ')}
-      Response: ${context.responseText}
-      Return JSON: { "isComplete": boolean, "completionScore": number, "explanation": string }
-    `,
-  },
-});
-```
-
-### Callbacks and Progress Tracking
-
-```typescript
-const execution = await executeRoutine({
-  definition: routine,
-  connector: 'openai',
-  model: 'gpt-4.1',
-
-  onTaskComplete: (task, execution) => {
-    console.log(`Task "${task.name}" completed`);
-    console.log(`  Score: ${task.result?.validationScore}`);
-    console.log(`  Progress: ${execution.progress}%`);
-  },
-
-  onTaskFailed: (task, execution) => {
-    console.error(`Task "${task.name}" failed after ${task.attempts} attempts`);
-    console.error(`  Error: ${task.result?.error}`);
-  },
-});
-```
-
-### ExecuteRoutineOptions Reference
-
-```typescript
-interface ExecuteRoutineOptions {
-  /** Routine definition to execute */
-  definition: RoutineDefinition;
-
-  /** Pre-created Agent instance. When provided, connector/model/tools are ignored.
-   *  The agent is NOT destroyed after execution — caller manages its lifecycle. */
-  agent?: Agent;
-
-  /** Connector name — required when `agent` is not provided */
-  connector?: string;
-
-  /** Model ID — required when `agent` is not provided */
-  model?: string;
-
-  /** Additional tools — only used when creating a new agent (no `agent` provided) */
-  tools?: ToolFunction[];
-
-  /** Input parameter values for parameterized routines */
-  inputs?: Record<string, unknown>;
-
-  /** Hooks — applied to agent for the duration of routine execution */
-  hooks?: HookConfig;
-
-  /** Called when a task starts executing */
-  onTaskStarted?: (task: Task, execution: RoutineExecution) => void;
-
-  /** Called when a task completes successfully */
-  onTaskComplete?: (task: Task, execution: RoutineExecution) => void;
-
-  /** Called when a task fails */
-  onTaskFailed?: (task: Task, execution: RoutineExecution) => void;
-
-  /** Called after each validation attempt (whether pass or fail) */
-  onTaskValidation?: (task: Task, result: TaskValidationResult, execution: RoutineExecution) => void;
-
-  /** Configurable prompts (all have sensible defaults) */
-  prompts?: {
-    system?: (definition: RoutineDefinition) => string;
-    task?: (task: Task) => string;
-    validation?: (task: Task, context: ValidationContext) => string;
-  };
-}
-```
-
-### RoutineExecution Result
-
-```typescript
-interface RoutineExecution {
-  id: string;                      // Unique execution ID
-  routineId: string;               // From definition
-  status: 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
-  plan: Plan;                      // Tasks with statuses and results
-  progress: number;                // 0-100 percentage
-  startedAt?: number;              // Timestamp
-  completedAt?: number;            // Timestamp
-  lastUpdatedAt: number;           // Timestamp
-  error?: string;                  // Error message if failed
-}
-```
-
-Each completed task has a `result`:
-
-```typescript
-// Shape of Task.result (not a separately exported type)
-interface TaskResult {
-  success: boolean;
-  output?: unknown;                // Agent's response text (or control-flow result)
-  error?: string;                  // Error message if failed
-  validationScore?: number;        // 0-100 from validation
-  validationExplanation?: string;  // Why it passed/failed
-}
-```
-
-### Complete Example: Multi-Step Research Pipeline
-
-```typescript
-import {
-  Connector, Vendor, Agent,
-  executeRoutine, createRoutineDefinition,
-  ConnectorTools, Services, tools,
-} from 'oneringai';
-
-// Setup connectors
-Connector.create({
-  name: 'openai',
-  vendor: Vendor.OpenAI,
-  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
-});
-
-Connector.create({
-  name: 'serper',
-  serviceType: Services.Serper,
-  auth: { type: 'api_key', apiKey: process.env.SERPER_API_KEY! },
-  baseURL: 'https://google.serper.dev',
-});
-
-// Define the routine
-const routine = createRoutineDefinition({
-  name: 'Competitive Analysis',
-  description: 'Analyze competitors and produce a report',
-  instructions: 'You are a business analyst. Be thorough and data-driven.',
-  requiredTools: ['web_search'],
-  tasks: [
-    {
-      name: 'Identify Competitors',
-      description: 'Search for the top 5 competitors of Acme Corp in the cloud storage market',
-      expectedOutput: 'List of competitors stored in context',
-      suggestedTools: ['web_search'],
-      validation: {
-        completionCriteria: [
-          'At least 5 competitors were identified',
-          'Competitor names were stored using store_set("whiteboard", ...)',
-        ],
-      },
-    },
-    {
-      name: 'Analyze Features',
-      description: 'For each competitor found, research their key features and pricing',
-      dependsOn: ['Identify Competitors'],
-      expectedOutput: 'Feature comparison data stored in memory',
-      suggestedTools: ['web_search', 'web_fetch'],
-      maxAttempts: 2,
-      validation: {
-        completionCriteria: [
-          'Features were researched for all identified competitors',
-          'Pricing information was found for at least 3 competitors',
-          'Data was stored in working memory',
-        ],
-        minCompletionScore: 70,  // More lenient — pricing may not always be public
-      },
-    },
-    {
-      name: 'Write Report',
-      description: 'Compile findings into a structured competitive analysis report',
-      dependsOn: ['Analyze Features'],
-      expectedOutput: 'A markdown report with executive summary, feature comparison table, and recommendations',
-      validation: {
-        completionCriteria: [
-          'Report has an executive summary',
-          'Report includes a feature comparison table',
-          'Report provides actionable recommendations',
-        ],
-      },
-    },
-  ],
-});
-
-// Execute with search tools
-const searchTools = ConnectorTools.for('serper');
-
-const execution = await executeRoutine({
-  definition: routine,
-  connector: 'openai',
-  model: 'gpt-4.1',
-  tools: [...searchTools, tools.webFetch],
-  onTaskComplete: (task, exec) => {
-    console.log(`[${exec.progress}%] ${task.name} completed (score: ${task.result?.validationScore})`);
-  },
-  onTaskFailed: (task) => {
-    console.error(`FAILED: ${task.name} — ${task.result?.error}`);
-  },
-});
-
-if (execution.status === 'completed') {
-  // Get the final report from the last task's output
-  const reportTask = execution.plan.tasks.find(t => t.name === 'Write Report');
-  console.log(reportTask?.result?.output);
-} else {
-  console.error(`Routine failed: ${execution.error}`);
-}
-```
-
-### Best Practices
-
-1. **Use `store_set("whiteboard", ...)` for small shared state** — task names, IDs, short summaries. These are always visible.
-2. **Use `store_set("notes", ...)` for large data** — full API responses, documents, raw data. Retrieved on demand via `store_get("notes", key)`.
-3. **Define clear completion criteria** — specific, verifiable conditions the LLM can evaluate.
-4. **Set appropriate `minCompletionScore`** — use 80+ for strict validation, 60-70 for lenient.
-5. **Use `skipReflection: true`** for simple tasks that don't need validation.
-6. **Keep `maxAttempts` reasonable** — 2-3 for most tasks. Each retry costs LLM calls.
-7. **Use `continue` failure mode** when tasks are independent and partial results are acceptable.
-
-### Routine Persistence
-
-Save routine definitions to disk and load them later using `FileRoutineDefinitionStorage` (or implement `IRoutineDefinitionStorage` for custom backends like MongoDB).
-
-```typescript
-import {
-  createFileRoutineDefinitionStorage,
-  createRoutineDefinition,
-} from 'oneringai';
-
-const storage = createFileRoutineDefinitionStorage();
-
-// Save a routine
-const routine = createRoutineDefinition({
-  name: 'Daily Report',
-  description: 'Generate a daily status report',
-  tags: ['daily', 'reports'],
-  author: 'alice',
-  tasks: [
-    { name: 'Gather Data', description: 'Collect metrics from all sources' },
-    { name: 'Write Report', description: 'Summarize findings', dependsOn: ['Gather Data'] },
-  ],
-});
-
-await storage.save(undefined, routine);  // undefined = default user
-
-// Load by ID
-const loaded = await storage.load(undefined, routine.id);
-
-// List with filtering
-const dailyRoutines = await storage.list(undefined, { tags: ['daily'] });
-const searchResults = await storage.list(undefined, { search: 'report', limit: 10 });
-
-// Delete
-await storage.delete(undefined, routine.id);
-```
-
-**Storage Path:** `~/.oneringai/users/<userId>/routines/<id>.json` (defaults to `~/.oneringai/users/default/routines/`)
-
-**Multi-user isolation:** Pass a `userId` to isolate routines per user. When `userId` is `undefined`, defaults to `'default'`.
-
-**StorageRegistry integration:**
-
-```typescript
-import { StorageRegistry } from 'oneringai';
-
-StorageRegistry.configure({
-  routineDefinitions: (ctx) => new MongoRoutineStorage(ctx?.userId),
-});
-```
-
-### Execution Recording
-
-Persist full routine execution history — every step, task snapshot, and progress update — without manually wiring hooks and callbacks.
-
-**Types:**
-
-| Type | Purpose |
-|------|---------|
-| `RoutineExecutionRecord` | Top-level persisted record (status, progress, tasks, steps, trigger info) |
-| `RoutineTaskSnapshot` | Per-task snapshot (status, attempts, result, controlFlowType) |
-| `RoutineExecutionStep` | Timestamped event (task.started, tool.call, llm.complete, etc.) |
-| `RoutineTaskResult` | Task outcome (success, output, error, validationScore) |
-
-**Factory functions:**
-
-```typescript
-import {
-  createRoutineExecutionRecord,
-  createTaskSnapshots,
-  createExecutionRecorder,
-} from 'oneringai';
-
-// 1. Create the initial record from a definition
-const record = createRoutineExecutionRecord(definition, 'openai', 'gpt-4.1', {
-  type: 'schedule',
-  source: 'daily-cron',
-});
-
-// 2. Insert into your storage backend
-const execId = await storage.insert(userId, record);
-
-// 3. Create recorder — returns ready-to-use hooks + callbacks
-const recorder = createExecutionRecorder({
-  storage,
-  executionId: execId,
-  logPrefix: '[MyRoutine]',
-  maxTruncateLength: 500,  // truncate tool args/results in steps
-});
-
-// 4. Wire into executeRoutine()
-executeRoutine({
-  definition, agent, inputs,
-  hooks: recorder.hooks,
-  onTaskStarted: recorder.onTaskStarted,
-  onTaskComplete: recorder.onTaskComplete,
-  onTaskFailed: recorder.onTaskFailed,
-  onTaskValidation: recorder.onTaskValidation,
-})
-  .then(exec => recorder.finalize(exec))
-  .catch(err => recorder.finalize(null, err));
-```
-
-**What the recorder tracks:**
-
-| Hook/Callback | Step Type(s) |
-|--------------|-------------|
-| `before:llm` | `llm.start` |
-| `after:llm` | `llm.complete` (with duration/tokens) |
-| `before:tool` | `tool.start` |
-| `after:tool` | `tool.call` (with args/result, truncated) |
-| `after:execution` | `iteration.complete` |
-| `pause:check` | heartbeat (`lastActivityAt` update) |
-| `onTaskStarted` | `task.started`, `control_flow.started` |
-| `onTaskComplete` | `task.completed`, `control_flow.completed` |
-| `onTaskFailed` | `task.failed` |
-| `onTaskValidation` | `task.validation` |
-| `finalize` | `execution.error` (on failure), final status update |
-
-**Storage interface (`IRoutineExecutionStorage`):**
-
-```typescript
-interface IRoutineExecutionStorage {
-  insert(userId: string | undefined, record: RoutineExecutionRecord): Promise<string>;
-  update(id: string, updates: Partial<Pick<RoutineExecutionRecord, 'status' | 'progress' | 'error' | 'completedAt' | 'lastActivityAt'>>): Promise<void>;
-  pushStep(id: string, step: RoutineExecutionStep): Promise<void>;
-  updateTask(id: string, taskName: string, updates: Partial<RoutineTaskSnapshot>): Promise<void>;
-  load(id: string): Promise<RoutineExecutionRecord | null>;
-  list(userId: string | undefined, options?: { routineId?: string; status?: RoutineExecutionStatus; limit?: number; offset?: number }): Promise<RoutineExecutionRecord[]>;
-  hasRunning(userId: string | undefined, routineId: string): Promise<boolean>;
-}
-```
-
-Implement this interface for your own storage backend (MongoDB, PostgreSQL, etc.), or use the library's built-in `FileRoutineExecutionStorage` (`createFileRoutineExecutionStorage()`), which persists records to `~/.oneringai/users/<userId>/routine-executions/<executionId>.json`.
-
-**StorageRegistry integration:**
-
-```typescript
-StorageRegistry.configure({
-  routineExecutions: (ctx) => new MongoRoutineExecutionStorage(ctx?.userId),
-});
-```
-
-### Scheduling
-
-Run routines on a timer using `IScheduler`. The built-in `SimpleScheduler` supports interval and one-time schedules:
-
-```typescript
-import { SimpleScheduler } from 'oneringai';
-
-const scheduler = new SimpleScheduler();
-
-// Repeat every hour
-scheduler.schedule('hourly-report', { intervalMs: 3600000 }, async () => {
-  await executeRoutine({ definition: dailyRoutine, agent, inputs });
-});
-
-// Run once at a specific time
-scheduler.schedule('end-of-day', { once: endOfDayTimestamp }, async () => {
-  await executeRoutine({ definition: summaryRoutine, agent, inputs });
-});
-
-// Cancel a schedule
-scheduler.cancel('hourly-report');
-
-// Check if a schedule exists
-scheduler.has('hourly-report'); // false
-
-// Clean up all timers
-scheduler.destroy();
-```
-
-**`ScheduleSpec` options:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `intervalMs` | `number` | Repeat every N milliseconds |
-| `once` | `number` | Fire once at this Unix timestamp (ms) |
-| `cron` | `string` | Cron expression (not supported by `SimpleScheduler` — use a cron library) |
-| `timezone` | `string` | IANA timezone for cron expressions |
-
-**SimpleScheduler** is intentionally minimal. For cron support, implement `IScheduler` with a cron library (e.g., `croner`, `node-cron`):
-
-```typescript
-import type { IScheduler, ScheduleHandle, ScheduleSpec } from 'oneringai';
-import { Cron } from 'croner';
-
-class CronScheduler implements IScheduler {
-  private jobs = new Map<string, Cron>();
-  private _isDestroyed = false;
-
-  schedule(id: string, spec: ScheduleSpec, callback: () => void | Promise<void>): ScheduleHandle {
-    if (spec.cron) {
-      const job = new Cron(spec.cron, { timezone: spec.timezone }, callback);
-      this.jobs.set(id, job);
-      return { id, cancel: () => this.cancel(id) };
-    }
-    throw new Error('CronScheduler only handles cron specs');
-  }
-  cancel(id: string) { this.jobs.get(id)?.stop(); this.jobs.delete(id); }
-  cancelAll() { for (const [id] of this.jobs) this.cancel(id); }
-  has(id: string) { return this.jobs.has(id); }
-  destroy() { this.cancelAll(); this._isDestroyed = true; }
-  get isDestroyed() { return this._isDestroyed; }
-}
-```
-
-### Event Triggers
-
-Trigger routine execution from external events (webhooks, message queues, custom signals) using `EventEmitterTrigger`:
-
-```typescript
-import { EventEmitterTrigger } from 'oneringai';
-
-const trigger = new EventEmitterTrigger();
-
-// Register a handler
-const unsubscribe = trigger.on('new-order', async (payload) => {
-  const order = payload as { orderId: string; items: string[] };
-  await executeRoutine({
-    definition: orderProcessingRoutine,
-    agent,
-    inputs: { orderId: order.orderId, items: order.items },
-  });
-});
-
-// Emit from your webhook handler, queue consumer, etc.
-app.post('/webhooks/orders', (req, res) => {
-  trigger.emit('new-order', req.body);
-  res.sendStatus(200);
-});
-
-// Unsubscribe a specific handler
-unsubscribe();
-
-// Clean up all listeners
-trigger.destroy();
-```
-
-**Key design:** `EventEmitterTrigger` is intentionally simple — no `ITriggerSource` interface. For complex trigger systems (AWS SQS, RabbitMQ, Kafka), just call `trigger.emit()` from your consumer callback.
-
----
-
 ## Tools & Function Calling
 
 ### Defining Tools
 
 ```typescript
-import { ToolFunction } from 'oneringai';
+// Documentation check: complete example
+import { type ToolFunction } from 'oneringai';
 
 const weatherTool: ToolFunction = {
   definition: {
@@ -7591,6 +4223,7 @@ const agent = Agent.create({
   connector: 'openai',
   model: 'gpt-4.1',
   context: {
+    model: 'gpt-4.1',
     features: {
       workingMemory: true,       // enables store="notes"
       inContextMemory: true,     // enables store="whiteboard"
@@ -8271,7 +4904,7 @@ const screenshot = createDesktopScreenshotTool({
 // Or provide a custom driver implementation
 import type { IDesktopDriver } from 'oneringai';
 
-const myDriver: IDesktopDriver = { /* custom implementation */ };
+declare const myDriver: IDesktopDriver; // Supply a complete host implementation of the interface.
 const click = createDesktopMouseClickTool({ driver: myDriver });
 ```
 
@@ -8382,16 +5015,16 @@ const reader = DocumentReader.create({
 
 // Read from different sources
 const result = await reader.read('/path/to/report.pdf');
-const result = await reader.read('https://example.com/doc.xlsx');
-const result = await reader.read({ type: 'buffer', buffer: uploadedBuffer, filename: 'doc.docx' });
-const result = await reader.read({ type: 'blob', blob: fileBlob, filename: 'slides.pptx' });
+const resultVariant2 = await reader.read('https://example.com/doc.xlsx');
+const resultVariant3 = await reader.read({ type: 'buffer', buffer: uploadedBuffer, filename: 'doc.docx' });
+const resultVariant4 = await reader.read({ type: 'blob', blob: fileBlob, filename: 'slides.pptx' });
 
 // Get merged text
-const markdown = mergeTextPieces(result.pieces);
+const markdown = mergeTextPieces(resultVariant4.pieces);
 console.log(markdown);
 
 // Access individual pieces
-for (const piece of result.pieces) {
+for (const piece of resultVariant4.pieces) {
   if (piece.type === 'text') {
     console.log(`[${piece.metadata.section}] ${piece.content.substring(0, 100)}...`);
   } else {
@@ -8400,12 +5033,12 @@ for (const piece of result.pieces) {
 }
 
 // Metadata
-console.log(result.metadata.format);           // 'pdf'
-console.log(result.metadata.family);           // 'pdf'
-console.log(result.metadata.estimatedTokens);  // 12500
-console.log(result.metadata.totalPieces);      // 15
-console.log(result.metadata.totalImagePieces); // 3
-console.log(result.metadata.processingTimeMs); // 234
+console.log(resultVariant4.metadata.format);           // 'pdf'
+console.log(resultVariant4.metadata.family);           // 'pdf'
+console.log(resultVariant4.metadata.estimatedTokens);  // 12500
+console.log(resultVariant4.metadata.totalPieces);      // 15
+console.log(resultVariant4.metadata.totalImagePieces); // 3
+console.log(resultVariant4.metadata.processingTimeMs); // 234
 ```
 
 #### Content Bridge — readDocumentAsContent()
@@ -8433,7 +5066,7 @@ const response = await agent.run([
 // Or use documentToContent() for two-step conversion
 const reader = DocumentReader.create();
 const result = await reader.read('/path/to/doc.pdf');
-const content = documentToContent(result, {
+const contentVariant2 = documentToContent(result, {
   imageDetail: 'low',
   maxImages: 10,
 });
@@ -8500,14 +5133,17 @@ const result = await reader.read('/path/to/large.pdf', {
 
 **XLSX (Spreadsheets):**
 - Each sheet becomes a separate piece with `## Sheet: Name` header
-- Three table output formats: `markdown` (default), `csv`, `json`
+- Four table output formats: `markdown` (default), `markdown-kv`, `csv`, `json`
 - Typed cell values (dates, numbers, formulas)
 - Row/column limits configurable
 
 **PDF:**
 - Per-page text pieces with `Page N` sections
 - Document metadata (title, author, pages) included as first piece
-- Image extraction supported
+- Embedded XObject image pixels are encoded as real PNG (RGB, grayscale and alpha)
+- Page selection applies to text and images; `extractImages: false` skips image work
+- One private input copy/proxy is shared for extraction and destroyed on exit; caller buffers remain reusable
+- Metadata or individual image-page failures log warnings while preserving available text and other pages; inline image/operator coverage follows unpdf
 
 **CSV:**
 - Auto-detected as spreadsheet family
@@ -8565,7 +5201,11 @@ const customPDFHandler: IFormatHandler = {
   supportedFormats: ['pdf'],
   async handle(buffer, filename, format, options) {
     // Custom PDF parsing logic
-    return [{ type: 'text', content: '...', metadata: {} }];
+    const text = await parsePdfText(buffer, options); // Your parser implementation.
+    return [{ type: 'text', content: text, metadata: {
+      sourceFilename: filename, format, index: 0, sizeBytes: buffer.length,
+      estimatedTokens: Math.ceil(text.length / 4),
+    } }];
   },
 };
 
@@ -9036,7 +5676,15 @@ import { Connector, ConnectorTools, Services, Agent } from 'oneringai';
 Connector.create({
   name: 'microsoft',
   serviceType: Services.Microsoft,
-  auth: { type: 'oauth', /* ... OAuth config ... */ },
+  auth: {
+    type: 'oauth', flow: 'authorization_code',
+    clientId: process.env.MICROSOFT_CLIENT_ID!,
+    clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+    redirectUri: 'http://localhost:3000/callback',
+    authorizationUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+    tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+    scope: 'https://graph.microsoft.com/.default offline_access',
+  },
   baseURL: 'https://graph.microsoft.com/v1.0',
 });
 
@@ -9303,6 +5951,8 @@ Connector.create({
     clientId: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     redirectUri: 'http://localhost:3000/callback',
+    authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenUrl: 'https://oauth2.googleapis.com/token',
     scope: 'https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly',
   },
   serviceType: 'google-api',
@@ -9605,7 +6255,7 @@ agent.tools.register(fallbackWeatherTool, {
   priority: 10,   // Low priority (fallback)
 });
 
-// LLM sees high-priority tools first
+// selectForContext() returns tools in priority order; priority does not force model choice or retry
 ```
 
 #### Conditions
@@ -9656,7 +6306,7 @@ const tools = agent.tools.selectForContext({
   custom: { environment: 'production', role: 'admin', permissions: ['write'] },
 });
 
-// Only tools matching context are selected
+// Only tools matching this explicit selection context are returned
 ```
 
 ### State Persistence
@@ -9674,7 +6324,7 @@ await fs.writeFile('./tool-config.json', JSON.stringify(state));
 const savedState = JSON.parse(await fs.readFile('./tool-config.json', 'utf-8'));
 agent.tools.loadState(savedState);
 
-// All tool registrations, priorities, and enabled states restored
+// Metadata restored for re-registered tools; executable functions are not serialized
 ```
 
 ### Events
@@ -9772,7 +6422,7 @@ class RateLimitedToolManager {
     }
 
     this.calls.set(name, count + 1);
-    return await this.agent.tools.get(name)?.execute(args);
+    return await this.agent.tools.execute(name, args); // Keep the shared permission/outcome pipeline
   }
 }
 ```
@@ -9842,14 +6492,14 @@ agent.tools.register(databaseTool, { namespace: 'database' });
 agent.tools.register(githubTool);  // Hard to organize later
 ```
 
-#### 2. Set Priorities for Fallbacks
+#### 2. Use Priorities for Selection Ordering
 
 ```typescript
 // Good
 agent.tools.register(primaryAPI, { priority: 100 });
 agent.tools.register(fallbackAPI, { priority: 50 });
 
-// Bad - no priority, random selection
+// Without explicit priorities, do not assume an application fallback order
 agent.tools.register(primaryAPI);
 agent.tools.register(fallbackAPI);
 ```
@@ -9952,507 +6602,1414 @@ const result = await agent.tools.execute('get_weather', { location: 'Paris' });
 
 ---
 
-## Async (Non-Blocking) Tools
+## Tool outcomes and cancellation
 
-Some tools take seconds or minutes to complete — web scraping, data analysis, external API calls, sub-agent orchestration. Normally, the agentic loop blocks on every tool call. With async tools (`blocking: false`), the tool executes in the background while the agent continues reasoning.
+For a tool that catches an operational error and returns an application-specific
+value, use `createOutcomeTool({ definition, execute: async (args, invocation) => ... })`.
+Call `invocation.reportFailure(new Error('Public-safe failure message'))` inside that
+callback; read the existing optional signal from `invocation.context?.signal`.
+The helper returns a normal ToolFunction, raw results stay intact, and a business
+decline without a report remains a succeeded execution. First report wins and the
+reporter becomes inert after settlement. Existing callbacks/defaults are unchanged.
+See the [complete recipe and boundaries](docs/OUTCOME_AWARE_TOOLS.md) and
+`npm run example:outcome-aware-tools`. This helper does not automatically convert bundled connector tools. Rich remote
+outcomes require the separately negotiated [remote protocol](docs/REMOTE_TOOL_OUTCOMES.md).
 
-### How It Works
+Use `agent.tools.executeWithOutcome(name, args, { signal, timeoutMs, callId, runId })`
+when the host needs `{ result, outcome }`; `execute()` still returns raw data. The
+manager recognizes its normalizer's failures without reinterpreting arbitrary
+application `success: false` objects. Agent tool results and streaming completion
+events expose optional `outcome` metadata. Failure/timeout counters now reflect
+those semantic results; async acceptance placeholders are not completed work.
+Settlement is counted before streaming completion events, including early stream exit.
+A tool retains its admitted implementation, definition, permission metadata, and
+resolved connector access through asynchronous waits. Later registration or account
+changes affect future calls. Queued background delivery checks scope again, and
+throwing completion/error/timeout observers cannot replace or double-count a settled
+result.
 
-The lifecycle of an async tool call:
+Tools may observe their existing optional `ToolContext.signal`. `agent.cancel()`
+and async cancellation methods request cancellation of the corresponding calls.
+Late settlement is diagnostic-only, correlated to the original call, and never
+counted twice or automatically delivered to a different account. A noncooperative
+tool can still finish; cancellation does not prove that a remote write was prevented.
 
-1. **LLM requests tool call** — The agent's agentic loop extracts tool calls from the LLM response as usual
-2. **Placeholder returned** — For `blocking: false` tools, a placeholder `tool_result` is returned immediately: *"Tool X is executing asynchronously. The result will be delivered in a follow-up message."*
-3. **Background execution** — The tool runs in the background (fire-and-forget promise with timeout)
-4. **Loop continues** — The LLM sees the placeholder, can call other (blocking) tools, reason about the situation, or produce text output
-5. **Result arrives** — When the async tool completes (or fails/times out), the result is queued
-6. **Delivery as user message** — Queued results are batched and injected as a structured user message:
-   ```
-   [Async Tool Results]
-   Tool "analyze_dataset" (call_abc123) completed:
-   { "summary": "...", "score": 42 }
+Connector requests compose caller signals with deadlines. Header timeouts and
+legacy retry policy remain defaults. Opt in to `timeoutScope: 'operation'` for one
+deadline through token waiting, retries, and body consumption, and
+`retryPolicy: 'safe'` to retry eligible GET/HEAD/OPTIONS only. Consume or cancel
+response bodies. Safe retry and operation-body cleanup remain cancellation/deadline
+aware, and chained response clones preserve metadata and native body checks.
+`skipRetry` skips both network and status retries. Generic API
+tools forward the signal; specialized tools/transports require their own support.
 
-   Process these results and continue.
-   ```
-7. **Continuation** — If `autoContinue: true` (default), the agent re-enters the agentic loop to process the results. If `false`, the caller must invoke `agent.continueWithAsyncResults()`.
+See [Tool outcomes and cancellation](docs/TOOL_OUTCOMES_AND_CANCELLATION.md) for
+public signatures, status/evidence meanings, listener cleanup, persistence and
+breaker boundaries, examples, AMOS behavior, and current live-validation limits.
+
+Explicit Anthropic named-tool requests advertise only the selected local function
+alongside configured native tools. A different returned local tool raises the
+existing `ProviderError` before execution, without automatic retries or model
+switching. Later `auto`/`required` calls retain their normal tool set. To modify
+request options in both managed modes, mutate `context.options` in `before:llm`
+and return `{}`; streaming hook return semantics are unchanged. See the
+[selection contract and opt-in live example](docs/TOOL_OUTCOMES_AND_CANCELLATION.md#explicit-anthropic-tool-selection).
+
+## Tool Permissions
+
+The policy-based permission system provides composable policies, per-user rules with argument inspection, and pluggable storage. Permissions are enforced at the ToolManager pipeline level — managed local tool execution and `agent.tools.execute()` use this pipeline.
+Calling a raw `ToolFunction.execute()` directly bypasses manager enforcement.
+Provider-hosted/native tools have their separately documented controls.
+
+### Architecture Overview
+
+With `autoApproveAll` disabled, permission evaluation follows this order.
+`autoApproveAll: true` is a compatibility bypass: it checks the blocklist, then
+allows without user rules, parent evaluation, or the remaining policies. Enable
+it only for host-approved autonomous execution.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  1. USER RULES PRE-CHECK (highest priority, FINAL)           │
+│     Per-user persistent rules with argument conditions.       │
+│     When matched: result is FINAL, no further evaluation.     │
+│     Specificity-based: more conditions > fewer conditions.    │
+├──────────────────────────────────────────────────────────────┤
+│  2. PARENT DELEGATION PRE-CHECK (orchestrator workers)       │
+│     Parent deny is FINAL — worker cannot override.            │
+│     Parent allow does NOT skip worker restrictions.           │
+├──────────────────────────────────────────────────────────────┤
+│  3. POLICY CHAIN (composable policies)                       │
+│     Deny short-circuits immediately.                          │
+│     Allow is remembered but does NOT short-circuit.           │
+│     All abstain → defaultVerdict (default: 'deny').           │
+│                                                              │
+│     If deny + needsApproval → APPROVAL FLOW                 │
+│     → onApprovalRequired callback                            │
+│     → optional persistent rule creation                      │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Detailed evaluation flow in `PermissionPolicyManager.check()`:
+
+```
+PermissionPolicyManager.check(context):
+  1. UserPermissionRulesEngine.evaluate()
+     → allow? → DONE (skip chain entirely)
+     → deny?  → DONE (skip chain entirely)
+     → ask?   → approval dialog
+     → no match → fall through
+
+  2. Parent delegation (if orchestrator worker)
+     → parent deny → DONE
+     → parent allow → continue
+
+  3. PolicyChain.evaluate()
+     → BlocklistPolicy (pri 5) → AllowlistPolicy (pri 10) → RateLimitPolicy (pri 20)
+     → RolePolicy (pri 30) → PathRestrictionPolicy (pri 50) → BashFilterPolicy (pri 50)
+     → UrlAllowlistPolicy (pri 50) → SessionApprovalPolicy (pri 90)
+
+  4. If deny + needsApproval → onApprovalRequired callback
+     → approved? → cache approval, optionally create persistent rule
+     → denied? → optionally create persistent deny rule
+```
+
+Key design principles:
+
+- **User rules are supreme** — when a user rule matches, the later chain and parent pre-check are skipped. These rules must be owned by the trusted host/user.
+- **Deny short-circuits** — in the policy chain, a deny verdict stops evaluation immediately. No later policy can override a deny.
+- **Allow does NOT short-circuit** — an allow verdict is remembered, but evaluation continues so a later custom policy can still reject the arguments.
+- **All abstain depends on construction path** — a directly constructed `PolicyChain` defaults to deny. `Agent.create()` currently builds its chain through `fromConfig()`, which defaults to deny when an approval callback exists and allow otherwise. Its `permissions.policyChain` field is not applied in the current implementation.
 
 ### Quick Start
 
-```typescript
-import { Agent, ToolFunction } from 'oneringai';
+#### Zero-Config (Backward Compatible)
 
-// 1. Define a tool with blocking: false
-const analyzeData: ToolFunction = {
-  definition: {
-    type: 'function',
-    function: {
-      name: 'analyze_dataset',
-      description: 'Run statistical analysis on a large dataset (may take 30+ seconds)',
-      parameters: {
-        type: 'object',
-        properties: {
-          dataset: { type: 'string', description: 'Dataset name or path' },
-          metrics: { type: 'array', items: { type: 'string' }, description: 'Metrics to compute' },
-        },
-        required: ['dataset'],
-      },
+The permission system is always active. Without configuration, default-allowlisted tools execute immediately. A tool declaring `scope: 'session'` or `scope: 'once'` requires approval; because no callback exists in this example, that call is rejected with “Approval required but no approval handler configured.” Use `autoApproveAll: true` only for trusted non-interactive automation.
+
+```typescript
+import { Agent, Connector, Vendor } from 'oneringai';
+
+Connector.create({
+  name: 'openai',
+  vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
+});
+
+// No permissions config — uses DEFAULT_ALLOWLIST.
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools: [readFile, writeFile, bash],
+});
+// read_file: auto-allowed (in DEFAULT_ALLOWLIST)
+// write_file: approval required; rejected because no callback is configured
+// bash: approval required on every call; rejected for the same reason
+```
+
+#### Simple Policy Configuration
+
+Configure public allow/block lists and an approval callback:
+
+```typescript
+import { Agent } from 'oneringai';
+
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  permissions: {
+    // Allowlist is auto-merged with DEFAULT_ALLOWLIST
+    allowlist: ['my_safe_tool'],
+    blocklist: ['dangerous_tool'],
+
+    // Approval callback — invoked when a tool needs user approval
+    onApprovalRequired: async (ctx) => {
+      console.log(`Tool '${ctx.toolName}' needs approval. Args:`, ctx.args);
+      // In a real app, show a UI dialog
+      return { approved: true, scope: 'session' };
     },
-    blocking: false, // <-- Makes this tool async
-  },
-  execute: async (args) => {
-    const data = await loadDataset(args.dataset);
-    const results = await computeMetrics(data, args.metrics);
-    return { summary: results.summary, rowCount: data.length, metrics: results.values };
-  },
-};
 
-// 2. Create agent with async config
-const agent = Agent.create({
-  connector: 'anthropic',
-  model: 'claude-sonnet-4-6',
-  asyncTools: {
-    autoContinue: true,      // Default: auto re-enter loop on result
-    batchWindowMs: 1000,     // Batch results within 1s window
-    asyncTimeout: 300000,    // 5 min timeout per async tool
   },
-  tools: [analyzeData, readFile, writeFile],  // Mix blocking and async tools
 });
-
-// 3. Run — async tools are handled automatically
-const response = await agent.run('Analyze the Q4 sales dataset and write a summary report');
-// The agent will:
-// - Call analyze_dataset (async) → gets placeholder
-// - Maybe call read_file (blocking) → gets real result
-// - Produce intermediate text while waiting
-// - When analyze_dataset completes → auto-continue, process results
-// - Write the report with writeFile
 ```
 
-### Auto-Continue vs Manual Mode
+For argument-aware path, command, URL, role, or rate-limit rules, pass your own
+public `IPermissionPolicy` implementation through `permissions.policies`. The
+source tree contains policies with names such as `PathRestrictionPolicy` and
+`BashFilterPolicy`, but those concrete classes are not exported from the
+package root; examples importing them from
+`oneringai` do not compile.
 
-#### Auto-Continue (Default)
+### Per-User Permission Rules
 
-With `autoContinue: true` (default), the agent re-enters the agentic loop automatically when results arrive:
+User permission rules are persistent, per-user, and have the highest evaluation priority. When a user rule matches, its result is final — no policy can override it.
+
+#### UserPermissionRule Model
+
+```typescript
+interface UserPermissionRule {
+  /** Unique rule ID (UUID) */
+  id: string;
+
+  /** Tool name this rule applies to. Use '*' for all tools. */
+  toolName: string;
+
+  /** What to do when this rule matches */
+  action: 'allow' | 'deny' | 'ask';
+
+  /**
+   * Argument conditions (optional). ALL conditions must match (AND logic).
+   * If empty/omitted, rule applies to ALL calls of this tool (blanket rule).
+   */
+  conditions?: ArgumentCondition[];
+
+  /**
+   * If true, this rule is absolute — more specific rules CANNOT override it.
+   * "Allow bash unconditionally" means even a "bash + rm -rf → ask" rule is ignored.
+   * @default false
+   */
+  unconditional?: boolean;
+
+  /** Whether this rule is active */
+  enabled: boolean;
+
+  /** Human-readable description (shown in settings UI) */
+  description?: string;
+
+  /** How this rule was created */
+  createdBy: 'user' | 'approval_dialog' | 'admin' | 'system';
+
+  /** ISO timestamp of creation */
+  createdAt: string;
+
+  /** ISO timestamp of last update */
+  updatedAt: string;
+
+  /** Optional expiry (ISO timestamp). Null/undefined = never expires. */
+  expiresAt?: string | null;
+}
+```
+
+#### ArgumentCondition Operators
+
+All 8 operators for inspecting argument values:
+
+```typescript
+interface ArgumentCondition {
+  /** Argument name to inspect (e.g., 'command', 'path', 'url') */
+  argName: string;
+
+  /** Comparison operator */
+  operator: ConditionOperator;
+
+  /** Value to compare against. For 'matches'/'not_matches', a regex string. */
+  value: string;
+
+  /** Case-insensitive comparison. @default true */
+  ignoreCase?: boolean;
+}
+
+type ConditionOperator =
+  | 'starts_with'    // value starts with the given string
+  | 'not_starts_with'
+  | 'contains'       // value contains the given string
+  | 'not_contains'
+  | 'equals'         // exact equality
+  | 'not_equals'
+  | 'matches'        // regex match
+  | 'not_matches';   // regex negation
+```
+
+Examples of each operator:
+
+```jsonc
+// Allow bash only for npm commands
+{ argName: 'command', operator: 'starts_with', value: 'npm' }
+
+// Deny commands containing 'sudo'
+{ argName: 'command', operator: 'contains', value: 'sudo' }
+
+// Allow write_file only for .ts files
+{ argName: 'path', operator: 'matches', value: '\\.ts$' }
+
+// Deny web_fetch for non-HTTPS URLs
+{ argName: 'url', operator: 'not_starts_with', value: 'https://' }
+
+// Allow edit_file only for a specific file
+{ argName: 'file_path', operator: 'equals', value: '/workspace/config.json' }
+
+// Deny bash commands matching dangerous patterns
+{ argName: 'command', operator: 'not_matches', value: 'rm\\s+-rf|dd\\s+if=|mkfs' }
+```
+
+#### Specificity Resolution
+
+When multiple rules match a tool call, specificity determines the winner:
+
+1. **Unconditional rules** are checked first. If matched, they are FINAL — no other rule can override them.
+2. **Conditional rules** are ranked by number of matching conditions. More conditions = more specific = higher priority.
+3. **Blanket rules** (no conditions) are the fallback with specificity 0.
+4. **Ties** are broken by `updatedAt` — most recently updated rule wins.
+
+```typescript
+// Example: these rules coexist without conflict
+const rules: UserPermissionRule[] = [
+  // Blanket: allow bash by default (specificity: 0)
+  { id: '1', toolName: 'bash', action: 'allow', enabled: true,
+    createdBy: 'user', createdAt: '...', updatedAt: '...' },
+
+  // Conditional: ask before rm commands (specificity: 1, overrides blanket)
+  { id: '2', toolName: 'bash', action: 'ask',
+    conditions: [{ argName: 'command', operator: 'contains', value: 'rm' }],
+    enabled: true, createdBy: 'user', createdAt: '...', updatedAt: '...' },
+
+  // More specific: deny rm -rf (specificity: 2, overrides the 'ask' above)
+  { id: '3', toolName: 'bash', action: 'deny',
+    conditions: [
+      { argName: 'command', operator: 'contains', value: 'rm' },
+      { argName: 'command', operator: 'contains', value: '-rf' },
+    ],
+    enabled: true, createdBy: 'user', createdAt: '...', updatedAt: '...' },
+];
+```
+
+#### Meta-Arguments
+
+Use special `__` prefixed argument names to match against tool registration metadata instead of call arguments:
+
+| Meta-Arg | Matches Against |
+|----------|----------------|
+| `__toolCategory` | Tool's registered category (e.g., `filesystem`, `web`, `shell`) |
+| `__toolSource` | Tool's source (e.g., `built-in`, `connector:github`, `mcp`, `custom`) |
+| `__toolNamespace` | Tool's registered namespace |
+
+```jsonc
+// Deny all MCP tools
+{
+  id: '1', toolName: '*', action: 'deny',
+  conditions: [{ argName: '__toolSource', operator: 'starts_with', value: 'mcp' }],
+  enabled: true, createdBy: 'admin', createdAt: '...', updatedAt: '...',
+}
+
+// Allow only filesystem category tools
+{
+  id: '2', toolName: '*', action: 'allow',
+  conditions: [{ argName: '__toolCategory', operator: 'equals', value: 'filesystem' }],
+  enabled: true, createdBy: 'admin', createdAt: '...', updatedAt: '...',
+}
+
+// Block all desktop tools
+{
+  id: '3', toolName: '*', action: 'deny',
+  conditions: [{ argName: '__toolCategory', operator: 'equals', value: 'desktop' }],
+  enabled: true, createdBy: 'user', createdAt: '...', updatedAt: '...',
+}
+```
+
+#### CRUD API
+
+Manage rules programmatically via the `UserPermissionRulesEngine`:
+
+```typescript
+const engine = agent.policyManager.userRules;
+
+// Add a rule
+await engine.addRule({
+  id: crypto.randomUUID(),
+  toolName: 'bash',
+  action: 'ask',
+  conditions: [{ argName: 'command', operator: 'contains', value: 'rm' }],
+  enabled: true,
+  description: 'Ask before any rm commands',
+  createdBy: 'user',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+}, userId);
+
+// Update a rule
+await engine.updateRule(ruleId, { action: 'deny' }, userId);
+
+// Remove a rule
+await engine.removeRule(ruleId, userId);
+
+// Get all rules
+const allRules = engine.getRules();
+
+// Get rules for a specific tool
+const bashRules = engine.getRulesForTool('bash');
+
+// Get a single rule by ID
+const rule = engine.getRule(ruleId);
+
+// Enable/disable a rule
+await engine.enableRule(ruleId, userId);
+await engine.disableRule(ruleId, userId);
+```
+
+Rules auto-save to storage (if configured) after every mutation. Expired rules (past `expiresAt`) are automatically cleaned on evaluation.
+
+### Approval Dialog Integration
+
+When a policy denies a tool call with `needsApproval: true`, the `onApprovalRequired` callback is invoked. This is where your application shows an approval UI.
+
+#### Full Approval Callback Example
+
+```typescript
+import type { ApprovalRequestContext, ApprovalDecision } from 'oneringai';
+
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  permissions: {
+    onApprovalRequired: async (ctx: ApprovalRequestContext): Promise<ApprovalDecision> => {
+      // ctx contains rich context for the approval dialog
+      console.log(`Tool: ${ctx.toolName}`);
+      console.log(`Risk level: ${ctx.riskLevel}`);
+      console.log(`Arguments:`, ctx.args);
+      console.log(`Reason: ${ctx.decision.reason}`);
+      console.log(`Policy: ${ctx.decision.policyName}`);
+
+      if (ctx.approvalMessage) {
+        console.log(`Message: ${ctx.approvalMessage}`);
+      }
+      if (ctx.sensitiveArgs) {
+        console.log(`Sensitive args: ${ctx.sensitiveArgs.join(', ')}`);
+      }
+
+      // Show your UI dialog here...
+      const userChoice = await showApprovalDialog(ctx);
+
+      if (userChoice === 'allow_once') {
+        return { approved: true, scope: 'once' };
+      }
+
+      if (userChoice === 'allow_session') {
+        return { approved: true, scope: 'session' };
+      }
+
+      if (userChoice === 'always_allow') {
+        return {
+          approved: true,
+          scope: 'always',
+          remember: true,  // creates a persistent user rule
+        };
+      }
+
+      if (userChoice === 'always_allow_with_conditions') {
+        return {
+          approved: true,
+          createRule: {
+            description: 'Allow write_file in /workspace',
+            conditions: [
+              { argName: 'path', operator: 'starts_with', value: '/workspace/' },
+            ],
+          },
+        };
+      }
+
+      if (userChoice === 'deny_forever') {
+        return {
+          approved: false,
+          scope: 'never',
+          remember: true,  // creates a persistent deny rule
+        };
+      }
+
+      return { approved: false, reason: 'User denied' };
+    },
+  },
+});
+```
+
+#### ApprovalRequestContext Fields
+
+The callback receives a rich context extending `PolicyContext`:
+
+```typescript
+interface ApprovalRequestContext extends PolicyContext {
+  /** The deny decision that triggered this approval request */
+  decision: PolicyDecision;
+
+  /** Tool's risk level (from tool permission config or default) */
+  riskLevel: RiskLevel;  // 'low' | 'medium' | 'high' | 'critical'
+
+  /** Custom approval message (from tool permission config) */
+  approvalMessage?: string;
+
+  /** Argument names to highlight as sensitive in approval UI */
+  sensitiveArgs?: string[];
+
+  /** Policy-provided approval scope key */
+  approvalKey?: string;
+
+  /** Suggested approval scope */
+  approvalScope?: 'once' | 'session' | 'persistent';
+}
+```
+
+The base `PolicyContext` provides:
+
+```typescript
+interface PolicyContext {
+  toolName: string;                      // Tool being invoked
+  args: Record<string, unknown>;         // Parsed arguments
+  userId?: string;                       // From ToolContext.userId
+  roles?: string[];                      // From agent config userRoles
+  agentId?: string;
+  parentAgentId?: string;                // For orchestrator workers
+  sessionId?: string;
+  iteration?: number;                    // Agentic loop iteration
+  executionId?: string;                  // For tracing
+  toolSource?: string;                   // built-in, connector:xxx, mcp, custom
+  toolCategory?: string;                 // filesystem, web, shell, etc.
+  toolNamespace?: string;
+  toolTags?: string[];
+  toolPermissionConfig?: ToolPermissionConfig;  // Merged tool + registration config
+}
+```
+
+#### ApprovalDecision with createRule
+
+When the user wants to remember their decision, include `createRule` in the response:
+
+```typescript
+interface ApprovalDecision {
+  approved: boolean;
+  scope?: PermissionScope;   // 'once' | 'session' | 'always' | 'never'
+  reason?: string;           // Reason for denial
+  approvedBy?: string;       // Identifier of approver
+  remember?: boolean;        // Create persistent rule (shorthand)
+
+  /** Explicit rule creation with argument conditions */
+  createRule?: {
+    description?: string;
+    conditions?: ArgumentCondition[];
+    expiresAt?: string | null;   // ISO timestamp, null = never
+    unconditional?: boolean;
+  };
+}
+```
+
+#### Approval-to-Rule Creation Flow
+
+When the user approves with `createRule` or `remember: true`, the system automatically creates a persistent `UserPermissionRule`:
+
+```
+User clicks "Always Allow" in dialog
+    ↓
+ApprovalDecision { approved: true, remember: true, scope: 'always' }
+    ↓
+PermissionPolicyManager.createRuleFromApproval()
+    ↓
+UserPermissionRulesEngine.addRule({
+  toolName, action: 'allow', createdBy: 'approval_dialog'
+})
+    ↓
+Rule persisted to IUserPermissionRulesStorage
+    ↓
+Next call: user rule matches → immediate allow (no policy chain, no dialog)
+```
+
+### Policy Implementations and the Public Surface
+
+The policy engine contains eight implementations, sorted by priority (lower
+number runs first). The public package exposes allowlist, blocklist, and
+session-approval behavior through `Agent.create({ permissions })` and manager
+shortcuts. It exports `IPermissionPolicy`, so applications can add custom
+policies. It does **not** export the eight concrete policy classes from the
+package root. The five advanced class descriptions below document current
+engine behavior and source-level configuration, but their constructors are not
+a supported npm import in the current v2 public surface.
+
+#### AllowlistPolicy
+
+Auto-allows tools by name. Returns `allow` for listed tools, `abstain` for others. Note: allow does NOT short-circuit, so later policies (e.g., BashFilterPolicy) can still deny based on arguments.
 
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
   model: 'gpt-4.1',
-  asyncTools: { autoContinue: true }, // default
-  tools: [asyncTool],
+  permissions: {
+    // Merged with DEFAULT_ALLOWLIST by PermissionPolicyManager.fromConfig().
+    allowlist: ['my_safe_tool', 'another_safe_tool'],
+  },
 });
-
-// Just run — everything is handled
-const response = await agent.run('Do the analysis');
-// response.pendingAsyncTools may be non-empty if tools are still running
-// when the initial loop ends (no more blocking work to do)
 ```
 
-The initial `run()` returns when the agentic loop has no more blocking work. If async tools are still pending, `response.pendingAsyncTools` lists them. When they complete, the agent auto-continues in the background.
+| Property | Value |
+|----------|-------|
+| Name | `builtin:allowlist` |
+| Priority | 10 |
+| Verdict | `allow` or `abstain` |
 
-#### Manual Mode
+Default allowlisted tools: `read_file`, `glob`, `grep`, `list_directory`, `store_get`, `store_set`, `store_delete`, `store_list`, `store_action`, `context_stats`, `todo_add`, `todo_update`, `todo_remove`, `tool_catalog_search`, `tool_catalog_load`, `tool_catalog_unload`, `_start_planning`, `_modify_plan`, `_report_progress`, `_request_approval`.
 
-With `autoContinue: false`, results are queued but the agent doesn't auto-continue. The caller decides when:
+Runtime modification:
+
+```typescript
+agent.policyManager.allowlistAdd('my_tool');
+agent.policyManager.allowlistRemove('my_tool');
+```
+
+#### BlocklistPolicy
+
+Blocks tools by name within the policy chain. Returns `deny` without
+`needsApproval`, so that denial has no approval-dialog override. A matching
+user rule can decide earlier; `autoApproveAll` still checks the blocklist. Runs at the highest policy priority to block before any other policy can allow.
 
 ```typescript
 const agent = Agent.create({
   connector: 'openai',
   model: 'gpt-4.1',
-  asyncTools: { autoContinue: false },
-  tools: [asyncTool],
+  permissions: { blocklist: ['dangerous_tool', 'deprecated_tool'] },
 });
-
-// Listen for completions
-agent.on('async:tool:complete', (event) => {
-  console.log(`${event.toolName} finished in ${event.duration}ms`);
-});
-
-const response = await agent.run('Start the analysis');
-
-// Check what's pending
-if (agent.hasPendingAsyncTools()) {
-  console.log('Pending:', agent.getPendingAsyncTools().map(p => p.toolName));
-
-  // Wait for results to arrive (via events, polling, or your own logic)
-  // Then trigger continuation:
-  const continuation = await agent.continueWithAsyncResults();
-  console.log(continuation.output_text); // Agent processed the async results
-}
 ```
 
-### Configuration
+| Property | Value |
+|----------|-------|
+| Name | `builtin:blocklist` |
+| Priority | 5 (runs before allowlist) |
+| Verdict | `deny` (hard block) or `abstain` |
+
+Runtime modification:
 
 ```typescript
-interface AsyncToolConfig {
-  /**
-   * Auto re-enter agentic loop when async results arrive.
-   * @default true
-   */
-  autoContinue?: boolean;
-
-  /**
-   * Batch window in ms. If multiple async tools complete within this window,
-   * their results are delivered together in a single user message.
-   * @default 500
-   */
-  batchWindowMs?: number;
-
-  /**
-   * Timeout per async tool execution in ms.
-   * @default 300000 (5 minutes)
-   */
-  asyncTimeout?: number;
-}
+agent.policyManager.blocklistAdd('bad_tool');   // also removes from allowlist
+agent.policyManager.blocklistRemove('bad_tool');
 ```
 
-Set `blocking: false` on individual tool definitions:
+#### SessionApprovalPolicy
+
+Manages session-level approval caching based on tool self-declarations. Reads `PolicyContext.toolPermissionConfig` to determine behavior:
+
+- `scope: 'always'` — auto-allow (tool declares itself safe)
+- `scope: 'never'` — hard deny (tool is disabled)
+- `scope: 'session'` — check approval cache, deny with `needsApproval` if not cached
+- `scope: 'once'` — always deny with `needsApproval` for every call
+- No config — `abstain` (tool has no permission declaration)
 
 ```typescript
-const tool: ToolFunction = {
-  definition: {
-    type: 'function',
-    function: { name: 'slow_tool', description: '...', parameters: {} },
-    blocking: false, // <-- async
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  permissions: {
+    defaultScope: 'once',
+    onApprovalRequired: async (request) => showApprovalDialog(request),
   },
-  execute: async (args) => { /* ... */ },
-};
+});
 ```
 
-Tools default to `blocking: true` if not specified.
+| Property | Value |
+|----------|-------|
+| Name | `builtin:session-approval` |
+| Priority | 90 (runs late, after argument-inspecting policies) |
+| Verdict | `allow`, `deny` (with or without `needsApproval`), or `abstain` |
 
-### Events
-
-Six new events for monitoring async tool lifecycle (a sixth, `async:results:injected` — `{ executionId, iteration, results: [{toolCallId, toolName}], timestamp }` — fires when queued results are injected mid-loop before the next LLM call, in addition to the five below):
-
-| Event | Payload | When |
-|-------|---------|------|
-| `async:tool:started` | `{ executionId, toolCallId, toolName, args, timestamp }` | Async tool execution begins |
-| `async:tool:complete` | `{ executionId, toolCallId, toolName, result, duration, timestamp }` | Tool completed successfully |
-| `async:tool:error` | `{ executionId, toolCallId, toolName, error, duration, timestamp }` | Tool threw an error |
-| `async:tool:timeout` | `{ executionId, toolCallId, toolName, timeout, timestamp }` | Tool exceeded `asyncTimeout` |
-| `async:continuation:start` | `{ executionId, results: [{toolCallId, toolName}], timestamp }` | Agent re-entering loop with results |
+Approval cache management:
 
 ```typescript
-agent.on('async:tool:started', (e) => {
-  console.log(`[ASYNC] ${e.toolName} started (${e.toolCallId})`);
+// Programmatically approve a tool for the session
+agent.policyManager.approve('write_file', {
+  scope: 'session',
+  approvedBy: 'admin',
 });
 
-agent.on('async:tool:complete', (e) => {
-  console.log(`[ASYNC] ${e.toolName} completed in ${e.duration}ms`);
+// With TTL expiration
+agent.policyManager.approve('bash', {
+  scope: 'session',
+  ttlMs: 300000, // 5 minutes
 });
 
-agent.on('async:tool:error', (e) => {
-  console.error(`[ASYNC] ${e.toolName} failed: ${e.error.message}`);
-});
+// Revoke an approval
+agent.policyManager.revoke('write_file');
 
-agent.on('async:tool:timeout', (e) => {
-  console.warn(`[ASYNC] ${e.toolName} timed out after ${e.timeout}ms`);
-});
+// Check cache
+agent.policyManager.isApproved('write_file'); // true/false
 
-agent.on('async:continuation:start', (e) => {
-  console.log(`[ASYNC] Continuing with ${e.results.length} result(s)`);
-});
+// Clear all session approvals
+agent.policyManager.clearSession();
 ```
 
-### Public API
+#### PathRestrictionPolicy
+
+Restricts file operations to allowed directory roots. Canonicalizes paths (resolves `..`, normalizes separators, best-effort symlink resolution for existing files).
 
 ```text
-// Check if any async tools are still running
-agent.hasPendingAsyncTools(): boolean;
+// Source-level illustration; PathRestrictionPolicy is not a package-root export in the current v2 public surface.
+const policy = new PathRestrictionPolicy({
+  // Required: allowed path prefixes (canonicalized at construction)
+  allowedPaths: ['/workspace', '/tmp', process.cwd()],
 
-// Get details about pending async tools
-agent.getPendingAsyncTools(): PendingAsyncTool[];
-// PendingAsyncTool: { toolCallId, toolName, args, startTime, status, result?, error? }
+  // Optional: customize which tools are checked
+  // Default: write_file, edit_file, read_file, list_directory, glob, grep
+  tools: ['write_file', 'edit_file', 'read_file', 'list_directory', 'glob', 'grep'],
 
-// Cancel a specific async tool
-agent.cancelAsyncTool(toolCallId: string): void;
+  // Optional: which argument names contain file paths
+  // Default: path, file_path, target_path, directory, pattern
+  pathArgs: ['path', 'file_path', 'target_path', 'directory', 'pattern'],
 
-// Cancel all pending async tools and clear the result queue
-agent.cancelAllAsyncTools(): void;
+  // Optional: resolve symlinks for existing files
+  resolveSymlinks: true,  // default: true
 
-// Manually trigger continuation with queued results
-// (only needed when autoContinue: false)
-agent.continueWithAsyncResults(results?: ToolResult[]): Promise<AgentResponse>;
-
-// Response includes pending info
-const response = await agent.run('...');
-response.pendingAsyncTools; // Array<{ toolCallId, toolName, startTime, status }> | undefined
+  // Optional: base path for resolving relative paths
+  basePath: process.cwd(),  // default: process.cwd()
+});
 ```
 
-### Mixed Blocking and Async Tools
+| Property | Value |
+|----------|-------|
+| Name | `builtin:path-restriction` |
+| Priority | 50 |
+| Verdict | `deny` (with `needsApproval`, argument-scoped key) or `abstain` |
 
-Blocking and async tools work together naturally in the same iteration:
+The policy returns `abstain` for tools not in its list, so non-filesystem tools are unaffected. When denying, it provides an argument-scoped approval key (e.g., `write_file:/workspace/foo.txt`) so users can approve access to specific paths for the session.
 
-```typescript
+#### BashFilterPolicy
+
+Best-effort command filtering for the `bash` tool. Checks deny patterns first (any match = deny), then allow patterns (any match = abstain).
+
+**Important**: This is a guardrail, NOT a sandbox. Shell command obfuscation can bypass string-based filtering. For strong isolation, combine with blocklisting bash by default, path restrictions, or container/sandbox execution.
+
+```text
+// Source-level illustration; BashFilterPolicy is not a package-root export in the current v2 public surface.
+const policy = new BashFilterPolicy({
+  // Deny patterns (checked first, any match → deny with needsApproval)
+  denyPatterns: [
+    /rm\s+-rf/,
+    /sudo\s+/,
+    /chmod\s+777/,
+    /curl.*\|.*sh/,     // pipe curl to shell
+  ],
+  denyCommands: ['shutdown', 'reboot', 'mkfs'],
+
+  // Allow patterns (if matched after deny check, abstain → other policies decide)
+  allowPatterns: [/^(ls|cat|echo|pwd|whoami)/],
+  allowCommands: ['npm', 'node', 'git', 'tsc', 'npx'],
+
+  // Argument containing the command (default: 'command')
+  commandArg: 'command',
+});
+```
+
+| Property | Value |
+|----------|-------|
+| Name | `builtin:bash-filter` |
+| Priority | 50 |
+| Verdict | `deny` (with `needsApproval`, command-scoped key) or `abstain` |
+
+Only applies to the `bash` tool — all other tools get `abstain`. If neither deny nor allow patterns match, the policy abstains and lets other policies decide.
+
+#### UrlAllowlistPolicy
+
+Restricts URL-based tools to allowed domains. Uses proper `URL` parsing (not regex over raw strings). Validates both protocol and hostname.
+
+```text
+// Source-level illustration; UrlAllowlistPolicy is not a package-root export in the current v2 public surface.
+const policy = new UrlAllowlistPolicy({
+  allowedDomains: [
+    'api.github.com',       // exact match (also matches www.api.github.com)
+    '.example.com',         // suffix: matches sub.example.com, NOT example.com
+    'internal.corp.net',    // exact + subdomains
+  ],
+
+  // Optional configuration
+  allowedProtocols: ['http:', 'https:'],  // default
+  tools: ['web_fetch', 'web_search', 'web_scrape'],  // default
+  urlArgs: ['url', 'query', 'target_url'],  // default
+});
+```
+
+| Property | Value |
+|----------|-------|
+| Name | `builtin:url-allowlist` |
+| Priority | 50 |
+| Verdict | `deny` (with `needsApproval`, domain-scoped key) or `abstain` |
+
+Domain matching rules:
+- `"example.com"` matches exactly `example.com` and subdomains like `www.example.com`
+- `".example.com"` (leading dot) matches `sub.example.com` but NOT `example.com` itself
+- `"evil-example.com"` does NOT match `example.com`
+- Non-URL arguments (e.g., plain search queries) are silently skipped
+
+#### RolePolicy
+
+Role-based access control. Users can have multiple roles. Deny beats allow across all matched rules.
+
+```text
+// Source-level illustration; RolePolicy is not a package-root export in the current v2 public surface.
+const policy = new RolePolicy([
+  {
+    role: 'admin',
+    allowTools: ['*'],  // admins can use everything
+  },
+  {
+    role: 'developer',
+    allowTools: ['read_file', 'write_file', 'edit_file', 'bash', 'glob', 'grep'],
+    denyTools: ['desktop_mouse_click'],  // no desktop automation
+  },
+  {
+    role: 'viewer',
+    allowTools: ['read_file', 'glob', 'grep', 'list_directory'],
+    denyTools: ['write_file', 'edit_file', 'bash'],
+  },
+  {
+    role: 'restricted',
+    denyTools: ['*'],  // deny everything (overrides any allow from other roles)
+  },
+]);
+
+// Set user roles on the agent
 const agent = Agent.create({
   connector: 'openai',
   model: 'gpt-4.1',
-  tools: [
-    readFile,           // blocking (default)
-    writeFile,          // blocking
-    webFetch,           // blocking
-    analyzeDataset,     // blocking: false
-    generateReport,     // blocking: false
-  ],
+  userRoles: ['developer'],  // passed to PolicyContext.roles
+  permissions: {
+    policies: [policy],
+  },
 });
-
-// If the LLM calls both readFile and analyzeDataset in the same turn:
-// - readFile executes synchronously, result returned immediately
-// - analyzeDataset starts in background, placeholder returned
-// - Both results go to context, loop continues
 ```
 
-### Edge Cases
+| Property | Value |
+|----------|-------|
+| Name | `builtin:role` |
+| Priority | 30 |
+| Verdict | `allow`, `deny` (hard block, no approval), or `abstain` |
 
-| Scenario | Behavior |
-|----------|----------|
-| **Result arrives during active loop** | Injected as a `[Async Tool Results]` user message at the start of the next iteration of the *same* run — the LLM can see results before `run()` ends, not just via a later continuation. (This mid-loop message omits the `(toolCallId)` and the "Process these results and continue." line used by `continueWithAsyncResults()`.) |
-| **All called tools are async** | LLM sees only placeholders → likely produces text → loop ends → results trickle in → auto-continue |
-| **Async tool fails** | Error result delivered same as success — LLM sees the error and can react |
-| **Async tool times out** | Treated as error with timeout message. Configurable via `asyncTimeout`. |
-| **Agent destroyed with pending tools** | `destroy()` cancels all pending async tools and clears timers |
-| **Multiple results arrive close together** | Batched within `batchWindowMs` window, delivered as single message |
-| **`continueWithAsyncResults()` called with no results** | Throws `"No async results to deliver"` |
-| **Concurrent continuations** | Second call throws `"A continuation is already in progress"` |
+If a user has roles `['developer', 'restricted']`, deny from `restricted` beats allow from `developer`. If no user roles are set, the policy abstains.
 
-### Use Cases
+#### RateLimitPolicy
 
-- **Long-running analysis** — Data processing, ML inference, report generation
-- **Parallel API calls** — Fetch from multiple external services simultaneously
-- **Sub-agent orchestration** — Dispatch work to sub-agents without blocking the orchestrator
-- **Web scraping** — Scrape multiple pages in parallel while the agent reasons about strategy
-- **File processing** — Process large files while the agent works on other tasks
+Per-tool rate limiting with a sliding window. In-memory only — counters reset on process restart.
 
----
+```text
+// Source-level illustration; RateLimitPolicy is not a package-root export in the current v2 public surface.
+const policy = new RateLimitPolicy({
+  limits: {
+    'web_fetch': { maxCalls: 10, windowMs: 60_000 },   // 10 per minute
+    'bash': { maxCalls: 5, windowMs: 30_000 },          // 5 per 30 seconds
+    'web_search': { maxCalls: 20, windowMs: 60_000 },   // 20 per minute
+  },
 
-## Long-Running Sessions (Suspend/Resume)
+  // Optional: default limit for tools not explicitly configured
+  defaultLimit: { maxCalls: 100, windowMs: 60_000 },
+});
+```
 
-Some agentic workflows span hours or days. For example, an agent analyzes data, emails the results to a user, and waits for their reply before continuing. The **Suspend/Resume** feature enables this by letting tools pause the agent loop and external events resume it later.
+| Property | Value |
+|----------|-------|
+| Name | `builtin:rate-limit` |
+| Priority | 20 |
+| Verdict | `deny` (hard block, no approval) or `abstain` |
 
-### How It Works
-
-1. A tool returns a `SuspendSignal` instead of a normal result
-2. The agent loop adds the display result to context, does a final wrap-up LLM call
-3. Session state (conversation + plugins) is saved automatically
-4. A correlation mapping links the external event ID to the session
-5. `AgentResponse` returns with `status: 'suspended'` and full metadata
-6. Later, `Agent.hydrate()` reconstructs the agent; `run(input)` continues
-
-### Creating a Suspend Tool
+Rate limit denials are hard blocks — no approval override. The deny reason includes retry timing (e.g., "retry after 12345ms").
 
 ```typescript
-import { SuspendSignal, ToolFunction } from 'oneringai';
+// Reset counters
+policy.reset('web_fetch');  // reset one tool
+policy.reset();             // reset all tools
+```
 
-const sendResultsEmail: ToolFunction = {
+For distributed rate limiting across processes, implement a custom `IPermissionPolicy` with external state (e.g., Redis).
+
+### Tool Self-Declaration
+
+Tool authors can declare permission defaults directly on the tool definition. These are read by `SessionApprovalPolicy` via `PolicyContext.toolPermissionConfig`.
+
+#### ToolPermissionConfig Fields
+
+```typescript
+interface ToolPermissionConfig {
+  /** When approval is required: 'once' | 'session' | 'always' | 'never' */
+  scope?: PermissionScope;
+
+  /** Risk classification: 'low' | 'medium' | 'high' | 'critical' */
+  riskLevel?: RiskLevel;
+
+  /** Custom message shown in approval UI */
+  approvalMessage?: string;
+
+  /** Argument names to highlight as sensitive (also used for audit redaction) */
+  sensitiveArgs?: string[];
+
+  /** Expiration time for session approvals (ms) */
+  sessionTTLMs?: number;
+}
+```
+
+#### Declaring on a Tool
+
+```typescript
+const myTool: ToolFunction = {
   definition: {
     type: 'function',
     function: {
-      name: 'send_results_email',
-      description: 'Email analysis results and wait for user reply',
+      name: 'deploy_service',
+      description: 'Deploy a service to production',
       parameters: {
         type: 'object',
         properties: {
-          to: { type: 'string', description: 'Recipient email' },
-          subject: { type: 'string' },
-          body: { type: 'string', description: 'Email body with results' },
+          service: { type: 'string' },
+          environment: { type: 'string' },
         },
-        required: ['to', 'subject', 'body'],
+        required: ['service', 'environment'],
       },
     },
   },
-  execute: async (args) => {
-    // Perform the side effect
-    const { messageId } = await emailService.send(args.to, args.subject, args.body);
-
-    // Return SuspendSignal — agent loop will pause
-    return SuspendSignal.create({
-      result: `Email sent to ${args.to} (subject: "${args.subject}"). Waiting for reply.`,
-      correlationId: `email:${messageId}`,
-      metadata: { messageId, sentTo: args.to },
-    });
+  execute: async (args) => { /* ... */ },
+  permission: {
+    scope: 'once',          // require approval every time
+    riskLevel: 'critical',
+    approvalMessage: 'This will deploy to production. Are you sure?',
+    sensitiveArgs: ['environment'],
+    sessionTTLMs: 300_000,  // session approvals expire after 5 minutes
   },
 };
 ```
 
-**SuspendSignal Options:**
+#### Registration-Time Override
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `result` | `unknown` | (required) | Tool result visible to the LLM |
-| `correlationId` | `string` | (required) | ID for routing external events back (e.g., `email:msg_123`) |
-| `resumeAs` | `'user_message' \| 'tool_result'` | `'user_message'` | How external input is injected on resume |
-| `ttl` | `number` | 7 days (ms) | Time-to-live before the suspended session expires |
-| `metadata` | `Record<string, unknown>` | — | App-specific data (email ID, ticket ID, etc.) |
-
-### Running the Agent
+Application developers can override tool declarations at registration time:
 
 ```typescript
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  tools: [sendResultsEmail, analyzeData],
+agent.tools.register(myTool, {
+  permission: {
+    scope: 'session',      // override: approve once per session instead of every call
+    riskLevel: 'medium',   // downgrade risk from critical
+  },
 });
+```
 
-const response = await agent.run('Analyze the Q1 sales data and email results to alice@example.com');
+The merged config (registration override > tool declaration) is passed to policies as `PolicyContext.toolPermissionConfig`.
 
-if (response.status === 'suspended') {
-  console.log('Agent suspended!');
-  console.log('Correlation:', response.suspension.correlationId);
-  console.log('Session:', response.suspension.sessionId);
-  console.log('Expires:', response.suspension.expiresAt);
-  // Store the correlation for your webhook handler
+#### Default Permissions for Built-in Tool Categories
+
+| Category | Tools | Default Scope | Risk Level |
+|----------|-------|--------------|------------|
+| Filesystem (read) | read_file, glob, grep, list_directory | `always` | `low` |
+| Filesystem (write) | write_file, edit_file | `session` | `medium` |
+| Shell | bash | `once` | `high` |
+| Web | web_fetch | `session` | `low` |
+| Web (connector-provided) | web_search, web_scrape | *(no self-declared permission — falls through to chain default)* | — |
+| Desktop (read) | desktop_get_*, desktop_window_list | `always` | `low` |
+| Desktop (action) | desktop_mouse_*, desktop_screenshot, desktop_keyboard_key, desktop_window_focus | `session` | `medium` |
+| Desktop (input) | desktop_keyboard_type | `session` | `high` |
+| Store tools | store_*, context_stats | `always` | `low` |
+| Code execution | execute_javascript | `once` | `high` |
+| Custom tools meta | custom_tool_save, custom_tool_delete | `session` | `medium` |
+| Custom tools meta | custom_tool_test | `once` | `high` |
+| Orchestrator | assign_turn, delegate_interactive, send_message, list_agents, destroy_agent | `always` | `low` |
+| Meta-tools | _start_planning, _modify_plan, _report_progress, _request_approval | `always` | `low` |
+
+### Storage (Clean Architecture)
+
+The permission system uses Clean Architecture storage interfaces. All storage is optional — the system works entirely in-memory without persistence.
+
+#### IUserPermissionRulesStorage
+
+Stores per-user permission rules:
+
+```typescript
+interface IUserPermissionRulesStorage {
+  /** Load all rules for a user. Returns null if no rules exist. */
+  load(userId: string | undefined): Promise<UserPermissionRule[] | null>;
+
+  /** Save all rules for a user (full replacement). */
+  save(userId: string | undefined, rules: UserPermissionRule[]): Promise<void>;
+
+  /** Delete all rules for a user. */
+  delete(userId: string | undefined): Promise<void>;
+
+  /** Check if rules exist for a user. */
+  exists(userId: string | undefined): Promise<boolean>;
+
+  /** Get storage path (for debugging/display). */
+  getPath(userId: string | undefined): string;
 }
 ```
 
-The `AgentResponse.suspension` field contains:
+The `userId` parameter is always optional — when `undefined`, implementations default to `'default'` user. Reference storage path: `~/.oneringai/users/<userId>/permission_rules.json`.
 
 ```typescript
-interface SuspensionInfo {
-  correlationId: string;    // 'email:msg_123'
-  sessionId: string;        // Auto-generated or existing session ID
-  agentId: string;          // Agent ID for reconstruction
-  resumeAs: 'user_message' | 'tool_result';
-  expiresAt: string;        // ISO timestamp
+// Reference implementation — file-based
+import { FileUserPermissionRulesStorage } from 'oneringai';
+
+const storage = new FileUserPermissionRulesStorage();
+
+// Custom implementation
+class MongoPermissionRulesStorage implements IUserPermissionRulesStorage {
+  async load(userId) { /* query MongoDB */ }
+  async save(userId, rules) { /* upsert to MongoDB */ }
+  async delete(userId) { /* delete from MongoDB */ }
+  async exists(userId) { /* check existence */ }
+  getPath(userId) { return `mongodb://permissions/${userId ?? 'default'}`; }
+}
+```
+
+#### IPermissionAuditStorage
+
+There is currently no built-in persistent audit-storage interface. `PermissionPolicyManager` only exposes the audit trail via events (`permission:allow`, `permission:deny`, `permission:approval_granted`, `permission:approval_denied`, `permission:audit` — see "Event Emission" below). To persist entries yourself, subscribe to `permission:audit` and write `PermissionAuditEntry` objects to your own store:
+
+```typescript
+agent.policyManager.on('permission:audit', async (entry: PermissionAuditEntry) => {
+  await myAuditLog.record(entry);
+});
+```
+
+#### IPermissionPolicyStorage
+
+There is no public `IPermissionPolicyStorage` or `PolicyFactoryRegistry` in the
+current implementation. Internal policy modules contain factory objects, but
+neither those factories nor their definition types are exported from the npm
+entry point. Persist your application's own serializable policy configuration
+and reconstruct your own `IPermissionPolicy` implementations at startup. The
+public allowlist/blocklist/session settings can be persisted as ordinary
+`AgentPolicyConfig` data.
+
+#### StorageRegistry Integration
+
+Configure permission storage globally via `StorageRegistry`, or pass directly in the agent config:
+
+```typescript
+import { StorageRegistry, FileUserPermissionRulesStorage } from 'oneringai';
+
+// Global configuration
+StorageRegistry.configure({
+  permissionRules: new MongoPermissionRulesStorage(), // Implement per-user partitioning inside this storage.
+});
+
+// Or per-agent
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  permissions: {
+    userRulesStorage: new FileUserPermissionRulesStorage(),
+    // NOTE: there is no built-in auditStorage/policyStorage config field —
+    // persist audit entries yourself via agent.policyManager.on('permission:audit', ...).
+  },
+});
+```
+
+### Orchestrator Delegation
+
+Orchestrator workers use the parent policy chain when evaluation reaches the
+delegation pre-check. User rules and `autoApproveAll` retain their earlier
+compatibility precedence; configure trusted worker rules deliberately.
+
+#### setParentEvaluator
+
+```typescript
+import { createOrchestrator } from 'oneringai';
+
+// Orchestrator with strict permissions
+const orchestrator = await createOrchestrator({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  agentTypes: {
+    developer: {
+      systemPrompt: 'Write code',
+      tools: [readFile, writeFile, bash],
+    },
+  },
+});
+
+// Public manager shortcut: parent-chain restriction, subject to the precedence above.
+orchestrator.policyManager.blocklistAdd('bash');
+// For argument-aware restrictions, add your own IPermissionPolicy implementation.
+```
+
+Delegation rules:
+- **Parent-chain deny is final when reached.** Matching worker user rules and
+  `autoApproveAll` run earlier and can skip delegation checks. Parent policy alone
+  is not a mandatory tenant boundary.
+- **Parent allow does NOT skip worker restrictions** — a worker's own custom policies still run.
+- **Parent approval callback is NOT invoked** during delegation check — only the worker's approval callback triggers.
+
+Programmatic delegation for custom agent hierarchies:
+
+```typescript
+import { PermissionPolicyManager } from 'oneringai';
+
+const parentManager = PermissionPolicyManager.fromConfig({ /* parent policies */ });
+const workerManager = PermissionPolicyManager.fromConfig({ /* worker policies */ });
+
+// Worker cannot exceed parent permissions
+workerManager.setParentEvaluator(parentManager);
+
+// Check parent
+const parent = workerManager.getParentEvaluator(); // PermissionPolicyManager | undefined
+```
+
+### Audit Trail
+
+Every permission check is recorded as a `PermissionAuditEntry` with centralized argument redaction.
+
+#### PermissionAuditEntry Format
+
+```typescript
+interface PermissionAuditEntry {
+  id: string;                    // Unique entry ID (UUID)
+  timestamp: string;             // ISO timestamp
+  toolName: string;              // Tool that was checked
+  decision: 'allow' | 'deny';   // Policy evaluation result
+  finalOutcome:                  // Final execution outcome
+    | 'executed'                 // Tool was allowed and executed
+    | 'blocked'                  // Tool was hard-blocked
+    | 'approval_granted'         // User approved via dialog
+    | 'approval_denied';         // User denied via dialog
+  reason: string;                // Human-readable reason
+  policyName?: string;           // Policy that made the deciding verdict
+  userId?: string;               // User who triggered the check
+  agentId?: string;              // Agent that triggered the check
+  args?: Record<string, unknown>; // Redacted arguments
+  executionId?: string;          // Execution ID for correlation
+  approvalRequired?: boolean;    // Whether approval was requested
+  approvalKey?: string;          // Approval cache key
   metadata?: Record<string, unknown>;
 }
 ```
 
-### Resuming a Suspended Session
+#### Centralized Redaction
 
-When the external event arrives (e.g., email reply webhook), reconstruct and resume:
+Arguments are automatically redacted before inclusion in audit entries. Three layers of protection:
+
+1. **Tool-declared `sensitiveArgs`** — argument names listed in `ToolPermissionConfig.sensitiveArgs` are replaced with `[REDACTED]`.
+2. **Built-in sensitive keys** — arguments with names matching common secret patterns are replaced with `[REDACTED]`: `token`, `password`, `secret`, `authorization`, `apikey`, `api_key`, `credential`, `private_key`, `access_token`, `refresh_token`, `client_secret`, `passphrase`, `key`.
+3. **Truncation** — string values longer than 500 characters are truncated with `...[truncated]`.
+
+#### Event Emission
+
+The `PermissionPolicyManager` emits events for every decision:
 
 ```typescript
-import { Agent, StorageRegistry } from 'oneringai';
-import type { ICorrelationStorage } from 'oneringai';
+const manager = agent.policyManager;
 
-// In your webhook handler
-app.post('/webhooks/email-reply', async (req, res) => {
-  const { inReplyTo, body } = req.body;
+manager.on('permission:allow', (entry: PermissionAuditEntry) => {
+  console.log(`Allowed: ${entry.toolName} by ${entry.policyName}`);
+});
 
-  // 1. Resolve which session this reply belongs to
-  const correlationStorage = StorageRegistry.get('correlations') as ICorrelationStorage;
-  const ref = await correlationStorage.resolve(`email:${inReplyTo}`);
-  if (!ref) {
-    return res.status(404).send('Unknown or expired session');
-  }
+manager.on('permission:deny', (entry: PermissionAuditEntry) => {
+  console.log(`Denied: ${entry.toolName} — ${entry.reason}`);
+});
 
-  // 2. Reconstruct agent from stored definition + session
-  const agent = await Agent.hydrate(ref.sessionId, {
-    agentId: ref.agentId,
-  });
+manager.on('permission:approval_granted', (entry: PermissionAuditEntry) => {
+  console.log(`Approved by user: ${entry.toolName}`);
+});
 
-  // 3. Customize — add tools, hooks, etc.
-  agent.tools.register(sendResultsEmail);
-  agent.setLifecycleHooks({ onError: myErrorHandler });
+manager.on('permission:approval_denied', (entry: PermissionAuditEntry) => {
+  console.log(`User denied: ${entry.toolName}`);
+});
 
-  // 4. Continue with the user's reply
-  const result = await agent.run(body);
+// Catch-all audit event (fires for EVERY decision, in addition to specific events)
+manager.on('permission:audit', (entry: PermissionAuditEntry) => {
+  myAuditLog.record(entry);
+});
 
-  if (result.status === 'suspended') {
-    // Agent suspended again — another email sent, cycle continues
-    console.log('Re-suspended:', result.suspension.correlationId);
-  } else {
-    console.log('Agent completed:', result.output_text);
-  }
+// Policy lifecycle events
+manager.on('policy:added', ({ name }) => console.log(`Policy added: ${name}`));
+manager.on('policy:removed', ({ name }) => console.log(`Policy removed: ${name}`));
+manager.on('session:cleared', () => console.log('Session approvals cleared'));
+```
 
-  res.status(200).send('OK');
+There is no built-in audit storage — persistence is entirely up to the caller. Subscribe to `permission:audit` (or the more specific `permission:allow`/`permission:deny`/etc. events) and write entries to your own store; do this fire-and-forget so a storage failure never blocks tool execution.
+
+### Migration from Legacy System
+
+The original `ToolPermissionManager` is deprecated. The new `PermissionPolicyManager` is fully backward compatible.
+
+#### ToolPermissionManager to PermissionPolicyManager
+
+The legacy config is automatically translated when passed to `Agent.create()`:
+
+| Legacy Config | Policy Translation |
+|--------------|-------------------|
+| `blocklist: [...]` | `BlocklistPolicy` |
+| `allowlist: [...]` | `AllowlistPolicy` (merged with `DEFAULT_ALLOWLIST`) |
+| `defaultScope: 'once'` | `SessionApprovalPolicy('once')` |
+| `onApprovalRequired: fn` | Passed through unchanged (same callback signature in both configs) |
+
+`Agent.create()` always routes permission config through `PermissionPolicyManager.fromConfig()` — there is no separate "legacy" vs "policy" code path. `fromConfig()` first applies the legacy translation (blocklist/allowlist/defaultScope/onApprovalRequired) unconditionally, then layers on any explicitly supplied `policies`.
+
+```typescript
+import { FileUserPermissionRulesStorage } from 'oneringai';
+import type { IPermissionPolicy } from 'oneringai';
+
+const noSudoPolicy: IPermissionPolicy = {
+  name: 'app:no-sudo',
+  priority: 50,
+  evaluate: (ctx) =>
+    ctx.toolName === 'bash' && String(ctx.args.command ?? '').includes('sudo')
+      ? { verdict: 'deny', reason: 'sudo is disabled', policyName: 'app:no-sudo' }
+      : { verdict: 'abstain', reason: 'not applicable', policyName: 'app:no-sudo' },
+};
+
+// Legacy config — still works, auto-translated to policies
+const legacyAgent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  permissions: {
+    defaultScope: 'session',
+    allowlist: ['my_tool'],
+    blocklist: ['bad_tool'],
+    onApprovalRequired: async (ctx) => ({ approved: true }),
+  },
+});
+legacyAgent.permissions.approve('tool');  // ToolPermissionManager (deprecated)
+
+// New policy config — explicitly uses policies
+const policyAgent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  permissions: {
+    allowlist: ['my_tool'],
+    blocklist: ['bad_tool'],
+    policies: [noSudoPolicy],
+    onApprovalRequired: async (ctx) => ({ approved: true }),
+    userRulesStorage: new FileUserPermissionRulesStorage(),
+  },
+});
+policyAgent.policyManager.userRules.addRule(rule);  // PermissionPolicyManager
+```
+
+#### Programmatic Translation
+
+```typescript
+import { PermissionPolicyManager } from 'oneringai';
+
+// From legacy config
+const manager = PermissionPolicyManager.fromLegacyConfig({
+  allowlist: ['my_tool'],
+  blocklist: ['bad_tool'],
+  defaultScope: 'session',
+});
+
+// From new config with policies
+const managerVariant2 = PermissionPolicyManager.fromConfig({
+  allowlist: ['my_tool'],
+  policies: [noSudoPolicy],
+  userRulesStorage: new FileUserPermissionRulesStorage(),
+  // NOTE: policyChain and auditStorage are not read by fromConfig() — see notes above.
 });
 ```
 
-### `Agent.hydrate()` API
+Note: the chain default verdict is `'deny'` only when `onApprovalRequired` is supplied; otherwise it is `'allow'` to preserve backward compatibility (pre-policy-system behavior where all tools auto-execute). This is independent of whether `policies` are configured — `PermissionPolicyManager.fromConfig()` never reads `AgentPolicyConfig.policyChain`, so it cannot be used to force a strict `'deny'` default.
+
+#### Accessing the Manager
+
+```typescript
+// New API (preferred)
+const policyManager = agent.policyManager;
+
+// Deprecated (still works for backward compatibility)
+const legacyManager = agent.permissions;
+```
+
+### Pipeline Enforcement
+
+The permission system is enforced via `PermissionEnforcementPlugin`, registered at priority 1 on the ToolManager's execution pipeline. This guarantees all tool calls are checked regardless of entry point:
+
+```
+ToolManager.execute()
+    ↓
+ToolExecutionPipeline.beforeExecute()
+    ↓
+PermissionEnforcementPlugin (priority: 1; normalizer priority 0 also runs)
+    ↓
+PolicyContext built from: tool args + ToolContext + registration metadata
+    ↓
+PermissionPolicyManager.check()
+    ↓
+If denied → throws ToolPermissionDeniedError
+If allowed → execution continues to next plugin / tool handler
+```
+
+The `PermissionEnforcementPlugin` is automatically wired by `BaseAgent` during construction:
 
 ```text
-static async hydrate(
-  sessionId: string,
-  options: {
-    agentId: string;
-    definitionStorage?: IAgentDefinitionStorage;
-    overrides?: Partial<AgentConfig>;
-  }
-): Promise<Agent>
+// Internal illustration; not a consumer call. This happens in BaseAgent:
+this._agentContext.tools.setPermissionManager(this._policyManager);
 ```
 
-`hydrate()` is a static method that:
-1. Loads the agent definition via `Agent.fromStorage(agentId)`
-2. Loads the session state (conversation + plugin states) via `loadSession(sessionId)`
-3. Cleans up correlation mappings for the session
-4. Returns a fully reconstructed `Agent` ready for customization and `run()`
+The plugin builds `PolicyContext` automatically from:
+- Tool call arguments (from the execution pipeline context)
+- `ToolContext` (userId, agentId, sessionId, roles)
+- Tool registration metadata (source, category, namespace, tags, permission config)
 
-**Prerequisites:** The agent definition must have been saved via `agent.saveDefinition()`, and `StorageRegistry` must have `sessions` configured (or the agent was created with explicit session storage).
+### Complete Example
 
-### Correlation Storage
-
-By default, correlations are stored as files in `~/.oneringai/correlations/`. Configure a custom backend:
+A complete example combining a public custom policy, user rules, an approval
+callback, persistent rule storage, and audit events:
 
 ```typescript
-import { StorageRegistry, FileCorrelationStorage } from 'oneringai';
+import {
+  Agent, Connector, Vendor,
+  FileUserPermissionRulesStorage,
+} from 'oneringai';
+import type {
+  ApprovalRequestContext,
+  ApprovalDecision,
+  IPermissionPolicy,
+  PermissionAuditEntry,
+} from 'oneringai';
 
-// Use default file-based storage (auto-configured)
-// OR configure explicitly:
-StorageRegistry.set('correlations', new FileCorrelationStorage({
-  baseDirectory: '/custom/path/correlations',
-}));
+declare function promptUser(question: string): Promise<'y' | 'n' | 'always'>;
 
-// Or implement ICorrelationStorage for Redis, database, etc.
-StorageRegistry.set('correlations', new RedisCorrelationStorage());
-```
+// The package root exposes the policy interface, so applications can encode
+// restrictions without importing source-internal policy implementations.
+const workspaceSafetyPolicy: IPermissionPolicy = {
+  name: 'app:workspace-safety',
+  priority: 50,
+  evaluate(ctx) {
+    if (ctx.toolName === 'bash') {
+      const command = String(ctx.args.command ?? '');
+      if (/\b(?:sudo|rm\s+-rf)\b/.test(command)) {
+        return {
+          verdict: 'deny',
+          reason: 'Privileged and recursive-delete commands are blocked',
+          policyName: 'app:workspace-safety',
+        };
+      }
+    }
 
-**ICorrelationStorage interface:**
+    if (['read_file', 'write_file', 'edit_file'].includes(ctx.toolName)) {
+      const path = String(ctx.args.path ?? '');
+      if (!path.startsWith('/workspace/')) {
+        return {
+          verdict: 'deny',
+          reason: 'File access is restricted to /workspace',
+          policyName: 'app:workspace-safety',
+        };
+      }
+    }
 
-```typescript
-interface ICorrelationStorage {
-  save(correlationId: string, ref: SessionRef): Promise<void>;
-  resolve(correlationId: string): Promise<SessionRef | null>;
-  delete(correlationId: string): Promise<void>;
-  exists(correlationId: string): Promise<boolean>;
-  listBySession(sessionId: string): Promise<string[]>;
-  listByAgent(agentId: string): Promise<CorrelationSummary[]>;
-  pruneExpired(): Promise<number>;
-  getPath(): string;
-}
-```
+    return {
+      verdict: 'abstain',
+      reason: 'No workspace restriction matched',
+      policyName: 'app:workspace-safety',
+    };
+  },
+};
 
-### Multi-Step Workflows
-
-Suspend/resume naturally supports multi-step workflows. Each `run()` can either complete or suspend again:
-
-```typescript
-// Step 1: Agent analyzes data, emails results, suspends
-const r1 = await agent.run('Analyze Q1 data and email results');
-// r1.status === 'suspended' (email sent, waiting for reply)
-
-// Step 2: User replies, agent processes feedback, sends follow-up, suspends
-const agent2 = await Agent.hydrate(r1.suspension.sessionId, { agentId });
-agent2.tools.register(sendResultsEmail);
-const r2 = await agent2.run('Looks good, but also analyze Q2');
-// r2.status === 'suspended' (another email sent)
-
-// Step 3: User replies, agent completes
-const agent3 = await Agent.hydrate(r2.suspension.sessionId, { agentId });
-agent3.tools.register(sendResultsEmail);
-const r3 = await agent3.run('Perfect, thanks!');
-// r3.status === 'completed'
-```
-
-### Events
-
-The agent emits an `execution:suspended` event when suspension occurs:
-
-```typescript
-agent.on('execution:suspended', (event) => {
-  console.log('Session suspended:', event.sessionId);
-  console.log('Correlation:', event.correlationId);
-  console.log('Expires:', event.expiresAt);
+// Setup connector
+Connector.create({
+  name: 'openai',
+  vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
 });
-```
 
-### Housekeeping
+// Create agent with full permission configuration
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  userId: 'alice',
+  userRoles: ['developer'],
 
-Expired correlations can be pruned:
+  permissions: {
+    // Lists
+    allowlist: ['my_custom_tool'],
+    blocklist: ['legacy_dangerous_tool'],
 
-```typescript
-const correlationStorage = StorageRegistry.get('correlations') as ICorrelationStorage;
-const pruned = await correlationStorage.pruneExpired();
-console.log(`Pruned ${pruned} expired correlations`);
+    policies: [workspaceSafetyPolicy],
+
+    // Per-user rules storage (persistent)
+    userRulesStorage: new FileUserPermissionRulesStorage(),
+
+    // Approval dialog
+    onApprovalRequired: async (ctx: ApprovalRequestContext): Promise<ApprovalDecision> => {
+      console.log(`[APPROVAL NEEDED] ${ctx.toolName}`);
+      console.log(`  Risk: ${ctx.riskLevel}`);
+      console.log(`  Reason: ${ctx.decision.reason}`);
+      console.log(`  Args: ${JSON.stringify(ctx.args)}`);
+
+      // Auto-approve low-risk tools for the session
+      if (ctx.riskLevel === 'low') {
+        return { approved: true, scope: 'session' };
+      }
+
+      // Always deny critical tools without asking
+      if (ctx.riskLevel === 'critical') {
+        return { approved: false, reason: 'Critical tools require admin approval' };
+      }
+
+      // Prompt the user for medium/high risk tools
+      const answer = await promptUser(`Allow ${ctx.toolName}? (y/n/always)`);
+      if (answer === 'always') {
+        return {
+          approved: true,
+          createRule: {
+            description: `User approved ${ctx.toolName}`,
+            conditions: ctx.approvalKey !== ctx.toolName
+              ? [{ argName: 'path', operator: 'starts_with', value: ctx.args.path as string }]
+              : undefined,
+          },
+        };
+      }
+      return { approved: answer === 'y' };
+    },
+  },
+});
+
+// Listen to audit events
+agent.policyManager.on('permission:audit', (entry: PermissionAuditEntry) => {
+  console.log(`[AUDIT] ${entry.decision} ${entry.toolName}: ${entry.reason}`);
+});
+
+// Add a user rule programmatically
+await agent.policyManager.userRules.addRule({
+  id: crypto.randomUUID(),
+  toolName: 'write_file',
+  action: 'allow',
+  conditions: [
+    { argName: 'path', operator: 'starts_with', value: '/workspace/src/' },
+  ],
+  enabled: true,
+  description: 'Allow writing to src directory',
+  createdBy: 'admin',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+}, 'alice');
+
+// Run the agent — all tool calls are permission-checked automatically
+const result = await agent.run('Read the README and refactor the auth module');
 ```
 
 ---
@@ -10827,1354 +8384,6 @@ agent.tools.executionPipeline.use(new BrowserUIPlugin({
 
 ---
 
-## Tool Permissions
-
-The policy-based permission system provides composable policies, per-user rules with argument inspection, and pluggable storage. Permissions are enforced at the ToolManager pipeline level — all tool execution is gated, whether from Agent's agentic loop, direct API calls, or orchestrator workers.
-
-### Architecture Overview
-
-Permission evaluation follows a 3-tier model, checked in this order:
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│  1. USER RULES PRE-CHECK (highest priority, FINAL)           │
-│     Per-user persistent rules with argument conditions.       │
-│     When matched: result is FINAL, no further evaluation.     │
-│     Specificity-based: more conditions > fewer conditions.    │
-├──────────────────────────────────────────────────────────────┤
-│  2. PARENT DELEGATION PRE-CHECK (orchestrator workers)       │
-│     Parent deny is FINAL — worker cannot override.            │
-│     Parent allow does NOT skip worker restrictions.           │
-├──────────────────────────────────────────────────────────────┤
-│  3. POLICY CHAIN (composable policies)                       │
-│     Deny short-circuits immediately.                          │
-│     Allow is remembered but does NOT short-circuit.           │
-│     All abstain → defaultVerdict (default: 'deny').           │
-│                                                              │
-│     If deny + needsApproval → APPROVAL FLOW                 │
-│     → onApprovalRequired callback                            │
-│     → optional persistent rule creation                      │
-└──────────────────────────────────────────────────────────────┘
-```
-
-Detailed evaluation flow in `PermissionPolicyManager.check()`:
-
-```
-PermissionPolicyManager.check(context):
-  1. UserPermissionRulesEngine.evaluate()
-     → allow? → DONE (skip chain entirely)
-     → deny?  → DONE (skip chain entirely)
-     → ask?   → approval dialog
-     → no match → fall through
-
-  2. Parent delegation (if orchestrator worker)
-     → parent deny → DONE
-     → parent allow → continue
-
-  3. PolicyChain.evaluate()
-     → BlocklistPolicy (pri 5) → AllowlistPolicy (pri 10) → RateLimitPolicy (pri 20)
-     → RolePolicy (pri 30) → PathRestrictionPolicy (pri 50) → BashFilterPolicy (pri 50)
-     → UrlAllowlistPolicy (pri 50) → SessionApprovalPolicy (pri 90)
-
-  4. If deny + needsApproval → onApprovalRequired callback
-     → approved? → cache approval, optionally create persistent rule
-     → denied? → optionally create persistent deny rule
-```
-
-Key design principles:
-
-- **User rules are supreme** — when a user rule matches, no policy can override it. This guarantees users always have final say.
-- **Deny short-circuits** — in the policy chain, a deny verdict stops evaluation immediately. No later policy can override a deny.
-- **Allow does NOT short-circuit** — an allow verdict is remembered, but evaluation continues so a later custom policy can still reject the arguments.
-- **All abstain depends on construction path** — a directly constructed `PolicyChain` defaults to deny. `Agent.create()` currently builds its chain through `fromConfig()`, which defaults to deny when an approval callback exists and allow otherwise. Its `permissions.policyChain` field is not applied in 1.0.
-
-### Quick Start
-
-#### Zero-Config (Backward Compatible)
-
-The permission system is always active. Without configuration, default-allowlisted tools execute immediately. A tool declaring `scope: 'session'` or `scope: 'once'` requires approval; because no callback exists in this example, that call is rejected with “Approval required but no approval handler configured.” Use `autoApproveAll: true` only for trusted non-interactive automation.
-
-```typescript
-import { Agent, Connector, Vendor } from 'oneringai';
-
-Connector.create({
-  name: 'openai',
-  vendor: Vendor.OpenAI,
-  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
-});
-
-// No permissions config — uses DEFAULT_ALLOWLIST.
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  tools: [readFile, writeFile, bash],
-});
-// read_file: auto-allowed (in DEFAULT_ALLOWLIST)
-// write_file: approval required; rejected because no callback is configured
-// bash: approval required on every call; rejected for the same reason
-```
-
-#### Simple Policy Configuration
-
-Configure public allow/block lists and an approval callback:
-
-```typescript
-import { Agent } from 'oneringai';
-
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  permissions: {
-    // Allowlist is auto-merged with DEFAULT_ALLOWLIST
-    allowlist: ['my_safe_tool'],
-    blocklist: ['dangerous_tool'],
-
-    // Approval callback — invoked when a tool needs user approval
-    onApprovalRequired: async (ctx) => {
-      console.log(`Tool '${ctx.toolName}' needs approval. Args:`, ctx.args);
-      // In a real app, show a UI dialog
-      return { approved: true, scope: 'session' };
-    },
-
-  },
-});
-```
-
-For argument-aware path, command, URL, role, or rate-limit rules, pass your own
-public `IPermissionPolicy` implementation through `permissions.policies`. The
-source tree contains policies with names such as `PathRestrictionPolicy` and
-`BashFilterPolicy`, but those concrete classes are not exported from the
-published package root in 1.0.0; examples importing them from
-`oneringai` do not compile.
-
-### Per-User Permission Rules
-
-User permission rules are persistent, per-user, and have the highest evaluation priority. When a user rule matches, its result is final — no policy can override it.
-
-#### UserPermissionRule Model
-
-```typescript
-interface UserPermissionRule {
-  /** Unique rule ID (UUID) */
-  id: string;
-
-  /** Tool name this rule applies to. Use '*' for all tools. */
-  toolName: string;
-
-  /** What to do when this rule matches */
-  action: 'allow' | 'deny' | 'ask';
-
-  /**
-   * Argument conditions (optional). ALL conditions must match (AND logic).
-   * If empty/omitted, rule applies to ALL calls of this tool (blanket rule).
-   */
-  conditions?: ArgumentCondition[];
-
-  /**
-   * If true, this rule is absolute — more specific rules CANNOT override it.
-   * "Allow bash unconditionally" means even a "bash + rm -rf → ask" rule is ignored.
-   * @default false
-   */
-  unconditional?: boolean;
-
-  /** Whether this rule is active */
-  enabled: boolean;
-
-  /** Human-readable description (shown in settings UI) */
-  description?: string;
-
-  /** How this rule was created */
-  createdBy: 'user' | 'approval_dialog' | 'admin' | 'system';
-
-  /** ISO timestamp of creation */
-  createdAt: string;
-
-  /** ISO timestamp of last update */
-  updatedAt: string;
-
-  /** Optional expiry (ISO timestamp). Null/undefined = never expires. */
-  expiresAt?: string | null;
-}
-```
-
-#### ArgumentCondition Operators
-
-All 8 operators for inspecting argument values:
-
-```typescript
-interface ArgumentCondition {
-  /** Argument name to inspect (e.g., 'command', 'path', 'url') */
-  argName: string;
-
-  /** Comparison operator */
-  operator: ConditionOperator;
-
-  /** Value to compare against. For 'matches'/'not_matches', a regex string. */
-  value: string;
-
-  /** Case-insensitive comparison. @default true */
-  ignoreCase?: boolean;
-}
-
-type ConditionOperator =
-  | 'starts_with'    // value starts with the given string
-  | 'not_starts_with'
-  | 'contains'       // value contains the given string
-  | 'not_contains'
-  | 'equals'         // exact equality
-  | 'not_equals'
-  | 'matches'        // regex match
-  | 'not_matches';   // regex negation
-```
-
-Examples of each operator:
-
-```jsonc
-// Allow bash only for npm commands
-{ argName: 'command', operator: 'starts_with', value: 'npm' }
-
-// Deny commands containing 'sudo'
-{ argName: 'command', operator: 'contains', value: 'sudo' }
-
-// Allow write_file only for .ts files
-{ argName: 'path', operator: 'matches', value: '\\.ts$' }
-
-// Deny web_fetch for non-HTTPS URLs
-{ argName: 'url', operator: 'not_starts_with', value: 'https://' }
-
-// Allow edit_file only for a specific file
-{ argName: 'file_path', operator: 'equals', value: '/workspace/config.json' }
-
-// Deny bash commands matching dangerous patterns
-{ argName: 'command', operator: 'not_matches', value: 'rm\\s+-rf|dd\\s+if=|mkfs' }
-```
-
-#### Specificity Resolution
-
-When multiple rules match a tool call, specificity determines the winner:
-
-1. **Unconditional rules** are checked first. If matched, they are FINAL — no other rule can override them.
-2. **Conditional rules** are ranked by number of matching conditions. More conditions = more specific = higher priority.
-3. **Blanket rules** (no conditions) are the fallback with specificity 0.
-4. **Ties** are broken by `updatedAt` — most recently updated rule wins.
-
-```typescript
-// Example: these rules coexist without conflict
-const rules: UserPermissionRule[] = [
-  // Blanket: allow bash by default (specificity: 0)
-  { id: '1', toolName: 'bash', action: 'allow', enabled: true,
-    createdBy: 'user', createdAt: '...', updatedAt: '...' },
-
-  // Conditional: ask before rm commands (specificity: 1, overrides blanket)
-  { id: '2', toolName: 'bash', action: 'ask',
-    conditions: [{ argName: 'command', operator: 'contains', value: 'rm' }],
-    enabled: true, createdBy: 'user', createdAt: '...', updatedAt: '...' },
-
-  // More specific: deny rm -rf (specificity: 2, overrides the 'ask' above)
-  { id: '3', toolName: 'bash', action: 'deny',
-    conditions: [
-      { argName: 'command', operator: 'contains', value: 'rm' },
-      { argName: 'command', operator: 'contains', value: '-rf' },
-    ],
-    enabled: true, createdBy: 'user', createdAt: '...', updatedAt: '...' },
-];
-```
-
-#### Meta-Arguments
-
-Use special `__` prefixed argument names to match against tool registration metadata instead of call arguments:
-
-| Meta-Arg | Matches Against |
-|----------|----------------|
-| `__toolCategory` | Tool's registered category (e.g., `filesystem`, `web`, `shell`) |
-| `__toolSource` | Tool's source (e.g., `built-in`, `connector:github`, `mcp`, `custom`) |
-| `__toolNamespace` | Tool's registered namespace |
-
-```jsonc
-// Deny all MCP tools
-{
-  id: '1', toolName: '*', action: 'deny',
-  conditions: [{ argName: '__toolSource', operator: 'starts_with', value: 'mcp' }],
-  enabled: true, createdBy: 'admin', createdAt: '...', updatedAt: '...',
-}
-
-// Allow only filesystem category tools
-{
-  id: '2', toolName: '*', action: 'allow',
-  conditions: [{ argName: '__toolCategory', operator: 'equals', value: 'filesystem' }],
-  enabled: true, createdBy: 'admin', createdAt: '...', updatedAt: '...',
-}
-
-// Block all desktop tools
-{
-  id: '3', toolName: '*', action: 'deny',
-  conditions: [{ argName: '__toolCategory', operator: 'equals', value: 'desktop' }],
-  enabled: true, createdBy: 'user', createdAt: '...', updatedAt: '...',
-}
-```
-
-#### CRUD API
-
-Manage rules programmatically via the `UserPermissionRulesEngine`:
-
-```typescript
-const engine = agent.policyManager.userRules;
-
-// Add a rule
-await engine.addRule({
-  id: crypto.randomUUID(),
-  toolName: 'bash',
-  action: 'ask',
-  conditions: [{ argName: 'command', operator: 'contains', value: 'rm' }],
-  enabled: true,
-  description: 'Ask before any rm commands',
-  createdBy: 'user',
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-}, userId);
-
-// Update a rule
-await engine.updateRule(ruleId, { action: 'deny' }, userId);
-
-// Remove a rule
-await engine.removeRule(ruleId, userId);
-
-// Get all rules
-const allRules = engine.getRules();
-
-// Get rules for a specific tool
-const bashRules = engine.getRulesForTool('bash');
-
-// Get a single rule by ID
-const rule = engine.getRule(ruleId);
-
-// Enable/disable a rule
-await engine.enableRule(ruleId, userId);
-await engine.disableRule(ruleId, userId);
-```
-
-Rules auto-save to storage (if configured) after every mutation. Expired rules (past `expiresAt`) are automatically cleaned on evaluation.
-
-### Approval Dialog Integration
-
-When a policy denies a tool call with `needsApproval: true`, the `onApprovalRequired` callback is invoked. This is where your application shows an approval UI.
-
-#### Full Approval Callback Example
-
-```typescript
-import type { ApprovalRequestContext, ApprovalDecision } from 'oneringai';
-
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  permissions: {
-    onApprovalRequired: async (ctx: ApprovalRequestContext): Promise<ApprovalDecision> => {
-      // ctx contains rich context for the approval dialog
-      console.log(`Tool: ${ctx.toolName}`);
-      console.log(`Risk level: ${ctx.riskLevel}`);
-      console.log(`Arguments:`, ctx.args);
-      console.log(`Reason: ${ctx.decision.reason}`);
-      console.log(`Policy: ${ctx.decision.policyName}`);
-
-      if (ctx.approvalMessage) {
-        console.log(`Message: ${ctx.approvalMessage}`);
-      }
-      if (ctx.sensitiveArgs) {
-        console.log(`Sensitive args: ${ctx.sensitiveArgs.join(', ')}`);
-      }
-
-      // Show your UI dialog here...
-      const userChoice = await showApprovalDialog(ctx);
-
-      if (userChoice === 'allow_once') {
-        return { approved: true, scope: 'once' };
-      }
-
-      if (userChoice === 'allow_session') {
-        return { approved: true, scope: 'session' };
-      }
-
-      if (userChoice === 'always_allow') {
-        return {
-          approved: true,
-          scope: 'always',
-          remember: true,  // creates a persistent user rule
-        };
-      }
-
-      if (userChoice === 'always_allow_with_conditions') {
-        return {
-          approved: true,
-          createRule: {
-            description: 'Allow write_file in /workspace',
-            conditions: [
-              { argName: 'path', operator: 'starts_with', value: '/workspace/' },
-            ],
-          },
-        };
-      }
-
-      if (userChoice === 'deny_forever') {
-        return {
-          approved: false,
-          scope: 'never',
-          remember: true,  // creates a persistent deny rule
-        };
-      }
-
-      return { approved: false, reason: 'User denied' };
-    },
-  },
-});
-```
-
-#### ApprovalRequestContext Fields
-
-The callback receives a rich context extending `PolicyContext`:
-
-```typescript
-interface ApprovalRequestContext extends PolicyContext {
-  /** The deny decision that triggered this approval request */
-  decision: PolicyDecision;
-
-  /** Tool's risk level (from tool permission config or default) */
-  riskLevel: RiskLevel;  // 'low' | 'medium' | 'high' | 'critical'
-
-  /** Custom approval message (from tool permission config) */
-  approvalMessage?: string;
-
-  /** Argument names to highlight as sensitive in approval UI */
-  sensitiveArgs?: string[];
-
-  /** Policy-provided approval scope key */
-  approvalKey?: string;
-
-  /** Suggested approval scope */
-  approvalScope?: 'once' | 'session' | 'persistent';
-}
-```
-
-The base `PolicyContext` provides:
-
-```typescript
-interface PolicyContext {
-  toolName: string;                      // Tool being invoked
-  args: Record<string, unknown>;         // Parsed arguments
-  userId?: string;                       // From ToolContext.userId
-  roles?: string[];                      // From agent config userRoles
-  agentId?: string;
-  parentAgentId?: string;                // For orchestrator workers
-  sessionId?: string;
-  iteration?: number;                    // Agentic loop iteration
-  executionId?: string;                  // For tracing
-  toolSource?: string;                   // built-in, connector:xxx, mcp, custom
-  toolCategory?: string;                 // filesystem, web, shell, etc.
-  toolNamespace?: string;
-  toolTags?: string[];
-  toolPermissionConfig?: ToolPermissionConfig;  // Merged tool + registration config
-}
-```
-
-#### ApprovalDecision with createRule
-
-When the user wants to remember their decision, include `createRule` in the response:
-
-```typescript
-interface ApprovalDecision {
-  approved: boolean;
-  scope?: PermissionScope;   // 'once' | 'session' | 'always' | 'never'
-  reason?: string;           // Reason for denial
-  approvedBy?: string;       // Identifier of approver
-  remember?: boolean;        // Create persistent rule (shorthand)
-
-  /** Explicit rule creation with argument conditions */
-  createRule?: {
-    description?: string;
-    conditions?: ArgumentCondition[];
-    expiresAt?: string | null;   // ISO timestamp, null = never
-    unconditional?: boolean;
-  };
-}
-```
-
-#### Approval-to-Rule Creation Flow
-
-When the user approves with `createRule` or `remember: true`, the system automatically creates a persistent `UserPermissionRule`:
-
-```
-User clicks "Always Allow" in dialog
-    ↓
-ApprovalDecision { approved: true, remember: true, scope: 'always' }
-    ↓
-PermissionPolicyManager.createRuleFromApproval()
-    ↓
-UserPermissionRulesEngine.addRule({
-  toolName, action: 'allow', createdBy: 'approval_dialog'
-})
-    ↓
-Rule persisted to IUserPermissionRulesStorage
-    ↓
-Next call: user rule matches → immediate allow (no policy chain, no dialog)
-```
-
-### Policy Implementations and the Public 1.0 Surface
-
-The policy engine contains eight implementations, sorted by priority (lower
-number runs first). The published 1.0 package exposes allowlist, blocklist, and
-session-approval behavior through `Agent.create({ permissions })` and manager
-shortcuts. It exports `IPermissionPolicy`, so applications can add custom
-policies. It does **not** export the eight concrete policy classes from the
-package root. The five advanced class descriptions below document current
-engine behavior and source-level configuration, but their constructors are not
-a supported npm import in 1.0.0.
-
-#### AllowlistPolicy
-
-Auto-allows tools by name. Returns `allow` for listed tools, `abstain` for others. Note: allow does NOT short-circuit, so later policies (e.g., BashFilterPolicy) can still deny based on arguments.
-
-```typescript
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  permissions: {
-    // Merged with DEFAULT_ALLOWLIST by PermissionPolicyManager.fromConfig().
-    allowlist: ['my_safe_tool', 'another_safe_tool'],
-  },
-});
-```
-
-| Property | Value |
-|----------|-------|
-| Name | `builtin:allowlist` |
-| Priority | 10 |
-| Verdict | `allow` or `abstain` |
-
-Default allowlisted tools: `read_file`, `glob`, `grep`, `list_directory`, `store_get`, `store_set`, `store_delete`, `store_list`, `store_action`, `context_stats`, `todo_add`, `todo_update`, `todo_remove`, `tool_catalog_search`, `tool_catalog_load`, `tool_catalog_unload`, `_start_planning`, `_modify_plan`, `_report_progress`, `_request_approval`.
-
-Runtime modification:
-
-```typescript
-agent.policyManager.allowlistAdd('my_tool');
-agent.policyManager.allowlistRemove('my_tool');
-```
-
-#### BlocklistPolicy
-
-Permanently blocks tools by name. Returns `deny` without `needsApproval` — no user approval can override a blocklisted tool. Runs at the highest policy priority to block before any other policy can allow.
-
-```typescript
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  permissions: { blocklist: ['dangerous_tool', 'deprecated_tool'] },
-});
-```
-
-| Property | Value |
-|----------|-------|
-| Name | `builtin:blocklist` |
-| Priority | 5 (runs before allowlist) |
-| Verdict | `deny` (hard block) or `abstain` |
-
-Runtime modification:
-
-```typescript
-agent.policyManager.blocklistAdd('bad_tool');   // also removes from allowlist
-agent.policyManager.blocklistRemove('bad_tool');
-```
-
-#### SessionApprovalPolicy
-
-Manages session-level approval caching based on tool self-declarations. Reads `PolicyContext.toolPermissionConfig` to determine behavior:
-
-- `scope: 'always'` — auto-allow (tool declares itself safe)
-- `scope: 'never'` — hard deny (tool is disabled)
-- `scope: 'session'` — check approval cache, deny with `needsApproval` if not cached
-- `scope: 'once'` — always deny with `needsApproval` for every call
-- No config — `abstain` (tool has no permission declaration)
-
-```typescript
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  permissions: {
-    defaultScope: 'once',
-    onApprovalRequired: async (request) => showApprovalDialog(request),
-  },
-});
-```
-
-| Property | Value |
-|----------|-------|
-| Name | `builtin:session-approval` |
-| Priority | 90 (runs late, after argument-inspecting policies) |
-| Verdict | `allow`, `deny` (with or without `needsApproval`), or `abstain` |
-
-Approval cache management:
-
-```typescript
-// Programmatically approve a tool for the session
-agent.policyManager.approve('write_file', {
-  scope: 'session',
-  approvedBy: 'admin',
-});
-
-// With TTL expiration
-agent.policyManager.approve('bash', {
-  scope: 'session',
-  ttlMs: 300000, // 5 minutes
-});
-
-// Revoke an approval
-agent.policyManager.revoke('write_file');
-
-// Check cache
-agent.policyManager.isApproved('write_file'); // true/false
-
-// Clear all session approvals
-agent.policyManager.clearSession();
-```
-
-#### PathRestrictionPolicy
-
-Restricts file operations to allowed directory roots. Canonicalizes paths (resolves `..`, normalizes separators, best-effort symlink resolution for existing files).
-
-```text
-// Source-level illustration; PathRestrictionPolicy is not a package-root export in 1.0.0.
-const policy = new PathRestrictionPolicy({
-  // Required: allowed path prefixes (canonicalized at construction)
-  allowedPaths: ['/workspace', '/tmp', process.cwd()],
-
-  // Optional: customize which tools are checked
-  // Default: write_file, edit_file, read_file, list_directory, glob, grep
-  tools: ['write_file', 'edit_file', 'read_file', 'list_directory', 'glob', 'grep'],
-
-  // Optional: which argument names contain file paths
-  // Default: path, file_path, target_path, directory, pattern
-  pathArgs: ['path', 'file_path', 'target_path', 'directory', 'pattern'],
-
-  // Optional: resolve symlinks for existing files
-  resolveSymlinks: true,  // default: true
-
-  // Optional: base path for resolving relative paths
-  basePath: process.cwd(),  // default: process.cwd()
-});
-```
-
-| Property | Value |
-|----------|-------|
-| Name | `builtin:path-restriction` |
-| Priority | 50 |
-| Verdict | `deny` (with `needsApproval`, argument-scoped key) or `abstain` |
-
-The policy returns `abstain` for tools not in its list, so non-filesystem tools are unaffected. When denying, it provides an argument-scoped approval key (e.g., `write_file:/workspace/foo.txt`) so users can approve access to specific paths for the session.
-
-#### BashFilterPolicy
-
-Best-effort command filtering for the `bash` tool. Checks deny patterns first (any match = deny), then allow patterns (any match = abstain).
-
-**Important**: This is a guardrail, NOT a sandbox. Shell command obfuscation can bypass string-based filtering. For strong isolation, combine with blocklisting bash by default, path restrictions, or container/sandbox execution.
-
-```text
-// Source-level illustration; BashFilterPolicy is not a package-root export in 1.0.0.
-const policy = new BashFilterPolicy({
-  // Deny patterns (checked first, any match → deny with needsApproval)
-  denyPatterns: [
-    /rm\s+-rf/,
-    /sudo\s+/,
-    /chmod\s+777/,
-    /curl.*\|.*sh/,     // pipe curl to shell
-  ],
-  denyCommands: ['shutdown', 'reboot', 'mkfs'],
-
-  // Allow patterns (if matched after deny check, abstain → other policies decide)
-  allowPatterns: [/^(ls|cat|echo|pwd|whoami)/],
-  allowCommands: ['npm', 'node', 'git', 'tsc', 'npx'],
-
-  // Argument containing the command (default: 'command')
-  commandArg: 'command',
-});
-```
-
-| Property | Value |
-|----------|-------|
-| Name | `builtin:bash-filter` |
-| Priority | 50 |
-| Verdict | `deny` (with `needsApproval`, command-scoped key) or `abstain` |
-
-Only applies to the `bash` tool — all other tools get `abstain`. If neither deny nor allow patterns match, the policy abstains and lets other policies decide.
-
-#### UrlAllowlistPolicy
-
-Restricts URL-based tools to allowed domains. Uses proper `URL` parsing (not regex over raw strings). Validates both protocol and hostname.
-
-```text
-// Source-level illustration; UrlAllowlistPolicy is not a package-root export in 1.0.0.
-const policy = new UrlAllowlistPolicy({
-  allowedDomains: [
-    'api.github.com',       // exact match (also matches www.api.github.com)
-    '.example.com',         // suffix: matches sub.example.com, NOT example.com
-    'internal.corp.net',    // exact + subdomains
-  ],
-
-  // Optional configuration
-  allowedProtocols: ['http:', 'https:'],  // default
-  tools: ['web_fetch', 'web_search', 'web_scrape'],  // default
-  urlArgs: ['url', 'query', 'target_url'],  // default
-});
-```
-
-| Property | Value |
-|----------|-------|
-| Name | `builtin:url-allowlist` |
-| Priority | 50 |
-| Verdict | `deny` (with `needsApproval`, domain-scoped key) or `abstain` |
-
-Domain matching rules:
-- `"example.com"` matches exactly `example.com` and subdomains like `www.example.com`
-- `".example.com"` (leading dot) matches `sub.example.com` but NOT `example.com` itself
-- `"evil-example.com"` does NOT match `example.com`
-- Non-URL arguments (e.g., plain search queries) are silently skipped
-
-#### RolePolicy
-
-Role-based access control. Users can have multiple roles. Deny beats allow across all matched rules.
-
-```text
-// Source-level illustration; RolePolicy is not a package-root export in 1.0.0.
-const policy = new RolePolicy([
-  {
-    role: 'admin',
-    allowTools: ['*'],  // admins can use everything
-  },
-  {
-    role: 'developer',
-    allowTools: ['read_file', 'write_file', 'edit_file', 'bash', 'glob', 'grep'],
-    denyTools: ['desktop_mouse_click'],  // no desktop automation
-  },
-  {
-    role: 'viewer',
-    allowTools: ['read_file', 'glob', 'grep', 'list_directory'],
-    denyTools: ['write_file', 'edit_file', 'bash'],
-  },
-  {
-    role: 'restricted',
-    denyTools: ['*'],  // deny everything (overrides any allow from other roles)
-  },
-]);
-
-// Set user roles on the agent
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  userRoles: ['developer'],  // passed to PolicyContext.roles
-  permissions: {
-    policies: [policy],
-  },
-});
-```
-
-| Property | Value |
-|----------|-------|
-| Name | `builtin:role` |
-| Priority | 30 |
-| Verdict | `allow`, `deny` (hard block, no approval), or `abstain` |
-
-If a user has roles `['developer', 'restricted']`, deny from `restricted` beats allow from `developer`. If no user roles are set, the policy abstains.
-
-#### RateLimitPolicy
-
-Per-tool rate limiting with a sliding window. In-memory only — counters reset on process restart.
-
-```text
-// Source-level illustration; RateLimitPolicy is not a package-root export in 1.0.0.
-const policy = new RateLimitPolicy({
-  limits: {
-    'web_fetch': { maxCalls: 10, windowMs: 60_000 },   // 10 per minute
-    'bash': { maxCalls: 5, windowMs: 30_000 },          // 5 per 30 seconds
-    'web_search': { maxCalls: 20, windowMs: 60_000 },   // 20 per minute
-  },
-
-  // Optional: default limit for tools not explicitly configured
-  defaultLimit: { maxCalls: 100, windowMs: 60_000 },
-});
-```
-
-| Property | Value |
-|----------|-------|
-| Name | `builtin:rate-limit` |
-| Priority | 20 |
-| Verdict | `deny` (hard block, no approval) or `abstain` |
-
-Rate limit denials are hard blocks — no approval override. The deny reason includes retry timing (e.g., "retry after 12345ms").
-
-```typescript
-// Reset counters
-policy.reset('web_fetch');  // reset one tool
-policy.reset();             // reset all tools
-```
-
-For distributed rate limiting across processes, implement a custom `IPermissionPolicy` with external state (e.g., Redis).
-
-### Tool Self-Declaration
-
-Tool authors can declare permission defaults directly on the tool definition. These are read by `SessionApprovalPolicy` via `PolicyContext.toolPermissionConfig`.
-
-#### ToolPermissionConfig Fields
-
-```typescript
-interface ToolPermissionConfig {
-  /** When approval is required: 'once' | 'session' | 'always' | 'never' */
-  scope?: PermissionScope;
-
-  /** Risk classification: 'low' | 'medium' | 'high' | 'critical' */
-  riskLevel?: RiskLevel;
-
-  /** Custom message shown in approval UI */
-  approvalMessage?: string;
-
-  /** Argument names to highlight as sensitive (also used for audit redaction) */
-  sensitiveArgs?: string[];
-
-  /** Expiration time for session approvals (ms) */
-  sessionTTLMs?: number;
-}
-```
-
-#### Declaring on a Tool
-
-```typescript
-const myTool: ToolFunction = {
-  definition: {
-    type: 'function',
-    function: {
-      name: 'deploy_service',
-      description: 'Deploy a service to production',
-      parameters: {
-        type: 'object',
-        properties: {
-          service: { type: 'string' },
-          environment: { type: 'string' },
-        },
-        required: ['service', 'environment'],
-      },
-    },
-  },
-  execute: async (args) => { /* ... */ },
-  permission: {
-    scope: 'once',          // require approval every time
-    riskLevel: 'critical',
-    approvalMessage: 'This will deploy to production. Are you sure?',
-    sensitiveArgs: ['environment'],
-    sessionTTLMs: 300_000,  // session approvals expire after 5 minutes
-  },
-};
-```
-
-#### Registration-Time Override
-
-Application developers can override tool declarations at registration time:
-
-```typescript
-agent.tools.register(myTool, {
-  permission: {
-    scope: 'session',      // override: approve once per session instead of every call
-    riskLevel: 'medium',   // downgrade risk from critical
-  },
-});
-```
-
-The merged config (registration override > tool declaration) is passed to policies as `PolicyContext.toolPermissionConfig`.
-
-#### Default Permissions for Built-in Tool Categories
-
-| Category | Tools | Default Scope | Risk Level |
-|----------|-------|--------------|------------|
-| Filesystem (read) | read_file, glob, grep, list_directory | `always` | `low` |
-| Filesystem (write) | write_file, edit_file | `session` | `medium` |
-| Shell | bash | `once` | `high` |
-| Web | web_fetch | `session` | `low` |
-| Web (connector-provided) | web_search, web_scrape | *(no self-declared permission — falls through to chain default)* | — |
-| Desktop (read) | desktop_get_*, desktop_window_list | `always` | `low` |
-| Desktop (action) | desktop_mouse_*, desktop_screenshot, desktop_keyboard_key, desktop_window_focus | `session` | `medium` |
-| Desktop (input) | desktop_keyboard_type | `session` | `high` |
-| Store tools | store_*, context_stats | `always` | `low` |
-| Code execution | execute_javascript | `once` | `high` |
-| Custom tools meta | custom_tool_save, custom_tool_delete | `session` | `medium` |
-| Custom tools meta | custom_tool_test | `once` | `high` |
-| Orchestrator | assign_turn, delegate_interactive, send_message, list_agents, destroy_agent | `always` | `low` |
-| Meta-tools | _start_planning, _modify_plan, _report_progress, _request_approval | `always` | `low` |
-
-### Storage (Clean Architecture)
-
-The permission system uses Clean Architecture storage interfaces. All storage is optional — the system works entirely in-memory without persistence.
-
-#### IUserPermissionRulesStorage
-
-Stores per-user permission rules:
-
-```typescript
-interface IUserPermissionRulesStorage {
-  /** Load all rules for a user. Returns null if no rules exist. */
-  load(userId: string | undefined): Promise<UserPermissionRule[] | null>;
-
-  /** Save all rules for a user (full replacement). */
-  save(userId: string | undefined, rules: UserPermissionRule[]): Promise<void>;
-
-  /** Delete all rules for a user. */
-  delete(userId: string | undefined): Promise<void>;
-
-  /** Check if rules exist for a user. */
-  exists(userId: string | undefined): Promise<boolean>;
-
-  /** Get storage path (for debugging/display). */
-  getPath(userId: string | undefined): string;
-}
-```
-
-The `userId` parameter is always optional — when `undefined`, implementations default to `'default'` user. Reference storage path: `~/.oneringai/users/<userId>/permission_rules.json`.
-
-```typescript
-// Reference implementation — file-based
-import { FileUserPermissionRulesStorage } from 'oneringai';
-
-const storage = new FileUserPermissionRulesStorage();
-
-// Custom implementation
-class MongoPermissionRulesStorage implements IUserPermissionRulesStorage {
-  async load(userId) { /* query MongoDB */ }
-  async save(userId, rules) { /* upsert to MongoDB */ }
-  async delete(userId) { /* delete from MongoDB */ }
-  async exists(userId) { /* check existence */ }
-  getPath(userId) { return `mongodb://permissions/${userId ?? 'default'}`; }
-}
-```
-
-#### IPermissionAuditStorage
-
-There is currently no built-in persistent audit-storage interface. `PermissionPolicyManager` only exposes the audit trail via events (`permission:allow`, `permission:deny`, `permission:approval_granted`, `permission:approval_denied`, `permission:audit` — see "Event Emission" below). To persist entries yourself, subscribe to `permission:audit` and write `PermissionAuditEntry` objects to your own store:
-
-```typescript
-agent.policyManager.on('permission:audit', async (entry: PermissionAuditEntry) => {
-  await myAuditLog.record(entry);
-});
-```
-
-#### IPermissionPolicyStorage
-
-There is no public `IPermissionPolicyStorage` or `PolicyFactoryRegistry` in the
-current implementation. Internal policy modules contain factory objects, but
-neither those factories nor their definition types are exported from the npm
-entry point. Persist your application's own serializable policy configuration
-and reconstruct your own `IPermissionPolicy` implementations at startup. The
-public allowlist/blocklist/session settings can be persisted as ordinary
-`AgentPolicyConfig` data.
-
-#### StorageRegistry Integration
-
-Configure permission storage globally via `StorageRegistry`, or pass directly in the agent config:
-
-```typescript
-import { StorageRegistry, FileUserPermissionRulesStorage } from 'oneringai';
-
-// Global configuration
-StorageRegistry.configure({
-  permissionRules: (ctx) => new MongoPermissionRulesStorage(ctx?.tenantId),
-});
-
-// Or per-agent
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  permissions: {
-    userRulesStorage: new FileUserPermissionRulesStorage(),
-    // NOTE: there is no built-in auditStorage/policyStorage config field —
-    // persist audit entries yourself via agent.policyManager.on('permission:audit', ...).
-  },
-});
-```
-
-### Orchestrator Delegation
-
-When using the orchestrator pattern, worker agents cannot exceed the permissions of their parent (orchestrator).
-
-#### setParentEvaluator
-
-```typescript
-import { createOrchestrator } from 'oneringai';
-
-// Orchestrator with strict permissions
-const orchestrator = await createOrchestrator({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  agentTypes: {
-    developer: {
-      systemPrompt: 'Write code',
-      tools: [readFile, writeFile, bash],
-    },
-  },
-});
-
-// Public manager shortcut: workers inherit this hard restriction.
-orchestrator.policyManager.blocklistAdd('bash');
-// For argument-aware restrictions, add your own IPermissionPolicy implementation.
-```
-
-Delegation rules:
-- **Parent deny is FINAL** — worker cannot override a parent deny, even with its own user rules.
-- **Parent allow does NOT skip worker restrictions** — a worker's own custom policies still run.
-- **Parent approval callback is NOT invoked** during delegation check — only the worker's approval callback triggers.
-
-Programmatic delegation for custom agent hierarchies:
-
-```typescript
-import { PermissionPolicyManager } from 'oneringai';
-
-const parentManager = PermissionPolicyManager.fromConfig({ /* parent policies */ });
-const workerManager = PermissionPolicyManager.fromConfig({ /* worker policies */ });
-
-// Worker cannot exceed parent permissions
-workerManager.setParentEvaluator(parentManager);
-
-// Check parent
-const parent = workerManager.getParentEvaluator(); // PermissionPolicyManager | undefined
-```
-
-### Audit Trail
-
-Every permission check is recorded as a `PermissionAuditEntry` with centralized argument redaction.
-
-#### PermissionAuditEntry Format
-
-```typescript
-interface PermissionAuditEntry {
-  id: string;                    // Unique entry ID (UUID)
-  timestamp: string;             // ISO timestamp
-  toolName: string;              // Tool that was checked
-  decision: 'allow' | 'deny';   // Policy evaluation result
-  finalOutcome:                  // Final execution outcome
-    | 'executed'                 // Tool was allowed and executed
-    | 'blocked'                  // Tool was hard-blocked
-    | 'approval_granted'         // User approved via dialog
-    | 'approval_denied';         // User denied via dialog
-  reason: string;                // Human-readable reason
-  policyName?: string;           // Policy that made the deciding verdict
-  userId?: string;               // User who triggered the check
-  agentId?: string;              // Agent that triggered the check
-  args?: Record<string, unknown>; // Redacted arguments
-  executionId?: string;          // Execution ID for correlation
-  approvalRequired?: boolean;    // Whether approval was requested
-  approvalKey?: string;          // Approval cache key
-  metadata?: Record<string, unknown>;
-}
-```
-
-#### Centralized Redaction
-
-Arguments are automatically redacted before inclusion in audit entries. Three layers of protection:
-
-1. **Tool-declared `sensitiveArgs`** — argument names listed in `ToolPermissionConfig.sensitiveArgs` are replaced with `[REDACTED]`.
-2. **Built-in sensitive keys** — arguments with names matching common secret patterns are replaced with `[REDACTED]`: `token`, `password`, `secret`, `authorization`, `apikey`, `api_key`, `credential`, `private_key`, `access_token`, `refresh_token`, `client_secret`, `passphrase`, `key`.
-3. **Truncation** — string values longer than 500 characters are truncated with `...[truncated]`.
-
-#### Event Emission
-
-The `PermissionPolicyManager` emits events for every decision:
-
-```typescript
-const manager = agent.policyManager;
-
-manager.on('permission:allow', (entry: PermissionAuditEntry) => {
-  console.log(`Allowed: ${entry.toolName} by ${entry.policyName}`);
-});
-
-manager.on('permission:deny', (entry: PermissionAuditEntry) => {
-  console.log(`Denied: ${entry.toolName} — ${entry.reason}`);
-});
-
-manager.on('permission:approval_granted', (entry: PermissionAuditEntry) => {
-  console.log(`Approved by user: ${entry.toolName}`);
-});
-
-manager.on('permission:approval_denied', (entry: PermissionAuditEntry) => {
-  console.log(`User denied: ${entry.toolName}`);
-});
-
-// Catch-all audit event (fires for EVERY decision, in addition to specific events)
-manager.on('permission:audit', (entry: PermissionAuditEntry) => {
-  myAuditLog.record(entry);
-});
-
-// Policy lifecycle events
-manager.on('policy:added', ({ name }) => console.log(`Policy added: ${name}`));
-manager.on('policy:removed', ({ name }) => console.log(`Policy removed: ${name}`));
-manager.on('session:cleared', () => console.log('Session approvals cleared'));
-```
-
-There is no built-in audit storage — persistence is entirely up to the caller. Subscribe to `permission:audit` (or the more specific `permission:allow`/`permission:deny`/etc. events) and write entries to your own store; do this fire-and-forget so a storage failure never blocks tool execution.
-
-### Migration from Legacy System
-
-The original `ToolPermissionManager` is deprecated. The new `PermissionPolicyManager` is fully backward compatible.
-
-#### ToolPermissionManager to PermissionPolicyManager
-
-The legacy config is automatically translated when passed to `Agent.create()`:
-
-| Legacy Config | Policy Translation |
-|--------------|-------------------|
-| `blocklist: [...]` | `BlocklistPolicy` |
-| `allowlist: [...]` | `AllowlistPolicy` (merged with `DEFAULT_ALLOWLIST`) |
-| `defaultScope: 'once'` | `SessionApprovalPolicy('once')` |
-| `onApprovalRequired: fn` | Passed through unchanged (same callback signature in both configs) |
-
-`Agent.create()` always routes permission config through `PermissionPolicyManager.fromConfig()` — there is no separate "legacy" vs "policy" code path. `fromConfig()` first applies the legacy translation (blocklist/allowlist/defaultScope/onApprovalRequired) unconditionally, then layers on any explicitly supplied `policies`.
-
-```typescript
-import { FileUserPermissionRulesStorage } from 'oneringai';
-import type { IPermissionPolicy } from 'oneringai';
-
-const noSudoPolicy: IPermissionPolicy = {
-  name: 'app:no-sudo',
-  priority: 50,
-  evaluate: (ctx) =>
-    ctx.toolName === 'bash' && String(ctx.args.command ?? '').includes('sudo')
-      ? { verdict: 'deny', reason: 'sudo is disabled', policyName: 'app:no-sudo' }
-      : { verdict: 'abstain', reason: 'not applicable', policyName: 'app:no-sudo' },
-};
-
-// Legacy config — still works, auto-translated to policies
-const legacyAgent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  permissions: {
-    defaultScope: 'session',
-    allowlist: ['my_tool'],
-    blocklist: ['bad_tool'],
-    onApprovalRequired: async (ctx) => ({ approved: true }),
-  },
-});
-legacyAgent.permissions.approve('tool');  // ToolPermissionManager (deprecated)
-
-// New policy config — explicitly uses policies
-const policyAgent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  permissions: {
-    allowlist: ['my_tool'],
-    blocklist: ['bad_tool'],
-    policies: [noSudoPolicy],
-    onApprovalRequired: async (ctx) => ({ approved: true }),
-    userRulesStorage: new FileUserPermissionRulesStorage(),
-  },
-});
-policyAgent.policyManager.userRules.addRule(rule);  // PermissionPolicyManager
-```
-
-#### Programmatic Translation
-
-```typescript
-import { PermissionPolicyManager } from 'oneringai';
-
-// From legacy config
-const manager = PermissionPolicyManager.fromLegacyConfig({
-  allowlist: ['my_tool'],
-  blocklist: ['bad_tool'],
-  defaultScope: 'session',
-});
-
-// From new config with policies
-const manager = PermissionPolicyManager.fromConfig({
-  allowlist: ['my_tool'],
-  policies: [noSudoPolicy],
-  userRulesStorage: new FileUserPermissionRulesStorage(),
-  // NOTE: policyChain and auditStorage are not read by fromConfig() — see notes above.
-});
-```
-
-Note: the chain default verdict is `'deny'` only when `onApprovalRequired` is supplied; otherwise it is `'allow'` to preserve backward compatibility (pre-policy-system behavior where all tools auto-execute). This is independent of whether `policies` are configured — `PermissionPolicyManager.fromConfig()` never reads `AgentPolicyConfig.policyChain`, so it cannot be used to force a strict `'deny'` default.
-
-#### Accessing the Manager
-
-```typescript
-// New API (preferred)
-const policyManager = agent.policyManager;
-
-// Deprecated (still works for backward compatibility)
-const legacyManager = agent.permissions;
-```
-
-### Pipeline Enforcement
-
-The permission system is enforced via `PermissionEnforcementPlugin`, registered at priority 1 on the ToolManager's execution pipeline. This guarantees all tool calls are checked regardless of entry point:
-
-```
-ToolManager.execute()
-    ↓
-ToolExecutionPipeline.beforeExecute()
-    ↓
-PermissionEnforcementPlugin (priority: 1, runs FIRST)
-    ↓
-PolicyContext built from: tool args + ToolContext + registration metadata
-    ↓
-PermissionPolicyManager.check()
-    ↓
-If denied → throws ToolPermissionDeniedError
-If allowed → execution continues to next plugin / tool handler
-```
-
-The `PermissionEnforcementPlugin` is automatically wired by `BaseAgent` during construction:
-
-```typescript
-// This happens automatically in BaseAgent constructor:
-this._agentContext.tools.setPermissionManager(this._policyManager);
-```
-
-The plugin builds `PolicyContext` automatically from:
-- Tool call arguments (from the execution pipeline context)
-- `ToolContext` (userId, agentId, sessionId, roles)
-- Tool registration metadata (source, category, namespace, tags, permission config)
-
-### Complete Example
-
-A complete example combining a public custom policy, user rules, an approval
-callback, persistent rule storage, and audit events:
-
-```typescript
-import {
-  Agent, Connector, Vendor,
-  FileUserPermissionRulesStorage,
-} from 'oneringai';
-import type {
-  ApprovalRequestContext,
-  ApprovalDecision,
-  IPermissionPolicy,
-  PermissionAuditEntry,
-} from 'oneringai';
-
-declare function promptUser(question: string): Promise<'y' | 'n' | 'always'>;
-
-// The package root exposes the policy interface, so applications can encode
-// restrictions without importing source-internal policy implementations.
-const workspaceSafetyPolicy: IPermissionPolicy = {
-  name: 'app:workspace-safety',
-  priority: 50,
-  evaluate(ctx) {
-    if (ctx.toolName === 'bash') {
-      const command = String(ctx.args.command ?? '');
-      if (/\b(?:sudo|rm\s+-rf)\b/.test(command)) {
-        return {
-          verdict: 'deny',
-          reason: 'Privileged and recursive-delete commands are blocked',
-          policyName: 'app:workspace-safety',
-        };
-      }
-    }
-
-    if (['read_file', 'write_file', 'edit_file'].includes(ctx.toolName)) {
-      const path = String(ctx.args.path ?? '');
-      if (!path.startsWith('/workspace/')) {
-        return {
-          verdict: 'deny',
-          reason: 'File access is restricted to /workspace',
-          policyName: 'app:workspace-safety',
-        };
-      }
-    }
-
-    return {
-      verdict: 'abstain',
-      reason: 'No workspace restriction matched',
-      policyName: 'app:workspace-safety',
-    };
-  },
-};
-
-// Setup connector
-Connector.create({
-  name: 'openai',
-  vendor: Vendor.OpenAI,
-  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
-});
-
-// Create agent with full permission configuration
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  userId: 'alice',
-  userRoles: ['developer'],
-
-  permissions: {
-    // Lists
-    allowlist: ['my_custom_tool'],
-    blocklist: ['legacy_dangerous_tool'],
-
-    policies: [workspaceSafetyPolicy],
-
-    // Per-user rules storage (persistent)
-    userRulesStorage: new FileUserPermissionRulesStorage(),
-
-    // Approval dialog
-    onApprovalRequired: async (ctx: ApprovalRequestContext): Promise<ApprovalDecision> => {
-      console.log(`[APPROVAL NEEDED] ${ctx.toolName}`);
-      console.log(`  Risk: ${ctx.riskLevel}`);
-      console.log(`  Reason: ${ctx.decision.reason}`);
-      console.log(`  Args: ${JSON.stringify(ctx.args)}`);
-
-      // Auto-approve low-risk tools for the session
-      if (ctx.riskLevel === 'low') {
-        return { approved: true, scope: 'session' };
-      }
-
-      // Always deny critical tools without asking
-      if (ctx.riskLevel === 'critical') {
-        return { approved: false, reason: 'Critical tools require admin approval' };
-      }
-
-      // Prompt the user for medium/high risk tools
-      const answer = await promptUser(`Allow ${ctx.toolName}? (y/n/always)`);
-      if (answer === 'always') {
-        return {
-          approved: true,
-          createRule: {
-            description: `User approved ${ctx.toolName}`,
-            conditions: ctx.approvalKey !== ctx.toolName
-              ? [{ argName: 'path', operator: 'starts_with', value: ctx.args.path as string }]
-              : undefined,
-          },
-        };
-      }
-      return { approved: answer === 'y' };
-    },
-  },
-});
-
-// Listen to audit events
-agent.policyManager.on('permission:audit', (entry: PermissionAuditEntry) => {
-  console.log(`[AUDIT] ${entry.decision} ${entry.toolName}: ${entry.reason}`);
-});
-
-// Add a user rule programmatically
-await agent.policyManager.userRules.addRule({
-  id: crypto.randomUUID(),
-  toolName: 'write_file',
-  action: 'allow',
-  conditions: [
-    { argName: 'path', operator: 'starts_with', value: '/workspace/src/' },
-  ],
-  enabled: true,
-  description: 'Allow writing to src directory',
-  createdBy: 'admin',
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-}, 'alice');
-
-// Run the agent — all tool calls are permission-checked automatically
-const result = await agent.run('Read the README and refactor the auth module');
-```
-
----
-
 ## MCP (Model Context Protocol)
 
 The Model Context Protocol (MCP) is an open standard that enables seamless integration between AI applications and external data sources and tools. The library provides a complete MCP client implementation with support for both local (stdio) and remote (HTTP/HTTPS) servers.
@@ -12192,10 +8401,11 @@ MCP allows you to:
 
 ### Quick Start
 
-#### 1. Install MCP SDK
+#### 1. Install or provision an MCP server
 
 ```bash
-npm install @modelcontextprotocol/sdk zod
+npm install oneringai
+# Client dependencies are included. Provision the selected MCP server separately.
 ```
 
 #### 2. Connect to a Local MCP Server
@@ -12318,7 +8528,7 @@ for (const client of clients) {
 }
 ```
 
-`loadFromConfigFile()` creates clients but does not connect them. In 1.0,
+`loadFromConfigFile()` creates clients but does not connect them. Currently,
 `MCPRegistry.connectAll()` connects **all** disconnected clients; it does not
 filter on the declared `autoConnect` flag. Connect selected clients individually
 if your application needs that distinction. Also use
@@ -12338,7 +8548,7 @@ const client = MCPRegistry.create({
 });
 
 // Get a client
-const client = MCPRegistry.get('my-server');
+const clientVariant2 = MCPRegistry.get('my-server');
 
 // Check if exists
 if (MCPRegistry.has('my-server')) {
@@ -12416,7 +8626,7 @@ console.log(content.text);
 
 ```
 
-**1.0 limitation:** the client currently initializes negotiated capabilities as
+**Current limitation:** the client currently initializes negotiated capabilities as
 an empty object and does not register an SDK notification handler for resource
 updates. As a result, `subscribeResource()` cannot pass its capability check and
 no `resource:updated` event is emitted. Treat resource subscriptions as
@@ -12758,10 +8968,6610 @@ client.on('tool:result', (name, result) => {
 The public `MCPServerConfig` currently accepts only `stdio`, `http`, and
 `https`; `MCPClient` constructs the corresponding SDK transport internally.
 Implementing the SDK's `Transport` interface alone is therefore not enough to
-inject a custom transport into OneRingAI 1.0. Add an adapter in the library or
+inject a custom transport into this integration. Add an adapter in the library or
 use the MCP SDK client directly when another transport is required.
 
 ---
+
+## Context Management
+
+The library includes a **powerful, universal context management system** that automatically handles the complexity of managing LLM context windows. `AgentContextNextGen` is the primary context manager with a clean, plugin-based architecture.
+
+### Preparation and ownership
+
+Managed `run()`/`stream()` prepare context once before each call, then validate the
+actual dispatch shape, capacity, and replay owner. Read `lastPreparation` after
+execution for detached budget/selection/compaction diagnostics. Do not call
+`prepare()` again just to inspect a managed request. Standalone context owners may
+call it when they are actually constructing their own provider request.
+
+Connected function/native call-result groups, pending dependencies, protected
+host task state, and unacknowledged evidence cannot be discarded to make a prompt
+fit. An explicit fit/ownership error is preferable to silently losing them.
+The [preparation recipe](docs/CONTEXT_PREPARATION.md) describes bounded hook refresh,
+spill, concurrency, repair, and failure behavior.
+
+### AgentContextNextGen - The Modern API
+
+**AgentContextNextGen** is the modern, plugin-first context manager. It provides clean separation of concerns with composable plugins:
+
+#### What the plugin architecture is for
+
+A context plugin is a bounded capability, not just a prompt fragment. A plugin
+can own all of the following as one lifecycle unit:
+
+| Responsibility | Why it belongs in the plugin |
+|----------------|------------------------------|
+| Static instructions | Teaches the model when and how to use the capability |
+| Dynamic context content | Injects only the state needed for the current call |
+| Tools | Makes feature-specific operations available through the shared `ToolManager` |
+| Token accounting | Lets the context budget show exactly what each capability costs |
+| Compaction | Lets a feature reduce its own content safely when the context fills |
+| Persistence | Saves and restores plugin state with the conversation session |
+| Cleanup | Releases resources through the common `IDisposable` lifecycle |
+
+`AgentContextNextGen.prepare()` assembles one system message from the enabled
+plugins and compacts at most once immediately before the LLM call. Conversation
+tool-call/result pairs remain atomic, the newest input is never compacted, and
+disabling a feature removes its prompt content and feature tools.
+
+The word “memory” appears in several plugin names because they solve different
+problems:
+
+| Use case | Choose | Data location / retrieval model |
+|----------|--------|---------------------------------|
+| Scratch notes and large intermediate findings | `WorkingMemoryPluginNextGen` | Values live outside the prompt; an index is injected and the agent retrieves details with `store_*` |
+| Small state the model must always see | `InContextMemoryPluginNextGen` | Full values live directly in the prompt |
+| Durable people, organizations, tasks, events, documents, relationships, and learned profiles | `MemoryPluginNextGen` | Standalone entity/fact system with ranked, graph, vector, and bitemporal retrieval |
+| Let the LLM mutate durable memory | `MemoryWritePluginNextGen` | Six controlled write tools layered on the read plugin |
+| Learn from conversations without LLM write tools | `SessionIngestorPluginNextGen` | Background extraction into the same `MemorySystem` |
+
+See the [Memory Layer Guide](./docs/MEMORY_GUIDE.md) for the standalone system
+and the [Self-Learning Memory](#self-learning-memory-nextgen-plugin) section for
+agent wiring.
+
+```typescript
+import { AgentContextNextGen } from 'oneringai';
+
+// Create a context instance
+const ctx = AgentContextNextGen.create({
+  model: 'gpt-4.1',
+  systemPrompt: 'You are a helpful assistant.',
+  features: {
+    workingMemory: true,      // WorkingMemoryPluginNextGen
+    inContextMemory: true,    // InContextMemoryPluginNextGen
+    persistentInstructions: false,
+  },
+  strategy: 'algorithmic', // 75% reclaim target; 90% critical trigger
+});
+
+// Add user message
+ctx.addUserMessage('What is the weather in Paris?');
+
+// Prepare context for LLM call (handles compaction if needed)
+const { input, budget, compacted } = await ctx.prepare();
+
+// After LLM call, add response
+ctx.addAssistantResponse(response.output);
+
+// Add tool results
+ctx.addToolResults([{ tool_use_id: '...', content: '...', state: ToolCallState.COMPLETED }]);
+
+// Access plugins
+const memory = ctx.memory;  // WorkingMemoryPluginNextGen | null
+await memory?.store('key', 'description', value);
+
+// Access tools
+ctx.tools.disable('risky_tool');
+
+// Budget information
+console.log(`Tokens: ${budget.totalUsed}/${budget.maxTokens}`);
+console.log(`Utilization: ${budget.utilizationPercent}%`);
+console.log(`Available: ${budget.available}`);
+```
+
+### Semantic Rollover at Provider-Session Boundaries
+
+Automatic compaction is token-triggered. Use explicit rollover when the
+provider session itself must be replaced—for example, before OpenAI Realtime's
+hard session lifetime—but the same OneRingAI Agent should continue:
+
+```typescript
+const result = await agent.rolloverContext({
+  preserveRecentTurns: 8,
+  maxSummaryTokens: 2048,
+  reason: 'provider-session-expiring',
+});
+```
+
+The Agent obtains its normal exclusive execution lease, loads persisted state,
+summarizes the older prefix with a tool-free direct call, and commits a
+developer continuity brief only after a non-empty summary succeeds. Recent
+turns and complete tool-call/result pairs remain exact. Plugin state and the
+append-only history journal are not compacted. With session storage,
+`checkpoint` defaults to `true`; without it, checkpointing defaults to `false`.
+
+Use a trusted custom summarizer when the Agent model is not text-capable or the
+summary must run through another service:
+
+```typescript
+await agent.rolloverContext({
+  summarize: async ({ items, estimatedTokens, preservedRecentTurns, reason }) =>
+    summaryService.createContinuityBrief({
+      items,
+      estimatedTokens,
+      preservedRecentTurns,
+      reason,
+    }),
+});
+```
+
+The lower-level context API requires the summarizer explicitly:
+
+```typescript
+const result = await agent.context.rollover({
+  preserveRecentTurns: 8,
+  reason: 'manual-handoff',
+  summarize: ({ items }) => summarizeWithTrustedModel(items),
+});
+```
+
+Call either API only between turns, with no pending input. Agent-level rollover
+cannot overlap `run()`, `stream()`, async continuation, or external execution;
+context-level rollover rejects concurrent rollover and aborts if the live
+context changes while the summary is being generated. Observe committed
+rollovers with `context:rolled_over` and inspect the returned token/item counts.
+
+### Context Structure
+
+AgentContextNextGen organizes context into clear sections:
+
+```
+[Developer Message - All glued together]
+  # System Prompt
+  # Persistent Instructions (if plugin enabled)
+  # Plugin Instructions (for enabled plugins)
+  # In-Context Memory (if plugin enabled)
+  # Working Memory Index (if plugin enabled)
+
+[Conversation History]
+  ... messages including tool_use/tool_result pairs ...
+
+[Current Input]
+  User message OR tool results (newest, never compacted)
+```
+
+#### AgentContextNextGen Components
+
+AgentContextNextGen uses a plugin architecture with these core components:
+
+| Component | Access | Purpose |
+|-----------|--------|---------|
+| **ToolManager** | `ctx.tools` | Tool registration, execution, circuit breakers |
+| **WorkingMemoryPluginNextGen** | `ctx.getPlugin('working_memory')` | Tiered memory (raw/summary/findings) |
+| **InContextMemoryPluginNextGen** | `ctx.getPlugin('in_context_memory')` | Live key-value storage in context |
+| **PersistentInstructionsPluginNextGen** | `ctx.getPlugin('persistent_instructions')` | Disk-persisted agent instructions |
+| **UserInfoPluginNextGen** | `ctx.getPlugin('user_info')` | User-scoped preferences + TODO tracking, auto-injected into context |
+| **ToolCatalogPluginNextGen** | `ctx.getPlugin('tool_catalog')` | Scoped discovery and dynamic loading/unloading of tool categories |
+| **SharedWorkspacePluginNextGen** | `ctx.getPlugin('shared_workspace')` | Versioned multi-agent coordination board |
+| **MemoryPluginNextGen** | `ctx.getPlugin('memory')` | Profile injection plus six graph/vector/document retrieval tools |
+| **MemoryWritePluginNextGen** | `ctx.getPlugin('memory_write')` | Six controlled durable-memory mutation tools |
+| **SessionIngestorPluginNextGen** | Manually registered | Optional background extraction from accumulated conversation turns |
+| **Evidence** | Opt-in evidence plugin | Scoped source receipts, projections, and bounded retrieval |
+| **TaskStatePluginNextGen** | `ctx.getPlugin('task_state')` | Protected host notes and action receipts |
+| **Conversation** | `ctx.getConversation()` | Built-in conversation tracking (`InputItem[]`) |
+
+#### Using AgentContextNextGen with Agent
+
+**AgentContextNextGen is always available** - BaseAgent creates it in the constructor, making it the single source of truth for ToolManager:
+
+```typescript
+import { Agent, AgentContextNextGen } from 'oneringai';
+
+// AgentContextNextGen is auto-created with default config
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools: [weatherTool],
+  context: {
+    model: 'gpt-4.1',
+    strategy: 'algorithmic',    // Default strategy; 75% reclaim threshold, 90% critical trigger
+    features: { workingMemory: true },
+  },
+});
+
+// UNIFIED TOOL MANAGEMENT: agent.tools and agent.context.tools are the SAME instance
+console.log(agent.tools === agent.context.tools);  // true
+console.log(agent.hasContext());  // Always true
+
+// Tool changes via either path are immediately reflected
+agent.tools.disable('weather_tool');
+console.log(agent.context.tools.listEnabled().includes('weather_tool'));  // false
+
+agent.context.tools.enable('weather_tool');
+console.log(agent.tools.listEnabled().includes('weather_tool'));  // true
+
+// Agent automatically tracks messages and tool calls
+await agent.run('What is the weather?');
+
+// Access the context (never null)
+const ctx = agent.context;
+const conversation = ctx.getConversation(); // InputItem[] - NextGen API
+const budget = ctx.lastPreparation?.budget;
+if (budget) console.log(`Used: ${budget.totalUsed}/${budget.maxTokens} tokens`);
+
+// Option 2: Pass existing AgentContextNextGen instance
+const sharedContext = AgentContextNextGen.create({ model: 'gpt-4.1' });
+const agent1 = Agent.create({ connector: 'openai', model: 'gpt-4.1', context: sharedContext });
+// Keep this context under one execution owner. Sharing history with another
+// provider requires compatible state and explicit authorization; opaque signed
+// continuations cannot simply transfer between accounts/providers.
+```
+
+#### AgentContextNextGen Configuration
+
+```typescript
+interface AgentContextNextGenConfig {
+  /** Model name (used for token limits) — REQUIRED */
+  model: string;
+
+  /** Max context tokens (overrides model default) */
+  maxContextTokens?: number;
+
+  /** Response token reserve in tokens (default: 4096) */
+  responseReserve?: number;
+
+  /** System prompt */
+  systemPrompt?: string;
+
+  /** Agent ID (used for persistent storage paths) */
+  agentId?: string;
+
+  /** Tools to register */
+  tools?: ToolFunction[];
+
+  /** Feature flags for enabling/disabling plugins */
+  features?: ContextFeatures;
+
+  /** Compaction strategy */
+  strategy?: string;  // 'algorithmic' (default, 75%) or custom registered strategy name
+
+  /** Context storage for session persistence */
+  storage?: IContextStorage;
+
+  /** Plugin configurations */
+  plugins?: PluginConfigs;
+}
+
+interface ContextFeatures {
+  /** Enable WorkingMemoryPluginNextGen (default: true) */
+  workingMemory?: boolean;
+
+  /** Enable InContextMemoryPluginNextGen (default: true) */
+  inContextMemory?: boolean;
+
+  /** Enable PersistentInstructionsPluginNextGen (default: false) */
+  persistentInstructions?: boolean;
+
+  /** Enable UserInfoPluginNextGen (default: false) */
+  userInfo?: boolean;
+
+  /** Enable ToolCatalogPluginNextGen for dynamic tool loading/unloading (default: false) */
+  toolCatalog?: boolean;
+
+  /** Enable SharedWorkspacePluginNextGen (default: false) */
+  sharedWorkspace?: boolean;
+
+  /** Enable MemoryPluginNextGen read tools/profile injection (default: false) */
+  memory?: boolean;
+
+  /** Enable MemoryWritePluginNextGen write tools (default: false; requires memory) */
+  memoryWrite?: boolean;
+}
+```
+
+#### Feature Configuration
+
+AgentContextNextGen features enable plugins independently. When a feature is disabled, its associated tools are **not registered**, giving the LLM a cleaner tool set:
+
+```typescript
+import { AgentContextNextGen, DEFAULT_FEATURES } from 'oneringai';
+
+// View default feature settings
+console.log(DEFAULT_FEATURES);
+// { taskState: false, workingMemory: true, inContextMemory: true, persistentInstructions: false, userInfo: false, toolCatalog: false, sharedWorkspace: false, memory: false, memoryWrite: false }
+// evidence is separately opt-in; it is not enabled by these defaults.
+```
+
+**Available Features:**
+
+| Feature | Default | Plugin | When Disabled |
+|---------|---------|--------|---------------|
+| `workingMemory` | `true` | WorkingMemoryPluginNextGen - tiered memory (raw/summary/findings) | `store_*` tools cannot target `"notes"` store; `ctx.memory` returns `null` |
+| `inContextMemory` | `true` | InContextMemoryPluginNextGen - live key-value storage directly in context | `store_*` tools cannot target `"whiteboard"` store |
+| `persistentInstructions` | `false` | PersistentInstructionsPluginNextGen - agent instructions persisted to disk (KVP entries) | `store_*` tools cannot target `"instructions"` store |
+| `userInfo` | `false` | UserInfoPluginNextGen - user-scoped preferences + TODO tracking auto-injected into context | `store_*` tools cannot target `"user_info"` store; `todo_*` tools not registered |
+| `toolCatalog` | `false` | ToolCatalogPluginNextGen - dynamic tool loading/unloading by category | `tool_catalog_*` tools not registered; all tools must be pre-loaded |
+| `sharedWorkspace` | `false` | SharedWorkspacePluginNextGen - versioned multi-agent coordination board | `store_*` tools cannot target `"workspace"` |
+| `memory` | `false` | MemoryPluginNextGen - profile injection and six read tools | No durable graph/vector memory content or `memory_*` read tools; requires `plugins.memory.memory` when enabled |
+| `memoryWrite` | `false` | MemoryWritePluginNextGen - six controlled write tools | Agent remains unable to mutate durable memory; requires `memory: true` when enabled |
+| `evidence` | disabled | Built-in evidence plugin | No evidence tools, projections, or storage writes |
+| `taskState` | `false` | TaskStatePluginNextGen | No protected task view; host scope/task ID required when enabled |
+
+**Usage Examples:**
+
+```typescript
+// 1. Managed context without scratch notes (history and whiteboard still enabled)
+const ctx = AgentContextNextGen.create({
+  model: 'gpt-4.1',
+  features: { workingMemory: false },  // Disable working memory
+});
+
+console.log(ctx.memory);  // null
+
+// 2. Example with legacy compatibility stores enabled
+const ctxVariant2 = AgentContextNextGen.create({
+  model: 'gpt-4.1',
+  features: {
+    workingMemory: true,          // default: true
+    inContextMemory: true,        // default: true
+    persistentInstructions: true, // default: false
+    userInfo: true,               // default: false
+  },
+});
+
+// 3. Via Agent.create() - inline config
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  context: {
+    model: 'gpt-4.1',
+    features: { workingMemory: false },  // Disable working memory
+  },
+});
+
+// 4. Agent with selected compatibility stores
+const fullAgent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  userId: 'alice',  // Optional for userInfo isolation
+  context: {
+    model: 'gpt-4.1',
+    agentId: 'my-agent',
+    features: {
+      workingMemory: true,
+      inContextMemory: true,
+      persistentInstructions: true,
+      userInfo: true,
+    },
+  },
+});
+```
+
+**Feature-Aware APIs:**
+
+```typescript
+// Check if a feature is enabled
+ctx.features.workingMemory;           // boolean
+ctx.features.inContextMemory;         // boolean
+ctx.features.persistentInstructions;  // boolean
+ctx.features.userInfo;                // boolean
+
+// Get read-only feature configuration
+ctx.features; // also includes sharedWorkspace, memory, memoryWrite, and registered external feature keys
+
+// Access nullable memory
+ctx.memory;  // WorkingMemoryPluginNextGen | null
+
+// Access plugins by name
+ctx.getPlugin('working_memory');            // WorkingMemoryPluginNextGen | null
+ctx.getPlugin('in_context_memory');         // InContextMemoryPluginNextGen | null
+ctx.getPlugin('persistent_instructions');   // PersistentInstructionsPluginNextGen | null
+ctx.getPlugin('user_info');                 // UserInfoPluginNextGen | null
+ctx.getPlugin('tool_catalog');              // ToolCatalogPluginNextGen | null
+ctx.getPlugin('shared_workspace');          // SharedWorkspacePluginNextGen | null
+ctx.getPlugin('memory');                    // MemoryPluginNextGen | null
+ctx.getPlugin('memory_write');              // MemoryWritePluginNextGen | null
+
+// Check if plugin exists
+ctx.hasPlugin('working_memory');  // boolean
+```
+
+**Tool Auto-Registration:**
+
+AgentContextNextGen automatically registers feature-aware tools based on enabled features:
+
+```typescript
+import { AgentContextNextGen } from 'oneringai';
+
+// With workingMemory enabled (default)
+const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
+console.log(ctx.tools.has('store_set'));     // true (store_* tools registered)
+
+// With workingMemory disabled - memory store not available
+const ctx2 = AgentContextNextGen.create({
+  model: 'gpt-4.1',
+  features: { workingMemory: false },
+});
+// store_* tools are still registered, but store_set("notes", ...) will fail
+```
+
+**Tools registered by feature:**
+
+All plugin stores are accessed through 5 unified `store_*` tools: `store_get`, `store_set`, `store_delete`, `store_list`, `store_action`. Each feature flag enables its corresponding store:
+
+- **workingMemory=true** (default): enables `"notes"` store (e.g., `store_set("notes", key, { description, value })`)
+- **inContextMemory=true**: enables `"whiteboard"` store (e.g., `store_set("whiteboard", key, { description, value })`)
+- **persistentInstructions=true**: enables `"instructions"` store (e.g., `store_set("instructions", key, { content })`)
+- **userInfo=true**: enables `"user_info"` store (e.g., `store_set("user_info", key, { value })`)
+- **sharedWorkspace=true**: enables `"workspace"` store (e.g., `store_set("workspace", key, { summary, content })`)
+- **memory=true**: adds six `memory_*` read tools and injects the configured user/profile view (these are not `store_*` tools)
+- **memoryWrite=true**: adds six `memory_*` write tools and requires `memory=true`
+
+TODO tools (`todo_add`, `todo_update`, `todo_remove`) remain separate and are registered when `userInfo=true`.
+
+**Backward Compatibility:**
+
+- Default features: `workingMemory: true`, `inContextMemory: true`, `persistentInstructions: false`, `sharedWorkspace: false`
+- Code not using `features` config works unchanged
+
+#### Conversation Management
+
+AgentContextNextGen provides a simple API for managing conversation history:
+
+```typescript
+import { AgentContextNextGen } from 'oneringai';
+
+const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
+
+// Add user message
+ctx.addUserMessage('Hello!');
+
+// Prepare for LLM call (handles compaction if needed)
+const { input, budget } = await ctx.prepare();
+
+// ... call LLM with input ...
+
+// Add assistant response
+ctx.addAssistantResponse(response.output);
+
+// Add tool results
+ctx.addToolResults([
+  { tool_use_id: 'call_123', content: JSON.stringify({ result: 'success' }), state: ToolCallState.COMPLETED }
+]);
+
+// Get conversation history
+const conversation = ctx.getConversation();
+
+// Clear conversation
+ctx.clearConversation('Starting fresh');
+```
+
+**Compaction:**
+
+Compaction happens during `prepare()` when content utilization exceeds the configured
+critical threshold (`0.9` by default), after subtracting response reserve and tools.
+The strategy threshold determines the reclaim target; it does not trigger early
+spilling below critical. Each preparation runs at most one strategy pass, rebuilds
+all contributions, sanitizes tool groups before counting, and checks the final fit.
+
+The strategy metadata is:
+
+| Strategy | Reclaim threshold | Description |
+|----------|-----------|-------------|
+| `algorithmic` | 75% | Moves large tool results to Working Memory, limits tool pairs, applies rolling window (default) |
+
+Custom strategies can be registered via `StrategyRegistry.register()`.
+
+**Context Budget:**
+
+```typescript
+const { input, budget, compacted } = await ctx.prepare();
+
+console.log(budget.utilizationPercent);  // Current usage %
+console.log(budget.available);           // Remaining tokens
+console.log(compacted);                  // true if compaction occurred
+```
+
+Final checks include synchronous request-event changes, the dispatch model’s capacity
+(with explicit host limits retained), structured schemas/native tools, and tool-call
+replay signatures. Managed JSON formatting and repair checks fit without replacing
+the main prepared revision. Algorithmic spill preserves connected native results
+and attachments before removal; storage failures leave history intact.
+Initial preparation also counts known schemas/native tools and resolves the initial
+provider window, so evictable history can be removed before final validation.
+Spill allocation checks existing memory keys across turns and save/load; collisions
+receive distinct suffixes and every new spill is verified before history removal.
+Function-result errors participate in the same accounting as custom-result errors.
+
+Budgets are estimates, not provider-reported usage. `agent.context.lastPreparation`
+returns a detached snapshot with `revision`, `preparedAt`, and `budget` for the last
+selected request. Later context mutations do not rewrite that request's history.
+`lastBudget` and `calculateBudget()` preserve their cached inspection semantics.
+Use these getters for UI inspection instead of calling `prepare()` again.
+
+Managed `run()` and `stream()` send the definitions counted during preparation,
+including dynamic descriptions and identity filtering, and recount host-hook changes
+without another compaction. Native async calls may remain outstanding; pending
+results protect their connected calls. Duplicate final results for one call are
+reported as `INVALID_TOOL_PROTOCOL`, while asynchronous completion messages remain
+supported. Protected content that cannot fit produces `ContextOverflowError`.
+The existing user rejection/tool-text emergency truncation policy is preserved.
+
+See [Context Preparation](./docs/CONTEXT_PREPARATION.md) for additive adapter options,
+legacy strategy behavior, concurrency bounds, estimation limits, and the offline
+`npm run example:context-freshness`, `npm run example:context-budget`, and
+`npm run example:structured-budget` demonstrations. AMOS labels selected revisions in
+`/context budget` and `/context breakdown`.
+
+#### Session Persistence
+
+AgentContextNextGen supports saving and loading sessions:
+
+```typescript
+import { AgentContextNextGen, createFileContextStorage } from 'oneringai';
+
+// Create storage
+const storage = createFileContextStorage('my-agent');
+
+// Create context with storage
+const ctx = AgentContextNextGen.create({
+  model: 'gpt-4.1',
+  features: { workingMemory: true },
+  storage,
+});
+
+// Add messages and data
+ctx.addUserMessage('Hello');
+
+// Save session
+await ctx.save('session-001', { title: 'My Session' });
+
+// Later: Load session
+const ctx2 = AgentContextNextGen.create({ model: 'gpt-4.1', storage });
+await ctx2.load('session-001');
+// ctx2 now has full conversation and plugin states restored
+```
+
+#### Plugin System (NextGen)
+
+Extend AgentContextNextGen with custom plugins:
+
+```typescript
+import { type IContextPluginNextGen, BasePluginNextGen, AgentContextNextGen } from 'oneringai';
+
+// Create a custom plugin by extending BasePluginNextGen
+class MyPlugin extends BasePluginNextGen {
+  readonly name = 'my_plugin';
+
+  private data: string[] = [];
+
+  // Static usage instructions for the LLM (never compacted)
+  getInstructions(): string | null {
+    return null;
+  }
+
+  // Return content to be included in context (must update the token cache)
+  async getContent(): Promise<string | null> {
+    if (this.data.length === 0) return null;
+    const content = `## My Plugin Data\n${this.data.join('\n')}`;
+    this.updateTokenCache(this.estimator.estimateTokens(content));
+    return content;
+  }
+
+  // Raw data for programmatic inspection
+  getContents(): unknown {
+    return this.data;
+  }
+
+  addData(item: string) {
+    this.data.push(item);
+    this.invalidateTokenCache();
+  }
+
+  // Opt in to compaction (base class defaults to false)
+  isCompactable(): boolean {
+    return this.data.length > 0;
+  }
+
+  // Compact: reduce content to fit within targetTokensToFree
+  async compact(targetTokensToFree: number): Promise<number> {
+    const before = this.getTokenSize();
+    while (this.getTokenSize() > Math.max(0, before - targetTokensToFree) && this.data.length > 1) {
+      this.data.shift();
+      await this.getContent(); // refreshes the token cache
+    }
+    return before - this.getTokenSize();
+  }
+
+  // Serialize state for persistence
+  getState(): unknown {
+    return { data: this.data };
+  }
+
+  // Restore state
+  restoreState(state: unknown): void {
+    this.data = ((state as { data?: string[] }).data) || [];
+    this.invalidateTokenCache();
+  }
+}
+
+// Use the plugin
+const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
+const plugin = new MyPlugin();
+ctx.registerPlugin(plugin);
+plugin.addData('Custom data');
+```
+
+#### Events
+
+Monitor AgentContextNextGen activity:
+
+```typescript
+const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
+
+// Message events
+ctx.on('message:added', ({ role }) => {
+  console.log(`New ${role} message`);
+});
+
+// Compaction events
+ctx.on('context:compacted', ({ tokensFreed }) => {
+  console.log(`Freed ${tokensFreed} tokens`);
+});
+
+// Budget events
+ctx.on('budget:warning', ({ budget }) => {
+  console.log(`Context at ${budget.utilizationPercent.toFixed(1)}%`);
+});
+
+// Context prepared event
+ctx.on('context:prepared', ({ budget }) => {
+  console.log(`Context prepared: ${budget.totalUsed}/${budget.maxTokens} tokens`);
+});
+```
+
+#### Accessing Context in Agent
+
+Agent uses **AgentContextNextGen** with plugins for extended functionality:
+
+```typescript
+import { Agent, AgentContextNextGen, WorkingMemoryPluginNextGen } from 'oneringai';
+
+// Create Agent with NextGen context
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools: [myTool],
+  context: {
+    model: 'gpt-4.1',
+    features: { workingMemory: true, inContextMemory: true },
+  },
+});
+
+// Access AgentContextNextGen directly
+agent.context.addUserMessage('Hello');
+const { input, budget } = await agent.context.prepare();
+agent.context.addAssistantResponse(response.output);
+
+// Get conversation
+const conversation = agent.context.getConversation();  // InputItem[]
+
+// Access WorkingMemory via plugin
+const memoryPlugin = agent.context.getPlugin('working_memory') as WorkingMemoryPluginNextGen;
+await memoryPlugin.store('key', 'description', value);
+
+// Access tools via context
+agent.context.tools.disable('tool_name');
+```
+
+**AgentContextNextGen API:**
+```typescript
+// AgentContextNextGen provides clean context management:
+ctx.addUserMessage(content);              // Set current user input
+ctx.addAssistantResponse(response.output);       // Add response to conversation
+await ctx.prepare();                      // Prepare context for LLM call, returns { input, budget }
+ctx.getConversation();                    // Get conversation history
+ctx.registerPlugin(plugin);               // Register context plugin
+ctx.getPlugin(name);                      // Get registered plugin by name
+await ctx.consolidate();                  // Post-cycle consolidation (strategy-driven cleanup)
+await ctx.save(sessionId);                // Save session (if storage configured)
+await ctx.load(sessionId);                // Load session (if storage configured)
+
+// Access ToolManager:
+ctx.tools;                                // ToolManager instance
+```
+
+**NextGen Plugin System:**
+
+Use NextGen plugins to extend AgentContextNextGen:
+
+```typescript
+import { BasePluginNextGen, WorkingMemoryPluginNextGen, InContextMemoryPluginNextGen } from 'oneringai';
+
+// Built-in NextGen plugins:
+// - WorkingMemoryPluginNextGen: Tiered memory (raw/summary/findings)
+// - InContextMemoryPluginNextGen: Live key-value storage in context
+// - PersistentInstructionsPluginNextGen: Disk-persisted instructions
+
+// Custom plugin example:
+class MyPlugin extends BasePluginNextGen {
+  readonly name = 'my_plugin';
+
+  getInstructions(): string | null {
+    return null;
+  }
+
+  async getContent(): Promise<string | null> {
+    const content = 'Custom context content';
+    this.updateTokenCache(this.estimator.estimateTokens(content));
+    return content;
+  }
+
+  getContents(): unknown {
+    return null;
+  }
+}
+
+ctx.registerPlugin(new MyPlugin());
+```
+
+---
+
+### Why Context Management Matters
+
+LLMs have fixed context windows (e.g., 128K tokens for GPT-4, 200K for Claude). As conversations grow, you must:
+- **Track usage** to avoid hitting limits
+- **Prioritize content** (instructions vs history vs memory)
+- **Compact intelligently** when approaching limits
+- **Preserve critical information** while freeing space
+
+The context management system handles all of this automatically.
+
+### Basic Context Management
+
+Context management is **automatic** with AgentContextNextGen:
+
+```typescript
+import { Agent } from 'oneringai';
+
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools: [myTool],
+  context: {
+    model: 'gpt-4.1',
+    strategy: 'algorithmic',  // Default: compact at 75% utilization
+    features: { workingMemory: true },
+  },
+});
+
+// AgentContextNextGen will automatically:
+// 1. Track context usage across all plugins
+// 2. Compact when approaching limits (at prepare() time)
+// 3. Evict low-priority memory entries when needed
+// 4. Call plugin compact() methods in priority order
+// 5. Emit events for monitoring
+```
+
+### Architecture Overview
+
+The context management system is built around **AgentContextNextGen** - the clean, plugin-first context manager:
+
+```
+┌─────────────────────────────────────────────────────┐
+│               AgentContextNextGen                    │
+│  - Plugin-first architecture                        │
+│  - Clean message flow (addUserMessage → prepare)    │
+│  - Single compaction point (right before LLM call)  │
+└─────────────────┬───────────────────────────────────┘
+                  │
+    ┌─────────────┼─────────────┐
+    │             │             │
+    ▼             ▼             ▼
+┌─────────┐ ┌──────────┐ ┌───────────────┐
+│ Strategy│ │ Plugins  │ │ Context       │
+│ (how)   │ │ (what)   │ │ Structure     │
+└─────────┘ └──────────┘ └───────────────┘
+
+Critical gate: Decides WHEN to compact (90% content utilization by default)
+Strategy: Decides HOW to reclaim and its target (algorithmic threshold: 75%)
+Plugins: WorkingMemoryPluginNextGen, InContextMemoryPluginNextGen, etc.
+Context: Developer Message → Conversation History → Current Input
+```
+
+### Manual Context Management
+
+For advanced use cases, use **AgentContextNextGen** with plugins:
+
+```typescript
+import {
+  AgentContextNextGen,
+  WorkingMemoryPluginNextGen,
+  InContextMemoryPluginNextGen,
+} from 'oneringai';
+
+// Create AgentContextNextGen with configuration
+const ctx = AgentContextNextGen.create({
+  model: 'gpt-4.1',
+  systemPrompt: 'Your system instructions',
+  maxContextTokens: 128000,    // Model's context window
+  responseReserve: 4096,       // Reserve tokens for response
+  strategy: 'algorithmic',     // Default strategy (75% reclaim threshold; critical gate controls triggering)
+  features: {
+    workingMemory: true,       // Enable WorkingMemoryPluginNextGen
+    inContextMemory: true,     // Enable InContextMemoryPluginNextGen
+  },
+});
+
+// Plugins are auto-registered when features are enabled
+// Access them via getPlugin():
+const memoryPlugin = ctx.getPlugin('working_memory') as WorkingMemoryPluginNextGen;
+const inContextPlugin = ctx.getPlugin('in_context_memory') as InContextMemoryPluginNextGen;
+
+// Add user message (sets _currentInput)
+ctx.addUserMessage('Current task description');
+
+// Prepare context before each LLM call
+const { input, budget } = await ctx.prepare();
+console.log(`Context: ${budget.totalUsed}/${budget.maxTokens} tokens`);
+console.log(`Utilization: ${budget.utilizationPercent.toFixed(1)}%`);
+
+// After LLM response, add it to conversation
+ctx.addAssistantResponse(llmResponse);
+
+// Get conversation history
+const conversation = ctx.getConversation();  // InputItem[]
+```
+
+### Compactors Deep Dive
+
+> **Note:** `TruncateCompactor`, `MemoryEvictionCompactor`, and `SummarizeCompactor` implement the legacy `IContextCompactor`/`IContextComponent` interfaces (`src/core/context/types.ts`) and are standalone utility classes — `AgentContextNextGen` never uses them. Its actual compaction is driven entirely by `ICompactionStrategy` implementations (e.g. `AlgorithmicCompactionStrategy`), which contain no reference to these compactor classes.
+
+Compactors determine **how** content is reduced during compaction. Each compactor handles components with a matching `strategy` metadata.
+
+#### Available Compactors
+
+| Compactor | Strategy | Priority | What It Does |
+|-----------|----------|----------|--------------|
+| **TruncateCompactor** | `truncate` | 10 | Removes content from the end |
+| **MemoryEvictionCompactor** | `evict` | 8 | Evicts low-priority memory entries |
+| **SummarizeCompactor** | `summarize` | 5 | Uses LLM to create intelligent summaries |
+
+**Lower priority number = runs earlier** (summarize before truncate).
+
+#### SummarizeCompactor (LLM-Based)
+
+The `SummarizeCompactor` uses an LLM to intelligently summarize content, preserving key information while reducing token count.
+
+```typescript
+import { SummarizeCompactor, ApproximateTokenEstimator } from 'oneringai';
+
+const estimator = new ApproximateTokenEstimator();
+
+// Create summarize compactor with LLM
+const summarizeCompactor = new SummarizeCompactor(estimator, {
+  textProvider: myTextProvider,     // Required: LLM for summarization
+  model: 'gpt-4o-mini',             // Optional: model to use (default: same as agent)
+  maxSummaryTokens: 500,            // Optional: max tokens for summary
+  preserveStructure: true,          // Optional: keep headings/lists (default: true)
+  fallbackToTruncate: true,         // Optional: truncate if LLM fails (default: true)
+});
+
+// Components with strategy: 'summarize' will use this compactor
+const component = {
+  name: 'conversation_history',
+  content: longConversation,
+  priority: 6,
+  compactable: true,
+  metadata: { strategy: 'summarize' },  // Uses SummarizeCompactor
+};
+```
+
+**What SummarizeCompactor Preserves:**
+
+For **conversation history**:
+- Key decisions made
+- Important facts discovered
+- User preferences expressed
+- Unresolved questions
+
+For **tool outputs** (search/scrape results):
+- Key findings relevant to the task
+- Source URLs and main points
+- Factual data (numbers, dates, names)
+- Contradictions between sources
+
+```typescript
+// Example: Research task with summarization
+// AgentContextNextGen is the unified context manager - configure via Agent.create()
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  context: {
+    model: 'gpt-4.1',
+    features: { workingMemory: true },
+  },
+});
+
+// Access context management via agent.context (AgentContextNextGen instance)
+const budget = agent.context.lastPreparation?.budget; // Inspect after run/stream; do not prepare twice.
+```
+
+#### MemoryEvictionCompactor
+
+Evicts low-priority memory entries based on the `avgEntrySize` metadata.
+
+```typescript
+import { MemoryEvictionCompactor } from 'oneringai';
+
+const evictionCompactor = new MemoryEvictionCompactor(estimator);
+
+// Components with strategy: 'evict' will use this compactor
+const memoryComponent = {
+  name: 'memory_index',
+  content: memoryIndex,
+  priority: 8,
+  compactable: true,
+  metadata: {
+    strategy: 'evict',
+    avgEntrySize: 100,                    // Average tokens per entry
+    evict: async (count) => { await evictMemoryEntries(count); },
+    getUpdatedContent: async () => getMemoryIndex(),
+  },
+};
+```
+
+### Pre-Compaction Hooks
+
+The `beforeCompaction` lifecycle hook allows agents to save important data before compaction occurs. This is critical for research tasks where tool outputs may contain valuable information.
+
+```typescript
+import { Agent } from 'oneringai';
+// The callback parameter is inferred from AgentConfig; component summaries contain metadata only.
+
+// Define lifecycle hooks when creating the agent
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  lifecycleHooks: {
+    beforeCompaction: async (context) => {
+      console.log(`Agent ${context.agentId}: Compaction starting`);
+      console.log(`Current usage: ${context.currentBudget.used}/${context.currentBudget.total}`);
+      console.log(`Need to free: ${context.estimatedTokensToFree} tokens`);
+      console.log(`Strategy: ${context.strategy}`);
+      console.log(`Components to compact: ${context.components.length}`);
+
+      // These are metadata summaries, not source bodies.
+      for (const component of context.components) {
+        console.log(component.name, component.compactable);
+      }
+      // Preserve application-owned findings through the enabled memory plugin;
+      // see the native-hooks example for a complete bounded implementation.
+    },
+  },
+});
+
+// AgentContextNextGen handles all context management internally
+// No separate ContextManager needed
+```
+
+#### BeforeCompactionContext
+
+The hook receives detailed context about the upcoming compaction:
+
+```typescript
+interface BeforeCompactionContext {
+  /** Agent identifier */
+  agentId: string;
+
+  /** Current context budget info (a lightweight summary, not the full ContextBudget) */
+  currentBudget: {
+    total: number;
+    used: number;
+    available: number;
+    utilizationPercent: number;
+    status: 'ok' | 'warning' | 'critical';
+  };
+
+  /** Strategy being used (e.g. 'algorithmic') */
+  strategy: string;
+
+  /** Components about to be compacted (read-only summaries) */
+  components: ReadonlyArray<{
+    name: string;
+    priority: number;
+    compactable: boolean;
+  }>;
+
+  /** Estimated tokens that need to be freed */
+  estimatedTokensToFree: number;
+}
+```
+
+#### Error Handling in Hooks
+
+Hooks are designed to be resilient - errors are logged but don't prevent compaction:
+
+```typescript
+const hooks = {
+  beforeCompaction: async (context) => {
+    // Even if this throws, compaction will continue
+    throw new Error('Hook error');
+  },
+};
+
+// Compaction proceeds, error is logged to console
+```
+
+### Context Strategies Deep Dive
+
+AgentContextNextGen uses a **strategy-based compaction system** with the `ICompactionStrategy` interface. The strategy controls when and how context is compacted.
+
+#### Built-in Strategies
+
+| Strategy | Reclaim threshold | Description |
+|----------|-----------|-------------|
+| **algorithmic** (default) | 75% | Moves large tool results to Working Memory, limits tool pairs to 10, applies rolling window. Best for tool-heavy agents. |
+
+The `algorithmic` strategy is the default. With working memory enabled it can
+retain removed tool sources there. Without it, that offload step is skipped;
+rolling-window compaction still works within protection and fit constraints.
+
+```typescript
+// Default - uses algorithmic strategy automatically
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  context: { model: 'gpt-4.1', features: { workingMemory: true } },
+});
+
+// Explicit strategy selection
+const agentVariant2 = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  context: { model: 'gpt-4.1', strategy: 'algorithmic' },
+});
+```
+
+---
+
+### Creating Custom Strategies
+
+The existing `ICompactionStrategy` and `StrategyRegistry` remain extension points.
+Start with a configured built-in strategy so its connected tool-group, pending-source,
+and evidence protections continue to apply:
+
+```typescript
+import { Agent, StrategyRegistry } from 'oneringai';
+
+const earlierReclaim = StrategyRegistry.create('algorithmic', { threshold: 0.60 });
+const agent = Agent.create({
+  connector: 'openai', model: 'gpt-4.1',
+  context: { model: 'gpt-4.1', compactionStrategy: earlierReclaim },
+});
+```
+
+The strategy threshold selects a reclaim target; it is not a replacement for the
+context's critical trigger. A custom implementation must preserve connected
+function/native call-result groups, pending input, opaque provider ownership,
+protected task state, and unacknowledged observations. Do not delete an arbitrary
+percentage of messages. Final preparation may reject an unsafe or oversized result.
+Use `context.compactionStrategy` for a configured instance; the
+[native composition recipe](docs/NATIVE_CONTEXT_COMPACTION.md) uses that same field.
+
+### Using Strategies
+
+```typescript
+// Default - algorithmic strategy (recommended for most use cases)
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  // strategy defaults to 'algorithmic' (75% reclaim target; 90% critical trigger)
+});
+
+// Custom registered strategy
+const agentVariant2 = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  context: { model: 'gpt-4.1', compactionStrategy: earlierReclaim },  // Instance configured above
+});
+```
+
+### Token Estimation
+
+The `ApproximateTokenEstimator` provides content-type-aware estimation:
+
+```typescript
+import { ApproximateTokenEstimator } from 'oneringai';
+
+const estimator = new ApproximateTokenEstimator();
+
+// Basic estimation (mixed content assumed)
+const tokens1 = estimator.estimateTokens('Hello, world!');
+
+// Content-type-aware estimation for better accuracy
+const codeTokens = estimator.estimateTokens(sourceCode, 'code');    // ~3 chars/token
+const proseTokens = estimator.estimateTokens(essay, 'prose');       // ~4 chars/token
+const mixedTokens = estimator.estimateTokens(readme, 'mixed');      // ~3.5 chars/token
+
+// Estimate structured data
+const dataTokens = estimator.estimateDataTokens({ users: [], config: {} });
+```
+
+**Why content type matters:**
+- Code has more special characters and shorter words → fewer chars/token
+- Prose has longer words and punctuation → more chars/token
+- Accurate estimation prevents over/under-compaction
+
+### Context Budget Monitoring
+
+```typescript
+// Get budget from prepare() call
+const { input, budget, compacted } = await agent.context.prepare();
+
+console.log(`Max tokens: ${budget.maxTokens}`);
+console.log(`Used tokens: ${budget.totalUsed}`);
+console.log(`Available: ${budget.available}`);
+console.log(`Utilization: ${budget.utilizationPercent.toFixed(1)}%`);
+
+// Check if compaction occurred
+if (compacted) {
+  console.log('Context was compacted to make room');
+}
+
+// Detailed breakdown
+console.log('Breakdown:');
+console.log(`  System prompt: ${budget.breakdown.systemPrompt} tokens`);
+console.log(`  Plugin instructions: ${budget.breakdown.pluginInstructions} tokens`);
+console.log(`  Conversation: ${budget.breakdown.conversation} tokens`);
+console.log(`  Current input: ${budget.breakdown.currentInput} tokens`);
+```
+
+### Agent Lifecycle Hooks for Context
+
+Use lifecycle hooks to integrate context management with your application. **Caveat:** in the current `Agent` implementation, only `beforeCompaction` is actually invoked at runtime (wired in `Agent`'s constructor via `AgentContextNextGen.setBeforeCompactionCallback`). `beforeContextPrepare`, `afterCompaction`, `beforeToolExecution`, `afterToolExecution`, and `onError` can be registered via `agent.setLifecycleHooks()`, but no code path in `Agent`/`BaseAgent` currently calls their `invoke*` helpers, so they will not fire.
+
+```typescript
+import type { AgentConfig } from 'oneringai';
+
+type LifecycleHooks = NonNullable<AgentConfig['lifecycleHooks']>;
+
+const hooks: LifecycleHooks = {
+  // This is the lifecycle hook currently wired by Agent.
+  beforeCompaction: async (context) => {
+    await monitoring.record({
+      event: 'context_compaction_starting',
+      agentId: context.agentId,
+      utilizationPercent: context.currentBudget.utilizationPercent,
+      strategy: context.strategy,
+      estimatedTokensToFree: context.estimatedTokensToFree,
+    });
+  },
+};
+
+// Apply hooks to agent
+agent.setLifecycleHooks(hooks);
+```
+
+### Best Practices for Context Management
+
+#### 1. Use the Default Strategy
+
+The `algorithmic` strategy (default, 75% reclaim threshold; 90% critical trigger) works well for most use cases. It automatically offloads large tool results to Working Memory and manages conversation history:
+
+```typescript
+import { Agent } from 'oneringai';
+
+// Default algorithmic strategy - recommended for most use cases
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  context: { model: 'gpt-4.1', features: { workingMemory: true } },
+});
+
+// For custom compaction behavior, register a custom strategy via StrategyRegistry
+```
+
+#### 2. Monitor in Production
+
+```typescript
+// Set up monitoring with AgentContextNextGen events
+const ctx = agent.context;
+
+ctx.on('context:compacted', async ({ tokensFreed }) => {
+  await metrics.gauge('context.tokens_freed', tokensFreed);
+});
+
+ctx.on('context:prepared', async ({ budget }) => {
+  await metrics.gauge('context.usage', budget.totalUsed);
+  await metrics.gauge('context.total', budget.maxTokens);
+});
+
+ctx.on('budget:warning', async ({ budget }) => {
+  const utilization = Math.round(budget.utilizationPercent);
+  await alerts.warn(`Context warning: ${utilization}%`);
+});
+```
+
+#### 3. Use WorkingMemory Tiers
+
+```typescript
+// Store data in appropriate tiers based on importance
+const memoryPlugin = ctx.getPlugin('working_memory') as WorkingMemoryPluginNextGen;
+
+// Raw tier: Large, unprocessed data (evicted first)
+await memoryPlugin.store('search.results', 'Raw search results', largeResults, { tier: 'raw' });
+
+// Summary tier: Condensed information
+await memoryPlugin.store('search.summary', 'Search summary', summaryData, { tier: 'summary' });
+
+// Findings tier: Key insights (evicted last)
+await memoryPlugin.store('search.findings', 'Key findings', findings, { tier: 'findings' });
+```
+
+#### 4. Plan for Compaction
+
+```typescript
+// Structure data for efficient compaction using tiers
+const memoryPlugin = ctx.getPlugin('working_memory') as WorkingMemoryPluginNextGen;
+
+// BAD: Single large object in findings (won't be evicted easily)
+await memoryPlugin.store('all.data', 'All data', hugeObject, { tier: 'findings' });
+
+// GOOD: Split by importance using tiers
+// Raw tier: Evicted first during compaction
+await memoryPlugin.store('data.raw', 'Raw data', rawData, { tier: 'raw' });
+
+// Summary tier: Evicted second
+await memoryPlugin.store('data.summary', 'Summarized data', summaryData, { tier: 'summary' });
+
+// Findings tier: Evicted last (most important)
+await memoryPlugin.store('data.findings', 'Key findings', findings, { tier: 'findings' });
+```
+
+---
+
+## Selective context assembly
+
+Enable optional `context.assembly` on a managed Agent/context. Explicit
+`registerContextContributor(pluginName, companion)` replaces that enabled plugin's
+prompt data view with bounded selectable blocks; no plugin method is auto-detected.
+`createInContextMemoryContributor` adapts the built-in whiteboard while retaining
+all stored entries and protecting critical entries. Default plugin interfaces,
+layout, saved state, observation hooks and single ToolManager remain unchanged.
+
+Selection supports priorities, full dependency closures, protected data, expiry,
+source budgets and explicit host projections. Returned blocks are JSON user data,
+never host instructions. Protected task/evidence/instruction plugins cannot be
+replaced; violations, stale scope/revisions and deadline/fit failures are explicit.
+`assembly.layout: 'stable-prefix'` optionally places legacy dynamic data/date later
+and sorts tool definitions. Use existing `responseReserve` plus optional
+`reasoningReserveTokens` for headroom appropriate to actual model configuration.
+
+Inspect detached `lastPreparation.selection` for IDs/status/reasons/tokens and actual
+provider-input/cache observations. Missing counters stay null, zero stays zero;
+opaque/multimodal estimates and unknown-model fallback remain uncertain. This is
+not a provider cache service or a cost-saving guarantee. Source state persists,
+while callbacks/selection policy must be reattached by trusted host code. AMOS
+`contextAssembly.selectWhiteboard` and `/context breakdown` demonstrate adoption.
+Account/task and registry-instance changes invalidate old selections. Managed
+history/input edits from hooks receive one bounded refresh in the same contributor
+allowance, without repeating hooks or compaction; existing history ownership stays
+unchanged. JSON repair permits the normal answer commit while rejecting a replaced
+host prompt or earlier input. Whiteboard overview/store_get guidance reflects partial
+visibility. Last-request usage includes wrap-up calls and remains separate from stream
+aggregates; consolidation performs no new contributor fetches. Selected structured
+run() formats before consolidation; selected structured suspension formats once
+before saving its session/correlation and emitting suspension. Formatting or storage
+failure retains the accepted observation in live context; checkpoint it before
+destruction instead of repeating the action. Native function/custom image/file
+results and opaque thought signatures set the uncertainty flag, shown by AMOS.
+Run `npm run example:context-dispatch-safety` for a deterministic demonstration.
+Read the [complete recipe](docs/CONTEXT_ASSEMBLY.md) for public signatures, limits,
+JSON repair, lifecycle/authorization boundaries and offline/live setup.
+
+## Experimental context strategies
+
+For independent plugin/history controls with provider-native continuation, see
+[Native compaction](docs/NATIVE_CONTEXT_COMPACTION.md). It is separately
+opted in through the existing strategy-instance field; Existing evidence-backed strategy behavior and the
+algorithmic default remain unchanged.
+
+Native compaction binds the provider's construction-time endpoint/account
+selection; changing it requires a new compatible Agent or fresh context. Known
+hosted-tool/server-token conflicts stop before compaction. Supported raw OpenAI
+prompt controls participate in provider counts, and selected contributions retain
+their shared timeout across plugin/history phases. See the native recipe for
+exact support and recovery boundaries.
+
+Automatic and explicit native composition preserve the existing `beforeCompaction`
+memory-writing hook: plugin content/revision changes receive one bounded refresh
+before reduction. Manual targets retain the same lifecycle and measured compaction
+events, including with `automatic: false`.
+Read-only native source proofs stop waiting on cancellation/ModelTask deadlines,
+and late reads cannot resume a cancelled turn. Admitted archival writes retain
+ownership until settled. Anthropic top-level Responses reasoning is explicitly
+unsupported on this opted-in path; it is rejected before counting or archival.
+Nested thinking must also have replay fields supported by the selected provider;
+foreign/incomplete opaque blocks reject before reduction or archival. Run
+`npm run example:native-hooks` or `npm run example:native-hooks-manual` offline, or
+add `-- --live=openai` / `-- --live=anthropic` for bounded actual calls. Manual live
+Anthropic mode demonstrates an 8192-token fixed-thinking budget. Native output
+defaults to that fixed budget plus 4096 summary tokens (bounded by model capacity);
+explicit host caps are never raised. Known cap conflicts reject before archival.
+Internal streaming supports large native output limits; main thinking remains
+unchanged. See the native recipe for matching reservation/source bounds.
+
+Algorithmic remains the default; the alternatives remain experimental.
+
+Use `ObservationMaskingStrategy` for helper-free masking of older acknowledged
+read observations, or `StructuredSummaryStrategy` for a bounded compactor summary
+plus masking. Both require enabled evidence storage and preserve user messages,
+call arguments/receipt metadata, recent turns, pending dependencies, write/unknown
+effects and opaque state. Summary capsules remain assistant data. The algorithmic
+default and existing explicit rollover/custom strategy contracts are unchanged.
+
+Read [Context Strategies](./docs/CONTEXT_STRATEGIES.md) for verified constructors,
+settings/defaults, source-policy matching, scope, canonical JSON, save/load,
+cancellation, revisions, fallback, diagnostics and support boundaries. A source
+must remain acknowledged before replacement; source storage failure does not
+trigger action repetition. References are process-local with the default store;
+use stable file/custom storage for restart recovery. A valid schema/reference does
+not establish semantic truth. Final preparation explicitly fails if protected
+content still cannot fit.
+
+`npm run example:context-strategies` compares identical deterministic offline
+workflows. `--live --held-out` opts into billable OpenAI main/helper calls; the
+three-provider live test additionally covers Anthropic and Google. The bounded
+pilot is not statistical proof of quality preservation or lower total cost.
+AMOS `/context strategy` selects/inspects the policy; `/helpers usage` shows actual
+task accounting. Selection itself makes no helper request. See the
+[Version 2 adoption record](./docs/VERSION_2_GUIDE.md) for branch/release availability.
+
+## Durable tool evidence
+
+Enable `context.features.evidence` and
+configure `context.plugins.evidence.storage` with `FileEvidenceStorage` or another
+scoped backend. An optional `StorageRegistry` evidence factory centralizes backend
+configuration. Existing configurations keep evidence disabled and add no tools,
+prompt content, writes, or model calls.
+
+Tools can supply `output.summarize` and host-declared `output.effect`. An acknowledged
+large JSON result can become a bounded model-facing envelope with an exact reference;
+`execute()`, managed result content and application execution events remain raw.
+`evidence_read` retrieves bounded source JSON and `evidence_list` lists metadata.
+The default enabled backend is process-local; deliberately choose file/custom
+storage and stable owner/tenant/namespace scope for restart recovery.
+
+Evidence-write or projection failure does not reclassify a successful tool action.
+Unacknowledged raw results are protected from compaction/truncation/rollover; if
+retaining them cannot fit, model dispatch stops explicitly. Async delivery with
+failed storage stops before injecting a lossy text message. After storing a retained
+result without rerunning its action, host-only `acknowledgeToolEvidence()` can
+release the matching raw group for later compaction. Timeout/cancellation can leave
+an immutable receipt with unknown completion; later observations do not rewrite it.
+Receipt-only records cannot release raw protection. Queued native async results
+remain available for host repair and explicit continuation; automatic delivery
+does not spin on blocked evidence. Mutable host hooks invalidate stale projections,
+and invalid evidence snapshots fail before changing context state.
+
+Authentic `ToolResult.evidence` carries recovery correlation internally, so
+`outcome` remains optional. Protected pending groups survive async insertion and
+follow-up input. Explicit context/Agent session saves include pending unacknowledged
+results in a detached conversation snapshot without changing the session schema
+or committing live input; same-instance restoration avoids duplicate results.
+Stream closure and later fail-fast tool errors retain completed unstored observations
+before cleanup. Receipt-only deliveries cannot release raw-result protection.
+Restoration reconciles matching invocation IDs across acknowledgement changes;
+the loaded checkpoint owns those invocations and unrelated pending content remains.
+
+Bundled storage supplies an optional `serializationLimitBytes` hint for bounded
+argument/result capture. `plugins.evidence.maxSerializationBytes` can override the
+source budget when deliberate redaction reduces a larger input; final storage
+quotas still apply. Existing custom adapters need no new required members.
+
+Read the [complete evidence recipe](./docs/DURABLE_EVIDENCE.md) for exact defaults,
+JSON support, authentication/data-handling boundaries, save/load, read backpressure,
+retention/deletion, restart versus fsync acknowledgement, recovery, and bundled
+file-store single-process writer limits. Run the [durable example](./examples/durable-tool-evidence.ts)
+and [ambiguous-action example](./examples/ambiguous-action-evidence.ts) after building.
+The [failed-write recovery example](./examples/evidence-recovery.ts) demonstrates
+pending-result save/load, repair and acknowledgement without repeating its action.
+The [stream interruption example](./examples/evidence-stream-interruption.ts) also
+checks early closure, receipt-only admission and restore-after-recovery with one action.
+AMOS provides `/context evidence [id] [offset]` with metadata-only lists and explicit
+bounded previews. Evidence retention does not introduce action replay or transaction guarantees.
+
+## Protected task state
+
+Use a named connector as usual, then enable `context.features.taskState` with
+`plugins.taskState: { taskId, scope: { ownerId, namespace, tenantId? }, association? }`.
+Select these values in the trusted host, and keep `userId` consistent with the owner.
+The plugin is named `task_state`; access it through
+`agent.context.getPlugin<TaskStatePluginNextGen>('task_state')`. It shares the
+existing context/tool manager and exposes no model mutation/store tools.
+
+```typescript
+const state = agent.context.getPlugin<TaskStatePluginNextGen>('task_state')!;
+state.updateHost({ notes: [{ id: 'budget', category: 'constraint',
+  text: 'Spend at most 40 EUR.', source: { label: 'Confirmed user instruction' },
+}] }, state.revision);
+state.propose([{ id: 'possible', category: 'decision',
+  text: 'Submission may mean completion.', uncertainty: 'No remote verification.',
+  source: { label: 'Explicit extractor output' },
+}] , state.revision);
+```
+
+Import `TaskStatePluginNextGen` from the public package. Host corrections use new
+IDs with `supersedes`, and conflicts use `conflictsWith`. Action receipts are
+recorded explicitly from `executeWithOutcome` via `recordAction`; they do not set
+workflow completion. `confirmAction` supplies a separate sourced host status such
+as `waiting_external` or `completed` after the host's actual completion check.
+Admission failure never authorizes replay of an external action.
+
+Default limits are 100 combined notes/actions, 8,000 estimated content tokens and
+256 KiB strict JSON. Full protected state is counted in managed prompts; it remains
+through compaction/rollover or fails fit explicitly. Hooks cannot silently remove
+it at dispatch. JSON repair retains it; direct calls bypass it. No automatic
+extraction or model-obedience guarantee is provided.
+
+Existing optional plugin snapshots persist state; foreign/future/malformed records
+fail preflight, and legacy snapshots without task state clear enabled notes. Restore
+only host-owned checkpoints. Task/routine statuses and MemorySystem task transitions
+keep their authority; explicit lifecycle views do not create another workflow engine.
+Read the [complete recipe](./docs/TASK_STATE.md) before configuring memory linkage,
+pruning, capacity handling or recovery. Offline examples: `npm run example:task-state`
+and `npm run example:amos-task-state`; live probes: `npm run test:task-state:live`.
+
+
+Atomic host
+recovery at capacity uses the existing `updateHost` method with optional fields:
+
+```typescript
+state.updateHost({ resolve: ['finished-question'],
+  prune: { noteIds: ['finished-question'] },
+}, state.revision);
+// Only after the host verifies a terminal external outcome:
+state.updateHost({
+  confirmActions: [{ executionId, status: 'completed', source: { label: 'Verified remote status' } }],
+  prune: { executionIds: [executionId] },
+}, state.revision);
+```
+
+Notes, resolutions, confirmations and explicit pruning are one atomic transaction;
+only the final snapshot must fit, while the delta still satisfies the input limit.
+Invalid proof/target/status or overflow leaves the original state unchanged. Archive
+records before explicit pruning when needed. ID reuse detaches obsolete correction/
+conflict links and keeps already historical predecessors inactive. Managed guards
+recheck after final budget observers, including repair validation.
+AMOS host commands add `task prune`, `resolve-prune`, `prune-action` and
+`confirm-prune`; they use the same host validation/checkpoint flow and make no model
+calls. Read [Task State](./docs/TASK_STATE.md) and the historical
+[review/fix plan](./docs/designs/STAGE_04_REVIEW_AND_FIX_PLAN.md).
+
+## Managed model routing
+
+Optional `modelExecution.routing` adds named alternative model profiles to the
+same Agent. Configure `routes: { fast: { model: fastModel } }` and a host selector
+such as `select: ({ hints }) => hints.taskType === 'lookup' ? 'fast' : 'default'`.
+Supply `{ routing: { taskType: 'lookup' } }` to managed `run()`/`stream()`, force a
+route with `{ routing: { route: 'fast' } }`, or bypass policy with `{ routing: null }`.
+The implicit default uses the configured connector/model. Selection makes no
+hidden classifier call and precedes context preparation/input mutation.
+
+One execution keeps its selected identity through tool iterations, recovery,
+repair, retries and compaction; public Agent/context defaults stay unchanged.
+Existing plugins and the one shared ToolManager remain in place. Route capacity,
+transfer authority and provider-bound state must be compatible. Another connector
+requires `allowContextTransfer: true`; opaque native/signed state retains its exact
+owner regardless of that permission. Authorized host routes can restore a native
+checkpoint without treating saved policy as authority.
+
+`sticky: 'phase'` reuses a dispatched route only within the same explicitly shared
+`ModelTask`, Agent and latest nonempty phase. Async followups/suspension retain the
+original route/task. Helpers, direct calls, explicit maintenance and external SDK
+loops keep their existing configured owners. Failed provider calls do not replay
+on another model. Automatic delegation-based routing remains deferred.
+
+Inspect `response.routing`, the existing stream completion event's optional
+`routing`, or `getRoutingDiagnostics()`. Use task snapshots for actual model costs,
+usage/unknowns and shared limits. Read the [routing recipe](./docs/MODEL_ROUTING.md)
+for complete options, failure behavior, native support and persistence boundaries.
+Build then run `npm run example:model-routing`, `example:routing-context` and
+`example:amos-routing`; all default to offline. AMOS `/routing` configures JSON
+host rules and shows actual selections. Live examples/tests explicitly bill calls.
+See [release status](docs/RELEASE_READINESS_V2.md) for package availability.
+
+Ordinary event resumption of a suspended routed run inherits its output format,
+route and ModelTask. Explicit supported run options override the originating
+options; data-handling prohibitions cannot be relaxed. Local JSON parsing/repair
+and the host completion predicate both run on the resumed final candidate.
+Local coercion guarantees parseability, not full JSON Schema validation. Streaming
+retains its existing no-repair boundary. See `npm run example:routing-suspension`.
+Failed event retries retain the original task and limits; they cannot obtain a
+fresh allowance. Explicit host `agent.cancel(reason)` abandons pending execution
+authority without undoing its action. Structured suspension finalizes before saving
+or publishing success. A formatting failure saves the registered wait/correlation
+with optional `metadata.suspensionFinalization.status: 'failed'`; it never authorizes
+repeating the wait. Storage failure is explicit and may require preserving the
+in-memory observation. See the recipe's recovery boundaries and the example's
+`--failed-finalization` mode. Task budgets and authorization remain process-local.
+Saved opaque state keeps exact-owner dispatch checks even when the restoring
+Agent omits routing. Portable legacy history still permits supported model hooks.
+This includes signed/provider-owned items first produced by JSON repair: ordered
+replay state and its admitted identity survive response replacement and save/load.
+For Google GenerateContent/Vertex, explicit `thinking: { enabled: false }` now
+sends a zero thinking budget on supported Gemini 2.5 Flash/Flash-Lite models.
+Omitted defaults and explicit vendor thinking overrides retain their behavior;
+this does not add a disable capability to Pro, 3.x or Interactions. See the routing
+recipe for the exact supported scope and actual pilot cost evidence.
+A native-capable alternative may be selected with an unsupported default provider;
+idle `compactContext()` still uses its configured owner and requires its adapter.
+
+## Model tasks and helper models
+
+Optional `Agent.create({ modelExecution: { helpers: { extractor: {
+connector: 'helper-account', model: 'gpt-4o-mini' } } } })` keeps the main model
+fixed and enables an explicit `invokeHelper()` call. Helpers receive only a text
+packet, have no tools or provider continuation state, and require a locally
+validated JSON schema. Default helper output is 512 tokens with at most one repair;
+unsupported settings and oversize packets fail before dispatch.
+Schema IDs and compiler caches are isolated per invocation. Supported Anthropic
+extended thinking validates its mode and token budget before building the packet.
+Google GenerateContent/Vertex thinking is included in ledger output/cost totals
+and helper output checks; legacy provider response/event fields remain unchanged.
+
+Pass one host-owned `ModelTask` through `{ modelTask }` to managed/direct run and
+stream, helper calls, or explicit rollover to share reservations. Sharing is
+explicit: a helper without `modelTask` owns an independent task,
+even during another active execution. Missing or partial external usage stays
+unknown in the ledger; failed/cancelled external outcomes remain visible. Terminal
+stream usage survives later failure or cancellation without being counted twice.
+Tracked calls snapshot request records before admission. Google/Vertex candidate
+count multiplies output reservations and the configured aggregate per-call cap.
+Helper repairs retain selected evidence and fail before dispatch if the expanded
+packet cannot fit. Mixed external pricing remains unknown through final snapshots.
+Optional limits are calls, tokens, absolute deadline and estimated model token cost. Reservations
+use full provider input capacity plus bounded output, so large-window models need
+large temporary allowances. Unknown usage/prices remain explicit; external fees
+and distributed/external runtime admission are outside the guarantee. With no
+configuration, existing defaults, signatures, hooks and sessions remain unchanged.
+
+Read the [complete recipe](./docs/MODEL_TASKS_AND_HELPERS.md) for named connector
+setup, all options, cancellation/late settlement, registry versus upper-bound
+costs, helper fallback, external usage, ownership and save/load boundaries. Run
+`npm run example:purpose-models` and `npm run example:shared-budget` after a build
+for offline demonstrations; `--live` on the purpose example explicitly opts into
+billable OpenAI calls. AMOS adds `/helpers` configuration and usage inspection.
+Opt-in experimental automatic strategies are described in the
+[context strategy recipe](./docs/CONTEXT_STRATEGIES.md). Configuring a compactor
+alone keeps the algorithmic default; selecting `StructuredSummaryStrategy` uses
+that role during bounded pre-call preparation. The bounded comparison is a
+functional pilot, not a general quality or cost-reduction claim.
+
+## Bounded managed-loop policies
+
+Set `AgentConfig.loopPolicy` or `RunOptions.loopPolicy` to add bounded recovery
+and host completion checks to managed run/stream. `null` disables a configured
+policy for one execution. Without a policy, existing behavior is preserved.
+
+The shared allowance defaults to two recovery interventions. Failed actual tools,
+repeated normalized read observations, optional unchanged host progress keys and
+false completion predicates consume it. Repeated admitted writes/unknown effects
+stop before replay; uncertain outcomes require host inspection. Application
+`success:false` data does not become a framework failure.
+
+`completion(context)` is host-owned and checks actual required state/evidence;
+return `{complete, reason?, feedback?}`. A successful model response or submitted
+job alone is insufficient. Optional `response.loop`/existing stream-event `loop`
+metadata and `agent.getLoopDiagnostics()` report phase/reason/workflow status
+separately from provider status and assistant text. Missing completion callbacks
+yield an ordinary answer without a workflow completion assertion.
+
+Checks receive bounded frozen observations/task state and a cancellation signal;
+they are timed, validated and rejected on stale task/owner/conversation identity.
+Callbacks/counters are not session authority and are never restored. Use explicit
+ModelTask sharing for helper checks and inspect actual model-call usage.
+
+With the policy enabled, stream invokes shared `before:tool` preparation; the
+unconfigured legacy trace remains unchanged. Streamed candidate text stays
+provisional. JSON final repair remains run-only. Async/suspended work retains
+waiting-external semantics. Direct, realtime and external SDK-owned loops remain
+outside this policy. Read [the complete recipe](docs/AGENT_LOOP_POLICIES.md) for
+limits, effects, persistence and exact support boundaries. Build first and run
+`npm run example:feedback-agent`, `npm run example:loop-equivalence`, or
+`npm run example:amos-loop` offline. `npm run test:loop:live` opts into billable
+three-provider checks. See [release status](docs/RELEASE_READINESS_V2.md).
+
+### Local helper validation and completion scope
+
+Optional `HelperCallOptions.validationSchema` is an additional synchronous local
+JSON schema. Both it and `schema` must pass inside the same zero-or-one repair
+allowance. It appears as prompt guidance while native `response_format` stays
+portable; it cannot weaken `schema`. Invalid schemas fail before packet building,
+and repair uses the selected evidence and existing task/input/output/deadline bounds.
+
+Automatic structured compaction uses this to reject all-empty summaries and
+blank/overlong entries before helper success. Actual Google recovery from the
+recorded empty body is now verified without masking fallback. Standalone summary
+callbacks retain one invocation and the existing transaction/fallback behavior.
+Pending loop completion/progress checks also reject changes to tool principal,
+account/connector selections, identities, roles, session or connector authority.
+See [helpers](docs/MODEL_TASKS_AND_HELPERS.md) for local validation and repair bounds.
+
+## Opt-in Agent presets and inspection
+
+Use the public `createAgentPreset('research' | 'workflow', config)` factory with
+`Agent.create()`. Research selects observation masking, workflow selects
+algorithmic compaction plus protected task state; both enable explicitly scoped
+evidence and bounded recovery. Defaults are 12/8 main-loop iterations. Explicit
+settings override these defaults, including `loopPolicy: null`. Helpers, hard
+ModelTask limits, permissions and host completion checks remain explicit.
+
+`agent.inspectCapabilities()` reports actual managed configuration and provider
+support without a model/storage call or private content. Per-call overrides and
+external drivers keep their existing ownership. AMOS `/preset` saves next-agent
+selection and distinguishes it from active configuration. Candidate startup/load
+failures preserve the prior AMOS session; recovery observations are checkpointed
+before release. Titles/preset labels survive autosave and unnamed saves. Inspection
+projects declared getter-backed capabilities without exposing provider extras.
+Failed resumes restore caller-owned permission/tool/prompt/role/callback bindings before candidate cleanup, including constructor and synchronous load-notification failures; rejected scoped loads
+retain the active checkpoint and autosave target. Getter-backed scope requirements
+are normalized, and teardown continues after individual plugin errors. JSON-compatible plugin conversion hooks remain supported, and failed rollback keeps saves blocked until every damaged plugin actually recovers. No session/portable protocol changes; scope checks and legacy loading remain intact. Read the
+[complete recipe](docs/AGENT_PRESETS.md) for setup, overrides, failure behavior,
+public examples, runtime boundaries and migration. Availability is on the Version 2
+branch pending a verified package release.
+
+## Unified Store Tools
+
+In v0.5.0, the 19 plugin-specific CRUD tools (`memory_store`, `context_set`, `instructions_set`, `user_info_set`, etc.) were replaced with **5 generic `store_*` tools** that work across all stores. This reduces tool clutter, simplifies the LLM's decision-making, and makes it trivial to add new stores.
+
+### The 5 Generic Tools
+
+| Tool | Signature | Description |
+|------|-----------|-------------|
+| `store_get` | `store_get(store, key?)` | Read one value by exact key; omitting key returns a store-specific view, which may contain only metadata |
+| `store_set` | `store_set(store, key, data)` | Create or update an entry |
+| `store_delete` | `store_delete(store, key)` | Remove an entry by key |
+| `store_list` | `store_list(store, filter?)` | List entries with optional filters |
+| `store_action` | `store_action(store, action, params?)` | Store-specific operations (query, clear, etc.) |
+
+The `store` parameter is a string identifying which store to target. The `data` parameter is an object whose shape depends on the store.
+
+For `"notes"`, a keyless `store_get({ store: "notes" })` returns only keys,
+descriptions, and tiers. Read each source's contents with
+`store_get({ store: "notes", key: "<exact index key>" })`, including the displayed
+tier prefix and any collision suffix. `store_list` discovers entries omitted from
+the visible index. Other stores retain their own keyless behavior.
+
+### Available Stores
+
+| Store | Feature Flag | Description | Data Shape for `store_set` |
+|-------|-------------|-------------|---------------------------|
+| `"notes"` | `workingMemory: true` | Tiered working memory (raw/summary/findings) | `{ description, value, tier?, priority? }` |
+| `"whiteboard"` | `inContextMemory: true` | Key-value pairs visible directly in LLM context | `{ description, value, priority? }` (`showInUI` is host-owned metadata; see below) |
+| `"instructions"` | `persistentInstructions: true` | Agent instructions persisted to disk | `{ content }` |
+| `"user_info"` | `userInfo: true` | User-scoped preferences across agents | `{ value, description? }` |
+| `"workspace"` | `sharedWorkspace: true` | Multi-agent coordination workspace | `{ summary, content?, references?, status?, tags? }` |
+
+### When to Use Each Store
+
+| Need | Store | Why |
+|------|-------|-----|
+| Large data, external retrieval | `"notes"` | Index in context, full data via `store_get` |
+| Small live state, instant access | `"whiteboard"` | Full values rendered directly in context |
+| Cross-session agent rules | `"instructions"` | Persists to disk, auto-loaded on start |
+| User preferences shared across agents | `"user_info"` | User-scoped, not agent-scoped |
+| Multi-agent data sharing | `"workspace"` | Versioned entries with author tracking |
+
+### Migration from Old Tool Names
+
+| Old Tool | New Equivalent |
+|----------|---------------|
+| `memory_store(key, desc, value, ...)` | `store_set("notes", key, { description, value, tier?, ... })` |
+| `memory_retrieve(key)` | `store_get("notes", key)` |
+| `memory_delete(key)` | `store_delete("notes", key)` |
+| `memory_query(...)` | `store_action("notes", "query", { pattern?, tier?, ... })` |
+| `memory_cleanup_raw()` | `store_action("notes", "cleanup_raw")` |
+| `context_set(key, desc, value, ...)` | `store_set("whiteboard", key, { description, value, priority? })` |
+| `context_delete(key)` | `store_delete("whiteboard", key)` |
+| `context_list()` | `store_list("whiteboard")` |
+| `instructions_set(key, content)` | `store_set("instructions", key, { content })` |
+| `instructions_remove(key)` | `store_delete("instructions", key)` |
+| `instructions_list()` | `store_list("instructions")` |
+| `instructions_clear(confirm)` | `store_action("instructions", "clear", { confirm: true })` |
+| `user_info_set(key, value, desc?)` | `store_set("user_info", key, { value, description? })` |
+| `user_info_get(key?)` | `store_get("user_info", key?)` |
+| `user_info_remove(key)` | `store_delete("user_info", key)` |
+| `user_info_clear(confirm)` | `store_action("user_info", "clear", { confirm: true })` |
+
+> **Note:** TODO tools (`todo_add`, `todo_update`, `todo_remove`) are unchanged.
+
+### Example Usage by Store
+
+#### Memory Store
+
+```jsonc
+// Store data in working memory
+// Tool call from LLM:
+{
+  "name": "store_set",
+  "arguments": {
+    "store": "notes",
+    "key": "api_response",
+    "data": {
+      "description": "Full API response from /users endpoint",
+      "value": { "users": ["Alice", "Bob", "Charlie"] },
+      "tier": "findings",
+      "priority": "high"
+    }
+  }
+}
+
+// Retrieve data
+{
+  "name": "store_get",
+  "arguments": {
+    "store": "notes",
+    "key": "api_response"
+  }
+}
+
+// Query memory entries
+{
+  "name": "store_action",
+  "arguments": {
+    "store": "notes",
+    "action": "query",
+    "params": { "tier": "findings", "pattern": "api_*" }
+  }
+}
+
+// Clean up raw tier
+{
+  "name": "store_action",
+  "arguments": {
+    "store": "notes",
+    "action": "cleanup_raw"
+  }
+}
+```
+
+#### Context Store
+
+```jsonc
+// Store live state visible directly in context
+{
+  "name": "store_set",
+  "arguments": {
+    "store": "whiteboard",
+    "key": "current_state",
+    "data": {
+      "description": "Processing state for current task",
+      "value": { "step": 3, "status": "active" },
+      "priority": "high"
+    }
+  }
+}
+
+// Delete an entry
+{
+  "name": "store_delete",
+  "arguments": {
+    "store": "whiteboard",
+    "key": "temp_data"
+  }
+}
+
+// List all entries
+{
+  "name": "store_list",
+  "arguments": {
+    "store": "whiteboard"
+  }
+}
+```
+
+#### Instructions Store
+
+```jsonc
+// Set a persistent instruction
+{
+  "name": "store_set",
+  "arguments": {
+    "store": "instructions",
+    "key": "personality",
+    "data": {
+      "content": "Always be friendly and helpful. Use clear, simple language."
+    }
+  }
+}
+
+// Remove an instruction
+{
+  "name": "store_delete",
+  "arguments": {
+    "store": "instructions",
+    "key": "personality"
+  }
+}
+
+// Clear all instructions
+{
+  "name": "store_action",
+  "arguments": {
+    "store": "instructions",
+    "action": "clear",
+    "params": { "confirm": true }
+  }
+}
+```
+
+#### User Info Store
+
+```jsonc
+// Store user preference
+{
+  "name": "store_set",
+  "arguments": {
+    "store": "user_info",
+    "key": "theme",
+    "data": {
+      "value": "dark",
+      "description": "User preferred theme"
+    }
+  }
+}
+
+// Get all user info
+{
+  "name": "store_get",
+  "arguments": {
+    "store": "user_info"
+  }
+}
+
+// Clear all user info
+{
+  "name": "store_action",
+  "arguments": {
+    "store": "user_info",
+    "action": "clear",
+    "params": { "confirm": true }
+  }
+}
+```
+
+### Creating a Custom Store Plugin
+
+Any plugin that implements `IContextPluginNextGen` and `IStoreHandler` automatically becomes available as a store target. The `IStoreHandler` interface defines the CRUD operations:
+
+```typescript
+// Documentation check: complete example
+import {
+  BasePluginNextGen,
+  type IStoreHandler,
+  type StoreEntrySchema,
+  type StoreGetResult,
+  type StoreSetResult,
+  type StoreDeleteResult,
+  type StoreListResult,
+  type StoreActionResult,
+} from 'oneringai';
+
+class SnippetsPlugin extends BasePluginNextGen implements IStoreHandler {
+  readonly name = 'snippets';
+
+  private snippets = new Map<string, { text: string; createdAt: number }>();
+
+  getStoreSchema(): StoreEntrySchema {
+    return {
+      storeId: 'snippets',
+      displayName: 'Snippets',
+      description: 'Text snippets keyed by name',
+      usageHint: 'Use for: quick reusable text snippets.',
+      setDataFields: 'text (required): Snippet content',
+    };
+  }
+
+  // IStoreHandler implementation
+  async storeGet(key?: string): Promise<StoreGetResult> {
+    if (key) {
+      const snippet = this.snippets.get(key);
+      return snippet ? { found: true, key, entry: snippet } : { found: false, key };
+    }
+    // For this custom snippets store only, return all entries when key is omitted
+    const entries = Array.from(this.snippets.entries()).map(([k, v]) => ({ key: k, ...v }));
+    return { found: true, entries };
+  }
+
+  async storeSet(key: string, data: Record<string, unknown>): Promise<StoreSetResult> {
+    const text = data.text as string;
+    if (!text) return { success: false, key, error: 'Missing "text" field' };
+    this.snippets.set(key, { text, createdAt: Date.now() });
+    return { success: true, key, message: `Snippet "${key}" saved` };
+  }
+
+  async storeDelete(key: string): Promise<StoreDeleteResult> {
+    const deleted = this.snippets.delete(key);
+    return { deleted, key };
+  }
+
+  async storeList(filter?: Record<string, unknown>): Promise<StoreListResult> {
+    const entries = Array.from(this.snippets.entries()).map(([k, v]) => ({
+      key: k,
+      text: v.text,
+      createdAt: v.createdAt,
+    }));
+    return { entries, total: entries.length };
+  }
+
+  async storeAction(action: string, params?: Record<string, unknown>): Promise<StoreActionResult> {
+    if (action === 'clear') {
+      if (!params?.confirm) return { success: false, action, error: 'Requires confirm: true' };
+      this.snippets.clear();
+      return { success: true, action, message: 'All snippets cleared' };
+    }
+    return { success: false, action, error: `Unknown action: ${action}` };
+  }
+
+  // Standard plugin methods
+  getInstructions(): string | null { return 'Use store_set("snippets", key, { text }) to save text snippets.'; }
+  async getContent(): Promise<string | null> { return null; }
+  getContents(): unknown { return Object.fromEntries(this.snippets); }
+  getTools() { return []; }  // No plugin-specific tools needed; store_* tools handle everything
+}
+```
+
+Register and use:
+
+```typescript
+const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
+ctx.registerPlugin(new SnippetsPlugin());
+
+// Now the LLM can use:
+// store_set("snippets", "meeting", { text: "Discussed Q3 roadmap" })
+// store_get("snippets", "meeting")
+// store_list("snippets")
+// store_action("snippets", "clear", { confirm: true })
+```
+
+---
+
+## InContextMemory (NextGen Plugin)
+
+**InContextMemoryPluginNextGen** is a context plugin that stores key-value pairs **directly in the LLM context** (not just an index like WorkingMemory). This is ideal for small, frequently-updated state that the LLM needs instant access to without retrieval calls.
+
+### Key Difference from WorkingMemory
+
+| Feature | WorkingMemory | InContextMemory |
+|---------|---------------|-----------------|
+| **Storage** | External (in-memory or file) | Directly in LLM context |
+| **Context visibility** | Index only (keys + descriptions) | Full values visible |
+| **Access pattern** | Requires `store_get("notes", key)` call | Immediate - no retrieval needed |
+| **UI integration** | Host-defined | `showInUI` metadata and `onEntriesChanged` are available to hosts; core renders no UI |
+| **Best for** | Large data, rarely accessed info | Small state, frequently updated, live dashboards |
+| **Default capacity** | 25MB | 20 entries, 40000 tokens |
+
+### Quick Setup
+
+```typescript
+import { AgentContextNextGen, InContextMemoryPluginNextGen } from 'oneringai';
+
+const ctx = AgentContextNextGen.create({
+  model: 'gpt-4.1',
+  features: { inContextMemory: true },  // Enables InContextMemoryPluginNextGen
+});
+
+// Plugin is automatically registered when feature is enabled
+// Access it via the plugin registry
+const plugin = ctx.getPlugin('in_context_memory') as InContextMemoryPluginNextGen;
+plugin.set('state', 'Current processing state', { step: 1, status: 'active' });
+```
+
+### Manual Setup
+
+For more control, you can set up the plugin manually:
+
+```typescript
+import { AgentContextNextGen, InContextMemoryPluginNextGen } from 'oneringai';
+
+const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
+
+// Create and configure plugin
+const plugin = new InContextMemoryPluginNextGen({
+  maxEntries: 20,
+  maxTotalTokens: 40000,
+  defaultPriority: 'normal',
+  showTimestamps: false,
+});
+
+// Register plugin with context
+ctx.registerPlugin(plugin);
+```
+
+### Configuration Options
+
+```typescript
+interface InContextMemoryConfig {
+  /** Maximum number of entries (default: 20) */
+  maxEntries?: number;
+
+  /** Maximum total tokens for all entries (default: 40000) */
+  maxTotalTokens?: number;
+
+  /** Default priority for new entries (default: 'normal') */
+  defaultPriority?: 'low' | 'normal' | 'high' | 'critical';
+
+  /** Whether to show timestamps in output (default: false) */
+  showTimestamps?: boolean;
+
+  /** Callback fired when entries change (set/delete/clear/restore). Debounced at 100ms. */
+  onEntriesChanged?: (entries: InContextEntry[]) => void;
+}
+```
+
+### Available Tools
+
+The LLM manages in-context memory through the unified `store_*` tools with `store="whiteboard"` (values are always visible directly in context, so no `store_get` is needed):
+
+#### store_set("whiteboard", ...)
+
+Store or update a key-value pair in the live context:
+
+```jsonc
+// Tool call from LLM
+{
+  "name": "store_set",
+  "arguments": {
+    "store": "whiteboard",
+    "key": "current_state",
+    "data": {
+      "description": "Processing state for current task",
+      "value": { "step": 3, "status": "active", "errors": [] },
+      "priority": "high"     // optional: low, normal, high, critical
+    }
+  }
+}
+```
+
+#### store_delete("whiteboard", ...)
+
+Remove an entry to free space:
+
+```jsonc
+// Tool call from LLM
+{
+  "name": "store_delete",
+  "arguments": {
+    "store": "whiteboard",
+    "key": "temp_data"
+  }
+}
+// Returns: { "deleted": true, "key": "temp_data" }
+```
+
+#### store_list("whiteboard")
+
+List all entries with metadata:
+
+```jsonc
+// Tool call from LLM
+{
+  "name": "store_list",
+  "arguments": {
+    "store": "whiteboard"
+  }
+}
+// Returns: {
+//   "entries": [
+//     { "key": "current_state", "description": "...", "priority": "high", "showInUI": true, "updatedAt": 1769798400000 },
+//     { "key": "user_prefs", "description": "...", "priority": "normal", "showInUI": false, "updatedAt": 1769798400000 }
+//   ],
+//   "total": 2
+// }
+```
+
+### Direct API Access
+
+The plugin provides a programmatic API for direct manipulation:
+
+```typescript
+const plugin = ctx.getPlugin('in_context_memory') as InContextMemoryPluginNextGen;
+
+// Store entries
+plugin.set('state', 'Current state', { step: 1 });
+plugin.set('prefs', 'User preferences', { verbose: true }, 'high');
+plugin.set('temp', 'Temporary data', 'xyz', 'low');
+
+// Store with UI display (5th argument)
+plugin.set('dashboard', 'Live dashboard', '## Status\n- OK', 'normal', true);
+
+// Retrieve
+const state = plugin.get('state');        // { step: 1 }
+const missing = plugin.get('nonexistent'); // undefined
+
+// Check existence
+plugin.has('state');  // true
+plugin.has('missing'); // false
+
+// Delete
+plugin.delete('temp');  // true (existed and deleted)
+plugin.delete('missing'); // false (didn't exist)
+
+// List all entries
+const entries = plugin.list();
+// [{ key: 'state', description: '...', priority: 'normal', showInUI: false, updatedAt: 1706... }, ...]
+
+// Get entry count
+console.log(plugin.list().length);  // 2
+
+// Clear all
+plugin.clear();
+```
+
+### Priority-Based Eviction
+
+When space is needed (either due to `maxEntries` or `compact()` being called), entries are evicted in this order:
+
+1. **Priority**: `low` → `normal` → `high` (lowest first)
+2. **Age**: Within the same priority, oldest entries (by `updatedAt`) are evicted first
+3. **Critical**: Entries with `priority: 'critical'` are **never** auto-evicted
+
+```typescript
+// Example: limited to 3 entries
+const plugin = new InContextMemoryPluginNextGen({ maxEntries: 3 });
+ctx.registerPlugin(plugin);
+
+plugin.set('critical1', 'Critical data', 'value', 'critical');
+plugin.set('high1', 'High priority', 'value', 'high');
+plugin.set('normal1', 'Normal data', 'value', 'normal');
+plugin.set('low1', 'Low priority', 'value', 'low');  // Triggers eviction
+
+// 'normal1' is evicted (lowest priority among non-critical)
+console.log(plugin.has('critical1')); // true
+console.log(plugin.has('high1'));     // true
+console.log(plugin.has('low1'));      // true (just added)
+console.log(plugin.has('normal1'));   // false (evicted)
+```
+
+### Context Output Format
+
+When the LLM context is prepared, InContextMemory adds a formatted section titled after the store's display name ("Whiteboard"):
+
+```markdown
+# Whiteboard
+
+**current_state** (high): Processing state for current task
+{
+  "step": 3,
+  "status": "active",
+  "errors": []
+}
+
+**user_preferences** (normal): User preferences for this session
+{
+  "theme": "dark",
+  "verbose": true
+}
+```
+
+Each entry renders as `**key** (priority): description` followed by a plain fenced, pretty-printed JSON block. The LLM can read this section directly without making any tool calls.
+
+### UI Display (`showInUI`)
+
+Each InContextMemory entry can carry optional `showInUI` metadata. OneRingAI stores, serializes, and returns the flag, but it does not render a sidebar or define pinning behavior. Those are host-application responsibilities.
+
+The built-in whiteboard schema intentionally does **not** advertise `showInUI` to the LLM. The `store_set` handler still accepts it for compatibility, but an agent will only know to send the field when a host plugin or application instruction explicitly teaches that extension (for example, a UI integration layer). The direct `set()` API always supports it.
+
+#### How It Works
+
+1. **Host code sets `showInUI: true`** through the direct `set()` API, or explicitly extends the LLM's instructions/schema to permit the field.
+2. **Host app receives updates** via the `onEntriesChanged` callback (debounced at 100ms).
+3. **Host code chooses rendering, sanitization, pinning, and persistence behavior.**
+
+#### Via `store_set` in a host-enabled UI integration
+
+```jsonc
+// This field is accepted by the handler, but the default LLM-facing store
+// schema does not advertise it. Expose it deliberately in host instructions.
+{
+  "name": "store_set",
+  "arguments": {
+    "store": "whiteboard",
+    "key": "progress",
+    "data": {
+      "description": "Task progress dashboard",
+      "value": "## Research Progress\n\n| Topic | Status |\n|-------|--------|\n| API Design | Done |\n| Implementation | In Progress |\n\n**Next:** Write tests",
+      "priority": "high",
+      "showInUI": true
+    }
+  }
+}
+```
+
+#### Via Direct API
+
+```typescript
+// Show a progress dashboard in the UI
+plugin.set(
+  'progress',
+  'Task progress',
+  '## Progress\n- [x] Step 1: Research\n- [x] Step 2: Design\n- [ ] Step 3: Implement',
+  'high',
+  true  // showInUI
+);
+
+// Update it later (showInUI persists with the entry)
+plugin.set('progress', 'Task progress',
+  '## Progress\n- [x] Step 1\n- [x] Step 2\n- [x] Step 3: Implement',
+  'high',
+  true
+);
+
+// Hide from UI
+plugin.set('progress', 'Task progress', value, 'high', false);
+```
+
+#### Real-Time Updates with `onEntriesChanged`
+
+Host applications can subscribe to entry changes to update their UI in real time:
+
+```typescript
+const plugin = new InContextMemoryPluginNextGen({
+  maxEntries: 20,
+  onEntriesChanged: (entries) => {
+    // Called whenever entries are set, deleted, cleared, or restored
+    // Debounced at 100ms to avoid excessive updates during batch operations
+    const visibleEntries = entries.filter(e => e.showInUI);
+    updateSidebarUI(visibleEntries);
+  },
+});
+```
+
+The callback fires on: `set()`, `delete()`, `clear()`, `restoreState()`, and `compact()`.
+
+#### User Pinning
+
+Host applications can let users **pin** specific entries regardless of the entry's `showInUI` value. This is useful when:
+
+- An agent stores useful state but doesn't mark it as `showInUI`
+- The user wants to monitor a specific key during a session
+- The agent sets `showInUI: false` on an entry the user still wants to see
+
+Pin persistence belongs to the host application. A host can store the selected keys per agent so they survive application restarts; OneRingAI supplies the entry data and change callback, not a UI-specific persistence layer.
+
+#### Rendering
+
+Rendering is not part of OneRingAI. A host may pass string values through its
+normal Markdown renderer and support features such as:
+
+- **Code blocks** with syntax highlighting
+- **Tables** with alignment
+- **LaTeX math** (`$inline$` and `$$block$$`)
+- **Mermaid diagrams** (flowcharts, sequence diagrams, etc.)
+- **Vega-Lite charts** (bar, line, pie, etc.)
+- **Markmap mindmaps**
+- **Checklists**, **blockquotes**, **images**, and more
+
+Within the LLM context, objects and arrays are serialized as formatted JSON code blocks. A host UI decides independently how to render every value and must apply its own sanitization policy.
+
+### Session Persistence
+
+InContextMemoryPluginNextGen supports full state serialization for session persistence:
+
+```typescript
+// Save state
+const state = plugin.getState();
+// state = { entries: [...] }
+
+// Later, restore state
+const newPlugin = new InContextMemoryPluginNextGen();
+newPlugin.restoreState(state);
+```
+
+When using with `AgentContextNextGen`, the state is automatically included:
+
+```typescript
+// AgentContextNextGen synchronously captures plugin state
+const ctxState = ctx.getState();
+
+// Restore entire context (including InContextMemory)
+const newCtx = AgentContextNextGen.create({
+  model: 'gpt-4.1',
+  features: { inContextMemory: true },
+});
+newCtx.restoreState(ctxState);  // Plugins are restored automatically
+```
+
+### Use Cases
+
+**Ideal for:**
+- **Current state/status** that changes during task execution
+- **User preferences** for the session (theme, verbosity, etc.)
+- **Counters and flags** (iteration count, feature flags)
+- **Small accumulated results** (running totals, collected IDs)
+- **Control variables** (abort flags, mode switches)
+- **Live dashboards** (with `showInUI: true`) — progress trackers, status displays, structured results
+
+**Not ideal for (use WorkingMemory instead):**
+- Large data (documents, API responses, search results)
+- Rarely accessed reference data
+- Historical data that doesn't need instant access
+- Data that exceeds 4000 tokens
+
+### Best Practices
+
+#### 1. Use Appropriate Priorities
+
+```typescript
+// Critical: Never evicted - for essential state
+plugin.set('session_id', 'Session identifier', 'sess_123', 'critical');
+
+// High: Kept as long as possible - important state
+plugin.set('user_context', 'User context', { name: 'Alice' }, 'high');
+
+// Normal (default): Standard data
+plugin.set('current_step', 'Current step', 3);
+
+// Low: Can be evicted - temporary/reconstructable data
+plugin.set('last_check', 'Last health check', Date.now(), 'low');
+```
+
+#### 2. Keep Values Small
+
+```typescript
+// GOOD: Small, focused values
+plugin.set('state', 'Task state', { step: 2, status: 'active' });
+
+// BAD: Large objects (use WorkingMemory instead)
+plugin.set('results', 'All results', hugeArrayOfResults);  // Don't do this!
+```
+
+#### 3. Clean Up When Done
+
+```typescript
+// Delete temporary entries when no longer needed
+plugin.delete('temp_calculation');
+plugin.delete('iteration_data');
+
+// Or use low priority for auto-cleanup
+plugin.set('temp', 'Temporary', value, 'low');
+```
+
+#### 4. Combine with WorkingMemory
+
+Use both systems for their strengths:
+
+```typescript
+// Large data goes to WorkingMemoryPluginNextGen (index-based)
+const memoryPlugin = ctx.getPlugin('working_memory') as WorkingMemoryPluginNextGen;
+await memoryPlugin.store('search_results', 'Web search results', largeResults);
+
+// Small, frequently-accessed state goes to InContextMemoryPluginNextGen (full values)
+const inContextPlugin = ctx.getPlugin('in_context_memory') as InContextMemoryPluginNextGen;
+inContextPlugin.set('search_status', 'Search status', { completed: 3, pending: 2 });
+
+// LLM sees:
+// - Memory Index: "search_results: Web search results" (needs store_get("notes", "search_results"))
+// - Live Context: Full search_status value (instant access)
+```
+
+---
+
+## Self-Learning Memory (NextGen Plugin)
+
+The Self-Learning Memory system is a brain-like, queryable knowledge store that lets agents *learn from observation* — the user's profile and any user-given behavior rules are injected into the system message on every turn, and the agent can read or mutate the knowledge graph mid-conversation through 12 dedicated tools. It supersedes both `PersistentInstructionsPluginNextGen` and `UserInfoPluginNextGen`.
+
+The underlying `MemorySystem` is a first-class standalone module: it has no
+dependency on `Agent` or the context plugins. Server code can use its entity and
+fact model, vector embeddings, document search, graph traversal, bitemporal
+queries, signal ingestion, profile generation, storage adapters, and permission
+model directly. The context plugins are adapters that expose that same system
+to an LLM safely; they are not the memory implementation itself.
+
+This section is the user-guide-level walkthrough. For the full conceptual model, adapter setup, signal ingestion pipeline, predicate vocabulary, and resolution tiers, see:
+- [docs/MEMORY_GUIDE.md](./docs/MEMORY_GUIDE.md) — the canonical memory layer guide.
+- [docs/MEMORY_API.md](./docs/MEMORY_API.md) — full `MemorySystem` API reference.
+- [docs/MEMORY_PERMISSIONS.md](./docs/MEMORY_PERMISSIONS.md) — three-principal permission model.
+- [docs/MEMORY_SIGNALS.md](./docs/MEMORY_SIGNALS.md) — signal → fact extraction.
+- [docs/MEMORY_PREDICATES.md](./docs/MEMORY_PREDICATES.md) — predicate registry.
+
+### What it is
+
+Two first-class concepts:
+
+- **Entities** are pure identity. People, organizations, projects, tasks, events, topics — each carries a `displayName`, `aliases`, strong `identifiers` (email, domain, slack_id, github, custom canonical id), and type-specific `metadata` (e.g. task `state` / `dueAt`, event `startTime` / `attendeeIds`).
+- **Facts** are knowledge. Triples like `(John, works_at, Microsoft)` or document facts (long-form prose). Facts carry `confidence`, `importance`, `sourceSignalId`, temporal validity (`validFrom` / `validUntil`), supersession links, and can bind to additional entities via `contextIds` ("this fact is about John but also relates to the Acme deal").
+
+Facts preserve history through supersession; task entities are mutable through
+the state-machine API and keep a bounded `stateHistory`. Every record has an
+owner, can be tenant-scoped by group, supports owner/group/world permissions
+plus explicit principal ACLs, and is retrievable as profile + ranked facts +
+related tasks + related events in one query.
+
+**Self-learning loop:**
+1. The user tells the agent something ("I prefer concise answers"), or a background ingestor extracts facts from the conversation.
+2. A fact lands in the store via `memory_remember` (LLM-driven) or `SessionIngestorPluginNextGen` (passive).
+3. When the new-facts threshold is crossed (default 3), **incremental profile regeneration** fires in the background — the configured LLM gets the prior profile + new facts + invalidated IDs and returns an evolved profile document.
+4. On the next turn, the system message reflects the change. No manual prompt engineering.
+
+### When to use which plugin
+
+| Plugin | Feature flag | Purpose |
+|---|---|---|
+| `WorkingMemoryPluginNextGen` | `workingMemory` (default true) | Ephemeral per-session scratchpad with tiered eviction (raw / summary / findings). NOT a knowledge store. |
+| `InContextMemoryPluginNextGen` | `inContextMemory` (default true) | Live KV values rendered directly in the system message. Use for small, high-signal state the LLM must always see. |
+| **`MemoryPluginNextGen`** | `memory` (default false) | **Recommended.** Self-learning knowledge store. Read-side: profile injection + 6 retrieval tools. |
+| **`MemoryWritePluginNextGen`** | `memoryWrite` (default false) | Optional sidecar — adds the 6 write `memory_*` tools. Requires `memory: true`. |
+| `SessionIngestorPluginNextGen` | n/a (registered manually) | Background pipeline — extracts facts from each batch of messages and writes them to the same `MemorySystem`. Pair with `memory: true` (no `memoryWrite`) for retrieval-only agents whose memory updates happen passively. |
+| `PersistentInstructionsPluginNextGen`, `UserInfoPluginNextGen` | `persistentInstructions`, `userInfo` | ⚠️ Deprecated — use `MemoryPluginNextGen` instead. |
+
+### Quick Start (in-process, dev)
+
+```typescript
+// Documentation check: complete example
+import {
+  Agent,
+  createMemorySystemWithConnectors,
+  InMemoryAdapter,
+  PredicateRegistry,
+} from 'oneringai';
+
+const predicates = PredicateRegistry.standard().register({
+  name: 'prefers',
+  description: 'A durable user preference.',
+  category: 'preference',
+  payloadKind: 'attribute',
+  subjectTypes: ['person'],
+  lifecycle: 'stable',
+});
+
+// 1. Build the MemorySystem. Embedder + profile-generator are optional but
+//    recommended (without them: no semantic search, no profile auto-regen).
+const memory = createMemorySystemWithConnectors({
+  store: new InMemoryAdapter(),
+  connectors: {
+    embedding: { connector: 'openai', model: 'text-embedding-3-small', dimensions: 1536 },
+    profile:   { connector: 'anthropic', model: 'claude-sonnet-4-6' },
+  },
+  predicates,
+  predicateMode: 'strict',
+  visibilityPolicy: () => ({ group: 'read', world: 'none' }),
+});
+
+// 2. Agent with feature flags + plugin config (under `context.features` /
+//    `context.plugins`).
+const agent = Agent.create({
+  connector: 'anthropic',
+  model: 'claude-sonnet-4-6',
+  userId: 'alice',                              // REQUIRED — memory's owner invariant
+  context: {
+    model: 'claude-sonnet-4-6',
+    agentId: 'my-assistant',                    // optional — auto-generated if omitted
+    features: {
+      memory: true,                             // reads: profile injection + 6 retrieval tools
+      memoryWrite: true,                        // writes: 6 mutation tools (omit for retrieval-only)
+    },
+    plugins: {
+      memory: {
+        memory,                                 // the MemorySystem instance — shared by both plugins
+        // groupId: 'team-A',                   // optional, trusted from your auth layer
+        // userDisplayName: 'Alice Smith',
+        // userProfileInjection: { topFacts: 20, relatedTasks: true },
+      },
+      // `memoryWrite` inherits memory / agentId / userId from plugins.memory.
+    },
+  },
+});
+
+await agent.run('Remember that I prefer concise answers');
+await agent.run('What are my preferences?');
+// → The fact is available to retrieval immediately and appears in injected
+//   top facts; the synthesized profile refreshes after the configured threshold.
+```
+
+> The `context.features.memory` and `context.features.memoryWrite` flags are independent. `memoryWrite: true` requires `memory: true`. Enable just `memory` for a retrieval-only agent (and pair with `SessionIngestorPluginNextGen` to keep memory growing passively).
+
+### Storage backends
+
+`MemorySystem` is an `IMemoryStore` adapter away from any database. Three adapters ship out of the box; full setup details live in [docs/MEMORY_GUIDE.md § Choosing a storage backend](./docs/MEMORY_GUIDE.md#choosing-a-storage-backend).
+
+| Adapter | When to use |
+|---|---|
+| `InMemoryAdapter` | Tests, REPL, single-user desktop apps that snapshot externally. Zero deps. |
+| `MongoMemoryAdapter` + `RawMongoCollection` | Production servers using the `mongodb` driver. Supports native `$graphLookup` and Atlas Vector Search. |
+| `MongoMemoryAdapter` + `MeteorMongoCollection` | Meteor apps — writes flow through Meteor's async API and trigger reactive publications. |
+
+```typescript
+import { MongoClient } from 'mongodb';
+import {
+  MongoMemoryAdapter,
+  RawMongoCollection, type IEntity, type IFact,
+} from 'oneringai';
+
+const client = await new MongoClient(url).connect();
+const db = client.db('myapp');
+const entitiesColl = new RawMongoCollection<IEntity>(db.collection('memory_entities'), client);
+const factsColl   = new RawMongoCollection<IFact>(db.collection('memory_facts'), client);
+const memoryAdapter = new MongoMemoryAdapter({
+  entities: entitiesColl,
+  facts: factsColl,
+  factsCollectionName: 'memory_facts',     // required for native $graphLookup
+  useNativeGraphLookup: true,
+  vectorIndexName: 'memory_facts_vector',
+  entityVectorIndexName: 'memory_entities_identity_vector',
+  entityContentVectorIndexName: 'memory_entities_content_vector',
+});
+
+const memory = createMemorySystemWithConnectors({
+  store: memoryAdapter,
+  connectors: {
+    embedding: { connector: 'openai', model: 'text-embedding-3-small', dimensions: 1536 },
+    profile:   { connector: 'anthropic', model: 'claude-sonnet-4-6' },
+  },
+});
+
+// Run once on startup — creates all required performance + correctness indexes.
+await memory.ensureAdapterIndexes();
+
+// For semantic search at scale, also create Atlas Vector Search indexes
+// programmatically (UI creation is a security footgun — see MEMORY_GUIDE.md).
+await memoryAdapter.ensureVectorSearchIndexes({ dimensions: 1536 });
+```
+
+> Mongo deployments need two host-managed uniqueness migrations in addition to
+> `ensureAdapterIndexes()`: a unique partial index on
+> `{identifiers.kind: 1, identifiers.value: 1}` to prevent connector/bootstrap
+> identity races, and `ensureNormalizedNameUniqueIndex(entitiesColl)` to make
+> normalized-name find-or-create atomic across processes. For an existing
+> database, backfill normalized fields and deduplicate before installing either
+> index; the library intentionally cannot make that destructive migration for
+> you. See the Memory Guide's Mongo deployment checklist.
+
+### What gets injected into the system message
+
+Up to four blocks are rendered when `features.memory: true` (the rules block and the priorities block only appear when applicable facts exist):
+
+```
+## Your persona — how YOU (the assistant) present yourself
+_These lines define the ASSISTANT — you, the AI — NOT the user. Each line begins with `[ruleId=<id>]` — pass that exact id to `memory_set_agent_rule.replaces` to supersede or to `memory_forget.factId` to drop._
+- [ruleId=fact_abc123_…] Be terse in replies.
+- [ruleId=fact_def456_…] Reply in English again.
+
+## About the User (Alice Smith)
+Alice prefers concise replies, leads product strategy at Acme, …
+
+### Recent top facts (up to 20)
+- prefers: "concise answers" (conf=1.00)
+- works_at: Acme (conf=0.95)
+- role: "product lead" (conf=0.9)
+
+## User's Active Priorities        ← only when the user has tracks_priority facts
+- **Ship NA launch** _(horizon=Q, weight=0.80, deadline=2026-06-30T00:00:00.000Z)_
+
+## About the User's Organization (Acme)        ← only when groupBootstrap is set
+Acme is a 500-person SaaS company in the logistics space …
+
+### Recent top facts (up to 20)
+- …
+```
+
+The blocks are rendered **before** every LLM call, never trimmed by compaction (`isCompactable() === false`). Empty blocks are omitted — a brand-new user with no facts gets nothing rendered until something is learned.
+
+> Global agent personality / base instructions are NOT auto-rendered any more — set them via `Agent.create({ instructions })`. The `agent` entity still exists for graph queries and as the `this_agent` subject for `memory_set_agent_rule`, but its profile is not synthesised or injected.
+
+### Plugin config
+
+```typescript
+interface MemoryPluginConfig {
+  memory: MemorySystem;                  // REQUIRED
+  agentId: string;                       // auto-filled from context.agentId
+  userId: string;                        // auto-filled from agent.userId
+  groupId?: string;                      // TRUSTED — from your auth layer
+  principals?: string[];                 // TRUSTED host-resolved ACL principal set
+  timezone?: string;                     // Viewer IANA timezone for rendered instants
+
+  // Optional shared persona subject for multiple agent variants.
+  personaEntityId?: string;
+
+  // Permissions stamped on the bootstrapped user / agent / group entities.
+  userEntityPermissions?:  { group?: 'none'|'read'|'write'; world?: 'none'|'read'|'write' };
+  agentEntityPermissions?: { group?: 'none'|'read'|'write'; world?: 'none'|'read'|'write' };
+
+  // Optional org bootstrap — when set AND groupId is set, a third entity
+  // (`organization`, identifier `system_group_id`) is upserted and rendered
+  // as "About the User's Organization". Visibility of facts on it is controlled
+  // by your MemorySystem.visibilityPolicy + per-write permissions.
+  groupBootstrap?: {
+    displayName: string;
+    identifiers?: { kind: string; value: string }[];   // e.g. [{kind:'domain', value:'acme.com'}]
+    permissions?: { group?: 'none'|'read'|'write'; world?: 'none'|'read'|'write' };
+  };
+
+  // What to inject for each profile block. Defaults to { profile:true, topFacts:20,
+  // recentActivity: { limit: 20, windowDays: 7 } }.
+  userProfileInjection?:  ProfileInjection;
+  groupProfileInjection?: ProfileInjection;
+
+  // Legacy compatibility field. The current write tools do not consult it when
+  // the LLM omits visibility; configure MemorySystem.visibilityPolicy instead.
+  defaultVisibility?: {
+    forUser?:  'private' | 'group' | 'public';
+    forAgent?: 'private' | 'group' | 'public';
+    forOther?: 'private' | 'group' | 'public';
+  };
+
+  autoResolveThreshold?: number;        // Fuzzy-match threshold for {surface}. Default 0.9.
+  userDisplayName?: string;             // Used on first bootstrap; ignored if entity exists.
+  agentDisplayName?: string;            // Same.
+}
+
+interface ProfileInjection {
+  profile?: boolean;          // Include profile.details. Default true.
+  topFacts?: number;          // Top N ranked facts. 0 disables. Default 20 (cap 100).
+  factPredicates?: string[];  // Restrict topFacts to these predicates.
+  relatedTasks?: boolean;     // Include active related tasks. Default false.
+  relatedEvents?: boolean;    // Include recent related events. Default false.
+  identifiers?: boolean;      // Render entity identifier list. Default false.
+  maxFactLineChars?: number;  // Cap each rendered fact line. Default undefined (no cap).
+  recentActivity?: {          // Time-ordered "Recent activity" tail. Default ON, limit 20, 7d.
+    limit?: number;           // 0 disables.
+    windowDays?: number;
+    predicates?: string[];    // Optional predicate allowlist.
+  };
+}
+
+interface MemoryWritePluginConfig {
+  memory: MemorySystem;                  // REQUIRED
+  agentId: string;                       // auto-filled
+  userId: string;                        // auto-filled
+  groupId?: string;
+  predicates?: PredicateRegistry;       // Usually inherited from MemorySystem.
+  defaultVisibility?: { /* same shape as above */ };
+  autoResolveThreshold?: number;
+  forgetRateLimit?: { maxCallsPerWindow?: number; windowMs?: number };       // default 10/60s/user; also fallback for setAgentRuleRateLimit
+  setAgentRuleRateLimit?: { maxCallsPerWindow?: number; windowMs?: number }; // default: falls back to forgetRateLimit, then 10/60s/user
+  forbiddenEntityTypes?: readonly string[]; // Reject host-managed entity types.
+}
+```
+
+### The 12 `memory_*` tools
+
+All tools accept a flexible **`SubjectRef`** so the LLM never has to know an entity id:
+
+```typescript
+type SubjectRef =
+  | string                                             // entity id, "me", or "this_agent"
+  | { id: string }
+  | { identifier: { kind: string; value: string } }    // exact identifier match
+  | { surface: string };                               // fuzzy resolution by name/alias
+```
+
+**Read tools (6)** — registered when `features.memory: true`:
+
+| Tool | What it does | Example |
+|------|--------------|---------|
+| `memory_recall` | Profile + top facts + optional tiers (`documents` / `semantic` / `neighbors`) | `{"subject":"me"}` · `{"subject":{"surface":"Acme deal"},"include":["neighbors"]}` |
+| `memory_graph` | N-hop graph traversal (Mongo `$graphLookup` for `direction:'out'`/`'in'`; iterative BFS for `'both'`) | `{"start":"me","direction":"out","maxDepth":2}` |
+| `memory_search` | Semantic text search across embedded facts | `{"query":"deployment incidents last quarter","topK":10}` |
+| `memory_search_documents` | Search long-form documents (`type='document'`) by content. `mode:'semantic'\|'keyword'`; filters by `attachedTo` / `role`. | `{"query":"Q3 launch brief"}` · `{"query":"TODO","mode":"keyword","role":"notes"}` |
+| `memory_find_entity` | Lookup or list by id, identifier, surface, or type+metadata (read-only — actions: `find` / `list`) | `{"by":{"identifier":{"kind":"email","value":"alice@a.com"}}}` |
+| `memory_list_facts` | Paginated raw fact enumeration; `archivedOnly: true` returns audit view | `{"subject":"me","predicate":"prefers"}` |
+
+**Write tools (6)** — registered when `features.memoryWrite: true` (requires `memory: true`):
+
+| Tool | What it does | Example |
+|------|--------------|---------|
+| `memory_remember` | Write an atomic fact (or document fact via `kind: "document"` + `details`) | `{"subject":"me","predicate":"prefers","value":"concise"}` |
+| `memory_link` | Write a relational fact between two entities | `{"from":{"surface":"Alice"},"predicate":"attended","to":{"surface":"Q3 planning"}}` |
+| `memory_upsert_entity` | Create or merge an entity by identifiers (multi-ID auto-merge) | `{"type":"person","displayName":"Alice","identifiers":[{"kind":"email","value":"alice@a.com"}]}` |
+| `memory_forget` | Archive a fact (optionally supersede with a correction). Rate-limited 10/60s/user. | `{"factId":"fact_xyz","replaceWith":{"predicate":"role","value":"senior engineer"}}` |
+| `memory_restore` | Un-archive a previously forgotten fact (undo). Rejects when superseded by a live successor. | `{"factId":"fact_xyz"}` |
+| `memory_set_agent_rule` | Record a user-specific behavior rule for THIS agent. Rendered back into the system-message rules block. | `{"rule":"Be terse in replies."}` · `{"rule":"Reply in Russian.","replaces":"fact_abc123"}` |
+
+**Write visibility:** the LLM-facing schemas for `memory_remember`,
+`memory_link`, and `memory_upsert_entity` deliberately do not expose a
+`visibility` argument. When those tools write a record, they pass no explicit
+permissions and `MemorySystem.visibilityPolicy` decides what to stamp. Configure
+that policy at the memory-system boundary; do not rely on prompt instructions
+for authorization. Programmatic callers using `MemorySystem` directly can pass
+explicit `permissions`.
+
+**Multi-ID enrichment** — `memory_upsert_entity` auto-merges identifiers when any one matches an existing entity. Useful when the LLM observes a person via Slack today and via email tomorrow:
+
+```json
+{"type":"person","displayName":"Alice Smith",
+ "identifiers":[{"kind":"email","value":"alice@a.com"},
+                {"kind":"slack_user_id","value":"U07ABC"}]}
+```
+
+If any identifier already belongs to an entity, the others are added to it — so future `memory_find_entity` lookups by either identifier resolve to the same Alice.
+
+### Behavior rules — `memory_set_agent_rule`
+
+When the user gives a directive about *the agent itself* ("be terse", "stop apologizing", "reply in Russian", "your name is Jason now"), the LLM calls `memory_set_agent_rule`. The rule is stored as a fact on the agent entity scoped to the calling user (`ownerId = userId`, `predicate = 'agent_behavior_rule'`, importance 0.95, private visibility) and rendered back into the **`## Your persona — how YOU (the assistant) present yourself`** block on every subsequent turn. Each rule shows its `ruleId` so the LLM can pass `replaces` to supersede it cleanly when the user contradicts a prior rule.
+
+The plugin's instructions teach the LLM a narrow trigger:
+
+- ✅ Identity / name / persona, role assignment, tone, format, language, meta-interaction rules.
+- ❌ Task creation ("remind me to X" → `memory_upsert_entity` task or a tracker connector), calendar actions, factual corrections, user statements about themselves.
+
+Rules are scoped per-user-per-agent — another user of the same agent gets a different set, all derived from the same single `agentEntityId` plus per-fact `ownerId` filtering.
+
+### Background ingestion via `SessionIngestorPluginNextGen`
+
+`memory_*` write tools depend on the agent remembering to call them. For deployments where the agent should be retrieval-only or where you want belt-and-suspenders capture, register `SessionIngestorPluginNextGen` alongside `MemoryPluginNextGen`. It hooks `onBeforePrepare`, snapshots the conversation slice since its watermark, and (when the slice meets `minBatchMessages`) kicks off an async LLM extraction that writes facts directly to the same `MemorySystem`.
+
+```typescript
+import { SessionIngestorPluginNextGen } from 'oneringai';
+
+// After Agent.create(...):
+agent.context.registerPlugin(new SessionIngestorPluginNextGen({
+  memory,
+  agentId: agent.context.agentId,
+  userId: 'alice',
+  groupId: 'team-A',                    // optional, trusted
+  connectorName: 'fast-extractor',      // REQUIRED — typically a cheap, NON-reasoning model
+  model: 'gpt-4.1',
+  diligence: 'normal',                  // 'minimal' | 'normal' | 'thorough'
+  minBatchMessages: 6,                  // default
+}));
+```
+
+Pair `memory: true` with the ingestor (and **without** `memoryWrite`) for an agent that reads memory but never mutates it directly — useful when the agent operator wants ambient learning without trusting the LLM to write. See [docs/MEMORY_GUIDE.md § Learning from agent runs](./docs/MEMORY_GUIDE.md#learning-from-agent-runs-with-sessioningestorpluginnextgen) for batching, watermark, dedup-merge, and graceful-shutdown details.
+
+> On graceful shutdown the host MUST `await ingestor.flush()` before destroying the agent — `flush()` ignores the batch threshold and awaits completion, so the trailing batch is captured.
+
+For **non-agent flows** (process this email / text now, no conversation involved), use `SignalIngestor` directly — see [docs/MEMORY_SIGNALS.md](./docs/MEMORY_SIGNALS.md). Reference adapters: `EmailSignalAdapter`, `CalendarSignalAdapter`, `PlainTextAdapter`. Custom adapters implement `SignalSourceAdapter`.
+
+### Permissions and scope
+
+Every entity and fact carries:
+- **`ownerId`** (required) — the user who created the record. Owner always has full access.
+- **`groupId`** (optional) — the group the record belongs to.
+- **`permissions: { group?, world? }`** — `'none' | 'read' | 'write'`. Defaults: `group: 'read'`, `world: 'read'` (public-read, owner-write).
+
+Reads are filtered at the storage adapter (defence-in-depth); writes are checked at the `MemorySystem` layer (`assertCanAccess(..., 'write')` throws `PermissionDeniedError`). Scope visibility cuts orthogonal: a record with `groupId: 'A'` is invisible to callers in group `'B'` regardless of permissions.
+
+The plugin config still accepts `defaultVisibility` for compatibility, but the
+current write-tool implementations do not apply it when the LLM omits
+visibility. Use `MemorySystem.visibilityPolicy` for deployment-wide defaults.
+`memory_set_agent_rule` is a special case: it always writes the user-specific
+agent rule as private. Writes whose `contextIds` include foreign or
+unverifiable entities are fail-safe restricted to owner-only visibility.
+Full model: [docs/MEMORY_PERMISSIONS.md](./docs/MEMORY_PERMISSIONS.md).
+
+### Principal-based ACLs (explicit grants)
+
+Owner / group / world handles the common cases, but it can't say *"this **specific** other person, agent, or service can read this record."* The principal-ACL layer adds that — explicit per-identity grants that sit **alongside** owner/group/world. It is fully opt-in and backwards compatible: set no `acl` and pass no `scope.principals`, and nothing below changes.
+
+**Principals** are opaque tokens — `user:<id>`, `entity:<id>` (typically a `person`), `group:<id>`, `service:<name>`, and `world` — built with the exported helpers `principalUser`, `principalEntity`, `principalGroup`, `principalService`, and `PRINCIPAL_WORLD`. (`parsePrincipal(token)` parses one back; an unknown prefix is `kind: 'unknown'`, never `world`.)
+
+**Grant** access with an `acl` on any entity or fact:
+
+```typescript
+import { principalEntity } from 'oneringai';
+
+await memory.addFact(
+  {
+    subjectId: deal.id,
+    predicate: 'note',
+    kind: 'atomic',
+    details: 'Pricing discussed with Alice',
+    permissions: { group: 'none', world: 'none' },              // owner-private base
+    acl: [{ principal: principalEntity('alice'), actions: ['read'] }],  // …plus Alice
+  },
+  { userId: 'owner', groupId: 'g1' },
+);
+```
+
+`ACLEntry` is `{ principal, actions: Array<'read' | 'write'> }`; an empty `actions` array grants nothing (never a silent read). On every write the storage boundary projects `ownerId` + `groupId` + `permissions` + `acl` into two **library-owned** arrays on the record — `readPrincipals` and `writePrincipals` (`writePrincipals ⊆ readPrincipals`). Never set these by hand; they're recomputed on each write.
+
+**Query in principal mode** by passing `scope.principals` — its *presence* (any length) is authoritative, and a record is visible iff the token sets intersect:
+
+```typescript
+import { principalUser, principalGroup, principalEntity, PRINCIPAL_WORLD } from 'oneringai';
+
+const scope = {
+  principals: [
+    principalUser('alice'),            // own user token → owner access
+    principalGroup('g1'),              // groups alice belongs to
+    principalEntity(alicePersonId),    // alice's Person entity (account-link grants)
+    PRINCIPAL_WORLD,                   // see public records
+  ],
+};
+await memory.getFact(id, scope);       // visible iff tokens ∩ readPrincipals ≠ ∅
+```
+
+- **Empty set** (`{ principals: [] }`) → sees/authorizes nothing. **Absent** → the legacy owner/group/world path runs unchanged.
+- When present, `userId` / `groupId` are ignored for the access decision — encode them as tokens instead.
+- The **host owns token-set correctness** (the library trusts it like `scope.userId`): include `PRINCIPAL_WORLD` to see public records and the caller's own `user:<id>` for owner access (both fail *closed* if omitted), and include **only** `group:` tokens the caller truly belongs to (over-including one **leaks** that group — fails *open*).
+
+**Mutate access** after creation with `setAccess` (requires `write`; replaces the `acl` and re-materializes the arrays — it does not touch `ownerId` or the `permissions` block):
+
+```typescript
+await memory.setAccess('fact', factId, [{ principal: principalEntity('bob'), actions: ['read'] }], scope);
+```
+
+**"Account links later."** When two `person` entities turn out to be the same identity, `mergeEntities(winner, loser, scope)` rewrites every `entity:<loser>` grant to `entity:<winner>` across all records — so a linked contact's prior facts stay visible under the surviving identity.
+
+> ⚠️ **Migration gate.** Principal callers have **no legacy fallback**: a row written before the principal model (no `readPrincipals`) is invisible to a `scope.principals` caller. Before any host code starts passing `scope.principals`, run the idempotent backfill to completion:
+> ```typescript
+> await memory.backfillAccessPrincipals(scope, { batchSize: 500 });
+> // → { entitiesScanned, entitiesUpdated, factsScanned, factsUpdated }
+> ```
+
+The same primitives (`materializePrincipals`, `fromLibraryPermissions`, `fromNimbleAudit`, `readFilterForPrincipals`, …) are exported so a host can authorize its **own** collections with identical grammar. Full reference: [docs/MEMORY_PERMISSIONS.md § Principal-based ACLs](./docs/MEMORY_PERMISSIONS.md#principal-based-acls-explicit-grants).
+
+### Security invariants
+
+The library trusts scope (`{userId, groupId}`) because the host authenticates the caller. The plugin + tools preserve that trust boundary:
+
+- **`userId` and `groupId` come from plugin config, NEVER from tool arguments.** Tools silently ignore any `groupId` passed by the LLM. (Otherwise a user in group A could ask the agent to call `memory_remember({..., groupId: "B"})` and escalate.)
+- **No ghost-writes.** `memory_remember` and `memory_link` reject writes whose subject is owned by another user — the memory layer enforces `fact.ownerId == subject.ownerId`, so without this guard a write against someone else's entity would silently attribute the fact to *them*. The tools return a structured error; the LLM should `memory_upsert_entity` its own entity instead.
+- **`contextIds` fail-safe restriction.** A write specifying `contextIds` that include foreign-owned or unverifiable entities is forced to owner-only whenever the host policy could otherwise choose wider visibility. The response includes a warning. This prevents planting cross-owner facts that surface in another owner's graph walks.
+- **Numeric clamping.** All LLM-controllable numeric limits are capped (`maxDepth ≤ 5`, `topK ≤ 100`, `limit ≤ 200/500`, `topFactsLimit ≤ 100`, `neighborDepth ≤ 5`, `confidence`/`importance` ∈ [0, 1]). DoS and ranking-pollution mitigated.
+- **`kind` is a strict enum.** Every fact is `'atomic'` or `'document'`. Anything else is rejected at both the tool and `MemorySystem.addFact` boundary.
+- **`value` and `objectId` are mutually exclusive.** Either relational or attribute, never both.
+
+### Using the tools without the plugin
+
+If you want the LLM tools but not the plugin's profile injection (e.g. you already have a custom system prompt strategy), call the factories directly. All three share the same `CreateMemoryToolsArgs`:
+
+```typescript
+import {
+  createMemoryReadTools,
+  createMemoryWriteTools,
+  createMemoryTools,            // convenience: all 12
+} from 'oneringai';
+
+const readTools = createMemoryReadTools({
+  memory,                                   // MemorySystem instance
+  agentId: 'my-agent',
+  defaultUserId: 'alice',                   // fallback when ToolContext.userId is unset
+  defaultGroupId: 'team-A',                 // TRUSTED — from your auth layer
+  defaultPrincipals: ['user:alice', 'group:team-A', 'world'],
+  // Optional: wire "me" / "this_agent" token resolution via your own bootstrap.
+  getOwnSubjectIds: () => ({ userEntityId, agentEntityId }),
+  autoResolveThreshold: 0.9,
+});
+
+agent.tools.registerMany(readTools);
+
+// Or full read+write:
+const writeTools = createMemoryWriteTools({ memory, agentId: 'my-agent', defaultUserId: 'alice' });
+agent.tools.registerMany(writeTools);
+```
+
+Without `getOwnSubjectIds`, the `"me"` / `"this_agent"` `SubjectRef` tokens return a structured error; callers must reference entities by id, identifier, or surface.
+
+### Direct `MemorySystem` access
+
+For server-side code (jobs, migrations, CLI tooling) you can bypass the agent layer entirely and use the `MemorySystem` API directly:
+
+```typescript
+const scope = { userId: 'alice', groupId: 'team-A' };
+
+// Upsert an entity
+const { entity: john } = await memory.upsertEntity({
+  type: 'person',
+  displayName: 'John Doe',
+  identifiers: [{ kind: 'email', value: 'john@acme.com' }],
+}, scope);
+
+// Add a fact
+await memory.addFact({
+  subjectId: john.id,
+  predicate: 'works_at',
+  kind: 'atomic',
+  objectId: acmeId,
+  importance: 0.8,
+}, scope);
+
+// Brain-like retrieval — profile + top facts + related tasks + related events
+const view = await memory.getContext(john.id, {}, scope);
+
+// Surface-form lookup (for callers that don't know the id yet)
+const candidates = await memory.resolveEntity(
+  { surface: 'John from Acme', type: 'person' },
+  scope,
+);
+
+// Graph traversal
+const neighborhood = await memory.traverse(john.id, {
+  direction: 'out',
+  maxDepth: 2,
+}, scope);
+
+// Semantic search (requires embedder)
+const hits = await memory.semanticSearch('budget concerns', {}, scope);
+
+// Bitemporal — what did we know about this entity on a specific date?
+const past = await memory.getContext(john.id, { asOf: new Date('2026-01-15') }, scope);
+```
+
+Full API reference: [docs/MEMORY_API.md](./docs/MEMORY_API.md).
+
+---
+
+## Tool Catalog: Dynamic Tool Loading/Unloading
+
+When agents need 100+ tools, sending all tool definitions to the LLM wastes tokens and degrades performance. The Tool Catalog lets agents dynamically discover and load only the tool categories they need.
+
+### Quick Start
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools: [readFile, writeFile],  // always-on tools (outside catalog)
+  identities: [{ connector: 'github' }],  // connector scope
+  context: {
+    model: 'gpt-4.1',
+    features: { toolCatalog: true },
+    toolCategories: ['web', 'code'],  // built-in category scope
+    plugins: {
+      toolCatalog: {
+        pinned: ['web'],  // always loaded, LLM can't unload
+      },
+    },
+  },
+});
+```
+
+The agent gets 3 metatools: `tool_catalog_search`, `tool_catalog_load`, `tool_catalog_unload`. It can browse available categories, load what it needs, and unload when done.
+
+**Important:** Plugin tools (memory, context, instructions, etc.) are always available and completely separate from the catalog. They cannot be unloaded.
+
+### How Scoping Works
+
+The Tool Catalog has two independent scoping mechanisms:
+
+| Scope | Controls | Config |
+|-------|----------|--------|
+| **`toolCategories`** | Built-in categories (filesystem, web, code, shell, etc.) | `context.toolCategories` |
+| **`identities`** | Connector categories (connector:github, connector:slack, etc.) | `Agent.create({ identities })` |
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+
+  // Controls which connector categories appear in catalog
+  identities: [
+    { connector: 'github' },
+    { connector: 'slack' },
+    { connector: 'microsoft', accountId: 'work' },
+  ],
+
+  context: {
+    model: 'gpt-4.1',
+    features: { toolCatalog: true },
+    // Controls which built-in categories appear in catalog
+    toolCategories: ['filesystem', 'web', 'code'],
+  },
+});
+
+// LLM sees: filesystem, web, code, connector:github, connector:slack, connector:microsoft:work
+```
+
+**Scoping syntax for `toolCategories`:**
+
+```text
+// Allowlist (string[] shorthand)
+toolCategories: ['web', 'knowledge']
+
+// Explicit allowlist
+toolCategories: { include: ['web', 'knowledge'] }
+
+// Blocklist (all except these)
+toolCategories: { exclude: ['desktop', 'shell'] }
+
+// No scope = all built-in categories visible
+```
+
+### Pinned Categories
+
+Pinned categories are always loaded and the LLM cannot unload them. Use this for tools the agent must always have access to:
+
+```typescript
+const contextConfig = {
+  features: { toolCatalog: true },
+  toolCategories: ['filesystem', 'web', 'code'],
+  plugins: {
+    toolCatalog: {
+      pinned: ['filesystem'],  // always loaded, can't unload
+    },
+  },
+};
+```
+
+**Pinned vs always-on tools (`tools` array):**
+- `tools: [myTool]` on `Agent.create()` — individual tools always available, outside the catalog entirely
+- `pinned: ['filesystem']` — entire category loaded via catalog, visible in catalog listings as `[PINNED]`, but cannot be unloaded
+
+**Behavior:**
+- Pinned categories are loaded automatically when the plugin initializes
+- `tool_catalog_unload` returns an error for pinned categories
+- Pinned categories don't count toward `maxLoadedCategories` limit
+- During compaction, pinned categories are never evicted
+
+### Auto-Loading Categories
+
+Pre-load categories so the agent doesn't need an extra turn. Unlike pinned, auto-loaded categories **can** be unloaded by the LLM:
+
+```typescript
+const pluginConfigs = {
+  plugins: {
+  toolCatalog: {
+    pinned: ['filesystem'],                     // always loaded
+    autoLoadCategories: ['web', 'knowledge'],   // pre-loaded, can be unloaded
+    maxLoadedCategories: 10,                    // limit (excludes pinned)
+  },
+  },
+};
+```
+
+### Dynamic Instructions
+
+The LLM receives dynamic instructions that list exactly which categories are available, with markers:
+
+```
+## Tool Catalog
+
+Your core tools (memory, context, instructions, etc.) are always available.
+Additional tool categories can be loaded on demand from the catalog below.
+
+**Available categories:**
+- filesystem (6 tools) [PINNED]: Read, write, edit, search, and list files
+- web (1 tool): Fetch and process web content
+- code (1 tool): Execute JavaScript code in sandboxed VM
+- connector:github (9 tools): Authenticated API + 8 GitHub tools
+- connector:slack (11 tools): Authenticated API + 10 Slack tools
+
+**Best practices:**
+- Search first to find the right category before loading.
+- Unload categories you no longer need to keep context lean.
+- Categories marked [PINNED] are always available and cannot be unloaded.
+```
+
+### ToolCatalogRegistry
+
+Static global registry for tool categories (like `Connector` and `StorageRegistry`). Register your custom categories at app startup:
+
+```typescript
+import { ToolCatalogRegistry } from 'oneringai';
+
+ToolCatalogRegistry.registerCategory({
+  name: 'knowledge',
+  displayName: 'Knowledge Graph',
+  description: 'Search entities, get facts, manage references',
+});
+
+ToolCatalogRegistry.registerTools('knowledge', [
+  { name: 'entity_search', displayName: 'Entity Search', description: 'Search people/orgs', tool: entitySearch, safeByDefault: true },
+]);
+```
+
+Built-in tools from `registry.generated.ts` are auto-registered on first access.
+
+### Resolving Tool Names
+
+For executors that resolve `string[]` tool names to `ToolFunction[]`:
+
+```typescript
+const tools = ToolCatalogRegistry.resolveTools(
+  ['entity_search', 'github_api'],
+  { includeConnectors: true }
+);
+```
+
+### Tools
+
+| Tool | Description | Permission |
+|------|-------------|------------|
+| `tool_catalog_search` | Browse categories, list tools, keyword search | Always allowed |
+| `tool_catalog_load` | Load a category's tools into the agent | Always allowed |
+| `tool_catalog_unload` | Unload a category to free token budget | Always allowed |
+
+### Full Configuration Reference
+
+```typescript
+interface ToolCatalogPluginConfig {
+  /** Scope for built-in categories (does NOT affect connector categories) */
+  categoryScope?: string[] | { include: string[] } | { exclude: string[] };
+  /** Categories pre-loaded on init (can be unloaded by LLM) */
+  autoLoadCategories?: string[];
+  /** Categories always loaded (cannot be unloaded by LLM) */
+  pinned?: string[];
+  /** Max loaded categories at once, excluding pinned (default: 10) */
+  maxLoadedCategories?: number;
+  /** Auth identities for connector filtering (usually set via Agent.create) */
+  identities?: AuthIdentity[];
+}
+```
+
+---
+
+## Shared Workspace
+
+The **Shared Workspace** store enables multi-agent coordination by providing a shared, versioned key-value space that multiple agents can read from and write to.
+
+### Setup
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  context: {
+    model: 'gpt-4.1',
+    features: { sharedWorkspace: true },
+  },
+});
+```
+
+### Entry Model
+
+Each workspace entry has richer metadata than other stores:
+
+```typescript
+interface WorkspaceEntry {
+  key: string;
+  content?: string;           // Inline text content (for collaborative documents)
+  references?: string[];      // External pointers: file paths, DB IDs, URLs
+  summary: string;            // Human-readable summary (always required)
+  status?: string;            // e.g., "draft", "final", "in-review"
+  author?: string;            // Agent or user who wrote it
+  version: number;            // Auto-incremented on each update
+  tags?: string[];            // Categorization tags
+  createdAt: number;
+  updatedAt: number;
+}
+```
+
+### Usage
+
+```jsonc
+// Store a workspace entry
+{
+  "name": "store_set",
+  "arguments": {
+    "store": "workspace",
+    "key": "research_findings",
+    "data": {
+      "summary": "Analysis of competitor pricing models",
+      "content": "Competitors: ...\nInsights: ...",
+      "status": "draft",
+      "tags": ["research", "pricing"],
+      "references": ["market_data"]
+    }
+  }
+}
+
+// Get a specific entry
+{
+  "name": "store_get",
+  "arguments": {
+    "store": "workspace",
+    "key": "research_findings"
+  }
+}
+
+// List entries (with optional filter)
+{
+  "name": "store_list",
+  "arguments": {
+    "store": "workspace",
+    "filter": { "tags": ["research"], "status": "draft" }
+  }
+}
+```
+
+### Workspace-Specific Actions
+
+The workspace store supports additional actions via `store_action`:
+
+| Action | Params | Description |
+|--------|--------|-------------|
+| `log` | `{ message, author? }` | Append a log entry (for coordination/debugging) |
+| `history` | `{ limit? }` | Get recent entries from the shared team log (default limit: 20) |
+| `archive` | `{ key }` | Archive an entry (soft-delete) |
+| `clear` | `{ confirm: true }` | Clear all entries |
+
+```jsonc
+// Log a coordination message
+{
+  "name": "store_action",
+  "arguments": {
+    "store": "workspace",
+    "action": "log",
+    "params": { "message": "Starting phase 2 of analysis", "author": "researcher" }
+  }
+}
+
+// Get recent team log entries
+{
+  "name": "store_action",
+  "arguments": {
+    "store": "workspace",
+    "action": "history",
+    "params": { "limit": 20 }
+  }
+}
+```
+
+### Multi-Agent Example
+
+```typescript
+// Documentation check: complete example
+import { Agent, Connector, Vendor, SharedWorkspacePluginNextGen } from 'oneringai';
+
+Connector.create({
+  name: 'openai', vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
+});
+const workspace = new SharedWorkspacePluginNextGen();
+
+// Register one actual board with both contexts; enabling two separate plugins would not share state.
+const researcher = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  instructions: 'You are a research agent. Store findings in the workspace.',
+  context: { model: 'gpt-4.1', features: { sharedWorkspace: false } },
+});
+
+const writer = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  instructions: 'You are a writing agent. Read findings from workspace and write reports.',
+  context: { model: 'gpt-4.1', features: { sharedWorkspace: false } },
+});
+
+researcher.context.registerPlugin(workspace);
+writer.context.registerPlugin(workspace);
+
+// Researcher stores findings
+await researcher.run('Research AI trends for 2026');
+// Agent calls: store_set("workspace", "ai_trends", { summary: "Key AI trends...", content: {...} })
+
+// Writer reads findings and writes report
+await writer.run('Write a report based on the workspace findings');
+// Agent calls: store_get("workspace", "ai_trends"), then produces a report
+```
+
+---
+
+The shared board is in-process state, not automatic database synchronization.
+Coordinate the participating contexts as one lifecycle and do not destroy a shared
+plugin while another agent still needs it. `createOrchestrator()` owns this wiring.
+
+## Session Persistence
+
+Save and resume agent conversations across restarts using `AgentContextNextGen` and `FileContextStorage`.
+
+`agent.loadSession()` and `context.load()` validate protected evidence/task scope,
+association and version before restoration, then commit the active save target on
+success. Rejected loads keep the previous target and scoped state; checkpoint saves
+wait for restoration. Custom restore hooks retain their extension point and must
+honor serializable plugin state; saves fail closed if a plugin refuses rollback.
+Recovery requires successful restoration of every affected plugin instance; a legacy
+checkpoint missing it does not clear the guard. Trusted host
+`context.restoreState(goodSnapshot)` can also repair it. Rollback snapshots follow
+the existing JSON contract, including `toJSON` hooks. A synchronous loaded-notification
+error rolls back state and ID with its original error. Run loads while execution/host
+edits are idle.
+
+`context.save(id?, metadata?, state?)` keeps existing serialized overrides and also
+accepts a snapshot builder as its optional third argument; the builder runs after
+preceding checkpoint operations. `loadRaw()` retains its legacy unvalidated session
+ID selection and is not the managed restore path. Failed shared-context resumes
+include construction and synchronous notification in the transaction, restoring
+permission/tool/prompt/callback/role bindings before candidate cleanup. Cleanup attempts all owned resources even if a plugin throws; direct
+`destroy()` reports the first teardown error after cleanup. Read the
+[complete restoration boundaries](docs/AGENT_PRESETS.md#session-restoration-and-cleanup)
+for custom-hook IO, private side effects and shared ownership.
+
+### Quick Start
+
+```typescript
+import { AgentContextNextGen, createFileContextStorage } from 'oneringai';
+
+// Create storage for the agent
+const storage = createFileContextStorage('my-assistant');
+// Sessions stored at: ~/.oneringai/agents/my-assistant/sessions/
+
+// Create context with storage
+const ctx = AgentContextNextGen.create({
+  model: 'gpt-4.1',
+  features: { workingMemory: true },
+  storage,
+});
+
+// Build up state
+ctx.addUserMessage('Remember: my name is Alice');
+await ctx.memory?.store('user_name', 'User name', 'Alice');
+
+// Save session
+await ctx.save('session-001', { title: 'User Session' });
+
+// Later... load session
+const ctx2 = AgentContextNextGen.create({ model: 'gpt-4.1', storage });
+const loaded = await ctx2.load('session-001');
+
+if (loaded) {
+  // Full state restored
+  const name = await ctx2.memory?.retrieve('user_name');
+  console.log(name); // 'Alice'
+}
+```
+
+### Storage Backend: FileContextStorage
+
+```typescript
+import { FileContextStorage, createFileContextStorage } from 'oneringai';
+
+// Simple: use helper function
+const storage = createFileContextStorage('my-agent');
+
+// Advanced: custom config
+const storageVariant2 = new FileContextStorage({
+  agentId: 'my-agent',
+  baseDirectory: '/custom/path/agents',  // Override default ~/.oneringai/agents
+  prettyPrint: true,  // Human-readable JSON
+});
+```
+
+**Storage Location:** `~/.oneringai/agents/<agentId>/sessions/<sessionId>.json`
+
+### Custom Storage
+
+Implement `IContextStorage` interface:
+
+```typescript
+import type { IContextStorage, StoredContextSession, SerializedContextState, ContextSessionMetadata, ContextStorageListOptions, ContextSessionSummary } from 'oneringai';
+
+abstract class DatabaseContextStorage implements IContextStorage {
+  abstract save(sessionId: string, state: SerializedContextState, metadata?: ContextSessionMetadata): Promise<void>;
+  abstract load(sessionId: string): Promise<StoredContextSession | null>;
+  abstract delete(sessionId: string): Promise<void>;
+  abstract exists(sessionId: string): Promise<boolean>;
+  abstract list(options?: ContextStorageListOptions): Promise<ContextSessionSummary[]>;
+  getPath() { return 'database://...'; }
+}
+```
+
+### Centralized Storage Registry
+
+Instead of configuring each subsystem separately, use `StorageRegistry` to set storage backends in one call. Custom tools, media, sessions, context plugins, OAuth, routines, correlation records, agent/connector definitions, and permission rules consult the registry. Resolution can happen during construction or lazily at execution time depending on the subsystem; the table below records each actual default.
+
+```typescript
+import { StorageRegistry } from 'oneringai';
+
+// Configure all storage backends at init time
+StorageRegistry.configure({
+  // Global singletons
+  media: new S3MediaStorage(),
+  oauthTokens: new FileTokenStorage({ directory: './tokens' }),
+
+  // Context-aware factories (called with optional StorageContext for multi-tenant)
+  customTools: (ctx) => new MongoCustomToolStorage(ctx?.userId),
+  sessions: (agentId) => new RedisContextStorage(agentId),
+  persistentInstructions: (agentId) => new DBInstructionsStorage(agentId),
+  workingMemory: () => new RedisMemoryStorage(),
+  userInfo: (ctx) => new MongoUserInfoStorage(ctx?.userId),
+  routineDefinitions: (ctx) => new MongoRoutineDefinitionStorage(ctx?.userId),
+  routineExecutions: (ctx) => new MongoRoutineExecutionStorage(ctx?.userId),
+
+  // Additional global backends
+  correlations: new MongoCorrelationStorage(),
+  permissionRules: new MongoPermissionRulesStorage(),
+});
+
+// That's it! All agents, tools, and plugins will use these backends automatically.
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1' });
+```
+
+**Resolution order** (every subsystem follows this):
+1. Explicit parameter passed to constructor/factory (e.g., `createCustomToolMetaTools({ storage })`)
+2. Value registered in `StorageRegistry`
+3. Built-in file-based (or in-memory) default
+
+**No breaking changes** — `setMediaStorage()`, `Connector.setDefaultStorage()`, and all explicit constructor params continue to work exactly as before. They now delegate to the registry internally.
+
+**Available storage keys:**
+
+| Key | Type | Default | Consumed By |
+|-----|------|---------|-------------|
+| `customTools` | `(ctx?) => ICustomToolStorage` | `FileCustomToolStorage` | `custom_tool_save/list/load/delete` meta-tools |
+| `media` | `IMediaStorage` | `FileMediaStorage` | Image/video/TTS output tools |
+| `oauthTokens` | `ITokenStorage` | `MemoryStorage` | `Connector` OAuth token persistence |
+| `agentDefinitions` | `IAgentDefinitionStorage` | — | `Agent.saveDefinition()`, `Agent.fromStorage()` |
+| `connectorConfig` | `IConnectorConfigStorage` | — | `ConnectorConfigStore.create()` |
+| `sessions` | `(agentId, ctx?) => IContextStorage` | — | `AgentContextNextGen` constructor |
+| `persistentInstructions` | `(agentId, ctx?) => IPersistentInstructionsStorage` | `FilePersistentInstructionsStorage` | `PersistentInstructionsPluginNextGen` |
+| `workingMemory` | `(ctx?) => IMemoryStorage` | `InMemoryStorage` | `WorkingMemoryPluginNextGen` |
+| `userInfo` | `(ctx?) => IUserInfoStorage` | `FileUserInfoStorage` | `UserInfoPluginNextGen` |
+| `routineDefinitions` | `(ctx?) => IRoutineDefinitionStorage` | `FileRoutineDefinitionStorage` | Routine definition persistence |
+| `routineExecutions` | `(ctx?) => IRoutineExecutionStorage` | — | Routine execution detail/list tools |
+| `correlations` | `ICorrelationStorage` | — | Agent correlation/result routing |
+| `permissionRules` | `IUserPermissionRulesStorage` | — | Persistent per-user permission rules |
+| `evidence` | `(scope, ctx?) => IEvidenceStorage` | Process-local when evidence is explicitly enabled | Scoped source retention; separate from session snapshots |
+| `runtimeSessions` | `(trustedContext) => IRuntimeSessionStorage` | Unconfigured | Optional runtime control/recovery; managed drivers require durable storage |
+
+**Individual access:**
+
+```typescript
+// Set one backend
+StorageRegistry.set('media', new S3MediaStorage());
+
+// Get (returns undefined if not configured)
+const storage = StorageRegistry.get('customTools');
+
+// Check if configured
+if (StorageRegistry.has('sessions')) { /* ... */ }
+
+// Reset all (useful in tests)
+StorageRegistry.reset();
+```
+
+**Multi-Tenant / Multi-User:**
+
+Per-agent factories receive an optional `StorageContext` — an opaque object (like `ConnectorAccessContext`) that carries userId, tenantId, or any custom fields:
+
+```typescript
+import { StorageRegistry } from 'oneringai';
+
+// Configure factories that partition by tenant
+StorageRegistry.configure({
+  sessions: (agentId, ctx) => new TenantSessionStorage(agentId, ctx?.tenantId as string),
+  persistentInstructions: (agentId, ctx) => new TenantInstructionsStorage(agentId, ctx?.userId as string),
+  workingMemory: (ctx) => new TenantMemoryStorage(ctx?.tenantId as string),
+});
+
+// Single-tenant startup only; do not change global context during overlapping tenant requests
+StorageRegistry.setContext({ userId: 'alice', tenantId: 'acme-corp' });
+
+// All agents now get tenant-scoped storage automatically
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1', userId: 'alice' });
+```
+
+If no global context is set, `AgentContextNextGen` derives `{ userId }` for the `sessions` factory. Custom-tool, user-info, and routine tools can derive `{ userId }` from their per-call `ToolContext`. The `workingMemory` and `persistentInstructions` factories receive only `StorageRegistry.getContext()` and have no per-instance fallback, so call `StorageRegistry.setContext({ userId, tenantId })` when those backends must be partitioned. Because the registry context is process-global, request-concurrent multi-tenant servers should prefer explicitly scoped factories/instances over mutating global context during overlapping requests.
+
+### Session Management APIs
+
+```typescript
+// Check if session exists
+const exists = await ctx.sessionExists('session-001');
+
+// Delete session
+await ctx.deleteSession('session-001');
+
+// Get current session ID
+console.log(ctx.sessionId);  // 'session-001' or null
+
+// List all sessions for this agent
+const sessions = await storage.list();
+for (const s of sessions) {
+  console.log(`${s.sessionId}: ${s.metadata?.title} (${s.messageCount} messages)`);
+}
+```
+
+### Using with Agent
+
+```typescript
+import { Agent, createFileContextStorage } from 'oneringai';
+
+const storage = createFileContextStorage('my-agent');
+
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  context: {
+    model: 'gpt-4.1',
+    agentId: 'my-agent',
+    features: { workingMemory: true },
+    storage,
+  },
+});
+
+// Run agent
+await agent.run('Remember: my favorite color is blue');
+
+// Save session
+await agent.context.save('session-001');
+
+// Later... load session
+await agent.context.load('session-001');
+await agent.run('What is my favorite color?');
+// Output: "Your favorite color is blue."
+```
+
+### What Gets Persisted
+
+| Component | Persisted? | Notes |
+|-----------|------------|-------|
+| Conversation history | ✅ | All messages with timestamps |
+| WorkingMemory entries | ✅ | Full values, not just index |
+| InContextMemory entries | ✅ | Via plugin state |
+| Tool enable/disable state | ❌ | `ToolManager.getState()/loadState()` exist but are not wired into `ctx.save()`/`ctx.load()` — persist/restore separately if needed |
+| System prompt | ✅ | |
+
+
+### AgentContextNextGen Session Persistence
+
+The recommended approach to session persistence using `AgentContextNextGen`:
+
+```typescript
+import { AgentContextNextGen, createFileContextStorage, MessageRole, ContentType } from 'oneringai';
+
+// Create storage for the agent
+const storage = createFileContextStorage('my-assistant');
+// Sessions stored at: ~/.oneringai/agents/my-assistant/sessions/
+
+// Create context with storage
+const ctx = AgentContextNextGen.create({
+  model: 'gpt-4.1',
+  features: { workingMemory: true, inContextMemory: true },
+  storage,
+});
+
+// Build up state
+ctx.addUserMessage('My name is Alice and I prefer dark mode.');
+ctx.addAssistantResponse([{ type: 'message', role: MessageRole.ASSISTANT, content: [
+  { type: ContentType.OUTPUT_TEXT, text: 'Nice to meet you, Alice!' },
+] }]);
+await ctx.memory?.store('user_name', 'User name', 'Alice');
+await ctx.memory?.store('user_pref', 'User preferences', { theme: 'dark' });
+
+// Save session with metadata
+// Note: this metadata is merged into the serialized state's internal
+// `metadata` field, NOT into StoredContextSession.metadata (the field
+// storage.list() uses for s.metadata?.title / tags filtering below).
+// To make title/tags queryable via storage.list(), call
+// storage.updateMetadata(sessionId, { title, tags }) as well.
+await ctx.save('session-001', {
+  title: 'Alice Support Chat',
+  tags: ['support', 'vip'],
+});
+
+console.log(ctx.sessionId);  // 'session-001'
+```
+
+#### Loading Sessions
+
+```typescript
+// Create new context and load
+const ctx2 = AgentContextNextGen.create({
+  model: 'gpt-4.1',
+  features: { workingMemory: true, inContextMemory: true },
+  storage,
+});
+
+const loaded = await ctx2.load('session-001');
+
+if (loaded) {
+  // Everything is restored:
+  const conversation = ctx2.getConversation();
+  console.log(conversation[0]);  // User message about Alice
+
+  const name = await ctx2.memory?.retrieve('user_name');
+  console.log(name);  // 'Alice'
+
+  const prefs = await ctx2.memory?.retrieve('user_pref');
+  console.log(prefs);  // { theme: 'dark' }
+}
+```
+
+#### What Gets Persisted
+
+| Component | Persisted? | Notes |
+|-----------|------------|-------|
+| Conversation history | ✅ | All messages with timestamps |
+| WorkingMemory entries | ✅ | **Full values**, not just index |
+| Tool enable/disable state | ❌ | `ToolManager.getState()/loadState()` exist but are not wired into `ctx.save()`/`ctx.load()` — persist/restore separately if needed |
+| Permission approvals | ❌ | `ToolPermissionManager.getState()/loadState()` exist but are not wired into `ctx.save()`/`ctx.load()` — persist/restore separately if needed |
+| InContextMemory entries | ✅ | Via plugin state |
+| System prompt | ✅ | |
+| Instructions | ✅ | |
+
+#### Session Management APIs
+
+```typescript
+// Check if session exists
+const exists = await ctx.sessionExists('session-001');
+
+// Delete session
+await ctx.deleteSession('session-001');
+
+// Delete current session
+await ctx.deleteSession();  // Uses ctx.sessionId
+
+// List all sessions for this agent
+const sessions = await storage.list();
+for (const s of sessions) {
+  console.log(`${s.sessionId}: ${s.metadata?.title} (${s.messageCount} messages)`);
+}
+
+// List with filtering
+const recentSessions = await storage.list({
+  savedAfter: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),  // Last week
+  tags: ['support'],
+  limit: 10,
+});
+```
+
+#### Storage Backends
+
+**FileContextStorage** (default):
+```typescript
+import { FileContextStorage, createFileContextStorage } from 'oneringai';
+
+// Simple: use helper
+const storage = createFileContextStorage('my-agent');
+
+// Advanced: custom config
+const storageVariant2 = new FileContextStorage({
+  agentId: 'my-agent',
+  baseDirectory: '/custom/path/agents',  // Override default ~/.oneringai/agents
+  prettyPrint: true,  // Human-readable JSON
+});
+```
+
+**Custom Storage** (implement `IContextStorage`):
+```typescript
+import type { IContextStorage, StoredContextSession, SerializedContextState, ContextSessionMetadata, ContextStorageListOptions, ContextSessionSummary } from 'oneringai';
+
+abstract class RedisContextStorage implements IContextStorage {
+  abstract save(sessionId: string, state: SerializedContextState, metadata?: ContextSessionMetadata): Promise<void>;
+  abstract load(sessionId: string): Promise<StoredContextSession | null>;
+  abstract delete(sessionId: string): Promise<void>;
+  abstract exists(sessionId: string): Promise<boolean>;
+  abstract list(options?: ContextStorageListOptions): Promise<ContextSessionSummary[]>;
+  getPath() { return 'redis://...'; }
+}
+```
+
+### Agent Definition Persistence
+
+Store agent **configuration** separately from sessions for easy instantiation:
+
+```typescript
+import { Agent, createFileAgentDefinitionStorage } from 'oneringai';
+
+const defStorage = createFileAgentDefinitionStorage();
+// Stores at: ~/.oneringai/agents/<agentId>/definition.json
+
+// Create and configure agent
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  instructions: 'You are a helpful support assistant.',
+  context: {
+    model: 'gpt-4.1',
+    agentId: 'support-bot',
+    features: { workingMemory: true, persistentInstructions: true }
+  }
+});
+
+// Save definition with metadata
+await agent.saveDefinition(defStorage, {
+  description: 'Customer support chatbot',
+  tags: ['support', 'production'],
+  author: 'Team A'
+});
+```
+
+#### Loading Agents from Definitions
+
+```typescript
+// Later: recreate agent from stored definition
+const restored = await Agent.fromStorage('support-bot', defStorage);
+
+if (restored) {
+  // Agent has same model, instructions, features as when saved
+  const response = await restored.run('Hello!');
+}
+
+// With config overrides
+const devAgent = await Agent.fromStorage('support-bot', defStorage, {
+  model: 'gpt-5.6-luna',  // Override with an economical current model
+});
+```
+
+#### Listing Agent Definitions
+
+```typescript
+const definitions = await defStorage.list();
+
+for (const def of definitions) {
+  console.log(`${def.agentId}: ${def.name}`);
+  console.log(`  Type: ${def.agentType}, Model: ${def.model}`);
+  console.log(`  Created: ${def.createdAt}`);
+}
+
+// Filter by type
+const taskAgents = await defStorage.list({ agentType: 'task-agent' });
+```
+
+#### Storage Structure
+
+```
+~/.oneringai/agents/
+├── support-bot/
+│   ├── definition.json          # Agent configuration
+│   ├── custom_instructions.json  # Persistent instructions (if enabled)
+│   └── sessions/
+│       ├── _index.json          # Session index for fast listing
+│       ├── session-001.json     # Full session state
+│       └── session-002.json
+├── research-bot/
+│   ├── definition.json
+│   └── sessions/
+│       └── ...
+└── _agents_index.json           # Agent definitions index
+```
+
+## Portable Agent Packages
+
+`exportAgentPackage()` captures the serializable state of an already-resolved
+native `Agent`: its unrendered instructions, portable runtime limits, context
+state, tool definitions and placement, plus optional Realtime metadata. It
+never serializes executable functions or connector credentials.
+
+```typescript
+import {
+  AgentPackageToolServer,
+  createPortableToolImplementationFingerprint,
+  exportAgentPackage,
+  hydrateAgentPackage,
+} from 'oneringai';
+
+const localToolFingerprints = new Map([
+  ['read_desktop_file', createPortableToolImplementationFingerprint(
+    readDesktopFile.definition,
+    'desktop:read_desktop_file:v3',
+  )],
+]);
+
+// Trusted source server
+const packageValue = exportAgentPackage(serverAgent, {
+  expiresAt: new Date(Date.now() + 10 * 60_000),
+  toolPlacement: (name) => name === 'read_desktop_file' ? 'local' : 'remote',
+  toolImplementationFingerprint: (name) => localToolFingerprints.get(name),
+  realtime: {
+    provider: 'openai',
+    connectorName: 'server-openai',
+    model: 'gpt-realtime-2.1',
+    voice: 'marin',
+  },
+});
+const toolServer = new AgentPackageToolServer(serverAgent, packageValue);
+
+// Trusted desktop main process
+const desktopAgent = await hydrateAgentPackage(packageValue, {
+  connector: 'desktop-openai',
+  model: 'gpt-5.6-terra',
+  userId: authenticatedUser.id,
+  permissions: desktopPermissionPolicy,
+  contextFactory: ({ package: pkg, model, userId, identities }) => ({
+    model,
+    agentId: pkg.agent.id,
+    systemPrompt: pkg.agent.instructions,
+    userId,
+    identities,
+    features: trustedContextFeatures,
+    plugins: trustedContextPlugins,
+  }),
+  localToolResolver: (descriptor) => {
+    const tool = resolveAuthorizedDesktopTool(descriptor);
+    const implementationFingerprint = localToolFingerprints.get(
+      descriptor.definition.function.name,
+    );
+    return tool && implementationFingerprint
+      ? { tool, implementationFingerprint }
+      : undefined;
+  },
+  remoteToolTransport: {
+    execute: (request) => authenticatedRpc.executeRemoteTool(request),
+  },
+  agentConfig: trustedProviderPolicy,
+});
+```
+
+Custom tools placed `local` must use a stable implementation ID that both
+trusted runtimes map through `createPortableToolImplementationFingerprint()`.
+The implementation ID is required and must change whenever executable behavior
+or one of its dependencies changes.
+Hydration requires `localToolResolver` to return a `ResolvedLocalTool`; returning
+a bare `ToolFunction` is rejected. Generated OneRingAI built-ins use their
+runtime-aware registry fingerprints automatically and can be wrapped with
+`createResolvedLocalTool(tool)` on the receiving host. A matching name or JSON
+schema alone is never treated as executable compatibility.
+
+Fingerprint inputs follow JSON-wire semantics, so omitted and explicitly
+`undefined` optional fields do not diverge after serialization. A tool's
+dynamic function description is prompt presentation generated independently on
+each host and is excluded from its local executable contract; its callable
+schema, blocking mode, and timeout still must match. Remote tool definitions
+retain their full canonical definition fingerprint, which package validation
+recomputes before hydration or tool-server construction.
+
+The RPC host must authenticate and authorize each request before forwarding it
+to `toolServer.execute(request)`. Hydration also rejects a package tool whose
+name collides with a trusted context, identity, or host tool; package tools
+never overwrite host authority.
+
+Packaged `descriptor.permission` values are informational and are never applied
+directly. If a portable tool needs a receiving-host override, provide
+`toolPermissionResolver: (descriptor) => trustedPolicyFor(descriptor)` to
+`hydrateAgentPackage()`. Returning `undefined` leaves the tool without a
+per-tool override; the Agent's required host-owned permission system still
+governs execution.
+
+The package and remote-tool protocol require exact JSON objects. A package is
+limited to 10,000,000 UTF-8 bytes. Remote arguments and successful results are
+limited to 1,000,000 UTF-8 bytes each, and one tool-server session accepts at
+most 1,000 distinct request IDs. Unknown fields, non-JSON values, expired or
+incompatible packages, cross-package requests, and non-allowlisted tools fail
+closed. Exact request retries are idempotent for the bounded server-session
+lifetime.
+
+Agent packages and remote-tool DTOs use exact protocol version 2. Version 1
+peers reject version 2 objects, and version 2 peers reject version 1 objects.
+Deploy the exporting server and receiving host together, or keep the old pair
+active until all in-flight version 1 sessions have ended. Do not mix protocol
+versions within one tool-server session.
+
+Call `await toolServer.close()` and `desktopAgent.destroy()` when the session
+ends. Concurrent close callers share the same shutdown operation, so every
+caller waits for in-flight tool execution to settle.
+
+For a voice package, pass `executionProfile: 'realtime'` during hydration.
+The package's connector and model remain hints; an authorized
+`connectorResolver` may replace both. See
+[Distributed Agent Execution](./docs/designs/DISTRIBUTED_AGENT_EXECUTION.md)
+for ownership, Electron/WebRTC flow, and security boundaries.
+
+## Negotiated portable observations
+
+Use the opt-in [remote outcome recipe](docs/REMOTE_TOOL_OUTCOMES.md) when a consumer
+needs source effects, authentic server outcomes, evidence and recovery. The new
+outer protocol requires five authenticated transport operations and scoped evidence;
+old v2 packages and servers keep their contracts. Tools-first construction composes
+with C6 before Agent initialization. Unknown remote writes stop managed dispatch;
+`session.getReceipt()` repairs acknowledged source without action replay. Checkpoints
+restore observations, not workflow or budget authority.
+Repeated/concurrent receipt lookups reuse validated observations while still invoking
+the authenticated receipt transport. Missing authoritative metadata after source
+handoff remains unknown, including uninstrumented execution overrides. A failed
+shutdown completion callback preserves its error and releases settled ownership of
+the borrowed source Agent. See the recipe for repair, quota and cancellation details.
+
+## Async (Non-Blocking) Tools
+
+Some tools take seconds or minutes to complete — web scraping, data analysis, external API calls, sub-agent orchestration. Normally, the agentic loop blocks on every tool call. With async tools (`blocking: false`), the tool executes in the background while the agent continues reasoning.
+
+### How It Works
+
+The lifecycle of an async tool call:
+
+1. **LLM requests tool call** — The agent's agentic loop extracts tool calls from the LLM response as usual
+2. **Placeholder returned** — For `blocking: false` tools, a placeholder `tool_result` is returned immediately: *"Tool X is executing asynchronously. The result will be delivered in a follow-up message."*
+3. **Background execution** — The tool runs in the background (fire-and-forget promise with timeout)
+4. **Loop continues** — The LLM sees the placeholder, can call other (blocking) tools, reason about the situation, or produce text output
+5. **Result arrives** — When the async tool completes (or fails/times out), the result is queued
+6. **Delivery as user message** — Queued results are batched and injected as a structured user message:
+   ```
+   [Async Tool Results]
+   Tool "analyze_dataset" (call_abc123) completed:
+   { "summary": "...", "score": 42 }
+
+   Process these results and continue.
+   ```
+7. **Continuation** — If `autoContinue: true` (default), the agent re-enters the agentic loop to process the results. If `false`, the caller must invoke `agent.continueWithAsyncResults()`.
+
+### Quick Start
+
+```typescript
+import { Agent, type ToolFunction } from 'oneringai';
+
+// 1. Define a tool with blocking: false
+const analyzeData: ToolFunction = {
+  definition: {
+    type: 'function',
+    function: {
+      name: 'analyze_dataset',
+      description: 'Run statistical analysis on a large dataset (may take 30+ seconds)',
+      parameters: {
+        type: 'object',
+        properties: {
+          dataset: { type: 'string', description: 'Dataset name or path' },
+          metrics: { type: 'array', items: { type: 'string' }, description: 'Metrics to compute' },
+        },
+        required: ['dataset'],
+      },
+    },
+    blocking: false, // <-- Makes this tool async
+  },
+  execute: async (args) => {
+    const data = await loadDataset(args.dataset);
+    const results = await computeMetrics(data, args.metrics);
+    return { summary: results.summary, rowCount: data.length, metrics: results.values };
+  },
+};
+
+// 2. Create agent with async config
+const agent = Agent.create({
+  connector: 'anthropic',
+  model: 'claude-sonnet-4-6',
+  asyncTools: {
+    autoContinue: true,      // Default: auto re-enter loop on result
+    batchWindowMs: 1000,     // Batch results within 1s window
+    asyncTimeout: 300000,    // 5 min timeout per async tool
+  },
+  tools: [analyzeData, readFile, writeFile],  // Mix blocking and async tools
+});
+
+// 3. Run — async tools are handled automatically
+const response = await agent.run('Analyze the Q4 sales dataset and write a summary report');
+// The agent will:
+// - Call analyze_dataset (async) → gets placeholder
+// - Maybe call read_file (blocking) → gets real result
+// - Produce intermediate text while waiting
+// - When analyze_dataset completes → auto-continue, process results
+// - Write the report with writeFile
+```
+
+### Auto-Continue vs Manual Mode
+
+#### Auto-Continue (Default)
+
+With `autoContinue: true` (default), the agent re-enters the agentic loop automatically when results arrive:
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  asyncTools: { autoContinue: true }, // default
+  tools: [asyncTool],
+});
+
+// Just run — everything is handled
+const response = await agent.run('Do the analysis');
+// response.pendingAsyncTools may be non-empty if tools are still running
+// when the initial loop ends (no more blocking work to do)
+```
+
+The initial `run()` returns when the agentic loop has no more blocking work. If async tools are still pending, `response.pendingAsyncTools` lists them. When they complete, the agent auto-continues in the background.
+
+#### Manual Mode
+
+With `autoContinue: false`, results are queued but the agent doesn't auto-continue. The caller decides when:
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  asyncTools: { autoContinue: false },
+  tools: [asyncTool],
+});
+
+// Listen for completions
+agent.on('async:tool:complete', (event) => {
+  console.log(`${event.toolName} finished in ${event.duration}ms`);
+});
+
+const response = await agent.run('Start the analysis');
+
+// Check what's pending
+if (agent.hasPendingAsyncTools()) {
+  console.log('Pending:', agent.getPendingAsyncTools().map(p => p.toolName));
+
+  // Wait for results to arrive (via events, polling, or your own logic)
+  // Then trigger continuation:
+  const continuation = await agent.continueWithAsyncResults();
+  console.log(continuation.output_text); // Agent processed the async results
+}
+```
+
+### Configuration
+
+```typescript
+interface AsyncToolConfig {
+  /**
+   * Auto re-enter agentic loop when async results arrive.
+   * @default true
+   */
+  autoContinue?: boolean;
+
+  /**
+   * Batch window in ms. If multiple async tools complete within this window,
+   * their results are delivered together in a single user message.
+   * @default 500
+   */
+  batchWindowMs?: number;
+
+  /**
+   * Timeout per async tool execution in ms.
+   * @default 300000 (5 minutes)
+   */
+  asyncTimeout?: number;
+}
+```
+
+Set `blocking: false` on individual tool definitions:
+
+```typescript
+const tool: ToolFunction = {
+  definition: {
+    type: 'function',
+    function: { name: 'slow_tool', description: '...', parameters: {} },
+    blocking: false, // <-- async
+  },
+  execute: async (args) => { /* ... */ },
+};
+```
+
+Tools default to `blocking: true` if not specified.
+
+### Events
+
+Six new events for monitoring async tool lifecycle (a sixth, `async:results:injected` — `{ executionId, iteration, results: [{toolCallId, toolName}], timestamp }` — fires when queued results are injected mid-loop before the next LLM call, in addition to the five below):
+
+| Event | Payload | When |
+|-------|---------|------|
+| `async:tool:started` | `{ executionId, toolCallId, toolName, args, timestamp }` | Async tool execution begins |
+| `async:tool:complete` | `{ executionId, toolCallId, toolName, result, duration, timestamp }` | Tool completed successfully |
+| `async:tool:error` | `{ executionId, toolCallId, toolName, error, duration, timestamp }` | Tool threw an error |
+| `async:tool:timeout` | `{ executionId, toolCallId, toolName, timeout, timestamp }` | Tool exceeded `asyncTimeout` |
+| `async:continuation:start` | `{ executionId, results: [{toolCallId, toolName}], timestamp }` | Agent re-entering loop with results |
+
+```typescript
+agent.on('async:tool:started', (e) => {
+  console.log(`[ASYNC] ${e.toolName} started (${e.toolCallId})`);
+});
+
+agent.on('async:tool:complete', (e) => {
+  console.log(`[ASYNC] ${e.toolName} completed in ${e.duration}ms`);
+});
+
+agent.on('async:tool:error', (e) => {
+  console.error(`[ASYNC] ${e.toolName} failed: ${e.error.message}`);
+});
+
+agent.on('async:tool:timeout', (e) => {
+  console.warn(`[ASYNC] ${e.toolName} timed out after ${e.timeout}ms`);
+});
+
+agent.on('async:continuation:start', (e) => {
+  console.log(`[ASYNC] Continuing with ${e.results.length} result(s)`);
+});
+```
+
+### Public API
+
+```text
+// Check if any async tools are still running
+agent.hasPendingAsyncTools(): boolean;
+
+// Get details about pending async tools
+agent.getPendingAsyncTools(): PendingAsyncTool[];
+// PendingAsyncTool: { toolCallId, toolName, args, startTime, status, result?, error? }
+
+// Cancel a specific async tool
+agent.cancelAsyncTool(toolCallId: string): void;
+
+// Cancel all pending async tools and clear the result queue
+agent.cancelAllAsyncTools(): void;
+
+// Manually trigger continuation with queued results
+// (only needed when autoContinue: false)
+agent.continueWithAsyncResults(results?: ToolResult[]): Promise<AgentResponse>;
+
+// Response includes pending info
+const response = await agent.run('...');
+response.pendingAsyncTools; // Array<{ toolCallId, toolName, startTime, status }> | undefined
+```
+
+### Mixed Blocking and Async Tools
+
+Blocking and async tools work together naturally in the same iteration:
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools: [
+    readFile,           // blocking (default)
+    writeFile,          // blocking
+    webFetch,           // blocking
+    analyzeDataset,     // blocking: false
+    generateReport,     // blocking: false
+  ],
+});
+
+// If the LLM calls both readFile and analyzeDataset in the same turn:
+// - readFile executes synchronously, result returned immediately
+// - analyzeDataset starts in background, placeholder returned
+// - Both results go to context, loop continues
+```
+
+### Edge Cases
+
+| Scenario | Behavior |
+|----------|----------|
+| **Result arrives during active loop** | Injected as a `[Async Tool Results]` user message at the start of the next iteration of the *same* run — the LLM can see results before `run()` ends, not just via a later continuation. (This mid-loop message omits the `(toolCallId)` and the "Process these results and continue." line used by `continueWithAsyncResults()`.) |
+| **All called tools are async** | LLM sees only placeholders → likely produces text → loop ends → results trickle in → auto-continue |
+| **Async tool fails** | Error result delivered same as success — LLM sees the error and can react |
+| **Async tool times out** | Treated as error with timeout message. Configurable via `asyncTimeout`. |
+| **Agent destroyed with pending tools** | `destroy()` cancels all pending async tools and clears timers |
+| **Multiple results arrive close together** | Batched within `batchWindowMs` window, delivered as single message |
+| **`continueWithAsyncResults()` called with no results** | Throws `"No async results to deliver"` |
+| **Concurrent continuations** | Second call throws `"A continuation is already in progress"` |
+
+### Use Cases
+
+- **Long-running analysis** — Data processing, ML inference, report generation
+- **Parallel API calls** — Fetch from multiple external services simultaneously
+- **Sub-agent orchestration** — Dispatch work to sub-agents without blocking the orchestrator
+- **Web scraping** — Scrape multiple pages in parallel while the agent reasons about strategy
+- **File processing** — Process large files while the agent works on other tasks
+
+---
+
+## Long-Running Sessions (Suspend/Resume)
+
+Some agentic workflows span hours or days. For example, an agent analyzes data, emails the results to a user, and waits for their reply before continuing. The **Suspend/Resume** feature enables this by letting tools pause the agent loop and external events resume it later.
+
+### How It Works
+
+1. A tool returns a `SuspendSignal` instead of a normal result
+2. The agent loop adds the display result to context, does a final wrap-up LLM call
+3. Session state (conversation + plugins) is saved automatically
+4. A correlation mapping links the external event ID to the session
+5. `AgentResponse` returns with `status: 'suspended'` and full metadata
+6. Later, `Agent.hydrate()` reconstructs the agent; `run(input)` continues
+
+### Creating a Suspend Tool
+
+```typescript
+import { SuspendSignal, type ToolFunction } from 'oneringai';
+
+const sendResultsEmail: ToolFunction = {
+  definition: {
+    type: 'function',
+    function: {
+      name: 'send_results_email',
+      description: 'Email analysis results and wait for user reply',
+      parameters: {
+        type: 'object',
+        properties: {
+          to: { type: 'string', description: 'Recipient email' },
+          subject: { type: 'string' },
+          body: { type: 'string', description: 'Email body with results' },
+        },
+        required: ['to', 'subject', 'body'],
+      },
+    },
+  },
+  execute: async (args) => {
+    // Perform the side effect
+    const { messageId } = await emailService.send(args.to, args.subject, args.body);
+
+    // Return SuspendSignal — agent loop will pause
+    return SuspendSignal.create({
+      result: `Email sent to ${args.to} (subject: "${args.subject}"). Waiting for reply.`,
+      correlationId: `email:${messageId}`,
+      metadata: { messageId, sentTo: args.to },
+    });
+  },
+};
+```
+
+**SuspendSignal Options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `result` | `unknown` | (required) | Tool result visible to the LLM |
+| `correlationId` | `string` | (required) | ID for routing external events back (e.g., `email:msg_123`) |
+| `resumeAs` | `'user_message' \| 'tool_result'` | `'user_message'` | How external input is injected on resume |
+| `ttl` | `number` | 7 days (ms) | Time-to-live before the suspended session expires |
+| `metadata` | `Record<string, unknown>` | — | App-specific data (email ID, ticket ID, etc.) |
+
+### Running the Agent
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools: [sendResultsEmail, analyzeData],
+});
+
+const response = await agent.run('Analyze the Q1 sales data and email results to alice@example.com');
+
+if (response.status === 'suspended') {
+  console.log('Agent suspended!');
+  console.log('Correlation:', response.suspension.correlationId);
+  console.log('Session:', response.suspension.sessionId);
+  console.log('Expires:', response.suspension.expiresAt);
+  // Store the correlation for your webhook handler
+}
+```
+
+The `AgentResponse.suspension` field contains:
+
+```typescript
+interface SuspensionInfo {
+  correlationId: string;    // 'email:msg_123'
+  sessionId: string;        // Auto-generated or existing session ID
+  agentId: string;          // Agent ID for reconstruction
+  resumeAs: 'user_message' | 'tool_result';
+  expiresAt: string;        // ISO timestamp
+  metadata?: Record<string, unknown>;
+}
+```
+
+### Resuming a Suspended Session
+
+When the external event arrives (e.g., email reply webhook), reconstruct and resume:
+
+```typescript
+import { Agent, StorageRegistry } from 'oneringai';
+import type { ICorrelationStorage } from 'oneringai';
+
+// In your webhook handler
+app.post('/webhooks/email-reply', async (req, res) => {
+  const { inReplyTo, body } = req.body;
+
+  // 1. Resolve which session this reply belongs to
+  const correlationStorage = StorageRegistry.get('correlations') as ICorrelationStorage;
+  const ref = await correlationStorage.resolve(`email:${inReplyTo}`);
+  if (!ref) {
+    return res.status(404).send('Unknown or expired session');
+  }
+
+  // 2. Reconstruct agent from stored definition + session
+  const agent = await Agent.hydrate(ref.sessionId, {
+    agentId: ref.agentId,
+  });
+
+  // 3. Customize — add tools, hooks, etc.
+  agent.tools.register(sendResultsEmail);
+  agent.setLifecycleHooks({ onError: myErrorHandler });
+
+  // 4. Continue with the user's reply
+  const result = await agent.run(body);
+
+  if (result.status === 'suspended' && result.suspension) {
+    // Agent suspended again — another email sent, cycle continues
+    console.log('Re-suspended:', result.suspension.correlationId);
+  } else {
+    console.log('Agent completed:', result.output_text);
+  }
+
+  res.status(200).send('OK');
+});
+```
+
+### `Agent.hydrate()` API
+
+```text
+static async hydrate(
+  sessionId: string,
+  options: {
+    agentId: string;
+    definitionStorage?: IAgentDefinitionStorage;
+    overrides?: Partial<AgentConfig>;
+  }
+): Promise<Agent>
+```
+
+`hydrate()` is a static method that:
+1. Loads the agent definition via `Agent.fromStorage(agentId)`
+2. Loads the session state (conversation + plugin states) via `loadSession(sessionId)`
+3. Cleans up correlation mappings for the session
+4. Returns a fully reconstructed `Agent` ready for customization and `run()`
+
+**Prerequisites:** The agent definition must have been saved via `agent.saveDefinition()`, and `StorageRegistry` must have `sessions` configured (or the agent was created with explicit session storage).
+
+### Correlation Storage
+
+By default, correlations are stored as files in `~/.oneringai/correlations/`. Configure a custom backend:
+
+```typescript
+import { StorageRegistry, FileCorrelationStorage } from 'oneringai';
+
+// Use default file-based storage (auto-configured)
+// OR configure explicitly:
+StorageRegistry.set('correlations', new FileCorrelationStorage({
+  baseDirectory: '/custom/path/correlations',
+}));
+
+// Or implement ICorrelationStorage for Redis, database, etc.
+StorageRegistry.set('correlations', new RedisCorrelationStorage());
+```
+
+**ICorrelationStorage interface:**
+
+```typescript
+interface ICorrelationStorage {
+  save(correlationId: string, ref: SessionRef): Promise<void>;
+  resolve(correlationId: string): Promise<SessionRef | null>;
+  delete(correlationId: string): Promise<void>;
+  exists(correlationId: string): Promise<boolean>;
+  listBySession(sessionId: string): Promise<string[]>;
+  listByAgent(agentId: string): Promise<CorrelationSummary[]>;
+  pruneExpired(): Promise<number>;
+  getPath(): string;
+}
+```
+
+### Multi-Step Workflows
+
+Suspend/resume naturally supports multi-step workflows. Each `run()` can either complete or suspend again:
+
+```typescript
+// Step 1: Agent analyzes data, emails results, suspends
+const r1 = await agent.run('Analyze Q1 data and email results');
+// r1.status === 'suspended' (email sent, waiting for reply)
+
+// Step 2: User replies, agent processes feedback, sends follow-up, suspends
+const agent2 = await Agent.hydrate(r1.suspension.sessionId, { agentId });
+agent2.tools.register(sendResultsEmail);
+const r2 = await agent2.run('Looks good, but also analyze Q2');
+// r2.status === 'suspended' (another email sent)
+
+// Step 3: User replies, agent completes
+const agent3 = await Agent.hydrate(r2.suspension.sessionId, { agentId });
+agent3.tools.register(sendResultsEmail);
+const r3 = await agent3.run('Perfect, thanks!');
+// r3.status === 'completed'
+```
+
+### Events
+
+The agent emits an `execution:suspended` event when suspension occurs:
+
+```typescript
+agent.on('execution:suspended', (event) => {
+  console.log('Session suspended:', event.sessionId);
+  console.log('Correlation:', event.correlationId);
+  console.log('Expires:', event.expiresAt);
+});
+```
+
+### Housekeeping
+
+Expired correlations can be pruned:
+
+```typescript
+const correlationStorage = StorageRegistry.get('correlations') as ICorrelationStorage;
+const pruned = await correlationStorage.pruneExpired();
+console.log(`Pruned ${pruned} expired correlations`);
+```
+
+---
+
+## Routine Execution
+
+For new workflows that must verify business completion, prefer the additive
+[verified routine runner](#verified-routines). The legacy API below remains
+supported. Default and generated prompts use the current `store_set` / `store_get`
+tools. Nested map/fold/until instructions reach reused agents through the task
+prompt, while their system instructions and shared tool manager remain intact.
+Prompt overrides remain optional. See the [offline store/map/fold example](examples/routine-store-bridge.ts)
+and [release report](docs/RELEASE_READINESS_V2.md).
+
+Execute tasks in dependency order with shared working memory and optional LLM
+quality reflection. Host-verified business completion uses the separate facade above.
+
+### Overview
+
+The **Routine Runner** (`executeRoutine()`) takes a `RoutineDefinition` and executes it end-to-end:
+
+1. Creates an Agent with working memory + in-context memory enabled
+2. Runs tasks in dependency order (respecting `dependsOn`)
+3. Runs LLM self-reflection only when both `skipReflection: false` and nonempty completion criteria are configured; otherwise quality auto-passes
+4. Clears conversation between tasks but **preserves memory plugins** — this is how tasks share data
+5. Retries failed tasks up to `maxAttempts`
+6. Returns a `RoutineExecution` with status, progress, and per-task results
+
+```
+Task A → validate → clear conversation → Task B → validate → clear → Task C → done
+           ↓                                ↓
+    memory persists ──────────────→ memory persists
+```
+
+### Quick Start
+
+```typescript
+import {
+  Connector, ConnectorTools, Services, tools, Vendor, executeRoutine,
+  createRoutineDefinition,
+} from 'oneringai';
+
+// 1. Setup connector
+Connector.create({
+  name: 'openai',
+  vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
+});
+
+Connector.create({
+  name: 'serper-main', serviceType: Services.Serper,
+  auth: { type: 'api_key', apiKey: process.env.SERPER_API_KEY! },
+  baseURL: 'https://google.serper.dev',
+});
+const searchTools = ConnectorTools.for('serper-main');
+
+// 2. Define a routine
+const routine = createRoutineDefinition({
+  name: 'Research Report',
+  description: 'Research a topic and write a report',
+  instructions: 'You are a research assistant. Be thorough and cite sources.',
+  tasks: [
+    {
+      name: 'Research',
+      description: 'Search for information about quantum computing advances in 2026',
+      expectedOutput: 'A summary of key findings stored in memory',
+      suggestedTools: ['serper-main_web_search', 'web_fetch'],
+      validation: {
+        skipReflection: false, // Reflection is opt-in; not a host completion proof.
+        completionCriteria: [
+          'At least 3 distinct sources were found',
+          'Key findings were stored in memory',
+        ],
+      },
+    },
+    {
+      name: 'Write Report',
+      description: 'Write a structured report based on the research findings',
+      expectedOutput: 'A markdown report with introduction, findings, and conclusion',
+      dependsOn: ['Research'],
+      validation: {
+        skipReflection: false, // Reflection is opt-in; not a host completion proof.
+        completionCriteria: [
+          'Report has an introduction, findings section, and conclusion',
+          'Report cites specific sources from the research',
+        ],
+      },
+    },
+  ],
+});
+
+// 3. Execute
+const execution = await executeRoutine({
+  definition: routine,
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools: [...searchTools, tools.webFetch],
+  onTaskComplete: (task) => console.log(`Done: ${task.name}`),
+  onTaskFailed: (task) => console.error(`Failed: ${task.name}`),
+});
+
+console.log(execution.status);   // 'completed' | 'failed'
+console.log(execution.progress); // 100
+```
+
+### RoutineDefinition Structure
+
+```typescript
+interface RoutineDefinition {
+  name: string;                    // Routine name
+  description: string;             // Human-readable description (required)
+  instructions?: string;           // System prompt for the agent
+  requiredTools?: string[];        // Tool names that must be available
+  requiredPlugins?: string[];      // Plugin names that must be registered
+
+  tasks: TaskInput[];              // Array of task definitions (TaskDefinition does not exist)
+
+  concurrency?: {
+    maxParallelTasks: number;      // Required if concurrency is set; runner executes tasks sequentially regardless
+    strategy: 'fifo' | 'priority' | 'shortest-first';
+    failureMode?: 'fail-fast' | 'continue' | 'fail-all';  // Default: 'fail-fast'
+  };
+}
+```
+
+### Task Definition
+
+Each task in a routine has:
+
+```typescript
+interface TaskInput {
+  name: string;                    // Task name (used as ID)
+  description: string;             // What the agent should do
+  expectedOutput?: string;         // What success looks like
+  suggestedTools?: string[];       // Hint to the agent about useful tools
+  dependsOn?: string[];            // Task names this depends on
+  maxAttempts?: number;            // Max retry attempts (default: 3)
+
+  validation?: {
+    completionCriteria?: string[]; // Criteria for LLM self-reflection
+    minCompletionScore?: number;   // Minimum score 0-100 (default: 80)
+    skipReflection?: boolean;      // Skip validation, auto-pass
+  };
+}
+```
+
+### Control Flow (Map / Fold / Until)
+
+Tasks can use control flow to iterate over data. Three flow types are available:
+
+- **`map`** — Execute a sub-routine for each element in an array (from memory key)
+- **`fold`** — Accumulate a result across array elements (like `Array.reduce`)
+- **`until`** — Repeat a sub-routine until a condition is met
+
+All three support an optional `iterationTimeoutMs` to prevent infinite hangs:
+
+```typescript
+const mapTask = {
+  name: 'Process Items',
+  description: 'Process each item from the list',
+  controlFlow: {
+    type: 'map',
+    source: '__items_list',
+    resultKey: '__processed_items',
+    maxIterations: 50,
+    iterationTimeoutMs: 120000, // 2 min per iteration
+    tasks: [
+      { name: 'Process', description: 'Process the current item' },
+    ],
+  },
+};
+```
+
+When `iterationTimeoutMs` is set, each sub-execution is wrapped with `Promise.race`. If an iteration exceeds the timeout (or its sub-execution otherwise fails), the entire `map`/`fold`/`until` task fails immediately — there is no per-iteration failure mode or skip-and-continue; the loop does not proceed to remaining iterations.
+
+### Error Classification
+
+The routine runner classifies errors as **transient** or **permanent**:
+
+- **Permanent errors** (auth failures, context length exceeded, model not found, config errors) immediately fail the task without retrying
+- **Transient errors** (network issues, rate limits, unknown errors) are retried up to `maxAttempts`
+
+This prevents wasting retries on errors that will never succeed.
+
+### `ROUTINE_KEYS` Constant
+
+The `ROUTINE_KEYS` constant is exported from the core library and contains all well-known ICM/WM key names used internally by the routine framework:
+
+```typescript
+import { ROUTINE_KEYS } from 'oneringai';
+
+// ROUTINE_KEYS.PLAN            → '__routine_plan'
+// ROUTINE_KEYS.DEPS            → '__routine_deps'
+// ROUTINE_KEYS.DEP_RESULT_PREFIX → '__dep_result_'
+// ROUTINE_KEYS.MAP_ITEM        → '__map_item'
+// ROUTINE_KEYS.MAP_INDEX       → '__map_index'
+// ROUTINE_KEYS.MAP_TOTAL       → '__map_total'
+// ROUTINE_KEYS.FOLD_ACCUMULATOR → '__fold_accumulator'
+```
+
+Useful for custom integrations that need to read or set routine state programmatically.
+
+### Task Dependencies and Ordering
+
+Tasks execute in dependency order. Use `dependsOn` to create a DAG:
+
+```typescript
+const routine = createRoutineDefinition({
+  name: 'Data Pipeline',
+  tasks: [
+    { name: 'Fetch Data', description: '...' },
+    { name: 'Clean Data', description: '...', dependsOn: ['Fetch Data'] },
+    { name: 'Analyze', description: '...', dependsOn: ['Clean Data'] },
+    { name: 'Visualize', description: '...', dependsOn: ['Analyze'] },
+  ],
+});
+```
+
+Tasks with no dependencies run first. A task only becomes eligible when all its dependencies are completed.
+
+### Memory as the Inter-Task Bridge
+
+Between tasks, conversation history is cleared but **memory plugins persist**. This is how tasks share information:
+
+- **In-Context Memory** (`store_set("whiteboard", ...)`): Small key results that subsequent tasks see immediately in context. No retrieval call needed.
+  ```
+  Task 1 calls: store_set({ store: "whiteboard", key: "api_endpoints", description: "...", value: "Found 3 endpoints: /users, /orders, /products" })
+  Task 2 sees this automatically in its context window
+  ```
+
+- **Working Memory** (`store_set("notes", ...)` / `store_get("notes", ...)`): Larger data stored externally, retrieved on demand.
+  ```
+  Task 1 calls: store_set({ store: "notes", key: "raw_data", description: "Full API response", value: "...", tier: "findings" })
+  Task 2 calls: store_get({ store: "notes", key: "findings.raw_data" }) → gets the full response
+  ```
+
+The defaults use these unified tools. Read each notes source with its exact index key, including tier/collision suffixes; the index and keyless reads contain metadata only. Large routine dependencies and results spill to the findings tier, and internal control-flow resolution preserves exact-key precedence before checking that spill location. Routine cleanup removes its reserved tiered keys and preserves unrelated host notes. Map/fold iteration state requires the in-context memory plugin. Fold captures the last completed subtask output first; a whiteboard accumulator update is only a fallback when no task output exists.
+
+### Validation and Self-Reflection
+
+After each task completes, the runner validates the output:
+
+1. LLM validation is opt-in: it only runs when the task sets `skipReflection: false` explicitly AND provides non-empty `completionCriteria`
+2. Otherwise (the default — `skipReflection` omitted/`true`, or no `completionCriteria`) the task auto-passes with `completionScore: 100`
+3. When enabled: calls `agent.runDirect()` with the task criteria and agent's response
+4. The validation LLM is asked to return `{ isComplete, completionScore, explanation }`, but only `completionScore`/`explanation` are used — the LLM's own `isComplete` is ignored
+5. Task passes if `completionScore >= minCompletionScore` (default 80)
+
+```typescript
+const validation = {
+  validation: {
+    skipReflection: false, // Reflection is opt-in; not a host completion proof.
+    completionCriteria: [
+      'All API endpoints were documented',
+      'Error codes were listed for each endpoint',
+      'Authentication requirements were specified',
+    ],
+    minCompletionScore: 85,  // Strict: require 85+ score
+  },
+};
+```
+
+### Retry Logic
+
+If validation fails and the task hasn't exhausted `maxAttempts`:
+
+- The conversation is **NOT cleared** (agent builds on previous attempt)
+- Task status returns to `in_progress` (increments attempt counter)
+- Agent retries with the same prompt
+
+If `maxAttempts` is exceeded, the task is marked `failed`.
+
+### Failure Modes
+
+```typescript
+const routine = createRoutineDefinition({
+  name: 'Pipeline',
+  concurrency: {
+    maxParallelTasks: 1,
+    strategy: 'fifo',
+    failureMode: 'fail-fast',  // Default: stop on first failure
+    // failureMode: 'continue', // Skip failed tasks, continue with independents
+  },
+  tasks: [],
+});
+```
+
+| Mode | Behavior |
+|------|----------|
+| `fail-fast` | Stop entire routine on first task failure |
+| `continue` | Skip failed task, proceed to next independent task |
+
+### Custom Prompts
+
+Override any prompt builder to customize agent behavior:
+
+```typescript
+const execution = await executeRoutine({
+  definition: routine,
+  connector: 'openai',
+  model: 'gpt-4.1',
+  prompts: {
+    // Custom system prompt
+    system: (definition) => `You are ${definition.name}. Follow these rules...`,
+
+    // Custom task prompt
+    task: (task) => `
+      ## ${task.name}
+      ${task.description}
+      Remember to store results using store_set("whiteboard", key, { description, value }).
+    `,
+
+    // Custom validation prompt
+    validation: (task, context) => `
+      Did the agent complete "${task.name}"?
+      Criteria: ${task.validation?.completionCriteria?.join(', ')}
+      Response: ${context.responseText}
+      Return JSON: { "isComplete": boolean, "completionScore": number, "explanation": string }
+    `,
+  },
+});
+```
+
+### Callbacks and Progress Tracking
+
+```typescript
+const execution = await executeRoutine({
+  definition: routine,
+  connector: 'openai',
+  model: 'gpt-4.1',
+
+  onTaskComplete: (task, execution) => {
+    console.log(`Task "${task.name}" completed`);
+    console.log(`  Score: ${task.result?.validationScore}`);
+    console.log(`  Progress: ${execution.progress}%`);
+  },
+
+  onTaskFailed: (task, execution) => {
+    console.error(`Task "${task.name}" failed after ${task.attempts} attempts`);
+    console.error(`  Error: ${task.result?.error}`);
+  },
+});
+```
+
+### ExecuteRoutineOptions Reference
+
+```typescript
+interface ExecuteRoutineOptions {
+  /** Routine definition to execute */
+  definition: RoutineDefinition;
+
+  /** Pre-created Agent instance. When provided, connector/model/tools are ignored.
+   *  The agent is NOT destroyed after execution — caller manages its lifecycle. */
+  agent?: Agent;
+
+  /** Connector name — required when `agent` is not provided */
+  connector?: string;
+
+  /** Model ID — required when `agent` is not provided */
+  model?: string;
+
+  /** Additional tools — only used when creating a new agent (no `agent` provided) */
+  tools?: ToolFunction[];
+
+  /** Input parameter values for parameterized routines */
+  inputs?: Record<string, unknown>;
+
+  /** Hooks — applied to agent for the duration of routine execution */
+  hooks?: HookConfig;
+
+  /** Called when a task starts executing */
+  onTaskStarted?: (task: Task, execution: RoutineExecution) => void;
+
+  /** Called when a task completes successfully */
+  onTaskComplete?: (task: Task, execution: RoutineExecution) => void;
+
+  /** Called when a task fails */
+  onTaskFailed?: (task: Task, execution: RoutineExecution) => void;
+
+  /** Called after each validation attempt (whether pass or fail) */
+  onTaskValidation?: (task: Task, result: TaskValidationResult, execution: RoutineExecution) => void;
+
+  /** Configurable prompts (all have sensible defaults) */
+  prompts?: {
+    system?: (definition: RoutineDefinition) => string;
+    task?: (task: Task) => string;
+    validation?: (task: Task, context: ValidationContext) => string;
+  };
+}
+```
+
+### RoutineExecution Result
+
+```typescript
+interface RoutineExecution {
+  id: string;                      // Unique execution ID
+  routineId: string;               // From definition
+  status: 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
+  plan: Plan;                      // Tasks with statuses and results
+  progress: number;                // 0-100 percentage
+  startedAt?: number;              // Timestamp
+  completedAt?: number;            // Timestamp
+  lastUpdatedAt: number;           // Timestamp
+  error?: string;                  // Error message if failed
+}
+```
+
+Each completed task has a `result`:
+
+```typescript
+// Shape of Task.result (not a separately exported type)
+interface TaskResult {
+  success: boolean;
+  output?: unknown;                // Agent's response text (or control-flow result)
+  error?: string;                  // Error message if failed
+  validationScore?: number;        // 0-100 from validation
+  validationExplanation?: string;  // Why it passed/failed
+}
+```
+
+### Complete Example: Multi-Step Research Pipeline
+
+```typescript
+import {
+  Connector, Vendor, Agent,
+  executeRoutine, createRoutineDefinition,
+  ConnectorTools, Services, tools,
+} from 'oneringai';
+
+// Setup connectors
+Connector.create({
+  name: 'openai',
+  vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
+});
+
+Connector.create({
+  name: 'serper',
+  serviceType: Services.Serper,
+  auth: { type: 'api_key', apiKey: process.env.SERPER_API_KEY! },
+  baseURL: 'https://google.serper.dev',
+});
+
+// Define the routine
+const routine = createRoutineDefinition({
+  name: 'Competitive Analysis',
+  description: 'Analyze competitors and produce a report',
+  instructions: 'You are a business analyst. Be thorough and data-driven.',
+  requiredTools: ['web_search'],
+  tasks: [
+    {
+      name: 'Identify Competitors',
+      description: 'Search for the top 5 competitors of Acme Corp in the cloud storage market',
+      expectedOutput: 'List of competitors stored in context',
+      suggestedTools: ['web_search'],
+      validation: {
+        skipReflection: false, // Reflection is opt-in; not a host completion proof.
+        completionCriteria: [
+          'At least 5 competitors were identified',
+          'Competitor names were stored using store_set("whiteboard", ...)',
+        ],
+      },
+    },
+    {
+      name: 'Analyze Features',
+      description: 'For each competitor found, research their key features and pricing',
+      dependsOn: ['Identify Competitors'],
+      expectedOutput: 'Feature comparison data stored in memory',
+      suggestedTools: ['web_search', 'web_fetch'],
+      maxAttempts: 2,
+      validation: {
+        skipReflection: false, // Reflection is opt-in; not a host completion proof.
+        completionCriteria: [
+          'Features were researched for all identified competitors',
+          'Pricing information was found for at least 3 competitors',
+          'Data was stored in working memory',
+        ],
+        minCompletionScore: 70,  // More lenient — pricing may not always be public
+      },
+    },
+    {
+      name: 'Write Report',
+      description: 'Compile findings into a structured competitive analysis report',
+      dependsOn: ['Analyze Features'],
+      expectedOutput: 'A markdown report with executive summary, feature comparison table, and recommendations',
+      validation: {
+        skipReflection: false, // Reflection is opt-in; not a host completion proof.
+        completionCriteria: [
+          'Report has an executive summary',
+          'Report includes a feature comparison table',
+          'Report provides actionable recommendations',
+        ],
+      },
+    },
+  ],
+});
+
+// Execute with search tools
+const searchTools = ConnectorTools.for('serper');
+
+const execution = await executeRoutine({
+  definition: routine,
+  connector: 'openai',
+  model: 'gpt-4.1',
+  tools: [...searchTools, tools.webFetch],
+  onTaskComplete: (task, exec) => {
+    console.log(`[${exec.progress}%] ${task.name} completed (score: ${task.result?.validationScore})`);
+  },
+  onTaskFailed: (task) => {
+    console.error(`FAILED: ${task.name} — ${task.result?.error}`);
+  },
+});
+
+if (execution.status === 'completed') {
+  // Get the final report from the last task's output
+  const reportTask = execution.plan.tasks.find(t => t.name === 'Write Report');
+  console.log(reportTask?.result?.output);
+} else {
+  console.error(`Routine failed: ${execution.error}`);
+}
+```
+
+### Best Practices
+
+1. **Use `store_set("whiteboard", ...)` for small shared state** — task names, IDs, short summaries. These are always visible.
+2. **Use `store_set("notes", ...)` for large data** — full API responses, documents, raw data. Retrieved on demand via `store_get("notes", key)`.
+3. **Separate quality from completion** — LLM criteria assess an answer; host verifiers must check actual artifacts and remote state.
+4. **Set appropriate `minCompletionScore`** — use 80+ for strict validation, 60-70 for lenient.
+5. **Opt into reflection explicitly** with `skipReflection: false` and criteria when needed; omission already auto-passes.
+6. **Keep `maxAttempts` reasonable** — 2-3 for most tasks. Each retry costs LLM calls.
+7. **Use `continue` failure mode** when tasks are independent and partial results are acceptable.
+
+### Routine Persistence
+
+Save routine definitions to disk and load them later using `FileRoutineDefinitionStorage` (or implement `IRoutineDefinitionStorage` for custom backends like MongoDB).
+
+```typescript
+import {
+  createFileRoutineDefinitionStorage,
+  createRoutineDefinition,
+} from 'oneringai';
+
+const storage = createFileRoutineDefinitionStorage();
+
+// Save a routine
+const routine = createRoutineDefinition({
+  name: 'Daily Report',
+  description: 'Generate a daily status report',
+  tags: ['daily', 'reports'],
+  author: 'alice',
+  tasks: [
+    { name: 'Gather Data', description: 'Collect metrics from all sources' },
+    { name: 'Write Report', description: 'Summarize findings', dependsOn: ['Gather Data'] },
+  ],
+});
+
+await storage.save(undefined, routine);  // undefined = default user
+
+// Load by ID
+const loaded = await storage.load(undefined, routine.id);
+
+// List with filtering
+const dailyRoutines = await storage.list(undefined, { tags: ['daily'] });
+const searchResults = await storage.list(undefined, { search: 'report', limit: 10 });
+
+// Delete
+await storage.delete(undefined, routine.id);
+```
+
+**Storage Path:** `~/.oneringai/users/<userId>/routines/<id>.json` (defaults to `~/.oneringai/users/default/routines/`)
+
+**Multi-user isolation:** Pass a `userId` to isolate routines per user. When `userId` is `undefined`, defaults to `'default'`.
+
+**StorageRegistry integration:**
+
+```typescript
+import { StorageRegistry } from 'oneringai';
+
+StorageRegistry.configure({
+  routineDefinitions: (ctx) => new MongoRoutineStorage(ctx?.userId),
+});
+```
+
+### Execution Recording
+
+Persist full routine execution history — every step, task snapshot, and progress update — without manually wiring hooks and callbacks.
+
+**Types:**
+
+| Type | Purpose |
+|------|---------|
+| `RoutineExecutionRecord` | Top-level persisted record (status, progress, tasks, steps, trigger info) |
+| `RoutineTaskSnapshot` | Per-task snapshot (status, attempts, result, controlFlowType) |
+| `RoutineExecutionStep` | Timestamped event (task.started, tool.call, llm.complete, etc.) |
+| `RoutineTaskResult` | Task outcome (success, output, error, validationScore) |
+
+**Factory functions:**
+
+```typescript
+import {
+  createRoutineExecutionRecord,
+  createTaskSnapshots,
+  createExecutionRecorder,
+} from 'oneringai';
+
+// 1. Create the initial record from a definition
+const record = createRoutineExecutionRecord(definition, 'openai', 'gpt-4.1', {
+  type: 'schedule',
+  source: 'daily-cron',
+});
+
+// 2. Insert into your storage backend
+const execId = await storage.insert(userId, record);
+
+// 3. Create recorder — returns ready-to-use hooks + callbacks
+const recorder = createExecutionRecorder({
+  storage,
+  executionId: execId,
+  logPrefix: '[MyRoutine]',
+  maxTruncateLength: 500,  // truncate tool args/results in steps
+});
+
+// 4. Wire into executeRoutine()
+executeRoutine({
+  definition, agent, inputs,
+  hooks: recorder.hooks,
+  onTaskStarted: recorder.onTaskStarted,
+  onTaskComplete: recorder.onTaskComplete,
+  onTaskFailed: recorder.onTaskFailed,
+  onTaskValidation: recorder.onTaskValidation,
+})
+  .then(exec => recorder.finalize(exec))
+  .catch(err => recorder.finalize(null, err));
+```
+
+**What the recorder tracks:**
+
+| Hook/Callback | Step Type(s) |
+|--------------|-------------|
+| `before:llm` | `llm.start` |
+| `after:llm` | `llm.complete` (with duration/tokens) |
+| `before:tool` | `tool.start` |
+| `after:tool` | `tool.call` (with args/result, truncated) |
+| `after:execution` | `iteration.complete` |
+| `pause:check` | heartbeat (`lastActivityAt` update) |
+| `onTaskStarted` | `task.started`, `control_flow.started` |
+| `onTaskComplete` | `task.completed`, `control_flow.completed` |
+| `onTaskFailed` | `task.failed` |
+| `onTaskValidation` | `task.validation` |
+| `finalize` | `execution.error` (on failure), final status update |
+
+**Storage interface (`IRoutineExecutionStorage`):**
+
+```typescript
+interface IRoutineExecutionStorage {
+  insert(userId: string | undefined, record: RoutineExecutionRecord): Promise<string>;
+  update(id: string, updates: Partial<Pick<RoutineExecutionRecord, 'status' | 'progress' | 'error' | 'completedAt' | 'lastActivityAt'>>): Promise<void>;
+  pushStep(id: string, step: RoutineExecutionStep): Promise<void>;
+  updateTask(id: string, taskName: string, updates: Partial<RoutineTaskSnapshot>): Promise<void>;
+  load(id: string): Promise<RoutineExecutionRecord | null>;
+  list(userId: string | undefined, options?: { routineId?: string; status?: RoutineExecutionStatus; limit?: number; offset?: number }): Promise<RoutineExecutionRecord[]>;
+  hasRunning(userId: string | undefined, routineId: string): Promise<boolean>;
+}
+```
+
+Implement this interface for your own storage backend (MongoDB, PostgreSQL, etc.), or use the library's built-in `FileRoutineExecutionStorage` (`createFileRoutineExecutionStorage()`), which persists records to `~/.oneringai/users/<userId>/routine-executions/<executionId>.json`.
+
+**StorageRegistry integration:**
+
+```typescript
+StorageRegistry.configure({
+  routineExecutions: (ctx) => new MongoRoutineExecutionStorage(ctx?.userId),
+});
+```
+
+### Scheduling
+
+Run routines on a timer using `IScheduler`. The built-in `SimpleScheduler` supports interval and one-time schedules:
+
+```typescript
+import { SimpleScheduler } from 'oneringai';
+
+const scheduler = new SimpleScheduler();
+
+// Repeat every hour
+scheduler.schedule('hourly-report', { intervalMs: 3600000 }, async () => {
+  await executeRoutine({ definition: dailyRoutine, agent, inputs });
+});
+
+// Run once at a specific time
+scheduler.schedule('end-of-day', { once: endOfDayTimestamp }, async () => {
+  await executeRoutine({ definition: summaryRoutine, agent, inputs });
+});
+
+// Cancel a schedule
+scheduler.cancel('hourly-report');
+
+// Check if a schedule exists
+scheduler.has('hourly-report'); // false
+
+// Clean up all timers
+scheduler.destroy();
+```
+
+**`ScheduleSpec` options:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `intervalMs` | `number` | Repeat every N milliseconds |
+| `once` | `number` | Fire once at this Unix timestamp (ms) |
+| `cron` | `string` | Cron expression (not supported by `SimpleScheduler` — use a cron library) |
+| `timezone` | `string` | IANA timezone for cron expressions |
+
+**SimpleScheduler** is intentionally minimal. For cron support, implement `IScheduler` with a cron library (e.g., `croner`, `node-cron`):
+
+```typescript
+import type { IScheduler, ScheduleHandle, ScheduleSpec } from 'oneringai';
+import { Cron } from 'croner';
+
+class CronScheduler implements IScheduler {
+  private jobs = new Map<string, Cron>();
+  private _isDestroyed = false;
+
+  schedule(id: string, spec: ScheduleSpec, callback: () => void | Promise<void>): ScheduleHandle {
+    if (spec.cron) {
+      const job = new Cron(spec.cron, { timezone: spec.timezone }, callback);
+      this.jobs.set(id, job);
+      return { id, cancel: () => this.cancel(id) };
+    }
+    throw new Error('CronScheduler only handles cron specs');
+  }
+  cancel(id: string) { this.jobs.get(id)?.stop(); this.jobs.delete(id); }
+  cancelAll() { for (const [id] of this.jobs) this.cancel(id); }
+  has(id: string) { return this.jobs.has(id); }
+  destroy() { this.cancelAll(); this._isDestroyed = true; }
+  get isDestroyed() { return this._isDestroyed; }
+}
+```
+
+### Event Triggers
+
+Trigger routine execution from external events (webhooks, message queues, custom signals) using `EventEmitterTrigger`:
+
+```typescript
+import { EventEmitterTrigger } from 'oneringai';
+
+const trigger = new EventEmitterTrigger();
+
+// Register a handler
+const unsubscribe = trigger.on('new-order', async (payload) => {
+  const order = payload as { orderId: string; items: string[] };
+  await executeRoutine({
+    definition: orderProcessingRoutine,
+    agent,
+    inputs: { orderId: order.orderId, items: order.items },
+  });
+});
+
+// Emit from your webhook handler, queue consumer, etc.
+app.post('/webhooks/orders', (req, res) => {
+  trigger.emit('new-order', req.body);
+  res.sendStatus(200);
+});
+
+// Unsubscribe a specific handler
+unsubscribe();
+
+// Clean up all listeners
+trigger.destroy();
+```
+
+**Key design:** `EventEmitterTrigger` is intentionally simple — no `ITriggerSource` interface. For complex trigger systems (AWS SQS, RabbitMQ, Kafka), just call `trigger.emit()` from your consumer callback.
+
+---
+
+## Verified routines
+
+Use `createRoutineRunner({ verify })` with a host-built Agent for task-readiness and final-artifact gates. Waiting results retain a same-process continuation; `resume` requires renewed host authorization and retains the original task/deadline. `asTool` owns a fresh child across waiting. Read [the complete recipe](docs/VERIFIED_ROUTINES.md) for scopes, bounded source recovery, cancellation and limits. Existing routine/session contracts retain their defaults.
+
+## Agent Registry
+
+The `AgentRegistry` is a global static registry that automatically tracks all active `Agent` instances. It provides observability, deep inspection, parent/child relationship tracking, event fan-in, and external control — all from one central place.
+
+### Automatic Tracking
+
+Every agent auto-registers on creation and auto-unregisters on destroy. No setup required:
+
+```typescript
+import { Agent, AgentRegistry } from 'oneringai';
+
+const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1', name: 'assistant' });
+AgentRegistry.count;  // 1
+AgentRegistry.has(agent.registryId);  // true
+
+agent.destroy();
+AgentRegistry.count;  // 0
+```
+
+Each agent gets a unique `registryId` (UUID) on creation. Agent names are NOT unique — multiple agents can share a name.
+
+### Query
+
+```typescript
+// By unique ID
+AgentRegistry.get(agent.registryId);
+
+// By name (returns array — names aren't unique)
+AgentRegistry.getByName('assistant');
+
+// Filter with AND logic
+AgentRegistry.filter({ model: 'gpt-4.1', status: 'running' });
+AgentRegistry.filter({ status: ['idle', 'running'] });  // match any of these statuses
+AgentRegistry.filter({ connector: 'openai', parentAgentId: parentAgent.registryId });
+
+// Lightweight info snapshots
+const infos = AgentRegistry.listInfo();  // AgentInfo[]
+// Each: { id, name, model, connector, status, createdAt, parentAgentId, childAgentIds }
+
+// Aggregate stats
+const stats = AgentRegistry.getStats();
+// { total, byStatus: { idle, running, paused, cancelled, destroyed }, byModel, byConnector }
+
+// Aggregate metrics across all agents
+const metrics = AgentRegistry.getAggregateMetrics();
+// { totalAgents, activeExecutions, totalTokens, totalToolCalls, totalErrors, byModel, byConnector }
+```
+
+### Deep Inspection
+
+The `inspect()` method returns everything about an agent — full context snapshot, conversation history, plugin states, tools, execution metrics, audit trail, and circuit breaker states:
+
+```typescript
+const inspection = await AgentRegistry.inspect(agent.registryId);
+
+// Context snapshot (from agent.getSnapshot())
+inspection.context.plugins;       // IPluginSnapshot[] — all plugin states
+inspection.context.tools;         // IToolSnapshot[] — all tools with call counts
+inspection.context.budget;        // ContextBudget — token usage breakdown
+inspection.context.systemPrompt;  // string | null
+inspection.context.features;      // { workingMemory, inContextMemory, ... }
+
+// Full conversation
+inspection.conversation;          // ReadonlyArray<InputItem>
+inspection.currentInput;          // ReadonlyArray<InputItem> — pending input
+
+// Execution state
+inspection.execution.id;          // current executionId or null
+inspection.execution.iteration;   // current iteration
+inspection.execution.metrics;     // ExecutionMetrics (tokens, tool calls, durations, errors)
+inspection.execution.auditTrail;  // AuditEntry[] (hook executions, tool skips, permissions)
+
+// Tool manager
+inspection.toolStats;             // ToolManagerStats
+inspection.circuitBreakers;       // Map<string, CircuitState>
+
+// Children
+inspection.children;              // AgentInfo[] — child agent snapshots
+
+// Bulk inspection
+const all = await AgentRegistry.inspectAll();
+const filtered = await AgentRegistry.inspectMatching({ model: 'gpt-4.1' });
+```
+
+### Parent/Child Hierarchy
+
+Agents can track parent/child relationships for hierarchical agent architectures:
+
+```typescript
+// Create parent
+const orchestrator = Agent.create({ connector: 'openai', model: 'gpt-4.1', name: 'orchestrator' });
+
+// Create children linked to parent
+const researcher = Agent.create({
+  connector: 'openai', model: 'gpt-4.1', name: 'researcher',
+  parentAgentId: orchestrator.registryId,
+});
+const writer = Agent.create({
+  connector: 'anthropic', model: 'claude-sonnet-4-6', name: 'writer',
+  parentAgentId: orchestrator.registryId,
+});
+
+// Query relationships
+AgentRegistry.getChildren(orchestrator.registryId);  // [researcher, writer]
+AgentRegistry.getParent(researcher.registryId);      // orchestrator
+
+// Recursive tree (for visualization/dashboards)
+const tree = AgentRegistry.getTree(orchestrator.registryId);
+// { info: orchestratorInfo, children: [
+//   { info: researcherInfo, children: [] },
+//   { info: writerInfo, children: [] },
+// ]}
+
+// Filter by parent
+AgentRegistry.filter({ parentAgentId: orchestrator.registryId });
+```
+
+### Events
+
+Registry lifecycle events:
+
+```typescript
+// Agent registered/unregistered
+AgentRegistry.on('agent:registered', ({ agent, info }) => {
+  console.log(`New agent: ${info.name} (${info.id})`);
+});
+
+AgentRegistry.on('agent:unregistered', ({ id, name, reason }) => {
+  console.log(`Agent removed: ${name} (${reason})`);
+});
+
+// Status changes (tracked via agent's own EventEmitter)
+AgentRegistry.on('agent:statusChanged', ({ id, name, previous, current }) => {
+  console.log(`${name}: ${previous} -> ${current}`);
+});
+
+// Registry empty
+AgentRegistry.on('registry:empty', () => {
+  console.log('All agents destroyed');
+});
+```
+
+#### Event Fan-In
+
+Receive ALL events from ALL agents through a single callback — ideal for dashboards, logging pipelines, and monitoring:
+
+```typescript
+AgentRegistry.onAgentEvent((agentId, agentName, event, data) => {
+  console.log(`[${agentName}] ${event}`, data);
+  // "[researcher] execution:start" { executionId, config, timestamp }
+  // "[researcher] tool:complete" { executionId, iteration, toolCall, result, timestamp }
+  // "[writer] llm:response" { executionId, iteration, response, timestamp, duration }
+});
+
+// Stop listening
+AgentRegistry.offAgentEvent(myListener);
+```
+
+Forwarded events include all agent events: `execution:*`, `iteration:*`, `llm:*`, `tool:*`, `hook:error`, `circuit:*`, `async:*`.
+
+### External Control
+
+Control agents without holding a direct reference:
+
+```typescript
+// Individual control
+AgentRegistry.pauseAgent(id);
+AgentRegistry.resumeAgent(id);
+AgentRegistry.cancelAgent(id, 'timeout');
+AgentRegistry.destroyAgent(id);
+
+// Bulk control with filters
+AgentRegistry.pauseMatching({ model: 'gpt-4.1' });
+AgentRegistry.cancelMatching({ status: 'running' }, 'shutting down');
+AgentRegistry.destroyMatching({ connector: 'openai' });
+
+// Nuclear
+AgentRegistry.pauseAll();
+AgentRegistry.cancelAll('emergency shutdown');
+AgentRegistry.destroyAll();
+```
+
+### Full API Reference
+
+| Category | Method | Returns | Description |
+|----------|--------|---------|-------------|
+| **Query** | `get(id)` | `IRegistrableAgent?` | Get agent by unique ID |
+| | `getByName(name)` | `IRegistrableAgent[]` | Get all agents with name |
+| | `has(id)` | `boolean` | Check if agent exists |
+| | `list()` | `string[]` | All registry IDs |
+| | `filter(filter)` | `IRegistrableAgent[]` | Agents matching filter |
+| | `count` | `number` | Total tracked agents |
+| **Info** | `listInfo()` | `AgentInfo[]` | Lightweight snapshots |
+| | `filterInfo(filter)` | `AgentInfo[]` | Filtered snapshots |
+| **Inspection** | `inspect(id)` | `Promise<AgentInspection?>` | Deep inspection |
+| | `inspectAll()` | `Promise<AgentInspection[]>` | Inspect all agents |
+| | `inspectMatching(filter)` | `Promise<AgentInspection[]>` | Filtered inspection |
+| **Aggregates** | `getStats()` | `AgentRegistryStats` | Counts by status/model/connector |
+| | `getAggregateMetrics()` | `AggregateMetrics` | Tokens, tool calls, errors |
+| **Hierarchy** | `getChildren(parentId)` | `IRegistrableAgent[]` | Child agents |
+| | `getParent(childId)` | `IRegistrableAgent?` | Parent agent |
+| | `getTree(rootId)` | `AgentTreeNode?` | Recursive tree |
+| **Events** | `on(event, listener)` | `void` | Subscribe to lifecycle events |
+| | `off(event, listener)` | `void` | Unsubscribe |
+| | `once(event, listener)` | `void` | Subscribe once |
+| | `onAgentEvent(listener)` | `void` | Fan-in: all agent events |
+| | `offAgentEvent(listener)` | `void` | Remove fan-in listener |
+| **Control** | `pauseAgent(id)` | `boolean` | Pause agent |
+| | `resumeAgent(id)` | `boolean` | Resume agent |
+| | `cancelAgent(id, reason?)` | `boolean` | Cancel agent |
+| | `destroyAgent(id)` | `boolean` | Destroy agent |
+| | `pauseMatching(filter)` | `number` | Bulk pause |
+| | `cancelMatching(filter, reason?)` | `number` | Bulk cancel |
+| | `destroyMatching(filter)` | `number` | Bulk destroy |
+| | `pauseAll()` | `number` | Pause all |
+| | `cancelAll(reason?)` | `number` | Cancel all |
+| | `destroyAll()` | `number` | Destroy all |
+| **Housekeeping** | `clear()` | `void` | Clear registry (testing) |
+
+---
+
+## Agent Orchestrator
+
+Create autonomous agent teams that coordinate through a shared workspace. The orchestrator is a regular Agent with special tools — no subclass needed.
+
+### Quick Start
+
+```typescript
+import { createOrchestrator, Connector, Vendor } from 'oneringai';
+
+Connector.create({
+  name: 'openai',
+  vendor: Vendor.OpenAI,
+  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
+});
+
+const orchestrator = await createOrchestrator({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  agentTypes: {
+    architect: {
+      systemPrompt: 'You are a senior software architect. Design clean, scalable systems. Use the shared workspace to publish your designs.',
+      tools: [readFile, writeFile],
+    },
+    critic: {
+      systemPrompt: 'You are a thorough code reviewer. Read artifacts from the workspace, find issues, and post your review back to the workspace.',
+      tools: [readFile, grep],
+    },
+    developer: {
+      systemPrompt: 'You are a senior developer. Read the plan from the workspace, implement it, and update the workspace with your progress.',
+      tools: [readFile, writeFile, editFile, bash],
+    },
+  },
+});
+
+const result = await orchestrator.run('Build an auth module with JWT support');
+console.log(result.output_text);
+```
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Orchestrator (Agent)                    │
+│                                                           │
+│  System prompt: auto-generated from agentTypes            │
+│  Tools: 5 orchestration tools + workspace store tools     │
+│                                                           │
+├─────────────────────────────────────────────────────────┤
+│           SharedWorkspace (shared instance)               │
+│  - entries: plans, code, reviews, status                  │
+│  - log: team conversation                                 │
+│  - All agents read/write via store_*("workspace", ...)    │
+├─────────────────────────────────────────────────────────┤
+│                    Worker Agents                          │
+│  - Persistent (remember reasoning across turns)           │
+│  - Own context + shared workspace                         │
+│  - Receive workspace delta at turn start                  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐               │
+│  │Architect │  │  Critic  │  │Developer │               │
+│  └──────────┘  └──────────┘  └──────────┘               │
+└─────────────────────────────────────────────────────────┘
+```
+
+### OrchestratorConfig
+
+```typescript
+interface OrchestratorConfig {
+  connector: string;           // Connector for LLM access
+  model: string;               // Model for orchestrator (default for workers too)
+  systemPrompt?: string;       // Custom prompt (overrides auto-generated)
+  agentTypes: Record<string, AgentTypeConfig>;  // Available worker types
+  workspace?: Partial<SharedWorkspaceConfig>;    // Workspace settings
+  features?: Partial<ContextFeatures>;           // Orchestrator context features
+  pluginConfigs?: PluginConfigs;                 // Plugin configurations for the orchestrator
+  name?: string;               // Orchestrator name (default: 'orchestrator')
+  agentId?: string;            // For session persistence
+  maxIterations?: number;      // Max loop iterations (default: 100)
+  maxAgents?: number;          // Max worker agents (default: 20)
+  skipPlanning?: boolean;      // Skip UNDERSTAND/PLAN/APPROVE phases (default: false)
+  tools?: ToolFunction[];      // Tools available to the orchestrator for DIRECT-route tasks
+  delegationDefaults?: DelegationDefaults; // Default delegation settings
+  autoDescribe?: boolean;      // LLM-generated descriptions for agent types (default: false)
+}
+
+interface AgentTypeConfig {
+  systemPrompt: string;        // Role-defining prompt
+  tools?: ToolFunction[];      // Role-specific tools
+  model?: string;              // Override model per type
+  connector?: string;          // Override connector per type
+  features?: Partial<ContextFeatures>;  // Worker context features
+  plugins?: PluginConfigs;     // Worker plugin configurations
+  description?: string;        // One-liner for routing (e.g., "Senior dev who writes and tests code")
+  scenarios?: string[];        // When to use (e.g., ["implementing features", "fixing bugs"])
+  capabilities?: string[];     // What it can do (e.g., ["read/write files", "run shell commands"])
+}
+```
+
+### 3-Tier Routing
+
+The orchestrator v2 uses a 3-tier routing model:
+
+| Route | When | Behavior |
+|-------|------|----------|
+| **DIRECT** | Simple queries, quick lookups | Orchestrator handles directly using its own `tools` |
+| **DELEGATE** | User needs extended interaction with a specialist | Hands user-facing session to a sub-agent via `delegate_interactive` |
+| **ORCHESTRATE** | Complex multi-step tasks | Coordinates multiple workers via `assign_turn` + workspace |
+
+### Orchestration Tools
+
+The orchestrator gets 5 tools automatically:
+
+#### Task Assignment
+
+| Tool | Description |
+|------|-------------|
+| `assign_turn(agent, type, instruction)` | Assign work to an agent. Auto-creates the agent if it doesn't exist. Always async. Optional `autoDestroy` to clean up after completion. |
+| `delegate_interactive(agent, type?, monitoring?, reclaimOn?, briefing?)` | Hand the user-facing session to a sub-agent. Supports `monitoring` (passive/active/event) and `reclaimOn` conditions (keyword, maxTurns, workspaceKey). |
+
+#### Team Management
+
+| Tool | Description |
+|------|-------------|
+| `list_agents()` | Returns all workers with name, model, status, plus current delegation state. |
+| `destroy_agent(name)` | Destroy a worker. Auto-reclaims delegation if the destroyed agent was the delegatee. |
+
+#### Communication
+
+| Tool | Description |
+|------|-------------|
+| `send_message(agent, message)` | Inject a message into an agent's context. If the agent is running, the message appears on its next iteration. If idle, it's seen on the next turn. Uses `Agent.inject()`. |
+
+### Workspace Delta
+
+When a worker starts a turn, its instruction is automatically prepended with a workspace delta showing what changed since that worker's last turn:
+
+```
+[Workspace changes since your last turn]
+- NEW: "auth_plan" (v1, by architect) — JWT auth design with refresh tokens
+- UPDATED: "requirements" (v1→v2, by orchestrator) — Added rate limiting requirement
+Recent log:
+  [architect] Designed API following RESTful patterns
+  [orchestrator] Added rate limiting to requirements
+
+Design the authentication module based on the approved plan.
+```
+
+### Workflow Examples
+
+#### Sequential Review Cycle
+
+```typescript
+const orchestrator = await createOrchestrator({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  agentTypes: {
+    architect: { systemPrompt: 'You are a software architect...', tools: [readFile, writeFile] },
+    critic: { systemPrompt: 'You are a code reviewer...', tools: [readFile] },
+    developer: { systemPrompt: 'You are a developer...', tools: [readFile, writeFile, editFile, bash] },
+  },
+});
+
+// The orchestrator LLM naturally follows this pattern:
+// 1. assign_turn(agent="arch", type="architect", instruction="Design the auth module")
+//    → auto-creates "arch" as an architect worker
+// 2. assign_turn(agent="rev", type="critic", instruction="Review the architecture plan")
+//    → auto-creates "rev" as a critic worker
+// 3. If issues: assign_turn(agent="arch", instruction="Address reviewer feedback")
+// 4. assign_turn(agent="dev", type="developer", instruction="Implement the approved plan")
+// 5. assign_turn(agent="rev", instruction="Review the implementation")
+// 6. If issues: assign_turn(agent="dev", instruction="Fix review comments")
+// 7. Final acceptance → destroy_agent for each worker
+
+const result = await orchestrator.run('Build a JWT auth module with refresh tokens');
+```
+
+#### Parallel Research
+
+```typescript
+const orchestrator = await createOrchestrator({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  agentTypes: {
+    researcher: {
+      systemPrompt: 'You are a research analyst. Search the web, analyze findings, and post results to the workspace.',
+      tools: [webSearchTool, webFetchTool],
+    },
+    synthesizer: {
+      systemPrompt: 'You are an analyst. Read research findings from the workspace and produce a comprehensive summary.',
+    },
+  },
+});
+
+// The orchestrator will (all assign_turn calls are async/non-blocking):
+// 1. assign_turn(agent="r1", type="researcher", instruction="Research competitor A")
+// 2. assign_turn(agent="r2", type="researcher", instruction="Research competitor B")
+// 3. assign_turn(agent="r3", type="researcher", instruction="Research competitor C")
+//    → All 3 run concurrently (assign_turn is always non-blocking)
+// 4. When results arrive, assign_turn(agent="synth", type="synthesizer", instruction="Combine all research")
+
+const result = await orchestrator.run('Research the top 3 competitors in the AI agent space');
+```
+
+#### Async Execution (All assign_turn Calls Are Non-Blocking)
+
+```typescript
+// assign_turn is always async (blocking: false). The orchestrator naturally
+// launches multiple agents concurrently:
+//
+// 1. assign_turn(agent="r1", type="researcher", instruction="Research competitor A")
+//    → Returns immediately, r1 starts working in background
+//
+// 2. assign_turn(agent="r2", type="researcher", instruction="Research competitor B")
+//    → Returns immediately, r2 starts working in background
+//
+// 3. Orchestrator continues: updates workspace, plans next steps, talks to user
+//
+// 4. Results arrive via autoContinue (500ms batching window):
+//    → "r1 completed: Found 5 key insights..."
+//    → "r2 completed: Analysis complete..."
+//
+// The orchestrator classifies each result: complete, question, stuck, or partial.
+// 3-strike rule: after 3 failed re-assignments, try different agent type or escalate.
+```
+
+#### Interactive Delegation
+
+```typescript
+// For extended interactive sessions (pair-programming, tutoring, debugging):
+//
+// delegate_interactive(agent="dev", type="developer",
+//   monitoring="active",     // LLM reviews each turn, can intervene
+//   reclaimOn={ keyword: "done", maxTurns: 20 },
+//   briefing="User wants help implementing auth")
+//
+// User now talks directly to the "dev" agent.
+// Orchestrator monitors and can inject guidance via send_message.
+// Control returns when user says "done" or after 20 turns.
+//
+// Monitoring modes:
+//   passive  — exchanges logged to workspace, reviewed when control returns
+//   active   — LLM reviews each turn, can inject intervention messages
+//   event    — notified when a specific workspace key appears
+//
+// Reclaim conditions:
+//   keyword     — user says a word (regex match, e.g., "done", "back")
+//   maxTurns    — auto-reclaim after N delegation turns
+//   workspaceKey — reclaim when a specific workspace entry appears
+```
+
+### Agent.inject()
+
+The `inject()` method enables orchestrator-to-worker communication:
+
+```typescript
+// Inject a message into a running or idle agent
+agent.inject('Please also consider rate limiting in your design');
+agent.inject('Switch to OAuth2 instead of JWT', 'developer');  // 'developer' role
+
+// The message is queued and delivered on the agent's next agentic loop iteration.
+// Safe to call while the agent is running.
+```
+
+This is used internally by the `send_message` orchestration tool, but can also be called directly on any Agent instance.
+
+### Worker Agent Lifecycle
+
+Workers are **persistent** — they remember their reasoning across turns:
+
+1. **Created** via `assign_turn(agent=name, type=type, instruction=...)` — auto-creates with system prompt, tools, shared workspace
+2. **Assigned turns** — each subsequent `assign_turn` calls `agent.run(instruction)` on the same instance
+3. **Context accumulates** — the worker's context grows with each turn (compaction handles limits)
+4. **Destroyed** via `destroy_agent(name)` or when the orchestrator is destroyed
+
+### Custom System Prompt
+
+Override the auto-generated prompt for specialized workflows:
+
+```typescript
+const orchestrator = await createOrchestrator({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  systemPrompt: `You are a QA team lead. For every task:
+1. assign_turn a "developer" to write code
+2. assign_turn a "tester" to write tests
+3. Both run concurrently (assign_turn is always async)
+4. If tests fail, send_message the failure details to the developer
+5. assign_turn the developer again to fix, repeat until all tests pass`,
+  agentTypes: {
+    developer: { systemPrompt: '...', tools: [writeFile, editFile] },
+    tester: { systemPrompt: '...', tools: [readFile, bash] },
+  },
+});
+```
+
+### Per-Type Configuration
+
+Each agent type can have its own model, connector, and features:
+
+```typescript
+const orchestrator = await createOrchestrator({
+  connector: 'openai',
+  model: 'gpt-4.1',  // Default
+  agentTypes: {
+    planner: {
+      systemPrompt: 'You are a strategic planner...',
+      model: 'gpt-4.1',      // Use the best model for planning
+      connector: 'openai',
+    },
+    coder: {
+      systemPrompt: 'You are a fast coder...',
+      model: 'gpt-4o-mini',  // Use a faster/cheaper model for coding
+      connector: 'openai',
+      tools: [readFile, writeFile, editFile, bash],
+    },
+    reviewer: {
+      systemPrompt: 'You are a code reviewer...',
+      model: 'claude-sonnet-4-20250514',  // Different provider entirely
+      connector: 'anthropic',
+      tools: [readFile, grep],
+    },
+  },
+});
+```
+
+---
+
+## Complete orchestration configuration
+
+Use `createOrchestratorWithFactory(config, { configureAgent, onChildOutcome?, descriptionExecution? })` when root/workers require complete authorized Agent/context settings before initialization. Return a complete plain configuration, resolve workers independently, and pass a ModelTask per operation for shared accounting. Read [the recipe](docs/ORCHESTRATOR_FACTORY.md) for precedence, reservations, async repair, cancellation/quarantine, source retention and cleanup. Existing createOrchestrator and synchronous callbacks retain their contracts.
+
+## Composed guarantees and inspection
+
+Use [the conformance recipe](docs/EVIDENCE_CONFORMANCE.md) to validate custom evidence
+adapters with the test-only factory harness. Current memory/file profiles and real
+process recovery are covered. Compose existing capability, routine, remote, child
+and ModelTask reports; distinguish configured checks from observed verification,
+proxy settlement from source settlement, and known model subtotal from unknown costs.
+No workflow authority is restored by loading stored evidence.
+
+## Agent Runtime (preview)
+
+The Agent Runtime is a vendor-neutral surface for executing complete agent systems.
+It sits above `Agent`: each harness retains its native loop, tools and state.
+Drivers normalize the supported behavior
+into the same specifications, capabilities, sessions, runs, live events, and results.
+
+This is the correct surface when a workflow needs to plug in a pre-built agent harness,
+select its model and reasoning level, observe its autonomous work, and receive one
+normalized result. It is deliberately separate from model-provider adapters.
+
+
+### Reusable definitions and harness bindings
+
+The five harness adapters are implemented with offline transport validation.
+A bounded Codex subscription/CLI pilot and small OpenAI model-call sample ran on
+2026-11-01; production API-key Codex, Claude SDK, and managed-provider live gates
+remain pending. See [the validation record](docs/evaluations/LIVE_VALIDATION_2026_11_01.md). Existing `runtime.agent(spec)` calls and saved native Agent sessions
+retain their behavior. Use `runtime.createAgent({ id, instructions, tools? })` to define
+one logical agent, then `agent.inspect(options)` / `agent.openSession(options)` with
+`execution: { driver, connector, model, reasoning?, driverConfig? }`. The connector
+remains the credential authority. The model does not select the harness.
+
+`environment` accepts `none`, `local-directory` with `path`, or `provider-managed`;
+a driver must support the selected placement. Do not combine it with legacy `workspace`.
+Native OneRingAI and Codex currently require their existing local policy boundaries.
+`OneRingAIDriver({ trustAgentPolicy: true, configureAgent? })` permits host native-only
+configuration before initialization; it cannot override definition/binding/identity
+fields. Additional plugin tools require host approval through `additionalToolNames`;
+the standard `store_*` tools retain their existing defaults.
+
+Select exact application tool names in the definition. Configure backend `resolveTools`
+to return `{ tools, fingerprint, manager?, owner?, permissionManager? }` from trusted
+host authorization. It must return exactly the selected tools. The fingerprint must
+include implementation, authorization, connector and evidence revisions. Inspection
+calls this resolver read-only; it must not launch execution or lease resources.
+Blocking function tools with object-root JSON schemas are supported; background/native-async tools reject. Existing
+C7 tools must retain their original manager/evidence handle rather than be cloned.
+A projection whose original source provenance cannot be verified stops delivery and
+retains the observation; it never silently substitutes the raw body. Use matching
+public ESM or CJS entries for original managers and runtime adapters; arbitrary mixed
+module/duplicate-package evidence handles are not inferred to be equivalent.
+An explicit Agent owner uses its external-execution hooks; lifecycle completion
+receives the actual bounded native result/status/error. Native usage stays in the
+runtime result rather than being relabelled/priced as the tool owner's configured model. Bare managers preserve
+manager semantics and do not claim Agent hooks. Native definition mode materializes
+fresh tools into the Agent's one shared manager; it rejects borrowed external owners.
+For selected native definition tools, the resolver's `permissionManager` is an
+additional check on that same manager: both it and the Agent's configured policy
+must allow execution. Resolver permissions remain host-owned and are not destroyed
+with the Agent. Native plugin tools retain their Agent policy. Resolver roles/account
+context is merged while the native Agent retains its principal, memory and cancellation.
+
+Codex receives selected host tools through an authenticated loopback HTTP MCP channel.
+The session token is isolated from shell tool inheritance. This channel is control
+traffic, separate from the selected shell network policy. Only this private server uses
+`default_tools_approval_mode: 'approve'`: OneRingAI's host ToolManager and permission
+policies still decide each invocation, while Codex's native approval policy stays
+`never`. Unrelated MCP/native tools receive no such grant. A bounded current-CLI
+evaluation verified this bridge, continuation, idle recovery, cancellation and shell
+credential isolation; see [the live validation record](docs/evaluations/LIVE_VALIDATION_2026_11_01.md).
+That evaluation uses an explicit test-only SDK authentication bootstrap, not a public
+subscription authentication option. Production still requires a named API-key connector.
+Native multitenant isolation remains a host responsibility.
+
+Runtime results use `outputText`; native `Agent` responses use `output_text`.
+`requestId` deduplicates identical inputs within the session; different payloads reject.
+A session reference is a locator, never authorization. Process-only references require
+the same backend and trusted tenant/user/group. `getRun` returns retained run handles.
+Only drivers with safe native checkpoint/detach support may detach. Local SDK
+checkpoints support idle restoration when their private native state remains complete;
+active interrupted local input stays unknown and is never replayed. Always destroy the runtime
+when finished. No subscription token extraction or consumer ChatGPT/Claude billing
+is provided; API-key entitlement follows the selected endpoint.
+
+Run the deterministic [swappable example](examples/agent-runtime-swappable.ts) with
+`npx tsx examples/agent-runtime-swappable.ts` after building. It uses real runtime
+drivers with synthetic transports and exits without native CLI or provider calls.
+See the [delivery ledger](docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md) for stage status.
+
+A minimal application binding uses ordinary public types and a host-owned resolver:
+
+```typescript
+// Documentation check: complete example
+import path from 'node:path';
+import { Connector, Vendor, type ToolFunction } from 'oneringai';
+import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage }
+  from 'oneringai/agent-runtime';
+import { ClaudeAgentSdkDriver } from 'oneringai/agent-runtime/claude';
+
+Connector.create({ name: 'claude-main', vendor: Vendor.Anthropic,
+  auth: { type: 'api_key', apiKey: process.env.ANTHROPIC_API_KEY! } });
+const lookup: ToolFunction = {
+  definition: { type: 'function', function: { name: 'lookup_status',
+    description: 'Read the application status.',
+    parameters: { type: 'object', properties: {}, additionalProperties: false } } },
+  execute: async () => ({ status: 'ready' }),
+};
+const runtime = new AgentRuntime({ backend: new LocalExecutionBackend({
+  drivers: [new ClaudeAgentSdkDriver()],
+  sessionStorage: new FileRuntimeSessionStorage(path.resolve('.onering-runtime')),
+  resolveTools: (names, context) => {
+    if (context.userId !== 'host-user' || names.some(name => name !== 'lookup_status'))
+      throw new Error('Tool selection not authorized');
+    return { tools: [lookup], fingerprint: 'host-user:lookup-implementation-v1' };
+  },
+}) });
+const assistant = runtime.createAgent({ id: 'assistant',
+  instructions: 'Use lookup_status when checking application status.', tools: ['lookup_status'] });
+try {
+  const options = { execution: { driver: 'anthropic.agent.sdk', connector: 'claude-main', model: 'claude-sonnet-4-6' },
+    context: { userId: 'host-user' }, environment: { type: 'none' as const },
+    policy: { filesystem: 'denied' as const, commands: 'denied' as const,
+      sandboxNetwork: 'denied' as const, providerWebSearch: 'denied' as const, approvals: 'deny' as const } };
+  const inspection = await assistant.inspect(options); // No task/model invocation.
+  const session = await assistant.openSession(options);
+  const run = await session.run('Check the status.', { requestId: 'status-1' });
+  for await (const event of run.events()) console.log(event.type);
+  console.log((await run.result).outputText, inspection.definitionDigest);
+} finally { await runtime.destroy(); }
+```
+
+This real mode needs the optional SDK and API entitlement and is billable; use the
+offline examples for credential-free verification. To swap harnesses, register the
+other driver and named connector and bind that same `assistant` with its model and
+supported policy/environment. Tools/instructions/application logic stay the same;
+unsupported required features reject rather than being silently removed. Register
+all desired drivers at backend construction; the [five-binding example](examples/agent-runtime-swappable.ts)
+creates the logical agent once and exercises this exact pattern.
+
+### Local Claude Agent SDK
+
+Install `@anthropic-ai/claude-agent-sdk` (validated interface: 0.3.312) and import
+`ClaudeAgentSdkDriver` from `oneringai/agent-runtime/claude`. Register it
+alongside other drivers and bind `anthropic.agent.sdk` with an Anthropic API-key or
+API-key-provider connector. A Claude consumer subscription is not an API entitlement
+for this integration. SDK process startup/platform support and account access for this Claude integration remain
+live-pending; no login token is read from the user's CLI profile.
+
+The initial profile is host-tools-only: select policy `filesystem: 'denied'`,
+`commands: 'denied'`, `providerWebSearch: 'denied'`, `approvals: 'deny'`.
+It disables native tools, subagents, plugins, auto memory, filesystem settings and
+unselected MCP servers, with isolated HOME/config/env and a deny permission callback.
+Host tool authorization still belongs to the resolver/manager. This is process
+execution, not an OS tenant sandbox. Admin-managed SDK settings remain subject to
+Anthropic's platform policy. Unsupported policy/configuration and unverified model
+reasoning controls reject; unknown reasoning values are not translated.
+
+Text, continuation, exposed reasoning/tool progress, cancellation and locally
+validated structured output are supported. `success` is distinguished from error,
+turn/budget limits and stream loss. A terminal SDK limit returns `incomplete`; a
+broken stream cannot establish completion and may quarantine the session.
+Credential redaction spans text/thinking chunks and also sanitizes decoded structured
+strings/keys before local schema validation. If sanitized output cannot satisfy the
+schema, the run fails explicitly instead of returning the credential.
+Usage retains the SDK's model-level report with explicit coverage; cost is an
+estimate. The driver does not claim every internal helper is counted. Destroy the
+runtime to remove its temporary SDK state; with control storage, idle detach preserves
+its native transcript for recovery. Active local input remains unknown after a crash.
+
+`npx tsx examples/agent-runtime-claude.ts` runs synthetic queries with the real
+in-process SDK MCP implementation. It needs the optional SDK, no credentials or CLI
+launch. `--live` additionally requires `ONERINGAI_ALLOW_LIVE=1` and `ANTHROPIC_API_KEY`;
+it is billable and remains unrun under the project's live-testing pause.
+
+### Runtime recovery and control storage
+
+Configure `new LocalExecutionBackend({ drivers, resolveTools, sessionStorage })` with
+`FileRuntimeSessionStorage(privateDirectory)` for restart recovery. Alternatively set
+`StorageRegistry.configure({ runtimeSessions: context => storageFor(context) })`.
+`InMemoryRuntimeSessionStorage` supports the same control protocol within one process;
+it is not restart durability. The factory is optional and separate from native context
+storage and `evidence`. The file backend uses one exclusive writer per scoped record,
+revision checks, private files, atomic replacement and file/directory acknowledgement.
+It can reclaim a same-host lock only when its recorded process is proven dead. It
+provides no distributed lease service. Do not share its directory across hosts.
+
+Save `session.reference()` in trusted application state. After a restart, call
+`runtime.resumeSession(reference, { context, observation? })` with the original trusted
+tenant/user/group. References contain no authentication. The runtime reauthorizes the
+recorded connector/model, policy, environment identity, tool implementation/schema and
+native configuration. Changed tool fingerprints or native configuration reject rather
+than silently migrating history. A native `configureAgent` callback therefore requires
+a host `configurationRevision`. Do not put credentials into definition/config metadata.
+
+Pass a stable `requestId` to `session.run(input, options)`. Identical repeated requests
+return the original run; different payloads reject. Admission is stored before native
+dispatch. Input and serializable options are captured when `run()` is called; later
+caller mutations cannot change the admitted command or its executed payload. The
+original abort signal remains live throughout admission and execution.
+If native acceptance or termination is unknown, `AgentSessionRecoveryError`
+carries the original reference/run ID. Resume/get that run; do not generate another
+request to repeat it. `session.inspectState()` reports connection, activity, active run
+and unresolved effects separately from the unchanged legacy terminal-status union.
+`session.getRun(runId)` reads a saved terminal result or its current observer. Saved
+terminal results survive activity eviction; their old events throw
+`AgentEventHistoryExpiredError`. Restored live observation starts in a new reserved
+sequence range, with explicit history gaps. Control snapshots are acknowledged;
+token-by-token activity is bounded process memory, not a durable event journal.
+
+If restoration fails, retain the original reference, repair the storage or reported
+prerequisite, and retry `resumeSession` with the same trusted scope. A failed initial
+read releases its writer, and a partially restored observer is never published in
+the process cache. Restoration failure releases supported native observation without
+implicitly cancelling existing managed work. Explicit cancellation and deletion remain
+host actions; retrying restoration does not resubmit the original input.
+If runtime destruction wins a race with recovery, the late observer is detached and
+recovery rejects. A failed detach retains the original reference in a recovery error;
+it does not authorize cancelling the independent native task.
+
+The tool-result outbox stores the acknowledged provider-facing payload plus outcome
+and evidence references before delivery. Raw manager returns/events keep their existing
+semantics and storage owner; the outbox is not a second evidence backend. An interrupted
+write stays unresolved. A trusted resolver `reconcile(call, context)` may return the
+original source/receipt's `ToolExecutionReport` with matching call/tool/run IDs and a
+settled completion. This callback must read the original source, never execute a fresh
+action. Without proof, continuation stays blocked. C7 source guards remain authoritative.
+Evidence storage/projection failures stop the run and retain the observation; use
+`onRetainedObservation` and the existing scoped evidence repair APIs before teardown.
+An application `success: false` value still does not mean framework execution failed.
+
+`detach()` preserves native work/state and releases observation/writer ownership;
+`destroy()` requests cancellation and disposes the local handle. Local OneRingAI,
+Codex and Claude SDK detach requires configured control storage and an idle native
+session. Active local input cannot be replayed safely after a crash; it remains unknown.
+OneRingAI restores complete serialized context with renewed host configuration; opaque
+native continuations require their own verified source restore and reject here. SDK
+native transcript directories must still exist and match their private ownership marker.
+Restoring prior Codex/Claude SDK history additionally requires the trusted driver
+`verifyNativeCheckpoint({ directory, nativeSessionId }, request)` callback to verify
+complete native transcripts and their dependencies. A marker alone does not prove
+history survived; the default rejects that restore rather than launching a task as a
+probe. Do not supply a no-op verifier. Managed-provider recovery uses canonical native
+state instead of this local callback. The bounded Codex pilot verified its specific native transcript restore. Other
+local SDK/platform persistence gates remain pending; the pilot is not standing
+authorization for additional live calls.
+Use detach when preserving those directories. No C3 continuation, ModelTask authority,
+routine cursor or collection cursor is restored by this API.
+
+Use `runtime.deleteSession(reference, { context })` for explicit owned-native-resource
+and control-record cleanup. Deletion rechecks scope and driver policy. Keep the reference
+when cleanup fails. Read-only caller observation never grants another tenant's authority.
+Control records default to a 4 MiB bound; request identity is retained up to 1024 requests
+per session. Capacity errors reject before new dispatch or retain a completed result
+for storage repair. After fixing storage, retry `getRun` to store the retained result;
+never retry its action. Use a new session when its bounded request ledger is full.
+When a write committed but its acknowledgement failed, the control writer verifies
+the exact original intent under its exclusive lease and obtains a new acknowledged
+write before advancing its cache. A conflicting record remains blocked. This repairs
+bookkeeping without replaying native input or tool actions. Stop/destruction interrupts
+read-only admission inspection even when its underlying read has not settled; queued
+input cannot dispatch later. Accepted actions and mutating operations retain their
+existing completion/reconciliation requirements.
+
+`npm run example:agent-runtime-safety` demonstrates host denial, a simulated lost
+post-commit acknowledgement, `getRun` repair and restoration with exactly one authorized
+tool execution. It runs offline with dummy data and removes its temporary files.
+
+`npx tsx examples/agent-runtime-recovery.ts` runs actual producer/recovery processes
+over temporary file storage and a synthetic external service. It verifies one input,
+one external write, stored-result redelivery, a crash after a write, original receipt
+reconciliation and foreign-scope denial. It removes its temporary data and makes no
+provider calls. The same observer API applies to managed drivers; their native account
+and retention policies still apply. `npm run example:agent-runtime-managed-restart`
+additionally exercises both actual managed SDK adapters against an external loopback
+mock service: a producer process crashes after its tool result was accepted, and a
+second process recovers the original ACK with one native input/one effect and no
+implicit cancellation. No live provider is used.
+
+### OpenAI managed Agents API
+
+Import `OpenAIManagedDriver` from `oneringai/agent-runtime/openai-managed`
+and bind `openai.agents.api`. This uses OpenAI's managed Codex harness through the
+installed `openai` SDK, distinct from the client-side Agents SDK and local Codex SDK.
+Configure durable control storage before opening a session. A named OpenAI API-key or
+API-key-provider connector supplies credentials on each request. Account access needs
+Agents read/write plus model-inference permissions; ChatGPT subscription allowances
+are not used by this integration. See [the provider quickstart](https://developers.openai.com/api/docs/guides/agents-api/quickstart).
+
+The initial verified endpoint model profile is `gpt-6-astra` with low/medium/high/xhigh/max
+reasoning; additional models require explicit host `modelEfforts` assertions. Unknown
+controls, fixed thinking budgets and disabled thinking reject. No model name is silently
+translated. Native resource creation is lazy: OpenAI requires the initial input for a
+no-environment session, so `openSession` records a logical handle and the first run
+creates its owned native session with that input. No duplicate reusable provider agent
+resource is created. Application credentials stay outside provider sandbox configuration.
+
+Choose `environment: { type: 'none' }` with native filesystem/commands denied for host
+functions only. `provider-managed` selects an OpenAI-hosted sandbox and requires
+workspace-write plus sandboxed commands. Network denial is explicitly configured and
+verified; plugins, skills, capability directories, desktop and native delegation are
+disabled. Referenced templates require a host-reviewed `environmentTemplates` allowlist.
+Provider web search follows the separate policy flag. No local directory is treated as
+a hosted sandbox or implicitly uploaded. Native command/filesystem behavior belongs
+to the owned provider environment, not the OneRingAI local tool manager.
+Canonical state checks reject unselected vaults, enabled desktop access and changed
+selected function descriptions/schemas/loading configuration before continued execution
+or restoration. Omitted/disabled desktop defaults and reordered JSON object keys are
+accepted. Creation explicitly selects an empty vault list. Owned deletion checks
+names/ownership without loading executable host tools.
+
+The adapter sends exact function schemas, reads current `required_actions`, executes
+through the selected host manager, stores the model payload, rechecks that the request
+is still pending, and submits the result with its original turn/call IDs. Input/result
+writes have SDK automatic retries disabled; input idempotency keys are stable. Lost
+responses are reconciled from saved provider state. Reconnection opens and buffers a
+new stream before fetching saved state and every page of current-turn items. Native
+idle, a closed stream, historical actions, subagent events and pending actions cannot
+complete a root turn. Unknown creation/input retains the original recovery reference.
+Bounded reconciliation stops explicitly rather than claiming complete corpus coverage.
+
+Model/reasoning overrides use the session's supported update endpoint before each
+new input. Output format is fixed when the native session is created: choose it on the
+first run and repeat the same format on continuation. JSON is validated locally.
+Only verified root-turn terminal states produce results; returned text comes from the
+final-answer items, with commentary kept in activity events. Hosted artifact inventory
+is scoped to that completed turn; transfers are a separate host operation. Usage is the
+provider's best-effort root-turn report; external tool/environment fees are excluded.
+OneRingAI wall time controls observation/cancellation, not a guaranteed provider spend cap.
+
+Detach preserves native work and the durable reference. Cancel requests stop and waits
+for native confirmation; HTTP acceptance alone does not prove termination. Destroy
+releases the local handle, while explicit reference-based deletion removes the owned
+provider session only after execution is idle/confirmed. Keep control files/references
+after uncertainty or failed cleanup; provider retention and account billing still apply.
+Interactive approvals, self-hosted environments and native subagents are not enabled.
+
+`npx tsx examples/agent-runtime-openai-managed.ts` exercises the real SDK against mock
+HTTP/SSE responses, including a lost tool-result acknowledgement and paginated output.
+It needs no credentials and cleans up on success. Explicit `--live` requires
+`ONERINGAI_ALLOW_LIVE=1` plus `OPENAI_API_KEY`; it is billable and remains unrun while
+live testing is paused. An error preserves the recovery directory/reference.
+
+### Claude Managed Agents API
+
+Import `ClaudeManagedDriver` from `oneringai/agent-runtime/claude-managed`
+and bind `anthropic.managed.api`. It uses the existing official Anthropic SDK and the
+`managed-agents-2026-04-01` protocol. Configure durable runtime control storage and an
+Anthropic API-key/API-key-provider connector. Keys refresh from that connector; ambient
+CLI login profiles, bearer tokens and custom auth headers do not select credentials.
+`workspaceId` is an optional trusted driver-constructor setting for keys spanning native
+workspaces. This API uses Console/API entitlement, not a consumer Claude subscription.
+See [the provider quickstart](https://platform.claude.com/docs/en/managed-agents/quickstart).
+
+Unlike the OpenAI no-environment profile, this API requires `provider-managed` placement.
+The driver creates a per-session owned, version-pinned agent, a cloud environment and
+a session. Metadata/IDs and creation intent are acknowledged after each step. A failed
+setup returns a recovery reference; cleanup reconciles each original resource rather
+than creating another one. A referenced environment must appear in the host's
+`environmentIds` allowlist and pass current cloud/network policy validation. Borrowed
+environments are never deleted. Owned agent cleanup uses the provider's archive API;
+session/environment deletion is separate and physical retention follows provider policy.
+
+`nativeTools` defaults to an empty list. The built-in toolset explicitly defaults to
+`enabled: false`, because the provider otherwise enables it. The host can select bash,
+read/write/edit/glob/grep and web tools through the driver constructor; policy must
+permit their exact filesystem, command and web effects. No MCP servers, skills,
+memory resources, vault credentials, coordinator agents or workflow runs are enabled.
+Network denial is verified against the environment's limited-network configuration.
+Interactive approval, self-hosted environments and native delegation require other
+capabilities and reject here. Host functions continue through the same selected
+ToolManager, evidence owner, permissions and control outbox as other harnesses.
+
+Model/reasoning are selected at session binding time. This endpoint does not update
+those settings mid-session, so run overrides reject before native input. The initial
+profile also rejects runtime JSON-schema output, rather than suggesting an unsupported
+native output-format option. Use another session/harness when that capability is required.
+Native thinking events indicate activity without exposing reasoning text; previews are
+kept distinct from complete assistant messages. Native history is paginated with its own
+cursor API, bounded separately from local event buffering.
+
+Each input is correlated with its actual native user-event echo and the saved preceding
+boundary. A lost response never causes another user message. Only currently pending
+custom-tool IDs or fresh live calls are executable; old historical calls are observations.
+Results use their original `custom_tool_use_id`, and native duplicate-result semantics
+allow safe redelivery after pending-state reconciliation. A naturally ended turn returns
+`completed`; explicit accepted interrupt plus subsequent stop evidence returns `cancelled`.
+Refusal remains a terminal response rather than proof of business acceptance. Budget and
+requires-action idle reasons keep the run waiting and block a second input. A bare idle
+session, stream closure or span error cannot imply successful completion. Observation
+loss in managed execution does not itself cancel provider work; resume its reference.
+
+Optional `driverConfig: { maxListCostUsdCents: '50' }` sends the provider's native USD
+list-cost ceiling (50 cents). Amounts are integer decimal strings, avoiding float
+rounding. This is a vendor-specific native cap, not a universal ModelTask budget.
+`budget_reached` is resumable waiting; the initial runtime API does not expose budget
+increases. Usage is the difference of available native cumulative snapshots; absent or
+inconsistent fields stay unknown. The raw cumulative report and its coverage accompany
+usage, and library estimates exclude external/runtime fees. Final text is the last
+complete native agent message; earlier messages remain observable activity.
+
+Use the same reference, inspection, request-ID, getRun, cancel, detach and deletion
+recipes as other harnesses. Unresolved source effects must be reconciled before their
+control record can be deleted, including after the native turn stopped requesting a
+result. Resume invokes only the trusted original-receipt resolver; it never reexecutes
+an action. If native setup, cleanup, or source proof is incomplete, keep the reference
+and control directory for repair.
+
+`npx tsx examples/agent-runtime-claude-managed.ts` uses actual SDK serialization with
+synthetic HTTP/SSE. It demonstrates one custom action despite a lost result response,
+a waiting budget pause, explicit interrupt and owned cleanup. No credentials are needed.
+`--live` requires `ONERINGAI_ALLOW_LIVE=1`, `ANTHROPIC_API_KEY` and optionally a trusted
+`ANTHROPIC_WORKSPACE_ID`; it runs only the ordinary task scenario and is billable.
+Live testing remains paused and has not been performed.
+
+### Inspect the effective binding
+
+`inspect()` resolves selected tools and validates the same driver/policy profile as
+open, without creating provider resources or acquiring tool-manager execution ownership.
+It returns the logical `definitionDigest`, control `recovery` durability and optional
+`inspection` details: effective execution digest, selected tool/schema fingerprints,
+native transport names where verified, environment, enforcement ownership, replay bounds,
+usage coverage and prerequisites. Account access stays `unknown` until native requests.
+External driver enforcement stays `unknown` unless that driver reports it; no guarantee
+is inferred from its ID. OneRingAI policy trust is an explicit host assertion.
+
+Runtime event/output/history/inventory bounds apply at their documented normalized or
+retained stage. The vendor SDK may parse a complete upstream JSON page or SSE event
+before the adapter can count it; these are not hard upstream parser/allocation caps.
+Transfers count actual response-stream bytes separately. Hosts needing stricter transport
+limits must provide a reviewed SDK client/transport through the driver constructor.
+Native provider quotas, token consumption and external fees remain independent.
+
+A file-backed control log does not prove native state survived. The file adapter is a
+single-host POSIX implementation using exclusive ownership, atomic rename, file/directory
+fsync and revision checks. It is tested on this macOS host; other POSIX filesystems must
+honor those primitives. Windows requires a custom acknowledged storage adapter and is
+rejected by this file implementation. Network filesystems and distributed ownership are
+not claimed. A lock is recovered only after same-host process death is proven; malformed,
+foreign-host or uncertain locks require host repair, never timeout-based action replay.
+Keep the private storage directory inaccessible to other OS users and outside writable
+model workspaces and transfer roots. A model must not be able to edit authoritative
+control/checkpoint files. This is not tenant isolation. Stored state/results are sensitive application data even though credentials
+and executable handles are excluded from runtime configuration.
+
+Request and tool digests canonicalize nested JSON property order. Tool schema changes,
+host authorization/fingerprint changes, connector endpoint/account settings, workspace
+identity and native configuration changes reject recovery rather than silently migrate.
+API-key refresh through the same authorized account remains supported; the host must
+not substitute another account under the same connector name. SDK constructors/factories
+are trusted host code and must preserve origin/authentication controls. Default managed
+transports pin the connector origin, reject redirects and suppress remote error bodies
+that could echo credentials. Provider control traffic is separate from sandbox egress.
+
+### Explicit files and artifacts
+
+Managed runs return `AgentArtifact` references. These are native locators, not downloaded
+files and not permission to read an arbitrary URL. Enable host transfer separately:
+
+```typescript
+const backend = new LocalExecutionBackend({
+  drivers, // Your registered drivers, as above.
+  sessionStorage: new FileRuntimeSessionStorage(controlDirectory),
+  fileTransfer: context => {
+    const root = authorizedTransferRoots.get(context.userId!);
+    if (!root) throw new Error('No transfer directory for this user');
+    return { root, maxBytes: 1024 * 1024, mediaTypes: ['text/plain', 'application/pdf'] };
+  },
+});
+// An attached, idle RuntimeSession, after an explicit host file selection:
+const uploaded = await session.uploadFile({ path: 'input.txt', mediaType: 'text/plain' });
+const saved = await session.downloadArtifact({ reference: artifact.reference, path: 'answer.txt' });
+```
+
+The transfer callback receives trusted scope on each operation; roots are host-owned,
+existing directories. Paths are relative to that directory, parent directories must
+exist, and source/destination symlinks, traversal and overwrites reject. Keep directory
+parents under host control so another process cannot rename them during I/O. MIME types
+are declarations/native response metadata checked against the exact host allowlist, not
+malware scanning. Default maximum is 1 MiB, maximum configurable bound 16 MiB, additionally
+capped by `policy.limits.artifactBytes`. Streams are counted even without Content-Length;
+failed downloads remove the partial destination. Files use private permissions. File
+transfer and new turns/detach are mutually exclusive; it never submits model input.
+
+OpenAI uploads inline bytes into its owned hosted `/workspace/<name>`; provision the
+hosted environment by completing the first turn before uploading. The upload reference
+identifies a live environment file; only published native artifact references are
+immutable/downloadable. Inline-upload intent is acknowledged before native mutation;
+a lost response blocks new input instead of retrying the write. The native file-list
+metadata cannot prove exact contents, so preserve that reference for explicit owned
+environment/session cleanup rather than claiming automatic content reconciliation.
+OpenAI download metadata and content use the exact owned session
+and artifact endpoints; response MIME and byte bounds still apply. No-environment runs
+cannot upload. Hosted template inheritance remains a separately reviewed host decision.
+
+Claude uploads a separately tracked, expiring Files API object, then mounts it explicitly
+at `/mnt/session/uploads/<name>`. Durable upload intent/IDs are separate from native
+session/environment ownership. Lost upload or mount responses are reconciled by original
+intent/resource membership; they never trigger another upload. An unmounted uncertain
+upload blocks new input and can be cleaned up with `deleteSession`. Native generated
+files are enumerated with exact native session scope (session-wide, not attributed to a
+specific turn); foreign or expired file metadata rejects. Uploaded objects that the native
+API marks non-downloadable cannot be downloaded through this abstraction. Explicit session
+deletion removes tracked owned uploads; borrowed environments remain untouched. Native
+provider-generated file retention follows that provider's session/file lifecycle.
+
+Local SDK drivers continue to use their explicit workspace/image capabilities; these
+managed transfer methods reject there. `workspace-file` never silently uploads to a cloud
+harness. Unsupported rich inputs reject before task submission. Transfers don't run the
+OneRingAI tool pipeline or acquire workflow/ModelTask authority.
+
+Run [the bounded transfer example](examples/agent-runtime-artifacts.ts) after building.
+It uses actual SDK serialization with mock HTTP, checks exact bytes and foreign reference
+denial, and cleans up private temporary data. Native expiry and upload-loss cases also
+have offline regression tests. Live file behavior remains pending vendor/platform checks.
+
+### Adding a future harness
+
+Implement `AgentDriver` and register its instance in `LocalExecutionBackend({ drivers })`.
+Keep the driver ID independent of Connector vendor/model. `inspect` must be read-only,
+validate endpoint-specific models/policy/tool translation, and report actual capabilities;
+optional descriptor `inspection` metadata reports transport names/enforcement/prerequisites.
+Unknown guarantees must remain unknown. Return native additions/configuration revisions
+in `agent.definition` constraints so incompatible checkpoint configuration is detected.
+
+`openSession` receives trusted scope, a scoped connector registry, the bound definition,
+policy/environment and optional `RuntimeHostTools` / `RuntimeControl`. Resolve credentials
+through the named Connector. Invoke selected application functions through
+`request.hostTools.execute(name, args, originalCallId)`; this retains the existing manager,
+Agent owner/evidence/permissions and acknowledged outbox. Never construct a duplicate
+pipeline or clone remote proxies. Drivers normalize native events/results; `DriverRun.result`
+settles only when native work is proven terminal and cannot mutate its environment.
+Observer loss or an accepted cancel request is not proof. `observationIndependent` is
+opt-in only for service-owned work that survives local observation loss.
+
+Optional checkpoint/restore/delete/detach hooks preserve native identity and ownership.
+Use the supplied serialized `control.update` for acknowledgements around native mutation;
+never put credentials, executable objects or workflow authority in a checkpoint. Do not
+re-send uncertain input. Driver-specific state is JSON and versioned; unsupported/missing
+native recovery remains explicit. Optional upload/download hooks receive bounded host
+bytes or scoped native references; default runtime filesystem checks remain authoritative.
+No new driver registry, profile DSL or model-provider adapter is needed. Existing drivers
+and backends may omit these additive hooks and retain their legacy runtime behavior.
+
+### Desktop and AMOS integration
+
+Keep `AgentRuntime`, Connectors, SDK clients, tool resolution, trusted scope, durable
+storage and transfer directories in the desktop **main process**. The renderer receives
+sanitized activity/result DTOs and an application session locator. It cannot choose tenant,
+connector accounts, native IDs, policy, tool lists or executable bootstrap code. Authorize
+IPC operations against the authenticated owner and the currently selected binding before
+run/cancel/detach/resume/transfer. Bounded `run.events()` feeds activity independently of
+approval UI. This initial profile rejects interactive approvals/user questions/steering;
+never render an observation as an approval decision.
+
+Distinguish `/stop` (explicit native cancellation, then terminal confirmation), `/detach`
+(release observer; managed work continues), and deletion (explicit owned-resource cleanup).
+Persist the reference outside renderer memory; after restart call `resumeSession` with
+renewed host authorization and `getRun` for the original active ID. Never retry the original
+prompt after uncertain input. Activity gaps and unknown native state must be visible.
+Native Agent-only commands must not reach `Agent.context` for external harnesses.
+
+AMOS illustrates these boundaries with opt-in `--runtime-host <trusted-module.mjs>`.
+The bootstrap exports `createAmosRuntimeHost(dataDir)` and returns `{ runtime, definition,
+options, resume?, saveReference? }` using ordinary public APIs and named Connectors.
+The same controller renders all five harnesses. `/run` accepts explicit request IDs,
+model/reasoning/schema/metadata options; `/result` and `/observe` read existing work.
+`/upload` and `/download` use the host-authorized transfer boundary. `/reference`,
+`/save`, `/resume [reference-json]` and `--runtime-resume` expose scoped recovery;
+`/new` starts another session and `/delete [reference-json]` explicitly cleans owned
+resources. `/inspect`, `/status`, `/stop`, `/detach`, `/exit` and `/help` remain. Native
+context/routing/routine/helper/tool-mutation commands reject in this mode. Its standard
+Agent-based mode and saved configuration remain unchanged. See [AMOS setup and lifecycle](apps/amos/README.md#agent-runtime-mode).
+The deterministic [AMOS example](apps/amos/examples/agent-runtime-offline.ts) executes the
+same selected tool twice through all five adapters, deduplicates a repeated request,
+reads/replays saved results, transfers exact bytes for both managed adapters, exercises
+supported idle detach/resume and deletes owned resources. It uses synthetic transports
+and one UI consumer, with no native CLI or provider calls. The [AMOS cookbook](apps/amos/docs/AGENT_RUNTIME.md)
+provides interactive setup, commands, persistence, failures and endpoint limits. The
+[run-options example](examples/agent-runtime-run-options.ts) demonstrates native Agent
+JSON output, model/reasoning overrides, mutation-safe admission, cancellation and replay
+after context restore. The separate recovery example uses actual process restart.
+
+### Choose the right agent surface
+
+| Goal | Use | Why |
+|---|---|---|
+| Build a OneRingAI-native assistant with OneRingAI tools, context, memory, and persistence | `Agent.create()` | `Agent` owns the native OneRingAI loop and is the simplest direct API |
+| Coordinate multiple OneRingAI-native agents | `createOrchestrator()` | Adds delegation and shared-workspace tools around regular `Agent` instances |
+| Run interchangeable complete agent systems such as OneRingAI and Codex | `AgentRuntime` | Normalizes driver selection, sessions, policy, events, cancellation, and results without replacing native loops |
+
+Do not implement Codex, Claude Agent SDK, or another complete harness as an
+`ITextProvider`: those systems already own an agent loop and tool/session semantics.
+They belong behind an `AgentDriver`. Likewise, use an execution backend—not a driver—to
+choose whether work runs locally or in a future isolated server worker.
+
+### Current implementation and roadmap
+
+The detailed local recipes below preserve legacy `.agent(spec)` usage. Common
+definitions and managed bindings use the additive recipes above.
+
+| Component | Status | Notes |
+|---|---|---|
+| Native OneRingAI driver | Implemented | Logical definition materialization; legacy stored/binding/factory sources retained |
+| OpenAI Codex TypeScript SDK driver | Implemented locally | Optional peer dependency; SDK-managed local CLI process |
+| Live autonomous observation | Implemented locally | Messages, vendor-exposed reasoning, and driver-specific activity |
+| Interactive approvals, user questions, and steering | Capability-defined, not implemented locally | Planned for drivers with a bidirectional native protocol, such as Codex App Server |
+| Remote container/microVM execution | Designed, not implemented | Future execution backend with per-active-run isolation leases |
+| Claude Agent SDK | Implemented on branch, offline validated, live-pending | Optional SDK; tools-only local profile via `anthropic.agent.sdk` |
+| OpenAI managed Agents API | Implemented on branch, offline validated, live-pending | `openai.agents.api`; durable control and explicit placement |
+| Claude Managed Agents API | Implemented on branch, offline validated, live-pending | `anthropic.managed.api`; durable control/provider-managed placement |
+| Explicit managed file transfers | Implemented on branch, offline validated | Host-only authorized directory, byte/MIME bounds and native scoped references |
+| A2A interoperability | Designed, not implemented | External protocol adapter, not the internal worker protocol |
+
+The runtime supports native OneRingAI, local Codex/Claude SDKs and managed OpenAI/Claude APIs.
+Install optional peers only for local SDK drivers:
+
+```bash
+npm install @openai/codex-sdk @anthropic-ai/claude-agent-sdk
+```
+
+The complete local example can run either backend through the same workflow:
+
+```bash
+npx tsx examples/agent-runtime-local.ts oneringai
+npx tsx examples/agent-runtime-local.ts codex
+```
+
+### Create a local runtime
+
+The generic API is published separately from the optional Codex driver:
+
+```typescript
+import { Agent } from 'oneringai';
+import {
+  AgentRuntime,
+  LocalExecutionBackend,
+  OneRingAIDriver,
+  type AgentRun,
+  type RuntimeAgentSpec,
+}
+  from 'oneringai/agent-runtime';
+import { CodexSdkDriver }
+  from 'oneringai/agent-runtime/codex';
+
+const runtime = new AgentRuntime({
+  backend: new LocalExecutionBackend({
+    drivers: [
+      new OneRingAIDriver({
+        // This asserts that every supplied native Agent's tools and permission
+        // pipeline enforce the runtime policy passed below.
+        trustAgentPolicy: true,
+        factories: {
+          assistant: ({ context }) => Agent.create({
+            connector: 'openai-main',
+            model: 'gpt-5.3-codex',
+            userId: context.userId,
+          }),
+        },
+      }),
+      new CodexSdkDriver(),
+    ],
+  }),
+});
+```
+
+### Select an agent, model, and reasoning level
+
+A OneRingAI source is a stored definition, registered binding, or factory. Its native
+source owns connector and instructions. Model and reasoning selection use the same
+generic fields as every other runtime driver:
+
+```typescript
+const oneRingSpec: RuntimeAgentSpec = {
+  id: 'support-agent',
+  driver: 'oneringai.agent',
+  model: 'gpt-5.6-sol',
+  reasoning: { effort: 'medium' },
+  driverConfig: { source: { type: 'factory', name: 'assistant' } },
+};
+```
+
+A Codex source uses a named OpenAI API-key connector, an active OpenAI model from the
+registry, and an explicit local workspace:
+
+```typescript
+const codexSpec: RuntimeAgentSpec = {
+  id: 'coding-agent',
+  driver: 'openai.codex.sdk',
+  connector: 'openai-main',
+  model: 'gpt-5.6-sol',
+  reasoning: { effort: 'medium' },
+  instructions: 'Make focused changes and run relevant tests.',
+  driverConfig: {
+    skipGitRepoCheck: false,
+    allowProjectConfig: false,
+  },
+};
+```
+
+Both local drivers fail closed on model-specific reasoning controls. The Codex driver
+uses `modelReasoningEfforts`; the OneRingAI driver uses richer
+`modelReasoningControls` entries because native agents may also support disabling
+reasoning or fixed token budgets. New models require explicit verified metadata rather
+than optimistic passthrough:
+
+```typescript
+const codexDriver = new CodexSdkDriver({
+  modelReasoningEfforts: {
+    'new-codex-model': ['low', 'medium', 'high'],
+  },
+});
+
+const oneRingDriver = new OneRingAIDriver({
+  trustAgentPolicy: true,
+  modelReasoningControls: {
+    'new-provider-model': {
+      efforts: ['low', 'medium', 'high'],
+      supportsDisabled: false,
+      supportsBudgetTokens: true,
+    },
+  },
+});
+```
+
+The bundled OneRingAI map covers the current GPT-6 family, GPT-5.6
+Sol/Terra/Luna/Cyber, Claude Opus/Sonnet 5.5, Gemini 3.8 Flash, and Grok 4.7.
+The Codex map covers the current GPT-6 family and GPT-5.6 Sol/Terra/Luna, and
+both retain GPT-5.3 Codex.
+Unsupported efforts, disable requests, and token
+budgets fail before an API call. Known models marked as non-reasoning reject reasoning
+configuration in both drivers. For OneRingAI agents, model overrides also update the
+managed context's model and registry-derived context limit; an explicit
+`context.maxContextTokens` remains fixed.
+
+Model and thinking controls are available both on the specification and per run. A
+per-run value overrides the specification for that turn and requires the corresponding
+`run.model_override` or `run.reasoning_override` capability:
+
+```typescript
+const agent = runtime.agent(codexSpec);
+
+const session = await agent.openSession({
+  context: { tenantId, userId },
+  workspace: { type: 'local-directory', path: repositoryPath },
+  policy: {
+    filesystem: 'workspace-write',
+    commands: 'sandboxed',
+    sandboxNetwork: 'denied',
+    providerWebSearch: 'denied',
+    approvals: 'deny',
+    limits: { wallTimeMs: 300_000, outputBytes: 256_000 },
+  },
+  observation: { mode: 'live', detail: 'reasoning' },
+  controlMode: 'observe-only',
+});
+
+const run = await session.run('Implement the approved change.', {
+  model: 'gpt-5.3-codex',
+  reasoning: { effort: 'high' },
+});
+
+const renderEvents = async (activeRun: AgentRun) => {
+  for await (const event of activeRun.events()) {
+    // Forward every visible thought summary, message, plan, command/output,
+    // file change, tool update, usage update, and terminal event to the UI.
+    render(event);
+  }
+};
+
+await renderEvents(run);
+const result = await run.result;
+console.log(result.configuration); // effective model and reasoning configuration
+```
+
+### Inputs and structured results
+
+JSON Schema response formats and workspace image parts are also automatically
+capability-gated as `run.structured_output` and `input.image`; callers do not need to
+duplicate those requirements manually.
+
+### Observation, autonomy, and control are separate
+
+The runtime deliberately avoids one ambiguous “interactive mode” flag:
+
+| Concern | Configuration | Current local support |
+|---|---|---|
+| Autonomous versus approval-gated execution | `policy.approvals` | Autonomous with `deny`; interactive approvals are unsupported |
+| Live versus final-only observation | `observation.mode` | Both |
+| Amount of visible activity | `observation.detail` | `status`, `activity`, or `reasoning` |
+| Observe-only versus steerable control | `controlMode` | Observe-only; steering is capability-gated and currently unsupported |
+
+The default observation is `{ mode: 'live', detail: 'reasoning' }`. Autonomous users
+therefore see the agent working without having to approve or interfere. “Reasoning”
+means every readable reasoning event exposed by the selected vendor/model; it does not
+promise private chain-of-thought.
+
+Use `activity` to stream messages, plans, commands, command output, file changes, and
+tools without reasoning events. Use `status` or `final-only` when only essential/final
+updates are wanted. Filtering affects delivery and retention, never native execution.
+
+Representative event types include:
+
+```text
+run.started
+agent.message.delta / agent.message.completed
+reasoning.delta / reasoning.completed
+plan.updated / agent.iteration.completed
+command.started / command.output.delta / command.completed
+file.change.started / file.changed
+tool.started / tool.progress / tool.completed
+usage.updated / diagnostic / run.finished
+```
+
+The original native OneRingAI/Codex local drivers report message `phase: 'unknown'`: their native streams do
+not reliably distinguish an intermediate tool-producing message from the final answer.
+Use `run.finished` and `run.result` for terminal state.
+
+Events are sequence-numbered and retained in a bounded in-process journal. A client
+can reconnect with `run.events({ afterSequence })` while that history remains. Event
+consumption is optional: the backend pumps native events itself and `run.result`
+settles even when nobody subscribes. Events are deeply cloned and frozen before
+publication, so one UI subscriber cannot modify another subscriber's data or replay
+history. OneRingAI structured-output runs remain on this streamed path and validate
+the completed output against the requested schema.
+
+### Capability inspection
+
+Inspect before opening a session when a workflow has hard requirements:
+
+```typescript
+const capabilities = await agent.inspect({
+  workspace: { type: 'local-directory', path: repositoryPath },
+  policy,
+  requiredCapabilities: [
+    { id: 'event.live', minimum: 'native' },
+    { id: 'event.reasoning' },
+    { id: 'run.model_override' },
+    { id: 'run.reasoning_override' },
+  ],
+});
+
+console.log(capabilities.configuration);
+```
+
+Support is `native`, `emulated`, or `unsupported`. Unsupported requirements fail in
+preflight instead of silently degrading. The current Codex SDK and OneRingAI drivers
+both expose live model/reasoning-aware autonomous runs, but their event categories and
+enforcement strength differ.
+
+### Local and server boundaries
+
+The Codex SDK driver launches an SDK-managed local CLI process; it does not call a
+hosted Codex App Server. It uses a session-owned Codex home, minimal environment,
+non-login shell policy, connector-secret filtering/redaction, `approvalPolicy:
+'never'`, and the requested Codex sandbox. Repository `.codex/config.toml` is rejected
+before every turn unless `allowProjectConfig: true` explicitly trusts it.
+
+Codex App Server is a separate process that the host starts and supervises. It is a
+future driver for richer bidirectional approvals, questions, and steering. It is not
+needed merely to stream autonomous work; the SDK driver already publishes messages,
+reasoning summaries, plans, commands/output, file changes, and tool activity.
+
+The local backend is for trusted development and is not multi-tenant isolation. A
+future server backend should keep this API but schedule an isolated container or
+microVM lease per active run, optionally retaining warm session affinity for a short
+TTL. A permanent VM per tenant/session is a deployment choice, not a runtime
+requirement. Server-wide durable activity replay, distributed checkpoint coordination,
+credential leasing and A2A remain separate future phases. H3 supplies the scoped
+single-host control/native-checkpoint recovery documented above.
+
+Cancellation, timeout, and post-start driver failures attempt bounded native cleanup.
+Synchronous driver cancellation errors are contained. If the native result and event
+pump cannot both be confirmed terminal within the cleanup window, legacy `.agent(spec)`
+runs return an error result while common-definition runs reject with
+`AgentSessionRecoveryError` and suppress a fabricated terminal event. The session fails
+and the local backend quarantines
+that workspace lease until backend teardown; it never starts a second writer over
+possibly live native work.
+
+Always clean up sessions and the runtime:
+
+```typescript
+try {
+  // open and run sessions
+} finally {
+  await session.destroy();
+  await runtime.destroy();
+}
+```
+
+See the [full design](./docs/designs/AGENT_RUNTIME.md) and runnable
+[`agent-runtime-local.ts`](./examples/agent-runtime-local.ts) example.
 
 ## Multimodal (Vision)
 
@@ -13301,6 +16111,10 @@ const granularities = stt.getTimestampGranularities();  // model-specific
 
 ### Available Models
 
+These tables describe checked-in registry metadata. Prices are estimates rather
+than live quotes, and account/region access must be verified separately. Prefer
+registry introspection for application model pickers.
+
 #### TTS Models
 
 | Model | Provider | Features | Pricing |
@@ -13358,11 +16172,12 @@ async function voiceAssistant(audioInput: Buffer): Promise<Buffer> {
   console.log('User said:', transcription.text);
 
   // 2. Text → AI Response
+  if (!transcription.text) throw new Error('No transcript returned');
   const response = await agent.run(transcription.text);
   console.log('Agent response:', response.output_text);
 
   // 3. Text → Speech
-  const audioResponse = await tts.synthesize(response.output_text);
+  const audioResponse = await tts.synthesize(response.output_text ?? '');
   return audioResponse.audio;
 }
 ```
@@ -14218,8 +17033,8 @@ modality metadata used by the calculator.
   speech, or automated calling laws require them.
 
 The library's WebSocket client transports raw audio but does not capture a
-microphone or play sound. The WebRTC helper mints credentials but does not manage
-`RTCPeerConnection`. SIP helpers control an existing OpenAI call but do not
+microphone or play sound. The REST helper mints credentials; the separate browser-safe
+`OpenAIRealtimeWebRTCPeer` manages `RTCPeerConnection` through a host SDP callback. SIP helpers control an existing OpenAI call but do not
 provision phone numbers or receive webhooks. `VoiceBridge` supplies those media
 and lifecycle integrations for supported telephony adapters.
 
@@ -14509,7 +17324,7 @@ const result = await grokImages.generate({
 
 ### Current Image Models
 
-The table highlights current non-retired choices. Use `getActiveImageModels()`
+The table summarizes the checked-in image registry, not a live account probe. Use `getActiveImageModels()`
 and `getDeprecatedImageModels()` rather than hard-coding this table in a model
 picker.
 
@@ -14581,6 +17396,7 @@ The library provides multi-vendor text embeddings and Google Gemini Embedding 2 
 ### Basic Usage
 
 ```typescript
+// Documentation check: complete example
 import { Connector, Embeddings, Vendor } from 'oneringai';
 
 // Setup connector
@@ -14609,14 +17425,14 @@ console.log(batch.embeddings.length);  // 3
 
 ### Matryoshka Representation Learning (MRL)
 
-Models that support MRL (marked with `matryoshka: true` in the registry) allow you to request fewer output dimensions. This produces smaller vectors for faster similarity search with minimal quality loss.
+Models that support MRL (marked with `matryoshka: true` in the registry) allow you to request fewer output dimensions. This produces smaller vectors; measure retrieval quality and latency on your own corpus.
 
 ```typescript
 // Full dimensions (default)
 const full = await embeddings.embed('Hello world');
 console.log(full.embeddings[0].length);  // 1536
 
-// Reduced dimensions — 3x smaller vectors, ~1% quality loss
+// Reduced dimensions — 3x smaller vectors; evaluate retrieval quality
 const compact = await embeddings.embed('Hello world', { dimensions: 512 });
 console.log(compact.embeddings[0].length);  // 512
 
@@ -14746,18 +17562,19 @@ const nomic = await local.embed('query', {
 });
 ```
 
-**Recommended Ollama embedding models by system RAM:**
+**Illustrative local-model sizing (verify memory use on your workload):**
 
 | RAM | Model | Size | Dimensions | Quality |
 |-----|-------|------|------------|---------|
 | < 12 GB | `qwen3-embedding:0.6b` | ~400 MB | 1024 | Good |
 | 12-24 GB | `qwen3-embedding:4b` | ~2.5 GB | 4096 | Very good |
-| 24+ GB | `qwen3-embedding` | ~5 GB | 4096 | Best (MTEB #1) |
+| 24+ GB | `qwen3-embedding` | ~5 GB | 4096 | Largest of these variants; evaluate on your corpus |
 
 ### Available Models
 
-The table lists the 14 callable embedding models. The 15-record registry also
-retains retired `text-embedding-004` for lookup and migration metadata.
+The table summarizes checked-in embedding registry records. Availability and
+prices are registry metadata, not a live account probe. Use the active selectors;
+retired records remain available for lookup and migration.
 
 | Vendor | Model | Default Dims | Max Dims | MRL | Max Tokens | Price/1M Tokens |
 |--------|-------|-------------|----------|-----|------------|-----------------|
@@ -14790,6 +17607,7 @@ import {
 
 // Get model information
 const info = getEmbeddingModelInfo('text-embedding-3-small');
+if (!info) throw new Error('Embedding model is not registered');
 console.log(info.capabilities.maxDimensions);        // 1536
 console.log(info.capabilities.maxTokens);            // 8191
 console.log(info.capabilities.features.matryoshka);   // true
@@ -15114,6 +17932,7 @@ as described above; the public method signatures remain available.
 
 ### Available Models
 
+Prices below are historical or checked-in registry estimates, not live quotes.
 The video registry retains retired Sora and Veo 2 records for historical lookup.
 Use the active-model selectors for new work.
 
@@ -15132,7 +17951,7 @@ Use the active-model selectors for new work.
 | `veo-3.1-fast-generate-preview` | Fast inference, audio | 4-8s | 720p-4K | $0.10-$0.30 |
 | `veo-3.1-generate-preview` | Full features, 4K | 4-8s | 720p-4K | $0.40 |
 | `gemini-omni-1.1-flash` | Active, preferred conversational generation/editing | 3-10s | 360p-4K | ~$0.10 at 720p |
-| `gemini-omni-flash-preview` | Deprecated; shuts down 2026-09-30 | 3-10s | 720p | $0.10 |
+| `gemini-omni-flash-preview` | Historical migration entry; inspect lifecycle before use | 3-10s | 720p | $0.10 |
 
 #### xAI Grok Imagine Models
 
@@ -15234,8 +18053,9 @@ By default, multimedia tools (image generation, video generation, TTS, STT) save
 ### The IMediaStorage Interface
 
 ```typescript
-import type { IMediaStorage, MediaStorageMetadata, MediaStorageResult } from 'oneringai';
+import type { MediaStorageMetadata, MediaStorageResult, MediaStorageListOptions, MediaStorageEntry } from 'oneringai';
 
+// Interface sketch; import IMediaStorage when implementing a backend.
 interface IMediaStorage {
   save(data: Buffer, metadata: MediaStorageMetadata): Promise<MediaStorageResult>;
   read(location: string): Promise<Buffer | null>;
@@ -15337,7 +18157,7 @@ import { FileMediaStorage, createFileMediaStorage } from 'oneringai';
 const storage = createFileMediaStorage();
 
 // Custom output directory
-const storage = createFileMediaStorage({ outputDir: '/data/media-outputs' });
+const storageVariant2 = createFileMediaStorage({ outputDir: '/data/media-outputs' });
 ```
 
 ### Per-Tool-Factory Storage
@@ -15414,7 +18234,7 @@ const results = await search.search('query', {
 
 **Features:**
 - Fast (1-2 second response time)
-- 2,500 free queries, then $0.30/1k
+- Provider plans and quotas are independent; check your account terms
 - Google search quality
 - Up to 100 results per query
 
@@ -15439,7 +18259,7 @@ const results = await search.search('query', {
 **Features:**
 - Privacy-focused (no Google)
 - Independent search index
-- 2,000 free queries, then $3/1k
+- Provider plans and quotas are independent; check your account terms
 - Up to 20 results per query
 
 #### Tavily
@@ -15468,7 +18288,7 @@ const results = await search.search('query', {
 **Features:**
 - AI-optimized for LLMs
 - Includes summaries
-- 1,000 free queries, then $1/1k
+- Provider plans and quotas are independent; check your account terms
 - Up to 20 results per query
 
 #### RapidAPI
@@ -15765,2219 +18585,23 @@ Scraping strategy is handled internally - the tool will use the best available m
 
 ---
 
-## Streaming
-
-### Basic Streaming
-
-```typescript
-import { Agent, isOutputTextDelta } from 'oneringai';
-
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-});
-
-// Stream response
-for await (const event of agent.stream('Tell me a story')) {
-  if (isOutputTextDelta(event)) {
-    process.stdout.write(event.delta);
-  }
-}
-```
-
-### Stream Helpers
-
-```typescript
-import { StreamHelpers } from 'oneringai';
-
-// Text only (filters to just text deltas)
-for await (const text of StreamHelpers.textOnly(agent.stream('Hello'))) {
-  process.stdout.write(text);
-}
-
-// All events
-for await (const event of agent.stream('Hello')) {
-  switch (event.type) {
-    case 'response.created':
-      console.log('🔄 Starting...');
-      break;
-
-    case 'response.output_text.delta':
-      process.stdout.write(event.delta);
-      break;
-
-    case 'response.tool_call.start':
-      console.log(`\n🔧 Calling ${event.tool_name}...`);
-      break;
-
-    case 'response.tool_execution.done':
-      console.log(`✅ Tool complete`);
-      break;
-
-    case 'response.complete':
-      console.log('\n✓ Done');
-      break;
-
-    case 'response.error':
-      console.error('Error:', event.error);
-      break;
-  }
-}
-```
-
-### Streaming with Tools
-
-```typescript
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  tools: [weatherTool, calculatorTool],
-});
-
-for await (const event of agent.stream('What is the weather in Paris?')) {
-  if (event.type === 'response.tool_call.start') {
-    console.log(`🔧 Calling ${event.tool_name}...`);
-  }
-
-  if (event.type === 'response.tool_execution.done') {
-    console.log(`✅ Tool result: ${JSON.stringify(event.result)}`);
-  }
-
-  if (event.type === 'response.output_text.delta') {
-    process.stdout.write(event.delta);
-  }
-}
-```
-
----
-
-## External API Integration
-
-Connect your AI agents to 50 external services with enterprise-grade resilience. The library provides both connector-based tools and direct fetch capabilities.
-
-> **Need the inventory rather than a tutorial?** The
-> [Connector & Tool Catalog](./docs/CONNECTOR_TOOL_CATALOG.md) lists every
-> template, the generic tool each connector receives, all specialized packs,
-> connector-free built-ins, plugin tools, and the runtime discovery APIs.
-
-### Overview
-
-External API integration uses the **Connector-First Architecture** - the same pattern used for AI providers. This means:
-- Single source of truth for authentication
-- Built-in resilience (retry, timeout, circuit breaker)
-- Automatic tool generation for any service
-
-### Quick Start
-
-```typescript
-import { Connector, ConnectorTools, Services, Agent } from 'oneringai';
-
-// 1. Create a connector for an external service
-Connector.create({
-  name: 'github',
-  serviceType: Services.Github,
-  auth: { type: 'api_key', apiKey: process.env.GITHUB_TOKEN! },
-  baseURL: 'https://api.github.com',
-});
-
-// 2. Generate tools from the connector
-const tools = ConnectorTools.for('github');
-
-// 3. Use with an agent
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  tools: tools,
-});
-
-// 4. Agent can now call the GitHub API
-await agent.run('List all open issues in owner/repo');
-```
-
-### Connector Configuration
-
-#### Basic Configuration
-
-```typescript
-Connector.create({
-  name: 'slack',
-  serviceType: Services.Slack,  // Optional: explicit service type
-  auth: { type: 'api_key', apiKey: process.env.SLACK_TOKEN! },
-  baseURL: 'https://slack.com/api',
-});
-```
-
-#### Enterprise Resilience Features
-
-```typescript
-Connector.create({
-  name: 'stripe',
-  serviceType: Services.Stripe,
-  auth: { type: 'api_key', apiKey: process.env.STRIPE_SECRET_KEY! },
-  baseURL: 'https://api.stripe.com/v1',
-
-  // Timeout
-  timeout: 30000,  // 30 seconds (default)
-
-  // Retry with exponential backoff
-  retry: {
-    maxRetries: 3,
-    baseDelayMs: 1000,
-    maxDelayMs: 30000,
-    retryableStatuses: [429, 500, 502, 503, 504],
-  },
-
-  // Circuit breaker
-  circuitBreaker: {
-    enabled: true,
-    failureThreshold: 5,      // Open after 5 failures
-    successThreshold: 2,      // Close after 2 successes
-    resetTimeoutMs: 60000,    // Try again after 60s
-  },
-
-  // Logging
-  logging: {
-    enabled: true,
-    logBody: false,           // Don't log request/response bodies
-    logHeaders: false,        // Don't log headers
-  },
-});
-```
-
-### Supported Services (50)
-
-The library includes built-in definitions for 50 popular services:
-
-| Category | Services |
-|----------|----------|
-| **Major Vendors** | Microsoft, Google |
-| **Communication** | Slack, Discord, Telegram, X (Twitter), Zoom, HeyReach |
-| **Development** | GitHub, GitLab, Bitbucket, Jira, Linear, Asana, Trello |
-| **Productivity** | Notion, Airtable, Confluence, Cal.com, Calendly |
-| **CRM** | Salesforce, HubSpot, Pipedrive |
-| **Payments** | Stripe, PayPal, QuickBooks, Ramp |
-| **Cloud** | AWS, Cloudflare |
-| **Storage** | Dropbox, Box |
-| **Email** | SendGrid, Mailchimp, Postmark, Mailgun, EmailBison |
-| **Monitoring** | Datadog, PagerDuty, Sentry |
-| **Search** | Serper, Brave Search, Tavily, RapidAPI Search |
-| **Scrape** | ZenRows |
-| **Other** | Twilio, Zendesk, Intercom, Shopify, ipinfo, Clay |
-
-```typescript
-import { Services, getServiceInfo, getServicesByCategory } from 'oneringai';
-
-// Use service constants
-Connector.create({
-  name: 'my-slack',
-  serviceType: Services.Slack,  // Type-safe
-  // ...
-});
-
-// Get service metadata
-const info = getServiceInfo('slack');
-console.log(info?.name);        // 'Slack'
-console.log(info?.category);    // 'communication'
-console.log(info?.docsURL);     // 'https://api.slack.com/methods'
-console.log(info?.commonScopes); // ['chat:write', 'channels:read', ...]
-
-// Filter by category
-const devServices = getServicesByCategory('development');
-// Returns: github, gitlab, jira, linear, bitbucket, ...
-```
-
-### Using Connector.fetch()
-
-For direct API calls without tools:
-
-```typescript
-const connector = Connector.get('github');
-
-// Basic fetch
-const response = await connector.fetch('/repos/owner/repo/issues', {
-  method: 'GET',
-  queryParams: { state: 'open', per_page: '10' },
-});
-
-// JSON helper with automatic parsing
-const issues = await connector.fetchJSON<Issue[]>('/repos/owner/repo/issues');
-
-// POST with body
-const newIssue = await connector.fetchJSON('/repos/owner/repo/issues', {
-  method: 'POST',
-  body: {
-    title: 'New Issue',
-    body: 'Issue description',
-    labels: ['bug'],
-  },
-});
-
-// Per-request options
-const urgent = await connector.fetch('/chat.postMessage', {
-  method: 'POST',
-  body: { channel: 'C123', text: 'Urgent!' },
-  timeout: 5000,           // Override timeout
-  skipRetry: true,         // Skip retry for this request
-  skipCircuitBreaker: true, // Bypass circuit breaker
-});
-```
-
-### ConnectorTools API
-
-#### Generate Tools for a Connector
-
-```typescript
-import { ConnectorTools } from 'oneringai';
-
-// Get all tools for a connector (generic API + any registered service tools)
-const tools = ConnectorTools.for('github');
-const tools = ConnectorTools.for(connector);  // Can pass instance too
-
-// userId is automatic — all generated tools read it from ToolContext at execution time.
-// No need to pass userId to ConnectorTools.for().
-// Just set it on the agent: Agent.create({ userId: 'user-123', tools })
-
-// With scoped registry (access control)
-const registry = Connector.scoped({ tenantId: 'acme' });
-const tools = ConnectorTools.for('github', undefined, { registry });
-
-// The generic API tool is included automatically by ConnectorTools.for()
-// (named `{connectorName}_api` whenever the connector has a baseURL)
-const tools = ConnectorTools.for('github');
-const apiTool = tools.find(t => t.definition.function.name === 'github_api');
-```
-
-#### Tool Naming Convention
-
-All tools generated by `ConnectorTools.for()` are prefixed with the connector name to prevent naming collisions when multiple connectors provide tools with the same base name:
-
-| Tool type | Naming pattern | Example |
-|-----------|---------------|---------|
-| Generic API | `{connectorName}_api` | `github_api`, `slack_api` |
-| Service-specific | `{connectorName}_{toolName}` | `github_search_files`, `google_generate_image`, `main-openai_text_to_speech` |
-
-**Services with built-in tools:**
-- **GitHub** — 8 tools: `search_files`, `search_code`, `read_file`, `list_branches`, `get_pr`, `pr_files`, `pr_comments`, `create_pr` (see [GitHub Connector Tools](#github-connector-tools))
-- **Microsoft** — 11 tools: email, calendar, meetings, Teams transcripts, OneDrive/SharePoint files (see [Microsoft Graph Connector Tools](#microsoft-graph-connector-tools))
-- **Google Workspace** — 11 tools: Gmail, Calendar, Meet transcripts, Drive files (see [Google Workspace Connector Tools](#google-workspace-connector-tools))
-- **Zoom** — 3 tools: `zoom_create_meeting`, `zoom_update_meeting`, `zoom_get_transcript` (see [Zoom Connector Tools](#zoom-connector-tools))
-- **Telegram** — 6 tools: `telegram_send_message`, `telegram_send_photo`, `telegram_get_updates`, `telegram_set_webhook`, `telegram_get_me`, `telegram_get_chat` (see [Telegram Connector Tools](#telegram-connector-tools))
-- **Twilio** — 4 tools: `send_sms`, `send_whatsapp`, `list_messages`, `get_message` (see [Twilio Connector Tools](#twilio-connector-tools))
-- **AI Vendors** (OpenAI, Google, Grok) — Multimedia tools: `generate_image`, `generate_video`, `text_to_speech`, `speech_to_text`
-
-This ensures that tools from different vendors (e.g., `google_generate_image` vs `main-openai_generate_image`) never collide, and are clearly identified by connector in UIs and agent configs.
-
-`ToolRegistry` automatically derives clean display names from these prefixed names using vendor metadata (e.g., `google_generate_image` displays as "Google Generate Image").
-
-#### The Generic API Tool
-
-Every connector with a `baseURL` gets a generic API tool that allows the agent to make any API call:
-
-```jsonc
-// Tool schema:
-{
-  name: 'github_api',  // {connectorName}_api
-  description: 'Make API requests to api.github.com',
-  parameters: {
-    method: { enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] },
-    endpoint: { type: 'string' },          // API path, e.g., '/repos/owner/repo'
-    body: { type: 'object' },              // JSON request body (POST/PUT/PATCH)
-    queryParams: { type: 'object' },       // URL query parameters (GET filtering/pagination)
-    headers: { type: 'object' },           // Additional headers (auth headers are protected)
-  }
-}
-```
-
-**Important:** For `POST`/`PUT`/`PATCH` requests, data must be passed in the `body` parameter as a JSON object — **not** as query string parameters in the endpoint URL. The body is sent as `application/json`. For example, to post a Slack message:
-
-```jsonc
-// Correct: data in body
-{ method: 'POST', endpoint: '/chat.postMessage', body: { channel: 'C123', text: 'Hello!' } }
-
-// Wrong: data in query string — many APIs will reject this
-{ method: 'POST', endpoint: '/chat.postMessage?channel=C123&text=Hello!' }
-```
-
-**Security:** Authorization headers cannot be overridden by the agent.
-
-#### Register Custom Service Tools
-
-For frequently-used operations, register service-specific tools. Note that tool names returned by the factory use generic names — `ConnectorTools.for()` automatically prefixes them with the connector name:
-
-```typescript
-import { ConnectorTools, ToolFunction } from 'oneringai';
-
-// Register tools for a service type
-ConnectorTools.registerService('slack', (connector) => {
-  const listChannels: ToolFunction = {
-    definition: {
-      type: 'function',
-      function: {
-        name: 'list_channels',
-        description: 'List all Slack channels',
-        parameters: {
-          type: 'object',
-          properties: {
-            types: {
-              type: 'string',
-              description: 'Filter by channel types',
-              enum: ['public_channel', 'private_channel'],
-            },
-            limit: { type: 'number', description: 'Max results' },
-          },
-        },
-      },
-    },
-    execute: async (args) => {
-      return connector.fetchJSON('/conversations.list', {
-        queryParams: { types: args.types, limit: String(args.limit || 100) },
-      });
-    },
-    describeCall: (args) => `List ${args.types || 'all'} channels`,
-  };
-
-  const postMessage: ToolFunction = {
-    definition: {
-      type: 'function',
-      function: {
-        name: 'post_message',
-        description: 'Post a message to a Slack channel',
-        parameters: {
-          type: 'object',
-          properties: {
-            channel: { type: 'string', description: 'Channel ID' },
-            text: { type: 'string', description: 'Message text' },
-          },
-          required: ['channel', 'text'],
-        },
-      },
-    },
-    execute: async (args) => {
-      return connector.fetchJSON('/chat.postMessage', {
-        method: 'POST',
-        body: { channel: args.channel, text: args.text },
-      });
-    },
-    describeCall: (args) => `Post to ${args.channel}`,
-    permission: { riskLevel: 'medium', scope: 'session' },
-  };
-
-  return [listChannels, postMessage];
-});
-
-// Now ConnectorTools.for('slack-connector') returns:
-// slack-connector_api, slack-connector_list_channels, slack-connector_post_message
-```
-
-#### Discover All Connectors
-
-```typescript
-// Get tools for all connectors with serviceType
-const allTools = ConnectorTools.discoverAll();
-// Returns: Map<connectorName, ToolFunction[]>
-
-for (const [name, tools] of allTools) {
-  console.log(`${name}: ${tools.length} tools`);
-}
-
-// Find connector by service type
-const slackConnector = ConnectorTools.findConnector(Services.Slack);
-
-// Find all connectors for a service type
-const allSlackConnectors = ConnectorTools.findConnectors(Services.Slack);
-
-// Check if service has custom tools
-if (ConnectorTools.hasServiceTools('slack')) {
-  // ...
-}
-
-// List all services with custom tools registered
-const services = ConnectorTools.listSupportedServices();
-```
-
-### ToolRegistry API
-
-Unified view of all tools (built-in + connector-generated). Use this for UI tool pickers, inventory screens, or any code that needs to enumerate available tools.
-
-#### Basic Usage
-
-```typescript
-import { ToolRegistry } from 'oneringai';
-
-// Get ALL tools (main API for UIs)
-const allTools = ToolRegistry.getAllTools();
-
-// Built-in tools only (filesystem, shell, web, code, json, connector, desktop, custom-tools, routines, other)
-const builtInTools = ToolRegistry.getBuiltInTools();
-
-// All connector-generated tools
-const connectorTools = ToolRegistry.getAllConnectorTools();
-
-// Tools for a specific connector
-const githubTools = ToolRegistry.getConnectorTools('github');
-
-// Filter by service type
-const slackTools = ToolRegistry.getToolsByService('slack');
-
-// Filter by connector name
-const myApiTools = ToolRegistry.getToolsByConnector('my-api');
-```
-
-#### Type Guard
-
-Use `isConnectorTool()` to distinguish built-in from connector tools:
-
-```typescript
-for (const tool of ToolRegistry.getAllTools()) {
-  if (ToolRegistry.isConnectorTool(tool)) {
-    // ConnectorToolEntry - has connectorName, serviceType
-    console.log(`API: ${tool.displayName} (${tool.connectorName})`);
-  } else {
-    // ToolRegistryEntry - built-in tool
-    console.log(`Built-in: ${tool.displayName}`);
-  }
-}
-```
-
-#### Methods Reference
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `getAllTools()` | `(ToolRegistryEntry \| ConnectorToolEntry)[]` | All tools (main API) |
-| `getBuiltInTools()` | `ToolRegistryEntry[]` | Built-in tools only |
-| `getAllConnectorTools()` | `ConnectorToolEntry[]` | All connector tools |
-| `getConnectorTools(name)` | `ConnectorToolEntry[]` | Tools for specific connector |
-| `getToolsByService(type)` | `ConnectorToolEntry[]` | Filter by service type |
-| `getToolsByConnector(name)` | `ConnectorToolEntry[]` | Filter by connector name |
-| `isConnectorTool(entry)` | `boolean` | Type guard for ConnectorToolEntry |
-
-#### Entry Properties
-
-**ToolRegistryEntry** (built-in tools):
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `name` | `string` | Tool name (e.g., `read_file`) |
-| `displayName` | `string` | Human-readable name (e.g., `Read File`) |
-| `category` | `ToolCategory` | `filesystem`, `shell`, `web`, `code`, `json`, `connector`, `desktop`, `custom-tools`, `routines`, `other` |
-| `description` | `string` | Brief description |
-| `safeByDefault` | `boolean` | Whether safe without approval |
-| `tool` | `ToolFunction` | The actual tool function |
-| `requiresConnector` | `boolean?` | If tool needs a connector |
-| `connectorServiceTypes` | `string[]?` | Supported service types |
-
-**ConnectorToolEntry** extends ToolRegistryEntry with:
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `connectorName` | `string` | Source connector name |
-| `serviceType` | `string?` | Detected service type (e.g., `github`) |
-
-### Service Detection
-
-Services are detected from URL patterns or explicit `serviceType`:
-
-```typescript
-import { detectServiceFromURL, Services } from 'oneringai';
-
-// Automatic detection from URL
-detectServiceFromURL('https://api.github.com/repos');     // 'github'
-detectServiceFromURL('https://slack.com/api/chat');       // 'slack'
-detectServiceFromURL('https://api.stripe.com/v1');        // 'stripe'
-detectServiceFromURL('https://company.atlassian.net/jira'); // 'jira'
-
-// Explicit serviceType takes precedence
-Connector.create({
-  name: 'custom',
-  serviceType: Services.Jira,                        // Explicit
-  baseURL: 'https://api.github.com',                 // Ignored for detection
-});
-```
-
-### Metrics and Monitoring
-
-```typescript
-const connector = Connector.get('github');
-
-// Get metrics
-const metrics = connector.getMetrics();
-console.log(`Requests: ${metrics.requestCount}`);
-console.log(`Success: ${metrics.successCount}`);
-console.log(`Failures: ${metrics.failureCount}`);
-console.log(`Avg Latency: ${metrics.avgLatencyMs}ms`);
-console.log(`Circuit: ${metrics.circuitBreakerState}`);
-
-// Reset circuit breaker manually
-connector.resetCircuitBreaker();
-
-// Check if connector is disposed
-if (connector.isDisposed()) {
-  // Recreate connector
-}
-```
-
-### Complete Example
-
-```typescript
-import { Connector, ConnectorTools, Services, Agent, Vendor } from 'oneringai';
-
-// Setup AI connector
-Connector.create({
-  name: 'openai',
-  vendor: Vendor.OpenAI,
-  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
-});
-
-// Setup GitHub connector with resilience
-Connector.create({
-  name: 'github',
-  serviceType: Services.Github,
-  auth: { type: 'api_key', apiKey: process.env.GITHUB_TOKEN! },
-  baseURL: 'https://api.github.com',
-  timeout: 15000,
-  retry: { maxRetries: 2, baseDelayMs: 500 },
-  circuitBreaker: { enabled: true, failureThreshold: 3 },
-});
-
-// Setup Slack connector
-Connector.create({
-  name: 'slack',
-  serviceType: Services.Slack,
-  auth: { type: 'api_key', apiKey: process.env.SLACK_TOKEN! },
-  baseURL: 'https://slack.com/api',
-});
-
-// Create agent with external API tools
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  tools: [
-    ...ConnectorTools.for('github'),
-    ...ConnectorTools.for('slack'),
-  ],
-});
-
-// Agent can now interact with both services
-await agent.run(`
-  Check if there are any critical issues in owner/repo,
-  and if so, post a summary to the #alerts Slack channel.
-`);
-```
-
----
-
-## Vendor Templates
-
-Quickly set up connectors for 50 services with pre-configured authentication templates. No need to look up URLs, headers, or scopes - just provide your credentials!
-
-### Quick Start
-
-```typescript
-import {
-  createConnectorFromTemplate,
-  listVendors,
-  getVendorTemplate,
-  ConnectorTools
-} from 'oneringai';
-
-// Create GitHub connector with Personal Access Token
-const connector = createConnectorFromTemplate(
-  'my-github',           // Connector name
-  'github',              // Vendor ID
-  'pat',                 // Auth method
-  { apiKey: process.env.GITHUB_TOKEN! }
-);
-
-// Get tools for the connector
-const tools = ConnectorTools.for('my-github');
-
-// Use with agent
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  tools,
-});
-
-await agent.run('List my GitHub repositories');
-```
-
-### Discovering Available Vendors
-
-```typescript
-import { listVendors, getVendorTemplate, getVendorInfo } from 'oneringai';
-
-// List all available vendors
-const vendors = listVendors();
-console.log(vendors.length);  // 50
-
-// Get specific vendor info
-const github = getVendorInfo('github');
-console.log(github);
-// {
-//   id: 'github',
-//   name: 'GitHub',
-//   category: 'development',
-//   docsURL: 'https://docs.github.com/en/rest',
-//   credentialsSetupURL: 'https://github.com/settings/developers',
-//   authMethods: [
-//     { id: 'pat', name: 'Personal Access Token', type: 'api_key', ... },
-//     { id: 'oauth-user', name: 'OAuth App (User Authorization)', type: 'oauth', ... },
-//     { id: 'github-app', name: 'GitHub App (Installation Token)', type: 'oauth', ... }
-//   ]
-// }
-
-// Filter by category
-import { listVendorsByCategory, listVendorsByAuthType } from 'oneringai';
-
-const devVendors = listVendorsByCategory('development');
-// [github, gitlab, bitbucket, jira, linear, asana, trello]
-
-const apiKeyVendors = listVendorsByAuthType('api_key');
-// All vendors that support API key authentication
-```
-
-### Vendor Logos
-
-Access vendor logos for use in UIs. Logos come from the Simple Icons library where available, with branded placeholders for others:
-
-```typescript
-import {
-  getVendorLogo,
-  getVendorLogoSvg,
-  getVendorColor,
-  hasVendorLogo,
-  listVendorsWithLogos,
-  getAllVendorLogos
-} from 'oneringai';
-
-// Check if logo is available
-if (hasVendorLogo('github')) {
-  const logo = getVendorLogo('github');
-  console.log(logo.svg);           // Full SVG content
-  console.log(logo.hex);           // Brand color: "181717"
-  console.log(logo.isPlaceholder); // false (has official icon)
-}
-
-// Get just the SVG content
-const svg = getVendorLogoSvg('slack');
-
-// Get SVG with custom color
-const whiteSvg = getVendorLogoSvg('github', 'FFFFFF');
-
-// Get brand color
-const stripeColor = getVendorColor('stripe');  // "635BFF"
-
-// List all vendors with logos
-const vendorsWithLogos = listVendorsWithLogos();  // 54 known logo IDs
-
-// Get all logos at once
-const allLogos = getAllVendorLogos();  // Map<vendorId, VendorLogo>
-```
-
-**VendorLogo Interface:**
-```typescript
-interface VendorLogo {
-  vendorId: string;          // e.g., 'github'
-  svg: string;               // Full SVG content
-  hex: string;               // Brand color (without #)
-  isPlaceholder: boolean;    // true if using generated placeholder
-  simpleIconsSlug?: string;  // Simple Icons slug if available
-}
-```
-
-### Authentication Methods
-
-Each vendor template includes one or more authentication methods:
-
-#### API Key
-
-Simple token-based authentication:
-
-```typescript
-// GitHub Personal Access Token
-createConnectorFromTemplate('my-github', 'github', 'pat', {
-  apiKey: process.env.GITHUB_TOKEN!
-});
-
-// Slack Bot Token
-createConnectorFromTemplate('my-slack', 'slack', 'bot-token', {
-  apiKey: process.env.SLACK_BOT_TOKEN!
-});
-
-// Stripe Secret Key
-createConnectorFromTemplate('my-stripe', 'stripe', 'api-key', {
-  apiKey: process.env.STRIPE_SECRET_KEY!
-});
-
-// HeyReach (LinkedIn sequencing) — key sent via the X-API-KEY header
-createConnectorFromTemplate('my-heyreach', 'heyreach', 'api-key', {
-  apiKey: process.env.HEYREACH_API_KEY!
-});
-
-// EmailBison (cold-email sequencing) — per-instance deployment, so you MUST
-// override baseURL with your own instance domain.
-createConnectorFromTemplate('my-emailbison', 'emailbison', 'api-token', {
-  apiKey: process.env.EMAILBISON_TOKEN!
-}, { baseURL: 'https://acme.emailbison.com/api' });
-
-// Cal.com — API v1 key passed automatically as the ?apiKey query parameter
-createConnectorFromTemplate('my-calcom', 'cal-com', 'api-key', {
-  apiKey: process.env.CALCOM_API_KEY!  // cal_live_...
-});
-
-// Calendly — Personal Access Token (Bearer). See OAuth section for multi-account.
-createConnectorFromTemplate('my-calendly', 'calendly', 'personal-token', {
-  apiKey: process.env.CALENDLY_TOKEN!
-});
-```
-
-#### OAuth (User Authorization)
-
-For apps where users grant permissions:
-
-```typescript
-// GitHub OAuth App
-createConnectorFromTemplate('my-github-oauth', 'github', 'oauth-user', {
-  clientId: process.env.GITHUB_CLIENT_ID!,
-  clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-  redirectUri: 'https://myapp.com/callback',
-  scope: 'repo read:user'  // Optional - uses template defaults
-});
-
-// Google OAuth (unified template also covers Workspace: Drive, Gmail, Calendar, Sheets, Docs)
-createConnectorFromTemplate('my-google', 'google-api', 'oauth-user', {
-  clientId: process.env.GOOGLE_CLIENT_ID!,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-  redirectUri: 'https://myapp.com/google/callback',
-});
-
-// Calendly OAuth (multi-account/public apps; auto-refresh, PKCE)
-createConnectorFromTemplate('my-calendly-oauth', 'calendly', 'oauth-user', {
-  clientId: process.env.CALENDLY_CLIENT_ID!,
-  clientSecret: process.env.CALENDLY_CLIENT_SECRET!,
-  redirectUri: 'https://myapp.com/calendly/callback',
-});
-```
-
-#### Service Account (JWT Bearer)
-
-For server-to-server authentication:
-
-```typescript
-// Google Service Account (same unified 'google-api' vendor template)
-createConnectorFromTemplate('my-gcp', 'google-api', 'service-account', {
-  clientId: process.env.GOOGLE_SERVICE_CLIENT_ID!,
-  privateKey: process.env.GOOGLE_SERVICE_PRIVATE_KEY!,
-  scope: 'https://www.googleapis.com/auth/cloud-platform'
-});
-
-// Salesforce JWT Bearer
-createConnectorFromTemplate('my-salesforce', 'salesforce', 'jwt-bearer', {
-  clientId: process.env.SF_CLIENT_ID!,
-  privateKey: process.env.SF_PRIVATE_KEY!,
-  username: process.env.SF_USERNAME!
-});
-```
-
-#### Client Credentials
-
-For app-level authentication:
-
-```typescript
-// Microsoft 365 App-Only (unified 'microsoft' vendor template covers 365, Teams, OneDrive, Outlook)
-createConnectorFromTemplate('my-m365', 'microsoft', 'client-credentials', {
-  clientId: process.env.AZURE_CLIENT_ID!,
-  clientSecret: process.env.AZURE_CLIENT_SECRET!,
-  tenantId: process.env.AZURE_TENANT_ID!
-});
-
-// PayPal
-createConnectorFromTemplate('my-paypal', 'paypal', 'oauth-client-credentials', {
-  clientId: process.env.PAYPAL_CLIENT_ID!,
-  clientSecret: process.env.PAYPAL_CLIENT_SECRET!
-});
-```
-
-### Getting Credentials Setup URLs
-
-Each vendor template includes the URL where you create credentials:
-
-```typescript
-import { getCredentialsSetupURL, getDocsURL } from 'oneringai';
-
-// Get where to create credentials
-const setupUrl = getCredentialsSetupURL('github');
-// 'https://github.com/settings/developers'
-
-// Get API documentation
-const docsUrl = getDocsURL('github');
-// 'https://docs.github.com/en/rest'
-```
-
-### Configuration Options
-
-Override defaults when creating connectors:
-
-```typescript
-createConnectorFromTemplate(
-  'my-github',
-  'github',
-  'pat',
-  { apiKey: process.env.GITHUB_TOKEN! },
-  {
-    // Override baseURL (e.g., for GitHub Enterprise)
-    baseURL: 'https://github.mycompany.com/api/v3',
-
-    // Add description
-    description: 'GitHub connector for CI/CD automation',
-
-    // Set display name
-    displayName: 'GitHub (Production)',
-
-    // Configure timeout
-    timeout: 30000,
-
-    // Enable logging
-    logging: true,
-  }
-);
-```
-
-### Complete Vendor Reference
-
-#### Major Vendors (2 vendors)
-
-| Vendor | ID | Auth Methods | Credentials URL |
-|--------|-----|-------------|-----------------|
-| Microsoft | `microsoft` | `oauth-user`, `client-credentials` | [Azure app registrations](https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) |
-| Google Workspace | `google-api` | `oauth-user`, `service-account` | [Google Cloud credentials](https://console.cloud.google.com/apis/credentials) |
-
-#### Communication (6 vendors)
-
-| Vendor | ID | Auth Methods | Credentials URL |
-|--------|-----|-------------|-----------------|
-| Slack | `slack` | `bot-token`, `oauth-user` | [api.slack.com/apps](https://api.slack.com/apps) |
-| Discord | `discord` | `bot-token`, `oauth-user` | [discord.com/developers](https://discord.com/developers/applications) |
-| Telegram | `telegram` | `bot-token` | [t.me/BotFather](https://t.me/BotFather) |
-| X (Twitter) | `twitter` | `oauth-user`, `bearer-token` | [developer.x.com](https://developer.x.com/en/portal/dashboard) |
-| Zoom | `zoom` | `oauth-user`, `server-to-server` | [marketplace.zoom.us](https://marketplace.zoom.us/develop/create) |
-| HeyReach | `heyreach` | `api-key` | [app.heyreach.io](https://app.heyreach.io/) |
-
-#### Development (7 vendors)
-
-| Vendor | ID | Auth Methods | Credentials URL |
-|--------|-----|-------------|-----------------|
-| GitHub | `github` | `pat`, `oauth-user`, `github-app` | [github.com/settings/developers](https://github.com/settings/developers) |
-| GitLab | `gitlab` | `pat`, `oauth-user` | [gitlab.com/-/profile/personal_access_tokens](https://gitlab.com/-/profile/personal_access_tokens) |
-| Bitbucket | `bitbucket` | `app-password`, `oauth-user` | [bitbucket.org/account/settings/app-passwords](https://bitbucket.org/account/settings/app-passwords/) |
-| Jira | `jira` | `api-token`, `oauth-3lo` | [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens) |
-| Linear | `linear` | `api-key`, `oauth-user` | [linear.app/settings/api](https://linear.app/settings/api) |
-| Asana | `asana` | `pat`, `oauth-user` | [app.asana.com/0/developer-console](https://app.asana.com/0/developer-console) |
-| Trello | `trello` | `api-key`, `oauth-user` | [trello.com/power-ups/admin](https://trello.com/power-ups/admin) |
-
-#### Productivity (5 vendors)
-
-| Vendor | ID | Auth Methods | Credentials URL |
-|--------|-----|-------------|-----------------|
-| Notion | `notion` | `internal-token`, `oauth-user` | [notion.so/my-integrations](https://www.notion.so/my-integrations) |
-| Airtable | `airtable` | `pat`, `oauth-user` | [airtable.com/create/tokens](https://airtable.com/create/tokens) |
-| Confluence | `confluence` | `api-token`, `oauth-3lo` | [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens) |
-| Cal.com | `cal-com` | `api-key` | [Cal.com API keys](https://app.cal.com/settings/developer/api-keys) |
-| Calendly | `calendly` | `personal-token`, `oauth-user` | [Calendly integrations](https://calendly.com/integrations/api_webhooks) |
-
-Google Workspace and Microsoft 365 use the unified `google-api` and `microsoft`
-templates listed under Major Vendors; there are no separate product-specific
-template IDs.
-
-#### CRM (3 vendors)
-
-| Vendor | ID | Auth Methods | Credentials URL |
-|--------|-----|-------------|-----------------|
-| Salesforce | `salesforce` | `oauth-user`, `jwt-bearer` | [Salesforce Connected Apps](https://login.salesforce.com/lightning/setup/ConnectedApplication/home) |
-| HubSpot | `hubspot` | `api-key`, `oauth-user`, `oauth-mcp` | [developers.hubspot.com](https://developers.hubspot.com/get-started) |
-| Pipedrive | `pipedrive` | `api-token`, `oauth-user` | [app.pipedrive.com/settings/api](https://app.pipedrive.com/settings/api) |
-
-#### Payments (4 vendors)
-
-| Vendor | ID | Auth Methods | Credentials URL |
-|--------|-----|-------------|-----------------|
-| Stripe | `stripe` | `api-key`, `oauth-connect` | [dashboard.stripe.com/apikeys](https://dashboard.stripe.com/apikeys) |
-| PayPal | `paypal` | `oauth-client-credentials` | [developer.paypal.com/dashboard](https://developer.paypal.com/dashboard/applications) |
-| QuickBooks | `quickbooks` | `oauth-user` | [developer.intuit.com](https://developer.intuit.com/app/developer/dashboard) |
-| Ramp | `ramp` | `oauth-client-credentials`, `oauth-user` | [app.ramp.com/settings/developer](https://app.ramp.com/settings/developer) |
-
-#### Cloud (2 vendors)
-
-| Vendor | ID | Auth Methods | Credentials URL |
-|--------|-----|-------------|-----------------|
-| AWS | `aws` | `access-key` | [AWS IAM Console](https://console.aws.amazon.com/iam/home#/security_credentials) |
-| Cloudflare | `cloudflare` | `api-token`, `global-api-key` | [dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens) |
-
-#### Storage (2 vendors)
-
-| Vendor | ID | Auth Methods | Credentials URL |
-|--------|-----|-------------|-----------------|
-| Dropbox | `dropbox` | `oauth-user` | [dropbox.com/developers/apps](https://www.dropbox.com/developers/apps) |
-| Box | `box` | `oauth-user`, `client-credentials` | [developer.box.com/console](https://developer.box.com/console) |
-
-#### Email (5 vendors)
-
-| Vendor | ID | Auth Methods | Credentials URL |
-|--------|-----|-------------|-----------------|
-| SendGrid | `sendgrid` | `api-key` | [app.sendgrid.com/settings/api_keys](https://app.sendgrid.com/settings/api_keys) |
-| Mailchimp | `mailchimp` | `api-key`, `oauth-user` | [admin.mailchimp.com/account/api](https://admin.mailchimp.com/account/api/) |
-| Mailgun | `mailgun` | `api-key` | [app.mailgun.com/settings/api_security](https://app.mailgun.com/settings/api_security) |
-| Postmark | `postmark` | `server-token`, `account-token` | [account.postmarkapp.com/api_tokens](https://account.postmarkapp.com/api_tokens) |
-| EmailBison | `emailbison` | `api-token` | [EmailBison authentication](https://docs.emailbison.com/get-started/authentication) |
-
-#### Monitoring (3 vendors)
-
-| Vendor | ID | Auth Methods | Credentials URL |
-|--------|-----|-------------|-----------------|
-| Datadog | `datadog` | `api-key` | [app.datadoghq.com/organization-settings/api-keys](https://app.datadoghq.com/organization-settings/api-keys) |
-| PagerDuty | `pagerduty` | `api-key`, `oauth-user` | [PagerDuty API Keys](https://support.pagerduty.com/main/docs/api-access-keys) |
-| Sentry | `sentry` | `auth-token`, `oauth-user` | [sentry.io/settings/account/api/auth-tokens](https://sentry.io/settings/account/api/auth-tokens/) |
-
-#### Search (4 vendors)
-
-| Vendor | ID | Auth Methods | Credentials URL |
-|--------|-----|-------------|-----------------|
-| Serper | `serper` | `api-key` | [serper.dev/api-key](https://serper.dev/api-key) |
-| Brave Search | `brave-search` | `api-key` | [brave.com/search/api](https://brave.com/search/api/) |
-| Tavily | `tavily` | `api-key` | [tavily.com/#api](https://tavily.com/#api) |
-| RapidAPI Web Search | `rapidapi-search` | `api-key` | [rapidapi.com/developer/dashboard](https://rapidapi.com/developer/dashboard) |
-
-#### Scrape (1 vendor)
-
-| Vendor | ID | Auth Methods | Credentials URL |
-|--------|-----|-------------|-----------------|
-| ZenRows | `zenrows` | `api-key` | [zenrows.com/register](https://www.zenrows.com/register) |
-
-#### Other (6 vendors)
-
-| Vendor | ID | Auth Methods | Credentials URL |
-|--------|-----|-------------|-----------------|
-| Twilio | `twilio` | `api-key`, `api-key-sid` | [Twilio Console](https://console.twilio.com/us1/account/keys-credentials/api-keys) |
-| Zendesk | `zendesk` | `api-token`, `oauth-user` | [Zendesk API Tokens](https://support.zendesk.com/hc/en-us/articles/4408889192858) |
-| Intercom | `intercom` | `access-token`, `oauth-user` | [developers.intercom.com](https://developers.intercom.com/docs/build-an-integration) |
-| Shopify | `shopify` | `access-token`, `oauth-user` | [partners.shopify.com](https://partners.shopify.com/) |
-| ipinfo | `ipinfo` | `api-key` | [ipinfo.io/signup](https://ipinfo.io/signup) |
-| Clay | `clay` | `api-key` | [Clay API key guide](https://university.clay.com/docs/guide-find-clay-api-key) |
-
-### Template vs Manual Configuration
-
-**Use templates when:**
-- Setting up a well-known service
-- You want sensible defaults for headers, URLs, and scopes
-- You want the credentials setup URL handy
-
-**Use manual Connector.create() when:**
-- Connecting to a custom API not in the template list
-- You need complete control over configuration
-- The service has non-standard authentication
-
-```typescript
-// Template approach (recommended for supported vendors)
-createConnectorFromTemplate('my-github', 'github', 'pat', {
-  apiKey: process.env.GITHUB_TOKEN!
-});
-
-// Manual approach (for custom/unsupported APIs)
-Connector.create({
-  name: 'my-custom-api',
-  serviceType: 'custom',
-  auth: {
-    type: 'api_key',
-    apiKey: process.env.CUSTOM_API_KEY!,
-    headerName: 'X-Custom-Auth',
-    headerPrefix: '',
-  },
-  baseURL: 'https://api.custom-service.com/v1',
-});
-```
-
----
-
-## OAuth for External APIs
-
-The library includes full OAuth 2.0 support for external APIs.
-
-### Basic OAuth Setup
-
-```typescript
-import { OAuthManager, FileStorage } from 'oneringai';
-
-const oauth = new OAuthManager({
-  flow: 'authorization_code',
-  clientId: process.env.GITHUB_CLIENT_ID!,
-  clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-  authorizationUrl: 'https://github.com/login/oauth/authorize',
-  tokenUrl: 'https://github.com/login/oauth/access_token',
-  redirectUri: 'http://localhost:3000/callback',
-  scope: 'repo user',
-
-  // Token storage
-  storage: new FileStorage({
-    directory: './tokens',
-    encryptionKey: process.env.OAUTH_ENCRYPTION_KEY,
-  }),
-});
-
-// Start OAuth flow
-const authUrl = await oauth.startAuthFlow('user-123');
-console.log('Visit:', authUrl);
-
-// After user authorizes and is redirected back with ?code=...&state=...
-await oauth.handleCallback(callbackUrl, 'user-123');  // Result can be ignored for ordinary OAuth API access
-
-// Use token
-const accessToken = await oauth.getToken('user-123');  // returns the access token string
-```
-
-### OpenID Connect callback result
-
-`OAuthManager.handleCallback()` and `Connector.handleCallback()` return an
-`OAuthCallbackResult` (`{ idToken?: string }`), exported from
-`oneringai`. For providers that return `id_token`, the result contains
-that raw token; otherwise it is `{}`. Existing callers can continue to ignore
-the result. Wrappers explicitly typed as `Promise<void>` must either await and
-discard the result or update their return type.
-
-An ID token is **not verified** by this API. Before using it to authenticate a
-user, the host must verify its signature, issuer, exact client audience, expiry
-and the attempt's nonce. The library does not persist it in `StoredToken`, make
-it available through `getToken()`, or return it again during access-token refresh.
-Do not log the ID token or expose it to an untrusted client. Access and refresh
-token storage and user/account scoping are unchanged.
-
-### Authenticated Fetch
-
-```typescript
-import { createAuthenticatedFetch } from 'oneringai';
-
-// Create connector for external API using a pre-obtained access token
-Connector.create({
-  name: 'github',
-  vendor: Vendor.Custom,
-  auth: {
-    type: 'api_key',
-    apiKey: userToken.access_token,
-    headerName: 'Authorization',
-    headerPrefix: 'Bearer',
-  },
-});
-
-// Create authenticated fetch
-const githubFetch = createAuthenticatedFetch('github');
-
-// Make API calls (automatically refreshes tokens)
-const response = await githubFetch('https://api.github.com/user/repos');
-const repos = await response.json();
-```
-
-### OAuth as a Connector
-
-```typescript
-// Create connector with a pre-obtained access token
-Connector.create({
-  name: 'microsoft-graph',
-  vendor: Vendor.Custom,
-  baseURL: 'https://graph.microsoft.com/v1.0',
-  auth: {
-    type: 'api_key',
-    apiKey: token.access_token,
-    headerName: 'Authorization',
-    headerPrefix: 'Bearer',
-  },
-});
-
-// Use in tools
-const listEmailsTool: ToolFunction = {
-  definition: {
-    type: 'function',
-    function: {
-      name: 'list_emails',
-      description: 'List user emails',
-      parameters: { type: 'object', properties: {}, required: [] },
-    },
-  },
-  execute: async () => {
-    const fetch = createAuthenticatedFetch('microsoft-graph');
-    const response = await fetch('/me/messages');
-    return await response.json();
-  },
-};
-
-// Use with agent
-const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  tools: [listEmailsTool],
-});
-
-await agent.run('Show me my recent emails');
-```
-
----
-
-## Model Registry
-
-The library includes registry schema v2 metadata for the current text/realtime catalog,
-plus separate TTS, STT, image, video, and embedding registries.
-
-### Using the Model Registry
-
-```typescript
-import {
-  getModelInfo,
-  calculateCost,
-  getModelsByVendor,
-  getActiveModels,
-  getDeprecatedModels,
-  LLM_MODELS,
-  MODEL_REGISTRY_SCHEMA_VERSION,
-  Vendor,
-} from 'oneringai';
-
-// Get model information
-const model = getModelInfo('gpt-6-astra');
-console.log(model.provider);                   // 'openai'
-console.log(MODEL_REGISTRY_SCHEMA_VERSION);   // 2
-console.log(model.features.input.tokens);     // 1050000 total context-window guardrail
-console.log(model.features.output.tokens);    // 128000
-console.log(model.features.reasoning);        // true
-console.log(model.features.vision);           // true
-console.log(model.lifecycle);                  // 'active'
-console.log(model.endpoints);                  // ['responses', 'chat_completions', 'batch']
-
-// Calculate API costs
-const cost = calculateCost('gpt-5.6-luna', 50000, 2000);
-console.log(`Cost: $${cost}`); // $0.0124
-
-// With mixed cached and uncached input, using batch pricing
-const cachedCost = calculateCost('gpt-5.6-luna', 50000, 2000, {
-  cachedInputTokens: 30000,
-  processingMode: 'batch',
-});
-console.log(`Optimized: $${cachedCost}`); // $0.0035
-
-// Get all models for a vendor
-const openaiModels = getModelsByVendor(Vendor.OpenAI);
-console.log(openaiModels.map(m => m.name));
-// ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', ...]
-
-// Get all active models
-const activeModels = getActiveModels();
-console.log(activeModels.length); // lifecycle-aware active records only
-
-// Use model constants
-const flagship = LLM_MODELS[Vendor.OpenAI].GPT_6_ASTRA;
-const efficient = LLM_MODELS[Vendor.OpenAI].GPT_5_6_LUNA;
-```
-
-### Registry schema v2 and API compatibility
-
-Schema v2 is additive for existing consumers. `name`, `provider`, `isActive`,
-features, and the original cost fields retain their meaning. New metadata is:
-
-- `lifecycle`: `preview`, `active`, `legacy`, `deprecated`, or `retired`;
-- `availability`, `preferred`, `aliases`, and `snapshots`;
-- `endpoints`, `deprecationDate`, `retirementDate`, and `replacementModel`;
-- official `sources` on media records and newly audited text entries; and
-- long-context, processing-mode, duration, message, resolution, and modality
-  pricing where the vendor publishes it.
-
-Unknown token limits are represented as `null`, not `0`. This currently matters
-for duration-priced voice-agent models. Existing code that assumes a number
-should use `resolveMaxContextTokens()` or check for `null`.
-
-Lookup helpers resolve aliases. Direct indexing remains canonical-only:
-
-```typescript
-getModelInfo('gpt-5.6')?.name;          // 'gpt-5.6-sol'
-getModelInfo('grok-voice-latest')?.name; // 'grok-voice-think-fast-2.0'
-MODEL_REGISTRY['gpt-5.6'];              // undefined by design
-```
-
-Use `getDeprecatedModels()` and the equivalent media helpers instead of treating
-every callable-but-deprecated model as inactive. `isActive` means the API can
-still be called; `lifecycle` carries the vendor's migration state.
-
-### Current provider API selection
-
-- OpenAI text models use Responses by default, including current reasoning,
-  service-tier, explicit/implicit prompt-cache, hosted-tool, and long-context
-  cost metadata. Connector-first wrappers also expose Decisions, GPT-Live,
-  and custom voices.
-- Anthropic supports Claude 5.5 adaptive/between-tools thinking, effort through
-  `output_config`, Opus fast mode, tool search/deferred tools, server-side
-  compaction, and current server tools. Generic request metadata is
-  narrowed to Anthropic's supported `{ user_id }` shape; unrelated host keys
-  remain local rather than producing invalid Messages requests.
-- Gemini 3.5+ uses the GA Interactions API (`steps`, `step.delta`) by default;
-  Gemini 3.8 also supports continuation tokens, file search, and computer use.
-  Set `vendorOptions.api = 'generateContent'` to retain the legacy path, or
-  `vendorOptions.api = 'interactions'` to force Interactions on another model.
-  Named function selection is strict on both paths (`allowed_tools` for
-  Interactions and `allowedFunctionNames` for `generateContent`). Live sessions
-  and custom voices have connector-first wrappers.
-- xAI text uses a dedicated OpenAI-compatible adapter for Grok reasoning,
-  registry-gated X/web search, hosted code execution, ordered replay, and cost
-  telemetry; dedicated
-  image, video, TTS, STT, and realtime voice endpoints use native contracts.
-
-### Resolve Model Capabilities
-
-Providers use the registry to resolve model capabilities automatically, but you can also use the helper directly:
-
-```typescript
-import { resolveModelCapabilities, resolveMaxContextTokens } from 'oneringai';
-
-// Get full capabilities for a registered model
-const caps = resolveModelCapabilities('gpt-5.6-terra', {
-  supportsTools: true, supportsVision: false, supportsJSON: true,
-  supportsJSONSchema: false, maxTokens: 128000, maxOutputTokens: 4096,
-});
-console.log(caps.maxTokens);       // 1050000 (from registry)
-console.log(caps.maxOutputTokens); // 128000 (from registry)
-
-// For unregistered models, vendor defaults are returned
-const unknown = resolveModelCapabilities('my-custom-model', { ...vendorDefaults });
-console.log(unknown.maxTokens);    // falls back to vendorDefaults
-
-// Quick context limit lookup (useful for error messages)
-const limit = resolveMaxContextTokens('gpt-5.6-terra', 128000);
-console.log(limit); // 1050000
-```
-
-### Model Information
-
-```typescript
-interface ILLMDescription {
-  name: string;
-  provider: string;
-  description?: string;
-  isActive: boolean; // callable, not necessarily recommended
-  lifecycle?: 'preview' | 'active' | 'legacy' | 'deprecated' | 'retired';
-  availability?: 'public' | 'limited' | 'invite_only' | 'enterprise' | 'region_limited';
-  preferred?: boolean;
-  aliases?: readonly string[];
-  snapshots?: readonly string[];
-  endpoints?: readonly ModelEndpoint[];
-  releaseDate?: string;
-  deprecationDate?: string;
-  retirementDate?: string;
-  replacementModel?: string;
-  knowledgeCutoff?: string;
-  sources?: {
-    documentation: string;
-    pricing?: string;
-    apiReference?: string;
-    lastVerified: string;
-  };
-
-  features: {
-    input: {
-      tokens: number | null;
-      cpm: number;
-      cpmCached?: number;
-    };
-    output: {
-      tokens: number | null;
-      cpm: number;
-    };
-
-    // Feature flags
-    reasoning: boolean;
-    streaming: boolean;
-    structuredOutput: boolean;
-    functionCalling: boolean;
-    vision: boolean;
-    audio: boolean;
-    video: boolean;
-    extendedThinking: boolean;
-    batchAPI: boolean;
-    promptCaching: boolean;
-
-    pricing?: {
-      text?: TokenPricing;
-      audio?: TokenPricing;
-      image?: TokenPricing;
-      audioDurationPerMinute?: number;
-      textInputPerMessage?: number;
-      processingMultipliers?: Partial<Record<ProcessingMode, number>>;
-    };
-  };
-}
-```
-
-### Available Models
-
-**OpenAI:**
-- GPT-6: Astra, GPT-6.1 Sol, GPT-6 Sol, and GPT-6 Luna
-- Specialized: GPT-5.6 Cyber and GPT-Rosalind Research (access-controlled)
-- GPT-5.6: Sol, Terra, Luna
-- GPT-5.5 Pro
-- GPT-5.3: codex, chat-latest
-- GPT-5.2: standard, pro, codex, chat-latest
-- GPT-5.1: standard, codex, codex-max, codex-mini, chat-latest
-- GPT-5: standard, mini, nano, codex, chat-latest
-- GPT-4.1: standard, mini, nano
-- GPT-4o: standard, mini
-- Audio: gpt-audio-1.5, gpt-audio, gpt-audio-mini
-- Realtime: gpt-realtime-2.1 (recommended), gpt-realtime-2.1-mini, gpt-realtime-2, gpt-realtime-translate, gpt-realtime-1.5; gpt-realtime and gpt-realtime-mini are deprecated
-- Realtime transcription: gpt-live-transcribe (recommended) and gpt-realtime-whisper ($0.017/audio minute)
-- o-series: o3, o4-mini, o3-mini, o1
-- Deep Research: o3-deep-research, o4-mini-deep-research
-- Open-weight: gpt-oss-120b, gpt-oss-20b
-
-**Anthropic:**
-- Claude 5.5: Opus 5.5 and Sonnet 5.5
-- Claude 5: Opus 5, Mythos 5, Fable 5, and Sonnet 5
-- Opus 4.8
-- Claude 4.7: Opus 4.7 (legacy flagship)
-- Claude 4.6: Opus 4.6, Sonnet 4.6
-- Claude 4.5: Opus, Sonnet, Haiku
-- Claude 4.x legacy: Opus 4.1, Opus 4, Sonnet 4
-- Claude 3.7: Sonnet
-
-**Google:**
-- Gemini 3.8 Flash, Live, and Live Extended Thinking
-- Gemini 3.7 and 3.6 Flash; Gemini 3.5 and 3.5 Flash-Lite
-- Gemini 3.1: Pro, Flash-Lite, Flash Image, Flash Live
-- Gemini 3 (preview): Flash, Pro Image
-- Gemini 2.5: Pro, Flash, Flash-Lite, Flash Image
-
-**Grok / xAI:**
-- Grok 4.7, Grok 4.6, Grok 4.5, Grok 4.3, and Grok Build 0.1
-- Grok 4.20 (2M context, flagship): reasoning, non-reasoning, multi-agent
-- Grok 4.1 fast (2M context): reasoning, non-reasoning
-- Grok Voice Think Fast 2.0 and maintained 1.0 migration entries
-
-**DeepSeek (5 models):**
-- V4 Flash, V4 Pro, and V4 Flash Vision Experimental
-- Retired `deepseek-chat` and `deepseek-reasoner` compatibility records
-
-Dedicated media registries add GPT Image 2.5 Sunburst/Flare, Gemini Nano Banana
-2.1 and 3.1 Flash-Lite Image, Grok Imagine Image 2.0, Sora 2, Veo/Omni, Grok
-Imagine Video 1.5, current OpenAI speech, Gemini 3.8 TTS, Grok Voice Transcribe
-2.0, Google/xAI voice models, and Gemini Embedding 2. Use
-`getImageModelInfo`, `getVideoModelInfo`, `getTTSModelInfo`, `getSTTModelInfo`,
-and `getEmbeddingModelInfo` for their modality-specific capability schemas.
-
-The complete official-source audit and migration table is in
-[`docs/MODEL_REGISTRY_AUDIT.md`](./docs/MODEL_REGISTRY_AUDIT.md).
-
----
-
-## Scoped Connector Registry
-
-In multi-user or multi-tenant systems, you often need to limit which connectors are visible to which users. The **Scoped Connector Registry** provides a pluggable access control layer over the Connector registry — a lightweight filtered view gated by a user-provided policy predicate. Zero changes to the existing API; scoping is entirely opt-in.
-
-### Access Control Policies
-
-Define a policy that determines which connectors a given context can access:
-
-```typescript
-import { Connector, ScopedConnectorRegistry } from 'oneringai';
-import type { IConnectorAccessPolicy, ConnectorAccessContext } from 'oneringai';
-
-// Tag-based policy: connector must have a matching tenant tag
-const tenantPolicy: IConnectorAccessPolicy = {
-  canAccess: (connector, context) => {
-    const tags = connector.config.tags as string[] | undefined;
-    const tenantId = context.tenantId as string;
-    return !!tags && tags.includes(tenantId);
-  },
-};
-
-// Role-based policy
-const rolePolicy: IConnectorAccessPolicy = {
-  canAccess: (connector, context) => {
-    const roles = context.roles as string[];
-    if (roles.includes('admin')) return true;
-    // Non-admins can only see connectors in their department
-    const dept = connector.config.tags as string[] | undefined;
-    return !!dept && dept.includes(context.department as string);
-  },
-};
-```
-
-**Policy rules:**
-- `canAccess()` is **synchronous** — access checks must be fast, policy data should be in-memory
-- `context` is an opaque `Record<string, unknown>` — the library imposes no structure
-- The policy receives the full `Connector` instance so it can inspect `config.tags`, `vendor`, `serviceType`, `baseURL`, etc.
-
-### Setting a Global Policy
-
-```typescript
-// Set the policy (required before calling Connector.scoped())
-Connector.setAccessPolicy(tenantPolicy);
-
-// Check current policy
-const current = Connector.getAccessPolicy(); // IConnectorAccessPolicy | null
-
-// Clear the policy
-Connector.setAccessPolicy(null);
-```
-
-### Creating Scoped Views
-
-```typescript
-// Create a scoped view for tenant "acme"
-const acmeRegistry = Connector.scoped({ tenantId: 'acme' });
-
-// Only connectors tagged with "acme" are visible
-acmeRegistry.list();       // ['acme-openai', 'acme-slack']
-acmeRegistry.size();       // 2
-acmeRegistry.has('other'); // false
-
-// Accessing a denied connector gives the same "not found" error
-// as a truly non-existent one — no information leakage
-acmeRegistry.get('competitor-key');
-// throws: "Connector 'competitor-key' not found. Available: acme-openai, acme-slack"
-```
-
-You can also create a `ScopedConnectorRegistry` directly with any policy (not just the global one):
-
-```typescript
-import { ScopedConnectorRegistry } from 'oneringai';
-
-const custom = new ScopedConnectorRegistry(myPolicy, { userId: 'user-123' });
-```
-
-### Unfiltered Admin View
-
-When your code accepts `IConnectorRegistry` but you want the full, unfiltered view:
-
-```typescript
-import type { IConnectorRegistry } from 'oneringai';
-
-// Returns an IConnectorRegistry that delegates to Connector static methods
-const adminRegistry: IConnectorRegistry = Connector.asRegistry();
-
-// Full access, no filtering
-adminRegistry.list(); // all connectors
-```
-
-### Using with Agent
-
-Pass a scoped registry to `Agent.create()` via the `registry` option:
-
-```typescript
-const registry = Connector.scoped({ tenantId: 'acme' });
-
-const agent = Agent.create({
-  connector: 'acme-openai',  // Resolved via scoped registry
-  model: 'gpt-4.1',
-  registry,
-});
-
-// The agent can only see connectors accessible to 'acme'
-```
-
-If the connector name isn't accessible through the scoped registry, agent creation throws the standard "Connector not found" error listing only visible connectors.
-
-### Using with ConnectorTools
-
-All major `ConnectorTools` methods accept an optional `{ registry }` option:
-
-```typescript
-const registry = Connector.scoped({ tenantId: 'acme' });
-
-// Get tools for a specific connector (resolved via scoped registry)
-const tools = ConnectorTools.for('acme-slack', undefined, { registry });
-
-// Discover tools for all accessible connectors
-const allTools = ConnectorTools.discoverAll(undefined, { registry });
-
-// Find connectors by service type (searches only accessible connectors)
-const github = ConnectorTools.findConnector('github', { registry });
-const allGithubs = ConnectorTools.findConnectors('github', { registry });
-```
-
-### Multi-Tenant Example
-
-```typescript
-import { Connector, Agent, Vendor, ConnectorTools } from 'oneringai';
-import type { IConnectorAccessPolicy } from 'oneringai';
-
-// 1. Create connectors with tenant tags
-Connector.create({
-  name: 'acme-openai',
-  vendor: Vendor.OpenAI,
-  auth: { type: 'api_key', apiKey: process.env.ACME_OPENAI_KEY! },
-  tags: ['acme'],
-});
-
-Connector.create({
-  name: 'globex-openai',
-  vendor: Vendor.OpenAI,
-  auth: { type: 'api_key', apiKey: process.env.GLOBEX_OPENAI_KEY! },
-  tags: ['globex'],
-});
-
-Connector.create({
-  name: 'acme-github',
-  auth: { type: 'api_key', apiKey: process.env.ACME_GITHUB_TOKEN! },
-  baseURL: 'https://api.github.com',
-  tags: ['acme'],
-});
-
-// 2. Set up the policy
-const policy: IConnectorAccessPolicy = {
-  canAccess: (connector, ctx) => {
-    const tags = connector.config.tags as string[] | undefined;
-    return !!tags && tags.includes(ctx.tenantId as string);
-  },
-};
-Connector.setAccessPolicy(policy);
-
-// 3. Per-request: create a scoped view
-function handleRequest(tenantId: string) {
-  const registry = Connector.scoped({ tenantId });
-
-  // This tenant can only see their own connectors
-  const agent = Agent.create({
-    connector: `${tenantId}-openai`,
-    model: 'gpt-4.1',
-    registry,
-  });
-
-  // Discover tools only for this tenant's connectors
-  const tools = ConnectorTools.discoverAll(undefined, { registry });
-
-  return { agent, tools };
-}
-
-// Acme sees: acme-openai, acme-github
-handleRequest('acme');
-
-// Globex sees: globex-openai
-handleRequest('globex');
-```
-
-### IConnectorRegistry Interface
-
-The `IConnectorRegistry` interface covers the read-only subset of Connector static methods:
-
-| Method | Description |
-|--------|-------------|
-| `get(name)` | Get connector by name (throws if not found/denied) |
-| `has(name)` | Check if connector exists and is accessible |
-| `list()` | List accessible connector names |
-| `listAll()` | List accessible connector instances |
-| `size()` | Count of accessible connectors |
-| `getDescriptionsForTools()` | Formatted descriptions for LLM tool parameters |
-| `getInfo()` | Connector info map for UI/documentation |
-| `getById(id)` | Optional ID lookup; same error contract as `get(name)` |
-
-Missing connectors throw the public `ConnectorNotFoundError`, which extends
-`AIError` and carries `code: 'CONNECTOR_NOT_FOUND'`. Scoped registries and agent
-identity views use the same error for hidden connectors; absence does not reveal
-whether a connector exists in another scope. The error has no HTTP status: the
-host decides how to report it and whether an optional read can use a separately
-authorized cache. It never grants access to a connector or cached data.
-
-Custom `IConnectorRegistry` implementations should throw this error for missing
-or scope-hidden connectors. `Connector.get()` and `Connector.getById()` delegate
-without wrapping errors: authentication, broken configuration and storage errors
-must propagate as their original failures, not be converted into absence.
-
-```typescript
-import { ConnectorNotFoundError } from 'oneringai';
-
-// Inside a custom registry, after applying its scope/visibility checks:
-throw new ConnectorNotFoundError();
-```
-
-The default message is safe and generic. A custom diagnostic message and optional
-original error may be supplied as `new ConnectorNotFoundError(message, cause)`.
-Built-in diagnostics retain the requested name/ID and visible connector names;
-HTTP adapters should avoid exposing these diagnostics to clients.
-
----
-
-## Agent Registry
-
-The `AgentRegistry` is a global static registry that automatically tracks all active `Agent` instances. It provides observability, deep inspection, parent/child relationship tracking, event fan-in, and external control — all from one central place.
-
-### Automatic Tracking
-
-Every agent auto-registers on creation and auto-unregisters on destroy. No setup required:
-
-```typescript
-import { Agent, AgentRegistry } from 'oneringai';
-
-const agent = Agent.create({ connector: 'openai', model: 'gpt-4.1', name: 'assistant' });
-AgentRegistry.count;  // 1
-AgentRegistry.has(agent.registryId);  // true
-
-agent.destroy();
-AgentRegistry.count;  // 0
-```
-
-Each agent gets a unique `registryId` (UUID) on creation. Agent names are NOT unique — multiple agents can share a name.
-
-### Query
-
-```typescript
-// By unique ID
-AgentRegistry.get(agent.registryId);
-
-// By name (returns array — names aren't unique)
-AgentRegistry.getByName('assistant');
-
-// Filter with AND logic
-AgentRegistry.filter({ model: 'gpt-4.1', status: 'running' });
-AgentRegistry.filter({ status: ['idle', 'running'] });  // match any of these statuses
-AgentRegistry.filter({ connector: 'openai', parentAgentId: parent.registryId });
-
-// Lightweight info snapshots
-const infos = AgentRegistry.listInfo();  // AgentInfo[]
-// Each: { id, name, model, connector, status, createdAt, parentAgentId, childAgentIds }
-
-// Aggregate stats
-const stats = AgentRegistry.getStats();
-// { total, byStatus: { idle, running, paused, cancelled, destroyed }, byModel, byConnector }
-
-// Aggregate metrics across all agents
-const metrics = AgentRegistry.getAggregateMetrics();
-// { totalAgents, activeExecutions, totalTokens, totalToolCalls, totalErrors, byModel, byConnector }
-```
-
-### Deep Inspection
-
-The `inspect()` method returns everything about an agent — full context snapshot, conversation history, plugin states, tools, execution metrics, audit trail, and circuit breaker states:
-
-```typescript
-const inspection = await AgentRegistry.inspect(agent.registryId);
-
-// Context snapshot (from agent.getSnapshot())
-inspection.context.plugins;       // IPluginSnapshot[] — all plugin states
-inspection.context.tools;         // IToolSnapshot[] — all tools with call counts
-inspection.context.budget;        // ContextBudget — token usage breakdown
-inspection.context.systemPrompt;  // string | null
-inspection.context.features;      // { workingMemory, inContextMemory, ... }
-
-// Full conversation
-inspection.conversation;          // ReadonlyArray<InputItem>
-inspection.currentInput;          // ReadonlyArray<InputItem> — pending input
-
-// Execution state
-inspection.execution.id;          // current executionId or null
-inspection.execution.iteration;   // current iteration
-inspection.execution.metrics;     // ExecutionMetrics (tokens, tool calls, durations, errors)
-inspection.execution.auditTrail;  // AuditEntry[] (hook executions, tool skips, permissions)
-
-// Tool manager
-inspection.toolStats;             // ToolManagerStats
-inspection.circuitBreakers;       // Map<string, CircuitState>
-
-// Children
-inspection.children;              // AgentInfo[] — child agent snapshots
-
-// Bulk inspection
-const all = await AgentRegistry.inspectAll();
-const filtered = await AgentRegistry.inspectMatching({ model: 'gpt-4.1' });
-```
-
-### Parent/Child Hierarchy
-
-Agents can track parent/child relationships for hierarchical agent architectures:
-
-```typescript
-// Create parent
-const orchestrator = Agent.create({ connector: 'openai', model: 'gpt-4.1', name: 'orchestrator' });
-
-// Create children linked to parent
-const researcher = Agent.create({
-  connector: 'openai', model: 'gpt-4.1', name: 'researcher',
-  parentAgentId: orchestrator.registryId,
-});
-const writer = Agent.create({
-  connector: 'anthropic', model: 'claude-sonnet-4-6', name: 'writer',
-  parentAgentId: orchestrator.registryId,
-});
-
-// Query relationships
-AgentRegistry.getChildren(orchestrator.registryId);  // [researcher, writer]
-AgentRegistry.getParent(researcher.registryId);      // orchestrator
-
-// Recursive tree (for visualization/dashboards)
-const tree = AgentRegistry.getTree(orchestrator.registryId);
-// { info: orchestratorInfo, children: [
-//   { info: researcherInfo, children: [] },
-//   { info: writerInfo, children: [] },
-// ]}
-
-// Filter by parent
-AgentRegistry.filter({ parentAgentId: orchestrator.registryId });
-```
-
-### Events
-
-Registry lifecycle events:
-
-```typescript
-// Agent registered/unregistered
-AgentRegistry.on('agent:registered', ({ agent, info }) => {
-  console.log(`New agent: ${info.name} (${info.id})`);
-});
-
-AgentRegistry.on('agent:unregistered', ({ id, name, reason }) => {
-  console.log(`Agent removed: ${name} (${reason})`);
-});
-
-// Status changes (tracked via agent's own EventEmitter)
-AgentRegistry.on('agent:statusChanged', ({ id, name, previous, current }) => {
-  console.log(`${name}: ${previous} -> ${current}`);
-});
-
-// Registry empty
-AgentRegistry.on('registry:empty', () => {
-  console.log('All agents destroyed');
-});
-```
-
-#### Event Fan-In
-
-Receive ALL events from ALL agents through a single callback — ideal for dashboards, logging pipelines, and monitoring:
-
-```typescript
-AgentRegistry.onAgentEvent((agentId, agentName, event, data) => {
-  console.log(`[${agentName}] ${event}`, data);
-  // "[researcher] execution:start" { executionId, config, timestamp }
-  // "[researcher] tool:complete" { executionId, iteration, toolCall, result, timestamp }
-  // "[writer] llm:response" { executionId, iteration, response, timestamp, duration }
-});
-
-// Stop listening
-AgentRegistry.offAgentEvent(myListener);
-```
-
-Forwarded events include all agent events: `execution:*`, `iteration:*`, `llm:*`, `tool:*`, `hook:error`, `circuit:*`, `async:*`.
-
-### External Control
-
-Control agents without holding a direct reference:
-
-```typescript
-// Individual control
-AgentRegistry.pauseAgent(id);
-AgentRegistry.resumeAgent(id);
-AgentRegistry.cancelAgent(id, 'timeout');
-AgentRegistry.destroyAgent(id);
-
-// Bulk control with filters
-AgentRegistry.pauseMatching({ model: 'gpt-4.1' });
-AgentRegistry.cancelMatching({ status: 'running' }, 'shutting down');
-AgentRegistry.destroyMatching({ connector: 'openai' });
-
-// Nuclear
-AgentRegistry.pauseAll();
-AgentRegistry.cancelAll('emergency shutdown');
-AgentRegistry.destroyAll();
-```
-
-### Full API Reference
-
-| Category | Method | Returns | Description |
-|----------|--------|---------|-------------|
-| **Query** | `get(id)` | `IRegistrableAgent?` | Get agent by unique ID |
-| | `getByName(name)` | `IRegistrableAgent[]` | Get all agents with name |
-| | `has(id)` | `boolean` | Check if agent exists |
-| | `list()` | `string[]` | All registry IDs |
-| | `filter(filter)` | `IRegistrableAgent[]` | Agents matching filter |
-| | `count` | `number` | Total tracked agents |
-| **Info** | `listInfo()` | `AgentInfo[]` | Lightweight snapshots |
-| | `filterInfo(filter)` | `AgentInfo[]` | Filtered snapshots |
-| **Inspection** | `inspect(id)` | `Promise<AgentInspection?>` | Deep inspection |
-| | `inspectAll()` | `Promise<AgentInspection[]>` | Inspect all agents |
-| | `inspectMatching(filter)` | `Promise<AgentInspection[]>` | Filtered inspection |
-| **Aggregates** | `getStats()` | `AgentRegistryStats` | Counts by status/model/connector |
-| | `getAggregateMetrics()` | `AggregateMetrics` | Tokens, tool calls, errors |
-| **Hierarchy** | `getChildren(parentId)` | `IRegistrableAgent[]` | Child agents |
-| | `getParent(childId)` | `IRegistrableAgent?` | Parent agent |
-| | `getTree(rootId)` | `AgentTreeNode?` | Recursive tree |
-| **Events** | `on(event, listener)` | `void` | Subscribe to lifecycle events |
-| | `off(event, listener)` | `void` | Unsubscribe |
-| | `once(event, listener)` | `void` | Subscribe once |
-| | `onAgentEvent(listener)` | `void` | Fan-in: all agent events |
-| | `offAgentEvent(listener)` | `void` | Remove fan-in listener |
-| **Control** | `pauseAgent(id)` | `boolean` | Pause agent |
-| | `resumeAgent(id)` | `boolean` | Resume agent |
-| | `cancelAgent(id, reason?)` | `boolean` | Cancel agent |
-| | `destroyAgent(id)` | `boolean` | Destroy agent |
-| | `pauseMatching(filter)` | `number` | Bulk pause |
-| | `cancelMatching(filter, reason?)` | `number` | Bulk cancel |
-| | `destroyMatching(filter)` | `number` | Bulk destroy |
-| | `pauseAll()` | `number` | Pause all |
-| | `cancelAll(reason?)` | `number` | Cancel all |
-| | `destroyAll()` | `number` | Destroy all |
-| **Housekeeping** | `clear()` | `void` | Clear registry (testing) |
-
----
-
-## Agent Orchestrator
-
-Create autonomous agent teams that coordinate through a shared workspace. The orchestrator is a regular Agent with special tools — no subclass needed.
-
-### Quick Start
-
-```typescript
-import { createOrchestrator, Connector, Vendor } from 'oneringai';
-
-Connector.create({
-  name: 'openai',
-  vendor: Vendor.OpenAI,
-  auth: { type: 'api_key', apiKey: process.env.OPENAI_API_KEY! },
-});
-
-const orchestrator = await createOrchestrator({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  agentTypes: {
-    architect: {
-      systemPrompt: 'You are a senior software architect. Design clean, scalable systems. Use the shared workspace to publish your designs.',
-      tools: [readFile, writeFile],
-    },
-    critic: {
-      systemPrompt: 'You are a thorough code reviewer. Read artifacts from the workspace, find issues, and post your review back to the workspace.',
-      tools: [readFile, grep],
-    },
-    developer: {
-      systemPrompt: 'You are a senior developer. Read the plan from the workspace, implement it, and update the workspace with your progress.',
-      tools: [readFile, writeFile, editFile, bash],
-    },
-  },
-});
-
-const result = await orchestrator.run('Build an auth module with JWT support');
-console.log(result.output_text);
-```
-
-### Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                   Orchestrator (Agent)                    │
-│                                                           │
-│  System prompt: auto-generated from agentTypes            │
-│  Tools: 5 orchestration tools + workspace store tools     │
-│                                                           │
-├─────────────────────────────────────────────────────────┤
-│           SharedWorkspace (shared instance)               │
-│  - entries: plans, code, reviews, status                  │
-│  - log: team conversation                                 │
-│  - All agents read/write via store_*("workspace", ...)    │
-├─────────────────────────────────────────────────────────┤
-│                    Worker Agents                          │
-│  - Persistent (remember reasoning across turns)           │
-│  - Own context + shared workspace                         │
-│  - Receive workspace delta at turn start                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐               │
-│  │Architect │  │  Critic  │  │Developer │               │
-│  └──────────┘  └──────────┘  └──────────┘               │
-└─────────────────────────────────────────────────────────┘
-```
-
-### OrchestratorConfig
-
-```typescript
-interface OrchestratorConfig {
-  connector: string;           // Connector for LLM access
-  model: string;               // Model for orchestrator (default for workers too)
-  systemPrompt?: string;       // Custom prompt (overrides auto-generated)
-  agentTypes: Record<string, AgentTypeConfig>;  // Available worker types
-  workspace?: Partial<SharedWorkspaceConfig>;    // Workspace settings
-  features?: Partial<ContextFeatures>;           // Orchestrator context features
-  pluginConfigs?: PluginConfigs;                 // Plugin configurations for the orchestrator
-  name?: string;               // Orchestrator name (default: 'orchestrator')
-  agentId?: string;            // For session persistence
-  maxIterations?: number;      // Max loop iterations (default: 100)
-  maxAgents?: number;          // Max worker agents (default: 20)
-  skipPlanning?: boolean;      // Skip UNDERSTAND/PLAN/APPROVE phases (default: false)
-  tools?: ToolFunction[];      // Tools available to the orchestrator for DIRECT-route tasks
-  delegationDefaults?: DelegationDefaults; // Default delegation settings
-  autoDescribe?: boolean;      // LLM-generated descriptions for agent types (default: false)
-}
-
-interface AgentTypeConfig {
-  systemPrompt: string;        // Role-defining prompt
-  tools?: ToolFunction[];      // Role-specific tools
-  model?: string;              // Override model per type
-  connector?: string;          // Override connector per type
-  features?: Partial<ContextFeatures>;  // Worker context features
-  plugins?: PluginConfigs;     // Worker plugin configurations
-  description?: string;        // One-liner for routing (e.g., "Senior dev who writes and tests code")
-  scenarios?: string[];        // When to use (e.g., ["implementing features", "fixing bugs"])
-  capabilities?: string[];     // What it can do (e.g., ["read/write files", "run shell commands"])
-}
-```
-
-### 3-Tier Routing
-
-The orchestrator v2 uses a 3-tier routing model:
-
-| Route | When | Behavior |
-|-------|------|----------|
-| **DIRECT** | Simple queries, quick lookups | Orchestrator handles directly using its own `tools` |
-| **DELEGATE** | User needs extended interaction with a specialist | Hands user-facing session to a sub-agent via `delegate_interactive` |
-| **ORCHESTRATE** | Complex multi-step tasks | Coordinates multiple workers via `assign_turn` + workspace |
-
-### Orchestration Tools
-
-The orchestrator gets 5 tools automatically:
-
-#### Task Assignment
-
-| Tool | Description |
-|------|-------------|
-| `assign_turn(agent, type, instruction)` | Assign work to an agent. Auto-creates the agent if it doesn't exist. Always async. Optional `autoDestroy` to clean up after completion. |
-| `delegate_interactive(agent, type?, monitoring?, reclaimOn?, briefing?)` | Hand the user-facing session to a sub-agent. Supports `monitoring` (passive/active/event) and `reclaimOn` conditions (keyword, maxTurns, workspaceKey). |
-
-#### Team Management
-
-| Tool | Description |
-|------|-------------|
-| `list_agents()` | Returns all workers with name, model, status, plus current delegation state. |
-| `destroy_agent(name)` | Destroy a worker. Auto-reclaims delegation if the destroyed agent was the delegatee. |
-
-#### Communication
-
-| Tool | Description |
-|------|-------------|
-| `send_message(agent, message)` | Inject a message into an agent's context. If the agent is running, the message appears on its next iteration. If idle, it's seen on the next turn. Uses `Agent.inject()`. |
-
-### Workspace Delta
-
-When a worker starts a turn, its instruction is automatically prepended with a workspace delta showing what changed since that worker's last turn:
-
-```
-[Workspace changes since your last turn]
-- NEW: "auth_plan" (v1, by architect) — JWT auth design with refresh tokens
-- UPDATED: "requirements" (v1→v2, by orchestrator) — Added rate limiting requirement
-Recent log:
-  [architect] Designed API following RESTful patterns
-  [orchestrator] Added rate limiting to requirements
-
-Design the authentication module based on the approved plan.
-```
-
-### Workflow Examples
-
-#### Sequential Review Cycle
-
-```typescript
-const orchestrator = await createOrchestrator({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  agentTypes: {
-    architect: { systemPrompt: 'You are a software architect...', tools: [readFile, writeFile] },
-    critic: { systemPrompt: 'You are a code reviewer...', tools: [readFile] },
-    developer: { systemPrompt: 'You are a developer...', tools: [readFile, writeFile, editFile, bash] },
-  },
-});
-
-// The orchestrator LLM naturally follows this pattern:
-// 1. assign_turn(agent="arch", type="architect", instruction="Design the auth module")
-//    → auto-creates "arch" as an architect worker
-// 2. assign_turn(agent="rev", type="critic", instruction="Review the architecture plan")
-//    → auto-creates "rev" as a critic worker
-// 3. If issues: assign_turn(agent="arch", instruction="Address reviewer feedback")
-// 4. assign_turn(agent="dev", type="developer", instruction="Implement the approved plan")
-// 5. assign_turn(agent="rev", instruction="Review the implementation")
-// 6. If issues: assign_turn(agent="dev", instruction="Fix review comments")
-// 7. Final acceptance → destroy_agent for each worker
-
-const result = await orchestrator.run('Build a JWT auth module with refresh tokens');
-```
-
-#### Parallel Research
-
-```typescript
-const orchestrator = await createOrchestrator({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  agentTypes: {
-    researcher: {
-      systemPrompt: 'You are a research analyst. Search the web, analyze findings, and post results to the workspace.',
-      tools: [webSearchTool, webFetchTool],
-    },
-    synthesizer: {
-      systemPrompt: 'You are an analyst. Read research findings from the workspace and produce a comprehensive summary.',
-    },
-  },
-});
-
-// The orchestrator will (all assign_turn calls are async/non-blocking):
-// 1. assign_turn(agent="r1", type="researcher", instruction="Research competitor A")
-// 2. assign_turn(agent="r2", type="researcher", instruction="Research competitor B")
-// 3. assign_turn(agent="r3", type="researcher", instruction="Research competitor C")
-//    → All 3 run concurrently (assign_turn is always non-blocking)
-// 4. When results arrive, assign_turn(agent="synth", type="synthesizer", instruction="Combine all research")
-
-const result = await orchestrator.run('Research the top 3 competitors in the AI agent space');
-```
-
-#### Async Execution (All assign_turn Calls Are Non-Blocking)
-
-```typescript
-// assign_turn is always async (blocking: false). The orchestrator naturally
-// launches multiple agents concurrently:
-//
-// 1. assign_turn(agent="r1", type="researcher", instruction="Research competitor A")
-//    → Returns immediately, r1 starts working in background
-//
-// 2. assign_turn(agent="r2", type="researcher", instruction="Research competitor B")
-//    → Returns immediately, r2 starts working in background
-//
-// 3. Orchestrator continues: updates workspace, plans next steps, talks to user
-//
-// 4. Results arrive via autoContinue (500ms batching window):
-//    → "r1 completed: Found 5 key insights..."
-//    → "r2 completed: Analysis complete..."
-//
-// The orchestrator classifies each result: complete, question, stuck, or partial.
-// 3-strike rule: after 3 failed re-assignments, try different agent type or escalate.
-```
-
-#### Interactive Delegation
-
-```typescript
-// For extended interactive sessions (pair-programming, tutoring, debugging):
-//
-// delegate_interactive(agent="dev", type="developer",
-//   monitoring="active",     // LLM reviews each turn, can intervene
-//   reclaimOn={ keyword: "done", maxTurns: 20 },
-//   briefing="User wants help implementing auth")
-//
-// User now talks directly to the "dev" agent.
-// Orchestrator monitors and can inject guidance via send_message.
-// Control returns when user says "done" or after 20 turns.
-//
-// Monitoring modes:
-//   passive  — exchanges logged to workspace, reviewed when control returns
-//   active   — LLM reviews each turn, can inject intervention messages
-//   event    — notified when a specific workspace key appears
-//
-// Reclaim conditions:
-//   keyword     — user says a word (regex match, e.g., "done", "back")
-//   maxTurns    — auto-reclaim after N delegation turns
-//   workspaceKey — reclaim when a specific workspace entry appears
-```
-
-### Agent.inject()
-
-The `inject()` method enables orchestrator-to-worker communication:
-
-```typescript
-// Inject a message into a running or idle agent
-agent.inject('Please also consider rate limiting in your design');
-agent.inject('Switch to OAuth2 instead of JWT', 'developer');  // 'developer' role
-
-// The message is queued and delivered on the agent's next agentic loop iteration.
-// Safe to call while the agent is running.
-```
-
-This is used internally by the `send_message` orchestration tool, but can also be called directly on any Agent instance.
-
-### Worker Agent Lifecycle
-
-Workers are **persistent** — they remember their reasoning across turns:
-
-1. **Created** via `assign_turn(agent=name, type=type, instruction=...)` — auto-creates with system prompt, tools, shared workspace
-2. **Assigned turns** — each subsequent `assign_turn` calls `agent.run(instruction)` on the same instance
-3. **Context accumulates** — the worker's context grows with each turn (compaction handles limits)
-4. **Destroyed** via `destroy_agent(name)` or when the orchestrator is destroyed
-
-### Custom System Prompt
-
-Override the auto-generated prompt for specialized workflows:
-
-```typescript
-const orchestrator = await createOrchestrator({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  systemPrompt: `You are a QA team lead. For every task:
-1. assign_turn a "developer" to write code
-2. assign_turn a "tester" to write tests
-3. Both run concurrently (assign_turn is always async)
-4. If tests fail, send_message the failure details to the developer
-5. assign_turn the developer again to fix, repeat until all tests pass`,
-  agentTypes: {
-    developer: { systemPrompt: '...', tools: [writeFile, editFile] },
-    tester: { systemPrompt: '...', tools: [readFile, bash] },
-  },
-});
-```
-
-### Per-Type Configuration
-
-Each agent type can have its own model, connector, and features:
-
-```typescript
-const orchestrator = await createOrchestrator({
-  connector: 'openai',
-  model: 'gpt-4.1',  // Default
-  agentTypes: {
-    planner: {
-      systemPrompt: 'You are a strategic planner...',
-      model: 'gpt-4.1',      // Use the best model for planning
-      connector: 'openai',
-    },
-    coder: {
-      systemPrompt: 'You are a fast coder...',
-      model: 'gpt-4o-mini',  // Use a faster/cheaper model for coding
-      connector: 'openai',
-      tools: [readFile, writeFile, editFile, bash],
-    },
-    reviewer: {
-      systemPrompt: 'You are a code reviewer...',
-      model: 'claude-sonnet-4-20250514',  // Different provider entirely
-      connector: 'anthropic',
-      tools: [readFile, grep],
-    },
-  },
-});
-```
-
----
-
 ## Advanced Features
 
 ### Hooks & Lifecycle Events
 
 #### Lifecycle Hooks (via AgentConfig)
 
-Intercept tool execution, compaction, and error events:
+`beforeCompaction` is the wired Agent lifecycle preservation hook. Other legacy
+`lifecycleHooks` slots can be assigned but currently have no managed-loop callers;
+do not use them to enforce tool authorization or promise observability. Use
+execution `hooks`, context/Agent events, and the tool execution pipeline instead.
 
 ```typescript
-import { Agent } from 'oneringai';
-
 const agent = Agent.create({
-  connector: 'openai',
-  model: 'gpt-4.1',
-  tools: [myTool],
-
-  // Lifecycle hooks
+  connector: 'openai', model: 'gpt-4.1',
   lifecycleHooks: {
-    beforeToolExecution: async (context) => {
-      console.log(`About to call: ${context.toolName}`);
-      // Throw to prevent execution
-    },
-    afterToolExecution: async (result) => {
-      console.log(`Tool ${result.toolName} completed in ${result.durationMs}ms`);
-    },
-    beforeCompaction: async (context) => {
-      console.log(`Compaction starting for agent ${context.agentId}`);
-    },
-    afterCompaction: async (log, tokensFreed) => {
-      console.log(`Compaction freed ${tokensFreed} tokens`);
-    },
-    onError: async (error, context) => {
-      console.error(`Error in ${context.phase}: ${error.message}`);
+    beforeCompaction: async ({ agentId, estimatedTokensToFree }) => {
+      console.log(agentId, estimatedTokensToFree);
     },
   },
 });
@@ -18204,7 +18828,7 @@ Connector.create({ name: 'openai-backup', vendor: Vendor.OpenAI,
 const agent = Agent.create({ connector: 'openai-main', model: 'gpt-4.1' });
 
 // Bad: Passing keys directly
-const agent = Agent.create({
+const agentVariant2 = Agent.create({
   connector: { vendor: Vendor.OpenAI, auth: { apiKey: '...' } },
   model: 'gpt-4.1'
 });
@@ -18212,27 +18836,20 @@ const agent = Agent.create({
 
 #### 2. Handle Rate Limits
 
-```typescript
-import { retryWithBackoff } from 'oneringai';
-
-const response = await retryWithBackoff(
-  () => agent.run(input),
-  {
-    strategy: 'exponential',
-    initialDelayMs: 1000,
-    maxDelayMs: 30000,
-    multiplier: 2,
-  },
-  3
-);
-```
+Configure the named connector's retry contract for individual eligible requests.
+Do not wrap an entire tool-using `agent.run()` in automatic retry: an earlier tool
+may already have performed a write. Use bounded loop policies and original
+receipts to reconcile uncertain actions. `retryWithBackoff` is appropriate only
+when the host knows the entire operation is safe to repeat. Read
+[outcomes and cancellation](docs/TOOL_OUTCOMES_AND_CANCELLATION.md) for operation
+budgets, `retryPolicy: 'safe'`, and cancellation boundaries.
 
 #### 3. Monitor Context Usage
 
 ```typescript
 // Monitor context budget
-const { budget } = await agent.context.prepare();
-if (budget.utilizationPercent > 80) {
+const budget = agent.context.lastPreparation?.budget; // Inspect after run/stream; do not prepare twice.
+if (budget && budget.utilizationPercent > 80) {
   console.warn(`Context at ${budget.utilizationPercent}%`);
 }
 ```
@@ -18263,7 +18880,7 @@ const oauth = new OAuthManager({
   // ...
   storage: new FileStorage({
     directory: './tokens',
-    encryptionKey: process.env.OAUTH_ENCRYPTION_KEY, // Required!
+    encryptionKey: process.env.OAUTH_ENCRYPTION_KEY!, // Required!
   }),
 });
 ```
@@ -18314,7 +18931,7 @@ if (!toolManager.isDestroyed) {
    - Lower perceived latency
 
 4. **Manage context:**
-   - The default `algorithmic` strategy (75% threshold) handles most use cases
+   - The default `algorithmic` strategy (75% reclaim target; 90% critical trigger) handles most use cases
    - Enable `workingMemory` for automatic tool result offloading
    - Register custom strategies via `StrategyRegistry` for specialized needs
 
@@ -18419,6 +19036,7 @@ const agent = Agent.create({
   model: 'gpt-4.1',
   tools: [searchTool, scrapeWebTool],
   context: {
+    model: 'gpt-4.1',
     features: { workingMemory: true },
   },
 });
@@ -18435,887 +19053,6 @@ const response = await agent.run(`
 ```
 
 ---
-
-## Agent Runtime (preview)
-
-The Agent Runtime is a vendor-neutral surface for executing complete agent systems.
-It sits above `Agent`: each harness retains its native loop, tools and state.
-Drivers normalize the supported behavior
-into the same specifications, capabilities, sessions, runs, live events, and results.
-
-This is the correct surface when a workflow needs to plug in a pre-built agent harness,
-select its model and reasoning level, observe its autonomous work, and receive one
-normalized result. It is deliberately separate from model-provider adapters.
-
-
-### Reusable definitions and harness bindings
-
-H0–H6 are implemented on branch with offline transport validation; live harness validation
-remains pending. Existing `runtime.agent(spec)` calls and saved native Agent sessions
-retain their behavior. Use `runtime.createAgent({ id, instructions, tools? })` to define
-one logical agent, then `agent.inspect(options)` / `agent.openSession(options)` with
-`execution: { driver, connector, model, reasoning?, driverConfig? }`. The connector
-remains the credential authority. The model does not select the harness.
-
-`environment` accepts `none`, `local-directory` with `path`, or `provider-managed`;
-a driver must support the selected placement. Do not combine it with legacy `workspace`.
-Native OneRingAI and Codex currently require their existing local policy boundaries.
-`OneRingAIDriver({ trustAgentPolicy: true, configureAgent? })` permits host native-only
-configuration before initialization; it cannot override definition/binding/identity
-fields. Additional plugin tools require host approval through `additionalToolNames`;
-the standard `store_*` tools retain their existing defaults.
-
-Select exact application tool names in the definition. Configure backend `resolveTools`
-to return `{ tools, fingerprint, manager?, owner?, permissionManager? }` from trusted
-host authorization. It must return exactly the selected tools. The fingerprint must
-include implementation, authorization, connector and evidence revisions. Inspection
-calls this resolver read-only; it must not launch execution or lease resources.
-Blocking function tools with object-root JSON schemas are supported; background/native-async tools reject. Existing
-C7 tools must retain their original manager/evidence handle rather than be cloned.
-A projection whose original source provenance cannot be verified stops delivery and
-retains the observation; it never silently substitutes the raw body. Use matching
-public ESM or CJS entries for original managers and runtime adapters; arbitrary mixed
-module/duplicate-package evidence handles are not inferred to be equivalent.
-An explicit Agent owner uses its external-execution hooks; lifecycle completion
-receives the actual bounded native result/status/error. Native usage stays in the
-runtime result rather than being relabelled/priced as the tool owner's configured model. Bare managers preserve
-manager semantics and do not claim Agent hooks. Native definition mode materializes
-fresh tools into the Agent's one shared manager; it rejects borrowed external owners.
-For selected native definition tools, the resolver's `permissionManager` is an
-additional check on that same manager: both it and the Agent's configured policy
-must allow execution. Resolver permissions remain host-owned and are not destroyed
-with the Agent. Native plugin tools retain their Agent policy. Resolver roles/account
-context is merged while the native Agent retains its principal, memory and cancellation.
-
-Codex receives selected host tools through an authenticated loopback HTTP MCP channel.
-The session token is isolated from shell tool inheritance. This channel is control
-traffic, separate from the selected shell network policy. Only this private server uses
-`default_tools_approval_mode: 'approve'`: OneRingAI's host ToolManager and permission
-policies still decide each invocation, while Codex's native approval policy stays
-`never`. Unrelated MCP/native tools receive no such grant. A bounded current-CLI
-evaluation verified this bridge, continuation, idle recovery, cancellation and shell
-credential isolation; see [the live validation record](docs/evaluations/LIVE_VALIDATION_2026_11_01.md).
-That evaluation uses an explicit test-only SDK authentication bootstrap, not a public
-subscription authentication option. Production still requires a named API-key connector.
-Native multitenant isolation remains a host responsibility.
-
-Runtime results use `outputText`; native `Agent` responses use `output_text`.
-`requestId` deduplicates identical inputs within the session; different payloads reject.
-A session reference is a locator, never authorization. Process-only references require
-the same backend and trusted tenant/user/group. `getRun` returns retained run handles.
-Only drivers with safe native checkpoint/detach support may detach. Local SDK
-checkpoints support idle restoration when their private native state remains complete;
-active interrupted local input stays unknown and is never replayed. Always destroy the runtime
-when finished. No subscription token extraction or consumer ChatGPT/Claude billing
-is provided; API-key entitlement follows the selected endpoint.
-
-Run the deterministic [swappable example](examples/agent-runtime-swappable.ts) with
-`npx tsx examples/agent-runtime-swappable.ts` after building. It uses real runtime
-drivers with synthetic transports and exits without native CLI or provider calls.
-See the [delivery ledger](docs/designs/AGENT_HARNESS_DELIVERY_LEDGER.md) for stage status.
-
-A minimal application binding uses ordinary public types and a host-owned resolver:
-
-```typescript
-import path from 'node:path';
-import { Connector, Vendor, type ToolFunction } from 'oneringai';
-import { AgentRuntime, LocalExecutionBackend, FileRuntimeSessionStorage }
-  from 'oneringai/agent-runtime';
-import { ClaudeAgentSdkDriver } from 'oneringai/agent-runtime/claude';
-
-Connector.create({ name: 'claude-main', vendor: Vendor.Anthropic,
-  auth: { type: 'api_key', apiKey: process.env.ANTHROPIC_API_KEY! } });
-const lookup: ToolFunction = {
-  definition: { type: 'function', function: { name: 'lookup_status',
-    description: 'Read the application status.',
-    parameters: { type: 'object', properties: {}, additionalProperties: false } } },
-  execute: async () => ({ status: 'ready' }),
-};
-const runtime = new AgentRuntime({ backend: new LocalExecutionBackend({
-  drivers: [new ClaudeAgentSdkDriver()],
-  sessionStorage: new FileRuntimeSessionStorage(path.resolve('.onering-runtime')),
-  resolveTools: (names, context) => {
-    if (context.userId !== 'host-user' || names.some(name => name !== 'lookup_status'))
-      throw new Error('Tool selection not authorized');
-    return { tools: [lookup], fingerprint: 'host-user:lookup-implementation-v1' };
-  },
-}) });
-const assistant = runtime.createAgent({ id: 'assistant',
-  instructions: 'Use lookup_status when checking application status.', tools: ['lookup_status'] });
-try {
-  const options = { execution: { driver: 'anthropic.agent.sdk', connector: 'claude-main', model: 'claude-sonnet-4-6' },
-    context: { userId: 'host-user' }, environment: { type: 'none' as const },
-    policy: { filesystem: 'denied' as const, commands: 'denied' as const,
-      sandboxNetwork: 'denied' as const, providerWebSearch: 'denied' as const, approvals: 'deny' as const } };
-  const inspection = await assistant.inspect(options); // No task/model invocation.
-  const session = await assistant.openSession(options);
-  const run = await session.run('Check the status.', { requestId: 'status-1' });
-  for await (const event of run.events()) console.log(event.type);
-  console.log((await run.result).outputText, inspection.definitionDigest);
-} finally { await runtime.destroy(); }
-```
-
-This real mode needs the optional SDK and API entitlement and is billable; use the
-offline examples for credential-free verification. To swap harnesses, register the
-other driver and named connector and bind that same `assistant` with its model and
-supported policy/environment. Tools/instructions/application logic stay the same;
-unsupported required features reject rather than being silently removed. Register
-all desired drivers at backend construction; the [five-binding example](examples/agent-runtime-swappable.ts)
-creates the logical agent once and exercises this exact pattern.
-
-### Local Claude Agent SDK
-
-Install `@anthropic-ai/claude-agent-sdk` (validated interface: 0.3.312) and import
-`ClaudeAgentSdkDriver` from `oneringai/agent-runtime/claude`. Register it
-alongside other drivers and bind `anthropic.agent.sdk` with an Anthropic API-key or
-API-key-provider connector. A Claude consumer subscription is not an API entitlement
-for this integration. SDK process startup/platform support and account access remain
-live-pending; no login token is read from the user's CLI profile.
-
-The initial profile is host-tools-only: select policy `filesystem: 'denied'`,
-`commands: 'denied'`, `providerWebSearch: 'denied'`, `approvals: 'deny'`.
-It disables native tools, subagents, plugins, auto memory, filesystem settings and
-unselected MCP servers, with isolated HOME/config/env and a deny permission callback.
-Host tool authorization still belongs to the resolver/manager. This is process
-execution, not an OS tenant sandbox. Admin-managed SDK settings remain subject to
-Anthropic's platform policy. Unsupported policy/configuration and unverified model
-reasoning controls reject; unknown reasoning values are not translated.
-
-Text, continuation, exposed reasoning/tool progress, cancellation and locally
-validated structured output are supported. `success` is distinguished from error,
-turn/budget limits and stream loss. A terminal SDK limit returns `incomplete`; a
-broken stream cannot establish completion and may quarantine the session.
-Credential redaction spans text/thinking chunks and also sanitizes decoded structured
-strings/keys before local schema validation. If sanitized output cannot satisfy the
-schema, the run fails explicitly instead of returning the credential.
-Usage retains the SDK's model-level report with explicit coverage; cost is an
-estimate. The driver does not claim every internal helper is counted. Destroy the
-runtime to remove its temporary SDK state; with control storage, idle detach preserves
-its native transcript for recovery. Active local input remains unknown after a crash.
-
-`npx tsx examples/agent-runtime-claude.ts` runs synthetic queries with the real
-in-process SDK MCP implementation. It needs the optional SDK, no credentials or CLI
-launch. `--live` additionally requires `ONERINGAI_ALLOW_LIVE=1` and `ANTHROPIC_API_KEY`;
-it is billable and remains unrun under the project's live-testing pause.
-
-### Runtime recovery and control storage
-
-Configure `new LocalExecutionBackend({ drivers, resolveTools, sessionStorage })` with
-`FileRuntimeSessionStorage(privateDirectory)` for restart recovery. Alternatively set
-`StorageRegistry.configure({ runtimeSessions: context => storageFor(context) })`.
-`InMemoryRuntimeSessionStorage` supports the same control protocol within one process;
-it is not restart durability. The factory is optional and separate from native context
-storage and `evidence`. The file backend uses one exclusive writer per scoped record,
-revision checks, private files, atomic replacement and file/directory acknowledgement.
-It can reclaim a same-host lock only when its recorded process is proven dead. It
-provides no distributed lease service. Do not share its directory across hosts.
-
-Save `session.reference()` in trusted application state. After a restart, call
-`runtime.resumeSession(reference, { context, observation? })` with the original trusted
-tenant/user/group. References contain no authentication. The runtime reauthorizes the
-recorded connector/model, policy, environment identity, tool implementation/schema and
-native configuration. Changed tool fingerprints or native configuration reject rather
-than silently migrating history. A native `configureAgent` callback therefore requires
-a host `configurationRevision`. Do not put credentials into definition/config metadata.
-
-Pass a stable `requestId` to `session.run(input, options)`. Identical repeated requests
-return the original run; different payloads reject. Admission is stored before native
-dispatch. Input and serializable options are captured when `run()` is called; later
-caller mutations cannot change the admitted command or its executed payload. The
-original abort signal remains live throughout admission and execution.
-If native acceptance or termination is unknown, `AgentSessionRecoveryError`
-carries the original reference/run ID. Resume/get that run; do not generate another
-request to repeat it. `session.inspectState()` reports connection, activity, active run
-and unresolved effects separately from the unchanged legacy terminal-status union.
-`session.getRun(runId)` reads a saved terminal result or its current observer. Saved
-terminal results survive activity eviction; their old events throw
-`AgentEventHistoryExpiredError`. Restored live observation starts in a new reserved
-sequence range, with explicit history gaps. Control snapshots are acknowledged;
-token-by-token activity is bounded process memory, not a durable event journal.
-
-If restoration fails, retain the original reference, repair the storage or reported
-prerequisite, and retry `resumeSession` with the same trusted scope. A failed initial
-read releases its writer, and a partially restored observer is never published in
-the process cache. Restoration failure releases supported native observation without
-implicitly cancelling existing managed work. Explicit cancellation and deletion remain
-host actions; retrying restoration does not resubmit the original input.
-If runtime destruction wins a race with recovery, the late observer is detached and
-recovery rejects. A failed detach retains the original reference in a recovery error;
-it does not authorize cancelling the independent native task.
-
-The tool-result outbox stores the acknowledged provider-facing payload plus outcome
-and evidence references before delivery. Raw manager returns/events keep their existing
-semantics and storage owner; the outbox is not a second evidence backend. An interrupted
-write stays unresolved. A trusted resolver `reconcile(call, context)` may return the
-original source/receipt's `ToolExecutionReport` with matching call/tool/run IDs and a
-settled completion. This callback must read the original source, never execute a fresh
-action. Without proof, continuation stays blocked. C7 source guards remain authoritative.
-Evidence storage/projection failures stop the run and retain the observation; use
-`onRetainedObservation` and the existing scoped evidence repair APIs before teardown.
-An application `success: false` value still does not mean framework execution failed.
-
-`detach()` preserves native work/state and releases observation/writer ownership;
-`destroy()` requests cancellation and disposes the local handle. Local OneRingAI,
-Codex and Claude SDK detach requires configured control storage and an idle native
-session. Active local input cannot be replayed safely after a crash; it remains unknown.
-OneRingAI restores complete serialized context with renewed host configuration; opaque
-native continuations require their own verified source restore and reject here. SDK
-native transcript directories must still exist and match their private ownership marker.
-Restoring prior Codex/Claude SDK history additionally requires the trusted driver
-`verifyNativeCheckpoint({ directory, nativeSessionId }, request)` callback to verify
-complete native transcripts and their dependencies. A marker alone does not prove
-history survived; the default rejects that restore rather than launching a task as a
-probe. Do not supply a no-op verifier. Managed-provider recovery uses canonical native
-state instead of this local callback. Local native/live persistence verification is
-still pending under the live-testing pause.
-Use detach when preserving those directories. No C3 continuation, ModelTask authority,
-routine cursor or collection cursor is restored by this API.
-
-Use `runtime.deleteSession(reference, { context })` for explicit owned-native-resource
-and control-record cleanup. Deletion rechecks scope and driver policy. Keep the reference
-when cleanup fails. Read-only caller observation never grants another tenant's authority.
-Control records default to a 4 MiB bound; request identity is retained up to 1024 requests
-per session. Capacity errors reject before new dispatch or retain a completed result
-for storage repair. After fixing storage, retry `getRun` to store the retained result;
-never retry its action. Use a new session when its bounded request ledger is full.
-When a write committed but its acknowledgement failed, the control writer verifies
-the exact original intent under its exclusive lease and obtains a new acknowledged
-write before advancing its cache. A conflicting record remains blocked. This repairs
-bookkeeping without replaying native input or tool actions. Stop/destruction interrupts
-read-only admission inspection even when its underlying read has not settled; queued
-input cannot dispatch later. Accepted actions and mutating operations retain their
-existing completion/reconciliation requirements.
-
-`npm run example:agent-runtime-safety` demonstrates host denial, a simulated lost
-post-commit acknowledgement, `getRun` repair and restoration with exactly one authorized
-tool execution. It runs offline with dummy data and removes its temporary files.
-
-`npx tsx examples/agent-runtime-recovery.ts` runs actual producer/recovery processes
-over temporary file storage and a synthetic external service. It verifies one input,
-one external write, stored-result redelivery, a crash after a write, original receipt
-reconciliation and foreign-scope denial. It removes its temporary data and makes no
-provider calls. The same observer API applies to managed drivers; their native account
-and retention policies still apply. `npm run example:agent-runtime-managed-restart`
-additionally exercises both actual managed SDK adapters against an external loopback
-mock service: a producer process crashes after its tool result was accepted, and a
-second process recovers the original ACK with one native input/one effect and no
-implicit cancellation. No live provider is used.
-
-### OpenAI managed Agents API
-
-Import `OpenAIManagedDriver` from `oneringai/agent-runtime/openai-managed`
-and bind `openai.agents.api`. This uses OpenAI's managed Codex harness through the
-installed `openai` SDK, distinct from the client-side Agents SDK and local Codex SDK.
-Configure durable control storage before opening a session. A named OpenAI API-key or
-API-key-provider connector supplies credentials on each request. Account access needs
-Agents read/write plus model-inference permissions; ChatGPT subscription allowances
-are not used by this integration. See [the provider quickstart](https://developers.openai.com/api/docs/guides/agents-api/quickstart).
-
-The initial verified endpoint model profile is `gpt-6-astra` with low/medium/high/xhigh/max
-reasoning; additional models require explicit host `modelEfforts` assertions. Unknown
-controls, fixed thinking budgets and disabled thinking reject. No model name is silently
-translated. Native resource creation is lazy: OpenAI requires the initial input for a
-no-environment session, so `openSession` records a logical handle and the first run
-creates its owned native session with that input. No duplicate reusable provider agent
-resource is created. Application credentials stay outside provider sandbox configuration.
-
-Choose `environment: { type: 'none' }` with native filesystem/commands denied for host
-functions only. `provider-managed` selects an OpenAI-hosted sandbox and requires
-workspace-write plus sandboxed commands. Network denial is explicitly configured and
-verified; plugins, skills, capability directories, desktop and native delegation are
-disabled. Referenced templates require a host-reviewed `environmentTemplates` allowlist.
-Provider web search follows the separate policy flag. No local directory is treated as
-a hosted sandbox or implicitly uploaded. Native command/filesystem behavior belongs
-to the owned provider environment, not the OneRingAI local tool manager.
-Canonical state checks reject unselected vaults, enabled desktop access and changed
-selected function descriptions/schemas/loading configuration before continued execution
-or restoration. Omitted/disabled desktop defaults and reordered JSON object keys are
-accepted. Creation explicitly selects an empty vault list. Owned deletion checks
-names/ownership without loading executable host tools.
-
-The adapter sends exact function schemas, reads current `required_actions`, executes
-through the selected host manager, stores the model payload, rechecks that the request
-is still pending, and submits the result with its original turn/call IDs. Input/result
-writes have SDK automatic retries disabled; input idempotency keys are stable. Lost
-responses are reconciled from saved provider state. Reconnection opens and buffers a
-new stream before fetching saved state and every page of current-turn items. Native
-idle, a closed stream, historical actions, subagent events and pending actions cannot
-complete a root turn. Unknown creation/input retains the original recovery reference.
-Bounded reconciliation stops explicitly rather than claiming complete corpus coverage.
-
-Model/reasoning overrides use the session's supported update endpoint before each
-new input. Output format is fixed when the native session is created: choose it on the
-first run and repeat the same format on continuation. JSON is validated locally.
-Only verified root-turn terminal states produce results; returned text comes from the
-final-answer items, with commentary kept in activity events. Hosted artifact inventory
-is scoped to that completed turn; transfers are a separate host operation. Usage is the
-provider's best-effort root-turn report; external tool/environment fees are excluded.
-OneRingAI wall time controls observation/cancellation, not a guaranteed provider spend cap.
-
-Detach preserves native work and the durable reference. Cancel requests stop and waits
-for native confirmation; HTTP acceptance alone does not prove termination. Destroy
-releases the local handle, while explicit reference-based deletion removes the owned
-provider session only after execution is idle/confirmed. Keep control files/references
-after uncertainty or failed cleanup; provider retention and account billing still apply.
-Interactive approvals, self-hosted environments and native subagents are not enabled.
-
-`npx tsx examples/agent-runtime-openai-managed.ts` exercises the real SDK against mock
-HTTP/SSE responses, including a lost tool-result acknowledgement and paginated output.
-It needs no credentials and cleans up on success. Explicit `--live` requires
-`ONERINGAI_ALLOW_LIVE=1` plus `OPENAI_API_KEY`; it is billable and remains unrun while
-live testing is paused. An error preserves the recovery directory/reference.
-
-### Claude Managed Agents API
-
-Import `ClaudeManagedDriver` from `oneringai/agent-runtime/claude-managed`
-and bind `anthropic.managed.api`. It uses the existing official Anthropic SDK and the
-`managed-agents-2026-04-01` protocol. Configure durable runtime control storage and an
-Anthropic API-key/API-key-provider connector. Keys refresh from that connector; ambient
-CLI login profiles, bearer tokens and custom auth headers do not select credentials.
-`workspaceId` is an optional trusted driver-constructor setting for keys spanning native
-workspaces. This API uses Console/API entitlement, not a consumer Claude subscription.
-See [the provider quickstart](https://platform.claude.com/docs/en/managed-agents/quickstart).
-
-Unlike the OpenAI no-environment profile, this API requires `provider-managed` placement.
-The driver creates a per-session owned, version-pinned agent, a cloud environment and
-a session. Metadata/IDs and creation intent are acknowledged after each step. A failed
-setup returns a recovery reference; cleanup reconciles each original resource rather
-than creating another one. A referenced environment must appear in the host's
-`environmentIds` allowlist and pass current cloud/network policy validation. Borrowed
-environments are never deleted. Owned agent cleanup uses the provider's archive API;
-session/environment deletion is separate and physical retention follows provider policy.
-
-`nativeTools` defaults to an empty list. The built-in toolset explicitly defaults to
-`enabled: false`, because the provider otherwise enables it. The host can select bash,
-read/write/edit/glob/grep and web tools through the driver constructor; policy must
-permit their exact filesystem, command and web effects. No MCP servers, skills,
-memory resources, vault credentials, coordinator agents or workflow runs are enabled.
-Network denial is verified against the environment's limited-network configuration.
-Interactive approval, self-hosted environments and native delegation require other
-capabilities and reject here. Host functions continue through the same selected
-ToolManager, evidence owner, permissions and control outbox as other harnesses.
-
-Model/reasoning are selected at session binding time. This endpoint does not update
-those settings mid-session, so run overrides reject before native input. The initial
-profile also rejects runtime JSON-schema output, rather than suggesting an unsupported
-native output-format option. Use another session/harness when that capability is required.
-Native thinking events indicate activity without exposing reasoning text; previews are
-kept distinct from complete assistant messages. Native history is paginated with its own
-cursor API, bounded separately from local event buffering.
-
-Each input is correlated with its actual native user-event echo and the saved preceding
-boundary. A lost response never causes another user message. Only currently pending
-custom-tool IDs or fresh live calls are executable; old historical calls are observations.
-Results use their original `custom_tool_use_id`, and native duplicate-result semantics
-allow safe redelivery after pending-state reconciliation. A naturally ended turn returns
-`completed`; explicit accepted interrupt plus subsequent stop evidence returns `cancelled`.
-Refusal remains a terminal response rather than proof of business acceptance. Budget and
-requires-action idle reasons keep the run waiting and block a second input. A bare idle
-session, stream closure or span error cannot imply successful completion. Observation
-loss in managed execution does not itself cancel provider work; resume its reference.
-
-Optional `driverConfig: { maxListCostUsdCents: '50' }` sends the provider's native USD
-list-cost ceiling (50 cents). Amounts are integer decimal strings, avoiding float
-rounding. This is a vendor-specific native cap, not a universal ModelTask budget.
-`budget_reached` is resumable waiting; the initial runtime API does not expose budget
-increases. Usage is the difference of available native cumulative snapshots; absent or
-inconsistent fields stay unknown. The raw cumulative report and its coverage accompany
-usage, and library estimates exclude external/runtime fees. Final text is the last
-complete native agent message; earlier messages remain observable activity.
-
-Use the same reference, inspection, request-ID, getRun, cancel, detach and deletion
-recipes as other harnesses. Unresolved source effects must be reconciled before their
-control record can be deleted, including after the native turn stopped requesting a
-result. Resume invokes only the trusted original-receipt resolver; it never reexecutes
-an action. If native setup, cleanup, or source proof is incomplete, keep the reference
-and control directory for repair.
-
-`npx tsx examples/agent-runtime-claude-managed.ts` uses actual SDK serialization with
-synthetic HTTP/SSE. It demonstrates one custom action despite a lost result response,
-a waiting budget pause, explicit interrupt and owned cleanup. No credentials are needed.
-`--live` requires `ONERINGAI_ALLOW_LIVE=1`, `ANTHROPIC_API_KEY` and optionally a trusted
-`ANTHROPIC_WORKSPACE_ID`; it runs only the ordinary task scenario and is billable.
-Live testing remains paused and has not been performed.
-
-### Inspect the effective binding
-
-`inspect()` resolves selected tools and validates the same driver/policy profile as
-open, without creating provider resources or acquiring tool-manager execution ownership.
-It returns the logical `definitionDigest`, control `recovery` durability and optional
-`inspection` details: effective execution digest, selected tool/schema fingerprints,
-native transport names where verified, environment, enforcement ownership, replay bounds,
-usage coverage and prerequisites. Account access stays `unknown` until native requests.
-External driver enforcement stays `unknown` unless that driver reports it; no guarantee
-is inferred from its ID. OneRingAI policy trust is an explicit host assertion.
-
-Runtime event/output/history/inventory bounds apply at their documented normalized or
-retained stage. The vendor SDK may parse a complete upstream JSON page or SSE event
-before the adapter can count it; these are not hard upstream parser/allocation caps.
-Transfers count actual response-stream bytes separately. Hosts needing stricter transport
-limits must provide a reviewed SDK client/transport through the driver constructor.
-Native provider quotas, token consumption and external fees remain independent.
-
-A file-backed control log does not prove native state survived. The file adapter is a
-single-host POSIX implementation using exclusive ownership, atomic rename, file/directory
-fsync and revision checks. It is tested on this macOS host; other POSIX filesystems must
-honor those primitives. Windows requires a custom acknowledged storage adapter and is
-rejected by this file implementation. Network filesystems and distributed ownership are
-not claimed. A lock is recovered only after same-host process death is proven; malformed,
-foreign-host or uncertain locks require host repair, never timeout-based action replay.
-Keep the private storage directory inaccessible to other OS users and outside writable
-model workspaces and transfer roots. A model must not be able to edit authoritative
-control/checkpoint files. This is not tenant isolation. Stored state/results are sensitive application data even though credentials
-and executable handles are excluded from runtime configuration.
-
-Request and tool digests canonicalize nested JSON property order. Tool schema changes,
-host authorization/fingerprint changes, connector endpoint/account settings, workspace
-identity and native configuration changes reject recovery rather than silently migrate.
-API-key refresh through the same authorized account remains supported; the host must
-not substitute another account under the same connector name. SDK constructors/factories
-are trusted host code and must preserve origin/authentication controls. Default managed
-transports pin the connector origin, reject redirects and suppress remote error bodies
-that could echo credentials. Provider control traffic is separate from sandbox egress.
-
-### Explicit files and artifacts
-
-Managed runs return `AgentArtifact` references. These are native locators, not downloaded
-files and not permission to read an arbitrary URL. Enable host transfer separately:
-
-```typescript
-const backend = new LocalExecutionBackend({
-  drivers, // Your registered drivers, as above.
-  sessionStorage: new FileRuntimeSessionStorage(controlDirectory),
-  fileTransfer: context => {
-    const root = authorizedTransferRoots.get(context.userId!);
-    if (!root) throw new Error('No transfer directory for this user');
-    return { root, maxBytes: 1024 * 1024, mediaTypes: ['text/plain', 'application/pdf'] };
-  },
-});
-// An attached, idle RuntimeSession, after an explicit host file selection:
-const uploaded = await session.uploadFile({ path: 'input.txt', mediaType: 'text/plain' });
-const saved = await session.downloadArtifact({ reference: artifact.reference, path: 'answer.txt' });
-```
-
-The transfer callback receives trusted scope on each operation; roots are host-owned,
-existing directories. Paths are relative to that directory, parent directories must
-exist, and source/destination symlinks, traversal and overwrites reject. Keep directory
-parents under host control so another process cannot rename them during I/O. MIME types
-are declarations/native response metadata checked against the exact host allowlist, not
-malware scanning. Default maximum is 1 MiB, maximum configurable bound 16 MiB, additionally
-capped by `policy.limits.artifactBytes`. Streams are counted even without Content-Length;
-failed downloads remove the partial destination. Files use private permissions. File
-transfer and new turns/detach are mutually exclusive; it never submits model input.
-
-OpenAI uploads inline bytes into its owned hosted `/workspace/<name>`; provision the
-hosted environment by completing the first turn before uploading. The upload reference
-identifies a live environment file; only published native artifact references are
-immutable/downloadable. Inline-upload intent is acknowledged before native mutation;
-a lost response blocks new input instead of retrying the write. The native file-list
-metadata cannot prove exact contents, so preserve that reference for explicit owned
-environment/session cleanup rather than claiming automatic content reconciliation.
-OpenAI download metadata and content use the exact owned session
-and artifact endpoints; response MIME and byte bounds still apply. No-environment runs
-cannot upload. Hosted template inheritance remains a separately reviewed host decision.
-
-Claude uploads a separately tracked, expiring Files API object, then mounts it explicitly
-at `/mnt/session/uploads/<name>`. Durable upload intent/IDs are separate from native
-session/environment ownership. Lost upload or mount responses are reconciled by original
-intent/resource membership; they never trigger another upload. An unmounted uncertain
-upload blocks new input and can be cleaned up with `deleteSession`. Native generated
-files are enumerated with exact native session scope (session-wide, not attributed to a
-specific turn); foreign or expired file metadata rejects. Uploaded objects that the native
-API marks non-downloadable cannot be downloaded through this abstraction. Explicit session
-deletion removes tracked owned uploads; borrowed environments remain untouched. Native
-provider-generated file retention follows that provider's session/file lifecycle.
-
-Local SDK drivers continue to use their explicit workspace/image capabilities; these
-managed transfer methods reject there. `workspace-file` never silently uploads to a cloud
-harness. Unsupported rich inputs reject before task submission. Transfers don't run the
-OneRingAI tool pipeline or acquire workflow/ModelTask authority.
-
-Run [the bounded transfer example](examples/agent-runtime-artifacts.ts) after building.
-It uses actual SDK serialization with mock HTTP, checks exact bytes and foreign reference
-denial, and cleans up private temporary data. Native expiry and upload-loss cases also
-have offline regression tests. Live file behavior remains pending vendor/platform checks.
-
-### Adding a future harness
-
-Implement `AgentDriver` and register its instance in `LocalExecutionBackend({ drivers })`.
-Keep the driver ID independent of Connector vendor/model. `inspect` must be read-only,
-validate endpoint-specific models/policy/tool translation, and report actual capabilities;
-optional descriptor `inspection` metadata reports transport names/enforcement/prerequisites.
-Unknown guarantees must remain unknown. Return native additions/configuration revisions
-in `agent.definition` constraints so incompatible checkpoint configuration is detected.
-
-`openSession` receives trusted scope, a scoped connector registry, the bound definition,
-policy/environment and optional `RuntimeHostTools` / `RuntimeControl`. Resolve credentials
-through the named Connector. Invoke selected application functions through
-`request.hostTools.execute(name, args, originalCallId)`; this retains the existing manager,
-Agent owner/evidence/permissions and acknowledged outbox. Never construct a duplicate
-pipeline or clone remote proxies. Drivers normalize native events/results; `DriverRun.result`
-settles only when native work is proven terminal and cannot mutate its environment.
-Observer loss or an accepted cancel request is not proof. `observationIndependent` is
-opt-in only for service-owned work that survives local observation loss.
-
-Optional checkpoint/restore/delete/detach hooks preserve native identity and ownership.
-Use the supplied serialized `control.update` for acknowledgements around native mutation;
-never put credentials, executable objects or workflow authority in a checkpoint. Do not
-re-send uncertain input. Driver-specific state is JSON and versioned; unsupported/missing
-native recovery remains explicit. Optional upload/download hooks receive bounded host
-bytes or scoped native references; default runtime filesystem checks remain authoritative.
-No new driver registry, profile DSL or model-provider adapter is needed. Existing drivers
-and backends may omit these additive hooks and retain their legacy runtime behavior.
-
-### Desktop and AMOS integration
-
-Keep `AgentRuntime`, Connectors, SDK clients, tool resolution, trusted scope, durable
-storage and transfer directories in the desktop **main process**. The renderer receives
-sanitized activity/result DTOs and an application session locator. It cannot choose tenant,
-connector accounts, native IDs, policy, tool lists or executable bootstrap code. Authorize
-IPC operations against the authenticated owner and the currently selected binding before
-run/cancel/detach/resume/transfer. Bounded `run.events()` feeds activity independently of
-approval UI. This initial profile rejects interactive approvals/user questions/steering;
-never render an observation as an approval decision.
-
-Distinguish `/stop` (explicit native cancellation, then terminal confirmation), `/detach`
-(release observer; managed work continues), and deletion (explicit owned-resource cleanup).
-Persist the reference outside renderer memory; after restart call `resumeSession` with
-renewed host authorization and `getRun` for the original active ID. Never retry the original
-prompt after uncertain input. Activity gaps and unknown native state must be visible.
-Native Agent-only commands must not reach `Agent.context` for external harnesses.
-
-AMOS illustrates these boundaries with opt-in `--runtime-host <trusted-module.mjs>`.
-The bootstrap exports `createAmosRuntimeHost(dataDir)` and returns `{ runtime, definition,
-options, resume?, saveReference? }` using ordinary public APIs and named Connectors.
-The same controller renders all five harnesses. `/run` accepts explicit request IDs,
-model/reasoning/schema/metadata options; `/result` and `/observe` read existing work.
-`/upload` and `/download` use the host-authorized transfer boundary. `/reference`,
-`/save`, `/resume [reference-json]` and `--runtime-resume` expose scoped recovery;
-`/new` starts another session and `/delete [reference-json]` explicitly cleans owned
-resources. `/inspect`, `/status`, `/stop`, `/detach`, `/exit` and `/help` remain. Native
-context/routing/routine/helper/tool-mutation commands reject in this mode. Its standard
-Agent-based mode and saved configuration remain unchanged. See [AMOS setup and lifecycle](apps/amos/README.md#agent-runtime-mode).
-The deterministic [AMOS example](apps/amos/examples/agent-runtime-offline.ts) executes the
-same selected tool twice through all five adapters, deduplicates a repeated request,
-reads/replays saved results, transfers exact bytes for both managed adapters, exercises
-supported idle detach/resume and deletes owned resources. It uses synthetic transports
-and one UI consumer, with no native CLI or provider calls. The [AMOS cookbook](apps/amos/docs/AGENT_RUNTIME.md)
-provides interactive setup, commands, persistence, failures and endpoint limits. The
-[run-options example](examples/agent-runtime-run-options.ts) demonstrates native Agent
-JSON output, model/reasoning overrides, mutation-safe admission, cancellation and replay
-after context restore. The separate recovery example uses actual process restart.
-No unrelated desktop application is modified.
-
-### Choose the right agent surface
-
-| Goal | Use | Why |
-|---|---|---|
-| Build a OneRingAI-native assistant with OneRingAI tools, context, memory, and persistence | `Agent.create()` | `Agent` owns the native OneRingAI loop and is the simplest direct API |
-| Coordinate multiple OneRingAI-native agents | `createOrchestrator()` | Adds delegation and shared-workspace tools around regular `Agent` instances |
-| Run interchangeable complete agent systems such as OneRingAI and Codex | `AgentRuntime` | Normalizes driver selection, sessions, policy, events, cancellation, and results without replacing native loops |
-
-Do not implement Codex, Claude Agent SDK, or another complete harness as an
-`ITextProvider`: those systems already own an agent loop and tool/session semantics.
-They belong behind an `AgentDriver`. Likewise, use an execution backend—not a driver—to
-choose whether work runs locally or in a future isolated server worker.
-
-### Current implementation and roadmap
-
-The detailed local recipes below preserve legacy `.agent(spec)` usage. Common
-definitions and managed bindings use the additive recipes above.
-
-| Component | Status | Notes |
-|---|---|---|
-| Native OneRingAI driver | Implemented | Logical definition materialization; legacy stored/binding/factory sources retained |
-| OpenAI Codex TypeScript SDK driver | Implemented locally | Optional peer dependency; SDK-managed local CLI process |
-| Live autonomous observation | Implemented locally | Messages, vendor-exposed reasoning, and driver-specific activity |
-| Interactive approvals, user questions, and steering | Capability-defined, not implemented locally | Planned for drivers with a bidirectional native protocol, such as Codex App Server |
-| Remote container/microVM execution | Designed, not implemented | Future execution backend with per-active-run isolation leases |
-| Claude Agent SDK | Implemented on branch, offline validated, live-pending | Optional SDK; tools-only local profile via `anthropic.agent.sdk` |
-| OpenAI managed Agents API | Implemented on branch, offline validated, live-pending | `openai.agents.api`; durable control and explicit placement |
-| Claude Managed Agents API | Implemented on branch, offline validated, live-pending | `anthropic.managed.api`; durable control/provider-managed placement |
-| Explicit managed file transfers | Implemented on branch, offline validated | Host-only authorized directory, byte/MIME bounds and native scoped references |
-| A2A interoperability | Designed, not implemented | External protocol adapter, not the internal worker protocol |
-
-The runtime supports native OneRingAI, local Codex/Claude SDKs and managed OpenAI/Claude APIs.
-Install optional peers only for local SDK drivers:
-
-```bash
-npm install @openai/codex-sdk @anthropic-ai/claude-agent-sdk
-```
-
-The complete local example can run either backend through the same workflow:
-
-```bash
-npx tsx examples/agent-runtime-local.ts oneringai
-npx tsx examples/agent-runtime-local.ts codex
-```
-
-### Create a local runtime
-
-The generic API is published separately from the optional Codex driver:
-
-```typescript
-import { Agent } from 'oneringai';
-import {
-  AgentRuntime,
-  LocalExecutionBackend,
-  OneRingAIDriver,
-  type AgentRun,
-  type RuntimeAgentSpec,
-}
-  from 'oneringai/agent-runtime';
-import { CodexSdkDriver }
-  from 'oneringai/agent-runtime/codex';
-
-const runtime = new AgentRuntime({
-  backend: new LocalExecutionBackend({
-    drivers: [
-      new OneRingAIDriver({
-        // This asserts that every supplied native Agent's tools and permission
-        // pipeline enforce the runtime policy passed below.
-        trustAgentPolicy: true,
-        factories: {
-          assistant: ({ context }) => Agent.create({
-            connector: 'openai-main',
-            model: 'gpt-5.3-codex',
-            userId: context.userId,
-          }),
-        },
-      }),
-      new CodexSdkDriver(),
-    ],
-  }),
-});
-```
-
-### Select an agent, model, and reasoning level
-
-A OneRingAI source is a stored definition, registered binding, or factory. Its native
-source owns connector and instructions. Model and reasoning selection use the same
-generic fields as every other runtime driver:
-
-```typescript
-const oneRingSpec: RuntimeAgentSpec = {
-  id: 'support-agent',
-  driver: 'oneringai.agent',
-  model: 'gpt-5.6-sol',
-  reasoning: { effort: 'medium' },
-  driverConfig: { source: { type: 'factory', name: 'assistant' } },
-};
-```
-
-A Codex source uses a named OpenAI API-key connector, an active OpenAI model from the
-registry, and an explicit local workspace:
-
-```typescript
-const codexSpec: RuntimeAgentSpec = {
-  id: 'coding-agent',
-  driver: 'openai.codex.sdk',
-  connector: 'openai-main',
-  model: 'gpt-5.6-sol',
-  reasoning: { effort: 'medium' },
-  instructions: 'Make focused changes and run relevant tests.',
-  driverConfig: {
-    skipGitRepoCheck: false,
-    allowProjectConfig: false,
-  },
-};
-```
-
-Both local drivers fail closed on model-specific reasoning controls. The Codex driver
-uses `modelReasoningEfforts`; the OneRingAI driver uses richer
-`modelReasoningControls` entries because native agents may also support disabling
-reasoning or fixed token budgets. New models require explicit verified metadata rather
-than optimistic passthrough:
-
-```typescript
-const codexDriver = new CodexSdkDriver({
-  modelReasoningEfforts: {
-    'new-codex-model': ['low', 'medium', 'high'],
-  },
-});
-
-const oneRingDriver = new OneRingAIDriver({
-  trustAgentPolicy: true,
-  modelReasoningControls: {
-    'new-provider-model': {
-      efforts: ['low', 'medium', 'high'],
-      supportsDisabled: false,
-      supportsBudgetTokens: true,
-    },
-  },
-});
-```
-
-The bundled OneRingAI map covers the current GPT-6 family, GPT-5.6
-Sol/Terra/Luna/Cyber, Claude Opus/Sonnet 5.5, Gemini 3.8 Flash, and Grok 4.7.
-The Codex map covers the current GPT-6 family and GPT-5.6 Sol/Terra/Luna, and
-both retain GPT-5.3 Codex.
-Unsupported efforts, disable requests, and token
-budgets fail before an API call. Known models marked as non-reasoning reject reasoning
-configuration in both drivers. For OneRingAI agents, model overrides also update the
-managed context's model and registry-derived context limit; an explicit
-`context.maxContextTokens` remains fixed.
-
-Model and thinking controls are available both on the specification and per run. A
-per-run value overrides the specification for that turn and requires the corresponding
-`run.model_override` or `run.reasoning_override` capability:
-
-```typescript
-const agent = runtime.agent(codexSpec);
-
-const session = await agent.openSession({
-  context: { tenantId, userId },
-  workspace: { type: 'local-directory', path: repositoryPath },
-  policy: {
-    filesystem: 'workspace-write',
-    commands: 'sandboxed',
-    sandboxNetwork: 'denied',
-    providerWebSearch: 'denied',
-    approvals: 'deny',
-    limits: { wallTimeMs: 300_000, outputBytes: 256_000 },
-  },
-  observation: { mode: 'live', detail: 'reasoning' },
-  controlMode: 'observe-only',
-});
-
-const run = await session.run('Implement the approved change.', {
-  model: 'gpt-5.3-codex',
-  reasoning: { effort: 'high' },
-});
-
-const renderEvents = async (activeRun: AgentRun) => {
-  for await (const event of activeRun.events()) {
-    // Forward every visible thought summary, message, plan, command/output,
-    // file change, tool update, usage update, and terminal event to the UI.
-    render(event);
-  }
-};
-
-await renderEvents(run);
-const result = await run.result;
-console.log(result.configuration); // effective model and reasoning configuration
-```
-
-### Inputs and structured results
-
-JSON Schema response formats and workspace image parts are also automatically
-capability-gated as `run.structured_output` and `input.image`; callers do not need to
-duplicate those requirements manually.
-
-### Observation, autonomy, and control are separate
-
-The runtime deliberately avoids one ambiguous “interactive mode” flag:
-
-| Concern | Configuration | Current local support |
-|---|---|---|
-| Autonomous versus approval-gated execution | `policy.approvals` | Autonomous with `deny`; interactive approvals are unsupported |
-| Live versus final-only observation | `observation.mode` | Both |
-| Amount of visible activity | `observation.detail` | `status`, `activity`, or `reasoning` |
-| Observe-only versus steerable control | `controlMode` | Observe-only; steering is capability-gated and currently unsupported |
-
-The default observation is `{ mode: 'live', detail: 'reasoning' }`. Autonomous users
-therefore see the agent working without having to approve or interfere. “Reasoning”
-means every readable reasoning event exposed by the selected vendor/model; it does not
-promise private chain-of-thought.
-
-Use `activity` to stream messages, plans, commands, command output, file changes, and
-tools without reasoning events. Use `status` or `final-only` when only essential/final
-updates are wanted. Filtering affects delivery and retention, never native execution.
-
-Representative event types include:
-
-```text
-run.started
-agent.message.delta / agent.message.completed
-reasoning.delta / reasoning.completed
-plan.updated / agent.iteration.completed
-command.started / command.output.delta / command.completed
-file.change.started / file.changed
-tool.started / tool.progress / tool.completed
-usage.updated / diagnostic / run.finished
-```
-
-Both current local drivers report message `phase: 'unknown'`: their native streams do
-not reliably distinguish an intermediate tool-producing message from the final answer.
-Use `run.finished` and `run.result` for terminal state.
-
-Events are sequence-numbered and retained in a bounded in-process journal. A client
-can reconnect with `run.events({ afterSequence })` while that history remains. Event
-consumption is optional: the backend pumps native events itself and `run.result`
-settles even when nobody subscribes. Events are deeply cloned and frozen before
-publication, so one UI subscriber cannot modify another subscriber's data or replay
-history. OneRingAI structured-output runs remain on this streamed path and validate
-the completed output against the requested schema.
-
-### Capability inspection
-
-Inspect before opening a session when a workflow has hard requirements:
-
-```typescript
-const capabilities = await agent.inspect({
-  workspace: { type: 'local-directory', path: repositoryPath },
-  policy,
-  requiredCapabilities: [
-    { id: 'event.live', minimum: 'native' },
-    { id: 'event.reasoning' },
-    { id: 'run.model_override' },
-    { id: 'run.reasoning_override' },
-  ],
-});
-
-console.log(capabilities.configuration);
-```
-
-Support is `native`, `emulated`, or `unsupported`. Unsupported requirements fail in
-preflight instead of silently degrading. The current Codex SDK and OneRingAI drivers
-both expose live model/reasoning-aware autonomous runs, but their event categories and
-enforcement strength differ.
-
-### Local and server boundaries
-
-The Codex SDK driver launches an SDK-managed local CLI process; it does not call a
-hosted Codex App Server. It uses a session-owned Codex home, minimal environment,
-non-login shell policy, connector-secret filtering/redaction, `approvalPolicy:
-'never'`, and the requested Codex sandbox. Repository `.codex/config.toml` is rejected
-before every turn unless `allowProjectConfig: true` explicitly trusts it.
-
-Codex App Server is a separate process that the host starts and supervises. It is a
-future driver for richer bidirectional approvals, questions, and steering. It is not
-needed merely to stream autonomous work; the SDK driver already publishes messages,
-reasoning summaries, plans, commands/output, file changes, and tool activity.
-
-The local backend is for trusted development and is not multi-tenant isolation. A
-future server backend should keep this API but schedule an isolated container or
-microVM lease per active run, optionally retaining warm session affinity for a short
-TTL. A permanent VM per tenant/session is a deployment choice, not a runtime
-requirement. Server-wide durable activity replay, distributed checkpoint coordination,
-credential leasing and A2A remain separate future phases. H3 supplies the scoped
-single-host control/native-checkpoint recovery documented above.
-
-Cancellation, timeout, and post-start driver failures attempt bounded native cleanup.
-Synchronous driver cancellation errors are contained. If the native result and event
-pump cannot both be confirmed terminal within the cleanup window, legacy `.agent(spec)`
-runs return an error result while common-definition runs reject with
-`AgentSessionRecoveryError` and suppress a fabricated terminal event. The session fails
-and the local backend quarantines
-that workspace lease until backend teardown; it never starts a second writer over
-possibly live native work.
-
-Always clean up sessions and the runtime:
-
-```typescript
-try {
-  // open and run sessions
-} finally {
-  await session.destroy();
-  await runtime.destroy();
-}
-```
-
-See the [full design](./docs/designs/AGENT_RUNTIME.md) and runnable
-[`agent-runtime-local.ts`](./examples/agent-runtime-local.ts) example.
 
 ## Agentic Evaluation Baselines
 
@@ -19346,569 +19083,503 @@ applications need no configuration changes. Agent defaults, algorithmic compacti
 the shared ToolManager, tool payloads, and saved-session format are unchanged.
 See the Version 2 Guide for branch availability and subsequent planned stages.
 
-## Support & Resources
+## Persistent Instructions (NextGen Plugin)
 
-- **GitHub:** https://github.com/aantich/oneringai
-- **Issues:** https://github.com/aantich/oneringai/issues
-- **Examples:** `/examples` directory in repo
-- **TypeScript Docs:** Full IntelliSense support
+> ⚠️ **Deprecated** in favour of [`MemoryPluginNextGen`](#self-learning-memory-nextgen-plugin). This plugin keeps working unchanged for existing integrations — no breaking change — but new code should prefer the memory plugin, which replaces dumb KV with append-only facts + LLM-synthesised profiles that evolve from observations.
+
+**PersistentInstructionsPluginNextGen** is a context plugin that stores agent-level custom instructions on disk as **individually keyed entries**. Unlike InContextMemory (volatile key-value pairs), persistent instructions survive process restarts and are automatically loaded when the agent starts.
+
+### Key Difference from InContextMemory
+
+| Feature | InContextMemory | Persistent Instructions |
+|---------|-----------------|------------------------|
+| **Storage** | In-memory (volatile) | Disk (persistent JSON) |
+| **Survives restarts** | No | Yes |
+| **Best for** | Session state, counters, flags | Agent personality, learned rules |
+| **LLM can modify** | Yes (store_set("whiteboard", ...)) | Yes (store_set/store_delete("instructions", ...)) |
+| **Auto-loaded** | Via session restore | Always on agent start |
+| **Default capacity** | 20 entries, 40,000 tokens | 50 entries, 50,000 chars total |
+
+### Quick Setup
+
+```typescript
+import { Agent } from 'oneringai';
+
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  context: {
+    model: 'gpt-4.1',
+    agentId: 'my-assistant',  // Used for storage path
+    features: {
+      persistentInstructions: true,  // Enables PersistentInstructionsPluginNextGen
+    },
+  },
+});
+
+// Plugin is accessible via ctx.getPlugin('persistent_instructions')
+// Instructions are automatically loaded from disk on first context prepare
+```
+
+### Manual Setup
+
+For more control, you can set up the plugin manually:
+
+```typescript
+import { AgentContextNextGen, PersistentInstructionsPluginNextGen } from 'oneringai';
+
+const ctx = AgentContextNextGen.create({ model: 'gpt-4.1' });
+
+// Create and configure plugin
+const plugin = new PersistentInstructionsPluginNextGen({
+  agentId: 'my-assistant',
+  maxTotalLength: 100000,  // Characters across all entries, default is 50000
+  maxEntries: 50,          // Maximum number of keyed entries, default is 50
+});
+
+// Register with context
+ctx.registerPlugin(plugin);
+
+// Set instructions programmatically (keyed entries)
+await plugin.set('personality', 'Always respond in a friendly tone.');
+await plugin.set('formatting', 'Prefer bullet points for lists.');
+```
+
+### Configuration Options
+
+```typescript
+interface PersistentInstructionsConfig {
+  /** Agent ID - used to determine storage path (required) */
+  agentId: string;
+
+  /** Custom storage implementation (default: FilePersistentInstructionsStorage) */
+  storage?: IPersistentInstructionsStorage;
+
+  /** Maximum total content length across all entries in characters (default: 50000) */
+  maxTotalLength?: number;
+
+  /** Maximum number of entries (default: 50) */
+  maxEntries?: number;
+}
+```
+
+### Storage Path
+
+Instructions are stored at:
+- **Unix/macOS**: `~/.oneringai/agents/<agentId>/custom_instructions.json`
+- **Windows**: `%APPDATA%/oneringai/agents/<agentId>/custom_instructions.json`
+
+The agent ID is sanitized to be filesystem-safe (lowercase, special chars replaced with underscores).
+
+### Available Tools
+
+The LLM manages persistent instructions through the unified `store_*` tools with `store="instructions"`:
+
+#### store_set("instructions", ...)
+
+Add or update a single instruction by key:
+
+```jsonc
+// Tool call from LLM
+{
+  "name": "store_set",
+  "arguments": {
+    "store": "instructions",
+    "key": "personality",
+    "data": {
+      "content": "Always be friendly and helpful. Use clear, simple language."
+    }
+  }
+}
+// Returns: { "success": true, "message": "Instruction 'personality' added", "key": "personality", "contentLength": 57 }
+```
+
+#### store_delete("instructions", ...)
+
+Remove a single instruction by key:
+
+```jsonc
+// Tool call from LLM
+{
+  "name": "store_delete",
+  "arguments": {
+    "store": "instructions",
+    "key": "personality"
+  }
+}
+// Returns: { "deleted": true, "key": "personality" }
+```
+
+#### store_list("instructions")
+
+List all instructions with their keys and content:
+
+```jsonc
+// Tool call from LLM
+{
+  "name": "store_list",
+  "arguments": {
+    "store": "instructions"
+  }
+}
+// Returns: {
+//   "total": 2,
+//   "entries": [
+//     { "key": "personality", "contentLength": 57, "createdAt": ..., "updatedAt": ... },
+//     { "key": "formatting", "contentLength": 35, "createdAt": ..., "updatedAt": ... }
+//   ]
+// }
+```
+
+#### store_action("instructions", "clear", ...)
+
+Remove all instructions (requires confirmation):
+
+```jsonc
+// Tool call from LLM
+{
+  "name": "store_action",
+  "arguments": {
+    "store": "instructions",
+    "action": "clear",
+    "params": { "confirm": true }
+  }
+}
+// Returns: { "success": true, "action": "clear", "message": "All custom instructions cleared" }
+```
+
+### Direct API Access
+
+The plugin provides a programmatic API for direct manipulation:
+
+```typescript
+const plugin = ctx.getPlugin<PersistentInstructionsPluginNextGen>('persistent_instructions')!;
+
+// Add/update entry by key
+await plugin.set('personality', 'Always be friendly and helpful.');
+await plugin.set('formatting', 'Use bullet points for lists.');
+
+// Get single entry by key
+const entry = await plugin.get('personality');  // InstructionEntry | null
+// entry = { id: 'personality', content: '...', createdAt: ..., updatedAt: ... }
+
+// Get all entries (sorted by createdAt)
+const all = await plugin.get();  // InstructionEntry[] | null
+
+// List metadata for all entries
+const list = await plugin.list();
+// [{ key: 'personality', contentLength: 35, createdAt: ..., updatedAt: ... }, ...]
+
+// Remove a single entry
+await plugin.remove('formatting');  // true if found, false if not
+
+// Clear all
+await plugin.clear();
+```
+
+### Context Output Format
+
+When the LLM context is prepared, persistent instruction entries are rendered as markdown sections:
+
+```markdown
+### personality
+Always be friendly and helpful. Use clear, simple language.
+
+### formatting
+- Use bullet points for lists
+- Keep responses concise
+
+### user_preferences
+The user prefers dark mode and verbose explanations.
+```
+
+### Session Persistence
+
+PersistentInstructionsPluginNextGen supports state serialization. The state format includes all entries:
+
+```typescript
+// State includes all entries
+const state = plugin.getState();
+// state = { entries: [...], agentId: "my-assistant", version: 2 }
+
+// Restore state (useful for in-memory state sync)
+plugin.restoreState(state);
+// Also handles legacy format: { content: string | null, agentId: string }
+```
+
+### Use Cases
+
+**Ideal for:**
+- **Agent personality/behavior** - Tone, style, expertise areas
+- **User preferences** - Formatting, verbosity, topics of interest
+- **Learned rules** - Patterns discovered during conversation
+- **Tool usage guidelines** - When to use specific tools
+- **Custom instructions** - Domain-specific knowledge
+
+**Example: Building a Learning Assistant**
+
+```typescript
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  instructions: `You are a learning assistant. When the user expresses preferences or
+gives feedback about your responses, use store_set("instructions", key, { content }) to remember them for
+future sessions. Use descriptive keys like "user_preferences", "response_style", etc.
+Review your instructions with store_list("instructions") at the start of each conversation.`,
+  context: {
+    model: 'gpt-4.1',
+    agentId: 'learning-assistant',
+    features: { persistentInstructions: true },
+  },
+});
+
+// User: "I prefer when you explain things with analogies"
+// Agent calls: store_set("instructions", "response_style", { content: "Explain concepts using analogies when possible" })
+// Next session, agent sees this in context automatically
+```
+
+### Best Practices
+
+#### 1. Use Descriptive Keys
+
+```typescript
+// GOOD: Descriptive, categorical keys
+await plugin.set('personality', 'Be friendly and approachable');
+await plugin.set('formatting_rules', 'Use bullet points for lists');
+await plugin.set('domain_knowledge', 'User works in fintech');
+
+// AVOID: Generic or numbered keys
+await plugin.set('rule1', '...');  // Not descriptive
+await plugin.set('misc', '...');   // Too vague
+```
+
+#### 2. One Concern Per Entry
+
+```typescript
+// GOOD: Each entry covers one topic
+await plugin.set('tone', 'Use formal language');
+await plugin.set('code_style', 'Use TypeScript, follow existing patterns');
+await plugin.set('response_length', 'Keep responses concise, 2-3 paragraphs max');
+
+// AVOID: Mixing concerns in one entry
+await plugin.set('rules', 'Be formal. Use TypeScript. Keep it short.');
+```
+
+#### 3. Combine with InContextMemory
+
+Use both systems for their strengths:
+
+```typescript
+// Persistent instructions for long-term knowledge
+// - Agent personality
+// - User preferences
+// - Learned rules
+
+// InContextMemory for session-specific state
+// - Current task progress
+// - Temporary flags
+// - Running totals
+```
+
+#### 4. Set Reasonable Limits
+
+```typescript
+// For simple agents
+const agent = Agent.create({
+  context: {
+    features: { persistentInstructions: true },
+    plugins: { persistentInstructions: { maxTotalLength: 10000, maxEntries: 20 } },
+  },
+});
+
+// For complex agents with lots of learned rules
+const agentVariant2 = Agent.create({
+  context: {
+    features: { persistentInstructions: true },
+    plugins: { persistentInstructions: { maxTotalLength: 100000, maxEntries: 100 } },
+  },
+});
+```
+
+### Upgrade Guide (from single-string to KVP)
+
+If upgrading from the previous single-string persistent instructions:
+
+1. **File storage**: Auto-migrated. Legacy `custom_instructions.md` files are read as a single `legacy_instructions` entry and converted to `custom_instructions.json` on next save. No action needed.
+2. **Custom storage backends**: Update `load()` to return `InstructionEntry[] | null` and `save()` to accept `InstructionEntry[]` instead of `string`.
+3. **Tool API**: `instructions_append` is removed — use `store_set("instructions", key, { content })` to add new entries. `instructions_get` is removed — use `store_list("instructions")` to see all entries.
+4. **Programmatic API**: `plugin.set(content)` → `plugin.set(key, content)`. `plugin.append(section)` → `plugin.set(newKey, section)`. `plugin.get()` now returns `InstructionEntry[] | null` (or a single `InstructionEntry` when called with a key).
+5. **Session state**: Existing saved sessions with old format (`{ content: string | null }`) are auto-migrated on `restoreState()`.
 
 ---
+
+## User Info (NextGen Plugin)
+
+> ⚠️ **Deprecated** in favour of [`MemoryPluginNextGen`](#self-learning-memory-nextgen-plugin). This plugin keeps working unchanged; the memory plugin supersedes it with facts-over-KV, supersession-preserved history, LLM-synthesised profiles, three-principal permissions, and semantic recall.
+
+Store user-specific preferences and context that persist across sessions and agents. Unlike other plugins, user info is **user-scoped** (not agent-scoped) — different agents share the same user's data.
+
+User info entries are **automatically injected into the LLM system message** as markdown, so the LLM always knows the user's preferences without needing to call `store_get("user_info")` each turn.
+
+### Setup
+
+```typescript
+import { Agent } from 'oneringai';
+
+// Single-user app — no userId needed
+const agent = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  context: {
+    model: 'gpt-4.1',
+    features: { userInfo: true },
+  },
+});
+
+// Multi-user app — opt-in per-user isolation
+const agentVariant2 = Agent.create({
+  connector: 'openai',
+  model: 'gpt-4.1',
+  userId: 'alice',
+  context: {
+    model: 'gpt-4.1',
+    features: { userInfo: true },
+  },
+});
+```
+
+### How It Works
+
+1. **Lazy Loading** — On first access (tool call or `getContent()`), entries are loaded from storage into an in-memory cache
+2. **Context Injection** — `getContent()` renders entries as markdown in the system message. Regular user info and TODOs are shown in separate sections:
+   ```
+   ### theme
+   dark
+
+   ### language
+   en
+
+   ## Current TODOs
+   - [ ] todo_a1b2c3: Review PR for auth module (due: 2026-03-01, people: Alice) [work]
+     Check the error handling changes
+   - [x] todo_d4e5f6: Buy groceries (due: 2026-02-25) [personal]
+   ```
+3. **Write-Through** — Tool mutations (set/remove/clear) update both the in-memory cache and persist to storage immediately
+4. **Session Persistence** — `getState()`/`restoreState()` serialize/deserialize entries for session save/load
+
+### User Info Tools
+
+| Tool Call | Description | Permission |
+|-----------|-------------|------------|
+| `store_set("user_info", key, { value, description? })` | Store/update entry by key | Always allowed |
+| `store_get("user_info", key?)` | Retrieve one entry by key, or all entries (key optional) | Always allowed |
+| `store_delete("user_info", key)` | Remove a specific entry by key | Always allowed |
+| `store_action("user_info", "clear", { confirm: true })` | Clear all entries | Requires approval |
+
+### TODO Tools
+
+TODOs are stored as user info entries with a `todo_` key prefix. They are rendered in a dedicated **"Current TODOs"** checklist section in context, separate from regular user info.
+
+| Tool | Description | Permission |
+|------|-------------|------------|
+| `todo_add` | Create a TODO (`title`, `description?`, `people?`, `dueDate?`, `tags?`) | Always allowed |
+| `todo_update` | Update a TODO — partial updates (`id`, `title?`, `description?`, `people?`, `dueDate?`, `tags?`, `status?`) | Always allowed |
+| `todo_remove` | Delete a TODO by id | Always allowed |
+
+**TODO fields:**
+- `title` (required) — short description of the task
+- `description` (optional) — additional details
+- `people` (optional) — other people involved besides the current user
+- `dueDate` (optional) — deadline in `YYYY-MM-DD` format
+- `tags` (optional) — categorization tags (e.g. `["work", "urgent"]`)
+- `status` — `'pending'` or `'done'`
+
+**Agent behavior (built into plugin instructions):**
+- **Proactive creation** — When conversation implies an action item, the agent suggests creating a TODO. Explicit requests like "remind me" or "track this" create one immediately.
+- **Daily reminders** — Once per day, the agent reminds about overdue and soon-due items (within 2 days). Uses a `_todo_last_reminded` internal entry to avoid repeating.
+- **Auto-cleanup** — Completed TODOs older than 48 hours are automatically removed. Pending TODOs overdue by more than 7 days prompt the user: "Still relevant or should I remove it?"
+
+### Storage
+
+- **Default path:** `~/.oneringai/users/<userId>/user_info.json` (defaults to `~/.oneringai/users/default/user_info.json`)
+- **Custom storage:** Implement `IUserInfoStorage` and pass via config or `StorageRegistry`
+
+```typescript
+// Via StorageRegistry
+StorageRegistry.set('userInfo', (context?: StorageContext) => {
+  return new MongoUserInfoStorage(collection);
+});
+```
+
+### Configuration
+
+```typescript
+interface UserInfoPluginConfig {
+  storage?: IUserInfoStorage;    // Custom storage backend
+  maxTotalSize?: number;         // Default: 100000 (~100KB)
+  maxEntries?: number;           // Default: 100
+  userId?: string;               // Auto-set from AgentContextNextGen._userId
+}
+```
+
+### Differences from Other Plugins
+
+| | PersistentInstructions | UserInfo | InContextMemory |
+|---|---|---|---|
+| **Scope** | Agent-scoped | User-scoped | Session only |
+| **Storage key** | `agentId` | `userId` | None (in memory) |
+| **Persists to disk** | Yes | Yes | No |
+| **In system message** | Yes | Yes | Yes |
+| **Value type** | `string` | `unknown` (any JSON) | `unknown` (any JSON) |
+
+### Use Cases
+
+- User preferences: theme, language, timezone, notification settings
+- User context: role, location, department
+- Accumulated knowledge about the user
+- Profile information the LLM should always have access to
+- TODO tracking: tasks with deadlines, involved people, and tags — with proactive reminders and auto-cleanup
+
+> ⚠️ **Deprecated** in favour of the Self-Learning Memory plugin below. `UserInfoPluginNextGen` keeps working unchanged; the memory plugin supersedes it with append-only facts (history preserved via supersession), LLM-synthesised profiles that evolve with new observations, three-principal permissions, and semantic recall.
+
+---
+
+
+## Upgrading to the unscoped v2 package
+
+Use [Package migration](docs/PACKAGE_MIGRATION.md) for source trials, installation,
+import changes, compatibility, saved data, and the v1 maintenance path. A normal
+npm update cannot move an installation between package names.
+
+<a id="upgrading-to-120"></a>
+
+**Upgrading to 1.2.0:** see the [historical upgrade notes](docs/MIGRATION_V1_HISTORY.md#upgrading-to-120).
+
+<a id="upgrading-to-113"></a>
+
+**Upgrading to 1.1.3:** see the [historical upgrade notes](docs/MIGRATION_V1_HISTORY.md#upgrading-to-113).
+
+<a id="upgrading-to-112"></a>
+
+**Upgrading to 1.1.2:** see the [historical upgrade notes](docs/MIGRATION_V1_HISTORY.md#upgrading-to-112).
+
+<a id="upgrading-to-111"></a>
+
+**Upgrading to 1.1.1:** see the [historical upgrade notes](docs/MIGRATION_V1_HISTORY.md#upgrading-to-111).
+
+<a id="upgrading-to-100"></a>
+
+**Upgrading to 1.0.0:** see the [historical upgrade notes](docs/MIGRATION_V1_HISTORY.md#upgrading-to-100).
+
+## Support & Resources
+
+- [Examples](examples/README.md), [API Reference](API_REFERENCE.md), and [Agent Guide](AGENTS.md).
+- [AMOS](apps/amos/README.md) and [Hosea](apps/hosea/README.md) application setup.
+- [Release readiness](docs/RELEASE_READINESS_V2.md) and [migration](docs/PACKAGE_MIGRATION.md).
+- [GitHub issues](https://github.com/aantich/oneringai/issues).
 
 ## License
 
-MIT License - see LICENSE file for details.
-
----
-
-**Last Updated:** 2026-10-07
-**Version:** 1.2.0
-
-
-## Tool outcomes and cancellation (Stage 02)
-
-For a tool that catches an operational error and returns an application-specific
-value, use `createOutcomeTool({ definition, execute: async (args, invocation) => ... })`.
-Call `invocation.reportFailure(new Error('Public-safe failure message'))` inside that
-callback; read the existing optional signal from `invocation.context?.signal`.
-The helper returns a normal ToolFunction, raw results stay intact, and a business
-decline without a report remains a succeeded execution. First report wins and the
-reporter becomes inert after settlement. Existing callbacks/defaults are unchanged.
-See the [complete recipe and boundaries](docs/OUTCOME_AWARE_TOOLS.md) and
-`npm run example:outcome-aware-tools`. C1 does not add rich remote outcomes to
-legacy protocol v2 or automatically convert bundled connector tools.
-
-Use `agent.tools.executeWithOutcome(name, args, { signal, timeoutMs, callId, runId })`
-when the host needs `{ result, outcome }`; `execute()` still returns raw data. The
-manager recognizes its normalizer's failures without reinterpreting arbitrary
-application `success: false` objects. Agent tool results and streaming completion
-events expose optional `outcome` metadata. Failure/timeout counters now reflect
-those semantic results; async acceptance placeholders are not completed work.
-Settlement is counted before streaming completion events, including early stream exit.
-A tool retains its admitted implementation, definition, permission metadata, and
-resolved connector access through asynchronous waits. Later registration or account
-changes affect future calls. Queued background delivery checks scope again, and
-throwing completion/error/timeout observers cannot replace or double-count a settled
-result.
-
-Tools may observe their existing optional `ToolContext.signal`. `agent.cancel()`
-and async cancellation methods request cancellation of the corresponding calls.
-Late settlement is diagnostic-only, correlated to the original call, and never
-counted twice or automatically delivered to a different account. A noncooperative
-tool can still finish; cancellation does not prove that a remote write was prevented.
-
-Connector requests compose caller signals with deadlines. Header timeouts and
-legacy retry policy remain defaults. Opt in to `timeoutScope: 'operation'` for one
-deadline through token waiting, retries, and body consumption, and
-`retryPolicy: 'safe'` to retry eligible GET/HEAD/OPTIONS only. Consume or cancel
-response bodies. Safe retry and operation-body cleanup remain cancellation/deadline
-aware, and chained response clones preserve metadata and native body checks.
-`skipRetry` skips both network and status retries. Generic API
-tools forward the signal; specialized tools/transports require their own support.
-
-See [Tool outcomes and cancellation](docs/TOOL_OUTCOMES_AND_CANCELLATION.md) for
-public signatures, status/evidence meanings, listener cleanup, persistence and
-breaker boundaries, examples, AMOS behavior, and current live-validation limits.
-
-Explicit Anthropic named-tool requests advertise only the selected local function
-alongside configured native tools. A different returned local tool raises the
-existing `ProviderError` before execution, without automatic retries or model
-switching. Later `auto`/`required` calls retain their normal tool set. To modify
-request options in both managed modes, mutate `context.options` in `before:llm`
-and return `{}`; streaming hook return semantics are unchanged. See the
-[selection contract and opt-in live example](docs/TOOL_OUTCOMES_AND_CANCELLATION.md#explicit-anthropic-tool-selection).
-
-
-## Managed model routing (Stage 14A)
-
-Optional `modelExecution.routing` adds named alternative model profiles to the
-same Agent. Configure `routes: { fast: { model: fastModel } }` and a host selector
-such as `select: ({ hints }) => hints.taskType === 'lookup' ? 'fast' : 'default'`.
-Supply `{ routing: { taskType: 'lookup' } }` to managed `run()`/`stream()`, force a
-route with `{ routing: { route: 'fast' } }`, or bypass policy with `{ routing: null }`.
-The implicit default uses the configured connector/model. Selection makes no
-hidden classifier call and precedes context preparation/input mutation.
-
-One execution keeps its selected identity through tool iterations, recovery,
-repair, retries and compaction; public Agent/context defaults stay unchanged.
-Existing plugins and the one shared ToolManager remain in place. Route capacity,
-transfer authority and provider-bound state must be compatible. Another connector
-requires `allowContextTransfer: true`; opaque native/signed state retains its exact
-owner regardless of that permission. Authorized host routes can restore a native
-checkpoint without treating saved policy as authority.
-
-`sticky: 'phase'` reuses a dispatched route only within the same explicitly shared
-`ModelTask`, Agent and latest nonempty phase. Async followups/suspension retain the
-original route/task. Helpers, direct calls, explicit maintenance and external SDK
-loops keep their existing configured owners. Failed provider calls do not replay
-on another model. Stage 14B delegation is separately deferred.
-
-Inspect `response.routing`, the existing stream completion event's optional
-`routing`, or `getRoutingDiagnostics()`. Use task snapshots for actual model costs,
-usage/unknowns and shared limits. Read the [routing recipe](./docs/MODEL_ROUTING.md)
-for complete options, failure behavior, native support and persistence boundaries.
-Build then run `npm run example:model-routing`, `example:routing-context` and
-`example:amos-routing`; all default to offline. AMOS `/routing` configures JSON
-host rules and shows actual selections. Live examples/tests explicitly bill calls.
-This is branch availability, not a verified package release.
-
-Ordinary event resumption of a suspended routed run inherits its output format,
-route and ModelTask. Explicit supported run options override the originating
-options; data-handling prohibitions cannot be relaxed. Local JSON parsing/repair
-and the host completion predicate both run on the resumed final candidate.
-Local coercion guarantees parseability, not full JSON Schema validation. Streaming
-retains its existing no-repair boundary. See `npm run example:routing-suspension`.
-Failed event retries retain the original task and limits; they cannot obtain a
-fresh allowance. Explicit host `agent.cancel(reason)` abandons pending execution
-authority without undoing its action. Structured suspension finalizes before saving
-or publishing success. A formatting failure saves the registered wait/correlation
-with optional `metadata.suspensionFinalization.status: 'failed'`; it never authorizes
-repeating the wait. Storage failure is explicit and may require preserving the
-in-memory observation. See the recipe's recovery boundaries and the example's
-`--failed-finalization` mode. Task budgets and authorization remain process-local.
-Saved opaque state keeps exact-owner dispatch checks even when the restoring
-Agent omits routing. Portable legacy history still permits supported model hooks.
-This includes signed/provider-owned items first produced by JSON repair: ordered
-replay state and its admitted identity survive response replacement and save/load.
-For Google GenerateContent/Vertex, explicit `thinking: { enabled: false }` now
-sends a zero thinking budget on supported Gemini 2.5 Flash/Flash-Lite models.
-Omitted defaults and explicit vendor thinking overrides retain their behavior;
-this does not add a disable capability to Pro, 3.x or Interactions. See the routing
-recipe for the exact supported scope and actual pilot cost evidence.
-A native-capable alternative may be selected with an unsupported default provider;
-idle `compactContext()` still uses its configured owner and requires its adapter.
-
-## Model tasks and helper models (Stage 06)
-
-Optional `Agent.create({ modelExecution: { helpers: { extractor: {
-connector: 'helper-account', model: 'gpt-4o-mini' } } } })` keeps the main model
-fixed and enables an explicit `invokeHelper()` call. Helpers receive only a text
-packet, have no tools or provider continuation state, and require a locally
-validated JSON schema. Default helper output is 512 tokens with at most one repair;
-unsupported settings and oversize packets fail before dispatch.
-Schema IDs and compiler caches are isolated per invocation. Supported Anthropic
-extended thinking validates its mode and token budget before building the packet.
-Google GenerateContent/Vertex thinking is included in ledger output/cost totals
-and helper output checks; legacy provider response/event fields remain unchanged.
-
-Pass one host-owned `ModelTask` through `{ modelTask }` to managed/direct run and
-stream, helper calls, or explicit rollover to share reservations. Sharing is
-explicit: a helper without `modelTask` owns an independent task,
-even during another active execution. Missing or partial external usage stays
-unknown in the ledger; failed/cancelled external outcomes remain visible. Terminal
-stream usage survives later failure or cancellation without being counted twice.
-Tracked calls snapshot request records before admission. Google/Vertex candidate
-count multiplies output reservations and the configured aggregate per-call cap.
-Helper repairs retain selected evidence and fail before dispatch if the expanded
-packet cannot fit. Mixed external pricing remains unknown through final snapshots.
-Optional limits are calls, tokens, absolute deadline and estimated model token cost. Reservations
-use full provider input capacity plus bounded output, so large-window models need
-large temporary allowances. Unknown usage/prices remain explicit; external fees
-and distributed/external runtime admission are outside the guarantee. With no
-configuration, existing defaults, signatures, hooks and sessions remain unchanged.
-
-Read the [complete recipe](./docs/MODEL_TASKS_AND_HELPERS.md) for named connector
-setup, all options, cancellation/late settlement, registry versus upper-bound
-costs, helper fallback, external usage, ownership and save/load boundaries. Run
-`npm run example:purpose-models` and `npm run example:shared-budget` after a build
-for offline demonstrations; `--live` on the purpose example explicitly opts into
-billable OpenAI calls. AMOS adds `/helpers` configuration and usage inspection.
-Stage 06 is branch work, not an announced package release. Stage 07 adds opt-in experimental automatic strategies through the
-[context strategy recipe](./docs/CONTEXT_STRATEGIES.md). Configuring a compactor
-alone keeps the algorithmic default; selecting `StructuredSummaryStrategy` uses
-that role during bounded pre-call preparation. The bounded comparison is a
-functional pilot, not a general quality or cost-reduction claim.
-
-
-## Durable tool evidence (Stage 03)
-
-On the `version2` development branch, enable `context.features.evidence` and
-configure `context.plugins.evidence.storage` with `FileEvidenceStorage` or another
-scoped backend. An optional `StorageRegistry` evidence factory centralizes backend
-configuration. Existing configurations keep evidence disabled and add no tools,
-prompt content, writes, or model calls.
-
-Tools can supply `output.summarize` and host-declared `output.effect`. An acknowledged
-large JSON result can become a bounded model-facing envelope with an exact reference;
-`execute()`, managed result content and application execution events remain raw.
-`evidence_read` retrieves bounded source JSON and `evidence_list` lists metadata.
-The default enabled backend is process-local; deliberately choose file/custom
-storage and stable owner/tenant/namespace scope for restart recovery.
-
-Evidence-write or projection failure does not reclassify a successful tool action.
-Unacknowledged raw results are protected from compaction/truncation/rollover; if
-retaining them cannot fit, model dispatch stops explicitly. Async delivery with
-failed storage stops before injecting a lossy text message. After storing a retained
-result without rerunning its action, host-only `acknowledgeToolEvidence()` can
-release the matching raw group for later compaction. Timeout/cancellation can leave
-an immutable receipt with unknown completion; later observations do not rewrite it.
-Receipt-only records cannot release raw protection. Queued native async results
-remain available for host repair and explicit continuation; automatic delivery
-does not spin on blocked evidence. Mutable host hooks invalidate stale projections,
-and invalid evidence snapshots fail before changing context state.
-
-Authentic `ToolResult.evidence` carries recovery correlation internally, so
-`outcome` remains optional. Protected pending groups survive async insertion and
-follow-up input. Explicit context/Agent session saves include pending unacknowledged
-results in a detached conversation snapshot without changing the session schema
-or committing live input; same-instance restoration avoids duplicate results.
-Stream closure and later fail-fast tool errors retain completed unstored observations
-before cleanup. Receipt-only deliveries cannot release raw-result protection.
-Restoration reconciles matching invocation IDs across acknowledgement changes;
-the loaded checkpoint owns those invocations and unrelated pending content remains.
-
-Bundled storage supplies an optional `serializationLimitBytes` hint for bounded
-argument/result capture. `plugins.evidence.maxSerializationBytes` can override the
-source budget when deliberate redaction reduces a larger input; final storage
-quotas still apply. Existing custom adapters need no new required members.
-
-Read the [complete evidence recipe](./docs/DURABLE_EVIDENCE.md) for exact defaults,
-JSON support, authentication/data-handling boundaries, save/load, read backpressure,
-retention/deletion, restart versus fsync acknowledgement, recovery, and bundled
-file-store single-process writer limits. Run the [durable example](./examples/durable-tool-evidence.ts)
-and [ambiguous-action example](./examples/ambiguous-action-evidence.ts) after building.
-The [failed-write recovery example](./examples/evidence-recovery.ts) demonstrates
-pending-result save/load, repair and acknowledgement without repeating its action.
-The [stream interruption example](./examples/evidence-stream-interruption.ts) also
-checks early closure, receipt-only admission and restore-after-recovery with one action.
-AMOS provides `/context evidence [id] [offset]` with metadata-only lists and explicit
-bounded previews. This stage does not introduce action replay or transaction guarantees.
-
-## Experimental context strategies (Stage 07)
-
-For independent plugin/history controls with provider-native continuation, see
-[Stage 16A native compaction](docs/NATIVE_CONTEXT_COMPACTION.md). It is separately
-opted in through the existing strategy-instance field; Stage 07 behavior and the
-algorithmic default remain unchanged.
-
-Native compaction binds the provider's construction-time endpoint/account
-selection; changing it requires a new compatible Agent or fresh context. Known
-hosted-tool/server-token conflicts stop before compaction. Supported raw OpenAI
-prompt controls participate in provider counts, and selected contributions retain
-their shared timeout across plugin/history phases. See the native recipe for
-exact support and recovery boundaries.
-
-Automatic and explicit native composition preserve the existing `beforeCompaction`
-memory-writing hook: plugin content/revision changes receive one bounded refresh
-before reduction. Manual targets retain the same lifecycle and measured compaction
-events, including with `automatic: false`.
-Read-only native source proofs stop waiting on cancellation/ModelTask deadlines,
-and late reads cannot resume a cancelled turn. Admitted archival writes retain
-ownership until settled. Anthropic top-level Responses reasoning is explicitly
-unsupported on this opted-in path; it is rejected before counting or archival.
-Nested thinking must also have replay fields supported by the selected provider;
-foreign/incomplete opaque blocks reject before reduction or archival. Run
-`npm run example:native-hooks` or `npm run example:native-hooks-manual` offline, or
-add `-- --live=openai` / `-- --live=anthropic` for bounded actual calls. Manual live
-Anthropic mode demonstrates an 8192-token fixed-thinking budget. Native output
-defaults to that fixed budget plus 4096 summary tokens (bounded by model capacity);
-explicit host caps are never raised. Known cap conflicts reject before archival.
-Internal streaming supports large native output limits; main thinking remains
-unchanged. See the native recipe for matching reservation/source bounds.
-
-All three review corrections are validated on branch (2026-10-15): only eligible
-groups consume source capacity, known no-op preparations avoid writes/helpers,
-and failed AMOS saves restore absent as well as explicit settings. See the
-[corrective completion](./docs/designs/STAGE_07_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-15).
-Algorithmic remains the default; both alternatives remain experimental.
-
-Use `ObservationMaskingStrategy` for helper-free masking of older acknowledged
-read observations, or `StructuredSummaryStrategy` for a bounded compactor summary
-plus masking. Both require enabled evidence storage and preserve user messages,
-call arguments/receipt metadata, recent turns, pending dependencies, write/unknown
-effects and opaque state. Summary capsules remain assistant data. The algorithmic
-default and existing explicit rollover/custom strategy contracts are unchanged.
-
-Read [Context Strategies](./docs/CONTEXT_STRATEGIES.md) for verified constructors,
-settings/defaults, source-policy matching, scope, canonical JSON, save/load,
-cancellation, revisions, fallback, diagnostics and support boundaries. A source
-must remain acknowledged before replacement; source storage failure does not
-trigger action repetition. References are process-local with the default store;
-use stable file/custom storage for restart recovery. A valid schema/reference does
-not establish semantic truth. Final preparation explicitly fails if protected
-content still cannot fit.
-
-`npm run example:context-strategies` compares identical deterministic offline
-workflows. `--live --held-out` opts into billable OpenAI main/helper calls; the
-three-provider live test additionally covers Anthropic and Google. The bounded
-pilot is not statistical proof of quality preservation or lower total cost.
-AMOS `/context strategy` selects/inspects the policy; `/helpers usage` shows actual
-task accounting. Selection itself makes no helper request. See the
-[Version 2 adoption record](./docs/VERSION_2_GUIDE.md) for branch/release availability.
-
-
-## Protected task state (Stage 04, opt-in branch capability)
-
-Use a named connector as usual, then enable `context.features.taskState` with
-`plugins.taskState: { taskId, scope: { ownerId, namespace, tenantId? }, association? }`.
-Select these values in the trusted host, and keep `userId` consistent with the owner.
-The plugin is named `task_state`; access it through
-`agent.context.getPlugin<TaskStatePluginNextGen>('task_state')`. It shares the
-existing context/tool manager and exposes no model mutation/store tools.
-
-```typescript
-const state = agent.context.getPlugin<TaskStatePluginNextGen>('task_state')!;
-state.updateHost({ notes: [{ id: 'budget', category: 'constraint',
-  text: 'Spend at most 40 EUR.', source: { label: 'Confirmed user instruction' },
-}] }, state.revision);
-state.propose([{ id: 'possible', category: 'decision',
-  text: 'Submission may mean completion.', uncertainty: 'No remote verification.',
-  source: { label: 'Explicit extractor output' },
-}] , state.revision);
-```
-
-Import `TaskStatePluginNextGen` from the public package. Host corrections use new
-IDs with `supersedes`, and conflicts use `conflictsWith`. Action receipts are
-recorded explicitly from `executeWithOutcome` via `recordAction`; they do not set
-workflow completion. `confirmAction` supplies a separate sourced host status such
-as `waiting_external` or `completed` after the host's actual completion check.
-Admission failure never authorizes replay of an external action.
-
-Default limits are 100 combined notes/actions, 8,000 estimated content tokens and
-256 KiB strict JSON. Full protected state is counted in managed prompts; it remains
-through compaction/rollover or fails fit explicitly. Hooks cannot silently remove
-it at dispatch. JSON repair retains it; direct calls bypass it. No automatic
-extraction or model-obedience guarantee is provided.
-
-Existing optional plugin snapshots persist state; foreign/future/malformed records
-fail preflight, and legacy snapshots without task state clear enabled notes. Restore
-only host-owned checkpoints. Task/routine statuses and MemorySystem task transitions
-keep their authority; explicit lifecycle views do not create another workflow engine.
-Read the [complete recipe](./docs/TASK_STATE.md) before configuring memory linkage,
-pruning, capacity handling or recovery. Offline examples: `npm run example:task-state`
-and `npm run example:amos-task-state`; live probes: `npm run test:task-state:live`.
-
-
-Stage 04 corrections are implemented and validated on branch. Atomic host
-recovery at capacity uses the existing `updateHost` method with optional fields:
-
-```typescript
-state.updateHost({ resolve: ['finished-question'],
-  prune: { noteIds: ['finished-question'] },
-}, state.revision);
-// Only after the host verifies a terminal external outcome:
-state.updateHost({
-  confirmActions: [{ executionId, status: 'completed', source: { label: 'Verified remote status' } }],
-  prune: { executionIds: [executionId] },
-}, state.revision);
-```
-
-Notes, resolutions, confirmations and explicit pruning are one atomic transaction;
-only the final snapshot must fit, while the delta still satisfies the input limit.
-Invalid proof/target/status or overflow leaves the original state unchanged. Archive
-records before explicit pruning when needed. ID reuse detaches obsolete correction/
-conflict links and keeps already historical predecessors inactive. Managed guards
-recheck after final budget observers, including repair validation.
-AMOS host commands add `task prune`, `resolve-prune`, `prune-action` and
-`confirm-prune`; they use the same host validation/checkpoint flow and make no model
-calls. Read [Task State](./docs/TASK_STATE.md) and the historical
-[review/fix plan](./docs/designs/STAGE_04_REVIEW_AND_FIX_PLAN.md).
-
-All four corrective findings pass focused/full local and real-provider validation;
-see [corrective evidence](./docs/evaluations/STAGE_04_CORRECTIONS_VALIDATION.json).
-The [second review](./docs/designs/STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md) found
-two additional public TypeScript compatibility regressions; both are now
-[fixed and validated](./docs/designs/STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16).
-Legacy `ResolvedContextFeatures` values retain their eight required fields, while
-later additions remain optional in constructed values. Live contexts still apply
-their defaults; use `features.taskState ?? false` for legacy snapshots/adapters.
-Generic plugin configuration retains external factory records; declare built-in
-configuration with `satisfies TaskStatePluginConfig` for strict scope/task checks.
-Fresh validation passes 7,795 units and the unchanged public consumers. No package
-release or automatic completion policy is claimed.
-
-## Bounded managed-loop policies (Stage 10, opt-in branch capability)
-
-Set `AgentConfig.loopPolicy` or `RunOptions.loopPolicy` to add bounded recovery
-and host completion checks to managed run/stream. `null` disables a configured
-policy for one execution. Without a policy, existing behavior is preserved.
-
-The shared allowance defaults to two recovery interventions. Failed actual tools,
-repeated normalized read observations, optional unchanged host progress keys and
-false completion predicates consume it. Repeated admitted writes/unknown effects
-stop before replay; uncertain outcomes require host inspection. Application
-`success:false` data does not become a framework failure.
-
-`completion(context)` is host-owned and checks actual required state/evidence;
-return `{complete, reason?, feedback?}`. A successful model response or submitted
-job alone is insufficient. Optional `response.loop`/existing stream-event `loop`
-metadata and `agent.getLoopDiagnostics()` report phase/reason/workflow status
-separately from provider status and assistant text. Missing completion callbacks
-yield an ordinary answer without a workflow completion assertion.
-
-Checks receive bounded frozen observations/task state and a cancellation signal;
-they are timed, validated and rejected on stale task/owner/conversation identity.
-Callbacks/counters are not session authority and are never restored. Use explicit
-ModelTask sharing for helper checks and inspect actual model-call usage.
-
-With the policy enabled, stream invokes shared `before:tool` preparation; the
-unconfigured legacy trace remains unchanged. Streamed candidate text stays
-provisional. JSON final repair remains run-only. Async/suspended work retains
-waiting-external semantics. Direct, realtime and external SDK-owned loops remain
-outside this policy. Read [the complete recipe](docs/AGENT_LOOP_POLICIES.md) for
-limits, effects, persistence and exact support boundaries. Build first and run
-`npm run example:feedback-agent`, `npm run example:loop-equivalence`, or
-`npm run example:amos-loop` offline. `npm run test:loop:live` opts into billable
-three-provider checks. No package release is claimed.
-
-All five [Stage 10 review findings](docs/designs/STAGE_10_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16)
-are fixed and validated. Normal-run and explicit async delivery import authentic
-outcomes before receiving policy dispatch/checks, retaining admitted effect across
-re-registration. Legacy uncorrelated deliveries use receipt effect or unknown;
-missing possible-action outcomes block conservatively. Normal policy stops commit
-settled results without extra model calls/journal entries. JSON formatting appends
-a separate answer after a stopped tool turn, preserving exact calls/results across
-new input and file checkpoints. Class/prototype callbacks retain their original
-host receiver and private state; callbacks/thresholds are captured per execution.
-These internal corrections add no required public/session/storage members.
-See [corrective evidence](docs/evaluations/STAGE_10_CORRECTIONS_VALIDATION.json)
-for 7,950 units, 135 live cases / 147 scenarios and 22 offline examples, including
-the retained first Google empty-summary failure. No release is claimed.
-
-### Local helper validation and completion scope (Stage 10 review fixes)
-
-Optional `HelperCallOptions.validationSchema` is an additional synchronous local
-JSON schema. Both it and `schema` must pass inside the same zero-or-one repair
-allowance. It appears as prompt guidance while native `response_format` stays
-portable; it cannot weaken `schema`. Invalid schemas fail before packet building,
-and repair uses the selected evidence and existing task/input/output/deadline bounds.
-
-Automatic structured compaction uses this to reject all-empty summaries and
-blank/overlong entries before helper success. Actual Google recovery from the
-recorded empty body is now verified without masking fallback. Standalone summary
-callbacks retain one invocation and the existing transaction/fallback behavior.
-Pending loop completion/progress checks also reject changes to tool principal,
-account/connector selections, identities, roles, session or connector authority.
-See [helper recipe](docs/MODEL_TASKS_AND_HELPERS.md),
-[context recipe](docs/CONTEXT_STRATEGIES.md), and
-[latest review/fix evidence](docs/designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md).
-Final gates pass 7,988 units, 136 live cases / 148 scenarios and 22 offline examples;
-no breaking API, new defaults or release.
-
-## Opt-in Agent presets and inspection
-
-Use the public `createAgentPreset('research' | 'workflow', config)` factory with
-`Agent.create()`. Research selects observation masking, workflow selects
-algorithmic compaction plus protected task state; both enable explicitly scoped
-evidence and bounded recovery. Defaults are 12/8 main-loop iterations. Explicit
-settings override these defaults, including `loopPolicy: null`. Helpers, hard
-ModelTask limits, permissions and host completion checks remain explicit.
-
-`agent.inspectCapabilities()` reports actual managed configuration and provider
-support without a model/storage call or private content. Per-call overrides and
-external drivers keep their existing ownership. AMOS `/preset` saves next-agent
-selection and distinguishes it from active configuration. Candidate startup/load
-failures preserve the prior AMOS session; recovery observations are checkpointed
-before release. Titles/preset labels survive autosave and unnamed saves. Inspection
-projects declared getter-backed capabilities without exposing provider extras.
-Failed resumes restore caller-owned permission/tool/prompt/role/callback bindings before candidate cleanup, including constructor and synchronous load-notification failures; rejected scoped loads
-retain the active checkpoint and autosave target. Getter-backed scope requirements
-are normalized, and teardown continues after individual plugin errors. JSON-compatible plugin conversion hooks remain supported, and failed rollback keeps saves blocked until every damaged plugin actually recovers. No session/portable protocol changes; scope checks and legacy loading remain intact. Read the
-[complete recipe](docs/AGENT_PRESETS.md) for setup, overrides, failure behavior,
-public examples, runtime boundaries and migration. Availability is on the Version 2
-branch pending a verified package release.
-
-
-## Selective context assembly (Stage 05)
-
-Enable optional `context.assembly` on a managed Agent/context. Explicit
-`registerContextContributor(pluginName, companion)` replaces that enabled plugin's
-prompt data view with bounded selectable blocks; no plugin method is auto-detected.
-`createInContextMemoryContributor` adapts the built-in whiteboard while retaining
-all stored entries and protecting critical entries. Default plugin interfaces,
-layout, saved state, observation hooks and single ToolManager remain unchanged.
-
-Selection supports priorities, full dependency closures, protected data, expiry,
-source budgets and explicit host projections. Returned blocks are JSON user data,
-never host instructions. Protected task/evidence/instruction plugins cannot be
-replaced; violations, stale scope/revisions and deadline/fit failures are explicit.
-`assembly.layout: 'stable-prefix'` optionally places legacy dynamic data/date later
-and sorts tool definitions. Use existing `responseReserve` plus optional
-`reasoningReserveTokens` for headroom appropriate to actual model configuration.
-
-Inspect detached `lastPreparation.selection` for IDs/status/reasons/tokens and actual
-provider-input/cache observations. Missing counters stay null, zero stays zero;
-opaque/multimodal estimates and unknown-model fallback remain uncertain. This is
-not a provider cache service or a cost-saving guarantee. Source state persists,
-while callbacks/selection policy must be reattached by trusted host code. AMOS
-`contextAssembly.selectWhiteboard` and `/context breakdown` demonstrate adoption.
-Account/task and registry-instance changes invalidate old selections. Managed
-history/input edits from hooks receive one bounded refresh in the same contributor
-allowance, without repeating hooks or compaction; existing history ownership stays
-unchanged. JSON repair permits the normal answer commit while rejecting a replaced
-host prompt or earlier input. Whiteboard overview/store_get guidance reflects partial
-visibility. Last-request usage includes wrap-up calls and remains separate from stream
-aggregates; consolidation performs no new contributor fetches. Selected structured
-run() formats before consolidation; selected structured suspension formats once
-before saving its session/correlation and emitting suspension. Formatting or storage
-failure retains the accepted observation in live context; checkpoint it before
-destruction instead of repeating the action. Native function/custom image/file
-results and opaque thought signatures set the uncertainty flag, shown by AMOS.
-Run `npm run example:context-dispatch-safety` for a deterministic demonstration.
-Read the [complete recipe](docs/CONTEXT_ASSEMBLY.md) for public signatures, limits,
-JSON repair, lifecycle/authorization boundaries and offline/live setup.
-
-## Verified routines (C3)
-
-Use `createRoutineRunner({ verify })` with a host-built Agent for task-readiness and final-artifact gates. Waiting results retain a same-process continuation; `resume` requires renewed host authorization and retains the original task/deadline. `asTool` owns a fresh child across waiting. Read [the complete recipe](docs/VERIFIED_ROUTINES.md) for scopes, bounded source recovery, cancellation and limits. Existing routine/session contracts retain their defaults.
-
-## Enhanced connector execution profiles
-
-Select `ConnectorTools.enhanced` with `profile: "execution-v1"` for the bundled Microsoft/Google/Slack/GitHub execution contract. Register actual names through `agent.tools.registerConnectorTools`, keep host permissions/scopes, and use exact identity filters with catalog disabled for C4. The profile adds host deadlines, physical-attempt diagnostics and evidence-aware read projections; old factory defaults stay unchanged. Read [the full recipe](docs/ENHANCED_CONNECTORS.md) for inventory, partial acceptance, origin checks, cancellation, retries, source limits and persistence.
-Generic requests check each redirect hop before forwarding credentials; same-origin
-redirects retain method/body semantics, while cross-origin destinations are rejected.
-
-## Whole connector pages (C5)
-
-Select `collections-v1` for 17 whole-page read variants and strict Slack topics. `pageSize` is a provider hint; follow opaque `position.more` with identical normalized inputs and detect repeated `positionId`. `position.end`, `returnedCount` and `searchCoverage` have separate meanings. Use existing source/account registration and actual identity filters to adopt the manager-local catalog adapter. Its cursor key survives reload/rollover/scoping, but not a fresh manager/process or explicit clear. Read [the recipe](docs/CONNECTOR_COLLECTION_PAGES.md) for inventory, raw provider items, provider ceilings, query binding, Unicode validation, source recovery and setup; [the capacity inventory](docs/CONSUMER_CAPACITY_INVENTORY.md) classifies retained bounds. Legacy/execution-v1 and saved DTOs remain unchanged.
-
-## Complete orchestration configuration (C6)
-
-Use `createOrchestratorWithFactory(config, { configureAgent, onChildOutcome?, descriptionExecution? })` when root/workers require complete authorized Agent/context settings before initialization. Return a complete plain configuration, resolve workers independently, and pass a ModelTask per operation for shared accounting. Read [the recipe](docs/ORCHESTRATOR_FACTORY.md) for precedence, reservations, async repair, cancellation/quarantine, source retention and cleanup. Existing createOrchestrator and synchronous callbacks retain their contracts.
-
-### Negotiated portable observations (C7)
-
-Use the opt-in [remote outcome recipe](docs/REMOTE_TOOL_OUTCOMES.md) when a consumer
-needs source effects, authentic server outcomes, evidence and recovery. The new
-outer protocol requires five authenticated transport operations and scoped evidence;
-old v2 packages and servers keep their contracts. Tools-first construction composes
-with C6 before Agent initialization. Unknown remote writes stop managed dispatch;
-`session.getReceipt()` repairs acknowledged source without action replay. Checkpoints
-restore observations, not workflow or budget authority.
-Repeated/concurrent receipt lookups reuse validated observations while still invoking
-the authenticated receipt transport. Missing authoritative metadata after source
-handoff remains unknown, including uninstrumented execution overrides. A failed
-shutdown completion callback preserves its error and releases settled ownership of
-the borrowed source Agent. See the recipe for repair, quota and cancellation details.
-
-### Composed guarantees and inspection (C8)
-
-Use [the conformance recipe](docs/EVIDENCE_CONFORMANCE.md) to validate custom evidence
-adapters with the test-only factory harness. Current memory/file profiles and real
-process recovery are covered. Compose existing capability, routine, remote, child
-and ModelTask reports; distinguish configured checks from observed verification,
-proxy settlement from source settlement, and known model subtotal from unknown costs.
-No workflow authority is restored by loading stored evidence.
-
-### Endpoint capability metadata (C9-A)
-
-Use [the capability recipe](docs/ENDPOINT_CAPABILITIES.md) for pure root/shared
-lookups over explicit vendor, endpoint, transport and session mode. Keep supported,
-unsupported and unknown distinct. A reasoning-capable model may still have an
-unverified exact effort set; preserve saved selections and host fallbacks.
-
-### Effective temperature decisions (C9-B)
-
-Select [the parameter policy](docs/PARAMETER_POLICY.md) explicitly when normalized
-temperature should be omitted for a particular model/effort combination. Decisions
-use actual routed/per-call request settings across generation, streaming, selected
-counting and batches. Preserve supported zero and unknown values; keep raw controls
-strict. Old portable snapshots require the trusted receiving host to reconfigure
-policy. `npm run example:parameter-policy` inspects real mocked request bodies offline.
-
-### Vendor labels and colors (C9-C)
-
-Use [vendor presentation](docs/VENDOR_PRESENTATION.md) through root or `/shared`.
-Compose host overrides over immutable rows; unknown IDs return undefined. The
-catalog supplies no model defaults or authorization. Custom external services keep
-their existing service/auth ownership even when an application uses the same ID.
+The library, AMOS, and Hosea source are MIT licensed, Copyright © 2025–2026
+Anton Antic ([anton.antich@gmail.com](mailto:anton.antich@gmail.com)).
+See [LICENSE](LICENSE) and [Licensing](LICENSING.md) for scope and third-party terms.

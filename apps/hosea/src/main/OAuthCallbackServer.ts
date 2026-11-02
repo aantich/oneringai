@@ -122,7 +122,7 @@ export class OAuthCallbackServer {
         res.end(
           `<html><body style="font-family:system-ui,sans-serif;text-align:center;padding:60px;">` +
             `<h2>Authorization Complete!</h2>` +
-            `<p>You can close this window and return to Everworker Desktop.</p>` +
+            `<p>You can close this window and return to hosea.</p>` +
             `<script>setTimeout(function(){window.close()},1500);</script>` +
             `</body></html>`
         );

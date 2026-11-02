@@ -1,0 +1,320 @@
+{
+  "reviewDate": "2026-11-02",
+  "branch": "version2",
+  "committedBaseline": "1b88a42609fc9f2403682b47f3162915662ee957",
+  "workingTree": "Includes reviewed uncommitted documentation and existing Hosea revival changes; no merge/tag/publish performed.",
+  "preparedPackage": "oneringai@2.0.0-beta.1",
+  "reviewCoverage": {
+    "README_originalLines": 3717,
+    "USER_GUIDE_originalLines": 19914,
+    "method": "Full manual section read, source/public-declaration comparison, code-fence parsing, public imports, selected complete-example typechecks, local link/anchor checks."
+  },
+  "checks": {
+    "libraryBuild": {
+      "status": "pass",
+      "exportFiles": 33,
+      "formats": [
+        "esm",
+        "cjs"
+      ],
+      "connectorIdentity": "pass"
+    },
+    "sourceTypes": "pass",
+    "lint": "pass",
+    "exampleTypes": "pass",
+    "publicConsumerCompatibility": "pass",
+    "unitTests": {
+      "status": "pass; final four-worker full suite 9360/424",
+      "tests": 9360,
+      "files": 424,
+      "runs": [
+        {
+          "command": "npm run test:unit",
+          "passed": 9360,
+          "failed": 0
+        },
+        {
+          "command": "npm run test:unit after generated fingerprint refresh",
+          "passed": 9359,
+          "failed": 1,
+          "failure": "OpenAIManagedDriver.test.ts: first run returned failed in 500 ms synthetic-deadline test under concurrent validation."
+        },
+        {
+          "command": "node node_modules/vitest/vitest.mjs run tests/unit/agent-runtime/OpenAIManagedDriver.test.ts --maxWorkers=1",
+          "passed": 21,
+          "failed": 0
+        },
+        {
+          "command": "npm run test:unit -- --maxWorkers=4",
+          "passed": 9360,
+          "failed": 0,
+          "files": 424
+        }
+      ],
+      "assertionsOrDeadlinesChanged": false
+    },
+    "documentation": {
+      "status": "pass",
+      "markdownFiles": 153,
+      "typescriptBlocks": 512,
+      "completeExamples": 10,
+      "verbatimModuleSyntax": true,
+      "documentedNpmCommands": "verified",
+      "externalUrls": "not crawled"
+    },
+    "generatedReference": {
+      "publicEntries": 1825,
+      "internalEntries": 3618,
+      "sourceLinks": "relative to each output, with line anchors"
+    },
+    "amos": {
+      "types": "pass",
+      "build": "pass",
+      "offlineAdapters": 5
+    },
+    "hosea": {
+      "types": "pass",
+      "installerPlatforms": "separate/unverified"
+    },
+    "offlineExamples": [
+      {
+        "file": "examples/agentic-evaluation-baseline.ts",
+        "status": "pass",
+        "ms": 8486
+      },
+      {
+        "file": "examples/context-strategy-comparison.ts",
+        "status": "pass",
+        "ms": 2380
+      },
+      {
+        "file": "examples/adaptive-model-routing.ts",
+        "status": "pass",
+        "ms": 2272
+      },
+      {
+        "file": "examples/verified-routines.ts",
+        "status": "pass",
+        "ms": 7169
+      },
+      {
+        "file": "examples/agent-runtime-swappable.ts",
+        "status": "pass",
+        "ms": 3135
+      },
+      {
+        "file": "examples/agent-runtime-claude.ts",
+        "status": "pass",
+        "ms": 2771
+      },
+      {
+        "file": "examples/agent-runtime-openai-managed.ts",
+        "status": "pass",
+        "ms": 3162
+      },
+      {
+        "file": "examples/agent-runtime-claude-managed.ts",
+        "status": "pass",
+        "ms": 2981
+      },
+      {
+        "file": "examples/agent-runtime-artifacts.ts",
+        "status": "pass",
+        "ms": 3183
+      },
+      {
+        "file": "examples/agent-runtime-recovery.ts",
+        "status": "pass",
+        "ms": 9550
+      },
+      {
+        "file": "examples/agent-runtime-managed-restart.ts",
+        "status": "pass",
+        "ms": 10815
+      },
+      {
+        "file": "examples/agent-runtime-run-options.ts",
+        "status": "pass",
+        "ms": 1982
+      },
+      {
+        "file": "examples/agent-runtime-safety.ts",
+        "status": "pass",
+        "ms": 2248
+      },
+      {
+        "file": "apps/amos/examples/agent-runtime-offline.ts",
+        "status": "pass",
+        "ms": 3930
+      }
+    ],
+    "cleanProductionConsumer": {
+      "status": "pass",
+      "installScripts": false,
+      "optionalDependencies": false,
+      "esmEntries": 11,
+      "cjsEntries": 11,
+      "connectorIdentity": "pass",
+      "criticalGuidesAndLicenses": "present",
+      "legacyPackage": "absent",
+      "providerCalls": 0,
+      "dependencyAudit": "See R2; functional import probe is separate."
+    },
+    "npmRegistry": {
+      "unscoped": "E404 on 2026-11-02; no reservation implied",
+      "legacyLatest": "1.2.1",
+      "legacyMaintainer": "aantich <anton.antich@gmail.com>"
+    },
+    "releaseTag": {
+      "status": "not ready",
+      "missing": "v2.0.0-beta.1",
+      "cleanTree": false
+    },
+    "productionDependencyAudit": {
+      "status": "open finding R2",
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 4,
+        "high": 1,
+        "critical": 0,
+        "total": 5
+      },
+      "packages": [
+        {
+          "name": "archiver-utils",
+          "severity": "moderate",
+          "range": ">=0.2.0",
+          "advisories": []
+        },
+        {
+          "name": "glob",
+          "severity": "moderate",
+          "range": "3.0.0 - 14.0.1",
+          "advisories": [
+            "https://github.com/advisories/GHSA-3g3m-2fjr-6pw4"
+          ]
+        },
+        {
+          "name": "minimatch",
+          "severity": "moderate",
+          "range": "<11.0.1",
+          "advisories": [
+            "https://github.com/advisories/GHSA-g3hv-75wg-m249"
+          ]
+        },
+        {
+          "name": "pdfjs-dist",
+          "severity": "high",
+          "range": ">=5.6.83 <6.2.108",
+          "advisories": [
+            "https://github.com/advisories/GHSA-hq66-cqwq-w95j"
+          ]
+        },
+        {
+          "name": "uuid",
+          "severity": "moderate",
+          "range": "<11.1.1",
+          "advisories": [
+            "https://github.com/advisories/GHSA-w5hq-g745-h8pq"
+          ]
+        }
+      ],
+      "paths": [
+        {
+          "name": "pdfjs-dist",
+          "version": "6.1.200",
+          "parents": [
+            {
+              "name": "officeparser",
+              "version": "7.8.0",
+              "declared": "6.1.200"
+            }
+          ]
+        },
+        {
+          "name": "uuid",
+          "version": "8.3.2",
+          "parents": [
+            {
+              "name": "exceljs",
+              "version": "4.4.0",
+              "declared": "^8.3.0"
+            }
+          ]
+        },
+        {
+          "name": "glob",
+          "version": "13.0.6",
+          "parents": [
+            {
+              "name": "oneringai",
+              "version": "2.0.0-beta.1",
+              "declared": "^13.0.6"
+            }
+          ]
+        },
+        {
+          "name": "glob",
+          "version": "7.2.3",
+          "parents": [
+            {
+              "name": "archiver-utils",
+              "version": "2.1.0",
+              "declared": "^7.1.4"
+            }
+          ]
+        },
+        {
+          "name": "glob",
+          "version": "7.2.3",
+          "parents": [
+            {
+              "name": "rimraf",
+              "version": "2.7.1",
+              "declared": "^7.1.3"
+            }
+          ]
+        },
+        {
+          "name": "glob",
+          "version": "7.2.3",
+          "parents": [
+            {
+              "name": "archiver-utils",
+              "version": "3.0.4",
+              "declared": "^7.2.3"
+            }
+          ]
+        }
+      ]
+    },
+    "packedCandidate": {
+      "files": 495,
+      "publication": "not performed",
+      "installLocation": "temporary clean consumer",
+      "consumerDependencies": "real production install; repository overrides intentionally not applied"
+    }
+  },
+  "currentLiveProviderCalls": 0,
+  "existingLiveEvidence": "LIVE_VALIDATION_2026_11_01.md; bounded Codex subscription test and light OpenAI sample only.",
+  "openFindings": [
+    {
+      "id": "R1",
+      "priority": "P1 before stable",
+      "area": "default routine/system/task/output-contract/fold prompts",
+      "issue": "Still instruct context_set, memory_store and memory_retrieve although unified plugins register store_* tools.",
+      "codeChangedByThisPass": false
+    },
+    {
+      "id": "R2",
+      "priority": "P1 before stable: remediate or assess applicability",
+      "area": "clean production dependency resolution",
+      "issue": "Five npm-audit package entries (1 high / 4 moderate); consumer installs pdfjs-dist 6.1.200 via officeparser. Installed dependency overrides do not control consumer root resolution.",
+      "exploitDemonstrated": false,
+      "dependencyVersionsChangedByThisPass": false
+    }
+  ],
+  "decision": "Do not advertise unrestricted stable release; runtime previews/live gates and exact release candidate remain explicit.",
+  "subsequentHardeningRecord": "V2_RELEASE_VALIDATION_2026_11_02.json"
+}

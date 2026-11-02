@@ -671,7 +671,7 @@ providers explicitly rather than silently treating skipped tests as validation.
 
 ---
 
-Version: 1.2.0 | Runtime: Node.js 22.13+ or 24+ | Architecture: Connector-first +
+Documentation version: 2.0.0-beta.1 | Runtime: Node.js 22.13+ or 24+ | Architecture: Connector-first +
 NextGen context
 
 ## Experimental context strategies

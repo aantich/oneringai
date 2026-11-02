@@ -221,3 +221,29 @@ By contributing to OneRingAI, you agree that your contributions will be licensed
 ---
 
 Thank you for helping make OneRingAI better. If you have questions, open an issue or start a discussion — we're happy to help you get oriented.
+
+### Documentation changes
+
+Keep internal repository links relative so they follow the current branch. The
+README's explicit npm version-navigation links to `version1` and eventual `main`
+are the only branch-pinned documentation exception.
+
+After editing usage guides, build the package and run `npm run docs:check`. It
+checks repository targets/anchors, current npm commands, public imports and syntax
+in README/User Guide TypeScript blocks, and marked complete examples with strict
+ESM type imports. Generate API references through `npm run docs` (public) or
+`npm run docs:full` (internal); source links are relative to the output file.
+`prepublishOnly` includes the documentation check. Keep partial/application-owned
+snippets clearly identified and runnable examples in the examples index.
+
+### Release candidate validation
+
+From a source checkout with development dependencies installed, run
+`npm run release:check`. It runs build/type/lint/unit/compatibility/example/docs
+checks and a real tarball consumer install, including strict ESM/CJS declarations,
+document parsing and dependency assessment. `npm run examples:offline` runs only
+explicit offline entrypoints. The consumer step needs registry access and runs no
+LLM calls. Review [dependency security](docs/DEPENDENCY_SECURITY.md) and
+[release readiness](docs/RELEASE_READINESS_V2.md), then separately validate AMOS
+and Hosea as listed there. `prepublishOnly` also requires the exact release tag
+and a clean tree; a passing candidate check does not publish or authorize a merge.

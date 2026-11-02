@@ -1,3 +1,5 @@
+import { Welcome } from '../design-system/Welcome';
+import { HoseaMark } from '../design-system/Brand';
 /**
  * Chat Page - Main chat interface with multi-tab support
  * Features rich markdown rendering with support for code, diagrams, charts, and math
@@ -152,7 +154,7 @@ function ChatContent({ tab, onSend, onCancel }: ChatContentProps): React.ReactEl
     });
   };
 
-  // Custom message renderer preserving Everworker Desktop's visual style
+  // Custom message renderer preserving hosea's visual style
   const renderHoseaMessage = useCallback((msg: IChatMessage, index: number) => {
     // Cast to Message to access Hosea-specific fields (retryInfo, warning)
     const message = msg as Message;
@@ -185,7 +187,7 @@ function ChatContent({ tab, onSend, onCancel }: ChatContentProps): React.ReactEl
       <div key={message.id || index} className="message message--assistant">
         <div className="message__header">
           <div className="message__avatar">
-            <Bot size={16} />
+            <HoseaMark size={21} />
           </div>
         </div>
         <div className="message__content">
@@ -358,22 +360,7 @@ function ChatContent({ tab, onSend, onCancel }: ChatContentProps): React.ReactEl
         onScroll={handleScroll}
       >
         {tab.messages.length === 0 ? (
-          <div className="chat__welcome">
-            <div className="chat__welcome-icon">
-              <Bot size={40} />
-            </div>
-            <h2 className="chat__welcome-title">Welcome to Everworker Desktop</h2>
-            <p className="chat__welcome-subtitle">
-              {tab.status.initialized
-                ? `Connected to ${tab.agentName}. Start a conversation!`
-                : 'Configure an LLM provider to get started.'}
-            </p>
-            {!tab.status.initialized && (
-              <Button variant="primary" className="mt-4" onClick={() => navigate('llm-connectors')}>
-                Add LLM Provider
-              </Button>
-            )}
-          </div>
+          <Welcome agentName={tab.status.initialized ? tab.agentName : undefined} onPrompt={text => { setInput(text); textareaRef.current?.focus(); }} />
         ) : (
           <MessageList
             messages={tab.messages}
@@ -401,14 +388,17 @@ function ChatContent({ tab, onSend, onCancel }: ChatContentProps): React.ReactEl
                 tab.routineExecution?.status === 'running'
                   ? 'Agent is executing a routine...'
                   : tab.status.initialized
-                    ? 'Type a message... (Shift+Enter for new line)'
-                    : 'Connect to an agent first...'
+                    ? 'Ask anything, or make something…'
+                    : 'Connect a model to get started'
               }
               disabled={!tab.status.initialized || tab.isLoading || tab.routineExecution?.status === 'running'}
+              aria-label="Message your agent"
               rows={1}
             />
             {tab.isLoading ? (
               <button
+                type="button"
+                aria-label="Stop response"
                 className="chat__send-btn chat__send-btn--danger"
                 onClick={onCancel}
               >
@@ -416,6 +406,8 @@ function ChatContent({ tab, onSend, onCancel }: ChatContentProps): React.ReactEl
               </button>
             ) : (
               <button
+                type="button"
+                aria-label="Send message"
                 className="chat__send-btn"
                 onClick={handleSend}
                 disabled={!input.trim() || !tab.status.initialized || tab.routineExecution?.status === 'running'}
@@ -424,6 +416,7 @@ function ChatContent({ tab, onSend, onCancel }: ChatContentProps): React.ReactEl
               </button>
             )}
           </div>
+          <p className="chat__input-caption">Shift + Enter for a new line · AI can make mistakes. Check important details.</p>
         </div>
       </div>
     </>
@@ -432,28 +425,8 @@ function ChatContent({ tab, onSend, onCancel }: ChatContentProps): React.ReactEl
 
 // ============ Empty State (no tabs) ============
 
-function EmptyTabsState({ onCreateTab }: { onCreateTab: () => void }): React.ReactElement {
-  const { navigate } = useNavigation();
-
-  return (
-    <div className="chat__welcome">
-      <div className="chat__welcome-icon">
-        <Bot size={40} />
-      </div>
-      <h2 className="chat__welcome-title">Welcome to Everworker Desktop</h2>
-      <p className="chat__welcome-subtitle">
-        Create a new tab to start chatting with an agent.
-      </p>
-      <div className="d-flex gap-2 mt-4">
-        <Button variant="primary" onClick={onCreateTab}>
-          New Chat
-        </Button>
-        <Button variant="outline-secondary" onClick={() => navigate('agents')}>
-          Configure Agents
-        </Button>
-      </div>
-    </div>
-  );
+function EmptyTabsState(): React.ReactElement {
+  return <Welcome />;
 }
 
 // ============ Main Chat Page Content ============
@@ -559,7 +532,7 @@ function ChatPageContent(): React.ReactElement {
           />
         ) : tabCount === 0 ? (
           <div className="chat__messages chat__messages--empty">
-            <EmptyTabsState onCreateTab={handleNewTabClick} />
+            <EmptyTabsState />
           </div>
         ) : null}
       </div>

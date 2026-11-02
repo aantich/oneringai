@@ -613,6 +613,15 @@ stream rejection/retry. JSON repair retains the admitted owner of opaque output;
 structured suspension is checkpointed only after finalization. The library example's
 `--failed-finalization` mode illustrates saved recovery receipts and zero tool replay.
 
+### Routine store compatibility
+
+The shared library's routine prompts use `store_set` / `store_get` with the
+`whiteboard` and `notes` stores. Nested map/fold/until guidance also reaches reused
+agents. Read notes by exact index key, including tier suffixes. From the repository
+root, `npm run example:routine-stores` runs the offline store/map/fold demonstration;
+expected final total: `10`. The existing AMOS routine commands below keep their
+host verification and continuation rules. See [routine execution](../../USER_GUIDE.md#routine-execution).
+
 ### Verified routine demonstration
 
 `/routine demo` makes one billable call on the selected model with synthetic local actions. `/routine inspect` shows phases/verdicts; `/routine confirm` supplies synthetic host proof and reconciles without repeating the submission; `/routine cancel` revokes continuation and requests cancellation. Handles are process-local and never saved in configuration/session files. This demonstrates host verification, not a production remote-state check.

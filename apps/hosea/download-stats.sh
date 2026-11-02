@@ -1,5 +1,5 @@
 #!/bin/bash
-# Everworker Desktop Download Statistics
+# hosea Download Statistics
 # Usage: ./download-stats.sh [version]
 # Examples:
 #   ./download-stats.sh          # All releases
@@ -54,7 +54,7 @@ data = json.load(sys.stdin)
 print(sum(a['downloads'] for a in data['assets']))
 " 2>/dev/null)
 
-    echo -e "${BOLD}${CYAN}Everworker Desktop v${version}${RESET}  ${DIM}(${published})${RESET}  ${BOLD}Total: ${total} downloads${RESET}"
+    echo -e "${BOLD}${CYAN}hosea v${version}${RESET}  ${DIM}(${published})${RESET}  ${BOLD}Total: ${total} downloads${RESET}"
 
     # Print per-asset breakdown
     echo "$assets" | python3 -c "
@@ -91,7 +91,7 @@ for a in sorted(data['assets'], key=lambda x: x['name']):
 # Header
 echo ""
 echo -e "${BOLD}══════════════════════════════════════════════════${RESET}"
-echo -e "${BOLD}  Everworker Desktop Download Statistics${RESET}"
+echo -e "${BOLD}  hosea Download Statistics${RESET}"
 echo -e "${BOLD}══════════════════════════════════════════════════${RESET}"
 echo ""
 

@@ -1,5 +1,5 @@
 /**
- * Everworker Desktop - AI Agent Desktop Application
+ * hosea - AI Agent Desktop Application
  *
  * Electron main process - handles window management and IPC with the agent.
  */
@@ -7,26 +7,18 @@
 import { app, BrowserWindow, ipcMain, shell, dialog, Menu, protocol, net } from 'electron';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { homedir, tmpdir } from 'node:os';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { AgentService } from './AgentService.js';
 import { AgentRegistry } from 'oneringai';
 import { BrowserService } from './BrowserService.js';
 import { AutoUpdaterService } from './AutoUpdaterService.js';
-import { EWAuthService } from './EWAuthService.js';
+import { BackendAuthService } from './BackendAuthService.js';
 import { OllamaService } from './OllamaService.js';
-import { sendTelemetryPing } from './telemetry.js';
 import type { Rectangle } from './browser/types.js';
 
-/**
- * Get the data directory for Everworker Desktop
- * - macOS/Linux: ~/.everworker/hosea
- * - Windows: %USERPROFILE%\.everworker\hosea (e.g., C:\Users\name\.everworker\hosea)
- */
-function getDataDir(): string {
-  const home = homedir();
-  return join(home, '.everworker', 'hosea');
-}
+import { getHoseaDataDir, isBackendEnabled, isDesignPreview } from './runtimeConfig.js';
+
+const getDataDir = getHoseaDataDir;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -37,7 +29,7 @@ const isDev = process.argv.includes('--dev') || process.env.NODE_ENV === 'develo
 let mainWindow: BrowserWindow | null = null;
 let agentService: AgentService | null = null;
 let browserService: BrowserService | null = null;
-const ewAuthService = new EWAuthService();
+const backendAuthService = new BackendAuthService();
 let autoUpdaterService: AutoUpdaterService | null = null;
 let ollamaService: OllamaService | null = null;
 
@@ -62,13 +54,23 @@ function writeSettings(data: Record<string, unknown>): void {
   writeFileSync(getSettingsPath(), JSON.stringify(data, null, 2), 'utf-8');
 }
 
+// Reserved for the future optional Youetal backend integration.
+function backendHandler<F extends (...args: any[]) => Promise<any>>(handler: F): F {
+  return readyHandler((async (...args: Parameters<F>) => {
+    if (!isBackendEnabled()) throw new Error('Backend integration is disabled in this build.');
+    return handler(...args);
+  }) as F);
+}
+
 async function createWindow(): Promise<void> {
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 800,
+    width: 1380,
+    height: 900,
+    minWidth: 880,
     minHeight: 600,
-    title: 'Everworker Desktop',
+    title: 'hosea',
+    backgroundColor: '#ffffff',
+    icon: join(__dirname, '../../assets/icon.png'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -83,7 +85,7 @@ async function createWindow(): Promise<void> {
   if (isDev) {
     // In development, load from Vite dev server
     await mainWindow.loadURL('http://localhost:5173');
-    mainWindow.webContents.openDevTools();
+    if (process.argv.includes('--devtools')) mainWindow.webContents.openDevTools();
   } else {
     // In production, load from built files
     await mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
@@ -111,7 +113,7 @@ function safeHandler<T>(
     try {
       return await handler(...args);
     } catch (error) {
-      console.error('[EW Desktop] IPC handler error:', error);
+      console.error('[hosea] IPC handler error:', error);
       return defaultValue;
     }
   };
@@ -134,7 +136,7 @@ async function setupIPC(): Promise<void> {
   // Initialize agent service with fast essential init only (dirs + config + log level)
   // Heavy initialization (connectors, tools, agents) is deferred to after window shows
   const dataDir = getDataDir();
-  console.log('Everworker Desktop data directory:', dataDir);
+  console.log('hosea data directory:', dataDir);
   agentService = await AgentService.createFast(dataDir, isDev);
 
   // Initialize browser service (pass null window for now, set later when window is created)
@@ -160,12 +162,12 @@ async function setupIPC(): Promise<void> {
   // ============ Browser User Control Handoff ============
   // When agent appears stuck on browser tools (Trigger 2), auto-pause
   browserService.on('browser:agent-stuck', (instanceId: string) => {
-    console.log(`[EW Desktop] Agent appears stuck on ${instanceId}, auto-pausing`);
+    console.log(`[hosea] Agent appears stuck on ${instanceId}, auto-pausing`);
     agentService!.takeUserControl(instanceId, 'Agent appears stuck. You may need to assist.');
   });
 
   browserService.on('browser:overlay-detected', (instanceId: string, overlayData: unknown) => {
-    console.log(`[EW Desktop] Overlay detected for ${instanceId}:`, overlayData);
+    console.log(`[hosea] Overlay detected for ${instanceId}:`, overlayData);
 
     // Send as a special stream chunk that the agent will see
     mainWindow?.webContents.send('agent:stream-chunk', instanceId, {
@@ -200,7 +202,7 @@ async function setupIPC(): Promise<void> {
       mainWindow?.webContents.send('agent:stream-end');
       return { success: true };
     } catch (error) {
-      console.error('[EW Desktop] Stream error:', error);
+      console.error('[hosea] Stream error:', error);
       mainWindow?.webContents.send('agent:stream-end');
       return { success: false, error: String(error) };
     }
@@ -243,7 +245,7 @@ async function setupIPC(): Promise<void> {
       mainWindow?.webContents.send('agent:stream-end', instanceId);
       return { success: true };
     } catch (error) {
-      console.error('[EW Desktop] Stream instance error:', error);
+      console.error('[hosea] Stream instance error:', error);
       // Still save session on error (preserves partial conversation)
       await agentService!.saveInstanceSession(instanceId).catch(() => {});
       // Send error chunk BEFORE stream-end so UI knows what happened
@@ -543,8 +545,8 @@ async function setupIPC(): Promise<void> {
     return agentService!.builtInOAuthDisconnect(vendorId);
   }));
 
-  ipcMain.handle('built-in-oauth:get-default-ew-url', async () => {
-    return agentService!.getDefaultEWUrl();
+  ipcMain.handle('built-in-oauth:get-default-backend-url', async () => {
+    return agentService!.getDefaultBackendUrl();
   });
 
   // OAuth flow operations
@@ -598,68 +600,68 @@ async function setupIPC(): Promise<void> {
     return agentService!.refreshMCPServerTools(name);
   }));
 
-  // Everworker Backend operations (require heavy init)
-  ipcMain.handle('everworker:get-config', readyHandler(async () => {
-    return agentService!.getEWConfig();
+  // Optional backend operations (require heavy init)
+  ipcMain.handle('backend:get-config', backendHandler(async () => {
+    return agentService!.getBackendConfig();
   }));
 
-  ipcMain.handle('everworker:set-config', readyHandler(async (_event, config: unknown) => {
-    return agentService!.setEWConfig(config as any);
+  ipcMain.handle('backend:set-config', backendHandler(async (_event, config: unknown) => {
+    return agentService!.setBackendConfig(config as any);
   }));
 
-  ipcMain.handle('everworker:test-connection', readyHandler(async () => {
-    return agentService!.testEWConnection();
+  ipcMain.handle('backend:test-connection', backendHandler(async () => {
+    return agentService!.testBackendConnection();
   }));
 
-  ipcMain.handle('everworker:sync-connectors', readyHandler(async () => {
-    return agentService!.syncEWConnectors();
+  ipcMain.handle('backend:sync-connectors', backendHandler(async () => {
+    return agentService!.syncBackendConnectors();
   }));
 
-  // Everworker Multi-Profile operations (require heavy init)
-  ipcMain.handle('everworker:get-profiles', readyHandler(async () => {
-    return agentService!.getEWProfiles();
+  // Backend Multi-Profile operations (require heavy init)
+  ipcMain.handle('backend:get-profiles', backendHandler(async () => {
+    return agentService!.getBackendProfiles();
   }));
 
-  ipcMain.handle('everworker:add-profile', readyHandler(async (_event, data: { name: string; url: string; token: string }) => {
-    return agentService!.addEWProfile(data);
+  ipcMain.handle('backend:add-profile', backendHandler(async (_event, data: { name: string; url: string; token: string }) => {
+    return agentService!.addBackendProfile(data);
   }));
 
-  ipcMain.handle('everworker:update-profile', readyHandler(async (_event, id: string, updates: { name?: string; url?: string; token?: string }) => {
-    return agentService!.updateEWProfile(id, updates);
+  ipcMain.handle('backend:update-profile', backendHandler(async (_event, id: string, updates: { name?: string; url?: string; token?: string }) => {
+    return agentService!.updateBackendProfile(id, updates);
   }));
 
-  ipcMain.handle('everworker:delete-profile', readyHandler(async (_event, id: string) => {
-    return agentService!.deleteEWProfile(id);
+  ipcMain.handle('backend:delete-profile', backendHandler(async (_event, id: string) => {
+    return agentService!.deleteBackendProfile(id);
   }));
 
-  ipcMain.handle('everworker:switch-profile', readyHandler(async (_event, id: string | null) => {
-    return agentService!.switchEWProfile(id);
+  ipcMain.handle('backend:switch-profile', backendHandler(async (_event, id: string | null) => {
+    return agentService!.switchBackendProfile(id);
   }));
 
-  ipcMain.handle('everworker:test-profile', readyHandler(async (_event, id: string) => {
-    return agentService!.testEWProfileConnection(id);
+  ipcMain.handle('backend:test-profile', backendHandler(async (_event, id: string) => {
+    return agentService!.testBackendProfileConnection(id);
   }));
 
-  ipcMain.handle('everworker:sync-active', readyHandler(async () => {
-    return agentService!.syncActiveEWProfile();
+  ipcMain.handle('backend:sync-active', backendHandler(async () => {
+    return agentService!.syncActiveBackendProfile();
   }));
 
-  // EW Browser Auth
-  ipcMain.handle('everworker:check-auth-support', async (_event, url: string) => {
-    return ewAuthService.checkAuthSupport(url);
-  });
+  // backend Browser Auth
+  ipcMain.handle('backend:check-auth-support', backendHandler(async (_event, url: string) => {
+    return backendAuthService.checkAuthSupport(url);
+  }));
 
-  ipcMain.handle('everworker:start-auth', async (_event, url: string) => {
-    return ewAuthService.authenticate({ ewUrl: url, parentWindow: mainWindow });
-  });
+  ipcMain.handle('backend:start-auth', backendHandler(async (_event, url: string) => {
+    return backendAuthService.authenticate({ backendUrl: url, parentWindow: mainWindow });
+  }));
 
-  ipcMain.handle('everworker:cancel-auth', async () => {
-    ewAuthService.cancel();
-  });
+  ipcMain.handle('backend:cancel-auth', backendHandler(async () => {
+    backendAuthService.cancel();
+  }));
 
-  ipcMain.handle('everworker:token-status', async (_event, profileId?: string) => {
+  ipcMain.handle('backend:token-status', backendHandler(async (_event, profileId?: string) => {
     return agentService!.getTokenStatus(profileId);
-  });
+  }));
 
   // Config operations
   ipcMain.handle('config:get', async () => {
@@ -677,6 +679,7 @@ async function setupIPC(): Promise<void> {
 
   // Dev mode check
   ipcMain.handle('app:get-is-dev', () => isDev);
+  ipcMain.handle('app:get-design-preview', () => isDesignPreview());
 
   // What's New
   ipcMain.handle('whatsnew:get-last-seen', () => {
@@ -699,22 +702,6 @@ async function setupIPC(): Promise<void> {
     acceptedAt: null,
   }));
   ipcMain.handle('license:accept', () => ({ success: true }));
-
-  // Telemetry operations
-  ipcMain.handle('telemetry:get-status', () => {
-    const settings = readSettings();
-    return {
-      enabled: settings.telemetryEnabled !== false,
-      installationId: (settings.installationId as string) || null,
-    };
-  });
-
-  ipcMain.handle('telemetry:set-enabled', (_event, enabled: boolean) => {
-    const settings = readSettings();
-    settings.telemetryEnabled = enabled;
-    writeSettings(settings);
-    return { success: true };
-  });
 
   // Log level operations
   ipcMain.handle('log:get-level', async () => {
@@ -1292,10 +1279,17 @@ protocol.registerSchemesAsPrivileged([{
   privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true },
 }]);
 
+// Keep the native identity and Chromium profile independent of other applications.
+app.setName('hosea');
+app.setPath('userData', join(getDataDir(), 'desktop'));
+
 // App lifecycle
 app.whenReady().then(async () => {
+  if (process.platform === 'darwin') app.dock?.setIcon(join(__dirname, '../../assets/icon.png'));
+  app.setAboutPanelOptions({ applicationName: 'hosea', applicationVersion: app.getVersion(),
+    copyright: '© 2025–2026 Anton Antic · MIT', website: 'https://github.com/aantich/oneringai' });
   // Handle local-media:// protocol - serves files from the media output directory
-  const allowedMediaDir = join(tmpdir(), 'oneringai-media');
+  const allowedMediaDir = join(getDataDir(), 'media');
   protocol.handle('local-media', async (request) => {
     const url = new URL(request.url);
     // Standard URL parsing may capture the first path segment as hostname
@@ -1326,7 +1320,7 @@ app.whenReady().then(async () => {
   }
 
   // Set main window on auto-updater and check for updates (5 second delay)
-  if (autoUpdaterService && mainWindow) {
+  if (autoUpdaterService && mainWindow && !isDesignPreview()) {
     autoUpdaterService.setMainWindow(mainWindow);
     autoUpdaterService.checkOnStartup(5000);
   }
@@ -1335,19 +1329,13 @@ app.whenReady().then(async () => {
   createAppMenu();
 
   // Phase 2: Heavy initialization in background (connectors, tools, agents)
-  // Window is already visible showing "Starting Everworker Desktop..." spinner
+  // Window is already visible showing "Starting hosea..." spinner
   agentService!.initializeHeavy().then(() => {
     // Notify renderer that service is fully ready
     mainWindow?.webContents.send('service:ready');
-    console.log('[EW Desktop] Service fully initialized, notified renderer');
+    console.log('[hosea] Service fully initialized, notified renderer');
 
-    // Send telemetry ping (fire-and-forget, after heavy init so it doesn't delay startup)
-    try {
-      const settings = readSettings();
-      sendTelemetryPing(settings, writeSettings);
-    } catch {
-      // Telemetry should never break the app
-    }
+
   });
 
   app.on('activate', async () => {
@@ -1384,8 +1372,8 @@ app.on('before-quit', async () => {
 // These prevent the app from crashing due to unhandled errors in IPC handlers or tools
 
 process.on('uncaughtException', (error, origin) => {
-  console.error('[EW Desktop] Uncaught exception:', error);
-  console.error('[EW Desktop] Origin:', origin);
+  console.error('[hosea] Uncaught exception:', error);
+  console.error('[hosea] Origin:', origin);
   // Don't crash - log and continue unless it's truly fatal
   // Send error to renderer if possible
   try {
@@ -1400,7 +1388,7 @@ process.on('uncaughtException', (error, origin) => {
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('[EW Desktop] Unhandled rejection:', reason);
+  console.error('[hosea] Unhandled rejection:', reason);
   // Don't crash - log and continue
   // Send error to renderer if possible
   try {

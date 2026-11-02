@@ -11,7 +11,7 @@ import { useConnectorVersion } from '../App';
 interface ConnectorConfig {
   name: string;
   vendor: string;
-  source?: 'local' | 'everworker' | 'built-in';
+  source?: 'local' | 'backend' | 'built-in';
   models?: string[];
   createdAt: number;
 }
@@ -175,12 +175,12 @@ export function LLMConnectorsPage(): React.ReactElement {
   return (
     <div className="page">
       <PageHeader
-        title="LLM Providers"
+        title="Model providers"
         subtitle="Manage your AI model provider connections"
       >
         <Button variant="primary" onClick={() => setShowAddModal(true)}>
           <Plus size={16} className="me-2" />
-          Add Provider
+          Add provider
         </Button>
       </PageHeader>
 
@@ -197,7 +197,7 @@ export function LLMConnectorsPage(): React.ReactElement {
             </p>
             <Button variant="primary" onClick={() => setShowAddModal(true)}>
               <Plus size={16} className="me-2" />
-              Add Provider
+              Add provider
             </Button>
           </div>
         ) : (
@@ -208,7 +208,7 @@ export function LLMConnectorsPage(): React.ReactElement {
                   color: '#64748b',
                   label: connector.vendor,
                 };
-                const isEW = connector.source === 'everworker';
+                const isRemote = connector.source === 'backend';
                 const isManagedOllama = connector.name === 'ollama-local' && connector.vendor === 'ollama';
                 return (
                   <div key={connector.name} className="card connector-card">
@@ -231,10 +231,10 @@ export function LLMConnectorsPage(): React.ReactElement {
                             <Cpu size={10} />
                             Managed
                           </Badge>
-                        ) : isEW ? (
+                        ) : isRemote ? (
                           <Badge bg="info" className="d-flex align-items-center gap-1">
                             <Cloud size={10} />
-                            EW
+                            backend
                           </Badge>
                         ) : (
                           <Badge bg="secondary" className="d-flex align-items-center gap-1">
@@ -259,8 +259,8 @@ export function LLMConnectorsPage(): React.ReactElement {
                     </div>
                     <div className="card__footer">
                       {isManagedOllama ? (
-                        <small className="text-muted">{'Managed by Everworker Desktop \u2014 Settings > Local AI'}</small>
-                      ) : !isEW ? (
+                        <small className="text-muted">{'Managed by hosea \u2014 Settings > Local AI'}</small>
+                      ) : !isRemote ? (
                         <Button
                           variant="outline-secondary"
                           size="sm"
@@ -270,14 +270,14 @@ export function LLMConnectorsPage(): React.ReactElement {
                           Update Key
                         </Button>
                       ) : (
-                        <small className="text-muted">Managed by Everworker</small>
+                        <small className="text-muted">Managed by Backend</small>
                       )}
                       {!isManagedOllama && (
                         <Button
                           variant="outline-danger"
                           size="sm"
                           onClick={() => handleDeleteConnector(connector.name)}
-                          title={isEW ? 'Remove local copy (will return on next sync)' : 'Delete connector'}
+                          title={isRemote ? 'Remove local copy (will return on next sync)' : 'Delete connector'}
                         >
                           <Trash2 size={14} />
                         </Button>
@@ -304,7 +304,7 @@ export function LLMConnectorsPage(): React.ReactElement {
       {/* Add Modal */}
       <Modal show={showAddModal} onHide={resetAddModal} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Add LLM Provider</Modal.Title>
+          <Modal.Title>Add model provider</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form.Group className="mb-3">
@@ -415,7 +415,7 @@ export function LLMConnectorsPage(): React.ReactElement {
             onClick={handleAddConnector}
             disabled={!newConnector.name || (!isAddNoAuth && !newConnector.apiKey)}
           >
-            Add Provider
+            Add provider
           </Button>
         </Modal.Footer>
       </Modal>

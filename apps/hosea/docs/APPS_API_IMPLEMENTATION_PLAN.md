@@ -1171,7 +1171,7 @@ export async function handleStreamingProxy(
 
 ---
 
-## Everworker Desktop Integration (Reuses Library Patterns)
+## hosea Integration (Reuses Library Patterns)
 
 ### Key Files to Modify/Create
 
@@ -1388,7 +1388,7 @@ ipcMain.handle('proxy:list-services', safeHandler(async () => {
 28. Integration tests (including admin flows)
 29. Load testing
 
-### Phase 7: Everworker Desktop Integration
+### Phase 7: hosea Integration
 30. AuthService in the app
 31. Generic proxy connector support
 32. Credential management UI
@@ -1493,7 +1493,7 @@ curl https://api.oneringai.com/admin/audit-log?action=balance.grant \
 | `Vendor` enum | `src/core/Vendor.ts` | Vendor identification |
 | `ServiceCategory` | `src/domain/entities/Services.ts` | Category enum |
 
-### Reused from Everworker Desktop App
+### Reused from hosea App
 
 | Pattern | Location | Used For |
 |---------|----------|----------|

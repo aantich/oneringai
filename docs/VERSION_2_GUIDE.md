@@ -1,5 +1,13 @@
 # OneRingAI Version 2 Guide
 
+**Documentation/release review — 2026-11-02:** The README is rewritten for v2,
+and the complete User Guide is reviewed and reorganized. Use those documents for
+current integration and [Release readiness](RELEASE_READINESS_V2.md) for validation
+and the corrected routine prompts, consumer dependency assessment, and final validation. Historical counts and availability statements
+below retain their delivery dates. Hosea's subsequent revival now passes its full
+desktop typecheck; the older 24-diagnostic statement below is historical. npm
+publication, stable-version selection, merge and tags remain separate actions.
+
 **Package identity — 2026-11-01:** The user explicitly selected the unscoped npm
 name `oneringai` for v2 and retained this repository. The branch prepares
 `2.0.0-beta.1`; v1 remains published as `@everworker/oneringai`. This authorized
@@ -10,10 +18,10 @@ change runtime defaults, public subpaths or saved session formats. See
 AMOS and Hosea source are now MIT licensed under Anton Antic with contact
 `anton.antich@gmail.com`. The owner explicitly authorized incorporating the
 previously separate React UI source into Hosea under MIT. Its external package
-dependency and commercial-license startup gate are removed. Both application
-builds and the local UI typecheck pass; the complete dormant desktop typecheck
-has 24 existing integration diagnostics. The package migration guide records
-the clean-consumer, compatibility, examples and offline test results. This
+dependency and commercial-license startup gate are removed. Both applications build. Subsequent Hosea revival work also passes its complete
+desktop typecheck and provides the local design preview; installer/platform
+release gates remain separate. The package migration and release-readiness guides
+record clean-consumer, compatibility, examples and offline test results. This
 does not announce an npm or desktop release.
 
 This is the living, user-facing guide to OneRingAI's Version 2 initiative. It
@@ -25,7 +33,7 @@ scope, dependencies, research, and acceptance criteria.
 - **Status:** Core stages, Stage 16A, Stage 14A and consumer slices C1–C9-C and agent-harness H0–H6 are implemented on branch. The user separately authorized [bounded Codex/OpenAI validation on 2026-11-01](evaluations/LIVE_VALIDATION_2026_11_01.md); other new native/provider live gates remain pending. The [latest consumer review corrections](#consumer-review-corrections--2026-10-28) track the preceding corrective validation; earlier totals and live-pause statements below are historical. Publication remains separate; this bounded run is not standing authorization for additional live suites.
 - **Stage 03 review:** All findings fixed and validated: 7,473 units / 245 Stage 03 cases, 66 live cases / 78 scenarios and 15 offline examples pass. See the [third corrective completion](./designs/STAGE_03_THIRD_REVIEW.md#corrective-completion--2026-10-14).
 - **Stage 06 review:** All findings corrected and validated: 7,228 units and 48 live cases/60 scenarios pass. See the [latest completion](./designs/STAGE_06_SECOND_REVIEW.md#correction-completion--2026-10-13).
-- **Created / last updated:** 2026-10-07 / 2026-11-01.
+- **Created / last updated:** 2026-10-07 / 2026-11-02.
 - **Current selected scope:** Agent-harness revision 3 H0–H6 is sequentially authorized; see [the delivery ledger](designs/AGENT_HARNESS_DELIVERY_LEDGER.md). The preceding full consumer-hardening sequence C2–C8 and C9-A/B/C is authorized, in order with review/fixes after each slice. C1 is complete. The [delivery ledger](./designs/CONSUMER_DELIVERY_LEDGER.md) records current availability; each slice must pass its own gates. Existing APIs/defaults stay unchanged; no consumer upgrade or release is included.
 - **Repository package version at creation:** `1.2.0`.
 - **Implemented stages:** 00 — evaluation and compatibility baselines;
@@ -42,9 +50,10 @@ scope, dependencies, research, and acceptance criteria.
   16A — opt-in provider-native compaction composed with context plugins, including all review corrections.
 - **Version 2 release:** Not announced by this document.
 
-“Version 2” names the development initiative. It does not mean that an npm `2.0.0`
-release exists, that the features below are available, or that existing APIs will
-break. Package versioning and any breaking change require separate decisions.
+“Version 2” includes the prepared unscoped package and the recorded development
+initiative. Implemented capabilities below are available in this source, not yet
+in a verified npm v2 release. Package publication and any additional breaking
+change require separate decisions.
 
 ## Reading this guide
 
@@ -3221,3 +3230,53 @@ tool execution. The canonical User Guide, AMOS cookbook, examples index, AGENTS,
 release notes and generated API document the changes. The [delivery ledger](designs/AGENT_HARNESS_DELIVERY_LEDGER.md)
 owns final checks; the fixed probes record all-five-harness denial. No package release,
 consumer upgrade or live-provider verification is implied.
+
+## Documentation handoff — 2026-11-02
+
+The entire README and User Guide were reviewed. Current v2 adoption now appears
+in their main navigation and relevant chapters; v1 upgrade notes moved to
+[MIGRATION_V1_HISTORY.md](MIGRATION_V1_HISTORY.md) with compatible guide anchors.
+All internal navigation is relative. Only the README's npm version switch links
+pin the required `version1` and eventual `main` pages. The AMOS cookbook stays
+prominent at the start. Generated source links now resolve relative to each
+output file; `npm run docs:check` checks paths, anchors and complete examples.
+[Release readiness](RELEASE_READINESS_V2.md) and the
+[coverage record](evaluations/V2_DOCUMENTATION_SECTION_COVERAGE.json) own this
+review's evidence and remaining gates. This does not mark any release as published.
+
+## Release hardening handoff — 2026-11-02
+
+The release-readiness corrections preserve the public API and defaults. Routines
+now advertise unified stores, deliver nested instructions to reused agents, and
+resolve/clean/restore routine findings-tier spills. Reflection remains opt-in;
+fold task-output precedence and prompt overrides remain. Adopt through the
+[current routine guide](../USER_GUIDE.md#routine-execution) and
+[offline map/fold example](../examples/routine-store-bridge.ts); AMOS documents
+its shared-library behavior without adding another execution/tool pipeline.
+
+The published dependency ranges now include the patched parser/glob/unpdf paths,
+with production WebSocket declarations for strict consumers. PDF extraction uses
+selected-page raw pixels encoded as real PNG and releases its private loading task
+on all exits; caller buffers stay reusable. Metadata/image-page failures retain
+available text and other pages with warnings. Existing document result shapes
+remain. The default and optional-SDK production graphs have no high/critical audit
+entries; the two source-reviewed non-applicable advisories and their propagated
+moderate entries remain explicit in [dependency security](DEPENDENCY_SECURITY.md).
+
+`npm run release:check` owns the repeatable build/type/lint/unit/compatibility,
+27 offline examples, generated docs, links/snippets and real installed-consumer
+gates. Core types work without SDK peers; adapter types are also checked with
+selected peers. The [release record](RELEASE_READINESS_V2.md) owns the final results.
+README, User Guide, examples index, AMOS cookbook, migration guide, agent guide,
+generated API, contributing guidance and release notes carry the handoff. No new
+stage, stable-version selection, live-provider claim, merge or publication is
+included. Keep existing native/provider and experimental surfaces opt-in.
+
+Final hardening validation is recorded in
+[V2_RELEASE_VALIDATION_2026_11_02.json](evaluations/V2_RELEASE_VALIDATION_2026_11_02.json):
+the full release gate passes, with 9,374 units / 427 files, 27 offline examples,
+strict default/optional-SDK consumer contracts, both production audits, nine document
+formats in ESM/CJS, Node 22.13/24.20 probes, AMOS types/build and Hosea types/build/
+six design-storage checks. This closes the earlier November 2 readiness findings
+within the documented preview and source-reviewed dependency boundaries. The
+prepared version remains `2.0.0-beta.1`; no npm publication or merge is implied.

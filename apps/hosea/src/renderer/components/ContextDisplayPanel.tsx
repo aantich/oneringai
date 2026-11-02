@@ -1,7 +1,7 @@
 /**
- * ContextDisplayPanel — Everworker Desktop wrapper around Hosea local UI shared component.
+ * ContextDisplayPanel — hosea wrapper around Hosea local UI shared component.
  *
- * Everworker Desktop-specific features:
+ * hosea-specific features:
  * - Pin/unpin entries (persisted via IPC)
  * - Custom filter: shows showInUI=true OR pinned entries
  * - Drag-and-drop reorder with own localStorage namespace

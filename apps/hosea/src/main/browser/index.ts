@@ -1,7 +1,7 @@
 /**
  * Browser Automation Module
  *
- * Exports all browser automation types and tools for Everworker Desktop.
+ * Exports all browser automation types and tools for hosea.
  */
 
 export * from './types.js';

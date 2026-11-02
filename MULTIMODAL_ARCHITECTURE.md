@@ -1,5 +1,8 @@
 # Multi-Modal Architecture Design
 
+This is a historical design proposal. For current public classes, model lifecycle,
+and supported operations use the [User Guide](USER_GUIDE.md).
+
 ## Executive Summary
 
 This document proposes a comprehensive architecture for extending `oneringai` to support multiple modalities beyond text generation: **Image Generation**, **Video Generation**, **Text-to-Speech (TTS)**, and **Speech-to-Text (STT)**.
@@ -16,7 +19,7 @@ The design follows Clean Architecture principles, maintains backward compatibili
 4. [Domain Interfaces](#domain-interfaces)
 5. [Model Registries](#model-registries)
 6. [Capability Classes](#capability-classes)
-7. [Provider Implementations](#provider-implementations)
+7. [Vendor Capabilities Matrix](#vendor-capabilities-matrix)
 8. [Validation Layer](#validation-layer)
 9. [File Structure](#file-structure)
 10. [Implementation Phases](#implementation-phases)

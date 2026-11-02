@@ -34,7 +34,7 @@ export function WhatsNewModal({ show, onClose }: WhatsNewModalProps): React.Reac
     >
       <Modal.Header closeButton>
         <div className="d-flex align-items-center gap-3 w-100">
-          <Modal.Title>What's New in Everworker Desktop</Modal.Title>
+          <Modal.Title>What's New in hosea</Modal.Title>
           <Form.Select
             size="sm"
             style={{ width: 'auto' }}

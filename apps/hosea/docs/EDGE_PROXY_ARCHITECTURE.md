@@ -1,4 +1,10 @@
-# Edge Proxy Architecture for Everworker Desktop
+> **Deferred architecture:** the backend auth, profile, discovery, and proxy code is
+> preserved under neutral backend names, disabled by default, and intended for
+> future Youetal work. This document is a historical design proposal, not a claim
+> that the current UI exposes or validates hosted functionality. See
+> [the current integration status](BACKEND_INTEGRATION.md).
+
+# Edge Proxy Architecture for hosea
 
 ## TL;DR
 
@@ -22,9 +28,9 @@ Deploy a Cloudflare Workers edge proxy that:
 
 ## Current State
 
-Everworker Desktop is an Electron desktop app where:
+hosea is an Electron desktop app where:
 - Users enter their own API keys locally
-- Keys stored in `~/.everworker/hosea/connectors/*.json`
+- Keys stored in `~/.hosea/connectors/*.json`
 - Direct API calls: `App → Provider → Vendor API`
 
 ## Goal
@@ -311,7 +317,7 @@ CREATE INDEX idx_usage_user_id ON usage(user_id);
 CREATE INDEX idx_usage_created_at ON usage(created_at);
 ```
 
-### 3. Everworker Desktop Client Changes
+### 3. hosea Client Changes
 
 **New Connector Type: `proxy`**
 
@@ -435,7 +441,7 @@ apps/hosea/
 │       └── index.ts            # Add auth API
 ```
 
-**AuthService.ts (Everworker Desktop Client):**
+**AuthService.ts (hosea Client):**
 ```typescript
 import { safeStorage } from 'electron';
 
@@ -517,7 +523,7 @@ export class AuthService {
 
     // Store encrypted in Electron's safeStorage
     const encrypted = safeStorage.encryptString(JSON.stringify({ token, refreshToken }));
-    // Save to file: ~/.everworker/hosea/auth.enc
+    // Save to file: ~/.hosea/auth.enc
   }
 
   private isTokenExpired(token: string): boolean {
@@ -532,7 +538,7 @@ export class AuthService {
   private async clearTokens() {
     this.token = null;
     this.refreshToken = null;
-    // Delete ~/.everworker/hosea/auth.enc
+    // Delete ~/.hosea/auth.enc
   }
 }
 ```
@@ -608,7 +614,7 @@ export class ProxyTextProvider extends BaseTextProvider {
 
 ### New User
 
-1. **Download & Install Everworker Desktop**
+1. **Download & Install hosea**
 2. **Launch → See "Sign In" screen**
 3. **Click "Sign in with Google"** → Browser opens
 4. **Complete OAuth** → Redirected back to the app
@@ -617,7 +623,7 @@ export class ProxyTextProvider extends BaseTextProvider {
 
 ### Existing User (Migration)
 
-1. **Update Everworker Desktop** to new version
+1. **Update hosea** to new version
 2. **See prompt:** "We now manage API keys for you! Sign in to continue."
 3. **Sign in** → JWT stored
 4. **Old connectors preserved** (can still use own keys if desired)
@@ -1125,13 +1131,13 @@ app.get('/billing/usage', async (c) => {
 - `packages/edge-proxy/` - Cloudflare Worker for LLM API proxying
 - `packages/auth-server/` - Cloudflare Worker for auth + billing
 
-### New Files (Everworker Desktop Client)
+### New Files (hosea Client)
 - `apps/hosea/src/main/AuthService.ts` - Custom JWT auth client
 - `apps/hosea/src/renderer/pages/LoginPage.tsx` - Login/signup UI
 - `apps/hosea/src/renderer/pages/BillingPage.tsx` - Usage + upgrade UI
 - `apps/hosea/src/renderer/contexts/AuthContext.tsx` - Auth state management
 
-### Modified Files (Everworker Desktop Client)
+### Modified Files (hosea Client)
 - `apps/hosea/src/main/AgentService.ts` - Support proxy connectors
 - `apps/hosea/src/main/ipc-handlers.ts` - Add auth + billing handlers
 - `apps/hosea/src/preload/index.ts` - Expose auth API to renderer
@@ -1161,7 +1167,7 @@ app.get('/billing/usage', async (c) => {
    - Stripe checkout flow (test mode)
    - Webhook handling (subscription events)
 
-3. **Everworker Desktop Client Tests**
+3. **hosea Client Tests**
    - Fresh install → sign up → chat works
    - Token storage in safeStorage (encrypted)
    - Auto token refresh when expired

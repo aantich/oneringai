@@ -55,7 +55,7 @@ export interface PDFTemplate {
     customCSS?: string; // Custom CSS to inject
 
     // Theme Name (for predefined themes)
-    theme?: 'default' | 'professional' | 'modern' | 'minimal' | 'everworker';
+    theme?: 'default' | 'professional' | 'modern' | 'minimal' | 'hosea';
 }
 
 export interface ExportOptions {

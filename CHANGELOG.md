@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Correct PDF image extraction to use unpdf's per-page raw-pixel API, encode valid
+  PNG bytes for RGB/grayscale/alpha, respect selected pages, and release one shared
+  PDF proxy on success/failure. Add real image-bearing PDF and lifecycle regressions.
+- Ship WebSocket declarations required by provider public types as a production
+  dependency. Compile the installed tarball's ESM/CJS entries and compatibility
+  fixtures with strict library checking and consumer-only type resolution.
+
+- Correct all default/generated routine prompts to use unified stores. Deliver
+  nested map/fold/until instructions to reused agents without changing their
+  system prompt or tool manager. Resolve findings-tier spill keys with exact-key
+  precedence and clean/restore routine-owned tiered data. Add request/tool execution
+  regressions and an offline store/map/fold example; retain reflection opt-in,
+  custom prompt signatures and fold task-output precedence.
+- Upgrade the published graph to officeparser 8.0.0 and glob 14.0.3+. Add a real
+  tarball/default-install/ESM+CJS/document/audit gate and source-reviewed disposition
+  for two non-applicable ExcelJS advisories. Keep the moderate audit entries
+  visible; unknown findings fail. Document the parser pin and Node compatibility.
+- Make lost-continuation recovery tests end synthetic idle streams explicitly,
+  exercising reconnect exhaustion without imposing a 500 ms deadline on a healthy
+  first turn. Native ambiguity and no-resubmission assertions remain intact.
+
+- Rewrite the README around v2 adoption, inherited connectors/memory, harness
+  boundaries and prominent AMOS documentation. Review and reorganize the full
+  User Guide, archive v1 migration history with compatible anchors, correct
+  stale examples/behavior claims and generated relative source links, and add
+  repeatable documentation checks plus an explicit release-readiness report.
+  Publication and currently unverified native/provider gates remain separate.
+
 - Fix six runtime review findings: preserve resolver permissions alongside native
   Agent policies; redact split Claude SDK output and structured values; reject
   expanded managed OpenAI access/configuration; recover ambiguous control-write

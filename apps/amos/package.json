@@ -34,7 +34,7 @@
     "typescript": "^5.3.3"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": "^22.13.0 || >=24.0.0"
   },
   "author": {
     "name": "Anton Antic",

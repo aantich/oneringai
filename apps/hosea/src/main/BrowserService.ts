@@ -349,7 +349,7 @@ export class BrowserService extends EventEmitter {
         }
 
         // Skip our own stealth injection logs
-        if (message.startsWith('[Stealth]') || message.startsWith('[EW Desktop]') || message.startsWith('[CookieConsent]')) {
+        if (message.startsWith('[Stealth]') || message.startsWith('[hosea]') || message.startsWith('[CookieConsent]')) {
           return;
         }
 
@@ -659,7 +659,7 @@ export class BrowserService extends EventEmitter {
           }
         }, 1000);
 
-        console.log('[EW Desktop] Overlay watcher installed');
+        console.log('[hosea] Overlay watcher installed');
       })()
     `;
 

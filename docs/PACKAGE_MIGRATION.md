@@ -6,16 +6,36 @@ The maintainer is Anton Antic, `anton.antich@gmail.com`.
 
 ## Current availability
 
-This branch prepares `oneringai@2.0.0-beta.1`; it has not been published. The
-registry check on 2026-11-01 returned E404 for `oneringai`, while the signed-in
+At the **2026-11-02** readiness review, this branch prepared
+`oneringai@2.0.0-beta.1`; publication had not been performed or verified. The
+registry check repeated on 2026-11-02 returned E404 for `oneringai`, while the signed-in
 npm account and existing v1 maintainer are `aantich`. E404 confirms no visible
 published package at the time of the check; it does not reserve the name or
 guarantee a future publication will be accepted.
+
+V1 maintenance stays on `version1`; the eventual v2 release comes from `main`.
+This documentation review creates no new branch and performs no merge.
 
 Published v1 remains `@everworker/oneringai@1.2.1`. It is not renamed, removed,
 silently redirected or deprecated before a verified replacement is installable.
 Historical changelogs, evaluation evidence and v1 upgrade recipes keep the old
 identity. Current source, examples and public API documentation use `oneringai`.
+
+## Try v2 before publication
+
+From this checkout, build and create a local tarball without publishing:
+
+```bash
+npm install
+npm run build
+npm pack --ignore-scripts --pack-destination /tmp
+```
+
+Install the resulting tarball path in a separate consumer (`npm install /tmp/oneringai-2.0.0-beta.1.tgz`).
+For a source example, install development dependencies in the checkout and run the
+[documented examples](../examples/README.md). A local tarball is not a registry
+release, and `--ignore-scripts` here is not a publish-gate bypass: build/check the
+source first and do not use it to skip `prepublishOnly` when actually publishing.
 
 ## Consumer migration
 
@@ -96,7 +116,7 @@ do not write acceptance of the previous commercial agreement.
 7. Once stable v2 is installable, the authorized maintainer can apply this notice:
 
    ```bash
-   npm deprecate '@everworker/oneringai@<2' 'OneRingAI v2 is now published as oneringai. Install with npm i oneringai. Migration: https://github.com/aantich/oneringai/blob/version2/docs/PACKAGE_MIGRATION.md'
+   npm deprecate '@everworker/oneringai@<2' 'OneRingAI v2 is now published as oneringai. Install with npm i oneringai. Migration guide: see the package README on npm.'
    ```
 
    Deprecation displays a notice during installation; it does not upgrade users,
@@ -104,8 +124,15 @@ do not write acceptance of the previous commercial agreement.
    the replacement is unpublished or unavailable. Keep support commitments
    explicit rather than inventing a v1 end-of-support date.
 
-Live LLM/native provider testing remains paused. Updating license and package
+The bounded November 1 Codex/OpenAI validation did not authorize additional live
+suites. Other new native/provider live gates remain pending. Updating license and package
 metadata does not establish desktop runtime/platform compatibility or a release.
+
+## Current release review
+
+See [Release readiness](RELEASE_READINESS_V2.md) for the November 2 documentation
+review, corrected routine/data paths, consumer dependency assessment and current validation. The record below is
+historical, including the desktop diagnostics fixed during later Hosea work.
 
 ## Verification on this branch — 2026-11-01
 

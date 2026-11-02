@@ -44,9 +44,9 @@ export interface OllamaState {
 }
 
 /**
- * Everworker Backend Profile
+ * Optional backend Profile
  */
-export interface EverworkerProfile {
+export interface BackendProfile {
   id: string;
   name: string;
   url: string;
@@ -59,18 +59,18 @@ export interface EverworkerProfile {
   tokenExpiresAt?: number;
   /** Unix ms — when the JWT token was issued */
   tokenIssuedAt?: number;
-  /** Display name of the authenticated EW user */
+  /** Display name of the authenticated backend user */
   userName?: string;
-  /** EW user ID */
+  /** backend user ID */
   userId?: string;
   /** How the token was obtained */
   authMethod?: 'manual' | 'browser-auth';
 }
 
-export interface EverworkerProfilesConfig {
+export interface BackendProfilesConfig {
   version: 2;
   activeProfileId: string | null;
-  profiles: EverworkerProfile[];
+  profiles: BackendProfile[];
 }
 
 /**
@@ -458,7 +458,7 @@ export interface HoseaAPI {
     list: () => Promise<Array<{
       name: string;
       vendor: string;
-      source?: 'local' | 'everworker' | 'built-in';
+      source?: 'local' | 'backend' | 'built-in';
       models?: string[];
       createdAt: number;
     }>>;
@@ -480,11 +480,11 @@ export interface HoseaAPI {
     authorize: (vendorId: string) => Promise<{ success: boolean; error?: string }>;
     getStatus: (vendorId: string) => Promise<{ connected: boolean; connectorName?: string }>;
     disconnect: (vendorId: string) => Promise<{ success: boolean; error?: string }>;
-    getDefaultEWUrl: () => Promise<string>;
+    getDefaultBackendUrl: () => Promise<string>;
   };
 
-  // Everworker Backend
-  everworker: {
+  // Optional backend
+  backend: {
     getConfig: () => Promise<{
       url: string;
       token: string;
@@ -499,7 +499,7 @@ export interface HoseaAPI {
     syncConnectors: () => Promise<{ success: boolean; added: number; updated: number; removed: number; error?: string }>;
 
     // Multi-profile API
-    getProfiles: () => Promise<EverworkerProfilesConfig>;
+    getProfiles: () => Promise<BackendProfilesConfig>;
     addProfile: (data: {
       name: string;
       url: string;
@@ -549,16 +549,11 @@ export interface HoseaAPI {
     removeTokenExpiryListener: () => void;
   };
 
-  // Telemetry
-  telemetry: {
-    getStatus: () => Promise<{ enabled: boolean; installationId: string | null }>;
-    setEnabled: (enabled: boolean) => Promise<{ success: boolean }>;
-  };
-
   // App info
   app: {
     getVersion: () => Promise<string>;
     getIsDev: () => Promise<boolean>;
+    getDesignPreview: () => Promise<boolean>;
   };
 
   // What's New
@@ -699,6 +694,7 @@ export interface HoseaAPI {
       maxMemoryIndexEntries: number;
       memorySoftLimitPercent: number;
       contextAllocationPercent: number;
+      dynamicUIEnabled: boolean;
       inContextMemoryEnabled: boolean;
       maxInContextEntries: number;
       maxInContextTokens: number;
@@ -763,6 +759,7 @@ export interface HoseaAPI {
       maxMemoryIndexEntries: number;
       memorySoftLimitPercent: number;
       contextAllocationPercent: number;
+      dynamicUIEnabled: boolean;
       inContextMemoryEnabled: boolean;
       maxInContextEntries: number;
       maxInContextTokens: number;
@@ -954,7 +951,7 @@ export interface HoseaAPI {
       lastTestedAt?: number;
       status: 'active' | 'error' | 'untested';
       legacyServiceType?: string;
-      source?: 'local' | 'everworker' | 'built-in';
+      source?: 'local' | 'backend' | 'built-in';
     }>>;
     get: (name: string) => Promise<{
       name: string;
@@ -970,7 +967,7 @@ export interface HoseaAPI {
       lastTestedAt?: number;
       status: 'active' | 'error' | 'untested';
       legacyServiceType?: string;
-      source?: 'local' | 'everworker' | 'built-in';
+      source?: 'local' | 'backend' | 'built-in';
     } | null>;
     create: (config: {
       name: string;
@@ -1347,7 +1344,7 @@ export interface HoseaAPI {
     onCallEnd: (callback: (data: { agentConfigId: string; session: { sessionId: string; from: string; to: string }; summary: { duration: number; turns: number; endReason: string } }) => void) => void;
     onError: (callback: (data: { agentConfigId: string; error: string; sessionId?: string }) => void) => void;
     onLog: (callback: (data: { agentConfigId: string; timestamp: number; level: string; message: string }) => void) => void;
-    onTranscript: (callback: (data: { agentConfigId: string; sessionId: string; role: 'caller' | 'agent'; text: string; timestamp: number }) => void) => void;
+    onTranscript: (callback: (data: { agentConfigId: string; sessionId: string; from?: string; role: 'caller' | 'agent'; text: string; timestamp: number }) => void) => void;
     removeAllListeners: () => void;
   };
 
@@ -1563,57 +1560,52 @@ const api: HoseaAPI = {
     authorize: (vendorId) => ipcRenderer.invoke('built-in-oauth:authorize', vendorId),
     getStatus: (vendorId) => ipcRenderer.invoke('built-in-oauth:get-status', vendorId),
     disconnect: (vendorId) => ipcRenderer.invoke('built-in-oauth:disconnect', vendorId),
-    getDefaultEWUrl: () => ipcRenderer.invoke('built-in-oauth:get-default-ew-url'),
+    getDefaultBackendUrl: () => ipcRenderer.invoke('built-in-oauth:get-default-backend-url'),
   },
 
-  everworker: {
-    getConfig: () => ipcRenderer.invoke('everworker:get-config'),
-    setConfig: (config) => ipcRenderer.invoke('everworker:set-config', config),
-    testConnection: () => ipcRenderer.invoke('everworker:test-connection'),
-    syncConnectors: () => ipcRenderer.invoke('everworker:sync-connectors'),
+  backend: {
+    getConfig: () => ipcRenderer.invoke('backend:get-config'),
+    setConfig: (config) => ipcRenderer.invoke('backend:set-config', config),
+    testConnection: () => ipcRenderer.invoke('backend:test-connection'),
+    syncConnectors: () => ipcRenderer.invoke('backend:sync-connectors'),
 
     // Multi-profile API
-    getProfiles: () => ipcRenderer.invoke('everworker:get-profiles'),
-    addProfile: (data) => ipcRenderer.invoke('everworker:add-profile', data),
-    updateProfile: (id, updates) => ipcRenderer.invoke('everworker:update-profile', id, updates),
-    deleteProfile: (id) => ipcRenderer.invoke('everworker:delete-profile', id),
-    switchProfile: (id) => ipcRenderer.invoke('everworker:switch-profile', id),
-    testProfile: (id) => ipcRenderer.invoke('everworker:test-profile', id),
-    syncActive: () => ipcRenderer.invoke('everworker:sync-active'),
+    getProfiles: () => ipcRenderer.invoke('backend:get-profiles'),
+    addProfile: (data) => ipcRenderer.invoke('backend:add-profile', data),
+    updateProfile: (id, updates) => ipcRenderer.invoke('backend:update-profile', id, updates),
+    deleteProfile: (id) => ipcRenderer.invoke('backend:delete-profile', id),
+    switchProfile: (id) => ipcRenderer.invoke('backend:switch-profile', id),
+    testProfile: (id) => ipcRenderer.invoke('backend:test-profile', id),
+    syncActive: () => ipcRenderer.invoke('backend:sync-active'),
 
     // Browser-based auth flow
-    checkAuthSupport: (url) => ipcRenderer.invoke('everworker:check-auth-support', url),
-    startAuth: (url) => ipcRenderer.invoke('everworker:start-auth', url),
-    cancelAuth: () => ipcRenderer.invoke('everworker:cancel-auth'),
-    getTokenStatus: (profileId) => ipcRenderer.invoke('everworker:token-status', profileId),
+    checkAuthSupport: (url) => ipcRenderer.invoke('backend:check-auth-support', url),
+    startAuth: (url) => ipcRenderer.invoke('backend:start-auth', url),
+    cancelAuth: () => ipcRenderer.invoke('backend:cancel-auth'),
+    getTokenStatus: (profileId) => ipcRenderer.invoke('backend:token-status', profileId),
 
     // Push event from main process
     onConnectorsChanged: (callback) => {
-      ipcRenderer.removeAllListeners('everworker:connectors-changed');
-      ipcRenderer.on('everworker:connectors-changed', (_event, data) => callback(data));
+      ipcRenderer.removeAllListeners('backend:connectors-changed');
+      ipcRenderer.on('backend:connectors-changed', (_event, data) => callback(data));
     },
     removeConnectorsChangedListener: () => {
-      ipcRenderer.removeAllListeners('everworker:connectors-changed');
+      ipcRenderer.removeAllListeners('backend:connectors-changed');
     },
     onTokenExpiry: (callback) => {
-      ipcRenderer.removeAllListeners('everworker:token-expiry');
-      ipcRenderer.on('everworker:token-expiry', (_event, data) => callback(data));
+      ipcRenderer.removeAllListeners('backend:token-expiry');
+      ipcRenderer.on('backend:token-expiry', (_event, data) => callback(data));
     },
     removeTokenExpiryListener: () => {
-      ipcRenderer.removeAllListeners('everworker:token-expiry');
+      ipcRenderer.removeAllListeners('backend:token-expiry');
     },
-  },
-
-  // Telemetry
-  telemetry: {
-    getStatus: () => ipcRenderer.invoke('telemetry:get-status'),
-    setEnabled: (enabled: boolean) => ipcRenderer.invoke('telemetry:set-enabled', enabled),
   },
 
   // App info
   app: {
     getVersion: () => ipcRenderer.invoke('app:get-version'),
     getIsDev: () => ipcRenderer.invoke('app:get-is-dev'),
+    getDesignPreview: () => ipcRenderer.invoke('app:get-design-preview'),
   },
 
   // What's New

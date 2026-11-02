@@ -47,7 +47,7 @@ export function AgentsPage(): React.ReactElement {
     [connectors],
   );
   const ewConnectors = React.useMemo(
-    () => new Set(connectors.filter((c) => c.source === 'everworker').map((c) => c.name)),
+    () => new Set(connectors.filter((c) => c.source === 'backend').map((c) => c.name)),
     [connectors],
   );
 
@@ -239,7 +239,7 @@ export function AgentsPage(): React.ReactElement {
                 key={agent.id}
                 agent={agent}
                 isConnectorAvailable={availableConnectors.has(agent.connector)}
-                isEwConnector={ewConnectors.has(agent.connector)}
+                isBackendConnector={ewConnectors.has(agent.connector)}
                 onChat={handleChat}
                 onEdit={handleEdit}
                 onFixConnector={handleFixConnector}

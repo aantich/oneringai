@@ -6,6 +6,7 @@ import type { Turn } from 'openai/resources/beta/agents/sessions/turns/turns';
 /** Recorded-wire style fake HTTP server exercised through the actual OpenAI SDK. */
 export function openAIManagedFixture(options: { dropFirstToolResult?: 'before' | 'after'; idleWithoutTerminal?: boolean; foreignMetadata?: boolean; dropContinuationInput?: boolean; pauseCompletion?: boolean; artifacts?: boolean; foreignArtifact?: boolean; dropInlineUpload?: boolean } = {}) {
   let session: AgentSession | undefined; let turn: Turn | undefined; let sequence = 0; let eventId = 0; let dropped = false;
+  let continuationLost = false;
   const channels = new Set<ReadableStreamDefaultController<Uint8Array>>();
   const counts = { creations: 0, inputs: 0, toolDeliveries: 0, deletes: 0, cancels: 0, streams: 0, itemPages: 0 };
   const requests: { method: string; path: string; body: Record<string, unknown> }[] = [];
@@ -23,7 +24,9 @@ export function openAIManagedFixture(options: { dropFirstToolResult?: 'before' |
       if (creation) push({ type: 'agent.session.created', session });
       if (turn && creation) { push({ type: 'agent.session.turn.created', turn_id: turn.id, turn }); push({ type: 'agent.session.requires_action' }); }
       else push({ type: 'agent.session.idle', session });
-      if (options.idleWithoutTerminal) { controller.close(); channels.delete(controller); }
+      // A lost continuation has no accepted new turn. Close subsequent idle
+      // observations too, so reconnect exhaustion is deterministic without a timer.
+      if (options.idleWithoutTerminal || continuationLost) { controller.close(); channels.delete(controller); }
     }, cancel() { if (ownController) channels.delete(ownController); } }), { headers: { 'Content-Type': 'text/event-stream' } });
   };
   const json = (data: unknown) => new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json' } });
@@ -61,7 +64,7 @@ export function openAIManagedFixture(options: { dropFirstToolResult?: 'before' |
     if (pathname.endsWith('/events') && method === 'GET') return stream(false);
     if (pathname.endsWith('/events') && method === 'POST') {
       for (const sent of body.events as Record<string,unknown>[]) {
-        if (sent.type === 'agent.session.input.message') { if (options.dropContinuationInput) { close(); throw new TypeError('Synthetic input response lost before acceptance'); } startTurn(); publish({ type: 'agent.session.turn.created', turn_id: turn!.id, turn }); publish({ type: 'agent.session.requires_action' }); }
+        if (sent.type === 'agent.session.input.message') { if (options.dropContinuationInput) { continuationLost = true; close(); throw new TypeError('Synthetic input response lost before acceptance'); } startTurn(); publish({ type: 'agent.session.turn.created', turn_id: turn!.id, turn }); publish({ type: 'agent.session.requires_action' }); }
         if (sent.type === 'agent.session.input.cancel') { counts.cancels++; if (!options.idleWithoutTerminal) { turn!.status = 'cancelled'; session!.status = 'idle'; publish({ type: 'agent.session.turn.cancelled', turn_id: turn!.id, turn, usage: null }); close(); } }
         if (sent.type === 'agent.session.input.tool_result') {
           counts.toolDeliveries++;

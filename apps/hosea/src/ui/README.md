@@ -4,7 +4,7 @@ These UI components and the main-process DynamicUI plugin are part of Hosea,
 licensed under the [Hosea MIT license](../../LICENSE), Copyright (c) 2025-2026
 Anton Antic <anton.antich@gmail.com>.
 
-The owner authorized migration and MIT licensing from `Integrail/react-ui`,
+The owner authorized migration and MIT licensing from the formerly separate, owner-controlled React UI repository,
 commit `51f1050fc93a4c07089fedafd3beca2abec81b1e`, on 2026-11-01. This is an owned-source migration,
 not redistribution under the former commercial dependency's license.
 

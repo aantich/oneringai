@@ -30,7 +30,7 @@ export interface DocxTemplate {
     documentTitle?: string;
 
     // Theme Name
-    theme?: 'default' | 'professional' | 'modern' | 'minimal' | 'everworker';
+    theme?: 'default' | 'professional' | 'modern' | 'minimal' | 'hosea';
 }
 
 export class DocxTemplateManager {
@@ -43,7 +43,7 @@ export class DocxTemplateManager {
             professional: this.getProfessionalTemplate(),
             modern: this.getModernTemplate(),
             minimal: this.getMinimalTemplate(),
-            everworker: this.getEverworkerTemplate(),
+            hosea: this.getHoseaTemplate(),
         };
 
         return templates[templateName] || templates.default;
@@ -120,17 +120,17 @@ export class DocxTemplateManager {
         };
     }
 
-    static getEverworkerTemplate(): DocxTemplate {
+    static getHoseaTemplate(): DocxTemplate {
         return {
-            headerText: 'EVERWORKER AI Platform',
-            footerText: 'Generated with EVERWORKER',
+            headerText: 'hosea',
+            footerText: 'Generated with hosea',
             showPageNumbers: true,
-            primaryColor: '1a5490',
+            primaryColor: '242423',
             secondaryColor: '666666',
-            accentColor: 'e74c3c',
+            accentColor: '767570',
             textColor: '333333',
-            fontFamily: 'Inter',
-            headingFont: 'Inter',
+            fontFamily: 'Arial',
+            headingFont: 'Arial',
             fontSize: 11,
             headingScale: 1.4,
             margins: {
@@ -139,8 +139,8 @@ export class DocxTemplateManager {
                 bottom: 1,
                 left: 0.8,
             },
-            companyName: 'EVERWORKER',
-            companyTagline: 'AI-Powered Agent Platform',
+            companyName: 'hosea',
+            companyTagline: '',
         };
     }
 
@@ -186,7 +186,7 @@ export class DocxTemplateManager {
 }
 
 export const CorporateTemplates = {
-    EVERWORKER: DocxTemplateManager.getEverworkerTemplate(),
+    HOSEA: DocxTemplateManager.getHoseaTemplate(),
     PROFESSIONAL: DocxTemplateManager.getProfessionalTemplate(),
     MODERN: DocxTemplateManager.getModernTemplate(),
     MINIMAL: DocxTemplateManager.getMinimalTemplate(),

@@ -1,5 +1,5 @@
 /**
- * Everworker Desktop Tools Module
+ * hosea Tools Module
  *
  * Registers desktop-specific tool categories with the core ToolCatalogRegistry.
  */

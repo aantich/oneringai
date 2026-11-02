@@ -1,0 +1,233 @@
+{
+  "date": "2026-11-02",
+  "package": "oneringai@2.0.0-beta.1",
+  "status": "pass",
+  "scope": "Uncommitted version2 release candidate; no merge, tag, publication, new live-provider call or desktop installer release",
+  "releaseGate": {
+    "command": "npm run release:check",
+    "status": "pass",
+    "unitFiles": 427,
+    "unitTests": 9374,
+    "unitWorkers": 4,
+    "retries": 0,
+    "offlineExamples": [
+      "examples/agentic-evaluation-baseline.ts",
+      "examples/context-strategy-comparison.ts",
+      "examples/adaptive-model-routing.ts",
+      "examples/verified-routines.ts",
+      "examples/routine-store-bridge.ts",
+      "examples/agent-runtime-swappable.ts",
+      "examples/agent-runtime-claude.ts",
+      "examples/agent-runtime-openai-managed.ts",
+      "examples/agent-runtime-claude-managed.ts",
+      "examples/agent-runtime-artifacts.ts",
+      "examples/agent-runtime-recovery.ts",
+      "examples/agent-runtime-managed-restart.ts",
+      "examples/agent-runtime-run-options.ts",
+      "examples/agent-runtime-safety.ts",
+      "apps/amos/examples/agent-runtime-offline.ts",
+      "examples/connector-collection-pages.ts",
+      "examples/enhanced-connector-execution.ts",
+      "examples/remote-tool-outcomes.ts",
+      "examples/composite-execution-binding.ts",
+      "examples/outcome-aware-tools.ts",
+      "examples/composed-meeting-preparation.ts",
+      "examples/endpoint-capabilities.ts",
+      "examples/parameter-policy.ts",
+      "examples/vendor-presentation.ts",
+      "examples/native-context-compaction.ts",
+      "examples/native-context-recovery.ts",
+      "apps/amos/examples/native-compaction-offline.ts"
+    ],
+    "documentation": {
+      "publicItems": 1825,
+      "internalItems": 3619,
+      "markdownFiles": 154,
+      "typeScriptBlocks": 512,
+      "completeSemanticExamples": 10
+    },
+    "build": {
+      "exportFiles": 33,
+      "moduleFormats": [
+        "esm",
+        "cjs"
+      ]
+    },
+    "sourceTypes": "pass",
+    "lint": "pass",
+    "exampleTypes": "pass",
+    "publicCompatibility": "pass"
+  },
+  "consumer": {
+    "node": "v24.20.0",
+    "probe": {
+      "node": "v24.20.0",
+      "sdkModules": [],
+      "documents": [
+        "csv",
+        "xlsx",
+        "docx",
+        "pptx",
+        "odt",
+        "odp",
+        "ods",
+        "rtf",
+        "pdf"
+      ],
+      "status": "pass",
+      "entries": 11,
+      "formats": [
+        "esm",
+        "cjs"
+      ],
+      "documentsBothFormats": true,
+      "publicSymbols": true,
+      "connectorIdentity": true,
+      "documentation": true,
+      "MITLicenses": true,
+      "legacyPackageAbsent": true,
+      "providerCalls": 0
+    },
+    "coreConsumerTypes": "ESM and CJS; public compatibility fixtures and nine entries; no optional SDKs; skipLibCheck=false",
+    "optionalConsumerTypes": "ESM and CJS; all eleven entries with declared optional SDK peers installed; skipLibCheck=false",
+    "optionalSdkVersions": {
+      "@openai/codex-sdk": "0.149.1",
+      "@anthropic-ai/claude-agent-sdk": "0.3.316"
+    },
+    "optionalSdkProbe": {
+      "node": "v24.20.0",
+      "sdkModules": [
+        "@openai/codex-sdk",
+        "@anthropic-ai/claude-agent-sdk"
+      ],
+      "documents": [
+        "csv",
+        "xlsx",
+        "docx",
+        "pptx",
+        "odt",
+        "odp",
+        "ods",
+        "rtf",
+        "pdf"
+      ],
+      "status": "pass",
+      "entries": 11,
+      "formats": [
+        "esm",
+        "cjs"
+      ],
+      "documentsBothFormats": true,
+      "publicSymbols": true,
+      "connectorIdentity": true,
+      "documentation": true,
+      "MITLicenses": true,
+      "legacyPackageAbsent": true,
+      "providerCalls": 0
+    },
+    "audit": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 10,
+        "high": 0,
+        "critical": 0,
+        "total": 10
+      },
+      "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+      "checked": [
+        "minimatch@3.1.5",
+        "minimatch@5.1.9",
+        "minimatch@3.1.5",
+        "minimatch@3.1.5",
+        "uuid@8.3.2"
+      ]
+    },
+    "optionalSdkAudit": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 10,
+        "high": 0,
+        "critical": 0,
+        "total": 10
+      },
+      "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+      "checked": [
+        "minimatch@3.1.5",
+        "minimatch@5.1.9",
+        "minimatch@3.1.5",
+        "minimatch@3.1.5",
+        "uuid@8.3.2"
+      ]
+    }
+  },
+  "minimumNodeProbe": {
+    "node": "v22.13.0",
+    "sdkModules": [
+      "@openai/codex-sdk",
+      "@anthropic-ai/claude-agent-sdk"
+    ],
+    "documents": [
+      "csv",
+      "xlsx",
+      "docx",
+      "pptx",
+      "odt",
+      "odp",
+      "ods",
+      "rtf",
+      "pdf"
+    ],
+    "status": "pass",
+    "entries": 11,
+    "formats": [
+      "esm",
+      "cjs"
+    ],
+    "documentsBothFormats": true,
+    "publicSymbols": true,
+    "connectorIdentity": true,
+    "documentation": true,
+    "MITLicenses": true,
+    "legacyPackageAbsent": true,
+    "providerCalls": 0
+  },
+  "applications": {
+    "amos": {
+      "types": "pass",
+      "build": "pass",
+      "runtimeAdapters": "Five through shared controller in offline examples"
+    },
+    "hosea": {
+      "types": "pass",
+      "rendererBuild": "pass",
+      "electronMainBuild": "pass",
+      "designAndStorageTests": 6,
+      "installerPlatforms": "Not released or newly validated"
+    }
+  },
+  "fixes": [
+    "Unified routine instructions, nested prompt delivery, findings-tier resolution and scoped cleanup/restore",
+    "Published officeparser/glob/unpdf dependencies and source-reviewed non-applicable remaining advisories",
+    "PDF page images encoded as PNG with loading-task lifecycle, real fixtures and failure coverage",
+    "Production WebSocket declaration dependency, core/optional SDK installed-package typing and runtime smoke checks",
+    "Deterministic uncertain-continuation fixture retaining ambiguity/no-resubmission assertions",
+    "Documentation, examples, AMOS handoff and repeatable prepublish candidate gates"
+  ],
+  "compatibility": {
+    "publicSignaturesAndDefaults": "Preserved; package identity migration was previously explicitly authorized",
+    "routineReflection": "Still opt-in",
+    "foldOutput": "Task output keeps precedence",
+    "optionalSDKs": "Core needs neither peer; adapter types retain their SDK-specific extension contracts",
+    "previewBoundaries": "Retained; wire/installation checks do not establish live vendor availability or cross-platform support"
+  },
+  "remainingPublicationSteps": [
+    "Review and commit intended tree",
+    "Separately authorize merge/version/tag/publication",
+    "Verify exact release tag at clean HEAD and registry account/name at publication",
+    "Deprecate legacy package only after replacement is installable"
+  ],
+  "historicalEvidence": "V2_DOCUMENTATION_VALIDATION_2026_11_02.json",
+  "newBillableProviderCalls": 0
+}

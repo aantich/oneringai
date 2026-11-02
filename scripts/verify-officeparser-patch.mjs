@@ -16,9 +16,10 @@
 import { mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parseOffice } from 'officeparser';
 
-const PPTX = '/Users/aantich/dev/oneringai/docs/architecture.pptx';
+const PPTX = fileURLToPath(new URL('../docs/architecture.pptx', import.meta.url));
 
 const buf = await readFile(PPTX);
 console.log('[verify] file size:', buf.length, 'bytes');

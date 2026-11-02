@@ -1,8 +1,8 @@
 /**
- * EverWorker Authentication Service
+ * Backend Authentication Service
  *
- * Manages the browser-based authentication flow between Everworker Desktop and EverWorker.
- * Opens a BrowserWindow to the EW login page, monitors for the token callback,
+ * Manages the browser-based authentication flow between hosea and Backend.
+ * Opens a BrowserWindow to the backend login page, monitors for the token callback,
  * and returns the token to the caller.
  */
 
@@ -12,7 +12,7 @@ import { BrowserWindow } from 'electron';
 // Types
 // ---------------------------------------------------------------------------
 
-export interface EWAuthResult {
+export interface BackendAuthResult {
   success: boolean;
   token?: string;
   expiresAt?: number;
@@ -21,14 +21,14 @@ export interface EWAuthResult {
   error?: string;
 }
 
-export interface EWAuthOptions {
-  ewUrl: string;
+export interface BackendAuthOptions {
+  backendUrl: string;
   parentWindow?: BrowserWindow | null;
   /** Timeout in milliseconds. Default: 300000 (5 minutes). */
   timeoutMs?: number;
 }
 
-export interface EWAuthSupportResult {
+export interface BackendAuthSupportResult {
   supported: boolean;
   version?: number;
   error?: string;
@@ -38,16 +38,16 @@ export interface EWAuthSupportResult {
 // Service
 // ---------------------------------------------------------------------------
 
-export class EWAuthService {
+export class BackendAuthService {
   private authWindow: BrowserWindow | null = null;
 
   /**
-   * Check if the EW instance supports the browser-based auth flow.
+   * Check if the backend instance supports the browser-based auth flow.
    * Makes a GET request to /api/v1/hosea-auth/status.
    */
-  async checkAuthSupport(ewUrl: string): Promise<EWAuthSupportResult> {
+  async checkAuthSupport(backendUrl: string): Promise<BackendAuthSupportResult> {
     try {
-      const url = `${ewUrl.replace(/\/+$/, '')}/api/v1/hosea-auth/status`;
+      const url = `${backendUrl.replace(/\/+$/, '')}/api/v1/hosea-auth/status`;
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);
 
@@ -83,8 +83,8 @@ export class EWAuthService {
    * - The timeout expires
    * - A network error occurs
    */
-  async authenticate(options: EWAuthOptions): Promise<EWAuthResult> {
-    const { ewUrl, parentWindow, timeoutMs = 300000 } = options;
+  async authenticate(options: BackendAuthOptions): Promise<BackendAuthResult> {
+    const { backendUrl, parentWindow, timeoutMs = 300000 } = options;
 
     // Prevent multiple concurrent auth windows
     if (this.authWindow && !this.authWindow.isDestroyed()) {
@@ -92,10 +92,10 @@ export class EWAuthService {
       return { success: false, error: 'Authentication already in progress' };
     }
 
-    return new Promise<EWAuthResult>((resolve) => {
+    return new Promise<BackendAuthResult>((resolve) => {
       let resolved = false;
 
-      const finish = (result: EWAuthResult): void => {
+      const finish = (result: BackendAuthResult): void => {
         if (resolved) return;
         resolved = true;
         clearTimeout(timer);
@@ -119,7 +119,7 @@ export class EWAuthService {
           sandbox: true,
           // No preload — this is a pure web page
         },
-        title: 'Login to EverWorker',
+        title: 'Login to Backend',
         autoHideMenuBar: true,
       });
 
@@ -159,7 +159,7 @@ export class EWAuthService {
       });
 
       // Navigate to the auth endpoint
-      const authUrl = `${ewUrl.replace(/\/+$/, '')}/api/v1/hosea-auth`;
+      const authUrl = `${backendUrl.replace(/\/+$/, '')}/api/v1/hosea-auth`;
       this.authWindow.loadURL(authUrl);
     });
   }
@@ -188,7 +188,7 @@ export class EWAuthService {
   /**
    * Check if a URL is the callback URL and extract token data from the hash fragment.
    */
-  private extractTokenFromUrl(url: string, finish: (result: EWAuthResult) => void): void {
+  private extractTokenFromUrl(url: string, finish: (result: BackendAuthResult) => void): void {
     try {
       const parsed = new URL(url);
       if (parsed.pathname !== '/api/v1/hosea-auth/complete') return;

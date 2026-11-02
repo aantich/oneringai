@@ -12,7 +12,7 @@ interface SetupModalProps {
 interface ConnectorConfig {
   name: string;
   vendor: string;
-  source?: 'local' | 'everworker' | 'built-in';
+  source?: 'local' | 'backend' | 'built-in';
   createdAt: number;
 }
 
@@ -196,7 +196,7 @@ export function SetupModal({
   const renderChoiceStep = () => (
     <>
       <Modal.Body>
-        <p className="text-muted mb-4">Choose how you'd like to use AI with Everworker Desktop:</p>
+        <p className="text-muted mb-4">Choose how you'd like to use AI with hosea:</p>
 
         <div className="d-grid gap-3">
           <Button
@@ -262,7 +262,7 @@ export function SetupModal({
             <option value="">Choose...</option>
             {connectors.map((c) => (
               <option key={c.name} value={c.name}>
-                {c.name} ({c.vendor}){c.source === 'everworker' ? ' [EW]' : c.source === 'local' ? ' [Local]' : ''}
+                {c.name} ({c.vendor}){c.source === 'backend' ? ' [backend]' : c.source === 'local' ? ' [Local]' : ''}
               </option>
             ))}
           </Form.Select>
@@ -367,7 +367,7 @@ export function SetupModal({
               <option value="">Choose...</option>
               {availableModels.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.name} ({(m.contextWindow / 1000).toFixed(0)}K context)
+                  {m.name} ({m.contextWindow > 0 ? `${(m.contextWindow / 1000).toFixed(0)}K context` : 'context limit unknown'})
                 </option>
               ))}
             </Form.Select>
@@ -398,7 +398,7 @@ export function SetupModal({
 
   const getTitle = () => {
     switch (step) {
-      case 'choice': return 'Welcome to Everworker Desktop';
+      case 'choice': return 'Make yourself at home.';
       case 'connector': return 'Select Connector';
       case 'new-connector': return 'Add Connector';
       case 'model': return 'Select Model';
@@ -408,7 +408,7 @@ export function SetupModal({
 
   return (
     <Modal show={show} onHide={onHide} centered backdrop="static" size={step === 'local-ai' ? 'lg' : undefined}>
-      <Modal.Header closeButton={connectors.length > 0}>
+      <Modal.Header closeButton>
         <Modal.Title>{getTitle()}</Modal.Title>
       </Modal.Header>
 
@@ -426,6 +426,7 @@ export function SetupModal({
           {step === 'model' && renderModelStep()}
         </>
       )}
+      {step === 'choice' && <Modal.Footer><Button variant="link" onClick={onHide}>Explore the workspace first</Button></Modal.Footer>}
     </Modal>
   );
 }

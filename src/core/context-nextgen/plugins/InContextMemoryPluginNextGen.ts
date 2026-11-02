@@ -38,7 +38,7 @@ export interface InContextEntry {
 export interface InContextMemoryConfig {
   /** Maximum number of entries (default: 20) */
   maxEntries?: number;
-  /** Maximum total tokens for all entries (default: 4000) */
+  /** Maximum total tokens for all entries (default: 40000) */
   maxTotalTokens?: number;
   /** Default priority for new entries (default: 'normal') */
   defaultPriority?: InContextPriority;

@@ -62,7 +62,7 @@ export function Chat({
       <div className="messages-container flex-grow-1 overflow-auto p-4">
         {messages.length === 0 ? (
           <div className="text-center text-muted mt-5">
-            <h4>Welcome to Everworker Desktop</h4>
+            <h4>Welcome to hosea</h4>
             <p>Start a conversation with your AI agent.</p>
           </div>
         ) : (

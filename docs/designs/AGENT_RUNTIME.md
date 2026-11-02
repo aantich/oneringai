@@ -8,7 +8,7 @@
 
 **Designed extensions:** Codex App Server, other harnesses, isolated server workers and A2A interoperability
 
-**Public documentation:** [README overview](../../README.md#agent-runtime-run-complete-agents-through-one-api),
+**Public documentation:** [README overview](../../README.md#one-definition-multiple-agent-harnesses),
 [detailed User Guide](../../USER_GUIDE.md#agent-runtime-preview), and
 [runnable local example](../../examples/agent-runtime-local.ts)
 

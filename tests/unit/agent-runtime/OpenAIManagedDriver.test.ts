@@ -114,10 +114,11 @@ describe('OpenAI managed native wire adapter', () => {
   it('does not associate uncertain continuation input with an older completed turn', async () => {
     const f = await setup({ dropContinuationInput: true });
     try {
-      const session = await f.agent.openSession({ ...f.options, policy: { ...policy, limits: { wallTimeMs: 500 } } });
+      const session = await f.agent.openSession(f.options);
       expect((await (await session.run('first')).result).status).toBe('completed');
       const run = await session.run('uncertain continuation'); await expect(run.result).rejects.toThrow('not proven terminal');
       expect(f.wire.counts.inputs).toBe(1); expect(f.tools()).toBe(1);
+      expect(f.wire.counts.streams).toBeGreaterThan(2); expect(f.wire.counts.cancels).toBe(0);
     } finally { await f.cleanup(); }
   });
 

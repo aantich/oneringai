@@ -7,7 +7,6 @@
 import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import {
   Connector,
   Vendor,
@@ -101,6 +100,9 @@ import {
   type RegistryAgentStatus,
   type AgentEventListener,
   type VoiceSessionInfo,
+  type VoiceHooks,
+  type UserPermissionRule,
+  resolveMaxContextTokens,
 } from 'oneringai';
 // Side-effect: registers DynamicUI plugin factory with PluginRegistry
 import '../ui/plugins.js';
@@ -112,6 +114,8 @@ import { HoseaUIPlugin, type DynamicUIContent } from './plugins/index.js';
 import { VendorOAuthService } from './VendorOAuthService.js';
 import { OAuthCallbackServer } from './OAuthCallbackServer.js';
 import { OAuthCallbackServerHttps } from './OAuthCallbackServerHttps.js';
+import { createHoseaStorage } from './storage.js';
+import { isBackendEnabled } from './runtimeConfig.js';
 import { loadBuiltInOAuthApps, type BuiltInOAuthApp } from './built-in-oauth-apps.js';
 
 interface StoredConnectorConfig {
@@ -120,30 +124,30 @@ interface StoredConnectorConfig {
   auth: { type: 'api_key'; apiKey: string } | { type: 'none' };
   baseURL?: string;
   models?: string[];
-  /** Where this connector comes from: 'local' (user-configured) or 'everworker' (synced from EW backend) */
-  source?: 'local' | 'everworker';
+  /** Where this connector comes from: 'local' (user-configured) or 'backend' (synced from backend backend) */
+  source?: 'local' | 'backend';
   createdAt: number;
   updatedAt: number;
 }
 
 /**
- * Everworker Backend configuration for proxy mode (LEGACY).
- * Stored at ~/.everworker/hosea/everworker-backend.json
- * @deprecated Use EverworkerProfilesConfig instead
+ * Optional backend configuration for proxy mode (LEGACY).
+ * Stored at ~/.hosea/backend-backend.json
+ * @deprecated Use BackendProfilesConfig instead
  */
-export interface EverworkerBackendConfig {
-  /** EW backend URL (e.g., 'https://ew.company.com') */
+export interface BackendConfig {
+  /** backend backend URL (e.g., 'https://ew.company.com') */
   url: string;
   /** JWT token with llm:proxy scope */
   token: string;
-  /** Whether EW integration is enabled */
+  /** Whether backend integration is enabled */
   enabled: boolean;
 }
 
 /**
- * Everworker Backend Profile
+ * Optional backend Profile
  */
-export interface EverworkerProfile {
+export interface BackendProfile {
   id: string;
   name: string;
   url: string;
@@ -156,9 +160,9 @@ export interface EverworkerProfile {
   tokenExpiresAt?: number;
   /** Unix ms — when the JWT token was issued */
   tokenIssuedAt?: number;
-  /** Display name of the authenticated EW user */
+  /** Display name of the authenticated backend user */
   userName?: string;
-  /** EW user ID */
+  /** backend user ID */
   userId?: string;
   /** How the token was obtained */
   authMethod?: 'manual' | 'browser-auth';
@@ -171,17 +175,17 @@ export interface TokenStatus {
 }
 
 /**
- * Multi-profile Everworker configuration.
- * Stored at ~/.everworker/hosea/everworker-profiles.json
+ * Multi-profile Backend configuration.
+ * Stored at ~/.hosea/backend-profiles.json
  */
-export interface EverworkerProfilesConfig {
+export interface BackendProfilesConfig {
   version: 2;
   activeProfileId: string | null;
-  profiles: EverworkerProfile[];
+  profiles: BackendProfile[];
 }
 
-/** Connector info returned by EW discovery endpoint */
-interface EWRemoteConnector {
+/** Connector info returned by backend discovery endpoint */
+interface RemoteBackendConnector {
   name: string;
   vendor: string;
   type?: 'llm' | 'universal';
@@ -328,8 +332,8 @@ export interface StoredUniversalConnector {
   status: 'active' | 'error' | 'untested';
   /** For migrated connectors - original serviceType for tool compatibility */
   legacyServiceType?: string;
-  /** Where this connector comes from: 'local' (user-configured), 'everworker' (synced from EW backend), or 'built-in' (one-click from Connections page) */
-  source?: 'local' | 'everworker' | 'built-in';
+  /** Where this connector comes from: 'local' (user-configured), 'backend' (synced from backend backend), or 'built-in' (one-click from Connections page) */
+  source?: 'local' | 'backend' | 'built-in';
 }
 
 /**
@@ -522,20 +526,22 @@ export type StreamChunk =
   | { type: 'orchestrator:worker_turn_start'; workerName: string }
   | { type: 'orchestrator:worker_turn_end'; workerName: string; success: boolean }
   | { type: 'orchestrator:workspace_update'; entries: Array<{ key: string; summary: string; status: string; author: string; version: number; updatedAt: number }> }
+  | { type: 'tool:approval_required'; request: import('../preload/index.js').ToolApprovalRequest }
+  | { type: 'tool:approval_resolved'; requestId: string; approved: boolean }
   // Stream status events (retry, incomplete, failed)
   | { type: 'retry'; attempt: number; maxAttempts: number; reason: string; delayMs: number }
   | { type: 'status'; status: 'completed' | 'incomplete' | 'failed'; stopReason?: string };
 
 /**
- * Everworker Desktop UI Capabilities System Prompt
+ * hosea UI Capabilities System Prompt
  *
  * This is automatically prepended to all agent instructions to inform them
  * about the rich markdown rendering capabilities available in the UI.
  */
 const HOSEA_UI_CAPABILITIES_PROMPT = `
-## Everworker Desktop UI Rendering Capabilities
+## hosea UI Rendering Capabilities
 
-You are running inside Everworker Desktop, a desktop chat interface with advanced markdown rendering. Your responses will be displayed with rich formatting. Use these capabilities to provide better, more visual responses:
+You are running inside hosea, a desktop chat interface with advanced markdown rendering. Your responses will be displayed with rich formatting. Use these capabilities to provide better, more visual responses:
 
 ### Basic Markdown
 - **Bold**, *italic*, ~~strikethrough~~, \`inline code\`
@@ -618,7 +624,7 @@ When a media generation tool returns a result with a \`location\` field containi
 [Play: description](/path/to/media/video.mp4)
 \`\`\`
 
-Everworker Desktop renders audio/video links as inline players automatically. Do NOT use image syntax (\`![]()\`) for audio or video files.
+hosea renders audio/video links as inline players automatically. Do NOT use image syntax (\`![]()\`) for audio or video files.
 
 ### Best Practices
 1. Use diagrams and charts when explaining complex concepts, processes, or data
@@ -636,7 +642,7 @@ const DEFAULT_CONFIG: HoseaConfig = {
   activeModel: null,
   logLevel: 'info',
   ui: {
-    theme: 'system',
+    theme: 'light',
     fontSize: 14,
     streamResponses: true,
   },
@@ -683,7 +689,7 @@ export class AgentService {
   // Multi-tab agent instances (instanceId -> AgentInstance)
   private instances: Map<string, AgentInstance> = new Map();
   // Routine definition storage
-  private routineStorage = new FileRoutineDefinitionStorage();
+  private routineStorage: FileRoutineDefinitionStorage;
   // Browser service reference (set by main process)
   private browserService: BrowserService | null = null;
   // Ollama service reference (set by main process)
@@ -709,8 +715,8 @@ export class AgentService {
   // Voice bridge log buffer (agentConfigId → ring buffer of log entries)
   private voiceBridgeLogs = new Map<string, Array<{ timestamp: number; level: string; message: string }>>();
   private readonly MAX_VOICE_BRIDGE_LOG_ENTRIES = 200;
-  // Everworker backend profiles (multi-profile support)
-  private ewProfiles: EverworkerProfilesConfig = { version: 2, activeProfileId: null, profiles: [] };
+  // Backend backend profiles (multi-profile support)
+  private backendProfiles: BackendProfilesConfig = { version: 2, activeProfileId: null, profiles: [] };
   // Main window sender for push events to renderer
   private mainWindowSender: ((channel: string, ...args: unknown[]) => void) | null = null;
   // Readiness tracking for non-blocking startup
@@ -883,11 +889,12 @@ export class AgentService {
     // Initialize centralized storage via StorageRegistry.
     // All subsystems (sessions, agent definitions, OAuth tokens, custom tools, etc.)
     // resolve their storage from the registry at execution time.
-    this.initializeStorageRegistry();
+    const storage = this.initializeStorageRegistry();
+    this.routineStorage = storage.routineDefinitions();
 
     this.agentDefinitionStorage = StorageRegistry.resolve(
       'agentDefinitions',
-      () => new FileAgentDefinitionStorage({ baseDirectory: this.dataDir }),
+      () => new FileAgentDefinitionStorage({ baseDirectory: join(this.dataDir, 'agent-definitions') }),
     );
 
     // Register app-specific tool categories (browser, desktop) with core ToolCatalogRegistry
@@ -907,22 +914,10 @@ export class AgentService {
    * OAuth token storage is configured later in initializeTokenStorage() once the
    * encryption key is available.
    */
-  private initializeStorageRegistry(): void {
-    const baseDirectory = join(this.dataDir, '..');
-
-    const maxExecutionLogs = this.config.routines?.maxExecutionLogs ?? 100;
-
-    StorageRegistry.configure({
-      // Per-agent session storage factory — all agents use the same base directory
-      sessions: (agentId: string) => new FileContextStorage({
-        agentId,
-        baseDirectory,
-      }),
-      // Routine execution storage with configurable retention
-      routineExecutions: () => new FileRoutineExecutionStorage({
-        maxRecords: maxExecutionLogs,
-      }),
-    });
+  private initializeStorageRegistry() {
+    const storage = createHoseaStorage(this.dataDir, () => this.config.routines?.maxExecutionLogs ?? 100);
+    StorageRegistry.configure(storage);
+    return storage;
   }
 
   /**
@@ -936,7 +931,7 @@ export class AgentService {
     // Fallback (should never happen since initializeStorageRegistry runs in constructor)
     return new FileContextStorage({
       agentId,
-      baseDirectory: join(this.dataDir, '..'),
+      baseDirectory: join(this.dataDir, 'sessions'),
     });
   }
 
@@ -1022,7 +1017,7 @@ export class AgentService {
 
   /**
    * Phase 2: Heavy initialization (slow, ~20s)
-   * Loads connectors, discovers tools, syncs profiles, loads agents.
+   * Loads connectors, discovers tools, optionally syncs backend profiles, loads agents.
    * Can be called after the window is visible.
    */
   async initializeHeavy(): Promise<void> {
@@ -1051,14 +1046,13 @@ export class AgentService {
         logger.debug(`  tool=${t.name}, category=${t.category}, connectorServiceTypes=${JSON.stringify(t.connectorServiceTypes)}`);
       }
 
-      await this.loadEWProfiles();
-      this.checkTokenExpiry();
-
-      // EW profile sync is non-critical — don't let it block startup.
-      // Fire in background so agents, MCP servers, etc. load immediately.
-      this.syncActiveEWProfile().catch(err => {
-        logger.warn(`[initializeHeavy] EW profile sync failed (non-blocking): ${err instanceof Error ? err.message : String(err)}`);
-      });
+      if (isBackendEnabled()) {
+        await this.loadBackendProfiles();
+        this.checkTokenExpiry();
+        this.syncActiveBackendProfile().catch(err => {
+          logger.warn(`[initializeHeavy] Optional backend sync failed: ${String(err)}`);
+        });
+      }
 
       await this.loadAgents();
       await this.migrateAgentsToNextGen();
@@ -1137,6 +1131,7 @@ export class AgentService {
         if (file.endsWith('.json')) {
           const content = await readFile(join(connectorsDir, file), 'utf-8');
           const config = JSON.parse(content) as StoredConnectorConfig;
+          if (config.source === 'backend' && !isBackendEnabled()) continue;
           this.connectors.set(config.name, config);
           logger.debug(`[loadConnectors] Loaded connector: name=${config.name}, vendor=${config.vendor}`);
 
@@ -1160,7 +1155,7 @@ export class AgentService {
     }
   }
 
-  // ============ Everworker Backend Integration (Multi-Profile) ============
+  // ============ Optional backend Integration (Multi-Profile) ============
 
   /**
    * Set the main window sender for push events to the renderer
@@ -1176,21 +1171,21 @@ export class AgentService {
   }
 
   /**
-   * Load EW profiles with auto-migration from old format
+   * Load backend profiles with auto-migration from old format
    */
-  private async loadEWProfiles(): Promise<void> {
-    const newPath = join(this.dataDir, 'everworker-profiles.json');
-    const oldPath = join(this.dataDir, 'everworker-backend.json');
+  private async loadBackendProfiles(): Promise<void> {
+    const newPath = join(this.dataDir, 'backend-profiles.json');
+    const oldPath = join(this.dataDir, 'backend-backend.json');
 
     // 1. Try new format first
     if (existsSync(newPath)) {
       try {
         const content = await readFile(newPath, 'utf-8');
-        this.ewProfiles = JSON.parse(content) as EverworkerProfilesConfig;
-        logger.info(`[loadEWProfiles] Loaded ${this.ewProfiles.profiles.length} profiles (active: ${this.ewProfiles.activeProfileId})`);
+        this.backendProfiles = JSON.parse(content) as BackendProfilesConfig;
+        logger.info(`[loadBackendProfiles] Loaded ${this.backendProfiles.profiles.length} profiles (active: ${this.backendProfiles.activeProfileId})`);
         return;
       } catch (err) {
-        logger.error(`[loadEWProfiles] Failed to load profiles: ${err instanceof Error ? err.message : String(err)}`);
+        logger.error(`[loadBackendProfiles] Failed to load profiles: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
 
@@ -1198,9 +1193,9 @@ export class AgentService {
     if (existsSync(oldPath)) {
       try {
         const content = await readFile(oldPath, 'utf-8');
-        const oldConfig = JSON.parse(content) as EverworkerBackendConfig;
+        const oldConfig = JSON.parse(content) as BackendConfig;
         const profileId = `profile_${Date.now()}`;
-        const profile: EverworkerProfile = {
+        const profile: BackendProfile = {
           id: profileId,
           name: 'Default',
           url: oldConfig.url,
@@ -1208,38 +1203,38 @@ export class AgentService {
           createdAt: Date.now(),
           updatedAt: Date.now(),
         };
-        this.ewProfiles = {
+        this.backendProfiles = {
           version: 2,
           activeProfileId: oldConfig.enabled ? profileId : null,
           profiles: [profile],
         };
-        await this.saveEWProfiles();
+        await this.saveBackendProfiles();
 
         // Rename old file
         const { rename } = await import('node:fs/promises');
         await rename(oldPath, `${oldPath}.migrated`);
-        logger.info(`[loadEWProfiles] Migrated old config to profile "Default" (active: ${oldConfig.enabled})`);
+        logger.info(`[loadBackendProfiles] Migrated old config to profile "Default" (active: ${oldConfig.enabled})`);
         return;
       } catch (err) {
-        logger.error(`[loadEWProfiles] Migration failed: ${err instanceof Error ? err.message : String(err)}`);
+        logger.error(`[loadBackendProfiles] Migration failed: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
 
     // 3. Initialize empty
-    this.ewProfiles = { version: 2, activeProfileId: null, profiles: [] };
+    this.backendProfiles = { version: 2, activeProfileId: null, profiles: [] };
   }
 
-  private async saveEWProfiles(): Promise<void> {
-    const configPath = join(this.dataDir, 'everworker-profiles.json');
-    await writeFile(configPath, JSON.stringify(this.ewProfiles, null, 2));
+  private async saveBackendProfiles(): Promise<void> {
+    const configPath = join(this.dataDir, 'backend-profiles.json');
+    await writeFile(configPath, JSON.stringify(this.backendProfiles, null, 2));
   }
 
   /**
-   * Get the active EW profile, or null if disconnected
+   * Get the active backend profile, or null if disconnected
    */
-  private getActiveEWProfile(): EverworkerProfile | null {
-    if (!this.ewProfiles.activeProfileId) return null;
-    return this.ewProfiles.profiles.find(p => p.id === this.ewProfiles.activeProfileId) ?? null;
+  private getActiveBackendProfile(): BackendProfile | null {
+    if (!this.backendProfiles.activeProfileId) return null;
+    return this.backendProfiles.profiles.find(p => p.id === this.backendProfiles.activeProfileId) ?? null;
   }
 
   // ---- Token Status ----
@@ -1249,8 +1244,8 @@ export class AgentService {
    */
   getTokenStatus(profileId?: string): TokenStatus {
     const profile = profileId
-      ? this.ewProfiles.profiles.find(p => p.id === profileId)
-      : this.getActiveEWProfile();
+      ? this.backendProfiles.profiles.find(p => p.id === profileId)
+      : this.getActiveBackendProfile();
 
     if (!profile) return { status: 'unknown' };
     if (!profile.tokenExpiresAt) return { status: 'unknown' }; // Manual token
@@ -1272,13 +1267,13 @@ export class AgentService {
    * Check active profile token expiry and notify renderer if expiring/expired.
    */
   private checkTokenExpiry(): void {
-    const active = this.getActiveEWProfile();
+    const active = this.getActiveBackendProfile();
     if (!active?.tokenExpiresAt) return;
 
     const status = this.getTokenStatus();
     if (status.status === 'expiring_soon' || status.status === 'expired') {
       logger.warn(`[checkTokenExpiry] Active profile "${active.name}" token ${status.status} (${status.daysRemaining}d remaining)`);
-      this.notifyRenderer('everworker:token-expiry', {
+      this.notifyRenderer('backend:token-expiry', {
         profileId: active.id,
         status: status.status,
         daysRemaining: status.daysRemaining,
@@ -1288,11 +1283,11 @@ export class AgentService {
 
   // ---- Profile CRUD ----
 
-  getEWProfiles(): EverworkerProfilesConfig {
-    return this.ewProfiles;
+  getBackendProfiles(): BackendProfilesConfig {
+    return this.backendProfiles;
   }
 
-  async addEWProfile(data: {
+  async addBackendProfile(data: {
     name: string;
     url: string;
     token: string;
@@ -1304,7 +1299,7 @@ export class AgentService {
   }): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
       const id = `profile_${Date.now()}`;
-      const profile: EverworkerProfile = {
+      const profile: BackendProfile = {
         id,
         name: data.name,
         url: data.url.replace(/\/+$/, ''),
@@ -1317,16 +1312,16 @@ export class AgentService {
         ...(data.userId !== undefined && { userId: data.userId }),
         ...(data.authMethod !== undefined && { authMethod: data.authMethod }),
       };
-      this.ewProfiles.profiles.push(profile);
-      await this.saveEWProfiles();
-      logger.info(`[addEWProfile] Added profile "${data.name}" (${id})`);
+      this.backendProfiles.profiles.push(profile);
+      await this.saveBackendProfiles();
+      logger.info(`[addBackendProfile] Added profile "${data.name}" (${id})`);
       return { success: true, id };
     } catch (error) {
       return { success: false, error: String(error) };
     }
   }
 
-  async updateEWProfile(id: string, updates: {
+  async updateBackendProfile(id: string, updates: {
     name?: string;
     url?: string;
     token?: string;
@@ -1337,7 +1332,7 @@ export class AgentService {
     authMethod?: 'manual' | 'browser-auth';
   }): Promise<{ success: boolean; error?: string }> {
     try {
-      const profile = this.ewProfiles.profiles.find(p => p.id === id);
+      const profile = this.backendProfiles.profiles.find(p => p.id === id);
       if (!profile) return { success: false, error: 'Profile not found' };
 
       if (updates.name !== undefined) profile.name = updates.name;
@@ -1350,32 +1345,32 @@ export class AgentService {
       if (updates.authMethod !== undefined) profile.authMethod = updates.authMethod;
       profile.updatedAt = Date.now();
 
-      await this.saveEWProfiles();
-      logger.info(`[updateEWProfile] Updated profile "${profile.name}" (${id})`);
+      await this.saveBackendProfiles();
+      logger.info(`[updateBackendProfile] Updated profile "${profile.name}" (${id})`);
       return { success: true };
     } catch (error) {
       return { success: false, error: String(error) };
     }
   }
 
-  async deleteEWProfile(id: string): Promise<{ success: boolean; error?: string }> {
+  async deleteBackendProfile(id: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const idx = this.ewProfiles.profiles.findIndex(p => p.id === id);
+      const idx = this.backendProfiles.profiles.findIndex(p => p.id === id);
       if (idx === -1) return { success: false, error: 'Profile not found' };
 
-      const wasActive = this.ewProfiles.activeProfileId === id;
-      this.ewProfiles.profiles.splice(idx, 1);
+      const wasActive = this.backendProfiles.activeProfileId === id;
+      this.backendProfiles.profiles.splice(idx, 1);
 
       if (wasActive) {
-        this.ewProfiles.activeProfileId = null;
-        await this.saveEWProfiles();
-        await this.purgeAllEWConnectors();
-        this.notifyRenderer('everworker:connectors-changed', { profileId: null, added: 0, removed: 0 });
+        this.backendProfiles.activeProfileId = null;
+        await this.saveBackendProfiles();
+        await this.purgeAllBackendConnectors();
+        this.notifyRenderer('backend:connectors-changed', { profileId: null, added: 0, removed: 0 });
       } else {
-        await this.saveEWProfiles();
+        await this.saveBackendProfiles();
       }
 
-      logger.info(`[deleteEWProfile] Deleted profile ${id} (wasActive: ${wasActive})`);
+      logger.info(`[deleteBackendProfile] Deleted profile ${id} (wasActive: ${wasActive})`);
       return { success: true };
     } catch (error) {
       return { success: false, error: String(error) };
@@ -1385,29 +1380,29 @@ export class AgentService {
   // ---- Core switch + sync ----
 
   /**
-   * Switch the active EW profile. Purges old connectors and syncs new ones live.
+   * Switch the active backend profile. Purges old connectors and syncs new ones live.
    */
-  async switchEWProfile(profileId: string | null): Promise<{ success: boolean; added?: number; removed?: number; error?: string }> {
+  async switchBackendProfile(profileId: string | null): Promise<{ success: boolean; added?: number; removed?: number; error?: string }> {
     try {
-      // Count how many EW connectors existed before purge
+      // Count how many backend connectors existed before purge
       let removedCount = 0;
       for (const config of this.connectors.values()) {
-        if (config.source === 'everworker') removedCount++;
+        if (config.source === 'backend') removedCount++;
       }
       for (const config of this.universalConnectors.values()) {
-        if (config.source === 'everworker') removedCount++;
+        if (config.source === 'backend') removedCount++;
       }
 
-      this.ewProfiles.activeProfileId = profileId;
-      await this.saveEWProfiles();
+      this.backendProfiles.activeProfileId = profileId;
+      await this.saveBackendProfiles();
 
       // Purge old connectors
-      await this.purgeAllEWConnectors();
+      await this.purgeAllBackendConnectors();
 
       let addedCount = 0;
       if (profileId) {
         // Sync new profile's connectors
-        const syncResult = await this.syncActiveEWProfile();
+        const syncResult = await this.syncActiveBackendProfile();
         if (!syncResult.success) {
           return { success: false, added: 0, removed: removedCount, error: syncResult.error };
         }
@@ -1419,9 +1414,9 @@ export class AgentService {
       invalidateHoseaTools();
 
       // Notify renderer
-      this.notifyRenderer('everworker:connectors-changed', { profileId, added: addedCount, removed: removedCount });
+      this.notifyRenderer('backend:connectors-changed', { profileId, added: addedCount, removed: removedCount });
 
-      logger.info(`[switchEWProfile] Switched to profile ${profileId}: ${addedCount} added, ${removedCount} removed`);
+      logger.info(`[switchBackendProfile] Switched to profile ${profileId}: ${addedCount} added, ${removedCount} removed`);
       return { success: true, added: addedCount, removed: removedCount };
     } catch (error) {
       return { success: false, error: String(error) };
@@ -1429,13 +1424,13 @@ export class AgentService {
   }
 
   /**
-   * Purge all EW-sourced connectors from memory, disk, and the library registry
+   * Purge all backend-sourced connectors from memory, disk, and the library registry
    */
-  private async purgeAllEWConnectors(): Promise<void> {
+  private async purgeAllBackendConnectors(): Promise<void> {
     const { unlink } = await import('node:fs/promises');
 
     for (const [name, config] of [...this.connectors.entries()]) {
-      if (config.source === 'everworker') {
+      if (config.source === 'backend') {
         this.connectors.delete(name);
         if (Connector.has(name)) Connector.remove(name);
         const filePath = join(this.dataDir, 'connectors', `${name}.json`);
@@ -1444,7 +1439,7 @@ export class AgentService {
     }
 
     for (const [name, config] of [...this.universalConnectors.entries()]) {
-      if (config.source === 'everworker') {
+      if (config.source === 'backend') {
         this.universalConnectors.delete(name);
         if (Connector.has(name)) Connector.remove(name);
         const filePath = join(this.dataDir, 'universal-connectors', `${name}.json`);
@@ -1452,19 +1447,19 @@ export class AgentService {
       }
     }
 
-    logger.debug('[purgeAllEWConnectors] All EW connectors purged');
+    logger.debug('[purgeAllBackendConnectors] All backend connectors purged');
   }
 
   /**
    * Test connection for a specific profile
    */
-  async testEWProfileConnection(id: string): Promise<{ success: boolean; connectorCount?: number; error?: string }> {
-    const profile = this.ewProfiles.profiles.find(p => p.id === id);
+  async testBackendProfileConnection(id: string): Promise<{ success: boolean; connectorCount?: number; error?: string }> {
+    const profile = this.backendProfiles.profiles.find(p => p.id === id);
     if (!profile) return { success: false, error: 'Profile not found' };
 
     try {
       const url = `${profile.url}/api/v1/proxy/connectors`;
-      logger.info(`[testEWProfileConnection] Testing connection to ${url}`);
+      logger.info(`[testBackendProfileConnection] Testing connection to ${url}`);
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
       let response: Response;
@@ -1479,25 +1474,25 @@ export class AgentService {
       }
       if (!response.ok) {
         const text = await response.text();
-        logger.error(`[testEWProfileConnection] HTTP ${response.status}: ${text}`);
+        logger.error(`[testBackendProfileConnection] HTTP ${response.status}: ${text}`);
         return { success: false, error: `HTTP ${response.status}: ${text}` };
       }
-      const data = await response.json() as { connectors: EWRemoteConnector[] };
+      const data = await response.json() as { connectors: RemoteBackendConnector[] };
       const count = data.connectors?.length ?? 0;
-      logger.info(`[testEWProfileConnection] Success: ${count} connectors available`);
+      logger.info(`[testBackendProfileConnection] Success: ${count} connectors available`);
       return { success: true, connectorCount: count };
     } catch (error) {
-      logger.error(`[testEWProfileConnection] Error: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(`[testBackendProfileConnection] Error: ${error instanceof Error ? error.message : String(error)}`);
       return { success: false, error: String(error) };
     }
   }
 
   /**
-   * Sync connectors for the active EW profile.
-   * Replaces the old syncEWConnectors method.
+   * Sync connectors for the active backend profile.
+   * Replaces the old syncBackendConnectors method.
    */
-  async syncActiveEWProfile(): Promise<{ success: boolean; added: number; updated: number; removed: number; error?: string }> {
-    const activeProfile = this.getActiveEWProfile();
+  async syncActiveBackendProfile(): Promise<{ success: boolean; added: number; updated: number; removed: number; error?: string }> {
+    const activeProfile = this.getActiveBackendProfile();
     if (!activeProfile) {
       return { success: true, added: 0, updated: 0, removed: 0 };
     }
@@ -1505,7 +1500,7 @@ export class AgentService {
     // Check token expiry before attempting sync
     const tokenStatus = this.getTokenStatus();
     if (tokenStatus.status === 'expired') {
-      return { success: false, added: 0, updated: 0, removed: 0, error: 'Token expired. Please re-authenticate with EverWorker.' };
+      return { success: false, added: 0, updated: 0, removed: 0, error: 'Token expired. Please re-authenticate with Backend.' };
     }
 
     try {
@@ -1524,24 +1519,24 @@ export class AgentService {
       }
       if (!response.ok) {
         const text = await response.text();
-        logger.error(`[syncActiveEWProfile] Discovery endpoint returned HTTP ${response.status}: ${text}`);
+        logger.error(`[syncActiveBackendProfile] Discovery endpoint returned HTTP ${response.status}: ${text}`);
         return { success: false, added: 0, updated: 0, removed: 0, error: `HTTP ${response.status}: ${text}` };
       }
 
-      const data = await response.json() as { connectors: EWRemoteConnector[] };
+      const data = await response.json() as { connectors: RemoteBackendConnector[] };
       const remoteConnectors = data.connectors ?? [];
 
       let added = 0;
       let updated = 0;
       let removed = 0;
 
-      // ---- Phase 1: Purge ALL existing EW-sourced entries from both stores ----
-      const previousEWNames = new Set<string>();
+      // ---- Phase 1: Purge ALL existing backend-sourced entries from both stores ----
+      const previousBackendNames = new Set<string>();
       const { unlink } = await import('node:fs/promises');
 
       for (const [name, config] of [...this.connectors.entries()]) {
-        if (config.source === 'everworker') {
-          previousEWNames.add(name);
+        if (config.source === 'backend') {
+          previousBackendNames.add(name);
           this.connectors.delete(name);
           if (Connector.has(name)) Connector.remove(name);
           const filePath = join(this.dataDir, 'connectors', `${name}.json`);
@@ -1550,8 +1545,8 @@ export class AgentService {
       }
 
       for (const [name, config] of [...this.universalConnectors.entries()]) {
-        if (config.source === 'everworker') {
-          previousEWNames.add(name);
+        if (config.source === 'backend') {
+          previousBackendNames.add(name);
           this.universalConnectors.delete(name);
           if (Connector.has(name)) Connector.remove(name);
           const filePath = join(this.dataDir, 'universal-connectors', `${name}.json`);
@@ -1559,18 +1554,18 @@ export class AgentService {
         }
       }
 
-      logger.debug(`[syncActiveEWProfile] Purged ${previousEWNames.size} previous EW entries, re-adding ${remoteConnectors.length} from server`);
+      logger.debug(`[syncActiveBackendProfile] Purged ${previousBackendNames.size} previous backend entries, re-adding ${remoteConnectors.length} from server`);
 
       // ---- Phase 2: Re-add all remote connectors into the correct store ----
       for (const remote of remoteConnectors) {
         const proxyBaseURL = `${activeProfile.url}/api/v1/proxy/${remote.name}`;
         const isLLM = remote.type === 'llm' || (remote.type === undefined && isVendor(remote.vendor));
-        const wasKnown = previousEWNames.has(remote.name);
+        const wasKnown = previousBackendNames.has(remote.name);
 
         if (isLLM) {
           const localExisting = this.connectors.get(remote.name);
           if (localExisting) {
-            logger.debug(`[syncActiveEWProfile] Skipping LLM "${remote.name}" - local connector exists`);
+            logger.debug(`[syncActiveBackendProfile] Skipping LLM "${remote.name}" - local connector exists`);
             continue;
           }
 
@@ -1580,7 +1575,7 @@ export class AgentService {
             auth: { type: 'api_key', apiKey: activeProfile.token },
             baseURL: proxyBaseURL,
             models: remote.models,
-            source: 'everworker',
+            source: 'backend',
             createdAt: Date.now(),
             updatedAt: Date.now(),
           };
@@ -1598,11 +1593,11 @@ export class AgentService {
           });
 
           if (wasKnown) updated++; else added++;
-          logger.debug(`[syncActiveEWProfile] Synced LLM connector: ${remote.name} (vendor: ${remote.vendor})`);
+          logger.debug(`[syncActiveBackendProfile] Synced LLM connector: ${remote.name} (vendor: ${remote.vendor})`);
         } else {
           const localExisting = this.universalConnectors.get(remote.name);
           if (localExisting) {
-            logger.debug(`[syncActiveEWProfile] Skipping universal "${remote.name}" - local connector exists`);
+            logger.debug(`[syncActiveBackendProfile] Skipping universal "${remote.name}" - local connector exists`);
             continue;
           }
 
@@ -1611,13 +1606,13 @@ export class AgentService {
             vendorId: remote.vendor || remote.serviceType || remote.name,
             vendorName: remote.name,
             authMethodId: 'ew-proxy',
-            authMethodName: 'Everworker Proxy',
+            authMethodName: 'Backend Proxy',
             credentials: {},
             baseURL: proxyBaseURL,
             createdAt: Date.now(),
             updatedAt: Date.now(),
             status: 'active',
-            source: 'everworker',
+            source: 'backend',
           };
 
           this.universalConnectors.set(remote.name, config);
@@ -1633,63 +1628,63 @@ export class AgentService {
           });
 
           if (wasKnown) updated++; else added++;
-          logger.debug(`[syncActiveEWProfile] Synced universal connector: ${remote.name} (vendor: ${remote.vendor})`);
+          logger.debug(`[syncActiveBackendProfile] Synced universal connector: ${remote.name} (vendor: ${remote.vendor})`);
         }
       }
 
       // ---- Phase 3: Count removals ----
       const remoteNames = new Set(remoteConnectors.map(c => c.name));
-      for (const name of previousEWNames) {
+      for (const name of previousBackendNames) {
         if (!remoteNames.has(name)) {
           removed++;
-          logger.info(`[syncActiveEWProfile] Removed EW connector no longer on server: ${name}`);
+          logger.info(`[syncActiveBackendProfile] Removed backend connector no longer on server: ${name}`);
         }
       }
 
       // Update profile sync metadata
       activeProfile.lastSyncedAt = Date.now();
       activeProfile.lastSyncConnectorCount = remoteConnectors.length;
-      await this.saveEWProfiles();
+      await this.saveBackendProfiles();
 
       // Invalidate tool caches after sync
       ToolCatalogRegistry.reset();
       invalidateHoseaTools();
 
-      logger.info(`[syncActiveEWProfile] Sync complete: ${added} added, ${updated} updated, ${removed} removed, ${remoteConnectors.length} total remote`);
+      logger.info(`[syncActiveBackendProfile] Sync complete: ${added} added, ${updated} updated, ${removed} removed, ${remoteConnectors.length} total remote`);
       return { success: true, added, updated, removed };
     } catch (error) {
-      logger.error(`[syncActiveEWProfile] Error: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(`[syncActiveBackendProfile] Error: ${error instanceof Error ? error.message : String(error)}`);
       return { success: false, added: 0, updated: 0, removed: 0, error: String(error) };
     }
   }
 
   // ---- Legacy compatibility wrappers ----
 
-  /** @deprecated Use getEWProfiles() and getActiveEWProfile() instead */
-  getEWConfig(): EverworkerBackendConfig | null {
-    const active = this.getActiveEWProfile();
+  /** @deprecated Use getBackendProfiles() and getActiveBackendProfile() instead */
+  getBackendConfig(): BackendConfig | null {
+    const active = this.getActiveBackendProfile();
     if (!active) return null;
     return { url: active.url, token: active.token, enabled: true };
   }
 
-  /** @deprecated Use addEWProfile() or updateEWProfile() + switchEWProfile() instead */
-  async setEWConfig(config: EverworkerBackendConfig): Promise<{ success: boolean; error?: string }> {
+  /** @deprecated Use addBackendProfile() or updateBackendProfile() + switchBackendProfile() instead */
+  async setBackendConfig(config: BackendConfig): Promise<{ success: boolean; error?: string }> {
     try {
       // If no profiles exist, create one
-      if (this.ewProfiles.profiles.length === 0) {
-        const result = await this.addEWProfile({ name: 'Default', url: config.url, token: config.token });
+      if (this.backendProfiles.profiles.length === 0) {
+        const result = await this.addBackendProfile({ name: 'Default', url: config.url, token: config.token });
         if (result.success && config.enabled && result.id) {
-          this.ewProfiles.activeProfileId = result.id;
-          await this.saveEWProfiles();
+          this.backendProfiles.activeProfileId = result.id;
+          await this.saveBackendProfiles();
         }
       } else {
         // Update the first profile
-        const first = this.ewProfiles.profiles[0];
+        const first = this.backendProfiles.profiles[0];
         first.url = config.url.replace(/\/+$/, '');
         first.token = config.token;
         first.updatedAt = Date.now();
-        this.ewProfiles.activeProfileId = config.enabled ? first.id : null;
-        await this.saveEWProfiles();
+        this.backendProfiles.activeProfileId = config.enabled ? first.id : null;
+        await this.saveBackendProfiles();
       }
       return { success: true };
     } catch (error) {
@@ -1697,16 +1692,16 @@ export class AgentService {
     }
   }
 
-  /** @deprecated Use testEWProfileConnection() instead */
-  async testEWConnection(): Promise<{ success: boolean; connectorCount?: number; error?: string }> {
-    const active = this.getActiveEWProfile();
-    if (!active) return { success: false, error: 'Everworker backend not configured or disabled' };
-    return this.testEWProfileConnection(active.id);
+  /** @deprecated Use testBackendProfileConnection() instead */
+  async testBackendConnection(): Promise<{ success: boolean; connectorCount?: number; error?: string }> {
+    const active = this.getActiveBackendProfile();
+    if (!active) return { success: false, error: 'Backend backend not configured or disabled' };
+    return this.testBackendProfileConnection(active.id);
   }
 
-  /** @deprecated Use syncActiveEWProfile() instead */
-  async syncEWConnectors(): Promise<{ success: boolean; added: number; updated: number; removed: number; error?: string }> {
-    return this.syncActiveEWProfile();
+  /** @deprecated Use syncActiveBackendProfile() instead */
+  async syncBackendConnectors(): Promise<{ success: boolean; added: number; updated: number; removed: number; error?: string }> {
+    return this.syncActiveBackendProfile();
   }
 
   private async loadAgents(): Promise<void> {
@@ -2297,6 +2292,7 @@ export class AgentService {
         if (file.endsWith('.json')) {
           const content = await readFile(join(universalConnectorsDir, file), 'utf-8');
           const config = JSON.parse(content) as StoredUniversalConnector;
+          if (config.source === 'backend' && !isBackendEnabled()) continue;
           this.universalConnectors.set(config.name, config);
 
           // For OAuth authorization_code connectors: set default redirectUri if not already stored
@@ -2829,26 +2825,26 @@ export class AgentService {
   // ============ Built-in OAuth (Connections Page) ============
 
   /**
-   * Resolve the default EverWorker URL.
+   * Resolve the default Backend URL.
    * Priority: env var > settings file > hardcoded default.
    */
-  getDefaultEWUrl(): string {
+  getDefaultBackendUrl(): string {
     // 1. Env var (dev override)
-    if (process.env.HOSEA_EW_URL) {
-      return process.env.HOSEA_EW_URL;
+    if (process.env.HOSEA_BACKEND_URL) {
+      return process.env.HOSEA_BACKEND_URL;
     }
     // 2. Settings file override
     try {
       const settingsPath = join(this.dataDir, 'settings.json');
       if (existsSync(settingsPath)) {
         const content = JSON.parse(readFileSync(settingsPath, 'utf-8'));
-        if (content.ewDefaultUrl) return content.ewDefaultUrl;
+        if (content.backendDefaultUrl) return content.backendDefaultUrl;
       }
     } catch {
       // ignore
     }
     // 3. Hardcoded default
-    return 'https://saas.everworker.ai';
+    return 'https://youetal.ai';
   }
 
   /**
@@ -3592,7 +3588,7 @@ export class AgentService {
           permissions: {
             policies: [],
             onApprovalRequired: this.createApprovalCallback('default'),
-            userRulesStorage: new FileUserPermissionRulesStorage(),
+            userRulesStorage: new FileUserPermissionRulesStorage({ baseDirectory: join(this.dataDir, 'users') }),
           },
         } : {}),
       };
@@ -3689,7 +3685,7 @@ export class AgentService {
               id: m.name,
               name: m.name,
               description: m.description,
-              contextWindow: m.features.input.tokens,
+              contextWindow: resolveMaxContextTokens(m.name, 0),
               realtime: m.features.realtime ?? false,
               voices: m.voices,
             })),
@@ -4120,7 +4116,7 @@ export class AgentService {
         id: crypto.randomUUID(),
         toolName: String(ruleData.toolName ?? '*'),
         action: (ruleData.action as 'allow' | 'deny' | 'ask') ?? 'allow',
-        conditions: ruleData.conditions as Array<{ argName: string; operator: string; value: string }> | undefined,
+        conditions: ruleData.conditions as UserPermissionRule['conditions'],
         unconditional: Boolean(ruleData.unconditional),
         enabled: ruleData.enabled !== false,
         description: ruleData.description as string | undefined,
@@ -4159,7 +4155,7 @@ export class AgentService {
     if (!instance) return { success: false, error: 'Instance not found' };
 
     try {
-      const tools = instance.agent.tools.list().map(t => t.definition.function.name);
+      const tools = instance.agent.tools.list();
       return { success: true, tools: tools.sort() };
     } catch (error) {
       return { success: false, error: String(error) };
@@ -4221,7 +4217,7 @@ export class AgentService {
    */
   getPinnedContextKeysSync(agentConfigId: string): string[] {
     try {
-      const configPath = join(homedir(), '.oneringai', 'agents', agentConfigId, 'ui_config.json');
+      const configPath = join(this.dataDir, 'agent-ui', agentConfigId, 'ui_config.json');
       if (!existsSync(configPath)) return [];
       const { readFileSync } = require('node:fs');
       const data = JSON.parse(readFileSync(configPath, 'utf-8'));
@@ -4236,7 +4232,7 @@ export class AgentService {
    */
   async getPinnedContextKeys(agentConfigId: string): Promise<string[]> {
     try {
-      const configPath = join(homedir(), '.oneringai', 'agents', agentConfigId, 'ui_config.json');
+      const configPath = join(this.dataDir, 'agent-ui', agentConfigId, 'ui_config.json');
       if (!existsSync(configPath)) return [];
       const data = JSON.parse(await readFile(configPath, 'utf-8'));
       return Array.isArray(data.pinnedContextKeys) ? data.pinnedContextKeys : [];
@@ -4250,7 +4246,7 @@ export class AgentService {
    */
   async setPinnedContextKey(agentConfigId: string, key: string, pinned: boolean): Promise<{ success: boolean; error?: string }> {
     try {
-      const agentDir = join(homedir(), '.oneringai', 'agents', agentConfigId);
+      const agentDir = join(this.dataDir, 'agent-ui', agentConfigId);
       const configPath = join(agentDir, 'ui_config.json');
 
       // Ensure directory exists
@@ -4474,7 +4470,7 @@ export class AgentService {
         logger.info(`[createInstance] Creating orchestrator with ${Object.keys(agentTypes).length} agent types: ${Object.keys(agentTypes).join(', ')}`);
 
         // Create orchestrator agent (gets 7 orchestration tools + shared workspace automatically)
-        agent = createOrchestrator({
+        agent = await createOrchestrator({
           connector: agentConfig.connector,
           model: agentConfig.model,
           name: agentConfig.name,
@@ -4606,7 +4602,7 @@ export class AgentService {
           ...(agentConfig.permissionsEnabled ? {
             permissions: {
               onApprovalRequired: this.createApprovalCallback(instanceId),
-              userRulesStorage: new FileUserPermissionRulesStorage(),
+              userRulesStorage: new FileUserPermissionRulesStorage({ baseDirectory: join(this.dataDir, 'users') }),
             },
           } : {}),
         });
@@ -4883,7 +4879,7 @@ export class AgentService {
 
   /**
    * List all saved sessions across all instance directories, grouped by agent.
-   * Scans ~/.everworker/inst_* dirs for session data and groups by agentConfigId from metadata.
+   * Scans the workspace sessions/inst_* dirs for session data and groups by agentConfigId from metadata.
    */
   async listAllSessions(): Promise<Array<{
     agentConfigId: string;
@@ -4898,7 +4894,7 @@ export class AgentService {
       model?: string;
     }>;
   }>> {
-    const baseDir = join(this.dataDir, '..');
+    const baseDir = join(this.dataDir, 'sessions');
     const groupMap = new Map<string, {
       agentConfigId: string;
       agentName: string;
@@ -6513,7 +6509,7 @@ export class AgentService {
       }
 
       // Ensure STT connector is registered
-      const sttConnectorName = config.voiceBridgeSttConnector;
+      const sttConnectorName = config.voiceBridgeSttConnector || '';
       const sttConn = this.connectors.get(sttConnectorName);
       if (sttConn && !Connector.has(sttConnectorName)) {
         Connector.create({
@@ -6592,7 +6588,7 @@ export class AgentService {
         };
       }
 
-      bridgeConfig.hooks = {
+      const hooks: VoiceHooks = {
           onCallStart: async (session) => {
             this.pushVoiceBridgeLog(agentConfigId, 'info', `Call started from ${session.from} to ${session.to}`);
             this.mainWindowSender?.('voice-bridge:call-start', {
@@ -6650,6 +6646,7 @@ export class AgentService {
           },
       };
 
+      bridgeConfig.hooks = hooks;
       const bridge = VoiceBridge.create(bridgeConfig);
 
       // Wire bridge events for logging
@@ -6848,7 +6845,9 @@ export class AgentService {
   // ============ Routine Methods ============
 
   async listRoutines(options?: { tags?: string[]; search?: string }): Promise<RoutineDefinition[]> {
-    return this.routineStorage.list(undefined, options);
+    const summaries = await this.routineStorage.list(undefined, options);
+    const definitions = await Promise.all(summaries.map(summary => this.routineStorage.load(undefined, summary.id)));
+    return definitions.filter((definition): definition is RoutineDefinition => definition !== null);
   }
 
   async getRoutine(id: string): Promise<RoutineDefinition | null> {
@@ -6938,7 +6937,7 @@ export class AgentService {
     const execStorageFactory = StorageRegistry.get('routineExecutions');
     const execStorage = execStorageFactory
       ? execStorageFactory()
-      : new FileRoutineExecutionStorage({ maxRecords: this.config.routines?.maxExecutionLogs ?? 100 });
+      : new FileRoutineExecutionStorage({ baseDirectory: join(this.dataDir, 'users'), maxRecords: this.config.routines?.maxExecutionLogs ?? 100 });
     await execStorage.insert(undefined, record);
 
     // Create recorder for persistent execution tracking

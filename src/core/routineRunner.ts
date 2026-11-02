@@ -1,5 +1,6 @@
 import { boundedData, freezeData } from './routines/observations.js';
 import { ROUTINE_KEYS } from './routineKeys.js';
+import { addTierPrefix, stripTierPrefix } from '../domain/entities/Memory.js';
 /**
  * Routine Execution Runner
  *
@@ -194,7 +195,7 @@ export interface ExecuteRoutineOptions {
 export interface ValidationContext {
   /** Agent's final text output */
   responseText: string;
-  /** Current in-context memory entries (key-value pairs set via context_set) */
+  /** Current in-context memory entries (the whiteboard store) */
   inContextMemory: string | null;
   /** Current working memory index (keys + descriptions of stored data) */
   workingMemoryIndex: string | null;
@@ -221,9 +222,10 @@ function defaultSystemPrompt(definition: RoutineDefinition): string {
     '',
     'Between tasks, your conversation history is cleared but your memory persists.',
     'Use these strategies to pass information between tasks:',
-    '- Use context_set for small key results that subsequent tasks need immediately (visible in context, no retrieval needed).',
-    '- Use memory_store with tier="findings" for larger data that may be needed later.',
-    '- Use memory_retrieve to access data stored by previous tasks.',
+    '- For small results, use store_set({ store: "whiteboard", key: "result", description: "Result", value: <JSON value> }); values are visible in context.',
+    '- For larger data, use store_set({ store: "notes", key: "result", description: "Result", value: <JSON value>, tier: "findings" }).',
+    '- Read notes with store_get({ store: "notes", key: "<exact index key>" }); preserve tier/collision suffixes. The notes index and keyless store_get contain metadata only.',
+    '- Use only stores and tools advertised in this session. If a store is disabled, report results in your final response instead.',
     '',
     'IMPORTANT: When you have completed the current task, you MUST stop immediately.',
     'Do NOT repeat work you have already done. Do NOT re-fetch data you already have.',
@@ -278,7 +280,8 @@ function getOutputContracts(
 /**
  * Default task prompt builder.
  */
-function defaultTaskPrompt(task: Task, execution?: RoutineExecution): string {
+/** @internal Shared with nested control-flow execution; not a package export. */
+export function defaultTaskPrompt(task: Task, execution?: RoutineExecution): string {
   const parts: string[] = [];
 
   parts.push(`## Current Task: ${task.name}`, '');
@@ -304,7 +307,7 @@ function defaultTaskPrompt(task: Task, execution?: RoutineExecution): string {
 
   if (task.dependsOn.length > 0) {
     parts.push('Note: Results from prerequisite tasks are available in your live context.');
-    parts.push('Small results appear directly; larger results are in working memory — use memory_retrieve to access them.');
+    parts.push('Small results appear directly; read larger results with store_get({ store: "notes", key: "<exact index key>" }). The notes index is metadata only.');
     parts.push('Review the plan overview and dependency results before starting.');
     parts.push('');
   }
@@ -318,7 +321,8 @@ function defaultTaskPrompt(task: Task, execution?: RoutineExecution): string {
         parts.push(
           `A downstream task ("${contract.consumingTaskName}") will ${contract.flowType} over your results.`,
           `Store your result as a JSON ${contract.format} using:`,
-          `  context_set("${contract.storageKey}", <your JSON ${contract.format}>)`,
+          `  store_set({ store: "whiteboard", key: ${JSON.stringify(contract.storageKey)}, description: "Task output", value: <your JSON ${contract.format}> })`,
+          'If whiteboard is unavailable, use the notes store with the same key and omit tier. Control flow requires an enabled memory store.',
           'Each array element should represent one item to process independently.',
           ''
         );
@@ -545,7 +549,7 @@ async function cleanupMemoryKeys(
   if (wmPlugin) {
     const { entries: wmEntries } = await wmPlugin.query();
     for (const entry of wmEntries) {
-      if (config.wmPrefixes.some((p) => entry.key.startsWith(p))) {
+      if (config.wmPrefixes.some((p) => entry.key.startsWith(p) || stripTierPrefix(entry.key).startsWith(p))) {
         await wmPlugin.delete(entry.key);
       }
     }
@@ -627,7 +631,7 @@ async function injectRoutineContext(
       icmPlugin.set(depKey, depLabel, output, 'high');
       inContextDeps.push(depTask.name);
     } else if (wmPlugin) {
-      // Large result → WM (accessible via memory_retrieve)
+      // Large result → notes (read through store_get with its exact index key)
       await wmPlugin.store(depKey, depLabel, output, { tier: 'findings' });
       workingMemoryDeps.push(depTask.name);
     } else if (icmPlugin) {
@@ -648,7 +652,7 @@ async function injectRoutineContext(
       summaryParts.push(`In context (visible now): ${inContextDeps.join(', ')}`);
     }
     if (workingMemoryDeps.length > 0) {
-      summaryParts.push(`In working memory (use memory_retrieve): ${workingMemoryDeps.join(', ')}`);
+      summaryParts.push(`In notes (read each exact index key with store_get): ${workingMemoryDeps.join(', ')}`);
     }
     icmPlugin.set(ROUTINE_KEYS.DEPS, 'Dependency results location guide', summaryParts.join('\n'), 'high');
   }
@@ -668,6 +672,7 @@ async function cleanupRoutineContext(agent: Agent, extraKeys?: string[]): Promis
       if (icmPlugin) icmPlugin.delete(key);
       if (wmPlugin) {
         try { await wmPlugin.delete(key); } catch { /* may not exist in WM */ }
+        try { await wmPlugin.delete(addTierPrefix(key, 'findings')); } catch { /* may not exist in WM */ }
       }
     }
   }
@@ -1077,7 +1082,8 @@ export async function executeRoutine(options: ExecuteRoutineOptions): Promise<Ro
   const { icmPlugin: savedICM, wmPlugin: savedWM } = getPlugins(agent);
   const customKeys = [...(definition.preSteps ?? []), ...(definition.postSteps ?? [])].flatMap(step => step.resultKey ? [step.resultKey] : []);
   const routineKey = (key: string) => FULL_CLEANUP_CONFIG.icmPrefixes.some(prefix => key.startsWith(prefix))
-    || FULL_CLEANUP_CONFIG.wmPrefixes.some(prefix => key.startsWith(prefix)) || customKeys.includes(key);
+    || FULL_CLEANUP_CONFIG.wmPrefixes.some(prefix => stripTierPrefix(key).startsWith(prefix))
+    || customKeys.includes(key) || customKeys.includes(stripTierPrefix(key));
   const icmBefore = binding?.verified ? savedICM?.getState().entries.filter(entry => routineKey(entry.key)) : undefined;
   const wmBefore = binding?.verified ? savedWM?.getState().entries.filter(entry => routineKey(entry.key)) : undefined;
   const restoreSelected = async () => {

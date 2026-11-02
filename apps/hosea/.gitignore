@@ -47,3 +47,6 @@ logs/
 publish.sh
 publish-nonotary.sh
 notarize-later.sh
+
+# Isolated design preview (never commit credentials or sessions)
+.preview-data/

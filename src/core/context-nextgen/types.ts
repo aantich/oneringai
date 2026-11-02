@@ -775,7 +775,7 @@ export interface KnownContextFeatures {
   /** Enable WorkingMemory plugin (default: true) */
   workingMemory?: boolean;
 
-  /** Enable InContextMemory plugin (default: false) */
+  /** Enable InContextMemory plugin (default: true) */
   inContextMemory?: boolean;
 
   /** Enable PersistentInstructions plugin (default: false). @deprecated prefer the `memory` feature. */

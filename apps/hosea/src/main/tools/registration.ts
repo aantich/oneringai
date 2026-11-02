@@ -1,5 +1,5 @@
 /**
- * Everworker Desktop Tool Registration
+ * hosea Tool Registration
  *
  * Registers desktop-specific tool categories (browser, desktop) with the core
  * ToolCatalogRegistry at app startup. Replaces the old provider-based

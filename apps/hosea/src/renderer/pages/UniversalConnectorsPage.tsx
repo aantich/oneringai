@@ -31,7 +31,7 @@ interface StoredUniversalConnector {
   lastTestedAt?: number;
   status: 'active' | 'error' | 'untested';
   legacyServiceType?: string;
-  source?: 'local' | 'everworker' | 'built-in';
+  source?: 'local' | 'backend' | 'built-in';
 }
 
 interface VendorInfo {
@@ -213,7 +213,7 @@ export function UniversalConnectorsPage(): React.ReactElement {
   if (loading) {
     return (
       <div className="page">
-        <PageHeader title="Universal Connectors" subtitle="Loading..." />
+        <PageHeader title="Service connectors" subtitle="Loading..." />
         <div className="page__content">
           <div className="text-center py-5">
             <div className="spinner-border" role="status">
@@ -228,7 +228,7 @@ export function UniversalConnectorsPage(): React.ReactElement {
   return (
     <div className="page universal-connectors-page">
       <PageHeader
-        title="Universal Connectors"
+        title="Service connectors"
         subtitle={`${connectors.length} connector${connectors.length !== 1 ? 's' : ''} configured`}
       >
         <Button variant="primary" onClick={handleAddConnector}>

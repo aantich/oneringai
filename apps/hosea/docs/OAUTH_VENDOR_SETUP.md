@@ -1,6 +1,30 @@
 # OAuth Vendor Setup Guide (Desktop / Electron)
 
-Everworker Desktop uses OAuth 2.0 Authorization Code + PKCE for authenticating users with third-party services. The infrastructure is fully implemented — this document covers how to register your app with each vendor.
+hosea uses OAuth 2.0 Authorization Code + PKCE for authenticating users with third-party services. The infrastructure is fully implemented — this document covers how to register your app with each vendor.
+
+Hosea ships without organization-owned client IDs or shared client secrets.
+Configure a service connector through the UI, or add your own quick-connect
+registrations to `<HOSEA_DATA_DIR>/built-in-oauth-apps.json` (default `~/.hosea/`).
+The file is an array of `BuiltInOAuthApp` objects defined in
+`src/main/built-in-oauth-apps.ts`; restart after changing it. For example:
+
+```json
+[
+  {
+    "vendorId": "microsoft",
+    "displayName": "Microsoft",
+    "clientId": "YOUR_PUBLIC_CLIENT_ID",
+    "authTemplateId": "oauth-user",
+    "scopes": ["User.Read", "offline_access"],
+    "extraCredentials": { "tenantId": "common" }
+  }
+]
+```
+
+Only use registrations you control. Desktop apps cannot keep embedded client
+secrets confidential; prefer supported public-client / PKCE flows. Quick-connect
+cards appear only for configured registrations. The backend login/proxy path is
+separate and [disabled for now](BACKEND_INTEGRATION.md).
 
 **Redirect URI for all vendors:** `http://localhost:19876/oauth/callback`
 
@@ -37,7 +61,7 @@ All flows use the existing `VendorOAuthService` + `OAuthCallbackServer` in `apps
 **Steps:**
 
 1. Go to Azure Portal → App Registrations → **"New registration"**
-   - Name: `Everworker Desktop`
+   - Name: `hosea`
    - Supported account types: **"Accounts in any organizational directory and personal Microsoft accounts"** (multi-tenant + personal)
    - Redirect URI: Platform = **"Mobile and desktop applications"**, URI = `http://localhost:19876/oauth/callback`
 2. After creation, note the **Application (client) ID** — this is your `clientId`
@@ -114,7 +138,7 @@ All flows use the existing `VendorOAuthService` + `OAuthCallbackServer` in `apps
 2. Enable required APIs: Gmail API, Google Calendar API, Google Drive API, etc.
 3. Go to **Credentials** → **"Create Credentials"** → **"OAuth client ID"**
    - Application type: **"Desktop app"**
-   - Name: `Everworker Desktop`
+   - Name: `hosea`
 4. Download the JSON — note **Client ID** and **Client Secret**
 5. Go to **"OAuth consent screen"**:
    - User Type: **"External"**
@@ -164,7 +188,7 @@ All flows use the existing `VendorOAuthService` + `OAuthCallbackServer` in `apps
 **Steps:**
 
 1. Go to GitHub Settings → Developer settings → **GitHub Apps** → **"New GitHub App"**
-   - App name: `Everworker Desktop`
+   - App name: `hosea`
    - Homepage URL: your website
    - Callback URL: `http://localhost:19876/oauth/callback`
    - Check **"Request user authorization (OAuth) during installation"**
@@ -215,7 +239,7 @@ All flows use the existing `VendorOAuthService` + `OAuthCallbackServer` in `apps
 **Steps:**
 
 1. Log into a Salesforce org → **Setup** → **Apps** → **App Manager** → **"New Connected App"**
-   - Connected App Name: `Everworker Desktop`
+   - Connected App Name: `hosea`
    - Contact Email: your email
 2. Under **"API (Enable OAuth Settings)"**:
    - Check **"Enable OAuth Settings"**
@@ -356,7 +380,7 @@ These services use static API keys. Users enter their key directly in the app's 
 
 ## Token Storage
 
-Everworker Desktop stores all OAuth tokens locally using AES-256-GCM encryption:
+hosea stores all OAuth tokens locally using AES-256-GCM encryption:
 - **Location**: `~/.oneringai/oauth/tokens/` (file permissions 0o600)
 - **Encryption key**: Set `OAUTH_ENCRYPTION_KEY` env var for persistence across restarts
 - **Filenames**: SHA256-hashed (no sensitive data in filesystem)

@@ -593,7 +593,7 @@ function generateMemberDoc(member: DocMember, indent: string = ''): string {
   return lines.join('\n');
 }
 
-function generateItemDoc(item: DocItem): string {
+function generateItemDoc(item: DocItem, outputFile: string): string {
   const lines: string[] = [];
 
   // Header with kind badge
@@ -603,7 +603,9 @@ function generateItemDoc(item: DocItem): string {
 
   // Source link
   const relativePath = item.sourceFile.replace(/.*\/src\//, 'src/');
-  lines.push(`📍 [\`${relativePath}:${item.lineNumber}\`](${relativePath})`);
+  const sourceLink = path.relative(path.dirname(path.resolve(__dirname, '..', outputFile)), item.sourceFile)
+    .split(path.sep).join('/');
+  lines.push(`📍 [\`${relativePath}:${item.lineNumber}\`](${sourceLink}#L${item.lineNumber})`);
   lines.push('');
 
   // Description
@@ -765,7 +767,7 @@ function generateMarkdown(items: DocItem[], config: GeneratorConfig): string {
     });
 
     for (const item of categoryItems) {
-      lines.push(generateItemDoc(item));
+      lines.push(generateItemDoc(item, config.outputFile));
     }
   }
 

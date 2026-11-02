@@ -20,7 +20,7 @@ import { AgentContextMenu } from './AgentContextMenu.js';
 interface AgentCardProps {
   agent: AgentListItem;
   isConnectorAvailable: boolean;
-  isEwConnector: boolean;
+  isBackendConnector: boolean;
   onChat: (id: string) => void;
   onEdit: (id: string) => void;
   onFixConnector: (id: string) => void;
@@ -38,7 +38,7 @@ interface AgentCardProps {
 export function AgentCard({
   agent,
   isConnectorAvailable,
-  isEwConnector,
+  isBackendConnector,
   onChat,
   onEdit,
   onFixConnector,
@@ -137,7 +137,7 @@ export function AgentCard({
               ) : (
                 <>
                   {agent.name}
-                  {isEwConnector && <span className="agent-card__ew-badge">EW</span>}
+                  {isBackendConnector && <span className="agent-card__backend-badge">backend</span>}
                   {agent.isActive && <span className="agent-card__default-badge"><Star size={9} />Default</span>}
                   {!isConnectorAvailable && <AlertTriangle size={13} className="agent-card__warn" />}
                 </>

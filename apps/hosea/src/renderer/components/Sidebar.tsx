@@ -26,7 +26,7 @@ export function Sidebar({
       {/* Header */}
       <div className="p-3 border-bottom border-secondary">
         <h5 className="mb-0 d-flex align-items-center">
-          <span className="me-2">EW</span>
+          <span className="me-2">h</span>
           <Badge bg={status.initialized ? 'success' : 'secondary'} pill>
             {status.initialized ? 'Connected' : 'Offline'}
           </Badge>

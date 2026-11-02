@@ -1,0 +1,112 @@
+{
+  "status": "pass",
+  "node": "v24.20.0",
+  "startedAt": "2026-11-02T11:53:32.859Z",
+  "package": "oneringai@2.0.0-beta.1",
+  "integrity": "sha512-7+FuPKTLphaD5nIO9BUa0C0u3jp82lFAbzff0ZuUeM0+Ztb+j8zhjUUErhX2qNF5psT3fusN+4hkRxqg7TYnCg==",
+  "files": 498,
+  "documentationMatchesSource": true,
+  "probe": {
+    "node": "v22.13.0",
+    "sdkModules": [],
+    "documents": [
+      "csv",
+      "xlsx",
+      "docx",
+      "pptx",
+      "odt",
+      "odp",
+      "ods",
+      "rtf",
+      "pdf"
+    ],
+    "status": "pass",
+    "entries": 11,
+    "formats": [
+      "esm",
+      "cjs"
+    ],
+    "documentsBothFormats": true,
+    "publicSymbols": true,
+    "connectorIdentity": true,
+    "documentation": true,
+    "MITLicenses": true,
+    "legacyPackageAbsent": true,
+    "providerCalls": 0
+  },
+  "coreConsumerTypes": "ESM and CJS; public compatibility fixtures and nine entries; no optional SDKs; skipLibCheck=false",
+  "audit": {
+    "counts": {
+      "info": 0,
+      "low": 0,
+      "moderate": 10,
+      "high": 0,
+      "critical": 0,
+      "total": 10
+    },
+    "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+    "checked": [
+      "minimatch@3.1.5",
+      "minimatch@5.1.9",
+      "minimatch@3.1.5",
+      "minimatch@3.1.5",
+      "uuid@8.3.2"
+    ]
+  },
+  "optionalSdkVersions": {
+    "@openai/codex-sdk": "0.149.1",
+    "@anthropic-ai/claude-agent-sdk": "0.3.316"
+  },
+  "optionalConsumerTypes": "ESM and CJS; all eleven entries with declared optional SDK peers installed; skipLibCheck=false",
+  "optionalSdkProbe": {
+    "node": "v22.13.0",
+    "sdkModules": [
+      "@openai/codex-sdk",
+      "@anthropic-ai/claude-agent-sdk"
+    ],
+    "documents": [
+      "csv",
+      "xlsx",
+      "docx",
+      "pptx",
+      "odt",
+      "odp",
+      "ods",
+      "rtf",
+      "pdf"
+    ],
+    "status": "pass",
+    "entries": 11,
+    "formats": [
+      "esm",
+      "cjs"
+    ],
+    "documentsBothFormats": true,
+    "publicSymbols": true,
+    "connectorIdentity": true,
+    "documentation": true,
+    "MITLicenses": true,
+    "legacyPackageAbsent": true,
+    "providerCalls": 0
+  },
+  "optionalSdkAudit": {
+    "counts": {
+      "info": 0,
+      "low": 0,
+      "moderate": 10,
+      "high": 0,
+      "critical": 0,
+      "total": 10
+    },
+    "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+    "checked": [
+      "minimatch@3.1.5",
+      "minimatch@5.1.9",
+      "minimatch@3.1.5",
+      "minimatch@3.1.5",
+      "uuid@8.3.2"
+    ]
+  },
+  "finishedAt": "2026-11-02T11:54:29.473Z",
+  "note": "Detached final-tarball attestation; intentionally excluded from the tarball whose integrity it records. No merge, tag or publication performed."
+}

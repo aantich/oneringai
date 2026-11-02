@@ -2029,9 +2029,9 @@ h4.dynamic-ui__heading {
 }
 
 /* Context Display Panel — now provided by Hosea local UI/styles/context-display */
-/* Everworker Desktop-specific overrides for the shared cdp-* classes */
+/* hosea-specific overrides for the shared cdp-* classes */
 
-/* Map Everworker Desktop CSS variables to cdp variables */
+/* Map hosea CSS variables to cdp variables */
 .cdp-panel {
   --cdp-border-color: var(--color-gray-200);
   --cdp-bg: white;

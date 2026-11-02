@@ -432,7 +432,7 @@ export function OllamaSetupPanel({ compact = false, onReady }: OllamaSetupPanelP
             <Form.Check
               type="switch"
               id="ollama-autostart"
-              label="Auto-start Ollama when Everworker Desktop launches"
+              label="Auto-start Ollama when hosea launches"
               checked={state.autoStart}
               onChange={(e) => window.hosea.ollama.setAutoStart(e.target.checked)}
             />
@@ -440,7 +440,7 @@ export function OllamaSetupPanel({ compact = false, onReady }: OllamaSetupPanelP
               <Alert variant="info" className="mt-3 mb-0 py-2">
                 <small>
                   <ExternalLink size={14} className="me-1" />
-                  Using externally installed Ollama. Everworker Desktop manages the lifecycle but doesn't own the binary.
+                  Using externally installed Ollama. hosea manages the lifecycle but doesn't own the binary.
                 </small>
               </Alert>
             )}

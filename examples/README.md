@@ -433,6 +433,8 @@ The verified routine facade and AMOS operation controls are delivered in C3.
 
 ### Verified routines (C3)
 
+After `npm run build`, run `npm run example:routine-stores` for an offline demonstration of actual unified store calls, map output and fold accumulation. Expected result: `[2,3]` becomes `[4,6]`, then `10`, with six deterministic model calls and complete agent/connector cleanup. No keys, network or live LLM are used. See [the example](routine-store-bridge.ts) and the [routine guide](../USER_GUIDE.md#routine-execution).
+
 After `npm run build`, run `npm run example:verified-routines` (offline, no credentials). It submits one synthetic action, waits for a host check, resumes the same cursor and verifies an artifact created by a post-step. All agents/tasks/connectors are cleaned up. See [the recipe](../docs/VERIFIED_ROUTINES.md) for source archival and live test opt-in.
 
 ### Enhanced connectors (C4)

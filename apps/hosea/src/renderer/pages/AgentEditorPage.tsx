@@ -74,7 +74,7 @@ interface UniversalConnector {
   displayName?: string;
   baseURL?: string;
   status: 'active' | 'error' | 'untested';
-  source?: 'local' | 'everworker' | 'built-in';
+  source?: 'local' | 'backend' | 'built-in';
 }
 
 interface MCPServerInfo {
@@ -252,7 +252,7 @@ export function AgentEditorPage(): React.ReactElement {
   const [saving, setSaving] = useState(false);
 
   // Data from API
-  const [connectors, setConnectors] = useState<{ name: string; vendor: string; source?: 'local' | 'everworker' | 'built-in' }[]>([]);
+  const [connectors, setConnectors] = useState<{ name: string; vendor: string; source?: 'local' | 'backend' | 'built-in' }[]>([]);
   const [modelsByVendor, setModelsByVendor] = useState<
     { vendor: string; models: ModelInfo[] }[]
   >([]);
@@ -286,7 +286,7 @@ export function AgentEditorPage(): React.ReactElement {
   const [liveModels, setLiveModels] = useState<string[]>([]);
   const [loadingLiveModels, setLoadingLiveModels] = useState(false);
 
-  // Load data on mount (and when connectors change via EW profile switch)
+  // Load data on mount (and when connectors change via backend profile switch)
   useEffect(() => {
     async function loadData() {
       try {
@@ -611,9 +611,9 @@ export function AgentEditorPage(): React.ReactElement {
     };
   }, [availableTools, isToolOperational]);
 
-  // Map connector names to their source (local vs everworker)
+  // Map connector names to their source (local vs backend)
   const connectorSourceMap = useMemo(() => {
-    const map = new Map<string, 'local' | 'everworker' | 'built-in'>();
+    const map = new Map<string, 'local' | 'backend' | 'built-in'>();
     for (const c of connectors) {
       if (c.source) map.set(c.name, c.source);
     }
@@ -973,7 +973,7 @@ export function AgentEditorPage(): React.ReactElement {
                       <option value="">Select connector...</option>
                       {connectors.map((c) => (
                         <option key={c.name} value={c.name}>
-                          {c.name} ({c.vendor}){c.source === 'everworker' ? ' [EW]' : c.source === 'local' ? ' [Local]' : ''}
+                          {c.name} ({c.vendor}){c.source === 'backend' ? ' [backend]' : c.source === 'local' ? ' [Local]' : ''}
                         </option>
                       ))}
                     </Form.Select>
@@ -1245,10 +1245,10 @@ export function AgentEditorPage(): React.ReactElement {
                               className="ms-2 me-2"
                             />
                             <strong>{connectorName}</strong>
-                            {connectorSourceMap.get(connectorName) === 'everworker' && (
+                            {connectorSourceMap.get(connectorName) === 'backend' && (
                               <Badge bg="info" className="ms-2 d-inline-flex align-items-center gap-1" style={{ fontSize: '0.65rem' }}>
                                 <Cloud size={10} />
-                                EW
+                                backend
                               </Badge>
                             )}
                             {serviceType && (
@@ -2397,7 +2397,7 @@ export function AgentEditorPage(): React.ReactElement {
                             rows={2}
                             value={formData.voiceBridgeGreetingOutbound}
                             onChange={(e) => setFormData({ ...formData, voiceBridgeGreetingOutbound: e.target.value })}
-                            placeholder="Hi, this is Ada from Everworker..."
+                            placeholder="Hi, this is your assistant…"
                           />
                           <Form.Text className="text-muted">
                             First thing the agent says when making an outbound call. Leave empty to let the callee speak first.
@@ -2500,7 +2500,7 @@ export function AgentEditorPage(): React.ReactElement {
           <PermissionsTabContent
             formData={formData}
             setFormData={setFormData}
-            agentId={agentId}
+            agentId={agentId ?? null}
           />
         )}
 
