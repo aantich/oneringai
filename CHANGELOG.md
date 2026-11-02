@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Changes after the first v2 beta will be recorded here. See the
+- Correct standalone guide availability and installation instructions after the
+  verified v2 beta publication. Historical stage validation records and external
+  harness preview boundaries remain explicit.
+
+See the
 [published v2 beta](#200-beta1--2026-11-02) for the complete feature and upgrade notes.
 
 ## [2.0.0-beta.1] — 2026-11-02

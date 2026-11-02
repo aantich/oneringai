@@ -8,10 +8,12 @@ place for native Agent context, routing, routines, helper and tool-mutation comm
 This chapter owns AMOS setup and commands. The [canonical runtime chapter](../../../USER_GUIDE.md#agent-runtime-preview)
 owns library signatures, authentication, tools, capabilities and recovery guarantees.
 The [examples index](../../../examples/README.md#agent-runtime-harness-examples)
-contains deterministic checks and expected output. Availability is source on branch;
+contains deterministic checks and expected output. The library runtime is published
+in `oneringai@2.0.0-beta.1`; AMOS remains a source application.
 the [2026-11-01 library validation](../../../docs/evaluations/LIVE_VALIDATION_2026_11_01.md)
 records a separately authorized Codex subscription evaluation and small OpenAI API
-sample. AMOS native-provider end-to-end verification remains pending; no release is claimed.
+sample. AMOS native-provider end-to-end verification remains pending; the library
+beta does not establish a separate AMOS distribution release.
 
 ## Start the ready-to-run host
 

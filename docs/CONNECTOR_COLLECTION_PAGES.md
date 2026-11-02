@@ -1,6 +1,6 @@
 # Whole connector collection pages
 
-Branch API, explicitly opt-in; no verified package release. Import
+Available in `oneringai@2.0.0-beta.1`, explicitly opt-in. Import
 `ConnectorTools`, `ConnectorPage<T>` and `PagePosition` from `oneringai`.
 Execution-v1 remains the fixed C4 static profile. Select **collections-v1** for
 page contracts, strict topic input and the manager-local catalog adapter.

@@ -1,7 +1,7 @@
 # Context preparation and freshness
 
-Stage 01 of the Version 2 roadmap is available in the `version2` working tree.
-This document describes the delivered behavior, not a released npm version.
+Stage 01's context preparation is available in `oneringai@2.0.0-beta.1`.
+See the [release notes](../CHANGELOG.md#200-beta1--2026-11-02) for publication and validation.
 
 Managed `Agent.run()` and `Agent.stream()` select a prepared request immediately
 before each model call. Compaction can change the working-memory index, catalog,

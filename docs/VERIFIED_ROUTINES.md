@@ -1,4 +1,4 @@
-# Verified routines (C3, branch availability)
+# Verified routines (C3)
 
 `createRoutineRunner` is an opt-in facade over the existing routine engine. Existing
 `executeRoutine`, `createRoutineTool`, task unions and session formats retain their
@@ -136,4 +136,5 @@ and **one billable selected-model call**. `/routine inspect`, `/routine confirm`
 this synthetic demo. No AMOS saved configuration/session migration is required.
 
 Durable workflow restore (C3-R), production provider checks and ICOS adoption remain
-outside this slice. Branch availability is not a verified package release.
+outside this slice. This opt-in API is included in `oneringai@2.0.0-beta.1`;
+publication does not establish production provider checks or consumer adoption.

@@ -3,8 +3,8 @@
 Stage 16A adds an optional composition strategy to managed `Agent.run()` and
 `stream()`. Algorithmic remains the default. Existing strategy names, custom
 instances, plugins, ToolManager, events and version-1 sessions keep their existing
-contracts. Branch availability is recorded in [Version 2](VERSION_2_GUIDE.md);
-it is not evidence of a published package release.
+contracts. This API is included in `oneringai@2.0.0-beta.1`; exact support and
+validation boundaries are recorded in [Version 2](VERSION_2_GUIDE.md).
 
 ## Choose plugin and history behavior independently
 

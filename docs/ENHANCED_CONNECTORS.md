@@ -1,6 +1,6 @@
 # Enhanced connector contracts
 
-Branch availability: `ConnectorTools.enhanced` is opt-in. Existing `for`, factory
+Available in `oneringai@2.0.0-beta.1`: `ConnectorTools.enhanced` is opt-in. Existing `for`, factory
 callbacks, names, schemas and raw legacy results keep their behavior. No profile,
 plugin, tool catalog, prompt content or retry policy is enabled globally.
 

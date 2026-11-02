@@ -1,13 +1,14 @@
 # Selective context assembly and stable prompt layout
 
-Current status (2026-10-22): **all first- and second-review corrections validated
-on branch**. See [completion](designs/STAGE_05_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22)
+Available in `oneringai@2.0.0-beta.1`. **Recorded stage validation (2026-10-22):
+all first- and second-review corrections validated**. See [completion](designs/STAGE_05_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-22)
 and [validation](evaluations/STAGE_05_SECOND_CORRECTIONS_VALIDATION.json): 8,340 units,
 190 live tests / 202 scenarios across all three providers, 28 offline examples,
 92 public controls and all local/AMOS/type/build gates pass. Historical review
-and validation remain available. No package release is claimed.
+and validation remain available; the subsequent beta publication is recorded in
+the [release notes](../CHANGELOG.md#200-beta1--2026-11-02).
 
-Stage 05 is opt-in on the Version 2 branch; package release is separate. Existing
+Stage 05 remains opt-in in the published beta. Existing
 plugins, default Agent/context layout, observation hooks, tool execution, history,
 compaction strategies and saved state retain their contracts. Selection is a prompt
 view over sources, not a new memory backend, model router or retrieval service.

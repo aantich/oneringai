@@ -1,7 +1,7 @@
 # Model tasks and purpose-specific helpers
 
-Stage 06 adds optional helper roles and shared, process-local model budgets. This
-work is on the `version2` development branch; no package release is claimed.
+Stage 06's optional helper roles and shared, process-local model budgets are
+available in `oneringai@2.0.0-beta.1`. See the [release notes](../CHANGELOG.md#200-beta1--2026-11-02).
 Existing agents continue to use their configured main model. Omitting
 `modelExecution` and per-call `modelTask` preserves existing behavior and adds no
 helper calls, tools, prompt content, or accounting task.

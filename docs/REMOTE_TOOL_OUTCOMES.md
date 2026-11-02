@@ -1,6 +1,7 @@
 # Negotiated remote tool outcomes
 
-Branch availability: opt-in C7. No package release or consumer upgrade is implied.
+Available in `oneringai@2.0.0-beta.1` as opt-in C7. Publication does not
+automatically upgrade consumers or negotiate a remote protocol.
 The old `AgentPackageToolServer`, transport, DTOs, classification and literal
 `AGENT_PACKAGE_PROTOCOL_VERSION = 2` remain unchanged.
 

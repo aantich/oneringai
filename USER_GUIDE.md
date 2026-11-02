@@ -149,13 +149,14 @@ Offline demonstrations are explicitly identified in the examples index.
 
 ### Installation
 
-Use Node.js 22.13+ or 24+. After v2 publication, install the unscoped package:
+Use Node.js 22.13+ or 24+. Install the published unscoped v2 beta:
 
 ```bash
 npm install oneringai
 ```
 
-For the current unpublished source, follow [the local-package recipe](docs/PACKAGE_MIGRATION.md#try-v2-before-publication).
+The published package is `oneringai@2.0.0-beta.1`; both `latest` and `next` currently
+select this beta. For source development, follow [the local-package recipe](docs/PACKAGE_MIGRATION.md#try-v2-before-publication).
 ESM and CommonJS outputs and declarations are supplied. Optional SDK, Mongo, and
 native desktop dependencies are needed only for their respective integrations.
 
@@ -19085,7 +19086,7 @@ comparative quality, latency, or cost savings.
 These utilities require the repository; they are not new package exports. Existing
 applications need no configuration changes. Agent defaults, algorithmic compaction,
 the shared ToolManager, tool payloads, and saved-session format are unchanged.
-See the Version 2 Guide for branch availability and subsequent planned stages.
+See the Version 2 Guide for published-beta availability, historical validation, and deferred stages.
 
 ## Persistent Instructions (NextGen Plugin)
 

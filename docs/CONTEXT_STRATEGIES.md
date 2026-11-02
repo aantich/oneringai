@@ -1,11 +1,11 @@
 # Opt-in context strategies (Stage 07)
 
-Stage 07 is complete on `version2` as an experimental opt-in delivery, including
-all three review corrections (2026-10-15). The current gate passes 7,631 units and
+Stage 07 is included in `oneringai@2.0.0-beta.1` as experimental opt-in functionality, including
+all three review corrections (2026-10-15). The recorded stage gate passes 7,631 units and
 105 live cases in one batch. See the [corrective completion](designs/STAGE_07_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-15)
 and [evidence](evaluations/STAGE_07_CORRECTIONS_VALIDATION.json). Earlier review,
-pilot and validation records remain historical snapshots. No package release or
-promotion of a new default is claimed.
+pilot and validation records remain historical snapshots. Beta publication does
+not promote these strategies to a new default.
 
 Algorithmic remains the default. Two additive built-in registrations are available
 through `StrategyRegistry`: `observation-masking` and `structured-summary`. They

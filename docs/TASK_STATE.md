@@ -1,15 +1,14 @@
 # Protected task state
 
-Stage 04 is opt-in branch functionality. Package version 1.2.0 is unchanged; a
-published release has not been verified. `taskState` is disabled by default.
+Stage 04 is included in `oneringai@2.0.0-beta.1` as opt-in functionality.
+`taskState` remains disabled by default.
 
-**Current review status:** Both reviews' findings are fixed and validated on
-branch. The [second corrective completion](designs/STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16)
+**Recorded stage review:** Both reviews' findings are fixed and validated. The [second corrective completion](designs/STAGE_04_SECOND_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16)
 restores legacy public feature/configuration typing; its
 [evidence](evaluations/STAGE_04_SECOND_CORRECTIONS_VALIDATION.json) includes 7,795
 units and unchanged public consumers. Earlier review/corrective evidence and
-failed diagnostic attempts remain historical. No package release or breaking
-change is claimed.
+failed diagnostic attempts remain historical. The subsequent beta publication
+does not change these opt-in defaults or compatibility contracts.
 
 The plugin keeps a bounded, host-controlled task view separate from conversation
 prose. It stores objectives, constraints and corrections, decisions, questions,

@@ -1,6 +1,7 @@
 # Durable tool evidence (Stage 03)
 
-Implemented in the `version2` development branch; no package release is claimed.
+Available in the published `oneringai@2.0.0-beta.1` beta. See the
+[release notes](../CHANGELOG.md#200-beta1--2026-11-02) for publication and validation.
 Evidence is opt-in. Existing tool returns, defaults, execution plugins, and older
 saved sessions continue to work without enabling it.
 

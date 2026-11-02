@@ -1,8 +1,8 @@
 # Tool outcomes and cancellation
 
 Stage 02 adds semantic execution diagnostics and cancellation to the existing shared
-`ToolManager`. Available on the `version2` branch; this does not identify a published
-package release. Existing tools, raw return values, session formats, and defaults
+`ToolManager`. Available in the published `oneringai@2.0.0-beta.1` beta.
+Existing tools, raw return values, session formats, and defaults
 remain supported.
 
 Consumer C1 adds [`createOutcomeTool()`](OUTCOME_AWARE_TOOLS.md) for callbacks that

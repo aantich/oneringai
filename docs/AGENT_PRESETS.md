@@ -1,7 +1,6 @@
 # Opt-in Agent presets and capability inspection
 
-Available on the Version 2 development branch; this does not establish a published
-package release. The [third corrective completion](designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16)
+Available in the published `oneringai@2.0.0-beta.1` beta. The [third corrective completion](designs/STAGE_12_THIRD_REVIEW_AND_FIX_PLAN.md#third-corrective-completion--2026-10-16)
 records the shared-resume, JSON serialization and plugin recovery fixes and their validation.
 Ordinary `Agent.create(config)` keeps its existing defaults.
 
@@ -313,4 +312,4 @@ examples and 54 ESM/CJS public controls. All four third-review observations veri
 the fixes; 27 new unit regressions cover actual AMOS commands, file storage,
 permissions, JSON extension state and plugin recovery. Earlier validation remains
 historical; see the [fresh record](evaluations/STAGE_12_THIRD_CORRECTIONS.json).
-No package release is claimed.
+The stage record predates the [subsequent beta publication](../CHANGELOG.md#200-beta1--2026-11-02).

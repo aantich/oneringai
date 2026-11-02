@@ -1,8 +1,8 @@
 # Bounded recovery and host completion checks
 
 Stage 10 adds an opt-in policy to managed `Agent.run()` and `Agent.stream()`.
-It is available on the `version2` development branch once the stage completion
-record's validation gates pass. This document does not announce an npm release.
+It is available in `oneringai@2.0.0-beta.1`; the
+[release notes](../CHANGELOG.md#200-beta1--2026-11-02) record publication separately from the stage validation below.
 
 **Correction status:** All five [review findings](designs/STAGE_10_REVIEW_AND_FIX_PLAN.md#corrective-completion--2026-10-16)
 are fixed, and the [second review](designs/STAGE_10_SECOND_REVIEW_AND_FIXES.md)

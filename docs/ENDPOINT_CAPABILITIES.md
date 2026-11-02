@@ -51,4 +51,5 @@ Run `npm run example:endpoint-capabilities` for all three support states and the
 known-versus-unknown effort distinction. AMOS has no Realtime selector and receives
 no voice UI here. ICOS must explicitly adopt these lookups while preserving saved
 values and its host authorization/custom-service rules; an SDK pin alone does not
-change selector choices. A package release is not implied by branch availability.
+change selector choices. These lookups are included in `oneringai@2.0.0-beta.1`;
+publication does not imply a consumer upgrade.

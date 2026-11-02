@@ -8,6 +8,12 @@ in ESM/CJS and nine document formats. See the
 [publication evidence](evaluations/V2_RELEASE_VALIDATION_2026_11_02.json).
 Stable release and pending live/provider/platform gates remain separate.
 
+**Website documentation handoff — 2026-11-02:** Standalone usage guides and the
+User Guide installation section now identify the verified published beta rather
+than their earlier branch-only status. Historical stage records below retain
+their dates and validation scope; this documentation correction does not rerun
+live provider gates or announce another package version.
+
 **Documentation/release review — 2026-11-02:** The README is rewritten for v2,
 and the complete User Guide is reviewed and reorganized. Use those documents for
 current integration, the [v2 changelog](../CHANGELOG.md#200-beta1--2026-11-02) for a consolidated
