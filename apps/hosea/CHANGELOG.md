@@ -33,7 +33,7 @@ changes do not announce a signed desktop release.
 
 See the [design system](docs/DESIGN_SYSTEM.md),
 [backend integration boundaries](docs/BACKEND_INTEGRATION.md), and
-[library v2 changelog](../../CHANGELOG.md#unreleased).
+[library v2 changelog](../../CHANGELOG.md#200-beta1--2026-11-02).
 
 ## [0.2.1] - 2026-03-12
 

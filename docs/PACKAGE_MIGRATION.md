@@ -1,21 +1,23 @@
 # v1 to the unscoped OneRingAI v2 package
 
-The v2 package name is **`oneringai`**. Install it with `npm i oneringai` after
-publication. The repository remains [aantich/oneringai](https://github.com/aantich/oneringai).
+The v2 package name is **`oneringai`**. Install the published beta with
+`npm i oneringai`. The repository remains [aantich/oneringai](https://github.com/aantich/oneringai).
 The maintainer is Anton Antic, `anton.antich@gmail.com`.
 
 ## Current availability
 
-At the **2026-11-02** readiness review, this branch prepared
-`oneringai@2.0.0-beta.1`; publication had not been performed or verified. The
-registry check repeated on 2026-11-02 returned E404 for `oneringai`, while the signed-in
-npm account and existing v1 maintainer are `aantich`. E404 confirms no visible
-published package at the time of the check; it does not reserve the name or
-guarantee a future publication will be accepted.
+**Published — 2026-11-02:** [oneringai@2.0.0-beta.1](https://www.npmjs.com/package/oneringai)
+is owned by `aantich`. The registry assigns both `latest` and `next` to this first
+beta, so plain `npm i oneringai` currently installs a prerelease. You can explicitly
+select `oneringai@next` or pin the version. Source tag `v2.0.0-beta.1` points to
+`318c84b`; registry integrity matches the validated artifact. All eleven public
+entries, both module formats and nine document formats pass in a fresh registry
+install. See the [publication record](evaluations/V2_RELEASE_VALIDATION_2026_11_02.json).
+Earlier E404/name-availability observations are pre-publication history.
 
 V2 was committed and merged into `main` at `9c18dfa` on **2026-11-02** and pushed
 to GitHub. `main` is the canonical v2 development line. V1 maintenance stays on
-`version1`; npm publication and release tags remain separate steps.
+`version1`. Stable `2.0.0` and legacy deprecation remain separate steps.
 
 Published v1 remains `@everworker/oneringai@1.2.1`. It is not renamed, removed,
 silently redirected or deprecated before a verified replacement is installable.
@@ -23,6 +25,9 @@ Historical changelogs, evaluation evidence and v1 upgrade recipes keep the old
 identity. Current source, examples and public API documentation use `oneringai`.
 
 ## Try v2 before publication
+
+This original pre-publication workflow also supports source development after
+the beta publication. Registry users can use the install commands above.
 
 From this checkout, build and create a local tarball without publishing:
 

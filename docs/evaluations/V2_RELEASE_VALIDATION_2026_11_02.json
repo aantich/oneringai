@@ -229,5 +229,56 @@
     "Deprecate legacy package only after replacement is installable"
   ],
   "historicalEvidence": "V2_DOCUMENTATION_VALIDATION_2026_11_02.json",
-  "newBillableProviderCalls": 0
+  "newBillableProviderCalls": 0,
+  "publicationOutcome": {
+    "status": "published-and-registry-install-verified",
+    "verifiedAt": "2026-11-02T14:07:15.820092+00:00",
+    "package": "oneringai",
+    "version": "2.0.0-beta.1",
+    "publisher": "aantich",
+    "packageUrl": "https://www.npmjs.com/package/oneringai",
+    "sourceRevision": "318c84b53329a808af1ad5949dc2d51edefdffc5",
+    "sourceTag": "v2.0.0-beta.1",
+    "distTags": {
+      "latest": "2.0.0-beta.1",
+      "next": "2.0.0-beta.1"
+    },
+    "integrity": "sha512-sdg+5ZmcAC/7TS5W6QM527qic74DPkanlvU8R2HJZ5Uz9e2QiLiWzJzQB90wu638mRUm90KGsDyEu/UlMM/jtg==",
+    "matchesValidatedArtifact": true,
+    "packageFileCount": 498,
+    "releaseGate": "Passed before publication and again inside prepublishOnly; 9374 units, 27 offline examples, strict consumer types and both consumer audits",
+    "registryInstall": "Fresh directory; ordinary npm install scripts and optional dependencies; downloaded from public registry",
+    "registryProbe": {
+      "node": "v25.1.0",
+      "sdkModules": [],
+      "documents": [
+        "csv",
+        "xlsx",
+        "docx",
+        "pptx",
+        "odt",
+        "odp",
+        "ods",
+        "rtf",
+        "pdf"
+      ],
+      "status": "pass",
+      "entries": 11,
+      "formats": [
+        "esm",
+        "cjs"
+      ],
+      "documentsBothFormats": true,
+      "publicSymbols": true,
+      "connectorIdentity": true,
+      "documentation": true,
+      "MITLicenses": true,
+      "legacyPackageAbsent": true,
+      "providerCalls": 0
+    },
+    "stableVersionPublished": false,
+    "legacyPackageDeprecated": false,
+    "scope": "First library beta publication; no signed desktop distribution or new live-provider validation",
+    "historicalFields": "Original candidate checks and remainingPublicationSteps above describe the pre-publication snapshot"
+  }
 }

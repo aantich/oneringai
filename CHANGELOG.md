@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### OneRingAI v2 — `oneringai@2.0.0-beta.1`
+Changes after the first v2 beta will be recorded here. See the
+[published v2 beta](#200-beta1--2026-11-02) for the complete feature and upgrade notes.
+
+## [2.0.0-beta.1] — 2026-11-02
 
 Version 2 adds interchangeable agent harnesses, durable execution evidence,
 protected task state, explicit model budgets and routing, stronger connector
@@ -16,10 +19,14 @@ plugin-first architecture, long-term memory, tools, media APIs and shared
 ToolManager. These foundations remain central; they are not newly introduced
 features or replaced subsystems.
 
-**Source status — 2026-11-02:** v2 is committed on `main`; legacy v1 maintenance
-continues on `version1`. The prepared package is a **beta candidate**. This entry
-does not announce an npm publication, a stable `2.0.0` release, or signed desktop
-installers. External harness integrations retain their preview boundaries.
+**Published — 2026-11-02:** [oneringai@2.0.0-beta.1](https://www.npmjs.com/package/oneringai/v/2.0.0-beta.1)
+is available under `aantich`, from source tag `v2.0.0-beta.1` at `318c84b`.
+The registry assigns both `latest` and `next` to this first version, so
+`npm install oneringai` installs the **beta**. Its integrity matches the validated
+artifact, and a fresh registry install passes all 11 public entries in ESM/CJS
+and nine document formats. V2 development continues on `main`; legacy maintenance
+stays on `version1`. External harnesses retain their preview boundaries, and
+stable `2.0.0` and signed desktop installers remain separate releases.
 
 Start with the [v2 README](README.md), [User Guide](USER_GUIDE.md),
 [adoption guide](docs/VERSION_2_GUIDE.md), and
@@ -3763,7 +3770,8 @@ StorageRegistry.setContext({ userId: currentUser.id });
 [0.1.2]: https://github.com/aantich/oneringai/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/aantich/oneringai/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/aantich/oneringai/releases/tag/v0.1.0
-[Unreleased]: https://github.com/aantich/oneringai/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/aantich/oneringai/compare/v2.0.0-beta.1...HEAD
+[2.0.0-beta.1]: https://github.com/aantich/oneringai/compare/v1.2.1...v2.0.0-beta.1
 [1.2.0]: https://github.com/aantich/oneringai/compare/v1.1.8...v1.2.0
 [1.1.8]: https://github.com/aantich/oneringai/compare/v1.1.7...v1.1.8
 [1.1.7]: https://github.com/aantich/oneringai/compare/v1.1.6...v1.1.7

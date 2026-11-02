@@ -1,6 +1,16 @@
 # OneRingAI v2 release readiness
 
 Review date: **2026-11-02**. Prepared package: **`oneringai@2.0.0-beta.1`**.
+
+**Subsequent publication — 2026-11-02:** the beta is now
+[published on npm](https://www.npmjs.com/package/oneringai) under `aantich`, from
+`v2.0.0-beta.1` / `318c84b`. Both `latest` and `next` select it. Registry integrity
+matches the validated artifact; a fresh registry install passes all eleven public
+entries in ESM/CJS and all nine document formats. The machine record's
+[`publicationOutcome`](evaluations/V2_RELEASE_VALIDATION_2026_11_02.json) retains
+the post-publication verification. The following review describes the earlier
+candidate checks; preview/live/platform boundaries remain unchanged.
+
 This record concerns the library candidate and application source checks. It does
 not represent an npm publication, a merge, or a signed desktop installer release.
 

@@ -17,10 +17,11 @@ AMOS is the complete terminal application: configure connectors, run agents,
 switch harnesses, inspect activity, and recover saved sessions. Its
 [application guide](apps/amos/README.md) also covers native OneRingAI mode.
 
-**v2 package:** **`oneringai`**, without a scope. This documentation targets
-`2.0.0-beta.1`; use the matching package version and retain the preview boundaries
-below. Existing v1 users must migrate explicitly from `@everworker/oneringai`.
-See the **[v2 changelog](CHANGELOG.md#unreleased)**,
+**Published v2 beta:** **[`oneringai@2.0.0-beta.1`](https://www.npmjs.com/package/oneringai)**,
+without a scope. Both `latest` and `next` currently select this beta. Use the
+matching package version and retain the preview boundaries below. Existing v1
+users must migrate explicitly from `@everworker/oneringai`.
+See the **[v2 changelog](CHANGELOG.md#200-beta1--2026-11-02)**,
 [migration](docs/PACKAGE_MIGRATION.md), and [release readiness](docs/RELEASE_READINESS_V2.md).
 
 ## What changes in v2
@@ -51,14 +52,15 @@ availability, limitations, validation, and deferred work.
 ## Quick start
 
 Node.js **22.13+ or 24+** is required. The package provides ESM, CommonJS, and
-TypeScript declarations. Stable v2 installs use:
+TypeScript declarations. Install the current v2 beta:
 
 ```bash
 npm install oneringai
 ```
 
-For published v2 prereleases use `npm install oneringai@next`. Before registry
-availability, use a [source checkout or locally packed package](docs/PACKAGE_MIGRATION.md#try-v2-before-publication).
+You can also select `npm install oneringai@next` or pin `oneringai@2.0.0-beta.1`.
+The [source checkout/local package workflow](docs/PACKAGE_MIGRATION.md#try-v2-before-publication)
+remains available for development.
 Load your own environment configuration before creating connectors; the library
 does not automatically load your application's `.env` file.
 

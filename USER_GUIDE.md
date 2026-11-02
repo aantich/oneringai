@@ -2,6 +2,10 @@
 
 **Documented version:** `oneringai@2.0.0-beta.1` · **Reviewed:** 2026-11-02
 
+**Published beta:** [npm package](https://www.npmjs.com/package/oneringai).
+Both `latest` and `next` currently select this beta; `npm install oneringai` works.
+External harness and experimental-policy boundaries still apply.
+
 This guide describes the v2 APIs; use documentation matching your installed
 version. The dated [release readiness](docs/RELEASE_READINESS_V2.md) record separates
 local validation from publication and live-provider gates. For a running application, start with

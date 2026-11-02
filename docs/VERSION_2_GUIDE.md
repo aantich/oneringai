@@ -1,13 +1,21 @@
 # OneRingAI Version 2 Guide
 
+**Published beta — 2026-11-02:** [oneringai@2.0.0-beta.1](https://www.npmjs.com/package/oneringai)
+is published under `aantich`, from source tag `v2.0.0-beta.1` at `318c84b`.
+Both `latest` and `next` select this first beta. Registry integrity matches the
+validated artifact; a fresh registry install passes all eleven public entries
+in ESM/CJS and nine document formats. See the
+[publication evidence](evaluations/V2_RELEASE_VALIDATION_2026_11_02.json).
+Stable release and pending live/provider/platform gates remain separate.
+
 **Documentation/release review — 2026-11-02:** The README is rewritten for v2,
 and the complete User Guide is reviewed and reorganized. Use those documents for
-current integration, the [v2 changelog](../CHANGELOG.md#unreleased) for a consolidated
+current integration, the [v2 changelog](../CHANGELOG.md#200-beta1--2026-11-02) for a consolidated
 feature/upgrade summary, and [Release readiness](RELEASE_READINESS_V2.md) for validation
 and the corrected routine prompts, consumer dependency assessment, and final validation. Historical counts and availability statements
 below retain their delivery dates. Hosea's subsequent revival now passes its full
-desktop typecheck; the older 24-diagnostic statement below is historical. npm
-publication, stable-version selection and tags remain separate actions.
+desktop typecheck; the older 24-diagnostic statement below is historical. The
+subsequent beta publication is recorded above; stable-version selection remains separate.
 
 **Repository handoff — 2026-11-02:** v2 was committed and merged into `main` at
 `9c18dfa`, and that revision was pushed to GitHub. `main` is now the canonical v2
@@ -29,7 +37,7 @@ dependency and commercial-license startup gate are removed. Both applications bu
 desktop typecheck and provides the local design preview; installer/platform
 release gates remain separate. The package migration and release-readiness guides
 record clean-consumer, compatibility, examples and offline test results. This
-does not announce an npm or desktop release.
+does not establish signed desktop distribution or additional provider live support.
 
 This is the living, user-facing guide to OneRingAI's Version 2 initiative. It
 explains what each delivered stage enables, how to adopt it, and what must reach
@@ -55,12 +63,13 @@ scope, dependencies, research, and acceptance criteria.
   12 — opt-in presets, resolved capability inspection and AMOS adoption;
   14A — optional managed model routing;
   16A — opt-in provider-native compaction composed with context plugins, including all review corrections.
-- **Version 2 release:** Not announced by this document.
+- **Version 2 release:** `2.0.0-beta.1` published and registry-install verified on 2026-11-02; stable `2.0.0` remains pending.
 
 “Version 2” includes the prepared unscoped package and the recorded development
-initiative. Implemented capabilities below are available in this source, not yet
-in a verified npm v2 release. Package publication and any additional breaking
-change require separate decisions.
+initiative. Implemented capabilities at source revision `318c84b` are included in
+the verified npm beta. Historical stage labels below describe their availability
+at delivery time; inclusion in a beta does not complete pending live/provider gates.
+Additional breaking changes and stable publication require separate decisions.
 
 ## Reading this guide
 
