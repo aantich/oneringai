@@ -2,20 +2,10 @@
  * Auth integration tests
  */
 import { describe, it, expect, beforeAll } from 'vitest';
-import { env } from 'cloudflare:test';
-import { request, createTestUser } from './setup.js';
+import { request, createTestUser, migrateDB } from './setup.js';
 
 describe('Auth', () => {
-  beforeAll(async () => {
-    // Apply schema
-    const fs = await import('fs');
-    const schema = fs.readFileSync('./schema.sql', 'utf-8');
-    // Split by semicolons and execute each statement
-    const statements = schema.split(';').filter((s) => s.trim());
-    for (const stmt of statements) {
-      await env.DB.prepare(stmt).run();
-    }
-  });
+  beforeAll(migrateDB);
 
   describe('POST /auth/signup', () => {
     it('should create a new user', async () => {

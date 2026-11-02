@@ -59,3 +59,39 @@ the XLSX fixture with the installed ExcelJS. Source unit tests cover formatting,
 limits, filtering and parser behavior. The PPTX temp-file workaround remains in
 place for bundled server compatibility. See [release readiness](RELEASE_READINESS_V2.md)
 for the final commands/results and supported Node checks.
+
+## API application development tooling — 2026-11-02
+
+The separate, private `apps/api` manifest still selected Vitest 2.1.x after the
+v2 branch promotion. GitHub alert 24 tracks
+[GHSA-5xrq-8626-4rwp](https://github.com/vitest-dev/vitest/security/advisories/GHSA-5xrq-8626-4rwp),
+which affects exposed Vitest UI/API servers and UI/browser mode on Windows.
+The app's checked-in scripts use ordinary run/watch mode, with no UI, browser
+mode or exposed API-server configuration. This lowers the observed exposure;
+the vulnerable development dependency should still be updated.
+
+The correction selects **Vitest 4.1.12+** and the maintained
+**`@cloudflare/vitest-plugin` 1.4.12+**. Vitest 3.2.7 removes the original advisory
+but retains a Tinypool version with additional critical audit findings, so it
+is not the selected fix. The Cloudflare configuration uses its current plugin
+API. Test setup now uses valid D1 binding options and bundles `schema.sql` as
+data instead of attempting unsupported filesystem access inside a Worker.
+These test-setup problems were present before the dependency update.
+
+Validation of the updated local app graph:
+
+- `npm --prefix apps/api run typecheck` passes.
+- `npm --prefix apps/api test` executes all 30 tests: **29 pass**, with one
+  existing model-seeding failure exposed by the repaired harness. Seven current
+  registry entries have an unknown input or output token limit; the seeding route
+  sends those nulls to the app's `NOT NULL` database columns. The security fix
+  does not invent token limits or change the database schema.
+- `npm --prefix apps/api audit --json` reports **0 critical, 6 high, 0 moderate,
+  1 low** entries. The original advisory and critical Tinypool path are absent.
+  The remaining findings concern Hono and local Wrangler/Miniflare dependencies;
+  this is not a clean whole-repository audit.
+
+This app's development graph is separate from the library's clean-tarball
+production-consumer assessment above. A local dependency correction does not
+close the GitHub alert until the updated manifest reaches the default branch
+and GitHub rescans it.

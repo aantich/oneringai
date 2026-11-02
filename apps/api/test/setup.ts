@@ -1,8 +1,9 @@
 /**
  * Test harness — creates a Hono app with miniflare D1/KV bindings
  */
-import { env } from 'cloudflare:test';
+import { env } from 'cloudflare:workers';
 import app from '../src/index.js';
+import schema from '../schema.sql?raw';
 
 export { app, env };
 
@@ -65,6 +66,8 @@ export async function promoteUser(
 
 /** Helper: run schema.sql on the test DB */
 export async function migrateDB(): Promise<void> {
-  // The schema is loaded via vitest-environment-miniflare d1Databases config
-  // This is a no-op if using `wrangler test` which auto-applies migrations
+  const statements = schema.split(';').filter((statement) => statement.trim());
+  for (const statement of statements) {
+    await env.DB.prepare(statement).run();
+  }
 }

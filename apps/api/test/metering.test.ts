@@ -2,8 +2,8 @@
  * Metering integration tests
  */
 import { describe, it, expect, beforeAll } from 'vitest';
-import { env } from 'cloudflare:test';
-import { request, createTestUser, promoteUser } from './setup.js';
+import { env } from 'cloudflare:workers';
+import { request, createTestUser, promoteUser, migrateDB } from './setup.js';
 
 describe('Metering', () => {
   let adminToken: string;
@@ -11,13 +11,7 @@ describe('Metering', () => {
   let userId: string;
 
   beforeAll(async () => {
-    // Apply schema
-    const fs = await import('fs');
-    const schema = fs.readFileSync('./schema.sql', 'utf-8');
-    const statements = schema.split(';').filter((s) => s.trim());
-    for (const stmt of statements) {
-      await env.DB.prepare(stmt).run();
-    }
+    await migrateDB();
 
     // Create admin
     const admin = await createTestUser('meter-admin@test.com');
