@@ -6,6 +6,11 @@ embedded dependency hardening. The [beta.2 record](evaluations/BETA2_RELEASE_VAL
 separates candidate validation from verified publication. The user explicitly
 authorized fixing, committing on main, pushing and publishing beta.2.
 
+**Verified publication:** beta.2 is now available under both `latest` and `next`,
+from `v2.0.0-beta.2` / `4934f066`. Its registry integrity matches the validated
+tarball. Fresh registry consumers and all three browser page/Worker hosts pass;
+the beta.2 record contains the source revision, checksums, audits and runtime results.
+
 Unreleased beta follow-up — 2026-11-08: release validation now checks embedded
 dependency provenance and advisories as well as the installed consumer graph.
 Patched MCP HTTP redirect behavior is tested through the tarball's public ESM/CJS

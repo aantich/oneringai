@@ -8,6 +8,13 @@ See [beta.2 validation](evaluations/BETA2_RELEASE_VALIDATION_2026_11_08.json) fo
 the release gates and publication status. Earlier dated beta.1/stage records below
 remain historical; external harness and live-provider boundaries are unchanged.
 
+**Verified publication:** beta.2 is published under `aantich` from
+`v2.0.0-beta.2` / `4934f066`. Both `latest` and `next` select it. Registry integrity
+matches the validated tarball; fresh registry consumers pass on Node 22/24,
+including ESM/CJS, strict declarations, document formats and MCP redirects.
+The registry-installed browser build passes strict-CSP pages and Workers in
+Chromium, Firefox and WebKit. The linked beta.2 record retains the publication receipt.
+
 **Browser and Node Agent portability — 2026-11-08 (2.0.0-beta.2):**
 Agents use the **same API in browsers and Node.js**, including the agentic loop,
 context plugins, managed/direct calls, helpers, routing, permissions, evidence and

@@ -17,6 +17,10 @@ permissions, evidence and budget ledger have not been forked. No public runtime
 object, bootstrap call, async factory, replacement registry or storage adapter
 was introduced. The earlier beta.1 does not include this change.
 
+The beta.2 package is registry-install verified from `v2.0.0-beta.2` / `4934f066`.
+Both `latest` and `next` select it; the beta.2 evidence record contains the immutable
+artifact integrity and fresh Node/browser verification after npm processing completed.
+
 | Stage | Delivered work | Validation |
 | --- | --- | --- |
 | P0 | Qualified synchronous crypto/comparison and CSP schema adapter; actual SDK transport seams | 186 schema cases against AJV; 16 Node 22 comparison vectors; six crypto vectors; strict-CSP page/Worker |

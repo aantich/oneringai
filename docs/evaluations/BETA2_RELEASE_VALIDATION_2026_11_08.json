@@ -4,8 +4,8 @@
   "branch": "main",
   "sourceBase": "f0cb9cd743c669a0f8e37431ce1930b9bc8d8e6e",
   "authorization": "fix all; then commit, push and release to npm as beta2",
-  "status": "all candidate gates passed; publication pending",
-  "publicationPerformed": false,
+  "status": "published-and-registry-install-verified",
+  "publicationPerformed": true,
   "liveModelCalls": 0,
   "compatibility": "Same public Agent/context/plugin API in browser and Node; native Node AJV/defaults/ALS/Buffer contracts retained",
   "fixes": [
@@ -1811,7 +1811,16 @@
         "finishedAt": "2026-11-08T20:34:32.710Z"
       }
     ],
-    "releaseCheck": "pass end to end"
+    "releaseCheck": "pass end to end",
+    "prepublishOnly": {
+      "status": "pass",
+      "unit": {
+        "passed": 9478,
+        "files": 435
+      },
+      "releaseCheck": "complete build/audit/type/lint/unit/examples/docs/clean-consumer pipeline repeated before upload",
+      "tagGuard": "clean v2.0.0-beta.2 at release commit"
+    }
   },
   "releasePlan": {
     "version": "2.0.0-beta.2",
@@ -1822,7 +1831,7 @@
       "latest",
       "next"
     ],
-    "status": "not yet published"
+    "status": "completed"
   },
   "limits": [
     "Synthetic/local HTTP and offline scenarios only; no live or billable LLM calls.",
@@ -1830,5 +1839,698 @@
     "Registry publication and integrity are verified separately after candidate validation."
   ],
   "validatedAt": "2026-11-08T20:35:15.018Z",
-  "artifactScope": "Clean-consumer reports validate the beta.2 code outputs before evidence metadata is finalized. The final committed package is rebuilt and checked again by prepublishOnly; publication integrity is recorded separately."
+  "artifactScope": "Clean-consumer reports validate the beta.2 code outputs before evidence metadata is finalized. The final committed package is rebuilt and checked again by prepublishOnly; publication integrity is recorded separately.",
+  "publicationOutcome": {
+    "status": "published-and-registry-install-verified",
+    "verifiedAt": "2026-11-08T20:57:01.159Z",
+    "registry": "https://registry.npmjs.org/",
+    "npmAccount": "aantich",
+    "version": "2.0.0-beta.2",
+    "publishedAt": "2026-11-08T20:47:23.703Z",
+    "sourceTag": "v2.0.0-beta.2",
+    "sourceCommit": "4934f06681779e4e3080b9dda47595954cf1e0cb",
+    "distTags": {
+      "latest": "2.0.0-beta.2",
+      "next": "2.0.0-beta.2"
+    },
+    "integrity": "sha512-VSWa7iNXfP0gBoXACzdGoLLqCPsl50f+AN6oNXWy4drvOLi4B2tuiSx0EbnrlE0CGoLktb+4Pp/Foo4pNyEJ9Q==",
+    "shasum": "de1f563dc92733e8ed143feec1490949f62ed0a3",
+    "tarball": "https://registry.npmjs.org/oneringai/-/oneringai-2.0.0-beta.2.tgz",
+    "files": 557,
+    "packedBytes": 20581584,
+    "unpackedBytes": 104524429,
+    "integrityMatchesValidatedArtifact": true,
+    "registryConsumer": {
+      "status": "pass",
+      "node": "v24.20.0",
+      "probe": {
+        "node": "v24.20.0",
+        "sdkModules": [],
+        "documents": [
+          "csv",
+          "xlsx",
+          "docx",
+          "pptx",
+          "odt",
+          "odp",
+          "ods",
+          "rtf",
+          "pdf"
+        ],
+        "status": "pass",
+        "entries": 11,
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "documentsBothFormats": true,
+        "publicSymbols": true,
+        "connectorIdentity": true,
+        "documentation": true,
+        "MITLicenses": true,
+        "legacyPackageAbsent": true,
+        "providerCalls": 0
+      },
+      "optionalSdkProbe": {
+        "node": "v24.20.0",
+        "sdkModules": [
+          "@openai/codex-sdk",
+          "@anthropic-ai/claude-agent-sdk"
+        ],
+        "documents": [
+          "csv",
+          "xlsx",
+          "docx",
+          "pptx",
+          "odt",
+          "odp",
+          "ods",
+          "rtf",
+          "pdf"
+        ],
+        "status": "pass",
+        "entries": 11,
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "documentsBothFormats": true,
+        "publicSymbols": true,
+        "connectorIdentity": true,
+        "documentation": true,
+        "MITLicenses": true,
+        "legacyPackageAbsent": true,
+        "providerCalls": 0
+      },
+      "coreTypes": "ESM and CJS; public compatibility fixtures and nine entries; no optional SDKs; skipLibCheck=false",
+      "optionalTypes": "ESM and CJS; all eleven entries with declared optional SDK peers installed; skipLibCheck=false",
+      "mcpRedirects": {
+        "esm": {
+          "sameOrigin": "connected",
+          "crossOrigin": "blocked",
+          "forwardedRequests": 0
+        },
+        "cjs": {
+          "sameOrigin": "connected",
+          "crossOrigin": "blocked",
+          "forwardedRequests": 0
+        }
+      },
+      "audit": {
+        "counts": {
+          "info": 0,
+          "low": 0,
+          "moderate": 3,
+          "high": 0,
+          "critical": 0,
+          "total": 3
+        },
+        "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+        "checked": [
+          "uuid@8.3.2"
+        ]
+      },
+      "optionalSdkAudit": {
+        "counts": {
+          "info": 0,
+          "low": 0,
+          "moderate": 3,
+          "high": 0,
+          "critical": 0,
+          "total": 3
+        },
+        "disposition": "source-reviewed non-applicable advisories; see docs/DEPENDENCY_SECURITY.md",
+        "checked": [
+          "uuid@8.3.2"
+        ]
+      }
+    },
+    "registryNode22": {
+      "probe": {
+        "node": "v22.13.1",
+        "sdkModules": [],
+        "documents": [
+          "csv",
+          "xlsx",
+          "docx",
+          "pptx",
+          "odt",
+          "odp",
+          "ods",
+          "rtf",
+          "pdf"
+        ],
+        "status": "pass",
+        "entries": 11,
+        "formats": [
+          "esm",
+          "cjs"
+        ],
+        "documentsBothFormats": true,
+        "publicSymbols": true,
+        "connectorIdentity": true,
+        "documentation": true,
+        "MITLicenses": true,
+        "legacyPackageAbsent": true,
+        "providerCalls": 0
+      },
+      "mcpRedirects": {
+        "esm": {
+          "sameOrigin": "connected",
+          "crossOrigin": "blocked",
+          "forwardedRequests": 0
+        },
+        "cjs": {
+          "sameOrigin": "connected",
+          "crossOrigin": "blocked",
+          "forwardedRequests": 0
+        }
+      }
+    },
+    "registryBrowser": {
+      "bytes": 11206691,
+      "gzipBytes": 3159878,
+      "hosts": [
+        {
+          "engine": "chromium",
+          "version": "158.0.8127.18",
+          "normal": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 4,
+            "estimatedTokens": 2695
+          },
+          "retry": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 5,
+            "estimatedTokens": 2695
+          },
+          "worker": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 4,
+            "estimatedTokens": 2695
+          },
+          "pageRegressions": {
+            "plugins": {
+              "plugins": [
+                "working_memory",
+                "in_context_memory",
+                "persistent_instructions",
+                "user_info",
+                "tool_catalog",
+                "shared_workspace",
+                "memory",
+                "memory_write",
+                "evidence",
+                "task_state"
+              ],
+              "checkpoint": true,
+              "rollover": true,
+              "revisionAndScope": true,
+              "catalog": 9
+            },
+            "transport": {
+              "concurrent": true,
+              "sharedBudget": true,
+              "earlyClosure": true,
+              "unknownUsage": true,
+              "cancellation": true
+            },
+            "loop": {
+              "routing": true,
+              "external": true,
+              "protectedRecovery": true,
+              "runtimeCollectionSchema": true,
+              "scopedCursor": true,
+              "controlsAndAsync": true,
+              "suspensionFailure": true,
+              "structuredRepair": true,
+              "remoteReconciliation": true
+            },
+            "schemas": {
+              "primaryAndValidationSchemas": 32,
+              "invalidBeforeDispatch": 12,
+              "urn": true,
+              "nestedScopes": true,
+              "githubBom": true,
+              "annotationReferences": true,
+              "beforeDispatch": true,
+              "normalizedIds": true,
+              "metadataIds": true,
+              "strictAdmission": true,
+              "inactiveBranches": true
+            }
+          },
+          "workerRegressions": {
+            "plugins": {
+              "plugins": [
+                "working_memory",
+                "in_context_memory",
+                "persistent_instructions",
+                "user_info",
+                "tool_catalog",
+                "shared_workspace",
+                "memory",
+                "memory_write",
+                "evidence",
+                "task_state"
+              ],
+              "checkpoint": true,
+              "rollover": true,
+              "revisionAndScope": true,
+              "catalog": 9
+            },
+            "transport": {
+              "concurrent": true,
+              "sharedBudget": true,
+              "earlyClosure": true,
+              "unknownUsage": true,
+              "cancellation": true
+            },
+            "loop": {
+              "routing": true,
+              "external": true,
+              "protectedRecovery": true,
+              "runtimeCollectionSchema": true,
+              "scopedCursor": true,
+              "controlsAndAsync": true,
+              "suspensionFailure": true,
+              "structuredRepair": true,
+              "remoteReconciliation": true
+            },
+            "schemas": {
+              "primaryAndValidationSchemas": 32,
+              "invalidBeforeDispatch": 12,
+              "urn": true,
+              "nestedScopes": true,
+              "githubBom": true,
+              "annotationReferences": true,
+              "beforeDispatch": true,
+              "normalizedIds": true,
+              "metadataIds": true,
+              "strictAdmission": true,
+              "inactiveBranches": true
+            }
+          },
+          "largePage": {
+            "inputBytes": 3500000,
+            "estimatedInputTokens": 1000000,
+            "preparedTokens": 1000028,
+            "serializedBytes": 3500419,
+            "preparedAfterMs": 37.19999980926514,
+            "runMs": 61.69999980926514,
+            "serializationMs": 3.700000762939453,
+            "timerLagMs": 65.69999980926514,
+            "heapBefore": 39600000,
+            "heapAfter": 39600000,
+            "model": "local scripted provider",
+            "estimator": "OneRingAI simpleTokenEstimator; not a provider tokenizer"
+          },
+          "largeWorker": {
+            "inputBytes": 3500000,
+            "estimatedInputTokens": 1000000,
+            "preparedTokens": 1000028,
+            "serializedBytes": 3500419,
+            "preparedAfterMs": 39.39999961853027,
+            "runMs": 65.80000019073486,
+            "serializationMs": 3.8999996185302734,
+            "timerLagMs": 69.80000019073486,
+            "model": "local scripted provider",
+            "estimator": "OneRingAI simpleTokenEstimator; not a provider tokenizer"
+          },
+          "errors": [],
+          "violations": []
+        },
+        {
+          "engine": "firefox",
+          "version": "159.0",
+          "normal": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 4,
+            "estimatedTokens": 2695
+          },
+          "retry": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 5,
+            "estimatedTokens": 2695
+          },
+          "worker": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 4,
+            "estimatedTokens": 2695
+          },
+          "pageRegressions": {
+            "plugins": {
+              "plugins": [
+                "working_memory",
+                "in_context_memory",
+                "persistent_instructions",
+                "user_info",
+                "tool_catalog",
+                "shared_workspace",
+                "memory",
+                "memory_write",
+                "evidence",
+                "task_state"
+              ],
+              "checkpoint": true,
+              "rollover": true,
+              "revisionAndScope": true,
+              "catalog": 9
+            },
+            "transport": {
+              "concurrent": true,
+              "sharedBudget": true,
+              "earlyClosure": true,
+              "unknownUsage": true,
+              "cancellation": true
+            },
+            "loop": {
+              "routing": true,
+              "external": true,
+              "protectedRecovery": true,
+              "runtimeCollectionSchema": true,
+              "scopedCursor": true,
+              "controlsAndAsync": true,
+              "suspensionFailure": true,
+              "structuredRepair": true,
+              "remoteReconciliation": true
+            },
+            "schemas": {
+              "primaryAndValidationSchemas": 32,
+              "invalidBeforeDispatch": 12,
+              "urn": true,
+              "nestedScopes": true,
+              "githubBom": true,
+              "annotationReferences": true,
+              "beforeDispatch": true,
+              "normalizedIds": true,
+              "metadataIds": true,
+              "strictAdmission": true,
+              "inactiveBranches": true
+            }
+          },
+          "workerRegressions": {
+            "plugins": {
+              "plugins": [
+                "working_memory",
+                "in_context_memory",
+                "persistent_instructions",
+                "user_info",
+                "tool_catalog",
+                "shared_workspace",
+                "memory",
+                "memory_write",
+                "evidence",
+                "task_state"
+              ],
+              "checkpoint": true,
+              "rollover": true,
+              "revisionAndScope": true,
+              "catalog": 9
+            },
+            "transport": {
+              "concurrent": true,
+              "sharedBudget": true,
+              "earlyClosure": true,
+              "unknownUsage": true,
+              "cancellation": true
+            },
+            "loop": {
+              "routing": true,
+              "external": true,
+              "protectedRecovery": true,
+              "runtimeCollectionSchema": true,
+              "scopedCursor": true,
+              "controlsAndAsync": true,
+              "suspensionFailure": true,
+              "structuredRepair": true,
+              "remoteReconciliation": true
+            },
+            "schemas": {
+              "primaryAndValidationSchemas": 32,
+              "invalidBeforeDispatch": 12,
+              "urn": true,
+              "nestedScopes": true,
+              "githubBom": true,
+              "annotationReferences": true,
+              "beforeDispatch": true,
+              "normalizedIds": true,
+              "metadataIds": true,
+              "strictAdmission": true,
+              "inactiveBranches": true
+            }
+          },
+          "largePage": {
+            "inputBytes": 3500000,
+            "estimatedInputTokens": 1000000,
+            "preparedTokens": 1000028,
+            "serializedBytes": 3500419,
+            "preparedAfterMs": 29,
+            "runMs": 44,
+            "serializationMs": 2,
+            "timerLagMs": 46,
+            "model": "local scripted provider",
+            "estimator": "OneRingAI simpleTokenEstimator; not a provider tokenizer"
+          },
+          "largeWorker": {
+            "inputBytes": 3500000,
+            "estimatedInputTokens": 1000000,
+            "preparedTokens": 1000028,
+            "serializedBytes": 3500419,
+            "preparedAfterMs": 31,
+            "runMs": 54,
+            "serializationMs": 2,
+            "timerLagMs": 56,
+            "model": "local scripted provider",
+            "estimator": "OneRingAI simpleTokenEstimator; not a provider tokenizer"
+          },
+          "errors": [],
+          "violations": []
+        },
+        {
+          "engine": "webkit",
+          "version": "27.2",
+          "normal": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 4,
+            "estimatedTokens": 2695
+          },
+          "retry": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 5,
+            "estimatedTokens": 2695
+          },
+          "worker": {
+            "output": "Total EUR 42",
+            "toolCalls": 1,
+            "sharedToolManager": true,
+            "registryPluginRestored": true,
+            "manualPluginRestored": true,
+            "streamed": true,
+            "helper": {
+              "currency": "USD"
+            },
+            "modelCalls": 4,
+            "estimatedTokens": 2695
+          },
+          "pageRegressions": {
+            "plugins": {
+              "plugins": [
+                "working_memory",
+                "in_context_memory",
+                "persistent_instructions",
+                "user_info",
+                "tool_catalog",
+                "shared_workspace",
+                "memory",
+                "memory_write",
+                "evidence",
+                "task_state"
+              ],
+              "checkpoint": true,
+              "rollover": true,
+              "revisionAndScope": true,
+              "catalog": 9
+            },
+            "transport": {
+              "concurrent": true,
+              "sharedBudget": true,
+              "earlyClosure": true,
+              "unknownUsage": true,
+              "cancellation": true
+            },
+            "loop": {
+              "routing": true,
+              "external": true,
+              "protectedRecovery": true,
+              "runtimeCollectionSchema": true,
+              "scopedCursor": true,
+              "controlsAndAsync": true,
+              "suspensionFailure": true,
+              "structuredRepair": true,
+              "remoteReconciliation": true
+            },
+            "schemas": {
+              "primaryAndValidationSchemas": 32,
+              "invalidBeforeDispatch": 12,
+              "urn": true,
+              "nestedScopes": true,
+              "githubBom": true,
+              "annotationReferences": true,
+              "beforeDispatch": true,
+              "normalizedIds": true,
+              "metadataIds": true,
+              "strictAdmission": true,
+              "inactiveBranches": true
+            }
+          },
+          "workerRegressions": {
+            "plugins": {
+              "plugins": [
+                "working_memory",
+                "in_context_memory",
+                "persistent_instructions",
+                "user_info",
+                "tool_catalog",
+                "shared_workspace",
+                "memory",
+                "memory_write",
+                "evidence",
+                "task_state"
+              ],
+              "checkpoint": true,
+              "rollover": true,
+              "revisionAndScope": true,
+              "catalog": 9
+            },
+            "transport": {
+              "concurrent": true,
+              "sharedBudget": true,
+              "earlyClosure": true,
+              "unknownUsage": true,
+              "cancellation": true
+            },
+            "loop": {
+              "routing": true,
+              "external": true,
+              "protectedRecovery": true,
+              "runtimeCollectionSchema": true,
+              "scopedCursor": true,
+              "controlsAndAsync": true,
+              "suspensionFailure": true,
+              "structuredRepair": true,
+              "remoteReconciliation": true
+            },
+            "schemas": {
+              "primaryAndValidationSchemas": 32,
+              "invalidBeforeDispatch": 12,
+              "urn": true,
+              "nestedScopes": true,
+              "githubBom": true,
+              "annotationReferences": true,
+              "beforeDispatch": true,
+              "normalizedIds": true,
+              "metadataIds": true,
+              "strictAdmission": true,
+              "inactiveBranches": true
+            }
+          },
+          "largePage": {
+            "inputBytes": 3500000,
+            "estimatedInputTokens": 1000000,
+            "preparedTokens": 1000028,
+            "serializedBytes": 3500419,
+            "preparedAfterMs": 26,
+            "runMs": 41,
+            "serializationMs": 2,
+            "timerLagMs": 43,
+            "model": "local scripted provider",
+            "estimator": "OneRingAI simpleTokenEstimator; not a provider tokenizer"
+          },
+          "largeWorker": {
+            "inputBytes": 3500000,
+            "estimatedInputTokens": 1000000,
+            "preparedTokens": 1000028,
+            "serializedBytes": 3500419,
+            "preparedAfterMs": 35,
+            "runMs": 54,
+            "serializationMs": 2,
+            "timerLagMs": 56,
+            "model": "local scripted provider",
+            "estimator": "OneRingAI simpleTokenEstimator; not a provider tokenizer"
+          },
+          "errors": [],
+          "violations": []
+        }
+      ],
+      "requests": 273,
+      "passed": true
+    },
+    "provenanceSha256": "5693a9e01720803260a622b72c291d2615376a4fbb4dd0e9d47e71ec69ee896e",
+    "receiptScope": "The npm artifact contains the candidate record at the release tag. This follow-up source receipt records post-publication verification without altering that immutable artifact."
+  }
 }
